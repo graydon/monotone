@@ -21,7 +21,7 @@ namespace legacy
   // parser for old .mt-attrs file format
   typedef std::map<file_path, std::map<std::string, std::string> > dot_mt_attrs_map;
 
-  void 
+  void
   read_dot_mt_attrs(data const & dat, dot_mt_attrs_map & attr);
 
   ///////
@@ -36,7 +36,7 @@ namespace legacy
 
   typedef std::map<revision_id, std::map<split_path, split_path> > renames_map;
 
-  void 
+  void
   get_manifest_and_renames_for_rev(app_state & app,
                                    revision_id const & ident,
                                    manifest_id & mid,
@@ -44,7 +44,7 @@ namespace legacy
 
   ///////
   // parsing old-style manifests, for 'rosterify' and 'changesetify' commands
-  typedef std::map<file_path, file_id, 
+  typedef std::map<file_path, file_id,
                    std::less<file_path> > manifest_map;
   void read_manifest_map(manifest_data const & mdat,
                          manifest_map & man);

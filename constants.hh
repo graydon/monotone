@@ -20,10 +20,10 @@ namespace constants
   extern size_t const automate_stdio_size;
 
   // number of bits in an RSA key we use
-  extern size_t const keylen; 
+  extern size_t const keylen;
 
   // number of characters in a SHA1 id
-  static size_t const idlen = 40; 
+  static size_t const idlen = 40;
 
   // number of characters in an encoded epoch
   static size_t const epochlen = idlen;
@@ -33,7 +33,7 @@ namespace constants
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
-  extern time_t const cvs_window; 
+  extern time_t const cvs_window;
 
   // number of bytes in a password buffer. further bytes will be dropped.
   static size_t const maxpasswd = 0xfff;
@@ -119,7 +119,7 @@ namespace constants
                                       + 1   // cmd code
                                       + 1); // smallest uleb possible
 
-  
+
   // largest command *payload* allowed in a netcmd
   // in practice, this sets the size of the largest compressed file
   static size_t const netcmd_payload_limit = 2 << 27;

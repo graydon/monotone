@@ -1015,15 +1015,15 @@ static string expected_SHA_MCT[] = {
   "25f67e9875a90aee60bf1dc1b26c2750294aa7b7",
   "8fa552efdcb67d98b5e0189144e99607f5a807fe" };
 
-static void 
+static void
 calculate_ident_test()
 {
-  // NIST checks all SHA implementations using a test system 
+  // NIST checks all SHA implementations using a test system
   // outlined in the SHA Verification System PDF obtained at
   // http://csrc.nist.gov/cryptval/shs/SHAVS.pdf
 
   // There are three tests outlined:
-  //   - Short Message Test:  A small message is provided as 
+  //   - Short Message Test:  A small message is provided as
   //     an input with a pre-computed digest.  If the crypto
   //     module under test produces a HASH that matches the
   //     known digest, the test passes
@@ -1037,13 +1037,13 @@ calculate_ident_test()
   //
   //   - Monte Carlo Test:  This tests the usage of SHA in
   //     PRNGs.  A known 'seed' is provided.  This 'seed' is
-  //     hashed and used as input into the next iteration. 
+  //     hashed and used as input into the next iteration.
   //     This continues for 100,000 iterations.  After every
   //     1000 hashes, the computed hash is compared to a known
   //     one.  If they match, the test succeeds.
 
 
-  // This test has been updated to include a defined Short 
+  // This test has been updated to include a defined Short
   // Message test, and the Monte Carlo Test.  The Long Message
   // test has been dropped as suitable, pre-computed values, are
   // not available.  Also, instead of the expected 100,000
@@ -1058,21 +1058,21 @@ calculate_ident_test()
 
   calculate_ident(input, output);
 
-  //L(FL(" Input: %s\n") % input);
-  //L(FL("Output: %s\n") % output);
+  //L(FL(" Input: %s") % input);
+  //L(FL("Output: %s") % output);
 
   BOOST_CHECK(output() == ident);
   L(FL("SHA Short Message Test:  Passed\n\n"));
 
 
   //SHA Monte Carlo Test
-  // 
+  //
   //INPUT: Seed - A random seed n bits long
   //
   //   for (j=0; j<100; j++) {
   //
   //      MD0 = MD1 = MD2 = Seed;
-  //  
+  //
   //      for (i=3; i<1003; i++) {
   //         Mi = MDi-3 || MDi-2 || MDi-1;
   //        MDi = SHA(Mi);
@@ -1088,29 +1088,29 @@ calculate_ident_test()
 
   string MD[1003];
 
-  for (int j = 0; j < 1000; j++) 
+  for (int j = 0; j < 1000; j++)
     {
 
       MD[0] = Seed;
       MD[1] = Seed;
       MD[2] = Seed;
 
-      for (int i = 3; i < 1003; i++) 
+      for (int i = 3; i < 1003; i++)
         {
           string messageString = MD[i - 3] + MD[i - 2] + MD[i - 1];
-          // L(FL("messageString: %s\n") % messageString );
+          // L(FL("messageString: %s") % messageString );
 
           data messageData(decode_hexenc(messageString));
-          // L(FL("message: %s\n") % messageString );
+          // L(FL("message: %s") % messageString );
 
           calculate_ident(messageData, output2);
-          // L(FL("output: %s\n") % output2 );
+          // L(FL("output: %s") % output2 );
 
           MD[i] = output2();
         }
-  
-      L(FL("  %03d:  %s\n") % j % output2 );
-    
+
+      L(FL("  %03d:  %s") % j % output2 );
+
       BOOST_CHECK(output2() == expected_SHA_MCT[j]);
 
       MD[j] = output2();

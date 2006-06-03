@@ -3,6 +3,28 @@
 	* {cert,charset,cleanup,cmd*}.{cc,hh}: Coppyright and formatting
 	fixes.
 
+2006-06-03  Lapo Luchini  <lapo@lapo.it>
+
+	* *.cc *.hh: removed extra "\n" from translatable strings.
+	removed trailing spaces.
+
+	* po/it.po: Updated to the new newline-less strings.
+
+2006-06-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/os_strerror.cc (os_strerror): Trim trailing newlines from
+	error string returned from FormatMessage.
+
+	* sanity.{cc,hh} (format_base): Add dtor to delete pimpl.
+
+2006-06-02  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (95 to go).
+
+2006-06-02  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more and fuzzy strings to Italian (90 to go).
+	
 2006-06-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* visualc/monotone.vcproj: Add win32/os_strerror.cc to project.
@@ -13,7 +35,7 @@
 
 2006-05-29  Derek Scherger  <derek@echologic.com>
 
-	* HACKING: add note on using namespaces
+	* HACKING: add note on using namespaces33
 	* ROADMAP: remove janitorial items pertaining to namespaces and
 	splitting commands.cc
 
@@ -671,6 +693,10 @@
 
 	* xdelta.cc (read_num): New function.
 	(apply_delta): Rewrite to avoid string streams.
+
+2006-05-10  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (140 to go).
 
 2006-05-09  Graydon Hoare  <graydon@pobox.com>
 

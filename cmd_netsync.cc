@@ -37,7 +37,7 @@ process_netsync_args(string const & name,
           if (use_defaults
               && (!app.db.var_exists(default_server_key) || app.set_default))
             {
-              P(F("setting default server to %s\n") % addr);
+              P(F("setting default server to %s") % addr);
               app.db.set_var(default_server_key, var_value(addr()));
             }
         }
@@ -49,7 +49,7 @@ process_netsync_args(string const & name,
           var_value addr_value;
           app.db.get_var(default_server_key, addr_value);
           addr = utf8(addr_value());
-          L(FL("using default server address: %s\n") % addr);
+          L(FL("using default server address: %s") % addr);
         }
     }
 
@@ -64,13 +64,13 @@ process_netsync_args(string const & name,
       if (use_defaults &&
           (!app.db.var_exists(default_include_pattern_key) || app.set_default))
         {
-          P(F("setting default branch include pattern to '%s'\n") % include_pattern);
+          P(F("setting default branch include pattern to '%s'") % include_pattern);
           app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
         }
       if (use_defaults &&
           (!app.db.var_exists(default_exclude_pattern_key) || app.set_default))
         {
-          P(F("setting default branch exclude pattern to '%s'\n") % exclude_pattern);
+          P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
           app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
     }
@@ -82,7 +82,7 @@ process_netsync_args(string const & name,
       var_value pattern_value;
       app.db.get_var(default_include_pattern_key, pattern_value);
       include_pattern = utf8(pattern_value());
-      L(FL("using default branch include pattern: '%s'\n") % include_pattern);
+      L(FL("using default branch include pattern: '%s'") % include_pattern);
       if (app.db.var_exists(default_exclude_pattern_key))
         {
           app.db.get_var(default_exclude_pattern_key, pattern_value);
@@ -90,7 +90,7 @@ process_netsync_args(string const & name,
         }
       else
         exclude_pattern = utf8("");
-      L(FL("excluding: %s\n") % exclude_pattern);
+      L(FL("excluding: %s") % exclude_pattern);
     }
 }
 
@@ -106,7 +106,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
   app.signing_key = key;
 
   run_netsync_protocol(client_voice, source_role, addr,
-                       include_pattern, exclude_pattern, app);  
+                       include_pattern, exclude_pattern, app);
 }
 
 CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
@@ -117,10 +117,10 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
 
   if (app.signing_key() == "")
-    P(F("doing anonymous pull; use -kKEYNAME if you need authentication\n"));
-  
+    P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
+
   run_netsync_protocol(client_voice, sink_role, addr,
-                       include_pattern, exclude_pattern, app);  
+                       include_pattern, exclude_pattern, app);
 }
 
 CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
@@ -135,7 +135,7 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
   app.signing_key = key;
 
   run_netsync_protocol(client_voice, source_and_sink_role, addr,
-                       include_pattern, exclude_pattern, app);  
+                       include_pattern, exclude_pattern, app);
 }
 
 
@@ -200,5 +200,5 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
   utf8 dummy_addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, false, true, app);
   run_netsync_protocol(server_voice, source_and_sink_role, app.bind_address,
-                       include_pattern, exclude_pattern, app);  
+                       include_pattern, exclude_pattern, app);
 }

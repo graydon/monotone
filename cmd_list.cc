@@ -34,17 +34,16 @@ using std::sort;
 using std::string;
 using std::vector;
 
-static void 
-ls_certs(string const & name, app_state & app, 
-	 vector<utf8> const & args)
+static void
+ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 {
   if (args.size() != 1)
     throw usage(name);
 
   vector<cert> certs;
-  
+
   transaction_guard guard(app.db, false);
-  
+
   revision_id ident;
   complete(app, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
@@ -53,7 +52,7 @@ ls_certs(string const & name, app_state & app,
     certs.push_back(idx(ts, i).inner());
 
   {
-    set<rsa_keypair_id> checked;      
+    set<rsa_keypair_id> checked;
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
@@ -63,9 +62,9 @@ ls_certs(string const & name, app_state & app,
         checked.insert(idx(certs, i).key);
       }
   }
-        
-  // Make the output deterministic; this is useful for the test suite,
-  // in particular.
+
+  // Make the output deterministic; this is useful for the test suite, in
+  // particular.
   sort(certs.begin(), certs.end());
 
   string str     = _("Key   : %s\n"
@@ -86,7 +85,7 @@ ls_certs(string const & name, app_state & app,
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(app, idx(certs, i));
-      cert_value tv;      
+      cert_value tv;
       decode_base64(idx(certs, i).value, tv);
       string washed;
       if (guess_binary(tv()))
@@ -122,10 +121,10 @@ ls_certs(string const & name, app_state & app,
                % stat
                % idx(certs, i).name()
                % idx(lines, 0));
-      
+
       for (size_t i = 1; i < lines.size(); ++i)
         cout << (i18n_format(extra_str) % idx(lines, i));
-    }  
+    }
 
   if (certs.size() > 0)
     cout << "\n";
@@ -158,7 +157,7 @@ ls_keys(string const & name, app_state & app,
   for (vector<rsa_keypair_id>::const_iterator i = pubs.begin();
        i != pubs.end(); i++)
     pubkeys[*i] = true;
-  
+
   bool all_in_db = true;
   for (vector<rsa_keypair_id>::const_iterator i = privkeys.begin();
        i != privkeys.end(); i++)
@@ -182,7 +181,7 @@ ls_keys(string const & name, app_state & app,
           bool indb = i->second;
 
           if (indb)
-            app.db.get_key(keyid, pub_encoded); 
+            app.db.get_key(keyid, pub_encoded);
           else
             {
               keypair kp;
@@ -209,7 +208,7 @@ ls_keys(string const & name, app_state & app,
         {
           keypair kp;
           hexenc<id> hash_code;
-          app.keys.get_key_pair(*i, kp); 
+          app.keys.get_key_pair(*i, kp);
           key_hash_code(*i, kp.priv, hash_code);
           cout << hash_code << " " << *i << "\n";
         }
@@ -220,15 +219,14 @@ ls_keys(string const & name, app_state & app,
       privkeys.size() == 0)
     {
       if (args.size() == 0)
-        P(F("no keys found\n"));
+        P(F("no keys found"));
       else
-        W(F("no keys found matching '%s'\n") % idx(args, 0)());
+        W(F("no keys found matching '%s'") % idx(args, 0)());
     }
 }
 
-static void 
-ls_branches(string name, app_state & app, 
-	    vector<utf8> const & args)
+static void
+ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
   utf8 inc("*");
   utf8 exc;
@@ -248,9 +246,8 @@ ls_branches(string name, app_state & app,
       cout << idx(names, i) << "\n";
 }
 
-static void 
-ls_epochs(string name, app_state & app, 
-	  vector<utf8> const & args)
+static void
+ls_epochs(string name, app_state & app, vector<utf8> const & args)
 {
   map<cert_value, epoch_data> epochs;
   app.db.get_epochs(epochs);
@@ -270,15 +267,14 @@ ls_epochs(string name, app_state & app,
 	   i != args.end();
            ++i)
         {
-          map<cert_value, epoch_data>::const_iterator 
-	    j = epochs.find(cert_value((*i)()));
-          N(j != epochs.end(), F("no epoch for branch %s\n") % *i);
+          map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
+          N(j != epochs.end(), F("no epoch for branch %s") % *i);
           cout << j->second << " " << j->first << "\n";
         }
-    }  
+    }
 }
 
-static void 
+static void
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
   vector< revision<cert> > certs;
@@ -295,11 +291,11 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
       decode_base64(c.value, name);
       sorted_vals.insert(make_pair(name, make_pair(c.ident, c.key)));
     }
-  for (set<pair<cert_value, pair<revision_id, 
+  for (set<pair<cert_value, pair<revision_id,
          rsa_keypair_id> > >::const_iterator i = sorted_vals.begin();
        i != sorted_vals.end(); ++i)
     {
-      cout << i->first << " " 
+      cout << i->first << " "
            << i->second.first  << " "
            << i->second.second  << "\n";
     }
@@ -407,13 +403,10 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   app.require_workspace();
 
-  get_base_and_current_roster_shape(old_roster, 
-				    new_roster, 
-				    nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  restriction mask(args, app.exclude_patterns, 
-		   old_roster, new_roster, app);
-      
+  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, 
 			included, excluded, mask);
@@ -430,7 +423,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
       if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (map<split_path, split_path>::const_iterator 
+  for (map<split_path, split_path>::const_iterator
          i = included.nodes_renamed.begin();
        i != included.nodes_renamed.end(); ++i)
     {
@@ -452,8 +445,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
         files.insert(file_path(i->first));
     }
   for (map<split_path, pair<file_id, file_id> >::const_iterator
-         i = included.deltas_applied.begin(); 
-       i != included.deltas_applied.end(); 
+         i = included.deltas_applied.begin(); i != included.deltas_applied.end();
        ++i)
     {
       if (mask.includes(i->first))

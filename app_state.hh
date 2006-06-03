@@ -88,7 +88,7 @@ public:
 
   // Set if the value of the flag was explicitly given on the command
   // line.
-  std::map<int, bool> explicit_option_map;  
+  std::map<int, bool> explicit_option_map;
   void set_is_explicit_option (int option_id);
   bool is_explicit_option(int option_id) const;
 
@@ -98,7 +98,7 @@ public:
   // called.
 
   std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Signer>, 
+    std::pair<boost::shared_ptr<Botan::PK_Signer>,
         boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
   std::map<rsa_keypair_id,
     std::pair<boost::shared_ptr<Botan::PK_Verifier>,

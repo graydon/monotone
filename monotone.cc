@@ -142,17 +142,17 @@ struct poptOption options[] =
 // in other words, this program should *never* unexpectedly terminate
 // without dumping some diagnostics.
 
-void 
-dumper() 
+void
+dumper()
 {
   if (!global_sanity.clean_shutdown)
     global_sanity.dump_buffer();
-  
+
   Botan::Init::deinitialize();
 }
 
 
-struct 
+struct
 utf8_argv
 {
   int argc;
@@ -175,7 +175,7 @@ utf8_argv
     }
   }
 
-  ~utf8_argv() 
+  ~utf8_argv()
   {
     if (argv != NULL)
       {
@@ -183,7 +183,7 @@ utf8_argv
           if (argv[i] != NULL)
             free(argv[i]);
         free(argv);
-      }    
+      }
   }
 };
 
@@ -249,7 +249,7 @@ coption_string(int o)
   return string();
 }
 
-int 
+int
 cpp_main(int argc, char ** argv)
 {
   int ret = 0;
@@ -282,11 +282,11 @@ cpp_main(int argc, char ** argv)
     cmdline_string = cmdline_ss.str();
   }
   MM(cmdline_string);
-  L(FL("command line: %s\n") % cmdline_string);
+  L(FL("command line: %s") % cmdline_string);
 
   string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
   MM(locale_string);
-  L(FL("set locale: LC_ALL=%s\n") % locale_string);
+  L(FL("set locale: LC_ALL=%s") % locale_string);
 
   string full_version_string;
   get_full_version(full_version_string);
@@ -295,7 +295,7 @@ cpp_main(int argc, char ** argv)
   // Set up secure memory allocation etc
   Botan::Init::initialize();
   Botan::set_default_allocator("malloc");
-  
+
   // decode all argv values into a UTF-8 array
 
   save_initial_path();
@@ -310,7 +310,7 @@ cpp_main(int argc, char ** argv)
 
   // prepare for arg parsing
 
-  cleanup_ptr<poptContext, void> 
+  cleanup_ptr<poptContext, void>
     ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
         &my_poptFreeContext);
 
@@ -496,7 +496,7 @@ cpp_main(int argc, char ** argv)
             case OPT_EXTERNAL_DIFF:
               app.set_diff_format(external_diff);
               break;
-              
+
             case OPT_EXTERNAL_DIFF_ARGS:
               app.set_diff_args(utf8(string(argstr)));
               break;
@@ -519,7 +519,7 @@ cpp_main(int argc, char ** argv)
                 string addr_part, port_part;
                 size_t l_colon = arg.find(':');
                 size_t r_colon = arg.rfind(':');
-                
+
                 // not an ipv6 address, as that would have at least two colons
                 if (l_colon == r_colon)
                   {
@@ -527,7 +527,7 @@ cpp_main(int argc, char ** argv)
                     port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
                   }
                 else
-                  { 
+                  {
                     // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
                     size_t squareb = arg.rfind(']');
                     if ((arg.find('[') == 0) && (squareb != string::npos))
@@ -538,7 +538,7 @@ cpp_main(int argc, char ** argv)
                           port_part = "";
                         addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
                       }
-                    else 
+                    else
                       {
                         addr_part = arg;
                         port_part = "";
@@ -614,7 +614,7 @@ cpp_main(int argc, char ** argv)
 
       app.allow_workspace();
 
-      // main options processed, now invoke the 
+      // main options processed, now invoke the
       // sub-command w/ remaining args
 
       if (cmd.empty())
@@ -651,25 +651,25 @@ cpp_main(int argc, char ** argv)
           if (command_options.find(o->val) != command_options.end())
             {
               o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Removed 'hidden' from option # %d\n") % o->argInfo);
+              L(FL("Removed 'hidden' from option # %d") % o->argInfo);
               count++;
             }
           else
             {
               o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Added 'hidden' to option # %d\n") % o->argInfo);
+              L(FL("Added 'hidden' to option # %d") % o->argInfo);
             }
         }
       free((void *)options[0].descrip); options[0].descrip = NULL;
       if (count != 0)
         {
           ostringstream sstr;
-          sstr << F("Options specific to '%s %s':") 
+          sstr << F("Options specific to '%s %s':")
             % prog_name % u.which;
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-          L(FL("Added 'hidden' to option # %d\n") % options[0].argInfo);
+          L(FL("Added 'hidden' to option # %d") % options[0].argInfo);
         }
 
       poptPrintHelp(ctx(), stdout, 0);

@@ -11,7 +11,7 @@
 #include "app_state.hh"
 #include "vocab.hh"
 
-// this function just encapsulates the (somewhat complex) logic 
+// this function just encapsulates the (somewhat complex) logic
 // behind picking an update target. the actual updating takes
 // place in commands.cc, along with most other file-modifying
 // actions.

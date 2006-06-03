@@ -83,13 +83,13 @@ void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 
 extern std::string const branch_cert_name;
 
-void 
-cert_revision_in_branch(revision_id const & ctx, 
+void
+cert_revision_in_branch(revision_id const & ctx,
                         cert_value const & branchname,
                         app_state & app,
                         packet_consumer & pc);
 
-void 
+void
 get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  std::set<revision_id> & heads);
@@ -102,7 +102,7 @@ get_branch_heads(cert_value const & branchname,
 void
 get_user_key(rsa_keypair_id & key, app_state & app);
 
-void 
+void
 guess_branch(revision_id const & id,
              app_state & app,
              cert_value & branchname);
@@ -114,54 +114,54 @@ extern std::string const changelog_cert_name;
 extern std::string const comment_cert_name;
 extern std::string const testresult_cert_name;
 
-void 
-cert_revision_date_now(revision_id const & m, 
+void
+cert_revision_date_now(revision_id const & m,
                       app_state & app,
                       packet_consumer & pc);
 
-void 
-cert_revision_date_time(revision_id const & m, 
+void
+cert_revision_date_time(revision_id const & m,
                         boost::posix_time::ptime t,
                         app_state & app,
                         packet_consumer & pc);
 
-void 
-cert_revision_date_time(revision_id const & m, 
+void
+cert_revision_date_time(revision_id const & m,
                         time_t time,
                         app_state & app,
                         packet_consumer & pc);
 
-void 
-cert_revision_author(revision_id const & m, 
+void
+cert_revision_author(revision_id const & m,
                     std::string const & author,
                     app_state & app,
                     packet_consumer & pc);
 
-void 
-cert_revision_author_default(revision_id const & m, 
+void
+cert_revision_author_default(revision_id const & m,
                             app_state & app,
                             packet_consumer & pc);
 
-void 
-cert_revision_tag(revision_id const & m, 
+void
+cert_revision_tag(revision_id const & m,
                  std::string const & tagname,
                  app_state & app,
                  packet_consumer & pc);
 
-void 
-cert_revision_changelog(revision_id const & m, 
+void
+cert_revision_changelog(revision_id const & m,
                        std::string const & changelog,
                        app_state & app,
                        packet_consumer & pc);
 
-void 
-cert_revision_comment(revision_id const & m, 
+void
+cert_revision_comment(revision_id const & m,
                      std::string const & comment,
                      app_state & app,
                      packet_consumer & pc);
 
-void 
-cert_revision_testresult(revision_id const & m, 
+void
+cert_revision_testresult(revision_id const & m,
                          std::string const & results,
                          app_state & app,
                          packet_consumer & pc);

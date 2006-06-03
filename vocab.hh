@@ -26,8 +26,8 @@ void dump(T const &, std::string &);
 #define ATOMIC(ty) hh_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
 
-inline bool is_xdigit(char x) 
-{ 
+inline bool is_xdigit(char x)
+{
   return ((x >= '0' && x <= '9')
 	  || (x >= 'a' && x <= 'f')
 	  || (x >= 'A' && x <= 'F'));
@@ -48,14 +48,14 @@ inline bool is_alnum(char x)
 
 inline bool is_space(char x)
 {
-  return (x == ' ') 
+  return (x == ' ')
     || (x == '\n')
     || (x == '\t')
     || (x == '\r')
     || (x == '\v')
     || (x == '\f');
 }
-      
+
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -120,25 +120,25 @@ enum diff_type
 };
 
 // do these belong here?
-inline bool 
+inline bool
 null_id(hexenc<id> const & i)
 {
   return i().empty();
 }
 
-inline bool 
+inline bool
 null_id(file_id const & i)
 {
   return i.inner()().empty();
 }
 
-inline bool 
+inline bool
 null_id(manifest_id const & i)
 {
   return i.inner()().empty();
 }
 
-inline bool 
+inline bool
 null_id(revision_id const & i)
 {
   return i.inner()().empty();

@@ -35,20 +35,20 @@ struct rcs_deltatext
   std::string text;
 };
 
-struct rcs_file 
+struct rcs_file
 {
   rcs_admin admin;
   std::map<std::string, boost::shared_ptr<rcs_delta> > deltas;
   std::map<std::string, boost::shared_ptr<rcs_deltatext> > deltatexts;
-  void push_delta(rcs_delta const & d) 
-  { 
+  void push_delta(rcs_delta const & d)
+  {
     boost::shared_ptr<rcs_delta> dp(new rcs_delta(d));
-    deltas.insert(make_pair(dp->num,dp)); 
+    deltas.insert(make_pair(dp->num,dp));
   }
-  void push_deltatext(rcs_deltatext const & dt) 
-  { 
+  void push_deltatext(rcs_deltatext const & dt)
+  {
     boost::shared_ptr<rcs_deltatext> dp(new rcs_deltatext(dt));
-    deltatexts.insert(make_pair(dp->num, dp)); 
+    deltatexts.insert(make_pair(dp->num, dp));
   }
 };
 

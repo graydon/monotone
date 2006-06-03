@@ -49,7 +49,7 @@ check_normalized(cset const & cs)
           I(false);
       }
   }
-  
+
   // no file+attr pair appears in both the "set" list and the "cleared" list
   {
     set<pair<split_path, attr_key> >::const_iterator c = cs.attrs_cleared.begin();
@@ -70,8 +70,8 @@ check_normalized(cset const & cs)
 bool
 cset::empty() const
 {
-  return 
-    nodes_deleted.empty() 
+  return
+    nodes_deleted.empty()
     && dirs_added.empty()
     && files_added.empty()
     && nodes_renamed.empty()
@@ -95,18 +95,18 @@ cset::clear()
 struct
 detach
 {
-  detach(split_path const & src) 
-    : src_path(src), 
-      reattach(false) 
+  detach(split_path const & src)
+    : src_path(src),
+      reattach(false)
   {}
-  
-  detach(split_path const & src, 
-         split_path const & dst) 
-    : src_path(src), 
-      reattach(true), 
-      dst_path(dst) 
+
+  detach(split_path const & src,
+         split_path const & dst)
+    : src_path(src),
+      reattach(true),
+      dst_path(dst)
   {}
-  
+
   split_path src_path;
   bool reattach;
   split_path dst_path;
@@ -123,8 +123,8 @@ detach
 struct
 attach
 {
-  attach(node_id n, 
-         split_path const & p) 
+  attach(node_id n,
+         split_path const & p)
     : node(n), path(p)
   {}
 
@@ -140,7 +140,7 @@ attach
   }
 };
 
-void 
+void
 cset::apply_to(editable_tree & t) const
 {
   // SPEEDUP?: use vectors and sort them once, instead of maintaining sorted
@@ -179,9 +179,9 @@ cset::apply_to(editable_tree & t) const
   // bottom-up.
 
   for (path_set::const_iterator i = nodes_deleted.begin();
-       i != nodes_deleted.end(); ++i)    
+       i != nodes_deleted.end(); ++i)
     safe_insert(detaches, detach(*i));
-  
+
   for (map<split_path, split_path>::const_iterator i = nodes_renamed.begin();
        i != nodes_renamed.end(); ++i)
     safe_insert(detaches, detach(i->first, i->second));
@@ -190,7 +190,7 @@ cset::apply_to(editable_tree & t) const
   // Execute all the detaches, rescheduling the results of each detach
   // for either attaching or dropping.
 
-  for (set<detach>::const_iterator i = detaches.begin(); 
+  for (set<detach>::const_iterator i = detaches.begin();
        i != detaches.end(); ++i)
     {
       node_id n = t.detach_node(i->src_path);
@@ -253,7 +253,7 @@ namespace
   }
 }
 
-void 
+void
 print_cset(basic_io::printer & printer,
            cset const & cs)
 {
@@ -335,7 +335,7 @@ parse_path(basic_io::parser & parser, split_path & sp)
   file_path_internal(s).split(sp);
 }
 
-void 
+void
 parse_cset(basic_io::parser & parser,
            cset & cs)
 {
@@ -346,13 +346,13 @@ parse_cset(basic_io::parser & parser,
   split_path p1, p2;
   MM(p1);
   MM(p2);
-  
+
   split_path prev_path;
   MM(prev_path);
   pair<split_path, attr_key> prev_pair;
   MM(prev_pair.first);
   MM(prev_pair.second);
-  
+
   // we make use of the fact that a valid split_path is never empty
   prev_path.clear();
   while (parser.symp(syms::delete_node))
@@ -409,11 +409,11 @@ parse_cset(basic_io::parser & parser,
       parser.hex(t1);
       parser.esym(syms::to);
       parser.hex(t2);
-      safe_insert(cs.deltas_applied, 
+      safe_insert(cs.deltas_applied,
                   make_pair(p1, make_pair(file_id(t1), file_id(t2))));
     }
 
-  prev_pair.first.clear(); 
+  prev_pair.first.clear();
   while (parser.symp(syms::clear))
     {
       parser.sym();
@@ -426,7 +426,7 @@ parse_cset(basic_io::parser & parser,
       safe_insert(cs.attrs_cleared, new_pair);
     }
 
-  prev_pair.first.clear(); 
+  prev_pair.first.clear();
   while (parser.symp(syms::set))
     {
       parser.sym();
@@ -485,7 +485,7 @@ setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
   // the file has attr "attr_file=value_file", and the dir has
   // "attr_dir=value_dir".
   r = roster_t();
-  
+
   {
     split_path sp;
     file_path().split(sp);
@@ -508,7 +508,7 @@ setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
 static void
 cset_written_test()
 {
-  { 
+  {
     L(FL("TEST: cset reading - operation misordering"));
     // bad cset, add_dir should be before add_file
     string s("delete \"foo\"\n"
@@ -715,9 +715,9 @@ cset_written_test()
     cs.nodes_renamed.insert(make_pair(fish, womble));
     cs.deltas_applied.insert(make_pair(womble, make_pair(f2, f3)));
     cs.attrs_cleared.insert(make_pair(policeman, attr_key("yodel")));
-    cs.attrs_set.insert(make_pair(make_pair(policeman, 
+    cs.attrs_set.insert(make_pair(make_pair(policeman,
                         attr_key("axolotyl")), attr_value("fruitily")));
-    cs.attrs_set.insert(make_pair(make_pair(policeman, 
+    cs.attrs_set.insert(make_pair(make_pair(policeman,
                         attr_key("spin")), attr_value("capybara")));
 
     data dat; MM(dat);
@@ -766,7 +766,7 @@ basic_csets_test()
   MM(r);
 
   editable_roster_base tree(r, nis);
-  
+
   file_id f1(string("0000000000000000000000000000000000000001"));
   file_id f2(string("0000000000000000000000000000000000000002"));
 
@@ -851,7 +851,7 @@ basic_csets_test()
     L(FL("TEST: set attr"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
+    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")),
                                   attr_value("klang")));
     BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
 
@@ -868,11 +868,11 @@ basic_csets_test()
     L(FL("TEST: clear attr file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")), 
+    cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")),
                                   attr_value("klang")));
     cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("attr_file")));
     BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK((r.get_node(foo_bar))->attrs[attr_key("attr_file")] 
+    BOOST_CHECK((r.get_node(foo_bar))->attrs[attr_key("attr_file")]
                 == make_pair(false, attr_value("")));
     BOOST_CHECK(r.all_nodes().size() == 3);
   }
@@ -881,7 +881,7 @@ basic_csets_test()
   {
     L(FL("TEST: renaming at different levels"));
     setup_roster(r, f1, nis);
-    split_path quux_sub, foo_sub, foo_sub_deep, foo_subsub, 
+    split_path quux_sub, foo_sub, foo_sub_deep, foo_subsub,
                foo_subsub_deep, quux_bar, foo_bar,
                quux_sub_thing, foo_sub_thing;
     file_path_internal("quux/bar").split(quux_bar);
@@ -946,7 +946,7 @@ invalid_csets_test()
   roster_t r;
   MM(r);
   editable_roster_base tree(r, nis);
-  
+
   file_id f1(string("0000000000000000000000000000000000000001"));
   file_id f2(string("0000000000000000000000000000000000000002"));
 
@@ -1121,7 +1121,7 @@ root_dir_test()
   roster_t r;
   MM(r);
   editable_roster_base tree(r, nis);
-  
+
   file_id f1(string("0000000000000000000000000000000000000001"));
 
   split_path root, baz;

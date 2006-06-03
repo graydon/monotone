@@ -12,27 +12,27 @@
 #  include <windows.h>
 #endif
 
-/* 
+/*
    What is this all for?
- 
+
    If you want to transparently handle a pipe and a socket on unix and
    windows you have to abstract some difficulties:
- 
+
  - sockets have a single filedescriptor for reading and writing
    pipes usually come in pairs (one for reading and one for writing)
-   
+
  - process creation is different on unix and windows
- 
+
  => so Netxx::PipeStream is a Netxx::StreamBase which abstracts two pipes to
    and from an external command
-   
+
  - windows can select on a socket but not on a pipe
- 
+
  => so Netxx::PipeCompatibleProbe is a Netxx::Probe like class which
    _can_ handle pipes on windows (emulating select is difficult at best!)
-   (on unix Probe and PipeCompatibleProbe are nearly identical: with pipes 
+   (on unix Probe and PipeCompatibleProbe are nearly identical: with pipes
    you should not select for both read and write on the same descriptor)
-   
+
 */
 
 namespace Netxx
@@ -42,7 +42,7 @@ namespace Netxx
 
   class PipeStream : public StreamBase
     {
-#ifdef WIN32     
+#ifdef WIN32
       HANDLE named_pipe;
       HANDLE child;
       char readbuf[1024];
@@ -58,11 +58,11 @@ namespace Netxx
 
     public:
       // do we need Timeout for symmetry with Stream?
-      explicit PipeStream (int readfd, int writefd); 
+      explicit PipeStream (int readfd, int writefd);
       explicit PipeStream (const std::string &cmd, const std::vector<std::string> &args);
       virtual ~PipeStream() { close(); }
       virtual signed_size_type read (void *buffer, size_type length);
-      virtual signed_size_type write (const void *buffer, size_type length);      
+      virtual signed_size_type write (const void *buffer, size_type length);
       virtual void close (void);
       virtual socket_type get_socketfd (void) const;
       virtual const ProbeInfo* get_probe_info (void) const;
@@ -89,7 +89,7 @@ namespace Netxx
   // This probe can either handle _one_ PipeStream or several network
   // Streams so if !is_pipe this acts like a Probe.
   class PipeCompatibleProbe : public Probe
-    { 
+    {
       bool is_pipe;
       // only meaningful if is_pipe is true
       PipeStream *pipe;

@@ -59,7 +59,7 @@ struct node_attr_conflict
 //     'bar', and 'a' and 'b' both being renamed to 'bar'.  Only the former
 //     occurs; 'b' merges cleanly and will be named 'bar' in the resulting
 //     manifest.)
-//   
+//
 
 // orphaned nodes always merged their name cleanly, so we simply put that name
 // here.  the node in the resulting roster is detached.

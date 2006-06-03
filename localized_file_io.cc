@@ -33,23 +33,23 @@ ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
   return true;
 }
 
-void 
-read_localized_data(file_path const & path, 
-                    data & dat, 
+void
+read_localized_data(file_path const & path,
+                    data & dat,
                     lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
-  
-  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
+
+  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep)
                       && db_linesep != ext_linesep);
 
-  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
+  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset)
                       && db_charset != ext_charset);
 
   data tdat;
   read_data(path, tdat);
-  
+
   string tmp1, tmp2;
   tmp2 = tdat();
   if (do_charconv) {
@@ -63,20 +63,20 @@ read_localized_data(file_path const & path,
   dat = tmp2;
 }
 
-void 
-write_localized_data(file_path const & path, 
-                     data const & dat, 
+void
+write_localized_data(file_path const & path,
+                     data const & dat,
                      lua_hooks & lua)
 {
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
-  
-  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
+
+  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep)
                       && db_linesep != ext_linesep);
 
-  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
+  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset)
                       && db_charset != ext_charset);
-  
+
   string tmp1, tmp2;
   tmp2 = dat();
   if (do_lineconv) {
@@ -91,7 +91,7 @@ write_localized_data(file_path const & path,
   write_data(path, data(tmp2));
 }
 
-void 
+void
 calculate_ident(file_path const & file,
                 hexenc<id> & ident,
                 lua_hooks & lua)
@@ -99,10 +99,10 @@ calculate_ident(file_path const & file,
   string db_linesep, ext_linesep;
   string db_charset, ext_charset;
 
-  bool do_lineconv = (lua.hook_get_linesep_conv(file, db_linesep, ext_linesep) 
+  bool do_lineconv = (lua.hook_get_linesep_conv(file, db_linesep, ext_linesep)
                       && db_linesep != ext_linesep);
 
-  bool do_charconv = (lua.hook_get_charset_conv(file, db_charset, ext_charset) 
+  bool do_charconv = (lua.hook_get_charset_conv(file, db_charset, ext_charset)
                       && db_charset != ext_charset);
 
   if (do_charconv || do_lineconv)

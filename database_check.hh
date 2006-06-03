@@ -8,7 +8,7 @@
 
 #include "app_state.hh"
 
-void 
+void
 check_db(app_state & app);
 
 #endif  // header guard

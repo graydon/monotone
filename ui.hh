@@ -98,8 +98,8 @@ public:
   void set_prog_name(std::string const & name);
   std::string output_prefix();
 
-private:  
-  std::set<std::string> issued_warnings;  
+private:
+  std::set<std::string> issued_warnings;
 
   bool some_tick_is_dirty;    // At least one tick needs being printed
   bool last_write_was_a_tick;

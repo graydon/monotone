@@ -26,7 +26,7 @@ using std::string;
 
 // reading inodeprint_maps
 
-void 
+void
 read_inodeprint_map(data const & dat,
                     inodeprint_map & ipm)
 {
@@ -55,14 +55,14 @@ read_inodeprint_map(data const & dat,
 
 // writing inodeprint_maps
 
-ostream & 
+ostream &
 operator<<(ostream & out, inodeprint_entry const & e)
 {
   return (out << e.second << "  " << e.first << "\n");
 }
 
 
-void 
+void
 write_inodeprint_map(inodeprint_map const & ipm,
                      data & dat)
 {

@@ -56,7 +56,7 @@ class restriction
 
   restriction(std::vector<utf8> const & includes,
               std::vector<utf8> const & excludes,
-              roster_t const & roster, 
+              roster_t const & roster,
               app_state & a) :
     app(a)
   {
@@ -64,7 +64,7 @@ class restriction
     map_nodes(roster);
     validate();
   }
-  
+
   restriction(std::vector<utf8> const & includes,
               std::vector<utf8> const & excludes,
               roster_t const & roster1,

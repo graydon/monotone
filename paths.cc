@@ -263,9 +263,9 @@ file_path::file_path(file_path::source_type type, string const & path)
     case external:
       if (!initial_rel_path.initialized)
         {
-          // we are not in a workspace; treat this as an internal 
-          // path, and set the access_tracker() into a very uninitialised 
-          // state so that we will hit an exception if we do eventually 
+          // we are not in a workspace; treat this as an internal
+          // path, and set the access_tracker() into a very uninitialised
+          // state so that we will hit an exception if we do eventually
           // enter a workspace
           initial_rel_path.may_not_initialize();
           data = path;
@@ -322,13 +322,13 @@ bookkeeping_path::is_bookkeeping_path(string const & path)
 // This function takes a vector of path components and joins them into a
 // single file_path.  This is the inverse to file_path::split.  It takes a
 // vector of the form:
-// 
+//
 //   ["", p[0], p[1], ..., p[n]]
-//   
+//
 // and constructs the path:
-// 
+//
 //   p[0]/p[1]/.../p[n]
-//   
+//
 file_path::file_path(split_path const & sp)
 {
   split_path::const_iterator i = sp.begin();
@@ -391,7 +391,7 @@ void dump(split_path const & sp, string & out)
 
   for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
     {
-      if (null_name(*i)) 
+      if (null_name(*i))
         oss << ".";
       else
         oss << "/" << *i;
@@ -564,13 +564,13 @@ dirname_basename(split_path const & sp,
                  split_path & dirname, path_component & basename)
 {
   I(!sp.empty());
-  // L(FL("dirname_basename('%s' [%d components],...)\n") % file_path(sp) % sp.size());
+  // L(FL("dirname_basename('%s' [%d components],...)") % file_path(sp) % sp.size());
   dirname = sp;
   dirname.pop_back();
   basename = sp.back();
   if (dirname.empty())
     {
-      // L(FL("basename %d vs. null component %d\n") % basename % the_null_component);
+      // L(FL("basename %d vs. null component %d") % basename % the_null_component);
       I(null_name(basename));
     }
 }
@@ -579,7 +579,7 @@ dirname_basename(split_path const & sp,
 // workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
 
-system_path 
+system_path
 current_root_path()
 {
   return system_path(fs::initial_path().root_path().string());
@@ -600,7 +600,7 @@ find_and_go_to_workspace(system_path const & search_root)
   fs::path::iterator ri = root.begin();
   fs::path::iterator ci = current.begin();
 
-  while (ri != root.end() && ci != current.end() && *ri == *ci) 
+  while (ri != root.end() && ci != current.end() && *ri == *ci)
     {
       ++ri;
       ++ci;
@@ -611,12 +611,12 @@ find_and_go_to_workspace(system_path const & search_root)
   if (ri != root.end())
     {
       W(F("current directory '%s' is not below root '%s'")
-        % current.string() 
+        % current.string()
         % root.string());
       return false;
     }
 
-  L(FL("searching for '%s' directory with root '%s'\n") 
+  L(FL("searching for '%s' directory with root '%s'")
     % bookdir.string()
     % root.string());
 
@@ -625,32 +625,32 @@ find_and_go_to_workspace(system_path const & search_root)
          && current.has_leaf()
          && !fs::exists(check))
     {
-      L(FL("'%s' not found in '%s' with '%s' removed\n")
+      L(FL("'%s' not found in '%s' with '%s' removed")
         % bookdir.string() % current.string() % removed.string());
       removed = fs::path(current.leaf(), fs::native) / removed;
       current = current.branch_path();
       check = current / bookdir;
     }
 
-  L(FL("search for '%s' ended at '%s' with '%s' removed\n") 
+  L(FL("search for '%s' ended at '%s' with '%s' removed")
     % bookdir.string() % current.string() % removed.string());
 
   if (!fs::exists(check))
     {
-      L(FL("'%s' does not exist\n") % check.string());
+      L(FL("'%s' does not exist") % check.string());
       return false;
     }
 
   if (!fs::is_directory(check))
     {
-      L(FL("'%s' is not a directory\n") % check.string());
+      L(FL("'%s' is not a directory") % check.string());
       return false;
     }
 
   // check for _MTN/. and _MTN/.. to see if mt dir is readable
   if (!fs::exists(check / ".") || !fs::exists(check / ".."))
     {
-      L(FL("problems with '%s' (missing '.' or '..')\n") % check.string());
+      L(FL("problems with '%s' (missing '.' or '..')") % check.string());
       return false;
     }
 
@@ -749,7 +749,7 @@ static void test_file_path_internal()
                             "_MTNfoo/bar",
                             "foo:bar",
                             0 };
-  
+
   for (int i = 0; i < 2; ++i)
     {
       initial_rel_path.unset();
@@ -796,7 +796,7 @@ static void check_fp_normalizes_to(char * before, char * after)
          i = split_test.begin() + 1; i != split_test.end(); ++i)
     BOOST_CHECK(!null_name(*i));
 }
-  
+
 static void test_file_path_external_null_prefix()
 {
   initial_rel_path.unset();
@@ -835,7 +835,7 @@ static void test_file_path_external_null_prefix()
       L(FL("test_file_path_external_null_prefix: trying baddie: %s") % *c);
       BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
     }
-  
+
   check_fp_normalizes_to("a", "a");
   check_fp_normalizes_to("foo", "foo");
   check_fp_normalizes_to("foo/bar", "foo/bar");
@@ -916,7 +916,7 @@ static void test_file_path_external_prefix_a_b()
       L(FL("test_file_path_external_prefix_a_b: trying baddie: %s") % *c);
       BOOST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
     }
-  
+
   check_fp_normalizes_to("foo", "a/b/foo");
   check_fp_normalizes_to("a", "a/b/a");
   check_fp_normalizes_to("foo/bar", "a/b/foo/bar");
@@ -1077,7 +1077,7 @@ static void test_bookkeeping_path()
     }
   BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("foo/bar")), logic_error);
   BOOST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("a")), logic_error);
-  
+
   check_bk_normalizes_to("a", "_MTN/a");
   check_bk_normalizes_to("foo", "_MTN/foo");
   check_bk_normalizes_to("foo/bar", "_MTN/foo/bar");

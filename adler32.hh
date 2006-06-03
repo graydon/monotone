@@ -13,7 +13,7 @@
 #include <string>
 #include "numeric_vocab.hh"
 
-struct 
+struct
 adler32
 {
   u32 s1, s2, len;
@@ -42,8 +42,8 @@ adler32
     --len;
   }
 
-  adler32() 
-    : s1(1), s2(0), len(0), mask(widen<u32,u16>(0xffff)) 
+  adler32()
+    : s1(1), s2(0), len(0), mask(widen<u32,u16>(0xffff))
   {}
 
   adler32(u8 const * ch, std::string::size_type count)

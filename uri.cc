@@ -26,8 +26,8 @@ parse_uri(string const & in, uri & out)
   string fragment_part = "(?:#(.*))?";
 
   string uri_rx = (string("^")
-		   + scheme_part 
-		   + authority_part 
+		   + scheme_part
+		   + authority_part
 		   + path_part
 		   + query_part
 		   + fragment_part
@@ -57,7 +57,7 @@ parse_uri(string const & in, uri & out)
 	  I(boost::regex_match(authority, auth_matches, boost::regex(auth_rx)));
 	  u.user = auth_matches.str(1);
 	  u.port = auth_matches.str(4);
-	  if (auth_matches[2].matched)	  
+	  if (auth_matches[2].matched)	
 	    u.host = auth_matches.str(2);
 	  else
 	    {
@@ -90,7 +90,7 @@ parse_uri(string const & in, uri & out)
 #include "transforms.hh"
 
 static void
-test_one_uri(string scheme, 
+test_one_uri(string scheme,
 	     string user,
 	     string ipv6_host,
 	     string normal_host,
@@ -112,21 +112,21 @@ test_one_uri(string scheme,
       host += '[';
       host += (ipv6_host + ']');
     }
-  else 
+  else
     host = normal_host;
 
-  if (! (user.empty() 
-	 && host.empty() 
+  if (! (user.empty()
+	 && host.empty()
 	 && port.empty()))
     {
       built += "//";
-      
+
       if (! user.empty())
 	built += (user + '@');
-      
+
       if (! host.empty())
 	built += host;
-      
+
       if (! port.empty())
 	{
 	  built += ':';
@@ -151,7 +151,7 @@ test_one_uri(string scheme,
       built += '#';
       built += fragment;
     }
-  
+
   L(FL("testing parse of URI '%s'") % built);
   uri u;
   BOOST_CHECK(parse_uri(built, u));
@@ -165,7 +165,7 @@ test_one_uri(string scheme,
 }
 
 
-static void 
+static void
 uri_test()
 {
   test_one_uri("ssh", "graydon", "", "venge.net", "22", "/tmp/foo.mtn", "", "");
@@ -178,7 +178,7 @@ uri_test()
 }
 
 
-void 
+void
 add_uri_tests(test_suite * suite)
 {
   I(suite);

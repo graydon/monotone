@@ -13,7 +13,7 @@ class lua_hooks;
 class app_state;
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
-// to read passphrases and manipulate raw, decrypted private keys). it 
+// to read passphrases and manipulate raw, decrypted private keys). it
 // could in theory be in transforms.cc too, but that file's already kinda
 // big and this stuff "feels" different, imho.
 
@@ -63,7 +63,7 @@ void decrypt_rsa(lua_hooks & lua,
 
 // netsync stuff
 
-void read_pubkey(std::string const & in, 
+void read_pubkey(std::string const & in,
                  rsa_keypair_id & id,
                  base64<rsa_pub_key> & pub);
 

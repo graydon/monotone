@@ -89,7 +89,7 @@ encode_hexenc_inner(string::const_iterator i,
       *out++ = tab[*i & 0xf];
     }
 }
-                                  
+
 
 string encode_hexenc(string const & in)
 {
@@ -107,12 +107,12 @@ string encode_hexenc(string const & in)
     }
 }
 
-static inline char 
+static inline char
 decode_hex_char(char c)
 {
   if (c >= '0' && c <= '9')
     return c - '0';
-  else 
+  else
   {
 	  I(c >= 'a' && c <= 'f');
 	  return c - 'a' + 10;
@@ -135,7 +135,7 @@ decode_hexenc_inner(string::const_iterator i,
 
 string decode_hexenc(string const & in)
 {
-  
+
   I(in.size() % 2 == 0);
   if (LIKELY(in.size() == constants::idlen))
     {
@@ -143,7 +143,7 @@ string decode_hexenc(string const & in)
       decode_hexenc_inner(in.begin(), in.end(), buf);
       return string(buf, constants::idlen / 2);
     }
-  else 
+  else
     {
       scoped_array<char> buf(new char[in.size() / 2]);
       decode_hexenc_inner(in.begin(), in.end(), buf.get());
@@ -184,7 +184,7 @@ template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 // diffing and patching
 
-void 
+void
 diff(data const & olddata,
      data const & newdata,
      delta & del)
@@ -194,7 +194,7 @@ diff(data const & olddata,
   del = delta(unpacked);
 }
 
-void 
+void
 patch(data const & olddata,
       delta const & del,
       data & newdata)
@@ -206,7 +206,7 @@ patch(data const & olddata,
 
 // identifier (a.k.a. sha1 signature) calculation
 
-void 
+void
 calculate_ident(data const & dat,
                 hexenc<id> & ident)
 {
@@ -214,21 +214,21 @@ calculate_ident(data const & dat,
   p.process_msg(dat());
 
   id ident_decoded(p.read_all_as_string());
-  encode_hexenc(ident_decoded, ident);  
+  encode_hexenc(ident_decoded, ident);
 }
 
-void 
+void
 calculate_ident(base64< gzip<data> > const & dat,
                 hexenc<id> & ident)
 {
   gzip<data> data_decoded;
-  data data_decompressed;  
+  data data_decompressed;
   decode_base64(dat, data_decoded);
-  decode_gzip(data_decoded, data_decompressed);  
+  decode_gzip(data_decoded, data_decompressed);
   calculate_ident(data_decompressed, ident);
 }
 
-void 
+void
 calculate_ident(file_data const & dat,
                 file_id & ident)
 {
@@ -255,7 +255,7 @@ calculate_ident(roster_data const & dat,
   ident = tmp;
 }
 
-string 
+string
 canonical_base64(string const & s)
 {
   return xform<Botan::Base64_Encoder>
@@ -267,7 +267,7 @@ canonical_base64(string const & s)
 #include "unit_tests.hh"
 #include <stdlib.h>
 
-static void 
+static void
 enc_test()
 {
   data d2, d1("the rain in spain");
@@ -281,20 +281,20 @@ enc_test()
   BOOST_CHECK(d2 == d1);
 }
 
-static void 
+static void
 rdiff_test()
 {
   data dat1(string("the first day of spring\nmakes me want to sing\n"));
   data dat2(string("the first day of summer\nis a major bummer\n"));
   delta del;
   diff(dat1, dat2, del);
-  
+
   data dat3;
   patch(dat1, del, dat3);
   BOOST_CHECK(dat3 == dat2);
 }
 
-static void 
+static void
 calculate_ident_test()
 {
   data input(string("the only blender which can be turned into the most powerful vaccum cleaner"));
@@ -304,7 +304,7 @@ calculate_ident_test()
   BOOST_CHECK(output() == ident);
 }
 
-void 
+void
 add_transform_tests(test_suite * suite)
 {
   I(suite);

@@ -12,8 +12,8 @@
 #include "sanity.hh"
 
 template <typename T>
-struct 
-interner 
+struct
+interner
 {
   typedef typename hashmap::hash_map<std::string, T> hmap;
 
@@ -35,7 +35,7 @@ interner
     bool is_new;
     return intern(s, is_new);
   }
-  T intern(std::string const & s, bool & is_new) 
+  T intern(std::string const & s, bool & is_new)
   {
     std::pair<typename hmap::iterator, bool> res;
     T t = rev.size();

@@ -63,20 +63,20 @@ packet_consumer::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
 }
 
 
-packet_db_writer::packet_db_writer(app_state & app) 
+packet_db_writer::packet_db_writer(app_state & app)
   : app(app)
 {}
 
-packet_db_writer::~packet_db_writer() 
+packet_db_writer::~packet_db_writer()
 {}
 
-void 
-packet_db_writer::consume_file_data(file_id const & ident, 
+void
+packet_db_writer::consume_file_data(file_id const & ident,
                                     file_data const & dat)
 {
   if (app.db.file_version_exists(ident))
     {
-      L(FL("file version '%s' already exists in db\n") % ident);
+      L(FL("file version '%s' already exists in db") % ident);
       return;
     }
 
@@ -85,8 +85,8 @@ packet_db_writer::consume_file_data(file_id const & ident,
   guard.commit();
 }
 
-void 
-packet_db_writer::consume_file_delta(file_id const & old_id, 
+void
+packet_db_writer::consume_file_delta(file_id const & old_id,
                                      file_id const & new_id,
                                      file_delta const & del)
 {
@@ -94,7 +94,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
 
   if (app.db.file_version_exists(new_id))
     {
-      L(FL("file version '%s' already exists in db\n") % new_id);
+      L(FL("file version '%s' already exists in db") % new_id);
       return;
     }
 
@@ -111,45 +111,45 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
 }
 
 void
-packet_db_writer::consume_revision_data(revision_id const & ident, 
+packet_db_writer::consume_revision_data(revision_id const & ident,
                                         revision_data const & dat)
 {
   MM(ident);
   transaction_guard guard(app.db);
   if (app.db.revision_exists(ident))
     {
-      L(FL("revision '%s' already exists in db\n") % ident);
+      L(FL("revision '%s' already exists in db") % ident);
       return;
     }
 
   revision_set rev;
   MM(rev);
   read_revision_set(dat, rev);
-      
-  for (edge_map::const_iterator i = rev.edges.begin(); 
+
+  for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); ++i)
     {
-      if (!edge_old_revision(i).inner()().empty() 
+      if (!edge_old_revision(i).inner()().empty()
           && !app.db.revision_exists(edge_old_revision(i)))
         {
-          W(F("missing prerequisite revision '%s'\n") % edge_old_revision(i));
-          W(F("dropping revision '%s'\n") % ident);
+          W(F("missing prerequisite revision '%s'") % edge_old_revision(i));
+          W(F("dropping revision '%s'") % ident);
           return;
         }
-      
-      for (map<split_path, file_id>::const_iterator a 
-             = edge_changes(i).files_added.begin(); 
-           a != edge_changes(i).files_added.end(); ++a)          
+
+      for (map<split_path, file_id>::const_iterator a
+             = edge_changes(i).files_added.begin();
+           a != edge_changes(i).files_added.end(); ++a)
         {
           if (! app.db.file_version_exists(a->second))
             {
-              W(F("missing prerequisite file '%s'\n") % a->second);
-              W(F("dropping revision '%s'\n") % ident);
+              W(F("missing prerequisite file '%s'") % a->second);
+              W(F("dropping revision '%s'") % ident);
               return;
-            }      
+            }
         }
 
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d 
+      for (map<split_path, pair<file_id, file_id> >::const_iterator d
              = edge_changes(i).deltas_applied.begin();
            d != edge_changes(i).deltas_applied.end(); ++d)
         {
@@ -158,57 +158,57 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
 
           if (! app.db.file_version_exists(delta_entry_src(d)))
             {
-              W(F("missing prerequisite file pre-delta '%s'\n") 
+              W(F("missing prerequisite file pre-delta '%s'")
                 % delta_entry_src(d));
-              W(F("dropping revision '%s'\n") % ident);
-              return;
-            }      
-              
-          if (! app.db.file_version_exists(delta_entry_dst(d)))
-            {
-              W(F("missing prerequisite file post-delta '%s'\n") 
-                % delta_entry_dst(d));
-              W(F("dropping revision '%s'\n") % ident);
+              W(F("dropping revision '%s'") % ident);
               return;
             }
-        }     
+
+          if (! app.db.file_version_exists(delta_entry_dst(d)))
+            {
+              W(F("missing prerequisite file post-delta '%s'")
+                % delta_entry_dst(d));
+              W(F("dropping revision '%s'") % ident);
+              return;
+            }
+        }
     }
 
   app.db.put_revision(ident, dat);
-  if (on_revision_written) 
+  if (on_revision_written)
     on_revision_written(ident);
   guard.commit();
 }
 
-void 
+void
 packet_db_writer::consume_revision_cert(revision<cert> const & t)
 {
   transaction_guard guard(app.db);
 
   if (app.db.revision_cert_exists(t))
     {
-      L(FL("revision cert on '%s' already exists in db\n") 
+      L(FL("revision cert on '%s' already exists in db")
         % t.inner().ident);
       return;
     }
-  
+
   if (!app.db.revision_exists(revision_id(t.inner().ident)))
     {
-      W(F("cert revision '%s' does not exist in db\n") 
+      W(F("cert revision '%s' does not exist in db")
         % t.inner().ident);
-      W(F("dropping cert\n"));
+      W(F("dropping cert"));
       return;
     }
 
   app.db.put_revision_cert(t);
-  if (on_cert_written) 
+  if (on_cert_written)
     on_cert_written(t.inner());
 
   guard.commit();
 }
 
 
-void 
+void
 packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
                                      base64< rsa_pub_key > const & k)
 {
@@ -219,20 +219,20 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
       base64<rsa_pub_key> tmp;
       app.db.get_key(ident, tmp);
       if (!keys_match(ident, tmp, ident, k))
-        W(F("key '%s' is not equal to key '%s' in database\n") % ident % ident);
-      L(FL("skipping existing public key %s\n") % ident);
+        W(F("key '%s' is not equal to key '%s' in database") % ident % ident);
+      L(FL("skipping existing public key %s") % ident);
       return;
     }
 
-  L(FL("putting public key %s\n") % ident);
+  L(FL("putting public key %s") % ident);
   app.db.put_key(ident, k);
-  if (on_pubkey_written) 
+  if (on_pubkey_written)
     on_pubkey_written(ident);
 
   guard.commit();
 }
 
-void 
+void
 packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
                                    keypair const & kp)
 {
@@ -240,12 +240,12 @@ packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
 
   if (app.keys.key_pair_exists(ident))
     {
-      L(FL("skipping existing key pair %s\n") % ident);
+      L(FL("skipping existing key pair %s") % ident);
       return;
     }
 
   app.keys.put_key_pair(ident, kp);
-  if (on_keypair_written) 
+  if (on_keypair_written)
     on_keypair_written(ident);
 
   guard.commit();
@@ -255,42 +255,42 @@ packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
 
 packet_writer::packet_writer(ostream & o) : ost(o) {}
 
-void 
-packet_writer::consume_file_data(file_id const & ident, 
+void
+packet_writer::consume_file_data(file_id const & ident,
                                  file_data const & dat)
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[fdata " << ident.inner()() << "]" << endl 
+  ost << "[fdata " << ident.inner()() << "]" << endl
       << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
-void 
-packet_writer::consume_file_delta(file_id const & old_id, 
+void
+packet_writer::consume_file_delta(file_id const & old_id,
                                   file_id const & new_id,
                                   file_delta const & del)
 {
   base64<gzip<delta> > packed;
   pack(del.inner(), packed);
-  ost << "[fdelta " << old_id.inner()() << endl 
-      << "        " << new_id.inner()() << "]" << endl 
+  ost << "[fdelta " << old_id.inner()() << endl
+      << "        " << new_id.inner()() << "]" << endl
       << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
-void 
-packet_writer::consume_revision_data(revision_id const & ident, 
+void
+packet_writer::consume_revision_data(revision_id const & ident,
                                      revision_data const & dat)
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[rdata " << ident.inner()() << "]" << endl 
+  ost << "[rdata " << ident.inner()() << "]" << endl
       << trim_ws(packed()) << endl
       << "[end]" << endl;
 }
 
-void 
+void
 packet_writer::consume_revision_cert(revision<cert> const & t)
 {
   ost << "[rcert " << t.inner().ident() << endl
@@ -301,7 +301,7 @@ packet_writer::consume_revision_cert(revision<cert> const & t)
       << "[end]" << endl;
 }
 
-void 
+void
 packet_writer::consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k)
 {
@@ -310,7 +310,7 @@ packet_writer::consume_public_key(rsa_keypair_id const & ident,
       << "[end]" << endl;
 }
 
-void 
+void
 packet_writer::consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp)
 {
@@ -322,7 +322,7 @@ packet_writer::consume_key_pair(rsa_keypair_id const & ident,
 
 // -- remainder just deals with the regexes for reading packets off streams
 
-struct 
+struct
 feed_packet_consumer
 {
   app_state & app;
@@ -348,7 +348,7 @@ feed_packet_consumer
   bool operator()(match_results<string::const_iterator> const & res) const
   {
     if (res.size() != 4)
-      throw oops("matched impossible packet with " 
+      throw oops("matched impossible packet with "
                  + lexical_cast<string>(res.size()) + " matching parts: " +
                  string(res[0].first, res[0].second));
     I(res[1].matched);
@@ -366,10 +366,10 @@ feed_packet_consumer
         data contents;
         unpack(body_packed, contents);
         if (type == "rdata")
-          cons.consume_revision_data(revision_id(hexenc<id>(args)), 
+          cons.consume_revision_data(revision_id(hexenc<id>(args)),
                                      revision_data(contents));
         else if (type == "fdata")
-          cons.consume_file_data(file_id(hexenc<id>(args)), 
+          cons.consume_file_data(file_id(hexenc<id>(args)),
                                  file_data(contents));
         else
           throw oops("matched impossible data packet with head '" + type + "'");
@@ -385,8 +385,8 @@ feed_packet_consumer
         base64<gzip<delta> > body_packed(trim_ws(body));
         delta contents;
         unpack(body_packed, contents);
-        cons.consume_file_delta(file_id(hexenc<id>(src_id)), 
-                                file_id(hexenc<id>(dst_id)), 
+        cons.consume_file_delta(file_id(hexenc<id>(src_id)),
+                                file_id(hexenc<id>(dst_id)),
                                 file_delta(contents));
       }
     else if (type == "rcert")
@@ -408,7 +408,7 @@ feed_packet_consumer
                       rsa_keypair_id(keyid),
                       base64<rsa_sha1_signature>(canonical_base64(contents)));
         cons.consume_revision_cert(revision<cert>(t));
-      } 
+      }
     else if (type == "pubkey")
       {
         L(FL("read pubkey data packet"));
@@ -451,7 +451,7 @@ feed_packet_consumer
   }
 };
 
-static size_t 
+static size_t
 extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
   string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
@@ -465,7 +465,7 @@ extract_packets(string const & s, packet_consumer & cons, app_state & app)
 }
 
 
-size_t 
+size_t
 read_packets(istream & in, packet_consumer & cons, app_state & app)
 {
   string accum, tmp;
@@ -476,7 +476,7 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
   while(in)
     {
       in.read(buf, bufsz);
-      accum.append(buf, in.gcount());      
+      accum.append(buf, in.gcount());
       string::size_type endpos = string::npos;
       endpos = accum.rfind(end);
       if (endpos != string::npos)
@@ -501,7 +501,7 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
 using std::istringstream;
 using std::ostringstream;
 
-static void 
+static void
 packet_roundabout_test()
 {
   string tmp;
@@ -516,7 +516,7 @@ packet_roundabout_test()
     calculate_ident(fdata, fid);
     pw.consume_file_data(fid, fdata);
 
-    // an fdelta packet    
+    // an fdelta packet
     file_data fdata2(data("this is some file data which is not the same as the first one"));
     file_id fid2;
     calculate_ident(fdata2, fid2);
@@ -543,10 +543,10 @@ packet_roundabout_test()
     base64<cert_value> val;
     encode_base64(cert_value("peaches"), val);
     base64<rsa_sha1_signature> sig;
-    encode_base64(rsa_sha1_signature("blah blah there is no way this is a valid signature"), sig);    
+    encode_base64(rsa_sha1_signature("blah blah there is no way this is a valid signature"), sig);
     // should be a type violation to use a file id here instead of a revision
     // id, but no-one checks...
-    cert c(fid.inner(), cert_name("smell"), val, 
+    cert c(fid.inner(), cert_name("smell"), val,
            rsa_keypair_id("fun@moonman.com"), sig);
     pw.consume_revision_cert(revision<cert>(c));
 
@@ -557,9 +557,9 @@ packet_roundabout_test()
 
     // a keypair packet
     encode_base64(rsa_priv_key("this is not a real rsa key either!"), kp.priv);
-    
+
     pw.consume_key_pair(rsa_keypair_id("test@lala.com"), kp);
-    
+
     tmp = oss.str();
   }
 
@@ -572,7 +572,7 @@ packet_roundabout_test()
     {
       // now spin around sending and receiving this a few times
       ostringstream oss;
-      packet_writer pw(oss);      
+      packet_writer pw(oss);
       istringstream iss(tmp);
       read_packets(iss, pw, aaa);
       BOOST_CHECK(oss.str() == tmp);
@@ -580,7 +580,7 @@ packet_roundabout_test()
     }
 }
 
-void 
+void
 add_packet_tests(test_suite * suite)
 {
   I(suite);

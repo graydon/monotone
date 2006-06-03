@@ -3,7 +3,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-// this fragment is included into both vocab.hh and vocab.cc, 
+// this fragment is included into both vocab.hh and vocab.cc,
 // in order to facilitate external instantiation of most of the
 // vocabulary, minimize code duplication, speed up compilation, etc.
 

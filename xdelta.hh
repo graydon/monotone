@@ -9,7 +9,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-void 
+void
 compute_delta(std::string const & a,
               std::string const & b,
               std::string & delta);

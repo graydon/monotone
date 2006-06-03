@@ -15,10 +15,10 @@
 #include "hmac.hh"
 #include "string_queue.hh"
 
-typedef enum 
-  { 
-    source_role = 1, 
-    sink_role = 2, 
+typedef enum
+  {
+    source_role = 1,
+    sink_role = 2,
     source_and_sink_role = 3
   }
 protocol_role;
@@ -30,8 +30,8 @@ typedef enum
   }
 refinement_type;
 
-typedef enum 
-  { 
+typedef enum
+  {
     // general commands
     error_cmd = 0,
     bye_cmd = 1,
@@ -41,11 +41,11 @@ typedef enum
     anonymous_cmd = 3,
     auth_cmd = 4,
     confirm_cmd = 5,
-      
+
     // refinement commands
     refine_cmd = 6,
     done_cmd = 7,
-      
+
     // transmission commands
     data_cmd = 8,
     delta_cmd = 9,
@@ -109,23 +109,23 @@ public:
                           utf8 & include_pattern,
                           utf8 & exclude_pattern,
                           rsa_oaep_sha_data & hmac_key_encrypted) const;
-  void write_anonymous_cmd(protocol_role role, 
+  void write_anonymous_cmd(protocol_role role,
                            utf8 const & include_pattern,
                            utf8 const & exclude_pattern,
                            rsa_oaep_sha_data const & hmac_key_encrypted);
 
-  void read_auth_cmd(protocol_role & role, 
+  void read_auth_cmd(protocol_role & role,
                      utf8 & include_pattern,
                      utf8 & exclude_pattern,
-                     id & client, 
-                     id & nonce1, 
+                     id & client,
+                     id & nonce1,
                      rsa_oaep_sha_data & hmac_key_encrypted,
                      std::string & signature) const;
-  void write_auth_cmd(protocol_role role, 
-                      utf8 const & include_pattern, 
-                      utf8 const & exclude_pattern, 
+  void write_auth_cmd(protocol_role role,
+                      utf8 const & include_pattern,
+                      utf8 const & exclude_pattern,
                       id const & client,
-                      id const & nonce1, 
+                      id const & nonce1,
                       rsa_oaep_sha_data const & hmac_key_encrypted,
                       std::string const & signature);
 
@@ -146,10 +146,10 @@ public:
                       std::string const & dat);
 
   void read_delta_cmd(netcmd_item_type & type,
-                      id & base, id & ident, 
+                      id & base, id & ident,
                       delta & del) const;
   void write_delta_cmd(netcmd_item_type & type,
-                       id const & base, id const & ident, 
+                       id const & base, id const & ident,
                        delta const & del);
 
   void read_usher_cmd(utf8 & greeting) const;

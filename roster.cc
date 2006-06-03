@@ -107,7 +107,7 @@ dump(marking_map const & markings, string & out)
   out = oss.str();
 }
 
-namespace 
+namespace
 {
   //
   // We have a few concepts of "nullness" here:
@@ -117,7 +117,7 @@ namespace
   //   is detached.
   //
   // - the_null_component is a path_component. It is the *name* of the root
-  //   node. Its string representation is "", the empty string. 
+  //   node. Its string representation is "", the empty string.
   //
   // - The split_path corresponding to the_null_node is [], the empty vector.
   //
@@ -132,7 +132,7 @@ namespace
   // We do this in order to support the notion of moving the root directory
   // around, or applying attributes to the root directory (though we will
   // not support moving the root at this time, since we haven't worked out
-  // all the UI implications yet). 
+  // all the UI implications yet).
   //
 
 
@@ -146,7 +146,7 @@ namespace
 
 
 node::node(node_id i)
-  : self(i),    
+  : self(i),
     parent(the_null_node),
     name(the_null_component)
 {
@@ -155,7 +155,7 @@ node::node(node_id i)
 
 node::node()
   : self(the_null_node),
-    parent(the_null_node), 
+    parent(the_null_node),
     name(the_null_component)
 {
 }
@@ -179,14 +179,14 @@ dir_node::has_child(path_component const & pc) const
   return children.find(pc) != children.end();
 }
 
-node_t 
+node_t
 dir_node::get_child(path_component const & pc) const
 {
   return safe_get(children, pc);
 }
-  
 
-void 
+
+void
 dir_node::attach_child(path_component const & pc, node_t child)
 {
   I(null_node(child->parent));
@@ -197,7 +197,7 @@ dir_node::attach_child(path_component const & pc, node_t child)
 }
 
 
-node_t 
+node_t
 dir_node::detach_child(path_component const & pc)
 {
   node_t n = get_child(pc);
@@ -314,14 +314,14 @@ roster_t::operator=(roster_t const & other)
 struct
 dfs_iter
 {
-  
+
   dir_t root;
   bool return_root;
   stack< pair<dir_t, dir_map::const_iterator> > stk;
   split_path dirname;
 
 
-  dfs_iter(dir_t r) 
+  dfs_iter(dir_t r)
     : root(r), return_root(root)
   {
     if (root && !root->children.empty())
@@ -398,12 +398,12 @@ same_type(node_t a, node_t b)
 
 
 inline bool
-shallow_equal(node_t a, node_t b, 
+shallow_equal(node_t a, node_t b,
               bool shallow_compare_dir_children)
 {
   if (a->self != b->self)
     return false;
-  
+
   if (a->parent != b->parent)
     return false;
 
@@ -421,7 +421,7 @@ shallow_equal(node_t a, node_t b,
       file_t fa = downcast_to_file_t(a);
       file_t fb = downcast_to_file_t(b);
       if (!(fa->content == fb->content))
-        return false;     
+        return false;
     }
   else
     {
@@ -432,11 +432,11 @@ shallow_equal(node_t a, node_t b,
         {
           if (da->children.size() != db->children.size())
             return false;
-          
-          dir_map::const_iterator 
+
+          dir_map::const_iterator
             i = da->children.begin(),
-            j = db->children.begin(); 
-          
+            j = db->children.begin();
+
           while (i != da->children.end() && j != db->children.end())
             {
               if (i->first != j->first)
@@ -456,10 +456,10 @@ shallow_equal(node_t a, node_t b,
 // FIXME_ROSTERS: why does this do two loops?  why does it pass 'true' to
 // shallow_equal?
 // -- njs
-bool 
+bool
 roster_t::operator==(roster_t const & other) const
 {
-  node_map::const_iterator i = nodes.begin(), j = other.nodes.begin(); 
+  node_map::const_iterator i = nodes.begin(), j = other.nodes.begin();
   while (i != nodes.end() && j != other.nodes.end())
     {
       if (i->first != j->first)
@@ -507,7 +507,7 @@ roster_t::get_node(split_path const & sp) const
       return root_dir;
     }
 
-  dir_t d = root_dir;  
+  dir_t d = root_dir;
   for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
     d = downcast_to_dir_t(d->get_child(*i));
   return d->get_child(basename);
@@ -541,8 +541,8 @@ roster_t::has_node(split_path const & sp) const
   // If we have no root, we *definitely* don't have a non-root path
   if (!has_root())
     return false;
-    
-  dir_t d = root_dir;  
+
+  dir_t d = root_dir;
   for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
     {
       if (d->children.find(*i) == d->children.end())
@@ -576,7 +576,7 @@ roster_t::get_name(node_id nid, split_path & sp) const
 }
 
 
-void 
+void
 roster_t::replace_node_id(node_id from, node_id to)
 {
   I(!null_node(from));
@@ -585,7 +585,7 @@ roster_t::replace_node_id(node_id from, node_id to)
   safe_erase(nodes, from);
   safe_insert(nodes, make_pair(to, n));
   n->self = to;
-  
+
   if (is_dir_t(n))
     {
       dir_t d = downcast_to_dir_t(n);
@@ -708,7 +708,7 @@ void
 roster_t::attach_node(node_id nid, node_id parent, path_component name)
 {
   node_t n = get_node(nid);
-  
+
   I(!null_node(n->self));
   // ensure the node is already detached (as best one can)
   I(null_node(n->parent));
@@ -735,7 +735,7 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
       parent_n->attach_child(name, n);
       I(i == old_locations.end() || i->second != make_pair(n->parent, n->name));
     }
-  
+
   if (i != old_locations.end())
     old_locations.erase(i);
 }
@@ -846,7 +846,7 @@ roster_t::check_sane(bool temp_nodes_ok) const
     }
 
   I(has_root());
-  size_t maxdepth = nodes.size(); 
+  size_t maxdepth = nodes.size();
   for (dfs_iter i(root_dir); !i.finished(); ++i)
     {
       I(*i == get_node((*i)->self));
@@ -893,11 +893,11 @@ roster_t::check_sane_against(marking_map const & markings) const
 }
 
 
-temp_node_id_source::temp_node_id_source() 
-  : curr(first_temp_node) 
+temp_node_id_source::temp_node_id_source()
+  : curr(first_temp_node)
 {}
 
-node_id 
+node_id
 temp_node_id_source::next()
 {
     node_id n = curr++;
@@ -909,39 +909,39 @@ editable_roster_base::editable_roster_base(roster_t & r, node_id_source & nis)
   : r(r), nis(nis)
 {}
 
-node_id 
+node_id
 editable_roster_base::detach_node(split_path const & src)
 {
-  // L(FL("detach_node('%s')") % file_path(src)); 
+  // L(FL("detach_node('%s')") % file_path(src));
   return r.detach_node(src);
 }
 
-void 
+void
 editable_roster_base::drop_detached_node(node_id nid)
 {
-  // L(FL("drop_detached_node(%d)") % nid); 
+  // L(FL("drop_detached_node(%d)") % nid);
   r.drop_detached_node(nid);
 }
 
-node_id 
+node_id
 editable_roster_base::create_dir_node()
 {
-  // L(FL("create_dir_node()\n")); 
+  // L(FL("create_dir_node()"));
   node_id n = r.create_dir_node(nis);
-  // L(FL("create_dir_node() -> %d\n") % n); 
+  // L(FL("create_dir_node() -> %d") % n);
   return n;
 }
 
-node_id 
+node_id
 editable_roster_base::create_file_node(file_id const & content)
 {
-  // L(FL("create_file_node('%s')\n") % content); 
+  // L(FL("create_file_node('%s')") % content);
   node_id n = r.create_file_node(content, nis);
-  // L(FL("create_file_node('%s') -> %d\n") % content % n); 
+  // L(FL("create_file_node('%s') -> %d") % content % n);
   return n;
 }
 
-void 
+void
 editable_roster_base::attach_node(node_id nid, split_path const & dst)
 {
   // L(FL("attach_node(%d, '%s')") % nid % file_path(dst));
@@ -950,16 +950,16 @@ editable_roster_base::attach_node(node_id nid, split_path const & dst)
   r.attach_node(nid, dst);
 }
 
-void 
-editable_roster_base::apply_delta(split_path const & pth, 
-                                  file_id const & old_id, 
+void
+editable_roster_base::apply_delta(split_path const & pth,
+                                  file_id const & old_id,
                                   file_id const & new_id)
 {
   // L(FL("clear_attr('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
   r.apply_delta(pth, old_id, new_id);
 }
 
-void 
+void
 editable_roster_base::clear_attr(split_path const & pth,
                                  attr_key const & name)
 {
@@ -967,7 +967,7 @@ editable_roster_base::clear_attr(split_path const & pth,
   r.clear_attr(pth, name);
 }
 
-void 
+void
 editable_roster_base::set_attr(split_path const & pth,
                                attr_key const & name,
                                attr_value const & val)
@@ -981,9 +981,9 @@ editable_roster_base::commit()
 {
 }
 
-namespace 
+namespace
 {
-  struct true_node_id_source 
+  struct true_node_id_source
     : public node_id_source
   {
     true_node_id_source(app_state & app) : app(app) {}
@@ -997,7 +997,7 @@ namespace
   };
 
 
-  class editable_roster_for_merge 
+  class editable_roster_for_merge
     : public editable_roster_base
   {
   public:
@@ -1206,7 +1206,7 @@ namespace
                      set<revision_id> & new_marks)
   {
     I(new_marks.empty());
-    
+
     // let's not depend on T::operator!= being defined, only on T::operator==
     // being defined.
     bool diff_from_left = !(new_val == left_val);
@@ -1376,13 +1376,13 @@ namespace
           mark_unmerged_scalar(safe_get(left_marking.attrs, key),
                                li->second,
                                new_rid, i->second, new_marks);
-        
+
         else if (li == ln->attrs.end() && ri != rn->attrs.end())
           // only the right side has seen this attr before
           mark_unmerged_scalar(safe_get(right_marking.attrs, key),
                                ri->second,
                                new_rid, i->second, new_marks);
-        
+
         else
           // both sides have seen this attr before
           mark_merged_scalar(safe_get(left_marking.attrs, key),
@@ -1419,7 +1419,7 @@ namespace
                     marking_map const & right_markings,
                     set<revision_id> const & right_uncommon_ancestors,
                     revision_id const & new_rid,
-                    roster_t const & merge, 
+                    roster_t const & merge,
                     marking_map & new_markings)
   {
     for (node_map::const_iterator i = merge.all_nodes().begin();
@@ -1472,10 +1472,10 @@ namespace
 
         safe_insert(new_markings, make_pair(i->first, new_marking));
       }
-  }             
-  
-  
-  class editable_roster_for_nonmerge 
+  }
+
+
+  class editable_roster_for_nonmerge
     : public editable_roster_base
   {
   public:
@@ -1555,12 +1555,12 @@ namespace
           marking->second.attrs.insert(make_pair(name, set<revision_id>()));
           am = marking->second.attrs.find(name);
         }
-      
+
       I(am != marking->second.attrs.end());
       am->second.clear();
       am->second.insert(rid);
     }
-    
+
   private:
     revision_id const & rid;
     // markings starts out as the parent's markings
@@ -1623,7 +1623,7 @@ namespace
                     nis);
       I(new_roster == from_right_r);
     }
-    
+
     // SPEEDUP?: instead of constructing new marking from scratch, track which
     // nodes were modified, and scan only them
     // load one of the parent markings directly into the new marking map
@@ -1745,8 +1745,8 @@ make_roster_for_revision(revision_set const & rev, revision_id const & new_rid,
 
 namespace
 {
-  
-  void delta_only_in_from(roster_t const & from, 
+
+  void delta_only_in_from(roster_t const & from,
                           node_id nid, node_t n,
                           cset & cs)
   {
@@ -1770,7 +1770,7 @@ namespace
       {
         safe_insert(cs.dirs_added, sp);
       }
-    for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+    for (full_attr_map_t::const_iterator i = n->attrs.begin();
          i != n->attrs.end(); ++i)
       if (i->second.first)
         safe_insert(cs.attrs_set,
@@ -1831,13 +1831,13 @@ namespace
                                     i.right_data().second));
             }
           else if (i.state() == parallel::in_both
-                   && i.right_data().first 
+                   && i.right_data().first
                    && i.left_data().first
                    && i.right_data().second != i.left_data().second)
             {
               safe_insert(cs.attrs_set,
                           make_pair(make_pair(to_sp, i.right_key()),
-                                    i.right_data().second));              
+                                    i.right_data().second));
             }
         }
     }
@@ -1861,7 +1861,7 @@ make_cset(roster_t const & from, roster_t const & to, cset & cs)
           // deleted
           delta_only_in_from(from, i.left_key(), i.left_data(), cs);
           break;
- 
+
         case parallel::in_right:
           // added
           delta_only_in_to(to, i.right_key(), i.right_data(), cs);
@@ -1883,7 +1883,7 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
 {
   if (a.all_nodes().size() != b.all_nodes().size())
     return false;
-  
+
   for (node_map::const_iterator i = a.all_nodes().begin();
        i != a.all_nodes().end(); ++i)
     {
@@ -1918,7 +1918,7 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
   included.clear();
   excluded.clear();
 
-  L(FL("building restricted csets\n"));
+  L(FL("building restricted csets"));
   parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
     {
@@ -1933,26 +1933,26 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           if (mask.includes(from, i.left_key()))
             {
               delta_only_in_from(from, i.left_key(), i.left_data(), included);
-              L(FL("included left %d\n") % i.left_key());
+              L(FL("included left %d") % i.left_key());
             }
           else
             {
               delta_only_in_from(from, i.left_key(), i.left_data(), excluded);
-              L(FL("excluded left %d\n") % i.left_key());
+              L(FL("excluded left %d") % i.left_key());
             }
           break;
- 
+
         case parallel::in_right:
           // added
           if (mask.includes(to, i.right_key()))
             {
               delta_only_in_to(to, i.right_key(), i.right_data(), included);
-              L(FL("included right %d\n") % i.right_key());
+              L(FL("included right %d") % i.right_key());
             }
           else
             {
               delta_only_in_to(to, i.right_key(), i.right_data(), excluded);
-              L(FL("excluded right %d\n") % i.right_key());
+              L(FL("excluded right %d") % i.right_key());
             }
           break;
 
@@ -1961,12 +1961,12 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
           if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
             {
               delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
-              L(FL("in both %d %d\n") % i.left_key() % i.right_key());
+              L(FL("in both %d %d") % i.left_key() % i.right_key());
             }
           else
             {
               delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), excluded);
-              L(FL("in both %d %d\n") % i.left_key() % i.right_key());
+              L(FL("in both %d %d") % i.left_key() % i.right_key());
             }
           break;
         }
@@ -2012,7 +2012,7 @@ check_restricted_cset(roster_t const & roster, cset const & cs)
         }
     }
 
-  N(missing == 0, F("invalid restriction excludes required directories")); 
+  N(missing == 0, F("invalid restriction excludes required directories"));
 
 }
 
@@ -2030,16 +2030,16 @@ select_nodes_modified_by_cset(cset const & cs,
 
   // Pre-state damage
 
-  copy(cs.nodes_deleted.begin(), cs.nodes_deleted.end(), 
+  copy(cs.nodes_deleted.begin(), cs.nodes_deleted.end(),
        inserter(modified_prestate_nodes, modified_prestate_nodes.begin()));
-  
+
   for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     modified_prestate_nodes.insert(i->first);
 
   // Post-state damage
 
-  copy(cs.dirs_added.begin(), cs.dirs_added.end(), 
+  copy(cs.dirs_added.begin(), cs.dirs_added.end(),
        inserter(modified_poststate_nodes, modified_poststate_nodes.begin()));
 
   for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
@@ -2081,15 +2081,15 @@ select_nodes_modified_by_cset(cset const & cs,
 }
 
 ////////////////////////////////////////////////////////////////////
-//   getting rosters from the workspace 
+//   getting rosters from the workspace
 ////////////////////////////////////////////////////////////////////
 
-// TODO: doesn't that mean they should go in work.cc ? 
+// TODO: doesn't that mean they should go in work.cc ?
 // perhaps do that after propagating back to n.v.m.experiment.rosters
 // or to mainline so that diffs are more informative
 
 inline static bool
-inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
+inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
 {
   inodeprint_map::const_iterator old_ip = ipm.find(path);
   if (old_ip != ipm.end())
@@ -2110,7 +2110,7 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
 // automate_inventory which operates on the entire, unrestricted, working
 // directory.
 
-void 
+void
 classify_roster_paths(roster_t const & ros,
                       path_set & unchanged,
                       path_set & changed,
@@ -2149,7 +2149,7 @@ classify_roster_paths(roster_t const & ros,
           // dirs don't have content changes
           unchanged.insert(sp);
         }
-      else 
+      else
         {
           file_t file = downcast_to_file_t(node);
           file_id fid;
@@ -2168,8 +2168,8 @@ classify_roster_paths(roster_t const & ros,
     }
 }
 
-void 
-update_current_roster_from_filesystem(roster_t & ros, 
+void
+update_current_roster_from_filesystem(roster_t & ros,
                                       restriction const & mask,
                                       app_state & app)
 {
@@ -2222,7 +2222,7 @@ update_current_roster_from_filesystem(roster_t & ros,
         }
     }
 
-  N(missing_files == 0, 
+  N(missing_files == 0,
     F("%d missing files; use '%s ls missing' to view\n"
       "to restore consistency, on each missing file run either\n"
       "'%s drop FILE' to remove it permanently, or\n"
@@ -2232,8 +2232,8 @@ update_current_roster_from_filesystem(roster_t & ros,
     % missing_files % app.prog_name % app.prog_name % app.prog_name);
 }
 
-void 
-update_current_roster_from_filesystem(roster_t & ros, 
+void
+update_current_roster_from_filesystem(roster_t & ros,
                                       app_state & app)
 {
   restriction tmp(app);
@@ -2275,7 +2275,7 @@ namespace
     symbol const file("file");
     symbol const content("content");
     symbol const attr("attr");
-    
+
     // 'local' roster and marking symbols
     symbol const ident("ident");
     symbol const birth("birth");
@@ -2309,7 +2309,7 @@ push_marking(basic_io::stanza & st,
     }
   else
     I(mark.file_content.empty());
-  
+
   for (full_attr_map_t::const_iterator i = curr->attrs.begin();
        i != curr->attrs.end(); ++i)
     {
@@ -2323,8 +2323,8 @@ push_marking(basic_io::stanza & st,
 
 
 void
-parse_marking(basic_io::parser & pa, 
-              node_t n, 
+parse_marking(basic_io::parser & pa,
+              node_t n,
               marking_t & marking)
 {
   while (pa.symp())
@@ -2367,7 +2367,7 @@ parse_marking(basic_io::parser & pa,
 // consider replacing the roster disk format with something that can be
 // processed more efficiently.
 
-void 
+void
 roster_t::print_to(basic_io::printer & pr,
                    marking_map const & mm,
                    bool print_local_parts) const
@@ -2389,7 +2389,7 @@ roster_t::print_to(basic_io::printer & pr,
       basic_io::stanza st;
       if (is_dir_t(curr))
         {
-          // L(FL("printing dir %s\n") % fp);
+          // L(FL("printing dir %s") % fp);
           st.push_file_pair(syms::dir, fp);
         }
       else
@@ -2397,7 +2397,7 @@ roster_t::print_to(basic_io::printer & pr,
           file_t ftmp = downcast_to_file_t(curr);
           st.push_file_pair(syms::file, fp);
           st.push_hex_pair(syms::content, ftmp->content.inner());
-          // L(FL("printing file %s\n") % fp);
+          // L(FL("printing file %s") % fp);
         }
 
       if (print_local_parts)
@@ -2413,7 +2413,7 @@ roster_t::print_to(basic_io::printer & pr,
           if (j->second.first)
             {
               I(!j->second.second().empty());
-              // L(FL("printing attr %s : %s = %s\n") % fp % j->first % j->second);
+              // L(FL("printing attr %s : %s = %s") % fp % j->first % j->second);
               st.push_str_triple(syms::attr, j->first(), j->second.second());
             }
         }
@@ -2454,7 +2454,7 @@ read_num(string const & s)
   return n;
 }
 
-void 
+void
 roster_t::parse_from(basic_io::parser & pa,
                      marking_map & mm)
 {
@@ -2473,7 +2473,7 @@ roster_t::parse_from(basic_io::parser & pa,
   nodes.clear();
   root_dir.reset();
   mm.clear();
-  
+
   {
     pa.esym(syms::format_version);
     string vers;
@@ -2506,7 +2506,7 @@ roster_t::parse_from(basic_io::parser & pa,
           pa.str(ident);
           n = dir_t(new dir_node(read_num(ident)));
         }
-      else 
+      else
         break;
 
       I(static_cast<bool>(n));
@@ -2554,7 +2554,7 @@ roster_t::parse_from(basic_io::parser & pa,
 }
 
 
-void 
+void
 read_roster_and_marking(roster_data const & dat,
                         roster_t & ros,
                         marking_map & mm)
@@ -2598,7 +2598,7 @@ write_manifest_of_roster(roster_t const & ros,
                          roster_data & dat)
 {
   marking_map mm;
-  write_roster_and_marking(ros, mm, dat, false);  
+  write_roster_and_marking(ros, mm, dat, false);
 }
 
 void calculate_ident(roster_t const & ros,
@@ -2730,7 +2730,7 @@ apply_cset_and_do_testing(roster_t & r, cset const & cs, node_id_source & nis)
   roster_t original = r;
   MM(original);
   I(original == r);
-  
+
   editable_roster_base e(r, nis);
   cs.apply_to(e);
 
@@ -2803,7 +2803,7 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
 }
 
 template<typename M>
-typename M::const_iterator 
+typename M::const_iterator
 random_element(M const & m)
 {
   size_t i = rand() % m.size();
@@ -2811,7 +2811,7 @@ random_element(M const & m)
   while (i > 0)
     {
       I(j != m.end());
-      --i; 
+      --i;
       ++j;
     }
   return j;
@@ -2870,10 +2870,10 @@ bool parent_of(split_path const & p,
 
   if (p.size() <= c.size())
     {
-      split_path::const_iterator c_anchor = 
+      split_path::const_iterator c_anchor =
         search(c.begin(), c.end(),
                p.begin(), p.end());
-        
+
       is_parent = (c_anchor == c.begin());
     }
 
@@ -2881,8 +2881,8 @@ bool parent_of(split_path const & p,
   //       % file_path(p)
   //       % (is_parent ? "" : " not")
   //       % file_path(c));
-    
-  return is_parent;      
+
+  return is_parent;
 }
 
 struct
@@ -2911,7 +2911,7 @@ change_automaton
             node_t n = random_element(r.all_nodes())->second;
             split_path pth;
             r.get_name(n->self, pth);
-            // L(FL("considering acting on '%s'\n") % file_path(pth));
+            // L(FL("considering acting on '%s'") % file_path(pth));
 
             switch (rand() % 7)
               {
@@ -2922,19 +2922,19 @@ change_automaton
                 if (is_file_t(n) || (pth.size() > 1 && flip()))
                   // Add a sibling of an existing entry.
                   pth[pth.size() - 1] = new_component();
-                
-                else 
+
+                else
                   // Add a child of an existing entry.
                   pth.push_back(new_component());
-                
+
                 if (flip())
                   {
-                    // L(FL("adding dir '%s'\n") % file_path(pth));
+                    // L(FL("adding dir '%s'") % file_path(pth));
                     safe_insert(c.dirs_added, pth);
                   }
                 else
                   {
-                    // L(FL("adding file '%s'\n") % file_path(pth));
+                    // L(FL("adding file '%s'") % file_path(pth));
                     safe_insert(c.files_added, make_pair(pth, new_ident()));
                   }
                 break;
@@ -2942,7 +2942,7 @@ change_automaton
               case 3:
                 if (is_file_t(n))
                   {
-                    safe_insert(c.deltas_applied, 
+                    safe_insert(c.deltas_applied,
                                 make_pair
                                 (pth, make_pair(downcast_to_file_t(n)->content,
                                                 new_ident())));
@@ -2957,38 +2957,38 @@ change_automaton
 
                   if (n == n2)
                     continue;
-                  
+
                   if (is_file_t(n2) || (pth2.size() > 1 && flip()))
                     {
-                      // L(FL("renaming to a sibling of an existing entry '%s'\n") % file_path(pth2));
+                      // L(FL("renaming to a sibling of an existing entry '%s'") % file_path(pth2));
                       // Move to a sibling of an existing entry.
                       pth2[pth2.size() - 1] = new_component();
                     }
-                  
+
                   else
                     {
-                      // L(FL("renaming to a child of an existing entry '%s'\n") % file_path(pth2));
+                      // L(FL("renaming to a child of an existing entry '%s'") % file_path(pth2));
                       // Move to a child of an existing entry.
                       pth2.push_back(new_component());
                     }
-                  
+
                   if (!parent_of(pth, pth2))
                     {
-                      // L(FL("renaming '%s' -> '%s\n") % file_path(pth) % file_path(pth2));
+                      // L(FL("renaming '%s' -> '%s") % file_path(pth) % file_path(pth2));
                       safe_insert(c.nodes_renamed, make_pair(pth, pth2));
                     }
                 }
                 break;
-                
+
               case 5:
-                if (!null_node(n->parent) && 
+                if (!null_node(n->parent) &&
                     (is_file_t(n) || downcast_to_dir_t(n)->children.empty()))
                   {
-                    // L(FL("deleting '%s'\n") % file_path(pth));
+                    // L(FL("deleting '%s'") % file_path(pth));
                     safe_insert(c.nodes_deleted, pth);
                   }
                 break;
-                
+
               case 6:
                 if (!n->attrs.empty() && flip())
                   {
@@ -2997,7 +2997,7 @@ change_automaton
                       {
                         if (flip())
                           {
-                            // L(FL("clearing attr on '%s'\n") % file_path(pth));
+                            // L(FL("clearing attr on '%s'") % file_path(pth));
                             safe_insert(c.attrs_cleared, make_pair(pth, k));
                           }
                         else
@@ -3008,16 +3008,16 @@ change_automaton
                       }
                     else
                       {
-                        // L(FL("setting previously set attr on '%s'\n") % file_path(pth));
+                        // L(FL("setting previously set attr on '%s'") % file_path(pth));
                         safe_insert(c.attrs_set, make_pair(make_pair(pth, k), new_word()));
                       }
                   }
                 else
                   {
-                    // L(FL("setting attr on '%s'\n") % file_path(pth));
+                    // L(FL("setting attr on '%s'") % file_path(pth));
                     safe_insert(c.attrs_set, make_pair(make_pair(pth, new_word()), new_word()));
                   }
-                break;                
+                break;
               }
           }
       }
@@ -3033,7 +3033,7 @@ testing_node_id_source::testing_node_id_source()
 node_id
 testing_node_id_source::next()
 {
-  // L(FL("creating node %x\n") % curr);
+  // L(FL("creating node %x") % curr);
   node_id n = curr++;
   I(!temp_node(n));
   return n;
@@ -3058,7 +3058,7 @@ automaton_roster_test()
     {
       MM(i);
       if (i % 100 == 0)
-        P(F("performing random action %d\n") % i);
+        P(F("performing random action %d") % i);
       // test operator==
       I(r == r);
       aut.perform_random_action(r, nis);
@@ -3096,7 +3096,7 @@ check_sane_roster_do_tests(int to_run, int& total)
   testing_node_id_source nis;
   roster_t r;
   MM(r);
-  
+
   // roster must have a root dir
   MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
   MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
@@ -3244,7 +3244,7 @@ bad_attr_test()
 //       a   a  a   a  a   b  a   b
 //        \ /    \ /    \ /    \ /
 //         a      b*     c*     a?
-// 
+//
 // Each node has a number of scalars associated with it:
 //   * basename+parent
 //   * file content (iff a file)
@@ -3270,7 +3270,7 @@ bad_attr_test()
 // And one parent:
 //   * in any of the cases above with one node parent and the attr pre-existing
 //   * in a 2-parent node where the attr exists in only one of the parents
-//   
+//
 // Plus, just to be sure, in the merge cases we check both the given example
 // and the mirror-reversed one, since the code implementing this could
 // conceivably mark merge(A, B) right but get merge(B, A) wrong.  And for the
@@ -3418,7 +3418,7 @@ namespace
       safe_insert(markings, make_pair(nid, marking));
     }
   };
-  
+
   struct dir_maker
   {
     static void make_obj(revision_id const & scalar_origin_rid, node_id nid,
@@ -3431,11 +3431,11 @@ namespace
       safe_insert(markings, make_pair(nid, marking));
     }
   };
-  
+
   struct file_content_scalar : public a_scalar
   {
     virtual string my_type() const { return "file_content_scalar"; }
-    
+
     map<scalar_val, file_id> values;
     file_content_scalar(node_id_source & nis)
       : a_scalar(nis)
@@ -3578,7 +3578,7 @@ namespace
       roster.check_sane_against(markings);
     }
   };
-  
+
   // this scalar represents an attr whose node does not exist; we create the
   // node when we create the attr.
   template <typename T>
@@ -3652,7 +3652,7 @@ run_with_0_roster_parents(a_scalar & s, revision_id scalar_origin_rid,
   roster_t empty_roster;
   cset cs; MM(cs);
   make_cset(empty_roster, expected_roster, cs);
-  
+
   roster_t new_roster; MM(new_roster);
   marking_map new_markings; MM(new_markings);
   // this function takes the old parent roster/marking and modifies them; in
@@ -3689,7 +3689,7 @@ run_with_1_roster_parent(a_scalar & s,
 
   cset cs; MM(cs);
   make_cset(parent_roster, expected_roster, cs);
-  
+
   roster_t new_roster; MM(new_roster);
   marking_map new_markings; MM(new_markings);
   new_roster = parent_roster;
@@ -4058,7 +4058,7 @@ test_all_2_scalar_parent_mark_scenarios()
 //   +   +
 //    \ /
 //     a*
-//     
+//
 //   a*  +
 //    \ /
 //     a
@@ -4070,7 +4070,7 @@ test_all_2_scalar_parent_mark_scenarios()
 //   .   .
 //    \ /
 //     a*
-//     
+//
 //   a*  .
 //    \ /
 //     a
@@ -4300,7 +4300,7 @@ test_same_nid_diff_type()
                            new_rid, new_roster, new_markings,
                            nis),
      logic_error);
-  
+
 }
 
 
@@ -4367,12 +4367,12 @@ write_roster_test()
   r.clear_attr(foo_zoo, attr_key("regime"));
   mark_new_node(rid, r.get_node(nid), mm[nid]);
 
-  { 
+  {
     // manifest first
     roster_data mdat; MM(mdat);
     write_manifest_of_roster(r, mdat);
 
-    roster_data 
+    roster_data
       expected(string("format_version \"1\"\n"
                       "\n"
                       "dir \"\"\n"
@@ -4397,14 +4397,14 @@ write_roster_test()
     BOOST_CHECK_NOT_THROW( I(expected == mdat), logic_error);
   }
 
-  { 
+  {
     // full roster with local parts
     roster_data rdat; MM(rdat);
     write_roster_and_marking(r, mm, rdat);
 
     // node_id order is a hassle.
     // root 1, foo 2, xx 3, fo 4, foo_bar 5, foo_ang 6, foo_zoo 7
-    roster_data 
+    roster_data
       expected(string("format_version \"1\"\n"
                       "\n"
                       "      dir \"\"\n"
@@ -4693,7 +4693,7 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
           left_nid = left_er.create_file_node(fid);
           right_nid = right_er.create_file_node(fid);
         }
-      
+
       left_new_nodes.insert(left_nid);
       right_new_nodes.insert(right_nid);
 
@@ -4704,14 +4704,14 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
 
       if (is_file_t(left_n) || (pth.size() > 1 && flip()))
         // Add a sibling of an existing entry.
-        pth[pth.size() - 1] = new_component();      
-      else 
+        pth[pth.size() - 1] = new_component();
+      else
         // Add a child of an existing entry.
         pth.push_back(new_component());
-      
+
       left_er.attach_node(left_nid, pth);
       right_er.attach_node(right_nid, pth);
-    }  
+    }
 }
 
 static void
@@ -4719,7 +4719,7 @@ test_unify_rosters_randomized()
 {
   L(FL("TEST: begin checking unification of rosters (randomly)"));
   temp_node_id_source tmp_nis;
-  testing_node_id_source test_nis;  
+  testing_node_id_source test_nis;
   roster_t left, right;
   for (size_t i = 0; i < 30; ++i)
     {
@@ -4768,7 +4768,7 @@ test_unify_rosters_end_to_end_ids()
   cset add_cs; MM(add_cs);
   safe_insert(add_cs.files_added, make_pair(split("foo"), my_fid));
   cset no_add_cs; MM(no_add_cs);
-  
+
   // added in left, then merged
   {
     roster_t new_roster; MM(new_roster);
@@ -4857,7 +4857,7 @@ test_unify_rosters_end_to_end_attr_corpses()
     safe_insert(second_markings,
                 make_pair(second_roster.get_node(split("bar"))->self, marking));
   }
-  
+
   // put in the attrs on foo
   {
     safe_insert(first_roster.get_node(foo_id)->attrs,
@@ -4869,11 +4869,11 @@ test_unify_rosters_end_to_end_attr_corpses()
     safe_insert(second_markings.find(foo_id)->second.attrs,
                 make_pair(attr_key("testfoo2"), singleton(second_rid)));
   }
-  
+
   cset add_cs; MM(add_cs);
   safe_insert(add_cs.files_added, make_pair(split("bar"), my_fid));
   cset no_add_cs; MM(no_add_cs);
-  
+
   {
     roster_t new_roster; MM(new_roster);
     marking_map new_markings; MM(new_markings);

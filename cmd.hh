@@ -32,7 +32,7 @@ namespace commands
   };
   extern const no_opts OPT_NONE;
 
-  struct command 
+  struct command
   {
     // NB: these strings are stored _un_translated, because we cannot
     // translate them until after main starts, by which time the
@@ -55,7 +55,7 @@ namespace commands
   };
 };
 
-std::string 
+std::string
 get_stdin();
 
 std::string
@@ -63,20 +63,20 @@ describe_revision(app_state & app,
                   revision_id const & id);
 
 void
-complete(app_state & app, 
+complete(app_state & app,
          std::string const & str,
          revision_id & completion,
          bool must_exist=true);
 
-void 
-complete(app_state & app, 
+void
+complete(app_state & app,
          std::string const & str,
          std::set<revision_id> & completion,
          bool must_exist=true);
 
 template<typename ID>
-static void 
-complete(app_state & app, 
+static void
+complete(app_state & app,
          std::string const & str,
          ID & completion)
 {
@@ -101,8 +101,8 @@ complete(app_state & app,
         err += (i->inner()() + "\n");
       N(completions.size() == 1, i18n_format(err));
     }
-  completion = *(completions.begin());  
-  P(F("expanded partial id '%s' to '%s'\n")
+  completion = *(completions.begin());
+  P(F("expanded partial id '%s' to '%s'")
     % str % completion);
 }
 

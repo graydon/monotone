@@ -32,7 +32,7 @@ using std::vector;
 // we might expose this blunt command interface to scripting someday. but
 // not today.
 
-namespace commands 
+namespace commands
 {
   using std::map;
   // This must be a pointer.
@@ -73,7 +73,7 @@ namespace std
   };
 };
 
-namespace commands 
+namespace commands
 {
   using std::endl;
   using std::greater;
@@ -88,11 +88,11 @@ namespace commands
   }
 
 
-  string complete_command(string const & cmd) 
+  string complete_command(string const & cmd)
   {
     if (cmd.length() == 0 || (*cmds).find(cmd) != (*cmds).end()) return cmd;
 
-    L(FL("expanding command '%s'\n") % cmd);
+    L(FL("expanding command '%s'") % cmd);
 
     vector<string> matched;
 
@@ -111,10 +111,10 @@ namespace commands
       F("unknown command '%s'\n") % cmd);
 
     // one matched command
-    if (matched.size() == 1) 
+    if (matched.size() == 1)
       {
       string completed = *matched.begin();
-      L(FL("expanded command to '%s'") %  completed);  
+      L(FL("expanded command to '%s'") %  completed);
       return completed;
       }
 
@@ -165,7 +165,7 @@ namespace commands
       {
         sorted.push_back(i->second);
       }
-  
+
     sort(sorted.begin(), sorted.end(), greater<command *>());
 
     string curr_group;
@@ -205,7 +205,7 @@ namespace commands
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
-        L(FL("executing command '%s'\n") % cmd);
+        L(FL("executing command '%s'") % cmd);
 
         // at this point we process the data from _MTN/options if
         // the command needs it.
@@ -217,7 +217,7 @@ namespace commands
       }
     else
       {
-        P(F("unknown command '%s'\n") % cmd);
+        P(F("unknown command '%s'") % cmd);
         return 1;
       }
   }
@@ -242,11 +242,11 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
 {
   if (args.size() < 1)
     throw usage("");
-  
+
   string full_cmd = complete_command(idx(args, 0)());
   if ((*cmds).find(full_cmd) == (*cmds).end())
     throw usage("");
-  
+
   throw usage(full_cmd);
 }
 
@@ -281,7 +281,7 @@ maybe_update_inodeprints(app_state & app)
                 {
                   split_path sp;
                   new_roster.get_name(nid, sp);
-                  file_path fp(sp);                  
+                  file_path fp(sp);
                   hexenc<inodeprint> ip;
                   if (inodeprint_file(fp, ip))
                     ipm_new.insert(inodeprint_entry(fp, ip));
@@ -294,7 +294,7 @@ maybe_update_inodeprints(app_state & app)
   write_inodeprints(dat);
 }
 
-string 
+string
 get_stdin()
 {
   char buf[constants::bufsz];
@@ -345,8 +345,8 @@ describe_revision(app_state & app,
 }
 
 
-void 
-complete(app_state & app, 
+void
+complete(app_state & app,
          string const & str,
          set<revision_id> & completion,
          bool must_exist)
@@ -369,7 +369,7 @@ complete(app_state & app,
   vector<pair<selectors::selector_type, string> >
     sels(selectors::parse_selector(str, app));
 
-  P(F("expanding selection '%s'\n") % str);
+  P(F("expanding selection '%s'") % str);
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
@@ -383,13 +383,13 @@ complete(app_state & app,
        i != completions.end(); ++i)
     {
       pair<set<revision_id>::const_iterator, bool> p = completion.insert(revision_id(*i));
-      P(F("expanded to '%s'\n") % *(p.first));
+      P(F("expanded to '%s'") % *(p.first));
     }
 }
 
 
 void
-complete(app_state & app, 
+complete(app_state & app,
          string const & str,
          revision_id & completion,
          bool must_exist)
@@ -437,7 +437,7 @@ process_commit_message_args(bool & given,
   // can't have both a --message and a --message-file ...
   N(app.message().length() == 0 || app.message_file().length() == 0,
     F("--message and --message-file are mutually exclusive"));
-  
+
   if (app.is_explicit_option(OPT_MESSAGE))
     {
       log_message = app.message();
