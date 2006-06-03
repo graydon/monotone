@@ -1,13 +1,21 @@
-#include "cmd.hh"
-
-#include "transforms.hh"
-#include "simplestring_xform.hh"
-#include "packet.hh"
-#include "annotate.hh"
-#include "diff_patch.hh"
-#include "localized_file_io.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <iostream>
+
+#include "annotate.hh"
+#include "cmd.hh"
+#include "diff_patch.hh"
+#include "localized_file_io.hh"
+#include "packet.hh"
+#include "simplestring_xform.hh"
+#include "transforms.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -37,17 +45,21 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   if (args.size() != 3)
     throw usage(name);
 
-  file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
+  file_id 
+    anc_id(idx(args, 0)()), 
+    left_id(idx(args, 1)()), 
+    right_id(idx(args, 2)());
+
   file_data anc, left, right;
 
   N(app.db.file_version_exists (anc_id),
-  F("ancestor file id does not exist"));
+    F("ancestor file id does not exist"));
 
   N(app.db.file_version_exists (left_id),
-  F("left file id does not exist"));
+    F("left file id does not exist"));
 
   N(app.db.file_version_exists (right_id),
-  F("right file id does not exist"));
+    F("right file id does not exist"));
 
   app.db.get_file_version(anc_id, anc);
   app.db.get_file_version(left_id, left);
@@ -58,8 +70,10 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   split_into_lines(anc.inner()(), anc_lines);
   split_into_lines(left.inner()(), left_lines);
   split_into_lines(right.inner()(), right_lines);
-  N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
-  copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
+  N(merge3(anc_lines, left_lines, right_lines, merged_lines), 
+    F("merge failed"));
+  copy(merged_lines.begin(), merged_lines.end(), 
+       ostream_iterator<string>(cout, "\n"));
   
 }
 
@@ -84,8 +98,10 @@ CMD(annotate, N_("informative"), N_("PATH"),
   else 
     complete(app, idx(app.revision_selectors, 0)(), rid);
 
-  N(!null_id(rid), F("no revision for file '%s' in database") % file);
-  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+  N(!null_id(rid), 
+    F("no revision for file '%s' in database") % file);
+  N(app.db.revision_exists(rid), 
+    F("no such revision '%s'") % rid);
 
   L(FL("annotate file file_path '%s'\n") % file);
 
@@ -93,9 +109,11 @@ CMD(annotate, N_("informative"), N_("PATH"),
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no such file '%s' in revision '%s'") % file % rid);
+  N(roster.has_node(sp), 
+    F("no such file '%s' in revision '%s'") % file % rid);
   node_t node = roster.get_node(sp);
-  N(is_file_t(node), F("'%s' in revision '%s' is not a file") % file % rid);
+  N(is_file_t(node), 
+    F("'%s' in revision '%s' is not a file") % file % rid);
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s\n") % file_node->self);
@@ -113,7 +131,8 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path_external(idx(args, 0)), dat, app.lua);
+      read_localized_data(file_path_external(idx(args, 0)), 
+			  dat, app.lua);
     }
   else
     {
@@ -143,10 +162,11 @@ CMD(cat, N_("informative"),
     get_revision_id(rid);
   else 
     complete(app, idx(app.revision_selectors, 0)(), rid);
-  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+  N(app.db.revision_exists(rid), 
+    F("no such revision '%s'") % rid);
 
-  // paths are interpreted as standard external ones when we're in a
-  // workspace, but as project-rooted external ones otherwise
+  // Paths are interpreted as standard external ones when we're in a
+  // workspace, but as project-rooted external ones otherwise.
   file_path fp;
   split_path sp;
   fp = file_path_external(idx(args, 0));
@@ -155,9 +175,11 @@ CMD(cat, N_("informative"),
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no file '%s' found in revision '%s'\n") % fp % rid);
+  N(roster.has_node(sp), 
+    F("no file '%s' found in revision '%s'\n") % fp % rid);
   node_t node = roster.get_node(sp);
-  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % fp % rid);
+  N((!null_node(node->self) && is_file_t(node)), 
+    F("no file '%s' found in revision '%s'\n") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
   file_id ident = file_node->content;  
@@ -168,3 +190,11 @@ CMD(cat, N_("informative"),
 
   guard.commit();
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

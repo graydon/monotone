@@ -1,21 +1,30 @@
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
 #include <vector>
 
 #include <boost/tokenizer.hpp>
 
-#include "charset.hh"
-#include "sanity.hh"
-#include "simplestring_xform.hh"
-#include "numeric_vocab.hh"
-
 #include "idna/idna.h"
 #include "idna/stringprep.h"
+
+#include "charset.hh"
+#include "numeric_vocab.hh"
+#include "sanity.hh"
+#include "simplestring_xform.hh"
 
 using std::string;
 using std::vector;
 
 using boost::char_separator;
 
-// general character code conversion routines
+// General character code conversion routines.
 
 static string 
 system_charset()

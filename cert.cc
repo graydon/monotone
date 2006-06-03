@@ -1,22 +1,16 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
-#include "constants.hh"
-#include "cert.hh"
-#include "packet.hh"
-#include "app_state.hh"
-#include "interner.hh"
-#include "keys.hh"
-#include "netio.hh"
-#include "sanity.hh"
-#include "transforms.hh"
-#include "simplestring_xform.hh"
-#include "ui.hh"
-#include "options.hh"
-#include "revision.hh"
+#include <limits>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -25,10 +19,19 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 
-#include <string>
-#include <limits>
-#include <sstream>
-#include <vector>
+#include "app_state.hh"
+#include "cert.hh"
+#include "constants.hh"
+#include "interner.hh"
+#include "keys.hh"
+#include "netio.hh"
+#include "options.hh"
+#include "packet.hh"
+#include "revision.hh"
+#include "sanity.hh"
+#include "simplestring_xform.hh"
+#include "transforms.hh"
+#include "ui.hh"
 
 using std::make_pair;
 using std::map;
@@ -42,7 +45,9 @@ using boost::get;
 using boost::tuple;
 using boost::lexical_cast;
 
-// The alternaive is to #include "cert.hh" in vocab.*, which is even uglier.
+// The alternaive is to #include "cert.hh" in vocab.*, which is even
+// uglier.
+
 #include "vocab_macros.hh"
 cc_DECORATE(revision)
 cc_DECORATE(manifest)
@@ -74,7 +79,8 @@ bogus_cert_p
       {
         string txt;
         cert_signable_text(c, txt);
-        W(F("ignoring bad signature by '%s' on '%s'\n") % c.key() % txt);
+        W(F("ignoring bad signature by '%s' on '%s'\n") 
+          % c.key() % txt);
         return true;
       }
     else
@@ -82,7 +88,8 @@ bogus_cert_p
         I(status == cert_unknown);
         string txt;
         cert_signable_text(c, txt);
-        W(F("ignoring unknown signature by '%s' on '%s'\n") % c.key() % txt);
+        W(F("ignoring unknown signature by '%s' on '%s'\n") 
+          % c.key() % txt);
         return true;
       }
   }
@@ -109,14 +116,17 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
 
   vector< manifest<cert> > tmp_certs;
 
-  // sorry, this is a crazy data structure
+  // Sorry, this is a crazy data structure
   typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
-  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
+  typedef map< trust_key, 
+    pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 
   for (it i = certs.begin(); i != certs.end(); ++i)
     {
-      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
+      trust_key key = trust_key(i->inner().ident, 
+                                i->inner().name, 
+                                i->inner().value);
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
       if (j == trust.end())
@@ -139,14 +149,20 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
                                                get<1>(i->first),
                                                decoded_value))
         {
-          L(FL("trust function liked %d signers of %s cert on manifest %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          L(FL("trust function liked %d signers of %s "
+               "cert on manifest %s\n")
+            % i->second.first->size() 
+            % get<1>(i->first) 
+            % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
-          W(F("trust function disliked %d signers of %s cert on manifest %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          W(F("trust function disliked %d signers of %s "
+              "cert on manifest %s\n")
+            % i->second.first->size() 
+            % get<1>(i->first) 
+            % get<0>(i->first));
         }
     }
   certs = tmp_certs;
@@ -163,13 +179,17 @@ erase_bogus_certs(vector< revision<cert> > & certs,
   vector< revision<cert> > tmp_certs;
 
   // sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
-  typedef map< trust_key, pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
+  typedef tuple< hexenc<id>, 
+    cert_name, base64<cert_value> > trust_key;
+  typedef map< trust_key, 
+    pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 
   for (it i = certs.begin(); i != certs.end(); ++i)
     {
-      trust_key key = trust_key(i->inner().ident, i->inner().name, i->inner().value);
+      trust_key key = trust_key(i->inner().ident, 
+                                i->inner().name, 
+                                i->inner().value);
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
       if (j == trust.end())
@@ -192,14 +212,20 @@ erase_bogus_certs(vector< revision<cert> > & certs,
                                                get<1>(i->first),
                                                decoded_value))
         {
-          L(FL("trust function liked %d signers of %s cert on revision %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          L(FL("trust function liked %d signers of %s "
+               "cert on revision %s\n")
+            % i->second.first->size() 
+            % get<1>(i->first) 
+            % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
-          W(F("trust function disliked %d signers of %s cert on revision %s\n")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          W(F("trust function disliked %d signers of %s "
+              "cert on revision %s\n")
+            % i->second.first->size() 
+            % get<1>(i->first) 
+            % get<0>(i->first));
         }
     }
   certs = tmp_certs;
@@ -212,17 +238,17 @@ cert::cert()
 {}
 
 cert::cert(hexenc<id> const & ident,
-         cert_name const & name,
-         base64<cert_value> const & value,
-         rsa_keypair_id const & key)
+           cert_name const & name,
+           base64<cert_value> const & value,
+           rsa_keypair_id const & key)
   : ident(ident), name(name), value(value), key(key)
 {}
 
 cert::cert(hexenc<id> const & ident, 
-         cert_name const & name,
-         base64<cert_value> const & value,
-         rsa_keypair_id const & key,
-         base64<rsa_sha1_signature> const & sig)
+           cert_name const & name,
+           base64<cert_value> const & value,
+           rsa_keypair_id const & key,
+           base64<rsa_sha1_signature> const & sig)
   : ident(ident), name(name), value(value), key(key), sig(sig)
 {}
 
@@ -236,7 +262,8 @@ cert::operator<(cert const & other) const
     || ((((ident == other.ident) && name == other.name) 
          && value == other.value) && key < other.key)
     || (((((ident == other.ident) && name == other.name) 
-          && value == other.value) && key == other.key) && sig < other.sig);
+          && value == other.value) && key == other.key) 
+        && sig < other.sig);
 }
 
 bool 
@@ -250,7 +277,7 @@ cert::operator==(cert const & other) const
     && (sig == other.sig);
 }
 
-// netio support
+// Netio support.
                          
 void 
 read_cert(string const & in, cert & t)
@@ -318,9 +345,10 @@ write_cert(cert const & t, string & out)
 
 void 
 cert_signable_text(cert const & t,
-                       string & out)
+                   string & out)
 {
-  out = (FL("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
+  out = (FL("[%s@%s:%s]") 
+         % t.name % t.ident % remove_ws(t.value())).str();
   L(FL("cert: signable text %s\n") % out);
 }
 
@@ -346,6 +374,7 @@ priv_key_exists(app_state & app, rsa_keypair_id const & id)
 // Loads a key pair for a given key id, from either a lua hook
 // or the key store. This will bomb out if the same keyid exists
 // in both with differing contents.
+
 void
 load_key_pair(app_state & app,
               rsa_keypair_id const & id,
@@ -354,7 +383,6 @@ load_key_pair(app_state & app,
 
   static map<rsa_keypair_id, keypair> keys;
   bool persist_ok = (!keys.empty()) || app.lua.hook_persist_phrase_ok();
-
 
   if (persist_ok && keys.find(id) != keys.end())
     {
@@ -440,11 +468,13 @@ get_user_key(rsa_keypair_id & key, app_state & app)
   
   vector<rsa_keypair_id> all_privkeys;
   app.keys.get_keys(all_privkeys);
-  N(!all_privkeys.empty(), F("you have no private key to make signatures with\n"
-                             "perhaps you need to 'genkey <your email>'"));
+  N(!all_privkeys.empty(), 
+    F("you have no private key to make signatures with\n"
+      "perhaps you need to 'genkey <your email>'"));
   N(all_privkeys.size() == 1,
     F("you have multiple private keys\n"
-      "pick one to use for signatures by adding '-k<keyname>' to your command"));
+      "pick one to use for signatures "
+      "by adding '-k<keyname>' to your command"));
   key = all_privkeys[0];  
 }
 
@@ -453,7 +483,8 @@ guess_branch(revision_id const & ident,
              app_state & app,
              cert_value & branchname)
 {
-  if ((app.branch_name() != "") && app.is_explicit_option(OPT_BRANCH_NAME))
+  if ((app.branch_name() != "") 
+      && app.is_explicit_option(OPT_BRANCH_NAME))
     {
       branchname = app.branch_name();
     }
@@ -499,10 +530,10 @@ make_simple_cert(hexenc<id> const & id,
 
 static void 
 put_simple_revision_cert(revision_id const & id,
-                        cert_name const & nm,
-                        cert_value const & val,
-                        app_state & app,
-                        packet_consumer & pc)
+                         cert_name const & nm,
+                         cert_value const & val,
+                         app_state & app,
+                         packet_consumer & pc)
 {
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
@@ -512,12 +543,12 @@ put_simple_revision_cert(revision_id const & id,
 
 void 
 cert_revision_in_branch(revision_id const & rev, 
-                       cert_value const & branchname,
-                       app_state & app,
-                       packet_consumer & pc)
+                        cert_value const & branchname,
+                        app_state & app,
+                        packet_consumer & pc)
 {
   put_simple_revision_cert (rev, branch_cert_name,
-                           branchname, app, pc);
+                            branchname, app, pc);
 }
 
 void 
@@ -564,25 +595,30 @@ cert_revision_date_time(revision_id const & m,
   put_simple_revision_cert(m, date_cert_name, val, app, pc);
 }
 
+
 void 
 cert_revision_date_time(revision_id const & m, 
                         time_t t,
                         app_state & app,
                         packet_consumer & pc)
 {
-  // make sure you do all your CVS conversions by 2038!
-  boost::posix_time::ptime tmp(boost::gregorian::date(1970,1,1), 
-                               boost::posix_time::seconds(static_cast<long>(t)));
+  // Make sure you do all your CVS conversions by 2038!
+  boost::posix_time::ptime 
+    tmp(boost::gregorian::date(1970,1,1), 
+        boost::posix_time::seconds(static_cast<long>(t)));
   cert_revision_date_time(m, tmp, app, pc);
 }
+
 
 void 
 cert_revision_date_now(revision_id const & m, 
                        app_state & app,
                        packet_consumer & pc)
 {
-  cert_revision_date_time(m, boost::posix_time::second_clock::universal_time(), app, pc);
+  cert_revision_date_time
+    (m, boost::posix_time::second_clock::universal_time(), app, pc);
 }
+
 
 void 
 cert_revision_author(revision_id const & m, 
@@ -594,6 +630,7 @@ cert_revision_author(revision_id const & m,
                            author, app, pc);  
 }
 
+
 void 
 cert_revision_author_default(revision_id const & m, 
                              app_state & app,
@@ -604,10 +641,11 @@ cert_revision_author_default(revision_id const & m,
     {
       rsa_keypair_id key;
       get_user_key(key, app),
-      author = key();
+        author = key();
     }
   cert_revision_author(m, author, app, pc);
 }
+
 
 void 
 cert_revision_tag(revision_id const & m, 
@@ -630,6 +668,7 @@ cert_revision_changelog(revision_id const & m,
                            changelog, app, pc);  
 }
 
+
 void 
 cert_revision_comment(revision_id const & m, 
                       string const & comment,
@@ -639,6 +678,7 @@ cert_revision_comment(revision_id const & m,
   put_simple_revision_cert(m, comment_cert_name, 
                            comment, app, pc);  
 }
+
 
 void 
 cert_revision_testresult(revision_id const & r, 
@@ -658,9 +698,12 @@ cert_revision_testresult(revision_id const & r,
            results == "0")
     passed = false;
   else
-    throw informative_failure("could not interpret test results, tried '0/1' 'yes/no', 'true/false', 'pass/fail'");
+    throw informative_failure("could not interpret test results, "
+                              "tried '0/1' 'yes/no', 'true/false', "
+                              "'pass/fail'");
 
-  put_simple_revision_cert(r, testresult_cert_name, lexical_cast<string>(passed), app, pc); 
+  put_simple_revision_cert(r, testresult_cert_name, 
+                           lexical_cast<string>(passed), app, pc); 
 }
 
                           
@@ -668,3 +711,11 @@ cert_revision_testresult(revision_id const & r,
 #include "unit_tests.hh"
 
 #endif // BUILD_UNIT_TESTS
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

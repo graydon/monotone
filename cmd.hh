@@ -1,12 +1,20 @@
 #ifndef __CMD_HH__
 #define __CMD_HH__
 
-#include "sanity.hh"
-#include "options.hh"
-#include "constants.hh"
-#include "app_state.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
+#include "app_state.hh"
 #include "commands.hh"
+#include "constants.hh"
+#include "options.hh"
+#include "sanity.hh"
 
 namespace commands
 {
@@ -26,9 +34,9 @@ namespace commands
 
   struct command 
   {
-    // NB: these strings are stred _un_translated
-    // because we cannot translate them until after main starts, by which time
-    // the command objects have all been constructed.
+    // NB: these strings are stored _un_translated, because we cannot
+    // translate them until after main starts, by which time the
+    // command objects have all been constructed.
     std::string name;
     std::string cmdgroup;
     std::string params;
@@ -42,7 +50,8 @@ namespace commands
             bool u,
             command_opts const & o);
     virtual ~command();
-    virtual void exec(app_state & app, std::vector<utf8> const & args) = 0;
+    virtual void exec(app_state & app, 
+		      std::vector<utf8> const & args) = 0;
   };
 };
 
@@ -84,7 +93,9 @@ complete(app_state & app,
     F("partial id '%s' does not have an expansion") % str);
   if (completions.size() > 1)
     {
-      std::string err = (F("partial id '%s' has multiple ambiguous expansions:\n") % str).str();
+      std::string err = 
+	(F("partial id '%s' has multiple ambiguous expansions:\n") 
+	 % str).str();
       for (typename std::set<ID>::const_iterator i = completions.begin();
             i != completions.end(); ++i)
         err += (i->inner()() + "\n");
@@ -121,8 +132,9 @@ namespace commands {                                                 \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::vector<utf8> const & args)       \
 
-// use this for commands that should specifically _not_ look for an _MTN dir
-// and load options from it
+// Use this for commands that should specifically _not_ look for an
+// _MTN dir and load options from it.
+
 #define CMD_NO_WORKSPACE(C, group, params, desc, opts)               \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
@@ -143,7 +155,7 @@ CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,         \
     realcommand##_cmd.desc + "\nAlias for " #realcommand,            \
     realcommand##_cmd.options)                                       \
 {                                                                    \
-  process(app, std::string(#realcommand), args);                          \
+  process(app, std::string(#realcommand), args);                     \
 }
 
 #endif

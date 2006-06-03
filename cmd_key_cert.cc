@@ -1,13 +1,21 @@
-#include "cmd.hh"
-
-#include "keys.hh"
-#include "cert.hh"
-#include "transforms.hh"
-#include "charset.hh"
-#include "packet.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <sstream>
 #include <iostream>
+
+#include "cert.hh"
+#include "charset.hh"
+#include "cmd.hh"
+#include "keys.hh"
+#include "packet.hh"
+#include "transforms.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -15,7 +23,8 @@ using std::ostringstream;
 using std::set;
 using std::string;
 
-CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT_NONE)
+CMD(genkey, N_("key and cert"), N_("KEYID"), 
+    N_("generate an RSA key-pair"), OPT_NONE)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -35,11 +44,13 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), OPT
   keypair kp;
   P(F("generating key-pair '%s'") % ident);
   generate_key_pair(app.lua, ident, kp);
-  P(F("storing key-pair '%s' in %s/") % ident % app.keys.get_key_dir());
+  P(F("storing key-pair '%s' in %s/") 
+    % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
 }
 
-CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"), OPT_NONE)
+CMD(dropkey, N_("key and cert"), N_("KEYID"), 
+    N_("drop a public and private key"), OPT_NONE)
 {
   bool key_deleted = false;
   
@@ -70,9 +81,11 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
 
   i18n_format fmt;
   if (checked_db)
-    fmt = F("public or private key '%s' does not exist in keystore or database");
+    fmt = F("public or private key '%s' does not exist "
+	    "in keystore or database");
   else
-    fmt = F("public or private key '%s' does not exist in keystore, and no database was specified");
+    fmt = F("public or private key '%s' does not exist "
+	    "in keystore, and no database was specified");
   N(key_deleted, fmt % idx(args, 0)());
 }
 
@@ -133,9 +146,10 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   guard.commit();
 }
 
-CMD(trusted, N_("key and cert"), N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
+CMD(trusted, N_("key and cert"), 
+    N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
     N_("test whether a hypothetical cert would be trusted\n"
-      "by current settings"),
+       "by current settings"),
     OPT_NONE)
 {
   if (args.size() < 4)
@@ -192,7 +206,8 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
 }
 
 
-CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"), 
+CMD(testresult, N_("review"), 
+    N_("ID (pass|fail|true|false|yes|no|1|0)"), 
     N_("note the results of running a test on a revision"), OPT_NONE)
 {
   if (args.size() != 2)
@@ -243,3 +258,10 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
   cert_revision_comment(r, comment, app, dbw);
 }
 
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

@@ -1,15 +1,24 @@
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
+#include <deque>
+#include <iostream>
+#include <map>
+#include <sstream>
+
 #include "cmd.hh"
 #include "diff_patch.hh"
-#include "revision.hh"
-#include "transforms.hh"
-#include "simplestring_xform.hh"
-#include "restrictions.hh"
 #include "localized_file_io.hh"
-
-#include <map>
-#include <iostream>
-#include <sstream>
-#include <deque>
+#include "restrictions.hh"
+#include "revision.hh"
+#include "simplestring_xform.hh"
+#include "transforms.hh"
 
 using std::cout;
 using std::deque;
@@ -113,13 +122,15 @@ changes_summary::print(ostream & os, size_t max_cols) const
       for (map<split_path, split_path>::const_iterator
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); i++)
-        os << "        " << file_path(i->first) << " to " << file_path(i->second) << "\n";
+        os << "        " << file_path(i->first) 
+	   << " to " << file_path(i->second) << "\n";
     }
 
   if (! cs.files_added.empty())
     {
       path_set tmp;
-      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+      for (map<split_path, file_id>::const_iterator 
+	     i = cs.files_added.begin();
            i != cs.files_added.end(); ++i)
         tmp.insert(i->first);
       os << "Added files:" << "\n";
@@ -135,7 +146,8 @@ changes_summary::print(ostream & os, size_t max_cols) const
   if (! cs.deltas_applied.empty())
     {
       path_set tmp;
-      for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+      for (map<split_path, pair<file_id, file_id> >::const_iterator 
+	     i = cs.deltas_applied.begin();
            i != cs.deltas_applied.end(); ++i)
         tmp.insert(i->first);
       os << "Modified files:" << "\n";
@@ -145,11 +157,13 @@ changes_summary::print(ostream & os, size_t max_cols) const
   if (! cs.attrs_set.empty() || ! cs.attrs_cleared.empty())
     {
       path_set tmp;
-      for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+      for (set<pair<split_path, attr_key> >::const_iterator 
+	     i = cs.attrs_cleared.begin();
            i != cs.attrs_cleared.end(); ++i)
         tmp.insert(i->first);
 
-      for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+      for (map<pair<split_path, attr_key>, attr_value>::const_iterator 
+	     i = cs.attrs_set.begin();
            i != cs.attrs_set.end(); ++i)
         tmp.insert(i->first.first);
 
@@ -243,8 +257,10 @@ dump_diffs(cset const & cs,
           split_into_lines(unpacked(), lines);
           if (! lines.empty())
             {
-              cout << (FL("--- %s\t%s\n") % file_path(i->first) % i->second)
-                   << (FL("+++ %s\t%s\n") % file_path(i->first) % i->second)
+              cout << (FL("--- %s\t%s\n") 
+		       % file_path(i->first) % i->second)
+                   << (FL("+++ %s\t%s\n") 
+		       % file_path(i->first) % i->second)
                    << (FL("@@ -0,0 +1,%d @@\n") % lines.size());
               for (vector<string>::const_iterator j = lines.begin();
                    j != lines.end(); ++j)
@@ -294,7 +310,9 @@ dump_diffs(cset const & cs,
       
       if (guess_binary(data_new()) || 
           guess_binary(data_old()))
-        cout << "# " << file_path(delta_entry_path(i)) << " is binary\n";
+        cout << "# " 
+	     << file_path(delta_entry_path(i)) 
+	     << " is binary\n";
       else
         {
           split_into_lines(data_old(), old_lines);
@@ -331,9 +349,10 @@ dump_diffs(cset const & cs,
 
 CMD(diff, N_("informative"), N_("[PATH]..."), 
     N_("show current diffs on stdout.\n"
-    "If one revision is given, the diff between the workspace and\n"
-    "that revision is shown.  If two revisions are given, the diff between\n"
-    "them is given.  If no format is specified, unified is used by default."),
+       "If one revision is given, the diff between the workspace and\n"
+       "that revision is shown.  If two revisions are given, the diff\n"
+       "between them is given. If no format is specified, unified\n"
+       "is used by default."),
     OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
     OPT_EXTERNAL_DIFF_ARGS)
@@ -350,7 +369,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
   cset included, excluded;
 
-  // initialize before transaction so we have a database to work with
+  // initialize before transaction so we have a database to work with.
 
   if (app.revision_selectors.size() == 0)
     app.require_workspace();
@@ -362,13 +381,16 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       roster_t new_roster, old_roster;
       revision_id old_rid;
 
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      get_base_and_current_roster_shape(old_roster, new_roster, 
+					nis, app);
       get_revision_id(old_rid);
 
-      restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+      restriction mask(args, app.exclude_patterns, 
+		       old_roster, new_roster, app);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
-      make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+      make_restricted_csets(old_roster, new_roster, 
+			    included, excluded, mask);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
@@ -383,17 +405,22 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      get_base_and_current_roster_shape(old_roster, 
+					new_roster, 
+					nis, app);
       // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
 
       // FIXME: handle no ancestor case
-      // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
+      // N(r_new.edges.size() == 1, 
+      // F("current revision has no ancestor"));
 
-      restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+      restriction mask(args, app.exclude_patterns, 
+		       old_roster, new_roster, app);
       
       update_current_roster_from_filesystem(new_roster, mask, app);
-      make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+      make_restricted_csets(old_roster, new_roster, 
+			    included, excluded, mask);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
@@ -415,19 +442,20 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
 
-      restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+      restriction mask(args, app.exclude_patterns, 
+		       old_roster, new_roster, app);
       
-      // FIXME: this is *possibly* a UI bug, insofar as we
-      // look at the restriction name(s) you provided on the command
-      // line in the context of new and old, *not* the working copy.
-      // One way of "fixing" this is to map the filenames on the command
-      // line to node_ids, and then restrict based on those. This 
-      // might be more intuitive; on the other hand it would make it
-      // impossible to restrict to paths which are dead in the working
-      // copy but live between old and new. So ... no rush to "fix" it;
-      // discuss implications first.
+      // FIXME: this is *possibly* a UI bug, insofar as we look at the
+      // restriction name(s) you provided on the command line in the
+      // context of new and old, *not* the working copy.  One way of
+      // "fixing" this is to map the filenames on the command line to
+      // node_ids, and then restrict based on those. This might be
+      // more intuitive; on the other hand it would make it impossible
+      // to restrict to paths which are dead in the working copy but
+      // live between old and new. So ... no rush to "fix" it; discuss
+      // implications first.
       //
-      // let the discussion begin...
+      // Let the discussion begin...
       //
       // - "map filenames on the command line to node_ids" needs to be done 
       //   in the context of some roster, possibly the working copy base or
@@ -439,7 +467,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       //   (which fails for paths with @'s in them) or possibly //rev/file 
       //   since versioned paths are required to be relative.
 
-      make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+      make_restricted_csets(old_roster, new_roster, 
+			    included, excluded, mask);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = true;
@@ -459,7 +488,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   if (summary().size() > 0) 
     {
       cout << header.str() << "# " << "\n";
-      for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
+      for (vector<string>::iterator i = lines.begin(); 
+	   i != lines.end(); ++i)
         cout << "# " << *i << "\n";
     }
   else
@@ -516,7 +546,8 @@ log_certs(app_state & app, revision_id id, cert_name name,
 }
 
 static void
-log_certs(app_state & app, revision_id id, cert_name name, string label, bool multiline)
+log_certs(app_state & app, revision_id id, cert_name name, 
+	  string label, bool multiline)
 {
   log_certs(app, id, name, label, label, multiline, true);
 }
@@ -528,10 +559,11 @@ log_certs(app_state & app, revision_id id, cert_name name)
 }
 
 CMD(log, N_("informative"), N_("[FILE] ..."),
-    N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
-    "revisions are given, use them as a starting point."),
-    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS % OPT_NO_MERGES %
-    OPT_NO_FILES)
+    N_("print history in reverse order (filtering by 'FILE'). "
+       "If one or more revisions are given, "
+       "use them as a starting point."),
+    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS 
+    % OPT_NO_MERGES % OPT_NO_FILES)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
@@ -547,7 +579,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
   else
     {
-      for (vector<utf8>::const_iterator i = app.revision_selectors.begin();
+      for (vector<utf8>::const_iterator 
+	     i = app.revision_selectors.begin();
            i != app.revision_selectors.end(); i++) 
         {
           set<revision_id> rids;
@@ -566,12 +599,15 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       roster_t old_roster, new_roster;
 
       if (app.revision_selectors.size() == 0)
-        get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+        get_base_and_current_roster_shape(old_roster, 
+					  new_roster, nis, app);
       else
         app.db.get_roster(first_rid, new_roster);          
 
-      // FIXME_RESTRICTIONS: should this add paths from the rosters of all selected revs?
-      mask = restriction(args, app.exclude_patterns, old_roster, new_roster, app);
+      // FIXME_RESTRICTIONS: should this add paths from the rosters of
+      // all selected revs?
+      mask = restriction(args, app.exclude_patterns, 
+			 old_roster, new_roster, app);
     }
 
 
@@ -591,7 +627,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
   revision_set rev;
 
-  while(! frontier.empty() && (last == -1 || last > 0) && (next == -1 || next > 0))
+  while(! frontier.empty() && (last == -1 || last > 0) 
+	&& (next == -1 || next > 0))
     {
       set<revision_id> next_frontier;
       
@@ -613,8 +650,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           if (!mask.empty())
             {
-              // TODO: stop if the restriction is pre-dated by the current roster
-              // i.e. the restriction's nodes are not born in the current roster
+              // TODO: stop if the restriction is pre-dated by the
+              // current roster i.e. the restriction's nodes are not
+              // born in the current roster
               roster_t roster;
               app.db.get_roster(rid, roster); 
 
@@ -623,7 +661,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                                            nodes_modified, 
                                            app);
               
-              for (set<node_id>::const_iterator n = nodes_modified.begin(); 
+              for (set<node_id>::const_iterator 
+		     n = nodes_modified.begin(); 
                    n != nodes_modified.end(); ++n)
                 {
                   if (!roster.has_node(*n))
@@ -674,8 +713,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               }
             else
               {
-                cout << "-----------------------------------------------------------------"
-                     << "\n";
+                cout << string(65, '-') << "\n";
                 cout << "Revision: " << rid << "\n";
 
                 changes_summary csum;
@@ -689,7 +727,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                     csum.add_change_set(edge_changes(e));
                   }
 
-                for (set<revision_id>::const_iterator anc = ancestors.begin();
+                for (set<revision_id>::const_iterator 
+		       anc = ancestors.begin();
                      anc != ancestors.end(); ++anc)
                   cout << "Ancestor: " << *anc << "\n";
 
@@ -734,3 +773,10 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 }
 
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

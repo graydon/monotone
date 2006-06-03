@@ -1,10 +1,19 @@
-#include "cmd.hh"
-#include "revision.hh"
-#include "database_check.hh"
-#include "charset.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <iostream>
 #include <utility>
+
+#include "charset.hh"
+#include "cmd.hh"
+#include "database_check.hh"
+#include "revision.hh"
 
 using std::cin;
 using std::cout;
@@ -13,8 +22,10 @@ using std::pair;
 using std::set;
 using std::string;
 
-// Deletes a revision from the local database.  This can be used to 'undo' a
-// changed revision from a local database without leaving (much of) a trace.
+// Deletes a revision from the local database.  This can be used to
+// 'undo' a changed revision from a local database without leaving
+// (much of) a trace.
+
 static void
 kill_rev_locally(app_state& app, string const& id)
 {
@@ -34,19 +45,19 @@ kill_rev_locally(app_state& app, string const& id)
 
 CMD(db, N_("database"), 
     N_("init\n"
-      "info\n"
-      "version\n"
-      "dump\n"
-      "load\n"
-      "migrate\n"
-      "execute\n"
-      "kill_rev_locally ID\n"
-      "kill_branch_certs_locally BRANCH\n"
-      "kill_tag_locally TAG\n"
-      "check\n"
-      "changesetify\n"
-      "rosterify\n"
-      "set_epoch BRANCH EPOCH\n"), 
+       "info\n"
+       "version\n"
+       "dump\n"
+       "load\n"
+       "migrate\n"
+       "execute\n"
+       "kill_rev_locally ID\n"
+       "kill_branch_certs_locally BRANCH\n"
+       "kill_tag_locally TAG\n"
+       "check\n"
+       "changesetify\n"
+       "rosterify\n"
+       "set_epoch BRANCH EPOCH\n"), 
     N_("manipulate database state"),
     OPT_DROP_ATTR)
 {
@@ -94,7 +105,8 @@ CMD(db, N_("database"),
         {
           epoch_data ed(idx(args,2)());
           N(ed.inner()().size() == constants::epochlen,
-            F("The epoch must be %s characters") % constants::epochlen);
+            F("The epoch must be %s characters") 
+	    % constants::epochlen);
           app.db.set_epoch(cert_value(idx(args, 1)()), ed);
         }
       else
@@ -132,7 +144,8 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
   internalize_var_domain(idx(args, 0), d);
   n = var_name(idx(args, 1)());
   var_key k(d, n);
-  N(app.db.var_exists(k), F("no var with name %s in domain %s") % n % d);
+  N(app.db.var_exists(k), 
+    F("no var with name %s in domain %s") % n % d);
   app.db.clear_var(k);
 }
 
@@ -184,3 +197,10 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(name);  
 }
 
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
