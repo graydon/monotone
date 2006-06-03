@@ -13,7 +13,7 @@ using std::string;
 
 namespace legacy
 {
-  namespace 
+  namespace
   {
     namespace syms
     {
@@ -28,9 +28,9 @@ namespace legacy
     basic_io::input_source src(dat(), ".mt-attrs");
     basic_io::tokenizer tok(src);
     basic_io::parser parser(tok);
-    
+
     string file, name, value;
-    
+
     attr.clear();
 
     while (parser.symp(syms::file))
@@ -38,8 +38,8 @@ namespace legacy
         parser.sym();
         parser.str(file);
         file_path fp = file_path_internal(file);
-        
-        while (parser.symp() && 
+
+        while (parser.symp() &&
                !parser.symp(syms::file))
           {
             parser.sym(name);
@@ -49,7 +49,7 @@ namespace legacy
       }
   }
 
-  namespace 
+  namespace
   {
     namespace syms
     {
@@ -66,7 +66,7 @@ namespace legacy
       symbol const rename_dir("rename_dir");
     }
   }
-  
+
   // cf. revision.cc:parse_edge and change_set.cc:parse_change_set and
   // change_set.cc:parse_path_rearrangement in the pre-roster code.
   static void
@@ -118,7 +118,7 @@ namespace legacy
   }
 
   // cf. revision.cc:parse_revision in the pre-roster code.
-  void 
+  void
   get_manifest_and_renames_for_rev(app_state & app,
                                    revision_id const & ident,
                                    manifest_id & mid,
@@ -139,7 +139,7 @@ namespace legacy
   }
 
   // cf. manifest.cc:read_manifest_map in the pre-roster code.
-  void 
+  void
   read_manifest_map(manifest_data const & mdat,
                     manifest_map & man)
   {
@@ -166,5 +166,5 @@ namespace legacy
       }
     return;
   }
-  
+
 }

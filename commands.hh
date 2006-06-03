@@ -17,7 +17,7 @@
 class app_state;
 class utf8;
 
-struct usage 
+struct usage
 {
   usage(std::string const & w) : which(w) {}
   std::string which;

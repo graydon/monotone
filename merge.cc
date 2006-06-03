@@ -40,9 +40,9 @@ get_file_details(roster_t const & ros, node_id nid,
 void
 resolve_merge_conflicts(revision_id const & left_rid,
                         revision_id const & right_rid,
-                        roster_t const & left_roster, 
+                        roster_t const & left_roster,
                         roster_t const & right_roster,
-                        marking_map const & left_marking_map, 
+                        marking_map const & left_marking_map,
                         marking_map const & right_marking_map,
                         roster_merge_result & result,
                         content_merge_adaptor & adaptor,
@@ -68,7 +68,7 @@ resolve_merge_conflicts(revision_id const & left_rid,
       if (!result.file_content_conflicts.empty())
         {
 
-          L(FL("examining content conflicts\n"));
+          L(FL("examining content conflicts"));
           vector<file_content_conflict> residual_conflicts;
 
           for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
@@ -87,17 +87,17 @@ resolve_merge_conflicts(revision_id const & left_rid,
               get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
               get_file_details (left_roster, conflict.nid, left_id, left_path);
               get_file_details (right_roster, conflict.nid, right_id, right_path);
-              
+
               file_id merged_id;
-              
-              content_merger cm(app, *roster_for_file_lca, 
-                                left_roster, right_roster, 
+
+              content_merger cm(app, *roster_for_file_lca,
+                                left_roster, right_roster,
                                 adaptor);
 
               if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
                                         anc_id, left_id, right_id, merged_id))
                 {
-                  L(FL("resolved content conflict %d / %d\n") 
+                  L(FL("resolved content conflict %d / %d")
                     % (i+1) % result.file_content_conflicts.size());
                   file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
                   f->content = merged_id;
@@ -105,7 +105,7 @@ resolve_merge_conflicts(revision_id const & left_rid,
               else
                 residual_conflicts.push_back(conflict);
             }
-          result.file_content_conflicts = residual_conflicts;     
+          result.file_content_conflicts = residual_conflicts;
         }
     }
 
@@ -133,9 +133,9 @@ interactive_merge_and_store(revision_id const & left_rid,
 //   {
 //     data tmp;
 //     write_roster_and_marking(left_roster, left_marking_map, tmp);
-//     P(F("merge left roster: [[[\n%s\n]]]\n") % tmp);
+//     P(F("merge left roster: [[[\n%s\n]]]") % tmp);
 //     write_roster_and_marking(right_roster, right_marking_map, tmp);
-//     P(F("merge right roster: [[[\n%s\n]]]\n") % tmp);
+//     P(F("merge right roster: [[[\n%s\n]]]") % tmp);
 //   }
 
   roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
@@ -168,23 +168,23 @@ store_roster_merge_result(roster_t const & left_roster,
   merged_roster.check_sane();
 
   revision_set merged_rev;
-  
+
   calculate_ident(merged_roster, merged_rev.new_manifest);
-  
+
   shared_ptr<cset> left_to_merged(new cset);
   make_cset(left_roster, merged_roster, *left_to_merged);
   safe_insert(merged_rev.edges, make_pair(left_rid, left_to_merged));
-  
+
   shared_ptr<cset> right_to_merged(new cset);
   make_cset(right_roster, merged_roster, *right_to_merged);
   safe_insert(merged_rev.edges, make_pair(right_rid, right_to_merged));
-  
+
   revision_data merged_data;
   write_revision_set(merged_rev, merged_data);
   calculate_ident(merged_data, merged_rid);
   {
     transaction_guard guard(app.db);
-  
+
     app.db.put_revision(merged_rid, merged_rev);
     packet_db_writer dbw(app);
     if (app.date_set)

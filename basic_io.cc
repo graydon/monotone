@@ -30,7 +30,7 @@ using std::vector;
 void basic_io::input_source::err(string const & s)
 {
   L(FL("error in %s:%d:%d:E: %s") % name % line % col % s);
-  throw logic_error((F("error in %s:%d:%d:E: %s") 
+  throw logic_error((F("error in %s:%d:%d:E: %s")
                      % name % line % col % s).str());
 }
 
@@ -40,7 +40,7 @@ void basic_io::tokenizer::err(string const & s)
   in.err(s);
 }
 
-string 
+string
 basic_io::escape(string const & s)
 {
   string escaped;
@@ -75,8 +75,8 @@ void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
     indent = k().size();
 }
 
-void basic_io::stanza::push_hex_triple(symbol const & k, 
-				       string const & n, 
+void basic_io::stanza::push_hex_triple(symbol const & k,
+				       string const & n,
 				       hexenc<id> const & v)
 {
   entries.push_back(make_pair(k, escape(n) + " " + "[" + v() + "]"));
@@ -114,7 +114,7 @@ void basic_io::stanza::push_str_multi(symbol const & k,
     indent = k().size();
 }
 
-void basic_io::stanza::push_str_triple(symbol const & k, 
+void basic_io::stanza::push_str_triple(symbol const & k,
                                        string const & n,
                                        string const & v)
 {
@@ -126,7 +126,7 @@ void basic_io::stanza::push_str_triple(symbol const & k,
 
 string basic_io::printer::buf;
 
-basic_io::printer::printer() 
+basic_io::printer::printer()
 {
   buf.clear();
 }

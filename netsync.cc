@@ -104,7 +104,7 @@
 //   - empty
 //   - leaf
 //   - subtree
-//   
+//
 // In addition, each leaf contains a hash code which identifies an element
 // of the set being synchronized. Each subtree slot contains a hash code of
 // the node immediately beneath it in the merkle tree. Empty slots contain
@@ -121,7 +121,7 @@
 //      20 bytes       - hash of the remaining bytes in the node
 //       1 byte        - type of this node (manifest, file, key, mcert, fcert)
 //     1-N bytes       - level of this node in the tree (0 == "root", uleb128)
-//    0-20 bytes       - the prefix of this node, 4 bits * level, 
+//    0-20 bytes       - the prefix of this node, 4 bits * level,
 //                       rounded up to a byte
 //     1-N bytes       - number of leaves under this node (uleb128)
 //       4 bytes       - slot-state bitmap of the node
@@ -190,7 +190,7 @@
 //
 // For more details on the refinement process, see refiner.cc.
 //
-// 
+//
 // Transmission
 // ------------
 //
@@ -247,10 +247,10 @@ using std::vector;
 using boost::shared_ptr;
 using boost::lexical_cast;
 
-static inline void 
+static inline void
 require(bool check, string const & context)
 {
-  if (!check) 
+  if (!check)
     throw bad_decode(F("check of '%s' failed") % context);
 }
 
@@ -260,7 +260,7 @@ struct netsync_error
   netsync_error(string const & s): msg(s) {}
 };
 
-struct 
+struct
 session:
   public refiner_callbacks,
   public enumerator_callbacks
@@ -273,11 +273,11 @@ session:
   app_state & app;
 
   string peer_id;
-  shared_ptr<Netxx::StreamBase> str;  
+  shared_ptr<Netxx::StreamBase> str;
 
-  string_queue inbuf; 
+  string_queue inbuf;
   // deque of pair<string data, size_t cur_pos>
-  deque< pair<string,size_t> > outbuf; 
+  deque< pair<string,size_t> > outbuf;
   // the total data stored in outbuf - this is
   // used as a valve to stop too much data
   // backing up
@@ -301,7 +301,7 @@ session:
   auto_ptr<ticker> cert_out_ticker;
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
-  
+
   vector<revision_id> written_revisions;
   vector<rsa_keypair_id> written_keys;
   vector<cert> written_certs;
@@ -309,13 +309,13 @@ session:
   id saved_nonce;
   packet_db_writer dbw;
 
-  enum 
-    { 
+  enum
+    {
       working_state,
       shutdown_state,
       confirmed_state
     }
-    protocol_state;  
+    protocol_state;
   bool encountered_error;
   bool set_totals;
 
@@ -347,7 +347,7 @@ session:
           shared_ptr<Netxx::StreamBase> sock);
 
   virtual ~session();
-  
+
   void rev_written_callback(revision_id rid);
   void key_written_callback(rsa_keypair_id kid);
   void cert_written_callback(cert const & c);
@@ -383,29 +383,29 @@ session:
   void queue_error_cmd(string const & errmsg);
   void queue_done_cmd(netcmd_item_type type, size_t n_items);
   void queue_hello_cmd(rsa_keypair_id const & key_name,
-                       base64<rsa_pub_key> const & pub_encoded, 
+                       base64<rsa_pub_key> const & pub_encoded,
                        id const & nonce);
-  void queue_anonymous_cmd(protocol_role role, 
-                           utf8 const & include_pattern, 
-                           utf8 const & exclude_pattern, 
+  void queue_anonymous_cmd(protocol_role role,
+                           utf8 const & include_pattern,
+                           utf8 const & exclude_pattern,
                            id const & nonce2,
                            base64<rsa_pub_key> server_key_encoded);
-  void queue_auth_cmd(protocol_role role, 
-                      utf8 const & include_pattern, 
-                      utf8 const & exclude_pattern, 
-                      id const & client, 
-                      id const & nonce1, 
-                      id const & nonce2, 
+  void queue_auth_cmd(protocol_role role,
+                      utf8 const & include_pattern,
+                      utf8 const & exclude_pattern,
+                      id const & client,
+                      id const & nonce1,
+                      id const & nonce2,
                       string const & signature,
                       base64<rsa_pub_key> server_key_encoded);
   void queue_confirm_cmd();
   void queue_refine_cmd(refinement_type ty, merkle_node const & node);
-  void queue_data_cmd(netcmd_item_type type, 
+  void queue_data_cmd(netcmd_item_type type,
                       id const & item,
                       string const & dat);
-  void queue_delta_cmd(netcmd_item_type type, 
-                       id const & base, 
-                       id const & ident, 
+  void queue_delta_cmd(netcmd_item_type type,
+                       id const & base,
+                       id const & ident,
                        delta const & del);
 
   // Incoming dispatch-called methods.
@@ -414,23 +414,23 @@ session:
                          rsa_pub_key const & server_key,
                          id const & nonce);
   bool process_bye_cmd(u8 phase, transaction_guard & guard);
-  bool process_anonymous_cmd(protocol_role role, 
+  bool process_anonymous_cmd(protocol_role role,
                              utf8 const & their_include_pattern,
                              utf8 const & their_exclude_pattern);
-  bool process_auth_cmd(protocol_role role, 
-                        utf8 const & their_include_pattern, 
-                        utf8 const & their_exclude_pattern, 
-                        id const & client, 
-                        id const & nonce1, 
+  bool process_auth_cmd(protocol_role role,
+                        utf8 const & their_include_pattern,
+                        utf8 const & their_exclude_pattern,
+                        id const & client,
+                        id const & nonce1,
                         string const & signature);
   bool process_refine_cmd(refinement_type ty, merkle_node const & node);
   bool process_done_cmd(netcmd_item_type type, size_t n_items);
   bool process_data_cmd(netcmd_item_type type,
-                        id const & item, 
+                        id const & item,
                         string const & dat);
   bool process_delta_cmd(netcmd_item_type type,
-                         id const & base, 
-                         id const & ident, 
+                         id const & base,
+                         id const & ident,
                          delta const & del);
   bool process_usher_cmd(utf8 const & msg);
 
@@ -441,7 +441,7 @@ session:
   // Various helpers.
   void assume_corresponding_role(protocol_role their_role);
   void respond_to_confirm_cmd();
-  bool data_exists(netcmd_item_type type, 
+  bool data_exists(netcmd_item_type type,
                    id const & item);
   void load_data(netcmd_item_type type,
                  id const & item,
@@ -455,14 +455,14 @@ session:
   bool process(transaction_guard & guard);
 };
 
-  
+
 session::session(protocol_role role,
                  protocol_voice voice,
                  utf8 const & our_include_pattern,
                  utf8 const & our_exclude_pattern,
                  app_state & app,
                  string const & peer,
-                 shared_ptr<Netxx::StreamBase> sock) : 
+                 shared_ptr<Netxx::StreamBase> sock) :
   role(role),
   voice(voice),
   our_include_pattern(our_include_pattern),
@@ -531,7 +531,7 @@ session::~session()
     }
 
   //  if (role == sink_role || role == source_and_sink_role)
-  if (!written_keys.empty() 
+  if (!written_keys.empty()
       || !written_revisions.empty()
       || !written_certs.empty())
     {
@@ -578,7 +578,7 @@ session::~session()
     }
 }
 
-bool 
+bool
 session::process_this_rev(revision_id const & rev)
 {
   id item;
@@ -587,7 +587,7 @@ session::process_this_rev(revision_id const & rev)
           != rev_refiner.items_to_send.end());
 }
 
-bool 
+bool
 session::queue_this_cert(hexenc<id> const & c)
 {
   id item;
@@ -596,13 +596,13 @@ session::queue_this_cert(hexenc<id> const & c)
           != cert_refiner.items_to_send.end());
 }
 
-bool 
+bool
 session::queue_this_file(hexenc<id> const & f)
 {
   return file_items_sent.find(f) == file_items_sent.end();
 }
 
-void 
+void
 session::note_file_data(file_id const & f)
 {
   if (role == sink_role)
@@ -615,7 +615,7 @@ session::note_file_data(file_id const & f)
   file_items_sent.insert(f);
 }
 
-void 
+void
 session::note_file_delta(file_id const & src, file_id const & dst)
 {
   if (role == sink_role)
@@ -623,13 +623,13 @@ session::note_file_delta(file_id const & src, file_id const & dst)
   file_delta fdel;
   id fid1, fid2;
   decode_hexenc(src.inner(), fid1);
-  decode_hexenc(dst.inner(), fid2);  
+  decode_hexenc(dst.inner(), fid2);
   app.db.get_arbitrary_file_delta(src, dst, fdel);
   queue_delta_cmd(file_item, fid1, fid2, fdel.inner());
   file_items_sent.insert(dst);
 }
 
-void 
+void
 session::note_rev(revision_id const & rev)
 {
   if (role == sink_role)
@@ -643,7 +643,7 @@ session::note_rev(revision_id const & rev)
   queue_data_cmd(revision_item, item, tmp());
 }
 
-void 
+void
 session::note_cert(hexenc<id> const & c)
 {
   if (role == sink_role)
@@ -673,7 +673,7 @@ void session::cert_written_callback(cert const & c)
   written_certs.push_back(c);
 }
 
-id 
+id
 session::mk_nonce()
 {
   I(this->saved_nonce().size() == 0);
@@ -685,7 +685,7 @@ session::mk_nonce()
   return this->saved_nonce;
 }
 
-void 
+void
 session::mark_recent_io()
 {
   last_io_time = ::time(NULL);
@@ -744,7 +744,7 @@ session::setup_client_tickers()
     }
 }
 
-bool 
+bool
 session::done_all_refinements()
 {
   bool all = rev_refiner.done
@@ -765,15 +765,15 @@ session::done_all_refinements()
 
       if (revision_in_ticker.get())
         revision_in_ticker->set_total(rev_refiner.items_to_receive);
-        
+
       set_totals = true;
     }
-  return all;  
+  return all;
 }
 
 
 
-bool 
+bool
 session::received_all_items()
 {
   if (role == source_role)
@@ -785,19 +785,19 @@ session::received_all_items()
   return all;
 }
 
-bool 
+bool
 session::finished_working()
 {
-  bool all = done_all_refinements() 
+  bool all = done_all_refinements()
     && received_all_items()
     && queued_all_items()
     && rev_enumerator.done();
   return all;
 }
 
-bool 
+bool
 session::queued_all_items()
-{  
+{
   if (role == sink_role)
     return true;
   bool all = rev_refiner.items_to_send.empty()
@@ -907,7 +907,7 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
     }
 }
 
-void 
+void
 session::write_netcmd_and_try_flush(netcmd const & cmd)
 {
   if (!encountered_error)
@@ -918,7 +918,7 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
     outbuf_size += buf.size();
   }
   else
-    L(FL("dropping outgoing netcmd (because we're in error unwind mode)\n"));
+    L(FL("dropping outgoing netcmd (because we're in error unwind mode)"));
   // FIXME: this helps keep the protocol pipeline full but it seems to
   // interfere with initial and final sequences. careful with it.
   // write_some();
@@ -936,7 +936,7 @@ session::error(string const & errmsg)
   throw netsync_error(errmsg);
 }
 
-Netxx::Probe::ready_type 
+Netxx::Probe::ready_type
 session::which_events() const
 {
   // Only ask to read if we're not armed.
@@ -953,10 +953,10 @@ session::which_events() const
         return Netxx::Probe::ready_write | Netxx::Probe::ready_read | Netxx::Probe::ready_oobd;
       else
         return Netxx::Probe::ready_write | Netxx::Probe::ready_oobd;
-    }       
+    }
 }
 
-bool 
+bool
 session::read_some()
 {
   I(inbuf.size() < constants::netcmd_maxsz);
@@ -964,10 +964,10 @@ session::read_some()
   Netxx::signed_size_type count = str->read(tmp, sizeof(tmp));
   if (count > 0)
     {
-      L(FL("read %d bytes from fd %d (peer %s)\n") % count % str->get_socketfd() % peer_id);
+      L(FL("read %d bytes from fd %d (peer %s)") % count % str->get_socketfd() % peer_id);
       if (encountered_error)
         {
-          L(FL("in error unwind mode, so throwing them into the bit bucket\n"));
+          L(FL("in error unwind mode, so throwing them into the bit bucket"));
           return true;
         }
       inbuf.append(tmp,count);
@@ -980,12 +980,12 @@ session::read_some()
     return false;
 }
 
-bool 
+bool
 session::write_some()
 {
-  I(!outbuf.empty());    
+  I(!outbuf.empty());
   size_t writelen = outbuf.front().first.size() - outbuf.front().second;
-  Netxx::signed_size_type count = str->write(outbuf.front().first.data() + outbuf.front().second, 
+  Netxx::signed_size_type count = str->write(outbuf.front().first.data() + outbuf.front().second,
                                             min(writelen,
                                             constants::bufsz));
   if (count > 0)
@@ -999,7 +999,7 @@ session::write_some()
         {
           outbuf.front().second += count;
         }
-      L(FL("wrote %d bytes to fd %d (peer %s)\n")
+      L(FL("wrote %d bytes to fd %d (peer %s)")
         % count % str->get_socketfd() % peer_id);
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
@@ -1007,7 +1007,7 @@ session::write_some()
       if (encountered_error && outbuf.empty())
         {
           // we've flushed our error message, so it's time to get out.
-          L(FL("finished flushing output queue in error unwind mode, disconnecting\n"));
+          L(FL("finished flushing output queue in error unwind mode, disconnecting"));
           return false;
         }
       return true;
@@ -1018,42 +1018,42 @@ session::write_some()
 
 // senders
 
-void 
+void
 session::queue_error_cmd(string const & errmsg)
 {
-  L(FL("queueing 'error' command\n"));
+  L(FL("queueing 'error' command"));
   netcmd cmd;
   cmd.write_error_cmd(errmsg);
   write_netcmd_and_try_flush(cmd);
 }
 
-void 
-session::queue_bye_cmd(u8 phase) 
+void
+session::queue_bye_cmd(u8 phase)
 {
-  L(FL("queueing 'bye' command, phase %d\n") 
+  L(FL("queueing 'bye' command, phase %d")
     % static_cast<size_t>(phase));
   netcmd cmd;
   cmd.write_bye_cmd(phase);
   write_netcmd_and_try_flush(cmd);
 }
 
-void 
+void
 session::queue_done_cmd(netcmd_item_type type,
-                        size_t n_items) 
+                        size_t n_items)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  L(FL("queueing 'done' command for %s (%d items)\n") 
+  L(FL("queueing 'done' command for %s (%d items)")
     % typestr % n_items);
   netcmd cmd;
   cmd.write_done_cmd(type, n_items);
   write_netcmd_and_try_flush(cmd);
 }
 
-void 
+void
 session::queue_hello_cmd(rsa_keypair_id const & key_name,
-                         base64<rsa_pub_key> const & pub_encoded, 
-                         id const & nonce) 
+                         base64<rsa_pub_key> const & pub_encoded,
+                         id const & nonce)
 {
   rsa_pub_key pub;
   if (app.use_transport_auth)
@@ -1062,10 +1062,10 @@ session::queue_hello_cmd(rsa_keypair_id const & key_name,
   write_netcmd_and_try_flush(cmd);
 }
 
-void 
-session::queue_anonymous_cmd(protocol_role role, 
-                             utf8 const & include_pattern, 
-                             utf8 const & exclude_pattern, 
+void
+session::queue_anonymous_cmd(protocol_role role,
+                             utf8 const & include_pattern,
+                             utf8 const & exclude_pattern,
                              id const & nonce2,
                              base64<rsa_pub_key> server_key_encoded)
 {
@@ -1080,13 +1080,13 @@ session::queue_anonymous_cmd(protocol_role role,
   set_session_key(nonce2());
 }
 
-void 
-session::queue_auth_cmd(protocol_role role, 
-                        utf8 const & include_pattern, 
-                        utf8 const & exclude_pattern, 
-                        id const & client, 
-                        id const & nonce1, 
-                        id const & nonce2, 
+void
+session::queue_auth_cmd(protocol_role role,
+                        utf8 const & include_pattern,
+                        utf8 const & exclude_pattern,
+                        id const & client,
+                        id const & nonce1,
+                        id const & nonce2,
                         string const & signature,
                         base64<rsa_pub_key> server_key_encoded)
 {
@@ -1109,14 +1109,14 @@ session::queue_confirm_cmd()
   write_netcmd_and_try_flush(cmd);
 }
 
-void 
+void
 session::queue_refine_cmd(refinement_type ty, merkle_node const & node)
 {
   string typestr;
   hexenc<prefix> hpref;
   node.get_hex_prefix(hpref);
   netcmd_item_type_to_string(node.type, typestr);
-  L(FL("queueing refinement %s of %s node '%s', level %d\n")
+  L(FL("queueing refinement %s of %s node '%s', level %d")
     % (ty == refinement_query ? "query" : "response")
     % typestr % hpref % static_cast<int>(node.level));
   netcmd cmd;
@@ -1124,9 +1124,9 @@ session::queue_refine_cmd(refinement_type ty, merkle_node const & node)
   write_netcmd_and_try_flush(cmd);
 }
 
-void 
+void
 session::queue_data_cmd(netcmd_item_type type,
-                        id const & item, 
+                        id const & item,
                         string const & dat)
 {
   string typestr;
@@ -1136,19 +1136,19 @@ session::queue_data_cmd(netcmd_item_type type,
 
   if (role == sink_role)
     {
-      L(FL("not queueing %s data for '%s' as we are in pure sink role\n") 
+      L(FL("not queueing %s data for '%s' as we are in pure sink role")
         % typestr % hid);
       return;
     }
 
-  L(FL("queueing %d bytes of data for %s item '%s'\n")
+  L(FL("queueing %d bytes of data for %s item '%s'")
     % dat.size() % typestr % hid);
 
   netcmd cmd;
   // TODO: This pair of functions will make two copies of a large
   // file, the first in cmd.write_data_cmd, and the second in
   // write_netcmd_and_try_flush when the data is copied from the
-  // cmd.payload variable to the string buffer for output.  This 
+  // cmd.payload variable to the string buffer for output.  This
   // double copy should be collapsed out, it may be better to use
   // a string_queue for output as well as input, as that will reduce
   // the amount of mallocs that happen when the string queue is large
@@ -1160,8 +1160,8 @@ session::queue_data_cmd(netcmd_item_type type,
 
 void
 session::queue_delta_cmd(netcmd_item_type type,
-                         id const & base, 
-                         id const & ident, 
+                         id const & base,
+                         id const & ident,
                          delta const & del)
 {
   I(type == file_item);
@@ -1175,12 +1175,12 @@ session::queue_delta_cmd(netcmd_item_type type,
 
   if (role == sink_role)
     {
-      L(FL("not queueing %s delta '%s' -> '%s' as we are in pure sink role\n") 
+      L(FL("not queueing %s delta '%s' -> '%s' as we are in pure sink role")
         % typestr % base_hid % ident_hid);
       return;
     }
 
-  L(FL("queueing %s delta '%s' -> '%s'\n")
+  L(FL("queueing %s delta '%s' -> '%s'")
     % typestr % base_hid % ident_hid);
   netcmd cmd;
   cmd.write_delta_cmd(type, base, ident, del);
@@ -1191,8 +1191,8 @@ session::queue_delta_cmd(netcmd_item_type type,
 
 // processors
 
-bool 
-session::process_error_cmd(string const & errmsg) 
+bool
+session::process_error_cmd(string const & errmsg)
 {
   throw bad_decode(F("received network error: %s") % errmsg);
 }
@@ -1206,10 +1206,10 @@ get_branches(app_state & app, vector<string> & names)
 
 static const var_domain known_servers_domain = var_domain("known-servers");
 
-bool 
+bool
 session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                            rsa_pub_key const & their_key,
-                           id const & nonce) 
+                           id const & nonce)
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
@@ -1221,7 +1221,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       hexenc<id> their_key_hash;
       encode_base64(their_key, their_key_encoded);
       key_hash_code(their_keyname, their_key_encoded, their_key_hash);
-      L(FL("server key has name %s, hash %s\n") % their_keyname % their_key_hash);
+      L(FL("server key has name %s, hash %s") % their_keyname % their_key_hash);
       var_key their_key_key(known_servers_domain, var_name(peer_id));
       if (app.db.var_exists(their_key_key))
         {
@@ -1236,7 +1236,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                   "it is also possible that the server key has just been changed\n"
                   "remote host sent key %s\n"
                   "I expected %s\n"
-                  "'%s unset %s %s' overrides this check\n")
+                  "'%s unset %s %s' overrides this check")
                 % their_key_hash % expected_key_hash
                 % app.prog_name % their_key_key.first % their_key_key.second);
               E(false, F("server key changed"));
@@ -1251,19 +1251,19 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
         }
       if (!app.db.public_key_exists(their_key_hash))
         {
-          W(F("saving public key for %s to database\n") % their_keyname);
+          W(F("saving public key for %s to database") % their_keyname);
           app.db.put_key(their_keyname, their_key_encoded);
         }
       {
         hexenc<id> hnonce;
         encode_hexenc(nonce, hnonce);
-        L(FL("received 'hello' netcmd from server '%s' with nonce '%s'\n") 
+        L(FL("received 'hello' netcmd from server '%s' with nonce '%s'")
           % their_key_hash % hnonce);
       }
 
       I(app.db.public_key_exists(their_key_hash));
-  
-      // save their identity 
+
+      // save their identity
       id their_key_hash_decoded;
       decode_hexenc(their_key_hash, their_key_hash_decoded);
       this->remote_peer_key_hash = their_key_hash_decoded;
@@ -1283,8 +1283,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   rebuild_merkle_trees(app, ok_branches);
 
   setup_client_tickers();
-    
-  if (app.use_transport_auth && 
+
+  if (app.use_transport_auth &&
       app.signing_key() != "")
     {
       // get our key pair
@@ -1296,13 +1296,13 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       id our_key_hash_raw;
       key_hash_code(app.signing_key, our_kp.pub, our_key_hash);
       decode_hexenc(our_key_hash, our_key_hash_raw);
-      
+
       // make a signature
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
       make_signature(app, app.signing_key, our_kp.priv, nonce(), sig);
       decode_base64(sig, sig_raw);
-      
+
       // make a new nonce of our own and send off the 'auth'
       queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,
                      our_key_hash_raw, nonce, mk_nonce(), sig_raw(),
@@ -1313,12 +1313,12 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       queue_anonymous_cmd(this->role, our_include_pattern,
                           our_exclude_pattern, mk_nonce(), their_key_encoded);
     }
-    
+
   return true;
 }
 
-bool 
-session::process_anonymous_cmd(protocol_role their_role, 
+bool
+session::process_anonymous_cmd(protocol_role their_role,
                                utf8 const & their_include_pattern,
                                utf8 const & their_exclude_pattern)
 {
@@ -1335,8 +1335,8 @@ session::process_anonymous_cmd(protocol_role their_role,
   //
 
   // Client must be a sink and server must be a source (anonymous
-  // read-only), unless transport auth is disabled. 
-  // 
+  // read-only), unless transport auth is disabled.
+  //
   // If running in no-transport-auth mode, we operate anonymously and
   // permit adoption of any role.
 
@@ -1344,14 +1344,14 @@ session::process_anonymous_cmd(protocol_role their_role,
     {
       if (their_role != sink_role)
         {
-          W(F("rejected attempt at anonymous connection for write\n"));
+          W(F("rejected attempt at anonymous connection for write"));
           this->saved_nonce = id("");
           return false;
         }
-      
+
       if (this->role == sink_role)
         {
-          W(F("rejected attempt at anonymous connection while running as sink\n"));
+          W(F("rejected attempt at anonymous connection while running as sink"));
           this->saved_nonce = id("");
           return false;
         }
@@ -1382,13 +1382,13 @@ session::process_anonymous_cmd(protocol_role their_role,
 
   if (app.use_transport_auth)
     {
-      P(F("allowed anonymous read permission for '%s' excluding '%s'\n")
+      P(F("allowed anonymous read permission for '%s' excluding '%s'")
         % their_include_pattern % their_exclude_pattern);
       this->role = source_role;
     }
   else
     {
-      P(F("allowed anonymous read/write permission for '%s' excluding '%s'\n")
+      P(F("allowed anonymous read/write permission for '%s' excluding '%s'")
         % their_include_pattern % their_exclude_pattern);
       assume_corresponding_role(their_role);
     }
@@ -1410,15 +1410,15 @@ session::assume_corresponding_role(protocol_role their_role)
       I(this->role != source_role);
       this->role = sink_role;
       break;
-      
+
     case source_and_sink_role:
       I(this->role == source_and_sink_role);
       break;
-      
+
     case sink_role:
       I(this->role != sink_role);
       this->role = source_role;
-      break;          
+      break;
     }
 }
 
@@ -1432,18 +1432,18 @@ session::process_auth_cmd(protocol_role their_role,
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
-  
+
   hexenc<id> their_key_hash;
   encode_hexenc(client, their_key_hash);
   set<utf8> ok_branches;
   vector<string> branchnames;
   get_branches(app, branchnames);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
-  
+
   // Check that they replied with the nonce we asked for.
   if (!(nonce1 == this->saved_nonce))
     {
-      W(F("detected replay attack in auth netcmd\n"));
+      W(F("detected replay attack in auth netcmd"));
       this->saved_nonce = id("");
       return false;
     }
@@ -1465,12 +1465,12 @@ session::process_auth_cmd(protocol_role their_role,
       // have the private key that goes with it.
       if (!app.keys.try_ensure_in_db(their_key_hash))
         {
-          W(F("remote public key hash '%s' is unknown\n") % their_key_hash);
+          W(F("remote public key hash '%s' is unknown") % their_key_hash);
           this->saved_nonce = id("");
           return false;
         }
     }
-  
+
   // Get their public key.
   rsa_keypair_id their_id;
   base64<rsa_pub_key> their_key;
@@ -1482,7 +1482,7 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (this->role != source_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink\n") 
+          W(F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink")
             % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
@@ -1502,7 +1502,7 @@ session::process_auth_cmd(protocol_role their_role,
             }
           else if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
             {
-              W(F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'\n") 
+              W(F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")
                 % their_id % their_include_pattern % their_exclude_pattern % *i);
 
               error((F("access to branch '%s' denied by server") % *i).str());
@@ -1515,7 +1515,7 @@ session::process_auth_cmd(protocol_role their_role,
 
   // If we're source_and_sink_role, continue even with no branches readable
   // eg. serve --db=empty.db
-  P(F("allowed '%s' read permission for '%s' excluding '%s'\n")
+  P(F("allowed '%s' read permission for '%s' excluding '%s'")
     % their_id % their_include_pattern % their_exclude_pattern);
 
   // Client as source, server as sink (writing).
@@ -1524,7 +1524,7 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source\n")
+          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source")
             % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
@@ -1532,13 +1532,13 @@ session::process_auth_cmd(protocol_role their_role,
 
       if (!app.lua.hook_get_netsync_write_permitted(their_id))
         {
-          W(F("denied '%s' write permission for '%s' excluding '%s'\n")
+          W(F("denied '%s' write permission for '%s' excluding '%s'")
             % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
           return false;
         }
 
-      P(F("allowed '%s' write permission for '%s' excluding '%s'\n")
+      P(F("allowed '%s' write permission for '%s' excluding '%s'")
         % their_id % their_include_pattern % their_exclude_pattern);
     }
 
@@ -1553,7 +1553,7 @@ session::process_auth_cmd(protocol_role their_role,
   if (check_signature(app, their_id, their_key, nonce1(), sig))
     {
       // Get our private key and sign back.
-      L(FL("client signature OK, accepting authentication\n"));
+      L(FL("client signature OK, accepting authentication"));
       this->authenticated = true;
       this->remote_peer_key_name = their_id;
 
@@ -1562,8 +1562,8 @@ session::process_auth_cmd(protocol_role their_role,
     }
   else
     {
-      W(F("bad client signature\n"));         
-    }  
+      W(F("bad client signature"));
+    }
   return false;
 }
 
@@ -1572,27 +1572,27 @@ session::process_refine_cmd(refinement_type ty, merkle_node const & node)
 {
   string typestr;
   netcmd_item_type_to_string(node.type, typestr);
-  L(FL("processing refine cmd for %s node at level %d\n")
+  L(FL("processing refine cmd for %s node at level %d")
     % typestr % node.level);
 
   switch (node.type)
-    {    
+    {
     case file_item:
-      W(F("Unexpected 'refine' command on non-refined item type\n"));
+      W(F("Unexpected 'refine' command on non-refined item type"));
       break;
-      
+
     case key_item:
       key_refiner.process_refinement_command(ty, node);
       break;
-      
+
     case revision_item:
       rev_refiner.process_refinement_command(ty, node);
       break;
-      
+
     case cert_item:
       cert_refiner.process_refinement_command(ty, node);
       break;
-      
+
     case epoch_item:
       epoch_refiner.process_refinement_command(ty, node);
       break;
@@ -1600,8 +1600,8 @@ session::process_refine_cmd(refinement_type ty, merkle_node const & node)
   return true;
 }
 
-bool 
-session::process_bye_cmd(u8 phase, 
+bool
+session::process_bye_cmd(u8 phase,
                          transaction_guard & guard)
 {
 
@@ -1615,16 +1615,16 @@ session::process_bye_cmd(u8 phase,
 // 0. [refinement, data, deltas, etc.]
 //                                        client: C_SHUTDOWN
 //                                        (client checkpoints here)
-// 1. client -> "bye 0"                   
+// 1. client -> "bye 0"
 // 2.           "bye 0"  -> server
 //                                        server: S_SHUTDOWN
 //                                        (server checkpoints here)
-// 3.           "bye 1"  <- server        
-// 4. client <- "bye 1"              
+// 3.           "bye 1"  <- server
+// 4. client <- "bye 1"
 //                                        client: C_CONFIRMED
-// 5. client -> "bye 2"                   
+// 5. client -> "bye 2"
 // 6.           "bye 2"  -> server
-//                                        server: S_CONFIRMED     
+//                                        server: S_CONFIRMED
 // 7. [server drops connection]
 //
 //
@@ -1641,7 +1641,7 @@ session::process_bye_cmd(u8 phase,
   switch (phase)
     {
     case 0:
-      if (voice == server_voice && 
+      if (voice == server_voice &&
           protocol_state == working_state)
         {
           protocol_state = shutdown_state;
@@ -1653,7 +1653,7 @@ session::process_bye_cmd(u8 phase,
       break;
 
     case 1:
-      if (voice == client_voice && 
+      if (voice == client_voice &&
           protocol_state == shutdown_state)
         {
           protocol_state = confirmed_state;
@@ -1664,7 +1664,7 @@ session::process_bye_cmd(u8 phase,
       break;
 
     case 2:
-      if (voice == server_voice && 
+      if (voice == server_voice &&
           protocol_state == shutdown_state)
         {
           protocol_state = confirmed_state;
@@ -1681,32 +1681,32 @@ session::process_bye_cmd(u8 phase,
   return true;
 }
 
-bool 
+bool
 session::process_done_cmd(netcmd_item_type type, size_t n_items)
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   L(FL("received 'done' command for %s (%s items)") % typestr % n_items);
   switch (type)
-    {    
+    {
     case file_item:
-      W(F("Unexpected 'done' command on non-refined item type\n"));
+      W(F("Unexpected 'done' command on non-refined item type"));
       break;
-      
+
     case key_item:
       key_refiner.process_done_command(n_items);
       if (key_refiner.done && role != sink_role)
         send_all_data(key_item, key_refiner.items_to_send);
       break;
-      
+
     case revision_item:
       rev_refiner.process_done_command(n_items);
       break;
-      
+
     case cert_item:
       cert_refiner.process_done_command(n_items);
       break;
-      
+
     case epoch_item:
       epoch_refiner.process_done_command(n_items);
       if (epoch_refiner.done)
@@ -1725,8 +1725,8 @@ session::respond_to_confirm_cmd()
   epoch_refiner.begin_refinement();
 }
 
-bool 
-session::data_exists(netcmd_item_type type, 
+bool
+session::data_exists(netcmd_item_type type,
                      id const & item)
 {
   hexenc<id> hitem;
@@ -1734,26 +1734,26 @@ session::data_exists(netcmd_item_type type,
   switch (type)
     {
     case key_item:
-      return key_refiner.local_item_exists(item) 
+      return key_refiner.local_item_exists(item)
         || app.db.public_key_exists(hitem);
     case file_item:
       return app.db.file_version_exists(file_id(hitem));
     case revision_item:
-      return rev_refiner.local_item_exists(item) 
+      return rev_refiner.local_item_exists(item)
         || app.db.revision_exists(revision_id(hitem));
     case cert_item:
-      return cert_refiner.local_item_exists(item) 
+      return cert_refiner.local_item_exists(item)
         || app.db.revision_cert_exists(hitem);
     case epoch_item:
-      return epoch_refiner.local_item_exists(item) 
+      return epoch_refiner.local_item_exists(item)
         || app.db.epoch_exists(epoch_id(hitem));
     }
   return false;
 }
 
-void 
-session::load_data(netcmd_item_type type, 
-                   id const & item, 
+void
+session::load_data(netcmd_item_type type,
+                   id const & item,
                    string & out)
 {
   string typestr;
@@ -1780,7 +1780,7 @@ session::load_data(netcmd_item_type type,
         rsa_keypair_id keyid;
         base64<rsa_pub_key> pub_encoded;
         app.db.get_pubkey(hitem, keyid, pub_encoded);
-        L(FL("public key '%s' is also called '%s'\n") % hitem % keyid);
+        L(FL("public key '%s' is also called '%s'") % hitem % keyid);
         write_pubkey(keyid, pub_encoded, out);
       }
       break;
@@ -1793,7 +1793,7 @@ session::load_data(netcmd_item_type type,
         out = mdat.inner()();
       }
       break;
-      
+
     case file_item:
       {
         file_data fdat;
@@ -1814,11 +1814,11 @@ session::load_data(netcmd_item_type type,
     }
 }
 
-bool 
+bool
 session::process_data_cmd(netcmd_item_type type,
-                          id const & item, 
+                          id const & item,
                           string const & dat)
-{  
+{
   hexenc<id> hitem;
   encode_hexenc(item, hitem);
 
@@ -1828,7 +1828,7 @@ session::process_data_cmd(netcmd_item_type type,
   note_item_arrived(type, item);
   if (data_exists(type, item))
     {
-      L(FL("%s '%s' already exists in our database\n") % typestr % hitem);
+      L(FL("%s '%s' already exists in our database") % typestr % hitem);
       return true;
     }
 
@@ -1839,19 +1839,19 @@ session::process_data_cmd(netcmd_item_type type,
         cert_value branch;
         epoch_data epoch;
         read_epoch(dat, branch, epoch);
-        L(FL("received epoch %s for branch %s\n") % epoch % branch);
+        L(FL("received epoch %s for branch %s") % epoch % branch);
         map<cert_value, epoch_data> epochs;
         app.db.get_epochs(epochs);
         map<cert_value, epoch_data>::const_iterator i;
         i = epochs.find(branch);
         if (i == epochs.end())
           {
-            L(FL("branch %s has no epoch; setting epoch to %s\n") % branch % epoch);
+            L(FL("branch %s has no epoch; setting epoch to %s") % branch % epoch);
             app.db.set_epoch(branch, epoch);
           }
         else
           {
-            L(FL("branch %s already has an epoch; checking\n") % branch);
+            L(FL("branch %s already has an epoch; checking") % branch);
             // If we get here, then we know that the epoch must be
             // different, because if it were the same then the
             // if (epoch_exists()) branch up above would have been taken.
@@ -1859,7 +1859,7 @@ session::process_data_cmd(netcmd_item_type type,
             // hashing or something, which is very dangerous, so play it
             // safe...
             I(!(i->second == epoch));
-            
+
             // It is safe to call 'error' here, because if we get here,
             // then the current netcmd packet cannot possibly have
             // written anything to the database.
@@ -1872,7 +1872,7 @@ session::process_data_cmd(netcmd_item_type type,
       }
       maybe_note_epochs_finished();
       break;
-      
+
     case key_item:
       {
         rsa_keypair_id keyid;
@@ -1882,7 +1882,7 @@ session::process_data_cmd(netcmd_item_type type,
         key_hash_code(keyid, pub, tmp);
         if (! (tmp == hitem))
           throw bad_decode(F("hash check failed for public key '%s' (%s);"
-                             " wanted '%s' got '%s'")  
+                             " wanted '%s' got '%s'")
                            % hitem % keyid % hitem % tmp);
         this->dbw.consume_public_key(keyid, pub);
       }
@@ -1902,14 +1902,14 @@ session::process_data_cmd(netcmd_item_type type,
 
     case revision_item:
       {
-        L(FL("received revision '%s'\n") % hitem);
+        L(FL("received revision '%s'") % hitem);
         this->dbw.consume_revision_data(revision_id(hitem), revision_data(dat));
       }
       break;
-      
+
     case file_item:
       {
-        L(FL("received file '%s'\n") % hitem);
+        L(FL("received file '%s'") % hitem);
         this->dbw.consume_file_data(file_id(hitem), file_data(dat));
       }
       break;
@@ -1917,10 +1917,10 @@ session::process_data_cmd(netcmd_item_type type,
   return true;
 }
 
-bool 
+bool
 session::process_delta_cmd(netcmd_item_type type,
-                           id const & base, 
-                           id const & ident, 
+                           id const & base,
+                           id const & ident,
                            delta const & del)
 {
   string typestr;
@@ -1938,14 +1938,14 @@ session::process_delta_cmd(netcmd_item_type type,
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
-        this->dbw.consume_file_delta(src_file, 
+        this->dbw.consume_file_delta(src_file,
                                      dst_file,
                                      file_delta(del));
       }
       break;
-      
+
     default:
-      L(FL("ignoring delta received for item type %s\n") % typestr);
+      L(FL("ignoring delta received for item type %s") % typestr);
       break;
     }
   return true;
@@ -1978,9 +1978,9 @@ session::send_all_data(netcmd_item_type ty, set<id> const & items)
   // Use temporary; passed arg will be invalidated during iteration.
   set<id> tmp = items;
 
-  for (set<id>::const_iterator i = tmp.begin(); 
+  for (set<id>::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
-    {  
+    {
       hexenc<id> hitem;
       encode_hexenc(*i, hitem);
 
@@ -1993,11 +1993,11 @@ session::send_all_data(netcmd_item_type ty, set<id> const & items)
     }
 }
 
-bool 
+bool
 session::dispatch_payload(netcmd const & cmd,
                           transaction_guard & guard)
 {
-  
+
   switch (cmd.get_cmd_code())
     {
 
@@ -2034,7 +2034,7 @@ session::dispatch_payload(netcmd const & cmd,
       require(! authenticated, "anonymous netcmd received when not authenticated");
       require(voice == server_voice, "anonymous netcmd received in server voice");
       require(role == source_role ||
-              role == source_and_sink_role, 
+              role == source_and_sink_role,
               "anonymous netcmd received in source or source/sink role");
       {
         protocol_role role;
@@ -2124,7 +2124,7 @@ session::dispatch_payload(netcmd const & cmd,
     case data_cmd:
       require(authenticated, "data netcmd received when not authenticated");
       require(role == sink_role ||
-              role == source_and_sink_role, 
+              role == source_and_sink_role,
               "data netcmd received in source or source/sink role");
       {
         netcmd_item_type type;
@@ -2138,7 +2138,7 @@ session::dispatch_payload(netcmd const & cmd,
     case delta_cmd:
       require(authenticated, "delta netcmd received when not authenticated");
       require(role == sink_role ||
-              role == source_and_sink_role, 
+              role == source_and_sink_role,
               "delta netcmd received in source or source/sink role");
       {
         netcmd_item_type type;
@@ -2147,7 +2147,7 @@ session::dispatch_payload(netcmd const & cmd,
         cmd.read_delta_cmd(type, base, ident, del);
         return process_delta_cmd(type, base, ident, del);
       }
-      break;      
+      break;
 
     case usher_cmd:
       {
@@ -2165,7 +2165,7 @@ session::dispatch_payload(netcmd const & cmd,
 }
 
 // This kicks off the whole cascade starting from "hello".
-void 
+void
 session::begin_service()
 {
   keypair kp;
@@ -2174,7 +2174,7 @@ session::begin_service()
   queue_hello_cmd(app.signing_key, kp.pub, mk_nonce());
 }
 
-void 
+void
 session::maybe_step()
 {
   while (done_all_refinements()
@@ -2185,7 +2185,7 @@ session::maybe_step()
     }
 }
 
-void 
+void
 session::maybe_say_goodbye(transaction_guard & guard)
 {
   if (voice == client_voice
@@ -2198,14 +2198,14 @@ session::maybe_say_goodbye(transaction_guard & guard)
     }
 }
 
-bool 
+bool
 session::arm()
 {
   if (!armed)
     {
       // Don't pack the buffer unnecessarily.
       if (outbuf_size > constants::bufsz * 10)
-        return false; 
+        return false;
 
       if (cmd.read(inbuf, read_hmac))
         {
@@ -2213,19 +2213,19 @@ session::arm()
         }
     }
   return armed;
-}      
+}
 
 bool session::process(transaction_guard & guard)
 {
   if (encountered_error)
     return true;
-  try 
+  try
     {
       if (!arm())
         return true;
-      
+
       armed = false;
-      L(FL("processing %d byte input buffer from peer %s\n") 
+      L(FL("processing %d byte input buffer from peer %s")
         % inbuf.size() % peer_id);
 
       size_t sz = cmd.encoded_size();
@@ -2236,21 +2236,21 @@ bool session::process(transaction_guard & guard)
             "after netcmd dispatch\n") % peer_id);
 
       guard.maybe_checkpoint(sz);
-      
+
       if (!ret)
-        L(FL("finishing processing with '%d' packet") 
+        L(FL("finishing processing with '%d' packet")
           % cmd.get_cmd_code());
       return ret;
     }
   catch (bad_decode & bd)
     {
-      W(F("protocol error while processing peer %s: '%s'\n") 
+      W(F("protocol error while processing peer %s: '%s'")
         % peer_id % bd.what);
       return false;
     }
   catch (netsync_error & err)
     {
-      W(F("error: %s\n") % err.msg);
+      W(F("error: %s") % err.msg);
       queue_error_cmd(err.msg);
       encountered_error = true;
       return true; // Don't terminate until we've send the error_cmd.
@@ -2258,7 +2258,7 @@ bool session::process(transaction_guard & guard)
 }
 
 
-static shared_ptr<Netxx::StreamBase> 
+static shared_ptr<Netxx::StreamBase>
 build_stream_to_server(app_state & app,
                        utf8 const & include_pattern,
                        utf8 const & exclude_pattern,
@@ -2269,8 +2269,8 @@ build_stream_to_server(app_state & app,
   shared_ptr<Netxx::StreamBase> server;
   uri u;
   vector<string> argv;
-  if (parse_uri(address(), u) 
-      && app.lua.hook_get_netsync_connect_command(u, 
+  if (parse_uri(address(), u)
+      && app.lua.hook_get_netsync_connect_command(u,
                                                   include_pattern(),
                                                   exclude_pattern(),
                                                   global_sanity.debug,
@@ -2282,23 +2282,23 @@ build_stream_to_server(app_state & app,
       app.use_transport_auth = app.lua.hook_use_transport_auth(u);
       return shared_ptr<Netxx::StreamBase>
         (new Netxx::PipeStream(cmd, argv));
-      
+
     }
-  else 
-    { 
+  else
+    {
 #ifdef USE_IPV6
       bool use_ipv6=true;
 #else
       bool use_ipv6=false;
 #endif
-      Netxx::Address addr(address().c_str(), 
+      Netxx::Address addr(address().c_str(),
                           default_port, use_ipv6);
       return shared_ptr<Netxx::StreamBase>
         (new Netxx::Stream(addr, timeout));
-    }  
+    }
 }
 
-static void 
+static void
 call_server(protocol_role role,
             utf8 const & include_pattern,
             utf8 const & exclude_pattern,
@@ -2314,13 +2314,13 @@ call_server(protocol_role role,
 
   // FIXME: split into labels and convert to ace here.
 
-  P(F("connecting to %s\n") % address());
+  P(F("connecting to %s") % address());
 
-  shared_ptr<Netxx::StreamBase> server 
-    = build_stream_to_server(app, 
+  shared_ptr<Netxx::StreamBase> server
+    = build_stream_to_server(app,
                              include_pattern,
                              exclude_pattern,
-                             address, default_port, 
+                             address, default_port,
                              timeout);
 
 
@@ -2329,21 +2329,21 @@ call_server(protocol_role role,
   Netxx::SockOpt socket_options(server->get_socketfd(), false);
   socket_options.set_non_blocking();
 
-  session sess(role, client_voice, 
-               include_pattern, 
+  session sess(role, client_voice,
+               include_pattern,
                exclude_pattern,
                app, address(), server);
 
   while (true)
-    {       
+    {
       bool armed = false;
-      try 
+      try
         {
           armed = sess.arm();
         }
       catch (bad_decode & bd)
         {
-          E(false, F("protocol error while processing peer %s: '%s'\n") 
+          E(false, F("protocol error while processing peer %s: '%s'")
             % sess.peer_id % bd.what);
         }
 
@@ -2355,11 +2355,11 @@ call_server(protocol_role role,
       Netxx::Probe::result_type res = probe.ready(armed ? instant : timeout);
       Netxx::Probe::ready_type event = res.second;
       Netxx::socket_type fd = res.first;
-      
-      if (fd == -1 && !armed) 
+
+      if (fd == -1 && !armed)
         {
           E(false, (F("timed out waiting for I/O with "
-                      "peer %s, disconnecting\n") 
+                      "peer %s, disconnecting\n")
                     % sess.peer_id));
         }
 
@@ -2367,7 +2367,7 @@ call_server(protocol_role role,
 
       if (event & Netxx::Probe::ready_read)
         all_io_clean = all_io_clean && sess.read_some();
-      
+
       if (event & Netxx::Probe::ready_write)
         all_io_clean = all_io_clean && sess.write_some();
 
@@ -2376,13 +2376,13 @@ call_server(protocol_role role,
           {
             // Commit whatever work we managed to accomplish anyways.
             guard.commit();
-            
+
             // We failed during processing. This should only happen in
             // client voice when we have a decode exception, or received an
             // error from our server (which is translated to a decode
             // exception). We call these cases E() errors.
             E(false, F("processing failure while talking to "
-                       "peer %s, disconnecting\n") 
+                       "peer %s, disconnecting\n")
               % sess.peer_id);
             return;
           }
@@ -2395,22 +2395,22 @@ call_server(protocol_role role,
           // We had an I/O error. We must decide if this represents a
           // user-reported error or a clean disconnect. See protocol
           // state diagram in session::process_bye_cmd.
-          
+
           if (sess.protocol_state == session::confirmed_state)
-            {          
-              P(F("successful exchange with %s\n") 
+            {
+              P(F("successful exchange with %s")
                 % sess.peer_id);
               return;
             }
           else if (sess.encountered_error)
             {
-              P(F("peer %s disconnected after we informed them of error\n") 
+              P(F("peer %s disconnected after we informed them of error")
                 % sess.peer_id);
               return;
             }
           else
             E(false, (F("I/O failure while talking to "
-                        "peer %s, disconnecting\n") 
+                        "peer %s, disconnecting\n")
                       % sess.peer_id));
         }
     }
@@ -2422,13 +2422,13 @@ drop_session_associated_with_fd(map<Netxx::socket_type, shared_ptr<session> > & 
 {
   // This is a bit of a hack. Initially all "file descriptors" in
   // netsync were full duplex, so we could get away with indexing
-  // sessions by their file descriptor.  
+  // sessions by their file descriptor.
   //
   // When using pipes in unix, it's no longer true: a session gets
   // entered in the session map under its read pipe fd *and* its write
   // pipe fd. When we're in such a situation the socket fd is "-1" and
   // we downcast to a PipeStream and use its read+write fds.
-  // 
+  //
   // When using pipes in windows, we use a full duplex pipe (named
   // pipe) so the socket-like abstraction holds.
 
@@ -2441,9 +2441,9 @@ drop_session_associated_with_fd(map<Netxx::socket_type, shared_ptr<session> > & 
     {
       sessions.erase(fd);
     }
-  else 
+  else
     {
-      shared_ptr<Netxx::PipeStream> pipe = 
+      shared_ptr<Netxx::PipeStream> pipe =
         boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
       I(static_cast<bool>(pipe));
       I(pipe->get_writefd() != -1);
@@ -2453,32 +2453,32 @@ drop_session_associated_with_fd(map<Netxx::socket_type, shared_ptr<session> > & 
     }
 }
 
-static void 
+static void
 arm_sessions_and_calculate_probe(Netxx::PipeCompatibleProbe & probe,
                                  map<Netxx::socket_type, shared_ptr<session> > & sessions,
                                  set<Netxx::socket_type> & armed_sessions)
 {
   set<Netxx::socket_type> arm_failed;
-  for (map<Netxx::socket_type, 
+  for (map<Netxx::socket_type,
          shared_ptr<session> >::const_iterator i = sessions.begin();
        i != sessions.end(); ++i)
     {
       i->second->maybe_step();
-      try 
+      try
         {
           if (i->second->arm())
             {
-              L(FL("fd %d is armed\n") % i->first);
+              L(FL("fd %d is armed") % i->first);
               armed_sessions.insert(i->first);
             }
           probe.add(*i->second->str, i->second->which_events());
         }
       catch (bad_decode & bd)
         {
-          W(F("protocol error while processing peer %s: '%s', marking as bad\n") 
+          W(F("protocol error while processing peer %s: '%s', marking as bad")
             % i->second->peer_id % bd.what);
           arm_failed.insert(i->first);
-        }         
+        }
     }
   for (set<Netxx::socket_type>::const_iterator i = arm_failed.begin();
        i != arm_failed.end(); ++i)
@@ -2497,25 +2497,25 @@ handle_new_connection(Netxx::Address & addr,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
                       app_state & app)
 {
-  L(FL("accepting new connection on %s : %s\n") 
+  L(FL("accepting new connection on %s : %s")
     % (addr.get_name()?addr.get_name():"") % lexical_cast<string>(addr.get_port()));
   Netxx::Peer client = server.accept_connection();
-  
-  if (!client) 
+
+  if (!client)
     {
-      L(FL("accept() returned a dead client\n"));
+      L(FL("accept() returned a dead client"));
     }
   else
     {
-      P(F("accepted new client connection from %s : %s\n")
+      P(F("accepted new client connection from %s : %s")
         % client.get_address() % lexical_cast<string>(client.get_port()));
 
       // 'false' here means not to revert changes when the SockOpt
       // goes out of scope.
       Netxx::SockOpt socket_options(client.get_socketfd(), false);
       socket_options.set_non_blocking();
-      
-      shared_ptr<Netxx::Stream> str = 
+
+      shared_ptr<Netxx::Stream> str =
         shared_ptr<Netxx::Stream>
         (new Netxx::Stream(client.get_socketfd(), timeout));
 
@@ -2528,7 +2528,7 @@ handle_new_connection(Netxx::Address & addr,
     }
 }
 
-static void 
+static void
 handle_read_available(Netxx::socket_type fd,
                       shared_ptr<session> sess,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
@@ -2544,7 +2544,7 @@ handle_read_available(Netxx::socket_type fd,
         }
       catch (bad_decode & bd)
         {
-          W(F("protocol error while processing peer %s: '%s', disconnecting\n") 
+          W(F("protocol error while processing peer %s: '%s', disconnecting")
             % sess->peer_id % bd.what);
           drop_session_associated_with_fd(sessions, fd);
           live_p = false;
@@ -2555,18 +2555,18 @@ handle_read_available(Netxx::socket_type fd,
       switch (sess->protocol_state)
         {
         case session::working_state:
-          P(F("peer %s read failed in working state (error)\n") 
+          P(F("peer %s read failed in working state (error)")
             % sess->peer_id);
           break;
 
         case session::shutdown_state:
           P(F("peer %s read failed in shutdown state "
-              "(possibly client misreported error)\n") 
+              "(possibly client misreported error)\n")
             % sess->peer_id);
           break;
 
         case session::confirmed_state:
-          P(F("peer %s read failed in confirmed state (success)\n") 
+          P(F("peer %s read failed in confirmed state (success)")
             % sess->peer_id);
           break;
         }
@@ -2576,7 +2576,7 @@ handle_read_available(Netxx::socket_type fd,
 }
 
 
-static void 
+static void
 handle_write_available(Netxx::socket_type fd,
                        shared_ptr<session> sess,
                        map<Netxx::socket_type, shared_ptr<session> > & sessions,
@@ -2587,18 +2587,18 @@ handle_write_available(Netxx::socket_type fd,
       switch (sess->protocol_state)
         {
         case session::working_state:
-          P(F("peer %s write failed in working state (error)\n") 
+          P(F("peer %s write failed in working state (error)")
             % sess->peer_id);
           break;
 
         case session::shutdown_state:
           P(F("peer %s write failed in shutdown state "
-              "(possibly client misreported error)\n") 
+              "(possibly client misreported error)\n")
             % sess->peer_id);
           break;
 
         case session::confirmed_state:
-          P(F("peer %s write failed in confirmed state (success)\n") 
+          P(F("peer %s write failed in confirmed state (success)")
             % sess->peer_id);
           break;
         }
@@ -2625,7 +2625,7 @@ process_armed_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
           shared_ptr<session> sess = j->second;
           if (!sess->process(guard))
             {
-              P(F("peer %s processing finished, disconnecting\n") 
+              P(F("peer %s processing finished, disconnecting")
                 % sess->peer_id);
               drop_session_associated_with_fd(sessions, *i);
             }
@@ -2641,13 +2641,13 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
   // or who have exchanged all items and flushed their output buffers.
   set<Netxx::socket_type> dead_clients;
   time_t now = ::time(NULL);
-  for (map<Netxx::socket_type, shared_ptr<session> >::const_iterator 
+  for (map<Netxx::socket_type, shared_ptr<session> >::const_iterator
          i = sessions.begin(); i != sessions.end(); ++i)
     {
-      if (static_cast<unsigned long>(i->second->last_io_time + timeout_seconds) 
+      if (static_cast<unsigned long>(i->second->last_io_time + timeout_seconds)
           < static_cast<unsigned long>(now))
         {
-          P(F("fd %d (peer %s) has been idle too long, disconnecting\n") 
+          P(F("fd %d (peer %s) has been idle too long, disconnecting")
             % i->first % i->second->peer_id);
           dead_clients.insert(i->first);
         }
@@ -2659,7 +2659,7 @@ reap_dead_sessions(map<Netxx::socket_type, shared_ptr<session> > & sessions,
     }
 }
 
-static void 
+static void
 serve_connections(protocol_role role,
                   utf8 const & include_pattern,
                   utf8 const & exclude_pattern,
@@ -2669,11 +2669,11 @@ serve_connections(protocol_role role,
                   unsigned long timeout_seconds,
                   unsigned long session_limit)
 {
-  Netxx::PipeCompatibleProbe probe;  
+  Netxx::PipeCompatibleProbe probe;
 
-  Netxx::Timeout 
-    forever, 
-    timeout(static_cast<long>(timeout_seconds)), 
+  Netxx::Timeout
+    forever,
+    timeout(static_cast<long>(timeout_seconds)),
     instant(0,1);
 
   if (!app.bind_port().empty())
@@ -2715,13 +2715,13 @@ serve_connections(protocol_role role,
           try_again=false;
 
           const char *name = addr.get_name();
-          P(F("beginning service on %s : %s\n")
+          P(F("beginning service on %s : %s")
             % (name != NULL ? name : _("<all interfaces>"))
             % lexical_cast<string>(addr.get_port()));
-  
+
           map<Netxx::socket_type, shared_ptr<session> > sessions;
           set<Netxx::socket_type> armed_sessions;
-  
+
           shared_ptr<transaction_guard> guard;
 
           while (true)
@@ -2737,7 +2737,7 @@ serve_connections(protocol_role role,
 
               arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
 
-              L(FL("i/o probe with %d armed\n") % armed_sessions.size());
+              L(FL("i/o probe with %d armed") % armed_sessions.size());
               Netxx::socket_type fd;
               Netxx::Timeout how_long;
               if (sessions.empty())
@@ -2757,20 +2757,20 @@ serve_connections(protocol_role role,
                     guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
 
                   I(guard);
-          
+
                   if (fd == -1)
                     {
                       if (armed_sessions.empty())
-                        L(FL("timed out waiting for I/O (listening on %s : %s)\n")
+                        L(FL("timed out waiting for I/O (listening on %s : %s)")
                           % addr.get_name() % lexical_cast<string>(addr.get_port()));
                     }
-          
+
                   // we either got a new connection
                   else if (fd == server)
                     handle_new_connection(addr, server, timeout, role,
                                           include_pattern, exclude_pattern,
                                           sessions, app);
-          
+
                   // or an existing session woke up
                   else
                     {
@@ -2778,7 +2778,7 @@ serve_connections(protocol_role role,
                       i = sessions.find(fd);
                       if (i == sessions.end())
                         {
-                          L(FL("got woken up for action on unknown fd %d\n") % fd);
+                          L(FL("got woken up for action on unknown fd %d") % fd);
                         }
                       else
                         {
@@ -2789,13 +2789,13 @@ serve_connections(protocol_role role,
                           if (event & Netxx::Probe::ready_read)
                             handle_read_available(fd, sess, sessions,
                                                   armed_sessions, live_p);
-                    
+
                           if (live_p && (event & Netxx::Probe::ready_write))
                             handle_write_available(fd, sess, sessions, live_p);
-                    
+
                           if (live_p && (event & Netxx::Probe::ready_oobd))
                             {
-                              P(F("got OOB from peer %s, disconnecting\n")
+                              P(F("got OOB from peer %s, disconnecting")
                                 % sess->peer_id);
                               drop_session_associated_with_fd(sessions, fd);
                             }
@@ -2844,30 +2844,30 @@ serve_connections(protocol_role role,
   while(try_again);
   }
 
-static void 
+static void
 serve_single_connection(shared_ptr<session> sess,
                         unsigned long timeout_seconds)
 {
-  Netxx::PipeCompatibleProbe probe;  
-  
-  Netxx::Timeout 
-    forever, 
-    timeout(static_cast<long>(timeout_seconds)), 
+  Netxx::PipeCompatibleProbe probe;
+
+  Netxx::Timeout
+    forever,
+    timeout(static_cast<long>(timeout_seconds)),
     instant(0,1);
-  
-  P(F("beginning service on %s\n") % sess->peer_id);
-  
+
+  P(F("beginning service on %s") % sess->peer_id);
+
   sess->begin_service();
-  
+
   transaction_guard guard(sess->app.db);
 
   map<Netxx::socket_type, shared_ptr<session> > sessions;
   set<Netxx::socket_type> armed_sessions;
-  
-  if (sess->str->get_socketfd() == -1) 
+
+  if (sess->str->get_socketfd() == -1)
     {
       // Unix pipes are non-duplex, have two filedescriptors
-      shared_ptr<Netxx::PipeStream> pipe = 
+      shared_ptr<Netxx::PipeStream> pipe =
         boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
       I(pipe);
       sessions[pipe->get_writefd()]=sess;
@@ -2875,27 +2875,27 @@ serve_single_connection(shared_ptr<session> sess,
     }
   else
     sessions[sess->str->get_socketfd()]=sess;
-  
+
   while (!sessions.empty())
     {
       probe.clear();
       armed_sessions.clear();
-      
+
       arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
-      
-      L(FL("i/o probe with %d armed\n") % armed_sessions.size());      
-      Netxx::Probe::result_type res = probe.ready((armed_sessions.empty() ? timeout 
+
+      L(FL("i/o probe with %d armed") % armed_sessions.size());
+      Netxx::Probe::result_type res = probe.ready((armed_sessions.empty() ? timeout
                                                    : instant));
       Netxx::Probe::ready_type event = res.second;
       Netxx::socket_type fd = res.first;
-      
+
       if (fd == -1)
         {
-          if (armed_sessions.empty()) 
-            L(FL("timed out waiting for I/O (listening on %s)\n") 
+          if (armed_sessions.empty())
+            L(FL("timed out waiting for I/O (listening on %s)")
               % sess->peer_id);
         }
-      
+
       // an existing session woke up
       else
         {
@@ -2903,7 +2903,7 @@ serve_single_connection(shared_ptr<session> sess,
           i = sessions.find(fd);
           if (i == sessions.end())
             {
-              L(FL("got woken up for action on unknown fd %d\n") % fd);
+              L(FL("got woken up for action on unknown fd %d") % fd);
             }
           else
             {
@@ -2912,13 +2912,13 @@ serve_single_connection(shared_ptr<session> sess,
 
               if (event & Netxx::Probe::ready_read)
                 handle_read_available(fd, sess, sessions, armed_sessions, live_p);
-                
+
               if (live_p && (event & Netxx::Probe::ready_write))
                 handle_write_available(fd, sess, sessions, live_p);
-                
+
               if (live_p && (event & Netxx::Probe::ready_oobd))
                 {
-                  P(F("got some OOB data on fd %d (peer %s), disconnecting\n") 
+                  P(F("got some OOB data on fd %d (peer %s), disconnecting")
                     % fd % sess->peer_id);
                   drop_session_associated_with_fd(sessions, fd);
                 }
@@ -2931,11 +2931,11 @@ serve_single_connection(shared_ptr<session> sess,
 
 
 void
-insert_with_parents(revision_id rev, 
-                    refiner & ref, 
+insert_with_parents(revision_id rev,
+                    refiner & ref,
                     revision_enumerator & rev_enumerator,
                     set<revision_id> & revs,
-                    app_state & app, 
+                    app_state & app,
                     ticker & revisions_ticker)
 {
   deque<revision_id> work;
@@ -2963,11 +2963,11 @@ insert_with_parents(revision_id rev,
     }
 }
 
-void 
+void
 session::rebuild_merkle_trees(app_state & app,
                               set<utf8> const & branchnames)
 {
-  P(F("finding items to synchronize:\n"));
+  P(F("finding items to synchronize:"));
   for (set<utf8>::const_iterator i = branchnames.begin();
       i != branchnames.end(); ++i)
     L(FL("including branch %s") % *i);
@@ -2981,7 +2981,7 @@ session::rebuild_merkle_trees(app_state & app,
 
   set<revision_id> revision_ids;
   set<rsa_keypair_id> inserted_keys;
-  
+
   {
     // Get our branches
     vector<string> names;
@@ -2999,7 +2999,7 @@ session::rebuild_merkle_trees(app_state & app,
                  j != certs.end(); j++)
               {
                 revision_id rid(j->inner().ident);
-                insert_with_parents(rid, rev_refiner, rev_enumerator, 
+                insert_with_parents(rid, rev_refiner, rev_enumerator,
                                     revision_ids, app, revisions_ticker);
                 // Granch certs go in here, others later on.
                 hexenc<id> tmp;
@@ -3014,11 +3014,11 @@ session::rebuild_merkle_trees(app_state & app,
           }
       }
   }
-    
+
   {
     map<cert_value, epoch_data> epochs;
     app.db.get_epochs(epochs);
-    
+
     epoch_data epoch_zero(string(constants::epochlen, '0'));
     for (set<utf8>::const_iterator i = branchnames.begin();
          i != branchnames.end(); ++i)
@@ -3030,7 +3030,7 @@ session::rebuild_merkle_trees(app_state & app,
         // Set to zero any epoch which is not yet set.
         if (j == epochs.end())
           {
-            L(FL("setting epoch on %s to zero\n") % branch);
+            L(FL("setting epoch on %s to zero") % branch);
             epochs.insert(make_pair(branch, epoch_zero));
             app.db.set_epoch(branch, epoch_zero);
           }
@@ -3045,11 +3045,11 @@ session::rebuild_merkle_trees(app_state & app,
         epoch_refiner.note_local_item(epoch_item);
       }
   }
-  
+
   {
     typedef vector< pair<hexenc<id>,
       pair<revision_id, rsa_keypair_id> > > cert_idx;
-    
+
     cert_idx idx;
     app.db.get_revision_cert_nobranch_index(idx);
 
@@ -3063,10 +3063,10 @@ session::rebuild_merkle_trees(app_state & app,
         rsa_keypair_id const & key = i->second.second;
 
         rev_enumerator.note_cert(ident, hash);
-        
+
         if (revision_ids.find(ident) == revision_ids.end())
           continue;
-        
+
         id item;
         decode_hexenc(hash, item);
         cert_refiner.note_local_item(item);
@@ -3077,8 +3077,8 @@ session::rebuild_merkle_trees(app_state & app,
   }
 
   // Add any keys specified on the command line.
-  for (vector<rsa_keypair_id>::const_iterator key 
-         = app.keys_to_push.begin(); 
+  for (vector<rsa_keypair_id>::const_iterator key
+         = app.keys_to_push.begin();
        key != app.keys_to_push.end(); ++key)
     {
       if (inserted_keys.find(*key) == inserted_keys.end())
@@ -3104,7 +3104,7 @@ session::rebuild_merkle_trees(app_state & app,
           app.db.get_key(*key, pub_encoded);
           hexenc<id> keyhash;
           key_hash_code(*key, pub_encoded, keyhash);
-          L(FL("noting key '%s' = '%s' to send\n") % *key % keyhash);
+          L(FL("noting key '%s' = '%s' to send") % *key % keyhash);
           id key_item;
           decode_hexenc(keyhash, key_item);
           key_refiner.note_local_item(key_item);
@@ -3118,10 +3118,10 @@ session::rebuild_merkle_trees(app_state & app,
   epoch_refiner.reindex_local_items();
 }
 
-void 
-run_netsync_protocol(protocol_voice voice, 
-                     protocol_role role, 
-                     utf8 const & addr, 
+void
+run_netsync_protocol(protocol_voice voice,
+                     protocol_role role,
+                     utf8 const & addr,
                      utf8 const & include_pattern,
                      utf8 const & exclude_pattern,
                      app_state & app)
@@ -3138,38 +3138,38 @@ run_netsync_protocol(protocol_voice voice,
           "%s\n") % exclude_pattern());
     }
 
-  try 
+  try
     {
       if (voice == server_voice)
         {
           if (app.bind_stdio)
-            { 
+            {
               shared_ptr<Netxx::PipeStream> str(new Netxx::PipeStream(0,1));
-              shared_ptr<session> sess(new session(role, server_voice, 
+              shared_ptr<session> sess(new session(role, server_voice,
                                                    include_pattern, exclude_pattern,
                                                    app, "stdio", str));
               serve_single_connection(sess,constants::netsync_timeout_seconds);
             }
           else
             serve_connections(role, include_pattern, exclude_pattern, app,
-                              addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
-                              static_cast<unsigned long>(constants::netsync_timeout_seconds), 
+                              addr, static_cast<Netxx::port_type>(constants::netsync_default_port),
+                              static_cast<unsigned long>(constants::netsync_timeout_seconds),
                               static_cast<unsigned long>(constants::netsync_connection_limit));
         }
-      else    
+      else
         {
           I(voice == client_voice);
           call_server(role, include_pattern, exclude_pattern, app,
-                      addr, static_cast<Netxx::port_type>(constants::netsync_default_port), 
+                      addr, static_cast<Netxx::port_type>(constants::netsync_default_port),
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
         }
     }
   catch (Netxx::NetworkException & e)
-    {      
+    {
       throw informative_failure((F("network error: %s") % e.what()).str());
     }
   catch (Netxx::Exception & e)
-    {      
+    {
       throw oops((F("network error: %s") % e.what()).str());;
     }
 }

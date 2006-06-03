@@ -14,12 +14,12 @@ struct cleanup_ptr {
   T ptr;
   R (* cleanup)(T);
   explicit cleanup_ptr(T p, R (*c)(T)) : ptr(p), cleanup(c) {}
-  ~cleanup_ptr() 
+  ~cleanup_ptr()
   {
     if (cleanup && ptr)
       cleanup(ptr);
   }
-  T operator()() 
+  T operator()()
   {
     return ptr;
   }

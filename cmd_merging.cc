@@ -20,7 +20,7 @@ using std::vector;
 
 using boost::shared_ptr;
 
-struct update_source 
+struct update_source
   : public file_content_source
 {
   map<file_id, file_data> & temporary_store;
@@ -77,7 +77,7 @@ CMD(update, N_("workspace"), "",
   calculate_ident(r_working, r_working_id);
   I(r_working.edges.size() == 1);
   r_old_id = edge_old_revision(r_working.edges.begin());
-  make_roster_for_base_plus_cset(r_old_id, 
+  make_roster_for_base_plus_cset(r_old_id,
                                  edge_changes(r_working.edges.begin()),
                                  r_working_id,
                                  working_roster, working_mm, nis, app);
@@ -113,18 +113,18 @@ CMD(update, N_("workspace"), "",
     }
 
   notify_if_multiple_heads(app);
-  
+
   if (r_old_id == r_chosen_id)
     {
-      P(F("already up to date at %s\n") % r_old_id);
+      P(F("already up to date at %s") % r_old_id);
       // do still switch the workspace branch, in case they have used
       // update to switch branches.
       if (!app.branch_name().empty())
         app.make_branch_sticky();
       return;
     }
-  
-  P(F("selected update target %s\n") % r_chosen_id);
+
+  P(F("selected update target %s") % r_chosen_id);
 
   bool switched_branch = false;
   {
@@ -134,7 +134,7 @@ CMD(update, N_("workspace"), "",
     erase_bogus_certs(certs, app);
 
     set< utf8 > branches;
-    for (vector< revision<cert> >::const_iterator i = certs.begin(); 
+    for (vector< revision<cert> >::const_iterator i = certs.begin();
          i != certs.end(); i++)
       {
         cert_value b;
@@ -153,7 +153,7 @@ CMD(update, N_("workspace"), "",
           {
             // multiple non-matching branchnames
             string branch_list;
-            for (set<utf8>::const_iterator i = branches.begin(); 
+            for (set<utf8>::const_iterator i = branches.begin();
                  i != branches.end(); i++)
               branch_list += "\n  " + (*i)();
             N(false, F("target revision is in multiple branches:%s\n\n"
@@ -178,8 +178,8 @@ CMD(update, N_("workspace"), "",
 
   app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
-  set<revision_id> 
-    working_uncommon_ancestors, 
+  set<revision_id>
+    working_uncommon_ancestors,
     chosen_uncommon_ancestors;
 
   if (is_ancestor(r_old_id, r_chosen_id, app))
@@ -188,7 +188,7 @@ CMD(update, N_("workspace"), "",
       target_mm = chosen_mm;
       r_target_id = r_chosen_id;
       app.db.get_uncommon_ancestors(r_old_id, r_chosen_id,
-                                    working_uncommon_ancestors, 
+                                    working_uncommon_ancestors,
                                     chosen_uncommon_ancestors);
     }
   else
@@ -198,7 +198,7 @@ CMD(update, N_("workspace"), "",
       // just pick something, all that's important is that it not
       // match the work revision or any ancestors of the base revision.
       r_target_id = revision_id(hexenc<id>("5432100000000000000000000500000000000000"));
-      make_roster_for_base_plus_cset(r_old_id, 
+      make_roster_for_base_plus_cset(r_old_id,
                                      transplant,
                                      r_target_id,
                                      target_roster, target_mm, nis, app);
@@ -211,9 +211,9 @@ CMD(update, N_("workspace"), "",
 
   working_uncommon_ancestors.insert(r_working_id);
 
-  // Now merge the working roster with the chosen target. 
+  // Now merge the working roster with the chosen target.
 
-  roster_merge_result result;  
+  roster_merge_result result;
   roster_merge(working_roster, working_mm, working_uncommon_ancestors,
                target_roster, target_mm, chosen_uncommon_ancestors,
                result);
@@ -233,7 +233,7 @@ CMD(update, N_("workspace"), "",
   // we have the following
   //
   // old --> working
-  //   |         | 
+  //   |         |
   //   V         V
   //  chosen --> merged
   //
@@ -241,10 +241,10 @@ CMD(update, N_("workspace"), "",
   // - working is based on old and includes the workspace's changes
   // - chosen is the revision we're updating to and will end up in _MTN/revision
   // - merged is the merge of working and chosen
-  // 
-  // we apply the working to merged cset to the workspace 
+  //
+  // we apply the working to merged cset to the workspace
   // and write the cset from chosen to merged changeset in _MTN/work
-  
+
   cset update, remaining;
   make_cset(working_roster, merged_roster, update);
   make_cset(target_roster, merged_roster, remaining);
@@ -254,15 +254,15 @@ CMD(update, N_("workspace"), "",
   //     write_cset(update, t1);
   //     write_cset(remaining, t2);
   //     write_manifest_of_roster(merged_roster, t3);
-  //     P(F("updating workspace with [[[\n%s\n]]]\n") % t1);
-  //     P(F("leaving residual work [[[\n%s\n]]]\n") % t2);
-  //     P(F("merged roster [[[\n%s\n]]]\n") % t3);
+  //     P(F("updating workspace with [[[\n%s\n]]]") % t1);
+  //     P(F("leaving residual work [[[\n%s\n]]]") % t2);
+  //     P(F("merged roster [[[\n%s\n]]]") % t3);
   //   }
 
   update_source fsource(wca.temporary_store, app);
   editable_working_tree ewt(app, fsource);
   update.apply_to(ewt);
-  
+
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
   // is the basis of the workspace, not the workspace itself.
@@ -273,7 +273,7 @@ CMD(update, N_("workspace"), "",
     }
   if (switched_branch)
     P(F("switched branch; next commit will use branch %s") % app.branch_name());
-  P(F("updated to base revision %s\n") % r_chosen_id);
+  P(F("updated to base revision %s") % r_chosen_id);
 
   put_work_cset(remaining);
   update_any_attrs(app);
@@ -296,10 +296,10 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
   get_branch_heads(app.branch_name(), app, heads);
 
-  N(heads.size() != 0, F("branch '%s' is empty\n") % app.branch_name);
+  N(heads.size() != 0, F("branch '%s' is empty") % app.branch_name);
   if (heads.size() == 1)
     {
-      P(F("branch '%s' is already merged\n") % app.branch_name);
+      P(F("branch '%s' is already merged") % app.branch_name);
       return;
     }
 
@@ -307,18 +307,18 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   revision_id left = *i;
   revision_id ancestor;
   size_t count = 1;
-  P(F("starting with revision 1 / %d\n") % heads.size());
+  P(F("starting with revision 1 / %d") % heads.size());
   for (++i; i != heads.end(); ++i, ++count)
     {
       revision_id right = *i;
-      P(F("merging with revision %d / %d\n") % (count + 1) % heads.size());
-      P(F("[source] %s\n") % left);
-      P(F("[source] %s\n") % right);
+      P(F("merging with revision %d / %d") % (count + 1) % heads.size());
+      P(F("[source] %s") % left);
+      P(F("[source] %s") % right);
 
       revision_id merged;
       transaction_guard guard(app.db);
       interactive_merge_and_store(left, right, merged, app);
-                  
+
       // merged 1 edge; now we commit this, update merge source and
       // try next one
 
@@ -328,15 +328,15 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       string log = (FL("merge of %s\n"
 		       "     and %s\n") % left % right).str();
       cert_revision_changelog(merged, log, app, dbw);
-          
+
       guard.commit();
-      P(F("[merged] %s\n") % merged);
+      P(F("[merged] %s") % merged);
       left = merged;
     }
-  P(F("note: your workspaces have not been updated\n"));
+  P(F("note: your workspaces have not been updated"));
 }
 
-CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"), 
+CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("merge from one branch to another asymmetrically"),
     OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
 {
@@ -347,7 +347,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
   process(app, "merge_into_dir", a);
 }
 
-CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"), 
+CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("merge one branch into a subdirectory in another branch"),
     OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
 {
@@ -376,7 +376,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
   //   if dir is not the empty string, rename the root of N1 to have the name
   //   'dir' in the merged tree. (ie, it has name "basename(dir)", and its
   //   parent node is "N2.get_node(dirname(dir))")
-  
+
   set<revision_id> src_heads, dst_heads;
 
   if (args.size() != 3)
@@ -385,29 +385,29 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
   get_branch_heads(idx(args, 0)(), app, src_heads);
   get_branch_heads(idx(args, 1)(), app, dst_heads);
 
-  N(src_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 0)());
-  N(src_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 0)());
+  N(src_heads.size() != 0, F("branch '%s' is empty") % idx(args, 0)());
+  N(src_heads.size() == 1, F("branch '%s' is not merged") % idx(args, 0)());
 
-  N(dst_heads.size() != 0, F("branch '%s' is empty\n") % idx(args, 1)());
-  N(dst_heads.size() == 1, F("branch '%s' is not merged\n") % idx(args, 1)());
+  N(dst_heads.size() != 0, F("branch '%s' is empty") % idx(args, 1)());
+  N(dst_heads.size() == 1, F("branch '%s' is not merged") % idx(args, 1)());
 
   set<revision_id>::const_iterator src_i = src_heads.begin();
   set<revision_id>::const_iterator dst_i = dst_heads.begin();
-  
-  P(F("propagating %s -> %s\n") % idx(args,0) % idx(args,1));
-  P(F("[source] %s\n") % *src_i);
-  P(F("[target] %s\n") % *dst_i);
+
+  P(F("propagating %s -> %s") % idx(args,0) % idx(args,1));
+  P(F("[source] %s") % *src_i);
+  P(F("[target] %s") % *dst_i);
 
   // check for special cases
   if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app))
     {
-      P(F("branch '%s' is up-to-date with respect to branch '%s'\n")
+      P(F("branch '%s' is up-to-date with respect to branch '%s'")
           % idx(args, 1)() % idx(args, 0)());
-      P(F("no action taken\n"));
+      P(F("no action taken"));
     }
   else if (is_ancestor(*dst_i, *src_i, app))
     {
-      P(F("no merge necessary; putting %s in branch '%s'\n")
+      P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
       packet_db_writer dbw(app);
@@ -492,8 +492,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
 
       cert_revision_changelog(merged, log_message, app, dbw);
 
-      guard.commit();      
-      P(F("[merged] %s\n") % merged);
+      guard.commit();
+      P(F("[merged] %s") % merged);
     }
 }
 
@@ -511,7 +511,7 @@ CMD(explicit_merge, N_("tree"),
   complete(app, idx(args, 0)(), left);
   complete(app, idx(args, 1)(), right);
   branch = idx(args, 2)();
-  
+
   N(!(left == right),
     F("%s and %s are the same revision, aborting") % left % right);
   N(!is_ancestor(left, right, app),
@@ -520,26 +520,26 @@ CMD(explicit_merge, N_("tree"),
     F("%s is already an ancestor of %s") % right % left);
 
   // Somewhat redundant, but consistent with output of plain "merge" command.
-  P(F("[source] %s\n") % left);
-  P(F("[source] %s\n") % right);
+  P(F("[source] %s") % left);
+  P(F("[source] %s") % right);
 
   revision_id merged;
   transaction_guard guard(app.db);
   interactive_merge_and_store(left, right, merged, app);
-  
+
   packet_db_writer dbw(app);
-  
+
   cert_revision_in_branch(merged, branch, app, dbw);
-  
+
   string log = (FL("explicit_merge of '%s'\n"
 		   "              and '%s'\n"
 		   "        to branch '%s'\n")
                 % left % right % branch).str();
-  
+
   cert_revision_changelog(merged, log, app, dbw);
-  
-  guard.commit();      
-  P(F("[merged] %s\n") % merged);
+
+  guard.commit();
+  P(F("[merged] %s") % merged);
 }
 
 CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts would need to be resolved to merge the given revisions."),
@@ -560,7 +560,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"), N_("Show what conflicts wo
   app.db.get_roster(r_id, r_roster, r_marking);
   set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
   app.db.get_uncommon_ancestors(l_id, r_id,
-                                l_uncommon_ancestors, 
+                                l_uncommon_ancestors,
                                 r_uncommon_ancestors);
   roster_merge_result result;
   roster_merge(l_roster, l_marking, l_uncommon_ancestors,
@@ -588,13 +588,13 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
   get_branch_heads(app.branch_name(), app, heads);
 
   if (heads.size() == 0)
-    P(F("branch '%s' is empty\n") % app.branch_name);
+    P(F("branch '%s' is empty") % app.branch_name);
   else if (heads.size() == 1)
-    P(F("branch '%s' is currently merged:\n") % app.branch_name);
+    P(F("branch '%s' is currently merged:") % app.branch_name);
   else
-    P(F("branch '%s' is currently unmerged:\n") % app.branch_name);
-  
-  for (set<revision_id>::const_iterator i = heads.begin(); 
+    P(F("branch '%s' is currently unmerged:") % app.branch_name);
+
+  for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
     cout << describe_revision(app, *i) << "\n";
 }
@@ -608,11 +608,11 @@ CMD(get_roster, N_("debug"), N_("REVID"),
 
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
-      
+
   roster_t roster;
   marking_map mm;
   app.db.get_roster(rid, roster, mm);
-  
+
   roster_data dat;
   write_roster_and_marking(roster, mm, dat);
   cout << dat;

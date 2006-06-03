@@ -51,7 +51,7 @@ checked_globish_to_regex(string const & glob, string & regex)
   regex.clear();
   regex.reserve(glob.size() * 2);
 
-  L(FL("checked_globish_to_regex: input = '%s'\n") % glob);
+  L(FL("checked_globish_to_regex: input = '%s'") % glob);
 
   if (glob == "")
     {
@@ -61,9 +61,9 @@ checked_globish_to_regex(string const & glob, string & regex)
   for (string::const_iterator i = glob.begin(); i != glob.end(); ++i)
     {
       char c = *i;
-      
+
       N(in_braces < 5, F("braces nested too deep in pattern '%s'") % glob);
-      
+
       switch(c)
         {
         case '*':
@@ -97,11 +97,11 @@ checked_globish_to_regex(string const & glob, string & regex)
           break;
         }
     }
-  
+
   N(in_braces == 0,
     F("run-away brace expression in pattern '%s'") % glob);
 
-  L(FL("checked_globish_to_regex: output = '%s'\n") % regex);
+  L(FL("checked_globish_to_regex: output = '%s'") % regex);
 }
 
 void
@@ -143,7 +143,7 @@ globish_matcher::operator()(string const & s)
   bool inc_match = regex_match(s, r_inc);
   bool exc_match = regex_match(s, r_exc);
   bool result = inc_match && !exc_match;
-  L(FL("matching '%s' against '%s' excluding '%s': %s, %s: %s\n")
+  L(FL("matching '%s' against '%s' excluding '%s': %s, %s: %s")
     % s % r_inc % r_exc
     % (inc_match ? "included" : "not included")
     % (exc_match ? "excluded" : "not excluded")

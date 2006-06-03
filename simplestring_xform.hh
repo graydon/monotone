@@ -24,7 +24,7 @@ void join_lines(std::vector<std::string> const & in,
 void prefix_lines_with(std::string const & prefix,
                        std::string const & lines,
                        std::string & out);
-  
+
 // remove all whitespace
 std::string remove_ws(std::string const & s);
 

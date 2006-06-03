@@ -16,13 +16,13 @@
 template <typename T>
 struct cycle_detector
 {
-  
+
   typedef std::vector< T > edge_vec;
   typedef std::vector <edge_vec > edge_map;
-  typedef std::pair <typename edge_vec::const_iterator, 
+  typedef std::pair <typename edge_vec::const_iterator,
                      typename edge_vec::const_iterator> state;
   typedef std::stack <state > edge_stack;
-  
+
   edge_map edges;
   edge_stack stk;
   std::set<T> global_in_edges;
@@ -39,7 +39,7 @@ struct cycle_detector
     src_edges.push_back(dst);
     global_in_edges.insert(dst);
   }
-  
+
 
   bool edge_makes_cycle(T const & src, T const & dst)
   {
@@ -69,7 +69,7 @@ struct cycle_detector
               {
                 return true;
               }
-            if (val < edges.size() && ! edges.at(val).empty() 
+            if (val < edges.size() && ! edges.at(val).empty()
                 && visited.find(val) == visited.end())
               {
                 visited.insert(val);

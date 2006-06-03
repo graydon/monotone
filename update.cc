@@ -46,7 +46,7 @@ using std::vector;
 
 using boost::lexical_cast;
 
-static void 
+static void
 get_test_results_for_revision(revision_id const & id,
                               map<rsa_keypair_id, bool> & results,
                               app_state & app)
@@ -59,14 +59,14 @@ get_test_results_for_revision(revision_id const & id,
     {
       cert_value cv;
       decode_base64(i->inner().value, cv);
-      try 
+      try
         {
           bool test_ok = lexical_cast<bool>(cv());
           results.insert(make_pair(i->inner().key, test_ok));
         }
       catch(boost::bad_lexical_cast &)
         {
-          W(F("failed to decode boolean testresult cert value '%s'\n") % cv);
+          W(F("failed to decode boolean testresult cert value '%s'") % cv);
         }
     }
 }
@@ -78,8 +78,8 @@ acceptable_descendent(cert_value const & branch,
                       revision_id const & target,
                       app_state & app)
 {
-  L(FL("Considering update target %s\n") % target);
-  
+  L(FL("Considering update target %s") % target);
+
   // step 1: check the branch
   base64<cert_value> val;
   encode_base64(branch, val);
@@ -88,25 +88,25 @@ acceptable_descendent(cert_value const & branch,
   erase_bogus_certs(certs, app);
   if (certs.empty())
     {
-      L(FL("%s not in branch %s\n") % target % branch);
+      L(FL("%s not in branch %s") % target % branch);
       return false;
     }
-  
+
   // step 2: check the testresults
   map<rsa_keypair_id, bool> target_results;
   get_test_results_for_revision(target, target_results, app);
   if (app.lua.hook_accept_testresult_change(base_results, target_results))
     {
-      L(FL("%s is acceptable update candidate\n") % target);
+      L(FL("%s is acceptable update candidate") % target);
       return true;
     }
   else
     {
-      L(FL("%s has unacceptable test results\n") % target);
+      L(FL("%s has unacceptable test results") % target);
       return false;
     }
 }
-      
+
 
 static void
 calculate_update_set(revision_id const & base,
@@ -131,7 +131,7 @@ calculate_update_set(revision_id const & base,
 
   app.db.get_revision_children(base, children);
   copy(children.begin(), children.end(), back_inserter(to_traverse));
-  
+
   while (!to_traverse.empty())
     {
       revision_id target = to_traverse.back();
@@ -153,8 +153,8 @@ calculate_update_set(revision_id const & base,
 
   erase_ancestors(candidates, app);
 }
-  
-  
+
+
 void pick_update_candidates(revision_id const & base_ident,
                             app_state & app,
                             set<revision_id> & candidates)
@@ -166,5 +166,5 @@ void pick_update_candidates(revision_id const & base_ident,
   calculate_update_set(base_ident, cert_value(app.branch_name()),
                        app, candidates);
 }
-  
+
 

@@ -18,10 +18,10 @@
 // refiner for every merkle trie you wish to refine, and pass it a
 // reference to a refiner_callbacks object, such as the netsync session
 // object. Refinement proceeds in stages.
-// 
+//
 // 1. Add local items.
 //
-// 2. Call reindex_local_items to index the merkle table. 
+// 2. Call reindex_local_items to index the merkle table.
 //
 // 3. Call begin_refinement, and process the queue_refine_cmd callback
 //    this will generate.
@@ -35,7 +35,7 @@
 struct
 refiner_callbacks
 {
-  virtual void queue_refine_cmd(refinement_type ty, 
+  virtual void queue_refine_cmd(refinement_type ty,
 				merkle_node const & our_node) = 0;
   virtual void queue_done_cmd(netcmd_item_type ty,
 			      size_t n_items) = 0;
@@ -78,16 +78,16 @@ public:
   void begin_refinement();
   void process_done_command(size_t n_items);
   void process_refinement_command(refinement_type ty, merkle_node const & their_node);
-  bool local_item_exists(id const & ident) 
-  { 
-    return local_items.find(ident) != local_items.end(); 
+  bool local_item_exists(id const & ident)
+  {
+    return local_items.find(ident) != local_items.end();
   }
 
 
   // These are populated as the 'done' packets arrive.
   bool done;
   std::set<id> items_to_send;
-  size_t items_to_receive;  
+  size_t items_to_receive;
 };
 
 

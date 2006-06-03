@@ -15,7 +15,7 @@
 #include "revision.hh"
 #include "app_state.hh"
 
-void 
+void
 do_annotate(app_state &app, file_t file_node, revision_id rid);
 
 #endif // defined __ANNOTATE_HH__

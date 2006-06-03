@@ -35,7 +35,7 @@ CMD(automate, N_("automation"),
        "packet_for_fdata FILEID\n"
        "packet_for_fdelta OLD_FILE NEW_FILE\n"
        "keys\n"),
-    N_("automation interface"), 
+    N_("automation interface"),
     OPT_NONE)
 {
   if (args.size() == 0)

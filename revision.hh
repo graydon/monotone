@@ -47,7 +47,7 @@ edge_map;
 typedef edge_map::value_type
 edge_entry;
 
-struct 
+struct
 revision_set
 {
   void check_sane() const;
@@ -62,38 +62,38 @@ revision_set
   edge_map edges;
 };
 
-inline revision_id const & 
-edge_old_revision(edge_entry const & e) 
-{ 
-  return e.first; 
+inline revision_id const &
+edge_old_revision(edge_entry const & e)
+{
+  return e.first;
 }
 
-inline revision_id const & 
-edge_old_revision(edge_map::const_iterator i) 
-{ 
-  return i->first; 
+inline revision_id const &
+edge_old_revision(edge_map::const_iterator i)
+{
+  return i->first;
 }
 
-inline cset const & 
-edge_changes(edge_entry const & e) 
-{ 
-  return *(e.second); 
+inline cset const &
+edge_changes(edge_entry const & e)
+{
+  return *(e.second);
 }
 
-inline cset const & 
-edge_changes(edge_map::const_iterator i) 
-{ 
-  return *(i->second); 
+inline cset const &
+edge_changes(edge_map::const_iterator i)
+{
+  return *(i->second);
 }
 
 template <> void
 dump(revision_set const & rev, std::string & out);
 
-void 
+void
 read_revision_set(data const & dat,
                   revision_set & rev);
 
-void 
+void
 read_revision_set(revision_data const & dat,
                   revision_set & rev);
 
@@ -135,7 +135,7 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
                     app_state & app);
 
 
-// FIXME: can probably optimize this passing a lookaside cache of the active 
+// FIXME: can probably optimize this passing a lookaside cache of the active
 // frontier set of shared_ptr<roster_t>s, while traversing history.
 void
 select_nodes_modified_by_rev(revision_id const & rid,
@@ -145,13 +145,13 @@ select_nodes_modified_by_rev(revision_id const & rid,
                              app_state & app);
 
 void
-make_revision_set(revision_id const & old_rev_id, 
+make_revision_set(revision_id const & old_rev_id,
                   roster_t const & old_roster,
                   roster_t const & new_roster,
                   revision_set & rev);
 
 /*
-void 
+void
 calculate_composite_cset(revision_id const & ancestor,
                          revision_id const & child,
                          app_state & app,
@@ -165,29 +165,29 @@ calculate_arbitrary_cset(revision_id const & start,
 
 */
 
-void 
+void
 build_changesets_from_manifest_ancestry(app_state & app);
 
-void 
+void
 build_roster_style_revs_from_manifest_style_revs(app_state & app);
 
 // basic_io access to printers and parsers
 
 namespace basic_io { struct printer; struct parser; }
 
-void 
+void
 print_revision(basic_io::printer & printer,
                revision_set const & rev);
 
-void 
+void
 parse_revision(basic_io::parser & parser,
                revision_set & rev);
 
-void 
+void
 print_edge(basic_io::printer & printer,
            edge_entry const & e);
 
-void 
+void
 parse_edge(basic_io::parser & parser,
            edge_map & es);
 

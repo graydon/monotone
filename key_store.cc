@@ -19,15 +19,15 @@ struct keyreader : public packet_consumer
   key_store * ks;
 
   keyreader(key_store * k): ks(k) {}
-  virtual void consume_file_data(file_id const & ident, 
+  virtual void consume_file_data(file_id const & ident,
                                  file_data const & dat)
   {E(false, F("Extraneous data in key store."));}
-  virtual void consume_file_delta(file_id const & id_old, 
+  virtual void consume_file_delta(file_id const & id_old,
                                   file_id const & id_new,
                                   file_delta const & del)
   {E(false, F("Extraneous data in key store."));}
 
-  virtual void consume_revision_data(revision_id const & ident, 
+  virtual void consume_revision_data(revision_id const & ident,
                                      revision_data const & dat)
   {E(false, F("Extraneous data in key store."));}
   virtual void consume_revision_cert(revision<cert> const & t)
@@ -49,7 +49,7 @@ struct keyreader : public packet_consumer
     key_hash_code(ident, kp.pub, hash);
     ks->hashes.insert(make_pair(hash, ident));
     L(FL("successfully read key pair '%s' from key store") % ident);
-  } 
+  }
 };
 
 key_store::key_store(app_state * a): have_read(false), app(a)
@@ -211,7 +211,7 @@ key_store::write_key(rsa_keypair_id const & ident)
 }
 
 void
-key_store::put_key_pair(rsa_keypair_id const & ident, 
+key_store::put_key_pair(rsa_keypair_id const & ident,
                         keypair const & kp)
 {
   maybe_read_key_dir();

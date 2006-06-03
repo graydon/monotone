@@ -10,7 +10,7 @@
 #include <vector>
 #include "quick_alloc.hh"
 
-void 
+void
 longest_common_subsequence(std::vector<long, QA(long)>::const_iterator begin_a,
 			   std::vector<long, QA(long)>::const_iterator end_a,
 			   std::vector<long, QA(long)>::const_iterator begin_b,
@@ -18,7 +18,7 @@ longest_common_subsequence(std::vector<long, QA(long)>::const_iterator begin_a,
 			   long p_lim,
 			   std::back_insert_iterator< std::vector<long, QA(long)> > lcs);
 
-void 
+void
 edit_script(std::vector<long, QA(long)>::const_iterator begin_a,
 	    std::vector<long, QA(long)>::const_iterator end_a,
 	    std::vector<long, QA(long)>::const_iterator begin_b,

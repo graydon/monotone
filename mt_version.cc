@@ -5,7 +5,7 @@
 
 // This is split off into its own file to minimize recompilation time; it is
 // the only .cc file that depends on the revision/full_revision header files,
-// which change constantly. 
+// which change constantly.
 
 #include "config.h"
 

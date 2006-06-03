@@ -38,7 +38,7 @@ changes_summary
   void print(ostream & os, size_t max_cols) const;
 };
 
-changes_summary::changes_summary(void) 
+changes_summary::changes_summary(void)
 {
 }
 
@@ -53,30 +53,30 @@ changes_summary::add_change_set(cset const & c)
   // are not really sensible to union; they refer to different trees
   // so mixing them up in a single set is potentially ambiguous.
 
-  copy(c.nodes_deleted.begin(), c.nodes_deleted.end(), 
+  copy(c.nodes_deleted.begin(), c.nodes_deleted.end(),
        inserter(cs.nodes_deleted, cs.nodes_deleted.begin()));
 
-  copy(c.files_added.begin(), c.files_added.end(), 
+  copy(c.files_added.begin(), c.files_added.end(),
        inserter(cs.files_added, cs.files_added.begin()));
 
-  copy(c.dirs_added.begin(), c.dirs_added.end(), 
+  copy(c.dirs_added.begin(), c.dirs_added.end(),
        inserter(cs.dirs_added, cs.dirs_added.begin()));
 
-  copy(c.nodes_renamed.begin(), c.nodes_renamed.end(), 
+  copy(c.nodes_renamed.begin(), c.nodes_renamed.end(),
        inserter(cs.nodes_renamed, cs.nodes_renamed.begin()));
 
-  copy(c.deltas_applied.begin(), c.deltas_applied.end(), 
+  copy(c.deltas_applied.begin(), c.deltas_applied.end(),
        inserter(cs.deltas_applied, cs.deltas_applied.begin()));
 
-  copy(c.attrs_cleared.begin(), c.attrs_cleared.end(), 
+  copy(c.attrs_cleared.begin(), c.attrs_cleared.end(),
        inserter(cs.attrs_cleared, cs.attrs_cleared.begin()));
 
-  copy(c.attrs_set.begin(), c.attrs_set.end(), 
+  copy(c.attrs_set.begin(), c.attrs_set.end(),
        inserter(cs.attrs_set, cs.attrs_set.begin()));
 }
 
-static void 
-print_indented_set(ostream & os, 
+static void
+print_indented_set(ostream & os,
                    path_set const & s,
                    size_t max_cols)
 {
@@ -89,7 +89,7 @@ print_indented_set(ostream & os,
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
-          os << "\n" << "       "; 
+          os << "\n" << "       ";
         }
       os << " " << str;
       cols += str.size() + 1;
@@ -106,7 +106,7 @@ changes_summary::print(ostream & os, size_t max_cols) const
       os << "Deleted entries:" << "\n";
       print_indented_set(os, cs.nodes_deleted, max_cols);
     }
-  
+
   if (! cs.nodes_renamed.empty())
     {
       os << "Renamed entries:" << "\n";
@@ -163,7 +163,7 @@ do_external_diff(cset const & cs,
                  app_state & app,
                  bool new_is_archived)
 {
-  for (map<split_path, pair<file_id, file_id> >::const_iterator 
+  for (map<split_path, pair<file_id, file_id> >::const_iterator
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
@@ -202,7 +202,7 @@ do_external_diff(cset const & cs,
     }
 }
 
-static void 
+static void
 dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
@@ -213,7 +213,7 @@ dump_diffs(cset const & cs,
   // 60 is somewhat arbitrary, but less than 80
   string patch_sep = string(60, '=');
 
-  for (map<split_path, file_id>::const_iterator 
+  for (map<split_path, file_id>::const_iterator
          i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
@@ -223,7 +223,7 @@ dump_diffs(cset const & cs,
       cout << patch_sep << "\n";
       data unpacked;
       vector<string> lines;
-      
+
       if (new_is_archived)
         {
           file_data dat;
@@ -235,17 +235,17 @@ dump_diffs(cset const & cs,
           read_localized_data(file_path(i->first),
                               unpacked, app.lua);
         }
-      
+
       if (guess_binary(unpacked()))
         cout << "# " << file_path(i->first) << " is binary\n";
       else
-        {     
+        {
           split_into_lines(unpacked(), lines);
           if (! lines.empty())
             {
-              cout << (FL("--- %s\t%s\n") % file_path(i->first) % i->second)
-                   << (FL("+++ %s\t%s\n") % file_path(i->first) % i->second)
-                   << (FL("@@ -0,0 +1,%d @@\n") % lines.size());
+              cout << (FL("--- %s\t%s") % file_path(i->first) % i->second)
+                   << (FL("+++ %s\t%s") % file_path(i->first) % i->second)
+                   << (FL("@@ -0,0 +1,%d @@") % lines.size());
               for (vector<string>::const_iterator j = lines.begin();
                    j != lines.end(); ++j)
                 {
@@ -257,14 +257,14 @@ dump_diffs(cset const & cs,
 
   map<split_path, split_path> reverse_rename_map;
 
-  for (map<split_path, split_path>::const_iterator 
+  for (map<split_path, split_path>::const_iterator
          i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     {
       reverse_rename_map.insert(make_pair(i->second, i->first));
     }
 
-  for (map<split_path, pair<file_id, file_id> >::const_iterator 
+  for (map<split_path, pair<file_id, file_id> >::const_iterator
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
@@ -276,10 +276,10 @@ dump_diffs(cset const & cs,
       vector<string> old_lines, new_lines;
 
       cout << patch_sep << "\n";
-      
+
       app.db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
-      
+
       if (new_is_archived)
         {
           file_data f_new;
@@ -288,11 +288,11 @@ dump_diffs(cset const & cs,
         }
       else
         {
-          read_localized_data(file_path(delta_entry_path(i)), 
+          read_localized_data(file_path(delta_entry_path(i)),
                               data_new, app.lua);
         }
-      
-      if (guess_binary(data_new()) || 
+
+      if (guess_binary(data_new()) ||
           guess_binary(data_old()))
         cout << "# " << file_path(delta_entry_path(i)) << " is binary\n";
       else
@@ -309,8 +309,8 @@ dump_diffs(cset const & cs,
           if (re != reverse_rename_map.end())
             src_path = re->second;
 
-          make_diff(file_path(src_path).as_internal(), 
-                    file_path(dst_path).as_internal(), 
+          make_diff(file_path(src_path).as_internal(),
+                    file_path(dst_path).as_internal(),
                     delta_entry_src(i),
                     delta_entry_dst(i),
                     old_lines, new_lines,
@@ -319,7 +319,7 @@ dump_diffs(cset const & cs,
     }
 }
 
-static void 
+static void
 dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
@@ -329,7 +329,7 @@ dump_diffs(cset const & cs,
   dump_diffs(cs, app, new_is_archived, type, dummy);
 }
 
-CMD(diff, N_("informative"), N_("[PATH]..."), 
+CMD(diff, N_("informative"), N_("[PATH]..."),
     N_("show current diffs on stdout.\n"
     "If one revision is given, the diff between the workspace and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
@@ -391,7 +391,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
 
       restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
-      
+
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
       check_restricted_cset(old_roster, included);
@@ -416,12 +416,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_new_id, new_roster);
 
       restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
-      
+
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
       // line in the context of new and old, *not* the working copy.
       // One way of "fixing" this is to map the filenames on the command
-      // line to node_ids, and then restrict based on those. This 
+      // line to node_ids, and then restrict based on those. This
       // might be more intuitive; on the other hand it would make it
       // impossible to restrict to paths which are dead in the working
       // copy but live between old and new. So ... no rush to "fix" it;
@@ -429,14 +429,14 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       //
       // let the discussion begin...
       //
-      // - "map filenames on the command line to node_ids" needs to be done 
+      // - "map filenames on the command line to node_ids" needs to be done
       //   in the context of some roster, possibly the working copy base or
       //   the current working copy (or both)
-      // - diff with two --revision's may be done with no working copy 
-      // - some form of "peg" revision syntax for paths that would allow 
+      // - diff with two --revision's may be done with no working copy
+      // - some form of "peg" revision syntax for paths that would allow
       //   for each path to specify which revision it is relevant to is
       //   probably the "right" way to go eventually. something like file@rev
-      //   (which fails for paths with @'s in them) or possibly //rev/file 
+      //   (which fails for paths with @'s in them) or possibly //rev/file
       //   since versioned paths are required to be relative.
 
       make_restricted_csets(old_roster, new_roster, included, excluded, mask);
@@ -449,14 +449,14 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       throw usage(name);
     }
 
-  
+
   data summary;
   write_cset(included, summary);
 
   vector<string> lines;
   split_into_lines(summary(), lines);
   cout << "# " << "\n";
-  if (summary().size() > 0) 
+  if (summary().size() > 0)
     {
       cout << header.str() << "# " << "\n";
       for (vector<string>::iterator i = lines.begin(); i != lines.end(); ++i)
@@ -548,7 +548,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   else
     {
       for (vector<utf8>::const_iterator i = app.revision_selectors.begin();
-           i != app.revision_selectors.end(); i++) 
+           i != app.revision_selectors.end(); i++)
         {
           set<revision_id> rids;
           complete(app, (*i)(), rids);
@@ -559,7 +559,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
 
   restriction mask(app);
-  
+
   if (args.size() > 0)
     {
       // User wants to trace only specific files
@@ -568,7 +568,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       if (app.revision_selectors.size() == 0)
         get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       else
-        app.db.get_roster(first_rid, new_roster);          
+        app.db.get_roster(first_rid, new_roster);
 
       // FIXME_RESTRICTIONS: should this add paths from the rosters of all selected revs?
       mask = restriction(args, app.exclude_patterns, old_roster, new_roster, app);
@@ -594,10 +594,10 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   while(! frontier.empty() && (last == -1 || last > 0) && (next == -1 || next > 0))
     {
       set<revision_id> next_frontier;
-      
+
       for (set<revision_id>::const_iterator i = frontier.begin();
            i != frontier.end(); ++i)
-        { 
+        {
           revision_id rid = *i;
 
           bool print_this = mask.empty();
@@ -616,14 +616,14 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               // TODO: stop if the restriction is pre-dated by the current roster
               // i.e. the restriction's nodes are not born in the current roster
               roster_t roster;
-              app.db.get_roster(rid, roster); 
+              app.db.get_roster(rid, roster);
 
               set<node_id> nodes_modified;
               select_nodes_modified_by_rev(rid, rev, roster,
-                                           nodes_modified, 
+                                           nodes_modified,
                                            app);
-              
-              for (set<node_id>::const_iterator n = nodes_modified.begin(); 
+
+              for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)
                 {
                   if (!roster.has_node(*n))
@@ -631,7 +631,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                       // include all deleted nodes
                       print_this = true;
                     }
-                  else if (mask.includes(roster, *n)) 
+                  else if (mask.includes(roster, *n))
                     {
                       print_this = true;
                       if (app.diffs)
@@ -648,20 +648,20 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
             {
               set<revision_id> children;
               app.db.get_revision_children(rid, children);
-              copy(children.begin(), children.end(), 
+              copy(children.begin(), children.end(),
                    inserter(next_frontier, next_frontier.end()));
             }
           else // work backwards by default
             {
               set<revision_id> parents;
               app.db.get_revision_parents(rid, parents);
-              copy(parents.begin(), parents.end(), 
+              copy(parents.begin(), parents.end(),
                    inserter(next_frontier, next_frontier.end()));
             }
 
           if (app.no_merges && rev.is_merge_node())
             print_this = false;
-          
+
           if (print_this)
           {
             if (global_sanity.brief)
@@ -714,7 +714,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)
                   {
-                    dump_diffs(edge_changes(e), app, true, unified_diff, 
+                    dump_diffs(edge_changes(e), app, true, unified_diff,
                                diff_paths, !mask.empty());
                   }
               }

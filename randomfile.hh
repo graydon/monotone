@@ -17,9 +17,9 @@ struct file_randomizer
   std::vector<std::string> lines;
   std::string prefix;
 
-  void seed(int seed = 0xf00feed) 
-  { 
-    srand (seed); 
+  void seed(int seed = 0xf00feed)
+  {
+    srand (seed);
   }
 
   size_t random_index(bool last_line_ok = true)
@@ -101,7 +101,7 @@ struct file_randomizer
                                 std::vector<std::string> & merged,
                                 int seed,
                                 int n_hunks = 10)
-  {    
+  {
 
     file_randomizer fr;
     fr.seed(seed);

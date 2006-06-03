@@ -12,8 +12,8 @@
 
 typedef std::pair<file_path const, hexenc<inodeprint> > inodeprint_entry;
 
-typedef std::map<file_path, hexenc<inodeprint>, 
-                 std::less<file_path>, 
+typedef std::map<file_path, hexenc<inodeprint>,
+                 std::less<file_path>,
                  QA(inodeprint_entry) > inodeprint_map;
 
 std::ostream & operator<<(std::ostream & out, inodeprint_entry const & e);
@@ -23,7 +23,7 @@ class app_state;
 void read_inodeprint_map(data const & dat,
                          inodeprint_map & ipm);
 
-void write_inodeprint_map(inodeprint_map const & ipm, 
+void write_inodeprint_map(inodeprint_map const & ipm,
                           data & dat);
 
 

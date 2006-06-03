@@ -37,14 +37,14 @@ using std::istream;
 using std::string;
 
 #ifdef HAVE_MMAP
-struct 
+struct
 file_handle
 {
   string const & filename;
   off_t length;
   int fd;
-  file_handle(string const & fn) : 
-    filename(fn), 
+  file_handle(string const & fn) :
+    filename(fn),
     length(0),
     fd(-1)
     {
@@ -56,7 +56,7 @@ file_handle
       if (fd == -1)
         throw oops("open of " + filename + " failed");
     }
-  ~file_handle() 
+  ~file_handle()
     {
       if (close(fd) == -1)
         throw oops("close of " + filename + " failed");
@@ -87,9 +87,9 @@ struct file_source
       ++pos;
     return good();
   }
-  file_source(string const & fn, 
-              int f, 
-              off_t len) : 
+  file_source(string const & fn,
+              int f,
+              off_t len) :
     filename(fn),
     fd(f),
     length(len),
@@ -97,7 +97,7 @@ struct file_source
     mapping(NULL)
   {
     mapping = mmap(0, length, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (mapping == MAP_FAILED) 
+    if (mapping == MAP_FAILED)
       throw oops("mmap of " + filename + " failed");
   }
   ~file_source()
@@ -107,14 +107,14 @@ struct file_source
   }
 };
 #elif defined(WIN32)
-struct 
+struct
 file_handle
 {
   string const & filename;
   off_t length;
   HANDLE fd;
-  file_handle(string const & fn) : 
-    filename(fn), 
+  file_handle(string const & fn) :
+    filename(fn),
     length(0),
     fd(NULL)
     {
@@ -123,14 +123,14 @@ file_handle
         throw oops("stat of " + filename + " failed");
       length = st.st_size;
       fd = CreateFile(fn.c_str(),
-                      GENERIC_READ, 
+                      GENERIC_READ,
                       FILE_SHARE_READ,
                       NULL,
                       OPEN_EXISTING, 0, NULL);
       if (fd == NULL)
         throw oops("open of " + filename + " failed");
     }
-  ~file_handle() 
+  ~file_handle()
     {
       if (CloseHandle(fd)==0)
         throw oops("close of " + filename + " failed");
@@ -192,15 +192,15 @@ file_source
 typedef istream file_source;
 #endif
 
-typedef enum 
+typedef enum
   {
     TOK_STRING,
     TOK_SYMBOL,
     TOK_NUM,
     TOK_SEMI,
     TOK_COLON,
-    TOK_NONE   
-  } 
+    TOK_NONE
+  }
 token_type;
 
 static inline void
@@ -215,17 +215,17 @@ adv(char i, size_t & line, size_t & col)
     ++col;
 }
 
-static token_type 
+static token_type
 get_token(file_source & ist,
           string & str,
-	  size_t & line, 
+	  size_t & line,
 	  size_t & col)
 {
   bool saw_idchar = false;
   int i = ist.peek();
   char c;
   str.clear();
-  
+
   // eat leading whitespace
   while (true)
     {
@@ -241,11 +241,11 @@ get_token(file_source & ist,
   switch (i)
     {
     case ';':
-      ist.get(c); 
+      ist.get(c);
       ++col;
-      return TOK_SEMI; 
+      return TOK_SEMI;
       break;
-      
+
     case ':':
       ist.get(c);
       ++col;
@@ -274,9 +274,9 @@ get_token(file_source & ist,
       break;
 
     default:
-      while (ist.good() 
-             && i != ';' 
-             && i != ':' 
+      while (ist.good()
+             && i != ';'
+             && i != ':'
              && !isspace(i))
         {
           ist.get(c);
@@ -288,7 +288,7 @@ get_token(file_source & ist,
         }
       break;
     }
-  
+
   if (str.empty())
     return TOK_NONE;
   else if (saw_idchar)
@@ -307,10 +307,10 @@ struct parser
   size_t line, col;
 
   parser(file_source & s,
-         rcs_file & r) 
+         rcs_file & r)
     : ist(s), r(r), line(1), col(1)
   {}
-  
+
   string tt2str(token_type tt)
   {
     switch (tt)
@@ -360,10 +360,10 @@ struct parser
   void sym() { eat(TOK_SYMBOL); }
   void num(string & v) { v = token; eat(TOK_NUM); }
   void num() { eat(TOK_NUM); }
-  void semi() { eat(TOK_SEMI); } 
+  void semi() { eat(TOK_SEMI); }
   void colon() { eat(TOK_COLON); }
   void expect(string const & expected)
-  { 
+  {
     string tmp;
     if (!symp(expected))
       throw oops((F("parse failure %d:%d: expecting word '%s'\n")
@@ -379,7 +379,7 @@ struct parser
             || ttype == TOK_COLON);
   }
   void word()
-  { 
+  {
     if (!wordp())
       throw oops((F("parse failure %d:%d: expecting word\n")
 		  % line % col).str());
@@ -401,26 +401,26 @@ struct parser
     expect("head"); num(r.admin.head); semi();
     if (symp("branch")) { sym(r.admin.branch); if (nump()) num(); semi(); }
     expect("access"); while(symp()) { sym(); } semi();
-    expect("symbols"); 
+    expect("symbols");
 
     // "man rcsfile" lies: there are real files in the wild which use
     // num tokens as the key value in a symbols entry. for example
     // "3.1:1.1.0.2" is a real sym:num specification, despite "3.1"
     // being a num itself, not a sym.
 
-    while(symp() || nump()) 
-      { 
+    while(symp() || nump())
+      {
         string stmp, ntmp;
 	if (symp())
 	  {
-	    sym(stmp); colon(); num(ntmp); 
+	    sym(stmp); colon(); num(ntmp);
 	  }
 	else
 	  {
-	    num(stmp); colon(); num(ntmp); 
+	    num(stmp); colon(); num(ntmp);
 	  }
         r.admin.symbols.insert(make_pair(ntmp, stmp));
-      } 
+      }
     semi();
     expect("locks"); while(symp()) { sym(); colon(); num(); } semi();
     if (symp("strict")) { sym(); semi(); }
@@ -430,7 +430,7 @@ struct parser
   }
 
   void parse_deltas()
-  {    
+  {
     while (nump())
       {
         rcs_delta d;
@@ -438,12 +438,12 @@ struct parser
         expect("date"); num(d.date); semi();
         expect("author"); sym(d.author); semi();
         expect("state"); if (symp()) sym(d.state); semi();
-        expect("branches"); 
-        while(nump()) 
-          { 
-            string tmp; 
-            num(tmp); 
-            d.branches.push_back(tmp); 
+        expect("branches");
+        while(nump())
+          {
+            string tmp;
+            num(tmp);
+            d.branches.push_back(tmp);
           }
         semi();
         expect("next"); if (nump()) num(d.next); semi();
@@ -463,7 +463,7 @@ struct parser
       {
         rcs_deltatext d;
         num(d.num);
-        expect("log"); str(d.log); 
+        expect("log"); str(d.log);
         parse_newphrases("text");
         expect("text"); str(d.text);
         r.push_deltatext(d);

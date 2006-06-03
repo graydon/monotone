@@ -9,16 +9,16 @@ using std::vector;
 using std::ostringstream;
 using std::ostream_iterator;
 
-struct 
+struct
 lowerize
 {
-  char operator()(char const & c) const 
-  { 
-    return ::tolower(static_cast<int>(c)); 
+  char operator()(char const & c) const
+  {
+    return ::tolower(static_cast<int>(c));
   }
 };
 
-string 
+string
 lowercase(string const & in)
 {
   string n(in);
@@ -26,16 +26,16 @@ lowercase(string const & in)
   return n;
 }
 
-struct 
+struct
 upperize
 {
-  char operator()(char const & c) const 
-  { 
-    return ::toupper(static_cast<int>(c)); 
+  char operator()(char const & c) const
+  {
+    return ::toupper(static_cast<int>(c));
   }
 };
 
-string 
+string
 uppercase(string const & in)
 {
   string n(in);
@@ -43,23 +43,23 @@ uppercase(string const & in)
   return n;
 }
 
-void split_into_lines(string const & in,                 
+void split_into_lines(string const & in,
                       string const & encoding,
                       vector<string> & out)
 {
-  string lc_encoding = lowercase(encoding);  
+  string lc_encoding = lowercase(encoding);
   out.clear();
 
-  // note: this function does not handle ISO-2022-X, Shift-JIS, and 
-  // probably a good deal of other encodings as well. please expand 
-  // the logic here if you can work out an easy way of doing line 
-  // breaking on these encodings. currently it's just designed to 
+  // note: this function does not handle ISO-2022-X, Shift-JIS, and
+  // probably a good deal of other encodings as well. please expand
+  // the logic here if you can work out an easy way of doing line
+  // breaking on these encodings. currently it's just designed to
   // work with charsets in which 0x0a / 0x0d are *always* \n and \r
   // respectively.
   //
   // as far as I know, this covers the EUC, ISO-8859-X, GB, Big5, KOI,
-  // ASCII, and UTF-8 families of encodings. 
-  
+  // ASCII, and UTF-8 families of encodings.
+
   if (lc_encoding == constants::default_encoding
       || lc_encoding.find("ascii") != string::npos
       || lc_encoding.find("8859") != string::npos
@@ -77,7 +77,7 @@ void split_into_lines(string const & in,
         {
           out.push_back(in.substr(begin, end-begin));
           if (in.at(end) == '\r'
-              && in.size() > end+1 
+              && in.size() > end+1
               && in.at(end+1) == '\n')
             begin = end + 2;
           else
@@ -96,14 +96,14 @@ void split_into_lines(string const & in,
 }
 
 
-void 
+void
 split_into_lines(string const & in,
                  vector<string> & out)
 {
   split_into_lines(in, constants::default_encoding, out);
 }
 
-void 
+void
 join_lines(vector<string> const & in,
            string & out,
            string const & linesep)
@@ -113,7 +113,7 @@ join_lines(vector<string> const & in,
   out = oss.str();
 }
 
-void 
+void
 join_lines(vector<string> const & in,
            string & out)
 {
@@ -135,11 +135,11 @@ prefix_lines_with(string const & prefix, string const & lines, string & out)
       if (i != msgs.end())
         oss << "\n";
     }
-  
+
   out = oss.str();
 }
 
-string 
+string
 remove_ws(string const & s)
 {
   string tmp;
@@ -162,7 +162,7 @@ remove_ws(string const & s)
   return tmp;
 }
 
-string 
+string
 trim_ws(string const & s)
 {
   string tmp = s;
@@ -175,7 +175,7 @@ trim_ws(string const & s)
   return tmp;
 }
 
-void 
+void
 line_end_convert(string const & linesep, string const & src, string & dst)
 {
   string linesep_str("\n");
@@ -186,7 +186,7 @@ line_end_convert(string const & linesep, string const & src, string & dst)
   else if (linesep == "LF"|| linesep == "\n")
     linesep_str = "\n";
 
-  L(FL("doing linesep conversion to %s\n") % linesep);  
+  L(FL("doing linesep conversion to %s") % linesep);
   vector<string> tmp;
   split_into_lines(src, tmp);
   join_lines(tmp, dst, linesep_str);
@@ -200,7 +200,7 @@ line_end_convert(string const & linesep, string const & src, string & dst)
 #include "unit_tests.hh"
 #include <stdlib.h>
 
-static void 
+static void
 caseconv_test()
 {
   BOOST_CHECK(uppercase("hello") == "HELLO");
@@ -211,7 +211,7 @@ caseconv_test()
   BOOST_CHECK(lowercase("!@#$%^&*()") == "!@#$%^&*()");
 }
 
-static void 
+static void
 join_lines_test()
 {
   vector<string> strs;
@@ -231,10 +231,10 @@ join_lines_test()
 
   strs.push_back("user");
   join_lines(strs, joined);
-  BOOST_CHECK(joined == "hi\nthere\nuser\n");  
+  BOOST_CHECK(joined == "hi\nthere\nuser\n");
 }
 
-static void 
+static void
 strip_ws_test()
 {
   BOOST_CHECK(trim_ws("\n  leading space") == "leading space");
@@ -244,7 +244,7 @@ strip_ws_test()
               == "Ilikegoingforwalks");
 }
 
-void 
+void
 add_simplestring_xform_tests(test_suite * suite)
 {
   I(suite);

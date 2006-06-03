@@ -9,16 +9,16 @@
 
 class lua_hooks;
 
-void read_localized_data(file_path const & path, 
-                         data & dat, 
+void read_localized_data(file_path const & path,
+                         data & dat,
                          lua_hooks & lua);
 bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 void calculate_ident(file_path const & file,
-                     hexenc<id> & ident, 
+                     hexenc<id> & ident,
                      lua_hooks & lua);
 
-void write_localized_data(file_path const & path, 
-                          data const & dat, 
+void write_localized_data(file_path const & path,
+                          data const & dat,
                           lua_hooks & lua);
 
 #endif

@@ -32,7 +32,7 @@ kill_rev_locally(app_state& app, string const& id)
   app.db.delete_existing_rev_and_certs(ident);
 }
 
-CMD(db, N_("database"), 
+CMD(db, N_("database"),
     N_("init\n"
       "info\n"
       "version\n"
@@ -46,7 +46,7 @@ CMD(db, N_("database"),
       "check\n"
       "changesetify\n"
       "rosterify\n"
-      "set_epoch BRANCH EPOCH\n"), 
+      "set_epoch BRANCH EPOCH\n"),
     N_("manipulate database state"),
     OPT_DROP_ATTR)
 {
@@ -149,7 +149,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     F("non-hex digits in partial id"));
 
   if (idx(args, 0)() == "revision")
-    {      
+    {
       set<revision_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
@@ -181,6 +181,6 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
         }
     }
   else
-    throw usage(name);  
+    throw usage(name);
 }
 

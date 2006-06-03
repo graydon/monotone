@@ -37,8 +37,8 @@ struct editable_tree
   virtual void attach_node(node_id nid, split_path const & dst) = 0;
 
   // Modifying elements in-place
-  virtual void apply_delta(split_path const & pth, 
-                           file_id const & old_id, 
+  virtual void apply_delta(split_path const & pth,
+                           file_id const & old_id,
                            file_id const & new_id) = 0;
   virtual void clear_attr(split_path const & pth,
                           attr_key const & name) = 0;
@@ -52,9 +52,9 @@ struct editable_tree
 };
 
 
-// In-memory representation of a change set. 
+// In-memory representation of a change set.
 
-struct cset 
+struct cset
 {
   // Deletions.
   path_set nodes_deleted;
@@ -84,25 +84,25 @@ struct cset
       && attrs_set == other.attrs_set
       ;
   }
-  
+
   void apply_to(editable_tree & t) const;
   bool empty() const;
   void clear();
 };
 
-inline split_path const & 
+inline split_path const &
 delta_entry_path(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
 {
   return i->first;
 }
 
-inline file_id const & 
+inline file_id const &
 delta_entry_src(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
 {
   return i->second.first;
 }
 
-inline file_id const & 
+inline file_id const &
 delta_entry_dst(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
 {
   return i->second.second;
@@ -111,14 +111,14 @@ delta_entry_dst(std::map<split_path, std::pair<file_id, file_id> >::const_iterat
 
 namespace basic_io { struct printer; struct parser; }
 
-void 
+void
 print_cset(basic_io::printer & printer,
            cset const & cs);
 
 void
 write_cset(cset const & cs, data & dat);
 
-void 
+void
 parse_cset(basic_io::parser & parser,
            cset & cs);
 

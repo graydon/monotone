@@ -1,3 +1,10 @@
+2006-06-03  Lapo Luchini  <lapo@lapo.it>
+
+	* *.cc *.hh: removed extra "\n" from translatable strings.
+	removed trailing spaces.
+
+	* po/it.po: Updated to the new newline-less strings.
+
 2006-06-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/os_strerror.cc (os_strerror): Trim trailing newlines from

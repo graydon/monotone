@@ -31,7 +31,7 @@
 //        system_path(file_path_internal("foo"))
 //      is not, in general, the same as
 //        system_path("foo")
-//      
+//
 //   -- file_path
 //      this is a path representing a versioned file.  it is always
 //      a fully normalized relative path, that does not escape the project
@@ -45,10 +45,10 @@
 //          to the project root.
 //        file_path_external: use this for strings that come from the user.
 //          these strings are normalized before being checked, and if there is
-//          a problem trigger N() invariants rather than I() invariants.  if in 
-//          a workspace, such strings are interpreted as being 
-//          _relative to the user's original directory_.  
-//          if not in a workspace, strings are treated as referring to some 
+//          a problem trigger N() invariants rather than I() invariants.  if in
+//          a workspace, such strings are interpreted as being
+//          _relative to the user's original directory_.
+//          if not in a workspace, strings are treated as referring to some
 //          database object directly.
 //      file_path's also provide optimized splitting and joining
 //      functionality.
@@ -63,7 +63,7 @@
 //      'bookkeeping_root', which points to the _MTN directory.  Thus to
 //      construct a path pointing to _MTN/options, use:
 //          bookkeeping_root / "options"
-//          
+//
 // All path types should always be constructed from utf8-encoded strings.
 //
 // All path types provide an "operator /" which allows one to construct new
@@ -150,7 +150,7 @@ public:
   file_path() {}
   // join a file_path out of pieces
   file_path(split_path const & sp);
-  
+
   // this currently doesn't do any normalization or anything.
   file_path operator /(std::string const & to_append) const;
 
@@ -243,7 +243,7 @@ dirname_basename(split_path const & sp,
 void
 save_initial_path();
 
-system_path 
+system_path
 current_root_path();
 
 // returns true if workspace found, in which case cwd has been changed
@@ -259,7 +259,7 @@ go_to_workspace(system_path const & new_workspace);
 typedef std::set<split_path> path_set;
 
 // equivalent to file_path_internal(path).split(sp) but more efficient.
-void 
+void
 internal_string_to_split_path(std::string const & path, split_path & sp);
 
 #endif

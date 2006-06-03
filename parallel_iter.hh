@@ -40,7 +40,7 @@
 namespace parallel
 {
   typedef enum { in_left, in_right, in_both, invalid } state_t;
-    
+
   template <typename M>
   class iter
   {
@@ -98,7 +98,7 @@ namespace parallel
         }
       return !finished_;
     }
-    
+
     state_t state() const
     {
       return state_;
@@ -110,7 +110,7 @@ namespace parallel
       I(state_ == in_left || state_ == in_both);
       return *left_;
     }
-    
+
     typename M::key_type const &
     left_key()
     {

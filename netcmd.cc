@@ -17,8 +17,8 @@
 
 using std::string;
 
-static netcmd_item_type 
-read_netcmd_item_type(string const & in, 
+static netcmd_item_type
+read_netcmd_item_type(string const & in,
                       size_t & pos,
                       string const & name)
 {
@@ -26,17 +26,17 @@ read_netcmd_item_type(string const & in,
   switch (tmp)
     {
     case static_cast<u8>(revision_item):
-      return revision_item;      
+      return revision_item;
     case static_cast<u8>(file_item):
       return file_item;
     case static_cast<u8>(cert_item):
       return cert_item;
     case static_cast<u8>(key_item):
-      return key_item;      
+      return key_item;
     case static_cast<u8>(epoch_item):
-      return epoch_item;      
+      return epoch_item;
     default:
-      throw bad_decode(F("unknown item type 0x%x for '%s'") 
+      throw bad_decode(F("unknown item type 0x%x for '%s'")
                        % static_cast<int>(tmp) % name);
     }
 }
@@ -45,15 +45,15 @@ netcmd::netcmd() : version(constants::netcmd_current_protocol_version),
                    cmd_code(error_cmd)
 {}
 
-size_t netcmd::encoded_size() 
+size_t netcmd::encoded_size()
 {
   string tmp;
   insert_datum_uleb128<size_t>(payload.size(), tmp);
   return 1 + 1 + tmp.size() + payload.size() + 4;
 }
 
-bool 
-netcmd::operator==(netcmd const & other) const 
+bool
+netcmd::operator==(netcmd const & other) const
 {
   return version == other.version &&
     cmd_code == other.cmd_code &&
@@ -61,7 +61,7 @@ netcmd::operator==(netcmd const & other) const
 }
 
 // note: usher_reply_cmd does not get included in the hmac.
-void 
+void
 netcmd::write(string & out, chained_hmac & hmac) const
 {
   size_t oldlen = out.size();
@@ -78,7 +78,7 @@ netcmd::write(string & out, chained_hmac & hmac) const
 }
 
 // note: usher_cmd does not get included in the hmac.
-bool 
+bool
 netcmd::read(string_queue & inbuf, chained_hmac & hmac)
 {
   size_t pos = 0;
@@ -126,11 +126,11 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
   if (!try_extract_datum_uleb128<size_t>(inbuf, pos, "netcmd payload length",
       payload_len))
       return false;
-  
+
   // they might have given us a bogus size
   if (payload_len > constants::netcmd_payload_limit)
     throw bad_decode(F("oversized payload of '%d' bytes") % payload_len);
-  
+
   // there might not be enough data yet in the input buffer
   unsigned int minsize;
   if (hmac.is_active() && cmd_code != usher_cmd)
@@ -152,21 +152,21 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
       I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);	
       digest = hmac.process(inbuf, 0, pos + payload_len);
     }
-  
+
   payload = extract_substring(inbuf, pos, payload_len, "netcmd payload");
-  
+
   if (hmac.is_active() && cmd_code != usher_cmd)
     {
       // they might have given us bogus data
-      cmd_digest = extract_substring(inbuf, pos, 
+      cmd_digest = extract_substring(inbuf, pos,
 				     constants::netsync_hmac_value_length_in_bytes,
 				     "netcmd HMAC");
     }
 
   inbuf.pop_front(pos);
 
-  if (hmac.is_active() 
-      && cmd_code != usher_cmd 
+  if (hmac.is_active()
+      && cmd_code != usher_cmd
       && cmd_digest != digest)
     {
       throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
@@ -175,14 +175,14 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
 		       % encode_hexenc(digest));
     }
 
-  return true;    
+  return true;
 }
 
 ////////////////////////////////////////////
 // payload reader/writer functions follow //
 ////////////////////////////////////////////
 
-void 
+void
 netcmd::read_error_cmd(string & errmsg) const
 {
   size_t pos = 0;
@@ -191,7 +191,7 @@ netcmd::read_error_cmd(string & errmsg) const
   assert_end_of_buffer(payload, pos, "error netcmd payload");
 }
 
-void 
+void
 netcmd::write_error_cmd(string const & errmsg)
 {
   cmd_code = error_cmd;
@@ -200,7 +200,7 @@ netcmd::write_error_cmd(string const & errmsg)
 }
 
 
-void 
+void
 netcmd::read_hello_cmd(rsa_keypair_id & server_keyname,
                        rsa_pub_key & server_key,
                        id & nonce) const
@@ -215,12 +215,12 @@ netcmd::read_hello_cmd(rsa_keypair_id & server_keyname,
                                  "hello netcmd, server key");
   server_key = rsa_pub_key(sk_str);
   nonce = id(extract_substring(payload, pos,
-                               constants::merkle_hash_length_in_bytes, 
+                               constants::merkle_hash_length_in_bytes,
                                "hello netcmd, nonce"));
   assert_end_of_buffer(payload, pos, "hello netcmd payload");
 }
 
-void 
+void
 netcmd::write_hello_cmd(rsa_keypair_id const & server_keyname,
                         rsa_pub_key const & server_key,
                         id const & nonce)
@@ -234,7 +234,7 @@ netcmd::write_hello_cmd(rsa_keypair_id const & server_keyname,
 }
 
 
-void 
+void
 netcmd::read_bye_cmd(u8 & phase) const
 {
   size_t pos = 0;
@@ -244,7 +244,7 @@ netcmd::read_bye_cmd(u8 & phase) const
 }
 
 
-void 
+void
 netcmd::write_bye_cmd(u8 phase)
 {
   cmd_code = bye_cmd;
@@ -294,12 +294,12 @@ netcmd::write_anonymous_cmd(protocol_role role,
   insert_variable_length_string(hmac_key_encrypted(), payload);
 }
 
-void 
-netcmd::read_auth_cmd(protocol_role & role, 
+void
+netcmd::read_auth_cmd(protocol_role & role,
                       utf8 & include_pattern,
                       utf8 & exclude_pattern,
-                      id & client, 
-                      id & nonce1, 
+                      id & client,
+                      id & nonce1,
                       rsa_oaep_sha_data & hmac_key_encrypted,
                       string & signature) const
 {
@@ -321,10 +321,10 @@ netcmd::read_auth_cmd(protocol_role & role,
                                  "auth(hmac) netcmd, exclude_pattern");
   exclude_pattern = utf8(pattern_string);
   client = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
+                                constants::merkle_hash_length_in_bytes,
                                 "auth(hmac) netcmd, client identifier"));
   nonce1 = id(extract_substring(payload, pos,
-                                constants::merkle_hash_length_in_bytes, 
+                                constants::merkle_hash_length_in_bytes,
                                 "auth(hmac) netcmd, nonce1"));
   string hmac_key;
   extract_variable_length_string(payload, hmac_key, pos,
@@ -362,7 +362,7 @@ netcmd::read_confirm_cmd() const
   size_t pos = 0;
   assert_end_of_buffer(payload, pos, "confirm netcmd payload");
 }
-  
+
 void
 netcmd::write_confirm_cmd()
 {
@@ -370,7 +370,7 @@ netcmd::write_confirm_cmd()
   payload.clear();
 }
 
-void 
+void
 netcmd::read_refine_cmd(refinement_type & ty, merkle_node & node) const
 {
   // syntax is: <u8: refinement type> <node: a merkle tree node>
@@ -383,7 +383,7 @@ netcmd::read_refine_cmd(refinement_type & ty, merkle_node & node) const
   assert_end_of_buffer(payload, pos, "refine cmd");
 }
 
-void 
+void
 netcmd::write_refine_cmd(refinement_type ty, merkle_node const & node)
 {
   cmd_code = refine_cmd;
@@ -392,18 +392,18 @@ netcmd::write_refine_cmd(refinement_type ty, merkle_node const & node)
   write_node(node, payload);
 }
 
-void 
+void
 netcmd::read_done_cmd(netcmd_item_type & type, size_t & n_items)  const
 {
   size_t pos = 0;
-  // syntax is: <type: 1 byte> <n_items: uleb128> 
+  // syntax is: <type: 1 byte> <n_items: uleb128>
   type = read_netcmd_item_type(payload, pos, "done netcmd, item type");
   n_items = extract_datum_uleb128<size_t>(payload, pos,
                                           "done netcmd, item-to-send count");
   assert_end_of_buffer(payload, pos, "done netcmd payload");
 }
 
-void 
+void
 netcmd::write_done_cmd(netcmd_item_type type,
                        size_t n_items)
 {
@@ -413,17 +413,17 @@ netcmd::write_done_cmd(netcmd_item_type type,
   insert_datum_uleb128<size_t>(n_items, payload);
 }
 
-void 
+void
 netcmd::read_data_cmd(netcmd_item_type & type,
                       id & item, string & dat) const
 {
   size_t pos = 0;
-  // syntax is: <type: 1 byte> <id: 20 bytes sha1> 
+  // syntax is: <type: 1 byte> <id: 20 bytes sha1>
   //            <compressed_p1: 1 byte> <dat: vstr>
 
   type = read_netcmd_item_type(payload, pos, "data netcmd, item type");
   item = id(extract_substring(payload, pos,
-                              constants::merkle_hash_length_in_bytes, 
+                              constants::merkle_hash_length_in_bytes,
                               "data netcmd, item identifier"));
 
   dat.clear();
@@ -441,7 +441,7 @@ netcmd::read_data_cmd(netcmd_item_type & type,
   assert_end_of_buffer(payload, pos, "data netcmd payload");
 }
 
-void 
+void
 netcmd::write_data_cmd(netcmd_item_type type,
                        id const & item,
                        string const & dat)
@@ -459,25 +459,25 @@ netcmd::write_data_cmd(netcmd_item_type type,
     }
   else
     {
-      payload += static_cast<char>(0); // compressed flag       
+      payload += static_cast<char>(0); // compressed flag
       insert_variable_length_string(dat, payload);
     }
 }
 
 
-void 
+void
 netcmd::read_delta_cmd(netcmd_item_type & type,
                        id & base, id & ident, delta & del) const
 {
   size_t pos = 0;
   // syntax is: <type: 1 byte> <src: 20 bytes sha1> <dst: 20 bytes sha1>
-  //            <compressed_p: 1 byte> <del: vstr>    
+  //            <compressed_p: 1 byte> <del: vstr>
   type = read_netcmd_item_type(payload, pos, "delta netcmd, item type");
   base = id(extract_substring(payload, pos,
-                              constants::merkle_hash_length_in_bytes, 
+                              constants::merkle_hash_length_in_bytes,
                               "delta netcmd, base identifier"));
   ident = id(extract_substring(payload, pos,
-                               constants::merkle_hash_length_in_bytes, 
+                               constants::merkle_hash_length_in_bytes,
                                "delta netcmd, ident identifier"));
   u8 compressed_p = extract_datum_lsb<u8>(payload, pos,
                                           "delta netcmd, compression flag");
@@ -496,9 +496,9 @@ netcmd::read_delta_cmd(netcmd_item_type & type,
   assert_end_of_buffer(payload, pos, "delta netcmd payload");
 }
 
-void 
+void
 netcmd::write_delta_cmd(netcmd_item_type & type,
-                        id const & base, id const & ident, 
+                        id const & base, id const & ident,
                         delta const & del)
 {
   cmd_code = delta_cmd;
@@ -519,14 +519,14 @@ netcmd::write_delta_cmd(netcmd_item_type & type,
     }
   else
     {
-      payload += static_cast<char>(0); // compressed flag       
+      payload += static_cast<char>(0); // compressed flag
       tmp = del();
     }
   I(tmp.size() <= constants::netcmd_payload_limit);
   insert_variable_length_string(tmp, payload);
 }
 
-void 
+void
 netcmd::read_usher_cmd(utf8 & greeting) const
 {
   size_t pos = 0;
@@ -536,7 +536,7 @@ netcmd::read_usher_cmd(utf8 & greeting) const
   assert_end_of_buffer(payload, pos, "error netcmd payload");
 }
 
-void 
+void
 netcmd::write_usher_reply_cmd(utf8 const & server, utf8 const & pattern)
 {
   cmd_code = usher_reply_cmd;
@@ -611,16 +611,16 @@ do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
   BOOST_CHECK(in_cmd == out_cmd);
 }
 
-void 
+void
 test_netcmd_functions()
 {
-  
-  try 
+
+  try
     {
 
       // error_cmd
       {
-        L(FL("checking i/o round trip on error_cmd\n")); 
+        L(FL("checking i/o round trip on error_cmd"));
         netcmd out_cmd, in_cmd;
         string out_errmsg("your shoelaces are untied"), in_errmsg;
         string buf;
@@ -628,12 +628,12 @@ test_netcmd_functions()
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_error_cmd(in_errmsg);
         BOOST_CHECK(in_errmsg == out_errmsg);
-        L(FL("errmsg_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("errmsg_cmd test done, buffer was %d bytes") % buf.size());
       }
-      
+
       // hello_cmd
       {
-        L(FL("checking i/o round trip on hello_cmd\n"));
+        L(FL("checking i/o round trip on hello_cmd"));
         netcmd out_cmd, in_cmd;
         string buf;
         rsa_keypair_id out_server_keyname("server@there"), in_server_keyname;
@@ -645,12 +645,12 @@ test_netcmd_functions()
         BOOST_CHECK(in_server_keyname == out_server_keyname);
         BOOST_CHECK(in_server_key == out_server_key);
         BOOST_CHECK(in_nonce == out_nonce);
-        L(FL("hello_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("hello_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // bye_cmd
       {
-        L(FL("checking i/o round trip on bye_cmd\n"));
+        L(FL("checking i/o round trip on bye_cmd"));
         netcmd out_cmd, in_cmd;
         u8 out_phase(1), in_phase;
         string buf;
@@ -659,12 +659,12 @@ test_netcmd_functions()
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_bye_cmd(in_phase);
         BOOST_CHECK(in_phase == out_phase);
-        L(FL("bye_cmd test done, buffer was %d bytes\n") % buf.size()); 
+        L(FL("bye_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // anonymous_cmd
       {
-        L(FL("checking i/o round trip on anonymous_cmd\n"));
+        L(FL("checking i/o round trip on anonymous_cmd"));
         netcmd out_cmd, in_cmd;
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
@@ -681,16 +681,16 @@ test_netcmd_functions()
         BOOST_CHECK(in_include_pattern == out_include_pattern);
         BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
         BOOST_CHECK(in_role == out_role);
-        L(FL("anonymous_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("anonymous_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // auth_cmd
       {
-        L(FL("checking i/o round trip on auth_cmd\n"));
+        L(FL("checking i/o round trip on auth_cmd"));
         netcmd out_cmd, in_cmd;
         protocol_role out_role = source_and_sink_role, in_role;
         string buf;
-        id out_client(raw_sha1("happy client day")), out_nonce1(raw_sha1("nonce me amadeus")), 
+        id out_client(raw_sha1("happy client day")), out_nonce1(raw_sha1("nonce me amadeus")),
           in_client, in_nonce1;
         // total cheat, since we don't actually verify that rsa_oaep_sha_data
         // is sensible anywhere here...
@@ -711,23 +711,23 @@ test_netcmd_functions()
         BOOST_CHECK(in_role == out_role);
         BOOST_CHECK(in_include_pattern == out_include_pattern);
         BOOST_CHECK(in_exclude_pattern == out_exclude_pattern);
-        L(FL("auth_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("auth_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // confirm_cmd
       {
-        L(FL("checking i/o round trip on confirm_cmd\n"));
+        L(FL("checking i/o round trip on confirm_cmd"));
         netcmd out_cmd, in_cmd;
         string buf;
         out_cmd.write_confirm_cmd();
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_confirm_cmd();
-        L(FL("confirm_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("confirm_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // refine_cmd
       {
-        L(FL("checking i/o round trip on refine_cmd\n"));
+        L(FL("checking i/o round trip on refine_cmd"));
         netcmd out_cmd, in_cmd;
         string buf;
         refinement_type out_ty (refinement_query), in_ty(refinement_response);
@@ -747,12 +747,12 @@ test_netcmd_functions()
         in_cmd.read_refine_cmd(in_ty, in_node);
         BOOST_CHECK(in_ty == out_ty);
         BOOST_CHECK(in_node == out_node);
-        L(FL("refine_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("refine_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // done_cmd
       {
-        L(FL("checking i/o round trip on done_cmd\n"));
+        L(FL("checking i/o round trip on done_cmd"));
         netcmd out_cmd, in_cmd;
         size_t out_n_items(12), in_n_items(0);
         netcmd_item_type out_type(key_item), in_type(revision_item);
@@ -763,12 +763,12 @@ test_netcmd_functions()
         in_cmd.read_done_cmd(in_type, in_n_items);
         BOOST_CHECK(in_n_items == out_n_items);
         BOOST_CHECK(in_type == out_type);
-        L(FL("done_cmd test done, buffer was %d bytes\n") % buf.size()); 
+        L(FL("done_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // data_cmd
       {
-        L(FL("checking i/o round trip on data_cmd\n"));
+        L(FL("checking i/o round trip on data_cmd"));
         netcmd out_cmd, in_cmd;
         netcmd_item_type out_type(file_item), in_type(key_item);
         id out_id(raw_sha1("tuna is not yummy")), in_id;
@@ -779,12 +779,12 @@ test_netcmd_functions()
         in_cmd.read_data_cmd(in_type, in_id, in_dat);
         BOOST_CHECK(in_id == out_id);
         BOOST_CHECK(in_dat == out_dat);
-        L(FL("data_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("data_cmd test done, buffer was %d bytes") % buf.size());
       }
 
       // delta_cmd
       {
-        L(FL("checking i/o round trip on delta_cmd\n"));
+        L(FL("checking i/o round trip on delta_cmd"));
         netcmd out_cmd, in_cmd;
         netcmd_item_type out_type(file_item), in_type(key_item);
         id out_head(raw_sha1("your seat cusion can be reused")), in_head;
@@ -799,18 +799,18 @@ test_netcmd_functions()
         BOOST_CHECK(in_head == out_head);
         BOOST_CHECK(in_base == out_base);
         BOOST_CHECK(in_delta == out_delta);
-        L(FL("delta_cmd test done, buffer was %d bytes\n") % buf.size());
+        L(FL("delta_cmd test done, buffer was %d bytes") % buf.size());
       }
 
     }
   catch (bad_decode & d)
     {
-      L(FL("bad decode exception: '%s'\n") % d.what);
+      L(FL("bad decode exception: '%s'") % d.what);
       throw;
     }
 }
 
-void 
+void
 add_netcmd_tests(test_suite * suite)
 {
   suite->add(BOOST_TEST_CASE(&test_netcmd_functions));

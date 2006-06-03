@@ -23,11 +23,11 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
 
   file_id f_id;
   file_data f_data(s);
-  
+
   calculate_ident (f_data, f_id);
-  
+
   packet_db_writer dbw(app);
-  dbw.consume_file_data(f_id, f_data);  
+  dbw.consume_file_data(f_id, f_data);
 }
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
@@ -60,7 +60,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   split_into_lines(right.inner()(), right_lines);
   N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
-  
+
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
@@ -81,13 +81,13 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
-  else 
+  else
     complete(app, idx(app.revision_selectors, 0)(), rid);
 
   N(!null_id(rid), F("no revision for file '%s' in database") % file);
   N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
 
-  L(FL("annotate file file_path '%s'\n") % file);
+  L(FL("annotate file file_path '%s'") % file);
 
   // find the version of the file requested
   roster_t roster;
@@ -98,7 +98,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   N(is_file_t(node), F("'%s' in revision '%s' is not a file") % file % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  L(FL("annotate for file_id %s\n") % file_node->self);
+  L(FL("annotate for file_id %s") % file_node->self);
   do_annotate(app, file_node, rid);
 }
 
@@ -119,7 +119,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
     {
       dat = get_stdin();
     }
-  
+
   hexenc<id> ident;
   calculate_ident(dat, ident);
   cout << ident << "\n";
@@ -141,7 +141,7 @@ CMD(cat, N_("informative"),
   revision_id rid;
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
-  else 
+  else
     complete(app, idx(app.revision_selectors, 0)(), rid);
   N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
 
@@ -155,14 +155,14 @@ CMD(cat, N_("informative"),
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no file '%s' found in revision '%s'\n") % fp % rid);
+  N(roster.has_node(sp), F("no file '%s' found in revision '%s'") % fp % rid);
   node_t node = roster.get_node(sp);
-  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % fp % rid);
+  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  file_id ident = file_node->content;  
+  file_id ident = file_node->content;
   file_data dat;
-  L(FL("dumping file '%s'\n") % ident);
+  L(FL("dumping file '%s'") % ident);
   app.db.get_file_version(ident, dat);
   cout.write(dat.inner()().data(), dat.inner()().size());
 
