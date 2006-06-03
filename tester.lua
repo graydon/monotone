@@ -7,6 +7,15 @@ testname = nil
 wanted_fail = false
 partial_skip = false -- set this to true if you skip part of the test
 
+-- This is for redirected output from local implementations
+-- of shellutils type stuff (ie, grep).
+-- Reason: {set,clear}_redirect don't seem to (always?) work
+-- for this (at least on Windows).
+files = {}
+files.stdout = nil
+files.stdin = nil
+files.stderr = nil
+
 errfile = ""
 errline = -1
 
@@ -53,9 +62,18 @@ function locheader()
   end
 end
 
-function err(...)
-    errfile,errline = getsrcline()
-    error(unpack(arg))
+function err(what, level)
+  if level == nil then level = 2 end
+  errfile,errline = getsrcline()
+  local e
+  if type(what) == "table" then
+    e = what
+    if e.bt == nil then e.bt = {} end
+    table.insert(e.bt, debug.traceback())
+  else
+    e = {e = what, bt = {debug.traceback()}}
+  end
+  error(e, level)
 end
 
 old_mkdir = mkdir
@@ -195,57 +213,59 @@ function execute(path, ...)
    return ret
 end
 
-function background(path, ...)
-  local ret = {}
-  local pid = spawn(path, unpack(arg))
-  if (pid == -1) then return false end
-  ret.pid = pid
-  local mt = {}
-  mt.__index = mt
-  mt.finish = function (obj, timeout)
-                if timeout == nil then timeout = 0 end
-                local ret, res = timed_wait(obj.pid, timeout)
-                if (res == -1) then
-                  kill(obj.pid, 15) -- TERM
-                  ret, res = timed_wait(obj.pid, 2)
-                  if (res == -1) then
-                    kill(obj.pid, 9) -- KILL
-                    ret, res = timed_wait(obj.pid, 2)
-                  end
-                end
-                return ret
-              end
-  mt.wait = function (obj)
-              local ret,_ = wait(obj.pid)
-              return ret
-            end
-  return setmetatable(ret, mt)
-end
-
-function cmd(first, ...)
-  local args = arg
-  if type(first) == "table" then
-    args = first
-    first = args[1]
-    table.remove(args, 1)
+function runcmd(cmd, prefix, bgnd)
+  if prefix == nil then prefix = "ts-" end
+  if type(cmd) ~= "table" then err("runcmd called with bad argument") end
+  local local_redir = cmd.local_redirect
+  if cmd.local_redirect == nil then
+    if type(cmd[1]) == "function" then
+      local_redir = true
+    else
+      local_redir = false
+    end
+  end
+  if bgnd == true and type(cmd[1]) == "string" then local_redir = false end
+  L("runcmd: ", tostring(cmd[1]), ", local_redir = ", tostring(local_redir), ", requested = ", tostring(cmd.local_redirect), "\n")
+  local redir
+  if local_redir then
+    files.stdin = io.open(prefix.."stdin")
+    files.stdout = io.open(prefix.."stdout", "w")
+    files.stderr = io.open(prefix.."stderr", "w")
+  else
+    redir = set_redirect(prefix.."stdin", prefix.."stdout", prefix.."stderr")
   end
   
-  if type(first) == "string" then
-    L(locheader(), first, " ", table.concat(args, " "), "\n")
-    return function () return execute(first, unpack(args)) end
-  elseif type(first) == "function" then
-    local info = debug.getinfo(first)
-    local name
-    if info.name ~= nil then
-      name  = info.name
-    else
-      name = "<function>"
+  local result
+  if type(cmd[1]) == "function" then
+    L(locheader(), "<function> ")
+    for i,x in ipairs(cmd) do
+      if i ~= 1 then L(" ", tostring(x)) end
     end
-    L(locheader(), name, " ", table.concat(args, " "), "\n")
-    return function () return first(unpack(args)) end
+    L("\n")
+    result = {pcall(unpack(cmd))}
+  elseif type(cmd[1]) == "string" then
+    L(locheader())
+    for i,x in ipairs(cmd) do
+      L(" ", tostring(x))
+    end
+    L("\n")
+    if bgnd then
+      result = {pcall(spawn, unpack(cmd))}
+    else
+      result = {pcall(execute, unpack(cmd))}
+    end
   else
-    error("cmd() called with argument of unknown type " .. type(first), 2)
+    err("runcmd called with bad command table")
   end
+  
+  if local_redir then
+    files.stdin:close()
+    files.stdout:close()
+    files.stderr:close()
+  else
+    redir:restore()
+  end
+  return unpack(result)
 end
 
 function samefile(left, right)
@@ -277,15 +297,19 @@ function grep(...)
                    end
                    local quiet = string.find(flags, "q") ~= nil
                    local reverse = string.find(flags, "v") ~= nil
+                   if not quiet and files.stdout == nil then err("non-quiet grep not redirected") end
                    local out = 1
+                   local infile = files.stdin
+                   if where ~= nil then infile = io.open(where) end
                    for line in io.lines(where) do
                      local matched = regex.search(what, line)
                      if reverse then matched = not matched end
                      if matched then
-                       if not quiet then print(line) end
+                       if not quiet then files.stdout:write(line, "\n") end
                        out = 0
                      end
                    end
+                   if where ~= nil then infile:close() end
                    return out
                  end
   return {dogrep, unpack(arg)}
@@ -308,7 +332,6 @@ function pre_cmd(stdin, ident)
   os.rename("stdin", ident .. "stdin")
   L("stdin:\n")
   log_file_contents(ident .. "stdin")
-  return set_redirect(ident .. "stdin", ident .. "stdout", ident .. "stderr")
 end
 
 function post_cmd(result, ret, stdout, stderr, ident)
@@ -368,12 +391,11 @@ function bg(torun, ret, stdout, stderr, stdin)
   bgid = bgid + 1
   local out = {}
   out.prefix = "ts-" .. bgid .. "-"
-  local redir = pre_cmd(stdin, out.prefix)
-  out.process = background(unpack(torun))
-  redir:restore()
-  if out.process == false then
-    err("Failed to start background process\n", 2)
-  end
+  pre_cmd(stdin, out.prefix)
+  L("Starting background command...")
+  local _,pid = runcmd(torun, out.prefix, true)
+  if pid == -1 then err("Failed to start background process\n", 2) end
+  out.pid = pid
   bglist[bgid] = out
   out.id = bgid
   out.retval = nil
@@ -382,12 +404,23 @@ function bg(torun, ret, stdout, stderr, stdin)
   out.expret = ret
   out.expout = stdout
   out.experr = stderr
-  L(out.locstr, "starting background command: ", table.concat(out.cmd, " "), "\n")
   local mt = {}
   mt.__index = mt
   mt.finish = function(obj, timeout)
                 if obj.retval ~= nil then return end
-                obj.retval = obj.process:finish(timeout)
+                
+                if timeout == nil then timeout = 0 end
+                local res
+                obj.retval, res = timed_wait(obj.pid, timeout)
+                if (res == -1) then
+                  kill(obj.pid, 15) -- TERM
+                  obj.retval, res = timed_wait(obj.pid, 2)
+                  if (res == -1) then
+                    kill(obj.pid, 9) -- KILL
+                    obj.retval, res = timed_wait(obj.pid, 2)
+                  end
+                end
+                
                 table.remove(bglist, obj.id)
                 L(locheader(), "checking background command from ", out.locstr,
                   table.concat(out.cmd, " "))
@@ -395,7 +428,7 @@ function bg(torun, ret, stdout, stderr, stdin)
               end
   mt.wait = function(obj)
               if obj.retval ~= nil then return end
-              obj.retval = obj.process:wait()
+              obj.retval = wait(obj.pid)
               table.remove(bglist, obj.id)
               L(locheader(), "checking background command from ", out.locstr,
                 table.concat(out.cmd, " "), "\n")
@@ -404,11 +437,10 @@ function bg(torun, ret, stdout, stderr, stdin)
   return setmetatable(out, mt)
 end
 
-function check_func(func, ret, stdout, stderr, stdin)
+function runcheck(cmd, ret, stdout, stderr, stdin)
   if ret == nil then ret = 0 end
-  local redir = pre_cmd(stdin)
-  local ok, result = pcall(func)
-  redir:restore()
+  pre_cmd(stdin)
+  local ok, result = runcmd(cmd)
   if ok == false then
     err(result, 2)
   end
@@ -417,25 +449,29 @@ function check_func(func, ret, stdout, stderr, stdin)
 end
 
 function indir(dir, what)
+  if type(what) ~= "table" then
+    err("bad argument of type "..type(what).." to indir()")
+  end
   local function do_indir()
-    if type(what) == "table" then what = cmd(what) end
-    if type(what) ~= "function" then
-      err("bad argument of type "..type(what).." to indir()")
-    end
     local savedir = chdir(dir)
-    local ok, res = pcall(what)
+    local ok, res
+    if type(what[1]) == "function" then
+      ok, res = pcall(unpack(what))
+    elseif type(what[1]) == "string" then
+      ok, res = pcall(execute, unpack(what))
+    else
+      err("bad argument to indir(): cannot execute a "..type(what[1]))
+    end
     chdir(savedir)
     if not ok then err(res) end
     return res
   end
-  return do_indir
+  return {do_indir, local_redirect = (type(what[1]) == "function")}
 end
 
 function check(first, ...)
   if type(first) == "table" then
-    return check_func(cmd(first), unpack(arg))
-  elseif type(first) == "function" then
-    return check_func(first, unpack(arg))
+    return runcheck(first, unpack(arg))
   elseif type(first) == "boolean" then
     if not first then err("Check failed: false", 2) end
   elseif type(first) == "number" then
@@ -463,6 +499,18 @@ function xfail_if(chk, ...)
       wanted_fail = true
       L("UNEXPECTED SUCCESS\n")
     end
+  end
+end
+
+function log_error(e)
+  if type(e) == "table" then
+    test_log:write("\n", tostring(e.e), "\n")
+    for i,bt in ipairs(e.bt) do
+      if i ~= 1 then test_log:write("Rethrown from:") end
+      test_log:write(bt)
+    end
+  else
+    test_log:write("\n", tostring(e), "\n")
   end
 end
 
@@ -568,19 +616,23 @@ function run_tests(args)
         counts.success = counts.success + 1
       end
     else
-      if e == true then
+      if type(e) ~= "table" then
+        local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
+        e = tbl
+      end
+      if e.e == true then
         P(string.format("skipped (line %i)\n", errline))
         test_log:close()
         if not debugging then clean_test_dir(testname) end
         counts.skip = counts.skip + 1
-      elseif e == false then
+      elseif e.e == false then
         P(string.format("expected failure (line %i)\n", errline))
         test_log:close()
         leave_test_dir()
         counts.xfail = counts.xfail + 1
       else
         P(string.format("FAIL (line %i)\n", errline))
-        test_log:write("\n", e, "\n")
+        log_error(e)
         table.insert(failed_testlogs, tlog)
         test_log:close()
         leave_test_dir()

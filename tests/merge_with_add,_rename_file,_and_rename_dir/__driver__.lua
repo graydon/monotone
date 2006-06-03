@@ -51,7 +51,7 @@ check(mtn("merge"), 0, false, false)
 
 check(mtn("checkout", "--revision", revs.base, "test_dir"), 0, false, false)
 check(indir("test_dir", mtn("update", "--branch=testbranch")), 0, false, false)
-revs.test = indir("test_dir", base_revision)()
+revs.test = indir("test_dir", {base_revision})[1]()
 
 for _,x in pairs{"base", "rename_dir", "added", "rename_file"} do
   check(revs.test ~= revs[x])

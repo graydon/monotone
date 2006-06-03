@@ -149,7 +149,9 @@ function base_revision()
 end
 
 function qgrep(what, where)
-  return cmd(grep("-q", what, where))() == 0
+  local ok,res = pcall(unpack(grep("-q", what, where)))
+  if not ok then err(res) end
+  return res == 0
 end
 
 function addfile(filename, contents)
@@ -191,7 +193,7 @@ function check_same_db_contents(db1, db2)
                     mtn("--db", db2, "ls", "keys"))
   
   check(mtn("--db", db1, "complete", "revision", ""), 0, true, false)
-  rename("stdout", "revs")
+  rename_over("stdout", "revs")
   check(mtn("--db", db2, "complete", "revision", ""), 0, true, false)
   check(samefile("stdout", "revs"))
   for rev in io.lines("revs") do
@@ -205,7 +207,7 @@ function check_same_db_contents(db1, db2)
   end
   
   check(mtn("--db", db1, "complete", "file", ""), 0, true, false)
-  rename("stdout", "files")
+  rename_over("stdout", "files")
   check(mtn("--db", db2, "complete", "file", ""), 0, true, false)
   check(samefile("stdout", "files"))
   for file in io.lines("files") do

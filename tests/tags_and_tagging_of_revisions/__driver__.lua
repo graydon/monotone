@@ -43,7 +43,7 @@ if existsonpath("sort") then
   canonicalize("stdout")
   copyfile("stdout", "stdin")
   rename("stdout", "stdout-orig")
-  check(cmd("sort"), 0, readfile("stdout-orig"), false, true)
+  check({"sort"}, 0, readfile("stdout-orig"), false, true)
 end
 
 for i,x in {{true, false, false},

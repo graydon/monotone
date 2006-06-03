@@ -191,8 +191,8 @@ check(included("X", 1, 2, 3, 4))
 
 -- include rename source and target
 
-check(cmd(mtn("commit", "--message=move fileX to file1",
-              "work/fileX", "work/file1")), 0, false, false)
+check(mtn("commit", "--message=move fileX to file1",
+          "work/fileX", "work/file1"), 0, false, false)
 
 check(mtn("status"), 0, true, false)
 check(included(2, 3, 4))

@@ -21,8 +21,8 @@ check(not qgrep(privkey, "stdout"))
 
 -- Now check that --key-to-push works.
 srv = netsync.start("testbranch", 2)
-check(cmd(mtn("--rcfile=netsync.lua", "push", srv.address,
-              "testbranch", "--key-to-push=foo@test.example.com")),
+check(mtn("--rcfile=netsync.lua", "push", srv.address,
+          "testbranch", "--key-to-push=foo@test.example.com"),
       0, false, false)
 srv:finish()
 check(mtn2("dropkey", "foo@test.example.com"), 0, false, false)
@@ -30,8 +30,8 @@ check(mtn2("dropkey", "foo@test.example.com"), 0, false, false)
 -- Now commit a version that does use the new key, and make sure that
 -- now it does get transferred.
 writefile("testfile", "version 1 of test file")
-check(cmd(mtn("--branch=testbranch", "--message=blah-blah",
-              "--key=foo@test.example.com", "commit")), 0, false, false)
+check(mtn("--branch=testbranch", "--message=blah-blah",
+          "--key=foo@test.example.com", "commit"), 0, false, false)
 
 netsync.pull("testbranch")
 

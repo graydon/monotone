@@ -49,7 +49,7 @@ check(mtn("merge", "--branch=testbranch"), 0, false, false)
 
 check(mtn("checkout", "--revision", base, "test_dir"), 0, false, false)
 check(indir("test_dir", mtn("--branch=testbranch", "update")), 0, false, false)
-merged = indir("test_dir", base_revision)()
+merged = indir("test_dir", {base_revision})[1]()
 check(base ~= merged)
 check(left ~= merged)
 check(right ~= merged)
