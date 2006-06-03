@@ -9,14 +9,14 @@ commit()
 left = base_revision()
 
 remove_recursive("_MTN")
-check(cmd(mtn("setup", "--branch=testbranch", ".")), 0, false, false)
+check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
 
 addfile("testfile2", "This is test file 2\n")
 commit()
 right = base_revision()
 
-xfail_if(true, cmd(mtn("--branch=testbranch", "merge")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
+xfail_if(true, mtn("--branch=testbranch", "merge"), 0, false, false)
+check(mtn("update"), 0, false, false)
 
 writefile("expected_data1", "This is test file 1\n")
 writefile("expected_data2", "This is test file 2\n")

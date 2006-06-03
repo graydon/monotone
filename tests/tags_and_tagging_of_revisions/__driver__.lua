@@ -6,34 +6,34 @@ writefile("file2", "file 2")
 writefile("file3", "file 3")
 
 -- make sure a tag of a nonexistent revision fails
-check(cmd(mtn("tag", "af2f6c1f3b7892672357a1018124ee80c752475d", "foo")), 1, false, false)
+check(mtn("tag", "af2f6c1f3b7892672357a1018124ee80c752475d", "foo"), 1, false, false)
 
 revs = {}
 
 -- make and tag revision 1
 
-check(cmd(mtn("add", "file1")), 0, false, false)
+check(mtn("add", "file1"), 0, false, false)
 commit()
 revs[1] = base_revision()
-check(cmd(mtn("tag", revs[1], "tag1")), 0, false, false)
+check(mtn("tag", revs[1], "tag1"), 0, false, false)
 
 -- make and tag revision 2
 
-check(cmd(mtn("add", "file2")), 0, false, false)
+check(mtn("add", "file2"), 0, false, false)
 commit()
 revs[2] = base_revision()
-check(cmd(mtn("tag", revs[2], "tag2")), 0, false, false)
+check(mtn("tag", revs[2], "tag2"), 0, false, false)
 
 -- make and tag revision 3
 
-check(cmd(mtn("add", "file3")), 0, false, false)
+check(mtn("add", "file3"), 0, false, false)
 commit()
 revs[3] = base_revision()
-check(cmd(mtn("tag", revs[3], "tag3")), 0, true, true)
+check(mtn("tag", revs[3], "tag3"), 0, true, true)
 
 -- check tags created above
 
-check(cmd(mtn("ls", "tags")), 0, true, false)
+check(mtn("ls", "tags"), 0, true, false)
 check(qgrep("tag1", "stdout"))
 check(qgrep("tag2", "stdout"))
 check(qgrep("tag3", "stdout"))
@@ -54,7 +54,7 @@ for i,x in {{true, false, false},
   remove("file2")
   remove("file3")
   
-  check(cmd(mtn("co", "--revision=tag"..i, ".")), 0, false, false)
+  check(mtn("co", "--revision=tag"..i, "."), 0, false, false)
   check(base_revision() == revs[i])
   for j = 1,3 do
     check(exists("file"..j) == x[j])

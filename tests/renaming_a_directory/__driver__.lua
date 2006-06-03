@@ -7,13 +7,13 @@ writefile("foo/foo", "foo file")
 writefile("bleh", "bleh file")
 
 -- produce root
-check(cmd(mtn("add", "foo")), 0, false, false)
+check(mtn("add", "foo"), 0, false, false)
 commit()
 root_r_sha = base_revision()
 root_f_sha = sha1("foo/foo")
 
 -- produce move edge
-check(cmd(mtn("rename", "foo", "bar")), 0, false, false)
+check(mtn("rename", "foo", "bar"), 0, false, false)
 os.rename("foo", "bar")
 commit()
 
@@ -26,9 +26,9 @@ addfile("foo/bar", "bar file")
 commit()
 
 -- merge the add and the rename
-check(cmd(mtn("merge")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
-check(cmd(mtn("automate", "get_manifest_of")), 0, true, false)
+check(mtn("merge"), 0, false, false)
+check(mtn("update"), 0, false, false)
+check(mtn("automate", "get_manifest_of"), 0, true, false)
 os.rename("stdout", "manifest")
 check(qgrep("bar/bar", "manifest"))
 check(qgrep("bar/foo", "manifest"))

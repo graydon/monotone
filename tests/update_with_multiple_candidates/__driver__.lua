@@ -22,7 +22,7 @@ revert_to(anc)
 
 -- There are two possible candidates, so our update should fail.
 remove("file1")
-check(cmd(mtn("update")), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(not exists("file1"))
 -- Make sure that the failure message listed the possibilities
 check(qgrep(left, "stderr"))
@@ -38,7 +38,7 @@ left2 = base_revision()
 revert_to(anc)
 remove("file1")
 remove("file2")
-check(cmd(mtn("update")), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(not exists("file1"))
 check(not exists("file2"))
 -- Make sure that the failure message listed the possibilities

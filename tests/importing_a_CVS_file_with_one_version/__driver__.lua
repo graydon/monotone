@@ -25,5 +25,5 @@ check(cmd("cvs", "-d", cvsroot, "commit", "-m", 'commit 0', "testdir/importme"),
 
 -- import into monotone and check presence of file
 
-check(cmd(mtn("--branch=testbranch", "cvs_import", cvsroot .. "/testdir")), 0, false, false)
-check(cmd(mtn("automate", "get_file", tsha)), 0, false)
+check(mtn("--branch=testbranch", "cvs_import", cvsroot .. "/testdir"), 0, false, false)
+check(mtn("automate", "get_file", tsha), 0, false)

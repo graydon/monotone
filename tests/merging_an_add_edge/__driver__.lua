@@ -22,11 +22,11 @@ addfile("zz/testfile1", "added file")
 
 commit()
 
-xfail_if(true, cmd(mtn("--branch=testbranch", "merge")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
+xfail_if(true, mtn("--branch=testbranch", "merge"), 0, false, false)
+check(mtn("update"), 0, false, false)
 
 merged = base_revision()
 
-check(cmd(mtn("automate", "get_revision", merged)), 0, true)
+check(mtn("automate", "get_revision", merged), 0, true)
 rename("stdout", "rev")
 check(not qgrep("add_file", "rev"))

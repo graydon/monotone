@@ -15,10 +15,10 @@ revs.base = base_revision()
 addfile("bystander2", "6")
 addfile("groundzero/new-file", "7")
 rename("rename-in", "groundzero/rename-in")
-check(cmd(mtn("rename", "rename-in", "groundzero/rename-in")), 0, false, false)
+check(mtn("rename", "rename-in", "groundzero/rename-in"), 0, false, false)
 rename("groundzero/rename-out", "rename-out")
-check(cmd(mtn("rename", "groundzero/rename-out", "rename-out")), 0, false, false)
-check(cmd(mtn("drop", "-e", "groundzero/double-kill")), 0, false, false)
+check(mtn("rename", "groundzero/rename-out", "rename-out"), 0, false, false)
+check(mtn("drop", "-e", "groundzero/double-kill"), 0, false, false)
 commit()
 revs.other = base_revision()
 
@@ -28,25 +28,25 @@ revert_to(revs.base)
 remove("groundzero/rename-in")
 remove("groundzero/new-file")
 
-check(cmd(mtn("drop", "-e", "groundzero")), 1, false, false)
-check(cmd(mtn("drop", "--recursive", "-e", "groundzero")), 0, false, false)
+check(mtn("drop", "-e", "groundzero"), 1, false, false)
+check(mtn("drop", "--recursive", "-e", "groundzero"), 0, false, false)
 commit()
 revs.dir_del = base_revision()
 
 
 -- orphaned node conflicts on rename-in and new-file
-check(cmd(mtn("merge")), 1, false, false)
+check(mtn("merge"), 1, false, false)
 
-check(cmd(mtn("update", "-r", revs.other)), 0, false, false)
-check(cmd(mtn("drop", "groundzero/new-file")), 0, false, false)
-check(cmd(mtn("drop", "groundzero/rename-in")), 0, false, false)
+check(mtn("update", "-r", revs.other), 0, false, false)
+check(mtn("drop", "groundzero/new-file"), 0, false, false)
+check(mtn("drop", "groundzero/rename-in"), 0, false, false)
 commit()
-check(cmd(mtn("merge")), 0, false, false)
+check(mtn("merge"), 0, false, false)
 
 
-check(cmd(mtn("checkout", "--revision", revs.base, "clean")), 0, false, false)
+check(mtn("checkout", "--revision", revs.base, "clean"), 0, false, false)
 chdir("clean")
-check(cmd(mtn("--branch=testbranch", "update")), 0, false, false)
+check(mtn("--branch=testbranch", "update"), 0, false, false)
 chdir("..")
 
 check(not exists("clean/rename-out"))

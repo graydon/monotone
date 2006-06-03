@@ -3,7 +3,7 @@ mtn_setup()
 netsync.setup()
 
 writefile("testfile", "version 0 of test file")
-check(cmd(mtn("add", "testfile")), 0, false, false)
+check(mtn("add", "testfile"), 0, false, false)
 commit()
 f_ver = {}
 ver = {}
@@ -17,7 +17,7 @@ ver[1] = base_revision()
 
 netsync.pull("testbranch")
 
-check(cmd(mtn2("ls", "certs", ver[0])), 0, true)
+check(mtn2("ls", "certs", ver[0]), 0, true)
 rename("stdout", "certs")
 check(qgrep("date", "certs"))
 check(qgrep("author", "certs"))
@@ -25,7 +25,7 @@ check(qgrep("branch", "certs"))
 check(qgrep("changelog", "certs"))
 check(not qgrep("bad", "certs"))
 
-check(cmd(mtn2("ls", "certs", ver[1])), 0, true)
+check(mtn2("ls", "certs", ver[1]), 0, true)
 rename_over("stdout", "certs")
 check(qgrep("date", "certs"))
 check(qgrep("author", "certs"))
@@ -37,15 +37,15 @@ for _, what in {{cmd = "get_revision", ver = ver[0]},
                 {cmd = "get_revision", ver = ver[1]},
                 {cmd = "get_file", ver = f_ver[0]},
                 {cmd = "get_file", ver = f_ver[1]}} do
-  check(cmd(mtn2("automate", what.cmd, what.ver)), 0, true)
+  check(mtn2("automate", what.cmd, what.ver), 0, true)
   canonicalize("stdout")
   check(sha1("stdout") == what.ver)
 end
 
-check(cmd(mtn("db", "info")), 0, true)
+check(mtn("db", "info"), 0, true)
 canonicalize("stdout")
 info1 = sha1("stdout")
-check(cmd(mtn2("db", "info")), 0, true)
+check(mtn2("db", "info"), 0, true)
 canonicalize("stdout")
 info2 = sha1("stdout")
 check(info1 == info2)

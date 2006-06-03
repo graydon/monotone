@@ -27,48 +27,48 @@ writefile("iced", "stuff here")
 revs = {}
 
 -- produce state A
-check(cmd(mtn("add", "foo")), 0, false, false)
+check(mtn("add", "foo"), 0, false, false)
 commit("branch.main")
 revs.a = base_revision()
 
 -- produce state C
-check(cmd(mtn("add", "bar")), 0, false, false)
+check(mtn("add", "bar"), 0, false, false)
 commit("branch.main")
 revs.c = base_revision()
-check(cmd(mtn("cert", revs.c, "branch", "branch.fork")))
+check(mtn("cert", revs.c, "branch", "branch.fork"))
 
 -- produce state F
 revert_to(revs.a)
-check(cmd(mtn("add", "iced")), 0, false, false)
+check(mtn("add", "iced"), 0, false, false)
 commit("branch.fork")
 revs.f = base_revision()
 
 -- merge heads of branch.fork to make D
-check(cmd(mtn("--branch=branch.fork", "merge")), 0, false, false)
+check(mtn("--branch=branch.fork", "merge"), 0, false, false)
 
 -- produce state E
 revert_to(revs.c, "branch.main")
-check(cmd(mtn("drop", "bar")), 0, false, false)
+check(mtn("drop", "bar"), 0, false, false)
 commit("branch.main")
 revs.e = base_revision()
 
 -- state G
 revert_to(revs.a)
-check(cmd(mtn("add", "quux")), 0, false, false)
+check(mtn("add", "quux"), 0, false, false)
 commit("branch.main")
 revs.g = base_revision()
 
 -- merge to get state B
-check(cmd(mtn("--branch=branch.main", "merge")), 0, false, false)
+check(mtn("--branch=branch.main", "merge"), 0, false, false)
 
 -- now try the propagate
-check(cmd(mtn("propagate", "branch.main", "branch.fork")), 0, false, false)
+check(mtn("propagate", "branch.main", "branch.fork"), 0, false, false)
 
 -- check
 remove_recursive("_MTN")
-check(cmd(mtn("--branch=branch.fork", "checkout", ".")))
+check(mtn("--branch=branch.fork", "checkout", "."))
 
-check(cmd(mtn("automate", "get_manifest_of")), 0, true)
+check(mtn("automate", "get_manifest_of"), 0, true)
 rename("stdout", "manifest")
 check(not qgrep("bar", "manifest"))
 check(qgrep("quux", "manifest"))

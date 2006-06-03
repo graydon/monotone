@@ -23,7 +23,7 @@ probe_node("testfile", root_r_sha, root_f_sha)
 
 getfile("secondinsert", "testfile")
 
-check(cmd(mtn("update")), 0, false, false)
+check(mtn("update"), 0, false, false)
 
 -- files should now be merged
 

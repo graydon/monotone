@@ -40,8 +40,8 @@ function alice (...)
                  "--keydir=keys", unpack(arg))
 end
 
-check(cmd(bob("genkey", "bob")), 0, false, false, "bob\nbob\n")
-check(cmd(alice("genkey", "alice")), 0, false, false, "alice\nalice\n")
+check(bob("genkey", "bob"), 0, false, false, "bob\nbob\n")
+check(alice("genkey", "alice"), 0, false, false, "alice\nalice\n")
 
 
 -- construct ancestor
@@ -75,13 +75,13 @@ check(right_r_sha ~= left_r_sha)
 check(right_f_sha ~= left_f_sha)
 
 -- construct alice, a merge choosing the right side to win
-check(cmd(alice("merge")), 0, false, false)
+check(alice("merge"), 0, false, false)
 
 -- construct bob, a merge choosing the left side to win
-check(cmd(bob("merge")), 0, false, false)
+check(bob("merge"), 0, false, false)
 
 -- now merge the merges. this *should* fail.
 -- because there are conflicting changes and
 -- we have no merge3 hook to fall back on
 
-check(cmd(mtn("merge")), 1, false, false)
+check(mtn("merge"), 1, false, false)

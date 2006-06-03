@@ -31,10 +31,10 @@ check(right_r_sha ~= left_r_sha)
 check(right_f_sha ~= left_f_sha)
 
 -- now merge and update again, this time successfully
-check(cmd(mtn("--branch=testbranch", "merge")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
+check(mtn("--branch=testbranch", "merge"), 0, false, false)
+check(mtn("update"), 0, false, false)
 
-check(cmd(mtn("--branch=testbranch", "heads")), 0, true, false)
+check(mtn("--branch=testbranch", "heads"), 0, true, false)
 check(not qgrep("empty", "stdout"))
 
 -- files should now be merged

@@ -3,7 +3,7 @@ mtn_setup()
 
 writefile("testfile", "version 0 of test file\n")
 
-check(cmd(mtn("add", "testfile")), 0, false, false)
+check(mtn("add", "testfile"), 0, false, false)
 commit()
 root_r_sha = base_revision()
 root_f_sha = sha1("testfile")
@@ -15,13 +15,13 @@ left_f_sha = sha1("testfile")
 check(left_r_sha ~= right_r_sha)
 check(left_f_sha ~= right_f_sha)
 
-check(cmd(mtn("--branch=testbranch", "heads")), 0, true, false)
+check(mtn("--branch=testbranch", "heads"), 0, true, false)
 check(not qgrep("empty", "stdout"))
 
 probe_node("testfile", root_r_sha, root_f_sha)
 
 writefile("testfile", "right version of fork\n")
-check(cmd(mtn("add", "testfile")), 0, false, false)
+check(mtn("add", "testfile"), 0, false, false)
 commit()
 right_r_sha = base_revision()
 right_f_sha = sha1("testfile")

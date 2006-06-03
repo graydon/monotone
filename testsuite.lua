@@ -1,11 +1,11 @@
 #!./tester
 
 function safe_mtn(...)
-  return "mtn", "--norc", "--root=" .. test_root, unpack(arg)
+  return {"mtn", "--norc", "--root=" .. test_root, unpack(arg)}
 end
 
--- function preexecute(...)
---   return "valgrind", "--tool=memcheck", unpack(arg)
+-- function preexecute(x)
+--   return {"valgrind", "--tool=memcheck", unpack(x)}
 -- end
 
 function raw_mtn(...)
@@ -30,13 +30,14 @@ function minhooks_mtn(...)
                  "--key=tester@test.net", unpack(arg))
 end
 
-function commit(branch)
+function commit(branch, message)
   if branch == nil then branch = "testbranch" end
-  check(cmd(mtn("commit", "--message=blah-blah", "--branch", branch)), 0, false, false)
+  if message == nil then message = "blah-blah" end
+  check(mtn("commit", "--message", message, "--branch", branch), 0, false, false)
 end
 
 function sha1(what)
-  check(cmd(safe_mtn("identify", what)), 0, false, false)
+  check(safe_mtn("identify", what), 0, false, false)
   return trim(readfile("ts-stdout"))
 end
 
@@ -44,7 +45,7 @@ function probe_node(filename, rsha, fsha)
   remove_recursive("_MTN.old")
   os.rename("_MTN", "_MTN.old")
   os.remove(filename)
-  check(cmd(mtn("checkout", "--revision", rsha, ".")), 0, false)
+  check(mtn("checkout", "--revision", rsha, "."), 0, false)
   os.rename("_MTN.old/options", "_MTN")
   check(base_revision() == rsha)
   check(sha1(filename) == fsha)
@@ -55,9 +56,9 @@ function mtn_setup()
   getstdfile("tests/test_hooks.lua", "test_hooks.lua")
   getstdfile("tests/min_hooks.lua", "min_hooks.lua")
   
-  check(cmd(mtn("db", "init")), 0, false, false)
-  check(cmd(mtn("read", "test_keys")), 0, false, false)
-  check(cmd(mtn("setup", "--branch=testbranch", ".")), 0, false, false)
+  check(mtn("db", "init"), 0, false, false)
+  check(mtn("read", "test_keys"), 0, false, false)
+  check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
   os.remove("test_keys")
 end
 
@@ -91,8 +92,8 @@ end
 function netsync.internal.client(srv, oper, pat, n, res)
   if pat == "" or pat == nil then pat = "*" end
   if n == nil then n = 2 end
-  check(cmd(mtn("--rcfile=netsync.lua", "--keydir=keys"..n,
-                "--db=test"..n..".db", oper, srv.address, pat)),
+  check(mtn("--rcfile=netsync.lua", "--keydir=keys"..n,
+            "--db=test"..n..".db", oper, srv.address, pat),
         res, false, false)
 end
 function netsync.internal.pull(srv, pat, n, res) srv:client("pull", pat, n, res) end
@@ -117,7 +118,7 @@ function netsync.start(pat, n, min)
   end
   table.insert(args, "serve")
   table.insert(args, pat)
-  local out = bg({fn(unpack(args))}, false, false, false)
+  local out = bg(fn(unpack(args)), false, false, false)
   -- wait for "beginning service..."
   while fsize(out.prefix .. "stderr") == 0 do
     sleep(1)
@@ -153,7 +154,7 @@ end
 
 function addfile(filename, contents)
   if contents ~= nil then writefile(filename, contents) end
-  check(cmd(mtn("add", filename)), 0, false, false)
+  check(mtn("add", filename), 0, false, false)
 end
 
 function revert_to(rev, branch)
@@ -161,9 +162,9 @@ function revert_to(rev, branch)
   os.rename("_MTN", "_MTN.old")
   
   if branch == nil then
-    check(cmd(mtn("checkout", "--revision", rev, ".")), 0, false)
+    check(mtn("checkout", "--revision", rev, "."), 0, false)
   else
-    check(cmd(mtn("checkout", "--branch", branch, "--revision", rev, ".")), 0, false)
+    check(mtn("checkout", "--branch", branch, "--revision", rev, "."), 0, false)
   end
   check(base_revision() == rev)
 end
@@ -186,31 +187,31 @@ function canonicalize(filename)
 end
 
 function check_same_db_contents(db1, db2)
-  check_same_stdout(cmd(mtn("--db", db1, "ls", "keys")),
-                    cmd(mtn("--db", db2, "ls", "keys")))
+  check_same_stdout(mtn("--db", db1, "ls", "keys"),
+                    mtn("--db", db2, "ls", "keys"))
   
-  check(cmd(mtn("--db", db1, "complete", "revision", "")), 0, true, false)
+  check(mtn("--db", db1, "complete", "revision", ""), 0, true, false)
   rename("stdout", "revs")
-  check(cmd(mtn("--db", db2, "complete", "revision", "")), 0, true, false)
+  check(mtn("--db", db2, "complete", "revision", ""), 0, true, false)
   check(samefile("stdout", "revs"))
   for rev in io.lines("revs") do
     rev = trim(rev)
-    check_same_stdout(cmd(mtn("--db", db1, "automate", "certs", rev)),
-                      cmd(mtn("--db", db2, "automate", "certs", rev)))
-    check_same_stdout(cmd(mtn("--db", db1, "automate", "get_revision", rev)),
-                      cmd(mtn("--db", db2, "automate", "get_revision", rev)))
-    check_same_stdout(cmd(mtn("--db", db1, "automate", "get_manifest_of", rev)),
-                      cmd(mtn("--db", db2, "automate", "get_manifest_of", rev)))
+    check_same_stdout(mtn("--db", db1, "automate", "certs", rev),
+                      mtn("--db", db2, "automate", "certs", rev))
+    check_same_stdout(mtn("--db", db1, "automate", "get_revision", rev),
+                      mtn("--db", db2, "automate", "get_revision", rev))
+    check_same_stdout(mtn("--db", db1, "automate", "get_manifest_of", rev),
+                      mtn("--db", db2, "automate", "get_manifest_of", rev))
   end
   
-  check(cmd(mtn("--db", db1, "complete", "file", "")), 0, true, false)
+  check(mtn("--db", db1, "complete", "file", ""), 0, true, false)
   rename("stdout", "files")
-  check(cmd(mtn("--db", db2, "complete", "file", "")), 0, true, false)
+  check(mtn("--db", db2, "complete", "file", ""), 0, true, false)
   check(samefile("stdout", "files"))
   for file in io.lines("files") do
     file = trim(file)
-    check_same_stdout(cmd(mtn("--db", db1, "automate", "get_file", file)),
-                      cmd(mtn("--db", db2, "automate", "get_file", file)))
+    check_same_stdout(mtn("--db", db1, "automate", "get_file", file),
+                      mtn("--db", db2, "automate", "get_file", file))
   end
 end
 
@@ -332,3 +333,28 @@ table.insert(tests, "tests/(imp)_deleting_directories")
 table.insert(tests, "tests/schema_migration")
 table.insert(tests, "tests/database_dump_load")
 table.insert(tests, "tests/no-change_deltas_disappear")
+table.insert(tests, "tests/merge((),_(drop_a,_rename_b_a,_patch_a))")
+table.insert(tests, "tests/verification_of_command_line_options")
+table.insert(tests, "tests/log_hides_deleted_renamed_files")
+table.insert(tests, "tests/CRLF_line_normalization")
+table.insert(tests, "tests/pull_a_netsync_branch_which_has_a_parent_from_another_branch")
+table.insert(tests, "tests/(normal)_netsync_revision_with_no_certs")
+table.insert(tests, "tests/check_same_db_contents_macro")
+table.insert(tests, "tests/merge_rev_with_ancestor")
+table.insert(tests, "tests/propagate_a_descendent")
+table.insert(tests, "tests/propagate_an_ancestor")
+table.insert(tests, "tests/status_with_missing_files")
+table.insert(tests, "tests/(imp)_persistent_netsync_server_-_keys_2")
+table.insert(tests, "tests/update_1")
+table.insert(tests, "tests/(todo)_vcheck")
+table.insert(tests, "tests/--db_with_parent_dir")
+table.insert(tests, "tests/add_in_subdir")
+table.insert(tests, "tests/(minor)_drop_in_subdir")
+table.insert(tests, "tests/revert_in_subdirs")
+table.insert(tests, "tests/rename_in_subdir")
+table.insert(tests, "tests/attr_command_in_subdirs")
+table.insert(tests, "tests/(normal)_update_across_discontinuity")
+table.insert(tests, "tests/rename_dir_to_non-sibling")
+table.insert(tests, "tests/merge_with_add,_rename_file,_and_rename_dir")
+table.insert(tests, "tests/merge((rename_a_b),_(rename_a_c))")
+table.insert(tests, "tests/merge((patch_foo_a),_(rename_foo__bar_))")

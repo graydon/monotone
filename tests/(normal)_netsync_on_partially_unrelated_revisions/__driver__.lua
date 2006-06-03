@@ -26,24 +26,24 @@ base = base_revision()
 netsync.pull("testbranch")
 
 for _,i in pairs{{"automate", "graph"}, {"ls", "certs", base}} do
-  check_same_stdout(cmd(mtn(unpack(i))), cmd(mtn2(unpack(i))))
+  check_same_stdout(mtn(unpack(i)), mtn2(unpack(i)))
 end
 
 remove_recursive("_MTN")
-check(cmd(mtn("setup", "--branch=testbranch", ".")), 0, false, false)
+check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
 
 addfile("testfile2", "This is test file 2")
 commit("testbranch")
 unrelated = base_revision()
 
-xfail_if(true, cmd(mtn("--branch=testbranch", "merge")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
+xfail_if(true, mtn("--branch=testbranch", "merge"), 0, false, false)
+check(mtn("update"), 0, false, false)
 merge = base_revision()
 
 netsync.pull("testbranch")
 
-check_same_stdout(cmd(mtn("automate", "graph")), cmd(mtn2("automate", "graph")))
+check_same_stdout(mtn("automate", "graph"), mtn2("automate", "graph"))
 for _,i in pairs{base, unrelated, merge} do
-  check_same_stdout(cmd(mtn("ls", "certs", i)),
-                    cmd(mtn2("ls", "certs", i)))
+  check_same_stdout(mtn("ls", "certs", i),
+                    mtn2("ls", "certs", i))
 end

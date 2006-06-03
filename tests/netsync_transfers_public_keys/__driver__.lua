@@ -6,7 +6,7 @@ pubkey = "52f32ec62128ea3541ebdd9d17400e268cfcd3fe"
 privkey = "06b040c37796863b53f10dc23fcccf379cc2e259"
 
 getfile("newkeys.txt", "stdin")
-check(cmd(mtn("read")), 0, false, false, true)
+check(mtn("read"), 0, false, false, true)
 
 -- First commit a version that doesn't use the new key, and make sure
 -- that it doesn't get transferred.
@@ -15,7 +15,7 @@ commit("testbranch")
 
 netsync.pull("testbranch")
 
-check(cmd(mtn2("ls", "keys")), 0, true, false)
+check(mtn2("ls", "keys"), 0, true, false)
 check(not qgrep(pubkey, "stdout"))
 check(not qgrep(privkey, "stdout"))
 
@@ -25,7 +25,7 @@ check(cmd(mtn("--rcfile=netsync.lua", "push", srv.address,
               "testbranch", "--key-to-push=foo@test.example.com")),
       0, false, false)
 srv:finish()
-check(cmd(mtn2("dropkey", "foo@test.example.com")), 0, false, false)
+check(mtn2("dropkey", "foo@test.example.com"), 0, false, false)
 
 -- Now commit a version that does use the new key, and make sure that
 -- now it does get transferred.
@@ -35,6 +35,6 @@ check(cmd(mtn("--branch=testbranch", "--message=blah-blah",
 
 netsync.pull("testbranch")
 
-check(cmd(mtn2("ls", "keys")), 0, true, false)
+check(mtn2("ls", "keys"), 0, true, false)
 check(qgrep(pubkey, "stdout"))
 check(not qgrep(privkey, "stdout"))

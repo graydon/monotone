@@ -4,15 +4,15 @@ mtn_setup()
 addfile("testfile", "foo")
 commit()
 
-check(cmd(mtn("--branch=testbranch", "checkout", "test_dir1")),
+check(mtn("--branch=testbranch", "checkout", "test_dir1"),
          0, false, false)
 
 writefile("test_dir2")
-check(cmd(mtn("--branch=testbranch", "checkout", "test_dir2")),
+check(mtn("--branch=testbranch", "checkout", "test_dir2"),
          1, false, false)
 
 mkdir("test_dir3")
-check(cmd(mtn("--branch=testbranch", "checkout", "test_dir3")),
+check(mtn("--branch=testbranch", "checkout", "test_dir3"),
          1, false, false)
 
 if existsonpath("chmod") and existsonpath("test") then
@@ -22,9 +22,9 @@ if existsonpath("chmod") and existsonpath("test") then
   else
     mkdir("test_dir4")
     check(cmd("chmod", "444", "test_dir4"), 0, false)
-    check(cmd(mtn("--branch=testbranch", "checkout", "test_dir4")),
+    check(mtn("--branch=testbranch", "checkout", "test_dir4"),
              1, false, false)
-    check(cmd(mtn("--branch=testbranch", "checkout", "test_dir4/subdir")),
+    check(mtn("--branch=testbranch", "checkout", "test_dir4/subdir"),
              1, false, false)
     -- Reset the permissions so Autotest can correctly clean up our
     -- temporary directory.
@@ -39,5 +39,5 @@ end
 
 mkdir("test_dir5")
 chdir("test_dir5")
-check(cmd(mtn("--branch=testbranch", "checkout", ".")), 0, false, false)
+check(mtn("--branch=testbranch", "checkout", "."), 0, false, false)
 chdir("..")

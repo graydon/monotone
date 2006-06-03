@@ -15,8 +15,8 @@ addfile("testfile2", "This is test file 2\n")
 commit()
 right = base_revision()
 
-check(cmd(mtn("--branch=testbranch", "merge")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
+check(mtn("--branch=testbranch", "merge"), 0, false, false)
+check(mtn("update"), 0, false, false)
 
 writefile("expected_irrelevant", "this is just a file\n")
 writefile("expected_data1", "This is test file 1\n")

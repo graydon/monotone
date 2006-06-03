@@ -20,13 +20,13 @@ check(lver == left)
 check(rver == right)
 
 copyfile("ancestor", "stdin")
-check(cmd(mtn("fload")), 0, false, false, true)
+check(mtn("fload"), 0, false, false, true)
 copyfile("left", "stdin")
-check(cmd(mtn("fload")), 0, false, false, true)
+check(mtn("fload"), 0, false, false, true)
 copyfile("right", "stdin")
-check(cmd(mtn("fload")), 0, false, false, true)
+check(mtn("fload"), 0, false, false, true)
 
-check(cmd(mtn("fmerge", anc, left, right)), 0, true, false)
+check(mtn("fmerge", anc, left, right), 0, true, false)
 canonicalize("stdout")
 rename("stdout", "merge.monotone")
 

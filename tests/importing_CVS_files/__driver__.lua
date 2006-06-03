@@ -45,15 +45,15 @@ check(cmd("cvs", "-d", cvsroot, "commit", "-m", 'commit 3', "testdir/importme"),
 
 -- safety check -- we stop people from accidentally feeding their whole
 -- repo to cvs_import instead of just a module.
-check(cmd(mtn("--branch=testbranch", "cvs_import", cvsroot)), 1, false, false)
-check(cmd(mtn("--branch=testbranch", "cvs_import", cvsroot .. "/testdir")), 0, false, false)
-check(cmd(mtn("automate", "get_file", tsha0)), 0, false)
-check(cmd(mtn("automate", "get_file", tsha1)), 0, false)
-check(cmd(mtn("automate", "get_file", tsha2)), 0, false)
-check(cmd(mtn("automate", "get_file", tsha3)), 0, false)
+check(mtn("--branch=testbranch", "cvs_import", cvsroot), 1, false, false)
+check(mtn("--branch=testbranch", "cvs_import", cvsroot .. "/testdir"), 0, false, false)
+check(mtn("automate", "get_file", tsha0), 0, false)
+check(mtn("automate", "get_file", tsha1), 0, false)
+check(mtn("automate", "get_file", tsha2), 0, false)
+check(mtn("automate", "get_file", tsha3), 0, false)
 
 -- also check that history is okay -- has a unique head, and it's the
 -- right one.
 
-check(cmd(mtn("checkout", "--branch=testbranch", "mtcodir")), 0, false, false)
+check(mtn("checkout", "--branch=testbranch", "mtcodir"), 0, false, false)
 check(samefile("importme.3", "mtcodir/importme"))

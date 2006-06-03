@@ -29,46 +29,46 @@ mtn_setup()
 -- We don't want the standard db, we want full control ourselves
 remove("test.db")
 remove_recursive("keys")
-check(cmd(mtn("db", "init")))
+check(mtn("db", "init"))
 
 -- Put some random keys in, with and without corresponding private keys
 getfile("migrate_keys", "stdin")
-check(cmd(mtn("read")), 0, false, false, true)
+check(mtn("read"), 0, false, false, true)
 
 addfile("testfile1", "f1v1\n")
 addfile("testfile2", "f2v1\n")
-check(cmd(mtn("attr", "set", "testfile1", "testfile1_key", "initial_value")), 0, false, false)
-check(cmd(mtn("attr", "set", ".", "dir_key", "initial_value")), 0, false, false)
-check(cmd(mtn("commit", "--branch=testbranch1", "--date=1999-01-01T12:00:00", "--message=blah-blah")), 0, false, false)
+check(mtn("attr", "set", "testfile1", "testfile1_key", "initial_value"), 0, false, false)
+check(mtn("attr", "set", ".", "dir_key", "initial_value"), 0, false, false)
+check(mtn("commit", "--branch=testbranch1", "--date=1999-01-01T12:00:00", "--message=blah-blah"), 0, false, false)
 rev = base_revision()
 
-check(cmd(mtn("cert", rev, "somekey", "somevalue")), 0, false, false)
+check(mtn("cert", rev, "somekey", "somevalue"), 0, false, false)
 
 writefile("testfile1", "f1v2\n")
 addfile("testfile3", "f3v1\n")
-check(cmd(mtn("attr", "drop", "testfile1", "testfile1_key")), 0, false, false)
-check(cmd(mtn("attr", "set", ".", "dir_key", "new_value")), 0, false, false)
-check(cmd(mtn("commit", "--branch=testbranch2", "--date=2000-01-01T12:00:00", "--message=blah-blah")), 0, false, false)
+check(mtn("attr", "drop", "testfile1", "testfile1_key"), 0, false, false)
+check(mtn("attr", "set", ".", "dir_key", "new_value"), 0, false, false)
+check(mtn("commit", "--branch=testbranch2", "--date=2000-01-01T12:00:00", "--message=blah-blah"), 0, false, false)
 
 revert_to(rev)
 
 writefile("testfile2", "f2v2\n")
 addfile("testfile4", "f4v1\n")
-check(cmd(mtn("commit", "--branch=testbranch1", "--date=2001-01-01T12:00:00", "--message=blah-blah")), 0, false, false)
+check(mtn("commit", "--branch=testbranch1", "--date=2001-01-01T12:00:00", "--message=blah-blah"), 0, false, false)
 
-check(cmd(mtn("propagate", "--date=2002-01-01T12:00:00", "testbranch2", "testbranch1")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
+check(mtn("propagate", "--date=2002-01-01T12:00:00", "testbranch2", "testbranch1"), 0, false, false)
+check(mtn("update"), 0, false, false)
 
-check(cmd(mtn("drop", "testfile1")), 0, false, false)
+check(mtn("drop", "testfile1"), 0, false, false)
 writefile("testfile4", "f4v2\n")
-check(cmd(mtn("commit", "--branch=testbranch3", "--date=2003-01-01T12:00:00", "--message=blah-blah")), 0, false, false)
+check(mtn("commit", "--branch=testbranch3", "--date=2003-01-01T12:00:00", "--message=blah-blah"), 0, false, false)
 
 rename("test.db", "latest.mtn")
 
 if debugging then
-  check(cmd(mtn("--db=latest.mtn", "db", "dump")), 0, true, false)
+  check(mtn("--db=latest.mtn", "db", "dump"), 0, true, false)
   rename("stdout", "latest.mtn.dumped")
-  check(cmd(mtn("--db=latest.mtn", "db", "version")), 0, true, false)
+  check(mtn("--db=latest.mtn", "db", "version"), 0, true, false)
   local ver = string.gsub(readfile("stdout"), "^.*: (.*)%s$", "%1")
   rename("latest.mtn.dumped", ver..".mtn.dumped")
 end
@@ -80,12 +80,12 @@ end
 function check_migrate_from(id)
   -- id.dumped is a 'db dump' of a db with schema "id"
   getfile(id..".mtn.dumped", "stdin")
-  check(cmd(mtn("--db="..id..".mtn", "db", "load")), 0, false, false, true)
+  check(mtn("--db="..id..".mtn", "db", "load"), 0, false, false, true)
   -- check that the version's correct
-  check(cmd(mtn("--db="..id..".mtn", "db", "version")), 0, true, false)
+  check(mtn("--db="..id..".mtn", "db", "version"), 0, true, false)
   check(qgrep(id, "stdout"))
   -- migrate it
-  check(cmd(mtn("--db="..id..".mtn", "db", "migrate")), 0, false, false)
+  check(mtn("--db="..id..".mtn", "db", "migrate"), 0, false, false)
   check_same_db_contents(id..".mtn", "latest.mtn")
 end
 

@@ -24,11 +24,11 @@ copyfile("right", "testfile")
 commit()
 right = base_revision()
 
-check(cmd(mtn("explicit_merge", left, right, "otherbranch")), 0, false, false)
+check(mtn("explicit_merge", left, right, "otherbranch"), 0, false, false)
 
 -- Check that it didn't end up on our current branch, i.e. update doesn't do anything
-check(cmd(mtn("update")), 0, false, false)
+check(mtn("update"), 0, false, false)
 check(samefile("right", "testfile"))
 
-check(cmd(mtn("checkout", "--branch=otherbranch", "otherbranch_co")), 0, false, false)
+check(mtn("checkout", "--branch=otherbranch", "otherbranch_co"), 0, false, false)
 check(samefile("merged", "otherbranch_co/testfile"))

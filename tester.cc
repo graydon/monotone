@@ -255,6 +255,7 @@ extern "C"
   go_to_dir(lua_State * L)
   {
     fs::path dir(luaL_checkstring(L, -1), fs::native);
+    string from = fs::current_path().native_file_string();
     if (!dir.is_complete())
       dir = fs::current_path() / dir;
     if (!fs::exists(dir) || !fs::is_directory(dir))
@@ -263,7 +264,7 @@ extern "C"
         return 1;
       }
     go_to_workspace(dir.native_file_string());
-    lua_pushboolean(L, true);
+    lua_pushstring(L, from.c_str());
     return 1;
   }
 

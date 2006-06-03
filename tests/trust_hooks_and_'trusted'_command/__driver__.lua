@@ -2,7 +2,7 @@
 mtn_setup()
 
 function trusted(rev, name, value, ...) -- ... is signers
-  check(cmd(mtn("trusted", rev, name, value, unpack(arg))), 0, true, false)
+  check(mtn("trusted", rev, name, value, unpack(arg)), 0, true, false)
   local t = qgrep(" trusted", "stdout")
   local u = qgrep(" untrusted", "stdout") or qgrep(" UNtrusted", "stdout")
   check(t ~= u)

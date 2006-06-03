@@ -9,7 +9,7 @@ writefile("left", "bar blah")
 writefile("new_right", "baz blah")
 
 copyfile("base", "testfile")
-check(cmd(mtn("add", "testfile")), 0, false, false)
+check(mtn("add", "testfile"), 0, false, false)
 commit()
 base = base_revision()
 
@@ -19,13 +19,13 @@ commit()
 revert_to(base)
 
 remove("testfile")
-check(cmd(mtn("drop", "testfile")), 0, false, false)
+check(mtn("drop", "testfile"), 0, false, false)
 commit()
 
 copyfile("new_right", "testfile")
-check(cmd(mtn("add", "testfile")), 0, false, false)
+check(mtn("add", "testfile"), 0, false, false)
 commit()
 
-check(cmd(mtn("merge")), 0, false, false)
-check(cmd(mtn("update")), 0, false, false)
+check(mtn("merge"), 0, false, false)
+check(mtn("update"), 0, false, false)
 check(samefile("testfile", "new_right"))

@@ -5,7 +5,7 @@ mtn_setup()
 
 -- get first file and commit to db
 getfile("firstfile", "testfile")
-check(cmd(mtn("add", "testfile")), 0, false, false)
+check(mtn("add", "testfile"), 0, false, false)
 commit()
 rename("testfile", "firstfile")
 
@@ -13,7 +13,7 @@ rename("testfile", "firstfile")
 getfile("secondfile", "testfile")
 
 -- calculate diff to second file using monotone
-check(cmd(mtn("diff")), 0, true)
+check(mtn("diff"), 0, true)
 canonicalize("stdout")
 rename("stdout", "monodiff")
 rename("testfile", "secondfile")

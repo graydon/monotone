@@ -25,7 +25,7 @@ getfile("right")
 getfile("correct")
 
 copyfile("parent", "testfile")
-check(cmd(mtn("add", "testfile")), 0, false, false)
+check(mtn("add", "testfile"), 0, false, false)
 commit()
 parent = base_revision()
 
@@ -37,7 +37,7 @@ revert_to(parent)
 copyfile("right", "testfile")
 commit()
 
-check(cmd(mtn("merge")), 0, false, false)
+check(mtn("merge"), 0, false, false)
 
-check(cmd(mtn("update")), 0, false, false)
+check(mtn("update"), 0, false, false)
 check(samefile("testfile", "correct"))

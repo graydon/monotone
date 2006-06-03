@@ -223,9 +223,16 @@ function background(path, ...)
 end
 
 function cmd(first, ...)
+  local args = arg
+  if type(first) == "table" then
+    args = first
+    first = args[1]
+    table.remove(args, 1)
+  end
+  
   if type(first) == "string" then
-    L(locheader(), first, " ", table.concat(arg, " "), "\n")
-    return function () return execute(first, unpack(arg)) end
+    L(locheader(), first, " ", table.concat(args, " "), "\n")
+    return function () return execute(first, unpack(args)) end
   elseif type(first) == "function" then
     local info = debug.getinfo(first)
     local name
@@ -234,8 +241,8 @@ function cmd(first, ...)
     else
       name = "<function>"
     end
-    L(locheader(), name, " ", table.concat(arg, " "), "\n")
-    return function () return first(unpack(arg)) end
+    L(locheader(), name, " ", table.concat(args, " "), "\n")
+    return function () return first(unpack(args)) end
   else
     error("cmd() called with argument of unknown type " .. type(first), 2)
   end
@@ -281,7 +288,7 @@ function grep(...)
                    end
                    return out
                  end
-  return dogrep, unpack(arg)
+  return {dogrep, unpack(arg)}
 end
 
 function log_file_contents(filename)
@@ -409,8 +416,25 @@ function check_func(func, ret, stdout, stderr, stdin)
   return result
 end
 
+function indir(dir, what)
+  local function do_indir()
+    if type(what) == "table" then what = cmd(what) end
+    if type(what) ~= "function" then
+      err("bad argument of type "..type(what).." to indir()")
+    end
+    local savedir = chdir(dir)
+    local ok, res = pcall(what)
+    chdir(savedir)
+    if not ok then err(res) end
+    return res
+  end
+  return do_indir
+end
+
 function check(first, ...)
-  if type(first) == "function" then
+  if type(first) == "table" then
+    return check_func(cmd(first), unpack(arg))
+  elseif type(first) == "function" then
     return check_func(first, unpack(arg))
   elseif type(first) == "boolean" then
     if not first then err("Check failed: false", 2) end
@@ -504,8 +528,8 @@ function run_tests(args)
     
     if i < 100 then P(" ") end
     if i < 10 then P(" ") end
-    P(i .. " " .. shortname)
-    local spacelen = 46 - string.len(shortname)
+    P(i, " ", shortname, " ")
+    local spacelen = 45 - string.len(shortname)
     local spaces = string.rep(" ", 50)
     if spacelen > 0 then P(string.sub(spaces, 1, spacelen)) end
 

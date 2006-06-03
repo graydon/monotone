@@ -25,43 +25,43 @@ commit()
 -- FIXME_RESTRICTIONS: the old code allows for --depth=N with no paths
 -- and adds the "." path so that depth is interpreted against the current
 -- included directory. this seems bad. how does --depth interact with --exclude?
---check(cmd(mtn("ls", "known", "--depth=0")), 0, true, false)
+--check(mtn("ls", "known", "--depth=0"), 0, true, false)
 --check(not qgrep("fileX", "stdout"))
 
-check(cmd(mtn("ls", "known", "--depth=0", ".")) , 0, true, false)
+check(mtn("ls", "known", "--depth=0", ".") , 0, true, false)
 check(not qgrep("fileX", "stdout"))
 
-check(cmd(mtn("ls", "known", "--depth=1", ".")) , 0, true, false)
+check(mtn("ls", "known", "--depth=1", ".") , 0, true, false)
 check(qgrep("fileX", "stdout"))
 
-check(cmd(mtn("ls", "known", "--depth=0", "work/A")) , 0, true, false)
+check(mtn("ls", "known", "--depth=0", "work/A") , 0, true, false)
 check(not qgrep("fileAB", "stdout"))
 
-check(cmd(mtn("ls", "known", "--depth=1", "work/A")) , 0, true, false)
+check(mtn("ls", "known", "--depth=1", "work/A") , 0, true, false)
 check(qgrep("fileAB", "stdout"))
 
 -- test restriction of unknown, missing, ignored files
 
-check(cmd(mtn("ls", "unknown")), 0, true, false)
+check(mtn("ls", "unknown"), 0, true, false)
 check(qgrep("work/file4", "stdout"))
 
-check(cmd(mtn("ls", "unknown", "work")), 0, true, false)
+check(mtn("ls", "unknown", "work"), 0, true, false)
 check(qgrep("work/file4", "stdout"))
 
 os.rename("work/file2", "work/filex2")
 
-check(cmd(mtn("ls", "missing")), 0, true, false)
+check(mtn("ls", "missing"), 0, true, false)
 check(qgrep("work/file2", "stdout"))
 
-check(cmd(mtn("ls", "missing", "work/file2")), 0, true, false)
+check(mtn("ls", "missing", "work/file2"), 0, true, false)
 check(qgrep("work/file2", "stdout"))
 
 os.rename("work/filex2", "work/file2")
 
-check(cmd(mtn("ls", "ignored", "--rcfile=ignored.lua")), 0, true, false)
+check(mtn("ls", "ignored", "--rcfile=ignored.lua"), 0, true, false)
 check(qgrep("work/foo.o", "stdout"))
 
-check(cmd(mtn("ls", "ignored", "--rcfile=ignored.lua", "work")), 0, true, false)
+check(mtn("ls", "ignored", "--rcfile=ignored.lua", "work"), 0, true, false)
 check(qgrep("work/foo.o", "stdout"))
 
 -- create moved, dropped, and changed work to test status, diff, commit
@@ -73,9 +73,9 @@ writefile("work/file3", "version 2 of file3 with some changes")
 writefile("work/A/fileA", "version 2 of fileA with some changes")
 writefile("work/A/B/fileAB", "version 2 of fileAB with some changes")
 
-check(cmd(mtn("rename", "work/fileX", "work/file1")), 0, false, false)
-check(cmd(mtn("drop", "work/file2")), 0, false, false)
-check(cmd(mtn("add", "work/file4")), 0, false, false)
+check(mtn("rename", "work/fileX", "work/file1"), 0, false, false)
+check(mtn("drop", "work/file2"), 0, false, false)
+check(mtn("add", "work/file4"), 0, false, false)
 
 -- moved fileX to file1
 -- dropped file2
@@ -116,77 +116,77 @@ end
 
 -- status
 
-check(cmd(mtn("status")), 0, true, false)
+check(mtn("status"), 0, true, false)
 check(included("X", 1, 2, 3, 4), 0, false)
 
 -- include both source and target of rename
 
-check(cmd(mtn("status", "work/fileX", "work/file1")), 0, true, false)
+check(mtn("status", "work/fileX", "work/file1"), 0, true, false)
 check(included("X", 1))
 check(excluded(2, 3, 4))
 
 -- include drop
 
-check(cmd(mtn("status", "work/file2")), 0, true, false)
+check(mtn("status", "work/file2"), 0, true, false)
 check(included(2))
 check(excluded("X", 1, 3, 4))
 
 -- include delta
 
-check(cmd(mtn("status", "work/file3")), 0, true, false)
+check(mtn("status", "work/file3"), 0, true, false)
 check(included(3))
 check(excluded("X", 1, 2, 4))
 
 -- include add
 
-check(cmd(mtn("status", "work/file4")), 0, true, false)
+check(mtn("status", "work/file4"), 0, true, false)
 check(included(4))
 check(excluded("X", 1, 2, 3))
 
 -- diff
 
-check(cmd(mtn("diff")), 0, true, false)
+check(mtn("diff"), 0, true, false)
 check(included("X", 1, 2, 3, 4))
 
-check(cmd(mtn("diff", "--depth=0", ".")), 0, true, false)
+check(mtn("diff", "--depth=0", "."), 0, true, false)
 check(not qgrep("fileAB", "stdout"))
 
-check(cmd(mtn("diff", "--depth=2", ".")), 0, true, false)
+check(mtn("diff", "--depth=2", "."), 0, true, false)
 check(qgrep("fileA", "stdout"))
 
-check(cmd(mtn("diff", "--context", "--depth=0", ".")), 0, true, false)
+check(mtn("diff", "--context", "--depth=0", "."), 0, true, false)
 check(not qgrep("fileAB", "stdout"))
 
-check(cmd(mtn("diff", "--context", "--depth=2", ".")), 0, true, false)
+check(mtn("diff", "--context", "--depth=2", "."), 0, true, false)
 check(qgrep("fileA", "stdout"))
 
 -- include both source and target of rename
 
-check(cmd(mtn("diff", "work/fileX", "work/file1")), 0, true, false)
+check(mtn("diff", "work/fileX", "work/file1"), 0, true, false)
 check(included("X", 1))
 check(excluded(2, 3, 4))
 
 -- include drop
 
-check(cmd(mtn("diff", "work/file2")), 0, true, false)
+check(mtn("diff", "work/file2"), 0, true, false)
 check(included(2))
 check(excluded("X", 1, 3, 4))
 
 -- include delta
 
-check(cmd(mtn("diff", "work/file3")), 0, true, false)
+check(mtn("diff", "work/file3"), 0, true, false)
 check(included(3))
 check(excluded("X", 1, 2, 4))
 
 -- include add
 
-check(cmd(mtn("diff", "work/file4")), 0, true, false)
+check(mtn("diff", "work/file4"), 0, true, false)
 check(included(4))
 check(excluded("X", 1, 2, 3))
 
 -- commit
 
-check(cmd(mtn("status")), 0, true, false)
+check(mtn("status"), 0, true, false)
 check(included("X", 1, 2, 3, 4))
 
 -- include rename source and target
@@ -194,31 +194,31 @@ check(included("X", 1, 2, 3, 4))
 check(cmd(mtn("commit", "--message=move fileX to file1",
               "work/fileX", "work/file1")), 0, false, false)
 
-check(cmd(mtn("status")), 0, true, false)
+check(mtn("status"), 0, true, false)
 check(included(2, 3, 4))
 check(excluded("X", 1))
 
 -- include drop
 
-check(cmd(mtn("commit", "--message=drop file2", "work/file2")), 0, false, false)
+check(mtn("commit", "--message=drop file2", "work/file2"), 0, false, false)
 
-check(cmd(mtn("status")), 0, true, false)
+check(mtn("status"), 0, true, false)
 check(included(3, 4))
 check(excluded("X", 1, 2))
 
 -- include delta
 
-check(cmd(mtn("commit", "--message=change file3", "work/file3")), 0, false, false)
+check(mtn("commit", "--message=change file3", "work/file3"), 0, false, false)
 
-check(cmd(mtn("status")), 0, true, false)
+check(mtn("status"), 0, true, false)
 check(included(4))
 check(excluded("X", 1, 2, 3))
 
 -- include add
 
-check(cmd(mtn("commit", "--message=add file4", "work/file4")), 0, false, false)
+check(mtn("commit", "--message=add file4", "work/file4"), 0, false, false)
 
-check(cmd(mtn("status")), 0, true, false)
+check(mtn("status"), 0, true, false)
 check(excluded("X", 1, 2, 3, 4))
 
 -- setup for excluded commits
@@ -258,7 +258,7 @@ for i = 1,11 do
   end
 end
 
-check(cmd(mtn("diff", "file.four", "file.ten")), 0, true, false)
+check(mtn("diff", "file.four", "file.ten"), 0, true, false)
 
 check(qgrep("file.four", "stdout"))
 check(qgrep("file.ten", "stdout"))

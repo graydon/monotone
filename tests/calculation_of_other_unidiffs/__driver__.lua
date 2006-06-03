@@ -11,7 +11,7 @@ os.rename("testfile", "firstfile")
 
 -- calculate diff to second file using monotone
 getfile("secondfile", "testfile")
-check(cmd(mtn("diff")), 0, true)
+check(mtn("diff"), 0, true)
 os.rename("stdout", "monodiff")
 
 -- look for a meaningless change

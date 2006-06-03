@@ -5,8 +5,8 @@ writefile("importme", "version 0 of test file\n")
 
 tsha = sha1("importme")
 
-check(cmd(mtn("add", "importme")), 0, false, false)
+check(mtn("add", "importme"), 0, false, false)
 commit()
-check(cmd(mtn("automate", "get_file", tsha)), 0, true)
+check(mtn("automate", "get_file", tsha), 0, true)
 canonicalize("stdout")
 check(samefile("importme", "stdout"))

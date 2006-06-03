@@ -23,7 +23,7 @@ commit()
 
 writefile("testfile", "version 1")
 addfile("end_file", "end file")
-check(cmd(mtn("drop", "start_file")), 0, true, false)
+check(mtn("drop", "start_file"), 0, true, false)
 commit()
 revs.new = base_revision()
 files.new = sha1("testfile")
@@ -31,13 +31,13 @@ files.new_other = sha1("end_file")
 
 check(files.base == files.new)
 
-check(cmd(mtn("diff", "--revision", revs.base,
-                      "--revision", revs.new)),
+check(mtn("diff", "--revision", revs.base,
+                  "--revision", revs.new),
       0, true, false)
 check(qgrep(files.new_other, "stdout"))
 check(not qgrep(files.base, "stdout"))
-check(cmd(mtn("diff", "--revision", revs.new,
-                      "--revision", revs.base)),
+check(mtn("diff", "--revision", revs.new,
+                  "--revision", revs.base),
       0, true, false)
 check(qgrep(files.base_other, "stdout"))
 check(not qgrep(files.base, "stdout"))

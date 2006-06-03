@@ -30,14 +30,14 @@ if ostype ~= "Darwin" then
 	check(writefile("euc/" .. japanese_euc_jp, ""))
 end
 
-check(cmd(mtn("add", "weird/file name with spaces")), 0, false, false)
-check(cmd(mtn("add", "weird/" .. funny_filename)), 0, false, false)
+check(mtn("add", "weird/file name with spaces"), 0, false, false)
+check(mtn("add", "weird/" .. funny_filename), 0, false, false)
 
 -- add some files with UTF8 names
 set_env("LANG", "en_US.utf-8")
 set_env("CHARSET", "UTF-8")
-check(cmd(mtn("add", "utf8/" .. european_utf8)), 0, false, false)
-check(cmd(mtn("add", "utf8/" .. japanese_utf8)), 0, false, false)
+check(mtn("add", "utf8/" .. european_utf8), 0, false, false)
+check(mtn("add", "utf8/" .. japanese_utf8), 0, false, false)
 
 commit()
 
@@ -46,7 +46,7 @@ commit()
 set_env("LANG", "en_US.utf-8")
 set_env("CHARSET", "UTF-8")
 
-check(cmd(mtn("automate", "get_manifest_of")), 0, true)
+check(mtn("automate", "get_manifest_of"), 0, true)
 os.rename("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
@@ -60,7 +60,7 @@ check(qgrep(european_utf8, "manifest"))
 -- the tree, then, monotone will attempt to convert them to the current
 -- locale, and fail miserably.  so get rid of them first.
 
-check(cmd(mtn("drop", "utf8/" .. european_utf8, "utf8/" .. japanese_utf8)), 0, false, false)
+check(mtn("drop", "utf8/" .. european_utf8, "utf8/" .. japanese_utf8), 0, false, false)
 commit()
 
 -- OS X expects data passed to the OS to be utf8, so these tests don't make
@@ -70,14 +70,14 @@ if ostype ~= "Darwin" then
 
 	set_env("LANG", "de_DE.iso-8859-1")
 	set_env("CHARSET", "iso-8859-1")
-	check(cmd(mtn("add", "8859-1/" .. european_8859_1)), 0, false, false)
+	check(mtn("add", "8859-1/" .. european_8859_1), 0, false, false)
 
 	commit()
 end
 
 -- check the names showed up in our manifest
 
-check(cmd(mtn("automate", "get_manifest_of")), 0, true)
+check(mtn("automate", "get_manifest_of"), 0, true)
 os.rename("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
@@ -88,7 +88,7 @@ end
 -- okay, clean up again
 
 if ostype ~= "Darwin" then
-	check(cmd(mtn("drop", "8859-1/" .. european_8859_1)), 0, false, false)
+	check(mtn("drop", "8859-1/" .. european_8859_1), 0, false, false)
 	commit()
 end
 
@@ -97,14 +97,14 @@ end
 if ostype ~= "Darwin" then
 	set_env("LANG", "ja_JP.euc-jp")
 	set_env("CHARSET", "euc-jp")
-	check(cmd(mtn("add", "euc/" .. japanese_euc_jp)), 0, false, false)
+	check(mtn("add", "euc/" .. japanese_euc_jp), 0, false, false)
 
 	commit()
 end
 
 -- check the names showed up in our manifest
 
-check(cmd(mtn("automate", "get_manifest_of")), 0, true)
+check(mtn("automate", "get_manifest_of"), 0, true)
 os.rename("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
