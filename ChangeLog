@@ -1,5 +1,8 @@
 2006-06-03  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* win32/os_strerror.cc (os_strerror): Trim trailing newlines from
+	error string returned from FormatMessage.
+
 	* sanity.{cc,hh} (format_base): Add dtor to delete pimpl.
 
 2006-06-02  Lapo Luchini  <lapo@lapo.it>
