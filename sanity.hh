@@ -106,6 +106,7 @@ protected:
   impl *pimpl;
 
   format_base() : pimpl(NULL) {}
+  ~format_base();
   format_base(format_base const & other);
   format_base & operator=(format_base const & other);
   explicit format_base(char const * pattern);

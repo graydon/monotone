@@ -368,6 +368,11 @@ format_base::format_base(format_base const & other)
 
 }
 
+format_base::~format_base()
+{
+	delete pimpl;
+}
+
 format_base & 
 format_base::operator=(format_base const & other)
 {

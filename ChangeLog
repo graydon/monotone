@@ -1,3 +1,7 @@
+2006-06-03  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sanity.{cc,hh} (format_base): Add dtor to delete pimpl.
+
 2006-06-02  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Updated and translated a few more strings (95 to go).
