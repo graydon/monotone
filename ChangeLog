@@ -1,5 +1,10 @@
 2006-06-03  Graydon Hoare  <graydon@pobox.com>
 
+	* std_hooks.lua (merge3_xxdiff_cmd): Fix typo.
+	* cmd_diff_log.cc (dump_diffs): Undo overzealous removal of '\n'.
+
+2006-06-03  Graydon Hoare  <graydon@pobox.com>
+
 	* {cert,charset,cleanup,cmd*}.{cc,hh}: Coppyright and formatting
 	fixes.
 

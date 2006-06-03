@@ -257,9 +257,9 @@ dump_diffs(cset const & cs,
           split_into_lines(unpacked(), lines);
           if (! lines.empty())
             {
-              cout << (FL("--- %s\t%s") % file_path(i->first) % i->second)
-                   << (FL("+++ %s\t%s") % file_path(i->first) % i->second)
-                   << (FL("@@ -0,0 +1,%d @@") % lines.size());
+              cout << (FL("--- %s\t%s\n") % file_path(i->first) % i->second)
+                   << (FL("+++ %s\t%s\n") % file_path(i->first) % i->second)
+                   << (FL("@@ -0,0 +1,%d @@\n") % lines.size());
               for (vector<string>::const_iterator j = lines.begin();
                    j != lines.end(); ++j)
                 {
