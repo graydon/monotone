@@ -1,3 +1,12 @@
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
 #include <iostream>
 #include <string>
 #include <map>
@@ -44,11 +53,6 @@ using Botan::RSA_PrivateKey;
 using Botan::RSA_PublicKey;
 using Botan::SecureVector;
 using Botan::X509_PublicKey;
-
-// copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
 
 // there will probably forever be bugs in this file. it's very
 // hard to get right, portably and securely. sorry about that.

@@ -1,10 +1,14 @@
 #ifndef __STRING_QUEUE_HH__
 #define __STRING_QUEUE_HH__
 
-// copyright (C) 2005 Eric Anderson <anderse@hpl.hp.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Eric Anderson <anderse@hpl.hp.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 #include <cstring>

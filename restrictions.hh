@@ -1,10 +1,14 @@
 #ifndef __RESTRICTIONS_HH__
 #define __RESTRICTIONS_HH__
 
-// copyright (C) 2005 derek scherger <derek@echologic.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Derek Scherger <derek@echologic.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // the following commands accept file arguments and --exclude and --depth
 // options used to define a restriction on the files that will be processed:

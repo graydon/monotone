@@ -1,8 +1,14 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2005 Christof Petig <christof@petig-baender.de>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+#ifndef __NETXX_PIPE_HH__
+#define __NETXX_PIPE_HH__
+
+// Copyright (C) 2005 Christof Petig <christof@petig-baender.de>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 #include <vector>
@@ -126,3 +132,6 @@ namespace Netxx
 #endif
 
 }
+
+#endif // __NETXX_PIPE_HH__
+

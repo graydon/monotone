@@ -1,10 +1,14 @@
 #ifndef __LUA_HOOKS_HH__
 #define __LUA_HOOKS_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this file defines a typed C++ interface to the various hooks
 // we expose to the user as lua functions or variables
