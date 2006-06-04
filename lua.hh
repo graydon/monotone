@@ -11,7 +11,7 @@ struct lua_State;
 // transaction are ignored. it cleans the lua stack up when it is
 // destructed, so no need to pop values when you're done.
 
-struct 
+struct
 Lua
 {
   lua_State * st;

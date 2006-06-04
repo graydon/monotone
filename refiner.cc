@@ -1,8 +1,11 @@
-
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <algorithm>
 #include <set>
@@ -47,13 +50,13 @@ using std::string;
 // the client sends a done command, stating how many items it will be
 // sending.
 //
-// When the server receives a done command, it echoes it back stating how 
-// many items *it* is going to send. 
+// When the server receives a done command, it echoes it back stating how
+// many items *it* is going to send.
 //
 // When either side receives a done command, it transitions to
 // streaming send mode, sending all the items it's calculated.
 
-void 
+void
 refiner::note_local_item(id const & item)
 {
   local_items.insert(item);
@@ -66,11 +69,11 @@ refiner::reindex_local_items()
   recalculate_merkle_codes(table, prefix(""), 0);
 }
 
-void 
+void
 refiner::load_merkle_node(size_t level, prefix const & pref,
                           merkle_ptr & node)
 {
-  merkle_table::const_iterator j = table.find(make_pair(pref, level));  
+  merkle_table::const_iterator j = table.find(make_pair(pref, level));
   I(j != table.end());
   node = j->second;
 }
@@ -83,7 +86,7 @@ refiner::merkle_node_exists(size_t level,
   return (j != table.end());
 }
 
-void 
+void
 refiner::calculate_items_to_send()
 {
   if (calculated_items_to_send)
@@ -98,8 +101,8 @@ refiner::calculate_items_to_send()
 
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  
-  L(FL("determined %d %s items to send") % items_to_send.size() % typestr);  
+
+  L(FL("determined %d %s items to send") % items_to_send.size() % typestr);
   calculated_items_to_send = true;
 }
 
@@ -123,8 +126,8 @@ refiner::note_subtree_shared_with_peer(merkle_node const & our_node, size_t slot
   collect_items_in_subtree(table, pref, our_node.level+1, peer_items);
 }
 
-refiner::refiner(netcmd_item_type type, protocol_voice voice, refiner_callbacks & cb) 
-  : type(type), voice (voice), cb(cb), 
+refiner::refiner(netcmd_item_type type, protocol_voice voice, refiner_callbacks & cb)
+  : type(type), voice (voice), cb(cb),
     sent_initial_query(false),
     queries_in_flight(0),
     calculated_items_to_send(false),
@@ -148,20 +151,20 @@ refiner::note_item_in_peer(merkle_node const & their_node, size_t slot)
   {
     hexenc<id> hslotval;
     their_node.get_hex_slot(slot, hslotval);
-        
+
     hexenc<prefix> hpref;
     their_node.get_hex_prefix(hpref);
-    
+
     string typestr;
     netcmd_item_type_to_string(their_node.type, typestr);
-    
-    L(FL("peer has %s '%s' at slot %d (in node '%s', level %d)\n")
+
+    L(FL("peer has %s '%s' at slot %d (in node '%s', level %d)")
       % typestr % hslotval % slot % hpref % their_node.level);
   }
 }
 
 
-void 
+void
 refiner::begin_refinement()
 {
   merkle_ptr root;
@@ -174,7 +177,7 @@ refiner::begin_refinement()
   L(FL("Beginning %s refinement.") % typestr);
 }
 
-void 
+void
 refiner::process_done_command(size_t n_items)
 {
   string typestr;
@@ -193,8 +196,8 @@ refiner::process_done_command(size_t n_items)
 }
 
 
-void 
-refiner::process_refinement_command(refinement_type ty, 
+void
+refiner::process_refinement_command(refinement_type ty,
                                     merkle_node const & their_node)
 {
   prefix pref;
@@ -202,13 +205,13 @@ refiner::process_refinement_command(refinement_type ty,
   their_node.get_raw_prefix(pref);
   their_node.get_hex_prefix(hpref);
   string typestr;
-  
+
   netcmd_item_type_to_string(their_node.type, typestr);
   size_t lev = static_cast<size_t>(their_node.level);
-  
-  L(FL("received refinement %s netcmd on %s node '%s', level %d") 
+
+  L(FL("received refinement %s netcmd on %s node '%s', level %d")
     % (ty == refinement_query ? "query" : "response") % typestr % hpref % lev);
-  
+
   merkle_ptr our_node;
 
   if (merkle_node_exists(their_node.level, pref))
@@ -243,7 +246,7 @@ refiner::process_refinement_command(refinement_type ty,
                 }
             }
         }
-      
+
       // Compare any subtrees, if we both have subtrees.
       if (our_node->get_slot_state(slot) == subtree_state
           && their_node.get_slot_state(slot) == subtree_state)
@@ -251,11 +254,11 @@ refiner::process_refinement_command(refinement_type ty,
           id our_slotval, their_slotval;
           their_node.get_raw_slot(slot, their_slotval);
           our_node->get_raw_slot(slot, our_slotval);
-          
+
           // Always note when you share a subtree.
           if (their_slotval == our_slotval)
             note_subtree_shared_with_peer(*our_node, slot);
-          
+
           // Send subqueries when you have a different subtree
           // and you're answering a query message.
           else if (ty == refinement_query)
@@ -267,7 +270,7 @@ refiner::process_refinement_command(refinement_type ty,
       // have any of the *other* parts of my subtree, so it's ok if I
       // eventually wind up sending the subtree-minus-their-leaf.
     }
-  
+
   if (ty == refinement_response)
     {
       E((queries_in_flight > 0),

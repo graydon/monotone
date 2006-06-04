@@ -1,10 +1,14 @@
 #ifndef __ENUMERATOR_H__
 #define __ENUMERATOR_H__
 
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <deque>
 #include <map>
@@ -36,7 +40,7 @@ enumerator_callbacks
   virtual ~enumerator_callbacks() {}
 };
 
-struct 
+struct
 enumerator_item
 {
   enum { fdata, fdelta, rev, cert } tag;
@@ -72,8 +76,8 @@ revision_enumerator
                       app_state & app);
   void load_graphs();
   bool all_parents_enumerated(revision_id const & child);
-  void files_for_revision(revision_id const & r, 
-                          std::set<file_id> & full_files, 
+  void files_for_revision(revision_id const & r,
+                          std::set<file_id> & full_files,
                           std::set<std::pair<file_id,file_id> > & del_files);
   void step();
   bool done();

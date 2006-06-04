@@ -370,7 +370,7 @@ extern "C"
     char const * infile = luaL_checkstring(L, -3);
     char const * outfile = luaL_checkstring(L, -2);
     char const * errfile = luaL_checkstring(L, -1);
-    
+
     typedef redirect::saveblock rsb;
     rsb *sb = static_cast<rsb*> (lua_newuserdata(L, sizeof(rsb)));
     sb->in = set_redirect(redirect::in, infile);

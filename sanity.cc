@@ -1,7 +1,11 @@
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -39,19 +43,19 @@ using boost::format;
 
 sanity global_sanity;
 
-sanity::sanity() : 
-  debug(false), quiet(false), reallyquiet(false), relaxed(false), logbuf(0xffff), 
+sanity::sanity() :
+  debug(false), quiet(false), reallyquiet(false), relaxed(false), logbuf(0xffff),
   already_dumping(false), clean_shutdown(false)
 {
   string flavour;
   get_system_flavour(flavour);
-  L(FL("started up on %s\n") % flavour);
+  L(FL("started up on %s") % flavour);
 }
 
 sanity::~sanity()
 {}
 
-void 
+void
 sanity::dump_buffer()
 {
   if (!filename.empty())
@@ -66,14 +70,14 @@ sanity::dump_buffer()
                        % filename).str());
         }
       else
-        ui.inform((FL("failed to write debugging log to %s\n") % filename).str());
+        ui.inform((FL("failed to write debugging log to %s") % filename).str());
     }
   else
     ui.inform("discarding debug log, because I have nowhere to write it\n"
               "(maybe you want --debug or --dump?)");
 }
 
-void 
+void
 sanity::set_debug()
 {
   quiet = false;
@@ -82,7 +86,7 @@ sanity::set_debug()
 
   // it is possible that some pre-setting-of-debug data
   // accumulated in the log buffer (during earlier option processing)
-  // so we will dump it now  
+  // so we will dump it now
   ostringstream oss;
   vector<string> lines;
   copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(oss));
@@ -97,7 +101,7 @@ sanity::set_brief()
   brief = true;
 }
 
-void 
+void
 sanity::set_quiet()
 {
   debug = false;
@@ -105,7 +109,7 @@ sanity::set_quiet()
   reallyquiet = false;
 }
 
-void 
+void
 sanity::set_reallyquiet()
 {
   debug = false;
@@ -113,7 +117,7 @@ sanity::set_reallyquiet()
   reallyquiet = true;
 }
 
-void 
+void
 sanity::set_relaxed(bool rel)
 {
   relaxed = rel;
@@ -137,12 +141,12 @@ sanity::do_format(format_base const & fmt, char const * file, int line)
 }
 
 
-void 
-sanity::log(plain_format const & fmt, 
+void
+sanity::log(plain_format const & fmt,
             char const * file, int line)
 {
   string str = do_format(fmt, file, line);
-  
+
   if (str.size() > constants::log_line_sz)
     {
       str.resize(constants::log_line_sz);
@@ -156,8 +160,8 @@ sanity::log(plain_format const & fmt,
     ui.inform(str);
 }
 
-void 
-sanity::progress(i18n_format const & i18nfmt, 
+void
+sanity::progress(i18n_format const & i18nfmt,
                  char const * file, int line)
 {
   string str = do_format(i18nfmt, file, line);
@@ -175,8 +179,8 @@ sanity::progress(i18n_format const & i18nfmt,
     ui.inform(str);
 }
 
-void 
-sanity::warning(i18n_format const & i18nfmt, 
+void
+sanity::warning(i18n_format const & i18nfmt,
                 char const * file, int line)
 {
   string str = do_format(i18nfmt, file, line);
@@ -195,31 +199,31 @@ sanity::warning(i18n_format const & i18nfmt,
     ui.warn(str);
 }
 
-void 
-sanity::naughty_failure(string const & expr, i18n_format const & explain, 
+void
+sanity::naughty_failure(string const & expr, i18n_format const & explain,
                         string const & file, int line)
 {
   string message;
-  log(FL("%s:%d: usage constraint '%s' violated\n") % file % line % expr,
+  log(FL("%s:%d: usage constraint '%s' violated") % file % line % expr,
       file.c_str(), line);
   prefix_lines_with(_("misuse: "), do_format(explain, file.c_str(), line), message);
   gasp();
   throw informative_failure(message);
 }
 
-void 
-sanity::error_failure(string const & expr, i18n_format const & explain, 
+void
+sanity::error_failure(string const & expr, i18n_format const & explain,
                       string const & file, int line)
 {
   string message;
-  log(FL("%s:%d: detected error '%s' violated\n") % file % line % expr,
+  log(FL("%s:%d: detected error '%s' violated") % file % line % expr,
       file.c_str(), line);
   prefix_lines_with(_("error: "), do_format(explain, file.c_str(), line), message);
   throw informative_failure(message);
 }
 
-void 
-sanity::invariant_failure(string const & expr, 
+void
+sanity::invariant_failure(string const & expr,
                           string const & file, int line)
 {
   char const * pattern = N_("%s:%d: invariant '%s' violated");
@@ -228,9 +232,9 @@ sanity::invariant_failure(string const & expr,
   throw logic_error((F(pattern) % file % line % expr).str());
 }
 
-void 
-sanity::index_failure(string const & vec_expr, 
-                      string const & idx_expr, 
+void
+sanity::index_failure(string const & vec_expr,
+                      string const & idx_expr,
                       unsigned long sz,
                       unsigned long idx,
                       string const & file, int line)
@@ -250,7 +254,7 @@ sanity::gasp()
 {
   if (already_dumping)
     {
-      L(FL("ignoring request to give last gasp; already in process of dumping\n"));
+      L(FL("ignoring request to give last gasp; already in process of dumping"));
       return;
     }
   already_dumping = true;
@@ -329,7 +333,7 @@ void MusingBase::gasp_body(const string & objstr, string & out) const
 }
 
 
-struct 
+struct
 format_base::impl
 {
   format fmt;
@@ -348,17 +352,17 @@ format_base::impl
     return *this;
   }
 
-  impl(char const * pattern) 
-    : fmt(pattern) 
+  impl(char const * pattern)
+    : fmt(pattern)
   {}
-  impl(string const & pattern) 
-    : fmt(pattern) 
+  impl(string const & pattern)
+    : fmt(pattern)
   {}
-  impl(char const * pattern, locale const & loc) 
-    : fmt(pattern, loc) 
+  impl(char const * pattern, locale const & loc)
+    : fmt(pattern, loc)
   {}
-  impl(string const & pattern, locale const & loc) 
-    : fmt(pattern, loc) 
+  impl(string const & pattern, locale const & loc)
+    : fmt(pattern, loc)
   {}
 };
 
@@ -368,14 +372,19 @@ format_base::format_base(format_base const & other)
 
 }
 
-format_base & 
+format_base::~format_base()
+{
+	delete pimpl;
+}
+
+format_base &
 format_base::operator=(format_base const & other)
 {
   if (&other != this)
     {
       impl * tmp = NULL;
 
-      try 
+      try
 	{
 	  if (other.pimpl)
 	    tmp = new impl(*(other.pimpl));
@@ -393,52 +402,52 @@ format_base::operator=(format_base const & other)
     }
   return *this;
 }
-  
+
 format_base::format_base(char const * pattern)
   : pimpl(new impl(pattern))
 {}
- 
+
 format_base::format_base(std::string const & pattern)
   : pimpl(new impl(pattern))
 {}
- 
+
 format_base::format_base(char const * pattern, locale const & loc)
   : pimpl(new impl(pattern, loc))
 {}
- 
+
 format_base::format_base(string const & pattern, locale const & loc)
   : pimpl(new impl(pattern, loc))
 {}
- 
+
 ostream &
 format_base::get_stream()
 {
   return pimpl->oss;
 }
-  
-void 
+
+void
 format_base::flush()
 {
   pimpl->fmt % pimpl->oss.str();
   pimpl->oss.str(string());
 }
-  
-std::string 
+
+std::string
 format_base::str() const
 {
   return pimpl->fmt.str();
 }
- 
+
 i18n_format::i18n_format(const char * localized_pattern)
   : format_base(localized_pattern, get_user_locale())
 {
 }
- 
+
 i18n_format::i18n_format(std::string const & localized_pattern)
   : format_base(localized_pattern, get_user_locale())
 {
 }
- 
+
 ostream &
 operator<<(ostream & os, format_base const & fmt)
 {

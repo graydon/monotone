@@ -17,7 +17,7 @@ namespace hashmap {
   {
     // bool operator()(_T const & b, _T const & b) const;
   };
-  
+
   template<typename _T>
   struct hash
   {
@@ -49,20 +49,20 @@ namespace hashmap {
       return __gnu_cxx::__stl_hash_string(s.c_str());
     }
   };
-  
+
   template<typename _Key, typename _Value>
   class hash_map : public __gnu_cxx::hash_map<_Key,
                                               _Value,
                                               hash<_Key>,
                                               equal_to<_Key> >
   {};
-  
+
   template<typename _Key>
   class hash_set : public __gnu_cxx::hash_set<_Key,
                                               hash<_Key>,
                                               equal_to<_Key> >
   {};
-  
+
   template<typename _Key, typename _Value>
   class hash_multimap : public __gnu_cxx::hash_multimap<_Key,
                                                         _Value,
@@ -100,13 +100,13 @@ namespace hashmap {
                                         hash<_Key>,
                                         equal_to<_Key> >
   {};
-  
+
   template<typename _Key>
   class hash_set : public std::hash_set<_Key,
                                         hash<_Key>,
                                         equal_to<_Key> >
   {};
-  
+
   template<typename _Key, typename _Value>
   class hash_multimap : public std::hash_multimap<_Key,
                                                   _Value,
@@ -121,7 +121,7 @@ namespace hashmap {
 #include <hash_map>
 #include <hash_set>
 
-namespace hashmap 
+namespace hashmap
 {
   template<>
   struct hash<std::string>

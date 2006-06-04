@@ -1,11 +1,14 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 #ifndef __WORK_HH__
 #define __WORK_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 #include <set>
@@ -39,7 +42,7 @@
 // sha1 fingerprints from those listed in the revision's manifest, or else are
 // added or deleted or renamed (and the paths of those changes recorded in
 // '_MTN/work').
-// 
+//
 // when it comes time to commit, the cset in _MTN/work (which can have no
 // deltas) is applied to the base roster, then a new roster is built by
 // analyzing the content of every file in the roster, as it appears in the
@@ -55,7 +58,7 @@ struct file_itemizer : public tree_walker
   path_set & unknown;
   path_set & ignored;
   restriction const & mask;
-  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i, restriction const & r) 
+  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i, restriction const & r)
     : app(a), known(k), unknown(u), ignored(i), mask(r) {}
   virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
@@ -65,7 +68,7 @@ void
 find_missing(app_state & app, std::vector<utf8> const & args, path_set & missing);
 
 void
-find_unknown_and_ignored(app_state & app, std::vector<utf8> const & args, 
+find_unknown_and_ignored(app_state & app, std::vector<utf8> const & args,
                          path_set & unknown, path_set & ignored);
 
 void
@@ -95,7 +98,7 @@ void put_work_cset(cset & w);
 
 void get_revision_id(revision_id & c);
 void put_revision_id(revision_id const & rev);
-void get_base_revision(app_state & app, 
+void get_base_revision(app_state & app,
                        revision_id & rid,
                        roster_t & ros,
                        marking_map & mm);
@@ -153,7 +156,7 @@ void write_options_map(data & dat,
 
 void get_local_dump_path(bookkeeping_path & d_path);
 
-// the 'inodeprints file' contains inode fingerprints 
+// the 'inodeprints file' contains inode fingerprints
 
 void get_inodeprints_path(bookkeeping_path & ip_path);
 
@@ -165,7 +168,7 @@ void write_inodeprints(data const & dat);
 
 void enable_inodeprints();
 
-bool get_attribute_from_roster(roster_t const & ros,                               
+bool get_attribute_from_roster(roster_t const & ros,
                                file_path const & path,
                                attr_key const & key,
                                attr_value & val);
@@ -199,8 +202,8 @@ struct editable_working_tree : public editable_tree
   virtual node_id create_file_node(file_id const & content);
   virtual void attach_node(node_id nid, split_path const & dst);
 
-  virtual void apply_delta(split_path const & pth, 
-                           file_id const & old_id, 
+  virtual void apply_delta(split_path const & pth,
+                           file_id const & old_id,
                            file_id const & new_id);
   virtual void clear_attr(split_path const & pth,
                           attr_key const & name);

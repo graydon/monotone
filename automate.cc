@@ -68,7 +68,7 @@ automate_interface_version(vector<utf8> args,
 {
   if (args.size() != 0)
     throw usage(help_name);
-  
+
   output << interface_version << endl;
 }
 
@@ -258,7 +258,7 @@ automate_attributes(vector<utf8> args,
       // a filename was given, if it has attributes, print them
       split_path path;
       file_path_external(idx(args,0)).split(path);
-      
+
       if (current.has_node(path))
         {
           node_t n = current.get_node(path);
@@ -386,10 +386,10 @@ automate_leaves(vector<utf8> args,
   app.db.get_revision_ids(leaves);
   multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
-  for (multimap<revision_id, revision_id>::const_iterator 
+  for (multimap<revision_id, revision_id>::const_iterator
          i = graph.begin(); i != graph.end(); ++i)
     leaves.erase(i->first);
-  for (set<revision_id>::const_iterator i = leaves.begin(); 
+  for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
     output << (*i).inner()() << endl;
 }
@@ -466,7 +466,7 @@ automate_children(vector<utf8> args,
 //   The first would indicate that 07804171823d963f78d6a0ff1763d694dd74ff40
 //   was a root node; the second would indicate that it had one parent, and
 //   the third would indicate that it had two parents, i.e., was a merge.
-//   
+//
 //   The output as a whole is alphabetically sorted; additionally, the parents
 //   within each line are alphabetically sorted.
 // Error conditions: None.
@@ -497,7 +497,7 @@ automate_graph(vector<utf8> args,
       j->second.insert(i->first);
     }
 
-  for (map<revision_id, set<revision_id> >::const_iterator 
+  for (map<revision_id, set<revision_id> >::const_iterator
          i = child_to_parents.begin();
        i != child_to_parents.end(); ++i)
     {
@@ -508,7 +508,7 @@ automate_graph(vector<utf8> args,
       output << endl;
     }
 }
-      
+
 // Name: select
 // Arguments:
 //   1: selector
@@ -555,20 +555,20 @@ automate_select(vector<utf8> args,
 struct inventory_item
 {
   // pre/post rearrangement state
-  enum pstate 
-    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH } 
+  enum pstate
+    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH }
     pre_state, post_state;
 
   enum nstate
-    { UNCHANGED_NODE, PATCHED_NODE, MISSING_NODE, 
-      UNKNOWN_NODE, IGNORED_NODE } 
+    { UNCHANGED_NODE, PATCHED_NODE, MISSING_NODE,
+      UNKNOWN_NODE, IGNORED_NODE }
     node_state;
 
   size_t pre_id, post_id;
 
   inventory_item():
-    pre_state(UNCHANGED_PATH), post_state(UNCHANGED_PATH), 
-    node_state(UNCHANGED_NODE), 
+    pre_state(UNCHANGED_PATH), post_state(UNCHANGED_PATH),
+    node_state(UNCHANGED_NODE),
     pre_id(0), post_id(0) {}
 };
 
@@ -579,15 +579,15 @@ typedef map<split_path, file_id> addition_map;  // ditto
 static void
 inventory_pre_state(inventory_map & inventory,
                     path_set const & paths,
-                    inventory_item::pstate pre_state, 
+                    inventory_item::pstate pre_state,
                     size_t rename_id)
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(FL("%d %d %s\n") % inventory[*i].pre_state % pre_state % file_path(*i));
+      L(FL("%d %d %s") % inventory[*i].pre_state % pre_state % file_path(*i));
       I(inventory[*i].pre_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].pre_state = pre_state;
-      if (rename_id != 0) 
+      if (rename_id != 0)
         {
           I(inventory[*i].pre_id == 0);
           inventory[*i].pre_id = rename_id;
@@ -598,16 +598,16 @@ inventory_pre_state(inventory_map & inventory,
 static void
 inventory_post_state(inventory_map & inventory,
                      path_set const & paths,
-                     inventory_item::pstate post_state, 
+                     inventory_item::pstate post_state,
                      size_t rename_id)
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(FL("%d %d %s\n") % inventory[*i].post_state 
+      L(FL("%d %d %s") % inventory[*i].post_state
         % post_state % file_path(*i));
       I(inventory[*i].post_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].post_state = post_state;
-      if (rename_id != 0) 
+      if (rename_id != 0)
         {
           I(inventory[*i].post_id == 0);
           inventory[*i].post_id = rename_id;
@@ -622,7 +622,7 @@ inventory_node_state(inventory_map & inventory,
 {
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(FL("%d %d %s\n") % inventory[*i].node_state 
+      L(FL("%d %d %s") % inventory[*i].node_state
         % node_state % file_path(*i));
       I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
       inventory[*i].node_state = node_state;
@@ -638,7 +638,7 @@ inventory_renames(inventory_map & inventory,
 
   static size_t rename_id = 1;
 
-  for (rename_map::const_iterator i = renames.begin(); 
+  for (rename_map::const_iterator i = renames.begin();
        i != renames.end(); i++)
     {
       old_name.clear();
@@ -647,9 +647,9 @@ inventory_renames(inventory_map & inventory,
       old_name.insert(i->first);
       new_name.insert(i->second);
 
-      inventory_pre_state(inventory, old_name, 
+      inventory_pre_state(inventory, old_name,
                           inventory_item::RENAMED_PATH, rename_id);
-      inventory_post_state(inventory, new_name, 
+      inventory_post_state(inventory, new_name,
                            inventory_item::RENAMED_PATH, rename_id);
 
       rename_id++;
@@ -657,10 +657,10 @@ inventory_renames(inventory_map & inventory,
 }
 
 static void
-extract_added_file_paths(addition_map const & additions, path_set & paths) 
+extract_added_file_paths(addition_map const & additions, path_set & paths)
 {
-  for (addition_map::const_iterator i = additions.begin(); 
-       i != additions.end(); ++i) 
+  for (addition_map::const_iterator i = additions.begin();
+       i != additions.end(); ++i)
     {
       paths.insert(i->first);
     }
@@ -692,7 +692,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 //         'I' the node is ignored and not included in the roster
 //         'M' the node is missing but is included in the roster
 //
-// Output format: Each path is printed on its own line, prefixed by three 
+// Output format: Each path is printed on its own line, prefixed by three
 //   status characters as described above. The status is followed by a
 //   single space and two numbers, each separated by a single space,
 //   used for identifying renames.  The numbers are followed by a
@@ -736,10 +736,10 @@ automate_inventory(vector<utf8> args,
   path_set nodes_added(cs.dirs_added);
   extract_added_file_paths(cs.files_added, nodes_added);
 
-  inventory_pre_state(inventory, cs.nodes_deleted, 
+  inventory_pre_state(inventory, cs.nodes_deleted,
                       inventory_item::DROPPED_PATH, 0);
   inventory_renames(inventory, cs.nodes_renamed);
-  inventory_post_state(inventory, nodes_added, 
+  inventory_post_state(inventory, nodes_added,
                        inventory_item::ADDED_PATH, 0);
 
   classify_roster_paths(curr, unchanged, changed, missing, app);
@@ -749,30 +749,30 @@ automate_inventory(vector<utf8> args,
   file_itemizer u(app, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 
-  inventory_node_state(inventory, unchanged, 
+  inventory_node_state(inventory, unchanged,
                        inventory_item::UNCHANGED_NODE);
 
-  inventory_node_state(inventory, changed, 
+  inventory_node_state(inventory, changed,
                        inventory_item::PATCHED_NODE);
 
-  inventory_node_state(inventory, missing, 
+  inventory_node_state(inventory, missing,
                        inventory_item::MISSING_NODE);
 
-  inventory_node_state(inventory, unknown, 
+  inventory_node_state(inventory, unknown,
                        inventory_item::UNKNOWN_NODE);
 
-  inventory_node_state(inventory, ignored, 
+  inventory_node_state(inventory, ignored,
                        inventory_item::IGNORED_NODE);
 
   // FIXME: do we want to report on attribute changes here?!?
 
-  for (inventory_map::const_iterator i = inventory.begin(); 
+  for (inventory_map::const_iterator i = inventory.begin();
        i != inventory.end(); ++i)
     {
 
       string path_suffix;
 
-      if (curr.has_node(i->first)) 
+      if (curr.has_node(i->first))
         {
           // Explicitly skip the root dir for now. The trailing / dir
           // format isn't going to work here.
@@ -785,7 +785,7 @@ automate_inventory(vector<utf8> args,
           path_suffix = "/";
         }
 
-      switch (i->second.pre_state) 
+      switch (i->second.pre_state)
         {
         case inventory_item::UNCHANGED_PATH: output << " "; break;
         case inventory_item::DROPPED_PATH: output << "D"; break;
@@ -793,7 +793,7 @@ automate_inventory(vector<utf8> args,
         default: I(false); // invalid pre_state
         }
 
-      switch (i->second.post_state) 
+      switch (i->second.post_state)
         {
         case inventory_item::UNCHANGED_PATH: output << " "; break;
         case inventory_item::RENAMED_PATH: output << "R"; break;
@@ -801,7 +801,7 @@ automate_inventory(vector<utf8> args,
         default: I(false); // invalid post_state
         }
 
-      switch (i->second.node_state) 
+      switch (i->second.node_state)
         {
         case inventory_item::UNCHANGED_NODE: output << " "; break;
         case inventory_item::PATCHED_NODE: output << "P"; break;
@@ -811,24 +811,24 @@ automate_inventory(vector<utf8> args,
         default: I(false); // invalid node_state
         }
 
-      output << " " << i->second.pre_id 
-             << " " << i->second.post_id 
+      output << " " << i->second.pre_id
+             << " " << i->second.post_id
              << " " << i->first;
 
       // FIXME: it's possible that a directory was deleted and a file
       // was added in it's place (or vice-versa) so we need something
       // like pre/post node type indicators rather than a simple path
       // suffix! ugh.
-      
+
       output << path_suffix;
 
       output << endl;
     }
 }
 
-namespace 
+namespace
 {
-  namespace syms 
+  namespace syms
   {
     symbol const key("key");
     symbol const signature("signature");
@@ -847,12 +847,12 @@ namespace
 // Arguments:
 //   1: a revision id
 // Added in: 1.0
-// Purpose: Prints all certificates associated with the given revision 
+// Purpose: Prints all certificates associated with the given revision
 //   ID. Each certificate is contained in a basic IO stanza. For each
 //   certificate, the following values are provided:
-//   
+//
 //   'key' : a string indicating the key used to sign this certificate.
-//   'signature': a string indicating the status of the signature. 
+//   'signature': a string indicating the status of the signature.
 //   Possible values of this string are:
 //     'ok'        : the signature is correct
 //     'bad'       : the signature is invalid
@@ -882,9 +882,9 @@ automate_certs(vector<utf8> args,
     throw usage(help_name);
 
   vector<cert> certs;
-  
+
   transaction_guard guard(app.db, false);
-  
+
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   hexenc<id> ident(rid.inner());
@@ -895,17 +895,17 @@ automate_certs(vector<utf8> args,
     certs.push_back(idx(ts, i).inner());
 
   {
-    set<rsa_keypair_id> checked;      
+    set<rsa_keypair_id> checked;
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
             !app.db.public_key_exists(idx(certs, i).key))
-          W(F("no public key '%s' found in database\n")
+          W(F("no public key '%s' found in database")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
       }
   }
-        
+
   // Make the output deterministic; this is useful for the test suite,
   // in particular.
   sort(certs.begin(), certs.end());
@@ -916,7 +916,7 @@ automate_certs(vector<utf8> args,
     {
       basic_io::stanza st;
       cert_status status = check_cert(app, idx(certs, i));
-      cert_value tv;      
+      cert_value tv;
       cert_name name = idx(certs, i).name();
       set<rsa_keypair_id> signers;
 
@@ -925,7 +925,7 @@ automate_certs(vector<utf8> args,
       rsa_keypair_id keyid = idx(certs, i).key();
       signers.insert(keyid);
 
-      bool trusted = 
+      bool trusted =
         app.lua.hook_get_revision_cert_trust(signers, ident,
                                              name, tv);
 
@@ -959,7 +959,7 @@ automate_certs(vector<utf8> args,
 
 // Name: get_revision
 // Arguments:
-//   1: a revision id (optional, determined from the workspace if 
+//   1: a revision id (optional, determined from the workspace if
 //      non-existant)
 // Added in: 1.0
 
@@ -968,11 +968,11 @@ automate_certs(vector<utf8> args,
 //   described by a different basic_io stanza. The first string pair
 //   of each stanza indicates the type of change represented.
 //
-//   All stanzas are formatted by basic_io. Stanzas are separated 
-//   by a blank line. Values will be escaped, '\' to '\\' and 
+//   All stanzas are formatted by basic_io. Stanzas are separated
+//   by a blank line. Values will be escaped, '\' to '\\' and
 //   '"' to '\"'.
 //
-//   Possible values of this first value are along with an ordered list of 
+//   Possible values of this first value are along with an ordered list of
 //   basic_io formatted stanzas that will be provided are:
 //
 //   'format_version'
@@ -1039,7 +1039,7 @@ automate_get_revision(vector<utf8> args,
       revision_id old_revision_id;
       revision_set rev;
 
-      app.require_workspace(); 
+      app.require_workspace();
       get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       update_current_roster_from_filesystem(new_roster, app);
 
@@ -1057,7 +1057,7 @@ automate_get_revision(vector<utf8> args,
       app.db.get_revision(ident, dat);
     }
 
-  L(FL("dumping revision %s\n") % ident);
+  L(FL("dumping revision %s") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -1108,8 +1108,8 @@ automate_get_current_revision_id(vector<utf8> args,
   revision_id old_revision_id, new_revision_id;
   revision_set rev;
   temp_node_id_source nis;
-  
-  app.require_workspace(); 
+
+  app.require_workspace();
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
   update_current_roster_from_filesystem(new_roster, app);
 
@@ -1132,11 +1132,11 @@ automate_get_current_revision_id(vector<utf8> args,
 //   There is one basic_io stanza for each file or directory in the
 //   manifest.
 //
-//   All stanzas are formatted by basic_io. Stanzas are separated 
-//   by a blank line. Values will be escaped, '\' to '\\' and 
+//   All stanzas are formatted by basic_io. Stanzas are separated
+//   by a blank line. Values will be escaped, '\' to '\\' and
 //   '"' to '\"'.
 //
-//   Possible values of this first value are along with an ordered list of 
+//   Possible values of this first value are along with an ordered list of
 //   basic_io formatted stanzas that will be provided are:
 //
 //   'format_version'
@@ -1180,7 +1180,7 @@ automate_get_manifest_of(vector<utf8> args,
     {
       revision_id old_revision_id;
 
-      app.require_workspace(); 
+      app.require_workspace();
       get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       update_current_roster_from_filesystem(new_roster, app);
     }
@@ -1194,7 +1194,7 @@ automate_get_manifest_of(vector<utf8> args,
 
   calculate_ident(new_roster, mid);
   write_manifest_of_roster(new_roster, dat);
-  L(FL("dumping manifest %s\n") % mid);
+  L(FL("dumping manifest %s") % mid);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -1207,7 +1207,7 @@ automate_get_manifest_of(vector<utf8> args,
 //
 // Output format: The file contents are output without modification.
 //
-// Error conditions: If the file id specified is unknown or invalid prints 
+// Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
 static void
 automate_get_file(vector<utf8> args,
@@ -1223,7 +1223,7 @@ automate_get_file(vector<utf8> args,
     F("no file version %s found in database") % ident);
 
   file_data dat;
-  L(FL("dumping file %s\n") % ident);
+  L(FL("dumping file %s") % ident);
   app.db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
@@ -1282,7 +1282,7 @@ automate_packets_for_certs(vector<utf8> args,
 
   revision_id r_id(idx(args, 0)());
   vector< revision<cert> > certs;
-    
+
   N(app.db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
   app.db.get_revision_certs(r_id, certs);
@@ -1313,7 +1313,7 @@ automate_packet_for_fdata(vector<utf8> args,
 
   file_id f_id(idx(args, 0)());
   file_data f_data;
-    
+
   N(app.db.file_version_exists(f_id),
     F("no such file '%s'") % f_id);
   app.db.get_file_version(f_id, f_data);
@@ -1345,7 +1345,7 @@ automate_packet_for_fdelta(vector<utf8> args,
   file_id f_old_id(idx(args, 0)());
   file_id f_new_id(idx(args, 1)());
   file_data f_old_data, f_new_data;
-   
+
   N(app.db.file_version_exists(f_old_id),
     F("no such revision '%s'") % f_old_id);
   N(app.db.file_version_exists(f_new_id),
@@ -1483,9 +1483,9 @@ void print_some_output(int cmdnum,
 static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
 {
   ssize_t rv;
-  
+
   rv = read(d, buf, nbytes);
-  
+
   E(rv >= 0, F("read from client failed with error code: %d") % rv);
   return rv;
 }
@@ -1652,7 +1652,7 @@ automate_keys(vector<utf8> args, string const & help_name,
     {
       keypair kp;
       hexenc<id> privhash, pubhash;
-      app.keys.get_key_pair(*i, kp); 
+      app.keys.get_key_pair(*i, kp);
       key_hash_code(*i, kp.pub, pubhash);
       key_hash_code(*i, kp.priv, privhash);
       items[(*i)()].get<0>() = pubhash;

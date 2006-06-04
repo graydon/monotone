@@ -50,7 +50,7 @@ monotone_mkstemp(string &tmpl)
 #ifdef _MSC_VER
       fd = _open(tmp.c_str(), _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY, 0600);
 #else
-	  fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);      
+	  fd = open(tmp.c_str(), O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
 #endif
 	  if (fd >= 0)
       {
@@ -59,7 +59,7 @@ monotone_mkstemp(string &tmpl)
       }
       else if (errno != EEXIST)
         break;
-    }  
+    }
   return -1;
 }
 

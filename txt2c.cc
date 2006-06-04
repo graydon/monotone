@@ -57,7 +57,7 @@ int main(int argc, char **argv)
        << "\n\n"
        << static_decl
        << "char const " << arr << "_constant[" << (dat.size() + 1) << "] = {\n";
-  
+
   for (unsigned int i = 0; i < dat.size(); ++i)
     {
       if (i == 0) cout << "\t";
