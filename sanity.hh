@@ -1,10 +1,14 @@
 #ifndef __SANITY_HH__
 #define __SANITY_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "config.h" // Required for ENABLE_NLS
 
@@ -67,21 +71,21 @@ struct sanity {
   bool clean_shutdown;
   std::vector<MusingI const *> musings;
 
-  void log(plain_format const & fmt, 
+  void log(plain_format const & fmt,
            char const * file, int line);
   void progress(i18n_format const & fmt,
                 char const * file, int line);
-  void warning(i18n_format const & fmt, 
+  void warning(i18n_format const & fmt,
                char const * file, int line);
-  void naughty_failure(std::string const & expr, i18n_format const & explain, 
+  void naughty_failure(std::string const & expr, i18n_format const & explain,
                        std::string const & file, int line) NORETURN;
-  void error_failure(std::string const & expr, i18n_format const & explain, 
+  void error_failure(std::string const & expr, i18n_format const & explain,
                      std::string const & file, int line) NORETURN;
-  void invariant_failure(std::string const & expr, 
+  void invariant_failure(std::string const & expr,
                          std::string const & file, int line) NORETURN;
   void index_failure(std::string const & vec_expr,
                      std::string const & idx_expr,
-                     unsigned long sz, 
+                     unsigned long sz,
                      unsigned long idx,
                      std::string const & file, int line) NORETURN;
   void gasp();
@@ -96,9 +100,9 @@ typedef std::runtime_error oops;
 extern sanity global_sanity;
 
 // This hides boost::format from infecting every source file. Instead, we
-// implement a single very small formatter. 
+// implement a single very small formatter.
 
-class 
+class
 format_base
 {
 protected:
@@ -106,6 +110,7 @@ protected:
   impl *pimpl;
 
   format_base() : pimpl(NULL) {}
+  ~format_base();
   format_base(format_base const & other);
   format_base & operator=(format_base const & other);
   explicit format_base(char const * pattern);
@@ -121,38 +126,38 @@ public:
 
 
 struct
-plain_format 
+plain_format
   : public format_base
 {
-  plain_format() 
+  plain_format()
   {}
 
-  explicit plain_format(char const * pattern) 
-    : format_base(pattern) 
+  explicit plain_format(char const * pattern)
+    : format_base(pattern)
   {}
 
-  explicit plain_format(std::string const & pattern) 
-    : format_base(pattern) 
+  explicit plain_format(std::string const & pattern)
+    : format_base(pattern)
   {}
 
-  template<typename T> plain_format & operator %(T const & t) 
+  template<typename T> plain_format & operator %(T const & t)
   {
-    get_stream() << t; 
+    get_stream() << t;
     flush();
     return *this;
   }
 
-  template<typename T> plain_format & operator %(T & t) 
+  template<typename T> plain_format & operator %(T & t)
   {
     get_stream() << t;
     flush();
-    return *this; 
+    return *this;
   }
 };
 
 
 struct
-i18n_format 
+i18n_format
   : public format_base
 {
   i18n_format() {}
@@ -242,26 +247,26 @@ do { \
 // expression, not as a statement.
 
 template <typename T>
-inline T & checked_index(std::vector<T> & v, 
+inline T & checked_index(std::vector<T> & v,
                          typename std::vector<T>::size_type i,
                          char const * vec,
                          char const * index,
                          char const * file,
-                         int line) 
-{ 
+                         int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }
 
 template <typename T>
-inline T const & checked_index(std::vector<T> const & v, 
+inline T const & checked_index(std::vector<T> const & v,
                                typename std::vector<T>::size_type i,
                                char const * vec,
                                char const * index,
                                char const * file,
-                               int line) 
-{ 
+                               int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
@@ -269,26 +274,26 @@ inline T const & checked_index(std::vector<T> const & v,
 
 #ifdef QA_SUPPORTED
 template <typename T>
-inline T & checked_index(std::vector<T, QA(T)> & v, 
+inline T & checked_index(std::vector<T, QA(T)> & v,
                          typename std::vector<T>::size_type i,
                          char const * vec,
                          char const * index,
                          char const * file,
-                         int line) 
-{ 
+                         int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }
 
 template <typename T>
-inline T const & checked_index(std::vector<T, QA(T)> const & v, 
+inline T const & checked_index(std::vector<T, QA(T)> const & v,
                                typename std::vector<T>::size_type i,
                                char const * vec,
                                char const * index,
                                char const * file,
-                               int line) 
-{ 
+                               int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
@@ -382,15 +387,15 @@ Musing<T>::gasp(std::string & out) const
 #define fake_M(obj, line) real_M(obj, line)
 #define MM(obj) fake_M(obj, __LINE__)
 #else
-#define MM(obj) /* */ 
+#define MM(obj) /* */
 #endif
 
 template <> void dump(std::string const & obj, std::string & out);
 
 //////////////////////////////////////////////////////////////////////////
-// Local Variables: 
-// mode: C++ 
-// c-file-style: "gnu" 
+// Local Variables:
+// mode: C++
+// c-file-style: "gnu"
 // indent-tabs-mode: nil
 // End:
 // vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

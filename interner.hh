@@ -1,10 +1,14 @@
 #ifndef __INTERNER_HH__
 #define __INTERNER_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 
@@ -12,8 +16,8 @@
 #include "sanity.hh"
 
 template <typename T>
-struct 
-interner 
+struct
+interner
 {
   typedef typename hashmap::hash_map<std::string, T> hmap;
 
@@ -35,7 +39,7 @@ interner
     bool is_new;
     return intern(s, is_new);
   }
-  T intern(std::string const & s, bool & is_new) 
+  T intern(std::string const & s, bool & is_new)
   {
     std::pair<typename hmap::iterator, bool> res;
     T t = rev.size();

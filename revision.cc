@@ -1,8 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <cctype>
 #include <cstdlib>
@@ -91,10 +94,10 @@ void revision_set::check_sane() const
   // (done in put_revision, for instance) covers this case automatically.
 }
 
-bool 
+bool
 revision_set::is_merge_node() const
-{ 
-  return edges.size() > 1; 
+{
+  return edges.size() > 1;
 }
 
 bool
@@ -119,7 +122,7 @@ revision_set::revision_set(revision_set const & other)
   edges = other.edges;
 }
 
-revision_set const & 
+revision_set const &
 revision_set::operator=(revision_set const & other)
 {
   other.check_sane();
@@ -155,10 +158,10 @@ typedef unsigned long ctx;
 typedef dynamic_bitset<> bitmap;
 typedef shared_ptr<bitmap> shared_bitmap;
 
-static void 
+static void
 calculate_ancestors_from_graph(interner<ctx> & intern,
                                revision_id const & init,
-                               multimap<revision_id, revision_id> const & graph, 
+                               multimap<revision_id, revision_id> const & graph,
                                map< ctx, shared_bitmap > & ancestors,
                                shared_bitmap & total_union);
 
@@ -188,7 +191,7 @@ find_common_ancestor_for_merge(revision_id const & left,
       inverse_graph.insert(make_pair(i->second, i->first));
   }
 
-  
+
   while (leaves.size() != 1)
     {
       isect->clear();
@@ -205,8 +208,8 @@ find_common_ancestor_for_merge(revision_id const & left,
           else
             {
               curr_leaf_ancestors = shared_bitmap(new bitmap());
-              calculate_ancestors_from_graph(intern, revision_id(intern.lookup(curr_leaf)), 
-                                             inverse_graph, ancestors, 
+              calculate_ancestors_from_graph(intern, revision_id(intern.lookup(curr_leaf)),
+                                             inverse_graph, ancestors,
                                              curr_leaf_ancestors);
             }
           if (isect->size() > curr_leaf_ancestors->size())
@@ -220,16 +223,16 @@ find_common_ancestor_for_merge(revision_id const & left,
           else
             (*isect) &= (*curr_leaf_ancestors);
         }
-      
+
       // isect is now the set of common ancestors of leaves, but that is not enough.
-      // We need the set of leaves of isect; to do that we calculate the set of 
+      // We need the set of leaves of isect; to do that we calculate the set of
       // ancestors of isect, in order to subtract it from isect (below).
       set<ctx> new_leaves;
       for (ctx i = 0; i < isect->size(); ++i)
         {
           if (isect->test(i))
             {
-              calculate_ancestors_from_graph(intern, revision_id(intern.lookup(i)), 
+              calculate_ancestors_from_graph(intern, revision_id(intern.lookup(i)),
                                              inverse_graph, ancestors, isect_ancs);
             }
         }
@@ -286,7 +289,7 @@ is_ancestor(T const & ancestor_id,
             }
         }
     }
-  return false;  
+  return false;
 }
 
 bool
@@ -294,7 +297,7 @@ is_ancestor(revision_id const & ancestor_id,
             revision_id const & descendent_id,
             app_state & app)
 {
-  L(FL("checking whether %s is an ancestor of %s\n") % ancestor_id % descendent_id);
+  L(FL("checking whether %s is an ancestor of %s") % ancestor_id % descendent_id);
 
   multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
@@ -302,7 +305,7 @@ is_ancestor(revision_id const & ancestor_id,
 }
 
 
-static void 
+static void
 add_bitset_to_union(shared_bitmap src,
                     shared_bitmap dst)
 {
@@ -314,10 +317,10 @@ add_bitset_to_union(shared_bitmap src,
 }
 
 
-static void 
+static void
 calculate_ancestors_from_graph(interner<ctx> & intern,
                                revision_id const & init,
-                               multimap<revision_id, revision_id> const & graph, 
+                               multimap<revision_id, revision_id> const & graph,
                                map< ctx, shared_bitmap > & ancestors,
                                shared_bitmap & total_union)
 {
@@ -406,7 +409,7 @@ toposort(set<revision_id> const & revisions,
     {
       // now stick them in our ordering (if wanted) and remove them from the
       // graph, calculating the new roots as we go
-      L(FL("new root: %s\n") % (roots.front()));
+      L(FL("new root: %s") % (roots.front()));
       if (revisions.find(roots.front()) != revisions.end())
         sorted.push_back(roots.front());
       for(gi i = graph.lower_bound(roots.front());
@@ -421,7 +424,7 @@ toposort(set<revision_id> const & revisions,
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
     {
-      L(FL("new leaf: %s\n") % (*i));
+      L(FL("new leaf: %s") % (*i));
       if (revisions.find(*i) != revisions.end())
         sorted.push_back(*i);
     }
@@ -448,7 +451,7 @@ erase_ancestors(set<revision_id> & revisions, app_state & app)
 
   for (set<revision_id>::const_iterator i = revisions.begin();
        i != revisions.end(); ++i)
-    {      
+    {
       calculate_ancestors_from_graph(intern, *i, inverse_graph, ancestors, u);
     }
 
@@ -461,7 +464,7 @@ erase_ancestors(set<revision_id> & revisions, app_state & app)
       if (!has_ancestor_in_set)
         tmp.insert(*i);
     }
-  
+
   revisions = tmp;
 }
 
@@ -491,7 +494,7 @@ ancestry_difference(revision_id const & a, set<revision_id> const & bs,
 
   for (set<revision_id>::const_iterator i = bs.begin();
        i != bs.end(); ++i)
-    {      
+    {
       calculate_ancestors_from_graph(intern, *i, inverse_graph, ancestors, u);
       ctx c = intern.intern(i->inner()());
       if (u->size() <= c)
@@ -510,7 +513,7 @@ ancestry_difference(revision_id const & a, set<revision_id> const & bs,
 
   au->resize(max(au->size(), u->size()));
   u->resize(max(au->size(), u->size()));
-  
+
   *au -= *u;
 
   for (unsigned int i = 0; i != au->size(); ++i)
@@ -539,19 +542,19 @@ select_nodes_modified_by_rev(revision_id const & rid,
       set<node_id> edge_nodes_modified;
       roster_t old_roster;
       app.db.get_roster(edge_old_revision(i), old_roster);
-      select_nodes_modified_by_cset(edge_changes(i), 
-                                    old_roster, 
-                                    new_roster, 
+      select_nodes_modified_by_cset(edge_changes(i),
+                                    old_roster,
+                                    new_roster,
                                     edge_nodes_modified);
 
-      copy(edge_nodes_modified.begin(), edge_nodes_modified.end(), 
+      copy(edge_nodes_modified.begin(), edge_nodes_modified.end(),
                 inserter(nodes_modified, nodes_modified.begin()));
     }
 }
 
 
 void
-make_revision_set(revision_id const & old_rev_id, 
+make_revision_set(revision_id const & old_rev_id,
                   roster_t const & old_roster,
                   roster_t const & new_roster,
                   revision_set & rev)
@@ -560,10 +563,10 @@ make_revision_set(revision_id const & old_rev_id,
 
   rev.edges.clear();
   make_cset(old_roster, new_roster, *cs);
-  
+
   calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s\n") % rev.new_manifest);
-  
+  L(FL("new manifest_id is %s") % rev.new_manifest);
+
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
 }
 
@@ -571,7 +574,7 @@ make_revision_set(revision_id const & old_rev_id,
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
-typedef map<u64, pair<shared_ptr<roster_t>, shared_ptr<marking_map> > > 
+typedef map<u64, pair<shared_ptr<roster_t>, shared_ptr<marking_map> > >
 parent_roster_map;
 
 template <> void
@@ -597,16 +600,16 @@ dump(parent_roster_map const & prm, string & out)
 
 struct anc_graph
 {
-  anc_graph(bool existing, app_state & a) : 
+  anc_graph(bool existing, app_state & a) :
     existing_graph(existing),
-    app(a), 
-    max_node(0), 
+    app(a),
+    max_node(0),
     n_nodes("nodes", "n", 1),
     n_certs_in("certs in", "c", 1),
     n_revs_out("revs out", "r", 1),
     n_certs_out("certs out", "C", 1)
   {}
-  
+
   bool existing_graph;
   app_state & app;
   u64 max_node;
@@ -630,14 +633,14 @@ struct anc_graph
   multimap<u64, pair<cert_name, cert_value> > certs;
   multimap<u64, u64> ancestry;
   set<string> branches;
-  
-  void add_node_ancestry(u64 child, u64 parent);  
+
+  void add_node_ancestry(u64 child, u64 parent);
   void write_certs();
   void kluge_for_bogus_merge_edges();
   void rebuild_ancestry();
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
-  u64 add_node_for_oldstyle_revision(revision_id const & rev);                     
+  u64 add_node_for_oldstyle_revision(revision_id const & rev);
   void construct_revisions_from_ancestry();
   void fixup_node_identities(parent_roster_map const & parent_rosters,
                              roster_t & child_roster,
@@ -647,7 +650,7 @@ struct anc_graph
 
 void anc_graph::add_node_ancestry(u64 child, u64 parent)
 {
-  L(FL("noting ancestry from child %d -> parent %d\n") % child % parent);
+  L(FL("noting ancestry from child %d -> parent %d") % child % parent);
   ancestry.insert(make_pair(child, parent));
 }
 
@@ -662,7 +665,7 @@ void anc_graph::write_certs()
 {
   {
     // regenerate epochs on all branches to random states
-    
+
     for (set<string>::const_iterator i = branches.begin(); i != branches.end(); ++i)
       {
         char buf[constants::epochlen_bytes];
@@ -670,21 +673,21 @@ void anc_graph::write_certs()
         hexenc<data> hexdata;
         encode_hexenc(data(string(buf, buf + constants::epochlen_bytes)), hexdata);
         epoch_data new_epoch(hexdata);
-        L(FL("setting epoch for %s to %s\n") % *i % new_epoch);
+        L(FL("setting epoch for %s to %s") % *i % new_epoch);
         app.db.set_epoch(cert_value(*i), new_epoch);
       }
   }
 
 
   typedef multimap<u64, pair<cert_name, cert_value> >::const_iterator ci;
-    
+
   for (map<u64,revision_id>::const_iterator i = node_to_new_rev.begin();
        i != node_to_new_rev.end(); ++i)
     {
       revision_id rev(i->second);
 
       pair<ci,ci> range = certs.equal_range(i->first);
-        
+
       for (ci j = range.first; j != range.second; ++j)
         {
           cert_name name(j->second.first);
@@ -698,8 +701,8 @@ void anc_graph::write_certs()
               ++n_certs_out;
               app.db.put_revision_cert(rcert);
             }
-        }        
-    }    
+        }
+    }
 }
 
 void
@@ -724,7 +727,7 @@ anc_graph::kluge_for_bogus_merge_edges()
   // dropped by a previous kluge ("3-ancestor") so we have removed that
   // code.
 
-  P(F("scanning for bogus merge edges\n"));
+  P(F("scanning for bogus merge edges"));
 
   multimap<u64,u64> parent_to_child_map;
     for (multimap<u64, u64>::const_iterator i = ancestry.begin();
@@ -743,7 +746,7 @@ anc_graph::kluge_for_bogus_merge_edges()
         {
           if (j->first == i->first)
             {
-              L(FL("considering old merge edge %s\n") % 
+              L(FL("considering old merge edge %s") %
                 safe_get(node_to_old_rev, i->first));
               u64 parent1 = i->second;
               u64 parent2 = j->second;
@@ -755,7 +758,7 @@ anc_graph::kluge_for_bogus_merge_edges()
         }
     }
 
-  for (map<u64, u64>::const_iterator i = edges_to_kill.begin(); 
+  for (map<u64, u64>::const_iterator i = edges_to_kill.begin();
        i != edges_to_kill.end(); ++i)
     {
       u64 child = i->first;
@@ -766,16 +769,16 @@ anc_graph::kluge_for_bogus_merge_edges()
         {
           if (j->second == parent)
             {
-              P(F("optimizing out redundant edge %d -> %d\n") 
+              P(F("optimizing out redundant edge %d -> %d")
                 % parent % child);
               ancestry.erase(j);
               killed = true;
               break;
             }
         }
-      
+
       if (!killed)
-        W(F("failed to eliminate edge %d -> %d\n") 
+        W(F("failed to eliminate edge %d -> %d")
           % parent % child);
     }
 }
@@ -786,11 +789,11 @@ anc_graph::rebuild_ancestry()
 {
   kluge_for_bogus_merge_edges();
 
-  P(F("rebuilding %d nodes\n") % max_node);
+  P(F("rebuilding %d nodes") % max_node);
   {
     transaction_guard guard(app.db);
     if (existing_graph)
-      app.db.delete_existing_revs_and_certs();    
+      app.db.delete_existing_revs_and_certs();
     construct_revisions_from_ancestry();
     write_certs();
     if (existing_graph)
@@ -799,7 +802,7 @@ anc_graph::rebuild_ancestry()
   }
 }
 
-u64 
+u64
 anc_graph::add_node_for_old_manifest(manifest_id const & man)
 {
   I(!existing_graph);
@@ -808,22 +811,22 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
     {
       node = max_node++;
       ++n_nodes;
-      L(FL("node %d = manifest %s\n") % node % man);
+      L(FL("node %d = manifest %s") % node % man);
       old_man_to_node.insert(make_pair(man, node));
       node_to_old_man.insert(make_pair(node, man));
-      
+
       // load certs
       vector< manifest<cert> > mcerts;
       app.db.get_manifest_certs(man, mcerts);
-      erase_bogus_certs(mcerts, app);      
+      erase_bogus_certs(mcerts, app);
       for(vector< manifest<cert> >::const_iterator i = mcerts.begin();
           i != mcerts.end(); ++i)
         {
-          L(FL("loaded '%s' manifest cert for node %s\n") % i->inner().name % node);
+          L(FL("loaded '%s' manifest cert for node %s") % i->inner().name % node);
           cert_value tv;
           decode_base64(i->inner().value, tv);
           ++n_certs_in;
-          certs.insert(make_pair(node, 
+          certs.insert(make_pair(node,
                                       make_pair(i->inner().name, tv)));
         }
     }
@@ -843,12 +846,12 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
     {
       node = max_node++;
       ++n_nodes;
-      
+
       manifest_id man;
       legacy::renames_map renames;
       legacy::get_manifest_and_renames_for_rev(app, rev, man, renames);
-      
-      L(FL("node %d = revision %s = manifest %s\n") % node % rev % man);
+
+      L(FL("node %d = revision %s = manifest %s") % node % rev % man);
       old_rev_to_node.insert(make_pair(rev, node));
       node_to_old_rev.insert(make_pair(node, rev));
       node_to_old_man.insert(make_pair(node, man));
@@ -857,18 +860,18 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       // load certs
       vector< revision<cert> > rcerts;
       app.db.get_revision_certs(rev, rcerts);
-      erase_bogus_certs(rcerts, app);      
+      erase_bogus_certs(rcerts, app);
       for(vector< revision<cert> >::const_iterator i = rcerts.begin();
           i != rcerts.end(); ++i)
         {
-          L(FL("loaded '%s' revision cert for node %s\n") % i->inner().name % node);
+          L(FL("loaded '%s' revision cert for node %s") % i->inner().name % node);
           cert_value tv;
           decode_base64(i->inner().value, tv);
           ++n_certs_in;
-          certs.insert(make_pair(node, 
+          certs.insert(make_pair(node,
                                       make_pair(i->inner().name, tv)));
 
-          if (i->inner().name == branch_cert_name)            
+          if (i->inner().name == branch_cert_name)
             branches.insert(tv());
         }
     }
@@ -897,17 +900,17 @@ not_dead_yet(node_id nid, u64 birth_rev,
   // node's birth revision is _not_ an ancestor of the revision.
   // "Dead" means, the node does not exist in the revision's tree, and the
   // node's birth revision _is_ an ancestor of the revision.
-    
-  // L(FL("testing liveliness of node %d, born in rev %d\n") % nid % birth_rev);
+
+  // L(FL("testing liveliness of node %d, born in rev %d") % nid % birth_rev);
   for (parent_roster_map::const_iterator r = parent_rosters.begin();
        r != parent_rosters.end(); ++r)
     {
       shared_ptr<roster_t> parent = r->second.first;
-      // L(FL("node %d %s in parent roster %d\n") 
+      // L(FL("node %d %s in parent roster %d")
       //             % nid
-      //             % (parent->has_node(n->first) ? "exists" : "does not exist" ) 
+      //             % (parent->has_node(n->first) ? "exists" : "does not exist" )
       //             % r->first);
-      
+
       if (!parent->has_node(nid))
         {
           deque<u64> work;
@@ -917,13 +920,13 @@ not_dead_yet(node_id nid, u64 birth_rev,
             {
               u64 curr = work.front();
               work.pop_front();
-              // L(FL("examining ancestor %d of parent roster %d, looking for anc=%d\n")
+              // L(FL("examining ancestor %d of parent roster %d, looking for anc=%d")
               //                     % curr % r->first % birth_rev);
-              
+
               if (seen.find(curr) != seen.end())
                 continue;
               seen.insert(curr);
-              
+
               if (curr == birth_rev)
                 {
                   // L(FL("node is dead in %d") % r->first);
@@ -939,7 +942,7 @@ not_dead_yet(node_id nid, u64 birth_rev,
                 }
             }
         }
-    }  
+    }
   // L(FL("node is alive in all parents, returning true"));
   return true;
 }
@@ -981,8 +984,8 @@ find_new_path_for(map<split_path, split_path> const & renames,
 }
 
 static void
-insert_into_roster(roster_t & child_roster, 
-                   temp_node_id_source & nis, 
+insert_into_roster(roster_t & child_roster,
+                   temp_node_id_source & nis,
                    file_path const & pth,
                    file_id const & fid)
 {
@@ -1012,7 +1015,7 @@ insert_into_roster(roster_t & child_roster,
   }
 
   if (child_roster.has_node(sp))
-    {      
+    {
       node_t n = child_roster.get_node(sp);
       E(is_file_t(n),
         F("Path %s cannot be added, as there is a directory in the way\n") % sp);
@@ -1046,7 +1049,7 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
   map<node_id, u64> nodes_in_any_parent;
 
   // Stage 1: collect all nodes (and their birth revs) in any parent.
-  for (parent_roster_map::const_iterator i = parent_rosters.begin(); 
+  for (parent_roster_map::const_iterator i = parent_rosters.begin();
        i != parent_rosters.end(); ++i)
     {
       shared_ptr<roster_t> parent_roster = i->second.first;
@@ -1080,7 +1083,7 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
 
       if (not_dead_yet(n, birth_rev, parent_rosters, ancestry))
         {
-          for (parent_roster_map::const_iterator j = parent_rosters.begin(); 
+          for (parent_roster_map::const_iterator j = parent_rosters.begin();
                j != parent_rosters.end(); ++j)
             {
               shared_ptr<roster_t> parent_roster = j->second.first;
@@ -1111,19 +1114,19 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
                     {
                       child_roster.replace_node_id(cn->self, n);
                       break;
-                    }                  
+                    }
                 }
             }
         }
     }
 }
 
-struct 
+struct
 current_rev_debugger
 {
   u64 node;
   anc_graph const & agraph;
-  current_rev_debugger(u64 n, anc_graph const & ag) 
+  current_rev_debugger(u64 n, anc_graph const & ag)
     : node(n), agraph(ag)
   {
   }
@@ -1145,7 +1148,7 @@ dump(current_rev_debugger const & d, string & out)
 }
 
 
-void 
+void
 anc_graph::construct_revisions_from_ancestry()
 {
   // This is an incredibly cheesy, and also reasonably simple sorting
@@ -1177,7 +1180,7 @@ anc_graph::construct_revisions_from_ancestry()
       {
         all.insert(i->first);
       }
-    
+
     set_difference(all.begin(), all.end(),
                    children.begin(), children.end(),
                    back_inserter(work));
@@ -1185,7 +1188,7 @@ anc_graph::construct_revisions_from_ancestry()
 
   while (!work.empty())
     {
-      
+
       u64 child = work.front();
 
       current_rev_debugger dbg(child, *this);
@@ -1213,10 +1216,10 @@ anc_graph::construct_revisions_from_ancestry()
           parents.insert(parent);
       }
 
-      if (parents_all_done 
+      if (parents_all_done
           && (node_to_new_rev.find(child) == node_to_new_rev.end()))
-        {          
-          L(FL("processing node %d\n") % child);
+        {
+          L(FL("processing node %d") % child);
 
           manifest_id old_child_mid;
           legacy::manifest_map old_child_man;
@@ -1229,12 +1232,12 @@ anc_graph::construct_revisions_from_ancestry()
           // Load all the parent rosters into a temporary roster map
           parent_roster_map parent_rosters;
           MM(parent_rosters);
-          
+
           for (ci i = parent_range.first; parents_all_done && i != parent_range.second; ++i)
             {
               if (i->first != child)
                 continue;
-              u64 parent = i->second;           
+              u64 parent = i->second;
               if (parent_rosters.find(parent) == parent_rosters.end())
                 {
                   shared_ptr<roster_t> ros = shared_ptr<roster_t>(new roster_t());
@@ -1272,7 +1275,7 @@ anc_graph::construct_revisions_from_ancestry()
               else
                 insert_into_roster(child_roster, nis, i->first, i->second);
             }
-          
+
           // migrate attributes out of .mt-attrs
           {
             legacy::manifest_map::const_iterator i = old_child_man.find(attr_path);
@@ -1336,7 +1339,7 @@ anc_graph::construct_revisions_from_ancestry()
               shared_ptr<roster_t> parent_roster = i->second.first;
               shared_ptr<cset> cs = shared_ptr<cset>(new cset());
               MM(*cs);
-              make_cset(*parent_roster, child_roster, *cs); 
+              make_cset(*parent_roster, child_roster, *cs);
               safe_insert(rev.edges, make_pair(parent_rid, cs));
             }
 
@@ -1351,9 +1354,9 @@ anc_graph::construct_revisions_from_ancestry()
               shared_ptr<roster_t> parent_roster = shared_ptr<roster_t>(new roster_t());
               shared_ptr<cset> cs = shared_ptr<cset>(new cset());
               MM(*cs);
-              make_cset(*parent_roster, child_roster, *cs); 
+              make_cset(*parent_roster, child_roster, *cs);
               safe_insert(rev.edges, make_pair (parent_rid, cs));
-              
+
             }
 
           // Finally, put all this excitement into the database and save
@@ -1365,8 +1368,8 @@ anc_graph::construct_revisions_from_ancestry()
           new_rev_to_node.insert(make_pair(new_rid, child));
 
           /*
-          P(F("------------------------------------------------\n"));
-          P(F("made revision %s with %d edges, manifest id = %s\n")
+          P(F("------------------------------------------------"));
+          P(F("made revision %s with %d edges, manifest id = %s")
             % new_rid % rev.edges.size() % rev.new_manifest);
 
           {
@@ -1374,29 +1377,29 @@ anc_graph::construct_revisions_from_ancestry()
             data dtmp;
             dump(dbg, rtmp);
             write_revision_set(rev, dtmp);
-            P(F("%s\n") % rtmp);
-            P(F("%s\n") % dtmp);
+            P(F("%s") % rtmp);
+            P(F("%s") % dtmp);
           }
-          P(F("------------------------------------------------\n"));
+          P(F("------------------------------------------------"));
           */
 
           if (!app.db.revision_exists (new_rid))
             {
-              L(FL("mapped node %d to revision %s\n") % child % new_rid);
+              L(FL("mapped node %d to revision %s") % child % new_rid);
               app.db.put_revision(new_rid, rev);
               ++n_revs_out;
             }
           else
             {
-              L(FL("skipping already existing revision %s\n") % new_rid);
+              L(FL("skipping already existing revision %s") % new_rid);
             }
-          
+
           // Mark this child as done, hooray!
           safe_insert(done, child);
 
           // Extend the work queue with all the children of this child
           pair<ci,ci> grandchild_range = parent_to_child_map.equal_range(child);
-          for (ci i = grandchild_range.first; 
+          for (ci i = grandchild_range.first;
                i != grandchild_range.second; ++i)
             {
               if (i->first != child)
@@ -1408,7 +1411,7 @@ anc_graph::construct_revisions_from_ancestry()
     }
 }
 
-void 
+void
 build_roster_style_revs_from_manifest_style_revs(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
@@ -1417,7 +1420,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   global_sanity.set_relaxed(true);
   anc_graph graph(true, app);
 
-  P(F("converting existing revision graph to new roster-style revisions\n"));
+  P(F("converting existing revision graph to new roster-style revisions"));
   multimap<revision_id, revision_id> existing_graph;
 
   {
@@ -1464,7 +1467,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
 }
 
 
-void 
+void
 build_changesets_from_manifest_ancestry(app_state & app)
 {
   app.db.ensure_open_for_format_changes();
@@ -1472,7 +1475,7 @@ build_changesets_from_manifest_ancestry(app_state & app)
 
   anc_graph graph(false, app);
 
-  P(F("rebuilding revision graph from manifest certs\n"));
+  P(F("rebuilding revision graph from manifest certs"));
 
   {
     // early short-circuit to avoid failure after lots of work
@@ -1498,13 +1501,13 @@ build_changesets_from_manifest_ancestry(app_state & app)
       u64 child_node = graph.add_node_for_old_manifest(child);
       graph.add_node_ancestry(child_node, parent_node);
     }
-  
+
   graph.rebuild_ancestry();
 }
 
 // i/o stuff
 
-namespace 
+namespace
 {
   namespace syms
   {
@@ -1514,28 +1517,28 @@ namespace
   }
 }
 
-void 
+void
 print_edge(basic_io::printer & printer,
            edge_entry const & e)
-{       
+{
   basic_io::stanza st;
   st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner());
   printer.print_stanza(st);
-  print_cset(printer, edge_changes(e)); 
+  print_cset(printer, edge_changes(e));
 }
 
 
-void 
+void
 print_revision(basic_io::printer & printer,
                revision_set const & rev)
 {
   rev.check_sane();
 
-  basic_io::stanza format_stanza; 
+  basic_io::stanza format_stanza;
   format_stanza.push_str_pair(syms::format_version, "1");
   printer.print_stanza(format_stanza);
 
-  basic_io::stanza manifest_stanza; 
+  basic_io::stanza manifest_stanza;
   manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner());
   printer.print_stanza(manifest_stanza);
 
@@ -1545,7 +1548,7 @@ print_revision(basic_io::printer & printer,
 }
 
 
-void 
+void
 parse_edge(basic_io::parser & parser,
            edge_map & es)
 {
@@ -1554,18 +1557,18 @@ parse_edge(basic_io::parser & parser,
   manifest_id old_man;
   revision_id old_rev;
   string tmp;
-  
+
   parser.esym(syms::old_revision);
   parser.hex(tmp);
   old_rev = revision_id(tmp);
-  
+
   parse_cset(parser, *cs);
 
   es.insert(make_pair(old_rev, cs));
 }
 
 
-void 
+void
 parse_revision(basic_io::parser & parser,
                revision_set & rev)
 {
@@ -1587,7 +1590,7 @@ parse_revision(basic_io::parser & parser,
   rev.check_sane();
 }
 
-void 
+void
 read_revision_set(data const & dat,
                   revision_set & rev)
 {
@@ -1600,7 +1603,7 @@ read_revision_set(data const & dat,
   rev.check_sane();
 }
 
-void 
+void
 read_revision_set(revision_data const & dat,
                   revision_set & rev)
 {
@@ -1681,7 +1684,7 @@ test_find_old_new_path_for()
   I(foo_bar == find_new_path_for(renames, foo_baz));
 }
 
-void 
+void
 add_revision_tests(test_suite * suite)
 {
   I(suite);

@@ -1,10 +1,14 @@
 #ifndef __UI_HH__
 #define __UI_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this file contains a couple utilities to deal with the user
 // interface. the global user_interface object 'ui' owns cerr, so
@@ -98,8 +102,8 @@ public:
   void set_prog_name(std::string const & name);
   std::string output_prefix();
 
-private:  
-  std::set<std::string> issued_warnings;  
+private:
+  std::set<std::string> issued_warnings;
 
   bool some_tick_is_dirty;    // At least one tick needs being printed
   bool last_write_was_a_tick;

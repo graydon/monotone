@@ -363,7 +363,7 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
    return 
    function()
       local path = "xxdiff"
-      local ret execute(path, 
+      local ret = execute(path, 
 			"--title1", left_path,
 			"--title2", right_path,
 			"--title3", merged_path,

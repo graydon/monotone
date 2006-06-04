@@ -1,11 +1,15 @@
-// copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // This is split off into its own file to minimize recompilation time; it is
 // the only .cc file that depends on the revision/full_revision header files,
-// which change constantly. 
+// which change constantly.
 
 #include "config.h"
 

@@ -1,10 +1,14 @@
 #ifndef __LUA_HOOKS_HH__
 #define __LUA_HOOKS_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this file defines a typed C++ interface to the various hooks
 // we expose to the user as lua functions or variables
@@ -45,7 +49,7 @@ public:
   bool hook_get_author(cert_value const & branchname, std::string & author);
   bool hook_edit_comment(std::string const & commentary,
                          std::string const & user_log_message,
-                         std::string & result);  
+                         std::string & result);
   bool hook_persist_phrase_ok();
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
                                    hexenc<id> const & id,
@@ -65,8 +69,8 @@ public:
 					bool debug,
 					std::vector<std::string> & argv);
   bool hook_use_transport_auth(uri const & u);
-			       
-  bool hook_get_netsync_read_permitted(std::string const & branch, 
+			
+  bool hook_get_netsync_read_permitted(std::string const & branch,
                                        rsa_keypair_id const & identity);
   // anonymous no-key version
   bool hook_get_netsync_read_permitted(std::string const & branch);
@@ -79,9 +83,9 @@ public:
                    file_path const & left_path,
                    file_path const & right_path,
                    file_path const & merged_path,
-                   data const & ancestor, 
-                   data const & left, 
-                   data const & right, 
+                   data const & ancestor,
+                   data const & left,
+                   data const & right,
                    data & result);
 
   bool hook_external_diff(file_path const & path,
@@ -99,15 +103,15 @@ public:
   // attribute hooks
   bool hook_init_attributes(file_path const & filename,
                             std::map<std::string, std::string> & attrs);
-  bool hook_apply_attribute(std::string const & attr, 
-                            file_path const & filename, 
+  bool hook_apply_attribute(std::string const & attr,
+                            file_path const & filename,
                             std::string const & value);
 
   // conversion hooks
   bool hook_get_system_linesep(std::string & linesep);
-  bool hook_get_charset_conv(file_path const & p, 
+  bool hook_get_charset_conv(file_path const & p,
                              std::string & db, std::string & ext);
-  bool hook_get_linesep_conv(file_path const & p, 
+  bool hook_get_linesep_conv(file_path const & p,
                              std::string & db, std::string & ext);
 
   // validation hooks

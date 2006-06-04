@@ -1,10 +1,14 @@
 #ifndef __KEYS_HH__
 #define __KEYS_HH__
 
-// copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "vocab.hh"
 #include <string>
@@ -13,7 +17,7 @@ class lua_hooks;
 class app_state;
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
-// to read passphrases and manipulate raw, decrypted private keys). it 
+// to read passphrases and manipulate raw, decrypted private keys). it
 // could in theory be in transforms.cc too, but that file's already kinda
 // big and this stuff "feels" different, imho.
 
@@ -63,7 +67,7 @@ void decrypt_rsa(lua_hooks & lua,
 
 // netsync stuff
 
-void read_pubkey(std::string const & in, 
+void read_pubkey(std::string const & in,
                  rsa_keypair_id & id,
                  base64<rsa_pub_key> & pub);
 

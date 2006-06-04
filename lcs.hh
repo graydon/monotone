@@ -1,16 +1,20 @@
 #ifndef __LCS_HH__
 #define __LCS_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <iterator>
 #include <vector>
 #include "quick_alloc.hh"
 
-void 
+void
 longest_common_subsequence(std::vector<long, QA(long)>::const_iterator begin_a,
 			   std::vector<long, QA(long)>::const_iterator end_a,
 			   std::vector<long, QA(long)>::const_iterator begin_b,
@@ -18,7 +22,7 @@ longest_common_subsequence(std::vector<long, QA(long)>::const_iterator begin_a,
 			   long p_lim,
 			   std::back_insert_iterator< std::vector<long, QA(long)> > lcs);
 
-void 
+void
 edit_script(std::vector<long, QA(long)>::const_iterator begin_a,
 	    std::vector<long, QA(long)>::const_iterator end_a,
 	    std::vector<long, QA(long)>::const_iterator begin_b,

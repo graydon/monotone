@@ -10,7 +10,7 @@
 using std::string;
 
 chained_hmac::chained_hmac(netsync_session_key const & session_key, bool active) :
-  hmac_length(constants::sha1_digest_length), 
+  hmac_length(constants::sha1_digest_length),
   active(active),
   key(reinterpret_cast<Botan::byte const *>(session_key().data()), session_key().size())
 {
@@ -67,7 +67,7 @@ chained_hmac::process(string_queue const & str, size_t pos, size_t n)
   p.start_msg();
   p.write(chain_val);
   p.write(reinterpret_cast<Botan::byte const *>(str.front_pointer(n) + pos), n);
-	  
+	
   p.end_msg();
 
   chain_val = p.read_all_as_string();

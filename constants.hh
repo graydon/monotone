@@ -1,10 +1,14 @@
 #ifndef __CONSTANTS_HH__
 #define __CONSTANTS_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <unistd.h>
 #include <string>
@@ -20,10 +24,10 @@ namespace constants
   extern size_t const automate_stdio_size;
 
   // number of bits in an RSA key we use
-  extern size_t const keylen; 
+  extern size_t const keylen;
 
   // number of characters in a SHA1 id
-  static size_t const idlen = 40; 
+  static size_t const idlen = 40;
 
   // number of characters in an encoded epoch
   static size_t const epochlen = idlen;
@@ -33,7 +37,7 @@ namespace constants
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
-  extern time_t const cvs_window; 
+  extern time_t const cvs_window;
 
   // number of bytes in a password buffer. further bytes will be dropped.
   static size_t const maxpasswd = 0xfff;
@@ -119,7 +123,7 @@ namespace constants
                                       + 1   // cmd code
                                       + 1); // smallest uleb possible
 
-  
+
   // largest command *payload* allowed in a netcmd
   // in practice, this sets the size of the largest compressed file
   static size_t const netcmd_payload_limit = 2 << 27;

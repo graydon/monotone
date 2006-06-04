@@ -1,7 +1,11 @@
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <deque>
 #include <map>
@@ -41,7 +45,7 @@ revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
   load_graphs();
 }
 
-void 
+void
 revision_enumerator::load_graphs()
 {
   app.db.get_revision_ancestry(graph);
@@ -52,7 +56,7 @@ revision_enumerator::load_graphs()
     }
 }
 
-void 
+void
 revision_enumerator::get_revision_parents(revision_id const & child,
 					  vector<revision_id> & parents)
 {
@@ -69,7 +73,7 @@ revision_enumerator::get_revision_parents(revision_id const & child,
 }
 
 
-bool 
+bool
 revision_enumerator::all_parents_enumerated(revision_id const & child)
 {
   typedef multimap<revision_id, revision_id>::const_iterator ci;
@@ -92,8 +96,8 @@ revision_enumerator::done()
 }
 
 void
-revision_enumerator::files_for_revision(revision_id const & r, 
-                                        set<file_id> & full_files, 
+revision_enumerator::files_for_revision(revision_id const & r,
+                                        set<file_id> & full_files,
                                         set<pair<file_id,file_id> > & del_files)
 {
   // when we're sending a merge, we have to be careful if we
@@ -119,7 +123,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
     {
       set<file_id> file_dsts;
       cset const & cs = edge_changes(i);
-        
+
       // Queue up all the file-adds
       for (map<split_path, file_id>::const_iterator fa = cs.files_added.begin();
            fa != cs.files_added.end(); ++fa)
@@ -127,7 +131,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
           file_adds.insert(fa->second);
           file_dsts.insert(fa->second);
         }
-        
+
       // Queue up all the file-deltas
       for (map<split_path, pair<file_id, file_id> >::const_iterator fd
              = cs.deltas_applied.begin();
@@ -147,7 +151,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
   full_files.clear();
   size_t num_edges = rs.edges.size();
 
-  for (map<file_id, size_t>::const_iterator i = file_edge_counts.begin(); 
+  for (map<file_id, size_t>::const_iterator i = file_edge_counts.begin();
        i != file_edge_counts.end(); i++)
     {
       MM(i->first);
@@ -182,7 +186,7 @@ revision_enumerator::note_cert(revision_id const & rid,
 }
 
 
-void 
+void
 revision_enumerator::get_revision_certs(revision_id const & rid,
 					vector<hexenc<id> > & hashes)
 {
@@ -201,8 +205,8 @@ revision_enumerator::get_revision_certs(revision_id const & rid,
       app.db.get_revision_certs(rid, hashes);
     }
 }
- 
-void 
+
+void
 revision_enumerator::step()
 {
   while (!done())
@@ -216,13 +220,13 @@ revision_enumerator::step()
           // time around. Cull rather than reprocess.
           if (enumerated_nodes.find(r) != enumerated_nodes.end())
             continue;
-          
+
           if (!all_parents_enumerated(r))
             {
               revs.push_back(r);
               continue;
             }
-          
+
           if (terminal_nodes.find(r) == terminal_nodes.end())
             {
               typedef multimap<revision_id, revision_id>::const_iterator ci;
@@ -288,8 +292,8 @@ revision_enumerator::step()
                 items.push_back(item);
               }
             }
-                
-          // Queue up some or all of the rev's certs 
+
+          // Queue up some or all of the rev's certs
           vector<hexenc<id> > hashes;
           get_revision_certs(r, hashes);
           for (vector<hexenc<id> >::const_iterator i = hashes.begin();
@@ -307,28 +311,28 @@ revision_enumerator::step()
 
       if (!items.empty())
         {
-          L(FL("revision_enumerator::step extracting item\n"));
+          L(FL("revision_enumerator::step extracting item"));
 
           enumerator_item i = items.front();
           items.pop_front();
           I(!null_id(i.ident_a));
-      
+
           switch (i.tag)
             {
             case enumerator_item::fdata:
               cb.note_file_data(file_id(i.ident_a));
               break;
-              
+
             case enumerator_item::fdelta:
               I(!null_id(i.ident_b));
               cb.note_file_delta(file_id(i.ident_a),
                                  file_id(i.ident_b));
               break;
-              
+
             case enumerator_item::rev:
               cb.note_rev(revision_id(i.ident_a));
               break;
-              
+
             case enumerator_item::cert:
               cb.note_cert(i.ident_a);
               break;

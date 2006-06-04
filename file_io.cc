@@ -1,8 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <iostream>
 #include <fstream>
@@ -92,21 +95,21 @@ require_path_is_directory(any_path const & path,
     }
 }
 
-bool 
-path_exists(any_path const & p) 
-{ 
+bool
+path_exists(any_path const & p)
+{
   return get_path_status(p) != path::nonexistent;
 }
 
-bool 
-directory_exists(any_path const & p) 
-{ 
+bool
+directory_exists(any_path const & p)
+{
   return get_path_status(p) == path::directory;
 }
 
-bool 
-file_exists(any_path const & p) 
-{ 
+bool
+file_exists(any_path const & p)
+{
   return get_path_status(p) == path::file;
 }
 
@@ -143,7 +146,7 @@ bool guess_binary(string const & s)
       init_char_is_binary();
     }
 
-  for (size_t i = 0; i < s.size(); ++i) 
+  for (size_t i = 0; i < s.size(); ++i)
     {
       if (char_is_binary[ static_cast<uint8_t>(s[i]) ])
         return true;
@@ -157,9 +160,9 @@ mkdir(any_path const & p)
   return fs::path(p.as_external(), fs::native);
 }
 
-void 
-mkdir_p(any_path const & p) 
-{ 
+void
+mkdir_p(any_path const & p)
+{
   try
     {
       fs::create_directories(mkdir(p));
@@ -179,9 +182,9 @@ mkdir_p(any_path const & p)
                             F("could not create directory '%s'\nit is a file") % p);
 }
 
-void 
-make_dir_for(any_path const & p) 
-{ 
+void
+make_dir_for(any_path const & p)
+{
   fs::path tmp(p.as_external(), fs::native);
   if (tmp.has_branch_path())
     {
@@ -208,9 +211,9 @@ do_shallow_deletion_with_sane_error_message(any_path const & p)
     }
 }
 
-void 
-delete_file(any_path const & p) 
-{ 
+void
+delete_file(any_path const & p)
+{
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
@@ -233,19 +236,19 @@ delete_file_or_dir_shallow(any_path const & p)
   do_shallow_deletion_with_sane_error_message(p);
 }
 
-void 
-delete_dir_recursive(any_path const & p) 
-{ 
+void
+delete_dir_recursive(any_path const & p)
+{
   require_path_is_directory(p,
                             F("directory to delete, '%s', does not exist") % p,
                             F("directory to delete, '%s', is a file") % p);
   fs::remove_all(mkdir(p));
 }
 
-void 
+void
 move_file(any_path const & old_path,
-          any_path const & new_path) 
-{ 
+          any_path const & new_path)
+{
   require_path_is_file(old_path,
                        F("rename source file '%s' does not exist") % old_path,
                        F("rename source file '%s' is a directory "
@@ -255,10 +258,10 @@ move_file(any_path const & old_path,
   fs::rename(mkdir(old_path), mkdir(new_path));
 }
 
-void 
+void
 move_dir(any_path const & old_path,
-         any_path const & new_path) 
-{ 
+         any_path const & new_path)
+{
   require_path_is_directory(old_path,
                             F("rename source dir '%s' does not exist") % old_path,
                             F("rename source dir '%s' is a file "
@@ -286,7 +289,7 @@ move_path(any_path const & old_path,
     }
 }
 
-void 
+void
 read_data(any_path const & p, data & dat)
 {
   require_path_is_file(p,
@@ -359,11 +362,11 @@ read_data_for_command_line(utf8 const & path, data & dat)
 // but you might want to make this code a bit tighter.
 
 
-static void 
+static void
 write_data_impl(any_path const & p,
                 data const & dat,
                 any_path const & tmp)
-{  
+{
   N(!directory_exists(p),
     F("file '%s' cannot be overwritten as data; it is a directory") % p);
 
@@ -385,7 +388,7 @@ write_data_impl(any_path const & p,
 static void
 write_data_impl(any_path const & p,
                 data const & dat)
-{  
+{
   // we write, non-atomically, to _MTN/data.tmp.
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
@@ -395,16 +398,16 @@ write_data_impl(any_path const & p,
   write_data_impl(p, dat, tmp);
 }
 
-void 
+void
 write_data(file_path const & path, data const & dat)
-{ 
-  write_data_impl(path, dat); 
+{
+  write_data_impl(path, dat);
 }
 
-void 
+void
 write_data(bookkeeping_path const & path, data const & dat)
-{ 
-  write_data_impl(path, dat); 
+{
+  write_data_impl(path, dat);
 }
 
 void
@@ -418,7 +421,7 @@ write_data(system_path const & path,
 
 tree_walker::~tree_walker() {}
 
-static void 
+static void
 walk_tree_recursive(fs::path const & absolute,
                     fs::path const & relative,
                     tree_walker & walker)
@@ -431,16 +434,16 @@ walk_tree_recursive(fs::path const & absolute,
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)
       fs::path rel_entry = relative / fs::path(entry.leaf(), fs::native);
-      
+
       if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
         {
-          L(FL("ignoring book keeping entry %s\n") % rel_entry.string());
+          L(FL("ignoring book keeping entry %s") % rel_entry.string());
           continue;
         }
-      
-      if (!fs::exists(entry) 
-          || di->string() == "." 
-          || di->string() == "..") 
+
+      if (!fs::exists(entry)
+          || di->string() == "."
+          || di->string() == "..")
         {
           // ignore
           continue;
@@ -448,14 +451,14 @@ walk_tree_recursive(fs::path const & absolute,
       else
         {
           file_path p;
-          try 
+          try
             {
               // FIXME: BUG: this screws up charsets
               p = file_path_internal(rel_entry.normalize().string());
             }
           catch (runtime_error const & c)
             {
-              W(F("caught runtime error %s constructing file path for %s\n") 
+              W(F("caught runtime error %s constructing file path for %s")
                 % c.what() % rel_entry.string());
               continue;
             }
@@ -480,7 +483,7 @@ tree_walker::visit_dir(file_path const & path)
 
 
 // from some (safe) sub-entry of cwd
-void 
+void
 walk_tree(file_path const & path,
           tree_walker & walker,
           bool require_existing_path)
@@ -490,7 +493,7 @@ walk_tree(file_path const & path,
       walk_tree_recursive(fs::current_path(), fs::path(), walker);
       return;
     }
-      
+
   switch (get_path_status(path))
     {
     case path::nonexistent:
@@ -512,7 +515,7 @@ walk_tree(file_path const & path,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-void 
+void
 add_file_io_tests(test_suite * suite)
 {
   I(suite);

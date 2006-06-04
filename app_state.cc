@@ -40,19 +40,19 @@ static string const branch_option("branch");
 static string const key_option("key");
 static string const keydir_option("keydir");
 
-app_state::app_state() 
-  : branch_name(""), db(system_path()), 
+app_state::app_state()
+  : branch_name(""), db(system_path()),
     keys(this), recursive(false),
     stdhooks(true), rcfiles(true), diffs(false),
-    no_merges(false), set_default(false), 
+    no_merges(false), set_default(false),
     verbose(false), date_set(false),
     search_root(current_root_path()),
-    depth(-1), last(-1), next(-1), 
+    depth(-1), last(-1), next(-1),
     diff_format(unified_diff), diff_args_provided(false),
-    execute(false), bind_address(""), bind_port(""), 
-    bind_stdio(false), use_transport_auth(true), 
+    execute(false), bind_address(""), bind_port(""),
+    bind_stdio(false), use_transport_auth(true),
     missing(false), unknown(false),
-    confdir(get_default_confdir()), 
+    confdir(get_default_confdir()),
     have_set_key_dir(false), no_files(false)
 {
   db.set_app(this);
@@ -82,10 +82,10 @@ app_state::is_explicit_option(int option_id) const
 void
 app_state::allow_workspace()
 {
-  L(FL("initializing from directory %s\n") % fs::initial_path().string());
+  L(FL("initializing from directory %s") % fs::initial_path().string());
   found_workspace = find_and_go_to_workspace(search_root);
 
-  if (found_workspace) 
+  if (found_workspace)
     {
       // We read the options, but we don't process them here.  That's
       // done with process_options().
@@ -95,7 +95,7 @@ app_state::allow_workspace()
         {
           bookkeeping_path dump_path;
           get_local_dump_path(dump_path);
-          L(FL("setting dump path to %s\n") % dump_path);
+          L(FL("setting dump path to %s") % dump_path);
           // The 'true' means that, e.g., if we're running checkout,
           // then it's okay for dumps to go into our starting working
           // dir's _MTN rather than the new workspace dir's _MTN.
@@ -105,7 +105,7 @@ app_state::allow_workspace()
   load_rcfiles();
 }
 
-void 
+void
 app_state::process_options()
 {
   if (found_workspace) {
@@ -124,15 +124,15 @@ app_state::process_options()
     if (branch_name().empty() && !options[branch_option]().empty())
       branch_name = options[branch_option];
 
-    L(FL("branch name is '%s'\n") % branch_name());
+    L(FL("branch name is '%s'") % branch_name());
 
 	  if (!options[key_option]().empty())
-		  internalize_rsa_keypair_id(options[key_option], 
+		  internalize_rsa_keypair_id(options[key_option],
 					     signing_key);
   }
 }
 
-void 
+void
 app_state::require_workspace(string const & explanation)
 {
   N(found_workspace,
@@ -141,21 +141,21 @@ app_state::require_workspace(string const & explanation)
   write_options();
 }
 
-void 
+void
 app_state::create_workspace(system_path const & new_dir)
 {
   N(!new_dir.empty(), F("invalid directory ''"));
 
-  L(FL("creating workspace in %s\n") % new_dir);
-  
+  L(FL("creating workspace in %s") % new_dir);
+
   mkdir_p(new_dir);
   go_to_workspace(new_dir);
 
   N(!directory_exists(bookkeeping_root),
-    F("monotone bookkeeping directory '%s' already exists in '%s'\n") 
+    F("monotone bookkeeping directory '%s' already exists in '%s'\n")
     % bookkeeping_root % new_dir);
 
-  L(FL("creating bookkeeping directory '%s' for workspace in '%s'\n")
+  L(FL("creating bookkeeping directory '%s' for workspace in '%s'")
     % bookkeeping_root % new_dir);
 
   mkdir_p(bookkeeping_root);
@@ -172,7 +172,7 @@ app_state::create_workspace(system_path const & new_dir)
   load_rcfiles();
 }
 
-void 
+void
 app_state::set_database(system_path const & filename)
 {
   if (!filename.empty()) db.set_filename(filename);
@@ -180,7 +180,7 @@ app_state::set_database(system_path const & filename)
   options[database_option] = filename.as_internal();
 }
 
-void 
+void
 app_state::set_key_dir(system_path const & filename)
 {
   if (!filename.empty())
@@ -192,7 +192,7 @@ app_state::set_key_dir(system_path const & filename)
   options[keydir_option] = filename.as_internal();
 }
 
-void 
+void
 app_state::set_branch(utf8 const & branch)
 {
   branch_name = branch();
@@ -212,7 +212,7 @@ app_state::make_branch_sticky()
     }
 }
 
-void 
+void
 app_state::set_signing_key(utf8 const & key)
 {
   internalize_rsa_keypair_id(key, signing_key);
@@ -220,7 +220,7 @@ app_state::set_signing_key(utf8 const & key)
   options[key_option] = key;
 }
 
-void 
+void
 app_state::add_key_to_push(utf8 const & key)
 {
   rsa_keypair_id k;
@@ -228,7 +228,7 @@ app_state::add_key_to_push(utf8 const & key)
   keys_to_push.push_back(k);
 }
 
-void 
+void
 app_state::set_root(system_path const & path)
 {
   require_path_is_directory
@@ -236,7 +236,7 @@ app_state::set_root(system_path const & path)
      F("search root '%s' does not exist") % path,
      F("search root '%s' is not a directory\n") % path);
   search_root = path;
-  L(FL("set search root to %s\n") % search_root);
+  L(FL("set search root to %s") % search_root);
 }
 
 void
@@ -268,7 +268,7 @@ app_state::set_date(utf8 const & d)
     }
   catch (exception &e)
     {
-      N(false, F("failed to parse date string '%s': %s") 
+      N(false, F("failed to parse date string '%s': %s")
 	% d % e.what());
     }
 }
@@ -439,7 +439,7 @@ app_state::read_options()
     }
 }
 
-void 
+void
 app_state::write_options()
 {
   bookkeeping_path o_path;

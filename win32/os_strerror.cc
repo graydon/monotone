@@ -13,11 +13,17 @@ std::string
 os_strerror(os_err_t errnum)
 {
   LPTSTR tstr;
-  if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
-                    0, errnum, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                    reinterpret_cast<LPTSTR>(&tstr), 0,
-                    static_cast<va_list*>(0)) == 0)
+  DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM;
+  DWORD len = FormatMessage(flags, 0, errnum,
+                            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                            reinterpret_cast<LPTSTR>(&tstr), 0,
+                            static_cast<va_list *>(0));
+  if (len == 0)
     return (F("unknown error code %d") % errnum).str();
+  // clobber trailing newlines.
+  for (LPTSTR p = tstr + len - 1; p > tstr; --p)
+    if (*p == '\r' || *p == '\n')
+      *p = '\0';
   std::string str = tstr;
   LocalFree(tstr);
   return str;

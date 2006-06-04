@@ -1,10 +1,14 @@
 #ifndef __VOCAB_HH__
 #define __VOCAB_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "config.h"
 
@@ -26,8 +30,8 @@ void dump(T const &, std::string &);
 #define ATOMIC(ty) hh_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
 
-inline bool is_xdigit(char x) 
-{ 
+inline bool is_xdigit(char x)
+{
   return ((x >= '0' && x <= '9')
 	  || (x >= 'a' && x <= 'f')
 	  || (x >= 'A' && x <= 'F'));
@@ -48,14 +52,14 @@ inline bool is_alnum(char x)
 
 inline bool is_space(char x)
 {
-  return (x == ' ') 
+  return (x == ' ')
     || (x == '\n')
     || (x == '\t')
     || (x == '\r')
     || (x == '\v')
     || (x == '\f');
 }
-      
+
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -120,25 +124,25 @@ enum diff_type
 };
 
 // do these belong here?
-inline bool 
+inline bool
 null_id(hexenc<id> const & i)
 {
   return i().empty();
 }
 
-inline bool 
+inline bool
 null_id(file_id const & i)
 {
   return i.inner()().empty();
 }
 
-inline bool 
+inline bool
 null_id(manifest_id const & i)
 {
   return i.inner()().empty();
 }
 
-inline bool 
+inline bool
 null_id(revision_id const & i)
 {
   return i.inner()().empty();

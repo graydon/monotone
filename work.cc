@@ -1,8 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <sstream>
 #include <cstdio>
@@ -52,7 +55,7 @@ file_itemizer::visit_dir(file_path const & path)
   this->visit_file(path);
 }
 
-void 
+void
 file_itemizer::visit_file(file_path const & path)
 {
   split_path sp;
@@ -87,7 +90,7 @@ find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
         {
           split_path sp;
           new_roster.get_name(nid, sp);
-          file_path fp(sp);      
+          file_path fp(sp);
 
           if (!path_exists(fp))
             missing.insert(sp);
@@ -96,7 +99,7 @@ find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 }
 
 void
-find_unknown_and_ignored(app_state & app, vector<utf8> const & args, 
+find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
                          path_set & unknown, path_set & ignored)
 {
   revision_set rev;
@@ -115,8 +118,8 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
 }
 
 
-class 
-addition_builder 
+class
+addition_builder
   : public tree_walker
 {
   app_state & app;
@@ -133,7 +136,7 @@ public:
   void add_node_for(split_path const & sp);
 };
 
-void 
+void
 addition_builder::add_node_for(split_path const & sp)
 {
   file_path path(sp);
@@ -154,7 +157,7 @@ addition_builder::add_node_for(split_path const & sp)
       nid = er.create_dir_node();
       break;
     }
-  
+
   I(nid != the_null_node);
   er.attach_node(nid, sp);
 
@@ -169,26 +172,26 @@ addition_builder::add_node_for(split_path const & sp)
 }
 
 
-void 
+void
 addition_builder::visit_dir(file_path const & path)
 {
   this->visit_file(path);
 }
 
-void 
+void
 addition_builder::visit_file(file_path const & path)
-{     
+{
   if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
     {
       P(F("skipping ignorable file %s") % path);
       return;
-    }  
+    }
 
   split_path sp;
   path.split(sp);
   if (ros.has_node(sp))
     {
-      if (sp.size() > 1) 
+      if (sp.size() > 1)
         P(F("skipping %s, already accounted for in workspace") % path);
       return;
     }
@@ -217,7 +220,7 @@ perform_additions(path_set const & paths, app_state & app, bool recursive)
 {
   if (paths.empty())
     return;
-  
+
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
   get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
@@ -243,7 +246,7 @@ perform_additions(path_set const & paths, app_state & app, bool recursive)
         }
       else
         {
-          // in the case where we're just handled a set of paths, we use the builder 
+          // in the case where we're just handled a set of paths, we use the builder
           // in this strange way.
           build.visit_file(file_path(*i));
         }
@@ -260,7 +263,7 @@ perform_deletions(path_set const & paths, app_state & app)
 {
   if (paths.empty())
     return;
-  
+
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
   get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
@@ -323,8 +326,8 @@ perform_deletions(path_set const & paths, app_state & app)
   update_any_attrs(app);
 }
 
-static void 
-add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis, 
+static void
+add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis,
                 app_state & app)
 {
   editable_roster_base er(ros, nis);
@@ -372,7 +375,7 @@ perform_rename(set<file_path> const & src_paths,
       N(is_dir_t(new_roster.get_node(dst)),
         F("destination %s is an existing file in current revision") % dst_path);
 
-      for (set<file_path>::const_iterator i = src_paths.begin(); 
+      for (set<file_path>::const_iterator i = src_paths.begin();
            i != src_paths.end(); i++)
         {
           split_path s;
@@ -406,8 +409,8 @@ perform_rename(set<file_path> const & src_paths,
     {
       node_id nid = new_roster.detach_node(i->first);
       new_roster.attach_node(nid, i->second);
-      P(F("renaming %s to %s in workspace manifest") 
-        % file_path(i->first) 
+      P(F("renaming %s to %s in workspace manifest")
+        % file_path(i->first)
         % file_path(i->second));
     }
 
@@ -471,7 +474,7 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
     N(!new_roster.has_node(new_root__MTN),
       F("proposed new root directory '%s' contains illegal path %s") % new_root % bookkeeping_root);
   }
-  
+
   {
     file_path current_path_to_put_old = (new_root / put_old.as_internal());
     split_path current_path_to_put_old_sp, current_path_to_put_old_parent_sp;
@@ -491,7 +494,7 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
   cset cs;
   safe_insert(cs.nodes_renamed, make_pair(root_sp, put_old_sp));
   safe_insert(cs.nodes_renamed, make_pair(new_root_sp, root_sp));
-  
+
   {
     editable_roster_base e(new_roster, nis);
     cs.apply_to(e);
@@ -516,7 +519,7 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
 static void get_work_path(bookkeeping_path & w_path)
 {
   w_path = bookkeeping_root / work_file_name;
-  L(FL("work path is %s\n") % w_path);
+  L(FL("work path is %s") % w_path);
 }
 
 void get_work_cset(cset & w)
@@ -525,15 +528,15 @@ void get_work_cset(cset & w)
   get_work_path(w_path);
   if (path_exists(w_path))
     {
-      L(FL("checking for un-committed work file %s\n") % w_path);
+      L(FL("checking for un-committed work file %s") % w_path);
       data w_data;
       read_data(w_path, w_data);
       read_cset(w_data, w);
-      L(FL("read cset from %s\n") % w_path);
+      L(FL("read cset from %s") % w_path);
     }
   else
     {
-      L(FL("no un-committed work file %s\n") % w_path);
+      L(FL("no un-committed work file %s") % w_path);
     }
 }
 
@@ -549,7 +552,7 @@ void put_work_cset(cset & w)
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
-  
+
   if (w.empty())
     {
       if (file_exists(w_path))
@@ -563,14 +566,14 @@ void put_work_cset(cset & w)
     }
 }
 
-// revision file name 
+// revision file name
 
 string revision_file_name("revision");
 
 static void get_revision_path(bookkeeping_path & m_path)
 {
   m_path = bookkeeping_root / revision_file_name;
-  L(FL("revision path is %s\n") % m_path);
+  L(FL("revision path is %s") % m_path);
 }
 
 void get_revision_id(revision_id & c)
@@ -600,13 +603,13 @@ void put_revision_id(revision_id const & rev)
 {
   bookkeeping_path c_path;
   get_revision_path(c_path);
-  L(FL("writing revision id to %s\n") % c_path);
+  L(FL("writing revision id to %s") % c_path);
   data c_data(rev.inner()() + "\n");
   write_data(c_path, c_data);
 }
 
 void
-get_base_revision(app_state & app, 
+get_base_revision(app_state & app,
                   revision_id & rid,
                   roster_t & ros,
                   marking_map & mm)
@@ -618,15 +621,15 @@ get_base_revision(app_state & app,
 
       N(app.db.revision_exists(rid),
         F("base revision %s does not exist in database\n") % rid);
-      
+
       app.db.get_roster(rid, ros, mm);
     }
 
-  L(FL("base roster has %d entries\n") % ros.all_nodes().size());
+  L(FL("base roster has %d entries") % ros.all_nodes().size());
 }
 
 void
-get_base_revision(app_state & app, 
+get_base_revision(app_state & app,
                   revision_id & rid,
                   roster_t & ros)
 {
@@ -635,7 +638,7 @@ get_base_revision(app_state & app,
 }
 
 void
-get_base_roster(app_state & app, 
+get_base_roster(app_state & app,
                 roster_t & ros)
 {
   revision_id rid;
@@ -673,7 +676,7 @@ void
 get_user_log_path(bookkeeping_path & ul_path)
 {
   ul_path = bookkeeping_root / user_log_file_name;
-  L(FL("user log path is %s\n") % ul_path);
+  L(FL("user log path is %s") % ul_path);
 }
 
 void
@@ -716,14 +719,14 @@ has_contents_user_log()
 
 // options map file
 
-void 
+void
 get_options_path(bookkeeping_path & o_path)
 {
   o_path = bookkeeping_root / options_file_name;
-  L(FL("options path is %s\n") % o_path);
+  L(FL("options path is %s") % o_path);
 }
 
-void 
+void
 read_options_map(data const & dat, options_map & options)
 {
   basic_io::input_source src(dat(), "_MTN/options");
@@ -731,20 +734,20 @@ read_options_map(data const & dat, options_map & options)
   basic_io::parser parser(tok);
 
   // don't clear the options which will have settings from the command line
-  // options.clear(); 
+  // options.clear();
 
   string opt, val;
   while (parser.symp())
     {
       parser.sym(opt);
       parser.str(val);
-      // options[opt] = val;      
+      // options[opt] = val;
       // use non-replacing insert versus replacing with options[opt] = val;
-      options.insert(make_pair(opt, val)); 
+      options.insert(make_pair(opt, val));
     }
 }
 
-void 
+void
 write_options_map(data & dat, options_map const & options)
 {
   basic_io::printer pr;
@@ -763,7 +766,7 @@ write_options_map(data & dat, options_map const & options)
 void get_local_dump_path(bookkeeping_path & d_path)
 {
   d_path = bookkeeping_root / local_dump_file_name;
-  L(FL("local dump path is %s\n") % d_path);
+  L(FL("local dump path is %s") % d_path);
 }
 
 // inodeprint file
@@ -810,8 +813,8 @@ enable_inodeprints()
 }
 
 
-bool 
-get_attribute_from_roster(roster_t const & ros,                               
+bool
+get_attribute_from_roster(roster_t const & ros,
                           file_path const & path,
                           attr_key const & key,
                           attr_value & val)
@@ -858,7 +861,7 @@ void update_any_attrs(app_state & app)
                                             file_path(sp),
                                             j->second.second());
             }
-        }          
+        }
     }
 }
 
@@ -923,7 +926,7 @@ void
 editable_working_tree::drop_detached_node(node_id nid)
 {
   bookkeeping_path pth = path_for_nid(nid);
-  map<bookkeeping_path, file_path>::const_iterator i 
+  map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(pth);
   I(i != rename_add_drop_map.end());
   P(F("dropping %s") % i->second);
@@ -966,7 +969,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   if (!path_exists(src_pth))
     {
       I(root_dir_attached);
-      map<bookkeeping_path, file_id>::const_iterator i 
+      map<bookkeeping_path, file_id>::const_iterator i
         = written_content.find(src_pth);
       if (i != written_content.end())
         {
@@ -1022,8 +1025,8 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
 }
 
 void
-editable_working_tree::apply_delta(split_path const & pth, 
-                                   file_id const & old_id, 
+editable_working_tree::apply_delta(split_path const & pth,
+                                   file_id const & old_id,
                                    file_id const & new_id)
 {
   file_path pth_unsplit(pth);

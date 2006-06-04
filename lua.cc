@@ -58,19 +58,19 @@ dump_stack(lua_State * st)
       out += string(lua_tostring(st, i), lua_strlen(st, i));
       out += '\'';
       break;
-      
+
     case LUA_TBOOLEAN:  /* booleans */
       out += (lua_toboolean(st, i) ? "true" : "false");
       break;
-      
+
     case LUA_TNUMBER:  /* numbers */
       out += (FL("%g") % lua_tonumber(st, i)).str();
       break;
-      
+
     default:  /* other values */
       out += std::string(lua_typename(st, t));
       break;
-      
+
     }
     out += "  ";  /* put a separator */
   }
@@ -78,7 +78,7 @@ dump_stack(lua_State * st)
 }
 
 
-Lua::Lua(lua_State * s) : 
+Lua::Lua(lua_State * s) :
   st(s), failed(false)
 {}
 
@@ -90,16 +90,16 @@ Lua::~Lua()
 void
 Lua::fail(string const & reason)
 {
-  L(FL("lua failure: %s; stack = %s\n") % reason % dump_stack(st));
+  L(FL("lua failure: %s; stack = %s") % reason % dump_stack(st));
   failed = true;
 }
 
 bool
-Lua::ok() 
+Lua::ok()
 {
-  if (failed) 
+  if (failed)
     L(FL("Lua::ok(): failed"));
-  return !failed; 
+  return !failed;
 }
 
 void
@@ -107,7 +107,7 @@ Lua::report_error()
 {
   I(lua_isstring(st, -1));
   string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
-  W(i18n_format("%s\n") % err);
+  W(i18n_format("%s") % err);
   L(FL("lua stack: %s") % dump_stack(st));
   lua_pop(st, 1);
   failed = true;
@@ -116,71 +116,71 @@ Lua::report_error()
 // getters
 
 Lua &
-Lua::get(int idx) 
-{ 
+Lua::get(int idx)
+{
   if (failed) return *this;
-  if (!lua_istable (st, idx)) 
-    { 
+  if (!lua_istable (st, idx))
+    {
       fail("istable() in get");
-      return *this; 
+      return *this;
     }
-  if (lua_gettop (st) < 1) 
-    { 
+  if (lua_gettop (st) < 1)
+    {
       fail("stack top > 0 in get");
-      return *this; 
+      return *this;
     }
-  lua_gettable(st, idx); 
-  return *this; 
+  lua_gettable(st, idx);
+  return *this;
 }
 
 Lua &
-Lua::get_fn(int idx) 
-{ 
+Lua::get_fn(int idx)
+{
   if (failed) return *this;
   get(idx);
-  if (!lua_isfunction (st, -1)) 
+  if (!lua_isfunction (st, -1))
     fail("isfunction() in get_fn");
-  return *this; 
+  return *this;
 }
 
 Lua &
-Lua::get_tab(int idx) 
-{ 
+Lua::get_tab(int idx)
+{
   if (failed) return *this;
   get(idx);
-  if (!lua_istable (st, -1)) 
+  if (!lua_istable (st, -1))
     fail("istable() in get_tab");
-  return *this; 
+  return *this;
 }
 
 Lua &
-Lua::get_str(int idx) 
-{ 
+Lua::get_str(int idx)
+{
   if (failed) return *this;
   get(idx);
-  if (!lua_isstring (st, -1)) 
+  if (!lua_isstring (st, -1))
     fail("isstring() in get_str");
-  return *this; 
+  return *this;
 }
 
 Lua &
-Lua::get_num(int idx) 
-{ 
+Lua::get_num(int idx)
+{
   if (failed) return *this;
   get(idx);
-  if (!lua_isnumber (st, -1)) 
+  if (!lua_isnumber (st, -1))
     fail("isnumber() in get_num");
-  return *this; 
+  return *this;
 }
 
 Lua &
-Lua::get_bool(int idx) 
-{ 
+Lua::get_bool(int idx)
+{
   if (failed) return *this;
   get(idx);
-  if (!lua_isboolean (st, -1)) 
+  if (!lua_isboolean (st, -1))
     fail("isboolean() in get_bool");
-  return *this; 
+  return *this;
 }
 
 // extractors
@@ -189,8 +189,8 @@ Lua &
 Lua::extract_str_nolog(string & str)
 {
   if (failed) return *this;
-  if (!lua_isstring (st, -1)) 
-    { 
+  if (!lua_isstring (st, -1))
+    {
       fail("isstring() in extract_str");
       return *this;
     }
@@ -218,8 +218,8 @@ Lua &
 Lua::extract_int(int & i)
 {
   if (failed) return *this;
-  if (!lua_isnumber (st, -1)) 
-    { 
+  if (!lua_isnumber (st, -1))
+    {
       fail("isnumber() in extract_int");
       return *this;
     }
@@ -232,8 +232,8 @@ Lua &
 Lua::extract_double(double & i)
 {
   if (failed) return *this;
-  if (!lua_isnumber (st, -1)) 
-    { 
+  if (!lua_isnumber (st, -1))
+    {
       fail("isnumber() in extract_double");
       return *this;
     }
@@ -247,8 +247,8 @@ Lua &
 Lua::extract_bool(bool & i)
 {
   if (failed) return *this;
-  if (!lua_isboolean (st, -1)) 
-    { 
+  if (!lua_isboolean (st, -1))
+    {
       fail("isboolean() in extract_bool");
       return *this;
     }
@@ -264,22 +264,22 @@ Lua &
 Lua::begin()
 {
   if (failed) return *this;
-  if (!lua_istable(st, -1)) 
-    { 
+  if (!lua_istable(st, -1))
+    {
       fail("istable() in begin");
       return *this;
     }
   I(lua_checkstack (st, 1));
-  lua_pushnil(st);    
+  lua_pushnil(st);
   return *this;
 }
 
 bool
-Lua::next() 
+Lua::next()
 {
   if (failed) return false;
-  if (!lua_istable(st, -2)) 
-    { 
+  if (!lua_istable(st, -2))
+    {
       fail("istable() in next");
       return false;
     }
@@ -295,98 +295,98 @@ Lua::next()
 // pushers
 
 Lua &
-Lua::push_str(string const & str) 
-{ 
+Lua::push_str(string const & str)
+{
   if (failed) return *this;
   I(lua_checkstack (st, 1));
-  lua_pushlstring(st, str.c_str(), str.size()); 
-  return *this; 
+  lua_pushlstring(st, str.c_str(), str.size());
+  return *this;
 }
 
 Lua &
-Lua::push_int(int num) 
-{ 
+Lua::push_int(int num)
+{
   if (failed) return *this;
   I(lua_checkstack (st, 1));
-  lua_pushnumber(st, num); 
-  return *this; 
+  lua_pushnumber(st, num);
+  return *this;
 }
 
 Lua &
-Lua::push_int(double num) 
-{ 
+Lua::push_int(double num)
+{
   if (failed) return *this;
   I(lua_checkstack (st, 1));
-  lua_pushnumber(st, num); 
-  return *this; 
+  lua_pushnumber(st, num);
+  return *this;
 }
 
 Lua &
-Lua::push_bool(bool b) 
-{ 
+Lua::push_bool(bool b)
+{
   if (failed) return *this;
   I(lua_checkstack (st, 1));
-  lua_pushboolean(st, b); 
-  return *this; 
+  lua_pushboolean(st, b);
+  return *this;
 }
 
 Lua &
-Lua::push_nil() 
-{ 
+Lua::push_nil()
+{
   if (failed) return *this;
   I(lua_checkstack (st, 1));
-  lua_pushnil(st); 
-  return *this; 
+  lua_pushnil(st);
+  return *this;
 }
 
 Lua &
-Lua::push_table() 
-{ 
+Lua::push_table()
+{
   if (failed) return *this;
   I(lua_checkstack (st, 1));
-  lua_newtable(st); 
-  return *this; 
+  lua_newtable(st);
+  return *this;
 }
 
 Lua &
-Lua::set_table(int idx) 
-{ 
+Lua::set_table(int idx)
+{
   if (failed) return *this;
   I(lua_checkstack (st, 1));
-  lua_settable(st, idx); 
-  return *this; 
+  lua_settable(st, idx);
+  return *this;
 }
 
 Lua &
-Lua::call(int in, int out) 
-{ 
+Lua::call(int in, int out)
+{
   if (failed) return *this;
   I(lua_checkstack (st, out));
   if (lua_pcall(st, in, out, 0) != 0)
-    { 
+    {
       report_error();
-    } 
-  return *this; 
+    }
+  return *this;
 }
 
 Lua &
-Lua::pop(int count) 
-{ 
+Lua::pop(int count)
+{
   if (failed) return *this;
-  if (lua_gettop (st) < count) 
-    { 
+  if (lua_gettop (st) < count)
+    {
       fail("stack top is not >= count in pop");
-      return *this; 
+      return *this;
     }
-  lua_pop(st, count); 
-  return *this; 
+  lua_pop(st, count);
+  return *this;
 }
 
 Lua &
 Lua::func(string const & fname)
 {
   L(FL("loading lua hook %s") % fname);
-  if (!failed) 
+  if (!failed)
     {
       if (missing_functions.find(fname) != missing_functions.end())
         failed = true;
@@ -434,30 +434,30 @@ set<string> Lua::missing_functions;
 
 extern "C"
 {
-  static int 
-  monotone_mkstemp_for_lua(lua_State *L) 
+  static int
+  monotone_mkstemp_for_lua(lua_State *L)
   {
     int fd = -1;
     FILE **pf = NULL;
     char const *filename = luaL_checkstring (L, -1);
     string dup(filename);
-    
+
     fd = monotone_mkstemp(dup);
-    
+
     if (fd == -1)
       return 0;
-    
+
     // this magic constructs a lua object which the lua io library
     // will enjoy working with
     pf = static_cast<FILE **>(lua_newuserdata(L, sizeof(FILE *)));
-    *pf = fdopen(fd, "r+");  
+    *pf = fdopen(fd, "r+");
     lua_pushstring(L, "FILE*");
     lua_rawget(L, LUA_REGISTRYINDEX);
-    lua_setmetatable(L, -2);  
-    
+    lua_setmetatable(L, -2);
+
     lua_pushstring(L, dup.c_str());
-    
-    if (*pf == NULL) 
+
+    if (*pf == NULL)
       {
         lua_pushnil(L);
         lua_pushfstring(L, "%s", strerror(errno));
@@ -552,7 +552,7 @@ extern "C"
     N(path, F("%s called with an invalid parameter") % "guess_binary");
 
     ifstream file(path, ios_base::binary);
-    if (!file) 
+    if (!file)
       {
         lua_pushnil(L);
         return 1;
@@ -564,7 +564,7 @@ extern "C"
       {
         I(file.gcount() <= static_cast<int>(sizeof tmpbuf));
         buf.assign(tmpbuf, file.gcount());
-        if (guess_binary(buf)) 
+        if (guess_binary(buf))
           {
             lua_pushboolean(L, true);
             return 1;
@@ -573,13 +573,13 @@ extern "C"
     lua_pushboolean(L, false);
     return 1;
   }
-  
+
   static int
   monotone_include_for_lua(lua_State *L)
   {
     const char *path = luaL_checkstring(L, -1);
     N(path, F("%s called with an invalid parameter") % "Include");
-    
+
     bool res =Lua(L)
     .loadfile(string(path, lua_strlen(L, -1)))
     .call(0,1)
@@ -588,7 +588,7 @@ extern "C"
     lua_pushboolean(L, res);
     return 1;
   }
-  
+
   static int
   monotone_includedir_for_lua(lua_State *L)
   {
@@ -619,7 +619,7 @@ extern "C"
         N(res, F("lua error while loading rcfile '%s'") % i->string());
       }
 
-    lua_pushboolean(L, true); 
+    lua_pushboolean(L, true);
     return 1;
   }
 
@@ -741,22 +741,22 @@ extern "C"
   }
 }
 
-bool 
+bool
 run_string(lua_State * st, string const &str, string const & identity)
 {
   I(st);
-  return 
+  return
     Lua(st)
     .loadstring(str, identity)
     .call(0,1)
     .ok();
 }
 
-bool 
+bool
 run_file(lua_State * st, string const &filename)
 {
   I(st);
-  return 
+  return
     Lua(st)
     .loadfile(filename)
     .call(0,1)

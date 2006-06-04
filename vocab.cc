@@ -1,7 +1,11 @@
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 #include <iostream>
@@ -41,14 +45,14 @@ static inline void
 verify(T & val)
 {}
 
-inline void 
+inline void
 verify(path_component & val)
 {
   // FIXME: probably ought to do something here?
   val.ok = true;
 }
 
-inline void 
+inline void
 verify(hexenc<id> & val)
 {
   if (val.ok)
@@ -67,7 +71,7 @@ verify(hexenc<id> & val)
   val.ok = true;
 }
 
-inline void 
+inline void
 verify(ace & val)
 {
   if (val.ok)
@@ -95,7 +99,7 @@ verify(symbol & val)
   val.ok = true;
 }
 
-inline void 
+inline void
 verify(cert_name & val)
 {
   if (val.ok)
@@ -108,7 +112,7 @@ verify(cert_name & val)
   val.ok = true;
 }
 
-inline void 
+inline void
 verify(rsa_keypair_id & val)
 {
   if (val.ok)
@@ -165,14 +169,14 @@ verify(netsync_hmac_value & val)
 // string implementations are copy-on-write, this has the affect
 // of making the ATOMIC(foo) values constructed within a symbol table
 // scope share string storage.
-struct 
-symtab_impl 
+struct
+symtab_impl
 {
   typedef hashmap::hash_set<string> hset;
   hset vals;
   symtab_impl() : vals() {}
   void clear() { vals.clear(); }
-  string const & unique(string const & in) 
+  string const & unique(string const & in)
   {
     // This produces a pair <iter,bool> where iter points to an
     // element of the table; the bool indicates whether the element is
@@ -192,7 +196,7 @@ symtab_impl
 #define ATOMIC(ty) cc_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) cc_ATOMIC_NOVERIFY(ty)
 
-#define EXTERN 
+#define EXTERN
 
 #include "vocab_terms.hh"
 

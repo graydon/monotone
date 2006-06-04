@@ -1,16 +1,25 @@
-#include "cmd.hh"
-
-#include "packet.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <sstream>
 #include <iostream>
+
+#include "cmd.hh"
+#include "packet.hh"
 
 using std::cin;
 using std::cout;
 using std::istringstream;
 using std::vector;
 
-CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
+CMD(pubkey, N_("packet i/o"), N_("ID"), 
+    N_("write public key packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -38,7 +47,8 @@ CMD(pubkey, N_("packet i/o"), N_("ID"), N_("write public key packet to stdout"),
   pw.consume_public_key(ident, key);
 }
 
-CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"),
+CMD(privkey, N_("packet i/o"), N_("ID"), 
+    N_("write private key packet to stdout"),
     OPT_NONE)
 {
   if (args.size() != 1)
@@ -47,7 +57,7 @@ CMD(privkey, N_("packet i/o"), N_("ID"), N_("write private key packet to stdout"
   rsa_keypair_id ident(idx(args, 0)());
   N(app.keys.key_pair_exists(ident),
     F("public and private key '%s' do not exist in keystore")
-      % idx(args, 0)());
+    % idx(args, 0)());
 
   packet_writer pw(cout);
   keypair kp;
@@ -69,7 +79,8 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     }
   else
     {
-      for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+      for (vector<utf8>::const_iterator i = args.begin(); 
+           i != args.end(); ++i)
         {
           data dat;
           read_data(system_path(*i), dat);
@@ -82,3 +93,12 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     }
   P(FP("read %d packet", "read %d packets", count) % count);
 }
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

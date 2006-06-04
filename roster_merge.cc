@@ -1,8 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-// copyright (C) 2005, 2006 nathaniel smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <set>
 
@@ -47,25 +50,25 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
          % result.rename_target_conflicts.size()
          % result.directory_loop_conflicts.size())
     .str();
-  
+
   for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
-    out += (FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
-            % result.node_name_conflicts[i].nid 
-            % result.node_name_conflicts[i].left.first 
+    out += (FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]")
+            % result.node_name_conflicts[i].nid
+            % result.node_name_conflicts[i].left.first
             % result.node_name_conflicts[i].left.second
-            % result.node_name_conflicts[i].right.first 
+            % result.node_name_conflicts[i].right.first
             % result.node_name_conflicts[i].right.second)
       .str();
-  
+
   for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
-    out += (FL("content conflict on node %d: [%s] vs. [%s]\n") 
+    out += (FL("content conflict on node %d: [%s] vs. [%s]")
             % result.file_content_conflicts[i].nid
             % result.file_content_conflicts[i].left
             % result.file_content_conflicts[i].right)
       .str();
-  
+
   for (size_t i = 0; i < result.node_attr_conflicts.size(); ++i)
-    out += (FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+    out += (FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]")
             % result.node_attr_conflicts[i].nid
             % result.node_attr_conflicts[i].key
             % result.node_attr_conflicts[i].left.first
@@ -73,14 +76,14 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
             % result.node_attr_conflicts[i].right.first
             % result.node_attr_conflicts[i].right.second)
       .str();
-  
+
   for (size_t i = 0; i < result.orphaned_node_conflicts.size(); ++i)
     out += (FL("orphaned node conflict on node %d, dead parent %d, name %s")
             % result.orphaned_node_conflicts[i].nid
             % result.orphaned_node_conflicts[i].parent_name.first
             % result.orphaned_node_conflicts[i].parent_name.second)
       .str();
-  
+
   for (size_t i = 0; i < result.rename_target_conflicts.size(); ++i)
     out += (FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
             % result.rename_target_conflicts[i].nid1
@@ -88,7 +91,7 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
             % result.rename_target_conflicts[i].parent_name.first
             % result.rename_target_conflicts[i].parent_name.second)
       .str();
-  
+
   for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
     out += (FL("directory loop conflict: node %d, wanted parent %d, name %s")
             % result.directory_loop_conflicts[i].nid
@@ -126,35 +129,35 @@ void
 roster_merge_result::warn_non_content_conflicts() const
 {
   for (size_t i = 0; i < node_name_conflicts.size(); ++i)
-    W(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]\n") 
-      % node_name_conflicts[i].nid 
-      % node_name_conflicts[i].left.first 
+    W(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]")
+      % node_name_conflicts[i].nid
+      % node_name_conflicts[i].left.first
       % node_name_conflicts[i].left.second
-      % node_name_conflicts[i].right.first 
+      % node_name_conflicts[i].right.first
       % node_name_conflicts[i].right.second);
-  
+
   for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
-    W(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]\n") 
+    W(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]")
       % node_attr_conflicts[i].nid
       % node_attr_conflicts[i].key
       % node_attr_conflicts[i].left.first
       % node_attr_conflicts[i].left.second
       % node_attr_conflicts[i].right.first
       % node_attr_conflicts[i].right.second);
-  
+
   for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
     W(F("orphaned node conflict on node %d, dead parent %d, name %s")
       % orphaned_node_conflicts[i].nid
       % orphaned_node_conflicts[i].parent_name.first
       % orphaned_node_conflicts[i].parent_name.second);
-  
+
   for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
     W(F("rename target conflict: nodes %d, %d, both want parent %d, name %s")
       % rename_target_conflicts[i].nid1
       % rename_target_conflicts[i].nid2
       % rename_target_conflicts[i].parent_name.first
       % rename_target_conflicts[i].parent_name.second);
-  
+
   for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
     W(F("directory loop conflict: node %d, wanted parent %d, name %s")
       % directory_loop_conflicts[i].nid
@@ -182,7 +185,7 @@ roster_merge_result::clear()
   roster = roster_t();
 }
 
-namespace 
+namespace
 {
   // a wins if *(b) > a.  Which is to say that all members of b_marks are
   // ancestors of a.  But all members of b_marks are ancestors of the
@@ -258,7 +261,7 @@ namespace
     else
       I(false);
   }
-  
+
   inline void
   insert_if_unborn(node_t const & n,
                    marking_map const & markings,
@@ -269,7 +272,7 @@ namespace
     if (uncommon_ancestors.find(birth) != uncommon_ancestors.end())
       create_node_for(n, new_roster);
   }
-  
+
   bool
   would_make_dir_loop(roster_t const & r, node_id nid, node_id parent)
   {
@@ -374,7 +377,7 @@ namespace
       downcast_to_file_t(n)->content = downcast_to_file_t(old_n)->content;
     assign_name(result, n->self, old_n->parent, old_n->name);
   }
-  
+
 } // end anonymous namespace
 
 void
@@ -392,7 +395,7 @@ roster_merge(roster_t const & left_parent,
   MM(right_parent);
   MM(right_markings);
   MM(result);
-  
+
   // First handle lifecycles, by die-die-die merge -- our result will contain
   // everything that is alive in both parents, or alive in one and unborn in
   // the other, exactly.
@@ -567,7 +570,7 @@ roster_merge(roster_t const & left_parent,
                         }
                       break;
                     }
-                  
+
                 }
               }
             }
@@ -612,12 +615,12 @@ roster_merge(roster_t const & left_parent,
 // cases for testing:
 //
 // (DONE:)
-// 
+//
 // lifecycle, file and dir
 //    alive in both
 //    alive in one and unborn in other (left vs. right)
 //    alive in one and dead in other (left vs. right)
-// 
+//
 // mark merge:
 //   same in both, same mark
 //   same in both, diff marks
@@ -814,7 +817,7 @@ struct file_scalar : public virtual base_scalar
   split_path thing_name;
   file_scalar() : thing_name(split("thing"))
   {}
-    
+
   void
   make_thing(roster_t & r, marking_map & markings)
   {
@@ -828,7 +831,7 @@ struct dir_scalar : public virtual base_scalar
   split_path thing_name;
   dir_scalar() : thing_name(split("thing"))
   {}
-    
+
   void
   make_thing(roster_t & r, marking_map & markings)
   {
@@ -1152,7 +1155,7 @@ test_scalar_merges()
   test_a_scalar_merge(scalar_b, "4", "4", scalar_a, "23", "35", scalar_conflict);
 
   //   different, conflict with 2 marks both conflicting
-  //               
+  //
   //               .1*
   //              / \.
   //             .2  a3*
@@ -1435,7 +1438,7 @@ struct simple_rename_target_conflict : public structural_conflict_helper
 struct simple_dir_loop_conflict : public structural_conflict_helper
 {
   node_id left_top_nid, right_top_nid;
-  
+
   virtual void setup()
     {
       left_top_nid = nis.next();
@@ -1466,7 +1469,7 @@ struct simple_dir_loop_conflict : public structural_conflict_helper
 struct simple_orphan_conflict : public structural_conflict_helper
 {
   node_id a_dead_parent_nid, a_live_child_nid, b_dead_parent_nid, b_live_child_nid;
-  
+
   // in ancestor, both parents are alive
   // in left, a_dead_parent is dead, and b_live_child is created
   // in right, b_dead_parent is dead, and a_live_child is created
@@ -1518,7 +1521,7 @@ struct simple_orphan_conflict : public structural_conflict_helper
 struct simple_illegal_name_conflict : public structural_conflict_helper
 {
   node_id new_root_nid, bad_dir_nid;
-  
+
   // in left, new_root is the root (it existed in old, but was renamed in left)
   // in right, new_root is still a subdir, the old root still exists, and a
   // new dir has been created
@@ -1554,7 +1557,7 @@ struct simple_illegal_name_conflict : public structural_conflict_helper
 struct simple_missing_root_dir : public structural_conflict_helper
 {
   node_id other_root_nid;
-  
+
   // left and right each have different root nodes, and each has deleted the
   // other's root node
 
@@ -1728,7 +1731,7 @@ struct node_name_plus_missing_root : public structural_conflict_helper
   {
     left_root_nid = nis.next();
     right_root_nid = nis.next();
-    
+
     left_roster.drop_detached_node(left_roster.detach_node(split("")));
     safe_erase(left_markings, root_nid);
     make_dir(left_roster, left_markings, old_rid, left_rid, "", left_root_nid);
@@ -1781,7 +1784,7 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
   {
     left_root_nid = nis.next();
     right_root_nid = nis.next();
-    
+
     left_roster.drop_detached_node(left_roster.detach_node(split("")));
     safe_erase(left_markings, root_nid);
     make_dir(left_roster, left_markings, left_rid, left_rid, "", left_root_nid);

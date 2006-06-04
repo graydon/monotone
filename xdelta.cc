@@ -1,7 +1,11 @@
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this file implements the xdelta algorithm, produces and consumes simple
 // copy/insert binary patches with the following structure:
@@ -50,7 +54,7 @@ struct identity {size_t operator()(u32 const & v) const { return static_cast<siz
 typedef pair<string::size_type, string::size_type> extent;
 typedef hashmap::hash_map<u32, extent> match_table;
 
-struct 
+struct
 insn
 {
   insn(char c) : code(insert), pos(0), len(0), payload("")  { payload += c; }
@@ -75,7 +79,7 @@ ostream & operator<<(ostream & ost, insn const & i)
 }
 
 
-static inline void 
+static inline void
 init_match_table(string const & a,
                  string::size_type blocksz,
                  match_table & tab)
@@ -87,19 +91,19 @@ init_match_table(string const & a,
       u32 sum = adler32(reinterpret_cast<u8 const *>(a.data() + i), step).sum();
       if (tab.find(sum) == tab.end())
         tab.insert(make_pair(sum, make_pair(i, step)));
-    }  
+    }
   return;
 }
 
 
 static inline bool
-find_match(match_table const & matches, 
+find_match(match_table const & matches,
            vector<insn> & delta,
-           adler32 const & rolling, 
-           string const & a, 
-           string const & b, 
-           string::size_type bpos, 
-           string::size_type & apos, 
+           adler32 const & rolling,
+           string const & a,
+           string const & b,
+           string::size_type bpos,
+           string::size_type & apos,
            string::size_type & alen,
            string::size_type & badvance)
 {
@@ -112,14 +116,14 @@ find_match(match_table const & matches,
 
   string::size_type tpos = e->second.first;
   string::size_type tlen = e->second.second;
-  
+
   I(tpos < a.size());
   I(tpos + tlen <= a.size());
 
   // maybe it's a false match?
   if (memcmp(a.data() + tpos, b.data() + bpos, tlen) != 0)
     return false;
-  
+
   apos = tpos;
 
   // see if we can extend our match forwards
@@ -127,7 +131,7 @@ find_match(match_table const & matches,
   string::const_iterator ae = a.end();
   string::const_iterator bi = b.begin() + bpos + tlen;
   string::const_iterator be = b.end();
-  
+
   while((ai != ae)
         && (bi != be)
         && (*ai == *bi))
@@ -143,7 +147,7 @@ find_match(match_table const & matches,
   // see if we can extend backwards into a previous insert hunk
   if (! delta.empty() && delta.back().code == insn::insert)
     {
-      while(apos > 0 
+      while(apos > 0
             && bpos > 0
             && a[apos - 1] == b[bpos - 1]
             && !delta.back().payload.empty())
@@ -158,19 +162,19 @@ find_match(match_table const & matches,
           // 'badvance' forward, just alen.
         }
 
-      // if we've extended back to consume the *entire* insert, 
+      // if we've extended back to consume the *entire* insert,
       // let's do away with it altogether.
       if (delta.back().payload.empty())
         {
           delta.pop_back();
         }
     }
-  
+
   I(memcmp(a.data() + apos, b.data() + bpos, alen) == 0);
   return true;
 }
 
-static inline void 
+static inline void
 insert_insn(vector<insn> & delta, char c)
 {
   if (delta.empty() || delta.back().code == insn::copy)
@@ -180,14 +184,14 @@ insert_insn(vector<insn> & delta, char c)
 }
 
 
-static inline void 
+static inline void
 copy_insn(vector<insn> & delta, string::size_type i, string::size_type matchlen)
 {
   delta.push_back(insn(i, matchlen));
 }
-                      
-  
-static void 
+
+
+static void
 compute_delta_insns(string const & a,
                     string const & b,
                     vector<insn> & delta)
@@ -202,13 +206,13 @@ compute_delta_insns(string const & a,
         insert_insn(delta, b[i]);
       return;
     }
-  
-  adler32 rolling(reinterpret_cast<u8 const *>(b.data()), blocksz);  
 
-  for (string::size_type 
+  adler32 rolling(reinterpret_cast<u8 const *>(b.data()), blocksz);
+
+  for (string::size_type
        sz = b.size(),
-       lo = 0, 
-       hi = blocksz; 
+       lo = 0,
+       hi = blocksz;
        lo < sz; )
     {
       string::size_type apos = 0, alen = 1, badvance = 1;
@@ -220,7 +224,7 @@ compute_delta_insns(string const & a,
           copy_insn(delta, apos, alen);
         }
       else
-        { 
+        {
           I(apos + alen <= a.size());
           I(alen == 1);
           I(alen < blocksz);
@@ -241,21 +245,21 @@ compute_delta_insns(string const & a,
     }
 }
 
-void 
+void
 write_delta_insns(vector<insn> const & delta_insns,
 		  string & delta)
 {
   delta.clear();
-  ostringstream oss;  
-  for (vector<insn>::const_iterator i = delta_insns.begin(); 
+  ostringstream oss;
+  for (vector<insn>::const_iterator i = delta_insns.begin();
        i != delta_insns.end(); ++i)
     {
       oss << *i;
     }
-  delta = oss.str();  
+  delta = oss.str();
 }
 
-void 
+void
 compute_delta(string const & a,
               string const & b,
               string & delta)
@@ -282,14 +286,14 @@ compute_delta(string const & a,
     {
       I(a.size() > 0);
       I(b.size() > 0);
-      
-      L(FL("computing binary delta instructions\n"));
+
+      L(FL("computing binary delta instructions"));
       compute_delta_insns(a, b, delta_insns);
-      L(FL("computed binary delta instructions\n"));
+      L(FL("computed binary delta instructions"));
     }
 
-  ostringstream oss;  
-  for (vector<insn>::const_iterator i = delta_insns.begin(); 
+  ostringstream oss;
+  for (vector<insn>::const_iterator i = delta_insns.begin();
        i != delta_insns.end(); ++i)
     {
       oss << *i;
@@ -297,35 +301,35 @@ compute_delta(string const & a,
   delta = oss.str();
 }
 
-struct 
-simple_applicator 
+struct
+simple_applicator
   : public delta_applicator
 {
   string src;
   string dst;
   virtual ~simple_applicator () {}
-  virtual void begin(string const & base) 
-  {     
-    src = base; 
+  virtual void begin(string const & base)
+  {
+    src = base;
     dst.clear();
   }
-  virtual void next() 
-  { 
-    swap(src,dst); 
-    dst.clear(); 
+  virtual void next()
+  {
+    swap(src,dst);
+    dst.clear();
   }
-  virtual void finish(string & out) 
-  { 
-    out = src; 
+  virtual void finish(string & out)
+  {
+    out = src;
   }
 
-  virtual void copy(string::size_type pos, string::size_type len) 
-  { 
-    dst.append(src, pos, len); 
+  virtual void copy(string::size_type pos, string::size_type len)
+  {
+    dst.append(src, pos, len);
   }
   virtual void insert(string const & str)
-  { 
-    dst.append(str); 
+  {
+    dst.append(str);
   }
 };
 
@@ -347,15 +351,15 @@ read_num(string::const_iterator &i,
   return n;
 }
 
-void 
+void
 apply_delta(shared_ptr<delta_applicator> da,
             string const & delta)
-{  
-  string::const_iterator i = delta.begin(); 
+{
+  string::const_iterator i = delta.begin();
   while (i != delta.end() && (*i == 'I' || *i == 'C'))
     {
       if (*i == 'I')
-        { 
+        {
           ++i;
           I(i != delta.end());
           string::size_type len = read_num(i, delta.end());
@@ -385,7 +389,7 @@ apply_delta(shared_ptr<delta_applicator> da,
       I(i != delta.end());
       I(*i == '\n');
       ++i;
-    }    
+    }
   I(i == delta.end());
 }
 
@@ -401,7 +405,7 @@ apply_delta(string const & a,
   da->finish(b);
 }
 
-struct 
+struct
 size_accumulating_delta_applicator :
   public delta_applicator
 {
@@ -411,15 +415,15 @@ size_accumulating_delta_applicator :
   virtual void next() {}
   virtual void finish(string & out) {}
 
-  virtual void copy(string::size_type pos, 
-                    string::size_type len) 
+  virtual void copy(string::size_type pos,
+                    string::size_type len)
   { sz += len; }
-  virtual void insert(string const & str) 
+  virtual void insert(string const & str)
   { sz += str.size(); }
 };
 
 
-u64 
+u64
 measure_delta_target_size(string const & delta)
 {
   u64 sz = 0;
@@ -438,7 +442,7 @@ typedef string::size_type length;
 typedef unsigned long piece_id;
 
 struct chunk
-{  
+{
   length len;        // how many chars in this chunk
   piece_id piece;    // which piece to take chars from
   version_pos vpos;  // position in the current version
@@ -465,20 +469,20 @@ struct chunk
 
 typedef vector<chunk> version_spec;
 
-struct 
+struct
 piece_table
 {
   vector<string> pieces;
 
-  void clear() 
+  void clear()
   {
     pieces.clear();
   }
 
-  piece_id insert(string const & p) 
-  { 
-    pieces.push_back(p); 
-    return pieces.size() - 1; 
+  piece_id insert(string const & p)
+  {
+    pieces.push_back(p);
+    return pieces.size() - 1;
   }
 
   void append(string & targ, piece_id p, piece_pos pp, length ln)
@@ -492,23 +496,23 @@ piece_table
     out.clear();
     for (version_spec::const_iterator i = in.begin();
          i != in.end(); ++i)
-      {        
+      {
         append(out, i->piece, i->ppos, i->len);
       }
   }
 };
 
-static void 
+static void
 apply_insert(piece_table & p, version_spec & out, string const & str)
 {
   piece_id piece = p.insert(str);
   version_pos vpos = 0;
-  if (!out.empty()) 
+  if (!out.empty())
     vpos = out.back().vpos + out.back().len;
   out.push_back(chunk(str.size(), piece, vpos, 0));
 }
 
-struct 
+struct
 chunk_less_than
 {
   bool operator()(chunk const & ch1, chunk const & ch2) const
@@ -520,8 +524,8 @@ chunk_less_than
   }
 };
 
-static void 
-apply_copy(version_spec const & in, version_spec & out, 
+static void
+apply_copy(version_spec const & in, version_spec & out,
            version_pos src_vpos, length src_len)
 {
   //
@@ -551,9 +555,9 @@ apply_copy(version_spec const & in, version_spec & out,
     dst_vpos = out.back().vpos + out.back().len;
   version_pos dst_final = dst_vpos + src_len;
   chunk src_bounding_chunk(0,0,src_vpos,0);
-  version_spec::const_iterator lo = lower_bound(in.begin(), 
-                                                in.end(), 
-                                                src_bounding_chunk, 
+  version_spec::const_iterator lo = lower_bound(in.begin(),
+                                                in.end(),
+                                                src_bounding_chunk,
                                                 chunk_less_than());
   for ( ; src_len > 0; ++lo)
     {
@@ -599,8 +603,8 @@ apply_copy(version_spec const & in, version_spec & out,
 }
 
 
-struct 
-piecewise_applicator 
+struct
+piecewise_applicator
   : public delta_applicator
 {
   piece_table pt;
@@ -614,48 +618,48 @@ piecewise_applicator
 
   virtual ~piecewise_applicator () {}
 
-  virtual void begin(string const & base) 
-  { 
+  virtual void begin(string const & base)
+  {
     pt.clear();
     piece_id piece = pt.insert(base);
     src->clear();
     src->push_back(chunk(base.size(), piece, 0, 0));
-    dst->clear();    
+    dst->clear();
   }
 
-  virtual void next() 
-  { 
-    swap(src,dst); 
-    dst->clear(); 
+  virtual void next()
+  {
+    swap(src,dst);
+    dst->clear();
   }
 
-  virtual void finish(string & out) 
-  { 
+  virtual void finish(string & out)
+  {
     out.clear();
     pt.build(*src, out);
   }
 
-  virtual void copy(string::size_type pos, string::size_type len) 
-  { 
+  virtual void copy(string::size_type pos, string::size_type len)
+  {
     apply_copy(*src, *dst, pos, len);
   }
 
   virtual void insert(string const & str)
-  { 
+  {
     apply_insert(pt, *dst, str);
   }
 };
 
 
-// these just hide our implementation types from outside 
+// these just hide our implementation types from outside
 
-shared_ptr<delta_applicator> 
+shared_ptr<delta_applicator>
 new_simple_applicator()
 {
   return shared_ptr<delta_applicator>(new simple_applicator());
 }
 
-shared_ptr<delta_applicator> 
+shared_ptr<delta_applicator>
 new_piecewise_applicator()
 {
   return shared_ptr<delta_applicator>(new piecewise_applicator());
@@ -683,22 +687,22 @@ struct copied_extent
   }
 };
 
-struct 
+struct
 inverse_delta_writing_applicator :
   public delta_applicator
 {
   string const & old;
   set<copied_extent> copied_extents;
   string::size_type new_pos;
-  
-  inverse_delta_writing_applicator(string const & old) 
-    : old(old), 
+
+  inverse_delta_writing_applicator(string const & old)
+    : old(old),
       new_pos(0)
   {}
 
   virtual void begin(string const & base) {}
   virtual void next() {}
-  virtual void finish(string & out) 
+  virtual void finish(string & out)
   {
     // We are trying to write a delta instruction stream which
     // produces 'old' from 'new'. We don't care what was in 'new',
@@ -747,16 +751,16 @@ inverse_delta_writing_applicator :
     write_delta_insns(delta_insns, out);
   }
 
-  virtual void copy(string::size_type old_pos, 
-                    string::size_type len) 
-  { 
+  virtual void copy(string::size_type old_pos,
+                    string::size_type len)
+  {
     I(old_pos < old.size());
     copied_extents.insert(copied_extent(old_pos, new_pos, len));
     new_pos += len;
   }
 
-  virtual void insert(string const & str) 
-  { 
+  virtual void insert(string const & str)
+  {
     new_pos += str.size();
   }
 };
@@ -794,22 +798,22 @@ boost::uniform_smallint<boost::mt19937, char> xdelta_chargen(xdelta_prng, 'a', '
 boost::uniform_smallint<boost::mt19937, size_t> xdelta_sizegen(xdelta_prng, 1024, 65536);
 boost::uniform_smallint<boost::mt19937, size_t> xdelta_editgen(xdelta_prng, 3, 10);
 boost::uniform_smallint<boost::mt19937, size_t> xdelta_lengen(xdelta_prng, 1, 256);
-#define PRNG 
+#define PRNG
 #endif
 
-void 
+void
 xdelta_random_string(string & str)
 {
   size_t sz = xdelta_sizegen(PRNG);
   str.clear();
-  str.reserve(sz);   
+  str.reserve(sz);
   while(sz-- > 0)
     {
       str += xdelta_chargen(PRNG);
     }
 }
 
-void 
+void
 xdelta_randomly_insert(string & str)
 {
   size_t nedits = xdelta_editgen(PRNG);
@@ -828,7 +832,7 @@ xdelta_randomly_insert(string & str)
     }
 }
 
-void 
+void
 xdelta_randomly_change(string & str)
 {
   size_t nedits = xdelta_editgen(PRNG);
@@ -844,7 +848,7 @@ xdelta_randomly_change(string & str)
     }
 }
 
-void 
+void
 xdelta_randomly_delete(string & str)
 {
   size_t nedits = xdelta_editgen(PRNG);
@@ -859,7 +863,7 @@ xdelta_randomly_delete(string & str)
     }
 }
 
-void 
+void
 xdelta_random_simple_delta_test()
 {
   for (int i = 0; i < 100; ++i)
@@ -872,26 +876,26 @@ xdelta_random_simple_delta_test()
       xdelta_randomly_delete(b);
       compute_delta(a, b, fdel);
       compute_delta(b, a, rdel);
-      L(FL("src %d, dst %d, fdel %d, rdel %d\n")
+      L(FL("src %d, dst %d, fdel %d, rdel %d")
         % a.size() % b.size()% fdel.size() % rdel.size()) ;
       if (fdel.size() == 0)
         {
-          L(FL("confirming src == dst and rdel == 0\n"));
+          L(FL("confirming src == dst and rdel == 0"));
           BOOST_CHECK(a == b);
           BOOST_CHECK(rdel.size() == 0);
-        }      
+        }
       else
         {
           apply_delta(a, fdel, c);
           apply_delta(b, rdel, d);
-          L(FL("confirming dst1 %d, dst2 %d\n") % c.size() % d.size());
+          L(FL("confirming dst1 %d, dst2 %d") % c.size() % d.size());
           BOOST_CHECK(b == c);
           BOOST_CHECK(a == d);
         }
     }
 }
 
-void 
+void
 add_xdelta_tests(test_suite * suite)
 {
   I(suite);

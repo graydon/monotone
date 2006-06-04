@@ -1,20 +1,28 @@
-#include "cmd.hh"
-
-#include "globish.hh"
-#include "restrictions.hh"
-#include "revision.hh"
-#include "transforms.hh"
-#include "simplestring_xform.hh"
-#include "charset.hh"
-#include "database.hh"
-#include "ui.hh"
-#include "keys.hh"
-#include "cert.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <algorithm>
 #include <iostream>
 #include <map>
 #include <utility>
+
+#include "cert.hh"
+#include "charset.hh"
+#include "cmd.hh"
+#include "database.hh"
+#include "globish.hh"
+#include "keys.hh"
+#include "restrictions.hh"
+#include "revision.hh"
+#include "simplestring_xform.hh"
+#include "transforms.hh"
+#include "ui.hh"
 
 using std::cout;
 using std::make_pair;
@@ -26,16 +34,16 @@ using std::sort;
 using std::string;
 using std::vector;
 
-static void 
+static void
 ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 {
   if (args.size() != 1)
     throw usage(name);
 
   vector<cert> certs;
-  
+
   transaction_guard guard(app.db, false);
-  
+
   revision_id ident;
   complete(app, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
@@ -44,7 +52,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
     certs.push_back(idx(ts, i).inner());
 
   {
-    set<rsa_keypair_id> checked;      
+    set<rsa_keypair_id> checked;
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
@@ -54,7 +62,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
         checked.insert(idx(certs, i).key);
       }
   }
-        
+
   // Make the output deterministic; this is useful for the test suite, in
   // particular.
   sort(certs.begin(), certs.end());
@@ -77,7 +85,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(app, idx(certs, i));
-      cert_value tv;      
+      cert_value tv;
       decode_base64(idx(certs, i).value, tv);
       string washed;
       if (guess_binary(tv()))
@@ -113,10 +121,10 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
                % stat
                % idx(certs, i).name()
                % idx(lines, 0));
-      
+
       for (size_t i = 1; i < lines.size(); ++i)
         cout << (i18n_format(extra_str) % idx(lines, i));
-    }  
+    }
 
   if (certs.size() > 0)
     cout << "\n";
@@ -125,7 +133,8 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_keys(string const & name, app_state & app, vector<utf8> const & args)
+ls_keys(string const & name, app_state & app, 
+	vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
@@ -148,7 +157,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
   for (vector<rsa_keypair_id>::const_iterator i = pubs.begin();
        i != pubs.end(); i++)
     pubkeys[*i] = true;
-  
+
   bool all_in_db = true;
   for (vector<rsa_keypair_id>::const_iterator i = privkeys.begin();
        i != privkeys.end(); i++)
@@ -172,7 +181,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
           bool indb = i->second;
 
           if (indb)
-            app.db.get_key(keyid, pub_encoded); 
+            app.db.get_key(keyid, pub_encoded);
           else
             {
               keypair kp;
@@ -186,7 +195,8 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
             cout << hash_code << " " << keyid << "   (*)" << "\n";
         }
       if (!all_in_db)
-        cout << F("(*) - only in %s/") % app.keys.get_key_dir() << "\n";
+        cout << (F("(*) - only in %s/") 
+		 % app.keys.get_key_dir()) << "\n";
       cout << "\n";
     }
 
@@ -198,7 +208,7 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
         {
           keypair kp;
           hexenc<id> hash_code;
-          app.keys.get_key_pair(*i, kp); 
+          app.keys.get_key_pair(*i, kp);
           key_hash_code(*i, kp.priv, hash_code);
           cout << hash_code << " " << *i << "\n";
         }
@@ -209,13 +219,13 @@ ls_keys(string const & name, app_state & app, vector<utf8> const & args)
       privkeys.size() == 0)
     {
       if (args.size() == 0)
-        P(F("no keys found\n"));
+        P(F("no keys found"));
       else
-        W(F("no keys found matching '%s'\n") % idx(args, 0)());
+        W(F("no keys found matching '%s'") % idx(args, 0)());
     }
 }
 
-static void 
+static void
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
   utf8 inc("*");
@@ -231,11 +241,12 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 
   sort(names.begin(), names.end());
   for (size_t i = 0; i < names.size(); ++i)
-    if (match(idx(names, i)) && !app.lua.hook_ignore_branch(idx(names, i)))
+    if (match(idx(names, i)) 
+	&& !app.lua.hook_ignore_branch(idx(names, i)))
       cout << idx(names, i) << "\n";
 }
 
-static void 
+static void
 ls_epochs(string name, app_state & app, vector<utf8> const & args)
 {
   map<cert_value, epoch_data> epochs;
@@ -243,7 +254,8 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 
   if (args.size() == 0)
     {
-      for (map<cert_value, epoch_data>::const_iterator i = epochs.begin();
+      for (map<cert_value, epoch_data>::const_iterator 
+	     i = epochs.begin();
            i != epochs.end(); ++i)
         {
           cout << i->second << " " << i->first << "\n";
@@ -251,23 +263,25 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
     }
   else
     {
-      for (vector<utf8>::const_iterator i = args.begin(); i != args.end();
+      for (vector<utf8>::const_iterator i = args.begin(); 
+	   i != args.end();
            ++i)
         {
           map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
-          N(j != epochs.end(), F("no epoch for branch %s\n") % *i);
+          N(j != epochs.end(), F("no epoch for branch %s") % *i);
           cout << j->second << " " << j->first << "\n";
         }
-    }  
+    }
 }
 
-static void 
+static void
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
-  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > > sorted_vals;
+  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > > 
+    sorted_vals;
 
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
@@ -277,11 +291,11 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
       decode_base64(c.value, name);
       sorted_vals.insert(make_pair(name, make_pair(c.ident, c.key)));
     }
-  for (set<pair<cert_value, pair<revision_id, 
+  for (set<pair<cert_value, pair<revision_id,
          rsa_keypair_id> > >::const_iterator i = sorted_vals.begin();
        i != sorted_vals.end(); ++i)
     {
-      cout << i->first << " " 
+      cout << i->first << " "
            << i->second.first  << " "
            << i->second.second  << "\n";
     }
@@ -313,7 +327,9 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
         continue;
       external ext_domain, ext_name;
       externalize_var_domain(i->first.first, ext_domain);
-      cout << ext_domain << ": " << i->first.second << " " << i->second << "\n";
+      cout << ext_domain << ": " 
+	   << i->first.second << " " 
+	   << i->second << "\n";
     }
 }
 
@@ -329,11 +345,13 @@ ls_known(app_state & app, vector<utf8> const & args)
   restriction mask(args, app.exclude_patterns, new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+  for (node_map::const_iterator i = nodes.begin(); 
+       i != nodes.end(); ++i)
     {
       node_id nid = i->first;
 
-      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
+      if (!new_roster.is_root(nid) 
+	  && mask.includes(new_roster, nid))
         {
           split_path sp;
           new_roster.get_name(nid, sp);
@@ -343,7 +361,8 @@ ls_known(app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_unknown_or_ignored(app_state & app, bool want_ignored, vector<utf8> const & args)
+ls_unknown_or_ignored(app_state & app, bool want_ignored, 
+		      vector<utf8> const & args)
 {
   app.require_workspace();
 
@@ -351,10 +370,12 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored, vector<utf8> const & a
   find_unknown_and_ignored(app, args, unknown, ignored);
 
   if (want_ignored)
-    for (path_set::const_iterator i = ignored.begin(); i != ignored.end(); ++i)
+    for (path_set::const_iterator i = ignored.begin(); 
+	 i != ignored.end(); ++i)
       cout << file_path(*i) << "\n";
   else
-    for (path_set::const_iterator i = unknown.begin(); i != unknown.end(); ++i)
+    for (path_set::const_iterator i = unknown.begin(); 
+	 i != unknown.end(); ++i)
       cout << file_path(*i) << "\n";
 }
 
@@ -364,7 +385,8 @@ ls_missing(app_state & app, vector<utf8> const & args)
   path_set missing;
   find_missing(app, args, missing);
 
-  for (path_set::const_iterator i = missing.begin(); i != missing.end(); ++i)
+  for (path_set::const_iterator i = missing.begin(); 
+       i != missing.end(); ++i)
     {
       cout << file_path(*i) << "\n";
     }
@@ -384,14 +406,16 @@ ls_changed(app_state & app, vector<utf8> const & args)
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
-      
+
   update_current_roster_from_filesystem(new_roster, mask, app);
-  make_restricted_csets(old_roster, new_roster, included, excluded, mask);
+  make_restricted_csets(old_roster, new_roster, 
+			included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
   // FIXME: this would probably be better as a function of roster.cc
   // set<node_id> nodes;
-  // select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
+  // select_nodes_modified_by_cset(included, old_roster, 
+  // new_roster, nodes);
 
   for (path_set::const_iterator i = included.nodes_deleted.begin();
        i != included.nodes_deleted.end(); ++i)
@@ -399,7 +423,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
       if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (map<split_path, split_path>::const_iterator 
+  for (map<split_path, split_path>::const_iterator
          i = included.nodes_renamed.begin();
        i != included.nodes_renamed.end(); ++i)
     {
@@ -413,14 +437,15 @@ ls_changed(app_state & app, vector<utf8> const & args)
       if (mask.includes(*i))
         files.insert(file_path(*i));
     }
-  for (map<split_path, file_id>::const_iterator i = included.files_added.begin();
+  for (map<split_path, file_id>::const_iterator 
+	 i = included.files_added.begin();
        i != included.files_added.end(); ++i)
     {
       if (mask.includes(i->first))
         files.insert(file_path(i->first));
     }
   for (map<split_path, pair<file_id, file_id> >::const_iterator
-         i = included.deltas_applied.begin(); i != included.deltas_applied.end(); 
+         i = included.deltas_applied.begin(); i != included.deltas_applied.end();
        ++i)
     {
       if (mask.includes(i->first))
@@ -445,8 +470,9 @@ CMD(list, N_("informative"),
        "ignored\n"
        "missing\n"
        "changed"),
-    N_("show database objects, or the current workspace manifest, or known,\n"
-       "unknown, intentionally ignored, missing, or changed state files"),
+    N_("show database objects, or the current workspace manifest, \n"
+       "or known, unknown, intentionally ignored, missing, or \n"
+       "changed-state files"),
     OPT_DEPTH % OPT_EXCLUDE)
 {
   if (args.size() == 0)
@@ -482,3 +508,11 @@ CMD(list, N_("informative"),
 }
 
 ALIAS(ls, list)
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

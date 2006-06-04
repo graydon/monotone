@@ -1,11 +1,23 @@
 #ifndef __CHARSET_HH__
 #define __CHARSET_HH__
 
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
 #include "vocab.hh"
 
-// charset conversions
-void charset_convert(std::string const & src_charset, std::string const & dst_charset,
-                     std::string const & src, std::string & dst);
+// Charset conversions.
+
+void charset_convert(std::string const & src_charset, 
+		     std::string const & dst_charset,
+                     std::string const & src, 
+		     std::string & dst);
 void system_to_utf8(external const & system, utf8 & utf);
 void utf8_to_system(utf8 const & utf, external & system);
 void utf8_to_system(utf8 const & utf, std::string & system);
@@ -13,10 +25,10 @@ void ace_to_utf8(ace const & ac, utf8 & utf);
 void utf8_to_ace(utf8 const & utf, ace & a);
 bool utf8_validate(utf8 const & utf);
 
-// returns length in characters (not bytes)
+// Returns length in characters (not bytes).
 size_t display_width(utf8 const & utf);
 
-// specific internal / external conversions for various vocab terms
+// Specific internal / external conversions for various vocab terms.
 void internalize_cert_name(utf8 const & utf, cert_name & c);
 void internalize_cert_name(external const & ext, cert_name & c);
 void externalize_cert_name(cert_name const & c, utf8 & utf);

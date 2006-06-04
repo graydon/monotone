@@ -1,8 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this file contains a couple utilities to deal with the user
 // interface. the global user_interface object 'ui' owns clog, so no
@@ -67,7 +70,7 @@ ticker::~ticker()
   ui.finish_ticking();
 }
 
-void 
+void
 ticker::operator++()
 {
   I(ui.tickers.find(keyname) != ui.tickers.end());
@@ -77,7 +80,7 @@ ticker::operator++()
     ui.write_ticks();
 }
 
-void 
+void
 ticker::operator+=(size_t t)
 {
   I(ui.tickers.find(keyname) != ui.tickers.end());
@@ -220,7 +223,7 @@ void tick_write_count::write_ticks()
     }
 
   string tickline1;
-  bool write_tickline1 = !(ui.last_write_was_a_tick 
+  bool write_tickline1 = !(ui.last_write_was_a_tick
                            && (tick_widths == last_tick_widths));
   if (write_tickline1)
     {
@@ -250,7 +253,7 @@ void tick_write_count::write_ticks()
       tickline2 += " ";
       tickline2 += ui.tick_trailer;
     }
-  
+
   size_t curr_sz = display_width(utf8(tickline2));
   if (curr_sz < last_tick_len)
     tickline2.append(last_tick_len - curr_sz, ' ');
@@ -366,7 +369,7 @@ user_interface::user_interface() :
   clog.sync_with_stdio(false);
 #endif
   clog.unsetf(ios_base::unitbuf);
-  if (have_smart_terminal()) 
+  if (have_smart_terminal())
     set_tick_writer(new tick_write_count);
   else
     set_tick_writer(new tick_write_dot);
@@ -377,10 +380,10 @@ user_interface::~user_interface()
   delete t_writer;
 }
 
-void 
+void
 user_interface::finish_ticking()
 {
-  if (tickers.size() == 0 && 
+  if (tickers.size() == 0 &&
       last_write_was_a_tick)
     {
       tick_trailer = "";
@@ -389,13 +392,13 @@ user_interface::finish_ticking()
     }
 }
 
-void 
+void
 user_interface::set_tick_trailer(string const & t)
 {
   tick_trailer = t;
 }
 
-void 
+void
 user_interface::set_tick_writer(tick_writer * t)
 {
   if (t_writer != 0)
@@ -403,7 +406,7 @@ user_interface::set_tick_writer(tick_writer * t)
   t_writer = t;
 }
 
-void 
+void
 user_interface::write_ticks()
 {
   t_writer->write_ticks();
@@ -411,7 +414,7 @@ user_interface::write_ticks()
   some_tick_is_dirty = false;
 }
 
-void 
+void
 user_interface::warn(string const & warning)
 {
   if (issued_warnings.find(warning) == issued_warnings.end())
@@ -423,7 +426,7 @@ user_interface::warn(string const & warning)
   issued_warnings.insert(warning);
 }
 
-void 
+void
 user_interface::fatal(string const & fatal)
 {
   inform(F("fatal: %s\n"
@@ -449,18 +452,18 @@ user_interface::output_prefix()
   return prog_name + ": ";
 }
 
-static inline string 
+static inline string
 sanitize(string const & line)
 {
   // FIXME: you might want to adjust this if you're using a charset
-  // which has safe values in the sub-0x20 range. ASCII, UTF-8, 
+  // which has safe values in the sub-0x20 range. ASCII, UTF-8,
   // and most ISO8859-x sets do not.
   string tmp;
   tmp.reserve(line.size());
   for (size_t i = 0; i < line.size(); ++i)
     {
       if ((line[i] == '\n')
-          || (static_cast<unsigned char>(line[i]) >= static_cast<unsigned char>(0x20) 
+          || (static_cast<unsigned char>(line[i]) >= static_cast<unsigned char>(0x20)
               && line[i] != static_cast<char>(0x7F)))
         tmp += line[i];
       else
@@ -491,7 +494,7 @@ user_interface::redirect_log_to(system_path const & filename)
   clog.rdbuf(filestr.rdbuf());
 }
 
-void 
+void
 user_interface::inform(string const & line)
 {
   string prefixedLine;
