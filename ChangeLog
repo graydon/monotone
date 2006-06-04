@@ -2,6 +2,10 @@
 
 	* *.{cc,hh}: Update copyright notices.
 
+2006-06-04  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Lots of fuzzies to fix.
+
 2006-06-03  Graydon Hoare  <graydon@pobox.com>
 
 	* std_hooks.lua (merge3_xxdiff_cmd): Fix typo.
