@@ -119,6 +119,12 @@ carefully observe the test case's behaviour before and after your fix. If no
 test case exists, it is strongly recommended to write a test case before
 attempting to fix the bug.
 
+Tip: if the unit tests are failing, the quickest way to find the
+problem is to search the output for the regexp \([0-9]+\) -- i.e., a
+number in parentheses.  Or, if using gdb, try setting a breakpoint on
+theboost::unit_test::first_failed_assertion function (see
+results_collector.hpp).
+
 
 Single-character macros
 -----------------------

@@ -1,3 +1,8 @@
+2006-06-04  Nathaniel Smith  <njs@pobox.com>
+
+	* HACKING (Tip): Add some tips on tracking down unit test
+	failures.
+
 2006-06-03  Graydon Hoare  <graydon@pobox.com>
 
 	* *.{cc,hh}: Update editor mode lines.
