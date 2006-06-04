@@ -1,3 +1,8 @@
+2006-06-04  Richard Levitte  <richard@levitte.org>
+
+	* m4/ac_compile_check_sizeof.m4, m4/acx_pthread.m4: Updates
+	contributed by Peter Simons <simons@cryp.to>.
+
 2006-06-03  Graydon Hoare  <graydon@pobox.com>
 
 	* *.{cc,hh}: Update editor mode lines.
