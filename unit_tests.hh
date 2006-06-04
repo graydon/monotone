@@ -47,4 +47,12 @@ void add_roster_merge_tests(test_suite * suite);
 void add_restrictions_tests(test_suite * suite);
 void add_uri_tests(test_suite * suite);
 
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+
 #endif

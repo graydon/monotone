@@ -1097,3 +1097,11 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
 
   m.migrate(sql, "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df");
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

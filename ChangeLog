@@ -1,5 +1,9 @@
 2006-06-03  Graydon Hoare  <graydon@pobox.com>
 
+	* *.{cc,hh}: Update editor mode lines.
+
+2006-06-03  Graydon Hoare  <graydon@pobox.com>
+
 	* *.{cc,hh}: Update copyright notices.
 
 2006-06-04  Richard Levitte  <richard@levitte.org>

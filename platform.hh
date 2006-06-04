@@ -73,4 +73,12 @@ void rename_clobberingly(any_path const & from, any_path const & to);
 // strerror wrapper for OS-specific errors (e.g. use FormatMessage on Win32)
 std::string os_strerror(os_err_t errnum);
 
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+
 #endif // __PLATFORM_HH__
