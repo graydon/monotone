@@ -9,19 +9,24 @@ tsha = sha1("importme.0")
 -- build the cvs repository
 
 cvsroot = test_root .. "/cvs-repository"
-check(cmd("cvs", "-q", "-d", cvsroot, "init"), 0, false, false)
+
+function cvs(...)
+  return {"cvs", "-d", cvsroot, unpack(arg)}
+end
+
+check(cvs("-q", "init"), 0, false, false)
 check(exists(cvsroot))
 check(exists(cvsroot .. "/CVSROOT"))
 check(exists(cvsroot .. "/CVSROOT/modules"))
 
 -- check out the workspace and make a commit
 
-check(cmd("cvs", "-d", cvsroot, "co", "."), 0, false, false)
+check(cvs("co", "."), 0, false, false)
 mkdir("testdir")
 os.rename("importme.0", "testdir/importme")
-check(cmd("cvs", "-d", cvsroot, "add", "testdir"), 0, false, false)
-check(cmd("cvs", "-d", cvsroot, "add", "testdir/importme"), 0, false, false)
-check(cmd("cvs", "-d", cvsroot, "commit", "-m", 'commit 0', "testdir/importme"), 0, false, false)
+check(cvs("add", "testdir"), 0, false, false)
+check(cvs("add", "testdir/importme"), 0, false, false)
+check(cvs("commit", "-m", 'commit 0', "testdir/importme"), 0, false, false)
 
 -- import into monotone and check presence of file
 

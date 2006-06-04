@@ -76,6 +76,13 @@ function err(what, level)
   error(e, level)
 end
 
+old_mtime = mtime
+mtime = function(name)
+  local x = old_mtime(name)
+  L(locheader(), "mtime(", name, ") = ", tostring(x), "\n")
+  return x
+end
+
 old_mkdir = mkdir
 mkdir = function(name)
   L(locheader(), "mkdir ", name, "\n")
@@ -93,6 +100,13 @@ existsonpath = function(name)
   end
   L(locheader(), name, " ", what, " on the path\n")
   return r
+end
+
+function numlines(filename)
+  local n = 0
+  for _ in io.lines(filename) do n = n + 1 end
+  L(locheader(), "numlines(", filename, ") = ", n, "\n")
+  return n
 end
 
 function fsize(filename)
@@ -139,6 +153,19 @@ end
 function writefile(filename, dat)
   L(locheader(), "writefile ", filename, "\n")
   return writefile_q(filename, dat)
+end
+
+function append(filename, dat)
+  L(locheader(), "append to file ", filename, "\n")
+  local file,e = io.open(filename, "a+")
+  if file == nil then
+    L("Cannot open file: ", e, "\n")
+    return false
+  else
+    file:write(dat)
+    file:close()
+    return true
+  end
 end
 
 function copyfile(from, to)
@@ -313,6 +340,30 @@ function grep(...)
                    return out
                  end
   return {dogrep, unpack(arg)}
+end
+
+function cat(...)
+  local function docat(...)
+    local bsize = 8*1024
+    for _,x in ipairs(arg) do
+      local infile
+      if x == "-" then
+        infile = files.stdin
+      else
+        infile = io.open(x, "rb")
+      end
+      local block = infile:read(bsize)
+      while block do
+        files.stdout:write(block)
+        block = infile:read(bsize)
+      end
+      if x ~= "-" then
+        infile:close()
+      end
+    end
+    return 0
+  end
+  return {docat, unpack(arg)}
 end
 
 function log_file_contents(filename)

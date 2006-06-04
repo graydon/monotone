@@ -28,6 +28,11 @@ using std::map;
 using std::make_pair;
 using boost::lexical_cast;
 
+#include <sys/types.h>
+#include <sys/stat.h>
+// for stat, to get mtime
+// maybe factor this out of inodeprint instead?
+
 namespace redirect
 {
   enum what {in, out, err};
@@ -313,6 +318,26 @@ extern "C"
   }
 
   static int
+  mtime(lua_State *L)
+  {
+    char const * file = luaL_checkstring(L, -1);
+#ifdef WIN32
+    struct _stat st;
+    int r = _stat(file, &st);
+#else
+    struct stat st;
+    int r = stat(file, &st);
+#endif
+    if (r != 0)
+      {
+        lua_pushnil(L);
+        return 1;
+      }
+    lua_pushnumber(L, st.st_mtime);
+    return 1;
+  }
+
+  static int
   exists(lua_State *L)
   {
     char const * name = luaL_checkstring(L, -1);
@@ -457,6 +482,7 @@ int main(int argc, char **argv)
   lua_register(st, "leave_test_dir", leave_test_dir);
   lua_register(st, "mkdir", make_dir);
   lua_register(st, "chdir", go_to_dir);
+  lua_register(st, "mtime", mtime);
   lua_register(st, "remove_recursive", remove_recursive);
   lua_register(st, "copy_recursive", copy_recursive);
   lua_register(st, "exists", exists);
