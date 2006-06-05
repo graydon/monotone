@@ -1,5 +1,9 @@
 2006-06-04  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Draft release notes for 0.27.
+
+2006-06-04  Nathaniel Smith  <njs@pobox.com>
+
 	* HACKING (Tip): Add some tips on tracking down unit test
 	failures.
 
