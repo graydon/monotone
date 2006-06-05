@@ -1,3 +1,7 @@
+﻿2006-05-10  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (81 to go).
+
 2006-06-03  Graydon Hoare  <graydon@pobox.com>
 
 	* *.{cc,hh}: Update editor mode lines.
