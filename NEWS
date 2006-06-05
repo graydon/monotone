@@ -1,3 +1,78 @@
+????????????????????????????
+
+        0.27 release.  Minor bug fixes and enhancements, plus ssh
+        support.
+
+        Major new features:
+
+        - Monotone can now push/pull/synchronize over arbitrary
+          bidirectional streams, not just raw TCP.
+          - File-to-file synchronization is enabled out of the box,
+            e.g.:
+              $ mtn -d db1.mtn sync file:/path/to/db2.mtn
+          - SSH synchronization is enabled out of the box, e.g.:
+              $ mtn -d local.mtn sync ssh://njs@venge.net:/home/njs/remote.mtn
+            Note that this requires mtn be installed on the remote
+            computer, and locks the remote database while running; it
+            is not ideal for groups accessing a shared database.
+          - New protocols can be defined with Lua hooks -- for
+            example, someone could in principle make "$ mtn sync
+            xmpp://njs@jabber.org" do something interesting.
+          - See section "Other Transports" under "Advanced Uses" in the
+            for more details.
+
+        Minor new features:
+        
+        - Selectors now support escaping, e.g., b:foo\/bar can be used
+          to refer to a branch with name "foo/bar" (normally / is a
+          metacharacter that separates multiple selectors).
+        - Visual C++ can now build monotone on Windows.  (Mostly
+          important because it allows better Windows debugging.)
+        - --quiet now turns tickers off, and does not turn warnings
+          off.  New option --reallyquiet disables warnings as well.
+        - New command 'automate common_ancestors'.
+        - 'ls branches' now takes a pattern, e.g.:
+            $ mtn ls branches "*contrib*"
+
+        Speed improvements:
+
+        - Bug in select() loop fixed, server should no longer pause in
+          processing other clients while busy with one, but multiplex
+          fairly.
+
+        Bug fixes:
+
+        - Merge tools that exit in failure are now detected.
+        - Better reporting of operating system errors on Win32.
+        - Passphrases stored in ~/.monotonerc are no longer written to
+          the log file.  (Passphrases entered at the terminal were
+          never written to the log file.)
+        - Fix sql injection bugs in selectors, making it safe to
+          expose slectors in web interfaces etc.
+        - Files marked with the mtn:execute attr now respect umask.
+        - 'automate' commands on Win32 now disable newline translation
+          on their output; this is especially important for 'automate
+          stdio'.
+        - 'db check' now calls the sqlite "PRAGMA integrity_check", to
+          validate the integrity of things like sqlite indices.
+        - 'mtn annotate nonexistent-file' now gives a proper error
+          message, instead of an assertion error.
+        - 'mtn revert --missing' now works correctly when run in a
+          subdirectory.
+
+        Other:
+
+        - Many, many internal code cleanups
+          - Including changes to somewhat reduce the size of the
+            binary
+        - New tutorial on using packets added to the manual
+        - Updated translations, improved error messages, etc.
+
+        Reliability considerations:
+
+        - In the two months since 0.27 was released, zero serious bugs
+          have been reported in the new code.
+
 Sat Apr  8 19:33:35 PDT 2006
 
         0.26 release.  Major enhancements and internal rewrites.
