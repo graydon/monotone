@@ -1,7 +1,41 @@
 #!./tester
 
+ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
+
+function getpathof(exe)
+  local function gotit(now)
+    if test_log == nil then
+      logfile:write(exe, " found at ", now, "\n")
+    else
+      test_log:write(exe, " found at ", now, "\n")
+    end
+    return now
+  end
+  local path = os.getenv("PATH")
+  local char
+  if ostype == "Windows" then
+    char = ';'
+  else
+    char = ':'
+  end
+  local now = initial_dir.."/"..exe
+  if exists(now) then return gotit(now) end
+  for x in string.gfind(path, "[^"..char.."]*"..char) do
+    local now = string.sub(x, 0, -2).."/"..exe
+    if exists(now) then return gotit(now) end
+  end
+  if test_log == nil then
+    logfile:write("Cannot find ", exe, "\n")
+  else
+    test_log:write("Cannot find ", exe, "\n")
+  end
+  return exe
+end
+
+monotone_path = getpathof("mtn")
+
 function safe_mtn(...)
-  return {"mtn", "--norc", "--root=" .. test_root, unpack(arg)}
+  return {monotone_path, "--norc", "--root=" .. test_root, unpack(arg)}
 end
 
 -- function preexecute(x)
@@ -82,6 +116,7 @@ function netsync.setup()
   copyfile("test.db", "test3.db")
   copy_recursive("keys", "keys3")
   getstdfile("tests/netsync.lua", "netsync.lua")
+  math.randomseed(os.time())
 end
 
 function netsync.setup_with_notes()
@@ -90,11 +125,11 @@ function netsync.setup_with_notes()
 end
 
 function netsync.internal.client(srv, oper, pat, n, res)
-  if pat == "" or pat == nil then pat = "*" end
   if n == nil then n = 2 end
-  check(mtn("--rcfile=netsync.lua", "--keydir=keys"..n,
-            "--db=test"..n..".db", oper, srv.address, pat),
-        res, false, false)
+  args = {"--rcfile=netsync.lua", "--keydir=keys"..n,
+          "--db=test"..n..".db", oper, srv.address}
+  if pat ~= nil then table.insert(args, pat) end
+  check(mtn(unpack(args)), res, false, false)
 end
 function netsync.internal.pull(srv, pat, n, res) srv:client("pull", pat, n, res) end
 function netsync.internal.push(srv, pat, n, res) srv:client("push", pat, n, res) end
@@ -117,18 +152,32 @@ function netsync.start(pat, n, min)
     table.insert(args, "--db=test"..n..".db")
   end
   table.insert(args, "serve")
-  table.insert(args, pat)
-  local out = bg(fn(unpack(args)), false, false, false)
-  -- wait for "beginning service..."
-  while fsize(out.prefix .. "stderr") == 0 do
-    sleep(1)
+  if type(pat) == "string" then
+    table.insert(args, pat)
+  elseif type(pat) == "table" then
+    local function ins(i,x)
+      table.insert(args,x)
+    end
+    table.foreachi(pat, ins)
+  else
+    err("Bad pattern type "..type(pat))
   end
+  local out = bg(fn(unpack(args)), false, false, false)
   out.address = addr
   local mt = getmetatable(out)
   mt.client = netsync.internal.client
   mt.pull = netsync.internal.pull
   mt.push = netsync.internal.push
   mt.sync = netsync.internal.sync
+  local mt_wait = mt.wait
+  mt.check = function(obj) return not mt_wait(obj, 0) end
+  mt.wait = nil -- using this would hang; don't allow it
+  -- wait for "beginning service..."
+  while fsize(out.prefix .. "stderr") == 0 do
+    sleep(1)
+    check(out:check())
+  end
+  mt.stop = mt.finish
   return out
 end
 
@@ -170,8 +219,6 @@ function revert_to(rev, branch)
   end
   check(base_revision() == rev)
 end
-
-ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
 
 function canonicalize(filename)
   if ostype == "Windows" then
@@ -217,13 +264,42 @@ function check_same_db_contents(db1, db2)
   end
 end
 
--- maybe this one should go in tester.lua?
-function check_same_stdout(cmd1, cmd2)
+-- maybe these should go in tester.lua?
+function do_check_same_stdout(cmd1, cmd2)
   check(cmd1, 0, true, false)
   rename_over("stdout", "stdout-first")
   check(cmd2, 0, true, false)
   rename_over("stdout", "stdout-second")
   check(samefile("stdout-first", "stdout-second"))
+end
+function do_check_different_stdout(cmd1, cmd2)
+  check(cmd1, 0, true, false)
+  rename_over("stdout", "stdout-first")
+  check(cmd2, 0, true, false)
+  rename_over("stdout", "stdout-second")
+  check(not samefile("stdout-first", "stdout-second"))
+end
+function check_same_stdout(a, b, c)
+  if type(a) == "table" and type(b) == "table" then
+    return do_check_same_stdout(a, b)
+  elseif type(a) == "table" and type(b) == "function" and type(c) == "function" then
+    return do_check_same_stdout(b(unpack(a)), c(unpack(a)))
+  elseif type(a) == "table" and type(b) == "nil" and type(c) == "nil" then
+    return do_check_same_stdout(mtn(unpack(a)), mtn2(unpack(a)))
+  else
+    err("bad arguments ("..type(a)..", "..type(b)..", "..type(c)..") to check_same_stdout")
+  end
+end
+function check_different_stdout(a, b, c)
+  if type(a) == "table" and type(b) == "table" then
+    return do_check_different_stdout(a, b)
+  elseif type(a) == "table" and type(b) == "function" and type(c) == "function" then
+    return do_check_different_stdout(b(unpack(a)), c(unpack(a)))
+  elseif type(a) == "table" and type(b) == "nil" and type(c) == "nil" then
+    return do_check_different_stdout(mtn(unpack(a)), mtn2(unpack(a)))
+  else
+    err("bad arguments ("..type(a)..", "..type(b)..", "..type(c)..") to check_different_stdout")
+  end
 end
 
 function write_large_file(name, size)
@@ -385,3 +461,34 @@ table.insert(tests, "tests/files_with_intermediate__MTN_path_elements")
 table.insert(tests, "tests/(minor)_test_a_merge_3")
 table.insert(tests, "tests/(minor)_test_a_merge_4")
 table.insert(tests, "tests/db_missing")
+table.insert(tests, "tests/database_check")
+table.insert(tests, "tests/(minor)_add_own_db")
+table.insert(tests, "tests/can_execute_things")
+table.insert(tests, "tests/diff_a_binary_file")
+table.insert(tests, "tests/command_completion")
+table.insert(tests, "tests/merge_rename_file_and_rename_dir")
+table.insert(tests, "tests/diff_respects_restrictions")
+table.insert(tests, "tests/cat_-r_REV_PATH")
+table.insert(tests, "tests/netsync_client_absorbs_and_checks_epochs")
+table.insert(tests, "tests/netsync_server_absorbs_and_checks_epochs")
+table.insert(tests, "tests/netsync_epochs_are_not_sent_upstream_by_pull")
+table.insert(tests, "tests/vars")
+table.insert(tests, "tests/netsync_default_server_pattern")
+table.insert(tests, "tests/netsync_default_server_pattern_setting")
+table.insert(tests, "tests/netsync_client_absorbs_server_key")
+table.insert(tests, "tests/netsync_verifies_server_keys")
+table.insert(tests, "tests/test_a_merge_5")
+table.insert(tests, "tests/empty_id_completion")
+table.insert(tests, "tests/empty_string_as_a_path_name")
+table.insert(tests, "tests/empty_environment")
+table.insert(tests, "tests/short_options_work_correctly")
+table.insert(tests, "tests/netsync_is_not_interrupted_by_SIGPIPE")
+table.insert(tests, "tests/setup_creates__MTN_log")
+table.insert(tests, "tests/checkout_creates__MTN_log")
+table.insert(tests, "tests/commit_using__MTN_log")
+table.insert(tests, "tests/commit_w_o__MTN_log_being_present")
+table.insert(tests, "tests/commit_validation_lua_hook")
+table.insert(tests, "tests/drop_a_public_key")
+table.insert(tests, "tests/drop_a_public_and_private_key")
+table.insert(tests, "tests/rename_moves_attributes")
+table.insert(tests, "tests/automate_ancestors")

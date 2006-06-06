@@ -439,6 +439,7 @@ int main(int argc, char **argv)
 {
 //  global_sanity.set_debug();
   string testfile;
+  string firstdir;
   bool needhelp = false;
   for (int i = 1; i < argc; ++i)
     if (string(argv[i]) == "--help" || string(argv[i]) == "-h")
@@ -449,6 +450,7 @@ int main(int argc, char **argv)
       testfile = file.native_file_string();
       save_initial_path();
       source_dir = file.branch_path();
+      firstdir = fs::initial_path().native_file_string();
       run_dir = fs::initial_path() / "tester_dir";
       fs::create_directory(run_dir);
       go_to_workspace(run_dir.native_file_string());
@@ -491,6 +493,10 @@ int main(int argc, char **argv)
   lua_register(st, "restore_env", do_restore_env);
   lua_register(st, "set_env", do_set_env);
   lua_register(st, "timed_wait", timed_wait);
+  
+  lua_pushstring(st, "initial_dir");
+  lua_pushstring(st, firstdir.c_str());
+  lua_settable(st, LUA_GLOBALSINDEX);
 
   int ret = 2;
   try

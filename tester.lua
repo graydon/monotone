@@ -33,6 +33,7 @@ end
 
 function L(...)
   test_log:write(unpack(arg))
+  test_log:flush()
 end
 
 function getsrcline()
@@ -252,7 +253,7 @@ function runcmd(cmd, prefix, bgnd)
     end
   end
   if bgnd == true and type(cmd[1]) == "string" then local_redir = false end
-  L("runcmd: ", tostring(cmd[1]), ", local_redir = ", tostring(local_redir), ", requested = ", tostring(cmd.local_redirect), "\n")
+  L("\nruncmd: ", tostring(cmd[1]), ", local_redir = ", tostring(local_redir), ", requested = ", tostring(cmd.local_redirect))
   local redir
   if local_redir then
     files.stdin = io.open(prefix.."stdin")
@@ -366,8 +367,26 @@ function cat(...)
   return {docat, unpack(arg)}
 end
 
+function tail(...)
+  local function dotail(file, num)
+    if num == nil then num = 10 end
+    local mylines = {}
+    for l in io.lines(file) do
+      table.insert(mylines, l)
+      if table.getn(mylines) > num then
+        table.remove(mylines, 1)
+      end
+    end
+    for _,x in ipairs(mylines) do
+      files.stdout:write(x, "\n")
+    end
+    return 0
+  end
+  return {dotail, unpack(arg)}
+end
+
 function log_file_contents(filename)
-  L(readfile_q(filename))
+  L(readfile_q(filename), "\n")
 end
 
 function pre_cmd(stdin, ident)
@@ -444,7 +463,8 @@ function bg(torun, ret, stdout, stderr, stdin)
   out.prefix = "ts-" .. bgid .. "-"
   pre_cmd(stdin, out.prefix)
   L("Starting background command...")
-  local _,pid = runcmd(torun, out.prefix, true)
+  local ok,pid = runcmd(torun, out.prefix, true)
+  if not ok then err(pid, 2) end
   if pid == -1 then err("Failed to start background process\n", 2) end
   out.pid = pid
   bglist[bgid] = out
@@ -461,6 +481,9 @@ function bg(torun, ret, stdout, stderr, stdin)
                 if obj.retval ~= nil then return end
                 
                 if timeout == nil then timeout = 0 end
+                if type(timeout) ~= "number" then
+                  err("Bad timeout of type "..type(timeout))
+                end
                 local res
                 obj.retval, res = timed_wait(obj.pid, timeout)
                 if (res == -1) then
@@ -476,14 +499,25 @@ function bg(torun, ret, stdout, stderr, stdin)
                 L(locheader(), "checking background command from ", out.locstr,
                   table.concat(out.cmd, " "))
                 post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
+                return true
               end
-  mt.wait = function(obj)
+  mt.wait = function(obj, timeout)
               if obj.retval ~= nil then return end
-              obj.retval = wait(obj.pid)
+              if timeout == nil then
+                obj.retval = wait(obj.pid)
+              else
+                local res
+                obj.retval, res = timed_wait(obj.pid, timeout)
+                if res == -1 then
+                  obj.retval = nil
+                  return false
+                end
+              end
               table.remove(bglist, obj.id)
               L(locheader(), "checking background command from ", out.locstr,
                 table.concat(out.cmd, " "), "\n")
               post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
+              return true
             end
   return setmetatable(out, mt)
 end
@@ -606,7 +640,10 @@ function run_tests(args)
       end
     end
   end
-  if not list_only then P("Running tests...\n") end
+  if not list_only then
+    logfile:write("Running on ", get_ostype(), "\n\n")
+    P("Running tests...\n")
+  end
   local counts = {}
   counts.success = 0
   counts.skip = 0
