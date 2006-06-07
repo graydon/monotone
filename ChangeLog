@@ -3,6 +3,11 @@
 	* sqlite/*: Import SQLite 3.3.6.
 	* Makefile.am, configure.ac: Test for fdatasync and usleep.
 
+2006-06-07  Nathaniel Smith  <njs@pobox.com>
+
+	* netxx_pipe.cc (simple_pipe_test): Another test failure,
+	another klugey #ifdef...
+
 2006-06-07  Graydon Hoare  <graydon@pobox.com>
 
 	* netxx_pipe.cc (simple_pipe_test): Attempt to fix broken unit
