@@ -545,8 +545,12 @@ simple_pipe_test()
   probe.clear();
   probe.add(pipe, Netxx::Probe::ready_write);
   res = probe.ready(short_time);
-  I(res.second&Netxx::Probe::ready_write);
+  I(res.second & Netxx::Probe::ready_write);
+#ifdef WIN32
+  I(res.first==pipe.get_socketfd());
+#else
   I(res.first==pipe.get_writefd());
+#endif
 
   // try binary transparency
   for (int c = 0; c < 256; ++c)
