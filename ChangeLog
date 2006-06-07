@@ -1,5 +1,6 @@
 2006-06-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* Makefile.am: Add new SQLite sources.
 	* sqlite/*: Import SQLite 3.3.6.
 	* Makefile.am, configure.ac: Test for fdatasync and usleep.
 
