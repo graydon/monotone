@@ -21,6 +21,7 @@
 #include "boost/current_function.hpp"
 
 #include "i18n.h"
+#include "mt-stdint.h"
 #include "paths.hh"
 #include "quick_alloc.hh" // to get the QA() macro
 
@@ -117,10 +118,22 @@ protected:
   explicit format_base(std::string const & pattern);
   explicit format_base(char const * pattern, std::locale const & loc);
   explicit format_base(std::string const & pattern, std::locale const & loc);
-  std::ostream & get_stream();
-  void flush();
-
 public:
+  // It is a lie that these are const; but then, everything about this
+  // class is a lie.
+  std::ostream & get_stream() const;
+  void flush_stream() const;
+  void put_and_flush_signed(int64_t const & s) const;
+  void put_and_flush_signed(int32_t const & s) const;
+  void put_and_flush_signed(int16_t const & s) const;
+  void put_and_flush_signed(int8_t const & s) const;
+  void put_and_flush_unsigned(uint64_t const & u) const;
+  void put_and_flush_unsigned(uint32_t const & u) const;
+  void put_and_flush_unsigned(uint16_t const & u) const;
+  void put_and_flush_unsigned(uint8_t const & u) const;
+  void put_and_flush_float(float const & f) const;
+  void put_and_flush_double(double const & d) const;
+
   std::string str() const;
 };
 
@@ -139,21 +152,66 @@ plain_format
   explicit plain_format(std::string const & pattern)
     : format_base(pattern)
   {}
-
-  template<typename T> plain_format & operator %(T const & t)
-  {
-    get_stream() << t;
-    flush();
-    return *this;
-  }
-
-  template<typename T> plain_format & operator %(T & t)
-  {
-    get_stream() << t;
-    flush();
-    return *this;
-  }
 };
+
+template<typename T> inline plain_format const & 
+operator %(plain_format const & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline plain_format const & 
+operator %(const plain_format & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline plain_format & 
+operator %(plain_format & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline plain_format & 
+operator %(plain_format & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+#define SPECIALIZED_OP(format_ty, specialize_arg_ty, overload_arg_ty, s)  \
+template <> inline format_ty &                                            \
+operator %<specialize_arg_ty>(format_ty & f, overload_arg_ty & a)         \
+{                                                                         \
+  f.put_and_flush_ ## s (a);                                              \
+  return f;                                                               \
+}
+
+#define ALL_CONST_VARIANTS(fmt_ty, arg_ty, stem) \
+SPECIALIZED_OP(      fmt_ty, arg_ty,       arg_ty, stem) \
+SPECIALIZED_OP(      fmt_ty, arg_ty, const arg_ty, stem) \
+SPECIALIZED_OP(const fmt_ty, arg_ty,       arg_ty, stem) \
+SPECIALIZED_OP(const fmt_ty, arg_ty, const arg_ty, stem)
+
+ALL_CONST_VARIANTS(plain_format, int64_t, signed)
+ALL_CONST_VARIANTS(plain_format, int32_t, signed)
+ALL_CONST_VARIANTS(plain_format, int16_t, signed)
+ALL_CONST_VARIANTS(plain_format, int8_t, signed)
+
+ALL_CONST_VARIANTS(plain_format, uint64_t, unsigned)
+ALL_CONST_VARIANTS(plain_format, uint32_t, unsigned)
+ALL_CONST_VARIANTS(plain_format, uint16_t, unsigned)
+ALL_CONST_VARIANTS(plain_format, uint8_t, unsigned)
+
+ALL_CONST_VARIANTS(plain_format, float, float)
+ALL_CONST_VARIANTS(plain_format, double, double)
 
 
 struct
@@ -163,21 +221,55 @@ i18n_format
   i18n_format() {}
   explicit i18n_format(const char * localized_pattern);
   explicit i18n_format(std::string const & localized_pattern);
-
-  template <typename T> i18n_format & operator%(T const & t)
-  {
-    get_stream() << t;
-    flush();
-    return *this;
-  }
-
-  template <typename T> i18n_format & operator%(T & t)
-  {
-    get_stream() << t;
-    flush();
-    return *this;
-  }
 };
+
+template<typename T> inline i18n_format const & 
+operator %(i18n_format const & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline i18n_format const & 
+operator %(i18n_format const & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline i18n_format & 
+operator %(i18n_format & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline i18n_format & 
+operator %(i18n_format & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+ALL_CONST_VARIANTS(i18n_format, int64_t, signed)
+ALL_CONST_VARIANTS(i18n_format, int32_t, signed)
+ALL_CONST_VARIANTS(i18n_format, int16_t, signed)
+ALL_CONST_VARIANTS(i18n_format, int8_t, signed)
+
+ALL_CONST_VARIANTS(i18n_format, uint64_t, unsigned)
+ALL_CONST_VARIANTS(i18n_format, uint32_t, unsigned)
+ALL_CONST_VARIANTS(i18n_format, uint16_t, unsigned)
+ALL_CONST_VARIANTS(i18n_format, uint8_t, unsigned)
+
+ALL_CONST_VARIANTS(i18n_format, float, float)
+ALL_CONST_VARIANTS(i18n_format, double, double)
+
+#undef ALL_CONST_VARIANTS
+#undef SPECIALIZED_OP
 
 std::ostream & operator<<(std::ostream & os, format_base const & fmt);
 

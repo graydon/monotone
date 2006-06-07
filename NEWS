@@ -11,7 +11,7 @@
             e.g.:
               $ mtn -d db1.mtn sync file:/path/to/db2.mtn
           - SSH synchronization is enabled out of the box, e.g.:
-              $ mtn -d local.mtn sync ssh://njs@venge.net:/home/njs/remote.mtn
+              $ mtn -d local.mtn sync ssh://njs@venge.net/home/njs/remote.mtn
             Note that this requires mtn be installed on the remote
             computer, and locks the remote database while running; it
             is not ideal for groups accessing a shared database.
@@ -39,6 +39,10 @@
         - Bug in select() loop fixed, server should no longer pause in
           processing other clients while busy with one, but multiplex
           fairly.
+        - The database has a new write buffer which gives significant 
+          speed improvements in initial pulls by cancelling redundant 
+          database writes.
+        - There's been a fair bit of performance tuning all around.
 
         Bug fixes:
 
