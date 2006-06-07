@@ -12,6 +12,7 @@
 	* simplestring_xform.cc:
 	* txt2c.cc:
 	* xdelta.cc: add some more using std::* directives.
+	* boost/format/feed_args.hpp: std::streamsize might be signed
 
 2006-06-07  Matthew Gregan  <kinetik@orcon.net.nz>
 

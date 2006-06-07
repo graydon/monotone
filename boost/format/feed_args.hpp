@@ -156,7 +156,7 @@ namespace detail {
                     prefix_space = oss.widen(' ');
             size_type res_size = (std::min)(
                 static_cast<size_type>(specs.truncate_ - !!prefix_space), 
-                buf.pcount() );
+                static_cast<size_type>(std::max(0,buf.pcount())) );
 			if (res_size)
 	            mk_str(res, res_beg, res_size, w, oss.fill(), fl, 
 		               prefix_space, (specs.pad_scheme_ & format_item_t::centered) !=0 );
@@ -201,7 +201,7 @@ namespace detail {
                 // we now have the minimal-length output
                 const Ch * tmp_beg = buf.pbase();
                 size_type tmp_size = (std::min)(static_cast<size_type>(specs.truncate_),
-                                                buf.pcount() );
+                                                static_cast<size_type>(std::max(0,buf.pcount())) );
                                                     
                 
                 if(static_cast<size_type>(w) <= tmp_size) { 
