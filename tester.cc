@@ -18,6 +18,7 @@ extern "C" {
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
+#include <boost/filesystem/exception.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <map>
@@ -27,11 +28,6 @@ using std::string;
 using std::map;
 using std::make_pair;
 using boost::lexical_cast;
-
-#include <sys/types.h>
-#include <sys/stat.h>
-// for stat, to get mtime
-// maybe factor this out of inodeprint instead?
 
 namespace redirect
 {
@@ -321,19 +317,12 @@ extern "C"
   mtime(lua_State *L)
   {
     char const * file = luaL_checkstring(L, -1);
-#ifdef WIN32
-    struct _stat st;
-    int r = _stat(file, &st);
-#else
-    struct stat st;
-    int r = stat(file, &st);
-#endif
-    if (r != 0)
-      {
-        lua_pushnil(L);
-        return 1;
-      }
-    lua_pushnumber(L, st.st_mtime);
+    fs::path fn(file);
+    std::time_t t = fs::last_write_time(file);
+    if (t == std::time_t(-1))
+      lua_pushnil(L);
+    else
+      lua_pushnumber(L, t);
     return 1;
   }
 
@@ -341,8 +330,16 @@ extern "C"
   exists(lua_State *L)
   {
     char const * name = luaL_checkstring(L, -1);
-    fs::path p(name, fs::native);
-    lua_pushboolean(L, fs::exists(p));
+    fs::path p;
+    try
+      {
+        p = fs::path(name, fs::native);
+        lua_pushboolean(L, fs::exists(p));
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushnil(L);
+      }
     return 1;
   }
 
@@ -446,10 +443,19 @@ int main(int argc, char **argv)
       needhelp = true;
   if (argc > 1 && !needhelp)
     {
-      fs::path file = fs::complete(fs::path(argv[1], fs::native));
-      testfile = file.native_file_string();
       save_initial_path();
-      source_dir = file.branch_path();
+      try
+        {
+          std::string name = argv[1];
+          fs::path file = fs::complete(fs::path(name, fs::native));
+          testfile = file.native_file_string();
+          source_dir = file.branch_path();
+        }
+      catch(fs::filesystem_error & e)
+        {
+          fprintf(stderr, "Error during initialization: %s", e.what());
+          exit(1);
+        }
       firstdir = fs::initial_path().native_file_string();
       run_dir = fs::initial_path() / "tester_dir";
       fs::create_directory(run_dir);
@@ -518,6 +524,7 @@ int main(int argc, char **argv)
     }
   catch (std::exception &e)
     {
+      fprintf(stderr, "Error: %s", e.what());
     }
 
   lua_close(st);
