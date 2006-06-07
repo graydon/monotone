@@ -7,6 +7,7 @@ using std::cout;
 using std::endl;
 using std::ifstream;
 using std::string;
+using std::exit;
 
 int main(int argc, char **argv)
 {

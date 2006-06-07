@@ -1,3 +1,18 @@
+2006-06-07  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cert.cc:
+	* charset.cc:
+	* commands.cc:
+	* keys.cc:
+	* lua.cc:
+	* netsync.cc:
+	* netxx_pipe.cc:
+	* rcs_import.cc:
+	* schema_migration.cc:
+	* simplestring_xform.cc:
+	* txt2c.cc:
+	* xdelta.cc: add some more using std::* directives.
+
 2006-06-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* Makefile.am: Add new SQLite sources.

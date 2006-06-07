@@ -23,6 +23,13 @@
 #include <errno.h>
 #endif
 
+using std::vector;
+using std::string;
+using std::make_pair;
+using std::exit;
+using std::perror;
+using std::strerror;
+
 Netxx::PipeStream::PipeStream(int _readfd, int _writefd)
     :
 #ifdef WIN32
@@ -118,20 +125,20 @@ pipe_and_fork(int fd1[2], int fd2[2])
 #endif
 
 #ifdef WIN32
-static std::string
+static string
 err_msg()
 {
   char buf[1024];
   I(FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
                   NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                   (LPSTR) &buf, sizeof(buf) / sizeof(TCHAR), NULL) != 0);
-  return std::string(buf);
+  return string(buf);
 }
 #endif
 
 
-Netxx::PipeStream::PipeStream (const std::string & cmd,
-                               const std::vector<std::string> & args)
+Netxx::PipeStream::PipeStream (const string & cmd,
+                               const vector<string> & args)
   :
 #ifdef WIN32
   child(INVALID_HANDLE_VALUE),
@@ -152,7 +159,7 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
 
   unsigned newargc = 0;
   newargv[newargc++]=cmd.c_str();
-  for (std::vector<std::string>::const_iterator i = args.begin();
+  for (vector<string>::const_iterator i = args.begin();
        i != args.end(); ++i)
     newargv[newargc++] = i->c_str();
   newargv[newargc] = 0;
@@ -163,7 +170,7 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
   // pipes and overlapped i/o. There is no other way, alas.
 
   static unsigned long serial = 0;
-  std::string pipename = (F("\\\\.\\pipe\\netxx_pipe_%ld_%d")
+  string pipename = (F("\\\\.\\pipe\\netxx_pipe_%ld_%d")
                           % GetCurrentProcessId()
                           % (++serial)).str();
 
@@ -213,7 +220,7 @@ Netxx::PipeStream::PipeStream (const std::string & cmd,
   siStartInfo.hStdInput = hpipe;
   siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-  std::string cmdline = munge_argv_into_cmdline(newargv);
+  string cmdline = munge_argv_into_cmdline(newargv);
   L(FL("Subprocess command line: '%s'") % cmdline);
 
   BOOL started = CreateProcess(NULL, // Application name
@@ -345,7 +352,7 @@ Netxx::PipeStream::get_probe_info (void) const
 
 #ifdef WIN32
 
-static std::string
+static string
 status_name(DWORD wstatus)
 {
   switch (wstatus) {
@@ -370,7 +377,7 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
 
   if (rt & ready_write)
     {
-      return std::make_pair(pipe->get_socketfd(), ready_write);
+      return make_pair(pipe->get_socketfd(), ready_write);
     }
 
   if (rt & ready_read)
@@ -419,7 +426,7 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
                 F("WaitForMultipleObjects call failed: %s") % err_msg());
 
               if (wstatus == WAIT_OBJECT_0 + 1)
-                return std::make_pair(pipe->get_socketfd(), ready_oobd);
+                return make_pair(pipe->get_socketfd(), ready_oobd);
             }
           else
             {
@@ -430,7 +437,7 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
             }
 
           if (wstatus == WAIT_TIMEOUT)
-            return std::make_pair(-1, ready_none);
+            return make_pair(-1, ready_none);
 
           BOOL ok = GetOverlappedResult(pipe->named_pipe,
                                         &pipe->overlap,
@@ -453,11 +460,11 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
 
       if (pipe->bytes_available != 0)
         {
-          return std::make_pair(pipe->get_socketfd(), ready_read);
+          return make_pair(pipe->get_socketfd(), ready_read);
         }
     }
 
-  return std::make_pair(pipe->get_socketfd(), ready_none);
+  return make_pair(pipe->get_socketfd(), ready_none);
 }
 
 void
@@ -529,9 +536,9 @@ static void
 simple_pipe_test()
 { try
   {
-  Netxx::PipeStream pipe("cat",std::vector<std::string>());
+  Netxx::PipeStream pipe("cat",vector<string>());
 
-  std::string result;
+  string result;
   Netxx::PipeCompatibleProbe probe;
   Netxx::Timeout timeout(2L), short_time(0,1000);
 
@@ -560,7 +567,7 @@ simple_pipe_test()
       buf[1] = 255 - c;
       pipe.write(buf, 2);
 
-      std::string result;
+      string result;
       while (result.size() < 2)
         { // wait for data to arrive
           probe.clear();
@@ -573,7 +580,7 @@ simple_pipe_test()
           I(res.first == pipe.get_readfd());
 #endif
           int bytes = pipe.read(buf, sizeof(buf));
-          result += std::string(buf, bytes);
+          result += string(buf, bytes);
         }
       I(result.size() == 2);
       I(static_cast<unsigned char>(result[0]) == c);

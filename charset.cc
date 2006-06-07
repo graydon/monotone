@@ -21,6 +21,7 @@
 
 using std::string;
 using std::vector;
+using std::free;
 
 using boost::char_separator;
 

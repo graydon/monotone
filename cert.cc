@@ -39,6 +39,7 @@ using std::pair;
 using std::set;
 using std::string;
 using std::vector;
+using std::remove_if;
 
 using boost::shared_ptr;
 using boost::get;

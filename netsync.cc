@@ -9,6 +9,7 @@
 
 #include <map>
 #include <string>
+#include <cstdlib>
 #include <memory>
 #include <list>
 #include <deque>
@@ -2680,7 +2681,7 @@ serve_connections(protocol_role role,
     instant(0,1);
 
   if (!app.bind_port().empty())
-    default_port = ::atoi(app.bind_port().c_str());
+    default_port = std::atoi(app.bind_port().c_str());
 #ifdef USE_IPV6
   bool use_ipv6=true;
 #else
