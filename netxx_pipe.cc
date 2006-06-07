@@ -567,7 +567,11 @@ simple_pipe_test()
           probe.add(pipe, Netxx::Probe::ready_read);
           res = probe.ready(timeout);
           E(res.second & Netxx::Probe::ready_read, F("timeout reading data %d") % c);
+#ifdef WIN32
+          I(res.first == pipe.get_socketfd());
+#else
           I(res.first == pipe.get_readfd());
+#endif
           int bytes = pipe.read(buf, sizeof(buf));
           result += std::string(buf, bytes);
         }
