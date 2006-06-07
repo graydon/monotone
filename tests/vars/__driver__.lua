@@ -15,6 +15,9 @@ writefile("domain1_vars", "domain1: key1 overwritten_value\n"..
 writefile("domain2_vars", "domain2: key1 other_domain_value\n")
 check(cat("domain1_vars", "domain2_vars"), 0, true)
 rename("stdout", "all_vars")
+canonicalize("domain1_vars")
+canonicalize("domain2_vars")
+canonicalize("all_vars")
 
 check(mtn("ls", "vars"), 0, true, false)
 canonicalize("stdout")

@@ -14,6 +14,7 @@ for i = 1,4 do
 end
 table.sort(revs)
 for _,x in ipairs(revs) do append("wanted_heads", x.."\n") end
+canonicalize("wanted_heads")
 
 
 check(mtn("automate", "heads", "testbranch"), 0, true, false)

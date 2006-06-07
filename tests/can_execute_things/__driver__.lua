@@ -2,6 +2,9 @@
 if existsonpath("cp") then
   getfile("nix-cphook.lua", "cphook.lua")
 elseif existsonpath("xcopy") then
+  -- This actually copies it to testfile.copied/testfile,
+  -- but that still makes testfile.copied exists. So it's
+  -- not exactly the same as the other hook, but it works.
   getfile("win-cphook.lua", "cphook.lua")
 else
   skip_if(true)
