@@ -229,6 +229,12 @@ function getfile(name, as)
   getstdfile(testname .. "/" .. name, as)
 end
 
+function runstdfile(name)
+  local func, e = loadfile(srcdir.."/"..name)
+  if func == nil then err(e, 2) end
+  func()
+end
+
 function trim(str)
   return string.gsub(str, "^%s*(.-)%s*$", "%1")
 end
@@ -385,21 +391,45 @@ function tail(...)
   return {dotail, unpack(arg)}
 end
 
+function sort(...)
+  local function dosort(file)
+    local infile
+    if file == nil then
+      infile = files.stdin
+    else
+      infile = io.open(file)
+    end
+    local lines = {}
+    for l in infile:lines() do
+      table.insert(lines, l)
+    end
+    if file ~= nil then infile:close() end
+    table.sort(lines)
+    for _,l in ipairs(lines) do
+      files.stdout:write(l, "\n")
+    end
+    return 0
+  end
+  return {dosort, unpack(arg)}
+end
+
 function log_file_contents(filename)
   L(readfile_q(filename), "\n")
 end
 
 function pre_cmd(stdin, ident)
   if ident == nil then ident = "ts-" end
-  if stdin ~= true then
-    local infile = io.open("stdin", "w")
+  if stdin == true then
+    copyfile("stdin", ident .. "stdin")
+  elseif type(stdin) == "table" then
+    copyfile(stdin[1], ident .. "stdin")
+  else
+    local infile = io.open(ident .. "stdin", "w")
     if stdin ~= nil and stdin ~= false then
       infile:write(stdin)
     end
     infile:close()
   end
-  os.remove(ident .. "stdin")
-  os.rename("stdin", ident .. "stdin")
   L("stdin:\n")
   log_file_contents(ident .. "stdin")
 end
@@ -425,6 +455,10 @@ function post_cmd(result, ret, stdout, stderr, ident)
     if contents ~= stdout then
       err("Check failed (stdout): doesn't match", 3)
     end
+  elseif type(stdout) == "table" then
+    if not samefile(ident .. "stdout", stdout[1]) then
+      err("Check failed (stdout): doesn't match", 3)
+    end
   elseif stdout == true then
     os.remove("stdout")
     os.rename(ident .. "stdout", "stdout")
@@ -441,6 +475,10 @@ function post_cmd(result, ret, stdout, stderr, ident)
     if contents ~= stderr then
       err("Check failed (stderr): doesn't match", 3)
     end
+  elseif type(stderr) == "table" then
+    if not samefile(ident .. "stderr", stderr[1]) then
+      err("Check failed (stderr): doesn't match", 3)
+    end
   elseif stderr == true then
     os.remove("stderr")
     os.rename(ident .. "stderr", "stderr")
@@ -452,10 +490,12 @@ end
 --   * true: ignore, copy to stdout
 --   * string: check that it matches the contents
 --   * nil: must be empty
+--   * {string}: check that it matches the named file
 -- stdin can be:
 --   * true: use existing "stdin" file
 --   * nil, false: empty input
 --   * string: contents of string
+--   * {string}: contents of the named file
 
 function bg(torun, ret, stdout, stderr, stdin)
   bgid = bgid + 1
