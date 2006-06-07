@@ -21,7 +21,11 @@ function getpathof(exe)
   local now = initial_dir.."/"..exe
   if exists(now) then return gotit(now) end
   for x in string.gfind(path, "[^"..char.."]*"..char) do
-    local now = string.sub(x, 0, -2).."/"..exe
+    local dir = string.sub(x, 0, -2)
+    if string.find(dir, "[\\/]$") then
+      dir = string.sub(dir, 0, -2)
+    end
+    local now = dir.."/"..exe
     if exists(now) then return gotit(now) end
   end
   if test_log == nil then
