@@ -1,3 +1,7 @@
+2006-06-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* visualc/sqlite3.vcproj: Let SQLite build find our config.h.
+
 2006-06-08  Matt Johnston  <matt@ucc.asn.au>
 
 	* boost/format/feed_args.hpp: 0 needs to be unsigned.

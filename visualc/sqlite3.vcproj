@@ -39,7 +39,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)\..\visualc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;SQLITE_OMIT_CURSOR"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
