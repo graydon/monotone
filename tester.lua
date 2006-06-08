@@ -1,29 +1,39 @@
-tests = {}
-srcdir = get_source_dir()
-debugging = false
+tests = {} -- list of all tests, not visible when running tests
+test = {} -- table of per-test values
 
-test_root = nil
-testname = nil
-wanted_fail = false
-partial_skip = false -- set this to true if you skip part of the test
+
+-- misc global values
+srcdir = get_source_dir()
+debugging = false -- was the -d switch given?
+
+-- combined logfile
+logfile = io.open("tester.log", "w")
+-- logfiles of failed tests; append these to the main logfile
+failed_testlogs = {}
 
 -- This is for redirected output from local implementations
 -- of shellutils type stuff (ie, grep).
 -- Reason: {set,clear}_redirect don't seem to (always?) work
 -- for this (at least on Windows).
-files = {}
-files.stdout = nil
-files.stdin = nil
-files.stderr = nil
+files = {stdout = nil, stdin = nil, stderr = nil}
 
-errfile = ""
-errline = -1
 
-logfile = io.open("tester.log", "w") -- combined logfile
-test_log = nil -- logfile for this test
-failed_testlogs = {}
-bgid = 0
-bglist = {}
+-- misc per-test values
+test.root = nil
+test.name = nil
+test.wanted_fail = false
+test.partial_skip = false -- set this to true if you skip part of the test
+
+--probably should put these in the error that gets thrown...
+test.errfile = ""
+test.errline = -1
+
+-- for tracking background processes
+test.bgid = 0
+test.bglist = {}
+
+test.log = nil -- logfile for this test
+
 
 function P(...)
   io.write(unpack(arg))
@@ -32,8 +42,8 @@ function P(...)
 end
 
 function L(...)
-  test_log:write(unpack(arg))
-  test_log:flush()
+  test.log:write(unpack(arg))
+  test.log:flush()
 end
 
 function getsrcline()
@@ -48,7 +58,7 @@ function getsrcline()
     info = debug.getinfo(depth)
     if string.find(info.source, "^@.*__driver__%.lua") then
       -- return info.source, info.currentline
-      return testname, info.currentline
+      return test.name, info.currentline
     end
   end
 end
@@ -56,16 +66,16 @@ end
 function locheader()
   local _,line = getsrcline()
   if line == nil then line = -1 end
-  if testname == nil then
+  if test.name == nil then
     return "\n<unknown>:" .. line .. ": "
   else
-    return "\n" .. testname .. ":" .. line .. ": "
+    return "\n" .. test.name .. ":" .. line .. ": "
   end
 end
 
 function err(what, level)
   if level == nil then level = 2 end
-  errfile,errline = getsrcline()
+  test.errfile, test.errline = getsrcline()
   local e
   if type(what) == "table" then
     e = what
@@ -226,12 +236,13 @@ end
 
 function getfile(name, as)
   if as == nil then as = name end
-  getstdfile(testname .. "/" .. name, as)
+  getstdfile(test.name .. "/" .. name, as)
 end
 
 function runstdfile(name)
   local func, e = loadfile(srcdir.."/"..name)
   if func == nil then err(e, 2) end
+  setfenv(func, getfenv(2))
   func()
 end
 
@@ -320,6 +331,42 @@ function samefile(left, right)
     end
   end
   return ldat == rdat
+end
+
+function samelines(f, t)
+  local fl = {}
+  for l in io.lines(f) do table.insert(fl, l) end
+  if not table.getn(fl) == table.getn(t) then
+    L(locheader(), string.format("file has %s lines; table has %s\n",
+                                 table.getn(fl), table.getn(t)))
+    return false
+  end
+  for i=1,table.getn(t) do
+    if fl[i] ~= t[i] then
+      L(locheader(), string.format("file[i] = '%s'; table[i] = '%s'\n",
+                                   fl[i], t[i]))
+      return false
+    end
+  end
+  return true
+end
+
+function greplines(f, t)
+  local fl = {}
+  for l in io.lines(f) do table.insert(fl, l) end
+  if not table.getn(fl) == table.getn(t) then
+    L(locheader(), string.format("file has %s lines; table has %s\n",
+                                 table.getn(fl), table.getn(t)))
+    return false
+  end
+  for i=1,table.getn(t) do
+    if not regex.search(t[i], fl[i]) then
+      L(locheader(), string.format("file[i] = '%s'; table[i] = '%s'\n",
+                                   fl[i], t[i]))
+      return false
+    end
+  end
+  return true
 end
 
 function grep(...)
@@ -498,16 +545,16 @@ end
 --   * {string}: contents of the named file
 
 function bg(torun, ret, stdout, stderr, stdin)
-  bgid = bgid + 1
+  test.bgid = test.bgid + 1
   local out = {}
-  out.prefix = "ts-" .. bgid .. "-"
+  out.prefix = "ts-" .. test.bgid .. "-"
   pre_cmd(stdin, out.prefix)
   L("Starting background command...")
   local ok,pid = runcmd(torun, out.prefix, true)
   if not ok then err(pid, 2) end
   if pid == -1 then err("Failed to start background process\n", 2) end
   out.pid = pid
-  bglist[bgid] = out
+  test.bglist[test.bgid] = out
   out.id = bgid
   out.retval = nil
   out.locstr = locheader()
@@ -535,7 +582,7 @@ function bg(torun, ret, stdout, stderr, stdin)
                   end
                 end
                 
-                table.remove(bglist, obj.id)
+                table.remove(test.bglist, obj.id)
                 L(locheader(), "checking background command from ", out.locstr,
                   table.concat(out.cmd, " "))
                 post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
@@ -553,7 +600,7 @@ function bg(torun, ret, stdout, stderr, stdin)
                   return false
                 end
               end
-              table.remove(bglist, obj.id)
+              table.remove(test.bglist, obj.id)
               L(locheader(), "checking background command from ", out.locstr,
                 table.concat(out.cmd, " "), "\n")
               post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
@@ -621,7 +668,7 @@ function xfail_if(chk, ...)
     if chk then err(false, 2) else err(err, 2) end
   else
     if chk then
-      wanted_fail = true
+      test.wanted_fail = true
       L("UNEXPECTED SUCCESS\n")
     end
   end
@@ -629,13 +676,13 @@ end
 
 function log_error(e)
   if type(e) == "table" then
-    test_log:write("\n", tostring(e.e), "\n")
+    L("\n", tostring(e.e), "\n")
     for i,bt in ipairs(e.bt) do
-      if i ~= 1 then test_log:write("Rethrown from:") end
-      test_log:write(bt)
+      if i ~= 1 then L("Rethrown from:") end
+      L(bt)
     end
   else
-    test_log:write("\n", tostring(e), "\n")
+    L("\n", tostring(e), "\n")
   end
 end
 
@@ -693,14 +740,27 @@ function run_tests(args)
   counts.total = 0
 
   local function runtest(i, tname)
-    bgid = 0
-    testname = tname
-    wanted_fail = false
-    partial_skip = false
+    local env = {}
+    local genv = getfenv(0)
+    for x,y in pairs(genv) do
+      env[x] = y
+      -- we want changes to globals in a test to be visible to
+      -- already-defined functions
+      if type(y) == "function" then
+        pcall(setfenv, y, env)
+      end
+    end
+    env.tests = nil -- don't let them mess with this
+    
+    test.bgid = 0
+    test.name = tname
+    test.wanted_fail = false
+    test.partial_skip = false
     local shortname = nil
-    test_root, shortname = go_to_test_dir(testname)
-    errfile = ""
-    errline = -1
+    test.root, shortname = go_to_test_dir(tname)
+    test.errfile = ""
+    test.errline = -1
+    test.bglist = {}
     
     if i < 100 then P(" ") end
     if i < 10 then P(" ") end
@@ -709,38 +769,47 @@ function run_tests(args)
     local spaces = string.rep(" ", 50)
     if spacelen > 0 then P(string.sub(spaces, 1, spacelen)) end
 
-    local tlog = test_root .. "/tester.log"
-    test_log = io.open(tlog, "w")
+    local tlog = test.root .. "/tester.log"
+    test.log = io.open(tlog, "w")
     L("Test number ", i, ", ", shortname, "\n")
 
-    local driverfile = srcdir .. "/" .. testname .. "/__driver__.lua"
+    local driverfile = srcdir .. "/" .. test.name .. "/__driver__.lua"
     local driver, e = loadfile(driverfile)
     local r
     if driver == nil then
       r = false
       e = "Could not load driver file " .. driverfile .. " .\n" .. e
     else
-      bglist = {}
+      setfenv(driver, env)
       r,e = xpcall(driver, debug.traceback)
-      for i,b in pairs(bglist) do
+      for i,b in pairs(test.bglist) do
         b:finish(0)
       end
       restore_env()
     end
+    
+    -- set our functions back to the proper environment
+    local genv = getfenv(0)
+    for x,y in pairs(genv) do
+      if type(y) == "function" then
+        pcall(setfenv, y, genv)
+      end
+    end
+    
     if r then
-      if wanted_fail then
+      if test.wanted_fail then
         P("unexpected success\n")
-        test_log:close()
+        test.log:close()
         leave_test_dir()
         counts.noxfail = counts.noxfail + 1
       else
-        if partial_skip then
+        if test.partial_skip then
           P("partial skip\n")
         else
           P("ok\n")
         end
-        test_log:close()
-        if not debugging then clean_test_dir(testname) end
+        test.log:close()
+        if not debugging then clean_test_dir(tname) end
         counts.success = counts.success + 1
       end
     else
@@ -749,20 +818,20 @@ function run_tests(args)
         e = tbl
       end
       if e.e == true then
-        P(string.format("skipped (line %i)\n", errline))
-        test_log:close()
+        P(string.format("skipped (line %i)\n", test.errline))
+        test.log:close()
         if not debugging then clean_test_dir(testname) end
         counts.skip = counts.skip + 1
       elseif e.e == false then
-        P(string.format("expected failure (line %i)\n", errline))
-        test_log:close()
+        P(string.format("expected failure (line %i)\n", test.errline))
+        test.log:close()
         leave_test_dir()
         counts.xfail = counts.xfail + 1
       else
-        P(string.format("FAIL (line %i)\n", errline))
+        P(string.format("FAIL (line %i)\n", test.errline))
         log_error(e)
         table.insert(failed_testlogs, tlog)
-        test_log:close()
+        test.log:close()
         leave_test_dir()
         counts.fail = counts.fail + 1
       end

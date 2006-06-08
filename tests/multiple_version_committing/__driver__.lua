@@ -9,7 +9,7 @@ fsha = {}
 rsha = {}
 
 for i = 1, 6 do
-  test_log:write(string.format("generating version %i of the file\n", i))
+  L(string.format("generating version %i of the file\n", i))
   writefile("testfile", string.format("version %i of the file\n", i))
   commit()
   fsha[i] = sha1("testfile")
@@ -17,7 +17,7 @@ for i = 1, 6 do
 end
 
 for i = 1, 6 do
-  test_log:write(string.format("checking version %i of the file\n", i))
+  L(string.format("checking version %i of the file\n", i))
   writefile("testfile", string.format("version %i of the file\n", i))
   check(mtn("automate", "get_file", fsha[i]), 0, true)
   canonicalize("stdout")

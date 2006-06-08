@@ -608,17 +608,6 @@ rm -f largish.tmp
 
 # include all the sub-tests we're going to use
 
-m4_include(tests/t_replace_dir_with_file.at)
-m4_include(tests/t_parents_children.at)
-m4_include(tests/t_automate_graph.at)
-m4_include(tests/t_i18n_file_data.at)
-m4_include(tests/t_cvsimport_manifest_cycle.at)
-m4_include(tests/t_select_cert.at)
-m4_include(tests/t_automate_select.at)
-m4_include(tests/t_refresh_inodeprints.at)
-m4_include(tests/t_merge_6.at)
-m4_include(tests/t_annotate.at)
-m4_include(tests/t_annotate_add_collision.at)
 m4_include(tests/t_annotate_branch_collision.at)
 m4_include(tests/t_netsync_error.at)
 m4_include(tests/t_options.at)

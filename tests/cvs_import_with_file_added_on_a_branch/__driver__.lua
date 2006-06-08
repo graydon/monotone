@@ -7,7 +7,7 @@ mtn_setup()
 -- file on mainline, followed by an add of the file on the branch).
 -- Make sure we handle it correct.
 
-cvsroot = test_root.."/cvsroot"
+cvsroot = test.root.."/cvsroot"
 function cvs(...)
   return {"cvs", "-d", cvsroot, unpack(arg)}
 end

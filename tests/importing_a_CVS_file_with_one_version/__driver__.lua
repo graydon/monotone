@@ -8,7 +8,7 @@ tsha = sha1("importme.0")
 
 -- build the cvs repository
 
-cvsroot = test_root .. "/cvs-repository"
+cvsroot = test.root .. "/cvs-repository"
 
 function cvs(...)
   return {"cvs", "-d", cvsroot, unpack(arg)}

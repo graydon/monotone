@@ -4,34 +4,36 @@ ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
 
 function getpathof(exe)
   local function gotit(now)
-    if test_log == nil then
+    if test.log == nil then
       logfile:write(exe, " found at ", now, "\n")
     else
-      test_log:write(exe, " found at ", now, "\n")
+      test.log:write(exe, " found at ", now, "\n")
     end
     return now
   end
   local path = os.getenv("PATH")
-  local char
+  local char, ext
   if ostype == "Windows" then
     char = ';'
+    ext = ".exe"
   else
     char = ':'
+    ext = ""
   end
-  local now = initial_dir.."/"..exe..".exe"
+  local now = initial_dir.."/"..exe..ext
   if exists(now) then return gotit(now) end
   for x in string.gfind(path, "[^"..char.."]*"..char) do
     local dir = string.sub(x, 0, -2)
     if string.find(dir, "[\\/]$") then
       dir = string.sub(dir, 0, -2)
     end
-    local now = dir.."/"..exe..".exe"
+    local now = dir.."/"..exe..ext
     if exists(now) then return gotit(now) end
   end
-  if test_log == nil then
+  if test.log == nil then
     logfile:write("Cannot find ", exe, "\n")
   else
-    test_log:write("Cannot find ", exe, "\n")
+    test.log:write("Cannot find ", exe, "\n")
   end
   return exe
 end
@@ -39,7 +41,7 @@ end
 monotone_path = getpathof("mtn")
 
 function safe_mtn(...)
-  return {monotone_path, "--norc", "--root=" .. test_root, unpack(arg)}
+  return {monotone_path, "--norc", "--root=" .. test.root, unpack(arg)}
 end
 
 -- function preexecute(x)
@@ -55,16 +57,16 @@ function raw_mtn(...)
 end
 
 function mtn(...)
-  return raw_mtn("--rcfile", test_root .. "/test_hooks.lua",
-         "--nostd", "--db=" .. test_root .. "/test.db",
-         "--keydir", test_root .. "/keys",
+  return raw_mtn("--rcfile", test.root .. "/test_hooks.lua",
+         "--nostd", "--db=" .. test.root .. "/test.db",
+         "--keydir", test.root .. "/keys",
          "--key=tester@test.net", unpack(arg))
 end
 
 function minhooks_mtn(...)
-  return raw_mtn("--db=" .. test_root .. "/test.db",
-                 "--keydir", test_root .. "/keys",
-                 "--rcfile", test_root .. "/min_hooks.lua",
+  return raw_mtn("--db=" .. test.root .. "/test.db",
+                 "--keydir", test.root .. "/keys",
+                 "--rcfile", test.root .. "/min_hooks.lua",
                  "--key=tester@test.net", unpack(arg))
 end
 
@@ -540,3 +542,15 @@ table.insert(tests, "tests/normalized_filenames")
 table.insert(tests, "tests/workspace_inventory")
 table.insert(tests, "tests/rename_file_to_dir")
 table.insert(tests, "tests/replace_file_with_dir")
+table.insert(tests, "tests/replace_dir_with_file")
+table.insert(tests, "tests/automate_parents,_automate_children")
+table.insert(tests, "tests/automate_graph")
+table.insert(tests, "tests/files_with_non-utf8_data")
+table.insert(tests, "tests/cvs_import,_file_dead_on_head_and_branch")
+table.insert(tests, "tests/selecting_arbitrary_certs")
+table.insert(tests, "tests/check_automate_select")
+table.insert(tests, "tests/refresh_inodeprints")
+table.insert(tests, "tests/test_a_merge_6")
+table.insert(tests, "tests/test_annotate_command")
+table.insert(tests, "tests/annotate_file_added_on_different_forks")
+table.insert(tests, "tests/annotate_file_on_multirooted_branch")

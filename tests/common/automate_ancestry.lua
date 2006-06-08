@@ -37,12 +37,6 @@ end
 function revmap(name, from, to, dosort)
   if dosort == nil then dosort = true end
   check(mtn("automate", name, unpack(from)), 0, true, false)
-  canonicalize("stdout")
   if dosort then table.sort(to) end
-  if to[1] == nil then
-    writefile("tmp", "")
-  else
-    writefile("tmp", table.concat(to, "\n").."\n")
-  end
-  check(samefile("tmp", "stdout"))
+  check(samelines("stdout", to))
 end
