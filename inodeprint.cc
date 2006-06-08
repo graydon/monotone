@@ -19,61 +19,83 @@
 #include "sanity.hh"
 #include "platform.hh"
 #include "constants.hh"
+#include "basic_io.hh"
 
 using std::ostream;
 using std::ostringstream;
 using std::string;
 
 // this file defines the inodeprint_map structure, and some operations on it.
-// it is currently heavily based on the old manifest.cc.
 
+namespace
+{
+  namespace syms
+  {
+    // roster symbols
+    symbol const format_version("format_version");
+    symbol const file("file");
+    symbol const print("print");
+  }
+}
 // reading inodeprint_maps
 
 void
 read_inodeprint_map(data const & dat,
                     inodeprint_map & ipm)
 {
-  string::size_type pos = 0;
-  while (pos != dat().size())
+  // don't bomb out if it's just an old-style inodeprints file
+  string start = dat().substr(0, syms::format_version().size());
+  if (start != syms::format_version())
     {
-      // whenever we get here, pos points to the beginning of a inodeprint
-      // line
-      // inodeprint file has 40 characters hash, then 2 characters space, then
-      // everything until next \n is filename.
-      string ident = dat().substr(pos, constants::idlen);
-      string::size_type file_name_begin = pos + constants::idlen + 2;
-      pos = dat().find('\n', file_name_begin);
-      string file_name;
-      if (pos == string::npos)
-        file_name = dat().substr(file_name_begin);
-      else
-        file_name = dat().substr(file_name_begin, pos - file_name_begin);
-      ipm.insert(inodeprint_entry(file_path_internal(file_name),
-                                  hexenc<inodeprint>(ident)));
-      // skip past the '\n'
-      ++pos;
+      L(FL("inodeprints file format is wrong, skipping it"));
+      return;
     }
-  return;
+  
+  basic_io::input_source src(dat(), "inodeprint");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pa(tok);
+
+  {
+    pa.esym(syms::format_version);
+    string vers;
+    pa.str(vers);
+    I(vers == "1");
+  }
+
+  while(pa.symp())
+    {
+      string path, print;
+
+      pa.esym(syms::file);
+      pa.str(path);
+      pa.esym(syms::print);
+      pa.hex(print);
+
+      ipm.insert(inodeprint_entry(file_path_internal(path),
+                                  hexenc<inodeprint>(print)));
+    }
+  I(src.lookahead == EOF);
 }
-
-// writing inodeprint_maps
-
-ostream &
-operator<<(ostream & out, inodeprint_entry const & e)
-{
-  return (out << e.second << "  " << e.first << "\n");
-}
-
 
 void
 write_inodeprint_map(inodeprint_map const & ipm,
                      data & dat)
 {
-  ostringstream sstr;
+  basic_io::printer pr;
+  {
+    basic_io::stanza st;
+    st.push_str_pair(syms::format_version, "1");
+    pr.print_stanza(st);
+  }
   for (inodeprint_map::const_iterator i = ipm.begin();
        i != ipm.end(); ++i)
-    sstr << *i;
-  dat = sstr.str();
+    {
+      basic_io::stanza st;
+      st.push_file_pair(syms::file, i->first);
+      st.push_hex_pair(syms::print, i->second());
+      pr.print_stanza(st);
+    }
+  dat = pr.buf;
 }
 
 // Local Variables:
