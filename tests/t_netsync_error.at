@@ -1,6 +1,0 @@
-AT_SETUP([netsync badhost gives nice error])
-MTN_SETUP
-
-AT_CHECK(MTN pull nosuchhost__blahblah__asdvasoih.com some.pattern, [1], [ignore], [ignore])
-
-AT_CLEANUP

@@ -1,0 +1,4 @@
+function labellagigogin()
+  io.write("CICCA CICCA")
+end
+labellagigogin()
