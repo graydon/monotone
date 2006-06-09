@@ -1,16 +1,7 @@
 
-skip_if(not existsonpath("cvs"))
+include("/common/cvs.lua")
 mtn_setup()
-
-cvsroot = test.root.."/cvs-repository"
-function cvs(...)
-  return {"cvs", "-d", cvsroot, unpack(arg)}
-end
-
-check(cvs("-q", "init"), 0, false, false)
-check(exists(cvsroot))
-check(exists(cvsroot.."/CVSROOT"))
-check(exists(cvsroot.."/CVSROOT/modules"))
+cvs_setup()
 
 mkdir(cvsroot.."/attest")
 getfile("cvsfile,v", cvsroot.."/attest/cvsfile,v")

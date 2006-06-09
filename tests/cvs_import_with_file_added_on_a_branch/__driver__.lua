@@ -1,17 +1,13 @@
 
-skip_if(not existsonpath("cvs"))
+include("/common/cvs.lua")
 mtn_setup()
+cvs_setup()
 
 -- This tests the case where a file was added on a branch in CVS; CVS
 -- records this in a strange way (with a delete of the non-existent
 -- file on mainline, followed by an add of the file on the branch).
 -- Make sure we handle it correct.
 
-cvsroot = test.root.."/cvsroot"
-function cvs(...)
-  return {"cvs", "-d", cvsroot, unpack(arg)}
-end
-check(cvs("init"), 0, false, false)
 mkdir("src")
 writefile("src/foo", "foo")
 check(indir("src", cvs("import", "-m", "import", "mod", "vtag", "rtag")), 0, false, false)

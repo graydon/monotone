@@ -121,6 +121,10 @@ int set_redirect(redirect::what what, string where)
     from = 2;
     mode = "w";
     break;
+  default:
+    from = -1;
+    mode = "";
+    break;
   };
   int saved = dup(from);
   FILE *f = fopen(where.c_str(), mode);
@@ -143,6 +147,9 @@ void clear_redirect(redirect::what what, int saved)
     break;
   case redirect::err:
     from = 2;
+    break;
+  default:
+    from = -1;
     break;
   };
   dup2(saved, from);
@@ -219,7 +226,7 @@ static int panic_thrower(lua_State * st)
   throw oops("lua error");
 }
 
-void copy_recursive(fs::path const &from, fs::path const &to)
+void do_copy_recursive(fs::path const &from, fs::path const &to)
 {
   if (!fs::exists(from))
     return;
@@ -229,7 +236,7 @@ void copy_recursive(fs::path const &from, fs::path const &to)
     {
       fs::create_directory(to);
       for (fs::directory_iterator i(from); i != fs::directory_iterator(); ++i)
-        copy_recursive(*i, to / i->leaf());
+        do_copy_recursive(*i, to / i->leaf());
     }
   else
     fs::copy_file(from, to);
@@ -293,7 +300,7 @@ extern "C"
   {
     fs::path from(luaL_checkstring(L, -2));
     fs::path to(luaL_checkstring(L, -1));
-    copy_recursive(from, to);
+    do_copy_recursive(from, to);
     return 0;
   }
 
@@ -421,8 +428,8 @@ extern "C"
   static int
   timed_wait(lua_State * L)
   {
-    pid_t pid = luaL_checknumber(L, -2);
-    int time = luaL_checknumber(L, -1);
+    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -2));
+    int time = static_cast<int>(luaL_checknumber(L, -1));
     int res;
     int ret;
     ret = process_wait(pid, &res, time);

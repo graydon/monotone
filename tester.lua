@@ -3,8 +3,14 @@ test = {} -- table of per-test values
 
 
 -- misc global values
+
+-- where the main testsuite file is
 srcdir = get_source_dir()
-debugging = false -- was the -d switch given?
+-- where the individual test dirs are
+-- most paths will be testdir.."/something"
+testdir = srcdir
+-- was the -d switch given?
+debugging = false
 
 -- combined logfile
 logfile = io.open("tester.log", "w")
@@ -231,7 +237,8 @@ function rename_over(from, to)
 end
 
 function getstdfile(name, as)
-  copyfile(srcdir .. "/" .. name, as)
+  if as == nil then as = name end
+  copyfile(testdir .. "/" .. name, as)
 end
 
 function getfile(name, as)
@@ -239,11 +246,20 @@ function getfile(name, as)
   getstdfile(test.name .. "/" .. name, as)
 end
 
-function runstdfile(name)
-  local func, e = loadfile(srcdir.."/"..name)
+-- include from the main tests directory; there's no reason
+-- to want to include from the dir for the current test,
+-- since in that case it could just go in the driver file.
+function include(name)
+  local func, e = loadfile(testdir.."/"..name)
   if func == nil then err(e, 2) end
   setfenv(func, getfenv(2))
   func()
+end
+
+function gettree(name, as)
+  if as == nil then as = name end
+  L(locheader(), "gettree(", name, ", ", as, ")\n")
+  copy_recursive(testdir.."/"..test.name.."/"..name, as)
 end
 
 function trim(str)
@@ -773,7 +789,7 @@ function run_tests(args)
     test.log = io.open(tlog, "w")
     L("Test number ", i, ", ", shortname, "\n")
 
-    local driverfile = srcdir .. "/" .. test.name .. "/__driver__.lua"
+    local driverfile = testdir .. "/" .. test.name .. "/__driver__.lua"
     local driver, e = loadfile(driverfile)
     local r
     if driver == nil then
@@ -782,6 +798,9 @@ function run_tests(args)
     else
       setfenv(driver, env)
       r,e = xpcall(driver, debug.traceback)
+      if type(env.cleanup) == "function" then
+        pcall(env.cleanup)
+      end
       for i,b in pairs(test.bglist) do
         b:finish(0)
       end

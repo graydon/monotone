@@ -8,7 +8,7 @@ mtn_setup()
 --     D E
 --     \/
 --      F
-runstdfile("tests/common/automate_ancestry.lua")
+include("/common/automate_ancestry.lua")
 
 revs = make_graph()
 

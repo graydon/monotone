@@ -10,7 +10,7 @@ check(mtn("automate", "erase_ancestors", "c7539264e83c5d6af4c792f079b5d46e9c1286
 --     D E
 --     \/
 --      F
-runstdfile("tests/common/automate_ancestry.lua")
+include("/common/automate_ancestry.lua")
 
 revs = make_graph()
 
