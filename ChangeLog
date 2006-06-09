@@ -1,10 +1,15 @@
+2006-06-03  Lapo Luchini  <lapo@lapo.it>
+
+	* database.cc: corrected a '%s' in a '%d', removed a couple of '\n'.
+	* po/it.po: Updated and translated a few more strings (71 to go).
+
 2006-06-08  Matt Johnston  <matt@ucc.asn.au>
 
-    * inodeprint.cc: convert to basic_io format. 
-    Silently skips reading old format files, then writes
-    out the new format as per usual. Old mtn versions
-    have no format checking so will read the (nonsensical)
-    new format file without errors.
+	* inodeprint.cc: convert to basic_io format. 
+	Silently skips reading old format files, then writes
+	out the new format as per usual. Old mtn versions
+	have no format checking so will read the (nonsensical)
+	new format file without errors.
 
 2006-06-08  Matt Johnston  <matt@ucc.asn.au>
 
