@@ -3,6 +3,10 @@
 	* database.cc: corrected a '%s' in a '%d', removed a couple of '\n'.
 	* po/it.po: Updated and translated a few more strings (71 to go).
 
+2006-06-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* visualc/sqlite3.vcproj: Let SQLite build find our config.h.
+
 2006-06-08  Matt Johnston  <matt@ucc.asn.au>
 
 	* inodeprint.cc: convert to basic_io format. 
