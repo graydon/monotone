@@ -146,7 +146,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-06-10 07:59+0200\n"
-"PO-Revision-Date: 2006-06-10 08:00+0200\n"
+"PO-Revision-Date: 2006-06-10 08:32+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2091,7 +2091,7 @@ msgstr "inget resultat med databasfråga: %s"
 #: database.cc:789
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
-msgstr "ville ha %d rader, fick %s i databasfråga: %s"
+msgstr "ville ha %d rader, fick %d i databasfråga: %s"
 
 #: database.cc:1929
 #, c-format

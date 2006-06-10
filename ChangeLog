@@ -1,6 +1,7 @@
 2006-06-10  Richard Levitte  <richard@levitte.org>
 
-	* po/sv.po: Clear 2 fuzzies.
+	* po/sv.po: Clear 2 fuzzies.  Change a %s to %d, corresponding to
+	Lapo's change below.
 
 2006-06-03  Lapo Luchini  <lapo@lapo.it>
 
