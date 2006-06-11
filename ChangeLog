@@ -1,9 +1,13 @@
+2006-06-11  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (68 to go).
+
 2006-06-10  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Clear 2 fuzzies.  Change a %s to %d, corresponding to
 	Lapo's change below.
 
-2006-06-03  Lapo Luchini  <lapo@lapo.it>
+2006-06-09  Lapo Luchini  <lapo@lapo.it>
 
 	* database.cc: corrected a '%s' in a '%d', removed a couple of '\n'.
 	* po/it.po: Updated and translated a few more strings (71 to go).
