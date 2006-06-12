@@ -2,7 +2,8 @@
 
 ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
 
-function getpathof(exe)
+-- maybe this should go in tester.lua instead?
+function getpathof(exe, ext)
   local function gotit(now)
     if test.log == nil then
       logfile:write(exe, " found at ", now, "\n")
@@ -12,13 +13,16 @@ function getpathof(exe)
     return now
   end
   local path = os.getenv("PATH")
-  local char, ext
+  local char
   if ostype == "Windows" then
     char = ';'
-    ext = ".exe"
   else
     char = ':'
-    ext = ""
+  end
+  if ostype == "Windows" then
+    if ext == nil then ext = ".exe" end
+  else
+    if ext == nil then ext = "" end
   end
   local now = initial_dir.."/"..exe..ext
   if exists(now) then return gotit(now) end
@@ -35,10 +39,11 @@ function getpathof(exe)
   else
     test.log:write("Cannot find ", exe, "\n")
   end
-  return exe
+  return nil
 end
 
 monotone_path = getpathof("mtn")
+if monotone_path == nil then monotone_path = "mtn" end
 
 function safe_mtn(...)
   return {monotone_path, "--norc", "--root=" .. test.root, unpack(arg)}
