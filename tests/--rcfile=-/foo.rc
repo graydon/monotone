@@ -1,0 +1,3 @@
+function note_commit(new_id, certs)
+  io.write("BOOGA BOOGA\n")
+end

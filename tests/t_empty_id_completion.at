@@ -1,7 +1,0 @@
-AT_SETUP([empty id completion])
-MTN_SETUP
-
-# regression test: completing the revision "" doesn't crash
-AT_CHECK(MTN cat -r "" nosuchfile, [1], [ignore], [ignore])
-
-AT_CLEANUP
