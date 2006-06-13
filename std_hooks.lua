@@ -8,7 +8,7 @@ function temp_file()
    if tdir == nil then tdir = os.getenv("TMP") end
    if tdir == nil then tdir = os.getenv("TEMP") end
    if tdir == nil then tdir = "/tmp" end
-   return mkstemp(string.format("%s/mt.XXXXXX", tdir))
+   return mkstemp(string.format("%s/mtn.XXXXXX", tdir))
 end
 
 function execute(path, ...)   
@@ -39,9 +39,8 @@ end
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
 -- re-set any time the files are modified. the attributes themselves
--- are stored in a file .mt-attrs, in the workspace (and
--- manifest). each (f,k,v) triple in an attribute file turns into a
--- call to attr_functions[k](f,v) in lua.
+-- are stored in the roster associated with the revision. each (f,k,v)
+-- attribute triple turns into a call to attr_functions[k](f,v) in lua.
 
 if (attr_init_functions == nil) then
    attr_init_functions = {}
@@ -118,6 +117,8 @@ function ignore_file(name)
       -- c/c++
       "%.a$", "%.so$", "%.o$", "%.la$", "%.lo$", "^core$",
       "/core$", "/core%.%d+$",
+      -- java
+      "%.class$",
       -- python
       "%.pyc$", "%.pyo$",
       -- TeX

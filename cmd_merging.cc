@@ -635,11 +635,15 @@ CMD(get_roster, N_("debug"), N_("REVID"),
     N_("dump the roster associated with the given REVID"),
     OPT_NONE)
 {
-  if (args.size() != 1)
+  revision_id rid;
+  if (args.size() == 0)
+    get_revision_id(rid);
+  else if (args.size() == 1)
+    complete(app, idx(args, 0)(), rid);
+  else
     throw usage(name);
 
-  revision_id rid;
-  complete(app, idx(args, 0)(), rid);
+  I(!null_id(rid));
 
   roster_t roster;
   marking_map mm;
