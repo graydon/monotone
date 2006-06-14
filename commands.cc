@@ -22,6 +22,7 @@ using std::cin;
 using std::pair;
 using std::set;
 using std::string;
+using std::strlen;
 using std::vector;
 
 //

@@ -47,6 +47,8 @@ using std::pair;
 using std::set;
 using std::string;
 using std::vector;
+using std::memcmp;
+using std::lower_bound;
 
 using boost::shared_ptr;
 

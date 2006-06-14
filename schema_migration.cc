@@ -30,6 +30,7 @@ using std::ctype;
 using std::locale;
 using std::map;
 using std::pair;
+using std::remove_if;
 using std::string;
 using std::use_facet;
 using std::vector;

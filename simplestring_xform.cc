@@ -8,6 +8,7 @@ using std::string;
 using std::vector;
 using std::ostringstream;
 using std::ostream_iterator;
+using std::transform;
 
 struct
 lowerize

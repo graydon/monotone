@@ -39,6 +39,9 @@ using std::set;
 using std::sort;
 using std::string;
 using std::vector;
+using std::strerror;
+using std::malloc;
+using std::free;
 
 // adapted from "programming in lua", section 24.2.3
 // http://www.lua.org/pil/24.2.3.html

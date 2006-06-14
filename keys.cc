@@ -43,6 +43,7 @@ using boost::shared_ptr;
 using boost::shared_dynamic_cast;
 
 using Botan::byte;
+using Botan::get_cipher;
 using Botan::PKCS8_PrivateKey;
 using Botan::PK_Decryptor;
 using Botan::PK_Encryptor;

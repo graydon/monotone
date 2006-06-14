@@ -196,6 +196,9 @@ symtab_impl
 #define ATOMIC(ty) cc_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) cc_ATOMIC_NOVERIFY(ty)
 
+#ifdef EXTERN
+#undef EXTERN
+#endif
 #define EXTERN
 
 #include "vocab_terms.hh"
