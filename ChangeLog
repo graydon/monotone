@@ -1,3 +1,8 @@
+2006-06-14  Alex Queiroz  <alex@ventonegro.org>
+
+	* monotone.texi: Added a trick about reusing code from the default
+	hooks using Lua closures.
+
 2006-06-13  Derek Scherger  <derek@echologic.com>
 
 	* cmd_list.cc (ls_changed): roster friendly rewrite using existing

@@ -17,6 +17,7 @@ Copyright 2004, 2005, 2006 Nathaniel Smith
 Copyright 2005 Derek Scherger
 Copyright 2005 Daniel Carosone
 Copyright 2006 Jeronimo Pellegrini
+Copyright 2006 Alex Queiroz
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -6791,11 +6792,30 @@ files.
 By specifying @option{--rcfile=@var{directory}} you can automatically
 load all the files contained into @var{directory}.
 
+Monotone provides some default hooks, see @ref{Default hooks} for their
+complete source. When writing new hooks, it may be helpful to reuse some code
+from the default ones. Since Lua is a lexically scoped language with closures,
+this can be achieved with the following code:
+
+@smallexample
+@group
+do
+	local old_hook = default_hook
+	function default_hook(arg)
+		if not old_hook(arg) then
+			-- do other stuff
+		end
+	end
+end
+@end group
+@end smallexample
+
+Now the default hook is trapped in a variable local to this block, and can
+only be seen by the new hook. Since in Lua variables default to the global
+scope, the new hook is seen from inside monotone.
+
 Monotone also makes available to hook writers a number of helper
 functions exposing functionality not available with standard lua.
-
-For the complete source of the default hooks see @ref{Default
-hooks}.
 
 @menu
 * Hooks::                     All hooks called by monotone.
