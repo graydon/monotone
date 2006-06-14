@@ -1,10 +1,36 @@
+2006-06-12  Derek Scherger  <derek@echologic.com>
+
+	* cmd_merging.cc (get_roster): allow no arguments and default to
+	value in _MTN/revision
+	* std_hooks.lua: switch temporary file names from mt.XXX to
+	mtn.XXX; update attr function docs; add java class files to
+	standard ignore hook
+
+2006-06-11  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (68 to go).
+
+2006-06-10  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear 2 fuzzies.  Change a %s to %d, corresponding to
+	Lapo's change below.
+
+2006-06-09  Lapo Luchini  <lapo@lapo.it>
+
+	* database.cc: corrected a '%s' in a '%d', removed a couple of '\n'.
+	* po/it.po: Updated and translated a few more strings (71 to go).
+
+2006-06-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* visualc/sqlite3.vcproj: Let SQLite build find our config.h.
+
 2006-06-08  Matt Johnston  <matt@ucc.asn.au>
 
-    * inodeprint.cc: convert to basic_io format. 
-    Silently skips reading old format files, then writes
-    out the new format as per usual. Old mtn versions
-    have no format checking so will read the (nonsensical)
-    new format file without errors.
+	* inodeprint.cc: convert to basic_io format. 
+	Silently skips reading old format files, then writes
+	out the new format as per usual. Old mtn versions
+	have no format checking so will read the (nonsensical)
+	new format file without errors.
 
 2006-06-08  Matt Johnston  <matt@ucc.asn.au>
 
