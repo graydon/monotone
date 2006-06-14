@@ -25,6 +25,7 @@
 #include "ui.hh"
 
 using std::cout;
+using std::endl;
 using std::make_pair;
 using std::map;
 using std::ostream_iterator;
@@ -412,49 +413,20 @@ ls_changed(app_state & app, vector<utf8> const & args)
 			included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
-  // FIXME: this would probably be better as a function of roster.cc
-  // set<node_id> nodes;
-  // select_nodes_modified_by_cset(included, old_roster, 
-  // new_roster, nodes);
+  set<node_id> nodes;
+  select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
 
-  for (path_set::const_iterator i = included.nodes_deleted.begin();
-       i != included.nodes_deleted.end(); ++i)
-    {
-      if (mask.includes(*i))
-        files.insert(file_path(*i));
-    }
-  for (map<split_path, split_path>::const_iterator
-         i = included.nodes_renamed.begin();
-       i != included.nodes_renamed.end(); ++i)
-    {
-      // FIXME: is reporting the old name the "right" thing to do?
-      if (mask.includes(i->first))
-        files.insert(file_path(i->first));
-    }
-  for (path_set::const_iterator i = included.dirs_added.begin();
-       i != included.dirs_added.end(); ++i)
-    {
-      if (mask.includes(*i))
-        files.insert(file_path(*i));
-    }
-  for (map<split_path, file_id>::const_iterator 
-	 i = included.files_added.begin();
-       i != included.files_added.end(); ++i)
-    {
-      if (mask.includes(i->first))
-        files.insert(file_path(i->first));
-    }
-  for (map<split_path, pair<file_id, file_id> >::const_iterator
-         i = included.deltas_applied.begin(); i != included.deltas_applied.end();
+  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end(); 
        ++i)
     {
-      if (mask.includes(i->first))
-        files.insert(file_path(i->first));
+      split_path sp;
+      if (old_roster.has_node(*i))
+        old_roster.get_name(*i, sp);
+      else
+        new_roster.get_name(*i, sp);
+      cout << sp << endl;
     }
-  // FIXME: should attr changes count?
 
-  copy(files.begin(), files.end(),
-       ostream_iterator<const file_path>(cout, "\n"));
 }
 
 
