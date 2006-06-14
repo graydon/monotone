@@ -709,7 +709,7 @@ database::fetch(results & res,
   ncol = sqlite3_column_count(i->second.stmt());
 
   E(want_cols == any_cols || want_cols == ncol,
-    F("wanted %d columns got %d in query: %s\n") % want_cols % ncol % query.sql_cmd);
+    F("wanted %d columns got %d in query: %s") % want_cols % ncol % query.sql_cmd);
 
   // bind parameters for this execution
 
@@ -786,7 +786,7 @@ database::fetch(results & res,
   i->second.count++;
 
   E(want_rows == any_rows || want_rows == nrow,
-    F("wanted %d rows got %s in query: %s\n") % want_rows % nrow % query.sql_cmd);
+    F("wanted %d rows got %d in query: %s") % want_rows % nrow % query.sql_cmd);
 }
 
 // general application-level logic

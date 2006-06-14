@@ -169,7 +169,7 @@ namespace redirect
 #include <cstdlib>
 map<string, string> orig_env_vars;
 void save_env() { orig_env_vars.clear(); }
-#ifdef WIN32
+#if defined(WIN32) && !defined(__MINGW32__)
 void restore_env()
 {
   for (map<string,string>::const_iterator i = orig_env_vars.begin();
