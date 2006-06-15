@@ -2,15 +2,7 @@
 include("/common/cvs.lua")
 mtn_setup()
 
-writefile("importme.0", "version 0 of test file")
-writefile("importme.1", "version 1 of test file")
-writefile("importme.2", "version 2 of test file")
 writefile("importme.3", "version 3 of test file")
-
-tsha0=sha1("importme.0")
-tsha1=sha1("importme.1")
-tsha2=sha1("importme.2")
-tsha3=sha1("importme.3")
 
 -- build the cvs repository
 
@@ -20,15 +12,19 @@ cvs_setup()
 
 check(cvs("co", "."), 0, false, false)
 mkdir("testdir")
-copy("importme.0", "testdir/importme")
+writefile("testdir/importme", "version 0 of test file")
+tsha0 = sha1("testdir/importme")
 check(cvs("add", "testdir"), 0, false, false)
 check(cvs("add", "testdir/importme"), 0, false, false)
 check(cvs("commit", "-m", 'commit 0', "testdir/importme"), 0, false, false)
-copy("importme.1", "testdir/importme")
+writefile("testdir/importme", "version 1 of test file")
+tsha1 = sha1("testdir/importme")
 check(cvs("commit", "-m", 'commit same message', "testdir/importme"), 0, false, false)
-copy("importme.2", "testdir/importme")
+writefile("testdir/importme", "version 2 of test file")
+tsha2 = sha1("testdir/importme")
 check(cvs("commit", "-m", 'commit same message', "testdir/importme"), 0, false, false)
-copy("importme.3", "testdir/importme")
+writefile("testdir/importme", "version 3 of test file")
+tsha3 = sha1("testdir/importme")
 check(cvs("commit", "-m", 'commit 3', "testdir/importme"), 0, false, false)
 
 -- import into monotone and check presence of files
