@@ -5,13 +5,13 @@ mtn_setup()
 -- the fork; instead, it updates, and (in theory) shifts from right to
 -- merged-with-left
 
-getfile("origfile", "testfile")
+get("origfile", "testfile")
 addfile("testfile")
 commit()
 root_r_sha = base_revision()
 root_f_sha = sha1("testfile")
 
-getfile("firstinsert", "testfile")
+get("firstinsert", "testfile")
 commit()
 left_r_sha = base_revision()
 left_f_sha = sha1("testfile")
@@ -21,12 +21,12 @@ check(left_f_sha ~= root_f_sha)
 probe_node("testfile", root_r_sha, root_f_sha)
 
 
-getfile("secondinsert", "testfile")
+get("secondinsert", "testfile")
 
 check(mtn("update"), 0, false, false)
 
 -- files should now be merged
 
-getfile("bothinsert", "probe")
+get("bothinsert", "probe")
 
 check(samefile("testfile", "probe"))

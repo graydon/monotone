@@ -12,12 +12,12 @@ root_f_sha = sha1("foo")
 
 -- produce move edge
 check(mtn("rename", "foo", "bar"), 0, false, false)
-copyfile("foo", "bar")
+copy("foo", "bar")
 commit()
 
 -- revert to root
 probe_node("foo", root_r_sha, root_f_sha)
-os.remove("bar")
+remove("bar")
 
 -- make a simple add edge
 addfile("bleh")
@@ -27,7 +27,7 @@ commit()
 check(mtn("merge"), 0, false, false)
 check(mtn("update"), 0, false, false)
 check(mtn("automate", "get_manifest_of"), 0, true, false)
-os.rename("stdout", "manifest")
+rename("stdout", "manifest")
 check(qgrep("bar", "manifest"))
 check(qgrep("bleh", "manifest"))
 
@@ -46,16 +46,16 @@ check(not exists("_MTN/work"))
 
 -- move file before renaming it
 check(mtn("status"), 0, false, false)
-os.rename("bar", "barfoo")
+rename("bar", "barfoo")
 check(mtn("rename", "bar", "barfoo"), 0, false, true)
 check(qgrep('renaming bar to barfoo in workspace manifest', "stderr"))
 check(mtn("status"), 0, false, false)
 
 -- move file to wrong place before renaming it
-os.rename("barfoo", "bar")
+rename("barfoo", "bar")
 check(mtn("revert", "."), 0, false, false)
 check(mtn("status"), 0, false, false)
-os.rename("bar", "barfoofoo")
+rename("bar", "barfoofoo")
 check(mtn("rename", "bar", "barfoo"), 0, false, true)
 check(qgrep('renaming bar to barfoo in workspace manifest', "stderr"))
 check(mtn("status"), 1, false, false)

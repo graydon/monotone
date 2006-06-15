@@ -8,12 +8,12 @@ writefile("base", "foo blah")
 writefile("left", "bar blah")
 writefile("new_right", "baz blah")
 
-copyfile("base", "testfile")
+copy("base", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 base = base_revision()
 
-copyfile("left", "testfile")
+copy("left", "testfile")
 commit()
 
 revert_to(base)
@@ -22,7 +22,7 @@ remove("testfile")
 check(mtn("drop", "testfile"), 0, false, false)
 commit()
 
-copyfile("new_right", "testfile")
+copy("new_right", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 

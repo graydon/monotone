@@ -1,11 +1,11 @@
 
 mtn_setup()
 
-getfile("test.manifest")
+get("test.manifest")
 
-getfile("test.tags")
+get("test.tags")
 
-gettree("e")
+get("e")
 
 check(mtn("--branch=foo.bar", "cvs_import", "e"), 0, false, false)
 check(mtn("--branch=foo.bar", "co"))

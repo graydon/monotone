@@ -2,7 +2,7 @@
 mtn_setup()
 revs = {}
 
-getfile("expected")
+get("expected")
 
 writefile("empty", "")
 

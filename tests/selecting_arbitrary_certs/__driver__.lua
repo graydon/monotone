@@ -3,17 +3,17 @@ mtn_setup()
 revs = {}
 
 addfile("testfile", "this is just a file")
-copyfile("testfile", "testfile1")
+copy("testfile", "testfile1")
 commit()
 revs.first = base_revision()
 
 writefile("testfile", "Now, this is a different file")
-copyfile("testfile", "testfile2")
+copy("testfile", "testfile2")
 commit()
 revs.second = base_revision()
 
 writefile("testfile", "And we change it a third time")
-copyfile("testfile", "testfile3")
+copy("testfile", "testfile3")
 commit()
 
 check(mtn("cert", revs.first, "testcert", 'value=with=equal=signs'))
@@ -36,10 +36,10 @@ check(mtn("list", "certs", "c:testcert"), 1, false, true)
 check(grep('has multiple ambiguous expansions', "stderr"), 0, false)
 
 -- Check that exact value succeed...
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("co", "--revision=c:testcert=value", "."), 0, false, false)
 check(samefile("testfile", "testfile2"))
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("co", "--revision=c:testcert=value=with=equal=signs", "."), 0, false, false)
 check(samefile("testfile", "testfile1"))

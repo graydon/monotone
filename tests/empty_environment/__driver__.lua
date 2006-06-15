@@ -9,8 +9,8 @@ end
 if os.getenv("OSTYPE") == "msys" then
   local iconv = getpathof("libiconv-2", ".dll")
   local zlib = getpathof("zlib1", ".dll")
-  copyfile(iconv, "libiconv-2.dll")
-  copyfile(zlib, "zlib1.dll")
+  copy(iconv, "libiconv-2.dll")
+  copy(zlib, "zlib1.dll")
 end
 
 check(noenv_mtn("--help"), 2, false, false)

@@ -8,5 +8,5 @@ check(mtn("add", "foo1"), 0, false, false)
 commit()
 rev = base_revision()
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("log", "--revision", rev, "foo1"), 0, false, false)

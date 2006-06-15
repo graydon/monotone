@@ -16,7 +16,7 @@ check(mtn("ls", "known"), 0, true, false)
 check(not qgrep("'test.db'", "stdout"))
 
 mkdir("subdir")
-copyfile("test.db", "subdir/test.db")
+copy("test.db", "subdir/test.db")
 
 check(mtn("--db=subdir/test.db", "add", "subdir/test.db"), 0, false, false)
 check(mtn("--db=subdir/test.db", "ls", "known"), 0, true, false)

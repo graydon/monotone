@@ -11,17 +11,17 @@ netsync = {}
 netsync.internal = {}
 
 function netsync.setup()
-  copyfile("test.db", "test2.db")
-  copy_recursive("keys", "keys2")
-  copyfile("test.db", "test3.db")
-  copy_recursive("keys", "keys3")
-  getstdfile("common/netsync-hooks.lua", "netsync.lua")
+  copy("test.db", "test2.db")
+  copy("keys", "keys2")
+  copy("test.db", "test3.db")
+  copy("keys", "keys3")
+  check(getstd("common/netsync-hooks.lua", "netsync.lua"))
   math.randomseed(os.time())
 end
 
 function netsync.setup_with_notes()
   netsync.setup()
-  getstdfile("common/netsync-hooks_with_notes.lua", "netsync.lua")
+  check(getstd("common/netsync-hooks_with_notes.lua", "netsync.lua"))
 end
 
 function netsync.internal.client(srv, oper, pat, n, res)

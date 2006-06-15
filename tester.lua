@@ -1,7 +1,6 @@
 tests = {} -- list of all tests, not visible when running tests
 test = {} -- table of per-test values
 
-
 -- misc global values
 
 -- where the main testsuite file is
@@ -93,30 +92,32 @@ function err(what, level)
   error(e, level)
 end
 
-old_mtime = mtime
-mtime = function(name)
-  local x = old_mtime(name)
-  L(locheader(), "mtime(", name, ") = ", tostring(x), "\n")
-  return x
-end
-
-old_mkdir = mkdir
-mkdir = function(name)
-  L(locheader(), "mkdir ", name, "\n")
-  old_mkdir(name)
-end
-
-old_existsonpath = existsonpath
-existsonpath = function(name)
-  local r = (old_existsonpath(name) == 0)
-  local what
-  if r then
-    what = "exists"
-  else
-    what = "does not exist"
+do -- replace some builtings with logged versions
+  old_mtime = mtime
+  mtime = function(name)
+    local x = old_mtime(name)
+    L(locheader(), "mtime(", name, ") = ", tostring(x), "\n")
+    return x
   end
-  L(locheader(), name, " ", what, " on the path\n")
-  return r
+
+  old_mkdir = mkdir
+  mkdir = function(name)
+    L(locheader(), "mkdir ", name, "\n")
+    old_mkdir(name)
+  end
+
+  old_existsonpath = existsonpath
+  existsonpath = function(name)
+    local r = (old_existsonpath(name) == 0)
+    local what
+    if r then
+      what = "exists"
+    else
+      what = "does not exist"
+    end
+    L(locheader(), name, " ", what, " on the path\n")
+    return r
+  end
 end
 
 function numlines(filename)
@@ -185,65 +186,72 @@ function append(filename, dat)
   end
 end
 
-function copyfile(from, to)
-  L(locheader(), "copyfile ", from, " ", to, "\n")
-  local infile = io.open(from, "rb")
-  if infile == nil then
-    L("Cannot open file " .. from)
-    return false
-  end
-  local outfile = io.open(to, "wb")
-  if outfile == nil then
-    infile:close()
-    L("Cannot open file " .. to)
-    return false
-  end
-  local size = 2^13
-  while true do
-    local block = infile:read(size)
-    if not block then break end
-    outfile:write(block)
-  end
-  infile:close()
-  outfile:close()
-  return true
-end
-
-function rename(from, to)
-  L(locheader(), "rename ", from, " ", to, "\n")
-  local ok,res = os.rename(from, to)
-  if ok == nil then
-    L(res, "\n")
-    return false
-  else
-    return true
+do
+  unlogged_copy = copy_recursive
+  copy_recursive = nil
+  function copy(from, to)
+    L(locheader(), "copy ", from, " -> ", to, "\n")
+    local ok, res = unlogged_copy(from, to)
+    if not ok then
+      L(res, "\n")
+      return false
+    else
+      return true
+    end
   end
 end
 
-function remove(file)
-  L(locheader(), "remove ", file, "\n")
-  local ok,res = os.remove(file)
-  if ok == nil then
-    L(res, "\n")
-    return false
-  else
-    return true
+do
+  local os_rename = os.rename
+  os.rename = nil
+  os.remove = nil
+  function rename(from, to)
+    L(locheader(), "rename ", from, " ", to, "\n")
+    if exists(to) and not isdir(to) then
+      L("Destination ", to, " exists; removing...\n")
+      local ok, res = unlogged_remove(to)
+      if not ok then
+        L("Could not remove ", to, ": ", res, "\n")
+        return false
+      end
+    end
+    local ok,res = os_rename(from, to)
+    if not ok then
+      L(res, "\n")
+      return false
+    else
+      return true
+    end
+  end
+  function unlogged_rename(from, to)
+    if exists(to) and not isdir(to) then
+      unlogged_remove(to)
+    end
+    os_rename(from, to)
+  end
+  unlogged_remove = remove_recursive
+  remove_recursive = nil
+  function remove(file)
+    L(locheader(), "remove ", file, "\n")
+    local ok,res = unlogged_remove(file)
+    if not ok then
+      L(res, "\n")
+      return false
+    else
+      return true
+    end
   end
 end
 
-function rename_over(from, to)
-  remove(to)
-  return rename(from, to)
-end
 
-function getstdfile(name, as)
+function getstd(name, as)
   if as == nil then as = name end
-  copyfile(testdir .. "/" .. name, as)
+  return copy(testdir .. "/" .. name, as)
 end
 
-function getfile(name, as)
+function get(name, as)
   if as == nil then as = name end
-  getstdfile(test.name .. "/" .. name, as)
+  return getstd(test.name .. "/" .. name, as)
 end
 
 -- include from the main tests directory; there's no reason
@@ -254,12 +262,6 @@ function include(name)
   if func == nil then err(e, 2) end
   setfenv(func, getfenv(2))
   func()
-end
-
-function gettree(name, as)
-  if as == nil then as = name end
-  L(locheader(), "gettree(", name, ", ", as, ")\n")
-  copy_recursive(testdir.."/"..test.name.."/"..name, as)
 end
 
 function trim(str)
@@ -483,9 +485,9 @@ end
 function pre_cmd(stdin, ident)
   if ident == nil then ident = "ts-" end
   if stdin == true then
-    copyfile("stdin", ident .. "stdin")
+    unlogged_copy("stdin", ident .. "stdin")
   elseif type(stdin) == "table" then
-    copyfile(stdin[1], ident .. "stdin")
+    unlogged_copy(stdin[1], ident .. "stdin")
   else
     local infile = io.open(ident .. "stdin", "w")
     if stdin ~= nil and stdin ~= false then
@@ -524,8 +526,8 @@ function post_cmd(result, ret, stdout, stderr, ident)
       err("Check failed (stdout): doesn't match", 3)
     end
   elseif stdout == true then
-    os.remove("stdout")
-    os.rename(ident .. "stdout", "stdout")
+    unlogged_remove("stdout")
+    unlogged_rename(ident .. "stdout", "stdout")
   end
 
   if stderr == nil then
@@ -544,8 +546,8 @@ function post_cmd(result, ret, stdout, stderr, ident)
       err("Check failed (stderr): doesn't match", 3)
     end
   elseif stderr == true then
-    os.remove("stderr")
-    os.rename(ident .. "stderr", "stderr")
+    unlogged_remove("stderr")
+    unlogged_rename(ident .. "stderr", "stderr")
   end
 end
 

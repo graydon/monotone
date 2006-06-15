@@ -12,7 +12,7 @@ writefile("foo.ignored", "foo.ignored")
 writefile("bar.ignored", "bar.ignored")
 writefile("baz.ignored", "baz.ignored")
 
-getfile("ignore.lua")
+get("ignore.lua")
 
 commit()
 

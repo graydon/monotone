@@ -88,7 +88,7 @@ check(not qgrep("sub", "stdout"))
 
 -- check reverting a missing file
 check(mtn("revert", "."), 0, false, false)
-os.remove("testfile0")
+remove("testfile0")
 check(mtn("status"), 1, false, false)
 check(mtn("revert", "testfile0"), 0, true, false)
 check(mtn("status"), 0, false, false)
@@ -98,8 +98,8 @@ check(mtn("status"), 0, false, false)
 check(mtn("revert", "."), 0, false, false)
 check(mtn("status"), 0, true)
 
-copyfile("testfile0", "foofile0")
-copyfile("sub/testfile2", "sub/foofile2")
+copy("testfile0", "foofile0")
+copy("sub/testfile2", "sub/foofile2")
 
 check(mtn("rename", "testfile0", "foofile0"), 0, false, false)
 check(mtn("rename", "sub/testfile2", "sub/foofile2"), 0, false, false)

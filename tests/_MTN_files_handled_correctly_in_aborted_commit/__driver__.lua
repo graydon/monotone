@@ -10,11 +10,11 @@ addfile("otherfile", "stuff stuff")
 
 writefile("_MTN/log", "message message")
 
-copyfile("_MTN/log", "good_log")
-copyfile("_MTN/revision", "good_revision")
-copyfile("_MTN/work", "good_work")
+copy("_MTN/log", "good_log")
+copy("_MTN/revision", "good_revision")
+copy("_MTN/work", "good_work")
 
-getfile("bad_edit_comment.lua")
+get("bad_edit_comment.lua")
 
 check(mtn("commit", "--rcfile=bad_edit_comment.lua"), 1, false, false)
 

@@ -7,15 +7,15 @@ writefile("r0otherfile", "r0 other file")
 writefile("r1testfile", "r1 test file")
 writefile("subfile", "data in subfile")
 
-copyfile("r0testfile", "testfile")
-copyfile("r0otherfile", "otherfile")
+copy("r0testfile", "testfile")
+copy("r0otherfile", "otherfile")
 mkdir("subdir")
-copyfile("subfile", "subdir/testfile")
+copy("subfile", "subdir/testfile")
 check(mtn("add", "testfile", "otherfile", "subdir/testfile"), 0, false, false)
 commit()
 revs[0] = base_revision()
 
-copyfile("r1testfile", "testfile")
+copy("r1testfile", "testfile")
 commit()
 revs[1] = base_revision()
 
@@ -34,7 +34,7 @@ check(samefile("stdout", "r1testfile"))
 check(indir("subdir", mtn("cat", "-r", revs[0], "testfile")), 0, true, false)
 check(samefile("stdout", "subfile"))
 
-remove_recursive("_MTN")
+remove("_MTN")
 
 check(mtn("cat", "-r", revs[0], "testfile"), 0, true, false)
 check(samefile("stdout", "r0testfile"))

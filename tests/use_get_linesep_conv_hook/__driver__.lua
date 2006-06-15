@@ -12,18 +12,18 @@ writefile("foo.lf", "foo\n")
 writefile("foofoo.crlf", "foo\r\nfoo\r\n")
 writefile("foofoo.lf", "foo\nfoo\n")
 
-getfile("linesep.lua")
+get("linesep.lua")
 
-copyfile("foo.crlf", "foo")
+copy("foo.crlf", "foo")
 check(mtn("--rcfile=linesep.lua", "add", "foo"), 0, false, false)
 check(mtn("--rcfile=linesep.lua", "--branch=foo", "commit", "-m", "foo"), 0, false, false)
 revs.foo = base_revision()
 
-copyfile("foofoo.crlf", "foo")
+copy("foofoo.crlf", "foo")
 check(mtn("--rcfile=linesep.lua", "commit", "-m", "foofoo"), 0, false, false)
 revs.foofoo = base_revision()
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("--rcfile=linesep.lua", "co", "--revision", revs.foo, "."), 0, false, false)
 check(samefile("foo", "foo.crlf"))
 

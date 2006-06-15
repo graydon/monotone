@@ -9,8 +9,8 @@ writefile("baz/xyzzy")
 writefile(".mtn-ignore", "bar\nbaz\n*.d\n")
 
 check(raw_mtn("ls", "unknown"), 0, true, true)
-copyfile("stdout", "unknown")
-copyfile("stderr", "unknownerr")
+copy("stdout", "unknown")
+copy("stderr", "unknownerr")
 
 check(qgrep("foo", "unknown"))
 check(not qgrep("bar", "unknown"))
@@ -19,8 +19,8 @@ check(qgrep("WARNING", "unknownerr"))
 
 
 check(raw_mtn("ls", "ignored"), 0, true, true)
-copyfile("stdout", "ignored")
-copyfile("stderr", "ignorederr")
+copy("stdout", "ignored")
+copy("stderr", "ignorederr")
 
 check(not qgrep("foo", "ignored"))
 check(qgrep("bar", "ignored"))

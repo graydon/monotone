@@ -8,7 +8,7 @@ addfile("testfile1", "This is test file 1\n")
 commit()
 left = base_revision()
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
 
 addfile("testfile2", "This is test file 2\n")

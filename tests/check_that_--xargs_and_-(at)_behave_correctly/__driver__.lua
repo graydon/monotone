@@ -28,6 +28,6 @@ check(raw_mtn("-@", "at_test.input1", "-@", "at_test.input2"), 2, {"expout"}, fa
 
 -- Check that -@ works with an argument file with no content
 check(raw_mtn("list"), 2, true, false)
-rename_over("stdout", "expout")
+rename("stdout", "expout")
 writefile("at_test.input")
 check(raw_mtn("list", "-@", "at_test.input"), 2, {"expout"}, false)

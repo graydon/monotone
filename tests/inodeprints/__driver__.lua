@@ -16,7 +16,7 @@ commit()
 
 -- Something should have been written to it
 check(fsize("_MTN/inodeprints") ~= 0)
-copyfile("_MTN/inodeprints", "ip1")
+copy("_MTN/inodeprints", "ip1")
 
 -- And stuff should still work
 check(mtn("diff"), 0, true, false)

@@ -9,7 +9,7 @@ commit()
 check(mtn("genkey", "foo@bar"), 0, false, false, "foo@bar\nfoo@bar\n")
 check(mtn("pubkey", "foo@bar"), 0, true, false)
 canonicalize("stdout")
-copyfile("stdout", "foo_public")
+copy("stdout", "foo_public")
 
 srv = netsync.start({"--key=foo@bar", "testbranch"})
 srv:pull("testbranch")

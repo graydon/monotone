@@ -1,8 +1,8 @@
 
 mtn_setup()
 
-getfile("expected")
-getfile("expected2")
+get("expected")
+get("expected2")
 
 addfile("foo", "blah\n")
 check(mtn("commit", "--date=2005-05-21T12:30:51",

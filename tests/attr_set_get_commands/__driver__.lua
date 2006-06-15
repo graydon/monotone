@@ -18,13 +18,13 @@ commit()
 update_r_sha1 = base_revision()
 
 -- Check checkouts.
-remove_recursive("co-dir")
+remove("co-dir")
 check(mtn("checkout", "--revision", co_r_sha1, "co-dir"), 0, true)
 check(qgrep("test:test_attr:foo:true", "stdout"))
 check(qgrep("test:test_attr:a:1", "stdout"))
 
 -- Check updates.
-remove_recursive("co-dir")
+remove("co-dir")
 check(mtn("checkout", "--revision", update_r_sha1, "co-dir"), 0, true)
 check(not qgrep("test:test_attr:foo", "stdout"))
 check(qgrep("test:test_attr:a:2", "stdout"))

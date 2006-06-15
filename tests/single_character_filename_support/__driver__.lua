@@ -7,7 +7,7 @@ commit()
 revs.a = base_revision()
 
 check(mtn("rename", "a", "b"), 0, false, false)
-os.rename("a", "b")
+rename("a", "b")
 commit()
 revs.b = base_revision()
 
@@ -19,9 +19,9 @@ revs.null = base_revision()
 for _,x in pairs{{revs.a, true, false},
                  {revs.b, false, true},
                  {revs.null, false, false}} do
-  remove_recursive("_MTN")
+  remove("_MTN")
   check(mtn("checkout", "--revision", x[1], "co-dir"), 0, false, false)
   check(exists("co-dir/a") == x[2])
   check(exists("co-dir/b") == x[3])
-  remove_recursive("co-dir")
+  remove("co-dir")
 end

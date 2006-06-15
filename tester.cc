@@ -259,7 +259,7 @@ void do_remove_recursive(fs::path const &rem)
 void do_copy_recursive(fs::path const &from, fs::path const &to)
 {
   if (!fs::exists(from))
-    return;
+    throw fs::filesystem_error("Source for copy does not exist", from, 0);
   if (fs::exists(to))
     do_remove_recursive(to);
   if (fs::is_directory(from))
@@ -320,18 +320,38 @@ extern "C"
   static int
   remove_recursive(lua_State *L)
   {
-    fs::path dir(luaL_checkstring(L, -1));
-    do_remove_recursive(dir);
-    return 0;
+    try
+      {
+        fs::path dir(luaL_checkstring(L, -1));
+        do_remove_recursive(dir);
+        lua_pushboolean(L, true);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushboolean(L, false);
+        lua_pushstring(L, e.what());
+        return 2;
+      }
   }
 
   static int
   copy_recursive(lua_State *L)
   {
-    fs::path from(luaL_checkstring(L, -2));
-    fs::path to(luaL_checkstring(L, -1));
-    do_copy_recursive(from, to);
-    return 0;
+    try
+      {
+        fs::path from(luaL_checkstring(L, -2));
+        fs::path to(luaL_checkstring(L, -1));
+        do_copy_recursive(from, to);
+        lua_pushboolean(L, true);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushboolean(L, false);
+        lua_pushstring(L, e.what());
+        return 2;
+      }
   }
 
   static int
@@ -372,6 +392,23 @@ extern "C"
       {
         p = fs::path(name, fs::native);
         lua_pushboolean(L, fs::exists(p));
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushnil(L);
+      }
+    return 1;
+  }
+
+  static int
+  isdir(lua_State *L)
+  {
+    char const * name = luaL_checkstring(L, -1);
+    fs::path p;
+    try
+      {
+        p = fs::path(name, fs::native);
+        lua_pushboolean(L, fs::exists(p) && fs::is_directory(p));
       }
     catch(fs::filesystem_error & e)
       {
@@ -531,6 +568,7 @@ int main(int argc, char **argv)
   lua_register(st, "remove_recursive", remove_recursive);
   lua_register(st, "copy_recursive", copy_recursive);
   lua_register(st, "exists", exists);
+  lua_register(st, "isdir", isdir);
   lua_register(st, "get_ostype", get_ostype);
   lua_register(st, "save_env", do_save_env);
   lua_register(st, "restore_env", do_restore_env);

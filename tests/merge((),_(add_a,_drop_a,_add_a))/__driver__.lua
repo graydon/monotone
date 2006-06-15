@@ -8,7 +8,7 @@ addfile("randomfile", "blah blah blah")
 commit()
 base = base_revision()
 
-copyfile("v1", "testfile")
+copy("v1", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 
@@ -16,7 +16,7 @@ remove("testfile")
 check(mtn("drop", "testfile"), 0, false, false)
 commit()
 
-copyfile("v2", "testfile")
+copy("v2", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 

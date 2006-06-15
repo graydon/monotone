@@ -14,7 +14,7 @@ cvs_setup()
 
 check(cvs("co", "."), 0, false, false)
 mkdir("testdir")
-os.rename("importme.0", "testdir/importme")
+rename("importme.0", "testdir/importme")
 check(cvs("add", "testdir"), 0, false, false)
 check(cvs("add", "testdir/importme"), 0, false, false)
 check(cvs("commit", "-m", 'commit 0', "testdir/importme"), 0, false, false)

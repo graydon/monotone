@@ -18,7 +18,7 @@ commit()
 
 -- checkout in a clean dir and cd there
 function co()
-  remove_recursive(test.root.."/checkout")
+  remove(test.root.."/checkout")
   check(mtn("checkout", "-b", "testbranch", test.root.."/checkout"),
         0, false, false)
 end

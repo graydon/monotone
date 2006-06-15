@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-getfile("persist.lua")
+get("persist.lua")
 
 addfile("input.txt", "version 0 of the file")
 writefile("input.txt", "version 1 of the file")

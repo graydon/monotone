@@ -1,13 +1,13 @@
 
 mtn_setup()
 
-getfile("ru-8859-5")
-getfile("ru-utf8")
-getfile("jp-euc")
-getfile("jp-utf8")
+get("ru-8859-5")
+get("ru-utf8")
+get("jp-euc")
+get("jp-utf8")
 
-getfile("8859-5.lua")
-getfile("euc.lua")
+get("8859-5.lua")
+get("euc.lua")
 
 -- Create a mock base revision to revert back to
 addfile("blah", "foo foo")

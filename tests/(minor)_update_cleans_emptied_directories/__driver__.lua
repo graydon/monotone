@@ -6,7 +6,7 @@ addfile("testdir/foo", "blah blah blah")
 commit()
 base = base_revision()
 
-remove_recursive("testdir")
+remove("testdir")
 check(mtn("drop", "testdir/foo", "testdir"), 0, false, false)
 commit()
 

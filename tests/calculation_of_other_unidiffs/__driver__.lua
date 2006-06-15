@@ -4,15 +4,15 @@ mtn_setup()
 -- I don't get it. This seems to work, but WTF is that qgrep looking for?
 
 -- decode first file and commit to db
-getfile("firstfile", "testfile")
+get("firstfile", "testfile")
 addfile("testfile")
 commit()
-os.rename("testfile", "firstfile")
+rename("testfile", "firstfile")
 
 -- calculate diff to second file using monotone
-getfile("secondfile", "testfile")
+get("secondfile", "testfile")
 check(mtn("diff"), 0, true)
-os.rename("stdout", "monodiff")
+rename("stdout", "monodiff")
 
 -- look for a meaningless change
 check(not qgrep("^-$", "monodiff"))

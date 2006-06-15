@@ -23,15 +23,15 @@ rename("stdout", "changelog.3")
 -- create the initial 3rd-party vendor import
 
 mkdir("importdir")
-copyfile("file1.0", "importdir/file1")
-copyfile("file2.0", "importdir/file2")
-copyfile("changelog.0", "importdir/changelog")
+copy("file1.0", "importdir/file1")
+copy("file2.0", "importdir/file2")
+copy("changelog.0", "importdir/changelog")
 check(indir("importdir", cvs("import", "-m", "Initial import of VENDORWARE 1", "testsrc", "VENDOR", "VENDOR_REL_1")), 0, false, false)
 
 -- now we alter some of the files.
 check(cvs("co", "testsrc"), 0, false, false)
-copyfile("file1.1", "testsrc/file1")
-copyfile("changelog.1", "testsrc/changelog")
+copy("file1.1", "testsrc/file1")
+copy("changelog.1", "testsrc/changelog")
 check(indir("testsrc", cvs ("commit", "-m", 'commit 0')), 0, false, false)
 
 -- now we create a branch
@@ -39,14 +39,14 @@ check(indir("testsrc", cvs ("tag", "-b", "branched")), 0, false, false)
 check(indir("testsrc", cvs ("up", "-r", "branched")), 0, false, false)
 
 -- alter the files on the branch
-copyfile("file1.2", "testsrc/file1")
-copyfile("file2.1", "testsrc/file2")
-copyfile("changelog.3", "testsrc/changelog")
+copy("file1.2", "testsrc/file1")
+copy("file2.1", "testsrc/file2")
+copy("changelog.3", "testsrc/changelog")
 check(indir("testsrc", cvs ("commit", "-m", 'commit on branch')), 0, false, false)
 
 -- and create some mainline changes after the branch
 check(indir("testsrc", cvs ("up", "-A")), 0, false, false)
-copyfile("changelog.2", "testsrc/changelog")
+copy("changelog.2", "testsrc/changelog")
 check(indir("testsrc", cvs ("commit", "-m", 'commit on mainline after branch')), 0, false, false)
 
 -- import into monotone and check presence of files

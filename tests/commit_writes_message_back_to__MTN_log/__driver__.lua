@@ -9,13 +9,13 @@ addfile("testfile", "blah blah")
 -- work?  Well, it did...)
 check({"chmod", "a-w", "test.db"})
 
-getfile("my_hook.lua")
+get("my_hook.lua")
 
 check(mtn("commit", "-btestbranch", "--rcfile=my_hook.lua"), 1, false, false)
 
 check(samelines("_MTN/log", {"foobar"}))
 
-remove_recursive("_MTN/log")
+remove("_MTN/log")
 writefile("_MTN/log", "")
 
 -- -m messages don't get written out to _MTN/log

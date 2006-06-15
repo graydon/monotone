@@ -5,19 +5,19 @@ writefile("v1a", "foo blah")
 writefile("v1b", "bar blah")
 writefile("v2a", "baz blah")
 
-copyfile("v1a", "testfile")
+copy("v1a", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 base = base_revision()
 
-copyfile("v1b", "testfile")
+copy("v1b", "testfile")
 commit()
 
 remove("testfile")
 check(mtn("drop", "testfile"), 0, false, false)
 commit()
 
-copyfile("v2a", "testfile")
+copy("v2a", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 

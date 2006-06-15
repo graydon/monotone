@@ -10,7 +10,7 @@ commit("testbranch1")
 addfile("testfile2", "foo")
 commit("testbranch2")
 
-copyfile("test.db", "test2.db")
+copy("test.db", "test2.db")
 check_same_db_contents("test.db", "test2.db")
 
 addfile("testfile3", "pizza")

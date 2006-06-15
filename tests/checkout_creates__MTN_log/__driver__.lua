@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-getfile("commit_log.lua")
+get("commit_log.lua")
 
 writefile("_MTN/log", "Log entry")
 

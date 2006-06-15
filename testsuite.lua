@@ -88,24 +88,24 @@ function sha1(what)
 end
 
 function probe_node(filename, rsha, fsha)
-  remove_recursive("_MTN.old")
-  os.rename("_MTN", "_MTN.old")
-  os.remove(filename)
+  remove("_MTN.old")
+  rename("_MTN", "_MTN.old")
+  remove(filename)
   check(mtn("checkout", "--revision", rsha, "."), 0, false)
-  os.rename("_MTN.old/options", "_MTN")
+  rename("_MTN.old/options", "_MTN")
   check(base_revision() == rsha)
   check(sha1(filename) == fsha)
 end
 
 function mtn_setup()
-  getstdfile("test_keys")
-  getstdfile("test_hooks.lua")
-  getstdfile("min_hooks.lua")
+  getstd("test_keys")
+  getstd("test_hooks.lua")
+  getstd("min_hooks.lua")
   
   check(mtn("db", "init"), 0, false, false)
   check(mtn("read", "test_keys"), 0, false, false)
   check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
-  os.remove("test_keys")
+  remove("test_keys")
 end
 
 function base_revision()
@@ -130,8 +130,8 @@ function revert_to(rev, branch, mt)
     branch = nil
   end
   if mt == nil then mt = mtn end
-  remove_recursive("_MTN.old")
-  os.rename("_MTN", "_MTN.old")
+  remove("_MTN.old")
+  rename("_MTN", "_MTN.old")
   
   if branch == nil then
     check(mt("checkout", "--revision", rev, "."), 0, false)
@@ -161,7 +161,7 @@ function check_same_db_contents(db1, db2)
                     mtn("--db", db2, "ls", "keys"))
   
   check(mtn("--db", db1, "complete", "revision", ""), 0, true, false)
-  rename_over("stdout", "revs")
+  rename("stdout", "revs")
   check(mtn("--db", db2, "complete", "revision", ""), 0, true, false)
   check(samefile("stdout", "revs"))
   for rev in io.lines("revs") do
@@ -175,7 +175,7 @@ function check_same_db_contents(db1, db2)
   end
   
   check(mtn("--db", db1, "complete", "file", ""), 0, true, false)
-  rename_over("stdout", "files")
+  rename("stdout", "files")
   check(mtn("--db", db2, "complete", "file", ""), 0, true, false)
   check(samefile("stdout", "files"))
   for file in io.lines("files") do
@@ -188,16 +188,16 @@ end
 -- maybe these should go in tester.lua?
 function do_check_same_stdout(cmd1, cmd2)
   check(cmd1, 0, true, false)
-  rename_over("stdout", "stdout-first")
+  rename("stdout", "stdout-first")
   check(cmd2, 0, true, false)
-  rename_over("stdout", "stdout-second")
+  rename("stdout", "stdout-second")
   check(samefile("stdout-first", "stdout-second"))
 end
 function do_check_different_stdout(cmd1, cmd2)
   check(cmd1, 0, true, false)
-  rename_over("stdout", "stdout-first")
+  rename("stdout", "stdout-first")
   check(cmd2, 0, true, false)
-  rename_over("stdout", "stdout-second")
+  rename("stdout", "stdout-second")
   check(not samefile("stdout-first", "stdout-second"))
 end
 function check_same_stdout(a, b, c)

@@ -3,19 +3,19 @@ mtn_setup()
 revs = {}
 
 addfile("testfile", "this is just a file")
-copyfile("testfile", "testfile1")
+copy("testfile", "testfile1")
 check(mtn("commit", "--date=2005-03-11T20:33:01", "--branch=foo",
           "--message=march"), 0, false, false)
 revs.first = base_revision()
 
 writefile("testfile", "Now, this is a different file")
-copyfile("testfile", "testfile2")
+copy("testfile", "testfile2")
 check(mtn("commit", "--date=2005-04-22T12:15:00", "--branch=foo",
           "--message=aprila"), 0, false, false)
 revs.second = base_revision()
 
 writefile("testfile", "And we change it a third time")
-copyfile("testfile", "testfile3")
+copy("testfile", "testfile3")
 check(mtn("commit", "--date=2005-04-24T07:44:39", "--branch=foo",
           "--message=aprilb"), 0, false, false)
 revs.third = base_revision()

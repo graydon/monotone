@@ -30,7 +30,7 @@ for _,i in pairs{{"automate", "graph"}, {"ls", "certs", base}} do
   check_same_stdout(mtn(unpack(i)), mtn2(unpack(i)))
 end
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
 
 addfile("testfile2", "This is test file 2")

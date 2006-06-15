@@ -1,8 +1,8 @@
 
 mtn_setup()
 
-getfile("on.lua")
-getfile("off.lua")
+get("on.lua")
+get("off.lua")
 
 check(not exists("_MTN/inodeprints"))
 addfile("testfile", "blah blah")

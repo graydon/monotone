@@ -1,9 +1,9 @@
 
 mtn_setup()
 
-getfile("test.manifest")
+get("test.manifest")
 
-gettree("e")
+get("e")
 
 check(mtn("--branch=foo.bar", "cvs_import", "e"), 0, false, false)
 check(mtn("--branch=foo.bar.disasm-branch", "co"))

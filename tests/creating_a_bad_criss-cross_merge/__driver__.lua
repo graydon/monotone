@@ -26,8 +26,8 @@ writefile("specific.bob", "non-conflicting mergeable data in alice")
 -- keys (bob and alice) that don't trust each other so that they can
 -- produce two different merge results
 
-getfile("bob.lua")
-getfile("alice.lua")
+get("bob.lua")
+get("alice.lua")
 
 function bob (...)
   return raw_mtn("--rcfile=test_hooks.lua", "--rcfile=bob.lua",
@@ -45,14 +45,14 @@ check(alice("genkey", "alice"), 0, false, false, "alice\nalice\n")
 
 
 -- construct ancestor
-copyfile("shared.anc", "shared")
+copy("shared.anc", "shared")
 addfile("shared")
 commit()
 root_r_sha = base_revision()
 root_f_sha = sha1("shared")
 
 -- construct left node
-copyfile("shared.left", "shared")
+copy("shared.left", "shared")
 addfile("specific.left")
 commit()
 left_r_sha = base_revision()
@@ -64,7 +64,7 @@ check(left_f_sha ~= root_f_sha)
 revert_to(root_r_sha)
 
 -- construct right node
-copyfile("shared.right", "shared")
+copy("shared.right", "shared")
 addfile("specific.right")
 commit()
 right_r_sha = base_revision()

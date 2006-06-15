@@ -12,7 +12,7 @@ check(mtn("add", "foo2"), 0, false, false)
 commit()
 second = base_revision()
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("diff", "--revision", parent, "--revision", second), 0, false, false)
 -- check it works when specifying files
 check(mtn("diff", "--revision", parent, "--revision", second, "foo2"), 0, false, false)

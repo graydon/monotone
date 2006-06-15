@@ -1,9 +1,9 @@
 
 mtn_setup()
 
-getfile("parent")
-getfile("left")
-getfile("right")
+get("parent")
+get("left")
+get("right")
 
 parent = "fe24df7edf04cb06161defc10b252c5fa32bf1f7"
 left = "f4657ce998dd0e39465a3f345f3540b689fd60ad"
@@ -13,11 +13,11 @@ check(sha1("parent") == parent)
 check(sha1("left") == left)
 check(sha1("right") == right)
 
-copyfile("parent", "stdin")
+copy("parent", "stdin")
 check(mtn("fload"), 0, false, false, true)
-copyfile("left", "stdin")
+copy("left", "stdin")
 check(mtn("fload"), 0, false, false, true)
-copyfile("right", "stdin")
+copy("right", "stdin")
 check(mtn("fload"), 0, false, false, true)
 
 check(mtn("fmerge", parent, left, right), 0, true, false)

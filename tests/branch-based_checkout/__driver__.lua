@@ -4,11 +4,11 @@ mtn_setup()
 writefile("foo.testbranch", "this is the testbranch version")
 writefile("foo.otherbranch", "this version goes in otherbranch")
 
-copyfile("foo.testbranch", "foo")
+copy("foo.testbranch", "foo")
 check(mtn("add", "foo"), 0, false, false)
 commit()
 
-copyfile("foo.otherbranch", "foo")
+copy("foo.otherbranch", "foo")
 commit("otherbranch")
 
 check(mtn("--branch=testbranch", "checkout"), 0, false, false)

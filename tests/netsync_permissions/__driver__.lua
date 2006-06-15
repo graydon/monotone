@@ -16,18 +16,18 @@ genkey(keys.other)
 netsync.setup()
 
 -- test with open security settings
-gettree("open")
+get("open")
 
 addfile("badfile", "badfile")
 commit("badbranch", "badfile")
 
-copyfile("test.db", "clean.db")
-copy_recursive("keys", "clean_keys")
+copy("test.db", "clean.db")
+copy("keys", "clean_keys")
 function clean(n)
   if n == nil or n == 1 then n = "" end
-  copyfile("clean.db", "test"..n..".db")
-  remove_recursive("keys"..n)
-  copy_recursive("clean_keys", "keys"..n)
+  copy("clean.db", "test"..n..".db")
+  remove("keys"..n)
+  copy("clean_keys", "keys"..n)
 end
 
 addfile("testfile", "testfile")
@@ -68,9 +68,9 @@ check(mtn2("automate", "get_revision", revs.base), 1, true, true)
 
 -- push with default key
 
-copyfile("test.db", "test2.db")
-remove_recursive("keys2")
-copy_recursive("keys", "keys2")
+copy("test.db", "test2.db")
+remove("keys2")
+copy("keys", "keys2")
 revert_to(revs.base, mtn2)
 addfile("default", "default", mtn2)
 check(mtn2("commit", "--message", "default"), 0, false, false)
@@ -102,7 +102,7 @@ check(mtn("automate", "get_revision", revs.unknown), 1, true, true)
 
 
 -- test with closed security settings
-gettree("closed")
+get("closed")
 
 clean()
 writefile("_MTN/revision", "")
@@ -151,9 +151,9 @@ check(mtn2("automate", "get_revision", revs.base), 1, true, true)
 
 -- push with default key
 
-copyfile("test.db", "test2.db")
-remove_recursive("keys2")
-copy_recursive("keys", "keys2")
+copy("test.db", "test2.db")
+remove("keys2")
+copy("keys", "keys2")
 revert_to(revs.base, mtn2)
 addfile("default", "default", mtn2)
 check(mtn2("commit", "--message", "default"), 0, false, false)

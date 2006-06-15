@@ -11,18 +11,18 @@ commit()
 base = base_revision()
 
 
-copyfile("foo.left", "foo")
+copy("foo.left", "foo")
 check(mtn("add", "foo"), 0, false, false)
 commit()
 left = base_revision()
 
 revert_to(base)
-copyfile("foo.right", "foo")
+copy("foo.right", "foo")
 check(mtn("add", "foo"), 0, false, false)
 commit()
 right = base_revision()
 
-getfile("merge2.lua")
+get("merge2.lua")
 
 xfail_if(true, mtn("--rcfile=merge2.lua", "merge"), 0, false, false)
 check(mtn("update"), 0, false, false)

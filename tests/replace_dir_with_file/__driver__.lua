@@ -5,7 +5,7 @@ mkdir("dir")
 addfile("dir/file", "file")
 commit()
 
-remove_recursive("dir")
+remove("dir")
 writefile("dir", "this isn't a directory")
 
 check(mtn("status"), 1, false, false)

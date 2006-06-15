@@ -30,22 +30,22 @@ mtn_setup()
 
 -- Since there's apparently no right way, we accept the conflict as a pass.
 
-getfile("parent")
-getfile("left")
-getfile("right")
-getfile("correct")
+get("parent")
+get("left")
+get("right")
+get("correct")
 
-copyfile("parent", "testfile")
+copy("parent", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 parent = base_revision()
 
-copyfile("left", "testfile")
+copy("left", "testfile")
 commit()
 
 revert_to(parent)
 
-copyfile("right", "testfile")
+copy("right", "testfile")
 commit()
 
 check(mtn("--branch=testbranch", "merge"), 1, false, false)

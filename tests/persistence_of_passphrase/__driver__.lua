@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-getfile("persist.lua")
+get("persist.lua")
 
 writefile("input.txt", "version 0 of the file\n")
 
@@ -14,7 +14,7 @@ check(mtn("--branch=testbranch", "--rcfile=persist.lua", "--message=blah-blah", 
 tsha = base_revision()
 
 check(mtn("ls", "certs", tsha), 0, true)
-os.rename("stdout", "certs")
+rename("stdout", "certs")
 
 for i,name in pairs{"branch", "author", "date", "changelog"} do
   check(qgrep(name, "certs"))

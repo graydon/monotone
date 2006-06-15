@@ -84,7 +84,7 @@ check(mtn("--branch=branch.y", "merge"), 0, false, false)
 check(mtn("--branch=branch.y", "update"), 0, false, false)
 
 check(mtn("automate", "get_manifest_of"), 0, true)
-os.rename("stdout", "manifest")
+rename("stdout", "manifest")
 check(qgrep('"y"', "manifest"))
 check(not qgrep('"x"', "manifest"))
 check(exists("y"))

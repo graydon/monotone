@@ -22,7 +22,7 @@ for i = 1, 6 do
   check(mtn("automate", "get_file", fsha[i]), 0, true)
   canonicalize("stdout")
   check(samefile("stdout", "testfile"))
-  remove_recursive("_MTN")
+  remove("_MTN")
   check(mtn("checkout", "--revision", rsha[i], "."), 0, true)
   check(sha1("testfile") == fsha[i])
 end

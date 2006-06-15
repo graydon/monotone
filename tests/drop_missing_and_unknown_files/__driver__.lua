@@ -7,7 +7,7 @@ addfile("harold", "the file harold")
 addfile("places/cemetery", "the place file cemetery")
 commit()
 
-os.remove("maude")
+remove("maude")
 
 check(mtn("drop", "maude"), 0, false, true)
 check(qgrep('dropping maude from workspace manifest', "stderr"))
@@ -20,8 +20,8 @@ check(not qgrep("places/cemetery", "stdout"))
 check(mtn("drop", "foobar"), 0, false, true)
 check(qgrep("skipping foobar", "stderr"))
 
-os.remove("harold")
-os.remove("places/cemetery")
+remove("harold")
+remove("places/cemetery")
 
 check(mtn("drop", "--missing"), 0, false, true)
 check(qgrep('dropping harold from workspace manifest', "stderr"))

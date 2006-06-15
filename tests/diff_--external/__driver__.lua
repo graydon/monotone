@@ -4,12 +4,12 @@ mtn_setup()
 addfile("testfile", "foo bar")
 commit()
 old = sha1("testfile")
-copyfile("testfile", "old_testfile")
+copy("testfile", "old_testfile")
 
 writefile("testfile", "stuff stuff")
 new = sha1("testfile")
 
-getfile("testhook.lua")
+get("testhook.lua")
 
 check(mtn("--rcfile=testhook.lua", "diff", "--external"), 0, true, false)
 canonicalize("stdout")

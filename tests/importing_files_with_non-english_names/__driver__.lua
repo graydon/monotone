@@ -47,7 +47,7 @@ set_env("LANG", "en_US.utf-8")
 set_env("CHARSET", "UTF-8")
 
 check(mtn("automate", "get_manifest_of"), 0, true)
-os.rename("stdout", "manifest")
+rename("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
 check(qgrep(japanese_utf8, "manifest"))
@@ -78,7 +78,7 @@ end
 -- check the names showed up in our manifest
 
 check(mtn("automate", "get_manifest_of"), 0, true)
-rename_over("stdout", "manifest")
+rename("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
 if ostype ~= "Darwin" then
@@ -105,7 +105,7 @@ end
 -- check the names showed up in our manifest
 
 check(mtn("automate", "get_manifest_of"), 0, true)
-rename_over("stdout", "manifest")
+rename("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
 if ostype ~= "Darwin" then

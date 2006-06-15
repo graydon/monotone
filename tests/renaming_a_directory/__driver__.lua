@@ -14,12 +14,12 @@ root_f_sha = sha1("foo/foo")
 
 -- produce move edge
 check(mtn("rename", "foo", "bar"), 0, false, false)
-os.rename("foo", "bar")
+rename("foo", "bar")
 commit()
 
 -- revert to root
 probe_node("foo/foo", root_r_sha, root_f_sha)
-remove_recursive("bar")
+remove("bar")
 
 -- make an add *into the directory*
 addfile("foo/bar", "bar file")
@@ -29,7 +29,7 @@ commit()
 check(mtn("merge"), 0, false, false)
 check(mtn("update"), 0, false, false)
 check(mtn("automate", "get_manifest_of"), 0, true, false)
-os.rename("stdout", "manifest")
+rename("stdout", "manifest")
 check(qgrep("bar/bar", "manifest"))
 check(qgrep("bar/foo", "manifest"))
 check(not qgrep("foo/bar", "manifest"))

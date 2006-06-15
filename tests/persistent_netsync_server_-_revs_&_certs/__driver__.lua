@@ -10,7 +10,7 @@ check(mtn2("add", "testfile"), 0, false, false)
 check(mtn2("commit", "--branch=testbranch", "--message=foo"), 0, false, false)
 revs[1] = base_revision()
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn3("setup", "--branch=testbranch", "."), 0, false, false)
 writefile("otherfile", "baz quux")
 check(mtn3("add", "otherfile"), 0, false, false)
@@ -27,7 +27,7 @@ function chksy(n, co_mtn)
                     mtn3("automate", "get_revision", revs[n]))
   check_same_stdout(mtn2("ls", "certs", revs[n]),
                     mtn3("ls", "certs", revs[n]))
-  remove_recursive("somedir")
+  remove("somedir")
   check(co_mtn("checkout", "--revision", revs[n], "somedir"), 0, false, false)
 end
 
@@ -42,7 +42,7 @@ writefile("otherfile", "foo bar, baz, also quux (on off days)")
 check(mtn3("commit", "--branch=testbranch", "--message=foo"), 0, false, false)
 revs[3] = base_revision()
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn2("checkout", "--revision", revs[1], "."), 0, false, false)
 writefile("testfile", "ptang")
 check(mtn2("commit", "--branch=testbranch", "--message=foo"), 0, false, false)

@@ -13,24 +13,24 @@ addfile("otherfile", "this space for rent")
 commit()
 base = base_revision()
 
-copyfile("right_1_a", "testfile")
+copy("right_1_a", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 
-copyfile("right_1_b", "testfile")
+copy("right_1_b", "testfile")
 commit()
 
 remove("testfile")
 check(mtn("drop", "testfile"), 0, false, false)
 commit()
 
-copyfile("right_2_a", "testfile")
+copy("right_2_a", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 
 revert_to(base)
 
-copyfile("left", "testfile")
+copy("left", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 

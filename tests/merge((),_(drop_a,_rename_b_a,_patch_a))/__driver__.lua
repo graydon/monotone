@@ -5,7 +5,7 @@ writefile("v1a", "foo blah")
 writefile("v1b", "bar blah")
 writefile("v2a", "baz blah")
 
-copyfile("v1a", "testfile")
+copy("v1a", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 addfile("renamefile", "this will be overwritten")
 check(mtn("add", "renamefile"), 0, false, false)
@@ -18,7 +18,7 @@ check(mtn("rename", "renamefile", "testfile"), 0, false, false)
 rename("renamefile", "testfile")
 commit()
 
-copyfile("v2a", "testfile")
+copy("v2a", "testfile")
 commit()
 
 revert_to(base)

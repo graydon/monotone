@@ -10,11 +10,11 @@ check(fsize("stderr") == 0)
 writefile("foo.testbranch", "this is the testbranch version")
 writefile("foo.otherbranch", "this version goes in otherbranch")
 
-copyfile("foo.testbranch", "foo")
+copy("foo.testbranch", "foo")
 check(mtn("add", "foo"), 0, false, false)
 commit()
 
-copyfile("foo.otherbranch", "foo")
+copy("foo.otherbranch", "foo")
 commit("otherbranch")
 
 -- ls branches should list 2 branches now
@@ -28,10 +28,10 @@ check(mtn("ls", "branches", "--exclude", "testbr*"), 0, true, true)
 check(samelines("stdout", {"otherbranch"}))
 
 -- Create an ignore_branch hook to pass in
-getfile("ignore_branch.lua")
+get("ignore_branch.lua")
 
 -- if we make a change in the branch.to.be.ignored it should not turn up in the list
-copyfile("foo.testbranch", "in_ignored")
+copy("foo.testbranch", "in_ignored")
 check(mtn("--rcfile=ignore_branch.lua", "add", "in_ignored"), 0, false, false)
 commit("branch.to.be.ignored")
 check(mtn("--rcfile=ignore_branch.lua", "ls", "branches"),0,true,true)

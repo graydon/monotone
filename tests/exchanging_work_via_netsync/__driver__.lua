@@ -27,7 +27,7 @@ check(qgrep("changelog", "certs"))
 check(not qgrep("bad", "certs"))
 
 check(mtn2("ls", "certs", ver[1]), 0, true)
-rename_over("stdout", "certs")
+rename("stdout", "certs")
 check(qgrep("date", "certs"))
 check(qgrep("author", "certs"))
 check(qgrep("branch", "certs"))

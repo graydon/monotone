@@ -21,7 +21,7 @@ chdir("..")
 
 remove("subdir/testfile1")
 remove("subdir/testfile2")
-remove_recursive("subdir/testdir1")
+remove("subdir/testdir1")
 chdir("subdir")
 check(mtn("revert", "."), 0, false, false)
 chdir("..")

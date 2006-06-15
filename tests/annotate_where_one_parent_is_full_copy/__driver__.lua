@@ -16,18 +16,18 @@ writefile("B", "a\nb\nx\ny\nc\n")
 -- C == A
 -- D == B
 
-copyfile("A", "foo")
+copy("A", "foo")
 addfile("initialfile", "foo\nfile\n")
 check(mtn("add", "foo"), 0, false, false)
 commit()
 revs.a = base_revision()
 
-copyfile("B", "foo")
+copy("B", "foo")
 commit()
 revs.b = base_revision()
 
 revert_to(revs.a)
-copyfile("A", "initialfile")
+copy("A", "initialfile")
 commit()
 revs.c = base_revision()
 

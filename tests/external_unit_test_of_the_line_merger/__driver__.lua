@@ -3,9 +3,9 @@ skip_if(not existsonpath("diff3"))
 
 mtn_setup()
 
-getfile("left")
-getfile("right")
-getfile("ancestor")
+get("left")
+get("right")
+get("ancestor")
 
 anc = "cec9ec2e479b700ea267e70feb5a4eb15155190d"
 left = "52f65363d555fecd3d2e887a207c3add0a949638"
@@ -19,11 +19,11 @@ check(aver == anc)
 check(lver == left)
 check(rver == right)
 
-copyfile("ancestor", "stdin")
+copy("ancestor", "stdin")
 check(mtn("fload"), 0, false, false, true)
-copyfile("left", "stdin")
+copy("left", "stdin")
 check(mtn("fload"), 0, false, false, true)
-copyfile("right", "stdin")
+copy("right", "stdin")
 check(mtn("fload"), 0, false, false, true)
 
 check(mtn("fmerge", anc, left, right), 0, true, false)

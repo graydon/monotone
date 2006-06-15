@@ -17,7 +17,7 @@ commit()
 
 probe_node("a", root_r_sha, root_f_sha)
 
-remove_recursive("b")
+remove("b")
 writefile("d")
 
 check(mtn("add", "d"), 0, false, false)

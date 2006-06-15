@@ -9,7 +9,7 @@ netsync.setup()
 addfile("testfile", "some data")
 commit()
 
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn2("setup", "--branch=testbranch", "."))
 writefile("otherfile", "some data")
 check(mtn2("add", "testfile"), 0, false, false)

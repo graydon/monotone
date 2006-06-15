@@ -41,7 +41,7 @@ check(qgrep("tag3", "stdout"))
 -- make sure 'ls tags' output is sorted
 if existsonpath("sort") then
   canonicalize("stdout")
-  copyfile("stdout", "stdin")
+  copy("stdout", "stdin")
   rename("stdout", "stdout-orig")
   check({"sort"}, 0, readfile("stdout-orig"), false, true)
 end
@@ -49,7 +49,7 @@ end
 for i,x in {{true, false, false},
             {true, true, false},
             {true, true, true}} do
-  remove_recursive("_MTN")
+  remove("_MTN")
   remove("file1")
   remove("file2")
   remove("file3")

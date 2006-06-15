@@ -19,11 +19,11 @@ mtn_setup()
 
 -- We don't want the standard db, we want full control ourselves
 remove("test.db")
-remove_recursive("keys")
+remove("keys")
 check(mtn("db", "init"))
 
 -- Put some random keys in, with and without corresponding private keys
-getfile("migrate_keys")
+get("migrate_keys")
 check(mtn("read"), 0, false, false, {"migrate_keys"})
 
 addfile("testfile1", "f1v1\n")
@@ -43,7 +43,7 @@ writefile("testfile2", "f2v2\n")
 addfile("testfile4", "f4v1\n")
 commit("testbranch1")
 
-getfile("old_revs_propagate_log")
+get("old_revs_propagate_log")
 check(mtn("propagate", "testbranch2", "testbranch1",
           "--message-file=old_revs_propagate_log"), 0, false, false)
 check(mtn("update"), 0, false, false)
@@ -57,7 +57,7 @@ commit("testbranch3")
 -- any problem, as long as it's replaced by code with the same effect.
 check(mtn("db", "execute", "DELETE FROM revision_certs WHERE name = 'date'"), 0, false, false)
 
-copyfile("test.db", "latest.mtn")
+copy("test.db", "latest.mtn")
 
 if debugging then
   check(mtn("--db=latest.mtn", "db", "dump"), 0, true, false)
@@ -73,7 +73,7 @@ end
 
 function check_migrate_from(id)
   -- id.dumped is a 'db dump' of a db with schema "id"
-  getfile(id..".mtn.dumped", "stdin")
+  get(id..".mtn.dumped", "stdin")
   check(mtn("--db="..id..".mtn", "db", "load"), 0, false, false, true)
   -- check that the version's correct
   check(mtn("--db="..id..".mtn", "db", "version"), 0, true, false)

@@ -53,7 +53,7 @@ check(qgrep('5 serious', "stderr"))
 
 
 -- add an unreferenced file
-copyfile("fileX", "stdin")
+copy("fileX", "stdin")
 check(mtn("fload"), 0, false, false, true)
 -- create an unreferenced roster by deleting the revision. Note that this will increment
 -- the "missing revision" count by one for further checks

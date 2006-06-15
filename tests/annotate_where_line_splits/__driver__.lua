@@ -14,23 +14,23 @@ writefile("foo.C", "c\nident\nx\n")
 -- ident
 -- d
 
-getfile("merge.lua")
+get("merge.lua")
 
 
-copyfile("foo.A", "foo")
+copy("foo.A", "foo")
 check(mtn("add", "foo"), 0, false, false)
 commit()
 revs.a = base_revision()
 L("revs.a = ", revs.a, "\n")
 
-copyfile("foo.B", "foo")
+copy("foo.B", "foo")
 commit()
 revs.b = base_revision()
 L("revs.b = ", revs.b, "\n")
 
 revert_to(revs.a)
 
-copyfile("foo.C", "foo")
+copy("foo.C", "foo")
 commit()
 revs.c = base_revision()
 L("revs.c = ", revs.c, "\n")

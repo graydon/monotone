@@ -19,22 +19,22 @@ mtn_setup()
 --    return false;
 --  }
 
-getfile("parent")
-getfile("left")
-getfile("right")
-getfile("correct")
+get("parent")
+get("left")
+get("right")
+get("correct")
 
-copyfile("parent", "testfile")
+copy("parent", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 parent = base_revision()
 
-copyfile("left", "testfile")
+copy("left", "testfile")
 commit()
 
 revert_to(parent)
 
-copyfile("right", "testfile")
+copy("right", "testfile")
 commit()
 
 check(mtn("merge"), 0, false, false)

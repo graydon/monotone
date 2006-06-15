@@ -23,7 +23,7 @@ base = base_revision()
 rename("largish", "largish.orig")
 
 check(cat("-", "largish.orig"), 0, true, false, "foo\n")
-rename_over("stdout", "largish")
+rename("stdout", "largish")
 append("largish", "bar\n")
 commit()
 mod = base_revision()

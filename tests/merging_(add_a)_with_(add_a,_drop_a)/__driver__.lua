@@ -65,7 +65,7 @@ check(mtn("--branch=branch.main", "merge"), 0, false, false)
 check(mtn("propagate", "branch.main", "branch.fork"), 0, false, false)
 
 -- check
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("--branch=branch.fork", "checkout", "."))
 
 check(mtn("automate", "get_manifest_of"), 0, true)

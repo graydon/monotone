@@ -9,23 +9,23 @@ mtn_setup()
 
 writefile("initial", "some initial data")
 
-getfile("foo.alice")
+get("foo.alice")
 
-getfile("foo.bob")
+get("foo.bob")
 
 -- Alice does her add
 mkdir("alicewd")
-copyfile("initial", "alicewd/initial")
+copy("initial", "alicewd/initial")
 check(mtn("--branch=testbranch", "setup", "alicewd"), 0, false, false)
 check(indir("alicewd", mtn("--root=.", "add", "initial")), 0, false, false)
 check(indir("alicewd", mtn("--root=.", "commit", "-m", 'initial commit')), 0, false, false)
-copyfile("foo.alice", "alicewd/foo")
+copy("foo.alice", "alicewd/foo")
 check(indir("alicewd", mtn("add", "--root=.", "foo")), 0, false, false)
 -- Note, alice does not commit this add...
 
 -- Bob does add of same file, with edits, and commits
 check(mtn("--branch=testbranch", "checkout", "bobwd"), 0, false, false)
-copyfile("foo.bob", "bobwd/foo")
+copy("foo.bob", "bobwd/foo")
 check(indir("bobwd", mtn("--root=.", "add", "foo")), 0, false, false)
 check(indir("bobwd", mtn("--root=.", "commit", "-m", 'bob commit')), 0, false, false)
 rev = indir("bobwd", {base_revision})[1]()

@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-getfile("ignored.lua")
+get("ignored.lua")
 
 mkdir("work")
 mkdir("work/A")
@@ -48,7 +48,7 @@ check(qgrep("work/file4", "stdout"))
 check(mtn("ls", "unknown", "work"), 0, true, false)
 check(qgrep("work/file4", "stdout"))
 
-os.rename("work/file2", "work/filex2")
+rename("work/file2", "work/filex2")
 
 check(mtn("ls", "missing"), 0, true, false)
 check(qgrep("work/file2", "stdout"))
@@ -56,7 +56,7 @@ check(qgrep("work/file2", "stdout"))
 check(mtn("ls", "missing", "work/file2"), 0, true, false)
 check(qgrep("work/file2", "stdout"))
 
-os.rename("work/filex2", "work/file2")
+rename("work/filex2", "work/file2")
 
 check(mtn("ls", "ignored", "--rcfile=ignored.lua"), 0, true, false)
 check(qgrep("work/foo.o", "stdout"))
@@ -66,8 +66,8 @@ check(qgrep("work/foo.o", "stdout"))
 
 -- create moved, dropped, and changed work to test status, diff, commit
 
-os.rename("work/fileX", "work/file1")
-os.remove("work/file2")
+rename("work/fileX", "work/file1")
+remove("work/file2")
 
 writefile("work/file3", "version 2 of file3 with some changes")
 writefile("work/A/fileA", "version 2 of fileA with some changes")

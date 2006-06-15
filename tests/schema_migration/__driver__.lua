@@ -28,11 +28,11 @@
 mtn_setup()
 -- We don't want the standard db, we want full control ourselves
 remove("test.db")
-remove_recursive("keys")
+remove("keys")
 check(mtn("db", "init"))
 
 -- Put some random keys in, with and without corresponding private keys
-getfile("migrate_keys", "stdin")
+get("migrate_keys", "stdin")
 check(mtn("read"), 0, false, false, true)
 
 addfile("testfile1", "f1v1\n")
@@ -79,7 +79,7 @@ end
 
 function check_migrate_from(id)
   -- id.dumped is a 'db dump' of a db with schema "id"
-  getfile(id..".mtn.dumped", "stdin")
+  get(id..".mtn.dumped", "stdin")
   check(mtn("--db="..id..".mtn", "db", "load"), 0, false, false, true)
   -- check that the version's correct
   check(mtn("--db="..id..".mtn", "db", "version"), 0, true, false)

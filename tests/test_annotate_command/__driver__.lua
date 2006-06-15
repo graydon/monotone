@@ -12,15 +12,15 @@ commit()
 revs[0] = base_revision()
 
 addfile("bar0", "0\n1\n2\n")
-copyfile("foo1", "foo0")
+copy("foo1", "foo0")
 commit()
 revs[1] = base_revision()
 
-copyfile("bar1", "bar0")
+copy("bar1", "bar0")
 commit()
 revs[2] = base_revision()
 
-copyfile("bar2", "bar0")
+copy("bar2", "bar0")
 commit()
 revs[3] = base_revision()
 
@@ -91,7 +91,7 @@ commit()
 revs[6] = base_revision()
 
 -- Now make right side
-remove_recursive("_MTN")
+remove("_MTN")
 check(mtn("co", "--revision", revs[4], "."), 0, false, false)
 writefile("bar0", "bar\non right side of fork\n")
 commit()

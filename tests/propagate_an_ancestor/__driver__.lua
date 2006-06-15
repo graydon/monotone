@@ -23,13 +23,13 @@ writefile("testfile", "quux")
 commit("b")
 heads.b = base_revision()
 
-copyfile("test.db", "test2.db")
+copy("test.db", "test2.db")
 check(mtn("propagate", "a", "b"), 0, false, false)
 
 check_same_db_contents("test.db", "test2.db")
 
 check(mtn("cert", heads.b, "branch", "c"), 0, false, false)
-copyfile("test.db", "test3.db")
+copy("test.db", "test3.db")
 check(mtn("propagate", "b", "c"), 0, false, false)
 
 check_same_db_contents("test.db", "test3.db")

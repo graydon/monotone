@@ -17,20 +17,20 @@ tsha3=sha1("importme.3")
 cvs_setup()
 
 -- check out the workspace and make some commits
--- note that this has to use copyfile, rather than rename, to update
+-- note that this has to use copy, rather than rename, to update
 -- the file in cvs. Apparently, cvs uses timestamps or something to track
 -- file modifications.
 check(cvs("co", "."), 0, false, false)
 mkdir("testdir")
-copyfile("importme.0", "testdir/importme")
+copy("importme.0", "testdir/importme")
 check(cvs("add", "testdir"), 0, false, false)
 check(cvs("add", "testdir/importme"), 0, false, false)
 check(cvs("commit", "-m", 'commit 0', "testdir/importme"), 0, false, false)
-copyfile("importme.1", "testdir/importme")
+copy("importme.1", "testdir/importme")
 check(cvs("commit", "-m", 'commit 1', "testdir/importme"), 0, false, false)
-copyfile("importme.2", "testdir/importme")
+copy("importme.2", "testdir/importme")
 check(cvs("commit", "-m", 'commit 2', "testdir/importme"), 0, false, false)
-copyfile("importme.3", "testdir/importme")
+copy("importme.3", "testdir/importme")
 check(cvs("commit", "-m", 'commit 3', "testdir/importme"), 0, false, false)
 
 -- import into monotone and check presence of files

@@ -1,12 +1,12 @@
 
 mtn_setup()
 
-getfile("left")
-getfile("right")
+get("left")
+get("right")
 
-copyfile("left", "stdin")
+copy("left", "stdin")
 check(mtn("fload"), 0, false, false, true)
-copyfile("right", "stdin")
+copy("right", "stdin")
 check(mtn("fload"), 0, false, false, true)
 left = sha1("left")
 right = sha1("right")

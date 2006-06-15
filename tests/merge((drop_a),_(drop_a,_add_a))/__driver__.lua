@@ -5,7 +5,7 @@ writefile("original", "some stuff here")
 writefile("replaced", "the re-added file")
 writefile("nonce", "...nothing here...")
 
-copyfile("original", "testfile")
+copy("original", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 base = base_revision()
@@ -25,7 +25,7 @@ commit()
 
 -- ... and add the replacement
 -- on the other side of the fork, drop it
-copyfile("replaced", "testfile")
+copy("replaced", "testfile")
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 
