@@ -839,7 +839,7 @@ function run_tests(args)
       if e.e == true then
         P(string.format("skipped (line %i)\n", test.errline))
         test.log:close()
-        if not debugging then clean_test_dir(testname) end
+        if not debugging then clean_test_dir(tname) end
         counts.skip = counts.skip + 1
       elseif e.e == false then
         P(string.format("expected failure (line %i)\n", test.errline))

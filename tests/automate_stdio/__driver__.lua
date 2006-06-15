@@ -21,6 +21,6 @@ writefile("output", "file contents")
 
 check(mtn("automate", "inventory"), 0, true, false)
 canonicalize("stdout")
-rename("stdout", "output")
+rename_over("stdout", "output")
 check(mtn("automate", "stdio"), 0, true, false, "l9:inventorye")
 check(parse_stdio(readfile("stdout"), 0) == readfile("output"))

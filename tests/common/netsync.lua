@@ -45,7 +45,7 @@ function netsync.internal.push(srv, pat, n, res) srv:client("push", pat, n, res)
 function netsync.internal.sync(srv, pat, n, res) srv:client("sync", pat, n, res) end
 
 function netsync.start(pat, n, min)
-  if pat == "" or pat == nil then pat = "*" end
+  if pat == "" or pat == nil then pat = "{*}" end
   local args = {}
   local fn = mtn
   local addr = "localhost:" .. math.random(20000, 50000)

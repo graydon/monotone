@@ -100,6 +100,14 @@ void clear_redirect(redirect::what what, HANDLE saved)
     break;
   }
 }
+bool make_accessible(string const &name)
+{
+  DWORD attrs = GetFileAttributes(name.c_str());
+  if (attrs == INVALID_FILE_ATTRIBUTES)
+    return false;
+  bool ok = SetFileAttributes(name.c_str(), attrs & ~FILE_ATTRIBUTE_READONLY);
+  return ok;
+}
 #else
 #include <unistd.h>
 namespace redirect {typedef int savetype;}
@@ -154,6 +162,14 @@ void clear_redirect(redirect::what what, int saved)
   };
   dup2(saved, from);
   close(saved);
+}
+bool make_accessible(string const &name)
+{
+  struct stat st;
+  bool ok = (stat(name.c_str(), &st) == 0);
+  if (!ok)
+    return false;
+  ok = )chmod(name.c_str(), st.st_mode | S_IREAD | S_IWRITE | S_IEXEC) == 0);
 }
 #endif
 namespace redirect
@@ -226,12 +242,25 @@ static int panic_thrower(lua_State * st)
   throw oops("lua error");
 }
 
+void do_remove_recursive(fs::path const &rem)
+{
+  if (!fs::exists(rem))
+    return;
+  make_accessible(rem.native_file_string());
+  if (fs::is_directory(rem))
+    {
+      for (fs::directory_iterator i(rem); i != fs::directory_iterator(); ++i)
+        do_remove_recursive(*i);
+    }
+  fs::remove(rem);
+}
+
 void do_copy_recursive(fs::path const &from, fs::path const &to)
 {
   if (!fs::exists(from))
     return;
   if (fs::exists(to))
-    fs::remove_all(to);
+    do_remove_recursive(to);
   if (fs::is_directory(from))
     {
       fs::create_directory(to);
@@ -251,7 +280,7 @@ extern "C"
     fs::path tname(testname);
     fs::path testdir = run_dir / tname.leaf();
     if (fs::exists(testdir))
-      fs::remove_all(testdir);
+      do_remove_recursive(testdir);
     fs::create_directory(testdir);
     go_to_workspace(testdir.native_file_string());
     lua_pushstring(L, testdir.native_file_string().c_str());
@@ -283,7 +312,7 @@ extern "C"
     fs::path tname(testname, fs::native);
     fs::path testdir = run_dir / tname.leaf();
     go_to_workspace(run_dir.native_file_string());
-    fs::remove_all(testdir);
+    do_remove_recursive(testdir);
     return 0;
   }
 
@@ -291,7 +320,7 @@ extern "C"
   remove_recursive(lua_State *L)
   {
     fs::path dir(luaL_checkstring(L, -1));
-    fs::remove_all(dir);
+    do_remove_recursive(dir);
     return 0;
   }
 
