@@ -1,3 +1,11 @@
+2006-06-12  Derek Scherger  <derek@echologic.com>
+
+	* cmd_merging.cc (get_roster): allow no arguments and default to
+	value in _MTN/revision
+	* std_hooks.lua: switch temporary file names from mt.XXX to
+	mtn.XXX; update attr function docs; add java class files to
+	standard ignore hook
+
 2006-06-11  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Updated and translated a few more strings (68 to go).
