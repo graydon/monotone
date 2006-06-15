@@ -78,7 +78,7 @@ end
 -- check the names showed up in our manifest
 
 check(mtn("automate", "get_manifest_of"), 0, true)
-os.rename("stdout", "manifest")
+rename_over("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
 if ostype ~= "Darwin" then
@@ -105,7 +105,7 @@ end
 -- check the names showed up in our manifest
 
 check(mtn("automate", "get_manifest_of"), 0, true)
-os.rename("stdout", "manifest")
+rename_over("stdout", "manifest")
 check(qgrep("funny", "manifest"))
 check(qgrep("spaces", "manifest"))
 if ostype ~= "Darwin" then
