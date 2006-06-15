@@ -110,6 +110,7 @@ bool make_accessible(string const &name)
 }
 #else
 #include <unistd.h>
+#include <sys/stat.h>
 namespace redirect {typedef int savetype;}
 int set_redirect(redirect::what what, string where)
 {
@@ -169,7 +170,7 @@ bool make_accessible(string const &name)
   bool ok = (stat(name.c_str(), &st) == 0);
   if (!ok)
     return false;
-  ok = )chmod(name.c_str(), st.st_mode | S_IREAD | S_IWRITE | S_IEXEC) == 0);
+  return (chmod(name.c_str(), st.st_mode | S_IREAD | S_IWRITE | S_IEXEC) == 0);
 }
 #endif
 namespace redirect

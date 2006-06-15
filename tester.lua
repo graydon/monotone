@@ -498,6 +498,7 @@ function pre_cmd(stdin, ident)
 end
 
 function post_cmd(result, ret, stdout, stderr, ident)
+  if ret == nil then ret = 0 end
   if ident == nil then ident = "ts-" end
   L("stdout:\n")
   log_file_contents(ident .. "stdout")
@@ -798,11 +799,19 @@ function run_tests(args)
     else
       setfenv(driver, env)
       r,e = xpcall(driver, debug.traceback)
-      if type(env.cleanup) == "function" then
-        pcall(env.cleanup)
-      end
       for i,b in pairs(test.bglist) do
-        b:finish(0)
+        local a,b = pcall(function () b:finish(0) end)
+        if r and not a then
+          r = a
+          e = b
+        end
+      end
+      if type(env.cleanup) == "function" then
+        local a,b = pcall(env.cleanup)
+        if r and not a then
+          r = a
+          e = b
+        end
       end
       restore_env()
     end
@@ -832,6 +841,7 @@ function run_tests(args)
         counts.success = counts.success + 1
       end
     else
+      if test.errline == nil then test.errline = -1 end
       if type(e) ~= "table" then
         local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
         e = tbl

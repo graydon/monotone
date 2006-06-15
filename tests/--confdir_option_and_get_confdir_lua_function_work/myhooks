@@ -1,0 +1,6 @@
+dir = get_confdir()
+if string.find(dir, "fooxyzzybar$") then
+  file = io.open(dir .. "/checkfile", "w")
+  file:write("foobar")
+  io.close(file)
+end

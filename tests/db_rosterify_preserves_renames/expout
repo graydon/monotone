@@ -1,0 +1,11 @@
+format_version "1"
+
+new_manifest [0ee54a587bc4465f17eaf5de2807fbd7d9f46c75]
+
+old_revision [3ee4662e91afd842e0eb0e6681db790bf8c3e627]
+
+rename "testdir_start"
+    to "testdir_end"
+
+rename "testfile_start"
+    to "testfile_end"

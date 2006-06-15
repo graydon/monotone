@@ -108,7 +108,7 @@ Lua::ok()
 void
 Lua::report_error()
 {
-  I(lua_isstring(st, -1));
+//  I(lua_isstring(st, -1));
   string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
   W(i18n_format("%s") % err);
   L(FL("lua stack: %s") % dump_stack(st));
