@@ -1,6 +1,0 @@
-AT_SETUP([warn on bad restriction])
-MTN_SETUP
-
-AT_CHECK(MTN diff bogusdir1 bogusdir2, [1], [ignore], [stderr])
-
-AT_CLEANUP

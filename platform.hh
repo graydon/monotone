@@ -28,7 +28,7 @@ bool is_executable(const char *path);
 int existsonpath(const char *exe);
 int make_executable(const char *path);
 pid_t process_spawn(const char * const argv[]);
-int process_wait(pid_t pid, int *res);
+int process_wait(pid_t pid, int *res, int timeout = -1);// default infinite
 int process_kill(pid_t pid, int signal);
 int process_sleep(unsigned int seconds);
 

@@ -108,7 +108,7 @@ Lua::ok()
 void
 Lua::report_error()
 {
-  I(lua_isstring(st, -1));
+//  I(lua_isstring(st, -1));
   string err = string(lua_tostring(st, -1), lua_strlen(st, -1));
   W(i18n_format("%s") % err);
   L(FL("lua stack: %s") % dump_stack(st));
@@ -715,7 +715,7 @@ extern "C"
     catch (informative_failure & e)
       {// there was a syntax error in our string
         lua_pushnil(L);
-        return 0;
+        return 1;
       }
     lua_newtable(L);
     int n = 1;

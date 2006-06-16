@@ -235,9 +235,9 @@ WIN32_PLATFORM_SOURCES = \
 # primaries
 
 bin_PROGRAMS = mtn
-check_PROGRAMS = unit_tests
-noinst_PROGRAMS = txt2c 
-EXTRA_PROGRAMS = usher tester
+check_PROGRAMS = unit_tests tester
+noinst_PROGRAMS = txt2c
+EXTRA_PROGRAMS = usher
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 usher_SOURCES = contrib/usher.cc
@@ -396,9 +396,8 @@ EXTRA_DIST = $(man1_MANS) \
              texinfo.css \
 	     schema.sql views.sql \
 	     std_hooks.lua test_hooks.lua tester.lua \
-	     testsuite.at \
-	     $(wildcard $(srcdir)/tests/t_*.at) \
-	     testsuite \
+	     testsuite.lua $(srcdir)/tests/ \
+	     tester-testsuite.lua $(srcdir)/tester-tests/ \
              tests/atconfig.in \
              tests/atlocal.in  \
 	     package.m4 \
@@ -453,15 +452,15 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 # testsuite stuff (could this possibly be more ugly?)
 
 if BUILD_UNIT_TESTS
-TESTS = unit_tests $(srcdir)/testsuite
+TESTS = unit_tests run_lua_tests
 else
-TESTS = $(srcdir)/testsuite
+TESTS = run_lua_tests
 endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
-	rm -rf testsuite.dir testsuite.log package_full_revision.txt
+	rm -rf tester_dir package_full_revision.txt
 
 DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
@@ -486,10 +485,11 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo 'm4_define([AT_PACKAGE_BUGREPORT], [@PACKAGE_BUGREPORT@])'; \
 	} >$(srcdir)/package.m4
 
-$(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
-                     $(srcdir)/package.m4 
-	autom4te --language=Autotest -I $(srcdir) $< -o $@.tmp
-	mv -f $@.tmp $@
+run_lua_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo $(top_builddir)/tester $(srcdir)/testsuite.lua >> $@ ; \
+	chmod 755 $@
 
 # we generate some headers to copy data into the executable
 
