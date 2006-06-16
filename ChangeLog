@@ -1,3 +1,8 @@
+2006-06-16  Richard Levitte  <richard@levitte.org>
+
+	* examples/display_branches.lua: Enhanced to display how many
+	times each branch cert appeared.
+
 2006-06-14  Alex Queiroz  <alex@ventonegro.org>
 
 	* monotone.texi: Added a trick about reusing code from the default
