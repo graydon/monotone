@@ -30,6 +30,7 @@ check(mtn("log", "--diffs"), 0, true, false)
 check(grep('^(---|\\+\\+\\+) ', "stdout"), 0, true, false)
 rename("stdout", "full")
 get("expect_full")
+canonicalize("full")
 check(samefile("expect_full", "full"))
 
 -- restrict to foo2 and quux
@@ -37,4 +38,5 @@ check(mtn("log", "quux", "--diffs", "foo2"), 0, true, false)
 check(grep("^(---|\\+\\+\\+) ", "stdout"), 0, true, false)
 rename("stdout", "restrict")
 get("expect_restrict")
+canonicalize("restrict")
 check(samefile("expect_restrict", "restrict"))
