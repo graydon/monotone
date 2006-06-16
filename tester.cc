@@ -298,44 +298,69 @@ extern "C"
   static int
   go_to_test_dir(lua_State * L)
   {
-    char const * testname = luaL_checkstring(L, -1);
-    fs::path tname(testname);
-    fs::path testdir = run_dir / tname.leaf();
-    if (fs::exists(testdir))
-      do_remove_recursive(testdir);
-    fs::create_directory(testdir);
-    go_to_workspace(testdir.native_file_string());
-    lua_pushstring(L, testdir.native_file_string().c_str());
-    lua_pushstring(L, tname.leaf().c_str());
-    return 2;
+    try
+      {
+        char const * testname = luaL_checkstring(L, -1);
+        fs::path tname(testname);
+        fs::path testdir = run_dir / tname.leaf();
+        if (fs::exists(testdir))
+          do_remove_recursive(testdir);
+        fs::create_directory(testdir);
+        go_to_workspace(testdir.native_file_string());
+        lua_pushstring(L, testdir.native_file_string().c_str());
+        lua_pushstring(L, tname.leaf().c_str());
+        return 2;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushnil(L);
+        return 1;
+      }
   }
 
   static int
   go_to_dir(lua_State * L)
   {
-    fs::path dir(luaL_checkstring(L, -1), fs::native);
-    string from = fs::current_path().native_file_string();
-    if (!dir.is_complete())
-      dir = fs::current_path() / dir;
-    if (!fs::exists(dir) || !fs::is_directory(dir))
+    try
+      {
+        fs::path dir(luaL_checkstring(L, -1), fs::native);
+        string from = fs::current_path().native_file_string();
+        if (!dir.is_complete())
+          dir = fs::current_path() / dir;
+        if (!fs::exists(dir) || !fs::is_directory(dir))
+          {
+            lua_pushnil(L);
+            return 1;
+          }
+        go_to_workspace(dir.native_file_string());
+        lua_pushstring(L, from.c_str());
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
       {
         lua_pushnil(L);
         return 1;
       }
-    go_to_workspace(dir.native_file_string());
-    lua_pushstring(L, from.c_str());
-    return 1;
   }
 
   static int
   clean_test_dir(lua_State *L)
   {
-    char const * testname = luaL_checkstring(L, -1);
-    fs::path tname(testname, fs::native);
-    fs::path testdir = run_dir / tname.leaf();
-    go_to_workspace(run_dir.native_file_string());
-    do_remove_recursive(testdir);
-    return 0;
+    try
+      {
+        char const * testname = luaL_checkstring(L, -1);
+        fs::path tname(testname, fs::native);
+        fs::path testdir = run_dir / tname.leaf();
+        go_to_workspace(run_dir.native_file_string());
+        do_remove_recursive(testdir);
+        lua_pushboolean(L, true);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushnil(L);
+        return 1;
+      }
   }
 
   static int
@@ -378,39 +403,65 @@ extern "C"
   static int
   leave_test_dir(lua_State *L)
   {
-    go_to_workspace(run_dir.native_file_string());
-    return 0;
+    try
+      {
+        go_to_workspace(run_dir.native_file_string());
+        lua_pushboolean(L, true);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushnil(L);
+        return 1;
+      }
   }
 
   static int
   make_dir(lua_State *L)
   {
-    char const * dirname = luaL_checkstring(L, -1);
-    fs::path dir(dirname, fs::native);
-    fs::create_directory(dir);
-    return 0;
+    try
+      {
+        char const * dirname = luaL_checkstring(L, -1);
+        fs::path dir(dirname, fs::native);
+        fs::create_directory(dir);
+        lua_pushboolean(L, true);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushnil(L);
+        return 1;
+      }
   }
 
   static int
   mtime(lua_State *L)
   {
-    char const * file = luaL_checkstring(L, -1);
-    fs::path fn(file);
-    std::time_t t = fs::last_write_time(file);
-    if (t == std::time_t(-1))
-      lua_pushnil(L);
-    else
-      lua_pushnumber(L, t);
-    return 1;
+    try
+      {
+        char const * file = luaL_checkstring(L, -1);
+        fs::path fn(file);
+        std::time_t t = fs::last_write_time(file);
+        if (t == std::time_t(-1))
+          lua_pushnil(L);
+        else
+          lua_pushnumber(L, t);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushnil(L);
+        return 1;
+      }
   }
 
   static int
   exists(lua_State *L)
   {
-    char const * name = luaL_checkstring(L, -1);
-    fs::path p;
     try
       {
+        char const * name = luaL_checkstring(L, -1);
+        fs::path p;
         p = fs::path(name, fs::native);
         lua_pushboolean(L, fs::exists(p));
       }
@@ -424,10 +475,10 @@ extern "C"
   static int
   isdir(lua_State *L)
   {
-    char const * name = luaL_checkstring(L, -1);
-    fs::path p;
     try
       {
+        char const * name = luaL_checkstring(L, -1);
+        fs::path p;
         p = fs::path(name, fs::native);
         lua_pushboolean(L, fs::exists(p) && fs::is_directory(p));
       }
