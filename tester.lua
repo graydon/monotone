@@ -150,6 +150,10 @@ function readfile(filename)
   return readfile_q(filename)
 end
 
+function readstdfile(filename)
+  return readfile(testdir.."/"..filename)
+end
+
 function writefile_q(filename, dat)
   local file,e
   if dat == nil then
@@ -574,7 +578,7 @@ function bg(torun, ret, stdout, stderr, stdin)
   if pid == -1 then err("Failed to start background process\n", 2) end
   out.pid = pid
   test.bglist[test.bgid] = out
-  out.id = bgid
+  out.id = test.bgid
   out.retval = nil
   out.locstr = locheader()
   out.cmd = torun
@@ -601,9 +605,9 @@ function bg(torun, ret, stdout, stderr, stdin)
                   end
                 end
                 
-                table.remove(test.bglist, obj.id)
+                test.bglist[obj.id] = nil
                 L(locheader(), "checking background command from ", out.locstr,
-                  table.concat(out.cmd, " "))
+                  table.concat(out.cmd, " "), "\n")
                 post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
                 return true
               end
@@ -619,7 +623,7 @@ function bg(torun, ret, stdout, stderr, stdin)
                   return false
                 end
               end
-              table.remove(test.bglist, obj.id)
+              test.bglist[obj.id] = nil
               L(locheader(), "checking background command from ", out.locstr,
                 table.concat(out.cmd, " "), "\n")
               post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
@@ -645,6 +649,9 @@ function indir(dir, what)
   end
   local function do_indir()
     local savedir = chdir(dir)
+    if savedir == nil then
+      err("Cannot chdir to "..dir)
+    end
     local ok, res
     if type(what[1]) == "function" then
       ok, res = pcall(unpack(what))
@@ -757,6 +764,8 @@ function run_tests(args)
   counts.noxfail = 0
   counts.fail = 0
   counts.total = 0
+  counts.of_interest = 0
+  local of_interest = {}
 
   local function runtest(i, tname)
     local env = {}
@@ -781,12 +790,16 @@ function run_tests(args)
     test.errline = -1
     test.bglist = {}
     
-    if i < 100 then P(" ") end
-    if i < 10 then P(" ") end
-    P(i, " ", shortname, " ")
+    local test_header = ""
+    if i < 100 then test_header = test_header .. " " end
+    if i < 10 then test_header = test_header .. " " end
+    test_header = test_header .. i .. " " .. shortname .. " "
     local spacelen = 45 - string.len(shortname)
     local spaces = string.rep(" ", 50)
-    if spacelen > 0 then P(string.sub(spaces, 1, spacelen)) end
+    if spacelen > 0 then
+      test_header = test_header .. string.sub(spaces, 1, spacelen)
+    end
+    P(test_header)
 
     local tlog = test.root .. "/tester.log"
     test.log = io.open(tlog, "w")
@@ -800,12 +813,17 @@ function run_tests(args)
       e = "Could not load driver file " .. driverfile .. " .\n" .. e
     else
       setfenv(driver, env)
+      local oldmask = posix_umask(0)
+      posix_umask(oldmask)
       r,e = xpcall(driver, debug.traceback)
+      local errline = test.errline
       for i,b in pairs(test.bglist) do
-        local a,b = pcall(function () b:finish(0) end)
+        local a,x = pcall(function () b:finish(0) end)
         if r and not a then
           r = a
-          e = b
+          e = x
+        elseif not a then
+          L("Error cleaning up background processes: ", tostring(b.locstr), "\n")
         end
       end
       if type(env.cleanup) == "function" then
@@ -815,7 +833,9 @@ function run_tests(args)
           e = b
         end
       end
+      test.errline = errline
       restore_env()
+      posix_umask(oldmask)
     end
     
     -- set our functions back to the proper environment
@@ -832,6 +852,8 @@ function run_tests(args)
         test.log:close()
         leave_test_dir()
         counts.noxfail = counts.noxfail + 1
+        counts.of_interest = counts.of_interest + 1
+        table.insert(of_interest, test_header .. "unexpected success")
       else
         if test.partial_skip then
           P("partial skip\n")
@@ -859,12 +881,15 @@ function run_tests(args)
         leave_test_dir()
         counts.xfail = counts.xfail + 1
       else
-        P(string.format("FAIL (line %i)\n", test.errline))
+        result = string.format("FAIL (line %i)", test.errline)
+        P(result, "\n")
         log_error(e)
         table.insert(failed_testlogs, tlog)
         test.log:close()
         leave_test_dir()
         counts.fail = counts.fail + 1
+        counts.of_interest = counts.of_interest + 1
+        table.insert(of_interest, test_header .. result)
       end
     end
     counts.total = counts.total + 1
@@ -900,6 +925,12 @@ function run_tests(args)
     return 0
   end
   
+  if counts.of_interest ~= 0 and (counts.total / counts.of_interest) > 4 then
+   P("\nInteresting tests:\n")
+   for i,x in ipairs(of_interest) do
+     P(x, "\n")
+   end
+  end
   P("\n")
   P(string.format("Of %i tests run:\n", counts.total))
   P(string.format("\t%i succeeded\n", counts.success))

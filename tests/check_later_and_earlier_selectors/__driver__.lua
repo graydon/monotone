@@ -1,4 +1,5 @@
 
+include("common/selectors.lua")
 mtn_setup()
 revs = {}
 
@@ -23,10 +24,6 @@ revs.third = base_revision()
 -- -------------------
 -- check 'earlier or equal' selector
 -- -------------------
-function selmap(sel, revs, sort)
-  check(raw_mtn("automate", "select", sel), 0, true, false)
-  samelines("stdout", revs, sort)
-end
 
 -- this time is just 'before' the first commit, thus no output should come
 selmap("e:2005-03-11T20:33:00", {})

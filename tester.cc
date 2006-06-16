@@ -256,12 +256,17 @@ void do_remove_recursive(fs::path const &rem)
   fs::remove(rem);
 }
 
-void do_copy_recursive(fs::path const &from, fs::path const &to)
+void do_copy_recursive(fs::path const &from, fs::path to)
 {
   if (!fs::exists(from))
     throw fs::filesystem_error("Source for copy does not exist", from, 0);
   if (fs::exists(to))
-    do_remove_recursive(to);
+    {
+      if (fs::is_directory(to))
+        to = to / from.leaf();
+      else
+        do_remove_recursive(to);
+    }
   if (fs::is_directory(from))
     {
       fs::create_directory(to);
@@ -274,6 +279,22 @@ void do_copy_recursive(fs::path const &from, fs::path const &to)
 
 extern "C"
 {
+  static int
+  posix_umask(lua_State * L)
+  {
+#ifdef WIN32
+    lua_pushnil(L);
+    return 1;
+#else
+    int from = luaL_checknumber(L, -1);
+    mode_t mask = 64*((from / 100) % 10) + 8*((from / 10) % 10) + (from % 10);
+    mode_t oldmask = umask(mask);
+    int res = 100*(oldmask/64) + 10*((oldmask/8) % 8) + (oldmask % 8);
+    lua_pushnumber(L, res);
+    return 1;
+#endif
+  }
+
   static int
   go_to_test_dir(lua_State * L)
   {
@@ -298,7 +319,7 @@ extern "C"
       dir = fs::current_path() / dir;
     if (!fs::exists(dir) || !fs::is_directory(dir))
       {
-        lua_pushboolean(L, false);
+        lua_pushnil(L);
         return 1;
       }
     go_to_workspace(dir.native_file_string());
@@ -574,6 +595,8 @@ int main(int argc, char **argv)
   lua_register(st, "restore_env", do_restore_env);
   lua_register(st, "set_env", do_set_env);
   lua_register(st, "timed_wait", timed_wait);
+
+  lua_register(st, "posix_umask", posix_umask);
   
   lua_pushstring(st, "initial_dir");
   lua_pushstring(st, firstdir.c_str());

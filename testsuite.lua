@@ -44,6 +44,7 @@ end
 
 monotone_path = getpathof("mtn")
 if monotone_path == nil then monotone_path = "mtn" end
+set_env("mtn", monotone_path)
 
 function safe_mtn(...)
   return {monotone_path, "--norc", "--root=" .. test.root, unpack(arg)}
@@ -110,6 +111,23 @@ end
 
 function base_revision()
   return (string.gsub(readfile("_MTN/revision"), "%s*$", ""))
+end
+
+function base_manifest()
+  check(safe_mtn("automate", "get_manifest_of", base_revision()), 0, false)
+  copy("ts-stdout", "base_manifest_temp")
+  return sha1("base_manifest_temp")
+end
+
+function certvalue(rev, name)
+  check(safe_mtn("automate", "certs", rev), 0, false)
+  local parsed = parse_basic_io(readfile("ts-stdout"))
+  local cname
+  for _,l in pairs(parsed) do
+    if l.name == "name" then cname = l.values[1] end
+    if cname == name and l.name == "value" then return l.values[1] end
+  end
+  return nil
 end
 
 function qgrep(what, where)
@@ -558,3 +576,49 @@ table.insert(tests, "revert_ignored_files")
 table.insert(tests, "disallowing_persistence_of_passphrase")
 table.insert(tests, "db_data_format_checking")
 table.insert(tests, "rename_files_into_a_directory")
+table.insert(tests, "listing_changed_files")
+table.insert(tests, "revert_file_in_new_project")
+table.insert(tests, "db_kill_rev_locally_command_2")
+table.insert(tests, "log_--no-files_and_--merges")
+table.insert(tests, "importing_cvs_branches_with_correct_ancestory")
+table.insert(tests, "check_--log")
+table.insert(tests, "log_and_selectors_returning_multiple_rids")
+table.insert(tests, "pivot_root")
+table.insert(tests, "reverting_a_pivot_root")
+table.insert(tests, "updating_through_a_pivot_root")
+table.insert(tests, "db_rosterify_on_a_db_with_a_root_suture")
+table.insert(tests, "log_dir")
+table.insert(tests, "show_conflicts")
+table.insert(tests, "merge_a_project_into_a_subdirectory_of_an_unrelated_project")
+table.insert(tests, "restriction_excludes_parent_dir")
+table.insert(tests, "revert_moving_a_file_to_a_renamed_directory")
+table.insert(tests, "one-way_netsync_where_the_sink_has_more_epochs")
+table.insert(tests, "branch_handling_in_disapprove")
+table.insert(tests, "checking_that_certain_commands_ignores_the_contents_of__MTN_options")
+table.insert(tests, "exchanging_work_via_netsync,_with_notes")
+table.insert(tests, "db_rosterify_twice_gives_an_error_second_time")
+table.insert(tests, "_MTN_case-folding_security_patch")
+table.insert(tests, "rosterify_handles_.mt-ignore_files")
+table.insert(tests, "revert_file_blocked_by_unversioned_directory")
+table.insert(tests, "pid_file_cleanup")
+table.insert(tests, "rosterify_on_a_db_with_an_empty_manifest")
+table.insert(tests, "sync_server_--exclude_foo")
+table.insert(tests, "pid_file_and_log_handles_open_failures")
+table.insert(tests, "mtn_execute_attr_respects_umask")
+table.insert(tests, "setup_in_subdirectory")
+table.insert(tests, "test_the_help_command")
+table.insert(tests, "test_the_approve_command")
+table.insert(tests, "checkout_fails_with_multiple_heads")
+table.insert(tests, "ls_epochs")
+table.insert(tests, "test_some_hook_helper_functions")
+table.insert(tests, "do_not_log_the_result_of_hook_get_passphrase")
+table.insert(tests, "quiet_turns_off_tickers_but_not_warnings")
+table.insert(tests, "reallyquiet_turns_off_tickers_and_warnings")
+table.insert(tests, "escaped_selectors")
+table.insert(tests, "automate_get_base_revision_id")
+table.insert(tests, "automate_get_current_revision_id")
+table.insert(tests, "log_--diffs")
+table.insert(tests, "db_info_of_new_database")
+table.insert(tests, "automate_common_ancestors")
+table.insert(tests, "invalid_--root_settings")
+table.insert(tests, "netsync_over_pipes")

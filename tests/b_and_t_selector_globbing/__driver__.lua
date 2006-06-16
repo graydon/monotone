@@ -1,4 +1,5 @@
 
+include("common/selectors.lua")
 mtn_setup()
 
 addfile("testfile", "blah blah")
@@ -16,12 +17,6 @@ R3=base_revision()
 check(mtn("tag", R1, "foo"), 0, false, false)
 check(mtn("tag", R2, "bar"), 0, false, false)
 check(mtn("tag", R3, "foobarbaz"), 0, false, false)
-function selmap(s, res, sort)
-  if sort == nil then sort = true end
-  check(mtn("automate", "select", s), 0, true, false)
-  if sort then table.sort(res) end
-  check(samelines("stdout", res))
-end
 
 selmap("b:testbranch", {R1})
 selmap("b:otherbranch", {R2})

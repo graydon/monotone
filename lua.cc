@@ -715,7 +715,7 @@ extern "C"
     catch (informative_failure & e)
       {// there was a syntax error in our string
         lua_pushnil(L);
-        return 0;
+        return 1;
       }
     lua_newtable(L);
     int n = 1;
