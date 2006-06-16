@@ -9,7 +9,14 @@ function ignore_file (name)
   if not globish_match("a*b", "acb") then ok = false end
   if globish_match("a{b", "abc") ~= nil then ok = false end
 
-  if ok then execute ("touch", "outfile") end
+  if ok then
+    if existsonpath("touch") == 0 then
+      execute ("touch", "outfile")
+    else
+      x = io.open("outfile", "w")
+      x:close()
+    end
+  end
 
   ignore_file = function (name) return true end
 return true
