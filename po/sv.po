@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-06-10 07:59+0200\n"
-"PO-Revision-Date: 2006-06-10 08:32+0200\n"
+"POT-Creation-Date: 2006-06-18 00:28+0200\n"
+"PO-Revision-Date: 2006-06-18 00:31+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -279,11 +279,21 @@ msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "flera grencert funna för revision %s, var god ange en gren"
 
-#: cmd_automate.cc:18
+#: cmd_automate.cc:203
+#, c-format
+msgid "read from client failed with error code: %d"
+msgstr "läsning från klienten misslyckades med följande felkod: %d"
+
+#: cmd_automate.cc:246
+#, c-format
+msgid "Bad input to automate stdio"
+msgstr "felaktigt indata till automate stdio"
+
+#: cmd_automate.cc:294
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:19
+#: cmd_automate.cc:295
 msgid ""
 "interface_version\n"
 "heads [BRANCH]\n"
@@ -341,7 +351,7 @@ msgstr ""
 "packet_for_fdelta GAMMAL_FIL NY_FIL\n"
 "keys\n"
 
-#: cmd_automate.cc:46
+#: cmd_automate.cc:322
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
@@ -428,7 +438,7 @@ msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
 #: cmd_db.cc:152 cmd_diff_log.cc:348 cmd_diff_log.cc:556 cmd_files.cc:78
-#: cmd_files.cc:145 cmd_list.cc:461 cmd_merging.cc:569 cmd_ws_commit.cc:322
+#: cmd_files.cc:145 cmd_list.cc:436 cmd_merging.cc:569 cmd_ws_commit.cc:322
 #: commands.cc:244
 msgid "informative"
 msgstr "informativ"
@@ -576,22 +586,22 @@ msgstr "skriv ut angiven fil från databasen"
 msgid "no file '%s' found in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
 
-#: cmd.hh:84
+#: cmd.hh:110
 #, c-format
 msgid "non-hex digits in id"
 msgstr "något tecken i identiteten är inte hexadecimalt"
 
-#: cmd.hh:93
+#: cmd.hh:119
 #, c-format
 msgid "partial id '%s' does not have an expansion"
 msgstr "den partiella identiteten '%s' matchar inte befintliga identiteter"
 
-#: cmd.hh:97
+#: cmd.hh:123
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:\n"
 msgstr "den partiella identiteten '%s' har mer än en uttydning:\n"
 
-#: cmd.hh:105
+#: cmd.hh:131
 #, c-format
 msgid "expanded partial id '%s' to '%s'"
 msgstr "expanderade partiell identitet '%s' till '%s'"
@@ -762,12 +772,12 @@ msgstr "misslyckades med att redigera kommentaren"
 msgid "empty comment"
 msgstr "tom kommentar"
 
-#: cmd_list.cc:60
+#: cmd_list.cc:64 cmd_list.cc:654
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "den publika nyckeln '%s' finns inte i databasen"
 
-#: cmd_list.cc:70
+#: cmd_list.cc:74
 #, c-format
 msgid ""
 "Key   : %s\n"
@@ -780,39 +790,39 @@ msgstr ""
 "Namn     : %s\n"
 "Värde    : %s\n"
 
-#: cmd_list.cc:104
+#: cmd_list.cc:108
 msgid "ok"
 msgstr "ok"
 
-#: cmd_list.cc:107
+#: cmd_list.cc:111
 msgid "bad"
 msgstr "felaktig"
 
-#: cmd_list.cc:110
+#: cmd_list.cc:114
 msgid "unknown"
 msgstr "okänd"
 
-#: cmd_list.cc:198
+#: cmd_list.cc:202
 #, c-format
 msgid "(*) - only in %s/"
 msgstr "(*) - enbart i %s/"
 
-#: cmd_list.cc:222
+#: cmd_list.cc:226
 #, c-format
 msgid "no keys found"
 msgstr "hittade inga nycklar"
 
-#: cmd_list.cc:224
+#: cmd_list.cc:228
 #, c-format
 msgid "no keys found matching '%s'"
 msgstr "hittade inga nycklar som matchar '%s'"
 
-#: cmd_list.cc:271
+#: cmd_list.cc:275
 #, c-format
 msgid "no epoch for branch %s"
 msgstr "ingen epok i grenen %s"
 
-#: cmd_list.cc:462
+#: cmd_list.cc:437
 msgid ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -838,7 +848,7 @@ msgstr ""
 "missing\n"
 "changed"
 
-#: cmd_list.cc:473
+#: cmd_list.cc:448
 msgid ""
 "show database objects, or the current workspace manifest, \n"
 "or known, unknown, intentionally ignored, missing, or \n"
@@ -846,6 +856,11 @@ msgid ""
 msgstr ""
 "visa databasobjekten, arbetskopians manifest, okända filer, kända \n"
 "filer, medvetet ignorerade filer, saknade filer eller ändrade filer"
+
+#: cmd_list.cc:640
+#, c-format
+msgid "No such revision %s"
+msgstr "det finns ingen revision med identiteten %s"
 
 #: cmd_merging.cc:53 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
 #: cmd_ws_commit.cc:251 cmd_ws_commit.cc:278 cmd_ws_commit.cc:303

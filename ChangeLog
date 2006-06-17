@@ -7,6 +7,16 @@
 	instead of all being a big block in the automate command.
 	* automate.cc, cmd_list.cc, cmd_automate.cc: Update AUTOMATE() usage.
 
+2006-06-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One new untranslated string and a couple of fuzzies.
+
+2006-06-17  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac, debian/changelog, monotone.spec:
+	* win32/monotone.iss, NEWS, UPGRADE: Bump version numbers to
+	0.27.
+
 2006-06-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	(see bug #15995, asking for a more comprehensive automate command set)
