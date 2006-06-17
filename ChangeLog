@@ -1,3 +1,7 @@
+2006-06-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One new untranslated string and a couple of fuzzies.
+
 2006-06-17  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac, debian/changelog, monotone.spec:
