@@ -1,3 +1,19 @@
+2006-06-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	(see bug #15995, asking for a more comprehensive automate command set)
+	Start splitting up automate.cc . There is now an AUTOMATE() macro in
+	cmd.hh , similar to the CMD() macro. Individual automate commands can
+	share a file with similar command-line commands, and many commands can
+	be factored into an implementation with CMD() and AUTOMATE() wrappers
+	to format input/output.
+	* cmd.hh: Add stuff needed to define a new automate command.
+	* cmd_automate.cc: This gets automate infrastructure similar to
+	what commands.cc is for command-line commands. And automate stdio.
+	* cmd_list.cc: "keys" and "certs" automate commands go here
+	* automate.hh: No longer needed.
+	* automate.cc: use AUTOMATE() macro for the automate commands that
+	haven't got a new home yet.
+
 2006-06-16  Richard Levitte  <richard@levitte.org>
 
 	* examples/display_branches.lua: Enhanced to display how many

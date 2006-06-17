@@ -12,6 +12,9 @@
 #include <map>
 #include <utility>
 
+#include <boost/tuple/tuple.hpp>
+
+#include "basic_io.hh"
 #include "cert.hh"
 #include "charset.hh"
 #include "cmd.hh"
@@ -480,6 +483,231 @@ CMD(list, N_("informative"),
 }
 
 ALIAS(ls, list)
+
+namespace
+{
+  namespace syms
+  {
+    symbol const key("key");
+    symbol const signature("signature");
+    symbol const name("name");
+    symbol const value("value");
+    symbol const trust("trust");
+
+    symbol const public_hash("public_hash");
+    symbol const private_hash("private_hash");
+    symbol const public_location("public_location");
+    symbol const private_location("private_location");
+  }
+};
+
+// Name: keys
+// Arguments: none
+// Added in: 1.1
+// Purpose: Prints all keys in the keystore, and if a database is given
+//   also all keys in the database, in basic_io format.
+// Output format: For each key, a basic_io stanza is printed. The items in
+//   the stanza are:
+//     name - the key identifier
+//     public_hash - the hash of the public half of the key
+//     private_hash - the hash of the private half of the key
+//     public_location - where the public half of the key is stored
+//     private_location - where the private half of the key is stored
+//   The *_location items may have multiple values, as shown below
+//   for public_location.
+//   If the private key does not exist, then the private_hash and
+//   private_location items will be absent.
+//
+// Sample output:
+//               name "tbrownaw@gmail.com"
+//        public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+//       private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+//    public_location "database" "keystore"
+//   private_location "keystore"
+//
+//              name "njs@pobox.com"
+//       public_hash [de84b575d5e47254393eba49dce9dc4db98ed42d]
+//   public_location "database"
+//
+//               name "foo@bar.com"
+//        public_hash [7b6ce0bd83240438e7a8c7c207d8654881b763f6]
+//       private_hash [bfc3263e3257087f531168850801ccefc668312d]
+//    public_location "keystore"
+//   private_location "keystore"
+//
+// Error conditions: None.
+AUTOMATE(keys)
+{
+  if (args.size() != 0)
+    throw usage(help_name);
+  vector<rsa_keypair_id> dbkeys;
+  vector<rsa_keypair_id> kskeys;
+  // public_hash, private_hash, public_location, private_location
+  map<string, boost::tuple<hexenc<id>, hexenc<id>,
+                           vector<string>,
+                           vector<string> > > items;
+  if (app.db.database_specified())
+    {
+      transaction_guard guard(app.db, false);
+      app.db.get_key_ids("", dbkeys);
+      guard.commit();
+    }
+  app.keys.get_key_ids("", kskeys);
+
+  for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();
+       i != dbkeys.end(); i++)
+    {
+      base64<rsa_pub_key> pub_encoded;
+      hexenc<id> hash_code;
+
+      app.db.get_key(*i, pub_encoded);
+      key_hash_code(*i, pub_encoded, hash_code);
+      items[(*i)()].get<0>() = hash_code;
+      items[(*i)()].get<2>().push_back("database");
+    }
+
+  for (vector<rsa_keypair_id>::iterator i = kskeys.begin();
+       i != kskeys.end(); i++)
+    {
+      keypair kp;
+      hexenc<id> privhash, pubhash;
+      app.keys.get_key_pair(*i, kp);
+      key_hash_code(*i, kp.pub, pubhash);
+      key_hash_code(*i, kp.priv, privhash);
+      items[(*i)()].get<0>() = pubhash;
+      items[(*i)()].get<1>() = privhash;
+      items[(*i)()].get<2>().push_back("keystore");
+      items[(*i)()].get<3>().push_back("keystore");
+    }
+  basic_io::printer prt;
+  for (map<string, boost::tuple<hexenc<id>, hexenc<id>,
+                                     vector<string>,
+                                     vector<string> > >::iterator
+         i = items.begin(); i != items.end(); ++i)
+    {
+      basic_io::stanza stz;
+      stz.push_str_pair(syms::name, i->first);
+      stz.push_hex_pair(syms::public_hash, i->second.get<0>());
+      if (!i->second.get<1>()().empty())
+        stz.push_hex_pair(syms::private_hash, i->second.get<1>());
+      stz.push_str_multi(syms::public_location, i->second.get<2>());
+      if (!i->second.get<3>().empty())
+        stz.push_str_multi(syms::private_location, i->second.get<3>());
+      prt.print_stanza(stz);
+    }
+  output.write(prt.buf.data(), prt.buf.size());
+}
+
+// Name: certs
+// Arguments:
+//   1: a revision id
+// Added in: 1.0
+// Purpose: Prints all certificates associated with the given revision
+//   ID. Each certificate is contained in a basic IO stanza. For each
+//   certificate, the following values are provided:
+//
+//   'key' : a string indicating the key used to sign this certificate.
+//   'signature': a string indicating the status of the signature.
+//   Possible values of this string are:
+//     'ok'        : the signature is correct
+//     'bad'       : the signature is invalid
+//     'unknown'   : signature was made with an unknown key
+//   'name' : the name of this certificate
+//   'value' : the value of this certificate
+//   'trust' : is this certificate trusted by the defined trust metric
+//   Possible values of this string are:
+//     'trusted'   : this certificate is trusted
+//     'untrusted' : this certificate is not trusted
+//
+// Output format: All stanzas are formatted by basic_io. Stanzas are
+// seperated by a blank line. Values will be escaped, '\' -> '\\' and
+// '"' -> '\"'.
+//
+// Error conditions: If a certificate is signed with an unknown public
+// key, a warning message is printed to stderr. If the revision
+// specified is unknown or invalid prints an error message to stderr
+// and exits with status 1.
+AUTOMATE(certs)
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+
+  vector<cert> certs;
+
+  transaction_guard guard(app.db, false);
+
+  revision_id rid(idx(args, 0)());
+  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  hexenc<id> ident(rid.inner());
+
+  vector< revision<cert> > ts;
+  app.db.get_revision_certs(rid, ts);
+  for (size_t i = 0; i < ts.size(); ++i)
+    certs.push_back(idx(ts, i).inner());
+
+  {
+    set<rsa_keypair_id> checked;
+    for (size_t i = 0; i < certs.size(); ++i)
+      {
+        if (checked.find(idx(certs, i).key) == checked.end() &&
+            !app.db.public_key_exists(idx(certs, i).key))
+          W(F("no public key '%s' found in database")
+            % idx(certs, i).key);
+        checked.insert(idx(certs, i).key);
+      }
+  }
+
+  // Make the output deterministic; this is useful for the test suite,
+  // in particular.
+  sort(certs.begin(), certs.end());
+
+  basic_io::printer pr;
+
+  for (size_t i = 0; i < certs.size(); ++i)
+    {
+      basic_io::stanza st;
+      cert_status status = check_cert(app, idx(certs, i));
+      cert_value tv;
+      cert_name name = idx(certs, i).name();
+      set<rsa_keypair_id> signers;
+
+      decode_base64(idx(certs, i).value, tv);
+
+      rsa_keypair_id keyid = idx(certs, i).key();
+      signers.insert(keyid);
+
+      bool trusted =
+        app.lua.hook_get_revision_cert_trust(signers, ident,
+                                             name, tv);
+
+      st.push_str_pair(syms::key, keyid());
+
+      string stat;
+      switch (status)
+        {
+        case cert_ok:
+          stat = "ok";
+          break;
+        case cert_bad:
+          stat = "bad";
+          break;
+        case cert_unknown:
+          stat = "unknown";
+          break;
+        }
+      st.push_str_pair(syms::signature, stat);
+
+      st.push_str_pair(syms::name, name());
+      st.push_str_pair(syms::value, tv());
+      st.push_str_pair(syms::trust, (trusted ? "trusted" : "untrusted"));
+
+      pr.print_stanza(st);
+    }
+  output.write(pr.buf.data(), pr.buf.size());
+
+  guard.commit();
+}
+
 
 // Local Variables:
 // mode: C++

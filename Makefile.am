@@ -48,7 +48,7 @@ MOST_SOURCES =								\
 	 cset.cc cset.hh						\
 	 roster.cc roster.hh						\
          mt_version.cc mt_version.hh					\
-         automate.cc automate.hh					\
+         automate.cc							\
          database_check.cc database_check.hh				\
          epoch.cc epoch.hh						\
          inodeprint.cc inodeprint.hh					\

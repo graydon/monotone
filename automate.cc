@@ -22,6 +22,7 @@
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "cert.hh"
+#include "cmd.hh"
 #include "commands.hh"
 #include "constants.hh"
 #include "keys.hh"
@@ -49,28 +50,6 @@ using std::streamsize;
 using std::string;
 using std::vector;
 
-static string const interface_version = "2.1";
-
-// Name: interface_version
-// Arguments: none
-// Added in: 0.0
-// Purpose: Prints version of automation interface.  Major number increments
-//   whenever a backwards incompatible change is made; minor number increments
-//   whenever any change is made (but is reset when major number increments).
-// Output format: "<decimal number>.<decimal number>\n".  Always matches
-//   "[0-9]+\.[0-9]+\n".
-// Error conditions: None.
-static void
-automate_interface_version(vector<utf8> args,
-                           string const & help_name,
-                           app_state & app,
-                           ostream & output)
-{
-  if (args.size() != 0)
-    throw usage(help_name);
-
-  output << interface_version << endl;
-}
 
 // Name: heads
 // Arguments:
@@ -81,11 +60,7 @@ automate_interface_version(vector<utf8> args,
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the branch does not exist, prints nothing.  (There are
 //   no heads.)
-static void
-automate_heads(vector<utf8> args,
-               string const & help_name,
-               app_state & app,
-               ostream & output)
+AUTOMATE(heads)
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -109,11 +84,7 @@ automate_heads(vector<utf8> args,
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_ancestors(vector<utf8> args,
-                   string const & help_name,
-                   app_state & app,
-                   ostream & output)
+AUTOMATE(ancestors)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -160,11 +131,7 @@ automate_ancestors(vector<utf8> args,
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_descendents(vector<utf8> args,
-                     string const & help_name,
-                     app_state & app,
-                     ostream & output)
+AUTOMATE(descendents)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -212,11 +179,7 @@ automate_descendents(vector<utf8> args,
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_erase_ancestors(vector<utf8> args,
-                         string const & help_name,
-                         app_state & app,
-                         ostream & output)
+AUTOMATE(erase_ancestors)
 {
   set<revision_id> revs;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -239,11 +202,7 @@ automate_erase_ancestors(vector<utf8> args,
 // Output format: A list of file names in alphabetically sorted order,
 //   or a list of attributes if a file name provided.
 // Error conditions: If the file name has no attributes, prints nothing.
-static void
-automate_attributes(vector<utf8> args,
-                    string const & help_name,
-                    app_state & app,
-                    ostream & output)
+AUTOMATE(attributes)
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -293,11 +252,7 @@ automate_attributes(vector<utf8> args,
 //   newline.  Revisions are printed in topologically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_toposort(vector<utf8> args,
-                  string const & help_name,
-                  app_state & app,
-                  ostream & output)
+AUTOMATE(toposort)
 {
   set<revision_id> revs;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -329,11 +284,7 @@ automate_toposort(vector<utf8> args,
 //   newline.  Revisions are printed in topologically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_ancestry_difference(vector<utf8> args,
-                             string const & help_name,
-                             app_state & app,
-                             ostream & output)
+AUTOMATE(ancestry_difference)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -372,11 +323,7 @@ automate_ancestry_difference(vector<utf8> args,
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-static void
-automate_leaves(vector<utf8> args,
-                string const & help_name,
-                app_state & app,
-                ostream & output)
+AUTOMATE(leaves)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -404,11 +351,7 @@ automate_leaves(vector<utf8> args,
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
-static void
-automate_parents(vector<utf8> args,
-                 string const & help_name,
-                 app_state & app,
-                 ostream & output)
+AUTOMATE(parents)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -432,11 +375,7 @@ automate_parents(vector<utf8> args,
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
-static void
-automate_children(vector<utf8> args,
-                  string const & help_name,
-                  app_state & app,
-                  ostream & output)
+AUTOMATE(children)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -470,11 +409,7 @@ automate_children(vector<utf8> args,
 //   The output as a whole is alphabetically sorted; additionally, the parents
 //   within each line are alphabetically sorted.
 // Error conditions: None.
-static void
-automate_graph(vector<utf8> args,
-               string const & help_name,
-               app_state & app,
-               ostream & output)
+AUTOMATE(graph)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -517,11 +452,7 @@ automate_graph(vector<utf8> args,
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-static void
-automate_select(vector<utf8> args,
-                string const & help_name,
-                app_state & app,
-                ostream & output)
+AUTOMATE(select)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -703,11 +634,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-static void
-automate_inventory(vector<utf8> args,
-                   string const & help_name,
-                   app_state & app,
-                   ostream & output)
+AUTOMATE(inventory)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -826,137 +753,6 @@ automate_inventory(vector<utf8> args,
     }
 }
 
-namespace
-{
-  namespace syms
-  {
-    symbol const key("key");
-    symbol const signature("signature");
-    symbol const name("name");
-    symbol const value("value");
-    symbol const trust("trust");
-
-    symbol const public_hash("public_hash");
-    symbol const private_hash("private_hash");
-    symbol const public_location("public_location");
-    symbol const private_location("private_location");
-  }
-};
-
-// Name: certs
-// Arguments:
-//   1: a revision id
-// Added in: 1.0
-// Purpose: Prints all certificates associated with the given revision
-//   ID. Each certificate is contained in a basic IO stanza. For each
-//   certificate, the following values are provided:
-//
-//   'key' : a string indicating the key used to sign this certificate.
-//   'signature': a string indicating the status of the signature.
-//   Possible values of this string are:
-//     'ok'        : the signature is correct
-//     'bad'       : the signature is invalid
-//     'unknown'   : signature was made with an unknown key
-//   'name' : the name of this certificate
-//   'value' : the value of this certificate
-//   'trust' : is this certificate trusted by the defined trust metric
-//   Possible values of this string are:
-//     'trusted'   : this certificate is trusted
-//     'untrusted' : this certificate is not trusted
-//
-// Output format: All stanzas are formatted by basic_io. Stanzas are
-// seperated by a blank line. Values will be escaped, '\' -> '\\' and
-// '"' -> '\"'.
-//
-// Error conditions: If a certificate is signed with an unknown public
-// key, a warning message is printed to stderr. If the revision
-// specified is unknown or invalid prints an error message to stderr
-// and exits with status 1.
-static void
-automate_certs(vector<utf8> args,
-               string const & help_name,
-               app_state & app,
-               ostream & output)
-{
-  if (args.size() != 1)
-    throw usage(help_name);
-
-  vector<cert> certs;
-
-  transaction_guard guard(app.db, false);
-
-  revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
-  hexenc<id> ident(rid.inner());
-
-  vector< revision<cert> > ts;
-  app.db.get_revision_certs(rid, ts);
-  for (size_t i = 0; i < ts.size(); ++i)
-    certs.push_back(idx(ts, i).inner());
-
-  {
-    set<rsa_keypair_id> checked;
-    for (size_t i = 0; i < certs.size(); ++i)
-      {
-        if (checked.find(idx(certs, i).key) == checked.end() &&
-            !app.db.public_key_exists(idx(certs, i).key))
-          W(F("no public key '%s' found in database")
-            % idx(certs, i).key);
-        checked.insert(idx(certs, i).key);
-      }
-  }
-
-  // Make the output deterministic; this is useful for the test suite,
-  // in particular.
-  sort(certs.begin(), certs.end());
-
-  basic_io::printer pr;
-
-  for (size_t i = 0; i < certs.size(); ++i)
-    {
-      basic_io::stanza st;
-      cert_status status = check_cert(app, idx(certs, i));
-      cert_value tv;
-      cert_name name = idx(certs, i).name();
-      set<rsa_keypair_id> signers;
-
-      decode_base64(idx(certs, i).value, tv);
-
-      rsa_keypair_id keyid = idx(certs, i).key();
-      signers.insert(keyid);
-
-      bool trusted =
-        app.lua.hook_get_revision_cert_trust(signers, ident,
-                                             name, tv);
-
-      st.push_str_pair(syms::key, keyid());
-
-      string stat;
-      switch (status)
-        {
-        case cert_ok:
-          stat = "ok";
-          break;
-        case cert_bad:
-          stat = "bad";
-          break;
-        case cert_unknown:
-          stat = "unknown";
-          break;
-        }
-      st.push_str_pair(syms::signature, stat);
-
-      st.push_str_pair(syms::name, name());
-      st.push_str_pair(syms::value, tv());
-      st.push_str_pair(syms::trust, (trusted ? "trusted" : "untrusted"));
-
-      pr.print_stanza(st);
-    }
-  output.write(pr.buf.data(), pr.buf.size());
-
-  guard.commit();
-}
-
 // Name: get_revision
 // Arguments:
 //   1: a revision id (optional, determined from the workspace if
@@ -1020,11 +816,7 @@ automate_certs(vector<utf8> args,
 //   the same type will be sorted by the filename they refer to.
 // Error conditions: If the revision specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
-static void
-automate_get_revision(vector<utf8> args,
-                      string const & help_name,
-                      app_state & app,
-                      ostream & output)
+AUTOMATE(get_revision)
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -1068,11 +860,7 @@ automate_get_revision(vector<utf8> args,
 //   on. This is the value stored in _MTN/revision
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-static void
-automate_get_base_revision_id(vector<utf8> args,
-                              string const & help_name,
-                              app_state & app,
-                              ostream & output)
+AUTOMATE(get_base_revision_id)
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -1093,11 +881,7 @@ automate_get_base_revision_id(vector<utf8> args,
 //   files in the workspace.
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-static void
-automate_get_current_revision_id(vector<utf8> args,
-                                 string const & help_name,
-                                 app_state & app,
-                                 ostream & output)
+AUTOMATE(get_current_revision_id)
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -1162,11 +946,7 @@ automate_get_current_revision_id(vector<utf8> args,
 //
 // Error conditions: If the revision ID specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
-static void
-automate_get_manifest_of(vector<utf8> args,
-                         string const & help_name,
-                         app_state & app,
-                         ostream & output)
+AUTOMATE(get_manifest_of)
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -1209,11 +989,7 @@ automate_get_manifest_of(vector<utf8> args,
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-static void
-automate_get_file(vector<utf8> args,
-                  string const & help_name,
-                  app_state & app,
-                  ostream & output)
+AUTOMATE(get_file)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1239,11 +1015,7 @@ automate_get_file(vector<utf8> args,
 //
 // Error conditions: If the revision id specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
-static void
-automate_packet_for_rdata(vector<utf8> args,
-                          string const & help_name,
-                          app_state & app,
-                          ostream & output)
+AUTOMATE(packet_for_rdata)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1269,11 +1041,7 @@ automate_packet_for_rdata(vector<utf8> args,
 //
 // Error conditions: If the revision id specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
-static void
-automate_packets_for_certs(vector<utf8> args,
-                           string const & help_name,
-                           app_state & app,
-                           ostream & output)
+AUTOMATE(packets_for_certs)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1300,11 +1068,7 @@ automate_packets_for_certs(vector<utf8> args,
 //
 // Error conditions: If the file id specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
-static void
-automate_packet_for_fdata(vector<utf8> args,
-                          string const & help_name,
-                          app_state & app,
-                          ostream & output)
+AUTOMATE(packet_for_fdata)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1331,11 +1095,7 @@ automate_packet_for_fdata(vector<utf8> args,
 //
 // Error conditions: If any of the file ids specified are unknown or
 // invalid prints an error message to stderr and exits with status 1.
-static void
-automate_packet_for_fdelta(vector<utf8> args,
-                           string const & help_name,
-                           app_state & app,
-                           ostream & output)
+AUTOMATE(packet_for_fdelta)
 {
   if (args.size() != 2)
     throw usage(help_name);
@@ -1357,328 +1117,6 @@ automate_packet_for_fdelta(vector<utf8> args,
   pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));
 }
 
-void
-automate_command(utf8 cmd, vector<utf8> args,
-                 string const & root_cmd_name,
-                 app_state & app,
-                 ostream & output);
-
-// Name: stdio
-// Arguments: none
-// Added in: 1.0
-// Purpose: Allow multiple automate commands to be run from one instance
-//   of monotone.
-//
-// Input format: The input is a series of lines of the form
-//   'l'<size>':'<string>[<size>':'<string>...]'e', with characters
-//   after the 'e' of one command, but before the 'l' of the next ignored.
-//   This space is reserved, and should not contain characters other
-//   than '\n'.
-//   Example:
-//     l6:leavese
-//     l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
-//
-// Output format: <command number>:<err code>:<last?>:<size>:<output>
-//   <command number> is a decimal number specifying which command
-//   this output is from. It is 0 for the first command, and increases
-//   by one each time.
-//   <err code> is 0 for success, 1 for a syntax error, and 2 for any
-//   other error.
-//   <last?> is 'l' if this is the last piece of output for this command,
-//   and 'm' if there is more output to come.
-//   <size> is the number of bytes in the output.
-//   <output> is the output of the command.
-//   Example:
-//     0:0:l:205:0e3171212f34839c2e3263e7282cdeea22fc5378
-//     1f4ef73c3e056883c6a5ff66728dd764557db5e6
-//     2133c52680aa2492b18ed902bdef7e083464c0b8
-//     23501f8afd1f9ee037019765309b0f8428567f8a
-//     2c295fcf5fe20301557b9b3a5b4d437b5ab8ec8c
-//     1:0:l:41:7706a422ccad41621c958affa999b1a1dd644e79
-//
-// Error conditions: Errors encountered by the commands run only set
-//   the error code in the output for that command. Malformed input
-//   results in exit with a non-zero return value and an error message.
-
-// We use our own stringbuf class so we can put in a callback on write.
-// This lets us dump output at a set length, rather than waiting until
-// we have all of the output.
-
-typedef basic_stringbuf<char,
-                        char_traits<char>,
-                        allocator<char> > char_stringbuf;
-struct my_stringbuf : public char_stringbuf
-{
-private:
-  streamsize written;
-  boost::function1<void, int> on_write;
-  streamsize last_call;
-  streamsize call_every;
-  bool clear;
-public:
-  my_stringbuf() : char_stringbuf(),
-                   written(0),
-                   last_call(0),
-                   call_every(constants::automate_stdio_size)
-  {}
-  virtual streamsize
-  xsputn(const char_stringbuf::char_type* __s, streamsize __n)
-  {
-    streamsize ret=char_stringbuf::xsputn(__s, __n);
-    written+=__n;
-    while(written>=last_call+call_every)
-      {
-        if(on_write)
-          on_write(call_every);
-        last_call+=call_every;
-      }
-    return ret;
-  }
-  virtual int sync()
-  {
-    int ret=char_stringbuf::sync();
-    if(on_write)
-      on_write(-1);
-    last_call=written;
-    return ret;
-  }
-  void set_on_write(boost::function1<void, int> x)
-  {
-    on_write = x;
-  }
-};
-
-void print_some_output(int cmdnum,
-                       int err,
-                       bool last,
-                       string const & text,
-                       ostream & s,
-                       int & pos,
-                       int size)
-{
-  if(size==-1)
-    {
-      while(text.size()-pos > constants::automate_stdio_size)
-        {
-          s<<cmdnum<<':'<<err<<':'<<'m'<<':';
-          s<<constants::automate_stdio_size<<':'
-           <<text.substr(pos, constants::automate_stdio_size);
-          pos+=constants::automate_stdio_size;
-          s.flush();
-        }
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<(text.size()-pos)<<':'<<text.substr(pos);
-      pos=text.size();
-    }
-  else
-    {
-      I((unsigned int)(size) <= constants::automate_stdio_size);
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<size<<':'<<text.substr(pos, size);
-      pos+=size;
-    }
-  s.flush();
-}
-
-static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
-{
-  ssize_t rv;
-
-  rv = read(d, buf, nbytes);
-
-  E(rv >= 0, F("read from client failed with error code: %d") % rv);
-  return rv;
-}
-
-static void
-automate_stdio(vector<utf8> args,
-               string const & help_name,
-               app_state & app,
-               ostream & output)
-{
-  if (args.size() != 0)
-    throw usage(help_name);
-  int cmdnum = 0;
-  char c;
-  ssize_t n=1;
-  while(n)//while(!EOF)
-    {
-      string x;
-      utf8 cmd;
-      args.clear();
-      bool first=true;
-      int toklen=0;
-      bool firstchar=true;
-      for(n=automate_stdio_read(0, &c, 1); c != 'l' && n; n=automate_stdio_read(0, &c, 1))
-        ;
-      for(n=automate_stdio_read(0, &c, 1); c!='e' && n; n=automate_stdio_read(0, &c, 1))
-        {
-          if(c<='9' && c>='0')
-            {
-              toklen=(toklen*10)+(c-'0');
-            }
-          else if(c == ':')
-            {
-              char *tok=new char[toklen];
-              int count=0;
-              while(count<toklen)
-                count+=automate_stdio_read(0, tok+count, toklen-count);
-              if(first)
-                cmd=utf8(string(tok, toklen));
-              else
-                args.push_back(utf8(string(tok, toklen)));
-              toklen=0;
-              delete[] tok;
-              first=false;
-            }
-          else
-            {
-              N(false, F("Bad input to automate stdio"));
-            }
-          firstchar=false;
-        }
-      if(cmd() != "")
-        {
-          int outpos=0;
-          int err;
-          ostringstream s;
-          my_stringbuf sb;
-          sb.set_on_write(boost::bind(print_some_output,
-                                      cmdnum,
-                                      boost::ref(err),
-                                      false,
-                                      boost::bind(&my_stringbuf::str, &sb),
-                                      boost::ref(output),
-                                      boost::ref(outpos),
-                                      _1));
-          s.basic_ios<char, char_traits<char> >::rdbuf(&sb);
-          try
-            {
-              err=0;
-              automate_command(cmd, args, help_name, app, s);
-            }
-          catch(usage &)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=1;
-              commands::explain_usage(help_name, s);
-            }
-          catch(informative_failure & f)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=2;
-              //Do this instead of printing f.what directly so the output
-              //will be split into properly-sized blocks automatically.
-              s<<f.what;
-            }
-            print_some_output(cmdnum, err, true, sb.str(),
-                              output, outpos, -1);
-        }
-      cmdnum++;
-    }
-}
-
-// Name: keys
-// Arguments: none
-// Added in: 1.1
-// Purpose: Prints all keys in the keystore, and if a database is given
-//   also all keys in the database, in basic_io format.
-// Output format: For each key, a basic_io stanza is printed. The items in
-//   the stanza are:
-//     name - the key identifier
-//     public_hash - the hash of the public half of the key
-//     private_hash - the hash of the private half of the key
-//     public_location - where the public half of the key is stored
-//     private_location - where the private half of the key is stored
-//   The *_location items may have multiple values, as shown below
-//   for public_location.
-//   If the private key does not exist, then the private_hash and
-//   private_location items will be absent.
-//
-// Sample output:
-//               name "tbrownaw@gmail.com"
-//        public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
-//       private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
-//    public_location "database" "keystore"
-//   private_location "keystore"
-//
-//              name "njs@pobox.com"
-//       public_hash [de84b575d5e47254393eba49dce9dc4db98ed42d]
-//   public_location "database"
-//
-//               name "foo@bar.com"
-//        public_hash [7b6ce0bd83240438e7a8c7c207d8654881b763f6]
-//       private_hash [bfc3263e3257087f531168850801ccefc668312d]
-//    public_location "keystore"
-//   private_location "keystore"
-//
-// Error conditions: None.
-static void
-automate_keys(vector<utf8> args, string const & help_name,
-              app_state & app, ostream & output)
-{
-  if (args.size() != 0)
-    throw usage(help_name);
-  vector<rsa_keypair_id> dbkeys;
-  vector<rsa_keypair_id> kskeys;
-  // public_hash, private_hash, public_location, private_location
-  map<string, boost::tuple<hexenc<id>, hexenc<id>,
-                           vector<string>,
-                           vector<string> > > items;
-  if (app.db.database_specified())
-    {
-      transaction_guard guard(app.db, false);
-      app.db.get_key_ids("", dbkeys);
-      guard.commit();
-    }
-  app.keys.get_key_ids("", kskeys);
-
-  for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();
-       i != dbkeys.end(); i++)
-    {
-      base64<rsa_pub_key> pub_encoded;
-      hexenc<id> hash_code;
-
-      app.db.get_key(*i, pub_encoded);
-      key_hash_code(*i, pub_encoded, hash_code);
-      items[(*i)()].get<0>() = hash_code;
-      items[(*i)()].get<2>().push_back("database");
-    }
-
-  for (vector<rsa_keypair_id>::iterator i = kskeys.begin();
-       i != kskeys.end(); i++)
-    {
-      keypair kp;
-      hexenc<id> privhash, pubhash;
-      app.keys.get_key_pair(*i, kp);
-      key_hash_code(*i, kp.pub, pubhash);
-      key_hash_code(*i, kp.priv, privhash);
-      items[(*i)()].get<0>() = pubhash;
-      items[(*i)()].get<1>() = privhash;
-      items[(*i)()].get<2>().push_back("keystore");
-      items[(*i)()].get<3>().push_back("keystore");
-    }
-  basic_io::printer prt;
-  for (map<string, boost::tuple<hexenc<id>, hexenc<id>,
-                                     vector<string>,
-                                     vector<string> > >::iterator
-         i = items.begin(); i != items.end(); ++i)
-    {
-      basic_io::stanza stz;
-      stz.push_str_pair(syms::name, i->first);
-      stz.push_hex_pair(syms::public_hash, i->second.get<0>());
-      if (!i->second.get<1>()().empty())
-        stz.push_hex_pair(syms::private_hash, i->second.get<1>());
-      stz.push_str_multi(syms::public_location, i->second.get<2>());
-      if (!i->second.get<3>().empty())
-        stz.push_str_multi(syms::private_location, i->second.get<3>());
-      prt.print_stanza(stz);
-    }
-  output.write(prt.buf.data(), prt.buf.size());
-}
-
 // Name: common_ancestors
 // Arguments:
 //   1 or more revision ids
@@ -1691,9 +1129,7 @@ automate_keys(vector<utf8> args, string const & help_name,
 // Error conditions: If any of the revisions do not exist, prints
 //   nothing to stdout, prints an error message to stderr, and exits
 //   with status 1.
-static void
-automate_common_ancestors(vector<utf8> args, string const & help_name,
-                          app_state & app, ostream & output)
+AUTOMATE(common_ancestors)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -1742,71 +1178,6 @@ automate_common_ancestors(vector<utf8> args, string const & help_name,
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
       output << (*i).inner()() << endl;
-}
-
-
-void
-automate_command(utf8 cmd, vector<utf8> args,
-                 string const & root_cmd_name,
-                 app_state & app,
-                 ostream & output)
-{
-  if (cmd() == "interface_version")
-    automate_interface_version(args, root_cmd_name, app, output);
-  else if (cmd() == "heads")
-    automate_heads(args, root_cmd_name, app, output);
-  else if (cmd() == "ancestors")
-    automate_ancestors(args, root_cmd_name, app, output);
-  else if (cmd() == "descendents")
-    automate_descendents(args, root_cmd_name, app, output);
-  else if (cmd() == "erase_ancestors")
-    automate_erase_ancestors(args, root_cmd_name, app, output);
-  else if (cmd() == "toposort")
-    automate_toposort(args, root_cmd_name, app, output);
-  else if (cmd() == "ancestry_difference")
-    automate_ancestry_difference(args, root_cmd_name, app, output);
-  else if (cmd() == "leaves")
-    automate_leaves(args, root_cmd_name, app, output);
-  else if (cmd() == "parents")
-    automate_parents(args, root_cmd_name, app, output);
-  else if (cmd() == "children")
-    automate_children(args, root_cmd_name, app, output);
-  else if (cmd() == "graph")
-    automate_graph(args, root_cmd_name, app, output);
-  else if (cmd() == "select")
-    automate_select(args, root_cmd_name, app, output);
-  else if (cmd() == "inventory")
-    automate_inventory(args, root_cmd_name, app, output);
-  else if (cmd() == "attributes")
-    automate_attributes(args, root_cmd_name, app, output);
-  else if (cmd() == "stdio")
-    automate_stdio(args, root_cmd_name, app, output);
-  else if (cmd() == "certs")
-    automate_certs(args, root_cmd_name, app, output);
-  else if (cmd() == "get_revision")
-    automate_get_revision(args, root_cmd_name, app, output);
-  else if (cmd() == "get_base_revision_id")
-    automate_get_base_revision_id(args, root_cmd_name, app, output);
-  else if (cmd() == "get_current_revision_id")
-    automate_get_current_revision_id(args, root_cmd_name, app, output);
-  else if (cmd() == "get_manifest_of")
-    automate_get_manifest_of(args, root_cmd_name, app, output);
-  else if (cmd() == "get_file")
-    automate_get_file(args, root_cmd_name, app, output);
-  else if (cmd() == "keys")
-    automate_keys(args, root_cmd_name, app, output);
-  else if (cmd() == "packet_for_rdata")
-    automate_packet_for_rdata(args, root_cmd_name, app, output);
-  else if (cmd() == "packets_for_certs")
-    automate_packets_for_certs(args, root_cmd_name, app, output);
-  else if (cmd() == "packet_for_fdata")
-    automate_packet_for_fdata(args, root_cmd_name, app, output);
-  else if (cmd() == "packet_for_fdelta")
-    automate_packet_for_fdelta(args, root_cmd_name, app, output);
-  else if (cmd() == "common_ancestors")
-    automate_common_ancestors(args, root_cmd_name, app, output);
-  else
-    throw usage(root_cmd_name);
 }
 
 

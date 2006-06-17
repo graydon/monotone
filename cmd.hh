@@ -158,6 +158,37 @@ CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params,         \
   process(app, std::string(#realcommand), args);                     \
 }
 
+namespace automation {
+  struct automate
+  {
+    automate(std::string const & name);
+    virtual void run(std::vector<utf8> args,
+                     std::string const & help_name,
+                     app_state & app,
+                     std::ostream & output) const = 0;
+    virtual ~automate();
+  };
+}
+
+#define AUTOMATE(NAME)                                              \
+namespace automation {                                              \
+  struct auto_ ## NAME : public automate                            \
+  {                                                                 \
+    auto_ ## NAME () : automate(#NAME) {}                           \
+    void run(std::vector<utf8> args, std::string const & help_name, \
+                     app_state & app, std::ostream & output) const; \
+    virtual ~auto_ ## NAME() {}                                     \
+  };                                                                \
+  static auto_ ## NAME NAME ## _auto;                               \
+}                                                                   \
+void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
+                                      std::string const & help_name,\
+                                      app_state & app,              \
+                                      std::ostream & output) const
+
+
+
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
