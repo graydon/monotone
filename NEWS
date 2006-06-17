@@ -1,4 +1,4 @@
-????????????????????????????
+Sat Jun 17 14:43:12 PDT 2006
 
         0.27 release.  Minor bug fixes and enhancements, plus ssh
         support.
@@ -63,6 +63,8 @@
           message, instead of an assertion error.
         - 'mtn revert --missing' now works correctly when run in a
           subdirectory.
+        - 'automate inventory' no longer fails when _MTN/work contains
+          patch stanzas.
 
         Other:
 
