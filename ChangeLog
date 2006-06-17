@@ -1,5 +1,14 @@
 2006-06-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* cmd.hh, commands.cc: Modify how command parameters description
+	strings are handled.
+	* cmd_automate.cc, cmd.hh: Use this to make the parameters for
+	each automate subcommand be a parameter of the ATUOMATE() macro,
+	instead of all being a big block in the automate command.
+	* automate.cc, cmd_list.cc, cmd_automate.cc: Update AUTOMATE() usage.
+
+2006-06-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	(see bug #15995, asking for a more comprehensive automate command set)
 	Start splitting up automate.cc . There is now an AUTOMATE() macro in
 	cmd.hh , similar to the CMD() macro. Individual automate commands can

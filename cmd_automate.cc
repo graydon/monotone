@@ -25,7 +25,8 @@ namespace automation {
   // guarantees about initialization order. So, use something we can
   // initialize ourselves.
   static map<string, automate * const> * automations;
-  automate::automate(string const &name)
+  automate::automate(string const &n, string const &p)
+   : name(n), params(p)
   {
     static bool first(true);
     if (first)
@@ -63,7 +64,7 @@ static string const interface_version = "2.1";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version)
+AUTOMATE(interface_version, N_(""))
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -204,7 +205,7 @@ static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
   return rv;
 }
 
-AUTOMATE(stdio)
+AUTOMATE(stdio, N_(""))
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -291,36 +292,9 @@ AUTOMATE(stdio)
 }
 
 
-CMD(automate, N_("automation"),
-    N_("interface_version\n"
-       "heads [BRANCH]\n"
-       "ancestors REV1 [REV2 [REV3 [...]]]\n"
-       "attributes [FILE]\n"
-       "parents REV\n"
-       "descendents REV1 [REV2 [REV3 [...]]]\n"
-       "children REV\n"
-       "graph\n"
-       "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
-       "toposort [REV1 [REV2 [REV3 [...]]]]\n"
-       "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
-       "common_ancestors REV1 [REV2 [REV3 [...]]]\n"
-       "leaves\n"
-       "inventory\n"
-       "stdio\n"
-       "certs REV\n"
-       "select SELECTOR\n"
-       "get_file FILEID\n"
-       "get_manifest_of [REVID]\n"
-       "get_revision [REVID]\n"
-       "get_base_revision_id\n"
-       "get_current_revision_id\n"
-       "packet_for_rdata REVID\n"
-       "packets_for_certs REVID\n"
-       "packet_for_fdata FILEID\n"
-       "packet_for_fdelta OLD_FILE NEW_FILE\n"
-       "keys\n"),
-    N_("automation interface"),
-    OPT_NONE)
+CMD_PARAMS_FN(automate, N_("automation"),
+              N_("automation interface"),
+              OPT_NONE)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -333,6 +307,21 @@ CMD(automate, N_("automation"),
   make_io_binary();
 
   automate_command(cmd, cmd_args, name, app, std::cout);
+}
+
+std::string commands::cmd_automate::params()
+{
+  std::string out;
+  map<string, automation::automate * const>::const_iterator i;
+  for (i = automation::automations->begin();
+       i != automation::automations->end(); ++i)
+    {
+      char const * const p = commands::safe_gettext(i->second->params.c_str());
+      out += i->second->name + " " + p;
+      if (out[out.size()-1] != '\n')
+        out += "\n";
+    }
+  return out;
 }
 
 

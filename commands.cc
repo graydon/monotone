@@ -37,6 +37,14 @@ using std::vector;
 
 namespace commands
 {
+  const char * safe_gettext(const char * msgid)
+  {
+    if (strlen(msgid) == 0)
+      return msgid;
+
+    return _(msgid);
+  }
+
   using std::map;
   // This must be a pointer.
   // It's used by the constructor of other static objects in different
@@ -51,7 +59,7 @@ namespace commands
                   string const & d,
                   bool u,
                   command_opts const & o)
-    : name(n), cmdgroup(g), params(p), desc(d), use_workspace_options(u),
+    : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
     static bool first(true);
@@ -61,6 +69,8 @@ namespace commands
     (*cmds)[n] = this;
   }
   command::~command() {}
+  std::string command::params() {return safe_gettext(params_.c_str());}
+  std::string command::desc() {return safe_gettext(desc_.c_str());}
   bool operator<(command const & self, command const & other);
 };
 
@@ -130,14 +140,6 @@ namespace commands
     return cmd;
   }
 
-  const char * safe_gettext(const char * msgid)
-  {
-    if (strlen(msgid) == 0)
-      return msgid;
-
-    return _(msgid);
-  }
-
   void explain_usage(string const & cmd, ostream & out)
   {
     map<string,command *>::const_iterator i;
@@ -148,13 +150,13 @@ namespace commands
 
     if (i != (*cmds).end())
       {
-        string params = safe_gettext(i->second->params.c_str());
+        string params = i->second->params();
         vector<string> lines;
         split_into_lines(params, lines);
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
           out << "     " << i->second->name << " " << *j << endl;
-        split_into_lines(safe_gettext(i->second->desc.c_str()), lines);
+        split_into_lines(i->second->desc(), lines);
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
           out << "       " << *j << endl;
