@@ -1,3 +1,11 @@
+2006-06-18  Ethan Blanton  <elb@elitists.net>
+
+	* std_hooks.lua: Call the lua function get_mtn_command(host)
+	from get_netsync_connect_command in order to determine the
+	monotone command on the remote host.
+	* monotone.texi: Document get_mtn_command, update the
+	get_netsync_connect_command definition to incorporate it.
+
 2006-06-17  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am: Permit building 'tester' with static boost.

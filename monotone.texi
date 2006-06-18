@@ -7181,7 +7181,7 @@ function get_netsync_connect_command(uri, args)
 
         if argv then
 
-                table.insert(argv, "mtn")
+                table.insert(argv, get_mtn_command(uri["host"]))
 
                 if args["debug"] then
                         table.insert(argv, "--debug")
@@ -7228,6 +7228,7 @@ between this hook's return value and the command line returned by
 as the local and remote monotone processes will have mismatched
 authentication assumptions.
 
+
 @smallexample
 @group
 function use_transport_auth(uri)
@@ -7237,6 +7238,23 @@ function use_transport_auth(uri)
         else
                 return true
         end
+end
+@end group
+@end smallexample
+
+@item get_mtn_command(@var{host})
+
+Returns a string containing the monotone command to be executed on
+@var{host} when communicating over @command{ssh}.  The @var{host}
+argument is a string containing the name of the host to which
+@command{ssh} is connecting, from the server URI.  This is useful when
+there are multiple monotone binaries on the remote host, or the
+monotone binary is not in the default path.
+
+@smallexample
+@group
+function get_mtn_command(host)
+	return "mtn"
 end
 @end group
 @end smallexample

@@ -786,7 +786,7 @@ function get_netsync_connect_command(uri, args)
 
 	if argv then
 
-		table.insert(argv, "mtn")
+		table.insert(argv, get_mtn_command(uri["host"]))
 
 		if args["debug"] then
 			table.insert(argv, "--debug")
@@ -828,4 +828,8 @@ function use_transport_auth(uri)
 	else
 		return true
 	end
+end
+
+function get_mtn_command(host)
+	return "mtn"
 end
