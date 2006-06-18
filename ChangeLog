@@ -1,3 +1,7 @@
+2006-06-17  Graydon Hoare  <graydon@pobox.com>
+
+	* Makefile.am: Permit building 'tester' with static boost.
+
 2006-06-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* cmd.hh, commands.cc: Modify how command parameters description

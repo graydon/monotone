@@ -319,7 +319,7 @@ if STATIC_BOOST
   mtn_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
                      @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
-  tester_LDADD = lib3rdparty.a
+  tester_LDADD = lib3rdparty.a $(BOOSTLIBS)
 else
   mtn_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
