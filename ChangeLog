@@ -1,5 +1,15 @@
 2006-06-17  Derek Scherger  <derek@echologic.com>
 
+	* tests/'heads':
+	* tests/heads:
+	* tests/'heads'_with_discontinuous_branches:
+	* tests/heads_with_discontinuous_branches:
+	* tests/trust_hooks_and_'trusted'_command:
+	* tests/trust_hooks_and_trusted_command:
+	rename tests to play nicer with find and xargs
+	
+2006-06-17  Derek Scherger  <derek@echologic.com>
+
 	* tests/ls_unknown_of_unknown_subdir: new xfail test
 	* testsuite.lua: insert in tests table
 	
