@@ -15,6 +15,8 @@ Running tests:
    (it's actually a regex)
 -  option -d will keep the tester_dir files for post-test debugging
 -  option -h is your friend :)
+-  summary of test logs in tester_dir/tester.log
+-  details of test logs in tester_dir/<testname>/tester.log
 
 Creating tests:
 ---------------

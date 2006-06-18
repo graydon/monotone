@@ -1,5 +1,9 @@
 2006-06-17  Derek Scherger  <derek@echologic.com>
 
+	* tests/README: add a couple of notes on where to find test logs
+	
+2006-06-17  Derek Scherger  <derek@echologic.com>
+
 	* tests/'heads':
 	* tests/heads:
 	* tests/'heads'_with_discontinuous_branches:
