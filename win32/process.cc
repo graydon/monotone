@@ -73,7 +73,10 @@ static std::string munge_argument(const char* arg)
     return result;
   }
 
-  return munge_inner_argument(arg);
+  if (*arg == 0)
+    return "\"\"";
+  else
+    return munge_inner_argument(arg);
 }
 
 std::string munge_argv_into_cmdline(const char* const argv[])
@@ -132,7 +135,7 @@ pid_t process_spawn(const char * const argv[])
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
   /* We don't need to set any of the STARTUPINFO members */
-  if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
+  if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)==0)
     {
       os_err_t errnum = GetLastError();
       L(FL("CreateProcess failed, err=%s (%d)\n") % os_strerror(errnum) % errnum);
@@ -144,10 +147,16 @@ pid_t process_spawn(const char * const argv[])
   return (pid_t)pi.hProcess;
 }
 
-int process_wait(pid_t pid, int *res)
+int process_wait(pid_t pid, int *res, int timeout)
 {
   HANDLE hProcess = (HANDLE)pid;
-  if (WaitForSingleObject(hProcess, INFINITE)==WAIT_FAILED)
+  DWORD time = INFINITE;
+  if (timeout != -1)
+    time = timeout * 1000;
+  DWORD r = WaitForSingleObject(hProcess, time);
+  if (r == WAIT_TIMEOUT)
+    return -1;
+  if (r == WAIT_FAILED)
     {
       CloseHandle(hProcess); /* May well not work, but won't harm */
       return -1;
