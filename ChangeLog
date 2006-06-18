@@ -1,3 +1,8 @@
+2006-06-17  Derek Scherger  <derek@echologic.com>
+
+	* tests/ls_unknown_of_unknown_subdir: new xfail test
+	* testsuite.lua: insert in tests table
+	
 2006-06-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* cmd.hh, commands.cc: Modify how command parameters description
@@ -200,7 +205,7 @@
 
 2006-05-29  Derek Scherger  <derek@echologic.com>
 
-	* HACKING: add note on using namespaces33
+	* HACKING: add note on using namespaces
 	* ROADMAP: remove janitorial items pertaining to namespaces and
 	splitting commands.cc
 
