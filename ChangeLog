@@ -1,3 +1,12 @@
+2006-06-18  Derek Scherger  <derek@echologic.com>
+
+	* cmd_ws_commit.cc (checkout): replace size check with call to
+	workspace_root
+	* paths.{cc,hh} (workspace_root): new function to test if a
+	split_path is the workspace root
+	* roster.cc (extract_path_set): replace size check with call to
+	workspace_root
+
 2006-06-18  Ethan Blanton  <elb@elitists.net>
 
 	* std_hooks.lua: Call the lua function get_mtn_command(host)

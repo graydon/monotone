@@ -487,9 +487,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
 
       if (is_dir_t(node))
         {
-          if (sp.size() == 1)
-            I(null_name(idx(sp,0)));
-          else
+          if (!workspace_root(sp))
             mkdir_p(path);
         }
       else

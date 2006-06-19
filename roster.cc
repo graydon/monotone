@@ -2254,9 +2254,7 @@ roster_t::extract_path_set(path_set & paths) const
           node_t curr = *i;
           split_path pth;
           get_name(curr->self, pth);
-          if (pth.size() == 1)
-            I(null_name(idx(pth,0)));
-          else
+          if (!workspace_root(pth))
             paths.insert(pth);
         }
     }
