@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 
+#include <boost/function.hpp>
 #include <boost/bind.hpp>
 
 #include "cmd.hh"
