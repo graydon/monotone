@@ -536,7 +536,7 @@ namespace
 //   private_location "keystore"
 //
 // Error conditions: None.
-AUTOMATE(keys, N_(""))
+AUTOMATE(keys, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
