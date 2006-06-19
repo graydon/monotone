@@ -2,6 +2,11 @@
 
 	* po/pt_BR.po: Fixed several fuzzy translations.
 
+2006-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (EXTRA_DIST): Make sure that all the files in
+	examples/ get properly distributed as well.
+
 2006-06-19  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_automate.cc: #include <boost/function.hpp>, as requested in
