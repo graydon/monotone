@@ -1,5 +1,9 @@
 2006-06-20  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: A fuzzy to clear.
+
+2006-06-20  Richard Levitte  <richard@levitte.org>
+
 	* cmd_automate.cc (AUTOMATE(interface_version),AUTOMATE(stdio)),
 	cmd_list.cc (AUTOMATE(keys)): Don't send an empty string to
 	gettext.  Here's what xgettext said:
