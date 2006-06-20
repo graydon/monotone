@@ -422,7 +422,7 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/monotone-cvs-ignore.lua \
              contrib/usher.cc \
              $(wildcard $(srcdir)/examples/*) \
-             win32/monotone.iss \
+             win32/monotone.iss win32/modpath.iss \
              $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
