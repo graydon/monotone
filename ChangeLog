@@ -1,3 +1,10 @@
+2006-06-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/monotone.iss: Add monotone logo to wizard (generated from
+	figures/monotone-logo.svg).  Sanity check key ID, branch name, and
+	workspace path.
+	* Makefile.am: Include win32/modpath.iss in EXTRA_DIST.
+
 2006-06-20  Nathaniel Smith  <njs@pobox.com>
 
 	* INSTALL: Update a little bit, in particular, give a newer boost
