@@ -423,7 +423,7 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/ciabot_monotone_hookversion.py \
              contrib/monotone-cvs-ignore.lua \
              contrib/usher.cc \
-             $(wildcard $(srcdir)/examples/*)
+             $(wildcard $(srcdir)/examples/*) \
              win32/monotone.iss \
              $(wildcard $(srcdir)/debian/*)
 
