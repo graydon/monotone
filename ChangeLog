@@ -1,3 +1,7 @@
+2006-06-20  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fixed remaining fuzzies.
+
 2006-06-20  Nathaniel Smith  <njs@pobox.com>
 
 	* INSTALL: Update a little bit, in particular, give a newer boost
