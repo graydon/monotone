@@ -1,3 +1,39 @@
+2006-06-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to clear.
+
+2006-06-20  Richard Levitte  <richard@levitte.org>
+
+	* cmd_automate.cc (AUTOMATE(interface_version),AUTOMATE(stdio)),
+	cmd_list.cc (AUTOMATE(keys)): Don't send an empty string to
+	gettext.  Here's what xgettext said:
+
+	cmd_automate.cc:68: warning: Empty msgid.  It is reserved by GNU gettext:
+	                             gettext("") returns the header entry with
+	                             meta information, not the empty string.
+	cmd_automate.cc:209: warning: Empty msgid.  It is reserved by GNU gettext:
+	                              gettext("") returns the header entry with
+	                              meta information, not the empty string.
+	cmd_list.cc:539: warning: Empty msgid.  It is reserved by GNU gettext:
+	                          gettext("") returns the header entry with
+	                          meta information, not the empty string.
+
+	I'm quite sure we don't want the header entry printed...
+
+2006-06-19  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fixed several fuzzy translations.
+
+2006-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (EXTRA_DIST): Make sure that all the files in
+	examples/ get properly distributed as well.
+
+2006-06-19  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_automate.cc: #include <boost/function.hpp>, as requested in
+	bug #16866 for boost 1.32.0 compatibility.
+
 2006-06-19  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc (inventory): use path_restriction
