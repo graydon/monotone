@@ -79,7 +79,7 @@ find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  restriction mask(args, app.exclude_patterns, new_roster, app);
+  node_restriction mask(args, app.exclude_patterns, new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -109,7 +109,7 @@ find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+  path_restriction mask(args, app.exclude_patterns, app);
 
   new_roster.extract_path_set(known);
 

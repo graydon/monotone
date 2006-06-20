@@ -65,7 +65,7 @@ static string const interface_version = "2.1";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version, N_(""))
+AUTOMATE(interface_version, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -206,7 +206,7 @@ static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
   return rv;
 }
 
-AUTOMATE(stdio, N_(""))
+AUTOMATE(stdio, "")
 {
   if (args.size() != 0)
     throw usage(help_name);

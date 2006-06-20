@@ -120,6 +120,9 @@ null_name(path_component pc)
   return pc == the_null_component;
 }
 
+bool
+workspace_root(split_path const & sp);
+
 template <> void dump(split_path const & sp, std::string & out);
 
 // It's possible this will become a proper virtual interface in the future,

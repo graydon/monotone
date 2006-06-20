@@ -563,6 +563,13 @@ system_path::system_path(utf8 const & path)
 // utility
 ///////////////////////////////////////////////////////////////////////////
 
+bool
+workspace_root(split_path const & sp)
+{
+  I(null_name(idx(sp,0)));
+  return sp.size() == 1;
+}
+
 void
 dirname_basename(split_path const & sp,
                  split_path & dirname, path_component & basename)

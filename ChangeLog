@@ -3,10 +3,71 @@
 	* Makefile.am (EXTRA_DIST, BUILT_SOURCES_CLEAN): 
 	* database.hh, database.cc: Remove old dead views stuff.
 
+2006-06-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to clear.
+
+2006-06-20  Richard Levitte  <richard@levitte.org>
+
+	* cmd_automate.cc (AUTOMATE(interface_version),AUTOMATE(stdio)),
+	cmd_list.cc (AUTOMATE(keys)): Don't send an empty string to
+	gettext.  Here's what xgettext said:
+
+	cmd_automate.cc:68: warning: Empty msgid.  It is reserved by GNU gettext:
+	                             gettext("") returns the header entry with
+	                             meta information, not the empty string.
+	cmd_automate.cc:209: warning: Empty msgid.  It is reserved by GNU gettext:
+	                              gettext("") returns the header entry with
+	                              meta information, not the empty string.
+	cmd_list.cc:539: warning: Empty msgid.  It is reserved by GNU gettext:
+	                          gettext("") returns the header entry with
+	                          meta information, not the empty string.
+
+	I'm quite sure we don't want the header entry printed...
+
+2006-06-19  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fixed several fuzzy translations.
+
+2006-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (EXTRA_DIST): Make sure that all the files in
+	examples/ get properly distributed as well.
+
 2006-06-19  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_automate.cc: #include <boost/function.hpp>, as requested in
 	bug #16866 for boost 1.32.0 compatibility.
+
+2006-06-19  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (inventory): use path_restriction
+	* cmd_diff_log.cc (diff,log):
+	* cmd_list.cc (ls_known,ls_changed):
+	* cmd_ws_commit.cc (revert,status,commit): use node_restrictions
+	* restrictions.{cc,hh} (restriction): subclass into ...
+	(node_restriction): ... this, operating on roster nodes and
+	validated against roster paths
+	(path_restriction): ... and this, operating on split paths and
+	validated against workspace paths ; the unit_tests currently
+	create directories {x,y}/{x,y} wherever they run to pass workspace
+	path validation and this should probably be cleaned up
+	* roster.{cc,hh} (make_restricted_csets, 
+	update_current_roster_from_filesystem,
+	extract_path_set): use node_restrictions
+	* work.{cc,hh} (find_missing): use node_restriction
+	(find_unknown_and_ignored): use path_restriction
+	* tests/ls_unknown_of_unknown_subdir/__driver__.lua: un-xfail
+	and add output checks
+
+2006-06-18  Derek Scherger  <derek@echologic.com>
+
+	* cmd_ws_commit.cc (checkout): replace size check with call to
+	workspace_root
+	* paths.{cc,hh} (workspace_root): new function to test if a
+	split_path is the workspace root
+	* roster.cc (extract_path_set): replace size check with call to
+	workspace_root
 
 2006-06-18  Ethan Blanton  <elb@elitists.net>
 
