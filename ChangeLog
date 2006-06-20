@@ -1,5 +1,7 @@
 2006-06-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* hash_map.hh: Add a specialization for unsigned long; fixes build
+	on Cygwin/GCC 3.4.  Thanks to Lapo Luchini for the original patch.
 	* win32/monotone.iss: Add monotone logo to wizard (generated from
 	figures/monotone-logo.svg).  Sanity check key ID, branch name, and
 	workspace path.

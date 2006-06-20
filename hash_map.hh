@@ -32,6 +32,15 @@ namespace hashmap {
       return t;
     }
   };
+
+  template<>
+  struct hash<unsigned long>
+  {
+    size_t operator()(unsigned long t) const
+    {
+      return t;
+    }
+  };
 }
 
 #ifdef HAVE_GNUCXX_HASHMAP
