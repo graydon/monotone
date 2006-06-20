@@ -103,7 +103,6 @@ class database
   bool transaction_exclusive;
 
   void install_functions(app_state * app);
-  void install_views();
 
   typedef std::vector< std::vector<std::string> > results;
 

@@ -394,7 +394,7 @@ EXTRA_DIST = $(man1_MANS) \
              monotone.spec \
              monotone.html \
              texinfo.css \
-	     schema.sql views.sql \
+	     schema.sql \
 	     std_hooks.lua test_hooks.lua tester.lua \
 	     testsuite.lua $(srcdir)/tests/ \
 	     tester-testsuite.lua $(srcdir)/tester-tests/ \
@@ -494,7 +494,7 @@ run_lua_tests: Makefile
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h \
-                      schema.h views.h \
+                      schema.h \
                       package_revision.c \
                       package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
                       $(PCH_FILE) $(PCH_BUILD)

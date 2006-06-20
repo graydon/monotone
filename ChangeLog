@@ -1,5 +1,10 @@
 2006-06-19  Nathaniel Smith  <njs@pobox.com>
 
+	* Makefile.am (EXTRA_DIST, BUILT_SOURCES_CLEAN): 
+	* database.hh, database.cc: Remove old dead views stuff.
+
+2006-06-19  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_automate.cc: #include <boost/function.hpp>, as requested in
 	bug #16866 for boost 1.32.0 compatibility.
 
