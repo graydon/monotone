@@ -396,10 +396,8 @@ EXTRA_DIST = $(man1_MANS) \
              texinfo.css \
 	     schema.sql \
 	     std_hooks.lua test_hooks.lua tester.lua \
-	     testsuite.lua $(srcdir)/tests/ \
+	     testsuite.lua $(srcdir)/tests \
 	     tester-testsuite.lua $(srcdir)/tester-tests/ \
-             tests/atconfig.in \
-             tests/atlocal.in  \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard $(srcdir)/m4/*.m4) \
@@ -463,7 +461,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
 # distcheck stuff
 
