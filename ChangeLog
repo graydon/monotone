@@ -1,3 +1,24 @@
+2006-06-19  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (inventory): use path_restriction
+	* cmd_diff_log.cc (diff,log):
+	* cmd_list.cc (ls_known,ls_changed):
+	* cmd_ws_commit.cc (revert,status,commit): use node_restrictions
+	* restrictions.{cc,hh} (restriction): subclass into ...
+	(node_restriction): ... this, operating on roster nodes and
+	validated against roster paths
+	(path_restriction): ... and this, operating on split paths and
+	validated against workspace paths ; the unit_tests currently
+	create directories {x,y}/{x,y} wherever they run to pass workspace
+	path validation and this should probably be cleaned up
+	* roster.{cc,hh} (make_restricted_csets, 
+	update_current_roster_from_filesystem,
+	extract_path_set): use node_restrictions
+	* work.{cc,hh} (find_missing): use node_restriction
+	(find_unknown_and_ignored): use path_restriction
+	* tests/ls_unknown_of_unknown_subdir/__driver__.lua: un-xfail
+	and add output checks
+
 2006-06-18  Derek Scherger  <derek@echologic.com>
 
 	* cmd_ws_commit.cc (checkout): replace size check with call to

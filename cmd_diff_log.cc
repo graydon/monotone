@@ -383,8 +383,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 					nis, app);
       get_revision_id(old_rid);
 
-      restriction mask(args, app.exclude_patterns, 
-		       old_roster, new_roster, app);
+      node_restriction mask(args, app.exclude_patterns, 
+                            old_roster, new_roster, app);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, 
@@ -412,7 +412,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       // FIXME: handle no ancestor case
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
 
-      restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+      node_restriction mask(args, app.exclude_patterns, 
+                            old_roster, new_roster, app);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, 
@@ -438,7 +439,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
 
-      restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+      node_restriction mask(args, app.exclude_patterns, 
+                            old_roster, new_roster, app);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -585,7 +587,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         }
     }
 
-  restriction mask(app);
+  node_restriction mask(app);
 
   if (args.size() > 0)
     {
@@ -600,10 +602,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
       // FIXME_RESTRICTIONS: should this add paths from the rosters of
       // all selected revs?
-      mask = restriction(args, app.exclude_patterns, 
-			 old_roster, new_roster, app);
+      mask = node_restriction(args, app.exclude_patterns, 
+                              old_roster, new_roster, app);
     }
-
 
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);

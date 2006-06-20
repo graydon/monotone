@@ -346,7 +346,7 @@ ls_known(app_state & app, vector<utf8> const & args)
   app.require_workspace();
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  restriction mask(args, app.exclude_patterns, new_roster, app);
+  node_restriction mask(args, app.exclude_patterns, new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); 
@@ -409,7 +409,8 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  restriction mask(args, app.exclude_patterns, old_roster, new_roster, app);
+  node_restriction mask(args, app.exclude_patterns, 
+                        old_roster, new_roster, app);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, 

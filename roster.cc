@@ -1916,7 +1916,7 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
 
 void make_restricted_csets(roster_t const & from, roster_t const & to,
                            cset & included, cset & excluded,
-                           restriction const & mask)
+                           node_restriction const & mask)
 {
   included.clear();
   excluded.clear();
@@ -2173,7 +2173,7 @@ classify_roster_paths(roster_t const & ros,
 
 void
 update_current_roster_from_filesystem(roster_t & ros,
-                                      restriction const & mask,
+                                      node_restriction const & mask,
                                       app_state & app)
 {
   temp_node_id_source nis;
@@ -2239,7 +2239,7 @@ void
 update_current_roster_from_filesystem(roster_t & ros,
                                       app_state & app)
 {
-  restriction tmp(app);
+  node_restriction tmp(app);
   update_current_roster_from_filesystem(ros, tmp, app);
 }
 
