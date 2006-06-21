@@ -127,6 +127,14 @@ function numlines(filename)
   return n
 end
 
+function open_or_err(filename, mode, depth)
+  local file, e = io.open(filename, mode)
+  if file == nil then
+    err("Cannot open file " .. filename .. ": " .. e, depth)
+  end
+  return file
+end
+
 function fsize(filename)
   local file = io.open(filename, "r")
   if file == nil then error("Cannot open file " .. filename, 2) end
@@ -493,7 +501,7 @@ function pre_cmd(stdin, ident)
   elseif type(stdin) == "table" then
     unlogged_copy(stdin[1], ident .. "stdin")
   else
-    local infile = io.open(ident .. "stdin", "w")
+    local infile = open_or_err(ident .. "stdin", "w")
     if stdin ~= nil and stdin ~= false then
       infile:write(stdin)
     end

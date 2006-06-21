@@ -1,5 +1,11 @@
 2006-06-20  Nathaniel Smith  <njs@pobox.com>
 
+	* tester.lua (open_or_err): New function.
+	(pre_cmd): Use it.  It should probably be used much more widely,
+	but I'm not sure what I'm doing yet...
+
+2006-06-20  Nathaniel Smith  <njs@pobox.com>
+
 	* INSTALL: Update a little bit, in particular, give a newer boost
 	download link in response to complaint on mailing list, and put
 	1.9 version number on automake command line.
