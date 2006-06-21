@@ -1,5 +1,7 @@
 2006-06-21  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* tests/empty_environment/__driver__.lua: Fix test on Cygwin--copy
+	essential DLLs into current directory before emptying $PATH.
 	* win32/monotone.iss: Remove hardcoded paths that were
 	accidentally left in after debugging.
 
