@@ -1,3 +1,8 @@
+2006-06-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/monotone.iss: Remove hardcoded paths that were
+	accidentally left in after debugging.
+
 2006-06-20  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* hash_map.hh: Add a specialization for unsigned long; fixes build
