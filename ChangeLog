@@ -1,3 +1,9 @@
+2006-06-22  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.lua: Make sure to set all NLS environment variables
+	to "C", so tests don't fail when the default locale is non-
+	english.
+
 2006-06-21  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/empty_environment/__driver__.lua: Fix test on Cygwin--copy

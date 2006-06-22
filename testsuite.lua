@@ -46,6 +46,26 @@ monotone_path = getpathof("mtn")
 if monotone_path == nil then monotone_path = "mtn" end
 set_env("mtn", monotone_path)
 
+-- NLS nuisances.
+for _,name in pairs({  "LANG",
+		       "LANGUAGE",
+		       "LC_ADDRESS",
+		       "LC_ALL",
+		       "LC_COLLATE",
+		       "LC_CTYPE",
+		       "LC_IDENTIFICATION",
+		       "LC_MEASUREMENT",
+		       "LC_MESSAGES",
+		       "LC_MONETARY",
+		       "LC_NAME",
+		       "LC_NUMERIC",
+		       "LC_PAPER",
+		       "LC_TELEPHONE",
+		       "LC_TIME"  }) do
+   set_env(name,"C")
+end
+       
+
 function safe_mtn(...)
   return {monotone_path, "--norc", "--root=" .. test.root, unpack(arg)}
 end
