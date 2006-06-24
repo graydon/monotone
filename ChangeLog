@@ -1,3 +1,9 @@
+2006-06-24  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Replace references to
+	'monotone' with 'mtn'. Allow more than one standard option on the
+	command line.
+
 2006-06-22  Richard Levitte  <richard@levitte.org>
 
 	* testsuite.lua: Make sure to set all NLS environment variables
