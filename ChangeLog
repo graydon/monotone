@@ -1,3 +1,9 @@
+2006-06-24  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Replace references to
+	'monotone' with 'mtn'. Allow more than one standard option on the
+	command line.
+
 2006-06-19  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_automate.cc: #include <boost/function.hpp>, as requested in
