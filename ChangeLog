@@ -1,3 +1,9 @@
+2006-06-24  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (63 to go).
+	Removed quotes around revision values.
+	* app_state.cc, revision.cc, work.cc: removed a newline.
+
 2006-06-24  Thomas Moschny <thomas.moschny@gmx.de>
 
 	* contrib/monotone.zsh_completion: Recommend installation into

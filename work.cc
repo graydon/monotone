@@ -620,7 +620,7 @@ get_base_revision(app_state & app,
     {
 
       N(app.db.revision_exists(rid),
-        F("base revision %s does not exist in database\n") % rid);
+        F("base revision %s does not exist in database") % rid);
 
       app.db.get_roster(rid, ros, mm);
     }
