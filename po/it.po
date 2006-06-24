@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-06-10 13:57+0200\n"
-"PO-Revision-Date: 2006-06-23 23:13+0100\n"
+"PO-Revision-Date: 2006-06-24 12:11+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -25,9 +25,9 @@ msgid "invalid directory ''"
 msgstr "directory non valida ‘’"
 
 #: app_state.cc:155
-#, fuzzy, c-format
-msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
-msgstr "la directory monotone contabilità ‘%s’ già esiste in ‘%s’\n"
+#, c-format
+msgid "monotone bookkeeping directory '%s' already exists in '%s'"
+msgstr "la directory di servizio di monotone ‘%s’ esiste già in ‘%s’"
 
 # TODO: radice di ricerca?
 #: app_state.cc:236
@@ -1787,6 +1787,10 @@ msgid ""
 "try '%s db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
+"il layout del database ‘%s’ non corrisponde a questa versione di monotone\n"
+"mi aspettavo lo schema ‘%s’, ho trovato ‘%s’\n"
+"prova ‘%s db migrate’ per aggiornarlo\n"
+"(operazione irreversibile; potresti voler prima fare una copia di backup)"
 
 #: database.cc:170
 #, c-format
@@ -2134,7 +2138,7 @@ msgstr "nessun file o directory con nome ‘%s’"
 #: keys.cc:99
 #, c-format
 msgid "got empty passphrase from get_passphrase() hook"
-msgstr ""
+msgstr "ricevuta passphrase vuota dall'hook ‘get_passphrase()’"
 
 #: keys.cc:115
 #, c-format
@@ -2289,11 +2293,11 @@ msgstr "usa formato di diff con contesto"
 
 #: monotone.cc:82
 msgid "use external diff hook for generating diffs"
-msgstr ""
+msgstr "utilizza l'hook per generare le diff esternamente"
 
 #: monotone.cc:83
 msgid "argument to pass external diff hook"
-msgstr ""
+msgstr "argomenti da passare all'hook per le diff esterne"
 
 #: monotone.cc:84
 msgid "perform the associated file operation"
@@ -2348,8 +2352,9 @@ msgid "file to write the log to"
 msgstr "file su cui scrivere il registro"
 
 #: monotone.cc:105
+#, fuzzy
 msgid "suppress verbose, informational and progress messages"
-msgstr ""
+msgstr "evita i messaggi informativi e sul progresso"
 
 #: monotone.cc:106
 msgid "suppress warning, verbose, informational and progress messages"
@@ -2381,7 +2386,7 @@ msgstr "non caricare gli hook standard Lua"
 
 #: monotone.cc:113
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
-msgstr "non caricare i file LUA ‘~/.monotone/monotonerc’ or ‘_MTN/monotonerc’"
+msgstr "non caricare i file LUA ‘~/.monotone/monotonerc’ o ‘_MTN/monotonerc’"
 
 #: monotone.cc:114
 msgid "load extra rc file"

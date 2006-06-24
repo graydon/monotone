@@ -1,3 +1,8 @@
+2006-06-24  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (65 to go).
+	* app_state.cc: removed a newline.
+
 2006-06-24  Marcel van der Boom  <marcel@hsdev.com>
 
 	* roster.cc (update_current_roster_from_filesystem): Change

@@ -152,7 +152,7 @@ app_state::create_workspace(system_path const & new_dir)
   go_to_workspace(new_dir);
 
   N(!directory_exists(bookkeeping_root),
-    F("monotone bookkeeping directory '%s' already exists in '%s'\n")
+    F("monotone bookkeeping directory '%s' already exists in '%s'")
     % bookkeeping_root % new_dir);
 
   L(FL("creating bookkeeping directory '%s' for workspace in '%s'")
