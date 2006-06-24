@@ -1,3 +1,11 @@
+2006-06-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* visualc/config.h: Bump version number to 0.27.
+	* monotone.cc (cpp_main): Fix another 'monotone' vs 'mtn' in
+	command output.
+	* roster.cc (update_current_roster_from_filesystem): Use prog_name
+	here too.
+
 2006-06-24  Marcel van der Boom  <marcel@hsdev.com>
 
 	* roster.cc (update_current_roster_from_filesystem): Change

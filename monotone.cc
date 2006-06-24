@@ -632,8 +632,8 @@ cpp_main(int argc, char ** argv)
           for (set<int>::const_iterator i = used_local_options.begin();
                i != used_local_options.end(); ++i)
             N(command_options.find(*i) != command_options.end(),
-              F("monotone %s doesn't use the option %s")
-              % cmd % coption_string(*i));
+              F("%s %s doesn't use the option %s")
+              % prog_name % cmd % coption_string(*i));
 
           vector<utf8> args;
           while(poptPeekArg(ctx()))
