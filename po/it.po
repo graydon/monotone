@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-06-10 13:57+0200\n"
-"PO-Revision-Date: 2006-06-24 12:11+0100\n"
+"PO-Revision-Date: 2006-06-24 12:35+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -169,12 +169,12 @@ msgstr "interfaccia di automazione"
 #: commands.cc:370
 #, c-format
 msgid "no such revision '%s'"
-msgstr "questa revisione ‘%s’ non esiste"
+msgstr "la revisione %s non esiste"
 
 #: cmd_db.cc:41
 #, c-format
 msgid "revision %s already has children. We cannot kill it."
-msgstr "la revisione ‘%s’ ha già dei figli, non possiamo eliminarla."
+msgstr "la revisione %s ha già dei figli, non possiamo eliminarla."
 
 #: cmd_db.cc:46
 msgid "database"
@@ -314,7 +314,7 @@ msgstr "[FILE…]"
 
 #: cmd_diff_log.cc:559
 msgid "print history in reverse order (filtering by 'FILE'). If one or more revisions are given, use them as a starting point."
-msgstr "stampa lo storico in ordine contrario (filtrando con ‘FILE’). Se sono specificate una o più revisioni, usa quelle come punto di partenza."
+msgstr "stampa lo storico in ordine contrario (filtrando per ‘FILE’). Se sono specificate una o più revisioni, usa quelle come punto di partenza."
 
 #: cmd_diff_log.cc:621
 #, c-format
@@ -377,12 +377,12 @@ msgstr "nessuna revisione nel database per il file ‘%s’"
 #: cmd_files.cc:111
 #, c-format
 msgid "no such file '%s' in revision '%s'"
-msgstr "nessun file ‘%s’ trovato nella revisione ‘%s’"
+msgstr "nessun file ‘%s’ trovato nella revisione %s"
 
 #: cmd_files.cc:114
 #, c-format
 msgid "'%s' in revision '%s' is not a file"
-msgstr "‘%s’ della revisione ‘%s’ non è un file"
+msgstr "‘%s’ della revisione %s non è un file"
 
 #: cmd_files.cc:121
 msgid "[PATH]"
@@ -404,7 +404,7 @@ msgstr "copia un file dal database a stdout"
 #: cmd_files.cc:178
 #, c-format
 msgid "no file '%s' found in revision '%s'"
-msgstr "nessun file ‘%s’ trovato nella revisione ‘%s’"
+msgstr "nessun file ‘%s’ trovato nella revisione %s"
 
 #: cmd.hh:87
 #, c-format
@@ -689,9 +689,9 @@ msgid "REV"
 msgstr "REV"
 
 #: cmd_list.cc:641
-#, fuzzy, c-format
+#, c-format
 msgid "No such revision %s"
-msgstr "questa revisione ‘%s’ non esiste"
+msgstr "La revisione %s non esiste"
 
 #: cmd_merging.cc:53
 #: cmd_ws_commit.cc:53
@@ -790,7 +790,7 @@ msgid ""
 "next commit will use branch %s"
 msgstr ""
 "la revisione in oggetto non è in un ramo\n"
-"il prossimo commit userà il ramo %s"
+"il prossimo commit userà il ramo ‘%s’"
 
 #: cmd_merging.cc:288
 #, c-format
@@ -800,7 +800,7 @@ msgstr "ramo cambiato: il prossimo commit userà il ramo ‘%s’"
 #: cmd_merging.cc:289
 #, c-format
 msgid "updated to base revision %s"
-msgstr "aggiorno alla revisione base ‘%s’"
+msgstr "aggiorno alla revisione base %s"
 
 #: cmd_merging.cc:299
 #: cmd_merging.cc:352
@@ -931,7 +931,7 @@ msgstr "unisce due revisioni specificate, mettendo il risultato in un ramo speci
 #: cmd_merging.cc:540
 #, c-format
 msgid "%s and %s are the same revision, aborting"
-msgstr "‘%s’ e ‘%s’ sono la stessa revisione, annullo"
+msgstr "%s e %s sono la stessa revisione, annullo"
 
 #: cmd_merging.cc:542
 #: cmd_merging.cc:544
@@ -1212,7 +1212,7 @@ msgstr "disapprova una particolare revisione"
 #: cmd_ws_commit.cc:185
 #, c-format
 msgid "revision '%s' has %d changesets, cannot invert\n"
-msgstr "la revisione ‘%s’ contiene %d changeset, non può essere annullata\n"
+msgstr "la revisione %s contiene %d changeset, non può essere annullata\n"
 
 #: cmd_ws_commit.cc:189
 #, c-format
@@ -1306,7 +1306,7 @@ msgstr "il ramo ‘%s’ ha più teste"
 #: cmd_ws_commit.cc:464
 #, c-format
 msgid "revision %s is not a member of branch %s"
-msgstr "la revisione ‘%s’ non fa parte del ramo ‘%s’"
+msgstr "la revisione %s non fa parte del ramo ‘%s’"
 
 #: cmd_ws_commit.cc:497
 #, c-format
@@ -1349,12 +1349,12 @@ msgstr "Nessun attributo ‘%s’ nel percorso ‘%s’"
 
 #: cmd_ws_commit.cc:614
 msgid "commit workspace to database"
-msgstr "‘commit’ dello spazio di lavoro nel database"
+msgstr "salvataggio dello spazio di lavoro nel database"
 
 #: cmd_ws_commit.cc:648
 #, c-format
 msgid "no changes to commit"
-msgstr "nessuna modifica che necessita di commit"
+msgstr "nessuna modifica da salvare"
 
 #: cmd_ws_commit.cc:662
 #, c-format
@@ -1375,7 +1375,7 @@ msgstr ""
 #: cmd_ws_commit.cc:686
 #, c-format
 msgid "empty log message; commit canceled"
-msgstr "messaggio di log vuoto; ‘commit’ annullato"
+msgstr "messaggio di log vuoto; salvataggio annullato"
 
 #: cmd_ws_commit.cc:707
 #, c-format
@@ -1385,7 +1385,7 @@ msgstr "messaggio di log respinto: %s"
 #: cmd_ws_commit.cc:715
 #, c-format
 msgid "revision %s already in database"
-msgstr "la revisione ‘%s’ è già nel database"
+msgstr "la revisione %s è già nel database"
 
 #: cmd_ws_commit.cc:754
 #: cmd_ws_commit.cc:784
@@ -1401,7 +1401,7 @@ msgstr "Nel tuo database manca la versione %s del file ‘%s’"
 #: cmd_ws_commit.cc:812
 #, c-format
 msgid "committed revision %s"
-msgstr "eseguito ‘commit’ della revisione %s"
+msgstr "salvato come revisione %s"
 
 #: cmd_ws_commit.cc:818
 #, c-format
@@ -1569,70 +1569,70 @@ msgstr "il roster ‘%s’ non è in forma normalizzata"
 #: database_check.cc:613
 #, c-format
 msgid "revision %s missing (%d revision references; %d cert references; %d parent references; %d child references; %d roster references)"
-msgstr "revisione ‘%s’ mancante (%d riferimenti alla revisione; %d riferimenti al certificato; %d riferimenti al genitore; %d riferimenti al figlio; %d riferimenti al roster)"
+msgstr "revisione %s mancante (%d riferimenti alla revisione; %d riferimenti al certificato; %d riferimenti al genitore; %d riferimenti al figlio; %d riferimenti al roster)"
 
 #: database_check.cc:621
 #, c-format
 msgid "revision %s incomplete (%d missing manifests)"
-msgstr "la revisione ‘%s’ è incompleta (mancano %d manifesti)"
+msgstr "la revisione %s è incompleta (mancano %d manifesti)"
 
 #: database_check.cc:628
 #, c-format
 msgid "revision %s incomplete (%d missing revisions)"
-msgstr "la revisione ‘%s’ è incompleta (mancano %d revisioni)"
+msgstr "la revisione %s è incompleta (mancano %d revisioni)"
 
 #: database_check.cc:635
 #, c-format
 msgid "revision %s incomplete (missing roster link)"
-msgstr "la revisione ‘%s’ è incompleta (manca il link al roster)"
+msgstr "la revisione %s è incompleta (manca il link al roster)"
 
 #: database_check.cc:641
 #, c-format
 msgid "revision %s incomplete (missing roster)"
-msgstr "la revisione ‘%s’ è incompleta (manca il roster)"
+msgstr "la revisione %s è incompleta (manca il roster)"
 
 #: database_check.cc:647
 #, c-format
 msgid "revision %s mismatched roster and manifest"
-msgstr "la revisione ‘%s’ non corrisponde al roster né al manifesto"
+msgstr "la revisione %s non corrisponde al roster né al manifesto"
 
 #: database_check.cc:653
 #, c-format
 msgid "revision %s incomplete (incomplete roster)"
-msgstr "la revisione ‘%s’ è incompleta (roster incompleto)"
+msgstr "la revisione %s è incompleta (roster incompleto)"
 
 # TODO: stirpi?
 #: database_check.cc:659
 #, c-format
 msgid "revision %s mismatched parents (%d ancestry parents; %d revision refs)"
-msgstr "la revisione ‘%s’ non corrisponde ai genitori (%d stirpi di genitori; %d riferimenti alla revisione)"
+msgstr "la revisione %s non corrisponde ai genitori (%d stirpi di genitori; %d riferimenti alla revisione)"
 
 # TODO: stirpi?
 #: database_check.cc:668
 #, c-format
 msgid "revision %s mismatched children (%d ancestry children; %d parents)"
-msgstr "la revisione ‘%s’ non corrisponde ai figli (%d stirpi di figli; %d genitori)"
+msgstr "la revisione %s non corrisponde ai figli (%d stirpi di figli; %d genitori)"
 
 #: database_check.cc:680
 #, c-format
 msgid "revision %s has bad history (%s)"
-msgstr "la revisione ‘%s’ ha una storia non valida (%s)"
+msgstr "la revisione %s ha una storia non valida (%s)"
 
 # TODO: togliere il ? in inglese
 #: database_check.cc:687
 #, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)"
-msgstr "revisione ‘%s’ non comprensibile (forse a causa di percorsi non normalizzati)"
+msgstr "revisione %s non comprensibile (forse a causa di percorsi non normalizzati)"
 
 #: database_check.cc:694
 #, c-format
 msgid "revision %s is not in normalized form"
-msgstr "la revisione ‘%s’ non in forma normalizzata"
+msgstr "la revisione %s non in forma normalizzata"
 
 #: database_check.cc:718
 #, c-format
 msgid "key %s missing (signed %d certs)"
-msgstr "chiave ‘%s’ mancante (firma %d certificati)"
+msgstr "chiave %s mancante (firma %d certificati)"
 
 #: database_check.cc:751
 #, c-format
@@ -1647,7 +1647,7 @@ msgstr ""
 #: database_check.cc:774
 #, c-format
 msgid "revision %s missing %s cert"
-msgstr "alla revisione ‘%s’ manca il certificato ‘%s’"
+msgstr "alla revisione %s manca il certificato ‘%s’"
 
 #: database_check.cc:783
 #, c-format
@@ -2734,7 +2734,7 @@ msgstr ""
 #: netsync.cc:1902
 #, c-format
 msgid "hash check failed for revision cert '%s'"
-msgstr "l'hash nel certificato della revisione ‘%s’ non è corretto"
+msgstr "l'hash nel certificato della revisione %s non è corretto"
 
 #: netsync.cc:1964
 #, c-format
@@ -2935,7 +2935,7 @@ msgstr "cancello il delta ‘%s’ → ‘%s’"
 #: packet.cc:139
 #, c-format
 msgid "missing prerequisite revision '%s'"
-msgstr "manca un requisito: la revisione ‘%s’"
+msgstr "manca un requisito: la revisione %s"
 
 #: packet.cc:140
 #: packet.cc:151
@@ -2943,7 +2943,7 @@ msgstr "manca un requisito: la revisione ‘%s’"
 #: packet.cc:175
 #, c-format
 msgid "dropping revision '%s'"
-msgstr "elimino la revisione ‘%s’"
+msgstr "elimino la revisione %s"
 
 #: packet.cc:150
 #, c-format
@@ -2965,7 +2965,7 @@ msgstr "manca un requisito: la post-delta del file ‘%s’"
 #: packet.cc:201
 #, c-format
 msgid "cert revision '%s' does not exist in db"
-msgstr "la revisione ‘%s’ non è presente in database"
+msgstr "la revisione %s non è presente in database"
 
 #: packet.cc:203
 #, c-format
@@ -3072,8 +3072,8 @@ msgstr "La cartella per il percorso ‘%s’ non può essere aggiunta, dato che 
 
 #: revision.cc:1021
 #, c-format
-msgid "Path %s cannot be added, as there is a directory in the way\n"
-msgstr ""
+msgid "Path %s cannot be added, as there is a directory in the way"
+msgstr "Il percorso ‘%s’ non può essere aggiunto, dato che c'è già una directory con lo stesso nome"
 
 #: revision.cc:1024
 #, c-format
@@ -3163,7 +3163,7 @@ msgstr "risultati della migrazione diversi da quanto previsto: ho ottenuto ‘%s
 #: schema_migration.cc:295
 #, c-format
 msgid "committing changes to database"
-msgstr "commit delle modifiche nel database in corso"
+msgstr "salvataggio delle modifiche nel database in corso"
 
 #: schema_migration.cc:297
 #, c-format
@@ -3419,8 +3419,8 @@ msgstr "problemi con lo spazio di lavoro: ‘%s’ non è leggibile"
 
 #: work.cc:623
 #, c-format
-msgid "base revision %s does not exist in database\n"
-msgstr "la revisione base ‘%s’ non è in database\n"
+msgid "base revision %s does not exist in database"
+msgstr "la revisione base %s non è in database"
 
 #: work.cc:932
 #, c-format

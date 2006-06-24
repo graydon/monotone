@@ -1018,7 +1018,7 @@ insert_into_roster(roster_t & child_roster,
     {
       node_t n = child_roster.get_node(sp);
       E(is_file_t(n),
-        F("Path %s cannot be added, as there is a directory in the way\n") % sp);
+        F("Path %s cannot be added, as there is a directory in the way") % sp);
       file_t f = downcast_to_file_t(n);
       E(f->content == fid,
         F("Path %s added twice with differing content\n") % sp);
