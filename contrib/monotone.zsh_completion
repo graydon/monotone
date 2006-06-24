@@ -1,10 +1,16 @@
 #compdef mtn # -*-sh-*-
 #
-# Installing into /etc/zsh/:
+# Installing into /usr/share/zsh/site-functions:
 #
-# 1) if not present, add the line "fpath=(/etc/zsh $fpath)" to either 
-#    your system wide zshrc, or user ~/.zshrc 
-# 2) cp $MONOTONE/contrib/monotone.zsh_completion /etc/zsh/_mtn
+# 1) If that directory is not already present in $fpath, add the line
+#    "fpath=(/usr/share/zsh/site-functions $fpath)" to either your
+#    system wide zshrc, or user ~/.zshrc.
+#
+# 2) Copy $MONOTONE/contrib/monotone.zsh_completion (this file) to
+#    /usr/share/zsh/site-functions/_mtn
+#
+# Alternatively, you can install this file as _mtn into some directory
+# in your home (e.g. ~/.zsh), and add that directory to the $fpath.
 #
 
 # redefine _mtn.

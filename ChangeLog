@@ -1,5 +1,11 @@
 2006-06-24  Thomas Moschny <thomas.moschny@gmx.de>
 
+	* contrib/monotone.zsh_completion: Recommend installation into
+	/usr/share/zsh/site-functions, as suggested by Steven E. Harris
+	<seh@panix.com>. Add a note about per-user installation.
+
+2006-06-24  Thomas Moschny <thomas.moschny@gmx.de>
+
 	* contrib/monotone.zsh_completion: Replace references to
 	'monotone' with 'mtn'. Allow more than one standard option on the
 	command line.
