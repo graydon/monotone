@@ -2230,9 +2230,10 @@ update_current_roster_from_filesystem(roster_t & ros,
       "to restore consistency, on each missing file run either\n"
       "'%s drop FILE' to remove it permanently, or\n"
       "'%s revert FILE' to restore it\n"
-      "or to handle all at once, simply 'monotone drop --missing'\n"
-      "or 'monotone revert --missing'")
-    % missing_files % app.prog_name % app.prog_name % app.prog_name);
+      "or to handle all at once, simply '%s drop --missing'\n"
+      "or '%s revert --missing'")
+    % missing_files % app.prog_name % app.prog_name % app.prog_name
+    % app.prog_name % app.prog_name);
 }
 
 void
