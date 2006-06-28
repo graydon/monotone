@@ -1,3 +1,8 @@
+2006-06-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* hash_map.hh: %s/_T/T/g; _T is reserved for the implementation,
+	and attempting to use it results in compile failures on OS X 10.3.
+
 2006-06-24  Richard Levitte  <richard@levitte.org>
 
 	* Changelog: Convert all CRLF to LF.
