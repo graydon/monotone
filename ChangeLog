@@ -1,3 +1,10 @@
+2006-06-29  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Bugfix: completion for 'mtn ci'
+	used _mtn_checkout(). Directory completion for --keydir and
+	--confdir. Revised _mtn_commit(). Redirecting stderr to /dev/null
+	while completing branches or known files.
+
 2006-06-28  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* hash_map.hh: %s/_T/T/g; _T is reserved for the implementation,
