@@ -1,3 +1,9 @@
+2006-06-30  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: New function
+	 _mtn_files_changed, used by _mtn_commit and _mtn_revert. Renamed
+	 and updated mtn_files_unmaintained. Minor fixes.
+
 2006-06-29  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* contrib/monotone.zsh_completion: Bugfix: completion for 'mtn ci'
