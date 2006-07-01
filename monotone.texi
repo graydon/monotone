@@ -5726,6 +5726,41 @@ None.
 @end table
 
 
+@item mtn automate branches
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+Prints all branch certs present in the revision graph, that are not
+excluded by the lua hook @code{ignore_branch}.
+
+@item Sample output:
+
+@verbatim
+net.venge.monotone
+net.venge.monotone.win32
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each the name of a branch. The lines are printed
+in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+
 @item mtn automate select @var{selector}
 
 @table @strong

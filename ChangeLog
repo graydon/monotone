@@ -1,3 +1,12 @@
+2006-07-01  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* automate.cc (AUTOMATE(branches)): New function, almost similar
+	to ls branches.
+	* cmd_automate.cc (interface_version): Incremented.
+	* monotone.texi (Automation): Description of the new command added.
+	* tests/automate_branches/: Testing the new command.
+	* testsuite.lua: Activated new test.
+
 2006-06-30  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* contrib/monotone.zsh_completion: New function

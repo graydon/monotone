@@ -1180,6 +1180,33 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
       output << (*i).inner()() << endl;
 }
 
+// Name: branches
+// Arguments:
+//   None
+// Added in: 2.2
+// Purpose:
+//   Prints all branch certs present in the revision graph, that are not
+//   excluded by the lua hook 'ignore_branch'.
+// Output format:
+//   Zero or more lines, each the name of a branch. The lines are printed
+//   in alphabetically sorted order.
+// Error conditions:
+//   None.
+AUTOMATE(branches, N_(""))
+{
+  if (args.size() > 0)
+    throw usage(help_name);
+
+  vector<string> names;
+
+  app.db.get_branches(names);
+  sort(names.begin(), names.end());
+
+  for (vector<string>::const_iterator i = names.begin();
+       i != names.end(); ++i)
+    if (!app.lua.hook_ignore_branch(*i))
+      output << (*i) << endl;
+}
 
 // Local Variables:
 // mode: C++
