@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-06-10 13:57+0200\n"
-"PO-Revision-Date: 2006-06-24 12:35+0100\n"
-"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
+"PO-Revision-Date: 2006-07-02 15:50-0500\n"
+"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -143,7 +143,7 @@ msgstr "trovati certificati con rami multipli per la revisione %s, per favore in
 #: cmd_automate.cc:205
 #, c-format
 msgid "read from client failed with error code: %d"
-msgstr ""
+msgstr "lettura dal client fallita con errore codice: %d"
 
 #: cmd_automate.cc:248
 #, c-format
@@ -1637,12 +1637,12 @@ msgstr "chiave %s mancante (firma %d certificati)"
 #: database_check.cc:751
 #, c-format
 msgid "revision %s unchecked signature in %s cert from missing key %s"
-msgstr ""
+msgstr "revisione ‘%s’ firma non controllata nel certificato ‘%s’ per chiave ‘%s’ mancante"
 
 #: database_check.cc:759
 #, c-format
 msgid "revision %s bad signature in %s cert from key %s"
-msgstr ""
+msgstr "revisione ‘%s’ firma non ammessa per certificato ‘%s’ della chiave ‘%s’"
 
 #: database_check.cc:774
 #, c-format
@@ -1652,7 +1652,7 @@ msgstr "alla revisione %s manca il certificato ‘%s’"
 #: database_check.cc:783
 #, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)"
-msgstr ""
+msgstr "la revisione ‘%s’ non corrisponde ai certificati (%d autori %d date %d changelogs)"
 
 #: database_check.cc:870
 #, c-format
@@ -1808,6 +1808,13 @@ msgid ""
 "  pull into a fresh database.\n"
 "sorry about the inconvenience."
 msgstr ""
+"il database ‘%s’ contiene revisioni ma non roster\n"
+"se sei un project leader o fai verifiche locali:\n"
+" vedi il file UPGRADE per istruzioni sull'aggiornamento.\n"
+"se non sei un project leader:\n"
+"aspetta che un leader sposti i dati del progetto, e poi\n"
+"entra in un data base nuovo.\n"
+"scusa per l'inconveniete."
 
 #: database.cc:209
 #, c-format
@@ -1816,6 +1823,9 @@ msgid ""
 "this is a very old database; it needs to be upgraded\n"
 "please see README.changesets for details"
 msgstr ""
+"il database ‘%s’ contiene manifesti ma non revisioni\n"
+"è un database molto vecchio; ha bisogno di essere aggiornato\n"
+"prego vedi README.changesets per dettagli"
 
 # TODO: "in" o "dal"?
 #: database.cc:245
@@ -1834,6 +1844,8 @@ msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
 msgstr ""
+"assicurati che database e directory contenente sia scrivibili\n"
+"e non devi uscire dallo spazio disco"
 
 #: database.cc:287
 #: schema_migration.cc:205
@@ -2309,15 +2321,15 @@ msgstr "indirizzo:porta su cui stare in ascolto (default ‘:4691’)"
 
 #: monotone.cc:86
 msgid "perform the operations for files missing from workspace"
-msgstr ""
+msgstr "eseguire le operazioni per file mancanti nello spazio di lavoro"
 
 #: monotone.cc:87
 msgid "perform the operations for unknown files from workspace"
-msgstr ""
+msgstr "eseguire le operazioni per file sconosciuti nello spazio di lavoro"
 
 #: monotone.cc:88
 msgid "push the specified key even if it hasn't signed anything"
-msgstr ""
+msgstr "invia la chiave specificata anche se non è stato firmato niente"
 
 #: monotone.cc:89
 msgid "serve netsync on stdio"
@@ -2374,7 +2386,7 @@ msgstr "stampa il numero di versione con dettagli ed esce"
 
 #: monotone.cc:110
 msgid "insert command line arguments taken from the given file"
-msgstr ""
+msgstr "inserisco nella linea di comando gli argomenti presi dal file dato"
 
 #: monotone.cc:111
 msgid "set ticker style (count|dot|none)"
@@ -2765,7 +2777,7 @@ msgstr ""
 #: netsync.cc:2350
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
-msgstr ""
+msgstr "errore di protocollo processando il peer %s: '%s' "
 
 #: netsync.cc:2257
 #, c-format
@@ -2780,12 +2792,12 @@ msgstr "connessione a ‘%s’"
 #: netsync.cc:2365
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
-msgstr ""
+msgstr "tempo disponibile finito aspettando I/O con peer ‘%s’, mi scollego\n"
 
 #: netsync.cc:2388
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting\n"
-msgstr ""
+msgstr "ottenuto fallimento parlando col peer ‘%s’, mi scollego\n"
 
 #: netsync.cc:2405
 #, c-format
@@ -2800,22 +2812,22 @@ msgstr ""
 #: netsync.cc:2416
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting\n"
-msgstr ""
+msgstr "I/O fallito mentrw parlavo col peer ‘%s’, mi scollego\n"
 
 #: netsync.cc:2482
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
-msgstr ""
+msgstr "errore di protocollo processando peer ‘%s’: ‘%s’, marcato come invalido"
 
 #: netsync.cc:2514
 #, c-format
 msgid "accepted new client connection from %s : %s"
-msgstr ""
+msgstr "accettata connessione nuovo cliente da ‘%s’: ‘%s’"
 
 #: netsync.cc:2551
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
-msgstr ""
+msgstr "errore di protocollo processando peer ‘%s’: ‘%s’, mi scollego"
 
 #: netsync.cc:2562
 #, c-format
@@ -3053,7 +3065,7 @@ msgstr ""
 #: revision.cc:781
 #, c-format
 msgid "failed to eliminate edge %d -> %d"
-msgstr ""
+msgstr "fallita eliminazione di parentela %d -> %d"
 
 #: revision.cc:792
 #, c-format

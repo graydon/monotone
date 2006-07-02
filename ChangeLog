@@ -1,3 +1,7 @@
+﻿2006-07-02  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (42 to go).
+	
 2006-06-29  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* contrib/monotone.zsh_completion: Bugfix: completion for 'mtn ci'
