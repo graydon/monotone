@@ -1,3 +1,10 @@
+2006-07-02  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.txt: Short descriptions of the functions provided for use
+	by testsuites.
+	* testsuite.txt: Short descriptions of the functions provided for
+	use by tests.
+
 2006-07-01  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* automate.cc (AUTOMATE(branches)): New function, almost similar
