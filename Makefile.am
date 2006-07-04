@@ -66,7 +66,8 @@ MOST_SOURCES =								\
                                                                         \
 	 cleanup.hh unit_tests.hh 					\
          cycle_detector.hh randomfile.hh adler32.hh 			\
-	 netio.hh smap.hh gettext.h					\
+         randomizer.cc randomizer.hh                                    \
+         netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
          package_full_revision.c package_full_revision.h options.hh	\
          i18n.h parallel_iter.hh safe_map.hh pch.hh

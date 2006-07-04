@@ -1,3 +1,14 @@
+2006-07-04  Graydon Hoare  <graydon@pobox.com>
+
+	* randomizer.{cc,hh}: New helpers for prngs.
+	* Makefile.am (MOST_SOURCES): Add them.
+	* charset.cc: Fix some missing initializers in unit tests.
+	* randomfile.hh: Use randomizer, not rand().
+	* roster.cc: Likewise.
+	* refiner.{cc,hh}: Add random unit tester, 
+	and fix serious protocol-wedging bug.
+	* unit_tests.{cc,hh}: Register refiner tests.
+
 2006-06-17  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am: Permit building 'tester' with static boost.

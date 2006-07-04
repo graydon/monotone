@@ -59,6 +59,11 @@ Netxx::PipeStream::PipeStream(int _readfd, int _writefd)
   overlap.hEvent = CreateEvent(0, TRUE, TRUE, 0);
   bytes_available = 0;
   I(overlap.hEvent != 0);
+#else
+  int flags = fcntl(readfd, F_GETFL, 0);
+  I(fcntl(readfd, F_SETFL, flags | O_NONBLOCK) != -1);
+  flags = fcntl(writefd, F_GETFL, 0);
+  I(fcntl(writefd, F_SETFL, flags | O_NONBLOCK) != -1);
 #endif
 }
 
