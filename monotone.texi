@@ -5761,6 +5761,86 @@ None.
 @end table
 
 
+@item mtn automate tags [@var{branch_pattern}]
+
+@table @strong
+@item Arguments:
+
+A branch pattern (optional).
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+If a branch pattern is given, prints all tags that are attached to
+revisions on branches matched by the pattern; otherwise prints all
+tags of the revision graph.
+
+If a branch name is ignored by means of the lua hook
+@code{ignore_branch}, it is neither printed, nor can it be matched by
+a pattern.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+     tag "monotree-0.3"
+revision [35cff8e8ba14155f5f7ddf7965073f514fd60f61]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.2"
+revision [5d288b39b49613b0d9dca8ece6b9a42c3773f35b]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.1"
+revision [8a121346ce2920b6f85df68b3b620de96bd14a8d]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib" "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.4"
+revision [f1afc520474f83c58262896ede027ef77226046e]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each tag.
+
+All stanzas are formatted by basic_io. Stanzas are separated by a
+blank line. Values will be escaped, '\' to '\\' and '"' to '\"'.
+
+Each stanza has exactly the following four entries:
+
+@table @option
+@item 'tag'
+the value of the tag cert, i.e. the name of the tag
+
+@item 'revision'
+the hexadecimal id of the revision the tag is attached to
+
+@item 'signer'
+the name of the key used to sign the tag cert
+
+@item 'branches'
+a (possibly empty) list of all branches the tagged revision is on
+@end table
+
+Stanzas are printed in arbitrary order.
+
+@item Error conditions:
+
+A run-time exception occures if an illegal branch pattern is
+specified.
+
+@end table
+
+
 @item mtn automate select @var{selector}
 
 @table @strong

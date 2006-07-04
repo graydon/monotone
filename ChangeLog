@@ -1,3 +1,9 @@
+2006-07-04  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* automate.cc (AUTOMATE(tags)): New function: List all tags in
+	basic_io format, possibly filtered by branch.
+	* monotone.texi (Automation): Description of the new added.
+
 2006-07-02  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tester.txt: Short descriptions of the functions provided for use
