@@ -263,7 +263,12 @@ AUTOMATE(stdio, "")
                                       boost::ref(output),
                                       boost::ref(outpos),
                                       _1));
-          s.std::basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
+          {
+            // Do not use s.std::basic_ios<...>::rdbuf here, 
+            // it confuses VC8.
+            using std::basic_ios;
+            s.basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
+          }
           try
             {
               err=0;

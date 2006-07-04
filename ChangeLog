@@ -1,5 +1,11 @@
 2006-07-04  Graydon Hoare  <graydon@pobox.com>
 
+	* cmd_automate.cc: Fix for VC8 compatibility.
+	* netxx_pipe.cc: Minor cleanups.
+	* visualc/*.vcproj: Build fixes.
+
+2006-07-04  Graydon Hoare  <graydon@pobox.com>
+
 	* randomizer.{cc,hh}: Remove seed function.
 	* randomfile.hh: Remove use of seed().
 	* diff_patch.cc: Remove seeding arg from tester.
