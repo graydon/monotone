@@ -208,7 +208,8 @@ void set_env(string const &var, string const &val)
 #else
 void putenv2(string const &var, string const &val)
 {
-  char const *s = (var + "=" + val).c_str();
+  string tempstr = var + "=" + val;
+  char const *s = tempstr.c_str();
   size_t len = var.size() + val.size() + 2;
   char *cp = new char[len];
   memcpy(cp, s, len);

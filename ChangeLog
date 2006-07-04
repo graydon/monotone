@@ -1,3 +1,7 @@
+2006-07-04  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.cc: When setting env vars, don't take .c_str() of a temporary.
+
 2006-07-02  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tester.txt: Short descriptions of the functions provided for use
