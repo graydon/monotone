@@ -46,8 +46,6 @@
 // defined in schema.sql, converted to header:
 #include "schema.h"
 
-// defined in views.sql, converted to header:
-#include "views.h"
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
 // the schema, and all SQL statements used to access the schema.
@@ -312,7 +310,6 @@ database::sql(bool init, bool migrating_format)
 
       check_schema();
       install_functions(__app);
-      install_views();
 
       if (!migrating_format)
         check_format();
@@ -2021,28 +2018,6 @@ database::install_functions(app_state * app)
                            SQLITE_UTF8, NULL,
                            &sqlite3_gunzip_fn,
                            NULL, NULL) == 0);
-}
-
-void
-database::install_views()
-{
-  // we don't currently use any views. re-enable this code if you find a
-  // compelling reason to use views.
-
-  /*
-  // delete any existing views
-  results res;
-  fetch(res, one_col, any_rows,
-        "SELECT name FROM sqlite_master WHERE type='view'");
-
-  for (size_t i = 0; i < res.size(); ++i)
-    {
-      string drop = "DROP VIEW " + res[i][0];
-      execute(drop.c_str());
-    }
-  // register any views we're going to use
-  execute(views_constant);
-  */
 }
 
 void

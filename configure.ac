@@ -3,9 +3,8 @@
 
 AC_PREREQ(2.58)
 AC_INIT(monotone, 0.27, monotone-devel@nongnu.org)
-AM_INIT_AUTOMAKE(1.7.1)
+AM_INIT_AUTOMAKE([1.9 tar-ustar check-news std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
-AC_CONFIG_TESTDIR([tests])
 AM_CONFIG_HEADER([config.h])
 
 # Checks for programs.
@@ -578,6 +577,6 @@ AC_SUBST(MONOTONE_CXXFLAGS)
 AC_SUBST(LIB3RDPARTY_CFLAGS)
 AC_SUBST(LIB3RDPARTY_CXXFLAGS)
 
-AC_CONFIG_FILES([Makefile tests/atlocal])
+AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([po/Makefile.in], [cat xgettext.opts >>po/Makefile.in])
 AC_OUTPUT

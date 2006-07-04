@@ -337,12 +337,12 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
 
 
 // various (circular?) dependencies prevent inclusion of restrictions.hh
-class restriction;
+class node_restriction;
 
 void
 make_restricted_csets(roster_t const & from, roster_t const & to,
                       cset & included, cset & excluded,
-                      restriction const & mask);
+                      node_restriction const & mask);
 
 void
 check_restricted_cset(roster_t const & roster, cset const & cs);
@@ -362,7 +362,7 @@ classify_roster_paths(roster_t const & ros,
 
 void
 update_current_roster_from_filesystem(roster_t & ros,
-                                      restriction const & mask,
+                                      node_restriction const & mask,
                                       app_state & app);
 
 void

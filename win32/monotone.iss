@@ -11,16 +11,17 @@ DefaultGroupName=monotone
 MinVersion=4.0,4.0
 OutputDir=.
 AllowNoIcons=1
-Compression=lzma/fast
+Compression=lzma/ultra
 SolidCompression=yes
 LicenseFile="..\COPYING"
 ChangesEnvironment=true
+WizardImageFile=monotone.bmp
 
 [Files]
-Source: "..\..\monotone.release\mtn.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\monotone.release\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
+Source: "..\mtn.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\monotone.release\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignoreversion
+Source: "..\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignoreversion
 Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"
 Source: "\mingw\bin\zlib1.dll"; DestDir: "{app}"
 
@@ -44,61 +45,59 @@ Name: "{group}\monotone documentation"; Filename: "{app}\documentation\index.htm
 program Setup;
 
 var
-  DBChecked : Boolean;
-  DBDidntExist : Boolean;
-  KeyIDPage : TInputQueryWizardPage;
-  BranchWorkspacePage : TInputQueryWizardPage;
+  DBChecked: Boolean;
+  DBDidntExist: Boolean;
+  KeyIDPage: TInputQueryWizardPage;
+  BranchWorkspacePage: TInputQueryWizardPage;
 
 function InitializeSetup(): Boolean;
 begin
-  DBChecked := false;
-  Result := true;
+  DBChecked := False;
+  Result := True;
 end;
 
-function GetDBPath(db: String) : String;
-var
-  path: String;
+function GetDBPath(db: String): String;
+var path: String;
 begin
-  path := GetShellFolder(false, sfDocs);
+  path := GetShellFolder(False, sfDocs);
   path := path + '\monotone\' + db;
   Result := path;
 end;
 
-function GetKeyID(Default: String) : String;
+function DBDoesntExist(): Boolean;
+var path: String;
 begin
-  Result := KeyIDPage.Values[0];
-end;
-
-function GetBranchName(Default: String) : String;
-begin
-  Result := BranchWorkspacePage.Values[0];
-end;
-
-function GetWorkspacePath(Default: String) : String;
-begin
-  Result := BranchWorkspacePage.Values[1];
-end;
-
-function DBDoesntExist() : Boolean;
-var
-  path: String;
-begin
-  if (DBChecked) then begin
+  if (DBChecked = True) then
+    Result := DBDidntExist
+  else begin
+    path := GetDBPath('monotone.mtn');
+    DBDidntExist := not FileOrDirExists(path);
+    DBChecked := True;
     Result := DBDidntExist;
-    exit;
   end;
-  path := GetDBPath('monotone.mtn');
-  DBDidntExist := not FileOrDirExists(path);
-  DBChecked := true;
-  Result := DBDidntExist;
 end;
 
-function ForceDBPath(db: String) : String;
+function ForceDBPath(db: String): String;
 var path: String;
 begin
   path := GetDBPath('');
   ForceDirectories(path);
   Result := path + db;
+end;
+
+function GetKeyID(Default: String): String;
+begin
+  Result := KeyIDPage.Values[0];
+end;
+
+function GetBranchName(Default: String): String;
+begin
+  Result := BranchWorkspacePage.Values[0];
+end;
+
+function GetWorkspacePath(Default: String): String;
+begin
+  Result := BranchWorkspacePage.Values[1];
 end;
 
 procedure InitializeWizard;
@@ -122,7 +121,28 @@ begin
   else if (IsTaskSelected('initdb\createws') = False) and (PageID = BranchWorkspacePage.ID) then
     Result := True
   else
-    Result := False
+    Result := False;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+begin
+  if CurPageID = KeyIDPage.ID then begin
+    if KeyIDPage.Values[0] = '' then begin
+      MsgBox('You must enter a valid key ID', mbError, MB_OK);
+      Result := False;
+    end else
+      Result := True;
+  end else if CurPageId = BranchWorkspacePage.ID then begin
+    if BranchWorkspacePage.Values[0] = '' then begin
+      MsgBox('You must enter a valid branch name', mbError, MB_OK);
+      Result := False;
+    end else if BranchWorkspacePage.Values[1] = '' then begin
+      MsgBox('You must enter a valid workspace path', mbError, MB_OK);
+      Result := False;
+    end else
+      Result := True;
+  end else
+    Result := True;
 end;
 
 function ModPathDir(): String;

@@ -51,70 +51,72 @@
 //
 // revision A ... included ... revision X ... excluded ... revision B
 
-enum path_state { included, excluded };
+namespace restricted_path 
+{
+  enum status { included, excluded };
+}
 
 class restriction
 {
  public:
+  bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
+
+ protected:
   restriction(app_state & a) : app(a) {}
 
   restriction(std::vector<utf8> const & includes,
               std::vector<utf8> const & excludes,
-              roster_t const & roster,
-              app_state & a) :
-    app(a)
-  {
-    map_paths(includes, excludes);
-    map_nodes(roster);
-    validate();
-  }
+              app_state & a);
 
-  restriction(std::vector<utf8> const & includes,
-              std::vector<utf8> const & excludes,
-              roster_t const & roster1,
-              roster_t const & roster2,
-              app_state & a) :
-    app(a)
-  {
-    map_paths(includes, excludes);
-    map_nodes(roster1);
-    map_nodes(roster2);
-    validate();
-  }
+  app_state & app;
+  path_set included_paths, excluded_paths;
+};
+
+class node_restriction : public restriction
+{
+ public:
+  node_restriction(app_state & a) : restriction(a) {}
+
+  node_restriction(std::vector<utf8> const & includes,
+                   std::vector<utf8> const & excludes,
+                   roster_t const & roster,
+                   app_state & a);
+
+  node_restriction(std::vector<utf8> const & includes,
+                     std::vector<utf8> const & excludes,
+                     roster_t const & roster1,
+                     roster_t const & roster2,
+                     app_state & a);
 
   bool includes(roster_t const & roster, node_id nid) const;
 
-  bool includes(split_path const & sp) const;
-
-  bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
-
-  restriction & operator=(restriction const & other)
+  node_restriction & operator=(node_restriction const & other)
   {
     included_paths = other.included_paths;
     excluded_paths = other.excluded_paths;
     known_paths = other.known_paths;
     node_map = other.node_map;
-    path_map = other.path_map;
     return *this;
   }
 
  private:
+  path_set known_paths;
+  std::map<node_id, restricted_path::status> node_map;
+};
 
-  app_state & app;
-  path_set included_paths, excluded_paths, known_paths;
+class path_restriction : public restriction
+{
+ public:
+  path_restriction(app_state & a) : restriction(a) {}
 
-  // we maintain maps by node_id and also by split_path, which is not
-  // particularly nice, but paths are required for checking unknown and ignored
-  // files
-  std::map<node_id, path_state> node_map;
-  std::map<split_path, path_state> path_map;
+  path_restriction(std::vector<utf8> const & includes,
+                   std::vector<utf8> const & excludes,
+                   app_state & a);
 
-  void map_paths(std::vector<utf8> const & includes,
-                 std::vector<utf8> const & excludes);
+  bool includes(split_path const & sp) const;
 
-  void map_nodes(roster_t const & roster);
-
-  void validate();
+ private:
+  std::map<split_path, restricted_path::status> path_map;
 };
 
 // Local Variables:

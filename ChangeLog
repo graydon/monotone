@@ -9,6 +9,217 @@
 	and fix serious protocol-wedging bug.
 	* unit_tests.{cc,hh}: Register refiner tests.
 
+2006-07-04  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* automate.cc (AUTOMATE(tags)): New function: List all tags in
+	basic_io format, possibly filtered by branch.
+	* monotone.texi (Automation): Description of the new added.
+
+2006-07-02  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.txt: Short descriptions of the functions provided for use
+	by testsuites.
+	* testsuite.txt: Short descriptions of the functions provided for
+	use by tests.
+
+2006-07-01  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* automate.cc (AUTOMATE(branches)): New function, almost similar
+	to ls branches.
+	* cmd_automate.cc (interface_version): Incremented.
+	* monotone.texi (Automation): Description of the new command added.
+	* tests/automate_branches/: Testing the new command.
+	* testsuite.lua: Activated new test.
+
+2006-06-30  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: New function
+	 _mtn_files_changed, used by _mtn_commit and _mtn_revert. Renamed
+	 and updated mtn_files_unmaintained. Minor fixes.
+
+2006-06-29  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Bugfix: completion for 'mtn ci'
+	used _mtn_checkout(). Directory completion for --keydir and
+	--confdir. Revised _mtn_commit(). Redirecting stderr to /dev/null
+	while completing branches or known files.
+
+2006-06-28  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* hash_map.hh: %s/_T/T/g; _T is reserved for the implementation,
+	and attempting to use it results in compile failures on OS X 10.3.
+
+2006-06-24  Richard Levitte  <richard@levitte.org>
+
+	* Changelog: Convert all CRLF to LF.
+	* po/sv.po: A few more fuzzies to correct.
+
+2006-06-24  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (63 to go).
+	Removed quotes around revision values.
+	* app_state.cc, revision.cc, work.cc: removed a newline.
+
+2006-06-24  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Recommend installation into
+	/usr/share/zsh/site-functions, as suggested by Steven E. Harris
+	<seh@panix.com>. Add a note about per-user installation.
+
+2006-06-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* visualc/config.h: Bump version number to 0.27.
+	* monotone.cc (cpp_main): Fix another 'monotone' vs 'mtn' in
+	command output.
+	* roster.cc (update_current_roster_from_filesystem): Use prog_name
+	here too.
+
+2006-06-24  Marcel van der Boom  <marcel@hsdev.com>
+
+	* roster.cc (update_current_roster_from_filesystem): Change
+	'monotone' to 'mtn' in an error message.  
+
+2006-06-24  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Replace references to
+	'monotone' with 'mtn'. Allow more than one standard option on the
+	command line.
+
+2006-06-22  Richard Levitte  <richard@levitte.org>
+
+	* testsuite.lua: Make sure to set all NLS environment variables
+	to "C", so tests don't fail when the default locale is non-
+	english.
+
+2006-06-21  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/empty_environment/__driver__.lua: Fix test on Cygwin--copy
+	essential DLLs into current directory before emptying $PATH.
+	* win32/monotone.iss: Remove hardcoded paths that were
+	accidentally left in after debugging.
+
+2006-06-20  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* hash_map.hh: Add a specialization for unsigned long; fixes build
+	on Cygwin/GCC 3.4.  Thanks to Lapo Luchini for the original patch.
+	* win32/monotone.iss: Add monotone logo to wizard (generated from
+	figures/monotone-logo.svg).  Sanity check key ID, branch name, and
+	workspace path.
+	* Makefile.am: Include win32/modpath.iss in EXTRA_DIST.
+
+2006-06-20  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fixed remaining fuzzies.
+
+2006-06-20  Nathaniel Smith  <njs@pobox.com>
+
+	* tester.lua (open_or_err): New function.
+	(pre_cmd): Use it.  It should probably be used much more widely,
+	but I'm not sure what I'm doing yet...
+
+2006-06-20  Nathaniel Smith  <njs@pobox.com>
+
+	* INSTALL: Update a little bit, in particular, give a newer boost
+	download link in response to complaint on mailing list, and put
+	1.9 version number on automake command line.
+
+2006-06-20  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac: Remove autotest-related configury.  
+	Add magic AM_INIT_AUTOMAKE options to make tar handle the long
+	filenames in the new test suite (automake 1.9 is now required).
+
+2006-06-20  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST): The auto* gods demand sacrifice;
+	remove an extra / to balance previous change.
+	(NB: apparently a trailing / on a directory in EXTRA_DIST does
+	bizarre things.)
+	Also, remove empty files tests/atconfig.in, tests/atlocal.in.
+
+2006-06-19  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST): Add missing \.
+
+2006-06-19  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST, BUILT_SOURCES_CLEAN): 
+	* database.hh, database.cc: Remove old dead views stuff.
+
+2006-06-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to clear.
+
+2006-06-20  Richard Levitte  <richard@levitte.org>
+
+	* cmd_automate.cc (AUTOMATE(interface_version),AUTOMATE(stdio)),
+	cmd_list.cc (AUTOMATE(keys)): Don't send an empty string to
+	gettext.  Here's what xgettext said:
+
+	cmd_automate.cc:68: warning: Empty msgid.  It is reserved by GNU gettext:
+	                             gettext("") returns the header entry with
+	                             meta information, not the empty string.
+	cmd_automate.cc:209: warning: Empty msgid.  It is reserved by GNU gettext:
+	                              gettext("") returns the header entry with
+	                              meta information, not the empty string.
+	cmd_list.cc:539: warning: Empty msgid.  It is reserved by GNU gettext:
+	                          gettext("") returns the header entry with
+	                          meta information, not the empty string.
+
+	I'm quite sure we don't want the header entry printed...
+
+2006-06-19  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fixed several fuzzy translations.
+
+2006-06-19  Richard Levitte  <richard@levitte.org>
+
+	* Makefile.am (EXTRA_DIST): Make sure that all the files in
+	examples/ get properly distributed as well.
+
+2006-06-19  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_automate.cc: #include <boost/function.hpp>, as requested in
+	bug #16866 for boost 1.32.0 compatibility.
+
+2006-06-19  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (inventory): use path_restriction
+	* cmd_diff_log.cc (diff,log):
+	* cmd_list.cc (ls_known,ls_changed):
+	* cmd_ws_commit.cc (revert,status,commit): use node_restrictions
+	* restrictions.{cc,hh} (restriction): subclass into ...
+	(node_restriction): ... this, operating on roster nodes and
+	validated against roster paths
+	(path_restriction): ... and this, operating on split paths and
+	validated against workspace paths ; the unit_tests currently
+	create directories {x,y}/{x,y} wherever they run to pass workspace
+	path validation and this should probably be cleaned up
+	* roster.{cc,hh} (make_restricted_csets, 
+	update_current_roster_from_filesystem,
+	extract_path_set): use node_restrictions
+	* work.{cc,hh} (find_missing): use node_restriction
+	(find_unknown_and_ignored): use path_restriction
+	* tests/ls_unknown_of_unknown_subdir/__driver__.lua: un-xfail
+	and add output checks
+
+2006-06-18  Derek Scherger  <derek@echologic.com>
+
+	* cmd_ws_commit.cc (checkout): replace size check with call to
+	workspace_root
+	* paths.{cc,hh} (workspace_root): new function to test if a
+	split_path is the workspace root
+	* roster.cc (extract_path_set): replace size check with call to
+	workspace_root
+
+2006-06-18  Ethan Blanton  <elb@elitists.net>
+
+	* std_hooks.lua: Call the lua function get_mtn_command(host)
+	from get_netsync_connect_command in order to determine the
+	monotone command on the remote host.
+	* monotone.texi: Document get_mtn_command, update the
+	get_netsync_connect_command definition to incorporate it.
+
 2006-06-17  Graydon Hoare  <graydon@pobox.com>
 
 	* Makefile.am: Permit building 'tester' with static boost.

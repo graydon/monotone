@@ -4,6 +4,8 @@ mkdir("foo")
 writefile("foo/a", "aaa")
 writefile("foo/b", "bbb")
 
--- this fails complaining that foo is an unknown path
+check(mtn("ls", "unknown", "foo"), 0, true, false)
+check(grep('foo$', "stdout"), 0, false, false)
+check(grep('foo/a$', "stdout"), 0, false, false)
+check(grep('foo/b$', "stdout"), 0, false, false)
 
-xfail_if(true, mtn("ls", "unknown", "foo"), 0)

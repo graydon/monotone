@@ -395,12 +395,10 @@ EXTRA_DIST = $(man1_MANS) \
              monotone.spec \
              monotone.html \
              texinfo.css \
-	     schema.sql views.sql \
+	     schema.sql \
 	     std_hooks.lua test_hooks.lua tester.lua \
-	     testsuite.lua $(srcdir)/tests/ \
+	     testsuite.lua $(srcdir)/tests \
 	     tester-testsuite.lua $(srcdir)/tester-tests/ \
-             tests/atconfig.in \
-             tests/atlocal.in  \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard $(srcdir)/m4/*.m4) \
@@ -424,7 +422,8 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/ciabot_monotone_hookversion.py \
              contrib/monotone-cvs-ignore.lua \
              contrib/usher.cc \
-             win32/monotone.iss \
+             $(wildcard $(srcdir)/examples/*) \
+             win32/monotone.iss win32/modpath.iss \
              $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
@@ -463,7 +462,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
 # distcheck stuff
 
@@ -495,7 +494,7 @@ run_lua_tests: Makefile
 # we generate some headers to copy data into the executable
 
 BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h \
-                      schema.h views.h \
+                      schema.h \
                       package_revision.c \
                       package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
                       $(PCH_FILE) $(PCH_BUILD)
