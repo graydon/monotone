@@ -19,8 +19,6 @@
 
 namespace randomizer
 {
-  void seed(size_t n);
-  
   // uniform process in [0,n]
   size_t uniform(size_t n);
 

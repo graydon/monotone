@@ -93,12 +93,10 @@ struct file_randomizer
                                 std::vector<std::string> & left,
                                 std::vector<std::string> & right,
                                 std::vector<std::string> & merged,
-                                int seed,
                                 int n_hunks = 10)
   {
 
     file_randomizer fr;
-    randomizer::seed(seed);
     // maybe prepend something to one side or the other
     if (randomizer::flip())
       {
@@ -114,7 +112,6 @@ struct file_randomizer
     for (int h = 0; h < n_hunks; ++h)
       {
         file_randomizer hr;
-        randomizer::seed(seed + h);
         hr.set_prefix(std::string("hunk ") + boost::lexical_cast<std::string>(h) + " -- ");
         hr.initial_sequential_lines(10);
         hr.append_to(ancestor);
