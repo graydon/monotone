@@ -567,7 +567,7 @@ With ARG of 0, clear default server and collection."
   (interactive)
   (when (not (eq monotone-commit-edit-status 'started))
     (error "The commit in this buffer is '%s'" monotone-commit-edit-status))
-  (monotone-remove-_MTN-lines)
+  (monotone-remove-MTN-lines)
   (let ((buf (current-buffer))
         (message (buffer-substring-no-properties (point-min) (point-max)))
         (mca     monotone-commit-args) ;; copy of buffer-local-var

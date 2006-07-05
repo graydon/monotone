@@ -50,9 +50,18 @@ bool is_executable(const char *path)
         struct stat s;
 
         int rc = stat(path, &s);
-        N(rc != -1, F("error getting status of file %s: %s") % path % strerror(errno));
+        N(rc != -1, F("error getting status of file %s: %s") % path % os_strerror(errno));
 
         return (s.st_mode & S_IXUSR) && !(s.st_mode & S_IFDIR);
+}
+
+// copied from libc info page
+static mode_t
+read_umask()
+{
+  mode_t mask = umask(0);
+  umask(mask);
+  return mask;
 }
 
 int make_executable(const char *path)
@@ -60,13 +69,13 @@ int make_executable(const char *path)
         mode_t mode;
         struct stat s;
         int fd = open(path, O_RDONLY);
-        N(fd != -1, F("error opening file %s: %s") % path % strerror(errno));
+        N(fd != -1, F("error opening file %s: %s") % path % os_strerror(errno));
         if (fstat(fd, &s))
           return -1;
         mode = s.st_mode;
-        mode |= S_IXUSR|S_IXGRP|S_IXOTH;
+        mode |= ((S_IXUSR|S_IXGRP|S_IXOTH) & ~read_umask());
         int ret = fchmod(fd, mode);
-        N(close(fd) == 0, F("error closing file %s: %s") % path % strerror(errno));
+        N(close(fd) == 0, F("error closing file %s: %s") % path % os_strerror(errno));
         return ret;
 }
 
@@ -96,10 +105,23 @@ pid_t process_spawn(const char * const argv[])
         }
 }
 
-int process_wait(pid_t pid, int *res)
+int process_wait(pid_t pid, int *res, int timeout)
 {
         int status;
-        pid = waitpid(pid, &status, 0);
+        int flags = 0;
+        if (timeout == -1)
+          timeout = 0;
+        else
+          flags |= WNOHANG;
+        int r;
+        for (r = 0; r == 0 && timeout >= 0; --timeout)
+          {
+            r = waitpid(pid, &status, flags);
+            if (r == 0 && timeout > 0)
+              process_sleep(1);
+          }
+        if (r == 0)
+          return -1;
         if (WIFEXITED(status))    
                 *res = WEXITSTATUS(status);
         else

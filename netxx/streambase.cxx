@@ -165,7 +165,7 @@ namespace
 		return socket_options.check_for_error(message);
 	    }
 
-	    message = strerror(error_code);
+	    message = Netxx::str_error(error_code);
 	    return false;
 	}
 

@@ -1,9 +1,14 @@
 #ifndef __MERKLE_TREE_HH__
 #define __MERKLE_TREE_HH__
-// copyright (C) 2004, 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+
+// Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <map>
 #include <string>
@@ -14,6 +19,8 @@
 #include "numeric_vocab.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+//#include <tr1/unordered_map>
+#include "hash_map.hh"
 
 // This file contains data structures and functions for managing merkle
 // trees. A merkle tree is, conceptually, a general recursive construction
@@ -35,7 +42,7 @@
 typedef enum
   {
     file_item = 2,
-    key_item = 3,    
+    key_item = 3,
     revision_item = 4,
     cert_item = 5,
     epoch_item = 6
@@ -53,7 +60,7 @@ typedef enum
 slot_state;
 
 struct merkle_node
-{    
+{
   size_t level;
   boost::dynamic_bitset<unsigned char> pref;
   size_t total_num_leaves;
@@ -83,7 +90,38 @@ struct merkle_node
 };
 
 typedef boost::shared_ptr<merkle_node> merkle_ptr;
-typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
+
+//typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
+/*
+namespace std {
+  namespace tr1 {
+    template<>
+    struct hash<std::pair<prefix, size_t> >
+        : public std::unary_function<std::pair<prefix, size_t>, std::size_t> {
+      hash<string> h;
+      hash<size_t> t;
+      std::size_t operator()(std::pair<prefix, size_t> const & val) const {
+        return h(val.first()) + t(val.second);
+      }
+    };
+  }
+}
+typedef std::tr1::unordered_map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
+*/
+typedef std::pair<prefix,size_t> merkle_node_id;
+namespace hashmap {
+  template<>
+  struct hash<merkle_node_id>
+  {
+    hash<std::string> sh;
+    size_t operator()(merkle_node_id const & m) const
+    {
+     return sh(m.first()) + m.second;
+    }
+  };
+}
+typedef hashmap::hash_map<merkle_node_id, merkle_ptr> merkle_table;
+
 
 size_t prefix_length_in_bits(size_t level);
 size_t prefix_length_in_bytes(size_t level);
@@ -100,7 +138,7 @@ locate_item(merkle_table & table,
             merkle_ptr & mp);
 
 
-void 
+void
 pick_slot_and_prefix_for_value(id const & val,
                                size_t level,
                                size_t & slotnum,
@@ -116,7 +154,7 @@ collect_items_in_subtree(merkle_table & tab,
 
 // Insert an item into a tree.
 
-void 
+void
 insert_into_merkle_tree(merkle_table & tab,
                         netcmd_item_type type,
                         id const & leaf,
@@ -137,9 +175,17 @@ insert_into_merkle_tree(merkle_table & tab,
 // insert_into_merkle_tree, and before using tree (but you can batch up
 // multiple calls to insert_into_merkle_tree and then only call this once).
 
-id 
+id
 recalculate_merkle_codes(merkle_table & tab,
-                         prefix const & pref, 
+                         prefix const & pref,
                          size_t level);
-  
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+
 #endif // __MERKLE_TREE_HH__

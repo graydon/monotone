@@ -1,41 +1,54 @@
 AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
+CMD_SOURCES =								\
+	cmd.hh cmd_netsync.cc cmd_list.cc cmd_packet.cc cmd_key_cert.cc	\
+	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc	\
+	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
+
+SANITY_CORE_SOURCES =							\
+	sanity.cc sanity.hh ui.cc ui.hh quick_alloc.hh			\
+	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
+	charset.cc charset.hh						\
+	simplestring_xform.cc simplestring_xform.hh			\
+	constants.cc constants.hh numeric_vocab.hh paths.cc paths.hh	\
+	interner.hh hash_map.hh platform.hh
+
+LUAEXT_SOURCES =							\
+	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
+	globish.cc globish.hh basic_io.cc basic_io.hh
+
 MOST_SOURCES =								\
+	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES)			\
 	 app_state.cc app_state.hh					\
-         commands.cc commands.hh					\
+         commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\
-         lua.cc lua.hh							\
+         lua_hooks.cc lua_hooks.hh					\
          transforms.cc transforms.hh					\
          update.cc update.hh						\
          work.cc work.hh						\
          cert.cc cert.hh						\
          database.cc database.hh					\
          key_store.cc key_store.hh					\
-         file_io.cc file_io.hh						\
+         localized_file_io.cc localized_file_io.hh			\
          keys.cc keys.hh						\
          packet.cc packet.hh						\
-         sanity.cc sanity.hh						\
-         vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
          rcs_file.cc rcs_file.hh					\
          xdelta.cc xdelta.hh						\
-         ui.cc ui.hh							\
          schema_migration.cc schema_migration.hh			\
-         constants.cc constants.hh					\
          refiner.cc refiner.hh						\
          enumerator.cc enumerator.hh					\
          netsync.cc netsync.hh						\
+         netxx_pipe.cc netxx_pipe.hh					\
          netcmd.cc netcmd.hh						\
          merkle_tree.cc merkle_tree.hh					\
-         basic_io.cc basic_io.hh					\
-         mkstemp.cc mkstemp.hh						\
          lcs.cc lcs.hh							\
          rcs_import.cc rcs_import.hh					\
          revision.cc revision.hh					\
 	 cset.cc cset.hh						\
 	 roster.cc roster.hh						\
          mt_version.cc mt_version.hh					\
-         automate.cc automate.hh					\
+         automate.cc							\
          database_check.cc database_check.hh				\
          epoch.cc epoch.hh						\
          inodeprint.cc inodeprint.hh					\
@@ -43,21 +56,21 @@ MOST_SOURCES =								\
          annotate.cc annotate.hh					\
          restrictions.cc restrictions.hh				\
          hmac.cc hmac.hh                                                \
-         globish.cc globish.hh                                          \
          string_queue.cc string_queue.hh                                \
-         paths.cc paths.hh                                              \
          roster_merge.cc roster_merge.hh                                \
          merge.cc merge.hh                                              \
          legacy.cc legacy.hh                                            \
+	 uri.cc uri.hh                                                  \
                                                                         \
          lru_cache.h                                                    \
                                                                         \
-	 cleanup.hh unit_tests.hh interner.hh				\
-         cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
-	 netio.hh smap.hh gettext.h					\
+	 cleanup.hh unit_tests.hh 					\
+         cycle_detector.hh randomfile.hh adler32.hh 			\
+         randomizer.cc randomizer.hh                                    \
+         netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
          package_full_revision.c package_full_revision.h options.hh	\
-         i18n.h hash_map.hh parallel_iter.hh safe_map.hh pch.hh
+         i18n.h parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =									\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
@@ -174,7 +187,7 @@ SQLITE_SOURCES = \
         sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
         sqlite/hash.c sqlite/insert.c \
         sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
-        sqlite/os.c sqlite/os_unix.c sqlite/os_win.c \
+        sqlite/os.c sqlite/os_unix.c sqlite/os_win.c sqlite/os_os2.c \
         sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
         sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
         sqlite/trigger.c sqlite/update.c sqlite/utf.c \
@@ -186,7 +199,7 @@ SQLITE_SOURCES = \
 	sqlite/complete.c \
 	\
         sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h \
+        sqlite/os_common.h sqlite/os_os2.h \
         sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
 	sqlite/pager.h
 
@@ -214,22 +227,23 @@ POPT_SOURCES = \
 
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
-	unix/inodeprint.cc unix/fs.cc
+	unix/inodeprint.cc unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc
 
 WIN32_PLATFORM_SOURCES = \
 	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/inodeprint.cc win32/fs.cc
+	win32/inodeprint.cc win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc
 
 # primaries
 
 bin_PROGRAMS = mtn
-check_PROGRAMS = unit_tests
-noinst_PROGRAMS = txt2c 
-EXTRA_PROGRAMS = usher 
+check_PROGRAMS = unit_tests tester
+noinst_PROGRAMS = txt2c
+EXTRA_PROGRAMS = usher
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
 usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
+tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
 
 txt2c_SOURCES = txt2c.cc
 
@@ -276,7 +290,7 @@ endif
 SUFFIXES = .gch
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
 AM_LDFLAGS = 
 
@@ -293,6 +307,10 @@ unit_tests_LDFLAGS =
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 
+tester_LDFLAGS = 
+tester_CPPFLAGS = -I$(top_srcdir)/lua
+tester_CXXFLAGS = $(AM_CXXFLAGS)
+
 # conditionals from configury
 
 if STATIC_BOOST
@@ -302,13 +320,16 @@ if STATIC_BOOST
   mtn_LDADD = lib3rdparty.a $(BOOSTLIBS)
   unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
                      @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
+  tester_LDADD = lib3rdparty.a $(BOOSTLIBS)
 else
   mtn_LDADD = lib3rdparty.a
   unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
+  tester_LDADD = lib3rdparty.a
 endif
 
 mtn_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+tester_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
@@ -374,13 +395,10 @@ EXTRA_DIST = $(man1_MANS) \
              monotone.spec \
              monotone.html \
              texinfo.css \
-	     schema.sql views.sql \
-	     std_hooks.lua test_hooks.lua \
-	     testsuite.at \
-	     $(wildcard $(srcdir)/tests/t_*.at) \
-	     testsuite \
-             tests/atconfig.in \
-             tests/atlocal.in  \
+	     schema.sql \
+	     std_hooks.lua test_hooks.lua tester.lua \
+	     testsuite.lua $(srcdir)/tests \
+	     tester-testsuite.lua $(srcdir)/tester-tests/ \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard $(srcdir)/m4/*.m4) \
@@ -404,7 +422,8 @@ EXTRA_DIST = $(man1_MANS) \
              contrib/ciabot_monotone_hookversion.py \
              contrib/monotone-cvs-ignore.lua \
              contrib/usher.cc \
-             win32/monotone.iss \
+             $(wildcard $(srcdir)/examples/*) \
+             win32/monotone.iss win32/modpath.iss \
              $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
@@ -433,17 +452,17 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 # testsuite stuff (could this possibly be more ugly?)
 
 if BUILD_UNIT_TESTS
-TESTS = unit_tests $(srcdir)/testsuite
+TESTS = unit_tests run_lua_tests
 else
-TESTS = $(srcdir)/testsuite
+TESTS = run_lua_tests
 endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
-	rm -rf testsuite.dir testsuite.log package_full_revision.txt
+	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep
 
 # distcheck stuff
 
@@ -466,14 +485,16 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo 'm4_define([AT_PACKAGE_BUGREPORT], [@PACKAGE_BUGREPORT@])'; \
 	} >$(srcdir)/package.m4
 
-$(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
-                     $(srcdir)/package.m4 
-	autom4te --language=Autotest -I $(srcdir) $< -o $@.tmp
-	mv -f $@.tmp $@
+run_lua_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo $(top_builddir)/tester $(srcdir)/testsuite.lua >> $@ ; \
+	chmod 755 $@
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h \
+                      schema.h \
                       package_revision.c \
                       package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
                       $(PCH_FILE) $(PCH_BUILD)
@@ -529,8 +550,8 @@ package_full_revision_raw.txt:
 # creates, and also make sure that the shell command exits
 # successfully; the rm -f ensures both
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
-	(cd $(srcdir) && $$REAL_BLDDIR/mtn automate get_revision) 2>/dev/null >$@ \
-	|| (cd $(srcdir) && mtn automate get_revision) 2>/dev/null >$@ \
+	(cd $(srcdir) && $$REAL_BLDDIR/mtn --root=. automate get_revision) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && mtn --root=. automate get_revision) 2>/dev/null >$@ \
 	|| rm -f $@
 # See above comment -- the file this depends on may or may not exist.
 # This file, however, must always exist, so that 'make dist' can
@@ -582,10 +603,9 @@ monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 		cp $(srcdir)/texinfo.css .; \
 	fi
 	makeinfo -I $(srcdir) --no-split --no-headers --output $@ --html $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@
-	rm -f $@.perlbak
-
-# The .perlbak thing is needed, otherwise the perl executions fails on MinGW
+	cp $@ $@.bak
+	sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $@.bak >$@
+	rm -f $@.bak
 
 html: monotone.texi version.texi std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
@@ -595,6 +615,8 @@ html: monotone.texi version.texi std_hooks.lua texinfo.css
 	cp -r $(srcdir)/figures $@
 	cp $(srcdir)/texinfo.css $@
 	makeinfo -I $(srcdir) --number-sections --html --output $@ $<
-	perl -i.perlbak -pe 's@<head>@<head>\n<link type="text/css" rel="stylesheet" href="texinfo.css" />@' $@/*.html
-	rm -f $@/*.perlbak
-
+	for f in $@/*.html; do \
+		cp $$f $$f.bak; \
+		sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $$f.bak >$$f; \
+		rm -f $$f.bak; \
+	done

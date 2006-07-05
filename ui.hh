@@ -1,10 +1,14 @@
 #ifndef __UI_HH__
 #define __UI_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this file contains a couple utilities to deal with the user
 // interface. the global user_interface object 'ui' owns cerr, so
@@ -13,7 +17,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <boost/format.hpp>
 
 #include "sanity.hh"
 
@@ -24,14 +27,17 @@ struct ticker
   size_t ticks;
   size_t mod;
   size_t total;
+  size_t previous_total;
   bool kilocount;
   bool use_total;
   std::string keyname;
   std::string name; // translated name
   std::string shortname;
-  ticker(std::string const & n, std::string const & s, size_t mod = 64, 
+  size_t count_size;
+  ticker(std::string const & n, std::string const & s, size_t mod = 64,
       bool kilocount=false);
   void set_total(size_t tot) { use_total = true; total = tot; }
+  void set_count_size(size_t csiz) { count_size = csiz; }
   void operator++();
   void operator+=(size_t t);
   ~ticker();
@@ -83,12 +89,11 @@ public:
   user_interface();
   ~user_interface();
   void warn(std::string const & warning);
-  void warn(boost::format const & fmt) { warn(fmt.str()); }
+  void warn(format_base const & fmt) { warn(fmt.str()); }
   void fatal(std::string const & warning);
-  void fatal(boost::format const & fmt) { warn(fmt.str()); }
+  void fatal(format_base const & fmt) { warn(fmt.str()); }
   void inform(std::string const & line);
-  void inform(boost::format const & fmt) { inform(fmt.str()); }
-  void inform(i18n_format const & fmt) { inform(fmt.str()); }
+  void inform(format_base const & fmt) { inform(fmt.str()); }
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();
@@ -97,8 +102,8 @@ public:
   void set_prog_name(std::string const & name);
   std::string output_prefix();
 
-private:  
-  std::set<std::string> issued_warnings;  
+private:
+  std::set<std::string> issued_warnings;
 
   bool some_tick_is_dirty;    // At least one tick needs being printed
   bool last_write_was_a_tick;
@@ -123,5 +128,13 @@ unsigned int guess_terminal_width();
 
 // returns the a default user locale value
 const std::locale & get_user_locale();
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __UI_HH__

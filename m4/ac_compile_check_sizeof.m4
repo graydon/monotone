@@ -16,8 +16,8 @@ dnl The following is not:
 dnl
 dnl      switch (0) case 0: case 0:;
 dnl
-dnl Thus, the AC_TRY_COMPILE will fail if the currently tried size
-dnl does not match.
+dnl Thus, the AC_TRY_COMPILE will fail if the currently tried size does
+dnl not match.
 dnl
 dnl Here is an example skeleton configure.in script, demonstrating the
 dnl macro's usage:
@@ -46,9 +46,11 @@ dnl      AC_COMPILE_CHECK_SIZEOF(ssize_t, $headers)
 dnl      AC_COMPILE_CHECK_SIZEOF(ptrdiff_t, $headers)
 dnl      AC_COMPILE_CHECK_SIZEOF(off_t, $headers)
 dnl
+dnl @category Misc
 dnl @author Kaveh Ghazi <ghazi@caip.rutgers.edu>
-dnl @version $Id: ac_compile_check_sizeof.m4,v 1.1 2003/06/18 16:48:00 jas Exp $
-dnl
+dnl @version 2000-07-19
+dnl @license GPLWithACException
+
 AC_DEFUN([AC_COMPILE_CHECK_SIZEOF],
 [changequote(<<, >>)dnl
 dnl The name to #define.

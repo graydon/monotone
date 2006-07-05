@@ -1,11 +1,14 @@
 #ifndef __CSET_HH__
 #define __CSET_HH__
 
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <map>
 #include <set>
@@ -37,8 +40,8 @@ struct editable_tree
   virtual void attach_node(node_id nid, split_path const & dst) = 0;
 
   // Modifying elements in-place
-  virtual void apply_delta(split_path const & pth, 
-                           file_id const & old_id, 
+  virtual void apply_delta(split_path const & pth,
+                           file_id const & old_id,
                            file_id const & new_id) = 0;
   virtual void clear_attr(split_path const & pth,
                           attr_key const & name) = 0;
@@ -52,9 +55,9 @@ struct editable_tree
 };
 
 
-// In-memory representation of a change set. 
+// In-memory representation of a change set.
 
-struct cset 
+struct cset
 {
   // Deletions.
   path_set nodes_deleted;
@@ -84,25 +87,25 @@ struct cset
       && attrs_set == other.attrs_set
       ;
   }
-  
+
   void apply_to(editable_tree & t) const;
   bool empty() const;
   void clear();
 };
 
-inline split_path const & 
+inline split_path const &
 delta_entry_path(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
 {
   return i->first;
 }
 
-inline file_id const & 
+inline file_id const &
 delta_entry_src(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
 {
   return i->second.first;
 }
 
-inline file_id const & 
+inline file_id const &
 delta_entry_dst(std::map<split_path, std::pair<file_id, file_id> >::const_iterator i)
 {
   return i->second.second;
@@ -111,14 +114,14 @@ delta_entry_dst(std::map<split_path, std::pair<file_id, file_id> >::const_iterat
 
 namespace basic_io { struct printer; struct parser; }
 
-void 
+void
 print_cset(basic_io::printer & printer,
            cset const & cs);
 
 void
 write_cset(cset const & cs, data & dat);
 
-void 
+void
 parse_cset(basic_io::parser & parser,
            cset & cs);
 
@@ -128,15 +131,12 @@ read_cset(data const & dat, cset & cs);
 template <> void
 dump(cset const & cs, std::string & out);
 
-
-// Some helpers.
-
-inline split_path
-internal_string_to_split_path(std::string const & str)
-{
-  split_path sp;
-  file_path_internal(str).split(sp);
-  return sp;
-}
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __CSET_HH__

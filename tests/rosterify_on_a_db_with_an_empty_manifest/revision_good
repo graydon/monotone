@@ -1,0 +1,7 @@
+format_version "1"
+
+new_manifest [ec9ef3a345b0766c1e03c47c1e22b1fe174395e7]
+
+old_revision [9a0e6637605966d7a125f7c8932bed02ee930207]
+
+delete "afile"

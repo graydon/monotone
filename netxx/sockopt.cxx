@@ -114,7 +114,7 @@ bool Netxx::SockOpt::set_reuse_address (void)
 
     if (setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, val, sizeof(on)) != 0) {
 	std::string error("setsockopt(2) failure: ");
-	error += strerror(get_last_error());
+	error += str_error(get_last_error());
 	throw Exception(error);
     }
 
@@ -128,12 +128,12 @@ bool Netxx::SockOpt::check_for_error (std::string &message) const
     os_socklen_type so_len(sizeof(so_error));
 
     if ( (so_return = getsockopt(socket_, SOL_SOCKET, SO_ERROR, val, &so_len)) < 0) {
-	message = strerror(so_return);
+	message = str_error(get_last_error());
 	return false;
     }
 
     if (so_error) {
-	message = strerror(so_error);
+	message = str_error(so_error);
 	return false;
     }
 

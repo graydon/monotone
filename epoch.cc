@@ -1,7 +1,11 @@
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "epoch.hh"
 #include "netio.hh"
@@ -10,12 +14,14 @@
 
 #include <string>
 
+using std::string;
+
 void
-read_epoch(std::string const & in,
+read_epoch(string const & in,
            cert_value & branch, epoch_data & epoch)
 {
   size_t pos = 0;
-  std::string raw_branch;
+  string raw_branch;
   data raw_epoch;
   extract_variable_length_string(in, raw_branch, pos, "epoch, branch name");
   raw_epoch = data(extract_substring(in, pos, constants::epochlen_bytes,
@@ -28,7 +34,7 @@ read_epoch(std::string const & in,
 
 void
 write_epoch(cert_value const & branch, epoch_data const & epoch,
-            std::string & out)
+            string & out)
 {
   insert_variable_length_string(branch(), out);
   data raw_epoch;
@@ -40,9 +46,17 @@ void
 epoch_hash_code(cert_value const & branch, epoch_data const & epoch,
                 epoch_id & eid)
 {
-  std::string tmp(branch() + ":" + epoch.inner()());
+  string tmp(branch() + ":" + epoch.inner()());
   data tdat(tmp);
   hexenc<id> out;
   calculate_ident(tdat, out);
   eid = epoch_id(out);
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
