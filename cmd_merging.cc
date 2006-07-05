@@ -608,9 +608,10 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
 }
 
 CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
-    N_("cherrypick changes from other parts history into workspace.\n"
+    N_("cherrypick changes from other parts of history into workspace.\n"
        "This command takes arbitrary changes made at any point in history,\n"
-       "and applies them to your workspace.\n"
+       "and applies them to your current workspace, as if you had made the\n"
+       "edits by hand.\n"
        "If one revision is given, applies the changes made in that revision\n"
        "compared to its parent.\n"
        "If two revisions are given, applies the changes made to get from the\n"
@@ -631,7 +632,8 @@ CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
         F("revision %s is a merge\n"
           "to apply the changes relative to one of its parents, use:\n"
           "  %s cherrypatch -r PARENT -r %s")
-        % to_rid % app.prog_name % to_rid);
+        % to_rid
+        % app.prog_name % to_rid);
       from_rid = *parents.begin();
     }
   else if (app.revision_selectors.size() == 2)
