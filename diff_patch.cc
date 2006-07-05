@@ -1271,8 +1271,7 @@ static void randomizing_merge_test()
     {
       vector<string> anc, d1, d2, m1, m2, gm;
 
-      file_randomizer::build_random_fork(anc, d1, d2, gm,
-                                         i * 1023, (10 + 2 * i));
+      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i));
 
       BOOST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)

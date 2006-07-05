@@ -26,13 +26,6 @@ namespace randomizer
     return bernoulli(1.0 / static_cast<double>(n)); 
   }
 
-  void seed(size_t n)
-  {
-    if (rng)
-      delete rng;
-    rng = new boost::mt19937(n);
-  }
-
   size_t uniform(size_t n)
   {        
     return boost::random_number_generator<boost::mt19937>(get_rng())(n);

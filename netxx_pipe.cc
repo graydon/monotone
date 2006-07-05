@@ -474,36 +474,40 @@ Netxx::PipeCompatibleProbe::ready(const Timeout &timeout, ready_type rt)
 
 void
 Netxx::PipeCompatibleProbe::add(PipeStream &ps, ready_type rt)
-  {
-    assert(!is_pipe);
-    assert(!pipe);
-    is_pipe = true;
-    pipe = &ps;
-    ready_t = rt;
-  }
+{
+  assert(!is_pipe);
+  assert(!pipe);
+  is_pipe = true;
+  pipe = &ps;
+  ready_t = rt;
+}
 
 void
-Netxx::PipeCompatibleProbe::add(const StreamBase &sb, ready_type rt)
-  {
-    // FIXME: This is an unfortunate way of performing a downcast.
-    // Perhaps we should twiddle the caller-visible API.
-    try
-      {
-        add(const_cast<PipeStream&>(dynamic_cast<const PipeStream&>(sb)),rt);
-      }
-    catch (...)
-      {
-        assert(!is_pipe);
-        Probe::add(sb,rt);
-      }
-  }
+Netxx::PipeCompatibleProbe::add(StreamBase const &sb, ready_type rt)
+{
+  // FIXME: This is *still* an unfortunate way of performing a 
+  // downcast, though slightly less awful than the old way, which 
+  // involved throwing an exception. 
+  //
+  // Perhaps we should twiddle the caller-visible API.
+  
+  StreamBase const *sbp = &sb;
+  PipeStream const *psp = dynamic_cast<PipeStream const *>(sbp);
+  if (psp)
+    add(const_cast<PipeStream&>(*psp),rt);
+  else
+    {
+      assert(!is_pipe);
+      Probe::add(sb,rt);
+    }
+}
 
 void
 Netxx::PipeCompatibleProbe::add(const StreamServer &ss, ready_type rt)
-  {
-    assert(!is_pipe);
-    Probe::add(ss,rt);
-  }
+{
+  assert(!is_pipe);
+  Probe::add(ss,rt);
+}
 #else // unix
 void
 Netxx::PipeCompatibleProbe::add(PipeStream &ps, ready_type rt)
@@ -516,22 +520,22 @@ Netxx::PipeCompatibleProbe::add(PipeStream &ps, ready_type rt)
 
 void
 Netxx::PipeCompatibleProbe::add(const StreamBase &sb, ready_type rt)
-  {
-    try
-      {
-        add(const_cast<PipeStream&>(dynamic_cast<const PipeStream&>(sb)),rt);
-      }
-    catch (...)
-      {
-        Probe::add(sb,rt);
-      }
-  }
+{
+  try
+    {
+      add(const_cast<PipeStream&>(dynamic_cast<const PipeStream&>(sb)),rt);
+    }
+  catch (...)
+    {
+      Probe::add(sb,rt);
+    }
+}
 
 void
 Netxx::PipeCompatibleProbe::add(const StreamServer &ss, ready_type rt)
-  {
-    Probe::add(ss,rt);
-  }
+{
+  Probe::add(ss,rt);
+}
 #endif
 
 #ifdef BUILD_UNIT_TESTS

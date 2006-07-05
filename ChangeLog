@@ -1,3 +1,23 @@
+2006-07-04  Alex Queiroz  <tbrownaw@gmail.com>
+
+	* po/pt_BR.po: A few more strings translated.
+
+2006-07-04  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.cc: When setting env vars, don't take .c_str() of a temporary.
+
+2006-07-04  Graydon Hoare  <graydon@pobox.com>
+
+	* cmd_automate.cc: Fix for VC8 compatibility.
+	* netxx_pipe.cc: Minor cleanups.
+	* visualc/*.vcproj: Build fixes.
+
+2006-07-04  Graydon Hoare  <graydon@pobox.com>
+
+	* randomizer.{cc,hh}: Remove seed function.
+	* randomfile.hh: Remove use of seed().
+	* diff_patch.cc: Remove seeding arg from tester.
+
 2006-07-04  Graydon Hoare  <graydon@pobox.com>
 
 	* randomizer.{cc,hh}: New helpers for prngs.
