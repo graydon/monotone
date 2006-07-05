@@ -1,5 +1,13 @@
 2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* randomfile.hh (file_randomizer::build_random_fork): When generating
+	two consecutive 'insert' hunks where the inserts occur on opposite
+	sides of the fork, insert spacer lines between the hunks. This
+	prevents it from generating some real conflicts that were making some
+	of the unit_tests (which expect cleanly mergable files) fail.
+
+2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tester.lua: Use open_or_err more.
 
 2006-07-04  Alex Queiroz  <alex@ventonegro.org>
