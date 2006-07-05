@@ -3008,7 +3008,7 @@ msgstr ""
 #: revision.cc:1478
 #, c-format
 msgid "rebuilding revision graph from manifest certs"
-msgstr ""
+msgstr "reconstruindo grafo de versões a partir dos certificados da listagem"
 
 #: revision.cc:1581
 #, c-format
@@ -3017,6 +3017,9 @@ msgid ""
 "I only know how to understand the version '1' format\n"
 "a newer version of monotone is required to complete this operation"
 msgstr ""
+"encontrada uma versão com formato desconhecido, versão do formato '%s'\n"
+"apenas sei como entender o formato da versão '1'\n"
+"uma nova versão de monotone é necessária para completar esta operação"
 
 #: sanity.cc:135
 #, c-format
@@ -3039,7 +3042,7 @@ msgstr "%s:%d: invariante '%s' violada"
 #: sanity.cc:242
 #, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n"
-msgstr ""
+msgstr "%s:%d: índice '%s' = %d estourou vetor '%s' com tamanho %d\n"
 
 #: sanity.cc:263
 #, c-format
@@ -3049,12 +3052,12 @@ msgstr "Conjunto de trabalho atual: %i itens\n"
 #: schema_migration.cc:241
 #, c-format
 msgid "calculating necessary migration steps"
-msgstr ""
+msgstr "calculando passos necessários para migração"
 
 #: schema_migration.cc:251
 #, c-format
 msgid "error at transaction BEGIN statement"
-msgstr ""
+msgstr "erro no comando BEGIN da transação"
 
 #: schema_migration.cc:252
 #, c-format
@@ -3064,7 +3067,7 @@ msgstr "migrando dados"
 #: schema_migration.cc:278
 #, c-format
 msgid "migration step failed: %s"
-msgstr ""
+msgstr "passo da migração falhou: %s"
 
 #: schema_migration.cc:292
 #, c-format
@@ -3074,12 +3077,12 @@ msgstr ""
 #: schema_migration.cc:295
 #, c-format
 msgid "committing changes to database"
-msgstr ""
+msgstr "gravando mudanças no banco de dados"
 
 #: schema_migration.cc:297
 #, c-format
 msgid "failure on COMMIT"
-msgstr ""
+msgstr "erro em COMMIT"
 
 #: schema_migration.cc:299
 #, c-format
@@ -3089,12 +3092,12 @@ msgstr "otimizando banco de dados"
 #: schema_migration.cc:301
 #, c-format
 msgid "error vacuuming after migration"
-msgstr ""
+msgstr "erro fazendo limpeza após migração"
 
 #: schema_migration.cc:304
 #, c-format
 msgid "error running analyze after migration"
-msgstr ""
+msgstr "erro executando análise após migração"
 
 #: schema_migration.cc:311
 #, c-format
@@ -3118,7 +3121,7 @@ msgstr "movendo chave '%s' do banco de dados para %s"
 
 #: std_hooks.lua:31
 msgid "Press enter"
-msgstr ""
+msgstr "Pressione enter"
 
 #: std_hooks.lua:33
 msgid "Press enter when the subprocess has completed"
@@ -3151,7 +3154,7 @@ msgstr "%d"
 
 #: ui.cc:423
 msgid "warning: "
-msgstr ""
+msgstr "aviso: "
 
 #: ui.cc:432
 #, c-format
@@ -3184,7 +3187,7 @@ msgstr "impossível determinar ramo para atualização"
 #: vocab.cc:65
 #, c-format
 msgid "hex encoded ID '%s' size != %d"
-msgstr ""
+msgstr "tamanho do ID '%s' codificado em hexa != %d"
 
 #: vocab.cc:69
 #, c-format
@@ -3194,7 +3197,7 @@ msgstr "caractere inválido '%c' no nome do id '%s'"
 #: vocab.cc:82
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
-msgstr ""
+msgstr "caracter inválido '%c' na cadeia ace '%s'"
 
 #: vocab.cc:96
 #, c-format
@@ -3249,7 +3252,7 @@ msgstr "impossível remover %s/, não está vazio"
 #: work.cc:310
 #, c-format
 msgid "dropping %s from workspace manifest"
-msgstr ""
+msgstr "removendo %s da listagem da área de trabalho"
 
 #: work.cc:373
 #, c-format
@@ -3279,7 +3282,7 @@ msgstr "destino %s já existe na versão atual"
 #: work.cc:412
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
-msgstr ""
+msgstr "renomeando %s para %s na listagem da área de trabalho"
 
 #: work.cc:437
 #, c-format
@@ -3294,7 +3297,7 @@ msgstr "destino %s já existe na área de trabalho, pulando"
 #: work.cc:468
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
-msgstr ""
+msgstr "novo diretório raiz proposto '%s' não está versionado ou não existe"
 
 #: work.cc:470
 #, c-format
@@ -3304,7 +3307,7 @@ msgstr "novo diretório raiz proposto '%s' não é um diretório"
 #: work.cc:475
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
-msgstr ""
+msgstr "novo diretório raiz proposto '%s' contém caminho ilegal %s"
 
 #: work.cc:485
 #, c-format
