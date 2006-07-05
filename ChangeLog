@@ -2,6 +2,10 @@
 
 	* tester.lua: Use open_or_err more.
 
+2006-07-04  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: A few more strings translated.
+
 2006-07-04  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tester.cc: When setting env vars, don't take .c_str() of a temporary.
