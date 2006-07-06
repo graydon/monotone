@@ -576,7 +576,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     throw usage(name);
   revision_id l_id, r_id;
   complete(app, idx(args,0)(), l_id);
-  complete(app, idx(args,1)(), r_id);
+  complete(app, idx(args,1)(), r_id);                                                                    
   N(!is_ancestor(l_id, r_id, app),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app),
@@ -606,9 +606,9 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.rename_target_conflicts.size());
   P(F("There are %s directory_loop_conflicts.") 
     % result.directory_loop_conflicts.size());
-}
+}                                                                
 
-CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
+CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
     N_("Apply changes made at arbitrary places in history to current workspace.\n"
        "This command takes changes made at any point in history, and\n"
        "edits your current workspace to include those changes.  The end result\n"
@@ -617,17 +617,17 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
        "renames, conflicts, and so on.\n"
        "\n"
        "If one revision is given, applies the changes made in that revision\n"
-       "compared to its parent.\n"
+       "compared to its parent.\n"                                                                                  
        "\n"
-       "If two revisions are given, applies the changes made to get from the\n"
-       "first revision to the second."),
+       "If two revisions are given, applies the changes made to get from the\n"  
+       "first revision to the second."),                                                                            
     OPT_REVISION)
 {
   if (args.size() > 0)
-    throw usage(name);
+    throw usage(name);                                                                 
   
   revision_id from_rid, to_rid;
-  
+
   if (app.revision_selectors.size() == 1)
     {
       complete(app, idx(app.revision_selectors, 0)(), to_rid);
