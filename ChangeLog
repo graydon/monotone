@@ -1,3 +1,12 @@
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.cc: New function, does approximately "chmod -R u+rwx".
+	* tester.lua: Use this on things we copy from the test dir to the
+	scratch dir. This should fix the failures on the distcheck buildbots.
+	* tests/importing_cvs_with_vendor_imports_and_branches/__driver__.lua:
+	* tests/importing_cvs_files_with_identical_logs/__driver__.lua:
+	Add sleep() s between some of the CVS operations.
+
 2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/importing_cvs_branches_with_correct_ancestory/__driver__.lua:

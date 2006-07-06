@@ -257,6 +257,18 @@ void do_remove_recursive(fs::path const &rem)
   fs::remove(rem);
 }
 
+void do_make_tree_accessible(fs::path const &f)
+{
+  if (!fs::exists(f))
+    return;
+  make_accessible(f.native_file_string());
+  if (fs::is_directory(f))
+    {
+      for (fs::directory_iterator i(f); i != fs::directory_iterator(); ++i)
+        do_make_tree_accessible(*i);
+    }
+}
+
 void do_copy_recursive(fs::path const &from, fs::path to)
 {
   if (!fs::exists(from))
@@ -371,6 +383,24 @@ extern "C"
       {
         fs::path dir(luaL_checkstring(L, -1));
         do_remove_recursive(dir);
+        lua_pushboolean(L, true);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushboolean(L, false);
+        lua_pushstring(L, e.what());
+        return 2;
+      }
+  }
+
+  static int
+  make_tree_accessible(lua_State *L)
+  {
+    try
+      {
+        fs::path dir(luaL_checkstring(L, -1));
+        do_make_tree_accessible(dir);
         lua_pushboolean(L, true);
         return 1;
       }
@@ -639,6 +669,7 @@ int main(int argc, char **argv)
   lua_register(st, "chdir", go_to_dir);
   lua_register(st, "mtime", mtime);
   lua_register(st, "remove_recursive", remove_recursive);
+  lua_register(st, "make_tree_accessible", make_tree_accessible);
   lua_register(st, "copy_recursive", copy_recursive);
   lua_register(st, "exists", exists);
   lua_register(st, "isdir", isdir);
