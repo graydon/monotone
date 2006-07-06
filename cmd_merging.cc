@@ -672,19 +672,22 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
 
   // Get the FROM roster and markings
   shared_ptr<roster_t> from_roster = shared_ptr<roster_t>(new roster_t());
+  MM(*from_roster);
   marking_map from_markings;
   app.db.get_roster(from_rid, *from_roster, from_markings);
 
   // Get the FROM->WORKING and FROM->TO csets, and also the base roster
   // and working rid while we're at it
   cset from_to_working, from_to_to;
-  roster_t base_roster;
+  MM(from_to_working);
+  MM(from_to_to);
+  roster_t base_roster; MM(base_roster);
   revision_id working_rid;
   {
     // Get the workspace stuff
     temp_node_id_source nis;
     revision_id working_rid;
-    roster_t working_true_roster, base_roster;
+    roster_t working_true_roster;
     get_base_and_current_roster_shape(base_roster, working_true_roster,
                                       nis, app);
     update_current_roster_from_filesystem(working_true_roster, app);
@@ -708,6 +711,8 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
   // compatible nids.
   temp_node_id_source nis;
   roster_t working_roster, to_roster;
+  MM(working_roster);
+  MM(to_roster);
   marking_map working_markings, to_markings;
   make_roster_for_base_plus_cset(from_rid, from_to_working,
                                  working_rid,
@@ -744,6 +749,8 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
   // we apply the working to merged cset to the workspace 
   // and write the cset from the base to merged roster in _MTN/work
   cset update, remaining;
+  MM(update);
+  MM(remaining);
   make_cset(working_roster, merged_roster, update);
   make_cset(base_roster, merged_roster, remaining);
 
