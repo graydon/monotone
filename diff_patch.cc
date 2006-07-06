@@ -547,7 +547,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
 
   // If this roster doesn't contain the file, replace it with
   // the file's birth roster.
-  if (!anc->has_node(nid))
+  if (!anc || !anc->has_node(nid))
     {
       marking_map::const_iterator j = mm.find(nid);
       I(j != mm.end());

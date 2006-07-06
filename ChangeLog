@@ -1,5 +1,10 @@
 2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* diff-patch.cc: Apply njs's patch to fix crash.
+	* tests/merge_conflict_with_no_lca/__driver__.lua: Remove xfail.
+
+2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/merge_conflict_with_no_lca: We don't want to crash when
 	a merge has a content conflict but no lca.
 

@@ -29,4 +29,4 @@ check(mtn2("merge", "--rcfile", "rcfile"), 0, false, false)
 netsync.sync("*branch")
 
 -- should be a conflict
-xfail_if(true, mtn("merge"), 1, false, false)
+check(mtn("merge"), 1, false, false)
