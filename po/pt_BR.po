@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.26\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-06-20 09:37-0300\n"
+"POT-Creation-Date: 2006-07-05 22:56-0700\n"
 "PO-Revision-Date: 2006-06-20 17:56-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
@@ -27,8 +27,8 @@ msgid "invalid directory ''"
 msgstr "diretório inválido ''"
 
 #: app_state.cc:155
-#, c-format
-msgid "monotone bookkeeping directory '%s' already exists in '%s'\n"
+#, fuzzy, c-format
+msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "diretório '%s' de manutenção do monotone já existe em '%s'\n"
 
 #: app_state.cc:236
@@ -161,11 +161,11 @@ msgstr ""
 msgid "Bad input to automate stdio"
 msgstr ""
 
-#: cmd_automate.cc:296
+#: cmd_automate.cc:301
 msgid "automation"
 msgstr "automação"
 
-#: cmd_automate.cc:297
+#: cmd_automate.cc:302
 msgid "automation interface"
 msgstr "interface de automação"
 
@@ -320,7 +320,7 @@ msgstr ""
 msgid "only one of --last/--next allowed"
 msgstr "apenas ou --last ou --next é permitido"
 
-#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:634
+#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:771
 #: cmd_othervcs.cc:15
 msgid "debug"
 msgstr "depuração"
@@ -682,9 +682,9 @@ msgstr "VERSÂO"
 msgid "No such revision %s"
 msgstr "versão '%s' não existe"
 
-#: cmd_merging.cc:53 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
-#: cmd_ws_commit.cc:251 cmd_ws_commit.cc:278 cmd_ws_commit.cc:303
-#: cmd_ws_commit.cc:515 cmd_ws_commit.cc:613
+#: cmd_merging.cc:53 cmd_merging.cc:610 cmd_ws_commit.cc:53
+#: cmd_ws_commit.cc:224 cmd_ws_commit.cc:251 cmd_ws_commit.cc:278
+#: cmd_ws_commit.cc:303 cmd_ws_commit.cc:515 cmd_ws_commit.cc:613
 msgid "workspace"
 msgstr "área de trabalho"
 
@@ -784,7 +784,7 @@ msgid "updated to base revision %s"
 msgstr "atualizado para versão-base %s"
 
 #: cmd_merging.cc:299 cmd_merging.cc:352 cmd_merging.cc:363 cmd_merging.cc:523
-#: cmd_merging.cc:610 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
+#: cmd_merging.cc:747 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
 #: cmd_ws_commit.cc:872
 msgid "tree"
 msgstr "árvore"
@@ -793,12 +793,12 @@ msgstr "árvore"
 msgid "merge unmerged heads of branch"
 msgstr "combina diferentes frentes do ramo"
 
-#: cmd_merging.cc:308 cmd_merging.cc:618
+#: cmd_merging.cc:308 cmd_merging.cc:755
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "por favor especifique um ramo com --branch=RAMO"
 
-#: cmd_merging.cc:312 cmd_merging.cc:402 cmd_merging.cc:405 cmd_merging.cc:623
+#: cmd_merging.cc:312 cmd_merging.cc:402 cmd_merging.cc:405 cmd_merging.cc:760
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
@@ -951,25 +951,55 @@ msgstr "Há %s conflitos de alvos de renomeação."
 msgid "There are %s directory_loop_conflicts."
 msgstr "Há %s conflitos de laços de diretório."
 
-#: cmd_merging.cc:610
+#: cmd_merging.cc:611
+msgid ""
+"cherrypick changes from other parts of history into workspace.\n"
+"This command takes arbitrary changes made at any point in history,\n"
+"and applies them to your current workspace, as if you had made the\n"
+"edits by hand.\n"
+"If one revision is given, applies the changes made in that revision\n"
+"compared to its parent.\n"
+"If two revisions are given, applies the changes made to get from the\n"
+"first revision to the second."
+msgstr ""
+
+#: cmd_merging.cc:632
+#, c-format
+msgid ""
+"revision %s is a merge\n"
+"to apply the changes relative to one of its parents, use:\n"
+"  %s cherrypatch -r PARENT -r %s"
+msgstr ""
+
+#: cmd_merging.cc:649
+#, fuzzy, c-format
+msgid "no changes to apply"
+msgstr "nenhuma mudança para gravar"
+
+#: cmd_merging.cc:740
+#, fuzzy, c-format
+msgid "applied changes to workspace"
+msgstr "adiciona arquivos à área de trabalho"
+
+#: cmd_merging.cc:747
 msgid "show unmerged head revisions of branch"
 msgstr "mostra frentes não combinadas do ramo"
 
-#: cmd_merging.cc:625
+#: cmd_merging.cc:762
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "ramo '%s' está atualmente combinado:"
 
-#: cmd_merging.cc:627
+#: cmd_merging.cc:764
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "ramo '%s' não está combinado atualmente:"
 
-#: cmd_merging.cc:634
+#: cmd_merging.cc:771
 msgid "REVID"
 msgstr "VERSÂO"
 
-#: cmd_merging.cc:635
+#: cmd_merging.cc:772
 msgid "dump the roster associated with the given REVID"
 msgstr "exibe conteúdo do roster associado com VERSÃO"
 
@@ -1400,10 +1430,10 @@ msgstr "argumento --branch é necessário para configuração"
 msgid "refresh the inodeprint cache"
 msgstr "atualiza o cache de inodeprint"
 
-#: commands.cc:124
+#: commands.cc:124 commands.cc:225
 #, c-format
-msgid "unknown command '%s'\n"
-msgstr "comando desconhecido '%s'\n"
+msgid "unknown command '%s'"
+msgstr "comando desconhecido '%s'"
 
 #: commands.cc:135
 #, c-format
@@ -1413,11 +1443,6 @@ msgstr "comando '%s' tem várias expansões possíveis:\n"
 #: commands.cc:168
 msgid "commands:"
 msgstr "comandos:"
-
-#: commands.cc:225
-#, c-format
-msgid "unknown command '%s'"
-msgstr "comando desconhecido '%s'"
 
 #: commands.cc:246
 msgid "command [ARGS...]"
@@ -1911,22 +1936,22 @@ msgstr "%s é um diretório, não um banco de dados"
 msgid "could not open database '%s': %s"
 msgstr "erro abrindo banco de dados '%s': %s"
 
-#: diff_patch.cc:605
+#: diff_patch.cc:606
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "arquivo '%s' não existe na área de trabalho"
 
-#: diff_patch.cc:606
+#: diff_patch.cc:607
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' na área de trabalho é um diretório, não um arquivo"
 
-#: diff_patch.cc:610
+#: diff_patch.cc:611
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "arquivo %s na área de trabalho tem id %s, pedido %s"
 
-#: diff_patch.cc:731
+#: diff_patch.cc:732
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -2375,12 +2400,12 @@ msgstr ""
 msgid "syntax error near the \"%s\" option: %s"
 msgstr ""
 
-#: monotone.cc:635
+#: monotone.cc:629
 #, c-format
-msgid "monotone %s doesn't use the option %s"
+msgid "%s %s doesn't use the option %s"
 msgstr ""
 
-#: monotone.cc:670
+#: monotone.cc:663
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr ""
@@ -2874,7 +2899,6 @@ msgstr "arquivo pré-delta pré-requisito '%s' não existe"
 msgid "missing prerequisite file post-delta '%s'"
 msgstr "arquivo pós-delta pré-requisito '%s' não existe"
 
-
 #: packet.cc:201
 #, c-format
 msgid "cert revision '%s' does not exist in db"
@@ -2982,9 +3006,9 @@ msgid "Directory for path %s cannot be added, as there is a file in the way\n"
 msgstr ""
 
 #: revision.cc:1021
-#, c-format
-msgid "Path %s cannot be added, as there is a directory in the way\n"
-msgstr ""
+#, fuzzy, c-format
+msgid "Path %s cannot be added, as there is a directory in the way"
+msgstr "arquivo %s não pode ser lido como dados, é um diretório"
 
 #: revision.cc:1024
 #, c-format
@@ -3335,8 +3359,8 @@ msgid "Problem with workspace: %s is unreadable"
 msgstr "Problema com área de trabalho: %s é ilegível"
 
 #: work.cc:623
-#, c-format
-msgid "base revision %s does not exist in database\n"
+#, fuzzy, c-format
+msgid "base revision %s does not exist in database"
 msgstr "versão-base %s não existe no banco de dados\n"
 
 #: work.cc:932
@@ -3383,6 +3407,9 @@ msgstr "conteúdo do arquivo '%s' mudou, arquivo não será sobrescrito"
 #, c-format
 msgid "updating %s"
 msgstr "atualizando %s"
+
+#~ msgid "unknown command '%s'\n"
+#~ msgstr "comando desconhecido '%s'\n"
 
 #~ msgid "unknown path '%s'\n"
 #~ msgstr "caminho desconhecido '%s'\n"

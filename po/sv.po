@@ -145,7 +145,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-06-24 17:55+0200\n"
+"POT-Creation-Date: 2006-07-05 22:56-0700\n"
 "PO-Revision-Date: 2006-06-24 17:57+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
@@ -289,11 +289,11 @@ msgstr "läsning från klienten misslyckades med följande felkod: %d"
 msgid "Bad input to automate stdio"
 msgstr "felaktigt indata till automate stdio"
 
-#: cmd_automate.cc:296
+#: cmd_automate.cc:301
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:297
+#: cmd_automate.cc:302
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
@@ -447,7 +447,7 @@ msgstr ""
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
 
-#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:634
+#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:771
 #: cmd_othervcs.cc:15
 msgid "debug"
 msgstr "felsökning"
@@ -808,9 +808,9 @@ msgstr "REV"
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
 
-#: cmd_merging.cc:53 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
-#: cmd_ws_commit.cc:251 cmd_ws_commit.cc:278 cmd_ws_commit.cc:303
-#: cmd_ws_commit.cc:515 cmd_ws_commit.cc:613
+#: cmd_merging.cc:53 cmd_merging.cc:610 cmd_ws_commit.cc:53
+#: cmd_ws_commit.cc:224 cmd_ws_commit.cc:251 cmd_ws_commit.cc:278
+#: cmd_ws_commit.cc:303 cmd_ws_commit.cc:515 cmd_ws_commit.cc:613
 msgid "workspace"
 msgstr "arbetskopia"
 
@@ -915,7 +915,7 @@ msgid "updated to base revision %s"
 msgstr "uppdaterad till revisionen %s"
 
 #: cmd_merging.cc:299 cmd_merging.cc:352 cmd_merging.cc:363 cmd_merging.cc:523
-#: cmd_merging.cc:610 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
+#: cmd_merging.cc:747 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
 #: cmd_ws_commit.cc:872
 msgid "tree"
 msgstr "träd"
@@ -924,12 +924,12 @@ msgstr "träd"
 msgid "merge unmerged heads of branch"
 msgstr "slå ihop ej ihopslagna löv i grenen"
 
-#: cmd_merging.cc:308 cmd_merging.cc:618
+#: cmd_merging.cc:308 cmd_merging.cc:755
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "var god ange en gren med --branch=GREN"
 
-#: cmd_merging.cc:312 cmd_merging.cc:402 cmd_merging.cc:405 cmd_merging.cc:623
+#: cmd_merging.cc:312 cmd_merging.cc:402 cmd_merging.cc:405 cmd_merging.cc:760
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
@@ -1081,25 +1081,55 @@ msgstr "Det finns %s rename_target-konflikter."
 msgid "There are %s directory_loop_conflicts."
 msgstr "Det finns %s directory_loop-konflikter."
 
-#: cmd_merging.cc:610
+#: cmd_merging.cc:611
+msgid ""
+"cherrypick changes from other parts of history into workspace.\n"
+"This command takes arbitrary changes made at any point in history,\n"
+"and applies them to your current workspace, as if you had made the\n"
+"edits by hand.\n"
+"If one revision is given, applies the changes made in that revision\n"
+"compared to its parent.\n"
+"If two revisions are given, applies the changes made to get from the\n"
+"first revision to the second."
+msgstr ""
+
+#: cmd_merging.cc:632
+#, c-format
+msgid ""
+"revision %s is a merge\n"
+"to apply the changes relative to one of its parents, use:\n"
+"  %s cherrypatch -r PARENT -r %s"
+msgstr ""
+
+#: cmd_merging.cc:649
+#, fuzzy, c-format
+msgid "no changes to apply"
+msgstr "inga ändringar att arkivera"
+
+#: cmd_merging.cc:740
+#, fuzzy, c-format
+msgid "applied changes to workspace"
+msgstr "lägg till filer i arbetskopian"
+
+#: cmd_merging.cc:747
 msgid "show unmerged head revisions of branch"
 msgstr "visa ej ihopslagna lövrevisioner i grenen"
 
-#: cmd_merging.cc:625
+#: cmd_merging.cc:762
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "grenen '%s' har för tillfället ett löv:"
 
-#: cmd_merging.cc:627
+#: cmd_merging.cc:764
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "grenen '%s' har för tillfället mer än ett löv:"
 
-#: cmd_merging.cc:634
+#: cmd_merging.cc:771
 msgid "REVID"
 msgstr "REVID"
 
-#: cmd_merging.cc:635
+#: cmd_merging.cc:772
 msgid "dump the roster associated with the given REVID"
 msgstr "skriv ut den lista som hör ihop med angivet REVID"
 
@@ -1524,10 +1554,10 @@ msgstr "du måste ange en gren med --branch till kommandot \"setup\""
 msgid "refresh the inodeprint cache"
 msgstr "uppdatera inodeprint-cachen"
 
-#: commands.cc:124
+#: commands.cc:124 commands.cc:225
 #, c-format
-msgid "unknown command '%s'\n"
-msgstr "okänt kommando '%s'\n"
+msgid "unknown command '%s'"
+msgstr "okänt kommando '%s'"
 
 #: commands.cc:135
 #, c-format
@@ -1537,11 +1567,6 @@ msgstr "kommandot '%s' har mer än en betydelse:\n"
 #: commands.cc:168
 msgid "commands:"
 msgstr "kommandon:"
-
-#: commands.cc:225
-#, c-format
-msgid "unknown command '%s'"
-msgstr "okänt kommando '%s'"
 
 #: commands.cc:246
 msgid "command [ARGS...]"
@@ -2079,22 +2104,22 @@ msgstr "%s är en katalog, inte en databas"
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
 
-#: diff_patch.cc:605
+#: diff_patch.cc:606
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "filen '%s' existerar inte i arbetskopian"
 
-#: diff_patch.cc:606
+#: diff_patch.cc:607
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' i arbetskopian är en katalog, inte en fil"
 
-#: diff_patch.cc:610
+#: diff_patch.cc:611
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "filen %s i arbetskopian har identiteten %s, %s eftersöktes"
 
-#: diff_patch.cc:731
+#: diff_patch.cc:732
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -2548,12 +2573,12 @@ msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:635
+#: monotone.cc:629
 #, c-format
 msgid "%s %s doesn't use the option %s"
 msgstr "%s %s använder inte flaggan %s"
 
-#: monotone.cc:670
+#: monotone.cc:663
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3616,6 +3641,9 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "updating %s"
 msgstr "uppdaterar %s"
+
+#~ msgid "unknown command '%s'\n"
+#~ msgstr "okänt kommando '%s'\n"
 
 #~ msgid ""
 #~ "interface_version\n"

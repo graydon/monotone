@@ -19,6 +19,7 @@
 #include "transforms.hh"
 #include "update.hh"
 #include "work.hh"
+#include "safe_map.hh"
 
 using std::cout;
 using std::map;
@@ -615,8 +616,8 @@ CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
        "If one revision is given, applies the changes made in that revision\n"
        "compared to its parent.\n"
        "If two revisions are given, applies the changes made to get from the\n"
-       "first revision to the second.")
-    % OPT_REVISION)
+       "first revision to the second."),
+    OPT_REVISION)
 {
   if (args.size() > 0)
     throw usage(name);
@@ -625,7 +626,7 @@ CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
   
   if (app.revision_selectors.size() == 1)
     {
-      to_rid = idx(app.revision_selectors, 0);
+      complete(app, idx(app.revision_selectors, 0)(), to_rid);
       std::set<revision_id> parents;
       app.db.get_revision_parents(to_rid, parents);
       N(parents.size() == 1,
@@ -638,8 +639,8 @@ CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
     }
   else if (app.revision_selectors.size() == 2)
     {
-      from_rid = idx(app.revision_selectors, 0);
-      to_rid = idx(app.revision_selectors, 1);
+      complete(app, idx(app.revision_selectors, 0)(), from_rid);
+      complete(app, idx(app.revision_selectors, 1)(), to_rid);
     }
   else
     throw usage(name);
@@ -666,31 +667,41 @@ CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
   // and take the cset from the workspace's base, and write that to _MTN/work
 
   // Get the FROM roster and markings
-  shared_ptr<roster_t> from_roster = new roster_t();
+  shared_ptr<roster_t> from_roster = shared_ptr<roster_t>(new roster_t());
   marking_map from_markings;
   app.db.get_roster(from_rid, *from_roster, from_markings);
 
-  // Get the TO roster
-  roster_t to_true_roster;
-  app.db.get_roster(to_rid, to_true_roster);
-  
-  // Get the working roster and rid (and base, while we're at it)
-  revision_id working_rid, base_rid;
-  roster_t working_true_roster, base_roster;
-  get_unrestricted_working_revision_and_rosters(app, working_rev,
-                                                *base_roster, 
-                                                working_true_roster);
-  // Find the rid
-  calculate_ident(working_rev, working_rid);
-  I(working_rev.edges.size() == 1);
-
-  // Get the csets
+  // Get the FROM->WORKING and FROM->TO csets, and also the base roster
+  // and working rid while we're at it
   cset from_to_working, from_to_to;
-  make_cset(*from_roster, working_true_roster, from_to_working);
-  make_cset(*from_roster, to_true_roster, from_to_to);
+  roster_t base_roster;
+  revision_id working_rid;
+  {
+    // Get the workspace stuff
+    temp_node_id_source nis;
+    revision_id working_rid;
+    roster_t working_true_roster, base_roster;
+    get_base_and_current_roster_shape(base_roster, working_true_roster,
+                                      nis, app);
+    update_current_roster_from_filesystem(working_true_roster, app);
+    make_cset(*from_roster, working_true_roster, from_to_working);
+    revision_id base_rid;
+    get_revision_id(base_rid);
+    revision_set working_rev;
+    make_revision_set(base_rid, base_roster, working_true_roster, working_rev);
+    calculate_ident(working_rev, working_rid);
+  }
+  {
+    // Get the TO roster
+    roster_t to_true_roster;
+    app.db.get_roster(to_rid, to_true_roster);
+    make_cset(*from_roster, to_true_roster, from_to_to);
+  }
 
   // Recreate the working and to rosters with renumbered nids and fake
-  // markings
+  // markings.  We have to go roster->cset->roster because our marking code
+  // works on csets, and we need our final roster and final markings to use
+  // compatible nids.
   temp_node_id_source nis;
   roster_t working_roster, to_roster;
   marking_map working_markings, to_markings;
