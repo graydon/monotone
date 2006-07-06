@@ -665,21 +665,10 @@ CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
   //   workspace
   // and take the cset from the workspace's base, and write that to _MTN/work
 
-  //   revision_set r_old, r_working, r_new;
-//   roster_t working_roster, chosen_roster, target_roster;
-//   boost::shared_ptr<roster_t> old_roster = boost::shared_ptr<roster_t>(new roster_t());
-//   marking_map working_mm, chosen_mm, merged_mm, target_mm;
-//   revision_id r_old_id, r_working_id, r_chosen_id, r_target_id;
-
-  // FIXME: the next few lines are a little bit expensive insofar as they
-  // load the base roster twice. The API could use some factoring or
-  // such. But it should work for now; revisit if performance is
-  // intolerable.
-
   // Get the FROM roster and markings
-  roster_t from_roster;
+  shared_ptr<roster_t> from_roster = new roster_t();
   marking_map from_markings;
-  app.db.get_roster(from_rid, from_roster, from_markings);
+  app.db.get_roster(from_rid, *from_roster, from_markings);
 
   // Get the TO roster
   roster_t to_true_roster;
@@ -697,87 +686,58 @@ CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
 
   // Get the csets
   cset from_to_working, from_to_to;
-  make_cset(from_roster, working_true_roster, from_to_working);
-  make_cset(from_roster, to_true_roster, from_to_to);
+  make_cset(*from_roster, working_true_roster, from_to_working);
+  make_cset(*from_roster, to_true_roster, from_to_to);
 
-  // Build the rosters with renumbered nids and fake markings
-  roster_t to_fake_roster, working_fake_roster;
+  // Recreate the working and to rosters with renumbered nids and fake
+  // markings
+  temp_node_id_source nis;
+  roster_t working_roster, to_roster;
+  marking_map working_markings, to_markings;
   make_roster_for_base_plus_cset(from_rid, from_to_working,
-                                 r_working_id,
-                                 working_roster, working_mm, app);
+                                 working_rid,
+                                 working_roster, working_markings,
+                                 nis, app);
+  make_roster_for_base_plus_cset(from_rid, from_to_to,
+                                 to_rid,
+                                 to_roster, to_markings,
+                                 nis, app);
 
-  app.db.get_roster(from_rid, from_roster, from_markings);
-  app.db.get_roster(to_rid, to_roster);
-
+  // Set up the synthetic graph, by creating uncommon ancestor sets
   std::set<revision_id> working_uncommon_ancestors, to_uncommon_ancestors;
-  safe_insert(working_uncommon_ancestors, r_working_id);
+  safe_insert(working_uncommon_ancestors, working_rid);
   safe_insert(to_uncommon_ancestors, to_rid);
 
-  cset from_to_cs;
-  make_cset (*from_roster, to_roster, from_to_cs);
-  make_roster_for_base_plus_cset(from_rid, from_to_cs, to_rid, to_roster, to_mm, app);
-
-  // Now merge the working roster with the chosen target. 
-
-  roster_merge_result result;  
-  roster_merge(working_roster, working_mm, working_uncommon_ancestors,
-               to_roster, to_mm, to_uncommon_ancestors,
+  // Now do the merge
+  roster_merge_result result;
+  roster_merge(working_roster, working_markings, working_uncommon_ancestors,
+               to_roster, to_markings, to_uncommon_ancestors,
                result);
 
   roster_t & merged_roster = result.roster;
 
-  content_merge_workspace_adaptor wca(app, old_roster);
-  resolve_merge_conflicts (r_old_id, r_target_id,
-                           working_roster, target_roster,
-                           working_mm, target_mm,
-                           result, wca, app);
+  content_merge_workspace_adaptor wca(app, from_roster);
+  resolve_merge_conflicts(working_rid, to_rid,
+                          working_roster, to_roster,
+                          working_markings, to_markings,
+                          result, wca, app);
 
   I(result.is_clean());
-  // temporary node ids may appear if updating to a non-ancestor
+  // temporary node ids may appear
   merged_roster.check_sane(true);
 
-  // we have the following
-  //
-  // old --> working
-  //   |         | 
-  //   V         V
-  //  chosen --> merged
-  //
-  // - old is the revision specified in _MTN/revision
-  // - working is based on old and includes the workspace's changes
-  // - chosen is the revision we're updating to and will end up in _MTN/revision
-  // - merged is the merge of working and chosen
-  // 
   // we apply the working to merged cset to the workspace 
-  // and write the cset from chosen to merged changeset in _MTN/work
-  
+  // and write the cset from the base to merged roster in _MTN/work
   cset update, remaining;
-  make_cset (working_roster, merged_roster, update);
-  make_cset (target_roster, merged_roster, remaining);
-
-  //   {
-  //     data t1, t2, t3;
-  //     write_cset(update, t1);
-  //     write_cset(remaining, t2);
-  //     write_manifest_of_roster(merged_roster, t3);
-  //     P(F("updating workspace with [[[\n%s\n]]]\n") % t1);
-  //     P(F("leaving residual work [[[\n%s\n]]]\n") % t2);
-  //     P(F("merged roster [[[\n%s\n]]]\n") % t3);
-  //   }
+  make_cset(working_roster, merged_roster, update);
+  make_cset(base_roster, merged_roster, remaining);
 
   update_source fsource(wca.temporary_store, app);
   editable_working_tree ewt(app, fsource);
   update.apply_to(ewt);
   
   // small race condition here...
-  // nb: we write out r_chosen, not r_new, because the revision-on-disk
-  // is the basis of the workspace, not the workspace itself.
-  put_revision_id(r_chosen_id);
-  if (!app.branch_name().empty())
-    {
-      app.make_branch_sticky();
-    }
-  P(F("updated to base revision %s\n") % r_chosen_id);
+  P(F("applied changes to workspace"));
 
   put_work_cset(remaining);
   update_any_attrs(app);
