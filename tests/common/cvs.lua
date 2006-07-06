@@ -1,11 +1,20 @@
 skip_if(not existsonpath("cvs"))
 
 function cvs(...)
+  local what
   if os.getenv("OSTYPE") == "msys" then
-    return {"cvs", "-d", cvsroot_nix, unpack(arg)}
+    what = {"cvs", "-d", cvsroot_nix, unpack(arg)}
   else
-    return {"cvs", "-d", cvsroot, unpack(arg)}
+    what = {"cvs", "-d", cvsroot, unpack(arg)}
   end
+  local function do_cvs()
+    local ok, res = pcall(execute, unpack(what))
+    if not ok then err(res) end
+    sleep(1)
+    return res
+  end
+  local ll = cmd_as_str(what)
+  return {do_cvs, local_redirect = false, logline = ll}
 end
 
 function cvs_setup()

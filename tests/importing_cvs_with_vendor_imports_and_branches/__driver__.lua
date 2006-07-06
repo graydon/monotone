@@ -16,14 +16,12 @@ check(indir("importdir", cvs("import", "-m", "Initial import of VENDORWARE 1", "
 
 -- now we alter some of the files.
 check(cvs("co", "testsrc"), 0, false, false)
-sleep(1)
 writefile("file1.1", "version 1 of test file1")
 copy("file1.1", "testsrc/file1")
 check(cat("-", "changelog.0"), 0, true, false, "second changelog\n\n")
 rename("stdout", "changelog.1")
 copy("changelog.1", "testsrc/changelog")
 check(indir("testsrc", cvs ("commit", "-m", 'commit 0')), 0, false, false)
-sleep(1)
 
 check(cat("-", "changelog.1"), 0, true, false, "third changelog -not on branch-\n\n")
 rename("stdout", "changelog.2")
@@ -32,7 +30,6 @@ check(indir("testsrc", cvs ("tag", "-b", "branched")), 0, false, false)
 check(indir("testsrc", cvs ("up", "-r", "branched")), 0, false, false)
 
 -- alter the files on the branch
-sleep(1)
 writefile("file1.2", "version 2 of test file1")
 copy("file1.2", "testsrc/file1")
 writefile("file2.1", "version 1 of test file2")
@@ -44,7 +41,6 @@ check(indir("testsrc", cvs ("commit", "-m", 'commit on branch')), 0, false, fals
 
 -- and create some mainline changes after the branch
 check(indir("testsrc", cvs ("up", "-A")), 0, false, false)
-sleep(1)
 copy("changelog.2", "testsrc/changelog")
 check(indir("testsrc", cvs ("commit", "-m", 'commit on mainline after branch')), 0, false, false)
 

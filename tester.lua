@@ -277,6 +277,24 @@ function execute(path, ...)
    return ret
 end
 
+function cmd_as_str(cmd_table)
+  local str = ""
+  for i,x in ipairs(cmd_table) do
+    if str ~= "" then str = str .. " " end
+    if type(x) == "function" then
+      str = str .. "<function>"
+    else
+      local s = tostring(x)
+      if string.find(s, " ") then
+        str = str .. '"'..s..'"'
+      else
+        str = str .. s
+      end
+    end
+  end
+  return str
+end
+
 function runcmd(cmd, prefix, bgnd)
   if prefix == nil then prefix = "ts-" end
   if type(cmd) ~= "table" then err("runcmd called with bad argument") end
@@ -300,19 +318,14 @@ function runcmd(cmd, prefix, bgnd)
   end
   
   local result
+  if cmd.logline ~= nil then
+    L(locheader(), cmd.logline, "\n")
+  else
+    L(locheader(), cmd_as_str(cmd), "\n")
+  end
   if type(cmd[1]) == "function" then
-    L(locheader(), "<function> ")
-    for i,x in ipairs(cmd) do
-      if i ~= 1 then L(" ", tostring(x)) end
-    end
-    L("\n")
     result = {pcall(unpack(cmd))}
   elseif type(cmd[1]) == "string" then
-    L(locheader())
-    for i,x in ipairs(cmd) do
-      L(" ", tostring(x))
-    end
-    L("\n")
     if bgnd then
       result = {pcall(spawn, unpack(cmd))}
     else
@@ -389,7 +402,8 @@ function greplines(f, t)
 end
 
 function grep(...)
-  local dogrep = function (flags, what, where)
+  local flags, what, where = unpack(arg)
+  local dogrep = function ()
                    if where == nil and string.sub(flags, 1, 1) ~= "-" then
                      where = what
                      what = flags
@@ -412,13 +426,14 @@ function grep(...)
                    if where ~= nil then infile:close() end
                    return out
                  end
-  return {dogrep, unpack(arg)}
+  return {dogrep, logline = "grep "..cmd_as_str(arg)}
 end
 
 function cat(...)
-  local function docat(...)
+  local arguments = arg
+  local function docat()
     local bsize = 8*1024
-    for _,x in ipairs(arg) do
+    for _,x in ipairs(arguments) do
       local infile
       if x == "-" then
         infile = files.stdin
@@ -436,11 +451,12 @@ function cat(...)
     end
     return 0
   end
-  return {docat, unpack(arg)}
+  return {docat, logline = "cat "..cmd_as_str(arg)}
 end
 
 function tail(...)
-  local function dotail(file, num)
+  local file, num = unpack(arg)
+  local function dotail()
     if num == nil then num = 10 end
     local mylines = {}
     for l in io.lines(file) do
@@ -454,10 +470,10 @@ function tail(...)
     end
     return 0
   end
-  return {dotail, unpack(arg)}
+  return {dotail, logline = "tail "..cmd_as_str(arg)}
 end
 
-function sort(...)
+function sort(file)
   local function dosort(file)
     local infile
     if file == nil then
@@ -476,7 +492,7 @@ function sort(...)
     end
     return 0
   end
-  return {dosort, unpack(arg)}
+  return {dosort, file, logline = "sort "..file}
 end
 
 function log_file_contents(filename)
@@ -661,7 +677,22 @@ function indir(dir, what)
     if not ok then err(res) end
     return res
   end
-  return {do_indir, local_redirect = (type(what[1]) == "function")}
+  local want_local
+  if type(what[1]) == "function" then
+    if type(what.local_redirect) == "nil" then
+      want_local = true
+    else
+      want_local = what.local_redirect
+    end
+  else
+    want_local = false
+  end
+  local ll = "In directory "..dir..": "
+  if what.logline ~= nil then ll = ll .. tostring(what.logline)
+  else
+    ll = ll .. cmd_as_str(what)
+  end
+  return {do_indir, local_redirect = want_local, logline = ll}
 end
 
 function check(first, ...)

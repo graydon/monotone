@@ -1,5 +1,12 @@
 2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/common/cvs.lua: Sleep after running CVS.
+	* tester.lua: Adjust command handling somewhat, so the above works.
+	* tests/*cvs*/__driver__.lua: Remove any sleep(1) lines. This is now
+	handled automatically.
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/importing_cvs_branches_with_correct_ancestory/__driver__.lua:
 	Move a sleep(). Maybe it'll work reliably now?
 
