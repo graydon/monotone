@@ -245,7 +245,9 @@ end
 
 function getstd(name, as)
   if as == nil then as = name end
-  return copy(testdir .. "/" .. name, as)
+  local ret = copy(testdir .. "/" .. name, as)
+  make_tree_accessible(as)
+  return ret
 end
 
 function get(name, as)
