@@ -4,6 +4,11 @@
 	Add some sleep() s to (try to) fix intermittent failures, apparently
 	caused by CVS using only timestamps for change detection.
 
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (get_ancestral_roster): Update comment and add an
+	invariant.
+
 2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* diff-patch.cc: Apply njs's patch to fix crash.
