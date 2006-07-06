@@ -16,4 +16,5 @@ check(mtn("--depth=0", "pubkey", "tester@test.net"), 1, false, false)
 -- message:
 check(mtn("--branch=testbranch", "loggg"), 1, "", true)
 output = readfile("stderr")
-xfail_if(true, string.find(output, "unknown command"))
+-- 'not not' means 'coerce to bool'
+check(string.find(output, "unknown command") ~= nil)

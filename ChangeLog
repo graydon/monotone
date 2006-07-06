@@ -1,5 +1,10 @@
 2006-07-05  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/checking_a_few_command_specific_options/__driver__.lua
+	(output): Fix test to actually work.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.cc (cpp_main): Tyop in previous commit.
 
 2006-07-05  Nathaniel Smith  <njs@pobox.com>
