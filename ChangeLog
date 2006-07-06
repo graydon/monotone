@@ -1,3 +1,10 @@
+2006-07-06  Richard Levitte  <richard@levitte.org>
+
+	* cmd_merging.cc (CMD(pluck)): A message said 'cherrypatch' when
+	it should say 'pluck'.
+	* po/sv.po: New strings to translate and a few fuzzies that needed
+	changing.
+
 2006-07-05  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/checking_a_few_command_specific_options/__driver__.lua

@@ -636,7 +636,7 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
       N(parents.size() == 1,
         F("revision %s is a merge\n"
           "to apply the changes relative to one of its parents, use:\n"
-          "  %s cherrypatch -r PARENT -r %s")
+          "  %s pluck -r PARENT -r %s")
         % to_rid
         % app.prog_name % to_rid);
       from_rid = *parents.begin();
