@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-06 12:09+0200\n"
-"PO-Revision-Date: 2006-07-06 12:09+0200\n"
+"POT-Creation-Date: 2006-07-07 00:54+0200\n"
+"PO-Revision-Date: 2006-07-07 00:55+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1080,6 +1080,10 @@ msgstr "Det finns %s rename_target-konflikter."
 #, c-format
 msgid "There are %s directory_loop_conflicts."
 msgstr "Det finns %s directory_loop-konflikter."
+
+#: cmd_merging.cc:611
+msgid "[-r FROM] -r TO"
+msgstr "[-r FRÅN] -r TILL"
 
 #: cmd_merging.cc:612
 msgid ""
