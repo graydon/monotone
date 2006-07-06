@@ -545,14 +545,15 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   if (!lca.inner()().empty())
     load_and_cache_roster(lca, rosters, anc, app);
 
-  // If this roster doesn't contain the file, replace it with
-  // the file's birth roster.
-  if (!anc->has_node(nid))
+  // If there is no LCA, or the LCA's roster doesn't contain the file,
+  // then use the file's birth roster.
+  if (!anc || !anc->has_node(nid))
     {
       marking_map::const_iterator j = mm.find(nid);
       I(j != mm.end());
       load_and_cache_roster(j->second.birth_revision, rosters, anc, app);
     }
+  I(anc);
 }
 
 void

@@ -95,13 +95,17 @@ struct file_randomizer
                                 std::vector<std::string> & merged,
                                 int n_hunks = 10)
   {
+    bool last_was_insert = false;
+    bool last_insert_was_left = false;
 
     file_randomizer fr;
     // maybe prepend something to one side or the other
     if (randomizer::flip())
       {
+        last_was_insert = true;
         fr.prepend_sequential_lines();
-        if (randomizer::flip())
+        last_insert_was_left = randomizer::flip();
+        if (last_insert_was_left)
           fr.append_to(left);
         else
           fr.append_to(right);
@@ -114,11 +118,23 @@ struct file_randomizer
         file_randomizer hr;
         hr.set_prefix(std::string("hunk ") + boost::lexical_cast<std::string>(h) + " -- ");
         hr.initial_sequential_lines(10);
-        hr.append_to(ancestor);
         if (randomizer::flip())
           {
+            bool this_insert_is_left = randomizer::flip();
+            if (last_was_insert && (this_insert_is_left != last_insert_was_left))
+              {
+                fr.set_prefix("spacer ");
+                fr.initial_sequential_lines(3);
+                fr.append_to(left);
+                fr.append_to(right);
+                fr.append_to(ancestor);
+                fr.append_to(merged);
+                fr.set_prefix("");
+              }
+            last_insert_was_left = this_insert_is_left;
             // doing an insert
-            if (randomizer::flip())
+            hr.append_to(ancestor);
+            if (this_insert_is_left)
               {
                 // inserting in left
                 hr.append_to(right);
@@ -133,10 +149,12 @@ struct file_randomizer
                 hr.append_to(right);
               }
             hr.append_to(merged);
+            last_was_insert = true;
           }
         else
           {
             // doing a delete
+            hr.append_to(ancestor);
             if (randomizer::flip())
               {
                 // deleting in left
@@ -152,14 +170,26 @@ struct file_randomizer
                 hr.append_to(right);
               }
             hr.append_to(merged);
+            last_was_insert = false;
           }
       }
 
     // maybe append something to one side or the other
     if (randomizer::flip())
       {
+        bool this_insert_is_left = randomizer::flip();
+        if (last_was_insert && (this_insert_is_left != last_insert_was_left))
+          {
+            fr.set_prefix("spacer ");
+            fr.initial_sequential_lines(3);
+            fr.append_to(left);
+            fr.append_to(right);
+            fr.append_to(ancestor);
+            fr.append_to(merged);
+            fr.set_prefix("");
+          }
         fr.append_sequential_lines();
-        if (randomizer::flip())
+        if (this_insert_is_left)
           fr.append_to(left);
         else
           fr.append_to(right);

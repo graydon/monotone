@@ -1,4 +1,56 @@
-2006-07-04  Alex Queiroz  <tbrownaw@gmail.com>
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/checking_a_few_command_specific_options/__driver__.lua
+	(output): Fix test to actually work.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Tyop in previous commit.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (complete_command): 
+	* monotone.cc (cpp_main): Minor code cleanups.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/checking_a_few_command_specific_options/__driver__.lua:
+	Add test for minor bug reported by Marcin 'hrw' Juszkiewicz.
+
+2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/importing_cvs_branches_with_correct_ancestory/__driver__.lua:
+	Add some sleep() s to (try to) fix intermittent failures, apparently
+	caused by CVS using only timestamps for change detection.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (get_ancestral_roster): Update comment and add an
+	invariant.
+
+2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* diff-patch.cc: Apply njs's patch to fix crash.
+	* tests/merge_conflict_with_no_lca/__driver__.lua: Remove xfail.
+
+2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/merge_conflict_with_no_lca: We don't want to crash when
+	a merge has a content conflict but no lca.
+
+2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* randomfile.hh (file_randomizer::build_random_fork): When generating
+	two consecutive 'insert' hunks where the inserts occur on opposite
+	sides of the fork, insert spacer lines between the hunks. This
+	prevents it from generating some real conflicts that were making some
+	of the unit_tests (which expect cleanly mergable files) fail.
+
+2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.lua: Use open_or_err more.
+
+2006-07-04  Alex Queiroz  <alex@ventonegro.org>
 
 	* po/pt_BR.po: A few more strings translated.
 

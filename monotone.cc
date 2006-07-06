@@ -595,11 +595,11 @@ cpp_main(int argc, char ** argv)
 
       // complete the command if necessary
 
-      string cmd;
-      if (poptPeekArg(ctx()))
-        {
-          cmd = commands::complete_command(poptGetArg(ctx()));
-        }
+      if (!poptPeekArg(ctx()))
+        // no command given
+        throw usage("");
+      // poptPeekArg returned true, so we can call poptGetArg
+      string cmd = commands::complete_command(poptGetArg(ctx()));
 
       // stop here if they asked for help
 
@@ -620,28 +620,21 @@ cpp_main(int argc, char ** argv)
       // main options processed, now invoke the
       // sub-command w/ remaining args
 
-      if (cmd.empty())
+      // Make sure the local options used are really used by the
+      // given command.
+      set<int> command_options = commands::command_options(cmd);
+      for (set<int>::const_iterator i = used_local_options.begin();
+           i != used_local_options.end(); ++i)
+        N(command_options.find(*i) != command_options.end(),
+          F("%s %s doesn't use the option %s")
+          % prog_name % cmd % coption_string(*i));
+      
+      vector<utf8> args;
+      while(poptPeekArg(ctx()))
         {
-          throw usage("");
+          args.push_back(utf8(string(poptGetArg(ctx()))));
         }
-      else
-        {
-          // Make sure the local options used are really used by the
-          // given command.
-          set<int> command_options = commands::command_options(cmd);
-          for (set<int>::const_iterator i = used_local_options.begin();
-               i != used_local_options.end(); ++i)
-            N(command_options.find(*i) != command_options.end(),
-              F("%s %s doesn't use the option %s")
-              % prog_name % cmd % coption_string(*i));
-
-          vector<utf8> args;
-          while(poptPeekArg(ctx()))
-            {
-              args.push_back(utf8(string(poptGetArg(ctx()))));
-            }
-          ret = commands::process(app, cmd, args);
-        }
+      ret = commands::process(app, cmd, args);
     }
   catch (usage & u)
     {

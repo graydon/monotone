@@ -48,20 +48,20 @@ set_env("mtn", monotone_path)
 
 -- NLS nuisances.
 for _,name in pairs({  "LANG",
-		       "LANGUAGE",
-		       "LC_ADDRESS",
-		       "LC_ALL",
-		       "LC_COLLATE",
-		       "LC_CTYPE",
-		       "LC_IDENTIFICATION",
-		       "LC_MEASUREMENT",
-		       "LC_MESSAGES",
-		       "LC_MONETARY",
-		       "LC_NAME",
-		       "LC_NUMERIC",
-		       "LC_PAPER",
-		       "LC_TELEPHONE",
-		       "LC_TIME"  }) do
+                       "LANGUAGE",
+                       "LC_ADDRESS",
+                       "LC_ALL",
+                       "LC_COLLATE",
+                       "LC_CTYPE",
+                       "LC_IDENTIFICATION",
+                       "LC_MEASUREMENT",
+                       "LC_MESSAGES",
+                       "LC_MONETARY",
+                       "LC_NAME",
+                       "LC_NUMERIC",
+                       "LC_PAPER",
+                       "LC_TELEPHONE",
+                       "LC_TIME"  }) do
    set_env(name,"C")
 end
        
@@ -644,3 +644,4 @@ table.insert(tests, "invalid_--root_settings")
 table.insert(tests, "netsync_over_pipes")
 table.insert(tests, "ls_unknown_of_unknown_subdir")
 table.insert(tests, "automate_branches")
+table.insert(tests, "merge_conflict_with_no_lca")
