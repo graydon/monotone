@@ -121,14 +121,14 @@ namespace commands
 
     // no matched commands
     N(matched.size() != 0,
-      F("unknown command '%s'\n") % cmd);
+      F("unknown command '%s'") % cmd);
 
     // one matched command
     if (matched.size() == 1)
       {
-      string completed = *matched.begin();
-      L(FL("expanded command to '%s'") %  completed);
-      return completed;
+        string completed = *matched.begin();
+        L(FL("expanded command to '%s'") %  completed);
+        return completed;
       }
 
     // more than one matched command

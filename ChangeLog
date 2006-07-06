@@ -1,3 +1,24 @@
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/checking_a_few_command_specific_options/__driver__.lua
+	(output): Fix test to actually work.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Tyop in previous commit.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* commands.cc (complete_command): 
+	* monotone.cc (cpp_main): Minor code cleanups.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/checking_a_few_command_specific_options/__driver__.lua:
+	Add test for minor bug reported by Marcin 'hrw' Juszkiewicz.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
 2006-07-05  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/importing_cvs_branches_with_correct_ancestory/__driver__.lua:
