@@ -1,3 +1,24 @@
+monotone (0.27-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Nathaniel Smith <njs@pobox.com>  Sat, 17 Jun 2006 14:47:27 -0700
+
+monotone (0.26.0-2) unstable; urgency=low
+
+  * Closes: #358096: FTBFS with G++ 4.1: extra qualification
+  * Closes: #358220: upgrade to 0.25
+  * Closes: #363440: New upstream release
+  * Closes: #366908: please update to 0.26
+
+ -- Tomas Fasth <tomfa@debian.org>  Sun, 14 May 2006 06:22:59 +0000
+
+monotone (0.26.0-1) unstable; urgency=low
+
+  * Built (with pdebuild) for upload to debian archive.
+
+ -- Tomas Fasth <tomfa@debian.org>  Sun, 14 May 2006 06:21:14 +0000
+
 monotone (0.26.0-0.2) unstable; urgency=low
 
   * Added examples to the files that should end up in the documentation.
@@ -29,6 +50,12 @@ monotone (0.26pre1-0.1) unstable; urgency=low
   * New upstream release.
 
  -- Nathaniel Smith <njs@pobox.com>  Sun,  8 Jan 2006 21:25:54 -0800
+
+monotone (0.25-1) unstable; urgency=low
+
+  * Built (with pdebuild) for upload to debian archive.
+
+ -- Tomas Fasth <tomfa@debian.org>  Sun,  8 Jan 2006 09:27:17 +0000
 
 monotone (0.25-0.1) unstable; urgency=low
 

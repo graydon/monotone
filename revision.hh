@@ -1,10 +1,14 @@
 #ifndef __REVISION_HH__
 #define __REVISION_HH__
 
-// copyright (C) 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <set>
 #include <string>
@@ -24,18 +28,14 @@
 // new_manifest [16afa28e8783987223993d67f54700f0ecfedfaa]
 //
 // old_revision [d023242b16cbdfd46686a5d217af14e3c339f2b4]
-// old_manifest [2dc4a99e27a0026395fbd4226103614928c55c77]
 //
-// delete_file "deleted-file.cc"
+// delete "deleted-file.cc"
 //
-// rename_file "old-file.cc"
-//          to "new-file.cc"
+// rename "old-file.cc"
+//     to "new-file.cc"
 //
 // add_file "added-file.cc"
-//
-// patch "added-file.cc"
-//  from []
-//    to [da39a3ee5e6b4b0d3255bfef95601890afd80709]
+//  content [da39a3ee5e6b4b0d3255bfef95601890afd80709]
 //
 // patch "changed-file.cc"
 //  from [588fd8a7bcde43a46f0bde1dd1d13e9e77cf25a1]
@@ -51,7 +51,7 @@ edge_map;
 typedef edge_map::value_type
 edge_entry;
 
-struct 
+struct
 revision_set
 {
   void check_sane() const;
@@ -66,38 +66,38 @@ revision_set
   edge_map edges;
 };
 
-inline revision_id const & 
-edge_old_revision(edge_entry const & e) 
-{ 
-  return e.first; 
+inline revision_id const &
+edge_old_revision(edge_entry const & e)
+{
+  return e.first;
 }
 
-inline revision_id const & 
-edge_old_revision(edge_map::const_iterator i) 
-{ 
-  return i->first; 
+inline revision_id const &
+edge_old_revision(edge_map::const_iterator i)
+{
+  return i->first;
 }
 
-inline cset const & 
-edge_changes(edge_entry const & e) 
-{ 
-  return *(e.second); 
+inline cset const &
+edge_changes(edge_entry const & e)
+{
+  return *(e.second);
 }
 
-inline cset const & 
-edge_changes(edge_map::const_iterator i) 
-{ 
-  return *(i->second); 
+inline cset const &
+edge_changes(edge_map::const_iterator i)
+{
+  return *(i->second);
 }
 
 template <> void
 dump(revision_set const & rev, std::string & out);
 
-void 
+void
 read_revision_set(data const & dat,
                   revision_set & rev);
 
-void 
+void
 read_revision_set(revision_data const & dat,
                   revision_set & rev);
 
@@ -108,6 +108,9 @@ write_revision_set(revision_set const & rev,
 void
 write_revision_set(revision_set const & rev,
                    revision_data & dat);
+
+void calculate_ident(revision_set const & cs,
+                     revision_id & ident);
 
 // sanity checking
 
@@ -136,17 +139,23 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
                     app_state & app);
 
 
-// FIXME: can probably optimize this passing a lookaside cache of the active 
+// FIXME: can probably optimize this passing a lookaside cache of the active
 // frontier set of shared_ptr<roster_t>s, while traversing history.
 void
 select_nodes_modified_by_rev(revision_id const & rid,
                              revision_set const & rev,
-                             std::set<node_id> & nodes_changed,
-                             std::set<node_id> & nodes_born,
+                             roster_t const roster,
+                             std::set<node_id> & nodes_modified,
                              app_state & app);
 
+void
+make_revision_set(revision_id const & old_rev_id,
+                  roster_t const & old_roster,
+                  roster_t const & new_roster,
+                  revision_set & rev);
+
 /*
-void 
+void
 calculate_composite_cset(revision_id const & ancestor,
                          revision_id const & child,
                          app_state & app,
@@ -160,30 +169,38 @@ calculate_arbitrary_cset(revision_id const & start,
 
 */
 
-void 
+void
 build_changesets_from_manifest_ancestry(app_state & app);
 
-void 
+void
 build_roster_style_revs_from_manifest_style_revs(app_state & app);
 
 // basic_io access to printers and parsers
 
 namespace basic_io { struct printer; struct parser; }
 
-void 
+void
 print_revision(basic_io::printer & printer,
                revision_set const & rev);
 
-void 
+void
 parse_revision(basic_io::parser & parser,
                revision_set & rev);
 
-void 
+void
 print_edge(basic_io::printer & printer,
            edge_entry const & e);
 
-void 
+void
 parse_edge(basic_io::parser & parser,
            edge_map & es);
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __REVISION_HH__

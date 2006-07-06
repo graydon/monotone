@@ -1,10 +1,14 @@
-#ifndef __PATHS_H__
-#define __PATHS_H__
+#ifndef __PATHS_HH__
+#define __PATHS_HH__
 
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // safe, portable, fast, simple path handling -- in that order.
 // but they all count.
@@ -31,7 +35,7 @@
 //        system_path(file_path_internal("foo"))
 //      is not, in general, the same as
 //        system_path("foo")
-//      
+//
 //   -- file_path
 //      this is a path representing a versioned file.  it is always
 //      a fully normalized relative path, that does not escape the project
@@ -45,10 +49,10 @@
 //          to the project root.
 //        file_path_external: use this for strings that come from the user.
 //          these strings are normalized before being checked, and if there is
-//          a problem trigger N() invariants rather than I() invariants.  if in 
-//          a workspace, such strings are interpreted as being 
-//          _relative to the user's original directory_.  
-//          if not in a workspace, strings are treated as referring to some 
+//          a problem trigger N() invariants rather than I() invariants.  if in
+//          a workspace, such strings are interpreted as being
+//          _relative to the user's original directory_.
+//          if not in a workspace, strings are treated as referring to some
 //          database object directly.
 //      file_path's also provide optimized splitting and joining
 //      functionality.
@@ -63,7 +67,7 @@
 //      'bookkeeping_root', which points to the _MTN directory.  Thus to
 //      construct a path pointing to _MTN/options, use:
 //          bookkeeping_root / "options"
-//          
+//
 // All path types should always be constructed from utf8-encoded strings.
 //
 // All path types provide an "operator /" which allows one to construct new
@@ -102,6 +106,7 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "vocab.hh"
 
@@ -114,6 +119,9 @@ null_name(path_component pc)
 {
   return pc == the_null_component;
 }
+
+bool
+workspace_root(split_path const & sp);
 
 template <> void dump(split_path const & sp, std::string & out);
 
@@ -149,7 +157,7 @@ public:
   file_path() {}
   // join a file_path out of pieces
   file_path(split_path const & sp);
-  
+
   // this currently doesn't do any normalization or anything.
   file_path operator /(std::string const & to_append) const;
 
@@ -242,6 +250,9 @@ dirname_basename(split_path const & sp,
 void
 save_initial_path();
 
+system_path
+current_root_path();
+
 // returns true if workspace found, in which case cwd has been changed
 // returns false if workspace not found
 bool
@@ -253,5 +264,17 @@ void
 go_to_workspace(system_path const & new_workspace);
 
 typedef std::set<split_path> path_set;
+
+// equivalent to file_path_internal(path).split(sp) but more efficient.
+void
+internal_string_to_split_path(std::string const & path, split_path & sp);
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif

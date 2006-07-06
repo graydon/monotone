@@ -1,16 +1,19 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2004 nathaniel smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
-#include <string>
+#include <algorithm>
 #include <iostream>
 #include <iterator>
-#include <vector>
-#include <algorithm>
 #include <sstream>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -19,15 +22,35 @@
 
 #include "app_state.hh"
 #include "basic_io.hh"
+#include "cert.hh"
+#include "cmd.hh"
 #include "commands.hh"
 #include "constants.hh"
 #include "inodeprint.hh"
+#include "keys.hh"
+#include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
 #include "vocab.hh"
-#include "keys.hh"
-#include "packet.hh"
+
+using std::allocator;
+using std::basic_ios;
+using std::basic_stringbuf;
+using std::char_traits;
+using std::endl;
+using std::inserter;
+using std::make_pair;
+using std::map;
+using std::multimap;
+using std::ostream;
+using std::ostringstream;
+using std::pair;
+using std::set;
+using std::sort;
+using std::streamsize;
+using std::string;
+using std::vector;
 
 using boost::lexical_cast;
 
@@ -63,11 +86,7 @@ automate_interface_version(std::vector<utf8> args,
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the branch does not exist, prints nothing.  (There are
 //   no heads.)
-static void
-automate_heads(std::vector<utf8> args,
-               std::string const & help_name,
-               app_state & app,
-               std::ostream & output)
+AUTOMATE(heads, N_("[BRANCH]"))
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -76,10 +95,10 @@ automate_heads(std::vector<utf8> args,
     // branchname was explicitly given, use that
     app.set_branch(idx(args, 0));
   }
-  std::set<revision_id> heads;
+  set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
-  for (std::set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-    output << (*i).inner()() << std::endl;
+  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+    output << (*i).inner()() << endl;
 }
 
 // Name: ancestors
@@ -91,18 +110,14 @@ automate_heads(std::vector<utf8> args,
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_ancestors(std::vector<utf8> args,
-                     std::string const & help_name,
-                     app_state & app,
-                     std::ostream & output)
+AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
 {
   if (args.size() == 0)
     throw usage(help_name);
 
-  std::set<revision_id> ancestors;
-  std::vector<revision_id> frontier;
-  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  set<revision_id> ancestors;
+  vector<revision_id> frontier;
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -113,9 +128,9 @@ automate_ancestors(std::vector<utf8> args,
       revision_id rid = frontier.back();
       frontier.pop_back();
       if(!null_id(rid)) {
-        std::set<revision_id> parents;
+        set<revision_id> parents;
         app.db.get_revision_parents(rid, parents);
-        for (std::set<revision_id>::const_iterator i = parents.begin();
+        for (set<revision_id>::const_iterator i = parents.begin();
              i != parents.end(); ++i)
           {
             if (ancestors.find(*i) == ancestors.end())
@@ -126,10 +141,10 @@ automate_ancestors(std::vector<utf8> args,
           }
       }
     }
-  for (std::set<revision_id>::const_iterator i = ancestors.begin();
+  for (set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << std::endl;
+      output << (*i).inner()() << endl;
 }
 
 
@@ -142,18 +157,14 @@ automate_ancestors(std::vector<utf8> args,
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_descendents(std::vector<utf8> args,
-                     std::string const & help_name,
-                     app_state & app,
-                     std::ostream & output)
+AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"))
 {
   if (args.size() == 0)
     throw usage(help_name);
 
-  std::set<revision_id> descendents;
-  std::vector<revision_id> frontier;
-  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  set<revision_id> descendents;
+  vector<revision_id> frontier;
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -163,9 +174,9 @@ automate_descendents(std::vector<utf8> args,
     {
       revision_id rid = frontier.back();
       frontier.pop_back();
-      std::set<revision_id> children;
+      set<revision_id> children;
       app.db.get_revision_children(rid, children);
-      for (std::set<revision_id>::const_iterator i = children.begin();
+      for (set<revision_id>::const_iterator i = children.begin();
            i != children.end(); ++i)
         {
           if (descendents.find(*i) == descendents.end())
@@ -175,9 +186,9 @@ automate_descendents(std::vector<utf8> args,
             }
         }
     }
-  for (std::set<revision_id>::const_iterator i = descendents.begin();
+  for (set<revision_id>::const_iterator i = descendents.begin();
        i != descendents.end(); ++i)
-    output << (*i).inner()() << std::endl;
+    output << (*i).inner()() << endl;
 }
 
 
@@ -194,22 +205,18 @@ automate_descendents(std::vector<utf8> args,
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_erase_ancestors(std::vector<utf8> args,
-                         std::string const & help_name,
-                         app_state & app,
-                         std::ostream & output)
+AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 {
-  std::set<revision_id> revs;
-  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  set<revision_id> revs;
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
       revs.insert(rid);
     }
   erase_ancestors(revs, app);
-  for (std::set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
-    output << (*i).inner()() << std::endl;
+  for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
+    output << (*i).inner()() << endl;
 }
 
 // Name: attributes
@@ -221,17 +228,14 @@ automate_erase_ancestors(std::vector<utf8> args,
 // Output format: A list of file names in alphabetically sorted order,
 //   or a list of attributes if a file name provided.
 // Error conditions: If the file name has no attributes, prints nothing.
-static void
-automate_attributes(std::vector<utf8> args,
-                    std::string const & help_name,
-                    app_state & app,
-                    std::ostream & output)
+AUTOMATE(attributes, N_("[FILE]"))
 {
   if (args.size() > 1)
     throw usage(help_name);
 
   roster_t base, current;
   temp_node_id_source nis;
+
   get_base_and_current_roster_shape(base, current, nis, app);
 
   if (args.size() == 1)
@@ -239,14 +243,14 @@ automate_attributes(std::vector<utf8> args,
       // a filename was given, if it has attributes, print them
       split_path path;
       file_path_external(idx(args,0)).split(path);
-      
+
       if (current.has_node(path))
         {
           node_t n = current.get_node(path);
           for (full_attr_map_t::const_iterator i = n->attrs.begin();
                i != n->attrs.end(); ++i)
             if (i->second.first)
-              output << i->first << std::endl;
+              output << i->first << endl;
         }
     }
   else
@@ -258,7 +262,7 @@ automate_attributes(std::vector<utf8> args,
             {
               split_path path;
               current.get_name(i->first, path);
-              output << file_path(path) << std::endl;
+              output << file_path(path) << endl;
             }
         }
     }
@@ -274,24 +278,20 @@ automate_attributes(std::vector<utf8> args,
 //   newline.  Revisions are printed in topologically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_toposort(std::vector<utf8> args,
-                  std::string const & help_name,
-                  app_state & app,
-                  std::ostream & output)
+AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"))
 {
-  std::set<revision_id> revs;
-  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  set<revision_id> revs;
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
       revs.insert(rid);
     }
-  std::vector<revision_id> sorted;
+  vector<revision_id> sorted;
   toposort(revs, sorted, app);
-  for (std::vector<revision_id>::const_iterator i = sorted.begin();
+  for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << std::endl;
+    output << (*i).inner()() << endl;
 }
 
 // Name: ancestry_difference
@@ -310,18 +310,14 @@ automate_toposort(std::vector<utf8> args,
 //   newline.  Revisions are printed in topologically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-static void
-automate_ancestry_difference(std::vector<utf8> args,
-                             std::string const & help_name,
-                             app_state & app,
-                             std::ostream & output)
+AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
 {
   if (args.size() == 0)
     throw usage(help_name);
 
   revision_id a;
-  std::set<revision_id> bs;
-  std::vector<utf8>::const_iterator i = args.begin();
+  set<revision_id> bs;
+  vector<utf8>::const_iterator i = args.begin();
   a = revision_id((*i)());
   N(app.db.revision_exists(a), F("No such revision %s") % a);
   for (++i; i != args.end(); ++i)
@@ -330,14 +326,14 @@ automate_ancestry_difference(std::vector<utf8> args,
       N(app.db.revision_exists(b), F("No such revision %s") % b);
       bs.insert(b);
     }
-  std::set<revision_id> ancestors;
+  set<revision_id> ancestors;
   ancestry_difference(a, bs, ancestors, app);
 
-  std::vector<revision_id> sorted;
+  vector<revision_id> sorted;
   toposort(ancestors, sorted, app);
-  for (std::vector<revision_id>::const_iterator i = sorted.begin();
+  for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << std::endl;
+    output << (*i).inner()() << endl;
 }
 
 // Name: leaves
@@ -353,25 +349,22 @@ automate_ancestry_difference(std::vector<utf8> args,
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-static void
-automate_leaves(std::vector<utf8> args,
-               std::string const & help_name,
-               app_state & app,
-               std::ostream & output)
+AUTOMATE(leaves, N_(""))
 {
   if (args.size() != 0)
     throw usage(help_name);
 
   // this might be more efficient in SQL, but for now who cares.
-  std::set<revision_id> leaves;
+  set<revision_id> leaves;
   app.db.get_revision_ids(leaves);
-  std::multimap<revision_id, revision_id> graph;
+  multimap<revision_id, revision_id> graph;
   app.db.get_revision_ancestry(graph);
-  for (std::multimap<revision_id, revision_id>::const_iterator i = graph.begin();
-       i != graph.end(); ++i)
+  for (multimap<revision_id, revision_id>::const_iterator
+         i = graph.begin(); i != graph.end(); ++i)
     leaves.erase(i->first);
-  for (std::set<revision_id>::const_iterator i = leaves.begin(); i != leaves.end(); ++i)
-    output << (*i).inner()() << std::endl;
+  for (set<revision_id>::const_iterator i = leaves.begin();
+       i != leaves.end(); ++i)
+    output << (*i).inner()() << endl;
 }
 
 // Name: parents
@@ -384,22 +377,18 @@ automate_leaves(std::vector<utf8> args,
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
-static void
-automate_parents(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
+AUTOMATE(parents, N_("REV"))
 {
   if (args.size() != 1)
     throw usage(help_name);
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
-  std::set<revision_id> parents;
+  set<revision_id> parents;
   app.db.get_revision_parents(rid, parents);
-  for (std::set<revision_id>::const_iterator i = parents.begin();
+  for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << std::endl;
+          output << (*i).inner()() << endl;
 }
 
 // Name: children
@@ -412,22 +401,18 @@ automate_parents(std::vector<utf8> args,
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
-static void
-automate_children(std::vector<utf8> args,
-                  std::string const & help_name,
-                  app_state & app,
-                  std::ostream & output)
+AUTOMATE(children, N_("REV"))
 {
   if (args.size() != 1)
     throw usage(help_name);
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
-  std::set<revision_id> children;
+  set<revision_id> children;
   app.db.get_revision_children(rid, children);
-  for (std::set<revision_id>::const_iterator i = children.begin();
+  for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << std::endl;
+          output << (*i).inner()() << endl;
 }
 
 // Name: graph
@@ -446,48 +431,45 @@ automate_children(std::vector<utf8> args,
 //   The first would indicate that 07804171823d963f78d6a0ff1763d694dd74ff40
 //   was a root node; the second would indicate that it had one parent, and
 //   the third would indicate that it had two parents, i.e., was a merge.
-//   
+//
 //   The output as a whole is alphabetically sorted; additionally, the parents
 //   within each line are alphabetically sorted.
 // Error conditions: None.
-static void
-automate_graph(std::vector<utf8> args,
-               std::string const & help_name,
-               app_state & app,
-               std::ostream & output)
+AUTOMATE(graph, N_(""))
 {
   if (args.size() != 0)
     throw usage(help_name);
 
-  std::multimap<revision_id, revision_id> edges_mmap;
-  std::map<revision_id, std::set<revision_id> > child_to_parents;
+  multimap<revision_id, revision_id> edges_mmap;
+  map<revision_id, set<revision_id> > child_to_parents;
 
   app.db.get_revision_ancestry(edges_mmap);
 
-  for (std::multimap<revision_id, revision_id>::const_iterator i = edges_mmap.begin();
+  for (multimap<revision_id, revision_id>::const_iterator i = edges_mmap.begin();
        i != edges_mmap.end(); ++i)
     {
       if (child_to_parents.find(i->second) == child_to_parents.end())
-        child_to_parents.insert(std::make_pair(i->second, std::set<revision_id>()));
+        child_to_parents.insert(make_pair(i->second, set<revision_id>()));
       if (null_id(i->first))
         continue;
-      std::map<revision_id, std::set<revision_id> >::iterator
+      map<revision_id, set<revision_id> >::iterator
         j = child_to_parents.find(i->second);
       I(j->first == i->second);
       j->second.insert(i->first);
     }
 
-  for (std::map<revision_id, std::set<revision_id> >::const_iterator i = child_to_parents.begin();
+  for (map<revision_id, set<revision_id> >::const_iterator
+         i = child_to_parents.begin();
        i != child_to_parents.end(); ++i)
     {
       output << (i->first).inner()();
-      for (std::set<revision_id>::const_iterator j = i->second.begin();
+      for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
         output << " " << (*j).inner()();
-      output << std::endl;
+      output << endl;
     }
 }
-      
+
 // Name: select
 // Arguments:
 //   1: selector
@@ -496,26 +478,22 @@ automate_graph(std::vector<utf8> args,
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-static void
-automate_select(std::vector<utf8> args,
-               std::string const & help_name,
-               app_state & app,
-               std::ostream & output)
+AUTOMATE(select, N_("SELECTOR"))
 {
   if (args.size() != 1)
     throw usage(help_name);
 
-  std::vector<std::pair<selectors::selector_type, std::string> >
+  vector<pair<selectors::selector_type, string> >
     sels(selectors::parse_selector(args[0](), app));
 
   // we jam through an "empty" selection on sel_ident type
-  std::set<std::string> completions;
+  set<string> completions;
   selectors::selector_type ty = selectors::sel_ident;
   selectors::complete_selector("", sels, ty, completions, app);
 
-  for (std::set<std::string>::const_iterator i = completions.begin();
+  for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    output << *i << std::endl;
+    output << *i << endl;
 }
 
 struct node_info 
@@ -643,10 +621,12 @@ inventory_filesystem(app_state & app, inventory_map & inventory)
 // Name: inventory
 // Arguments: none
 // Added in: 1.0
+
 // Purpose: Prints a summary of every file found in the workspace or its
-//   associated base manifest. Each unique path is listed on a line prefixed by
-//   three status characters and two numeric values used for identifying
-//   renames. The three status characters are as follows.
+//   associated base manifest. Each unique path is listed on a line
+//   prefixed by three status characters and two numeric values used
+//   for identifying renames. The three status characters are as
+//   follows.
 //
 //   column 1 pre-state
 //         ' ' the path was unchanged in the pre-state
@@ -663,21 +643,18 @@ inventory_filesystem(app_state & app, inventory_map & inventory)
 //         'I' the node is ignored and not included in the roster
 //         'M' the node is missing but is included in the roster
 //
-// Output format: Each path is printed on its own line, prefixed by three status
-//   characters as described above. The status is followed by a single space and
-//   two numbers, each separated by a single space, used for identifying renames.
-//   The numbers are followed by a single space and then the pathname, which 
-//   includes the rest of the line. Directory paths are identified as ending with
-//   the "/" character, file paths do not end in this character.
+// Output format: Each path is printed on its own line, prefixed by three
+//   status characters as described above. The status is followed by a
+//   single space and two numbers, each separated by a single space,
+//   used for identifying renames.  The numbers are followed by a
+//   single space and then the pathname, which includes the rest of
+//   the line. Directory paths are identified as ending with the "/"
+//   character, file paths do not end in this character.
 //
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-static void
-automate_inventory(std::vector<utf8> args,
-                   std::string const & help_name,
-                   app_state & app,
-                   std::ostream & output)
+AUTOMATE(inventory, N_(""))
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -818,131 +795,82 @@ automate_inventory(std::vector<utf8> args,
   output.write(pr.buf.data(), pr.buf.size());
 }
 
-// Name: certs
-// Arguments:
-//   1: a revision id
-// Added in: 1.0
-// Purpose: Prints all certificates associated with the given revision ID.
-//   Each certificate is contained in a basic IO stanza. For each certificate, 
-//   the following values are provided:
-//   
-//   'key' : a string indicating the key used to sign this certificate.
-//   'signature': a string indicating the status of the signature. Possible 
-//   values of this string are:
-//     'ok'        : the signature is correct
-//     'bad'       : the signature is invalid
-//     'unknown'   : signature was made with an unknown key
-//   'name' : the name of this certificate
-//   'value' : the value of this certificate
-//   'trust' : is this certificate trusted by the defined trust metric
-//   Possible values of this string are:
-//     'trusted'   : this certificate is trusted
-//     'untrusted' : this certificate is not trusted
-//
-// Output format: All stanzas are formatted by basic_io. Stanzas are seperated 
-// by a blank line. Values will be escaped, '\' -> '\\' and '"' -> '\"'.
-//
-// Error conditions: If a certificate is signed with an unknown public key, a 
-// warning message is printed to stderr. If the revision specified is unknown 
-// or invalid prints an error message to stderr and exits with status 1.
-static void
-automate_certs(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
-{
-  if (args.size() != 1)
-    throw usage(help_name);
-
-  std::vector<cert> certs;
-  
-  transaction_guard guard(app.db, false);
-  
-  revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
-  hexenc<id> ident(rid.inner());
-
-  std::vector< revision<cert> > ts;
-  app.db.get_revision_certs(rid, ts);
-  for (size_t i = 0; i < ts.size(); ++i)
-    certs.push_back(idx(ts, i).inner());
-
-  {
-    std::set<rsa_keypair_id> checked;      
-    for (size_t i = 0; i < certs.size(); ++i)
-      {
-        if (checked.find(idx(certs, i).key) == checked.end() &&
-            !app.db.public_key_exists(idx(certs, i).key))
-          P(F("warning: no public key '%s' found in database\n")
-            % idx(certs, i).key);
-        checked.insert(idx(certs, i).key);
-      }
-  }
-        
-  // Make the output deterministic; this is useful for the test suite, in
-  // particular.
-  std::sort(certs.begin(), certs.end());
-
-  basic_io::printer pr;
-
-  for (size_t i = 0; i < certs.size(); ++i)
+  for (inventory_map::const_iterator i = inventory.begin();
+       i != inventory.end(); ++i)
     {
-      basic_io::stanza st;
-      cert_status status = check_cert(app, idx(certs, i));
-      cert_value tv;      
-      cert_name name = idx(certs, i).name();
-      std::set<rsa_keypair_id> signers;
 
-      decode_base64(idx(certs, i).value, tv);
+      string path_suffix;
 
-      rsa_keypair_id keyid = idx(certs, i).key();
-      signers.insert(keyid);
-
-      bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
-                                                          name, tv);
-
-      st.push_str_pair("key", keyid());
-
-      std::string stat;
-      switch (status)
+      if (curr.has_node(i->first))
         {
-        case cert_ok:
-          stat = "ok";
-          break;
-        case cert_bad:
-          stat = "bad";
-          break;
-        case cert_unknown:
-          stat = "unknown";
-          break;
+          // Explicitly skip the root dir for now. The trailing / dir
+          // format isn't going to work here.
+          node_t n = curr.get_node(i->first);
+          if (is_root_dir_t(n)) continue;
+          if (is_dir_t(n)) path_suffix = "/";
         }
-      st.push_str_pair("signature", stat);
+      else if (directory_exists(file_path(i->first)))
+        {
+          path_suffix = "/";
+        }
 
-      st.push_str_pair("name", name());
-      st.push_str_pair("value", tv());
-      st.push_str_pair("trust", (trusted ? "trusted" : "untrusted"));
+      switch (i->second.pre_state)
+        {
+        case inventory_item::UNCHANGED_PATH: output << " "; break;
+        case inventory_item::DROPPED_PATH: output << "D"; break;
+        case inventory_item::RENAMED_PATH: output << "R"; break;
+        default: I(false); // invalid pre_state
+        }
 
-      pr.print_stanza(st);
+      switch (i->second.post_state)
+        {
+        case inventory_item::UNCHANGED_PATH: output << " "; break;
+        case inventory_item::RENAMED_PATH: output << "R"; break;
+        case inventory_item::ADDED_PATH:   output << "A"; break;
+        default: I(false); // invalid post_state
+        }
+
+      switch (i->second.node_state)
+        {
+        case inventory_item::UNCHANGED_NODE: output << " "; break;
+        case inventory_item::PATCHED_NODE: output << "P"; break;
+        case inventory_item::UNKNOWN_NODE: output << "U"; break;
+        case inventory_item::IGNORED_NODE: output << "I"; break;
+        case inventory_item::MISSING_NODE: output << "M"; break;
+        default: I(false); // invalid node_state
+        }
+
+      output << " " << i->second.pre_id
+             << " " << i->second.post_id
+             << " " << i->first;
+
+      // FIXME: it's possible that a directory was deleted and a file
+      // was added in it's place (or vice-versa) so we need something
+      // like pre/post node type indicators rather than a simple path
+      // suffix! ugh.
+
+      output << path_suffix;
+
+      output << endl;
     }
-  output.write(pr.buf.data(), pr.buf.size());
-
-  guard.commit();
 }
 
 // Name: get_revision
 // Arguments:
-//   1: a revision id (optional, determined from the workspace if non-existant)
+//   1: a revision id (optional, determined from the workspace if
+//      non-existant)
 // Added in: 1.0
+
 // Purpose: Prints change information for the specified revision id.
-//   There are several changes that are described; each of these is described by 
-//   a different basic_io stanza. The first string pair of each stanza indicates the 
-//   type of change represented. 
+//   There are several changes that are described; each of these is
+//   described by a different basic_io stanza. The first string pair
+//   of each stanza indicates the type of change represented.
 //
-//   All stanzas are formatted by basic_io. Stanzas are separated 
-//   by a blank line. Values will be escaped, '\' to '\\' and 
+//   All stanzas are formatted by basic_io. Stanzas are separated
+//   by a blank line. Values will be escaped, '\' to '\\' and
 //   '"' to '\"'.
 //
-//   Possible values of this first value are along with an ordered list of 
+//   Possible values of this first value are along with an ordered list of
 //   basic_io formatted stanzas that will be provided are:
 //
 //   'format_version'
@@ -988,13 +916,9 @@ automate_certs(std::vector<utf8> args,
 //
 //   These stanzas will always occur in the order listed here; stanzas of
 //   the same type will be sorted by the filename they refer to.
-// Error conditions: If the revision specified is unknown or invalid prints an 
-// error message to stderr and exits with status 1.
-static void
-automate_get_revision(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
+// Error conditions: If the revision specified is unknown or invalid
+// prints an error message to stderr and exits with status 1.
+AUTOMATE(get_revision, N_("[REVID]"))
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -1005,14 +929,17 @@ automate_get_revision(std::vector<utf8> args,
 
   if (args.size() == 0)
     {
-      revision_set rev;
       roster_t old_roster, new_roster;
+      revision_id old_revision_id;
+      revision_set rev;
 
-      app.require_workspace(); 
-      get_unrestricted_working_revision_and_rosters(app, rev, 
-                                                    old_roster, 
-                                                    new_roster,
-                                                    nis);
+      app.require_workspace();
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      update_current_roster_from_filesystem(new_roster, app);
+
+      get_revision_id(old_revision_id);
+      make_revision_set(old_revision_id, old_roster, new_roster, rev);
+
       calculate_ident(rev, ident);
       write_revision_set(rev, dat);
     }
@@ -1024,25 +951,78 @@ automate_get_revision(std::vector<utf8> args,
       app.db.get_revision(ident, dat);
     }
 
-  L(FL("dumping revision %s\n") % ident);
+  L(FL("dumping revision %s") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+// Name: get_base_revision_id
+// Arguments: none
+// Added in: 2.0
+// Purpose: Prints the revision id the current workspace is based
+//   on. This is the value stored in _MTN/revision
+// Error conditions: If no workspace book keeping _MTN directory is found,
+//   prints an error message to stderr, and exits with status 1.
+AUTOMATE(get_base_revision_id, N_(""))
+{
+  if (args.size() > 0)
+    throw usage(help_name);
+
+  app.require_workspace();
+
+  revision_id rid;
+  get_revision_id(rid);
+  output << rid << endl;
+}
+
+// Name: get_current_revision_id
+// Arguments: none
+// Added in: 2.0
+// Purpose: Prints the revision id of the current workspace. This is the
+//   id of the revision that would be committed by an unrestricted
+//   commit calculated from _MTN/revision, _MTN/work and any edits to
+//   files in the workspace.
+// Error conditions: If no workspace book keeping _MTN directory is found,
+//   prints an error message to stderr, and exits with status 1.
+AUTOMATE(get_current_revision_id, N_(""))
+{
+  if (args.size() > 0)
+    throw usage(help_name);
+
+  app.require_workspace();
+
+  roster_t old_roster, new_roster;
+  revision_id old_revision_id, new_revision_id;
+  revision_set rev;
+  temp_node_id_source nis;
+
+  app.require_workspace();
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  update_current_roster_from_filesystem(new_roster, app);
+
+  get_revision_id(old_revision_id);
+  make_revision_set(old_revision_id, old_roster, new_roster, rev);
+
+  calculate_ident(rev, new_revision_id);
+
+  output << new_revision_id << endl;
 }
 
 // Name: get_manifest_of
 // Arguments:
 //   1: a revision id (optional, determined from the workspace if not given)
 // Added in: 2.0
-// Purpose: Prints the contents of the manifest associated with the given revision ID.
+// Purpose: Prints the contents of the manifest associated with the
+//   given revision ID.
 //
 // Output format:
 //   There is one basic_io stanza for each file or directory in the
 //   manifest.
 //
-//   All stanzas are formatted by basic_io. Stanzas are separated 
-//   by a blank line. Values will be escaped, '\' to '\\' and 
+//   All stanzas are formatted by basic_io. Stanzas are separated
+//   by a blank line. Values will be escaped, '\' to '\\' and
 //   '"' to '\"'.
 //
-//   Possible values of this first value are along with an ordered list of 
+//   Possible values of this first value are along with an ordered list of
 //   basic_io formatted stanzas that will be provided are:
 //
 //   'format_version'
@@ -1060,33 +1040,31 @@ automate_get_revision(std::vector<utf8> args,
 //         occurs: zero or more times
 //
 //   In addition, 'dir' and 'file' stanzas may have attr information
-//   included.  These are appended to the stanza below the basic dir/file
-//   information, with one line describing each attr.  These lines take the
-//   form ('attr', attr name, attr value).
+//   included.  These are appended to the stanza below the basic
+//   dir/file information, with one line describing each attr.  These
+//   lines take the form ('attr', attr name, attr value).
 //
 //   Stanzas are sorted by the path string.
 //
-// Error conditions:  If the revision ID specified is unknown or invalid prints an 
-// error message to stderr and exits with status 1.
-static void
-automate_get_manifest_of(std::vector<utf8> args,
-                         std::string const & help_name,
-                         app_state & app,
-                         std::ostream & output)
+// Error conditions: If the revision ID specified is unknown or
+// invalid prints an error message to stderr and exits with status 1.
+AUTOMATE(get_manifest_of, N_("[REVID]"))
 {
   if (args.size() > 1)
     throw usage(help_name);
 
-  data dat;
+  roster_data dat;
   manifest_id mid;
   roster_t old_roster, new_roster;
   temp_node_id_source nis;
 
   if (args.size() == 0)
     {
-      revision_set rs;
+      revision_id old_revision_id;
+
       app.require_workspace();
-      get_unrestricted_working_revision_and_rosters(app, rs, old_roster, new_roster, nis);
+      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      update_current_roster_from_filesystem(new_roster, app);
     }
   else
     {
@@ -1098,8 +1076,8 @@ automate_get_manifest_of(std::vector<utf8> args,
 
   calculate_ident(new_roster, mid);
   write_manifest_of_roster(new_roster, dat);
-  L(FL("dumping manifest %s\n") % mid);
-  output.write(dat().data(), dat().size());
+  L(FL("dumping manifest %s") % mid);
+  output.write(dat.inner()().data(), dat.inner()().size());
 }
 
 
@@ -1111,13 +1089,9 @@ automate_get_manifest_of(std::vector<utf8> args,
 //
 // Output format: The file contents are output without modification.
 //
-// Error conditions: If the file id specified is unknown or invalid prints 
+// Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-static void
-automate_get_file(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
+AUTOMATE(get_file, N_("FILEID"))
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1127,7 +1101,7 @@ automate_get_file(std::vector<utf8> args,
     F("no file version %s found in database") % ident);
 
   file_data dat;
-  L(FL("dumping file %s\n") % ident);
+  L(FL("dumping file %s") % ident);
   app.db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
@@ -1138,15 +1112,12 @@ automate_get_file(std::vector<utf8> args,
 // Added in: 2.0
 // Purpose: Prints the revision data in packet format
 //
-// Output format: revision data in "monotone read" compatible packet format
+// Output format: revision data in "monotone read" compatible packet
+//   format
 //
-// Error conditions: If the revision id specified is unknown or invalid prints 
-// an error message to stderr and exits with status 1.
-static void
-automate_packet_for_rdata(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
+// Error conditions: If the revision id specified is unknown or
+// invalid prints an error message to stderr and exits with status 1.
+AUTOMATE(packet_for_rdata, N_("REVID"))
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1170,13 +1141,9 @@ automate_packet_for_rdata(std::vector<utf8> args,
 //
 // Output format: certs in "monotone read" compatible packet format
 //
-// Error conditions: If the revision id specified is unknown or invalid prints 
-// an error message to stderr and exits with status 1.
-static void
-automate_packets_for_certs(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
+// Error conditions: If the revision id specified is unknown or
+// invalid prints an error message to stderr and exits with status 1.
+AUTOMATE(packets_for_certs, N_("REVID"))
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1184,8 +1151,8 @@ automate_packets_for_certs(std::vector<utf8> args,
   packet_writer pw(output);
 
   revision_id r_id(idx(args, 0)());
-  std::vector< revision<cert> > certs;
-    
+  vector< revision<cert> > certs;
+
   N(app.db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
   app.db.get_revision_certs(r_id, certs);
@@ -1201,13 +1168,9 @@ automate_packets_for_certs(std::vector<utf8> args,
 //
 // Output format: file data in "monotone read" compatible packet format
 //
-// Error conditions: If the file id specified is unknown or invalid prints 
-// an error message to stderr and exits with status 1.
-static void
-automate_packet_for_fdata(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
+// Error conditions: If the file id specified is unknown or invalid
+// prints an error message to stderr and exits with status 1.
+AUTOMATE(packet_for_fdata, N_("FILEID"))
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1216,7 +1179,7 @@ automate_packet_for_fdata(std::vector<utf8> args,
 
   file_id f_id(idx(args, 0)());
   file_data f_data;
-    
+
   N(app.db.file_version_exists(f_id),
     F("no such file '%s'") % f_id);
   app.db.get_file_version(f_id, f_data);
@@ -1234,11 +1197,7 @@ automate_packet_for_fdata(std::vector<utf8> args,
 //
 // Error conditions: If any of the file ids specified are unknown or
 // invalid prints an error message to stderr and exits with status 1.
-static void
-automate_packet_for_fdelta(std::vector<utf8> args,
-                 std::string const & help_name,
-                 app_state & app,
-                 std::ostream & output)
+AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"))
 {
   if (args.size() != 2)
     throw usage(help_name);
@@ -1248,7 +1207,7 @@ automate_packet_for_fdelta(std::vector<utf8> args,
   file_id f_old_id(idx(args, 0)());
   file_id f_new_id(idx(args, 1)());
   file_data f_old_data, f_new_data;
-   
+
   N(app.db.file_version_exists(f_old_id),
     F("no such revision '%s'") % f_old_id);
   N(app.db.file_version_exists(f_new_id),
@@ -1260,343 +1219,31 @@ automate_packet_for_fdelta(std::vector<utf8> args,
   pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));
 }
 
-void
-automate_command(utf8 cmd, std::vector<utf8> args,
-                 std::string const & root_cmd_name,
-                 app_state & app,
-                 std::ostream & output);
-
-// Name: stdio
-// Arguments: none
-// Added in: 1.0
-// Purpose: Allow multiple automate commands to be run from one instance
-//   of monotone.
-//
-// Input format: The input is a series of lines of the form
-//   'l'<size>':'<string>[<size>':'<string>...]'e', with characters
-//   after the 'e' of one command, but before the 'l' of the next ignored.
-//   This space is reserved, and should not contain characters other
-//   than '\n'.
-//   Example:
-//     l6:leavese
-//     l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
-//
-// Output format: <command number>:<err code>:<last?>:<size>:<output>
-//   <command number> is a decimal number specifying which command
-//   this output is from. It is 0 for the first command, and increases
-//   by one each time.
-//   <err code> is 0 for success, 1 for a syntax error, and 2 for any
-//   other error.
-//   <last?> is 'l' if this is the last piece of output for this command,
-//   and 'm' if there is more output to come.
-//   <size> is the number of bytes in the output.
-//   <output> is the output of the command.
-//   Example:
-//     0:0:l:205:0e3171212f34839c2e3263e7282cdeea22fc5378
-//     1f4ef73c3e056883c6a5ff66728dd764557db5e6
-//     2133c52680aa2492b18ed902bdef7e083464c0b8
-//     23501f8afd1f9ee037019765309b0f8428567f8a
-//     2c295fcf5fe20301557b9b3a5b4d437b5ab8ec8c
-//     1:0:l:41:7706a422ccad41621c958affa999b1a1dd644e79
-//
-// Error conditions: Errors encountered by the commands run only set the error
-//   code in the output for that command. Malformed input results in exit with
-//   a non-zero return value and an error message.
-
-//We use our own stringbuf class so we can put in a callback on write.
-//This lets us dump output at a set length, rather than waiting until
-//we have all of the output.
-typedef std::basic_stringbuf<char,
-                             std::char_traits<char>,
-                             std::allocator<char> > char_stringbuf;
-struct my_stringbuf : public char_stringbuf
-{
-private:
-  std::streamsize written;
-  boost::function1<void, int> on_write;
-  std::streamsize last_call;
-  std::streamsize call_every;
-  bool clear;
-public:
-  my_stringbuf() : char_stringbuf(),
-                   written(0),
-                   last_call(0),
-                   call_every(constants::automate_stdio_size)
-  {}
-  virtual std::streamsize
-  xsputn(const char_stringbuf::char_type* __s, std::streamsize __n)
-  {
-    std::streamsize ret=char_stringbuf::xsputn(__s, __n);
-    written+=__n;
-    while(written>=last_call+call_every)
-      {
-        if(on_write)
-          on_write(call_every);
-        last_call+=call_every;
-      }
-    return ret;
-  }
-  virtual int sync()
-  {
-    int ret=char_stringbuf::sync();
-    if(on_write)
-      on_write(-1);
-    last_call=written;
-    return ret;
-  }
-  void set_on_write(boost::function1<void, int> x)
-  {
-    on_write = x;
-  }
-};
-
-void print_some_output(int cmdnum,
-                       int err,
-                       bool last,
-                       std::string const & text,
-                       std::ostream & s,
-                       int & pos,
-                       int size)
-{
-  if(size==-1)
-    {
-      while(text.size()-pos > constants::automate_stdio_size)
-        {
-          s<<cmdnum<<':'<<err<<':'<<'m'<<':';
-          s<<constants::automate_stdio_size<<':'
-           <<text.substr(pos, constants::automate_stdio_size);
-          pos+=constants::automate_stdio_size;
-          s.flush();
-        }
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<(text.size()-pos)<<':'<<text.substr(pos);
-      pos=text.size();
-    }
-  else
-    {
-      I((unsigned int)(size) <= constants::automate_stdio_size);
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<size<<':'<<text.substr(pos, size);
-      pos+=size;
-    }
-  s.flush();
-}
-
-static ssize_t
-automate_stdio_read(int d, void *buf, size_t nbytes)
-{
-  ssize_t rv;
-  
-  rv = read(d, buf, nbytes);
-  
-  E(rv >= 0, F("read from client failed with error code: %d") % rv);
-  return rv;
-}
-
-static void
-automate_stdio(std::vector<utf8> args,
-                   std::string const & help_name,
-                   app_state & app,
-                   std::ostream & output)
-{
-  if (args.size() != 0)
-    throw usage(help_name);
-  int cmdnum = 0;
-  char c;
-  ssize_t n=1;
-  while(n)//while(!EOF)
-    {
-      std::string x;
-      utf8 cmd;
-      args.clear();
-      bool first=true;
-      int toklen=0;
-      bool firstchar=true;
-      for(n=automate_stdio_read(0, &c, 1); c != 'l' && n; n=automate_stdio_read(0, &c, 1))
-        ;
-      for(n=automate_stdio_read(0, &c, 1); c!='e' && n; n=automate_stdio_read(0, &c, 1))
-        {
-          if(c<='9' && c>='0')
-            {
-              toklen=(toklen*10)+(c-'0');
-            }
-          else if(c == ':')
-            {
-              char *tok=new char[toklen];
-              int count=0;
-              while(count<toklen)
-                count+=automate_stdio_read(0, tok+count, toklen-count);
-              if(first)
-                cmd=utf8(std::string(tok, toklen));
-              else
-                args.push_back(utf8(std::string(tok, toklen)));
-              toklen=0;
-              delete[] tok;
-              first=false;
-            }
-          else
-            {
-              N(false, F("Bad input to automate stdio"));
-            }
-          firstchar=false;
-        }
-      if(cmd() != "")
-        {
-          int outpos=0;
-          int err;
-          std::ostringstream s;
-          my_stringbuf sb;
-          sb.set_on_write(boost::bind(print_some_output,
-                                      cmdnum,
-                                      boost::ref(err),
-                                      false,
-                                      boost::bind(&my_stringbuf::str, &sb),
-                                      boost::ref(output),
-                                      boost::ref(outpos),
-                                      _1));
-          s.std::basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
-          try
-            {
-              err=0;
-              automate_command(cmd, args, help_name, app, s);
-            }
-          catch(usage & u)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=1;
-              commands::explain_usage(help_name, s);
-            }
-          catch(informative_failure & f)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=2;
-              //Do this instead of printing f.what directly so the output
-              //will be split into properly-sized blocks automatically.
-              s<<f.what;
-            }
-            print_some_output(cmdnum, err, true, sb.str(),
-                              output, outpos, -1);
-        }
-      cmdnum++;
-    }
-}
-
-// Name: keys
-// Arguments: none
-// Added in: 1.1
-// Purpose: Prints all keys in the keystore, and if a database is given
-//   also all keys in the database, in basic_io format.
-// Output format: For each key, a basic_io stanza is printed. The items in
-//   the stanza are:
-//     name - the key identifier
-//     public_hash - the hash of the public half of the key
-//     private_hash - the hash of the private half of the key
-//     public_location - where the public half of the key is stored
-//     private_location - where the private half of the key is stored
-//   The *_location items may have multiple values, as shown below
-//   for public_location.
-//   If the private key does not exist, then the private_hash and
-//   private_location items will be absent.
-//
-// Sample output:
-//               name "tbrownaw@gmail.com"
-//        public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
-//       private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
-//    public_location "database" "keystore"
-//   private_location "keystore"
-//
-//              name "njs@pobox.com"
-//       public_hash [de84b575d5e47254393eba49dce9dc4db98ed42d]
-//   public_location "database"
-//
-//               name "foo@bar.com"
-//        public_hash [7b6ce0bd83240438e7a8c7c207d8654881b763f6]
-//       private_hash [bfc3263e3257087f531168850801ccefc668312d]
-//    public_location "keystore"
-//   private_location "keystore"
-//
-// Error conditions: None.
-static void
-automate_keys(std::vector<utf8> args, std::string const & help_name,
-              app_state & app, std::ostream & output)
-{
-  if (args.size() != 0)
-    throw usage(help_name);
-  std::vector<rsa_keypair_id> dbkeys;
-  std::vector<rsa_keypair_id> kskeys;
-  // public_hash, private_hash, public_location, private_location
-  std::map<std::string, boost::tuple<hexenc<id>, hexenc<id>,
-                                     std::vector<std::string>,
-                                     std::vector<std::string> > > items;
-  if (app.db.database_specified())
-    {
-      transaction_guard guard(app.db, false);
-      app.db.get_key_ids("", dbkeys);
-      guard.commit();
-    }
-  app.keys.get_key_ids("", kskeys);
-
-  for (std::vector<rsa_keypair_id>::iterator i = dbkeys.begin();
-       i != dbkeys.end(); i++)
-    {
-      base64<rsa_pub_key> pub_encoded;
-      hexenc<id> hash_code;
-
-      app.db.get_key(*i, pub_encoded);
-      key_hash_code(*i, pub_encoded, hash_code);
-      items[(*i)()].get<0>() = hash_code;
-      items[(*i)()].get<2>().push_back("database");
-    }
-
-  for (std::vector<rsa_keypair_id>::iterator i = kskeys.begin();
-       i != kskeys.end(); i++)
-    {
-      keypair kp;
-      hexenc<id> privhash, pubhash;
-      app.keys.get_key_pair(*i, kp); 
-      key_hash_code(*i, kp.pub, pubhash);
-      key_hash_code(*i, kp.priv, privhash);
-      items[(*i)()].get<0>() = pubhash;
-      items[(*i)()].get<1>() = privhash;
-      items[(*i)()].get<2>().push_back("keystore");
-      items[(*i)()].get<3>().push_back("keystore");
-    }
-  basic_io::printer prt;
-  for (std::map<std::string, boost::tuple<hexenc<id>, hexenc<id>,
-                                     std::vector<std::string>,
-                                     std::vector<std::string> > >::iterator
-         i = items.begin(); i != items.end(); ++i)
-    {
-      basic_io::stanza stz;
-      stz.push_str_pair("name", i->first);
-      stz.push_hex_pair("public_hash", i->second.get<0>()());
-      if (!i->second.get<1>()().empty())
-        stz.push_hex_pair("private_hash", i->second.get<1>()());
-      stz.push_str_multi("public_location", i->second.get<2>());
-      if (!i->second.get<3>().empty())
-        stz.push_str_multi("private_location", i->second.get<3>());
-      prt.print_stanza(stz);
-    }
-  output.write(prt.buf.data(), prt.buf.size());
-}
-
-
-static void
-automate_common_ancestors(std::vector<utf8> args, std::string const & help_name,
-                         app_state & app, std::ostream & output)
+// Name: common_ancestors
+// Arguments:
+//   1 or more revision ids
+// Added in: 2.1
+// Purpose: Prints all revisions which are ancestors of all of the
+//   revisions given as arguments.
+// Output format: A list of revision ids, in hexadecimal, each
+//   followed by a newline.  Revisions are printed in alphabetically
+//   sorted order.
+// Error conditions: If any of the revisions do not exist, prints
+//   nothing to stdout, prints an error message to stderr, and exits
+//   with status 1.
+AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
 {
   if (args.size() == 0)
     throw usage(help_name);
 
-  std::set<revision_id> ancestors, common_ancestors;
-  std::vector<revision_id> frontier;
-  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  set<revision_id> ancestors, common_ancestors;
+  vector<revision_id> frontier;
+  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
       ancestors.clear();
+      ancestors.insert(rid);
       frontier.push_back(rid);
       while (!frontier.empty())
         {
@@ -1604,9 +1251,9 @@ automate_common_ancestors(std::vector<utf8> args, std::string const & help_name,
           frontier.pop_back();
           if(!null_id(rid))
             {
-              std::set<revision_id> parents;
+              set<revision_id> parents;
               app.db.get_revision_parents(rid, parents);
-              for (std::set<revision_id>::const_iterator i = parents.begin();
+              for (set<revision_id>::const_iterator i = parents.begin();
                    i != parents.end(); ++i)
                 {
                   if (ancestors.find(*i) == ancestors.end())
@@ -1621,76 +1268,52 @@ automate_common_ancestors(std::vector<utf8> args, std::string const & help_name,
         common_ancestors = ancestors;
       else
         {
-          std::set<revision_id> common;
-          std::set_intersection(ancestors.begin(), ancestors.end(),
+          set<revision_id> common;
+          set_intersection(ancestors.begin(), ancestors.end(),
                          common_ancestors.begin(), common_ancestors.end(),
-                         std::inserter(common, common.begin()));
+                         inserter(common, common.begin()));
           common_ancestors = common;
         }
     }
 
-  for (std::set<revision_id>::const_iterator i = common_ancestors.begin();
+  for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << std::endl;
+      output << (*i).inner()() << endl;
 }
 
-void
-automate_command(utf8 cmd, std::vector<utf8> args,
-                 std::string const & root_cmd_name,
-                 app_state & app,
-                 std::ostream & output)
+// Name: branches
+// Arguments:
+//   None
+// Added in: 2.2
+// Purpose:
+//   Prints all branch certs present in the revision graph, that are not
+//   excluded by the lua hook 'ignore_branch'.
+// Output format:
+//   Zero or more lines, each the name of a branch. The lines are printed
+//   in alphabetically sorted order.
+// Error conditions:
+//   None.
+AUTOMATE(branches, N_(""))
 {
-  if (cmd() == "interface_version")
-    automate_interface_version(args, root_cmd_name, app, output);
-  else if (cmd() == "heads")
-    automate_heads(args, root_cmd_name, app, output);
-  else if (cmd() == "ancestors")
-    automate_ancestors(args, root_cmd_name, app, output);
-  else if (cmd() == "descendents")
-    automate_descendents(args, root_cmd_name, app, output);
-  else if (cmd() == "erase_ancestors")
-    automate_erase_ancestors(args, root_cmd_name, app, output);
-  else if (cmd() == "toposort")
-    automate_toposort(args, root_cmd_name, app, output);
-  else if (cmd() == "ancestry_difference")
-    automate_ancestry_difference(args, root_cmd_name, app, output);
-  else if (cmd() == "leaves")
-    automate_leaves(args, root_cmd_name, app, output);
-  else if (cmd() == "parents")
-    automate_parents(args, root_cmd_name, app, output);
-  else if (cmd() == "children")
-    automate_children(args, root_cmd_name, app, output);
-  else if (cmd() == "graph")
-    automate_graph(args, root_cmd_name, app, output);
-  else if (cmd() == "select")
-    automate_select(args, root_cmd_name, app, output);
-  else if (cmd() == "inventory")
-    automate_inventory(args, root_cmd_name, app, output);
-  else if (cmd() == "attributes")
-    automate_attributes(args, root_cmd_name, app, output);
-  else if (cmd() == "stdio")
-    automate_stdio(args, root_cmd_name, app, output);
-  else if (cmd() == "certs")
-    automate_certs(args, root_cmd_name, app, output);
-  else if (cmd() == "get_revision")
-    automate_get_revision(args, root_cmd_name, app, output);
-  else if (cmd() == "get_manifest_of")
-    automate_get_manifest_of(args, root_cmd_name, app, output);
-  else if (cmd() == "get_file")
-    automate_get_file(args, root_cmd_name, app, output);
-  else if (cmd() == "keys")
-    automate_keys(args, root_cmd_name, app, output);
-  else if (cmd() == "packet_for_rdata")
-    automate_packet_for_rdata(args, root_cmd_name, app, output);
-  else if (cmd() == "packets_for_certs")
-    automate_packets_for_certs(args, root_cmd_name, app, output);
-  else if (cmd() == "packet_for_fdata")
-    automate_packet_for_fdata(args, root_cmd_name, app, output);
-  else if (cmd() == "packet_for_fdelta")
-    automate_packet_for_fdelta(args, root_cmd_name, app, output);
-  else if (cmd() == "common_ancestors")
-    automate_common_ancestors(args, root_cmd_name, app, output);
-  else
-    throw usage(root_cmd_name);
+  if (args.size() > 0)
+    throw usage(help_name);
+
+  vector<string> names;
+
+  app.db.get_branches(names);
+  sort(names.begin(), names.end());
+
+  for (vector<string>::const_iterator i = names.begin();
+       i != names.end(); ++i)
+    if (!app.lua.hook_ignore_branch(*i))
+      output << (*i) << endl;
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

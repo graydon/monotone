@@ -1,6 +1,0 @@
-AT_SETUP(["sync server --exclude foo"])
-MTN_SETUP
-
-AT_CHECK(MTN sync example.net --exclude foo, [1], [ignore], [ignore])
-
-AT_CLEANUP

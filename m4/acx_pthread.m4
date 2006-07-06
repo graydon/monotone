@@ -1,5 +1,7 @@
 dnl @synopsis ACX_PTHREAD([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 dnl
+dnl @summary figure out how to build C programs using POSIX threads
+dnl
 dnl This macro figures out how to build C programs using POSIX threads.
 dnl It sets the PTHREAD_LIBS output variable to the threads library and
 dnl linker flags, and the PTHREAD_CFLAGS output variable to any special
@@ -41,7 +43,7 @@ dnl We are also grateful for the helpful feedback of numerous users.
 dnl
 dnl @category InstalledPackages
 dnl @author Steven G. Johnson <stevenj@alum.mit.edu>
-dnl @version 2005-01-14
+dnl @version 2006-05-29
 dnl @license GPLWithACException
 
 AC_DEFUN([ACX_PTHREAD], [
@@ -100,6 +102,7 @@ acx_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -m
 # -mt: Sun Workshop C (may only link SunOS threads [-lthread], but it
 #      doesn't hurt to check since this sometimes defines pthreads too;
 #      also defines -D_REENTRANT)
+#      ... -mt is also the pthreads flag for HP/aCC
 # pthread: Linux, etcetera
 # --thread-safe: KAI C++
 # pthread-config: use pthread-config program (for GNU Pth library)
@@ -109,13 +112,13 @@ case "${host_cpu}-${host_os}" in
 
         # On Solaris (at least, for some versions), libc contains stubbed
         # (non-functional) versions of the pthreads routines, so link-based
-        # tests will erroneously succeed.  (We need to link with -pthread or
+        # tests will erroneously succeed.  (We need to link with -pthreads/-mt/
         # -lpthread.)  (The stubs are missing pthread_cleanup_push, or rather
         # a function called by this macro, so we could check for that, but
         # who knows whether they'll stub that too in a future libc.)  So,
         # we'll just look for -pthreads and -lpthread first:
 
-        acx_pthread_flags="-pthread -pthreads pthread -mt $acx_pthread_flags"
+        acx_pthread_flags="-pthreads pthread -mt -pthread $acx_pthread_flags"
         ;;
 esac
 
@@ -189,7 +192,7 @@ if test "x$acx_pthread_ok" = xyes; then
 	AC_MSG_CHECKING([for joinable pthread attribute])
 	attr_name=unknown
 	for attr in PTHREAD_CREATE_JOINABLE PTHREAD_CREATE_UNDETACHED; do
-	    AC_TRY_LINK([#include <pthread.h>], [int attr=$attr;],
+	    AC_TRY_LINK([#include <pthread.h>], [int attr=$attr; return attr;],
                         [attr_name=$attr; break])
 	done
         AC_MSG_RESULT($attr_name)
@@ -213,8 +216,12 @@ if test "x$acx_pthread_ok" = xyes; then
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
 
-        # More AIX lossage: must compile with cc_r
-        AC_CHECK_PROG(PTHREAD_CC, cc_r, cc_r, ${CC})
+        # More AIX lossage: must compile with xlc_r or cc_r
+	if test x"$GCC" != xyes; then
+          AC_CHECK_PROGS(PTHREAD_CC, xlc_r cc_r, ${CC})
+        else
+          PTHREAD_CC=$CC
+	fi
 else
         PTHREAD_CC="$CC"
 fi

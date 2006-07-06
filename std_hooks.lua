@@ -8,7 +8,7 @@ function temp_file()
    if tdir == nil then tdir = os.getenv("TMP") end
    if tdir == nil then tdir = os.getenv("TEMP") end
    if tdir == nil then tdir = "/tmp" end
-   return mkstemp(string.format("%s/mt.XXXXXX", tdir))
+   return mkstemp(string.format("%s/mtn.XXXXXX", tdir))
 end
 
 function execute(path, ...)   
@@ -24,8 +24,14 @@ end
 -- This is needed to work around some brokenness with some merge tools
 -- (e.g. on OS X)
 function execute_confirm(path, ...)   
-   execute(path, unpack(arg))
-   print(gettext("Press enter when the subprocess has completed"))
+   ret = execute(path, unpack(arg))
+
+   if (ret ~= 0)
+   then
+      print(gettext("Press enter"))
+   else
+      print(gettext("Press enter when the subprocess has completed"))
+   end
    io.read()
    return ret
 end
@@ -33,9 +39,8 @@ end
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
 -- re-set any time the files are modified. the attributes themselves
--- are stored in a file .mt-attrs, in the workspace (and
--- manifest). each (f,k,v) triple in an attribute file turns into a
--- call to attr_functions[k](f,v) in lua.
+-- are stored in the roster associated with the revision. each (f,k,v)
+-- attribute triple turns into a call to attr_functions[k](f,v) in lua.
 
 if (attr_init_functions == nil) then
    attr_init_functions = {}
@@ -112,6 +117,8 @@ function ignore_file(name)
       -- c/c++
       "%.a$", "%.so$", "%.o$", "%.la$", "%.lo$", "^core$",
       "/core$", "/core%.%d+$",
+      -- java
+      "%.class$",
       -- python
       "%.pyc$", "%.pyo$",
       -- TeX
@@ -282,26 +289,40 @@ end
 function merge3_meld_cmd(lfile, afile, rfile)
    return 
    function()
-      return execute("meld", lfile, afile, rfile)
+      local path = "meld"
+      local ret = execute(path, lfile, afile, rfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
 function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
    return
    function()
-      return execute("tortoisemerge",
-                     string.format("/base:%s", afile),
-                     string.format("/theirs:%s", lfile),
-                     string.format("/mine:%s", rfile),
-                     string.format("/merged:%s", outfile))
+      local path = "tortoisemerge"
+      local ret = execute(path,
+			  string.format("/base:%s", afile),
+			  string.format("/theirs:%s", lfile),
+			  string.format("/mine:%s", rfile),
+			  string.format("/merged:%s", outfile))
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
 function merge3_vim_cmd(vim, afile, lfile, rfile, outfile)
    return
    function()
-      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                     afile, lfile, rfile)
+      local ret = execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
+			  afile, lfile, rfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+      end
+      return ret
    end
 end
 
@@ -316,8 +337,12 @@ function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
          copy_text_file(lfile, outfile);
          return 0
       end
-      return execute(vim, "-f", "-c", string.format("file %s", outfile),
-                     lfile)
+      local ret = execute(vim, "-f", "-c", string.format("file %s", outfile),
+			  lfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+      end
+      return ret
    end
 end
 
@@ -325,8 +350,12 @@ function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
    local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
    return 
    function()
-      return execute(emacs, "--eval", 
-                     string.format(elisp, lfile, rfile, afile, outfile))
+      local ret = execute(emacs, "--eval", 
+			  string.format(elisp, lfile, rfile, afile, outfile))
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), emacs))
+      end
+      return ret
    end
 end
 
@@ -334,14 +363,19 @@ function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path,
                            lfile, afile, rfile, outfile)
    return 
    function()
-      return execute("xxdiff", 
-                     "--title1", left_path,
-                     "--title2", right_path,
-                     "--title3", merged_path,
-                     lfile, afile, rfile, 
-                     "--merge", 
-                     "--merged-filename", outfile,
-                     "--exit-with-merge-status")
+      local path = "xxdiff"
+      local ret = execute(path, 
+			"--title1", left_path,
+			"--title2", right_path,
+			"--title3", merged_path,
+			lfile, afile, rfile, 
+			"--merge", 
+			"--merged-filename", outfile,
+			"--exit-with-merge-status")
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
    
@@ -349,21 +383,34 @@ function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path,
                            lfile, afile, rfile, outfile)
    return 
    function()
-      return execute("kdiff3", 
-                     "--L1", anc_path,
-                     "--L2", left_path,
-                     "--L3", right_path,
-                     afile, lfile, rfile, 
-                     "--merge", 
-                     "--o", outfile)
+      local path = "kdiff3"
+      local ret = execute(path, 
+			  "--L1", anc_path,
+			  "--L2", left_path,
+			  "--L3", right_path,
+			  afile, lfile, rfile, 
+			  "--merge", 
+			  "--o", outfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
 function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
    return 
    function()
+      local path = "opendiff"
       -- As opendiff immediately returns, let user confirm manually
-      execute_confirm("opendiff",lfile,rfile,"-ancestor",afile,"-merge",outfile)
+      local ret = execute_confirm(path,
+				  lfile,rfile,
+				  "-ancestor",afile,
+				  "-merge",outfile)
+      if (ret ~= 0) then
+	 io.write(string.format(gettext("Error running merger '%s'\n"), path))
+      end
+      return ret
    end
 end
 
@@ -489,17 +536,22 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
       if cmd ~=nil 
       then 
          io.write (string.format(gettext("executing external 3-way merge command\n")))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.afile, "r")
-         else
-            ret = read_contents_of_file (tbl.outfile, "r") 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
-         end
+	 -- cmd() return 0 on success.
+         if cmd () ~= 0
+	 then
+	    ret = nil
+	 else
+	    if tbl.meld_exists 
+	    then 
+	       ret = read_contents_of_file (tbl.afile, "r")
+	    else
+	       ret = read_contents_of_file (tbl.outfile, "r") 
+	    end 
+	    if string.len (ret) == 0 
+	    then 
+	       ret = nil 
+	    end
+	 end
       else
          io.write (string.format("No external 3-way merge command found.\n"..
             "You may want to check that $EDITOR is set to an editor that supports 3-way merge,\n"..
@@ -654,16 +706,20 @@ function get_netsync_read_permitted(branch, ident)
       if item.name == "pattern" then
          if matches and not cont then return false end
          matches = false
+	 cont = false
          for j, val in pairs(item.values) do
             if globish_match(val, branch) then matches = true end
          end
       elseif item.name == "allow" then if matches then
          for j, val in pairs(item.values) do
             if val == "*" then return true end
+	    if val == "" and ident == nil then return true end
             if globish_match(val, ident) then return true end
          end
       end elseif item.name == "deny" then if matches then
          for j, val in pairs(item.values) do
+            if val == "*" then return false end
+	    if val == "" and ident == nil then return false end
             if globish_match(val, ident) then return false end
          end
       end elseif item.name == "continue" then if matches then
@@ -696,9 +752,84 @@ function get_netsync_write_permitted(ident)
    return matches
 end
 
-function validate_commit_message(message, changeset_text)
-    if (message == "") then
-        return false, "empty messages aren't allowed"
-    end
-    return true, ""
+-- This is a simple funciton which assumes you're going to be spawning
+-- a copy of mtn, so reuses a common bit at the end for converting
+-- local args into remote args. You might need to massage the logic a
+-- bit if this doesn't fit your assumptions.
+
+function get_netsync_connect_command(uri, args)
+
+	local argv = nil
+	local quote_patterns = false
+
+	if uri["scheme"] == "ssh" 
+		and uri["host"] 
+		and uri["path"] then
+
+		argv = { "ssh" }
+		if uri["user"] then
+			table.insert(argv, "-l")
+			table.insert(argv, uri["user"])
+		end
+		if uri["port"] then
+			table.insert(argv, "-p")
+			table.insert(argv, uri["port"])
+		end
+
+		table.insert(argv, uri["host"])
+    quote_patterns = true
+	end
+	
+	if uri["scheme"] == "file" and uri["path"] then
+		argv = { }
+	end
+
+	if argv then
+
+		table.insert(argv, get_mtn_command(uri["host"]))
+
+		if args["debug"] then
+			table.insert(argv, "--debug")
+		else
+			table.insert(argv, "--quiet")
+		end
+
+		table.insert(argv, "--db")
+		table.insert(argv, uri["path"])
+		table.insert(argv, "serve")
+		table.insert(argv, "--stdio")
+		table.insert(argv, "--no-transport-auth")
+
+		-- patterns must be quoted to avoid a remote shell expanding them
+		if args["include"] then
+			local include = args["include"]
+			if quote_patterns then
+				include = "'" .. args["include"] .. "'"
+			end
+			table.insert(argv, include)
+		end
+
+		if args["exclude"] then
+			table.insert(argv, "--exclude")
+			local exclude = args["exclude"]
+			if quote_patterns then
+				exclude = "'" .. args["exclude"] .. "'"
+			end
+			table.insert(argv, exclude)
+		end
+	end
+	return argv
+end
+
+function use_transport_auth(uri)
+	if uri["scheme"] == "ssh" 
+	or uri["scheme"] == "file" then
+		return false
+	else
+		return true
+	end
+end
+
+function get_mtn_command(host)
+	return "mtn"
 end

@@ -1,10 +1,14 @@
 #ifndef __RESTRICTIONS_HH__
 #define __RESTRICTIONS_HH__
 
-// copyright (C) 2005 derek scherger <derek@echologic.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Derek Scherger <derek@echologic.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // the following commands accept file arguments and --exclude and --depth
 // options used to define a restriction on the files that will be processed:
@@ -28,59 +32,99 @@
 #include "roster.hh"
 #include "vocab.hh"
 
-void 
-extract_rearranged_paths(cset const & rearrangement, 
-                         path_set & paths);
+// between any two related revisions, A and B, there is a set of changes (a
+// cset) that describes the operations required to get from A to B. for example:
+//
+// revision A ... changes ... revision B
+//
+// a restriction is a means of masking off some of these changes to produce a
+// third revision, X that lies somewhere between A and B.  changes included by
+// the restriction when applied to revision A would produce revision X.  changes
+// excluded by the restriction when applied to revision X would produce revision
+// B.
+//
+// conceptually, a restriction allows for something like a sliding control for
+// selecting the changes between revisions A and B. when the control is "all the
+// way to the right" all changes are included and X == B. when then control is
+// "all the way to the left" no changes are included and X == A. when the
+// control is somewhere between these extremes X is a new revision.
+//
+// revision A ... included ... revision X ... excluded ... revision B
 
-void 
-add_intermediate_paths(path_set & paths);
+namespace restricted_path 
+{
+  enum status { included, excluded };
+}
 
-void 
-restrict_cset(cset const & work, 
-              cset & included,
-              cset & excluded,
-              app_state & app);
+class restriction
+{
+ public:
+  bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
 
-void 
-get_base_roster_and_working_cset(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_id & old_revision_id,
-                                 roster_t & old_roster,
-                                 path_set & old_paths, 
-                                 path_set & new_paths,
-                                 cset & included,
-                                 cset & excluded);
+ protected:
+  restriction(app_state & a) : app(a) {}
 
-void 
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster,
-                                 cset & excluded,
-                                 node_id_source & nis);
+  restriction(std::vector<utf8> const & includes,
+              std::vector<utf8> const & excludes,
+              app_state & a);
 
-// Same as above, only without the "excluded" out-parameter.
-void
-get_working_revision_and_rosters(app_state & app, 
-                                 std::vector<utf8> const & args,
-                                 revision_set & rev,
-                                 roster_t & old_roster,
-                                 roster_t & new_roster,
-                                 node_id_source & nis);
+  app_state & app;
+  path_set included_paths, excluded_paths;
+};
 
-void
-get_unrestricted_working_revision_and_rosters(app_state & app, 
-                                              revision_set & rev,
-                                              roster_t & old_roster,
-                                              roster_t & new_roster,
-                                              node_id_source & nis);
+class node_restriction : public restriction
+{
+ public:
+  node_restriction(app_state & a) : restriction(a) {}
 
-void
-calculate_restricted_cset(app_state & app, 
-                          std::vector<utf8> const & args,
-                          cset const & cs,
-                          cset & included,
-                          cset & excluded);
+  node_restriction(std::vector<utf8> const & includes,
+                   std::vector<utf8> const & excludes,
+                   roster_t const & roster,
+                   app_state & a);
+
+  node_restriction(std::vector<utf8> const & includes,
+                     std::vector<utf8> const & excludes,
+                     roster_t const & roster1,
+                     roster_t const & roster2,
+                     app_state & a);
+
+  bool includes(roster_t const & roster, node_id nid) const;
+
+  node_restriction & operator=(node_restriction const & other)
+  {
+    included_paths = other.included_paths;
+    excluded_paths = other.excluded_paths;
+    known_paths = other.known_paths;
+    node_map = other.node_map;
+    return *this;
+  }
+
+ private:
+  path_set known_paths;
+  std::map<node_id, restricted_path::status> node_map;
+};
+
+class path_restriction : public restriction
+{
+ public:
+  path_restriction(app_state & a) : restriction(a) {}
+
+  path_restriction(std::vector<utf8> const & includes,
+                   std::vector<utf8> const & excludes,
+                   app_state & a);
+
+  bool includes(split_path const & sp) const;
+
+ private:
+  std::map<split_path, restricted_path::status> path_map;
+};
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif  // header guard

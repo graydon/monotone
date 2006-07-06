@@ -1,7 +1,11 @@
-// copyright (C) 2005 Kaushik Veeraraghavan <kaushikv@gmail.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Kaushik Veeraraghavan <kaushikv@gmail.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
@@ -9,8 +13,11 @@
 #include <string>
 
 #include "transforms.hh"
+#include "sanity.hh"
 
-static std::string expected_SHA_MCT[] = {
+using std::string;
+
+static string expected_SHA_MCT[] = {
   "e216836819477c7f78e0d843fe4ff1b6d6c14cd4",
   "a2dbc7a5b1c6c0a8bcb7aaa41252a6a7d0690dbc",
   "db1f9050bb863dfef4ce37186044e2eeb17ee013",
@@ -1012,15 +1019,15 @@ static std::string expected_SHA_MCT[] = {
   "25f67e9875a90aee60bf1dc1b26c2750294aa7b7",
   "8fa552efdcb67d98b5e0189144e99607f5a807fe" };
 
-static void 
+static void
 calculate_ident_test()
 {
-  // NIST checks all SHA implementations using a test system 
+  // NIST checks all SHA implementations using a test system
   // outlined in the SHA Verification System PDF obtained at
   // http://csrc.nist.gov/cryptval/shs/SHAVS.pdf
 
   // There are three tests outlined:
-  //   - Short Message Test:  A small message is provided as 
+  //   - Short Message Test:  A small message is provided as
   //     an input with a pre-computed digest.  If the crypto
   //     module under test produces a HASH that matches the
   //     known digest, the test passes
@@ -1034,13 +1041,13 @@ calculate_ident_test()
   //
   //   - Monte Carlo Test:  This tests the usage of SHA in
   //     PRNGs.  A known 'seed' is provided.  This 'seed' is
-  //     hashed and used as input into the next iteration. 
+  //     hashed and used as input into the next iteration.
   //     This continues for 100,000 iterations.  After every
   //     1000 hashes, the computed hash is compared to a known
   //     one.  If they match, the test succeeds.
 
 
-  // This test has been updated to include a defined Short 
+  // This test has been updated to include a defined Short
   // Message test, and the Monte Carlo Test.  The Long Message
   // test has been dropped as suitable, pre-computed values, are
   // not available.  Also, instead of the expected 100,000
@@ -1051,25 +1058,25 @@ calculate_ident_test()
 
   //SHA Short Message Test
   data input(decode_hexenc("5e"));
-  std::string ident("5e6f80a34a9798cafc6a5db96cc57ba4c4db59c2");
+  string ident("5e6f80a34a9798cafc6a5db96cc57ba4c4db59c2");
 
   calculate_ident(input, output);
 
-  //L(FL(" Input: %s\n") % input);
-  //L(FL("Output: %s\n") % output);
+  //L(FL(" Input: %s") % input);
+  //L(FL("Output: %s") % output);
 
   BOOST_CHECK(output() == ident);
   L(FL("SHA Short Message Test:  Passed\n\n"));
 
 
   //SHA Monte Carlo Test
-  // 
+  //
   //INPUT: Seed - A random seed n bits long
   //
   //   for (j=0; j<100; j++) {
   //
   //      MD0 = MD1 = MD2 = Seed;
-  //  
+  //
   //      for (i=3; i<1003; i++) {
   //         Mi = MDi-3 || MDi-2 || MDi-1;
   //        MDi = SHA(Mi);
@@ -1081,33 +1088,33 @@ calculate_ident_test()
   //
 
   //Seed = d0569cb3665a8a43eb6ea23d75a3c4d2054a0d7d
-  std::string Seed = ("d0569cb3665a8a43eb6ea23d75a3c4d2054a0d7d");
+  string Seed = ("d0569cb3665a8a43eb6ea23d75a3c4d2054a0d7d");
 
-  std::string MD[1003];
+  string MD[1003];
 
-  for (int j = 0; j < 1000; j++) 
+  for (int j = 0; j < 1000; j++)
     {
 
       MD[0] = Seed;
       MD[1] = Seed;
       MD[2] = Seed;
 
-      for (int i = 3; i < 1003; i++) 
+      for (int i = 3; i < 1003; i++)
         {
-          std::string messageString = MD[i - 3] + MD[i - 2] + MD[i - 1];
-          // L(FL("messageString: %s\n") % messageString );
+          string messageString = MD[i - 3] + MD[i - 2] + MD[i - 1];
+          // L(FL("messageString: %s") % messageString );
 
           data messageData(decode_hexenc(messageString));
-          // L(FL("message: %s\n") % messageString );
+          // L(FL("message: %s") % messageString );
 
           calculate_ident(messageData, output2);
-          // L(FL("output: %s\n") % output2 );
+          // L(FL("output: %s") % output2 );
 
           MD[i] = output2();
         }
-  
-      L(FL("  %03d:  %s\n") % j % output2 );
-    
+
+      L(FL("  %03d:  %s") % j % output2 );
+
       BOOST_CHECK(output2() == expected_SHA_MCT[j]);
 
       MD[j] = output2();
@@ -1127,3 +1134,11 @@ add_crypto_tests(test_suite * suite)
 
 
 #endif // BUILD_UNIT_TESTS
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

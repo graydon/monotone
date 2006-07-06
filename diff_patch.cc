@@ -1,9 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "config.h"
 
@@ -23,9 +25,22 @@
 #include "safe_map.hh"
 #include "sanity.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "vocab.hh"
+#include "revision.hh"
+#include "constants.hh"
+#include "localized_file_io.hh"
 
-using namespace std;
+using std::endl;
+using std::make_pair;
+using std::map;
+using std::min;
+using std::ostream;
+using std::ostream_iterator;
+using std::string;
+using std::swap;
+using std::vector;
+
 using boost::shared_ptr;
 
 //
@@ -36,7 +51,7 @@ using boost::shared_ptr;
 //            \---->   left
 //
 // first you compute the edit list "EDITS(ancestor,left)".
-// 
+//
 // then you make an offset table "leftpos" which describes positions in
 // "ancestor" as they map to "left"; that is, for 0 < apos <
 // ancestor.size(), we have
@@ -52,7 +67,7 @@ using boost::shared_ptr;
 //
 // you then go through this edit list applying the edits to left, rather
 // than ancestor, and using the table leftpos to map the position of each
-// edit to an appropriate spot in left. this means you walk a "curr_left" 
+// edit to an appropriate spot in left. this means you walk a "curr_left"
 // index through the edits, and for each edit e:
 //
 // - if e is a delete (and e.pos is a position in ancestor)
@@ -75,7 +90,7 @@ using boost::shared_ptr;
 //
 
 typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;
-static char *etab[3] = 
+static char *etab[3] =
   {
     "preserved",
     "deleted",
@@ -84,7 +99,7 @@ static char *etab[3] =
 
 struct extent
 {
-  extent(size_t p, size_t l, edit_t t) 
+  extent(size_t p, size_t l, edit_t t)
     : pos(p), len(l), type(t)
   {}
   size_t pos;
@@ -104,7 +119,7 @@ void calculate_extents(vector<long, QA(long)> const & a_b_edits,
 
   size_t a_pos = 0, b_pos = 0;
 
-  for (vector<long, QA(long)>::const_iterator i = a_b_edits.begin(); 
+  for (vector<long, QA(long)>::const_iterator i = a_b_edits.begin();
        i != a_b_edits.end(); ++i)
     {
       // L(FL("edit: %d") % *i);
@@ -121,7 +136,7 @@ void calculate_extents(vector<long, QA(long)> const & a_b_edits,
               extents.push_back(extent(b_pos++, 1, preserved));
             }
 
-          // L(FL(" -- delete at A-pos %d (B-pos = %d)\n") % a_deleted % b_pos);
+          // L(FL(" -- delete at A-pos %d (B-pos = %d)") % a_deleted % b_pos);
 
           // skip the deleted line
           a_pos++;
@@ -140,9 +155,9 @@ void calculate_extents(vector<long, QA(long)> const & a_b_edits,
               extents.push_back(extent(b_pos++, 1, preserved));
             }
 
-          // L(FL(" -- insert at B-pos %d (A-pos = %d) : '%s'\n") 
+          // L(FL(" -- insert at B-pos %d (A-pos = %d) : '%s'")
           //   % b_inserted % a_pos % intern.lookup(b.at(b_inserted)));
-          
+
           // record that there was an insertion, but a_pos did not move.
           if ((b_pos == 0 && extents.empty())
               || (b_pos == prefix.size()))
@@ -174,7 +189,7 @@ void normalize_extents(vector<extent> & a_b_map,
   for (size_t i = 0; i < a_b_map.size(); ++i)
     {
       if (i > 0)
-      { 
+      {
         size_t j = i;
         while (j > 0
                && (a_b_map.at(j-1).type == preserved)
@@ -193,7 +208,7 @@ void normalize_extents(vector<extent> & a_b_map,
             //                 u
             //                 v
             //                 a       ... the a on the RHS here. Hence we can
-            //  q  --pres-->   q   3   'shift' the entire 'changed' block 
+            //  q  --pres-->   q   3   'shift' the entire 'changed' block
             //  e  --chng-->   d   4   upwards, leaving a 'preserved' line
             //  g  --pres-->   g   5   'a'->'a'
             //
@@ -201,7 +216,7 @@ void normalize_extents(vector<extent> & a_b_map,
             //                     i
             //  z   --pres-->  z   0
             //  o   --chng-->  o   1
-            //                 a   
+            //                 a
             //                 t
             //                 u
             //                 v
@@ -213,7 +228,7 @@ void normalize_extents(vector<extent> & a_b_map,
             // Now all the 'changed' extents are normalised to the
             // earliest possible position.
 
-            L(FL("exchanging preserved extent [%d+%d] with changed extent [%d+%d]\n")
+            L(FL("exchanging preserved extent [%d+%d] with changed extent [%d+%d]")
               % a_b_map.at(j-1).pos
               % a_b_map.at(j-1).len
               % a_b_map.at(j).pos
@@ -229,7 +244,7 @@ void normalize_extents(vector<extent> & a_b_map,
   for (size_t i = 0; i < a_b_map.size(); ++i)
     {
       if (i > 0)
-      { 
+      {
         size_t j = i;
         while (j > 0
                && a_b_map.at(j).type == changed
@@ -240,20 +255,20 @@ void normalize_extents(vector<extent> & a_b_map,
             // step 1: move a chunk from this insert extent to its
             // predecessor
             size_t piece = a_b_map.at(j).len - 1;
-            //      L(FL("moving change piece of len %d from pos %d to pos %d\n")
+            //      L(FL("moving change piece of len %d from pos %d to pos %d")
             //        % piece
             //        % a_b_map.at(j).pos
             //        % a_b_map.at(j-1).pos);
             a_b_map.at(j).len = 1;
             a_b_map.at(j).pos += piece;
             a_b_map.at(j-1).len += piece;
-            
-            // step 2: if this extent (now of length 1) has become a "changed" 
+
+            // step 2: if this extent (now of length 1) has become a "changed"
             // extent identical to its previous state, switch it to a "preserved"
             // extent.
             if (b.at(a_b_map.at(j).pos) == a.at(j))
               {
-                //              L(FL("changing normalized 'changed' extent at %d to 'preserved'\n")
+                //              L(FL("changing normalized 'changed' extent at %d to 'preserved'")
                 //                % a_b_map.at(j).pos);
                 a_b_map.at(j).type = preserved;
               }
@@ -279,22 +294,22 @@ void merge_extents(vector<extent> const & a_b_map,
 
   //   for (; i != a_b_map.end(); ++i, ++j)
   //     {
-  
-  //       L(FL("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
-  //            % etab[i->type] % i->pos % i->len 
+
+  //       L(FL("trying to merge: [%s %d %d] vs. [%s %d %d]")
+  //            % etab[i->type] % i->pos % i->len
   //            % etab[j->type] % j->pos % j->len);
   //     }
-  
+
   //   i = a_b_map.begin();
   //   j = a_c_map.begin();
 
   for (; i != a_b_map.end(); ++i, ++j)
     {
 
-      //       L(FL("trying to merge: [%s %d %d] vs. [%s %d %d] \n")
-      //                % etab[i->type] % i->pos % i->len 
+      //       L(FL("trying to merge: [%s %d %d] vs. [%s %d %d]")
+      //                % etab[i->type] % i->pos % i->len
       //                % etab[j->type] % j->pos % j->len);
-      
+
       // mutual, identical preserves / inserts / changes
       if (((i->type == changed && j->type == changed)
            || (i->type == preserved && j->type == preserved))
@@ -304,8 +319,8 @@ void merge_extents(vector<extent> const & a_b_map,
             {
               if (b.at(i->pos + k) != c.at(j->pos + k))
                 {
-                  L(FL("conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'\n")
-                    % etab[i->type] % i->pos % k % in.lookup(b.at(i->pos + k)) 
+                  L(FL("conflicting edits: %s %d[%d] '%s' vs. %s %d[%d] '%s'")
+                    % etab[i->type] % i->pos % k % in.lookup(b.at(i->pos + k))
                     % etab[j->type] % j->pos % k % in.lookup(c.at(j->pos + k)));
                   throw conflict();
                 }
@@ -317,52 +332,52 @@ void merge_extents(vector<extent> const & a_b_map,
       else if ((i->type == deleted && j->type == deleted)
                || (i->type == deleted && j->type == preserved)
                || (i->type == preserved && j->type == deleted))
-        { 
+        {
           // do nothing
         }
 
-      // single-edge insert / changes 
+      // single-edge insert / changes
       else if (i->type == changed && j->type == preserved)
         for (size_t k = 0; k < i->len; ++k)
           merged.push_back(b.at(i->pos + k));
-      
+
       else if (i->type == preserved && j->type == changed)
         for (size_t k = 0; k < j->len; ++k)
           merged.push_back(c.at(j->pos + k));
-      
+
       else
         {
-          L(FL("conflicting edits: [%s %d %d] vs. [%s %d %d]\n")
-            % etab[i->type] % i->pos % i->len 
+          L(FL("conflicting edits: [%s %d %d] vs. [%s %d %d]")
+            % etab[i->type] % i->pos % i->len
             % etab[j->type] % j->pos % j->len);
-          throw conflict();       
-        }      
-      
+          throw conflict();
+        }
+
       //       if (merged.empty())
-      //        L(FL(" --> EMPTY\n"));
+      //        L(FL(" --> EMPTY"));
       //       else
-      //                L(FL(" --> [%d]: %s\n") % (merged.size() - 1) % in.lookup(merged.back()));
+      //                L(FL(" --> [%d]: %s") % (merged.size() - 1) % in.lookup(merged.back()));
     }
 }
 
 
 void merge_via_edit_scripts(vector<string> const & ancestor,
-                            vector<string> const & left,                            
+                            vector<string> const & left,
                             vector<string> const & right,
                             vector<string> & merged)
 {
-  vector<long, QA(long)> anc_interned;  
-  vector<long, QA(long)> left_interned, right_interned;  
-  vector<long, QA(long)> left_edits, right_edits;  
-  vector<long, QA(long)> left_prefix, right_prefix;  
-  vector<long, QA(long)> left_suffix, right_suffix;  
+  vector<long, QA(long)> anc_interned;
+  vector<long, QA(long)> left_interned, right_interned;
+  vector<long, QA(long)> left_edits, right_edits;
+  vector<long, QA(long)> left_prefix, right_prefix;
+  vector<long, QA(long)> left_suffix, right_suffix;
   vector<extent> left_extents, right_extents;
   vector<long, QA(long)> merged_interned;
   interner<long> in;
 
-  //   for (int i = 0; i < std::min(std::min(left.size(), right.size()), ancestor.size()); ++i)
+  //   for (int i = 0; i < min(min(left.size(), right.size()), ancestor.size()); ++i)
   //     {
-  //       std::cerr << "[" << i << "] " << left[i] << " " << ancestor[i] <<  " " << right[i] << endl;
+  //       cerr << "[" << i << "] " << left[i] << " " << ancestor[i] <<  " " << right[i] << endl;
   //     }
 
   anc_interned.reserve(ancestor.size());
@@ -380,59 +395,59 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
        i != right.end(); ++i)
     right_interned.push_back(in.intern(*i));
 
-  L(FL("calculating left edit script on %d -> %d lines\n")
+  L(FL("calculating left edit script on %d -> %d lines")
     % anc_interned.size() % left_interned.size());
 
   edit_script(anc_interned.begin(), anc_interned.end(),
               left_interned.begin(), left_interned.end(),
-              std::min(ancestor.size(), left.size()),
+              min(ancestor.size(), left.size()),
               left_edits);
-  
-  L(FL("calculating right edit script on %d -> %d lines\n")
+
+  L(FL("calculating right edit script on %d -> %d lines")
     % anc_interned.size() % right_interned.size());
 
   edit_script(anc_interned.begin(), anc_interned.end(),
               right_interned.begin(), right_interned.end(),
-              std::min(ancestor.size(), right.size()),
+              min(ancestor.size(), right.size()),
               right_edits);
 
-  L(FL("calculating left extents on %d edits\n") % left_edits.size());
-  calculate_extents(left_edits, left_interned, 
-                    left_prefix, left_extents, left_suffix, 
+  L(FL("calculating left extents on %d edits") % left_edits.size());
+  calculate_extents(left_edits, left_interned,
+                    left_prefix, left_extents, left_suffix,
                     anc_interned.size(), in);
 
-  L(FL("calculating right extents on %d edits\n") % right_edits.size());
-  calculate_extents(right_edits, right_interned, 
-                    right_prefix, right_extents, right_suffix, 
+  L(FL("calculating right extents on %d edits") % right_edits.size());
+  calculate_extents(right_edits, right_interned,
+                    right_prefix, right_extents, right_suffix,
                     anc_interned.size(), in);
 
-  L(FL("normalizing %d right extents\n") % right_extents.size());
+  L(FL("normalizing %d right extents") % right_extents.size());
   normalize_extents(right_extents, anc_interned, right_interned);
 
-  L(FL("normalizing %d left extents\n") % left_extents.size());
+  L(FL("normalizing %d left extents") % left_extents.size());
   normalize_extents(left_extents, anc_interned, left_interned);
 
 
   if ((!right_prefix.empty()) && (!left_prefix.empty()))
     {
-      L(FL("conflicting prefixes\n"));
+      L(FL("conflicting prefixes"));
       throw conflict();
     }
 
   if ((!right_suffix.empty()) && (!left_suffix.empty()))
     {
-      L(FL("conflicting suffixes\n"));
+      L(FL("conflicting suffixes"));
       throw conflict();
     }
 
-  L(FL("merging %d left, %d right extents\n") 
+  L(FL("merging %d left, %d right extents")
     % left_extents.size() % right_extents.size());
 
   copy(left_prefix.begin(), left_prefix.end(), back_inserter(merged_interned));
   copy(right_prefix.begin(), right_prefix.end(), back_inserter(merged_interned));
 
   merge_extents(left_extents, right_extents,
-                left_interned, right_interned, 
+                left_interned, right_interned,
                 in, merged_interned);
 
   copy(left_suffix.begin(), left_suffix.end(), back_inserter(merged_interned));
@@ -450,13 +465,13 @@ bool merge3(vector<string> const & ancestor,
             vector<string> const & right,
             vector<string> & merged)
 {
-  try 
-   { 
+  try
+   {
       merge_via_edit_scripts(ancestor, left, right, merged);
     }
-  catch(conflict & c)
+  catch(conflict &)
     {
-      L(FL("conflict detected. no merge.\n"));
+      L(FL("conflict detected. no merge."));
       return false;
     }
   return true;
@@ -474,27 +489,27 @@ content_merge_database_adaptor::content_merge_database_adaptor(app_state & app,
                                                                marking_map const & mm)
   : app(app), mm(mm)
 {
-  // FIXME: possibly refactor to run this lazily, as we don't 
+  // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
   // called on to do content merging.
   find_common_ancestor_for_merge(left, right, lca, app);
 }
 
-void 
-content_merge_database_adaptor::record_merge(file_id const & left_ident, 
-                                             file_id const & right_ident, 
+void
+content_merge_database_adaptor::record_merge(file_id const & left_ident,
+                                             file_id const & right_ident,
                                              file_id const & merged_ident,
-                                             file_data const & left_data, 
+                                             file_data const & left_data,
                                              file_data const & merged_data)
-{  
-  L(FL("recording successful merge of %s <-> %s into %s\n")
+{
+  L(FL("recording successful merge of %s <-> %s into %s")
     % left_ident % right_ident % merged_ident);
 
   delta left_delta, right_delta;
   transaction_guard guard(app.db);
 
-  diff(left_data.inner(), merged_data.inner(), left_delta); 
-  diff(left_data.inner(), merged_data.inner(), right_delta);  
+  diff(left_data.inner(), merged_data.inner(), left_delta);
+  diff(left_data.inner(), merged_data.inner(), right_delta);
   packet_db_writer dbw(app);
   dbw.consume_file_delta (left_ident, merged_ident, file_delta(left_delta));
   dbw.consume_file_delta (right_ident, merged_ident, file_delta(right_delta));
@@ -511,26 +526,26 @@ load_and_cache_roster(revision_id const & rid,
   if (i != rmap.end())
     rout = i->second;
   else
-    { 
+    {
       rout = shared_ptr<roster_t>(new roster_t());
       app.db.get_roster(rid, *rout);
       safe_insert(rmap, make_pair(rid, rout));
     }
 }
 
-void 
+void
 content_merge_database_adaptor::get_ancestral_roster(node_id nid,
-                                                     boost::shared_ptr<roster_t> & anc)
+                                                     shared_ptr<roster_t> & anc)
 {
   // Given a file, if the lca is nonzero and its roster contains the file,
   // then we use its roster.  Otherwise we use the roster at the file's
   // birth revision, which is the "per-file worst case" lca.
-  
+
   // Begin by loading any non-empty file lca roster
   if (!lca.inner()().empty())
     load_and_cache_roster(lca, rosters, anc, app);
-  
-  // If this roster doesn't contain the file, replace it with 
+
+  // If this roster doesn't contain the file, replace it with
   // the file's birth roster.
   if (!anc->has_node(nid))
     {
@@ -540,7 +555,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
     }
 }
 
-void 
+void
 content_merge_database_adaptor::get_version(file_path const & path,
                                             file_id const & ident,
                                             file_data & dat)
@@ -553,31 +568,31 @@ content_merge_database_adaptor::get_version(file_path const & path,
 // content_merge_workspace_adaptor
 ///////////////////////////////////////////////////////////////////////////
 
-void 
-content_merge_workspace_adaptor::record_merge(file_id const & left_id, 
+void
+content_merge_workspace_adaptor::record_merge(file_id const & left_id,
                                               file_id const & right_id,
                                               file_id const & merged_id,
-                                              file_data const & left_data, 
+                                              file_data const & left_data,
                                               file_data const & merged_data)
-{  
-  L(FL("temporarily recording merge of %s <-> %s into %s\n")
+{
+  L(FL("temporarily recording merge of %s <-> %s into %s")
     % left_id % right_id % merged_id);
   I(temporary_store.find(merged_id) == temporary_store.end());
   temporary_store.insert(make_pair(merged_id, merged_data));
 }
 
-void 
+void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
-                                                      boost::shared_ptr<roster_t> & anc)
+                                                      shared_ptr<roster_t> & anc)
 {
-  // When doing an update, the base revision is always the ancestor to 
+  // When doing an update, the base revision is always the ancestor to
   // use for content merging.
   anc = base;
 }
 
-void 
+void
 content_merge_workspace_adaptor::get_version(file_path const & path,
-                                             file_id const & ident, 
+                                             file_id const & ident,
                                              file_data & dat)
 {
   if (app.db.file_version_exists(ident))
@@ -603,45 +618,45 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
 // content_merger
 ///////////////////////////////////////////////////////////////////////////
 
-content_merger::content_merger(app_state & app, 
+content_merger::content_merger(app_state & app,
                                roster_t const & anc_ros,
-                               roster_t const & left_ros, 
+                               roster_t const & left_ros,
                                roster_t const & right_ros,
                                content_merge_adaptor & adaptor)
-  : app(app), 
-    anc_ros(anc_ros), 
-    left_ros(left_ros), 
+  : app(app),
+    anc_ros(anc_ros),
+    left_ros(left_ros),
     right_ros(right_ros),
     adaptor(adaptor)
 {}
 
-std::string 
+string
 content_merger::get_file_encoding(file_path const & path,
                                   roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, encoding_attribute, v))
+  if (get_attribute_from_roster(ros, path, constants::encoding_attribute, v))
     return v();
-  return default_encoding;
+  return constants::default_encoding;
 }
 
-bool 
+bool
 content_merger::attribute_manual_merge(file_path const & path,
                                        roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, manual_merge_attribute, v)
+  if (get_attribute_from_roster(ros, path, constants::manual_merge_attribute, v)
       && v() == "true")
     return true;
   return false; // default: enable auto merge
 }
 
-bool 
+bool
 content_merger::try_to_merge_files(file_path const & anc_path,
                                    file_path const & left_path,
                                    file_path const & right_path,
                                    file_path const & merged_path,
-                                   file_id const & ancestor_id,                                    
+                                   file_id const & ancestor_id,
                                    file_id const & left_id,
                                    file_id const & right_id,
                                    file_id & merged_id)
@@ -651,16 +666,16 @@ content_merger::try_to_merge_files(file_path const & anc_path,
   I(!null_id(ancestor_id));
   I(!null_id(left_id));
   I(!null_id(right_id));
-  
-  L(FL("trying to merge %s <-> %s (ancestor: %s)\n")
+
+  L(FL("trying to merge %s <-> %s (ancestor: %s)")
     % left_id % right_id % ancestor_id);
 
   if (left_id == right_id)
     {
-      L(FL("files are identical\n"));
+      L(FL("files are identical"));
       merged_id = left_id;
-      return true;      
-    }  
+      return true;
+    }
 
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
@@ -673,11 +688,11 @@ content_merger::try_to_merge_files(file_path const & anc_path,
   ancestor_unpacked = ancestor_data.inner();
   right_unpacked = right_data.inner();
 
-  if (!attribute_manual_merge(left_path, left_ros) && 
+  if (!attribute_manual_merge(left_path, left_ros) &&
       !attribute_manual_merge(right_path, right_ros))
     {
       // both files mergeable by monotone internal algorithm, try to merge
-      // note: the ancestor is not considered for manual merging. Forcing the 
+      // note: the ancestor is not considered for manual merging. Forcing the
       // user to merge manually just because of an ancestor mistakenly marked
       // manual seems too harsh
       string left_encoding, anc_encoding, right_encoding;
@@ -689,26 +704,26 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       split_into_lines(left_unpacked(), left_encoding, left_lines);
       split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
       split_into_lines(right_unpacked(), right_encoding, right_lines);
-        
-      if (merge3(ancestor_lines, 
-                 left_lines, 
-                 right_lines, 
+
+      if (merge3(ancestor_lines,
+                 left_lines,
+                 right_lines,
                  merged_lines))
         {
           hexenc<id> tmp_id;
           file_data merge_data;
           string tmp;
-          
-          L(FL("internal 3-way merged ok\n"));
+
+          L(FL("internal 3-way merged ok"));
           join_lines(merged_lines, tmp);
           calculate_ident(data(tmp), tmp_id);
           file_id merged_fid(tmp_id);
           merge_data = file_data(tmp);
-    
+
           merged_id = merged_fid;
-          adaptor.record_merge(left_id, right_id, merged_fid, 
+          adaptor.record_merge(left_id, right_id, merged_fid,
                                left_data, merge_data);
-    
+
           return true;
         }
     }
@@ -724,19 +739,19 @@ content_merger::try_to_merge_files(file_path const & anc_path,
     % merged_path);
 
   if (app.lua.hook_merge3(anc_path, left_path, right_path, merged_path,
-                          ancestor_unpacked, left_unpacked, 
+                          ancestor_unpacked, left_unpacked,
                           right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
       file_data merge_data;
 
-      L(FL("lua merge3 hook merged ok\n"));
+      L(FL("lua merge3 hook merged ok"));
       calculate_ident(merged_unpacked, tmp_id);
       file_id merged_fid(tmp_id);
       merge_data = file_data(merged_unpacked);
 
       merged_id = merged_fid;
-      adaptor.record_merge(left_id, right_id, merged_fid, 
+      adaptor.record_merge(left_id, right_id, merged_fid,
                            left_data, merge_data);
       return true;
     }
@@ -759,7 +774,7 @@ struct hunk_consumer
 
 void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
                         vector<long, QA(long)> const & lines1,
-                        vector<long, QA(long)> const & lines2,                    
+                        vector<long, QA(long)> const & lines2,
                         hunk_consumer & cons)
 {
 
@@ -779,7 +794,7 @@ void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
       // normal case: files have something in common
       for (vector<long, QA(long)>::const_iterator i = lcs.begin();
            i != lcs.end(); ++i, ++a, ++b)
-        {         
+        {
           if (idx(lines1, a) == *i && idx(lines2, b) == *i)
             continue;
 
@@ -843,7 +858,7 @@ void unidiff_hunk_writer::insert_at(size_t b_pos)
 void unidiff_hunk_writer::delete_at(size_t a_pos)
 {
   a_len++;
-  hunk.push_back(string("-") + a[a_pos]);  
+  hunk.push_back(string("-") + a[a_pos]);
 }
 
 void unidiff_hunk_writer::flush_hunk(size_t pos)
@@ -853,12 +868,12 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
       // insert trailing context
       size_t a_pos = a_begin + a_len;
       for (size_t i = 0; (i < ctx) && (a_pos + i < a.size()); ++i)
-        {         
+        {
           hunk.push_back(string(" ") + a[a_pos + i]);
           a_len++;
           b_len++;
         }
-      
+
       // write hunk to stream
       if (a_len == 0)
         ost << "@@ -0,0";
@@ -868,7 +883,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
           if (a_len > 1)
             ost << "," << a_len;
         }
-      
+
       if (b_len == 0)
         ost << " +0,0";
       else
@@ -878,10 +893,10 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
             ost << "," << b_len;
         }
       ost << " @@" << endl;
-      
+
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
     }
-  
+
   // reset hunk
   hunk.clear();
   skew += b_len - a_len;
@@ -920,7 +935,7 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
         {
           hunk.push_back(string(" ") + a[a_begin + a_len]);
           a_len++;
-          b_len++;        
+          b_len++;
         }
     }
 }
@@ -950,7 +965,7 @@ struct cxtdiff_hunk_writer : public hunk_consumer
   void flush_pending_mods();
   virtual ~cxtdiff_hunk_writer() {}
 };
-  
+
 cxtdiff_hunk_writer::cxtdiff_hunk_writer(vector<string> const & a,
                                          vector<string> const & b,
                                          size_t ctx,
@@ -966,7 +981,7 @@ void cxtdiff_hunk_writer::insert_at(size_t b_pos)
   inserts.push_back(b_pos);
   have_insertions = true;
 }
-  
+
 void cxtdiff_hunk_writer::delete_at(size_t a_pos)
 {
   deletes.push_back(a_pos);
@@ -1087,7 +1102,7 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
           from_file.push_back(string("  ") + a[a_begin + a_len]);
           to_file.push_back(string("  ") + a[a_begin + a_len]);
           a_len++;
-          b_len++;        
+          b_len++;
         }
     }
 }
@@ -1101,9 +1116,9 @@ void make_diff(string const & filename1,
                ostream & ost,
                diff_type type)
 {
-  vector<long, QA(long)> left_interned;  
-  vector<long, QA(long)> right_interned;  
-  vector<long, QA(long)> lcs;  
+  vector<long, QA(long)> left_interned;
+  vector<long, QA(long)> right_interned;
+  vector<long, QA(long)> lcs;
 
   interner<long> in;
 
@@ -1117,10 +1132,10 @@ void make_diff(string const & filename1,
        i != lines2.end(); ++i)
     right_interned.push_back(in.intern(*i));
 
-  lcs.reserve(std::min(lines1.size(),lines2.size()));
+  lcs.reserve(min(lines1.size(),lines2.size()));
   longest_common_subsequence(left_interned.begin(), left_interned.end(),
                              right_interned.begin(), right_interned.end(),
-                             std::min(lines1.size(), lines2.size()),
+                             min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
   switch (type)
@@ -1158,6 +1173,10 @@ void make_diff(string const & filename1,
 #include <boost/lexical_cast.hpp>
 #include "randomfile.hh"
 
+using std::cerr;
+using std::cout;
+using std::stringstream;
+
 using boost::lexical_cast;
 
 static void dump_incorrect_merge(vector<string> const & expected,
@@ -1170,17 +1189,17 @@ static void dump_incorrect_merge(vector<string> const & expected,
   for (size_t i = 0; i < mx; ++i)
     {
       cerr << "bad merge: " << i << " [" << prefix << "]\t";
-      
+
       if (i < expected.size())
         cerr << "[" << expected[i] << "]\t";
       else
         cerr << "[--nil--]\t";
-      
+
       if (i < got.size())
         cerr << "[" << got[i] << "]\t";
       else
         cerr << "[--nil--]\t";
-      
+
       cerr << endl;
     }
 }
@@ -1199,7 +1218,7 @@ static void unidiff_append_test()
              + "{\n"
              + "        say_hello();\n"
              + "}\n");
-  
+
   string dst(string("#include \"hello.h\"\n")
              + "\n"
              + "void say_hello()\n"
@@ -1217,7 +1236,7 @@ static void unidiff_append_test()
              + "        printf(\"goodbye\\n\");\n"
              + "}\n"
              + "\n");
-  
+
   string ud(string("--- hello.c\t0123456789abcdef0123456789abcdef01234567\n")
             + "+++ hello.c\tabcdef0123456789abcdef0123456789abcdef01\n"
             + "@@ -9,3 +9,9 @@\n"
@@ -1239,7 +1258,7 @@ static void unidiff_append_test()
             file_id(id("0123456789abcdef0123456789abcdef01234567")),
             file_id(id("abcdef0123456789abcdef0123456789abcdef01")),
             src_lines, dst_lines, sst, unified_diff);
-  cout << sst.str() << std::endl;
+  cout << sst.str() << endl;
   BOOST_CHECK(sst.str() == ud);
 }
 
@@ -1253,7 +1272,7 @@ static void randomizing_merge_test()
       vector<string> anc, d1, d2, m1, m2, gm;
 
       file_randomizer::build_random_fork(anc, d1, d2, gm,
-                                         i * 1023, (10 + 2 * i));      
+                                         i * 1023, (10 + 2 * i));
 
       BOOST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)
@@ -1346,7 +1365,7 @@ static void merge_additions_test()
   split_into_lines(confl, cf);
   split_into_lines(desc2, d2);
   split_into_lines(good_merge, gm);
-  
+
   BOOST_CHECK(merge3(anc, d1, d2, m1));
   if (gm != m1)
     dump_incorrect_merge (gm, m1, "merge_addition 1");
@@ -1397,3 +1416,11 @@ void add_diff_patch_tests(test_suite * suite)
 
 
 #endif // BUILD_UNIT_TESTS
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

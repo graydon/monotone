@@ -6,20 +6,28 @@
 #include "keys.hh"
 #include "globish.hh"
 
+using std::make_pair;
+using std::istringstream;
+using std::map;
+using std::ostringstream;
+using std::pair;
+using std::string;
+using std::vector;
+
 struct keyreader : public packet_consumer
 {
   key_store * ks;
 
   keyreader(key_store * k): ks(k) {}
-  virtual void consume_file_data(file_id const & ident, 
+  virtual void consume_file_data(file_id const & ident,
                                  file_data const & dat)
   {E(false, F("Extraneous data in key store."));}
-  virtual void consume_file_delta(file_id const & id_old, 
+  virtual void consume_file_delta(file_id const & id_old,
                                   file_id const & id_new,
                                   file_delta const & del)
   {E(false, F("Extraneous data in key store."));}
 
-  virtual void consume_revision_data(revision_id const & ident, 
+  virtual void consume_revision_data(revision_id const & ident,
                                      revision_data const & dat)
   {E(false, F("Extraneous data in key store."));}
   virtual void consume_revision_cert(revision<cert> const & t)
@@ -36,12 +44,12 @@ struct keyreader : public packet_consumer
     L(FL("reading key pair '%s' from key store") % ident);
     E(!ks->key_pair_exists(ident),
       F("Key store has multiple keys with id '%s'.") % ident);
-    ks->keys.insert(std::make_pair(ident, kp));
+    ks->keys.insert(make_pair(ident, kp));
     hexenc<id> hash;
     key_hash_code(ident, kp.pub, hash);
-    ks->hashes.insert(std::make_pair(hash, ident));
+    ks->hashes.insert(make_pair(hash, ident));
     L(FL("successfully read key pair '%s' from key store") % ident);
-  } 
+  }
 };
 
 key_store::key_store(app_state * a): have_read(false), app(a)
@@ -63,7 +71,7 @@ key_store::get_key_dir()
 void
 key_store::read_key_dir()
 {
-  std::vector<utf8> key_files, dirs;
+  vector<utf8> key_files, dirs;
   if (directory_exists(key_dir))
     {
       L(FL("reading key dir '%s'") % key_dir);
@@ -72,13 +80,13 @@ key_store::read_key_dir()
   else
     L(FL("key dir '%s' does not exist") % key_dir);
   keyreader kr(this);
-  for (std::vector<utf8>::const_iterator i = key_files.begin();
+  for (vector<utf8>::const_iterator i = key_files.begin();
        i != key_files.end(); ++i)
     {
       L(FL("reading keys from file '%s'") % (*i));
       data dat;
       read_data(key_dir / (*i)(), dat);
-      std::istringstream is(dat());
+      istringstream is(dat());
       read_packets(is, kr, *app);
     }
 }
@@ -101,7 +109,7 @@ key_store::ensure_in_database(rsa_keypair_id const & ident)
       L(FL("public key '%s' is already in db, not loading") % ident);
       return;
     }
-  std::map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
+  map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
   I(i != keys.end());
   app->db.put_key(ident, i->second.pub);
   L(FL("loaded public key '%s' into db") % ident);
@@ -110,7 +118,7 @@ key_store::ensure_in_database(rsa_keypair_id const & ident)
 bool
 key_store::try_ensure_in_db(hexenc<id> const & hash)
 {
-  std::map<hexenc<id>, rsa_keypair_id>::const_iterator i = hashes.find(hash);
+  map<hexenc<id>, rsa_keypair_id>::const_iterator i = hashes.find(hash);
   if (i == hashes.end())
     return false;
   ensure_in_database(i->second);
@@ -118,8 +126,8 @@ key_store::try_ensure_in_db(hexenc<id> const & hash)
 }
 
 void
-key_store::get_key_ids(std::string const & pattern,
-                   std::vector<rsa_keypair_id> & priv)
+key_store::get_key_ids(string const & pattern,
+                   vector<rsa_keypair_id> & priv)
 {
   maybe_read_key_dir();
   priv.clear();
@@ -127,7 +135,7 @@ key_store::get_key_ids(std::string const & pattern,
   if (pattern.empty())
     inc = utf8("*");
   globish_matcher gm(inc, utf8(""));
-  for (std::map<rsa_keypair_id, keypair>::const_iterator
+  for (map<rsa_keypair_id, keypair>::const_iterator
          i = keys.begin(); i != keys.end(); ++i)
     {
       if (gm((i->first)()))
@@ -136,11 +144,11 @@ key_store::get_key_ids(std::string const & pattern,
 }
 
 void
-key_store::get_keys(std::vector<rsa_keypair_id> & priv)
+key_store::get_keys(vector<rsa_keypair_id> & priv)
 {
   maybe_read_key_dir();
   priv.clear();
-  for (std::map<rsa_keypair_id, keypair>::const_iterator
+  for (map<rsa_keypair_id, keypair>::const_iterator
          i = keys.begin(); i != keys.end(); ++i)
     {
       priv.push_back(i->first);
@@ -159,7 +167,7 @@ key_store::get_key_pair(rsa_keypair_id const & ident,
                         keypair & kp)
 {
   maybe_read_key_dir();
-  std::map<rsa_keypair_id, keypair>::const_iterator i = keys.find(ident);
+  map<rsa_keypair_id, keypair>::const_iterator i = keys.find(ident);
   I(i != keys.end());
   kp = i->second;
 }
@@ -169,11 +177,11 @@ namespace
   // filename is the keypair id, except that some characters can't be put in
   // filenames (especially on windows).
   void
-  get_filename(rsa_keypair_id const & ident, std::string & filename)
+  get_filename(rsa_keypair_id const & ident, string & filename)
   {
     filename = ident();
     for (unsigned int i = 0; i < filename.size(); ++i)
-      if (std::string("+").find(filename[i]) != std::string::npos)
+      if (string("+").find(filename[i]) != string::npos)
         filename.at(i) = '_';
   }
 }
@@ -182,7 +190,7 @@ void
 key_store::get_key_file(rsa_keypair_id const & ident,
                  system_path & file)
 {
-  std::string leaf;
+  string leaf;
   get_filename(ident, leaf);
   file = key_dir /  leaf;
 }
@@ -192,7 +200,7 @@ key_store::write_key(rsa_keypair_id const & ident)
 {
   keypair kp;
   get_key_pair(ident, kp);
-  std::ostringstream oss;
+  ostringstream oss;
   packet_writer pw(oss);
   pw.consume_key_pair(ident, kp);
   data dat(oss.str());
@@ -203,18 +211,18 @@ key_store::write_key(rsa_keypair_id const & ident)
 }
 
 void
-key_store::put_key_pair(rsa_keypair_id const & ident, 
+key_store::put_key_pair(rsa_keypair_id const & ident,
                         keypair const & kp)
 {
   maybe_read_key_dir();
   L(FL("putting key pair '%s'") % ident);
-  std::pair<std::map<rsa_keypair_id, keypair>::iterator, bool> res;
-  res = keys.insert(std::make_pair(ident, kp));
+  pair<map<rsa_keypair_id, keypair>::iterator, bool> res;
+  res = keys.insert(make_pair(ident, kp));
   if (res.second)
     {
       hexenc<id> hash;
       key_hash_code(ident, kp.pub, hash);
-      I(hashes.insert(std::make_pair(hash, ident)).second);
+      I(hashes.insert(make_pair(hash, ident)).second);
       write_key(ident);
     }
   else
@@ -230,12 +238,12 @@ void
 key_store::delete_key(rsa_keypair_id const & ident)
 {
   maybe_read_key_dir();
-  std::map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
+  map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
   if (i != keys.end())
     {
       hexenc<id> hash;
       key_hash_code(ident, i->second.pub, hash);
-      std::map<hexenc<id>, rsa_keypair_id>::iterator j = hashes.find(hash);
+      map<hexenc<id>, rsa_keypair_id>::iterator j = hashes.find(hash);
       I(j != hashes.end());
       hashes.erase(j);
       keys.erase(i);
@@ -244,3 +252,11 @@ key_store::delete_key(rsa_keypair_id const & ident)
   get_key_file(ident, file);
   delete_file(file);
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

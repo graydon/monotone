@@ -1,10 +1,14 @@
 #ifndef __PLATFORM_HH__
 #define __PLATFORM_HH__
 
-// copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this describes functions to be found, alternatively, in win32/* or unix/*
 // directories.
@@ -24,13 +28,16 @@ bool is_executable(const char *path);
 int existsonpath(const char *exe);
 int make_executable(const char *path);
 pid_t process_spawn(const char * const argv[]);
-int process_wait(pid_t pid, int *res);
+int process_wait(pid_t pid, int *res, int timeout = -1);// default infinite
 int process_kill(pid_t pid, int signal);
 int process_sleep(unsigned int seconds);
 
 // stop "\n"->"\r\n" from breaking automate on Windows
 void make_io_binary();
 
+#ifdef WIN32
+std::string munge_argv_into_cmdline(const char* const argv[]);
+#endif
 // for term selection
 bool have_smart_terminal();
 // this function cannot call W/P/L, because it is called by the tick printing
@@ -62,5 +69,16 @@ namespace path
 path::status get_path_status(any_path const & path);
 
 void rename_clobberingly(any_path const & from, any_path const & to);
+
+// strerror wrapper for OS-specific errors (e.g. use FormatMessage on Win32)
+std::string os_strerror(os_err_t errnum);
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __PLATFORM_HH__

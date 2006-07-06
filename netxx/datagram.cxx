@@ -204,7 +204,7 @@ Netxx::signed_size_type Netxx::Datagram::send (const Peer &peer, const void *buf
     signed_size_type rc;
     if ( (rc = sendto(pimpl_->socket_.get_socketfd(), buffer_ptr, length, 0, sa, sa_size)) < 0) {
 	std::string error("sendto(2) failure: ");
-	error += strerror(get_last_error());
+	error += str_error(get_last_error());
 	throw Exception(error);
     }
 
@@ -290,7 +290,7 @@ namespace
 
 	if (connect(socket.get_socketfd(), sa, sa_size) != 0) {
 	    std::string error("connect(2) failed: ");
-	    error += strerror(Netxx::get_last_error());
+	    error += Netxx::str_error(Netxx::get_last_error());
 	    throw Netxx::NetworkException(error);
 	}
     }
@@ -314,7 +314,7 @@ namespace
 		
 		if (bind(socket.get_socketfd(), reinterpret_cast<sockaddr*>(saun), saun_size) != 0) {
 		    std::string error("bind(2) error: ");
-		    error += strerror(Netxx::get_last_error());
+		    error += Netxx::str_error(Netxx::get_last_error());
 		    throw Netxx::NetworkException(error);
 		}
 
@@ -337,7 +337,7 @@ namespace
 
 	    if ( (fd = mkstemp(buffer)) < 0) {
 		std::string error("can't create temporary file: ");
-		error += strerror(Netxx::get_last_error());
+		error += Netxx::str_error(Netxx::get_last_error());
 		throw Netxx::NetworkException(error);
 	    }
 
