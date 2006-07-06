@@ -10,3 +10,10 @@ check(mtn("--branch=testbranch", "--last=1", "log"), 1, false, false)
 check(mtn("--last=1", "log"), 0, false, false)
 
 check(mtn("--depth=0", "status"), 0, false, false)
+check(mtn("--depth=0", "pubkey", "tester@test.net"), 1, false, false)
+
+-- command-specific options with non-existent commands give correct error
+-- message:
+check(mtn("--branch=testbranch", "loggg"), 1, "", true)
+output = readfile("stderr")
+xfail_if(true, string.find(output, "unknown command"))
