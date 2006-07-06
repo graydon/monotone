@@ -1,5 +1,10 @@
 2006-07-05  Nathaniel Smith  <njs@pobox.com>
 
+	* commands.cc (complete_command): 
+	* monotone.cc (cpp_main): Minor code cleanups.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/checking_a_few_command_specific_options/__driver__.lua:
 	Add test for minor bug reported by Marcin 'hrw' Juszkiewicz.
 
