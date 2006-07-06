@@ -58,8 +58,8 @@ writefile("testdir/changelog", readfile("changelog.3"))
 check(cvs("commit", "-m", 'commit on branch', "testdir/file2", "testdir/changelog"), 0, false, false)
 
 -- and create some mainline changes after the branch
-sleep(1)
 check(cvs("up", "-A"), 0, false, false)
+sleep(1)
 writefile("testdir/file1", readfile("file1.2"))
 writefile("testdir/changelog", readfile("changelog.2"))
 check(cvs("commit", "-m", 'commit on mainline after branch', "testdir/file1", "testdir/changelog"), 0, false, false)

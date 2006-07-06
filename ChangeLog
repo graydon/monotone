@@ -1,5 +1,10 @@
 2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/importing_cvs_branches_with_correct_ancestory/__driver__.lua:
+	Move a sleep(). Maybe it'll work reliably now?
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tests/fail_cleanly_on_unreadable__MTN_options/__driver__.lua:
 	Monotone now checks that it was given a command before it looks at
 	_MTN. So, check that "mtn status" fails properly, instead of just "mtn".
