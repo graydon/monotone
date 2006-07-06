@@ -1,5 +1,11 @@
 2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/fail_cleanly_on_unreadable__MTN_options/__driver__.lua:
+	Monotone now checks that it was given a command before it looks at
+	_MTN. So, check that "mtn status" fails properly, instead of just "mtn".
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tester.cc: New function, does approximately "chmod -R u+rwx".
 	* tester.lua: Use this on things we copy from the test dir to the
 	scratch dir. This should fix the failures on the distcheck buildbots.
