@@ -1,5 +1,9 @@
 2006-07-05  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.cc (cpp_main): Tyop in previous commit.
+
+2006-07-05  Nathaniel Smith  <njs@pobox.com>
+
 	* commands.cc (complete_command): 
 	* monotone.cc (cpp_main): Minor code cleanups.
 

@@ -599,7 +599,7 @@ cpp_main(int argc, char ** argv)
         // no command given
         throw usage("");
       // poptPeekArg returned true, so we can call poptGetArg
-      string cmd = commands::complete_command(poptGetArg(ctx));
+      string cmd = commands::complete_command(poptGetArg(ctx()));
 
       // stop here if they asked for help
 
