@@ -608,13 +608,17 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.directory_loop_conflicts.size());
 }
 
-CMD(cherrypatch, N_("workspace"), "[-r FROM] -r TO",
-    N_("cherrypick changes from other parts of history into workspace.\n"
-       "This command takes arbitrary changes made at any point in history,\n"
-       "and applies them to your current workspace, as if you had made the\n"
-       "edits by hand.\n"
+CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
+    N_("Apply changes made at arbitrary places in history to current workspace.\n"
+       "This command takes changes made at any point in history, and\n"
+       "edits your current workspace to include those changes.  The end result\n"
+       "is identical to 'mtn diff -r FROM -r TO | patch -p0', except that\n"
+       "this command uses monotone's merger, and thus intelligently handles\n"
+       "renames, conflicts, and so on.\n"
+       "\n"
        "If one revision is given, applies the changes made in that revision\n"
        "compared to its parent.\n"
+       "\n"
        "If two revisions are given, applies the changes made to get from the\n"
        "first revision to the second."),
     OPT_REVISION)
