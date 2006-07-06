@@ -765,12 +765,69 @@ content_merger::try_to_merge_files(file_path const & anc_path,
 
 struct hunk_consumer
 {
+  vector<string> const & a;
+  vector<string> const & b;
+  size_t ctx;
+  ostream & ost;
+  string const & encloser_pattern;
+  app_state & app;
+  size_t a_begin, b_begin, a_len, b_len;
+  long skew;
+  ssize_t encloser_last_search;
+  ssize_t encloser_last_match;
+
   virtual void flush_hunk(size_t pos) = 0;
   virtual void advance_to(size_t newpos) = 0;
   virtual void insert_at(size_t b_pos) = 0;
   virtual void delete_at(size_t a_pos) = 0;
+  virtual void find_encloser(size_t pos, string & encloser);
   virtual ~hunk_consumer() {}
+  hunk_consumer(vector<string> const & a,
+                vector<string> const & b,
+                size_t ctx,
+                ostream & ost,
+                string const & encloser_pattern,
+                app_state & app)
+    : a(a), b(b), ctx(ctx), ost(ost), encloser_pattern(encloser_pattern),
+      app(app), a_begin(0), b_begin(0), a_len(0), b_len(0), skew(0),
+      encloser_last_search(0), encloser_last_match(0) {}
 };
+
+/* Find, and write to ENCLOSER, the nearest line before POS which matches
+   ENCLOSER_PATTERN.  We remember the last line scanned, and the matched, to
+   avoid duplication of effort.  */
+   
+void
+hunk_consumer::find_encloser(size_t pos, string & encloser)
+{
+  if (encloser_pattern == "")
+    return;
+
+  // We need the ability for i and last to go negative so that we do not
+  // have an infinite loop when last==0 (i.e. the first time 'round).
+  ssize_t last = encloser_last_search;
+  encloser_last_search = pos;
+  for (ssize_t i = min(pos, a.size()-1); i >= last; i--)
+    if (app.lua.patternmatch (a[i], encloser_pattern))
+      {
+        L(FL("find_encloser: from %u matching line %d, \"%s\"")
+          % pos % i % a[i]);
+        encloser_last_match = i;
+        // the number 40 is chosen to match GNU diff.  it could safely be
+        // increased up to about 60 without overflowing the standard
+        // terminal width.
+        encloser = string(" ") + a[i].substr(0, 40);
+        return;
+      }
+
+  if (encloser_last_match)
+    {
+      ssize_t i = encloser_last_match;
+      L(FL("find_encloser: from %u matching cached %d, \"%s\"")
+        % pos % i % a[i]);
+      encloser = string(" ") + a[i].substr(0, 40);
+    }
+}
 
 void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
                         vector<long, QA(long)> const & lines1,
@@ -822,17 +879,13 @@ void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
 
 struct unidiff_hunk_writer : public hunk_consumer
 {
-  vector<string> const & a;
-  vector<string> const & b;
-  size_t ctx;
-  ostream & ost;
-  size_t a_begin, b_begin, a_len, b_len;
-  long skew;
   vector<string> hunk;
   unidiff_hunk_writer(vector<string> const & a,
                       vector<string> const & b,
                       size_t ctx,
-                      ostream & ost);
+                      ostream & ost,
+                      string const & encloser_pattern,
+                      app_state & app);
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
@@ -843,10 +896,10 @@ struct unidiff_hunk_writer : public hunk_consumer
 unidiff_hunk_writer::unidiff_hunk_writer(vector<string> const & a,
                                          vector<string> const & b,
                                          size_t ctx,
-                                         ostream & ost)
-: a(a), b(b), ctx(ctx), ost(ost),
-  a_begin(0), b_begin(0),
-  a_len(0), b_len(0), skew(0)
+                                         ostream & ost,
+                                         string const & encloser_pattern,
+                                         app_state & app)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern, app)
 {}
 
 void unidiff_hunk_writer::insert_at(size_t b_pos)
@@ -892,7 +945,9 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
           if (b_len > 1)
             ost << "," << b_len;
         }
-      ost << " @@" << endl;
+      string encloser;
+      find_encloser(a_begin + ctx, encloser);
+      ost << " @@" << encloser << endl;
 
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
     }
@@ -942,12 +997,6 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
 
 struct cxtdiff_hunk_writer : public hunk_consumer
 {
-  vector<string> const & a;
-  vector<string> const & b;
-  size_t ctx;
-  ostream & ost;
-  size_t a_begin, b_begin, a_len, b_len;
-  long skew;
   vector<size_t> inserts;
   vector<size_t> deletes;
   vector<string> from_file;
@@ -957,7 +1006,9 @@ struct cxtdiff_hunk_writer : public hunk_consumer
   cxtdiff_hunk_writer(vector<string> const & a,
                       vector<string> const & b,
                       size_t ctx,
-                      ostream & ost);
+                      ostream & ost,
+                      string const & encloser_pattern,
+                      app_state & app);
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
@@ -969,11 +1020,11 @@ struct cxtdiff_hunk_writer : public hunk_consumer
 cxtdiff_hunk_writer::cxtdiff_hunk_writer(vector<string> const & a,
                                          vector<string> const & b,
                                          size_t ctx,
-                                         ostream & ost)
-    : a(a), b(b), ctx(ctx), ost(ost),
-      a_begin(0), b_begin(0),
-      a_len(0), b_len(0), skew(0),
-      have_insertions(false), have_deletions(false)
+                                         ostream & ost,
+                                         string const & encloser_pattern,
+                                         app_state & app)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern, app),
+    have_insertions(false), have_deletions(false)
 {}
 
 void cxtdiff_hunk_writer::insert_at(size_t b_pos)
@@ -1009,7 +1060,10 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
           b_len++;
         }
 
-      ost << "***************" << endl;
+      string encloser;
+      find_encloser(a_begin + ctx, encloser);
+
+      ost << "***************" << encloser << endl;
 
       ost << "*** " << (a_begin + 1) << "," << (a_begin + a_len) << " ****" << endl;
       if (have_deletions)
@@ -1114,7 +1168,7 @@ void make_diff(string const & filename1,
                vector<string> const & lines1,
                vector<string> const & lines2,
                ostream & ost,
-               diff_type type)
+               app_state & app)
 {
   vector<long, QA(long)> left_interned;
   vector<long, QA(long)> right_interned;
@@ -1138,14 +1192,18 @@ void make_diff(string const & filename1,
                              min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
-  switch (type)
+  string pattern;
+  if (app.diff_show_encloser)
+    app.lua.hook_get_encloser_pattern (filename1, pattern);
+
+  switch (app.diff_format)
     {
       case unified_diff:
       {
         ost << "--- " << filename1 << "\t" << id1 << endl;
         ost << "+++ " << filename2 << "\t" << id2 << endl;
 
-        unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern, app);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }
@@ -1154,7 +1212,7 @@ void make_diff(string const & filename1,
         ost << "*** " << filename1 << "\t" << id1 << endl;
         ost << "--- " << filename2 << "\t" << id2 << endl;
 
-        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern, app);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }
@@ -1203,65 +1261,6 @@ static void dump_incorrect_merge(vector<string> const & expected,
       cerr << endl;
     }
 }
-
-// regression blockers go here
-static void unidiff_append_test()
-{
-  string src(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n");
-
-  string dst(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n"
-             + "\n"
-             + "void say_goodbye()\n"
-             + "{\n"
-             + "        printf(\"goodbye\\n\");\n"
-             + "}\n"
-             + "\n");
-
-  string ud(string("--- hello.c\t0123456789abcdef0123456789abcdef01234567\n")
-            + "+++ hello.c\tabcdef0123456789abcdef0123456789abcdef01\n"
-            + "@@ -9,3 +9,9 @@\n"
-            + " {\n"
-            + "         say_hello();\n"
-            + " }\n"
-            + "+\n"
-            + "+void say_goodbye()\n"
-            + "+{\n"
-            + "+        printf(\"goodbye\\n\");\n"
-            + "+}\n"
-            + "+\n");
-
-  vector<string> src_lines, dst_lines;
-  split_into_lines(src, src_lines);
-  split_into_lines(dst, dst_lines);
-  stringstream sst;
-  make_diff("hello.c", "hello.c",
-            file_id(id("0123456789abcdef0123456789abcdef01234567")),
-            file_id(id("abcdef0123456789abcdef0123456789abcdef01")),
-            src_lines, dst_lines, sst, unified_diff);
-  cout << sst.str() << endl;
-  BOOST_CHECK(sst.str() == ud);
-}
-
 
 // high tech randomizing test
 
@@ -1406,7 +1405,6 @@ static void merge_deletions_test()
 void add_diff_patch_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&unidiff_append_test));
   suite->add(BOOST_TEST_CASE(&merge_prepend_test));
   suite->add(BOOST_TEST_CASE(&merge_append_test));
   suite->add(BOOST_TEST_CASE(&merge_additions_test));

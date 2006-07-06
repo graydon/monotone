@@ -41,6 +41,10 @@ public:
   void load_rcfile(utf8 const & file);
   void load_rcfile(any_path const & file, bool required);
 
+  // not a hook, but a convenience wrapper around Lua's str.find().
+  // currently only returns yes/no.
+  bool patternmatch(std::string const & haystack, std::string const & needle);
+
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_expand_date(std::string const & sel, std::string & exp);
@@ -96,6 +100,9 @@ public:
                           std::string const & diff_args,
                           std::string const & oldrev,
                           std::string const & newrev);
+
+  bool hook_get_encloser_pattern(std::string const & path,
+                                 std::string & pattern);
 
   // workspace hooks
   bool hook_use_inodeprints();

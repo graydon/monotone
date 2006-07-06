@@ -72,6 +72,7 @@ public:
   system_path pidfile;
   diff_type diff_format;
   bool diff_args_provided;
+  bool diff_show_encloser;
   utf8 diff_args;
   bool execute;
   utf8 bind_address;

@@ -182,6 +182,14 @@ function binary_file(name)
    return guess_binary_file_contents(name)
 end
 
+-- given a file name, return a regular expression which is suitable
+-- for scanning backward from a diff hunk for the name of the enclosing
+-- top-level construct.
+function get_encloser_pattern(name)
+   -- this default is correct surprisingly often
+   return "^[%w$_]"
+end
+
 function edit_comment(basetext, user_log_message)
    local exe = nil
    if (program_exists_in_path("vi")) then exe = "vi" end

@@ -22,7 +22,7 @@ using std::ostream_iterator;
 using std::string;
 using std::vector;
 
-// fload and fmerge are simple commands for debugging the line
+// fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
 CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
@@ -73,6 +73,43 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
 
+}
+
+CMD(fdiff, N_("debug"), N_("[-c, -u, -p] <sname> <dname> <s_id> <d_id>"),
+    N_("diff 2 files and output result"),
+    OPT_CONTEXT_DIFF % OPT_UNIFIED_DIFF % OPT_SHOW_ENCLOSER)
+{
+  if (args.size() != 4)
+    throw usage(name);
+
+  string const
+    & src_name = idx(args, 0)(),
+    & dst_name = idx(args, 1)();
+
+  file_id 
+    src_id(idx(args, 2)()), 
+    dst_id(idx(args, 3)());
+
+  file_data src, dst;
+
+  N(app.db.file_version_exists (src_id),
+    F("source file id does not exist"));
+
+  N(app.db.file_version_exists (dst_id),
+    F("destination file id does not exist"));
+
+  app.db.get_file_version(src_id, src);
+  app.db.get_file_version(dst_id, dst);
+
+  vector<string> src_lines, dst_lines;
+
+  split_into_lines(src.inner()(), src_lines);
+  split_into_lines(dst.inner()(), dst_lines);
+
+  make_diff(src_name, dst_name,
+            src_id, dst_id,
+            src_lines, dst_lines,
+            cout, app);
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
