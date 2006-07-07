@@ -324,14 +324,13 @@ cpp_main(int argc, char ** argv)
   // process main program options
 
   int opt;
-  bool requested_help = false;
   set<int> used_local_options;
 
   poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
 
+  app_state app;
   try
     {
-      app_state app;
 
       app.set_prog_name(prog_name);
 
@@ -400,7 +399,7 @@ cpp_main(int argc, char ** argv)
               else if (string(argstr) == "count")
                 ui.set_tick_writer(new tick_write_count);
               else
-                requested_help = true;
+                app.requested_help = true;
               break;
 
             case OPT_KEY_NAME:
@@ -581,8 +580,10 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_HELP:
+              app.requested_help = true;
+              break;
+
             default:
-              requested_help = true;
               break;
             }
         }
@@ -603,7 +604,7 @@ cpp_main(int argc, char ** argv)
 
       // stop here if they asked for help
 
-      if (requested_help)
+      if (app.requested_help)
         {
           throw usage(cmd);     // cmd may be empty, and that's fine.
         }
@@ -672,7 +673,10 @@ cpp_main(int argc, char ** argv)
       cout << endl;
       commands::explain_usage(u.which, cout);
       global_sanity.clean_shutdown = true;
-      return 2;
+      if (app.requested_help)
+        return 0;
+      else
+        return 2;
     }
   }
   catch (informative_failure & inf)
