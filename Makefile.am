@@ -462,7 +462,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_lua_tests
 
 # distcheck stuff
 
