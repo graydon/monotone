@@ -636,7 +636,7 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
       N(parents.size() == 1,
         F("revision %s is a merge\n"
           "to apply the changes relative to one of its parents, use:\n"
-          "  %s cherrypatch -r PARENT -r %s")
+          "  %s pluck -r PARENT -r %s")
         % to_rid
         % app.prog_name % to_rid);
       from_rid = *parents.begin();
@@ -660,10 +660,10 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
   //   V         V
   //   to --> merged
   //
-  // - from is the revision we start cherrypatching from
-  // - to is the revision we stop cherrypatching at
+  // - from is the revision we start plucking from
+  // - to is the revision we stop plucking at
   // - working is the current contents of the workspace
-  // - merged is the result of the cherrypatching, and achieved by running a
+  // - merged is the result of the plucking, and achieved by running a
   //   merge in the fictional graph seen above
   //
   // finally, we take the cset from working -> merged, and apply that to the
@@ -764,6 +764,19 @@ CMD(pluck, N_("workspace"), "[-r FROM] -r TO",
   put_work_cset(remaining);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
+  
+  // add a note to the user log file about what we did
+  {
+    data log;
+    read_user_log(log);
+    std::string log_str = log();
+    if (!log_str.empty())
+      log_str += "\n";
+    log_str += (FL("applied changes from %s\n"
+                   "             through %s\n")
+                % from_rid % to_rid).str();
+    write_user_log(data(log_str));
+  }
 }
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),

@@ -1,3 +1,9 @@
+2006-07-06  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (pluck): Write a note to _MTN/log after each
+	pluck.
+	* tests/pluck_basics/__driver__.lua: Test for it.
+
 2006-07-05  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/checking_a_few_command_specific_options/__driver__.lua

@@ -22,6 +22,8 @@ check(mtn("pluck", "-r", second_rev), 0, false, false)
 newtext = readfile("otherfile")
 check(newtext == "1\n2\n3-changed\n4\n5-changed\n")
 check(readfile("somefile") == "blah blah\n")
+check(string.find(readfile("_MTN/log"), first_rev .. ".*" .. second_rev) ~= nil)
+writefile("_MTN/log", "")
 
 check(mtn("pluck", "-r", second_rev, "-r", first_rev), 0, false, false)
 newtext = readfile("otherfile")
@@ -30,9 +32,12 @@ check(newtext == "1\n2\n3\n4\n5-changed\n")
 -- transition deletes "somefile", because the identity link between these two
 -- files with the name "somefile" has been broken.
 check(exists("somefile"))
+check(string.find(readfile("_MTN/log"), second_rev .. ".*" .. first_rev) ~= nil)
+writefile("_MTN/log", "")
 
 -- should get a conflict on the two "somefile" adds
 check(mtn("pluck", "-r", root_rev, "-r", second_rev), 1, false, false)
+check(readfile("_MTN/log") == "")
 
 check(mtn("drop", "-e", "somefile"), 0, false, false)
 -- now it should work again
@@ -40,3 +45,5 @@ check(mtn("pluck", "-r", root_rev, "-r", second_rev), 0, false, false)
 newtext = readfile("otherfile")
 check(newtext == "1-changed\n2\n3-changed\n4\n5-changed\n")
 check(readfile("somefile") == "blah blah\n")
+check(string.find(readfile("_MTN/log"), root_rev .. ".*" .. second_rev) ~= nil)
+writefile("_MTN/log", "")
