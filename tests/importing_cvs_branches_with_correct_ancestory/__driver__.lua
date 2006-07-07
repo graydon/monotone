@@ -42,7 +42,6 @@ check(cvs("add", "testdir/changelog"), 0, false, false)
 check(cvs("commit", "-m", 'initial import', "testdir/file1", "testdir/file2", "testdir/changelog"), 0, false, false)
 
 -- commit first changes
-sleep(1)
 writefile("testdir/file1", readfile("file1.1"))
 writefile("testdir/changelog", readfile("changelog.1"))
 check(cvs("commit", "-m", 'first commit', "testdir/file1", "testdir/changelog"), 0, false, false)
@@ -52,13 +51,11 @@ check(indir("testdir", cvs("tag", "-b", "branched")), 0, false, false)
 check(indir("testdir", cvs("up", "-r", "branched")), 0, false, false)
 
 -- alter the files on the branch
-sleep(1)
 writefile("testdir/file2", readfile("file2.1"))
 writefile("testdir/changelog", readfile("changelog.3"))
 check(cvs("commit", "-m", 'commit on branch', "testdir/file2", "testdir/changelog"), 0, false, false)
 
 -- and create some mainline changes after the branch
-sleep(1)
 check(cvs("up", "-A"), 0, false, false)
 writefile("testdir/file1", readfile("file1.2"))
 writefile("testdir/changelog", readfile("changelog.2"))
