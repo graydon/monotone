@@ -1,5 +1,10 @@
 2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* Makefile.am: distcheck isn't happy that run_lua_tests doesn't get
+	removed by distclean. I think it needs to be in DISTCLEANFILES ?
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Make 'mtn help' and 'mtn --help' exit with status 0 instead of 2.
 	* app_state.{cc,hh}: requested_help is now in app_state
 	* monotone.cc: requested_help is now in app_state. Also, check this
