@@ -174,8 +174,8 @@ CMD(update, N_("workspace"), "",
           {
             // one non-matching, inform and update
             app.branch_name = (*(branches.begin()))();
-	    switched_branch = true;
-	    P(F("switching to branch %s") % app.branch_name());
+            switched_branch = true;
+            P(F("switching to branch %s") % app.branch_name());
           }
         else
           {
@@ -318,97 +318,88 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       return;
     }
 
-  // These are declared outside the loop to make their lifetime unambiguous.
-  map<revision_id, set<revision_id> > heads_for_ancestor;
-  set<revision_id> ancestors;
-  typedef map<revision_id, set<revision_id> >::iterator rid_map_iter;
-  do
-    {
-      P(F("pass %d: %d heads to merge on branch '%s'")
-        % pass % heads.size() % app.branch_name);
-
-      // For every pair of heads, determine their merge ancestor, and remember
-      // the ancestor->head mapping.  Note that more than one pair might have
-      // the same ancestor (e.g. if we have three heads all with the same
-      // parent); thus we use a set on the RHS of the map, not a pair.
-      for (rid_set_iter i = heads.begin(); i != heads.end(); ++i)
-        for (rid_set_iter j = i; j != heads.end(); ++j)
-          {
-            // It is not possible to initialize j to i+1 (set iterators
-            // expose neither operator+ nor a nondestructive next() method)
-            if (j == i)
-              continue;
-
-            revision_id ancestor;
-            find_common_ancestor_for_merge (*i, *j, ancestor, app);
-            ancestors.insert(ancestor);
-
-            rid_map_iter target
-              = heads_for_ancestor.insert(std::make_pair(ancestor,
-                                                         set<revision_id>()))
-              .first;
-
-            I(target->first == ancestor);
-
-            target->second.insert(*i);
-            target->second.insert(*j);
-          }
-
-      // Erasing ancestors from ANCESTORS will now produce a set of merge
-      // ancestors each of which is not itself an ancestor of any other
-      // merge ancestor.  There is (believed to be) no good ordering of
-      // merges on that set.
-      erase_ancestors(ancestors, app);
-
-      size_t count = 1;
-      for (rid_set_iter i = ancestors.begin(); i != ancestors.end(); ++i)
-        {
-          rid_map_iter target = heads_for_ancestor.find(*i);
-          I(target != heads_for_ancestor.end());
-          I(target->second.size() >= 2);
-
-          rid_set_iter j = target->second.begin();
-          revision_id left = *j;
-          for (++j; j != target->second.end(); ++j)
-            {
-              revision_id right = *j;
-              P(F("merge %d / %d") % count % ancestors.size());
-              P(F("[left]   %s") % left);
-              P(F("[right]  %s") % right);
-
-              revision_id merged;
-              transaction_guard guard(app.db);
-              interactive_merge_and_store(left, right, merged, app);
-
-              // merged 1 edge; now we commit this, update merge source and
-              // try next one
-
-              packet_db_writer dbw(app);
-              cert_revision_in_branch(merged, app.branch_name(), app, dbw);
-
-              string log = (FL("merge of %s\n"
-                               "     and %s\n") % left % right).str();
-              cert_revision_changelog(merged, log, app, dbw);
-
-              guard.commit();
-              P(F("[merged] %s") % merged);
-              left = merged;
-              ++count;
-            }
-        }
-
-      // We merged all of those, but those may not have been all the heads.
-      // The maps we calculated above are now invalid, so destroy them all,
-      // get the head set again, and loop.  (Potential future optimization:
-      // update the maps instead of recalculating from scratch.)
-      ancestors.clear();
-      heads_for_ancestor.clear();
-      heads.clear();
-
-      get_branch_heads(app.branch_name(), app, heads);
-      ++pass;
-    }
+  P(F("%d heads on branch '%s'") % heads.size() % app.branch_name);
   while (heads.size() > 1);
+  {
+    if (heads.size() > 2)
+      P(F("pass %d: calculating optimal next merge") % pass);
+    
+    map<revision_id, set<revision_id> > heads_for_ancestor;
+    set<revision_id> ancestors;
+    typedef map<revision_id, set<revision_id> >::iterator rid_map_iter;
+    // For every pair of heads, determine their merge ancestor, and remember
+    // the ancestor->head mapping.  Note that more than one pair might have
+    // the same ancestor (e.g. if we have three heads all with the same
+    // parent); thus we use a set on the RHS of the map, not a pair.
+    for (rid_set_iter i = heads.begin(); i != heads.end(); ++i)
+      for (rid_set_iter j = i; j != heads.end(); ++j)
+        {
+          // It is not possible to initialize j to i+1 (set iterators
+          // expose neither operator+ nor a nondestructive next() method)
+          if (j == i)
+            continue;
+          
+          revision_id ancestor;
+          find_common_ancestor_for_merge(*i, *j, ancestor, app);
+          ancestors.insert(ancestor);
+          
+          rid_map_iter target
+            = heads_for_ancestor.insert(std::make_pair(ancestor,
+                                                       set<revision_id>()))
+              .first;
+          
+          I(target->first == ancestor);
+          
+          target->second.insert(*i);
+          target->second.insert(*j);
+        }
+    
+    // Erasing ancestors from ANCESTORS will now produce a set of merge
+    // ancestors each of which is not itself an ancestor of any other
+    // merge ancestor.  There is (believed to be) no good ordering of
+    // merges on that set.
+    erase_ancestors(ancestors, app);
+    
+    size_t count = 1;
+    for (rid_set_iter i = ancestors.begin(); i != ancestors.end(); ++i)
+      {
+        rid_map_iter target = heads_for_ancestor.find(*i);
+        I(target != heads_for_ancestor.end());
+        I(target->second.size() >= 2);
+        
+        rid_set_iter j = target->second.begin();
+        revision_id left = *j;
+        for (++j; j != target->second.end(); ++j)
+          {
+            revision_id right = *j;
+            P(F("merge %d / %d") % count % ancestors.size());
+            P(F("[left]   %s") % left);
+            P(F("[right]  %s") % right);
+            
+            revision_id merged;
+            transaction_guard guard(app.db);
+            interactive_merge_and_store(left, right, merged, app);
+            
+            // merged 1 edge; now we commit this, update merge source and
+            // try next one
+            
+            packet_db_writer dbw(app);
+            cert_revision_in_branch(merged, app.branch_name(), app, dbw);
+            
+            string log = (FL("merge of %s\n"
+                             "     and %s\n") % left % right).str();
+            cert_revision_changelog(merged, log, app, dbw);
+
+            guard.commit();
+            P(F("[merged] %s") % merged);
+            left = merged;
+            ++count;
+          }
+      }
+    
+    get_branch_heads(app.branch_name(), app, heads);
+    ++pass;
+  }
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -572,7 +563,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
       process_commit_message_args(log_message_given, log_message, app);
       if (!log_message_given)
         log_message = (FL("propagate from branch '%s' (head %s)\n"
-			  "            to branch '%s' (head %s)\n")
+                          "            to branch '%s' (head %s)\n")
                        % idx(args, 0) % (*src_i)
                        % idx(args, 1) % (*dst_i)).str();
 
@@ -619,8 +610,8 @@ CMD(explicit_merge, N_("tree"),
   cert_revision_in_branch(merged, branch, app, dbw);
 
   string log = (FL("explicit_merge of '%s'\n"
-		   "              and '%s'\n"
-		   "        to branch '%s'\n")
+                   "              and '%s'\n"
+                   "        to branch '%s'\n")
                 % left % right % branch).str();
 
   cert_revision_changelog(merged, log, app, dbw);
