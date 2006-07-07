@@ -646,7 +646,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "\t-d         don't clean the scratch directories\n");
       fprintf(stderr, "\tnum        run a specific test\n");
       fprintf(stderr, "\tnum..num   run tests in a range\n");
-      fprintf(stderr, "\t           if num is negative, count back from the end");
+      fprintf(stderr, "\t           if num is negative, count back from the end\n");
       fprintf(stderr, "\tregex      run tests with matching names\n");
       return 1;
     }

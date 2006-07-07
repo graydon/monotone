@@ -1,3 +1,8 @@
+2006-07-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.cc: Add a newline to the help message.
+	* tester.txt: Add a brief overview at the beginning.
+
 2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make 'mtn help' and 'mtn --help' exit with status 0 instead of 2.
