@@ -1,3 +1,16 @@
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make 'mtn help' and 'mtn --help' exit with status 0 instead of 2.
+	* app_state.{cc,hh}: requested_help is now in app_state
+	* monotone.cc: requested_help is now in app_state. Also, check this
+	when catching a usage, and exit with 0 instead of 2 if it's set.
+	* commands.cc (CMD(help)): Set app.requested_help.
+	* tests/basic_invocation_and_options/__driver__.lua:
+	* tests/check_that_--xargs_and_-(at)_behave_correctly/__driver__.lua:
+	* tests/empty_environment/__driver__.lua:
+	* tests/test_the_help_command/__driver__.lua:
+	Update to expect the new exit code.
+
 2006-07-06  Nathaniel Smith  <njs@pobox.com>
 
 	* unix/inodeprint.cc (inodeprint_file): Add some clever logic

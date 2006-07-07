@@ -85,6 +85,7 @@ public:
   bool have_set_key_dir;
   std::set<std::string> attrs_to_drop;
   bool no_files;
+  bool requested_help;
 
   // Set if the value of the flag was explicitly given on the command
   // line.

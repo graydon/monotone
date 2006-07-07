@@ -53,7 +53,8 @@ app_state::app_state()
     bind_stdio(false), use_transport_auth(true),
     missing(false), unknown(false),
     confdir(get_default_confdir()),
-    have_set_key_dir(false), no_files(false)
+    have_set_key_dir(false), no_files(false),
+    requested_help(false)
 {
   db.set_app(this);
   lua.set_app(this);
