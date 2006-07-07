@@ -1,3 +1,10 @@
+2006-07-06  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/inodeprint.cc (inodeprint_file): Add some clever logic
+	inspired by Martin Pool, to be somewhat more robust against clock
+	issues.  This should be ported to win32, but I don't know how; I
+	also have no earthly idea how to test this new code.
+
 2006-07-05  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/checking_a_few_command_specific_options/__driver__.lua
