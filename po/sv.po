@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-06-24 17:55+0200\n"
-"PO-Revision-Date: 2006-06-24 17:57+0200\n"
+"POT-Creation-Date: 2006-07-07 00:54+0200\n"
+"PO-Revision-Date: 2006-07-07 00:55+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -289,16 +289,16 @@ msgstr "läsning från klienten misslyckades med följande felkod: %d"
 msgid "Bad input to automate stdio"
 msgstr "felaktigt indata till automate stdio"
 
-#: cmd_automate.cc:296
+#: cmd_automate.cc:301
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:297
+#: cmd_automate.cc:302
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
 #: cmd_db.cc:35 cmd_diff_log.cc:404 cmd_diff_log.cc:435 cmd_diff_log.cc:437
-#: cmd_files.cc:102 cmd_files.cc:164 cmd_merging.cc:123 cmd_ws_commit.cc:446
+#: cmd_files.cc:102 cmd_files.cc:164 cmd_merging.cc:124 cmd_ws_commit.cc:446
 #: commands.cc:370
 #, c-format
 msgid "no such revision '%s'"
@@ -380,7 +380,7 @@ msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
 #: cmd_db.cc:152 cmd_diff_log.cc:348 cmd_diff_log.cc:558 cmd_files.cc:78
-#: cmd_files.cc:145 cmd_list.cc:437 cmd_merging.cc:569 cmd_ws_commit.cc:322
+#: cmd_files.cc:145 cmd_list.cc:437 cmd_merging.cc:570 cmd_ws_commit.cc:322
 #: commands.cc:246
 msgid "informative"
 msgstr "informativ"
@@ -447,7 +447,7 @@ msgstr ""
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
 
-#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:634
+#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:793
 #: cmd_othervcs.cc:15
 msgid "debug"
 msgstr "felsökning"
@@ -808,13 +808,13 @@ msgstr "REV"
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
 
-#: cmd_merging.cc:53 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
-#: cmd_ws_commit.cc:251 cmd_ws_commit.cc:278 cmd_ws_commit.cc:303
-#: cmd_ws_commit.cc:515 cmd_ws_commit.cc:613
+#: cmd_merging.cc:54 cmd_merging.cc:611 cmd_ws_commit.cc:53
+#: cmd_ws_commit.cc:224 cmd_ws_commit.cc:251 cmd_ws_commit.cc:278
+#: cmd_ws_commit.cc:303 cmd_ws_commit.cc:515 cmd_ws_commit.cc:613
 msgid "workspace"
 msgstr "arbetskopia"
 
-#: cmd_merging.cc:54
+#: cmd_merging.cc:55
 msgid ""
 "update workspace.\n"
 "This command modifies your workspace to be based off of a\n"
@@ -828,17 +828,17 @@ msgstr ""
 "Om en revision har angivits så uppdateras arbetskopian till den,\n"
 "i annat fall uppdateras den till lövet i grenen."
 
-#: cmd_merging.cc:97
+#: cmd_merging.cc:98
 #, c-format
 msgid "this workspace is a new project; cannot update"
 msgstr "denna arbetskatalog är ett nytt projekt; kan inte uppdatera"
 
-#: cmd_merging.cc:101
+#: cmd_merging.cc:102
 #, c-format
 msgid "updating along branch '%s'"
 msgstr "uppdaterar längs grenen '%s'"
 
-#: cmd_merging.cc:105
+#: cmd_merging.cc:106
 #, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
@@ -849,37 +849,37 @@ msgstr ""
 "faktum är att den inte ens matchar nuvarande revision\n"
 "du kanske vill ange --revision=<revision i annan gren>"
 
-#: cmd_merging.cc:110
+#: cmd_merging.cc:111
 #, c-format
 msgid "multiple update candidates:"
 msgstr "mer än en uppdateringskandidat:"
 
-#: cmd_merging.cc:114
+#: cmd_merging.cc:115
 #, c-format
 msgid "choose one with '%s update -r<id>'"
 msgstr "välj en med '%s update -r<id>'"
 
-#: cmd_merging.cc:115
+#: cmd_merging.cc:116
 #, c-format
 msgid "multiple update candidates remain after selection"
 msgstr "mer än en kandidat är kvar efter urval"
 
-#: cmd_merging.cc:130
+#: cmd_merging.cc:131
 #, c-format
 msgid "already up to date at %s"
 msgstr "redan uppdaterad till %s"
 
-#: cmd_merging.cc:138
+#: cmd_merging.cc:139
 #, c-format
 msgid "selected update target %s"
 msgstr "valt uppdateringsmål är %s"
 
-#: cmd_merging.cc:162
+#: cmd_merging.cc:163
 #, c-format
 msgid "target revision is not in current branch"
 msgstr "denna revision finns inte i den nuvarande grenen"
 
-#: cmd_merging.cc:170
+#: cmd_merging.cc:171
 #, c-format
 msgid ""
 "target revision is in multiple branches:%s\n"
@@ -890,12 +890,12 @@ msgstr ""
 "\n"
 "försök igen med en explicit --branch"
 
-#: cmd_merging.cc:178
+#: cmd_merging.cc:179
 #, c-format
 msgid "switching to branch %s"
 msgstr "byter gren till %s"
 
-#: cmd_merging.cc:183
+#: cmd_merging.cc:184
 #, c-format
 msgid ""
 "target revision not in any branch\n"
@@ -904,202 +904,255 @@ msgstr ""
 "Denna revision är inte i någon gren\n"
 "nästa ändring hamnar i grenen %s"
 
-#: cmd_merging.cc:288
+#: cmd_merging.cc:289
 #, c-format
 msgid "switched branch; next commit will use branch %s"
 msgstr "byter gren; nästa ändring kommer att använda grenen %s"
 
-#: cmd_merging.cc:289
+#: cmd_merging.cc:290
 #, c-format
 msgid "updated to base revision %s"
 msgstr "uppdaterad till revisionen %s"
 
-#: cmd_merging.cc:299 cmd_merging.cc:352 cmd_merging.cc:363 cmd_merging.cc:523
-#: cmd_merging.cc:610 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
+#: cmd_merging.cc:300 cmd_merging.cc:353 cmd_merging.cc:364 cmd_merging.cc:524
+#: cmd_merging.cc:769 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
 #: cmd_ws_commit.cc:872
 msgid "tree"
 msgstr "träd"
 
-#: cmd_merging.cc:299
+#: cmd_merging.cc:300
 msgid "merge unmerged heads of branch"
 msgstr "slå ihop ej ihopslagna löv i grenen"
 
-#: cmd_merging.cc:308 cmd_merging.cc:618
+#: cmd_merging.cc:309 cmd_merging.cc:777
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "var god ange en gren med --branch=GREN"
 
-#: cmd_merging.cc:312 cmd_merging.cc:402 cmd_merging.cc:405 cmd_merging.cc:623
+#: cmd_merging.cc:313 cmd_merging.cc:403 cmd_merging.cc:406 cmd_merging.cc:782
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "grenen '%s' är tom"
 
-#: cmd_merging.cc:315
+#: cmd_merging.cc:316
 #, c-format
 msgid "branch '%s' is already merged"
 msgstr "löven i grenen '%s' är redan ihopslagna"
 
-#: cmd_merging.cc:323
+#: cmd_merging.cc:324
 #, c-format
 msgid "starting with revision 1 / %d"
 msgstr "börjar med revision 1 av %d"
 
-#: cmd_merging.cc:327
+#: cmd_merging.cc:328
 #, c-format
 msgid "merging with revision %d / %d"
 msgstr "slår ihop med revision %d av %d"
 
-#: cmd_merging.cc:328 cmd_merging.cc:329 cmd_merging.cc:412 cmd_merging.cc:547
-#: cmd_merging.cc:548
+#: cmd_merging.cc:329 cmd_merging.cc:330 cmd_merging.cc:413 cmd_merging.cc:548
+#: cmd_merging.cc:549
 #, c-format
 msgid "[source] %s"
 msgstr "[källa]      %s"
 
-#: cmd_merging.cc:346 cmd_merging.cc:519 cmd_merging.cc:566
+#: cmd_merging.cc:347 cmd_merging.cc:520 cmd_merging.cc:567
 #, c-format
 msgid "[merged] %s"
 msgstr "[ihopslagen] %s"
 
-#: cmd_merging.cc:349
+#: cmd_merging.cc:350
 #, c-format
 msgid "note: your workspaces have not been updated"
 msgstr "obs: dina arbetskopior har inte uppdaterats"
 
-#: cmd_merging.cc:352
+#: cmd_merging.cc:353
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "KÄLLGREN MÅLGREN"
 
-#: cmd_merging.cc:353
+#: cmd_merging.cc:354
 msgid "merge from one branch to another asymmetrically"
 msgstr "slå ihop asymmetriskt från en gren till en annan"
 
-#: cmd_merging.cc:363
+#: cmd_merging.cc:364
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "KÄLLGREN MÅLGREN KATALOG"
 
-#: cmd_merging.cc:364
+#: cmd_merging.cc:365
 msgid "merge one branch into a subdirectory in another branch"
 msgstr "slå ihop en gren till en underkatalog i en annan gren"
 
-#: cmd_merging.cc:403 cmd_merging.cc:406
+#: cmd_merging.cc:404 cmd_merging.cc:407
 #, c-format
 msgid "branch '%s' is not merged"
 msgstr "löven i grenen '%s' är inte ihopslagna"
 
-#: cmd_merging.cc:411
+#: cmd_merging.cc:412
 #, c-format
 msgid "propagating %s -> %s"
 msgstr "propagerar %s -> %s"
 
-#: cmd_merging.cc:413
+#: cmd_merging.cc:414
 #, c-format
 msgid "[target] %s"
 msgstr "[mål]        %s"
 
-#: cmd_merging.cc:418
+#: cmd_merging.cc:419
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'"
 msgstr "grenen '%s' är uppdaterad med avseende på grenen '%s'"
 
-#: cmd_merging.cc:420
+#: cmd_merging.cc:421
 #, c-format
 msgid "no action taken"
 msgstr "inget utfördes"
 
-#: cmd_merging.cc:424
+#: cmd_merging.cc:425
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'"
 msgstr "ingen ihopslagning behövs; sätter %s i grenen '%s'"
 
-#: cmd_merging.cc:462
+#: cmd_merging.cc:463
 #, c-format
 msgid "Path %s not found in destination tree."
 msgstr "Sökvägen %s finns inte i målträdet."
 
-#: cmd_merging.cc:524
+#: cmd_merging.cc:525
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "VÄNSTERREVISION HÖGERREVISION MÅLGREN"
 
-#: cmd_merging.cc:525
+#: cmd_merging.cc:526
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr ""
 "slå ihop två explicit angivna revisioner, placera resultatet i angiven gren"
 
-#: cmd_merging.cc:540
+#: cmd_merging.cc:541
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr "%s och %s är samma revision, avbryter"
 
-#: cmd_merging.cc:542 cmd_merging.cc:544
+#: cmd_merging.cc:543 cmd_merging.cc:545
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr "%s är redan förfader till %s"
 
-#: cmd_merging.cc:569
+#: cmd_merging.cc:570
 msgid "REV REV"
 msgstr "REV REV"
 
-#: cmd_merging.cc:570
+#: cmd_merging.cc:571
 msgid ""
 "Show what conflicts would need to be resolved to merge the given revisions."
 msgstr ""
 "Visa de konflikter som behöver lösas om de givna revisionerna slås ihop."
 
-#: cmd_merging.cc:580 cmd_merging.cc:582
+#: cmd_merging.cc:581 cmd_merging.cc:583
 #, c-format
 msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "%s är en förfader till %s; någon ihopslagning behövs inte."
 
-#: cmd_merging.cc:596
+#: cmd_merging.cc:597
 #, c-format
 msgid "There are %s node_name_conflicts."
 msgstr "Det finns %s node_name-konflikter."
 
-#: cmd_merging.cc:598
+#: cmd_merging.cc:599
 #, c-format
 msgid "There are %s file_content_conflicts."
 msgstr "Det finns %s file_content-konflikter."
 
-#: cmd_merging.cc:600
+#: cmd_merging.cc:601
 #, c-format
 msgid "There are %s node_attr_conflicts."
 msgstr "Det finns %s node_attr-konflikter."
 
-#: cmd_merging.cc:602
+#: cmd_merging.cc:603
 #, c-format
 msgid "There are %s orphaned_node_conflicts."
 msgstr "Det finns %s orphaned_node-konflikter."
 
-#: cmd_merging.cc:604
+#: cmd_merging.cc:605
 #, c-format
 msgid "There are %s rename_target_conflicts."
 msgstr "Det finns %s rename_target-konflikter."
 
-#: cmd_merging.cc:606
+#: cmd_merging.cc:607
 #, c-format
 msgid "There are %s directory_loop_conflicts."
 msgstr "Det finns %s directory_loop-konflikter."
 
-#: cmd_merging.cc:610
+#: cmd_merging.cc:611
+msgid "[-r FROM] -r TO"
+msgstr "[-r FRÅN] -r TILL"
+
+#: cmd_merging.cc:612
+msgid ""
+"Apply changes made at arbitrary places in history to current workspace.\n"
+"This command takes changes made at any point in history, and\n"
+"edits your current workspace to include those changes.  The end result\n"
+"is identical to 'mtn diff -r FROM -r TO | patch -p0', except that\n"
+"this command uses monotone's merger, and thus intelligently handles\n"
+"renames, conflicts, and so on.\n"
+"\n"
+"If one revision is given, applies the changes made in that revision\n"
+"compared to its parent.\n"
+"\n"
+"If two revisions are given, applies the changes made to get from the\n"
+"first revision to the second."
+msgstr ""
+"Tar ändringar från vald(a) revision(er) och utför dem i arbetskopian.\n"
+"Det här kommandot plockar ändringar från någon punkt i historien, och\n"
+"skriver om din arbetskopia i enlighet med dessa ändringar.  Slut-\n"
+"resultatet är exakt som 'mtn diff -r FRÅN -r TILL | patch -p0', utom\n"
+"att det använder monotones ihopslagningsmekanism, och därmed hanterar\n"
+"namnbyten, konflikter och så vidare.\n"
+"\n"
+"Om enbart en revision har givits utförs ändringarna gjorda i den\n"
+"revisionen jämfört med dess förälder.\n"
+"\n"
+"Om två revision har givits utförs alla ändringar som gjorts för att\n"
+"komma från den första till den andra."
+
+#: cmd_merging.cc:637
+#, c-format
+msgid ""
+"revision %s is a merge\n"
+"to apply the changes relative to one of its parents, use:\n"
+"  %s pluck -r PARENT -r %s"
+msgstr ""
+"revisionen %s är en ihopslagning\n"
+"för att utföra ändringarna relativt en av dess föräldrar, gör så här:\n"
+"  %s pluck -r FÖRÄLDER -r %s"
+
+#: cmd_merging.cc:654
+#, c-format
+msgid "no changes to apply"
+msgstr "inga ändringar att utföra"
+
+#: cmd_merging.cc:762
+#, c-format
+msgid "applied changes to workspace"
+msgstr "utförde ändringarna i arbetskopian"
+
+#: cmd_merging.cc:769
 msgid "show unmerged head revisions of branch"
 msgstr "visa ej ihopslagna lövrevisioner i grenen"
 
-#: cmd_merging.cc:625
+#: cmd_merging.cc:784
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "grenen '%s' har för tillfället ett löv:"
 
-#: cmd_merging.cc:627
+#: cmd_merging.cc:786
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "grenen '%s' har för tillfället mer än ett löv:"
 
-#: cmd_merging.cc:634
+#: cmd_merging.cc:793
 msgid "REVID"
 msgstr "REVID"
 
-#: cmd_merging.cc:635
+#: cmd_merging.cc:794
 msgid "dump the roster associated with the given REVID"
 msgstr "skriv ut den lista som hör ihop med angivet REVID"
 
@@ -1524,10 +1577,10 @@ msgstr "du måste ange en gren med --branch till kommandot \"setup\""
 msgid "refresh the inodeprint cache"
 msgstr "uppdatera inodeprint-cachen"
 
-#: commands.cc:124
+#: commands.cc:124 commands.cc:225
 #, c-format
-msgid "unknown command '%s'\n"
-msgstr "okänt kommando '%s'\n"
+msgid "unknown command '%s'"
+msgstr "okänt kommando '%s'"
 
 #: commands.cc:135
 #, c-format
@@ -1537,11 +1590,6 @@ msgstr "kommandot '%s' har mer än en betydelse:\n"
 #: commands.cc:168
 msgid "commands:"
 msgstr "kommandon:"
-
-#: commands.cc:225
-#, c-format
-msgid "unknown command '%s'"
-msgstr "okänt kommando '%s'"
 
 #: commands.cc:246
 msgid "command [ARGS...]"
@@ -2079,22 +2127,22 @@ msgstr "%s är en katalog, inte en databas"
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
 
-#: diff_patch.cc:605
+#: diff_patch.cc:606
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "filen '%s' existerar inte i arbetskopian"
 
-#: diff_patch.cc:606
+#: diff_patch.cc:607
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' i arbetskopian är en katalog, inte en fil"
 
-#: diff_patch.cc:610
+#: diff_patch.cc:611
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "filen %s i arbetskopian har identiteten %s, %s eftersöktes"
 
-#: diff_patch.cc:731
+#: diff_patch.cc:732
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -2548,12 +2596,12 @@ msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:635
+#: monotone.cc:629
 #, c-format
 msgid "%s %s doesn't use the option %s"
 msgstr "%s %s använder inte flaggan %s"
 
-#: monotone.cc:670
+#: monotone.cc:663
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3614,8 +3662,14 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 
 #: work.cc:1041
 #, c-format
-msgid "updating %s"
-msgstr "uppdaterar %s"
+msgid "modifying %s"
+msgstr "ändrar %s"
+
+#~ msgid "updating %s"
+#~ msgstr "uppdaterar %s"
+
+#~ msgid "unknown command '%s'\n"
+#~ msgstr "okänt kommando '%s'\n"
 
 #~ msgid ""
 #~ "interface_version\n"

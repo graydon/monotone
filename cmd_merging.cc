@@ -19,6 +19,7 @@
 #include "transforms.hh"
 #include "update.hh"
 #include "work.hh"
+#include "safe_map.hh"
 
 using std::cout;
 using std::map;
@@ -174,8 +175,8 @@ CMD(update, N_("workspace"), "",
           {
             // one non-matching, inform and update
             app.branch_name = (*(branches.begin()))();
-	    switched_branch = true;
-	    P(F("switching to branch %s") % app.branch_name());
+            switched_branch = true;
+            P(F("switching to branch %s") % app.branch_name());
           }
         else
           {
@@ -339,7 +340,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       cert_revision_in_branch(merged, app.branch_name(), app, dbw);
 
       string log = (FL("merge of %s\n"
-		       "     and %s\n") % left % right).str();
+                       "     and %s\n") % left % right).str();
       cert_revision_changelog(merged, log, app, dbw);
 
       guard.commit();
@@ -509,7 +510,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
       process_commit_message_args(log_message_given, log_message, app);
       if (!log_message_given)
         log_message = (FL("propagate from branch '%s' (head %s)\n"
-			  "            to branch '%s' (head %s)\n")
+                          "            to branch '%s' (head %s)\n")
                        % idx(args, 0) % (*src_i)
                        % idx(args, 1) % (*dst_i)).str();
 
@@ -556,8 +557,8 @@ CMD(explicit_merge, N_("tree"),
   cert_revision_in_branch(merged, branch, app, dbw);
 
   string log = (FL("explicit_merge of '%s'\n"
-		   "              and '%s'\n"
-		   "        to branch '%s'\n")
+                   "              and '%s'\n"
+                   "        to branch '%s'\n")
                 % left % right % branch).str();
 
   cert_revision_changelog(merged, log, app, dbw);
@@ -575,7 +576,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     throw usage(name);
   revision_id l_id, r_id;
   complete(app, idx(args,0)(), l_id);
-  complete(app, idx(args,1)(), r_id);
+  complete(app, idx(args,1)(), r_id);                                                                    
   N(!is_ancestor(l_id, r_id, app),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app),
@@ -605,6 +606,177 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.rename_target_conflicts.size());
   P(F("There are %s directory_loop_conflicts.") 
     % result.directory_loop_conflicts.size());
+}                                                                
+
+CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
+    N_("Apply changes made at arbitrary places in history to current workspace.\n"
+       "This command takes changes made at any point in history, and\n"
+       "edits your current workspace to include those changes.  The end result\n"
+       "is identical to 'mtn diff -r FROM -r TO | patch -p0', except that\n"
+       "this command uses monotone's merger, and thus intelligently handles\n"
+       "renames, conflicts, and so on.\n"
+       "\n"
+       "If one revision is given, applies the changes made in that revision\n"
+       "compared to its parent.\n"                                                                                  
+       "\n"
+       "If two revisions are given, applies the changes made to get from the\n"  
+       "first revision to the second."),                                                                            
+    OPT_REVISION)
+{
+  if (args.size() > 0)
+    throw usage(name);                                                                 
+  
+  revision_id from_rid, to_rid;
+
+  if (app.revision_selectors.size() == 1)
+    {
+      complete(app, idx(app.revision_selectors, 0)(), to_rid);
+      std::set<revision_id> parents;
+      app.db.get_revision_parents(to_rid, parents);
+      N(parents.size() == 1,
+        F("revision %s is a merge\n"
+          "to apply the changes relative to one of its parents, use:\n"
+          "  %s pluck -r PARENT -r %s")
+        % to_rid
+        % app.prog_name % to_rid);
+      from_rid = *parents.begin();
+    }
+  else if (app.revision_selectors.size() == 2)
+    {
+      complete(app, idx(app.revision_selectors, 0)(), from_rid);
+      complete(app, idx(app.revision_selectors, 1)(), to_rid);
+    }
+  else
+    throw usage(name);
+  
+  app.require_workspace();
+
+  N(!(from_rid == to_rid), F("no changes to apply"));
+
+  // notionally, we have the situation
+  //
+  // from --> working
+  //   |         | 
+  //   V         V
+  //   to --> merged
+  //
+  // - from is the revision we start plucking from
+  // - to is the revision we stop plucking at
+  // - working is the current contents of the workspace
+  // - merged is the result of the plucking, and achieved by running a
+  //   merge in the fictional graph seen above
+  //
+  // finally, we take the cset from working -> merged, and apply that to the
+  //   workspace
+  // and take the cset from the workspace's base, and write that to _MTN/work
+
+  // Get the FROM roster and markings
+  shared_ptr<roster_t> from_roster = shared_ptr<roster_t>(new roster_t());
+  MM(*from_roster);
+  marking_map from_markings;
+  app.db.get_roster(from_rid, *from_roster, from_markings);
+
+  // Get the FROM->WORKING and FROM->TO csets, and also the base roster
+  // and working rid while we're at it
+  cset from_to_working, from_to_to;
+  MM(from_to_working);
+  MM(from_to_to);
+  roster_t base_roster; MM(base_roster);
+  revision_id working_rid;
+  {
+    // Get the workspace stuff
+    temp_node_id_source nis;
+    revision_id working_rid;
+    roster_t working_true_roster;
+    get_base_and_current_roster_shape(base_roster, working_true_roster,
+                                      nis, app);
+    update_current_roster_from_filesystem(working_true_roster, app);
+    make_cset(*from_roster, working_true_roster, from_to_working);
+    revision_id base_rid;
+    get_revision_id(base_rid);
+    revision_set working_rev;
+    make_revision_set(base_rid, base_roster, working_true_roster, working_rev);
+    calculate_ident(working_rev, working_rid);
+  }
+  {
+    // Get the TO roster
+    roster_t to_true_roster;
+    app.db.get_roster(to_rid, to_true_roster);
+    make_cset(*from_roster, to_true_roster, from_to_to);
+  }
+
+  // Recreate the working and to rosters with renumbered nids and fake
+  // markings.  We have to go roster->cset->roster because our marking code
+  // works on csets, and we need our final roster and final markings to use
+  // compatible nids.
+  temp_node_id_source nis;
+  roster_t working_roster, to_roster;
+  MM(working_roster);
+  MM(to_roster);
+  marking_map working_markings, to_markings;
+  make_roster_for_base_plus_cset(from_rid, from_to_working,
+                                 working_rid,
+                                 working_roster, working_markings,
+                                 nis, app);
+  make_roster_for_base_plus_cset(from_rid, from_to_to,
+                                 to_rid,
+                                 to_roster, to_markings,
+                                 nis, app);
+
+  // Set up the synthetic graph, by creating uncommon ancestor sets
+  std::set<revision_id> working_uncommon_ancestors, to_uncommon_ancestors;
+  safe_insert(working_uncommon_ancestors, working_rid);
+  safe_insert(to_uncommon_ancestors, to_rid);
+
+  // Now do the merge
+  roster_merge_result result;
+  roster_merge(working_roster, working_markings, working_uncommon_ancestors,
+               to_roster, to_markings, to_uncommon_ancestors,
+               result);
+
+  roster_t & merged_roster = result.roster;
+
+  content_merge_workspace_adaptor wca(app, from_roster);
+  resolve_merge_conflicts(working_rid, to_rid,
+                          working_roster, to_roster,
+                          working_markings, to_markings,
+                          result, wca, app);
+
+  I(result.is_clean());
+  // temporary node ids may appear
+  merged_roster.check_sane(true);
+
+  // we apply the working to merged cset to the workspace 
+  // and write the cset from the base to merged roster in _MTN/work
+  cset update, remaining;
+  MM(update);
+  MM(remaining);
+  make_cset(working_roster, merged_roster, update);
+  make_cset(base_roster, merged_roster, remaining);
+
+  update_source fsource(wca.temporary_store, app);
+  editable_working_tree ewt(app, fsource);
+  update.apply_to(ewt);
+  
+  // small race condition here...
+  P(F("applied changes to workspace"));
+
+  put_work_cset(remaining);
+  update_any_attrs(app);
+  maybe_update_inodeprints(app);
+  
+  // add a note to the user log file about what we did
+  {
+    data log;
+    read_user_log(log);
+    std::string log_str = log();
+    if (!log_str.empty())
+      log_str += "\n";
+    log_str += (FL("applied changes from %s\n"
+                   "             through %s\n")
+                % from_rid % to_rid).str();
+    write_user_log(data(log_str));
+  }
 }
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),

@@ -24,15 +24,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-03 22:15+0200\n"
-"PO-Revision-Date: 2006-07-03 23:42+0100\n"
+"POT-Creation-Date: 2006-07-06 15:30+0200\n"
+"PO-Revision-Date: 2006-07-06 15:31+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
-"Language-Team: Deutsch <kde-i18n-de@kde.org>\n"
+"Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: KBabel 1.11.1\n"
+"X-Poedit-Language: German\n"
+"X-Poedit-Country: GERMANY\n"
+"X-Poedit-Basepath: ..\n"
 
 #: app_state.cc:139
 #, c-format
@@ -168,11 +170,11 @@ msgstr "Lesen vom Client schlug fehl, Fehlercode: %d"
 msgid "Bad input to automate stdio"
 msgstr "Falsche Eingabe für 'automate stdio'"
 
-#: cmd_automate.cc:296
+#: cmd_automate.cc:301
 msgid "automation"
 msgstr "Automatisierung"
 
-#: cmd_automate.cc:297
+#: cmd_automate.cc:302
 msgid "automation interface"
 msgstr "Schnittstelle für die Automatisierung"
 
@@ -182,7 +184,7 @@ msgstr "Schnittstelle für die Automatisierung"
 #: cmd_diff_log.cc:437
 #: cmd_files.cc:102
 #: cmd_files.cc:164
-#: cmd_merging.cc:123
+#: cmd_merging.cc:124
 #: cmd_ws_commit.cc:446
 #: commands.cc:370
 #, c-format
@@ -271,7 +273,7 @@ msgstr "keine Variable mit dem Namen %s in der Domäne %s"
 #: cmd_files.cc:78
 #: cmd_files.cc:145
 #: cmd_list.cc:437
-#: cmd_merging.cc:569
+#: cmd_merging.cc:570
 #: cmd_ws_commit.cc:322
 #: commands.cc:246
 msgid "informative"
@@ -344,7 +346,7 @@ msgstr "'--last' und '--next' sind nur einmal erlaubt"
 #: cmd_files.cc:28
 #: cmd_files.cc:41
 #: cmd_files.cc:121
-#: cmd_merging.cc:634
+#: cmd_merging.cc:793
 #: cmd_othervcs.cc:15
 msgid "debug"
 msgstr "Debugging"
@@ -713,7 +715,8 @@ msgstr "REV"
 msgid "No such revision %s"
 msgstr "Revision %s nicht gefunden"
 
-#: cmd_merging.cc:53
+#: cmd_merging.cc:54
+#: cmd_merging.cc:611
 #: cmd_ws_commit.cc:53
 #: cmd_ws_commit.cc:224
 #: cmd_ws_commit.cc:251
@@ -724,7 +727,7 @@ msgstr "Revision %s nicht gefunden"
 msgid "workspace"
 msgstr "Arbeitsbereich"
 
-#: cmd_merging.cc:54
+#: cmd_merging.cc:55
 msgid ""
 "update workspace.\n"
 "This command modifies your workspace to be based off of a\n"
@@ -738,17 +741,17 @@ msgstr ""
 "Wenn eine Revision angegeben wurde, erfolgt die Aktualisierung zu dieser Revision.\n"
 "Wenn nicht, dient der Kopf des Zweiges als Grundlage für die Aktualisierung."
 
-#: cmd_merging.cc:97
+#: cmd_merging.cc:98
 #, c-format
 msgid "this workspace is a new project; cannot update"
 msgstr "dieser Arbeitsbereich ist ein neues Projekt; kann nicht aktualisieren"
 
-#: cmd_merging.cc:101
+#: cmd_merging.cc:102
 #, c-format
 msgid "updating along branch '%s'"
 msgstr "aktualisiere vorwärts auf dem Zweig '%s'"
 
-#: cmd_merging.cc:105
+#: cmd_merging.cc:106
 #, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
@@ -759,37 +762,37 @@ msgstr ""
 "Sie passt nicht einmal auf die derzeitige Revision.\n"
 "Eventuell möchten Sie '--revision=<rev_auf_anderen_zweig>' ausführen."
 
-#: cmd_merging.cc:110
+#: cmd_merging.cc:111
 #, c-format
 msgid "multiple update candidates:"
 msgstr "mehrere Kandidaten für die Aktualisierung:"
 
-#: cmd_merging.cc:114
+#: cmd_merging.cc:115
 #, c-format
 msgid "choose one with '%s update -r<id>'"
 msgstr "wählen Sie eine mit '%s update -r <id>'"
 
-#: cmd_merging.cc:115
+#: cmd_merging.cc:116
 #, c-format
 msgid "multiple update candidates remain after selection"
 msgstr "mehrere Kandidaten für die Aktualisierung verbleiben nach der Auswahl"
 
-#: cmd_merging.cc:130
+#: cmd_merging.cc:131
 #, c-format
 msgid "already up to date at %s"
 msgstr "bereits aktualisiert auf %s"
 
-#: cmd_merging.cc:138
+#: cmd_merging.cc:139
 #, c-format
 msgid "selected update target %s"
 msgstr "Ziel %s für Aktualisierung ausgewählt"
 
-#: cmd_merging.cc:162
+#: cmd_merging.cc:163
 #, c-format
 msgid "target revision is not in current branch"
 msgstr "Ziel-Revision befindet sich nicht im derzeitigen Zweig"
 
-#: cmd_merging.cc:170
+#: cmd_merging.cc:171
 #, c-format
 msgid ""
 "target revision is in multiple branches:%s\n"
@@ -800,12 +803,12 @@ msgstr ""
 "\n"
 "versuchen Sie es noch einmal mit der expliziten Angabe von '--branch'"
 
-#: cmd_merging.cc:178
+#: cmd_merging.cc:179
 #, c-format
 msgid "switching to branch %s"
 msgstr "wechsle zum Zweig %s"
 
-#: cmd_merging.cc:183
+#: cmd_merging.cc:184
 #, c-format
 msgid ""
 "target revision not in any branch\n"
@@ -814,216 +817,272 @@ msgstr ""
 "Ziel-Revision befindet sich in keinem Zweig\n"
 "beim nächsten Einpflegen wird der Zweig %s genutzt"
 
-#: cmd_merging.cc:288
+#: cmd_merging.cc:289
 #, c-format
 msgid "switched branch; next commit will use branch %s"
 msgstr "Zweig gewechselt; beim nächsten Einpflegen wird der Zweig %s genutzt"
 
-#: cmd_merging.cc:289
+#: cmd_merging.cc:290
 #, c-format
 msgid "updated to base revision %s"
 msgstr "aktualisiert auf gemeinsame Revision %s"
 
-#: cmd_merging.cc:299
-#: cmd_merging.cc:352
-#: cmd_merging.cc:363
-#: cmd_merging.cc:523
-#: cmd_merging.cc:610
+#: cmd_merging.cc:300
+#: cmd_merging.cc:353
+#: cmd_merging.cc:364
+#: cmd_merging.cc:524
+#: cmd_merging.cc:769
 #: cmd_ws_commit.cc:385
 #: cmd_ws_commit.cc:851
 #: cmd_ws_commit.cc:872
 msgid "tree"
 msgstr "Baum"
 
-#: cmd_merging.cc:299
+#: cmd_merging.cc:300
 msgid "merge unmerged heads of branch"
 msgstr "führe nicht-zusammengeführte Köpfe des Zweigs zusammen"
 
-#: cmd_merging.cc:308
-#: cmd_merging.cc:618
+#: cmd_merging.cc:309
+#: cmd_merging.cc:777
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "bitte geben Sie einen Zweig mit '--branch=ZWEIG' an"
 
-#: cmd_merging.cc:312
-#: cmd_merging.cc:402
-#: cmd_merging.cc:405
-#: cmd_merging.cc:623
+#: cmd_merging.cc:313
+#: cmd_merging.cc:403
+#: cmd_merging.cc:406
+#: cmd_merging.cc:782
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "Zweig '%s' ist leer"
 
-#: cmd_merging.cc:315
+#: cmd_merging.cc:316
 #, c-format
 msgid "branch '%s' is already merged"
 msgstr "Zweig '%s' wurde bereits zusammengeführt"
 
-#: cmd_merging.cc:323
+#: cmd_merging.cc:324
 #, c-format
 msgid "starting with revision 1 / %d"
 msgstr "starte mit Revision 1 / %d"
 
-#: cmd_merging.cc:327
+#: cmd_merging.cc:328
 #, c-format
 msgid "merging with revision %d / %d"
 msgstr "führe zusammen mit Revision %d / %d"
 
-#: cmd_merging.cc:328
 #: cmd_merging.cc:329
-#: cmd_merging.cc:412
-#: cmd_merging.cc:547
+#: cmd_merging.cc:330
+#: cmd_merging.cc:413
 #: cmd_merging.cc:548
+#: cmd_merging.cc:549
 #, c-format
 msgid "[source] %s"
 msgstr "[Quelle] %s"
 
-#: cmd_merging.cc:346
-#: cmd_merging.cc:519
-#: cmd_merging.cc:566
+#: cmd_merging.cc:347
+#: cmd_merging.cc:520
+#: cmd_merging.cc:567
 #, c-format
 msgid "[merged] %s"
 msgstr "[Zusammengeführt] %s"
 
-#: cmd_merging.cc:349
+#: cmd_merging.cc:350
 #, c-format
 msgid "note: your workspaces have not been updated"
 msgstr "Hinweis: Ihr Arbeitsbereich wurde nicht aktualisiert"
 
-#: cmd_merging.cc:352
+#: cmd_merging.cc:353
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "QUELL-ZWEIG ZIEL-ZWEIG"
 
-#: cmd_merging.cc:353
+#: cmd_merging.cc:354
 msgid "merge from one branch to another asymmetrically"
 msgstr "asymmetrisches Zusammenführen von Änderungen eines Zweigs auf einem anderen"
 
-#: cmd_merging.cc:363
+#: cmd_merging.cc:364
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "QUELL-ZWEIG ZIEL-ZWEIG VERZEICHNIS"
 
-#: cmd_merging.cc:364
+#: cmd_merging.cc:365
 msgid "merge one branch into a subdirectory in another branch"
 msgstr "überführe einen Zweig in ein Unterverzeichnis eines anderen Zweigs"
 
-#: cmd_merging.cc:403
-#: cmd_merging.cc:406
+#: cmd_merging.cc:404
+#: cmd_merging.cc:407
 #, c-format
 msgid "branch '%s' is not merged"
 msgstr "Zweig '%s' ist nicht zusammengeführt"
 
-#: cmd_merging.cc:411
+#: cmd_merging.cc:412
 #, c-format
 msgid "propagating %s -> %s"
 msgstr "übertrage %s -> %s"
 
-#: cmd_merging.cc:413
+#: cmd_merging.cc:414
 #, c-format
 msgid "[target] %s"
 msgstr "[Ziel] %s"
 
-#: cmd_merging.cc:418
+#: cmd_merging.cc:419
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'"
 msgstr "Zweig '%s' ist bezogen auf Zweig '%s' aktuell"
 
-#: cmd_merging.cc:420
+#: cmd_merging.cc:421
 #, c-format
 msgid "no action taken"
 msgstr "keine Aktion ausgeführt"
 
-#: cmd_merging.cc:424
+#: cmd_merging.cc:425
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'"
 msgstr "kein Zusammenführen notwendig; schiebe %s in Zweig '%s'"
 
-#: cmd_merging.cc:462
+#: cmd_merging.cc:463
 #, c-format
 msgid "Path %s not found in destination tree."
 msgstr "Pfad %s im Ziel-Baum nicht gefunden"
 
-#: cmd_merging.cc:524
+#: cmd_merging.cc:525
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "LINKE_REVISION RECHTE_REVISION ZIEL_ZWEIG"
 
-#: cmd_merging.cc:525
+#: cmd_merging.cc:526
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr "führt zwei gegebene Revisionen zusammen und erzeugt eine neue Revision im gegebenen Zweig"
 
-#: cmd_merging.cc:540
+#: cmd_merging.cc:541
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr "%s und %s sind dieselben Revisionen, breche ab"
 
-#: cmd_merging.cc:542
-#: cmd_merging.cc:544
+#: cmd_merging.cc:543
+#: cmd_merging.cc:545
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr "%s ist bereits ein Vorfahre von %s"
 
-#: cmd_merging.cc:569
+#: cmd_merging.cc:570
 msgid "REV REV"
 msgstr "REVISION REVISION"
 
-#: cmd_merging.cc:570
+#: cmd_merging.cc:571
 msgid "Show what conflicts would need to be resolved to merge the given revisions."
 msgstr "Zeige, welche Konflikte beim Zusammenführen der gegebenen Revisionen behoben werden müssten."
 
-#: cmd_merging.cc:580
-#: cmd_merging.cc:582
+#: cmd_merging.cc:581
+#: cmd_merging.cc:583
 #, c-format
 msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "%s ist ein Vorgänger von %s; kein Zusammenführen notwendig."
 
-#: cmd_merging.cc:596
+#: cmd_merging.cc:597
 #, c-format
 msgid "There are %s node_name_conflicts."
 msgstr "Es gibt %s node_name_conflicts."
 
-#: cmd_merging.cc:598
+#: cmd_merging.cc:599
 #, c-format
 msgid "There are %s file_content_conflicts."
 msgstr "Es gibt %s file_content_conflicts."
 
-#: cmd_merging.cc:600
+#: cmd_merging.cc:601
 #, c-format
 msgid "There are %s node_attr_conflicts."
 msgstr "Es gibt %s node_attr_conflicts."
 
-#: cmd_merging.cc:602
+#: cmd_merging.cc:603
 #, c-format
 msgid "There are %s orphaned_node_conflicts."
 msgstr "Es gibt %s orphaned_node_conflicts."
 
-#: cmd_merging.cc:604
+#: cmd_merging.cc:605
 #, c-format
 msgid "There are %s rename_target_conflicts."
 msgstr "Es gibt %s rename_target_conflicts."
 
-#: cmd_merging.cc:606
+#: cmd_merging.cc:607
 #, c-format
 msgid "There are %s directory_loop_conflicts."
 msgstr "Es gibt %s directory_loop_conflicts."
 
-#: cmd_merging.cc:610
+#: cmd_merging.cc:611
+msgid "[-r FROM] -r TO"
+msgstr "[-r VON] -r BIS"
+
+#: cmd_merging.cc:612
+msgid ""
+"Apply changes made at arbitrary places in history to current workspace.\n"
+"This command takes changes made at any point in history, and\n"
+"edits your current workspace to include those changes.  The end result\n"
+"is identical to 'mtn diff -r FROM -r TO | patch -p0', except that\n"
+"this command uses monotone's merger, and thus intelligently handles\n"
+"renames, conflicts, and so on.\n"
+"\n"
+"If one revision is given, applies the changes made in that revision\n"
+"compared to its parent.\n"
+"\n"
+"If two revisions are given, applies the changes made to get from the\n"
+"first revision to the second."
+msgstr ""
+"Wende Änderungen, die an beliebigen Punkten in der Historie vollzogen\n"
+"wurden, auf das derzeitige Arbeitsverzeichnis an.\n"
+"Das Ergebnis dieses Kommandos ist identisch zur Ausführung von\n"
+" mtn diff -r VON -r BIS | patch -p0\n"
+"außer, dass bei diesem Kommando monotones Vereinigungs-Algorithmus\n"
+"zur Anwendung kommt, welcher Umbenennungen, Konflikte u.a.\n"
+"intelligent handhabt.\n"
+"\n"
+"Wenn lediglich eine Revision übergeben wurde, werden die Änderungen,\n"
+"die in dieser Revision relativ zu deren Elternrevision gemacht wurden,\n"
+"angewendet.\n"
+"\n"
+"Wenn zwei Revisionen übergeben wurden, werden die Änderungen,\n"
+"die zwischen der ersten und der zweiten Revision gemacht wurden,\n"
+"angewendet."
+
+#: cmd_merging.cc:637
+#, c-format
+msgid ""
+"revision %s is a merge\n"
+"to apply the changes relative to one of its parents, use:\n"
+"  %s pluck -r PARENT -r %s"
+msgstr ""
+"Revision %s ist eine Vereinigung\n"
+"Um die Änderungen relativ auf eine der Elternrevisionen anzuwenden, benutzen Sie:\n"
+" %s pluck -r ELTERNREVISION -r %s"
+
+#: cmd_merging.cc:654
+#, c-format
+msgid "no changes to apply"
+msgstr "keine Änderungen anwendbar"
+
+#: cmd_merging.cc:762
+#, c-format
+msgid "applied changes to workspace"
+msgstr "Änderungen auf Arbeitsbereich angewendet"
+
+#: cmd_merging.cc:769
 msgid "show unmerged head revisions of branch"
 msgstr "zeige nicht zusammengeführte Revisionen des Zweigs"
 
-#: cmd_merging.cc:625
+#: cmd_merging.cc:784
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "Zweig '%s' ist derzeit zusammengeführt:"
 
-#: cmd_merging.cc:627
+#: cmd_merging.cc:786
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "Zweig '%s' ist derzeit nicht zusammengeführt:"
 
-#: cmd_merging.cc:634
+#: cmd_merging.cc:793
 msgid "REVID"
 msgstr "REVISIONS_ID"
 
-#: cmd_merging.cc:635
+#: cmd_merging.cc:794
 msgid "dump the roster associated with the given REVID"
 msgstr "Exportiere den Katalog, welcher mit der gegebenen REVID verknüpft ist"
 
@@ -1454,9 +1513,10 @@ msgid "refresh the inodeprint cache"
 msgstr "aktualisiere den 'inodeprint'-Cache"
 
 #: commands.cc:124
+#: commands.cc:225
 #, c-format
-msgid "unknown command '%s'\n"
-msgstr "unbekanntes Kommando '%s'\n"
+msgid "unknown command '%s'"
+msgstr "unbekanntes Kommando '%s'"
 
 #: commands.cc:135
 #, c-format
@@ -1466,11 +1526,6 @@ msgstr "Das Kommando '%s' kann auf mehrere Arten erweitert werden:\n"
 #: commands.cc:168
 msgid "commands:"
 msgstr "Kommandos:"
-
-#: commands.cc:225
-#, c-format
-msgid "unknown command '%s'"
-msgstr "unbekanntes Kommando '%s'"
 
 #: commands.cc:246
 msgid "command [ARGS...]"
@@ -1994,22 +2049,22 @@ msgstr "%s ist ein Verzeichnis, keine Datenbank"
 msgid "could not open database '%s': %s"
 msgstr "Konnte Datenbank '%s' nicht öffnen: %s"
 
-#: diff_patch.cc:605
+#: diff_patch.cc:606
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "Datei '%s' existiert nicht im Arbeitsbereich"
 
-#: diff_patch.cc:606
+#: diff_patch.cc:607
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' im Arbeitsbereich ist ein Verzeichnis, keine Datei"
 
-#: diff_patch.cc:610
+#: diff_patch.cc:611
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "Datei %s im Arbeitsbereich hat die ID %s, erwartete %s"
 
-#: diff_patch.cc:731
+#: diff_patch.cc:732
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -2467,12 +2522,12 @@ msgstr "[OPTION...] Kommando [Argumente...]\n"
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "Syntaxfehler in der der Option \"%s\": %s"
 
-#: monotone.cc:635
+#: monotone.cc:629
 #, c-format
 msgid "%s %s doesn't use the option %s"
 msgstr "%s %s benutzt die Option %s nicht"
 
-#: monotone.cc:670
+#: monotone.cc:663
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Spezifische Optionen für '%s %s':"
@@ -3512,63 +3567,6 @@ msgstr "Inhalt der Datei '%s' hat sich geändert, Datei wird nicht überschriebe
 
 #: work.cc:1041
 #, c-format
-msgid "updating %s"
-msgstr "aktualisiere %s"
-
-#~ msgid ""
-#~ "interface_version\n"
-#~ "heads [BRANCH]\n"
-#~ "ancestors REV1 [REV2 [REV3 [...]]]\n"
-#~ "attributes [FILE]\n"
-#~ "parents REV\n"
-#~ "descendents REV1 [REV2 [REV3 [...]]]\n"
-#~ "children REV\n"
-#~ "graph\n"
-#~ "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
-#~ "toposort [REV1 [REV2 [REV3 [...]]]]\n"
-#~ "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
-#~ "common_ancestors REV1 [REV2 [REV3 [...]]]\n"
-#~ "leaves\n"
-#~ "inventory\n"
-#~ "stdio\n"
-#~ "certs REV\n"
-#~ "select SELECTOR\n"
-#~ "get_file FILEID\n"
-#~ "get_manifest_of [REVID]\n"
-#~ "get_revision [REVID]\n"
-#~ "get_base_revision_id\n"
-#~ "get_current_revision_id\n"
-#~ "packet_for_rdata REVID\n"
-#~ "packets_for_certs REVID\n"
-#~ "packet_for_fdata FILEID\n"
-#~ "packet_for_fdelta OLD_FILE NEW_FILE\n"
-#~ "keys\n"
-#~ msgstr ""
-#~ "interface_version\n"
-#~ "heads [ZWEIG]\n"
-#~ "ancestors REV1 [REV2 [REV3 [...]]]\n"
-#~ "attributes [DATEI] \n"
-#~ "parents REVISION\n"
-#~ "descendents REV1 [REV2 [REV3 [...]]]\n"
-#~ "children REVISION\n"
-#~ "graph\n"
-#~ "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
-#~ "toposort [REV1 [REV2 [REV3 [...]]]]\n"
-#~ "ancestry_difference ALTE_REV [ALTE_REV1 [ALTE_REV2 [...]]]\n"
-#~ "common_ancestors REV1 [REV2 [REV3 [...]]]\n"
-#~ "leaves\n"
-#~ "inventory\n"
-#~ "stdio\n"
-#~ "certs REVISION\n"
-#~ "select SELEKTOR\n"
-#~ "get_file DATEI_ID\n"
-#~ "get_manifest_of [REVISIONS_ID]\n"
-#~ "get_revision [REVISIONS_ID]\n"
-#~ "get_base_revision_id\n"
-#~ "get_current_revision_id\n"
-#~ "packet_for_rdata REVISIONS_ID\n"
-#~ "packets_for_certs REVISIONS_ID\n"
-#~ "packet_for_fdata DATEI_ID\n"
-#~ "packet_for_fdelta ALTE_DATEI NEUE_DATEI\n"
-#~ "keys\n"
+msgid "modifying %s"
+msgstr "verändere %s"
 
