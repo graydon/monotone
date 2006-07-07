@@ -1,5 +1,11 @@
 2006-07-06  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/inodeprints/__driver__.lua: Add some sleep()s, so that the
+	clever new inodeprints logic does not notice we are changing
+	things very quickly and turn itself off.
+
+2006-07-06  Nathaniel Smith  <njs@pobox.com>
+
 	* unix/inodeprint.cc (inodeprint_file): Add some clever logic
 	inspired by Martin Pool, to be somewhat more robust against clock
 	issues.  This should be ported to win32, but I don't know how; I
