@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Monotone 0.26\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-05 22:56-0700\n"
-"PO-Revision-Date: 2006-06-20 17:56-0300\n"
+"PO-Revision-Date: 2006-07-06 17:56-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -27,9 +27,9 @@ msgid "invalid directory ''"
 msgstr "diretório inválido ''"
 
 #: app_state.cc:155
-#, fuzzy, c-format
+#, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
-msgstr "diretório '%s' de manutenção do monotone já existe em '%s'\n"
+msgstr "diretório '%s' de manutenção do monotone já existe em '%s'"
 
 #: app_state.cc:236
 #, c-format
@@ -972,14 +972,14 @@ msgid ""
 msgstr ""
 
 #: cmd_merging.cc:649
-#, fuzzy, c-format
+#, c-format
 msgid "no changes to apply"
-msgstr "nenhuma mudança para gravar"
+msgstr "nenhuma mudança a aplicar"
 
 #: cmd_merging.cc:740
-#, fuzzy, c-format
+#, c-format
 msgid "applied changes to workspace"
-msgstr "adiciona arquivos à área de trabalho"
+msgstr "mudanças aplicadas à área de trabalho"
 
 #: cmd_merging.cc:747
 msgid "show unmerged head revisions of branch"
@@ -2694,11 +2694,11 @@ msgstr ""
 
 #: netsync.cc:2052 netsync.cc:2083
 msgid "source"
-msgstr ""
+msgstr "fonte"
 
 #: netsync.cc:2052 netsync.cc:2083
 msgid "sink"
-msgstr ""
+msgstr "saída"
 
 #: netsync.cc:2239
 #, c-format
@@ -2733,7 +2733,7 @@ msgstr ""
 #: netsync.cc:2405
 #, c-format
 msgid "successful exchange with %s"
-msgstr ""
+msgstr "comunicação feita com sucesso com %s"
 
 #: netsync.cc:2411
 #, c-format
@@ -2743,7 +2743,7 @@ msgstr ""
 #: netsync.cc:2416
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting\n"
-msgstr ""
+msgstr "erro de E/S comunicando com par %s, desconectando\n"
 
 #: netsync.cc:2482
 #, c-format
@@ -2753,7 +2753,7 @@ msgstr ""
 #: netsync.cc:2514
 #, c-format
 msgid "accepted new client connection from %s : %s"
-msgstr ""
+msgstr "nova conexão do cliente %s aceita: %s"
 
 #: netsync.cc:2551
 #, c-format
@@ -2790,17 +2790,17 @@ msgstr ""
 #: netsync.cc:2605
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
-msgstr ""
+msgstr "escrita no par %s falhou em um estado confirmado (sucesso)"
 
 #: netsync.cc:2632
 #, c-format
 msgid "peer %s processing finished, disconnecting"
-msgstr ""
+msgstr "processamento do par %s terminou, desconectando"
 
 #: netsync.cc:2654
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
-msgstr ""
+msgstr "fd %d (par %s) tem estado parado por muito tempo, desconectando"
 
 #: netsync.cc:2722
 #, c-format
@@ -2814,12 +2814,12 @@ msgstr "<todas as interfaces>"
 #: netsync.cc:2737
 #, c-format
 msgid "session limit %d reached, some connections will be refused\n"
-msgstr ""
+msgstr "limite da sessão %d alcançado, algumas conexões serão recusadas\n"
 
 #: netsync.cc:2802
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
-msgstr ""
+msgstr "recebido OOB do par %s, desconectando"
 
 #: netsync.cc:2862
 #, c-format
@@ -2829,12 +2829,12 @@ msgstr "iniciando serviço em %s"
 #: netsync.cc:2925
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
-msgstr ""
+msgstr "recebidos alguns dados OOB no fd %d (par %s), desconectando"
 
 #: netsync.cc:2974
 #, c-format
 msgid "finding items to synchronize:"
-msgstr ""
+msgstr "encontrando itens para sincronizar:"
 
 #: netsync.cc:2982
 msgid "certificates"
@@ -2851,6 +2851,8 @@ msgid ""
 "include branch pattern contains a quote character:\n"
 "%s\n"
 msgstr ""
+"padrão de inclusão de ramos contém um caractere de aspas:\n"
+"%s\n"
 
 #: netsync.cc:3141
 #, c-format
@@ -2858,16 +2860,18 @@ msgid ""
 "exclude branch pattern contains a quote character:\n"
 "%s\n"
 msgstr ""
+"padrão de exclusão de ramos contém um caractere de aspas:\n"
+"%s\n"
 
 #: netsync.cc:3173 netsync.cc:3177
 #, c-format
 msgid "network error: %s"
-msgstr ""
+msgstr "erro de rede: %s"
 
 #: packet.cc:107
 #, c-format
 msgid "file preimage '%s' missing in db"
-msgstr ""
+msgstr "pré-imagem do arquivo '%s' faltando no banco de dados"
 
 #: packet.cc:108
 #, c-format
@@ -2922,37 +2926,37 @@ msgstr "pacote mal-formado"
 #: packet.cc:450
 #, c-format
 msgid "unknown packet type: '%s'"
-msgstr ""
+msgstr "tipo de pacote desconhecido: '%s'"
 
 #: rcs_file.cc:354
 #, c-format
 msgid "parse failure %d:%d: expecting %s, got %s with value '%s'\n"
-msgstr ""
+msgstr "falha de leitura %d:%d: esperando %s, veio %s com valor '%s'\n"
 
 #: rcs_file.cc:373
 #, c-format
 msgid "parse failure %d:%d: expecting word '%s'\n"
-msgstr ""
+msgstr "falha de leitura %d:%d: palavra '%s' esperada\n"
 
 #: rcs_file.cc:388
 #, c-format
 msgid "parse failure %d:%d: expecting word\n"
-msgstr ""
+msgstr "falha de leitura %d:%d: palavra esperada\n"
 
 #: rcs_import.cc:721
 #, c-format
 msgid "parsing RCS file %s"
-msgstr ""
+msgstr "lendo arquivo RCS %s"
 
 #: rcs_import.cc:724
 #, c-format
 msgid "parsed RCS file %s OK"
-msgstr ""
+msgstr "arquivo RCS %s lido OK"
 
 #: rcs_import.cc:913
 #, c-format
 msgid "error reading RCS file %s: %s"
-msgstr ""
+msgstr "erro lendo arquivo RCS %s: %s"
 
 #: rcs_import.cc:1210
 #, c-format
@@ -2960,11 +2964,13 @@ msgid ""
 "%s appears to be a CVS repository root directory\n"
 "try importing a module instead, with 'cvs_import %s/<module_name>"
 msgstr ""
+"%s aparenta ser um diretório raiz do CVS\n"
+"tente ao invés importar um módulo com cvs_import %s/<nome_do_módulo>"
 
 #: rcs_import.cc:1222
 #, c-format
 msgid "need base --branch argument for importing"
-msgstr ""
+msgstr "opção --branch necessária para importação"
 
 #: rcs_import.cc:1234
 #, c-format
@@ -2973,12 +2979,12 @@ msgstr "caminho %s não existe"
 
 #: rcs_import.cc:1269
 msgid "tags"
-msgstr ""
+msgstr "etiquetas"
 
 #: revision.cc:730
 #, c-format
 msgid "scanning for bogus merge edges"
-msgstr ""
+msgstr "procurando por falsas arestas da combinação"
 
 #: revision.cc:772
 #, c-format
@@ -2998,22 +3004,23 @@ msgstr "reconstruindo %d nós"
 #: revision.cc:997
 #, c-format
 msgid "Path %s added to child roster multiple times\n"
-msgstr ""
+msgstr "Caminho %s adicionado ao inventório-filho múltiplas vezes\n"
 
 #: revision.cc:1010
 #, c-format
 msgid "Directory for path %s cannot be added, as there is a file in the way\n"
-msgstr ""
+msgstr "Diretório com caminho %s não pode ser adicionado, porque há\n"
+"um arquivo no caminho\n"
 
 #: revision.cc:1021
-#, fuzzy, c-format
+#, c-format
 msgid "Path %s cannot be added, as there is a directory in the way"
-msgstr "arquivo %s não pode ser lido como dados, é um diretório"
+msgstr "Caminho %s não pode ser adicionado, há um diretório no caminho"
 
 #: revision.cc:1024
 #, c-format
 msgid "Path %s added twice with differing content\n"
-msgstr ""
+msgstr "Caminho %s adicionado duas vezes com conteúdos diferentes\n"
 
 #: revision.cc:1311
 #, c-format
@@ -3023,11 +3030,15 @@ msgid ""
 "(if you just want it to go away, see the switch --drop-attr, but\n"
 "seriously, if you'd like to keep it, we're happy to figure out how)"
 msgstr ""
+"atributo desconhecido '%s' no caminho '%s'\n"
+"por favor contate %s para que possamos achar uma maneira de migrar isto\n"
+"(se você apenas quer que isto suma, veja a opção --drop-attr, mas\n"
+"se você quiser manter o atributo, nós podemos ajudar como)"
 
 #: revision.cc:1423
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions"
-msgstr ""
+msgstr "convertendo grafo de versões atual para novo estilo com inventório"
 
 #: revision.cc:1478
 #, c-format
@@ -3359,9 +3370,9 @@ msgid "Problem with workspace: %s is unreadable"
 msgstr "Problema com área de trabalho: %s é ilegível"
 
 #: work.cc:623
-#, fuzzy, c-format
+#, c-format
 msgid "base revision %s does not exist in database"
-msgstr "versão-base %s não existe no banco de dados\n"
+msgstr "versão-base %s não existe no banco de dados"
 
 #: work.cc:932
 #, c-format

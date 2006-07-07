@@ -1,3 +1,49 @@
+2006-07-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A new string to translate
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/common/cvs.lua: Sleep after running CVS.
+	* tester.lua: Adjust command handling somewhat, so the above works.
+	* tests/*cvs*/__driver__.lua: Remove any sleep(1) lines. This is now
+	handled automatically.
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/importing_cvs_branches_with_correct_ancestory/__driver__.lua:
+	Move a sleep(). Maybe it'll work reliably now?
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/fail_cleanly_on_unreadable__MTN_options/__driver__.lua:
+	Monotone now checks that it was given a command before it looks at
+	_MTN. So, check that "mtn status" fails properly, instead of just "mtn".
+
+2006-07-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tester.cc: New function, does approximately "chmod -R u+rwx".
+	* tester.lua: Use this on things we copy from the test dir to the
+	scratch dir. This should fix the failures on the distcheck buildbots.
+	* tests/importing_cvs_with_vendor_imports_and_branches/__driver__.lua:
+	* tests/importing_cvs_files_with_identical_logs/__driver__.lua:
+	Add sleep() s between some of the CVS operations.
+
+2006-07-06  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fuzzies cleared and more strings translated.
+
+2006-07-06  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Another fuzzy.
+
+2006-07-06  Richard Levitte  <richard@levitte.org>
+
+	* cmd_merging.cc (CMD(pluck)): A message said 'cherrypatch' when
+	it should say 'pluck'.
+	* po/sv.po: New strings to translate and a few fuzzies that needed
+	changing.
+
 2006-07-06  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_merging.cc (pluck): Write a note to _MTN/log after each
