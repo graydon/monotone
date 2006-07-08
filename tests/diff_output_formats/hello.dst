@@ -1,0 +1,17 @@
+#include "hello.h"
+
+void say_hello()
+{
+        printf("hello, world\n");
+}
+
+int main()
+{
+        say_hello();
+}
+
+void say_goodbye()
+{
+        printf("goodbye\n");
+}
+
