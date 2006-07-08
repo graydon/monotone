@@ -1,3 +1,9 @@
+2006-07-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/pluck_lifecycle/__driver__.lua: New XFAILed test for a
+	minor pluck bug.
+	* testsuite.lua: Add it.
+
 2006-07-07  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tester.cc: Add a newline to the help message.
