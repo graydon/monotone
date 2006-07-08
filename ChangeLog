@@ -1,3 +1,7 @@
+2006-07-08  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: New string and a few fuzzies.
+
 2006-07-08  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* tests/pluck_lifecycle/__driver__.lua: New XFAILed test for a
