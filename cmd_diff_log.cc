@@ -298,8 +298,8 @@ dump_diffs(cset const & cs,
       split_path dst_path = delta_entry_path(i);
       split_path src_path = dst_path;
       map<split_path, split_path>::const_iterator re;
-      re = reverse_name_map.find(dst_path);
-      if (re != reverse_name_map.end())
+      re = reverse_rename_map.find(dst_path);
+      if (re != reverse_rename_map.end())
         src_path = re->second;
       
       make_diff(file_path(src_path).as_internal(),
