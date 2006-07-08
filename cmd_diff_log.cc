@@ -276,7 +276,6 @@ dump_diffs(cset const & cs,
 
       file_data f_old;
       data data_old, data_new;
-      vector<string> old_lines, new_lines;
 
       cout << patch_sep << "\n";
 
@@ -306,7 +305,7 @@ dump_diffs(cset const & cs,
                 file_path(dst_path).as_internal(),
                 delta_entry_src(i),
                 delta_entry_dst(i),
-                old_lines, new_lines,
+                data_old, data_new,
                 cout, type);
     }
 }
