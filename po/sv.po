@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-08 10:15+0200\n"
-"PO-Revision-Date: 2006-07-08 10:18+0200\n"
+"POT-Creation-Date: 2006-07-08 11:35+0200\n"
+"PO-Revision-Date: 2006-07-08 11:35+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -485,8 +485,8 @@ msgid "merge failed"
 msgstr "ihopslagningen misslyckades"
 
 #: cmd_files.cc:78
-msgid "[-c|-u] [-p] <sname> <dname> <s_id> <d_id>"
-msgstr "[-c|-u] [-p] <knamn> <mnamn> <k_id> <m_id>"
+msgid "SRCNAME DESTNAME SRCID DESTID"
+msgstr "KÄLLNAMN MÅLNAMN KÄLLID MÅLID"
 
 #: cmd_files.cc:79
 msgid "diff 2 files and output result"
@@ -3682,6 +3682,9 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "modifying %s"
 msgstr "ändrar %s"
+
+#~ msgid "[-c|-u] [-p] <sname> <dname> <s_id> <d_id>"
+#~ msgstr "[-c|-u] [-p] <knamn> <mnamn> <k_id> <m_id>"
 
 #~ msgid "updating %s"
 #~ msgstr "uppdaterar %s"

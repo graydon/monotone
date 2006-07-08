@@ -75,7 +75,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 }
 
-CMD(fdiff, N_("debug"), N_("[-c|-u] [-p] <sname> <dname> <s_id> <d_id>"),
+CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
     OPT_CONTEXT_DIFF % OPT_UNIFIED_DIFF)
 {

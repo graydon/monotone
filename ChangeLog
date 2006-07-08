@@ -1,5 +1,11 @@
 2006-07-08  Richard Levitte  <richard@levitte.org>
 
+	* cmd_files.cc (CMD(fdiff)): Make the synopsis match the
+	convention used in the rest of the commands.
+	* po/sv.po: Translate the new string.
+
+2006-07-08  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: New string and a few fuzzies.
 
 2006-07-08  Matthew Gregan  <kinetik@orcon.net.nz>
