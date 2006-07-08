@@ -1,5 +1,10 @@
 2006-07-07  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* contrib/ChangeLog.sh: Make it work from anywhere in a workspace,
+	not just the workspace root.
+
+2006-07-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* tester.cc: Add a newline to the help message.
 	* tester.txt: Add a brief overview at the beginning.
 
