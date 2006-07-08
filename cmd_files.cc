@@ -75,7 +75,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 }
 
-CMD(fdiff, N_("debug"), N_("[-c, -u, -p] <sname> <dname> <s_id> <d_id>"),
+CMD(fdiff, N_("debug"), N_("[-c|-u] [-p] <sname> <dname> <s_id> <d_id>"),
     N_("diff 2 files and output result"),
     OPT_CONTEXT_DIFF % OPT_UNIFIED_DIFF % OPT_SHOW_ENCLOSER)
 {
@@ -106,10 +106,14 @@ CMD(fdiff, N_("debug"), N_("[-c, -u, -p] <sname> <dname> <s_id> <d_id>"),
   split_into_lines(src.inner()(), src_lines);
   split_into_lines(dst.inner()(), dst_lines);
 
+  string pattern("");
+  if (app.diff_show_encloser)
+    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+
   make_diff(src_name, dst_name,
             src_id, dst_id,
             src_lines, dst_lines,
-            cout, app);
+            cout, app.diff_format, pattern);
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),

@@ -133,5 +133,5 @@ function use_transport_auth(uri)
 end
 
 function get_encloser_pattern(name)
-   return "^[%w$_]"
+   return "^[[:alnum:]$_]"
 end

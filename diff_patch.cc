@@ -17,6 +17,8 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/regex.hpp>
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -769,8 +771,7 @@ struct hunk_consumer
   vector<string> const & b;
   size_t ctx;
   ostream & ost;
-  string const & encloser_pattern;
-  app_state & app;
+  boost::scoped_ptr<boost::regex const> encloser_re;
   size_t a_begin, b_begin, a_len, b_len;
   long skew;
   ssize_t encloser_last_search;
@@ -786,11 +787,14 @@ struct hunk_consumer
                 vector<string> const & b,
                 size_t ctx,
                 ostream & ost,
-                string const & encloser_pattern,
-                app_state & app)
-    : a(a), b(b), ctx(ctx), ost(ost), encloser_pattern(encloser_pattern),
-      app(app), a_begin(0), b_begin(0), a_len(0), b_len(0), skew(0),
-      encloser_last_search(0), encloser_last_match(0) {}
+                string const & encloser_pattern)
+    : a(a), b(b), ctx(ctx), ost(ost), encloser_re(0),
+      a_begin(0), b_begin(0), a_len(0), b_len(0), skew(0),
+      encloser_last_search(0), encloser_last_match(0)
+  {
+    if (encloser_pattern != "")
+      encloser_re.reset(new boost::regex(encloser_pattern));
+  }
 };
 
 /* Find, and write to ENCLOSER, the nearest line before POS which matches
@@ -800,7 +804,7 @@ struct hunk_consumer
 void
 hunk_consumer::find_encloser(size_t pos, string & encloser)
 {
-  if (encloser_pattern == "")
+  if (!encloser_re)
     return;
 
   // We need the ability for i and last to go negative so that we do not
@@ -808,7 +812,7 @@ hunk_consumer::find_encloser(size_t pos, string & encloser)
   ssize_t last = encloser_last_search;
   encloser_last_search = pos;
   for (ssize_t i = min(pos, a.size()-1); i >= last; i--)
-    if (app.lua.patternmatch (a[i], encloser_pattern))
+    if (boost::regex_search (a[i], *encloser_re))
       {
         L(FL("find_encloser: from %u matching line %d, \"%s\"")
           % pos % i % a[i]);
@@ -880,27 +884,20 @@ void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
 struct unidiff_hunk_writer : public hunk_consumer
 {
   vector<string> hunk;
-  unidiff_hunk_writer(vector<string> const & a,
-                      vector<string> const & b,
-                      size_t ctx,
-                      ostream & ost,
-                      string const & encloser_pattern,
-                      app_state & app);
+
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
   virtual void delete_at(size_t a_pos);
   virtual ~unidiff_hunk_writer() {}
+  unidiff_hunk_writer(vector<string> const & a,
+                      vector<string> const & b,
+                      size_t ctx,
+                      ostream & ost,
+                      string const & encloser_pattern)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern)
+  {}
 };
-
-unidiff_hunk_writer::unidiff_hunk_writer(vector<string> const & a,
-                                         vector<string> const & b,
-                                         size_t ctx,
-                                         ostream & ost,
-                                         string const & encloser_pattern,
-                                         app_state & app)
-  : hunk_consumer(a, b, ctx, ost, encloser_pattern, app)
-{}
 
 void unidiff_hunk_writer::insert_at(size_t b_pos)
 {
@@ -1003,29 +1000,22 @@ struct cxtdiff_hunk_writer : public hunk_consumer
   vector<string> to_file;
   bool have_insertions;
   bool have_deletions;
-  cxtdiff_hunk_writer(vector<string> const & a,
-                      vector<string> const & b,
-                      size_t ctx,
-                      ostream & ost,
-                      string const & encloser_pattern,
-                      app_state & app);
+
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
   virtual void delete_at(size_t a_pos);
   void flush_pending_mods();
   virtual ~cxtdiff_hunk_writer() {}
-};
-
-cxtdiff_hunk_writer::cxtdiff_hunk_writer(vector<string> const & a,
-                                         vector<string> const & b,
-                                         size_t ctx,
-                                         ostream & ost,
-                                         string const & encloser_pattern,
-                                         app_state & app)
-  : hunk_consumer(a, b, ctx, ost, encloser_pattern, app),
+  cxtdiff_hunk_writer(vector<string> const & a,
+                      vector<string> const & b,
+                      size_t ctx,
+                      ostream & ost,
+                      string const & encloser_pattern)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern),
     have_insertions(false), have_deletions(false)
-{}
+  {}
+};
 
 void cxtdiff_hunk_writer::insert_at(size_t b_pos)
 {
@@ -1168,7 +1158,8 @@ void make_diff(string const & filename1,
                vector<string> const & lines1,
                vector<string> const & lines2,
                ostream & ost,
-               app_state & app)
+               diff_type type,
+               string const & pattern)
 {
   vector<long, QA(long)> left_interned;
   vector<long, QA(long)> right_interned;
@@ -1192,18 +1183,14 @@ void make_diff(string const & filename1,
                              min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
-  string pattern;
-  if (app.diff_show_encloser)
-    app.lua.hook_get_encloser_pattern (filename1, pattern);
-
-  switch (app.diff_format)
+  switch (type)
     {
       case unified_diff:
       {
         ost << "--- " << filename1 << "\t" << id1 << endl;
         ost << "+++ " << filename2 << "\t" << id2 << endl;
 
-        unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern, app);
+        unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }
@@ -1212,7 +1199,7 @@ void make_diff(string const & filename1,
         ost << "*** " << filename1 << "\t" << id1 << endl;
         ost << "--- " << filename2 << "\t" << id2 << endl;
 
-        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern, app);
+        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }

@@ -30,4 +30,24 @@ end
 
 mtn_setup()
 
+-- We do this first so that we can test per-file patterns.
+append("test_hooks.lua",
+       "function get_encloser_pattern(name)\n"..
+       "  if name == \"hello\" then\n"..
+       "    return \"^[[:alnum:]$_]\"\n"..
+       "  else\n"..
+       "    return \"-- initial\"\n"..
+       "  end\n"..
+       "end\n")
+
 test_one("hello")
+test_one("A")
+test_one("B")
+test_one("C")
+test_one("D")
+test_one("E")
+test_one("F")
+test_one("G")
+test_one("H")
+test_one("I")
+test_one("J")

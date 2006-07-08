@@ -206,26 +206,6 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
     }
 }
 
-// utility function, not really a hook
-bool
-lua_hooks::patternmatch(const string & haystack, const string & needle)
-{
-  int matchstart;
-
-  // If string.find returned nil, extract_int will fail, so the ok() return
-  // is the result we want.
-  return Lua(st)
-    .push_str("string")
-    .get_tab()
-    .push_str("find")
-    .get_fn(-2)
-    .push_str(haystack)
-    .push_str(needle)
-    .call(2,1)
-    .extract_int(matchstart)
-    .ok();
-}
-
 // concrete hooks
 
 // nb: if you're hooking lua to return your passphrase, you don't care if we
@@ -502,13 +482,13 @@ lua_hooks::hook_external_diff(file_path const & path,
 }
 
 bool
-lua_hooks::hook_get_encloser_pattern(std::string const & path,
+lua_hooks::hook_get_encloser_pattern(file_path const & path,
                                      std::string & pattern)
 {
   bool exec_ok
     = Lua(st)
     .func("get_encloser_pattern")
-    .push_str(path)
+    .push_str(path.as_external())
     .call(1, 1)
     .extract_str(pattern)
     .ok();

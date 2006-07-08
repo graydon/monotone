@@ -324,12 +324,17 @@ dump_diffs(cset const & cs,
           if (re != reverse_rename_map.end())
             src_path = re->second;
 
+          std::string pattern("");
+          if (app.diff_show_encloser)
+            app.lua.hook_get_encloser_pattern(file_path(src_path),
+                                              pattern);
+
           make_diff(file_path(src_path).as_internal(),
                     file_path(dst_path).as_internal(),
                     delta_entry_src(i),
                     delta_entry_dst(i),
                     old_lines, new_lines,
-                    cout, app);
+                    cout, app.diff_format, pattern);
         }
     }
 }
