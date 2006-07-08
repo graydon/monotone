@@ -1112,6 +1112,29 @@ void make_diff(string const & filename1,
                string const & filename2,
                file_id const & id1,
                file_id const & id2,
+               data const & data1,
+               data const & data2,
+               ostream & ost,
+               diff_type type)
+{
+  if (guess_binary(data1()) || guess_binary(data2()))
+    ost << "# " << filename2 << " is binary\n";
+  else
+    {
+      vector<string> lines1, lines2;
+      split_into_lines(data1(), lines1);
+      split_into_lines(data2(), lines2);
+      make_diff(filename1, filename2,
+                id1, id2,
+                lines1, lines2,
+                ost, type);
+    }
+}
+
+void make_diff(string const & filename1,
+               string const & filename2,
+               file_id const & id1,
+               file_id const & id2,
                vector<string> const & lines1,
                vector<string> const & lines2,
                ostream & ost,

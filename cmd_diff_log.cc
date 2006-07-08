@@ -250,23 +250,12 @@ dump_diffs(cset const & cs,
                               unpacked, app.lua);
         }
 
-      if (guess_binary(unpacked()))
-        cout << "# " << file_path(i->first) << " is binary\n";
-      else
-        {
-          split_into_lines(unpacked(), lines);
-          if (! lines.empty())
-            {
-              cout << (FL("--- %s\t%s\n") % file_path(i->first) % i->second)
-                   << (FL("+++ %s\t%s\n") % file_path(i->first) % i->second)
-                   << (FL("@@ -0,0 +1,%d @@\n") % lines.size());
-              for (vector<string>::const_iterator j = lines.begin();
-                   j != lines.end(); ++j)
-                {
-                  cout << "+" << *j << "\n";
-                }
-            }
-        }
+      make_diff(file_path(i->first).as_internal(),
+                file_path(i->first).as_internal(),
+                i->second,
+                i->second,
+                data(), unpacked,
+                cout, type);
     }
 
   map<split_path, split_path> reverse_rename_map;
@@ -306,32 +295,19 @@ dump_diffs(cset const & cs,
                               data_new, app.lua);
         }
 
-      if (guess_binary(data_new()) ||
-          guess_binary(data_old()))
-        cout << "# " 
-             << file_path(delta_entry_path(i)) 
-             << " is binary\n";
-      else
-        {
-          split_into_lines(data_old(), old_lines);
-          split_into_lines(data_new(), new_lines);
-
-          split_path dst_path = delta_entry_path(i);
-          split_path src_path = dst_path;
-
-          map<split_path, split_path>::const_iterator re;
-          re = reverse_rename_map.find(dst_path);
-
-          if (re != reverse_rename_map.end())
-            src_path = re->second;
-
-          make_diff(file_path(src_path).as_internal(),
-                    file_path(dst_path).as_internal(),
-                    delta_entry_src(i),
-                    delta_entry_dst(i),
-                    old_lines, new_lines,
-                    cout, type);
-        }
+      split_path dst_path = delta_entry_path(i);
+      split_path src_path = dst_path;
+      map<split_path, split_path>::const_iterator re;
+      re = reverse_name_map.find(dst_path);
+      if (re != reverse_name_map.end())
+        src_path = re->second;
+      
+      make_diff(file_path(src_path).as_internal(),
+                file_path(dst_path).as_internal(),
+                delta_entry_src(i),
+                delta_entry_dst(i),
+                old_lines, new_lines,
+                cout, type);
     }
 }
 

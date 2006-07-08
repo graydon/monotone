@@ -1,5 +1,11 @@
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
 
+	* diff_patch.cc (make_diff): Add a version that does a bit more
+	work.
+	* cmd_diff_log.cc (dump_diffs): Use it to simplify this code.
+
+2006-07-07  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_diff_log.cc: Remove tabs.
 
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
