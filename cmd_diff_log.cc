@@ -123,14 +123,14 @@ changes_summary::print(ostream & os, size_t max_cols) const
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); i++)
         os << "        " << file_path(i->first) 
-	   << " to " << file_path(i->second) << "\n";
+           << " to " << file_path(i->second) << "\n";
     }
 
   if (! cs.files_added.empty())
     {
       path_set tmp;
       for (map<split_path, file_id>::const_iterator 
-	     i = cs.files_added.begin();
+             i = cs.files_added.begin();
            i != cs.files_added.end(); ++i)
         tmp.insert(i->first);
       os << "Added files:" << "\n";
@@ -147,7 +147,7 @@ changes_summary::print(ostream & os, size_t max_cols) const
     {
       path_set tmp;
       for (map<split_path, pair<file_id, file_id> >::const_iterator 
-	     i = cs.deltas_applied.begin();
+             i = cs.deltas_applied.begin();
            i != cs.deltas_applied.end(); ++i)
         tmp.insert(i->first);
       os << "Modified files:" << "\n";
@@ -158,12 +158,12 @@ changes_summary::print(ostream & os, size_t max_cols) const
     {
       path_set tmp;
       for (set<pair<split_path, attr_key> >::const_iterator 
-	     i = cs.attrs_cleared.begin();
+             i = cs.attrs_cleared.begin();
            i != cs.attrs_cleared.end(); ++i)
         tmp.insert(i->first);
 
       for (map<pair<split_path, attr_key>, attr_value>::const_iterator 
-	     i = cs.attrs_set.begin();
+             i = cs.attrs_set.begin();
            i != cs.attrs_set.end(); ++i)
         tmp.insert(i->first.first);
 
@@ -309,8 +309,8 @@ dump_diffs(cset const & cs,
       if (guess_binary(data_new()) ||
           guess_binary(data_old()))
         cout << "# " 
-	     << file_path(delta_entry_path(i)) 
-	     << " is binary\n";
+             << file_path(delta_entry_path(i)) 
+             << " is binary\n";
       else
         {
           split_into_lines(data_old(), old_lines);
@@ -380,7 +380,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       revision_id old_rid;
 
       get_base_and_current_roster_shape(old_roster, new_roster, 
-					nis, app);
+                                        nis, app);
       get_revision_id(old_rid);
 
       node_restriction mask(args, app.exclude_patterns, 
@@ -388,7 +388,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, 
-			    included, excluded, mask);
+                            included, excluded, mask);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
@@ -404,8 +404,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
         F("no such revision '%s'") % r_old_id);
 
       get_base_and_current_roster_shape(old_roster, 
-					new_roster, 
-					nis, app);
+                                        new_roster, 
+                                        nis, app);
       // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
 
@@ -417,7 +417,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       update_current_roster_from_filesystem(new_roster, mask, app);
       make_restricted_csets(old_roster, new_roster, 
-			    included, excluded, mask);
+                            included, excluded, mask);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
@@ -465,7 +465,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       //   since versioned paths are required to be relative.
 
       make_restricted_csets(old_roster, new_roster, 
-			    included, excluded, mask);
+                            included, excluded, mask);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = true;
@@ -486,7 +486,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     {
       cout << header.str() << "# " << "\n";
       for (vector<string>::iterator i = lines.begin(); 
-	   i != lines.end(); ++i)
+           i != lines.end(); ++i)
         cout << "# " << *i << "\n";
     }
   else
@@ -544,7 +544,7 @@ log_certs(app_state & app, revision_id id, cert_name name,
 
 static void
 log_certs(app_state & app, revision_id id, cert_name name, 
-	  string label, bool multiline)
+          string label, bool multiline)
 {
   log_certs(app, id, name, label, label, multiline, true);
 }
@@ -596,7 +596,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
       if (app.revision_selectors.size() == 0)
         get_base_and_current_roster_shape(old_roster, 
-					  new_roster, nis, app);
+                                          new_roster, nis, app);
       else
         app.db.get_roster(first_rid, new_roster);
 
@@ -623,7 +623,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   revision_set rev;
 
   while(! frontier.empty() && (last == -1 || last > 0) 
-	&& (next == -1 || next > 0))
+        && (next == -1 || next > 0))
     {
       set<revision_id> next_frontier;
 
@@ -722,7 +722,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   }
 
                 for (set<revision_id>::const_iterator 
-		       anc = ancestors.begin();
+                       anc = ancestors.begin();
                      anc != ancestors.end(); ++anc)
                   cout << "Ancestor: " << *anc << "\n";
 

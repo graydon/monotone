@@ -1,5 +1,9 @@
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_diff_log.cc: Remove tabs.
+
+2006-07-07  Nathaniel Smith  <njs@pobox.com>
+
 	* lcs.cc (_longest_common_subsequence): Trivial whitespace tweak.
 
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
