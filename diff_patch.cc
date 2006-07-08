@@ -1162,6 +1162,36 @@ void make_diff(string const & filename1,
                              min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
+  // The existence of various hacky diff parsers in the world somewhat
+  // constrains what output we can use.  Here are some notes on how various
+  // tools interpret the header lines of a diff file:
+  //
+  // interdiff/filterdiff (patchutils):
+  //   Attempt to parse a timestamp after each whitespace.  If they succeed,
+  //   then they take the filename as everything up to the whitespace they
+  //   succeeded at, and the timestamp as everything after.  If they fail,
+  //   then they take the filename to be everything up to the first
+  //   whitespace.  Have hardcoded that /dev/null and timestamps at the
+  //   epoch (in any timezone) indicate a file that did not exist.
+  // PatchReader perl library (used by Bugzilla):
+  //   Takes the filename to be everything up to the first tab; requires
+  //   that there be a tab.
+  // diffstat:
+  //   Can handle pretty much everything; tries to read up to the first tab
+  //   to get the filename.  Knows that "/dev/null", "", and anything
+  //   beginning "/tmp/" are meaningless.
+  // patch:
+  //   If there is a tab, considers everything up to that tab to be the
+  //   filename.  If there is not a tab, considers everything up to the
+  //   first whitespace to be the filename.
+  //   
+  //   Contains comment: 'If the [file]name is "/dev/null", ignore the name
+  //   and mark the file as being nonexistent.  The name "/dev/null" appears
+  //   in patches regardless of how NULL_DEVICE is spelled.'  Also detects
+  //   timestamps at the epoch as indicating that a file does not exist.
+  // trac:
+  //   Anything up to the first whitespace, or end of line, is considered
+  //   filename.  Does not care about timestamp.
   switch (type)
     {
       case unified_diff:

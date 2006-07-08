@@ -1,5 +1,14 @@
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
 
+	* diff_patch.cc (make_diff): Add notes on how 5 different diff
+	parsing tools interpret diff headers.
+
+2006-07-07  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_diff_log.cc (dump_diffs): Oops again.
+
+2006-07-07  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_diff_log.cc (dump_diffs): Oops, fix typos.
 
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
