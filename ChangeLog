@@ -1,3 +1,14 @@
+2006-07-07  Zack Weinberg  <zackw@panix.com>
+
+	* diff_patch.cc: Add commentary on cxtdiff_hunk_writer algorithm.
+	(cxtdiff_hunk_writer::advance_to): Flush pending mods before computing
+	whether we need to make a new hunk.
+	(unidiff_append_test): Remove.
+	* cmd_files.cc (CMD(fdiff)): New debugging command.
+	* tests/diff_output_formats: New test.
+	* tests/(minor)_context_diff: Remove stub.
+	* testsuite.lua: Update to match.
+
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
 
 	* diff_patch.cc (make_diff): Add more notes on how diffs are
