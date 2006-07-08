@@ -763,7 +763,6 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
 
   put_work_cset(remaining);
   update_any_attrs(app);
-  maybe_update_inodeprints(app);
   
   // add a note to the user log file about what we did
   {

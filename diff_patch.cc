@@ -943,6 +943,12 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
 
 struct cxtdiff_hunk_writer : public hunk_consumer
 {
+  // For context diffs, we have to queue up calls to insert_at/delete_at
+  // until we hit an advance_to, so that we can get the tags right: an
+  // unpaired insert gets a + in the left margin, an unpaired delete a -,
+  // but if they are paired, they both get !.  Hence, we have both the
+  // 'inserts' and 'deletes' queues of line numbers, and the 'from_file' and
+  // 'to_file' queues of line strings.
   vector<string> const & a;
   vector<string> const & b;
   size_t ctx;
@@ -1070,6 +1076,12 @@ void cxtdiff_hunk_writer::flush_pending_mods()
 
 void cxtdiff_hunk_writer::advance_to(size_t newpos)
 {
+  // We must first flush out pending mods because otherwise our calculation
+  // of whether we need to generate a new hunk header will be way off.
+  // It is correct (i.e. consistent with diff(1)) to reset the +/-/!
+  // generation algorithm between sub-components of a single hunk.
+  flush_pending_mods();
+
   if (a_begin + a_len + (2 * ctx) < newpos)
     {
       flush_hunk(newpos);
@@ -1095,16 +1107,36 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
         }
     }
   else
+    // pad intermediate context
+    while (a_begin + a_len < newpos)
+      {
+        from_file.push_back(string("  ") + a[a_begin + a_len]);
+        to_file.push_back(string("  ") + a[a_begin + a_len]);
+        a_len++;
+        b_len++;
+      }
+}
+
+void make_diff(string const & filename1,
+               string const & filename2,
+               file_id const & id1,
+               file_id const & id2,
+               data const & data1,
+               data const & data2,
+               ostream & ost,
+               diff_type type)
+{
+  if (guess_binary(data1()) || guess_binary(data2()))
+    ost << "# " << filename2 << " is binary\n";
+  else
     {
-      flush_pending_mods();
-      // pad intermediate context
-      while (a_begin + a_len < newpos)
-        {
-          from_file.push_back(string("  ") + a[a_begin + a_len]);
-          to_file.push_back(string("  ") + a[a_begin + a_len]);
-          a_len++;
-          b_len++;
-        }
+      vector<string> lines1, lines2;
+      split_into_lines(data1(), lines1);
+      split_into_lines(data2(), lines2);
+      make_diff(filename1, filename2,
+                id1, id2,
+                lines1, lines2,
+                ost, type);
     }
 }
 
@@ -1139,6 +1171,63 @@ void make_diff(string const & filename1,
                              min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
+  // The existence of various hacky diff parsers in the world somewhat
+  // constrains what output we can use.  Here are some notes on how various
+  // tools interpret the header lines of a diff file:
+  //
+  // interdiff/filterdiff (patchutils):
+  //   Attempt to parse a timestamp after each whitespace.  If they succeed,
+  //   then they take the filename as everything up to the whitespace they
+  //   succeeded at, and the timestamp as everything after.  If they fail,
+  //   then they take the filename to be everything up to the first
+  //   whitespace.  Have hardcoded that /dev/null and timestamps at the
+  //   epoch (in any timezone) indicate a file that did not exist.
+  //
+  //   filterdiff filters on the first filename line.  interdiff matches on
+  //   the first filename line.
+  // PatchReader perl library (used by Bugzilla):
+  //   Takes the filename to be everything up to the first tab; requires
+  //   that there be a tab.  Determines the filename based on the first
+  //   filename line.
+  // diffstat:
+  //   Can handle pretty much everything; tries to read up to the first tab
+  //   to get the filename.  Knows that "/dev/null", "", and anything
+  //   beginning "/tmp/" are meaningless.  Uses the second filename line.
+  // patch:
+  //   If there is a tab, considers everything up to that tab to be the
+  //   filename.  If there is not a tab, considers everything up to the
+  //   first whitespace to be the filename.
+  //   
+  //   Contains comment: 'If the [file]name is "/dev/null", ignore the name
+  //   and mark the file as being nonexistent.  The name "/dev/null" appears
+  //   in patches regardless of how NULL_DEVICE is spelled.'  Also detects
+  //   timestamps at the epoch as indicating that a file does not exist.
+  //
+  //   Uses the first filename line as the target, unless it is /dev/null or
+  //   has an epoch timestamp in which case it uses the second.
+  // trac:
+  //   Anything up to the first whitespace, or end of line, is considered
+  //   filename.  Does not care about timestamp.  Uses the shorter of the
+  //   two filenames as the filename (!).
+  //
+  // Conclusions:
+  //   -- You must have a tab, both to prevent PatchReader blowing up, and
+  //      to make it possible to have filenames with spaces in them.
+  //      (Filenames with tabs in them are always impossible to properly
+  //      express; FIXME what should be done if one occurs?)
+  //   -- What comes after that tab matters not at all, though it probably
+  //      shouldn't look like a timestamp, or have any trailing part that
+  //      looks like a timestamp, unless it really is a timestamp.  Simply
+  //      having a trailing tab should work fine.
+  //   -- If you need to express that some file does not exist, you should
+  //      use /dev/null as the path.  patch(1) goes so far as to claim that
+  //      this is part of the diff format definition.
+  //   -- If you want your patches to actually _work_ with patch(1), then
+  //      renames are basically hopeless (you can do them by hand _after_
+  //      running patch), adds work so long as the first line says either
+  //      the new file's name or "/dev/null", nothing else, and deletes work
+  //      if the new file name is "/dev/null", nothing else.  (ATM we don't
+  //      write out patches for deletes anyway.)
   switch (type)
     {
       case unified_diff:
@@ -1204,65 +1293,6 @@ static void dump_incorrect_merge(vector<string> const & expected,
       cerr << endl;
     }
 }
-
-// regression blockers go here
-static void unidiff_append_test()
-{
-  string src(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n");
-
-  string dst(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n"
-             + "\n"
-             + "void say_goodbye()\n"
-             + "{\n"
-             + "        printf(\"goodbye\\n\");\n"
-             + "}\n"
-             + "\n");
-
-  string ud(string("--- hello.c\t0123456789abcdef0123456789abcdef01234567\n")
-            + "+++ hello.c\tabcdef0123456789abcdef0123456789abcdef01\n"
-            + "@@ -9,3 +9,9 @@\n"
-            + " {\n"
-            + "         say_hello();\n"
-            + " }\n"
-            + "+\n"
-            + "+void say_goodbye()\n"
-            + "+{\n"
-            + "+        printf(\"goodbye\\n\");\n"
-            + "+}\n"
-            + "+\n");
-
-  vector<string> src_lines, dst_lines;
-  split_into_lines(src, src_lines);
-  split_into_lines(dst, dst_lines);
-  stringstream sst;
-  make_diff("hello.c", "hello.c",
-            file_id(id("0123456789abcdef0123456789abcdef01234567")),
-            file_id(id("abcdef0123456789abcdef0123456789abcdef01")),
-            src_lines, dst_lines, sst, unified_diff);
-  cout << sst.str() << endl;
-  BOOST_CHECK(sst.str() == ud);
-}
-
 
 // high tech randomizing test
 
@@ -1406,7 +1436,6 @@ static void merge_deletions_test()
 void add_diff_patch_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&unidiff_append_test));
   suite->add(BOOST_TEST_CASE(&merge_prepend_test));
   suite->add(BOOST_TEST_CASE(&merge_append_test));
   suite->add(BOOST_TEST_CASE(&merge_additions_test));
