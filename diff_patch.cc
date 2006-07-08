@@ -1173,13 +1173,17 @@ void make_diff(string const & filename1,
   //   then they take the filename to be everything up to the first
   //   whitespace.  Have hardcoded that /dev/null and timestamps at the
   //   epoch (in any timezone) indicate a file that did not exist.
+  //
+  //   filterdiff filters on the first filename line.  interdiff matches on
+  //   the first filename line.
   // PatchReader perl library (used by Bugzilla):
   //   Takes the filename to be everything up to the first tab; requires
-  //   that there be a tab.
+  //   that there be a tab.  Determines the filename based on the first
+  //   filename line.
   // diffstat:
   //   Can handle pretty much everything; tries to read up to the first tab
   //   to get the filename.  Knows that "/dev/null", "", and anything
-  //   beginning "/tmp/" are meaningless.
+  //   beginning "/tmp/" are meaningless.  Uses the second filename line.
   // patch:
   //   If there is a tab, considers everything up to that tab to be the
   //   filename.  If there is not a tab, considers everything up to the
@@ -1189,9 +1193,32 @@ void make_diff(string const & filename1,
   //   and mark the file as being nonexistent.  The name "/dev/null" appears
   //   in patches regardless of how NULL_DEVICE is spelled.'  Also detects
   //   timestamps at the epoch as indicating that a file does not exist.
+  //
+  //   Uses the first filename line as the target, unless it is /dev/null or
+  //   has an epoch timestamp in which case it uses the second.
   // trac:
   //   Anything up to the first whitespace, or end of line, is considered
-  //   filename.  Does not care about timestamp.
+  //   filename.  Does not care about timestamp.  Uses the shorter of the
+  //   two filenames as the filename (!).
+  //
+  // Conclusions:
+  //   -- You must have a tab, both to prevent PatchReader blowing up, and
+  //      to make it possible to have filenames with spaces in them.
+  //      (Filenames with tabs in them are always impossible to properly
+  //      express; FIXME what should be done if one occurs?)
+  //   -- What comes after that tab matters not at all, though it probably
+  //      shouldn't look like a timestamp, or have any trailing part that
+  //      looks like a timestamp, unless it really is a timestamp.  Simply
+  //      having a trailing tab should work fine.
+  //   -- If you need to express that some file does not exist, you should
+  //      use /dev/null as the path.  patch(1) goes so far as to claim that
+  //      this is part of the diff format definition.
+  //   -- If you want your patches to actually _work_ with patch(1), then
+  //      renames are basically hopeless (you can do them by hand _after_
+  //      running patch), adds work so long as the first line says either
+  //      the new file's name or "/dev/null", nothing else, and deletes work
+  //      if the new file name is "/dev/null", nothing else.  (ATM we don't
+  //      write out patches for deletes anyway.)
   switch (type)
     {
       case unified_diff:
