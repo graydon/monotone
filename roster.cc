@@ -1669,6 +1669,9 @@ namespace
   // Warning: this function expects the parent's roster and markings in the
   // 'new_roster' and 'new_markings' parameters, and they are modified
   // destructively!
+  // This function performs an almost identical task to
+  // mark_roster_with_one_parent; however, for efficiency, it is implemented
+  // in a different, destructive way.
   void
   make_roster_for_nonmerge(cset const & cs,
                            revision_id const & new_rid,
@@ -1694,6 +1697,8 @@ namespace
   }
 }
 
+// WARNING: this function is not tested directly (no unit tests).  Do not
+// put real logic in it.
 void
 make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
                                revision_id const & new_rid,
@@ -1704,8 +1709,50 @@ make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
   MM(base);
   MM(cs);
   app.db.get_roster(base, new_roster, new_markings);
-  editable_roster_for_nonmerge er(new_roster, nis, new_rid, new_markings);
-  cs.apply_to(er);
+  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+}
+
+void
+mark_roster_with_no_parents(revision_id const & rid,
+                            roster_t const & roster,
+                            marking_map & markings)
+{
+  roster_t mock_parent;
+  marking_map mock_parent_markings;
+  mark_roster_with_one_parent(mock_parent, mock_parent_markings,
+                              rid, roster, markings);
+}
+
+void
+mark_roster_with_one_parent(roster_t const & parent,
+                            marking_map const & parent_markings,
+                            revision_id const & child_rid,
+                            roster_t const & child,
+                            marking_map & child_markings)
+{
+  MM(parent);
+  MM(parent_markings);
+  MM(child_rid);
+  MM(child);
+  MM(child_markings);
+
+  I(!null_id(child_rid));
+  child_markings.clear();
+  
+  for (node_map::const_iterator i = child.all_nodes().begin();
+       i != child.all_nodes().end(); ++i)
+    {
+      marking_t new_marking;
+      if (parent.has_node(i->first))
+        mark_unmerged_node(safe_get(parent_markings, i->first),
+                           parent.get_node(i->first),
+                           child_rid, i->second, new_marking);
+      else
+        mark_new_node(child_rid, i->second, new_marking);
+      safe_insert(child_markings, std::make_pair(i->first, new_marking));
+    }
+
+  child.check_sane_against(child_markings);
 }
 
 // WARNING: this function is not tested directly (no unit tests).  Do not put
@@ -3656,6 +3703,17 @@ run_with_0_roster_parents(a_scalar & s, revision_id scalar_origin_rid,
 
   I(equal_up_to_renumbering(expected_roster, expected_markings,
                             new_roster, new_markings));
+
+  marking_map new_markings2; MM(new_markings2);
+  mark_roster_with_no_parents(old_rid, new_roster, new_markings2);
+  I(new_markings == new_markings2);
+
+  marking_map new_markings3; MM(new_markings3);
+  roster_t parent3;
+  marking_map old_markings3;
+  mark_roster_with_one_parent(parent3, old_markings3, old_rid, new_roster,
+                              new_markings3);
+  I(new_markings == new_markings3);
 }
 
 static void
@@ -3692,6 +3750,11 @@ run_with_1_roster_parent(a_scalar & s,
 
   I(equal_up_to_renumbering(expected_roster, expected_markings,
                             new_roster, new_markings));
+
+  marking_map new_markings2; MM(new_markings2);
+  mark_roster_with_one_parent(parent_roster, parent_markings,
+                              new_rid, new_roster, new_markings2);
+  I(new_markings == new_markings2);
 }
 
 static void

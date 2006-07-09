@@ -1,5 +1,11 @@
 2006-07-08  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.cc (mark_roster_with_no_parents) 
+	(mark_roster_with_one_parent): New functions.
+	Plus tests, etc.
+
+2006-07-08  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_merging.cc (pluck): Check that revisions exist before using
 	them.
 

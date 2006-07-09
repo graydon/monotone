@@ -373,15 +373,30 @@ void
 extract_roster_path_set(roster_t const & ros,
                         path_set & paths);
 
+// These three functions are for the use of things like 'update' or 'pluck',
+// that need to construct fake rosters and/or markings in-memory, to achieve
+// particular merge results.
 void
 make_roster_for_base_plus_cset(revision_id const & base,
                                cset const & cs,
                                revision_id const & new_rid,
-                               roster_t & result,
-                               marking_map & marking,
+                               roster_t & new_rister,
+                               marking_map & new_markings,
                                node_id_source & nis,
                                app_state & app);
+void
+mark_roster_with_no_parents(revision_id const & rid,
+                            roster_t const & roster,
+                            marking_map & markings);
+void
+mark_roster_with_one_parent(roster_t const & parent,
+                            marking_map const & parent_markings,
+                            revision_id const & child_rid,
+                            roster_t const & child,
+                            marking_map & child_markings);
 
+// This is for revisions that are being written to the db, only.  It assigns
+// permanent node ids.
 void
 make_roster_for_revision(revision_set const & rev,
                          revision_id const & rid,
