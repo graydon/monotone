@@ -626,11 +626,14 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
   if (args.size() > 0)
     throw usage(name);                                                                 
   
+  // Work out our arguments
   revision_id from_rid, to_rid;
 
   if (app.revision_selectors.size() == 1)
     {
       complete(app, idx(app.revision_selectors, 0)(), to_rid);
+      N(app.db.revision_exists(to_rid),
+        F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
       app.db.get_revision_parents(to_rid, parents);
       N(parents.size() == 1,
@@ -644,7 +647,11 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
   else if (app.revision_selectors.size() == 2)
     {
       complete(app, idx(app.revision_selectors, 0)(), from_rid);
+      N(app.db.revision_exists(from_rid),
+        F("no such revision '%s'") % from_rid);
       complete(app, idx(app.revision_selectors, 1)(), to_rid);
+      N(app.db.revision_exists(to_rid),
+        F("no such revision '%s'") % to_rid);
     }
   else
     throw usage(name);
