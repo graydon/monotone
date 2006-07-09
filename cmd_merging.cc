@@ -673,62 +673,61 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
   // - merged is the result of the plucking, and achieved by running a
   //   merge in the fictional graph seen above
   //
+  // To perform the merge, we use the real from roster, and the real working
+  // roster, but synthesize a temporary 'to' roster.  This ensures that the
+  // 'from', 'working' and 'base' rosters all use the same nid namespace,
+  // while any additions that happened between 'from' and 'to' should be
+  // considered as new nodes, even if the file that was added is in fact in
+  // 'working' already -- so 'to' needs its own namespace.  (Among other
+  // things, it is impossible with our merge formalism to have the above
+  // graph with a node that exists in 'to' and 'working', but not 'from'.)
+  //
   // finally, we take the cset from working -> merged, and apply that to the
   //   workspace
   // and take the cset from the workspace's base, and write that to _MTN/work
 
+  // The node id source we'll use for the 'working' and 'to' rosters.
+  temp_node_id_source nis;
+
   // Get the FROM roster and markings
   shared_ptr<roster_t> from_roster = shared_ptr<roster_t>(new roster_t());
   MM(*from_roster);
-  marking_map from_markings;
-  app.db.get_roster(from_rid, *from_roster, from_markings);
+  app.db.get_roster(from_rid, *from_roster);
 
-  // Get the FROM->WORKING and FROM->TO csets, and also the base roster
-  // and working rid while we're at it
-  cset from_to_working, from_to_to;
-  MM(from_to_working);
-  MM(from_to_to);
+  // Get the WORKING roster, and also the base roster while we're at it
+  roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
-  revision_id working_rid;
+  get_base_and_current_roster_shape(base_roster, working_roster,
+                                    nis, app);
+  update_current_roster_from_filesystem(working_roster, app);
+
+  // Get the FROM->TO cset
+  cset from_to_to; MM(from_to_to);
   {
-    // Get the workspace stuff
-    temp_node_id_source nis;
-    revision_id working_rid;
-    roster_t working_true_roster;
-    get_base_and_current_roster_shape(base_roster, working_true_roster,
-                                      nis, app);
-    update_current_roster_from_filesystem(working_true_roster, app);
-    make_cset(*from_roster, working_true_roster, from_to_working);
-    revision_id base_rid;
-    get_revision_id(base_rid);
-    revision_set working_rev;
-    make_revision_set(base_rid, base_roster, working_true_roster, working_rev);
-    calculate_ident(working_rev, working_rid);
-  }
-  {
-    // Get the TO roster
     roster_t to_true_roster;
     app.db.get_roster(to_rid, to_true_roster);
     make_cset(*from_roster, to_true_roster, from_to_to);
   }
 
-  // Recreate the working and to rosters with renumbered nids and fake
-  // markings.  We have to go roster->cset->roster because our marking code
-  // works on csets, and we need our final roster and final markings to use
-  // compatible nids.
-  temp_node_id_source nis;
-  roster_t working_roster, to_roster;
-  MM(working_roster);
-  MM(to_roster);
-  marking_map working_markings, to_markings;
-  make_roster_for_base_plus_cset(from_rid, from_to_working,
-                                 working_rid,
-                                 working_roster, working_markings,
-                                 nis, app);
-  make_roster_for_base_plus_cset(from_rid, from_to_to,
-                                 to_rid,
-                                 to_roster, to_markings,
-                                 nis, app);
+  // Use a fake rid
+  revision_id working_rid(std::string("0000000000000000000000000000000000000001"));
+
+  // Mark up the FROM roster
+  marking_map from_markings; MM(from_markings);
+  mark_roster_with_no_parents(from_rid, *from_roster, from_markings);
+
+  // Mark up the WORKING roster
+  marking_map working_markings; MM(working_markings);
+  mark_roster_with_one_parent(*from_roster, from_markings,
+                              working_rid, working_roster,
+                              working_markings);
+  
+  // Create and mark up the TO roster
+  roster_t to_roster; MM(to_roster);
+  marking_map to_markings; MM(to_markings);
+  make_roster_for_base_plus_cset(from_rid, from_to_to, to_rid,
+                                 to_roster, to_markings, nis,
+                                 app);
 
   // Set up the synthetic graph, by creating uncommon ancestor sets
   std::set<revision_id> working_uncommon_ancestors, to_uncommon_ancestors;
