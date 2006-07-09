@@ -3,6 +3,38 @@
 	* cmd_merging.cc (pluck): Check that revisions exist before using
 	them.
 
+2006-07-08  Richard Levitte  <richard@levitte.org>
+
+	* cmd_files.cc (CMD(fdiff)): Make the synopsis match the
+	convention used in the rest of the commands.
+	* po/sv.po: Translate the new string.
+
+2006-07-08  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: New string and a few fuzzies.
+
+2006-07-08  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/pluck_lifecycle/__driver__.lua: New XFAILed test for a
+	minor pluck bug.
+	* testsuite.lua: Add it.
+
+2006-07-07  Zack Weinberg  <zackw@panix.com>
+
+	* diff_patch.cc: Add commentary on cxtdiff_hunk_writer algorithm.
+	(cxtdiff_hunk_writer::advance_to): Flush pending mods before computing
+	whether we need to make a new hunk.
+	(unidiff_append_test): Remove.
+	* cmd_files.cc (CMD(fdiff)): New debugging command.
+	* tests/diff_output_formats: New test.
+	* tests/(minor)_context_diff: Remove stub.
+	* testsuite.lua: Update to match.
+
+2006-07-07  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* contrib/ChangeLog.sh: Make it work from anywhere in a workspace,
+	not just the workspace root.
+
 2006-07-07  Nathaniel Smith  <njs@pobox.com>
 
 	* diff_patch.cc (make_diff): Add more notes on how diffs are

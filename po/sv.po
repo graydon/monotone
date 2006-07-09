@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-07 00:54+0200\n"
-"PO-Revision-Date: 2006-07-07 00:55+0200\n"
+"POT-Creation-Date: 2006-07-08 11:35+0200\n"
+"PO-Revision-Date: 2006-07-08 11:35+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -154,57 +154,57 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: app_state.cc:139
+#: app_state.cc:140
 #, c-format
 msgid "workspace required but not found%s%s"
 msgstr "arbetskatalog behövs men kunde inte hittas%s%s"
 
-#: app_state.cc:147
+#: app_state.cc:148
 #, c-format
 msgid "invalid directory ''"
 msgstr "katalogen '' är ogiltig"
 
-#: app_state.cc:155
+#: app_state.cc:156
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "det finns redan en administrativ katalog (%s) i '%s'"
 
-#: app_state.cc:236
+#: app_state.cc:237
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "angiven sökrot '%s' finns inte"
 
-#: app_state.cc:237
+#: app_state.cc:238
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr "sökroten '%s' är inte en katalog\n"
 
-#: app_state.cc:271
+#: app_state.cc:272
 #, c-format
 msgid "failed to parse date string '%s': %s"
 msgstr "kunde inte tyda datumangivelsen '%s': %s"
 
-#: app_state.cc:286
+#: app_state.cc:287
 #, c-format
 msgid "negative depth not allowed\n"
 msgstr "negativt djup är inte tillåtet\n"
 
-#: app_state.cc:294
+#: app_state.cc:295
 #, c-format
 msgid "illegal argument to --last: cannot be zero or negative\n"
 msgstr "felaktigt argument till --last: får ej vara noll eller negativt\n"
 
-#: app_state.cc:302
+#: app_state.cc:303
 #, c-format
 msgid "illegal argument to --next: cannot be zero or negative\n"
 msgstr "felaktigt argument till --next: får ej vara noll eller negativt\n"
 
-#: app_state.cc:438
+#: app_state.cc:439
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "Misslyckades med att läsa filen %s"
 
-#: app_state.cc:455
+#: app_state.cc:456
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Misslyckades med att skriva filen %s"
@@ -297,9 +297,9 @@ msgstr "automatisering"
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
-#: cmd_db.cc:35 cmd_diff_log.cc:404 cmd_diff_log.cc:435 cmd_diff_log.cc:437
-#: cmd_files.cc:102 cmd_files.cc:164 cmd_merging.cc:124 cmd_ws_commit.cc:446
-#: commands.cc:370
+#: cmd_db.cc:35 cmd_diff_log.cc:379 cmd_diff_log.cc:410 cmd_diff_log.cc:412
+#: cmd_files.cc:134 cmd_files.cc:196 cmd_merging.cc:124 cmd_ws_commit.cc:446
+#: commands.cc:374
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
@@ -379,8 +379,8 @@ msgstr "ta bort databasvariabeln NAMN från domänen DOMÄN"
 msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
-#: cmd_db.cc:152 cmd_diff_log.cc:348 cmd_diff_log.cc:558 cmd_files.cc:78
-#: cmd_files.cc:145 cmd_list.cc:437 cmd_merging.cc:570 cmd_ws_commit.cc:322
+#: cmd_db.cc:152 cmd_diff_log.cc:323 cmd_diff_log.cc:533 cmd_files.cc:110
+#: cmd_files.cc:177 cmd_list.cc:437 cmd_merging.cc:570 cmd_ws_commit.cc:322
 #: commands.cc:246
 msgid "informative"
 msgstr "informativ"
@@ -398,12 +398,12 @@ msgstr "utöka den partiella identiteten"
 msgid "non-hex digits in partial id"
 msgstr "något tecken i den partiella identiteten är inte hexadecimalt"
 
-#: cmd_diff_log.cc:348 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
+#: cmd_diff_log.cc:323 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
 #: cmd_ws_commit.cc:251 cmd_ws_commit.cc:322 cmd_ws_commit.cc:613
 msgid "[PATH]..."
 msgstr "[SÖKVÄG]..."
 
-#: cmd_diff_log.cc:349
+#: cmd_diff_log.cc:324
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -416,7 +416,7 @@ msgstr ""
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
 
-#: cmd_diff_log.cc:365
+#: cmd_diff_log.cc:340
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -425,15 +425,15 @@ msgstr ""
 "--diff-args kräver att även --external anges\n"
 "lägg till --external eller ta bort --diff-args?"
 
-#: cmd_diff_log.cc:494
+#: cmd_diff_log.cc:469
 msgid "no changes"
 msgstr "inga ändringar"
 
-#: cmd_diff_log.cc:558
+#: cmd_diff_log.cc:533
 msgid "[FILE] ..."
 msgstr "[FIL] ..."
 
-#: cmd_diff_log.cc:559
+#: cmd_diff_log.cc:534
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more "
 "revisions are given, use them as a starting point."
@@ -442,13 +442,13 @@ msgstr ""
 "arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
 "angivits används de som utgångspunkter."
 
-#: cmd_diff_log.cc:621
+#: cmd_diff_log.cc:596
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
 
-#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:793
-#: cmd_othervcs.cc:15
+#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:78 cmd_files.cc:153
+#: cmd_merging.cc:805 cmd_othervcs.cc:15
 msgid "debug"
 msgstr "felsökning"
 
@@ -485,45 +485,63 @@ msgid "merge failed"
 msgstr "ihopslagningen misslyckades"
 
 #: cmd_files.cc:78
+msgid "SRCNAME DESTNAME SRCID DESTID"
+msgstr "KÄLLNAMN MÅLNAMN KÄLLID MÅLID"
+
+#: cmd_files.cc:79
+msgid "diff 2 files and output result"
+msgstr "skriv ut skillnaden mellan 2 filer"
+
+#: cmd_files.cc:96
+#, c-format
+msgid "source file id does not exist"
+msgstr "källans filidentitet finns inte"
+
+#: cmd_files.cc:99
+#, c-format
+msgid "destination file id does not exist"
+msgstr "målets filidentitet finns inte"
+
+#: cmd_files.cc:110
 msgid "PATH"
 msgstr "SÖKVÄG"
 
-#: cmd_files.cc:79
+#: cmd_files.cc:111
 msgid "print annotated copy of the file from REVISION"
 msgstr "skriv ut filen ur REVISION med extra detaljer"
 
-#: cmd_files.cc:100
+#: cmd_files.cc:132
 #, c-format
 msgid "no revision for file '%s' in database"
 msgstr "filen '%s' har ingen revision i databasen"
 
-#: cmd_files.cc:111
+#: cmd_files.cc:143
 #, c-format
 msgid "no such file '%s' in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
 
-#: cmd_files.cc:114
+#: cmd_files.cc:146
 #, c-format
 msgid "'%s' in revision '%s' is not a file"
 msgstr "'%s' i revisionen '%s' är inte en fil"
 
-#: cmd_files.cc:121
+#: cmd_files.cc:153
 msgid "[PATH]"
 msgstr "[SÖKVÄG]"
 
-#: cmd_files.cc:122
+#: cmd_files.cc:154
 msgid "calculate identity of PATH or stdin"
 msgstr "räkna ut identiteten för SÖKVÄG eller stdin"
 
-#: cmd_files.cc:146
+#: cmd_files.cc:178
 msgid "FILENAME"
 msgstr "FILNAMN"
 
-#: cmd_files.cc:147
+#: cmd_files.cc:179
 msgid "write file from database to stdout"
 msgstr "skriv ut angiven fil från databasen"
 
-#: cmd_files.cc:176 cmd_files.cc:178
+#: cmd_files.cc:208 cmd_files.cc:210
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
@@ -915,7 +933,7 @@ msgid "updated to base revision %s"
 msgstr "uppdaterad till revisionen %s"
 
 #: cmd_merging.cc:300 cmd_merging.cc:353 cmd_merging.cc:364 cmd_merging.cc:524
-#: cmd_merging.cc:769 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
+#: cmd_merging.cc:781 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
 #: cmd_ws_commit.cc:872
 msgid "tree"
 msgstr "träd"
@@ -924,12 +942,12 @@ msgstr "träd"
 msgid "merge unmerged heads of branch"
 msgstr "slå ihop ej ihopslagna löv i grenen"
 
-#: cmd_merging.cc:309 cmd_merging.cc:777
+#: cmd_merging.cc:309 cmd_merging.cc:789
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "var god ange en gren med --branch=GREN"
 
-#: cmd_merging.cc:313 cmd_merging.cc:403 cmd_merging.cc:406 cmd_merging.cc:782
+#: cmd_merging.cc:313 cmd_merging.cc:403 cmd_merging.cc:406 cmd_merging.cc:794
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
@@ -1134,25 +1152,25 @@ msgstr "inga ändringar att utföra"
 msgid "applied changes to workspace"
 msgstr "utförde ändringarna i arbetskopian"
 
-#: cmd_merging.cc:769
+#: cmd_merging.cc:781
 msgid "show unmerged head revisions of branch"
 msgstr "visa ej ihopslagna lövrevisioner i grenen"
 
-#: cmd_merging.cc:784
+#: cmd_merging.cc:796
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "grenen '%s' har för tillfället ett löv:"
 
-#: cmd_merging.cc:786
+#: cmd_merging.cc:798
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "grenen '%s' har för tillfället mer än ett löv:"
 
-#: cmd_merging.cc:793
+#: cmd_merging.cc:805
 msgid "REVID"
 msgstr "REVID"
 
-#: cmd_merging.cc:794
+#: cmd_merging.cc:806
 msgid "dump the roster associated with the given REVID"
 msgstr "skriv ut den lista som hör ihop med angivet REVID"
 
@@ -1599,31 +1617,31 @@ msgstr "kommandon [ARGUMENT...]"
 msgid "display command help"
 msgstr "skriv ut hjälptext"
 
-#: commands.cc:377
+#: commands.cc:381
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expanderar valet '%s'"
 
-#: commands.cc:385
+#: commands.cc:389
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "det finns inget som matchar '%s'"
 
-#: commands.cc:391
+#: commands.cc:395
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expanderar till '%s'"
 
-#: commands.cc:408
+#: commands.cc:412
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions: \n"
 msgstr "valet '%s' har mer än en möjlig betydelse: \n"
 
-#: commands.cc:425
+#: commands.cc:429
 msgid "note: "
 msgstr "obs: "
 
-#: commands.cc:426
+#: commands.cc:430
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1632,7 +1650,7 @@ msgstr ""
 "grenen '%s' har mer än ett löv\n"
 "du kanske borde överväga '%s merge'"
 
-#: commands.cc:444
+#: commands.cc:448
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message och --message-file får inte anges samtidigt"
@@ -2587,21 +2605,21 @@ msgstr "problem att tyda argumenten i filen %s: %s"
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 
-#: monotone.cc:330
+#: monotone.cc:329
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 
-#: monotone.cc:593
+#: monotone.cc:594
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:629
+#: monotone.cc:630
 #, c-format
 msgid "%s %s doesn't use the option %s"
 msgstr "%s %s använder inte flaggan %s"
 
-#: monotone.cc:663
+#: monotone.cc:664
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3664,6 +3682,9 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "modifying %s"
 msgstr "ändrar %s"
+
+#~ msgid "[-c|-u] [-p] <sname> <dname> <s_id> <d_id>"
+#~ msgstr "[-c|-u] [-p] <knamn> <mnamn> <k_id> <m_id>"
 
 #~ msgid "updating %s"
 #~ msgstr "uppdaterar %s"

@@ -943,6 +943,12 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
 
 struct cxtdiff_hunk_writer : public hunk_consumer
 {
+  // For context diffs, we have to queue up calls to insert_at/delete_at
+  // until we hit an advance_to, so that we can get the tags right: an
+  // unpaired insert gets a + in the left margin, an unpaired delete a -,
+  // but if they are paired, they both get !.  Hence, we have both the
+  // 'inserts' and 'deletes' queues of line numbers, and the 'from_file' and
+  // 'to_file' queues of line strings.
   vector<string> const & a;
   vector<string> const & b;
   size_t ctx;
@@ -1070,6 +1076,12 @@ void cxtdiff_hunk_writer::flush_pending_mods()
 
 void cxtdiff_hunk_writer::advance_to(size_t newpos)
 {
+  // We must first flush out pending mods because otherwise our calculation
+  // of whether we need to generate a new hunk header will be way off.
+  // It is correct (i.e. consistent with diff(1)) to reset the +/-/!
+  // generation algorithm between sub-components of a single hunk.
+  flush_pending_mods();
+
   if (a_begin + a_len + (2 * ctx) < newpos)
     {
       flush_hunk(newpos);
@@ -1095,17 +1107,14 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
         }
     }
   else
-    {
-      flush_pending_mods();
-      // pad intermediate context
-      while (a_begin + a_len < newpos)
-        {
-          from_file.push_back(string("  ") + a[a_begin + a_len]);
-          to_file.push_back(string("  ") + a[a_begin + a_len]);
-          a_len++;
-          b_len++;
-        }
-    }
+    // pad intermediate context
+    while (a_begin + a_len < newpos)
+      {
+        from_file.push_back(string("  ") + a[a_begin + a_len]);
+        to_file.push_back(string("  ") + a[a_begin + a_len]);
+        a_len++;
+        b_len++;
+      }
 }
 
 void make_diff(string const & filename1,
@@ -1285,65 +1294,6 @@ static void dump_incorrect_merge(vector<string> const & expected,
     }
 }
 
-// regression blockers go here
-static void unidiff_append_test()
-{
-  string src(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n");
-
-  string dst(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n"
-             + "\n"
-             + "void say_goodbye()\n"
-             + "{\n"
-             + "        printf(\"goodbye\\n\");\n"
-             + "}\n"
-             + "\n");
-
-  string ud(string("--- hello.c\t0123456789abcdef0123456789abcdef01234567\n")
-            + "+++ hello.c\tabcdef0123456789abcdef0123456789abcdef01\n"
-            + "@@ -9,3 +9,9 @@\n"
-            + " {\n"
-            + "         say_hello();\n"
-            + " }\n"
-            + "+\n"
-            + "+void say_goodbye()\n"
-            + "+{\n"
-            + "+        printf(\"goodbye\\n\");\n"
-            + "+}\n"
-            + "+\n");
-
-  vector<string> src_lines, dst_lines;
-  split_into_lines(src, src_lines);
-  split_into_lines(dst, dst_lines);
-  stringstream sst;
-  make_diff("hello.c", "hello.c",
-            file_id(id("0123456789abcdef0123456789abcdef01234567")),
-            file_id(id("abcdef0123456789abcdef0123456789abcdef01")),
-            src_lines, dst_lines, sst, unified_diff);
-  cout << sst.str() << endl;
-  BOOST_CHECK(sst.str() == ud);
-}
-
-
 // high tech randomizing test
 
 static void randomizing_merge_test()
@@ -1486,7 +1436,6 @@ static void merge_deletions_test()
 void add_diff_patch_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&unidiff_append_test));
   suite->add(BOOST_TEST_CASE(&merge_prepend_test));
   suite->add(BOOST_TEST_CASE(&merge_append_test));
   suite->add(BOOST_TEST_CASE(&merge_additions_test));
