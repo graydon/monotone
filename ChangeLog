@@ -1,5 +1,10 @@
 2006-07-09  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_merging.cc (pluck): Restrictions support.
+	* tests/pluck_restricted/__driver__.lua: New test.
+
+2006-07-09  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (check_sane_against): Take a temp_nodes_ok arg.
 	(mark_roster_with_one_parent): Pass it.
 

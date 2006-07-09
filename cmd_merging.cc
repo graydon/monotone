@@ -608,7 +608,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.directory_loop_conflicts.size());
 }                                                                
 
-CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
+CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     N_("Apply changes made at arbitrary places in history to current workspace.\n"
        "This command takes changes made at any point in history, and\n"
        "edits your current workspace to include those changes.  The end result\n"
@@ -621,11 +621,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
        "\n"
        "If two revisions are given, applies the changes made to get from the\n"  
        "first revision to the second."),                                                                            
-    OPT_REVISION)
+    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE)
 {
-  if (args.size() > 0)
-    throw usage(name);                                                                 
-  
   // Work out our arguments
   revision_id from_rid, to_rid;
 
@@ -689,7 +686,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
   // The node id source we'll use for the 'working' and 'to' rosters.
   temp_node_id_source nis;
 
-  // Get the FROM roster and markings
+  // Get the FROM roster
   shared_ptr<roster_t> from_roster = shared_ptr<roster_t>(new roster_t());
   MM(*from_roster);
   app.db.get_roster(from_rid, *from_roster);
@@ -703,10 +700,15 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
 
   // Get the FROM->TO cset
   cset from_to_to; MM(from_to_to);
+  cset from_to_to_excluded; MM(from_to_to_excluded);
   {
     roster_t to_true_roster;
     app.db.get_roster(to_rid, to_true_roster);
-    make_cset(*from_roster, to_true_roster, from_to_to);
+    node_restriction mask(args, app.exclude_patterns,
+                          *from_roster, to_true_roster, app);
+    make_restricted_csets(*from_roster, to_true_roster,
+                          from_to_to, from_to_to_excluded,
+                          mask);
   }
 
   // Use a fake rid
@@ -777,9 +779,14 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
     std::string log_str = log();
     if (!log_str.empty())
       log_str += "\n";
-    log_str += (FL("applied changes from %s\n"
-                   "             through %s\n")
-                % from_rid % to_rid).str();
+    if (from_to_to_excluded.empty())
+      log_str += (FL("applied changes from %s\n"
+                     "             through %s\n")
+                  % from_rid % to_rid).str();
+    else
+      log_str += (FL("applied partial changes from %s\n"
+                     "                     through %s\n")
+                  % from_rid % to_rid).str();
     write_user_log(data(log_str));
   }
 }
