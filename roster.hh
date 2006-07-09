@@ -222,7 +222,7 @@ public:
 
   // verify that this roster is sane, and corresponds to the given
   // marking map
-  void check_sane_against(marking_map const & marks) const;
+  void check_sane_against(marking_map const & marks, bool temp_nodes_ok=false) const;
 
   void print_to(basic_io::printer & pr,
                 marking_map const & mm,

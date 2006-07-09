@@ -859,10 +859,10 @@ roster_t::check_sane(bool temp_nodes_ok) const
 }
 
 void
-roster_t::check_sane_against(marking_map const & markings) const
+roster_t::check_sane_against(marking_map const & markings, bool temp_nodes_ok) const
 {
 
-  check_sane();
+  check_sane(temp_nodes_ok);
 
   node_map::const_iterator ri;
   marking_map::const_iterator mi;
@@ -1752,7 +1752,7 @@ mark_roster_with_one_parent(roster_t const & parent,
       safe_insert(child_markings, std::make_pair(i->first, new_marking));
     }
 
-  child.check_sane_against(child_markings);
+  child.check_sane_against(child_markings, true);
 }
 
 // WARNING: this function is not tested directly (no unit tests).  Do not put

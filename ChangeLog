@@ -1,5 +1,10 @@
 2006-07-09  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.cc (check_sane_against): Take a temp_nodes_ok arg.
+	(mark_roster_with_one_parent): Pass it.
+
+2006-07-09  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_merging.cc (pluck): Restructure to handle nids correctly.
 	* tests/pluck_lifecycle/__driver__.lua: Fix and un-xfail.
 	* roster.hh (make_roster_for_base_plus_cset): Fix typo.
