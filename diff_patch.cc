@@ -17,6 +17,8 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/regex.hpp>
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -766,12 +768,71 @@ content_merger::try_to_merge_files(file_path const & anc_path,
 
 struct hunk_consumer
 {
+  vector<string> const & a;
+  vector<string> const & b;
+  size_t ctx;
+  ostream & ost;
+  boost::scoped_ptr<boost::regex const> encloser_re;
+  size_t a_begin, b_begin, a_len, b_len;
+  long skew;
+  ssize_t encloser_last_search;
+  ssize_t encloser_last_match;
+
   virtual void flush_hunk(size_t pos) = 0;
   virtual void advance_to(size_t newpos) = 0;
   virtual void insert_at(size_t b_pos) = 0;
   virtual void delete_at(size_t a_pos) = 0;
+  virtual void find_encloser(size_t pos, string & encloser);
   virtual ~hunk_consumer() {}
+  hunk_consumer(vector<string> const & a,
+                vector<string> const & b,
+                size_t ctx,
+                ostream & ost,
+                string const & encloser_pattern)
+    : a(a), b(b), ctx(ctx), ost(ost), encloser_re(0),
+      a_begin(0), b_begin(0), a_len(0), b_len(0), skew(0),
+      encloser_last_search(0), encloser_last_match(0)
+  {
+    if (encloser_pattern != "")
+      encloser_re.reset(new boost::regex(encloser_pattern));
+  }
 };
+
+/* Find, and write to ENCLOSER, the nearest line before POS which matches
+   ENCLOSER_PATTERN.  We remember the last line scanned, and the matched, to
+   avoid duplication of effort.  */
+   
+void
+hunk_consumer::find_encloser(size_t pos, string & encloser)
+{
+  if (!encloser_re)
+    return;
+
+  // We need the ability for i and last to go negative so that we do not
+  // have an infinite loop when last==0 (i.e. the first time 'round).
+  ssize_t last = encloser_last_search;
+  encloser_last_search = pos;
+  for (ssize_t i = min(pos, a.size()-1); i >= last; i--)
+    if (boost::regex_search (a[i], *encloser_re))
+      {
+        L(FL("find_encloser: from %u matching line %d, \"%s\"")
+          % pos % i % a[i]);
+        encloser_last_match = i;
+        // the number 40 is chosen to match GNU diff.  it could safely be
+        // increased up to about 60 without overflowing the standard
+        // terminal width.
+        encloser = string(" ") + a[i].substr(0, 40);
+        return;
+      }
+
+  if (encloser_last_match)
+    {
+      ssize_t i = encloser_last_match;
+      L(FL("find_encloser: from %u matching cached %d, \"%s\"")
+        % pos % i % a[i]);
+      encloser = string(" ") + a[i].substr(0, 40);
+    }
+}
 
 void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
                         vector<long, QA(long)> const & lines1,
@@ -823,32 +884,21 @@ void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
 
 struct unidiff_hunk_writer : public hunk_consumer
 {
-  vector<string> const & a;
-  vector<string> const & b;
-  size_t ctx;
-  ostream & ost;
-  size_t a_begin, b_begin, a_len, b_len;
-  long skew;
   vector<string> hunk;
-  unidiff_hunk_writer(vector<string> const & a,
-                      vector<string> const & b,
-                      size_t ctx,
-                      ostream & ost);
+
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
   virtual void delete_at(size_t a_pos);
   virtual ~unidiff_hunk_writer() {}
+  unidiff_hunk_writer(vector<string> const & a,
+                      vector<string> const & b,
+                      size_t ctx,
+                      ostream & ost,
+                      string const & encloser_pattern)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern)
+  {}
 };
-
-unidiff_hunk_writer::unidiff_hunk_writer(vector<string> const & a,
-                                         vector<string> const & b,
-                                         size_t ctx,
-                                         ostream & ost)
-: a(a), b(b), ctx(ctx), ost(ost),
-  a_begin(0), b_begin(0),
-  a_len(0), b_len(0), skew(0)
-{}
 
 void unidiff_hunk_writer::insert_at(size_t b_pos)
 {
@@ -893,7 +943,9 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
           if (b_len > 1)
             ost << "," << b_len;
         }
-      ost << " @@" << endl;
+      string encloser;
+      find_encloser(a_begin + ctx, encloser);
+      ost << " @@" << encloser << endl;
 
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
     }
@@ -949,39 +1001,28 @@ struct cxtdiff_hunk_writer : public hunk_consumer
   // but if they are paired, they both get !.  Hence, we have both the
   // 'inserts' and 'deletes' queues of line numbers, and the 'from_file' and
   // 'to_file' queues of line strings.
-  vector<string> const & a;
-  vector<string> const & b;
-  size_t ctx;
-  ostream & ost;
-  size_t a_begin, b_begin, a_len, b_len;
-  long skew;
   vector<size_t> inserts;
   vector<size_t> deletes;
   vector<string> from_file;
   vector<string> to_file;
   bool have_insertions;
   bool have_deletions;
-  cxtdiff_hunk_writer(vector<string> const & a,
-                      vector<string> const & b,
-                      size_t ctx,
-                      ostream & ost);
+
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
   virtual void delete_at(size_t a_pos);
   void flush_pending_mods();
   virtual ~cxtdiff_hunk_writer() {}
+  cxtdiff_hunk_writer(vector<string> const & a,
+                      vector<string> const & b,
+                      size_t ctx,
+                      ostream & ost,
+                      string const & encloser_pattern)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern),
+    have_insertions(false), have_deletions(false)
+  {}
 };
-
-cxtdiff_hunk_writer::cxtdiff_hunk_writer(vector<string> const & a,
-                                         vector<string> const & b,
-                                         size_t ctx,
-                                         ostream & ost)
-    : a(a), b(b), ctx(ctx), ost(ost),
-      a_begin(0), b_begin(0),
-      a_len(0), b_len(0), skew(0),
-      have_insertions(false), have_deletions(false)
-{}
 
 void cxtdiff_hunk_writer::insert_at(size_t b_pos)
 {
@@ -1016,7 +1057,10 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
           b_len++;
         }
 
-      ost << "***************" << endl;
+      string encloser;
+      find_encloser(a_begin + ctx, encloser);
+
+      ost << "***************" << encloser << endl;
 
       ost << "*** " << (a_begin + 1) << "," << (a_begin + a_len) << " ****" << endl;
       if (have_deletions)
@@ -1147,7 +1191,8 @@ void make_diff(string const & filename1,
                vector<string> const & lines1,
                vector<string> const & lines2,
                ostream & ost,
-               diff_type type)
+               diff_type type,
+               string const & pattern)
 {
   vector<long, QA(long)> left_interned;
   vector<long, QA(long)> right_interned;
@@ -1235,7 +1280,7 @@ void make_diff(string const & filename1,
         ost << "--- " << filename1 << "\t" << id1 << endl;
         ost << "+++ " << filename2 << "\t" << id2 << endl;
 
-        unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }
@@ -1244,7 +1289,7 @@ void make_diff(string const & filename1,
         ost << "*** " << filename1 << "\t" << id1 << endl;
         ost << "--- " << filename2 << "\t" << id2 << endl;
 
-        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }
@@ -1292,7 +1337,6 @@ static void dump_incorrect_merge(vector<string> const & expected,
 
       cerr << endl;
     }
-}
 
 // high tech randomizing test
 

@@ -44,7 +44,8 @@ void make_diff(std::string const & filename1,
                std::vector<std::string> const & lines1,
                std::vector<std::string> const & lines2,
                std::ostream & ost,
-               diff_type type);
+               diff_type type,
+               std::string const & pattern);
 
 bool merge3(std::vector<std::string> const & ancestor,
             std::vector<std::string> const & left,

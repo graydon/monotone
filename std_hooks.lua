@@ -182,6 +182,13 @@ function binary_file(name)
    return guess_binary_file_contents(name)
 end
 
+-- given a file name, return a regular expression which will match
+-- lines that name top-level constructs in that file.
+function get_encloser_pattern(name)
+   -- this default is correct surprisingly often
+   return "^[[:alnum:]$_]"
+end
+
 function edit_comment(basetext, user_log_message)
    local exe = nil
    if (program_exists_in_path("vi")) then exe = "vi" end
