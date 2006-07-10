@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-08 11:35+0200\n"
-"PO-Revision-Date: 2006-07-08 11:35+0200\n"
+"POT-Creation-Date: 2006-07-10 02:02+0200\n"
+"PO-Revision-Date: 2006-07-10 02:03+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -298,8 +298,8 @@ msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
 #: cmd_db.cc:35 cmd_diff_log.cc:379 cmd_diff_log.cc:410 cmd_diff_log.cc:412
-#: cmd_files.cc:134 cmd_files.cc:196 cmd_merging.cc:124 cmd_ws_commit.cc:446
-#: commands.cc:374
+#: cmd_files.cc:134 cmd_files.cc:196 cmd_merging.cc:124 cmd_merging.cc:633
+#: cmd_merging.cc:648 cmd_merging.cc:651 cmd_ws_commit.cc:446 commands.cc:374
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
@@ -448,7 +448,7 @@ msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
 
 #: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:78 cmd_files.cc:153
-#: cmd_merging.cc:805 cmd_othervcs.cc:15
+#: cmd_merging.cc:818 cmd_othervcs.cc:15
 msgid "debug"
 msgstr "felsökning"
 
@@ -933,7 +933,7 @@ msgid "updated to base revision %s"
 msgstr "uppdaterad till revisionen %s"
 
 #: cmd_merging.cc:300 cmd_merging.cc:353 cmd_merging.cc:364 cmd_merging.cc:524
-#: cmd_merging.cc:781 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
+#: cmd_merging.cc:794 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
 #: cmd_ws_commit.cc:872
 msgid "tree"
 msgstr "träd"
@@ -942,12 +942,12 @@ msgstr "träd"
 msgid "merge unmerged heads of branch"
 msgstr "slå ihop ej ihopslagna löv i grenen"
 
-#: cmd_merging.cc:309 cmd_merging.cc:789
+#: cmd_merging.cc:309 cmd_merging.cc:802
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "var god ange en gren med --branch=GREN"
 
-#: cmd_merging.cc:313 cmd_merging.cc:403 cmd_merging.cc:406 cmd_merging.cc:794
+#: cmd_merging.cc:313 cmd_merging.cc:403 cmd_merging.cc:406 cmd_merging.cc:807
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
@@ -1100,8 +1100,8 @@ msgid "There are %s directory_loop_conflicts."
 msgstr "Det finns %s directory_loop-konflikter."
 
 #: cmd_merging.cc:611
-msgid "[-r FROM] -r TO"
-msgstr "[-r FRÅN] -r TILL"
+msgid "[-r FROM] -r TO [PATH...]"
+msgstr "[-r FRÅN] -r TILL [SÖKVÄG...]"
 
 #: cmd_merging.cc:612
 msgid ""
@@ -1142,35 +1142,35 @@ msgstr ""
 "för att utföra ändringarna relativt en av dess föräldrar, gör så här:\n"
 "  %s pluck -r FÖRÄLDER -r %s"
 
-#: cmd_merging.cc:654
+#: cmd_merging.cc:658
 #, c-format
 msgid "no changes to apply"
 msgstr "inga ändringar att utföra"
 
-#: cmd_merging.cc:762
+#: cmd_merging.cc:770
 #, c-format
 msgid "applied changes to workspace"
 msgstr "utförde ändringarna i arbetskopian"
 
-#: cmd_merging.cc:781
+#: cmd_merging.cc:794
 msgid "show unmerged head revisions of branch"
 msgstr "visa ej ihopslagna lövrevisioner i grenen"
 
-#: cmd_merging.cc:796
+#: cmd_merging.cc:809
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "grenen '%s' har för tillfället ett löv:"
 
-#: cmd_merging.cc:798
+#: cmd_merging.cc:811
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "grenen '%s' har för tillfället mer än ett löv:"
 
-#: cmd_merging.cc:805
+#: cmd_merging.cc:818
 msgid "REVID"
 msgstr "REVID"
 
-#: cmd_merging.cc:806
+#: cmd_merging.cc:819
 msgid "dump the roster associated with the given REVID"
 msgstr "skriv ut den lista som hör ihop med angivet REVID"
 
