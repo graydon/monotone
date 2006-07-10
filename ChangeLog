@@ -1,5 +1,11 @@
 2006-07-10  Zack Weinberg  <zackw@panix.com>
 
+	* tests/database_is_closed_on_signal_exit/__driver__.lua: Invert
+	sense of SIGSEGV test - expect database *not* to be cleaned up,
+	consistent with main.cc.  Remove xfail.
+
+2006-07-10  Zack Weinberg  <zackw@panix.com>
+
 	* configure.ac: Add test and workaround for gcc 4.1.[01] bug
 	causing link to fail with a pile of multiple-definition errors.
 	* .mtn-ignore: Add aclocal.m4 and all the files in m4/ that

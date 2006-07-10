@@ -36,10 +36,10 @@ sleep(2)
 check(not exists("test.db-journal"))
 
 
--- should be cleaned up for SIGSEGV
+-- should *not* be cleaned up for SIGSEGV
 process = bg(mtn("--rcfile=wait.lua", "-btestbranch", "ci", "-mx"), false, false, false)
 sleep(2)
 check(exists("test.db-journal"))
 kill(process.pid, 11)
 sleep(2)
-xfail_if(true, not exists("test.db-journal"))
+check(exists("test.db-journal"))
