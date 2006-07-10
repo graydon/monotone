@@ -243,7 +243,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.22\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-05 22:56-0700\n"
+"POT-Creation-Date: 2006-07-10 15:00-0700\n"
 "PO-Revision-Date: 2006-03-15 17:13+0100\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
@@ -252,57 +252,57 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: app_state.cc:139
+#: app_state.cc:140
 #, c-format
 msgid "workspace required but not found%s%s"
 msgstr "espace de travail requis mais pas trouvé%s%s"
 
-#: app_state.cc:147
+#: app_state.cc:148
 #, c-format
 msgid "invalid directory ''"
 msgstr "dossier pas valable «»"
 
-#: app_state.cc:155
+#: app_state.cc:156
 #, fuzzy, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "le dossier administratif « %s » existe déjà dans « %s »\n"
 
-#: app_state.cc:236
+#: app_state.cc:237
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "le racine de l'espace de travail « %s » n'existe pas"
 
-#: app_state.cc:237
+#: app_state.cc:238
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr "le racine de l'espace de travail « %s » n'est pas un dossier\n"
 
-#: app_state.cc:271
+#: app_state.cc:272
 #, c-format
 msgid "failed to parse date string '%s': %s"
 msgstr "échou de comprendre la date « %s » : %s"
 
-#: app_state.cc:286
+#: app_state.cc:287
 #, c-format
 msgid "negative depth not allowed\n"
 msgstr "profondeur négative interdite\n"
 
-#: app_state.cc:294
+#: app_state.cc:295
 #, c-format
 msgid "illegal argument to --last: cannot be zero or negative\n"
 msgstr ""
 
-#: app_state.cc:302
+#: app_state.cc:303
 #, c-format
 msgid "illegal argument to --next: cannot be zero or negative\n"
 msgstr ""
 
-#: app_state.cc:438
+#: app_state.cc:439
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "La lecture du fichier d'options « %s » a échouée"
 
-#: app_state.cc:455
+#: app_state.cc:456
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "L'écriture du fichier d'options « %s » a échouée"
@@ -407,9 +407,9 @@ msgstr "automatisation"
 msgid "automation interface"
 msgstr "interface d'automatisation"
 
-#: cmd_db.cc:35 cmd_diff_log.cc:404 cmd_diff_log.cc:435 cmd_diff_log.cc:437
-#: cmd_files.cc:102 cmd_files.cc:164 cmd_merging.cc:123 cmd_ws_commit.cc:446
-#: commands.cc:370
+#: cmd_db.cc:35 cmd_diff_log.cc:379 cmd_diff_log.cc:410 cmd_diff_log.cc:412
+#: cmd_files.cc:134 cmd_files.cc:196 cmd_merging.cc:124 cmd_merging.cc:633
+#: cmd_merging.cc:648 cmd_merging.cc:651 cmd_ws_commit.cc:446 commands.cc:374
 #, c-format
 msgid "no such revision '%s'"
 msgstr "aucune révision « %s »"
@@ -492,8 +492,8 @@ msgstr ""
 msgid "no var with name %s in domain %s"
 msgstr "aucune variable nommée %s dans le domaine %s"
 
-#: cmd_db.cc:152 cmd_diff_log.cc:348 cmd_diff_log.cc:558 cmd_files.cc:78
-#: cmd_files.cc:145 cmd_list.cc:437 cmd_merging.cc:569 cmd_ws_commit.cc:322
+#: cmd_db.cc:152 cmd_diff_log.cc:323 cmd_diff_log.cc:533 cmd_files.cc:110
+#: cmd_files.cc:177 cmd_list.cc:437 cmd_merging.cc:570 cmd_ws_commit.cc:322
 #: commands.cc:246
 msgid "informative"
 msgstr "information"
@@ -511,12 +511,12 @@ msgstr "remplis une identité partielle"
 msgid "non-hex digits in partial id"
 msgstr "chiffres non-héxadécimaux dans l'id partielle"
 
-#: cmd_diff_log.cc:348 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
+#: cmd_diff_log.cc:323 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
 #: cmd_ws_commit.cc:251 cmd_ws_commit.cc:322 cmd_ws_commit.cc:613
 msgid "[PATH]..."
 msgstr "[CHEMIN]..."
 
-#: cmd_diff_log.cc:349
+#: cmd_diff_log.cc:324
 #, fuzzy
 msgid ""
 "show current diffs on stdout.\n"
@@ -531,7 +531,7 @@ msgstr ""
 "différence entre eux est affichée.  Si aucun format n'est précisé,\n"
 "le format « unified » est employé par défaut."
 
-#: cmd_diff_log.cc:365
+#: cmd_diff_log.cc:340
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -540,15 +540,15 @@ msgstr ""
 "--diff-args requiet --external\n"
 "essayez d'ajouter --external ou de retirer --diff-args ?"
 
-#: cmd_diff_log.cc:494
+#: cmd_diff_log.cc:469
 msgid "no changes"
 msgstr "aucun changement"
 
-#: cmd_diff_log.cc:558
+#: cmd_diff_log.cc:533
 msgid "[FILE] ..."
 msgstr "[FICHIER] ..."
 
-#: cmd_diff_log.cc:559
+#: cmd_diff_log.cc:534
 #, fuzzy
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more "
@@ -557,13 +557,13 @@ msgstr ""
 "Affiche l'histoire en sens inverse (filtré avec « FILE »).  Si une\n"
 "révision ou plus sont données, emploie-les comme débuts."
 
-#: cmd_diff_log.cc:621
+#: cmd_diff_log.cc:596
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "seul un de --last et --next est permit"
 
-#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:121 cmd_merging.cc:771
-#: cmd_othervcs.cc:15
+#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:78 cmd_files.cc:153
+#: cmd_merging.cc:818 cmd_othervcs.cc:15
 msgid "debug"
 msgstr "débogue"
 
@@ -600,45 +600,64 @@ msgid "merge failed"
 msgstr "la fusion a échouée"
 
 #: cmd_files.cc:78
+msgid "SRCNAME DESTNAME SRCID DESTID"
+msgstr ""
+
+#: cmd_files.cc:79
+#, fuzzy
+msgid "diff 2 files and output result"
+msgstr "fusionne 3 fichiers et affiche le résultat"
+
+#: cmd_files.cc:96
+#, fuzzy, c-format
+msgid "source file id does not exist"
+msgstr "l'id du fichier de l'ancêtre n'existe pas"
+
+#: cmd_files.cc:99
+#, fuzzy, c-format
+msgid "destination file id does not exist"
+msgstr "l'id du fichier de l'ancêtre n'existe pas"
+
+#: cmd_files.cc:110
 msgid "PATH"
 msgstr "CHEMIN"
 
-#: cmd_files.cc:79
+#: cmd_files.cc:111
 msgid "print annotated copy of the file from REVISION"
 msgstr "affiche une copie annotée du fichier venant de RÉVISION"
 
-#: cmd_files.cc:100
+#: cmd_files.cc:132
 #, c-format
 msgid "no revision for file '%s' in database"
 msgstr "aucune révision pour le fichier « %s » dans la base de données"
 
-#: cmd_files.cc:111
+#: cmd_files.cc:143
 #, fuzzy, c-format
 msgid "no such file '%s' in revision '%s'"
 msgstr "aucun fichier « %s » dans la révision « %s »\n"
 
-#: cmd_files.cc:114
+#: cmd_files.cc:146
 #, fuzzy, c-format
 msgid "'%s' in revision '%s' is not a file"
 msgstr "« %s » est un dossier, pas un fichier"
 
-#: cmd_files.cc:121
+#: cmd_files.cc:153
 msgid "[PATH]"
 msgstr "[CHEMIN]"
 
-#: cmd_files.cc:122
+#: cmd_files.cc:154
 msgid "calculate identity of PATH or stdin"
 msgstr "calculer l'identité du CHEMIN ou de l'entrée standard"
 
-#: cmd_files.cc:146
+#: cmd_files.cc:178
 msgid "FILENAME"
 msgstr "FICHIER"
 
-#: cmd_files.cc:147
+#: cmd_files.cc:179
 msgid "write file from database to stdout"
 msgstr "écrire un fichier de la base de donnée sur la sortie standard"
 
-#: cmd_files.cc:176 cmd_files.cc:178
+#: cmd_files.cc:208 cmd_files.cc:210
 #, fuzzy, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "aucun fichier « %s » dans la révision « %s »\n"
@@ -927,13 +946,13 @@ msgstr "ID_RÉVISION"
 msgid "No such revision %s"
 msgstr "aucune révision « %s »"
 
-#: cmd_merging.cc:53 cmd_merging.cc:610 cmd_ws_commit.cc:53
+#: cmd_merging.cc:54 cmd_merging.cc:611 cmd_ws_commit.cc:53
 #: cmd_ws_commit.cc:224 cmd_ws_commit.cc:251 cmd_ws_commit.cc:278
 #: cmd_ws_commit.cc:303 cmd_ws_commit.cc:515 cmd_ws_commit.cc:613
 msgid "workspace"
 msgstr "espace de travail"
 
-#: cmd_merging.cc:54
+#: cmd_merging.cc:55
 msgid ""
 "update workspace.\n"
 "This command modifies your workspace to be based off of a\n"
@@ -948,18 +967,18 @@ msgstr ""
 "cette révision.  Sinon, met à jour basé sur la révision d'entré de\n"
 "la branche actuelle."
 
-#: cmd_merging.cc:97
+#: cmd_merging.cc:98
 #, c-format
 msgid "this workspace is a new project; cannot update"
 msgstr ""
 "cet espace de travail est un nouveau projet, impossible de mettre à jour"
 
-#: cmd_merging.cc:101
+#: cmd_merging.cc:102
 #, fuzzy, c-format
 msgid "updating along branch '%s'"
 msgstr "la branche « %s » n'est pas servie"
 
-#: cmd_merging.cc:105
+#: cmd_merging.cc:106
 #, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
@@ -970,37 +989,37 @@ msgstr ""
 "actuelle.  Elle ne correspond même pas à la révision actuelle.\n"
 "Peut-être voulez-vous employer --revision=<révision d'une autre branche>?"
 
-#: cmd_merging.cc:110
+#: cmd_merging.cc:111
 #, fuzzy, c-format
 msgid "multiple update candidates:"
 msgstr "plusieurs candidats pour la mise à jour :\n"
 
-#: cmd_merging.cc:114
+#: cmd_merging.cc:115
 #, fuzzy, c-format
 msgid "choose one with '%s update -r<id>'"
 msgstr "choisissez en un avec « %s update -r<id> »\n"
 
-#: cmd_merging.cc:115
+#: cmd_merging.cc:116
 #, fuzzy, c-format
 msgid "multiple update candidates remain after selection"
 msgstr "il reste plusieurs candidats possible après la selection"
 
-#: cmd_merging.cc:130
+#: cmd_merging.cc:131
 #, fuzzy, c-format
 msgid "already up to date at %s"
 msgstr "déjà à jour en %s\n"
 
-#: cmd_merging.cc:138
+#: cmd_merging.cc:139
 #, fuzzy, c-format
 msgid "selected update target %s"
 msgstr "sélection de la cible %s pour la mise à jour\n"
 
-#: cmd_merging.cc:162
+#: cmd_merging.cc:163
 #, fuzzy, c-format
 msgid "target revision is not in current branch"
 msgstr "la révision actuelle n'existe pas"
 
-#: cmd_merging.cc:170
+#: cmd_merging.cc:171
 #, fuzzy, c-format
 msgid ""
 "target revision is in multiple branches:%s\n"
@@ -1010,246 +1029,254 @@ msgstr ""
 "la révision %s n'est pas membre de la branche %s\n"
 "éssayez de nouveau avec un --branch explicit\n"
 
-#: cmd_merging.cc:178
+#: cmd_merging.cc:179
 #, fuzzy, c-format
 msgid "switching to branch %s"
 msgstr "commence à confier sur la branche « %s »\n"
 
-#: cmd_merging.cc:183
+#: cmd_merging.cc:184
 #, c-format
 msgid ""
 "target revision not in any branch\n"
 "next commit will use branch %s"
 msgstr ""
 
-#: cmd_merging.cc:288
+#: cmd_merging.cc:289
 #, c-format
 msgid "switched branch; next commit will use branch %s"
 msgstr ""
 
-#: cmd_merging.cc:289
+#: cmd_merging.cc:290
 #, fuzzy, c-format
 msgid "updated to base revision %s"
 msgstr "mise à jour vers la révision de base %s\n"
 
-#: cmd_merging.cc:299 cmd_merging.cc:352 cmd_merging.cc:363 cmd_merging.cc:523
-#: cmd_merging.cc:747 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
+#: cmd_merging.cc:300 cmd_merging.cc:353 cmd_merging.cc:364 cmd_merging.cc:524
+#: cmd_merging.cc:794 cmd_ws_commit.cc:385 cmd_ws_commit.cc:851
 #: cmd_ws_commit.cc:872
 msgid "tree"
 msgstr "arborescence"
 
-#: cmd_merging.cc:299
+#: cmd_merging.cc:300
 msgid "merge unmerged heads of branch"
 msgstr "fusionne les entrées de la branche non fusionnées"
 
-#: cmd_merging.cc:308 cmd_merging.cc:755
+#: cmd_merging.cc:309 cmd_merging.cc:802
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "veuillez préciser une branche avec --branch=BRANCHE"
 
-#: cmd_merging.cc:312 cmd_merging.cc:402 cmd_merging.cc:405 cmd_merging.cc:760
+#: cmd_merging.cc:313 cmd_merging.cc:403 cmd_merging.cc:406 cmd_merging.cc:807
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "la branche « %s » est vide"
 
-#: cmd_merging.cc:315
+#: cmd_merging.cc:316
 #, fuzzy, c-format
 msgid "branch '%s' is already merged"
 msgstr "la branche « %s » est fusionnée\n"
 
-#: cmd_merging.cc:323
+#: cmd_merging.cc:324
 #, fuzzy, c-format
 msgid "starting with revision 1 / %d"
 msgstr "en commencent avec la révision 1 / %d\n"
 
-#: cmd_merging.cc:327
+#: cmd_merging.cc:328
 #, fuzzy, c-format
 msgid "merging with revision %d / %d"
 msgstr "fusionnent avec la révision %d / %d\n"
 
-#: cmd_merging.cc:328 cmd_merging.cc:329 cmd_merging.cc:412 cmd_merging.cc:547
-#: cmd_merging.cc:548
+#: cmd_merging.cc:329 cmd_merging.cc:330 cmd_merging.cc:413 cmd_merging.cc:548
+#: cmd_merging.cc:549
 #, fuzzy, c-format
 msgid "[source] %s"
 msgstr "[source] %s\n"
 
-#: cmd_merging.cc:346 cmd_merging.cc:519 cmd_merging.cc:566
+#: cmd_merging.cc:347 cmd_merging.cc:520 cmd_merging.cc:567
 #, fuzzy, c-format
 msgid "[merged] %s"
 msgstr "[fusionné] %s\n"
 
-#: cmd_merging.cc:349
+#: cmd_merging.cc:350
 #, fuzzy, c-format
 msgid "note: your workspaces have not been updated"
 msgstr "note: vos espaces de travail ne sont pas à jour\n"
 
-#: cmd_merging.cc:352
+#: cmd_merging.cc:353
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "BRANCHE-SOURCE BRANCHE-DESTINATION"
 
-#: cmd_merging.cc:353
+#: cmd_merging.cc:354
 msgid "merge from one branch to another asymmetrically"
 msgstr "fusionnez d'une branche à une autre asymétriquement"
 
-#: cmd_merging.cc:363
+#: cmd_merging.cc:364
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "BRANCHE-SOURCE BRANCHE-DESTINATION DOSSIER"
 
-#: cmd_merging.cc:364
+#: cmd_merging.cc:365
 msgid "merge one branch into a subdirectory in another branch"
 msgstr "fusionnez une branche dans un sous-dossier d'une autre branche"
 
-#: cmd_merging.cc:403 cmd_merging.cc:406
+#: cmd_merging.cc:404 cmd_merging.cc:407
 #, fuzzy, c-format
 msgid "branch '%s' is not merged"
 msgstr "la branche « %s » n'est pas fusionnée\n"
 
-#: cmd_merging.cc:411
+#: cmd_merging.cc:412
 #, fuzzy, c-format
 msgid "propagating %s -> %s"
 msgstr "propage %s -> %s\n"
 
-#: cmd_merging.cc:413
+#: cmd_merging.cc:414
 #, fuzzy, c-format
 msgid "[target] %s"
 msgstr "[cible] %s\n"
 
-#: cmd_merging.cc:418
+#: cmd_merging.cc:419
 #, fuzzy, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'"
 msgstr "la branche « %s » est à jour par rapport à la branche « %s »\n"
 
-#: cmd_merging.cc:420
+#: cmd_merging.cc:421
 #, fuzzy, c-format
 msgid "no action taken"
 msgstr "rien n'est fait\n"
 
-#: cmd_merging.cc:424
+#: cmd_merging.cc:425
 #, fuzzy, c-format
 msgid "no merge necessary; putting %s in branch '%s'"
 msgstr "fusion pas nécessaire; met %s dans la branch « %s »\n"
 
-#: cmd_merging.cc:462
+#: cmd_merging.cc:463
 #, c-format
 msgid "Path %s not found in destination tree."
 msgstr "Chemin %s pas trouvé dans l'arborescence de destination"
 
-#: cmd_merging.cc:524
+#: cmd_merging.cc:525
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "RÉVISION-GAUCHE RÉVISION-DROITE BRANCHE-DESTINATION"
 
-#: cmd_merging.cc:525
+#: cmd_merging.cc:526
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr ""
 "fusionne deux révisions données explicitement et met le résultat dans la "
 "branche donnée"
 
-#: cmd_merging.cc:540
+#: cmd_merging.cc:541
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr "%s et %s sont la même révision, j'abandonne"
 
-#: cmd_merging.cc:542 cmd_merging.cc:544
+#: cmd_merging.cc:543 cmd_merging.cc:545
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr "%s est déjà un ancêtre de %s"
 
-#: cmd_merging.cc:569
+#: cmd_merging.cc:570
 msgid "REV REV"
 msgstr "RÉV RÉV"
 
-#: cmd_merging.cc:570
+#: cmd_merging.cc:571
 msgid ""
 "Show what conflicts would need to be resolved to merge the given revisions."
 msgstr ""
 "Montre quels conflits auraient besoin d'être résolus l'ors d'une fusion des "
 "révisions données."
 
-#: cmd_merging.cc:580 cmd_merging.cc:582
+#: cmd_merging.cc:581 cmd_merging.cc:583
 #, fuzzy, c-format
 msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "%s est un ancêtre de %s; aucune fusion est nécessaire"
 
-#: cmd_merging.cc:596
+#: cmd_merging.cc:597
 #, c-format
 msgid "There are %s node_name_conflicts."
 msgstr "Il y a %s node_name_conflicts."
 
-#: cmd_merging.cc:598
+#: cmd_merging.cc:599
 #, c-format
 msgid "There are %s file_content_conflicts."
 msgstr "Il y a %s file_content_conflicts."
 
-#: cmd_merging.cc:600
+#: cmd_merging.cc:601
 #, c-format
 msgid "There are %s node_attr_conflicts."
 msgstr "Il y a %s node_attr_conflicts."
 
-#: cmd_merging.cc:602
+#: cmd_merging.cc:603
 #, c-format
 msgid "There are %s orphaned_node_conflicts."
 msgstr "Il y a %s orphaned_node_conflicts."
 
-#: cmd_merging.cc:604
+#: cmd_merging.cc:605
 #, c-format
 msgid "There are %s rename_target_conflicts."
 msgstr "Il y a %s rename_target_conflicts."
 
-#: cmd_merging.cc:606
+#: cmd_merging.cc:607
 #, c-format
 msgid "There are %s directory_loop_conflicts."
 msgstr "Il y a %s directory_loop_conflicts."
 
 #: cmd_merging.cc:611
+msgid "[-r FROM] -r TO [PATH...]"
+msgstr ""
+
+#: cmd_merging.cc:612
 msgid ""
-"cherrypick changes from other parts of history into workspace.\n"
-"This command takes arbitrary changes made at any point in history,\n"
-"and applies them to your current workspace, as if you had made the\n"
-"edits by hand.\n"
+"Apply changes made at arbitrary places in history to current workspace.\n"
+"This command takes changes made at any point in history, and\n"
+"edits your current workspace to include those changes.  The end result\n"
+"is identical to 'mtn diff -r FROM -r TO | patch -p0', except that\n"
+"this command uses monotone's merger, and thus intelligently handles\n"
+"renames, conflicts, and so on.\n"
+"\n"
 "If one revision is given, applies the changes made in that revision\n"
 "compared to its parent.\n"
+"\n"
 "If two revisions are given, applies the changes made to get from the\n"
 "first revision to the second."
 msgstr ""
 
-#: cmd_merging.cc:632
+#: cmd_merging.cc:637
 #, c-format
 msgid ""
 "revision %s is a merge\n"
 "to apply the changes relative to one of its parents, use:\n"
-"  %s cherrypatch -r PARENT -r %s"
+"  %s pluck -r PARENT -r %s"
 msgstr ""
 
-#: cmd_merging.cc:649
+#: cmd_merging.cc:658
 #, fuzzy, c-format
 msgid "no changes to apply"
 msgstr "aucun changement à confier\n"
 
-#: cmd_merging.cc:740
+#: cmd_merging.cc:770
 #, fuzzy, c-format
 msgid "applied changes to workspace"
 msgstr "ajouter des fichiers à l'espace de travail"
 
-#: cmd_merging.cc:747
+#: cmd_merging.cc:794
 msgid "show unmerged head revisions of branch"
 msgstr "affiche les entrées non fusionné de la branche"
 
-#: cmd_merging.cc:762
+#: cmd_merging.cc:809
 #, fuzzy, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "la branche « %s » est actuellement fusionnée :\n"
 
-#: cmd_merging.cc:764
+#: cmd_merging.cc:811
 #, fuzzy, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "la branche « %s » n'est actuellement pas fusionnée :\n"
 
-#: cmd_merging.cc:771
+#: cmd_merging.cc:818
 msgid "REVID"
 msgstr "ID_RÉVISION"
 
-#: cmd_merging.cc:772
+#: cmd_merging.cc:819
 msgid "dump the roster associated with the given REVID"
 msgstr "décharge la list associée avec l'ID_RÉV donnée"
 
@@ -1711,31 +1738,31 @@ msgstr "commande [ARGUMENTS...]"
 msgid "display command help"
 msgstr "afficher l'aide de la commande"
 
-#: commands.cc:377
+#: commands.cc:381
 #, fuzzy, c-format
 msgid "expanding selection '%s'"
 msgstr "expansion de la sélection « %s »\n"
 
-#: commands.cc:385
+#: commands.cc:389
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "aucune correspondance pour la sélection « %s »"
 
-#: commands.cc:391
+#: commands.cc:395
 #, fuzzy, c-format
 msgid "expanded to '%s'"
 msgstr "expansion à « %s »\n"
 
-#: commands.cc:408
+#: commands.cc:412
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions: \n"
 msgstr "la sélection « %s » a plusieurs expansions ambigües : \n"
 
-#: commands.cc:425
+#: commands.cc:429
 msgid "note: "
 msgstr "note : "
 
-#: commands.cc:426
+#: commands.cc:430
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1744,7 +1771,7 @@ msgstr ""
 "la branche « %s » a plusieurs heads\n"
 "vous devriez peut-être lancer « %s merge »"
 
-#: commands.cc:444
+#: commands.cc:448
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message et --message-file sont mutuellement exclusifs"
@@ -2718,21 +2745,21 @@ msgstr "erreur lors de l'analyse d'arguments venant du fichier %s : %s"
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "erreur bizarre en employent des arguments lu de %s: %s\n"
 
-#: monotone.cc:330
+#: monotone.cc:329
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[OPTION...] commande [ARGUMENTS...]\n"
 
-#: monotone.cc:593
+#: monotone.cc:594
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "erreur de syntaxe près de l'option « %s » : %s"
 
-#: monotone.cc:629
+#: monotone.cc:630
 #, fuzzy, c-format
 msgid "%s %s doesn't use the option %s"
 msgstr "monotone %s n'utilise pas l'option %s"
 
-#: monotone.cc:663
+#: monotone.cc:664
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Options spécifiques à « %s %s » :"
@@ -3791,8 +3818,12 @@ msgstr "le contenu du fichier « %s » a changé, il ne sera pas écrasé"
 
 #: work.cc:1041
 #, fuzzy, c-format
-msgid "updating %s"
-msgstr "mise à jour de %s en %s"
+msgid "modifying %s"
+msgstr "ajout de %s"
+
+#, fuzzy
+#~ msgid "updating %s"
+#~ msgstr "mise à jour de %s en %s"
 
 #~ msgid "unknown path '%s'\n"
 #~ msgstr "chemin inconnu « %s »\n"
