@@ -1,5 +1,12 @@
 2006-07-10  Zack Weinberg  <zackw@panix.com>
 
+	* configure.ac: Add test and workaround for gcc 4.1.[01] bug
+	causing link to fail with a pile of multiple-definition errors.
+	* .mtn-ignore: Add aclocal.m4 and all the files in m4/ that
+	autoreconf --install likes to create.
+
+2006-07-10  Zack Weinberg  <zackw@panix.com>
+
 	* po/de.po, po/fr.po, po/it.po, po/ja.po, po/pt_BR.po: Re-msgmerge'd.
 
 2006-07-10  Richard Levitte  <richard@levitte.org>
