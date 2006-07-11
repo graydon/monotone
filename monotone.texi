@@ -4681,11 +4681,10 @@ adjust the expression used with the Lua hook
 @code{get_encloser_pattern}; @ref{Hooks}.
 
 
-@option{--unified} requests the ``unified diff'' format, the default
-.  @option{--context}
-request the ``context diff'' format (analogous to running the program
-@code{diff -c}).  Both of these formats are generated directly by
-monotone, using its built-in diff algorithm.
+@option{--unified} requests the ``unified diff'' format, the default.
+@option{--context} requests the ``context diff'' format (analogous to
+running the program @code{diff -c}).  Both of these formats are
+generated directly by monotone, using its built-in diff algorithm.
 
 Sometimes, you may want more flexibility in output formats; for these
 cases, you can use @option{--external}, which causes monotone to invoke
@@ -7543,10 +7542,13 @@ Called for each file when @command{diff} is given the
 @option{--show-encloser} option (and @emph{not} the
 @option{--external} option).  @var{file_path} is the pathname of the
 file that is being diffed.  The hook should return a string constant
-containing a Lua-format regular expression; this regular expression
+containing a regular expression; this regular expression
 will be used to find lines that, in that file, name the ``top-level''
 constructs enclosing each ``hunk'' of changes.  The default is
-@code{^[%w$_]}, which is correct for many programming languages.
+@code{^[[:alnum:]$_]}, which is correct for many programming
+languages.  If you have a better regular expression for some
+language, you can add it here; and if you send it to the monotone
+developers, we will likely make it to the default for that language.
 
 @item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
                      @var{diff_args}, @var{old_rev}, @var{new_rev})
