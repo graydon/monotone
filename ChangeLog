@@ -1,3 +1,14 @@
+2006-07-10  Derek Scherger  <derek@echologic.com>
+
+	* restrictions.cc (node_restriction::includes,
+	path_restriction::includes): handle --depth with empty restriction
+	(test_include_depth_0_empty_restriction): new test for depth with
+	empty restriction
+	* restrictions.cc (add_restrictions_tests): add it to the testsuite
+	* sanity.hh (dump): new template function for dumping variables
+	when fiddling around or debugging
+	(DUMP): macro wrapper for new dump function
+
 2006-07-10  Zack Weinberg  <zackw@panix.com>
 
 	* tests/database_is_closed_on_signal_exit/__driver__.lua: Invert
