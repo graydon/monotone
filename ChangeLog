@@ -1,3 +1,7 @@
+2006-07-11  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Two new strings to translate.
+
 2006-07-10  Derek Scherger  <derek@echologic.com>
 
 	* restrictions.cc (node_restriction::includes,
