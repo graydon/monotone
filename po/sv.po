@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-10 02:02+0200\n"
-"PO-Revision-Date: 2006-07-10 02:03+0200\n"
+"POT-Creation-Date: 2006-07-11 15:57+0200\n"
+"PO-Revision-Date: 2006-07-11 15:58+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -154,57 +154,57 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: app_state.cc:140
+#: app_state.cc:141
 #, c-format
 msgid "workspace required but not found%s%s"
 msgstr "arbetskatalog behövs men kunde inte hittas%s%s"
 
-#: app_state.cc:148
+#: app_state.cc:149
 #, c-format
 msgid "invalid directory ''"
 msgstr "katalogen '' är ogiltig"
 
-#: app_state.cc:156
+#: app_state.cc:157
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "det finns redan en administrativ katalog (%s) i '%s'"
 
-#: app_state.cc:237
+#: app_state.cc:238
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "angiven sökrot '%s' finns inte"
 
-#: app_state.cc:238
+#: app_state.cc:239
 #, c-format
 msgid "search root '%s' is not a directory\n"
 msgstr "sökroten '%s' är inte en katalog\n"
 
-#: app_state.cc:272
+#: app_state.cc:273
 #, c-format
 msgid "failed to parse date string '%s': %s"
 msgstr "kunde inte tyda datumangivelsen '%s': %s"
 
-#: app_state.cc:287
+#: app_state.cc:288
 #, c-format
 msgid "negative depth not allowed\n"
 msgstr "negativt djup är inte tillåtet\n"
 
-#: app_state.cc:295
+#: app_state.cc:296
 #, c-format
 msgid "illegal argument to --last: cannot be zero or negative\n"
 msgstr "felaktigt argument till --last: får ej vara noll eller negativt\n"
 
-#: app_state.cc:303
+#: app_state.cc:304
 #, c-format
 msgid "illegal argument to --next: cannot be zero or negative\n"
 msgstr "felaktigt argument till --next: får ej vara noll eller negativt\n"
 
-#: app_state.cc:439
+#: app_state.cc:440
 #, c-format
 msgid "Failed to read options file %s"
 msgstr "Misslyckades med att läsa filen %s"
 
-#: app_state.cc:456
+#: app_state.cc:457
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Misslyckades med att skriva filen %s"
@@ -297,8 +297,8 @@ msgstr "automatisering"
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
-#: cmd_db.cc:35 cmd_diff_log.cc:379 cmd_diff_log.cc:410 cmd_diff_log.cc:412
-#: cmd_files.cc:134 cmd_files.cc:196 cmd_merging.cc:124 cmd_merging.cc:633
+#: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
+#: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:124 cmd_merging.cc:633
 #: cmd_merging.cc:648 cmd_merging.cc:651 cmd_ws_commit.cc:446 commands.cc:374
 #, c-format
 msgid "no such revision '%s'"
@@ -379,8 +379,8 @@ msgstr "ta bort databasvariabeln NAMN från domänen DOMÄN"
 msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
-#: cmd_db.cc:152 cmd_diff_log.cc:323 cmd_diff_log.cc:533 cmd_files.cc:110
-#: cmd_files.cc:177 cmd_list.cc:437 cmd_merging.cc:570 cmd_ws_commit.cc:322
+#: cmd_db.cc:152 cmd_diff_log.cc:331 cmd_diff_log.cc:540 cmd_files.cc:114
+#: cmd_files.cc:181 cmd_list.cc:437 cmd_merging.cc:570 cmd_ws_commit.cc:322
 #: commands.cc:246
 msgid "informative"
 msgstr "informativ"
@@ -398,12 +398,12 @@ msgstr "utöka den partiella identiteten"
 msgid "non-hex digits in partial id"
 msgstr "något tecken i den partiella identiteten är inte hexadecimalt"
 
-#: cmd_diff_log.cc:323 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
+#: cmd_diff_log.cc:331 cmd_ws_commit.cc:53 cmd_ws_commit.cc:224
 #: cmd_ws_commit.cc:251 cmd_ws_commit.cc:322 cmd_ws_commit.cc:613
 msgid "[PATH]..."
 msgstr "[SÖKVÄG]..."
 
-#: cmd_diff_log.cc:324
+#: cmd_diff_log.cc:332
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -416,7 +416,7 @@ msgstr ""
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
 
-#: cmd_diff_log.cc:340
+#: cmd_diff_log.cc:347
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -425,15 +425,15 @@ msgstr ""
 "--diff-args kräver att även --external anges\n"
 "lägg till --external eller ta bort --diff-args?"
 
-#: cmd_diff_log.cc:469
+#: cmd_diff_log.cc:476
 msgid "no changes"
 msgstr "inga ändringar"
 
-#: cmd_diff_log.cc:533
+#: cmd_diff_log.cc:540
 msgid "[FILE] ..."
 msgstr "[FIL] ..."
 
-#: cmd_diff_log.cc:534
+#: cmd_diff_log.cc:541
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more "
 "revisions are given, use them as a starting point."
@@ -442,12 +442,12 @@ msgstr ""
 "arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
 "angivits används de som utgångspunkter."
 
-#: cmd_diff_log.cc:596
+#: cmd_diff_log.cc:603
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
 
-#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:78 cmd_files.cc:153
+#: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:78 cmd_files.cc:157
 #: cmd_merging.cc:818 cmd_othervcs.cc:15
 msgid "debug"
 msgstr "felsökning"
@@ -502,46 +502,46 @@ msgstr "källans filidentitet finns inte"
 msgid "destination file id does not exist"
 msgstr "målets filidentitet finns inte"
 
-#: cmd_files.cc:110
+#: cmd_files.cc:114
 msgid "PATH"
 msgstr "SÖKVÄG"
 
-#: cmd_files.cc:111
+#: cmd_files.cc:115
 msgid "print annotated copy of the file from REVISION"
 msgstr "skriv ut filen ur REVISION med extra detaljer"
 
-#: cmd_files.cc:132
+#: cmd_files.cc:136
 #, c-format
 msgid "no revision for file '%s' in database"
 msgstr "filen '%s' har ingen revision i databasen"
 
-#: cmd_files.cc:143
+#: cmd_files.cc:147
 #, c-format
 msgid "no such file '%s' in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
 
-#: cmd_files.cc:146
+#: cmd_files.cc:150
 #, c-format
 msgid "'%s' in revision '%s' is not a file"
 msgstr "'%s' i revisionen '%s' är inte en fil"
 
-#: cmd_files.cc:153
+#: cmd_files.cc:157
 msgid "[PATH]"
 msgstr "[SÖKVÄG]"
 
-#: cmd_files.cc:154
+#: cmd_files.cc:158
 msgid "calculate identity of PATH or stdin"
 msgstr "räkna ut identiteten för SÖKVÄG eller stdin"
 
-#: cmd_files.cc:178
+#: cmd_files.cc:182
 msgid "FILENAME"
 msgstr "FILNAMN"
 
-#: cmd_files.cc:179
+#: cmd_files.cc:183
 msgid "write file from database to stdout"
 msgstr "skriv ut angiven fil från databasen"
 
-#: cmd_files.cc:208 cmd_files.cc:210
+#: cmd_files.cc:212 cmd_files.cc:214
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
@@ -2145,22 +2145,22 @@ msgstr "%s är en katalog, inte en databas"
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
 
-#: diff_patch.cc:606
+#: diff_patch.cc:608
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "filen '%s' existerar inte i arbetskopian"
 
-#: diff_patch.cc:607
+#: diff_patch.cc:609
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' i arbetskopian är en katalog, inte en fil"
 
-#: diff_patch.cc:611
+#: diff_patch.cc:613
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "filen %s i arbetskopian har identiteten %s, %s eftersöktes"
 
-#: diff_patch.cc:732
+#: diff_patch.cc:734
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -2479,147 +2479,155 @@ msgid "argument to pass external diff hook"
 msgstr "argument att skicka med till extern diff"
 
 #: monotone.cc:84
+msgid "show the function containing each block of changes"
+msgstr "visa funktionen som innehåller varje ändringsstycke"
+
+#: monotone.cc:85
+msgid "another name for --show-encloser (for compatibility with GNU diff)"
+msgstr "ett synonym till --show-encloser (for att vara kompatibel med GNU diff)"
+
+#: monotone.cc:86
 msgid "perform the associated file operation"
 msgstr "genomför den tillhörande operationen på filen/filerna"
 
-#: monotone.cc:85
+#: monotone.cc:87
 msgid "address:port to listen on (default :4691)"
 msgstr "adress:port att lyssna på (:4691 om inget anges)"
 
-#: monotone.cc:86
+#: monotone.cc:88
 msgid "perform the operations for files missing from workspace"
 msgstr "genomför operationen på filer som saknas i arbetskatalogen"
 
-#: monotone.cc:87
+#: monotone.cc:89
 msgid "perform the operations for unknown files from workspace"
 msgstr "genomför operationen på okända filer i arbetskatalogen"
 
-#: monotone.cc:88
+#: monotone.cc:90
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "skicka med angiven nyckel även om den inte använts för att signera"
 
-#: monotone.cc:89
+#: monotone.cc:91
 msgid "serve netsync on stdio"
 msgstr "servera netsync via standard input och standard output"
 
-#: monotone.cc:90
+#: monotone.cc:92
 msgid "disable transport authentication"
 msgstr "slå av transportautentisering"
 
-#: monotone.cc:91
+#: monotone.cc:93
 msgid "when rosterifying, drop attrs entries with the given key"
 msgstr "släng attribut med den givna nyckeln vid konvertering till listor"
 
-#: monotone.cc:92
+#: monotone.cc:94
 msgid "exclude files when printing logs"
 msgstr ""
 "ta ej med vilka filer som lagts till, tagits bort eller ändrats i loggen"
 
-#: monotone.cc:93
+#: monotone.cc:95
 msgid "also operate on the contents of any listed directories"
 msgstr "ta även med innehållet för varje listad katalog"
 
-#: monotone.cc:102
+#: monotone.cc:104
 msgid "print debug log to stderr while running"
 msgstr "skriv ut felsökningslogg till stderr under körning"
 
-#: monotone.cc:103
+#: monotone.cc:105
 msgid "file to dump debugging log to, on failure"
 msgstr "fil att skriva ut felsökningsloggen till om något gick fel"
 
-#: monotone.cc:104
+#: monotone.cc:106
 msgid "file to write the log to"
 msgstr "fil att skriva ut loggen till"
 
-#: monotone.cc:105
+#: monotone.cc:107
 msgid "suppress verbose, informational and progress messages"
 msgstr "skriv inte ut informations- eller förloppsmeddelanden"
 
-#: monotone.cc:106
+#: monotone.cc:108
 msgid "suppress warning, verbose, informational and progress messages"
 msgstr "skriv inte ut varningar eller informations- eller förloppsmeddelanden"
 
-#: monotone.cc:107
+#: monotone.cc:109
 msgid "display help message"
 msgstr "skriv ut extra hjälptext"
 
-#: monotone.cc:108
+#: monotone.cc:110
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: monotone.cc:109
+#: monotone.cc:111
 msgid "print detailed version number, then exit"
 msgstr "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
 
-#: monotone.cc:110
+#: monotone.cc:112
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
-#: monotone.cc:111
+#: monotone.cc:113
 msgid "set ticker style (count|dot|none)"
 msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
 
-#: monotone.cc:112
+#: monotone.cc:114
 msgid "do not load standard lua hooks"
 msgstr "använd inte standard-lua-rutinerna"
 
-#: monotone.cc:113
+#: monotone.cc:115
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
 
-#: monotone.cc:114
+#: monotone.cc:116
 msgid "load extra rc file"
 msgstr "använd denna lua-fil"
 
-#: monotone.cc:115
+#: monotone.cc:117
 msgid "set key for signatures"
 msgstr "ange nyckel att signera med"
 
-#: monotone.cc:116
+#: monotone.cc:118
 msgid "set name of database"
 msgstr "ange databasens filnamn"
 
-#: monotone.cc:117
+#: monotone.cc:119
 msgid "limit search for workspace to specified root"
 msgstr "begränsa sökningen efter arbetskopian till denna katalog"
 
-#: monotone.cc:118
+#: monotone.cc:120
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: monotone.cc:119
+#: monotone.cc:121
 msgid "set location of key store"
 msgstr "ange i vilken katalog nycklarna finns"
 
-#: monotone.cc:120
+#: monotone.cc:122
 msgid "set location of configuration directory"
 msgstr "ange i vilken katalog konfigurationsfilerna finns"
 
-#: monotone.cc:224
+#: monotone.cc:226
 #, c-format
 msgid "problem parsing arguments from file %s: %s"
 msgstr "problem att tyda argumenten i filen %s: %s"
 
-#: monotone.cc:233
+#: monotone.cc:235
 #, c-format
 msgid "weird error when stuffing arguments read from %s: %s\n"
 msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 
-#: monotone.cc:329
+#: monotone.cc:331
 msgid "[OPTION...] command [ARGS...]\n"
 msgstr "[FLAGGOR...] kommando [ARGUMENT...]\n"
 
-#: monotone.cc:594
+#: monotone.cc:600
 #, c-format
 msgid "syntax error near the \"%s\" option: %s"
 msgstr "syntaxfel nära flaggan \"%s\": %s"
 
-#: monotone.cc:630
+#: monotone.cc:636
 #, c-format
 msgid "%s %s doesn't use the option %s"
 msgstr "%s %s använder inte flaggan %s"
 
-#: monotone.cc:664
+#: monotone.cc:670
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"

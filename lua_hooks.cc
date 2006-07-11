@@ -206,7 +206,6 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
     }
 }
 
-
 // concrete hooks
 
 // nb: if you're hooking lua to return your passphrase, you don't care if we
@@ -480,6 +479,25 @@ lua_hooks::hook_external_diff(file_path const & path,
   ll.push_str(newrev);
 
   return ll.call(7,0).ok();
+}
+
+bool
+lua_hooks::hook_get_encloser_pattern(file_path const & path,
+                                     std::string & pattern)
+{
+  bool exec_ok
+    = Lua(st)
+    .func("get_encloser_pattern")
+    .push_str(path.as_external())
+    .call(1, 1)
+    .extract_str(pattern)
+    .ok();
+
+  // If the hook fails, make sure pattern is set to something sane
+  // (the empty string, which will disable enclosers for this file).
+  if (!exec_ok)
+    pattern = "";
+  return exec_ok;
 }
 
 bool

@@ -77,7 +77,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
-    OPT_CONTEXT_DIFF % OPT_UNIFIED_DIFF)
+    OPT_CONTEXT_DIFF % OPT_UNIFIED_DIFF % OPT_SHOW_ENCLOSER)
 {
   if (args.size() != 4)
     throw usage(name);
@@ -101,10 +101,14 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
   app.db.get_file_version(src_id, src);
   app.db.get_file_version(dst_id, dst);
 
+  string pattern("");
+  if (app.diff_show_encloser)
+    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+
   make_diff(src_name, dst_name,
             src_id, dst_id,
             src.inner(), dst.inner(),
-            cout, app.diff_format);
+            cout, app.diff_format, pattern);
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
@@ -162,7 +166,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
   if (args.size() == 1)
     {
       read_localized_data(file_path_external(idx(args, 0)), 
-			  dat, app.lua);
+                          dat, app.lua);
     }
   else
     {

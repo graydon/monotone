@@ -220,7 +220,6 @@ static void
 dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
-           diff_type type,
            set<split_path> const & paths,
            bool limit_paths = false)
 {
@@ -250,12 +249,17 @@ dump_diffs(cset const & cs,
                               unpacked, app.lua);
         }
 
+      std::string pattern("");
+      if (app.diff_show_encloser)
+        app.lua.hook_get_encloser_pattern(file_path(i->first),
+                                          pattern);
+
       make_diff(file_path(i->first).as_internal(),
                 file_path(i->first).as_internal(),
                 i->second,
                 i->second,
                 data(), unpacked,
-                cout, type);
+                cout, app.diff_format, pattern);
     }
 
   map<split_path, split_path> reverse_rename_map;
@@ -300,24 +304,28 @@ dump_diffs(cset const & cs,
       re = reverse_rename_map.find(dst_path);
       if (re != reverse_rename_map.end())
         src_path = re->second;
-      
+
+      std::string pattern("");
+      if (app.diff_show_encloser)
+        app.lua.hook_get_encloser_pattern(file_path(src_path),
+                                          pattern);
+
       make_diff(file_path(src_path).as_internal(),
                 file_path(dst_path).as_internal(),
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                cout, type);
+                cout, app.diff_format, pattern);
     }
 }
 
 static void
 dump_diffs(cset const & cs,
            app_state & app,
-           bool new_is_archived,
-           diff_type type)
+           bool new_is_archived)
 {
   set<split_path> dummy;
-  dump_diffs(cs, app, new_is_archived, type, dummy);
+  dump_diffs(cs, app, new_is_archived, dummy);
 }
 
 CMD(diff, N_("informative"), N_("[PATH]..."),
@@ -328,10 +336,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
        "is used by default."),
     OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
-    OPT_EXTERNAL_DIFF_ARGS)
+    OPT_EXTERNAL_DIFF_ARGS % OPT_SHOW_ENCLOSER)
 {
   bool new_is_archived;
-  diff_type type = app.diff_format;
   ostringstream header;
   temp_node_id_source nis;
 
@@ -470,10 +477,10 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   cout << "# " << "\n";
 
-  if (type == external_diff) {
+  if (app.diff_format == external_diff) {
     do_external_diff(included, app, new_is_archived);
   } else
-    dump_diffs(included, app, new_is_archived, type);
+    dump_diffs(included, app, new_is_archived);
 }
 
 static void
@@ -722,8 +729,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)
                   {
-                    dump_diffs(edge_changes(e), app, true, unified_diff,
-                               diff_paths, !mask.empty());
+                    dump_diffs(edge_changes(e), app, true, diff_paths,
+                               !mask.empty());
                   }
               }
 
