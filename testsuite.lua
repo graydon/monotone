@@ -48,20 +48,20 @@ set_env("mtn", monotone_path)
 
 -- NLS nuisances.
 for _,name in pairs({  "LANG",
-		       "LANGUAGE",
-		       "LC_ADDRESS",
-		       "LC_ALL",
-		       "LC_COLLATE",
-		       "LC_CTYPE",
-		       "LC_IDENTIFICATION",
-		       "LC_MEASUREMENT",
-		       "LC_MESSAGES",
-		       "LC_MONETARY",
-		       "LC_NAME",
-		       "LC_NUMERIC",
-		       "LC_PAPER",
-		       "LC_TELEPHONE",
-		       "LC_TIME"  }) do
+                       "LANGUAGE",
+                       "LC_ADDRESS",
+                       "LC_ALL",
+                       "LC_COLLATE",
+                       "LC_CTYPE",
+                       "LC_IDENTIFICATION",
+                       "LC_MEASUREMENT",
+                       "LC_MESSAGES",
+                       "LC_MONETARY",
+                       "LC_NAME",
+                       "LC_NUMERIC",
+                       "LC_PAPER",
+                       "LC_TELEPHONE",
+                       "LC_TIME"  }) do
    set_env(name,"C")
 end
        
@@ -401,7 +401,6 @@ table.insert(tests, "(imp)_merge((patch_foo_a),_(delete_foo_))")
 table.insert(tests, "revert_directories")
 table.insert(tests, "revert_renames")
 table.insert(tests, "revert_unchanged_file_preserves_mtime")
-table.insert(tests, "(minor)_context_diff")
 table.insert(tests, "rename_cannot_overwrite_files")
 table.insert(tests, "failed_checkout_is_a_no-op")
 table.insert(tests, "(todo)_write_monotone-agent")
@@ -644,3 +643,9 @@ table.insert(tests, "automate_common_ancestors")
 table.insert(tests, "invalid_--root_settings")
 table.insert(tests, "netsync_over_pipes")
 table.insert(tests, "ls_unknown_of_unknown_subdir")
+table.insert(tests, "automate_branches")
+table.insert(tests, "merge_conflict_with_no_lca")
+table.insert(tests, "pluck_basics")
+table.insert(tests, "diff_output_formats")
+table.insert(tests, "pluck_lifecycle")
+table.insert(tests, "pluck_restricted")

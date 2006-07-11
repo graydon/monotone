@@ -324,6 +324,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inodeprint.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -344,10 +348,6 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\inodeprint.cc"
-				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
@@ -484,6 +484,10 @@
 			</File>
 			<File
 				RelativePath="..\win32\process.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\randomizer.cc"
 				>
 			</File>
 			<File
@@ -781,6 +785,10 @@
 			</File>
 			<File
 				RelativePath="..\quick_alloc.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\randomizer.hh"
 				>
 			</File>
 			<File

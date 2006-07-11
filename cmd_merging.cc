@@ -19,6 +19,7 @@
 #include "transforms.hh"
 #include "update.hh"
 #include "work.hh"
+#include "safe_map.hh"
 
 using std::cout;
 using std::map;
@@ -629,7 +630,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     throw usage(name);
   revision_id l_id, r_id;
   complete(app, idx(args,0)(), l_id);
-  complete(app, idx(args,1)(), r_id);
+  complete(app, idx(args,1)(), r_id);                                                                    
   N(!is_ancestor(l_id, r_id, app),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app),
@@ -659,6 +660,189 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.rename_target_conflicts.size());
   P(F("There are %s directory_loop_conflicts.") 
     % result.directory_loop_conflicts.size());
+}                                                                
+
+CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
+    N_("Apply changes made at arbitrary places in history to current workspace.\n"
+       "This command takes changes made at any point in history, and\n"
+       "edits your current workspace to include those changes.  The end result\n"
+       "is identical to 'mtn diff -r FROM -r TO | patch -p0', except that\n"
+       "this command uses monotone's merger, and thus intelligently handles\n"
+       "renames, conflicts, and so on.\n"
+       "\n"
+       "If one revision is given, applies the changes made in that revision\n"
+       "compared to its parent.\n"                                                                                  
+       "\n"
+       "If two revisions are given, applies the changes made to get from the\n"  
+       "first revision to the second."),                                                                            
+    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE)
+{
+  // Work out our arguments
+  revision_id from_rid, to_rid;
+
+  if (app.revision_selectors.size() == 1)
+    {
+      complete(app, idx(app.revision_selectors, 0)(), to_rid);
+      N(app.db.revision_exists(to_rid),
+        F("no such revision '%s'") % to_rid);
+      std::set<revision_id> parents;
+      app.db.get_revision_parents(to_rid, parents);
+      N(parents.size() == 1,
+        F("revision %s is a merge\n"
+          "to apply the changes relative to one of its parents, use:\n"
+          "  %s pluck -r PARENT -r %s")
+        % to_rid
+        % app.prog_name % to_rid);
+      from_rid = *parents.begin();
+    }
+  else if (app.revision_selectors.size() == 2)
+    {
+      complete(app, idx(app.revision_selectors, 0)(), from_rid);
+      N(app.db.revision_exists(from_rid),
+        F("no such revision '%s'") % from_rid);
+      complete(app, idx(app.revision_selectors, 1)(), to_rid);
+      N(app.db.revision_exists(to_rid),
+        F("no such revision '%s'") % to_rid);
+    }
+  else
+    throw usage(name);
+  
+  app.require_workspace();
+
+  N(!(from_rid == to_rid), F("no changes to apply"));
+
+  // notionally, we have the situation
+  //
+  // from --> working
+  //   |         | 
+  //   V         V
+  //   to --> merged
+  //
+  // - from is the revision we start plucking from
+  // - to is the revision we stop plucking at
+  // - working is the current contents of the workspace
+  // - merged is the result of the plucking, and achieved by running a
+  //   merge in the fictional graph seen above
+  //
+  // To perform the merge, we use the real from roster, and the real working
+  // roster, but synthesize a temporary 'to' roster.  This ensures that the
+  // 'from', 'working' and 'base' rosters all use the same nid namespace,
+  // while any additions that happened between 'from' and 'to' should be
+  // considered as new nodes, even if the file that was added is in fact in
+  // 'working' already -- so 'to' needs its own namespace.  (Among other
+  // things, it is impossible with our merge formalism to have the above
+  // graph with a node that exists in 'to' and 'working', but not 'from'.)
+  //
+  // finally, we take the cset from working -> merged, and apply that to the
+  //   workspace
+  // and take the cset from the workspace's base, and write that to _MTN/work
+
+  // The node id source we'll use for the 'working' and 'to' rosters.
+  temp_node_id_source nis;
+
+  // Get the FROM roster
+  shared_ptr<roster_t> from_roster = shared_ptr<roster_t>(new roster_t());
+  MM(*from_roster);
+  app.db.get_roster(from_rid, *from_roster);
+
+  // Get the WORKING roster, and also the base roster while we're at it
+  roster_t working_roster; MM(working_roster);
+  roster_t base_roster; MM(base_roster);
+  get_base_and_current_roster_shape(base_roster, working_roster,
+                                    nis, app);
+  update_current_roster_from_filesystem(working_roster, app);
+
+  // Get the FROM->TO cset
+  cset from_to_to; MM(from_to_to);
+  cset from_to_to_excluded; MM(from_to_to_excluded);
+  {
+    roster_t to_true_roster;
+    app.db.get_roster(to_rid, to_true_roster);
+    node_restriction mask(args, app.exclude_patterns,
+                          *from_roster, to_true_roster, app);
+    make_restricted_csets(*from_roster, to_true_roster,
+                          from_to_to, from_to_to_excluded,
+                          mask);
+  }
+
+  // Use a fake rid
+  revision_id working_rid(std::string("0000000000000000000000000000000000000001"));
+
+  // Mark up the FROM roster
+  marking_map from_markings; MM(from_markings);
+  mark_roster_with_no_parents(from_rid, *from_roster, from_markings);
+
+  // Mark up the WORKING roster
+  marking_map working_markings; MM(working_markings);
+  mark_roster_with_one_parent(*from_roster, from_markings,
+                              working_rid, working_roster,
+                              working_markings);
+  
+  // Create and mark up the TO roster
+  roster_t to_roster; MM(to_roster);
+  marking_map to_markings; MM(to_markings);
+  make_roster_for_base_plus_cset(from_rid, from_to_to, to_rid,
+                                 to_roster, to_markings, nis,
+                                 app);
+
+  // Set up the synthetic graph, by creating uncommon ancestor sets
+  std::set<revision_id> working_uncommon_ancestors, to_uncommon_ancestors;
+  safe_insert(working_uncommon_ancestors, working_rid);
+  safe_insert(to_uncommon_ancestors, to_rid);
+
+  // Now do the merge
+  roster_merge_result result;
+  roster_merge(working_roster, working_markings, working_uncommon_ancestors,
+               to_roster, to_markings, to_uncommon_ancestors,
+               result);
+
+  roster_t & merged_roster = result.roster;
+
+  content_merge_workspace_adaptor wca(app, from_roster);
+  resolve_merge_conflicts(working_rid, to_rid,
+                          working_roster, to_roster,
+                          working_markings, to_markings,
+                          result, wca, app);
+
+  I(result.is_clean());
+  // temporary node ids may appear
+  merged_roster.check_sane(true);
+
+  // we apply the working to merged cset to the workspace 
+  // and write the cset from the base to merged roster in _MTN/work
+  cset update, remaining;
+  MM(update);
+  MM(remaining);
+  make_cset(working_roster, merged_roster, update);
+  make_cset(base_roster, merged_roster, remaining);
+
+  update_source fsource(wca.temporary_store, app);
+  editable_working_tree ewt(app, fsource);
+  update.apply_to(ewt);
+  
+  // small race condition here...
+  P(F("applied changes to workspace"));
+
+  put_work_cset(remaining);
+  update_any_attrs(app);
+  
+  // add a note to the user log file about what we did
+  {
+    data log;
+    read_user_log(log);
+    std::string log_str = log();
+    if (!log_str.empty())
+      log_str += "\n";
+    if (from_to_to_excluded.empty())
+      log_str += (FL("applied changes from %s\n"
+                     "             through %s\n")
+                  % from_rid % to_rid).str();
+    else
+      log_str += (FL("applied partial changes from %s\n"
+                     "                     through %s\n")
+                  % from_rid % to_rid).str();
+    write_user_log(data(log_str));
+  }
 }
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),

@@ -4320,6 +4320,33 @@ tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the workspace (even if you also
 specify an explicit @option{--revision} argument).
 
+@item mtn pluck --revision=@var{to}
+@itemx mtn pluck --revision=@var{from} --revision=@var{to}
+
+This command takes changes made at any point in history, and attempts
+to edit your current workspace to include those changes.  The end
+result is identical to 'mtn diff -r FROM -r TO | patch -p0', except
+that this command uses monotone's merger, and thus intelligently
+handles renames, conflicts, and so on.
+
+If only one revision is given, applies the changes made in @var{to} as
+compared to @var{to}'s parent.  If two revisions are given, applies
+the changes made to get from @var{from} to @var{to}.
+
+Note that this is not a true cherrypick operation.  A true cherrypick,
+as that word is used in version control theory, involves applying some
+changes out of context, and then recording the identity between the
+original changes and the newly applied changes for the use of later
+merges.  This command does the first part, not the second.  As far as
+monotone is concerned, the changes made by @command{mtn pluck} are
+exactly like those made in an editor; the command is simply a
+convenient way to make certain edits quickly.  In practice, this is
+rarely a problem.  @command{mtn pluck} should almost always be used
+between branches that will never be merged --- for instance,
+backporting fixes from a development branch to a stable branch.  It is
+not recommended to rely on this command as a central part of one's
+workflow.
+
 @item mtn refresh_inodeprints
 This command puts the current workspace into @ref{Inodeprints} mode,
 if it was not already, and forces a full inodeprints cache refresh.
@@ -5722,6 +5749,121 @@ lines are printed in alphabetically sorted order.
 @item Error conditions:
 
 None.
+
+@end table
+
+
+@item mtn automate branches
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+Prints all branch certs present in the revision graph, that are not
+excluded by the lua hook @code{ignore_branch}.
+
+@item Sample output:
+
+@verbatim
+net.venge.monotone
+net.venge.monotone.win32
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each the name of a branch. The lines are printed
+in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+
+@item mtn automate tags [@var{branch_pattern}]
+
+@table @strong
+@item Arguments:
+
+A branch pattern (optional).
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+If a branch pattern is given, prints all tags that are attached to
+revisions on branches matched by the pattern; otherwise prints all
+tags of the revision graph.
+
+If a branch name is ignored by means of the lua hook
+@code{ignore_branch}, it is neither printed, nor can it be matched by
+a pattern.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+     tag "monotree-0.3"
+revision [35cff8e8ba14155f5f7ddf7965073f514fd60f61]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.2"
+revision [5d288b39b49613b0d9dca8ece6b9a42c3773f35b]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.1"
+revision [8a121346ce2920b6f85df68b3b620de96bd14a8d]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib" "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.4"
+revision [f1afc520474f83c58262896ede027ef77226046e]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each tag.
+
+All stanzas are formatted by basic_io. Stanzas are separated by a
+blank line. Values will be escaped, '\' to '\\' and '"' to '\"'.
+
+Each stanza has exactly the following four entries:
+
+@table @option
+@item 'tag'
+the value of the tag cert, i.e. the name of the tag
+
+@item 'revision'
+the hexadecimal id of the revision the tag is attached to
+
+@item 'signer'
+the name of the key used to sign the tag cert
+
+@item 'branches'
+a (possibly empty) list of all branches the tagged revision is on
+@end table
+
+Stanzas are printed in arbitrary order.
+
+@item Error conditions:
+
+A run-time exception occures if an illegal branch pattern is
+specified.
 
 @end table
 

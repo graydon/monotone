@@ -6,22 +6,22 @@
 #include <functional>
 namespace hashmap {
 
-  template<typename _T>
-  class equal_to : public std::equal_to<_T>
+  template<typename T>
+  class equal_to : public std::equal_to<T>
   {
-    // bool operator()(_T const & b, _T const & b) const;
+    // bool operator()(T const & b, T const & b) const;
   };
 
-  template<typename _T>
-  class less : public std::less<_T>
+  template<typename T>
+  class less : public std::less<T>
   {
-    // bool operator()(_T const & b, _T const & b) const;
+    // bool operator()(T const & b, T const & b) const;
   };
 
-  template<typename _T>
+  template<typename T>
   struct hash
   {
-    // size_t operator()(_T const & t) const;
+    // size_t operator()(T const & t) const;
   };
 
   template<>
@@ -145,20 +145,20 @@ namespace hashmap
     }
   };
 
-  template<typename _T>
+  template<typename T>
   struct hash_traits
   {
     static const size_t bucket_size = 4;
     static const size_t min_buckets = 8;
-    less<_T> lt;
-    hash<_T> h;
+    less<T> lt;
+    hash<T> h;
 
-    size_t operator( )(_T const & s) const
+    size_t operator( )(T const & s) const
     {
       return h(s);		
     }
-    bool operator( )(_T const & a,
-                     _T const & b) const
+    bool operator( )(T const & a,
+                     T const & b) const
     {
       return lt(a, b);
     }

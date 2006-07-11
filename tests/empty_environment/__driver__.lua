@@ -22,7 +22,7 @@ elseif os.getenv("OSTYPE") == "cygwin" then
   copy(zlib, "cygz.dll")
 end
 
-check(noenv_mtn("--help"), 2, false, false)
+check(noenv_mtn("--help"), 0, false, false)
 writefile("testfile", "blah blah")
 check(noenv_mtn("add", "testfile"), 0, false, false)
 check(noenv_mtn("commit", "--branch=testbranch", "--message=foo"), 0, false, false)

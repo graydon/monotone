@@ -859,10 +859,10 @@ roster_t::check_sane(bool temp_nodes_ok) const
 }
 
 void
-roster_t::check_sane_against(marking_map const & markings) const
+roster_t::check_sane_against(marking_map const & markings, bool temp_nodes_ok) const
 {
 
-  check_sane();
+  check_sane(temp_nodes_ok);
 
   node_map::const_iterator ri;
   marking_map::const_iterator mi;
@@ -1669,6 +1669,9 @@ namespace
   // Warning: this function expects the parent's roster and markings in the
   // 'new_roster' and 'new_markings' parameters, and they are modified
   // destructively!
+  // This function performs an almost identical task to
+  // mark_roster_with_one_parent; however, for efficiency, it is implemented
+  // in a different, destructive way.
   void
   make_roster_for_nonmerge(cset const & cs,
                            revision_id const & new_rid,
@@ -1694,6 +1697,8 @@ namespace
   }
 }
 
+// WARNING: this function is not tested directly (no unit tests).  Do not
+// put real logic in it.
 void
 make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
                                revision_id const & new_rid,
@@ -1704,8 +1709,50 @@ make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
   MM(base);
   MM(cs);
   app.db.get_roster(base, new_roster, new_markings);
-  editable_roster_for_nonmerge er(new_roster, nis, new_rid, new_markings);
-  cs.apply_to(er);
+  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
+}
+
+void
+mark_roster_with_no_parents(revision_id const & rid,
+                            roster_t const & roster,
+                            marking_map & markings)
+{
+  roster_t mock_parent;
+  marking_map mock_parent_markings;
+  mark_roster_with_one_parent(mock_parent, mock_parent_markings,
+                              rid, roster, markings);
+}
+
+void
+mark_roster_with_one_parent(roster_t const & parent,
+                            marking_map const & parent_markings,
+                            revision_id const & child_rid,
+                            roster_t const & child,
+                            marking_map & child_markings)
+{
+  MM(parent);
+  MM(parent_markings);
+  MM(child_rid);
+  MM(child);
+  MM(child_markings);
+
+  I(!null_id(child_rid));
+  child_markings.clear();
+  
+  for (node_map::const_iterator i = child.all_nodes().begin();
+       i != child.all_nodes().end(); ++i)
+    {
+      marking_t new_marking;
+      if (parent.has_node(i->first))
+        mark_unmerged_node(safe_get(parent_markings, i->first),
+                           parent.get_node(i->first),
+                           child_rid, i->second, new_marking);
+      else
+        mark_new_node(child_rid, i->second, new_marking);
+      safe_insert(child_markings, std::make_pair(i->first, new_marking));
+    }
+
+  child.check_sane_against(child_markings, true);
 }
 
 // WARNING: this function is not tested directly (no unit tests).  Do not put
@@ -2624,17 +2671,19 @@ void calculate_ident(roster_t const & ros,
 #include "unit_tests.hh"
 #include "sanity.hh"
 #include "constants.hh"
+#include "randomizer.hh"
 
 #include <string>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
 
 using std::logic_error;
-using std::rand;
 using std::search;
-using std::srand;
 
 using boost::shared_ptr;
+
+using randomizer::uniform;
+using randomizer::flip;
 
 static void
 make_fake_marking_for(roster_t const & r, marking_map & mm)
@@ -2808,7 +2857,7 @@ template<typename M>
 typename M::const_iterator
 random_element(M const & m)
 {
-  size_t i = rand() % m.size();
+  size_t i = randomizer::uniform(m.size());
   typename M::const_iterator j = m.begin();
   while (i > 0)
     {
@@ -2819,11 +2868,6 @@ random_element(M const & m)
   return j;
 }
 
-bool flip(unsigned n = 2)
-{
-  return (rand() % n) == 0;
-}
-
 string new_word()
 {
   static string wordchars = "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -2831,7 +2875,7 @@ string new_word()
   string tmp;
   do
     {
-      tmp += wordchars[rand() % wordchars.size()];
+      tmp += wordchars[uniform(wordchars.size())];
     }
   while (tmp.size() < 10 && !flip(10));
   return tmp + lexical_cast<string>(tick++);
@@ -2843,7 +2887,7 @@ file_id new_ident()
   string tmp;
   tmp.reserve(constants::idlen);
   for (unsigned i = 0; i < constants::idlen; ++i)
-    tmp += tab[rand() % tab.size()];
+    tmp += tab[uniform(tab.size())];
   return file_id(tmp);
 }
 
@@ -2891,11 +2935,6 @@ struct
 change_automaton
 {
 
-  change_automaton()
-  {
-    srand(0x12345678);
-  }
-
   void perform_random_action(roster_t & r, node_id_source & nis)
   {
     cset c;
@@ -2915,7 +2954,7 @@ change_automaton
             r.get_name(n->self, pth);
             // L(FL("considering acting on '%s'") % file_path(pth));
 
-            switch (rand() % 7)
+            switch (uniform(7))
               {
               default:
               case 0:
@@ -3664,6 +3703,17 @@ run_with_0_roster_parents(a_scalar & s, revision_id scalar_origin_rid,
 
   I(equal_up_to_renumbering(expected_roster, expected_markings,
                             new_roster, new_markings));
+
+  marking_map new_markings2; MM(new_markings2);
+  mark_roster_with_no_parents(old_rid, new_roster, new_markings2);
+  I(new_markings == new_markings2);
+
+  marking_map new_markings3; MM(new_markings3);
+  roster_t parent3;
+  marking_map old_markings3;
+  mark_roster_with_one_parent(parent3, old_markings3, old_rid, new_roster,
+                              new_markings3);
+  I(new_markings == new_markings3);
 }
 
 static void
@@ -3700,6 +3750,11 @@ run_with_1_roster_parent(a_scalar & s,
 
   I(equal_up_to_renumbering(expected_roster, expected_markings,
                             new_roster, new_markings));
+
+  marking_map new_markings2; MM(new_markings2);
+  mark_roster_with_one_parent(parent_roster, parent_markings,
+                              new_rid, new_roster, new_markings2);
+  I(new_markings == new_markings2);
 }
 
 static void
@@ -4658,7 +4713,7 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
                            roster_t & right_ros,
                            set<node_id> & right_new_nodes)
 {
-  size_t n_nodes = 10 + (rand() % 30);
+  size_t n_nodes = 10 + (uniform(30));
   editable_roster_base left_er(left_ros, nis);
   editable_roster_base right_er(right_ros, nis);
 
