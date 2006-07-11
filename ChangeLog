@@ -1,5 +1,18 @@
 2006-07-10  Zack Weinberg  <zackw@panix.com>
 
+	* tests/diff_output_formats: Merge from mainline.  Correct
+	expected output where necessary.  Use long switches in __driver__.lua.
+	* diff_patch.cc (hunk_consumer::find_encloser): Use
+	reverse_iterators instead of mucking with ssize_t.
+	(unidiff_hunk_writer::flush_hunk)
+	(ctxdiff_hunk_writer::flush_hunk): Scan what is about to be
+	output, and give find_encloser exactly the right position.
+	(make_diff): Collapse the overload that takes vectors of strings
+	into its sole caller, the other overload.  * diff_patch.hh: Remove
+	prototype for deleted overload of make_diff.
+
+2006-07-10  Zack Weinberg  <zackw@panix.com>
+
 	* tests/database_is_closed_on_signal_exit/__driver__.lua: Invert
 	sense of SIGSEGV test - expect database *not* to be cleaned up,
 	consistent with main.cc.  Remove xfail.

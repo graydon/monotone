@@ -259,7 +259,7 @@ dump_diffs(cset const & cs,
                 i->second,
                 i->second,
                 data(), unpacked,
-                cout, type, pattern);
+                cout, app.diff_format, pattern);
     }
 
   map<split_path, split_path> reverse_rename_map;
@@ -315,7 +315,7 @@ dump_diffs(cset const & cs,
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                cout, type, pattern);
+                cout, app.diff_format, pattern);
     }
 }
 

@@ -805,25 +805,28 @@ struct hunk_consumer
 void
 hunk_consumer::find_encloser(size_t pos, string & encloser)
 {
+  typedef vector<string>::const_reverse_iterator riter;
+
   if (!encloser_re)
     return;
 
-  // We need the ability for i and last to go negative so that we do not
-  // have an infinite loop when last==0 (i.e. the first time 'round).
-  ssize_t last = encloser_last_search;
+  riter last = a.rbegin() + (a.size() - encloser_last_search);
   encloser_last_search = pos;
-  for (ssize_t i = min(pos, a.size()-1); i >= last; i--)
-    if (boost::regex_search (a[i], *encloser_re))
+
+  for (riter i = a.rbegin() + (a.size() - pos); i != last; i++) {
+    if (boost::regex_search (*i, *encloser_re))
       {
+        encloser_last_match = a.size() - (i - a.rbegin());
         L(FL("find_encloser: from %u matching line %d, \"%s\"")
-          % pos % i % a[i]);
-        encloser_last_match = i;
+          % pos % encloser_last_match % *i);
+
         // the number 40 is chosen to match GNU diff.  it could safely be
         // increased up to about 60 without overflowing the standard
         // terminal width.
-        encloser = string(" ") + a[i].substr(0, 40);
+        encloser = string(" ") + (*i).substr(0, 40);
         return;
       }
+  }
 
   if (encloser_last_match)
     {
@@ -943,10 +946,21 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
           if (b_len > 1)
             ost << "," << b_len;
         }
-      string encloser;
-      find_encloser(a_begin + ctx, encloser);
-      ost << " @@" << encloser << endl;
 
+      {
+        string encloser;
+        ptrdiff_t first_mod = 0;
+        vector<string>::const_iterator i;
+        for (i = hunk.begin(); i != hunk.end(); i++)
+          if ((*i)[0] != ' ')
+            {
+              first_mod = i - hunk.begin();
+              break;
+            }
+        
+        find_encloser(a_begin + first_mod, encloser);
+        ost << " @@" << encloser << endl;
+      }
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
     }
 
@@ -1057,10 +1071,32 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
           b_len++;
         }
 
-      string encloser;
-      find_encloser(a_begin + ctx, encloser);
+      {
+        string encloser;
+        ptrdiff_t first_insert = b_len;
+        ptrdiff_t first_delete = a_len;
+        vector<string>::const_iterator i;
 
-      ost << "***************" << encloser << endl;
+        if (have_deletions)
+          for (i = from_file.begin(); i != from_file.end(); i++)
+            if ((*i)[0] != ' ')
+              {
+                first_delete = i - from_file.begin();
+                break;
+              }
+        if (have_insertions)
+          for (i = to_file.begin(); i != to_file.end(); i++)
+            if ((*i)[0] != ' ')
+              {
+                first_insert = i - to_file.begin();
+                break;
+              }
+
+        find_encloser(a_begin + min(first_insert, first_delete),
+                      encloser);
+        
+        ost << "***************" << encloser << endl;
+      }
 
       ost << "*** " << (a_begin + 1) << "," << (a_begin + a_len) << " ****" << endl;
       if (have_deletions)
@@ -1161,39 +1197,27 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
       }
 }
 
-void make_diff(string const & filename1,
-               string const & filename2,
-               file_id const & id1,
-               file_id const & id2,
-               data const & data1,
-               data const & data2,
-               ostream & ost,
-               diff_type type)
+void
+make_diff(string const & filename1,
+          string const & filename2,
+          file_id const & id1,
+          file_id const & id2,
+          data const & data1,
+          data const & data2,
+          ostream & ost,
+          diff_type type,
+          string const & pattern)
 {
   if (guess_binary(data1()) || guess_binary(data2()))
-    ost << "# " << filename2 << " is binary\n";
-  else
     {
-      vector<string> lines1, lines2;
-      split_into_lines(data1(), lines1);
-      split_into_lines(data2(), lines2);
-      make_diff(filename1, filename2,
-                id1, id2,
-                lines1, lines2,
-                ost, type);
+      ost << "# " << filename2 << " is binary\n";
+      return;
     }
-}
 
-void make_diff(string const & filename1,
-               string const & filename2,
-               file_id const & id1,
-               file_id const & id2,
-               vector<string> const & lines1,
-               vector<string> const & lines2,
-               ostream & ost,
-               diff_type type,
-               string const & pattern)
-{
+  vector<string> lines1, lines2;
+  split_into_lines(data1(), lines1);
+  split_into_lines(data2(), lines2);
+
   vector<long, QA(long)> left_interned;
   vector<long, QA(long)> right_interned;
   vector<long, QA(long)> lcs;
@@ -1337,6 +1361,7 @@ static void dump_incorrect_merge(vector<string> const & expected,
 
       cerr << endl;
     }
+}
 
 // high tech randomizing test
 
