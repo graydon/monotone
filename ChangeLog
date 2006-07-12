@@ -1,3 +1,11 @@
+2006-07-11  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (merge_two): New function.
+	(CMD(merge)): Rewrite again - only merge one pair of heads on each
+	pass.  Also, skip all the work of finding a good choice if there
+	are only two heads. Use merge_two.
+	(CMD(explicit_merge)): Use merge_two.
+
 2006-07-11  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Two new strings to translate.
