@@ -1,5 +1,14 @@
 2006-07-11  Zack Weinberg  <zackw@panix.com>
 
+	* diff_patch.cc (struct hunk_consumer): Change type of
+	encloser_last_match and encloser_last_search from ssize_t to
+	vector<string>::const_reverse_iterator.
+	(hunk_consumer constructor): Initialize them with a.rend().
+	(hunk_consumer::find_encloser): Restructure to do less pointer
+	arithmetic.  Add some invariant checks.
+
+2006-07-11  Zack Weinberg  <zackw@panix.com>
+
 	* cmd_merging.cc (merge_two): New function.
 	(CMD(merge)): Rewrite again - only merge one pair of heads on each
 	pass.  Also, skip all the work of finding a good choice if there

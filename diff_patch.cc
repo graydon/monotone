@@ -775,8 +775,9 @@ struct hunk_consumer
   boost::scoped_ptr<boost::regex const> encloser_re;
   size_t a_begin, b_begin, a_len, b_len;
   long skew;
-  ssize_t encloser_last_search;
-  ssize_t encloser_last_match;
+
+  vector<string>::const_reverse_iterator encloser_last_search;
+  vector<string>::const_reverse_iterator encloser_last_match;
 
   virtual void flush_hunk(size_t pos) = 0;
   virtual void advance_to(size_t newpos) = 0;
@@ -791,7 +792,7 @@ struct hunk_consumer
                 string const & encloser_pattern)
     : a(a), b(b), ctx(ctx), ost(ost), encloser_re(0),
       a_begin(0), b_begin(0), a_len(0), b_len(0), skew(0),
-      encloser_last_search(0), encloser_last_match(0)
+      encloser_last_match(a.rend()), encloser_last_search(a.rend())
   {
     if (encloser_pattern != "")
       encloser_re.reset(new boost::regex(encloser_pattern));
@@ -807,34 +808,36 @@ hunk_consumer::find_encloser(size_t pos, string & encloser)
 {
   typedef vector<string>::const_reverse_iterator riter;
 
+  // Precondition: encloser_last_search <= pos <= a.size().
+  I(pos <= a.size());
+  I(pos >= a.rend() - encloser_last_search);
+
   if (!encloser_re)
     return;
 
-  riter last = a.rbegin() + (a.size() - encloser_last_search);
-  encloser_last_search = pos;
+  riter last = encloser_last_search;
+  riter i    = riter(a.begin() + pos);
 
-  for (riter i = a.rbegin() + (a.size() - pos); i != last; i++) {
+  encloser_last_search = i;
+
+  // i is a reverse_iterator, so this loop goes backward through the vector.
+  for (; i != last; i++)
     if (boost::regex_search (*i, *encloser_re))
       {
-        encloser_last_match = a.size() - (i - a.rbegin());
-        L(FL("find_encloser: from %u matching line %d, \"%s\"")
-          % pos % encloser_last_match % *i);
-
-        // the number 40 is chosen to match GNU diff.  it could safely be
-        // increased up to about 60 without overflowing the standard
-        // terminal width.
-        encloser = string(" ") + (*i).substr(0, 40);
-        return;
+        encloser_last_match = i;
+        break;
       }
-  }
 
-  if (encloser_last_match)
-    {
-      ssize_t i = encloser_last_match;
-      L(FL("find_encloser: from %u matching cached %d, \"%s\"")
-        % pos % i % a[i]);
-      encloser = string(" ") + a[i].substr(0, 40);
-    }
+  if (encloser_last_match == a.rend())
+    return;
+
+  L(FL("find_encloser: from %u matching %d, \"%s\"")
+    % pos % (a.rend() - encloser_last_match) % *encloser_last_match);
+
+  // the number 40 is chosen to match GNU diff.  it could safely be
+  // increased up to about 60 without overflowing the standard
+  // terminal width.
+  encloser = string(" ") + (*encloser_last_match).substr(0, 40);
 }
 
 void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
