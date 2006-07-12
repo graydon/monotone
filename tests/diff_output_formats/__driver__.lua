@@ -17,12 +17,21 @@ function test_one(base)
    src = sha1(src)
    dst = sha1(dst)
 
-   check(mtn("fdiff", base, base, src, dst), 0, {ud}, nil, nil)
-   check(mtn("fdiff", "--context", base, base, src, dst), 0, {cd}, nil, nil)
+   check(mtn("fdiff", base, base, src, dst), 0, true, nil, nil)
+   canonicalize("stdout")
+   check(samefile("stdout", ud))
+   check(mtn("fdiff", "--context", base, base, src, dst),
+         0, true, nil, nil)
+   canonicalize("stdout")
+   check(samefile("stdout", cd))
    check(mtn("fdiff", "--show-encloser", base, base, src, dst), 
-	 0, {udp}, nil, nil)
+	 0, true, nil, nil)
+   canonicalize("stdout")
+   check(samefile("stdout", udp))
    check(mtn("fdiff", "--context", "--show-encloser", base, base, src, dst),
-	 0, {cdp}, nil, nil)
+	 0, true, nil, nil)
+   canonicalize("stdout")
+   check(samefile("stdout", cdp))
 end
 
 append("test_hooks.lua",
