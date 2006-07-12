@@ -1,3 +1,12 @@
+2006-07-11  Zack Weinberg  <zackw@panix.com>
+
+	* diff_patch.cc (struct hunk_consumer): Change type of
+	encloser_last_match and encloser_last_search from ssize_t to
+	vector<string>::const_reverse_iterator.
+	(hunk_consumer constructor): Initialize them with a.rend().
+	(hunk_consumer::find_encloser): Restructure to do less pointer
+	arithmetic.  Add some invariant checks.
+
 2006-07-11  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Two new strings to translate.
