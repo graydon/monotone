@@ -294,13 +294,62 @@ CMD(update, N_("workspace"), "",
   maybe_update_inodeprints(app);
 }
 
+// Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
+// placing results onto BRANCH.  Note that interactive_merge_and_store may
+// bomb out, and therefore so may this.
+static void
+merge_two(revision_id const & left, revision_id const & right,
+          string const & branch, string const & caller, app_state & app)
+{
+  // The following mess constructs a neatly formatted log message that looks
+  // like this:
+  //    CALLER of 'LEFT'
+  //          and 'RIGHT'
+  //    to branch 'BRANCH'
+  // where the last line is left out if we're merging onto the current branch.
+  // We use a stringstream because boost::format does not support %-*s.
+  using std::ostringstream;
+  using std::setw;
+  using std::max;
+
+  ostringstream log;
+  size_t fieldwidth = max(caller.size() + strlen(" of '"), strlen("and '"));
+
+  if (branch != app.branch_name())
+    fieldwidth = max(fieldwidth, strlen("to branch '"));
+
+  log << setw(fieldwidth - strlen(" of '")) << caller << " of '" << left
+      << "'\n" << setw(fieldwidth) << "and '" << right
+      << "'\n";
+
+  if (branch != app.branch_name())
+    log << setw(fieldwidth) << "to branch '" << branch << "'\n";
+
+  // Now it's time for the real work.
+  P(F("[left]  %s") % left);
+  P(F("[right] %s") % right);
+  
+  revision_id merged;
+  transaction_guard guard(app.db);
+  interactive_merge_and_store(left, right, merged, app);
+
+  packet_db_writer dbw(app);
+  cert_revision_in_branch(merged, branch, app, dbw);
+  cert_revision_changelog(merged, log.str(), app, dbw);
+
+  guard.commit();
+  P(F("[merged] %s") % merged);
+}
 
 // should merge support --message, --message-file?  It seems somewhat weird,
 // since a single 'merge' command may perform arbitrarily many actual merges.
+// (Possibility: append the --message/--message-file text to the synthetic
+// log message constructed in merge_two().)
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
 {
-  set<revision_id> heads;
+  typedef std::pair<revision_id, revision_id> revpair;
+  typedef set<revision_id>::const_iterator rid_set_iter;
 
   if (args.size() != 0)
     throw usage(name);
@@ -308,6 +357,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   N(app.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
+  set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
 
   N(heads.size() != 0, F("branch '%s' is empty") % app.branch_name);
@@ -317,36 +367,80 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       return;
     }
 
-  set<revision_id>::const_iterator i = heads.begin();
-  revision_id left = *i;
-  revision_id ancestor;
-  size_t count = 1;
-  P(F("starting with revision 1 / %d") % heads.size());
-  for (++i; i != heads.end(); ++i, ++count)
+  P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
+    % heads.size() % app.branch_name);
+
+  map<revision_id, revpair> heads_for_ancestor;
+  set<revision_id> ancestors;
+  size_t pass = 1, todo = heads.size() - 1;
+
+  // If there are more than two heads to be merged, on each iteration we
+  // merge a pair whose least common ancestor is not an ancestor of any
+  // other pair's least common ancestor.  For example, if the history graph
+  // looks like this:
+  //
+  //            X
+  //           / \
+  //          Y   C
+  //         / \
+  //        A   B
+  //
+  // A and B will be merged first, and then the result will be merged with C.
+  while (heads.size() > 2)
     {
-      revision_id right = *i;
-      P(F("merging with revision %d / %d") % (count + 1) % heads.size());
-      P(F("[source] %s") % left);
-      P(F("[source] %s") % right);
+      P(F("merge %d / %d:") % pass % todo);
+      P(F("calculating best pair of heads to merge next"));
 
-      revision_id merged;
-      transaction_guard guard(app.db);
-      interactive_merge_and_store(left, right, merged, app);
+      // For every pair of heads, determine their merge ancestor, and
+      // remember the ancestor->head mapping. 
+      for (rid_set_iter i = heads.begin(); i != heads.end(); ++i)
+        for (rid_set_iter j = i; j != heads.end(); ++j)
+          {
+            // It is not possible to initialize j to i+1 (set iterators
+            // expose neither operator+ nor a nondestructive next() method)
+            if (j == i)
+              continue;
 
-      // merged 1 edge; now we commit this, update merge source and
-      // try next one
+            revision_id ancestor;
+            find_common_ancestor_for_merge(*i, *j, ancestor, app);
+            
+            // More than one pair might have the same ancestor (e.g. if we
+            // have three heads all with the same parent); as this table
+            // will be recalculated on every pass, we just take the first
+            // one we find.
+            if (ancestors.insert(ancestor).second)
+              safe_insert(heads_for_ancestor, std::make_pair(ancestor, revpair(*i, *j)));
+          }
+    
+      // Erasing ancestors from ANCESTORS will now produce a set of merge
+      // ancestors each of which is not itself an ancestor of any other
+      // merge ancestor.
+      erase_ancestors(ancestors, app);
+      I(ancestors.size() > 0);
 
-      packet_db_writer dbw(app);
-      cert_revision_in_branch(merged, app.branch_name(), app, dbw);
+      // Take the first ancestor from the above set and merge its
+      // corresponding pair of heads.
+      revpair p = heads_for_ancestor[*ancestors.begin()];
+      
+      merge_two(p.first, p.second, app.branch_name(), string("merge"), app);
 
-      string log = (FL("merge of %s\n"
-                       "     and %s\n") % left % right).str();
-      cert_revision_changelog(merged, log, app, dbw);
-
-      guard.commit();
-      P(F("[merged] %s") % merged);
-      left = merged;
+      ancestors.clear();
+      heads_for_ancestor.clear();
+      get_branch_heads(app.branch_name(), app, heads);
+      pass++;
     }
+
+  // Last one.
+  I(pass == todo);
+  if (todo > 1)
+    P(F("merge %d / %d:") % pass % todo);
+
+  rid_set_iter i = heads.begin();
+  revision_id left = *i++;
+  revision_id right = *i++;
+  I(i == heads.end());
+  
+  merge_two(left, right, app.branch_name(), string("merge"), app);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -544,27 +638,7 @@ CMD(explicit_merge, N_("tree"),
   N(!is_ancestor(right, left, app),
     F("%s is already an ancestor of %s") % right % left);
 
-  // Somewhat redundant, but consistent with output of plain "merge" command.
-  P(F("[source] %s") % left);
-  P(F("[source] %s") % right);
-
-  revision_id merged;
-  transaction_guard guard(app.db);
-  interactive_merge_and_store(left, right, merged, app);
-
-  packet_db_writer dbw(app);
-
-  cert_revision_in_branch(merged, branch, app, dbw);
-
-  string log = (FL("explicit_merge of '%s'\n"
-                   "              and '%s'\n"
-                   "        to branch '%s'\n")
-                % left % right % branch).str();
-
-  cert_revision_changelog(merged, log, app, dbw);
-
-  guard.commit();
-  P(F("[merged] %s") % merged);
+  merge_two(left, right, branch, string("explicit merge"), app);
 }
 
 CMD(show_conflicts, N_("informative"), N_("REV REV"), 

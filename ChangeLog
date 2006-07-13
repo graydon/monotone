@@ -1,3 +1,9 @@
+2006-07-12  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (merge): Small tweaks.
+	* tests/merge_multiple_heads_1/__driver__.lua: Correctly document
+	old algorithm.
+
 2006-07-12  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/diff_output_formats/__driver__.lua: Needs canonicalization.
@@ -10,6 +16,14 @@
 	(hunk_consumer constructor): Initialize them with a.rend().
 	(hunk_consumer::find_encloser): Restructure to do less pointer
 	arithmetic.  Add some invariant checks.
+
+2006-07-11  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (merge_two): New function.
+	(CMD(merge)): Rewrite again - only merge one pair of heads on each
+	pass.  Also, skip all the work of finding a good choice if there
+	are only two heads. Use merge_two.
+	(CMD(explicit_merge)): Use merge_two.
 
 2006-07-11  Richard Levitte  <richard@levitte.org>
 
