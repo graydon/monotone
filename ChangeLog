@@ -1,5 +1,12 @@
 2006-07-13  Nathaniel Smith  <njs@pobox.com>
 
+	* tester.lua, tester.txt: Add plain 'xfail' convenience function.
+	* tests/revert_--missing_in_subdir/: A bunch of revert --missing
+	tests.
+	* roster.cc (check_restricted_cset): Add some MM()'s.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi (Tree): Remove documentation of --lca and
 	explicit_merge-with-ancestor.
 

@@ -2027,6 +2027,8 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
 void
 check_restricted_cset(roster_t const & roster, cset const & cs)
 {
+  MM(roster);
+  MM(cs);
   path_set added;
   int missing = 0;
 
