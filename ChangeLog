@@ -1,3 +1,7 @@
+2006-07-13  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fixed fuzzy translations and removed old ones.
+
 2006-07-13  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: One new string and a few fuzzies to fix.

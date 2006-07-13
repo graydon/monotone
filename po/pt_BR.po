@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.26\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-10 15:00-0700\n"
-"PO-Revision-Date: 2006-07-06 17:56-0300\n"
+"POT-Creation-Date: 2006-07-10 15:00-0300\n"
+"PO-Revision-Date: 2006-07-13 12:00-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <ventonegro@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -362,19 +362,16 @@ msgid "SRCNAME DESTNAME SRCID DESTID"
 msgstr ""
 
 #: cmd_files.cc:79
-#, fuzzy
 msgid "diff 2 files and output result"
-msgstr "combina 3 arquivos e retorna o resultado"
+msgstr "exibe as diferenças entre dois arquivos"
 
 #: cmd_files.cc:96
-#, fuzzy, c-format
 msgid "source file id does not exist"
-msgstr "id do arquivo ancestral não existe"
+msgstr "identificador do arquivo de origem não existe"
 
 #: cmd_files.cc:99
-#, fuzzy, c-format
 msgid "destination file id does not exist"
-msgstr "id do arquivo ancestral não existe"
+msgstr "identificador do arquivo de destino não existe"
 
 #: cmd_files.cc:110
 msgid "PATH"
@@ -2708,16 +2705,16 @@ msgstr ""
 #: netsync.cc:1902
 #, c-format
 msgid "hash check failed for revision cert '%s'"
-msgstr ""
+msgstr "verificação do hash falhou para o certificado '%s' da versão"
 
 #: netsync.cc:1964
 #, c-format
 msgid "Received warning from usher: %s"
-msgstr ""
+msgstr "Recebido aviso do usher: %s"
 
 #: netsync.cc:2051 netsync.cc:2082
 msgid "source and sink"
-msgstr ""
+msgstr "fonte e ralo"
 
 #: netsync.cc:2052 netsync.cc:2083
 msgid "source"
@@ -2725,7 +2722,7 @@ msgstr "fonte"
 
 #: netsync.cc:2052 netsync.cc:2083
 msgid "sink"
-msgstr "saída"
+msgstr "ralo"
 
 #: netsync.cc:2239
 #, c-format
@@ -3443,141 +3440,7 @@ msgid "content of file '%s' has changed, not overwriting"
 msgstr "conteúdo do arquivo '%s' mudou, arquivo não será sobrescrito"
 
 #: work.cc:1041
-#, fuzzy, c-format
+#, c-format
 msgid "modifying %s"
-msgstr "adicionando %s"
+msgstr "modificando %s"
 
-#~ msgid "updating %s"
-#~ msgstr "atualizando %s"
-
-#~ msgid "unknown command '%s'\n"
-#~ msgstr "comando desconhecido '%s'\n"
-
-#~ msgid "unknown path '%s'\n"
-#~ msgstr "caminho desconhecido '%s'\n"
-
-#~ msgid ""
-#~ "interface_version\n"
-#~ "heads [BRANCH]\n"
-#~ "ancestors REV1 [REV2 [REV3 [...]]]\n"
-#~ "attributes [FILE]\n"
-#~ "parents REV\n"
-#~ "descendents REV1 [REV2 [REV3 [...]]]\n"
-#~ "children REV\n"
-#~ "graph\n"
-#~ "erase_ancestors [REV1 [REV2 [REV3 [...]]]]\n"
-#~ "toposort [REV1 [REV2 [REV3 [...]]]]\n"
-#~ "ancestry_difference NEW_REV [OLD_REV1 [OLD_REV2 [...]]]\n"
-#~ "leaves\n"
-#~ "inventory\n"
-#~ "stdio\n"
-#~ "certs REV\n"
-#~ "select SELECTOR\n"
-#~ "get_file FILEID\n"
-#~ "get_manifest_of [REVID]\n"
-#~ "get_revision [REVID]\n"
-#~ "packet_for_rdata REVID\n"
-#~ "packets_for_certs REVID\n"
-#~ "packet_for_fdata FILEID\n"
-#~ "packet_for_fdelta OLD_FILE NEW_FILE\n"
-#~ "keys\n"
-#~ msgstr ""
-#~ "interface_version\n"
-#~ "heads [RAMO]\n"
-#~ "ancestors VER1 [VER2 [VER3 [...]]]\n"
-#~ "attributes [FILE]\n"
-#~ "parents VERSÃO\n"
-#~ "descendents VER1 [VER2 [VER3 [...]]]\n"
-#~ "children VERSÃO\n"
-#~ "graph\n"
-#~ "erase_ancestors [VER1 [VER2 [VER3 [...]]]]\n"
-#~ "toposort [VER1 [VER2 [VER3 [...]]]]\n"
-#~ "ancestry_difference NOVA-VER [VELHA-VER1 [VELHA-VER2 [...]]]\n"
-#~ "leaves\n"
-#~ "inventory\n"
-#~ "stdio\n"
-#~ "certs VERSÃO\n"
-#~ "select SELETOR\n"
-#~ "get_file ID-ARQUIVO\n"
-#~ "get_manifest_of [VERSÃO]\n"
-#~ "get_revision [VERSÃO]\n"
-#~ "packet_for_rdata VERSÃO\n"
-#~ "packets_for_certs VERSÃO\n"
-#~ "packet_for_fdata ID-ARQUIVO\n"
-#~ "packet_for_fdelta ARQUIVO_VELHO ARQUIVO_NOVO\n"
-#~ "keys\n"
-
-#~ msgid "Unknown file '%s' for log command"
-#~ msgstr "Arquivo '%s' desconhecido para comando log"
-
-#~ msgid ""
-#~ "revision %s is a member of\n"
-#~ "%s, updating workspace branch"
-#~ msgstr ""
-#~ "versão %s é um membro de\n"
-#~ "%s, atualizando ramo da área de trabalho"
-
-#~ msgid ""
-#~ "revision %s is a member of no branches,\n"
-#~ "using branch %s for workspace"
-#~ msgstr ""
-#~ "versão %s não é membro de algum ramo,\n"
-#~ "usando ramo %s para área de trabalho"
-
-#~ msgid "branch '%s' is empty\n"
-#~ msgstr "ramo '%s' está vazio\n"
-
-#~ msgid "expected file '%s', but it is a directory."
-#~ msgstr "esperado arquivo '%s', mas é um diretório."
-
-#~ msgid "failed to convert string from %s to %s: '%s'"
-#~ msgstr "erro convertendo cadeia de %s para %s: '%s'"
-
-#~ msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
-#~ msgstr "erro convertendo %d octetos UTF-8 para IDNA ACE: %s"
-
-#~ msgid "negative or zero last not allowed\n"
-#~ msgstr "último negativo ou zero não permitido\n"
-
-#~ msgid "negative or zero next not allowed\n"
-#~ msgstr "próximo negativo ou zero não permitido\n"
-
-#~ msgid "monotone: "
-#~ msgstr "monotone: "
-
-#~ msgid "working copy"
-#~ msgstr "cópia de trabalho"
-
-#~ msgid "OLDID NEWID"
-#~ msgstr "VELHO-ID NOVO-ID"
-
-#~ msgid "write file delta packet to stdout"
-#~ msgstr "escreve pacote de delta de arquivo em stdout"
-
-#~ msgid "no such file '%s'"
-#~ msgstr "não há arquivo '%s'"
-
-#~ msgid "write revision data packet to stdout"
-#~ msgstr "escreve pacote de dados da versão em stdout"
-
-#~ msgid "write file data packet to stdout"
-#~ msgstr "escreve pacote de dados do arquivo em stdout"
-
-#~ msgid "write cert packets to stdout"
-#~ msgstr "escreve pacotes de certificado em stdout"
-
-#~ msgid "Error running editor '%s' to enter log message\n"
-#~ msgstr "Erro executando editor '%s' para entrada de mensagem de registro\n"
-
-#~ msgid "executing external 3-way merge command\n"
-#~ msgstr "executando comando externo para combinação de 3 arquivos\n"
-
-#~ msgid "adding %s to working copy delete set\n"
-#~ msgstr "adicionando %s ao conjunto de remoções da cópia de trabalho\n"
-
-#~ msgid "adding %s -> %s to working copy rename set"
-#~ msgstr ""
-#~ "adicionando %s -> %s ao conjunto de renomeações da cópia de trabalho"
-
-#~ msgid "renaming '%s' onto existing file: '%s'\n"
-#~ msgstr "renomeando '%s' para arquivo existente: '%s'\n"
