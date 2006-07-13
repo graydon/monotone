@@ -2091,93 +2091,16 @@ select_nodes_modified_by_cset(cset const & cs,
 // perhaps do that after propagating back to n.v.m.experiment.rosters
 // or to mainline so that diffs are more informative
 
-inline static bool
-inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
-{
-  inodeprint_map::const_iterator old_ip = ipm.find(path);
-  if (old_ip != ipm.end())
-    {
-      hexenc<inodeprint> ip;
-      if (inodeprint_file(path, ip) && ip == old_ip->second)
-          return true; // unchanged
-      else
-          return false; // changed or unavailable
-    }
-  else
-    return false; // unavailable
-}
-
 // TODO: unchanged, changed, missing might be better as set<node_id>
 
 // note that this does not take a restriction because it is used only by
 // automate_inventory which operates on the entire, unrestricted, working
 // directory.
 
-void
-classify_roster_paths(roster_t const & ros,
-                      path_set & unchanged,
-                      path_set & changed,
-                      path_set & missing,
-                      app_state & app)
-{
-  temp_node_id_source nis;
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  if (!ros.has_root())
-    return;
-
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      node_t node = i->second;
-
-      split_path sp;
-      ros.get_name(nid, sp);
-
-      file_path fp(sp);
-
-      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
-        {
-          // dirs don't have content changes
-          unchanged.insert(sp);
-        }
-      else
-        {
-          file_t file = downcast_to_file_t(node);
-          file_id fid;
-          if (ident_existing_file(fp, fid, app.lua))
-            {
-              if (file->content == fid)
-                unchanged.insert(sp);
-              else
-                changed.insert(sp);
-            }
-          else
-            {
-              missing.insert(sp);
-            }
-        }
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-//   getting rosters from the workspace 
-////////////////////////////////////////////////////////////////////
-
 void 
-update_restricted_roster_from_filesystem(roster_t & ros, 
-                                         app_state & app)
+update_current_roster_from_filesystem(roster_t & ros, 
+                                      node_restriction const & mask,
+                                      app_state & app)
 {
   temp_node_id_source nis;
   inodeprint_map ipm;

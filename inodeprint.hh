@@ -13,6 +13,7 @@
 #include "vocab.hh"
 #include "quick_alloc.hh"
 #include "paths.hh"
+#include "platform.hh"
 
 typedef std::pair<file_path const, hexenc<inodeprint> > inodeprint_entry;
 

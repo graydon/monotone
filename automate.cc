@@ -28,6 +28,7 @@
 #include "constants.hh"
 #include "inodeprint.hh"
 #include "keys.hh"
+#include "localized_file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
@@ -618,6 +619,19 @@ inventory_filesystem(app_state & app, inventory_map & inventory)
   walk_tree(file_path(), itemizer);
 }
 
+namespace
+{
+  namespace syms
+  {
+    symbol const path("path");
+    symbol const old_node("old_node");
+    symbol const new_node("new_node");
+    symbol const fs_type("fs_type");
+    symbol const status("status");
+    symbol const changes("changes");
+  }
+}
+
 // Name: inventory
 // Arguments: none
 // Added in: 1.0
@@ -679,62 +693,62 @@ AUTOMATE(inventory, N_(""))
       basic_io::stanza st;
       inventory_item const & item = i->second;
 
-      st.push_file_pair("path", i->first);
+      st.push_file_pair(syms::path, i->first);
 
       if (item.old_node.exists)
         {
-//           std::string id = lexical_cast<std::string>(item.old_node.id);
-          st.push_str_pair("old_id", lexical_cast<std::string>(item.old_node.id));
+          std::string id = lexical_cast<std::string>(item.old_node.id);
+//           st.push_str_pair("old_id", lexical_cast<std::string>(item.old_node.id));
           switch (item.old_node.type)
             {
-//             case path::file: st.push_str_triple("old", id, "file"); break;
-//             case path::directory: st.push_str_triple("old", id, "directory"); break;
-            case path::file: st.push_str_pair("old_type", "file"); break;
-            case path::directory: st.push_str_pair("old_type", "directory"); break;
+            case path::file: st.push_str_triple(syms::old_node, id, "file"); break;
+            case path::directory: st.push_str_triple(syms::old_node, id, "directory"); break;
+//             case path::file: st.push_str_pair("old_type", "file"); break;
+//             case path::directory: st.push_str_pair("old_type", "directory"); break;
             case path::nonexistent: I(false);
             }
         }
 
       if (item.new_node.exists)
         {
-//           std::string id = lexical_cast<std::string>(item.new_node.id);
-          st.push_str_pair("new_id", lexical_cast<std::string>(item.new_node.id));
+          std::string id = lexical_cast<std::string>(item.new_node.id);
+//           st.push_str_pair("new_id", lexical_cast<std::string>(item.new_node.id));
           switch (item.new_node.type)
             {
-//             case path::file: st.push_str_triple("new", id, "file"); break;
-//             case path::directory: st.push_str_triple("new", id, "directory"); break;
-            case path::file: st.push_str_pair("new_type", "file"); break;
-            case path::directory: st.push_str_pair("new_type", "directory"); break;
+            case path::file: st.push_str_triple(syms::new_node, id, "file"); break;
+            case path::directory: st.push_str_triple(syms::new_node, id, "directory"); break;
+//             case path::file: st.push_str_pair("new_type", "file"); break;
+//             case path::directory: st.push_str_pair("new_type", "directory"); break;
             case path::nonexistent: I(false);
             }
         }
 
       switch (item.fs_type)
         {
-        case path::file: st.push_str_pair("fs_type", "file"); break;
-        case path::directory: st.push_str_pair("fs_type", "directory"); break;
-        case path::nonexistent: st.push_str_pair("fs_type", "none"); break;
+        case path::file: st.push_str_pair(syms::fs_type, "file"); break;
+        case path::directory: st.push_str_pair(syms::fs_type, "directory"); break;
+        case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
       if (item.fs_type == path::nonexistent)
         {
           if (item.new_node.exists)
-            st.push_str_pair("status", "missing");
+            st.push_str_pair(syms::status, "missing");
         }
       else // exists on filesystem
         {
           if (!item.new_node.exists)
             {
               if (app.lua.hook_ignore_file(i->first))
-                st.push_str_pair("status", "ignored");
+                st.push_str_pair(syms::status, "ignored");
               else 
-                st.push_str_pair("status", "unknown");
+                st.push_str_pair(syms::status, "unknown");
             }
           else if (item.new_node.type != item.fs_type)
-            st.push_str_pair("status", "invalid");
+            st.push_str_pair(syms::status, "invalid");
           // TODO: would an ls_invalid command be good for listing these paths?
           else
-            st.push_str_pair("status", "known");
+            st.push_str_pair(syms::status, "known");
         }
 
       // note that we have three sources of information here
@@ -764,95 +778,31 @@ AUTOMATE(inventory, N_(""))
 
       if (item.new_node.exists)
         {
-          if (item.new_node.type == path::file)
+          std::vector<std::string> changes;
+
+          if (item.new_node.type == path::file && old_roster.has_node(item.new_node.id))
             {
-              if (item.fs_type == path::nonexistent)
-                st.push_str_pair("content", "unknown");
-              else if (old_roster.has_node(item.new_node.id))
-                {
-                  file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
-                  old_file->content;
-                  if (item.fs_ident == old_file->content)
-                    st.push_str_pair("content", "unchanged");
-                  else
-                    st.push_str_pair("content", "changed");
-                }
+              file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
+              old_file->content;
+              if (item.fs_type == path::file && !(item.fs_ident == old_file->content))
+                changes.push_back("content");
             }
 
           if (old_roster.has_node(item.new_node.id))
             {
               node_t old_node = old_roster.get_node(item.new_node.id);
-              if (old_node->attrs == item.new_node.attrs)
-                st.push_str_pair("attrs", "unchanged");
-              else
-                st.push_str_pair("attrs", "changed");
+              if (old_node->attrs != item.new_node.attrs)
+                changes.push_back("attrs");
             }
+
+          if (!changes.empty())
+            st.push_str_multi(syms::changes, changes);
         }
 
       pr.print_stanza(st);
     }
 
   output.write(pr.buf.data(), pr.buf.size());
-}
-
-  for (inventory_map::const_iterator i = inventory.begin();
-       i != inventory.end(); ++i)
-    {
-
-      string path_suffix;
-
-      if (curr.has_node(i->first))
-        {
-          // Explicitly skip the root dir for now. The trailing / dir
-          // format isn't going to work here.
-          node_t n = curr.get_node(i->first);
-          if (is_root_dir_t(n)) continue;
-          if (is_dir_t(n)) path_suffix = "/";
-        }
-      else if (directory_exists(file_path(i->first)))
-        {
-          path_suffix = "/";
-        }
-
-      switch (i->second.pre_state)
-        {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::DROPPED_PATH: output << "D"; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
-        default: I(false); // invalid pre_state
-        }
-
-      switch (i->second.post_state)
-        {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
-        case inventory_item::ADDED_PATH:   output << "A"; break;
-        default: I(false); // invalid post_state
-        }
-
-      switch (i->second.node_state)
-        {
-        case inventory_item::UNCHANGED_NODE: output << " "; break;
-        case inventory_item::PATCHED_NODE: output << "P"; break;
-        case inventory_item::UNKNOWN_NODE: output << "U"; break;
-        case inventory_item::IGNORED_NODE: output << "I"; break;
-        case inventory_item::MISSING_NODE: output << "M"; break;
-        default: I(false); // invalid node_state
-        }
-
-      output << " " << i->second.pre_id
-             << " " << i->second.post_id
-             << " " << i->first;
-
-      // FIXME: it's possible that a directory was deleted and a file
-      // was added in it's place (or vice-versa) so we need something
-      // like pre/post node type indicators rather than a simple path
-      // suffix! ugh.
-
-      output << path_suffix;
-
-      output << endl;
-    }
 }
 
 // Name: get_revision
