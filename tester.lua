@@ -728,6 +728,10 @@ function xfail_if(chk, ...)
   end
 end
 
+function xfail(...)
+   xfail_if(true, unpack(arg))
+end
+
 function log_error(e)
   if type(e) == "table" then
     L("\n", tostring(e.e), "\n")
