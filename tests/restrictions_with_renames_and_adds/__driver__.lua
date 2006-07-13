@@ -6,6 +6,12 @@ mtn_setup()
 -- a nonsense cset.  However, the current code only knows about adds, not
 -- about deletes or renames.
 
+-- The fix for this bug is to make check_restricted_cset use cs.apply_to with
+-- a special editable_tree that nicely detects invalid attach_node calls.
+-- Also, possibly 'diff' should just work even when given a funky restriction,
+-- rather than forcing people to mention more stuff just so they can see what
+-- they've done... if so, this test should be changed a bit.
+
 -- ways to need a path: add, rename
 -- ways to lose a path: drop, rename
 

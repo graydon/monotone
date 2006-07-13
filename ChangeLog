@@ -13,6 +13,17 @@
 	* merge.cc, netsync.cc, packet.cc, rcs_import.cc, revision.hh
 	* roster.cc roster.hh, work.cc: Update to match.
 
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/restrictions_with_renames_and_adds/__driver__.lua: 
+	* tests/diff_shows_renames/__driver__.lua: Add notes on possible
+	fixes for these bugs.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/diff_shows_renames/__driver__.lua: Tests for bug in diff
+	rename handling.
+
 2006-07-13  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: One new string and a few fuzzies to fix.
