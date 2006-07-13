@@ -30,13 +30,13 @@ using std::vector;
 using boost::shared_ptr;
 
 static void
-get_log_message_interactively(revision_set const & cs,
+get_log_message_interactively(revision_t const & cs,
                               app_state & app,
                               string & log_message)
 {
   string commentary;
   data summary, user_log_message;
-  write_revision_set(cs, summary);
+  write_revision(cs, summary);
   read_user_log(user_log_message);
   commentary += string(70, '-') + "\n";
   commentary += _("Enter a description of this change.\n"
@@ -176,7 +176,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     throw usage(name);
 
   revision_id r;
-  revision_set rev, rev_inverse;
+  revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
   complete(app, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
@@ -206,7 +206,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     revision_id inv_id;
     revision_data rdat;
 
-    write_revision_set(rev_inverse, rdat);
+    write_revision(rev_inverse, rdat);
     calculate_ident(rdat, inv_id);
     dbw.consume_revision_data(inv_id, rdat);
 
@@ -326,7 +326,7 @@ CMD(status, N_("informative"), N_("[PATH]..."),
   roster_t old_roster, new_roster, restricted_roster;
   cset included, excluded;
   revision_id old_rev_id;
-  revision_set rev;
+  revision_t rev;
   data tmp;
   temp_node_id_source nis;
 
@@ -346,7 +346,7 @@ CMD(status, N_("informative"), N_("[PATH]..."),
   included.apply_to(er);
 
   get_revision_id(old_rev_id);
-  make_revision_set(old_rev_id, old_roster, restricted_roster, rev);
+  make_revision(old_rev_id, old_roster, restricted_roster, rev);
 
   if (global_sanity.brief)
     {
@@ -377,7 +377,7 @@ CMD(status, N_("informative"), N_("[PATH]..."),
     }
   else
     {
-      write_revision_set(rev, tmp);
+      write_revision(rev, tmp);
       cout << "\n" << tmp << "\n";
     }
 }
@@ -617,7 +617,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 {
   string log_message("");
   bool log_message_given;
-  revision_set restricted_rev;
+  revision_t restricted_rev;
   revision_id old_rev_id, restricted_rev_id;
   roster_t old_roster, new_roster, restricted_roster;
   temp_node_id_source nis;
@@ -640,7 +640,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   included.apply_to(er);
 
   get_revision_id(old_rev_id);
-  make_revision_set(old_rev_id, old_roster, 
+  make_revision(old_rev_id, old_roster, 
 		    restricted_roster, restricted_rev);
 
   calculate_ident(restricted_rev, restricted_rev_id);
@@ -788,7 +788,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       }
 
     revision_data rdat;
-    write_revision_set(restricted_rev, rdat);
+    write_revision(restricted_rev, rdat);
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
     cert_revision_in_branch(restricted_rev_id, branchname, app, dbw);

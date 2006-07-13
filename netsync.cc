@@ -638,12 +638,12 @@ session::note_rev(revision_id const & rev)
 {
   if (role == sink_role)
     return;
-  revision_set rs;
+  revision_t rs;
   id item;
   decode_hexenc(rev.inner(), item);
   app.db.get_revision(rev, rs);
   data tmp;
-  write_revision_set(rs, tmp);
+  write_revision(rs, tmp);
   queue_data_cmd(revision_item, item, tmp());
 }
 

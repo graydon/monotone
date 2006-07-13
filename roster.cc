@@ -1758,7 +1758,7 @@ mark_roster_with_one_parent(roster_t const & parent,
 // WARNING: this function is not tested directly (no unit tests).  Do not put
 // real logic in it.
 void
-make_roster_for_revision(revision_set const & rev, revision_id const & new_rid,
+make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
                          roster_t & new_roster, marking_map & new_markings,
                          app_state & app)
 {
@@ -3857,7 +3857,7 @@ flip_revision_id(revision_id const & rid)
 }
 
 static set<revision_id>
-flip_revision_set(set<revision_id> const & rids)
+flip_revision(set<revision_id> const & rids)
 {
   set<revision_id> flipped_rids;
   for (set<revision_id>::const_iterator i = rids.begin(); i != rids.end(); ++i)
@@ -3883,9 +3883,9 @@ run_a_2_scalar_parent_mark_scenario(revision_id const & scalar_origin_rid,
   // because the exact stuff has hard-coded the names of the various
   // revisions and their uncommon ancestor sets.
   {
-    set<revision_id> flipped_left_mark_set = flip_revision_set(left_mark_set);
-    set<revision_id> flipped_right_mark_set = flip_revision_set(right_mark_set);
-    set<revision_id> flipped_new_mark_set = flip_revision_set(new_mark_set);
+    set<revision_id> flipped_left_mark_set = flip_revision(left_mark_set);
+    set<revision_id> flipped_right_mark_set = flip_revision(right_mark_set);
+    set<revision_id> flipped_new_mark_set = flip_revision(new_mark_set);
 
     run_a_2_scalar_parent_mark_scenario_exact(flip_revision_id(scalar_origin_rid),
                                               right_val, flipped_right_mark_set,

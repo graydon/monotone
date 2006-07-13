@@ -102,7 +102,7 @@ void
 find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
                          path_set & unknown, path_set & ignored)
 {
-  revision_set rev;
+  revision_t rev;
   roster_t old_roster, new_roster;
   path_set known;
   temp_node_id_source nis;

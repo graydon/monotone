@@ -169,7 +169,7 @@ store_roster_merge_result(roster_t const & left_roster,
   roster_t & merged_roster = result.roster;
   merged_roster.check_sane();
 
-  revision_set merged_rev;
+  revision_t merged_rev;
 
   calculate_ident(merged_roster, merged_rev.new_manifest);
 
@@ -182,7 +182,7 @@ store_roster_merge_result(roster_t const & left_roster,
   safe_insert(merged_rev.edges, make_pair(right_rid, right_to_merged));
 
   revision_data merged_data;
-  write_revision_set(merged_rev, merged_data);
+  write_revision(merged_rev, merged_data);
   calculate_ident(merged_data, merged_rid);
   {
     transaction_guard guard(app.db);

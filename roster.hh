@@ -298,7 +298,7 @@ struct temp_node_id_source
 template <> void dump(roster_t const & val, std::string & out);
 
 class app_state;
-struct revision_set;
+struct revision_t;
 
 // adaptor class to enable cset application on rosters.
 class editable_roster_base
@@ -398,7 +398,7 @@ mark_roster_with_one_parent(roster_t const & parent,
 // This is for revisions that are being written to the db, only.  It assigns
 // permanent node ids.
 void
-make_roster_for_revision(revision_set const & rev,
+make_roster_for_revision(revision_t const & rev,
                          revision_id const & rid,
                          roster_t & result,
                          marking_map & marking,

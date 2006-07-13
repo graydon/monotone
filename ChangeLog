@@ -1,3 +1,18 @@
+2006-07-13  Zack Weinberg  <zackw@panix.com>
+
+	* Makefile.am: Add explicit dependencies of object files on
+	generated headers, to prevent parallel make issues.
+
+	* revision.cc: Rename revision_set to revision_t,
+	make_revision_set to make_revision, read_revision_set to
+	read_revision, write_insane_revision_set to write_insane_revision,
+	and write_revision_set to write_revision.
+	* roster.cc: Rename flip_revision_set to flip_revision.
+	* automate.cc, cmd_diff_log.cc, cmd_merging.cc, cmd_ws_commit.cc
+	* database.cc, database.hh, database_check.cc, enumerator.cc
+	* merge.cc, netsync.cc, packet.cc, rcs_import.cc, revision.hh
+	* roster.cc roster.hh, work.cc: Update to match.
+
 2006-07-13  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: One new string and a few fuzzies to fix.

@@ -830,17 +830,17 @@ AUTOMATE(get_revision, N_("[REVID]"))
     {
       roster_t old_roster, new_roster;
       revision_id old_revision_id;
-      revision_set rev;
+      revision_t rev;
 
       app.require_workspace();
       get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       update_current_roster_from_filesystem(new_roster, app);
 
       get_revision_id(old_revision_id);
-      make_revision_set(old_revision_id, old_roster, new_roster, rev);
+      make_revision(old_revision_id, old_roster, new_roster, rev);
 
       calculate_ident(rev, ident);
-      write_revision_set(rev, dat);
+      write_revision(rev, dat);
     }
   else
     {
@@ -891,7 +891,7 @@ AUTOMATE(get_current_revision_id, N_(""))
 
   roster_t old_roster, new_roster;
   revision_id old_revision_id, new_revision_id;
-  revision_set rev;
+  revision_t rev;
   temp_node_id_source nis;
 
   app.require_workspace();
@@ -899,7 +899,7 @@ AUTOMATE(get_current_revision_id, N_(""))
   update_current_roster_from_filesystem(new_roster, app);
 
   get_revision_id(old_revision_id);
-  make_revision_set(old_revision_id, old_roster, new_roster, rev);
+  make_revision(old_revision_id, old_roster, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
 
