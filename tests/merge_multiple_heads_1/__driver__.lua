@@ -27,6 +27,7 @@ grandparent = base_revision()
 
 writefile_q("file", C("ce"))
 commit()
+ce_rev = base_revision()
 
 revert_to(grandparent)
 writefile_q("file", C("xx"))
@@ -35,9 +36,15 @@ parent = base_revision()
 
 writefile_q("file", C("cx"))
 commit()
+cx_rev = base_revision()
 
 revert_to(parent)
 writefile_q("file", C("xe"))
 commit()
+xe_rev = base_revision()
+
+-- Double-check that the old dumb "in lexicographic order by revision_id"
+-- algorithm would get this wrong.
+check(ce_rev < cx_rev or ce_rev < xe_rev)
 
 check(mtn("merge"), 0, false, false)

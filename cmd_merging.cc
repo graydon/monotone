@@ -367,7 +367,8 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       return;
     }
 
-  P(F("%d heads on branch '%s'") % heads.size() % app.branch_name);
+  P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
+    % heads.size() % app.branch_name);
 
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
@@ -387,7 +388,8 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   // A and B will be merged first, and then the result will be merged with C.
   while (heads.size() > 2)
     {
-      P(F("merge %d / %d: choosing next pair of heads") % pass % todo);
+      P(F("merge %d / %d:") % pass % todo);
+      P(F("calculating best pair of heads to merge next"));
 
       // For every pair of heads, determine their merge ancestor, and
       // remember the ancestor->head mapping. 
@@ -407,7 +409,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
             // will be recalculated on every pass, we just take the first
             // one we find.
             if (ancestors.insert(ancestor).second)
-              heads_for_ancestor[ancestor] = revpair(*i, *j);
+              safe_insert(heads_for_ancestor, std::make_pair(ancestor, revpair(*i, *j)));
           }
     
       // Erasing ancestors from ANCESTORS will now produce a set of merge
@@ -420,7 +422,6 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       // corresponding pair of heads.
       revpair p = heads_for_ancestor[*ancestors.begin()];
       
-      P(F("merge %d / %d:") % pass % todo);
       merge_two(p.first, p.second, app.branch_name(), string("merge"), app);
 
       ancestors.clear();

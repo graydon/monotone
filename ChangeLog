@@ -1,3 +1,9 @@
+2006-07-12  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (merge): Small tweaks.
+	* tests/merge_multiple_heads_1/__driver__.lua: Correctly document
+	old algorithm.
+
 2006-07-11  Zack Weinberg  <zackw@panix.com>
 
 	* diff_patch.cc (struct hunk_consumer): Change type of
