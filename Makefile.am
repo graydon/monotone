@@ -8,18 +8,20 @@ CMD_SOURCES =								\
 
 SANITY_CORE_SOURCES =							\
 	sanity.cc sanity.hh ui.cc ui.hh quick_alloc.hh			\
-	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
-	charset.cc charset.hh						\
 	simplestring_xform.cc simplestring_xform.hh			\
-	constants.cc constants.hh numeric_vocab.hh paths.cc paths.hh	\
-	interner.hh hash_map.hh platform.hh
+	constants.cc constants.hh numeric_vocab.hh			\
+	platform.hh
+
 
 LUAEXT_SOURCES =							\
+	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
+	charset.cc charset.hh paths.cc paths.hh				\
+	interner.hh hash_map.hh						\
 	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
 	globish.cc globish.hh basic_io.cc basic_io.hh
 
 MOST_SOURCES =								\
-	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES)			\
+	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES) platform-wrapped.hh	\
 	 app_state.cc app_state.hh					\
          commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\

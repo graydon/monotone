@@ -100,7 +100,7 @@ app_state::allow_workspace()
           // The 'true' means that, e.g., if we're running checkout,
           // then it's okay for dumps to go into our starting working
           // dir's _MTN rather than the new workspace dir's _MTN.
-          global_sanity.filename = system_path(dump_path, false);
+          global_sanity.filename = system_path(dump_path, false).as_external();
         }
     }
   load_rcfiles();

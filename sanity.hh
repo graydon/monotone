@@ -22,7 +22,6 @@
 
 #include "i18n.h"
 #include "mt-stdint.h"
-#include "paths.hh"
 #include "quick_alloc.hh" // to get the QA() macro
 
 #ifdef __GNUC__
@@ -66,7 +65,7 @@ struct sanity {
   bool reallyquiet;
   bool relaxed;
   boost::circular_buffer<char> logbuf;
-  system_path filename;
+  std::string filename;
   std::string gasp_dump;
   bool already_dumping;
   bool clean_shutdown;
@@ -481,6 +480,9 @@ Musing<T>::gasp(std::string & out) const
 #else
 #define MM(obj) /* */
 #endif
+
+template <typename T>
+void dump(T const &, std::string &);
 
 template <> void dump(std::string const & obj, std::string & out);
 

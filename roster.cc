@@ -18,6 +18,7 @@
 #include "basic_io.hh"
 #include "cset.hh"
 #include "inodeprint.hh"
+#include "platform-wrapped.hh"
 #include "roster.hh"
 #include "revision.hh"
 #include "vocab.hh"

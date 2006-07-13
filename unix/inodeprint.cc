@@ -70,10 +70,10 @@ inline bool is_future(time_t now, time_t then)
   return difftime(now, then) > 0;
 }
 
-bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
+bool inodeprint_file(std::string const & file, std::string & out)
 {
   struct stat st;
-  if (stat(file.as_external().c_str(), &st) < 0)
+  if (stat(file.c_str(), &st) < 0)
     return false;
 
   time_t now;
@@ -121,8 +121,6 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
 
   char digest[constants::sha1_digest_length];
   hash.final(reinterpret_cast<Botan::byte *>(digest));
-  std::string out(digest, constants::sha1_digest_length);
-  inodeprint ip_raw(out);
-  encode_hexenc(ip_raw, ip);
+  out = std::string(digest, constants::sha1_digest_length);
   return true;
 }

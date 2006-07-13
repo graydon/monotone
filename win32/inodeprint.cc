@@ -26,10 +26,10 @@ namespace
   }
 };
 
-bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
+bool inodeprint_file(std::string const & file, std::string & out)
 {
   struct _stati64 st;
-  if (_stati64(file.as_external().c_str(), &st) < 0)
+  if (_stati64(file.c_str(), &st) < 0)
     return false;
 
   Botan::SHA_160 hash;
@@ -60,8 +60,6 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
   I(hash.OUTPUT_LENGTH == 20);
   char digest[20];
   hash.final(reinterpret_cast<Botan::byte *>(digest));
-  std::string out(digest, hash.OUTPUT_LENGTH);
-  inodeprint ip_raw(out);
-  encode_hexenc(ip_raw, ip);
+  out = std::string(digest, hash.OUTPUT_LENGTH);
   return true;
 }
