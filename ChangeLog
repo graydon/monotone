@@ -1,5 +1,12 @@
 2006-07-12  Nathaniel Smith  <njs@pobox.com>
 
+	* std_hooks.lua (get_encloser_pattern): Add regexes for texinfo
+	and latex, and disable enclosers for pure text.
+	* monotone.texi (Hooks): Mention that there are default,
+	language-specific regexen.
+
+2006-07-12  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua: Remove tabs.
 
 2006-07-12  Nathaniel Smith  <njs@pobox.com>

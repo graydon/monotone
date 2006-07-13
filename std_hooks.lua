@@ -183,9 +183,41 @@ function binary_file(name)
 end
 
 -- given a file name, return a regular expression which will match
--- lines that name top-level constructs in that file.
+-- lines that name top-level constructs in that file, or "", to disable
+-- matching.
 function get_encloser_pattern(name)
-   -- this default is correct surprisingly often
+   -- texinfo has special sectioning commands
+   if (string.find(name, "%.texi$")) then
+      -- sectioning commands in texinfo: @node, @chapter, @top, 
+      -- @((sub)?sub)?section, @unnumbered(((sub)?sub)?sec)?,
+      -- @appendix(((sub)?sub)?sec)?, @(|major|chap|sub(sub)?)heading
+      return ("^@("
+              .. "node|chapter|top"
+              .. "|((sub)?sub)?section"
+              .. "|(unnumbered|appendix)(((sub)?sub)?sec)?"
+              .. "|(major|chap|sub(sub)?)?heading"
+              .. ")")
+   end
+   -- LaTeX has special sectioning commands.  This rule is applied to ordinary
+   -- .tex files too, since there's no reliable way to distinguish those from
+   -- latex files anyway, and there's no good pattern we could use for
+   -- arbitrary plain TeX anyway.
+   if (string.find(name, "%.tex$")
+       or string.find(name, "%.ltx$")
+       or string.find(name, "%.latex$")) then
+      return ("\\\\("
+              .. "part|chapter|paragraph|subparagraph"
+              .. "|((sub)?sub)?section"
+              .. ")")
+   end
+   -- There's no good way to find section headings in raw text, and trying
+   -- just gives distracting output, so don't even try.
+   if (string.find(name, "%.txt$")
+       or string.upper(name) == "README") then
+      return ""
+   end
+   -- This default is correct surprisingly often -- in pretty much any text
+   -- written with code-like indentation.
    return "^[[:alnum:]$_]"
 end
 

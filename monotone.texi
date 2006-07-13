@@ -7542,13 +7542,15 @@ Called for each file when @command{diff} is given the
 @option{--show-encloser} option (and @emph{not} the
 @option{--external} option).  @var{file_path} is the pathname of the
 file that is being diffed.  The hook should return a string constant
-containing a regular expression; this regular expression
-will be used to find lines that, in that file, name the ``top-level''
-constructs enclosing each ``hunk'' of changes.  The default is
+containing a regular expression; this regular expression will be used
+to find lines that, in that file, name the ``top-level'' constructs
+enclosing each ``hunk'' of changes.  The default is
 @code{^[[:alnum:]$_]}, which is correct for many programming
-languages.  If you have a better regular expression for some
-language, you can add it here; and if you send it to the monotone
-developers, we will likely make it to the default for that language.
+languages; a few text authoring packages, like Texinfo, have special
+regular expressions that match their particular syntax.  If you have a
+better regular expression for some language, you can add it to this
+hook; and if you send it to the monotone developers, we will likely
+make it to the default for that language.
 
 @item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
                      @var{diff_args}, @var{old_rev}, @var{new_rev})
