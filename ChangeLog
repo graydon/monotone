@@ -1,3 +1,7 @@
+2006-07-13  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One new string and a few fuzzies to fix.
+
 2006-07-12  Nathaniel Smith  <njs@pobox.com>
 
 	* std_hooks.lua (get_encloser_pattern): Add regexes for texinfo
