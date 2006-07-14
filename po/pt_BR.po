@@ -2639,16 +2639,18 @@ msgstr ""
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
 msgstr ""
+"negada a '%s' permissão de leitura para '%s' excluindo '%s' por causa\n"
+"do ramo '%s'"
 
 #: netsync.cc:1512
 #, c-format
 msgid "access to branch '%s' denied by server"
-msgstr ""
+msgstr "acesso ao ramo '%s' negado pelo servidor"
 
 #: netsync.cc:1522
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'"
-msgstr ""
+msgstr "permitida a '%s' permissão de leitura para '%s' excluindo '%s'"
 
 #: netsync.cc:1531
 #, c-format
@@ -2656,16 +2658,18 @@ msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
 "source"
 msgstr ""
+"negada a '%s' permissão de escrita para '%s' excluindo '%s' durante\n"
+"execução como fonte puro"
 
 #: netsync.cc:1539
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'"
-msgstr ""
+msgstr "negada a '%s' permissão de escrita para '%s' excluindo '%s'"
 
 #: netsync.cc:1545
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'"
-msgstr ""
+msgstr "permitida a '%s' permissão de escrita para '%s' excluindo '%s'"
 
 #: netsync.cc:1569
 #, c-format
@@ -2675,17 +2679,17 @@ msgstr "assinatura do cliente ruim"
 #: netsync.cc:1585
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
-msgstr ""
+msgstr "Comando 'refinar' não esperado em tipo de item não-refinado"
 
 #: netsync.cc:1682
 #, c-format
 msgid "unknown bye phase %d received"
-msgstr ""
+msgstr "fase de despedida desconhecida %d recebida"
 
 #: netsync.cc:1697
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type"
-msgstr ""
+msgstr "Comando 'feito' inesperado em tipo de item não-refinado"
 
 #: netsync.cc:1769
 #, c-format
@@ -2695,12 +2699,13 @@ msgstr "%s com hash '%s' não existe no banco de dados"
 #: netsync.cc:1870
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
-msgstr ""
+msgstr "Épocas não combinam no ramo %s. Servidor tem '%s', cliente tem '%s'."
 
 #: netsync.cc:1888
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
-msgstr ""
+msgstr "teste de hash falhou para chave pública '%s' (%s);\n"
+"esperado '%s', recebido '%s'"
 
 #: netsync.cc:1902
 #, c-format
@@ -2727,12 +2732,13 @@ msgstr "ralo"
 #: netsync.cc:2239
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch\n"
-msgstr ""
+msgstr "buffer de entrada do par %s está cheio após despacho de\n"
+"comando de rede\n"
 
 #: netsync.cc:2251 netsync.cc:2350
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
-msgstr ""
+msgstr "erro de protocolo durante processamento do par %s: '%s'"
 
 #: netsync.cc:2257
 #, c-format
@@ -2747,12 +2753,12 @@ msgstr "conectando a %s"
 #: netsync.cc:2365
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting\n"
-msgstr ""
+msgstr "tempo expirou esperando por E/S com par %s, desconectando\n"
 
 #: netsync.cc:2388
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting\n"
-msgstr ""
+msgstr "erro de processamento durante comunicação com par %s, desconectando\n" 
 
 #: netsync.cc:2405
 #, c-format
@@ -2762,7 +2768,7 @@ msgstr "comunicação feita com sucesso com %s"
 #: netsync.cc:2411
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
-msgstr ""
+msgstr "par %s desconectou após nós o termos informado de um erro"
 
 #: netsync.cc:2416
 #, c-format
@@ -2772,7 +2778,7 @@ msgstr "erro de E/S comunicando com par %s, desconectando\n"
 #: netsync.cc:2482
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
-msgstr ""
+msgstr "erro de protocolo processando par %s: '%s', marcado como ruim"
 
 #: netsync.cc:2514
 #, c-format
@@ -2782,34 +2788,39 @@ msgstr "nova conexão do cliente %s aceita: %s"
 #: netsync.cc:2551
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
-msgstr ""
+msgstr "erro do protocolo durante o processamento do par %s:\n"
+"'%s', desconectando"
 
 #: netsync.cc:2562
 #, c-format
 msgid "peer %s read failed in working state (error)"
-msgstr ""
+msgstr "leitura do par %s falhou no estado trabalhando (erro)"
 
 #: netsync.cc:2567
 #, c-format
 msgid ""
 "peer %s read failed in shutdown state (possibly client misreported error)\n"
 msgstr ""
+"leitura do par %s falhou no estado de encerramento (provavelmente o\n"
+"cliente reportou o erro erroneamente)\n"
 
 #: netsync.cc:2573
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
-msgstr ""
+msgstr "leitura do par %s falhou no estado confirmado (sucesso)"
 
 #: netsync.cc:2594
 #, c-format
 msgid "peer %s write failed in working state (error)"
-msgstr ""
+msgstr "escrita no par %s falhou no estado trabalhando (erro)"
 
 #: netsync.cc:2599
 #, c-format
 msgid ""
 "peer %s write failed in shutdown state (possibly client misreported error)\n"
 msgstr ""
+"escrita no par %s falhou no estado de encerramento (provavelmente o\n"
+"cliente reportou o erro erroneamente)\n"
 
 #: netsync.cc:2605
 #, c-format
@@ -3132,7 +3143,7 @@ msgstr "passo da migração falhou: %s"
 #: schema_migration.cc:292
 #, c-format
 msgid "mismatched result of migration, got %s, wanted %s"
-msgstr ""
+msgstr "resultado da migração está errado, recebido %s, o esperado era %s"
 
 #: schema_migration.cc:295
 #, c-format
