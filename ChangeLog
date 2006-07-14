@@ -1,3 +1,7 @@
+2006-07-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One new string.
+
 2006-07-13  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_ws_commit.cc (revert): Only require some restriction be
