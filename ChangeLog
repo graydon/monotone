@@ -1,5 +1,11 @@
 2006-07-13  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_ws_commit.cc (revert): Only require some restriction be
+	passed if --missing is not passed.  Print a proper error message
+	when no restriction is given.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_ws_commit.cc: Remove tabs.
 
 2006-07-13  Zack Weinberg  <zackw@panix.com>

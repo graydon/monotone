@@ -54,9 +54,6 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
     OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
 {
-  if (args.size() < 1)
-    throw usage(name);
-
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
   cset included, excluded;
@@ -91,6 +88,8 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
     {
       includes = args;
       excludes = app.exclude_patterns;
+      N(!includes.empty() || !excludes.empty(),
+        F("you must pass at least one path to 'revert' (perhaps '.')"));
     }
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
