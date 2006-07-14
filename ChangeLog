@@ -13,6 +13,12 @@
 	* merge.cc, netsync.cc, packet.cc, rcs_import.cc, revision.hh
 	* roster.cc roster.hh, work.cc: Update to match.
 
+2006-07-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (session::process_*): Replace "W(msg); return false;"
+	with "error(msg);" in several places, so the other side gets told why
+	the connection is being killed.
+
 2006-07-13  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/restrictions_with_renames_and_adds/__driver__.lua: 
