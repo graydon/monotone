@@ -4020,7 +4020,6 @@ computer clocks is not reliable, so monotone usually ignores time.
 
 
 @item mtn merge [--branch=@var{branchname}]
-@item mtn merge --lca [--branch=@var{branchname}]
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
 resulting merged revision as a member of @var{branchname}. The merged
@@ -4032,17 +4031,7 @@ graph and these 3 revisions are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn propagate @var{sourcebranch} @var{destbranch}
-@item mtn propagate --lca @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
 ancestor of the two heads for a 3-way merge. The resulting revision is
@@ -4058,26 +4047,14 @@ maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn explicit_merge @var{id} @var{id} @var{destbranch}
-@itemx mtn explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}
 This command merges exactly the two @var{id}s you give it, and places
 the result in branch @var{destbranch}.  It is useful when you need more
 control over the merging process than @code{propagate} or @code{merge}
 give you.  For instance, if you have a branch with three heads, and you
 only want to merge two of them, you can use this command.  Or if you
 have a branch with two heads, and you want to propagate one of them to
-another branch, again, you can use this command. If the optional
-@var{ancestor} argument is given, the merge uses that revision as the
-common ancestor instead of the default ancestor.
+another branch, again, you can use this command.
 
 @item mtn merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
 This command takes a unique head from @var{sourcebranch} and merges it

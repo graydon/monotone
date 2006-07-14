@@ -59,7 +59,7 @@ CMD(update, N_("workspace"), "",
        "If not, update the workspace to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
-  revision_set r_working;
+  revision_t r_working;
   roster_t working_roster, chosen_roster, target_roster;
   shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm, target_mm;
@@ -84,7 +84,7 @@ CMD(update, N_("workspace"), "",
   update_current_roster_from_filesystem(working_roster, app);
 
   get_revision_id(r_old_id);
-  make_revision_set(r_old_id, *old_roster, working_roster, r_working);
+  make_revision(r_old_id, *old_roster, working_roster, r_working);
 
   calculate_ident(r_working, r_working_id);
   I(r_working.edges.size() == 1);

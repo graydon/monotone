@@ -620,3 +620,10 @@ html: monotone.texi version.texi std_hooks.lua texinfo.css
 		sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $$f.bak >$$f; \
 		rm -f $$f.bak; \
 	done
+
+# Explicit dependencies of object files on generated headers, so Make
+# knows it has to build 'em.
+mtn-lua_hooks.o unit_tests-lua_hooks.o : test_hooks.h std_hooks.h
+mtn-database.o  unit_tests-database.o  : schema.h
+
+tester.o : tester.h

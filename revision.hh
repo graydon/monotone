@@ -52,16 +52,16 @@ typedef edge_map::value_type
 edge_entry;
 
 struct
-revision_set
+revision_t
 {
   void check_sane() const;
   bool is_merge_node() const;
   // trivial revisions are ones that have no effect -- e.g., commit should
   // refuse to commit them, saying that there are no changes to commit.
   bool is_nontrivial() const;
-  revision_set() {}
-  revision_set(revision_set const & other);
-  revision_set const & operator=(revision_set const & other);
+  revision_t() {}
+  revision_t(revision_t const & other);
+  revision_t const & operator=(revision_t const & other);
   manifest_id new_manifest;
   edge_map edges;
 };
@@ -91,25 +91,25 @@ edge_changes(edge_map::const_iterator i)
 }
 
 template <> void
-dump(revision_set const & rev, std::string & out);
+dump(revision_t const & rev, std::string & out);
 
 void
-read_revision_set(data const & dat,
-                  revision_set & rev);
+read_revision(data const & dat,
+              revision_t & rev);
 
 void
-read_revision_set(revision_data const & dat,
-                  revision_set & rev);
+read_revision(revision_data const & dat,
+              revision_t & rev);
 
 void
-write_revision_set(revision_set const & rev,
-                   data & dat);
+write_revision(revision_t const & rev,
+               data & dat);
 
 void
-write_revision_set(revision_set const & rev,
-                   revision_data & dat);
+write_revision(revision_t const & rev,
+               revision_data & dat);
 
-void calculate_ident(revision_set const & cs,
+void calculate_ident(revision_t const & cs,
                      revision_id & ident);
 
 // sanity checking
@@ -143,16 +143,16 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 // frontier set of shared_ptr<roster_t>s, while traversing history.
 void
 select_nodes_modified_by_rev(revision_id const & rid,
-                             revision_set const & rev,
+                             revision_t const & rev,
                              roster_t const roster,
                              std::set<node_id> & nodes_modified,
                              app_state & app);
 
 void
-make_revision_set(revision_id const & old_rev_id,
-                  roster_t const & old_roster,
-                  roster_t const & new_roster,
-                  revision_set & rev);
+make_revision(revision_id const & old_rev_id,
+              roster_t const & old_roster,
+              roster_t const & new_roster,
+              revision_t & rev);
 
 /*
 void
@@ -181,11 +181,11 @@ namespace basic_io { struct printer; struct parser; }
 
 void
 print_revision(basic_io::printer & printer,
-               revision_set const & rev);
+               revision_t const & rev);
 
 void
 parse_revision(basic_io::parser & parser,
-               revision_set & rev);
+               revision_t & rev);
 
 void
 print_edge(basic_io::printer & printer,

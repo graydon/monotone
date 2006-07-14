@@ -602,7 +602,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   N(last == -1 || next == -1,
     F("only one of --last/--next allowed"));
 
-  revision_set rev;
+  revision_t rev;
 
   while(! frontier.empty() && (last == -1 || last > 0) 
         && (next == -1 || next > 0))

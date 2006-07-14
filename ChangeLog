@@ -1,10 +1,78 @@
+2006-07-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: One new string.
+
+2006-07-14  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/revert_file_to_base_revision/: Expect a proper error
+	message.
+
 2006-07-13  Alex Queiroz  <alex@ventonegro.org>
 
 	* po/pt_BR.po: Fixed fuzzy translations and removed old ones.
 
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (revert): Only require some restriction be
+	passed if --missing is not passed.  Print a proper error message
+	when no restriction is given.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc: Remove tabs.
+
+2006-07-13  Zack Weinberg  <zackw@panix.com>
+
+	* Makefile.am: Add explicit dependencies of object files on
+	generated headers, to prevent parallel make issues.
+
+	* revision.cc: Rename revision_set to revision_t,
+	make_revision_set to make_revision, read_revision_set to
+	read_revision, write_insane_revision_set to write_insane_revision,
+	and write_revision_set to write_revision.
+	* roster.cc: Rename flip_revision_set to flip_revision.
+	* automate.cc, cmd_diff_log.cc, cmd_merging.cc, cmd_ws_commit.cc
+	* database.cc, database.hh, database_check.cc, enumerator.cc
+	* merge.cc, netsync.cc, packet.cc, rcs_import.cc, revision.hh
+	* roster.cc roster.hh, work.cc: Update to match.
+
+2006-07-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netsync.cc (session::process_*): Replace "W(msg); return false;"
+	with "error(msg);" in several places, so the other side gets told why
+	the connection is being killed.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/restrictions_with_renames_and_adds/__driver__.lua: 
+	* tests/diff_shows_renames/__driver__.lua: Add notes on possible
+	fixes for these bugs.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/diff_shows_renames/__driver__.lua: Tests for bug in diff
+	rename handling.
+
 2006-07-13  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: One new string and a few fuzzies to fix.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/restrictions_with_renames_and_adds/: Tests for bugs in
+	check_restricted_cset.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* tester.lua, tester.txt: Add plain 'xfail' convenience function.
+	* tests/revert_--missing_in_subdir/: A bunch of revert --missing
+	tests.
+	* roster.cc (check_restricted_cset): Add some MM()'s.
+
+2006-07-13  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Tree): Remove documentation of --lca and
+	explicit_merge-with-ancestor.
 
 2006-07-12  Nathaniel Smith  <njs@pobox.com>
 
