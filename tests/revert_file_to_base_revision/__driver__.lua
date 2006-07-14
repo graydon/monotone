@@ -121,10 +121,10 @@ check(not qgrep("foofile0", "stdout"))
 check(not qgrep("foofile2", "stdout"))
 check(not exists("_MTN/work"))
 
--- check that "revert" by itself just prints usage.
+-- check that "revert" by itself just prints an error
 writefile("foofile0", "blah\n")
 v1 = sha1("foofile0")
-check(mtn("revert"), 2, false, false)
+check(mtn("revert"), 1, false, false)
 v2 = sha1("foofile0")
 check(v1 == v2)
 

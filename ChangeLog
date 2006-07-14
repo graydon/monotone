@@ -2,6 +2,11 @@
 
 	* po/sv.po: One new string.
 
+2006-07-14  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/revert_file_to_base_revision/: Expect a proper error
+	message.
+
 2006-07-13  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_ws_commit.cc (revert): Only require some restriction be
