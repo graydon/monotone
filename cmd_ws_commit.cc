@@ -41,7 +41,7 @@ get_log_message_interactively(revision_t const & cs,
   commentary += string(70, '-') + "\n";
   commentary += _("Enter a description of this change.\n"
                   "Lines beginning with `MTN:' "
-		  "are removed automatically.\n");
+                  "are removed automatically.\n");
   commentary += "\n";
   commentary += summary();
   commentary += string(70, '-') + "\n";
@@ -97,7 +97,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   node_restriction mask(includes, excludes, old_roster, new_roster, app);
 
   make_restricted_csets(old_roster, new_roster, 
-			included, excluded, mask);
+                        included, excluded, mask);
 
   // The included cset will be thrown away (reverted) leaving the
   // excluded cset pending in MTN/work which must be valid against the
@@ -214,8 +214,8 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
     cert_revision_changelog(inv_id, 
-			    (FL("disapproval of revision '%s'") 
-			     % r).str(), app, dbw);
+                            (FL("disapproval of revision '%s'") 
+                             % r).str(), app, dbw);
     guard.commit();
   }
 }
@@ -237,7 +237,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
-	 i != args.end(); ++i)
+         i != args.end(); ++i)
       {
         split_path sp;
         file_path_external(*i).split(sp);
@@ -262,7 +262,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
     find_missing(app, args, paths);
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
-	 i != args.end(); ++i)
+         i != args.end(); ++i)
       {
         split_path sp;
         file_path_external(*i).split(sp);
@@ -338,7 +338,7 @@ CMD(status, N_("informative"), N_("[PATH]..."),
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, 
-			included, excluded, mask);
+                        included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
@@ -403,7 +403,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     {
       // No checkout dir specified, use branch name for dir.
       N(!app.branch_name().empty(), 
-	F("need --branch argument for branch-based checkout"));
+        F("need --branch argument for branch-based checkout"));
       dir = system_path(app.branch_name());
     }
   else
@@ -422,12 +422,12 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     {
       // use branch head revision
       N(!app.branch_name().empty(), 
-	F("need --branch argument for branch-based checkout"));
+        F("need --branch argument for branch-based checkout"));
 
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
       N(heads.size() > 0, 
-	F("branch '%s' is empty") % app.branch_name);
+        F("branch '%s' is empty") % app.branch_name);
       if (heads.size() > 1)
         {
           P(F("branch %s has multiple heads:") % app.branch_name);
@@ -582,8 +582,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             if (i->second.first)
               {
                 cout << path << " : " 
-		     << i->first << "=" 
-		     << i->second.second << "\n";
+                     << i->first << "=" 
+                     << i->second.second << "\n";
                 has_any_live_attrs = true;
               }
           if (!has_any_live_attrs)
@@ -595,11 +595,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
             cout << path << " : " 
-		 << i->first << "=" 
-		 << i->second.second << "\n";
+                 << i->first << "=" 
+                 << i->second.second << "\n";
           else
             cout << (F("No attribute '%s' on path '%s'") 
-		     % a_key % path) << "\n";
+                     % a_key % path) << "\n";
         }
       else
         throw usage(name);
@@ -632,7 +632,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, 
-			included, excluded, mask);
+                        included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
@@ -641,7 +641,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   get_revision_id(old_rev_id);
   make_revision(old_rev_id, old_roster, 
-		    restricted_roster, restricted_rev);
+                    restricted_roster, restricted_rev);
 
   calculate_ident(restricted_rev, restricted_rev_id);
 
@@ -727,7 +727,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         cset const & cs = edge_changes(edge);
 
         for (map<split_path, pair<file_id, file_id> >::const_iterator 
-	       i = cs.deltas_applied.begin();
+               i = cs.deltas_applied.begin();
              i != cs.deltas_applied.end(); ++i)
           {
             file_path path(i->first);
@@ -763,12 +763,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
               // If we don't err out here, our packet writer will
               // later.
               E(false, 
-		F("Your database is missing version %s of file '%s'")
-		% old_content % path);
+                F("Your database is missing version %s of file '%s'")
+                % old_content % path);
           }
 
         for (map<split_path, file_id>::const_iterator 
-	       i = cs.files_added.begin();
+               i = cs.files_added.begin();
              i != cs.files_added.end(); ++i)
           {
             file_path path(i->first);
@@ -849,7 +849,7 @@ ALIAS(ci, commit);
 
 
 CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), 
-		 N_("setup a new workspace directory, default to current"),
+                 N_("setup a new workspace directory, default to current"),
                  OPT_BRANCH_NAME)
 {
   if (args.size() > 1)
