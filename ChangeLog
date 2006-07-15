@@ -1,3 +1,8 @@
+2006-07-15  Matt Johnston <matt@ucc.asn.au>
+
+	* boost/format/feed_args.hpp: cast buf.pcount() to size_type as well,
+	fixes compiling with boost 1.32.0 for sarge
+
 2006-07-14  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_files.cc (diff): 
