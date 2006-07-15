@@ -372,8 +372,9 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
 {
   app.require_workspace();
 
+  path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
   path_set unknown, ignored;
-  find_unknown_and_ignored(app, args, unknown, ignored);
+  find_unknown_and_ignored(app, mask, unknown, ignored);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); 
@@ -388,8 +389,15 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
 static void
 ls_missing(app_state & app, vector<utf8> const & args)
 {
+  temp_node_id_source nis;
+  roster_t current_roster_shape;
+  get_current_roster_shape(current_roster_shape, nis, app);
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.exclude_patterns),
+                        current_roster_shape, app);
+
   path_set missing;
-  find_missing(app, args, missing);
+  find_missing(current_roster_shape, mask, missing);
 
   for (path_set::const_iterator i = missing.begin(); 
        i != missing.end(); ++i)

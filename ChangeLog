@@ -1,5 +1,14 @@
 2006-07-14  Nathaniel Smith  <njs@pobox.com>
 
+	* work.cc (find_missing): Take a restriction, instead of building
+	one from command line args.
+	(find_unknown_and_ignored): Similarly.
+	* cmd_list.cc (ls_missing, ls_unknown_or_ignored):
+	* cmd_ws_commit.cc (add, drop): Adjust accordingly.
+	(revert): Re-do --missing handling to work correctly.
+
+2006-07-14  Nathaniel Smith  <njs@pobox.com>
+
 	* restrictions.cc: Take file_path's instead of utf8 strings; make
 	it the cmd_* files's responsibility to convert user input into
 	properly typed data.

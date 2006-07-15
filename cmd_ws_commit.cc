@@ -58,10 +58,15 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   roster_t old_roster, new_roster;
   cset included, excluded;
 
+  N(app.missing || !args.empty() || !app.exclude_patterns.empty(),
+    F("you must pass at least one path to 'revert' (perhaps '.')"));
+
   app.require_workspace();
 
-  vector<utf8> includes;
-  vector<utf8> excludes;
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+                        old_roster, new_roster, app);
 
   if (app.missing)
     {
@@ -70,33 +75,26 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
       // specified args and then make a restriction that includes only
       // these missing files.
       path_set missing;
-      find_missing(app, args, missing);
+      find_missing(new_roster, mask, missing);
       if (missing.empty())
         {
-          L(FL("no missing files in restriction."));
+          P(F("no missing files to revert"));
           return;
         }
 
+      std::vector<file_path> missing_files;
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
         {
           file_path fp(*i);
           L(FL("missing files are '%s'") % fp);
-          includes.push_back(fp.as_external());
+          missing_files.push_back(fp);
         }
-    }
-  else
-    {
-      includes = args;
-      excludes = app.exclude_patterns;
-      N(!includes.empty() || !excludes.empty(),
-        F("you must pass at least one path to 'revert' (perhaps '.')"));
+      // replace the original mask with a more restricted one
+      mask = node_restriction(missing_files, std::vector<file_path>(),
+                              old_roster, new_roster, app);
     }
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  node_restriction mask(args_to_paths(includes),
-                        args_to_paths(excludes), old_roster, new_roster, app);
-
-  make_restricted_csets(old_roster, new_roster, 
+  make_restricted_csets(old_roster, new_roster,
                         included, excluded, mask);
 
   // The included cset will be thrown away (reverted) leaving the
@@ -232,8 +230,9 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   path_set paths;
   if (app.unknown)
     {
+      path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
       path_set ignored;
-      find_unknown_and_ignored(app, args, paths, ignored);
+      find_unknown_and_ignored(app, mask, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
@@ -259,7 +258,14 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
 
   path_set paths;
   if (app.missing)
-    find_missing(app, args, paths);
+    {
+      temp_node_id_source nis;
+      roster_t current_roster_shape;
+      get_current_roster_shape(current_roster_shape, nis, app);
+      node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+                            current_roster_shape, app);
+      find_missing(current_roster_shape, mask, paths);
+    }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
          i != args.end(); ++i)
