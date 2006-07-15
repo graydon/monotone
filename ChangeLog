@@ -1,3 +1,7 @@
+2006-07-15  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few fuzzies to clear.
+
 2006-07-15  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/diff_output_formats/: Use --no-show-encloser in the places
