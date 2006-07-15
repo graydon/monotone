@@ -1,5 +1,9 @@
 2006-07-14  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/revert_--missing_in_subdir/: Un-XFAIL.
+
+2006-07-14  Nathaniel Smith  <njs@pobox.com>
+
 	* work.cc (find_missing): Take a restriction, instead of building
 	one from command line args.
 	(find_unknown_and_ignored): Similarly.
