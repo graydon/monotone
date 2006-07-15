@@ -54,9 +54,18 @@ namespace commands
     virtual std::string params();
     virtual std::string desc();
     virtual void exec(app_state & app, 
-		      std::vector<utf8> const & args) = 0;
+                      std::vector<utf8> const & args) = 0;
   };
 };
+
+inline std::vector<file_path>
+args_to_paths(std::vector<utf8> const & args)
+{
+  std::vector<file_path> paths;
+  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+    paths.push_back(file_path_external(*i));
+  return paths;
+}
 
 std::string
 get_stdin();
@@ -97,8 +106,8 @@ complete(app_state & app,
   if (completions.size() > 1)
     {
       std::string err = 
-	(F("partial id '%s' has multiple ambiguous expansions:\n") 
-	 % str).str();
+        (F("partial id '%s' has multiple ambiguous expansions:\n") 
+         % str).str();
       for (typename std::set<ID>::const_iterator i = completions.begin();
             i != completions.end(); ++i)
         err += (i->inner()() + "\n");

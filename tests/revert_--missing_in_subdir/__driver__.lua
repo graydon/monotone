@@ -13,7 +13,7 @@ chdir("testdir")
 check(mtn("ls", "missing"), 0, true, false)
 check(readfile("stdout") == "testdir/testfile2\n" .. "testfile1\n")
 
-xfail(mtn("revert", "--missing", "."), 0, false, false)
+check(mtn("revert", "--missing", "."), 0, false, false)
 check(not exists("../testfile1"))
 check(exists("testfile2"))
 check(readfile("../somefile") == "GRRR\n")

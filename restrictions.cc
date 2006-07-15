@@ -30,13 +30,13 @@ using std::vector;
 // include these nodes.
 
 static void
-make_path_set(vector<utf8> const & args, path_set & paths)
+make_path_set(vector<file_path> const & paths, path_set & split_paths)
 {
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       split_path sp;
-      file_path_external(*i).split(sp);
-      paths.insert(sp);
+      i->split(sp);
+      split_paths.insert(sp);
     }
 }
 
@@ -159,8 +159,8 @@ validate_workspace_paths(path_set const & included_paths,
   N(bad == 0, F("%d unknown paths") % bad);
 }
 
-restriction::restriction(std::vector<utf8> const & includes,
-                         std::vector<utf8> const & excludes,
+restriction::restriction(std::vector<file_path> const & includes,
+                         std::vector<file_path> const & excludes,
                          app_state & a) :
   app(a)
 {
@@ -168,8 +168,8 @@ restriction::restriction(std::vector<utf8> const & includes,
   make_path_set(excludes, excluded_paths);
 }
 
-node_restriction::node_restriction(std::vector<utf8> const & includes,
-                                   std::vector<utf8> const & excludes,
+node_restriction::node_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
                                    roster_t const & roster,
                                    app_state & a) :
   restriction(includes, excludes, a)
@@ -182,8 +182,8 @@ node_restriction::node_restriction(std::vector<utf8> const & includes,
   validate_roster_paths(included_paths, excluded_paths, known_paths, app);
 }
 
-node_restriction::node_restriction(std::vector<utf8> const & includes,
-                                   std::vector<utf8> const & excludes,
+node_restriction::node_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
                                    roster_t const & roster1,
                                    roster_t const & roster2,
                                    app_state & a) :
@@ -202,8 +202,8 @@ node_restriction::node_restriction(std::vector<utf8> const & includes,
   validate_roster_paths(included_paths, excluded_paths, known_paths, app);
 }
 
-path_restriction::path_restriction(std::vector<utf8> const & includes,
-                                   std::vector<utf8> const & excludes,
+path_restriction::path_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
                                    app_state & a) :
   restriction(includes, excludes, a)
 {
@@ -611,9 +611,9 @@ test_simple_include()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
-  includes.push_back(utf8(string("x/x")));
-  includes.push_back(utf8(string("y/y")));
+  vector<file_path> includes, excludes;
+  includes.push_back(file_path_internal("x/x"));
+  includes.push_back(file_path_internal("y/y"));
 
   app_state app;
 
@@ -684,9 +684,9 @@ test_simple_exclude()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
-  excludes.push_back(utf8(string("x/x")));
-  excludes.push_back(utf8(string("y/y")));
+  vector<file_path> includes, excludes;
+  excludes.push_back(file_path_internal("x/x"));
+  excludes.push_back(file_path_internal("y/y"));
 
   app_state app;
 
@@ -757,11 +757,11 @@ test_include_exclude()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
-  includes.push_back(utf8(string("x")));
-  includes.push_back(utf8(string("y")));
-  excludes.push_back(utf8(string("x/x")));
-  excludes.push_back(utf8(string("y/y")));
+  vector<file_path> includes, excludes;
+  includes.push_back(file_path_internal("x"));
+  includes.push_back(file_path_internal("y"));
+  excludes.push_back(file_path_internal("x/x"));
+  excludes.push_back(file_path_internal("y/y"));
 
   app_state app;
 
@@ -832,14 +832,14 @@ test_exclude_include()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
+  vector<file_path> includes, excludes;
   // note that excludes higher up the tree than the top
   // include are rather pointless -- nothing above the
   // top include is included anyway
-  excludes.push_back(utf8(string("x")));
-  excludes.push_back(utf8(string("y")));
-  includes.push_back(utf8(string("x/x")));
-  includes.push_back(utf8(string("y/y")));
+  excludes.push_back(file_path_internal("x"));
+  excludes.push_back(file_path_internal("y"));
+  includes.push_back(file_path_internal("x/x"));
+  includes.push_back(file_path_internal("y/y"));
 
   app_state app;
 
@@ -910,9 +910,9 @@ test_invalid_roster_paths()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
-  includes.push_back(utf8(string("foo")));
-  excludes.push_back(utf8(string("bar")));
+  vector<file_path> includes, excludes;
+  includes.push_back(file_path_internal("foo"));
+  excludes.push_back(file_path_internal("bar"));
 
   app_state app;
   BOOST_CHECK_THROW(node_restriction(includes, excludes, roster, app), 
@@ -925,9 +925,9 @@ test_invalid_workspace_paths()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
-  includes.push_back(utf8(string("foo")));
-  excludes.push_back(utf8(string("bar")));
+  vector<file_path> includes, excludes;
+  includes.push_back(file_path_internal("foo"));
+  excludes.push_back(file_path_internal("bar"));
 
   app_state app;
   BOOST_CHECK_THROW(path_restriction(includes, excludes, app), 
@@ -940,9 +940,9 @@ test_include_depth_0()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
-  includes.push_back(utf8(string("x")));
-  includes.push_back(utf8(string("y")));
+  vector<file_path> includes, excludes;
+  includes.push_back(file_path_internal("x"));
+  includes.push_back(file_path_internal("y"));
 
   app_state app;
   // FIXME: depth == 0 currently means directory + immediate children
@@ -1017,7 +1017,7 @@ test_include_depth_0_empty_restriction()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
+  vector<file_path> includes, excludes;
 
   app_state app;
   // FIXME: depth == 0 currently means directory + immediate children
@@ -1092,9 +1092,9 @@ test_include_depth_1()
   roster_t roster;
   setup(roster);
 
-  vector<utf8> includes, excludes;
-  includes.push_back(utf8(string("x")));
-  includes.push_back(utf8(string("y")));
+  vector<file_path> includes, excludes;
+  includes.push_back(file_path_internal("x"));
+  includes.push_back(file_path_internal("y"));
 
   app_state app;
   // FIXME: depth == 1 currently means directory + children + grand children
