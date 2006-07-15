@@ -1,3 +1,17 @@
+2006-07-14  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_files.cc (diff): 
+	* cmd_diff_log.cc (fdiff): Oops, rename OPT_SHOW_ENCLOSER here
+	too.
+
+2006-07-14  Nathaniel Smith  <njs@pobox.com>
+
+	* app_state.cc (diff_show_encloser): Default to true.
+	* options.hh (OPT_SHOW_ENCLOSER): Rename to OPT_NO_SHOW_ENCLOSER.
+	* monotone.cc (coptions): Adjust accordingly -- rename switches to
+	--no-show-encloser and --no-show-c-function, remove -p.
+	(cpp_main): Adjust accordingly.
+
 2006-07-14  Alex Queiroz  <alex@ventonegro.org>
 
 	* po/pt_BR.po: More strings translated.

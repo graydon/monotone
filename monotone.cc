@@ -81,8 +81,8 @@ struct poptOption coptions[] =
     {"context", 'c', POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
     {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
     {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
-    {"show-encloser", 'p', POPT_ARG_NONE, NULL, OPT_SHOW_ENCLOSER, gettext_noop("show the function containing each block of changes"), NULL},
-    {"show-c-function", 0, POPT_ARG_NONE, NULL, OPT_SHOW_ENCLOSER, gettext_noop("another name for --show-encloser (for compatibility with GNU diff)"), NULL},
+    {"no-show-encloser", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("do not show the function containing each block of changes"), NULL},
+    {"no-show-c-function", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("another name for --no-show-encloser (for compatibility with GNU diff)"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
     {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
@@ -505,8 +505,8 @@ cpp_main(int argc, char ** argv)
               app.set_diff_args(utf8(string(argstr)));
               break;
 
-            case OPT_SHOW_ENCLOSER:
-              app.diff_show_encloser = true;
+            case OPT_NO_SHOW_ENCLOSER:
+              app.diff_show_encloser = false;
               break;
 
             case OPT_EXECUTE:

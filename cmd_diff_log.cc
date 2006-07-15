@@ -336,7 +336,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
        "is used by default."),
     OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
     OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
-    OPT_EXTERNAL_DIFF_ARGS % OPT_SHOW_ENCLOSER)
+    OPT_EXTERNAL_DIFF_ARGS % OPT_NO_SHOW_ENCLOSER)
 {
   bool new_is_archived;
   ostringstream header;
