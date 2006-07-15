@@ -64,8 +64,8 @@ class restriction
  protected:
   restriction(app_state & a) : app(a) {}
 
-  restriction(std::vector<utf8> const & includes,
-              std::vector<utf8> const & excludes,
+  restriction(std::vector<file_path> const & includes,
+              std::vector<file_path> const & excludes,
               app_state & a);
 
   app_state & app;
@@ -77,13 +77,13 @@ class node_restriction : public restriction
  public:
   node_restriction(app_state & a) : restriction(a) {}
 
-  node_restriction(std::vector<utf8> const & includes,
-                   std::vector<utf8> const & excludes,
+  node_restriction(std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
                    roster_t const & roster,
                    app_state & a);
 
-  node_restriction(std::vector<utf8> const & includes,
-                     std::vector<utf8> const & excludes,
+  node_restriction(std::vector<file_path> const & includes,
+                     std::vector<file_path> const & excludes,
                      roster_t const & roster1,
                      roster_t const & roster2,
                      app_state & a);
@@ -109,8 +109,8 @@ class path_restriction : public restriction
  public:
   path_restriction(app_state & a) : restriction(a) {}
 
-  path_restriction(std::vector<utf8> const & includes,
-                   std::vector<utf8> const & excludes,
+  path_restriction(std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
                    app_state & a);
 
   bool includes(split_path const & sp) const;

@@ -93,7 +93,8 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
     }
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  node_restriction mask(includes, excludes, old_roster, new_roster, app);
+  node_restriction mask(args_to_paths(includes),
+                        args_to_paths(excludes), old_roster, new_roster, app);
 
   make_restricted_csets(old_roster, new_roster, 
                         included, excluded, mask);
@@ -332,7 +333,8 @@ CMD(status, N_("informative"), N_("[PATH]..."),
   app.require_workspace();
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  node_restriction mask(args, app.exclude_patterns, 
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.exclude_patterns),
                         old_roster, new_roster, app);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
@@ -626,7 +628,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   app.require_workspace();
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  node_restriction mask(args, app.exclude_patterns, 
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.exclude_patterns),
                         old_roster, new_roster, app);
 
   update_current_roster_from_filesystem(new_roster, mask, app);

@@ -79,7 +79,8 @@ find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  node_restriction mask(args, app.exclude_patterns, new_roster, app);
+  node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+                        new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)

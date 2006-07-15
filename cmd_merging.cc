@@ -380,9 +380,9 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   // looks like this:
   //
   //            X
-  //           / \
-  //          Y   C
-  //         / \
+  //           / \.                      (periods to prevent multi-line
+  //          Y   C                       comment warnings)
+  //         / \.
   //        A   B
   //
   // A and B will be merged first, and then the result will be merged with C.
@@ -778,7 +778,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   {
     roster_t to_true_roster;
     app.db.get_roster(to_rid, to_true_roster);
-    node_restriction mask(args, app.exclude_patterns,
+    node_restriction mask(args_to_paths(args),
+                          args_to_paths(app.exclude_patterns),
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,

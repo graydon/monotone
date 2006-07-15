@@ -1,5 +1,15 @@
 2006-07-14  Nathaniel Smith  <njs@pobox.com>
 
+	* restrictions.cc: Take file_path's instead of utf8 strings; make
+	it the cmd_* files's responsibility to convert user input into
+	properly typed data.
+	* cmd.hh (args_to_paths): Convenience function to make this
+	easier.
+	* cmd_ws_commit.cc, cmd_merging.cc, cmd_list.cc, cmd_diff_log.cc:
+	Use it.
+
+2006-07-14  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/revert_file_to_base_revision/: Expect a proper error
 	message.
 
