@@ -1,9 +1,9 @@
 
 mtn_setup()
 
-get("parent")
-get("left")
-get("right")
+check(get("parent"))
+check(get("left"))
+check(get("right"))
 
 parent = "fe24df7edf04cb06161defc10b252c5fa32bf1f7"
 left = "f4657ce998dd0e39465a3f345f3540b689fd60ad"

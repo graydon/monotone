@@ -22,7 +22,7 @@ append("foo", "baz\n")
 commit(nil, nil, mtn2)
 check(mtn2("merge_into_dir", "otherbranch", "testbranch", "test"), 0, false, false)
 
-get("rcfile")
+check(get("rcfile"))
 check(mtn("merge", "--rcfile", "rcfile"), 0, false, false)
 check(mtn2("merge", "--rcfile", "rcfile"), 0, false, false)
 

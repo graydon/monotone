@@ -7,7 +7,6 @@ extern "C" {
 
 #include "lua.hh"
 #include "tester.h"
-#include "paths.hh"
 #include "platform.hh"
 #include "sanity.hh"
 
@@ -23,6 +22,8 @@ extern "C" {
 
 #include <map>
 #include <utility>
+
+namespace fs = boost::filesystem;
 
 using std::string;
 using std::map;
@@ -334,7 +335,7 @@ extern "C"
         if (fs::exists(testdir))
           do_remove_recursive(testdir);
         fs::create_directory(testdir);
-        go_to_workspace(testdir.native_file_string());
+        change_current_working_dir(testdir.native_file_string());
         lua_pushstring(L, testdir.native_file_string().c_str());
         lua_pushstring(L, tname.leaf().c_str());
         return 2;
@@ -360,7 +361,7 @@ extern "C"
             lua_pushnil(L);
             return 1;
           }
-        go_to_workspace(dir.native_file_string());
+        change_current_working_dir(dir.native_file_string());
         lua_pushstring(L, from.c_str());
         return 1;
       }
@@ -379,7 +380,7 @@ extern "C"
         char const * testname = luaL_checkstring(L, -1);
         fs::path tname(testname, fs::native);
         fs::path testdir = run_dir / tname.leaf();
-        go_to_workspace(run_dir.native_file_string());
+        change_current_working_dir(run_dir.native_file_string());
         do_remove_recursive(testdir);
         lua_pushboolean(L, true);
         return 1;
@@ -451,7 +452,7 @@ extern "C"
   {
     try
       {
-        go_to_workspace(run_dir.native_file_string());
+        change_current_working_dir(run_dir.native_file_string());
         lua_pushboolean(L, true);
         return 1;
       }
@@ -507,8 +508,7 @@ extern "C"
     try
       {
         char const * name = luaL_checkstring(L, -1);
-        fs::path p;
-        p = fs::path(name, fs::native);
+        fs::path p(name, fs::native);
         lua_pushboolean(L, fs::exists(p));
       }
     catch(fs::filesystem_error & e)
@@ -638,7 +638,8 @@ int main(int argc, char **argv)
       needhelp = true;
   if (argc > 1 && !needhelp)
     {
-      save_initial_path();
+      fs::initial_path();
+      fs::path::default_name_check(fs::native);
       try
         {
           std::string name = argv[1];
@@ -649,12 +650,11 @@ int main(int argc, char **argv)
       catch(fs::filesystem_error & e)
         {
           E(false, F("Error during initialization: %s") % e.what());
-          exit(1);
         }
       firstdir = fs::initial_path().native_file_string();
       run_dir = fs::initial_path() / "tester_dir";
       fs::create_directory(run_dir);
-      go_to_workspace(run_dir.native_file_string());
+      change_current_working_dir(run_dir.native_file_string());
     }
   else
     {
@@ -725,10 +725,10 @@ int main(int argc, char **argv)
       P(F("Error: %s") % e.what());
     }
   } catch (informative_failure & e) {
-    fprintf(stderr, "Error: %s\n", e.what.c_str());
+    P(F("Error: %s\n") % e.what.c_str());
     retcode = 1;
   } catch (std::logic_error & e) {
-    fprintf(stderr, "Invariant failure: %s\n", e.what());
+    P(F("Invariant failure: %s\n") % e.what());
     retcode = 3;
   }
   if (st)

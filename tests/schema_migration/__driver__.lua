@@ -32,7 +32,7 @@ remove("keys")
 check(mtn("db", "init"))
 
 -- Put some random keys in, with and without corresponding private keys
-get("migrate_keys", "stdin")
+check(get("migrate_keys", "stdin"))
 check(mtn("read"), 0, false, false, true)
 
 addfile("testfile1", "f1v1\n")
