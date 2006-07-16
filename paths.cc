@@ -17,7 +17,7 @@
 
 #include "constants.hh"
 #include "paths.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "sanity.hh"
 #include "interner.hh"
 #include "charset.hh"

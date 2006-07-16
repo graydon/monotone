@@ -97,7 +97,7 @@ public:
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();
-  void redirect_log_to(system_path const & filename);
+  void redirect_log_to(std::string const & filename);
 
   void set_prog_name(std::string const & name);
   std::string output_prefix();
@@ -126,8 +126,8 @@ extern struct user_interface ui;
 // (even if there is no terminal)
 unsigned int guess_terminal_width();
 
-// returns the a default user locale value
-const std::locale & get_user_locale();
+// Returns length in characters (not bytes).
+size_t display_width(std::string const & u);
 
 // Local Variables:
 // mode: C++

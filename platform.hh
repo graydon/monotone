@@ -17,9 +17,6 @@
 
 #include <string>
 
-#include "vocab.hh"
-#include "paths.hh"
-
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
 void get_system_flavour(std::string & ident);
 bool is_executable(const char *path);
@@ -49,7 +46,7 @@ unsigned int terminal_width();
 // returns 'true' if it has generated a valid inodeprint; returns 'false' if
 // there was a problem, in which case we should act as if the inodeprint has
 // changed.
-bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
+bool inodeprint_file(std::string const & file, std::string & out);
 
 // for netsync 'serve' pidfile support
 pid_t get_process_id();
@@ -58,17 +55,17 @@ pid_t get_process_id();
 // FIXME: BUG: this returns a string in the filesystem charset/encoding
 std::string get_current_working_dir();
 // calls N() if fails
-void change_current_working_dir(any_path const & to);
-utf8 tilde_expand(utf8 const & path);
-system_path get_default_confdir();
-utf8 get_homedir();
+void change_current_working_dir(std::string const & to);
+std::string tilde_expand(std::string const & path);
+std::string get_default_confdir();
+std::string get_homedir();
 namespace path
 {
   typedef enum { nonexistent, directory, file } status;
 };
-path::status get_path_status(any_path const & path);
+path::status get_path_status(std::string const & path);
 
-void rename_clobberingly(any_path const & from, any_path const & to);
+void rename_clobberingly(std::string const & from, std::string const & to);
 
 // strerror wrapper for OS-specific errors (e.g. use FormatMessage on Win32)
 std::string os_strerror(os_err_t errnum);
