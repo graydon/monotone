@@ -14,11 +14,11 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
-#include "vocab.hh"
+//#include "vocab.hh"
 #include "sanity.hh"
 #include "platform.hh"
 
-//namespace fs = boost::filesystem;
+namespace fs = boost::filesystem;
 
 std::string
 get_current_working_dir()
@@ -54,7 +54,7 @@ get_default_confdir()
         base = szPath;
     }
   N(!base.empty(), F("could not determine configuration path"));
-  return base + "\\monotone");
+  return base + "\\monotone";
 }
 
 // FIXME: BUG: this probably mangles character sets

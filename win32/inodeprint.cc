@@ -10,6 +10,7 @@
 #include "botan/sha160.h"
 
 #include "platform.hh"
+#include "sanity.hh"
 //#include "transforms.hh"
 //#include "file_io.hh"
 
@@ -38,7 +39,7 @@ bool inodeprint_file(std::string const & file, std::string & out)
   add_hash(hash, st.st_dev);
   add_hash(hash, st.st_size);
 
-  HANDLE filehandle = CreateFile(file.as_external().c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE filehandle = CreateFile(file.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (filehandle == INVALID_HANDLE_VALUE)
     return false;
 
