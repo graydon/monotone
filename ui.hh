@@ -129,9 +129,6 @@ unsigned int guess_terminal_width();
 // Returns length in characters (not bytes).
 size_t display_width(std::string const & u);
 
-// returns the a default user locale value
-const std::locale & get_user_locale();
-
 // Local Variables:
 // mode: C++
 // fill-column: 76

@@ -539,27 +539,6 @@ display_width(std::string const & u)
   return sz;
 }
 
-const locale &
-get_user_locale()
-{
-  // this is awkward because if LC_CTYPE is set to something the
-  // runtime doesn't know about, it will fail. in that case,
-  // the default will have to do.
-  static bool init = false;
-  static locale user_locale;
-  if (!init)
-    {
-      init = true;
-      try
-        {
-          user_locale = locale("");
-        }
-      catch( ... )
-        {}
-    }
-  return user_locale;
-}
-
 // Local Variables:
 // mode: C++
 // fill-column: 76

@@ -25,7 +25,6 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
-#include "ui.hh"
 
 using std::exception;
 using std::locale;
@@ -41,10 +40,8 @@ using boost::format;
 
 // debugging / logging system
 
-sanity global_sanity;
-
 sanity::sanity() :
-  debug(false), quiet(false), reallyquiet(false), relaxed(false), logbuf(0xffff),
+  debug(false), quiet(false), reallyquiet(false), logbuf(0xffff),
   already_dumping(false), clean_shutdown(false)
 {
   string flavour;
@@ -65,15 +62,15 @@ sanity::dump_buffer()
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
           copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
-          ui.inform((FL("wrote debugging log to %s\n"
+          inform_message((FL("wrote debugging log to %s\n"
                         "if reporting a bug, please include this file")
                        % filename).str());
         }
       else
-        ui.inform((FL("failed to write debugging log to %s") % filename).str());
+        inform_message((FL("failed to write debugging log to %s") % filename).str());
     }
   else
-    ui.inform("discarding debug log, because I have nowhere to write it\n"
+    inform_message("discarding debug log, because I have nowhere to write it\n"
               "(maybe you want --debug or --dump?)");
 }
 
@@ -92,7 +89,7 @@ sanity::set_debug()
   copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(oss));
   split_into_lines(oss.str(), lines);
   for (vector<string>::const_iterator i = lines.begin(); i != lines.end(); ++i)
-    ui.inform((*i) + "\n");
+    inform_log((*i) + "\n");
 }
 
 void
@@ -117,12 +114,6 @@ sanity::set_reallyquiet()
   reallyquiet = true;
 }
 
-void
-sanity::set_relaxed(bool rel)
-{
-  relaxed = rel;
-}
-
 string
 sanity::do_format(format_base const & fmt, char const * file, int line)
 {
@@ -132,10 +123,10 @@ sanity::do_format(format_base const & fmt, char const * file, int line)
     }
   catch (exception & e)
     {
-      ui.inform(F("fatal: formatter failed on %s:%d: %s")
+      inform_error((F("fatal: formatter failed on %s:%d: %s")
                 % file
                 % line
-                % e.what());
+                % e.what()).str());
       throw;
     }
 }
@@ -157,7 +148,7 @@ sanity::log(plain_format const & fmt,
   if (str[str.size() - 1] != '\n')
     logbuf.push_back('\n');
   if (debug)
-    ui.inform(str);
+    inform_log(str);
 }
 
 void
@@ -176,7 +167,7 @@ sanity::progress(i18n_format const & i18nfmt,
   if (str[str.size() - 1] != '\n')
     logbuf.push_back('\n');
   if (! quiet)
-    ui.inform(str);
+    inform_message(str);
 }
 
 void
@@ -196,7 +187,7 @@ sanity::warning(i18n_format const & i18nfmt,
   if (str[str.size() - 1] != '\n')
     logbuf.push_back('\n');
   if (! reallyquiet)
-    ui.warn(str);
+    inform_warning(str);
 }
 
 void
@@ -287,8 +278,8 @@ sanity::gasp()
   L(FL("finished saving work set"));
   if (debug)
     {
-      ui.inform("contents of work set:");
-      ui.inform(gasp_dump);
+      inform_log("contents of work set:");
+      inform_log(gasp_dump);
     }
   already_dumping = false;
 }
@@ -332,6 +323,26 @@ void MusingBase::gasp_body(const string & objstr, string & out) const
           ).str();
 }
 
+const locale &
+get_user_locale()
+{
+  // this is awkward because if LC_CTYPE is set to something the
+  // runtime doesn't know about, it will fail. in that case,
+  // the default will have to do.
+  static bool init = false;
+  static locale user_locale;
+  if (!init)
+    {
+      init = true;
+      try
+        {
+          user_locale = locale("");
+        }
+      catch( ... )
+        {}
+    }
+  return user_locale;
+}
 
 struct
 format_base::impl

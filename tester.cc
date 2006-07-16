@@ -29,6 +29,21 @@ using std::map;
 using std::make_pair;
 using boost::lexical_cast;
 
+// Lua uses the c i/o functions, so we need to too.
+struct tester_sanity : public sanity
+{
+  void inform_log(std::string const &msg)
+  {fprintf(stdout, "%s", msg.c_str());}
+  void inform_message(std::string const &msg)
+  {fprintf(stdout, "%s", msg.c_str());};
+  void inform_warning(std::string const &msg)
+  {fprintf(stderr, "warning: %s", msg.c_str());};
+  void inform_error(std::string const &msg)
+  {fprintf(stderr, "error: %s", msg.c_str());};
+};
+tester_sanity real_sanity;
+sanity & global_sanity(real_sanity);
+
 namespace redirect
 {
   enum what {in, out, err};
@@ -611,6 +626,9 @@ extern "C"
 
 int main(int argc, char **argv)
 {
+  int retcode = 2;
+  lua_State *st = 0;
+  try{
 //  global_sanity.set_debug();
   string testfile;
   string firstdir;
@@ -630,7 +648,7 @@ int main(int argc, char **argv)
         }
       catch(fs::filesystem_error & e)
         {
-          fprintf(stderr, "Error during initialization: %s", e.what());
+          E(false, F("Error during initialization: %s") % e.what());
           exit(1);
         }
       firstdir = fs::initial_path().native_file_string();
@@ -640,17 +658,17 @@ int main(int argc, char **argv)
     }
   else
     {
-      fprintf(stderr, "Usage: %s test-file [arguments]\n", argv[0]);
-      fprintf(stderr, "\t-h         print this message\n");
-      fprintf(stderr, "\t-l         print test names only; don't run them\n");
-      fprintf(stderr, "\t-d         don't clean the scratch directories\n");
-      fprintf(stderr, "\tnum        run a specific test\n");
-      fprintf(stderr, "\tnum..num   run tests in a range\n");
-      fprintf(stderr, "\t           if num is negative, count back from the end\n");
-      fprintf(stderr, "\tregex      run tests with matching names\n");
+      P(F("Usage: %s test-file [arguments]\n") % argv[0]);
+      P(F("\t-h         print this message\n"));
+      P(F("\t-l         print test names only; don't run them\n"));
+      P(F("\t-d         don't clean the scratch directories\n"));
+      P(F("\tnum        run a specific test\n"));
+      P(F("\tnum..num   run tests in a range\n"));
+      P(F("\t           if num is negative, count back from the end\n"));
+      P(F("\tregex      run tests with matching names\n"));
       return 1;
     }
-  lua_State *st = lua_open();
+  st = lua_open();
   lua_atpanic (st, &panic_thrower);
   luaopen_base(st);
   luaopen_io(st);
@@ -685,7 +703,6 @@ int main(int argc, char **argv)
   lua_pushstring(st, firstdir.c_str());
   lua_settable(st, LUA_GLOBALSINDEX);
 
-  int ret = 2;
   try
     {
       run_string(st, tester_constant, "tester builtin functions");
@@ -701,15 +718,22 @@ int main(int argc, char **argv)
           ll.set_table();
         }
       ll.call(1,1)
-        .extract_int(ret);
+        .extract_int(retcode);
     }
   catch (std::exception &e)
     {
-      fprintf(stderr, "Error: %s", e.what());
+      P(F("Error: %s") % e.what());
     }
-
-  lua_close(st);
-  return ret;
+  } catch (informative_failure & e) {
+    fprintf(stderr, "Error: %s\n", e.what.c_str());
+    retcode = 1;
+  } catch (std::logic_error & e) {
+    fprintf(stderr, "Invariant failure: %s\n", e.what());
+    retcode = 3;
+  }
+  if (st)
+    lua_close(st);
+  return retcode;
 }
 
 // Local Variables:

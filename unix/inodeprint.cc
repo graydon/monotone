@@ -10,8 +10,6 @@
 #include "botan/sha160.h"
 
 #include "platform.hh"
-#include "transforms.hh"
-#include "file_io.hh"
 #include "constants.hh"
 
 namespace

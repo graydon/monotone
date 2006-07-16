@@ -7,7 +7,7 @@ CMD_SOURCES =								\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
 SANITY_CORE_SOURCES =							\
-	sanity.cc sanity.hh ui.cc ui.hh quick_alloc.hh			\
+	sanity.cc sanity.hh quick_alloc.hh				\
 	simplestring_xform.cc simplestring_xform.hh			\
 	constants.cc constants.hh numeric_vocab.hh			\
 	platform.hh
@@ -22,6 +22,7 @@ LUAEXT_SOURCES =							\
 
 MOST_SOURCES =								\
 	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES) platform-wrapped.hh	\
+	 mtn-sanity.cc mtn-sanity.hh ui.cc ui.hh			\
 	 app_state.cc app_state.hh					\
          commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\

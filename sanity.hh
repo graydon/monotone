@@ -52,19 +52,17 @@ struct i18n_format;
 
 struct sanity {
   sanity();
-  ~sanity();
+  virtual ~sanity();
   void dump_buffer();
   void set_debug();
   void set_brief();
   void set_quiet();
   void set_reallyquiet();
-  void set_relaxed(bool rel);
 
   bool debug;
   bool brief;
   bool quiet;
   bool reallyquiet;
-  bool relaxed;
   boost::circular_buffer<char> logbuf;
   std::string filename;
   std::string gasp_dump;
@@ -94,11 +92,15 @@ struct sanity {
 private:
   std::string do_format(format_base const & fmt,
                         char const * file, int line);
+  virtual void inform_log(std::string const &msg) = 0;
+  virtual void inform_message(std::string const &msg) = 0;
+  virtual void inform_warning(std::string const &msg) = 0;
+  virtual void inform_error(std::string const &msg) = 0;
 };
 
-typedef std::runtime_error oops;
+extern sanity & global_sanity;
 
-extern sanity global_sanity;
+typedef std::runtime_error oops;
 
 // This hides boost::format from infecting every source file. Instead, we
 // implement a single very small formatter.
