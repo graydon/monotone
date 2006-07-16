@@ -1,3 +1,7 @@
+2006-07-15  Derek Scherger  <derek@echologic.com>
+
+	* tester.txt: wrap long lines and fix a couple spelling errors
+
 2006-07-15  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A few fuzzies to clear.
