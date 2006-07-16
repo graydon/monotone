@@ -262,6 +262,10 @@ skip_if(bool)
 
 If the argument is true, abort the test (throw true) and mark it as skipped.
 
+xfail(...)
+
+Equivalent to xfail_if(true, ...).
+
 xfail_if(chk, ...)
 
 Give the ... arguments to check(), and catch any errors. If chk is false just

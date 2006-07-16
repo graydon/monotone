@@ -72,7 +72,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 class transaction_guard;
 struct posting;
 class app_state;
-struct revision_set;
+struct revision_t;
 struct query;
 
 class database
@@ -280,13 +280,13 @@ public:
   void deltify_revision(revision_id const & rid);
 
   void get_revision(revision_id const & ident,
-                    revision_set & cs);
+                    revision_t & cs);
 
   void get_revision(revision_id const & ident,
                     revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-                    revision_set const & rev);
+                    revision_t const & rev);
 
   void put_revision(revision_id const & new_id,
                     revision_data const & dat);

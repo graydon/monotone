@@ -126,9 +126,9 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       return;
     }
 
-  revision_set rev;
+  revision_t rev;
   MM(rev);
-  read_revision_set(dat, rev);
+  read_revision(dat, rev);
 
   for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); ++i)
@@ -529,7 +529,7 @@ packet_roundabout_test()
     pw.consume_file_delta(fid, fid2, file_delta(del));
 
     // a rdata packet
-    revision_set rev;
+    revision_t rev;
     rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     split_path sp;
     file_path_internal("").split(sp);
@@ -538,7 +538,7 @@ packet_roundabout_test()
     rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
                                     cs));
     revision_data rdat;
-    write_revision_set(rev, rdat);
+    write_revision(rev, rdat);
     revision_id rid;
     calculate_ident(rdat, rid);
     pw.consume_revision_data(rid, rdat);

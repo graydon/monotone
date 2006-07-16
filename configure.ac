@@ -254,6 +254,45 @@ then
    fi
 fi
 
+# check for the obnoxious gcc 4.1.[01] template static data bug
+# (see http://gcc.gnu.org/PR28016)
+cv=ac_cv_prog_cxx_`echo $CXX | tr -c A-Za-z0-9_ _`_template_static_const_ok
+
+code='
+template<class T> struct S { static const bool B; };
+template<class T> const bool S<T>::B = true;'
+
+codeA="
+$code
+int foo() { return 0; }"
+
+codeB="
+$code
+extern int foo();
+int main() { return foo(); }"
+
+AC_CACHE_CHECK(
+  [whether $CXX handles templates with static const members correctly],
+  $cv,
+  [AC_LANG_PUSH([C++])
+   # Autoconf doesn't make it easy to do a test involving 
+   # linking two files.  This is the best way I know of.
+   AC_COMPILE_IFELSE([$codeA],
+     [mv conftest.$ac_objext conftestA.$ac_objext
+      save_LIBS="$LIBS"
+      LIBS=conftestA.$ac_objext
+      AC_LINK_IFELSE([$codeB],
+        [eval $cv=yes],
+        [eval $cv=no])
+      LIBS="$save_LIBS"],
+     [eval $cv=no])
+   AC_LANG_POP([C++])])
+if eval "test x\"\${$cv}\" = xno"; then
+  # ??? This is the correct workaround for g++ and gnu ld, but maybe not
+  # for others.  (But this is a GNU-specific bug, so...)
+  LDFLAGS="$LDFLAGS -Wl,-z,muldefs"
+fi
+
 # check for precompiled headers option
 AC_ARG_ENABLE(pch,
 AS_HELP_STRING([--enable-pch],

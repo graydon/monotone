@@ -59,7 +59,7 @@ CMD(update, N_("workspace"), "",
        "If not, update the workspace to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
-  revision_set r_working;
+  revision_t r_working;
   roster_t working_roster, chosen_roster, target_roster;
   shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
   marking_map working_mm, chosen_mm, merged_mm, target_mm;
@@ -84,7 +84,7 @@ CMD(update, N_("workspace"), "",
   update_current_roster_from_filesystem(working_roster, app);
 
   get_revision_id(r_old_id);
-  make_revision_set(r_old_id, *old_roster, working_roster, r_working);
+  make_revision(r_old_id, *old_roster, working_roster, r_working);
 
   calculate_ident(r_working, r_working_id);
   I(r_working.edges.size() == 1);
@@ -294,13 +294,62 @@ CMD(update, N_("workspace"), "",
   maybe_update_inodeprints(app);
 }
 
+// Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
+// placing results onto BRANCH.  Note that interactive_merge_and_store may
+// bomb out, and therefore so may this.
+static void
+merge_two(revision_id const & left, revision_id const & right,
+          string const & branch, string const & caller, app_state & app)
+{
+  // The following mess constructs a neatly formatted log message that looks
+  // like this:
+  //    CALLER of 'LEFT'
+  //          and 'RIGHT'
+  //    to branch 'BRANCH'
+  // where the last line is left out if we're merging onto the current branch.
+  // We use a stringstream because boost::format does not support %-*s.
+  using std::ostringstream;
+  using std::setw;
+  using std::max;
+
+  ostringstream log;
+  size_t fieldwidth = max(caller.size() + strlen(" of '"), strlen("and '"));
+
+  if (branch != app.branch_name())
+    fieldwidth = max(fieldwidth, strlen("to branch '"));
+
+  log << setw(fieldwidth - strlen(" of '")) << caller << " of '" << left
+      << "'\n" << setw(fieldwidth) << "and '" << right
+      << "'\n";
+
+  if (branch != app.branch_name())
+    log << setw(fieldwidth) << "to branch '" << branch << "'\n";
+
+  // Now it's time for the real work.
+  P(F("[left]  %s") % left);
+  P(F("[right] %s") % right);
+  
+  revision_id merged;
+  transaction_guard guard(app.db);
+  interactive_merge_and_store(left, right, merged, app);
+
+  packet_db_writer dbw(app);
+  cert_revision_in_branch(merged, branch, app, dbw);
+  cert_revision_changelog(merged, log.str(), app, dbw);
+
+  guard.commit();
+  P(F("[merged] %s") % merged);
+}
 
 // should merge support --message, --message-file?  It seems somewhat weird,
 // since a single 'merge' command may perform arbitrarily many actual merges.
+// (Possibility: append the --message/--message-file text to the synthetic
+// log message constructed in merge_two().)
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
 {
-  set<revision_id> heads;
+  typedef std::pair<revision_id, revision_id> revpair;
+  typedef set<revision_id>::const_iterator rid_set_iter;
 
   if (args.size() != 0)
     throw usage(name);
@@ -308,6 +357,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   N(app.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
+  set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
 
   N(heads.size() != 0, F("branch '%s' is empty") % app.branch_name);
@@ -317,36 +367,80 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       return;
     }
 
-  set<revision_id>::const_iterator i = heads.begin();
-  revision_id left = *i;
-  revision_id ancestor;
-  size_t count = 1;
-  P(F("starting with revision 1 / %d") % heads.size());
-  for (++i; i != heads.end(); ++i, ++count)
+  P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
+    % heads.size() % app.branch_name);
+
+  map<revision_id, revpair> heads_for_ancestor;
+  set<revision_id> ancestors;
+  size_t pass = 1, todo = heads.size() - 1;
+
+  // If there are more than two heads to be merged, on each iteration we
+  // merge a pair whose least common ancestor is not an ancestor of any
+  // other pair's least common ancestor.  For example, if the history graph
+  // looks like this:
+  //
+  //            X
+  //           / \.                      (periods to prevent multi-line
+  //          Y   C                       comment warnings)
+  //         / \.
+  //        A   B
+  //
+  // A and B will be merged first, and then the result will be merged with C.
+  while (heads.size() > 2)
     {
-      revision_id right = *i;
-      P(F("merging with revision %d / %d") % (count + 1) % heads.size());
-      P(F("[source] %s") % left);
-      P(F("[source] %s") % right);
+      P(F("merge %d / %d:") % pass % todo);
+      P(F("calculating best pair of heads to merge next"));
 
-      revision_id merged;
-      transaction_guard guard(app.db);
-      interactive_merge_and_store(left, right, merged, app);
+      // For every pair of heads, determine their merge ancestor, and
+      // remember the ancestor->head mapping. 
+      for (rid_set_iter i = heads.begin(); i != heads.end(); ++i)
+        for (rid_set_iter j = i; j != heads.end(); ++j)
+          {
+            // It is not possible to initialize j to i+1 (set iterators
+            // expose neither operator+ nor a nondestructive next() method)
+            if (j == i)
+              continue;
 
-      // merged 1 edge; now we commit this, update merge source and
-      // try next one
+            revision_id ancestor;
+            find_common_ancestor_for_merge(*i, *j, ancestor, app);
+            
+            // More than one pair might have the same ancestor (e.g. if we
+            // have three heads all with the same parent); as this table
+            // will be recalculated on every pass, we just take the first
+            // one we find.
+            if (ancestors.insert(ancestor).second)
+              safe_insert(heads_for_ancestor, std::make_pair(ancestor, revpair(*i, *j)));
+          }
+    
+      // Erasing ancestors from ANCESTORS will now produce a set of merge
+      // ancestors each of which is not itself an ancestor of any other
+      // merge ancestor.
+      erase_ancestors(ancestors, app);
+      I(ancestors.size() > 0);
 
-      packet_db_writer dbw(app);
-      cert_revision_in_branch(merged, app.branch_name(), app, dbw);
+      // Take the first ancestor from the above set and merge its
+      // corresponding pair of heads.
+      revpair p = heads_for_ancestor[*ancestors.begin()];
+      
+      merge_two(p.first, p.second, app.branch_name(), string("merge"), app);
 
-      string log = (FL("merge of %s\n"
-                       "     and %s\n") % left % right).str();
-      cert_revision_changelog(merged, log, app, dbw);
-
-      guard.commit();
-      P(F("[merged] %s") % merged);
-      left = merged;
+      ancestors.clear();
+      heads_for_ancestor.clear();
+      get_branch_heads(app.branch_name(), app, heads);
+      pass++;
     }
+
+  // Last one.
+  I(pass == todo);
+  if (todo > 1)
+    P(F("merge %d / %d:") % pass % todo);
+
+  rid_set_iter i = heads.begin();
+  revision_id left = *i++;
+  revision_id right = *i++;
+  I(i == heads.end());
+  
+  merge_two(left, right, app.branch_name(), string("merge"), app);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -544,27 +638,7 @@ CMD(explicit_merge, N_("tree"),
   N(!is_ancestor(right, left, app),
     F("%s is already an ancestor of %s") % right % left);
 
-  // Somewhat redundant, but consistent with output of plain "merge" command.
-  P(F("[source] %s") % left);
-  P(F("[source] %s") % right);
-
-  revision_id merged;
-  transaction_guard guard(app.db);
-  interactive_merge_and_store(left, right, merged, app);
-
-  packet_db_writer dbw(app);
-
-  cert_revision_in_branch(merged, branch, app, dbw);
-
-  string log = (FL("explicit_merge of '%s'\n"
-                   "              and '%s'\n"
-                   "        to branch '%s'\n")
-                % left % right % branch).str();
-
-  cert_revision_changelog(merged, log, app, dbw);
-
-  guard.commit();
-  P(F("[merged] %s") % merged);
+  merge_two(left, right, branch, string("explicit merge"), app);
 }
 
 CMD(show_conflicts, N_("informative"), N_("REV REV"), 
@@ -608,7 +682,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.directory_loop_conflicts.size());
 }                                                                
 
-CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
+CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     N_("Apply changes made at arbitrary places in history to current workspace.\n"
        "This command takes changes made at any point in history, and\n"
        "edits your current workspace to include those changes.  The end result\n"
@@ -621,16 +695,16 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
        "\n"
        "If two revisions are given, applies the changes made to get from the\n"  
        "first revision to the second."),                                                                            
-    OPT_REVISION)
+    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE)
 {
-  if (args.size() > 0)
-    throw usage(name);                                                                 
-  
+  // Work out our arguments
   revision_id from_rid, to_rid;
 
   if (app.revision_selectors.size() == 1)
     {
       complete(app, idx(app.revision_selectors, 0)(), to_rid);
+      N(app.db.revision_exists(to_rid),
+        F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
       app.db.get_revision_parents(to_rid, parents);
       N(parents.size() == 1,
@@ -644,7 +718,11 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
   else if (app.revision_selectors.size() == 2)
     {
       complete(app, idx(app.revision_selectors, 0)(), from_rid);
+      N(app.db.revision_exists(from_rid),
+        F("no such revision '%s'") % from_rid);
       complete(app, idx(app.revision_selectors, 1)(), to_rid);
+      N(app.db.revision_exists(to_rid),
+        F("no such revision '%s'") % to_rid);
     }
   else
     throw usage(name);
@@ -666,62 +744,67 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
   // - merged is the result of the plucking, and achieved by running a
   //   merge in the fictional graph seen above
   //
+  // To perform the merge, we use the real from roster, and the real working
+  // roster, but synthesize a temporary 'to' roster.  This ensures that the
+  // 'from', 'working' and 'base' rosters all use the same nid namespace,
+  // while any additions that happened between 'from' and 'to' should be
+  // considered as new nodes, even if the file that was added is in fact in
+  // 'working' already -- so 'to' needs its own namespace.  (Among other
+  // things, it is impossible with our merge formalism to have the above
+  // graph with a node that exists in 'to' and 'working', but not 'from'.)
+  //
   // finally, we take the cset from working -> merged, and apply that to the
   //   workspace
   // and take the cset from the workspace's base, and write that to _MTN/work
 
-  // Get the FROM roster and markings
+  // The node id source we'll use for the 'working' and 'to' rosters.
+  temp_node_id_source nis;
+
+  // Get the FROM roster
   shared_ptr<roster_t> from_roster = shared_ptr<roster_t>(new roster_t());
   MM(*from_roster);
-  marking_map from_markings;
-  app.db.get_roster(from_rid, *from_roster, from_markings);
+  app.db.get_roster(from_rid, *from_roster);
 
-  // Get the FROM->WORKING and FROM->TO csets, and also the base roster
-  // and working rid while we're at it
-  cset from_to_working, from_to_to;
-  MM(from_to_working);
-  MM(from_to_to);
+  // Get the WORKING roster, and also the base roster while we're at it
+  roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
-  revision_id working_rid;
+  get_base_and_current_roster_shape(base_roster, working_roster,
+                                    nis, app);
+  update_current_roster_from_filesystem(working_roster, app);
+
+  // Get the FROM->TO cset
+  cset from_to_to; MM(from_to_to);
+  cset from_to_to_excluded; MM(from_to_to_excluded);
   {
-    // Get the workspace stuff
-    temp_node_id_source nis;
-    revision_id working_rid;
-    roster_t working_true_roster;
-    get_base_and_current_roster_shape(base_roster, working_true_roster,
-                                      nis, app);
-    update_current_roster_from_filesystem(working_true_roster, app);
-    make_cset(*from_roster, working_true_roster, from_to_working);
-    revision_id base_rid;
-    get_revision_id(base_rid);
-    revision_set working_rev;
-    make_revision_set(base_rid, base_roster, working_true_roster, working_rev);
-    calculate_ident(working_rev, working_rid);
-  }
-  {
-    // Get the TO roster
     roster_t to_true_roster;
     app.db.get_roster(to_rid, to_true_roster);
-    make_cset(*from_roster, to_true_roster, from_to_to);
+    node_restriction mask(args_to_paths(args),
+                          args_to_paths(app.exclude_patterns),
+                          *from_roster, to_true_roster, app);
+    make_restricted_csets(*from_roster, to_true_roster,
+                          from_to_to, from_to_to_excluded,
+                          mask);
   }
 
-  // Recreate the working and to rosters with renumbered nids and fake
-  // markings.  We have to go roster->cset->roster because our marking code
-  // works on csets, and we need our final roster and final markings to use
-  // compatible nids.
-  temp_node_id_source nis;
-  roster_t working_roster, to_roster;
-  MM(working_roster);
-  MM(to_roster);
-  marking_map working_markings, to_markings;
-  make_roster_for_base_plus_cset(from_rid, from_to_working,
-                                 working_rid,
-                                 working_roster, working_markings,
-                                 nis, app);
-  make_roster_for_base_plus_cset(from_rid, from_to_to,
-                                 to_rid,
-                                 to_roster, to_markings,
-                                 nis, app);
+  // Use a fake rid
+  revision_id working_rid(std::string("0000000000000000000000000000000000000001"));
+
+  // Mark up the FROM roster
+  marking_map from_markings; MM(from_markings);
+  mark_roster_with_no_parents(from_rid, *from_roster, from_markings);
+
+  // Mark up the WORKING roster
+  marking_map working_markings; MM(working_markings);
+  mark_roster_with_one_parent(*from_roster, from_markings,
+                              working_rid, working_roster,
+                              working_markings);
+  
+  // Create and mark up the TO roster
+  roster_t to_roster; MM(to_roster);
+  marking_map to_markings; MM(to_markings);
+  make_roster_for_base_plus_cset(from_rid, from_to_to, to_rid,
+                                 to_roster, to_markings, nis,
+                                 app);
 
   // Set up the synthetic graph, by creating uncommon ancestor sets
   std::set<revision_id> working_uncommon_ancestors, to_uncommon_ancestors;
@@ -771,9 +854,14 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO"),
     std::string log_str = log();
     if (!log_str.empty())
       log_str += "\n";
-    log_str += (FL("applied changes from %s\n"
-                   "             through %s\n")
-                % from_rid % to_rid).str();
+    if (from_to_to_excluded.empty())
+      log_str += (FL("applied changes from %s\n"
+                     "             through %s\n")
+                  % from_rid % to_rid).str();
+    else
+      log_str += (FL("applied partial changes from %s\n"
+                     "                     through %s\n")
+                  % from_rid % to_rid).str();
     write_user_log(data(log_str));
   }
 }

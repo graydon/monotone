@@ -1594,18 +1594,18 @@ void
 database::get_revision_manifest(revision_id const & rid,
                                manifest_id & mid)
 {
-  revision_set rev;
+  revision_t rev;
   get_revision(rid, rev);
   mid = rev.new_manifest;
 }
 
 void
 database::get_revision(revision_id const & id,
-                       revision_set & rev)
+                       revision_t & rev)
 {
   revision_data d;
   get_revision(id, d);
-  read_revision_set(d, rev);
+  read_revision(d, rev);
 }
 
 void
@@ -1636,7 +1636,7 @@ void
 database::deltify_revision(revision_id const & rid)
 {
   transaction_guard guard(*this);
-  revision_set rev;
+  revision_t rev;
   MM(rev);
   MM(rid);
   get_revision(rid, rev);
@@ -1673,7 +1673,7 @@ database::deltify_revision(revision_id const & rid)
 
 void
 database::put_revision(revision_id const & new_id,
-                       revision_set const & rev)
+                       revision_t const & rev)
 {
   MM(new_id);
   MM(rev);
@@ -1684,7 +1684,7 @@ database::put_revision(revision_id const & new_id,
   rev.check_sane();
   revision_data d;
   MM(d.inner());
-  write_revision_set(rev, d);
+  write_revision(rev, d);
 
   // Phase 1: confirm the revision makes sense
   {
@@ -1737,8 +1737,8 @@ void
 database::put_revision(revision_id const & new_id,
                        revision_data const & dat)
 {
-  revision_set rev;
-  read_revision_set(dat, rev);
+  revision_t rev;
+  read_revision(dat, rev);
   put_revision(new_id, rev);
 }
 
