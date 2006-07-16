@@ -21,6 +21,9 @@
 #include "constants.hh"
 #include "basic_io.hh"
 
+#include "botan/botan.h"
+#include "botan/sha160.h"
+
 using std::ostream;
 using std::ostringstream;
 using std::string;
@@ -96,6 +99,53 @@ write_inodeprint_map(inodeprint_map const & ipm,
       pr.print_stanza(st);
     }
   dat = pr.buf;
+}
+
+class my_iprint_calc : public inodeprint_calculator
+{
+  std::string res;
+  Botan::SHA_160 hash;
+  bool too_close;
+  my_iprint_calc() : too_close(false)
+  {}
+  void add_item(void *dat, size_t size)
+  {
+    size_t size = sizeof(obj);
+    hash.update(reinterpret_cast<Botan::byte const *>(&size),
+                sizeof(size));
+    hash.update(reinterpret_cast<Botan::byte const *>(&obj),
+                sizeof(obj));
+  }
+public:
+  std::string str()
+  {
+    char digest[constants::sha1_digest_length];
+    hash.final(reinterpret_cast<Botan::byte *>(digest));
+    return std::string(digest, constants::sha1_digest_length);
+  }
+  void note_nowish(bool n)
+  {
+    too_close = n;
+  }
+  void note_future(bool f)
+  {
+    add_item(f);
+  }
+  bool ok()
+  {
+    return !too_close;
+  }
+};
+
+bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
+{
+  my_iprint_calc calc;
+  bool ret = inodeprint_file(file.as_external(), calc);
+  inodeprint ip_raw(calc.str());
+  if (!ret)
+    ip_raw = inodeprint("");
+  encode_hexenc(ip_raw, ip);
+  return ret && calc.ok();
 }
 
 // Local Variables:

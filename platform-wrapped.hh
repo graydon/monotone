@@ -6,15 +6,6 @@
 #include "transforms.hh"
 #include "vocab.hh"
 
-inline bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
-{
-  std::string out;
-  bool ret = inodeprint_file(file.as_external(), out);
-  inodeprint ip_raw(out);
-  encode_hexenc(ip_raw, ip);
-  return ret;
-}
-
 inline utf8 tilde_expand(utf8 const & path)
 {
   return tilde_expand(path());
