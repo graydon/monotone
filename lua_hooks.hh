@@ -97,6 +97,9 @@ public:
                           std::string const & oldrev,
                           std::string const & newrev);
 
+  bool hook_get_encloser_pattern(file_path const & path,
+                                 std::string & pattern);
+
   // workspace hooks
   bool hook_use_inodeprints();
 

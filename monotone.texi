@@ -87,8 +87,9 @@ version control tools.
 * Index::               Index of concepts and functions
 @end menu
 
-
+@ifnottex
 Complete table of contents
+@end ifnottex
 
 @contents
 
@@ -4019,7 +4020,6 @@ computer clocks is not reliable, so monotone usually ignores time.
 
 
 @item mtn merge [--branch=@var{branchname}]
-@item mtn merge --lca [--branch=@var{branchname}]
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
 resulting merged revision as a member of @var{branchname}. The merged
@@ -4031,17 +4031,7 @@ graph and these 3 revisions are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn propagate @var{sourcebranch} @var{destbranch}
-@item mtn propagate --lca @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
 ancestor of the two heads for a 3-way merge. The resulting revision is
@@ -4057,26 +4047,14 @@ maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn explicit_merge @var{id} @var{id} @var{destbranch}
-@itemx mtn explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}
 This command merges exactly the two @var{id}s you give it, and places
 the result in branch @var{destbranch}.  It is useful when you need more
 control over the merging process than @code{propagate} or @code{merge}
 give you.  For instance, if you have a branch with three heads, and you
 only want to merge two of them, you can use this command.  Or if you
 have a branch with two heads, and you want to propagate one of them to
-another branch, again, you can use this command. If the optional
-@var{ancestor} argument is given, the merge uses that revision as the
-common ancestor instead of the default ancestor.
+another branch, again, you can use this command.
 
 @item mtn merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
 This command takes a unique head from @var{sourcebranch} and merges it
@@ -4319,6 +4297,33 @@ If a @option{--branch} option is specified, the @command{update} command
 tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the workspace (even if you also
 specify an explicit @option{--revision} argument).
+
+@item mtn pluck --revision=@var{to}
+@itemx mtn pluck --revision=@var{from} --revision=@var{to}
+
+This command takes changes made at any point in history, and attempts
+to edit your current workspace to include those changes.  The end
+result is identical to 'mtn diff -r FROM -r TO | patch -p0', except
+that this command uses monotone's merger, and thus intelligently
+handles renames, conflicts, and so on.
+
+If only one revision is given, applies the changes made in @var{to} as
+compared to @var{to}'s parent.  If two revisions are given, applies
+the changes made to get from @var{from} to @var{to}.
+
+Note that this is not a true cherrypick operation.  A true cherrypick,
+as that word is used in version control theory, involves applying some
+changes out of context, and then recording the identity between the
+original changes and the newly applied changes for the use of later
+merges.  This command does the first part, not the second.  As far as
+monotone is concerned, the changes made by @command{mtn pluck} are
+exactly like those made in an editor; the command is simply a
+convenient way to make certain edits quickly.  In practice, this is
+rarely a problem.  @command{mtn pluck} should almost always be used
+between branches that will never be merged --- for instance,
+backporting fixes from a development branch to a stable branch.  It is
+not recommended to rely on this command as a central part of one's
+workflow.
 
 @item mtn refresh_inodeprints
 This command puts the current workspace into @ref{Inodeprints} mode,
@@ -4594,9 +4599,9 @@ $ mt complete revision 01f
 @end group
 @end smallexample
 
-@item mtn diff
-@item mtn diff --context
-@item mtn diff --external [--diff-args=@var{argstring}]
+@item mtn diff [--unified] [--show-encloser]
+@itemx mtn diff --context [--show-encloser]
+@itemx mtn diff --external [--diff-args=@var{argstring}]
 @itemx mtn diff @var{pathname...}
 @itemx mtn diff --revision=@var{id}
 @itemx mtn diff --revision=@var{id} @var{pathname...}
@@ -4631,12 +4636,32 @@ copy.  Specifying only the pathname "." will restrict @command{diff}
 to files changed within the current subdirectory of the workspace.
 
 The output format of @command{diff} is controlled by the options
-@option{--unified}, @option{--context}, and @option{--external}.
-@option{--unified} requests the ``unified diff'' format, the default
-(analogous to running the program @code{diff -u}).  @option{--context}
-request the ``context diff'' format (analogous to running the program
-@code{diff -c}).  Both of these formats are generated directly by
-monotone, using its built-in diff algorithm.
+@option{--unified}, @option{--context}, @option{--show-encloser}, and
+@option{--external}.  By default, monotone uses its built-in diff
+algorithm to produce a listing in ``unified diff'' format (analogous
+to running the program @code{diff -u}); you can also explicitly
+request this with @option{--unified}.  The built-in diff algorithm can
+also produce ``context diff'' format (analogous to @code{diff -c}),
+which you request by specifying @option{--context}.  The short options
+that @command{diff} accepts for these modes, @option{-u} and
+@option{-c}, also work.
+
+In either of these modes, you can request that monotone print the name
+of the top-level code construct that encloses each ``hunk'' of
+changes, with @option{--show-encloser}.  The options that
+@command{diff} accepts for this mode, @option{-p} and
+@option{--show-c-function}, also work.  Monotone finds the enclosing
+construct by scanning backward from the first changed line in each
+hunk for a line that matches a regular expression.  The default
+regular expression is correct for many programming languages.  You can
+adjust the expression used with the Lua hook
+@code{get_encloser_pattern}; @ref{Hooks}.
+
+
+@option{--unified} requests the ``unified diff'' format, the default.
+@option{--context} requests the ``context diff'' format (analogous to
+running the program @code{diff -c}).  Both of these formats are
+generated directly by monotone, using its built-in diff algorithm.
 
 Sometimes, you may want more flexibility in output formats; for these
 cases, you can use @option{--external}, which causes monotone to invoke
@@ -5722,6 +5747,121 @@ lines are printed in alphabetically sorted order.
 @item Error conditions:
 
 None.
+
+@end table
+
+
+@item mtn automate branches
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+Prints all branch certs present in the revision graph, that are not
+excluded by the lua hook @code{ignore_branch}.
+
+@item Sample output:
+
+@verbatim
+net.venge.monotone
+net.venge.monotone.win32
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each the name of a branch. The lines are printed
+in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+
+@item mtn automate tags [@var{branch_pattern}]
+
+@table @strong
+@item Arguments:
+
+A branch pattern (optional).
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+If a branch pattern is given, prints all tags that are attached to
+revisions on branches matched by the pattern; otherwise prints all
+tags of the revision graph.
+
+If a branch name is ignored by means of the lua hook
+@code{ignore_branch}, it is neither printed, nor can it be matched by
+a pattern.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+     tag "monotree-0.3"
+revision [35cff8e8ba14155f5f7ddf7965073f514fd60f61]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.2"
+revision [5d288b39b49613b0d9dca8ece6b9a42c3773f35b]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.1"
+revision [8a121346ce2920b6f85df68b3b620de96bd14a8d]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib" "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.4"
+revision [f1afc520474f83c58262896ede027ef77226046e]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each tag.
+
+All stanzas are formatted by basic_io. Stanzas are separated by a
+blank line. Values will be escaped, '\' to '\\' and '"' to '\"'.
+
+Each stanza has exactly the following four entries:
+
+@table @option
+@item 'tag'
+the value of the tag cert, i.e. the name of the tag
+
+@item 'revision'
+the hexadecimal id of the revision the tag is attached to
+
+@item 'signer'
+the name of the key used to sign the tag cert
+
+@item 'branches'
+a (possibly empty) list of all branches the tagged revision is on
+@end table
+
+Stanzas are printed in arbitrary order.
+
+@item Error conditions:
+
+A run-time exception occures if an illegal branch pattern is
+specified.
 
 @end table
 
@@ -7369,15 +7509,31 @@ lenient behavior you must redefine this hook.
 @subsection External Diff Tools
 
 Differences between files can be shown in a number of ways, varying
-according to user preference and file type. This hook allows
+according to user preference and file type. These hooks allow
 customisation of the way file differences are shown.
 
 @ftable @code
+@item get_encloser_pattern (@var{file_path})
+
+Called for each file when @command{diff} is given the
+@option{--show-encloser} option (and @emph{not} the
+@option{--external} option).  @var{file_path} is the pathname of the
+file that is being diffed.  The hook should return a string constant
+containing a regular expression; this regular expression will be used
+to find lines that, in that file, name the ``top-level'' constructs
+enclosing each ``hunk'' of changes.  The default is
+@code{^[[:alnum:]$_]}, which is correct for many programming
+languages; a few text authoring packages, like Texinfo, have special
+regular expressions that match their particular syntax.  If you have a
+better regular expression for some language, you can add it to this
+hook; and if you send it to the monotone developers, we will likely
+make it to the default for that language.
+
 @item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
                      @var{diff_args}, @var{old_rev}, @var{new_rev})
 
 Called for each file when @command{diff} is given the
-@option{--external} command.  @var{file_path} is the pathname of the
+@option{--external} option.  @var{file_path} is the pathname of the
 file that is being diffed.  @var{old_data} and @var{new_data} are the
 data contents of the old and the new file.  If the data is binary,
 @var{is_binary} will be true, otherwise false.  @var{old_rev} and

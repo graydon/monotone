@@ -77,10 +77,12 @@ struct poptOption coptions[] =
     {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("exclude merges when printing logs"), NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out anything described by its argument"), NULL},
-    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
-    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
+    {"unified", 'u', POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
+    {"context", 'c', POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
     {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
     {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
+    {"no-show-encloser", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("do not show the function containing each block of changes"), NULL},
+    {"no-show-c-function", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("another name for --no-show-encloser (for compatibility with GNU diff)"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
     {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
@@ -115,7 +117,7 @@ struct poptOption options[] =
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, gettext_noop("set key for signatures"), NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for workspace to specified root"), NULL},
-    {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
+    {"verbose", 'v', POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
     {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
     {"confdir", 0, POPT_ARG_STRING, &argstr, OPT_CONF_DIR, gettext_noop("set location of configuration directory"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -324,14 +326,13 @@ cpp_main(int argc, char ** argv)
   // process main program options
 
   int opt;
-  bool requested_help = false;
   set<int> used_local_options;
 
   poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
 
+  app_state app;
   try
     {
-      app_state app;
 
       app.set_prog_name(prog_name);
 
@@ -400,7 +401,7 @@ cpp_main(int argc, char ** argv)
               else if (string(argstr) == "count")
                 ui.set_tick_writer(new tick_write_count);
               else
-                requested_help = true;
+                app.requested_help = true;
               break;
 
             case OPT_KEY_NAME:
@@ -504,6 +505,10 @@ cpp_main(int argc, char ** argv)
               app.set_diff_args(utf8(string(argstr)));
               break;
 
+            case OPT_NO_SHOW_ENCLOSER:
+              app.diff_show_encloser = false;
+              break;
+
             case OPT_EXECUTE:
               app.execute = true;
               break;
@@ -581,8 +586,10 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_HELP:
+              app.requested_help = true;
+              break;
+
             default:
-              requested_help = true;
               break;
             }
         }
@@ -595,15 +602,15 @@ cpp_main(int argc, char ** argv)
 
       // complete the command if necessary
 
-      string cmd;
-      if (poptPeekArg(ctx()))
-        {
-          cmd = commands::complete_command(poptGetArg(ctx()));
-        }
+      if (!poptPeekArg(ctx()))
+        // no command given
+        throw usage("");
+      // poptPeekArg returned true, so we can call poptGetArg
+      string cmd = commands::complete_command(poptGetArg(ctx()));
 
       // stop here if they asked for help
 
-      if (requested_help)
+      if (app.requested_help)
         {
           throw usage(cmd);     // cmd may be empty, and that's fine.
         }
@@ -620,28 +627,21 @@ cpp_main(int argc, char ** argv)
       // main options processed, now invoke the
       // sub-command w/ remaining args
 
-      if (cmd.empty())
+      // Make sure the local options used are really used by the
+      // given command.
+      set<int> command_options = commands::command_options(cmd);
+      for (set<int>::const_iterator i = used_local_options.begin();
+           i != used_local_options.end(); ++i)
+        N(command_options.find(*i) != command_options.end(),
+          F("%s %s doesn't use the option %s")
+          % prog_name % cmd % coption_string(*i));
+      
+      vector<utf8> args;
+      while(poptPeekArg(ctx()))
         {
-          throw usage("");
+          args.push_back(utf8(string(poptGetArg(ctx()))));
         }
-      else
-        {
-          // Make sure the local options used are really used by the
-          // given command.
-          set<int> command_options = commands::command_options(cmd);
-          for (set<int>::const_iterator i = used_local_options.begin();
-               i != used_local_options.end(); ++i)
-            N(command_options.find(*i) != command_options.end(),
-              F("%s %s doesn't use the option %s")
-              % prog_name % cmd % coption_string(*i));
-
-          vector<utf8> args;
-          while(poptPeekArg(ctx()))
-            {
-              args.push_back(utf8(string(poptGetArg(ctx()))));
-            }
-          ret = commands::process(app, cmd, args);
-        }
+      ret = commands::process(app, cmd, args);
     }
   catch (usage & u)
     {
@@ -679,7 +679,10 @@ cpp_main(int argc, char ** argv)
       cout << endl;
       commands::explain_usage(u.which, cout);
       global_sanity.clean_shutdown = true;
-      return 2;
+      if (app.requested_help)
+        return 0;
+      else
+        return 2;
     }
   }
   catch (informative_failure & inf)

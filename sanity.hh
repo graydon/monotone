@@ -13,6 +13,7 @@
 #include "config.h" // Required for ENABLE_NLS
 
 #include <iosfwd>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -483,6 +484,23 @@ Musing<T>::gasp(std::string & out) const
 #endif
 
 template <> void dump(std::string const & obj, std::string & out);
+
+// debugging utility to dump out vars like MM but without requiring a crash
+
+template <typename T> void
+dump(T const & t, std::string var, 
+     std::string const & file, int const line, std::string const & func)
+{
+  std::string out;
+  dump(t, out);
+  std::cout << (FL("----- begin '%s' (in %s, at %s:%d)") 
+                % var % func % file % line) << std::endl
+            << out << std::endl
+            << (FL("-----   end '%s' (in %s, at %s:%d)") 
+                % var % func % file % line) << std::endl << std::endl;
+};
+
+#define DUMP(foo) dump(foo, #foo, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
 
 //////////////////////////////////////////////////////////////////////////
 // Local Variables:

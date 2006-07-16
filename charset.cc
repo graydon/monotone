@@ -458,36 +458,36 @@ idna
         0x0644, 0x064A, 0x0647, 0x0645, 0x0627, 0x0628, 0x062A, 0x0643,
         0x0644, 0x0645, 0x0648, 0x0634, 0x0639, 0x0631, 0x0628, 0x064A,
         0x061F},
-      IDNA_ACE_PREFIX "egbpdaj6bu4bxfgehfvwxn", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "egbpdaj6bu4bxfgehfvwxn", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Chinese (simplified)", 9,
       {
         0x4ED6, 0x4EEC, 0x4E3A, 0x4EC0, 0x4E48, 0x4E0D, 0x8BF4, 0x4E2D, 0x6587},
-      IDNA_ACE_PREFIX "ihqwcrb4cv8a8dqg056pqjye", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "ihqwcrb4cv8a8dqg056pqjye", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Chinese (traditional)", 9,
       {
         0x4ED6, 0x5011, 0x7232, 0x4EC0, 0x9EBD, 0x4E0D, 0x8AAA, 0x4E2D, 0x6587},
-      IDNA_ACE_PREFIX "ihqwctvzc91f659drss3x8bo0yb", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "ihqwctvzc91f659drss3x8bo0yb", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Czech", 22,
       {
         0x0050, 0x0072, 0x006F, 0x010D, 0x0070, 0x0072, 0x006F, 0x0073,
         0x0074, 0x011B, 0x006E, 0x0065, 0x006D, 0x006C, 0x0075, 0x0076,
         0x00ED, 0x010D, 0x0065, 0x0073, 0x006B, 0x0079},
-      IDNA_ACE_PREFIX "Proprostnemluvesky-uyb24dma41a", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "Proprostnemluvesky-uyb24dma41a", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Hebrew", 22,
       {
         0x05DC, 0x05DE, 0x05D4, 0x05D4, 0x05DD, 0x05E4, 0x05E9, 0x05D5,
         0x05D8, 0x05DC, 0x05D0, 0x05DE, 0x05D3, 0x05D1, 0x05E8, 0x05D9,
         0x05DD, 0x05E2, 0x05D1, 0x05E8, 0x05D9, 0x05EA},
-      IDNA_ACE_PREFIX "4dbcagdahymbxekheh6e0a7fei0b", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "4dbcagdahymbxekheh6e0a7fei0b", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Hindi (Devanagari)", 30,
       {
@@ -496,7 +496,7 @@ idna
         0x0928, 0x0939, 0x0940, 0x0902, 0x092C, 0x094B, 0x0932, 0x0938,
         0x0915, 0x0924, 0x0947, 0x0939, 0x0948, 0x0902},
       IDNA_ACE_PREFIX "i1baa7eci9glrd9b2ae1bj0hfcgg6iyaf8o0a1dig0cd", 0, 0,
-      IDNA_SUCCESS},
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese (kanji and hiragana)", 18,
       {
@@ -504,7 +504,7 @@ idna
         0x3092, 0x8A71, 0x3057, 0x3066, 0x304F, 0x308C, 0x306A, 0x3044,
         0x306E, 0x304B},
       IDNA_ACE_PREFIX "n8jok5ay5dzabd5bym9f0cm5685rrjetr6pdxa", 0, 0,
-      IDNA_SUCCESS},
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Russian (Cyrillic)", 28,
       {
@@ -523,7 +523,7 @@ idna
         0x0065, 0x0068, 0x0061, 0x0062, 0x006C, 0x0061, 0x0072, 0x0065,
         0x006E, 0x0045, 0x0073, 0x0070, 0x0061, 0x00F1, 0x006F, 0x006C},
       IDNA_ACE_PREFIX "PorqunopuedensimplementehablarenEspaol-fmd56a", 0, 0,
-      IDNA_SUCCESS},
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Vietnamese", 31,
       {
@@ -532,13 +532,13 @@ idna
         0x0063, 0x0068, 0x1EC9, 0x006E, 0x00F3, 0x0069, 0x0074, 0x0069,
         0x1EBF, 0x006E, 0x0067, 0x0056, 0x0069, 0x1EC7, 0x0074},
       IDNA_ACE_PREFIX "TisaohkhngthchnitingVit-kjcr8268qyxafd2f1b9g", 0, 0,
-      IDNA_SUCCESS},
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese", 8,
       {
         0x0033, 0x5E74, 0x0042, 0x7D44, 0x91D1, 0x516B, 0x5148, 0x751F},
-      IDNA_ACE_PREFIX "3B-ww4c5e180e575a65lsy2b", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "3B-ww4c5e180e575a65lsy2b", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese", 24,
       {
@@ -546,7 +546,7 @@ idna
         0x0074, 0x0068, 0x002D, 0x0053, 0x0055, 0x0050, 0x0045, 0x0052,
         0x002D, 0x004D, 0x004F, 0x004E, 0x004B, 0x0045, 0x0059, 0x0053},
       IDNA_ACE_PREFIX "-with-SUPER-MONKEYS-pc58ag80a8qai00g7n9n", 0, 0,
-      IDNA_SUCCESS},
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese", 25,
       {
@@ -555,20 +555,20 @@ idna
         0x0079, 0x002D, 0x305D, 0x308C, 0x305E, 0x308C, 0x306E, 0x5834,
         0x6240},
       IDNA_ACE_PREFIX "Hello-Another-Way--fc4qua05auwb3674vfr0b", 0, 0,
-      IDNA_SUCCESS},
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese", 8,
       {
         0x3072, 0x3068, 0x3064, 0x5C4B, 0x6839, 0x306E, 0x4E0B, 0x0032},
-      IDNA_ACE_PREFIX "2-u9tlzr9756bt3uc0v", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "2-u9tlzr9756bt3uc0v", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese", 13,
       {
         0x004D, 0x0061, 0x006A, 0x0069, 0x3067, 0x004B, 0x006F, 0x0069,
         0x3059, 0x308B, 0x0035, 0x79D2, 0x524D},
-      IDNA_ACE_PREFIX "MajiKoi5-783gue6qz075azm5e", 0, 0, IDNA_SUCCESS,
-      IDNA_SUCCESS},
+      IDNA_ACE_PREFIX "MajiKoi5-783gue6qz075azm5e", 0, 0, 
+      IDNA_SUCCESS, IDNA_SUCCESS},
     {
       "Japanese", 9,
       {

@@ -66,7 +66,8 @@ MOST_SOURCES =								\
                                                                         \
 	 cleanup.hh unit_tests.hh 					\
          cycle_detector.hh randomfile.hh adler32.hh 			\
-	 netio.hh smap.hh gettext.h					\
+         randomizer.cc randomizer.hh                                    \
+         netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
          package_full_revision.c package_full_revision.h options.hh	\
          i18n.h parallel_iter.hh safe_map.hh pch.hh
@@ -461,7 +462,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_lua_tests
 
 # distcheck stuff
 
@@ -619,3 +620,10 @@ html: monotone.texi version.texi std_hooks.lua texinfo.css
 		sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $$f.bak >$$f; \
 		rm -f $$f.bak; \
 	done
+
+# Explicit dependencies of object files on generated headers, so Make
+# knows it has to build 'em.
+mtn-lua_hooks.o unit_tests-lua_hooks.o : test_hooks.h std_hooks.h
+mtn-database.o  unit_tests-database.o  : schema.h
+
+tester.o : tester.h

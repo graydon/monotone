@@ -105,8 +105,8 @@ struct checked_revision {
 
   size_t cert_refs;            // number of references to this revision by revision certs;
 
-  bool parseable;              // read_revision_set does not throw
-  bool normalized;             // write_revision_set( read_revision_set(dat) ) == dat
+  bool parseable;              // read_revision does not throw
+  bool normalized;             // write_revision( read_revision(dat) ) == dat
 
   string history_error;
 
@@ -345,10 +345,10 @@ check_revisions(app_state & app,
       app.db.get_revision(*i, data);
       checked_revisions[*i].found = true;
 
-      revision_set rev;
+      revision_t rev;
       try
         {
-          read_revision_set(data, rev);
+          read_revision(data, rev);
         }
       catch (logic_error & e)
         {
@@ -361,7 +361,7 @@ check_revisions(app_state & app,
       // normalisation check
       revision_id norm_ident;
       revision_data norm_data;
-      write_revision_set(rev, norm_data);
+      write_revision(rev, norm_data);
       calculate_ident(norm_data, norm_ident);
       if (norm_ident == *i)
           checked_revisions[*i].normalized = true;

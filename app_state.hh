@@ -72,6 +72,7 @@ public:
   system_path pidfile;
   diff_type diff_format;
   bool diff_args_provided;
+  bool diff_show_encloser;
   utf8 diff_args;
   bool execute;
   utf8 bind_address;
@@ -85,6 +86,7 @@ public:
   bool have_set_key_dir;
   std::set<std::string> attrs_to_drop;
   bool no_files;
+  bool requested_help;
 
   // Set if the value of the flag was explicitly given on the command
   // line.

@@ -136,18 +136,14 @@ function open_or_err(filename, mode, depth)
 end
 
 function fsize(filename)
-  local file = io.open(filename, "r")
-  if file == nil then error("Cannot open file " .. filename, 2) end
+  local file = open_or_err(filename, "r", 3)
   local size = file:seek("end")
   file:close()
   return size
 end
 
 function readfile_q(filename)
-  local file = io.open(filename, "rb")
-  if file == nil then
-    error("Cannot open file " .. filename)
-  end
+  local file = open_or_err(filename, "rb", 3)
   local dat = file:read("*a")
   file:close()
   return dat
@@ -165,13 +161,9 @@ end
 function writefile_q(filename, dat)
   local file,e
   if dat == nil then
-    file,e = io.open(filename, "a+b")
+    file,e = open_or_err(filename, "a+b", 3)
   else
-    file,e = io.open(filename, "wb")
-  end
-  if file == nil then
-    L("Cannot open file ", filename, ": ", e, "\n")
-    return false
+    file,e = open_or_err(filename, "wb", 3)
   end
   if dat ~= nil then
     file:write(dat)
@@ -187,15 +179,10 @@ end
 
 function append(filename, dat)
   L(locheader(), "append to file ", filename, "\n")
-  local file,e = io.open(filename, "a+")
-  if file == nil then
-    L("Cannot open file: ", e, "\n")
-    return false
-  else
-    file:write(dat)
-    file:close()
-    return true
-  end
+  local file,e = open_or_err(filename, "a+", 3)
+  file:write(dat)
+  file:close()
+  return true
 end
 
 do
@@ -258,7 +245,9 @@ end
 
 function getstd(name, as)
   if as == nil then as = name end
-  return copy(testdir .. "/" .. name, as)
+  local ret = copy(testdir .. "/" .. name, as)
+  make_tree_accessible(as)
+  return ret
 end
 
 function get(name, as)
@@ -288,6 +277,24 @@ function execute(path, ...)
    return ret
 end
 
+function cmd_as_str(cmd_table)
+  local str = ""
+  for i,x in ipairs(cmd_table) do
+    if str ~= "" then str = str .. " " end
+    if type(x) == "function" then
+      str = str .. "<function>"
+    else
+      local s = tostring(x)
+      if string.find(s, " ") then
+        str = str .. '"'..s..'"'
+      else
+        str = str .. s
+      end
+    end
+  end
+  return str
+end
+
 function runcmd(cmd, prefix, bgnd)
   if prefix == nil then prefix = "ts-" end
   if type(cmd) ~= "table" then err("runcmd called with bad argument") end
@@ -303,27 +310,22 @@ function runcmd(cmd, prefix, bgnd)
   L("\nruncmd: ", tostring(cmd[1]), ", local_redir = ", tostring(local_redir), ", requested = ", tostring(cmd.local_redirect))
   local redir
   if local_redir then
-    files.stdin = io.open(prefix.."stdin")
-    files.stdout = io.open(prefix.."stdout", "w")
-    files.stderr = io.open(prefix.."stderr", "w")
+    files.stdin = open_or_err(prefix.."stdin", nil, 2)
+    files.stdout = open_or_err(prefix.."stdout", "w", 2)
+    files.stderr = open_or_err(prefix.."stderr", "w", 2)
   else
     redir = set_redirect(prefix.."stdin", prefix.."stdout", prefix.."stderr")
   end
   
   local result
+  if cmd.logline ~= nil then
+    L(locheader(), cmd.logline, "\n")
+  else
+    L(locheader(), cmd_as_str(cmd), "\n")
+  end
   if type(cmd[1]) == "function" then
-    L(locheader(), "<function> ")
-    for i,x in ipairs(cmd) do
-      if i ~= 1 then L(" ", tostring(x)) end
-    end
-    L("\n")
     result = {pcall(unpack(cmd))}
   elseif type(cmd[1]) == "string" then
-    L(locheader())
-    for i,x in ipairs(cmd) do
-      L(" ", tostring(x))
-    end
-    L("\n")
     if bgnd then
       result = {pcall(spawn, unpack(cmd))}
     else
@@ -400,7 +402,8 @@ function greplines(f, t)
 end
 
 function grep(...)
-  local dogrep = function (flags, what, where)
+  local flags, what, where = unpack(arg)
+  local dogrep = function ()
                    if where == nil and string.sub(flags, 1, 1) ~= "-" then
                      where = what
                      what = flags
@@ -411,8 +414,8 @@ function grep(...)
                    if not quiet and files.stdout == nil then err("non-quiet grep not redirected") end
                    local out = 1
                    local infile = files.stdin
-                   if where ~= nil then infile = io.open(where) end
-                   for line in io.lines(where) do
+                   if where ~= nil then infile = open_or_err(where) end
+                   for line in infile:lines() do
                      local matched = regex.search(what, line)
                      if reverse then matched = not matched end
                      if matched then
@@ -423,18 +426,19 @@ function grep(...)
                    if where ~= nil then infile:close() end
                    return out
                  end
-  return {dogrep, unpack(arg)}
+  return {dogrep, logline = "grep "..cmd_as_str(arg)}
 end
 
 function cat(...)
-  local function docat(...)
+  local arguments = arg
+  local function docat()
     local bsize = 8*1024
-    for _,x in ipairs(arg) do
+    for _,x in ipairs(arguments) do
       local infile
       if x == "-" then
         infile = files.stdin
       else
-        infile = io.open(x, "rb")
+        infile = open_or_err(x, "rb", 3)
       end
       local block = infile:read(bsize)
       while block do
@@ -447,11 +451,12 @@ function cat(...)
     end
     return 0
   end
-  return {docat, unpack(arg)}
+  return {docat, logline = "cat "..cmd_as_str(arg)}
 end
 
 function tail(...)
-  local function dotail(file, num)
+  local file, num = unpack(arg)
+  local function dotail()
     if num == nil then num = 10 end
     local mylines = {}
     for l in io.lines(file) do
@@ -465,16 +470,16 @@ function tail(...)
     end
     return 0
   end
-  return {dotail, unpack(arg)}
+  return {dotail, logline = "tail "..cmd_as_str(arg)}
 end
 
-function sort(...)
+function sort(file)
   local function dosort(file)
     local infile
     if file == nil then
       infile = files.stdin
     else
-      infile = io.open(file)
+      infile = open_or_err(file)
     end
     local lines = {}
     for l in infile:lines() do
@@ -487,7 +492,7 @@ function sort(...)
     end
     return 0
   end
-  return {dosort, unpack(arg)}
+  return {dosort, file, logline = "sort "..file}
 end
 
 function log_file_contents(filename)
@@ -501,7 +506,7 @@ function pre_cmd(stdin, ident)
   elseif type(stdin) == "table" then
     unlogged_copy(stdin[1], ident .. "stdin")
   else
-    local infile = open_or_err(ident .. "stdin", "w")
+    local infile = open_or_err(ident .. "stdin", "w", 3)
     if stdin ~= nil and stdin ~= false then
       infile:write(stdin)
     end
@@ -527,7 +532,7 @@ function post_cmd(result, ret, stdout, stderr, ident)
       err("Check failed (stdout): not empty", 3)
     end
   elseif type(stdout) == "string" then
-    local realout = io.open(ident .. "stdout")
+    local realout = open_or_err(ident .. "stdout", nil, 3)
     local contents = realout:read("*a")
     realout:close()
     if contents ~= stdout then
@@ -547,7 +552,7 @@ function post_cmd(result, ret, stdout, stderr, ident)
       err("Check failed (stderr): not empty", 3)
     end
   elseif type(stderr) == "string" then
-    local realerr = io.open(ident .. "stderr")
+    local realerr = open_or_err(ident .. "stderr", nil, 3)
     local contents = realerr:read("*a")
     realerr:close()
     if contents ~= stderr then
@@ -672,7 +677,22 @@ function indir(dir, what)
     if not ok then err(res) end
     return res
   end
-  return {do_indir, local_redirect = (type(what[1]) == "function")}
+  local want_local
+  if type(what[1]) == "function" then
+    if type(what.local_redirect) == "nil" then
+      want_local = true
+    else
+      want_local = what.local_redirect
+    end
+  else
+    want_local = false
+  end
+  local ll = "In directory "..dir..": "
+  if what.logline ~= nil then ll = ll .. tostring(what.logline)
+  else
+    ll = ll .. cmd_as_str(what)
+  end
+  return {do_indir, local_redirect = want_local, logline = ll}
 end
 
 function check(first, ...)
@@ -706,6 +726,10 @@ function xfail_if(chk, ...)
       L("UNEXPECTED SUCCESS\n")
     end
   end
+end
+
+function xfail(...)
+   xfail_if(true, unpack(arg))
 end
 
 function log_error(e)

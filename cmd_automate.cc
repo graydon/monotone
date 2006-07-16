@@ -54,7 +54,7 @@ automate_command(utf8 cmd, vector<utf8> args,
     i->second->run(args, root_cmd_name, app, output);
 }
 
-static string const interface_version = "2.1";
+static string const interface_version = "2.2";
 
 // Name: interface_version
 // Arguments: none
@@ -263,7 +263,12 @@ AUTOMATE(stdio, "")
                                       boost::ref(output),
                                       boost::ref(outpos),
                                       _1));
-          s.std::basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
+          {
+            // Do not use s.std::basic_ios<...>::rdbuf here, 
+            // it confuses VC8.
+            using std::basic_ios;
+            s.basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
+          }
           try
             {
               err=0;

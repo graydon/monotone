@@ -208,7 +208,8 @@ void set_env(string const &var, string const &val)
 #else
 void putenv2(string const &var, string const &val)
 {
-  char const *s = (var + "=" + val).c_str();
+  string tempstr = var + "=" + val;
+  char const *s = tempstr.c_str();
   size_t len = var.size() + val.size() + 2;
   char *cp = new char[len];
   memcpy(cp, s, len);
@@ -254,6 +255,18 @@ void do_remove_recursive(fs::path const &rem)
         do_remove_recursive(*i);
     }
   fs::remove(rem);
+}
+
+void do_make_tree_accessible(fs::path const &f)
+{
+  if (!fs::exists(f))
+    return;
+  make_accessible(f.native_file_string());
+  if (fs::is_directory(f))
+    {
+      for (fs::directory_iterator i(f); i != fs::directory_iterator(); ++i)
+        do_make_tree_accessible(*i);
+    }
 }
 
 void do_copy_recursive(fs::path const &from, fs::path to)
@@ -370,6 +383,24 @@ extern "C"
       {
         fs::path dir(luaL_checkstring(L, -1));
         do_remove_recursive(dir);
+        lua_pushboolean(L, true);
+        return 1;
+      }
+    catch(fs::filesystem_error & e)
+      {
+        lua_pushboolean(L, false);
+        lua_pushstring(L, e.what());
+        return 2;
+      }
+  }
+
+  static int
+  make_tree_accessible(lua_State *L)
+  {
+    try
+      {
+        fs::path dir(luaL_checkstring(L, -1));
+        do_make_tree_accessible(dir);
         lua_pushboolean(L, true);
         return 1;
       }
@@ -615,7 +646,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "\t-d         don't clean the scratch directories\n");
       fprintf(stderr, "\tnum        run a specific test\n");
       fprintf(stderr, "\tnum..num   run tests in a range\n");
-      fprintf(stderr, "\t           if num is negative, count back from the end");
+      fprintf(stderr, "\t           if num is negative, count back from the end\n");
       fprintf(stderr, "\tregex      run tests with matching names\n");
       return 1;
     }
@@ -638,6 +669,7 @@ int main(int argc, char **argv)
   lua_register(st, "chdir", go_to_dir);
   lua_register(st, "mtime", mtime);
   lua_register(st, "remove_recursive", remove_recursive);
+  lua_register(st, "make_tree_accessible", make_tree_accessible);
   lua_register(st, "copy_recursive", copy_recursive);
   lua_register(st, "exists", exists);
   lua_register(st, "isdir", isdir);

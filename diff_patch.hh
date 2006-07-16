@@ -32,10 +32,11 @@ void make_diff(std::string const & filename1,
                std::string const & filename2,
                file_id const & id1,
                file_id const & id2,
-               std::vector<std::string> const & lines1,
-               std::vector<std::string> const & lines2,
+               data const & data1,
+               data const & data2,
                std::ostream & ost,
-               diff_type type);
+               diff_type type,
+               std::string const & pattern);
 
 bool merge3(std::vector<std::string> const & ancestor,
             std::vector<std::string> const & left,

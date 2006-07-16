@@ -72,24 +72,18 @@ file_itemizer::visit_file(file_path const & path)
 
 
 void
-find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
+find_missing(roster_t const & new_roster_shape, node_restriction const & mask,
+             path_set & missing)
 {
-  temp_node_id_source nis;
-  roster_t old_roster, new_roster;
-
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-
-  node_restriction mask(args, app.exclude_patterns, new_roster, app);
-
-  node_map const & nodes = new_roster.all_nodes();
+  node_map const & nodes = new_roster_shape.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
       node_id nid = i->first;
 
-      if (!new_roster.is_root(nid) && mask.includes(new_roster, nid))
+      if (!new_roster_shape.is_root(nid) && mask.includes(new_roster_shape, nid))
         {
           split_path sp;
-          new_roster.get_name(nid, sp);
+          new_roster_shape.get_name(nid, sp);
           file_path fp(sp);
 
           if (!path_exists(fp))
@@ -99,17 +93,15 @@ find_missing(app_state & app, vector<utf8> const & args, path_set & missing)
 }
 
 void
-find_unknown_and_ignored(app_state & app, vector<utf8> const & args,
+find_unknown_and_ignored(app_state & app, path_restriction const & mask,
                          path_set & unknown, path_set & ignored)
 {
-  revision_set rev;
-  roster_t old_roster, new_roster;
+  revision_t rev;
+  roster_t new_roster;
   path_set known;
   temp_node_id_source nis;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-
-  path_restriction mask(args, app.exclude_patterns, app);
+  get_current_roster_shape(new_roster, nis, app);
 
   new_roster.extract_path_set(known);
 
@@ -1038,7 +1030,7 @@ editable_working_tree::apply_delta(split_path const & pth,
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
     F("content of file '%s' has changed, not overwriting") % pth_unsplit);
-  P(F("updating %s") % pth_unsplit);
+  P(F("modifying %s") % pth_unsplit);
 
   file_data dat;
   source.get_file_content(new_id, dat);

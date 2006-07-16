@@ -31,6 +31,7 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "vocab.hh"
+#include "globish.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -829,17 +830,17 @@ AUTOMATE(get_revision, N_("[REVID]"))
     {
       roster_t old_roster, new_roster;
       revision_id old_revision_id;
-      revision_set rev;
+      revision_t rev;
 
       app.require_workspace();
       get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       update_current_roster_from_filesystem(new_roster, app);
 
       get_revision_id(old_revision_id);
-      make_revision_set(old_revision_id, old_roster, new_roster, rev);
+      make_revision(old_revision_id, old_roster, new_roster, rev);
 
       calculate_ident(rev, ident);
-      write_revision_set(rev, dat);
+      write_revision(rev, dat);
     }
   else
     {
@@ -890,7 +891,7 @@ AUTOMATE(get_current_revision_id, N_(""))
 
   roster_t old_roster, new_roster;
   revision_id old_revision_id, new_revision_id;
-  revision_set rev;
+  revision_t rev;
   temp_node_id_source nis;
 
   app.require_workspace();
@@ -898,7 +899,7 @@ AUTOMATE(get_current_revision_id, N_(""))
   update_current_roster_from_filesystem(new_roster, app);
 
   get_revision_id(old_revision_id);
-  make_revision_set(old_revision_id, old_roster, new_roster, rev);
+  make_revision(old_revision_id, old_roster, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
 
@@ -1180,6 +1181,126 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
       output << (*i).inner()() << endl;
 }
 
+// Name: branches
+// Arguments:
+//   None
+// Added in: 2.2
+// Purpose:
+//   Prints all branch certs present in the revision graph, that are not
+//   excluded by the lua hook 'ignore_branch'.
+// Output format:
+//   Zero or more lines, each the name of a branch. The lines are printed
+//   in alphabetically sorted order.
+// Error conditions:
+//   None.
+AUTOMATE(branches, N_(""))
+{
+  if (args.size() > 0)
+    throw usage(help_name);
+
+  vector<string> names;
+
+  app.db.get_branches(names);
+  sort(names.begin(), names.end());
+
+  for (vector<string>::const_iterator i = names.begin();
+       i != names.end(); ++i)
+    if (!app.lua.hook_ignore_branch(*i))
+      output << (*i) << endl;
+}
+
+// Name: tags
+// Arguments:
+//   A branch pattern (optional).
+// Added in: 2.2
+// Purpose:
+//   If a branch pattern is given, prints all tags that are attached to
+//   revisions on branches matched by the pattern; otherwise prints all tags
+//   of the revision graph.
+//
+//   If a branch name is ignored by means of the lua hook 'ignore_branch',
+//   it is neither printed, nor can it be matched by a pattern.
+// Output format:
+//   There is one basic_io stanza for each tag.
+//
+//   All stanzas are formatted by basic_io. Stanzas are separated
+//   by a blank line. Values will be escaped, '\' to '\\' and
+//   '"' to '\"'.
+//
+//   Each stanza has exactly the following four entries:
+//
+//   'tag'
+//         the value of the tag cert, i.e. the name of the tag
+//   'revision'
+//         the hexadecimal id of the revision the tag is attached to
+//   'signer'
+//         the name of the key used to sign the tag cert
+//   'branches'
+//         a (possibly empty) list of all branches the tagged revision is on
+//
+//   Stanzas are printed in arbitrary order.
+// Error conditions:
+//   A run-time exception is thrown for illegal patterns.
+AUTOMATE(tags, N_("[BRANCH_PATTERN]"))
+{
+  utf8 incl("*");
+  bool filtering(false);
+  
+  if (args.size() == 1) {
+    incl = idx(args, 0);
+    filtering = true;
+  }
+  else if (args.size() > 1)
+    throw usage(name);
+
+  globish_matcher match(incl, utf8());
+  basic_io::printer prt;
+  basic_io::stanza stz;
+  stz.push_str_pair(symbol("format_version"), "1");
+  prt.print_stanza(stz);
+  
+  vector<revision<cert> > tag_certs;
+  app.db.get_revision_certs(tag_cert_name, tag_certs);
+
+  for (vector<revision<cert> >::const_iterator i = tag_certs.begin();
+       i != tag_certs.end(); ++i) {
+
+    cert tagcert(i->inner());
+    vector<revision<cert> > branch_certs;
+    app.db.get_revision_certs(tagcert.ident, branch_cert_name, branch_certs);
+    
+    bool show(!filtering);
+    vector<string> branch_names;
+
+    for (vector<revision<cert> >::const_iterator j = branch_certs.begin();
+         j != branch_certs.end(); ++j) {
+
+      cert branchcert(j->inner());
+      cert_value branch;
+      decode_base64(branchcert.value, branch);
+      string branch_name(branch());
+      
+      if (app.lua.hook_ignore_branch(branch_name))
+        continue;
+      
+      if (!show && match(branch_name)) 
+        show = true;
+      branch_names.push_back(branch_name);
+    }
+
+    if (show) {
+      basic_io::stanza stz;
+      cert_value tag;
+      decode_base64(tagcert.value, tag);
+      stz.push_str_pair(symbol("tag"), tag());
+      stz.push_hex_pair(symbol("revision"), tagcert.ident);
+      stz.push_str_pair(symbol("signer"), tagcert.key());
+      stz.push_str_multi(symbol("branches"), branch_names);
+      prt.print_stanza(stz);
+    }
+  }
+  output.write(prt.buf.data(), prt.buf.size());
+}
 
 // Local Variables:
 // mode: C++

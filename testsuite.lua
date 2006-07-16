@@ -48,20 +48,20 @@ set_env("mtn", monotone_path)
 
 -- NLS nuisances.
 for _,name in pairs({  "LANG",
-		       "LANGUAGE",
-		       "LC_ADDRESS",
-		       "LC_ALL",
-		       "LC_COLLATE",
-		       "LC_CTYPE",
-		       "LC_IDENTIFICATION",
-		       "LC_MEASUREMENT",
-		       "LC_MESSAGES",
-		       "LC_MONETARY",
-		       "LC_NAME",
-		       "LC_NUMERIC",
-		       "LC_PAPER",
-		       "LC_TELEPHONE",
-		       "LC_TIME"  }) do
+                       "LANGUAGE",
+                       "LC_ADDRESS",
+                       "LC_ALL",
+                       "LC_COLLATE",
+                       "LC_CTYPE",
+                       "LC_IDENTIFICATION",
+                       "LC_MEASUREMENT",
+                       "LC_MESSAGES",
+                       "LC_MONETARY",
+                       "LC_NAME",
+                       "LC_NUMERIC",
+                       "LC_PAPER",
+                       "LC_TELEPHONE",
+                       "LC_TIME"  }) do
    set_env(name,"C")
 end
        
@@ -357,6 +357,7 @@ table.insert(tests, "merge((),_(add_a,_drop_a,_add_a))")
 table.insert(tests, "merge((add_a),_(add_a,_drop_a,_add_a))")
 table.insert(tests, "merge((),_(add_a,_patch_a,_drop_a,_add_a))")
 table.insert(tests, "merge((patch_a),_(drop_a,_add_a))")
+table.insert(tests, "merge_multiple_heads_1")
 table.insert(tests, "explicit_merge")
 table.insert(tests, "update_with_multiple_candidates")
 table.insert(tests, "checkout_validates_target_directory")
@@ -400,7 +401,6 @@ table.insert(tests, "(imp)_merge((patch_foo_a),_(delete_foo_))")
 table.insert(tests, "revert_directories")
 table.insert(tests, "revert_renames")
 table.insert(tests, "revert_unchanged_file_preserves_mtime")
-table.insert(tests, "(minor)_context_diff")
 table.insert(tests, "rename_cannot_overwrite_files")
 table.insert(tests, "failed_checkout_is_a_no-op")
 table.insert(tests, "(todo)_write_monotone-agent")
@@ -643,3 +643,12 @@ table.insert(tests, "automate_common_ancestors")
 table.insert(tests, "invalid_--root_settings")
 table.insert(tests, "netsync_over_pipes")
 table.insert(tests, "ls_unknown_of_unknown_subdir")
+table.insert(tests, "automate_branches")
+table.insert(tests, "merge_conflict_with_no_lca")
+table.insert(tests, "pluck_basics")
+table.insert(tests, "diff_output_formats")
+table.insert(tests, "pluck_lifecycle")
+table.insert(tests, "pluck_restricted")
+table.insert(tests, "revert_--missing_in_subdir")
+table.insert(tests, "restrictions_with_renames_and_adds")
+table.insert(tests, "diff_shows_renames")
