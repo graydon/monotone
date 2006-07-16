@@ -1,3 +1,7 @@
+2006-07-16  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (53 to go).
+
 2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/revert_--missing_in_subdir/__driver__.lua: Make it
@@ -497,6 +501,10 @@
 	* automate.cc (AUTOMATE(tags)): New function: List all tags in
 	basic_io format, possibly filtered by branch.
 	* monotone.texi (Automation): Description of the new added.
+
+2006-07-02  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (42 to go).
 
 2006-07-02  Timothy Brownawell  <tbrownaw@gmail.com>
 
