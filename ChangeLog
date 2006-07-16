@@ -1,3 +1,8 @@
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/revert_--missing_in_subdir/__driver__.lua: Make it
+	line-ending safe.
+
 2006-07-15  Derek Scherger  <derek@echologic.com>
 
 	* tester.txt: wrap long lines and fix a couple spelling errors
