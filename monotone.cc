@@ -378,7 +378,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_LOG:
-              ui.redirect_log_to(system_path(argstr).as_external());
+              ui.redirect_log_to(system_path(argstr));
               break;
 
             case OPT_DB_NAME:

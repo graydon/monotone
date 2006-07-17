@@ -10,12 +10,11 @@
 #include <map>
 #include <algorithm>
 
-#include "cert.hh"
-#include "inodeprint.hh"
-#include "platform-wrapped.hh"
-#include "simplestring_xform.hh"
 #include "transforms.hh"
-#include "ui.hh"
+#include "simplestring_xform.hh"
+#include "charset.hh"
+#include "inodeprint.hh"
+#include "cert.hh"
 
 #include "cmd.hh"
 
@@ -179,7 +178,7 @@ namespace commands
     size_t col2 = 0;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-        size_t cmp = display_width(safe_gettext(idx(sorted, i)->cmdgroup.c_str()));
+        size_t cmp = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str())));
         col2 = col2 > cmp ? col2 : cmp;
       }
 
@@ -190,7 +189,7 @@ namespace commands
             curr_group = idx(sorted, i)->cmdgroup;
             out << endl;
             out << "  " << safe_gettext(idx(sorted, i)->cmdgroup.c_str());
-            col = display_width(safe_gettext(idx(sorted, i)->cmdgroup.c_str())) + 2;
+            col = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str()))) + 2;
             while (col++ < (col2 + 3))
               out << ' ';
           }

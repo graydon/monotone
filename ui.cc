@@ -13,11 +13,12 @@
 
 #include "config.h"
 
-#include "constants.hh"
 #include "platform.hh"
 #include "sanity.hh"
-#include "simplestring_xform.hh"
 #include "ui.hh"
+#include "charset.hh"
+#include "simplestring_xform.hh"
+#include "constants.hh"
 
 #include <iostream>
 #include <fstream>
@@ -180,8 +181,8 @@ void tick_write_count::write_ticks()
               // pad out this field to that eventual size to avoid
               // spurious re-issuing of the tick titles as we expand to
               // the goal.
-              tick->set_count_size(display_width(compose_count(tick,
-                                                               tick->total)));
+              tick->set_count_size(display_width(utf8(compose_count(tick,
+                                                                    tick->total))));
               tick->previous_total = tick->total;
             }
           else
@@ -191,15 +192,15 @@ void tick_write_count::write_ticks()
               // compose_count create the count string for that.  Use the
               // size of the returned count string as an initial size for
               // this tick.
-              tick->set_count_size(display_width(compose_count(tick,
-                                                               1048575)));
+              tick->set_count_size(display_width(utf8(compose_count(tick,
+                                                                    1048575))));
             }
         }
 
       string count(compose_count(tick));
 
-      size_t title_width = display_width(tick->name);
-      size_t count_width = display_width(count);
+      size_t title_width = display_width(utf8(tick->name));
+      size_t count_width = display_width(utf8(count));
 
       if (count_width > tick->count_size)
         {
@@ -253,7 +254,7 @@ void tick_write_count::write_ticks()
       tickline2 += ui.tick_trailer;
     }
 
-  size_t curr_sz = display_width(tickline2);
+  size_t curr_sz = display_width(utf8(tickline2));
   if (curr_sz < last_tick_len)
     tickline2.append(last_tick_len - curr_sz, ' ');
   last_tick_len = curr_sz;
@@ -264,7 +265,7 @@ void tick_write_count::write_ticks()
       if (ui.last_write_was_a_tick)
         clog << "\n";
 
-      if (tw && display_width(tickline1) > tw)
+      if (tw && display_width(utf8(tickline1)) > tw)
         {
           // FIXME: may chop off more than necessary (because we chop by
           // bytes, not by characters)
@@ -272,7 +273,7 @@ void tick_write_count::write_ticks()
         }
       clog << tickline1 << "\n";
     }
-  if (tw && display_width(tickline2) > tw)
+  if (tw && display_width(utf8(tickline2)) > tw)
     {
       // FIXME: may chop off more than necessary (because we chop by
       // bytes, not by characters)
@@ -483,12 +484,12 @@ user_interface::ensure_clean_line()
 }
 
 void
-user_interface::redirect_log_to(std::string const & filename)
+user_interface::redirect_log_to(system_path const & filename)
 {
   static ofstream filestr;
   if (filestr.is_open())
     filestr.close();
-  filestr.open(filename.c_str(), ofstream::out | ofstream::app);
+  filestr.open(filename.as_external().c_str(), ofstream::out | ofstream::app);
   E(filestr.is_open(), F("failed to open log file '%s'") % filename);
   clog.rdbuf(filestr.rdbuf());
 }
@@ -510,33 +511,6 @@ guess_terminal_width()
   if (!w)
     w = constants::default_terminal_width;
   return w;
-}
-
-size_t
-display_width(std::string const & u)
-{
-  size_t sz = 0;
-  string::const_iterator i = u.begin();
-  while (i != u.end())
-    {
-      if (UNLIKELY(static_cast<u8>(*i) & static_cast<u8>(0x80)))
-        {
-          // A UTF-8 escape: consume the full escape.
-          ++i;
-          ++sz;
-          while (i != u.end()
-                 && (static_cast<u8>(*i) & static_cast<u8>(0x80))
-                 && (!(static_cast<u8>(*i) & static_cast<u8>(0x40))))
-            ++i;
-        }
-      else
-        {
-          // An ASCII-like character in the range 0..0x7F.
-          ++i;
-          ++sz;
-        }
-    }
-  return sz;
 }
 
 // Local Variables:

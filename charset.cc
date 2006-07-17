@@ -68,6 +68,34 @@ system_to_utf8(external const & ext, utf8 & utf)
   utf = out;
 }
 
+size_t
+display_width(utf8 const & utf)
+{
+  string const & u = utf();
+  size_t sz = 0;
+  string::const_iterator i = u.begin();
+  while (i != u.end())
+    {
+      if (UNLIKELY(static_cast<u8>(*i) & static_cast<u8>(0x80)))
+        {
+          // A UTF-8 escape: consume the full escape.
+          ++i;
+          ++sz;
+          while (i != u.end()
+                 && (static_cast<u8>(*i) & static_cast<u8>(0x80))
+                 && (!(static_cast<u8>(*i) & static_cast<u8>(0x40))))
+            ++i;
+        }
+      else
+        {
+          // An ASCII-like character in the range 0..0x7F.
+          ++i;
+          ++sz;
+        }
+    }
+  return sz;
+}
+
 // Lots of gunk to avoid charset conversion as much as possible.  Running
 // iconv over every element of every path in a 30,000 file manifest takes
 // multiple seconds, which then is a minimum bound on pretty much any
