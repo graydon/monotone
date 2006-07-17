@@ -9,7 +9,7 @@ copy("testfile", "old_testfile")
 writefile("testfile", "stuff stuff")
 new = sha1("testfile")
 
-get("testhook.lua")
+check(get("testhook.lua"))
 
 check(mtn("--rcfile=testhook.lua", "diff", "--external"), 0, true, false)
 canonicalize("stdout")

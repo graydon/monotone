@@ -818,6 +818,10 @@ function run_tests(args)
     test.partial_skip = false
     local shortname = nil
     test.root, shortname = go_to_test_dir(tname)
+    if shortname == nil or test.root == nil then
+      P("ERROR: could not enter scratch dir for test '", tname, "'\n")
+      error("")
+    end
     test.errfile = ""
     test.errline = -1
     test.bglist = {}
