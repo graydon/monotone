@@ -1,5 +1,10 @@
 2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/dump_on_crash: New test; check that debug dumps work.
+	* testsuite.lua: Add it. Also, supply --confdir in safe_mtn.
+
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* cmd.hh: Declare a string commands::hidden_group, that can be given
 	as the group name to make a command invisible.
 	* commands.cc: Make it work and use it for a new command, "mtn crash".
