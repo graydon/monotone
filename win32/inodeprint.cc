@@ -11,12 +11,12 @@
 
 inline double difftime(FILETIME now, FILETIME then)
 {
-  ULONG_INTEGER here, there, res;
-  // Yes, MSDN says to use memcpy for this.
-  memcpy(&here, &now, sizeof(here));
-  memcpy(&there, &then, sizeof(there));
-  res = here - there;
-  double out = res.HighPart * (1<<32) + res.LowPart;
+  // 100 ns (1e-7 second) resolution
+  double out = now.dwHighDateTime - then.dwHighDateTime;
+  out *= (1<<16); // 1<<32 gives a compile warning about
+  out *= (1<<16); // shifting by too many bits
+  out += (now.dwLowDateTime - then.dwLowDateTime);
+  return out * 1e-7;
 }
 
 inline bool is_nowish(FILETIME now, FILETIME then)

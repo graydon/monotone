@@ -3,7 +3,6 @@
 
 #include "paths.hh"
 #include "platform.hh"
-#include "transforms.hh"
 #include "vocab.hh"
 
 inline utf8 tilde_expand(utf8 const & path)

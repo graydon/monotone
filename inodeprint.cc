@@ -18,6 +18,7 @@
 #include "inodeprint.hh"
 #include "sanity.hh"
 #include "platform.hh"
+#include "transforms.hh"
 #include "constants.hh"
 #include "basic_io.hh"
 
@@ -106,17 +107,16 @@ class my_iprint_calc : public inodeprint_calculator
   std::string res;
   Botan::SHA_160 hash;
   bool too_close;
-  my_iprint_calc() : too_close(false)
-  {}
   void add_item(void *dat, size_t size)
   {
-    size_t size = sizeof(obj);
     hash.update(reinterpret_cast<Botan::byte const *>(&size),
                 sizeof(size));
-    hash.update(reinterpret_cast<Botan::byte const *>(&obj),
-                sizeof(obj));
+    hash.update(reinterpret_cast<Botan::byte const *>(dat),
+                size);
   }
 public:
+  my_iprint_calc() : too_close(false)
+  {}
   std::string str()
   {
     char digest[constants::sha1_digest_length];
@@ -129,7 +129,7 @@ public:
   }
   void note_future(bool f)
   {
-    add_item(f);
+    inodeprint_calculator::add_item(f);
   }
   bool ok()
   {
