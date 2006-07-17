@@ -1,3 +1,9 @@
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: If we don't have a workspace and no dump file is
+	specified, set the dumpfile to $CONFDIR/dump . Not tested; that would
+	seem to need a reliable (not-a-bug) way to make monotone crash.
+
 2006-07-16  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Updated and translated a few more strings (53 to go).

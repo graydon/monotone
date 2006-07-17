@@ -624,6 +624,9 @@ cpp_main(int argc, char ** argv)
 
       app.allow_workspace();
 
+      if (!app.found_workspace && global_sanity.filename.empty())
+        global_sanity.filename = (app.get_confdir() / "dump").as_external();
+
       // main options processed, now invoke the
       // sub-command w/ remaining args
 
