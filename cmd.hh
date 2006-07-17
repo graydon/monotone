@@ -18,6 +18,7 @@
 
 namespace commands
 {
+  extern const std::string hidden_group;
   const char * safe_gettext(const char * msgid);
   struct no_opts {};
   struct command_opts

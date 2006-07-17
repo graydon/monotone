@@ -1,5 +1,11 @@
 2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* cmd.hh: Declare a string commands::hidden_group, that can be given
+	as the group name to make a command invisible.
+	* commands.cc: Make it work and use it for a new command, "mtn crash".
+
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* monotone.cc: If we don't have a workspace and no dump file is
 	specified, set the dumpfile to $CONFDIR/dump . Not tested; that would
 	seem to need a reliable (not-a-bug) way to make monotone crash.
