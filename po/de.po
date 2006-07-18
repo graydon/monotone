@@ -17,10 +17,10 @@
 # roster         -> Katalog
 # manifest       -> Manifest
 # revision       -> Revision
-# (to) revert    -> etw. zurücksetzen / Zurücksetzen
-# (to) commit    -> etw. einpflegen / Einpflegung
-# (to) update    -> etw. aktualisieren / Aktualisierung
-# (to) merge     -> etw. vereinigen / Vereinigung
+# (to) revert    -> etw. zurücksetzen / das Zurücksetzen
+# (to) commit    -> etw. einpflegen / das Einpflegen
+# (to) update    -> etw. aktualisieren / die Aktualisierung
+# (to) merge     -> etw. vereinigen / die Vereinigung
 # directory      -> Verzeichnis (NICHT "Ordner")
 #######
 #
