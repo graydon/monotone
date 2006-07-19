@@ -1,29 +1,11 @@
 
-
 #include "config.h"
-
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
-#include <errno.h>
-#include <signal.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <stdarg.h>
 
 #include "lua.hh"
 
 #include "sanity.hh"
-#include "platform.hh"
-#include "mkstemp.hh"
-#include "globish.hh"
-#include "basic_io.hh"
-#include "file_io.hh"
 
 #include <string>
-#include <fstream>
 #include <set>
 #include <vector>
 #include <utility>
@@ -32,8 +14,6 @@ extern "C" {
 #include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 
-using std::ifstream;
-using std::ios_base;
 using std::pair;
 using std::set;
 using std::sort;
@@ -42,6 +22,7 @@ using std::vector;
 using std::strerror;
 using std::malloc;
 using std::free;
+namespace fs = boost::filesystem;
 
 // adapted from "programming in lua", section 24.2.3
 // http://www.lua.org/pil/24.2.3.html
@@ -475,137 +456,6 @@ void add_functions(lua_State * st)
     }
 }
 
-LUAEXT(mkstemp, )
-{
-  int fd = -1;
-  FILE **pf = NULL;
-  char const *filename = luaL_checkstring (L, -1);
-  string dup(filename);
-
-  fd = monotone_mkstemp(dup);
-
-  if (fd == -1)
-    return 0;
-
-  // this magic constructs a lua object which the lua io library
-  // will enjoy working with
-  pf = static_cast<FILE **>(lua_newuserdata(L, sizeof(FILE *)));
-  *pf = fdopen(fd, "r+");
-  lua_pushstring(L, "FILE*");
-  lua_rawget(L, LUA_REGISTRYINDEX);
-  lua_setmetatable(L, -2);
-
-  lua_pushstring(L, dup.c_str());
-
-  if (*pf == NULL)
-    {
-      lua_pushnil(L);
-      lua_pushfstring(L, "%s", strerror(errno));
-      lua_pushnumber(L, errno);
-      return 3;
-    }
-  else
-    return 2;
-}
-
-LUAEXT(existsonpath, )
-{
-  const char *exe = luaL_checkstring(L, -1);
-  lua_pushnumber(L, existsonpath(exe));
-  return 1;
-}
-
-LUAEXT(is_executable, )
-{
-  const char *path = luaL_checkstring(L, -1);
-  lua_pushboolean(L, is_executable(path));
-  return 1;
-}
-
-LUAEXT(make_executable, )
-{
-  const char *path = luaL_checkstring(L, -1);
-  lua_pushnumber(L, make_executable(path));
-  return 1;
-}
-
-LUAEXT(spawn, )
-{
-  int n = lua_gettop(L);
-  const char *path = luaL_checkstring(L, -n);
-  char **argv = (char**)malloc((n+1)*sizeof(char*));
-  int i;
-  pid_t ret;
-  if (argv==NULL)
-    return 0;
-  argv[0] = (char*)path;
-  for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
-  argv[i] = NULL;
-  ret = process_spawn(argv);
-  free(argv);
-  lua_pushnumber(L, ret);
-  return 1;
-}
-
-LUAEXT(wait, )
-{
-  pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -1));
-  int res;
-  int ret;
-  ret = process_wait(pid, &res);
-  lua_pushnumber(L, res);
-  lua_pushnumber(L, ret);
-  return 2;
-}
-
-LUAEXT(kill, )
-{
-  int n = lua_gettop(L);
-  pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -2));
-  int sig;
-  if (n>1)
-    sig = static_cast<int>(luaL_checknumber(L, -1));
-  else
-    sig = SIGTERM;
-  lua_pushnumber(L, process_kill(pid, sig));
-  return 1;
-}
-
-LUAEXT(sleep, )
-{
-  int seconds = static_cast<int>(luaL_checknumber(L, -1));
-  lua_pushnumber(L, process_sleep(seconds));
-  return 1;
-}
-
-LUAEXT(guess_binary_file_contents, )
-{
-  const char *path = luaL_checkstring(L, -1);
-  N(path, F("%s called with an invalid parameter") % "guess_binary");
-
-  ifstream file(path, ios_base::binary);
-  if (!file)
-    {
-      lua_pushnil(L);
-      return 1;
-    }
-  const int bufsize = 8192;
-  char tmpbuf[bufsize];
-  string buf;
-  while (file.read(tmpbuf, sizeof tmpbuf))
-    {
-      I(file.gcount() <= static_cast<int>(sizeof tmpbuf));
-      buf.assign(tmpbuf, file.gcount());
-      if (guess_binary(buf))
-        {
-          lua_pushboolean(L, true);
-          return 1;
-        }
-    }
-  lua_pushboolean(L, false);
-  return 1;
-}
-
 LUAEXT(include, )
 {
   const char *path = luaL_checkstring(L, -1);
@@ -671,98 +521,10 @@ LUAEXT(search, regex)
   return 1;
 }
 
-LUAEXT(match, globish)
-{
-  const char *re = luaL_checkstring(L, -2);
-  const char *str = luaL_checkstring(L, -1);
-
-  bool result = false;
-  try {
-    string r(re);
-    string n;
-    string s(str);
-    result = globish_matcher(r, n)(s);
-  } catch (informative_failure & e) {
-    lua_pushstring(L, e.what.c_str());
-    lua_error(L);
-    return 0;
-  } catch (boost::bad_pattern & e) {
-    lua_pushstring(L, e.what());
-    lua_error(L);
-    return 0;
-  } catch (...) {
-    lua_pushstring(L, "Unknown error.");
-    lua_error(L);
-    return 0;
-  }
-  lua_pushboolean(L, result);
-  return 1;
-}
-
 LUAEXT(gettext, )
 {
   const char *msgid = luaL_checkstring(L, -1);
   lua_pushstring(L, gettext(msgid));
-  return 1;
-}
-
-LUAEXT(parse_basic_io, )
-{
-  vector<pair<string, vector<string> > > res;
-  const string str(luaL_checkstring(L, -1), lua_strlen(L, -1));
-  basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
-  basic_io::tokenizer tok(in);
-  try
-    {
-      string got;
-      basic_io::token_type tt;
-      do
-        {
-          tt = tok.get_token(got);
-          switch (tt)
-            {
-            case basic_io::TOK_SYMBOL:
-              res.push_back(make_pair(got, vector<string>()));
-              break;
-            case basic_io::TOK_STRING:
-            case basic_io::TOK_HEX:
-              E(!res.empty(), F("bad input to parse_basic_io"));
-              res.back().second.push_back(got);
-              break;
-            default:
-              break;
-            }
-        }
-      while (tt != basic_io::TOK_NONE);
-    }
-  catch (informative_failure & e)
-    {// there was a syntax error in our string
-      lua_pushnil(L);
-      return 1;
-    }
-  lua_newtable(L);
-  int n = 1;
-  for (vector<pair<string, vector<string> > >::const_iterator i = res.begin();
-        i != res.end(); ++i)
-    {
-      lua_pushnumber(L, n++);
-      lua_newtable(L);
-      lua_pushstring(L, "name");
-      lua_pushstring(L, i->first.c_str());
-      lua_settable(L, -3);
-      lua_pushstring(L, "values");
-      lua_newtable(L);
-      int m = 1;
-      for (vector<string>::const_iterator j = i->second.begin();
-            j != i->second.end(); ++j)
-        {
-          lua_pushnumber(L, m++);
-          lua_pushstring(L, j->c_str());
-          lua_settable(L, -3);
-        }
-      lua_settable(L, -3);
-      lua_settable(L, -3);
-    }
   return 1;
 }
 
