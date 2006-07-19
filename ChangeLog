@@ -1,3 +1,10 @@
+2006-07-19  Zack Weinberg  <zackw@panix.com>
+
+	* constants.cc (illegal_path_bytes_arr, illegal_path_bytes): Delete.
+	* constants.hh (illegal_path_bytes): Delete.
+	* paths.cc (has_bad_chars): Code set of forbidden characters
+	explicitly here.
+
 2006-07-18  Zack Weinberg  <zackw@panix.com>
 
 	* revision.cc (print_insane_revision): New function.
