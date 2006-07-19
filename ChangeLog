@@ -1,3 +1,8 @@
+2006-07-18  Zack Weinberg  <zackw@panix.com>
+
+	* revision.cc (print_insane_revision): New function.
+	(print_revision, write_insane_revision): Use it.
+
 2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/dump_on_crash: New test; check that debug dumps work.
@@ -44,7 +49,7 @@
 
 2006-07-14  Nathaniel Smith  <njs@pobox.com>
 
-	* cmd_files.cc (diff): 
+	* cmd_files.cc (diff):
 	* cmd_diff_log.cc (fdiff): Oops, rename OPT_SHOW_ENCLOSER here
 	too.
 
@@ -129,7 +134,7 @@
 
 2006-07-13  Nathaniel Smith  <njs@pobox.com>
 
-	* tests/restrictions_with_renames_and_adds/__driver__.lua: 
+	* tests/restrictions_with_renames_and_adds/__driver__.lua:
 	* tests/diff_shows_renames/__driver__.lua: Add notes on possible
 	fixes for these bugs.
 
@@ -512,6 +517,11 @@
 	* refiner.{cc,hh}: Add random unit tester,
 	and fix serious protocol-wedging bug.
 	* unit_tests.{cc,hh}: Register refiner tests.
+
+2006-07-19  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* tests/automate_tags: Some basic tests for automate tags.
+	* testsuite.lua: Activated new test.
 
 2006-07-04  Thomas Moschny  <thomas.moschny@gmx.de>
 

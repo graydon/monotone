@@ -1527,12 +1527,10 @@ print_edge(basic_io::printer & printer,
   print_cset(printer, edge_changes(e));
 }
 
-
-void
-print_revision(basic_io::printer & printer,
-               revision_t const & rev)
+static void
+print_insane_revision(basic_io::printer & printer,
+                      revision_t const & rev)
 {
-  rev.check_sane();
 
   basic_io::stanza format_stanza;
   format_stanza.push_str_pair(syms::format_version, "1");
@@ -1545,6 +1543,14 @@ print_revision(basic_io::printer & printer,
   for (edge_map::const_iterator edge = rev.edges.begin();
        edge != rev.edges.end(); ++edge)
     print_edge(printer, *edge);
+}
+
+void
+print_revision(basic_io::printer & printer,
+               revision_t const & rev)
+{
+  rev.check_sane();
+  print_insane_revision(printer, rev);
 }
 
 
@@ -1615,7 +1621,7 @@ static void write_insane_revision(revision_t const & rev,
                                   data & dat)
 {
   basic_io::printer pr;
-  print_revision(pr, rev);
+  print_insane_revision(pr, rev);
   dat = data(pr.buf);
 }
 
