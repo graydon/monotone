@@ -306,322 +306,299 @@ void do_copy_recursive(fs::path const &from, fs::path to)
     fs::copy_file(from, to);
 }
 
-extern "C"
+LUAEXT(posix_umask, )
 {
-  static int
-  posix_umask(lua_State * L)
-  {
 #ifdef WIN32
-    lua_pushnil(L);
-    return 1;
+  lua_pushnil(L);
+  return 1;
 #else
-    int from = luaL_checknumber(L, -1);
-    mode_t mask = 64*((from / 100) % 10) + 8*((from / 10) % 10) + (from % 10);
-    mode_t oldmask = umask(mask);
-    int res = 100*(oldmask/64) + 10*((oldmask/8) % 8) + (oldmask % 8);
-    lua_pushnumber(L, res);
-    return 1;
+  int from = luaL_checknumber(L, -1);
+  mode_t mask = 64*((from / 100) % 10) + 8*((from / 10) % 10) + (from % 10);
+  mode_t oldmask = umask(mask);
+  int res = 100*(oldmask/64) + 10*((oldmask/8) % 8) + (oldmask % 8);
+  lua_pushnumber(L, res);
+  return 1;
 #endif
-  }
+}
 
-  static int
-  go_to_test_dir(lua_State * L)
-  {
-    try
-      {
-        char const * testname = luaL_checkstring(L, -1);
-        fs::path tname(testname);
-        fs::path testdir = run_dir / tname.leaf();
-        if (fs::exists(testdir))
-          do_remove_recursive(testdir);
-        fs::create_directory(testdir);
-        change_current_working_dir(testdir.native_file_string());
-        lua_pushstring(L, testdir.native_file_string().c_str());
-        lua_pushstring(L, tname.leaf().c_str());
-        return 2;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushnil(L);
-        return 1;
-      }
-  }
-
-  static int
-  go_to_dir(lua_State * L)
-  {
-    try
-      {
-        fs::path dir(luaL_checkstring(L, -1), fs::native);
-        string from = fs::current_path().native_file_string();
-        if (!dir.is_complete())
-          dir = fs::current_path() / dir;
-        if (!fs::exists(dir) || !fs::is_directory(dir))
-          {
-            lua_pushnil(L);
-            return 1;
-          }
-        change_current_working_dir(dir.native_file_string());
-        lua_pushstring(L, from.c_str());
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushnil(L);
-        return 1;
-      }
-  }
-
-  static int
-  clean_test_dir(lua_State *L)
-  {
-    try
-      {
-        char const * testname = luaL_checkstring(L, -1);
-        fs::path tname(testname, fs::native);
-        fs::path testdir = run_dir / tname.leaf();
-        change_current_working_dir(run_dir.native_file_string());
+LUAEXT(go_to_test_dir, )
+{
+  try
+    {
+      char const * testname = luaL_checkstring(L, -1);
+      fs::path tname(testname);
+      fs::path testdir = run_dir / tname.leaf();
+      if (fs::exists(testdir))
         do_remove_recursive(testdir);
-        lua_pushboolean(L, true);
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushnil(L);
-        return 1;
-      }
-  }
+      fs::create_directory(testdir);
+      change_current_working_dir(testdir.native_file_string());
+      lua_pushstring(L, testdir.native_file_string().c_str());
+      lua_pushstring(L, tname.leaf().c_str());
+      return 2;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
 
-  static int
-  remove_recursive(lua_State *L)
-  {
-    try
-      {
-        fs::path dir(luaL_checkstring(L, -1));
-        do_remove_recursive(dir);
-        lua_pushboolean(L, true);
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushboolean(L, false);
-        lua_pushstring(L, e.what());
-        return 2;
-      }
-  }
-
-  static int
-  make_tree_accessible(lua_State *L)
-  {
-    try
-      {
-        fs::path dir(luaL_checkstring(L, -1));
-        do_make_tree_accessible(dir);
-        lua_pushboolean(L, true);
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushboolean(L, false);
-        lua_pushstring(L, e.what());
-        return 2;
-      }
-  }
-
-  static int
-  copy_recursive(lua_State *L)
-  {
-    try
-      {
-        fs::path from(luaL_checkstring(L, -2));
-        fs::path to(luaL_checkstring(L, -1));
-        do_copy_recursive(from, to);
-        lua_pushboolean(L, true);
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushboolean(L, false);
-        lua_pushstring(L, e.what());
-        return 2;
-      }
-  }
-
-  static int
-  leave_test_dir(lua_State *L)
-  {
-    try
-      {
-        change_current_working_dir(run_dir.native_file_string());
-        lua_pushboolean(L, true);
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushnil(L);
-        return 1;
-      }
-  }
-
-  static int
-  make_dir(lua_State *L)
-  {
-    try
-      {
-        char const * dirname = luaL_checkstring(L, -1);
-        fs::path dir(dirname, fs::native);
-        fs::create_directory(dir);
-        lua_pushboolean(L, true);
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushnil(L);
-        return 1;
-      }
-  }
-
-  static int
-  mtime(lua_State *L)
-  {
-    try
-      {
-        char const * file = luaL_checkstring(L, -1);
-        fs::path fn(file);
-        std::time_t t = fs::last_write_time(file);
-        if (t == std::time_t(-1))
+LUAEXT(chdir, )
+{
+  try
+    {
+      fs::path dir(luaL_checkstring(L, -1), fs::native);
+      string from = fs::current_path().native_file_string();
+      if (!dir.is_complete())
+        dir = fs::current_path() / dir;
+      if (!fs::exists(dir) || !fs::is_directory(dir))
+        {
           lua_pushnil(L);
-        else
-          lua_pushnumber(L, t);
-        return 1;
-      }
-    catch(fs::filesystem_error & e)
-      {
+          return 1;
+        }
+      change_current_working_dir(dir.native_file_string());
+      lua_pushstring(L, from.c_str());
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
+
+LUAEXT(clean_test_dir, )
+{
+  try
+    {
+      char const * testname = luaL_checkstring(L, -1);
+      fs::path tname(testname, fs::native);
+      fs::path testdir = run_dir / tname.leaf();
+      change_current_working_dir(run_dir.native_file_string());
+      do_remove_recursive(testdir);
+      lua_pushboolean(L, true);
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
+
+LUAEXT(remove_recursive, )
+{
+  try
+    {
+      fs::path dir(luaL_checkstring(L, -1));
+      do_remove_recursive(dir);
+      lua_pushboolean(L, true);
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushboolean(L, false);
+      lua_pushstring(L, e.what());
+      return 2;
+    }
+}
+
+LUAEXT(make_tree_accessible, )
+{
+  try
+    {
+      fs::path dir(luaL_checkstring(L, -1));
+      do_make_tree_accessible(dir);
+      lua_pushboolean(L, true);
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushboolean(L, false);
+      lua_pushstring(L, e.what());
+      return 2;
+    }
+}
+
+LUAEXT(copy_recursive, )
+{
+  try
+    {
+      fs::path from(luaL_checkstring(L, -2));
+      fs::path to(luaL_checkstring(L, -1));
+      do_copy_recursive(from, to);
+      lua_pushboolean(L, true);
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushboolean(L, false);
+      lua_pushstring(L, e.what());
+      return 2;
+    }
+}
+
+LUAEXT(leave_test_dir, )
+{
+  try
+    {
+      change_current_working_dir(run_dir.native_file_string());
+      lua_pushboolean(L, true);
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
+
+LUAEXT(mkdir, )
+{
+  try
+    {
+      char const * dirname = luaL_checkstring(L, -1);
+      fs::path dir(dirname, fs::native);
+      fs::create_directory(dir);
+      lua_pushboolean(L, true);
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
+
+LUAEXT(mtime, )
+{
+  try
+    {
+      char const * file = luaL_checkstring(L, -1);
+      fs::path fn(file);
+      std::time_t t = fs::last_write_time(file);
+      if (t == std::time_t(-1))
         lua_pushnil(L);
-        return 1;
-      }
-  }
+      else
+        lua_pushnumber(L, t);
+      return 1;
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
 
-  static int
-  exists(lua_State *L)
-  {
-    try
-      {
-        char const * name = luaL_checkstring(L, -1);
-        fs::path p(name, fs::native);
-        lua_pushboolean(L, fs::exists(p));
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushnil(L);
-      }
-    return 1;
-  }
+LUAEXT(exists, )
+{
+  try
+    {
+      char const * name = luaL_checkstring(L, -1);
+      fs::path p(name, fs::native);
+      lua_pushboolean(L, fs::exists(p));
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+    }
+  return 1;
+}
 
-  static int
-  isdir(lua_State *L)
-  {
-    try
-      {
-        char const * name = luaL_checkstring(L, -1);
-        fs::path p;
-        p = fs::path(name, fs::native);
-        lua_pushboolean(L, fs::exists(p) && fs::is_directory(p));
-      }
-    catch(fs::filesystem_error & e)
-      {
-        lua_pushnil(L);
-      }
-    return 1;
-  }
+LUAEXT(isdir, )
+{
+  try
+    {
+      char const * name = luaL_checkstring(L, -1);
+      fs::path p;
+      p = fs::path(name, fs::native);
+      lua_pushboolean(L, fs::exists(p) && fs::is_directory(p));
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+    }
+  return 1;
+}
 
-  static int
-  get_source_dir(lua_State * L)
-  {
-    lua_pushstring(L, source_dir.native_file_string().c_str());
-    return 1;
-  }
+LUAEXT(get_source_dir, )
+{
+  lua_pushstring(L, source_dir.native_file_string().c_str());
+  return 1;
+}
 
-  static int
-  clear_redirect(lua_State * L)
-  {
-    typedef redirect::saveblock rsb;
-    rsb const *sb = static_cast<rsb const*>(lua_topointer(L, 1));
-    clear_redirect(redirect::in, sb->in);
-    clear_redirect(redirect::out, sb->out);
-    clear_redirect(redirect::err, sb->err);
-    return 0;
-  }
+extern "C" static int clear_redirect(lua_State *L)
+{
+  typedef redirect::saveblock rsb;
+  rsb const *sb = static_cast<rsb const*>(lua_topointer(L, 1));
+  clear_redirect(redirect::in, sb->in);
+  clear_redirect(redirect::out, sb->out);
+  clear_redirect(redirect::err, sb->err);
+  return 0;
+}
 
-  static int
-  set_redirect(lua_State * L)
-  {
-    char const * infile = luaL_checkstring(L, -3);
-    char const * outfile = luaL_checkstring(L, -2);
-    char const * errfile = luaL_checkstring(L, -1);
+LUAEXT(set_redirect, )
+{
+  char const * infile = luaL_checkstring(L, -3);
+  char const * outfile = luaL_checkstring(L, -2);
+  char const * errfile = luaL_checkstring(L, -1);
 
-    typedef redirect::saveblock rsb;
-    rsb *sb = static_cast<rsb*> (lua_newuserdata(L, sizeof(rsb)));
-    sb->in = set_redirect(redirect::in, infile);
-    sb->out = set_redirect(redirect::out, outfile);
-    sb->err = set_redirect(redirect::err, errfile);
-    lua_newtable(L);
-    lua_pushstring(L, "__index");
-    lua_pushvalue(L, -2);
-    lua_settable(L, -3);
+  typedef redirect::saveblock rsb;
+  rsb *sb = static_cast<rsb*> (lua_newuserdata(L, sizeof(rsb)));
+  sb->in = set_redirect(redirect::in, infile);
+  sb->out = set_redirect(redirect::out, outfile);
+  sb->err = set_redirect(redirect::err, errfile);
+  lua_newtable(L);
+  lua_pushstring(L, "__index");
+  lua_pushvalue(L, -2);
+  lua_settable(L, -3);
 
-    lua_pushstring(L, "restore");
-    lua_pushcfunction(L,clear_redirect);
-    lua_settable(L, -3);
-    lua_setmetatable(L, -2);
-    
-    return 1;
-  }
+  lua_pushstring(L, "restore");
+  lua_pushcfunction(L,clear_redirect);
+  lua_settable(L, -3);
+  lua_setmetatable(L, -2);
+  
+  return 1;
+}
 
-  static int
-  get_ostype(lua_State * L)
-  {
-    string str;
-    get_system_flavour(str);
-    lua_pushstring(L, str.c_str());
-    return 1;
-  }
+LUAEXT(get_ostype, )
+{
+  string str;
+  get_system_flavour(str);
+  lua_pushstring(L, str.c_str());
+  return 1;
+}
 
-  static int
-  do_save_env(lua_State * L)
-  {
-    save_env();
-    return 0;
-  }
+LUAEXT(save_env, )
+{
+  save_env();
+  return 0;
+}
 
-  static int
-  do_restore_env(lua_State * L)
-  {
-    restore_env();
-    return 0;
-  }
+LUAEXT(restore_env, )
+{
+  restore_env();
+  return 0;
+}
 
-  static int
-  do_set_env(lua_State * L)
-  {
-    char const * var = luaL_checkstring(L, -2);
-    char const * val = luaL_checkstring(L, -1);
-    set_env(var, val);
-    return 0;
-  }
+LUAEXT(set_env, )
+{
+  char const * var = luaL_checkstring(L, -2);
+  char const * val = luaL_checkstring(L, -1);
+  set_env(var, val);
+  return 0;
+}
 
-  static int
-  timed_wait(lua_State * L)
-  {
-    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -2));
-    int time = static_cast<int>(luaL_checknumber(L, -1));
-    int res;
-    int ret;
-    ret = process_wait(pid, &res, time);
-    lua_pushnumber(L, res);
-    lua_pushnumber(L, ret);
-    return 2;
-  }
+LUAEXT(timed_wait, )
+{
+  pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -2));
+  int time = static_cast<int>(luaL_checknumber(L, -1));
+  int res;
+  int ret;
+  ret = process_wait(pid, &res, time);
+  lua_pushnumber(L, res);
+  lua_pushnumber(L, ret);
+  return 2;
 }
 
 int main(int argc, char **argv)
@@ -677,27 +654,6 @@ int main(int argc, char **argv)
   luaopen_table(st);
   luaopen_debug(st);
   add_functions(st);
-  lua_register(st, "go_to_test_dir", go_to_test_dir);
-  lua_register(st, "get_source_dir", get_source_dir);
-  lua_register(st, "set_redirect", set_redirect);
-  lua_register(st, "clear_redirect", clear_redirect);
-  lua_register(st, "clean_test_dir", clean_test_dir);
-  lua_register(st, "leave_test_dir", leave_test_dir);
-  lua_register(st, "mkdir", make_dir);
-  lua_register(st, "chdir", go_to_dir);
-  lua_register(st, "mtime", mtime);
-  lua_register(st, "remove_recursive", remove_recursive);
-  lua_register(st, "make_tree_accessible", make_tree_accessible);
-  lua_register(st, "copy_recursive", copy_recursive);
-  lua_register(st, "exists", exists);
-  lua_register(st, "isdir", isdir);
-  lua_register(st, "get_ostype", get_ostype);
-  lua_register(st, "save_env", do_save_env);
-  lua_register(st, "restore_env", do_restore_env);
-  lua_register(st, "set_env", do_set_env);
-  lua_register(st, "timed_wait", timed_wait);
-
-  lua_register(st, "posix_umask", posix_umask);
   
   lua_pushstring(st, "initial_dir");
   lua_pushstring(st, firstdir.c_str());
