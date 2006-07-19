@@ -1,3 +1,8 @@
+2006-07-19  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* NEWS: It's been about a month since the last release. Collect
+	important-looking things from the changelog.
+
 2006-07-19  Zack Weinberg  <zackw@panix.com>
 
 	* constants.cc (illegal_path_bytes_arr, illegal_path_bytes): Delete.
