@@ -89,9 +89,6 @@ namespace constants
   // boost regex that matches the bytes in legal_key_name_bytes
   extern std::string const regex_legal_key_name_bytes;
 
-  // all the ASCII characters (bytes) which are illegal in a (file|local)_path
-  extern char const * const illegal_path_bytes;
-
   // remaining constants are related to netsync protocol
 
   // number of bytes in the hash used in netsync

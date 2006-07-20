@@ -67,7 +67,8 @@ end
        
 
 function safe_mtn(...)
-  return {monotone_path, "--norc", "--root=" .. test.root, unpack(arg)}
+  return {monotone_path, "--norc", "--root=" .. test.root,
+          "--confdir="..test.root, unpack(arg)}
 end
 
 -- function preexecute(x)
@@ -652,3 +653,5 @@ table.insert(tests, "pluck_restricted")
 table.insert(tests, "revert_--missing_in_subdir")
 table.insert(tests, "restrictions_with_renames_and_adds")
 table.insert(tests, "diff_shows_renames")
+table.insert(tests, "dump_on_crash")
+table.insert(tests, "automate_tags")

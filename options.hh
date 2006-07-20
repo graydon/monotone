@@ -62,7 +62,7 @@
 #define OPT_REALLYQUIET 48
 #define OPT_STDIO 49
 #define OPT_NO_TRANSPORT_AUTH 50
-#define OPT_SHOW_ENCLOSER 51
+#define OPT_NO_SHOW_ENCLOSER 51
 
 // Local Variables:
 // mode: C++

@@ -49,7 +49,7 @@ app_state::app_state()
     search_root(current_root_path()),
     depth(-1), last(-1), next(-1),
     diff_format(unified_diff), diff_args_provided(false),
-    diff_show_encloser(false),
+    diff_show_encloser(true),
     execute(false), bind_address(""), bind_port(""),
     bind_stdio(false), use_transport_auth(true),
     missing(false), unknown(false),
@@ -128,9 +128,9 @@ app_state::process_options()
 
     L(FL("branch name is '%s'") % branch_name());
 
-	  if (!options[key_option]().empty())
-		  internalize_rsa_keypair_id(options[key_option],
-					     signing_key);
+          if (!options[key_option]().empty())
+                  internalize_rsa_keypair_id(options[key_option],
+                                             signing_key);
   }
 }
 
@@ -271,7 +271,7 @@ app_state::set_date(utf8 const & d)
   catch (exception &e)
     {
       N(false, F("failed to parse date string '%s': %s")
-	% d % e.what());
+        % d % e.what());
     }
 }
 
