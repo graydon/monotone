@@ -72,6 +72,7 @@ namespace commands
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
   bool operator<(command const & self, command const & other);
+  const std::string hidden_group("");
 };
 
 namespace std
@@ -168,7 +169,8 @@ namespace commands
     out << _("commands:") << endl;
     for (i = (*cmds).begin(); i != (*cmds).end(); ++i)
       {
-        sorted.push_back(i->second);
+        if (i->second->cmdgroup != hidden_group)
+          sorted.push_back(i->second);
       }
 
     sort(sorted.begin(), sorted.end(), greater<command *>());
@@ -257,6 +259,23 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
 
   app.requested_help = true;
   throw usage(full_cmd);
+}
+
+CMD(crash, hidden_group, "{ N | E | I }", "trigger the specified kind of crash", OPT_NONE)
+{
+  if (args.size() != 1)
+    throw usage(name);
+  bool spoon_exists(false);
+  if (idx(args,0)() == "N")
+    N(spoon_exists, i18n_format("There is no spoon."));
+  else if (idx(args,0)() == "E")
+    E(spoon_exists, i18n_format("There is no spoon."));
+  else if (idx(args,0)() == "I")
+    {
+      I(spoon_exists);
+    }
+  else
+    throw usage(name);
 }
 
 void

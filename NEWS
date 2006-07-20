@@ -1,3 +1,45 @@
+xxx Jul xx xx:xx:xx xxx 2006
+
+        0.28 release. Cherrypicking, a new testsuite, and some fixes
+        and enhancements.
+
+        Changes:
+
+        - automake 1.9 is now required.
+        - The testsuite has been rewritten, and should be much faster now. It
+          also no longer relies on the presence of a *nix userland.
+
+        New features:
+
+        - Cherrypicking with the new "pluck" command. This takes (a restricted
+          subset of) the changes in a revision, or between two revisions, and
+          applies them to your workspace.
+        - New automate commands, "automate tags" and "automate branches".
+
+        Enhancements:
+
+        - Crash dumps are now written to $CONFDIR/dump when no workspace is
+          available
+        - When netsync fails due to permission errors, the server returns a
+          semi-intelligible message before dropping the connection.
+        - When merging a branch with 3 or more heads, the order in which to
+          merge the heads will now be chosen in an intelligent manner.
+        - Inodeprints should be slightly more robust now.
+
+        Bug fixes:
+
+        - Fix an edge case where monotone would crash if there was a
+          content conflict in a merge for which there was no lca.
+        - Fix a case where netsync would sometimes hang during refinement.
+        - "mtn help" and "mtn --help" now exit with return code 0.
+        * "revert --missing" without restriction (was this broken in 0.27?)
+
+        Internal:
+
+        - Restrictions have been split into path_restrictions and
+          node_restrictions.
+        - AUTOMATE() macro, similar to the CMD() macro.
+
 Sat Jun 17 14:43:12 PDT 2006
 
         0.27 release.  Minor bug fixes and enhancements, plus ssh

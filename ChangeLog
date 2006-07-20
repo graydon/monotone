@@ -4,6 +4,49 @@
 	check_restricted_cset
 	* testsuite.lua: add it
 
+2006-07-19  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* NEWS: It's been about a month since the last release. Collect
+	important-looking things from the changelog.
+
+2006-07-19  Zack Weinberg  <zackw@panix.com>
+
+	* constants.cc (illegal_path_bytes_arr, illegal_path_bytes): Delete.
+	* constants.hh (illegal_path_bytes): Delete.
+	* paths.cc (has_bad_chars): Code set of forbidden characters
+	explicitly here.
+
+2006-07-18  Zack Weinberg  <zackw@panix.com>
+
+	* revision.cc (print_insane_revision): New function.
+	(print_revision, write_insane_revision): Use it.
+
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/dump_on_crash: New test; check that debug dumps work.
+	* testsuite.lua: Add it. Also, supply --confdir in safe_mtn.
+
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* cmd.hh: Declare a string commands::hidden_group, that can be given
+	as the group name to make a command invisible.
+	* commands.cc: Make it work and use it for a new command, "mtn crash".
+
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: If we don't have a workspace and no dump file is
+	specified, set the dumpfile to $CONFDIR/dump . Not tested; that would
+	seem to need a reliable (not-a-bug) way to make monotone crash.
+
+2006-07-16  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (53 to go).
+
+2006-07-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/revert_--missing_in_subdir/__driver__.lua: Make it
+	line-ending safe.
+
 2006-07-15  Derek Scherger  <derek@echologic.com>
 
 	* tester.txt: wrap long lines and fix a couple spelling errors
@@ -24,7 +67,7 @@
 
 2006-07-14  Nathaniel Smith  <njs@pobox.com>
 
-	* cmd_files.cc (diff): 
+	* cmd_files.cc (diff):
 	* cmd_diff_log.cc (fdiff): Oops, rename OPT_SHOW_ENCLOSER here
 	too.
 
@@ -109,7 +152,7 @@
 
 2006-07-13  Nathaniel Smith  <njs@pobox.com>
 
-	* tests/restrictions_with_renames_and_adds/__driver__.lua: 
+	* tests/restrictions_with_renames_and_adds/__driver__.lua:
 	* tests/diff_shows_renames/__driver__.lua: Add notes on possible
 	fixes for these bugs.
 
@@ -493,11 +536,20 @@
 	and fix serious protocol-wedging bug.
 	* unit_tests.{cc,hh}: Register refiner tests.
 
+2006-07-19  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* tests/automate_tags: Some basic tests for automate tags.
+	* testsuite.lua: Activated new test.
+
 2006-07-04  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* automate.cc (AUTOMATE(tags)): New function: List all tags in
 	basic_io format, possibly filtered by branch.
 	* monotone.texi (Automation): Description of the new added.
+
+2006-07-02  Roberta Lazzeri  <ripley@lapo.it>
+
+	* po/it.po: Translated a few more strings to Italian (42 to go).
 
 2006-07-02  Timothy Brownawell  <tbrownaw@gmail.com>
 

@@ -11,7 +11,7 @@ remove("testfile1")
 remove("testdir/testfile2")
 chdir("testdir")
 check(mtn("ls", "missing"), 0, true, false)
-check(readfile("stdout") == "testdir/testfile2\n" .. "testfile1\n")
+check(samelines("stdout", {"testdir/testfile2", "testfile1"}))
 
 check(mtn("revert", "--missing", "."), 0, false, false)
 check(not exists("../testfile1"))
