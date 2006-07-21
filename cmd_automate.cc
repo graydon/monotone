@@ -54,7 +54,7 @@ automate_command(utf8 cmd, vector<utf8> args,
     i->second->run(args, root_cmd_name, app, output);
 }
 
-static string const interface_version = "2.2";
+static string const interface_version = "3.0";
 
 // Name: interface_version
 // Arguments: none
