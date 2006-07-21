@@ -488,7 +488,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 run_lua_tests: Makefile
 	echo '#!/bin/sh' > $@ ; \
 	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
-	echo $(top_builddir)/tester $(srcdir)/testsuite.lua >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
 	chmod 755 $@
 
 # we generate some headers to copy data into the executable
