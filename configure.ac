@@ -293,6 +293,10 @@ if eval "test x\"\${$cv}\" = xno"; then
   LDFLAGS="$LDFLAGS -Wl,-z,muldefs"
 fi
 
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([cxxabi.h])
+AC_CHECK_FUNCS([__cxa_current_exception_type __cxa_demangle])
+
 # check for precompiled headers option
 AC_ARG_ENABLE(pch,
 AS_HELP_STRING([--enable-pch],

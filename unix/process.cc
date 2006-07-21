@@ -125,7 +125,7 @@ int process_wait(pid_t pid, int *res, int timeout)
         if (WIFEXITED(status))    
                 *res = WEXITSTATUS(status);
         else
-                *res = -1;
+                *res = -WTERMSIG(status);
         return 0;
 }
 

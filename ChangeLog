@@ -1,3 +1,42 @@
+2006-07-21  Zack Weinberg  <zackw@panix.com>
+
+	* main.cc: Break up into...
+	* unix/main.cc, win32/main.cc: ...these two files specialized for
+	the relevant operating systems.  Revamp Unix signal handling.
+	* Makefile.am: Update to match.
+	* configure.ac: Add tests for <cxxabi.h> interfaces conditionally
+	used by unix/main.cc.
+
+	* sanity.hh (informative_failure): Conform to std::exception interface.
+	(sanity): Remove clean_shutdown member.
+	* sanity.cc (sanity::sanity): Do not do any work here.
+	(sanity::do_format): Catch anything, and do not attempt to refer
+	to what().
+	* cmd_automate.cc, lua.cc, netxx_pipe.cc: informative_failure::what
+	is now a member function returning a char *, conforming to the
+	std::exception interface.
+	* ui.hh (user_interface): Add initialize and deinitialize members.
+	Correct typo in fatal(format_base const&) inline overload.
+	* ui.cc (user_interface::user_interface)
+	(user_interface::~user_interface): Do not do any work here...
+	(user_interface::initialize, user_interface::deinitialize):
+	... do it here instead.
+	* monotone.cc (dumper): Remove.
+	(struct botan_library, struct ui_library): New.
+	(cpp_main): Use struct botan_library and struct ui_library to
+	initialize global state.  Don't muck with global_sanity.clean_shutdown.
+	Catch standard exceptions here.  Log system_flavour here.
+
+	* commands.cc (crash): Add ability to throw any standard library
+	exception, bare strings, or (on Unix) raise any of the basic signals.
+	* unix/process.cc (process_wait): If process exited with a signal,
+	return -WTERMSIG(status) not -1.
+	* tests/database_is_closed_on_signal_exit: Ensure that the mtn
+	process actually exits in response to the signal, with the proper
+	exit status.
+	* tests/dump_on_crash: Add tests of all standard exceptions and
+	some signals.
+
 2006-07-20  Zack Weinberg  <zackw@panix.com>
 
 	* Makefile.am (run_lua_tests): In generated script, pass command

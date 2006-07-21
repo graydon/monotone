@@ -40,10 +40,20 @@
 // message to make it to the user, not a diagnostic error indicating
 // internal failure but a suggestion that they do something differently.
 
-struct informative_failure {
-  informative_failure(std::string const & s) : what(s) {}
-  std::string what;
+class informative_failure : public std::exception {
+  std::string const whatmsg;
+public:
+  explicit informative_failure(std::string const & s) : whatmsg(s) {};
+  virtual ~informative_failure() throw() {};
+  virtual char const * what() const throw() { return whatmsg.c_str(); }
 };
+
+// User interrupts are deferred to 'cancellation points', because it
+// is not safe to throw from a signal handler.  Q() is the primitive
+// cancellation point; explicit uses in running code should be rare,
+// because it's inside a lot of basic functions that get called
+// frequently.  The implementation is to be found in {unix,win32}/main.cc.
+extern void Q();
 
 class MusingI;
 
@@ -70,7 +80,6 @@ struct sanity {
   system_path filename;
   std::string gasp_dump;
   bool already_dumping;
-  bool clean_shutdown;
   std::vector<MusingI const *> musings;
 
   void log(plain_format const & fmt,

@@ -23,7 +23,9 @@ process = bg(mtn("--rcfile=wait.lua", "-btestbranch", "ci", "-mx"), false, false
 sleep(2)
 check(exists("test.db-journal"))
 kill(process.pid, 15)
-sleep(2)
+retval, res = timed_wait(process.pid, 2)
+check(res == 0)
+check(retval == -15) -- signal, not exit
 check(not exists("test.db-journal"))
 
 
@@ -32,7 +34,9 @@ process = bg(mtn("--rcfile=wait.lua", "-btestbranch", "ci", "-mx"), false, false
 sleep(2)
 check(exists("test.db-journal"))
 kill(process.pid, 2)
-sleep(2)
+retval, res = timed_wait(process.pid, 2)
+check(res == 0)
+check(retval == -1) -- signal, not exit
 check(not exists("test.db-journal"))
 
 
@@ -41,5 +45,7 @@ process = bg(mtn("--rcfile=wait.lua", "-btestbranch", "ci", "-mx"), false, false
 sleep(2)
 check(exists("test.db-journal"))
 kill(process.pid, 11)
-sleep(2)
+retval, res = timed_wait(process.pid, 2)
+check(res == 0)
+check(retval == -11) -- signal, not exit
 check(exists("test.db-journal"))

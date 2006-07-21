@@ -123,11 +123,14 @@ struct poptOption options[] =
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
-// there are 3 variables which serve as roots for our system.
+// there are 4 variables which serve as roots for our system.
 //
 // "global_sanity" is a global object, which contains the error logging
 // system, which is constructed once and used by any nana logging actions.
-// see cleanup.hh for it
+// see sanity.hh for it
+//
+// "ui" is a global object, through which all messages to the user go.
+// see ui.hh for it
 //
 // "cmds" is a static table in commands.cc which associates top-level
 // commands, given on the command-line, to various version control tasks.
@@ -146,16 +149,6 @@ struct poptOption options[] =
 //
 // in other words, this program should *never* unexpectedly terminate
 // without dumping some diagnostics.
-
-void
-dumper()
-{
-  if (!global_sanity.clean_shutdown)
-    global_sanity.dump_buffer();
-
-  Botan::Init::deinitialize();
-}
-
 
 struct
 utf8_argv
@@ -254,12 +247,35 @@ coption_string(int o)
   return string();
 }
 
+// Wrapper class to ensure Botan is properly initialized and deinitialized.
+struct botan_library
+{
+  botan_library() { 
+    Botan::Init::initialize();
+    Botan::set_default_allocator("malloc");
+  }
+  ~botan_library() {
+    Botan::Init::deinitialize();
+  }
+};
+
+// Similarly, for the global ui object.  (We do not want to use global
+// con/destructors for this, as they execute outside the protection of
+// main.cc's signal handlers.)
+struct ui_library
+{
+  ui_library() {
+    ui.initialize();
+  }
+  ~ui_library() {
+    ui.deinitialize();
+  }
+};
+
 int
 cpp_main(int argc, char ** argv)
 {
   int ret = 0;
-
-  atexit(&dumper);
 
   // go-go gadget i18n
 
@@ -267,74 +283,82 @@ cpp_main(int argc, char ** argv)
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
 
+  // Set up secure memory allocation etc
+  botan_library acquire_botan;
+
+  // Set up global UI
+  ui_library acquire_ui;
 
   // we want to catch any early informative_failures due to charset
   // conversion etc
   try
-  {
-
-  // set up some marked strings, so even if our logbuf overflows, we'll get
-  // this data in a crash.
-  string cmdline_string;
-  {
-    ostringstream cmdline_ss;
-    for (int i = 0; i < argc; ++i)
-      {
-        if (i)
-          cmdline_ss << ", ";
-        cmdline_ss << "'" << argv[i] << "'";
-      }
-    cmdline_string = cmdline_ss.str();
-  }
-  MM(cmdline_string);
-  L(FL("command line: %s") % cmdline_string);
-
-  string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
-  MM(locale_string);
-  L(FL("set locale: LC_ALL=%s") % locale_string);
-
-  string full_version_string;
-  get_full_version(full_version_string);
-  MM(full_version_string);
-
-  // Set up secure memory allocation etc
-  Botan::Init::initialize();
-  Botan::set_default_allocator("malloc");
-
-  // decode all argv values into a UTF-8 array
-
-  save_initial_path();
-  utf8_argv uv(argc, argv);
-
-  // find base name of executable
-
-  string prog_path = fs::path(uv.argv[0]).leaf();
-  if (prog_path.rfind(".exe") == prog_path.size() - 4)
-    prog_path = prog_path.substr(0, prog_path.size() - 4);
-  utf8 prog_name(prog_path);
-
-  // prepare for arg parsing
-
-  cleanup_ptr<poptContext, void>
-    ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
-        &my_poptFreeContext);
-
-  set<int> local_options;
-  for (poptOption *opt = coptions; opt->val; opt++)
-    local_options.insert(opt->val);
-
-  // process main program options
-
-  int opt;
-  set<int> used_local_options;
-
-  poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
-
-  app_state app;
-  try
     {
+      // set up some marked strings, so even if our logbuf overflows, we'll get
+      // this data in a crash.
+      string flavour;
+      get_system_flavour(flavour);
+      MM(flavour);
+      L(FL("started up on %s") % flavour);
+
+      string cmdline_string;
+      {
+        ostringstream cmdline_ss;
+        for (int i = 0; i < argc; ++i)
+          {
+            if (i)
+              cmdline_ss << ", ";
+            cmdline_ss << "'" << argv[i] << "'";
+          }
+        cmdline_string = cmdline_ss.str();
+      }
+      MM(cmdline_string);
+      L(FL("command line: %s") % cmdline_string);
+
+      string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+      MM(locale_string);
+      L(FL("set locale: LC_ALL=%s") % locale_string);
+
+      string full_version_string;
+      get_full_version(full_version_string);
+      MM(full_version_string);
+
+      // decode all argv values into a UTF-8 array
+
+      save_initial_path();
+      utf8_argv uv(argc, argv);
+
+      // find base name of executable
+
+      string prog_path = fs::path(uv.argv[0]).leaf();
+      if (prog_path.rfind(".exe") == prog_path.size() - 4)
+        prog_path = prog_path.substr(0, prog_path.size() - 4);
+      utf8 prog_name(prog_path);
+
+      // prepare for arg parsing
+
+      cleanup_ptr<poptContext, void>
+        ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
+            &my_poptFreeContext);
+
+      set<int> local_options;
+      for (poptOption *opt = coptions; opt->val; opt++)
+        local_options.insert(opt->val);
+
+      // process main program options
+
+      int opt;
+      set<int> used_local_options;
+
+      poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
+
+      app_state app;
 
       app.set_prog_name(prog_name);
+
+      // this extra try block allows variables declared above to be used in
+      // the 'catch (usage)' block below
+      try
+        {
 
       while ((opt = poptGetNextOpt(ctx())) > 0)
         {
@@ -415,12 +439,10 @@ cpp_main(int argc, char ** argv)
 
             case OPT_VERSION:
               print_version();
-              global_sanity.clean_shutdown = true;
               return 0;
 
             case OPT_FULL_VERSION:
               print_full_version();
-              global_sanity.clean_shutdown = true;
               return 0;
 
             case OPT_REVISION:
@@ -598,7 +620,7 @@ cpp_main(int argc, char ** argv)
 
       N(opt == -1,
         F("syntax error near the \"%s\" option: %s") %
-          poptBadOption(ctx(), POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
+        poptBadOption(ctx(), POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
 
       // complete the command if necessary
 
@@ -644,7 +666,7 @@ cpp_main(int argc, char ** argv)
         {
           args.push_back(utf8(string(poptGetArg(ctx()))));
         }
-      ret = commands::process(app, cmd, args);
+      return commands::process(app, cmd, args);
     }
   catch (usage & u)
     {
@@ -681,27 +703,55 @@ cpp_main(int argc, char ** argv)
       poptPrintHelp(ctx(), stdout, 0);
       cout << endl;
       commands::explain_usage(u.which, cout);
-      global_sanity.clean_shutdown = true;
-      if (app.requested_help)
-        return 0;
-      else
-        return 2;
+      return app.requested_help ? 0 : 2;
     }
-  }
+    }
   catch (informative_failure & inf)
-  {
-    ui.inform(inf.what);
-    global_sanity.clean_shutdown = true;
-    return 1;
-  }
+    {
+      ui.inform(inf.what());
+      return 1;
+    }
   catch (ios_base::failure const & ex)
-  {
-    global_sanity.clean_shutdown = true;
-    return 1;
-  }
+    {
+      // an error has already been printed
+      return 1;
+    }
 
-  global_sanity.clean_shutdown = true;
-  return ret;
+#define CATCH_FATAL_BARE(T) catch (T) { ui.fatal(#T); return 3; }
+#define CATCH_FATAL_WHAT(T)                                             \
+  catch (T const & ex) { ui.fatal(F(#T ": %s") % ex.what()); return 3; }
+
+  CATCH_FATAL_BARE(std::bad_alloc)
+  CATCH_FATAL_BARE(std::bad_cast)
+  CATCH_FATAL_BARE(std::bad_typeid)
+  CATCH_FATAL_BARE(std::bad_exception)
+  CATCH_FATAL_WHAT(std::domain_error)
+  CATCH_FATAL_WHAT(std::invalid_argument)
+  CATCH_FATAL_WHAT(std::length_error)
+  CATCH_FATAL_WHAT(std::out_of_range)
+  CATCH_FATAL_WHAT(std::range_error)
+  CATCH_FATAL_WHAT(std::overflow_error)
+  CATCH_FATAL_WHAT(std::underflow_error)
+    // logic_error, runtime_error, and exception must be last, being
+    // parent classes.
+  CATCH_FATAL_WHAT(std::logic_error)
+  CATCH_FATAL_WHAT(std::runtime_error)
+  CATCH_FATAL_WHAT(std::exception)
+
+  catch (char const * ex)
+    {
+      ui.fatal(F("C-string: %s") % ex);
+      return 3;
+    }
+  catch (std::string const & ex)
+    {
+      ui.fatal(F("std::string: %s") % ex);
+      return 3;
+    }
+
+  // control cannot reach this point
+  ui.fatal("impossible: reached end of cpp_main");
+  return 3;
 }
 
 // Local Variables:

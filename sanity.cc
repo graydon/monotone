@@ -45,12 +45,8 @@ sanity global_sanity;
 
 sanity::sanity() :
   debug(false), quiet(false), reallyquiet(false), relaxed(false), logbuf(0xffff),
-  already_dumping(false), clean_shutdown(false)
-{
-  string flavour;
-  get_system_flavour(flavour);
-  L(FL("started up on %s") % flavour);
-}
+  already_dumping(false)
+{}
 
 sanity::~sanity()
 {}
@@ -130,12 +126,11 @@ sanity::do_format(format_base const & fmt, char const * file, int line)
     {
       return fmt.str();
     }
-  catch (exception & e)
+  catch (...)
     {
-      ui.inform(F("fatal: formatter failed on %s:%d: %s")
+      ui.inform(F("fatal: formatter failed on %s:%d")
                 % file
-                % line
-                % e.what());
+                % line);
       throw;
     }
 }

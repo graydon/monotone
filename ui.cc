@@ -359,10 +359,17 @@ void tick_write_dot::clear_line()
   clog << endl;
 }
 
+// user_interface has both constructor/destructor and initialize/
+// deinitialize because there's only one of these objects, it's
+// global, and we don't want global constructors/destructors doing
+// any real work.  see monotone.cc for how this is handled.
 
 user_interface::user_interface() :
   last_write_was_a_tick(false),
   t_writer(0)
+{}
+
+void user_interface::initialize()
 {
   cout.exceptions(ios_base::badbit);
 #ifdef SYNC_WITH_STDIO_WORKS
@@ -376,6 +383,9 @@ user_interface::user_interface() :
 }
 
 user_interface::~user_interface()
+{}
+
+void user_interface::deinitialize()
 {
   delete t_writer;
 }
@@ -434,6 +444,7 @@ user_interface::fatal(string const & fatal)
            "please send this error message, the output of '%s --full-version',\n"
            "and a description of what you were doing to %s.\n")
          % fatal % prog_name % PACKAGE_BUGREPORT);
+  global_sanity.dump_buffer();
 }
 
 void
