@@ -1,6 +1,11 @@
+2006-07-21  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* monotone.texi: Document command aliases 'mv', 'ci' and 'ls',
+	motivated by savannah bug report #16923.
+
 2006-07-20  Matt Johnston  <matt@ucc.asn.au>
 
-    * monotone.texi: avoid "to to".
+	* monotone.texi: avoid "to to".
 
 2006-07-20  Zack Weinberg  <zackw@panix.com>
 

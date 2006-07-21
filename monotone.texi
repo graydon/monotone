@@ -4144,7 +4144,9 @@ deletion operations in the filesystem.  It will ignore files or
 directories which have already been deleted.
 
 @item mtn [--execute] rename @var{src} @var{dst}
+@item mtn [--execute] mv @var{src} @var{dst}
 @itemx mtn [--execute] rename @var{src1} @var{...} @var{dst/}
+@itemx mtn [--execute] mv @var{src1} @var{...} @var{dst/}
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
@@ -4166,11 +4168,17 @@ rename operations in the filesystem. It will ignore missing source files
 and will not overwrite existing destination files.
 
 @item mtn commit
+@item mtn ci
 @itemx mtn commit --message=@var{logmsg}
+@itemx mtn ci --message=@var{logmsg}
 @itemx mtn commit --message-file=@var{logfile}
+@itemx mtn ci --message-file=@var{logfile}
 @itemx mtn commit @var{pathname...}
+@itemx mtn ci @var{pathname...}
 @itemx mtn commit --message=@var{logmsg} @var{pathname...} 
+@itemx mtn ci --message=@var{logmsg} @var{pathname...} 
 @itemx mtn commit --message-file=@var{logfile} @var{pathname...} 
+@itemx mtn ci --message-file=@var{logfile} @var{pathname...} 
 
 This command looks at your workspace, decides which files have
 changed, and saves the changes to your database. It does this by loading
@@ -4673,6 +4681,7 @@ passed to it, and so on, are controlled by the hook
 @code{external_diff}; see @ref{Hooks} for more details.
 
 @item mtn list certs @var{id}
+@item mtn ls certs @var{id}
 
 These commands will print out a list of certificates associated with
 a particular revision @var{id}. Each line of the print out will
@@ -4729,7 +4738,9 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 @end smallexample
 
 @item mtn list keys
+@item mtn ls keys
 @itemx mtn list keys @var{pattern}
+@itemx mtn ls keys @var{pattern}
 These commands list @sc{rsa} keys held in your keystore and current database.
 They do not print out any cryptographic information; they simply list the
 names of public and private keys you have on hand.
@@ -4738,21 +4749,27 @@ If @var{pattern} is provided, it is used as a glob to limit the keys
 listed. Otherwise all keys in your database are listed.
 
 @item mtn list branches
+@item mtn ls branches
 
 This command lists all known branches in your database.
 
 @item mtn list tags
+@item mtn ls tags
 
 This command lists all known tags in your database.
 
 @item mtn list vars
+@item mtn ls vars
 @item mtn list vars @var{domain}
+@item mtn ls vars @var{domain}
 
 This command lists all vars in your database, or all vars within a given
 @var{domain}.  See @ref{Vars} for more information.
 
 @item mtn list known
+@item mtn ls known
 @itemx mtn list known @var{pathname...}
+@itemx mtn ls known @var{pathname...}
 
 This command lists all files which would become part of the manifest of
 the next revision if you comitted your workspace at this point.
@@ -4767,7 +4784,9 @@ Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the workspace.
 
 @item mtn list unknown
+@item mtn ls unknown
 @itemx mtn list unknown @var{pathname...}
+@itemx mtn ls unknown @var{pathname...}
 
 This command lists all files in your workspace that monotone is 
 either ignoring or knows nothing about.
@@ -4782,7 +4801,9 @@ Specifying only the pathname "." will restrict the search for unknown
 files to the current subdirectory of the workspace.
 
 @item mtn list ignored
+@item mtn ls ignored
 @itemx mtn list ignored @var{pathname...}
+@itemx mtn ls ignored @var{pathname...}
 
 This command lists all files in your workspace that monotone is
 intentionally ignoring, due to the results of the @code{ignore_file
@@ -4798,7 +4819,9 @@ Specifying only the pathname "." will restrict the search for ignored
 files to the current subdirectory of the workspace.
 
 @item mtn list missing
+@item mtn ls missing
 @itemx mtn list missing @var{pathname...}
+@itemx mtn ls missing @var{pathname...}
 
 This command lists all files in your workspace's base manifest,
 which are not present in the workspace.
@@ -4813,7 +4836,9 @@ Specifying only the pathname "." will restrict the search for missing
 files to the current subdirectory of the workspace.
 
 @item mtn list changed
+@item mtn ls changed
 @itemx mtn list changed @var{pathname...}
+@itemx mtn ls changed @var{pathname...}
 
 This command lists all files in your workspace that have changed
 compared to the base revision, including files that are dropped, added
