@@ -196,51 +196,89 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 
 // Name: attributes
 // Arguments:
-//   1: file name (optional, if non-existant prints all files with attributes)
+//   1: file name
 // Added in: 1.0
-// Purpose: Prints all attributes for a file, or all  all files with attributes
-//   if a file name provided.
-// Output format: A list of file names in alphabetically sorted order,
-//   or a list of attributes if a file name provided.
+// Purpose: Prints all attributes for a file
+// Output format: basic_io formatted output, each attribute has its own stanza:
+//
+// 'format_version'
+//         used in case this format ever needs to change.
+//         format: ('format_version', the string "1" currently)
+//         occurs: exactly once
+// 'attr'
+//         represents an attribute entry
+//         format: ('attr', name, value), ('state', [)
+//         occurs: zero or more times
 // Error conditions: If the file name has no attributes, prints nothing.
 AUTOMATE(attributes, N_("[FILE]"))
 {
-  if (args.size() > 1)
+  if (args.size() != 1)
     throw usage(help_name);
 
+  // this command requires a workspace to be run on
+  app.require_workspace();
+
+  roster_data dat;
   roster_t base, current;
   temp_node_id_source nis;
 
+  // create the printer
+  basic_io::printer pr;
+  
+  // print the format version
+  basic_io::stanza st;
+  st.push_str_pair(basic_io::syms::format_version, "1");
+  pr.print_stanza(st);
+    
   get_base_and_current_roster_shape(base, current, nis, app);
 
-  if (args.size() == 1)
-    {
-      // a filename was given, if it has attributes, print them
-      split_path path;
-      file_path_external(idx(args,0)).split(path);
+  split_path path;
+  file_path_external(idx(args,0)).split(path);
 
-      if (current.has_node(path))
-        {
-          node_t n = current.get_node(path);
-          for (full_attr_map_t::const_iterator i = n->attrs.begin();
-               i != n->attrs.end(); ++i)
-            if (i->second.first)
-              output << i->first << endl;
-        }
-    }
-  else
+  // check if the file is part of the current roster, if not, we won't process
+  // further (i.e. we do not list attributes of dropped files, since what
+  // should their status be? "dropped" because the node was dropped or
+  // "unchanged"... no, this is messy.)
+  if (current.has_node(path))
+  {
+    // the current node holds all current attributes (unchanged and new ones)
+    node_t n = current.get_node(path);
+    for (full_attr_map_t::const_iterator i = n->attrs.begin();
+         i != n->attrs.end(); ++i)
     {
-      for (node_map::const_iterator i = current.all_nodes().begin();
-           i != current.all_nodes().end(); ++i)
-        {
-          if (!i->second->attrs.empty())
-            {
-              split_path path;
-              current.get_name(i->first, path);
-              output << file_path(path) << endl;
-            }
-        }
+      if (!i->second.first)
+        continue;
+        
+      // this is taken from roster::print_to - but I don't know why its even 
+      // there...
+      // why shouldn't it be allowed that the value of an attribute is empty?
+      I(!i->second.second().empty());
+
+      basic_io::stanza st;
+      st.push_str_triple(basic_io::syms::attr, i->first(), i->second.second());
+      st.push_str_pair("bool", i->second.first() ? "true" : "false");
+/*
+      std::string state("existing");
+      // now comes the ugly part... determine if this attribute also existed
+      // in the previous roster
+      
+      st.push_str_pair("status", state);
+*/
+      pr.print_stanza(st);
     }
+    
+    // to list all dropped attributes, we need to have a closer look at the
+    // previous roster (if there is any)
+/*
+    if (base.has_node(path))
+    {
+      n = base.get_node(path);
+      
+    }
+*/    
+  }
+    
+  output.write(pr.buf.data(), pr.buf.size());
 }
 
 // Name: toposort
