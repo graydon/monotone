@@ -4308,7 +4308,7 @@ that this command uses monotone's merger, and thus intelligently
 handles renames, conflicts, and so on.
 
 If only one revision is given, applies the changes made in @var{to} as
-compared to @var{to}'s parent.  If two revisions are given, applies
+compared with @var{to}'s parent.  If two revisions are given, applies
 the changes made to get from @var{from} to @var{to}.
 
 Note that this is not a true cherrypick operation.  A true cherrypick,
@@ -8883,7 +8883,7 @@ Dump debugging log to @i{<file>} on failure.
 @comment TROFF INPUT: .TP
 
 @item @b{--log=}@i{<file>}
-Redirect the log lines to to @i{<file>}.
+Redirect the log lines to @i{<file>}.
 @comment TROFF INPUT: .TP
 
 @item @b{--nostd}

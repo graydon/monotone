@@ -1,3 +1,7 @@
+2006-07-20  Matt Johnston  <matt@ucc.asn.au>
+
+    * monotone.texi: avoid "to to".
+
 2006-07-19  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* NEWS: It's been about a month since the last release. Collect
