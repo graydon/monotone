@@ -1,5 +1,12 @@
 2006-07-21  Nathaniel Smith  <njs@pobox.com>
 
+	* AUTHORS: Add Thomas Moschny and Zack Weinberg.
+
+	* UPGRADE, monotone.spec, visualc/config.h, win32/monotone.iss:
+	* debian/changelog: Bump to version 0.28.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
 	* monotone.texi (Workspace): Make the Warnings about pluck more
 	Dire.
 
