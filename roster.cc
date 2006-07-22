@@ -2535,7 +2535,6 @@ roster_t::print_to(basic_io::printer & pr,
         {
           if (j->second.first)
             {
-              I(!j->second.second().empty());
               // L(FL("printing attr %s : %s = %s") % fp % j->first % j->second);
               st.push_str_triple(syms::attr, j->first(), j->second.second());
             }
