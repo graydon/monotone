@@ -1,5 +1,11 @@
 2006-07-21  Nathaniel Smith  <njs@pobox.com>
 
+	* NEWS: Update for 0.28.
+	* tests/netsync_over_pipes/__driver__.lua: Remove no-longer-needed
+	--debug.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (print_to): It is perfectly valid to have an attr set
 	to the empty string (which is why we have whole "full_attr"
 	annoyance).  Remove incorrect I().
