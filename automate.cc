@@ -207,7 +207,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 //         occurs: exactly once
 // 'attr'
 //         represents an attribute entry
-//         format: ('attr', name, value), ('state', [unchanged|added|dropped])
+//         format: ('attr', name, value), ('state', [unchanged|changed|added|dropped])
 //         occurs: zero or more times
 //
 // Error conditions: If the file name has no attributes, prints nothing.
@@ -271,11 +271,20 @@ AUTOMATE(attributes, N_("[FILE]"))
           if (base.has_node(path))
             {
               node_t prev_node = base.get_node(path);
-              // try to find the attribute in there
-              if (prev_node->attrs.find(i->first()) == prev_node->attrs.end())
+              full_attr_map_t::const_iterator j = 
+                prev_node->attrs.find(i->first());
+              // attribute not found? this is new
+              if (j == prev_node->attrs.end())
                 {
                   state = "added";
                 }
+              // check if this attribute has been changed 
+              // (dropped and set again)
+              else if (i->second.second() != j->second.second())
+                {
+                  state = "changed";
+                }
+                  
             }
           // its added since the whole node has been just added
           else
