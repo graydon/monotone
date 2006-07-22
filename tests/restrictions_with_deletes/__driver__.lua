@@ -21,4 +21,4 @@ commit()
 root_rev = base_revision()
 
 check(mtn("drop", "foo/bar", "foo"), 0, false, false)
-xfail(mtn("st", "--exclude", "foo/bar"), 0, false, false)
+check(mtn("st", "--exclude", "foo/bar"), 1, false, false)

@@ -1,3 +1,13 @@
+2006-07-21  Derek Scherger  <derek@echologic.com>
+
+	* roster.cc (mark_roster_with_one_parent): remove std:: prefix
+	(editable_roster_for_check): new class for checking cset
+	application
+	(check_restricted_cset): convert check to use cset.apply_to with
+	editable_roster_for_check
+	* tests/restrictions_with_deletes: un-xfail
+	* tests/restrictions_with_renames_and_adds: un-xfail
+
 2006-07-20  Zack Weinberg  <zackw@panix.com>
 
 	* Makefile.am (run_lua_tests): In generated script, pass command

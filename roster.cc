@@ -1749,7 +1749,7 @@ mark_roster_with_one_parent(roster_t const & parent,
                            child_rid, i->second, new_marking);
       else
         mark_new_node(child_rid, i->second, new_marking);
-      safe_insert(child_markings, std::make_pair(i->first, new_marking));
+      safe_insert(child_markings, make_pair(i->first, new_marking));
     }
 
   child.check_sane_against(child_markings, true);
@@ -2024,48 +2024,118 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
 
 }
 
+class editable_roster_for_check
+  : public editable_roster_base
+{
+ public:
+  editable_roster_for_check(roster_t & r);
+  virtual node_id detach_node(split_path const & src);
+  virtual void drop_detached_node(node_id nid);
+  virtual void attach_node(node_id nid, split_path const & dst);
+  int problems;
+
+ private:
+  temp_node_id_source nis;
+  map<node_id, pair<split_path, vector<path_component> > > detached_dirs;
+};
+
+editable_roster_for_check::editable_roster_for_check(roster_t & r)
+  : editable_roster_base(r, nis), problems(0)
+{
+  // ensure that this roster has no temp nodes
+  node_map nodes = r.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    I(!temp_node(i->first));
+}
+
+node_id
+editable_roster_for_check::detach_node(split_path const & src)
+{
+  node_t n = r.get_node(src);
+  if (is_dir_t(n))
+    {
+      dir_t dir = downcast_to_dir_t(n);
+      vector<path_component> children;
+      for (dir_map::const_iterator 
+             i = dir->children.begin(); i != dir->children.end(); ++i)
+        {
+          children.push_back(i->first);
+        }
+      detached_dirs.insert(make_pair(dir->self, 
+                                     make_pair(src, children)));
+    }
+
+  return this->editable_roster_base::detach_node(src);
+}
+
+void
+editable_roster_for_check::drop_detached_node(node_id nid)
+{
+  node_t n = r.get_node(nid);
+  if (is_dir_t(n) && !downcast_to_dir_t(n)->children.empty())
+    {
+      map<node_id, pair<split_path, vector<path_component> > >::const_iterator 
+        i = detached_dirs.find(nid);
+      I(i != detached_dirs.end());
+
+      split_path dir = i->second.first;
+      for (vector<path_component>::const_iterator 
+             p = i->second.second.begin(); p != i->second.second.end(); ++p)
+        {
+          split_path child(dir);
+          child.push_back(*p);
+          W(F("restriction includes deletion of '%s' but excludes deletion of '%s'")
+            % dir % child);
+          problems++;
+        }
+    }
+  else
+    {
+      this->editable_roster_base::drop_detached_node(nid);
+    }
+}
+
+void
+editable_roster_for_check::attach_node(node_id nid, split_path const & dst)
+{
+  split_path dirname;
+  path_component basename;
+  dirname_basename(dst, dirname, basename);
+
+  if (!dirname.empty() && !r.has_node(dirname))
+    {
+      W(F("restriction excludes addition of '%s' but includes addition of '%s'")
+        % dirname % dst);
+      problems++;
+    }
+  else
+    {
+      this->editable_roster_base::attach_node(nid, dst);
+    }
+}
+
 void
 check_restricted_cset(roster_t const & roster, cset const & cs)
 {
+  // there are two different cases we're checking for here:
+  //
+  // - add foo foo/bar followed by a restricted command that 
+  //   excludes foo and includes foo/bar which tries to add 
+  //   bar to a non-existent directory foo.
+  //
+  // - drop foo foo/bar followed by a restricted command that
+  //   includes foo and excludes foo/bar which tries to delete 
+  //   foo when it is not empty and still contains bar.
+
   MM(roster);
   MM(cs);
-  path_set added;
-  int missing = 0;
 
-  for (path_set::const_iterator i = cs.dirs_added.begin();
-       i != cs.dirs_added.end(); ++i)
-    {
-      split_path dir(*i);
-      added.insert(dir);
+  // make a copy of the roster to apply the cset to destructively
+  roster_t tmp(roster);
+  editable_roster_for_check e(tmp);
+  cs.apply_to(e);
 
-      if (dir.size() > 1)
-        {
-          dir.pop_back();
-
-          if (!roster.has_node(dir) && added.find(dir) == added.end())
-            {
-              missing++;
-              W(F("restriction excludes directory '%s'") % dir);
-            }
-        }
-    }
-
-  for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-       i != cs.files_added.end(); ++i)
-    {
-      split_path dir(i->first);
-      I(dir.size() > 1);
-      dir.pop_back();
-
-      if (!roster.has_node(dir) && added.find(dir) == added.end())
-        {
-          missing++;
-          W(F("restriction excludes directory '%s'") % dir);
-        }
-    }
-
-  N(missing == 0, F("invalid restriction excludes required directories"));
-
+  N(e.problems == 0, F("invalid restriction"));
 }
 
 
