@@ -207,8 +207,9 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 //         occurs: exactly once
 // 'attr'
 //         represents an attribute entry
-//         format: ('attr', name, value), ('state', [)
+//         format: ('attr', name, value), ('state', [unchanged|added|dropped])
 //         occurs: zero or more times
+//
 // Error conditions: If the file name has no attributes, prints nothing.
 AUTOMATE(attributes, N_("[FILE]"))
 {
@@ -246,36 +247,48 @@ AUTOMATE(attributes, N_("[FILE]"))
     for (full_attr_map_t::const_iterator i = n->attrs.begin();
          i != n->attrs.end(); ++i)
     {
-      if (!i->second.first)
-        continue;
-        
-      // this is taken from roster::print_to - but I don't know why its even 
-      // there...
-      // why shouldn't it be allowed that the value of an attribute is empty?
-      I(!i->second.second().empty());
-
-      basic_io::stanza st;
-      st.push_str_triple(basic_io::syms::attr, i->first(), i->second.second());
-      st.push_str_pair("bool", i->second.first() ? "true" : "false");
-/*
-      std::string state("existing");
-      // now comes the ugly part... determine if this attribute also existed
-      // in the previous roster
+      std::string value(i->second.second());
+      std::string state("unchanged");
       
-      st.push_str_pair("status", state);
-*/
+      // if if the first value of the value pair is false this marks a
+      // dropped attribute
+      if (!i->second.first)
+        {
+          state = "dropped";
+          // if the attribute is dropped, we should have a base roster
+          // with that node...
+          I(base.has_node(path));
+          node_t prev_node = base.get_node(path);
+          // find the attribute in there
+          full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
+          I(j != prev_node->attrs.end());
+          // output the previous (dropped) value later
+          value = j->second.second();
+        }
+      // this marks either a new or an existing attribute
+      else
+        {
+          if (base.has_node(path))
+            {
+              node_t prev_node = base.get_node(path);
+              // try to find the attribute in there
+              if (prev_node->attrs.find(i->first()) == prev_node->attrs.end())
+                {
+                  state = "added";
+                }
+            }
+          // its added since the whole node has been just added
+          else
+            {
+              state = "added";
+            }
+        }
+        
+      basic_io::stanza st;
+      st.push_str_triple(basic_io::syms::attr, i->first(), value);
+      st.push_str_pair(std::string("state"), state);
       pr.print_stanza(st);
     }
-    
-    // to list all dropped attributes, we need to have a closer look at the
-    // previous roster (if there is any)
-/*
-    if (base.has_node(path))
-    {
-      n = base.get_node(path);
-      
-    }
-*/    
   }
     
   output.write(pr.buf.data(), pr.buf.size());
