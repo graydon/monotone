@@ -48,13 +48,6 @@ public:
   virtual char const * what() const throw() { return whatmsg.c_str(); }
 };
 
-// User interrupts are deferred to 'cancellation points', because it
-// is not safe to throw from a signal handler.  Q() is the primitive
-// cancellation point; explicit uses in running code should be rare,
-// because it's inside a lot of basic functions that get called
-// frequently.  The implementation is to be found in {unix,win32}/main.cc.
-extern void Q();
-
 class MusingI;
 
 class format_base;

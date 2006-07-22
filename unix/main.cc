@@ -98,49 +98,21 @@ bug_signal(int signo)
   // delivered when this function returns.
 }
 
-// this exception is thrown for user interrupts (control-C, etc).
-// it is not descended from std::exception because we don't want
-// the catch-all handlers in monotone.cc::main to get it.
-struct user_interrupt {};
-static const struct user_interrupt user_interrupted = {};
-
-// the handler for asynchronous user interrupts just sets these flags; we
-// rely on the main code to call Q() at appropriate points.
-static volatile sig_atomic_t user_interrupt_time;
-static volatile sig_atomic_t user_interrupt_signo;
-
-void
-Q(void)
-{
-  if (user_interrupt_signo)
-    throw user_interrupted;
-}
+// User interrupts cause abrupt termination of the process as well,
+// but do not represent a bug in the program.  We do have to warn the
+// user that they may need to recover the database.
 
 static void
 interrupt_signal(int signo)
 {
-  sig_atomic_t prev_time = user_interrupt_time;
-  time_t now = time(0);
-  
-  // It is possible that a bug causes us to get stuck in a loop which
-  // does not call Q(), or after the exception is thrown but before
-  // the process exits.  Thus, detect having been called twice with at
-  // least a 1-second interval (i.e. the user got fed up and hit ^C
-  // again; not they held down the key too long and the kernel
-  // generated two signals).
-  if (prev_time == 0 || prev_time == (sig_atomic_t)now)
-    {
-      user_interrupt_time = now;
-      user_interrupt_signo = signo;
-      return;
-    }
-
-  // Treat this as SIGQUIT, and furthermore attempt to ensure that a
-  // core dump is generated, so we have a chance of finding out where
-  // the bad loop is.
-  struct rlimit unlimit = { RLIM_INFINITY, RLIM_INFINITY };
-  setrlimit(RLIMIT_CORE, &unlimit);
-  raise(SIGQUIT);
+  WRITE_STR_TO_STDERR(argv0);
+  WRITE_STR_TO_STDERR(": operation canceled: ");
+  WRITE_STR_TO_STDERR(strsignal(signo));
+  WRITE_STR_TO_STDERR("\nyou may need to unlock your database by hand\n");
+  raise(signo);
+  // The signal has been reset to the default handler by SA_RESETHAND
+  // specified in the sigaction() call, but it's also blocked; it will be
+  // delivered when this function returns.
 }
 
 // Signals that we handle can indicate either that there is a real bug
@@ -182,9 +154,7 @@ main(int argc, char ** argv)
   for (i = 0; i < bug_signals_len; i++)
     sigaction(bug_signals[i], &bug_signal_action, 0);
 
-  // we do not use SA_RESTART here because these signals should 
-  // interrupt a process blocked on I/O.
-  interrupt_signal_action.sa_flags   = 0;
+  interrupt_signal_action.sa_flags   = SA_RESETHAND;
   interrupt_signal_action.sa_handler = &interrupt_signal;
   sigemptyset(&interrupt_signal_action.sa_mask);
   for (i = 0; i < interrupt_signals_len; i++)
@@ -195,19 +165,6 @@ main(int argc, char ** argv)
   try
     {
       return cpp_main(argc, argv);
-    }
-  catch (user_interrupt)
-    {
-      int signo = user_interrupt_signo;
-      WRITE_STR_TO_STDERR(argv0);
-      WRITE_STR_TO_STDERR(": ");
-      WRITE_STR_TO_STDERR(strsignal(signo));
-
-      // Produce the proper exit code.
-      signal(signo, SIG_DFL);
-      raise(signo);
-      // should never get here, but just in case...
-      return 3;  // this exit code is not used anywhere else.
     }
   catch (...)
     {

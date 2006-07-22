@@ -16,6 +16,9 @@
 #include <stack>
 
 #include <time.h>
+#ifndef _WIN32
+#include <signal.h>
+#endif
 
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -3128,6 +3131,12 @@ run_netsync_protocol(protocol_voice voice,
       W(F("exclude branch pattern contains a quote character:\n"
           "%s\n") % exclude_pattern());
     }
+
+  // We do not want the server to be killed by SIGPIPE from a client
+  // disconnect.
+#ifndef _WIN32
+  signal(SIGPIPE, SIG_IGN);
+#endif
 
   try
     {

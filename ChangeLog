@@ -1,3 +1,20 @@
+2006-07-22  Zack Weinberg  <zackw@panix.com>
+
+	* sanity.hh: Remove Q().
+	* unix/main.cc: Delete all code related to deferred exception-throwing
+	on user interrupt.
+	(interrupt_signal): Just exit, telling the user they may have to
+	clean up a locked database.
+	* win32/main.cc: Remove most MSVC/Borland #ifdefs, preserving only
+	the MSVC-specific _CrtSetReportHook call.  Use
+	SetUnhandledExceptionFilter to trap errors reported via SEH.
+	(report_ms_se_error): Rename seh_reporting_function; restructure
+	to be suitable for SetUnhandledExceptionFilter; add cases for all
+	documented exception codes.
+	* netsync.cc: Include signal.h if not Windows.
+	(run_netsync_protocol): Ignore SIGPIPE if not Windows.
+	* tests/database_is_closed_on_signal_exit: Expected to fail.
+
 2006-07-21  Zack Weinberg  <zackw@panix.com>
 
 	* main.cc: Break up into...

@@ -35,26 +35,9 @@
 #include <string.h>
 
 // Microsoft + other compatible compilers such as Intel
-#if defined(_MSC_VER) || (defined(__MWERKS__) && __MWERKS__ >= 0x3000)
-#define MSC_STYLE_SEH
-#include <excpt.h>
-#include <eh.h>
-#if !defined(__MWERKS__)
+#if defined(_MSC_VER)
 #define MS_CRT_DEBUG_HOOK
 #include <crtdbg.h>
-#endif
-
-#elif (defined(__BORLANDC__) && defined(_Windows))
-#define BORLAND_STYLE_SEH
-
-#else
-// FIXME: We used to have a Mingw block in here, but if you read through the
-// maze of ifdefs you found that it did not actually trap SEH errors.  Only
-// put Mingw back if you know how to make it do so.  Mingw uses MSVCRT
-// internally, so an MSC-style approach should work?  Or we could do
-// something with SetUnhandledExceptionFilter maybe.
-
-#error "unsupported compiler - don't know how to interface to SEH"
 #endif
 
 // Actual error printing goes through here always.
@@ -94,33 +77,52 @@ report_error(char const * msg)
   bug_report_message();
 }
 
-static void
-report_ms_se_error(unsigned int id)
+static WINAPI LONG
+seh_reporting_function(LPEXCEPTION_POINTERS ep)
 {
-  switch (id)
+  // These are all the exception codes documented at
+  // http://msdn.microsoft.com/library/en-us/debug/base/exception_record_str.asp
+  // Some of them should never happen, but let's be thorough.
+  switch (ep->ExceptionRecord->ExceptionCode)
     {
     case EXCEPTION_ACCESS_VIOLATION:
       report_error("memory access violation");
       break;
-
-    case EXCEPTION_ILLEGAL_INSTRUCTION:
-      report_error("illegal instruction");
+      
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+      report_error("array bounds exceeded");
       break;
 
-    case EXCEPTION_PRIV_INSTRUCTION:
-      report_error("privilaged instruction");
-      break;
-
-    case EXCEPTION_IN_PAGE_ERROR:
-      report_error("memory page error");
-      break;
-
-    case EXCEPTION_STACK_OVERFLOW:
-      report_error("stack overflow");
+    case EXCEPTION_BREAKPOINT:
+      report_error("breakpoint trap");
       break;
 
     case EXCEPTION_DATATYPE_MISALIGNMENT:
-      report_error("data misalignment");
+      report_error("attempt to access misaligned data");
+      break;
+
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+      report_error("floating point divide by zero");
+      break;
+
+    case EXCEPTION_FLT_STACK_CHECK:
+      report_error("floating point stack over- or underflow");
+      break;
+
+    case EXCEPTION_FLT_DENORMAL_OPERAND:
+    case EXCEPTION_FLT_INEXACT_RESULT:
+    case EXCEPTION_FLT_INVALID_OPERATION:
+    case EXCEPTION_FLT_OVERFLOW:
+    case EXCEPTION_FLT_UNDERFLOW:
+      report_error("floating point exception");
+      break;
+
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+      report_error("attempt to execute invalid instruction");
+      break;
+
+    case EXCEPTION_IN_PAGE_ERROR:
+      report_error("system unable to load memory page");
       break;
 
     case EXCEPTION_INT_DIVIDE_BY_ZERO:
@@ -131,29 +133,28 @@ report_ms_se_error(unsigned int id)
       report_error("integer overflow");
       break;
 
-    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-      report_error("array bounds exceeded");
+    case EXCEPTION_INVALID_DISPOSITION:
+    case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+      report_error("SEH internal error");
       break;
 
-    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-      report_error("floating point divide by zero");
+    case EXCEPTION_PRIV_INSTRUCTION:
+      report_error("attempt to execute privileged instruction");
       break;
 
-    case EXCEPTION_FLT_STACK_CHECK:
-      report_error("floating point stack check");
+    case EXCEPTION_SINGLE_STEP:
+      report_error("single step trap");
       break;
 
-    case EXCEPTION_FLT_DENORMAL_OPERAND:
-    case EXCEPTION_FLT_INEXACT_RESULT:
-    case EXCEPTION_FLT_INVALID_OPERATION:
-    case EXCEPTION_FLT_OVERFLOW:
-    case EXCEPTION_FLT_UNDERFLOW:
-      report_error("floating point error");
+    case EXCEPTION_STACK_OVERFLOW:
+      report_error("stack overflow");
       break;
 
     default:
-      report_error("unrecognized exception or signal");
+      report_error("undocumented exception");
     }
+
+  return EXCEPTION_EXECUTE_HANDLER;  // causes process termination
 }
 
 #ifdef MS_CRT_DEBUG_HOOK
@@ -173,38 +174,13 @@ assert_reporting_function(int reportType, char* userMessage, int* retVal)
 }
 #endif
 
-#ifdef MSC_STYLE_SEH
-struct
-ms_se_exception
-{
-  unsigned int exception_id;
-  explicit ms_se_exception(unsigned int n)
-    : exception_id(n)
-  {}
-};
-
-static void
-ms_se_trans_func(unsigned int id, _EXCEPTION_POINTERS*)
-{
-  throw ms_se_exception(id);
-}
-#endif
-
-// FIXME: Implement trapping of ^C etc, and make this actually do something.
-void Q()
-{
-}
-
-
 extern int
 cpp_main(int argc, char ** argv);
 
 int
 main(int argc, char ** argv)
 {
-#ifdef MSC_STYLE_SEH
-  _set_se_translator(ms_se_trans_func);
-#endif
+  SetUnhandledExceptionFilter(&seh_reporting_function);
 
 #ifdef MS_CRT_DEBUG_HOOK
   _CrtSetReportHook(&assert_reporting_function);
@@ -212,27 +188,11 @@ main(int argc, char ** argv)
 
   try
     {
-      // this works for Borland but not other Win32 compilers (which trap
-      // too many cases)
-#ifdef BORLAND_STYLE_SEH
-      __try {
-#endif
-        return cpp_main(argc, argv);
-#ifdef BORLAND_STYLE_SEH
-      }  __except (1) {
-        report_ms_se_error(GetExceptionCode());
-      }
-#endif
+      return cpp_main(argc, argv);
     }
-#ifdef MSC_STYLE_SEH
-  catch (ms_se_exception const & ex)
-    {
-      report_ms_se_error(ex.exception_id);
-    }
-#endif
   catch (...)
     {
-      report_error("exception of unknown type");
+      report_error("C++ exception of unknown type");
     }
   // If control reaches this point it indicates a catastrophic failure.
   return 3;
