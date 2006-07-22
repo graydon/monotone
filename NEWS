@@ -1,4 +1,4 @@
-xxx Jul xx xx:xx:xx xxx 2006
+Sat Jul 22 01:39:51 PDT 2006
 
         0.28 release. Cherrypicking, a new testsuite, and some fixes
         and enhancements.
@@ -60,8 +60,6 @@ xxx Jul xx xx:xx:xx xxx 2006
 
         - Restrictions have been split into path_restrictions and
           node_restrictions, and generally cleaned up more.
-        - New AUTOMATE() macro, similar to the CMD() macro, to make
-          adding "automate" commands easier.
 
 Sat Jun 17 14:43:12 PDT 2006
 
