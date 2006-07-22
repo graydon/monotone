@@ -1,5 +1,10 @@
 2006-07-21  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.cc (check_restricted_cset, editable_roster_for_check):
+	Tweak comments.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
 	* configure.ac: Go ahead and bump the version number, to make
 	distcheck happy.
 
