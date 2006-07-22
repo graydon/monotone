@@ -4311,9 +4311,9 @@ specify an explicit @option{--revision} argument).
 
 This command takes changes made at any point in history, and attempts
 to edit your current workspace to include those changes.  The end
-result is identical to 'mtn diff -r FROM -r TO | patch -p0', except
-that this command uses monotone's merger, and thus intelligently
-handles renames, conflicts, and so on.
+result is identical to running @code{mtn diff -r FROM -r TO | patch
+-p0}, except that this command uses monotone's merger, and thus
+intelligently handles renames, conflicts, and so on.
 
 If only one revision is given, applies the changes made in @var{to} as
 compared with @var{to}'s parent.  If two revisions are given, applies
@@ -4329,9 +4329,15 @@ exactly like those made in an editor; the command is simply a
 convenient way to make certain edits quickly.  In practice, this is
 rarely a problem.  @command{mtn pluck} should almost always be used
 between branches that will never be merged --- for instance,
-backporting fixes from a development branch to a stable branch.  It is
-not recommended to rely on this command as a central part of one's
-workflow.
+backporting fixes from a development branch to a stable branch.
+
+When you use @command{pluck} you are going behind monotone's back, and
+reducing its ability to help you keep track of what has happened in
+your history.  Never use @command{pluck} where a true merging command
+like @command{merge}, @command{propagate}, or @command{explicit_merge}
+will do.  If you find yourself using @command{pluck} often, you should
+consider carefully whether there is any way to change your workflow to
+reduce your need for @command{pluck}ing.
 
 @item mtn refresh_inodeprints
 This command puts the current workspace into @ref{Inodeprints} mode,

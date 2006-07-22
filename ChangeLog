@@ -1,5 +1,10 @@
 2006-07-21  Nathaniel Smith  <njs@pobox.com>
 
+	* monotone.texi (Workspace): Make the Warnings about pluck more
+	Dire.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Update for 0.28.
 	* tests/netsync_over_pipes/__driver__.lua: Remove no-longer-needed
 	--debug.
