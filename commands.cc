@@ -295,9 +295,6 @@ CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the spec
   else maybe_throw(std::underflow_error);
   else maybe_throw(std::logic_error);
   else maybe_throw(std::runtime_error);
-  else maybe_throw(string);
-  else if (idx(args,0)() == "C-string")
-    throw "There is no spoon.";
   else
     {
 #ifndef _WIN32

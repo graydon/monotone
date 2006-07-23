@@ -486,6 +486,7 @@ Musing<T>::gasp(std::string & out) const
 #endif
 
 template <> void dump(std::string const & obj, std::string & out);
+template <> void dump(char const *const & obj, std::string & out);
 
 // debugging utility to dump out vars like MM but without requiring a crash
 

@@ -37,9 +37,6 @@
 // Two things that are definitely *not* safe are allocating memory and using
 // stdio or iostreams.  strsignal() should be safe, but it is conceivable it
 // would allocate memory; should it cause trouble, out it goes.
-//
-// note that down in the catch handlers in main(), we could use stdio or
-// iostreams; that we don't is mainly for consistency.
 
 #include "config.h"
 
@@ -48,18 +45,6 @@
 #include <string.h>
 #include <sys/resource.h>
 #include <unistd.h>
-
-#if defined HAVE_CXXABI_H \
-  && defined HAVE___CXA_CURRENT_EXCEPTION_TYPE \
-  && defined HAVE___CXA_DEMANGLE
-
-#define HAVE_CXXABI_EH
-#include <cxxabi.h>
-using abi::__cxa_current_exception_type;
-using abi::__cxa_demangle;
-using std::type_info;
-
-#endif
 
 static char const * argv0;
 
@@ -162,40 +147,7 @@ main(int argc, char ** argv)
   for (i = 0; i < interrupt_signals_len; i++)
     sigaction(interrupt_signals[i], &interrupt_signal_action, 0);
 
-  try
-    {
-      return cpp_main(argc, argv);
-    }
-  catch (...)
-    {
-      WRITE_STR_TO_STDERR(argv0);
-#ifdef HAVE_CXXABI_EH
-      // logic borrowed from gnu libstdc++'s __verbose_terminate_handler
-      type_info *t = __cxa_current_exception_type();
-      if (t)
-        {
-          // t->name() is the _mangled_ name of the type.
-          int status = -1;
-          char const * name = t->name();
-          char * dem = __cxa_demangle(name, 0, 0, &status);
-
-          WRITE_STR_TO_STDERR(": unexpected exception of type ");
-          if (status == 0)
-            WRITE_STR_TO_STDERR(dem);
-          else
-            WRITE_STR_TO_STDERR(name);
-        }
-      else
-#endif
-        WRITE_STR_TO_STDERR(": exception of unknown type");
-
-      bug_report_message();
-
-      // map this to abort(), but don't run our SIGABRT handler, 'cos
-      // we've already printed the bug-report message once.
-      signal(SIGABRT, SIG_DFL);
-      raise(SIGABRT);
-    }
+  return cpp_main(argc, argv);
 }
 
 // Local Variables:

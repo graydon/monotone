@@ -1,3 +1,24 @@
+2006-07-23  Zack Weinberg  <zackw@panix.com>
+
+	* monotone.cc: No need to include <strings.h>.  Reorganize entire
+	file, putting things in logical order and splitting large chunks
+	of cpp_main out to...
+	(process_all_options, hide_irrelevant_options): ... these new
+	functions.
+	(cpp_main): Also, avoid some unnecessary C-string-to-std::string
+	conversions, and use ui.fatal_exception for the outermost catch
+	clauses.
+	* sanity.cc, sanity.hh: Specialize dump() for C strings too.
+	* ui.cc: Add conditional compilation goo for systems with or
+	without cxxabi.h.
+	(user_interface::fatal_exception): New function (2 overloads).
+	* ui.hh: Declare new user_interface member functions.
+	* unix/main.cc, win32/main.cc: Remove try/catch in main() and all
+	logic supporting it.
+
+	* commands.cc (crash): Remove ability to throw strings.
+	* tests/dump_on_crash: Don't test throwing strings.
+
 2006-07-22  Zack Weinberg  <zackw@panix.com>
 
 	* sanity.hh: Remove Q().

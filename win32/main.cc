@@ -186,16 +186,7 @@ main(int argc, char ** argv)
   _CrtSetReportHook(&assert_reporting_function);
 #endif
 
-  try
-    {
-      return cpp_main(argc, argv);
-    }
-  catch (...)
-    {
-      report_error("C++ exception of unknown type");
-    }
-  // If control reaches this point it indicates a catastrophic failure.
-  return 3;
+  return cpp_main(argc, argv);
 }
 
 // Local Variables:

@@ -96,6 +96,8 @@ public:
   void fatal(format_base const & fmt) { fatal(fmt.str()); }
   void inform(std::string const & line);
   void inform(format_base const & fmt) { inform(fmt.str()); }
+  void fatal_exception(std::exception const & ex);
+  void fatal_exception();
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();

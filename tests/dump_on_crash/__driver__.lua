@@ -29,9 +29,7 @@ for _,tag in pairs({  'std::bad_alloc',
 		      'std::underflow_error',
 		      'std::logic_error',
 		      'std::runtime_error',
-		      'std::exception',
-		      'string',
-		      'C-string' }) do
+		      'std::exception' }) do
    remove("fork")
    check(mtn("crash", tag, "--dump=fork"), 3, false, false)
    check(exists("fork"))

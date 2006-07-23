@@ -309,6 +309,12 @@ dump(string const & obj, string & out)
   out = obj;
 }
 
+template <> void
+dump(char const *const & obj, string & out)
+{
+  out = obj;
+}
+
 
 void MusingBase::gasp_head(string & out) const
 {

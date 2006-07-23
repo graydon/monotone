@@ -11,9 +11,6 @@
 
 #include "popt/popt.h"
 #include <cstdio>
-#ifndef _MSC_VER
-#include <strings.h>
-#endif
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -48,10 +45,35 @@ using std::set;
 using std::string;
 using std::vector;
 
-// main option processing and exception handling code
+// there are 4 variables which serve as roots for our system.
+//
+// "global_sanity" is a global object, which contains the error logging
+// system, which is constructed once and used by any nana logging actions.
+// see sanity.hh for it
+//
+// "ui" is a global object, through which all messages to the user go.
+// see ui.hh for it
+//
+// "cmds" is a static table in commands.cc which associates top-level
+// commands, given on the command-line, to various version control tasks.
+//
+// "app_state" is a non-static object type which contains all the
+// application state (filesystem, database, network, lua interpreter,
+// etc). you can make more than one of these, and feed them to a command in
+// the command table.
 
-char * argstr = NULL;
-long arglong = 0;
+// this file defines cpp_main, which does option processing and sub-command
+// dispatching, and provides the outermost exception catch clauses.  it is
+// called by main, in unix/main.cc or win32/main.cc; that function is
+// responsible for trapping fatal conditions reported by the operating
+// system (signals, win32 structured exceptions, etc).
+
+// this program should *never* unexpectedly terminate without dumping some
+// diagnostics.  if the fatal condition is an invariant check or anything
+// else that produces a C++ exception caught in this file, the debug logs
+// will be dumped out.  if the fatal condition is only caught in the lower-
+// level handlers in main.cc, at least we'll get a friendly error message.
+
 
 // Options are split between two tables.  The first one is command-specific
 // options (hence the `c' in `coptions').  The second is the global one
@@ -59,6 +81,9 @@ long arglong = 0;
 //
 // the intent is to ensure that any command specific options mean the same
 // thing to all commands that use them
+
+char * argstr = NULL;
+long arglong = 0;
 
 struct poptOption coptions[] =
   {
@@ -123,68 +148,6 @@ struct poptOption options[] =
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
-// there are 4 variables which serve as roots for our system.
-//
-// "global_sanity" is a global object, which contains the error logging
-// system, which is constructed once and used by any nana logging actions.
-// see sanity.hh for it
-//
-// "ui" is a global object, through which all messages to the user go.
-// see ui.hh for it
-//
-// "cmds" is a static table in commands.cc which associates top-level
-// commands, given on the command-line, to various version control tasks.
-//
-// "app_state" is a non-static object type which contains all the
-// application state (filesystem, database, network, lua interpreter,
-// etc). you can make more than one of these, and feed them to a command in
-// the command table.
-
-// our main function is run inside a boost execution monitor. this monitor
-// portably sets up handlers for various fatal conditions (signals, win32
-// structured exceptions, etc) and provides a uniform reporting interface
-// to any exceptions it catches. we augment this with a helper atexit()
-// which will also dump our internal logs when an explicit clean shutdown
-// flag is not set.
-//
-// in other words, this program should *never* unexpectedly terminate
-// without dumping some diagnostics.
-
-struct
-utf8_argv
-{
-  int argc;
-  char **argv;
-
-  explicit utf8_argv(int ac, char **av)
-    : argc(ac),
-      argv(static_cast<char **>(malloc(ac * sizeof(char *))))
-  {
-    I(argv != NULL);
-    for (int i = 0; i < argc; ++i)
-      {
-        external ext(av[i]);
-        utf8 utf;
-        system_to_utf8(ext, utf);
-        argv[i] = static_cast<char *>(malloc(utf().size() + 1));
-        I(argv[i] != NULL);
-        memcpy(argv[i], utf().data(), utf().size());
-        argv[i][utf().size()] = static_cast<char>(0);
-    }
-  }
-
-  ~utf8_argv()
-  {
-    if (argv != NULL)
-      {
-        for (int i = 0; i < argc; ++i)
-          if (argv[i] != NULL)
-            free(argv[i]);
-        free(argv);
-      }
-  }
-};
-
 // Stupid type system tricks: to use a cleanup_ptr, we need to know the return
 // type of the cleanup function.  But popt silently changed the return type of
 // poptFreeContext at some point, I guess because they thought it would be
@@ -247,6 +210,380 @@ coption_string(int o)
   return string();
 }
 
+// used to flag cases where the program should exit successfully after
+// process_all_options
+struct exit_after_options {};
+
+static void
+process_all_options(poptContext ctx, app_state & app,
+                    string & cmd, vector<utf8> & args)
+{
+  set<int> local_options;
+  for (poptOption *opt = coptions; opt->val; opt++)
+    local_options.insert(opt->val);
+
+  poptSetOtherOptionHelp(ctx, _("[OPTION...] command [ARGS...]\n"));
+
+  int opt;
+  set<int> used_local_options;
+  while ((opt = poptGetNextOpt(ctx)) > 0)
+    {
+      if (local_options.find(opt) != local_options.end())
+        used_local_options.insert(opt);
+
+      switch(opt)
+        {
+        case OPT_DEBUG:
+          global_sanity.set_debug();
+          break;
+
+        case OPT_QUIET:
+          global_sanity.set_quiet();
+          ui.set_tick_writer(new tick_write_nothing);
+          break;
+
+        case OPT_REALLYQUIET:
+          global_sanity.set_reallyquiet();
+          ui.set_tick_writer(new tick_write_nothing);
+          break;
+
+        case OPT_NOSTD:
+          app.set_stdhooks(false);
+          break;
+
+        case OPT_NORC:
+          app.set_rcfiles(false);
+          break;
+
+        case OPT_VERBOSE:
+          app.set_verbose(true);
+          break;
+
+        case OPT_RCFILE:
+          app.add_rcfile(string(argstr));
+          break;
+
+        case OPT_DUMP:
+          global_sanity.filename = system_path(argstr);
+          break;
+
+        case OPT_LOG:
+          ui.redirect_log_to(system_path(argstr));
+          break;
+
+        case OPT_DB_NAME:
+          app.set_database(system_path(argstr));
+          break;
+
+        case OPT_KEY_DIR:
+          app.set_key_dir(system_path(argstr));
+          break;
+
+        case OPT_CONF_DIR:
+          app.set_confdir(system_path(argstr));
+          break;
+
+        case OPT_TICKER:
+          if (string(argstr) == "none" || global_sanity.quiet)
+            ui.set_tick_writer(new tick_write_nothing);
+          else if (string(argstr) == "dot")
+            ui.set_tick_writer(new tick_write_dot);
+          else if (string(argstr) == "count")
+            ui.set_tick_writer(new tick_write_count);
+          else
+            app.requested_help = true;
+          break;
+
+        case OPT_KEY_NAME:
+          app.set_signing_key(string(argstr));
+          break;
+
+        case OPT_BRANCH_NAME:
+          app.set_branch(string(argstr));
+          app.set_is_explicit_option(OPT_BRANCH_NAME);
+          break;
+
+        case OPT_VERSION:
+          print_version();
+          throw exit_after_options();
+
+        case OPT_FULL_VERSION:
+          print_full_version();
+          throw exit_after_options();
+
+        case OPT_REVISION:
+          app.add_revision(string(argstr));
+          break;
+
+        case OPT_MESSAGE:
+          app.set_message(string(argstr));
+          app.set_is_explicit_option(OPT_MESSAGE);
+          break;
+
+        case OPT_MSGFILE:
+          app.set_message_file(string(argstr));
+          app.set_is_explicit_option(OPT_MSGFILE);
+          break;
+
+        case OPT_DATE:
+          app.set_date(string(argstr));
+          break;
+
+        case OPT_AUTHOR:
+          app.set_author(string(argstr));
+          break;
+
+        case OPT_ROOT:
+          app.set_root(system_path(argstr));
+          break;
+
+        case OPT_LAST:
+          app.set_last(arglong);
+          break;
+
+        case OPT_NEXT:
+          app.set_next(arglong);
+          break;
+
+        case OPT_DEPTH:
+          app.set_depth(arglong);
+          break;
+
+        case OPT_BRIEF:
+          global_sanity.set_brief();
+          break;
+
+        case OPT_DIFFS:
+          app.diffs = true;
+          break;
+
+        case OPT_NO_MERGES:
+          app.no_merges = true;
+          break;
+
+        case OPT_SET_DEFAULT:
+          app.set_default = true;
+          break;
+
+        case OPT_EXCLUDE:
+          app.add_exclude(utf8(string(argstr)));
+          break;
+
+        case OPT_PIDFILE:
+          app.set_pidfile(system_path(argstr));
+          break;
+
+        case OPT_ARGFILE:
+          my_poptStuffArgFile(ctx, utf8(string(argstr)));
+          break;
+
+        case OPT_UNIFIED_DIFF:
+          app.set_diff_format(unified_diff);
+          break;
+
+        case OPT_CONTEXT_DIFF:
+          app.set_diff_format(context_diff);
+          break;
+
+        case OPT_EXTERNAL_DIFF:
+          app.set_diff_format(external_diff);
+          break;
+
+        case OPT_EXTERNAL_DIFF_ARGS:
+          app.set_diff_args(utf8(string(argstr)));
+          break;
+
+        case OPT_NO_SHOW_ENCLOSER:
+          app.diff_show_encloser = false;
+          break;
+
+        case OPT_EXECUTE:
+          app.execute = true;
+          break;
+
+        case OPT_STDIO:
+          app.bind_stdio = true;
+          break;
+
+        case OPT_NO_TRANSPORT_AUTH:
+          app.use_transport_auth = false;
+          break;
+
+        case OPT_BIND:
+          {
+            string arg(argstr);
+            string addr_part, port_part;
+            size_t l_colon = arg.find(':');
+            size_t r_colon = arg.rfind(':');
+
+            // not an ipv6 address, as that would have at least two colons
+            if (l_colon == r_colon)
+              {
+                addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
+                port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+              }
+            else
+              {
+                // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
+                size_t squareb = arg.rfind(']');
+                if ((arg.find('[') == 0) && (squareb != string::npos))
+                  {
+                    if (squareb < r_colon)
+                      port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                    else
+                      port_part = "";
+                    addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+                  }
+                else
+                  {
+                    addr_part = arg;
+                    port_part = "";
+                  }
+              }
+            app.bind_stdio = false;
+            app.bind_address = utf8(addr_part);
+            app.bind_port = utf8(port_part);
+          }
+          app.set_is_explicit_option(OPT_BIND);
+          break;
+
+        case OPT_MISSING:
+          app.missing = true;
+          break;
+
+        case OPT_UNKNOWN:
+          app.unknown = true;
+          break;
+
+        case OPT_KEY_TO_PUSH:
+          {
+            app.add_key_to_push(string(argstr));
+          }
+          break;
+
+        case OPT_DROP_ATTR:
+          app.attrs_to_drop.insert(string(argstr));
+          break;
+
+        case OPT_NO_FILES:
+          app.no_files = true;
+          break;
+
+        case OPT_RECURSIVE:
+          app.set_recursive();
+          break;
+
+        case OPT_HELP:
+          app.requested_help = true;
+          break;
+
+        default:
+          break;
+        }
+    }
+
+  // verify that there are no errors in the command line
+
+  N(opt == -1,
+    F("syntax error near the \"%s\" option: %s") %
+    poptBadOption(ctx, POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
+
+  // complete the command if necessary
+
+  if (!poptPeekArg(ctx))
+    // no command given
+    throw usage("");
+  // poptPeekArg returned true, so we can call poptGetArg
+  cmd = commands::complete_command(poptGetArg(ctx));
+
+  // stop here if they asked for help
+  if (app.requested_help)
+    throw usage(cmd);     // cmd may be empty, and that's fine.
+  
+  // Make sure the local options used are really used by the
+  // given command.
+  set<int> command_options = commands::command_options(cmd);
+  for (set<int>::const_iterator i = used_local_options.begin();
+       i != used_local_options.end(); ++i)
+    N(command_options.find(*i) != command_options.end(),
+      F("%s %s doesn't use the option %s")
+      % app.prog_name % cmd % coption_string(*i));
+
+  // Extract the remaining arguments, to feed to the command.
+  while(poptPeekArg(ctx))
+    args.push_back(utf8(string(poptGetArg(ctx))));
+}
+
+// Go through the popt structures and hide documentation that's not part of
+// the current command.
+static void
+hide_irrelevant_options(utf8 const & prog_name, string const & cmd)
+{
+  set<int> command_options = commands::command_options(cmd);
+  int count = 0;
+  for (poptOption *o = coptions; o->val != 0; o++)
+    {
+      if (command_options.find(o->val) != command_options.end())
+        {
+          o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
+          L(FL("Removed 'hidden' from option # %d") % o->argInfo);
+          count++;
+        }
+      else
+        {
+          o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
+          L(FL("Added 'hidden' to option # %d") % o->argInfo);
+        }
+    }
+  free((void *)options[0].descrip); options[0].descrip = NULL;
+  if (count != 0)
+    {
+      ostringstream sstr;
+      sstr << F("Options specific to '%s %s':")
+        % prog_name % cmd;
+      options[0].descrip = strdup(sstr.str().c_str());
+
+      options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
+      L(FL("Added 'hidden' to option # %d") % options[0].argInfo);
+    }
+}
+
+// argv but every string is guaranteed to be converted to utf8.
+struct
+utf8_argv
+{
+  int argc;
+  char **argv;
+
+  explicit utf8_argv(int ac, char **av)
+    : argc(ac),
+      argv(static_cast<char **>(malloc(ac * sizeof(char *))))
+  {
+    I(argv != NULL);
+    for (int i = 0; i < argc; ++i)
+      {
+        external ext(av[i]);
+        utf8 utf;
+        system_to_utf8(ext, utf);
+        argv[i] = static_cast<char *>(malloc(utf().size() + 1));
+        I(argv[i] != NULL);
+        memcpy(argv[i], utf().data(), utf().size());
+        argv[i][utf().size()] = static_cast<char>(0);
+    }
+  }
+
+  ~utf8_argv()
+  {
+    if (argv != NULL)
+      {
+        for (int i = 0; i < argc; ++i)
+          if (argv[i] != NULL)
+            free(argv[i]);
+        free(argv);
+      }
+  }
+};
+
 // Wrapper class to ensure Botan is properly initialized and deinitialized.
 struct botan_library
 {
@@ -275,26 +612,28 @@ struct ui_library
 int
 cpp_main(int argc, char ** argv)
 {
-  int ret = 0;
-
   // go-go gadget i18n
-
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
 
-  // Set up secure memory allocation etc
-  botan_library acquire_botan;
-
-  // Set up global UI
+  // set up global ui object - must occur before anything that might try to
+  // issue a diagnostic
   ui_library acquire_ui;
 
   // we want to catch any early informative_failures due to charset
   // conversion etc
   try
     {
+      // Set up secure memory allocation etc
+      botan_library acquire_botan;
+
       // set up some marked strings, so even if our logbuf overflows, we'll get
       // this data in a crash.
+      string full_version_string;
+      get_full_version(full_version_string);
+      MM(full_version_string);
+
       string flavour;
       get_system_flavour(flavour);
       MM(flavour);
@@ -314,13 +653,11 @@ cpp_main(int argc, char ** argv)
       MM(cmdline_string);
       L(FL("command line: %s") % cmdline_string);
 
-      string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
-      MM(locale_string);
-      L(FL("set locale: LC_ALL=%s") % locale_string);
-
-      string full_version_string;
-      get_full_version(full_version_string);
-      MM(full_version_string);
+      char const *locale_cstr = setlocale(LC_ALL, 0);
+      if (!locale_cstr)
+        locale_cstr = "n/a";
+      MM(locale_cstr);
+      L(FL("set locale: LC_ALL=%s") % locale_cstr);
 
       // decode all argv values into a UTF-8 array
 
@@ -334,377 +671,50 @@ cpp_main(int argc, char ** argv)
         prog_path = prog_path.substr(0, prog_path.size() - 4);
       utf8 prog_name(prog_path);
 
-      // prepare for arg parsing
+      app_state app;
+      app.set_prog_name(prog_name);
 
+      // prepare for arg parsing
       cleanup_ptr<poptContext, void>
         ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
             &my_poptFreeContext);
 
-      set<int> local_options;
-      for (poptOption *opt = coptions; opt->val; opt++)
-        local_options.insert(opt->val);
-
-      // process main program options
-
-      int opt;
-      set<int> used_local_options;
-
-      poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
-
-      app_state app;
-
-      app.set_prog_name(prog_name);
-
-      // this extra try block allows variables declared above to be used in
-      // the 'catch (usage)' block below
+      // this extra try block allows ctx to be visible to the 'catch(usage)'
+      // block below
       try
         {
+          // process main program options
+          string cmd;
+          vector<utf8> args;
+          process_all_options(ctx(), app, cmd, args);
 
-      while ((opt = poptGetNextOpt(ctx())) > 0)
-        {
-          if (local_options.find(opt) != local_options.end())
-            used_local_options.insert(opt);
+          // at this point we allow a workspace (meaning search for it
+          // and if found read _MTN/options, but don't use the data quite
+          // yet, and read all the monotonercs).  Processing the data
+          // from _MTN/options happens later.
+          // Certain commands may subsequently require a workspace or fail
+          // if we didn't find one at this point.
 
-          switch(opt)
-            {
-            case OPT_DEBUG:
-              global_sanity.set_debug();
-              break;
+          app.allow_workspace();
 
-            case OPT_QUIET:
-              global_sanity.set_quiet();
-              ui.set_tick_writer(new tick_write_nothing);
-              break;
+          if (!app.found_workspace && global_sanity.filename.empty())
+            global_sanity.filename = (app.get_confdir() / "dump").as_external();
 
-            case OPT_REALLYQUIET:
-              global_sanity.set_reallyquiet();
-              ui.set_tick_writer(new tick_write_nothing);
-              break;
-
-            case OPT_NOSTD:
-              app.set_stdhooks(false);
-              break;
-
-            case OPT_NORC:
-              app.set_rcfiles(false);
-              break;
-
-            case OPT_VERBOSE:
-              app.set_verbose(true);
-              break;
-
-            case OPT_RCFILE:
-              app.add_rcfile(string(argstr));
-              break;
-
-            case OPT_DUMP:
-              global_sanity.filename = system_path(argstr);
-              break;
-
-            case OPT_LOG:
-              ui.redirect_log_to(system_path(argstr));
-              break;
-
-            case OPT_DB_NAME:
-              app.set_database(system_path(argstr));
-              break;
-
-            case OPT_KEY_DIR:
-              app.set_key_dir(system_path(argstr));
-              break;
-
-            case OPT_CONF_DIR:
-              app.set_confdir(system_path(argstr));
-              break;
-
-            case OPT_TICKER:
-              if (string(argstr) == "none" || global_sanity.quiet)
-                ui.set_tick_writer(new tick_write_nothing);
-              else if (string(argstr) == "dot")
-                ui.set_tick_writer(new tick_write_dot);
-              else if (string(argstr) == "count")
-                ui.set_tick_writer(new tick_write_count);
-              else
-                app.requested_help = true;
-              break;
-
-            case OPT_KEY_NAME:
-              app.set_signing_key(string(argstr));
-              break;
-
-            case OPT_BRANCH_NAME:
-              app.set_branch(string(argstr));
-              app.set_is_explicit_option(OPT_BRANCH_NAME);
-              break;
-
-            case OPT_VERSION:
-              print_version();
-              return 0;
-
-            case OPT_FULL_VERSION:
-              print_full_version();
-              return 0;
-
-            case OPT_REVISION:
-              app.add_revision(string(argstr));
-              break;
-
-            case OPT_MESSAGE:
-              app.set_message(string(argstr));
-              app.set_is_explicit_option(OPT_MESSAGE);
-              break;
-
-            case OPT_MSGFILE:
-              app.set_message_file(string(argstr));
-              app.set_is_explicit_option(OPT_MSGFILE);
-              break;
-
-            case OPT_DATE:
-              app.set_date(string(argstr));
-              break;
-
-            case OPT_AUTHOR:
-              app.set_author(string(argstr));
-              break;
-
-            case OPT_ROOT:
-              app.set_root(system_path(argstr));
-              break;
-
-            case OPT_LAST:
-              app.set_last(arglong);
-              break;
-
-            case OPT_NEXT:
-              app.set_next(arglong);
-              break;
-
-            case OPT_DEPTH:
-              app.set_depth(arglong);
-              break;
-
-            case OPT_BRIEF:
-              global_sanity.set_brief();
-              break;
-
-            case OPT_DIFFS:
-              app.diffs = true;
-              break;
-
-            case OPT_NO_MERGES:
-              app.no_merges = true;
-              break;
-
-            case OPT_SET_DEFAULT:
-              app.set_default = true;
-              break;
-
-            case OPT_EXCLUDE:
-              app.add_exclude(utf8(string(argstr)));
-              break;
-
-            case OPT_PIDFILE:
-              app.set_pidfile(system_path(argstr));
-              break;
-
-            case OPT_ARGFILE:
-              my_poptStuffArgFile(ctx(), utf8(string(argstr)));
-              break;
-
-            case OPT_UNIFIED_DIFF:
-              app.set_diff_format(unified_diff);
-              break;
-
-            case OPT_CONTEXT_DIFF:
-              app.set_diff_format(context_diff);
-              break;
-
-            case OPT_EXTERNAL_DIFF:
-              app.set_diff_format(external_diff);
-              break;
-
-            case OPT_EXTERNAL_DIFF_ARGS:
-              app.set_diff_args(utf8(string(argstr)));
-              break;
-
-            case OPT_NO_SHOW_ENCLOSER:
-              app.diff_show_encloser = false;
-              break;
-
-            case OPT_EXECUTE:
-              app.execute = true;
-              break;
-
-            case OPT_STDIO:
-              app.bind_stdio = true;
-              break;
-
-            case OPT_NO_TRANSPORT_AUTH:
-              app.use_transport_auth = false;
-              break;
-
-            case OPT_BIND:
-              {
-                string arg(argstr);
-                string addr_part, port_part;
-                size_t l_colon = arg.find(':');
-                size_t r_colon = arg.rfind(':');
-
-                // not an ipv6 address, as that would have at least two colons
-                if (l_colon == r_colon)
-                  {
-                    addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
-                    port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-                  }
-                else
-                  {
-                    // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
-                    size_t squareb = arg.rfind(']');
-                    if ((arg.find('[') == 0) && (squareb != string::npos))
-                      {
-                        if (squareb < r_colon)
-                          port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-                        else
-                          port_part = "";
-                        addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
-                      }
-                    else
-                      {
-                        addr_part = arg;
-                        port_part = "";
-                      }
-                  }
-                app.bind_stdio = false;
-                app.bind_address = utf8(addr_part);
-                app.bind_port = utf8(port_part);
-              }
-              app.set_is_explicit_option(OPT_BIND);
-              break;
-
-            case OPT_MISSING:
-              app.missing = true;
-              break;
-
-            case OPT_UNKNOWN:
-              app.unknown = true;
-              break;
-
-            case OPT_KEY_TO_PUSH:
-              {
-                app.add_key_to_push(string(argstr));
-              }
-              break;
-
-            case OPT_DROP_ATTR:
-              app.attrs_to_drop.insert(string(argstr));
-              break;
-
-            case OPT_NO_FILES:
-              app.no_files = true;
-              break;
-
-            case OPT_RECURSIVE:
-              app.set_recursive();
-              break;
-
-            case OPT_HELP:
-              app.requested_help = true;
-              break;
-
-            default:
-              break;
-            }
+          // now invoke the sub-command w/remaining args     
+          return commands::process(app, cmd, args);
         }
-
-      // verify that there are no errors in the command line
-
-      N(opt == -1,
-        F("syntax error near the \"%s\" option: %s") %
-        poptBadOption(ctx(), POPT_BADOPTION_NOALIAS) % poptStrerror(opt));
-
-      // complete the command if necessary
-
-      if (!poptPeekArg(ctx()))
-        // no command given
-        throw usage("");
-      // poptPeekArg returned true, so we can call poptGetArg
-      string cmd = commands::complete_command(poptGetArg(ctx()));
-
-      // stop here if they asked for help
-
-      if (app.requested_help)
+      catch (usage & u)
         {
-          throw usage(cmd);     // cmd may be empty, and that's fine.
+          hide_irrelevant_options(prog_name, u.which);
+          poptPrintHelp(ctx(), stdout, 0);
+          cout << endl;
+          commands::explain_usage(u.which, cout);
+          return app.requested_help ? 0 : 2;
         }
-
-      // at this point we allow a workspace (meaning search for it
-      // and if found read _MTN/options, but don't use the data quite
-      // yet, and read all the monotonercs).  Processing the data
-      // from _MTN/options happens later.
-      // Certain commands may subsequently require a workspace or fail
-      // if we didn't find one at this point.
-
-      app.allow_workspace();
-
-      if (!app.found_workspace && global_sanity.filename.empty())
-        global_sanity.filename = (app.get_confdir() / "dump").as_external();
-
-      // main options processed, now invoke the
-      // sub-command w/ remaining args
-
-      // Make sure the local options used are really used by the
-      // given command.
-      set<int> command_options = commands::command_options(cmd);
-      for (set<int>::const_iterator i = used_local_options.begin();
-           i != used_local_options.end(); ++i)
-        N(command_options.find(*i) != command_options.end(),
-          F("%s %s doesn't use the option %s")
-          % prog_name % cmd % coption_string(*i));
-      
-      vector<utf8> args;
-      while(poptPeekArg(ctx()))
+      catch (exit_after_options)
         {
-          args.push_back(utf8(string(poptGetArg(ctx()))));
+          return 0;
         }
-      return commands::process(app, cmd, args);
-    }
-  catch (usage & u)
-    {
-      // Make sure to hide documentation that's not part of
-      // the current command.
-      set<int> command_options = commands::command_options(u.which);
-      int count = 0;
-      for (poptOption *o = coptions; o->val != 0; o++)
-        {
-          if (command_options.find(o->val) != command_options.end())
-            {
-              o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Removed 'hidden' from option # %d") % o->argInfo);
-              count++;
-            }
-          else
-            {
-              o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Added 'hidden' to option # %d") % o->argInfo);
-            }
-        }
-      free((void *)options[0].descrip); options[0].descrip = NULL;
-      if (count != 0)
-        {
-          ostringstream sstr;
-          sstr << F("Options specific to '%s %s':")
-            % prog_name % u.which;
-          options[0].descrip = strdup(sstr.str().c_str());
-
-          options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-          L(FL("Added 'hidden' to option # %d") % options[0].argInfo);
-        }
-
-      poptPrintHelp(ctx(), stdout, 0);
-      cout << endl;
-      commands::explain_usage(u.which, cout);
-      return app.requested_help ? 0 : 2;
-    }
     }
   catch (informative_failure & inf)
     {
@@ -716,36 +726,14 @@ cpp_main(int argc, char ** argv)
       // an error has already been printed
       return 1;
     }
-
-#define CATCH_FATAL_BARE(T) catch (T) { ui.fatal(#T); return 3; }
-#define CATCH_FATAL_WHAT(T)                                             \
-  catch (T const & ex) { ui.fatal(F(#T ": %s") % ex.what()); return 3; }
-
-  CATCH_FATAL_BARE(std::bad_alloc)
-  CATCH_FATAL_BARE(std::bad_cast)
-  CATCH_FATAL_BARE(std::bad_typeid)
-  CATCH_FATAL_BARE(std::bad_exception)
-  CATCH_FATAL_WHAT(std::domain_error)
-  CATCH_FATAL_WHAT(std::invalid_argument)
-  CATCH_FATAL_WHAT(std::length_error)
-  CATCH_FATAL_WHAT(std::out_of_range)
-  CATCH_FATAL_WHAT(std::range_error)
-  CATCH_FATAL_WHAT(std::overflow_error)
-  CATCH_FATAL_WHAT(std::underflow_error)
-    // logic_error, runtime_error, and exception must be last, being
-    // parent classes.
-  CATCH_FATAL_WHAT(std::logic_error)
-  CATCH_FATAL_WHAT(std::runtime_error)
-  CATCH_FATAL_WHAT(std::exception)
-
-  catch (char const * ex)
+  catch (std::exception const & ex)
     {
-      ui.fatal(F("C-string: %s") % ex);
+      ui.fatal_exception (ex);
       return 3;
     }
-  catch (std::string const & ex)
+  catch (...)
     {
-      ui.fatal(F("std::string: %s") % ex);
+      ui.fatal_exception ();
       return 3;
     }
 
