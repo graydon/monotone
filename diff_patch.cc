@@ -92,7 +92,7 @@ using boost::shared_ptr;
 //
 
 typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;
-static char *etab[3] =
+static const char etab[3][10] =
   {
     "preserved",
     "deleted",
@@ -810,7 +810,7 @@ hunk_consumer::find_encloser(size_t pos, string & encloser)
 
   // Precondition: encloser_last_search <= pos <= a.size().
   I(pos <= a.size());
-  I(pos >= a.rend() - encloser_last_search);
+  I(pos >= (a.rend() - encloser_last_search));
 
   if (!encloser_re)
     return;
