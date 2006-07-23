@@ -2870,9 +2870,9 @@ transitive_closure(string const & x,
       if (results.find(curr) == results.end())
         {
           results.insert(curr);
-          pair<ancestry_map::const_iterator, ancestry_map::const_iterator> range;
-          range = m.equal_range(c);
-          for (ancestry_map::const_iterator i = range.first; i != range.second; ++i)
+          pair<ancestry_map::const_iterator, ancestry_map::const_iterator> \
+            range(m.equal_range(c));
+          for (ancestry_map::const_iterator i(range.first); i != range.second; ++i)
             {
               if (i->first == c)
                 work.push_back(i->second);

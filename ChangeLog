@@ -1,5 +1,13 @@
 2006-07-23  Benoît Dejean  <benoit@placenet.org>
 
+	* configure.ac:
+	* database.cc (transitive_closure):
+	* hash_map.hh:
+	* interner.hh (interner): Use tr1 associative containers and hash
+	functions when available.
+
+2006-07-23  Benoît Dejean  <benoit@placenet.org>
+
 	* diff_patch.cc (hunk_consumer::find_encloser): Added missing parents.
 	Fixed warning.
 
