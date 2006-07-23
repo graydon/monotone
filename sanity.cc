@@ -26,6 +26,7 @@
 #include "sanity.hh"
 #include "simplestring_xform.hh"
 #include "ui.hh"
+#include "mt_version.hh"
 
 using std::exception;
 using std::locale;
@@ -50,6 +51,53 @@ sanity::sanity() :
 
 sanity::~sanity()
 {}
+
+void
+sanity::initialize(int argc, char ** argv, char const * lc_all)
+{
+  // set up some marked strings, so even if our logbuf overflows, we'll get
+  // this data in a crash.  We want the Musing objects to survive this
+  // function's return, so we allocate them from the heap; they put
+  // themselves onto the musings list.
+#ifdef HAVE_TYPEOF
+#define PERM_MM(obj) \
+  new Musing<typeof(obj)>(*(new remove_reference<typeof(obj)>::type(obj)), \
+                          #obj, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
+#else
+#define PERM_MM(obj) /* */
+#endif
+
+#ifndef IN_TESTER
+  string full_version_string;
+  get_full_version(full_version_string);
+  PERM_MM(full_version_string);
+#endif
+
+  // this is in full_version_string already, so don't MM it
+  string system_flavour;
+  get_system_flavour(system_flavour);
+  L(FL("started up on %s") % system_flavour);
+
+  string cmdline_string;
+  {
+    ostringstream cmdline_ss;
+    for (int i = 0; i < argc; ++i)
+      {
+        if (i)
+          cmdline_ss << ", ";
+        cmdline_ss << "'" << argv[i] << "'";
+      }
+    cmdline_string = cmdline_ss.str();
+  }
+  PERM_MM(cmdline_string);
+  L(FL("command line: %s") % cmdline_string);
+
+  if (!lc_all)
+    lc_all = "n/a";
+  PERM_MM(string(lc_all));
+  L(FL("set locale: LC_ALL=%s") % lc_all);
+#undef PERM_MM
+}
 
 void
 sanity::dump_buffer()
@@ -308,13 +356,6 @@ dump(string const & obj, string & out)
 {
   out = obj;
 }
-
-template <> void
-dump(char const *const & obj, string & out)
-{
-  out = obj;
-}
-
 
 void MusingBase::gasp_head(string & out) const
 {

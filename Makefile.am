@@ -308,7 +308,7 @@ unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sql
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 
 tester_LDFLAGS = 
-tester_CPPFLAGS = -I$(top_srcdir)/lua
+tester_CPPFLAGS = -DIN_TESTER -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
 
 # conditionals from configury

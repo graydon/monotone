@@ -625,42 +625,14 @@ cpp_main(int argc, char ** argv)
   // conversion etc
   try
     {
+      // Set up the global sanity object.  No destructor is needed and
+      // therefore no wrapper object is needed either.
+      global_sanity.initialize(argc, argv, setlocale(LC_ALL, 0));
+      
       // Set up secure memory allocation etc
       botan_library acquire_botan;
 
-      // set up some marked strings, so even if our logbuf overflows, we'll get
-      // this data in a crash.
-      string full_version_string;
-      get_full_version(full_version_string);
-      MM(full_version_string);
-
-      string flavour;
-      get_system_flavour(flavour);
-      MM(flavour);
-      L(FL("started up on %s") % flavour);
-
-      string cmdline_string;
-      {
-        ostringstream cmdline_ss;
-        for (int i = 0; i < argc; ++i)
-          {
-            if (i)
-              cmdline_ss << ", ";
-            cmdline_ss << "'" << argv[i] << "'";
-          }
-        cmdline_string = cmdline_ss.str();
-      }
-      MM(cmdline_string);
-      L(FL("command line: %s") % cmdline_string);
-
-      char const *locale_cstr = setlocale(LC_ALL, 0);
-      if (!locale_cstr)
-        locale_cstr = "n/a";
-      MM(locale_cstr);
-      L(FL("set locale: LC_ALL=%s") % locale_cstr);
-
       // decode all argv values into a UTF-8 array
-
       save_initial_path();
       utf8_argv uv(argc, argv);
 
@@ -711,10 +683,10 @@ cpp_main(int argc, char ** argv)
           commands::explain_usage(u.which, cout);
           return app.requested_help ? 0 : 2;
         }
-      catch (exit_after_options)
-        {
-          return 0;
-        }
+    }
+  catch (exit_after_options)
+    {
+      return 0;
     }
   catch (informative_failure & inf)
     {
