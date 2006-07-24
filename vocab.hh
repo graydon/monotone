@@ -149,6 +149,9 @@ null_id(revision_id const & i)
 }
 
 
+hexenc<id>
+fake_id();
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

@@ -185,6 +185,16 @@ symtab_impl
   }
 };
 
+// Sometimes it's handy to have a non-colliding, meaningless id.
+
+hexenc<id>
+fake_id()
+{
+  static u32 counter = 0;
+  ++counter;
+  I(counter >= 1); // detect overflow
+  return hexenc<id>((FL("00000000000000000000000000000000%08x") % counter).str());
+}
 
 // instantiation of various vocab functions
 

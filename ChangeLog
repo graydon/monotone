@@ -1,5 +1,10 @@
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* vocab.cc (fake_id): New function.
+	* cmd_merging.cc (update, pluck): Use it.
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* vocab.cc, vocab.hh: Remove tabs.
 
 2006-07-23  Benoît Dejean  <benoit@placenet.org>

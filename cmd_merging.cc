@@ -210,7 +210,7 @@ CMD(update, N_("workspace"), "",
 
       // Just pick some unused revid, all that's important is that it not
       // match the work revision or any ancestors of the base revision.
-      r_target_id = revision_id(hexenc<id>("5432100000000000000000000500000000000000"));
+      r_target_id = revision_id(fake_id());
       make_roster_for_base_plus_cset(r_old_id,
                                      transplant,
                                      r_target_id,
@@ -787,7 +787,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   }
 
   // Use a fake rid
-  revision_id working_rid(std::string("0000000000000000000000000000000000000001"));
+  revision_id working_rid(fake_id());
 
   // Mark up the FROM roster
   marking_map from_markings; MM(from_markings);
