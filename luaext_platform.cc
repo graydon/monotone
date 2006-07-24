@@ -5,6 +5,14 @@
 
 #include "platform.hh"
 
+LUAEXT(get_ostype, )
+{
+  std::string str;
+  get_system_flavour(str);
+  lua_pushstring(L, str.c_str());
+  return 1;
+}
+
 LUAEXT(existsonpath, )
 {
   const char *exe = luaL_checkstring(L, -1);
@@ -39,6 +47,28 @@ LUAEXT(spawn, )
   for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
   argv[i] = NULL;
   ret = process_spawn(argv);
+  free(argv);
+  lua_pushnumber(L, ret);
+  return 1;
+}
+
+LUAEXT(spawn_redirected, )
+{
+  int n = -lua_gettop(L);
+  char const * infile = luaL_checkstring(L, n++);
+  char const * outfile = luaL_checkstring(L, n++);
+  char const * errfile = luaL_checkstring(L, n++);
+  const char *path = luaL_checkstring(L, n);
+  n = -n;
+  char **argv = (char**)malloc((n+1)*sizeof(char*));
+  int i;
+  pid_t ret;
+  if (argv==NULL)
+    return 0;
+  argv[0] = (char*)path;
+  for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
+  argv[i] = NULL;
+  ret = process_spawn_redirected(infile, outfile, errfile, argv);
   free(argv);
   lua_pushnumber(L, ret);
   return 1;

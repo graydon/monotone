@@ -45,77 +45,8 @@ struct tester_sanity : public sanity
 tester_sanity real_sanity;
 sanity & global_sanity(real_sanity);
 
-namespace redirect
-{
-  enum what {in, out, err};
-}
-
 #ifdef WIN32
 #include <windows.h>
-namespace redirect {typedef HANDLE savetype;}
-HANDLE set_redirect(redirect::what what, string where)
-{
-  HANDLE file;
-  SECURITY_ATTRIBUTES sa;
-  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-  sa.lpSecurityDescriptor = 0;
-  sa.bInheritHandle = true;
-  if (what == redirect::in)
-    {
-      file = CreateFile(where.c_str(),
-                        GENERIC_READ,
-                        FILE_SHARE_READ,
-                        &sa,
-                        OPEN_EXISTING,
-                        FILE_ATTRIBUTE_NORMAL,
-                        NULL);
-    }
-  else
-    {
-      file = CreateFile(where.c_str(),
-                        GENERIC_WRITE,
-                        FILE_SHARE_READ,
-                        &sa,
-                        CREATE_ALWAYS,
-                        FILE_ATTRIBUTE_NORMAL,
-                        NULL);
-    }
-  HANDLE old;
-  switch(what)
-  {
-  case redirect::in:
-    old = GetStdHandle(STD_INPUT_HANDLE);
-    SetStdHandle(STD_INPUT_HANDLE, file);
-    break;
-  case redirect::out:
-    old = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetStdHandle(STD_OUTPUT_HANDLE, file);
-    break;
-  case redirect::err:
-    old = GetStdHandle(STD_ERROR_HANDLE);
-    SetStdHandle(STD_ERROR_HANDLE, file);
-    break;
-  }
-  return old;
-}
-void clear_redirect(redirect::what what, HANDLE saved)
-{
-  switch(what)
-  {
-  case redirect::in:
-    CloseHandle(GetStdHandle(STD_INPUT_HANDLE));
-    SetStdHandle(STD_INPUT_HANDLE, saved);
-    break;
-  case redirect::out:
-    CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
-    SetStdHandle(STD_OUTPUT_HANDLE, saved);
-    break;
-  case redirect::err:
-    CloseHandle(GetStdHandle(STD_ERROR_HANDLE));
-    SetStdHandle(STD_ERROR_HANDLE, saved);
-    break;
-  }
-}
 bool make_accessible(string const &name)
 {
   DWORD attrs = GetFileAttributes(name.c_str());
@@ -127,59 +58,6 @@ bool make_accessible(string const &name)
 #else
 #include <unistd.h>
 #include <sys/stat.h>
-namespace redirect {typedef int savetype;}
-int set_redirect(redirect::what what, string where)
-{
-  int from;
-  char const *mode;
-  switch(what)
-  {
-  case redirect::in:
-    from = 0;
-    mode = "r";
-    break;
-  case redirect::out:
-    from = 1;
-    mode = "w";
-    break;
-  case redirect::err:
-    from = 2;
-    mode = "w";
-    break;
-  default:
-    from = -1;
-    mode = "";
-    break;
-  };
-  int saved = dup(from);
-  FILE *f = fopen(where.c_str(), mode);
-  if (!f)
-    return -1;
-  dup2(fileno(f), from);
-  fclose(f);
-  return saved;
-}
-void clear_redirect(redirect::what what, int saved)
-{
-  int from;
-  switch(what)
-  {
-  case redirect::in:
-    from = 0;
-    break;
-  case redirect::out:
-    from = 1;
-    break;
-  case redirect::err:
-    from = 2;
-    break;
-  default:
-    from = -1;
-    break;
-  };
-  dup2(saved, from);
-  close(saved);
-}
 bool make_accessible(string const &name)
 {
   struct stat st;
@@ -189,15 +67,6 @@ bool make_accessible(string const &name)
   return (chmod(name.c_str(), st.st_mode | S_IREAD | S_IWRITE | S_IEXEC) == 0);
 }
 #endif
-namespace redirect
-{
-  struct saveblock
-  {
-    savetype in;
-    savetype out;
-    savetype err;
-  };
-}
 
 #include <cstdlib>
 map<string, string> orig_env_vars;
@@ -524,48 +393,6 @@ LUAEXT(isdir, )
 LUAEXT(get_source_dir, )
 {
   lua_pushstring(L, source_dir.native_file_string().c_str());
-  return 1;
-}
-
-extern "C" static int clear_redirect(lua_State *L)
-{
-  typedef redirect::saveblock rsb;
-  rsb const *sb = static_cast<rsb const*>(lua_topointer(L, 1));
-  clear_redirect(redirect::in, sb->in);
-  clear_redirect(redirect::out, sb->out);
-  clear_redirect(redirect::err, sb->err);
-  return 0;
-}
-
-LUAEXT(set_redirect, )
-{
-  char const * infile = luaL_checkstring(L, -3);
-  char const * outfile = luaL_checkstring(L, -2);
-  char const * errfile = luaL_checkstring(L, -1);
-
-  typedef redirect::saveblock rsb;
-  rsb *sb = static_cast<rsb*> (lua_newuserdata(L, sizeof(rsb)));
-  sb->in = set_redirect(redirect::in, infile);
-  sb->out = set_redirect(redirect::out, outfile);
-  sb->err = set_redirect(redirect::err, errfile);
-  lua_newtable(L);
-  lua_pushstring(L, "__index");
-  lua_pushvalue(L, -2);
-  lua_settable(L, -3);
-
-  lua_pushstring(L, "restore");
-  lua_pushcfunction(L,clear_redirect);
-  lua_settable(L, -3);
-  lua_setmetatable(L, -2);
-  
-  return 1;
-}
-
-LUAEXT(get_ostype, )
-{
-  string str;
-  get_system_flavour(str);
-  lua_pushstring(L, str.c_str());
   return 1;
 }
 
