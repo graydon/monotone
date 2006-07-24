@@ -27,8 +27,8 @@ commit()
 check(mtn("mv", "-e", "testdir", "newdir"), 0, false, false)
 addfile("newdir/foo", "blah blah\n")
 -- these should succeed, but they error out.
-xfail(mtn("diff"), 0, false, false)
-xfail(mtn("commit", "-m", "foo"), 0, false, false)
+check(mtn("diff"), 0, false, false)
+check(mtn("commit", "-m", "foo"), 0, false, false)
 
 -- or: rename a dir A, add a replacement B, add something C to the
 --   replacement, then use a restriction that includes A and C only
@@ -41,8 +41,8 @@ mkdir("testdir")
 addfile("testdir/newfile", "asdfasdf")
 -- these are nonsensical, but instead of erroring out gracefully, diff
 -- succeeds and commit asserts out in roster.cc
-xfail(mtn("diff", "newdir", "testdir/newfile"), 1, false, false)
-xfail(mtn("commit", "newdir", "testdir/newfile"), 1, false, false)
+check(mtn("diff", "newdir", "testdir/newfile"), 1, false, false)
+check(mtn("commit", "newdir", "testdir/newfile"), 1, false, false)
 
 -- or: rename A, then rename B under it, and use a restriction that includes
 --   only B
@@ -55,5 +55,5 @@ check(mtn("rename", "-e", "A", "newA"), 0, false, false)
 check(mtn("rename", "-e", "B", "newA/B"), 0, false, false)
 -- these are nonsensical, but instead of erroring out gracefully, diff
 -- succeeds and commit asserts out in roster.cc
-xfail(mtn("diff", "newA/B"), 1, false, false)
-xfail(mtn("commit", "newA/B"), 1, false, false)
+check(mtn("diff", "newA/B"), 1, false, false)
+check(mtn("commit", "newA/B"), 1, false, false)

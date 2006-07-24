@@ -138,25 +138,15 @@ bad_component(string const & component)
 static inline bool
 has_bad_chars(string const & path)
 {
-  static bool bad_chars_init(false);
-  static u8 bad_table[128] = {0};
-  if (UNLIKELY(!bad_chars_init))
+  for (string::const_iterator c = path.begin(); LIKELY(c != path.end()); c++)
     {
-      string bad_chars = string("\\") + constants::illegal_path_bytes + string(1, '\0');
-      for (string::const_iterator b = bad_chars.begin(); b != bad_chars.end(); b++)
-        {
-          u8 x = (u8)*b;
-          I((x) < sizeof(bad_table));
-          bad_table[x] = 1;
-        }
-      bad_chars_init = true;
-    }
-
-  for (string::const_iterator c = path.begin(); c != path.end(); c++)
-    {
+      // char is often a signed type; convert to unsigned to ensure that
+      // bytes 0x80-0xff are considered > 0x1f.
       u8 x = (u8)*c;
-      if (x < sizeof(bad_table) && bad_table[x])
-          return true;
+      // 0x5c is '\\'; we use the hex constant to make the dependency on
+      // ASCII encoding explicit.
+      if (UNLIKELY(x <= 0x1f || x == 0x5c || x == 0x7f))
+        return true;
     }
   return false;
 }
