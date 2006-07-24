@@ -33,8 +33,8 @@ void dump(T const &, std::string &);
 inline bool is_xdigit(char x)
 {
   return ((x >= '0' && x <= '9')
-	  || (x >= 'a' && x <= 'f')
-	  || (x >= 'A' && x <= 'F'));
+          || (x >= 'a' && x <= 'f')
+          || (x >= 'A' && x <= 'F'));
 }
 
 inline bool is_alpha(char x)
