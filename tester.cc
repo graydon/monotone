@@ -45,6 +45,7 @@ struct tester_sanity : public sanity
 tester_sanity real_sanity;
 sanity & global_sanity(real_sanity);
 
+
 #ifdef WIN32
 #include <windows.h>
 bool make_accessible(string const &name)
@@ -68,57 +69,25 @@ bool make_accessible(string const &name)
 }
 #endif
 
+
 #include <cstdlib>
-map<string, string> orig_env_vars;
-void save_env() { orig_env_vars.clear(); }
 #if defined(WIN32) && !defined(__MINGW32__)
-void restore_env()
+void setenv(char const * var, char const * val)
 {
-  for (map<string,string>::const_iterator i = orig_env_vars.begin();
-       i != orig_env_vars.end(); ++i)
-    {
-      _putenv_s(i->first.c_str(), i->second.c_str());
-    }
-  orig_env_vars.clear();
-}
-void set_env(string const &var, string const &val)
-{
-  char const *old = getenv(var.c_str());
-  if (old)
-    orig_env_vars.insert(make_pair(var, string(old)));
-  else
-    orig_env_vars.insert(make_pair(var, ""));
-  _putenv_s(var.c_str(), val.c_str());
+  _putenv_s(var, val);
 }
 #else
-void putenv2(string const &var, string const &val)
+void setenv(char const * var, char const * val)
 {
-  string tempstr = var + "=" + val;
+  string tempstr = string(var) + "=" + string(val);
   char const *s = tempstr.c_str();
-  size_t len = var.size() + val.size() + 2;
+  size_t len = tempstr.size() + 1;
   char *cp = new char[len];
   memcpy(cp, s, len);
   putenv(cp);
 }
-void restore_env()
-{
-  for (map<string,string>::const_iterator i = orig_env_vars.begin();
-       i != orig_env_vars.end(); ++i)
-    {
-      putenv2(i->first, i->second);
-    }
-  orig_env_vars.clear();
-}
-void set_env(string const &var, string const &val)
-{
-  char const *old = getenv(var.c_str());
-  if (old)
-    orig_env_vars.insert(make_pair(var, string(old)));
-  else
-    orig_env_vars.insert(make_pair(var, ""));
-  putenv2(var, val);
-}
 #endif
+map<string, string> orig_env_vars;
 
 
 fs::path source_dir;
@@ -398,13 +367,16 @@ LUAEXT(get_source_dir, )
 
 LUAEXT(save_env, )
 {
-  save_env();
+  orig_env_vars.clear();
   return 0;
 }
 
 LUAEXT(restore_env, )
 {
-  restore_env();
+  for (map<string,string>::const_iterator i = orig_env_vars.begin();
+       i != orig_env_vars.end(); ++i)
+    setenv(i->first.c_str(), i->second.c_str());
+  orig_env_vars.clear();
   return 0;
 }
 
@@ -412,7 +384,12 @@ LUAEXT(set_env, )
 {
   char const * var = luaL_checkstring(L, -2);
   char const * val = luaL_checkstring(L, -1);
-  set_env(var, val);
+  char const * old = getenv(var);
+  if (old)
+    orig_env_vars.insert(make_pair(string(var), string(old)));
+  else
+    orig_env_vars.insert(make_pair(string(var), ""));
+  setenv(var, val);
   return 0;
 }
 
