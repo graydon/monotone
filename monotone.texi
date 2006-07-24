@@ -6645,8 +6645,8 @@ state "unchanged"
 There is one basic_io stanza for each attribute of the given file.
 
 All stanzas are formatted by basic_io. Stanzas are separated 
-by a blank line. Values will be escaped, '\' to '\\' and 
-'"' to '\"'.
+by a blank line and ordered by attribute name. Values will be 
+escaped, '\' to '\\' and '"' to '\"'.
 
 Each attribute stanza also contains another entry which tells the status
 of attribute. This entry can have one of the following four values:
