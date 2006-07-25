@@ -52,7 +52,7 @@ check(mtn("--branch=testbranch", "commit", "--message-file=msgfile.txt",
 -- finally, --message-file and a filled _MTN/log should also fail
 -- --------------------
 
-get("commit_log.lua")
+check(get("commit_log.lua"))
 
 writefile("_MTN/log", "Log entry")
 

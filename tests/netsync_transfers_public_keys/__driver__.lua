@@ -6,7 +6,7 @@ netsync.setup()
 pubkey = "52f32ec62128ea3541ebdd9d17400e268cfcd3fe"
 privkey = "06b040c37796863b53f10dc23fcccf379cc2e259"
 
-get("newkeys.txt", "stdin")
+check(get("newkeys.txt", "stdin"))
 check(mtn("read"), 0, false, false, true)
 
 -- First commit a version that doesn't use the new key, and make sure

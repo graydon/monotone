@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-get("pubkey.txt", "stdin")
+check(get("pubkey.txt", "stdin"))
 
 check(mtn("read"), 0, false, false, true)
 

@@ -7,19 +7,24 @@ CMD_SOURCES =								\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
 SANITY_CORE_SOURCES =							\
-	sanity.cc sanity.hh ui.cc ui.hh quick_alloc.hh			\
-	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
-	charset.cc charset.hh						\
+	sanity.cc sanity.hh quick_alloc.hh				\
 	simplestring_xform.cc simplestring_xform.hh			\
-	constants.cc constants.hh numeric_vocab.hh paths.cc paths.hh	\
-	interner.hh hash_map.hh platform.hh
+	constants.cc constants.hh numeric_vocab.hh			\
+	platform.hh
+
 
 LUAEXT_SOURCES =							\
+	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
+	charset.cc charset.hh paths.cc paths.hh				\
+	interner.hh hash_map.hh						\
+	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
+	luaext_guess_binary.cc luaext_platform.cc luaext_globish.cc	\
 	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
 	globish.cc globish.hh basic_io.cc basic_io.hh
 
 MOST_SOURCES =								\
-	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES)			\
+	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES) platform-wrapped.hh	\
+	 mtn-sanity.cc mtn-sanity.hh ui.cc ui.hh			\
 	 app_state.cc app_state.hh					\
          commands.cc commands.hh $(CMD_SOURCES)				\
          diff_patch.cc diff_patch.hh					\
@@ -452,9 +457,9 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 # testsuite stuff (could this possibly be more ugly?)
 
 if BUILD_UNIT_TESTS
-TESTS = unit_tests run_lua_tests
+TESTS = unit_tests run_tester_tests run_lua_tests
 else
-TESTS = run_lua_tests
+TESTS = run_tester_tests run_lua_tests
 endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
@@ -462,7 +467,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_lua_tests
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_tester_tests run_lua_tests
 
 # distcheck stuff
 
@@ -486,6 +491,12 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	} >$(srcdir)/package.m4
 
 run_lua_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
+	chmod 755 $@
+
+run_tester_tests: Makefile
 	echo '#!/bin/sh' > $@ ; \
 	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
 	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \

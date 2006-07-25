@@ -374,7 +374,7 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_DUMP:
-              global_sanity.filename = system_path(argstr);
+              global_sanity.filename = system_path(argstr).as_external();
               break;
 
             case OPT_LOG:

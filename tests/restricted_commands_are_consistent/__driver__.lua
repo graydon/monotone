@@ -102,7 +102,7 @@ checkall({"ls", "unknown"}, "stdout")
 check(mtn("revert", "."), 0, false, false)
 
 -- ls ignored
-get("ignore.lua")
+check(get("ignore.lua"))
 -- only unknown files are considered by ls ignored
 check(mtn("drop", unpack(allfiles)), 0, false, false)
 checkall({"ls", "ignored", "--rcfile=ignore.lua"}, "stdout")

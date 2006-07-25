@@ -3,7 +3,7 @@ mtn_setup()
 
 -- This test relies on file-suturing
 
-get("left", "testfile")
+check(get("left", "testfile"))
 addfile("testfile")
 commit()
 left = base_revision()
@@ -11,7 +11,7 @@ left = base_revision()
 remove("_MTN")
 check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
 
-get("right", "testfile")
+check(get("right", "testfile"))
 addfile("testfile")
 commit()
 right = base_revision()
