@@ -1,5 +1,14 @@
 2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	More cleanups spotten by KingGuppy on IRC:
+	* cset.cc (print_cset):
+	* merkle_tree.cc (insert_into_merkle_tree): Remove some unused code.
+	* refiner.hh: Remove declarations of never-defined functions.
+	* paths.cc (test_system_path): Replace a '=' with a '==' in the
+	unit tests.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* netcmd.cc (write_delta_cmd): Fix logic for compressing large deltas.
 
 2006-07-25  Benoît Dejean  <benoit@placenet.org>
