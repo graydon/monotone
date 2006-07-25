@@ -1,3 +1,10 @@
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* vocab.hh: Provide base definition of dump template which
+	generates a compile-time error if ever instantiated.
+	* roster.hh: Correct declaration of dump<set<revision_id>>
+	specialization.
+
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
 	* std_hooks.lua (edit_comment): If the user_log_message did not
