@@ -3,6 +3,10 @@
 	* std_hooks.lua (edit_comment): If the user_log_message did not
 	end with a newline, insert one.
 
+2006-07-25  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to take care of.
+
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
 	* merge.cc (resolve_merge_conflicts): Remove unused arguments, and
