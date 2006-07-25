@@ -2042,12 +2042,19 @@ class editable_roster_for_check
 editable_roster_for_check::editable_roster_for_check(roster_t & r)
   : editable_roster_base(r, nis), problems(0)
 {
-  // Ensure that this roster has no temp nodes.
-  // If this every becomes a problem, then we could instead have our
-  // temp_node_id_source start at the largest node used + 1.
   node_map nodes = r.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    I(!temp_node(i->first));
+  node_map::const_iterator i = nodes.begin();
+  node_id max = i->first;
+
+  for (; i != nodes.end(); ++i)
+    {
+      if (i->first > max)
+        max = i->first;
+    }
+
+  // ensure our node source starts beyond the max temp node in this roster
+  while (nis.next() <= max)
+    ;
 }
 
 node_id
@@ -2125,9 +2132,6 @@ check_restricted_cset(roster_t const & roster, cset const & cs)
   // of the deletions/renames that emptied it were not included in the
   // restriction, it does not include the addition of a file when the
   // addition of its parent directory was not included, etc.
-
-  // 'roster' must not contain any temp nids, for now; this is checked, and
-  // easily fixed if it becomes a problem.
 
   MM(roster);
   MM(cs);
