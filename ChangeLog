@@ -1,5 +1,11 @@
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
+	* diff_patch.cc (struct hunk_consumer): Fix compiler warning about
+	initialization order.
+	(find_encloser): Ditto, signed vs. unsigned comparison.
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
 	* vocab.cc (fake_id): New function.
 	* cmd_merging.cc (update, pluck): Use it.
 
