@@ -6,5 +6,5 @@ writefile("foo/bar", "quux")
 
 check({"chmod", "a-w", "foo"})
 check({"chmod", "a-w", "foo/bar"})
-remove_recursive("foo")
+remove("foo")
 check(not exists("foo"))
