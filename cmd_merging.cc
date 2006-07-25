@@ -71,15 +71,13 @@ three_way_merge(roster_t const & ancestor_roster,
 
   // Mark up the LEFT roster
   marking_map left_markings; MM(left_markings);
-  mark_roster_with_one_parent(ancestor_roster, left_markings,
-                              left_rid, left_roster,
-                              left_markings);
+  mark_roster_with_one_parent(ancestor_roster, ancestor_markings,
+                              left_rid, left_roster, left_markings);
   
   // Mark up the RIGHT roster
   marking_map right_markings; MM(right_markings);
-  mark_roster_with_one_parent(ancestor_roster, right_markings,
-                              right_rid, right_roster,
-                              right_markings);
+  mark_roster_with_one_parent(ancestor_roster, ancestor_markings,
+                              right_rid, right_roster, right_markings);
 
   // Make the synthetic graph, by creating uncommon ancestor sets
   std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
@@ -149,6 +147,11 @@ CMD(update, N_("workspace"), "",
     }
   I(!null_id(chosen_rid));
 
+  // do this notification before checking to see if we can bail out early,
+  // because when you are at one of several heads, and you hit update, you
+  // want to know that merging would let you update further.
+  notify_if_multiple_heads(app);
+
   if (old_rid == chosen_rid)
     {
       P(F("already up to date at %s") % old_rid);
@@ -158,8 +161,6 @@ CMD(update, N_("workspace"), "",
         app.make_branch_sticky();
       return;
     }
-
-  notify_if_multiple_heads(app);
 
   P(F("selected update target %s") % chosen_rid);
 
