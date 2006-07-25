@@ -1,5 +1,10 @@
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
+	* std_hooks.lua (edit_comment): If the user_log_message did not
+	end with a newline, insert one.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
 	* merge.cc (resolve_merge_conflicts): Remove unused arguments, and
 	adjust callers.
 	* cmd_merging.cc (three_way_merge): Helper function factored out
