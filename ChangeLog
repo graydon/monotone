@@ -1,3 +1,7 @@
+2006-07-26  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
 2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	More cleanups spotten by KingGuppy on IRC:

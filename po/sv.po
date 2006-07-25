@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-25 13:22+0200\n"
-"PO-Revision-Date: 2006-07-25 13:35+0200\n"
+"POT-Creation-Date: 2006-07-26 00:04+0200\n"
+"PO-Revision-Date: 2006-07-26 00:05+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1837,8 +1837,8 @@ msgstr "revisionen %s har felaktig signatur i certet %s från nyckeln %s"
 
 #: database_check.cc:774
 #, c-format
-msgid "revision %s missing %s cert"
-msgstr "revisionen %s saknar certet %s"
+msgid "revision %1% missing %2% cert"
+msgstr "revisionen %1% saknar certet %2%"
 
 #: database_check.cc:783
 #, c-format
@@ -2385,30 +2385,25 @@ msgstr "inget lösen givet"
 msgid "passphrase for '%s' is incorrect"
 msgstr "lösen för '%s' stämmer inte"
 
-#: lua.cc:555 lua.cc:584 lua.cc:599
+#: lua.cc:462 lua.cc:476
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s anropades med inkorrekt parameter"
 
-#: lua.cc:602
+#: lua.cc:479
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:603 rcs_import.cc:1235 work.cc:480
+#: lua.cc:480 rcs_import.cc:1235 work.cc:480
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
 
-#: lua.cc:622
+#: lua.cc:499
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-fel vid läsning av rcfilen '%s'"
-
-#: lua.cc:706
-#, c-format
-msgid "bad input to parse_basic_io"
-msgstr "felaktigt indata till parse_basic_io"
 
 #: main.cc:326
 msgid "interrupted"
@@ -3347,30 +3342,30 @@ msgstr ""
 "Jag förstår bara formatet version '1'\n"
 "En nyare version av monotone behövs för att fortsätta"
 
-#: sanity.cc:135
+#: sanity.cc:126
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
 msgstr "allvarligt fel: formatering misslyckades vid %s:%d: %s"
 
-#: sanity.cc:209
+#: sanity.cc:200
 msgid "misuse: "
 msgstr "missbruk: "
 
-#: sanity.cc:221
+#: sanity.cc:212
 msgid "error: "
 msgstr "fel: "
 
-#: sanity.cc:229
+#: sanity.cc:220
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: invariant '%s' ej uppfylld"
 
-#: sanity.cc:242
+#: sanity.cc:233
 #, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n"
 msgstr "%s:%d; index '%s' = %d blev större än vektorn '%s' med storlek %d\n"
 
-#: sanity.cc:263
+#: sanity.cc:254
 #, c-format
 msgid "Current work set: %i items\n"
 msgstr "Nuvarande arbetsmängd: %i delar\n"
@@ -3712,6 +3707,9 @@ msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 #, c-format
 msgid "modifying %s"
 msgstr "ändrar %s"
+
+#~ msgid "bad input to parse_basic_io"
+#~ msgstr "felaktigt indata till parse_basic_io"
 
 #~ msgid "access to branch '%s' denied by server"
 #~ msgstr "åtkomst till grenen '%s' nekades av servern"
