@@ -1,5 +1,9 @@
 2006-07-25  Benoît Dejean  <benoit@placenet.org>
 
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
 	* database_check.cc (report_certs): Switched to
 	positional format to ease translation.
 
