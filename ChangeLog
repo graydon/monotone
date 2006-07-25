@@ -1,3 +1,32 @@
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (edit_comment): If the user_log_message did not
+	end with a newline, insert one.
+
+2006-07-25  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to take care of.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* merge.cc (resolve_merge_conflicts): Remove unused arguments, and
+	adjust callers.
+	* cmd_merging.cc (three_way_merge): Helper function factored out
+	of pluck.
+	(pluck): Use it.
+	(update): Rewrite for clarity, and use 'three_way_merge'.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* boost/format.hpp, boost/format/feed_args.hpp: Drop moldy old
+	files and hope it doesn't make any difference...
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (struct hunk_consumer): Fix compiler warning about
+	initialization order.
+	(find_encloser): Ditto, signed vs. unsigned comparison.
+
 2006-07-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* visualc/tester.vjproj: Forgot to add this.
