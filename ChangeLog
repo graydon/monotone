@@ -1,5 +1,10 @@
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.cc (make_roster_for_base_plus_cset): Remove unused
+	entry-point.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
 	* std_hooks.lua (edit_comment): If the user_log_message did not
 	end with a newline, insert one.
 

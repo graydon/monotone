@@ -1697,21 +1697,6 @@ namespace
   }
 }
 
-// WARNING: this function is not tested directly (no unit tests).  Do not
-// put real logic in it.
-void
-make_roster_for_base_plus_cset(revision_id const & base, cset const & cs,
-                               revision_id const & new_rid,
-                               roster_t & new_roster, marking_map & new_markings,
-                               node_id_source & nis,
-                               app_state & app)
-{
-  MM(base);
-  MM(cs);
-  app.db.get_roster(base, new_roster, new_markings);
-  make_roster_for_nonmerge(cs, new_rid, new_roster, new_markings, nis);
-}
-
 void
 mark_roster_with_no_parents(revision_id const & rid,
                             roster_t const & roster,
