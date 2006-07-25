@@ -241,10 +241,10 @@
 # invalid                 pas valable
 msgid ""
 msgstr ""
-"Project-Id-Version: monotone 0.22\n"
+"Project-Id-Version: monotone 0.28\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2006-07-25 09:44+0200\n"
-"PO-Revision-Date: 2006-03-15 17:13+0100\n"
+"POT-Creation-Date: 2006-07-25 19:48+0200\n"
+"PO-Revision-Date: 2006-07-25 19:57+0200\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -290,12 +290,12 @@ msgstr "profondeur négative interdite\n"
 #: ../app_state.cc:296
 #, c-format
 msgid "illegal argument to --last: cannot be zero or negative\n"
-msgstr ""
+msgstr "argument illégal à --last : il ne doit pas être nul ou négatif\n"
 
 #: ../app_state.cc:304
 #, c-format
 msgid "illegal argument to --next: cannot be zero or negative\n"
-msgstr ""
+msgstr "argument illégal à --next : il ne pas être nul ou négatif\n"
 
 #: ../app_state.cc:440
 #, c-format
@@ -392,7 +392,7 @@ msgstr ""
 #: ../cmd_automate.cc:205
 #, c-format
 msgid "read from client failed with error code: %d"
-msgstr ""
+msgstr "la lecture depuis le client a échoué avec le code d'erreur : %d"
 
 #: ../cmd_automate.cc:248
 #, fuzzy, c-format
@@ -463,7 +463,7 @@ msgstr "manipule l'état de la base de données"
 #: ../cmd_db.cc:108
 #, c-format
 msgid "The epoch must be %s characters"
-msgstr ""
+msgstr "L'époque doit faire %s caractères"
 
 #: ../cmd_db.cc:119 ../cmd_db.cc:135
 msgid "vars"
@@ -1078,9 +1078,9 @@ msgid "switched branch; next commit will use branch %s"
 msgstr ""
 
 #: ../cmd_merging.cc:290
-#, fuzzy, c-format
+#, c-format
 msgid "updated to base revision %s"
-msgstr "mise à jour vers la révision de base %s\n"
+msgstr "mise à jour vers la révision de base %s"
 
 #. Now it's time for the real work.
 #: ../cmd_merging.cc:329
@@ -1129,11 +1129,11 @@ msgid "branch '%s' is already merged"
 msgstr "la branche « %s » est déjà fusionnée"
 
 #: ../cmd_merging.cc:370
-#, fuzzy, c-format
+#, c-format
 msgid "%d head on branch '%s'"
 msgid_plural "%d heads on branch '%s'"
-msgstr[0] "la branche « %s » n'est pas servie"
-msgstr[1] "la branche « %s » n'est pas servie"
+msgstr[0] "il y %d entrée dans la branche « %s »"
+msgstr[1] "il y a %d entrées dans la branche « %s »"
 
 #: ../cmd_merging.cc:391 ../cmd_merging.cc:436
 #, c-format
@@ -1199,7 +1199,7 @@ msgstr "rien n'a été fait"
 #: ../cmd_merging.cc:519
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'"
-msgstr "fusion pas nécessaire; met %s dans la branch « %s »"
+msgstr "fusion non nécessaire; met %s dans la branche « %s »"
 
 #: ../cmd_merging.cc:557
 #, c-format
@@ -1274,7 +1274,7 @@ msgstr "Il y a %s directory_loop_conflicts."
 
 #: ../cmd_merging.cc:685
 msgid "[-r FROM] -r TO [PATH...]"
-msgstr ""
+msgstr "[-r DEPUIS] -r VERS [CHEMIN...]"
 
 #: ../cmd_merging.cc:686
 msgid ""
@@ -1299,6 +1299,9 @@ msgid ""
 "to apply the changes relative to one of its parents, use:\n"
 "  %s pluck -r PARENT -r %s"
 msgstr ""
+"la révision %s est une fusion\n"
+"pour appliquer les changements relatifs à un de ces parents, utiliser :\n"
+"  %s pluck -r PARENT -r %s"
 
 #: ../cmd_merging.cc:732
 #, c-format
@@ -1530,7 +1533,7 @@ msgstr ""
 #: ../cmd_ws_commit.cc:62
 #, c-format
 msgid "you must pass at least one path to 'revert' (perhaps '.')"
-msgstr ""
+msgstr "vous devez fournir au moins un chemin à « revert » (peut-être « . » ?)"
 
 #: ../cmd_ws_commit.cc:81
 #, fuzzy, c-format
@@ -1632,7 +1635,7 @@ msgid "need --branch argument for branch-based checkout"
 msgstr "il faut un argument --branch pour récupérer basé sur une branche"
 
 #: ../cmd_ws_commit.cc:426
-#, c-format
+#, fuzzy, c-format
 msgid "checkout directory '%s' already exists"
 msgstr "le fichier « %s » existe déjà"
 
@@ -1652,9 +1655,9 @@ msgid "branch %s has multiple heads"
 msgstr "la branche %s a plusieurs entrées"
 
 #: ../cmd_ws_commit.cc:471
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s is not a member of branch %s"
-msgstr "la révision %s n'est pas membre de la branche %s\n"
+msgstr "la révision %s n'est pas membre de la branche %s"
 
 #: ../cmd_ws_commit.cc:504
 #, c-format
@@ -1688,7 +1691,7 @@ msgstr "Le chemin « %s » n'a pas d'attribut « %s »\n"
 #: ../cmd_ws_commit.cc:597
 #, c-format
 msgid "No attributes for '%s'"
-msgstr ""
+msgstr "Pas d'attributs pour « %s »"
 
 #: ../cmd_ws_commit.cc:608
 #, c-format
@@ -1727,14 +1730,14 @@ msgid "empty log message; commit canceled"
 msgstr "message du journal vide; confidence arrêtée"
 
 #: ../cmd_ws_commit.cc:715
-#, fuzzy, c-format
+#, c-format
 msgid "log message rejected: %s"
-msgstr "entrée du journal rejetée: %s\n"
+msgstr "entrée du journal rejetée: %s"
 
 #: ../cmd_ws_commit.cc:723
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s already in database"
-msgstr "la révision %s est déjà dans la base de données\n"
+msgstr "la révision %s est déjà dans la base de données"
 
 #: ../cmd_ws_commit.cc:762 ../cmd_ws_commit.cc:792
 #, c-format
@@ -1780,9 +1783,9 @@ msgid "refresh the inodeprint cache"
 msgstr "rafraîchir le cache d'inodeprint"
 
 #: ../commands.cc:125 ../commands.cc:227
-#, fuzzy, c-format
+#, c-format
 msgid "unknown command '%s'"
-msgstr "commande inconnue « %s »\n"
+msgstr "commande inconnue « %s »"
 
 #. more than one matched command
 #: ../commands.cc:136
@@ -1803,9 +1806,9 @@ msgid "display command help"
 msgstr "afficher l'aide de la commande"
 
 #: ../commands.cc:400
-#, fuzzy, c-format
+#, c-format
 msgid "expanding selection '%s'"
-msgstr "expansion de la sélection « %s »\n"
+msgstr "expansion de la sélection « %s »"
 
 #: ../commands.cc:408
 #, c-format
@@ -1843,7 +1846,7 @@ msgstr "--message et --message-file sont mutuellement exclusifs"
 #: ../database_check.cc:133
 #, c-format
 msgid "file structure is corrupted; cannot check further"
-msgstr ""
+msgstr "la structure du fichier est corrompue ; impossible de faire plus de vérifications"
 
 #: ../database_check.cc:144
 msgid "files"
@@ -1881,24 +1884,24 @@ msgid "file %s missing (%d manifest references)"
 msgstr "fichier %s manquant (%d références du manifeste)\n"
 
 #: ../database_check.cc:540
-#, fuzzy, c-format
+#, c-format
 msgid "file %s unreferenced"
-msgstr "fichier %s non-référencé\n"
+msgstr "fichier %s non-référencé"
 
 #: ../database_check.cc:561
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s unreferenced"
-msgstr "liste %s non-référencé\n"
+msgstr "liste %s non-référencée"
 
 #: ../database_check.cc:567
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s incomplete (%d missing files)"
-msgstr "liste %s incomplet (%d fichiers manquants)\n"
+msgstr "liste %s incomplète (%d fichiers manquants)"
 
 #: ../database_check.cc:574
-#, fuzzy, c-format
+#, c-format
 msgid "roster %s incomplete (%d missing revisions)"
-msgstr "liste %s incomplet (%d révisions manquantes)\n"
+msgstr "liste %s incomplète (%d révisions manquantes)"
 
 #: ../database_check.cc:581
 #, fuzzy, c-format
@@ -1978,14 +1981,14 @@ msgstr ""
 "normalisé?)\n"
 
 #: ../database_check.cc:694
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s is not in normalized form"
-msgstr "la révision %s n'est pas en forme normalisé\n"
+msgstr "la révision %s n'est pas en forme normalisée"
 
 #: ../database_check.cc:718
-#, fuzzy, c-format
+#, c-format
 msgid "key %s missing (signed %d certs)"
-msgstr "la clef %s manque (elle a signé %d certifs)\n"
+msgstr "la clef %s est manquante (elle a signé %d certifs)"
 
 #: ../database_check.cc:751
 #, fuzzy, c-format
@@ -2003,7 +2006,7 @@ msgstr ""
 
 #: ../database_check.cc:774
 #, fuzzy, c-format
-msgid "revision %s missing %s cert"
+msgid "revision %1% missing %2% cert"
 msgstr "la révision %s manque le certif %s\n"
 
 #: ../database_check.cc:783
@@ -2014,24 +2017,24 @@ msgstr ""
 "de journal)\n"
 
 #: ../database_check.cc:870
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing files"
-msgstr "%d fichiers manquants\n"
+msgstr "%d fichiers manquants"
 
 #: ../database_check.cc:872
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced files"
-msgstr "%d fichiers non-référencés\n"
+msgstr "%d fichiers non-référencés"
 
 #: ../database_check.cc:875
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced rosters"
-msgstr "%d listes non-référencés\n"
+msgstr "%d listes non-référencées"
 
 #: ../database_check.cc:877
-#, fuzzy, c-format
+#, c-format
 msgid "%d incomplete rosters"
-msgstr "%d listes incomplets\n"
+msgstr "%d listes incomplètes"
 
 #: ../database_check.cc:879
 #, fuzzy, c-format
@@ -2040,91 +2043,92 @@ msgstr ""
 "%d listes non analysable (peut-être ont-ils des chemins pas valable?)\n"
 
 #: ../database_check.cc:882
-#, fuzzy, c-format
+#, c-format
 msgid "%d rosters not in normalized form"
-msgstr "%d listes pas en forme normalisé\n"
+msgstr "%d listes pas en forme normalisée"
 
 #: ../database_check.cc:885
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing revisions"
-msgstr "%d révisions manquantes\n"
+msgstr "%d révisions manquantes"
 
 #: ../database_check.cc:887
-#, fuzzy, c-format
+#, c-format
 msgid "%d incomplete revisions"
-msgstr "%d revisions incomplètes\n"
+msgstr "%d révisions incomplètes"
 
 #: ../database_check.cc:889
-#, fuzzy, c-format
+#, c-format
 msgid "%d mismatched parents"
-msgstr "%d parents non correspondents\n"
+msgstr "%d parents non correspondants"
 
 #: ../database_check.cc:891
-#, fuzzy, c-format
+#, c-format
 msgid "%d mismatched children"
-msgstr "%d enfants non correspondents\n"
+msgstr "%d enfants non correspondants"
 
 #: ../database_check.cc:893
-#, fuzzy, c-format
+#, c-format
 msgid "%d revisions with bad history"
-msgstr "%d révisions avec une mauvaise histoire\n"
+msgstr "%d révisions avec un mauvais historique"
 
 #: ../database_check.cc:895
-#, fuzzy, c-format
+#, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)"
 msgstr ""
-"%d révisions non analysable (peut-être ont-ils des chemins pas valable?)\n"
+"%d révisions non analysables (peut-être ont-elles des chemins invalides ?)"
 
 #: ../database_check.cc:898
-#, fuzzy, c-format
+#, c-format
 msgid "%d revisions not in normalized form"
-msgstr "%d révisions non normalisés\n"
+msgstr "%d révisions non normalisées"
 
 #: ../database_check.cc:902
-#, fuzzy, c-format
+#, c-format
 msgid "%d unreferenced roster links"
-msgstr "%d liens à liste non-référencés\n"
+msgstr "%d liens à liste non-référencés"
 
 #: ../database_check.cc:905
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing rosters"
-msgstr "%d listes manquantes\n"
+msgstr "%d listes manquantes"
 
 #: ../database_check.cc:909
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing keys"
-msgstr "%d clefs manquantes\n"
+msgstr "%d clefs manquantes"
 
 #: ../database_check.cc:912
-#, fuzzy, c-format
+#, c-format
 msgid "%d missing certs"
-msgstr "%d certifs manquants\n"
+msgstr "%d certifs manquants"
 
 #: ../database_check.cc:914
-#, fuzzy, c-format
+#, c-format
 msgid "%d mismatched certs"
-msgstr "%d certifs non correspondaets\n"
+msgstr "%d certifs non correspondants"
 
 #: ../database_check.cc:916
-#, fuzzy, c-format
+#, c-format
 msgid "%d unchecked signatures due to missing keys"
-msgstr "%d signature non contrôlées à cause de clefs manquantes\n"
+msgstr "%d signature non contrôlées à cause de clefs manquantes"
 
 #: ../database_check.cc:918
-#, fuzzy, c-format
+#, c-format
 msgid "%d bad signatures"
-msgstr "%d mauvaises signatures\n"
+msgstr "%d mauvaises signatures"
 
 #: ../database_check.cc:944
-#, fuzzy, c-format
+#, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs"
 msgstr ""
-"contrôle fini: %d fichiers; %d listes; %d révisions; %d clefs; %d certifs\n"
+"vérification terminée : %d fichiers; %d listes; %d révisions; %d clefs; %d "
+"certifs"
 
 #: ../database_check.cc:950
-#, fuzzy, c-format
+#, c-format
 msgid "total problems detected: %d (%d serious)"
-msgstr "problèmes total détectés: %d (%d sérieux)\n"
+msgstr "total problèmes détectés: %d (%d sérieux)"
 
 #: ../database_check.cc:952
 #, c-format
@@ -2132,14 +2136,14 @@ msgid "serious problems detected"
 msgstr "problèmes sérieux détectés"
 
 #: ../database_check.cc:954
-#, fuzzy, c-format
+#, c-format
 msgid "minor problems detected"
-msgstr "problèmes mineurs détectés\n"
+msgstr "problèmes mineurs détectés"
 
 #: ../database_check.cc:956
-#, fuzzy, c-format
+#, c-format
 msgid "database is good"
-msgstr "la base de données est bonne\n"
+msgstr "la base de données est bonne"
 
 #: ../database.cc:156
 #, c-format
@@ -2159,7 +2163,7 @@ msgstr ""
 #: ../database.cc:170
 #, c-format
 msgid "this database already contains rosters"
-msgstr ""
+msgstr "cette base de données contient déjà des listes"
 
 #: ../database.cc:190
 #, c-format
@@ -3366,19 +3370,19 @@ msgid "dropping delta '%s' -> '%s'"
 msgstr "supprime le delta « %s » -> « %s »"
 
 #: ../packet.cc:139
-#, fuzzy, c-format
+#, c-format
 msgid "missing prerequisite revision '%s'"
-msgstr "la révision préalable « %s » manque\n"
+msgstr "la révision prérequise « %s » manque"
 
 #: ../packet.cc:140 ../packet.cc:151 ../packet.cc:167 ../packet.cc:175
-#, fuzzy, c-format
+#, c-format
 msgid "dropping revision '%s'"
-msgstr "supprime la révision « %s »\n"
+msgstr "supprime la révision « %s »"
 
 #: ../packet.cc:150
-#, fuzzy, c-format
+#, c-format
 msgid "missing prerequisite file '%s'"
-msgstr "le fichier préalable « %s » manque\n"
+msgstr "le fichier prérequis « %s » est manquant"
 
 #: ../packet.cc:165
 #, fuzzy, c-format
@@ -3401,10 +3405,9 @@ msgid "dropping cert"
 msgstr "élimine le certif"
 
 #: ../packet.cc:226
-#, fuzzy, c-format
+#, c-format
 msgid "key '%s' is not equal to key '%s' in database"
-msgstr ""
-"la clef « %s » n'est pas égale à la clef « %s » dans la base de données\n"
+msgstr "la clef « %s » n'est pas égale à la clef « %s » dans la base de données"
 
 #: ../packet.cc:350
 #, c-format
@@ -3432,14 +3435,14 @@ msgid "parse failure %d:%d: expecting word\n"
 msgstr ""
 
 #: ../rcs_import.cc:721
-#, fuzzy, c-format
+#, c-format
 msgid "parsing RCS file %s"
-msgstr "analyse du fichier RCS %s\n"
+msgstr "analyse du fichier RCS %s"
 
 #: ../rcs_import.cc:724
-#, fuzzy, c-format
+#, c-format
 msgid "parsed RCS file %s OK"
-msgstr "analyse du fichier RCS %s OK\n"
+msgstr "analyse du fichier RCS %s OK"
 
 #: ../rcs_import.cc:913
 #, c-format
@@ -3516,17 +3519,17 @@ msgstr ""
 #: ../revision.cc:1010
 #, c-format
 msgid "Directory for path %s cannot be added, as there is a file in the way\n"
-msgstr ""
+msgstr "Le dossier %s ne peut pas être ajouter car il y a un fichier qui fait obstacle\n"
 
 #: ../revision.cc:1021
-#, fuzzy, c-format
+#, c-format
 msgid "Path %s cannot be added, as there is a directory in the way"
-msgstr "Le chemin %s ne peut être ajouté, un dossier fait obstacle\n"
+msgstr "Le chemin %s ne peut être ajouté, un dossier fait obstacle"
 
 #: ../revision.cc:1024
 #, c-format
 msgid "Path %s added twice with differing content\n"
-msgstr ""
+msgstr "Le chemin %s a été ajouté deux fois avec des contenus différents\n"
 
 #: ../revision.cc:1311
 #, c-format

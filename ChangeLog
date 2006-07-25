@@ -11,6 +11,15 @@
 
 	* netcmd.cc (write_delta_cmd): Fix logic for compressing large deltas.
 
+2006-07-26  Benoît Dejean  <benoit@placenet.org>
+
+	* cmd_ws_commit.cc (CMD(commit)): Use positional format
+	to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
 2006-07-25  Benoît Dejean  <benoit@placenet.org>
 
 	* database_check.cc (report_certs): Switched to
