@@ -1,3 +1,7 @@
+2006-07-23  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
 	* vocab.cc (fake_id): New function.
