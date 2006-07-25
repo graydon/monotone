@@ -1,3 +1,19 @@
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* database_check.cc (report_certs): Switched to
+	positional format to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* vocab.hh: Provide base definition of dump template which
+	generates a compile-time error if ever instantiated.
+	* roster.hh: Correct declaration of dump<set<revision_id>>
+	specialization.
+
 2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Rearrange things somewhat, to disentangle tester from the rest
