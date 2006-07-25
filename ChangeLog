@@ -1,3 +1,7 @@
+2006-07-24  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Updated and fixed fuzzies.
+
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
 	* vocab.cc (fake_id): New function.
