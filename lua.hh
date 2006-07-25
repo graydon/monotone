@@ -96,9 +96,11 @@ namespace luaext { \
     int call(lua_State * L); \
   }; \
   extfn_ ## NAME ## _ ## TABLE TABLE ## _ ## NAME ## _extfn; \
-  extern "C" static int TABLE ## _ ## NAME ## _for_lua(lua_State * L) \
-  { \
-    return TABLE ## _ ## NAME ## _extfn . call(L); \
+  extern "C" { \
+    static int TABLE ## _ ## NAME ## _for_lua(lua_State * L) \
+    { \
+      return TABLE ## _ ## NAME ## _extfn . call(L); \
+    } \
   } \
   extfn_ ## NAME ## _ ## TABLE :: extfn_ ## NAME ## _ ## TABLE () \
    : extfn( #NAME , #TABLE , & TABLE ## _## NAME ## _for_lua ) {} \

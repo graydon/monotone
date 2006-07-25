@@ -155,7 +155,7 @@ struct redir
   redir(int which, char const * file);
   ~redir();
 };
-redir::redir(int which, char const * file)
+redir::redir(int which, char const * filename)
  : what(which)
 {
   HANDLE file;
@@ -164,7 +164,7 @@ redir::redir(int which, char const * file)
   sa.lpSecurityDescriptor = 0;
   sa.bInheritHandle = true;
   
-  file = CreateFile(where.c_str(),
+  file = CreateFile(filename,
                     (which==0?GENERIC_READ:GENERIC_WRITE),
                     FILE_SHARE_READ,
                     &sa,
@@ -212,9 +212,9 @@ pid_t process_spawn_redirected(char const * in,
 {
   try
     {
-      redir i(0, in, "r");
-      redir o(1, out, "w");
-      redir e(2, err, "w");
+      redir i(0, in);
+      redir o(1, out);
+      redir e(2, err);
       return process_spawn(argv);
     }
   catch (redir::bad_redir)
