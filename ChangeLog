@@ -1,5 +1,14 @@
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
+	* merge.cc (resolve_merge_conflicts): Remove unused arguments, and
+	adjust callers.
+	* cmd_merging.cc (three_way_merge): Helper function factored out
+	of pluck.
+	(pluck): Use it.
+	(update): Rewrite for clarity, and use 'three_way_merge'.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
 	* boost/format.hpp, boost/format/feed_args.hpp: Drop moldy old
 	files and hope it doesn't make any difference...
 
