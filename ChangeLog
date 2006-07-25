@@ -1,3 +1,20 @@
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rearrange things somewhat, to disentangle tester from the rest
+	of the monotone sorce.
+	* luaext_*.cc: Split out our lua extension functions into multiple
+	files.
+	* lua.hh: Add a LUAEXT(name, [table]) mechanism, similar to CMD() and
+	AUTOMATE().
+	* mtn-sanity.{cc,hh} sanity.{cc,hh}: Make sanity.{cc,hh} not depend
+	on ui.{cc,hh}.
+	* platform-wrapped.hh platform.hh win32/* unix/*: Inline wrappers for
+	various platform functions, so that libplatform doesn't depend on
+	vocab or paths.
+	* many files: Fix includes for the platform and sanity changes.
+	* inodeprint.{cc,hh} {win32,unix}/inodeprint.cc: Rearrange slightly.
+	* Makefile.am: Adjust for all the new files.
+
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
 	* std_hooks.lua (edit_comment): If the user_log_message did not

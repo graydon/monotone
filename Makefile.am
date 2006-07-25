@@ -457,9 +457,9 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 # testsuite stuff (could this possibly be more ugly?)
 
 if BUILD_UNIT_TESTS
-TESTS = unit_tests run_lua_tests
+TESTS = unit_tests run_tester_tests run_lua_tests
 else
-TESTS = run_lua_tests
+TESTS = run_tester_tests run_lua_tests
 endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
@@ -467,7 +467,7 @@ TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 mostlyclean-local:
 	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_lua_tests
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_tester_tests run_lua_tests
 
 # distcheck stuff
 
@@ -491,6 +491,12 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	} >$(srcdir)/package.m4
 
 run_lua_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
+	chmod 755 $@
+
+run_tester_tests: Makefile
 	echo '#!/bin/sh' > $@ ; \
 	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
 	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
