@@ -198,10 +198,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\file_io.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\win32\fs.cc"
 				>
 			</File>
@@ -215,6 +211,18 @@
 			</File>
 			<File
 				RelativePath="..\lua.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\luaext_globish.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\luaext_parse_basic_io.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\luaext_platform.cc"
 				>
 			</File>
 			<File
@@ -238,10 +246,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\win32\read_password.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\sanity.cc"
 				>
 			</File>
@@ -250,15 +254,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\win32\terminal.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\tester.cc"
-				>
-			</File>
-			<File
-				RelativePath="..\ui.cc"
 				>
 			</File>
 			<File
@@ -308,10 +304,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\mkstemp.hh"
-				>
-			</File>
-			<File
 				RelativePath="..\numeric_vocab.hh"
 				>
 			</File>
@@ -333,10 +325,6 @@
 			</File>
 			<File
 				RelativePath="..\simplestring_xform.hh"
-				>
-			</File>
-			<File
-				RelativePath="..\ui.hh"
 				>
 			</File>
 			<File
