@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-26 00:04+0200\n"
-"PO-Revision-Date: 2006-07-26 00:05+0200\n"
+"POT-Creation-Date: 2006-07-26 06:39+0200\n"
+"PO-Revision-Date: 2006-07-26 06:40+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1587,8 +1587,8 @@ msgstr "filen '%s' ändrades under arkivering, avbryter"
 
 #: cmd_ws_commit.cc:774
 #, c-format
-msgid "Your database is missing version %s of file '%s'"
-msgstr "Din databas saknar version %s av filen '%s'"
+msgid "Your database is missing version %1% of file '%2%'"
+msgstr "Din databas saknar version %1% av filen '%2%'"
 
 #: cmd_ws_commit.cc:820
 #, c-format
