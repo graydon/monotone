@@ -16,7 +16,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "file_io.hh"
 #include "botan/botan.h"
 
 #ifndef O_BINARY

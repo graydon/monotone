@@ -1,3 +1,117 @@
+2006-07-26  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* paths.cc: Correct Windows tilde-expansion unit test.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (make_roster_for_base_plus_cset): Remove unused
+	entry-point.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	More cleanups spotten by KingGuppy on IRC:
+	* cset.cc (print_cset):
+	* merkle_tree.cc (insert_into_merkle_tree): Remove some unused code.
+	* refiner.hh: Remove declarations of never-defined functions.
+	* paths.cc (test_system_path): Replace a '=' with a '==' in the
+	unit tests.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.cc (write_delta_cmd): Fix logic for compressing large deltas.
+
+2006-07-26  Benoît Dejean  <benoit@placenet.org>
+
+	* cmd_ws_commit.cc (CMD(commit)): Use positional format
+	to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* database_check.cc (report_certs): Switched to
+	positional format to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* vocab.hh: Provide base definition of dump template which
+	generates a compile-time error if ever instantiated.
+	* roster.hh: Correct declaration of dump<set<revision_id>>
+	specialization.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rearrange things somewhat, to disentangle tester from the rest
+	of the monotone sorce.
+	* luaext_*.cc: Split out our lua extension functions into multiple
+	files.
+	* lua.hh: Add a LUAEXT(name, [table]) mechanism, similar to CMD() and
+	AUTOMATE().
+	* mtn-sanity.{cc,hh} sanity.{cc,hh}: Make sanity.{cc,hh} not depend
+	on ui.{cc,hh}.
+	* platform-wrapped.hh platform.hh win32/* unix/*: Inline wrappers for
+	various platform functions, so that libplatform doesn't depend on
+	vocab or paths.
+	* many files: Fix includes for the platform and sanity changes.
+	* inodeprint.{cc,hh} {win32,unix}/inodeprint.cc: Rearrange slightly.
+	* Makefile.am: Adjust for all the new files.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (edit_comment): If the user_log_message did not
+	end with a newline, insert one.
+
+2006-07-25  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to take care of.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* merge.cc (resolve_merge_conflicts): Remove unused arguments, and
+	adjust callers.
+	* cmd_merging.cc (three_way_merge): Helper function factored out
+	of pluck.
+	(pluck): Use it.
+	(update): Rewrite for clarity, and use 'three_way_merge'.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* boost/format.hpp, boost/format/feed_args.hpp: Drop moldy old
+	files and hope it doesn't make any difference...
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (struct hunk_consumer): Fix compiler warning about
+	initialization order.
+	(find_encloser): Ditto, signed vs. unsigned comparison.
+
+2006-07-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* visualc/tester.vjproj: Forgot to add this.
+
+2006-07-24  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Updated and fixed fuzzies.
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc (fake_id): New function.
+	* cmd_merging.cc (update, pluck): Use it.
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc, vocab.hh: Remove tabs.
+
 2006-07-24  Derek Scherger  <derek@echologic.com>
 
 	* roster.cc (check_restricted_cset): allow temp nodes and ensure

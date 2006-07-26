@@ -17,7 +17,7 @@
 #include "basic_io.hh"
 #include "cset.hh"
 #include "localized_file_io.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "restrictions.hh"
 #include "sanity.hh"
 #include "safe_map.hh"

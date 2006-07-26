@@ -26,8 +26,8 @@ writefile("specific.bob", "non-conflicting mergeable data in alice")
 -- keys (bob and alice) that don't trust each other so that they can
 -- produce two different merge results
 
-get("bob.lua")
-get("alice.lua")
+check(get("bob.lua"))
+check(get("alice.lua"))
 
 function bob (...)
   return raw_mtn("--rcfile=test_hooks.lua", "--rcfile=bob.lua",

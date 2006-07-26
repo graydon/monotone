@@ -8,8 +8,8 @@ writefile("include.lua", 'include("../gongolo/aaa.rc")')
 writefile("includedir.lua", 'includedir("../gongolo")')
 
 -- write two files and check that they will be invoked in alphabetic order
-get("aaa.rc", "gongolo/aaa.rc")
-get("bbb.zz", "gongolo/bbb.zz")
+check(get("aaa.rc", "gongolo/aaa.rc"))
+check(get("bbb.zz", "gongolo/bbb.zz"))
 
 -- setup a wrk dir
 check(mtn("setup", "--branch=testbranch", "alt_wrk"), 0, false, false)
@@ -23,6 +23,6 @@ check(indir("alt_wrk", mtn("--root=.", "--rcfile=../includedir.lua", "status")),
 check(qgrep("BOOGA BOOGACICCA CICCA", "stdout"))
 
 -- write a third file: should be read between the two previous ones
-get("aba.rc", "gongolo/aba.rc")
+check(get("aba.rc", "gongolo/aba.rc"))
 check(indir("alt_wrk", mtn("--root=.", "--rcfile=../includedir.lua", "status")), 0, true, false)
 check(qgrep("BOOGA BOOGAhu huCICCA CICCA", "stdout"))

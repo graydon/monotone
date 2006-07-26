@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-get("foo.rc")
+check(get("foo.rc"))
 
 addfile("testfile", "blah blah")
 check(mtn("--rcfile=-", "commit", "--message=foo", "--branch=testbranch"), 0, true, false, {"foo.rc"})

@@ -11,10 +11,10 @@ netsync = {}
 netsync.internal = {}
 
 function netsync.setup()
-  copy("test.db", "test2.db")
-  copy("keys", "keys2")
-  copy("test.db", "test3.db")
-  copy("keys", "keys3")
+  check(copy("test.db", "test2.db"))
+  check(copy("keys", "keys2"))
+  check(copy("test.db", "test3.db"))
+  check(copy("keys", "keys3"))
   check(getstd("common/netsync-hooks.lua", "netsync.lua"))
   math.randomseed(os.time())
 end

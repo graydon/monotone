@@ -15,7 +15,7 @@
 
 mtn_setup()
 
-get("bad.db")
+check(get("bad.db"))
 
 check(mtn("db", "migrate", "-d", "bad.db"), 0, false, false)
 

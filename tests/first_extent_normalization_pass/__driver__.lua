@@ -1,8 +1,8 @@
 
 mtn_setup()
 
-get("left")
-get("right")
+check(get("left"))
+check(get("right"))
 
 copy("left", "stdin")
 check(mtn("fload"), 0, false, false, true)

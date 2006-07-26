@@ -1,15 +1,15 @@
 
 mtn_setup()
 
-get("testfile")
+check(get("testfile"))
 addfile("testfile")
 commit()
 anc = base_revision()
 
-get("dont_merge")
-get("left")
-get("right")
-get("merged")
+check(get("dont_merge"))
+check(get("left"))
+check(get("right"))
+check(get("merged"))
 
 copy("dont_merge", "testfile")
 commit()
