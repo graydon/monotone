@@ -373,17 +373,9 @@ void
 extract_roster_path_set(roster_t const & ros,
                         path_set & paths);
 
-// These three functions are for the use of things like 'update' or 'pluck',
+// These two functions are for the use of things like 'update' or 'pluck',
 // that need to construct fake rosters and/or markings in-memory, to achieve
 // particular merge results.
-void
-make_roster_for_base_plus_cset(revision_id const & base,
-                               cset const & cs,
-                               revision_id const & new_rid,
-                               roster_t & new_roster,
-                               marking_map & new_markings,
-                               node_id_source & nis,
-                               app_state & app);
 void
 mark_roster_with_no_parents(revision_id const & rid,
                             roster_t const & roster,

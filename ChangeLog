@@ -2,6 +2,15 @@
 
 	* po/sv.po: A fuzzy to fix.
 
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* paths.cc: Correct Windows tilde-expansion unit test.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (make_roster_for_base_plus_cset): Remove unused
+	entry-point.
+
 2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	More cleanups spotten by KingGuppy on IRC:
@@ -14,6 +23,15 @@
 2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* netcmd.cc (write_delta_cmd): Fix logic for compressing large deltas.
+
+2006-07-26  Benoît Dejean  <benoit@placenet.org>
+
+	* cmd_ws_commit.cc (CMD(commit)): Use positional format
+	to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
 
 2006-07-25  Benoît Dejean  <benoit@placenet.org>
 
