@@ -1,3 +1,12 @@
+2006-07-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (temp_file): Allow callers to pass a filename hint
+	to be included in the temporary file name.
+	(write_to_temporary_file): Pass name hint to temp_file.
+	(merge3): Use left/right/ancestor/merged as name hints for
+	temporary files.
+	(get_netsync_connect_command): Formatting tweak.
+
 2006-07-23  Benoît Dejean  <benoit@placenet.org>
 
 	* configure.ac:
