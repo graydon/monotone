@@ -1,3 +1,7 @@
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* paths.cc: Correct Windows tilde-expansion unit test.
+
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
 	* roster.cc (make_roster_for_base_plus_cset): Remove unused
