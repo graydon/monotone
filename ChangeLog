@@ -1,3 +1,16 @@
+2006-07-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Implement the automate stdio extensions mentioned on the ML.
+	- options: can be given, but don't do anything yet. Fixing this will
+	  probably be easier after landing the boost-program-options branch.
+	- input stream: there has been some discussion on IRC as to whether we
+	actually want to keep this.
+	* cmd_automate.cc: Redo automate stdio I/O parsing.
+	* cmd.hh: Automate commands now get an input stream, and can take
+	options (but the options are currently just discared, since I'm not
+	sure how to make it work with our current option-parsing machinery).
+	* monotone.texi: Update the documentation of automate stdio.
+
 2006-07-26  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A fuzzy to fix.
