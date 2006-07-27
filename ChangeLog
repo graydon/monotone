@@ -7,6 +7,14 @@
 
 	* roster.cc (dfs_iter): Remove dirname member.
 
+2006-07-26  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* paths.cc: Correct Windows tilde-expansion unit test.
+
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
 
 	* roster.cc (make_roster_for_base_plus_cset): Remove unused
@@ -112,6 +120,11 @@
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
 	* vocab.cc, vocab.hh: Remove tabs.
+
+2006-07-24  Derek Scherger  <derek@echologic.com>
+
+	* roster.cc (check_restricted_cset): allow temp nodes and ensure
+	the node source does not overlap with any existing temp nodes
 
 2006-07-23  Benoît Dejean  <benoit@placenet.org>
 
