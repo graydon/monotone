@@ -112,6 +112,7 @@ workspace::find_unknown_and_ignored(app_state & app,
   walk_tree(file_path(), u);
 }
 
+namespace {
 
 class
 addition_builder
@@ -209,6 +210,8 @@ addition_builder::visit_file(file_path const & path)
 
   add_node_for(sp);
 }
+
+}; // anonymous namespace
 
 void
 workspace::perform_additions(path_set const & paths, app_state & app,
