@@ -88,6 +88,7 @@ public:
   // slow.  There doesn't seem to be anything that could be done about this.
   virtual void note_future(bool f = true) = 0;
   virtual void note_nowish(bool f = true) = 0;
+  virtual ~inodeprint_calculator() {};
 protected:
   virtual void add_item(void *dat, size_t size) = 0;
 };

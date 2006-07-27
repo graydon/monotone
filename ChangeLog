@@ -1,5 +1,10 @@
 2006-07-26  Nathaniel Smith  <njs@pobox.com>
 
+	* platform.hh (inodeprint_calculator): Add an empty virtual
+	destructor, as per compiler warning.
+
+2006-07-26  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.cc (dfs_iter): Remove dirname member.
 
 2006-07-25  Nathaniel Smith  <njs@pobox.com>
