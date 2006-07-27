@@ -174,11 +174,6 @@ struct workspace
   void update_any_attrs(app_state & app);
 };
 
-bool get_attribute_from_roster(roster_t const & ros,
-                               file_path const & path,
-                               attr_key const & key,
-                               attr_value & val);
-
 struct file_content_source
 {
   virtual void get_file_content(file_id const & fid,

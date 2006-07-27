@@ -973,29 +973,6 @@ workspace::enable_inodeprints()
   write_data(ip_path, dat);
 }
 
-
-bool
-get_attribute_from_roster(roster_t const & ros,
-                          file_path const & path,
-                          attr_key const & key,
-                          attr_value & val)
-{
-  split_path sp;
-  path.split(sp);
-  if (ros.has_node(sp))
-    {
-      node_t n = ros.get_node(sp);
-      full_attr_map_t::const_iterator i = n->attrs.find(key);
-      if (i != n->attrs.end() && i->second.first)
-        {
-          val = i->second.second;
-          return true;
-        }
-    }
-  return false;
-}
-
-
 void
 workspace::update_any_attrs(app_state & app)
 {

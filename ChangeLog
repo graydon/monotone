@@ -1,4 +1,13 @@
-2006-07-26  Zack Weinberg  <zack@boheme>
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_attribute_from_roster): Move ...
+	* roster.cc (roster_t::get_attr): ...here; make into a roster_t
+	method; provide both split_path and file_path variants.
+	* roster.hh, work.hh: Update to match.
+	* diff_patch.cc (content_merger::get_file_encoding)
+	(content_merger::attribute_manual_merge): Update to match.
+
+2006-07-26  Zack Weinberg  <zackw@panix.com>
 
 	* roster.cc: No need to include inodeprint.hh.
 	(inodeprint_unchanged, classify_roster_paths)

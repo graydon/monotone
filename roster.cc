@@ -788,6 +788,35 @@ roster_t::set_attr(split_path const & pth,
   i->second = val;
 }
 
+bool
+roster_t::get_attr(split_path const & pth,
+                   attr_key const & name,
+                   attr_value & val) const
+{
+  if (has_node(pth))
+    {
+      node_t n = get_node(pth);
+      full_attr_map_t::const_iterator i = n->attrs.find(name);
+      if (i != n->attrs.end() && i->second.first)
+        {
+          val = i->second.second;
+          return true;
+        }
+    }
+  return false;
+} 
+
+bool
+roster_t::get_attr(file_path const & pth,
+                   attr_key const & name,
+                   attr_value & val) const
+{
+  split_path sp;
+  pth.split(sp);
+  return get_attr(sp, name, val);
+ }
+
+
 template <> void
 dump(roster_t const & val, string & out)
 {
