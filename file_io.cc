@@ -116,7 +116,7 @@ file_exists(any_path const & p)
 static bool did_char_is_binary_init;
 static bool char_is_binary[256];
 
-void
+static void
 set_char_is_binary(char c, bool is_binary)
 {
     char_is_binary[static_cast<uint8_t>(c)] = is_binary;
@@ -132,7 +132,7 @@ init_char_is_binary()
   string nontext_chars("\x01\x02\x03\x04\x05\x06\x0e\x0f"
                        "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
                        "\x19\x1a\x1c\x1d\x1e\x1f");
-  set_char_is_binary('\0',true);
+  set_char_is_binary('\0', true);
   for(size_t i = 0; i < nontext_chars.size(); ++i)
     {
       set_char_is_binary(nontext_chars[i], true);
@@ -144,6 +144,7 @@ bool guess_binary(string const & s)
   if (did_char_is_binary_init == false)
     {
       init_char_is_binary();
+      did_char_is_binary_init = true;
     }
 
   for (size_t i = 0; i < s.size(); ++i)

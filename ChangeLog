@@ -1,3 +1,9 @@
+2006-07-27  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (guess_binary): Set did_char_is_binary_init to true
+	after initialization.
+	(set_char_is_binary): Make un-public.
+
 2006-07-26  Nathaniel Smith  <njs@pobox.com>
 
 	* platform.hh (inodeprint_calculator): Add an empty virtual
