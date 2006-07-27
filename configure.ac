@@ -631,7 +631,25 @@ AC_CACHE_CHECK([for tr1::unordered_map and tr1::unordered_set],
         tr1::unordered_map and tr1::unordered_set.])
         fi
 
-
+# This checks for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
+AC_DEFUN([TR1_HASHTABLE_CONST_CORRECT],
+[AC_CACHE_CHECK([for early 4.0-series g++ bug in tr1 hashtables],
+    ac_cv_cxx_tr1_hashtable_bug,
+    [AC_LANG_PUSH(C++)
+     AC_TRY_COMPILE([#include <tr1/unordered_set>],
+                    [std::tr1::unordered_set<int> s;
+                     const std::tr1::unordered_set<int> &s_ref = s;
+                     s_ref.find(27);],
+                     [ac_cv_cxx_tr1_hashtable_bug=no],
+                     [ac_cv_cxx_tr1_hashtable_bug=yes])
+     AC_LANG_POP(C++)])
+ if test x$ac_cv_cxx_tr1_hashtable_bug = xno; then
+   AC_DEFINE(HAVE_WORKING_TR1_UNORDERED_MAP_AND_SET, 1,
+             [Define if tr1::unordered_{map,set} actually work])
+ fi
+])
+TR1_HASHTABLE_CONST_CORRECT
+               
 
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.
