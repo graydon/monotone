@@ -322,7 +322,6 @@ dfs_iter
   dir_t root;
   bool return_root;
   stack< pair<dir_t, dir_map::const_iterator> > stk;
-  split_path dirname;
 
 
   dfs_iter(dir_t r)
@@ -367,7 +366,6 @@ dfs_iter
     node_t ntmp = stk.top().second->second;
     if (is_dir_t(ntmp))
       {
-        dirname.push_back(stk.top().second->first);
         dir_t dtmp = downcast_to_dir_t(ntmp);
         stk.push(make_pair(dtmp, dtmp->children.begin()));
       }
@@ -378,8 +376,6 @@ dfs_iter
            && stk.top().second == stk.top().first->children.end())
       {
         stk.pop();
-        if (!dirname.empty())
-          dirname.pop_back();
         if (!stk.empty())
           ++stk.top().second;
       }
