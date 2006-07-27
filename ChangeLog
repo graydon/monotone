@@ -1,3 +1,10 @@
+2006-07-27  Zack Weinberg  <zack@boheme>
+
+	* automate.cc (inventory): Use workspace::find_unknown_and_ignored.
+	* work.hh: Move struct file_itemizer...
+	* work.cc: ...here; wrap it and all its methods in an anonymous
+	namespace.
+
 2006-07-27  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (addition_builder): Wrap class and all its methods in an

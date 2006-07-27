@@ -646,7 +646,7 @@ AUTOMATE(inventory, N_(""))
   roster_t base, curr;
   inventory_map inventory;
   cset cs; MM(cs);
-  path_set unchanged, changed, missing, known, unknown, ignored;
+  path_set unchanged, changed, missing, unknown, ignored;
 
   app.work.get_base_and_current_roster_shape(base, curr, nis, app);
   make_cset(base, curr, cs);
@@ -670,12 +670,9 @@ AUTOMATE(inventory, N_(""))
   inventory_post_state(inventory, nodes_added,
                        inventory_item::ADDED_PATH, 0);
 
-  app.work.classify_roster_paths(curr, unchanged, changed, missing, app);
-  curr.extract_path_set(known);
-
   path_restriction mask(app);
-  file_itemizer u(app, known, unknown, ignored, mask);
-  walk_tree(file_path(), u);
+  app.work.classify_roster_paths(curr, unchanged, changed, missing, app);
+  app.work.find_unknown_and_ignored(app, mask, unknown, ignored);
 
   inventory_node_state(inventory, unchanged,
                        inventory_item::UNCHANGED_NODE);

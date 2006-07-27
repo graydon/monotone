@@ -53,20 +53,6 @@
 
 class path_restriction;
 
-struct file_itemizer : public tree_walker
-{
-  app_state & app;
-  path_set & known;
-  path_set & unknown;
-  path_set & ignored;
-  path_restriction const & mask;
-  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i, 
-                path_restriction const & r)
-    : app(a), known(k), unknown(u), ignored(i), mask(r) {}
-  virtual void visit_dir(file_path const & path);
-  virtual void visit_file(file_path const & path);
-};
-
 typedef std::map<std::string, utf8> options_map;
 
 struct workspace

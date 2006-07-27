@@ -50,6 +50,22 @@ static string const user_log_file_name("log");
 
 // attribute map file
 
+namespace {
+
+struct file_itemizer : public tree_walker
+{
+  app_state & app;
+  path_set & known;
+  path_set & unknown;
+  path_set & ignored;
+  path_restriction const & mask;
+  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i, 
+                path_restriction const & r)
+    : app(a), known(k), unknown(u), ignored(i), mask(r) {}
+  virtual void visit_dir(file_path const & path);
+  virtual void visit_file(file_path const & path);
+};
+
 void
 file_itemizer::visit_dir(file_path const & path)
 {
@@ -70,7 +86,7 @@ file_itemizer::visit_file(file_path const & path)
         unknown.insert(sp);
     }
 }
-
+};
 
 void
 workspace::find_missing(roster_t const & new_roster_shape,
@@ -99,9 +115,8 @@ workspace::find_unknown_and_ignored(app_state & app,
                                     path_restriction const & mask,
                                     path_set & unknown, path_set & ignored)
 {
-  revision_t rev;
-  roster_t new_roster;
   path_set known;
+  roster_t new_roster;
   temp_node_id_source nis;
 
   get_current_roster_shape(new_roster, nis, app);
