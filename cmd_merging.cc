@@ -79,11 +79,11 @@ CMD(update, N_("workspace"), "",
   // such. But it should work for now; revisit if performance is
   // intolerable.
 
-  get_base_and_current_roster_shape(*old_roster, 
+  app.work.get_base_and_current_roster_shape(*old_roster, 
                                     working_roster, nis, app);
-  update_current_roster_from_filesystem(working_roster, app);
+  app.work.update_current_roster_from_filesystem(working_roster, app);
 
-  get_revision_id(r_old_id);
+  app.work.get_revision_id(r_old_id);
   make_revision(r_old_id, *old_roster, working_roster, r_working);
 
   calculate_ident(r_working, r_working_id);
@@ -280,7 +280,7 @@ CMD(update, N_("workspace"), "",
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
   // is the basis of the workspace, not the workspace itself.
-  put_revision_id(r_chosen_id);
+  app.work.put_revision_id(r_chosen_id);
   if (!app.branch_name().empty())
     {
       app.make_branch_sticky();
@@ -289,8 +289,8 @@ CMD(update, N_("workspace"), "",
     P(F("switched branch; next commit will use branch %s") % app.branch_name());
   P(F("updated to base revision %s") % r_chosen_id);
 
-  put_work_cset(remaining);
-  update_any_attrs(app);
+  app.work.put_work_cset(remaining);
+  app.work.update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
 
@@ -768,9 +768,9 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   // Get the WORKING roster, and also the base roster while we're at it
   roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
-  get_base_and_current_roster_shape(base_roster, working_roster,
+  app.work.get_base_and_current_roster_shape(base_roster, working_roster,
                                     nis, app);
-  update_current_roster_from_filesystem(working_roster, app);
+  app.work.update_current_roster_from_filesystem(working_roster, app);
 
   // Get the FROM->TO cset
   cset from_to_to; MM(from_to_to);
@@ -844,13 +844,13 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   // small race condition here...
   P(F("applied changes to workspace"));
 
-  put_work_cset(remaining);
-  update_any_attrs(app);
+  app.work.put_work_cset(remaining);
+  app.work.update_any_attrs(app);
   
   // add a note to the user log file about what we did
   {
     data log;
-    read_user_log(log);
+    app.work.read_user_log(log);
     std::string log_str = log();
     if (!log_str.empty())
       log_str += "\n";
@@ -862,7 +862,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
       log_str += (FL("applied partial changes from %s\n"
                      "                     through %s\n")
                   % from_rid % to_rid).str();
-    write_user_log(data(log_str));
+    app.work.write_user_log(data(log_str));
   }
 }
 
@@ -896,7 +896,7 @@ CMD(get_roster, N_("debug"), N_("REVID"),
 {
   revision_id rid;
   if (args.size() == 0)
-    get_revision_id(rid);
+    app.work.get_revision_id(rid);
   else if (args.size() == 1)
     complete(app, idx(args, 0)(), rid);
   else

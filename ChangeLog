@@ -1,3 +1,21 @@
+2006-07-26  Zack Weinberg  <zack@boheme>
+
+	* roster.cc: No need to include inodeprint.hh.
+	(inodeprint_unchanged, classify_roster_paths)
+	(update_current_roster_from_filesystem [both overloads]):
+	Move to work.cc.
+	* roster.hh: Remove prototypes of functions moved to work.cc.
+	* work.hh (workspace): New class.  Make all work.cc functions
+	except get_attribute_from_roster into member functions of this
+	class, including the functions moved here from roster.hh.
+	Declare those functions.
+	* work.cc: Include inodeprint.hh.  Adjust function definitions to
+	match changes in work.hh.
+	* app_state.hh (struct app_state): Add 'work' data member.
+	* app_state.cc, automate.cc, cmd_diff_log.cc, cmd_files.cc, cmd_list.cc
+	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
+	interfaces.
+
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
 	* vocab.cc (fake_id): New function.

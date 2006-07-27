@@ -25,6 +25,7 @@
 #include "vocab.hh"
 #include "work.hh"
 #include "revision.hh"
+#include "inodeprint.hh"
 
 using std::deque;
 using std::exception;
@@ -72,8 +73,9 @@ file_itemizer::visit_file(file_path const & path)
 
 
 void
-find_missing(roster_t const & new_roster_shape, node_restriction const & mask,
-             path_set & missing)
+workspace::find_missing(roster_t const & new_roster_shape,
+                        node_restriction const & mask,
+                        path_set & missing)
 {
   node_map const & nodes = new_roster_shape.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
@@ -93,8 +95,9 @@ find_missing(roster_t const & new_roster_shape, node_restriction const & mask,
 }
 
 void
-find_unknown_and_ignored(app_state & app, path_restriction const & mask,
-                         path_set & unknown, path_set & ignored)
+workspace::find_unknown_and_ignored(app_state & app,
+                                    path_restriction const & mask,
+                                    path_set & unknown, path_set & ignored)
 {
   revision_t rev;
   roster_t new_roster;
@@ -208,7 +211,8 @@ addition_builder::visit_file(file_path const & path)
 }
 
 void
-perform_additions(path_set const & paths, app_state & app, bool recursive)
+workspace::perform_additions(path_set const & paths, app_state & app,
+                             bool recursive)
 {
   if (paths.empty())
     return;
@@ -251,7 +255,7 @@ perform_additions(path_set const & paths, app_state & app, bool recursive)
 }
 
 void
-perform_deletions(path_set const & paths, app_state & app)
+workspace::perform_deletions(path_set const & paths, app_state & app)
 {
   if (paths.empty())
     return;
@@ -334,9 +338,9 @@ add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis,
 }
 
 void
-perform_rename(set<file_path> const & src_paths,
-               file_path const & dst_path,
-               app_state & app)
+workspace::perform_rename(set<file_path> const & src_paths,
+                          file_path const & dst_path,
+                          app_state & app)
 {
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
@@ -443,8 +447,9 @@ perform_rename(set<file_path> const & src_paths,
 }
 
 void
-perform_pivot_root(file_path const & new_root, file_path const & put_old,
-                   app_state & app)
+workspace::perform_pivot_root(file_path const & new_root,
+                              file_path const & put_old,
+                              app_state & app)
 {
   split_path new_root_sp, put_old_sp, root_sp;
   new_root.split(new_root_sp);
@@ -508,13 +513,15 @@ perform_pivot_root(file_path const & new_root, file_path const & put_old,
 
 // work file containing rearrangement from uncommitted adds/drops/renames
 
-static void get_work_path(bookkeeping_path & w_path)
+static void
+get_work_path(bookkeeping_path & w_path)
 {
   w_path = bookkeeping_root / work_file_name;
   L(FL("work path is %s") % w_path);
 }
 
-void get_work_cset(cset & w)
+void
+workspace::get_work_cset(cset & w)
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
@@ -532,7 +539,8 @@ void get_work_cset(cset & w)
     }
 }
 
-void remove_work_cset()
+void
+workspace::remove_work_cset()
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
@@ -540,7 +548,8 @@ void remove_work_cset()
     delete_file(w_path);
 }
 
-void put_work_cset(cset & w)
+void 
+workspace::put_work_cset(cset & w)
 {
   bookkeeping_path w_path;
   get_work_path(w_path);
@@ -560,15 +569,17 @@ void put_work_cset(cset & w)
 
 // revision file name
 
-string revision_file_name("revision");
+static string const revision_file_name("revision");
 
-static void get_revision_path(bookkeeping_path & m_path)
+static void
+get_revision_path(bookkeeping_path & m_path)
 {
   m_path = bookkeeping_root / revision_file_name;
   L(FL("revision path is %s") % m_path);
 }
 
-void get_revision_id(revision_id & c)
+void
+workspace::get_revision_id(revision_id & c)
 {
   c = revision_id();
   bookkeeping_path c_path;
@@ -591,7 +602,8 @@ void get_revision_id(revision_id & c)
   c = revision_id(remove_ws(c_data()));
 }
 
-void put_revision_id(revision_id const & rev)
+void
+workspace::put_revision_id(revision_id const & rev)
 {
   bookkeeping_path c_path;
   get_revision_path(c_path);
@@ -601,10 +613,10 @@ void put_revision_id(revision_id const & rev)
 }
 
 void
-get_base_revision(app_state & app,
-                  revision_id & rid,
-                  roster_t & ros,
-                  marking_map & mm)
+workspace::get_base_revision(app_state & app,
+                             revision_id & rid,
+                             roster_t & ros,
+                             marking_map & mm)
 {
   get_revision_id(rid);
 
@@ -621,17 +633,17 @@ get_base_revision(app_state & app,
 }
 
 void
-get_base_revision(app_state & app,
-                  revision_id & rid,
-                  roster_t & ros)
+workspace::get_base_revision(app_state & app,
+                             revision_id & rid,
+                             roster_t & ros)
 {
   marking_map mm;
   get_base_revision(app, rid, ros, mm);
 }
 
 void
-get_base_roster(app_state & app,
-                roster_t & ros)
+workspace::get_base_roster(app_state & app,
+                           roster_t & ros)
 {
   revision_id rid;
   marking_map mm;
@@ -639,7 +651,8 @@ get_base_roster(app_state & app,
 }
 
 void
-get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app)
+workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis,
+                                    app_state & app)
 {
   get_base_roster(app, ros);
   cset cs;
@@ -649,10 +662,10 @@ get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app)
 }
 
 void
-get_base_and_current_roster_shape(roster_t & base_roster,
-                                  roster_t & current_roster,
-                                  node_id_source & nis,
-                                  app_state & app)
+workspace::get_base_and_current_roster_shape(roster_t & base_roster,
+                                             roster_t & current_roster,
+                                             node_id_source & nis,
+                                             app_state & app)
 {
   get_base_roster(app, base_roster);
   current_roster = base_roster;
@@ -662,17 +675,172 @@ get_base_and_current_roster_shape(roster_t & base_roster,
   cs.apply_to(er);
 }
 
+// updating rosters from the workspace
+
+inline static bool
+inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
+{
+  inodeprint_map::const_iterator old_ip = ipm.find(path);
+  if (old_ip != ipm.end())
+    {
+      hexenc<inodeprint> ip;
+      if (inodeprint_file(path, ip) && ip == old_ip->second)
+          return true; // unchanged
+      else
+          return false; // changed or unavailable
+    }
+  else
+    return false; // unavailable
+}
+
+// TODO: unchanged, changed, missing might be better as set<node_id>
+
+// note that this does not take a restriction because it is used only by
+// automate_inventory which operates on the entire, unrestricted, working
+// directory.
+
+void
+workspace::classify_roster_paths(roster_t const & ros,
+                                 path_set & unchanged,
+                                 path_set & changed,
+                                 path_set & missing,
+                                 app_state & app)
+{
+  temp_node_id_source nis;
+  inodeprint_map ipm;
+
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
+
+  // this code is speed critical, hence the use of inode fingerprints so be
+  // careful when making changes in here and preferably do some timing tests
+
+  if (!ros.has_root())
+    return;
+
+  node_map const & nodes = ros.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+      node_t node = i->second;
+
+      split_path sp;
+      ros.get_name(nid, sp);
+
+      file_path fp(sp);
+
+      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
+        {
+          // dirs don't have content changes
+          unchanged.insert(sp);
+        }
+      else
+        {
+          file_t file = downcast_to_file_t(node);
+          file_id fid;
+          if (ident_existing_file(fp, fid, app.lua))
+            {
+              if (file->content == fid)
+                unchanged.insert(sp);
+              else
+                changed.insert(sp);
+            }
+          else
+            {
+              missing.insert(sp);
+            }
+        }
+    }
+}
+
+void
+workspace::update_current_roster_from_filesystem(roster_t & ros,
+                                                 node_restriction const & mask,
+                                                 app_state & app)
+{
+  temp_node_id_source nis;
+  inodeprint_map ipm;
+
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
+
+  size_t missing_files = 0;
+
+  // this code is speed critical, hence the use of inode fingerprints so be
+  // careful when making changes in here and preferably do some timing tests
+
+  if (!ros.has_root())
+    return;
+
+  node_map const & nodes = ros.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+      node_t node = i->second;
+
+      // Only analyze files further, not dirs.
+      if (! is_file_t(node))
+        continue;
+
+      // Only analyze restriction-included files.
+      if (!mask.includes(ros, nid))
+        continue;
+
+      split_path sp;
+      ros.get_name(nid, sp);
+      file_path fp(sp);
+
+      // Only analyze changed files (or all files if inodeprints mode
+      // is disabled).
+      if (inodeprint_unchanged(ipm, fp))
+        continue;
+
+      file_t file = downcast_to_file_t(node);
+      if (!ident_existing_file(fp, file->content, app.lua))
+        {
+          W(F("missing %s") % (fp));
+          missing_files++;
+        }
+    }
+
+  N(missing_files == 0,
+    F("%d missing files; use '%s ls missing' to view\n"
+      "to restore consistency, on each missing file run either\n"
+      "'%s drop FILE' to remove it permanently, or\n"
+      "'%s revert FILE' to restore it\n"
+      "or to handle all at once, simply '%s drop --missing'\n"
+      "or '%s revert --missing'")
+    % missing_files % app.prog_name % app.prog_name % app.prog_name
+    % app.prog_name % app.prog_name);
+}
+
+void
+workspace::update_current_roster_from_filesystem(roster_t & ros,
+                                                 app_state & app)
+{
+  node_restriction tmp(app);
+  update_current_roster_from_filesystem(ros, tmp, app);
+}
+
 // user log file
 
 void
-get_user_log_path(bookkeeping_path & ul_path)
+workspace::get_user_log_path(bookkeeping_path & ul_path)
 {
   ul_path = bookkeeping_root / user_log_file_name;
   L(FL("user log path is %s") % ul_path);
 }
 
 void
-read_user_log(data & dat)
+workspace::read_user_log(data & dat)
 {
   bookkeeping_path ul_path;
   get_user_log_path(ul_path);
@@ -684,7 +852,7 @@ read_user_log(data & dat)
 }
 
 void
-write_user_log(data const & dat)
+workspace::write_user_log(data const & dat)
 {
   bookkeeping_path ul_path;
   get_user_log_path(ul_path);
@@ -693,7 +861,7 @@ write_user_log(data const & dat)
 }
 
 void
-blank_user_log()
+workspace::blank_user_log()
 {
   data empty;
   bookkeeping_path ul_path;
@@ -702,7 +870,7 @@ blank_user_log()
 }
 
 bool
-has_contents_user_log()
+workspace::has_contents_user_log()
 {
   data user_log_message;
   read_user_log(user_log_message);
@@ -712,14 +880,14 @@ has_contents_user_log()
 // options map file
 
 void
-get_options_path(bookkeeping_path & o_path)
+workspace::get_options_path(bookkeeping_path & o_path)
 {
   o_path = bookkeeping_root / options_file_name;
   L(FL("options path is %s") % o_path);
 }
 
 void
-read_options_map(data const & dat, options_map & options)
+workspace::read_options_map(data const & dat, options_map & options)
 {
   basic_io::input_source src(dat(), "_MTN/options");
   basic_io::tokenizer tok(src);
@@ -740,7 +908,7 @@ read_options_map(data const & dat, options_map & options)
 }
 
 void
-write_options_map(data & dat, options_map const & options)
+workspace::write_options_map(data & dat, options_map const & options)
 {
   basic_io::printer pr;
 
@@ -755,7 +923,8 @@ write_options_map(data & dat, options_map const & options)
 
 // local dump file
 
-void get_local_dump_path(bookkeeping_path & d_path)
+void
+workspace::get_local_dump_path(bookkeeping_path & d_path)
 {
   d_path = bookkeeping_root / local_dump_file_name;
   L(FL("local dump path is %s") % d_path);
@@ -764,13 +933,13 @@ void get_local_dump_path(bookkeeping_path & d_path)
 // inodeprint file
 
 void
-get_inodeprints_path(bookkeeping_path & ip_path)
+workspace::get_inodeprints_path(bookkeeping_path & ip_path)
 {
   ip_path = bookkeeping_root / inodeprints_file_name;
 }
 
 bool
-in_inodeprints_mode()
+workspace::in_inodeprints_mode()
 {
   bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
@@ -778,7 +947,7 @@ in_inodeprints_mode()
 }
 
 void
-read_inodeprints(data & dat)
+workspace::read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -787,7 +956,7 @@ read_inodeprints(data & dat)
 }
 
 void
-write_inodeprints(data const & dat)
+workspace::write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -796,7 +965,7 @@ write_inodeprints(data const & dat)
 }
 
 void
-enable_inodeprints()
+workspace::enable_inodeprints()
 {
   bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
@@ -827,7 +996,8 @@ get_attribute_from_roster(roster_t const & ros,
 }
 
 
-void update_any_attrs(app_state & app)
+void
+workspace::update_any_attrs(app_state & app)
 {
   temp_node_id_source nis;
   roster_t new_roster;

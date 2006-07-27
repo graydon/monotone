@@ -48,6 +48,7 @@ public:
   database db;
   lua_hooks lua;
   key_store keys;
+  workspace work;
   bool recursive;
   bool stdhooks;
   bool rcfiles;

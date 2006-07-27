@@ -96,7 +96,7 @@ app_state::allow_workspace()
       if (global_sanity.filename.empty())
         {
           bookkeeping_path dump_path;
-          get_local_dump_path(dump_path);
+          work.get_local_dump_path(dump_path);
           L(FL("setting dump path to %s") % dump_path);
           // The 'true' means that, e.g., if we're running checkout,
           // then it's okay for dumps to go into our starting working
@@ -166,10 +166,10 @@ app_state::create_workspace(system_path const & new_dir)
 
   write_options();
 
-  blank_user_log();
+  work.blank_user_log();
 
   if (lua.hook_use_inodeprints())
-    enable_inodeprints();
+    work.enable_inodeprints();
 
   load_rcfiles();
 }
@@ -425,14 +425,14 @@ void
 app_state::read_options()
 {
   bookkeeping_path o_path;
-  get_options_path(o_path);
+  work.get_options_path(o_path);
   try
     {
       if (path_exists(o_path))
         {
           data dat;
           read_data(o_path, dat);
-          read_options_map(dat, options);
+          work.read_options_map(dat, options);
         }
     }
   catch(exception &)
@@ -445,11 +445,11 @@ void
 app_state::write_options()
 {
   bookkeeping_path o_path;
-  get_options_path(o_path);
+  work.get_options_path(o_path);
   try
     {
       data dat;
-      write_options_map(dat, options);
+      work.write_options_map(dat, options);
       write_data(o_path, dat);
     }
   catch(exception &)

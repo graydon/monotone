@@ -67,117 +67,117 @@ struct file_itemizer : public tree_walker
   virtual void visit_file(file_path const & path);
 };
 
-void
-find_missing(roster_t const & new_roster_shape, node_restriction const & mask,
-             path_set & missing);
-
-void
-find_unknown_and_ignored(app_state & app, path_restriction const & mask,
-                         path_set & unknown, path_set & ignored);
-
-void
-perform_additions(path_set const & targets, app_state & app, bool recursive = true);
-
-void
-perform_deletions(path_set const & targets, app_state & app);
-
-void
-perform_rename(std::set<file_path> const & src_paths,
-               file_path const & dst_dir,
-               app_state & app);
-
-void
-perform_pivot_root(file_path const & new_root, file_path const & put_old,
-                   app_state & app);
-
-// the "work" file contains the current cset representing uncommitted
-// add/drop/rename operations (not deltas)
-
-void get_work_cset(cset & w);
-void remove_work_cset();
-void put_work_cset(cset & w);
-
-// the "revision" file contains the base revision id that the current working
-// copy was checked out from
-
-void get_revision_id(revision_id & c);
-void put_revision_id(revision_id const & rev);
-void get_base_revision(app_state & app,
-                       revision_id & rid,
-                       roster_t & ros,
-                       marking_map & mm);
-void get_base_revision(app_state & app,
-                       revision_id & rid,
-                       roster_t & ros);
-void get_base_roster(app_state & app, roster_t & ros);
-
-// This returns the current roster, except it does not bother updating the
-// hashes in that roster -- the "shape" is correct, all files and dirs exist
-// and under the correct names -- but do not trust file content hashes.
-void get_current_roster_shape(roster_t & ros, node_id_source & nis, app_state & app);
-
-// These returns the current roster, except they do not bother updating the
-// hashes in that roster -- the "shape" is correct, all files and dirs exist
-// and under the correct names -- but do not trust file content hashes.
-void get_base_and_current_roster_shape(roster_t & base_roster,
-                                       roster_t & current_roster,
-                                       node_id_source & nis,
-                                       app_state & app);
-
-// the "user log" is a file the user can edit as they program to record
-// changes they make to their source code. Upon commit the file is read
-// and passed to the edit_comment lua hook. If the commit is a success,
-// the user log is then blanked. If the commit does not succeed, no
-// change is made to the user log file.
-
-void get_user_log_path(bookkeeping_path & ul_path);
-
-void read_user_log(data & dat);
-
-void write_user_log(data const & dat);
-
-void blank_user_log();
-
-bool has_contents_user_log();
-
-// the "options map" is another administrative file, stored in
-// _MTN/options. it keeps a list of name/value pairs which are considered
-// "persistent options", associated with a particular the workspace and
-// implied unless overridden on the command line. the main ones are
-// --branch and --db, although some others may follow in the future.
-
 typedef std::map<std::string, utf8> options_map;
 
-void get_options_path(bookkeeping_path & o_path);
+struct workspace
+{
+  void find_missing(roster_t const & new_roster_shape,
+                    node_restriction const & mask,
+                    path_set & missing);
 
-void read_options_map(data const & dat, options_map & options);
+  void find_unknown_and_ignored(app_state & app, path_restriction const & mask,
+                                path_set & unknown, path_set & ignored);
 
-void write_options_map(data & dat,
-                       options_map const & options);
+  void perform_additions(path_set const & targets, app_state & app,
+                         bool recursive = true);
 
-// the "local dump file' is a debugging file, stored in _MTN/debug.  if we
-// crash, we save some debugging information here.
+  void perform_deletions(path_set const & targets, app_state & app);
 
-void get_local_dump_path(bookkeeping_path & d_path);
+  void perform_rename(std::set<file_path> const & src_paths,
+                      file_path const & dst_dir,
+                      app_state & app);
 
-// the 'inodeprints file' contains inode fingerprints
+  void perform_pivot_root(file_path const & new_root,
+                          file_path const & put_old,
+                          app_state & app);
+  
+  // the "work" file contains the current cset representing uncommitted
+  // add/drop/rename operations (not deltas)
 
-void get_inodeprints_path(bookkeeping_path & ip_path);
+  void get_work_cset(cset & w);
+  void remove_work_cset();
+  void put_work_cset(cset & w);
 
-bool in_inodeprints_mode();
+  // the "revision" file contains the base revision id that the current working
+  // copy was checked out from
 
-void read_inodeprints(data & dat);
+  void get_revision_id(revision_id & c);
+  void put_revision_id(revision_id const & rev);
+  void get_base_revision(app_state & app, revision_id & rid, roster_t & ros);
+  void get_base_revision(app_state & app, revision_id & rid, roster_t & ros,
+                         marking_map & mm);
+  void get_base_roster(app_state & app, roster_t & ros);
 
-void write_inodeprints(data const & dat);
+  // This returns the current roster, except it does not bother updating the
+  // hashes in that roster -- the "shape" is correct, all files and dirs exist
+  // and under the correct names -- but do not trust file content hashes.
+  // If you need the current roster with correct file content hashes, call
+  // update_current_roster_from_filesystem on the result of this function.
+  void get_current_roster_shape(roster_t & ros, node_id_source & nis,
+                                app_state & app);
 
-void enable_inodeprints();
+  // This returns both the base roster (as get_base_roster would) and the
+  // current roster shape (as get_current_roster_shape would).  The caveats
+  // for get_current_roster_shape also apply to this function.
+  void get_base_and_current_roster_shape(roster_t & base_roster,
+                                         roster_t & current_roster,
+                                         node_id_source & nis,
+                                         app_state & app);
+
+  void classify_roster_paths(roster_t const & ros,
+                             path_set & unchanged,
+                             path_set & changed,
+                             path_set & missing,
+                             app_state & app);
+
+  void update_current_roster_from_filesystem(roster_t & ros, app_state & app);
+  void update_current_roster_from_filesystem(roster_t & ros,
+                                             node_restriction const & mask,
+                                             app_state & app);
+
+
+  // the "user log" is a file the user can edit as they program to record
+  // changes they make to their source code. Upon commit the file is read
+  // and passed to the edit_comment lua hook. If the commit is a success,
+  // the user log is then blanked. If the commit does not succeed, no
+  // change is made to the user log file.
+
+  void get_user_log_path(bookkeeping_path & ul_path);
+  void read_user_log(data & dat);
+  void write_user_log(data const & dat);
+  void blank_user_log();
+  bool has_contents_user_log();
+
+  // the "options map" is another administrative file, stored in
+  // _MTN/options. it keeps a list of name/value pairs which are considered
+  // "persistent options", associated with a particular the workspace and
+  // implied unless overridden on the command line. the main ones are
+  // --branch and --db, although some others may follow in the future.
+
+  void get_options_path(bookkeeping_path & o_path);
+  void read_options_map(data const & dat, options_map & options);
+  void write_options_map(data & dat, options_map const & options);
+
+  // the "local dump file' is a debugging file, stored in _MTN/debug.  if we
+  // crash, we save some debugging information here.
+
+  void get_local_dump_path(bookkeeping_path & d_path);
+
+  // the 'inodeprints file' contains inode fingerprints
+
+  void get_inodeprints_path(bookkeeping_path & ip_path);
+  bool in_inodeprints_mode();
+  void read_inodeprints(data & dat);
+  void write_inodeprints(data const & dat);
+  void enable_inodeprints();
+
+  void update_any_attrs(app_state & app);
+};
 
 bool get_attribute_from_roster(roster_t const & ros,
                                file_path const & path,
                                attr_key const & key,
                                attr_value & val);
-
-void update_any_attrs(app_state & app);
 
 struct file_content_source
 {
