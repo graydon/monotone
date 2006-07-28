@@ -608,6 +608,31 @@ if test $ac_cv_sync_with_stdio = yes && test $ac_cv_sync_with_stdio_2 = yes; the
               [Define to 1 if sync_with_stdio works fine on C++ streams])
 fi
 
+
+
+AC_CACHE_CHECK([for tr1::unordered_map and tr1::unordered_set],
+                       ac_cv_cxx_tr1_unordered_map_and_set,
+          [AC_LANG_PUSH(C++)
+           AC_COMPILE_IFELSE(AC_LANG_SOURCE([
+        #include <tr1/functional>
+        #include <tr1/unordered_map>
+        #include <tr1/unordered_set>
+        using std::tr1::hash;
+        using std::tr1::unordered_map;
+        using std::tr1::unordered_set;
+        using std::tr1::unordered_multimap;
+        ]),
+              ac_cv_cxx_tr1_unordered_map_and_set=yes,
+              ac_cv_cxx_tr1_unordered_map_and_set=no)
+           AC_LANG_POP(C++)])
+        if test x$ac_cv_cxx_tr1_unordered_map_and_set = xyes; then
+          AC_DEFINE(HAVE_TR1_UNORDERED_MAP_AND_SET, 1,
+                    [Define to 1 if your C++ compiler provides
+        tr1::unordered_map and tr1::unordered_set.])
+        fi
+
+
+
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.
 # only makes sense if CFLAGS="" or CXXFLAGS=""

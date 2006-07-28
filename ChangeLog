@@ -1,3 +1,30 @@
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc (fake_id): New function.
+	* cmd_merging.cc (update, pluck): Use it.
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc, vocab.hh: Remove tabs.
+
+2006-07-23  Benoît Dejean  <benoit@placenet.org>
+
+	* configure.ac:
+	* database.cc (transitive_closure):
+	* hash_map.hh:
+	* interner.hh (interner): Use tr1 associative containers and hash
+	functions when available.
+
+2006-07-23  Benoît Dejean  <benoit@placenet.org>
+
+	* diff_patch.cc (hunk_consumer::find_encloser): Added missing parents.
+	Fixed warning.
+
+2006-07-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/automate_tags/__driver__.lua: Fix test on Win32 (globs vs
+	quoting).
+
 2006-07-22  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Set date, and it turns out AUTOMATE() was there in
