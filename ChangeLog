@@ -1,5 +1,25 @@
 2006-07-27  Zack Weinberg  <zackw@panix.com>
 
+	* app_state.cc: Delete static strings.
+	(app_state constructor): Initialize branch_is_sticky too.
+	(allow_workspace): Don't call read_options.
+	(process_options): Call work.get_ws_options here. Restructure
+	for new convention.
+	(write_options): Move next to process_options; use
+	work.set_ws_options.
+	(read_options): Delete.
+	(set_database, set_key_dir, set_signing_key): Don't mess with
+	options array.
+	(make_branch_sticky): Set branch_is_sticky, not options array.
+	* app_state.hh (struct app_state): Remove options and read_options;
+	add branch_is_sticky.
+	* database.cc, database.hh (database::get_filename): New method.
+	* work.cc (get_ws_options, set_ws_options): New methods.
+	(read_options_map, write_options_map): Delete.
+	* work.hh: Update to match.  Don't declare options_map.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
 	* work.cc: Include work.hh first.  Don't include vocab.hh.
 	(file_itemizer, addition_builder, editable_working_tree)
 	Remove 'app' instance variable; replace with 'db' and/or 'lua'.

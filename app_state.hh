@@ -56,7 +56,6 @@ public:
   bool no_merges;
   bool set_default;
   bool verbose;
-  options_map options;
   utf8 message;
   utf8 message_file;
   bool date_set;
@@ -88,6 +87,7 @@ public:
   std::set<std::string> attrs_to_drop;
   bool no_files;
   bool requested_help;
+  bool branch_is_sticky;
 
   // Set if the value of the flag was explicitly given on the command
   // line.
@@ -159,7 +159,6 @@ public:
 
 private:
   void load_rcfiles();
-  void read_options();
   void write_options();
 };
 

@@ -35,11 +35,6 @@ using std::string;
 using std::vector;
 using std::vector;
 
-static string const database_option("database");
-static string const branch_option("branch");
-static string const key_option("key");
-static string const keydir_option("keydir");
-
 app_state::app_state()
   : branch_name(""), db(system_path()),
     keys(this), work(db, lua), recursive(false),
@@ -55,7 +50,7 @@ app_state::app_state()
     missing(false), unknown(false),
     confdir(get_default_confdir()),
     have_set_key_dir(false), no_files(false),
-    requested_help(false)
+    requested_help(false), branch_is_sticky(false)
 {
   db.set_app(this);
   lua.set_app(this);
@@ -89,10 +84,6 @@ app_state::allow_workspace()
 
   if (found_workspace)
     {
-      // We read the options, but we don't process them here.  That's
-      // done with process_options().
-      read_options();
-
       if (global_sanity.filename.empty())
         {
           bookkeeping_path dump_path;
@@ -110,28 +101,43 @@ app_state::allow_workspace()
 void
 app_state::process_options()
 {
-  if (found_workspace) {
-    if (!options[database_option]().empty())
-      {
-        system_path dbname = system_path(options[database_option]);
-        db.set_filename(dbname);
-      }
+  utf8 database_option, branch_option, key_option, keydir_option;
 
-    if (!options[keydir_option]().empty())
-      {
-        system_path keydir = system_path(options[keydir_option]);
-        set_key_dir(keydir);
-      }
+  if (!found_workspace)
+    return;
 
-    if (branch_name().empty() && !options[branch_option]().empty())
-      branch_name = options[branch_option];
+  work.get_ws_options(database_option, branch_option,
+                      key_option, keydir_option);
 
-    L(FL("branch name is '%s'") % branch_name());
+  if (!database_option().empty())
+    db.set_filename(system_path(database_option));
 
-          if (!options[key_option]().empty())
-                  internalize_rsa_keypair_id(options[key_option],
-                                             signing_key);
-  }
+  if (!keydir_option().empty())
+    set_key_dir(system_path(keydir_option));
+
+  if (branch_name().empty() && !branch_option().empty())
+    branch_name = branch_option;
+
+  L(FL("branch name is '%s'") % branch_name());
+
+  if (!key_option().empty())
+    internalize_rsa_keypair_id(key_option, signing_key);
+}
+
+void
+app_state::write_options()
+{
+  utf8 database_option, branch_option, key_option, keydir_option;
+
+  database_option = db.get_filename().as_internal();
+  keydir_option = keys.get_key_dir().as_internal();
+
+  if (branch_is_sticky)
+    branch_option = branch_name;
+
+  externalize_rsa_keypair_id(signing_key, key_option);
+  work.set_ws_options(database_option, branch_option,
+                      key_option, keydir_option);
 }
 
 void
@@ -177,9 +183,8 @@ app_state::create_workspace(system_path const & new_dir)
 void
 app_state::set_database(system_path const & filename)
 {
-  if (!filename.empty()) db.set_filename(filename);
-
-  options[database_option] = filename.as_internal();
+  if (!filename.empty())
+    db.set_filename(filename);
 }
 
 void
@@ -190,8 +195,6 @@ app_state::set_key_dir(system_path const & filename)
       keys.set_key_dir(filename);
       have_set_key_dir = true;
     }
-
-  options[keydir_option] = filename.as_internal();
 }
 
 void
@@ -203,7 +206,7 @@ app_state::set_branch(utf8 const & branch)
 void
 app_state::make_branch_sticky()
 {
-  options[branch_option] = branch_name();
+  branch_is_sticky = true;
   if (found_workspace)
     {
       // Already have a workspace, can (must) write options directly,
@@ -218,8 +221,6 @@ void
 app_state::set_signing_key(utf8 const & key)
 {
   internalize_rsa_keypair_id(key, signing_key);
-
-  options[key_option] = key;
 }
 
 void
@@ -419,18 +420,6 @@ app_state::load_rcfiles()
     {
       lua.load_rcfile(*i);
     }
-}
-
-void
-app_state::read_options()
-{
-  work.read_options_map(options);
-}
-
-void
-app_state::write_options()
-{
-  work.write_options_map(options);
 }
 
 // Local Variables:

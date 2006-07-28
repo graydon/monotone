@@ -266,8 +266,13 @@ workspace::has_contents_user_log()
   return user_log_message().length() > 0;
 }
 
+// _MTN/options handling.
+
 void
-workspace::read_options_map(options_map & options)
+workspace::get_ws_options(utf8 & database_option,
+                          utf8 & branch_option,
+                          utf8 & key_option,
+                          utf8 & keydir_option)
 {
   bookkeeping_path o_path;
   get_options_path(o_path);
@@ -282,17 +287,23 @@ workspace::read_options_map(options_map & options)
           basic_io::tokenizer tok(src);
           basic_io::parser parser(tok);
 
-          // don't clear the options which will have settings from the
-          // command line.
-          string opt, val;
           while (parser.symp())
             {
+              string opt, val;
               parser.sym(opt);
               parser.str(val);
 
-              // use non-replacing insert versus replacing with
-              // options[opt] = val;
-              options.insert(make_pair(opt, val));
+              if (opt == "database")
+                database_option = val;
+              else if (opt == "branch")
+                branch_option = val;
+              else if (opt == "key")
+                key_option = val;
+              else if (opt == "keydir")
+                keydir_option =val;
+              else
+                W(F("unrecognized key '%s' in options file %s - ignored")
+                  % opt % o_path);
             }
         }
     }
@@ -303,14 +314,23 @@ workspace::read_options_map(options_map & options)
 }
 
 void
-workspace::write_options_map(options_map const & options)
+workspace::set_ws_options(utf8 & database_option,
+                          utf8 & branch_option,
+                          utf8 & key_option,
+                          utf8 & keydir_option)
 {
-  basic_io::printer pr;
   basic_io::stanza st;
-  for (options_map::const_iterator i = options.begin();
-       i != options.end(); ++i)
-    st.push_str_pair(i->first, i->second());
 
+  if (!database_option().empty())
+    st.push_str_pair(string("database"), database_option());
+  if (!branch_option().empty())
+    st.push_str_pair(string("branch"), branch_option());
+  if (!key_option().empty())
+    st.push_str_pair(string("key"), key_option());
+  if (!keydir_option().empty())
+    st.push_str_pair(string("keydir"), keydir_option());
+
+  basic_io::printer pr;
   pr.print_stanza(st);
 
   bookkeeping_path o_path;

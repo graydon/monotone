@@ -55,8 +55,6 @@ class database;
 class app_state;
 class lua_hooks;
 
-typedef std::map<std::string, utf8> options_map;
-
 struct workspace
 {
   void find_missing(roster_t const & new_roster_shape,
@@ -140,11 +138,17 @@ struct workspace
   // the "options map" is another administrative file, stored in
   // _MTN/options. it keeps a list of name/value pairs which are considered
   // "persistent options", associated with a particular the workspace and
-  // implied unless overridden on the command line. the main ones are
-  // --branch and --db, although some others may follow in the future.
+  // implied unless overridden on the command line. the set of valid keys
+  // corresponds exactly to the argument list of these functions.
 
-  void read_options_map(options_map & options);
-  void write_options_map(options_map const & options);
+  void get_ws_options(utf8 & database_option,
+                      utf8 & branch_option,
+                      utf8 & key_option,
+                      utf8 & keydir_option);
+  void set_ws_options(utf8 & database_option,
+                      utf8 & branch_option,
+                      utf8 & key_option,
+                      utf8 & keydir_option);
 
   // the "local dump file' is a debugging file, stored in _MTN/debug.  if we
   // crash, we save some debugging information here.
