@@ -1,6 +1,5 @@
 ABOUT-NLS
 AUTHORS
-COPYING
 NEWS
 README
 README.changesets
@@ -10,4 +9,3 @@ figures
 contrib
 debian/README.Debian
 debian/TODO.Debian
-examples
