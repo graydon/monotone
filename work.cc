@@ -26,6 +26,7 @@
 #include "work.hh"
 #include "revision.hh"
 #include "inodeprint.hh"
+#include "diff_patch.hh"
 
 using std::deque;
 using std::exception;
@@ -464,6 +465,56 @@ workspace::perform_rename(set<file_path> const & src_paths,
   update_any_attrs(app);
 }
 
+namespace {
+
+struct editable_working_tree : public editable_tree
+{
+  editable_working_tree(app_state & app, content_merge_adaptor const & source);
+
+  virtual node_id detach_node(split_path const & src);
+  virtual void drop_detached_node(node_id nid);
+
+  virtual node_id create_dir_node();
+  virtual node_id create_file_node(file_id const & content);
+  virtual void attach_node(node_id nid, split_path const & dst);
+
+  virtual void apply_delta(split_path const & pth,
+                           file_id const & old_id,
+                           file_id const & new_id);
+  virtual void clear_attr(split_path const & pth,
+                          attr_key const & name);
+  virtual void set_attr(split_path const & pth,
+                        attr_key const & name,
+                        attr_value const & val);
+
+  virtual void commit();
+
+  virtual ~editable_working_tree();
+private:
+  app_state & app;
+  content_merge_adaptor const & source;
+  node_id next_nid;
+  std::map<bookkeeping_path, file_id> written_content;
+  std::map<bookkeeping_path, file_path> rename_add_drop_map;
+  bool root_dir_attached;
+};
+
+
+struct content_merge_empty_adaptor : public content_merge_adaptor
+{
+  virtual void get_version(file_path const &, 
+                           file_id const &, file_data &) const
+  { I(false); }
+  virtual void record_merge(file_id const &, file_id const &,
+                            file_id const &, file_data const &,
+                            file_data const &)
+  { I(false); }
+  virtual void get_ancestral_roster(node_id, boost::shared_ptr<roster_t> &)
+  { I(false); }
+};
+
+};
+
 void
 workspace::perform_pivot_root(file_path const & new_root,
                               file_path const & put_old,
@@ -521,13 +572,20 @@ workspace::perform_pivot_root(file_path const & new_root,
   }
   if (app.execute)
     {
-      empty_file_content_source efcs;
-      editable_working_tree e(app, efcs);
-      cs.apply_to(e);
+      content_merge_empty_adaptor cmea;
+      perform_content_update(cs, cmea, app);
     }
   update_any_attrs(app);
 }
 
+void
+workspace::perform_content_update(cset const & update,
+                                  content_merge_adaptor const & ca,
+                                  app_state & app)
+{
+  editable_working_tree ewt(app, ca);
+  update.apply_to(ewt);
+}
 
 // work file containing rearrangement from uncommitted adds/drops/renames
 
@@ -1022,8 +1080,12 @@ workspace::update_any_attrs(app_state & app)
     }
 }
 
+// editable_working_tree implementation
+namespace {
+
 editable_working_tree::editable_working_tree(app_state & app,
-                                             file_content_source const & source)
+                                             content_merge_adaptor const &
+                                             source)
   : app(app), source(source), next_nid(1), root_dir_attached(true)
 {
 }
@@ -1132,7 +1194,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
         {
           P(F("adding %s") % dst_pth);
           file_data dat;
-          source.get_file_content(i->second, dat);
+          source.get_version(dst_pth, i->second, dat);
           write_localized_data(dst_pth, dat.inner(), app.lua);
           return;
         }
@@ -1198,7 +1260,7 @@ editable_working_tree::apply_delta(split_path const & pth,
   P(F("modifying %s") % pth_unsplit);
 
   file_data dat;
-  source.get_file_content(new_id, dat);
+  source.get_version(pth_unsplit, new_id, dat);
   write_localized_data(pth_unsplit, dat.inner(), app.lua);
 }
 
@@ -1227,6 +1289,8 @@ editable_working_tree::commit()
 editable_working_tree::~editable_working_tree()
 {
 }
+
+}; // anonymous namespace
 
 // Local Variables:
 // mode: C++

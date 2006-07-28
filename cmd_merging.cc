@@ -29,28 +29,6 @@ using std::vector;
 
 using boost::shared_ptr;
 
-struct update_source
-  : public file_content_source
-{
-  map<file_id, file_data> & temporary_store;
-  app_state & app;
-  update_source (map<file_id, file_data> & tmp,
-                 app_state & app)
-    : temporary_store(tmp), app(app)
-  {}
-  void get_file_content(file_id const & fid,
-                        file_data & dat) const
-  {
-    map<file_id, file_data>::const_iterator 
-      i = temporary_store.find(fid);
-
-    if (i != temporary_store.end())
-      dat = i->second;
-    else
-      app.db.get_file_version(fid, dat);
-  }
-};
-
 CMD(update, N_("workspace"), "",
     N_("update workspace.\n"
        "This command modifies your workspace to be based off of a\n"
@@ -263,19 +241,7 @@ CMD(update, N_("workspace"), "",
   make_cset(working_roster, merged_roster, update);
   make_cset(target_roster, merged_roster, remaining);
 
-  //   {
-  //     data t1, t2, t3;
-  //     write_cset(update, t1);
-  //     write_cset(remaining, t2);
-  //     write_manifest_of_roster(merged_roster, t3);
-  //     P(F("updating workspace with [[[\n%s\n]]]") % t1);
-  //     P(F("leaving residual work [[[\n%s\n]]]") % t2);
-  //     P(F("merged roster [[[\n%s\n]]]") % t3);
-  //   }
-
-  update_source fsource(wca.temporary_store, app);
-  editable_working_tree ewt(app, fsource);
-  update.apply_to(ewt);
+  app.work.perform_content_update(update, wca, app);
 
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
@@ -837,10 +803,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   make_cset(working_roster, merged_roster, update);
   make_cset(base_roster, merged_roster, remaining);
 
-  update_source fsource(wca.temporary_store, app);
-  editable_working_tree ewt(app, fsource);
-  update.apply_to(ewt);
-  
+  app.work.perform_content_update(update, wca, app);
+
   // small race condition here...
   P(F("applied changes to workspace"));
 

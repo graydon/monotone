@@ -1,4 +1,31 @@
-2006-07-27  Zack Weinberg  <zack@boheme>
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.hh: Don't declare struct editable_working_tree.
+	Delete file_content_source and empty_file_content_source.
+	Forward declare content_merge_adaptor.
+	(workspace::perform_content_update): New method.
+	* work.cc: Include diff_patch.hh.  Declare struct
+	editable_working_tree here, inside an anonymous namespace.
+	Change its 'source' member from type file_content_source to
+	type content_merge_adaptor.  Wrap all member functions in the
+	anonymous namespace.
+	(editable_working_tree::attach_node)
+	(editable_working_tree::apply_delta): Adjust for different type of
+	'source'.
+	(content_merge_empty_adaptor): New.
+	(workspace::perform_content_update): New.
+	(workspace::perform_pivot_root): Use perform_content_update and
+	content_merge_empty_adaptor.
+
+	* cmd_merging.cc (struct update_source): Delete.
+	(update, pluck): Use workspace::perform_content_update instead of
+	manipulating update_source and editable_working_tree objects.
+	* diff_patch.hh: Make all content_merge_adaptor::get_version variants
+	const methods.
+	* diff_patch.cc (content_merge_workspace_adaptor::get_version):
+	Use E(), not N(), if the idents don't match.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
 
 	* automate.cc (inventory): Use workspace::find_unknown_and_ignored.
 	* work.hh: Move struct file_itemizer...
