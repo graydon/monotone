@@ -14,11 +14,9 @@
 #include <set>
 #include <map>
 
-#include "cset.hh"
+#include "vocab.hh"
 #include "paths.hh"
 #include "roster.hh"
-#include "vocab.hh"
-#include "file_io.hh"
 
 //
 // this file defines structures to deal with the "workspace" of a tree
@@ -53,6 +51,9 @@
 
 class path_restriction;
 class content_merge_adaptor;
+class database;
+class app_state;
+class lua_hooks;
 
 typedef std::map<std::string, utf8> options_map;
 
@@ -62,26 +63,26 @@ struct workspace
                     node_restriction const & mask,
                     path_set & missing);
 
-  void find_unknown_and_ignored(app_state & app, path_restriction const & mask,
+  void find_unknown_and_ignored(path_restriction const & mask,
                                 path_set & unknown, path_set & ignored);
 
-  void perform_additions(path_set const & targets, app_state & app,
-                         bool recursive = true);
+  void perform_additions(path_set const & targets, bool recursive = true);
 
-  void perform_deletions(path_set const & targets, app_state & app);
+  void perform_deletions(path_set const & targets, bool recursive, 
+                         bool execute);
 
   void perform_rename(std::set<file_path> const & src_paths,
                       file_path const & dst_dir,
-                      app_state & app);
+                      bool execute);
 
   void perform_pivot_root(file_path const & new_root,
                           file_path const & put_old,
-                          app_state & app);
+                          bool execute);
 
-  void perform_content_update(cset const & cs, content_merge_adaptor const & ca,
-                              app_state & app);
+  void perform_content_update(cset const & cs,
+                              content_merge_adaptor const & ca);
 
-  void update_any_attrs(app_state & app);
+  void update_any_attrs();
 
   // the "work" file contains the current cset representing uncommitted
   // add/drop/rename operations (not deltas)
@@ -95,32 +96,28 @@ struct workspace
 
   void get_revision_id(revision_id & c);
   void put_revision_id(revision_id const & rev);
-  void get_base_revision(app_state & app, revision_id & rid, roster_t & ros);
-  void get_base_revision(app_state & app, revision_id & rid, roster_t & ros,
-                         marking_map & mm);
-  void get_base_roster(app_state & app, roster_t & ros);
+  void get_base_revision(revision_id & rid, roster_t & ros);
+  void get_base_revision(revision_id & rid, roster_t & ros, marking_map & mm);
+  void get_base_roster(roster_t & ros);
 
   // This returns the current roster, except it does not bother updating the
   // hashes in that roster -- the "shape" is correct, all files and dirs exist
   // and under the correct names -- but do not trust file content hashes.
   // If you need the current roster with correct file content hashes, call
   // update_current_roster_from_filesystem on the result of this function.
-  void get_current_roster_shape(roster_t & ros, node_id_source & nis,
-                                app_state & app);
+  void get_current_roster_shape(roster_t & ros, node_id_source & nis);
 
   // This returns both the base roster (as get_base_roster would) and the
   // current roster shape (as get_current_roster_shape would).  The caveats
   // for get_current_roster_shape also apply to this function.
   void get_base_and_current_roster_shape(roster_t & base_roster,
                                          roster_t & current_roster,
-                                         node_id_source & nis,
-                                         app_state & app);
+                                         node_id_source & nis);
 
   void classify_roster_paths(roster_t const & ros,
                              path_set & unchanged,
                              path_set & changed,
-                             path_set & missing,
-                             app_state & app);
+                             path_set & missing);
 
   void update_current_roster_from_filesystem(roster_t & ros, app_state & app);
   void update_current_roster_from_filesystem(roster_t & ros,
@@ -158,6 +155,14 @@ struct workspace
 
   void enable_inodeprints();
   void maybe_update_inodeprints(app_state & app);
+
+  // constructor and locals.
+  // by caching a pointer to the database, we don't have to pass
+  // app_state into a lot of functions.
+  workspace(database & db, lua_hooks & lua) : db(db), lua(lua) {};
+private:
+  database & db;
+  lua_hooks & lua;
 };
 
 // Local Variables:

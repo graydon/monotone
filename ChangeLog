@@ -1,5 +1,38 @@
 2006-07-27  Zack Weinberg  <zackw@panix.com>
 
+	* work.cc: Include work.hh first.  Don't include vocab.hh.
+	(file_itemizer, addition_builder, editable_working_tree)
+	Remove 'app' instance variable; replace with 'db' and/or 'lua'.
+	Update constructor to match.  All constructor users changed.
+	(get_base_revision, get_base_roster, get_current_roster_shape)
+	(get_base_and_current_roster_shape, classify_roster_paths)
+	(find_unknown_and_ignored, perform_additions, perform_content_update)
+	(update_any_attrs): Remove 'app' argument; use 'db' and/or 'lua'
+	instance variables instead.
+	(file_itemizer::visit_file, addition_builder::add_node_for)
+	(addition_builder::visit_file, editable_working_tree::attach_node)
+	(editable_working_tree::apply_delta)
+	Use 'db' and/or 'lua' instance variables, instead of 'app'.
+	(add_parent_dirs): Take 'db' and 'lua' arguments instead of 'app'.
+	All callers changed.
+	(update_current_roster_from_filesystem): Use 'lua' instead of
+	'app.lua' in one place.  Still has and uses an app_state argument.
+	(perform_deletions): Remove app_state argument; add 'recursive'
+	and 'execute' boolean arguments.
+	(perform_rename, perform_pivot_root): Remove app_state argument;
+	add 'execute' boolean argument.
+	* work.hh: Don't include cset.hh or file_io.hh.  Forward declare
+	classes database, app_state, lua_hooks.
+	(workspace): Add data members 'db' and 'lua', cached references to
+	the active database and lua hooks.  Add nontrivial constructor
+	which initializes these.  Update prototypes of changed interfaces.
+	* app_state.cc (app_state constructor): Give db and lua to work
+	constructor.
+	* automate.cc, cmd_diff_log.cc, cmd_list.cc, cmd_merging.cc
+	* cmd_ws_commit.cc: Update callers of changed interfaces.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
 	* app_state.cc (read_options): Just call work.read_options_map.
 	(write_options): Just call work.write_options_map.
 

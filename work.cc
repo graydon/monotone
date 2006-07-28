@@ -13,6 +13,7 @@
 #include <cerrno>
 #include <queue>
 
+#include "work.hh"
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
@@ -22,8 +23,6 @@
 #include "sanity.hh"
 #include "safe_map.hh"
 #include "simplestring_xform.hh"
-#include "vocab.hh"
-#include "work.hh"
 #include "revision.hh"
 #include "inodeprint.hh"
 #include "diff_patch.hh"
@@ -163,8 +162,7 @@ workspace::put_revision_id(revision_id const & rev)
 }
 
 void
-workspace::get_base_revision(app_state & app,
-                             revision_id & rid,
+workspace::get_base_revision(revision_id & rid,
                              roster_t & ros,
                              marking_map & mm)
 {
@@ -173,38 +171,35 @@ workspace::get_base_revision(app_state & app,
   if (!null_id(rid))
     {
 
-      N(app.db.revision_exists(rid),
+      N(db.revision_exists(rid),
         F("base revision %s does not exist in database") % rid);
 
-      app.db.get_roster(rid, ros, mm);
+      db.get_roster(rid, ros, mm);
     }
 
   L(FL("base roster has %d entries") % ros.all_nodes().size());
 }
 
 void
-workspace::get_base_revision(app_state & app,
-                             revision_id & rid,
+workspace::get_base_revision(revision_id & rid,
                              roster_t & ros)
 {
   marking_map mm;
-  get_base_revision(app, rid, ros, mm);
+  get_base_revision(rid, ros, mm);
 }
 
 void
-workspace::get_base_roster(app_state & app,
-                           roster_t & ros)
+workspace::get_base_roster(roster_t & ros)
 {
   revision_id rid;
   marking_map mm;
-  get_base_revision(app, rid, ros, mm);
+  get_base_revision(rid, ros, mm);
 }
 
 void
-workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis,
-                                    app_state & app)
+workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 {
-  get_base_roster(app, ros);
+  get_base_roster(ros);
   cset cs;
   get_work_cset(cs);
   editable_roster_base er(ros, nis);
@@ -214,10 +209,9 @@ workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis,
 void
 workspace::get_base_and_current_roster_shape(roster_t & base_roster,
                                              roster_t & current_roster,
-                                             node_id_source & nis,
-                                             app_state & app)
+                                             node_id_source & nis)
 {
-  get_base_roster(app, base_roster);
+  get_base_roster(base_roster);
   current_roster = base_roster;
   cset cs;
   get_work_cset(cs);
@@ -386,7 +380,7 @@ workspace::maybe_update_inodeprints(app_state & app)
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(old_roster, new_roster, nis);
   update_current_roster_from_filesystem(new_roster, app);
 
   node_map const & new_nodes = new_roster.all_nodes();
@@ -426,14 +420,16 @@ namespace {
 
 struct file_itemizer : public tree_walker
 {
-  app_state & app;
+  database & db;
+  lua_hooks & lua;
   path_set & known;
   path_set & unknown;
   path_set & ignored;
   path_restriction const & mask;
-  file_itemizer(app_state & a, path_set & k, path_set & u, path_set & i, 
+  file_itemizer(database & db, lua_hooks & lua,
+                path_set & k, path_set & u, path_set & i, 
                 path_restriction const & r)
-    : app(a), known(k), unknown(u), ignored(i), mask(r) {}
+    : db(db), lua(lua), known(k), unknown(u), ignored(i), mask(r) {}
   virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
@@ -452,7 +448,7 @@ file_itemizer::visit_file(file_path const & path)
 
   if (mask.includes(sp) && known.find(sp) == known.end())
     {
-      if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
+      if (lua.hook_ignore_file(path) || db.is_dbfile(path))
         ignored.insert(sp);
       else
         unknown.insert(sp);
@@ -463,14 +459,14 @@ class
 addition_builder
   : public tree_walker
 {
-  app_state & app;
+  database & db;
+  lua_hooks & lua;
   roster_t & ros;
   editable_roster_base & er;
 public:
-  addition_builder(app_state & a,
-                   roster_t & r,
-                   editable_roster_base & e)
-    : app(a), ros(r), er(e)
+  addition_builder(database & db, lua_hooks & lua,
+                   roster_t & r, editable_roster_base & e)
+    : db(db), lua(lua), ros(r), er(e)
   {}
   virtual void visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
@@ -490,7 +486,7 @@ addition_builder::add_node_for(split_path const & sp)
     case path::file:
       {
         file_id ident;
-        I(ident_existing_file(path, ident, app.lua));
+        I(ident_existing_file(path, ident, lua));
         nid = er.create_file_node(ident);
       }
       break;
@@ -503,7 +499,7 @@ addition_builder::add_node_for(split_path const & sp)
   er.attach_node(nid, sp);
 
   map<string, string> attrs;
-  app.lua.hook_init_attributes(path, attrs);
+  lua.hook_init_attributes(path, attrs);
   if (attrs.size() > 0)
     {
       for (map<string, string>::const_iterator i = attrs.begin();
@@ -522,7 +518,7 @@ addition_builder::visit_dir(file_path const & path)
 void
 addition_builder::visit_file(file_path const & path)
 {
-  if (app.lua.hook_ignore_file(path) || app.db.is_dbfile(path))
+  if (lua.hook_ignore_file(path) || db.is_dbfile(path))
     {
       P(F("skipping ignorable file %s") % path);
       return;
@@ -558,7 +554,9 @@ addition_builder::visit_file(file_path const & path)
 
 struct editable_working_tree : public editable_tree
 {
-  editable_working_tree(app_state & app, content_merge_adaptor const & source);
+  editable_working_tree(lua_hooks & lua, content_merge_adaptor const & source) 
+    : lua(lua), source(source), next_nid(1), root_dir_attached(true)
+  {};
 
   virtual node_id detach_node(split_path const & src);
   virtual void drop_detached_node(node_id nid);
@@ -580,7 +578,7 @@ struct editable_working_tree : public editable_tree
 
   virtual ~editable_working_tree();
 private:
-  app_state & app;
+  lua_hooks & lua;
   content_merge_adaptor const & source;
   node_id next_nid;
   std::map<bookkeeping_path, file_id> written_content;
@@ -603,13 +601,6 @@ struct content_merge_empty_adaptor : public content_merge_adaptor
 };
 
 // editable_working_tree implementation
-
-editable_working_tree::editable_working_tree(app_state & app,
-                                             content_merge_adaptor const &
-                                             source)
-  : app(app), source(source), next_nid(1), root_dir_attached(true)
-{
-}
 
 static inline bookkeeping_path
 path_for_nid(node_id nid)
@@ -716,7 +707,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
           P(F("adding %s") % dst_pth);
           file_data dat;
           source.get_version(dst_pth, i->second, dat);
-          write_localized_data(dst_pth, dat.inner(), app.lua);
+          write_localized_data(dst_pth, dat.inner(), lua);
           return;
         }
     }
@@ -774,7 +765,7 @@ editable_working_tree::apply_delta(split_path const & pth,
                        F("file '%s' does not exist") % pth_unsplit,
                        F("file '%s' is a directory") % pth_unsplit);
   hexenc<id> curr_id_raw;
-  calculate_ident(pth_unsplit, curr_id_raw, app.lua);
+  calculate_ident(pth_unsplit, curr_id_raw, lua);
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
     F("content of file '%s' has changed, not overwriting") % pth_unsplit);
@@ -782,7 +773,7 @@ editable_working_tree::apply_delta(split_path const & pth,
 
   file_data dat;
   source.get_version(pth_unsplit, new_id, dat);
-  write_localized_data(pth_unsplit, dat.inner(), app.lua);
+  write_localized_data(pth_unsplit, dat.inner(), lua);
 }
 
 void
@@ -815,10 +806,10 @@ editable_working_tree::~editable_working_tree()
 
 static void
 add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis,
-                app_state & app)
+                database & db, lua_hooks & lua)
 {
   editable_roster_base er(ros, nis);
-  addition_builder build(app, ros, er);
+  addition_builder build(db, lua, ros, er);
 
   split_path dirname;
   path_component basename;
@@ -856,8 +847,7 @@ void
 workspace::classify_roster_paths(roster_t const & ros,
                                  path_set & unchanged,
                                  path_set & changed,
-                                 path_set & missing,
-                                 app_state & app)
+                                 path_set & missing)
 {
   temp_node_id_source nis;
   inodeprint_map ipm;
@@ -895,7 +885,7 @@ workspace::classify_roster_paths(roster_t const & ros,
         {
           file_t file = downcast_to_file_t(node);
           file_id fid;
-          if (ident_existing_file(fp, fid, app.lua))
+          if (ident_existing_file(fp, fid, lua))
             {
               if (file->content == fid)
                 unchanged.insert(sp);
@@ -957,7 +947,7 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
         continue;
 
       file_t file = downcast_to_file_t(node);
-      if (!ident_existing_file(fp, file->content, app.lua))
+      if (!ident_existing_file(fp, file->content, lua))
         {
           W(F("missing %s") % (fp));
           missing_files++;
@@ -1006,33 +996,31 @@ workspace::find_missing(roster_t const & new_roster_shape,
 }
 
 void
-workspace::find_unknown_and_ignored(app_state & app,
-                                    path_restriction const & mask,
+workspace::find_unknown_and_ignored(path_restriction const & mask,
                                     path_set & unknown, path_set & ignored)
 {
   path_set known;
   roster_t new_roster;
   temp_node_id_source nis;
 
-  get_current_roster_shape(new_roster, nis, app);
+  get_current_roster_shape(new_roster, nis);
 
   new_roster.extract_path_set(known);
 
-  file_itemizer u(app, known, unknown, ignored, mask);
+  file_itemizer u(db, lua, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 }
 
 
 void
-workspace::perform_additions(path_set const & paths, app_state & app,
-                             bool recursive)
+workspace::perform_additions(path_set const & paths, bool recursive)
 {
   if (paths.empty())
     return;
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   editable_roster_base er(new_roster, nis);
 
@@ -1044,7 +1032,7 @@ workspace::perform_additions(path_set const & paths, app_state & app,
     }
 
   I(new_roster.has_root());
-  addition_builder build(app, new_roster, er);
+  addition_builder build(db, lua, new_roster, er);
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
@@ -1064,18 +1052,19 @@ workspace::perform_additions(path_set const & paths, app_state & app,
   cset new_work;
   make_cset(base_roster, new_roster, new_work);
   put_work_cset(new_work);
-  update_any_attrs(app);
+  update_any_attrs();
 }
 
 void
-workspace::perform_deletions(path_set const & paths, app_state & app)
+workspace::perform_deletions(path_set const & paths, 
+                             bool recursive, bool execute)
 {
   if (paths.empty())
     return;
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -1104,7 +1093,7 @@ workspace::perform_deletions(path_set const & paths, app_state & app)
               dir_t d = downcast_to_dir_t(n);
               if (!d->children.empty())
                 {
-                  N(app.recursive,
+                  N(recursive,
                     F("cannot remove %s/, it is not empty") % name);
                   for (dir_map::const_iterator j = d->children.begin();
                        j != d->children.end(); ++j)
@@ -1118,7 +1107,7 @@ workspace::perform_deletions(path_set const & paths, app_state & app)
             }
           P(F("dropping %s from workspace manifest") % name);
           new_roster.drop_detached_node(new_roster.detach_node(p));
-          if (app.execute && path_exists(name))
+          if (execute && path_exists(name))
             delete_file_or_dir_shallow(name);
         }
       todo.pop_front();
@@ -1132,13 +1121,13 @@ workspace::perform_deletions(path_set const & paths, app_state & app)
   cset new_work;
   make_cset(base_roster, new_roster, new_work);
   put_work_cset(new_work);
-  update_any_attrs(app);
+  update_any_attrs();
 }
 
 void
 workspace::perform_rename(set<file_path> const & src_paths,
                           file_path const & dst_path,
-                          app_state & app)
+                          bool execute)
 {
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
@@ -1148,7 +1137,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
 
   I(!src_paths.empty());
 
-  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   dst_path.split(dst);
 
@@ -1158,7 +1147,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
       split_path s;
       src_paths.begin()->split(s);
       renames.insert( make_pair(s, dst) );
-      add_parent_dirs(dst, new_roster, nis, app);
+      add_parent_dirs(dst, new_roster, nis, db, lua);
     }
   else
     {
@@ -1212,7 +1201,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
   make_cset(base_roster, new_roster, new_work);
   put_work_cset(new_work);
 
-  if (app.execute)
+  if (execute)
     {
       for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
            i != renames.end(); i++)
@@ -1241,13 +1230,13 @@ workspace::perform_rename(set<file_path> const & src_paths,
             }
         }
     }
-  update_any_attrs(app);
+  update_any_attrs();
 }
 
 void
 workspace::perform_pivot_root(file_path const & new_root,
                               file_path const & put_old,
-                              app_state & app)
+                              bool execute)
 {
   split_path new_root_sp, put_old_sp, root_sp;
   new_root.split(new_root_sp);
@@ -1256,7 +1245,7 @@ workspace::perform_pivot_root(file_path const & new_root,
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
-  get_base_and_current_roster_shape(base_roster, new_roster, nis, app);
+  get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   I(new_roster.has_root());
   N(new_roster.has_node(new_root_sp),
@@ -1299,29 +1288,28 @@ workspace::perform_pivot_root(file_path const & new_root,
     make_cset(base_roster, new_roster, new_work);
     put_work_cset(new_work);
   }
-  if (app.execute)
+  if (execute)
     {
       content_merge_empty_adaptor cmea;
-      perform_content_update(cs, cmea, app);
+      perform_content_update(cs, cmea);
     }
-  update_any_attrs(app);
+  update_any_attrs();
 }
 
 void
 workspace::perform_content_update(cset const & update,
-                                  content_merge_adaptor const & ca,
-                                  app_state & app)
+                                  content_merge_adaptor const & ca)
 {
-  editable_working_tree ewt(app, ca);
+  editable_working_tree ewt(lua, ca);
   update.apply_to(ewt);
 }
 
 void
-workspace::update_any_attrs(app_state & app)
+workspace::update_any_attrs()
 {
   temp_node_id_source nis;
   roster_t new_roster;
-  get_current_roster_shape(new_roster, nis, app);
+  get_current_roster_shape(new_roster, nis);
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
@@ -1329,21 +1317,12 @@ workspace::update_any_attrs(app_state & app)
       split_path sp;
       new_roster.get_name(i->first, sp);
 
-      // FIXME_RESTRICTIONS: do we need this check?
-      // if (!app.restriction_includes(sp))
-      //  continue;
-
       node_t n = i->second;
       for (full_attr_map_t::const_iterator j = n->attrs.begin();
            j != n->attrs.end(); ++j)
-        {
-          if (j->second.first)
-            {
-              app.lua.hook_apply_attribute (j->first(),
-                                            file_path(sp),
-                                            j->second.second());
-            }
-        }
+        if (j->second.first)
+          lua.hook_apply_attribute (j->first(), file_path(sp),
+                                    j->second.second());
     }
 }
 

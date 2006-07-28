@@ -63,7 +63,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
   app.require_workspace();
 
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
                         old_roster, new_roster, app);
@@ -162,7 +162,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
   // Race.
   app.work.put_work_cset(excluded);
-  app.work.update_any_attrs(app);
+  app.work.update_any_attrs();
   app.work.maybe_update_inodeprints(app);
 }
 
@@ -232,7 +232,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
     {
       path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
       path_set ignored;
-      app.work.find_unknown_and_ignored(app, mask, paths, ignored);
+      app.work.find_unknown_and_ignored(mask, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
@@ -244,7 +244,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
       }
 
   bool add_recursive = !app.unknown;
-  app.work.perform_additions(paths, app, add_recursive);
+  app.work.perform_additions(paths, add_recursive);
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
@@ -261,8 +261,9 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
     {
       temp_node_id_source nis;
       roster_t current_roster_shape;
-      app.work.get_current_roster_shape(current_roster_shape, nis, app);
-      node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+      app.work.get_current_roster_shape(current_roster_shape, nis);
+      node_restriction mask(args_to_paths(args),
+                            args_to_paths(app.exclude_patterns),
                             current_roster_shape, app);
       app.work.find_missing(current_roster_shape, mask, paths);
     }
@@ -275,7 +276,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  app.work.perform_deletions(paths, app);
+  app.work.perform_deletions(paths, app.recursive, app.execute);
 }
 
 ALIAS(rm, drop);
@@ -300,7 +301,7 @@ CMD(rename, N_("workspace"),
       file_path s = file_path_external(idx(args, i));
       src_paths.insert(s);
     }
-  app.work.perform_rename(src_paths, dst_path, app);
+  app.work.perform_rename(src_paths, dst_path, app.execute);
 }
 
 ALIAS(mv, rename)
@@ -322,7 +323,7 @@ ALIAS(mv, rename)
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
   file_path put_old = file_path_external(idx(args, 1));
-  app.work.perform_pivot_root(new_root, put_old, app);
+  app.work.perform_pivot_root(new_root, put_old, app.execute);
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), 
@@ -337,7 +338,7 @@ CMD(status, N_("informative"), N_("[PATH]..."),
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
@@ -512,7 +513,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         }
     }
   app.work.remove_work_cset();
-  app.work.update_any_attrs(app);
+  app.work.update_any_attrs();
   app.work.maybe_update_inodeprints(app);
   guard.commit();
 }
@@ -530,7 +531,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
 
   file_path path = file_path_external(idx(args,1));
@@ -577,7 +578,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
       cset new_work;
       make_cset(old_roster, new_roster, new_work);
       app.work.put_work_cset(new_work);
-      app.work.update_any_attrs(app);
+      app.work.update_any_attrs();
     }
   else if (subcmd == "get")
     {
@@ -632,7 +633,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.make_branch_sticky();
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
@@ -828,7 +829,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       % app.prog_name);
   }
 
-  app.work.update_any_attrs(app);
+  app.work.update_any_attrs();
   app.work.maybe_update_inodeprints(app);
 
   {

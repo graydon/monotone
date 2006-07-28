@@ -344,7 +344,7 @@ ls_known(app_state & app, vector<utf8> const & args)
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
@@ -374,7 +374,7 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
 
   path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
   path_set unknown, ignored;
-  app.work.find_unknown_and_ignored(app, mask, unknown, ignored);
+  app.work.find_unknown_and_ignored(mask, unknown, ignored);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); 
@@ -391,7 +391,7 @@ ls_missing(app_state & app, vector<utf8> const & args)
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(current_roster_shape, nis, app);
+  app.work.get_current_roster_shape(current_roster_shape, nis);
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
                         current_roster_shape, app);
@@ -417,7 +417,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   app.require_workspace();
 
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns), 

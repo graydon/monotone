@@ -57,8 +57,7 @@ CMD(update, N_("workspace"), "",
   // such. But it should work for now; revisit if performance is
   // intolerable.
 
-  app.work.get_base_and_current_roster_shape(*old_roster, 
-                                    working_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
   app.work.update_current_roster_from_filesystem(working_roster, app);
 
   app.work.get_revision_id(r_old_id);
@@ -241,7 +240,7 @@ CMD(update, N_("workspace"), "",
   make_cset(working_roster, merged_roster, update);
   make_cset(target_roster, merged_roster, remaining);
 
-  app.work.perform_content_update(update, wca, app);
+  app.work.perform_content_update(update, wca);
 
   // small race condition here...
   // nb: we write out r_chosen, not r_new, because the revision-on-disk
@@ -256,7 +255,7 @@ CMD(update, N_("workspace"), "",
   P(F("updated to base revision %s") % r_chosen_id);
 
   app.work.put_work_cset(remaining);
-  app.work.update_any_attrs(app);
+  app.work.update_any_attrs();
   app.work.maybe_update_inodeprints(app);
 }
 
@@ -734,8 +733,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   // Get the WORKING roster, and also the base roster while we're at it
   roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
-  app.work.get_base_and_current_roster_shape(base_roster, working_roster,
-                                    nis, app);
+  app.work.get_base_and_current_roster_shape(base_roster, working_roster, nis);
   app.work.update_current_roster_from_filesystem(working_roster, app);
 
   // Get the FROM->TO cset
@@ -803,13 +801,13 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   make_cset(working_roster, merged_roster, update);
   make_cset(base_roster, merged_roster, remaining);
 
-  app.work.perform_content_update(update, wca, app);
+  app.work.perform_content_update(update, wca);
 
   // small race condition here...
   P(F("applied changes to workspace"));
 
   app.work.put_work_cset(remaining);
-  app.work.update_any_attrs(app);
+  app.work.update_any_attrs();
   
   // add a note to the user log file about what we did
   {

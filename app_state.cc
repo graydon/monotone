@@ -42,7 +42,7 @@ static string const keydir_option("keydir");
 
 app_state::app_state()
   : branch_name(""), db(system_path()),
-    keys(this), recursive(false),
+    keys(this), work(db, lua), recursive(false),
     stdhooks(true), rcfiles(true), diffs(false),
     no_merges(false), set_default(false),
     verbose(false), date_set(false),

@@ -211,7 +211,7 @@ AUTOMATE(attributes, N_("[FILE]"))
   roster_t base, current;
   temp_node_id_source nis;
 
-  app.work.get_base_and_current_roster_shape(base, current, nis, app);
+  app.work.get_base_and_current_roster_shape(base, current, nis);
 
   if (args.size() == 1)
     {
@@ -648,7 +648,7 @@ AUTOMATE(inventory, N_(""))
   cset cs; MM(cs);
   path_set unchanged, changed, missing, unknown, ignored;
 
-  app.work.get_base_and_current_roster_shape(base, curr, nis, app);
+  app.work.get_base_and_current_roster_shape(base, curr, nis);
   make_cset(base, curr, cs);
 
   // The current roster (curr) has the complete set of registered nodes
@@ -671,8 +671,8 @@ AUTOMATE(inventory, N_(""))
                        inventory_item::ADDED_PATH, 0);
 
   path_restriction mask(app);
-  app.work.classify_roster_paths(curr, unchanged, changed, missing, app);
-  app.work.find_unknown_and_ignored(app, mask, unknown, ignored);
+  app.work.classify_roster_paths(curr, unchanged, changed, missing);
+  app.work.find_unknown_and_ignored(mask, unknown, ignored);
 
   inventory_node_state(inventory, unchanged,
                        inventory_item::UNCHANGED_NODE);
@@ -830,7 +830,7 @@ AUTOMATE(get_revision, N_("[REVID]"))
       revision_t rev;
 
       app.require_workspace();
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       app.work.update_current_roster_from_filesystem(new_roster, app);
 
       app.work.get_revision_id(old_revision_id);
@@ -892,7 +892,7 @@ AUTOMATE(get_current_revision_id, N_(""))
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
   app.work.update_current_roster_from_filesystem(new_roster, app);
 
   app.work.get_revision_id(old_revision_id);
@@ -959,7 +959,7 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
       revision_id old_revision_id;
 
       app.require_workspace();
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       app.work.update_current_roster_from_filesystem(new_roster, app);
     }
   else
