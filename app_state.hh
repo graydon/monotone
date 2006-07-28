@@ -84,6 +84,7 @@ public:
   std::vector<rsa_keypair_id> keys_to_push;
   system_path confdir;
   bool have_set_key_dir;
+  bool have_set_key;
   std::set<std::string> attrs_to_drop;
   bool no_files;
   bool requested_help;

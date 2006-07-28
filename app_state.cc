@@ -49,8 +49,8 @@ app_state::app_state()
     bind_stdio(false), use_transport_auth(true),
     missing(false), unknown(false),
     confdir(get_default_confdir()),
-    have_set_key_dir(false), no_files(false),
-    requested_help(false), branch_is_sticky(false)
+    have_set_key_dir(false), have_set_key(false),
+    no_files(false), requested_help(false), branch_is_sticky(false)
 {
   db.set_app(this);
   lua.set_app(this);
@@ -109,18 +109,22 @@ app_state::process_options()
   work.get_ws_options(database_option, branch_option,
                       key_option, keydir_option);
 
-  if (!database_option().empty())
+  // Workspace options are not to override the command line.
+  if (db.get_filename().as_internal().empty() && !database_option().empty())
     db.set_filename(system_path(database_option));
 
-  if (!keydir_option().empty())
+  if (keys.get_key_dir().as_internal().empty() && !keydir_option().empty())
     set_key_dir(system_path(keydir_option));
 
   if (branch_name().empty() && !branch_option().empty())
-    branch_name = branch_option;
+    {
+      branch_name = branch_option;
+      branch_is_sticky = true;
+    }
 
   L(FL("branch name is '%s'") % branch_name());
 
-  if (!key_option().empty())
+  if (!have_set_key)
     internalize_rsa_keypair_id(key_option, signing_key);
 }
 
@@ -135,7 +139,8 @@ app_state::write_options()
   if (branch_is_sticky)
     branch_option = branch_name;
 
-  externalize_rsa_keypair_id(signing_key, key_option);
+  if (have_set_key)
+    externalize_rsa_keypair_id(signing_key, key_option);
   work.set_ws_options(database_option, branch_option,
                       key_option, keydir_option);
 }
@@ -221,6 +226,7 @@ void
 app_state::set_signing_key(utf8 const & key)
 {
   internalize_rsa_keypair_id(key, signing_key);
+  have_set_key = true;
 }
 
 void

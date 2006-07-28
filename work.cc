@@ -319,8 +319,24 @@ workspace::set_ws_options(utf8 & database_option,
                           utf8 & key_option,
                           utf8 & keydir_option)
 {
-  basic_io::stanza st;
+  // If caller passes an empty string for any of the incoming options,
+  // we want to leave that option as is in _MTN/options, not write out
+  // an empty option.
+  utf8 old_database_option, old_branch_option;
+  utf8 old_key_option, old_keydir_option;
+  get_ws_options(old_database_option, old_branch_option,
+                 old_key_option, old_keydir_option);
 
+  if (database_option().empty())
+    database_option = old_database_option;
+  if (branch_option().empty())
+    branch_option = old_branch_option;
+  if (key_option().empty())
+    key_option = old_key_option;
+  if (keydir_option().empty())
+    keydir_option = old_keydir_option;
+
+  basic_io::stanza st;
   if (!database_option().empty())
     st.push_str_pair(string("database"), database_option());
   if (!branch_option().empty())

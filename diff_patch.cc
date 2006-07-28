@@ -598,7 +598,10 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
                                              file_id const & ident,
                                              file_data & dat) const
 {
-  if (app.db.file_version_exists(ident))
+  map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
+  if (i != temporary_store.end())
+    dat = i->second;
+  else if (app.db.file_version_exists(ident))
     app.db.get_file_version(ident, dat);
   else
     {
