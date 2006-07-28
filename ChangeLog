@@ -1,5 +1,9 @@
 2006-07-27  Zack Weinberg  <zackw@panix.com>
 
+	* work.cc: Reorganize.  No semantic changes.
+	
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
 	* work.hh: Don't declare struct editable_working_tree.
 	Delete file_content_source and empty_file_content_source.
 	Forward declare content_merge_adaptor.
