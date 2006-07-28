@@ -257,7 +257,7 @@ CMD(update, N_("workspace"), "",
 
   app.work.put_work_cset(remaining);
   app.work.update_any_attrs(app);
-  maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints(app);
 }
 
 // Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,

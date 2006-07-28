@@ -163,7 +163,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   // Race.
   app.work.put_work_cset(excluded);
   app.work.update_any_attrs(app);
-  maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints(app);
 }
 
 CMD(disapprove, N_("review"), N_("REVISION"),
@@ -513,7 +513,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     }
   app.work.remove_work_cset();
   app.work.update_any_attrs(app);
-  maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints(app);
   guard.commit();
 }
 
@@ -829,7 +829,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   }
 
   app.work.update_any_attrs(app);
-  maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints(app);
 
   {
     // Tell lua what happened. Yes, we might lose some information
@@ -883,7 +883,7 @@ CMD(refresh_inodeprints, N_("tree"), "",
 {
   app.require_workspace();
   app.work.enable_inodeprints();
-  maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints(app);
 }
 
 

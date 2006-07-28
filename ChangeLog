@@ -1,5 +1,20 @@
 2006-07-27  Zack Weinberg  <zackw@panix.com>
 
+	* app_state.cc (read_options): Just call work.read_options_map.
+	(write_options): Just call work.write_options_map.
+
+	* work.cc (get_options_path, get_inodeprints_path): No longer
+	methods; make static, move near the rest of these functions.
+	(read_options_map): Bulk of app_state::read_options folded in here.
+	(write_options_map): Bulk of app_state::write_options folded in here.
+	(in_inodeprints_mode, read_inodeprints, write_inodeprints):
+	No longer methods; make static.
+	(maybe_update_inodeprints): Define here, as a workspace method...
+	* commands.cc: ... not here.
+	* work.hh, cmd.hh, cmd_merging.cc, cmd_ws_commit.cc: Update to match.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
 	* work.cc: Reorganize.  No semantic changes.
 	
 2006-07-27  Zack Weinberg  <zackw@panix.com>

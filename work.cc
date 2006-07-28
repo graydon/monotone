@@ -63,6 +63,20 @@ get_revision_path(bookkeeping_path & m_path)
   L(FL("revision path is %s") % m_path);
 }
 
+static void
+get_options_path(bookkeeping_path & o_path)
+{
+  o_path = bookkeeping_root / options_file_name;
+  L(FL("options path is %s") % o_path);
+}
+
+static void
+get_inodeprints_path(bookkeeping_path & ip_path)
+{
+  ip_path = bookkeeping_root / inodeprints_file_name;
+  L(FL("inodeprints path is %s") % ip_path);
+}
+
 // routines for manipulating the bookkeeping directory
 // work file containing rearrangement from uncommitted adds/drops/renames
 void
@@ -258,48 +272,63 @@ workspace::has_contents_user_log()
   return user_log_message().length() > 0;
 }
 
-// options map file
-
 void
-workspace::get_options_path(bookkeeping_path & o_path)
+workspace::read_options_map(options_map & options)
 {
-  o_path = bookkeeping_root / options_file_name;
-  L(FL("options path is %s") % o_path);
-}
-
-void
-workspace::read_options_map(data const & dat, options_map & options)
-{
-  basic_io::input_source src(dat(), "_MTN/options");
-  basic_io::tokenizer tok(src);
-  basic_io::parser parser(tok);
-
-  // don't clear the options which will have settings from the command line
-  // options.clear();
-
-  string opt, val;
-  while (parser.symp())
+  bookkeeping_path o_path;
+  get_options_path(o_path);
+  try
     {
-      parser.sym(opt);
-      parser.str(val);
-      // options[opt] = val;
-      // use non-replacing insert versus replacing with options[opt] = val;
-      options.insert(make_pair(opt, val));
+      if (path_exists(o_path))
+        {
+          data dat;
+          read_data(o_path, dat);
+
+          basic_io::input_source src(dat(), o_path.as_external());
+          basic_io::tokenizer tok(src);
+          basic_io::parser parser(tok);
+
+          // don't clear the options which will have settings from the
+          // command line.
+          string opt, val;
+          while (parser.symp())
+            {
+              parser.sym(opt);
+              parser.str(val);
+
+              // use non-replacing insert versus replacing with
+              // options[opt] = val;
+              options.insert(make_pair(opt, val));
+            }
+        }
+    }
+  catch(exception & e)
+    {
+      W(F("Failed to read options file %s: %s") % o_path % e.what());
     }
 }
 
 void
-workspace::write_options_map(data & dat, options_map const & options)
+workspace::write_options_map(options_map const & options)
 {
   basic_io::printer pr;
-
   basic_io::stanza st;
   for (options_map::const_iterator i = options.begin();
        i != options.end(); ++i)
     st.push_str_pair(i->first, i->second());
 
   pr.print_stanza(st);
-  dat = pr.buf;
+
+  bookkeeping_path o_path;
+  get_options_path(o_path);
+  try
+    {
+      write_data(o_path, pr.buf);
+    }
+  catch(exception & e)
+    {
+      W(F("Failed to write options file %s: %s") % o_path % e.what());
+    }
 }
 
 // local dump file
@@ -313,22 +342,16 @@ workspace::get_local_dump_path(bookkeeping_path & d_path)
 
 // inodeprint file
 
-void
-workspace::get_inodeprints_path(bookkeeping_path & ip_path)
-{
-  ip_path = bookkeeping_root / inodeprints_file_name;
-}
-
-bool
-workspace::in_inodeprints_mode()
+static bool
+in_inodeprints_mode()
 {
   bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   return file_exists(ip_path);
 }
 
-void
-workspace::read_inodeprints(data & dat)
+static void
+read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -336,8 +359,8 @@ workspace::read_inodeprints(data & dat)
   read_data(ip_path, dat);
 }
 
-void
-workspace::write_inodeprints(data const & dat)
+static void
+write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -353,6 +376,51 @@ workspace::enable_inodeprints()
   data dat;
   write_data(ip_path, dat);
 }
+
+void
+workspace::maybe_update_inodeprints(app_state & app)
+{
+  if (!in_inodeprints_mode())
+    return;
+  inodeprint_map ipm_new;
+  temp_node_id_source nis;
+  roster_t old_roster, new_roster;
+
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  update_current_roster_from_filesystem(new_roster, app);
+
+  node_map const & new_nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+      if (old_roster.has_node(nid))
+        {
+          node_t old_node = old_roster.get_node(nid);
+          if (is_file_t(old_node))
+            {
+              node_t new_node = i->second;
+              I(is_file_t(new_node));
+
+              file_t old_file = downcast_to_file_t(old_node);
+              file_t new_file = downcast_to_file_t(new_node);
+
+              if (new_file->content == old_file->content)
+                {
+                  split_path sp;
+                  new_roster.get_name(nid, sp);
+                  file_path fp(sp);
+                  hexenc<inodeprint> ip;
+                  if (inodeprint_file(fp, ip))
+                    ipm_new.insert(inodeprint_entry(fp, ip));
+                }
+            }
+        }
+    }
+  data dat;
+  write_inodeprint_map(ipm_new, dat);
+  write_inodeprints(dat);
+}
+
 // objects and routines for manipulating the workspace itself
 namespace {
 

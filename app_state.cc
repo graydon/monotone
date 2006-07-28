@@ -424,38 +424,13 @@ app_state::load_rcfiles()
 void
 app_state::read_options()
 {
-  bookkeeping_path o_path;
-  work.get_options_path(o_path);
-  try
-    {
-      if (path_exists(o_path))
-        {
-          data dat;
-          read_data(o_path, dat);
-          work.read_options_map(dat, options);
-        }
-    }
-  catch(exception &)
-    {
-      W(F("Failed to read options file %s") % o_path);
-    }
+  work.read_options_map(options);
 }
 
 void
 app_state::write_options()
 {
-  bookkeeping_path o_path;
-  work.get_options_path(o_path);
-  try
-    {
-      data dat;
-      work.write_options_map(dat, options);
-      write_data(o_path, dat);
-    }
-  catch(exception &)
-    {
-      W(F("Failed to write options file %s") % o_path);
-    }
+  work.write_options_map(options);
 }
 
 // Local Variables:

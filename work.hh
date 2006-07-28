@@ -81,6 +81,8 @@ struct workspace
   void perform_content_update(cset const & cs, content_merge_adaptor const & ca,
                               app_state & app);
 
+  void update_any_attrs(app_state & app);
+
   // the "work" file contains the current cset representing uncommitted
   // add/drop/rename operations (not deltas)
 
@@ -144,9 +146,8 @@ struct workspace
   // implied unless overridden on the command line. the main ones are
   // --branch and --db, although some others may follow in the future.
 
-  void get_options_path(bookkeeping_path & o_path);
-  void read_options_map(data const & dat, options_map & options);
-  void write_options_map(data & dat, options_map const & options);
+  void read_options_map(options_map & options);
+  void write_options_map(options_map const & options);
 
   // the "local dump file' is a debugging file, stored in _MTN/debug.  if we
   // crash, we save some debugging information here.
@@ -155,13 +156,8 @@ struct workspace
 
   // the 'inodeprints file' contains inode fingerprints
 
-  void get_inodeprints_path(bookkeeping_path & ip_path);
-  bool in_inodeprints_mode();
-  void read_inodeprints(data & dat);
-  void write_inodeprints(data const & dat);
   void enable_inodeprints();
-
-  void update_any_attrs(app_state & app);
+  void maybe_update_inodeprints(app_state & app);
 };
 
 // Local Variables:
