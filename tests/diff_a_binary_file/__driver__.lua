@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-get("binary")
+check(get("binary"))
 
 check(mtn("add", "binary"), 0, false, false)
 check(mtn("status"), 0, false, false)

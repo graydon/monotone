@@ -18,6 +18,7 @@
 #include <set>
 #include <string>
 
+#include "paths.hh"
 #include "sanity.hh"
 
 struct user_interface;
@@ -125,9 +126,6 @@ extern struct user_interface ui;
 // like platform.hh's "terminal_width", but always returns a sensible value
 // (even if there is no terminal)
 unsigned int guess_terminal_width();
-
-// returns the a default user locale value
-const std::locale & get_user_locale();
 
 // Local Variables:
 // mode: C++

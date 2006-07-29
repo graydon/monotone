@@ -3,7 +3,7 @@ mtn_setup()
 
 -- this is an old privkey generated with 0.23
 
-get("old_privkey", "pkt")
+check(get("old_privkey", "pkt"))
 
 check(mtn("read", "pkt"), 0, false, true)
 check(qgrep("read 1 packet", "stderr"))

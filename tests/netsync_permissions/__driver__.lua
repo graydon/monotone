@@ -16,7 +16,7 @@ genkey(keys.other)
 netsync.setup()
 
 -- test with open security settings
-get("open")
+check(get("open"))
 
 addfile("badfile", "badfile")
 commit("badbranch", "badfile")
@@ -102,7 +102,7 @@ check(mtn("automate", "get_revision", revs.unknown), 1, true, true)
 
 
 -- test with closed security settings
-get("closed")
+check(get("closed"))
 
 clean()
 writefile("_MTN/revision", "")

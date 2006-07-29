@@ -28,7 +28,7 @@ check(mtn("ls", "branches", "--exclude", "testbr*"), 0, true, true)
 check(samelines("stdout", {"otherbranch"}))
 
 -- Create an ignore_branch hook to pass in
-get("ignore_branch.lua")
+check(get("ignore_branch.lua"))
 
 -- if we make a change in the branch.to.be.ignored it should not turn up in the list
 copy("foo.testbranch", "in_ignored")

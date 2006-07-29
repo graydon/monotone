@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.27, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.28, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar check-news std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
@@ -607,6 +607,49 @@ if test $ac_cv_sync_with_stdio = yes && test $ac_cv_sync_with_stdio_2 = yes; the
   AC_DEFINE(SYNC_WITH_STDIO_WORKS, 1,
               [Define to 1 if sync_with_stdio works fine on C++ streams])
 fi
+
+
+
+AC_CACHE_CHECK([for tr1::unordered_map and tr1::unordered_set],
+                       ac_cv_cxx_tr1_unordered_map_and_set,
+          [AC_LANG_PUSH(C++)
+           AC_COMPILE_IFELSE(AC_LANG_SOURCE([
+        #include <tr1/functional>
+        #include <tr1/unordered_map>
+        #include <tr1/unordered_set>
+        using std::tr1::hash;
+        using std::tr1::unordered_map;
+        using std::tr1::unordered_set;
+        using std::tr1::unordered_multimap;
+        ]),
+              ac_cv_cxx_tr1_unordered_map_and_set=yes,
+              ac_cv_cxx_tr1_unordered_map_and_set=no)
+           AC_LANG_POP(C++)])
+        if test x$ac_cv_cxx_tr1_unordered_map_and_set = xyes; then
+          AC_DEFINE(HAVE_TR1_UNORDERED_MAP_AND_SET, 1,
+                    [Define to 1 if your C++ compiler provides
+        tr1::unordered_map and tr1::unordered_set.])
+        fi
+
+# This checks for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
+AC_DEFUN([TR1_HASHTABLE_CONST_CORRECT],
+[AC_CACHE_CHECK([for early 4.0-series g++ bug in tr1 hashtables],
+    ac_cv_cxx_tr1_hashtable_bug,
+    [AC_LANG_PUSH(C++)
+     AC_TRY_COMPILE([#include <tr1/unordered_set>],
+                    [std::tr1::unordered_set<int> s;
+                     const std::tr1::unordered_set<int> &s_ref = s;
+                     s_ref.find(27);],
+                     [ac_cv_cxx_tr1_hashtable_bug=no],
+                     [ac_cv_cxx_tr1_hashtable_bug=yes])
+     AC_LANG_POP(C++)])
+ if test x$ac_cv_cxx_tr1_hashtable_bug = xno; then
+   AC_DEFINE(HAVE_WORKING_TR1_UNORDERED_MAP_AND_SET, 1,
+             [Define if tr1::unordered_{map,set} actually work])
+ fi
+])
+TR1_HASHTABLE_CONST_CORRECT
+               
 
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.

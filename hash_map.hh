@@ -43,7 +43,44 @@ namespace hashmap {
   };
 }
 
-#ifdef HAVE_GNUCXX_HASHMAP
+#if HAVE_TR1_UNORDERED_MAP_AND_SET && HAVE_WORKING_TR1_UNORDERED_MAP_AND_SET
+#define HASHMAP_PRESENT
+#include <tr1/functional>
+#include <tr1/unordered_map>
+#include <tr1/unordered_set>
+
+namespace hashmap {
+  template<>
+  struct hash<std::string>
+  {
+    size_t operator()(std::string const & s) const
+    {
+      return std::tr1::hash<std::string>()(s);
+    }
+  };
+
+  template<typename _Key, typename _Value>
+  class hash_map : public std::tr1::unordered_map<_Key,
+                                                  _Value,
+                                                  hash<_Key>,
+                                                  equal_to<_Key> >
+  {};
+
+  template<typename _Key>
+  class hash_set : public std::tr1::unordered_set<_Key,
+                                                  hash<_Key>,
+                                                  equal_to<_Key> >
+  {};
+
+  template<typename _Key, typename _Value>
+  class hash_multimap : public std::tr1::unordered_multimap<_Key,
+                                                            _Value,
+                                                            hash<_Key>,
+                                                            equal_to<_Key> >
+  {};
+}
+
+#elif defined(HAVE_GNUCXX_HASHMAP)
 #define HASHMAP_PRESENT
 #include <ext/hash_map>
 #include <ext/hash_set>
@@ -79,11 +116,10 @@ namespace hashmap {
                                                         equal_to<_Key> >
   {};
 
-	
+        
 }
-#endif
 
-#ifdef HAVE_STLPORT_HASHMAP
+#elif HAVE_STLPORT_HASHMAP
 #define HASHMAP_PRESENT
 #include <hash_map>
 #include <hash_set>
@@ -123,9 +159,8 @@ namespace hashmap {
                                                   equal_to<_Key> >
   {};
 }
-#endif
 
-#ifdef _MSC_VER
+#elif _MSC_VER
 #define HASHMAP_PRESENT
 #include <hash_map>
 #include <hash_set>
@@ -155,7 +190,7 @@ namespace hashmap
 
     size_t operator( )(T const & s) const
     {
-      return h(s);		
+      return h(s);              
     }
     bool operator( )(T const & a,
                      T const & b) const

@@ -8,7 +8,7 @@ mtn_setup()
 -- be run.  This test makes sure that monotone exits with an error if
 -- given a db that appears to be very old.
 
-get("changesetify.db.dumped", "stdin")
+check(get("changesetify.db.dumped", "stdin"))
 check(mtn("-d", "cs-modern.db", "db", "load"), 0, false, false, true)
 check(mtn("-d", "cs-modern.db", "db", "migrate"), 0, false, false)
 
@@ -16,7 +16,7 @@ check(mtn("-d", "cs-modern.db", "ls", "keys"), 1, false, false)
 check(mtn("-d", "cs-modern.db", "serve", "--bind=127.0.0.1:63219", '*'), 1, false, false)
 
 
-get("rosterify.db.dumped", "stdin")
+check(get("rosterify.db.dumped", "stdin"))
 check(mtn("-d", "ro-modern.db", "db", "load"), 0, false, false, true)
 check(mtn("-d", "ro-modern.db", "db", "migrate"), 0, false, false)
 

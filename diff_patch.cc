@@ -92,7 +92,7 @@ using boost::shared_ptr;
 //
 
 typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;
-static char *etab[3] =
+static const char etab[3][10] =
   {
     "preserved",
     "deleted",
@@ -776,8 +776,8 @@ struct hunk_consumer
   size_t a_begin, b_begin, a_len, b_len;
   long skew;
 
-  vector<string>::const_reverse_iterator encloser_last_search;
   vector<string>::const_reverse_iterator encloser_last_match;
+  vector<string>::const_reverse_iterator encloser_last_search;
 
   virtual void flush_hunk(size_t pos) = 0;
   virtual void advance_to(size_t newpos) = 0;
@@ -810,7 +810,10 @@ hunk_consumer::find_encloser(size_t pos, string & encloser)
 
   // Precondition: encloser_last_search <= pos <= a.size().
   I(pos <= a.size());
-  I(pos >= a.rend() - encloser_last_search);
+  // static_cast<> to silence compiler unsigned vs. signed comparison
+  // warning, after first making sure that the static_cast is safe.
+  I(a.rend() - encloser_last_search >= 0);
+  I(pos >= static_cast<size_t>(a.rend() - encloser_last_search));
 
   if (!encloser_re)
     return;

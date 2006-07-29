@@ -1,44 +1,65 @@
-xxx Jul xx xx:xx:xx xxx 2006
+Sat Jul 22 01:39:51 PDT 2006
 
         0.28 release. Cherrypicking, a new testsuite, and some fixes
         and enhancements.
 
-        Changes:
-
-        - automake 1.9 is now required.
-        - The testsuite has been rewritten, and should be much faster now. It
-          also no longer relies on the presence of a *nix userland.
-
         New features:
 
         - Cherrypicking with the new "pluck" command. This takes (a restricted
-          subset of) the changes in a revision, or between two revisions, and
-          applies them to your workspace.
+          subset of) the changes in a revision, or between two
+          revisions, and applies them to your workspace.  That this
+          has happened is not recorded in history; it as if you
+          happened to make some very similar changes by hand in your
+          workspace.
         - New automate commands, "automate tags" and "automate branches".
+        - "diff" now knows how to find enclosing function (or
+          whatever) bodies, just like GNU diff's "-p" option.
+          -- The regex that defines "enclosing function" can be chosen
+             on a per-file basis by a hook function; the default hook
+             knows about LaTeX, Texinfo, and most programming
+             languages.
+          -- This is enabled by default; use --no-show-encloser to
+             disable.
 
         Enhancements:
 
-        - Crash dumps are now written to $CONFDIR/dump when no workspace is
-          available
         - When netsync fails due to permission errors, the server returns a
           semi-intelligible message before dropping the connection.
         - When merging a branch with 3 or more heads, the order in which to
-          merge the heads will now be chosen in an intelligent manner.
+          merge the heads will now automatically be chosen to minimize
+          the amount of repeated work that must be done.
+        - Crash dumps are now written to $CONFDIR/dump when no workspace is
+          available
+        - Path validation routines are faster.
         - Inodeprints should be slightly more robust now.
+        - New hook get_mtn_command, used to determine the path to the
+          mtn binary on a remote host, when using ssh support.
+        - "diff" now accepts "-u" and "-c" as short for "--unified"
+          (the default) and "--context", respectively.
 
         Bug fixes:
 
+        - "revert --missing" now works when run in a subdirectory.
+        - "revert --missing" now works without any additional files
+          being specified.  (You don't have to say "mtn revert
+          --missing .".)
         - Fix an edge case where monotone would crash if there was a
           content conflict in a merge for which there was no lca.
         - Fix a case where netsync would sometimes hang during refinement.
         - "mtn help" and "mtn --help" now exit with return code 0.
-        * "revert --missing" without restriction (was this broken in 0.27?)
+
+        Build environment:
+
+        - automake 1.9 is now required.
+        - The testsuite has been rewritten, and should be much faster now. It
+          also no longer relies on the presence of a *nix userland.
+        - Add workaround for gcc 4.1.[01] bug causing "multiple
+          definition" errors.
 
         Internal:
 
         - Restrictions have been split into path_restrictions and
-          node_restrictions.
-        - AUTOMATE() macro, similar to the CMD() macro.
+          node_restrictions, and generally cleaned up more.
 
 Sat Jun 17 14:43:12 PDT 2006
 

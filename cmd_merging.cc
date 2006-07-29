@@ -51,6 +51,46 @@ struct update_source
   }
 };
 
+static void
+three_way_merge(roster_t const & ancestor_roster,
+                roster_t const & left_roster, roster_t const & right_roster,
+                roster_merge_result & result)
+{
+  MM(ancestor_roster);
+  MM(left_roster);
+  MM(right_roster);
+
+  // Make some fake rids
+  revision_id ancestor_rid(fake_id()); MM(ancestor_rid);
+  revision_id left_rid(fake_id()); MM(left_rid);
+  revision_id right_rid(fake_id()); MM(right_rid);
+  
+  // Mark up the ANCESTOR
+  marking_map ancestor_markings; MM(ancestor_markings);
+  mark_roster_with_no_parents(ancestor_rid, ancestor_roster, ancestor_markings);
+
+  // Mark up the LEFT roster
+  marking_map left_markings; MM(left_markings);
+  mark_roster_with_one_parent(ancestor_roster, ancestor_markings,
+                              left_rid, left_roster, left_markings);
+  
+  // Mark up the RIGHT roster
+  marking_map right_markings; MM(right_markings);
+  mark_roster_with_one_parent(ancestor_roster, ancestor_markings,
+                              right_rid, right_roster, right_markings);
+
+  // Make the synthetic graph, by creating uncommon ancestor sets
+  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  safe_insert(left_uncommon_ancestors, left_rid);
+  safe_insert(right_uncommon_ancestors, right_rid);
+
+  // And do the merge
+  roster_merge(left_roster, left_markings, left_uncommon_ancestors,
+               right_roster, right_markings, right_uncommon_ancestors,
+               result);
+}
+  
+
 CMD(update, N_("workspace"), "",
     N_("update workspace.\n"
        "This command modifies your workspace to be based off of a\n"
@@ -59,13 +99,6 @@ CMD(update, N_("workspace"), "",
        "If not, update the workspace to the head of the branch."),
     OPT_BRANCH_NAME % OPT_REVISION)
 {
-  revision_t r_working;
-  roster_t working_roster, chosen_roster, target_roster;
-  shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
-  marking_map working_mm, chosen_mm, merged_mm, target_mm;
-  revision_id r_old_id, r_working_id, r_chosen_id, r_target_id;
-  temp_node_id_source nis;
-
   if (args.size() > 0)
     throw usage(name);
 
@@ -74,38 +107,27 @@ CMD(update, N_("workspace"), "",
 
   app.require_workspace();
 
-  // FIXME: the next few lines are a little bit expensive insofar as they
-  // load the base roster twice. The API could use some factoring or
-  // such. But it should work for now; revisit if performance is
-  // intolerable.
+  // Figure out where we are
 
-  get_base_and_current_roster_shape(*old_roster, 
-                                    working_roster, nis, app);
-  update_current_roster_from_filesystem(working_roster, app);
+  revision_id old_rid;
+  get_revision_id(old_rid);
 
-  get_revision_id(r_old_id);
-  make_revision(r_old_id, *old_roster, working_roster, r_working);
-
-  calculate_ident(r_working, r_working_id);
-  I(r_working.edges.size() == 1);
-  r_old_id = edge_old_revision(r_working.edges.begin());
-  make_roster_for_base_plus_cset(r_old_id,
-                                 edge_changes(r_working.edges.begin()),
-                                 r_working_id,
-                                 working_roster, working_mm, nis, app);
-
-  N(!null_id(r_old_id),
+  N(!null_id(old_rid),
     F("this workspace is a new project; cannot update"));
 
+  // Figure out where we're going
+
+  revision_id chosen_rid;
   if (app.revision_selectors.size() == 0)
     {
       P(F("updating along branch '%s'") % app.branch_name);
       set<revision_id> candidates;
-      pick_update_candidates(r_old_id, app, candidates);
+      pick_update_candidates(old_rid, app, candidates);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
-          "maybe you want --revision=<rev on other branch>"));
+          "maybe you want something like --revision=h:%s")
+        % app.branch_name);
       if (candidates.size() != 1)
         {
           P(F("multiple update candidates:"));
@@ -115,20 +137,24 @@ CMD(update, N_("workspace"), "",
           P(F("choose one with '%s update -r<id>'") % app.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
-      r_chosen_id = *(candidates.begin());
+      chosen_rid = *(candidates.begin());
     }
   else
     {
-      complete(app, app.revision_selectors[0](), r_chosen_id);
-      N(app.db.revision_exists(r_chosen_id),
-        F("no such revision '%s'") % r_chosen_id);
+      complete(app, app.revision_selectors[0](), chosen_rid);
+      N(app.db.revision_exists(chosen_rid),
+        F("no such revision '%s'") % chosen_rid);
     }
+  I(!null_id(chosen_rid));
 
+  // do this notification before checking to see if we can bail out early,
+  // because when you are at one of several heads, and you hit update, you
+  // want to know that merging would let you update further.
   notify_if_multiple_heads(app);
 
-  if (r_old_id == r_chosen_id)
+  if (old_rid == chosen_rid)
     {
-      P(F("already up to date at %s") % r_old_id);
+      P(F("already up to date at %s") % old_rid);
       // do still switch the workspace branch, in case they have used
       // update to switch branches.
       if (!app.branch_name().empty())
@@ -136,13 +162,16 @@ CMD(update, N_("workspace"), "",
       return;
     }
 
-  P(F("selected update target %s") % r_chosen_id);
+  P(F("selected update target %s") % chosen_rid);
 
+  // Fiddle around with branches, in an attempt to guess what the user
+  // wants.
+  
   bool switched_branch = false;
   {
     // figure out which branches the target is in
     vector< revision<cert> > certs;
-    app.db.get_revision_certs(r_chosen_id, branch_cert_name, certs);
+    app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
     erase_bogus_certs(certs, app);
 
     set< utf8 > branches;
@@ -188,108 +217,73 @@ CMD(update, N_("workspace"), "",
       }
   }
 
-  app.db.get_roster(r_chosen_id, chosen_roster, chosen_mm);
 
-  set<revision_id>
-    working_uncommon_ancestors,
-    chosen_uncommon_ancestors;
+  // Okay, we have a target, we have a branch, let's do this merge!
 
-  if (is_ancestor(r_old_id, r_chosen_id, app))
-    {
-      target_roster = chosen_roster;
-      target_mm = chosen_mm;
-      r_target_id = r_chosen_id;
-      app.db.get_uncommon_ancestors(r_old_id, r_chosen_id,
-                                    working_uncommon_ancestors,
-                                    chosen_uncommon_ancestors);
-    }
-  else
-    {
-      cset transplant;
-      make_cset (*old_roster, chosen_roster, transplant);
-
-      // Just pick some unused revid, all that's important is that it not
-      // match the work revision or any ancestors of the base revision.
-      r_target_id = revision_id(hexenc<id>("5432100000000000000000000500000000000000"));
-      make_roster_for_base_plus_cset(r_old_id,
-                                     transplant,
-                                     r_target_id,
-                                     target_roster, target_mm, nis, app);
-      chosen_uncommon_ancestors.insert(r_target_id);
-    }
-
-  // Note that under the definition of mark-merge, the workspace is an
-  // "uncommon ancestor" of itself too, even though it was not present in
-  // the database (hence not returned by the query above).
-
-  working_uncommon_ancestors.insert(r_working_id);
-
-  // Now merge the working roster with the chosen target.
-
-  roster_merge_result result;
-  roster_merge(working_roster, working_mm, working_uncommon_ancestors,
-               target_roster, target_mm, chosen_uncommon_ancestors,
-               result);
-
-  roster_t & merged_roster = result.roster;
-
-  content_merge_workspace_adaptor wca(app, old_roster);
-  resolve_merge_conflicts (r_old_id, r_target_id,
-                           working_roster, target_roster,
-                           working_mm, target_mm,
-                           result, wca, app);
-
-  I(result.is_clean());
-
-  // Temporary node ids may appear if updating to a non-ancestor.
-  merged_roster.check_sane(true);
-
-  // We have the following
+  // We have:
   //
-  // old --> working
-  //   |         |
-  //   V         V
+  //    old  --> working
+  //     |         |
+  //     V         V
   //  chosen --> merged
   //
   // - old is the revision specified in _MTN/revision
   // - working is based on old and includes the workspace's changes
   // - chosen is the revision we're updating to and will end up in _MTN/revision
-  // - merged is the merge of working and chosen
+  // - merged is the merge of working and chosen, that will become the new
+  //   workspace
   //
   // we apply the working to merged cset to the workspace
   // and write the cset from chosen to merged changeset in _MTN/work
+  
+  temp_node_id_source nis;
 
+  // Get the OLD and WORKING rosters
+  shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
+  MM(*old_roster);
+  roster_t working_roster; MM(working_roster);
+  get_base_and_current_roster_shape(*old_roster, working_roster, nis, app);
+  update_current_roster_from_filesystem(working_roster, app);
+
+  // Get the CHOSEN roster
+  roster_t chosen_roster; MM(chosen_roster);
+  app.db.get_roster(chosen_rid, chosen_roster);
+  
+  // And finally do the merge
+  roster_merge_result result;
+  three_way_merge(*old_roster, working_roster, chosen_roster, result);
+
+  roster_t & merged_roster = result.roster;
+
+  content_merge_workspace_adaptor wca(app, old_roster);
+  resolve_merge_conflicts(working_roster, chosen_roster,
+                          result, wca, app);
+
+  // Make sure it worked...
+  I(result.is_clean());
+  merged_roster.check_sane(true);
+
+  // Now finally modify the workspace
   cset update, remaining;
   make_cset(working_roster, merged_roster, update);
-  make_cset(target_roster, merged_roster, remaining);
-
-  //   {
-  //     data t1, t2, t3;
-  //     write_cset(update, t1);
-  //     write_cset(remaining, t2);
-  //     write_manifest_of_roster(merged_roster, t3);
-  //     P(F("updating workspace with [[[\n%s\n]]]") % t1);
-  //     P(F("leaving residual work [[[\n%s\n]]]") % t2);
-  //     P(F("merged roster [[[\n%s\n]]]") % t3);
-  //   }
+  make_cset(chosen_roster, merged_roster, remaining);
 
   update_source fsource(wca.temporary_store, app);
   editable_working_tree ewt(app, fsource);
   update.apply_to(ewt);
 
   // small race condition here...
-  // nb: we write out r_chosen, not r_new, because the revision-on-disk
-  // is the basis of the workspace, not the workspace itself.
-  put_revision_id(r_chosen_id);
+  put_revision_id(chosen_rid);
+  put_work_cset(remaining);
+
   if (!app.branch_name().empty())
     {
       app.make_branch_sticky();
     }
   if (switched_branch)
     P(F("switched branch; next commit will use branch %s") % app.branch_name());
-  P(F("updated to base revision %s") % r_chosen_id);
+  P(F("updated to base revision %s") % chosen_rid);
 
-  put_work_cset(remaining);
   update_any_attrs(app);
   maybe_update_inodeprints(app);
 }
@@ -578,10 +572,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         content_merge_database_adaptor 
           dba(app, left_rid, right_rid, left_marking_map);
 
-        resolve_merge_conflicts (left_rid, right_rid,
-                                 left_roster, right_roster,
-                                 left_marking_map, right_marking_map,
-                                 result, dba, app);
+        resolve_merge_conflicts(left_roster, right_roster,
+                                result, dba, app);
 
         {
           dir_t moved_root = left_roster.root();
@@ -772,7 +764,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
                                     nis, app);
   update_current_roster_from_filesystem(working_roster, app);
 
-  // Get the FROM->TO cset
+  // Get the FROM->TO cset...
   cset from_to_to; MM(from_to_to);
   cset from_to_to_excluded; MM(from_to_to_excluded);
   {
@@ -784,45 +776,24 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,
                           mask);
+    check_restricted_cset(*from_roster, from_to_to);
   }
-
-  // Use a fake rid
-  revision_id working_rid(std::string("0000000000000000000000000000000000000001"));
-
-  // Mark up the FROM roster
-  marking_map from_markings; MM(from_markings);
-  mark_roster_with_no_parents(from_rid, *from_roster, from_markings);
-
-  // Mark up the WORKING roster
-  marking_map working_markings; MM(working_markings);
-  mark_roster_with_one_parent(*from_roster, from_markings,
-                              working_rid, working_roster,
-                              working_markings);
-  
-  // Create and mark up the TO roster
+  // ...and use it to create the TO roster
   roster_t to_roster; MM(to_roster);
-  marking_map to_markings; MM(to_markings);
-  make_roster_for_base_plus_cset(from_rid, from_to_to, to_rid,
-                                 to_roster, to_markings, nis,
-                                 app);
-
-  // Set up the synthetic graph, by creating uncommon ancestor sets
-  std::set<revision_id> working_uncommon_ancestors, to_uncommon_ancestors;
-  safe_insert(working_uncommon_ancestors, working_rid);
-  safe_insert(to_uncommon_ancestors, to_rid);
+  {
+    to_roster = *from_roster;
+    editable_roster_base editable_to_roster(to_roster, nis);
+    from_to_to.apply_to(editable_to_roster);
+  }
 
   // Now do the merge
   roster_merge_result result;
-  roster_merge(working_roster, working_markings, working_uncommon_ancestors,
-               to_roster, to_markings, to_uncommon_ancestors,
-               result);
+  three_way_merge(*from_roster, working_roster, to_roster, result);
 
   roster_t & merged_roster = result.roster;
 
   content_merge_workspace_adaptor wca(app, from_roster);
-  resolve_merge_conflicts(working_rid, to_rid,
-                          working_roster, to_roster,
-                          working_markings, to_markings,
+  resolve_merge_conflicts(working_roster, to_roster,
                           result, wca, app);
 
   I(result.is_clean());

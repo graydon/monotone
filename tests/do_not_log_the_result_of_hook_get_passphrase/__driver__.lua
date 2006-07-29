@@ -5,7 +5,7 @@ addfile("input.txt", "version 0 of the file")
 
 -- can't use passphrase == keyname here, because
 -- it's OK for the keyname to be logged.
-get("hook.lua")
+check(get("hook.lua"))
 pass = "xyzzypassphrasexyzzy"
 check(mtn("genkey", "quux"), 0, false, false, string.rep(pass.."\n", 2))
 

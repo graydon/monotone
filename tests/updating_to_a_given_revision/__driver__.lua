@@ -1,12 +1,12 @@
 
 mtn_setup()
 
-get("root")
-get("middle")
-get("left-leaf")
-get("right-leaf")
-get("modified-left-leaf")
-get("modified-root")
+check(get("root"))
+check(get("middle"))
+check(get("left-leaf"))
+check(get("right-leaf"))
+check(get("modified-left-leaf"))
+check(get("modified-root"))
 
 revs = {}
 

@@ -21,8 +21,19 @@
 // generally describe the "vocabulary" (nouns anyways) that modules in this
 // program use.
 
+// this template must be specialized for each type you want to dump.
+// there are a few stock dumpers in appropriate places.
 template <typename T>
-void dump(T const &, std::string &);
+void dump(T const &, std::string &)
+{
+  // the compiler will evaluate this somewhat odd construct (and issue an
+  // error) if and only if this base template is instantiated.  we do not
+  // use BOOST_STATIC_ASSERT mainly to avoid dragging it in everywhere;
+  // also we get better diagnostics this way (the error tells you what is
+  // wrong, not just that there's an assertion failure).
+  enum dummy { d = (sizeof(struct dump_must_be_specialized_for_this_type)
+		    == sizeof(T)) };
+}
 
 #include "vocab_macros.hh"
 #define ENCODING(enc) hh_ENCODING(enc)
@@ -33,8 +44,8 @@ void dump(T const &, std::string &);
 inline bool is_xdigit(char x)
 {
   return ((x >= '0' && x <= '9')
-	  || (x >= 'a' && x <= 'f')
-	  || (x >= 'A' && x <= 'F'));
+          || (x >= 'a' && x <= 'f')
+          || (x >= 'A' && x <= 'F'));
 }
 
 inline bool is_alpha(char x)
@@ -148,6 +159,9 @@ null_id(revision_id const & i)
   return i.inner()().empty();
 }
 
+
+hexenc<id>
+fake_id();
 
 // Local Variables:
 // mode: C++

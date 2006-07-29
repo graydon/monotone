@@ -1,29 +1,11 @@
 
-
 #include "config.h"
-
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
-#include <errno.h>
-#include <signal.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <stdarg.h>
 
 #include "lua.hh"
 
 #include "sanity.hh"
-#include "platform.hh"
-#include "mkstemp.hh"
-#include "globish.hh"
-#include "basic_io.hh"
-#include "file_io.hh"
 
 #include <string>
-#include <fstream>
 #include <set>
 #include <vector>
 #include <utility>
@@ -32,8 +14,6 @@ extern "C" {
 #include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 
-using std::ifstream;
-using std::ios_base;
 using std::pair;
 using std::set;
 using std::sort;
@@ -42,6 +22,7 @@ using std::vector;
 using std::strerror;
 using std::malloc;
 using std::free;
+namespace fs = boost::filesystem;
 
 // adapted from "programming in lua", section 24.2.3
 // http://www.lua.org/pil/24.2.3.html
@@ -432,316 +413,119 @@ Lua::loadfile(string const & filename)
 
 set<string> Lua::missing_functions;
 
+luaext::ftmap * luaext::fns;
 
-
-
-extern "C"
+luaext::extfn::extfn(std::string const & name, std::string const & table, int (*func) (lua_State *))
 {
-  static int
-  monotone_mkstemp_for_lua(lua_State *L)
-  {
-    int fd = -1;
-    FILE **pf = NULL;
-    char const *filename = luaL_checkstring (L, -1);
-    string dup(filename);
-
-    fd = monotone_mkstemp(dup);
-
-    if (fd == -1)
-      return 0;
-
-    // this magic constructs a lua object which the lua io library
-    // will enjoy working with
-    pf = static_cast<FILE **>(lua_newuserdata(L, sizeof(FILE *)));
-    *pf = fdopen(fd, "r+");
-    lua_pushstring(L, "FILE*");
-    lua_rawget(L, LUA_REGISTRYINDEX);
-    lua_setmetatable(L, -2);
-
-    lua_pushstring(L, dup.c_str());
-
-    if (*pf == NULL)
-      {
-        lua_pushnil(L);
-        lua_pushfstring(L, "%s", strerror(errno));
-        lua_pushnumber(L, errno);
-        return 3;
-      }
-    else
-      return 2;
-  }
-
-  static int
-  monotone_existsonpath_for_lua(lua_State *L)
-  {
-    const char *exe = luaL_checkstring(L, -1);
-    lua_pushnumber(L, existsonpath(exe));
-    return 1;
-  }
-
-  static int
-  monotone_is_executable_for_lua(lua_State *L)
-  {
-    const char *path = luaL_checkstring(L, -1);
-    lua_pushboolean(L, is_executable(path));
-    return 1;
-  }
-
-  static int
-  monotone_make_executable_for_lua(lua_State *L)
-  {
-    const char *path = luaL_checkstring(L, -1);
-    lua_pushnumber(L, make_executable(path));
-    return 1;
-  }
-
-  static int
-  monotone_spawn_for_lua(lua_State *L)
-  {
-    int n = lua_gettop(L);
-    const char *path = luaL_checkstring(L, -n);
-    char **argv = (char**)malloc((n+1)*sizeof(char*));
-    int i;
-    pid_t ret;
-    if (argv==NULL)
-      return 0;
-    argv[0] = (char*)path;
-    for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
-    argv[i] = NULL;
-    ret = process_spawn(argv);
-    free(argv);
-    lua_pushnumber(L, ret);
-    return 1;
-  }
-
-  static int
-  monotone_wait_for_lua(lua_State *L)
-  {
-    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -1));
-    int res;
-    int ret;
-    ret = process_wait(pid, &res);
-    lua_pushnumber(L, res);
-    lua_pushnumber(L, ret);
-    return 2;
-  }
-
-  static int
-  monotone_kill_for_lua(lua_State *L)
-  {
-    int n = lua_gettop(L);
-    pid_t pid = static_cast<pid_t>(luaL_checknumber(L, -2));
-    int sig;
-    if (n>1)
-      sig = static_cast<int>(luaL_checknumber(L, -1));
-    else
-      sig = SIGTERM;
-    lua_pushnumber(L, process_kill(pid, sig));
-    return 1;
-  }
-
-  static int
-  monotone_sleep_for_lua(lua_State *L)
-  {
-    int seconds = static_cast<int>(luaL_checknumber(L, -1));
-    lua_pushnumber(L, process_sleep(seconds));
-    return 1;
-  }
-
-  static int
-  monotone_guess_binary_file_contents_for_lua(lua_State *L)
-  {
-    const char *path = luaL_checkstring(L, -1);
-    N(path, F("%s called with an invalid parameter") % "guess_binary");
-
-    ifstream file(path, ios_base::binary);
-    if (!file)
-      {
-        lua_pushnil(L);
-        return 1;
-      }
-    const int bufsize = 8192;
-    char tmpbuf[bufsize];
-    string buf;
-    while (file.read(tmpbuf, sizeof tmpbuf))
-      {
-        I(file.gcount() <= static_cast<int>(sizeof tmpbuf));
-        buf.assign(tmpbuf, file.gcount());
-        if (guess_binary(buf))
-          {
-            lua_pushboolean(L, true);
-            return 1;
-          }
-      }
-    lua_pushboolean(L, false);
-    return 1;
-  }
-
-  static int
-  monotone_include_for_lua(lua_State *L)
-  {
-    const char *path = luaL_checkstring(L, -1);
-    N(path, F("%s called with an invalid parameter") % "Include");
-
-    bool res =Lua(L)
-    .loadfile(string(path, lua_strlen(L, -1)))
-    .call(0,1)
-    .ok();
-
-    lua_pushboolean(L, res);
-    return 1;
-  }
-
-  static int
-  monotone_includedir_for_lua(lua_State *L)
-  {
-    const char *pathstr = luaL_checkstring(L, -1);
-    N(pathstr, F("%s called with an invalid parameter") % "IncludeDir");
-
-    fs::path locpath(pathstr, fs::native);
-    N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
-    N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
-
-    // directory, iterate over it, skipping subdirs, taking every filename,
-    // sorting them and loading in sorted order
-    fs::directory_iterator it(locpath);
-    vector<fs::path> arr;
-    while (it != fs::directory_iterator())
-      {
-        if (!fs::is_directory(*it))
-          arr.push_back(*it);
-        ++it;
-      }
-    sort(arr.begin(), arr.end());
-    for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
-      {
-        bool res =Lua(L)
-        .loadfile(i->string())
-        .call(0,1)
-        .ok();
-        N(res, F("lua error while loading rcfile '%s'") % i->string());
-      }
-
-    lua_pushboolean(L, true);
-    return 1;
-  }
-
-  static int
-  monotone_regex_search_for_lua(lua_State *L)
-  {
-    const char *re = luaL_checkstring(L, -2);
-    const char *str = luaL_checkstring(L, -1);
-    boost::cmatch what;
-
-    bool result = false;
-    try {
-      result = boost::regex_search(str, what, boost::regex(re));
-    } catch (boost::bad_pattern e) {
-      lua_pushstring(L, e.what());
-      lua_error(L);
-      return 0;
+  static bool first(true);
+  if (first)
+    {
+      first = false;
+      fns = new ftmap;
     }
-    lua_pushboolean(L, result);
-    return 1;
-  }
+  (*fns)[table].insert(make_pair(name, func));
+}
 
-  static int
-  monotone_globish_match_for_lua(lua_State *L)
-  {
-    const char *re = luaL_checkstring(L, -2);
-    const char *str = luaL_checkstring(L, -1);
-
-    bool result = false;
-    try {
-      string r(re);
-      string n;
-      string s(str);
-      result = globish_matcher(r, n)(s);
-    } catch (informative_failure & e) {
-      lua_pushstring(L, e.what.c_str());
-      lua_error(L);
-      return 0;
-    } catch (boost::bad_pattern & e) {
-      lua_pushstring(L, e.what());
-      lua_error(L);
-      return 0;
-    } catch (...) {
-      lua_pushstring(L, "Unknown error.");
-      lua_error(L);
-      return 0;
+void add_functions(lua_State * st)
+{
+  for (luaext::ftmap::const_iterator i = luaext::fns->begin();
+       i != luaext::fns->end(); ++i)
+    {
+      std::string const & table(i->first);
+      if (table != "")
+        {
+          lua_newtable(st);
+          lua_pushstring(st, table.c_str());
+          lua_pushvalue(st, -2);
+          lua_settable(st, LUA_GLOBALSINDEX);
+        }
+      for (luaext::fmap::const_iterator j = i->second.begin();
+           j != i->second.end(); ++j)
+        {
+          if (table == "")
+            lua_register(st, j->first.c_str(), j->second);
+          else
+            {
+              lua_pushstring(st, j->first.c_str());
+              lua_pushcfunction(st, j->second);
+              lua_settable(st, -3);
+            }
+        }
+      if (table != "")
+        lua_pop(st, 1);
     }
-    lua_pushboolean(L, result);
-    return 1;
-  }
+}
 
-  static int
-  monotone_gettext_for_lua(lua_State *L)
-  {
-    const char *msgid = luaL_checkstring(L, -1);
-    lua_pushstring(L, gettext(msgid));
-    return 1;
-  }
+LUAEXT(include, )
+{
+  const char *path = luaL_checkstring(L, -1);
+  N(path, F("%s called with an invalid parameter") % "Include");
 
-  static int
-  monotone_parse_basic_io_for_lua(lua_State *L)
-  {
-    vector<pair<string, vector<string> > > res;
-    const string str(luaL_checkstring(L, -1), lua_strlen(L, -1));
-    basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
-    basic_io::tokenizer tok(in);
-    try
-      {
-        string got;
-        basic_io::token_type tt;
-        do
-          {
-            tt = tok.get_token(got);
-            switch (tt)
-              {
-              case basic_io::TOK_SYMBOL:
-                res.push_back(make_pair(got, vector<string>()));
-                break;
-              case basic_io::TOK_STRING:
-              case basic_io::TOK_HEX:
-                E(!res.empty(), F("bad input to parse_basic_io"));
-                res.back().second.push_back(got);
-                break;
-              default:
-                break;
-              }
-          }
-        while (tt != basic_io::TOK_NONE);
-      }
-    catch (informative_failure & e)
-      {// there was a syntax error in our string
-        lua_pushnil(L);
-        return 1;
-      }
-    lua_newtable(L);
-    int n = 1;
-    for (vector<pair<string, vector<string> > >::const_iterator i = res.begin();
-         i != res.end(); ++i)
-      {
-        lua_pushnumber(L, n++);
-        lua_newtable(L);
-        lua_pushstring(L, "name");
-        lua_pushstring(L, i->first.c_str());
-        lua_settable(L, -3);
-        lua_pushstring(L, "values");
-        lua_newtable(L);
-        int m = 1;
-        for (vector<string>::const_iterator j = i->second.begin();
-             j != i->second.end(); ++j)
-          {
-            lua_pushnumber(L, m++);
-            lua_pushstring(L, j->c_str());
-            lua_settable(L, -3);
-          }
-        lua_settable(L, -3);
-        lua_settable(L, -3);
-      }
-    return 1;
+  bool res =Lua(L)
+  .loadfile(string(path, lua_strlen(L, -1)))
+  .call(0,1)
+  .ok();
+
+  lua_pushboolean(L, res);
+  return 1;
+}
+
+LUAEXT(includedir, )
+{
+  const char *pathstr = luaL_checkstring(L, -1);
+  N(pathstr, F("%s called with an invalid parameter") % "IncludeDir");
+
+  fs::path locpath(pathstr, fs::native);
+  N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
+  N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
+
+  // directory, iterate over it, skipping subdirs, taking every filename,
+  // sorting them and loading in sorted order
+  fs::directory_iterator it(locpath);
+  vector<fs::path> arr;
+  while (it != fs::directory_iterator())
+    {
+      if (!fs::is_directory(*it))
+        arr.push_back(*it);
+      ++it;
+    }
+  sort(arr.begin(), arr.end());
+  for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+    {
+      bool res =Lua(L)
+      .loadfile(i->string())
+      .call(0,1)
+      .ok();
+      N(res, F("lua error while loading rcfile '%s'") % i->string());
+    }
+
+  lua_pushboolean(L, true);
+  return 1;
+}
+
+LUAEXT(search, regex)
+{
+  const char *re = luaL_checkstring(L, -2);
+  const char *str = luaL_checkstring(L, -1);
+  boost::cmatch what;
+
+  bool result = false;
+  try {
+    result = boost::regex_search(str, what, boost::regex(re));
+  } catch (boost::bad_pattern e) {
+    lua_pushstring(L, e.what());
+    lua_error(L);
+    return 0;
   }
+  lua_pushboolean(L, result);
+  return 1;
+}
+
+LUAEXT(gettext, )
+{
+  const char *msgid = luaL_checkstring(L, -1);
+  lua_pushstring(L, gettext(msgid));
+  return 1;
 }
 
 bool
@@ -764,47 +548,6 @@ run_file(lua_State * st, string const &filename)
     .loadfile(filename)
     .call(0,1)
     .ok();
-}
-
-void
-add_functions(lua_State * st)
-{
-  // add monotone-specific functions
-  lua_register(st, "mkstemp", monotone_mkstemp_for_lua);
-  lua_register(st, "existsonpath", monotone_existsonpath_for_lua);
-  lua_register(st, "is_executable", monotone_is_executable_for_lua);
-  lua_register(st, "make_executable", monotone_make_executable_for_lua);
-  lua_register(st, "spawn", monotone_spawn_for_lua);
-  lua_register(st, "wait", monotone_wait_for_lua);
-  lua_register(st, "kill", monotone_kill_for_lua);
-  lua_register(st, "sleep", monotone_sleep_for_lua);
-  lua_register(st, "guess_binary_file_contents", monotone_guess_binary_file_contents_for_lua);
-  lua_register(st, "include", monotone_include_for_lua);
-  lua_register(st, "includedir", monotone_includedir_for_lua);
-  lua_register(st, "gettext", monotone_gettext_for_lua);
-  lua_register(st, "parse_basic_io", monotone_parse_basic_io_for_lua);
-
-  // add regex functions:
-  lua_newtable(st);
-  lua_pushstring(st, "regex");
-  lua_pushvalue(st, -2);
-  lua_settable(st, LUA_GLOBALSINDEX);
-
-  lua_pushstring(st, "search");
-  lua_pushcfunction(st, monotone_regex_search_for_lua);
-  lua_settable(st, -3);
-
-  // add globish functions:
-  lua_newtable(st);
-  lua_pushstring(st, "globish");
-  lua_pushvalue(st, -2);
-  lua_settable(st, LUA_GLOBALSINDEX);
-
-  lua_pushstring(st, "match");
-  lua_pushcfunction(st, monotone_globish_match_for_lua);
-  lua_settable(st, -3);
-
-  lua_pop(st, 1);
 }
 
 // Local Variables:
