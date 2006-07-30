@@ -795,6 +795,12 @@ database::set_filename(system_path const & file)
   filename = file;
 }
 
+system_path
+database::get_filename()
+{
+  return filename;
+}
+
 void
 database::begin_transaction(bool exclusive)
 {

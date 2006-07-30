@@ -561,7 +561,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
 void
 content_merge_database_adaptor::get_version(file_path const & path,
                                             file_id const & ident,
-                                            file_data & dat)
+                                            file_data & dat) const
 {
   app.db.get_file_version(ident, dat);
 }
@@ -596,9 +596,12 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
 void
 content_merge_workspace_adaptor::get_version(file_path const & path,
                                              file_id const & ident,
-                                             file_data & dat)
+                                             file_data & dat) const
 {
-  if (app.db.file_version_exists(ident))
+  map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
+  if (i != temporary_store.end())
+    dat = i->second;
+  else if (app.db.file_version_exists(ident))
     app.db.get_file_version(ident, dat);
   else
     {
@@ -609,7 +612,7 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
                            F("'%s' in workspace is a directory, not a file") % path);
       read_localized_data(path, tmp, app.lua);
       calculate_ident(tmp, fid);
-      N(fid == ident,
+      E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
         % path % fid % ident);
       dat = tmp;
@@ -638,7 +641,7 @@ content_merger::get_file_encoding(file_path const & path,
                                   roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, constants::encoding_attribute, v))
+  if (ros.get_attr(path, constants::encoding_attribute, v))
     return v();
   return constants::default_encoding;
 }
@@ -648,7 +651,7 @@ content_merger::attribute_manual_merge(file_path const & path,
                                        roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, constants::manual_merge_attribute, v)
+  if (ros.get_attr(path, constants::manual_merge_attribute, v)
       && v() == "true")
     return true;
   return false; // default: enable auto merge

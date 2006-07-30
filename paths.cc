@@ -89,6 +89,10 @@ static access_tracker<system_path> working_root;
 bookkeeping_path const bookkeeping_root("_MTN");
 path_component const bookkeeping_root_component("_MTN");
 
+// this is a file_path because it does not conform to the invariant that
+// bookkeeping paths always start with the _current_ bookkeeping root.
+file_path const old_bookkeeping_root = file_path_internal("MT");
+
 void
 save_initial_path()
 {
@@ -586,14 +590,11 @@ current_root_path()
   return system_path(fs::initial_path().root_path().string());
 }
 
-
-bool
-find_and_go_to_workspace(system_path const & search_root)
+static bool
+find_bookdir(fs::path const & root, fs::path const & bookdir, 
+             fs::path & current, fs::path & removed)
 {
-  fs::path root(search_root.as_external(), fs::native);
-  fs::path bookdir(bookkeeping_root.as_external(), fs::native);
-  fs::path current(fs::initial_path());
-  fs::path removed;
+  current = fs::initial_path();
   fs::path check = current / bookdir;
 
   // check that the current directory is below the specified search root
@@ -654,6 +655,24 @@ find_and_go_to_workspace(system_path const & search_root)
       L(FL("problems with '%s' (missing '.' or '..')") % check.string());
       return false;
     }
+  return true;
+}
+
+
+bool
+find_and_go_to_workspace(system_path const & search_root)
+{
+  fs::path root(search_root.as_external(), fs::native);
+  fs::path bookdir(bookkeeping_root.as_external(), fs::native);
+  fs::path oldbookdir(old_bookkeeping_root.as_external(), fs::native);
+  fs::path current, removed;
+
+  // first look for the current name of the bookkeeping directory.
+  // if we don't find it, look for it under the old name, so that
+  // migration has a chance to work.
+  if (!find_bookdir(root, bookdir, current, removed))
+    if (!find_bookdir(root, oldbookdir, current, removed))
+      return false;
 
   working_root.set(current.native_file_string(), true);
   initial_rel_path.set(removed, true);

@@ -211,7 +211,7 @@ AUTOMATE(attributes, N_("[FILE]"))
   roster_t base, current;
   temp_node_id_source nis;
 
-  get_base_and_current_roster_shape(base, current, nis, app);
+  app.work.get_base_and_current_roster_shape(base, current, nis);
 
   if (args.size() == 1)
     {
@@ -646,9 +646,9 @@ AUTOMATE(inventory, N_(""))
   roster_t base, curr;
   inventory_map inventory;
   cset cs; MM(cs);
-  path_set unchanged, changed, missing, known, unknown, ignored;
+  path_set unchanged, changed, missing, unknown, ignored;
 
-  get_base_and_current_roster_shape(base, curr, nis, app);
+  app.work.get_base_and_current_roster_shape(base, curr, nis);
   make_cset(base, curr, cs);
 
   // The current roster (curr) has the complete set of registered nodes
@@ -670,12 +670,9 @@ AUTOMATE(inventory, N_(""))
   inventory_post_state(inventory, nodes_added,
                        inventory_item::ADDED_PATH, 0);
 
-  classify_roster_paths(curr, unchanged, changed, missing, app);
-  curr.extract_path_set(known);
-
   path_restriction mask(app);
-  file_itemizer u(app, known, unknown, ignored, mask);
-  walk_tree(file_path(), u);
+  app.work.classify_roster_paths(curr, unchanged, changed, missing);
+  app.work.find_unknown_and_ignored(mask, unknown, ignored);
 
   inventory_node_state(inventory, unchanged,
                        inventory_item::UNCHANGED_NODE);
@@ -833,10 +830,10 @@ AUTOMATE(get_revision, N_("[REVID]"))
       revision_t rev;
 
       app.require_workspace();
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-      update_current_roster_from_filesystem(new_roster, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.update_current_roster_from_filesystem(new_roster, app);
 
-      get_revision_id(old_revision_id);
+      app.work.get_revision_id(old_revision_id);
       make_revision(old_revision_id, old_roster, new_roster, rev);
 
       calculate_ident(rev, ident);
@@ -869,7 +866,7 @@ AUTOMATE(get_base_revision_id, N_(""))
   app.require_workspace();
 
   revision_id rid;
-  get_revision_id(rid);
+  app.work.get_revision_id(rid);
   output << rid << endl;
 }
 
@@ -895,10 +892,10 @@ AUTOMATE(get_current_revision_id, N_(""))
   temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  update_current_roster_from_filesystem(new_roster, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.update_current_roster_from_filesystem(new_roster, app);
 
-  get_revision_id(old_revision_id);
+  app.work.get_revision_id(old_revision_id);
   make_revision(old_revision_id, old_roster, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
@@ -962,8 +959,8 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
       revision_id old_revision_id;
 
       app.require_workspace();
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-      update_current_roster_from_filesystem(new_roster, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.update_current_roster_from_filesystem(new_roster, app);
     }
   else
     {
