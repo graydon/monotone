@@ -1,3 +1,21 @@
+2006-07-30  Zack Weinberg  <zackw@panix.com>
+
+	* work_migration.cc: New file.
+	* Makefile.am (MOST_SOURCES): Add it.
+
+	* app_state.cc (app_state::process_options): Call work.check_ws_format.
+	(app_state::create_workspace): Call work.write_ws_format.
+	* cmd_ws_commit (migrate_workspace): New NO_WORKSPACE command.
+	* paths.cc (old_bookkeeping_root): New global constant.
+	(find_bookdir): Split out of ...
+	(find_and_go_to_workspace): ...here.  If we don't have _MTN, look
+	for MT.
+	* paths.hh: Declare old_bookkeeping_root.
+	* work.hh: Declare check_ws_format, migrate_ws_format, write_ws_format.
+
+	* tests/migrate_workspace: New test.
+	* testsuite.lua: Add it.
+
 2006-07-28  Zack Weinberg  <zackw@panix.com>
 
 	* app_state.hh (app_state): Add boolean field 'have_set_key'.

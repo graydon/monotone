@@ -878,6 +878,20 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   app.work.put_revision_id(null);
 }
 
+CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
+ N_("migrate a workspace directory's metadata to the latest format, "
+    "default to current"),
+                 OPT_NONE)
+{
+  if (args.size() > 1)
+    throw usage(name);
+
+  if (args.size() == 1)
+    go_to_workspace(system_path(idx(args, 0)));
+  
+  app.work.migrate_ws_format();
+}
+
 CMD(refresh_inodeprints, N_("tree"), "", 
     N_("refresh the inodeprint cache"),
     OPT_NONE)

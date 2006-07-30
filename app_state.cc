@@ -106,6 +106,7 @@ app_state::process_options()
   if (!found_workspace)
     return;
 
+  work.check_ws_format(*this);
   work.get_ws_options(database_option, branch_option,
                       key_option, keydir_option);
 
@@ -177,6 +178,7 @@ app_state::create_workspace(system_path const & new_dir)
 
   write_options();
 
+  work.write_ws_format();
   work.blank_user_log();
 
   if (lua.hook_use_inodeprints())

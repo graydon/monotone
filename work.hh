@@ -150,6 +150,22 @@ struct workspace
                       utf8 & key_option,
                       utf8 & keydir_option);
 
+  // the "workspace format version" is a nonnegative integer value, stored
+  // in _MTN/format as an unadorned decimal number.  at any given time
+  // monotone supports actual use of only one workspace format.
+  // check_ws_format throws an error if the workspace's format number is not
+  // equal to the currently supported format number.  it is automatically
+  // called for all commands defined with CMD() (not CMD_NO_WORKSPACE()).
+  // migrate_ws_format is called only on explicit user request (mtn ws
+  // migrate) and will convert a workspace from any older format to the new
+  // one.  unlike most routines in this class, it is defined in its own
+  // file, work_migration.cc.  finally, write_ws_format is called only when
+  // a workspace is created, and simply writes the current workspace format
+  // number to _MTN/format.
+  void check_ws_format(app_state & app);
+  void migrate_ws_format();
+  void write_ws_format();
+
   // the "local dump file' is a debugging file, stored in _MTN/debug.  if we
   // crash, we save some debugging information here.
 
