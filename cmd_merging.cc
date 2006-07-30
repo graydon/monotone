@@ -243,12 +243,12 @@ CMD(update, N_("workspace"), "",
   // Now finally modify the workspace
   cset update, remaining;
   make_cset(working_roster, merged_roster, update);
-  make_cset(target_roster, merged_roster, remaining);
+  make_cset(chosen_roster, merged_roster, remaining);
 
   app.work.perform_content_update(update, wca);
 
   // small race condition here...
-  app.work.put_revision_id(r_chosen_id);
+  app.work.put_revision_id(chosen_rid);
   app.work.put_work_cset(remaining);
 
   if (!app.branch_name().empty())
