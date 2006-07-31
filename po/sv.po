@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-07-26 06:39+0200\n"
-"PO-Revision-Date: 2006-07-26 06:40+0200\n"
+"POT-Creation-Date: 2006-07-28 11:28+0200\n"
+"PO-Revision-Date: 2006-07-31 12:17+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -260,7 +260,7 @@ msgid ""
 "pick one to use for signatures by adding '-k<keyname>' to your command"
 msgstr ""
 "du har mer än en privat nyckel\n"
-"välj en att användas för signaturer genom att lägga '-k<nyckelnamn>' till "
+"välj en att användas för signaturer genom att lägga '-k<nyckelnamn>' till\n"
 "ditt kommando"
 
 #: cert.cc:478
@@ -612,7 +612,8 @@ msgstr "tar bort nyckelparet '%s' från nyckellagret"
 #, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
 msgstr ""
-"den publika eller privata nyckeln '%s' finns inte i nyckellager eller databas"
+"den publika eller privata nyckeln '%s' finns inte i nyckellager eller\n"
+"databas"
 
 #: cmd_key_cert.cc:87
 #, c-format
@@ -1983,8 +1984,8 @@ msgstr ""
 "strukturen i databasen %s matchar inte denna version av monotone\n"
 "förväntade schemat %s, fann %s\n"
 "prova '%s db migrate' för att uppgradera databasen\n"
-"(detta går inte att ångra; du vill nog ta en säkerhetskopia av databasen\n"
-"först)"
+"(detta går inte att ångra; du vill nog ta en säkerhetskopia av\n"
+"databasen först)"
 
 #: database.cc:170
 #, c-format
@@ -2030,17 +2031,17 @@ msgstr "kunde inte hitta någon databasversion i filen %s"
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
-"databasen %s är inte skapad med SQLite version 3; testa att dumpa och ladda "
-"på nytt"
+"databasen %s är inte skapad med SQLite version 3; testa att dumpa\n"
+"och ladda på nytt"
 
 #: database.cc:281 schema_migration.cc:200
 msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
 msgstr ""
-"se till att du har skrivrättigheter till databasen och katalogen den ligger "
-"i\n"
-"samt att det finns tillräckligt med ledigt utrymme på disken"
+"se till att du har skrivrättigheter till databasen och katalogen\n"
+"den ligger i samt att det finns tillräckligt med ledigt utrymme\n"
+"på disken"
 
 #: database.cc:287 schema_migration.cc:205
 #, c-format
@@ -2063,8 +2064,7 @@ msgid ""
 "s'\n"
 "cancelling database creation"
 msgstr ""
-"det finns en (kanske trasig) journalfil '%s' med samma bas som den nya "
-"databasen '%s'\n"
+"det finns en (kanske trasig) journalfil '%s' med samma bas som den nya databasen '%s'\n"
 "avbryter skapandet av databasen"
 
 #: database.cc:487
@@ -2201,7 +2201,7 @@ msgstr ""
 "[     höger] %s\n"
 "[ihopslagen] %s\n"
 
-#: file_io.cc:175 file_io.cc:182
+#: file_io.cc:176 file_io.cc:183
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -2210,7 +2210,7 @@ msgstr ""
 "kunde inte skapa katalogen '%s'\n"
 "det är en fil"
 
-#: file_io.cc:177
+#: file_io.cc:178
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -2219,17 +2219,17 @@ msgstr ""
 "kunde inte skapa katalogen '%s'\n"
 "%s"
 
-#: file_io.cc:181
+#: file_io.cc:182
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "kunde inte skapa katalogen '%s'"
 
-#: file_io.cc:194
+#: file_io.cc:195
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
 msgstr "misslyckades med att skapa katalogen '%s' för '%s'"
 
-#: file_io.cc:208
+#: file_io.cc:209
 #, c-format
 msgid ""
 "could not remove '%s'\n"
@@ -2238,109 +2238,109 @@ msgstr ""
 "kunde inte ta bort '%s'\n"
 "%s"
 
-#: file_io.cc:218
+#: file_io.cc:219
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "filen att ta bort, '%s', finns inte"
 
-#: file_io.cc:219
+#: file_io.cc:220
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "filen att ta bort, '%s', är inte en fil, den är en katalog"
 
-#: file_io.cc:227
+#: file_io.cc:228
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "katalogen att ta bort, '%s', finns inte"
 
-#: file_io.cc:228
+#: file_io.cc:229
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr "katalogen att ta bort, '%s', är inte en katalog, det är en fil"
 
-#: file_io.cc:235
+#: file_io.cc:236
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "objektet att ta bort, '%s', finns inte"
 
-#: file_io.cc:243
+#: file_io.cc:244
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "katalogen att ta bort, '%s', finns inte"
 
-#: file_io.cc:244
+#: file_io.cc:245
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "katalogen att ta bort, '%s', är en fil"
 
-#: file_io.cc:253
+#: file_io.cc:254
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "källfilen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:254
+#: file_io.cc:255
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr ""
 "källfilen att ge nytt namn, '%s', är en katalog -- programfel i monotone?"
 
-#: file_io.cc:257 file_io.cc:270
+#: file_io.cc:258 file_io.cc:271
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "målfilen, '%s', finns redan"
 
-#: file_io.cc:266
+#: file_io.cc:267
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "källkatalogen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:267
+#: file_io.cc:268
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr ""
 "källkatalogen att ge nytt namn, '%s', är en fil -- programfel i monotone?"
 
-#: file_io.cc:281
+#: file_io.cc:282
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "källsökvägen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:296
+#: file_io.cc:297
 #, c-format
 msgid "file %s does not exist"
 msgstr "filen %s finns inte"
 
-#: file_io.cc:297
+#: file_io.cc:298
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "file %s kan inte läsas som data; den är en katalog"
 
-#: file_io.cc:301
+#: file_io.cc:302
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "kan inte öppna filen %s för läsning"
 
-#: file_io.cc:340
+#: file_io.cc:341
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Kan inte läsa från stdin mer än en gång"
 
-#: file_io.cc:371
+#: file_io.cc:372
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "filen %s kan inte skrivas över som data; den är en katalog"
 
-#: file_io.cc:379
+#: file_io.cc:380
 #, c-format
 msgid "cannot open file %s for writing"
 msgstr "kan inte öppna filen %s för skrivning"
 
-#: file_io.cc:461
+#: file_io.cc:437
 #, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "fick felet %s när sökväg för %s byggdes"
 
-#: file_io.cc:500
+#: file_io.cc:530
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "ingen sådan fil eller katalog: '%s'"
