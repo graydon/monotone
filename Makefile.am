@@ -307,34 +307,19 @@ mtn_LDFLAGS =
 mtn_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
+mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua \
+		      -I$(top_srcdir)/sqlite
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
+unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) $(BOOST_UNITTEST) \
+		   libplatform.a $(LIBICONV) $(LIBINTL)
 
 tester_LDFLAGS = 
 tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
-
-# conditionals from configury
-
-if STATIC_BOOST
-  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \
-              @BOOST_LIBDIR@/libboost_date_time$(BOOST_SUFFIX).a \
-              @BOOST_LIBDIR@/libboost_regex$(BOOST_SUFFIX).a
-  mtn_LDADD = lib3rdparty.a $(BOOSTLIBS)
-  unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-                     @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
-  tester_LDADD = lib3rdparty.a $(BOOSTLIBS)
-else
-  mtn_LDADD = lib3rdparty.a
-  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
-  tester_LDADD = lib3rdparty.a
-endif
-
-mtn_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
-unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
-tester_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+tester_LDADD = lib3rdparty.a libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)

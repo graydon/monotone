@@ -140,9 +140,10 @@ EOF
       rm -f conftest.*
     fi
     if test -n "$ac_cv_prog_cxx_warnings"; then
-      CXXFLAGS="$CXXFLAGS $ac_cv_prog_cxx_warnings"
-    else
       ac_cv_prog_cxx_warnings="unknown"
     fi
   ])
-])dnl
+  if test x"$ac_cv_prog_cxx_warnings" != xunknown; then
+    CXXFLAGS="$CXXFLAGS $ac_cv_prog_cxx_warnings"
+  fi
+])

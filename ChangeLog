@@ -11,6 +11,15 @@
 	* m4/externtemplate.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
 	* m4/typeof.m4: Use AC_LANG_SOURCE where appropriate.
 
+	* m4/prog_cxx_warnings.m4: Set CXXFLAGS outside the AC_CACHE_CHECK.
+	* m4/boost.m4: New file.  All boost-related logic goes here now.
+	Cache results of library searches; simplify handling of
+	--enable-static-boost.
+	* m4/tr1unorderedmap.m4: New file with tests for tr1::unordered_*.
+	* configure.ac: Use the macros from the above new files.
+	* Makefile.am: Conditional on STATIC_BOOST is no longer	necessary.
+	Wrap some lines.
+
 2006-07-31  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Reformat some messages so they fit 80 columns better.
