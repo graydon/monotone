@@ -1,3 +1,8 @@
+2006-08-02  Zack Weinberg  <zackw@panix.com>
+
+	* acinclude.m4: Rename to m4/inaddrnone.m4; update macro to
+	autoconf 2.5x conventions.
+
 2006-07-31  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Reformat some messages so they fit 80 columns better.
