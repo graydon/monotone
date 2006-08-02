@@ -10,10 +10,10 @@ AC_DEFUN([AC_CXX_GNUCXX_HASHMAP],[
 AC_CACHE_CHECK(whether the compiler supports __gnu_cxx::hash_map,
 ac_cv_cxx_gnucxx_hashmap,
 [AC_LANG_PUSH([C++])
- AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <ext/hash_map>
 using __gnu_cxx::hash_map;
-], [])],
+])],
    [ac_cv_cxx_gnucxx_hashmap=yes],
    [ac_cv_cxx_gnucxx_hashmap=no])
  AC_LANG_POP([C++])

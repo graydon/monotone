@@ -11,10 +11,10 @@ AC_DEFUN([AC_CXX_EXTERN_TEMPLATE],[
 AC_CACHE_CHECK(whether the compiler supports extern template,
 ac_cv_cxx_extern_template,
 [AC_LANG_PUSH([C++])
- AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([
   template <typename T> void foo(T); 
   extern template void foo<int>(int);
-], [])],
+])],
   [ac_cv_cxx_extern_template=yes],
   [ac_cv_cxx_extern_template=no])
  AC_LANG_POP([C++])

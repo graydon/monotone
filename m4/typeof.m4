@@ -10,9 +10,7 @@ AC_DEFUN([AC_CXX_TYPEOF],[
 AC_CACHE_CHECK(whether the compiler supports typeof,
 ac_cv_cxx_typeof,
 [AC_LANG_PUSH([C++])
- AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-  int x; typeof (x) y[6];
-], [])],
+ AC_COMPILE_IFELSE([AC_LANG_SOURCE([[ int x; typeof (x) y[6]; ]])],
   [ac_cv_cxx_typeof=yes],
   [ac_cv_cxx_typeof=no])
  AC_LANG_POP([C++])

@@ -8,6 +8,9 @@
 	* m4/fexception.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
 	* m4/typeof.m4: Update to autoconf 2.5x conventions.
 
+	* m4/externtemplate.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
+	* m4/typeof.m4: Use AC_LANG_SOURCE where appropriate.
+
 2006-07-31  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Reformat some messages so they fit 80 columns better.
