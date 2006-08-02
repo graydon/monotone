@@ -20,6 +20,12 @@
 	* Makefile.am: Conditional on STATIC_BOOST is no longer	necessary.
 	Wrap some lines.
 
+	* m4/localeworks.m4, m4/netxx.m4, m4/pch.m4, m4/popt.m4, m4/sqlite.m4
+	* m4/syncwithstdio.m4, m4/tempstatconst.m4, m4/xgettextflag.m4:
+	New files.
+	* configure.ac: Use the macros defined in the above files instead
+	of in-line code.
+
 2006-07-31  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Reformat some messages so they fit 80 columns better.
