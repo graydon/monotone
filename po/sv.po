@@ -145,7 +145,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-02 12:58-0700\n"
+"POT-Creation-Date: 2006-07-28 11:28+0200\n"
 "PO-Revision-Date: 2006-07-31 12:17+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
@@ -2064,8 +2064,7 @@ msgid ""
 "s'\n"
 "cancelling database creation"
 msgstr ""
-"det finns en (kanske trasig) journalfil '%s' med samma bas som den nya "
-"databasen '%s'\n"
+"det finns en (kanske trasig) journalfil '%s' med samma bas som den nya databasen '%s'\n"
 "avbryter skapandet av databasen"
 
 #: database.cc:487
@@ -3441,11 +3440,11 @@ msgstr "publik och privat nyckel för %s stämmer inte överens"
 msgid "moving key '%s' from database to %s"
 msgstr "flyttar nyckeln '%s' från databasen till %s"
 
-#: std_hooks.lua:37
+#: std_hooks.lua:31
 msgid "Press enter"
 msgstr "Tryck på Enter"
 
-#: std_hooks.lua:39
+#: std_hooks.lua:33
 msgid "Press enter when the subprocess has completed"
 msgstr "Tryck [Retur] när underprocessen är klar"
 
