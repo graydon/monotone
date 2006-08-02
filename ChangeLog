@@ -1,3 +1,12 @@
+2006-08-01  Zack Weinberg  <zackw@panix.com>
+
+	Begin "full revision in _MTN" transition.  Not complete as is.
+	* work_migration.cc: Bump current_workspace_format to 2 and
+	first_version_supporting_format to 0.29.
+	(migrate_1_to_2): New function.
+	(workspace::migrate_ws_format): Call it.  Add more commentary and
+	an invariant check.
+
 2006-07-30  Zack Weinberg  <zackw@panix.com>
 
 	* work_migration.cc: New file.

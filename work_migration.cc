@@ -28,11 +28,11 @@ using boost::lexical_cast;
 // of exactly one format, the "current" format; it also supports 'migrating'
 // from all previous formats.  The current metadata format is recorded in
 // this constant:
-static const unsigned int current_workspace_format = 1;
+static const unsigned int current_workspace_format = 2;
 
 // This is the oldest released version of monotone that supports the current
 // format.
-static const char first_version_supporting_current_format[] = "0.26";
+static const char first_version_supporting_current_format[] = "0.29";
 
 // In a workspace, the metadata format's revision number is, notionally,
 // stored in the file _MTN/format.  However, this file only appears in
@@ -127,7 +127,9 @@ workspace::check_ws_format(app_state & app)
 
 
 // Workspace migration is done incrementally.  The functions defined below
-// each perform one step.
+// each perform one step.  Note that they must access bookkeeping directory
+// files directly, not via work.cc APIs, as those APIs expect a workspace in
+// the current format.
 
 static void
 migrate_0_to_1()
@@ -148,23 +150,109 @@ migrate_0_to_1()
       "again.  we apologize for the inconvenience."));
 }
 
-// This function is the public face of the migrate_X_to_Y functions.
+static void
+migrate_1_to_2(database & db)
+{
+  // In format 1, the parent revision ID of the checkout is stored bare in a
+  // file named _MTN/revision, and any directory tree operations are in cset
+  // format in _MTN/work, which does not exist if that cset is empty (no
+  // changes or only content changes).  In format 2, _MTN/revision contains
+  // a serialized revision (qua revision.hh), carrying both pieces of
+  // information, and _MTN/work does not exist; also, there may be more than
+  // one parent revision, but we do not have to worry about that here.
+
+  bookkeeping_path rev_path = bookkeeping_root / "revision";
+  data base_rev_data; MM(base_rev_data);
+  try 
+    {
+      read_data(rev_path, base_rev_data);
+    }
+  catch (exception & e)
+    {
+      E(false, F("workspace is corrupt: reading %s: %s")
+        % rev_path % e.what());
+    }
+  revision_id base_rid(remove_ws(base_rev_data())); 
+  MM(base_rid);
+
+  roster_t base_ros, current_ros;
+  MM(base_ros);
+  MM(current_ros);
+  
+  marking_map base_mm;
+  db.get_roster(base_rid, base_ros, base_mm);
+  current_ros = base_ros;
+
+  bookkeeping_path workcs_path = bookkeeping_root / "work";
+  bool delete_workcs = false;
+  if (file_exists(workcs_path))
+    {
+      delete_workcs = true;
+      data workcs_data; MM(workcs_data);
+      try 
+        {
+          read_data(workcs_path, workcs_data);
+        }
+      catch (exception & e)
+        {
+          E(false, F("workspace is corrupt: reading %s: %s")
+            % workcs_path % e.what());
+        }
+
+      cset workcs; 
+      MM(workcs);
+      read_cset(workcs_data, workcs);
+      temp_node_id_source nis;
+      editable_roster_base er(current_ros, nis);
+      workcs.apply_to(er);
+    }
+  else
+    require_path_is_nonexistent(work_path,
+                                F("workspace is corrupt: "
+                                  "%s exists but is not a regular file")
+                                % work_path);
+
+  revision_t rev;
+  MM(rev);
+  make_revision(base_rid, base_ros, current_ros, rev);
+  data rev_data;
+  write_revision(rev, rev_data);
+  write_data(rev_path, rev_data);
+  if (delete_workcs)
+    delete_file(workcs_path);
+}
+
+// This function is the public face of the migrate_X_to_X+1 functions.
 
 void
 workspace::migrate_ws_format()
 {
   unsigned int format = get_ws_format();
 
+  // When adding new migrations, note the organization of the first block of
+  // case entries in this switch statement.  There are entries each of the
+  // numbers 0 ... C-1 (where C is current_workspace_format); each calls the
+  // migrate_<n>_to_<n+1> function, AND DROPS THROUGH.  Thus, when we
+  // encounter a workspace in format K < C, the migrate_K_to_K+1,
+  // migrate_K+1_to_K+2, ..., migrate_C-1_to_C functions will all be called.
+  // The last entry drops through to the write_ws_format() line.
+
   switch (format)
     {
     case 0: migrate_0_to_1();
+    case 1: migrate_1_to_2(db);
+
+      // We are now in the current format.
+      write_ws_format();
       break;
 
     case current_workspace_format: 
-      P(F("this workspace is in the current format, no migration is necessary."));
+      P(F("this workspace is in the current format, "
+          "no migration is necessary."));
       break;
 
-    default: 
+    default:
+      I(format > current_workspace_format);
       // keep this message in sync with the copy in check_ws_format
       E(false,
         F("this version of monotone only understands workspace metadata\n"
@@ -172,9 +260,6 @@ workspace::migrate_ws_format()
           "you need a newer version of monotone to use this workspace.") 
         % current_workspace_format % format);
     }
-
-  // We are now in the current format.
-  write_ws_format();
 }
 
 // Local Variables:
