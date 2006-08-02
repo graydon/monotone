@@ -12,17 +12,14 @@ dnl @license MIT/X
 AC_DEFUN([AC_CC_FEXCEPTIONS],[
 AC_CACHE_CHECK(whether the compiler knows -fexception,
 ac_cv_cc_fexceptions,
-[
- AC_LANG_SAVE
- AC_LANG_C
- 
+[AC_LANG_PUSH([C])
  OLDCFLAGS="$CFLAGS"
  CFLAGS="$OLDCFLAGS -fexceptions"
- AC_TRY_COMPILE(,(void)1,
-                ac_cv_cc_fexceptions=yes,
-                ac_cv_cc_fexceptions=no)
+ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [(void)1])],
+   [ac_cv_cc_fexceptions=yes],
+   [ac_cv_cc_fexceptions=no])
  CFLAGS="$OLDCFLAGS"
- AC_LANG_RESTORE
+ AC_LANG_POP([C])
 ])
 if test "$ac_cv_cc_fexceptions" = yes; then
   CFLAGS="$CFLAGS -fexceptions"
