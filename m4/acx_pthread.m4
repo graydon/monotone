@@ -48,7 +48,7 @@ dnl @license GPLWithACException
 
 AC_DEFUN([ACX_PTHREAD], [
 AC_REQUIRE([AC_CANONICAL_HOST])
-AC_LANG_PUSH([C])
+AC_LANG_ASSERT([C])
 acx_pthread_ok=no
 
 # We used to check for pthread.h first, but this fails if pthread.h
@@ -238,5 +238,4 @@ else
         acx_pthread_ok=no
         $2
 fi
-AC_LANG_POP([C])
 ])dnl ACX_PTHREAD

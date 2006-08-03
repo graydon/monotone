@@ -139,7 +139,7 @@ EOF
       fi
       rm -f conftest.*
     fi
-    if test -n "$ac_cv_prog_cxx_warnings"; then
+    if test -z "$ac_cv_prog_cxx_warnings"; then
       ac_cv_prog_cxx_warnings="unknown"
     fi
   ])

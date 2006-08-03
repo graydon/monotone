@@ -3,7 +3,8 @@
 # serious bugs that we can't live with.  Maybe some time in the future...
 # The following was simply taken from the configure.in that comes with popt.
 AC_DEFUN([MTN_POPT_DEPENDENCIES],
-[AC_CHECK_HEADERS([alloca.h float.h libintl.h mcheck.h])
+[AC_CHECK_HEADERS([alloca.h float.h libintl.h mcheck.h],,,
+		  [AC_INCLUDES_DEFAULT()])
 AC_MSG_CHECKING(for /usr/ucblib in LIBS)
 if test -d /usr/ucblib ; then
 	if test "$build" = "mips-sni-sysv4" ; then

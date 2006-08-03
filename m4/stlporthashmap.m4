@@ -7,16 +7,15 @@ dnl @version 2005-07-18
 dnl @license AllPermissive
 
 AC_DEFUN([AC_CXX_STLPORT_HASHMAP],[
+AC_LANG_ASSERT([C++])
 AC_CACHE_CHECK(whether the compiler supports std::hash_map,
 ac_cv_cxx_stlport_hashmap,
-[AC_LANG_PUSH([C++])
- AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #include <hash_map>
 using std::hash_map;
 ])],
    [ac_cv_cxx_stlport_hashmap=yes],
    [ac_cv_cxx_stlport_hashmap=no])
- AC_LANG_POP([C++])
 ])
 if test "$ac_cv_cxx_stlport_hashmap" = yes; then
   AC_DEFINE(HAVE_STLPORT_HASHMAP, 1,

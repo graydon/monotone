@@ -26,6 +26,15 @@
 	* configure.ac: Use the macros defined in the above files instead
 	of in-line code.
 
+	* configure.ac: Reorganize tests for ease of reading and to ensure
+	that all tests are performed only once.
+	* m4/acx_pthread.m4, m4/externtemplate.m4, m4/fexception.m4
+	* m4/gnucxxhashmap.m4, m4/stlporthashmap.m4, mtl/tempstatconst.m4
+	* m4/tr1unorderedmap.m4, m4/typeof.m4: Use AC_LANG_ASSERT instead
+	of AC_LANG_PUSH/POP, per autoconf manual's recommendation.
+	* m4/popt.m4: Avoid double tests for headers.
+	* m4/prog_cxx_warnings.m4: Fix typo in last change.
+
 2006-07-31  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Reformat some messages so they fit 80 columns better.

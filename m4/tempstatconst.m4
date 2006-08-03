@@ -1,6 +1,6 @@
 # check for the obnoxious gcc 4.1.[01] template static data bug
 # (see http://gcc.gnu.org/PR28016)
-AC_DEFUN([AC_PROG_CXX_TEMPLATE_STATIC_CONST_BUG],
+AC_DEFUN([AC_CXX_TEMPLATE_STATIC_CONST_BUG],
 [AC_LANG_ASSERT([C++])
  code='
  template<class T> struct S { static const bool B; };
