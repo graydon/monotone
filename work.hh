@@ -82,18 +82,20 @@ struct workspace
 
   void update_any_attrs();
 
-  // the "work" file contains the current cset representing uncommitted
-  // add/drop/rename operations (not deltas)
+  // transitional: the write half of this is exposed, the read half isn't.
+  // write out a new (partial) revision describing the current workspace;
+  // the important pieces of this are the base revision id and the "shape"
+  // changeset (representing tree rearrangements).
+  void put_work_rev(revision_t const & rev);
 
+  // the current cset representing uncommitted add/drop/rename operations
+  // (not deltas)
   void get_work_cset(cset & w);
-  void remove_work_cset();
-  void put_work_cset(cset & w);
 
-  // the "revision" file contains the base revision id that the current working
-  // copy was checked out from
-
+  // the base revision id that the current working copy was checked out from
   void get_revision_id(revision_id & c);
-  void put_revision_id(revision_id const & rev);
+
+  // structures derived from the above
   void get_base_revision(revision_id & rid, roster_t & ros);
   void get_base_revision(revision_id & rid, roster_t & ros, marking_map & mm);
   void get_base_roster(roster_t & ros);

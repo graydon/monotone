@@ -44,16 +44,8 @@ static string const attr_file_name(".mt-attrs");
 static string const inodeprints_file_name("inodeprints");
 static string const local_dump_file_name("debug");
 static string const options_file_name("options");
-static string const work_file_name("work");
 static string const user_log_file_name("log");
 static string const revision_file_name("revision");
-
-static void
-get_work_path(bookkeeping_path & w_path)
-{
-  w_path = bookkeeping_root / work_file_name;
-  L(FL("work path is %s") % w_path);
-}
 
 static void
 get_revision_path(bookkeeping_path & m_path)
@@ -77,90 +69,68 @@ get_inodeprints_path(bookkeeping_path & ip_path)
 }
 
 // routines for manipulating the bookkeeping directory
+
+// revision file contains a partial revision describing the workspace
+static void
+get_work_rev(revision_t & rev)
+{
+  bookkeeping_path rev_path;
+  get_revision_path(rev_path);
+  data rev_data;
+  MM(rev_data);
+  try
+    {
+      read_data(rev_path, rev_data);
+    }
+  catch(exception & e)
+    {
+      E(false, F("workspace is corrupt: reading %s: %s")
+        % rev_path % e.what());
+    }
+
+  read_revision(rev_data, rev);
+  // Currently the revision must have only one ancestor.
+  I(rev.edges.size() == 1);
+}
+
+void
+workspace::put_work_rev(revision_t const & rev)
+{
+  // Currently the revision must have only one ancestor.
+  MM(rev);
+  I(rev.edges.size() == 1);
+  rev.check_sane();
+
+  data rev_data;
+  write_revision(rev, rev_data);
+
+  bookkeeping_path rev_path;
+  get_revision_path(rev_path);
+  write_data(rev_path, rev_data);
+}
+
+
 // work file containing rearrangement from uncommitted adds/drops/renames
 void
 workspace::get_work_cset(cset & w)
 {
-  bookkeeping_path w_path;
-  get_work_path(w_path);
-  if (path_exists(w_path))
-    {
-      L(FL("checking for un-committed work file %s") % w_path);
-      data w_data;
-      read_data(w_path, w_data);
-      read_cset(w_data, w);
-      L(FL("read cset from %s") % w_path);
-    }
-  else
-    {
-      L(FL("no un-committed work file %s") % w_path);
-    }
+  revision_t rev;
+  get_work_rev(rev);
+
+  w = edge_changes(rev.edges.begin());
 }
 
-void
-workspace::remove_work_cset()
-{
-  bookkeeping_path w_path;
-  get_work_path(w_path);
-  if (file_exists(w_path))
-    delete_file(w_path);
-}
-
-void 
-workspace::put_work_cset(cset & w)
-{
-  bookkeeping_path w_path;
-  get_work_path(w_path);
-
-  if (w.empty())
-    {
-      if (file_exists(w_path))
-        delete_file(w_path);
-    }
-  else
-    {
-      data w_data;
-      write_cset(w, w_data);
-      write_data(w_path, w_data);
-    }
-}
-
-// revision file name
-
+// base revision ID
 void
 workspace::get_revision_id(revision_id & c)
 {
-  c = revision_id();
-  bookkeeping_path c_path;
-  get_revision_path(c_path);
-
-  require_path_is_file(c_path,
-                       F("workspace is corrupt: %s does not exist") % c_path,
-                       F("workspace is corrupt: %s is a directory") % c_path);
-
-  data c_data;
-  L(FL("loading revision id from %s") % c_path);
-  try
-    {
-      read_data(c_path, c_data);
-    }
-  catch(exception &)
-    {
-      N(false, F("Problem with workspace: %s is unreadable") % c_path);
-    }
-  c = revision_id(remove_ws(c_data()));
+  revision_t rev;
+  get_work_rev(rev);
+  c = edge_old_revision(rev.edges.begin());
 }
 
-void
-workspace::put_revision_id(revision_id const & rev)
-{
-  bookkeeping_path c_path;
-  get_revision_path(c_path);
-  L(FL("writing revision id to %s") % c_path);
-  data c_data(rev.inner()() + "\n");
-  write_data(c_path, c_data);
-}
-
+// structures derived from the work revision, the database, and possibly
+// the workspace
 void
 workspace::get_base_revision(revision_id & rid,
                              roster_t & ros,
@@ -1085,9 +1055,12 @@ workspace::perform_additions(path_set const & paths, bool recursive)
         }
     }
 
-  cset new_work;
-  make_cset(base_roster, new_roster, new_work);
-  put_work_cset(new_work);
+  revision_id base_rev;
+  get_revision_id(base_rev);
+
+  revision_t new_work;
+  make_revision(base_rev, base_roster, new_roster, new_work);
+  put_work_rev(new_work);
   update_any_attrs();
 }
 
@@ -1154,9 +1127,12 @@ workspace::perform_deletions(path_set const & paths,
         }
     }
 
-  cset new_work;
-  make_cset(base_roster, new_roster, new_work);
-  put_work_cset(new_work);
+  revision_id base_rev;
+  get_revision_id(base_rev);
+
+  revision_t new_work;
+  make_revision(base_rev, base_roster, new_roster, new_work);
+  put_work_rev(new_work);
   update_any_attrs();
 }
 
@@ -1233,9 +1209,12 @@ workspace::perform_rename(set<file_path> const & src_paths,
         % file_path(i->second));
     }
 
-  cset new_work;
-  make_cset(base_roster, new_roster, new_work);
-  put_work_cset(new_work);
+  revision_id base_rev;
+  get_revision_id(base_rev);
+
+  revision_t new_work;
+  make_revision(base_rev, base_roster, new_roster, new_work);
+  put_work_rev(new_work);
 
   if (execute)
     {
@@ -1320,9 +1299,12 @@ workspace::perform_pivot_root(file_path const & new_root,
     cs.apply_to(e);
   }
   {
-    cset new_work;
-    make_cset(base_roster, new_roster, new_work);
-    put_work_cset(new_work);
+    revision_id base_rev;
+    get_revision_id(base_rev);
+
+    revision_t new_work;
+    make_revision(base_rev, base_roster, new_roster, new_work);
+    put_work_rev(new_work);
   }
   if (execute)
     {

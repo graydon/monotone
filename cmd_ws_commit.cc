@@ -160,8 +160,13 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   // been rewritten above but this may leave rename targets laying
   // around.
 
+  revision_t remaining;
+  revision_id base;
+  app.work.get_revision_id(base);
+  make_revision(base, old_roster, excluded, remaining);
+
   // Race.
-  app.work.put_work_cset(excluded);
+  app.work.put_work_rev(remaining);
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints(app);
 }
@@ -330,7 +335,7 @@ CMD(status, N_("informative"), N_("[PATH]..."),
     N_("show status of workspace"),
     OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
 {
-  roster_t old_roster, new_roster, restricted_roster;
+  roster_t old_roster, new_roster;
   cset included, excluded;
   revision_id old_rev_id;
   revision_t rev;
@@ -349,12 +354,8 @@ CMD(status, N_("informative"), N_("[PATH]..."),
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
-  restricted_roster = old_roster;
-  editable_roster_base er(restricted_roster, nis);
-  included.apply_to(er);
-
   app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, restricted_roster, rev);
+  make_revision(old_rev_id, old_roster, included, rev);
 
   if (global_sanity.brief)
     {
@@ -479,10 +480,12 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   roster_t ros;
   marking_map mm;
 
-  app.work.put_revision_id(ident);
-
   L(FL("checking out revision %s to directory %s") % ident % dir);
   app.db.get_roster(ident, ros, mm);
+
+  revision_t workrev;
+  make_revision(ident, ros, ros, workrev);
+  app.work.put_work_rev(workrev);
 
   node_map const & nodes = ros.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); 
@@ -512,7 +515,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
           write_localized_data(path, dat.inner(), app.lua);
         }
     }
-  app.work.remove_work_cset();
+
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints(app);
   guard.commit();
@@ -574,10 +577,12 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           else
             throw usage(name);
         }
+      revision_id base;
+      app.work.get_revision_id(base);
 
-      cset new_work;
-      make_cset(old_roster, new_roster, new_work);
-      app.work.put_work_cset(new_work);
+      revision_t new_work;
+      make_revision(base, old_roster, new_roster, new_work);
+      app.work.put_work_rev(new_work);
       app.work.update_any_attrs();
     }
   else if (subcmd == "get")
@@ -627,7 +632,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   bool log_message_given;
   revision_t restricted_rev;
   revision_id old_rev_id, restricted_rev_id;
-  roster_t old_roster, new_roster, restricted_roster;
+  roster_t old_roster, new_roster;
   temp_node_id_source nis;
   cset included, excluded;
 
@@ -644,13 +649,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
-  restricted_roster = old_roster;
-  editable_roster_base er(restricted_roster, nis);
-  included.apply_to(er);
-
   app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, 
-                    restricted_roster, restricted_rev);
+  make_revision(old_rev_id, old_roster, included, restricted_rev);
 
   calculate_ident(restricted_rev, restricted_rev_id);
 
@@ -815,9 +815,17 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     guard.commit();
   }
 
+  // the work revision is now whatever changes remain on top of the revision
+  // we just checked in.  is there a better way to get the base roster than
+  // by reading it back out of the database?
+  revision_t remaining;
+  roster_t new_base_roster;
+  marking_map mm;
+  app.db.get_roster(restricted_rev_id, new_base_roster, mm);
+  make_revision(restricted_rev_id, new_base_roster, excluded, remaining);
+  
   // small race condition here...
-  app.work.put_work_cset(excluded);
-  app.work.put_revision_id(restricted_rev_id);
+  app.work.put_work_rev(remaining);
   P(F("committed revision %s") % restricted_rev_id);
 
   app.work.blank_user_log();
@@ -874,8 +882,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
     dir = ".";
 
   app.create_workspace(dir);
-  revision_id null;
-  app.work.put_revision_id(null);
+  app.work.put_work_rev(revision_t());
 }
 
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),

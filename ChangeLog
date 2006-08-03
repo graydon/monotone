@@ -1,6 +1,18 @@
 2006-08-01  Zack Weinberg  <zackw@panix.com>
 
-	Begin "full revision in _MTN" transition.  Not complete as is.
+	Begin "full revision in _MTN" transition.  Compiles, doesn't work.
+
+	* work.cc (get_work_rev, workspace::put_work_rev): New functions.
+	(get_work_path, workspace::remove_work_cset, workspace::put_work_cset)
+	(workspace::put_revision_id): Delete.
+	All callers changed.
+	* work.hh: Update to match.
+	* revision.cc, revision.hh (make_revision): Add an overload that
+	takes a base roster and a cset.
+	* cmd_merging.cc, cmd_ws_commit.cc: Use put_work_rev and the
+	csetful make_revision if appropriate.
+	* work_migration.cc: Fix typos and include some missing headers.
+
 	* work_migration.cc: Bump current_workspace_format to 2 and
 	first_version_supporting_format to 0.29.
 	(migrate_1_to_2): New function.
@@ -28,7 +40,7 @@
 2006-07-28  Zack Weinberg  <zackw@panix.com>
 
 	* app_state.hh (app_state): Add boolean field 'have_set_key'.
-	* app_state.cc (app_state constructor): Initialize have_set_key 
+	* app_state.cc (app_state constructor): Initialize have_set_key
 	to false.
 	(app_state::set_signing_key): Set have_set_key to true.
 	(app_state::process_options): Do not allow workspace options to
@@ -116,7 +128,7 @@
 2006-07-27  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc: Reorganize.  No semantic changes.
-	
+
 2006-07-27  Zack Weinberg  <zackw@panix.com>
 
 	* work.hh: Don't declare struct editable_working_tree.

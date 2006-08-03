@@ -241,15 +241,15 @@ CMD(update, N_("workspace"), "",
   merged_roster.check_sane(true);
 
   // Now finally modify the workspace
-  cset update, remaining;
+  cset update;
   make_cset(working_roster, merged_roster, update);
-  make_cset(chosen_roster, merged_roster, remaining);
-
   app.work.perform_content_update(update, wca);
 
+  revision_t remaining;
+  make_revision(chosen_rid, chosen_roster, merged_roster, remaining);
+
   // small race condition here...
-  app.work.put_revision_id(chosen_rid);
-  app.work.put_work_cset(remaining);
+  app.work.put_work_rev(remaining);
 
   if (!app.branch_name().empty())
     {
@@ -775,19 +775,22 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   merged_roster.check_sane(true);
 
   // we apply the working to merged cset to the workspace 
-  // and write the cset from the base to merged roster in _MTN/work
-  cset update, remaining;
+  cset update;
   MM(update);
-  MM(remaining);
   make_cset(working_roster, merged_roster, update);
-  make_cset(base_roster, merged_roster, remaining);
-
   app.work.perform_content_update(update, wca);
 
-  // small race condition here...
   P(F("applied changes to workspace"));
 
-  app.work.put_work_cset(remaining);
+  // and record any remaining changes in _MTN/revision
+  revision_id base_id;
+  revision_t remaining;
+  MM(remaining);
+  app.work.get_revision_id(base_id);
+  make_revision(base_id, base_roster, merged_roster, remaining);
+
+  // small race condition here...
+  app.work.put_work_rev(remaining);
   app.work.update_any_attrs();
   
   // add a note to the user log file about what we did

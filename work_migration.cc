@@ -10,10 +10,13 @@
 #include "app_state.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
+#include "revision.hh"
 
 #include <boost/lexical_cast.hpp>
+#include <exception>
 
 using std::string;
+using std::exception;
 using boost::lexical_cast;
 
 // This file's primary entry point is workspace::migrate_ws_format.  It is
@@ -207,10 +210,10 @@ migrate_1_to_2(database & db)
       workcs.apply_to(er);
     }
   else
-    require_path_is_nonexistent(work_path,
+    require_path_is_nonexistent(workcs_path,
                                 F("workspace is corrupt: "
                                   "%s exists but is not a regular file")
-                                % work_path);
+                                % workcs_path);
 
   revision_t rev;
   MM(rev);
