@@ -1,3 +1,8 @@
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
+	* inodeprints.cc: just silently skip (but L()) inodeprint files
+	if the format version is unknown.
+
 2006-07-31  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Reformat some messages so they fit 80 columns better.
