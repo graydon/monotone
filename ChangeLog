@@ -1,5 +1,11 @@
 2006-08-03  Matt Johnston  <matt@ucc.asn.au>
 
+	* cmd_diff_log.cc: don't include revisions with deleted files
+	when doing "log FILE".
+	* tests/log_with_restriction/: a test
+
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
 	* inodeprints.cc: just silently skip (but L()) inodeprint files
 	if the format version is unknown.
 

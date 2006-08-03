@@ -645,12 +645,10 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)
                 {
-                  if (!roster.has_node(*n))
-                    {
-                      // include all deleted nodes
-                      print_this = true;
-                    }
-                  else if (mask.includes(roster, *n))
+                  // a deleted node will be "modified" but won't
+                  // exist in the result. 
+                  // we don't want to print them.
+                  if (roster.has_node(*n) && mask.includes(roster, *n))
                     {
                       print_this = true;
                       if (app.diffs)
