@@ -6641,6 +6641,87 @@ message to stderr and exits with status 1.
 
 @end table
 
+@item mtn automate attributes @var{file}
+
+@table @strong
+@item Arguments:
+
+The argument @var{file} determines which file's attributes should be printed.
+
+@item Added in:
+
+3.0
+
+@item Purpose:
+
+Prints all attributes of the given file and the attribute states.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+ attr "foo" "bar"
+state "added"
+
+ attr "baz" "bat"
+state "dropped"
+
+ attr "foobar" "foobat"
+state "unchanged"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each attribute of the given file.
+
+All stanzas are formatted by basic_io. Stanzas are separated 
+by a blank line and ordered by attribute name. Values will be 
+escaped, '\' to '\\' and '"' to '\"'.
+
+Each attribute stanza also contains another entry which tells the status
+of attribute. This entry can have one of the following four values:
+
+'added': the attribute has just been added to the file
+
+'dropped': the attribute has just been dropped from the file
+
+'unchanged': the attribute has not been changed since the last revision
+
+'changed': the attribute has been changed since the last revision
+
+The status 'changed' can come up if an attribute foo has been dropped and
+added afterwards with another value, like
+
+@verbatim
+# foo has the value "bar"
+$ mtn attr drop foo ; mtn attr set foo baz
+@end verbatim
+
+If an attribute has been dropped, the output will still return the previously
+set value of the dropped attribute for convenience (obviously this is no longer
+recorded in the current workspace).
+
+The complete format:
+
+@verbatim
+'format_version'
+      used in case this format ever needs to change.
+      format: ('format_version', the string "1")
+      occurs: exactly once
+'attr':
+      represents an attribute.
+      format: ('attr', key, value), ('state', [unchanged|changed|added|dropped])
+      occurs: zero or more times
+@end verbatim
+
+@item Error conditions:
+
+If the file specified is unknown to the current workspace prints an error
+message to stderr and exits with status 1.
+
+@end table
+
 @item mtn automate get_file @var{id}
 
 @table @strong

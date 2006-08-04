@@ -3,6 +3,24 @@
 	* std_hooks.lua: make ssh://host/~/path/file.mtn and
 	ssh://host/~user/path/file.mtn work for paths relative to homedirs.
 
+2006-08-04  Thomas Keller  <me@thomaskeller.biz>
+
+	* automate.cc: reworked `automate attributes`, this now
+	  outputs basic_io and shows the state of each attribute
+          (added, dropped, changed or unchanged) and also lists
+	  those attributes which have been dropped obviously
+	* monotone.texi: updated the docs for that change
+	* cmd_automate.cc: bumped interface_version to 3.0 since
+	  the new automate attributes is incompatible with the
+	  previous one
+	* tests/automate_attributes/__driver__.lua: updated test
+	* roster.cc: moved syms namespace ...
+	* basic_io.hh: ... here and updated the references in the
+	  former file. This is a first start for a more generic
+	  symbols namespace which should lead to a more consistent
+	  output of the different automate commands which make use
+	  of basic_io
+
 2006-08-03  Matt Johnston  <matt@ucc.asn.au>
 
 	* cmd_diff_log.cc: don't include revisions with deleted files

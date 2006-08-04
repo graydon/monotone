@@ -45,7 +45,6 @@ using std::vector;
 
 using boost::lexical_cast;
 
-
 ///////////////////////////////////////////////////////////////////
 
 template <> void
@@ -2373,30 +2372,6 @@ roster_t::extract_path_set(path_set & paths) const
 //   I/O routines
 ////////////////////////////////////////////////////////////////////
 
-
-namespace
-{
-  namespace syms
-  {
-    // roster symbols
-    symbol const format_version("format_version");
-    symbol const dir("dir");
-    symbol const file("file");
-    symbol const content("content");
-    symbol const attr("attr");
-
-    // 'local' roster and marking symbols
-    symbol const ident("ident");
-    symbol const birth("birth");
-    symbol const dormant_attr("dormant_attr");
-
-    symbol const path_mark("path_mark");
-    symbol const content_mark("content_mark");
-    symbol const attr_mark("attr_mark");
-  }
-}
-
-
 static void
 push_marking(basic_io::stanza & st,
              node_t curr,
@@ -2404,17 +2379,17 @@ push_marking(basic_io::stanza & st,
 {
 
   I(!null_id(mark.birth_revision));
-  st.push_hex_pair(syms::birth, mark.birth_revision.inner());
+  st.push_hex_pair(basic_io::syms::birth, mark.birth_revision.inner());
 
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
-    st.push_hex_pair(syms::path_mark, i->inner());
+    st.push_hex_pair(basic_io::syms::path_mark, i->inner());
 
   if (is_file_t(curr))
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
-        st.push_hex_pair(syms::content_mark, i->inner());
+        st.push_hex_pair(basic_io::syms::content_mark, i->inner());
     }
   else
     I(mark.file_content.empty());
@@ -2426,7 +2401,7 @@ push_marking(basic_io::stanza & st,
       I(am != mark.attrs.end());
       for (set<revision_id>::const_iterator j = am->second.begin();
            j != am->second.end(); ++j)
-        st.push_hex_triple(syms::attr_mark, i->first(), j->inner());
+        st.push_hex_triple(basic_io::syms::attr_mark, i->first(), j->inner());
     }
 }
 
@@ -2439,25 +2414,25 @@ parse_marking(basic_io::parser & pa,
   while (pa.symp())
     {
       string rev;
-      if (pa.symp(syms::birth))
+      if (pa.symp(basic_io::syms::birth))
         {
           pa.sym();
           pa.hex(rev);
           marking.birth_revision = revision_id(rev);
         }
-      else if (pa.symp(syms::path_mark))
+      else if (pa.symp(basic_io::syms::path_mark))
         {
           pa.sym();
           pa.hex(rev);
           safe_insert(marking.parent_name, revision_id(rev));
         }
-      else if (pa.symp(syms::content_mark))
+      else if (pa.symp(basic_io::syms::content_mark))
         {
           pa.sym();
           pa.hex(rev);
           safe_insert(marking.file_content, revision_id(rev));
         }
-      else if (pa.symp(syms::attr_mark))
+      else if (pa.symp(basic_io::syms::attr_mark))
         {
           string k;
           pa.sym();
@@ -2484,7 +2459,7 @@ roster_t::print_to(basic_io::printer & pr,
   I(has_root());
   {
     basic_io::stanza st;
-    st.push_str_pair(syms::format_version, "1");
+    st.push_str_pair(basic_io::syms::format_version, "1");
     pr.print_stanza(st);
   }
   for (dfs_iter i(root_dir); !i.finished(); ++i)
@@ -2499,20 +2474,20 @@ roster_t::print_to(basic_io::printer & pr,
       if (is_dir_t(curr))
         {
           // L(FL("printing dir %s") % fp);
-          st.push_file_pair(syms::dir, fp);
+          st.push_file_pair(basic_io::syms::dir, fp);
         }
       else
         {
           file_t ftmp = downcast_to_file_t(curr);
-          st.push_file_pair(syms::file, fp);
-          st.push_hex_pair(syms::content, ftmp->content.inner());
+          st.push_file_pair(basic_io::syms::file, fp);
+          st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
           // L(FL("printing file %s") % fp);
         }
 
       if (print_local_parts)
         {
           I(curr->self != the_null_node);
-          st.push_str_pair(syms::ident, lexical_cast<string>(curr->self));
+          st.push_str_pair(basic_io::syms::ident, lexical_cast<string>(curr->self));
         }
 
       // Push the non-dormant part of the attr map
@@ -2522,7 +2497,7 @@ roster_t::print_to(basic_io::printer & pr,
           if (j->second.first)
             {
               // L(FL("printing attr %s : %s = %s") % fp % j->first % j->second);
-              st.push_str_triple(syms::attr, j->first(), j->second.second());
+              st.push_str_triple(basic_io::syms::attr, j->first(), j->second.second());
             }
         }
 
@@ -2535,7 +2510,7 @@ roster_t::print_to(basic_io::printer & pr,
               if (!j->second.first)
                 {
                   I(j->second.second().empty());
-                  st.push_str_pair(syms::dormant_attr, j->first());
+                  st.push_str_pair(basic_io::syms::dormant_attr, j->first());
                 }
             }
 
@@ -2583,7 +2558,7 @@ roster_t::parse_from(basic_io::parser & pa,
   mm.clear();
 
   {
-    pa.esym(syms::format_version);
+    pa.esym(basic_io::syms::format_version);
     string vers;
     pa.str(vers);
     I(vers == "1");
@@ -2594,23 +2569,23 @@ roster_t::parse_from(basic_io::parser & pa,
       string pth, ident, rev;
       node_t n;
 
-      if (pa.symp(syms::file))
+      if (pa.symp(basic_io::syms::file))
         {
           string content;
           pa.sym();
           pa.str(pth);
-          pa.esym(syms::content);
+          pa.esym(basic_io::syms::content);
           pa.hex(content);
-          pa.esym(syms::ident);
+          pa.esym(basic_io::syms::ident);
           pa.str(ident);
           n = file_t(new file_node(read_num(ident),
                                    file_id(content)));
         }
-      else if (pa.symp(syms::dir))
+      else if (pa.symp(basic_io::syms::dir))
         {
           pa.sym();
           pa.str(pth);
-          pa.esym(syms::ident);
+          pa.esym(basic_io::syms::ident);
           pa.str(ident);
           n = dir_t(new dir_node(read_num(ident)));
         }
@@ -2634,7 +2609,7 @@ roster_t::parse_from(basic_io::parser & pa,
         }
 
       // Non-dormant attrs
-      while(pa.symp(syms::attr))
+      while(pa.symp(basic_io::syms::attr))
         {
           pa.sym();
           string k, v;
@@ -2645,7 +2620,7 @@ roster_t::parse_from(basic_io::parser & pa,
         }
 
       // Dormant attrs
-      while(pa.symp(syms::dormant_attr))
+      while(pa.symp(basic_io::syms::dormant_attr))
         {
           pa.sym();
           string k;

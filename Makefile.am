@@ -319,7 +319,7 @@ unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) $(BOOST_UNITTEST) \
 tester_LDFLAGS = 
 tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
-tester_LDADD = lib3rdparty.a libplatform.a $(LIBICONV) $(LIBINTL)
+tester_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
