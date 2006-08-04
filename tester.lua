@@ -269,10 +269,25 @@ function trim(str)
   return string.gsub(str, "^%s*(.-)%s*$", "%1")
 end
 
-function execute(path, ...)   
+function prepare_redirect(fin, fout, ferr)
+  local cwd = chdir(".").."/"
+  redir = {fin = cwd..fin, fout = cwd..fout, ferr = cwd..ferr}
+end
+do
+  oldspawn = spawn
+  function spawn(...)
+   if redir == nil then
+     return oldspawn(unpack(arg))
+   else
+     return spawn_redirected(redir.fin, redir.fout, redir.ferr, unpack(arg))
+   end
+  end
+end
+function execute(path, ...)
    local pid
    local ret = -1
    pid = spawn(path, unpack(arg))
+   redir = nil
    if (pid ~= -1) then ret, pid = wait(pid) end
    return ret
 end
@@ -314,7 +329,7 @@ function runcmd(cmd, prefix, bgnd)
     files.stdout = open_or_err(prefix.."stdout", "w", 2)
     files.stderr = open_or_err(prefix.."stderr", "w", 2)
   else
-    redir = set_redirect(prefix.."stdin", prefix.."stdout", prefix.."stderr")
+    prepare_redirect(prefix.."stdin", prefix.."stdout", prefix.."stderr")
   end
   
   local result
@@ -339,8 +354,6 @@ function runcmd(cmd, prefix, bgnd)
     files.stdin:close()
     files.stdout:close()
     files.stderr:close()
-  else
-    redir:restore()
   end
   return unpack(result)
 end
@@ -818,6 +831,10 @@ function run_tests(args)
     test.partial_skip = false
     local shortname = nil
     test.root, shortname = go_to_test_dir(tname)
+    if shortname == nil or test.root == nil then
+      P("ERROR: could not enter scratch dir for test '", tname, "'\n")
+      error("")
+    end
     test.errfile = ""
     test.errline = -1
     test.bglist = {}

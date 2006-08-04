@@ -8,7 +8,7 @@
 #include "simplestring_xform.hh"
 #include "charset.hh"
 #include "paths.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 
 using std::string;
 

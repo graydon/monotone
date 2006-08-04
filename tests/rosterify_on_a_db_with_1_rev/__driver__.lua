@@ -6,7 +6,7 @@ mtn_setup()
 
 remove("test.db")
 
-get("test.db.dumped", "stdin")
+check(get("test.db.dumped", "stdin"))
 check(mtn("db", "load"), 0, false, false, true)
 check(mtn("db", "migrate"), 0, false, false)
 check(mtn("db", "rosterify"), 0, false, false)
@@ -18,6 +18,6 @@ for l in io.lines("stdout") do
   table.insert(revs, l)
 end
 
-get("manifest_good")
+check(get("manifest_good"))
 check(mtn("automate", "get_manifest_of", revs[1]), 0, true)
 check(samefile("stdout", "manifest_good"))

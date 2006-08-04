@@ -1,6 +1,284 @@
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_diff_log.cc: don't include revisions with deleted files
+	when doing "log FILE".
+	* tests/log_with_restriction/: a test
+
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
+	* inodeprints.cc: just silently skip (but L()) inodeprint files
+	if the format version is unknown.
+
+2006-08-02  Zack Weinberg  <zackw@panix.com>
+
+	* acinclude.m4: Rename to m4/inaddrnone.m4; update macro to
+	autoconf 2.5x conventions.
+
+	* m4/ac_compile_check_sizeof.m4: Delete, unused.
+	* m4/acx_pthread.m4, m4/ax_create_stdint_h.m4, m4/externtemplate.m4
+	* m4/fexception.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
+	* m4/typeof.m4: Update to autoconf 2.5x conventions.
+
+	* m4/externtemplate.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
+	* m4/typeof.m4: Use AC_LANG_SOURCE where appropriate.
+
+	* m4/prog_cxx_warnings.m4: Set CXXFLAGS outside the AC_CACHE_CHECK.
+	* m4/boost.m4: New file.  All boost-related logic goes here now.
+	Cache results of library searches; simplify handling of
+	--enable-static-boost.
+	* m4/tr1unorderedmap.m4: New file with tests for tr1::unordered_*.
+	* configure.ac: Use the macros from the above new files.
+	* Makefile.am: Conditional on STATIC_BOOST is no longer	necessary.
+	Wrap some lines.
+
+	* m4/localeworks.m4, m4/netxx.m4, m4/pch.m4, m4/popt.m4, m4/sqlite.m4
+	* m4/syncwithstdio.m4, m4/tempstatconst.m4, m4/xgettextflag.m4:
+	New files.
+	* configure.ac: Use the macros defined in the above files instead
+	of in-line code.
+
+	* configure.ac: Reorganize tests for ease of reading and to ensure
+	that all tests are performed only once.
+	* m4/acx_pthread.m4, m4/externtemplate.m4, m4/fexception.m4
+	* m4/gnucxxhashmap.m4, m4/stlporthashmap.m4, mtl/tempstatconst.m4
+	* m4/tr1unorderedmap.m4, m4/typeof.m4: Use AC_LANG_ASSERT instead
+	of AC_LANG_PUSH/POP, per autoconf manual's recommendation.
+	* m4/popt.m4: Avoid double tests for headers.
+	* m4/prog_cxx_warnings.m4: Fix typo in last change.
+
+2006-07-31  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Reformat some messages so they fit 80 columns better.
+
+2006-07-28  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (walk_tree_recursive): Walk files first, then
+	directories; cuts down memory usage greatly on reiserfs.
+
+2006-07-27  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac: Add a check for g++ 4.0/4.0.1 std::tr1 hashtable
+	const-correctness bug.
+	* hash_map.hh: Check for new #define.
+
+2006-07-27  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (guess_binary): Set did_char_is_binary_init to true
+	after initialization.
+	(set_char_is_binary): Make un-public.
+
+2006-07-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (temp_file): Allow callers to pass a filename hint
+	to be included in the temporary file name.
+	(write_to_temporary_file): Pass name hint to temp_file.
+	(merge3): Use left/right/ancestor/merged as name hints for
+	temporary files.
+	(get_netsync_connect_command): Formatting tweak.
+
+2006-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (inodeprint_calculator): Add an empty virtual
+	destructor, as per compiler warning.
+
+2006-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (dfs_iter): Remove dirname member.
+
+2006-07-26  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* paths.cc: Correct Windows tilde-expansion unit test.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (make_roster_for_base_plus_cset): Remove unused
+	entry-point.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	More cleanups spotten by KingGuppy on IRC:
+	* cset.cc (print_cset):
+	* merkle_tree.cc (insert_into_merkle_tree): Remove some unused code.
+	* refiner.hh: Remove declarations of never-defined functions.
+	* paths.cc (test_system_path): Replace a '=' with a '==' in the
+	unit tests.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.cc (write_delta_cmd): Fix logic for compressing large deltas.
+
+2006-07-26  Benoît Dejean  <benoit@placenet.org>
+
+	* cmd_ws_commit.cc (CMD(commit)): Use positional format
+	to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* database_check.cc (report_certs): Switched to
+	positional format to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* vocab.hh: Provide base definition of dump template which
+	generates a compile-time error if ever instantiated.
+	* roster.hh: Correct declaration of dump<set<revision_id>>
+	specialization.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rearrange things somewhat, to disentangle tester from the rest
+	of the monotone sorce.
+	* luaext_*.cc: Split out our lua extension functions into multiple
+	files.
+	* lua.hh: Add a LUAEXT(name, [table]) mechanism, similar to CMD() and
+	AUTOMATE().
+	* mtn-sanity.{cc,hh} sanity.{cc,hh}: Make sanity.{cc,hh} not depend
+	on ui.{cc,hh}.
+	* platform-wrapped.hh platform.hh win32/* unix/*: Inline wrappers for
+	various platform functions, so that libplatform doesn't depend on
+	vocab or paths.
+	* many files: Fix includes for the platform and sanity changes.
+	* inodeprint.{cc,hh} {win32,unix}/inodeprint.cc: Rearrange slightly.
+	* Makefile.am: Adjust for all the new files.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (edit_comment): If the user_log_message did not
+	end with a newline, insert one.
+
+2006-07-25  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to take care of.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* merge.cc (resolve_merge_conflicts): Remove unused arguments, and
+	adjust callers.
+	* cmd_merging.cc (three_way_merge): Helper function factored out
+	of pluck.
+	(pluck): Use it.
+	(update): Rewrite for clarity, and use 'three_way_merge'.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* boost/format.hpp, boost/format/feed_args.hpp: Drop moldy old
+	files and hope it doesn't make any difference...
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (struct hunk_consumer): Fix compiler warning about
+	initialization order.
+	(find_encloser): Ditto, signed vs. unsigned comparison.
+
+2006-07-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* visualc/tester.vjproj: Forgot to add this.
+
+2006-07-24  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Updated and fixed fuzzies.
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc (fake_id): New function.
+	* cmd_merging.cc (update, pluck): Use it.
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc, vocab.hh: Remove tabs.
+
+2006-07-24  Derek Scherger  <derek@echologic.com>
+
+	* roster.cc (check_restricted_cset): allow temp nodes and ensure
+	the node source does not overlap with any existing temp nodes
+
+2006-07-23  Benoît Dejean  <benoit@placenet.org>
+
+	* configure.ac:
+	* database.cc (transitive_closure):
+	* hash_map.hh:
+	* interner.hh (interner): Use tr1 associative containers and hash
+	functions when available.
+
+2006-07-23  Benoît Dejean  <benoit@placenet.org>
+
+	* diff_patch.cc (hunk_consumer::find_encloser): Added missing parents.
+	Fixed warning.
+
+2006-07-23  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/automate_tags/__driver__.lua: Fix test on Win32 (globs vs
+	quoting).
+
+2006-07-22  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Set date, and it turns out AUTOMATE() was there in
+	0.27...
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
+	* AUTHORS: Add Thomas Moschny and Zack Weinberg.
+
+	* UPGRADE, monotone.spec, visualc/config.h, win32/monotone.iss:
+	* debian/changelog: Bump to version 0.28.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.texi (Workspace): Make the Warnings about pluck more
+	Dire.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Update for 0.28.
+	* tests/netsync_over_pipes/__driver__.lua: Remove no-longer-needed
+	--debug.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (print_to): It is perfectly valid to have an attr set
+	to the empty string (which is why we have whole "full_attr"
+	annoyance).  Remove incorrect I().
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (check_restricted_cset, editable_roster_for_check):
+	Tweak comments.
+
+2006-07-21  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac: Go ahead and bump the version number, to make
+	distcheck happy.
+
+2006-07-21  Derek Scherger  <derek@echologic.com>
+
+	* roster.cc (mark_roster_with_one_parent): remove std:: prefix
+	(editable_roster_for_check): new class for checking cset
+	application
+	(check_restricted_cset): convert check to use cset.apply_to with
+	editable_roster_for_check
+	* tests/restrictions_with_deletes: un-xfail
+	* tests/restrictions_with_renames_and_adds: un-xfail
+
+2006-07-21  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* monotone.texi: Document command aliases 'mv', 'ci' and 'ls',
+	motivated by savannah bug report #16923.
+
 2006-07-20  Matt Johnston  <matt@ucc.asn.au>
 
-    * monotone.texi: avoid "to to".
+	* monotone.texi: avoid "to to".
 
 2006-07-20  Zack Weinberg  <zackw@panix.com>
 

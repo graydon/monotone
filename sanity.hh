@@ -23,7 +23,6 @@
 
 #include "i18n.h"
 #include "mt-stdint.h"
-#include "paths.hh"
 #include "quick_alloc.hh" // to get the QA() macro
 
 #ifdef __GNUC__
@@ -53,21 +52,19 @@ struct i18n_format;
 
 struct sanity {
   sanity();
-  ~sanity();
+  virtual ~sanity();
   void dump_buffer();
   void set_debug();
   void set_brief();
   void set_quiet();
   void set_reallyquiet();
-  void set_relaxed(bool rel);
 
   bool debug;
   bool brief;
   bool quiet;
   bool reallyquiet;
-  bool relaxed;
   boost::circular_buffer<char> logbuf;
-  system_path filename;
+  std::string filename;
   std::string gasp_dump;
   bool already_dumping;
   bool clean_shutdown;
@@ -95,11 +92,15 @@ struct sanity {
 private:
   std::string do_format(format_base const & fmt,
                         char const * file, int line);
+  virtual void inform_log(std::string const &msg) = 0;
+  virtual void inform_message(std::string const &msg) = 0;
+  virtual void inform_warning(std::string const &msg) = 0;
+  virtual void inform_error(std::string const &msg) = 0;
 };
 
-typedef std::runtime_error oops;
+extern sanity & global_sanity;
 
-extern sanity global_sanity;
+typedef std::runtime_error oops;
 
 // This hides boost::format from infecting every source file. Instead, we
 // implement a single very small formatter.
@@ -482,6 +483,9 @@ Musing<T>::gasp(std::string & out) const
 #else
 #define MM(obj) /* */
 #endif
+
+template <typename T>
+void dump(T const &, std::string &);
 
 template <> void dump(std::string const & obj, std::string & out);
 

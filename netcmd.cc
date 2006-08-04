@@ -514,7 +514,7 @@ netcmd::write_delta_cmd(netcmd_item_type & type,
 
   string tmp;
 
-  if (tmp.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
+  if (del().size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
       payload += static_cast<char>(1); // compressed flag
       gzip<delta> zdel;

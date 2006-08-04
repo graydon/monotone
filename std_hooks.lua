@@ -2,13 +2,19 @@
 -- this is the standard set of lua hooks for monotone;
 -- user-provided files can override it or add to it.
 
-function temp_file()
+function temp_file(namehint)
    local tdir
    tdir = os.getenv("TMPDIR")
    if tdir == nil then tdir = os.getenv("TMP") end
    if tdir == nil then tdir = os.getenv("TEMP") end
    if tdir == nil then tdir = "/tmp" end
-   return mkstemp(string.format("%s/mtn.XXXXXX", tdir))
+   local filename
+   if namehint == nil then
+      filename = string.format("%s/mtn.XXXXXX", tdir)
+   else
+      filename = string.format("%s/mtn.%s.XXXXXX", tdir, namehint)
+   end
+   return mkstemp(filename)
 end
 
 function execute(path, ...)   
@@ -239,10 +245,9 @@ function edit_comment(basetext, user_log_message)
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
    basetext = "MTN: " .. string.gsub(basetext, "\n", "\nMTN: ") .. "\n"
-   if user_log_message == "" then
+   tmp:write(user_log_message)
+   if user_log_message == "" or string.sub(user_log_message, -1) ~= "\n" then
       tmp:write("\n")
-   else
-      tmp:write(user_log_message)
    end
    tmp:write(basetext)
    io.close(tmp)
@@ -453,8 +458,8 @@ function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile
    end
 end
 
-function write_to_temporary_file(data)
-   tmp, filename = temp_file()
+function write_to_temporary_file(data, namehint)
+   tmp, filename = temp_file(namehint)
    if (tmp == nil) then 
       return nil 
    end;
@@ -564,10 +569,10 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
    tbl.rfile = nil 
    tbl.outfile = nil 
    tbl.meld_exists = false 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.afile =   write_to_temporary_file (ancestor) 
-   tbl.rfile =   write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
+   tbl.lfile = write_to_temporary_file (left, "left")
+   tbl.afile = write_to_temporary_file (ancestor, "ancestor")
+   tbl.rfile = write_to_temporary_file (right, "right")
+   tbl.outfile = write_to_temporary_file ("", "merged")
    
    if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil 
    then 
@@ -816,7 +821,7 @@ function get_netsync_connect_command(uri, args)
                 end
 
                 table.insert(argv, uri["host"])
-    quote_patterns = true
+		quote_patterns = true
         end
         
         if uri["scheme"] == "file" and uri["path"] then

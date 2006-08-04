@@ -61,11 +61,6 @@ refiner
   std::set<id> peer_items;
   merkle_table table;
 
-  void refine_synthetic_empty_subtree(merkle_node const & their_node,
-                                      size_t slot);
-  void refine_synthetic_singleton_subtree(merkle_node const & their_node,
-                                          merkle_node const & our_node,
-                                          size_t slot);
   void note_subtree_shared_with_peer(merkle_node const & our_node, size_t slot);
   void send_subquery(merkle_node const & our_node, size_t slot);
   void send_synthetic_subquery(merkle_node const & our_node, size_t slot);

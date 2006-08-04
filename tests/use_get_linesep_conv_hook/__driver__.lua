@@ -12,7 +12,7 @@ writefile("foo.lf", "foo\n")
 writefile("foofoo.crlf", "foo\r\nfoo\r\n")
 writefile("foofoo.lf", "foo\nfoo\n")
 
-get("linesep.lua")
+check(get("linesep.lua"))
 
 copy("foo.crlf", "foo")
 check(mtn("--rcfile=linesep.lua", "add", "foo"), 0, false, false)

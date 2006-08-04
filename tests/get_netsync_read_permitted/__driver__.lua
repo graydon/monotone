@@ -24,7 +24,7 @@ B4=base_revision()
 -- pulling exactly that should give revs B1, B2, B3; and only give
 -- branch certs on B1, B3.
 mkdir("perm")
-get("read-permissions", "perm/read-permissions")
+check(get("read-permissions", "perm/read-permissions"))
 
 srv = netsync.start({"--confdir=perm", "branch*"}, nil, true)
 
