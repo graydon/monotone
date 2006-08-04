@@ -207,10 +207,12 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 //         occurs: exactly once
 // 'attr'
 //         represents an attribute entry
-//         format: ('attr', name, value), ('state', [)
+//         format: ('attr', name, value), ('state', [unchanged|changed|added|dropped])
 //         occurs: zero or more times
-// Error conditions: If the file name has no attributes, prints nothing.
-AUTOMATE(attributes, N_("[FILE]"))
+//
+// Error conditions: If the file name has no attributes, prints only the 
+//                   format version, if the file is unknown, escalates
+AUTOMATE(attributes, N_("FILE"))
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -218,9 +220,19 @@ AUTOMATE(attributes, N_("[FILE]"))
   // this command requires a workspace to be run on
   app.require_workspace();
 
-  roster_data dat;
+  // retrieve the path
+  split_path path;
+  file_path_external(idx(args,0)).split(path);
+
   roster_t base, current;
   temp_node_id_source nis;
+
+  // get the base and the current roster of this workspace
+  get_base_and_current_roster_shape(base, current, nis, app);
+
+  // escalate if the given path is unknown to the current roster
+  N(current.has_node(path),
+    F("file %s is unknown to the current workspace") % path);
 
   // create the printer
   basic_io::printer pr;
@@ -230,54 +242,64 @@ AUTOMATE(attributes, N_("[FILE]"))
   st.push_str_pair(basic_io::syms::format_version, "1");
   pr.print_stanza(st);
     
-  get_base_and_current_roster_shape(base, current, nis, app);
-
-  split_path path;
-  file_path_external(idx(args,0)).split(path);
-
-  // check if the file is part of the current roster, if not, we won't process
-  // further (i.e. we do not list attributes of dropped files, since what
-  // should their status be? "dropped" because the node was dropped or
-  // "unchanged"... no, this is messy.)
-  if (current.has_node(path))
+  // the current node holds all current attributes (unchanged and new ones)
+  node_t n = current.get_node(path);
+  for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+       i != n->attrs.end(); ++i)
   {
-    // the current node holds all current attributes (unchanged and new ones)
-    node_t n = current.get_node(path);
-    for (full_attr_map_t::const_iterator i = n->attrs.begin();
-         i != n->attrs.end(); ++i)
-    {
-      if (!i->second.first)
-        continue;
-        
-      // this is taken from roster::print_to - but I don't know why its even 
-      // there...
-      // why shouldn't it be allowed that the value of an attribute is empty?
-      I(!i->second.second().empty());
-
-      basic_io::stanza st;
-      st.push_str_triple(basic_io::syms::attr, i->first(), i->second.second());
-      st.push_str_pair("bool", i->second.first() ? "true" : "false");
-/*
-      std::string state("existing");
-      // now comes the ugly part... determine if this attribute also existed
-      // in the previous roster
-      
-      st.push_str_pair("status", state);
-*/
-      pr.print_stanza(st);
-    }
+    std::string value(i->second.second());
+    std::string state("unchanged");
     
-    // to list all dropped attributes, we need to have a closer look at the
-    // previous roster (if there is any)
-/*
-    if (base.has_node(path))
-    {
-      n = base.get_node(path);
+    // if if the first value of the value pair is false this marks a
+    // dropped attribute
+    if (!i->second.first)
+      {
+        state = "dropped";
+        // if the attribute is dropped, we should have a base roster
+        // with that node...
+        I(base.has_node(path));
+        node_t prev_node = base.get_node(path);
+        // find the attribute in there
+        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
+        I(j != prev_node->attrs.end());
+        // output the previous (dropped) value later
+        value = j->second.second();
+      }
+    // this marks either a new or an existing attribute
+    else
+      {
+        if (base.has_node(path))
+          {
+            node_t prev_node = base.get_node(path);
+            full_attr_map_t::const_iterator j = 
+              prev_node->attrs.find(i->first());
+            // attribute not found? this is new
+            if (j == prev_node->attrs.end())
+              {
+                state = "added";
+              }
+            // check if this attribute has been changed 
+            // (dropped and set again)
+            else if (i->second.second() != j->second.second())
+              {
+                state = "changed";
+              }
+                
+          }
+        // its added since the whole node has been just added
+        else
+          {
+            state = "added";
+          }
+      }
       
-    }
-*/    
+    basic_io::stanza st;
+    st.push_str_triple(basic_io::syms::attr, i->first(), value);
+    st.push_str_pair(std::string("state"), state);
+    pr.print_stanza(st);
   }
-    
+  
+  // print the output  
   output.write(pr.buf.data(), pr.buf.size());
 }
 
