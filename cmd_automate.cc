@@ -288,7 +288,7 @@ AUTOMATE(stdio, "")
               err=2;
               //Do this instead of printing f.what directly so the output
               //will be split into properly-sized blocks automatically.
-              s<<f.what;
+              s<<f.what();
             }
             print_some_output(cmdnum, err, true, sb.str(),
                               output, outpos, -1);

@@ -245,7 +245,7 @@ check_PROGRAMS = unit_tests tester
 noinst_PROGRAMS = txt2c
 EXTRA_PROGRAMS = usher
 
-mtn_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
+mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
 tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
@@ -317,18 +317,20 @@ unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) $(BOOST_UNITTEST) \
 		   libplatform.a $(LIBICONV) $(LIBINTL)
 
 tester_LDFLAGS = 
-tester_CPPFLAGS = -I$(top_srcdir)/lua
+tester_CPPFLAGS = -DIN_TESTER -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
 tester_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
+  mtn_SOURCES += win32/main.cc
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
+  mtn_SOURCES += unix/main.cc
 endif
 
 if MISSING_INET_PTON

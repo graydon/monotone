@@ -39,9 +39,12 @@
 // message to make it to the user, not a diagnostic error indicating
 // internal failure but a suggestion that they do something differently.
 
-struct informative_failure {
-  informative_failure(std::string const & s) : what(s) {}
-  std::string what;
+class informative_failure : public std::exception {
+  std::string const whatmsg;
+public:
+  explicit informative_failure(std::string const & s) : whatmsg(s) {};
+  virtual ~informative_failure() throw() {};
+  virtual char const * what() const throw() { return whatmsg.c_str(); }
 };
 
 class MusingI;
@@ -53,6 +56,7 @@ struct i18n_format;
 struct sanity {
   sanity();
   virtual ~sanity();
+  void initialize(int, char **, char const *);
   void dump_buffer();
   void set_debug();
   void set_brief();
@@ -67,7 +71,6 @@ struct sanity {
   std::string filename;
   std::string gasp_dump;
   bool already_dumping;
-  bool clean_shutdown;
   std::vector<MusingI const *> musings;
 
   void log(plain_format const & fmt,
@@ -480,8 +483,19 @@ Musing<T>::gasp(std::string & out) const
 #define real_M(obj, line) Musing<typeof(obj)> this_is_a_musing_fnord_object_ ## line (obj, #obj, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
 #define fake_M(obj, line) real_M(obj, line)
 #define MM(obj) fake_M(obj, __LINE__)
+
+// This is to be used for objects that should stay on the musings list
+// even after the caller returns.  Note that all PERM_MM objects must
+// be before all MM objects on the musings list, or you will get an
+// invariant failure.  (In other words, don't use PERM_MM unless you
+// are sanity::initialize.)
+#define PERM_MM(obj) \
+  new Musing<typeof(obj)>(*(new remove_reference<typeof(obj)>::type(obj)), \
+                          #obj, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
+
 #else
 #define MM(obj) /* */
+#define PERM_MM(obj) /* */
 #endif
 
 template <typename T>

@@ -18,6 +18,11 @@
 
 #include "cmd.hh"
 
+#ifndef _WIN32
+#include <boost/lexical_cast.hpp>
+#include <signal.h>
+#endif
+
 using std::cin;
 using std::pair;
 using std::set;
@@ -261,7 +266,7 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group, "{ N | E | I }", "trigger the specified kind of crash", OPT_NONE)
+CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the specified kind of crash", OPT_NONE)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -274,8 +279,43 @@ CMD(crash, hidden_group, "{ N | E | I }", "trigger the specified kind of crash",
     {
       I(spoon_exists);
     }
+#define maybe_throw(ex) if(idx(args,0)()==#ex) throw ex("There is no spoon.")
+#define maybe_throw_bare(ex) if(idx(args,0)()==#ex) throw ex()
+  else maybe_throw_bare(std::bad_alloc);
+  else maybe_throw_bare(std::bad_cast);
+  else maybe_throw_bare(std::bad_typeid);
+  else maybe_throw_bare(std::bad_exception);
+  else maybe_throw_bare(std::exception);
+  else maybe_throw(std::domain_error);
+  else maybe_throw(std::invalid_argument);
+  else maybe_throw(std::length_error);
+  else maybe_throw(std::out_of_range);
+  else maybe_throw(std::range_error);
+  else maybe_throw(std::overflow_error);
+  else maybe_throw(std::underflow_error);
+  else maybe_throw(std::logic_error);
+  else maybe_throw(std::runtime_error);
   else
-    throw usage(name);
+    {
+#ifndef _WIN32
+      try
+        {
+          int signo = boost::lexical_cast<int>(idx(args,0)());
+          if (0 < signo && signo <= 15)
+            {
+              raise(signo);
+              // control should not get here...
+              I(!"crash: raise returned");
+            }
+        }
+      catch (boost::bad_lexical_cast&)
+        { // fall through and throw usage
+        }
+#endif
+      throw usage(name);
+    }
+#undef maybe_throw
+#undef maybe_throw_bare
 }
 
 void
