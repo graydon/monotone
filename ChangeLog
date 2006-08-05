@@ -1,3 +1,7 @@
+2006-08-05  Zack Weinberg  <zackw@panix.com>
+
+	* tester.lua (gettree, _gettree, deltree, _deltree): New functions.
+
 2006-08-04  Zack Weinberg  <zackw@panix.com>
 
 	"Full revision in _MTN" transition.  Compiles, passes lua
