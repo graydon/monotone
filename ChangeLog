@@ -1,3 +1,23 @@
+2006-08-04  Zack Weinberg  <zackw@panix.com>
+
+	* platform.hh: Define ignore_sigpipe as a nop on win32 or declare
+	it as an external on Unix.
+	* unix/process.cc: Define ignore_sigpipe.
+	* netsync.cc: No need to conditionally include signal.h.
+	(run_netsync_protocol): Use ignore_sigpipe.
+	* sanity.hh: Define PERM_MM here, with comment explaining when it
+	is safe to use.
+	* sanity.cc: Don't define PERM_MM.
+	* ui.cc (fatal): Add note about need to keep message in sync with
+	other copies.
+	* unix/main.cc: Correct name in comment.  Downcase
+	WRITE_STR_TO_STDERR and make it an inline function.  Adjust note
+	about need to keep bug_report_message in sync with other copies.
+	* win32/main.cc: Similarly.
+	* commands.cc (crash): Undef maybe_throw_bare at end.
+	* tests/log_quits_on_SIGPIPE: New test.
+	* testsuite.lua: Add it.
+
 2006-07-23  Zack Weinberg  <zackw@panix.com>
 
 	* Makefile.am (tester_CPPFLAGS): Define IN_TESTER.

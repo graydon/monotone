@@ -56,16 +56,8 @@ void
 sanity::initialize(int argc, char ** argv, char const * lc_all)
 {
   // set up some marked strings, so even if our logbuf overflows, we'll get
-  // this data in a crash.  We want the Musing objects to survive this
-  // function's return, so we allocate them from the heap; they put
-  // themselves onto the musings list.
-#ifdef HAVE_TYPEOF
-#define PERM_MM(obj) \
-  new Musing<typeof(obj)>(*(new remove_reference<typeof(obj)>::type(obj)), \
-                          #obj, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
-#else
-#define PERM_MM(obj) /* */
-#endif
+  // this data in a crash.
+  // This is probably the only place PERM_MM should ever be used.
 
 #ifndef IN_TESTER
   string full_version_string;
@@ -96,7 +88,6 @@ sanity::initialize(int argc, char ** argv, char const * lc_all)
     lc_all = "n/a";
   PERM_MM(string(lc_all));
   L(FL("set locale: LC_ALL=%s") % lc_all);
-#undef PERM_MM
 }
 
 void

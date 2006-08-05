@@ -54,6 +54,13 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
 // for netsync 'serve' pidfile support
 pid_t get_process_id();
 
+// netsync wants to ignore sigpipe; this is meaningless on Win32
+#ifdef WIN32
+inline void ignore_sigpipe() {}
+#else
+void ignore_sigpipe(); // in unix/process.cc
+#endif
+
 // filesystem stuff
 // FIXME: BUG: this returns a string in the filesystem charset/encoding
 std::string get_current_working_dir();

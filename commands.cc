@@ -315,6 +315,7 @@ CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the spec
       throw usage(name);
     }
 #undef maybe_throw
+#undef maybe_throw_bare
 }
 
 void

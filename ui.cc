@@ -468,6 +468,8 @@ user_interface::warn(string const & warning)
   issued_warnings.insert(warning);
 }
 
+// this message should be kept consistent with unix/main.cc and
+// win32/main.cc ::bug_report_message (it is not exactly the same)
 void
 user_interface::fatal(string const & fatal)
 {

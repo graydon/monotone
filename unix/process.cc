@@ -143,3 +143,8 @@ pid_t get_process_id()
 {
         return getpid();
 }
+
+void ignore_sigpipe()
+{
+  signal(SIGPIPE, SIG_IGN);
+}

@@ -482,8 +482,19 @@ Musing<T>::gasp(std::string & out) const
 #define real_M(obj, line) Musing<typeof(obj)> this_is_a_musing_fnord_object_ ## line (obj, #obj, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
 #define fake_M(obj, line) real_M(obj, line)
 #define MM(obj) fake_M(obj, __LINE__)
+
+// This is to be used for objects that should stay on the musings list
+// even after the caller returns.  Note that all PERM_MM objects must
+// be before all MM objects on the musings list, or you will get an
+// invariant failure.  (In other words, don't use PERM_MM unless you
+// are sanity::initialize.)
+#define PERM_MM(obj) \
+  new Musing<typeof(obj)>(*(new remove_reference<typeof(obj)>::type(obj)), \
+                          #obj, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
+
 #else
 #define MM(obj) /* */
+#define PERM_MM(obj) /* */
 #endif
 
 template <> void dump(std::string const & obj, std::string & out);

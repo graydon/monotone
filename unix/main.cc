@@ -1,5 +1,5 @@
 // Copyright (C) 2006  Zack Weinberg  <zackw@panix.com>
-// Based on code by Graydon Saunders and contributors
+// Based on code by Graydon Hoare and contributors
 // Originally derived from execution_monitor.cpp, a part of boost.
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -49,17 +49,21 @@
 static char const * argv0;
 
 // a convenient wrapper
-#define WRITE_STR_TO_STDERR(s) write(2, s, strlen(s))
+inline void
+write_str_to_stderr(const char *s)
+{
+  write(2, s, strlen(s));
+}
 
-// this message should be kept consistent with ui.cc::fatal (it is not
-// exactly the same)
+// this message should be kept consistent with ui.cc::fatal and
+// win32/main.cc::bug_report_message (it is not exactly the same)
 static void
 bug_report_message()
 {
-  WRITE_STR_TO_STDERR("\nthis is almost certainly a bug in monotone."
+  write_str_to_stderr("\nthis is almost certainly a bug in monotone."
                       "\nplease send this error message, the output of '");
-  WRITE_STR_TO_STDERR(argv0);
-  WRITE_STR_TO_STDERR(" --full-version',"
+  write_str_to_stderr(argv0);
+  write_str_to_stderr(" --full-version',"
                       "\nand a description of what you were doing to "
                       PACKAGE_BUGREPORT "\n");
 }
@@ -69,11 +73,11 @@ bug_report_message()
 static void
 bug_signal(int signo)
 {
-  WRITE_STR_TO_STDERR(argv0);
-  WRITE_STR_TO_STDERR(": fatal signal: ");
-  WRITE_STR_TO_STDERR(strsignal(signo));
+  write_str_to_stderr(argv0);
+  write_str_to_stderr(": fatal signal: ");
+  write_str_to_stderr(strsignal(signo));
   bug_report_message();
-  WRITE_STR_TO_STDERR("do not send a core dump, but if you have one, "
+  write_str_to_stderr("do not send a core dump, but if you have one, "
                       "\nplease preserve it in case we ask you for "
                       "information from it.\n");
 
@@ -83,17 +87,17 @@ bug_signal(int signo)
   // delivered when this function returns.
 }
 
-// User interrupts cause abrupt termination of the process as well,
-// but do not represent a bug in the program.  We do have to warn the
-// user that they may need to recover the database.
-
+// User interrupts cause abrupt termination of the process as well, but do
+// not represent a bug in the program.  We do intercept the signal in order
+// to print a pretty message.  Note that this relies on sqlite's auto-
+// recovery feature (see <http://sqlite.org/lockingv3.html>, notably section
+// 'The Rollback Journal').
 static void
 interrupt_signal(int signo)
 {
-  WRITE_STR_TO_STDERR(argv0);
-  WRITE_STR_TO_STDERR(": operation canceled: ");
-  WRITE_STR_TO_STDERR(strsignal(signo));
-  WRITE_STR_TO_STDERR("\nyou may need to unlock your database by hand\n");
+  write_str_to_stderr(argv0);
+  write_str_to_stderr(": operation canceled: ");
+  write_str_to_stderr(strsignal(signo));
   raise(signo);
   // The signal has been reset to the default handler by SA_RESETHAND
   // specified in the sigaction() call, but it's also blocked; it will be

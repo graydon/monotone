@@ -1,5 +1,5 @@
 // Copyright (C) 2006  Zack Weinberg  <zackw@panix.com>
-// Based on code by Graydon Saunders and contributors
+// Based on code by Graydon Hoare and contributors
 // Originally derived from execution_monitor.cpp, a part of boost.
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -43,7 +43,7 @@
 // Actual error printing goes through here always.
 static HANDLE hStderr = INVALID_HANDLE_VALUE;
 static void
-WRITE_STR_TO_STDERR(char const * s)
+write_str_to_stderr(char const * s)
 {
   if (hStderr == INVALID_HANDLE_VALUE)
     hStderr = GetStdHandle(STD_ERROR_HANDLE);
@@ -55,15 +55,15 @@ WRITE_STR_TO_STDERR(char const * s)
 
 static char const * argv0;
 
-// this message should be kept consistent with ui.cc::fatal (it is not
-// exactly the same)
+// this message should be kept consistent with ui.cc::fatal and
+// unix/main.cc::bug_report_message (it is not exactly the same)
 static void
 bug_report_message()
 {
-  WRITE_STR_TO_STDERR("\nthis is almost certainly a bug in monotone."
+  write_str_to_stderr("\nthis is almost certainly a bug in monotone."
                       "\nplease send this error message, the output of '");
-  WRITE_STR_TO_STDERR(argv0);
-  WRITE_STR_TO_STDERR(" --full-version',"
+  write_str_to_stderr(argv0);
+  write_str_to_stderr(" --full-version',"
                       "\nand a description of what you were doing to "
                       PACKAGE_BUGREPORT "\n");
 }
@@ -71,9 +71,9 @@ bug_report_message()
 static void
 report_error(char const * msg)
 {
-  WRITE_STR_TO_STDERR(argv0);
-  WRITE_STR_TO_STDERR(": fatal: ");
-  WRITE_STR_TO_STDERR(msg);
+  write_str_to_stderr(argv0);
+  write_str_to_stderr(": fatal: ");
+  write_str_to_stderr(msg);
   bug_report_message();
 }
 
