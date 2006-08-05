@@ -264,7 +264,7 @@ process_all_options(poptContext ctx, app_state & app,
           break;
 
         case OPT_DUMP:
-          global_sanity.filename = system_path(argstr);
+          global_sanity.filename = system_path(argstr).as_external();
           break;
 
         case OPT_LOG:

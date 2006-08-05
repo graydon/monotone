@@ -56,7 +56,7 @@ struct i18n_format;
 struct sanity {
   sanity();
   virtual ~sanity();
-  void initialize(int, char **, char const *);
+  virtual void initialize(int, char **, char const *);
   void dump_buffer();
   void set_debug();
   void set_brief();

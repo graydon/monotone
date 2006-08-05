@@ -131,7 +131,7 @@ main(int argc, char ** argv)
 {
   struct sigaction bug_signal_action;
   struct sigaction interrupt_signal_action;
-  int i;
+  size_t i;
 
   argv0 = argv[0];
 

@@ -25,7 +25,6 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
-#include "mt_version.hh"
 
 using std::exception;
 using std::locale;
@@ -53,18 +52,12 @@ void
 sanity::initialize(int argc, char ** argv, char const * lc_all)
 {
   // set up some marked strings, so even if our logbuf overflows, we'll get
-  // this data in a crash.
-  // This is probably the only place PERM_MM should ever be used.
+  // this data in a crash.  This (and subclass overrides) are probably the
+  // only place PERM_MM should ever be used.
 
-#ifndef IN_TESTER
-  string full_version_string;
-  get_full_version(full_version_string);
-  PERM_MM(full_version_string);
-#endif
-
-  // this is in full_version_string already, so don't MM it
   string system_flavour;
   get_system_flavour(system_flavour);
+  PERM_MM(system_flavour);
   L(FL("started up on %s") % system_flavour);
 
   string cmdline_string;

@@ -317,7 +317,7 @@ unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) $(BOOST_UNITTEST) \
 		   libplatform.a $(LIBICONV) $(LIBINTL)
 
 tester_LDFLAGS = 
-tester_CPPFLAGS = -DIN_TESTER -I$(top_srcdir)/lua
+tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
 tester_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 

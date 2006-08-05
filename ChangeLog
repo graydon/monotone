@@ -1,3 +1,20 @@
+2006-08-05  Zack Weinberg  <zackw@panix.com>
+
+	Clean up after merge from mainline:
+	* luaext_globish.cc (match): Use e.what() instead of e.what.c_str(),
+	when e is an informative_failure.
+	* tester.cc (main): Similarly.
+	* monotone.cc (process_all_options): Add an .as_external() that
+	got lost.
+	* mtn-sanity.cc: Include mt_version.hh.
+	(mtn_sanity::initialize): New function.
+	* mtn-sanity.hh: Prototype it.
+	* sanity.hh: Make sanity::initialize virtual.
+	* sanity.cc (sanity::initialize): Remove IN_TESTER #ifdef.
+	Do PERM_MM system_flavour.
+	* unix/main.cc (main): Change i to a size_t.
+	* Makefile.am (tester_CPPFLAGS): Remove -DIN_TESTER kludge.
+
 2006-08-04  Zack Weinberg  <zackw@panix.com>
 
 	* platform.hh: Define ignore_sigpipe as a nop on win32 or declare
@@ -55,7 +72,7 @@
 
 	* automate.cc: reworked `automate attributes`, this now
 	  outputs basic_io and shows the state of each attribute
-          (added, dropped, changed or unchanged) and also lists
+	  (added, dropped, changed or unchanged) and also lists
 	  those attributes which have been dropped obviously
 	* monotone.texi: updated the docs for that change
 	* cmd_automate.cc: bumped interface_version to 3.0 since
