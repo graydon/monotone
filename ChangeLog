@@ -1,5 +1,12 @@
 2006-08-04  Nathaniel Smith  <njs@pobox.com>
 
+	* xdelta.cc (piece_table::build, insert_insn): Better handling of
+	string expansion, from Eric Anderson.
+	Pluck of d1e563447ab7d92bb965eb330988c637f3c22d14, plus formatting
+	fixups.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
 	* mtn.1, monotone.texi: Who are we kidding?  The man page is more
 	misleading than helpful.  Put a big warning at its top, and delete
 	the yet-even-more-bitrotten copy from the texinfo manual.
