@@ -1,5 +1,15 @@
 2006-08-04  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc: Limit the amount of pending writes we buffer up,
+	from Eric Anderson.  Pluck of 4e99cc37f548b5884d63c48bc486df
+	through	033e5805502c5441ef539ab5cbc1a4, with formatting fixups,
+	factoring out of duplicated code, commented precondition on
+	cancel_pending_write, and removal of comments about the
+	relationship between how often this buffer flushes and how often
+	netsync flushes, since these are logically separate.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
 	* xdelta.cc (piece_table::build, insert_insn): Better handling of
 	string expansion, from Eric Anderson.
 	Pluck of d1e563447ab7d92bb965eb330988c637f3c22d14, plus formatting
