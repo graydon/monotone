@@ -842,7 +842,7 @@ database::cancel_pending_write(string const & tab, hexenc<id> const & an_id)
 {
   data const & dat = safe_get(pending_writes, make_pair(tab, an_id));
   size_t cancel_size = size_pending_write(tab, an_id, dat);
-  I(cancel_size > pending_writes_size);
+  I(cancel_size < pending_writes_size);
   pending_writes_size -= cancel_size;
     
   safe_erase(pending_writes, make_pair(tab, an_id));

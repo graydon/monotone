@@ -1,5 +1,10 @@
 2006-08-04  Nathaniel Smith  <njs@pobox.com>
 
+	* database.cc (cancel_pending_write): >, <, what's the difference
+	anyway...
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc: Limit the amount of pending writes we buffer up,
 	from Eric Anderson.  Pluck of 4e99cc37f548b5884d63c48bc486df
 	through	033e5805502c5441ef539ab5cbc1a4, with formatting fixups,
