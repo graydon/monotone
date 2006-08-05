@@ -882,7 +882,12 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
     dir = ".";
 
   app.create_workspace(dir);
-  app.work.put_work_rev(revision_t());
+
+  revision_t rev;
+  shared_ptr<cset> cs(new cset());
+  rev.edges.insert(make_pair(revision_id(), cs));
+  
+  app.work.put_work_rev(rev);
 }
 
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),

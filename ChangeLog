@@ -1,6 +1,23 @@
-2006-08-01  Zack Weinberg  <zackw@panix.com>
+2006-08-04  Zack Weinberg  <zackw@panix.com>
 
-	Begin "full revision in _MTN" transition.  Compiles, doesn't work.
+	"Full revision in _MTN" transition.  Compiles, passes lua
+	testsuite, bizarro failures in unit tests; migration testing needs
+	to be implemented.
+
+	* cmd_ws_commit.cc (setup): Give put_work_rev a revision with a
+	single empty ancestor, not with no ancestors.
+	* testsuite.lua, tests/_MTN_files_handled_correctly_in_aborted_commit
+	* tests/automate_get_base_revision_id, tests/database_check
+	* tests/delete_work_file_on_checkout, tests/netsync_permissions
+	* tests/normalized_filenames, tests/renaming_a_file
+	* tests/revert_file_to_base_revision, tests/revert_renames
+	* tests/update_with_pending_add, tests/update_with_pending_drop
+	* tests/update_with_pending_rename: Update code that looked at
+	_MTN/work and/or _MTN/revision; partial pluck from
+	ca0e87f5aa94378df6e221f06dce5c5058683873, with edits (the revision
+	is in _MTN/revision, not _MTN/workrev).
+
+2006-08-01  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (get_work_rev, workspace::put_work_rev): New functions.
 	(get_work_path, workspace::remove_work_cset, workspace::put_work_cset)

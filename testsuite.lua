@@ -131,7 +131,12 @@ function mtn_setup()
 end
 
 function base_revision()
-  return (string.gsub(readfile("_MTN/revision"), "%s*$", ""))
+  local workrev = readfile("_MTN/revision")
+  local extract = string.gsub(workrev, "^.*old_revision %[(%x*)%].*$", "%1")
+  if extract == workrev then
+    err("failed to extract base revision from _MTN/revision")
+  end
+  return extract
 end
 
 function base_manifest()
