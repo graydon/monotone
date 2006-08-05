@@ -1,20 +1,16 @@
-.TH "monotone" 1
+.TH "mtn" 1
 .SH NAME
-monotone \- distributed version control system
+mtn \- distributed version control system
 .SH SYNOPSIS
-\fBmonotone\fP \fI[options] <command> [parameters]\fP
-.P
-Options, which affect global behavior or set default values, come
-first in the argument list. A single command must follow, indicating
-the operation to perform, followed by parameters which vary depending
-on the command.
-.SS Note
-This manpage is a summary of some of the features and commands of
-\fBmonotone\fP, but it is not the most detailed source of information
-available. For a complete discussion of the concepts and a tutorial on
-its use, please refer to the texinfo manual (via the \fBinfo
-monotone\fP command, or online).
-.SS Commands
+\fBmtn\fP \fI[options] <command> [parameters]\fP
+.SH WARNING
+This manpage is not well-maintained; it is a summary of monotone's
+capabilities, and probably contains inaccuracies.  For the complete,
+accurate manual, including tutorial, concepts, and full reference
+documentation, try running \fBinfo monotone\fP, or browsing to
+\fBhttp://venge.net/monotone/docs/\fP.  (Patches to generate this
+manpage from \fI--help\fP strings will be gratefully accepted.)
+.SH COMMANDS
 .TP 
 \fBcomment\fP \fI<id>\fP
 Write a comment cert for a revision.

@@ -1,3 +1,9 @@
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* mtn.1, monotone.texi: Who are we kidding?  The man page is more
+	misleading than helpful.  Put a big warning at its top, and delete
+	the yet-even-more-bitrotten copy from the texinfo manual.
+
 2006-08-04  Matt Johnston  <matt@ucc.asn.au>
 
 	* std_hooks.lua: make ssh://host/~/path/file.mtn and
