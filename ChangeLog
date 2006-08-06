@@ -1,3 +1,9 @@
+2006-08-07  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Remove main.cc, since it's been removed from
+	the source tree.
+	* po/sv.po: A fuzzy and two untranslated strings to translate.
+
 2006-08-06  Nathaniel Smith  <njs@pobox.com>
 
 	* packet.cc (extract_packets, read_packets): Make some const
