@@ -1,3 +1,9 @@
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Make the cute commit
+	message actually a commit message, rather than the world's longest
+	branch name.
+
 2006-08-05  Zack Weinberg  <zackw@panix.com>
 
 	Clean up after merge from mainline:

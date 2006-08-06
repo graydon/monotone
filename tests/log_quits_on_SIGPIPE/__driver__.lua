@@ -8,7 +8,8 @@ SIGPIPE = 13 -- what it is on traditional Unixy systems
 
 mtn_setup()
 addfile("file", "This is a file")
-commit("This is the commit message that never ends\n"..
+commit(nil, -- branch name
+       "This is the commit message that never ends\n"..
        "It just goes on and on my friends\n"..
        "Some people started reading it not knowing what it was\n"..
        "And they'll be reading it forever and ever just because\n"..
