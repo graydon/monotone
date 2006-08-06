@@ -745,6 +745,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 last--;
               }
 
+            cout.flush();
           }
         }
       frontier = next_frontier;

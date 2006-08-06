@@ -1,5 +1,10 @@
 2006-08-05  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_diff_log.cc (log): Call cout.flush() after describing each
+	revision.
+
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
 	* work.cc (visit_file): Print a message when implicitly adding
 	directories, and simplify a bit.
 
