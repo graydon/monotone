@@ -132,10 +132,10 @@ private:
   std::streamsize call_every;
   bool clear;
 public:
-  my_stringbuf() : char_stringbuf(),
-                   written(0),
-                   last_call(0),
-                   call_every(constants::automate_stdio_size)
+  my_stringbuf(std::streamsize _call_every) : char_stringbuf(),
+                                              written(0),
+                                              last_call(0),
+                                              call_every(_call_every)
   {}
   virtual std::streamsize
   xsputn(const char_stringbuf::char_type* __s, std::streamsize __n)
@@ -170,16 +170,17 @@ void print_some_output(int cmdnum,
                        string const & text,
                        ostream & s,
                        int & pos,
-                       int size)
+                       int size,
+                       size_t automate_stdio_size)
 {
   if(size==-1)
     {
-      while(text.size()-pos > constants::automate_stdio_size)
+      while(text.size()-pos > automate_stdio_size)
         {
           s<<cmdnum<<':'<<err<<':'<<'m'<<':';
-          s<<constants::automate_stdio_size<<':'
-           <<text.substr(pos, constants::automate_stdio_size);
-          pos+=constants::automate_stdio_size;
+          s<<automate_stdio_size<<':'
+           <<text.substr(pos, automate_stdio_size);
+          pos+=automate_stdio_size;
           s.flush();
         }
       s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
@@ -188,7 +189,7 @@ void print_some_output(int cmdnum,
     }
   else
     {
-      I((unsigned int)(size) <= constants::automate_stdio_size);
+      I((unsigned int)(size) <= automate_stdio_size);
       s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
       s<<size<<':'<<text.substr(pos, size);
       pos+=size;
@@ -254,7 +255,7 @@ AUTOMATE(stdio, "")
           int outpos=0;
           int err;
           std::ostringstream s;
-          my_stringbuf sb;
+          my_stringbuf sb(app.automate_stdio_size);
           sb.set_on_write(boost::bind(print_some_output,
                                       cmdnum,
                                       boost::ref(err),
@@ -262,7 +263,8 @@ AUTOMATE(stdio, "")
                                       boost::bind(&my_stringbuf::str, &sb),
                                       boost::ref(output),
                                       boost::ref(outpos),
-                                      _1));
+                                      _1,
+                                      app.automate_stdio_size));
           {
             // Do not use s.std::basic_ios<...>::rdbuf here, 
             // it confuses VC8.
@@ -291,7 +293,7 @@ AUTOMATE(stdio, "")
               s<<f.what();
             }
             print_some_output(cmdnum, err, true, sb.str(),
-                              output, outpos, -1);
+                              output, outpos, -1, app.automate_stdio_size);
         }
       cmdnum++;
     }
@@ -300,7 +302,7 @@ AUTOMATE(stdio, "")
 
 CMD_PARAMS_FN(automate, N_("automation"),
               N_("automation interface"),
-              OPT_NONE)
+              OPT_AUTOMATE_STDIO_SIZE)
 {
   if (args.size() == 0)
     throw usage(name);

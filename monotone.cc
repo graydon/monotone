@@ -118,6 +118,7 @@ struct poptOption coptions[] =
     {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
     {"no-files", 0, POPT_ARG_NONE, NULL, OPT_NO_FILES, gettext_noop("exclude files when printing logs"), NULL},
     {"recursive", 'R', POPT_ARG_NONE, NULL, OPT_RECURSIVE, gettext_noop("also operate on the contents of any listed directories"), NULL},
+    {"automate-stdio-size", 's', POPT_ARG_LONG, &arglong, OPT_AUTOMATE_STDIO_SIZE, gettext_noop("block size in bytes for \"automate stdio\" output"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
   };
 
@@ -475,6 +476,10 @@ process_all_options(poptContext ctx, app_state & app,
 
         case OPT_HELP:
           app.requested_help = true;
+          break;
+
+        case OPT_AUTOMATE_STDIO_SIZE:
+          app.set_automate_stdio_size(arglong);
           break;
 
         default:

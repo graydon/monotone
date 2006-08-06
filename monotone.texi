@@ -6301,9 +6301,12 @@ if there is more output to come.
 
 <size> is the number of bytes in the output.
 
-<output> is the output of the command. This will never exceed 1024 bytes.
-If a command produces more than 1024 bytes of output, it will be split into
-multiple pieces, with all but the last having the <last?> field set to 'm'.
+<output> is the output of the command. This will never exceed the
+maximum chunk size, which is 1024 bytes per default and can be
+adjusted using the @option{--automate-stdio-size} option.  If a
+command produces more bytes of output than fit into one chunk, it will
+be split into multiple pieces, with all but the last having the
+<last?> field set to 'm'.
 
 @item Error conditions:
 

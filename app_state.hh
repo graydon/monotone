@@ -87,6 +87,7 @@ public:
   std::set<std::string> attrs_to_drop;
   bool no_files;
   bool requested_help;
+  size_t automate_stdio_size;
 
   // Set if the value of the flag was explicitly given on the command
   // line.
@@ -148,6 +149,7 @@ public:
 
   void set_confdir(system_path const & cd);
   system_path get_confdir();
+  void set_automate_stdio_size(long size);
 
   explicit app_state();
   ~app_state();

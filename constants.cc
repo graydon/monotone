@@ -20,9 +20,6 @@ using std::string;
 namespace constants
 {
 
-  // block size in bytes for "automate stdio" output
-  size_t const automate_stdio_size = 1024;
-
   // number of bits in an RSA key we use
   size_t const keylen = 1024;
 

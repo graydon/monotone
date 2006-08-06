@@ -1,3 +1,14 @@
+2006-08-06  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	Make the block size for automate stdio configurable:
+	* constants.hh, constants.cc: Remove automate_stdio_size constant.
+	* app_state.cc, app_state.hh, options.hh, monotone.cc: Add new
+	option commandline option '--automate-stdio-size'. Default is 1024, 
+	which is the value of the old constant.
+	* cmd_automate.cc: Use the new commandline option instead of the
+	old onstant.
+	* monotone.texi (Automation): Document the new option.
+
 2006-08-05  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/log_quits_on_SIGPIPE/__driver__.lua: Make the cute commit

@@ -55,7 +55,8 @@ app_state::app_state()
     missing(false), unknown(false),
     confdir(get_default_confdir()),
     have_set_key_dir(false), no_files(false),
-    requested_help(false)
+    requested_help(false),
+    automate_stdio_size(1024)
 {
   db.set_app(this);
   lua.set_app(this);
@@ -379,6 +380,14 @@ app_state::set_confdir(system_path const & cd)
   confdir = cd;
   if (!have_set_key_dir)
     keys.set_key_dir(cd / "keys");
+}
+
+void
+app_state::set_automate_stdio_size(long size)
+{
+  N(size > 0,
+    F("illegal argument to --automate-stdio-size: cannot be zero or negative\n"));
+  automate_stdio_size = (size_t)size;
 }
 
 system_path
