@@ -458,10 +458,10 @@ feed_packet_consumer
 static size_t
 extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
-  string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
-  string const body("([^\\[\\]]+)");
-  string const tail("\\[end\\]");
-  string const whole = head + body + tail;
+  static string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
+  static string const body("([^\\[\\]]+)");
+  static string const tail("\\[end\\]");
+  static string const whole = head + body + tail;
   regex expr(whole);
   size_t count = 0;
   regex_grep(feed_packet_consumer(count, cons, app), s, expr, match_default);
@@ -476,7 +476,7 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
   size_t count = 0;
   size_t const bufsz = 0xff;
   char buf[bufsz];
-  string const end("[end]");
+  static string const end("[end]");
   while(in)
     {
       in.read(buf, bufsz);
