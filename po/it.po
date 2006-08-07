@@ -143,7 +143,7 @@ msgstr "trovati certificati con rami multipli per la revisione %s, per favore in
 #: cmd_automate.cc:205
 #, c-format
 msgid "read from client failed with error code: %d"
-msgstr "lettura dal client fallita con errore codice: %d"
+msgstr "lettura dal client fallita con codice di errore: %d"
 
 #: cmd_automate.cc:248
 #, c-format
@@ -370,19 +370,18 @@ msgid "SRCNAME DESTNAME SRCID DESTID"
 msgstr "NOME_ORIG NOME_DEST ID_ORIG ID_DEST"
 
 #: cmd_files.cc:79
-#, fuzzy
 msgid "diff 2 files and output result"
-msgstr "unisce 3 file e stampa il risultato"
+msgstr ""
 
 #: cmd_files.cc:96
-#, fuzzy, c-format
+#, c-format
 msgid "source file id does not exist"
-msgstr "id del file antenato inesistente"
+msgstr "id del file sorgente inesistente"
 
 #: cmd_files.cc:99
-#, fuzzy, c-format
+#, c-format
 msgid "destination file id does not exist"
-msgstr "id del file antenato inesistente"
+msgstr "id del file di destinazione inesistente"
 
 #: cmd_files.cc:114
 msgid "PATH"
@@ -878,11 +877,11 @@ msgid "branch '%s' is already merged"
 msgstr "il ramo ‘%s’ è già unito"
 
 #: cmd_merging.cc:364
-#, fuzzy, c-format
+#, c-format
 msgid "%d head on branch '%s'"
 msgid_plural "%d heads on branch '%s'"
-msgstr[0] "aggiorno seguendo il ramo ‘%s’"
-msgstr[1] "aggiorno seguendo il ramo ‘%s’"
+msgstr[0] ""
+msgstr[1] ""
 
 #: cmd_merging.cc:385
 #: cmd_merging.cc:430
@@ -1266,9 +1265,9 @@ msgid "revert file(s), dir(s) or entire workspace (\".\")"
 msgstr "recupera file, directory o l'intero spazio di lavoro (\".\")"
 
 #: cmd_ws_commit.cc:62
-#, c-format
+#, fuzzy, c-format
 msgid "you must pass at least one path to 'revert' (perhaps '.')"
-msgstr ""
+msgstr "‘revert’ richiede un path su cui lavorare (eventualmente ‘.’)"
 
 #: cmd_ws_commit.cc:81
 #, c-format
@@ -1481,7 +1480,7 @@ msgstr "file ‘%s’ modificato durante il commit, abbandono"
 #: cmd_ws_commit.cc:774
 #, fuzzy, c-format
 msgid "Your database is missing version %1% of file '%2%'"
-msgstr "Nel tuo database manca la versione %s del file ‘%s’"
+msgstr "Nel tuo database manca la versione %1% del file ‘%2%’"
 
 #: cmd_ws_commit.cc:820
 #, c-format
@@ -1728,7 +1727,7 @@ msgstr "revisione ‘%s’ firma non ammessa per certificato ‘%s’ della chia
 #: database_check.cc:774
 #, fuzzy, c-format
 msgid "revision %1% missing %2% cert"
-msgstr "alla revisione %s manca il certificato ‘%s’"
+msgstr "alla revisione ‘%1%’ manca il certificato ‘%2%’"
 
 #: database_check.cc:783
 #, c-format
@@ -2416,7 +2415,7 @@ msgstr "invia la chiave specificata anche se non è stato firmato niente"
 
 #: monotone.cc:91
 msgid "serve netsync on stdio"
-msgstr ""
+msgstr "esegui il server netsync su stdio"
 
 #: monotone.cc:92
 msgid "disable transport authentication"
@@ -2432,7 +2431,7 @@ msgstr "esclude i file dalla stampa dei log"
 
 #: monotone.cc:95
 msgid "also operate on the contents of any listed directories"
-msgstr ""
+msgstr "opera anche sui contenuti delle directory specificate"
 
 #: monotone.cc:104
 msgid "print debug log to stderr while running"
@@ -2618,7 +2617,7 @@ msgstr ""
 #: netio.hh:122
 #, fuzzy, c-format
 msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-msgstr "decodifica uleb128 per ‘%s’ in dati %d-byte ***overflow***"
+msgstr "la decodifica uleb128 per ‘%s’ in ***datum*** %d-byte ***overflow***"
 
 #: netio.hh:142
 #, c-format
@@ -3340,6 +3339,10 @@ msgid ""
 "please send this error message, the output of '%s --full-version',\n"
 "and a description of what you were doing to %s.\n"
 msgstr ""
+"errore fatale: %s\n"
+"this is almost certainly a bug in monotone.\n"
+"please send this error message, the output of '%s --full-version',\n"
+"and a description of what you were doing to %s.\n"
 
 #: ui.cc:493
 #, c-format
