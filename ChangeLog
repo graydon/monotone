@@ -1,3 +1,9 @@
+2006-08-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* Makefile.am: Fix run_tester_tests to run tester-testsuite.lua instead
+	of testsuite.lua .
+
+
 2006-08-07  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Updated and translated a few more strings (45 to go).
