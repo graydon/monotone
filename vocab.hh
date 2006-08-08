@@ -32,7 +32,7 @@ void dump(T const &, std::string &)
   // also we get better diagnostics this way (the error tells you what is
   // wrong, not just that there's an assertion failure).
   enum dummy { d = (sizeof(struct dump_must_be_specialized_for_this_type)
-		    == sizeof(T)) };
+                    == sizeof(T)) };
 }
 
 #include "vocab_macros.hh"
@@ -89,7 +89,6 @@ inline bool is_space(char x)
 // about the stuff in vocab_terms.hh
 
 typedef revision< hexenc<id> >  revision_id;
-typedef   roster< hexenc<id> >    roster_id;
 typedef manifest< hexenc<id> >  manifest_id;
 typedef     file< hexenc<id> >      file_id;
 typedef      key< hexenc<id> >       key_id;

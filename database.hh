@@ -231,15 +231,12 @@ public:
   bool database_specified();
 
   bool file_version_exists(file_id const & ident);
-  bool roster_version_exists(roster_id const & ident);
   bool revision_exists(revision_id const & ident);
   bool roster_link_exists_for_revision(revision_id const & ident);
   bool roster_exists_for_revision(revision_id const & ident);
 
-  void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_file_ids(std::set<file_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
-  void get_roster_ids(std::set<roster_id> & ids) ;
 
 
   bool check_integrity();
@@ -399,8 +396,6 @@ public:
   void get_branches(std::vector<std::string> & names);
 
   // roster and node_id stuff
-  void get_roster_id_for_revision(revision_id const & rev_id,
-                                  roster_id & ros_id);
 
   void get_roster(revision_id const & rid,
                   roster_t & roster);
@@ -408,9 +403,6 @@ public:
   void get_roster(revision_id const & rid,
                   roster_t & roster,
                   marking_map & marks);
-
-  void get_roster_version(roster_id const & ros_id,
-                          roster_data & dat);
 
   void get_uncommon_ancestors(revision_id const & a,
                               revision_id const & b,
@@ -438,6 +430,17 @@ public:
 
   ~database();
 
+  // internal implementation details of roster storage -- exposed here for
+  // the use of database_check.cc
+  typedef u64 roster_id;
+  bool roster_version_exists(roster_id ident);
+  void get_roster_links(std::map<revision_id, roster_id> & links);
+  void get_roster_ids(std::set<roster_id> & ids);
+  roster_id get_roster_id_for_revision(revision_id const & rev_id);
+  void get_roster_version(roster_id ros_id, roster_data & dat);
+
+private:
+  roster_id next_roster_id();
 };
 
 // Transaction guards nest. Acquire one in any scope you'd like

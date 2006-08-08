@@ -117,8 +117,8 @@ decode_hex_char(char c)
     return c - '0';
   else
   {
-	  I(c >= 'a' && c <= 'f');
-	  return c - 'a' + 10;
+          I(c >= 'a' && c <= 'f');
+          return c - 'a' + 10;
   }
 }
 
@@ -243,15 +243,6 @@ calculate_ident(file_data const & dat,
 void
 calculate_ident(revision_data const & dat,
                 revision_id & ident)
-{
-  hexenc<id> tmp;
-  calculate_ident(dat.inner(), tmp);
-  ident = tmp;
-}
-
-void
-calculate_ident(roster_data const & dat,
-                roster_id & ident)
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);

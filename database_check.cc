@@ -71,14 +71,13 @@ struct checked_roster {
   size_t missing_mark_revs; // number of missing revisions referenced in node markings by this roster
 
   bool parseable;       // read_roster_and_marking does not throw
-  bool normalized;      // write_roster_and_marking( read_roster_and_marking(dat) ) == dat
 
   manifest_id man_id;   // manifest id of this roster's public part
 
   checked_roster():
     found(false), revision_refs(0),
     missing_files(0), missing_mark_revs(0),
-    parseable(false), normalized(false), man_id() {}
+    parseable(false), man_id() {}
 };
 
 // the number of times a revision is referenced (revision_refs)
@@ -160,19 +159,19 @@ check_files(app_state & app, map<file_id, checked_file> & checked_files)
 // roster, and general parsability/normalisation
 static void
 check_rosters_manifest(app_state & app,
-              map<roster_id, checked_roster> & checked_rosters,
+              map<database::roster_id, checked_roster> & checked_rosters,
               map<revision_id, checked_revision> & checked_revisions,
               set<manifest_id> & found_manifests,
               map<file_id, checked_file> & checked_files)
 {
-  set<roster_id> rosters;
+  set<database::roster_id> rosters;
 
   app.db.get_roster_ids(rosters);
   L(FL("checking %d rosters, manifest pass") % rosters.size());
 
   ticker ticks(_("rosters"), "r", rosters.size()/70+1);
 
-  for (set<roster_id>::const_iterator i = rosters.begin();
+  for (set<database::roster_id>::const_iterator i = rosters.begin();
        i != rosters.end(); ++i)
     {
 
@@ -194,16 +193,6 @@ check_rosters_manifest(app_state & app,
           continue;
         }
       checked_rosters[*i].parseable = true;
-
-      // normalisation check
-      {
-        roster_id norm_ident;
-        roster_data norm_data;
-        write_roster_and_marking(ros, mm, norm_data);
-        calculate_ident(norm_data, norm_ident);
-        if (norm_ident == *i)
-          checked_rosters[*i].normalized = true;
-      }
 
       manifest_id man_id;
       calculate_ident(ros, man_id);
@@ -232,17 +221,17 @@ check_rosters_manifest(app_state & app,
 // that the referenced revisions exist.
 static void
 check_rosters_marking(app_state & app,
-              map<roster_id, checked_roster> & checked_rosters,
+              map<database::roster_id, checked_roster> & checked_rosters,
               map<revision_id, checked_revision> & checked_revisions)
 {
   L(FL("checking %d rosters, marking pass") % checked_rosters.size());
 
   ticker ticks(_("markings"), "m", checked_rosters.size()/70+1);
 
-  for (map<roster_id, checked_roster>::const_iterator i
+  for (map<database::roster_id, checked_roster>::const_iterator i
        = checked_rosters.begin(); i != checked_rosters.end(); i++)
     {
-      roster_id ros_id = i->first;
+      database::roster_id ros_id = i->first;
       L(FL("checking roster %s") % i->first);
       if (!i->second.parseable)
           continue;
@@ -296,27 +285,27 @@ check_rosters_marking(app_state & app,
 static void
 check_roster_links(app_state & app,
                    map<revision_id, checked_revision> & checked_revisions,
-                   map<roster_id, checked_roster> & checked_rosters,
+                   map<database::roster_id, checked_roster> & checked_rosters,
                    size_t & unreferenced_roster_links,
                    size_t & missing_rosters)
 {
   unreferenced_roster_links = 0;
 
-  map<revision_id, roster_id> links;
+  map<revision_id, database::roster_id> links;
   app.db.get_roster_links(links);
 
-  for (map<revision_id, roster_id>::const_iterator i = links.begin();
+  for (map<revision_id, database::roster_id>::const_iterator i = links.begin();
        i != links.end(); ++i)
     {
       revision_id rev(i->first);
-      roster_id ros(i->second);
+      database::roster_id ros(i->second);
 
       map<revision_id, checked_revision>::const_iterator j
         = checked_revisions.find(rev);
       if (j == checked_revisions.end() || (!j->second.found))
         ++unreferenced_roster_links;
 
-      map<roster_id, checked_roster>::const_iterator k
+      map<database::roster_id, checked_roster>::const_iterator k
         = checked_rosters.find(ros);
       if (k == checked_rosters.end() || (!k->second.found))
         ++missing_rosters;
@@ -327,7 +316,7 @@ check_roster_links(app_state & app,
 static void
 check_revisions(app_state & app,
                 map<revision_id, checked_revision> & checked_revisions,
-                map<roster_id, checked_roster> & checked_rosters,
+                map<database::roster_id, checked_roster> & checked_rosters,
                 set<manifest_id> const & found_manifests)
 {
   set<revision_id> revisions;
@@ -369,9 +358,9 @@ check_revisions(app_state & app,
       // roster checks
       if (app.db.roster_link_exists_for_revision(*i))
         {
-          roster_id ros_id;
+          database::roster_id ros_id;
           checked_revisions[*i].found_roster_link = true;
-          app.db.get_roster_id_for_revision(*i, ros_id);
+          ros_id = app.db.get_roster_id_for_revision(*i);
           if (app.db.roster_exists_for_revision(*i))
             {
               checked_revisions[*i].found_roster = true;
@@ -544,13 +533,13 @@ report_files(map<file_id, checked_file> const & checked_files,
 }
 
 static void
-report_rosters(map<roster_id, checked_roster> const & checked_rosters,
+report_rosters(map<database::roster_id, checked_roster> const & checked_rosters,
                  size_t & unreferenced_rosters,
                  size_t & incomplete_rosters,
                  size_t & non_parseable_rosters,
                  size_t & non_normalized_rosters)
 {
-  for (map<roster_id, checked_roster>::const_iterator
+  for (map<database::roster_id, checked_roster>::const_iterator
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
     {
       checked_roster roster = i->second;
@@ -795,7 +784,7 @@ check_db(app_state & app)
 {
   map<file_id, checked_file> checked_files;
   set<manifest_id> found_manifests;
-  map<roster_id, checked_roster> checked_rosters;
+  map<database::roster_id, checked_roster> checked_rosters;
   map<revision_id, checked_revision> checked_revisions;
   map<rsa_keypair_id, checked_key> checked_keys;
 
