@@ -1,3 +1,11 @@
+2006-08-08  Zack Weinberg  <zackw@panix.com>
+
+	* tests/migrate_workspace/__driver__.lua: Add migration tests for
+	format 1.
+	* tests/migrate_workspace/format-1-unmodified
+	* tests/migrate_workspace/format-1-rename: New files.
+	* tester.lua: Fix some typos.
+
 2006-08-05  Zack Weinberg  <zackw@panix.com>
 
 	* tester.lua (gettree, _gettree, deltree, _deltree): New functions.

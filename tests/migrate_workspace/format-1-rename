@@ -1,0 +1,7 @@
+return { _MTN = {
+   format = "1\n",
+   log = "",
+   tmp = {}, -- empty directory
+   revision = "351c01925417acef962ea23c3cfdd78086f28abc\n",
+   work = "rename \"foo\"\n    to \"bar\"\n"
+} }

@@ -269,7 +269,7 @@ function gettree(tree)
    if type(tree) == "string" then
       tree = dofile(testdir .. "/" .. test.name .. "/" .. tree)
    end
-   if type(tree) != "table" then
+   if type(tree) ~= "table" then
       err("gettree called with bad argument")
    end
    _gettree(tree, '')
@@ -293,7 +293,7 @@ function deltree(tree)
    if type(tree) == "string" then
       tree = dofile(testdir .. "/" .. test.name .. "/" .. tree)
    end
-   if type(tree) != "table" then
+   if type(tree) ~= "table" then
       err("gettree called with bad argument")
    end
    _deltree(tree, '')
