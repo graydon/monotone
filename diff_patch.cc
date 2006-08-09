@@ -580,7 +580,9 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 {
   L(FL("temporarily recording merge of %s <-> %s into %s")
     % left_id % right_id % merged_id);
-  I(temporary_store.find(merged_id) == temporary_store.end());
+  // this is an insert instead of a safe_insert because it is perfectly
+  // legal (though rare) to have multiple merges resolve to the same file
+  // contents.
   temporary_store.insert(make_pair(merged_id, merged_data));
 }
 
