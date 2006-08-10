@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-07 00:22+0200\n"
-"PO-Revision-Date: 2006-08-07 00:24+0200\n"
+"POT-Creation-Date: 2006-08-10 06:22+0200\n"
+"PO-Revision-Date: 2006-08-10 06:29+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -202,7 +202,9 @@ msgstr "felaktigt argument till --next: får ej vara noll eller negativt\n"
 #: app_state.cc:389
 #, c-format
 msgid "illegal argument to --automate-stdio-size: cannot be zero or negative\n"
-msgstr "felaktigt argument till --automate-stdio-size: får ej vara noll eller negativt\n"
+msgstr ""
+"felaktigt argument till --automate-stdio-size: får ej vara noll eller "
+"negativt\n"
 
 #: app_state.cc:449
 #, c-format
@@ -1593,8 +1595,8 @@ msgstr "filen '%s' ändrades under arkivering, avbryter"
 
 #: cmd_ws_commit.cc:774
 #, c-format
-msgid "Your database is missing version %1% of file '%2%'"
-msgstr "Din databas saknar version %1% av filen '%2%'"
+msgid "Your database is missing version %s of file '%s'"
+msgstr "Din databas saknar version %s av filen '%s'"
 
 #: cmd_ws_commit.cc:820
 #, c-format
@@ -1843,8 +1845,8 @@ msgstr "revisionen %s har felaktig signatur i certet %s från nyckeln %s"
 
 #: database_check.cc:774
 #, c-format
-msgid "revision %1% missing %2% cert"
-msgstr "revisionen %1% saknar certet %2%"
+msgid "revision %s missing %s cert"
+msgstr "revisionen %s saknar certet %s"
 
 #: database_check.cc:783
 #, c-format
