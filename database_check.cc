@@ -771,7 +771,7 @@ report_certs(map<revision_id, checked_revision> const & checked_revisions,
           if (revision.found && cert_counts[*n] == 0)
             {
               missing_certs++;
-              P(F("revision %1% missing %2% cert") % i->first % *n);
+              P(F("revision %s missing %s cert") % i->first % *n);
             }
         }
 

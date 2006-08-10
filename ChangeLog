@@ -1,3 +1,12 @@
+2006-08-10  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD(commit)):
+	* database_check.cc (report_certs): Don't use positional format
+	specifiers in the C++ source files.  Positional format
+	specifiers should only be used in the translation strings, if
+	needed.
+	* po/sv.po: Clear the fuzzies created by this change.
+
 2006-08-07  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Updated and translated a few more strings (45 to go).

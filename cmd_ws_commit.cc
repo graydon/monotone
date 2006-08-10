@@ -771,7 +771,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
               // If we don't err out here, our packet writer will
               // later.
               E(false, 
-                F("Your database is missing version %1% of file '%2%'")
+                F("Your database is missing version %s of file '%s'")
                 % old_content % path);
           }
 
