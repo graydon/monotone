@@ -4,7 +4,8 @@
 	* database_check.cc (report_certs): Don't use positional format
 	specifiers in the C++ source files.  Positional format
 	specifiers should only be used in the translation strings, if
-	needed.
+	needed.  For further information/opinions, see
+	http://lists.gnu.org/archive/html/monotone-devel/2006-07/msg00357.html
 	* po/sv.po: Clear the fuzzies created by this change.
 
 2006-08-07  Lapo Luchini  <lapo@lapo.it>
