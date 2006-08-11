@@ -486,7 +486,7 @@ run_lua_tests: Makefile
 run_tester_tests: Makefile
 	echo '#!/bin/sh' > $@ ; \
 	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
-	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/tester-testsuite.lua "$$@"' >> $@ ; \
 	chmod 755 $@
 
 # we generate some headers to copy data into the executable
