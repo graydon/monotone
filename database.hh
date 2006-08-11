@@ -155,9 +155,6 @@ class database
                    delta const & del,
                    std::string const & data_table,
                    std::string const & delta_table);
-  void remove_version(hexenc<id> const & target_id,
-                      std::string const & data_table,
-                      std::string const & delta_table);
 
   void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 

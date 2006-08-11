@@ -1313,93 +1313,6 @@ database::put_version(hexenc<id> const & old_id,
   guard.commit();
 }
 
-void
-database::remove_version(hexenc<id> const & target_id,
-                         string const & data_table,
-                         string const & delta_table)
-{
-  // We have a one of two cases (for multiple 'older' nodes):
-  //
-  //    1.  pre:        older <- target <- newer
-  //       post:                  older <- newer
-  //
-  //    2.  pre:        older <- target (a root)
-  //       post:                  older (a root)
-  //
-  // In case 1 we want to build new deltas bypassing the target we're
-  // removing. In case 2 we just promote the older object to a root.
-
-  transaction_guard guard(*this);
-
-  I(exists(target_id, data_table)
-    || delta_exists(target_id, delta_table));
-
-  map<hexenc<id>, data> older;
-
-  {
-    results res;
-    query q("SELECT id FROM " + delta_table + " WHERE base = ?");
-    fetch(res, one_col, any_rows, q % text(target_id()));
-    for (size_t i = 0; i < res.size(); ++i)
-      {
-        hexenc<id> old_id(res[i][0]);
-        data old_data;
-        get_version(old_id, old_data, data_table, delta_table);
-        older.insert(make_pair(old_id, old_data));
-      }
-  }
-
-  // no deltas are allowed to point to the target.
-  execute(query("DELETE from " + delta_table + " WHERE base = ?")
-          % text(target_id()));
-
-  if (delta_exists(target_id, delta_table))
-    {
-      if (!older.empty())
-        {
-          // Case 1: need to re-deltify all the older values against a newer
-          // member of the delta chain. Doesn't really matter which newer
-          // element (we have no good heuristic for guessing a good one
-          // anyways).
-          hexenc<id> newer_id;
-          data newer_data;
-          results res;
-          query q("SELECT base FROM " + delta_table + " WHERE id = ?");
-          fetch(res, one_col, any_rows, q % text(target_id()));
-          I(res.size() > 0);
-          newer_id = hexenc<id>(res[0][0]);
-          get_version(newer_id, newer_data, data_table, delta_table);
-          for (map<hexenc<id>, data>::const_iterator i = older.begin();
-               i != older.end(); ++i)
-            {
-              if (delta_exists(i->first, delta_table))
-                continue;
-              delta bypass_delta;
-              diff(newer_data, i->second, bypass_delta);
-              put_delta(i->first, newer_id, bypass_delta, delta_table);
-            }
-        }
-      execute(query("DELETE from " + delta_table + " WHERE id = ?")
-              % text(target_id()));
-    }
-  else
-    {
-      // Case 2: just plop the older values down as new storage roots.
-      I(exists(target_id, data_table));
-      for (map<hexenc<id>, data>::const_iterator i = older.begin();
-           i != older.end(); ++i)
-        {
-          if (!exists(i->first, data_table))
-            put(i->first, i->second, data_table);
-        }
-      execute(query("DELETE from " + data_table + " WHERE id = ?")
-              % text(target_id()));
-    }
-
-  guard.commit();
-}
-
-
 // ------------------------------------------------------------
 // --                                                        --
 // --              public interface follows                  --
@@ -1813,7 +1726,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 
   L(FL("Killing revision %s locally") % rid);
 
-  // Kill the certs, ancestry, and rev itself.
+  // Kill the certs, ancestry, revision, and roster link.
   execute(query("DELETE from revision_certs WHERE id = ?")
           % text(rid.inner()()));
 
@@ -1823,26 +1736,8 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   execute(query("DELETE from revisions WHERE id = ?")
           % text(rid.inner()()));
 
-  // Find the associated roster and count the number of links to it
-  roster_id ros_id;
-  size_t link_count = 0;
-  get_roster_id_for_revision(rid, ros_id);
-  {
-    results res;
-    fetch(res, 2, any_rows,
-          query("SELECT rev_id, roster_id FROM revision_roster "
-                "WHERE roster_id = ?") % text(ros_id.inner()()));
-    I(res.size() > 0);
-    link_count = res.size();
-  }
-
-  // Delete our link.
   execute(query("DELETE from revision_roster WHERE rev_id = ?")
           % text(rid.inner()()));
-
-  // If that was the last link to the roster, kill the roster too.
-  if (link_count == 1)
-    remove_version(ros_id.inner(), "rosters", "roster_deltas");
 
   guard.commit();
 }
