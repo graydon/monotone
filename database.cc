@@ -2830,9 +2830,6 @@ database::put_roster(revision_id const & rev_id,
                      marking_map & marks)
 {
   MM(rev_id);
-  roster_data old_data, new_data;
-  delta reverse_delta;
-  roster_id old_id, new_id;
 
   if (!rcache.exists(rev_id))
     {
@@ -2841,49 +2838,48 @@ database::put_roster(revision_id const & rev_id,
       rcache.insert(rev_id, sp);
     }
 
-  write_roster_and_marking(roster, marks, new_data);
-
-  // First: find the "old" revision; if there are multiple old
-  // revisions, we just pick the first. It probably doesn't matter for
-  // the sake of delta-encoding.
-
   string data_table = "rosters";
   string delta_table = "roster_deltas";
 
   transaction_guard guard(*this);
 
-  new_id = 
+  roster_id new_id = next_roster_id();
+  string new_id_str = lexical_cast<string>(new_id);
 
   execute(query("INSERT into revision_roster VALUES (?, ?)")
-          % text(rev_id.inner()())
-          % text(new_id.inner()()));
+          % text(rev_id.inner()()) % integer(new_id));
 
-  // Else we have a new roster the database hasn't seen yet; our task is to
-  // add it, and deltify all the incoming edges (if they aren't already).
+  // Our task is to add this roster, and deltify all the incoming edges (if
+  // they aren't already).
 
-  schedule_write(data_table, new_id.inner(), new_data.inner());
+  roster_data new_data;
+  write_roster_and_marking(roster, marks, new_data);
+
+  schedule_write(pending_roster, new_id_str, new_data.inner());
 
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
   // Now do what deltify would do if we bothered (we have the
   // roster written now, so might as well do it here).
+  roster_id old_id;
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
     {
       if (null_id(*i))
         continue;
       revision_id old_rev = *i;
-      get_roster_id_for_revision(old_rev, old_id);
-      if (exists(new_id.inner(), data_table))
+      old_id = get_roster_id_for_revision(old_rev);
+      if (exists(new_id_str, data_table))
         {
           get_roster_version(old_id, old_data);
           diff(new_data.inner(), old_data.inner(), reverse_delta);
-          if (have_pending_write(data_table, old_id.inner()))
-            cancel_pending_write(data_table, old_id.inner());
+          string old_id_str = lexical_cast<string>(old_id);
+          if (have_pending_write(pending_roster, old_id_str))
+            cancel_pending_write(pending_roster, old_id_str);
           else
-            drop(old_id.inner(), data_table);
-          put_delta(old_id.inner(), new_id.inner(), reverse_delta, delta_table);
+            drop(old_id_str, data_table);
+          put_delta(old_id_str, new_id_str, reverse_delta, delta_table);
         }
     }
   guard.commit();
