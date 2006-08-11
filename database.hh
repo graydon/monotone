@@ -432,7 +432,7 @@ public:
 
   // internal implementation details of roster storage -- exposed here for
   // the use of database_check.cc
-  typedef u64 roster_id;
+  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
   bool roster_version_exists(roster_id ident);
   void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_roster_ids(std::set<roster_id> & ids);

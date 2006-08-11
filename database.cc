@@ -77,9 +77,10 @@ namespace
 {
   struct query_param
   {
-    enum arg_type { text, blob };
+    enum arg_type { text, blob, s64 };
     arg_type type;
     string data;
+    s64 integer;
   };
 
   query_param
@@ -88,6 +89,7 @@ namespace
     query_param q = {
       query_param::text,
       txt,
+      0,
     };
     return q;
   }
@@ -98,10 +100,22 @@ namespace
     query_param q = {
       query_param::blob,
       blb,
+      0,
     };
     return q;
   }
 
+  query_param
+  integer(s64 n)
+  {
+    query_param q = {
+      query_param::s64,
+      "",
+      n,
+    };
+    return q;
+  }
+  
   // track all open databases for close_all_databases() handler
   set<sqlite3*> sql_contexts;
 }
@@ -596,8 +610,8 @@ database::info(ostream & out)
     % count("revision_certs")
     % num_nodes
     // bytes
-    % SPACE_USAGE("rosters", "length(id) + length(data)")
-    % SPACE_USAGE("roster_deltas", "length(id) + length(base) + length(delta)")
+    % SPACE_USAGE("rosters", "length(id) + length(checksum) + length(data)")
+    % SPACE_USAGE("roster_deltas", "length(id) + length(checksum) + length(base) + length(delta)")
     % SPACE_USAGE("files", "length(id) + length(data)")
     % SPACE_USAGE("file_deltas", "length(id) + length(base) + length(delta)")
     % SPACE_USAGE("revisions", "length(id) + length(data)")
@@ -746,6 +760,12 @@ database::fetch(results & res,
             sqlite3_bind_blob(i->second.stmt(), param,
                               data.data(), data.size(),
                               SQLITE_STATIC);
+          }
+          break;
+        case query_param::s64:
+          {
+            sqlite3_bind_int64(i->second.stmt(), param,
+                               idx(query.args, param - 1).integer);
           }
           break;
         default:
@@ -897,7 +917,7 @@ database::rollback_transaction()
 
 
 bool
-database::exists(hexenc<id> const & ident,
+database::exists(string const & ident,
                  string const & table)
 {
   if (have_pending_write(table, ident))
@@ -905,19 +925,19 @@ database::exists(hexenc<id> const & ident,
 
   results res;
   query q("SELECT id FROM " + table + " WHERE id = ?");
-  fetch(res, one_col, any_rows, q % text(ident()));
+  fetch(res, one_col, any_rows, q % text(ident));
   I((res.size() == 1) || (res.size() == 0));
   return res.size() == 1;
 }
 
 
 bool
-database::delta_exists(hexenc<id> const & ident,
+database::delta_exists(string const & ident,
                        string const & table)
 {
   results res;
   query q("SELECT id FROM " + table + " WHERE id = ?");
-  fetch(res, one_col, any_rows, q % text(ident()));
+  fetch(res, one_col, any_rows, q % text(ident));
   return res.size() > 0;
 }
 
@@ -976,9 +996,9 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 }
 
 void
-database::get(hexenc<id> const & ident,
-              data & dat,
-              string const & table)
+database::get_unchecked(hexenc<id> const & ident,
+                        data & dat,
+                        string const & table)
 {
   if (have_pending_write(table, ident))
     {
@@ -990,14 +1010,9 @@ database::get(hexenc<id> const & ident,
   query q("SELECT data FROM " + table + " WHERE id = ?");
   fetch(res, one_col, one_row, q % text(ident()));
 
-  // consistency check
   gzip<data> rdata(res[0][0]);
   data rdata_unpacked;
   decode_gzip(rdata,rdata_unpacked);
-
-  hexenc<id> tid;
-  calculate_ident(rdata_unpacked, tid);
-  I(tid == ident);
 
   dat = rdata_unpacked;
 }
@@ -1066,7 +1081,7 @@ struct datasz
   unsigned long operator()(data const & t) { return t().size(); }
 };
 
-static LRUCache<hexenc<id>, data, datasz>
+static LRUCache<string, data, datasz>
 vcache(constants::db_version_cache_sz);
 
 typedef vector< hexenc<id> > version_path;
@@ -1094,166 +1109,159 @@ extend_path_if_not_cycle(string table_name,
 }
 
 void
+database::get_reconstruction_path(string const & ident,
+                                  string const & data_table,
+                                  string const & delta_table,
+                                  reconstruction_path & path)
+{
+  // we start from the file we want to reconstruct and work *forwards*
+  // through the database, until we get to a full data object. we then
+  // trace back through the list of edges we followed to get to the data
+  // object, applying reverse deltas.
+  //
+  // the effect of this algorithm is breadth-first search, backwards
+  // through the storage graph, to discover a forwards shortest path, and
+  // then following that shortest path with delta application.
+  //
+  // we used to do this with the boost graph library, but it invovled
+  // loading too much of the storage graph into memory at any moment. this
+  // imperative version only loads the descendents of the reconstruction
+  // node, so it much cheaper in terms of memory.
+  //
+  // we also maintain a cycle-detecting set, just to be safe
+
+  // Our reconstruction algorithm involves keeping a set of parallel
+  // linear paths, starting from ident, moving forward through the
+  // storage DAG until we hit a storage root.
+  //
+  // On each iteration, we extend every active path by one step. If our
+  // extension involves a fork, we duplicate the path. If any path
+  // contains a cycle, we fault.
+  //
+  // If, by extending a path C, we enter a node which another path
+  // D has already seen, we kill path C. This avoids the possibility of
+  // exponential growth in the number of paths due to extensive forking
+  // and merging.
+
+  L(FL("reconstructing %s in %s") % ident % delta_table);
+
+  vector< shared_ptr<reconstruction_path> > live_paths;
+
+  string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
+
+  {
+    shared_ptr<reconstruction_path> pth0 = shared_ptr<reconstruction_path>(new reconstruction_path());
+    pth0->push_back(ident);
+    live_paths.push_back(pth0);
+  }
+
+  shared_ptr<reconstruction_path> selected_path;
+  set<string> seen_nodes;
+
+  while (!selected_path)
+    {
+      vector< shared_ptr<reconstruction_path> > next_paths;
+
+      for (vector<shared_ptr<reconstruction_path> >::const_iterator i = live_paths.begin();
+           i != live_paths.end(); ++i)
+        {
+          shared_ptr<reconstruction_path> pth = *i;
+          string tip = pth->back();
+
+          if (vcache.exists(tip) || exists(tip, data_table))
+            {
+              selected_path = pth;
+              break;
+            }
+          else
+            {
+              // This tip is not a root, so extend the path.
+              results res;
+              fetch(res, one_col, any_rows,
+                    query(delta_query)
+                    % text(tip));
+
+              I(res.size() != 0);
+
+              // Replicate the path if there's a fork.
+              for (size_t k = 1; k < res.size(); ++k)
+                {
+                  shared_ptr<reconstruction_path> pthN
+                    = shared_ptr<reconstruction_path>(new reconstruction_path(*pth));
+                  extend_path_if_not_cycle(delta_table, pthN,
+                                           hexenc<id>(res[k][0]),
+                                           seen_nodes, next_paths);
+                }
+
+              // And extend the base path we're examining.
+              extend_path_if_not_cycle(delta_table, pth,
+                                       hexenc<id>(res[0][0]),
+                                       seen_nodes, next_paths);
+            }
+        }
+
+      I(selected_path || !next_paths.empty());
+      live_paths = next_paths;
+    }
+}
+
+// used for files and legacy manifest migration
+void
 database::get_version(hexenc<id> const & ident,
                       data & dat,
                       string const & data_table,
                       string const & delta_table)
 {
   I(ident() != "");
-  if (vcache.fetch(ident, dat))
-    {
-      return;
-    }
-  else if (exists(ident, data_table))
-    {
-     // easy path
-     get(ident, dat, data_table);
-    }
+
+  reconstruction_path selected_path;
+  get_reconstruction_path(ident(), data_table, delta_table,
+                          selected_path);
+  
+  I(selected_path);
+  I(selected_path->size() > 1);
+  
+  hexenc<id> curr = selected_path->back();
+  selected_path->pop_back();
+  data begin;
+  
+  if (vcache.exists(curr))
+    I(vcache.fetch(curr, begin));
   else
+    get_unchecked(curr, begin, data_table);
+  
+  shared_ptr<delta_applicator> app = new_piecewise_applicator();
+  app->begin(begin());
+  
+  for (reconstruction_path::reverse_iterator i = selected_path->rbegin();
+       i != selected_path->rend(); ++i)
     {
-      // tricky path
-
-      // we start from the file we want to reconstruct and work *forwards*
-      // through the database, until we get to a full data object. we then
-      // trace back through the list of edges we followed to get to the data
-      // object, applying reverse deltas.
-      //
-      // the effect of this algorithm is breadth-first search, backwards
-      // through the storage graph, to discover a forwards shortest path, and
-      // then following that shortest path with delta application.
-      //
-      // we used to do this with the boost graph library, but it invovled
-      // loading too much of the storage graph into memory at any moment. this
-      // imperative version only loads the descendents of the reconstruction
-      // node, so it much cheaper in terms of memory.
-      //
-      // we also maintain a cycle-detecting set, just to be safe
-
-      L(FL("reconstructing %s in %s") % ident % delta_table);
-      I(delta_exists(ident, delta_table));
-
-      // Our reconstruction algorithm involves keeping a set of parallel
-      // linear paths, starting from ident, moving forward through the
-      // storage DAG until we hit a storage root.
-      //
-      // On each iteration, we extend every active path by one step. If our
-      // extension involves a fork, we duplicate the path. If any path
-      // contains a cycle, we fault.
-      //
-      // If, by extending a path C, we enter a node which another path
-      // D has already seen, we kill path C. This avoids the possibility of
-      // exponential growth in the number of paths due to extensive forking
-      // and merging.
-
-      vector< shared_ptr<version_path> > live_paths;
-
-      string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
-
-      {
-        shared_ptr<version_path> pth0 = shared_ptr<version_path>(new version_path());
-        pth0->push_back(ident);
-        live_paths.push_back(pth0);
-      }
-
-      shared_ptr<version_path> selected_path;
-      set< hexenc<id> > seen_nodes;
-
-      while (!selected_path)
+      hexenc<id> const nxt = *i;
+      
+      if (!vcache.exists(curr))
         {
-          vector< shared_ptr<version_path> > next_paths;
-
-          for (vector<shared_ptr<version_path> >::const_iterator i = live_paths.begin();
-               i != live_paths.end(); ++i)
-            {
-              shared_ptr<version_path> pth = *i;
-              hexenc<id> tip = pth->back();
-
-              if (vcache.exists(tip) || exists(tip, data_table))
-                {
-                  selected_path = pth;
-                  break;
-                }
-              else
-                {
-                  // This tip is not a root, so extend the path.
-                  results res;
-                  fetch(res, one_col, any_rows,
-                        query(delta_query)
-                        % text(tip()));
-
-                  I(res.size() != 0);
-
-                  // Replicate the path if there's a fork.
-                  for (size_t k = 1; k < res.size(); ++k)
-                    {
-                      shared_ptr<version_path> pthN
-                        = shared_ptr<version_path>(new version_path(*pth));
-                      extend_path_if_not_cycle(delta_table, pthN,
-                                               hexenc<id>(res[k][0]),
-                                               seen_nodes, next_paths);
-                    }
-
-                  // And extend the base path we're examining.
-                  extend_path_if_not_cycle(delta_table, pth,
-                                           hexenc<id>(res[0][0]),
-                                           seen_nodes, next_paths);
-                }
-            }
-
-          I(selected_path || !next_paths.empty());
-          live_paths = next_paths;
+          string tmp;
+          app->finish(tmp);
+          vcache.insert(curr, tmp);
         }
-
-      // Found a root, now trace it back along the path.
-
-      I(selected_path);
-      I(selected_path->size() > 1);
-
-      hexenc<id> curr = selected_path->back();
-      selected_path->pop_back();
-      data begin;
-
-      if (vcache.exists(curr))
-        {
-          I(vcache.fetch(curr, begin));
-        }
-      else
-        {
-          get(curr, begin, data_table);
-        }
-
-      shared_ptr<delta_applicator> app = new_piecewise_applicator();
-      app->begin(begin());
-
-      for (version_path::reverse_iterator i = selected_path->rbegin();
-           i != selected_path->rend(); ++i)
-        {
-          hexenc<id> const nxt = *i;
-
-          if (!vcache.exists(curr))
-            {
-              string tmp;
-              app->finish(tmp);
-              vcache.insert(curr, tmp);
-            }
-
-          L(FL("following delta %s -> %s") % curr % nxt);
-          delta del;
-          get_delta(nxt, curr, del, delta_table);
-          apply_delta (app, del());
-
-          app->next();
-          curr = nxt;
-        }
-
-      string tmp;
-      app->finish(tmp);
-      dat = data(tmp);
-
-      hexenc<id> final;
-      calculate_ident(dat, final);
-      I(final == ident);
+      
+      L(FL("following delta %s -> %s") % curr % nxt);
+      delta del;
+      get_delta(nxt, curr, del, delta_table);
+      apply_delta (app, del());
+      
+      app->next();
+      curr = nxt;
     }
+  
+  string tmp;
+  app->finish(tmp);
+  dat = data(tmp);
+  
+  hexenc<id> final;
+  calculate_ident(dat, final);
+  I(final == ident);
+
   vcache.insert(ident, dat);
 }
 
@@ -1401,15 +1409,15 @@ database::remove_version(hexenc<id> const & target_id,
 bool
 database::file_version_exists(file_id const & id)
 {
-  return delta_exists(id.inner(), "file_deltas")
-    || exists(id.inner(), "files");
+  return delta_exists(id.inner()(), "file_deltas")
+    || exists(id.inner()(), "files");
 }
 
 bool
-database::roster_version_exists(roster_id const & id)
+database::roster_version_exists(roster_id id)
 {
-  return delta_exists(id.inner(), "roster_deltas")
-    || exists(id.inner(), "rosters");
+  return delta_exists(lexical_cast<string>(id), "roster_deltas")
+    || exists(lexical_cast<string>(id), "rosters");
 }
 
 bool
@@ -1437,7 +1445,7 @@ database::roster_exists_for_revision(revision_id const & rev_id)
         query("SELECT roster_id FROM revision_roster WHERE rev_id = ? ")
         % text(rev_id.inner()()));
   I((res.size() == 1) || (res.size() == 0));
-  return (res.size() == 1) && roster_version_exists(roster_id(res[0][0]));
+  return (res.size() == 1) && roster_version_exists(lexical_cast<roster_id>(res[0][0]));
 }
 
 void
@@ -1449,7 +1457,7 @@ database::get_roster_links(map<revision_id, roster_id> & links)
   for (size_t i = 0; i < res.size(); ++i)
     {
       links.insert(make_pair(revision_id(res[i][0]),
-                             roster_id(res[i][1])));
+                             lexical_cast<roster_id>(res[i][1])));
     }
 }
 
@@ -1477,9 +1485,16 @@ database::get_roster_ids(set<roster_id> & ids)
 {
   ids.clear();
   set< hexenc<id> > tmp;
-  get_ids("rosters", tmp);
-  get_ids("roster_deltas", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+
+  results res;
+  query q1("SELECT oid FROM rosters");
+  fetch(res, one_col, any_rows, q1);
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    ids.insert(lexical_cast<roster_id>((*i)[0]));
+  query q2("SELECT oid FROM roster_deltas");
+  fetch(res, one_col, any_rows, q2);
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    ids.insert(lexical_cast<roster_id>((*i)[0]));
 }
 
 void
@@ -1501,7 +1516,7 @@ database::get_manifest_version(manifest_id const & id,
 }
 
 void
-database::get_roster_version(roster_id const & id,
+database::get_roster_version(roster_id id,
                              roster_data & dat)
 {
   data tmp;
