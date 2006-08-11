@@ -63,7 +63,11 @@ read_inodeprint_map(data const & dat,
     pa.esym(syms::format_version);
     string vers;
     pa.str(vers);
-    I(vers == "1");
+    if (vers != "1")
+      {
+        L(FL("inodeprints file version is unknown, skipping it"));
+        return;
+      }
   }
 
   while(pa.symp())

@@ -9,6 +9,7 @@ struct mtn_sanity : public sanity
 
   mtn_sanity();
   ~mtn_sanity();
+  void initialize(int, char **, char const *);
 
   void set_relaxed(bool rel);
 

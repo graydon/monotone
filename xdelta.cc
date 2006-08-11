@@ -182,7 +182,19 @@ insert_insn(vector<insn> & delta, char c)
   if (delta.empty() || delta.back().code == insn::copy)
     delta.push_back(insn(c));
   else
-    delta.back().payload += c;
+    {
+      // design in gcc 3.3 and 4.0 STL expands the string one character
+      // at a time when appending single characters ?!
+      // see libstdc++5-3.3-dev 3.3.5-13: basic_string.h:471, calling with
+      // size_type(1), then basic_string.tcc:717 reserving one more byte
+      // if needed.
+      // see libstdc++6-4.0-dev 4.0.3-3: basic_string.h:770 calling push_back
+      // then basic_string.h: 849 again adding 1 to the length.
+      if (delta.back().payload.capacity() == delta.back().payload.size())
+        // standard amortized constant rule
+        delta.back().payload.reserve(delta.back().payload.size() * 2);
+      delta.back().payload += c;
+    }
 }
 
 
@@ -249,7 +261,7 @@ compute_delta_insns(string const & a,
 
 void
 write_delta_insns(vector<insn> const & delta_insns,
-		  string & delta)
+                  string & delta)
 {
   delta.clear();
   ostringstream oss;
@@ -369,13 +381,13 @@ apply_delta(shared_ptr<delta_applicator> da,
           I(*i == '\n');
           ++i;
           I(i != delta.end());
-	  I((i - delta.begin()) + len <= delta.size());
-	  if (len > 0)
-	    {
-	      string tmp(i, i+len);
-	      da->insert(tmp);
-	    }
-	  i += len;
+          I((i - delta.begin()) + len <= delta.size());
+          if (len > 0)
+            {
+              string tmp(i, i+len);
+              da->insert(tmp);
+            }
+          i += len;
         }
       else
         {
@@ -385,8 +397,8 @@ apply_delta(shared_ptr<delta_applicator> da,
           string::size_type pos = read_num(i, delta.end());
           I(i != delta.end());
           string::size_type len = read_num(i, delta.end());
-	  if (len != 0)
-	    da->copy(pos, len);
+          if (len != 0)
+            da->copy(pos, len);
         }
       I(i != delta.end());
       I(*i == '\n');
@@ -496,11 +508,12 @@ piece_table
   void build(version_spec const & in, string & out)
   {
     out.clear();
-    for (version_spec::const_iterator i = in.begin();
-         i != in.end(); ++i)
-      {
-        append(out, i->piece, i->ppos, i->len);
-      }
+    unsigned out_len = 0;
+    for (version_spec::const_iterator i = in.begin(); i != in.end(); ++i)
+      out_len += i->len;
+    out.reserve(out_len);
+    for (version_spec::const_iterator i = in.begin(); i != in.end(); ++i)
+      append(out, i->piece, i->ppos, i->len);
   }
 };
 
@@ -673,8 +686,8 @@ new_piecewise_applicator()
 struct copied_extent
 {
   copied_extent(string::size_type op,
-		string::size_type np,
-		string::size_type len)
+                string::size_type np,
+                string::size_type len)
     : old_pos(op),
       new_pos(np),
       len(len)
@@ -720,32 +733,32 @@ inverse_delta_writing_applicator :
     vector<insn> delta_insns;
 
     for (set<copied_extent>::iterator i = copied_extents.begin();
-	 i != copied_extents.end(); ++i)
-      {	
-	// It is possible that this extent left a gap after the
-	// previously copied extent; in this case we wish to pad
-	// the intermediate space with an insert.
-	while (old_pos < i->old_pos)
-	  {
-	    I(old_pos < old.size());
-	    // Don't worry, adjacent inserts are merged.
-	    insert_insn(delta_insns, old.at(old_pos++));
-	  }
+         i != copied_extents.end(); ++i)
+      { 
+        // It is possible that this extent left a gap after the
+        // previously copied extent; in this case we wish to pad
+        // the intermediate space with an insert.
+        while (old_pos < i->old_pos)
+          {
+            I(old_pos < old.size());
+            // Don't worry, adjacent inserts are merged.
+            insert_insn(delta_insns, old.at(old_pos++));
+          }
 
-	// It is also possible that this extent *overlapped* the
-	// previously copied extent; in this case we wish to subtract
-	// the overlap from the inverse copy.
+        // It is also possible that this extent *overlapped* the
+        // previously copied extent; in this case we wish to subtract
+        // the overlap from the inverse copy.
 
-	string::size_type overlap = 0;
-	if (i->old_pos < old_pos)
-	  overlap = old_pos - i->old_pos;
+        string::size_type overlap = 0;
+        if (i->old_pos < old_pos)
+          overlap = old_pos - i->old_pos;
 
-	if (i->len <= overlap)
-	  continue;
+        if (i->len <= overlap)
+          continue;
 
-	I(i->len > overlap);
-	copy_insn(delta_insns, i->new_pos + overlap, i->len - overlap);
-	old_pos += (i->len - overlap);
+        I(i->len > overlap);
+        copy_insn(delta_insns, i->new_pos + overlap, i->len - overlap);
+        old_pos += (i->len - overlap);
       }
     while (old_pos < old.size())
       insert_insn(delta_insns, old.at(old_pos++));
@@ -770,8 +783,8 @@ inverse_delta_writing_applicator :
 
 void
 invert_xdelta(string const & old_str,
-	      string const & delta,
-	      string & delta_inverse)
+              string const & delta,
+              string & delta_inverse)
 {
   shared_ptr<delta_applicator> da(new inverse_delta_writing_applicator(old_str));
   apply_delta(da, delta);

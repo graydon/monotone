@@ -63,6 +63,7 @@
 #define OPT_STDIO 49
 #define OPT_NO_TRANSPORT_AUTH 50
 #define OPT_NO_SHOW_ENCLOSER 51
+#define OPT_AUTOMATE_STDIO_SIZE 52
 
 // Local Variables:
 // mode: C++

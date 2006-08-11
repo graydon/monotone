@@ -236,6 +236,203 @@
 	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
 	interfaces.
 
+2006-08-10  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD(commit)):
+	* database_check.cc (report_certs): Don't use positional format
+	specifiers in the C++ source files.  Positional format
+	specifiers should only be used in the translation strings, if
+	needed.  For further information/opinions, see
+	http://lists.gnu.org/archive/html/monotone-devel/2006-07/msg00357.html
+	* po/sv.po: Clear the fuzzies created by this change.
+
+2006-08-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* Makefile.am: Fix run_tester_tests to run tester-testsuite.lua instead
+	of testsuite.lua .
+
+2006-08-07  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (45 to go).
+
+2006-08-07  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Remove main.cc, since it's been removed from
+	the source tree.
+	* po/sv.po: A fuzzy and two untranslated strings to translate.
+
+2006-08-06  Nathaniel Smith  <njs@pobox.com>
+
+	* packet.cc (extract_packets, read_packets): Make some const
+	strings static (patch from Vaclav Haisman).
+
+2006-08-06  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	Make the block size for automate stdio configurable:
+	* constants.hh, constants.cc: Remove automate_stdio_size constant.
+	* app_state.cc, app_state.hh, options.hh, monotone.cc: Add new
+	option commandline option '--automate-stdio-size'. Default is 1024, 
+	which is the value of the old constant.
+	* cmd_automate.cc: Use the new commandline option instead of the
+	old onstant.
+	* monotone.texi (Automation): Document the new option.
+
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Make the cute commit
+	message actually a commit message, rather than the world's longest
+	branch name.
+
+2006-08-05  Zack Weinberg  <zackw@panix.com>
+
+	Clean up after merge from mainline:
+	* luaext_globish.cc (match): Use e.what() instead of e.what.c_str(),
+	when e is an informative_failure.
+	* tester.cc (main): Similarly.
+	* monotone.cc (process_all_options): Add an .as_external() that
+	got lost.
+	* mtn-sanity.cc: Include mt_version.hh.
+	(mtn_sanity::initialize): New function.
+	* mtn-sanity.hh: Prototype it.
+	* sanity.hh: Make sanity::initialize virtual.
+	* sanity.cc (sanity::initialize): Remove IN_TESTER #ifdef.
+	Do PERM_MM system_flavour.
+	* unix/main.cc (main): Change i to a size_t.
+	* Makefile.am (tester_CPPFLAGS): Remove -DIN_TESTER kludge.
+
+2006-08-04  Zack Weinberg  <zackw@panix.com>
+
+	* platform.hh: Define ignore_sigpipe as a nop on win32 or declare
+	it as an external on Unix.
+	* unix/process.cc: Define ignore_sigpipe.
+	* netsync.cc: No need to conditionally include signal.h.
+	(run_netsync_protocol): Use ignore_sigpipe.
+	* sanity.hh: Define PERM_MM here, with comment explaining when it
+	is safe to use.
+	* sanity.cc: Don't define PERM_MM.
+	* ui.cc (fatal): Add note about need to keep message in sync with
+	other copies.
+	* unix/main.cc: Correct name in comment.  Downcase
+	WRITE_STR_TO_STDERR and make it an inline function.  Adjust note
+	about need to keep bug_report_message in sync with other copies.
+	* win32/main.cc: Similarly.
+	* commands.cc (crash): Undef maybe_throw_bare at end.
+	* tests/log_quits_on_SIGPIPE: New test.
+	* testsuite.lua: Add it.
+
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_diff_log.cc (log): Call cout.flush() after describing each
+	revision.
+
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (visit_file): Print a message when implicitly adding
+	directories, and simplify a bit.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (cancel_pending_write): >, <, what's the difference
+	anyway...
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc: Limit the amount of pending writes we buffer up,
+	from Eric Anderson.  Pluck of 4e99cc37f548b5884d63c48bc486df
+	through	033e5805502c5441ef539ab5cbc1a4, with formatting fixups,
+	factoring out of duplicated code, commented precondition on
+	cancel_pending_write, and removal of comments about the
+	relationship between how often this buffer flushes and how often
+	netsync flushes, since these are logically separate.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* xdelta.cc (piece_table::build, insert_insn): Better handling of
+	string expansion, from Eric Anderson.
+	Pluck of d1e563447ab7d92bb965eb330988c637f3c22d14, plus formatting
+	fixups.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* mtn.1, monotone.texi: Who are we kidding?  The man page is more
+	misleading than helpful.  Put a big warning at its top, and delete
+	the yet-even-more-bitrotten copy from the texinfo manual.
+
+2006-08-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua: make ssh://host/~/path/file.mtn and
+	ssh://host/~user/path/file.mtn work for paths relative to homedirs.
+
+2006-08-04  Thomas Keller  <me@thomaskeller.biz>
+
+	* automate.cc: reworked `automate attributes`, this now
+	  outputs basic_io and shows the state of each attribute
+	  (added, dropped, changed or unchanged) and also lists
+	  those attributes which have been dropped obviously
+	* monotone.texi: updated the docs for that change
+	* cmd_automate.cc: bumped interface_version to 3.0 since
+	  the new automate attributes is incompatible with the
+	  previous one
+	* tests/automate_attributes/__driver__.lua: updated test
+	* roster.cc: moved syms namespace ...
+	* basic_io.hh: ... here and updated the references in the
+	  former file. This is a first start for a more generic
+	  symbols namespace which should lead to a more consistent
+	  output of the different automate commands which make use
+	  of basic_io
+
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_diff_log.cc: don't include revisions with deleted files
+	when doing "log FILE".
+	* tests/log_with_restriction/: a test
+
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
+	* inodeprints.cc: just silently skip (but L()) inodeprint files
+	if the format version is unknown.
+
+2006-08-02  Zack Weinberg  <zackw@panix.com>
+
+	* acinclude.m4: Rename to m4/inaddrnone.m4; update macro to
+	autoconf 2.5x conventions.
+
+	* m4/ac_compile_check_sizeof.m4: Delete, unused.
+	* m4/acx_pthread.m4, m4/ax_create_stdint_h.m4, m4/externtemplate.m4
+	* m4/fexception.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
+	* m4/typeof.m4: Update to autoconf 2.5x conventions.
+
+	* m4/externtemplate.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
+	* m4/typeof.m4: Use AC_LANG_SOURCE where appropriate.
+
+	* m4/prog_cxx_warnings.m4: Set CXXFLAGS outside the AC_CACHE_CHECK.
+	* m4/boost.m4: New file.  All boost-related logic goes here now.
+	Cache results of library searches; simplify handling of
+	--enable-static-boost.
+	* m4/tr1unorderedmap.m4: New file with tests for tr1::unordered_*.
+	* configure.ac: Use the macros from the above new files.
+	* Makefile.am: Conditional on STATIC_BOOST is no longer	necessary.
+	Wrap some lines.
+
+	* m4/localeworks.m4, m4/netxx.m4, m4/pch.m4, m4/popt.m4, m4/sqlite.m4
+	* m4/syncwithstdio.m4, m4/tempstatconst.m4, m4/xgettextflag.m4:
+	New files.
+	* configure.ac: Use the macros defined in the above files instead
+	of in-line code.
+
+	* configure.ac: Reorganize tests for ease of reading and to ensure
+	that all tests are performed only once.
+	* m4/acx_pthread.m4, m4/externtemplate.m4, m4/fexception.m4
+	* m4/gnucxxhashmap.m4, m4/stlporthashmap.m4, mtl/tempstatconst.m4
+	* m4/tr1unorderedmap.m4, m4/typeof.m4: Use AC_LANG_ASSERT instead
+	of AC_LANG_PUSH/POP, per autoconf manual's recommendation.
+	* m4/popt.m4: Avoid double tests for headers.
+	* m4/prog_cxx_warnings.m4: Fix typo in last change.
+
+2006-07-31  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Reformat some messages so they fit 80 columns better.
+
 2006-07-26  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* std_hooks.lua (temp_file): Allow callers to pass a filename hint
@@ -373,6 +570,36 @@
 	* roster.cc (check_restricted_cset): allow temp nodes and ensure
 	the node source does not overlap with any existing temp nodes
 
+2006-07-23  Zack Weinberg  <zackw@panix.com>
+
+	* Makefile.am (tester_CPPFLAGS): Define IN_TESTER.
+	* sanity.cc, sanity.hh: Remove C-string specialization of dump() again.
+	(sanity::initialize): New function with more logic split out of ...
+	* monotone.cc (cpp_main): ... here.  Move exit_after_options catch
+	to main chain of catches.
+
+2006-07-23  Zack Weinberg  <zackw@panix.com>
+
+	* monotone.cc: No need to include <strings.h>.  Reorganize entire
+	file, putting things in logical order and splitting large chunks
+	of cpp_main out to...
+	(process_all_options, hide_irrelevant_options): ... these new
+	functions.
+	(cpp_main): Also, avoid some unnecessary C-string-to-std::string
+	conversions, and use ui.fatal_exception for the outermost catch
+	clauses.
+	* sanity.cc, sanity.hh: Specialize dump() for C strings too.
+
+	* ui.cc: Add conditional compilation goo for systems with or
+	without cxxabi.h.
+	(user_interface::fatal_exception): New function (2 overloads).
+	* ui.hh: Declare new user_interface member functions.
+	* unix/main.cc, win32/main.cc: Remove try/catch in main() and all
+	logic supporting it.
+
+	* commands.cc (crash): Remove ability to throw strings.
+	* tests/dump_on_crash: Don't test throwing strings.
+
 2006-07-23  Benoît Dejean  <benoit@placenet.org>
 
 	* configure.ac:
@@ -391,10 +618,66 @@
 	* tests/automate_tags/__driver__.lua: Fix test on Win32 (globs vs
 	quoting).
 
+2006-07-22  Zack Weinberg  <zackw@panix.com>
+
+	* sanity.hh: Remove Q().
+	* unix/main.cc: Delete all code related to deferred exception-throwing
+	on user interrupt.
+	(interrupt_signal): Just exit, telling the user they may have to
+	clean up a locked database.
+	* win32/main.cc: Remove most MSVC/Borland #ifdefs, preserving only
+	the MSVC-specific _CrtSetReportHook call.  Use
+	SetUnhandledExceptionFilter to trap errors reported via SEH.
+	(report_ms_se_error): Rename seh_reporting_function; restructure
+	to be suitable for SetUnhandledExceptionFilter; add cases for all
+	documented exception codes.
+	* netsync.cc: Include signal.h if not Windows.
+	(run_netsync_protocol): Ignore SIGPIPE if not Windows.
+	* tests/database_is_closed_on_signal_exit: Expected to fail.
+
 2006-07-22  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Set date, and it turns out AUTOMATE() was there in
 	0.27...
+
+2006-07-21  Zack Weinberg  <zackw@panix.com>
+
+	* main.cc: Break up into...
+	* unix/main.cc, win32/main.cc: ...these two files specialized for
+	the relevant operating systems.  Revamp Unix signal handling.
+	* Makefile.am: Update to match.
+	* configure.ac: Add tests for <cxxabi.h> interfaces conditionally
+	used by unix/main.cc.
+
+	* sanity.hh (informative_failure): Conform to std::exception interface.
+	(sanity): Remove clean_shutdown member.
+	* sanity.cc (sanity::sanity): Do not do any work here.
+	(sanity::do_format): Catch anything, and do not attempt to refer
+	to what().
+	* cmd_automate.cc, lua.cc, netxx_pipe.cc: informative_failure::what
+	is now a member function returning a char *, conforming to the
+	std::exception interface.
+	* ui.hh (user_interface): Add initialize and deinitialize members.
+	Correct typo in fatal(format_base const&) inline overload.
+	* ui.cc (user_interface::user_interface)
+	(user_interface::~user_interface): Do not do any work here...
+	(user_interface::initialize, user_interface::deinitialize):
+	... do it here instead.
+	* monotone.cc (dumper): Remove.
+	(struct botan_library, struct ui_library): New.
+	(cpp_main): Use struct botan_library and struct ui_library to
+	initialize global state.  Don't muck with global_sanity.clean_shutdown.
+	Catch standard exceptions here.  Log system_flavour here.
+
+	* commands.cc (crash): Add ability to throw any standard library
+	exception, bare strings, or (on Unix) raise any of the basic signals.
+	* unix/process.cc (process_wait): If process exited with a signal,
+	return -WTERMSIG(status) not -1.
+	* tests/database_is_closed_on_signal_exit: Ensure that the mtn
+	process actually exits in response to the signal, with the proper
+	exit status.
+	* tests/dump_on_crash: Add tests of all standard exceptions and
+	some signals.
 
 2006-07-21  Nathaniel Smith  <njs@pobox.com>
 

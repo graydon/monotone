@@ -1,6 +1,6 @@
 AC_DEFUN([AC_HAVE_INADDR_NONE],
 [AC_CACHE_CHECK([whether INADDR_NONE is defined], ac_cv_have_inaddr_none,
- [AC_TRY_COMPILE([
+ [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -15,9 +15,10 @@ AC_DEFUN([AC_HAVE_INADDR_NONE],
 #endif
 ],[
 unsigned long foo = INADDR_NONE;
-],
-  ac_cv_have_inaddr_none=yes,
-  ac_cv_have_inaddr_none=no)])
- if test $ac_cv_have_inaddr_none != yes; then
-   AC_DEFINE(INADDR_NONE, 0xffffffff, [Define to value of INADDR_NONE if not provided by your system header files.])
+])],
+  [ac_cv_have_inaddr_none=yes],
+  [ac_cv_have_inaddr_none=no])])
+ if test x$ac_cv_have_inaddr_none != xyes; then
+   AC_DEFINE(INADDR_NONE, 0xffffffff,
+ [Define to value of INADDR_NONE if not provided by your system header files.])
  fi])

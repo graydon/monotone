@@ -820,6 +820,12 @@ function get_netsync_connect_command(uri, args)
                         table.insert(argv, uri["port"])
                 end
 
+                -- ssh://host/~/dir/file.mtn or 
+                -- ssh://host/~user/dir/file.mtn should be home-relative
+                if string.find(uri["path"], "^/~") then
+                        uri["path"] = string.sub(uri["path"], 2)
+                end
+
                 table.insert(argv, uri["host"])
 		quote_patterns = true
         end

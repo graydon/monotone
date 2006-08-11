@@ -17,7 +17,7 @@ LUAEXT(match, globish)
     string s(str);
     result = globish_matcher(r, n)(s);
   } catch (informative_failure & e) {
-    lua_pushstring(L, e.what.c_str());
+    lua_pushstring(L, e.what());
     lua_error(L);
     return 0;
   } catch (boost::bad_pattern & e) {

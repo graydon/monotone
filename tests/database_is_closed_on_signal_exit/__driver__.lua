@@ -23,23 +23,27 @@ process = bg(mtn("--rcfile=wait.lua", "-btestbranch", "ci", "-mx"), false, false
 sleep(2)
 check(exists("test.db-journal"))
 kill(process.pid, 15)
-sleep(2)
-check(not exists("test.db-journal"))
-
+retval, res = timed_wait(process.pid, 2)
+check(res == 0)
+check(retval == -15) -- signal, not exit
+xfail_if(exists("test.db-journal"))
 
 -- and again for SIGINT
 process = bg(mtn("--rcfile=wait.lua", "-btestbranch", "ci", "-mx"), false, false, false)
 sleep(2)
 check(exists("test.db-journal"))
 kill(process.pid, 2)
-sleep(2)
-check(not exists("test.db-journal"))
-
+retval, res = timed_wait(process.pid, 2)
+check(res == 0)
+check(retval == -1) -- signal, not exit
+xfail_if(exists("test.db-journal"))
 
 -- should *not* be cleaned up for SIGSEGV
 process = bg(mtn("--rcfile=wait.lua", "-btestbranch", "ci", "-mx"), false, false, false)
 sleep(2)
 check(exists("test.db-journal"))
 kill(process.pid, 11)
-sleep(2)
+retval, res = timed_wait(process.pid, 2)
+check(res == 0)
+check(retval == -11) -- signal, not exit
 check(exists("test.db-journal"))

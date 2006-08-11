@@ -181,7 +181,7 @@ int process_wait(pid_t pid, int *res, int timeout)
         if (WIFEXITED(status))    
                 *res = WEXITSTATUS(status);
         else
-                *res = -1;
+                *res = -WTERMSIG(status);
         return 0;
 }
 
@@ -198,4 +198,9 @@ int process_sleep(unsigned int seconds)
 pid_t get_process_id()
 {
         return getpid();
+}
+
+void ignore_sigpipe()
+{
+  signal(SIGPIPE, SIG_IGN);
 }

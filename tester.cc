@@ -485,7 +485,7 @@ int main(int argc, char **argv)
       P(F("Error: %s") % e.what());
     }
   } catch (informative_failure & e) {
-    P(F("Error: %s\n") % e.what.c_str());
+    P(F("Error: %s\n") % e.what());
     retcode = 1;
   } catch (std::logic_error & e) {
     P(F("Invariant failure: %s\n") % e.what());

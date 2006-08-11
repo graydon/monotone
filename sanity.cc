@@ -42,15 +42,43 @@ using boost::format;
 
 sanity::sanity() :
   debug(false), quiet(false), reallyquiet(false), logbuf(0xffff),
-  already_dumping(false), clean_shutdown(false)
-{
-  string flavour;
-  get_system_flavour(flavour);
-  L(FL("started up on %s") % flavour);
-}
+  already_dumping(false)
+{}
 
 sanity::~sanity()
 {}
+
+void
+sanity::initialize(int argc, char ** argv, char const * lc_all)
+{
+  // set up some marked strings, so even if our logbuf overflows, we'll get
+  // this data in a crash.  This (and subclass overrides) are probably the
+  // only place PERM_MM should ever be used.
+
+  string system_flavour;
+  get_system_flavour(system_flavour);
+  PERM_MM(system_flavour);
+  L(FL("started up on %s") % system_flavour);
+
+  string cmdline_string;
+  {
+    ostringstream cmdline_ss;
+    for (int i = 0; i < argc; ++i)
+      {
+        if (i)
+          cmdline_ss << ", ";
+        cmdline_ss << "'" << argv[i] << "'";
+      }
+    cmdline_string = cmdline_ss.str();
+  }
+  PERM_MM(cmdline_string);
+  L(FL("command line: %s") % cmdline_string);
+
+  if (!lc_all)
+    lc_all = "n/a";
+  PERM_MM(string(lc_all));
+  L(FL("set locale: LC_ALL=%s") % lc_all);
+}
 
 void
 sanity::dump_buffer()
@@ -304,7 +332,6 @@ dump(string const & obj, string & out)
 {
   out = obj;
 }
-
 
 void MusingBase::gasp_head(string & out) const
 {
