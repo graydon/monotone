@@ -89,7 +89,8 @@ class database
   };
 
   std::map<std::string, statement> statement_cache;
-  std::map<std::pair<std::string, hexenc<id> >, data> pending_writes;
+  enum pending_type { pending_roster, pending_file };
+  std::map<std::pair<pending_type, hexenc<id> >, data> pending_writes;
   size_t pending_writes_size;
 
   size_t size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat);

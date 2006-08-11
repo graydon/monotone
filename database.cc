@@ -845,38 +845,38 @@ database::size_pending_write(std::string const & tab, hexenc<id> const & id, dat
 }
 
 bool
-database::have_pending_write(string const & tab, hexenc<id> const & id)
+database::have_pending_write(pending_type t, hexenc<id> const & id)
 {
-  return pending_writes.find(make_pair(tab, id)) != pending_writes.end();
+  return pending_writes.find(make_pair(t, id)) != pending_writes.end();
 }
 
 void
-database::load_pending_write(string const & tab, hexenc<id> const & id, data & dat)
+database::load_pending_write(pending_type t, hexenc<id> const & id, data & dat)
 {
-  dat = safe_get(pending_writes, make_pair(tab, id));
+  dat = safe_get(pending_writes, make_pair(t, id));
 }
 
-// precondition: have_pending_write(tab, an_id) == true
+// precondition: have_pending_write(t, an_id) == true
 void
-database::cancel_pending_write(string const & tab, hexenc<id> const & an_id)
+database::cancel_pending_write(pending_where t, hexenc<id> const & an_id)
 {
-  data const & dat = safe_get(pending_writes, make_pair(tab, an_id));
-  size_t cancel_size = size_pending_write(tab, an_id, dat);
+  data const & dat = safe_get(pending_writes, make_pair(t, an_id));
+  size_t cancel_size = size_pending_write(t, an_id, dat);
   I(cancel_size < pending_writes_size);
   pending_writes_size -= cancel_size;
     
-  safe_erase(pending_writes, make_pair(tab, an_id));
+  safe_erase(pending_writes, make_pair(t, an_id));
 }
 
 void
-database::schedule_write(string const & tab,
-                         hexenc<id> const & an_id,
+database::schedule_write(pending_where t,
+                         string const & an_id,
                          data const & dat)
 {
-  if (!have_pending_write(tab, an_id))
+  if (!have_pending_write(t, an_id))
     {
-      safe_insert(pending_writes, make_pair(make_pair(tab, an_id), dat));
-      pending_writes_size += size_pending_write(tab, an_id, dat);
+      safe_insert(pending_writes, make_pair(make_pair(t, an_id), dat));
+      pending_writes_size += size_pending_write(t, an_id, dat);
     }
   if (pending_writes_size > constants::db_max_pending_writes_bytes)
     flush_pending_writes();
@@ -885,7 +885,7 @@ database::schedule_write(string const & tab,
 void
 database::flush_pending_writes()
 {
-  for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+  for (map<pair<pending_type, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
        i != pending_writes.end(); ++i)
     put(i->first.second, i->second, i->first.first);
   pending_writes.clear();
@@ -996,9 +996,9 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 }
 
 void
-database::get_unchecked(hexenc<id> const & ident,
-                        data & dat,
-                        string const & table)
+database::get_base_unchecked(hexenc<id> const & ident,
+                             data & dat,
+                             string const & table)
 {
   if (have_pending_write(table, ident))
     {
@@ -1018,10 +1018,10 @@ database::get_unchecked(hexenc<id> const & ident,
 }
 
 void
-database::get_delta(hexenc<id> const & ident,
-                    hexenc<id> const & base,
-                    delta & del,
-                    string const & table)
+database::get_delta_unchecked(hexenc<id> const & ident,
+                              hexenc<id> const & base,
+                              delta & del,
+                              string const & table)
 {
   I(ident() != "");
   I(base() != "");
@@ -1034,43 +1034,105 @@ database::get_delta(hexenc<id> const & ident,
 }
 
 void
-database::put(hexenc<id> const & ident,
-              data const & dat,
-              string const & table)
+database::get_roster_base(string const & ident,
+                          roster<data> & dat)
 {
-  // consistency check
-  I(ident() != "");
-  hexenc<id> tid;
-  calculate_ident(dat, tid);
-  MM(ident);
-  MM(tid);
-  I(tid == ident);
+  if (have_pending_write("rosters", ident))
+    {
+      load_pending_write(table, ident, dat);
+      return;
+    }
+  results res;
+  query q("SELECT checksum, data FROM rosters WHERE id = ?");
+  fetch(res, 2, one_row, q % text(ident));
 
+  hexenc<id> checksum(res[0][0]);
+  hexenc<id> calculated;
+  calculate_ident(data(res[0][1]), calculated);
+  I(calculated == checksum);
+  
+  gzip<data> del_packed(res[0][1]);
+  data tmp;
+  decode_gzip(del_packed, tmp);
+  dat = tmp;
+}
+
+void
+database::get_roster_delta(string const & ident,
+                           string const & base,
+                           roster<delta> & del)
+{
+  results res;
+  query q("SELECT checksum, delta FROM roster_deltas WHERE id = ? AND base = ?");
+  fetch(res, 2, one_row, q % text(ident) % text(base));
+
+  hexenc<id> checksum(res[0][0]);
+  hexenc<id> calculated;
+  calculate_ident(data(res[0][1]), calculated);
+  I(calculated == checksum);
+  
+  gzip<delta> del_packed(res[0][1]);
+  delta tmp;
+  decode_gzip(del_packed, tmp);
+  del = tmp;
+}
+
+void
+database::put(string const & ident,
+              data const & dat,
+              pending_where t)
+{
   gzip<data> dat_packed;
   encode_gzip(dat, dat_packed);
 
-  string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-  execute(query(insert)
-          % text(ident())
-          % blob(dat_packed()));
+  switch (t)
+    {
+    case pending_file:
+      {
+        // then ident is a hash, which we should check
+        I(ident != "");
+        hexenc<id> tid;
+        calculate_ident(dat, tid);
+        MM(ident);
+        MM(tid);
+        I(tid() == ident);
+        // and then write things to the db
+        query q("INSERT INTO files (id, data) VALUES (?, ?)");
+        execute(q % text(ident) % blob(dat_packed()));
+      }
+      break;
+
+    case pending_roster:
+      {
+        // then ident is a number, and we should calculate a checksum on what
+        // we write
+        hexenc<id> checksum;
+        calculate_ident(data(dat_packed()), checksum);
+        // and then write it
+        query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)");
+        execute(q % text(ident) % text(checksum()) % blob(dat_packed()));
+      }
+      break;
+    }
 }
+
+
 void
-database::put_delta(hexenc<id> const & ident,
-                    hexenc<id> const & base,
-                    delta const & del,
-                    string const & table)
+database::put_file_delta(file_id const & ident,
+                         file_id const & base,
+                         file_delta const & del)
 {
   // nb: delta schema is (id, base, delta)
-  I(ident() != "");
-  I(base() != "");
+  I(!null_id(ident));
+  I(!null_id(base));
 
   gzip<delta> del_packed;
-  encode_gzip(del, del_packed);
+  encode_gzip(del.inner(), del_packed);
 
-  string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
-  execute(query(insert)
-          % text(ident())
-          % text(base())
+  query q("INSERT INTO file_deltas VALUES (?, ?, ?)");
+  execute(q
+          % text(ident.inner()())
+          % text(base.inner()())
           % blob(del_packed()));
 }
 
@@ -1219,9 +1281,9 @@ database::get_version(hexenc<id> const & ident,
                           selected_path);
   
   I(selected_path);
-  I(selected_path->size() > 1);
+  I(!selected_path->empty());
   
-  hexenc<id> curr = selected_path->back();
+  string curr = selected_path->back();
   selected_path->pop_back();
   data begin;
   
@@ -1230,8 +1292,65 @@ database::get_version(hexenc<id> const & ident,
   else
     get_unchecked(curr, begin, data_table);
   
-  shared_ptr<delta_applicator> app = new_piecewise_applicator();
-  app->begin(begin());
+  shared_ptr<delta_applicator> appl = new_piecewise_applicator();
+  appl->begin(begin());
+  
+  for (reconstruction_path::reverse_iterator i = selected_path->rbegin();
+       i != selected_path->rend(); ++i)
+    {
+      string const nxt = *i;
+      
+      if (!vcache.exists(curr))
+        {
+          string tmp;
+          appl->finish(tmp);
+          vcache.insert(curr, tmp);
+        }
+      
+      L(FL("following delta %s -> %s") % curr % nxt);
+      delta del;
+      get_delta_unchecked(nxt, curr, del, delta_table);
+      apply_delta (appl, del());
+      
+      appl->next();
+      curr = nxt;
+    }
+  
+  string tmp;
+  appl->finish(tmp);
+  dat = data(tmp);
+  
+  hexenc<id> final;
+  calculate_ident(dat, final);
+  I(final == ident);
+
+  vcache.insert(ident(), dat);
+}
+
+// used for rosters
+void
+database::get_roster_version(roster_id id, roster_data & dat)
+{
+  string id_str = lexical_cast<string>(id);
+
+  reconstruction_path selected_path;
+  get_reconstruction_path(id_str, "rosters", "roster_deltas",
+                          selected_path);
+  
+  I(selected_path);
+  I(!selected_path->empty());
+  
+  string curr = selected_path->back();
+  selected_path->pop_back();
+  data begin;
+  
+  if (vcache.exists(curr))
+    I(vcache.fetch(curr, begin));
+  else
+    get_unchecked(curr, begin, data_table);
+  
+  shared_ptr<delta_applicator> appl = new_piecewise_applicator();
+  appl->begin(begin());
   
   for (reconstruction_path::reverse_iterator i = selected_path->rbegin();
        i != selected_path->rend(); ++i)
@@ -1241,28 +1360,28 @@ database::get_version(hexenc<id> const & ident,
       if (!vcache.exists(curr))
         {
           string tmp;
-          app->finish(tmp);
+          appl->finish(tmp);
           vcache.insert(curr, tmp);
         }
       
       L(FL("following delta %s -> %s") % curr % nxt);
       delta del;
       get_delta(nxt, curr, del, delta_table);
-      apply_delta (app, del());
+      apply_delta (appl, del());
       
-      app->next();
+      appl->next();
       curr = nxt;
     }
   
   string tmp;
-  app->finish(tmp);
+  appl->finish(tmp);
   dat = data(tmp);
   
   hexenc<id> final;
   calculate_ident(dat, final);
   I(final == ident);
 
-  vcache.insert(ident, dat);
+  vcache.insert(ident(), dat);
 }
 
 
@@ -1272,45 +1391,6 @@ database::drop(hexenc<id> const & ident,
 {
   string drop = "DELETE FROM " + table + " WHERE id = ?";
   execute(query(drop) % text(ident()));
-}
-
-void
-database::put_version(hexenc<id> const & old_id,
-                      hexenc<id> const & new_id,
-                      delta const & del,
-                      string const & data_table,
-                      string const & delta_table)
-{
-
-  data old_data, new_data;
-  delta reverse_delta;
-
-  get_version(old_id, old_data, data_table, delta_table);
-  patch(old_data, del, new_data);
-  {
-    string tmp;
-    invert_xdelta(old_data(), del(), tmp);
-    reverse_delta = delta(tmp);
-    data old_tmp;
-    hexenc<id> old_tmp_id;
-    patch(new_data, reverse_delta, old_tmp);
-    calculate_ident(old_tmp, old_tmp_id);
-    I(old_tmp_id == old_id);
-  }
-
-  transaction_guard guard(*this);
-  if (exists(old_id, data_table))
-    {
-      // descendent of a head version replaces the head, therefore old head
-      // must be disposed of
-      if (have_pending_write(data_table, old_id))
-        cancel_pending_write(data_table, old_id);
-      else
-        drop(old_id, data_table);
-    }
-  schedule_write(data_table, new_id, new_data);
-  put_delta(old_id, new_id, reverse_delta, delta_table);
-  guard.commit();
 }
 
 // ------------------------------------------------------------
@@ -1447,10 +1527,41 @@ database::put_file(file_id const & id,
 void
 database::put_file_version(file_id const & old_id,
                            file_id const & new_id,
-                           file_delta const & del)
+                           file_delta const & del,
 {
-  put_version(old_id.inner(), new_id.inner(), del.inner(),
-              "files", "file_deltas");
+  file_data old_data, new_data;
+  file_delta reverse_delta;
+
+  get_file_version(old_id, old_data);
+  {
+    data tmp;
+    patch(old_data.inner(), del.inner(), tmp);
+    new_data = tmp;
+  }
+  {
+    string tmp;
+    invert_xdelta(old_data(), del(), tmp);
+    reverse_delta = delta(tmp);
+    data old_tmp;
+    hexenc<id> old_tmp_id;
+    patch(new_data, reverse_delta, old_tmp);
+    calculate_ident(old_tmp, old_tmp_id);
+    I(old_tmp_id == old_id);
+  }
+
+  transaction_guard guard(*this);
+  if (exists(old_id.inner()(), "files"))
+    {
+      // descendent of a head version replaces the head, therefore old head
+      // must be disposed of
+      if (have_pending_write(pending_file, old_id))
+        cancel_pending_write(pending_file, old_id);
+      else
+        drop(old_id.inner(), "files");
+    }
+  schedule_write(pending_file, new_id.inner()(), new_data.inner());
+  put_file_delta(old_id, new_id);
+  guard.commit();
 }
 
 void
