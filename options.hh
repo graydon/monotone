@@ -10,60 +10,97 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "popt/popt.h"
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 
-#define OPT_DEBUG 1
-#define OPT_HELP 2
-#define OPT_NOSTD 3
-#define OPT_NORC 4
-#define OPT_RCFILE 5
-#define OPT_DB_NAME 6
-#define OPT_KEY_NAME 7
-#define OPT_BRANCH_NAME 8
-#define OPT_QUIET 9
-#define OPT_VERSION 10
-#define OPT_DUMP 11
-#define OPT_TICKER 12
-#define OPT_FULL_VERSION 13
-#define OPT_REVISION 14
-#define OPT_MESSAGE 15
-#define OPT_ROOT 16
-#define OPT_DEPTH 17
-#define OPT_ARGFILE 18
-#define OPT_DATE 19
-#define OPT_AUTHOR 20
-#define OPT_ALL_FILES 21
-#define OPT_PIDFILE 22
-#define OPT_MSGFILE 23
-#define OPT_BRIEF 24
-#define OPT_DIFFS 25
-#define OPT_NO_MERGES 26
-#define OPT_LAST 27
-#define OPT_NEXT 28
-#define OPT_VERBOSE 29
-#define OPT_SET_DEFAULT 30
-#define OPT_EXCLUDE 31
-#define OPT_UNIFIED_DIFF 32
-#define OPT_CONTEXT_DIFF 33
-#define OPT_EXTERNAL_DIFF 34
-#define OPT_EXTERNAL_DIFF_ARGS 35
-// formerly OPT_LCA was here
-#define OPT_EXECUTE 37
-#define OPT_KEY_DIR 38
-#define OPT_BIND 39
-#define OPT_MISSING 40
-#define OPT_UNKNOWN 41
-#define OPT_KEY_TO_PUSH 42
-#define OPT_CONF_DIR 43
-#define OPT_DROP_ATTR 44
-#define OPT_NO_FILES 45
-#define OPT_LOG 46
-#define OPT_RECURSIVE 47
-#define OPT_REALLYQUIET 48
+namespace option
+{
+  using boost::program_options::option_description;
+  using boost::program_options::options_description;
+  using boost::shared_ptr;
 #define OPT_STDIO 49
 #define OPT_NO_TRANSPORT_AUTH 50
 #define OPT_NO_SHOW_ENCLOSER 51
 #define OPT_AUTOMATE_STDIO_SIZE 52
+
+  extern options_description global_options;
+  extern options_description specific_options;
+
+  struct option
+  {
+    char const * operator()() { return o->long_name().c_str(); }
+    operator shared_ptr<option_description> () { return o; }
+  protected:
+    option(option_description * p) : o(p) {}
+    shared_ptr<option_description> o;
+  };
+
+  struct global : public option
+  {
+    global(option_description * p) : option(p) { global_options.add(o); }
+  };
+
+  struct specific : public option
+  {
+    specific(option_description * p) : option(p) { specific_options.add(o); }
+  };
+
+  struct no_option
+  {
+  };
+
+  extern no_option none;
+
+  // global options
+  extern global argfile;
+  extern global conf_dir;
+  extern global db_name;
+  extern global debug;
+  extern global dump;
+  extern global full_version;
+  extern global help;
+  extern global key_dir;
+  extern global key_name;
+  extern global log;
+  extern global norc;
+  extern global nostd;
+  extern global quiet;
+  extern global rcfile;
+  extern global reallyquiet;
+  extern global root;
+  extern global ticker;
+  extern global verbose;
+  extern global version;
+
+  // command-specific options
+  extern specific author;
+  extern specific bind;
+  extern specific branch_name;
+  extern specific brief;
+  extern specific context_diff;
+  extern specific date;
+  extern specific depth;
+  extern specific diffs;
+  extern specific drop_attr;
+  extern specific exclude;
+  extern specific execute;
+  extern specific external_diff;
+  extern specific external_diff_args;
+  extern specific key_to_push;
+  extern specific last;
+  extern specific message;
+  extern specific missing;
+  extern specific msgfile;
+  extern specific next;
+  extern specific no_files;
+  extern specific no_merges;
+  extern specific pidfile;
+  extern specific recursive;
+  extern specific revision;
+  extern specific set_default;
+  extern specific unified_diff;
+  extern specific unknown;
+}
 
 // Local Variables:
 // mode: C++
