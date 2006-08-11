@@ -16,7 +16,7 @@
 ** so is applicable.  Because this module is responsible for selecting
 ** indices, you might also think of this module as the "query optimizer".
 **
-** $Id: where.c,v 1.206 2006/03/28 23:55:58 drh Exp $
+** $Id: where.c,v 1.209 2006/06/06 11:45:55 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -1034,7 +1034,7 @@ static double bestIndex(
         Expr *pExpr = pTerm->pExpr;
         flags |= WHERE_COLUMN_IN;
         if( pExpr->pSelect!=0 ){
-          inMultiplier *= 100;
+          inMultiplier *= 25;
         }else if( pExpr->pList!=0 ){
           inMultiplier *= pExpr->pList->nExpr + 1;
         }
@@ -1224,17 +1224,16 @@ static void codeEqualityTerm(
 
     sqlite3CodeSubselect(pParse, pX);
     iTab = pX->iTable;
-    sqlite3VdbeAddOp(v, OP_Rewind, iTab, brk);
+    sqlite3VdbeAddOp(v, OP_Rewind, iTab, 0);
     VdbeComment((v, "# %.*s", pX->span.n, pX->span.z));
     pLevel->nIn++;
     sqliteReallocOrFree((void**)&pLevel->aInLoop,
-                                 sizeof(pLevel->aInLoop[0])*3*pLevel->nIn);
+                                 sizeof(pLevel->aInLoop[0])*2*pLevel->nIn);
     aIn = pLevel->aInLoop;
     if( aIn ){
-      aIn += pLevel->nIn*3 - 3;
-      aIn[0] = OP_Next;
-      aIn[1] = iTab;
-      aIn[2] = sqlite3VdbeAddOp(v, OP_Column, iTab, 0);
+      aIn += pLevel->nIn*2 - 2;
+      aIn[0] = iTab;
+      aIn[1] = sqlite3VdbeAddOp(v, OP_Column, iTab, 0);
     }else{
       pLevel->nIn = 0;
     }
@@ -1518,12 +1517,11 @@ WhereInfo *sqlite3WhereBegin(
 
     lowestCost = SQLITE_BIG_DBL;
     for(j=iFrom, pTabItem=&pTabList->a[j]; j<pTabList->nSrc; j++, pTabItem++){
-      if( once && 
-          ((pTabItem->jointype & (JT_LEFT|JT_CROSS))!=0
-           || (j>0 && (pTabItem[-1].jointype & (JT_LEFT|JT_CROSS))!=0))
-      ){
-        break;
-      }
+      int doNotReorder;  /* True if this table should not be reordered */
+
+      doNotReorder =  (pTabItem->jointype & (JT_LEFT|JT_CROSS))!=0
+                   || (j>0 && (pTabItem[-1].jointype & (JT_LEFT|JT_CROSS))!=0);
+      if( once && doNotReorder ) break;
       m = getMask(&maskSet, pTabItem->iCursor);
       if( (m & notReady)==0 ){
         if( j==iFrom ) iFrom++;
@@ -1540,6 +1538,7 @@ WhereInfo *sqlite3WhereBegin(
         bestNEq = nEq;
         bestJ = j;
       }
+      if( doNotReorder ) break;
     }
     TRACE(("*** Optimizer choose table %d for loop %d\n", bestJ,
            pLevel-pWInfo->a));
@@ -1592,6 +1591,9 @@ WhereInfo *sqlite3WhereBegin(
         zMsg = sqlite3MPrintf("%z WITH INDEX %s", zMsg, pIx->zName);
       }else if( pLevel->flags & (WHERE_ROWID_EQ|WHERE_ROWID_RANGE) ){
         zMsg = sqlite3MPrintf("%z USING PRIMARY KEY", zMsg);
+      }
+      if( pLevel->flags & WHERE_ORDERBY ){
+        zMsg = sqlite3MPrintf("%z ORDER BY", zMsg);
       }
       sqlite3VdbeOp3(v, OP_Explain, i, pLevel->iFrom, zMsg, P3_DYNAMIC);
     }
@@ -2056,8 +2058,9 @@ void sqlite3WhereEnd(WhereInfo *pWInfo){
     if( pLevel->nIn ){
       int *a;
       int j;
-      for(j=pLevel->nIn, a=&pLevel->aInLoop[j*3-3]; j>0; j--, a-=3){
-        sqlite3VdbeAddOp(v, a[0], a[1], a[2]);
+      for(j=pLevel->nIn, a=&pLevel->aInLoop[j*2-2]; j>0; j--, a-=2){
+        sqlite3VdbeAddOp(v, OP_Next, a[0], a[1]);
+        sqlite3VdbeJumpHere(v, a[1]-1);
       }
       sqliteFree(pLevel->aInLoop);
     }

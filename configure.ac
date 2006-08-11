@@ -2,10 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.26, monotone-devel@nongnu.org)
-AM_INIT_AUTOMAKE(1.7.1)
+AC_INIT(monotone, 0.28, monotone-devel@nongnu.org)
+AM_INIT_AUTOMAKE([1.9 tar-ustar check-news std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
-AC_CONFIG_TESTDIR([tests])
 AM_CONFIG_HEADER([config.h])
 
 # Checks for programs.
@@ -255,6 +254,45 @@ then
    fi
 fi
 
+# check for the obnoxious gcc 4.1.[01] template static data bug
+# (see http://gcc.gnu.org/PR28016)
+cv=ac_cv_prog_cxx_`echo $CXX | tr -c A-Za-z0-9_ _`_template_static_const_ok
+
+code='
+template<class T> struct S { static const bool B; };
+template<class T> const bool S<T>::B = true;'
+
+codeA="
+$code
+int foo() { return 0; }"
+
+codeB="
+$code
+extern int foo();
+int main() { return foo(); }"
+
+AC_CACHE_CHECK(
+  [whether $CXX handles templates with static const members correctly],
+  $cv,
+  [AC_LANG_PUSH([C++])
+   # Autoconf doesn't make it easy to do a test involving 
+   # linking two files.  This is the best way I know of.
+   AC_COMPILE_IFELSE([$codeA],
+     [mv conftest.$ac_objext conftestA.$ac_objext
+      save_LIBS="$LIBS"
+      LIBS=conftestA.$ac_objext
+      AC_LINK_IFELSE([$codeB],
+        [eval $cv=yes],
+        [eval $cv=no])
+      LIBS="$save_LIBS"],
+     [eval $cv=no])
+   AC_LANG_POP([C++])])
+if eval "test x\"\${$cv}\" = xno"; then
+  # ??? This is the correct workaround for g++ and gnu ld, but maybe not
+  # for others.  (But this is a GNU-specific bug, so...)
+  LDFLAGS="$LDFLAGS -Wl,-z,muldefs"
+fi
+
 # check for precompiled headers option
 AC_ARG_ENABLE(pch,
 AS_HELP_STRING([--enable-pch],
@@ -265,7 +303,7 @@ then
 	AC_MSG_CHECKING(for gcc with precompiled header support)
 	gxx_version=`${CXX} -dumpversion`
 	case $gxx_version in
-		4.0*)
+		4.*)
 			AC_MSG_RESULT(found)
 			AM_CONDITIONAL(BUILD_PCH, true)
 			;;
@@ -286,8 +324,10 @@ AC_CACHE_CHECK([if this is Windows],
 ])
 if test "$ac_win32" = "yes"; then
    AM_CONDITIONAL(WIN32_PLATFORM, true)
+   AC_DEFINE(os_err_t, unsigned int, [OS-specific error type])
 else
    AM_CONDITIONAL(WIN32_PLATFORM, false)
+   AC_DEFINE(os_err_t, int, [OS-specific error type])
 fi
 
 # Check for IPv6.  Let the user enable or disable it manually using a
@@ -332,7 +372,10 @@ AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
 AC_SEARCH_LIBS([inet_aton], [resolv])
 AC_SEARCH_LIBS([accept], [socket])
 AC_SEARCH_LIBS([inet_ntoa], [nsl])
-AC_SEARCH_LIBS([fdatasync], [rt])
+AC_SEARCH_LIBS([fdatasync], [rt], AC_DEFINE(HAVE_FDATASYNC))
+AH_TEMPLATE([HAVE_FDATASYNC], [For SQLite; use fdatasync if available])
+AC_SEARCH_LIBS([usleep], [rt], AC_DEFINE(HAVE_USLEEP))
+AH_TEMPLATE([HAVE_USLEEP], [For SQLite; use usleep if available])
 AC_CHECK_LIB([z], [deflate], , AC_MSG_FAILURE([zlib is required]))
 
 # Now let the user specify whether he wants large file support or not in
@@ -573,6 +616,6 @@ AC_SUBST(MONOTONE_CXXFLAGS)
 AC_SUBST(LIB3RDPARTY_CFLAGS)
 AC_SUBST(LIB3RDPARTY_CXXFLAGS)
 
-AC_CONFIG_FILES([Makefile tests/atlocal])
+AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([po/Makefile.in], [cat xgettext.opts >>po/Makefile.in])
 AC_OUTPUT

@@ -1,10 +1,14 @@
 #ifndef __RCS_FILE_HH__
 #define __RCS_FILE_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <vector>
 #include <string>
@@ -35,23 +39,31 @@ struct rcs_deltatext
   std::string text;
 };
 
-struct rcs_file 
+struct rcs_file
 {
   rcs_admin admin;
   std::map<std::string, boost::shared_ptr<rcs_delta> > deltas;
   std::map<std::string, boost::shared_ptr<rcs_deltatext> > deltatexts;
-  void push_delta(rcs_delta const & d) 
-  { 
+  void push_delta(rcs_delta const & d)
+  {
     boost::shared_ptr<rcs_delta> dp(new rcs_delta(d));
-    deltas.insert(make_pair(dp->num,dp)); 
+    deltas.insert(make_pair(dp->num,dp));
   }
-  void push_deltatext(rcs_deltatext const & dt) 
-  { 
+  void push_deltatext(rcs_deltatext const & dt)
+  {
     boost::shared_ptr<rcs_deltatext> dp(new rcs_deltatext(dt));
-    deltatexts.insert(make_pair(dp->num, dp)); 
+    deltatexts.insert(make_pair(dp->num, dp));
   }
 };
 
 void parse_rcs_file(std::string const & filename, rcs_file & r);
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __RCS_FILE_HH__

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.41"
+   width="210mm"
+   height="297mm"
+   sodipodi:docbase="/usr/home/graydon/src/net.venge.monotone/figures"
+   sodipodi:docname="monotone-logo.svg"
+   inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+   inkscape:export-xdpi="38.470001"
+   inkscape:export-ydpi="38.470001">
+  <metadata
+     id="metadata7">
+    <rdf:RDF
+       id="RDF9">
+      <cc:Work
+         rdf:about=""
+         id="Work11">
+        <dc:format
+           id="format13">image/svg+xml</dc:format>
+        <dc:type
+           id="type15"
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title
+           id="title1311">Monotone Logo</dc:title>
+        <dc:date
+           id="date1313">May 20 2006</dc:date>
+        <dc:creator
+           id="creator1315">
+          <cc:Agent
+             id="Agent1317">
+            <dc:title
+               id="title1319">Graydon Hoare</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights
+           id="rights1321">
+          <cc:Agent
+             id="Agent1323">
+            <dc:title
+               id="title1325"></dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:source
+           id="source1327">http://mkweb.bcgsc.ca/rat/images/raton3700</dc:source>
+        <dc:relation
+           id="relation1329"></dc:relation>
+        <dc:description
+           id="description1331">This is a derivative work of an image under not-completely-clear license, but it is published with a statement permitting &quot;unrestricted&quot; use, distribution and modification.</dc:description>
+        <cc:license
+           rdf:resource="http://web.resource.org/cc/PublicDomain"
+           id="license1333" />
+      </cc:Work>
+      <cc:License
+         id="License1343"
+         rdf:about="http://web.resource.org/cc/PublicDomain">
+        <cc:permits
+           id="permits1345"
+           rdf:resource="http://web.resource.org/cc/Reproduction" />
+        <cc:permits
+           id="permits1347"
+           rdf:resource="http://web.resource.org/cc/Distribution" />
+        <cc:permits
+           id="permits1349"
+           rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="721"
+     inkscape:window-height="723"
+     inkscape:zoom="0.97294510"
+     inkscape:cx="345.42022"
+     inkscape:cy="584.29598"
+     inkscape:window-x="292"
+     inkscape:window-y="0"
+     inkscape:current-layer="svg2" />
+  <rect
+     style="font-size:12.000000;fill:#ededed;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#3e5ea2;stroke-width:3.8430586;stroke-opacity:0.41666701"
+     id="rect169"
+     width="464.11206"
+     height="388.97031"
+     x="105.73557"
+     y="257.93811"
+     rx="8.0769300"
+     ry="9.2957697"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <path
+     style="fill:#9077a1;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.39611870px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+     d="M 338.97008,528.95249 C 345.11392,528.12640 364.89031,509.40546 367.68611,506.50975 C 370.58334,503.50898 385.03537,485.10603 394.40797,484.89822 C 403.58115,484.69042 408.76598,486.76845 411.95665,482.40459 C 414.78838,478.53164 424.82429,465.75532 427.11233,462.03988 C 429.73181,457.78623 432.64691,451.64345 433.89251,441.25956 C 435.08900,431.28501 436.28550,416.53098 434.29134,409.25787 C 432.34979,402.17667 423.92166,384.73709 417.14149,373.93133 C 410.23946,362.93135 391.61613,336.11115 380.04996,325.30539 C 368.70315,314.70459 353.63315,304.21533 337.94566,304.30609 C 322.26104,304.39682 308.69881,309.49146 300.73874,315.71691 C 293.03142,321.74468 261.99518,361.46314 254.81617,376.42497 C 247.55564,391.55670 246.45659,415.49129 246.83950,425.46652 C 247.23833,435.85668 247.61936,452.08810 250.42901,461.62427 C 253.12654,470.77991 271.06570,506.32255 274.35903,512.32824 C 277.54969,518.14673 283.19193,528.38492 286.32404,529.78370 C 289.11587,531.03053 295.75504,531.12705 298.94571,530.29583 C 301.76257,529.56200 303.73171,526.23629 303.47389,524.38083 C 303.19605,522.38133 285.12754,494.87277 283.53220,491.54792 C 281.84952,488.04104 352.53043,486.56064 352.53043,490.30111 C 352.53043,493.62596 331.56873,519.17900 328.99925,522.30280 C 326.60623,525.21204 332.78816,529.78370 338.97008,528.95249 z "
+     id="path1298"
+     sodipodi:nodetypes="czzzzzzzzzzzzzzzzzzzzz"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <path
+     sodipodi:nodetypes="czzzzzzzzzzzzz"
+     style="fill:#b193c5;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.39611870px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+     d="M 269.97185,414.24515 C 266.58177,429.83038 263.59052,453.72775 269.17419,464.53351 C 274.75787,475.33927 284.32986,489.88549 291.90771,499.44444 C 299.48555,509.00339 300.68205,517.73112 309.85522,520.22476 C 319.02839,522.71840 323.01674,524.79643 329.79690,520.22476 C 336.57709,515.65309 340.92871,508.37422 344.38855,503.18491 C 347.57922,498.39931 350.88691,491.27750 353.79536,486.20412 C 356.56661,481.37005 366.00001,470.96578 368.41536,467.54361 C 371.01364,463.86223 373.97068,434.79424 373.66861,429.20698 C 373.33488,423.03373 373.66861,418.40121 370.87678,410.50469 C 368.08494,402.60817 355.64438,384.93013 349.73859,377.67179 C 343.57573,370.09747 335.44557,359.14165 318.23074,359.38511 C 301.86195,359.62856 285.52637,376.42496 281.53803,383.49028 C 277.54969,390.55559 273.36194,398.65991 269.97185,414.24515 z "
+     id="path1302"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <g
+     style="fill-opacity:1.0000000;fill:#d08cab"
+     id="g2079"
+     transform="matrix(0.388043,0.000000,0.000000,0.404362,214.1350,219.3712)"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225">
+    <path
+       sodipodi:nodetypes="czzzzzzzzzz"
+       style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+       d="M 114.08660,342.14739 C 108.02496,349.17853 98.037490,380.38351 98.669494,396.62117 C 99.271571,412.08993 103.51262,429.22647 107.91976,435.67784 C 112.08263,441.77165 122.30906,459.31741 132.58713,459.31741 C 142.86521,459.31741 151.24637,475.29184 153.56901,475.76233 C 155.92566,476.23971 155.84407,459.44758 161.79147,447.65885 C 167.58423,436.17662 174.72723,421.09081 182.94969,413.06608 C 190.80832,405.39643 193.75680,389.77920 190.87111,386.89352 C 187.60178,383.62419 163.29665,351.82338 159.31012,339.24031 C 155.38430,326.84888 142.37410,328.33434 135.67055,329.81370 C 128.84999,331.31888 119.82771,335.48804 114.08660,342.14739 z "
+       id="path1304" />
+    <path
+       sodipodi:nodetypes="czzzzzzzzz"
+       style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+       d="M 414.72022,359.10620 C 407.55061,360.23204 391.59456,374.00941 385.42772,387.37090 C 379.54571,400.11524 355.10740,406.89924 353.05178,413.06609 C 351.14964,418.77250 378.41705,452.72866 382.34429,454.69228 C 386.45551,456.74789 394.93491,474.99143 393.65017,481.41526 C 392.38134,487.75954 410.54626,478.90668 416.26193,475.76233 C 421.74694,472.74487 435.79028,464.45645 445.04054,449.03934 C 454.51849,433.24273 459.42984,408.44095 457.37422,392.50994 C 455.36220,376.91679 445.09218,365.90096 436.81807,362.27780 C 427.93011,358.38585 422.24426,357.92471 414.72022,359.10620 z "
+       id="path1306" />
+    <path
+       sodipodi:nodetypes="czzzzz"
+       style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+       d="M 275.97250,687.96799 C 262.16388,687.24122 251.88581,685.41361 249.33142,695.44229 C 246.72695,705.66761 256.56703,728.05248 259.03768,730.23279 C 261.13104,732.08014 290.20323,731.89287 292.32299,729.88010 C 294.79364,727.53415 305.74683,702.40895 302.90210,694.31118 C 300.05737,686.21342 290.50594,688.73291 275.97250,687.96799 z "
+       id="path1308" />
+    <path
+       sodipodi:nodetypes="czzzzzzzzszzzszzzcz"
+       style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+       d="M 465.59668,654.60079 C 460.20606,655.16822 448.89888,658.92139 445.55444,662.82324 C 442.47102,666.42056 457.15125,700.94502 446.58224,708.56067 C 436.59480,715.75726 421.55345,730.41757 426.54000,733.74195 C 431.16514,736.82537 440.21766,738.82933 447.92622,731.63468 C 455.89585,724.19636 459.53313,722.46631 463.64436,726.57754 C 467.75558,730.68877 463.95035,744.08065 476.65316,743.01360 C 488.63416,742.00718 484.81733,729.85489 489.21485,727.55370 C 493.03169,725.55638 502.45662,749.89893 512.75111,749.58478 C 517.53530,749.43878 523.83753,737.76417 520.35475,733.52601 C 514.83314,726.80683 515.44125,723.86824 518.66857,724.29394 C 521.18017,724.62523 534.60518,748.30913 540.27392,749.45123 C 545.24248,750.45226 549.32645,733.54421 544.29071,729.85871 C 541.58927,727.88161 524.01051,714.11600 529.73007,715.69016 C 533.94575,716.85042 553.02538,734.71777 559.14853,735.53930 C 564.55701,736.26495 565.38468,733.73632 559.15315,725.49751 C 553.31530,717.77918 506.69384,693.28338 494.02260,687.20471 C 481.76747,681.32566 491.29186,653.57298 491.29186,653.57298 C 491.29186,653.57298 470.47877,654.08689 465.59668,654.60079 z "
+       id="path1314" />
+    <path
+       sodipodi:nodetypes="czzszzzzzz"
+       style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+       d="M 126.36864,674.67955 C 115.95932,675.91309 80.168964,687.49062 71.946506,697.76869 C 63.724048,708.04676 66.080699,717.59806 80.470001,714.51464 C 87.664652,712.97293 78.333950,704.44362 87.225986,704.50118 C 89.109037,704.51337 86.803321,712.38293 91.463183,714.31603 C 95.495879,715.98896 109.40160,716.90241 109.42718,712.39863 C 109.45276,707.16808 118.82364,702.82417 123.63791,704.91169 C 129.07041,707.26727 124.80449,715.79442 130.97864,715.18976 C 137.87225,714.51463 136.50063,701.91017 142.31478,701.68218 C 148.20228,701.45130 136.83818,673.43887 126.36864,674.67955 z "
+       id="path1316" />
+    <path
+       sodipodi:nodetypes="czzzzzzzzzzzzzzzzczzzzzzz"
+       id="path2070"
+       d="M 329.92612,763.03445 C 328.64136,767.14568 321.39933,769.35463 324.27318,769.71519 C 327.16956,770.07857 340.54176,770.96656 342.25981,775.88204 C 344.13205,781.23867 349.56604,797.27530 345.85713,798.49380 C 342.27050,799.67213 335.64140,799.45926 334.09969,794.83413 C 332.55798,790.20900 329.80143,784.47857 328.27041,782.27244 C 326.90448,780.30420 316.38660,770.83286 315.81203,771.40743 C 315.08526,772.13419 326.83931,781.37787 328.89831,785.64621 C 331.16679,790.34881 331.61836,796.71340 330.95393,800.03551 C 330.21949,803.70769 327.92139,809.79968 325.30098,809.79967 C 322.73147,809.79967 315.62499,803.99621 315.02292,802.09112 C 314.31566,799.85320 317.59244,790.78524 314.50901,786.67401 C 311.42558,782.56278 305.77265,782.56278 305.77265,782.56278 C 305.77265,782.56278 302.30524,788.33978 301.14752,790.84758 C 299.78564,793.79763 297.58672,812.15633 286.48301,811.91763 C 275.74268,811.67894 281.49598,802.42148 282.64699,799.52160 C 283.97584,796.17367 288.53531,782.92893 287.99889,780.50717 C 287.48498,778.18704 288.57939,779.27294 287.82255,776.75932 C 285.78574,778.79614 283.01037,785.19465 276.84353,789.81978 C 270.67669,794.44492 256.89608,804.44228 255.20793,804.66064 C 253.16301,804.92515 249.05178,806.34217 246.72096,804.83698 C 245.38484,803.97415 247.33968,790.70618 249.10344,788.27807 C 250.98422,785.68886 259.83306,778.95476 264.66036,776.39594 C 269.77355,773.68558 289.53059,755.34345 294.71617,753.44662 C 299.77460,751.59631 331.21088,758.92322 329.92612,763.03445 z "
+       style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <path
+       id="path2072"
+       d="M 182.41914,766.92348 C 182.41914,766.92348 186.05298,771.28409 182.41914,776.00809 C 178.78529,780.73210 173.69790,784.36594 176.24160,795.26748 C 178.78529,806.16903 180.96560,807.98595 185.68960,806.89580 C 190.41360,805.80564 192.59391,802.89856 192.23052,797.08441 C 191.86714,791.27025 191.86714,781.09548 193.68406,784.00256 C 195.50099,786.90964 200.58837,791.63364 201.31514,800.71826 C 202.04191,809.80287 207.12930,818.16072 215.48715,817.79734 C 223.84500,817.43395 221.30130,811.25641 219.84776,806.16903 C 218.39422,801.08164 213.30684,790.54348 214.76038,788.72656 C 216.21392,786.90964 223.11823,797.44779 227.47884,803.26195 C 231.83946,809.07610 236.20008,815.61703 244.19454,815.25364 C 252.18900,814.89026 255.82285,812.34657 250.73547,803.62533 C 245.64808,794.90410 241.28746,793.45056 235.10992,786.54625 C 228.93238,779.64194 239.47054,789.08994 244.92131,792.72379 C 250.37208,796.35764 262.00039,802.53518 268.90470,800.71826 C 275.80901,798.90133 279.80624,794.17733 271.08501,786.90964 C 262.36378,779.64194 258.00316,778.55179 245.64808,774.55455 C 233.29300,770.55732 233.65638,766.92348 230.02254,761.47270 C 226.38869,756.02193 185.68960,761.10932 182.41914,766.92348 z "
+       style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+  </g>
+  <path
+     sodipodi:nodetypes="czzzzzz"
+     style="fill:#000000;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.39611870px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+     d="M 291.06995,430.74768 C 292.43949,431.04758 296.46633,433.43406 296.69371,438.76592 C 296.92735,444.24444 299.97701,442.96808 297.04416,445.19305 C 294.01841,447.48850 289.68983,446.88372 287.66154,446.12078 C 285.63326,445.35783 283.76998,443.57672 282.92393,441.62474 C 282.05237,439.61394 282.78316,434.75530 284.09624,433.36304 C 285.47798,431.89797 289.56510,430.41814 291.06995,430.74768 z "
+     id="path1310"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <path
+     sodipodi:nodetypes="czzzzzz"
+     style="fill:#000000;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.39611870px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+     d="M 347.24588,432.73963 C 345.62820,433.63207 342.75900,440.53225 343.15784,443.44149 C 343.55667,446.35073 346.14910,448.53266 349.53918,448.42876 C 352.82955,448.32486 353.97785,445.90155 354.52460,445.10392 C 355.02314,444.37661 356.81789,441.88297 356.31934,438.14251 C 355.83226,434.48798 353.91683,433.08267 352.23131,432.32402 C 350.60964,431.59413 348.94094,431.80452 347.24588,432.73963 z "
+     id="path1312"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <path
+     sodipodi:nodetypes="czc"
+     id="path2058"
+     d="M 375.60610,497.66894 C 381.58860,492.26607 392.76148,467.80245 394.25450,463.56475 C 395.82516,459.10671 398.57325,445.91267 401.35335,430.40486"
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.39611870px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <g
+     style="stroke-opacity:1.0000000;stroke:none;fill-opacity:1.0000000;fill:#c9b0d7"
+     id="g2074"
+     transform="matrix(0.388043,0.000000,0.000000,0.404362,214.1350,219.3712)"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225">
+    <path
+       sodipodi:nodetypes="czzszz"
+       id="path2060"
+       d="M 176.30394,524.90389 C 171.84003,522.27646 186.90445,506.14144 199.38422,501.32484 C 210.97458,496.85151 221.14311,494.05562 228.60109,497.06752 C 235.64965,499.91409 225.04915,539.82223 221.96573,546.81028 C 219.14472,553.20362 221.45182,545.92856 208.63449,526.60682 C 195.81715,507.28508 180.39049,527.30920 176.30394,524.90389 z "
+       style="fill-rule:evenodd;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter" />
+    <path
+       sodipodi:nodetypes="czzzzzz"
+       id="path2062"
+       d="M 251.88796,687.52391 C 258.55358,683.41268 296.92970,685.43941 304.39171,687.70025 C 312.07934,690.02945 342.71276,620.48478 340.12811,617.75404 C 337.38277,614.85353 302.33002,653.27217 297.87218,657.27923 C 292.93973,661.71290 263.30967,661.32996 255.99919,656.75021 C 248.19134,651.85887 208.35300,617.64395 203.49545,620.66112 C 199.82946,622.93818 244.72432,691.94231 251.88796,687.52391 z "
+       style="fill-rule:evenodd;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter" />
+    <path
+       sodipodi:nodetypes="czzzzz"
+       id="path2064"
+       d="M 327.00347,501.32484 C 322.96643,508.66760 324.38857,545.78248 328.49980,545.25344 C 332.85998,544.69237 330.55541,521.82047 345.09080,521.82047 C 359.62619,521.82047 370.19838,537.61825 369.19889,533.44879 C 368.17108,529.16121 365.47060,522.52585 353.84229,507.99046 C 342.21398,493.45507 331.46739,493.20568 327.00347,501.32484 z "
+       style="fill-rule:evenodd;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter" />
+  </g>
+  <path
+     sodipodi:nodetypes="czsz"
+     id="path2066"
+     d="M 272.54708,386.24355 C 275.29884,380.33645 276.61070,371.07328 276.26170,368.55433 C 275.90751,365.99786 275.00160,355.50156 270.42716,354.35364 C 266.12904,353.27505 260.64881,357.90125 258.62211,361.08311"
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.39611870px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <path
+     sodipodi:nodetypes="czzzz"
+     id="path2068"
+     d="M 371.57474,397.20529 C 369.38116,395.54286 367.00057,387.02377 367.18758,383.90588 C 367.38698,380.58104 367.03602,375.75699 369.38116,372.06110 C 371.68250,368.43423 374.65862,366.38956 377.15841,366.24262 C 379.65424,366.09591 381.42877,366.80516 382.90729,368.32064"
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.39611870px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225" />
+  <text
+     style="font-size:92.221657;font-style:normal;font-weight:bold;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.2614599;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Helvetica;text-anchor:start;writing-mode:lr-tb"
+     x="129.60567"
+     y="548.13098"
+     id="text137"
+     transform="scale(0.863692,1.157820)"
+     inkscape:export-filename="/home/graydon/src/net.venge.monotone/monotone-new-logo.png"
+     inkscape:export-xdpi="38.465225"
+     inkscape:export-ydpi="38.465225"><tspan
+       x="129.60567"
+       y="548.13098"
+       sodipodi:role="line"
+       id="tspan167">monotone</tspan></text>
+</svg>

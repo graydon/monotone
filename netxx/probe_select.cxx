@@ -123,13 +123,31 @@ void Netxx::Probe_impl::clear (void)
     static_cast<pimpl*>(pimpl_)->wr_sockets_.clear();
     static_cast<pimpl*>(pimpl_)->er_sockets_.clear();
 }
+
+struct fdsets
+{
+    fd_set *rd, *wr, *er;
+    fdsets() : rd(new fd_set), wr(new fd_set), er(new fd_set)
+    {
+    }
+    ~fdsets()
+    {
+        delete rd;
+        delete wr;
+        delete er;
+    }
+};
+
 //####################################################################
 Netxx::Probe_impl::probe_type Netxx::Probe_impl::probe (const Timeout &timeout, Probe::ready_type rt) 
 {
     pimpl *p=static_cast<pimpl*>(pimpl_);
     probe_type return_value;
 
-    fd_set rd_fdset, wr_fdset, er_fdset;
+    fdsets my_fd_sets;
+    fd_set &rd_fdset(*my_fd_sets.rd),
+           &wr_fdset(*my_fd_sets.wr),
+           &er_fdset(*my_fd_sets.er);
     fd_set *rd_fdptr, *wr_fdptr, *er_fdptr;
     timeval tmp_timeout;
     timeval *timeout_ptr;
@@ -223,7 +241,7 @@ Netxx::Probe_impl::probe_type Netxx::Probe_impl::probe (const Timeout &timeout, 
 		default:
 		{
 		    std::string error("select(2): ");
-		    error += strerror(error_code);
+		    error += str_error(error_code);
 		    throw Exception(error);
 		}
 	    }

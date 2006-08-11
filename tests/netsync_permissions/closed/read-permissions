@@ -1,0 +1,2 @@
+pattern "*"
+allow "tester@test.net"

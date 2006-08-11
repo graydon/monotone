@@ -1,11 +1,14 @@
 #ifndef __ROSTER_HH__
 #define __ROSTER_HH__
 
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <map>
 
@@ -34,7 +37,7 @@ typedef boost::shared_ptr<dir_node> dir_t;
 
 node_id const the_null_node = 0;
 
-inline bool 
+inline bool
 null_node(node_id n)
 {
   return n == the_null_node;
@@ -56,8 +59,8 @@ struct node
   node();
   node(node_id i);
   node_id self;
-  node_id parent; // the_null_node iff this is a root dir  
-  path_component name; // the_null_component iff this is a root dir  
+  node_id parent; // the_null_node iff this is a root dir
+  path_component name; // the_null_component iff this is a root dir
   full_attr_map_t attrs;
 
   // need a virtual function to make dynamic_cast work
@@ -110,7 +113,7 @@ is_file_t(node_t n)
 }
 
 inline bool
-is_root_dir_t(node_t n) 
+is_root_dir_t(node_t n)
 {
   if (is_dir_t(n) && null_name(n->name))
     {
@@ -176,6 +179,7 @@ public:
   bool has_root() const;
   bool has_node(split_path const & sp) const;
   bool has_node(node_id nid) const;
+  bool is_root(node_id nid) const;
   node_t get_node(split_path const & sp) const;
   node_t get_node(node_id nid) const;
   void get_name(node_id nid, split_path & sp) const;
@@ -193,8 +197,8 @@ public:
   void insert_node(node_t n);
   void attach_node(node_id nid, split_path const & dst);
   void attach_node(node_id nid, node_id parent, path_component name);
-  void apply_delta(split_path const & pth, 
-                   file_id const & old_id, 
+  void apply_delta(split_path const & pth,
+                   file_id const & old_id,
                    file_id const & new_id);
   void clear_attr(split_path const & pth,
                   attr_key const & name);
@@ -218,7 +222,7 @@ public:
 
   // verify that this roster is sane, and corresponds to the given
   // marking map
-  void check_sane_against(marking_map const & marks) const;
+  void check_sane_against(marking_map const & marks, bool temp_nodes_ok=false) const;
 
   void print_to(basic_io::printer & pr,
                 marking_map const & mm,
@@ -251,7 +255,7 @@ private:
   // conservative --- perhaps it will turn out that it is _too_ conservative
   // and causes problems, in which case we should probably switch to the
   // former.
-  // 
+  //
   // FIXME: This _is_ all a little nasty, because this can be a source of
   // abstraction leak -- for instance, roster_merge's contract is that nodes
   // involved in name-related will be detached in the roster it returns.
@@ -283,7 +287,7 @@ private:
   template <typename T> friend void dump(T const & val, std::string & out);
 };
 
-struct temp_node_id_source 
+struct temp_node_id_source
   : public node_id_source
 {
   temp_node_id_source();
@@ -293,11 +297,11 @@ struct temp_node_id_source
 
 template <> void dump(roster_t const & val, std::string & out);
 
-struct app_state;
-struct revision_set;
+class app_state;
+struct revision_t;
 
 // adaptor class to enable cset application on rosters.
-class editable_roster_base 
+class editable_roster_base
   : public editable_tree
 {
 public:
@@ -307,8 +311,8 @@ public:
   virtual node_id create_dir_node();
   virtual node_id create_file_node(file_id const & content);
   virtual void attach_node(node_id nid, split_path const & dst);
-  virtual void apply_delta(split_path const & pth, 
-                           file_id const & old_id, 
+  virtual void apply_delta(split_path const & pth,
+                           file_id const & old_id,
                            file_id const & new_id);
   virtual void clear_attr(split_path const & pth,
                           attr_key const & name);
@@ -323,69 +327,104 @@ protected:
 
 
 void
-make_cset(roster_t const & from, 
-          roster_t const & to, 
+make_cset(roster_t const & from,
+          roster_t const & to,
           cset & cs);
 
 bool
 equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
                         roster_t const & b, marking_map const & b_markings);
 
+
+// various (circular?) dependencies prevent inclusion of restrictions.hh
+class node_restriction;
+
+void
+make_restricted_csets(roster_t const & from, roster_t const & to,
+                      cset & included, cset & excluded,
+                      node_restriction const & mask);
+
+void
+check_restricted_cset(roster_t const & roster, cset const & cs);
+
 void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
-                              std::set<node_id> & nodes_changed,
-                              std::set<node_id> & nodes_born);
+                              std::set<node_id> & nodes_modified);
 
-void 
+void
 classify_roster_paths(roster_t const & ros,
                       path_set & unchanged,
                       path_set & changed,
                       path_set & missing,
                       app_state & app);
 
-void 
-update_restricted_roster_from_filesystem(roster_t & ros, 
-                                         app_state & app);
+void
+update_current_roster_from_filesystem(roster_t & ros,
+                                      node_restriction const & mask,
+                                      app_state & app);
 
 void
-extract_roster_path_set(roster_t const & ros, 
+update_current_roster_from_filesystem(roster_t & ros,
+                                      app_state & app);
+
+void
+extract_roster_path_set(roster_t const & ros,
                         path_set & paths);
 
+// These three functions are for the use of things like 'update' or 'pluck',
+// that need to construct fake rosters and/or markings in-memory, to achieve
+// particular merge results.
 void
-make_roster_for_base_plus_cset(revision_id const & base, 
+make_roster_for_base_plus_cset(revision_id const & base,
                                cset const & cs,
                                revision_id const & new_rid,
-                               roster_t & result, 
-                               marking_map & marking,
+                               roster_t & new_roster,
+                               marking_map & new_markings,
                                node_id_source & nis,
                                app_state & app);
+void
+mark_roster_with_no_parents(revision_id const & rid,
+                            roster_t const & roster,
+                            marking_map & markings);
+void
+mark_roster_with_one_parent(roster_t const & parent,
+                            marking_map const & parent_markings,
+                            revision_id const & child_rid,
+                            roster_t const & child,
+                            marking_map & child_markings);
 
-void 
-make_roster_for_revision(revision_set const & rev, 
+// This is for revisions that are being written to the db, only.  It assigns
+// permanent node ids.
+void
+make_roster_for_revision(revision_t const & rev,
                          revision_id const & rid,
-                         roster_t & result, 
+                         roster_t & result,
                          marking_map & marking,
                          app_state & app);
 
-void 
-read_roster_and_marking(data const & dat,
+void
+read_roster_and_marking(roster_data const & dat,
                         roster_t & ros,
                         marking_map & mm);
 
 void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         data & dat);
+                         roster_data & dat);
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         data & dat);
+                         roster_data & dat);
+
+
+void calculate_ident(roster_t const & ros,
+                     manifest_id & ident);
 
 #ifdef BUILD_UNIT_TESTS
 
-struct testing_node_id_source 
+struct testing_node_id_source
   : public node_id_source
 {
   testing_node_id_source();
@@ -394,6 +433,14 @@ struct testing_node_id_source
 };
 
 #endif // BUILD_UNIT_TESTS
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif
 

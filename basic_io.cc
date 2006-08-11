@@ -1,48 +1,54 @@
+// Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <cctype>
 #include <cstdlib>
 
-#include <boost/lexical_cast.hpp>
-
 #include "basic_io.hh"
 #include "sanity.hh"
 #include "vocab.hh"
 
-// copyright (C) 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+using std::logic_error;
+using std::make_pair;
+using std::pair;
+using std::string;
+using std::vector;
 
-// this file provides parsing and printing primitives used by the higher
-// level parser and printer routines for the two datatypes change_set and
-// revision_set. every revision_set contains a number of change_sets, so
-// their i/o routines are somewhat related.
+// This file provides parsing and printing primitives used by the
+// higher level parser and printer routines for the datatypes cset,
+// roster/marking_map and revision.
 
-
-void basic_io::input_source::err(std::string const & s)
+void basic_io::input_source::err(string const & s)
 {
   L(FL("error in %s:%d:%d:E: %s") % name % line % col % s);
-  throw std::logic_error((F("error in %s:%d:%d:E: %s") 
-                          % name % line % col % s).str());
+  throw logic_error((F("error in %s:%d:%d:E: %s")
+                     % name % line % col % s).str());
 }
 
 
-void basic_io::tokenizer::err(std::string const & s)
+void basic_io::tokenizer::err(string const & s)
 {
   in.err(s);
 }
 
-std::string 
-basic_io::escape(std::string const & s)
+string
+basic_io::escape(string const & s)
 {
-  std::string escaped;
+  string escaped;
   escaped.reserve(s.size() + 8);
 
   escaped += "\"";
 
-  for (std::string::const_iterator i = s.begin(); i != s.end(); ++i)
+  for (string::const_iterator i = s.begin(); i != s.end(); ++i)
     {
       switch (*i)
         {
@@ -62,58 +68,40 @@ basic_io::escape(std::string const & s)
 basic_io::stanza::stanza() : indent(0)
 {}
 
-void basic_io::stanza::push_hex_pair(std::string const & k, std::string const & v)
+void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
-  for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(is_xdigit(*i));
-  
-  entries.push_back(std::make_pair(k, "[" + v + "]"));
-  if (k.size() > indent)
-    indent = k.size();
+  entries.push_back(make_pair(k, "[" + v() + "]"));
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_hex_triple(std::string const & k, 
-				       std::string const & n, 
-				       std::string const & v)
+void basic_io::stanza::push_hex_triple(symbol const & k,
+				       string const & n,
+				       hexenc<id> const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
-  for (std::string::const_iterator i = v.begin(); i != v.end(); ++i)
-    I(is_xdigit(*i));
-  
-  entries.push_back(std::make_pair(k, escape(n) + " " + "[" + v + "]"));
-  if (k.size() > indent)
-    indent = k.size();
+  entries.push_back(make_pair(k, escape(n) + " " + "[" + v() + "]"));
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_str_pair(std::string const & k, std::string const & v)
+void basic_io::stanza::push_str_pair(symbol const & k, string const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
-  entries.push_back(std::make_pair(k, escape(v)));
-  if (k.size() > indent)
-    indent = k.size();
+  entries.push_back(make_pair(k, escape(v)));
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_file_pair(std::string const & k, file_path const & v)
+void basic_io::stanza::push_file_pair(symbol const & k, file_path const & v)
 {
   push_str_pair(k, v.as_internal());
 }
 
-void basic_io::stanza::push_str_multi(std::string const & k,
-                                      std::vector<std::string> const & v)
+void basic_io::stanza::push_str_multi(symbol const & k,
+                                      vector<string> const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
-  std::string val;
+  string val;
   bool first = true;
-  for (std::vector<std::string>::const_iterator i = v.begin();
+  for (vector<string>::const_iterator i = v.begin();
        i != v.end(); ++i)
     {
       if (!first)
@@ -121,27 +109,24 @@ void basic_io::stanza::push_str_multi(std::string const & k,
       val += escape(*i);
       first = false;
     }
-  entries.push_back(std::make_pair(k, val));
-  if (k.size() > indent)
-    indent = k.size();
+  entries.push_back(make_pair(k, val));
+  if (k().size() > indent)
+    indent = k().size();
 }
 
-void basic_io::stanza::push_str_triple(std::string const & k, 
-				       std::string const & n,
-				       std::string const & v)
+void basic_io::stanza::push_str_triple(symbol const & k,
+                                       string const & n,
+                                       string const & v)
 {
-  for (std::string::const_iterator i = k.begin(); i != k.end(); ++i)
-    I(is_alnum(*i) || *i == '_');
-
-  entries.push_back(std::make_pair(k, escape(n) + " " + escape(v)));
-  if (k.size() > indent)
-    indent = k.size();
+  entries.push_back(make_pair(k, escape(n) + " " + escape(v)));
+  if (k().size() > indent)
+    indent = k().size();
 }
 
 
-std::string basic_io::printer::buf;
+string basic_io::printer::buf;
 
-basic_io::printer::printer() 
+basic_io::printer::printer()
 {
   buf.clear();
 }
@@ -151,24 +136,24 @@ void basic_io::printer::print_stanza(stanza const & st)
   if (LIKELY(!buf.empty()))
     buf += '\n';
 
-  for (std::vector<std::pair<std::string, std::string> >::const_iterator i = st.entries.begin();
+  for (vector<pair<symbol, string> >::const_iterator i = st.entries.begin();
        i != st.entries.end(); ++i)
     {
-      for (size_t k = i->first.size(); k < st.indent; ++k)
+      for (size_t k = i->first().size(); k < st.indent; ++k)
         buf += ' ';
-      buf.append(i->first);
+      buf.append(i->first());
       buf += ' ';
       buf.append(i->second);
       buf += '\n';
     }
 }
 
-void basic_io::parser::err(std::string const & s)
+void basic_io::parser::err(string const & s)
 {
   tok.err(s);
 }
 
-std::string basic_io::parser::tt2str(token_type tt)
+string basic_io::parser::tt2str(token_type tt)
 {
   switch (tt)
     {
@@ -184,4 +169,10 @@ std::string basic_io::parser::tt2str(token_type tt)
   return "TOK_UNKNOWN";
 }
 
-
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

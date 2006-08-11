@@ -7,7 +7,7 @@
 #include "paths.hh"
 #include "platform.hh"
 
-struct app_state;
+class app_state;
 
 struct keyreader;
 
@@ -43,10 +43,18 @@ public:
   void get_key_pair(rsa_keypair_id const & ident,
                     keypair & kp);
 
-  void put_key_pair(rsa_keypair_id const & ident, 
+  void put_key_pair(rsa_keypair_id const & ident,
                     keypair const & kp);
 
   void delete_key(rsa_keypair_id const & ident);
 };
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif

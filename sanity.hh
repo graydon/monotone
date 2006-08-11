@@ -1,28 +1,30 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
 #ifndef __SANITY_HH__
 #define __SANITY_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "config.h" // Required for ENABLE_NLS
 
+#include <iosfwd>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <iosfwd>
 
-#include "boost/format.hpp"
 #include "boost/circular_buffer.hpp"
 #include "boost/current_function.hpp"
 
 #include "i18n.h"
-
-#include "quick_alloc.hh" // to get the QA() macro
-
+#include "mt-stdint.h"
 #include "paths.hh"
+#include "quick_alloc.hh" // to get the QA() macro
 
 #ifdef __GNUC__
 #define NORETURN __attribute__((noreturn))
@@ -45,6 +47,8 @@ struct informative_failure {
 
 class MusingI;
 
+class format_base;
+struct plain_format;
 struct i18n_format;
 
 struct sanity {
@@ -54,11 +58,13 @@ struct sanity {
   void set_debug();
   void set_brief();
   void set_quiet();
+  void set_reallyquiet();
   void set_relaxed(bool rel);
 
   bool debug;
   bool brief;
   bool quiet;
+  bool reallyquiet;
   bool relaxed;
   boost::circular_buffer<char> logbuf;
   system_path filename;
@@ -67,29 +73,27 @@ struct sanity {
   bool clean_shutdown;
   std::vector<MusingI const *> musings;
 
-  void log(boost::format const & fmt, 
+  void log(plain_format const & fmt,
            char const * file, int line);
   void progress(i18n_format const & fmt,
                 char const * file, int line);
-  void warning(i18n_format const & fmt, 
+  void warning(i18n_format const & fmt,
                char const * file, int line);
-  void naughty_failure(std::string const & expr, i18n_format const & explain, 
+  void naughty_failure(std::string const & expr, i18n_format const & explain,
                        std::string const & file, int line) NORETURN;
-  void error_failure(std::string const & expr, i18n_format const & explain, 
+  void error_failure(std::string const & expr, i18n_format const & explain,
                      std::string const & file, int line) NORETURN;
-  void invariant_failure(std::string const & expr, 
+  void invariant_failure(std::string const & expr,
                          std::string const & file, int line) NORETURN;
   void index_failure(std::string const & vec_expr,
                      std::string const & idx_expr,
-                     unsigned long sz, 
+                     unsigned long sz,
                      unsigned long idx,
                      std::string const & file, int line) NORETURN;
   void gasp();
 
 private:
-  std::string do_format(i18n_format const & fmt,
-                        char const * file, int line);
-  std::string do_format(boost::format const & fmt,
+  std::string do_format(format_base const & fmt,
                         char const * file, int line);
 };
 
@@ -97,26 +101,178 @@ typedef std::runtime_error oops;
 
 extern sanity global_sanity;
 
-struct i18n_format
+// This hides boost::format from infecting every source file. Instead, we
+// implement a single very small formatter.
+
+class
+format_base
 {
-  boost::format fmt;
+protected:
+  struct impl;
+  impl *pimpl;
+
+  format_base() : pimpl(NULL) {}
+  ~format_base();
+  format_base(format_base const & other);
+  format_base & operator=(format_base const & other);
+  explicit format_base(char const * pattern);
+  explicit format_base(std::string const & pattern);
+  explicit format_base(char const * pattern, std::locale const & loc);
+  explicit format_base(std::string const & pattern, std::locale const & loc);
+public:
+  // It is a lie that these are const; but then, everything about this
+  // class is a lie.
+  std::ostream & get_stream() const;
+  void flush_stream() const;
+  void put_and_flush_signed(int64_t const & s) const;
+  void put_and_flush_signed(int32_t const & s) const;
+  void put_and_flush_signed(int16_t const & s) const;
+  void put_and_flush_signed(int8_t const & s) const;
+  void put_and_flush_unsigned(uint64_t const & u) const;
+  void put_and_flush_unsigned(uint32_t const & u) const;
+  void put_and_flush_unsigned(uint16_t const & u) const;
+  void put_and_flush_unsigned(uint8_t const & u) const;
+  void put_and_flush_float(float const & f) const;
+  void put_and_flush_double(double const & d) const;
+
+  std::string str() const;
+};
+
+
+struct
+plain_format
+  : public format_base
+{
+  plain_format()
+  {}
+
+  explicit plain_format(char const * pattern)
+    : format_base(pattern)
+  {}
+
+  explicit plain_format(std::string const & pattern)
+    : format_base(pattern)
+  {}
+};
+
+template<typename T> inline plain_format const & 
+operator %(plain_format const & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline plain_format const & 
+operator %(const plain_format & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline plain_format & 
+operator %(plain_format & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline plain_format & 
+operator %(plain_format & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+#define SPECIALIZED_OP(format_ty, specialize_arg_ty, overload_arg_ty, s)  \
+template <> inline format_ty &                                            \
+operator %<specialize_arg_ty>(format_ty & f, overload_arg_ty & a)         \
+{                                                                         \
+  f.put_and_flush_ ## s (a);                                              \
+  return f;                                                               \
+}
+
+#define ALL_CONST_VARIANTS(fmt_ty, arg_ty, stem) \
+SPECIALIZED_OP(      fmt_ty, arg_ty,       arg_ty, stem) \
+SPECIALIZED_OP(      fmt_ty, arg_ty, const arg_ty, stem) \
+SPECIALIZED_OP(const fmt_ty, arg_ty,       arg_ty, stem) \
+SPECIALIZED_OP(const fmt_ty, arg_ty, const arg_ty, stem)
+
+ALL_CONST_VARIANTS(plain_format, int64_t, signed)
+ALL_CONST_VARIANTS(plain_format, int32_t, signed)
+ALL_CONST_VARIANTS(plain_format, int16_t, signed)
+ALL_CONST_VARIANTS(plain_format, int8_t, signed)
+
+ALL_CONST_VARIANTS(plain_format, uint64_t, unsigned)
+ALL_CONST_VARIANTS(plain_format, uint32_t, unsigned)
+ALL_CONST_VARIANTS(plain_format, uint16_t, unsigned)
+ALL_CONST_VARIANTS(plain_format, uint8_t, unsigned)
+
+ALL_CONST_VARIANTS(plain_format, float, float)
+ALL_CONST_VARIANTS(plain_format, double, double)
+
+
+struct
+i18n_format
+  : public format_base
+{
   i18n_format() {}
   explicit i18n_format(const char * localized_pattern);
   explicit i18n_format(std::string const & localized_pattern);
-  std::string str() const;
-  template <typename T> i18n_format & operator%(T const & t)
-  {
-    fmt % t;
-    return *this;
-  }
-  template <typename T> i18n_format & operator%(T & t)
-  {
-    fmt % t;
-    return *this;
-  }
 };
 
-std::ostream & operator<<(std::ostream & os, i18n_format const & fmt);
+template<typename T> inline i18n_format const & 
+operator %(i18n_format const & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline i18n_format const & 
+operator %(i18n_format const & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline i18n_format & 
+operator %(i18n_format & f, T const & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+template<typename T> inline i18n_format & 
+operator %(i18n_format & f, T & t)
+{
+  f.get_stream() << t;
+  f.flush_stream();
+  return f;
+}
+
+ALL_CONST_VARIANTS(i18n_format, int64_t, signed)
+ALL_CONST_VARIANTS(i18n_format, int32_t, signed)
+ALL_CONST_VARIANTS(i18n_format, int16_t, signed)
+ALL_CONST_VARIANTS(i18n_format, int8_t, signed)
+
+ALL_CONST_VARIANTS(i18n_format, uint64_t, unsigned)
+ALL_CONST_VARIANTS(i18n_format, uint32_t, unsigned)
+ALL_CONST_VARIANTS(i18n_format, uint16_t, unsigned)
+ALL_CONST_VARIANTS(i18n_format, uint8_t, unsigned)
+
+ALL_CONST_VARIANTS(i18n_format, float, float)
+ALL_CONST_VARIANTS(i18n_format, double, double)
+
+#undef ALL_CONST_VARIANTS
+#undef SPECIALIZED_OP
+
+std::ostream & operator<<(std::ostream & os, format_base const & fmt);
 
 // F is for when you want to build a boost formatter for display
 i18n_format F(const char * str);
@@ -126,7 +282,7 @@ i18n_format FP(const char * str1, const char * strn, unsigned long count);
 
 // FL is for when you want to build a boost formatter for the developers -- it
 // is not gettextified.  Think of the L as "literal" or "log".
-boost::format FL(const char * str);
+plain_format FL(const char * str);
 
 // L is for logging, you can log all you want
 #define L(fmt) global_sanity.log(fmt, __FILE__, __LINE__)
@@ -184,26 +340,26 @@ do { \
 // expression, not as a statement.
 
 template <typename T>
-inline T & checked_index(std::vector<T> & v, 
+inline T & checked_index(std::vector<T> & v,
                          typename std::vector<T>::size_type i,
                          char const * vec,
                          char const * index,
                          char const * file,
-                         int line) 
-{ 
+                         int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }
 
 template <typename T>
-inline T const & checked_index(std::vector<T> const & v, 
+inline T const & checked_index(std::vector<T> const & v,
                                typename std::vector<T>::size_type i,
                                char const * vec,
                                char const * index,
                                char const * file,
-                               int line) 
-{ 
+                               int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
@@ -211,26 +367,26 @@ inline T const & checked_index(std::vector<T> const & v,
 
 #ifdef QA_SUPPORTED
 template <typename T>
-inline T & checked_index(std::vector<T, QA(T)> & v, 
+inline T & checked_index(std::vector<T, QA(T)> & v,
                          typename std::vector<T>::size_type i,
                          char const * vec,
                          char const * index,
                          char const * file,
-                         int line) 
-{ 
+                         int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
 }
 
 template <typename T>
-inline T const & checked_index(std::vector<T, QA(T)> const & v, 
+inline T const & checked_index(std::vector<T, QA(T)> const & v,
                                typename std::vector<T>::size_type i,
                                char const * vec,
                                char const * index,
                                char const * file,
-                               int line) 
-{ 
+                               int line)
+{
   if (UNLIKELY(i >= v.size()))
     global_sanity.index_failure(vec, index, v.size(), i, file, line);
   return v[i];
@@ -324,9 +480,35 @@ Musing<T>::gasp(std::string & out) const
 #define fake_M(obj, line) real_M(obj, line)
 #define MM(obj) fake_M(obj, __LINE__)
 #else
-#define MM(obj) /* */ 
+#define MM(obj) /* */
 #endif
 
 template <> void dump(std::string const & obj, std::string & out);
+
+// debugging utility to dump out vars like MM but without requiring a crash
+
+template <typename T> void
+dump(T const & t, std::string var, 
+     std::string const & file, int const line, std::string const & func)
+{
+  std::string out;
+  dump(t, out);
+  std::cout << (FL("----- begin '%s' (in %s, at %s:%d)") 
+                % var % func % file % line) << std::endl
+            << out << std::endl
+            << (FL("-----   end '%s' (in %s, at %s:%d)") 
+                % var % func % file % line) << std::endl << std::endl;
+};
+
+#define DUMP(foo) dump(foo, #foo, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
+
+//////////////////////////////////////////////////////////////////////////
+// Local Variables:
+// mode: C++
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+//////////////////////////////////////////////////////////////////////////
 
 #endif // __SANITY_HH__

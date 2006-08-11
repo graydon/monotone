@@ -1,0 +1,111 @@
+BEGIN EXCLUSIVE;
+CREATE TABLE branch_epochs
+	(
+	hash not null unique,         -- hash of remaining fields separated by ":"
+	branch not null unique,       -- joins with revision_certs.value
+	epoch not null                -- random hex-encoded id
+	);
+CREATE TABLE db_vars
+        (
+        domain not null,      -- scope of application of a var
+        name not null,        -- var key
+        value not null,       -- var value
+        unique(domain, name)
+        );
+CREATE TABLE file_deltas
+	(
+	id not null,      -- strong hash of file contents
+	base not null,    -- joins with files.id or file_deltas.id
+	delta not null,   -- compressed rdiff to construct current from base
+	unique(id, base)
+	);
+CREATE TABLE files
+	(
+	id primary key,   -- strong hash of file contents
+	data not null     -- compressed contents of a file
+	);
+INSERT INTO files VALUES('da39a3ee5e6b4b0d3255bfef95601890afd80709',X'1f8b08000000000000ff03000000000000000000');
+CREATE TABLE manifest_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with manifests.id or manifest_deltas.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+CREATE TABLE manifest_deltas
+	(
+	id not null,         -- strong hash of all the entries in a manifest
+	base not null,       -- joins with either manifest.id or manifest_deltas.id
+	delta not null,      -- rdiff to construct current from base
+	unique(id, base)
+	);
+CREATE TABLE manifests
+	(
+	id primary key,      -- strong hash of all the entries in a manifest
+	data not null        -- compressed, encoded contents of a manifest
+	);
+CREATE TABLE next_roster_node_number
+	(
+	node primary key        -- only one entry in this table, ever
+	);
+INSERT INTO next_roster_node_number VALUES('15');
+CREATE TABLE public_keys
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id primary key,         -- key identifier chosen by user
+	keydata not null        -- RSA public params
+	);
+INSERT INTO public_keys VALUES('de84b575d5e47254393eba49dce9dc4db98ed42d','njs@pobox.com',X'30819d300d06092a864886f70d010101050003818b0030818702818100b9e2f563aeba98a137cf4e05a6e89a6e2fe90e11170dd8e49c06c5aae9c6f85a6de79729b056a249cb0aba71b7f28146309aaca244b3f1468b1f2c6bb6dbc02113368ce096c01f5a6083b0b0bef55d7c74573405c43203bcf6006392479cc4b8b853f4faec3acb8e444f0229428162d936ff1878e1bd5c03de816cabee1340f7020111');
+CREATE TABLE revision_ancestry
+	(
+	parent not null,     -- joins with revisions.id
+	child not null,      -- joins with revisions.id
+	unique(parent, child)
+	);
+INSERT INTO revision_ancestry VALUES('','14845db36e32be94d00111b1b8ce1f1c6ae31eae');
+CREATE TABLE revision_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with revisions.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+INSERT INTO revision_certs VALUES('56c7d5384f1b8090389b5f5b3014934ca905a4ee','14845db36e32be94d00111b1b8ce1f1c6ae31eae','branch',X'746573746272616e6368','njs@pobox.com',X'7028744db77b8bc564ff05aba2b36e79aa499e03751dc7ff548046b49d0ef955b5392b208e215a5c022c820b56e7b262209f8d1834e46e69788243b6377c14ae832b969c63f71c29aa155ef8a9aa176e56ea5801a25a08b272519e3207759df9bb2d62ce5b889b43d0a3cba5622a06cd6e87d27231515e2ba5bcb67cf4b3ca8c');
+INSERT INTO revision_certs VALUES('d88bde33f3708976bbd1c516c6c7676ccbc76333','14845db36e32be94d00111b1b8ce1f1c6ae31eae','date',X'323030362d30332d32395430343a34353a3437','njs@pobox.com',X'573be9fd955f979444233a691e2927c1a54d3d38d7012a117f71415d8f04dc6958e997dd125ec22999835d5001bb70f7d999b9a7712cdb97c0cab56324d7a448f5e11f36cd8c4ac759aa2770677bb984782976fd6356fb090386b3a56bdec17f5380249565772dba4790e06f822505be97d52e14d5e4fe23440bcc1d57d9ca61');
+INSERT INTO revision_certs VALUES('9a657295205c9f8dce9ba007a1b3ce3a1ec9d3f7','14845db36e32be94d00111b1b8ce1f1c6ae31eae','author',X'6e6a7340706f626f782e636f6d','njs@pobox.com',X'370f1b82979322058ebc149a3991847174c3a0bf616651a3fa5ae6f4b8aa8cacb9806804915f23a7d23e3ae01f80497045583de7a52086b6f02de9848712693b76bd7d8d34a5cad0ee0686671a4812920025859198a327fa1d8cd25ab2046b33307904785a3f37fe7a970b75382c303200c45a4ae43c086133e9149ccd443043');
+INSERT INTO revision_certs VALUES('42d5b9a94113b93a697afacea43d47d1deaae3e7','14845db36e32be94d00111b1b8ce1f1c6ae31eae','changelog',X'666f6f','njs@pobox.com',X'5ca711d1e9827c95dfdaf24277e225e77fbf51cbb876763645cd07bdc9ffcf58ff691be0fbb6ddd25a12226346e5f89977b97a016b334d55f010badd7a0a3c7f22b905f3caa194cc369dc805a85eaba3bd394c186180043636bbce0d5a90d3583d49ab6553dad9bd4395e8271fbd2a5d83c601e9af0ee0a5cc7ac6db599f85fa');
+CREATE TABLE revision_roster
+	(
+	rev_id primary key,     -- joins with revisions.id
+	roster_id not null      -- joins with either rosters.id or roster_deltas.id
+	);
+INSERT INTO revision_roster VALUES('14845db36e32be94d00111b1b8ce1f1c6ae31eae','782a5f0a87bd8d67777ce2e1c7608846519fbec0');
+CREATE TABLE revisions
+	(
+	id primary key,      -- SHA1(text of revision)
+	data not null        -- compressed, encoded contents of a revision
+	);
+INSERT INTO revisions VALUES('14845db36e32be94d00111b1b8ce1f1c6ae31eae',X'1f8b08000000000000ffad91418a03211045f79e42bc4034addded219255766110abad02212a7424b97e9c3019e85e067796c57ffeffa5b2265fdd03d77b2c990b2518cbf874c9e74878affc2aad34d3341300e851a396a49665b06684a3999402d2a00d68f5c358b905b7e223be51d776e1437021ae5c34eaffd99d2e793bd7f36edeeed365bb4f3b7ddae953fde829de908bdf070f548a607c29b9626ea9821fac1f100d8ea04186e1680c1052cb25d56ca5a730cb49dabf101f503df7027572d4bae9e3a895da09d4aba3f68ddf3b7a01b5bdb495d8020000');
+CREATE TABLE roster_deltas
+	(
+	id not null,            -- strong hash of the roster
+	base not null,          -- joins with either rosters.id or roster_deltas.id
+	delta not null,         -- rdiff to construct current from base
+	unique(id, base)
+	);
+CREATE TABLE rosters
+	(
+	id primary key,         -- strong hash of the roster
+	data not null           -- compressed, encoded contents of the roster
+	);
+INSERT INTO rosters VALUES('782a5f0a87bd8d67777ce2e1c7608846519fbec0',X'1f8b08000000000000ffd595416ec3201444f73e05f205ca37c6814334abeca2c802f351506bbb7251cf5fdb6151b2ab8b8a60871068f84f3363e76554beffc2e5d3cd13a9a1ae2ab22fe31652d7fbc6199cfc7eb69d68b7f83bb9422b5a6e34eb90351a656b2805000d5a0c0816864e21035478ab3e94bff7a35ade7e73e9a78afef532454a9ac7ee5f951062dd3b927a13f362e7f921810cf3e4b7e95c8d625231448e9d6e3535ace15c5bb492771484a4ca1a414f54dec2cf4898aa0c0f1d18ec0ae3d06c83e63f32f1e78809cbcac49f5332015a2c94d8286d5e28498d026b36edc9549a53c64bec149e13ca2a26a95342141fe985acf1353e554a97174a5aa7842c2e0fca53a79cb24249dc29218b0b8412778ac80b25ad5342169700e51b645f6045ab0b0000');
+CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
+CREATE INDEX revision_certs__id ON revision_certs (id);
+CREATE INDEX revision_certs__name_value ON revision_certs (name, value);
+COMMIT;

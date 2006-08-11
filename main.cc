@@ -1,9 +1,9 @@
 
 // This file is derived from execution_monitor.cpp, a part of boost.
-// 
+//
 // the error reporting mechanisms in that file were irritating to our
-// users, so we've just copied and modified the code, cleaning up 
-// parts of it in the process. 
+// users, so we've just copied and modified the code, cleaning up
+// parts of it in the process.
 //
 // it is somewhat likely that you actually want to look in monotone.cc for
 // cpp_main(), which is the function which does more interesting stuff. all
@@ -35,7 +35,7 @@
 #include <wtypes.h>
 #include <winbase.h>
 #include <excpt.h>
-#include <eh.h> 
+#include <eh.h>
 #if !defined(__MWERKS__)
 #define MS_CRT_DEBUG_HOOK
 #include <crtdbg.h>
@@ -43,11 +43,11 @@
 
 #elif (defined(__BORLANDC__) && defined(_Windows))
 #define MS_STRUCTURED_EXCEPTION_HANDLING
-#include <windows.h>  // Borland 5.5.1 has its own way of doing things. 
+#include <windows.h>  // Borland 5.5.1 has its own way of doing things.
 
-#elif (defined(__GNUC__) && defined(__MINGW32__)) 
+#elif (defined(__GNUC__) && defined(__MINGW32__))
 #define MS_STRUCTURED_EXCEPTION_HANDLING
-#include <windows.h> 
+#include <windows.h>
 
 #elif defined(__unix) || defined(__APPLE__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define UNIX_STYLE_SIGNAL_HANDLING
@@ -59,9 +59,10 @@
 #error "no known OS signal handling interface"
 #endif
 
+using std::string;
 
 // A rough outline of what this file does:
-// 
+//
 // runs main()
 //   - sets up a try block to catch the_one_true_exception
 //   - calls main_with_many_flavours_of_exception
@@ -73,10 +74,10 @@
 //       * sets up a unix sigjump_buf if appropriate
 //       * calls cpp_main
 
-extern int 
+extern int
 cpp_main(int argc, char ** argv);
 
-static const size_t 
+static const size_t
 REPORT_ERROR_BUFFER_SIZE = 512;
 
 #ifdef BOOST_NO_STDC_NAMESPACE
@@ -96,7 +97,7 @@ the_one_true_exception
 };
 char the_one_true_exception::buf[REPORT_ERROR_BUFFER_SIZE];
 
-static void 
+static void
 report_error(char const *msg1, char const *msg2 = "")
 {
   throw the_one_true_exception(msg1, msg2);
@@ -104,7 +105,7 @@ report_error(char const *msg1, char const *msg2 = "")
 
 
 ////////////////////////////////////////////////
-// windows style structured exception handling 
+// windows style structured exception handling
 // (and assertions, which get their own support)
 ////////////////////////////////////////////////
 
@@ -117,11 +118,11 @@ assert_reporting_function(int reportType, char* userMessage, int* retVal)
     case _CRT_ASSERT:
       report_error(userMessage);
       return 1;
-      
+
     case _CRT_ERROR:
       report_error(userMessage);
       return 1;
-      
+
     default:
       return 0;
     }
@@ -131,11 +132,11 @@ assert_reporting_function(int reportType, char* userMessage, int* retVal)
 #if defined(MS_STRUCTURED_EXCEPTION_HANDLING)
 #if !defined(__BORLANDC__) && !defined(__MINGW32__)
 struct
-ms_se_exception 
+ms_se_exception
 {
   unsigned int exception_id;
-  explicit ms_se_exception(unsigned int n) 
-    : exception_id(n) 
+  explicit ms_se_exception(unsigned int n)
+    : exception_id(n)
   {}
 };
 
@@ -148,16 +149,16 @@ ms_se_trans_func(unsigned int id, _EXCEPTION_POINTERS*)
 static void
 report_ms_se_error(unsigned int id)
 {
-  switch (id) 
+  switch (id)
     {
     case EXCEPTION_ACCESS_VIOLATION:
       report_error("memory access violation");
       break;
-      
+
     case EXCEPTION_ILLEGAL_INSTRUCTION:
       report_error("illegal instruction");
       break;
-      
+
     case EXCEPTION_PRIV_INSTRUCTION:
       report_error("privilaged instruction");
       break;
@@ -173,7 +174,7 @@ report_ms_se_error(unsigned int id)
     case EXCEPTION_DATATYPE_MISALIGNMENT:
       report_error("data misalignment");
       break;
-      
+
     case EXCEPTION_INT_DIVIDE_BY_ZERO:
       report_error("integer divide by zero");
       break;
@@ -193,7 +194,7 @@ report_ms_se_error(unsigned int id)
     case EXCEPTION_FLT_STACK_CHECK:
       report_error("floating point stack check");
       break;
-      
+
     case EXCEPTION_FLT_DENORMAL_OPERAND:
     case EXCEPTION_FLT_INEXACT_RESULT:
     case EXCEPTION_FLT_INVALID_OPERATION:
@@ -201,7 +202,7 @@ report_ms_se_error(unsigned int id)
     case EXCEPTION_FLT_UNDERFLOW:
       report_error("floating point error");
       break;
-      
+
     default:
       report_error("unrecognized exception or signal");
     }
@@ -210,14 +211,14 @@ report_ms_se_error(unsigned int id)
 
 #if (defined(__BORLANDC__) && defined(_Windows))
 // this works for Borland but not other Win32 compilers (which trap too many cases)
-static int 
+static int
 main_with_signal_handlers(int argc, char **argv)
 {
   int result;
-  __try 
-    { 
-      result = cpp_main(argc, argv); 
-    }    
+  __try
+    {
+      result = cpp_main(argc, argv);
+    }
   __except (1)
     {
       throw ms_se_exception(GetExceptionCode());
@@ -226,7 +227,7 @@ main_with_signal_handlers(int argc, char **argv)
 }
 
 #else
-static int 
+static int
 main_with_signal_handlers(int argc, char **argv)
 {
   return cpp_main(argc, argv);
@@ -235,12 +236,12 @@ main_with_signal_handlers(int argc, char **argv)
 
 
 /////////////////////////////
-// unix style signal handling 
+// unix style signal handling
 /////////////////////////////
 
 #elif defined(UNIX_STYLE_SIGNAL_HANDLING)
 struct
-unix_signal_exception 
+unix_signal_exception
 {
   char const * error_message;
   explicit unix_signal_exception(char const * em)
@@ -250,16 +251,16 @@ unix_signal_exception
 
 static sigjmp_buf jump_buf;
 
-extern "C" 
+extern "C"
 {
-  static void 
+  static void
   unix_style_signal_handler(int sig)
   {
     siglongjmp(jump_buf, sig);
-  }  
+  }
 }
 
-static int 
+static int
 main_with_signal_handlers(int argc, char **argv)
 {
     typedef struct sigaction* sigaction_ptr;
@@ -277,7 +278,7 @@ main_with_signal_handlers(int argc, char **argv)
     all_signals_action.sa_flags   = 0;
     all_signals_action.sa_handler = &unix_style_signal_handler;
     sigemptyset(&all_signals_action.sa_mask);
-    
+
     ignore_signals_action.sa_flags   = 0;
     ignore_signals_action.sa_handler = SIG_IGN;
     sigemptyset(&ignore_signals_action.sa_mask);
@@ -298,15 +299,15 @@ main_with_signal_handlers(int argc, char **argv)
 
     volatile int sigtype = sigsetjmp(jump_buf, 1);
 
-    if(sigtype == 0) 
+    if(sigtype == 0)
       {
         result = cpp_main(argc, argv);
       }
-    
-    else 
+
+    else
       {
         trapped_signal = true;
-        switch(sigtype) 
+        switch(sigtype)
           {
           case SIGTRAP:
             em = "signal: SIGTRAP (perhaps integer divide by zero)";
@@ -333,7 +334,7 @@ main_with_signal_handlers(int argc, char **argv)
             em = "signal: unrecognized signal";
           }
       }
-    
+
     sigaction(SIGFPE , &old_SIGFPE_action , sigaction_ptr());
     sigaction(SIGTRAP, &old_SIGTRAP_action, sigaction_ptr());
     sigaction(SIGSEGV, &old_SIGSEGV_action, sigaction_ptr());
@@ -348,8 +349,8 @@ main_with_signal_handlers(int argc, char **argv)
         close_all_databases();
         return 1;
       }
-    
-    if(trapped_signal) 
+
+    if(trapped_signal)
       throw unix_signal_exception(em);
 
     return result;
@@ -357,136 +358,136 @@ main_with_signal_handlers(int argc, char **argv)
 #endif
 
 
-static int 
+static int
 main_with_many_flavours_of_exception(int argc, char **argv)
 {
-  
+
 #if defined(MS_STRUCTURED_EXCEPTION_HANDLING) && !defined(__BORLANDC__) && !defined(__MINGW32__)
   _set_se_translator(ms_se_trans_func);
 #endif
-  
+
 #if defined(MS_CRT_DEBUG_HOOK)
   _CrtSetReportHook(&assert_reporting_function);
 #endif
 
-    try 
+    try
       {
         return main_with_signal_handlers(argc, argv);
       }
 
     catch (char const * ex)
-      { 
-        report_error("C string: ", ex); 
+      {
+        report_error("C string: ", ex);
       }
 
-    catch (std::string const & ex)
-      { 
-        report_error("std::string: ", ex.c_str()); 
+    catch (string const & ex)
+      {
+        report_error("string: ", ex.c_str());
       }
-    
+
     catch( std::bad_alloc const & ex )
-      { 
-        report_error("std::bad_alloc: ", ex.what()); 
+      {
+        report_error("std::bad_alloc: ", ex.what());
       }
-    
+
 #if !defined(__BORLANDC__) || __BORLANDC__ > 0x0551
     catch (std::bad_cast const & ex)
-      { 
-        report_error("std::bad_cast: ", ex.what()); 
+      {
+        report_error("std::bad_cast: ", ex.what());
       }
 
     catch (std::bad_typeid const & ex)
-      { 
-        report_error("std::bad_typeid: ", ex.what()); 
+      {
+        report_error("std::bad_typeid: ", ex.what());
       }
 #else
     catch(std::bad_cast const & ex)
-      { 
-        report_error("std::bad_cast"); 
+      {
+        report_error("std::bad_cast");
       }
 
     catch( std::bad_typeid const & ex)
-      { 
-        report_error("std::bad_typeid"); 
+      {
+        report_error("std::bad_typeid");
       }
 #endif
-    
+
     catch(std::bad_exception const & ex)
-      { 
-        report_error("std::bad_exception: ", ex.what()); 
+      {
+        report_error("std::bad_exception: ", ex.what());
       }
 
     catch( std::domain_error const& ex )
-      { 
-        report_error("std::domain_error: ", ex.what()); 
+      {
+        report_error("std::domain_error: ", ex.what());
       }
 
     catch( std::invalid_argument const& ex )
-      { 
-        report_error("std::invalid_argument: ", ex.what()); 
+      {
+        report_error("std::invalid_argument: ", ex.what());
       }
 
     catch( std::length_error const& ex )
-      { 
-        report_error("std::length_error: ", ex.what()); 
+      {
+        report_error("std::length_error: ", ex.what());
       }
 
     catch( std::out_of_range const& ex )
-      { 
-        report_error("std::out_of_range: ", ex.what()); 
+      {
+        report_error("std::out_of_range: ", ex.what());
       }
 
     catch( std::range_error const& ex )
-      { 
-        report_error("std::range_error: ", ex.what()); 
+      {
+        report_error("std::range_error: ", ex.what());
       }
 
     catch( std::overflow_error const& ex )
-      { 
-        report_error("std::overflow_error: ", ex.what()); 
+      {
+        report_error("std::overflow_error: ", ex.what());
       }
 
     catch( std::underflow_error const& ex )
-      { 
-        report_error("std::underflow_error: ", ex.what()); 
+      {
+        report_error("std::underflow_error: ", ex.what());
       }
 
     catch( std::logic_error const& ex )
-      { 
-        report_error("std::logic_error: ", ex.what()); 
+      {
+        report_error("std::logic_error: ", ex.what());
       }
 
     catch( std::runtime_error const& ex )
-      { 
-        report_error("std::runtime_error: ", ex.what()); 
+      {
+        report_error("std::runtime_error: ", ex.what());
       }
 
     catch( std::exception const& ex )
-      { 
-        report_error("std::exception: ", ex.what()); 
+      {
+        report_error("std::exception: ", ex.what());
       }
 
 #if defined(MS_STRUCTURED_EXCEPTION_HANDLING) && !defined(__BORLANDC__) && !defined(__MINGW32__)
     catch(ms_se_exception const & ex)
-      { 
-        report_ms_se_error(ex.exception_id); 
+      {
+        report_ms_se_error(ex.exception_id);
       }
 
 #elif defined(UNIX_STYLE_SIGNAL_HANDLING)
     catch(unix_signal_exception const & ex)
-      { 
-        report_error(ex.error_message); 
+      {
+        report_error(ex.error_message);
       }
 #endif
 
     catch( ... )
-      { 
-        report_error("exception of unknown type" ); 
+      {
+        report_error("exception of unknown type" );
       }
     return 0;
 }
 
-int 
+int
 main(int argc, char **argv)
 {
   try
@@ -495,7 +496,7 @@ main(int argc, char **argv)
     }
   catch (the_one_true_exception const & e)
     {
-      ui.fatal(std::string(e.buf) + "\n");
+      ui.fatal(string(e.buf) + "\n");
       // If we got here, it's because something went _really_ wrong, like an
       // invariant failure or a segfault.  So use a distinctive error code, in
       // particular so the testsuite can tell whether we detected an error
@@ -503,3 +504,11 @@ main(int argc, char **argv)
       return 3;
     }
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

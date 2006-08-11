@@ -1,0 +1,6 @@
+start ---------------------------------------------------
+cert: rev_id = REV1
+cert: name   = tag
+cert: value  = testtag
+cert: key    = tester@test.net
+end -----------------------------------------------------

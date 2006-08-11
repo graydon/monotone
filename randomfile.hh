@@ -1,43 +1,37 @@
 #ifndef __RANDOMFILE_HH__
 #define __RANDOMFILE_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 #include <vector>
-#include <stdlib.h>
 #include <boost/lexical_cast.hpp>
+
+#include "randomizer.hh"
 
 struct file_randomizer
 {
-
   std::vector<std::string> lines;
   std::string prefix;
-
-  void seed(int seed = 0xf00feed) 
-  { 
-    srand (seed); 
-  }
 
   size_t random_index(bool last_line_ok = true)
   {
     if (last_line_ok)
-      return static_cast<size_t>(rand() % lines.size());
+      return static_cast<size_t>(randomizer::uniform(lines.size()));
     else
       {
         if (lines.size() == 0)
           return 0;
         else
-          return static_cast<size_t>(rand() % (lines.size() - 1));
+          return static_cast<size_t>(randomizer::uniform(lines.size() - 1));
       }
-  }
-
-  bool random_bool()
-  {
-    return (rand() % 2 == 0);
   }
 
   void set_prefix(std::string const & p)
@@ -99,17 +93,19 @@ struct file_randomizer
                                 std::vector<std::string> & left,
                                 std::vector<std::string> & right,
                                 std::vector<std::string> & merged,
-                                int seed,
                                 int n_hunks = 10)
-  {    
+  {
+    bool last_was_insert = false;
+    bool last_insert_was_left = false;
 
     file_randomizer fr;
-    fr.seed(seed);
     // maybe prepend something to one side or the other
-    if (fr.random_bool())
+    if (randomizer::flip())
       {
+        last_was_insert = true;
         fr.prepend_sequential_lines();
-        if (fr.random_bool())
+        last_insert_was_left = randomizer::flip();
+        if (last_insert_was_left)
           fr.append_to(left);
         else
           fr.append_to(right);
@@ -120,14 +116,25 @@ struct file_randomizer
     for (int h = 0; h < n_hunks; ++h)
       {
         file_randomizer hr;
-        hr.seed(seed + h);
         hr.set_prefix(std::string("hunk ") + boost::lexical_cast<std::string>(h) + " -- ");
         hr.initial_sequential_lines(10);
-        hr.append_to(ancestor);
-        if (hr.random_bool())
+        if (randomizer::flip())
           {
+            bool this_insert_is_left = randomizer::flip();
+            if (last_was_insert && (this_insert_is_left != last_insert_was_left))
+              {
+                fr.set_prefix("spacer ");
+                fr.initial_sequential_lines(3);
+                fr.append_to(left);
+                fr.append_to(right);
+                fr.append_to(ancestor);
+                fr.append_to(merged);
+                fr.set_prefix("");
+              }
+            last_insert_was_left = this_insert_is_left;
             // doing an insert
-            if (hr.random_bool())
+            hr.append_to(ancestor);
+            if (this_insert_is_left)
               {
                 // inserting in left
                 hr.append_to(right);
@@ -142,11 +149,13 @@ struct file_randomizer
                 hr.append_to(right);
               }
             hr.append_to(merged);
+            last_was_insert = true;
           }
         else
           {
             // doing a delete
-            if (hr.random_bool())
+            hr.append_to(ancestor);
+            if (randomizer::flip())
               {
                 // deleting in left
                 hr.append_to(right);
@@ -161,14 +170,26 @@ struct file_randomizer
                 hr.append_to(right);
               }
             hr.append_to(merged);
+            last_was_insert = false;
           }
       }
 
     // maybe append something to one side or the other
-    if (fr.random_bool())
+    if (randomizer::flip())
       {
+        bool this_insert_is_left = randomizer::flip();
+        if (last_was_insert && (this_insert_is_left != last_insert_was_left))
+          {
+            fr.set_prefix("spacer ");
+            fr.initial_sequential_lines(3);
+            fr.append_to(left);
+            fr.append_to(right);
+            fr.append_to(ancestor);
+            fr.append_to(merged);
+            fr.set_prefix("");
+          }
         fr.append_sequential_lines();
-        if (fr.random_bool())
+        if (this_insert_is_left)
           fr.append_to(left);
         else
           fr.append_to(right);
@@ -176,5 +197,13 @@ struct file_randomizer
       }
   }
 };
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __RANDOMFILE_HH__

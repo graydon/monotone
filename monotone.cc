@@ -1,14 +1,19 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "config.h"
 
 #include "popt/popt.h"
 #include <cstdio>
+#ifndef _MSC_VER
 #include <strings.h>
+#endif
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -29,15 +34,21 @@
 #include "sanity.hh"
 #include "cleanup.hh"
 #include "file_io.hh"
-#include "transforms.hh"
+#include "charset.hh"
 #include "ui.hh"
 #include "mt_version.hh"
 #include "options.hh"
 #include "paths.hh"
 
-// main option processing and exception handling code
+using std::cout;
+using std::endl;
+using std::ios_base;
+using std::ostringstream;
+using std::set;
+using std::string;
+using std::vector;
 
-using namespace std;
+// main option processing and exception handling code
 
 char * argstr = NULL;
 long arglong = 0;
@@ -66,16 +77,19 @@ struct poptOption coptions[] =
     {"no-merges", 0, POPT_ARG_NONE, NULL, OPT_NO_MERGES, gettext_noop("exclude merges when printing logs"), NULL},
     {"set-default", 0, POPT_ARG_NONE, NULL, OPT_SET_DEFAULT, gettext_noop("use the current arguments as the future default"), NULL},
     {"exclude", 0, POPT_ARG_STRING, &argstr, OPT_EXCLUDE, gettext_noop("leave out anything described by its argument"), NULL},
-    {"unified", 0, POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
-    {"context", 0, POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
+    {"unified", 'u', POPT_ARG_NONE, NULL, OPT_UNIFIED_DIFF, gettext_noop("use unified diff format"), NULL},
+    {"context", 'c', POPT_ARG_NONE, NULL, OPT_CONTEXT_DIFF, gettext_noop("use context diff format"), NULL},
     {"external", 0, POPT_ARG_NONE, NULL, OPT_EXTERNAL_DIFF, gettext_noop("use external diff hook for generating diffs"), NULL},
     {"diff-args", 0, POPT_ARG_STRING, &argstr, OPT_EXTERNAL_DIFF_ARGS, gettext_noop("argument to pass external diff hook"), NULL},
-    {"lca", 0, POPT_ARG_NONE, NULL, OPT_LCA, gettext_noop("use least common ancestor as ancestor for merge"), NULL},
+    {"no-show-encloser", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("do not show the function containing each block of changes"), NULL},
+    {"no-show-c-function", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("another name for --no-show-encloser (for compatibility with GNU diff)"), NULL},
     {"execute", 'e', POPT_ARG_NONE, NULL, OPT_EXECUTE, gettext_noop("perform the associated file operation"), NULL},
     {"bind", 0, POPT_ARG_STRING, &argstr, OPT_BIND, gettext_noop("address:port to listen on (default :4691)"), NULL},
     {"missing", 0, POPT_ARG_NONE, NULL, OPT_MISSING, gettext_noop("perform the operations for files missing from workspace"), NULL},
     {"unknown", 0, POPT_ARG_NONE, NULL, OPT_UNKNOWN, gettext_noop("perform the operations for unknown files from workspace"), NULL},
     {"key-to-push", 0, POPT_ARG_STRING, &argstr, OPT_KEY_TO_PUSH, gettext_noop("push the specified key even if it hasn't signed anything"), NULL},
+    {"stdio", 0, POPT_ARG_NONE, NULL, OPT_STDIO, gettext_noop("serve netsync on stdio"), NULL},
+    {"no-transport-auth", 0, POPT_ARG_NONE, NULL, OPT_NO_TRANSPORT_AUTH, gettext_noop("disable transport authentication"), NULL},
     {"drop-attr", 0, POPT_ARG_STRING, &argstr, OPT_DROP_ATTR, gettext_noop("when rosterifying, drop attrs entries with the given key"), NULL},
     {"no-files", 0, POPT_ARG_NONE, NULL, OPT_NO_FILES, gettext_noop("exclude files when printing logs"), NULL},
     {"recursive", 'R', POPT_ARG_NONE, NULL, OPT_RECURSIVE, gettext_noop("also operate on the contents of any listed directories"), NULL},
@@ -90,7 +104,8 @@ struct poptOption options[] =
     {"debug", 0, POPT_ARG_NONE, NULL, OPT_DEBUG, gettext_noop("print debug log to stderr while running"), NULL},
     {"dump", 0, POPT_ARG_STRING, &argstr, OPT_DUMP, gettext_noop("file to dump debugging log to, on failure"), NULL},
     {"log", 0, POPT_ARG_STRING, &argstr, OPT_LOG, gettext_noop("file to write the log to"), NULL},
-    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress log and progress messages"), NULL},
+    {"quiet", 0, POPT_ARG_NONE, NULL, OPT_QUIET, gettext_noop("suppress verbose, informational and progress messages"), NULL},
+    {"reallyquiet", 0, POPT_ARG_NONE, NULL, OPT_REALLYQUIET, gettext_noop("suppress warning, verbose, informational and progress messages"), NULL},
     {"help", 'h', POPT_ARG_NONE, NULL, OPT_HELP, gettext_noop("display help message"), NULL},
     {"version", 0, POPT_ARG_NONE, NULL, OPT_VERSION, gettext_noop("print version number, then exit"), NULL},
     {"full-version", 0, POPT_ARG_NONE, NULL, OPT_FULL_VERSION, gettext_noop("print detailed version number, then exit"), NULL},
@@ -102,7 +117,7 @@ struct poptOption options[] =
     {"key", 'k', POPT_ARG_STRING, &argstr, OPT_KEY_NAME, gettext_noop("set key for signatures"), NULL},
     {"db", 'd', POPT_ARG_STRING, &argstr, OPT_DB_NAME, gettext_noop("set name of database"), NULL},
     {"root", 0, POPT_ARG_STRING, &argstr, OPT_ROOT, gettext_noop("limit search for workspace to specified root"), NULL},
-    {"verbose", 0, POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
+    {"verbose", 'v', POPT_ARG_NONE, NULL, OPT_VERBOSE, gettext_noop("verbose completion output"), NULL},
     {"keydir", 0, POPT_ARG_STRING, &argstr, OPT_KEY_DIR, gettext_noop("set location of key store"), NULL},
     {"confdir", 0, POPT_ARG_STRING, &argstr, OPT_CONF_DIR, gettext_noop("set location of configuration directory"), NULL},
     { NULL, 0, 0, NULL, 0, NULL, NULL }
@@ -132,17 +147,17 @@ struct poptOption options[] =
 // in other words, this program should *never* unexpectedly terminate
 // without dumping some diagnostics.
 
-void 
-dumper() 
+void
+dumper()
 {
   if (!global_sanity.clean_shutdown)
     global_sanity.dump_buffer();
-  
+
   Botan::Init::deinitialize();
 }
 
 
-struct 
+struct
 utf8_argv
 {
   int argc;
@@ -165,7 +180,7 @@ utf8_argv
     }
   }
 
-  ~utf8_argv() 
+  ~utf8_argv()
   {
     if (argv != NULL)
       {
@@ -173,7 +188,7 @@ utf8_argv
           if (argv[i] != NULL)
             free(argv[i]);
         free(argv);
-      }    
+      }
   }
 };
 
@@ -239,7 +254,7 @@ coption_string(int o)
   return string();
 }
 
-int 
+int
 cpp_main(int argc, char ** argv)
 {
   int ret = 0;
@@ -260,9 +275,9 @@ cpp_main(int argc, char ** argv)
 
   // set up some marked strings, so even if our logbuf overflows, we'll get
   // this data in a crash.
-  std::string cmdline_string;
+  string cmdline_string;
   {
-    std::ostringstream cmdline_ss;
+    ostringstream cmdline_ss;
     for (int i = 0; i < argc; ++i)
       {
         if (i)
@@ -272,20 +287,20 @@ cpp_main(int argc, char ** argv)
     cmdline_string = cmdline_ss.str();
   }
   MM(cmdline_string);
-  L(FL("command line: %s\n") % cmdline_string);
+  L(FL("command line: %s") % cmdline_string);
 
-  std::string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+  string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
   MM(locale_string);
-  L(FL("set locale: LC_ALL=%s\n") % locale_string);
+  L(FL("set locale: LC_ALL=%s") % locale_string);
 
-  std::string full_version_string;
+  string full_version_string;
   get_full_version(full_version_string);
   MM(full_version_string);
 
   // Set up secure memory allocation etc
   Botan::Init::initialize();
   Botan::set_default_allocator("malloc");
-  
+
   // decode all argv values into a UTF-8 array
 
   save_initial_path();
@@ -294,12 +309,13 @@ cpp_main(int argc, char ** argv)
   // find base name of executable
 
   string prog_path = fs::path(uv.argv[0]).leaf();
-  prog_path = prog_path.substr(0, prog_path.find(".exe", 0));
+  if (prog_path.rfind(".exe") == prog_path.size() - 4)
+    prog_path = prog_path.substr(0, prog_path.size() - 4);
   utf8 prog_name(prog_path);
 
   // prepare for arg parsing
 
-  cleanup_ptr<poptContext, void> 
+  cleanup_ptr<poptContext, void>
     ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
         &my_poptFreeContext);
 
@@ -310,14 +326,13 @@ cpp_main(int argc, char ** argv)
   // process main program options
 
   int opt;
-  bool requested_help = false;
   set<int> used_local_options;
 
   poptSetOtherOptionHelp(ctx(), _("[OPTION...] command [ARGS...]\n"));
 
+  app_state app;
   try
     {
-      app_state app;
 
       app.set_prog_name(prog_name);
 
@@ -334,6 +349,12 @@ cpp_main(int argc, char ** argv)
 
             case OPT_QUIET:
               global_sanity.set_quiet();
+              ui.set_tick_writer(new tick_write_nothing);
+              break;
+
+            case OPT_REALLYQUIET:
+              global_sanity.set_reallyquiet();
+              ui.set_tick_writer(new tick_write_nothing);
               break;
 
             case OPT_NOSTD:
@@ -373,14 +394,14 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_TICKER:
-              if (string(argstr) == "dot")
+              if (string(argstr) == "none" || global_sanity.quiet)
+                ui.set_tick_writer(new tick_write_nothing);
+              else if (string(argstr) == "dot")
                 ui.set_tick_writer(new tick_write_dot);
               else if (string(argstr) == "count")
                 ui.set_tick_writer(new tick_write_count);
-              else if (string(argstr) == "none")
-                ui.set_tick_writer(new tick_write_nothing);
               else
-                requested_help = true;
+                app.requested_help = true;
               break;
 
             case OPT_KEY_NAME:
@@ -479,50 +500,59 @@ cpp_main(int argc, char ** argv)
             case OPT_EXTERNAL_DIFF:
               app.set_diff_format(external_diff);
               break;
-              
+
             case OPT_EXTERNAL_DIFF_ARGS:
               app.set_diff_args(utf8(string(argstr)));
               break;
 
-            case OPT_LCA:
-              app.use_lca = true;
+            case OPT_NO_SHOW_ENCLOSER:
+              app.diff_show_encloser = false;
               break;
 
             case OPT_EXECUTE:
               app.execute = true;
               break;
 
+            case OPT_STDIO:
+              app.bind_stdio = true;
+              break;
+
+            case OPT_NO_TRANSPORT_AUTH:
+              app.use_transport_auth = false;
+              break;
+
             case OPT_BIND:
               {
-                std::string arg(argstr);
-                std::string addr_part, port_part;
+                string arg(argstr);
+                string addr_part, port_part;
                 size_t l_colon = arg.find(':');
                 size_t r_colon = arg.rfind(':');
-                
+
                 // not an ipv6 address, as that would have at least two colons
                 if (l_colon == r_colon)
                   {
-                    addr_part = (r_colon == std::string::npos ? arg : arg.substr(0, r_colon));
-                    port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                    addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
+                    port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
                   }
                 else
-                  { 
+                  {
                     // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
                     size_t squareb = arg.rfind(']');
-                    if ((arg.find('[') == 0) && (squareb != std::string::npos))
+                    if ((arg.find('[') == 0) && (squareb != string::npos))
                       {
                         if (squareb < r_colon)
-                          port_part = (r_colon == std::string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+                          port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
                         else
                           port_part = "";
-                        addr_part = (squareb == std::string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+                        addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
                       }
-                    else 
+                    else
                       {
                         addr_part = arg;
                         port_part = "";
                       }
                   }
+                app.bind_stdio = false;
                 app.bind_address = utf8(addr_part);
                 app.bind_port = utf8(port_part);
               }
@@ -556,8 +586,10 @@ cpp_main(int argc, char ** argv)
               break;
 
             case OPT_HELP:
+              app.requested_help = true;
+              break;
+
             default:
-              requested_help = true;
               break;
             }
         }
@@ -570,15 +602,15 @@ cpp_main(int argc, char ** argv)
 
       // complete the command if necessary
 
-      string cmd;
-      if (poptPeekArg(ctx()))
-        {
-          cmd = commands::complete_command(poptGetArg(ctx()));
-        }
+      if (!poptPeekArg(ctx()))
+        // no command given
+        throw usage("");
+      // poptPeekArg returned true, so we can call poptGetArg
+      string cmd = commands::complete_command(poptGetArg(ctx()));
 
       // stop here if they asked for help
 
-      if (requested_help)
+      if (app.requested_help)
         {
           throw usage(cmd);     // cmd may be empty, and that's fine.
         }
@@ -592,31 +624,27 @@ cpp_main(int argc, char ** argv)
 
       app.allow_workspace();
 
-      // main options processed, now invoke the 
+      if (!app.found_workspace && global_sanity.filename.empty())
+        global_sanity.filename = (app.get_confdir() / "dump").as_external();
+
+      // main options processed, now invoke the
       // sub-command w/ remaining args
 
-      if (cmd.empty())
+      // Make sure the local options used are really used by the
+      // given command.
+      set<int> command_options = commands::command_options(cmd);
+      for (set<int>::const_iterator i = used_local_options.begin();
+           i != used_local_options.end(); ++i)
+        N(command_options.find(*i) != command_options.end(),
+          F("%s %s doesn't use the option %s")
+          % prog_name % cmd % coption_string(*i));
+      
+      vector<utf8> args;
+      while(poptPeekArg(ctx()))
         {
-          throw usage("");
+          args.push_back(utf8(string(poptGetArg(ctx()))));
         }
-      else
-        {
-          // Make sure the local options used are really used by the
-          // given command.
-          set<int> command_options = commands::command_options(cmd);
-          for (set<int>::const_iterator i = used_local_options.begin();
-               i != used_local_options.end(); ++i)
-            N(command_options.find(*i) != command_options.end(),
-              F("monotone %s doesn't use the option %s")
-              % cmd % coption_string(*i));
-
-          vector<utf8> args;
-          while(poptPeekArg(ctx()))
-            {
-              args.push_back(utf8(string(poptGetArg(ctx()))));
-            }
-          ret = commands::process(app, cmd, args);
-        }
+      ret = commands::process(app, cmd, args);
     }
   catch (usage & u)
     {
@@ -629,32 +657,35 @@ cpp_main(int argc, char ** argv)
           if (command_options.find(o->val) != command_options.end())
             {
               o->argInfo &= ~POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Removed 'hidden' from option # %d\n") % o->argInfo);
+              L(FL("Removed 'hidden' from option # %d") % o->argInfo);
               count++;
             }
           else
             {
               o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-              L(FL("Added 'hidden' to option # %d\n") % o->argInfo);
+              L(FL("Added 'hidden' to option # %d") % o->argInfo);
             }
         }
       free((void *)options[0].descrip); options[0].descrip = NULL;
       if (count != 0)
         {
           ostringstream sstr;
-          sstr << F("Options specific to '%s %s':") 
+          sstr << F("Options specific to '%s %s':")
             % prog_name % u.which;
           options[0].descrip = strdup(sstr.str().c_str());
 
           options[0].argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-          L(FL("Added 'hidden' to option # %d\n") % options[0].argInfo);
+          L(FL("Added 'hidden' to option # %d") % options[0].argInfo);
         }
 
       poptPrintHelp(ctx(), stdout, 0);
       cout << endl;
       commands::explain_usage(u.which, cout);
       global_sanity.clean_shutdown = true;
-      return 2;
+      if (app.requested_help)
+        return 0;
+      else
+        return 2;
     }
   }
   catch (informative_failure & inf)
@@ -663,7 +694,7 @@ cpp_main(int argc, char ** argv)
     global_sanity.clean_shutdown = true;
     return 1;
   }
-  catch (std::ios_base::failure const & ex)
+  catch (ios_base::failure const & ex)
   {
     global_sanity.clean_shutdown = true;
     return 1;
@@ -672,3 +703,11 @@ cpp_main(int argc, char ** argv)
   global_sanity.clean_shutdown = true;
   return ret;
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

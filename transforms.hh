@@ -1,15 +1,16 @@
 #ifndef __TRANSFORMS_HH__
 #define __TRANSFORMS_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
-#include "revision.hh"
-#include "lua.hh"
 #include "vocab.hh"
-#include "roster.hh"
 
 #include <vector>
 
@@ -53,9 +54,6 @@ void decode_base64(base64<T> const & in, T & out)
 
 
 // hex encoding
-
-std::string uppercase(std::string const & in);
-std::string lowercase(std::string const & in);
 
 std::string encode_hexenc(std::string const & in);
 std::string decode_hexenc(std::string const & in);
@@ -125,77 +123,19 @@ void calculate_ident(manifest_data const & dat,
 void calculate_ident(revision_data const & dat,
                      revision_id & ident);
 
-void calculate_ident(revision_set const & cs,
-                     revision_id & ident);
-
-// Variant which calculates the "manifest part" of a roster; this does
-// not include the local sequence numbers or markings, but produces
-// the manifest_id which is stored in the public revision_set object.
-void calculate_ident(roster_t const & ros,
-                     manifest_id & ident);
-
-
-// quick streamy variant which doesn't necessarily load the whole file
-
-void calculate_ident(file_path const & file,
-                     hexenc<id> & ident, 
-                     lua_hooks & lua);
-
-void split_into_lines(std::string const & in,
-                      std::vector<std::string> & out);
-
-void split_into_lines(std::string const & in,
-                      std::string const & encoding,
-                      std::vector<std::string> & out);
-
-void join_lines(std::vector<std::string> const & in,
-                std::string & out,
-                std::string const & linesep);
-
-void join_lines(std::vector<std::string> const & in,
-                std::string & out);
-
-void prefix_lines_with(std::string const & prefix,
-                       std::string const & lines,
-                       std::string & out);
-  
-// remove all whitespace
-std::string remove_ws(std::string const & s);
-
-// remove leading and trailing whitespace
-std::string trim_ws(std::string const & s);
+void calculate_ident(roster_data const & dat,
+                     roster_id & ident);
 
 // canonicalize base64 encoding
 std::string canonical_base64(std::string const & s);
 
-// charset conversions
-void charset_convert(std::string const & src_charset, std::string const & dst_charset,
-                     std::string const & src, std::string & dst);
-void system_to_utf8(external const & system, utf8 & utf);
-void utf8_to_system(utf8 const & utf, external & system);
-void utf8_to_system(utf8 const & utf, std::string & system);
-void ace_to_utf8(ace const & ac, utf8 & utf);
-void utf8_to_ace(utf8 const & utf, ace & a);
-bool utf8_validate(utf8 const & utf);
 
-// returns length in characters (not bytes)
-size_t display_width(utf8 const & utf);
-
-// specific internal / external conversions for various vocab terms
-void internalize_cert_name(utf8 const & utf, cert_name & c);
-void internalize_cert_name(external const & ext, cert_name & c);
-void externalize_cert_name(cert_name const & c, utf8 & utf);
-void externalize_cert_name(cert_name const & c, external & ext);
-void internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key);
-void internalize_rsa_keypair_id(external const & ext, rsa_keypair_id & key);
-void externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf);
-void externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext);
-void internalize_var_domain(utf8 const & utf, var_domain & d);
-void internalize_var_domain(external const & ext, var_domain & d);
-void externalize_var_domain(var_domain const & d, utf8 & utf);
-void externalize_var_domain(var_domain const & d, external & ext);
-
-// line-ending conversion
-void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __TRANSFORMS_HH__

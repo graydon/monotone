@@ -57,7 +57,8 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
   if (CloseHandle(filehandle) == 0)
     return false;
 
-  char digest[hash.OUTPUT_LENGTH];
+  I(hash.OUTPUT_LENGTH == 20);
+  char digest[20];
   hash.final(reinterpret_cast<Botan::byte *>(digest));
   std::string out(digest, hash.OUTPUT_LENGTH);
   inodeprint ip_raw(out);

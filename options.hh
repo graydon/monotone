@@ -1,9 +1,14 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// copyright (C) 2005 Richard Levitte <richard@levitte.org>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+#ifndef __OPTIONS_HH__
+#define __OPTIONS_HH__
+
+// Copyright (C) 2005 Richard Levitte <richard@levitte.org>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "popt/popt.h"
 
@@ -42,7 +47,7 @@
 #define OPT_CONTEXT_DIFF 33
 #define OPT_EXTERNAL_DIFF 34
 #define OPT_EXTERNAL_DIFF_ARGS 35
-#define OPT_LCA 36
+// formerly OPT_LCA was here
 #define OPT_EXECUTE 37
 #define OPT_KEY_DIR 38
 #define OPT_BIND 39
@@ -54,3 +59,17 @@
 #define OPT_NO_FILES 45
 #define OPT_LOG 46
 #define OPT_RECURSIVE 47
+#define OPT_REALLYQUIET 48
+#define OPT_STDIO 49
+#define OPT_NO_TRANSPORT_AUTH 50
+#define OPT_NO_SHOW_ENCLOSER 51
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+
+#endif // __OPTIONS_HH__

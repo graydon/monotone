@@ -1,8 +1,0 @@
-AT_SETUP([--rcfile requires extant file])
-MTN_SETUP
-
-# rcfiles may contain security settings.  So make it a hard error if
-# the user typoes or somesuch.
-AT_CHECK(MTN --rcfile=no-such-file status, [1], [ignore], [ignore])
-
-AT_CLEANUP

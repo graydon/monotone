@@ -77,15 +77,20 @@
 
 # include <string.h>
 # include <stdlib.h>
-
 #endif
 
+#include <string>
 #include "config.h"
 
 namespace Netxx 
 {
+#if defined (WIN32)
+    typedef DWORD error_type;
+#else
     typedef int error_type;
+#endif
     error_type get_last_error (void);
+    std::string str_error(error_type);
 
 
 #if defined(HAVE_SOCKLEN_T)

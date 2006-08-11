@@ -1,14 +1,19 @@
 #ifndef __ENUMERATOR_H__
 #define __ENUMERATOR_H__
 
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <deque>
 #include <map>
 #include <set>
+#include <vector>
 
 #include "app_state.hh"
 #include "vocab.hh"
@@ -35,7 +40,7 @@ enumerator_callbacks
   virtual ~enumerator_callbacks() {}
 };
 
-struct 
+struct
 enumerator_item
 {
   enum { fdata, fdelta, rev, cert } tag;
@@ -54,6 +59,14 @@ revision_enumerator
   std::deque<enumerator_item> items;
   std::multimap<revision_id, revision_id> graph;
   std::multimap<revision_id, revision_id> inverse_graph;
+  std::multimap<revision_id, hexenc<id> >  revision_certs;
+
+  void note_cert(revision_id const & rid,
+		 hexenc<id> const & cert_hash);
+  void get_revision_certs(revision_id const & rid,
+			  std::vector<hexenc<id> > & certs);
+  void get_revision_parents(revision_id const & rid,
+			    std::vector<revision_id> & parents);
 
   revision_enumerator(enumerator_callbacks & cb,
                       app_state & app,
@@ -63,11 +76,19 @@ revision_enumerator
                       app_state & app);
   void load_graphs();
   bool all_parents_enumerated(revision_id const & child);
-  void files_for_revision(revision_id const & r, 
-                          std::set<file_id> & full_files, 
+  void files_for_revision(revision_id const & r,
+                          std::set<file_id> & full_files,
                           std::set<std::pair<file_id,file_id> > & del_files);
   void step();
   bool done();
 };
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __ENUMERATOR_H__

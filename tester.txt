@@ -1,0 +1,348 @@
+A testsuite is a lua script which defines commonly used globals for the
+individual tests, and lists those tests in the "tests" table. Each test is a
+directory containing a lua script named "__driver__.lua", and optionally any
+number of data files. These data files can be copied to the scratch directory
+with "get(filename)".
+
+Each test is run in a scratch directory, named tester_dir/$TESTNAME relative to
+the directory in which the tester is run. If the test passes and the -d option
+is not given, this directory will be removed after the test finishes. The tester
+will leave a logfile named "tester.log" in tester_dir and in each scratch dir
+that isn't removed.
+
+tester should be called as
+	tester testsuite [-dlh] [num [...]] [num..num [...]] [regex [...]]
+	
+        -h         print a help message
+        -l         print test names only; don't run them
+        -d         don't clean the scratch directories
+        num        run a specific test
+        num..num   run tests in a range
+                   if num is negative, count back from the end
+        regex      run tests with matching names
+
+On startup, the testsuite file is run. It should set up any global vars that the
+tests need, and add them to the "tests" table, as 'table.insert(tests,
+"test-name")'. "test-name" is the name of the directory for this test relative
+to testdir, which is initialized to srcdir (where the testsuite file is).
+
+After this the internal run_tests function is called, which parses the
+command-line arguments and runs whichever tests have been asked for. It also
+resets most of the environment between tests.
+
+
+tests
+
+Global table, containing all tests. The testsuite should contain lines of
+   table.insert(tests, "test-name")
+.
+
+test.root
+
+The scratch directory.
+
+test.name
+
+The name of the test.
+
+test.wanted_fail
+
+Set when an xfailed command succeeds.
+
+test.partial_skip
+
+Set this if you want to note that part of a test is being skipped.
+
+test.log
+
+The logfile for this individual test.
+
+srcdir
+
+Set to the dir containing the testsuite.
+
+testdir
+
+The directory containing all test stuff. Initially set to srcdir. Where all
+testsuite-related files are in a subdir except for the testsuite itself, the
+testsuite should set this to that dir. For example, the monotone testsuite
+sets this to srcdir.."/tests" .
+
+debugging
+
+Set to true if the -d option was given.
+
+logfile
+
+The general log.
+
+failed_testlogs
+
+List of logfiles for failed tests, to be appended to the general log.
+
+files
+
+Table of files for built-in commands (grep, cat, sort, etc) to use for i/o.
+
+
+
+P(...)
+
+Print arguments (written to stdout and to the main logfile).
+
+L(...)
+
+Log arguments (written to the test logfile, which will be appended to the main
+logfile if this test fails).
+
+getsrcline()
+
+returns (test.name, sourceline), where sourceline is the line number of the
+oldest stack frame which is in the driver file for the current test
+
+locheader()
+
+Line getsrcline(), except that it returns a string suitable for prefixing log
+lines, as L(locheader(), message).
+
+err(what [, level])
+
+Cause the test to fail, by throwing an error. This is like error(), except
+that it records the getsrcline() of where the error was thrown.
+
+mtime(filename) [logged]
+
+Returns the file modification time.
+
+mkdir(filename) [logged]
+
+Create the specified directory.
+
+existsonpath(name) [logged]
+
+Returns true if "name" is on the path.
+
+numlines(filename) [logged]
+
+Count the lines in a file.
+
+open_or_err()
+
+Wrapper around io.open, that throws instead of returning an error code.
+
+fsize(filename)
+
+Return the size of the given file.
+
+readfile(filename) [logged]
+
+Return the contents of a file. The unlogged version is readfile_q.
+
+readstdfile(filename)
+
+Calls readfile(), taking filename as relative to the testsuite directory.
+
+writefile(filename [, dat]) [logged]
+
+If dat is given, set the file contents to dat. If dat is not given, only make
+sure that the file exists. The unlogged version is writefile_q.
+
+append(filename [, dat]) [logged]
+
+Append dat to the given file.
+
+copy(from, to) [logged]
+
+Copy a file or a directory tree. The unlogged version is unlogged_copy.
+
+rename(from, to) [logged]
+
+Like os.rename except that it removes the destination if it already exists
+(because os.rename on Windows will not replace an existing destination). The
+unlogged version is unlogged_rename.
+
+remove(filename) [logged]
+
+Remove a file or a directory tree. The unlogged version is unlogged_remove.
+
+getstd(name [, as])
+
+Copy a file or a directory tree named 'name' from the testsuite directory to
+the scratch directory, giving it the name 'as', or 'name' is as is not given.
+
+get(name [, as])
+
+Copy a file or a directory tree named 'name' from the test directory to
+the scratch directory, giving it the name 'as', or 'name' is as is not given.
+
+include(filename)
+
+Load and execute a file, named relative to the testsuite directory.
+
+trim(string)
+
+Return the string, with leading and trailing whitespace removed.
+
+execute(path, ...) [internal]
+
+Run an external program, and return the program's return code.
+
+runcmd(cmd, prefix, bgnd) [internal]
+
+Run cmd under i/o redirection. cmd is a table giving either a function and
+arguments, or an external program name and agruments.
+
+samefile(left, right)
+
+Return true if the given files have identical contents, or false otherwise.
+
+samelines(file, table)
+
+Split the file into lines, and check that each line matches the corresponding
+element of the table. This function doesn't care what the line endings are.
+
+greplines(file, table)
+
+Split the file into lines, and check that each line is matched by the regex
+given in the corresponding table element.
+
+grep(["-qv"], "what" [, "filename"])
+cat(...)
+tail(file, num)
+sort([filename])
+
+These functions each return a table, suitable for passing to pcall() or check().
+They are meant to be used in place of the shell utilities of the same names.
+
+log_file_contents(filename)
+
+Write the contents of the given file to the test log.
+
+pre_cmd() [internal]
+
+Set up the files used for i/o redirection of commands.
+
+post_cmd() [internal]
+
+Verify that a command gave the expected results, and throw an error if it
+did not.
+
+bg(torun, ret, stdout, stderr, stdin)
+
+Run a command in the background. The arguments are:
+	torun	list of strings, {"program", "arg1", "arg2" ,...}
+	ret	expected return code
+	std{out,err}
+		false	ignore output
+		true	save the output in a file named stdout or stderr
+		string	the string must match the output
+		{string} the named file must match the output
+		nil (not given)	the output must be empty
+	stdin
+		true	use existing "stdin" file
+		nil, false	empty input
+		string	contents of string are used as input
+		{string} contents of named file are used as input
+The returned object has two methods:
+	finish(timeout)
+		wait for the given timeout, then kill the program and check
+		the results. Returns true.
+	wait(timeout)
+		wait for the given timeout. If the program has ended, check
+		the results and return true. Otherwise, return false.
+
+runcheck() [internal]
+
+check(), minus some of the input validation
+
+indir(dir, cmd)
+
+cmd is a command table, as would be passed to check(). This wraps what it would
+do with a chdir() pair to run it in the given directory.
+
+check(first, ...)
+
+Run a command, and verify the results:
+	check(torun, ret, stdout, stderr, stdin)
+		Inputs are the same as to bg().
+	check(bool)
+		Throw an error if the argument is false.
+	check(number)
+		Check that the argument is zero.
+If the command fails, abort the test.
+
+skip_if(bool)
+
+If the argument is true, abort the test (throw true) and mark it as skipped.
+
+xfail(...)
+
+Equivalent to xfail_if(true, ...).
+
+xfail_if(chk, ...)
+
+Give the ... arguments to check(), and catch any errors. If chk is false just
+rethrow anything caught, so this wrapper is transparent. If chk is true, then
+either mark the test for unexpected success (if the command succeeded), or
+abort and mark it as an expected failure (throw false).
+
+log_error() [internal]
+
+Write a caught error to the test log.
+
+run_tests() [internal]
+
+Parse command line arguments, load the testsuite, and run specified tests.
+
+
+regex.search()
+globish.match()
+parse_basic_io()
+
+These functions are the same as in monotone.
+
+
+go_to_test_dir() [internal]
+set_redirect() [internal]
+clear_redirect() [internal]
+clean_test_dir() [internal]
+leave_test_dir() [internal]
+save_env() [internal]
+restore_env() [internal]
+
+Misc. infrastructure.
+
+get_source_dir()
+
+Return the directory the testsuite file was in.
+
+chdir()
+
+Go to a directory. You probably want to use indir() instead.
+
+exists()
+isdir()
+
+File status checks.
+
+get_ostype
+
+Return a string representing the OS. You probably care mostly about the
+first word.
+
+set_env()
+
+Set an environment variable.
+
+posix_umask
+
+Set the umask on posix systems, do nothing on Windows. If a test uses this, it
+should have a relevant skip_if.
+  
+initial_dir
+
+Global variable, set to the directory the test program was started in.
+
+
+
+

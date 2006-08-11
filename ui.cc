@@ -1,8 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // this file contains a couple utilities to deal with the user
 // interface. the global user_interface object 'ui' owns clog, so no
@@ -13,7 +16,8 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
-#include "transforms.hh"
+#include "charset.hh"
+#include "simplestring_xform.hh"
 #include "constants.hh"
 
 #include <iostream>
@@ -22,15 +26,28 @@
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 
-using namespace std;
+using std::clog;
+using std::cout;
+using std::endl;
+using std::ios_base;
+using std::locale;
+using std::make_pair;
+using std::map;
+using std::max;
+using std::ofstream;
+using std::string;
+using std::vector;
+
 using boost::lexical_cast;
+
 struct user_interface ui;
 
-ticker::ticker(string const & tickname, std::string const & s, size_t mod,
+ticker::ticker(string const & tickname, string const & s, size_t mod,
     bool kilocount) :
   ticks(0),
   mod(mod),
   total(0),
+  previous_total(0),
   kilocount(kilocount),
   use_total(false),
   keyname(tickname),
@@ -53,7 +70,7 @@ ticker::~ticker()
   ui.finish_ticking();
 }
 
-void 
+void
 ticker::operator++()
 {
   I(ui.tickers.find(keyname) != ui.tickers.end());
@@ -63,7 +80,7 @@ ticker::operator++()
     ui.write_ticks();
 }
 
-void 
+void
 ticker::operator+=(size_t t)
 {
   I(ui.tickers.find(keyname) != ui.tickers.end());
@@ -153,7 +170,9 @@ void tick_write_count::write_ticks()
     {
       ticker * tick = i->second;
 
-      if (tick->count_size == 0 && (tick->kilocount || tick->use_total))
+      if ((tick->count_size == 0 && tick->kilocount)
+          ||
+          (tick->use_total && tick->previous_total != tick->total))
         {
           if (!tick->kilocount && tick->use_total)
             {
@@ -164,6 +183,7 @@ void tick_write_count::write_ticks()
               // the goal.
               tick->set_count_size(display_width(utf8(compose_count(tick,
                                                                     tick->total))));
+              tick->previous_total = tick->total;
             }
           else
             {
@@ -187,7 +207,7 @@ void tick_write_count::write_ticks()
           tick->set_count_size(count_width);
         }
 
-      size_t max_width = std::max(title_width, tick->count_size);
+      size_t max_width = max(title_width, tick->count_size);
 
       string name;
       name.append(max_width - title_width, ' ');
@@ -203,7 +223,7 @@ void tick_write_count::write_ticks()
     }
 
   string tickline1;
-  bool write_tickline1 = !(ui.last_write_was_a_tick 
+  bool write_tickline1 = !(ui.last_write_was_a_tick
                            && (tick_widths == last_tick_widths));
   if (write_tickline1)
     {
@@ -233,7 +253,7 @@ void tick_write_count::write_ticks()
       tickline2 += " ";
       tickline2 += ui.tick_trailer;
     }
-  
+
   size_t curr_sz = display_width(utf8(tickline2));
   if (curr_sz < last_tick_len)
     tickline2.append(last_tick_len - curr_sz, ' ');
@@ -349,7 +369,7 @@ user_interface::user_interface() :
   clog.sync_with_stdio(false);
 #endif
   clog.unsetf(ios_base::unitbuf);
-  if (have_smart_terminal()) 
+  if (have_smart_terminal())
     set_tick_writer(new tick_write_count);
   else
     set_tick_writer(new tick_write_dot);
@@ -360,10 +380,10 @@ user_interface::~user_interface()
   delete t_writer;
 }
 
-void 
+void
 user_interface::finish_ticking()
 {
-  if (tickers.size() == 0 && 
+  if (tickers.size() == 0 &&
       last_write_was_a_tick)
     {
       tick_trailer = "";
@@ -372,13 +392,13 @@ user_interface::finish_ticking()
     }
 }
 
-void 
+void
 user_interface::set_tick_trailer(string const & t)
 {
   tick_trailer = t;
 }
 
-void 
+void
 user_interface::set_tick_writer(tick_writer * t)
 {
   if (t_writer != 0)
@@ -386,7 +406,7 @@ user_interface::set_tick_writer(tick_writer * t)
   t_writer = t;
 }
 
-void 
+void
 user_interface::write_ticks()
 {
   t_writer->write_ticks();
@@ -394,15 +414,19 @@ user_interface::write_ticks()
   some_tick_is_dirty = false;
 }
 
-void 
+void
 user_interface::warn(string const & warning)
 {
   if (issued_warnings.find(warning) == issued_warnings.end())
-    inform("warning: " + warning);
+    {
+      string message;
+      prefix_lines_with(_("warning: "), warning, message);
+      inform(message);
+    }
   issued_warnings.insert(warning);
 }
 
-void 
+void
 user_interface::fatal(string const & fatal)
 {
   inform(F("fatal: %s\n"
@@ -413,13 +437,13 @@ user_interface::fatal(string const & fatal)
 }
 
 void
-user_interface::set_prog_name(std::string const & name)
+user_interface::set_prog_name(string const & name)
 {
   prog_name = name;
   I(!prog_name.empty());
 }
 
-std::string
+string
 user_interface::output_prefix()
 {
   if (prog_name.empty()) {
@@ -428,18 +452,18 @@ user_interface::output_prefix()
   return prog_name + ": ";
 }
 
-static inline string 
+static inline string
 sanitize(string const & line)
 {
   // FIXME: you might want to adjust this if you're using a charset
-  // which has safe values in the sub-0x20 range. ASCII, UTF-8, 
+  // which has safe values in the sub-0x20 range. ASCII, UTF-8,
   // and most ISO8859-x sets do not.
   string tmp;
   tmp.reserve(line.size());
   for (size_t i = 0; i < line.size(); ++i)
     {
       if ((line[i] == '\n')
-          || (static_cast<unsigned char>(line[i]) >= static_cast<unsigned char>(0x20) 
+          || (static_cast<unsigned char>(line[i]) >= static_cast<unsigned char>(0x20)
               && line[i] != static_cast<char>(0x7F)))
         tmp += line[i];
       else
@@ -470,7 +494,7 @@ user_interface::redirect_log_to(system_path const & filename)
   clog.rdbuf(filestr.rdbuf());
 }
 
-void 
+void
 user_interface::inform(string const & line)
 {
   string prefixedLine;
@@ -509,3 +533,11 @@ get_user_locale()
     }
   return user_locale;
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
