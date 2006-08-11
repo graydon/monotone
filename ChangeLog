@@ -1,3 +1,7 @@
+2006-08-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: merge3 merger selection is horrible. Make it better.
+
 2006-08-10  Richard Levitte  <richard@levitte.org>
 
 	* cmd_ws_commit.cc (CMD(commit)):
