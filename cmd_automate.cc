@@ -302,7 +302,7 @@ AUTOMATE(stdio, "")
 
 CMD_PARAMS_FN(automate, N_("automation"),
               N_("automation interface"),
-              OPT_AUTOMATE_STDIO_SIZE)
+    option::none)
 {
   if (args.size() == 0)
     throw usage(name);

@@ -25,6 +25,17 @@ test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
 test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 
 AC_LANG([C])
+LIBS="-lboost_program_options${BOOST_SUFFIX} $LIBS"
+AC_MSG_CHECKING(for the libboost_program_options${BOOST_SUFFIX} library)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+  #include <boost/program_options.hpp>
+  using namespace boost::program_options;
+]],
+[[options_description od("foo"); od.add_options()("test", "a test option");]])],
+ [AC_MSG_RESULT([yes])],
+ [AC_MSG_FAILURE([libboost_program_options failure])])
+
+
 
 AC_C_CONST
 AC_C_INLINE
@@ -48,7 +59,6 @@ else
 fi
 
 # Checks for header files.
-
 AC_HEADER_STDC
 # Explicitly specifying AC_INCLUDES_DEFAULT gets autoconf not to do all
 # the tests twice.
@@ -57,16 +67,13 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h sys/file.h \
 		 [AC_INCLUDES_DEFAULT()])
 AC_HEADER_STDBOOL
 AX_CREATE_STDINT_H(mt-stdint.h)
-
 # gettext is nominally a library, but its tests don't work in C++ mode.
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 AM_ICONV
 AC_PROG_XGETTEXT_FLAG_OPTION
-
 # similarly, this calls ACX_PTHREAD, which expects C.
 BOOST_THREAD_STUBS
-
 AC_LANG([C++])
 
 # check for language features and compiler bugs

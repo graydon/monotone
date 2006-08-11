@@ -1,6 +1,9 @@
 #ifndef __CMD_HH__
 #define __CMD_HH__
 
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
+
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -19,20 +22,20 @@
 namespace commands
 {
   extern const std::string hidden_group;
-  const char * safe_gettext(const char * msgid);
-  struct no_opts {};
+  using boost::program_options::option_description;
+  using boost::shared_ptr;
+
   struct command_opts
   {
-    std::set<int> opts;
+    set< shared_ptr<option_description> > opts;
     command_opts() {}
-    command_opts & operator%(int o)
-    { opts.insert(o); return *this; }
-    command_opts & operator%(no_opts o)
+    command_opts & operator%(shared_ptr<option_description> p)
+    { opts.insert(p); return *this; }
+    command_opts & operator%(option::no_option)
     { return *this; }
     command_opts & operator%(command_opts const &o)
     { opts.insert(o.opts.begin(), o.opts.end()); return *this; }
   };
-  extern const no_opts OPT_NONE;
 
   struct command
   {
