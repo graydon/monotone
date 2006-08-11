@@ -2842,7 +2842,6 @@ database::put_roster(revision_id const & rev_id,
     }
 
   write_roster_and_marking(roster, marks, new_data);
-  calculate_ident(new_data, new_id);
 
   // First: find the "old" revision; if there are multiple old
   // revisions, we just pick the first. It probably doesn't matter for
@@ -2853,16 +2852,11 @@ database::put_roster(revision_id const & rev_id,
 
   transaction_guard guard(*this);
 
+  new_id = 
+
   execute(query("INSERT into revision_roster VALUES (?, ?)")
           % text(rev_id.inner()())
           % text(new_id.inner()()));
-
-  if (exists(new_id.inner(), data_table)
-      || delta_exists(new_id.inner(), delta_table))
-    {
-      guard.commit();
-      return;
-    }
 
   // Else we have a new roster the database hasn't seen yet; our task is to
   // add it, and deltify all the incoming edges (if they aren't already).
@@ -2965,8 +2959,9 @@ database::get_uncommon_ancestors(revision_id const & a,
                  inserter(b_uncommon_ancs, b_uncommon_ancs.begin()));
 }
 
-node_id
-database::next_node_id()
+
+u64
+database::next_id_from_table(string const & table)
 {
   transaction_guard guard(*this);
   results res;
@@ -2974,28 +2969,39 @@ database::next_node_id()
   // We implement this as a fixed db var.
 
   fetch(res, one_col, any_rows,
-        query("SELECT node FROM next_roster_node_number"));
+        query(string("SELECT node FROM ") + table));
 
-  node_id n;
+  u64 n;
   if (res.empty())
     {
       n = 1;
-      execute (query("INSERT INTO next_roster_node_number VALUES(?)")
+      execute (query(string("INSERT INTO ") + table + " VALUES(?)")
                % text(lexical_cast<string>(n)));
     }
   else
     {
       I(res.size() == 1);
-      n = lexical_cast<node_id>(res[0][0]);
+      n = lexical_cast<u64>(res[0][0]);
       ++n;
-      execute (query("UPDATE next_roster_node_number SET node = ?")
-               % text(lexical_cast<string>(n)));
+      execute(query(string("UPDATE ") + table + " SET node = ?")
+              % text(lexical_cast<string>(n)));
 
     }
   guard.commit();
   return n;
 }
 
+node_id
+database::next_node_id()
+{
+  return static_cast<node_id>(next_id_from_table("next_roster_node_number"));
+}
+
+roster_id
+database::next_roster_id()
+{
+  return static_cast<roster_id>(next_id_from_table("next_roster_number"));
+}
 
 void
 database::check_filename()
