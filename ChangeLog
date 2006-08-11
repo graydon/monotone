@@ -1,3 +1,7 @@
+2006-08-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: merge3 merger selection is horrible. Make it better.
+
 2006-08-08  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* Makefile.am: Fix run_tester_tests to run tester-testsuite.lua instead
