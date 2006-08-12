@@ -1528,7 +1528,7 @@ regenerate_rosters(app_state & app)
     {
       revision_t rev;
       app.db.get_revision(*i, rev);
-      app.db.put_roster_for(*i, rev);
+      app.db.put_roster_for_revision(*i, rev);
       ++done;
     }
 

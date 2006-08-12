@@ -651,7 +651,7 @@ database::migrate()
   bool need_regenerate_rosters;
   migrate_monotone_schema(__sql, __app, need_regenerate_rosters);
   if (need_regenerate_rosters)
-    regenerate_rosters();
+    regenerate_rosters(*__app);
 
   close();
 }
@@ -1843,8 +1843,9 @@ database::put_revision(revision_id const & new_id,
   guard.commit();
 }
 
-void put_roster_for_revision(revision_id const & new_id,
-                             revision_t const & rev)
+void
+database::put_roster_for_revision(revision_id const & new_id,
+                                  revision_t const & rev)
 {
   roster_t ros; MM(ros);
   marking_map mm; MM(mm);

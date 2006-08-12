@@ -208,7 +208,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
   calculate_id(tmp2, id);
 }
 
-typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *);
+typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *, bool &);
 
 struct
 migrator
@@ -1085,6 +1085,8 @@ migrate_rosters_integer_ids(sqlite3 * sql,
                             app_state * app,
                             bool & need_regenerate_rosters)
 {
+  int res;
+  
   res = logged_sqlite3_exec(sql, "DROP TABLE rosters", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
@@ -1116,6 +1118,8 @@ migrate_rosters_integer_ids(sqlite3 * sql,
     return false;
 
   need_regenerate_rosters = true;
+
+  return true;
 }
 
 
