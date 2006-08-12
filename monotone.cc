@@ -50,6 +50,7 @@ using std::ios_base;
 using boost::shared_ptr;
 namespace po = boost::program_options;
 
+// main option processing and exception handling code
 
 // options are split into two categories.  the first covers global options,
 // which globally affect program behaviour.  the second covers options
@@ -80,88 +81,67 @@ namespace po = boost::program_options;
 // will be dumped out.  if the fatal condition is only caught in the lower-
 // level handlers in main.cc, at least we'll get a friendly error message.
 
-namespace option
+
+struct
+utf8_argv
 {
-  using boost::program_options::value;
-  using boost::program_options::option_description;
-  using boost::program_options::options_description;
+  int argc;
+  char **argv;
 
-  options_description global_options;
-  options_description specific_options;
-
-  no_option none;
-long arglong = 0;
-
-    {"no-show-encloser", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("do not show the function containing each block of changes"), NULL},
-    {"no-show-c-function", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("another name for --no-show-encloser (for compatibility with GNU diff)"), NULL},
-    {"stdio", 0, POPT_ARG_NONE, NULL, OPT_STDIO, gettext_noop("serve netsync on stdio"), NULL},
-    {"no-transport-auth", 0, POPT_ARG_NONE, NULL, OPT_NO_TRANSPORT_AUTH, gettext_noop("disable transport authentication"), NULL},
-    {"automate-stdio-size", 's', POPT_ARG_LONG, &arglong, OPT_AUTOMATE_STDIO_SIZE, gettext_noop("block size in bytes for \"automate stdio\" output"), NULL},
-
-  po::value_semantic *
-  null_value()
+  explicit utf8_argv(int ac, char **av)
+    : argc(ac),
+      argv(static_cast<char **>(malloc(ac * sizeof(char *))))
   {
-    return new po::untyped_value(true);
+    I(argv != NULL);
+    for (int i = 0; i < argc; ++i)
+      {
+        external ext(av[i]);
+        utf8 utf;
+        system_to_utf8(ext, utf);
+        argv[i] = static_cast<char *>(malloc(utf().size() + 1));
+        I(argv[i] != NULL);
+        memcpy(argv[i], utf().data(), utf().size());
+        argv[i][utf().size()] = static_cast<char>(0);
+    }
   }
 
-  // the options below are also declared in options.hh for other users.  the
-  // GOPT and COPT defines are just to reduce duplication, maybe there is a
-  // cleaner way to do the same thing?
+  ~utf8_argv()
+  {
+    if (argv != NULL)
+      {
+        for (int i = 0; i < argc; ++i)
+          if (argv[i] != NULL)
+            free(argv[i]);
+        free(argv);
+      }
+  }
+};
 
-  // global options
-#define GOPT(NAME, OPT, TYPE, DESC) global NAME(new option_description(OPT, TYPE, DESC))
-  GOPT(debug, "debug", null_value(), gettext_noop("print debug log to stderr while running"));
-  GOPT(dump, "dump", value<string>(), gettext_noop("file to dump debugging log to, on failure"));
-  GOPT(log, "log", value<string>(), gettext_noop("file to write the log to"));
-  GOPT(quiet, "quiet", null_value(), gettext_noop("suppress verbose, informational and progress messages"));
-  GOPT(reallyquiet, "reallyquiet", null_value(), gettext_noop("suppress warning, verbose, informational and progress messages"));
-  GOPT(help, "help,h", null_value(), gettext_noop("display help message"));
-  GOPT(version, "version", null_value(), gettext_noop("print version number, then exit"));
-  GOPT(full_version, "full-version", null_value(), gettext_noop("print detailed version number, then exit"));
-  GOPT(argfile, "xargs,@", value<string>(), gettext_noop("insert command line arguments taken from the given file"));
-  GOPT(ticker, "ticker", value<string>(), gettext_noop("set ticker style (count|dot|none)"));
-  GOPT(nostd, "nostd", null_value(), gettext_noop("do not load standard lua hooks"));
-  GOPT(norc, "norc", null_value(), gettext_noop("do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"));
-  GOPT(rcfile, "rcfile", value<string>(), gettext_noop("load extra rc file"));
-  GOPT(key_name, "key,k", value<string>(), gettext_noop("set key for signatures"));
-  GOPT(db_name, "db,d", value<string>(), gettext_noop("set name of database"));
-  GOPT(root, "root", value<string>(), gettext_noop("limit search for workspace to specified root"));
-  GOPT(verbose, "verbose", null_value(), gettext_noop("verbose completion output"));
-  GOPT(key_dir, "keydir", value<string>(), gettext_noop("set location of key store"));
-  GOPT(conf_dir, "confdir", value<string>(), gettext_noop("set location of configuration directory"));
-#undef OPT
+// Wrapper class to ensure Botan is properly initialized and deinitialized.
+struct botan_library
+{
+  botan_library() { 
+    Botan::Init::initialize();
+    Botan::set_default_allocator("malloc");
+  }
+  ~botan_library() {
+    Botan::Init::deinitialize();
+  }
+};
 
-  // command-specific options
-#define COPT(NAME, OPT, TYPE, DESC) specific NAME(new option_description(OPT, TYPE, DESC))
-  COPT(author, "author", value<string>(), gettext_noop("override author for commit"));
-  COPT(bind, "bind", value<string>(), gettext_noop("address:port to listen on (default :4691)"));
-  COPT(branch_name, "branch,b", value<string>(), gettext_noop("select branch cert for operation"));
-  COPT(brief, "brief", null_value(), gettext_noop("print a brief version of the normal output"));
-  COPT(context_diff, "context", null_value(), gettext_noop("use context diff format"));
-  COPT(date, "date", value<string>(), gettext_noop("override date/time for commit"));
-  COPT(depth, "depth", value<long>(), gettext_noop("limit the number of levels of directories to descend"));
-  COPT(diffs, "diffs", null_value(), gettext_noop("print diffs along with logs"));
-  COPT(drop_attr, "drop-attr", value<string>(), gettext_noop("when rosterifying, drop attrs entries with the given key"));
-  COPT(exclude, "exclude", value<string>(), gettext_noop("leave out anything described by its argument"));
-  COPT(execute, "execute,e", null_value(), gettext_noop("perform the associated file operation"));
-  COPT(external_diff, "external", null_value(), gettext_noop("use external diff hook for generating diffs"));
-  COPT(external_diff_args, "diff-args", value<string>(), gettext_noop("argument to pass external diff hook"));
-  COPT(key_to_push, "key-to-push", value<string>(), gettext_noop("push the specified key even if it hasn't signed anything"));
-  COPT(last, "last", value<long>(), gettext_noop("limit log output to the last number of entries"));
-  COPT(message, "message,m", value<string>(), gettext_noop("set commit changelog message"));
-  COPT(missing, "missing", null_value(), gettext_noop("perform the operations for files missing from workspace"));
-  COPT(msgfile, "message-file", value<string>(), gettext_noop("set filename containing commit changelog message"));
-  COPT(next, "next", value<long>(), gettext_noop("limit log output to the next number of entries"));
-  COPT(no_files, "no-files", null_value(), gettext_noop("exclude files when printing logs"));
-  COPT(no_merges, "no-merges", null_value(), gettext_noop("exclude merges when printing logs"));
-  COPT(pidfile, "pid-file", value<string>(), gettext_noop("record process id of server"));
-  COPT(recursive, "recursive,R", null_value(), gettext_noop("also operate on the contents of any listed directories"));
-  COPT(revision, "revision,r", value<string>(), gettext_noop("select revision id for operation"));
-  COPT(set_default, "set-default", null_value(), gettext_noop("use the current arguments as the future default"));
-  COPT(unified_diff, "unified", null_value(), gettext_noop("use unified diff format"));
-  COPT(unknown, "unknown", null_value(), gettext_noop("perform the operations for unknown files from workspace"));
-#undef COPT
-}
+// Similarly, for the global ui object.  (We do not want to use global
+// con/destructors for this, as they execute outside the protection of
+// main.cc's signal handlers.)
+struct ui_library
+{
+  ui_library() {
+    ui.initialize();
+  }
+  ~ui_library() {
+    ui.deinitialize();
+  }
+};
+
 
 #if 0 // FIXME! need b::po equiv.
 // Read arguments from a file.  The special file '-' means stdin.
@@ -201,18 +181,78 @@ my_poptStuffArgFile(poptContext con, utf8 const & filename)
 }
 #endif
 
-// used to flag cases where the program should exit successfully after
-// process_all_options
-struct exit_after_options {};
+int
+cpp_main(int argc, char ** argv)
+{
+  int ret = 0;
+
+  // go-go gadget i18n
+  setlocale(LC_ALL, "");
+  bindtextdomain(PACKAGE, LOCALEDIR);
+  textdomain(PACKAGE);
+
+  // set up global ui object - must occur before anything that might try to
+  // issue a diagnostic
+  ui_library acquire_ui;
+
+  // we want to catch any early informative_failures due to charset
+  // conversion etc
+  try
+  {
+  // Set up the global sanity object.  No destructor is needed and
+  // therefore no wrapper object is needed either.
+  global_sanity.initialize(argc, argv, setlocale(LC_ALL, 0));
+
+  // Set up secure memory allocation etc
+  botan_library acquire_botan;
 
   // set up some marked strings, so even if our logbuf overflows, we'll get
   // this data in a crash.
   string cmdline_string;
-{
+  {
     ostringstream cmdline_ss;
+    for (int i = 0; i < argc; ++i)
+      {
+        if (i)
+          cmdline_ss << ", ";
+        cmdline_ss << "'" << argv[i] << "'";
+      }
+    cmdline_string = cmdline_ss.str();
+  }
+  MM(cmdline_string);
+  L(FL("command line: %s\n") % cmdline_string);
+
   string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
+  MM(locale_string);
+  L(FL("set locale: LC_ALL=%s\n") % locale_string);
+
   string full_version_string;
+  get_full_version(full_version_string);
+  MM(full_version_string);
+
+  // Set up secure memory allocation etc
+  Botan::Init::initialize();
+  Botan::set_default_allocator("malloc");
+
+  // decode all argv values into a UTF-8 array
+  save_initial_path();
+  utf8_argv uv(argc, argv);
+
+  // find base name of executable
+  string prog_path = fs::path(uv.argv[0]).leaf();
+  if (prog_path.rfind(".exe") == prog_path.size() - 4)
+    prog_path = prog_path.substr(0, prog_path.size() - 4);
+  utf8 prog_name(prog_path);
+
   // process main program options
+  bool requested_help = false;
+
+  try
+    {
+      app_state app;
+
+      app.set_prog_name(prog_name);
+
       // set up for parsing.  we add a hidden argument that collections all
       // positional arguments, which we process ourselves in a moment.
       po::options_description all_options;
@@ -235,7 +275,7 @@ struct exit_after_options {};
       string cmd;
       vector<string> positional_args;
       if (vm.count("all_positional_args"))
-    {
+        {
           positional_args = vm["all_positional_args"].as< vector<string> >();
           cmd = commands::complete_command(idx(positional_args, 0));
           positional_args.erase(positional_args.begin());
@@ -299,7 +339,7 @@ struct exit_after_options {};
 
       if (vm.count(option::dump()))
         {
-          global_sanity.filename = system_path(vm[option::dump()].as<string>());
+          global_sanity.filename = system_path(vm[option::dump()].as<string>()).as_external();
         }
 
       if (vm.count(option::log()))
@@ -349,14 +389,12 @@ struct exit_after_options {};
       if (vm.count(option::version()))
         {
           print_version();
-          global_sanity.clean_shutdown = true;
           return 0;
         }
 
       if (vm.count(option::full_version()))
         {
           print_full_version();
-          global_sanity.clean_shutdown = true;
           return 0;
         }
 
@@ -464,7 +502,12 @@ struct exit_after_options {};
         {
           app.set_diff_args(utf8(vm[option::external_diff_args()].as<string>()));
         }
-        case OPT_NO_SHOW_ENCLOSER:
+
+      if (vm.count(option::no_show_encloser()))
+        {
+          app.diff_show_encloser = false;
+        }
+
       if (vm.count(option::execute()))
         {
 
@@ -472,13 +515,6 @@ struct exit_after_options {};
         }
 
       if (vm.count(option::bind()))
-          app.bind_stdio = true;
-          break;
-
-        case OPT_NO_TRANSPORT_AUTH:
-          app.use_transport_auth = false;
-          break;
-
         {
           {
             string arg = vm[option::bind()].as<string>();
@@ -545,39 +581,38 @@ struct exit_after_options {};
       if (vm.count(option::recursive()))
         {
           app.set_recursive();
-          break;
-
+        }
       if (vm.count(option::help()))
-
-          requested_help = true;
-
-  if (!poptPeekArg(ctx))
-    // no command given
-  // poptPeekArg returned true, so we can call poptGetArg
-  cmd = commands::complete_command(poptGetArg(ctx));
-
-  // stop here if they asked for help
-  if (app.requested_help)
-    throw usage(cmd);     // cmd may be empty, and that's fine.
-  
-  // Make sure the local options used are really used by the
-  // given command.
-  set<int> command_options = commands::command_options(cmd);
-  for (set<int>::const_iterator i = used_local_options.begin();
-    N(command_options.find(*i) != command_options.end(),
-      F("%s %s doesn't use the option %s")
-      // main options processed, now invoke the
-
-  while(poptPeekArg(ctx))
-    args.push_back(utf8(string(poptGetArg(ctx))));
-}
-
-// Go through the popt structures and hide documentation that's not part of
-// the current command.
-          vector<utf8> args(positional_args.begin(), positional_args.end());
         {
-          o->argInfo |= POPT_ARGFLAG_DOC_HIDDEN;
-          L(FL("Added 'hidden' to option # %d") % o->argInfo);
+          requested_help = true;
+        }
+
+      // stop here if they asked for help
+      if (requested_help)
+        {
+          throw usage(cmd);     // cmd may be empty, and that's fine.
+        }
+
+      // at this point we allow a workspace (meaning search for it
+      // and if found read _MTN/options, but don't use the data quite
+      // yet, and read all the monotonercs).  Processing the data
+      // from _MTN/options happens later.
+      // Certain commands may subsequently require a workspace or fail
+      // if we didn't find one at this point.
+      app.allow_workspace();
+
+      // main options processed, now invoke the
+      // sub-command w/ remaining args
+      if (cmd.empty())
+        {
+          throw usage("");
+        }
+      else
+        {
+          vector<utf8> args(positional_args.begin(), positional_args.end());
+          return commands::process(app, cmd, args);
+        }
+    }
   catch (po::ambiguous_option const & e)
     {
       string msg = (F("%s:\n") % e.what()).str();
@@ -596,151 +631,27 @@ struct exit_after_options {};
       // the current command.
       set< shared_ptr<po::option_description> > cmd_options;
       cmd_options = commands::command_options(u.which);
+
       unsigned count = 0;
       po::options_description cmd_options_desc;
       set< shared_ptr<po::option_description> >::const_iterator it;
       for (it = cmd_options.begin(); it != cmd_options.end(); ++it, ++count)
         cmd_options_desc.add(*it);
-}
-
-// argv but every string is guaranteed to be converted to utf8.
-struct
-utf8_argv
-{
-  int argc;
-  char **argv;
-
-  explicit utf8_argv(int ac, char **av)
-    : argc(ac),
-      argv(static_cast<char **>(malloc(ac * sizeof(char *))))
-  {
-    I(argv != NULL);
-    for (int i = 0; i < argc; ++i)
-      {
-        external ext(av[i]);
-        utf8 utf;
-        system_to_utf8(ext, utf);
-        argv[i] = static_cast<char *>(malloc(utf().size() + 1));
-        I(argv[i] != NULL);
-        memcpy(argv[i], utf().data(), utf().size());
-        argv[i][utf().size()] = static_cast<char>(0);
-    }
-  }
-
-  ~utf8_argv()
-  {
-    if (argv != NULL)
-      {
-        for (int i = 0; i < argc; ++i)
-          if (argv[i] != NULL)
-            free(argv[i]);
-        free(argv);
-      }
-  }
-};
-
-// Wrapper class to ensure Botan is properly initialized and deinitialized.
-struct botan_library
-{
-  botan_library() { 
-    Botan::Init::initialize();
-    Botan::set_default_allocator("malloc");
-  }
-  ~botan_library() {
-    Botan::Init::deinitialize();
-  }
-};
-
-// Similarly, for the global ui object.  (We do not want to use global
-// con/destructors for this, as they execute outside the protection of
-// main.cc's signal handlers.)
-struct ui_library
-{
-  ui_library() {
-    ui.initialize();
-  }
-  ~ui_library() {
-    ui.deinitialize();
-  }
-};
-
-int
-cpp_main(int argc, char ** argv)
-{
-  // go-go gadget i18n
-  setlocale(LC_ALL, "");
-  bindtextdomain(PACKAGE, LOCALEDIR);
-  textdomain(PACKAGE);
-
-  // set up global ui object - must occur before anything that might try to
-  // issue a diagnostic
-  ui_library acquire_ui;
-
-  // we want to catch any early informative_failures due to charset
-  // conversion etc
-  try
-    {
-      // Set up the global sanity object.  No destructor is needed and
-      // therefore no wrapper object is needed either.
-      global_sanity.initialize(argc, argv, setlocale(LC_ALL, 0));
-      
-      // Set up secure memory allocation etc
-      botan_library acquire_botan;
-
-      // decode all argv values into a UTF-8 array
-      save_initial_path();
-      utf8_argv uv(argc, argv);
-
-      // find base name of executable
-
-      string prog_path = fs::path(uv.argv[0]).leaf();
-      if (prog_path.rfind(".exe") == prog_path.size() - 4)
-        prog_path = prog_path.substr(0, prog_path.size() - 4);
-      utf8 prog_name(prog_path);
-
-      app_state app;
-      app.set_prog_name(prog_name);
 
       cout << F("Usage: %s [OPTION...] command [ARG...]") % prog_name << "\n\n";
       cout << option::global_options << "\n";
-        ctx(poptGetContext(NULL, argc, (char const **) uv.argv, options, 0),
-            &my_poptFreeContext);
 
       if (count > 0)
-      // block below
-      try
         {
           cout << F("Options specific to '%s %s':") % prog_name % u.which << "\n\n";
           cout << cmd_options_desc << "\n";
-          vector<utf8> args;
-          process_all_options(ctx(), app, cmd, args);
-
-          // at this point we allow a workspace (meaning search for it
-          // and if found read _MTN/options, but don't use the data quite
-          // yet, and read all the monotonercs).  Processing the data
-          // from _MTN/options happens later.
-          // Certain commands may subsequently require a workspace or fail
-          // if we didn't find one at this point.
-
-          app.allow_workspace();
-
-          if (!app.found_workspace && global_sanity.filename.empty())
-            global_sanity.filename = (app.get_confdir() / "dump").as_external();
-
-          // now invoke the sub-command w/remaining args     
-          return commands::process(app, cmd, args);
         }
-      catch (usage & u)
-        {
-          hide_irrelevant_options(prog_name, u.which);
-          commands::explain_usage(u.which, cout);
-          return app.requested_help ? 0 : 2;
-        }
+
+      commands::explain_usage(u.which, cout);
+      return 2;
+
     }
-  catch (exit_after_options)
-    {
-      return 0;
-    }
+  }
   catch (informative_failure & inf)
     {
       ui.inform(inf.what());

@@ -324,8 +324,7 @@ std::string commands::cmd_automate::params()
   for (i = automation::automations->begin();
        i != automation::automations->end(); ++i)
     {
-      char const * const p = commands::safe_gettext(i->second->params.c_str());
-      out += i->second->name + " " + p;
+      out += i->second->name + " " + i->second->params;
       if (out[out.size()-1] != '\n')
         out += "\n";
     }

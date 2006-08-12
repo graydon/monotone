@@ -324,7 +324,7 @@ ALIAS(mv, rename)
   perform_pivot_root(new_root, put_old, app);
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."), 
+CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     option::depth % option::exclude % option::brief)
 {
   roster_t old_roster, new_roster, restricted_roster;
@@ -854,7 +854,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 ALIAS(ci, commit);
 
 
-CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), 
+CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
+    N_("setup a new workspace directory, default to current"), 
     option::branch_name)
 {
   if (args.size() > 1)

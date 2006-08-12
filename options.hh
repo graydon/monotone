@@ -20,7 +20,6 @@ namespace option
   using boost::shared_ptr;
 #define OPT_STDIO 49
 #define OPT_NO_TRANSPORT_AUTH 50
-#define OPT_NO_SHOW_ENCLOSER 51
 #define OPT_AUTOMATE_STDIO_SIZE 52
 
   extern options_description global_options;
@@ -94,6 +93,7 @@ namespace option
   extern specific next;
   extern specific no_files;
   extern specific no_merges;
+  extern specific no_show_encloser;
   extern specific pidfile;
   extern specific recursive;
   extern specific revision;

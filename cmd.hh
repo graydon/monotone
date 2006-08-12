@@ -27,7 +27,7 @@ namespace commands
 
   struct command_opts
   {
-    set< shared_ptr<option_description> > opts;
+    std::set< shared_ptr<option_description> > opts;
     command_opts() {}
     command_opts & operator%(shared_ptr<option_description> p)
     { opts.insert(p); return *this; }

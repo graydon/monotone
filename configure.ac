@@ -24,7 +24,7 @@ AC_PROG_RANLIB
 test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
 test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 
-AC_LANG([C])
+AC_LANG([C++])
 LIBS="-lboost_program_options${BOOST_SUFFIX} $LIBS"
 AC_MSG_CHECKING(for the libboost_program_options${BOOST_SUFFIX} library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
@@ -36,6 +36,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([libboost_program_options failure])])
 
 
+AC_LANG([C])
 
 AC_C_CONST
 AC_C_INLINE

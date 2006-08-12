@@ -543,7 +543,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     "revisions are given, use them as a starting point."),
     option::last % option::next % option::revision % option::brief
     % option::diffs % option::no_merges % option::no_files)
-    % OPT_NO_MERGES % OPT_NO_FILES)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");

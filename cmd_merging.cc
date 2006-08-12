@@ -686,8 +686,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
        "compared to its parent.\n"                                                                                  
        "\n"
        "If two revisions are given, applies the changes made to get from the\n"  
-       "first revision to the second."),                                                                            
-    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE)
+       "first revision to the second."),
+    option::revision % option::depth % option::exclude)
 {
   // Work out our arguments
   revision_id from_rid, to_rid;

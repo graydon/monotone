@@ -77,7 +77,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
-    OPT_CONTEXT_DIFF % OPT_UNIFIED_DIFF % OPT_NO_SHOW_ENCLOSER)
+    option::context_diff % option::unified_diff % option::no_show_encloser)
 {
   if (args.size() != 4)
     throw usage(name);

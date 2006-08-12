@@ -74,7 +74,8 @@ MOST_SOURCES =								\
          randomizer.cc randomizer.hh                                    \
          netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh	\
+         package_full_revision.c package_full_revision.h		\
+         options.cc options.hh						\
          i18n.h parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =									\
