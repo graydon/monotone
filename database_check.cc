@@ -536,8 +536,7 @@ static void
 report_rosters(map<database::roster_id, checked_roster> const & checked_rosters,
                  size_t & unreferenced_rosters,
                  size_t & incomplete_rosters,
-                 size_t & non_parseable_rosters,
-                 size_t & non_normalized_rosters)
+                 size_t & non_parseable_rosters)
 {
   for (map<database::roster_id, checked_roster>::const_iterator
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
@@ -568,13 +567,6 @@ report_rosters(map<database::roster_id, checked_roster> const & checked_rosters,
         {
           non_parseable_rosters++;
           P(F("roster %s is not parseable (perhaps with unnormalized paths?)")
-            % i->first);
-        }
-
-      if (roster.parseable && !roster.normalized)
-        {
-          non_normalized_rosters++;
-          P(F("roster %s is not in normalized form")
             % i->first);
         }
     }
@@ -795,7 +787,6 @@ check_db(app_state & app)
   size_t unreferenced_rosters = 0;
   size_t incomplete_rosters = 0;
   size_t non_parseable_rosters = 0;
-  size_t non_normalized_rosters = 0;
   size_t unreferenced_roster_links = 0;
 
   size_t missing_revisions = 0;
@@ -833,8 +824,7 @@ check_db(app_state & app)
   report_rosters(checked_rosters,
                  unreferenced_rosters,
                  incomplete_rosters,
-                 non_parseable_rosters,
-                 non_normalized_rosters);
+                 non_parseable_rosters);
 
   report_revisions(checked_revisions,
                    missing_revisions, incomplete_revisions,
@@ -867,8 +857,6 @@ check_db(app_state & app)
   if (non_parseable_rosters > 0)
     W(F("%d rosters not parseable (perhaps with invalid paths)")
       % non_parseable_rosters);
-  if (non_normalized_rosters > 0)
-    W(F("%d rosters not in normalized form") % non_normalized_rosters);
 
   if (missing_revisions > 0)
     W(F("%d missing revisions") % missing_revisions);
@@ -908,7 +896,7 @@ check_db(app_state & app)
 
   size_t total = missing_files + unreferenced_files +
     unreferenced_rosters + incomplete_rosters +
-    non_parseable_rosters + non_normalized_rosters +
+    non_parseable_rosters +
     missing_revisions + incomplete_revisions +
     non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children +
@@ -921,7 +909,7 @@ check_db(app_state & app)
   // serious errors; odd, but nothing will break.
   size_t serious = missing_files +
     incomplete_rosters + missing_rosters +
-    non_parseable_rosters + non_normalized_rosters +
+    non_parseable_rosters +
     missing_revisions + incomplete_revisions +
     non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children + manifest_mismatch +
