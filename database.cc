@@ -2860,7 +2860,7 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       get_roster_id_for_revision(old_rev, old_id);
-      if (exists(new_id.inner(), data_table))
+      if (exists(old_id.inner(), data_table))
         {
           get_roster_version(old_id, old_data);
           diff(new_data.inner(), old_data.inner(), reverse_delta);
