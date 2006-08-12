@@ -1393,7 +1393,11 @@ database::get_roster_version(roster_id id, roster_data & dat)
   roster_data begin;
   
   if (vcache.exists(curr))
-    I(vcache.fetch(curr, begin));
+    {
+      data tmp;
+      I(vcache.fetch(curr, tmp));
+      begin = tmp;
+    }
   else
     get_roster_base(curr, begin);
   
@@ -1425,7 +1429,7 @@ database::get_roster_version(roster_id id, roster_data & dat)
   appl->finish(tmp);
   dat = data(tmp);
   
-  vcache.insert(id_str, dat());
+  vcache.insert(id_str, dat.inner()());
 }
 
 
@@ -1560,13 +1564,13 @@ void
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
-  schedule_write("files", id.inner(), dat.inner());
+  schedule_write(pending_file, id.inner()(), dat.inner());
 }
 
 void
 database::put_file_version(file_id const & old_id,
                            file_id const & new_id,
-                           file_delta const & del,
+                           file_delta const & del)
 {
   file_data old_data, new_data;
   file_delta reverse_delta;
@@ -1579,13 +1583,13 @@ database::put_file_version(file_id const & old_id,
   }
   {
     string tmp;
-    invert_xdelta(old_data(), del(), tmp);
+    invert_xdelta(old_data.inner()(), del.inner()(), tmp);
     reverse_delta = delta(tmp);
     data old_tmp;
     hexenc<id> old_tmp_id;
-    patch(new_data, reverse_delta, old_tmp);
+    patch(new_data.inner(), reverse_delta.inner(), old_tmp);
     calculate_ident(old_tmp, old_tmp_id);
-    I(old_tmp_id == old_id);
+    I(file_id(old_tmp_id) == old_id);
   }
 
   transaction_guard guard(*this);
@@ -1593,13 +1597,13 @@ database::put_file_version(file_id const & old_id,
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
-      if (have_pending_write(pending_file, old_id))
-        cancel_pending_write(pending_file, old_id);
+      if (have_pending_write(pending_file, old_id.inner()()))
+        cancel_pending_write(pending_file, old_id.inner()());
       else
         drop(old_id.inner(), "files");
     }
   schedule_write(pending_file, new_id.inner()(), new_data.inner());
-  put_file_delta(old_id, new_id);
+  put_file_delta(old_id, new_id, reverse_delta);
   guard.commit();
 }
 
