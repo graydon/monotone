@@ -408,7 +408,7 @@ write_roster_and_marking(roster_t const & ros,
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         roster_data & dat);
+                         manifest_data & dat);
 
 
 void calculate_ident(roster_t const & ros,

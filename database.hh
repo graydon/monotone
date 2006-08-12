@@ -229,6 +229,7 @@ private:
   void open();
   void close();
 
+  u64 next_id_from_table(std::string const & table);
   roster_id next_roster_id();
 
 public:

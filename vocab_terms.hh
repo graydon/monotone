@@ -87,6 +87,7 @@ EXTERN template class     file< data >;
 EXTERN template class                   gzip<delta>;
 EXTERN template class           base64< gzip<delta> >;
 
+EXTERN template class roster< delta >;
 EXTERN template class manifest< delta >;
 EXTERN template class     file< delta >;
 

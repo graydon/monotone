@@ -241,6 +241,15 @@ calculate_ident(file_data const & dat,
 }
 
 void
+calculate_ident(manifest_data const & dat,
+                manifest_id & ident)
+{
+  hexenc<id> tmp;
+  calculate_ident(dat.inner(), tmp);
+  ident = tmp;
+}
+
+void
 calculate_ident(revision_data const & dat,
                 revision_id & ident)
 {

@@ -1756,7 +1756,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (exists(delta_entry_src(j).inner(), pending_file) &&
+            if (exists(delta_entry_src(j).inner()(), pending_file) &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -2806,21 +2806,16 @@ database::get_branches(vector<string> & names)
       }
 }
 
-void
-database::get_roster_id_for_revision(revision_id const & rev_id,
-                                     roster_id & ros_id)
+database::roster_id
+database::get_roster_id_for_revision(revision_id const & rev_id)
 {
-  if (rev_id.inner()().empty())
-    {
-      ros_id = roster_id();
-      return;
-    }
-
+  I(!null_id(rev_id));
+  
   results res;
   query q("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");
   fetch(res, one_col, any_rows, q % text(rev_id.inner()()));
   I(res.size() == 1);
-  ros_id = roster_id(res[0][0]);
+  return lexical_cast<roster_id>(res[0][0]);
 }
 
 void
@@ -2858,7 +2853,7 @@ database::get_roster(revision_id const & rev_id,
   roster_data dat;
   roster_id ident;
 
-  get_roster_id_for_revision(rev_id, ident);
+  ident = get_roster_id_for_revision(rev_id);
   get_roster_version(ident, dat);
   read_roster_and_marking(dat, roster, marks);
   sp = shared_ptr<pair<roster_t, marking_map> >
@@ -2915,7 +2910,9 @@ database::put_roster(revision_id const & rev_id,
       old_id = get_roster_id_for_revision(old_rev);
       if (exists(new_id_str, pending_roster))
         {
+          roster_data old_data;
           get_roster_version(old_id, old_data);
+          delta reverse_delta;
           diff(new_data.inner(), old_data.inner(), reverse_delta);
           string old_id_str = lexical_cast<string>(old_id);
           if (have_pending_write(pending_roster, old_id_str))
@@ -3036,7 +3033,7 @@ database::next_node_id()
   return static_cast<node_id>(next_id_from_table("next_roster_node_number"));
 }
 
-roster_id
+database::roster_id
 database::next_roster_id()
 {
   return static_cast<roster_id>(next_id_from_table("next_roster_number"));
