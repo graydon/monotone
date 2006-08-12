@@ -119,6 +119,7 @@ EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id
 EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,           roster<data> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,           manifest<data> const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data>   const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<data> > const &);
