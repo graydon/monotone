@@ -100,6 +100,7 @@ typedef   roster< data >     roster_data;
 typedef manifest< data >   manifest_data;
 typedef     file< data >       file_data;
 
+typedef   roster< delta >    roster_delta;
 typedef manifest< delta >  manifest_delta;
 typedef     file< delta >      file_delta;
 

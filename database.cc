@@ -80,7 +80,7 @@ namespace
     enum arg_type { text, blob, s64 };
     arg_type type;
     string data;
-    s64 integer;
+    ::s64 integer;
   };
 
   query_param
@@ -839,9 +839,9 @@ database::begin_transaction(bool exclusive)
 
 
 size_t
-database::size_pending_write(hexenc<id> const & id, data const & dat)
+database::size_pending_write(pending_where t, string const & id, data const & dat)
 {
-  return id().size() + dat().size();
+  return sizeof(t) + id.size() + dat().size();
 }
 
 bool
@@ -886,7 +886,7 @@ database::schedule_write(pending_where t,
 void
 database::flush_pending_writes()
 {
-  for (map<pair<pending_where, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+  for (map<pair<pending_where, string>, data>::const_iterator i = pending_writes.begin();
        i != pending_writes.end(); ++i)
     put(i->first.second, i->second, i->first.first);
   pending_writes.clear();
@@ -1014,11 +1014,12 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 void
 database::get_base_unchecked(hexenc<id> const & ident,
                              data & dat,
+                             pending_where t,
                              string const & table)
 {
-  if (have_pending_write(table, ident))
+  if (have_pending_write(t, ident()))
     {
-      load_pending_write(table, ident, dat);
+      load_pending_write(t, ident(), dat);
       return;
     }
 
@@ -1054,9 +1055,11 @@ void
 database::get_roster_base(string const & ident,
                           roster<data> & dat)
 {
-  if (have_pending_write("rosters", ident))
+  if (have_pending_write(pending_roster, ident))
     {
-      load_pending_write(table, ident, dat);
+      data tmp;
+      load_pending_write(pending_roster, ident, tmp);
+      dat = tmp;
       return;
     }
   results res;
@@ -1166,7 +1169,7 @@ database::put_roster_delta(roster_id ident,
   encode_gzip(del.inner(), del_packed);
 
   hexenc<id> checksum;
-  calculate_ident(data(del_packed.inner()()), checksum);
+  calculate_ident(data(del_packed()), checksum);
 
   query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?)");
   execute(q
@@ -1187,16 +1190,14 @@ struct datasz
 static LRUCache<string, data, datasz>
 vcache(constants::db_version_cache_sz);
 
-typedef vector< hexenc<id> > version_path;
-
 static void
 extend_path_if_not_cycle(string table_name,
-                         shared_ptr<version_path> p,
+                         shared_ptr<reconstruction_path> p,
                          hexenc<id> const & ext,
                          set< hexenc<id> > & seen_nodes,
-                         vector< shared_ptr<version_path> > & next_paths)
+                         vector< shared_ptr<reconstruction_path> > & next_paths)
 {
-  for (version_path::const_iterator i = p->begin(); i != p->end(); ++i)
+  for (reconstruction_path::const_iterator i = p->begin(); i != p->end(); ++i)
     {
       if ((*i)() == ext())
         throw oops("cycle in table '" + table_name + "', at node "
@@ -1326,14 +1327,14 @@ database::get_version(hexenc<id> const & ident,
   
   I(!selected_path->empty());
   
-  string curr = selected_path->back();
+  hexenc<id> curr = selected_path->back();
   selected_path->pop_back();
   data begin;
   
   if (vcache.exists(curr))
     I(vcache.fetch(curr, begin));
   else
-    get_unchecked(curr, begin, data_table);
+    get_base_unchecked(curr, begin, t, data_table);
   
   shared_ptr<delta_applicator> appl = new_piecewise_applicator();
   appl->begin(begin());
@@ -1341,7 +1342,7 @@ database::get_version(hexenc<id> const & ident,
   for (reconstruction_path::reverse_iterator i = selected_path->rbegin();
        i != selected_path->rend(); ++i)
     {
-      string const nxt = *i;
+      hexenc<id> const nxt = *i;
       
       if (!vcache.exists(curr))
         {

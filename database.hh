@@ -77,6 +77,10 @@ struct query;
 
 class database
 {
+public:
+  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
+
+private:
   system_path filename;
   std::string const schema;
   void check_schema();
@@ -92,7 +96,7 @@ class database
   // we don't actually have write support for manifests anymore --
   // pending_manifest is pure legacy support
   enum pending_where { pending_roster, pending_file, pending_manifest };
-  std::map<std::pair<pending_where, hexenc<id> >, data> pending_writes;
+  std::map<std::pair<pending_where, std::string>, data> pending_writes;
   size_t pending_writes_size;
 
   size_t size_pending_write(pending_where t, std::string const & id, data const & dat);
@@ -121,7 +125,7 @@ class database
 
   bool exists(std::string const & ident,
               pending_where t);
-  bool delta_exists(hexenc<id> const & ident,
+  bool delta_exists(std::string const & ident,
                     std::string const & table);
 
   unsigned long count(std::string const & table);
@@ -132,27 +136,40 @@ class database
 
   void get_ids(std::string const & table, std::set< hexenc<id> > & ids);
 
-  void get(hexenc<id> const & new_id,
-           data & dat,
-           std::string const & table);
-  void get_delta(hexenc<id> const & ident,
-                 hexenc<id> const & base,
-                 delta & del,
-                 std::string const & table);
+  void get_base_unchecked(hexenc<id> const & new_id,
+                          data & dat,
+                          pending_where t,
+                          std::string const & table);
+  void get_delta_unchecked(hexenc<id> const & ident,
+                           hexenc<id> const & base,
+                           delta & del,
+                           std::string const & table);
+  void get_roster_base(std::string const & ident, roster<data> & dat);
+  void get_roster_delta(std::string const & ident,
+                        std::string const & base,
+                        roster<delta> & del);
+  typedef std::vector< hexenc<id> > reconstruction_path;
+  void get_reconstruction_path(std::string const & ident,
+                               pending_where t,
+                               std::string const & data_table,
+                               std::string const & delta_table,
+                               reconstruction_path & path);
   void get_version(hexenc<id> const & ident,
                    data & dat,
                    std::string const & data_table,
                    std::string const & delta_table);
 
-  void put(hexenc<id> const & new_id,
+  void put(std::string const & new_id,
            data const & dat,
-           std::string const & table);
+           pending_where t);
   void drop(hexenc<id> const & base,
             std::string const & table);
-  void put_delta(hexenc<id> const & ident,
-                 hexenc<id> const & base,
-                 delta const & del,
-                 std::string const & table);
+  void put_file_delta(file_id const & ident,
+                      file_id const & base,
+                      file_delta const & del);
+  void put_roster_delta(roster_id ident,
+                        roster_id base,
+                        roster_delta const & del);
   void put_version(hexenc<id> const & old_id,
                    hexenc<id> const & new_id,
                    delta const & del,
@@ -211,6 +228,8 @@ class database
   void check_db_exists();
   void open();
   void close();
+
+  roster_id next_roster_id();
 
 public:
 
@@ -432,15 +451,11 @@ public:
 
   // internal implementation details of roster storage -- exposed here for
   // the use of database_check.cc
-  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
   bool roster_version_exists(roster_id ident);
   void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_roster_ids(std::set<roster_id> & ids);
   roster_id get_roster_id_for_revision(revision_id const & rev_id);
   void get_roster_version(roster_id ros_id, roster_data & dat);
-
-private:
-  roster_id next_roster_id();
 };
 
 // Transaction guards nest. Acquire one in any scope you'd like
