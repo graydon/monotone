@@ -80,7 +80,7 @@ CREATE TABLE roster_deltas
 CREATE TABLE revision_roster
 	(
 	rev_id primary key,     -- joins with revisions.id
-	roster_id not null      -- joins with either rosters.oid or roster_deltas.oid
+	roster_id not null      -- joins with either rosters.id or roster_deltas.id
 	);
 
 CREATE TABLE next_roster_node_number

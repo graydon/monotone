@@ -89,15 +89,17 @@ class database
   };
 
   std::map<std::string, statement> statement_cache;
-  enum pending_type { pending_roster, pending_file };
-  std::map<std::pair<pending_type, hexenc<id> >, data> pending_writes;
+  // we don't actually have write support for manifests anymore --
+  // pending_manifest is pure legacy support
+  enum pending_where { pending_roster, pending_file, pending_manifest };
+  std::map<std::pair<pending_where, hexenc<id> >, data> pending_writes;
   size_t pending_writes_size;
 
-  size_t size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat);
-  bool have_pending_write(std::string const & tab, hexenc<id> const & id);
-  void load_pending_write(std::string const & tab, hexenc<id> const & id, data & dat);
-  void cancel_pending_write(std::string const & tab, hexenc<id> const & id);
-  void schedule_write(std::string const & tab, hexenc<id> const & id, data const & dat);
+  size_t size_pending_write(pending_where t, std::string const & id, data const & dat);
+  bool have_pending_write(pending_where tab, std::string const & id);
+  void load_pending_write(pending_where tab, std::string const & id, data & dat);
+  void cancel_pending_write(pending_where tab, std::string const & id);
+  void schedule_write(pending_where tab, std::string const & id, data const & dat);
   void flush_pending_writes();
 
   app_state * __app;
@@ -117,8 +119,8 @@ class database
              int const want_rows,
              query const & q);
 
-  bool exists(hexenc<id> const & ident,
-              std::string const & table);
+  bool exists(std::string const & ident,
+              pending_where t);
   bool delta_exists(hexenc<id> const & ident,
                     std::string const & table);
 

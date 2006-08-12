@@ -839,26 +839,26 @@ database::begin_transaction(bool exclusive)
 
 
 size_t
-database::size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat)
+database::size_pending_write(hexenc<id> const & id, data const & dat)
 {
-  return tab.size() + id().size() + dat().size();
+  return id().size() + dat().size();
 }
 
 bool
-database::have_pending_write(pending_type t, hexenc<id> const & id)
+database::have_pending_write(pending_where t, string const & id)
 {
   return pending_writes.find(make_pair(t, id)) != pending_writes.end();
 }
 
 void
-database::load_pending_write(pending_type t, hexenc<id> const & id, data & dat)
+database::load_pending_write(pending_where t, string const & id, data & dat)
 {
   dat = safe_get(pending_writes, make_pair(t, id));
 }
 
 // precondition: have_pending_write(t, an_id) == true
 void
-database::cancel_pending_write(pending_where t, hexenc<id> const & an_id)
+database::cancel_pending_write(pending_where t, string const & an_id)
 {
   data const & dat = safe_get(pending_writes, make_pair(t, an_id));
   size_t cancel_size = size_pending_write(t, an_id, dat);
@@ -873,6 +873,7 @@ database::schedule_write(pending_where t,
                          string const & an_id,
                          data const & dat)
 {
+  I(t != pending_manifest);
   if (!have_pending_write(t, an_id))
     {
       safe_insert(pending_writes, make_pair(make_pair(t, an_id), dat));
@@ -885,7 +886,7 @@ database::schedule_write(pending_where t,
 void
 database::flush_pending_writes()
 {
-  for (map<pair<pending_type, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+  for (map<pair<pending_where, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
        i != pending_writes.end(); ++i)
     put(i->first.second, i->second, i->first.first);
   pending_writes.clear();
@@ -918,10 +919,24 @@ database::rollback_transaction()
 
 bool
 database::exists(string const & ident,
-                 string const & table)
+                 pending_where t)
 {
-  if (have_pending_write(table, ident))
+  if (have_pending_write(t, ident))
     return true;
+
+  string table;
+  switch (t)
+    {
+    case pending_file:
+      table = "files";
+      break;
+    case pending_roster:
+      table = "rosters";
+      break;
+    case pending_manifest:
+      table = "manifests";
+      break;
+    }
 
   results res;
   query q("SELECT id FROM " + table + " WHERE id = ?");
@@ -995,6 +1010,7 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
     }
 }
 
+// for files and legacy manifest support
 void
 database::get_base_unchecked(hexenc<id> const & ident,
                              data & dat,
@@ -1017,6 +1033,7 @@ database::get_base_unchecked(hexenc<id> const & ident,
   dat = rdata_unpacked;
 }
 
+// for files and legacy manifest support
 void
 database::get_delta_unchecked(hexenc<id> const & ident,
                               hexenc<id> const & base,
@@ -1113,6 +1130,10 @@ database::put(string const & ident,
         execute(q % text(ident) % text(checksum()) % blob(dat_packed()));
       }
       break;
+
+    case pending_manifest:
+      I(false);
+      break;
     }
 }
 
@@ -1135,6 +1156,26 @@ database::put_file_delta(file_id const & ident,
           % text(base.inner()())
           % blob(del_packed()));
 }
+
+void
+database::put_roster_delta(roster_id ident,
+                           roster_id base,
+                           roster_delta const & del)
+{
+  gzip<delta> del_packed;
+  encode_gzip(del.inner(), del_packed);
+
+  hexenc<id> checksum;
+  calculate_ident(data(del_packed.inner()()), checksum);
+
+  query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?)");
+  execute(q
+          % integer(ident)
+          % integer(base)
+          % text(checksum())
+          % blob(del_packed()));
+}
+
 
 // static ticker cache_hits("vcache hits", "h", 1);
 
@@ -1172,6 +1213,7 @@ extend_path_if_not_cycle(string table_name,
 
 void
 database::get_reconstruction_path(string const & ident,
+                                  pending_where t,
                                   string const & data_table,
                                   string const & delta_table,
                                   reconstruction_path & path)
@@ -1230,7 +1272,7 @@ database::get_reconstruction_path(string const & ident,
           shared_ptr<reconstruction_path> pth = *i;
           string tip = pth->back();
 
-          if (vcache.exists(tip) || exists(tip, data_table))
+          if (vcache.exists(tip) || exists(tip, t))
             {
               selected_path = pth;
               break;
@@ -1271,13 +1313,14 @@ database::get_reconstruction_path(string const & ident,
 void
 database::get_version(hexenc<id> const & ident,
                       data & dat,
+                      pending_where t,
                       string const & data_table,
                       string const & delta_table)
 {
   I(ident() != "");
 
   reconstruction_path selected_path;
-  get_reconstruction_path(ident(), data_table, delta_table,
+  get_reconstruction_path(ident(), t, data_table, delta_table,
                           selected_path);
   
   I(selected_path);
@@ -1403,20 +1446,24 @@ bool
 database::file_version_exists(file_id const & id)
 {
   return delta_exists(id.inner()(), "file_deltas")
-    || exists(id.inner()(), "files");
+    || exists(id.inner()(), pending_file);
 }
 
 bool
 database::roster_version_exists(roster_id id)
 {
   return delta_exists(lexical_cast<string>(id), "roster_deltas")
-    || exists(lexical_cast<string>(id), "rosters");
+    || exists(lexical_cast<string>(id), pending_roster);
 }
 
 bool
 database::revision_exists(revision_id const & id)
 {
-  return exists(id.inner(), "revisions");
+  results res;
+  query q("SELECT id FROM revisions WHERE id = ?");
+  fetch(res, one_col, any_rows, q % text(id.inner()()));
+  I(res.size() <= 1);
+  return res.size() == 1;
 }
 
 bool
@@ -1550,7 +1597,7 @@ database::put_file_version(file_id const & old_id,
   }
 
   transaction_guard guard(*this);
-  if (exists(old_id.inner()(), "files"))
+  if (exists(old_id.inner()(), pending_file))
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
@@ -1713,7 +1760,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (exists(delta_entry_src(j).inner(), "files") &&
+            if (exists(delta_entry_src(j).inner(), pending_file) &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -2870,7 +2917,7 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       old_id = get_roster_id_for_revision(old_rev);
-      if (exists(new_id_str, data_table))
+      if (exists(new_id_str, pending_roster))
         {
           get_roster_version(old_id, old_data);
           diff(new_data.inner(), old_data.inner(), reverse_delta);
@@ -2879,7 +2926,7 @@ database::put_roster(revision_id const & rev_id,
             cancel_pending_write(pending_roster, old_id_str);
           else
             drop(old_id_str, data_table);
-          put_delta(old_id_str, new_id_str, reverse_delta, delta_table);
+          put_roster_delta(old_id, new_id, reverse_delta);
         }
     }
   guard.commit();
