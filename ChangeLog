@@ -1,3 +1,12 @@
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix merge, and make unit_tests build.
+	* options.cc monotone.cc: Move option definitions to their own file.
+	* Makefile.am: Adjust accordingly.
+	* cmd.hh cmd_automate.cc cmd_diff_log.cc cmd_files.cc cmd_merging.cc:
+	* cmd_ws_commit.cc commands.cc configure.ac monotone.ac options.hh:
+	Fix enough merge errors that it can compile.
+
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
 	* xdelta.cc (spin): New utility function for tests.

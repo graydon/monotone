@@ -69,17 +69,15 @@ app_state::~app_state()
 }
 
 void
-app_state::set_is_explicit_option (int option_id)
+app_state::set_is_explicit_option (std::string o)
 {
-  explicit_option_map[option_id] = true;
+  explicit_options.insert(o);
 }
 
 bool
-app_state::is_explicit_option(int option_id) const
+app_state::is_explicit_option(std::string o) const
 {
-  map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
-  if (i == explicit_option_map.end()) return false;
-  return i->second;
+  return explicit_options.find(o) != explicit_options.end();
 }
 
 void
