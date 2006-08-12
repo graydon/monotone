@@ -148,14 +148,14 @@ private:
   void get_roster_delta(std::string const & ident,
                         std::string const & base,
                         roster<delta> & del);
-  typedef std::vector< hexenc<id> > reconstruction_path;
   void get_reconstruction_path(std::string const & ident,
                                pending_where t,
                                std::string const & data_table,
                                std::string const & delta_table,
-                               reconstruction_path & path);
+                               std::vector<std::string> & path);
   void get_version(hexenc<id> const & ident,
                    data & dat,
+                   pending_where t,
                    std::string const & data_table,
                    std::string const & delta_table);
 

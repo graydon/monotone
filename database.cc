@@ -1190,18 +1190,20 @@ struct datasz
 static LRUCache<string, data, datasz>
 vcache(constants::db_version_cache_sz);
 
+typedef vector<string> reconstruction_path;
+
 static void
 extend_path_if_not_cycle(string table_name,
                          shared_ptr<reconstruction_path> p,
-                         hexenc<id> const & ext,
-                         set< hexenc<id> > & seen_nodes,
+                         string const & ext,
+                         set<string> & seen_nodes,
                          vector< shared_ptr<reconstruction_path> > & next_paths)
 {
   for (reconstruction_path::const_iterator i = p->begin(); i != p->end(); ++i)
     {
-      if ((*i)() == ext())
+      if (*i == ext)
         throw oops("cycle in table '" + table_name + "', at node "
-                   + (*i)() + " <- " + ext());
+                   + *i + " <- " + ext);
     }
 
   if (seen_nodes.find(ext) == seen_nodes.end())
@@ -1295,13 +1297,13 @@ database::get_reconstruction_path(string const & ident,
                   shared_ptr<reconstruction_path> pthN
                     = shared_ptr<reconstruction_path>(new reconstruction_path(*pth));
                   extend_path_if_not_cycle(delta_table, pthN,
-                                           hexenc<id>(res[k][0]),
+                                           res[k][0],
                                            seen_nodes, next_paths);
                 }
 
               // And extend the base path we're examining.
               extend_path_if_not_cycle(delta_table, pth,
-                                       hexenc<id>(res[0][0]),
+                                       res[0][0],
                                        seen_nodes, next_paths);
             }
         }
@@ -1309,6 +1311,8 @@ database::get_reconstruction_path(string const & ident,
       I(selected_path || !next_paths.empty());
       live_paths = next_paths;
     }
+
+  path = *selected_path;
 }
 
 // used for files and legacy manifest migration
@@ -1325,30 +1329,30 @@ database::get_version(hexenc<id> const & ident,
   get_reconstruction_path(ident(), t, data_table, delta_table,
                           selected_path);
   
-  I(!selected_path->empty());
+  I(!selected_path.empty());
   
-  hexenc<id> curr = selected_path->back();
-  selected_path->pop_back();
+  hexenc<id> curr = selected_path.back();
+  selected_path.pop_back();
   data begin;
   
-  if (vcache.exists(curr))
-    I(vcache.fetch(curr, begin));
+  if (vcache.exists(curr()))
+    I(vcache.fetch(curr(), begin));
   else
     get_base_unchecked(curr, begin, t, data_table);
   
   shared_ptr<delta_applicator> appl = new_piecewise_applicator();
   appl->begin(begin());
   
-  for (reconstruction_path::reverse_iterator i = selected_path->rbegin();
-       i != selected_path->rend(); ++i)
+  for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
+       i != selected_path.rend(); ++i)
     {
       hexenc<id> const nxt = *i;
       
-      if (!vcache.exists(curr))
+      if (!vcache.exists(curr()))
         {
           string tmp;
           appl->finish(tmp);
-          vcache.insert(curr, tmp);
+          vcache.insert(curr(), tmp);
         }
       
       L(FL("following delta %s -> %s") % curr % nxt);
@@ -1382,22 +1386,22 @@ database::get_roster_version(roster_id id, roster_data & dat)
                           pending_roster, "rosters", "roster_deltas",
                           selected_path);
   
-  I(!selected_path->empty());
+  I(!selected_path.empty());
   
-  string curr = selected_path->back();
-  selected_path->pop_back();
-  data begin;
+  string curr = selected_path.back();
+  selected_path.pop_back();
+  roster_data begin;
   
   if (vcache.exists(curr))
     I(vcache.fetch(curr, begin));
   else
-    get_roster_base(curr, begin, data_table);
+    get_roster_base(curr, begin);
   
   shared_ptr<delta_applicator> appl = new_piecewise_applicator();
-  appl->begin(begin());
+  appl->begin(begin.inner()());
   
-  for (reconstruction_path::reverse_iterator i = selected_path->rbegin();
-       i != selected_path->rend(); ++i)
+  for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
+       i != selected_path.rend(); ++i)
     {
       string const nxt = *i;
       
@@ -1421,7 +1425,7 @@ database::get_roster_version(roster_id id, roster_data & dat)
   appl->finish(tmp);
   dat = data(tmp);
   
-  vcache.insert(id_str, dat);
+  vcache.insert(id_str, dat());
 }
 
 
@@ -1549,15 +1553,6 @@ database::get_manifest_version(manifest_id const & id,
 {
   data tmp;
   get_version(id.inner(), tmp, pending_manifest, "manifests", "manifest_deltas");
-  dat = tmp;
-}
-
-void
-database::get_roster_version(roster_id id,
-                             roster_data & dat)
-{
-  data tmp;
-  get_version(id.inner(), tmp, "rosters", "roster_deltas");
   dat = tmp;
 }
 
