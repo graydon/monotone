@@ -1178,6 +1178,8 @@ database::put_roster_delta(roster_id ident,
                            roster_id base,
                            roster_delta const & del)
 {
+  I(!del.inner()().empty());
+
   gzip<delta> del_packed;
   encode_gzip(del.inner(), del_packed);
 
@@ -1891,6 +1893,7 @@ database::delete_existing_rosters()
 {
   execute(query("DELETE FROM rosters"));
   execute(query("DELETE FROM roster_deltas"));
+  execute(query("DELETE FROM revision_roster"));
   execute(query("DELETE FROM next_roster_number"));
 }
 
@@ -2917,7 +2920,7 @@ database::put_roster(revision_id const & rev_id,
   // Our task is to add this roster, and deltify all the incoming edges (if
   // they aren't already).
 
-  roster_data new_data;
+  roster_data new_data; MM(new_data);
   write_roster_and_marking(roster, marks, new_data);
 
   schedule_write(pending_roster, new_id_str, new_data.inner());
@@ -2938,7 +2941,7 @@ database::put_roster(revision_id const & rev_id,
       string old_id_str = lexical_cast<string>(old_id);
       if (exists(old_id_str, pending_roster))
         {
-          roster_data old_data;
+          roster_data old_data; MM(old_data);
           get_roster_version(old_id, old_data);
           delta reverse_delta;
           diff(new_data.inner(), old_data.inner(), reverse_delta);

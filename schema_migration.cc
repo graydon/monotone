@@ -1093,6 +1093,9 @@ migrate_rosters_integer_ids(sqlite3 * sql,
   res = logged_sqlite3_exec(sql, "DROP TABLE roster_deltas", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
+  res = logged_sqlite3_exec(sql, "DROP TABLE revision_roster", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
 
   res = logged_sqlite3_exec(sql,
                             "CREATE TABLE rosters\n"
@@ -1113,6 +1116,16 @@ migrate_rosters_integer_ids(sqlite3 * sql,
                             "\tbase integer not null,  -- joins with either rosters.id or roster_deltas.id\n"
                             "\tdelta not null          -- rdiff to construct current from base\n"
                             ");",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE revision_roster\n"
+                            "\t(\n"
+                            "\trev_id primary key,        -- joins with revisions.id\n"
+                            "\troster_id integer not null -- joins with either rosters.id or roster_deltas.id\n"
+                            "\t);",
                             NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
