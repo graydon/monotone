@@ -648,7 +648,10 @@ database::migrate()
   check_db_exists();
   open();
 
-  migrate_monotone_schema(__sql, __app);
+  bool need_regenerate_rosters;
+  migrate_monotone_schema(__sql, __app, need_regenerate_rosters);
+  if (need_regenerate_rosters)
+    regenerate_rosters();
 
   close();
 }
@@ -1812,19 +1815,7 @@ database::put_revision(revision_id const & new_id,
 
   transaction_guard guard(*this);
 
-  // Phase 2: construct a new roster and sanity-check its manifest_id
-  // against the manifest_id of the revision you're writing.
-  roster_t ros;
-  marking_map mm;
-  {
-    manifest_id roster_manifest_id;
-    MM(roster_manifest_id);
-    make_roster_for_revision(rev, new_id, ros, mm, *__app);
-    calculate_ident(ros, roster_manifest_id);
-    I(rev.new_manifest == roster_manifest_id);
-  }
-
-  // Phase 3: Write the revision data
+  // Phase 2: Write the revision data (inside a transaction)
 
   gzip<data> d_packed;
   encode_gzip(d.inner(), d_packed);
@@ -1840,14 +1831,34 @@ database::put_revision(revision_id const & new_id,
               % text(new_id.inner()()));
     }
 
-  deltify_revision(new_id);
+  // Phase 3: Construct and write the roster (which also checks the manifest
+  // id as it goes)
 
-  // Phase 4: write the roster data and commit
-  put_roster(new_id, ros, mm);
+  put_roster_for_revision(new_id, rev);
+
+  // Phase 4: rewrite any files that need deltas added
+
+  deltify_revision(new_id);
 
   guard.commit();
 }
 
+void put_roster_for_revision(revision_id const & new_id,
+                             revision_t const & rev)
+{
+  roster_t ros; MM(ros);
+  marking_map mm; MM(mm);
+  // Construct, the roster, sanity-check the manifest id, and then write it
+  // to the db
+  {
+    manifest_id roster_manifest_id;
+    MM(roster_manifest_id);
+    make_roster_for_revision(rev, new_id, ros, mm, *__app);
+    calculate_ident(ros, roster_manifest_id);
+    I(rev.new_manifest == roster_manifest_id);
+  }
+  put_roster(new_id, ros, mm);
+}
 
 void
 database::put_revision(revision_id const & new_id,
@@ -1872,6 +1883,14 @@ database::delete_existing_manifests()
 {
   execute(query("DELETE FROM manifests"));
   execute(query("DELETE FROM manifest_deltas"));
+}
+
+void
+database::delete_existing_rosters()
+{
+  execute(query("DELETE FROM rosters"));
+  execute(query("DELETE FROM roster_deltas"));
+  execute(query("DELETE FROM next_roster_number"));
 }
 
 /// Deletes one revision from the local database.

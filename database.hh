@@ -311,14 +311,23 @@ public:
   void put_revision(revision_id const & new_id,
                     revision_data const & dat);
 
+  // for changesetify, rosterify
   void delete_existing_revs_and_certs();
 
   void delete_existing_manifests();
 
+  // for regenerate_rosters
+  void delete_existing_rosters();
+  void put_roster_for_revision(revision_id const & new_id,
+                               revision_t const & rev);
+
+  // for kill_rev_locally
   void delete_existing_rev_and_certs(revision_id const & rid);
 
+  // for kill_branch_certs_locally
   void delete_branch_named(cert_value const & branch);
 
+  // for kill_tag_locally
   void delete_tag_named(cert_value const & tag);
 
   // crypto key / cert operations
