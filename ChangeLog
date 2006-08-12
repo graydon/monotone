@@ -1,5 +1,16 @@
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
+	* xdelta.cc (spin): New utility function for tests.
+	(xdelta_simple_cases): New test.
+	(xdelta_random_simple_delta_test): Use spin to improve coverage.
+	(xdelta_random_piecewise_delta_test): New test.
+	(compute_delta): Actually work when target == destination.
+	(size_accumulating_delta_applicator, 
+	(measure_delta_target_size): Remove dead code.
+	I believe this file actually has complete unit test coverage now.
+	
+2006-08-12  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (put_roster): We only need one way to reconstruct a
 	given roster -- check whether the _old_ roster is stored in full
 	before doing deltification, rather than that the _new_ roster
