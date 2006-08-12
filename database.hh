@@ -162,7 +162,7 @@ private:
   void put(std::string const & new_id,
            data const & dat,
            pending_where t);
-  void drop(hexenc<id> const & base,
+  void drop(std::string const & base,
             std::string const & table);
   void put_file_delta(file_id const & ident,
                       file_id const & base,

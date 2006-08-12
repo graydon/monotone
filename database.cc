@@ -1434,11 +1434,11 @@ database::get_roster_version(roster_id id, roster_data & dat)
 
 
 void
-database::drop(hexenc<id> const & ident,
+database::drop(string const & ident,
                string const & table)
 {
   string drop = "DELETE FROM " + table + " WHERE id = ?";
-  execute(query(drop) % text(ident()));
+  execute(query(drop) % text(ident));
 }
 
 // ------------------------------------------------------------
@@ -1600,7 +1600,7 @@ database::put_file_version(file_id const & old_id,
       if (have_pending_write(pending_file, old_id.inner()()))
         cancel_pending_write(pending_file, old_id.inner()());
       else
-        drop(old_id.inner(), "files");
+        drop(old_id.inner()(), "files");
     }
   schedule_write(pending_file, new_id.inner()(), new_data.inner());
   put_file_delta(old_id, new_id, reverse_delta);
@@ -1766,8 +1766,8 @@ database::deltify_revision(revision_id const & rid)
                 delta delt;
                 diff(old_data.inner(), new_data.inner(), delt);
                 file_delta del(delt);
-                drop(delta_entry_dst(j).inner(), "files");
-                drop(delta_entry_dst(j).inner(), "file_deltas");
+                drop(delta_entry_dst(j).inner()(), "files");
+                drop(delta_entry_dst(j).inner()(), "file_deltas");
                 put_file_version(delta_entry_src(j), delta_entry_dst(j), del);
               }
           }
