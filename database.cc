@@ -2915,13 +2915,13 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       old_id = get_roster_id_for_revision(old_rev);
-      if (exists(new_id_str, pending_roster))
+      string old_id_str = lexical_cast<string>(old_id);
+      if (exists(old_id_str, pending_roster))
         {
           roster_data old_data;
           get_roster_version(old_id, old_data);
           delta reverse_delta;
           diff(new_data.inner(), old_data.inner(), reverse_delta);
-          string old_id_str = lexical_cast<string>(old_id);
           if (have_pending_write(pending_roster, old_id_str))
             cancel_pending_write(pending_roster, old_id_str);
           else
