@@ -225,9 +225,6 @@ template
 void dump(revision_id const & r, string &);
 
 template
-void dump(roster_id const & r, string &);
-
-template
 void dump(manifest_id const & r, string &);
 
 template

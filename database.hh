@@ -89,14 +89,17 @@ class database
   };
 
   std::map<std::string, statement> statement_cache;
-  std::map<std::pair<std::string, hexenc<id> >, data> pending_writes;
+  // we don't actually have write support for manifests anymore --
+  // pending_manifest is pure legacy support
+  enum pending_where { pending_roster, pending_file, pending_manifest };
+  std::map<std::pair<pending_where, hexenc<id> >, data> pending_writes;
   size_t pending_writes_size;
 
-  size_t size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat);
-  bool have_pending_write(std::string const & tab, hexenc<id> const & id);
-  void load_pending_write(std::string const & tab, hexenc<id> const & id, data & dat);
-  void cancel_pending_write(std::string const & tab, hexenc<id> const & id);
-  void schedule_write(std::string const & tab, hexenc<id> const & id, data const & dat);
+  size_t size_pending_write(pending_where t, std::string const & id, data const & dat);
+  bool have_pending_write(pending_where tab, std::string const & id);
+  void load_pending_write(pending_where tab, std::string const & id, data & dat);
+  void cancel_pending_write(pending_where tab, std::string const & id);
+  void schedule_write(pending_where tab, std::string const & id, data const & dat);
   void flush_pending_writes();
 
   app_state * __app;
@@ -116,8 +119,8 @@ class database
              int const want_rows,
              query const & q);
 
-  bool exists(hexenc<id> const & ident,
-              std::string const & table);
+  bool exists(std::string const & ident,
+              pending_where t);
   bool delta_exists(hexenc<id> const & ident,
                     std::string const & table);
 
@@ -155,9 +158,6 @@ class database
                    delta const & del,
                    std::string const & data_table,
                    std::string const & delta_table);
-  void remove_version(hexenc<id> const & target_id,
-                      std::string const & data_table,
-                      std::string const & delta_table);
 
   void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 
@@ -231,15 +231,12 @@ public:
   bool database_specified();
 
   bool file_version_exists(file_id const & ident);
-  bool roster_version_exists(roster_id const & ident);
   bool revision_exists(revision_id const & ident);
   bool roster_link_exists_for_revision(revision_id const & ident);
   bool roster_exists_for_revision(revision_id const & ident);
 
-  void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_file_ids(std::set<file_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
-  void get_roster_ids(std::set<roster_id> & ids) ;
 
 
   bool check_integrity();
@@ -399,8 +396,6 @@ public:
   void get_branches(std::vector<std::string> & names);
 
   // roster and node_id stuff
-  void get_roster_id_for_revision(revision_id const & rev_id,
-                                  roster_id & ros_id);
 
   void get_roster(revision_id const & rid,
                   roster_t & roster);
@@ -408,9 +403,6 @@ public:
   void get_roster(revision_id const & rid,
                   roster_t & roster,
                   marking_map & marks);
-
-  void get_roster_version(roster_id const & ros_id,
-                          roster_data & dat);
 
   void get_uncommon_ancestors(revision_id const & a,
                               revision_id const & b,
@@ -438,6 +430,17 @@ public:
 
   ~database();
 
+  // internal implementation details of roster storage -- exposed here for
+  // the use of database_check.cc
+  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
+  bool roster_version_exists(roster_id ident);
+  void get_roster_links(std::map<revision_id, roster_id> & links);
+  void get_roster_ids(std::set<roster_id> & ids);
+  roster_id get_roster_id_for_revision(revision_id const & rev_id);
+  void get_roster_version(roster_id ros_id, roster_data & dat);
+
+private:
+  roster_id next_roster_id();
 };
 
 // Transaction guards nest. Acquire one in any scope you'd like
