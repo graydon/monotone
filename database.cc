@@ -1211,6 +1211,7 @@ extend_path_if_not_cycle(string table_name,
     }
 }
 
+// used for files, rosters, and legacy manifest support
 void
 database::get_reconstruction_path(string const & ident,
                                   pending_where t,
@@ -1323,7 +1324,6 @@ database::get_version(hexenc<id> const & ident,
   get_reconstruction_path(ident(), t, data_table, delta_table,
                           selected_path);
   
-  I(selected_path);
   I(!selected_path->empty());
   
   string curr = selected_path->back();
@@ -1377,10 +1377,10 @@ database::get_roster_version(roster_id id, roster_data & dat)
   string id_str = lexical_cast<string>(id);
 
   reconstruction_path selected_path;
-  get_reconstruction_path(id_str, "rosters", "roster_deltas",
+  get_reconstruction_path(id_str,
+                          pending_roster, "rosters", "roster_deltas",
                           selected_path);
   
-  I(selected_path);
   I(!selected_path->empty());
   
   string curr = selected_path->back();
@@ -1390,7 +1390,7 @@ database::get_roster_version(roster_id id, roster_data & dat)
   if (vcache.exists(curr))
     I(vcache.fetch(curr, begin));
   else
-    get_unchecked(curr, begin, data_table);
+    get_roster_base(curr, begin, data_table);
   
   shared_ptr<delta_applicator> appl = new_piecewise_applicator();
   appl->begin(begin());
@@ -1398,7 +1398,7 @@ database::get_roster_version(roster_id id, roster_data & dat)
   for (reconstruction_path::reverse_iterator i = selected_path->rbegin();
        i != selected_path->rend(); ++i)
     {
-      hexenc<id> const nxt = *i;
+      string const nxt = *i;
       
       if (!vcache.exists(curr))
         {
@@ -1408,9 +1408,9 @@ database::get_roster_version(roster_id id, roster_data & dat)
         }
       
       L(FL("following delta %s -> %s") % curr % nxt);
-      delta del;
-      get_delta(nxt, curr, del, delta_table);
-      apply_delta (appl, del());
+      roster_delta del;
+      get_roster_delta(nxt, curr, del);
+      apply_delta(appl, del.inner()());
       
       appl->next();
       curr = nxt;
@@ -1420,11 +1420,7 @@ database::get_roster_version(roster_id id, roster_data & dat)
   appl->finish(tmp);
   dat = data(tmp);
   
-  hexenc<id> final;
-  calculate_ident(dat, final);
-  I(final == ident);
-
-  vcache.insert(ident(), dat);
+  vcache.insert(id_str, dat);
 }
 
 
@@ -1542,7 +1538,7 @@ database::get_file_version(file_id const & id,
                            file_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, "files", "file_deltas");
+  get_version(id.inner(), tmp, pending_file, "files", "file_deltas");
   dat = tmp;
 }
 
@@ -1551,7 +1547,7 @@ database::get_manifest_version(manifest_id const & id,
                                manifest_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, "manifests", "manifest_deltas");
+  get_version(id.inner(), tmp, pending_manifest, "manifests", "manifest_deltas");
   dat = tmp;
 }
 
