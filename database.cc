@@ -739,7 +739,17 @@ database::fetch(results & res,
       // profiling finds this logging to be quite expensive
       if (global_sanity.debug)
         {
-          string log = query.args[param-1].data;
+          string log;
+          switch (query.args[param-1].type)
+            {
+            case query_param::text:
+            case query_param::blob:
+              log = query.args[param-1].data;
+              break;
+            case query_param::s64:
+              log = lexical_cast<string>(query.args[param-1].integer);
+              break;
+            }
 
           if (log.size() > constants::log_line_sz)
             log = log.substr(0, constants::log_line_sz);
@@ -2876,9 +2886,6 @@ database::put_roster(revision_id const & rev_id,
       rcache.insert(rev_id, sp);
     }
 
-  string data_table = "rosters";
-  string delta_table = "roster_deltas";
-
   transaction_guard guard(*this);
 
   roster_id new_id = next_roster_id();
@@ -2918,7 +2925,7 @@ database::put_roster(revision_id const & rev_id,
           if (have_pending_write(pending_roster, old_id_str))
             cancel_pending_write(pending_roster, old_id_str);
           else
-            drop(old_id_str, data_table);
+            drop(old_id_str, "rosters");
           put_roster_delta(old_id, new_id, reverse_delta);
         }
     }
