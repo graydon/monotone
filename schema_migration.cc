@@ -208,13 +208,14 @@ calculate_schema_id(sqlite3 *sql, string & id)
   calculate_id(tmp2, id);
 }
 
-typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *);
+typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *, bool &);
 
 struct
 migrator
 {
   vector< pair<string,migrator_cb> > migration_events;
   app_state * __app;
+  bool need_regenerate_rosters;
 
   void set_app(app_state *app)
   {
@@ -239,6 +240,17 @@ migrator
 
 
     P(F("calculating necessary migration steps"));
+
+    // the contract for this boolean is: if it is true at the end of the
+    // migration chain, then we call regenerate_rosters() at the end.  the
+    // other option is to have individual migrators call regenerate_rosters
+    // directly as needed; but this cannot work, because all code called by
+    // migrators must remain unchanged as monotone evolves, and the roster
+    // regenerator most certainly will not (that being the point, after
+    // all).  In particular, the modern regenerate_rosters may want to write
+    // to database tables that don't exist in any particular non-modern
+    // database schema.
+    need_regenerate_rosters = false;
 
     bool migrating = false;
     for (vector< pair<string, migrator_cb> >::const_iterator i = migration_events.begin();
@@ -272,7 +284,7 @@ migrator
               }
 
             // do this migration step
-            else if (! i->second(sql, &errmsg, __app))
+            else if (! i->second(sql, &errmsg, __app, need_regenerate_rosters))
               {
                 logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
                 E(false, F("migration step failed: %s")
@@ -355,7 +367,8 @@ static bool move_table(sqlite3 *sql, char **errmsg,
 static bool
 migrate_client_merge_url_and_group(sqlite3 * sql,
                                    char ** errmsg,
-                                   app_state *)
+                                   app_state *,
+                                   bool & need_regenerate_rosters)
 {
 
   // migrate the posting_queue table
@@ -499,7 +512,8 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
 static bool
 migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
                                            char ** errmsg,
-                                           app_state *)
+                                           app_state *,
+                                           bool & need_regenerate_rosters)
 {
 
   // add the column to manifest_certs
@@ -663,7 +677,8 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
 static bool
 migrate_client_to_revisions(sqlite3 * sql,
                             char ** errmsg,
-                            app_state *)
+                            app_state *,
+                            bool & need_regenerate_rosters)
 {
   int res;
 
@@ -745,7 +760,8 @@ migrate_client_to_revisions(sqlite3 * sql,
 static bool
 migrate_client_to_epochs(sqlite3 * sql,
                          char ** errmsg,
-                         app_state *)
+                         app_state *,
+                         bool & need_regenerate_rosters)
 {
   int res;
 
@@ -770,7 +786,8 @@ migrate_client_to_epochs(sqlite3 * sql,
 static bool
 migrate_client_to_vars(sqlite3 * sql,
                        char ** errmsg,
-                       app_state *)
+                       app_state *,
+                       bool & need_regenerate_rosters)
 {
   int res;
 
@@ -791,7 +808,8 @@ migrate_client_to_vars(sqlite3 * sql,
 static bool
 migrate_client_to_add_indexes(sqlite3 * sql,
                               char ** errmsg,
-                              app_state *)
+                              app_state *,
+                              bool & need_regenerate_rosters)
 {
   int res;
 
@@ -831,7 +849,8 @@ extract_key(void *ptr, int ncols, char **values, char **names)
 static bool
 migrate_client_to_external_privkeys(sqlite3 * sql,
                                     char ** errmsg,
-                                    app_state *app)
+                                    app_state *app,
+                                    bool & need_regenerate_rosters)
 {
   int res;
   map<string, string> pub, priv;
@@ -881,7 +900,8 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
 static bool
 migrate_client_to_add_rosters(sqlite3 * sql,
                               char ** errmsg,
-                              app_state *)
+                              app_state *,
+                              bool & need_regenerate_rosters)
 {
   int res;
 
@@ -946,7 +966,8 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 static bool
 migrate_files_BLOB(sqlite3 * sql,
                                     char ** errmsg,
-                                    app_state *app)
+                                    app_state *app,
+                   bool & need_regenerate_rosters)
 {
   int res;
   I(sqlite3_create_function(sql, "unbase64", -1,
@@ -1058,8 +1079,52 @@ migrate_files_BLOB(sqlite3 * sql,
   return true;
 }
 
+static bool
+migrate_rosters_integer_ids(sqlite3 * sql,
+                            char ** errmsg,
+                            app_state * app,
+                            bool & need_regenerate_rosters)
+{
+  int res;
+  
+  res = logged_sqlite3_exec(sql, "DROP TABLE rosters", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  res = logged_sqlite3_exec(sql, "DROP TABLE roster_deltas", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE rosters\n"
+                            "\t(\n"
+                            "\tid integer primary key,\n"
+                            "\tchecksum not null,      -- checksum of 'data', to protect against disk corruption\n"
+                            "\tdata not null           -- compressed, encoded contents of the roster\n"
+                            "\t);",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE roster_deltas\n"
+                            "\t(\n"
+                            "\tid integer primary key,\n"
+                            "\tchecksum not null,      -- checksum of 'delta', to protect against disk corruption\n"
+                            "\tbase integer not null,  -- joins with either rosters.id or roster_deltas.id\n"
+                            "\tdelta not null          -- rdiff to construct current from base\n"
+                            ");",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+
+  need_regenerate_rosters = true;
+
+  return true;
+}
+
+
 void
-migrate_monotone_schema(sqlite3 *sql, app_state *app)
+migrate_monotone_schema(sqlite3 *sql, app_state *app, bool & need_regenerate_rosters)
 {
 
   migrator m;
@@ -1092,11 +1157,16 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   m.add("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
         &migrate_files_BLOB);
 
+  m.add("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
+        &migrate_rosters_integer_ids);
+
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df");
+  m.migrate(sql, "8753939783550785d86a74ccbda1a9347395588c");
+
+  need_regenerate_rosters = m.need_regenerate_rosters;
 }
 
 // Local Variables:

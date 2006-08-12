@@ -2654,7 +2654,7 @@ read_roster_and_marking(roster_data const & dat,
 static void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         roster_data & dat,
+                         data & dat,
                          bool print_local_parts)
 {
   if (print_local_parts)
@@ -2663,7 +2663,7 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane(true);
   basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = roster_data(pr.buf);
+  dat = pr.buf;
 }
 
 
@@ -2672,29 +2672,31 @@ write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
                          roster_data & dat)
 {
-  write_roster_and_marking(ros, mm, dat, true);
+  data tmp;
+  write_roster_and_marking(ros, mm, tmp, true);
+  dat = tmp;
 }
 
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         roster_data & dat)
+                         manifest_data & dat)
 {
+  data tmp;
   marking_map mm;
-  write_roster_and_marking(ros, mm, dat, false);
+  write_roster_and_marking(ros, mm, tmp, false);
+  dat = tmp;
 }
 
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident)
 {
-  roster_data tmp;
-  roster_id tid;
+  manifest_data tmp;
   if (!ros.all_nodes().empty())
     {
       write_manifest_of_roster(ros, tmp);
-      calculate_ident(tmp, tid);
+      calculate_ident(tmp, ident);
     }
-  ident = tid.inner();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -2864,10 +2866,10 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   // will have new ids assigned.
   // But they _will_ have the same manifests, assuming things are working
   // correctly.
-  roster_data a_dat; MM(a_dat);
-  roster_data a2_dat; MM(a2_dat);
-  roster_data b_dat; MM(b_dat);
-  roster_data b2_dat; MM(b2_dat);
+  manifest_data a_dat; MM(a_dat);
+  manifest_data a2_dat; MM(a2_dat);
+  manifest_data b_dat; MM(b_dat);
+  manifest_data b2_dat; MM(b2_dat);
   if (a.has_root())
     write_manifest_of_roster(a, a_dat);
   if (a2.has_root())
@@ -4460,10 +4462,10 @@ write_roster_test()
 
   {
     // manifest first
-    roster_data mdat; MM(mdat);
+    manifest_data mdat; MM(mdat);
     write_manifest_of_roster(r, mdat);
 
-    roster_data
+    manifest_data
       expected(string("format_version \"1\"\n"
                       "\n"
                       "dir \"\"\n"

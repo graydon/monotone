@@ -24,7 +24,7 @@ struct sqlite3;
 class app_state;
 
 void calculate_schema_id(sqlite3 *sql, std::string & id);
-void migrate_monotone_schema(sqlite3 *sql, app_state *app);
+void migrate_monotone_schema(sqlite3 *sql, app_state *app, bool & need_regenerate_rosters);
 
 // Local Variables:
 // mode: C++

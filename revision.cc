@@ -1505,6 +1505,36 @@ build_changesets_from_manifest_ancestry(app_state & app)
   graph.rebuild_ancestry();
 }
 
+void
+regenerate_rosters(app_state & app)
+{
+  P(F("regenerating cached rosters"));
+
+  transaction_guard guard(app.db);
+
+  app.db.delete_existing_rosters();
+
+  std::set<revision_id> ids;
+  app.db.get_revision_ids(ids);
+  P(F("calculating revisions to regenerate"));
+  std::vector<revision_id> sorted_ids;
+  toposort(ids, sorted_ids, app);
+
+  ticker done(_("regenerated"), "r");
+  done.set_total(sorted_ids.size());
+
+  for (std::vector<revision_id>::const_iterator i = sorted_ids.begin();
+       i != sorted_ids.end(); ++i)
+    {
+      revision_t rev;
+      app.db.get_revision(*i, rev);
+      app.db.put_roster_for_revision(*i, rev);
+      ++done;
+    }
+
+  guard.commit();
+}
+
 // i/o stuff
 
 namespace

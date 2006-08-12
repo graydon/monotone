@@ -77,9 +77,10 @@ namespace
 {
   struct query_param
   {
-    enum arg_type { text, blob };
+    enum arg_type { text, blob, s64 };
     arg_type type;
     string data;
+    ::s64 integer;
   };
 
   query_param
@@ -88,6 +89,7 @@ namespace
     query_param q = {
       query_param::text,
       txt,
+      0,
     };
     return q;
   }
@@ -98,10 +100,22 @@ namespace
     query_param q = {
       query_param::blob,
       blb,
+      0,
     };
     return q;
   }
 
+  query_param
+  integer(s64 n)
+  {
+    query_param q = {
+      query_param::s64,
+      "",
+      n,
+    };
+    return q;
+  }
+  
   // track all open databases for close_all_databases() handler
   set<sqlite3*> sql_contexts;
 }
@@ -132,7 +146,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df"),
+  schema("8753939783550785d86a74ccbda1a9347395588c"),
   pending_writes_size(0),
   __sql(NULL),
   transaction_level(0)
@@ -596,8 +610,8 @@ database::info(ostream & out)
     % count("revision_certs")
     % num_nodes
     // bytes
-    % SPACE_USAGE("rosters", "length(id) + length(data)")
-    % SPACE_USAGE("roster_deltas", "length(id) + length(base) + length(delta)")
+    % SPACE_USAGE("rosters", "length(id) + length(checksum) + length(data)")
+    % SPACE_USAGE("roster_deltas", "length(id) + length(checksum) + length(base) + length(delta)")
     % SPACE_USAGE("files", "length(id) + length(data)")
     % SPACE_USAGE("file_deltas", "length(id) + length(base) + length(delta)")
     % SPACE_USAGE("revisions", "length(id) + length(data)")
@@ -634,7 +648,10 @@ database::migrate()
   check_db_exists();
   open();
 
-  migrate_monotone_schema(__sql, __app);
+  bool need_regenerate_rosters;
+  migrate_monotone_schema(__sql, __app, need_regenerate_rosters);
+  if (need_regenerate_rosters)
+    regenerate_rosters(*__app);
 
   close();
 }
@@ -725,7 +742,17 @@ database::fetch(results & res,
       // profiling finds this logging to be quite expensive
       if (global_sanity.debug)
         {
-          string log = query.args[param-1].data;
+          string log;
+          switch (query.args[param-1].type)
+            {
+            case query_param::text:
+            case query_param::blob:
+              log = query.args[param-1].data;
+              break;
+            case query_param::s64:
+              log = lexical_cast<string>(query.args[param-1].integer);
+              break;
+            }
 
           if (log.size() > constants::log_line_sz)
             log = log.substr(0, constants::log_line_sz);
@@ -746,6 +773,12 @@ database::fetch(results & res,
             sqlite3_bind_blob(i->second.stmt(), param,
                               data.data(), data.size(),
                               SQLITE_STATIC);
+          }
+          break;
+        case query_param::s64:
+          {
+            sqlite3_bind_int64(i->second.stmt(), param,
+                               idx(query.args, param - 1).integer);
           }
           break;
         default:
@@ -819,44 +852,45 @@ database::begin_transaction(bool exclusive)
 
 
 size_t
-database::size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat)
+database::size_pending_write(pending_where t, string const & id, data const & dat)
 {
-  return tab.size() + id().size() + dat().size();
+  return sizeof(t) + id.size() + dat().size();
 }
 
 bool
-database::have_pending_write(string const & tab, hexenc<id> const & id)
+database::have_pending_write(pending_where t, string const & id)
 {
-  return pending_writes.find(make_pair(tab, id)) != pending_writes.end();
+  return pending_writes.find(make_pair(t, id)) != pending_writes.end();
 }
 
 void
-database::load_pending_write(string const & tab, hexenc<id> const & id, data & dat)
+database::load_pending_write(pending_where t, string const & id, data & dat)
 {
-  dat = safe_get(pending_writes, make_pair(tab, id));
+  dat = safe_get(pending_writes, make_pair(t, id));
 }
 
-// precondition: have_pending_write(tab, an_id) == true
+// precondition: have_pending_write(t, an_id) == true
 void
-database::cancel_pending_write(string const & tab, hexenc<id> const & an_id)
+database::cancel_pending_write(pending_where t, string const & an_id)
 {
-  data const & dat = safe_get(pending_writes, make_pair(tab, an_id));
-  size_t cancel_size = size_pending_write(tab, an_id, dat);
+  data const & dat = safe_get(pending_writes, make_pair(t, an_id));
+  size_t cancel_size = size_pending_write(t, an_id, dat);
   I(cancel_size < pending_writes_size);
   pending_writes_size -= cancel_size;
     
-  safe_erase(pending_writes, make_pair(tab, an_id));
+  safe_erase(pending_writes, make_pair(t, an_id));
 }
 
 void
-database::schedule_write(string const & tab,
-                         hexenc<id> const & an_id,
+database::schedule_write(pending_where t,
+                         string const & an_id,
                          data const & dat)
 {
-  if (!have_pending_write(tab, an_id))
+  I(t != pending_manifest);
+  if (!have_pending_write(t, an_id))
     {
-      safe_insert(pending_writes, make_pair(make_pair(tab, an_id), dat));
-      pending_writes_size += size_pending_write(tab, an_id, dat);
+      safe_insert(pending_writes, make_pair(make_pair(t, an_id), dat));
+      pending_writes_size += size_pending_write(t, an_id, dat);
     }
   if (pending_writes_size > constants::db_max_pending_writes_bytes)
     flush_pending_writes();
@@ -865,7 +899,7 @@ database::schedule_write(string const & tab,
 void
 database::flush_pending_writes()
 {
-  for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+  for (map<pair<pending_where, string>, data>::const_iterator i = pending_writes.begin();
        i != pending_writes.end(); ++i)
     put(i->first.second, i->second, i->first.first);
   pending_writes.clear();
@@ -897,27 +931,41 @@ database::rollback_transaction()
 
 
 bool
-database::exists(hexenc<id> const & ident,
-                 string const & table)
+database::exists(string const & ident,
+                 pending_where t)
 {
-  if (have_pending_write(table, ident))
+  if (have_pending_write(t, ident))
     return true;
+
+  string table;
+  switch (t)
+    {
+    case pending_file:
+      table = "files";
+      break;
+    case pending_roster:
+      table = "rosters";
+      break;
+    case pending_manifest:
+      table = "manifests";
+      break;
+    }
 
   results res;
   query q("SELECT id FROM " + table + " WHERE id = ?");
-  fetch(res, one_col, any_rows, q % text(ident()));
+  fetch(res, one_col, any_rows, q % text(ident));
   I((res.size() == 1) || (res.size() == 0));
   return res.size() == 1;
 }
 
 
 bool
-database::delta_exists(hexenc<id> const & ident,
+database::delta_exists(string const & ident,
                        string const & table)
 {
   results res;
   query q("SELECT id FROM " + table + " WHERE id = ?");
-  fetch(res, one_col, any_rows, q % text(ident()));
+  fetch(res, one_col, any_rows, q % text(ident));
   return res.size() > 0;
 }
 
@@ -975,14 +1023,16 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
     }
 }
 
+// for files and legacy manifest support
 void
-database::get(hexenc<id> const & ident,
-              data & dat,
-              string const & table)
+database::get_base_unchecked(hexenc<id> const & ident,
+                             data & dat,
+                             pending_where t,
+                             string const & table)
 {
-  if (have_pending_write(table, ident))
+  if (have_pending_write(t, ident()))
     {
-      load_pending_write(table, ident, dat);
+      load_pending_write(t, ident(), dat);
       return;
     }
 
@@ -990,23 +1040,19 @@ database::get(hexenc<id> const & ident,
   query q("SELECT data FROM " + table + " WHERE id = ?");
   fetch(res, one_col, one_row, q % text(ident()));
 
-  // consistency check
   gzip<data> rdata(res[0][0]);
   data rdata_unpacked;
   decode_gzip(rdata,rdata_unpacked);
 
-  hexenc<id> tid;
-  calculate_ident(rdata_unpacked, tid);
-  I(tid == ident);
-
   dat = rdata_unpacked;
 }
 
+// for files and legacy manifest support
 void
-database::get_delta(hexenc<id> const & ident,
-                    hexenc<id> const & base,
-                    delta & del,
-                    string const & table)
+database::get_delta_unchecked(hexenc<id> const & ident,
+                              hexenc<id> const & base,
+                              delta & del,
+                              string const & table)
 {
   I(ident() != "");
   I(base() != "");
@@ -1019,45 +1065,133 @@ database::get_delta(hexenc<id> const & ident,
 }
 
 void
-database::put(hexenc<id> const & ident,
-              data const & dat,
-              string const & table)
+database::get_roster_base(string const & ident,
+                          roster<data> & dat)
 {
-  // consistency check
-  I(ident() != "");
-  hexenc<id> tid;
-  calculate_ident(dat, tid);
-  MM(ident);
-  MM(tid);
-  I(tid == ident);
+  if (have_pending_write(pending_roster, ident))
+    {
+      data tmp;
+      load_pending_write(pending_roster, ident, tmp);
+      dat = tmp;
+      return;
+    }
+  results res;
+  query q("SELECT checksum, data FROM rosters WHERE id = ?");
+  fetch(res, 2, one_row, q % text(ident));
 
+  hexenc<id> checksum(res[0][0]);
+  hexenc<id> calculated;
+  calculate_ident(data(res[0][1]), calculated);
+  I(calculated == checksum);
+  
+  gzip<data> del_packed(res[0][1]);
+  data tmp;
+  decode_gzip(del_packed, tmp);
+  dat = tmp;
+}
+
+void
+database::get_roster_delta(string const & ident,
+                           string const & base,
+                           roster<delta> & del)
+{
+  results res;
+  query q("SELECT checksum, delta FROM roster_deltas WHERE id = ? AND base = ?");
+  fetch(res, 2, one_row, q % text(ident) % text(base));
+
+  hexenc<id> checksum(res[0][0]);
+  hexenc<id> calculated;
+  calculate_ident(data(res[0][1]), calculated);
+  I(calculated == checksum);
+  
+  gzip<delta> del_packed(res[0][1]);
+  delta tmp;
+  decode_gzip(del_packed, tmp);
+  del = tmp;
+}
+
+void
+database::put(string const & ident,
+              data const & dat,
+              pending_where t)
+{
   gzip<data> dat_packed;
   encode_gzip(dat, dat_packed);
 
-  string insert = "INSERT INTO " + table + " VALUES(?, ?)";
-  execute(query(insert)
-          % text(ident())
-          % blob(dat_packed()));
+  switch (t)
+    {
+    case pending_file:
+      {
+        // then ident is a hash, which we should check
+        I(ident != "");
+        hexenc<id> tid;
+        calculate_ident(dat, tid);
+        MM(ident);
+        MM(tid);
+        I(tid() == ident);
+        // and then write things to the db
+        query q("INSERT INTO files (id, data) VALUES (?, ?)");
+        execute(q % text(ident) % blob(dat_packed()));
+      }
+      break;
+
+    case pending_roster:
+      {
+        // then ident is a number, and we should calculate a checksum on what
+        // we write
+        hexenc<id> checksum;
+        calculate_ident(data(dat_packed()), checksum);
+        // and then write it
+        query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)");
+        execute(q % text(ident) % text(checksum()) % blob(dat_packed()));
+      }
+      break;
+
+    case pending_manifest:
+      I(false);
+      break;
+    }
 }
+
+
 void
-database::put_delta(hexenc<id> const & ident,
-                    hexenc<id> const & base,
-                    delta const & del,
-                    string const & table)
+database::put_file_delta(file_id const & ident,
+                         file_id const & base,
+                         file_delta const & del)
 {
   // nb: delta schema is (id, base, delta)
-  I(ident() != "");
-  I(base() != "");
+  I(!null_id(ident));
+  I(!null_id(base));
 
   gzip<delta> del_packed;
-  encode_gzip(del, del_packed);
+  encode_gzip(del.inner(), del_packed);
 
-  string insert = "INSERT INTO "+table+" VALUES(?, ?, ?)";
-  execute(query(insert)
-          % text(ident())
-          % text(base())
+  query q("INSERT INTO file_deltas VALUES (?, ?, ?)");
+  execute(q
+          % text(ident.inner()())
+          % text(base.inner()())
           % blob(del_packed()));
 }
+
+void
+database::put_roster_delta(roster_id ident,
+                           roster_id base,
+                           roster_delta const & del)
+{
+  gzip<delta> del_packed;
+  encode_gzip(del.inner(), del_packed);
+
+  hexenc<id> checksum;
+  calculate_ident(data(del_packed()), checksum);
+
+  query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?)");
+  execute(q
+          % integer(ident)
+          % integer(base)
+          % text(checksum())
+          % blob(del_packed()));
+}
+
 
 // static ticker cache_hits("vcache hits", "h", 1);
 
@@ -1066,23 +1200,23 @@ struct datasz
   unsigned long operator()(data const & t) { return t().size(); }
 };
 
-static LRUCache<hexenc<id>, data, datasz>
+static LRUCache<string, data, datasz>
 vcache(constants::db_version_cache_sz);
 
-typedef vector< hexenc<id> > version_path;
+typedef vector<string> reconstruction_path;
 
 static void
 extend_path_if_not_cycle(string table_name,
-                         shared_ptr<version_path> p,
-                         hexenc<id> const & ext,
-                         set< hexenc<id> > & seen_nodes,
-                         vector< shared_ptr<version_path> > & next_paths)
+                         shared_ptr<reconstruction_path> p,
+                         string const & ext,
+                         set<string> & seen_nodes,
+                         vector< shared_ptr<reconstruction_path> > & next_paths)
 {
-  for (version_path::const_iterator i = p->begin(); i != p->end(); ++i)
+  for (reconstruction_path::const_iterator i = p->begin(); i != p->end(); ++i)
     {
-      if ((*i)() == ext())
+      if (*i == ext)
         throw oops("cycle in table '" + table_name + "', at node "
-                   + (*i)() + " <- " + ext());
+                   + *i + " <- " + ext);
     }
 
   if (seen_nodes.find(ext) == seen_nodes.end())
@@ -1093,304 +1227,232 @@ extend_path_if_not_cycle(string table_name,
     }
 }
 
+// used for files, rosters, and legacy manifest support
+void
+database::get_reconstruction_path(string const & ident,
+                                  pending_where t,
+                                  string const & data_table,
+                                  string const & delta_table,
+                                  reconstruction_path & path)
+{
+  // we start from the file we want to reconstruct and work *forwards*
+  // through the database, until we get to a full data object. we then
+  // trace back through the list of edges we followed to get to the data
+  // object, applying reverse deltas.
+  //
+  // the effect of this algorithm is breadth-first search, backwards
+  // through the storage graph, to discover a forwards shortest path, and
+  // then following that shortest path with delta application.
+  //
+  // we used to do this with the boost graph library, but it invovled
+  // loading too much of the storage graph into memory at any moment. this
+  // imperative version only loads the descendents of the reconstruction
+  // node, so it much cheaper in terms of memory.
+  //
+  // we also maintain a cycle-detecting set, just to be safe
+
+  // Our reconstruction algorithm involves keeping a set of parallel
+  // linear paths, starting from ident, moving forward through the
+  // storage DAG until we hit a storage root.
+  //
+  // On each iteration, we extend every active path by one step. If our
+  // extension involves a fork, we duplicate the path. If any path
+  // contains a cycle, we fault.
+  //
+  // If, by extending a path C, we enter a node which another path
+  // D has already seen, we kill path C. This avoids the possibility of
+  // exponential growth in the number of paths due to extensive forking
+  // and merging.
+
+  L(FL("reconstructing %s in %s") % ident % delta_table);
+
+  vector< shared_ptr<reconstruction_path> > live_paths;
+
+  string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
+
+  {
+    shared_ptr<reconstruction_path> pth0 = shared_ptr<reconstruction_path>(new reconstruction_path());
+    pth0->push_back(ident);
+    live_paths.push_back(pth0);
+  }
+
+  shared_ptr<reconstruction_path> selected_path;
+  set<string> seen_nodes;
+
+  while (!selected_path)
+    {
+      vector< shared_ptr<reconstruction_path> > next_paths;
+
+      for (vector<shared_ptr<reconstruction_path> >::const_iterator i = live_paths.begin();
+           i != live_paths.end(); ++i)
+        {
+          shared_ptr<reconstruction_path> pth = *i;
+          string tip = pth->back();
+
+          if (vcache.exists(tip) || exists(tip, t))
+            {
+              selected_path = pth;
+              break;
+            }
+          else
+            {
+              // This tip is not a root, so extend the path.
+              results res;
+              fetch(res, one_col, any_rows,
+                    query(delta_query)
+                    % text(tip));
+
+              I(res.size() != 0);
+
+              // Replicate the path if there's a fork.
+              for (size_t k = 1; k < res.size(); ++k)
+                {
+                  shared_ptr<reconstruction_path> pthN
+                    = shared_ptr<reconstruction_path>(new reconstruction_path(*pth));
+                  extend_path_if_not_cycle(delta_table, pthN,
+                                           res[k][0],
+                                           seen_nodes, next_paths);
+                }
+
+              // And extend the base path we're examining.
+              extend_path_if_not_cycle(delta_table, pth,
+                                       res[0][0],
+                                       seen_nodes, next_paths);
+            }
+        }
+
+      I(selected_path || !next_paths.empty());
+      live_paths = next_paths;
+    }
+
+  path = *selected_path;
+}
+
+// used for files and legacy manifest migration
 void
 database::get_version(hexenc<id> const & ident,
                       data & dat,
+                      pending_where t,
                       string const & data_table,
                       string const & delta_table)
 {
   I(ident() != "");
-  if (vcache.fetch(ident, dat))
+
+  reconstruction_path selected_path;
+  get_reconstruction_path(ident(), t, data_table, delta_table,
+                          selected_path);
+  
+  I(!selected_path.empty());
+  
+  hexenc<id> curr = selected_path.back();
+  selected_path.pop_back();
+  data begin;
+  
+  if (vcache.exists(curr()))
+    I(vcache.fetch(curr(), begin));
+  else
+    get_base_unchecked(curr, begin, t, data_table);
+  
+  shared_ptr<delta_applicator> appl = new_piecewise_applicator();
+  appl->begin(begin());
+  
+  for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
+       i != selected_path.rend(); ++i)
     {
-      return;
+      hexenc<id> const nxt = *i;
+      
+      if (!vcache.exists(curr()))
+        {
+          string tmp;
+          appl->finish(tmp);
+          vcache.insert(curr(), tmp);
+        }
+      
+      L(FL("following delta %s -> %s") % curr % nxt);
+      delta del;
+      get_delta_unchecked(nxt, curr, del, delta_table);
+      apply_delta (appl, del());
+      
+      appl->next();
+      curr = nxt;
     }
-  else if (exists(ident, data_table))
+  
+  string tmp;
+  appl->finish(tmp);
+  dat = data(tmp);
+  
+  hexenc<id> final;
+  calculate_ident(dat, final);
+  I(final == ident);
+
+  vcache.insert(ident(), dat);
+}
+
+// used for rosters
+void
+database::get_roster_version(roster_id id, roster_data & dat)
+{
+  string id_str = lexical_cast<string>(id);
+
+  reconstruction_path selected_path;
+  get_reconstruction_path(id_str,
+                          pending_roster, "rosters", "roster_deltas",
+                          selected_path);
+  
+  I(!selected_path.empty());
+  
+  string curr = selected_path.back();
+  selected_path.pop_back();
+  roster_data begin;
+  
+  if (vcache.exists(curr))
     {
-     // easy path
-     get(ident, dat, data_table);
+      data tmp;
+      I(vcache.fetch(curr, tmp));
+      begin = tmp;
     }
   else
+    get_roster_base(curr, begin);
+  
+  shared_ptr<delta_applicator> appl = new_piecewise_applicator();
+  appl->begin(begin.inner()());
+  
+  for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
+       i != selected_path.rend(); ++i)
     {
-      // tricky path
-
-      // we start from the file we want to reconstruct and work *forwards*
-      // through the database, until we get to a full data object. we then
-      // trace back through the list of edges we followed to get to the data
-      // object, applying reverse deltas.
-      //
-      // the effect of this algorithm is breadth-first search, backwards
-      // through the storage graph, to discover a forwards shortest path, and
-      // then following that shortest path with delta application.
-      //
-      // we used to do this with the boost graph library, but it invovled
-      // loading too much of the storage graph into memory at any moment. this
-      // imperative version only loads the descendents of the reconstruction
-      // node, so it much cheaper in terms of memory.
-      //
-      // we also maintain a cycle-detecting set, just to be safe
-
-      L(FL("reconstructing %s in %s") % ident % delta_table);
-      I(delta_exists(ident, delta_table));
-
-      // Our reconstruction algorithm involves keeping a set of parallel
-      // linear paths, starting from ident, moving forward through the
-      // storage DAG until we hit a storage root.
-      //
-      // On each iteration, we extend every active path by one step. If our
-      // extension involves a fork, we duplicate the path. If any path
-      // contains a cycle, we fault.
-      //
-      // If, by extending a path C, we enter a node which another path
-      // D has already seen, we kill path C. This avoids the possibility of
-      // exponential growth in the number of paths due to extensive forking
-      // and merging.
-
-      vector< shared_ptr<version_path> > live_paths;
-
-      string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
-
-      {
-        shared_ptr<version_path> pth0 = shared_ptr<version_path>(new version_path());
-        pth0->push_back(ident);
-        live_paths.push_back(pth0);
-      }
-
-      shared_ptr<version_path> selected_path;
-      set< hexenc<id> > seen_nodes;
-
-      while (!selected_path)
+      string const nxt = *i;
+      
+      if (!vcache.exists(curr))
         {
-          vector< shared_ptr<version_path> > next_paths;
-
-          for (vector<shared_ptr<version_path> >::const_iterator i = live_paths.begin();
-               i != live_paths.end(); ++i)
-            {
-              shared_ptr<version_path> pth = *i;
-              hexenc<id> tip = pth->back();
-
-              if (vcache.exists(tip) || exists(tip, data_table))
-                {
-                  selected_path = pth;
-                  break;
-                }
-              else
-                {
-                  // This tip is not a root, so extend the path.
-                  results res;
-                  fetch(res, one_col, any_rows,
-                        query(delta_query)
-                        % text(tip()));
-
-                  I(res.size() != 0);
-
-                  // Replicate the path if there's a fork.
-                  for (size_t k = 1; k < res.size(); ++k)
-                    {
-                      shared_ptr<version_path> pthN
-                        = shared_ptr<version_path>(new version_path(*pth));
-                      extend_path_if_not_cycle(delta_table, pthN,
-                                               hexenc<id>(res[k][0]),
-                                               seen_nodes, next_paths);
-                    }
-
-                  // And extend the base path we're examining.
-                  extend_path_if_not_cycle(delta_table, pth,
-                                           hexenc<id>(res[0][0]),
-                                           seen_nodes, next_paths);
-                }
-            }
-
-          I(selected_path || !next_paths.empty());
-          live_paths = next_paths;
+          string tmp;
+          appl->finish(tmp);
+          vcache.insert(curr, tmp);
         }
-
-      // Found a root, now trace it back along the path.
-
-      I(selected_path);
-      I(selected_path->size() > 1);
-
-      hexenc<id> curr = selected_path->back();
-      selected_path->pop_back();
-      data begin;
-
-      if (vcache.exists(curr))
-        {
-          I(vcache.fetch(curr, begin));
-        }
-      else
-        {
-          get(curr, begin, data_table);
-        }
-
-      shared_ptr<delta_applicator> app = new_piecewise_applicator();
-      app->begin(begin());
-
-      for (version_path::reverse_iterator i = selected_path->rbegin();
-           i != selected_path->rend(); ++i)
-        {
-          hexenc<id> const nxt = *i;
-
-          if (!vcache.exists(curr))
-            {
-              string tmp;
-              app->finish(tmp);
-              vcache.insert(curr, tmp);
-            }
-
-          L(FL("following delta %s -> %s") % curr % nxt);
-          delta del;
-          get_delta(nxt, curr, del, delta_table);
-          apply_delta (app, del());
-
-          app->next();
-          curr = nxt;
-        }
-
-      string tmp;
-      app->finish(tmp);
-      dat = data(tmp);
-
-      hexenc<id> final;
-      calculate_ident(dat, final);
-      I(final == ident);
+      
+      L(FL("following delta %s -> %s") % curr % nxt);
+      roster_delta del;
+      get_roster_delta(nxt, curr, del);
+      apply_delta(appl, del.inner()());
+      
+      appl->next();
+      curr = nxt;
     }
-  vcache.insert(ident, dat);
+  
+  string tmp;
+  appl->finish(tmp);
+  dat = data(tmp);
+  
+  vcache.insert(id_str, dat.inner()());
 }
 
 
 void
-database::drop(hexenc<id> const & ident,
+database::drop(string const & ident,
                string const & table)
 {
   string drop = "DELETE FROM " + table + " WHERE id = ?";
-  execute(query(drop) % text(ident()));
+  execute(query(drop) % text(ident));
 }
-
-void
-database::put_version(hexenc<id> const & old_id,
-                      hexenc<id> const & new_id,
-                      delta const & del,
-                      string const & data_table,
-                      string const & delta_table)
-{
-
-  data old_data, new_data;
-  delta reverse_delta;
-
-  get_version(old_id, old_data, data_table, delta_table);
-  patch(old_data, del, new_data);
-  {
-    string tmp;
-    invert_xdelta(old_data(), del(), tmp);
-    reverse_delta = delta(tmp);
-    data old_tmp;
-    hexenc<id> old_tmp_id;
-    patch(new_data, reverse_delta, old_tmp);
-    calculate_ident(old_tmp, old_tmp_id);
-    I(old_tmp_id == old_id);
-  }
-
-  transaction_guard guard(*this);
-  if (exists(old_id, data_table))
-    {
-      // descendent of a head version replaces the head, therefore old head
-      // must be disposed of
-      if (have_pending_write(data_table, old_id))
-        cancel_pending_write(data_table, old_id);
-      else
-        drop(old_id, data_table);
-    }
-  schedule_write(data_table, new_id, new_data);
-  put_delta(old_id, new_id, reverse_delta, delta_table);
-  guard.commit();
-}
-
-void
-database::remove_version(hexenc<id> const & target_id,
-                         string const & data_table,
-                         string const & delta_table)
-{
-  // We have a one of two cases (for multiple 'older' nodes):
-  //
-  //    1.  pre:        older <- target <- newer
-  //       post:                  older <- newer
-  //
-  //    2.  pre:        older <- target (a root)
-  //       post:                  older (a root)
-  //
-  // In case 1 we want to build new deltas bypassing the target we're
-  // removing. In case 2 we just promote the older object to a root.
-
-  transaction_guard guard(*this);
-
-  I(exists(target_id, data_table)
-    || delta_exists(target_id, delta_table));
-
-  map<hexenc<id>, data> older;
-
-  {
-    results res;
-    query q("SELECT id FROM " + delta_table + " WHERE base = ?");
-    fetch(res, one_col, any_rows, q % text(target_id()));
-    for (size_t i = 0; i < res.size(); ++i)
-      {
-        hexenc<id> old_id(res[i][0]);
-        data old_data;
-        get_version(old_id, old_data, data_table, delta_table);
-        older.insert(make_pair(old_id, old_data));
-      }
-  }
-
-  // no deltas are allowed to point to the target.
-  execute(query("DELETE from " + delta_table + " WHERE base = ?")
-          % text(target_id()));
-
-  if (delta_exists(target_id, delta_table))
-    {
-      if (!older.empty())
-        {
-          // Case 1: need to re-deltify all the older values against a newer
-          // member of the delta chain. Doesn't really matter which newer
-          // element (we have no good heuristic for guessing a good one
-          // anyways).
-          hexenc<id> newer_id;
-          data newer_data;
-          results res;
-          query q("SELECT base FROM " + delta_table + " WHERE id = ?");
-          fetch(res, one_col, any_rows, q % text(target_id()));
-          I(res.size() > 0);
-          newer_id = hexenc<id>(res[0][0]);
-          get_version(newer_id, newer_data, data_table, delta_table);
-          for (map<hexenc<id>, data>::const_iterator i = older.begin();
-               i != older.end(); ++i)
-            {
-              if (delta_exists(i->first, delta_table))
-                continue;
-              delta bypass_delta;
-              diff(newer_data, i->second, bypass_delta);
-              put_delta(i->first, newer_id, bypass_delta, delta_table);
-            }
-        }
-      execute(query("DELETE from " + delta_table + " WHERE id = ?")
-              % text(target_id()));
-    }
-  else
-    {
-      // Case 2: just plop the older values down as new storage roots.
-      I(exists(target_id, data_table));
-      for (map<hexenc<id>, data>::const_iterator i = older.begin();
-           i != older.end(); ++i)
-        {
-          if (!exists(i->first, data_table))
-            put(i->first, i->second, data_table);
-        }
-      execute(query("DELETE from " + data_table + " WHERE id = ?")
-              % text(target_id()));
-    }
-
-  guard.commit();
-}
-
 
 // ------------------------------------------------------------
 // --                                                        --
@@ -1401,21 +1463,25 @@ database::remove_version(hexenc<id> const & target_id,
 bool
 database::file_version_exists(file_id const & id)
 {
-  return delta_exists(id.inner(), "file_deltas")
-    || exists(id.inner(), "files");
+  return delta_exists(id.inner()(), "file_deltas")
+    || exists(id.inner()(), pending_file);
 }
 
 bool
-database::roster_version_exists(roster_id const & id)
+database::roster_version_exists(roster_id id)
 {
-  return delta_exists(id.inner(), "roster_deltas")
-    || exists(id.inner(), "rosters");
+  return delta_exists(lexical_cast<string>(id), "roster_deltas")
+    || exists(lexical_cast<string>(id), pending_roster);
 }
 
 bool
 database::revision_exists(revision_id const & id)
 {
-  return exists(id.inner(), "revisions");
+  results res;
+  query q("SELECT id FROM revisions WHERE id = ?");
+  fetch(res, one_col, any_rows, q % text(id.inner()()));
+  I(res.size() <= 1);
+  return res.size() == 1;
 }
 
 bool
@@ -1437,7 +1503,7 @@ database::roster_exists_for_revision(revision_id const & rev_id)
         query("SELECT roster_id FROM revision_roster WHERE rev_id = ? ")
         % text(rev_id.inner()()));
   I((res.size() == 1) || (res.size() == 0));
-  return (res.size() == 1) && roster_version_exists(roster_id(res[0][0]));
+  return (res.size() == 1) && roster_version_exists(lexical_cast<roster_id>(res[0][0]));
 }
 
 void
@@ -1449,7 +1515,7 @@ database::get_roster_links(map<revision_id, roster_id> & links)
   for (size_t i = 0; i < res.size(); ++i)
     {
       links.insert(make_pair(revision_id(res[i][0]),
-                             roster_id(res[i][1])));
+                             lexical_cast<roster_id>(res[i][1])));
     }
 }
 
@@ -1477,9 +1543,16 @@ database::get_roster_ids(set<roster_id> & ids)
 {
   ids.clear();
   set< hexenc<id> > tmp;
-  get_ids("rosters", tmp);
-  get_ids("roster_deltas", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+
+  results res;
+  query q1("SELECT oid FROM rosters");
+  fetch(res, one_col, any_rows, q1);
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    ids.insert(lexical_cast<roster_id>((*i)[0]));
+  query q2("SELECT oid FROM roster_deltas");
+  fetch(res, one_col, any_rows, q2);
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    ids.insert(lexical_cast<roster_id>((*i)[0]));
 }
 
 void
@@ -1487,7 +1560,7 @@ database::get_file_version(file_id const & id,
                            file_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, "files", "file_deltas");
+  get_version(id.inner(), tmp, pending_file, "files", "file_deltas");
   dat = tmp;
 }
 
@@ -1496,16 +1569,7 @@ database::get_manifest_version(manifest_id const & id,
                                manifest_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, "manifests", "manifest_deltas");
-  dat = tmp;
-}
-
-void
-database::get_roster_version(roster_id const & id,
-                             roster_data & dat)
-{
-  data tmp;
-  get_version(id.inner(), tmp, "rosters", "roster_deltas");
+  get_version(id.inner(), tmp, pending_manifest, "manifests", "manifest_deltas");
   dat = tmp;
 }
 
@@ -1513,7 +1577,7 @@ void
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
-  schedule_write("files", id.inner(), dat.inner());
+  schedule_write(pending_file, id.inner()(), dat.inner());
 }
 
 void
@@ -1521,8 +1585,39 @@ database::put_file_version(file_id const & old_id,
                            file_id const & new_id,
                            file_delta const & del)
 {
-  put_version(old_id.inner(), new_id.inner(), del.inner(),
-              "files", "file_deltas");
+  file_data old_data, new_data;
+  file_delta reverse_delta;
+
+  get_file_version(old_id, old_data);
+  {
+    data tmp;
+    patch(old_data.inner(), del.inner(), tmp);
+    new_data = tmp;
+  }
+  {
+    string tmp;
+    invert_xdelta(old_data.inner()(), del.inner()(), tmp);
+    reverse_delta = delta(tmp);
+    data old_tmp;
+    hexenc<id> old_tmp_id;
+    patch(new_data.inner(), reverse_delta.inner(), old_tmp);
+    calculate_ident(old_tmp, old_tmp_id);
+    I(file_id(old_tmp_id) == old_id);
+  }
+
+  transaction_guard guard(*this);
+  if (exists(old_id.inner()(), pending_file))
+    {
+      // descendent of a head version replaces the head, therefore old head
+      // must be disposed of
+      if (have_pending_write(pending_file, old_id.inner()()))
+        cancel_pending_write(pending_file, old_id.inner()());
+      else
+        drop(old_id.inner()(), "files");
+    }
+  schedule_write(pending_file, new_id.inner()(), new_data.inner());
+  put_file_delta(old_id, new_id, reverse_delta);
+  guard.commit();
 }
 
 void
@@ -1674,7 +1769,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (exists(delta_entry_src(j).inner(), "files") &&
+            if (exists(delta_entry_src(j).inner()(), pending_file) &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -1684,8 +1779,8 @@ database::deltify_revision(revision_id const & rid)
                 delta delt;
                 diff(old_data.inner(), new_data.inner(), delt);
                 file_delta del(delt);
-                drop(delta_entry_dst(j).inner(), "files");
-                drop(delta_entry_dst(j).inner(), "file_deltas");
+                drop(delta_entry_dst(j).inner()(), "files");
+                drop(delta_entry_dst(j).inner()(), "file_deltas");
                 put_file_version(delta_entry_src(j), delta_entry_dst(j), del);
               }
           }
@@ -1720,19 +1815,7 @@ database::put_revision(revision_id const & new_id,
 
   transaction_guard guard(*this);
 
-  // Phase 2: construct a new roster and sanity-check its manifest_id
-  // against the manifest_id of the revision you're writing.
-  roster_t ros;
-  marking_map mm;
-  {
-    manifest_id roster_manifest_id;
-    MM(roster_manifest_id);
-    make_roster_for_revision(rev, new_id, ros, mm, *__app);
-    calculate_ident(ros, roster_manifest_id);
-    I(rev.new_manifest == roster_manifest_id);
-  }
-
-  // Phase 3: Write the revision data
+  // Phase 2: Write the revision data (inside a transaction)
 
   gzip<data> d_packed;
   encode_gzip(d.inner(), d_packed);
@@ -1748,14 +1831,35 @@ database::put_revision(revision_id const & new_id,
               % text(new_id.inner()()));
     }
 
-  deltify_revision(new_id);
+  // Phase 3: Construct and write the roster (which also checks the manifest
+  // id as it goes)
 
-  // Phase 4: write the roster data and commit
-  put_roster(new_id, ros, mm);
+  put_roster_for_revision(new_id, rev);
+
+  // Phase 4: rewrite any files that need deltas added
+
+  deltify_revision(new_id);
 
   guard.commit();
 }
 
+void
+database::put_roster_for_revision(revision_id const & new_id,
+                                  revision_t const & rev)
+{
+  roster_t ros; MM(ros);
+  marking_map mm; MM(mm);
+  // Construct, the roster, sanity-check the manifest id, and then write it
+  // to the db
+  {
+    manifest_id roster_manifest_id;
+    MM(roster_manifest_id);
+    make_roster_for_revision(rev, new_id, ros, mm, *__app);
+    calculate_ident(ros, roster_manifest_id);
+    I(rev.new_manifest == roster_manifest_id);
+  }
+  put_roster(new_id, ros, mm);
+}
 
 void
 database::put_revision(revision_id const & new_id,
@@ -1782,6 +1886,14 @@ database::delete_existing_manifests()
   execute(query("DELETE FROM manifest_deltas"));
 }
 
+void
+database::delete_existing_rosters()
+{
+  execute(query("DELETE FROM rosters"));
+  execute(query("DELETE FROM roster_deltas"));
+  execute(query("DELETE FROM next_roster_number"));
+}
+
 /// Deletes one revision from the local database.
 /// @see kill_rev_locally
 void
@@ -1798,7 +1910,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 
   L(FL("Killing revision %s locally") % rid);
 
-  // Kill the certs, ancestry, and rev itself.
+  // Kill the certs, ancestry, revision, and roster link.
   execute(query("DELETE from revision_certs WHERE id = ?")
           % text(rid.inner()()));
 
@@ -1808,26 +1920,8 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   execute(query("DELETE from revisions WHERE id = ?")
           % text(rid.inner()()));
 
-  // Find the associated roster and count the number of links to it
-  roster_id ros_id;
-  size_t link_count = 0;
-  get_roster_id_for_revision(rid, ros_id);
-  {
-    results res;
-    fetch(res, 2, any_rows,
-          query("SELECT rev_id, roster_id FROM revision_roster "
-                "WHERE roster_id = ?") % text(ros_id.inner()()));
-    I(res.size() > 0);
-    link_count = res.size();
-  }
-
-  // Delete our link.
   execute(query("DELETE from revision_roster WHERE rev_id = ?")
           % text(rid.inner()()));
-
-  // If that was the last link to the roster, kill the roster too.
-  if (link_count == 1)
-    remove_version(ros_id.inner(), "rosters", "roster_deltas");
 
   guard.commit();
 }
@@ -2742,21 +2836,16 @@ database::get_branches(vector<string> & names)
       }
 }
 
-void
-database::get_roster_id_for_revision(revision_id const & rev_id,
-                                     roster_id & ros_id)
+database::roster_id
+database::get_roster_id_for_revision(revision_id const & rev_id)
 {
-  if (rev_id.inner()().empty())
-    {
-      ros_id = roster_id();
-      return;
-    }
-
+  I(!null_id(rev_id));
+  
   results res;
   query q("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");
   fetch(res, one_col, any_rows, q % text(rev_id.inner()()));
   I(res.size() == 1);
-  ros_id = roster_id(res[0][0]);
+  return lexical_cast<roster_id>(res[0][0]);
 }
 
 void
@@ -2794,7 +2883,7 @@ database::get_roster(revision_id const & rev_id,
   roster_data dat;
   roster_id ident;
 
-  get_roster_id_for_revision(rev_id, ident);
+  ident = get_roster_id_for_revision(rev_id);
   get_roster_version(ident, dat);
   read_roster_and_marking(dat, roster, marks);
   sp = shared_ptr<pair<roster_t, marking_map> >
@@ -2809,9 +2898,6 @@ database::put_roster(revision_id const & rev_id,
                      marking_map & marks)
 {
   MM(rev_id);
-  roster_data old_data, new_data;
-  delta reverse_delta;
-  roster_id old_id, new_id;
 
   if (!rcache.exists(rev_id))
     {
@@ -2820,55 +2906,47 @@ database::put_roster(revision_id const & rev_id,
       rcache.insert(rev_id, sp);
     }
 
-  write_roster_and_marking(roster, marks, new_data);
-  calculate_ident(new_data, new_id);
-
-  // First: find the "old" revision; if there are multiple old
-  // revisions, we just pick the first. It probably doesn't matter for
-  // the sake of delta-encoding.
-
-  string data_table = "rosters";
-  string delta_table = "roster_deltas";
-
   transaction_guard guard(*this);
 
+  roster_id new_id = next_roster_id();
+  string new_id_str = lexical_cast<string>(new_id);
+
   execute(query("INSERT into revision_roster VALUES (?, ?)")
-          % text(rev_id.inner()())
-          % text(new_id.inner()()));
+          % text(rev_id.inner()()) % integer(new_id));
 
-  if (exists(new_id.inner(), data_table)
-      || delta_exists(new_id.inner(), delta_table))
-    {
-      guard.commit();
-      return;
-    }
+  // Our task is to add this roster, and deltify all the incoming edges (if
+  // they aren't already).
 
-  // Else we have a new roster the database hasn't seen yet; our task is to
-  // add it, and deltify all the incoming edges (if they aren't already).
+  roster_data new_data;
+  write_roster_and_marking(roster, marks, new_data);
 
-  schedule_write(data_table, new_id.inner(), new_data.inner());
+  schedule_write(pending_roster, new_id_str, new_data.inner());
 
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
   // Now do what deltify would do if we bothered (we have the
   // roster written now, so might as well do it here).
+  roster_id old_id;
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
     {
       if (null_id(*i))
         continue;
       revision_id old_rev = *i;
-      get_roster_id_for_revision(old_rev, old_id);
-      if (exists(old_id.inner(), data_table))
+      old_id = get_roster_id_for_revision(old_rev);
+      string old_id_str = lexical_cast<string>(old_id);
+      if (exists(old_id_str, pending_roster))
         {
+          roster_data old_data;
           get_roster_version(old_id, old_data);
+          delta reverse_delta;
           diff(new_data.inner(), old_data.inner(), reverse_delta);
-          if (have_pending_write(data_table, old_id.inner()))
-            cancel_pending_write(data_table, old_id.inner());
+          if (have_pending_write(pending_roster, old_id_str))
+            cancel_pending_write(pending_roster, old_id_str);
           else
-            drop(old_id.inner(), data_table);
-          put_delta(old_id.inner(), new_id.inner(), reverse_delta, delta_table);
+            drop(old_id_str, "rosters");
+          put_roster_delta(old_id, new_id, reverse_delta);
         }
     }
   guard.commit();
@@ -2944,8 +3022,9 @@ database::get_uncommon_ancestors(revision_id const & a,
                  inserter(b_uncommon_ancs, b_uncommon_ancs.begin()));
 }
 
-node_id
-database::next_node_id()
+
+u64
+database::next_id_from_table(string const & table)
 {
   transaction_guard guard(*this);
   results res;
@@ -2953,28 +3032,39 @@ database::next_node_id()
   // We implement this as a fixed db var.
 
   fetch(res, one_col, any_rows,
-        query("SELECT node FROM next_roster_node_number"));
+        query(string("SELECT node FROM ") + table));
 
-  node_id n;
+  u64 n;
   if (res.empty())
     {
       n = 1;
-      execute (query("INSERT INTO next_roster_node_number VALUES(?)")
+      execute (query(string("INSERT INTO ") + table + " VALUES(?)")
                % text(lexical_cast<string>(n)));
     }
   else
     {
       I(res.size() == 1);
-      n = lexical_cast<node_id>(res[0][0]);
+      n = lexical_cast<u64>(res[0][0]);
       ++n;
-      execute (query("UPDATE next_roster_node_number SET node = ?")
-               % text(lexical_cast<string>(n)));
+      execute(query(string("UPDATE ") + table + " SET node = ?")
+              % text(lexical_cast<string>(n)));
 
     }
   guard.commit();
   return n;
 }
 
+node_id
+database::next_node_id()
+{
+  return static_cast<node_id>(next_id_from_table("next_roster_node_number"));
+}
+
+database::roster_id
+database::next_roster_id()
+{
+  return static_cast<roster_id>(next_id_from_table("next_roster_number"));
+}
 
 void
 database::check_filename()
