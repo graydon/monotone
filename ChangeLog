@@ -1,3 +1,10 @@
+2006-08-12  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (put_roster): We only need one way to reconstruct a
+	given roster -- check whether the _old_ roster is stored in full
+	before doing deltification, rather than that the _new_ roster
+	(that we stored in full 10 lines up) is stored in full.
+
 2006-08-11  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* std_hooks.lua: merge3 merger selection is horrible. Make it better.
