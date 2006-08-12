@@ -74,7 +74,7 @@ CREATE TABLE roster_deltas
         id integer primary key,
         checksum not null,      -- checksum of 'delta', to protect against disk corruption
 	base not null,          -- joins with either rosters.id or roster_deltas.id
-	delta not null,         -- rdiff to construct current from base
+	delta not null          -- rdiff to construct current from base
 	);
 
 CREATE TABLE revision_roster
