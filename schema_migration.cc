@@ -1130,6 +1130,14 @@ migrate_rosters_integer_ids(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE next_roster_number\n"
+                            "\t(\n"
+                            "\tnode primary key        -- only one entry in this table, ever\n"
+                            "\t);",
+                            NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+
   need_regenerate_rosters = true;
 
   return true;
@@ -1177,7 +1185,7 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app, bool & need_regenerate_ros
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "8753939783550785d86a74ccbda1a9347395588c");
+  m.migrate(sql, "d570d2861caa6f855bd8260f25e3a964294b6cb1");
 
   need_regenerate_rosters = m.need_regenerate_rosters;
 }
