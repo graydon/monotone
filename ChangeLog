@@ -1,5 +1,15 @@
 2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	Make it pass the testsuite.
+	* tests/diff_--external/__driver__.lua:
+	* tests/netsync_permissions/__driver__.lua: "--option=" is not valid
+	anymore, use "--option ''". (appears to be a misfeature of
+	boost::program_options)
+	* options.cc options.hh monotone.cc: Work on option handling.
+	* cmd_netsync.cc: More merge fixes.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Fix merge, and make unit_tests build.
 	* options.cc monotone.cc: Move option definitions to their own file.
 	* Makefile.am: Adjust accordingly.

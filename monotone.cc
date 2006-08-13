@@ -82,41 +82,6 @@ namespace po = boost::program_options;
 // level handlers in main.cc, at least we'll get a friendly error message.
 
 
-struct
-utf8_argv
-{
-  int argc;
-  char **argv;
-
-  explicit utf8_argv(int ac, char **av)
-    : argc(ac),
-      argv(static_cast<char **>(malloc(ac * sizeof(char *))))
-  {
-    I(argv != NULL);
-    for (int i = 0; i < argc; ++i)
-      {
-        external ext(av[i]);
-        utf8 utf;
-        system_to_utf8(ext, utf);
-        argv[i] = static_cast<char *>(malloc(utf().size() + 1));
-        I(argv[i] != NULL);
-        memcpy(argv[i], utf().data(), utf().size());
-        argv[i][utf().size()] = static_cast<char>(0);
-    }
-  }
-
-  ~utf8_argv()
-  {
-    if (argv != NULL)
-      {
-        for (int i = 0; i < argc; ++i)
-          if (argv[i] != NULL)
-            free(argv[i]);
-        free(argv);
-      }
-  }
-};
-
 // Wrapper class to ensure Botan is properly initialized and deinitialized.
 struct botan_library
 {
@@ -181,6 +146,75 @@ my_poptStuffArgFile(poptContext con, utf8 const & filename)
 }
 #endif
 
+void
+tokenize_for_command_line(string const & from, vector<string> & to)
+{
+  // Unfortunately, the tokenizer in basic_io is too format-specific
+  to.clear();
+  enum quote_type {none, one, two};
+  string cur;
+  quote_type type = none;
+  bool have_tok(false);
+  
+  for (string::const_iterator i = from.begin(); i != from.end(); ++i)
+    {
+      if (*i == '\'')
+        {
+          if (type == none)
+            type = one;
+          else if (type == one)
+            type = none;
+          else
+            {
+              cur += *i;
+              have_tok = true;
+            }
+        }
+      else if (*i == '"')
+        {
+          if (type == none)
+            type = two;
+          else if (type == two)
+            type = none;
+          else
+            {
+              cur += *i;
+              have_tok = true;
+            }
+        }
+      else if (*i == '\\')
+        {
+          if (type != one)
+            ++i;
+          N(i != from.end(), F("Invalid escape in --xargs file"));
+          cur += *i;
+          have_tok = true;
+        }
+      else if (string(" \n\t").find(*i) != string::npos)
+        {
+          if (type == none)
+            {
+              if (have_tok)
+                to.push_back(cur);
+              cur.clear();
+              have_tok = false;
+            }
+          else
+            {
+              cur += *i;
+              have_tok = true;
+            }
+        }
+      else
+        {
+          cur += *i;
+          have_tok = true;
+        }
+    }
+  if (have_tok)
+    to.push_back(cur);
+}
+
 int
 cpp_main(int argc, char ** argv)
 {
@@ -236,20 +270,28 @@ cpp_main(int argc, char ** argv)
 
   // decode all argv values into a UTF-8 array
   save_initial_path();
-  utf8_argv uv(argc, argv);
+  vector<string> args;
+  utf8 progname;
+  for (int i = 0; i < argc; ++i)
+    {
+      external ex(argv[i]);
+      utf8 ut;
+      system_to_utf8(ex, ut);
+      if (i)
+        args.push_back(ut());
+      else
+        progname = ut;
+    }
 
   // find base name of executable
-  string prog_path = fs::path(uv.argv[0]).leaf();
+  string prog_path = fs::path(progname()).leaf();
   if (prog_path.rfind(".exe") == prog_path.size() - 4)
     prog_path = prog_path.substr(0, prog_path.size() - 4);
   utf8 prog_name(prog_path);
 
-  // process main program options
-  bool requested_help = false;
-
+  app_state app;
   try
     {
-      app_state app;
 
       app.set_prog_name(prog_name);
 
@@ -263,7 +305,34 @@ cpp_main(int argc, char ** argv)
       po::positional_options_description all_positional_args;
       all_positional_args.add("all_positional_args", -1);
 
-      po::parsed_options parsed = po::command_line_parser(argc, uv.argv)
+      // Check the command line for -@/--xargs
+      {
+        po::parsed_options parsed = po::command_line_parser(args)
+          .options(all_options)
+          .run();
+        po::variables_map vm;
+        po::store(parsed, vm);
+        po::notify(vm);
+        if (vm.count(option::argfile()))
+          {
+            vector<string> files = vm[option::argfile()].as<vector<string> >();
+            for (vector<string>::iterator f = files.begin();
+                 f != files.end(); ++f)
+              {
+                data dat;
+                read_data_for_command_line(*f, dat);
+                vector<string> fargs;
+                tokenize_for_command_line(dat(), fargs);
+                for (vector<string>::const_iterator i = fargs.begin();
+                     i != fargs.end(); ++i)
+                  {
+                    args.push_back(*i);
+                  }
+              }
+          }
+      }
+
+      po::parsed_options parsed = po::command_line_parser(args)
         .options(all_options)
         .positional(all_positional_args)
         .run();
@@ -294,7 +363,7 @@ cpp_main(int argc, char ** argv)
       all_for_this_cmd.add(cmd_options_desc);
 
       // reparse arguments using specific options.
-      parsed = po::command_line_parser(argc, uv.argv)
+      parsed = po::command_line_parser(args)
         .options(all_for_this_cmd)
         .run();
       po::store(parsed, vm);
@@ -334,7 +403,10 @@ cpp_main(int argc, char ** argv)
 
       if (vm.count(option::rcfile()))
         {
-          app.add_rcfile(vm[option::rcfile()].as<string>());
+          vector<string> files = vm[option::rcfile()].as<vector<string> >();
+          for (vector<string>::const_iterator i = files.begin();
+               i != files.end(); ++i)
+            app.add_rcfile(*i);
         }
 
       if (vm.count(option::dump()))
@@ -400,7 +472,10 @@ cpp_main(int argc, char ** argv)
 
       if (vm.count(option::revision()))
         {
-          app.add_revision(vm[option::revision()].as<string>());
+          vector<string> revs = vm[option::revision()].as<vector<string> >();
+          for (vector<string>::const_iterator i = revs.begin();
+               i != revs.end(); ++i)
+            app.add_revision(*i);
         }
 
       if (vm.count(option::message()))
@@ -465,22 +540,27 @@ cpp_main(int argc, char ** argv)
           app.set_default = true;
         }
 
+      if (vm.count(option::stdio()))
+        {
+          app.bind_stdio = true;
+        }
+
+      if (vm.count(option::no_transport_auth()))
+        {
+          app.use_transport_auth = false;
+        }
+
       if (vm.count(option::exclude()))
         {
-          app.add_exclude(utf8(vm[option::exclude()].as<string>()));
+          vector<string> excls = vm[option::exclude()].as<vector<string> >();
+          for (vector<string>::const_iterator i = excls.begin();
+               i != excls.end(); ++i)
+            app.add_exclude(utf8(*i));
         }
 
       if (vm.count(option::pidfile()))
         {
           app.set_pidfile(system_path(vm[option::pidfile()].as<string>()));
-        }
-
-      if (vm.count(option::argfile()))
-        {
-#if 0
-          // FIXME!
-          my_poptStuffArgFile(ctx(), utf8(string(argstr)));
-#endif
         }
 
       if (vm.count(option::unified_diff()))
@@ -565,12 +645,18 @@ cpp_main(int argc, char ** argv)
 
       if (vm.count(option::key_to_push()))
         {
-          app.add_key_to_push(vm[option::key_to_push()].as<string>());
+          vector<string> kp = vm[option::key_to_push()].as<vector<string> >();
+          for (vector<string>::const_iterator i = kp.begin();
+               i != kp.end(); ++i)
+            app.add_key_to_push(*i);
         }
 
       if (vm.count(option::drop_attr()))
         {
-          app.attrs_to_drop.insert(vm[option::drop_attr()].as<string>());
+          vector<string> da = vm[option::drop_attr()].as<vector<string> >();
+          for (vector<string>::const_iterator i = da.begin();
+               i != da.end(); ++i)
+            app.attrs_to_drop.insert(*i);
         }
 
       if (vm.count(option::no_files()))
@@ -584,11 +670,11 @@ cpp_main(int argc, char ** argv)
         }
       if (vm.count(option::help()))
         {
-          requested_help = true;
+          app.requested_help = true;
         }
 
       // stop here if they asked for help
-      if (requested_help)
+      if (app.requested_help)
         {
           throw usage(cmd);     // cmd may be empty, and that's fine.
         }
@@ -600,6 +686,9 @@ cpp_main(int argc, char ** argv)
       // Certain commands may subsequently require a workspace or fail
       // if we didn't find one at this point.
       app.allow_workspace();
+
+      if (!app.found_workspace && global_sanity.filename.empty())
+        global_sanity.filename = (app.get_confdir() / "dump").as_external();
 
       // main options processed, now invoke the
       // sub-command w/ remaining args
@@ -648,7 +737,10 @@ cpp_main(int argc, char ** argv)
         }
 
       commands::explain_usage(u.which, cout);
-      return 2;
+      if (app.requested_help)
+        return 0;
+      else
+        return 2;
 
     }
   }

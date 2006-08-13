@@ -172,7 +172,8 @@ private:
 
 CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
                  N_("serve the branches specified by PATTERNs to connecting clients"),
-                 option::bind % option::pidfile % option::exclude)
+                 option::bind % option::pidfile % option::exclude %
+                 option::stdio % option::no_transport_auth)
 {
   if (args.size() < 1)
     throw usage(name);

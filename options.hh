@@ -18,9 +18,6 @@ namespace option
   using boost::program_options::option_description;
   using boost::program_options::options_description;
   using boost::shared_ptr;
-#define OPT_STDIO 49
-#define OPT_NO_TRANSPORT_AUTH 50
-#define OPT_AUTOMATE_STDIO_SIZE 52
 
   extern options_description global_options;
   extern options_description specific_options;
@@ -94,10 +91,12 @@ namespace option
   extern specific no_files;
   extern specific no_merges;
   extern specific no_show_encloser;
+  extern specific no_transport_auth;
   extern specific pidfile;
   extern specific recursive;
   extern specific revision;
   extern specific set_default;
+  extern specific stdio;
   extern specific unified_diff;
   extern specific unknown;
 }
