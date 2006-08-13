@@ -188,43 +188,52 @@ database::check_is_not_rosterified()
 void
 database::check_format()
 {
-  results res_revisions;
-  string manifests_query = "SELECT 1 FROM manifests LIMIT 1";
-  string revisions_query = "SELECT 1 FROM revisions LIMIT 1";
-  string rosters_query = "SELECT 1 FROM rosters LIMIT 1";
+  results res;
+  query manifests_query("SELECT 1 FROM manifests LIMIT 1");
+  query revisions_query("SELECT 1 FROM revisions LIMIT 1");
+  query rosters_query("SELECT 1 FROM rosters LIMIT 1");
 
-  fetch(res_revisions, one_col, any_rows, query(revisions_query));
+  fetch(res, one_col, any_rows, revisions_query);
+  bool have_revisions = !res.empty();
+  fetch(res, one_col, any_rows, manifests_query);
+  bool have_manifests = !res.empty();
+  fetch(res, one_col, any_rows, rosters_query);
+  bool have_rosters = !res.empty();
 
-  if (!res_revisions.empty())
+  if (have_manifests)
     {
-      // they have revisions, so they can't be _ancient_, but they still might
-      // not have rosters
-      results res_rosters;
-      fetch(res_rosters, one_col, any_rows, query(rosters_query));
-      N(!res_rosters.empty(),
-        F("database %s contains revisions but no rosters\n"
-          "if you are a project leader or doing local testing:\n"
-          "  see the file UPGRADE for instructions on upgrading.\n"
-          "if you are not a project leader:\n"
-          "  wait for a leader to migrate project data, and then\n"
-          "  pull into a fresh database.\n"
-          "sorry about the inconvenience.")
-        % filename);
+      I(!have_rosters);
+      // they need to either changesetify or rosterify.  which?
+      if (have_revisions)
+        E(false,
+          F("database %s contains old-style revisions\n"
+            "if you are a project leader or doing local testing:\n"
+            "  see the file UPGRADE for instructions on upgrading.\n"
+            "if you are not a project leader:\n"
+            "  wait for a leader to migrate project data, and then\n"
+            "  pull into a fresh database.\n"
+            "sorry about the inconvenience.")
+          % filename);
+      else
+        E(false,
+          F("database %s contains manifests but no revisions\n"
+            "this is a very old database; it needs to be upgraded\n"
+            "please see README.changesets for details")
+          % filename);
     }
   else
     {
-      // they have no revisions, so they shouldn't have any manifests either.
-      // if they do, their db is probably ancient.  (though I guess you could
-      // trigger this check by taking a pre-roster monotone, doing "db
-      // init; commit; db kill_rev_locally", and then upgrading to a
-      // rosterified monotone.)
-      results res_manifests;
-      fetch(res_manifests, one_col, any_rows, query(manifests_query));
-      N(res_manifests.empty(),
-        F("database %s contains manifests but no revisions\n"
-          "this is a very old database; it needs to be upgraded\n"
-          "please see README.changesets for details")
-        % filename);
+      // no manifests
+      if (have_revisions && !have_rosters)
+        // must be an upgrade that requires rosters be regenerated
+        E(false,
+          F("database %s contains revisions but no rosters\n"
+            "probably this is because an upgrade cleared the roster cache\n"
+            "run '%s db regenerate_rosters' to restore use of this database")
+          % filename % __app->prog_name);
+      else
+        // we're all good.
+        ;
     }
 }
 
@@ -648,10 +657,7 @@ database::migrate()
   check_db_exists();
   open();
 
-  bool need_regenerate_rosters;
-  migrate_monotone_schema(__sql, __app, need_regenerate_rosters);
-  if (need_regenerate_rosters)
-    regenerate_rosters(*__app);
+  migrate_monotone_schema(__sql, __app);
 
   close();
 }

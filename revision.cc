@@ -1510,6 +1510,7 @@ regenerate_rosters(app_state & app)
 {
   P(F("regenerating cached rosters"));
 
+  app.db.ensure_open_for_format_changes();
   transaction_guard guard(app.db);
 
   app.db.delete_existing_rosters();
@@ -1520,7 +1521,7 @@ regenerate_rosters(app_state & app)
   std::vector<revision_id> sorted_ids;
   toposort(ids, sorted_ids, app);
 
-  ticker done(_("regenerated"), "r");
+  ticker done(_("regenerated"), "r", 5);
   done.set_total(sorted_ids.size());
 
   for (std::vector<revision_id>::const_iterator i = sorted_ids.begin();

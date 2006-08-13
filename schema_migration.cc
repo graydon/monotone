@@ -208,14 +208,29 @@ calculate_schema_id(sqlite3 *sql, string & id)
   calculate_id(tmp2, id);
 }
 
-typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *, bool &);
+// these must be listed in order so that ones listed earlier override ones
+// listed later
+enum upgrade_regime
+  {
+    upgrade_changesetify,
+    upgrade_rosterify,
+    upgrade_regen_rosters,
+    upgrade_none, 
+  };
+
+static void
+set_regime(upgrade_regime new_regime, upgrade_regime & regime)
+{
+  regime = std::min(new_regime, regime);
+}
+
+typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *, upgrade_regime &);
 
 struct
 migrator
 {
   vector< pair<string,migrator_cb> > migration_events;
   app_state * __app;
-  bool need_regenerate_rosters;
 
   void set_app(app_state *app)
   {
@@ -241,16 +256,7 @@ migrator
 
     P(F("calculating necessary migration steps"));
 
-    // the contract for this boolean is: if it is true at the end of the
-    // migration chain, then we call regenerate_rosters() at the end.  the
-    // other option is to have individual migrators call regenerate_rosters
-    // directly as needed; but this cannot work, because all code called by
-    // migrators must remain unchanged as monotone evolves, and the roster
-    // regenerator most certainly will not (that being the point, after
-    // all).  In particular, the modern regenerate_rosters may want to write
-    // to database tables that don't exist in any particular non-modern
-    // database schema.
-    need_regenerate_rosters = false;
+    upgrade_regime regime = upgrade_none;
 
     bool migrating = false;
     for (vector< pair<string, migrator_cb> >::const_iterator i = migration_events.begin();
@@ -284,7 +290,7 @@ migrator
               }
 
             // do this migration step
-            else if (! i->second(sql, &errmsg, __app, need_regenerate_rosters))
+            else if (! i->second(sql, &errmsg, __app, regime))
               {
                 logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
                 E(false, F("migration step failed: %s")
@@ -314,6 +320,28 @@ migrator
 
         E(logged_sqlite3_exec(sql, "ANALYZE", NULL, NULL, NULL) == SQLITE_OK,
           F("error running analyze after migration"));
+
+        switch (regime)
+          {
+          case upgrade_changesetify:
+          case upgrade_rosterify:
+            {
+              string command_str = (regime == upgrade_changesetify
+                                    ? "changesetify" : "rosterify");
+              P(F("NOTE: because this database was last used by a rather old version\n"
+                  "of monotone, you're not done yet.  If you're a project leader, then\n"
+                  "see the file UPGRADE for instructions on running '%s db %s'")
+                % __app->prog_name % command_str);
+            }
+            break;
+          case upgrade_regen_rosters:
+            P(F("NOTE: this upgrade cleared the roster cache\n"
+                "you should now run '%s db regenerate_rosters'")
+              % __app->prog_name);
+            break;
+          case upgrade_none:
+            break;
+          }
       }
     else
       {
@@ -368,7 +396,7 @@ static bool
 migrate_client_merge_url_and_group(sqlite3 * sql,
                                    char ** errmsg,
                                    app_state *,
-                                   bool & need_regenerate_rosters)
+                                   upgrade_regime & regime)
 {
 
   // migrate the posting_queue table
@@ -513,7 +541,7 @@ static bool
 migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
                                            char ** errmsg,
                                            app_state *,
-                                           bool & need_regenerate_rosters)
+                                           upgrade_regime & regime)
 {
 
   // add the column to manifest_certs
@@ -678,7 +706,7 @@ static bool
 migrate_client_to_revisions(sqlite3 * sql,
                             char ** errmsg,
                             app_state *,
-                            bool & need_regenerate_rosters)
+                            upgrade_regime & regime)
 {
   int res;
 
@@ -753,6 +781,8 @@ migrate_client_to_revisions(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
+  set_regime(upgrade_changesetify, regime);
+
   return true;
 }
 
@@ -761,7 +791,7 @@ static bool
 migrate_client_to_epochs(sqlite3 * sql,
                          char ** errmsg,
                          app_state *,
-                         bool & need_regenerate_rosters)
+                         upgrade_regime & regime)
 {
   int res;
 
@@ -787,7 +817,7 @@ static bool
 migrate_client_to_vars(sqlite3 * sql,
                        char ** errmsg,
                        app_state *,
-                       bool & need_regenerate_rosters)
+                       upgrade_regime & regime)
 {
   int res;
 
@@ -809,7 +839,7 @@ static bool
 migrate_client_to_add_indexes(sqlite3 * sql,
                               char ** errmsg,
                               app_state *,
-                              bool & need_regenerate_rosters)
+                              upgrade_regime & regime)
 {
   int res;
 
@@ -850,7 +880,7 @@ static bool
 migrate_client_to_external_privkeys(sqlite3 * sql,
                                     char ** errmsg,
                                     app_state *app,
-                                    bool & need_regenerate_rosters)
+                                    upgrade_regime & regime)
 {
   int res;
   map<string, string> pub, priv;
@@ -901,7 +931,7 @@ static bool
 migrate_client_to_add_rosters(sqlite3 * sql,
                               char ** errmsg,
                               app_state *,
-                              bool & need_regenerate_rosters)
+                              upgrade_regime & regime)
 {
   int res;
 
@@ -946,6 +976,8 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
+  set_regime(upgrade_rosterify, regime);
+
   return true;
 }
 
@@ -965,9 +997,9 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 // I wish I had a form of ALTER TABLE COMMENT on sqlite3
 static bool
 migrate_files_BLOB(sqlite3 * sql,
-                                    char ** errmsg,
-                                    app_state *app,
-                   bool & need_regenerate_rosters)
+                   char ** errmsg,
+                   app_state *app,
+                   upgrade_regime & regime)
 {
   int res;
   I(sqlite3_create_function(sql, "unbase64", -1,
@@ -1083,7 +1115,7 @@ static bool
 migrate_rosters_integer_ids(sqlite3 * sql,
                             char ** errmsg,
                             app_state * app,
-                            bool & need_regenerate_rosters)
+                            upgrade_regime & regime)
 {
   int res;
   
@@ -1139,14 +1171,14 @@ migrate_rosters_integer_ids(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  need_regenerate_rosters = true;
+  set_regime(upgrade_regen_rosters, regime);
 
   return true;
 }
 
 
 void
-migrate_monotone_schema(sqlite3 *sql, app_state *app, bool & need_regenerate_rosters)
+migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
 
   migrator m;
@@ -1187,8 +1219,6 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app, bool & need_regenerate_ros
   // tests/t_migrate_schema.at for details.
 
   m.migrate(sql, "d570d2861caa6f855bd8260f25e3a964294b6cb1");
-
-  need_regenerate_rosters = m.need_regenerate_rosters;
 }
 
 // Local Variables:
