@@ -1,5 +1,14 @@
 2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* monotone.cc options.cc options.hh: Make option parsing not subject
+	to bad_any_cast. Misremembering the option type will now be caught
+	at compile time.
+	* options_list.hh options.cc options.hh: We don't need to list all
+	the options twice.
+	* Makefile.am: Adjust for new file.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Make it pass the testsuite.
 	* tests/diff_--external/__driver__.lua:
 	* tests/netsync_permissions/__driver__.lua: "--option=" is not valid

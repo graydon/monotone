@@ -313,9 +313,9 @@ cpp_main(int argc, char ** argv)
         po::variables_map vm;
         po::store(parsed, vm);
         po::notify(vm);
-        if (vm.count(option::argfile()))
+        if (option::argfile.given(vm))
           {
-            vector<string> files = vm[option::argfile()].as<vector<string> >();
+            vector<string> files = option::argfile.get(vm);
             for (vector<string>::iterator f = files.begin();
                  f != files.end(); ++f)
               {
@@ -369,74 +369,74 @@ cpp_main(int argc, char ** argv)
       po::store(parsed, vm);
       po::notify(vm);
 
-      if (vm.count(option::debug()))
+      if (option::debug.given(vm))
         {
           global_sanity.set_debug();
         }
 
-      if (vm.count(option::quiet()))
+      if (option::quiet.given(vm))
         {
           global_sanity.set_quiet();
           ui.set_tick_writer(new tick_write_nothing);
         }
 
-      if (vm.count(option::reallyquiet()))
+      if (option::reallyquiet.given(vm))
         {
           global_sanity.set_reallyquiet();
           ui.set_tick_writer(new tick_write_nothing);
         }
 
-      if (vm.count(option::nostd()))
+      if (option::nostd.given(vm))
         {
           app.set_stdhooks(false);
         }
 
-      if (vm.count(option::norc()))
+      if (option::norc.given(vm))
         {
           app.set_rcfiles(false);
         }
 
-      if (vm.count(option::verbose()))
+      if (option::verbose.given(vm))
         {
           app.set_verbose(true);
         }
 
-      if (vm.count(option::rcfile()))
+      if (option::rcfile.given(vm))
         {
-          vector<string> files = vm[option::rcfile()].as<vector<string> >();
+          vector<string> files = option::rcfile.get(vm);
           for (vector<string>::const_iterator i = files.begin();
                i != files.end(); ++i)
             app.add_rcfile(*i);
         }
 
-      if (vm.count(option::dump()))
+      if (option::dump.given(vm))
         {
-          global_sanity.filename = system_path(vm[option::dump()].as<string>()).as_external();
+          global_sanity.filename = system_path(option::dump.get(vm)).as_external();
         }
 
-      if (vm.count(option::log()))
+      if (option::log.given(vm))
         {
-          ui.redirect_log_to(system_path(vm[option::log()].as<string>()));
+          ui.redirect_log_to(system_path(option::log.get(vm)));
         }
 
-      if (vm.count(option::db_name()))
+      if (option::db_name.given(vm))
         {
-          app.set_database(system_path(vm[option::db_name()].as<string>()));
+          app.set_database(system_path(option::db_name.get(vm)));
         }
 
-      if (vm.count(option::key_dir()))
+      if (option::key_dir.given(vm))
         {
-          app.set_key_dir(system_path(vm[option::key_dir()].as<string>()));
+          app.set_key_dir(system_path(option::key_dir.get(vm)));
         }
 
-      if (vm.count(option::conf_dir()))
+      if (option::conf_dir.given(vm))
         {
-          app.set_confdir(system_path(vm[option::conf_dir()].as<string>()));
+          app.set_confdir(system_path(option::conf_dir.get(vm)));
         }
 
-      if (vm.count(option::ticker()))
+      if (option::ticker.given(vm))
         {
-          string ticker = vm[option::ticker()].as<string>();
+          string ticker = option::ticker.get(vm);
           if (ticker == "none" || global_sanity.quiet)
             ui.set_tick_writer(new tick_write_nothing);
           else if (ticker == "dot")
@@ -447,157 +447,157 @@ cpp_main(int argc, char ** argv)
             app.requested_help = true;
         }
 
-      if (vm.count(option::key_name()))
+      if (option::key_name.given(vm))
         {
-          app.set_signing_key(vm[option::key_name()].as<string>());
+          app.set_signing_key(option::key_name.get(vm));
         }
 
-      if (vm.count(option::branch_name()))
+      if (option::branch_name.given(vm))
         {
-          app.set_branch(vm[option::branch_name()].as<string>());
+          app.set_branch(option::branch_name.get(vm));
           app.set_is_explicit_option(option::branch_name());
         }
 
-      if (vm.count(option::version()))
+      if (option::version.given(vm))
         {
           print_version();
           return 0;
         }
 
-      if (vm.count(option::full_version()))
+      if (option::full_version.given(vm))
         {
           print_full_version();
           return 0;
         }
 
-      if (vm.count(option::revision()))
+      if (option::revision.given(vm))
         {
-          vector<string> revs = vm[option::revision()].as<vector<string> >();
+          vector<string> revs = option::revision.get(vm);
           for (vector<string>::const_iterator i = revs.begin();
                i != revs.end(); ++i)
             app.add_revision(*i);
         }
 
-      if (vm.count(option::message()))
+      if (option::message.given(vm))
         {
-          app.set_message(vm[option::message()].as<string>());
+          app.set_message(option::message.get(vm));
           app.set_is_explicit_option(option::message());
         }
 
-      if (vm.count(option::msgfile()))
+      if (option::msgfile.given(vm))
         {
-          app.set_message_file(vm[option::msgfile()].as<string>());
+          app.set_message_file(option::msgfile.get(vm));
           app.set_is_explicit_option(option::msgfile());
         }
 
-      if (vm.count(option::date()))
+      if (option::date.given(vm))
         {
-          app.set_date(vm[option::date()].as<string>());
+          app.set_date(option::date.get(vm));
         }
 
-      if (vm.count(option::author()))
+      if (option::author.given(vm))
         {
-          app.set_author(vm[option::author()].as<string>());
+          app.set_author(option::author.get(vm));
         }
 
-      if (vm.count(option::root()))
+      if (option::root.given(vm))
         {
-          app.set_root(system_path(vm[option::root()].as<string>()));
+          app.set_root(system_path(option::root.get(vm)));
         }
 
-      if (vm.count(option::last()))
+      if (option::last.given(vm))
         {
-          app.set_last(vm[option::last()].as<long>());
+          app.set_last(option::last.get(vm));
         }
 
-      if (vm.count(option::next()))
+      if (option::next.given(vm))
         {
-          app.set_next(vm[option::next()].as<long>());
+          app.set_next(option::next.get(vm));
         }
 
-      if (vm.count(option::depth()))
+      if (option::depth.given(vm))
         {
-          app.set_depth(vm[option::depth()].as<long>());
+          app.set_depth(option::depth.get(vm));
         }
 
-      if (vm.count(option::brief()))
+      if (option::brief.given(vm))
         {
           global_sanity.set_brief();
         }
 
-      if (vm.count(option::diffs()))
+      if (option::diffs.given(vm))
         {
           app.diffs = true;
         }
 
-      if (vm.count(option::no_merges()))
+      if (option::no_merges.given(vm))
         {
           app.no_merges = true;
         }
 
-      if (vm.count(option::set_default()))
+      if (option::set_default.given(vm))
         {
           app.set_default = true;
         }
 
-      if (vm.count(option::stdio()))
+      if (option::stdio.given(vm))
         {
           app.bind_stdio = true;
         }
 
-      if (vm.count(option::no_transport_auth()))
+      if (option::no_transport_auth.given(vm))
         {
           app.use_transport_auth = false;
         }
 
-      if (vm.count(option::exclude()))
+      if (option::exclude.given(vm))
         {
-          vector<string> excls = vm[option::exclude()].as<vector<string> >();
+          vector<string> excls = option::exclude.get(vm);
           for (vector<string>::const_iterator i = excls.begin();
                i != excls.end(); ++i)
             app.add_exclude(utf8(*i));
         }
 
-      if (vm.count(option::pidfile()))
+      if (option::pidfile.given(vm))
         {
-          app.set_pidfile(system_path(vm[option::pidfile()].as<string>()));
+          app.set_pidfile(system_path(option::pidfile.get(vm)));
         }
 
-      if (vm.count(option::unified_diff()))
+      if (option::unified_diff.given(vm))
         {
           app.set_diff_format(unified_diff);
         }
 
-      if (vm.count(option::context_diff()))
+      if (option::context_diff.given(vm))
         {
           app.set_diff_format(context_diff);
         }
 
-      if (vm.count(option::external_diff()))
+      if (option::external_diff.given(vm))
         {
           app.set_diff_format(external_diff);
         }
 
-      if (vm.count(option::external_diff_args()))
+      if (option::external_diff_args.given(vm))
         {
-          app.set_diff_args(utf8(vm[option::external_diff_args()].as<string>()));
+          app.set_diff_args(utf8(option::external_diff_args.get(vm)));
         }
 
-      if (vm.count(option::no_show_encloser()))
+      if (option::no_show_encloser.given(vm))
         {
           app.diff_show_encloser = false;
         }
 
-      if (vm.count(option::execute()))
+      if (option::execute.given(vm))
         {
 
           app.execute = true;
         }
 
-      if (vm.count(option::bind()))
+      if (option::bind.given(vm))
         {
           {
-            string arg = vm[option::bind()].as<string>();
+            string arg = option::bind.get(vm);
             string addr_part, port_part;
             size_t l_colon = arg.find(':');
             size_t r_colon = arg.rfind(':');
@@ -633,42 +633,42 @@ cpp_main(int argc, char ** argv)
           app.set_is_explicit_option(option::bind());
         }
 
-      if (vm.count(option::missing()))
+      if (option::missing.given(vm))
         {
           app.missing = true;
         }
 
-      if (vm.count(option::unknown()))
+      if (option::unknown.given(vm))
         {
           app.unknown = true;
         }
 
-      if (vm.count(option::key_to_push()))
+      if (option::key_to_push.given(vm))
         {
-          vector<string> kp = vm[option::key_to_push()].as<vector<string> >();
+          vector<string> kp = option::key_to_push.get(vm);
           for (vector<string>::const_iterator i = kp.begin();
                i != kp.end(); ++i)
             app.add_key_to_push(*i);
         }
 
-      if (vm.count(option::drop_attr()))
+      if (option::drop_attr.given(vm))
         {
-          vector<string> da = vm[option::drop_attr()].as<vector<string> >();
+          vector<string> da = option::drop_attr.get(vm);
           for (vector<string>::const_iterator i = da.begin();
                i != da.end(); ++i)
             app.attrs_to_drop.insert(*i);
         }
 
-      if (vm.count(option::no_files()))
+      if (option::no_files.given(vm))
         {
           app.no_files = true;
         }
 
-      if (vm.count(option::recursive()))
+      if (option::recursive.given(vm))
         {
           app.set_recursive();
         }
-      if (vm.count(option::help()))
+      if (option::help.given(vm))
         {
           app.requested_help = true;
         }
