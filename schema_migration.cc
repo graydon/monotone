@@ -1137,6 +1137,7 @@ migrate_rosters_integer_ids(sqlite3 * sql,
                             "\t);",
                             NULL, NULL, errmsg);
   if (res != SQLITE_OK)
+    return false;
 
   need_regenerate_rosters = true;
 
