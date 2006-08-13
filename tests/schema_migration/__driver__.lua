@@ -85,7 +85,13 @@ function check_migrate_from(id)
   check(mtn("--db="..id..".mtn", "db", "version"), 0, true, false)
   check(qgrep(id, "stdout"))
   -- migrate it
-  check(mtn("--db="..id..".mtn", "db", "migrate"), 0, false, false)
+  check(mtn("--db="..id..".mtn", "db", "migrate"), 0, false, true)
+  -- check to see if it told us to regenerate_rosters
+  if (string.find(readfile("stderr"), "regenerate_rosters") ~= nil) then
+     check(mtn("--db="..id..".mtn", "ls", "keys"), 1, false, true)
+     check(qgrep("regenerate_rosters", "stderr"))
+     check(mtn("--db="..id..".mtn", "db", "regenerate_rosters"), 0, false, false)
+  end
   check_same_db_contents(id..".mtn", "latest.mtn")
 end
 
