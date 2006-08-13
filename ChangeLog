@@ -1,3 +1,13 @@
+2006-08-12  Derek Scherger  <derek@echologic.com>
+
+	* cmd_list.cc (ls_unknown_or_ignored): 
+	* cmd_ws_commit.cc (add): use args as roots to start the tree walk
+	for unknown files rather than walking from the workspace root
+	* work.{cc,hh} (find_unknown_and_ignored): walk tree from the
+	specified roots rather than the workspace root. this can make
+	restricted ls unknown *much* faster in a workspace with large
+	unversioned directories.
+
 2006-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: Add a check for g++ 4.0/4.0.1 std::tr1 hashtable
