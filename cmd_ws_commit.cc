@@ -230,9 +230,15 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   path_set paths;
   if (app.unknown)
     {
-      path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
+      vector<file_path> roots = args_to_paths(args);
+      path_restriction mask(roots, args_to_paths(app.exclude_patterns), app);
       path_set ignored;
-      find_unknown_and_ignored(app, mask, paths, ignored);
+
+      // if no starting paths have been specified use the workspace root
+      if (roots.empty())
+        roots.push_back(file_path());
+
+      find_unknown_and_ignored(app, mask, roots, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
