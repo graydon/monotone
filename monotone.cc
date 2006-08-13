@@ -668,9 +668,15 @@ cpp_main(int argc, char ** argv)
         {
           app.set_recursive();
         }
+
       if (option::help.given(vm))
         {
           app.requested_help = true;
+        }
+
+      if (option::automate_stdio_size.given(vm))
+        {
+          app.set_automate_stdio_size(option::automate_stdio_size.get(vm));
         }
 
       // stop here if they asked for help

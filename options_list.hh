@@ -20,6 +20,7 @@ GOPT(key_dir, "keydir", string, gettext_noop("set location of key store"));
 GOPT(conf_dir, "confdir", string, gettext_noop("set location of configuration directory"));
 
 COPT(author, "author", string, gettext_noop("override author for commit"));
+COPT(automate_stdio_size, "automate-stdio-size", long, gettext_noop("block size in bytes for \"automate stdio\" output"));
 COPT(bind, "bind", string, gettext_noop("address:port to listen on (default :4691)"));
 COPT(branch_name, "branch,b", string, gettext_noop("select branch cert for operation"));
 COPT(brief, "brief", nil, gettext_noop("print a brief version of the normal output"));
