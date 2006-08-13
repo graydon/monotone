@@ -1901,6 +1901,7 @@ database::delete_existing_rosters()
   execute(query("DELETE FROM roster_deltas"));
   execute(query("DELETE FROM revision_roster"));
   execute(query("DELETE FROM next_roster_number"));
+  execute(query("DELETE FROM next_roster_node_number"));
 }
 
 /// Deletes one revision from the local database.
@@ -1914,7 +1915,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   I(revision_exists(rid));
   set<revision_id> children;
   get_revision_children(rid, children);
-  I(!children.size());
+  I(children.empty());
 
 
   L(FL("Killing revision %s locally") % rid);

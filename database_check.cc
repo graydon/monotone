@@ -217,8 +217,9 @@ check_rosters_manifest(app_state & app,
   I(checked_rosters.size() == rosters.size());
 }
 
-// second phase of roster checking. examine the marking of a roster, checking
+// Second phase of roster checking. examine the marking of a roster, checking
 // that the referenced revisions exist.
+// This function assumes that check_revisions has been called!
 static void
 check_rosters_marking(app_state & app,
               map<database::roster_id, checked_roster> & checked_rosters,
@@ -235,6 +236,12 @@ check_rosters_marking(app_state & app,
       L(FL("checking roster %s") % i->first);
       if (!i->second.parseable)
           continue;
+
+      // skip marking check on unreferenced rosters -- they're left by
+      // kill_rev_locally, and not expected to have everything they
+      // reference existing
+      if (!i->second.revision_refs)
+        continue;
 
       roster_data dat;
       app.db.get_roster_version(ros_id, dat);
