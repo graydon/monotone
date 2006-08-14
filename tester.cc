@@ -650,14 +650,9 @@ int main(int argc, char **argv)
       fprintf(stderr, "\tregex      run tests with matching names\n");
       return 1;
     }
-  lua_State *st = lua_open();
+  lua_State *st = luaL_newstate();
   lua_atpanic (st, &panic_thrower);
-  luaopen_base(st);
-  luaopen_io(st);
-  luaopen_string(st);
-  luaopen_math(st);
-  luaopen_table(st);
-  luaopen_debug(st);
+  luaL_openlibs(st);
   add_functions(st);
   lua_register(st, "go_to_test_dir", go_to_test_dir);
   lua_register(st, "get_source_dir", get_source_dir);

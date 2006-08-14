@@ -46,9 +46,9 @@ if existsonpath("sort") then
   check({"sort"}, 0, readfile("stdout-orig"), false, true)
 end
 
-for i,x in {{true, false, false},
-            {true, true, false},
-            {true, true, true}} do
+for i,x in pairs({{true, false, false},
+                  {true, true, false},
+                  {true, true, true}}) do
   remove("_MTN")
   remove("file1")
   remove("file2")

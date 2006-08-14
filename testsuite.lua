@@ -26,7 +26,7 @@ function getpathof(exe, ext)
   end
   local now = initial_dir.."/"..exe..ext
   if exists(now) then return gotit(now) end
-  for x in string.gfind(path, "[^"..char.."]*"..char) do
+  for x in string.gmatch(path, "[^"..char.."]*"..char) do
     local dir = string.sub(x, 0, -2)
     if string.find(dir, "[\\/]$") then
       dir = string.sub(dir, 0, -2)

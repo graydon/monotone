@@ -1,3 +1,16 @@
+2006-08-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua/*, Makefile.am: Import Lua 5.1.1 plus fixes for the two
+	5.1.1 bugs listed on the Lua website.
+	* tests/(normal)_netsync_revision_with_no_certs,
+	tests/_MTN_case-folding_security_patch, tests/common/netsync.lua,
+	tests/db_check_and_non-serious_errors,
+	tests/exchanging_work_via_netsync,
+	tests/tags_and_tagging_of_revisions, testsuite.lua, std_hooks.lua:
+	Syntax tweaks and cleanups for Lua 5.1.1.
+	* lua_hooks.cc, tester.cc: Migrate to Lua 5.1 API.
+	* lua.cc: Slightly cleaner FILE* handling.
+
 2006-07-26  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* std_hooks.lua (temp_file): Allow callers to pass a filename hint
@@ -18016,4 +18029,3 @@
 2003-04-06  Graydon Hoare  <graydon@pobox.com>
 
 	* initial release.
-
