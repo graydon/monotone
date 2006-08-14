@@ -308,6 +308,8 @@ cpp_main(int argc, char ** argv)
       // Check the command line for -@/--xargs
       {
         po::parsed_options parsed = po::command_line_parser(args)
+          .style(po::command_line_style::default_style &
+                 ~po::command_line_style::allow_guessing)
           .options(all_options)
           .run();
         po::variables_map vm;
@@ -333,6 +335,8 @@ cpp_main(int argc, char ** argv)
       }
 
       po::parsed_options parsed = po::command_line_parser(args)
+        .style(po::command_line_style::default_style &
+               ~po::command_line_style::allow_guessing)
         .options(all_options)
         .positional(all_positional_args)
         .run();
@@ -364,6 +368,8 @@ cpp_main(int argc, char ** argv)
 
       // reparse arguments using specific options.
       parsed = po::command_line_parser(args)
+        .style(po::command_line_style::default_style &
+               ~po::command_line_style::allow_guessing)
         .options(all_for_this_cmd)
         .run();
       po::store(parsed, vm);

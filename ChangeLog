@@ -9,6 +9,15 @@
 
 	* po/sv.po: Clear a few fuzzies.
 
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: Boost has buggy option completion. Disable guessing of
+	partial options, such as --hel for --help.
+
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* testsuite.lua: Dump "mtn --full-version" output to the logfile.
+
 2006-08-13  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* cmd_automate.cc monotone.cc options_list.hh: Put back the
