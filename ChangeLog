@@ -1,3 +1,9 @@
+2006-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.7.
+	* Makefile.am: Disable new SQLite loadable extensions for now since
+	we don't use it.
+
 2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* monotone.cc: Boost has buggy option completion. Disable guessing of
