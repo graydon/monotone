@@ -751,6 +751,14 @@ roster_t::apply_delta(split_path const & pth,
   f->content = new_id;
 }
 
+void
+roster_t::set_delta(node_id nid, file_id const & new_id)
+{
+  file_t f = downcast_to_file_t(get_node(nid));
+  I(!(f->content == new_id));
+  f->content = new_id;
+}
+
 
 void
 roster_t::clear_attr(split_path const & pth,
@@ -759,6 +767,13 @@ roster_t::clear_attr(split_path const & pth,
   set_attr(pth, name, make_pair(false, attr_value()));
 }
 
+void
+roster_t::erase_attr(node_id nid,
+                     attr_key const & name)
+{
+  node_t n = get_node(nid);
+  safe_erase(n->attrs, name);
+}
 
 void
 roster_t::set_attr(split_path const & pth,
@@ -774,8 +789,16 @@ roster_t::set_attr(split_path const & pth,
                    attr_key const & name,
                    pair<bool, attr_value> const & val)
 {
+  set_attr(get_node(pth)->self, name, val);
+}
+
+void
+roster_t::set_attr(node_id nid,
+                   attr_key const & name,
+                   pair<bool, attr_value> const & val)
+{
+  node_t n = get_node(nid);
   I(val.first || val.second().empty());
-  node_t n = get_node(pth);
   I(!null_node(n->self));
   full_attr_map_t::iterator i = n->attrs.find(name);
   if (i == n->attrs.end())

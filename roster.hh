@@ -204,7 +204,7 @@ public:
                  file_id const & new_id);
   void clear_attr(split_path const & pth,
                   attr_key const & name);
-  void clear_attr(node_id nid,
+  void erase_attr(node_id nid,
                   attr_key const & name);
   void set_attr(split_path const & pth,
                 attr_key const & name,
