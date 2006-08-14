@@ -178,8 +178,127 @@ make_roster_delta(roster_t const & from, marking_map const & from_markings,
   }
 }
 
+namespace
+{
+  namespace syms
+  {
+    symbol const deleted("deleted");
+    symbol const rename("rename");
+    symbol const add_dir("add_dir");
+    symbol const add_file("add_file");
+    symbol const delta("delta");
+    symbol const attr_cleared("attr_cleared");
+    symbol const attr_changed("attr_changed");
+    symbol const marking("marking");
+    
+    symbol const content("content");
+    symbol const location("location");
+    symbol const attr("attr");
+    symbol const value("value");
+  }
+}
+
+static node_id
+parse_nid(basic_io::parser & parser)
+{
+  std::string s;
+  parser.str(s);
+  return lexical_cast<node_id>(s);
+}
+
+static 
+parse_loc(basic_io::parser & parser,
+          std::pair<node_id, path_component> & loc)
+{
+  loc.first = parse_nid(parser);
+  std::string name;
+  parser.str(name);
+  loc.second = path_component(name);
+}
 
 void
 parse_roster_delta(basic_io::parser & parser, roster_delta & d)
 {
+  string t1, t2;
+  MM(t1);
+  MM(t2);
+  
+  while (parser.symp(syms::deleted))
+    {
+      parser.sym();
+      safe_insert(d.nodes_deleted(parse_nid(parser)));
+    }
+  while (parser.symp(syms::rename))
+    {
+      parser.sym();
+      node_id nid = parse_nid(parser);
+      parser.esym(syms::location);
+      std::pair<node_id, path_component> loc;
+      parse_loc(parser, loc);
+      safe_insert(d.nodes_renamed, std::make_pair(nid, loc));
+    }
+  while (parser.symp(syms::add_dir))
+    {
+      parser.sym();
+      node_id nid = parse_nid(parser);
+      parser.esym(sysm::location);
+      std::pair<node_id, path_component> loc;
+      parse_loc(parser, loc);
+      safe_insert(d.dirs_added, std::make_pair(loc, nid));
+    }
+  while (parser.symp(syms::add_file))
+    {
+      parser.sym();
+      node_id nid = parse_nid(parser);
+      parser.esym(sysm::location);
+      std::pair<node_id, path_component> loc;
+      parse_loc(parser, loc);
+      safe_insert(d.dirs_added, std::make_pair(loc, nid));
+      parser.esym(syms::content);
+      string s;
+      parser.hex(s);
+      safe_insert(d.files_added,
+                  std::make_pair(loc, std::make_pair(nid, file_id(s))));
+    }
+  while (parser.symp(syms::delta))
+    {
+      parser.sym();
+      node_id nid = parse_nid(parser);
+      parser.esym(syms::content);
+      string s;
+      parser.hex(s);
+      safe_insert(d.deltas_applied, std::make_pair(nid, file_id(s)));
+    }
+  while (parser.symp(syms::attr_cleared))
+    {
+      node_id nid = parse_nid(parser);
+      parser.esym(syms::attr);
+      string key;
+      parser.str(key);
+      safe_insert(d.attrs_cleared, std::make_pair(nid, attr_key(key)));
+    }
+  while (parser.symp(syms::attr_changed))
+    {
+      node_id nid = parse_nid(parser);
+      parser.esym(syms::attr);
+      string key;
+      parser.str(key);
+      parser.esym(syms::value);
+      string value_bool, value_value;
+      parser.str(value_bool);
+      parser.str(value_value);
+      safe_insert(d.attrs_changed,
+                  std::make_pair(nid,
+                                 std::make_pair(attr_key(key),
+                                                std::make_pair(std::lexical_cast<bool>(value_bool),
+                                                               attr_value(value_value)))));
+    }
+  while (parser.symp(syms::marking))
+    {
+      parser.sym();
+      node_id nid = parse_nid(parser);
+      marking_t m;
+      parse_marking(parser, m);
+      safe_insert(d.markings_changed, std::make_pair(nid, m));
+    }
 }
