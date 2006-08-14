@@ -85,10 +85,10 @@ delta_in_both(node_t old_n, node_t new_n, roster_delta & d)
     }
   // attrs?
   {
-    parallel_iter<full_attr_map_t> i(old_n->attrs(), new_n->attrs());
+    parallel::iter<full_attr_map_t> i(old_n->attrs(), new_n->attrs());
+    MM(i);
     while (i.next())
       {
-        MM(i);
         switch (i.state())
           {
           case parallel::invalid:
@@ -108,6 +108,7 @@ delta_in_both(node_t old_n, node_t new_n, roster_delta & d)
             break;
           }
       }
+  }
 }
 
 void
@@ -120,30 +121,65 @@ make_roster_delta(roster_t const & from, marking_map const & from_markings,
   MM(to);
   MM(to_markings);
   MM(d);
-  parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
-  while (i.next())
-    {
-      MM(i);
-      switch (i.state())
-        {
-        case parallel::invalid:
-          I(false);
+  {
+    parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
+    MM(i);
+    while (i.next())
+      {
+        switch (i.state())
+          {
+          case parallel::invalid:
+            I(false);
+            
+          case parallel::in_left:
+            // deleted
+            safe_insert(d.nodes_deleted, i.left_key());
+            break;
+            
+          case parallel::in_right:
+            // added
+            delta_only_in_to(i.right_data(), d);
+            break;
+            
+          case parallel::in_both:
+            // moved/patched/attribute changes
+            delta_in_both(i.left_data(), i.right_data(), d);
+            break;
+          }
+      }
+  }
+  {
+    parallel::iter<marking_map> i(from_markings, to_markings);
+    MM(i);
+    while (i.next())
+      {
+        switch (i.state())
+          {
+          case parallel::invalid:
+            I(false);
+            
+          case parallel::in_left:
+            // deleted; don't need to do anything (will be handled by
+            // nodes_deleted set
+            break;
+            
+          case parallel::in_right:
+            // added
+            safe_insert(d.markings_changed, i.right_value());
+            break;
+            
+          case parallel::in_both:
+            // maybe changed
+            if (i.left_data() != i.right_data())
+              safe_insert(d.markings_changed, i.right_value());
+            break;
+          }
+      }
+  }
+}
 
-        case parallel::in_left:
-          // deleted
-          safe_insert(d.nodes_deleted, i.left_key());
-          break;
 
-        case parallel::in_right:
-          // added
-          delta_only_in_to(i.right_data(), d);
-          break;
-
-        case parallel::in_both:
-          // moved/patched/attribute changes
-          delta_in_both(i.left_data(), i.right_data(), d);
-          break;
-        }
-    }
-  
+void
+parse_roster_delta(basic_io::parser & parser, roster_delta & d)
+{
 }

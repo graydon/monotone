@@ -38,3 +38,5 @@ make_roster_delta(roster_t const & from, marking_map const & from_markings,
                   roster_t const & to, marking_map const & to_markings,
                   roster_delta & d);
 
+void
+parse_roster_delta(basic_io::parser & parser, roster_delta & d);
