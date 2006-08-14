@@ -155,6 +155,19 @@ AC_DEFUN([BOOST_LIB_IFELSE],
 # Checks for specific boost libraries.
 # These are named MTN_BOOST_* because their actions are monotone-specific.
 
+AC_DEFUN([MTN_BOOST_LIB_PROGRAM_OPTIONS],
+[BOOST_LIB_IFELSE([program_options],
+  [AC_LANG_PROGRAM([[
+      #include <boost/program_options.hpp>
+      using namespace boost::program_options;
+    ]],[[
+      options_description od("foo"); od.add_options()("test", "a test option");
+    ]])],
+    [BOOSTLIBS="$lib $BOOSTLIBS"],
+    [AC_MSG_FAILURE([the boost_program_options library is required])])
+ AC_SUBST(BOOSTLIBS)
+])
+
 AC_DEFUN([MTN_BOOST_LIB_FILESYSTEM],
 [BOOST_LIB_IFELSE([filesystem],
   [AC_LANG_PROGRAM([[
