@@ -25,6 +25,9 @@ void prefix_lines_with(std::string const & prefix,
                        std::string const & lines,
                        std::string & out);
 
+// append after removing all whitespace
+void append_without_ws(std::string & appendto, std::string const & s);
+
 // remove all whitespace
 std::string remove_ws(std::string const & s);
 

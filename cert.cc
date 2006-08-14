@@ -340,11 +340,19 @@ cert_signable_text(cert const & t,
 void
 cert_hash_code(cert const & t, hexenc<id> & out)
 {
-  string tmp(t.ident()
-             + ":" + t.name()
-             + ":" + remove_ws(t.value())
-             + ":" + t.key()
-             + ":" + remove_ws(t.sig()));
+  string tmp;
+  tmp.reserve(4+t.ident().size() + t.name().size() + t.value().size() +
+              t.key().size() + t.sig().size());
+  tmp.append(t.ident());
+  tmp += ':';
+  tmp.append(t.name());
+  tmp += ':';
+  append_without_ws(tmp,t.value());
+  tmp += ':';
+  tmp.append(t.key());
+  tmp += ':';
+  append_without_ws(tmp,t.sig());
+
   data tdat(tmp);
   calculate_ident(tdat, out);
 }
