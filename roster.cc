@@ -628,7 +628,6 @@ roster_t::detach_node(split_path const & pth)
   return nid;
 }
 
-
 void
 roster_t::drop_detached_node(node_id nid)
 {

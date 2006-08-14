@@ -1,16 +1,22 @@
 #include <set>
 #include <map>
 
+#include <boost/lexical_cast.hpp>
+
+#include "safe_map.hh"
+#include "parallel_iter.hh"
 #include "roster_delta.hh"
 #include "basic_io.hh"
 #include "paths.hh"
+
+using boost::lexical_cast;
 
 namespace 
 {
 
   struct roster_delta_t
   {
-    typedef std::map<node_id> nodes_deleted_t;
+    typedef std::set<node_id> nodes_deleted_t;
     nodes_deleted_t nodes_deleted;
     typedef std::map<std::pair<node_id, path_component>, node_id> dirs_added_t;
     dirs_added_t dirs_added;
@@ -22,7 +28,7 @@ namespace
     deltas_applied_t deltas_applied;
     typedef std::set<std::pair<node_id, attr_key> > attrs_cleared_t;
     attrs_cleared_t attrs_cleared;
-    typedef std::set<std::pair<node_id, std::pair<attr_key, std::pair<bool, attr_value> > > attrs_changed_t;
+    typedef std::set<std::pair<node_id, std::pair<attr_key, std::pair<bool, attr_value> > > > attrs_changed_t;
     attrs_changed_t attrs_changed;
 
     // nodes_deleted are automatically removed from the marking_map; these are
@@ -35,13 +41,21 @@ namespace
   };
 
   void
+  detach(node_id nid, roster_t & roster)
+  {
+    split_path sp;
+    roster.get_name(nid, sp);
+    I(nid == roster.detach_node(sp));
+  }
+
+  void
   roster_delta_t::apply(roster_t & roster, marking_map & markings) const
   {
     // detach everything that should be detached
-    for (nodes_deleted_t i = nodes_deleted.begin(); i != nodes_deleted.end(); ++i)
-      roster.detach_node(*i);
+    for (nodes_deleted_t::const_iterator i = nodes_deleted.begin(); i != nodes_deleted.end(); ++i)
+      detach(*i, roster);
     for (nodes_renamed_t::const_iterator i = nodes_renamed.begin(); i != nodes_renamed.end(); ++i)
-      roster.detach_node(i->first);
+      detach(i->first, roster);
     // delete the delete-able things
     for (nodes_deleted_t::const_iterator i = nodes_deleted.begin(); i != nodes_deleted.end(); ++i)
       roster.drop_detached_node(*i);
@@ -54,7 +68,7 @@ namespace
     for (dirs_added_t::const_iterator i = dirs_added.begin(); i != dirs_added.end(); ++i)
       roster.attach_node(i->second, i->first.first, i->first.second);
     for (files_added_t::const_iterator i = files_added.begin(); i != files_added.end(); ++i)
-      roster.attach_node(i->second.second, i->first.first, i->first.second);
+      roster.attach_node(i->second.first, i->first.first, i->first.second);
     for (nodes_renamed_t::const_iterator i = nodes_renamed.begin(); i != nodes_renamed.end(); ++i)
       roster.attach_node(i->first, i->second.first, i->second.second);
 
@@ -63,7 +77,7 @@ namespace
     for (deltas_applied_t::const_iterator i = deltas_applied.begin(); i != deltas_applied.end(); ++i)
       roster.set_delta(i->first, i->second);
     for (attrs_cleared_t::const_iterator i = attrs_cleared.begin(); i != attrs_cleared.end(); ++i)
-      roster._attr(i->first, i->second.first, i->second.second);
+      roster.erase_attr(i->first, i->second);
     for (attrs_changed_t::const_iterator i = attrs_changed.begin(); i != attrs_changed.end(); ++i)
       roster.set_attr(i->first, i->second.first, i->second.second);
 
@@ -74,7 +88,7 @@ namespace
       {
         marking_map::iterator j = markings.find(i->first);
         I(j != markings.end());
-        (*j) = i->second;
+        j->second = i->second;
       }
   }
 
@@ -114,12 +128,12 @@ namespace
       {
         file_id const & old_content = downcast_to_file_t(old_n)->content;
         file_id const & new_content = downcast_to_file_t(new_n)->content;
-        if (old_content != new_content)
+        if (!(old_content == new_content))
           safe_insert(d.deltas_applied, std::make_pair(nid, new_content));
       }
     // attrs?
     {
-      parallel::iter<full_attr_map_t> i(old_n->attrs(), new_n->attrs());
+      parallel::iter<full_attr_map_t> i(old_n->attrs, new_n->attrs);
       MM(i);
       while (i.next())
         {
@@ -204,7 +218,7 @@ namespace
             
             case parallel::in_both:
               // maybe changed
-              if (i.left_data() != i.right_data())
+              if (!(i.left_data() == i.right_data()))
                 safe_insert(d.markings_changed, i.right_value());
               break;
             }
@@ -339,7 +353,7 @@ namespace
     while (parser.symp(syms::deleted))
       {
         parser.sym();
-        safe_insert(d.nodes_deleted(parse_nid(parser)));
+        safe_insert(d.nodes_deleted, parse_nid(parser));
       }
     while (parser.symp(syms::rename))
       {

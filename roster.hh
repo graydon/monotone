@@ -14,6 +14,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "basic_io.hh"
 #include "cset.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
