@@ -198,6 +198,86 @@ namespace
   }
 }
 
+static void
+push_nid(symbol const & sym, node_id nid, basic_io::stanza & st)
+{
+  st.push_str_pair(sym, lexical_cast<std::string>(nid));
+}
+
+static void
+push_loc(std::pair<node_id, path_component> const & loc,
+         basic_io::stanza & st)
+{
+  st.push_str_triple(syms::location,
+                     lexical_cast<std::string>(loc.first),
+                     loc.second());
+}
+
+void
+print_roster_delta(basic_io::printer & printer,
+                   basic_delta & d)
+{
+  for (nodes_deleted_t i = d.nodes_deleted.begin(); i != d.nodes_deleted.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::deleted, *i, st);
+      printer.print_stanza(st);
+    }
+  for (nodes_renamed_t::const_iterator i = d.nodes_renamed.begin(); i != d.nodes_renamed.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::rename, i->first, st);
+      push_loc(i->second, st);
+      printer.print_stanza(st);
+    }
+  for (dirs_added_t::const_iterator i = d.dirs_added.begin(); i != d.dirs_added.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::add_dir, i->second, st);
+      push_loc(i->first, st);
+      printer.print_stanza(st);
+    }
+  for (files_added_t::const_iterator i = d.files_added.begin(); i != d.files_added.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::add_file, i->second.first, st);
+      push_loc(i->first, st);
+      push_hex_pair(syms::content, i->second.second, st);
+      printer.print_stanza(st);
+    }
+  for (deltas_applied_t::const_iterator i = d.deltas_applied.begin(); i != d.deltas_applied.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::delta, i->first, st);
+      st.push_hex_pair(syms::content, i->second);
+      printer.print_stanza(st);
+    }
+  for (attrs_cleared_t::const_iterator i = d.attrs_cleared.begin(); i != d.attrs_cleared.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::attr_cleared, i->first, st);
+      st.push_str_pair(syms::atr, i->second());
+      printer.print_stanza(st);
+    }
+  for (attrs_changed_t::const_iterator i = d.attrs_changed.begin(); i != d.attrs_changed.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::attr_changed, i->first, st);
+      st.push_str_pair(syms::atr, i->second.first());
+      st.push_str_triple(syms::value,
+                         lexical_cast<std::string>(i->second.second.first),
+                         i->second.second.second());
+      printer.print_stanza(st);
+    }
+  for (markings_changed_t::const_iterator i = d.markings_changed.begin(); i != d.markings_changed.end(); ++i)
+    {
+      basic_io::stanza st;
+      push_nid(syms::marking, i->first, st);
+      print_marking(i->second, st);
+      printer.print_stanza(st);
+    }
+}
+
 static node_id
 parse_nid(basic_io::parser & parser)
 {
@@ -210,6 +290,7 @@ static
 parse_loc(basic_io::parser & parser,
           std::pair<node_id, path_component> & loc)
 {
+  parser.esym(syms::location);
   loc.first = parse_nid(parser);
   std::string name;
   parser.str(name);
@@ -232,7 +313,6 @@ parse_roster_delta(basic_io::parser & parser, roster_delta & d)
     {
       parser.sym();
       node_id nid = parse_nid(parser);
-      parser.esym(syms::location);
       std::pair<node_id, path_component> loc;
       parse_loc(parser, loc);
       safe_insert(d.nodes_renamed, std::make_pair(nid, loc));
@@ -241,7 +321,6 @@ parse_roster_delta(basic_io::parser & parser, roster_delta & d)
     {
       parser.sym();
       node_id nid = parse_nid(parser);
-      parser.esym(sysm::location);
       std::pair<node_id, path_component> loc;
       parse_loc(parser, loc);
       safe_insert(d.dirs_added, std::make_pair(loc, nid));
@@ -250,7 +329,6 @@ parse_roster_delta(basic_io::parser & parser, roster_delta & d)
     {
       parser.sym();
       node_id nid = parse_nid(parser);
-      parser.esym(sysm::location);
       std::pair<node_id, path_component> loc;
       parse_loc(parser, loc);
       safe_insert(d.dirs_added, std::make_pair(loc, nid));
