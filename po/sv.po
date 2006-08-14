@@ -2420,7 +2420,7 @@ msgstr "lös filnamnskonflikterna och försök igen."
 #: merge.cc:111
 #, c-format
 msgid "merge failed due to unresolved conflicts\n"
-msgstr "ihopslagningen misslyckades på grund av olösta konflikter."
+msgstr "ihopslagningen misslyckades på grund av olösta konflikter.\n"
 
 #: merkle_tree.cc:290
 #, c-format

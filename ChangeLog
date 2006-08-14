@@ -7,6 +7,7 @@
 	* options.cc, options.hh:
 	GOPT and COPT macros used <ARGUMENT>, what has been expanded to
 	<vector<string>> at times. sunpro parses that as <vector<string >>
+	* po/sv.po: a newline was missing
 
 2006-08-14  Richard Levitte  <richard@levitte.org>
 
