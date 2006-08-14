@@ -200,12 +200,19 @@ public:
   void apply_delta(split_path const & pth,
                    file_id const & old_id,
                    file_id const & new_id);
+  void set_delta(node_id nid,
+                 file_id const & new_id);
   void clear_attr(split_path const & pth,
+                  attr_key const & name);
+  void clear_attr(node_id nid,
                   attr_key const & name);
   void set_attr(split_path const & pth,
                 attr_key const & name,
                 attr_value const & val);
   void set_attr(split_path const & pth,
+                attr_key const & name,
+                std::pair<bool, attr_value> const & val);
+  void set_attr(node_id nid,
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
 
