@@ -2395,9 +2395,9 @@ roster_t::extract_path_set(path_set & paths) const
 //   I/O routines
 ////////////////////////////////////////////////////////////////////
 
-static void
+void
 push_marking(basic_io::stanza & st,
-             node_t curr,
+             bool is_file,
              marking_t const & mark)
 {
 
@@ -2408,7 +2408,7 @@ push_marking(basic_io::stanza & st,
        i != mark.parent_name.end(); ++i)
     st.push_hex_pair(basic_io::syms::path_mark, i->inner());
 
-  if (is_file_t(curr))
+  if (is_file)
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
@@ -2431,7 +2431,6 @@ push_marking(basic_io::stanza & st,
 
 void
 parse_marking(basic_io::parser & pa,
-              node_t n,
               marking_t & marking)
 {
   while (pa.symp())
@@ -2462,7 +2461,6 @@ parse_marking(basic_io::parser & pa,
           pa.str(k);
           pa.hex(rev);
           attr_key key = attr_key(k);
-          I(n->attrs.find(key) != n->attrs.end());
           safe_insert(marking.attrs[key], revision_id(rev));
         }
       else break;
@@ -2539,7 +2537,7 @@ roster_t::print_to(basic_io::printer & pr,
 
           marking_map::const_iterator m = mm.find(curr->self);
           I(m != mm.end());
-          push_marking(st, curr, m->second);
+          push_marking(st, is_file_t(curr), m->second);
         }
 
       pr.print_stanza(st);
@@ -2654,7 +2652,7 @@ roster_t::parse_from(basic_io::parser & pa,
 
       {
         marking_t & m(safe_insert(mm, make_pair(n->self, marking_t()))->second);
-        parse_marking(pa, n, m);
+        parse_marking(pa, m);
       }
     }
 }

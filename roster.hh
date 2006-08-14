@@ -421,6 +421,11 @@ write_manifest_of_roster(roster_t const & ros,
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident);
 
+// for roster_delta
+void push_marking(basic_io::stanza & st, bool is_file, marking_t const & mark);
+void parse_marking(basic_io::parser & pa, marking_t & marking);
+
+
 #ifdef BUILD_UNIT_TESTS
 
 struct testing_node_id_source

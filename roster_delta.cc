@@ -304,7 +304,8 @@ namespace
       {
         basic_io::stanza st;
         push_nid(syms::marking, i->first, st);
-        print_marking(i->second, st);
+        // ...this second argument is a bit odd...
+        push_marking(st, !i->second.file_content.empty(), i->second);
         printer.print_stanza(st);
       }
   }
