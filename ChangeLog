@@ -1,3 +1,13 @@
+2006-08-14  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* luaext_mkstemp.cc, luaext_platform.cc, tester.cc:
+	Add includes and using std::* statements
+	* mtn-sanity.cc, tester.cc:
+	use slightly more compatible syntax for static reference initialization
+	* options.cc, options.hh:
+	GOPT and COPT macros used <ARGUMENT>, what has been expanded to
+	<vector<string>> at times. sunpro parses that as <vector<string >>
+
 2006-08-14  Richard Levitte  <richard@levitte.org>
 
 	* po/POTFILES.in: Add merge.cc and merge.hh.

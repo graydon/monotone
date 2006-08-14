@@ -3,8 +3,10 @@
 #include "mkstemp.hh"
 
 #include <errno.h>
+#include <cstring>
 
 using std::string;
+using std::strerror;
 
 LUAEXT(mkstemp, )
 {
