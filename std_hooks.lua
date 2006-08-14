@@ -362,7 +362,7 @@ mergers.tortoise = {
             io.write(string.format(gettext("Error running merger '%s'\n"), path))
             return false
          end
-         return outfile
+         return tbl.outfile
       end
    end ,
    available = function() return program_exists_in_path ("TortoiseMerge") end
@@ -388,7 +388,7 @@ mergers.vim = {
          io.write(string.format(gettext("Error running merger '%s'\n"), vim))
          return false
       end
-      return outfile
+      return tbl.outfile
    end ,
    available = function ()
       local editor = os.getenv("EDITOR")
@@ -406,7 +406,7 @@ mergers.rcsmerge = {
       local merge = os.getenv("MTN_RCSMERGE")
       if execute(merge, tbl.lfile, tbl.afile, tbl.rfile) == 0 then
          copy_text_file(tbl.lfile, tbl.outfile);
-         return outfile
+         return tbl.outfile
       end
       local ret = execute(vim, "-f", "-c", string.format("file %s", tbl.outfile),
                           lfile)
@@ -435,7 +435,7 @@ mergers.emacs = {
          io.write(string.format(gettext("Error running merger '%s'\n"), emacs))
          return false
       end
-      return outfile
+      return tbl.outfile
    end,
    available = function ()
       local editor = os.getenv("EDITOR")
@@ -459,7 +459,7 @@ mergers.xxdiff = {
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
          return false
       end
-      return outfile
+      return tbl.outfile
    end,
    available = function () return program_exists_in_path("xxdiff") end
 }
@@ -478,7 +478,7 @@ mergers.kdiff3 = {
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
          return false
       end
-      return outfile
+      return tbl.outfile
    end,
    available = function () return program_exists_in_path("kdiff3") end
 }
@@ -495,7 +495,7 @@ mergers.opendiff = {
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
          return false
       end
-      return outfile
+      return tbl.outfile
    end,
    available = function () return program_exists_in_path("opendiff") end
 }
@@ -590,7 +590,7 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
          if not ret then
             ret = nil
          else
-            ret = read_contents_of_file (res, "r")
+            ret = read_contents_of_file (ret, "r")
             if string.len (ret) == 0 
             then 
                ret = nil 

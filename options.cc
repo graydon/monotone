@@ -109,9 +109,9 @@ namespace option
   // cleaner way to do the same thing?
 
   // global options
-#define GOPT(NAME, OPT, TYPE, DESC) global<TYPE> NAME(new option_description(OPT, value<TYPE>()(), DESC))
+#define GOPT(NAME, OPT, TYPE, DESC) global<TYPE > NAME(new option_description(OPT, value<TYPE >()(), DESC))
   // command-specific options
-#define COPT(NAME, OPT, TYPE, DESC) specific<TYPE> NAME(new option_description(OPT, value<TYPE>()(), DESC))
+#define COPT(NAME, OPT, TYPE, DESC) specific<TYPE > NAME(new option_description(OPT, value<TYPE >()(), DESC))
 #include "options_list.hh"
 #undef OPT
 #undef COPT

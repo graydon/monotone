@@ -72,9 +72,9 @@ namespace option
   extern no_option none;
 
   // global options
-#define GOPT(NAME, OPT, TYPE, DESC) extern global<TYPE> NAME;
+#define GOPT(NAME, OPT, TYPE, DESC) extern global<TYPE > NAME;
   // command-specific options
-#define COPT(NAME, OPT, TYPE, DESC) extern specific<TYPE> NAME;
+#define COPT(NAME, OPT, TYPE, DESC) extern specific<TYPE > NAME;
 #include "options_list.hh"
 #undef OPT
 #undef COPT

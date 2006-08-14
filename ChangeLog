@@ -4,6 +4,45 @@
 	* Makefile.am: Disable new SQLite loadable extensions for now since
 	we don't use it.
 
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (mergers): All the functions in this table
+	returned `outfile' (which is unknown) instead of `tbl.outfile'.
+	(merge3): Incorrect variable `res' used instead of `ret'.
+
+2006-08-14  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* luaext_mkstemp.cc, luaext_platform.cc, tester.cc:
+	Add includes and using std::* statements
+	* mtn-sanity.cc, tester.cc:
+	use slightly more compatible syntax for static reference initialization
+	* options.cc, options.hh:
+	GOPT and COPT macros used <ARGUMENT>, what has been expanded to
+	<vector<string>> at times. sunpro parses that as <vector<string >>
+	* po/sv.po: a newline was missing
+	* m4/boost.m4, configure.ac: move boost_program_options check to boost.m4
+	because it's cleaner and --enable-static-boost is honored that way
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Add merge.cc and merge.hh.
+	* po/sv.po: Translate the resulting untranslated strings.
+
+2006-08-14  Nathaniel Smith  <njs@pobox.com>
+
+	* safe_map.hh: #include "sanity.hh".
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* tests/drop_directory_with_unversioned_files_and_merge/__driver__.lua: 
+	Added test for the case when an update tries to remove a directory
+	that isn't empty (it has unversioned files).
+	* testsuite.lua: Add it to the common tests.
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear a few fuzzies.
+
 2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* monotone.cc: Boost has buggy option completion. Disable guessing of
