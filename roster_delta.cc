@@ -103,8 +103,8 @@ namespace
     else
       {
         file_id const & content = downcast_to_file_t(new_n)->content;
-        safe_insert(d.dirs_added, std::make_pair(new_loc,
-                                                 std::make_pair(nid, content)));
+        safe_insert(d.files_added, std::make_pair(new_loc,
+                                                  std::make_pair(nid, content)));
       }
     for (full_attr_map_t::const_iterator i = new_n->attrs.begin();
          i != new_n->attrs.end(); ++i)
@@ -260,61 +260,61 @@ namespace
 
   void
   print_roster_delta_t(basic_io::printer & printer,
-                       basic_delta & d)
+                       roster_delta_t & d)
   {
-    for (nodes_deleted_t i = d.nodes_deleted.begin(); i != d.nodes_deleted.end(); ++i)
+    for (roster_delta_t::nodes_deleted_t::const_iterator i = d.nodes_deleted.begin(); i != d.nodes_deleted.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::deleted, *i, st);
         printer.print_stanza(st);
       }
-    for (nodes_renamed_t::const_iterator i = d.nodes_renamed.begin(); i != d.nodes_renamed.end(); ++i)
+    for (roster_delta_t::nodes_renamed_t::const_iterator i = d.nodes_renamed.begin(); i != d.nodes_renamed.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::rename, i->first, st);
         push_loc(i->second, st);
         printer.print_stanza(st);
       }
-    for (dirs_added_t::const_iterator i = d.dirs_added.begin(); i != d.dirs_added.end(); ++i)
+    for (roster_delta_t::dirs_added_t::const_iterator i = d.dirs_added.begin(); i != d.dirs_added.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::add_dir, i->second, st);
         push_loc(i->first, st);
         printer.print_stanza(st);
       }
-    for (files_added_t::const_iterator i = d.files_added.begin(); i != d.files_added.end(); ++i)
+    for (roster_delta_t::files_added_t::const_iterator i = d.files_added.begin(); i != d.files_added.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::add_file, i->second.first, st);
         push_loc(i->first, st);
-        push_hex_pair(syms::content, i->second.second, st);
+        st.push_hex_pair(syms::content, i->second.second.inner());
         printer.print_stanza(st);
       }
-    for (deltas_applied_t::const_iterator i = d.deltas_applied.begin(); i != d.deltas_applied.end(); ++i)
+    for (roster_delta_t::deltas_applied_t::const_iterator i = d.deltas_applied.begin(); i != d.deltas_applied.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::delta, i->first, st);
-        st.push_hex_pair(syms::content, i->second);
+        st.push_hex_pair(syms::content, i->second.inner());
         printer.print_stanza(st);
       }
-    for (attrs_cleared_t::const_iterator i = d.attrs_cleared.begin(); i != d.attrs_cleared.end(); ++i)
+    for (roster_delta_t::attrs_cleared_t::const_iterator i = d.attrs_cleared.begin(); i != d.attrs_cleared.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::attr_cleared, i->first, st);
-        st.push_str_pair(syms::atr, i->second());
+        st.push_str_pair(syms::attr, i->second());
         printer.print_stanza(st);
       }
-    for (attrs_changed_t::const_iterator i = d.attrs_changed.begin(); i != d.attrs_changed.end(); ++i)
+    for (roster_delta_t::attrs_changed_t::const_iterator i = d.attrs_changed.begin(); i != d.attrs_changed.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::attr_changed, i->first, st);
-        st.push_str_pair(syms::atr, i->second.first());
+        st.push_str_pair(syms::attr, i->second.first());
         st.push_str_triple(syms::value,
                            lexical_cast<std::string>(i->second.second.first),
                            i->second.second.second());
         printer.print_stanza(st);
       }
-    for (markings_changed_t::const_iterator i = d.markings_changed.begin(); i != d.markings_changed.end(); ++i)
+    for (roster_delta_t::markings_changed_t::const_iterator i = d.markings_changed.begin(); i != d.markings_changed.end(); ++i)
       {
         basic_io::stanza st;
         push_nid(syms::marking, i->first, st);
@@ -346,10 +346,6 @@ namespace
   void
   parse_roster_delta_t(basic_io::parser & parser, roster_delta_t & d)
   {
-    string t1, t2;
-    MM(t1);
-    MM(t2);
-  
     while (parser.symp(syms::deleted))
       {
         parser.sym();
@@ -379,7 +375,7 @@ namespace
         parse_loc(parser, loc);
         safe_insert(d.dirs_added, std::make_pair(loc, nid));
         parser.esym(syms::content);
-        string s;
+        std::string s;
         parser.hex(s);
         safe_insert(d.files_added,
                     std::make_pair(loc, std::make_pair(nid, file_id(s))));
@@ -389,7 +385,7 @@ namespace
         parser.sym();
         node_id nid = parse_nid(parser);
         parser.esym(syms::content);
-        string s;
+        std::string s;
         parser.hex(s);
         safe_insert(d.deltas_applied, std::make_pair(nid, file_id(s)));
       }
@@ -397,7 +393,7 @@ namespace
       {
         node_id nid = parse_nid(parser);
         parser.esym(syms::attr);
-        string key;
+        std::string key;
         parser.str(key);
         safe_insert(d.attrs_cleared, std::make_pair(nid, attr_key(key)));
       }
@@ -405,16 +401,16 @@ namespace
       {
         node_id nid = parse_nid(parser);
         parser.esym(syms::attr);
-        string key;
+        std::string key;
         parser.str(key);
         parser.esym(syms::value);
-        string value_bool, value_value;
+        std::string value_bool, value_value;
         parser.str(value_bool);
         parser.str(value_value);
         safe_insert(d.attrs_changed,
                     std::make_pair(nid,
                                    std::make_pair(attr_key(key),
-                                                  std::make_pair(std::lexical_cast<bool>(value_bool),
+                                                  std::make_pair(lexical_cast<bool>(value_bool),
                                                                  attr_value(value_value)))));
       }
     while (parser.symp(syms::marking))
@@ -434,6 +430,10 @@ delta_rosters(roster_t const & from, marking_map const & from_markings,
               roster_t const & to, marking_map const & to_markings,
               roster_delta & del)
 {
+  MM(from);
+  MM(from_markings);
+  MM(to);
+  MM(to_markings);
   roster_delta_t d;
   make_roster_delta_t(from, from_markings, to, to_markings, d);
   basic_io::printer printer;
@@ -445,7 +445,7 @@ void
 apply_roster_delta(roster_delta const & del,
                    roster_t & roster, marking_map & markings)
 {
-  MM(d);
+  MM(del);
   MM(roster);
   MM(markings);
 
