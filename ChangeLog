@@ -1,3 +1,7 @@
+2006-08-14  Nathaniel Smith  <njs@pobox.com>
+
+	* safe_map.hh: #include "sanity.hh".
+
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
 	* xdelta.cc (spin): New utility function for tests.
