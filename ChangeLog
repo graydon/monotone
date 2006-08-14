@@ -1,5 +1,12 @@
 2006-08-14  Richard Levitte  <richard@levitte.org>
 
+	* tests/drop_directory_with_unversioned_files_and_merge/__driver__.lua: 
+	Added test for the case when an update tries to remove a directory
+	that isn't empty (it has unversioned files).
+	* testsuite.lua: Add it to the common tests.
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: Clear a few fuzzies.
 
 2006-08-13  Timothy Brownawell  <tbrownaw@gmail.com>
