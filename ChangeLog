@@ -1,3 +1,8 @@
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Add merge.cc and merge.hh.
+	* po/sv.po: Translate the resulting untranslated strings.
+
 2006-08-14  Nathaniel Smith  <njs@pobox.com>
 
 	* safe_map.hh: #include "sanity.hh".

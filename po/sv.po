@@ -145,8 +145,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-14 09:35+0200\n"
-"PO-Revision-Date: 2006-08-14 09:38+0200\n"
+"POT-Creation-Date: 2006-08-14 13:26+0200\n"
+"PO-Revision-Date: 2006-08-14 13:32+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2412,6 +2412,16 @@ msgstr "'%s' är inte en katalog"
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-fel vid läsning av rcfilen '%s'"
 
+#: merge.cc:60
+#, c-format
+msgid "resolve non-content conflicts and then try again."
+msgstr "lös filnamnskonflikterna och försök igen."
+
+#: merge.cc:111
+#, c-format
+msgid "merge failed due to unresolved conflicts\n"
+msgstr "ihopslagningen misslyckades på grund av olösta konflikter."
+
 #: merkle_tree.cc:290
 #, c-format
 msgid "node level is %d, exceeds maximum %d"
@@ -2437,22 +2447,22 @@ msgstr "underligt fel när argument lästa från %s stoppades in: %s\n"
 msgid "Invalid escape in --xargs file"
 msgstr ""
 
-#: monotone.cc:713
+#: monotone.cc:719
 #, c-format
 msgid "%s:\n"
 msgstr "%s:\n"
 
-#: monotone.cc:721
+#: monotone.cc:727
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: monotone.cc:736
+#: monotone.cc:742
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Användning: %s [FLAGGOR...] kommando [ARGUMENT...]"
 
-#: monotone.cc:741
+#: monotone.cc:747
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
