@@ -14,6 +14,8 @@
 	GOPT and COPT macros used <ARGUMENT>, what has been expanded to
 	<vector<string>> at times. sunpro parses that as <vector<string >>
 	* po/sv.po: a newline was missing
+	* m4/boost.m4, configure.ac: move boost_program_options check to boost.m4
+	because it's cleaner and --enable-static-boost is honored that way
 
 2006-08-14  Richard Levitte  <richard@levitte.org>
 
