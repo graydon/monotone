@@ -1,3 +1,7 @@
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear a few fuzzies.
+
 2006-08-13  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* cmd_automate.cc monotone.cc options_list.hh: Put back the
