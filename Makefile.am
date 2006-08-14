@@ -74,7 +74,8 @@ MOST_SOURCES =								\
          randomizer.cc randomizer.hh                                    \
          netio.hh smap.hh gettext.h					\
          package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh	\
+         package_full_revision.c package_full_revision.h		\
+         options.cc options.hh options_list.hh				\
          i18n.h parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =									\
@@ -225,11 +226,6 @@ IDNA_SOURCES = \
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
-POPT_SOURCES = \
-	popt/findme.c  popt/poptconfig.c  popt/poptint.h   \
-	popt/findme.h  popt/popt.h        popt/poptparse.c \
-	popt/popt.c    popt/popthelp.c    popt/system.h
-
 UNIX_PLATFORM_SOURCES = \
 	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
 	unix/inodeprint.cc unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc
@@ -257,7 +253,6 @@ libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
-			$(POPT_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
@@ -394,8 +389,6 @@ EXTRA_DIST = $(man1_MANS) \
 	     package.m4 \
 	     package_revision.txt package_full_revision_dist.txt \
              $(wildcard $(srcdir)/m4/*.m4) \
-             popt/README popt/CHANGES popt/COPYING popt/popt.3 popt/popt.ps \
-             $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
              sqlite/keywordhash.h \
              contrib/README \
              contrib/monoprof.sh \

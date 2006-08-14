@@ -2,6 +2,59 @@
 
 	* safe_map.hh: #include "sanity.hh".
 
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* tests/drop_directory_with_unversioned_files_and_merge/__driver__.lua: 
+	Added test for the case when an update tries to remove a directory
+	that isn't empty (it has unversioned files).
+	* testsuite.lua: Add it to the common tests.
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear a few fuzzies.
+
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: Boost has buggy option completion. Disable guessing of
+	partial options, such as --hel for --help.
+
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* testsuite.lua: Dump "mtn --full-version" output to the logfile.
+
+2006-08-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* cmd_automate.cc monotone.cc options_list.hh: Put back the
+	--automate-stdio-size option.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc options.cc options.hh: Make option parsing not subject
+	to bad_any_cast. Misremembering the option type will now be caught
+	at compile time.
+	* options_list.hh options.cc options.hh: We don't need to list all
+	the options twice.
+	* Makefile.am: Adjust for new file.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make it pass the testsuite.
+	* tests/diff_--external/__driver__.lua:
+	* tests/netsync_permissions/__driver__.lua: "--option=" is not valid
+	anymore, use "--option ''". (appears to be a misfeature of
+	boost::program_options)
+	* options.cc options.hh monotone.cc: Work on option handling.
+	* cmd_netsync.cc: More merge fixes.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix merge, and make unit_tests build.
+	* options.cc monotone.cc: Move option definitions to their own file.
+	* Makefile.am: Adjust accordingly.
+	* cmd.hh cmd_automate.cc cmd_diff_log.cc cmd_files.cc cmd_merging.cc:
+	* cmd_ws_commit.cc commands.cc configure.ac monotone.ac options.hh:
+	Fix enough merge errors that it can compile.
+
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
 	* xdelta.cc (spin): New utility function for tests.
