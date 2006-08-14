@@ -168,7 +168,6 @@ namespace
     MM(from_markings);
     MM(to);
     MM(to_markings);
-    MM(d);
     {
       parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
       MM(i);
