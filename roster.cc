@@ -2416,13 +2416,11 @@ push_marking(basic_io::stanza & st,
   else
     I(mark.file_content.empty());
 
-  for (full_attr_map_t::const_iterator i = curr->attrs.begin();
-       i != curr->attrs.end(); ++i)
+  for (map<attr_key, set<revision_id> >::const_iterator i = mark.attrs.begin();
+       i != mark.attrs.end(); ++i)
     {
-      map<attr_key, set<revision_id> >::const_iterator am = mark.attrs.find(i->first);
-      I(am != mark.attrs.end());
-      for (set<revision_id>::const_iterator j = am->second.begin();
-           j != am->second.end(); ++j)
+      for (set<revision_id>::const_iterator j = i->second.begin();
+           j != i->second.end(); ++j)
         st.push_hex_triple(basic_io::syms::attr_mark, i->first(), j->inner());
     }
 }
