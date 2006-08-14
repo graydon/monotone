@@ -146,7 +146,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-08-14 13:26+0200\n"
-"PO-Revision-Date: 2006-08-14 13:32+0200\n"
+"PO-Revision-Date: 2006-08-14 13:45+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2420,7 +2420,7 @@ msgstr "lös filnamnskonflikterna och försök igen."
 #: merge.cc:111
 #, c-format
 msgid "merge failed due to unresolved conflicts\n"
-msgstr "ihopslagningen misslyckades på grund av olösta konflikter."
+msgstr "ihopslagningen misslyckades på grund av olösta konflikter.\n"
 
 #: merkle_tree.cc:290
 #, c-format
