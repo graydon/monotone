@@ -1,5 +1,8 @@
 2006-08-15  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* Makefile.am: Post-merge cleanup.
+	* luaext_mkstemp.cc: Slightly cleaner way to create a Lua IO
+	object from a FILE*.
 	* lua/*, Makefile.am: Import Lua 5.1.1 plus fixes for the two
 	5.1.1 bugs listed on the Lua website.
 	* tests/(normal)_netsync_revision_with_no_certs,

@@ -24,8 +24,7 @@ LUAEXT(mkstemp, )
   // will enjoy working with
   pf = static_cast<FILE **>(lua_newuserdata(L, sizeof(FILE *)));
   *pf = fdopen(fd, "r+");
-  lua_pushstring(L, "FILE*");
-  lua_rawget(L, LUA_REGISTRYINDEX);
+  luaL_getmetatable(L, LUA_FILEHANDLE);
   lua_setmetatable(L, -2);
 
   lua_pushstring(L, dup.c_str());
