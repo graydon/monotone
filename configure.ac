@@ -24,8 +24,6 @@ AC_PROG_RANLIB
 test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
 test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 
-AC_LANG([C])
-
 AC_C_CONST
 AC_C_INLINE
 AC_CC_FEXCEPTIONS
@@ -48,7 +46,6 @@ else
 fi
 
 # Checks for header files.
-
 AC_HEADER_STDC
 # Explicitly specifying AC_INCLUDES_DEFAULT gets autoconf not to do all
 # the tests twice.
@@ -57,16 +54,13 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h sys/file.h \
 		 [AC_INCLUDES_DEFAULT()])
 AC_HEADER_STDBOOL
 AX_CREATE_STDINT_H(mt-stdint.h)
-
 # gettext is nominally a library, but its tests don't work in C++ mode.
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 AM_ICONV
 AC_PROG_XGETTEXT_FLAG_OPTION
-
 # similarly, this calls ACX_PTHREAD, which expects C.
 BOOST_THREAD_STUBS
-
 AC_LANG([C++])
 
 # check for language features and compiler bugs
@@ -109,6 +103,7 @@ MTN_BOOST_LIB_FILESYSTEM
 MTN_BOOST_LIB_DATE_TIME
 MTN_BOOST_LIB_REGEX
 MTN_BOOST_LIB_UNIT_TEST_FRAMEWORK
+MTN_BOOST_LIB_PROGRAM_OPTIONS
 
 # more complex library checks
 MTN_NETXX_DEPENDENCIES

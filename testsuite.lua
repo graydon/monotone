@@ -46,6 +46,14 @@ monotone_path = getpathof("mtn")
 if monotone_path == nil then monotone_path = "mtn" end
 set_env("mtn", monotone_path)
 
+writefile_q("in", nil)
+prepare_redirect("in", "out", "err")
+execute(monotone_path, "--full-version")
+logfile:write(readfile_q("out"))
+unlogged_remove("in")
+unlogged_remove("out")
+unlogged_remove("err")
+
 -- NLS nuisances.
 for _,name in pairs({  "LANG",
                        "LANGUAGE",
@@ -658,3 +666,4 @@ table.insert(tests, "automate_tags")
 table.insert(tests, "restrictions_with_deletes")
 table.insert(tests, "log_with_restriction")
 table.insert(tests, "log_quits_on_SIGPIPE")
+table.insert(tests, "drop_directory_with_unversioned_files_and_merge")

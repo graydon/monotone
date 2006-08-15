@@ -4,7 +4,7 @@
 
 extern sanity & global_sanity;
 mtn_sanity real_sanity;
-sanity & global_sanity(real_sanity);
+sanity & global_sanity = real_sanity;
 
 mtn_sanity::mtn_sanity() : relaxed(false)
 {}

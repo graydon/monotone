@@ -33,7 +33,7 @@ check(qgrep('diff_args: -foobar', "stdout"))
 check(qgrep("rev_old: "..old, "stdout"))
 check(qgrep("rev_new: "..new, "stdout"))
 
-check(mtn("--rcfile=testhook.lua", "diff", "--external", "--diff-args="), 0, true, false)
+check(mtn("--rcfile=testhook.lua", "diff", "--external", "--diff-args", ""), 0, true, false)
 canonicalize("stdout")
 canonicalize("old_version")
 canonicalize("new_version")

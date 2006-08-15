@@ -11,6 +11,7 @@ extern "C" {
 #include "sanity.hh"
 
 #include <cstdio>
+#include <stdlib.h>
 
 #include <exception>
 
@@ -27,6 +28,9 @@ namespace fs = boost::filesystem;
 
 using std::string;
 using std::map;
+using std::memcpy;
+using std::getenv;
+using std::exit;
 using std::make_pair;
 using boost::lexical_cast;
 
@@ -43,7 +47,7 @@ struct tester_sanity : public sanity
   {fprintf(stderr, "error: %s", msg.c_str());};
 };
 tester_sanity real_sanity;
-sanity & global_sanity(real_sanity);
+sanity & global_sanity = real_sanity;
 
 
 #ifdef WIN32

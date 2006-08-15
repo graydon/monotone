@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.258 2006/05/23 23:22:29 drh Exp $
+** $Id: expr.c,v 1.266 2006/07/11 13:15:08 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -207,6 +207,19 @@ Expr *sqlite3Expr(int op, Expr *pLeft, Expr *pRight, const Token *pToken){
     pNew->span = pNew->token = *pToken;
   }else if( pLeft && pRight ){
     sqlite3ExprSpan(pNew, &pLeft->span, &pRight->span);
+  }
+  return pNew;
+}
+
+/*
+** Works like sqlite3Expr() but frees its pLeft and pRight arguments
+** if it fails due to a malloc problem.
+*/
+Expr *sqlite3ExprOrFree(int op, Expr *pLeft, Expr *pRight, const Token *pToken){
+  Expr *pNew = sqlite3Expr(op, pLeft, pRight, pToken);
+  if( pNew==0 ){
+    sqlite3ExprDelete(pLeft);
+    sqlite3ExprDelete(pRight);
   }
   return pNew;
 }
@@ -547,12 +560,12 @@ Select *sqlite3SelectDup(Select *p){
   pNew->iOffset = -1;
   pNew->isResolved = p->isResolved;
   pNew->isAgg = p->isAgg;
-  pNew->usesVirt = 0;
+  pNew->usesEphm = 0;
   pNew->disallowOrderBy = 0;
   pNew->pRightmost = 0;
-  pNew->addrOpenVirt[0] = -1;
-  pNew->addrOpenVirt[1] = -1;
-  pNew->addrOpenVirt[2] = -1;
+  pNew->addrOpenEphm[0] = -1;
+  pNew->addrOpenEphm[1] = -1;
+  pNew->addrOpenEphm[2] = -1;
   return pNew;
 }
 #else
@@ -1316,7 +1329,7 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
     case TK_IN: {
       char affinity;
       KeyInfo keyInfo;
-      int addr;        /* Address of OP_OpenVirtual instruction */
+      int addr;        /* Address of OP_OpenEphemeral instruction */
 
       affinity = sqlite3ExprAffinity(pExpr->pLeft);
 
@@ -1334,7 +1347,7 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
       ** is used.
       */
       pExpr->iTable = pParse->nTab++;
-      addr = sqlite3VdbeAddOp(v, OP_OpenVirtual, pExpr->iTable, 0);
+      addr = sqlite3VdbeAddOp(v, OP_OpenEphemeral, pExpr->iTable, 0);
       memset(&keyInfo, 0, sizeof(keyInfo));
       keyInfo.nField = 1;
       sqlite3VdbeAddOp(v, OP_SetNumColumns, pExpr->iTable, 1);
@@ -1489,7 +1502,8 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
       }else if( pExpr->iColumn>=0 ){
         Table *pTab = pExpr->pTab;
         int iCol = pExpr->iColumn;
-        sqlite3VdbeAddOp(v, OP_Column, pExpr->iTable, iCol);
+        int op = (pTab && IsVirtual(pTab)) ? OP_VColumn : OP_Column;
+        sqlite3VdbeAddOp(v, op, pExpr->iTable, iCol);
         sqlite3ColumnDefault(v, pTab, iCol);
 #ifndef SQLITE_OMIT_FLOATING_POINT
         if( pTab && pTab->aCol[iCol].affinity==SQLITE_AFF_REAL ){
@@ -1497,7 +1511,9 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
         }
 #endif
       }else{
-        sqlite3VdbeAddOp(v, OP_Rowid, pExpr->iTable, 0);
+        Table *pTab = pExpr->pTab;
+        int op = (pTab && IsVirtual(pTab)) ? OP_VRowid : OP_Rowid;
+        sqlite3VdbeAddOp(v, op, pExpr->iTable, 0);
       }
       break;
     }
@@ -1671,6 +1687,25 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
       pDef = sqlite3FindFunction(pParse->db, zId, nId, nExpr, enc, 0);
       assert( pDef!=0 );
       nExpr = sqlite3ExprCodeExprList(pParse, pList);
+#ifndef SQLITE_OMIT_VIRTUALTABLE
+      /* Possibly overload the function if the first argument is
+      ** a virtual table column.
+      **
+      ** For infix functions (LIKE, GLOB, REGEXP, and MATCH) use the
+      ** second argument, not the first, as the argument to test to
+      ** see if it is a column in a virtual table.  This is done because
+      ** the left operand of infix functions (the operand we want to
+      ** control overloading) ends up as the second argument to the
+      ** function.  The expression "A glob B" is equivalent to 
+      ** "glob(B,A).  We want to use the A in "A glob B" to test
+      ** for function overloading.  But we use the B term in "glob(B,A)".
+      */
+      if( nExpr>=2 && (pExpr->flags & EP_InfixFunc) ){
+        pDef = sqlite3VtabOverloadFunction(pDef, nExpr, pList->a[1].pExpr);
+      }else if( nExpr>0 ){
+        pDef = sqlite3VtabOverloadFunction(pDef, nExpr, pList->a[0].pExpr);
+      }
+#endif
       for(i=0; i<nExpr && i<32; i++){
         if( sqlite3ExprIsConstant(pList->a[i].pExpr) ){
           constMask |= (1<<i);
