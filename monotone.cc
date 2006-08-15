@@ -355,12 +355,7 @@ cpp_main(int argc, char ** argv)
         }
 
       // build an options_description specific to this cmd.
-      set< shared_ptr<po::option_description> > cmd_options;
-      cmd_options = commands::command_options(cmd);
-      po::options_description cmd_options_desc;
-      set< shared_ptr<po::option_description> >::const_iterator it;
-      for (it = cmd_options.begin(); it != cmd_options.end(); ++it)
-        if (*it!=0) cmd_options_desc.add(*it);
+      po::options_description cmd_options_desc = commands::command_options(cmd);
 
       po::options_description all_for_this_cmd;
       all_for_this_cmd.add(option::global_options);
@@ -730,14 +725,9 @@ cpp_main(int argc, char ** argv)
     {
       // Make sure to hide documentation that's not part of
       // the current command.
-      set< shared_ptr<po::option_description> > cmd_options;
-      cmd_options = commands::command_options(u.which);
 
-      unsigned count = 0;
-      po::options_description cmd_options_desc;
-      set< shared_ptr<po::option_description> >::const_iterator it;
-      for (it = cmd_options.begin(); it != cmd_options.end(); ++it, ++count)
-        cmd_options_desc.add(*it);
+      po::options_description cmd_options_desc = commands::command_options(u.which);
+      unsigned count = cmd_options_desc.options().size();
 
       cout << F("Usage: %s [OPTION...] command [ARG...]") % prog_name << "\n\n";
       cout << option::global_options << "\n";

@@ -1,3 +1,12 @@
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* options.hh: Have a non-template option_base class to allow for...
+	* cmd.hh (command_opts): Keep a set of option_base*, not
+	shared_ptr<option_description>. This is to avoid problems with global
+	object initialization order. Also provide a function to convert a
+	command_opts to an options_description.
+	* commands.cc commands.hh monotone.cc: Adjust accordingly.
+
 2006-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* monotone.cc: work around some boost/stlport4 interaction

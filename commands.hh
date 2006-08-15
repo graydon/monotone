@@ -36,7 +36,7 @@ namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
   std::string complete_command(std::string const & cmd);
   int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
-  std::set< shared_ptr<option_description> > command_options(std::string const & cmd);
+  boost::program_options::options_description command_options(std::string const & cmd);
 };
 
 // Local Variables:

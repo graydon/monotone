@@ -233,15 +233,15 @@ namespace commands
       }
   }
 
-  set< shared_ptr<option_description> > command_options(string const & cmd)
+  boost::program_options::options_description command_options(string const & cmd)
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
-        return (*cmds)[cmd]->options.opts;
+        return (*cmds)[cmd]->options.as_desc();
       }
     else
       {
-        return set< shared_ptr<option_description> >();
+        return boost::program_options::options_description();
       }
   }
 }

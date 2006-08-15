@@ -27,11 +27,18 @@ namespace option
   extern options_description global_options;
   extern options_description specific_options;
 
-  template<typename T>
-  struct option
+  struct option_base
   {
     char const * operator()() { return o->long_name().c_str(); }
-    operator shared_ptr<option_description> () { return o; }
+    shared_ptr<option_description> ptr() const { return o; }
+  protected:
+    option_base(option_description * p) : o(p) {}
+    shared_ptr<option_description> o;
+  };
+
+  template<typename T>
+  struct option : public option_base
+  {
     T const & get(boost::program_options::variables_map const & vm)
     {
       boost::program_options::variable_value const & vv(vm[(*this)()]);
@@ -42,8 +49,7 @@ namespace option
       return vm.count((*this)()) > 0;
     }
   protected:
-    option(option_description * p) : o(p) {}
-    shared_ptr<option_description> o;
+    option(option_description * p) : option_base(p) {}
   };
 
   template<typename T>
