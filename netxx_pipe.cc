@@ -603,7 +603,7 @@ catch (informative_failure &e)
   // for some reason boost does not provide
   // enough information
   {
-    W(F("Failure %s") % e.what);
+    W(F("Failure %s") % e.what());
     throw;
   }
 }

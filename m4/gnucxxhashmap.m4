@@ -7,17 +7,18 @@ dnl @version 2005-07-18
 dnl @license AllPermissive
 
 AC_DEFUN([AC_CXX_GNUCXX_HASHMAP],[
-AC_CACHE_CHECK(whether the compiler supports __gnu_cxx::hash_map,
+AC_LANG_ASSERT([C++])
+ AC_CACHE_CHECK(whether the compiler supports __gnu_cxx::hash_map,
 ac_cv_cxx_gnucxx_hashmap,
-[AC_LANG_SAVE
- AC_LANG_CPLUSPLUS
- AC_TRY_COMPILE([#include <ext/hash_map>
-using __gnu_cxx::hash_map;],
- [],
- ac_cv_cxx_gnucxx_hashmap=yes, ac_cv_cxx_gnucxx_hashmap=no)
- AC_LANG_RESTORE
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#include <ext/hash_map>
+using __gnu_cxx::hash_map;
+])],
+   [ac_cv_cxx_gnucxx_hashmap=yes],
+   [ac_cv_cxx_gnucxx_hashmap=no])
 ])
 if test "$ac_cv_cxx_gnucxx_hashmap" = yes; then
-  AC_DEFINE(HAVE_GNUCXX_HASHMAP,,[define if the compiler supports __gnu_cxx::hash_map])
+  AC_DEFINE(HAVE_GNUCXX_HASHMAP, 1,
+   [Define if the compiler supports __gnu_cxx::hash_map.])
 fi
 ])

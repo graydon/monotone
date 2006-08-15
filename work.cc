@@ -17,7 +17,7 @@
 #include "basic_io.hh"
 #include "cset.hh"
 #include "localized_file_io.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "restrictions.hh"
 #include "sanity.hh"
 #include "safe_map.hh"
@@ -188,23 +188,17 @@ addition_builder::visit_file(file_path const & path)
       return;
     }
 
-  P(F("adding %s to workspace manifest") % path);
-
-  split_path dirname, prefix;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
+  split_path prefix;
   I(ros.has_root());
-  for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
-       ++i)
+  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
     {
       prefix.push_back(*i);
-      if (i == dirname.begin())
-        continue;
       if (!ros.has_node(prefix))
-        add_node_for(prefix);
+        {
+          P(F("adding %s to workspace manifest") % file_path(prefix));
+          add_node_for(prefix);
+        }
     }
-
-  add_node_for(sp);
 }
 
 void

@@ -133,6 +133,7 @@ database::database(system_path const & fn) :
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
   schema("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df"),
+  pending_writes_size(0),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -817,6 +818,12 @@ database::begin_transaction(bool exclusive)
 }
 
 
+size_t
+database::size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat)
+{
+  return tab.size() + id().size() + dat().size();
+}
+
 bool
 database::have_pending_write(string const & tab, hexenc<id> const & id)
 {
@@ -829,19 +836,40 @@ database::load_pending_write(string const & tab, hexenc<id> const & id, data & d
   dat = safe_get(pending_writes, make_pair(tab, id));
 }
 
+// precondition: have_pending_write(tab, an_id) == true
 void
-database::cancel_pending_write(string const & tab, hexenc<id> const & id)
+database::cancel_pending_write(string const & tab, hexenc<id> const & an_id)
 {
-  safe_erase(pending_writes, make_pair(tab, id));
+  data const & dat = safe_get(pending_writes, make_pair(tab, an_id));
+  size_t cancel_size = size_pending_write(tab, an_id, dat);
+  I(cancel_size < pending_writes_size);
+  pending_writes_size -= cancel_size;
+    
+  safe_erase(pending_writes, make_pair(tab, an_id));
 }
 
 void
 database::schedule_write(string const & tab,
-                         hexenc<id> const & id,
+                         hexenc<id> const & an_id,
                          data const & dat)
 {
-  if (!have_pending_write(tab, id))
-    safe_insert(pending_writes, make_pair(make_pair(tab, id), dat));
+  if (!have_pending_write(tab, an_id))
+    {
+      safe_insert(pending_writes, make_pair(make_pair(tab, an_id), dat));
+      pending_writes_size += size_pending_write(tab, an_id, dat);
+    }
+  if (pending_writes_size > constants::db_max_pending_writes_bytes)
+    flush_pending_writes();
+}
+
+void
+database::flush_pending_writes()
+{
+  for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+       i != pending_writes.end(); ++i)
+    put(i->first.second, i->second, i->first.first);
+  pending_writes.clear();
+  pending_writes_size = 0;
 }
 
 void
@@ -849,12 +877,7 @@ database::commit_transaction()
 {
   if (transaction_level == 1)
     {
-      for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
-           i != pending_writes.end(); ++i)
-        {
-          put(i->first.second, i->second, i->first.first);
-        }
-      pending_writes.clear();
+      flush_pending_writes();
       execute(query("COMMIT"));
     }
   transaction_level--;
@@ -866,6 +889,7 @@ database::rollback_transaction()
   if (transaction_level == 1)
     {
       pending_writes.clear();
+      pending_writes_size = 0;
       execute(query("ROLLBACK"));
     }
   transaction_level--;
@@ -2836,7 +2860,7 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       get_roster_id_for_revision(old_rev, old_id);
-      if (exists(new_id.inner(), data_table))
+      if (exists(old_id.inner(), data_table))
         {
           get_roster_version(old_id, old_data);
           diff(new_data.inner(), old_data.inner(), reverse_delta);

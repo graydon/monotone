@@ -9,6 +9,6 @@ mtn_setup()
 
 -- This rcs file fails to be imported correctly by monotone
 mkdir("tmp")
-get("rcsfile,v", "tmp/rcsfile,v")
+check(get("rcsfile,v", "tmp/rcsfile,v"))
 
 xfail_if(true, mtn("--branch=test", "cvs_import", "tmp"), 0, ignore, ignore)

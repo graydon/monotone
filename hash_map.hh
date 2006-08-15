@@ -43,7 +43,7 @@ namespace hashmap {
   };
 }
 
-#if HAVE_TR1_UNORDERED_MAP_AND_SET
+#if HAVE_TR1_UNORDERED_MAP_AND_SET && HAVE_WORKING_TR1_UNORDERED_MAP_AND_SET
 #define HASHMAP_PRESENT
 #include <tr1/functional>
 #include <tr1/unordered_map>
@@ -61,22 +61,22 @@ namespace hashmap {
 
   template<typename _Key, typename _Value>
   class hash_map : public std::tr1::unordered_map<_Key,
-						  _Value,
-						  hash<_Key>,
-						  equal_to<_Key> >
+                                                  _Value,
+                                                  hash<_Key>,
+                                                  equal_to<_Key> >
   {};
 
   template<typename _Key>
   class hash_set : public std::tr1::unordered_set<_Key,
-						  hash<_Key>,
-						  equal_to<_Key> >
+                                                  hash<_Key>,
+                                                  equal_to<_Key> >
   {};
 
   template<typename _Key, typename _Value>
   class hash_multimap : public std::tr1::unordered_multimap<_Key,
-							    _Value,
-							    hash<_Key>,
-							    equal_to<_Key> >
+                                                            _Value,
+                                                            hash<_Key>,
+                                                            equal_to<_Key> >
   {};
 }
 
@@ -116,7 +116,7 @@ namespace hashmap {
                                                         equal_to<_Key> >
   {};
 
-	
+        
 }
 
 #elif HAVE_STLPORT_HASHMAP
@@ -190,7 +190,7 @@ namespace hashmap
 
     size_t operator( )(T const & s) const
     {
-      return h(s);		
+      return h(s);              
     }
     bool operator( )(T const & a,
                      T const & b) const

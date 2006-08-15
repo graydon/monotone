@@ -13,7 +13,7 @@
 ** interface, and routines that contribute to loading the database schema
 ** from disk.
 **
-** $Id: prepare.c,v 1.34 2006/05/23 23:22:29 drh Exp $
+** $Id: prepare.c,v 1.38 2006/08/12 13:28:23 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -28,6 +28,7 @@ static void corruptSchema(InitData *pData, const char *zExtra){
     sqlite3SetString(pData->pzErrMsg, "malformed database schema",
        zExtra!=0 && zExtra[0]!=0 ? " - " : (char*)0, zExtra, (char*)0);
   }
+  pData->rc = SQLITE_CORRUPT;
 }
 
 /*
@@ -38,7 +39,7 @@ static void corruptSchema(InitData *pData, const char *zExtra){
 ** Each callback contains the following information:
 **
 **     argv[0] = name of thing being created
-**     argv[1] = root page number for table or index.  NULL for trigger or view.
+**     argv[1] = root page number for table or index. 0 for trigger or view.
 **     argv[2] = SQL text for the CREATE statement.
 **     argv[3] = "1" for temporary files, "0" for main database, "2" or more
 **               for auxiliary database files.
@@ -49,7 +50,9 @@ int sqlite3InitCallback(void *pInit, int argc, char **argv, char **azColName){
   sqlite3 *db = pData->db;
   int iDb;
 
+  pData->rc = SQLITE_OK;
   if( sqlite3MallocFailed() ){
+    corruptSchema(pData, 0);
     return SQLITE_NOMEM;
   }
 
@@ -76,13 +79,14 @@ int sqlite3InitCallback(void *pInit, int argc, char **argv, char **azColName){
     db->init.iDb = 0;
     assert( rc!=SQLITE_OK || zErr==0 );
     if( SQLITE_OK!=rc ){
+      pData->rc = rc;
       if( rc==SQLITE_NOMEM ){
         sqlite3FailedMalloc();
-      }else{
+      }else if( rc!=SQLITE_INTERRUPT ){
         corruptSchema(pData, zErr);
       }
       sqlite3_free(zErr);
-      return rc;
+      return 1;
     }
   }else{
     /* If the SQL column is blank it means this is an index that
@@ -179,9 +183,9 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
   initData.db = db;
   initData.pzErrMsg = pzErrMsg;
   rc = sqlite3InitCallback(&initData, 4, (char **)azArg, 0);
-  if( rc!=SQLITE_OK ){
+  if( rc ){
     sqlite3SafetyOn(db);
-    return rc;
+    return initData.rc;
   }
   pTab = sqlite3FindTable(db, zMasterName, db->aDb[iDb].zName);
   if( pTab ){
@@ -295,6 +299,7 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
         zDbNum, db->aDb[iDb].zName, zMasterName);
     sqlite3SafetyOff(db);
     rc = sqlite3_exec(db, zSql, sqlite3InitCallback, &initData, 0);
+    if( rc==SQLITE_ABORT ) rc = initData.rc;
     sqlite3SafetyOn(db);
     sqliteFree(zSql);
 #ifndef SQLITE_OMIT_ANALYZE
@@ -498,6 +503,9 @@ int sqlite3_prepare(
   }
   if( sParse.rc==SQLITE_SCHEMA ){
     sqlite3ResetInternalSchema(db, 0);
+  }
+  if( sqlite3MallocFailed() ){
+    sParse.rc = SQLITE_NOMEM;
   }
   if( pzTail ) *pzTail = sParse.zTail;
   rc = sParse.rc;

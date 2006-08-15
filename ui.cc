@@ -26,6 +26,38 @@
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 
+#include <typeinfo>
+#include <cstring>
+
+// Add #ifdeffage here as appropriate for other compiler-specific ways to
+// get this information.  Windows note: as best I can determine from poking
+// around on MSDN, MSVC type_info.name() is already demangled, and there is
+// no documented equivalent of __cxa_current_exception_type().
+#ifdef HAVE_CXXABI_H
+ #include <cxxabi.h>
+ #ifdef HAVE___CXA_DEMANGLE
+  inline char const * demangle_typename(char const * name)
+  {
+    int status = -1;
+    char * dem = abi::__cxa_demangle(name, 0, 0, &status);
+    if (status == 0)
+      return dem;
+    else
+      return 0;
+  }
+ #else
+  #define demangle_typename(x) 0
+ #endif
+ #ifdef HAVE___CXA_CURRENT_EXCEPTION_TYPE
+  #define get_current_exception_type() abi::__cxa_current_exception_type()
+ #else
+  #define get_current_exception_type() 0
+ #endif
+#else
+ #define demangle_typename(x) 0
+ #define get_current_exception_type() 0
+#endif
+
 using std::clog;
 using std::cout;
 using std::endl;
@@ -359,10 +391,17 @@ void tick_write_dot::clear_line()
   clog << endl;
 }
 
+// user_interface has both constructor/destructor and initialize/
+// deinitialize because there's only one of these objects, it's
+// global, and we don't want global constructors/destructors doing
+// any real work.  see monotone.cc for how this is handled.
 
 user_interface::user_interface() :
   last_write_was_a_tick(false),
   t_writer(0)
+{}
+
+void user_interface::initialize()
 {
   cout.exceptions(ios_base::badbit);
 #ifdef SYNC_WITH_STDIO_WORKS
@@ -376,6 +415,9 @@ user_interface::user_interface() :
 }
 
 user_interface::~user_interface()
+{}
+
+void user_interface::deinitialize()
 {
   delete t_writer;
 }
@@ -426,6 +468,8 @@ user_interface::warn(string const & warning)
   issued_warnings.insert(warning);
 }
 
+// this message should be kept consistent with unix/main.cc and
+// win32/main.cc ::bug_report_message (it is not exactly the same)
 void
 user_interface::fatal(string const & fatal)
 {
@@ -434,6 +478,56 @@ user_interface::fatal(string const & fatal)
            "please send this error message, the output of '%s --full-version',\n"
            "and a description of what you were doing to %s.\n")
          % fatal % prog_name % PACKAGE_BUGREPORT);
+  global_sanity.dump_buffer();
+}
+
+// Report what we can about a fatal exception (caught in the outermost catch
+// handlers) which is from the std::exception hierarchy.  In this case we
+// can access the exception object.
+void
+user_interface::fatal_exception(std::exception const & ex)
+{
+  using std::strcmp;
+  using std::strncmp;
+  char const * ex_name = typeid(ex).name();
+  char const * ex_dem  = demangle_typename(ex_name);
+  char const * ex_what = ex.what();
+
+  if (ex_dem == 0)
+    ex_dem = ex_name;
+
+  // some demanglers stick "class" at the beginning of their output,
+  // which looks dumb in this context
+  if (!strncmp(ex_dem, "class ", 6))
+    ex_dem += 6;
+
+  // only print what() if it's interesting, i.e. nonempty and different
+  // from the name (mangled or otherwise) of the exception type.
+  if (ex_what == 0 || ex_what[0] == 0
+      || !strcmp(ex_what, ex_name)
+      || !strcmp(ex_what, ex_dem))
+    this->fatal(ex_dem);
+  else
+    this->fatal(F("%s: %s") % ex_dem % ex_what);
+}
+
+// Report what we can about a fatal exception (caught in the outermost catch
+// handlers) which is of unknown type.  If we have the <cxxabi.h> interfaces,
+// we can at least get the type_info object.
+void
+user_interface::fatal_exception()
+{
+  std::type_info *ex_type = get_current_exception_type();
+  if (ex_type)
+    {
+      char const * ex_name = ex_type->name();
+      char const * ex_dem  = demangle_typename(ex_name);
+      if (ex_dem == 0)
+        ex_dem = ex_name;
+      this->fatal(ex_dem);
+    }
+  else
+    this->fatal("exception of unknown type");
 }
 
 void
@@ -511,27 +605,6 @@ guess_terminal_width()
   if (!w)
     w = constants::default_terminal_width;
   return w;
-}
-
-const locale &
-get_user_locale()
-{
-  // this is awkward because if LC_CTYPE is set to something the
-  // runtime doesn't know about, it will fail. in that case,
-  // the default will have to do.
-  static bool init = false;
-  static locale user_locale;
-  if (!init)
-    {
-      init = true;
-      try
-        {
-          user_locale = locale("");
-        }
-      catch( ... )
-        {}
-    }
-  return user_locale;
 }
 
 // Local Variables:

@@ -16,7 +16,7 @@
 ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: func.c,v 1.128 2006/05/11 13:25:39 drh Exp $
+** $Id: func.c,v 1.132 2006/06/24 11:51:33 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -548,6 +548,19 @@ static void versionFunc(
   sqlite3_result_text(context, sqlite3_version, -1, SQLITE_STATIC);
 }
 
+/*
+** The MATCH() function is unimplemented.  If anybody tries to use it,
+** return an error.
+*/
+static void matchStub(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  static const char zErr[] = "MATCH is not implemented";
+  sqlite3_result_error(context, zErr, sizeof(zErr)-1);
+}
+
 
 /*
 ** EXPERIMENTAL - This is not an official function.  The interface may
@@ -642,6 +655,7 @@ static void soundexFunc(sqlite3_context *context, int argc, sqlite3_value **argv
   };
   assert( argc==1 );
   zIn = (u8*)sqlite3_value_text(argv[0]);
+  if( zIn==0 ) zIn = "";
   for(i=0; zIn[i] && !isalpha(zIn[i]); i++){}
   if( zIn[i] ){
     zResult[0] = toupper(zIn[i]);
@@ -658,6 +672,26 @@ static void soundexFunc(sqlite3_context *context, int argc, sqlite3_value **argv
     sqlite3_result_text(context, zResult, 4, SQLITE_TRANSIENT);
   }else{
     sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
+  }
+}
+#endif
+
+#ifndef SQLITE_OMIT_LOAD_EXTENSION
+/*
+** A function that loads a shared-library extension then returns NULL.
+*/
+static void loadExt(sqlite3_context *context, int argc, sqlite3_value **argv){
+  const char *zFile = (const char *)sqlite3_value_text(argv[0]);
+  const char *zProc = 0;
+  sqlite3 *db = sqlite3_user_data(context);
+  char *zErrMsg = 0;
+
+  if( argc==2 ){
+    zProc = (const char *)sqlite3_value_text(argv[1]);
+  }
+  if( sqlite3_load_extension(db, zFile, zProc, &zErrMsg) ){
+    sqlite3_result_error(context, zErrMsg, -1);
+    sqlite3_free(zErrMsg);
   }
 }
 #endif
@@ -1003,8 +1037,13 @@ void sqlite3RegisterBuiltinFunctions(sqlite3 *db){
     { "last_insert_rowid",  0, 1, SQLITE_UTF8,    0, last_insert_rowid },
     { "changes",            0, 1, SQLITE_UTF8,    0, changes    },
     { "total_changes",      0, 1, SQLITE_UTF8,    0, total_changes },
+    { "match",              2, 0, SQLITE_UTF8,    0, matchStub },
 #ifdef SQLITE_SOUNDEX
     { "soundex",            1, 0, SQLITE_UTF8, 0, soundexFunc},
+#endif
+#ifndef SQLITE_OMIT_LOAD_EXTENSION
+    { "load_extension",     1, 1, SQLITE_UTF8,    0, loadExt },
+    { "load_extension",     2, 1, SQLITE_UTF8,    0, loadExt },
 #endif
 #ifdef SQLITE_TEST
     { "randstr",               2, 0, SQLITE_UTF8, 0, randStr    },

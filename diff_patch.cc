@@ -580,7 +580,9 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 {
   L(FL("temporarily recording merge of %s <-> %s into %s")
     % left_id % right_id % merged_id);
-  I(temporary_store.find(merged_id) == temporary_store.end());
+  // this is an insert instead of a safe_insert because it is perfectly
+  // legal (though rare) to have multiple merges resolve to the same file
+  // contents.
   temporary_store.insert(make_pair(merged_id, merged_data));
 }
 
@@ -776,8 +778,8 @@ struct hunk_consumer
   size_t a_begin, b_begin, a_len, b_len;
   long skew;
 
-  vector<string>::const_reverse_iterator encloser_last_search;
   vector<string>::const_reverse_iterator encloser_last_match;
+  vector<string>::const_reverse_iterator encloser_last_search;
 
   virtual void flush_hunk(size_t pos) = 0;
   virtual void advance_to(size_t newpos) = 0;
@@ -810,7 +812,10 @@ hunk_consumer::find_encloser(size_t pos, string & encloser)
 
   // Precondition: encloser_last_search <= pos <= a.size().
   I(pos <= a.size());
-  I(pos >= (a.rend() - encloser_last_search));
+  // static_cast<> to silence compiler unsigned vs. signed comparison
+  // warning, after first making sure that the static_cast is safe.
+  I(a.rend() - encloser_last_search >= 0);
+  I(pos >= static_cast<size_t>(a.rend() - encloser_last_search));
 
   if (!encloser_re)
     return;

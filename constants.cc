@@ -20,9 +20,6 @@ using std::string;
 namespace constants
 {
 
-  // block size in bytes for "automate stdio" output
-  size_t const automate_stdio_size = 1024;
-
   // number of bits in an RSA key we use
   size_t const keylen = 1024;
 
@@ -44,6 +41,8 @@ namespace constants
 
   size_t const db_roster_cache_sz = 7;
 
+  unsigned long const db_max_pending_writes_bytes = 16 * 1024 * 1024;
+ 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
   size_t const log_line_sz = 0x300;

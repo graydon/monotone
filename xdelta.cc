@@ -182,7 +182,19 @@ insert_insn(vector<insn> & delta, char c)
   if (delta.empty() || delta.back().code == insn::copy)
     delta.push_back(insn(c));
   else
-    delta.back().payload += c;
+    {
+      // design in gcc 3.3 and 4.0 STL expands the string one character
+      // at a time when appending single characters ?!
+      // see libstdc++5-3.3-dev 3.3.5-13: basic_string.h:471, calling with
+      // size_type(1), then basic_string.tcc:717 reserving one more byte
+      // if needed.
+      // see libstdc++6-4.0-dev 4.0.3-3: basic_string.h:770 calling push_back
+      // then basic_string.h: 849 again adding 1 to the length.
+      if (delta.back().payload.capacity() == delta.back().payload.size())
+        // standard amortized constant rule
+        delta.back().payload.reserve(delta.back().payload.size() * 2);
+      delta.back().payload += c;
+    }
 }
 
 
@@ -249,7 +261,7 @@ compute_delta_insns(string const & a,
 
 void
 write_delta_insns(vector<insn> const & delta_insns,
-		  string & delta)
+                  string & delta)
 {
   delta.clear();
   ostringstream oss;
@@ -274,16 +286,12 @@ compute_delta(string const & a,
   // xdelta. several places of the xdelta code prefer assertions which are
   // only true with non-empty chunks anyways.
 
-  if (a == b)
-    {
-      delta.clear();
-      return;
-    }
-
   if (a.size() == 0 && b.size() != 0)
     delta_insns.push_back(insn(b));
   else if (a.size() != 0 && b.size() == 0)
     delta_insns.push_back(insn(0, 0));
+  else if (a == b)
+    delta_insns.push_back(insn(0, a.size()));
   else
     {
       I(a.size() > 0);
@@ -369,13 +377,13 @@ apply_delta(shared_ptr<delta_applicator> da,
           I(*i == '\n');
           ++i;
           I(i != delta.end());
-	  I((i - delta.begin()) + len <= delta.size());
-	  if (len > 0)
-	    {
-	      string tmp(i, i+len);
-	      da->insert(tmp);
-	    }
-	  i += len;
+          I((i - delta.begin()) + len <= delta.size());
+          if (len > 0)
+            {
+              string tmp(i, i+len);
+              da->insert(tmp);
+            }
+          i += len;
         }
       else
         {
@@ -385,8 +393,8 @@ apply_delta(shared_ptr<delta_applicator> da,
           string::size_type pos = read_num(i, delta.end());
           I(i != delta.end());
           string::size_type len = read_num(i, delta.end());
-	  if (len != 0)
-	    da->copy(pos, len);
+          if (len != 0)
+            da->copy(pos, len);
         }
       I(i != delta.end());
       I(*i == '\n');
@@ -406,35 +414,6 @@ apply_delta(string const & a,
   da->next();
   da->finish(b);
 }
-
-struct
-size_accumulating_delta_applicator :
-  public delta_applicator
-{
-  u64 & sz;
-  size_accumulating_delta_applicator(u64 & s) : sz(s) {}
-  virtual void begin(string const & base) {}
-  virtual void next() {}
-  virtual void finish(string & out) {}
-
-  virtual void copy(string::size_type pos,
-                    string::size_type len)
-  { sz += len; }
-  virtual void insert(string const & str)
-  { sz += str.size(); }
-};
-
-
-u64
-measure_delta_target_size(string const & delta)
-{
-  u64 sz = 0;
-  shared_ptr<delta_applicator> da(new size_accumulating_delta_applicator(sz));
-  apply_delta(da, delta);
-  return sz;
-}
-
-
 
 // piecewise-applicator stuff follows (warning: ugly)
 
@@ -496,11 +475,12 @@ piece_table
   void build(version_spec const & in, string & out)
   {
     out.clear();
-    for (version_spec::const_iterator i = in.begin();
-         i != in.end(); ++i)
-      {
-        append(out, i->piece, i->ppos, i->len);
-      }
+    unsigned out_len = 0;
+    for (version_spec::const_iterator i = in.begin(); i != in.end(); ++i)
+      out_len += i->len;
+    out.reserve(out_len);
+    for (version_spec::const_iterator i = in.begin(); i != in.end(); ++i)
+      append(out, i->piece, i->ppos, i->len);
   }
 };
 
@@ -673,8 +653,8 @@ new_piecewise_applicator()
 struct copied_extent
 {
   copied_extent(string::size_type op,
-		string::size_type np,
-		string::size_type len)
+                string::size_type np,
+                string::size_type len)
     : old_pos(op),
       new_pos(np),
       len(len)
@@ -720,32 +700,32 @@ inverse_delta_writing_applicator :
     vector<insn> delta_insns;
 
     for (set<copied_extent>::iterator i = copied_extents.begin();
-	 i != copied_extents.end(); ++i)
-      {	
-	// It is possible that this extent left a gap after the
-	// previously copied extent; in this case we wish to pad
-	// the intermediate space with an insert.
-	while (old_pos < i->old_pos)
-	  {
-	    I(old_pos < old.size());
-	    // Don't worry, adjacent inserts are merged.
-	    insert_insn(delta_insns, old.at(old_pos++));
-	  }
+         i != copied_extents.end(); ++i)
+      { 
+        // It is possible that this extent left a gap after the
+        // previously copied extent; in this case we wish to pad
+        // the intermediate space with an insert.
+        while (old_pos < i->old_pos)
+          {
+            I(old_pos < old.size());
+            // Don't worry, adjacent inserts are merged.
+            insert_insn(delta_insns, old.at(old_pos++));
+          }
 
-	// It is also possible that this extent *overlapped* the
-	// previously copied extent; in this case we wish to subtract
-	// the overlap from the inverse copy.
+        // It is also possible that this extent *overlapped* the
+        // previously copied extent; in this case we wish to subtract
+        // the overlap from the inverse copy.
 
-	string::size_type overlap = 0;
-	if (i->old_pos < old_pos)
-	  overlap = old_pos - i->old_pos;
+        string::size_type overlap = 0;
+        if (i->old_pos < old_pos)
+          overlap = old_pos - i->old_pos;
 
-	if (i->len <= overlap)
-	  continue;
+        if (i->len <= overlap)
+          continue;
 
-	I(i->len > overlap);
-	copy_insn(delta_insns, i->new_pos + overlap, i->len - overlap);
-	old_pos += (i->len - overlap);
+        I(i->len > overlap);
+        copy_insn(delta_insns, i->new_pos + overlap, i->len - overlap);
+        old_pos += (i->len - overlap);
       }
     while (old_pos < old.size())
       insert_insn(delta_insns, old.at(old_pos++));
@@ -770,8 +750,8 @@ inverse_delta_writing_applicator :
 
 void
 invert_xdelta(string const & old_str,
-	      string const & delta,
-	      string & delta_inverse)
+              string const & delta,
+              string & delta_inverse)
 {
   shared_ptr<delta_applicator> da(new inverse_delta_writing_applicator(old_str));
   apply_delta(da, delta);
@@ -782,6 +762,59 @@ invert_xdelta(string const & old_str,
 #ifdef BUILD_UNIT_TESTS
 
 #include "unit_tests.hh"
+
+string
+apply_via_normal(string const & base, string const & delta)
+{
+  string tmp;
+  apply_delta(base, delta, tmp);
+  return tmp;
+}
+
+string
+apply_via_piecewise(string const & base, string const & delta)
+{
+  shared_ptr<delta_applicator> appl = new_piecewise_applicator();
+  appl->begin(base);
+  apply_delta(appl, delta);
+  appl->next();
+  string tmp;
+  appl->finish(tmp);
+  return tmp;
+}
+
+void
+spin(string a, string b)
+{
+  string ab, ba;
+  compute_delta(a, b, ab);
+  compute_delta(b, a, ba);
+  BOOST_CHECK(a == apply_via_normal(b, ba));
+  BOOST_CHECK(a == apply_via_piecewise(b, ba));
+  BOOST_CHECK(b == apply_via_normal(a, ab));
+  BOOST_CHECK(b == apply_via_piecewise(a, ab));
+  string ab_inverted, ba_inverted;
+  invert_xdelta(a, ab, ab_inverted);
+  invert_xdelta(b, ba, ba_inverted);
+  BOOST_CHECK(a == apply_via_normal(b, ab_inverted));
+  BOOST_CHECK(a == apply_via_piecewise(b, ab_inverted));
+  BOOST_CHECK(b == apply_via_normal(a, ba_inverted));
+  BOOST_CHECK(b == apply_via_piecewise(a, ba_inverted));
+}
+
+void
+xdelta_simple_cases()
+{
+  L(FL("empty/empty"));
+  spin("", "");
+  L(FL("empty/short"));
+  spin("", "a");
+  L(FL("empty/longer"));
+  spin("", "asdfasdf");
+  L(FL("two identical strings"));
+  spin("same string", "same string");
+}
+
 #ifdef WIN32
 #define BOOST_NO_STDC_NAMESPACE
 #endif
@@ -870,38 +903,51 @@ xdelta_random_simple_delta_test()
 {
   for (int i = 0; i < 100; ++i)
     {
-      string a, b, fdel, rdel, c, d;
+      string a, b;
       xdelta_random_string(a);
       b = a;
       xdelta_randomly_change(b);
       xdelta_randomly_insert(b);
       xdelta_randomly_delete(b);
-      compute_delta(a, b, fdel);
-      compute_delta(b, a, rdel);
-      L(FL("src %d, dst %d, fdel %d, rdel %d")
-        % a.size() % b.size()% fdel.size() % rdel.size()) ;
-      if (fdel.size() == 0)
-        {
-          L(FL("confirming src == dst and rdel == 0"));
-          BOOST_CHECK(a == b);
-          BOOST_CHECK(rdel.size() == 0);
-        }
-      else
-        {
-          apply_delta(a, fdel, c);
-          apply_delta(b, rdel, d);
-          L(FL("confirming dst1 %d, dst2 %d") % c.size() % d.size());
-          BOOST_CHECK(b == c);
-          BOOST_CHECK(a == d);
-        }
+      spin(a, b);
     }
+}
+
+void
+xdelta_random_piecewise_delta_test()
+{
+  for (int i = 0; i < 50; ++i)
+    {
+      string prev, next, got;
+      xdelta_random_string(prev);
+      shared_ptr<delta_applicator> appl = new_piecewise_applicator();
+      appl->begin(prev);
+      for (int j = 0; j < 5; ++j)
+        {
+          appl->finish(got);
+          BOOST_CHECK(got == prev);
+          next = prev;
+          xdelta_randomly_change(next);
+          xdelta_randomly_insert(next);
+          xdelta_randomly_delete(next);
+          string delta;
+          compute_delta(prev, next, delta);
+          apply_delta(appl, delta);
+          appl->next();
+          prev = next;
+        }
+      appl->finish(got);
+      BOOST_CHECK(got == prev);
+  }
 }
 
 void
 add_xdelta_tests(test_suite * suite)
 {
   I(suite);
+  suite->add(BOOST_TEST_CASE(&xdelta_simple_cases));
   suite->add(BOOST_TEST_CASE(&xdelta_random_simple_delta_test));
+  suite->add(BOOST_TEST_CASE(&xdelta_random_piecewise_delta_test));
 }
 
 #endif // BUILD_UNIT_TESTS
