@@ -1,3 +1,19 @@
+2006-08-15  Zack Weinberg  <zackw@panix.com>
+
+	* configure.ac: Delete MTN_POPT_DEPENDENCIES.  Add strptime to
+	main AC_CHECK_FUNCS list (this is the only thing that
+	MTN_POPT_DEPENDENCIES checked for, that was used outside popt).
+	Also add lrint to this list.  Delete AC_SEARCH_LIBS for libdl.
+	* lua/luaconf.h: Include config.h. Set LUA_USE_POSIX if _WIN32 is
+	not defined.  Add versions of lua_number2int and lua_number2integer
+	that use the C99 lrint() function; remove the unreliable union hack.
+	At end of file, forcibly undefine all LUA_DL_* macros to ensure
+	that lualib.cc uses the stub implementation.
+	* m4/popt.m4: Delete file.
+	* m4/boost.m4: Create a new macro to factor out code in common
+	among most of the MTN_BOOST_LIB_* macros.
+	* options.hh: Fix typo.
+
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* options.hh: Have a non-template option_base class to allow for...
@@ -73,7 +89,7 @@
 
 2006-08-14  Richard Levitte  <richard@levitte.org>
 
-	* tests/drop_directory_with_unversioned_files_and_merge/__driver__.lua: 
+	* tests/drop_directory_with_unversioned_files_and_merge/__driver__.lua:
 	Added test for the case when an update tries to remove a directory
 	that isn't empty (it has unversioned files).
 	* testsuite.lua: Add it to the common tests.
@@ -126,7 +142,7 @@
 
 2006-08-12  Derek Scherger  <derek@echologic.com>
 
-	* cmd_list.cc (ls_unknown_or_ignored): 
+	* cmd_list.cc (ls_unknown_or_ignored):
 	* cmd_ws_commit.cc (add): use args as roots to start the tree walk
 	for unknown files rather than walking from the workspace root
 	* work.{cc,hh} (find_unknown_and_ignored): walk tree from the
@@ -141,10 +157,10 @@
 	(xdelta_random_simple_delta_test): Use spin to improve coverage.
 	(xdelta_random_piecewise_delta_test): New test.
 	(compute_delta): Actually work when target == destination.
-	(size_accumulating_delta_applicator, 
+	(size_accumulating_delta_applicator,
 	(measure_delta_target_size): Remove dead code.
 	I believe this file actually has complete unit test coverage now.
-	
+
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (put_roster): We only need one way to reconstruct a
@@ -196,7 +212,7 @@
 	Make the block size for automate stdio configurable:
 	* constants.hh, constants.cc: Remove automate_stdio_size constant.
 	* app_state.cc, app_state.hh, options.hh, monotone.cc: Add new
-	option commandline option '--automate-stdio-size'. Default is 1024, 
+	option commandline option '--automate-stdio-size'. Default is 1024,
 	which is the value of the old constant.
 	* cmd_automate.cc: Use the new commandline option instead of the
 	old onstant.
