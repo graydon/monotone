@@ -1,9 +1,6 @@
-
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 
 #include "lua.hh"
 #include "tester.h"
@@ -453,14 +450,9 @@ int main(int argc, char **argv)
       P(F("\tregex      run tests with matching names\n"));
       return 1;
     }
-  st = lua_open();
+  st = luaL_newstate();
   lua_atpanic (st, &panic_thrower);
-  luaopen_base(st);
-  luaopen_io(st);
-  luaopen_string(st);
-  luaopen_math(st);
-  luaopen_table(st);
-  luaopen_debug(st);
+  luaL_openlibs(st);
   add_functions(st);
   
   lua_pushstring(st, "initial_dir");

@@ -1,11 +1,9 @@
 #ifndef __LUA_HH__
 #define __LUA_HH__
 
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 
 #include <map>
 #include <set>

@@ -3,6 +3,30 @@
 	* monotone.cc: work around some boost/stlport4 interaction
 	by explicitely keeping NULL out of shared_ptrs
 
+2006-08-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua/*.c: Lua 5.1 supports raising exceptions using C++ exception
+	handling mechanisms.  Rename to *.cc so that automake compiles
+	with the C++ compiler.  Yes, this is lame, unless an automake guru
+	has a better way...
+	* lua.hh, lua_hooks.cc, tester.cc: Remove 'extern "C"' from around
+	the Lua includes (also change the includes from <> to "" since
+	we're using a local copy of Lua).
+	* Makefile.am: Update for renamed Lua files.
+	* Makefile.am: Post-merge cleanup.
+	* luaext_mkstemp.cc: Slightly cleaner way to create a Lua IO
+	object from a FILE*.
+	* lua/*, Makefile.am: Import Lua 5.1.1 plus fixes for the two
+	5.1.1 bugs listed on the Lua website.
+	* tests/(normal)_netsync_revision_with_no_certs,
+	tests/_MTN_case-folding_security_patch, tests/common/netsync.lua,
+	tests/db_check_and_non-serious_errors,
+	tests/exchanging_work_via_netsync,
+	tests/tags_and_tagging_of_revisions, testsuite.lua, std_hooks.lua:
+	Syntax tweaks and cleanups for Lua 5.1.1.
+	* lua_hooks.cc, tester.cc: Migrate to Lua 5.1 API.
+	* lua.cc: Slightly cleaner FILE* handling.
+
 2006-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*: Import SQLite 3.3.7.
@@ -18574,4 +18598,3 @@
 2003-04-06  Graydon Hoare  <graydon@pobox.com>
 
 	* initial release.
-
