@@ -214,9 +214,9 @@ public:
   void detach_node(node_id nid);
   void set_delta(node_id nid,
                  file_id const & new_id);
-  void set_attr(node_id nid,
-                attr_key const & name,
-                std::pair<bool, attr_value> const & val);
+  void set_attr_unknown_to_dead_ok(node_id nid,
+                                   attr_key const & name,
+                                   std::pair<bool, attr_value> const & val);
   void erase_attr(node_id nid,
                   attr_key const & name);
 

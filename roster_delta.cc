@@ -71,7 +71,7 @@ namespace
     for (attrs_cleared_t::const_iterator i = attrs_cleared.begin(); i != attrs_cleared.end(); ++i)
       roster.erase_attr(i->first, i->second);
     for (attrs_changed_t::const_iterator i = attrs_changed.begin(); i != attrs_changed.end(); ++i)
-      roster.set_attr(i->first, i->second.first, i->second.second);
+      roster.set_attr_unknown_to_dead_ok(i->first, i->second.first, i->second.second);
 
     // and the markings
     for (nodes_deleted_t::const_iterator i = nodes_deleted.begin(); i != nodes_deleted.end(); ++i)
@@ -360,7 +360,6 @@ namespace
         node_id nid = parse_nid(parser);
         std::pair<node_id, path_component> loc;
         parse_loc(parser, loc);
-        safe_insert(d.dirs_added, std::make_pair(loc, nid));
         parser.esym(syms::content);
         std::string s;
         parser.hex(s);
@@ -453,11 +452,18 @@ static void
 spin(roster_t const & from, marking_map const & from_marking,
      roster_t const & to, marking_map const & to_marking)
 {
+  MM(from);
+  MM(from_marking);
+  MM(to);
+  MM(to_marking);
   roster_delta del;
+  MM(del);
   delta_rosters(from, from_marking, to, to_marking, del);
 
   roster_t tmp(from);
+  MM(tmp);
   marking_map tmp_marking(from_marking);
+  MM(tmp_marking);
   apply_roster_delta(del, tmp, tmp_marking);
   I(tmp == to);
   I(tmp_marking == to_marking);

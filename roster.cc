@@ -811,15 +811,7 @@ roster_t::set_attr(split_path const & pth,
                    attr_key const & name,
                    pair<bool, attr_value> const & val)
 {
-  set_attr(get_node(pth)->self, name, val);
-}
-
-void
-roster_t::set_attr(node_id nid,
-                   attr_key const & name,
-                   pair<bool, attr_value> const & val)
-{
-  node_t n = get_node(nid);
+  node_t n = get_node(pth);
   I(val.first || val.second().empty());
   I(!null_node(n->self));
   full_attr_map_t::iterator i = n->attrs.find(name);
@@ -828,6 +820,20 @@ roster_t::set_attr(node_id nid,
                                         make_pair(false, attr_value())));
   I(i->second != val);
   i->second = val;
+}
+
+// same as above, but allowing <unknown> -> <dead> transition
+void
+roster_t::set_attr_unknown_to_dead_ok(node_id nid,
+                                      attr_key const & name,
+                                      pair<bool, attr_value> const & val)
+{
+  node_t n = get_node(nid);
+  I(val.first || val.second().empty());
+  full_attr_map_t::iterator i = n->attrs.find(name);
+  if (i != n->attrs.end())
+    I(i->second != val);
+  n->attrs[name] = val;
 }
 
 template <> void
