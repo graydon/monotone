@@ -629,6 +629,29 @@ roster_t::detach_node(split_path const & pth)
 }
 
 void
+roster_t::detach_node(node_id nid)
+{
+  node_t n = get_node(nid);
+  if (null_node(n->parent))
+    {
+      // detaching the root dir
+      I(null_name(n->name));
+      safe_insert(old_locations,
+                  make_pair(nid, make_pair(n->parent, n->name)));
+      root_dir.reset();
+      I(!has_root());
+    }
+  else
+    {
+      path_component name = n->name;
+      dir_t parent = downcast_to_dir_t(get_node(n->parent));
+      I(parent->detach_child(name) == n);
+      safe_insert(old_locations,
+                  make_pair(nid, make_pair(n->parent, name)));
+    }
+}
+
+void
 roster_t::drop_detached_node(node_id nid)
 {
   // ensure the node is already detached

@@ -41,21 +41,13 @@ namespace
   };
 
   void
-  detach(node_id nid, roster_t & roster)
-  {
-    split_path sp;
-    roster.get_name(nid, sp);
-    I(nid == roster.detach_node(sp));
-  }
-
-  void
   roster_delta_t::apply(roster_t & roster, marking_map & markings) const
   {
     // detach everything that should be detached
     for (nodes_deleted_t::const_iterator i = nodes_deleted.begin(); i != nodes_deleted.end(); ++i)
-      detach(*i, roster);
+      roster.detach_node(*i);
     for (nodes_renamed_t::const_iterator i = nodes_renamed.begin(); i != nodes_renamed.end(); ++i)
-      detach(i->first, roster);
+      roster.detach_node(i->first);
     // delete the delete-able things
     for (nodes_deleted_t::const_iterator i = nodes_deleted.begin(); i != nodes_deleted.end(); ++i)
       roster.drop_detached_node(*i);
@@ -85,11 +77,7 @@ namespace
     for (nodes_deleted_t::const_iterator i = nodes_deleted.begin(); i != nodes_deleted.end(); ++i)
       safe_erase(markings, *i);
     for (markings_changed_t::const_iterator i = markings_changed.begin(); i != markings_changed.end(); ++i)
-      {
-        marking_map::iterator j = markings.find(i->first);
-        I(j != markings.end());
-        j->second = i->second;
-      }
+      markings[i->first] = i->second;
   }
 
   void
@@ -390,6 +378,7 @@ namespace
       }
     while (parser.symp(syms::attr_cleared))
       {
+        parser.sym();
         node_id nid = parse_nid(parser);
         parser.esym(syms::attr);
         std::string key;
@@ -398,6 +387,7 @@ namespace
       }
     while (parser.symp(syms::attr_changed))
       {
+        parser.sym();
         node_id nid = parse_nid(parser);
         parser.esym(syms::attr);
         std::string key;

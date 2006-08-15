@@ -201,11 +201,7 @@ public:
   void apply_delta(split_path const & pth,
                    file_id const & old_id,
                    file_id const & new_id);
-  void set_delta(node_id nid,
-                 file_id const & new_id);
   void clear_attr(split_path const & pth,
-                  attr_key const & name);
-  void erase_attr(node_id nid,
                   attr_key const & name);
   void set_attr(split_path const & pth,
                 attr_key const & name,
@@ -213,9 +209,18 @@ public:
   void set_attr(split_path const & pth,
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
+
+  // more direct, lower-level operations, for the use of roster_delta's
+  void detach_node(node_id nid);
+  void set_delta(node_id nid,
+                 file_id const & new_id);
   void set_attr(node_id nid,
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
+  void erase_attr(node_id nid,
+                  attr_key const & name);
+
+  // misc.
 
   void extract_path_set(path_set & paths) const;
 
