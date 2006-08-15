@@ -17,4 +17,11 @@ apply_roster_delta(roster_delta const & del,
                    roster_t & roster, marking_map & markings);
                    
 
+#ifdef BUILD_UNIT_TESTS
+
+void test_roster_delta_on(roster_t const & a, marking_map const & a_marking,
+                          roster_t const & b, marking_map const & b_marking);
+
+#endif // BUILD_UNIT_TESTS
+
 #endif // __ROSTER_DELTA_HH__

@@ -2727,6 +2727,8 @@ void calculate_ident(roster_t const & ros,
 #include "constants.hh"
 #include "randomizer.hh"
 
+#include "roster_delta.hh"
+
 #include <string>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
@@ -2905,6 +2907,14 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   make_cset(b2, a2, b2_to_a2);
   do_testing_on_two_equivalent_csets(a_to_b, a2_to_b2);
   do_testing_on_two_equivalent_csets(b_to_a, b2_to_a2);
+  
+  {
+    marking_map a_marking;
+    make_fake_marking_for(a, a_marking);
+    marking_map b_marking;
+    make_fake_marking_for(b, b_marking);
+    test_roster_delta_on(a, a_marking, b, b_marking);
+  }
 }
 
 template<typename M>

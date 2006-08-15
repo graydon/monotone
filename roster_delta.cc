@@ -455,3 +455,33 @@ apply_roster_delta(roster_delta const & del,
   parse_roster_delta_t(pars, d);
   d.apply(roster, markings);
 }
+
+
+#ifdef BUILD_UNIT_TESTS
+
+static void
+spin(roster_t const & from, marking_map const & from_marking,
+     roster_t const & to, marking_map const & to_marking)
+{
+  roster_delta del;
+  delta_rosters(from, from_marking, to, to_marking, del);
+
+  roster_t tmp(from);
+  marking_map tmp_marking(from_marking);
+  apply_roster_delta(del, tmp, tmp_marking);
+  I(tmp == to);
+  I(tmp_marking == to_marking);
+
+  roster_delta del2;
+  delta_rosters(from, from_marking, tmp, tmp_marking, del2);
+  I(del == del2);
+}
+
+void test_roster_delta_on(roster_t const & a, marking_map const & a_marking,
+                          roster_t const & b, marking_map const & b_marking)
+{
+  spin(a, a_marking, b, b_marking);
+  spin(b, b_marking, a, a_marking);
+}
+
+#endif // BUILD_UNIT_TESTS
