@@ -27,14 +27,22 @@ namespace commands
 
   struct command_opts
   {
-    std::set< shared_ptr<option_description> > opts;
+    std::set<option::option_base const *> opts;
     command_opts() {}
-    command_opts & operator%(shared_ptr<option_description> p)
-    { opts.insert(p); return *this; }
+    command_opts & operator%(option::option_base const & p)
+    { opts.insert(&p); return *this; }
     command_opts & operator%(option::no_option)
     { return *this; }
     command_opts & operator%(command_opts const &o)
     { opts.insert(o.opts.begin(), o.opts.end()); return *this; }
+    boost::program_options::options_description as_desc()
+    {
+      boost::program_options::options_description d;
+      std::set<option::option_base const *>::const_iterator it;
+      for (it = opts.begin(); it != opts.end(); ++it)
+        if ((*it)->ptr() != 0) d.add((*it)->ptr());
+      return d;
+    }
   };
 
   struct command

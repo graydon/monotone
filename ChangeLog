@@ -2,6 +2,16 @@
 
 	* Makefile.am: put the lists back the way they were (mostly).
 
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+	* cmd_ws_commit.cc: "status" and "automate get_revision" give
+	identical output, except for leading/trailing whitespace. Make "status"
+	do what "status --brief" used to do, and make status not take the
+	--brief option.
+	* tests/status/__driver__.lua:
+	* tests/use_restrictions_with_--exclude/__driver__.lua:
+	* tests/use_restrictions_with_--exclude_and_inodeprints/__driver__.lua:
+	Update affected tests.
+
 2006-08-15  Zack Weinberg  <zackw@panix.com>
 
 	* configure.ac: Delete MTN_POPT_DEPENDENCIES.  Add strptime to
@@ -17,6 +27,14 @@
 	* m4/boost.m4: Create a new macro to factor out code in common
 	among most of the MTN_BOOST_LIB_* macros.
 	* options.hh: Fix typo.
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* options.hh: Have a non-template option_base class to allow for...
+	* cmd.hh (command_opts): Keep a set of option_base*, not
+	shared_ptr<option_description>. This is to avoid problems with global
+	object initialization order. Also provide a function to convert a
+	command_opts to an options_description.
+	* commands.cc commands.hh monotone.cc: Adjust accordingly.
 
 2006-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
