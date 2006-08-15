@@ -1,5 +1,9 @@
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* tests/log_quits_on_SIGPIPE/: Try to make the test work.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	The new lua version doesn't like the file objects our mkstemp produces.
 	* mkstemp.cc mkstemp.hh: Don't keep the file open. This is only called
 	from LUAEXT(mkstemp, ), which no longer wants an fd.
