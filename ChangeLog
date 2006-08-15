@@ -1,5 +1,9 @@
 2006-08-15  Zack Weinberg  <zackw@panix.com>
 
+	* Makefile.am: put the lists back the way they were (mostly).
+
+2006-08-15  Zack Weinberg  <zackw@panix.com>
+
 	* configure.ac: Delete MTN_POPT_DEPENDENCIES.  Add strptime to
 	main AC_CHECK_FUNCS list (this is the only thing that
 	MTN_POPT_DEPENDENCIES checked for, that was used outside popt).
