@@ -88,12 +88,10 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 # Checks for library functions.
 AC_FUNC_STAT
 AC_FUNC_LOCALE_WORKS
-AC_CHECK_FUNCS([atexit memset mkstemp setenv])
+AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint])
 
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
-AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
-AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
 
 # check for all things boost-related
 BOOST_VERSION_CHECK
@@ -108,7 +106,6 @@ MTN_BOOST_LIB_PROGRAM_OPTIONS
 # more complex library checks
 MTN_NETXX_DEPENDENCIES
 MTN_SQLITE_DEPENDENCIES
-MTN_POPT_DEPENDENCIES
 
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.

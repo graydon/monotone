@@ -76,7 +76,7 @@ namespace option
   // command-specific options
 #define COPT(NAME, OPT, TYPE, DESC) extern specific<TYPE > NAME;
 #include "options_list.hh"
-#undef OPT
+#undef GOPT
 #undef COPT
 }
 
