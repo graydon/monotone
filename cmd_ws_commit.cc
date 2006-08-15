@@ -331,7 +331,7 @@ ALIAS(mv, rename)
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
-    option::depth % option::exclude % option::brief)
+    option::depth % option::exclude)
 {
   roster_t old_roster, new_roster, restricted_roster;
   cset included, excluded;
@@ -359,37 +359,36 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   get_revision_id(old_rev_id);
   make_revision(old_rev_id, old_roster, restricted_roster, rev);
 
-  if (global_sanity.brief)
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
-      I(rev.edges.size() == 1);
-      cset const & cs = edge_changes(rev.edges.begin());
+      if (rev.edges.size() != 1)
+        {
+          revision_id parent = edge_old_revision(*i);
+          cout << "Changes against parent " << parent << "\n";
+        }
+      cset const & cs = edge_changes(*i);
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
-           i != cs.nodes_deleted.end(); ++i)
+            i != cs.nodes_deleted.end(); ++i)
         cout << "dropped " << *i << "\n";
 
       for (map<split_path, split_path>::const_iterator
-           i = cs.nodes_renamed.begin();
-           i != cs.nodes_renamed.end(); ++i)
+            i = cs.nodes_renamed.begin();
+            i != cs.nodes_renamed.end(); ++i)
         cout << "renamed " << i->first << "\n"
-             << "     to " << i->second << "\n";
+              << "     to " << i->second << "\n";
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
-           i != cs.dirs_added.end(); ++i)
+            i != cs.dirs_added.end(); ++i)
         cout << "added   " << *i << "\n";
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-           i != cs.files_added.end(); ++i)
+            i != cs.files_added.end(); ++i)
         cout << "added   " << i->first << "\n";
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
-             i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
         cout << "patched " << i->first << "\n";
-    }
-  else
-    {
-      write_revision(rev, tmp);
-      cout << "\n" << tmp << "\n";
     }
 }
 

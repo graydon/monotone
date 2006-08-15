@@ -1,3 +1,14 @@
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* cmd_ws_commit.cc: "status" and "automate get_revision" give
+	identical output, except for leading/trailing whitespace. Make "status"
+	do what "status --brief" used to do, and make status not take the
+	--brief option.
+	* tests/status/__driver__.lua:
+	* tests/use_restrictions_with_--exclude/__driver__.lua:
+	* tests/use_restrictions_with_--exclude_and_inodeprints/__driver__.lua:
+	Update affected tests.
+
 2006-08-15  Zack Weinberg  <zackw@panix.com>
 
 	* configure.ac: Delete MTN_POPT_DEPENDENCIES.  Add strptime to
