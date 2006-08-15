@@ -1,5 +1,15 @@
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	The new lua version doesn't like the file objects our mkstemp produces.
+	* mkstemp.cc mkstemp.hh: Don't keep the file open. This is only called
+	from LUAEXT(mkstemp, ), which no longer wants an fd.
+	* luaext_mkstemp.cc: Don't try to make a file object, just have
+	monotone_mkstemp create a file, then let...
+	* std_hooks.lua (temp_file): ... open it with io.open, so lua will
+	be happy with it.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* cmd_ws_commit.cc: "status" and "automate get_revision" give
 	identical output, except for leading/trailing whitespace. Make "status"
 	do what "status --brief" used to do, and make status not take the

@@ -14,7 +14,9 @@ function temp_file(namehint)
    else
       filename = string.format("%s/mtn.%s.XXXXXX", tdir, namehint)
    end
-   return mkstemp(filename)
+   local name = mkstemp(filename)
+   local file = io.open(name, "r+")
+   return file, name
 end
 
 function execute(path, ...)   
