@@ -360,7 +360,7 @@ cpp_main(int argc, char ** argv)
       po::options_description cmd_options_desc;
       set< shared_ptr<po::option_description> >::const_iterator it;
       for (it = cmd_options.begin(); it != cmd_options.end(); ++it)
-        cmd_options_desc.add(*it);
+        if (*it!=0) cmd_options_desc.add(*it);
 
       po::options_description all_for_this_cmd;
       all_for_this_cmd.add(option::global_options);

@@ -1,3 +1,8 @@
+2006-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* monotone.cc: work around some boost/stlport4 interaction
+	by explicitely keeping NULL out of shared_ptrs
+
 2006-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*: Import SQLite 3.3.7.
@@ -20,8 +25,9 @@
 	GOPT and COPT macros used <ARGUMENT>, what has been expanded to
 	<vector<string>> at times. sunpro parses that as <vector<string >>
 	* po/sv.po: a newline was missing
-	* m4/boost.m4, configure.ac: move boost_program_options check to boost.m4
-	because it's cleaner and --enable-static-boost is honored that way
+	* m4/boost.m4, configure.ac: move boost_program_options check to
+	boost.m4 because it's cleaner and --enable-static-boost is honored
+	that way
 
 2006-08-14  Richard Levitte  <richard@levitte.org>
 
