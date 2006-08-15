@@ -57,7 +57,7 @@ content_merge_adaptor
 
   virtual void get_version(file_path const & path,
                            file_id const & ident,
-                           file_data & dat) = 0;
+                           file_data & dat) const = 0;
 
   virtual ~content_merge_adaptor() {}
 };
@@ -85,7 +85,7 @@ content_merge_database_adaptor
 
   void get_version(file_path const & path,
                    file_id const & ident,
-                   file_data & dat);
+                   file_data & dat) const;
 };
 
 struct
@@ -110,7 +110,7 @@ content_merge_workspace_adaptor
 
   void get_version(file_path const & path,
                    file_id const & ident,
-                   file_data & dat);
+                   file_data & dat) const;
 };
 
 struct content_merger

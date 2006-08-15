@@ -31,7 +31,7 @@ MOST_SOURCES = 								\
 	lua_hooks.cc lua_hooks.hh 					\
 	transforms.cc transforms.hh					\
 	update.cc update.hh						\
-	work.cc work.hh							\
+	work.cc work_migration.cc work.hh				\
 	cert.cc cert.hh							\
 	database.cc database.hh						\
 	key_store.cc key_store.hh					\
