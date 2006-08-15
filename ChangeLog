@@ -1,5 +1,13 @@
 2006-08-15  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* lua/*.c: Lua 5.1 supports raising exceptions using C++ exception
+	handling mechanisms.  Rename to *.cc so that automake compiles
+	with the C++ compiler.  Yes, this is lame, unless an automake guru
+	has a better way...
+	* lua.hh, lua_hooks.cc, tester.cc: Remove 'extern "C"' from around
+	the Lua includes (also change the includes from <> to "" since
+	we're using a local copy of Lua).
+	* Makefile.am: Update for renamed Lua files.
 	* Makefile.am: Post-merge cleanup.
 	* luaext_mkstemp.cc: Slightly cleaner way to create a Lua IO
 	object from a FILE*.

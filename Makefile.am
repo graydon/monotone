@@ -164,17 +164,17 @@ SQLITE_SOURCES = sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c	\
         sqlite/sqliteInt.h sqlite/vdbe.h sqlite/sqlite3ext.h			\
 	sqlite/vdbeInt.h sqlite/pager.h
 
-LUA_SOURCES = lua/lapi.c lua/ldump.c lua/lmem.h lua/lstring.h lua/lualib.h	\
-	lua/lapi.h lua/lfunc.c lua/loadlib.c lua/lstrlib.c lua/lundump.c	\
-	lua/lauxlib.c lua/lfunc.h lua/lobject.c lua/ltable.c lua/lundump.h	\
-	lua/lauxlib.h lua/lgc.c lua/lobject.h lua/ltable.h lua/lvm.c		\
-	lua/lbaselib.c lua/lgc.h lua/lopcodes.c lua/ltablib.c lua/lvm.h		\
-	lua/lcode.c lua/linit.c lua/lopcodes.h lua/ltests.c lua/lzio.c		\
-	lua/lcode.h lua/liolib.c lua/loslib.c lua/ltm.c lua/lzio.h		\
-	lua/ldblib.c lua/llex.c lua/lparser.c lua/ltm.h lua/ldebug.c		\
-	lua/llex.h lua/lparser.h lua/ldebug.h lua/llimits.h lua/lstate.c	\
-	lua/ldo.c lua/lmathlib.c lua/lstate.h lua/luaconf.h lua/ldo.h		\
-	lua/lmem.c lua/lstring.c lua/lua.h
+LUA_SOURCES = lua/lapi.cc lua/ldump.cc lua/lmem.h lua/lstring.h lua/lualib.h	\
+	lua/lapi.h lua/lfunc.cc lua/loadlib.cc lua/lstrlib.cc lua/lundump.cc	\
+	lua/lauxlib.cc lua/lfunc.h lua/lobject.cc lua/ltable.cc			\
+	lua/lundump.h lua/lauxlib.h lua/lgc.cc lua/lobject.h lua/ltable.h	\
+	lua/lvm.cc lua/lbaselib.cc lua/lgc.h lua/lopcodes.cc lua/ltablib.cc	\
+	lua/lvm.h lua/lcode.cc lua/linit.cc lua/lopcodes.h lua/ltests.cc	\
+	lua/lzio.cc lua/lcode.h lua/liolib.cc lua/loslib.cc lua/ltm.cc		\
+	lua/lzio.h lua/ldblib.cc lua/llex.cc lua/lparser.cc lua/ltm.h		\
+	lua/ldebug.cc lua/llex.h lua/lparser.h lua/ldebug.h lua/llimits.h	\
+	lua/lstate.cc lua/ldo.cc lua/lmathlib.cc lua/lstate.h lua/luaconf.h	\
+	lua/ldo.h lua/lmem.cc lua/lstring.cc lua/lua.h
 
 IDNA_SOURCES = idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\
 	idna/punycode.c idna/rfc3454.c idna/stringprep.h idna/version.c		\
