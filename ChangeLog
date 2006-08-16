@@ -1,3 +1,7 @@
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: Fix some brokenness from the merge hook changes.
+
 2006-08-15  Zack Weinberg  <zackw@panix.com>
 
 	* Makefile.am: put the lists back the way they were (mostly).
