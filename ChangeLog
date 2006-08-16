@@ -177,6 +177,10 @@
 	restricted ls unknown *much* faster in a workspace with large
 	unversioned directories.
 
+2006-08-16  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
 	* xdelta.cc (spin): New utility function for tests.
