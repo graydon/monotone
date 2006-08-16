@@ -350,27 +350,24 @@ mergers.meld = {
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
          return false
       end
-      return afile
+      return tbl.afile
    end ,
    available = function () return program_exists_in_path("meld") end
 }
 
 mergers.tortoise = {
    cmd = function (tbl)
-      return
-      function()
-         local path = "tortoisemerge"
-         local ret = execute(path,
-                             string.format("/base:%s", tbl.afile),
-                             string.format("/theirs:%s", tbl.lfile),
-                             string.format("/mine:%s", tbl.rfile),
-                             string.format("/merged:%s", tbl.outfile))
-         if (ret ~= 0) then
-            io.write(string.format(gettext("Error running merger '%s'\n"), path))
-            return false
-         end
-         return tbl.outfile
+      local path = "tortoisemerge"
+      local ret = execute(path,
+                          string.format("/base:%s", tbl.afile),
+                          string.format("/theirs:%s", tbl.lfile),
+                          string.format("/mine:%s", tbl.rfile),
+                          string.format("/merged:%s", tbl.outfile))
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
       end
+      return tbl.outfile
    end ,
    available = function() return program_exists_in_path ("TortoiseMerge") end
 }
@@ -419,8 +416,9 @@ mergers.rcsmerge = {
                           lfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+         return false
       end
-      return ret
+      return tbl.outfile
    end,
    available = function ()
       return os.getenv("MTN_RCSMERGE") ~= nil
