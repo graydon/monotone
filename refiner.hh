@@ -61,18 +61,18 @@ refiner
   std::set<id> peer_items;
   merkle_table table;
 
-  void refine_synthetic_empty_subtree(merkle_node const & their_node,
-                                      size_t slot);
-  void refine_synthetic_singleton_subtree(merkle_node const & their_node,
-                                          merkle_node const & our_node,
-                                          size_t slot);
   void note_subtree_shared_with_peer(merkle_node const & our_node, size_t slot);
   void send_subquery(merkle_node const & our_node, size_t slot);
+  void send_synthetic_subquery(merkle_node const & our_node, size_t slot);
   void note_item_in_peer(merkle_node const & their_node, size_t slot);
   void load_merkle_node(size_t level, prefix const & pref,
                         merkle_ptr & node);
   bool merkle_node_exists(size_t level, prefix const & pref);
   void calculate_items_to_send();
+  std::string voicestr() 
+  { 
+    return voice == server_voice ? "server" : "client"; 
+  }  
 
 public:
 
@@ -87,6 +87,8 @@ public:
     return local_items.find(ident) != local_items.end();
   }
 
+  std::set<id> const & get_local_items() const { return local_items; }
+  std::set<id> const & get_peer_items() const { return peer_items; }
 
   // These are populated as the 'done' packets arrive.
   bool done;

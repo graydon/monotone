@@ -18,6 +18,7 @@
 #include <set>
 #include <string>
 
+#include "paths.hh"
 #include "sanity.hh"
 
 struct user_interface;
@@ -88,12 +89,16 @@ struct user_interface
 public:
   user_interface();
   ~user_interface();
+  void initialize();
+  void deinitialize();
   void warn(std::string const & warning);
   void warn(format_base const & fmt) { warn(fmt.str()); }
-  void fatal(std::string const & warning);
-  void fatal(format_base const & fmt) { warn(fmt.str()); }
+  void fatal(std::string const & fatal);
+  void fatal(format_base const & fmt) { fatal(fmt.str()); }
   void inform(std::string const & line);
   void inform(format_base const & fmt) { inform(fmt.str()); }
+  void fatal_exception(std::exception const & ex);
+  void fatal_exception();
   void set_tick_trailer(std::string const & trailer);
   void set_tick_writer(tick_writer * t_writer);
   void ensure_clean_line();
@@ -125,9 +130,6 @@ extern struct user_interface ui;
 // like platform.hh's "terminal_width", but always returns a sensible value
 // (even if there is no terminal)
 unsigned int guess_terminal_width();
-
-// returns the a default user locale value
-const std::locale & get_user_locale();
 
 // Local Variables:
 // mode: C++

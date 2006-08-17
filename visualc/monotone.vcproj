@@ -378,6 +378,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\luaext_globish.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\luaext_guess_binary.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\luaext_mkstemp.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\luaext_parse_basic_io.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\luaext_platform.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\main.cc"
 				>
 			</File>
@@ -403,6 +423,10 @@
 			</File>
 			<File
 				RelativePath="..\mt_version.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\mtn-sanity.cc"
 				>
 			</File>
 			<File
@@ -484,6 +508,10 @@
 			</File>
 			<File
 				RelativePath="..\win32\process.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\randomizer.cc"
 				>
 			</File>
 			<File
@@ -732,6 +760,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\mtn-sanity.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\netcmd.hh"
 				>
 			</File>
@@ -776,11 +808,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\platform-wrapped.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\platform.hh"
 				>
 			</File>
 			<File
 				RelativePath="..\quick_alloc.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\randomizer.hh"
 				>
 			</File>
 			<File

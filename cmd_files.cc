@@ -22,10 +22,10 @@ using std::ostream_iterator;
 using std::string;
 using std::vector;
 
-// fload and fmerge are simple commands for debugging the line
+// fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
 {
   string s = get_stdin();
 
@@ -40,7 +40,7 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("merge 3 files and output result"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -75,9 +75,45 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 }
 
+CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
+    N_("diff 2 files and output result"),
+    option::context_diff % option::unified_diff % option::no_show_encloser)
+{
+  if (args.size() != 4)
+    throw usage(name);
+
+  string const
+    & src_name = idx(args, 0)(),
+    & dst_name = idx(args, 1)();
+
+  file_id 
+    src_id(idx(args, 2)()), 
+    dst_id(idx(args, 3)());
+
+  file_data src, dst;
+
+  N(app.db.file_version_exists (src_id),
+    F("source file id does not exist"));
+
+  N(app.db.file_version_exists (dst_id),
+    F("destination file id does not exist"));
+
+  app.db.get_file_version(src_id, src);
+  app.db.get_file_version(dst_id, dst);
+
+  string pattern("");
+  if (app.diff_show_encloser)
+    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+
+  make_diff(src_name, dst_name,
+            src_id, dst_id,
+            src.inner(), dst.inner(),
+            cout, app.diff_format, pattern);
+}
+
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    OPT_REVISION % OPT_BRIEF)
+    option::revision % option::brief)
 {
   revision_id rid;
 
@@ -120,7 +156,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
-    OPT_NONE)
+    option::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -130,7 +166,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
   if (args.size() == 1)
     {
       read_localized_data(file_path_external(idx(args, 0)), 
-			  dat, app.lua);
+                          dat, app.lua);
     }
   else
     {
@@ -145,7 +181,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
-    OPT_REVISION)
+    option::revision)
 {
   if (args.size() != 1)
     throw usage(name);

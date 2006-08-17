@@ -35,7 +35,7 @@
 #include "keys.hh"
 #include "numeric_vocab.hh"
 #include "revision.hh"
-#include "sanity.hh"
+#include "mtn-sanity.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
 #include "ui.hh"
@@ -62,7 +62,7 @@ using std::vector;
 using boost::dynamic_bitset;
 using boost::shared_ptr;
 
-void revision_set::check_sane() const
+void revision_t::check_sane() const
 {
   // null id in current manifest only permitted if previous
   // state was null and no changes
@@ -95,13 +95,13 @@ void revision_set::check_sane() const
 }
 
 bool
-revision_set::is_merge_node() const
+revision_t::is_merge_node() const
 {
   return edges.size() > 1;
 }
 
 bool
-revision_set::is_nontrivial() const
+revision_t::is_nontrivial() const
 {
   check_sane();
   // merge revisions are never trivial, because even if the resulting node
@@ -113,7 +113,7 @@ revision_set::is_nontrivial() const
     return !edge_changes(edges.begin()).empty();
 }
 
-revision_set::revision_set(revision_set const & other)
+revision_t::revision_t(revision_t const & other)
 {
   /* behave like normal constructor if other is empty */
   if (null_id(other.new_manifest) && other.edges.empty()) return;
@@ -122,8 +122,8 @@ revision_set::revision_set(revision_set const & other)
   edges = other.edges;
 }
 
-revision_set const &
-revision_set::operator=(revision_set const & other)
+revision_t const &
+revision_t::operator=(revision_t const & other)
 {
   other.check_sane();
   new_manifest = other.new_manifest;
@@ -529,7 +529,7 @@ ancestry_difference(revision_id const & a, set<revision_id> const & bs,
 
 void
 select_nodes_modified_by_rev(revision_id const & rid,
-                             revision_set const & rev,
+                             revision_t const & rev,
                              roster_t const new_roster,
                              set<node_id> & nodes_modified,
                              app_state & app)
@@ -554,10 +554,10 @@ select_nodes_modified_by_rev(revision_id const & rid,
 
 
 void
-make_revision_set(revision_id const & old_rev_id,
-                  roster_t const & old_roster,
-                  roster_t const & new_roster,
-                  revision_set & rev)
+make_revision(revision_id const & old_rev_id,
+              roster_t const & old_roster,
+              roster_t const & new_roster,
+              revision_t & rev)
 {
   shared_ptr<cset> cs(new cset());
 
@@ -1323,7 +1323,7 @@ anc_graph::construct_revisions_from_ancestry()
           // tmpids), wherever possible.
           fixup_node_identities(parent_rosters, child_roster, node_to_renames[child]);
 
-          revision_set rev;
+          revision_t rev;
           MM(rev);
           calculate_ident(child_roster, rev.new_manifest);
 
@@ -1376,7 +1376,7 @@ anc_graph::construct_revisions_from_ancestry()
             string rtmp;
             data dtmp;
             dump(dbg, rtmp);
-            write_revision_set(rev, dtmp);
+            write_revision(rev, dtmp);
             P(F("%s") % rtmp);
             P(F("%s") % dtmp);
           }
@@ -1417,7 +1417,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   app.db.ensure_open_for_format_changes();
   app.db.check_is_not_rosterified();
 
-  global_sanity.set_relaxed(true);
+  real_sanity.set_relaxed(true);
   anc_graph graph(true, app);
 
   P(F("converting existing revision graph to new roster-style revisions"));
@@ -1462,7 +1462,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
       graph.add_node_for_oldstyle_revision(*i);
     }
 
-  global_sanity.set_relaxed(false);
+  real_sanity.set_relaxed(false);
   graph.rebuild_ancestry();
 }
 
@@ -1527,12 +1527,10 @@ print_edge(basic_io::printer & printer,
   print_cset(printer, edge_changes(e));
 }
 
-
-void
-print_revision(basic_io::printer & printer,
-               revision_set const & rev)
+static void
+print_insane_revision(basic_io::printer & printer,
+                      revision_t const & rev)
 {
-  rev.check_sane();
 
   basic_io::stanza format_stanza;
   format_stanza.push_str_pair(syms::format_version, "1");
@@ -1545,6 +1543,14 @@ print_revision(basic_io::printer & printer,
   for (edge_map::const_iterator edge = rev.edges.begin();
        edge != rev.edges.end(); ++edge)
     print_edge(printer, *edge);
+}
+
+void
+print_revision(basic_io::printer & printer,
+               revision_t const & rev)
+{
+  rev.check_sane();
+  print_insane_revision(printer, rev);
 }
 
 
@@ -1570,7 +1576,7 @@ parse_edge(basic_io::parser & parser,
 
 void
 parse_revision(basic_io::parser & parser,
-               revision_set & rev)
+               revision_t & rev)
 {
   MM(rev);
   rev.edges.clear();
@@ -1591,8 +1597,8 @@ parse_revision(basic_io::parser & parser,
 }
 
 void
-read_revision_set(data const & dat,
-                  revision_set & rev)
+read_revision(data const & dat,
+              revision_t & rev)
 {
   MM(rev);
   basic_io::input_source src(dat(), "revision");
@@ -1604,52 +1610,52 @@ read_revision_set(data const & dat,
 }
 
 void
-read_revision_set(revision_data const & dat,
-                  revision_set & rev)
+read_revision(revision_data const & dat,
+              revision_t & rev)
 {
-  read_revision_set(dat.inner(), rev);
+  read_revision(dat.inner(), rev);
   rev.check_sane();
 }
 
-static void write_insane_revision_set(revision_set const & rev,
-                                      data & dat)
+static void write_insane_revision(revision_t const & rev,
+                                  data & dat)
 {
   basic_io::printer pr;
-  print_revision(pr, rev);
+  print_insane_revision(pr, rev);
   dat = data(pr.buf);
 }
 
 template <> void
-dump(revision_set const & rev, string & out)
+dump(revision_t const & rev, string & out)
 {
   data dat;
-  write_insane_revision_set(rev, dat);
+  write_insane_revision(rev, dat);
   out = dat();
 }
 
 void
-write_revision_set(revision_set const & rev,
-                   data & dat)
+write_revision(revision_t const & rev,
+               data & dat)
 {
   rev.check_sane();
-  write_insane_revision_set(rev, dat);
+  write_insane_revision(rev, dat);
 }
 
 void
-write_revision_set(revision_set const & rev,
-                   revision_data & dat)
+write_revision(revision_t const & rev,
+               revision_data & dat)
 {
   data d;
-  write_revision_set(rev, d);
+  write_revision(rev, d);
   dat = revision_data(d);
 }
 
-void calculate_ident(revision_set const & cs,
+void calculate_ident(revision_t const & cs,
                      revision_id & ident)
 {
   data tmp;
   hexenc<id> tid;
-  write_revision_set(cs, tmp);
+  write_revision(cs, tmp);
   calculate_ident(tmp, tid);
   ident = tid;
 }

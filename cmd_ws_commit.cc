@@ -30,18 +30,18 @@ using std::vector;
 using boost::shared_ptr;
 
 static void
-get_log_message_interactively(revision_set const & cs,
+get_log_message_interactively(revision_t const & cs,
                               app_state & app,
                               string & log_message)
 {
   string commentary;
   data summary, user_log_message;
-  write_revision_set(cs, summary);
+  write_revision(cs, summary);
   read_user_log(user_log_message);
   commentary += string(70, '-') + "\n";
   commentary += _("Enter a description of this change.\n"
                   "Lines beginning with `MTN:' "
-		  "are removed automatically.\n");
+                  "are removed automatically.\n");
   commentary += "\n";
   commentary += summary();
   commentary += string(70, '-') + "\n";
@@ -52,19 +52,21 @@ get_log_message_interactively(revision_set const & cs,
 
 CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
-    OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    option::depth % option::exclude % option::missing)
 {
-  if (args.size() < 1)
-    throw usage(name);
-
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
   cset included, excluded;
 
+  N(app.missing || !args.empty() || !app.exclude_patterns.empty(),
+    F("you must pass at least one path to 'revert' (perhaps '.')"));
+
   app.require_workspace();
 
-  vector<utf8> includes;
-  vector<utf8> excludes;
+  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+
+  node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+                        old_roster, new_roster, app);
 
   if (app.missing)
     {
@@ -73,31 +75,27 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
       // specified args and then make a restriction that includes only
       // these missing files.
       path_set missing;
-      find_missing(app, args, missing);
+      find_missing(new_roster, mask, missing);
       if (missing.empty())
         {
-          L(FL("no missing files in restriction."));
+          P(F("no missing files to revert"));
           return;
         }
 
+      std::vector<file_path> missing_files;
       for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
         {
           file_path fp(*i);
           L(FL("missing files are '%s'") % fp);
-          includes.push_back(fp.as_external());
+          missing_files.push_back(fp);
         }
-    }
-  else
-    {
-      includes = args;
-      excludes = app.exclude_patterns;
+      // replace the original mask with a more restricted one
+      mask = node_restriction(missing_files, std::vector<file_path>(),
+                              old_roster, new_roster, app);
     }
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  node_restriction mask(includes, excludes, old_roster, new_roster, app);
-
-  make_restricted_csets(old_roster, new_roster, 
-			included, excluded, mask);
+  make_restricted_csets(old_roster, new_roster,
+                        included, excluded, mask);
 
   // The included cset will be thrown away (reverted) leaving the
   // excluded cset pending in MTN/work which must be valid against the
@@ -170,13 +168,13 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
 CMD(disapprove, N_("review"), N_("REVISION"),
     N_("disapprove of a particular revision"),
-    OPT_BRANCH_NAME)
+    option::branch_name)
 {
   if (args.size() != 1)
     throw usage(name);
 
   revision_id r;
-  revision_set rev, rev_inverse;
+  revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
   complete(app, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
@@ -206,7 +204,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     revision_id inv_id;
     revision_data rdat;
 
-    write_revision_set(rev_inverse, rdat);
+    write_revision(rev_inverse, rdat);
     calculate_ident(rdat, inv_id);
     dbw.consume_revision_data(inv_id, rdat);
 
@@ -214,15 +212,15 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
     cert_revision_changelog(inv_id, 
-			    (FL("disapproval of revision '%s'") 
-			     % r).str(), app, dbw);
+                            (FL("disapproval of revision '%s'") 
+                             % r).str(), app, dbw);
     guard.commit();
   }
 }
 
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"), OPT_UNKNOWN)
+    N_("add files to workspace"), option::unknown)
 {
   if (!app.unknown && (args.size() < 1))
     throw usage(name);
@@ -232,12 +230,19 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   path_set paths;
   if (app.unknown)
     {
+      vector<file_path> roots = args_to_paths(args);
+      path_restriction mask(roots, args_to_paths(app.exclude_patterns), app);
       path_set ignored;
-      find_unknown_and_ignored(app, args, paths, ignored);
+
+      // if no starting paths have been specified use the workspace root
+      if (roots.empty())
+        roots.push_back(file_path());
+
+      find_unknown_and_ignored(app, mask, roots, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
-	 i != args.end(); ++i)
+         i != args.end(); ++i)
       {
         split_path sp;
         file_path_external(*i).split(sp);
@@ -249,8 +254,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"), 
-    OPT_EXECUTE % OPT_MISSING % OPT_RECURSIVE)
+    N_("drop files from workspace"), option::execute % option::missing % option::recursive)
 {
   if (!app.missing && (args.size() < 1))
     throw usage(name);
@@ -259,10 +263,17 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
 
   path_set paths;
   if (app.missing)
-    find_missing(app, args, paths);
+    {
+      temp_node_id_source nis;
+      roster_t current_roster_shape;
+      get_current_roster_shape(current_roster_shape, nis, app);
+      node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+                            current_roster_shape, app);
+      find_missing(current_roster_shape, mask, paths);
+    }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
-	 i != args.end(); ++i)
+         i != args.end(); ++i)
       {
         split_path sp;
         file_path_external(*i).split(sp);
@@ -279,7 +290,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    OPT_EXECUTE)
+    option::execute)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -308,7 +319,7 @@ ALIAS(mv, rename)
          "that is currently the root\n"
          "directory will have name PUT_OLD.\n"
          "Using --execute is strongly recommended."),
-      OPT_EXECUTE)
+    option::execute)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -319,26 +330,26 @@ ALIAS(mv, rename)
   perform_pivot_root(new_root, put_old, app);
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."), 
-    N_("show status of workspace"),
-    OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
+CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
+    option::depth % option::exclude)
 {
   roster_t old_roster, new_roster, restricted_roster;
   cset included, excluded;
   revision_id old_rev_id;
-  revision_set rev;
+  revision_t rev;
   data tmp;
   temp_node_id_source nis;
 
   app.require_workspace();
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  node_restriction mask(args, app.exclude_patterns, 
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.exclude_patterns),
                         old_roster, new_roster, app);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, 
-			included, excluded, mask);
+                        included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
@@ -346,39 +357,38 @@ CMD(status, N_("informative"), N_("[PATH]..."),
   included.apply_to(er);
 
   get_revision_id(old_rev_id);
-  make_revision_set(old_rev_id, old_roster, restricted_roster, rev);
+  make_revision(old_rev_id, old_roster, restricted_roster, rev);
 
-  if (global_sanity.brief)
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
-      I(rev.edges.size() == 1);
-      cset const & cs = edge_changes(rev.edges.begin());
+      if (rev.edges.size() != 1)
+        {
+          revision_id parent = edge_old_revision(*i);
+          cout << "Changes against parent " << parent << "\n";
+        }
+      cset const & cs = edge_changes(*i);
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
-           i != cs.nodes_deleted.end(); ++i)
+            i != cs.nodes_deleted.end(); ++i)
         cout << "dropped " << *i << "\n";
 
       for (map<split_path, split_path>::const_iterator
-           i = cs.nodes_renamed.begin();
-           i != cs.nodes_renamed.end(); ++i)
+            i = cs.nodes_renamed.begin();
+            i != cs.nodes_renamed.end(); ++i)
         cout << "renamed " << i->first << "\n"
-             << "     to " << i->second << "\n";
+              << "     to " << i->second << "\n";
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
-           i != cs.dirs_added.end(); ++i)
+            i != cs.dirs_added.end(); ++i)
         cout << "added   " << *i << "\n";
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-           i != cs.files_added.end(); ++i)
+            i != cs.files_added.end(); ++i)
         cout << "added   " << i->first << "\n";
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
-             i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
         cout << "patched " << i->first << "\n";
-    }
-  else
-    {
-      write_revision_set(rev, tmp);
-      cout << "\n" << tmp << "\n";
     }
 }
 
@@ -387,7 +397,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
        "If no directory is given, the branch name will be used as directory"),
-    OPT_BRANCH_NAME % OPT_REVISION)
+    option::branch_name % option::revision)
 {
   revision_id ident;
   system_path dir;
@@ -403,7 +413,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     {
       // No checkout dir specified, use branch name for dir.
       N(!app.branch_name().empty(), 
-	F("need --branch argument for branch-based checkout"));
+        F("need --branch argument for branch-based checkout"));
       dir = system_path(app.branch_name());
     }
   else
@@ -422,12 +432,12 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     {
       // use branch head revision
       N(!app.branch_name().empty(), 
-	F("need --branch argument for branch-based checkout"));
+        F("need --branch argument for branch-based checkout"));
 
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
       N(heads.size() > 0, 
-	F("branch '%s' is empty") % app.branch_name);
+        F("branch '%s' is empty") % app.branch_name);
       if (heads.size() > 1)
         {
           P(F("branch %s has multiple heads:") % app.branch_name);
@@ -514,7 +524,7 @@ ALIAS(co, checkout)
 
 CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
     N_("set, get or drop file attributes"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -582,8 +592,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             if (i->second.first)
               {
                 cout << path << " : " 
-		     << i->first << "=" 
-		     << i->second.second << "\n";
+                     << i->first << "=" 
+                     << i->second.second << "\n";
                 has_any_live_attrs = true;
               }
           if (!has_any_live_attrs)
@@ -595,11 +605,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
             cout << path << " : " 
-		 << i->first << "=" 
-		 << i->second.second << "\n";
+                 << i->first << "=" 
+                 << i->second.second << "\n";
           else
             cout << (F("No attribute '%s' on path '%s'") 
-		     % a_key % path) << "\n";
+                     % a_key % path) << "\n";
         }
       else
         throw usage(name);
@@ -612,12 +622,12 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE %
-    OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
+    option::branch_name % option::message % option::msgfile % option::date % 
+    option::author % option::depth % option::exclude)
 {
   string log_message("");
   bool log_message_given;
-  revision_set restricted_rev;
+  revision_t restricted_rev;
   revision_id old_rev_id, restricted_rev_id;
   roster_t old_roster, new_roster, restricted_roster;
   temp_node_id_source nis;
@@ -627,12 +637,13 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   app.require_workspace();
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
-  node_restriction mask(args, app.exclude_patterns, 
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.exclude_patterns),
                         old_roster, new_roster, app);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
   make_restricted_csets(old_roster, new_roster, 
-			included, excluded, mask);
+                        included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
   restricted_roster = old_roster;
@@ -640,8 +651,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   included.apply_to(er);
 
   get_revision_id(old_rev_id);
-  make_revision_set(old_rev_id, old_roster, 
-		    restricted_roster, restricted_rev);
+  make_revision(old_rev_id, old_roster, 
+                    restricted_roster, restricted_rev);
 
   calculate_ident(restricted_rev, restricted_rev_id);
 
@@ -727,7 +738,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         cset const & cs = edge_changes(edge);
 
         for (map<split_path, pair<file_id, file_id> >::const_iterator 
-	       i = cs.deltas_applied.begin();
+               i = cs.deltas_applied.begin();
              i != cs.deltas_applied.end(); ++i)
           {
             file_path path(i->first);
@@ -763,12 +774,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
               // If we don't err out here, our packet writer will
               // later.
               E(false, 
-		F("Your database is missing version %s of file '%s'")
-		% old_content % path);
+                F("Your database is missing version %s of file '%s'")
+                % old_content % path);
           }
 
         for (map<split_path, file_id>::const_iterator 
-	       i = cs.files_added.begin();
+               i = cs.files_added.begin();
              i != cs.files_added.end(); ++i)
           {
             file_path path(i->first);
@@ -788,7 +799,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       }
 
     revision_data rdat;
-    write_revision_set(restricted_rev, rdat);
+    write_revision(restricted_rev, rdat);
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
     cert_revision_in_branch(restricted_rev_id, branchname, app, dbw);
@@ -848,9 +859,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 ALIAS(ci, commit);
 
 
-CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), 
-		 N_("setup a new workspace directory, default to current"),
-                 OPT_BRANCH_NAME)
+CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
+    N_("setup a new workspace directory, default to current"), 
+    option::branch_name)
 {
   if (args.size() > 1)
     throw usage(name);
@@ -869,9 +880,8 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   put_revision_id(null);
 }
 
-CMD(refresh_inodeprints, N_("tree"), "", 
-    N_("refresh the inodeprint cache"),
-    OPT_NONE)
+CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
+    option::none)
 {
   app.require_workspace();
   enable_inodeprints();

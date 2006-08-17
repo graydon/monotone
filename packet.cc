@@ -126,9 +126,9 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
       return;
     }
 
-  revision_set rev;
+  revision_t rev;
   MM(rev);
-  read_revision_set(dat, rev);
+  read_revision(dat, rev);
 
   for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); ++i)
@@ -458,10 +458,10 @@ feed_packet_consumer
 static size_t
 extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
-  string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
-  string const body("([^\\[\\]]+)");
-  string const tail("\\[end\\]");
-  string const whole = head + body + tail;
+  static string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
+  static string const body("([^\\[\\]]+)");
+  static string const tail("\\[end\\]");
+  static string const whole = head + body + tail;
   regex expr(whole);
   size_t count = 0;
   regex_grep(feed_packet_consumer(count, cons, app), s, expr, match_default);
@@ -476,7 +476,7 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
   size_t count = 0;
   size_t const bufsz = 0xff;
   char buf[bufsz];
-  string const end("[end]");
+  static string const end("[end]");
   while(in)
     {
       in.read(buf, bufsz);
@@ -529,7 +529,7 @@ packet_roundabout_test()
     pw.consume_file_delta(fid, fid2, file_delta(del));
 
     // a rdata packet
-    revision_set rev;
+    revision_t rev;
     rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     split_path sp;
     file_path_internal("").split(sp);
@@ -538,7 +538,7 @@ packet_roundabout_test()
     rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
                                     cs));
     revision_data rdat;
-    write_revision_set(rev, rdat);
+    write_revision(rev, rdat);
     revision_id rid;
     calculate_ident(rdat, rid);
     pw.consume_revision_data(rid, rdat);

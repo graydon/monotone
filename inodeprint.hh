@@ -48,6 +48,8 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
 }
 
 
+bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

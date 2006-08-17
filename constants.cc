@@ -20,9 +20,6 @@ using std::string;
 namespace constants
 {
 
-  // block size in bytes for "automate stdio" output
-  size_t const automate_stdio_size = 1024;
-
   // number of bits in an RSA key we use
   size_t const keylen = 1024;
 
@@ -44,6 +41,8 @@ namespace constants
 
   size_t const db_roster_cache_sz = 7;
 
+  unsigned long const db_max_pending_writes_bytes = 16 * 1024 * 1024;
+ 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
   size_t const log_line_sz = 0x300;
@@ -109,22 +108,6 @@ namespace constants
   ;
 
   string const regex_legal_key_name_bytes("([-a-zA-Z0-9\\.@\\+_]+)");
-
-  // all the ASCII characters (bytes) which are illegal in a (file|local)_path
-
-  char const illegal_path_bytes_arr[33] =
-    {
-      0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-      0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-      0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
-      0x7f, 0x00
-    }
-  ;
-
-  char const * const illegal_path_bytes =
-  illegal_path_bytes_arr
-  ;
 
   // merkle tree / netcmd / netsync related stuff
 

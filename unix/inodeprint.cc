@@ -4,75 +4,69 @@
 // see the file COPYING for details
 
 #include <sys/stat.h>
-
-#include "botan/botan.h"
-#include "botan/sha160.h"
+#include <time.h>
 
 #include "platform.hh"
-#include "transforms.hh"
-#include "file_io.hh"
-#include "constants.hh"
 
-namespace
+inline bool should_abort(time_t now, time_t then)
 {
-  template <typename T> void
-  add_hash(Botan::SHA_160 & hash, T obj)
-  {
-      // FIXME: this is not endian safe, which will cause problems
-      // if the inodeprint listing is shared between machines of
-      // different types (over NFS etc).
-      size_t size = sizeof(obj);
-      hash.update(reinterpret_cast<Botan::byte const *>(&size),
-                  sizeof(size));
-      hash.update(reinterpret_cast<Botan::byte const *>(&obj),
-                  sizeof(obj));
-  }
-};
+  if (now < 0 || then < 0)
+    return false;
+  double difference = difftime(now, then);
+  return (difference >= -3 && difference <= 3);
+}
 
-bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
+inline bool is_future(time_t now, time_t then)
+{
+  if (now < 0 || then < 0)
+    return false;
+  return difftime(now, then) > 0;
+}
+
+bool inodeprint_file(std::string const & file, inodeprint_calculator & calc)
 {
   struct stat st;
-  if (stat(file.as_external().c_str(), &st) < 0)
+  if (stat(file.c_str(), &st) < 0)
     return false;
 
-  Botan::SHA_160 hash;
+  time_t now;
+  time(&now);
 
-  add_hash(hash, st.st_ctime);
+  calc.note_nowish(should_abort(now, st.st_ctime));
+  calc.add_item(st.st_ctime);
+  calc.note_future(is_future(now, st.st_ctime));
 
   // aah, portability.
 #ifdef HAVE_STRUCT_STAT_ST_CTIM_TV_NSEC
-  add_hash(hash, st.st_ctim.tv_nsec);
+  calc.add_item(st.st_ctim.tv_nsec);
 #elif defined(HAVE_STRUCT_STAT_ST_CTIMESPEC_TV_NSEC)
-  add_hash(hash, st.st_ctimespec.tv_nsec);
+  calc.add_item(st.st_ctimespec.tv_nsec);
 #elif defined(HAVE_STRUCT_STAT_ST_CTIMENSEC)
-  add_hash(hash, st.st_ctimensec);
+  calc.add_item(st.st_ctimensec);
 #else
-  add_hash(hash, (long)0);
+  calc.add_item((long)0);
 #endif
 
-  add_hash(hash, st.st_mtime);
+  calc.note_nowish(should_abort(now, st.st_mtime));
+  calc.add_item(st.st_mtime);
+  calc.note_future(is_future(now, st.st_mtime));
 
 #ifdef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
-  add_hash(hash, st.st_mtim.tv_nsec);
+  calc.add_item(st.st_mtim.tv_nsec);
 #elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
-  add_hash(hash, st.st_mtimespec.tv_nsec);
+  calc.add_item(st.st_mtimespec.tv_nsec);
 #elif defined(HAVE_STRUCT_STAT_ST_MTIMENSEC)
-  add_hash(hash, st.st_mtimensec);
+  calc.add_item(st.st_mtimensec);
 #else
-  add_hash(hash, (long)0);
+  calc.add_item((long)0);
 #endif
 
-  add_hash(hash, st.st_mode);
-  add_hash(hash, st.st_ino);
-  add_hash(hash, st.st_dev);
-  add_hash(hash, st.st_uid);
-  add_hash(hash, st.st_gid);
-  add_hash(hash, st.st_size);
+  calc.add_item(st.st_mode);
+  calc.add_item(st.st_ino);
+  calc.add_item(st.st_dev);
+  calc.add_item(st.st_uid);
+  calc.add_item(st.st_gid);
+  calc.add_item(st.st_size);
 
-  char digest[constants::sha1_digest_length];
-  hash.final(reinterpret_cast<Botan::byte *>(digest));
-  std::string out(digest, constants::sha1_digest_length);
-  inodeprint ip_raw(out);
-  encode_hexenc(ip_raw, ip);
   return true;
 }

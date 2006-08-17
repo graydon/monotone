@@ -133,6 +133,7 @@ database::database(system_path const & fn) :
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
   schema("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df"),
+  pending_writes_size(0),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -817,6 +818,12 @@ database::begin_transaction(bool exclusive)
 }
 
 
+size_t
+database::size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat)
+{
+  return tab.size() + id().size() + dat().size();
+}
+
 bool
 database::have_pending_write(string const & tab, hexenc<id> const & id)
 {
@@ -829,19 +836,40 @@ database::load_pending_write(string const & tab, hexenc<id> const & id, data & d
   dat = safe_get(pending_writes, make_pair(tab, id));
 }
 
+// precondition: have_pending_write(tab, an_id) == true
 void
-database::cancel_pending_write(string const & tab, hexenc<id> const & id)
+database::cancel_pending_write(string const & tab, hexenc<id> const & an_id)
 {
-  safe_erase(pending_writes, make_pair(tab, id));
+  data const & dat = safe_get(pending_writes, make_pair(tab, an_id));
+  size_t cancel_size = size_pending_write(tab, an_id, dat);
+  I(cancel_size < pending_writes_size);
+  pending_writes_size -= cancel_size;
+    
+  safe_erase(pending_writes, make_pair(tab, an_id));
 }
 
 void
 database::schedule_write(string const & tab,
-                         hexenc<id> const & id,
+                         hexenc<id> const & an_id,
                          data const & dat)
 {
-  if (!have_pending_write(tab, id))
-    safe_insert(pending_writes, make_pair(make_pair(tab, id), dat));
+  if (!have_pending_write(tab, an_id))
+    {
+      safe_insert(pending_writes, make_pair(make_pair(tab, an_id), dat));
+      pending_writes_size += size_pending_write(tab, an_id, dat);
+    }
+  if (pending_writes_size > constants::db_max_pending_writes_bytes)
+    flush_pending_writes();
+}
+
+void
+database::flush_pending_writes()
+{
+  for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
+       i != pending_writes.end(); ++i)
+    put(i->first.second, i->second, i->first.first);
+  pending_writes.clear();
+  pending_writes_size = 0;
 }
 
 void
@@ -849,12 +877,7 @@ database::commit_transaction()
 {
   if (transaction_level == 1)
     {
-      for (map<pair<string, hexenc<id> >, data>::const_iterator i = pending_writes.begin();
-           i != pending_writes.end(); ++i)
-        {
-          put(i->first.second, i->second, i->first.first);
-        }
-      pending_writes.clear();
+      flush_pending_writes();
       execute(query("COMMIT"));
     }
   transaction_level--;
@@ -866,6 +889,7 @@ database::rollback_transaction()
   if (transaction_level == 1)
     {
       pending_writes.clear();
+      pending_writes_size = 0;
       execute(query("ROLLBACK"));
     }
   transaction_level--;
@@ -1594,18 +1618,18 @@ void
 database::get_revision_manifest(revision_id const & rid,
                                manifest_id & mid)
 {
-  revision_set rev;
+  revision_t rev;
   get_revision(rid, rev);
   mid = rev.new_manifest;
 }
 
 void
 database::get_revision(revision_id const & id,
-                       revision_set & rev)
+                       revision_t & rev)
 {
   revision_data d;
   get_revision(id, d);
-  read_revision_set(d, rev);
+  read_revision(d, rev);
 }
 
 void
@@ -1636,7 +1660,7 @@ void
 database::deltify_revision(revision_id const & rid)
 {
   transaction_guard guard(*this);
-  revision_set rev;
+  revision_t rev;
   MM(rev);
   MM(rid);
   get_revision(rid, rev);
@@ -1673,7 +1697,7 @@ database::deltify_revision(revision_id const & rid)
 
 void
 database::put_revision(revision_id const & new_id,
-                       revision_set const & rev)
+                       revision_t const & rev)
 {
   MM(new_id);
   MM(rev);
@@ -1684,7 +1708,7 @@ database::put_revision(revision_id const & new_id,
   rev.check_sane();
   revision_data d;
   MM(d.inner());
-  write_revision_set(rev, d);
+  write_revision(rev, d);
 
   // Phase 1: confirm the revision makes sense
   {
@@ -1737,8 +1761,8 @@ void
 database::put_revision(revision_id const & new_id,
                        revision_data const & dat)
 {
-  revision_set rev;
-  read_revision_set(dat, rev);
+  revision_t rev;
+  read_revision(dat, rev);
   put_revision(new_id, rev);
 }
 
@@ -2836,7 +2860,7 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       get_roster_id_for_revision(old_rev, old_id);
-      if (exists(new_id.inner(), data_table))
+      if (exists(old_id.inner(), data_table))
         {
           get_roster_version(old_id, old_data);
           diff(new_data.inner(), old_data.inner(), reverse_delta);
@@ -2870,9 +2894,9 @@ transitive_closure(string const & x,
       if (results.find(curr) == results.end())
         {
           results.insert(curr);
-          pair<ancestry_map::const_iterator, ancestry_map::const_iterator> range;
-          range = m.equal_range(c);
-          for (ancestry_map::const_iterator i = range.first; i != range.second; ++i)
+          pair<ancestry_map::const_iterator, ancestry_map::const_iterator> \
+            range(m.equal_range(c));
+          for (ancestry_map::const_iterator i(range.first); i != range.second; ++i)
             {
               if (i->first == c)
                 work.push_back(i->second);

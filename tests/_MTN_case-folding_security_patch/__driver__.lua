@@ -32,7 +32,7 @@ for _,i in pairs(names) do remove(i) end
 
 -- assert trips if we have a db that already has a file with this sort
 -- of name in it.
-for _,i in {"files", "dirs"} do
+for _,i in pairs({"files", "dirs"}) do
   get(i..".db.dumped", "stdin")
   check(mtn("db", "load", "-d", i..".mtn"), 0, false, false, true)
   check(mtn("db", "migrate", "-d", i..".mtn"), 0, false, false)

@@ -72,7 +72,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 class transaction_guard;
 struct posting;
 class app_state;
-struct revision_set;
+struct revision_t;
 struct query;
 
 class database
@@ -90,11 +90,14 @@ class database
 
   std::map<std::string, statement> statement_cache;
   std::map<std::pair<std::string, hexenc<id> >, data> pending_writes;
+  size_t pending_writes_size;
 
+  size_t size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat);
   bool have_pending_write(std::string const & tab, hexenc<id> const & id);
   void load_pending_write(std::string const & tab, hexenc<id> const & id, data & dat);
   void cancel_pending_write(std::string const & tab, hexenc<id> const & id);
   void schedule_write(std::string const & tab, hexenc<id> const & id, data const & dat);
+  void flush_pending_writes();
 
   app_state * __app;
   struct sqlite3 * __sql;
@@ -280,13 +283,13 @@ public:
   void deltify_revision(revision_id const & rid);
 
   void get_revision(revision_id const & ident,
-                    revision_set & cs);
+                    revision_t & cs);
 
   void get_revision(revision_id const & ident,
                     revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-                    revision_set const & rev);
+                    revision_t const & rev);
 
   void put_revision(revision_id const & new_id,
                     revision_data const & dat);

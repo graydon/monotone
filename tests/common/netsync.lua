@@ -11,10 +11,10 @@ netsync = {}
 netsync.internal = {}
 
 function netsync.setup()
-  copy("test.db", "test2.db")
-  copy("keys", "keys2")
-  copy("test.db", "test3.db")
-  copy("keys", "keys3")
+  check(copy("test.db", "test2.db"))
+  check(copy("keys", "keys2"))
+  check(copy("test.db", "test3.db"))
+  check(copy("keys", "keys3"))
   check(getstd("common/netsync-hooks.lua", "netsync.lua"))
   math.randomseed(os.time())
 end
@@ -31,10 +31,9 @@ function netsync.internal.client(srv, oper, pat, n, res)
   if type(pat) == "string" then
     table.insert(args, pat)
   elseif type(pat) == "table" then
-    local function ins(i,x)
-      table.insert(args,x)
+    for k, v in pairs(pat) do
+      table.insert(args, v)
     end
-    table.foreachi(pat, ins)
   elseif pat ~= nil then
     err("Bad pattern type "..type(pat))
   end
@@ -64,10 +63,9 @@ function netsync.start(pat, n, min)
   if type(pat) == "string" then
     table.insert(args, pat)
   elseif type(pat) == "table" then
-    local function ins(i,x)
-      table.insert(args,x)
+    for k, v in pairs(pat) do
+      table.insert(args, v)
     end
-    table.foreachi(pat, ins)
   else
     err("Bad pattern type "..type(pat))
   end

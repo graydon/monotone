@@ -40,12 +40,8 @@ get_file_details(roster_t const & ros, node_id nid,
 }
 
 void
-resolve_merge_conflicts(revision_id const & left_rid,
-                        revision_id const & right_rid,
-                        roster_t const & left_roster,
+resolve_merge_conflicts(roster_t const & left_roster,
                         roster_t const & right_roster,
-                        marking_map const & left_marking_map,
-                        marking_map const & right_marking_map,
                         roster_merge_result & result,
                         content_merge_adaptor & adaptor,
                         app_state & app)
@@ -145,9 +141,7 @@ interactive_merge_and_store(revision_id const & left_rid,
                result);
 
   content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
-  resolve_merge_conflicts (left_rid, right_rid,
-                           left_roster, right_roster,
-                           left_marking_map, right_marking_map,
+  resolve_merge_conflicts (left_roster, right_roster,
                            result, dba, app);
 
   // write new files into the db
@@ -169,7 +163,7 @@ store_roster_merge_result(roster_t const & left_roster,
   roster_t & merged_roster = result.roster;
   merged_roster.check_sane();
 
-  revision_set merged_rev;
+  revision_t merged_rev;
 
   calculate_ident(merged_roster, merged_rev.new_manifest);
 
@@ -182,7 +176,7 @@ store_roster_merge_result(roster_t const & left_roster,
   safe_insert(merged_rev.edges, make_pair(right_rid, right_to_merged));
 
   revision_data merged_data;
-  write_revision_set(merged_rev, merged_data);
+  write_revision(merged_rev, merged_data);
   calculate_ident(merged_data, merged_rid);
   {
     transaction_guard guard(app.db);

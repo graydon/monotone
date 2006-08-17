@@ -5,15 +5,15 @@ mtn_setup()
 -- just because contains some strategically placed line feeds
 -- now is a test for the new attribute merge_manual and its effect on merging
 
-get("parent.bmp")
-get("left.bmp")
-get("right.bmp")
+check(get("parent.bmp"))
+check(get("left.bmp"))
+check(get("right.bmp"))
 
 -- hook forces all files binary
-get("binary.lua")
+check(get("binary.lua"))
 
 -- hook forces all files text
-get("text.lua")
+check(get("text.lua"))
 
 -- --- first: auto add as binary 
 copy("parent.bmp", "binary.bmp")

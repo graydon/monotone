@@ -26,7 +26,7 @@ function getpathof(exe, ext)
   end
   local now = initial_dir.."/"..exe..ext
   if exists(now) then return gotit(now) end
-  for x in string.gfind(path, "[^"..char.."]*"..char) do
+  for x in string.gmatch(path, "[^"..char.."]*"..char) do
     local dir = string.sub(x, 0, -2)
     if string.find(dir, "[\\/]$") then
       dir = string.sub(dir, 0, -2)
@@ -46,28 +46,37 @@ monotone_path = getpathof("mtn")
 if monotone_path == nil then monotone_path = "mtn" end
 set_env("mtn", monotone_path)
 
+writefile_q("in", nil)
+prepare_redirect("in", "out", "err")
+execute(monotone_path, "--full-version")
+logfile:write(readfile_q("out"))
+unlogged_remove("in")
+unlogged_remove("out")
+unlogged_remove("err")
+
 -- NLS nuisances.
 for _,name in pairs({  "LANG",
-		       "LANGUAGE",
-		       "LC_ADDRESS",
-		       "LC_ALL",
-		       "LC_COLLATE",
-		       "LC_CTYPE",
-		       "LC_IDENTIFICATION",
-		       "LC_MEASUREMENT",
-		       "LC_MESSAGES",
-		       "LC_MONETARY",
-		       "LC_NAME",
-		       "LC_NUMERIC",
-		       "LC_PAPER",
-		       "LC_TELEPHONE",
-		       "LC_TIME"  }) do
+                       "LANGUAGE",
+                       "LC_ADDRESS",
+                       "LC_ALL",
+                       "LC_COLLATE",
+                       "LC_CTYPE",
+                       "LC_IDENTIFICATION",
+                       "LC_MEASUREMENT",
+                       "LC_MESSAGES",
+                       "LC_MONETARY",
+                       "LC_NAME",
+                       "LC_NUMERIC",
+                       "LC_PAPER",
+                       "LC_TELEPHONE",
+                       "LC_TIME"  }) do
    set_env(name,"C")
 end
        
 
 function safe_mtn(...)
-  return {monotone_path, "--norc", "--root=" .. test.root, unpack(arg)}
+  return {monotone_path, "--norc", "--root=" .. test.root,
+          "--confdir="..test.root, unpack(arg)}
 end
 
 -- function preexecute(x)
@@ -119,9 +128,9 @@ function probe_node(filename, rsha, fsha)
 end
 
 function mtn_setup()
-  getstd("test_keys")
-  getstd("test_hooks.lua")
-  getstd("min_hooks.lua")
+  check(getstd("test_keys"))
+  check(getstd("test_hooks.lua"))
+  check(getstd("min_hooks.lua"))
   
   check(mtn("db", "init"), 0, false, false)
   check(mtn("read", "test_keys"), 0, false, false)
@@ -135,7 +144,7 @@ end
 
 function base_manifest()
   check(safe_mtn("automate", "get_manifest_of", base_revision()), 0, false)
-  copy("ts-stdout", "base_manifest_temp")
+  check(copy("ts-stdout", "base_manifest_temp"))
   return sha1("base_manifest_temp")
 end
 
@@ -357,6 +366,7 @@ table.insert(tests, "merge((),_(add_a,_drop_a,_add_a))")
 table.insert(tests, "merge((add_a),_(add_a,_drop_a,_add_a))")
 table.insert(tests, "merge((),_(add_a,_patch_a,_drop_a,_add_a))")
 table.insert(tests, "merge((patch_a),_(drop_a,_add_a))")
+table.insert(tests, "merge_multiple_heads_1")
 table.insert(tests, "explicit_merge")
 table.insert(tests, "update_with_multiple_candidates")
 table.insert(tests, "checkout_validates_target_directory")
@@ -400,7 +410,6 @@ table.insert(tests, "(imp)_merge((patch_foo_a),_(delete_foo_))")
 table.insert(tests, "revert_directories")
 table.insert(tests, "revert_renames")
 table.insert(tests, "revert_unchanged_file_preserves_mtime")
-table.insert(tests, "(minor)_context_diff")
 table.insert(tests, "rename_cannot_overwrite_files")
 table.insert(tests, "failed_checkout_is_a_no-op")
 table.insert(tests, "(todo)_write_monotone-agent")
@@ -644,3 +653,17 @@ table.insert(tests, "invalid_--root_settings")
 table.insert(tests, "netsync_over_pipes")
 table.insert(tests, "ls_unknown_of_unknown_subdir")
 table.insert(tests, "automate_branches")
+table.insert(tests, "merge_conflict_with_no_lca")
+table.insert(tests, "pluck_basics")
+table.insert(tests, "diff_output_formats")
+table.insert(tests, "pluck_lifecycle")
+table.insert(tests, "pluck_restricted")
+table.insert(tests, "revert_--missing_in_subdir")
+table.insert(tests, "restrictions_with_renames_and_adds")
+table.insert(tests, "diff_shows_renames")
+table.insert(tests, "dump_on_crash")
+table.insert(tests, "automate_tags")
+table.insert(tests, "restrictions_with_deletes")
+table.insert(tests, "log_with_restriction")
+table.insert(tests, "log_quits_on_SIGPIPE")
+table.insert(tests, "drop_directory_with_unversioned_files_and_merge")

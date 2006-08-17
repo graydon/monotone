@@ -17,6 +17,8 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/regex.hpp>
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -90,7 +92,7 @@ using boost::shared_ptr;
 //
 
 typedef enum { preserved = 0, deleted = 1, changed = 2 } edit_t;
-static char *etab[3] =
+static const char etab[3][10] =
   {
     "preserved",
     "deleted",
@@ -545,14 +547,15 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   if (!lca.inner()().empty())
     load_and_cache_roster(lca, rosters, anc, app);
 
-  // If this roster doesn't contain the file, replace it with
-  // the file's birth roster.
-  if (!anc->has_node(nid))
+  // If there is no LCA, or the LCA's roster doesn't contain the file,
+  // then use the file's birth roster.
+  if (!anc || !anc->has_node(nid))
     {
       marking_map::const_iterator j = mm.find(nid);
       I(j != mm.end());
       load_and_cache_roster(j->second.birth_revision, rosters, anc, app);
     }
+  I(anc);
 }
 
 void
@@ -577,7 +580,9 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 {
   L(FL("temporarily recording merge of %s <-> %s into %s")
     % left_id % right_id % merged_id);
-  I(temporary_store.find(merged_id) == temporary_store.end());
+  // this is an insert instead of a safe_insert because it is perfectly
+  // legal (though rare) to have multiple merges resolve to the same file
+  // contents.
   temporary_store.insert(make_pair(merged_id, merged_data));
 }
 
@@ -765,12 +770,80 @@ content_merger::try_to_merge_files(file_path const & anc_path,
 
 struct hunk_consumer
 {
+  vector<string> const & a;
+  vector<string> const & b;
+  size_t ctx;
+  ostream & ost;
+  boost::scoped_ptr<boost::regex const> encloser_re;
+  size_t a_begin, b_begin, a_len, b_len;
+  long skew;
+
+  vector<string>::const_reverse_iterator encloser_last_match;
+  vector<string>::const_reverse_iterator encloser_last_search;
+
   virtual void flush_hunk(size_t pos) = 0;
   virtual void advance_to(size_t newpos) = 0;
   virtual void insert_at(size_t b_pos) = 0;
   virtual void delete_at(size_t a_pos) = 0;
+  virtual void find_encloser(size_t pos, string & encloser);
   virtual ~hunk_consumer() {}
+  hunk_consumer(vector<string> const & a,
+                vector<string> const & b,
+                size_t ctx,
+                ostream & ost,
+                string const & encloser_pattern)
+    : a(a), b(b), ctx(ctx), ost(ost), encloser_re(0),
+      a_begin(0), b_begin(0), a_len(0), b_len(0), skew(0),
+      encloser_last_match(a.rend()), encloser_last_search(a.rend())
+  {
+    if (encloser_pattern != "")
+      encloser_re.reset(new boost::regex(encloser_pattern));
+  }
 };
+
+/* Find, and write to ENCLOSER, the nearest line before POS which matches
+   ENCLOSER_PATTERN.  We remember the last line scanned, and the matched, to
+   avoid duplication of effort.  */
+   
+void
+hunk_consumer::find_encloser(size_t pos, string & encloser)
+{
+  typedef vector<string>::const_reverse_iterator riter;
+
+  // Precondition: encloser_last_search <= pos <= a.size().
+  I(pos <= a.size());
+  // static_cast<> to silence compiler unsigned vs. signed comparison
+  // warning, after first making sure that the static_cast is safe.
+  I(a.rend() - encloser_last_search >= 0);
+  I(pos >= static_cast<size_t>(a.rend() - encloser_last_search));
+
+  if (!encloser_re)
+    return;
+
+  riter last = encloser_last_search;
+  riter i    = riter(a.begin() + pos);
+
+  encloser_last_search = i;
+
+  // i is a reverse_iterator, so this loop goes backward through the vector.
+  for (; i != last; i++)
+    if (boost::regex_search (*i, *encloser_re))
+      {
+        encloser_last_match = i;
+        break;
+      }
+
+  if (encloser_last_match == a.rend())
+    return;
+
+  L(FL("find_encloser: from %u matching %d, \"%s\"")
+    % pos % (a.rend() - encloser_last_match) % *encloser_last_match);
+
+  // the number 40 is chosen to match GNU diff.  it could safely be
+  // increased up to about 60 without overflowing the standard
+  // terminal width.
+  encloser = string(" ") + (*encloser_last_match).substr(0, 40);
+}
 
 void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
                         vector<long, QA(long)> const & lines1,
@@ -822,32 +895,21 @@ void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
 
 struct unidiff_hunk_writer : public hunk_consumer
 {
-  vector<string> const & a;
-  vector<string> const & b;
-  size_t ctx;
-  ostream & ost;
-  size_t a_begin, b_begin, a_len, b_len;
-  long skew;
   vector<string> hunk;
-  unidiff_hunk_writer(vector<string> const & a,
-                      vector<string> const & b,
-                      size_t ctx,
-                      ostream & ost);
+
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
   virtual void delete_at(size_t a_pos);
   virtual ~unidiff_hunk_writer() {}
+  unidiff_hunk_writer(vector<string> const & a,
+                      vector<string> const & b,
+                      size_t ctx,
+                      ostream & ost,
+                      string const & encloser_pattern)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern)
+  {}
 };
-
-unidiff_hunk_writer::unidiff_hunk_writer(vector<string> const & a,
-                                         vector<string> const & b,
-                                         size_t ctx,
-                                         ostream & ost)
-: a(a), b(b), ctx(ctx), ost(ost),
-  a_begin(0), b_begin(0),
-  a_len(0), b_len(0), skew(0)
-{}
 
 void unidiff_hunk_writer::insert_at(size_t b_pos)
 {
@@ -892,8 +954,21 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
           if (b_len > 1)
             ost << "," << b_len;
         }
-      ost << " @@" << endl;
 
+      {
+        string encloser;
+        ptrdiff_t first_mod = 0;
+        vector<string>::const_iterator i;
+        for (i = hunk.begin(); i != hunk.end(); i++)
+          if ((*i)[0] != ' ')
+            {
+              first_mod = i - hunk.begin();
+              break;
+            }
+        
+        find_encloser(a_begin + first_mod, encloser);
+        ost << " @@" << encloser << endl;
+      }
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
     }
 
@@ -942,39 +1017,34 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
 
 struct cxtdiff_hunk_writer : public hunk_consumer
 {
-  vector<string> const & a;
-  vector<string> const & b;
-  size_t ctx;
-  ostream & ost;
-  size_t a_begin, b_begin, a_len, b_len;
-  long skew;
+  // For context diffs, we have to queue up calls to insert_at/delete_at
+  // until we hit an advance_to, so that we can get the tags right: an
+  // unpaired insert gets a + in the left margin, an unpaired delete a -,
+  // but if they are paired, they both get !.  Hence, we have both the
+  // 'inserts' and 'deletes' queues of line numbers, and the 'from_file' and
+  // 'to_file' queues of line strings.
   vector<size_t> inserts;
   vector<size_t> deletes;
   vector<string> from_file;
   vector<string> to_file;
   bool have_insertions;
   bool have_deletions;
-  cxtdiff_hunk_writer(vector<string> const & a,
-                      vector<string> const & b,
-                      size_t ctx,
-                      ostream & ost);
+
   virtual void flush_hunk(size_t pos);
   virtual void advance_to(size_t newpos);
   virtual void insert_at(size_t b_pos);
   virtual void delete_at(size_t a_pos);
   void flush_pending_mods();
   virtual ~cxtdiff_hunk_writer() {}
+  cxtdiff_hunk_writer(vector<string> const & a,
+                      vector<string> const & b,
+                      size_t ctx,
+                      ostream & ost,
+                      string const & encloser_pattern)
+  : hunk_consumer(a, b, ctx, ost, encloser_pattern),
+    have_insertions(false), have_deletions(false)
+  {}
 };
-
-cxtdiff_hunk_writer::cxtdiff_hunk_writer(vector<string> const & a,
-                                         vector<string> const & b,
-                                         size_t ctx,
-                                         ostream & ost)
-    : a(a), b(b), ctx(ctx), ost(ost),
-      a_begin(0), b_begin(0),
-      a_len(0), b_len(0), skew(0),
-      have_insertions(false), have_deletions(false)
-{}
 
 void cxtdiff_hunk_writer::insert_at(size_t b_pos)
 {
@@ -1009,7 +1079,32 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
           b_len++;
         }
 
-      ost << "***************" << endl;
+      {
+        string encloser;
+        ptrdiff_t first_insert = b_len;
+        ptrdiff_t first_delete = a_len;
+        vector<string>::const_iterator i;
+
+        if (have_deletions)
+          for (i = from_file.begin(); i != from_file.end(); i++)
+            if ((*i)[0] != ' ')
+              {
+                first_delete = i - from_file.begin();
+                break;
+              }
+        if (have_insertions)
+          for (i = to_file.begin(); i != to_file.end(); i++)
+            if ((*i)[0] != ' ')
+              {
+                first_insert = i - to_file.begin();
+                break;
+              }
+
+        find_encloser(a_begin + min(first_insert, first_delete),
+                      encloser);
+        
+        ost << "***************" << encloser << endl;
+      }
 
       ost << "*** " << (a_begin + 1) << "," << (a_begin + a_len) << " ****" << endl;
       if (have_deletions)
@@ -1069,6 +1164,12 @@ void cxtdiff_hunk_writer::flush_pending_mods()
 
 void cxtdiff_hunk_writer::advance_to(size_t newpos)
 {
+  // We must first flush out pending mods because otherwise our calculation
+  // of whether we need to generate a new hunk header will be way off.
+  // It is correct (i.e. consistent with diff(1)) to reset the +/-/!
+  // generation algorithm between sub-components of a single hunk.
+  flush_pending_mods();
+
   if (a_begin + a_len + (2 * ctx) < newpos)
     {
       flush_hunk(newpos);
@@ -1094,28 +1195,37 @@ void cxtdiff_hunk_writer::advance_to(size_t newpos)
         }
     }
   else
-    {
-      flush_pending_mods();
-      // pad intermediate context
-      while (a_begin + a_len < newpos)
-        {
-          from_file.push_back(string("  ") + a[a_begin + a_len]);
-          to_file.push_back(string("  ") + a[a_begin + a_len]);
-          a_len++;
-          b_len++;
-        }
-    }
+    // pad intermediate context
+    while (a_begin + a_len < newpos)
+      {
+        from_file.push_back(string("  ") + a[a_begin + a_len]);
+        to_file.push_back(string("  ") + a[a_begin + a_len]);
+        a_len++;
+        b_len++;
+      }
 }
 
-void make_diff(string const & filename1,
-               string const & filename2,
-               file_id const & id1,
-               file_id const & id2,
-               vector<string> const & lines1,
-               vector<string> const & lines2,
-               ostream & ost,
-               diff_type type)
+void
+make_diff(string const & filename1,
+          string const & filename2,
+          file_id const & id1,
+          file_id const & id2,
+          data const & data1,
+          data const & data2,
+          ostream & ost,
+          diff_type type,
+          string const & pattern)
 {
+  if (guess_binary(data1()) || guess_binary(data2()))
+    {
+      ost << "# " << filename2 << " is binary\n";
+      return;
+    }
+
+  vector<string> lines1, lines2;
+  split_into_lines(data1(), lines1);
+  split_into_lines(data2(), lines2);
+
   vector<long, QA(long)> left_interned;
   vector<long, QA(long)> right_interned;
   vector<long, QA(long)> lcs;
@@ -1138,6 +1248,63 @@ void make_diff(string const & filename1,
                              min(lines1.size(), lines2.size()),
                              back_inserter(lcs));
 
+  // The existence of various hacky diff parsers in the world somewhat
+  // constrains what output we can use.  Here are some notes on how various
+  // tools interpret the header lines of a diff file:
+  //
+  // interdiff/filterdiff (patchutils):
+  //   Attempt to parse a timestamp after each whitespace.  If they succeed,
+  //   then they take the filename as everything up to the whitespace they
+  //   succeeded at, and the timestamp as everything after.  If they fail,
+  //   then they take the filename to be everything up to the first
+  //   whitespace.  Have hardcoded that /dev/null and timestamps at the
+  //   epoch (in any timezone) indicate a file that did not exist.
+  //
+  //   filterdiff filters on the first filename line.  interdiff matches on
+  //   the first filename line.
+  // PatchReader perl library (used by Bugzilla):
+  //   Takes the filename to be everything up to the first tab; requires
+  //   that there be a tab.  Determines the filename based on the first
+  //   filename line.
+  // diffstat:
+  //   Can handle pretty much everything; tries to read up to the first tab
+  //   to get the filename.  Knows that "/dev/null", "", and anything
+  //   beginning "/tmp/" are meaningless.  Uses the second filename line.
+  // patch:
+  //   If there is a tab, considers everything up to that tab to be the
+  //   filename.  If there is not a tab, considers everything up to the
+  //   first whitespace to be the filename.
+  //   
+  //   Contains comment: 'If the [file]name is "/dev/null", ignore the name
+  //   and mark the file as being nonexistent.  The name "/dev/null" appears
+  //   in patches regardless of how NULL_DEVICE is spelled.'  Also detects
+  //   timestamps at the epoch as indicating that a file does not exist.
+  //
+  //   Uses the first filename line as the target, unless it is /dev/null or
+  //   has an epoch timestamp in which case it uses the second.
+  // trac:
+  //   Anything up to the first whitespace, or end of line, is considered
+  //   filename.  Does not care about timestamp.  Uses the shorter of the
+  //   two filenames as the filename (!).
+  //
+  // Conclusions:
+  //   -- You must have a tab, both to prevent PatchReader blowing up, and
+  //      to make it possible to have filenames with spaces in them.
+  //      (Filenames with tabs in them are always impossible to properly
+  //      express; FIXME what should be done if one occurs?)
+  //   -- What comes after that tab matters not at all, though it probably
+  //      shouldn't look like a timestamp, or have any trailing part that
+  //      looks like a timestamp, unless it really is a timestamp.  Simply
+  //      having a trailing tab should work fine.
+  //   -- If you need to express that some file does not exist, you should
+  //      use /dev/null as the path.  patch(1) goes so far as to claim that
+  //      this is part of the diff format definition.
+  //   -- If you want your patches to actually _work_ with patch(1), then
+  //      renames are basically hopeless (you can do them by hand _after_
+  //      running patch), adds work so long as the first line says either
+  //      the new file's name or "/dev/null", nothing else, and deletes work
+  //      if the new file name is "/dev/null", nothing else.  (ATM we don't
+  //      write out patches for deletes anyway.)
   switch (type)
     {
       case unified_diff:
@@ -1145,7 +1312,7 @@ void make_diff(string const & filename1,
         ost << "--- " << filename1 << "\t" << id1 << endl;
         ost << "+++ " << filename2 << "\t" << id2 << endl;
 
-        unidiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }
@@ -1154,7 +1321,7 @@ void make_diff(string const & filename1,
         ost << "*** " << filename1 << "\t" << id1 << endl;
         ost << "--- " << filename2 << "\t" << id2 << endl;
 
-        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost);
+        cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
         break;
       }
@@ -1204,65 +1371,6 @@ static void dump_incorrect_merge(vector<string> const & expected,
     }
 }
 
-// regression blockers go here
-static void unidiff_append_test()
-{
-  string src(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n");
-
-  string dst(string("#include \"hello.h\"\n")
-             + "\n"
-             + "void say_hello()\n"
-             + "{\n"
-             + "        printf(\"hello, world\\n\");\n"
-             + "}\n"
-             + "\n"
-             + "int main()\n"
-             + "{\n"
-             + "        say_hello();\n"
-             + "}\n"
-             + "\n"
-             + "void say_goodbye()\n"
-             + "{\n"
-             + "        printf(\"goodbye\\n\");\n"
-             + "}\n"
-             + "\n");
-
-  string ud(string("--- hello.c\t0123456789abcdef0123456789abcdef01234567\n")
-            + "+++ hello.c\tabcdef0123456789abcdef0123456789abcdef01\n"
-            + "@@ -9,3 +9,9 @@\n"
-            + " {\n"
-            + "         say_hello();\n"
-            + " }\n"
-            + "+\n"
-            + "+void say_goodbye()\n"
-            + "+{\n"
-            + "+        printf(\"goodbye\\n\");\n"
-            + "+}\n"
-            + "+\n");
-
-  vector<string> src_lines, dst_lines;
-  split_into_lines(src, src_lines);
-  split_into_lines(dst, dst_lines);
-  stringstream sst;
-  make_diff("hello.c", "hello.c",
-            file_id(id("0123456789abcdef0123456789abcdef01234567")),
-            file_id(id("abcdef0123456789abcdef0123456789abcdef01")),
-            src_lines, dst_lines, sst, unified_diff);
-  cout << sst.str() << endl;
-  BOOST_CHECK(sst.str() == ud);
-}
-
-
 // high tech randomizing test
 
 static void randomizing_merge_test()
@@ -1271,8 +1379,7 @@ static void randomizing_merge_test()
     {
       vector<string> anc, d1, d2, m1, m2, gm;
 
-      file_randomizer::build_random_fork(anc, d1, d2, gm,
-                                         i * 1023, (10 + 2 * i));
+      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i));
 
       BOOST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)
@@ -1406,7 +1513,6 @@ static void merge_deletions_test()
 void add_diff_patch_tests(test_suite * suite)
 {
   I(suite);
-  suite->add(BOOST_TEST_CASE(&unidiff_append_test));
   suite->add(BOOST_TEST_CASE(&merge_prepend_test));
   suite->add(BOOST_TEST_CASE(&merge_append_test));
   suite->add(BOOST_TEST_CASE(&merge_additions_test));

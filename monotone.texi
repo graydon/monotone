@@ -82,13 +82,13 @@ version control tools.
 * Command Reference::   Details of each monotone command
 * Hook Reference::      Functions which extend monotone
 * Special Topics::      Extra explanations and details
-* Man Page::            That other document
 * Default hooks::       The standard hook definitions
 * Index::               Index of concepts and functions
 @end menu
 
-
+@ifnottex
 Complete table of contents
+@end ifnottex
 
 @contents
 
@@ -4019,7 +4019,6 @@ computer clocks is not reliable, so monotone usually ignores time.
 
 
 @item mtn merge [--branch=@var{branchname}]
-@item mtn merge --lca [--branch=@var{branchname}]
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
 resulting merged revision as a member of @var{branchname}. The merged
@@ -4031,17 +4030,7 @@ graph and these 3 revisions are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn propagate @var{sourcebranch} @var{destbranch}
-@item mtn propagate --lca @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
 ancestor of the two heads for a 3-way merge. The resulting revision is
@@ -4057,26 +4046,14 @@ maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn explicit_merge @var{id} @var{id} @var{destbranch}
-@itemx mtn explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}
 This command merges exactly the two @var{id}s you give it, and places
 the result in branch @var{destbranch}.  It is useful when you need more
 control over the merging process than @code{propagate} or @code{merge}
 give you.  For instance, if you have a branch with three heads, and you
 only want to merge two of them, you can use this command.  Or if you
 have a branch with two heads, and you want to propagate one of them to
-another branch, again, you can use this command. If the optional
-@var{ancestor} argument is given, the merge uses that revision as the
-common ancestor instead of the default ancestor.
+another branch, again, you can use this command.
 
 @item mtn merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
 This command takes a unique head from @var{sourcebranch} and merges it
@@ -4166,7 +4143,9 @@ deletion operations in the filesystem.  It will ignore files or
 directories which have already been deleted.
 
 @item mtn [--execute] rename @var{src} @var{dst}
+@item mtn [--execute] mv @var{src} @var{dst}
 @itemx mtn [--execute] rename @var{src1} @var{...} @var{dst/}
+@itemx mtn [--execute] mv @var{src1} @var{...} @var{dst/}
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
@@ -4188,11 +4167,17 @@ rename operations in the filesystem. It will ignore missing source files
 and will not overwrite existing destination files.
 
 @item mtn commit
+@item mtn ci
 @itemx mtn commit --message=@var{logmsg}
+@itemx mtn ci --message=@var{logmsg}
 @itemx mtn commit --message-file=@var{logfile}
+@itemx mtn ci --message-file=@var{logfile}
 @itemx mtn commit @var{pathname...}
+@itemx mtn ci @var{pathname...}
 @itemx mtn commit --message=@var{logmsg} @var{pathname...} 
+@itemx mtn ci --message=@var{logmsg} @var{pathname...} 
 @itemx mtn commit --message-file=@var{logfile} @var{pathname...} 
+@itemx mtn ci --message-file=@var{logfile} @var{pathname...} 
 
 This command looks at your workspace, decides which files have
 changed, and saves the changes to your database. It does this by loading
@@ -4319,6 +4304,39 @@ If a @option{--branch} option is specified, the @command{update} command
 tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the workspace (even if you also
 specify an explicit @option{--revision} argument).
+
+@item mtn pluck --revision=@var{to}
+@itemx mtn pluck --revision=@var{from} --revision=@var{to}
+
+This command takes changes made at any point in history, and attempts
+to edit your current workspace to include those changes.  The end
+result is identical to running @code{mtn diff -r FROM -r TO | patch
+-p0}, except that this command uses monotone's merger, and thus
+intelligently handles renames, conflicts, and so on.
+
+If only one revision is given, applies the changes made in @var{to} as
+compared with @var{to}'s parent.  If two revisions are given, applies
+the changes made to get from @var{from} to @var{to}.
+
+Note that this is not a true cherrypick operation.  A true cherrypick,
+as that word is used in version control theory, involves applying some
+changes out of context, and then recording the identity between the
+original changes and the newly applied changes for the use of later
+merges.  This command does the first part, not the second.  As far as
+monotone is concerned, the changes made by @command{mtn pluck} are
+exactly like those made in an editor; the command is simply a
+convenient way to make certain edits quickly.  In practice, this is
+rarely a problem.  @command{mtn pluck} should almost always be used
+between branches that will never be merged --- for instance,
+backporting fixes from a development branch to a stable branch.
+
+When you use @command{pluck} you are going behind monotone's back, and
+reducing its ability to help you keep track of what has happened in
+your history.  Never use @command{pluck} where a true merging command
+like @command{merge}, @command{propagate}, or @command{explicit_merge}
+will do.  If you find yourself using @command{pluck} often, you should
+consider carefully whether there is any way to change your workflow to
+reduce your need for @command{pluck}ing.
 
 @item mtn refresh_inodeprints
 This command puts the current workspace into @ref{Inodeprints} mode,
@@ -4594,9 +4612,9 @@ $ mt complete revision 01f
 @end group
 @end smallexample
 
-@item mtn diff
-@item mtn diff --context
-@item mtn diff --external [--diff-args=@var{argstring}]
+@item mtn diff [--unified] [--show-encloser]
+@itemx mtn diff --context [--show-encloser]
+@itemx mtn diff --external [--diff-args=@var{argstring}]
 @itemx mtn diff @var{pathname...}
 @itemx mtn diff --revision=@var{id}
 @itemx mtn diff --revision=@var{id} @var{pathname...}
@@ -4631,12 +4649,32 @@ copy.  Specifying only the pathname "." will restrict @command{diff}
 to files changed within the current subdirectory of the workspace.
 
 The output format of @command{diff} is controlled by the options
-@option{--unified}, @option{--context}, and @option{--external}.
-@option{--unified} requests the ``unified diff'' format, the default
-(analogous to running the program @code{diff -u}).  @option{--context}
-request the ``context diff'' format (analogous to running the program
-@code{diff -c}).  Both of these formats are generated directly by
-monotone, using its built-in diff algorithm.
+@option{--unified}, @option{--context}, @option{--show-encloser}, and
+@option{--external}.  By default, monotone uses its built-in diff
+algorithm to produce a listing in ``unified diff'' format (analogous
+to running the program @code{diff -u}); you can also explicitly
+request this with @option{--unified}.  The built-in diff algorithm can
+also produce ``context diff'' format (analogous to @code{diff -c}),
+which you request by specifying @option{--context}.  The short options
+that @command{diff} accepts for these modes, @option{-u} and
+@option{-c}, also work.
+
+In either of these modes, you can request that monotone print the name
+of the top-level code construct that encloses each ``hunk'' of
+changes, with @option{--show-encloser}.  The options that
+@command{diff} accepts for this mode, @option{-p} and
+@option{--show-c-function}, also work.  Monotone finds the enclosing
+construct by scanning backward from the first changed line in each
+hunk for a line that matches a regular expression.  The default
+regular expression is correct for many programming languages.  You can
+adjust the expression used with the Lua hook
+@code{get_encloser_pattern}; @ref{Hooks}.
+
+
+@option{--unified} requests the ``unified diff'' format, the default.
+@option{--context} requests the ``context diff'' format (analogous to
+running the program @code{diff -c}).  Both of these formats are
+generated directly by monotone, using its built-in diff algorithm.
 
 Sometimes, you may want more flexibility in output formats; for these
 cases, you can use @option{--external}, which causes monotone to invoke
@@ -4648,6 +4686,7 @@ passed to it, and so on, are controlled by the hook
 @code{external_diff}; see @ref{Hooks} for more details.
 
 @item mtn list certs @var{id}
+@item mtn ls certs @var{id}
 
 These commands will print out a list of certificates associated with
 a particular revision @var{id}. Each line of the print out will
@@ -4704,7 +4743,9 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 @end smallexample
 
 @item mtn list keys
+@item mtn ls keys
 @itemx mtn list keys @var{pattern}
+@itemx mtn ls keys @var{pattern}
 These commands list @sc{rsa} keys held in your keystore and current database.
 They do not print out any cryptographic information; they simply list the
 names of public and private keys you have on hand.
@@ -4713,21 +4754,27 @@ If @var{pattern} is provided, it is used as a glob to limit the keys
 listed. Otherwise all keys in your database are listed.
 
 @item mtn list branches
+@item mtn ls branches
 
 This command lists all known branches in your database.
 
 @item mtn list tags
+@item mtn ls tags
 
 This command lists all known tags in your database.
 
 @item mtn list vars
+@item mtn ls vars
 @item mtn list vars @var{domain}
+@item mtn ls vars @var{domain}
 
 This command lists all vars in your database, or all vars within a given
 @var{domain}.  See @ref{Vars} for more information.
 
 @item mtn list known
+@item mtn ls known
 @itemx mtn list known @var{pathname...}
+@itemx mtn ls known @var{pathname...}
 
 This command lists all files which would become part of the manifest of
 the next revision if you comitted your workspace at this point.
@@ -4742,7 +4789,9 @@ Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the workspace.
 
 @item mtn list unknown
+@item mtn ls unknown
 @itemx mtn list unknown @var{pathname...}
+@itemx mtn ls unknown @var{pathname...}
 
 This command lists all files in your workspace that monotone is 
 either ignoring or knows nothing about.
@@ -4757,7 +4806,9 @@ Specifying only the pathname "." will restrict the search for unknown
 files to the current subdirectory of the workspace.
 
 @item mtn list ignored
+@item mtn ls ignored
 @itemx mtn list ignored @var{pathname...}
+@itemx mtn ls ignored @var{pathname...}
 
 This command lists all files in your workspace that monotone is
 intentionally ignoring, due to the results of the @code{ignore_file
@@ -4773,7 +4824,9 @@ Specifying only the pathname "." will restrict the search for ignored
 files to the current subdirectory of the workspace.
 
 @item mtn list missing
+@item mtn ls missing
 @itemx mtn list missing @var{pathname...}
+@itemx mtn ls missing @var{pathname...}
 
 This command lists all files in your workspace's base manifest,
 which are not present in the workspace.
@@ -4788,7 +4841,9 @@ Specifying only the pathname "." will restrict the search for missing
 files to the current subdirectory of the workspace.
 
 @item mtn list changed
+@item mtn ls changed
 @itemx mtn list changed @var{pathname...}
+@itemx mtn ls changed @var{pathname...}
 
 This command lists all files in your workspace that have changed
 compared to the base revision, including files that are dropped, added
@@ -5761,6 +5816,86 @@ None.
 @end table
 
 
+@item mtn automate tags [@var{branch_pattern}]
+
+@table @strong
+@item Arguments:
+
+A branch pattern (optional).
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+If a branch pattern is given, prints all tags that are attached to
+revisions on branches matched by the pattern; otherwise prints all
+tags of the revision graph.
+
+If a branch name is ignored by means of the lua hook
+@code{ignore_branch}, it is neither printed, nor can it be matched by
+a pattern.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+     tag "monotree-0.3"
+revision [35cff8e8ba14155f5f7ddf7965073f514fd60f61]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.2"
+revision [5d288b39b49613b0d9dca8ece6b9a42c3773f35b]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.1"
+revision [8a121346ce2920b6f85df68b3b620de96bd14a8d]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib" "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.4"
+revision [f1afc520474f83c58262896ede027ef77226046e]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each tag.
+
+All stanzas are formatted by basic_io. Stanzas are separated by a
+blank line. Values will be escaped, '\' to '\\' and '"' to '\"'.
+
+Each stanza has exactly the following four entries:
+
+@table @option
+@item 'tag'
+the value of the tag cert, i.e. the name of the tag
+
+@item 'revision'
+the hexadecimal id of the revision the tag is attached to
+
+@item 'signer'
+the name of the key used to sign the tag cert
+
+@item 'branches'
+a (possibly empty) list of all branches the tagged revision is on
+@end table
+
+Stanzas are printed in arbitrary order.
+
+@item Error conditions:
+
+A run-time exception occures if an illegal branch pattern is
+specified.
+
+@end table
+
+
 @item mtn automate select @var{selector}
 
 @table @strong
@@ -6166,9 +6301,12 @@ if there is more output to come.
 
 <size> is the number of bytes in the output.
 
-<output> is the output of the command. This will never exceed 1024 bytes.
-If a command produces more than 1024 bytes of output, it will be split into
-multiple pieces, with all but the last having the <last?> field set to 'm'.
+<output> is the output of the command. This will never exceed the
+maximum chunk size, which is 1024 bytes per default and can be
+adjusted using the @option{--automate-stdio-size} option.  If a
+command produces more bytes of output than fit into one chunk, it will
+be split into multiple pieces, with all but the last having the
+<last?> field set to 'm'.
 
 @item Error conditions:
 
@@ -6501,6 +6639,87 @@ Stanzas are sorted by the path string.
 @item Error conditions:
 
 If the revision ID specified is unknown or invalid prints an error
+message to stderr and exits with status 1.
+
+@end table
+
+@item mtn automate attributes @var{file}
+
+@table @strong
+@item Arguments:
+
+The argument @var{file} determines which file's attributes should be printed.
+
+@item Added in:
+
+3.0
+
+@item Purpose:
+
+Prints all attributes of the given file and the attribute states.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+ attr "foo" "bar"
+state "added"
+
+ attr "baz" "bat"
+state "dropped"
+
+ attr "foobar" "foobat"
+state "unchanged"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each attribute of the given file.
+
+All stanzas are formatted by basic_io. Stanzas are separated 
+by a blank line and ordered by attribute name. Values will be 
+escaped, '\' to '\\' and '"' to '\"'.
+
+Each attribute stanza also contains another entry which tells the status
+of attribute. This entry can have one of the following four values:
+
+'added': the attribute has just been added to the file
+
+'dropped': the attribute has just been dropped from the file
+
+'unchanged': the attribute has not been changed since the last revision
+
+'changed': the attribute has been changed since the last revision
+
+The status 'changed' can come up if an attribute foo has been dropped and
+added afterwards with another value, like
+
+@verbatim
+# foo has the value "bar"
+$ mtn attr drop foo ; mtn attr set foo baz
+@end verbatim
+
+If an attribute has been dropped, the output will still return the previously
+set value of the dropped attribute for convenience (obviously this is no longer
+recorded in the current workspace).
+
+The complete format:
+
+@verbatim
+'format_version'
+      used in case this format ever needs to change.
+      format: ('format_version', the string "1")
+      occurs: exactly once
+'attr':
+      represents an attribute.
+      format: ('attr', key, value), ('state', [unchanged|changed|added|dropped])
+      occurs: zero or more times
+@end verbatim
+
+@item Error conditions:
+
+If the file specified is unknown to the current workspace prints an error
 message to stderr and exits with status 1.
 
 @end table
@@ -7404,15 +7623,31 @@ lenient behavior you must redefine this hook.
 @subsection External Diff Tools
 
 Differences between files can be shown in a number of ways, varying
-according to user preference and file type. This hook allows
+according to user preference and file type. These hooks allow
 customisation of the way file differences are shown.
 
 @ftable @code
+@item get_encloser_pattern (@var{file_path})
+
+Called for each file when @command{diff} is given the
+@option{--show-encloser} option (and @emph{not} the
+@option{--external} option).  @var{file_path} is the pathname of the
+file that is being diffed.  The hook should return a string constant
+containing a regular expression; this regular expression will be used
+to find lines that, in that file, name the ``top-level'' constructs
+enclosing each ``hunk'' of changes.  The default is
+@code{^[[:alnum:]$_]}, which is correct for many programming
+languages; a few text authoring packages, like Texinfo, have special
+regular expressions that match their particular syntax.  If you have a
+better regular expression for some language, you can add it to this
+hook; and if you send it to the monotone developers, we will likely
+make it to the default for that language.
+
 @item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
                      @var{diff_args}, @var{old_rev}, @var{new_rev})
 
 Called for each file when @command{diff} is given the
-@option{--external} command.  @var{file_path} is the pathname of the
+@option{--external} option.  @var{file_path} is the pathname of the
 file that is being diffed.  @var{old_data} and @var{new_data} are the
 data contents of the old and the new file.  If the data is binary,
 @var{is_binary} will be true, otherwise false.  @var{old_rev} and
@@ -8406,525 +8641,6 @@ yourself in the foot, and it will let you.
 
 Fortunately, this process should be extremely rare; with luck, it will
 never happen at all.  But this way we're prepared.
-
-@node    Man Page
-@chapter Man Page
-@c DEBUG: print_menu("Top")
-
-@ifnottex
-@menu
-* NAME::
-* SYNOPSIS::
-* DESCRIPTION::
-* OPTIONS::
-* ENVIRONMENT::
-* FILES::
-* NOTES::
-* SEE ALSO::
-* BUGS::
-* AUTHOR::
-
-@end menu
-@end ifnottex
-
-
-@comment TROFF INPUT: .SH NAME
-
-@node NAME
-
-@section NAME
-@c DEBUG: print_menu("NAME")
-
-monotone @minus{} distributed version control system
-@comment TROFF INPUT: .SH SYNOPSIS
-
-@node SYNOPSIS
-
-@section SYNOPSIS
-@c DEBUG: print_menu("SYNOPSIS")
-
-@ifnottex
-@menu
-* Note::
-* Commands::
-
-@end menu
-@end ifnottex
-
-
-@b{mtn} @i{[options] <command> [parameters]}
-@comment TROFF INPUT: .P
-@comment .P
-
-Options, which affect global behavior or set default values, come
-first in the argument list. A single command must follow, indicating
-the operation to perform, followed by parameters which vary depending
-on the command.
-@comment TROFF INPUT: .SS Note
-
-@node Note
-
-@subsection Note
-
-This man page is a summary of some of the features and commands of
-@b{monotone}, but it is not the most detailed source of information
-available. For a complete discussion of the concepts and a tutorial on
-its use, please refer to the texinfo manual (via the @b{info
-monotone} command, or online).
-@comment TROFF INPUT: .SS Commands
-
-@node Commands
-
-@subsection Commands
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-@item @b{comment} @i{<id>}
-Write a comment cert for a revision.
-@comment TROFF INPUT: .TP
-
-@item @b{approve} @i{<id>}
-Make a ``branch'' cert approving of a revision's membership in a branch.
-@comment TROFF INPUT: .TP
-
-@item @b{disapprove} @i{<id>}
-Disapprove of a revision, committing the inverse changes as as a
-descendent of the disapproved revision.
-@comment TROFF INPUT: .TP
-
-@item @b{tag} @i{<id> <tagname>}
-Put a symbolic tag cert on a revision.
-@comment TROFF INPUT: .TP
-
-@item @b{testresult} @i{<id> (0|1|true|false|yes|no|pass|fail)}
-Indicate a passing or failing test result on a revision.
-@comment TROFF INPUT: .TP
-
-@item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}
-Show diffs between workspace and database.
-@comment TROFF INPUT: .TP
-
-@item @b{status} @i{[<pathname>...]}
-Show status of workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{log} @i{[id]}
-Show historical log of revisions, starting from workspace
-base revision, or @i{[id]} if given.
-@comment TROFF INPUT: .TP
-
-@item @b{cert} @i{<id> <certname> [certval]}
-Create a custom cert for a revision. Reads cert value
-from stdin if no value given on command line.
-@comment TROFF INPUT: .TP
-
-@item @b{genkey} @i{<keyid>}
-Generate an @sc{rsa} key-pair and store it in the database.
-@comment TROFF INPUT: .TP
-
-@item @b{dropkey} @i{<keyid>}
-Drop a public and/or private key.
-@comment TROFF INPUT: .TP
-
-@item @b{chkeypass} @i{<keyid>}
-Change passphrase of the private half of a key.
-@comment TROFF INPUT: .TP
-
-@item @b{list certs} @i{<id>}
-@itemx @b{ls certs} @i{ <id>}
-List certs associated with revision.
-@comment TROFF INPUT: .TP
-
-@item @b{list keys} @i{[partial-id]}
-@itemx @b{ls keys} @i{[partial-id]}
-List keys matching glob, or list all keys if no glob given.
-@comment TROFF INPUT: .TP
-
-@item @b{list branches}
-@itemx @b{ls branches}
-List all branches.
-@comment TROFF INPUT: .TP
-
-@item @b{list tags}
-@itemx @b{ls tags}
-List all tags.
-@comment TROFF INPUT: .TP
-
-@item @b{list known} @i{[<pathname>...]}
-@itemx @b{ls known} @i{[<pathname>...]}
-List files which are in revision's manifest, or are on the work list of
-the workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{list unknown} @i{[<pathname>...]}
-@itemx @b{ls unknown} @i{[<pathname>...]}
-List files in workspace, but not in revision's manifest or
-work list.
-@comment TROFF INPUT: .TP
-
-@item @b{list ignored} @i{[<pathname>...]}
-@itemx @b{ls ignored} @i{[<pathname>...]}
-List files intentionally ignored due to the ignore_file hook.
-@comment TROFF INPUT: .TP
-
-@item @b{list missing} @i{[<pathname>...]}
-@itemx @b{ls missing} @i{[<pathname>...]}
-List files in revision's manifest, but not in workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{list changed} @i{[<pathname>...]}
-@itemx @b{ls changed} @i{[<pathname>...]}
-List files in workspace that have changed compared to the base
-revision.
-@comment TROFF INPUT: .TP
-
-@item @b{fdata} @i{<id>}
-Write file data packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{fdelta} @i{<oldid> <newid>}
-Write file delta packet to stdout.
-@comment TROFF INPUT: .TP
- 
-@item @b{mdata} @i{<id>}
-Write manifest data packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{mdelta} @i{<oldid> <newid>}
-Write manifest delta packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{rcerts} @i{<id>}
-Write revision cert packets to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{rdata} @i{<id>}
-Write revision data packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{privkey} @i{<id>}
-Write private key packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{pubkey} @i{<id>}
-Write public key packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{read} @i{[<file1> [<file2> [...]]]}
-Read packets from files or stdin.
-@comment TROFF INPUT: .TP
-
-@item @b{cvs_import} @i{<cvsroot>/<module>}
-Import all versions in a CVS module. Reconstructs revisions and converts
-metadata to certificates. A private signing key must already exist in
-the database.
-@comment TROFF INPUT: .TP
-
-@item @b{rcs_import} @i{<rcsfile> ...}
-Import all file versions in RCS files. Does not reconstruct revisions
-across the entire tree.  You do not want this command, it is for
-debugging; use cvs_import.
-@comment TROFF INPUT: .TP
-
-@item @b{checkout} @i{[--revision=revision-id]} @i{[<directory>]}
-@itemx @b{co} @i{[--revision=revision-id]} @i{[<directory>]}
-Check out revision from database, into directory.
-@comment TROFF INPUT: .TP
-
-@item @b{cat} @i{(file <id>|manifest [<id>]|revision [<id>])}
-Write file, manifest or revision from database to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{heads}
-Show unmerged heads of branch, or report when branch is merged.
-@comment TROFF INPUT: .TP
-
-@item @b{merge}
-Merge unmerged heads of branch.
-@comment TROFF INPUT: .TP
-
-@item @b{add} @i{[--unknown] [<pathname>...]}
-Add files to workspace. adding a file does not copy it into the
-database, merely adds it to the work list. You must @b{commit} your
-changes in order to copy added files to the database.  The missing 
-flag causes those files that @command{mtn ls unknown} would
-display to be added to the project.
-@comment TROFF INPUT: .TP
-
-@item @b{drop} @i{[--missing] [--execute] [<pathname>...]}
-Drop files from workspace. Files are not deleted from workspace,
-merely noted as removals in the work list, unless the @option{--execute}
-flag is given.  If the @option{--missing} flag is given any files that
-monotone is tracking but which are not present in the workspace
-(ie. the output that @command{mtn ls missing} would give) are
-dropped.
-@comment TROFF INPUT: .TP
-
-@item @b{rename} @i{<src> <dst>}
-Rename files from @i{<src>} to @i{<dst>} in workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{commit} @i{[--message=log message | --message-file=log message file] [<pathname>...]}
-Commit workspace to database.  Each commit has a changelog message
-associated with it.  If @option{--message} is provided on the command
-line, it is used; if @option{--message-file} is provided, the content of
-the named file will be used as a commit message.  If the filename is '-'
-the commit message will be read from standard input.  Otherwise a log
-message editor will be invoked.  If the file @file{_MTN/log} exists and is
-non-empty, its content is used to prefill the editor.  You cannot
-specify both @option{--message} and @option{--message-file} at the same
-time, and if @file{_MTN/log} exists and is non-empty, you can cannot
-specify either of them at all.
-@comment TROFF INPUT: .TP
-
-@item @b{update} @i{[--revision=revision]}
-Update workspace.
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{refresh_inodeprints}
-Turn on inodeprints mode, and force a cache refresh.
-
-@item @b{push} @i{<host> <glob>}
-Push contents of branches matching @i{<glob>} to database on @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{pull} @i{<host> <glob>}
-Pull contents of branches matching @i{<glob>} from database on @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{sync} @i{<host> <glob>}
-Sync contents of branches matching @i{<glob>} with database on @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{serve} @i{<host> <glob>}
-Serve contents of branches matching @i{<glob>} at network address @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{automate} @i{(interface_version|heads|ancestors|attributes|parents|descendents|children|graph|erase_ancestors|toposort|ancestry_difference|leaves|inventory|stdio|certs|select)}
-Scripting interface.
-
-@item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
-Manipulate database state.
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node DESCRIPTION
-
-@section DESCRIPTION
-@c DEBUG: print_menu("DESCRIPTION")
-
-Monotone is a version control system, which allows you to keep old
-versions of files, as well as special @i{revisions} and @i{manifests}
-which describe the edit history, location, and content of files in a
-tree. Unlike other systems, versions in monotone are @i{identified} by
-cryptographic hash, and operations are authenticated by individual
-users' evaluating cryptographic signatures on meta-data, rather than
-any central authority.
-
-Monotone keeps a collection of versions in a single-file relational
-database. It is essentially serverless, using network servers only as
-untrusted communication facilities. A monotone database is a regular
-file, which contains all the information needed to extract previous
-versions of files, verify signatures, merge and modify versions, and
-communicate with network servers.
-@comment TROFF INPUT: .SH OPTIONS
-
-@node OPTIONS
-
-@section OPTIONS
-@c DEBUG: print_menu("OPTIONS")
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-@item @b{--help}
-Print help message.
-@comment TROFF INPUT: .TP
-
-@item @b{--debug}
-Turn on debugging log on standard error stream. This is very
-verbose. Default is to be silent, unless an error occurs, in which
-case failure log is dumped.
-@comment TROFF INPUT: .TP
-
-@item @b{--quiet}
-Turn off normal progress messages.
-@comment TROFF INPUT: .TP
-
-@item @b{--dump=}@i{<file>}
-Dump debugging log to @i{<file>} on failure.
-@comment TROFF INPUT: .TP
-
-@item @b{--log=}@i{<file>}
-Redirect the log lines to to @i{<file>}.
-@comment TROFF INPUT: .TP
-
-@item @b{--nostd}
-Do not evaluate "standard" Lua hooks compiled into @b{mtn}.
-@comment TROFF INPUT: .TP
-
-@item @b{--norc}
-Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
-workspace's @b{_MTN/monotonerc} file.
-@comment TROFF INPUT: .TP
-
-@item @b{--rcfile=}@i{<file>}
-Load extra Lua hooks from @i{file} (may be given multiple times).
-@comment TROFF INPUT: .TP
-
-@item @b{--db=}@i{<file>}
-Use database in @i{file}.
-@comment TROFF INPUT: .TP
-
-@item @b{--key=}@i{<keyid>}
-@itemx @b{-k} @i{<keyid>}
-Use @i{keyid} for operations which produce @sc{rsa}
-signatures. Default is inferred from presence of unique private key in
-database. Can also be customized on a per-branch basis with hook
-function @b{get@t{_}branch@t{_}key(branchname)}.
-@comment TROFF INPUT: .TP
-
-@item @b{--branch=}@i{<branchname>}
-@itemx @b{-b} @i{<branchname>}
-Use @i{branchname} for operations on a branch. Default is inferred
-in operations on existing branches (commit, update, etc). 
-@comment TROFF INPUT: .TP
-
-@item @b{--ticker=}[@b{dot}|@b{count}|@b{none}]
-Use the given method to print tickers.  The @b{count} method prints
-the count for each ticker on one line, incrementing the numbers in
-place, while the @b{dot} method prints a continuous string of
-characters (like some programs provide a progress line of dots).
-@b{none} prints nothing.  The default is @b{count}.
-
-@item @b{--revision=}@i{<id>}
-@itemx @b{-r} @i{<id>}
-Use the given revision with the current command. The revision id could be specified as a selector. @ref{Selectors}.
-
-@item @b{--message-file=}@i{<log message file>}
-Use the content of the given file as the changelog when committing a new
-revision rather than invoking the log message editor.  If the filename
-is '-' the changelog is read from standard input.  Currently this option
-only applies to the commit command, but it may also apply to the comment
-command in the future.
-
-@item @b{--message=}@i{<log message>}
-@itemx @b{-m} @i{<log message>}
-Use the given message as the changelog when committing a new revision
-rather than invoking the log message editor. Currently this option only
-applies to the commit command but it may also apply to the comment
-command in the future.
-
-@item @b{--author=}@i{<author email>}
-Use the given author as the value of the @code{author} cert when committing
-a new revision, rather than the default author.  Useful when
-committing a patch on behalf of someone else, or when importing
-history from another version control system.
-
-@item @b{--date=}@i{<date and time>}
-Use the given given date and time as value of the @code{date} cert when
-committing a new revision, rather than the current time.  Useful when
-importing history from another version control system.
-
-@item @b{--root=}@i{<root dir>}
-Stop the search for a workspace (containing the @file{_MTN} directory)
-at the specified root directory rather than at the physical root of the
-filesystem.
-
-@item @b{--xargs=}@i{<file>}
-Inject the contents of the file in place among the command line
-arguments.  This may be useful in case the command line would otherwise
-become too long for your system.  This option can be used more than once
-if needed.
-
-@item @b{-@@} @i{<file>}
-An alias for @b{--xargs=}@i{<file>}.
-
-@comment TROFF INPUT: .SH ENVIRONMENT
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node ENVIRONMENT
-
-@section ENVIRONMENT
-@c DEBUG: print_menu("ENVIRONMENT")
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-
-@item @b{EDITOR}
-Used to edit comments, log messages, etc.
-@comment TROFF INPUT: .TP
-
-@item @b{VISUAL}
-Used in preference to @b{EDITOR}, if set.
-@comment TROFF INPUT: .SH FILES
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node FILES
-
-@section FILES
-@c DEBUG: print_menu("FILES")
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-@item @b{$HOME/.monotone/monotonerc}
-A Lua script, used as a customization file.
-@comment TROFF INPUT: .SH NOTES
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node NOTES
-
-@section NOTES
-@c DEBUG: print_menu("NOTES")
-
-@comment TROFF INPUT: .IP \(bu
-
-Command line options override environment variables and
-settings in Lua scripts (such as @b{monotonerc})
-
-@comment TROFF INPUT: .SH "SEE ALSO"
-
-@node SEE ALSO
-
-@section SEE ALSO
-@c DEBUG: print_menu("SEE ALSO")
-
-@b{info monotone}
-@comment TROFF INPUT: .SH BUGS
-
-@node BUGS
-
-@section BUGS
-@c DEBUG: print_menu("BUGS")
-
-see http://savannah.nongnu.org/bugs/?group=monotone
-@comment TROFF INPUT: .SH AUTHOR
-
-@node AUTHOR
-
-@section AUTHOR
-@c DEBUG: print_menu("AUTHOR")
-
-graydon hoare <graydon@@pobox.com>
 
 @node Default hooks
 @appendix Default hooks

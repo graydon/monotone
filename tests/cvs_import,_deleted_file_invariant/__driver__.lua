@@ -4,7 +4,7 @@ mtn_setup()
 
 cvs_setup()
 
-get("attest", cvsroot.."/attest")
+check(get("attest", cvsroot.."/attest"))
 
 check(cvs("co", "-rABC_BASE", "attest"), 0, false, false)
 tsha0 = sha1("attest/afile")

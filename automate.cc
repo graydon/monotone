@@ -34,6 +34,7 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "vocab.hh"
+#include "globish.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -222,51 +223,111 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 
 // Name: attributes
 // Arguments:
-//   1: file name (optional, if non-existant prints all files with attributes)
+//   1: file name
 // Added in: 1.0
-// Purpose: Prints all attributes for a file, or all  all files with attributes
-//   if a file name provided.
-// Output format: A list of file names in alphabetically sorted order,
-//   or a list of attributes if a file name provided.
-// Error conditions: If the file name has no attributes, prints nothing.
-AUTOMATE(attributes, N_("[FILE]"))
+// Purpose: Prints all attributes for a file
+// Output format: basic_io formatted output, each attribute has its own stanza:
+//
+// 'format_version'
+//         used in case this format ever needs to change.
+//         format: ('format_version', the string "1" currently)
+//         occurs: exactly once
+// 'attr'
+//         represents an attribute entry
+//         format: ('attr', name, value), ('state', [unchanged|changed|added|dropped])
+//         occurs: zero or more times
+//
+// Error conditions: If the file name has no attributes, prints only the 
+//                   format version, if the file is unknown, escalates
+AUTOMATE(attributes, N_("FILE"))
 {
-  if (args.size() > 1)
+  if (args.size() != 1)
     throw usage(help_name);
+
+  // this command requires a workspace to be run on
+  app.require_workspace();
+
+  // retrieve the path
+  split_path path;
+  file_path_external(idx(args,0)).split(path);
 
   roster_t base, current;
   temp_node_id_source nis;
 
+  // get the base and the current roster of this workspace
   get_base_and_current_roster_shape(base, current, nis, app);
 
-  if (args.size() == 1)
-    {
-      // a filename was given, if it has attributes, print them
-      split_path path;
-      file_path_external(idx(args,0)).split(path);
+  // escalate if the given path is unknown to the current roster
+  N(current.has_node(path),
+    F("file %s is unknown to the current workspace") % path);
 
-      if (current.has_node(path))
-        {
-          node_t n = current.get_node(path);
-          for (full_attr_map_t::const_iterator i = n->attrs.begin();
-               i != n->attrs.end(); ++i)
-            if (i->second.first)
-              output << i->first << endl;
-        }
-    }
-  else
-    {
-      for (node_map::const_iterator i = current.all_nodes().begin();
-           i != current.all_nodes().end(); ++i)
-        {
-          if (!i->second->attrs.empty())
-            {
-              split_path path;
-              current.get_name(i->first, path);
-              output << file_path(path) << endl;
-            }
-        }
-    }
+  // create the printer
+  basic_io::printer pr;
+  
+  // print the format version
+  basic_io::stanza st;
+  st.push_str_pair(basic_io::syms::format_version, "1");
+  pr.print_stanza(st);
+    
+  // the current node holds all current attributes (unchanged and new ones)
+  node_t n = current.get_node(path);
+  for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+       i != n->attrs.end(); ++i)
+  {
+    std::string value(i->second.second());
+    std::string state("unchanged");
+    
+    // if if the first value of the value pair is false this marks a
+    // dropped attribute
+    if (!i->second.first)
+      {
+        state = "dropped";
+        // if the attribute is dropped, we should have a base roster
+        // with that node...
+        I(base.has_node(path));
+        node_t prev_node = base.get_node(path);
+        // find the attribute in there
+        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
+        I(j != prev_node->attrs.end());
+        // output the previous (dropped) value later
+        value = j->second.second();
+      }
+    // this marks either a new or an existing attribute
+    else
+      {
+        if (base.has_node(path))
+          {
+            node_t prev_node = base.get_node(path);
+            full_attr_map_t::const_iterator j = 
+              prev_node->attrs.find(i->first());
+            // attribute not found? this is new
+            if (j == prev_node->attrs.end())
+              {
+                state = "added";
+              }
+            // check if this attribute has been changed 
+            // (dropped and set again)
+            else if (i->second.second() != j->second.second())
+              {
+                state = "changed";
+              }
+                
+          }
+        // its added since the whole node has been just added
+        else
+          {
+            state = "added";
+          }
+      }
+      
+    basic_io::stanza st;
+    st.push_str_triple(basic_io::syms::attr, i->first(), value);
+    st.push_str_pair(std::string("state"), state);
+    pr.print_stanza(st);
+  }
+  
+  // print the output  
+  output.write(pr.buf.data(), pr.buf.size());
 }
 
 // Name: toposort
@@ -881,17 +942,17 @@ AUTOMATE(get_revision, N_("[REVID]"))
     {
       roster_t old_roster, new_roster;
       revision_id old_revision_id;
-      revision_set rev;
+      revision_t rev;
 
       app.require_workspace();
       get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
       update_current_roster_from_filesystem(new_roster, app);
 
       get_revision_id(old_revision_id);
-      make_revision_set(old_revision_id, old_roster, new_roster, rev);
+      make_revision(old_revision_id, old_roster, new_roster, rev);
 
       calculate_ident(rev, ident);
-      write_revision_set(rev, dat);
+      write_revision(rev, dat);
     }
   else
     {
@@ -942,7 +1003,7 @@ AUTOMATE(get_current_revision_id, N_(""))
 
   roster_t old_roster, new_roster;
   revision_id old_revision_id, new_revision_id;
-  revision_set rev;
+  revision_t rev;
   temp_node_id_source nis;
 
   app.require_workspace();
@@ -950,7 +1011,7 @@ AUTOMATE(get_current_revision_id, N_(""))
   update_current_roster_from_filesystem(new_roster, app);
 
   get_revision_id(old_revision_id);
-  make_revision_set(old_revision_id, old_roster, new_roster, rev);
+  make_revision(old_revision_id, old_roster, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
 
@@ -1258,6 +1319,99 @@ AUTOMATE(branches, N_(""))
        i != names.end(); ++i)
     if (!app.lua.hook_ignore_branch(*i))
       output << (*i) << endl;
+}
+
+// Name: tags
+// Arguments:
+//   A branch pattern (optional).
+// Added in: 2.2
+// Purpose:
+//   If a branch pattern is given, prints all tags that are attached to
+//   revisions on branches matched by the pattern; otherwise prints all tags
+//   of the revision graph.
+//
+//   If a branch name is ignored by means of the lua hook 'ignore_branch',
+//   it is neither printed, nor can it be matched by a pattern.
+// Output format:
+//   There is one basic_io stanza for each tag.
+//
+//   All stanzas are formatted by basic_io. Stanzas are separated
+//   by a blank line. Values will be escaped, '\' to '\\' and
+//   '"' to '\"'.
+//
+//   Each stanza has exactly the following four entries:
+//
+//   'tag'
+//         the value of the tag cert, i.e. the name of the tag
+//   'revision'
+//         the hexadecimal id of the revision the tag is attached to
+//   'signer'
+//         the name of the key used to sign the tag cert
+//   'branches'
+//         a (possibly empty) list of all branches the tagged revision is on
+//
+//   Stanzas are printed in arbitrary order.
+// Error conditions:
+//   A run-time exception is thrown for illegal patterns.
+AUTOMATE(tags, N_("[BRANCH_PATTERN]"))
+{
+  utf8 incl("*");
+  bool filtering(false);
+  
+  if (args.size() == 1) {
+    incl = idx(args, 0);
+    filtering = true;
+  }
+  else if (args.size() > 1)
+    throw usage(name);
+
+  globish_matcher match(incl, utf8());
+  basic_io::printer prt;
+  basic_io::stanza stz;
+  stz.push_str_pair(symbol("format_version"), "1");
+  prt.print_stanza(stz);
+  
+  vector<revision<cert> > tag_certs;
+  app.db.get_revision_certs(tag_cert_name, tag_certs);
+
+  for (vector<revision<cert> >::const_iterator i = tag_certs.begin();
+       i != tag_certs.end(); ++i) {
+
+    cert tagcert(i->inner());
+    vector<revision<cert> > branch_certs;
+    app.db.get_revision_certs(tagcert.ident, branch_cert_name, branch_certs);
+    
+    bool show(!filtering);
+    vector<string> branch_names;
+
+    for (vector<revision<cert> >::const_iterator j = branch_certs.begin();
+         j != branch_certs.end(); ++j) {
+
+      cert branchcert(j->inner());
+      cert_value branch;
+      decode_base64(branchcert.value, branch);
+      string branch_name(branch());
+      
+      if (app.lua.hook_ignore_branch(branch_name))
+        continue;
+      
+      if (!show && match(branch_name)) 
+        show = true;
+      branch_names.push_back(branch_name);
+    }
+
+    if (show) {
+      basic_io::stanza stz;
+      cert_value tag;
+      decode_base64(tagcert.value, tag);
+      stz.push_str_pair(symbol("tag"), tag());
+      stz.push_hex_pair(symbol("revision"), tagcert.ident);
+      stz.push_str_pair(symbol("signer"), tagcert.key());
+      stz.push_str_multi(symbol("branches"), branch_names);
+      prt.print_stanza(stz);
+    }
+  }
+  output.write(prt.buf.data(), prt.buf.size());
 }
 
 // Local Variables:

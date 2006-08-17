@@ -1,7 +1,9 @@
 #ifndef __MKSTEMP_HH__
 #define __MKSTEMP_HH__
 
-int
+#include <string>
+
+bool
 monotone_mkstemp(std::string &tmpl);
 
 // Local Variables:

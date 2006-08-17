@@ -9,4 +9,4 @@ function cleanup()
   check({"chmod", "u+rwx", "_MTN/"})
 end
 
-check(raw_mtn(), 1, false, false)
+check(raw_mtn("status"), 1, false, false)

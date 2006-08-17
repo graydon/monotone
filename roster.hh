@@ -164,7 +164,7 @@ struct marking_t
 
 typedef std::map<node_id, marking_t> marking_map;
 
-void dump(std::set<revision_id> & revids, std::string & out);
+template <> void dump(std::set<revision_id> const & revids, std::string & out);
 template <> void dump(marking_t const & marking, std::string & out);
 template <> void dump(marking_map const & marking_map, std::string & out);
 
@@ -222,7 +222,7 @@ public:
 
   // verify that this roster is sane, and corresponds to the given
   // marking map
-  void check_sane_against(marking_map const & marks) const;
+  void check_sane_against(marking_map const & marks, bool temp_nodes_ok=false) const;
 
   void print_to(basic_io::printer & pr,
                 marking_map const & mm,
@@ -298,7 +298,7 @@ struct temp_node_id_source
 template <> void dump(roster_t const & val, std::string & out);
 
 class app_state;
-struct revision_set;
+struct revision_t;
 
 // adaptor class to enable cset application on rosters.
 class editable_roster_base
@@ -366,17 +366,24 @@ void
 extract_roster_path_set(roster_t const & ros,
                         path_set & paths);
 
+// These two functions are for the use of things like 'update' or 'pluck',
+// that need to construct fake rosters and/or markings in-memory, to achieve
+// particular merge results.
 void
-make_roster_for_base_plus_cset(revision_id const & base,
-                               cset const & cs,
-                               revision_id const & new_rid,
-                               roster_t & result,
-                               marking_map & marking,
-                               node_id_source & nis,
-                               app_state & app);
+mark_roster_with_no_parents(revision_id const & rid,
+                            roster_t const & roster,
+                            marking_map & markings);
+void
+mark_roster_with_one_parent(roster_t const & parent,
+                            marking_map const & parent_markings,
+                            revision_id const & child_rid,
+                            roster_t const & child,
+                            marking_map & child_markings);
 
+// This is for revisions that are being written to the db, only.  It assigns
+// permanent node ids.
 void
-make_roster_for_revision(revision_set const & rev,
+make_roster_for_revision(revision_t const & rev,
                          revision_id const & rid,
                          roster_t & result,
                          marking_map & marking,

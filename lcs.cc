@@ -553,15 +553,15 @@ void _longest_common_subsequence(A begin_a, A end_a,
 
   if (len_b < len_a)
     {
-      calc_t::diff_to_edits (b, len_b, a, len_a, edits, p_lim);
-      calc_t::order_edits (edits, -1, ordered);
-      calc_t::edits_to_lcs (ordered, b, len_b, len_a, out);
+      calc_t::diff_to_edits(b, len_b, a, len_a, edits, p_lim);
+      calc_t::order_edits(edits, -1, ordered);
+      calc_t::edits_to_lcs(ordered, b, len_b, len_a, out);
     }
   else
     {
-      calc_t::diff_to_edits (a, len_a, b, len_b, edits, p_lim);
-      calc_t::order_edits (edits, 1, ordered);
-      calc_t::edits_to_lcs (ordered, a, len_a, len_b, out);
+      calc_t::diff_to_edits(a, len_a, b, len_b, edits, p_lim);
+      calc_t::order_edits(edits, 1, ordered);
+      calc_t::edits_to_lcs(ordered, a, len_a, len_b, out);
     }
 }
 

@@ -1,0 +1,3 @@
+foo = io.open("thefifo", "w")
+foo:write("bar")
+foo:flush()

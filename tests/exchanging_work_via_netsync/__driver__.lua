@@ -34,10 +34,10 @@ check(qgrep("branch", "certs"))
 check(qgrep("changelog", "certs"))
 check(not qgrep("bad", "certs"))
 
-for _, what in {{cmd = "get_revision", ver = ver[0]},
-                {cmd = "get_revision", ver = ver[1]},
-                {cmd = "get_file", ver = f_ver[0]},
-                {cmd = "get_file", ver = f_ver[1]}} do
+for _, what in pairs({{cmd = "get_revision", ver = ver[0]},
+                      {cmd = "get_revision", ver = ver[1]},
+                      {cmd = "get_file", ver = f_ver[0]},
+                      {cmd = "get_file", ver = f_ver[1]}}) do
   check(mtn2("automate", what.cmd, what.ver), 0, true)
   canonicalize("stdout")
   check(sha1("stdout") == what.ver)

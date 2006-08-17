@@ -23,7 +23,7 @@ remove("keys")
 check(mtn("db", "init"))
 
 -- Put some random keys in, with and without corresponding private keys
-get("migrate_keys")
+check(get("migrate_keys"))
 check(mtn("read"), 0, false, false, {"migrate_keys"})
 
 addfile("testfile1", "f1v1\n")
@@ -43,7 +43,7 @@ writefile("testfile2", "f2v2\n")
 addfile("testfile4", "f4v1\n")
 commit("testbranch1")
 
-get("old_revs_propagate_log")
+check(get("old_revs_propagate_log"))
 check(mtn("propagate", "testbranch2", "testbranch1",
           "--message-file=old_revs_propagate_log"), 0, false, false)
 check(mtn("update"), 0, false, false)

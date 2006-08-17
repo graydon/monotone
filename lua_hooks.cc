@@ -9,11 +9,9 @@
 
 #include "config.h"
 
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
@@ -81,17 +79,12 @@ extern "C"
 
 lua_hooks::lua_hooks()
 {
-  st = lua_open ();
+  st = luaL_newstate();
   I(st);
 
   lua_atpanic (st, &panic_thrower);
 
-  luaopen_base(st);
-  luaopen_io(st);
-  luaopen_string(st);
-  luaopen_math(st);
-  luaopen_table(st);
-  luaopen_debug(st);
+  luaL_openlibs(st);
 
   lua_register(st, "get_confdir", monotone_get_confdir_for_lua);
   add_functions(st);
@@ -205,7 +198,6 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
       L(FL("skipping nonexistent rcfile '%s'") % rc);
     }
 }
-
 
 // concrete hooks
 
@@ -480,6 +472,25 @@ lua_hooks::hook_external_diff(file_path const & path,
   ll.push_str(newrev);
 
   return ll.call(7,0).ok();
+}
+
+bool
+lua_hooks::hook_get_encloser_pattern(file_path const & path,
+                                     std::string & pattern)
+{
+  bool exec_ok
+    = Lua(st)
+    .func("get_encloser_pattern")
+    .push_str(path.as_external())
+    .call(1, 1)
+    .extract_str(pattern)
+    .ok();
+
+  // If the hook fails, make sure pattern is set to something sane
+  // (the empty string, which will disable enclosers for this file).
+  if (!exec_ok)
+    pattern = "";
+  return exec_ok;
 }
 
 bool

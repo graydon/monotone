@@ -638,12 +638,12 @@ session::note_rev(revision_id const & rev)
 {
   if (role == sink_role)
     return;
-  revision_set rs;
+  revision_t rs;
   id item;
   decode_hexenc(rev.inner(), item);
   app.db.get_revision(rev, rs);
   data tmp;
-  write_revision_set(rs, tmp);
+  write_revision(rs, tmp);
   queue_data_cmd(revision_item, item, tmp());
 }
 
@@ -1348,16 +1348,14 @@ session::process_anonymous_cmd(protocol_role their_role,
     {
       if (their_role != sink_role)
         {
-          W(F("rejected attempt at anonymous connection for write"));
           this->saved_nonce = id("");
-          return false;
+          error(F("rejected attempt at anonymous connection for write").str());
         }
 
       if (this->role == sink_role)
         {
-          W(F("rejected attempt at anonymous connection while running as sink"));
           this->saved_nonce = id("");
-          return false;
+          error(F("rejected attempt at anonymous connection while running as sink").str());
         }
     }
 
@@ -1372,13 +1370,11 @@ session::process_anonymous_cmd(protocol_role their_role,
         if (!our_matcher(*i))
           {
             error((F("not serving branch '%s'") % *i).str());
-            return true;
           }
         else if (app.use_transport_auth &&
                  !app.lua.hook_get_netsync_read_permitted(*i))
           {
             error((F("anonymous access to branch '%s' denied by server") % *i).str());
-            return true;
           }
         else
           ok_branches.insert(utf8(*i));
@@ -1447,9 +1443,8 @@ session::process_auth_cmd(protocol_role their_role,
   // Check that they replied with the nonce we asked for.
   if (!(nonce1 == this->saved_nonce))
     {
-      W(F("detected replay attack in auth netcmd"));
       this->saved_nonce = id("");
-      return false;
+      error(F("detected replay attack in auth netcmd").str());
     }
 
   // Internally netsync thinks in terms of sources and sinks. users like
@@ -1469,9 +1464,8 @@ session::process_auth_cmd(protocol_role their_role,
       // have the private key that goes with it.
       if (!app.keys.try_ensure_in_db(their_key_hash))
         {
-          W(F("remote public key hash '%s' is unknown") % their_key_hash);
           this->saved_nonce = id("");
-          return false;
+          error((F("remote public key hash '%s' is unknown") % their_key_hash).str());
         }
     }
 
@@ -1486,10 +1480,9 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (this->role != source_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink")
-            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
-          return false;
+          error((F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink")
+            % their_id % their_include_pattern % their_exclude_pattern).str());
         }
     }
 
@@ -1501,16 +1494,12 @@ session::process_auth_cmd(protocol_role their_role,
           if (!our_matcher(*i))
             {
               error((F("not serving branch '%s'") % *i).str());
-              return true;
 
             }
           else if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
             {
-              W(F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")
-                % their_id % their_include_pattern % their_exclude_pattern % *i);
-
-              error((F("access to branch '%s' denied by server") % *i).str());
-              return true;
+              error((F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")
+                % their_id % their_include_pattern % their_exclude_pattern % *i).str());
             }
           else
             ok_branches.insert(utf8(*i));
@@ -1528,18 +1517,16 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
-          W(F("denied '%s' write permission for '%s' excluding '%s' while running as pure source")
-            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
-          return false;
+          error((F("denied '%s' write permission for '%s' excluding '%s' while running as pure source")
+            % their_id % their_include_pattern % their_exclude_pattern).str());
         }
 
       if (!app.lua.hook_get_netsync_write_permitted(their_id))
         {
-          W(F("denied '%s' write permission for '%s' excluding '%s'")
-            % their_id % their_include_pattern % their_exclude_pattern);
           this->saved_nonce = id("");
-          return false;
+          error((F("denied '%s' write permission for '%s' excluding '%s'")
+            % their_id % their_include_pattern % their_exclude_pattern).str());
         }
 
       P(F("allowed '%s' write permission for '%s' excluding '%s'")
@@ -1566,7 +1553,7 @@ session::process_auth_cmd(protocol_role their_role,
     }
   else
     {
-      W(F("bad client signature"));
+      error((F("bad client signature")).str());
     }
   return false;
 }
@@ -3141,6 +3128,9 @@ run_netsync_protocol(protocol_voice voice,
       W(F("exclude branch pattern contains a quote character:\n"
           "%s\n") % exclude_pattern());
     }
+
+  // We do not want to be killed by SIGPIPE from a network disconnect.
+  ignore_sigpipe();
 
   try
     {

@@ -37,7 +37,7 @@
 #include "keys.hh"
 #include "packet.hh"
 #include "paths.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "rcs_file.hh"
 #include "revision.hh"
 #include "safe_map.hh"
@@ -1025,10 +1025,10 @@ cluster_consumer
   struct prepared_revision
   {
     prepared_revision(revision_id i,
-                      shared_ptr<revision_set> r,
+                      shared_ptr<revision_t> r,
                       cvs_cluster const & c);
     revision_id rid;
-    shared_ptr<revision_set> rev;
+    shared_ptr<revision_t> rev;
     time_t time;
     cvs_author author;
     cvs_changelog changelog;
@@ -1327,7 +1327,7 @@ cluster_consumer::cluster_consumer(cvs_history & cvs,
 }
 
 cluster_consumer::prepared_revision::prepared_revision(revision_id i,
-                                                       shared_ptr<revision_set> r,
+                                                       shared_ptr<revision_t> r,
                                                        cvs_cluster const & c)
   : rid(i),
     rev(r),
@@ -1352,7 +1352,7 @@ cluster_consumer::store_revisions()
       if (! app.db.revision_exists(i->rid))
         {
           data tmp;
-          write_revision_set(*(i->rev), tmp);
+          write_revision(*(i->rev), tmp);
           app.db.put_revision(i->rid, *(i->rev));
           store_auxiliary_certs(*i);
           ++n_revisions;
@@ -1465,7 +1465,7 @@ cluster_consumer::consume_cluster(cvs_cluster const & c)
   // you have an empty cluster.
   I(!c.entries.empty());
 
-  shared_ptr<revision_set> rev(new revision_set());
+  shared_ptr<revision_t> rev(new revision_t());
   shared_ptr<cset> cs(new cset());
   build_cset(c, *cs);
 

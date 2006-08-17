@@ -1,3 +1,36 @@
+A testsuite is a lua script which defines commonly used globals for the
+individual tests, and lists those tests in the "tests" table. Each test is a
+directory containing a lua script named "__driver__.lua", and optionally any
+number of data files. These data files can be copied to the scratch directory
+with "get(filename)".
+
+Each test is run in a scratch directory, named tester_dir/$TESTNAME relative to
+the directory in which the tester is run. If the test passes and the -d option
+is not given, this directory will be removed after the test finishes. The tester
+will leave a logfile named "tester.log" in tester_dir and in each scratch dir
+that isn't removed.
+
+tester should be called as
+	tester testsuite [-dlh] [num [...]] [num..num [...]] [regex [...]]
+	
+        -h         print a help message
+        -l         print test names only; don't run them
+        -d         don't clean the scratch directories
+        num        run a specific test
+        num..num   run tests in a range
+                   if num is negative, count back from the end
+        regex      run tests with matching names
+
+On startup, the testsuite file is run. It should set up any global vars that the
+tests need, and add them to the "tests" table, as 'table.insert(tests,
+"test-name")'. "test-name" is the name of the directory for this test relative
+to testdir, which is initialized to srcdir (where the testsuite file is).
+
+After this the internal run_tests function is called, which parses the
+command-line arguments and runs whichever tests have been asked for. It also
+resets most of the environment between tests.
+
+
 tests
 
 Global table, containing all tests. The testsuite should contain lines of
@@ -241,6 +274,10 @@ If the command fails, abort the test.
 skip_if(bool)
 
 If the argument is true, abort the test (throw true) and mark it as skipped.
+
+xfail(...)
+
+Equivalent to xfail_if(true, ...).
 
 xfail_if(chk, ...)
 

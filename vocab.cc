@@ -66,7 +66,7 @@ verify(hexenc<id> & val)
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
     {
       N(is_xdigit(*i),
-	F("bad character '%c' in id name '%s'") % *i % val);
+        F("bad character '%c' in id name '%s'") % *i % val);
     }
   val.ok = true;
 }
@@ -93,7 +93,7 @@ verify(symbol & val)
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
     {
       N(is_alnum(*i) || *i == '_',
-	F("bad character '%c' in symbol '%s'") % *i % val);
+        F("bad character '%c' in symbol '%s'") % *i % val);
     }
 
   val.ok = true;
@@ -185,6 +185,16 @@ symtab_impl
   }
 };
 
+// Sometimes it's handy to have a non-colliding, meaningless id.
+
+hexenc<id>
+fake_id()
+{
+  static u32 counter = 0;
+  ++counter;
+  I(counter >= 1); // detect overflow
+  return hexenc<id>((FL("00000000000000000000000000000000%08x") % counter).str());
+}
 
 // instantiation of various vocab functions
 
