@@ -66,6 +66,7 @@ MOST_SOURCES =								\
          merge.cc merge.hh                                              \
          legacy.cc legacy.hh                                            \
 	 uri.cc uri.hh                                                  \
+	 graph.cc graph.hh                                              \
                                                                         \
          lru_cache.h                                                    \
                                                                         \

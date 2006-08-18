@@ -77,96 +77,139 @@ struct query;
 
 class database
 {
-public:
-  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
-
+  //
+  // --== Opening the database and schema checking ==--
+  //
 private:
   system_path filename;
+  app_state * __app;
+  struct sqlite3 * __sql;
+
+  void install_functions(app_state * app);
+  struct sqlite3 * sql(bool init = false, bool migrating_format = false);
+
+  void check_filename();
+  void check_db_exists();
+  void open();
+  void close();
+
   std::string const schema;
   void check_schema();
   void check_format();
 
+public:
+  database(system_path const & file);
+  ~database();
+
+  void set_app(app_state * app);
+
+  void set_filename(system_path const & file);
+  bool is_dbfile(any_path const & file);
+  void ensure_open();
+  void ensure_open_for_format_changes();
+  void check_is_not_rosterified();
+  bool database_specified();
+
+  //
+  // --== Basic SQL interface and statement caching ==--
+  //
+private:
   struct statement {
     statement() : count(0), stmt(0, sqlite3_finalize) {}
     int count;
     cleanup_ptr<sqlite3_stmt*, int> stmt;
   };
-
   std::map<std::string, statement> statement_cache;
-  // we don't actually have write support for manifests anymore --
-  // pending_manifest is pure legacy support
-  enum pending_where { pending_roster, pending_file, pending_manifest };
-  std::map<std::pair<pending_where, std::string>, data> pending_writes;
-  size_t pending_writes_size;
-
-  size_t size_pending_write(pending_where t, std::string const & id, data const & dat);
-  bool have_pending_write(pending_where tab, std::string const & id);
-  void load_pending_write(pending_where tab, std::string const & id, data & dat);
-  void cancel_pending_write(pending_where tab, std::string const & id);
-  void schedule_write(pending_where tab, std::string const & id, data const & dat);
-  void flush_pending_writes();
-
-  app_state * __app;
-  struct sqlite3 * __sql;
-  struct sqlite3 * sql(bool init = false, bool migrating_format = false);
-  int transaction_level;
-  bool transaction_exclusive;
-
-  void install_functions(app_state * app);
 
   typedef std::vector< std::vector<std::string> > results;
-
+  void fetch(results & res,
+             int const want_cols, int const want_rows,
+             query const & q);
   void execute(query const & q);
 
-  void fetch(results & res,
-             int const want_cols,
-             int const want_rows,
-             query const & q);
+  void table_has_entry(std::string const & key, std::string const & column,
+                       std::string const & table);
 
-  bool exists(std::string const & ident,
-              pending_where t);
-  bool delta_exists(std::string const & ident,
-                    std::string const & table);
-
+  //
+  // --== Generic database metadata gathering ==--
+  //
+private:
   unsigned long count(std::string const & table);
   unsigned long space_usage(std::string const & table,
                             std::string const & concatenated_columns);
   unsigned int page_size();
   unsigned int cache_size();
 
-  void get_ids(std::string const & table, std::set< hexenc<id> > & ids);
+  //
+  // --== Transactions ==--
+  //
+private:
+  int transaction_level;
+  bool transaction_exclusive;
+  void begin_transaction(bool exclusive);
+  void commit_transaction();
+  void rollback_transaction();
+  friend class transaction_guard;
 
-  void get_base_unchecked(hexenc<id> const & new_id,
-                          data & dat,
-                          pending_where t,
-                          std::string const & table);
-  void get_delta_unchecked(hexenc<id> const & ident,
-                           hexenc<id> const & base,
-                           delta & del,
-                           std::string const & table);
+  //
+  // --== Write-buffering -- tied into transaction  ==--
+  // --== machinery and delta compression machinery ==--
+  //
+private:
+  enum delayed_type { delayed_roster, delayed_file };
+  std::map<std::pair<delayed_type, std::string>, data> pending_writes;
+  size_t pending_writes_size;
+
+  size_t size_pending_write(delayed_type t, std::string const & id, data const & dat);
+  bool have_pending_write(delayed_type tab, std::string const & id);
+  void load_pending_write(delayed_type tab, std::string const & id, data & dat);
+  void cancel_pending_write(delayed_type tab, std::string const & id);
+  void schedule_write(delayed_type tab, std::string const & id, data const & dat);
+  void flush_pending_writes();
+
+  void write_pending_object(delayed_type t,
+                            std::string const & new_id,
+                            data const & dat);
+
+  //
+  // --== Reading/writing delta-compressed objects ==--
+  //
+private:
+  // "do we have any entry for 'ident' that is a base version"
+  bool exists(std::string const & ident,
+              pending_where t);
+  // "do we have any entry for 'ident' that is a delta"
+  bool delta_exists(std::string const & ident,
+                    std::string const & table);
+
+  void get_file_or_manifest_base_unchecked(hexenc<id> const & new_id,
+                                           data & dat,
+                                           pending_where t,
+                                           std::string const & table);
+  void get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
+                                            hexenc<id> const & base,
+                                            delta & del,
+                                            std::string const & table);
   void get_roster_base(std::string const & ident, roster<data> & dat);
   void get_roster_delta(std::string const & ident,
                         std::string const & base,
                         roster<delta> & del);
-  void get_reconstruction_path(std::string const & ident,
-                               pending_where t,
-                               std::string const & data_table,
-                               std::string const & delta_table,
-                               std::vector<std::string> & path);
+  friend class file_and_manifest_reconstruction_graph;
+  friend class roster_reconstruction_graph;
   void get_version(hexenc<id> const & ident,
                    data & dat,
                    pending_where t,
                    std::string const & data_table,
                    std::string const & delta_table);
 
-  void put(std::string const & new_id,
-           data const & dat,
-           pending_where t);
   void drop(std::string const & base,
             std::string const & table);
   void put_file_delta(file_id const & ident,
                       file_id const & base,
                       file_delta const & del);
+public:
+  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
+private:
   void put_roster_delta(roster_id ident,
                         roster_id base,
                         roster_delta const & del);
@@ -176,92 +219,17 @@ private:
                    std::string const & data_table,
                    std::string const & delta_table);
 
-  void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
-
-  bool cert_exists(cert const & t,
-                  std::string const & table);
-  void put_cert(cert const & t, std::string const & table);
-  void results_to_certs(results const & res,
-                       std::vector<cert> & certs);
-
-  void get_certs(std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(hexenc<id> const & ident,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(cert_name const & name,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(hexenc<id> const & ident,
-                 cert_name const & name,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(hexenc<id> const & ident,
-                 cert_name const & name,
-                 base64<cert_value> const & val,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(cert_name const & name,
-                 base64<cert_value> const & val,
-                 std::vector<cert> & certs,
-                 std::string const & table);
-
-  void begin_transaction(bool exclusive);
-  void commit_transaction();
-  void rollback_transaction();
-  friend class transaction_guard;
-  friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
-                                    hexenc<id> const & new_id,
-                                    delta const & del,
-                                    database & db);
-
   void put_roster(revision_id const & rev_id,
                   roster_t & roster,
                   marking_map & marks);
 
-  void check_filename();
-  void check_db_exists();
-  void open();
-  void close();
-
-  u64 next_id_from_table(std::string const & table);
-  roster_id next_roster_id();
-
 public:
-
-  database(system_path const & file);
-
-  void set_filename(system_path const & file);
-  bool is_dbfile(any_path const & file);
-  void initialize();
-  void debug(std::string const & sql, std::ostream & out);
-  void dump(std::ostream &);
-  void load(std::istream &);
-  void info(std::ostream &);
-  void version(std::ostream &);
-  void migrate();
-  void ensure_open();
-  void ensure_open_for_format_changes();
-  void check_is_not_rosterified();
-  bool database_specified();
 
   bool file_version_exists(file_id const & ident);
   bool revision_exists(revision_id const & ident);
   bool roster_link_exists_for_revision(revision_id const & ident);
   bool roster_exists_for_revision(revision_id const & ident);
 
-  void get_file_ids(std::set<file_id> & ids);
-  void get_revision_ids(std::set<revision_id> & ids);
-
-
-  bool check_integrity();
-
-  void set_app(app_state * app);
 
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist)
@@ -286,6 +254,10 @@ public:
   void get_manifest_version(manifest_id const & ident,
                             manifest_data & dat);
 
+  //
+  // --== The ancestry graph ==--
+  //
+public:
   void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
   void get_revision_parents(revision_id const & ident,
@@ -296,9 +268,20 @@ public:
 
   void get_revision_manifest(revision_id const & cid,
                              manifest_id & mid);
+private:
+  // helper
+  void get_ids(std::string const & table, std::set< hexenc<id> > & ids);
+public:
+  void get_revision_ids(std::set<revision_id> & ids);
+  // this is exposed for 'db check':
+  void get_file_ids(std::set<file_id> & ids);
 
+  //
+  // --== Revision reading/writing ==--
+  //
+private:
   void deltify_revision(revision_id const & rid);
-
+public:
   void get_revision(revision_id const & ident,
                     revision_t & cs);
 
@@ -311,27 +294,36 @@ public:
   void put_revision(revision_id const & new_id,
                     revision_data const & dat);
 
-  // for changesetify, rosterify
-  void delete_existing_revs_and_certs();
+  //
+  // --== Rosters ==--
+  //
+private:
+  u64 next_id_from_table(std::string const & table);
+  roster_id next_roster_id();
+public:
+  node_id next_node_id();
 
-  void delete_existing_manifests();
+  void get_roster(revision_id const & rid,
+                  roster_t & roster);
 
-  // for regenerate_rosters
-  void delete_existing_rosters();
-  void put_roster_for_revision(revision_id const & new_id,
-                               revision_t const & rev);
+  void get_roster(revision_id const & rid,
+                  roster_t & roster,
+                  marking_map & marks);
 
-  // for kill_rev_locally
-  void delete_existing_rev_and_certs(revision_id const & rid);
+  // internal implementation details of roster storage -- exposed here for
+  // the use of database_check.cc
+  bool roster_version_exists(roster_id ident);
+  void get_roster_links(std::map<revision_id, roster_id> & links);
+  void get_roster_ids(std::set<roster_id> & ids);
+  roster_id get_roster_id_for_revision(revision_id const & rev_id);
+  void get_roster_version(roster_id ros_id, roster_data & dat);
 
-  // for kill_branch_certs_locally
-  void delete_branch_named(cert_value const & branch);
-
-  // for kill_tag_locally
-  void delete_tag_named(cert_value const & tag);
-
-  // crypto key / cert operations
-
+  //
+  // --== Keys ==--
+  //
+private:
+  void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
+public:
   void get_key_ids(std::string const & pattern,
                    std::vector<rsa_keypair_id> & pubkeys);
 
@@ -339,7 +331,6 @@ public:
 
   bool public_key_exists(hexenc<id> const & hash);
   bool public_key_exists(rsa_keypair_id const & ident);
-
 
   void get_pubkey(hexenc<id> const & hash,
                   rsa_keypair_id & ident,
@@ -353,8 +344,45 @@ public:
 
   void delete_public_key(rsa_keypair_id const & pub_id);
 
+  //
+  // --== Certs ==--
+  //
   // note: this section is ridiculous. please do something about it.
+private:
+  bool cert_exists(cert const & t,
+                   std::string const & table);
+  void put_cert(cert const & t, std::string const & table);
+  void results_to_certs(results const & res,
+                        std::vector<cert> & certs);
+  
+  void get_certs(std::vector< cert > & certs,
+                 std::string const & table);
+  
+  void get_certs(hexenc<id> const & ident,
+                 std::vector< cert > & certs,
+                 std::string const & table);
 
+  void get_certs(cert_name const & name,
+                 std::vector< cert > & certs,
+                 std::string const & table);
+
+  void get_certs(hexenc<id> const & ident,
+                 cert_name const & name,
+                 std::vector< cert > & certs,
+                 std::string const & table);
+
+  void get_certs(hexenc<id> const & ident,
+                 cert_name const & name,
+                 base64<cert_value> const & val,
+                 std::vector< cert > & certs,
+                 std::string const & table);
+
+  void get_certs(cert_name const & name,
+                 base64<cert_value> const & val,
+                 std::vector<cert> & certs,
+                 std::string const & table);
+
+public:
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
@@ -397,8 +425,10 @@ public:
   void get_manifest_certs(cert_name const & name,
                           std::vector< manifest<cert> > & certs);
 
-  // epochs
-
+  //
+  // --== Epochs ==--
+  //
+public:
   void get_epochs(std::map<cert_value, epoch_data> & epochs);
 
   void get_epoch(epoch_id const & eid, cert_value & branch, epoch_data & epo);
@@ -409,8 +439,10 @@ public:
 
   void clear_epoch(cert_value const & branch);
 
-  // vars
-
+  //
+  // --== Database 'vars' ==--
+  //
+public:
   void get_vars(std::map<var_key, var_value > & vars);
 
   void get_var(var_key const & key, var_value & value);
@@ -421,27 +453,10 @@ public:
 
   void clear_var(var_key const & key);
 
-  // branches
-  void get_branches(std::vector<std::string> & names);
-
-  // roster and node_id stuff
-
-  void get_roster(revision_id const & rid,
-                  roster_t & roster);
-
-  void get_roster(revision_id const & rid,
-                  roster_t & roster,
-                  marking_map & marks);
-
-  void get_uncommon_ancestors(revision_id const & a,
-                              revision_id const & b,
-                              std::set<revision_id> & a_uncommon_ancs,
-                              std::set<revision_id> & b_uncommon_ancs);
-
-  node_id next_node_id();
-
-  // completion stuff
-
+  //
+  // --== Completion ==--
+  //
+public:
   void complete(std::string const & partial,
                 std::set<revision_id> & completions);
 
@@ -457,15 +472,50 @@ public:
                                       std::string> > const & limit,
                 std::set<std::string> & completions);
 
-  ~database();
+  //
+  // --== The 'db' family of top-level commands ==--
+  //
+public:
+  void initialize();
+  void debug(std::string const & sql, std::ostream & out);
+  void dump(std::ostream &);
+  void load(std::istream &);
+  void info(std::ostream &);
+  void version(std::ostream &);
+  void migrate();
+  // for kill_rev_locally:
+  void delete_existing_rev_and_certs(revision_id const & rid);
+  // for kill_branch_certs_locally:
+  void delete_branch_named(cert_value const & branch);
+  // for kill_tag_locally:
+  void delete_tag_named(cert_value const & tag);
 
-  // internal implementation details of roster storage -- exposed here for
-  // the use of database_check.cc
-  bool roster_version_exists(roster_id ident);
-  void get_roster_links(std::map<revision_id, roster_id> & links);
-  void get_roster_ids(std::set<roster_id> & ids);
-  roster_id get_roster_id_for_revision(revision_id const & rev_id);
-  void get_roster_version(roster_id ros_id, roster_data & dat);
+  // misc
+private:
+  friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
+                                    hexenc<id> const & new_id,
+                                    delta const & del,
+                                    database & db);
+public:
+    // branches
+  void get_branches(std::vector<std::string> & names);
+
+  bool check_integrity();
+
+  void get_uncommon_ancestors(revision_id const & a,
+                              revision_id const & b,
+                              std::set<revision_id> & a_uncommon_ancs,
+                              std::set<revision_id> & b_uncommon_ancs);
+
+  // for changesetify, rosterify
+  void delete_existing_revs_and_certs();
+
+  void delete_existing_manifests();
+
+  // for regenerate_rosters
+  void delete_existing_rosters();
+  void put_roster_for_revision(revision_id const & new_id,
+                               revision_t const & rev);
 };
 
 // Transaction guards nest. Acquire one in any scope you'd like

@@ -826,6 +826,17 @@ database::fetch(results & res,
     F("wanted %d rows got %d in query: %s") % want_rows % nrow % query.sql_cmd);
 }
 
+void
+database::table_has_entry(std::string const & key, std::string const & column,
+                          std::string const & table)
+{
+  results res;
+  query q("SELECT 1 FROM " + table + " WHERE " + column + " = ?");
+  fetch(res, one_col, any_rows, q % text(ident));
+  I(res.size() <= 1);
+  return res.size() == 1;
+}
+
 // general application-level logic
 
 void
@@ -957,11 +968,7 @@ database::exists(string const & ident,
       break;
     }
 
-  results res;
-  query q("SELECT id FROM " + table + " WHERE id = ?");
-  fetch(res, one_col, any_rows, q % text(ident));
-  I((res.size() == 1) || (res.size() == 0));
-  return res.size() == 1;
+  return table_has_entry(ident, "id", table);
 }
 
 
@@ -969,10 +976,7 @@ bool
 database::delta_exists(string const & ident,
                        string const & table)
 {
-  results res;
-  query q("SELECT id FROM " + table + " WHERE id = ?");
-  fetch(res, one_col, any_rows, q % text(ident));
-  return res.size() > 0;
+  return table_has_entry(ident, "id", table);
 }
 
 unsigned long
@@ -1031,10 +1035,10 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 
 // for files and legacy manifest support
 void
-database::get_base_unchecked(hexenc<id> const & ident,
-                             data & dat,
-                             pending_where t,
-                             string const & table)
+database::get_file_or_manifest_base_unchecked(hexenc<id> const & ident,
+                                              data & dat,
+                                              pending_where t,
+                                              string const & table)
 {
   if (have_pending_write(t, ident()))
     {
@@ -1055,10 +1059,10 @@ database::get_base_unchecked(hexenc<id> const & ident,
 
 // for files and legacy manifest support
 void
-database::get_delta_unchecked(hexenc<id> const & ident,
-                              hexenc<id> const & base,
-                              delta & del,
-                              string const & table)
+database::get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
+                                               hexenc<id> const & base,
+                                               delta & del,
+                                               string const & table)
 {
   I(ident() != "");
   I(base() != "");
@@ -1211,131 +1215,6 @@ struct datasz
 static LRUCache<string, data, datasz>
 vcache(constants::db_version_cache_sz);
 
-typedef vector<string> reconstruction_path;
-
-static void
-extend_path_if_not_cycle(string table_name,
-                         shared_ptr<reconstruction_path> p,
-                         string const & ext,
-                         set<string> & seen_nodes,
-                         vector< shared_ptr<reconstruction_path> > & next_paths)
-{
-  for (reconstruction_path::const_iterator i = p->begin(); i != p->end(); ++i)
-    {
-      if (*i == ext)
-        throw oops("cycle in table '" + table_name + "', at node "
-                   + *i + " <- " + ext);
-    }
-
-  if (seen_nodes.find(ext) == seen_nodes.end())
-    {
-      p->push_back(ext);
-      next_paths.push_back(p);
-      seen_nodes.insert(ext);
-    }
-}
-
-// used for files, rosters, and legacy manifest support
-void
-database::get_reconstruction_path(string const & ident,
-                                  pending_where t,
-                                  string const & data_table,
-                                  string const & delta_table,
-                                  reconstruction_path & path)
-{
-  // we start from the file we want to reconstruct and work *forwards*
-  // through the database, until we get to a full data object. we then
-  // trace back through the list of edges we followed to get to the data
-  // object, applying reverse deltas.
-  //
-  // the effect of this algorithm is breadth-first search, backwards
-  // through the storage graph, to discover a forwards shortest path, and
-  // then following that shortest path with delta application.
-  //
-  // we used to do this with the boost graph library, but it invovled
-  // loading too much of the storage graph into memory at any moment. this
-  // imperative version only loads the descendents of the reconstruction
-  // node, so it much cheaper in terms of memory.
-  //
-  // we also maintain a cycle-detecting set, just to be safe
-
-  // Our reconstruction algorithm involves keeping a set of parallel
-  // linear paths, starting from ident, moving forward through the
-  // storage DAG until we hit a storage root.
-  //
-  // On each iteration, we extend every active path by one step. If our
-  // extension involves a fork, we duplicate the path. If any path
-  // contains a cycle, we fault.
-  //
-  // If, by extending a path C, we enter a node which another path
-  // D has already seen, we kill path C. This avoids the possibility of
-  // exponential growth in the number of paths due to extensive forking
-  // and merging.
-
-  L(FL("reconstructing %s in %s") % ident % delta_table);
-
-  vector< shared_ptr<reconstruction_path> > live_paths;
-
-  string delta_query = "SELECT base FROM " + delta_table + " WHERE id = ?";
-
-  {
-    shared_ptr<reconstruction_path> pth0 = shared_ptr<reconstruction_path>(new reconstruction_path());
-    pth0->push_back(ident);
-    live_paths.push_back(pth0);
-  }
-
-  shared_ptr<reconstruction_path> selected_path;
-  set<string> seen_nodes;
-
-  while (!selected_path)
-    {
-      vector< shared_ptr<reconstruction_path> > next_paths;
-
-      for (vector<shared_ptr<reconstruction_path> >::const_iterator i = live_paths.begin();
-           i != live_paths.end(); ++i)
-        {
-          shared_ptr<reconstruction_path> pth = *i;
-          string tip = pth->back();
-
-          if (vcache.exists(tip) || exists(tip, t))
-            {
-              selected_path = pth;
-              break;
-            }
-          else
-            {
-              // This tip is not a root, so extend the path.
-              results res;
-              fetch(res, one_col, any_rows,
-                    query(delta_query)
-                    % text(tip));
-
-              I(res.size() != 0);
-
-              // Replicate the path if there's a fork.
-              for (size_t k = 1; k < res.size(); ++k)
-                {
-                  shared_ptr<reconstruction_path> pthN
-                    = shared_ptr<reconstruction_path>(new reconstruction_path(*pth));
-                  extend_path_if_not_cycle(delta_table, pthN,
-                                           res[k][0],
-                                           seen_nodes, next_paths);
-                }
-
-              // And extend the base path we're examining.
-              extend_path_if_not_cycle(delta_table, pth,
-                                       res[0][0],
-                                       seen_nodes, next_paths);
-            }
-        }
-
-      I(selected_path || !next_paths.empty());
-      live_paths = next_paths;
-    }
-
-  path = *selected_path;
-}
-
 // used for files and legacy manifest migration
 void
 database::get_version(hexenc<id> const & ident,
@@ -1359,7 +1238,7 @@ database::get_version(hexenc<id> const & ident,
   if (vcache.exists(curr()))
     I(vcache.fetch(curr(), begin));
   else
-    get_base_unchecked(curr, begin, t, data_table);
+    get_file_or_manifest_base_unchecked(curr, begin, t, data_table);
   
   shared_ptr<delta_applicator> appl = new_piecewise_applicator();
   appl->begin(begin());
@@ -1378,7 +1257,7 @@ database::get_version(hexenc<id> const & ident,
       
       L(FL("following delta %s -> %s") % curr % nxt);
       delta del;
-      get_delta_unchecked(nxt, curr, del, delta_table);
+      get_file_or_manifest_delta_unchecked(nxt, curr, del, delta_table);
       apply_delta (appl, del());
       
       appl->next();
