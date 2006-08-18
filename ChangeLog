@@ -1,5 +1,10 @@
 2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* cmd.hh cmd_automate.cc monotone.text tests/automate_stdio/:
+	Comment out stuff related to giving automate commands an input stream.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* std_hooks.lua: Fix some brokenness from the merge hook changes.
 
 2006-08-15  Zack Weinberg  <zackw@panix.com>

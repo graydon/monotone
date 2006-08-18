@@ -210,8 +210,8 @@ namespace automation {
     virtual void run(std::vector<utf8> args,
                      std::string const & help_name,
                      app_state & app,
-                     std::ostream & output,
-                     std::istream & input) const = 0;
+                     std::ostream & output/*,
+                     std::istream & input*/) const = 0;
     virtual ~automate();
   };
 }
@@ -222,8 +222,8 @@ namespace automation {                                              \
   {                                                                 \
     auto_ ## NAME () : automate(#NAME, PARAMS) {}                   \
     void run(std::vector<utf8> args, std::string const & help_name, \
-                     app_state & app, std::ostream & output,        \
-                     std::istream & input) const;                   \
+                     app_state & app, std::ostream & output/*,        \
+                     std::istream & input*/) const;                   \
     virtual ~auto_ ## NAME() {}                                     \
   };                                                                \
   static auto_ ## NAME NAME ## _auto;                               \
@@ -231,8 +231,8 @@ namespace automation {                                              \
 void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
                                       std::string const & help_name,\
                                       app_state & app,              \
-                                      std::ostream & output,        \
-                                      std::istream & input) const
+                                      std::ostream & output/*,        \
+                                      std::istream & input*/) const
 
 
 

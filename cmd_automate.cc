@@ -48,15 +48,15 @@ void
 automate_command(utf8 cmd, vector<utf8> args,
                  string const & root_cmd_name,
                  app_state & app,
-                 ostream & output,
-                 istream & input)
+                 ostream & output/*,
+                 istream & input*/)
 {
   map<string, automation::automate * const>::const_iterator
     i = automation::automations->find(cmd());
   if (i == automation::automations->end())
     throw usage(root_cmd_name);
   else
-    i->second->run(args, root_cmd_name, app, output, input);
+    i->second->run(args, root_cmd_name, app, output/*, input*/);
 }
 
 static string const interface_version = "3.0";
@@ -77,13 +77,14 @@ AUTOMATE(interface_version, "")
 
   output << interface_version << "\n";
 }
-
+/*
 AUTOMATE(test, "")
 {
   string w;
   while (input >> w)
     output << "Got \"" << w << "\"\n";
 }
+*/
 
 // Name: stdio
 // Arguments: none
@@ -130,9 +131,9 @@ AUTOMATE(test, "")
 class automate_reader
 {
   std::istream & in;
-  enum location {opt, cmd, input, none, eof};
+  enum location {opt, cmd, /*input,*/ none, eof};
   location loc;
-  bool done_input;
+  //bool done_input;
   bool get_string(std::string & out)
   {
     out.clear();
@@ -180,7 +181,7 @@ class automate_reader
   {
     if (loc == eof)
       return;
-    std::string starters("oli");
+    std::string starters("ol");//"oli"
     std::string foo;
     while (loc != none)
       get_string(foo);
@@ -197,19 +198,19 @@ class automate_reader
       {
       case 'o': loc = opt; break;
       case 'l': loc = cmd; break;
-      case 'i': loc = input; break;
+      //case 'i': loc = input; break;
       }
   }
 public:
-  automate_reader(std::istream & is) : in(is), loc(none), done_input(false)
+  automate_reader(std::istream & is) : in(is), loc(none)/*, done_input(false)*/
   {}
   bool get_command(std::vector<std::pair<std::string, std::string> > & params,
                    std::vector<std::string> & cmdline)
   {
     params.clear();
     cmdline.clear();
-    done_input = false;
-    while (loc == none || loc == input)
+    //done_input = false;
+    while (loc == none /*|| loc == input*/)
       go_to_next_item();
     if (loc == eof)
       return false;
@@ -230,6 +231,7 @@ public:
       }
     return true;
   }
+  /*
   std::string get_some_input()
   {
     if (done_input || loc == eof)
@@ -249,6 +251,7 @@ public:
         return str;
       }
   }
+  */
 };
 
 struct automate_streambuf : public std::streambuf
@@ -318,7 +321,7 @@ public:
         out->flush();
       }
   }
-  
+  /*
   int_type
   underflow()
   {
@@ -341,7 +344,7 @@ public:
         return *base;
       }
   }
-  
+  */
   int_type
   overflow(int_type c = traits_type::eof())
   {
@@ -373,7 +376,7 @@ struct automate_ostream : public std::ostream
   void end_cmd()
   { _M_autobuf.end_cmd(); }
 };
-
+/*
 struct automate_istream : public std::istream
 {
   automate_streambuf _M_autobuf;
@@ -391,23 +394,37 @@ struct automate_istream : public std::istream
   { return const_cast<automate_streambuf *>(&_M_autobuf); }
   
 };
+*/
 
-// This DOES NOT respect it's "input" parameter.
+static void parse_params(vector<pair<string, string> > const & params,
+                         app_state & app)
+{
+  app.exclude_patterns.clear();
+  for (vector<pair<string, string> >::const_iterator i = params.begin();
+       i != params.end(); ++i)
+    {
+      string const & key = i->first;
+      string const & val = i->second;
+      if (key == "exclude")
+        {
+          app.add_exclude(val);
+        }
+    }
+}
+
 AUTOMATE(stdio, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
   automate_ostream os(output);
-  automate_reader ar(input);
-  automate_istream is(ar);
+//  automate_reader ar(input);
+  automate_reader ar(std::cin);
+//  automate_istream is(ar);
   vector<pair<string, string> > params;
   vector<string> cmdline;
   while(ar.get_command(params, cmdline))//while(!EOF)
     {
-      L(FL("Got %d parameters:") % params.size());
-      for (vector<pair<string, string> >::iterator i = params.begin();
-           i != params.end(); ++i)
-        L(FL("\t%s = %s") % i->first % i->second);
+      parse_params(params, app);
       utf8 cmd;
       vector<utf8> args;
       vector<string>::iterator i = cmdline.begin();
@@ -419,7 +436,8 @@ AUTOMATE(stdio, "")
         }
       try
         {
-          automate_command(cmd, args, help_name, app, os, is);
+          //automate_command(cmd, args, help_name, app, os, is);
+          automate_command(cmd, args, help_name, app, os);
         }
       catch(usage &)
         {
@@ -431,7 +449,7 @@ AUTOMATE(stdio, "")
           os.set_err(2);
           //Do this instead of printing f.what directly so the output
           //will be split into properly-sized blocks automatically.
-          os<<f.what;
+          os<<f.what();
         }
       os.end_cmd();
     }
@@ -452,7 +470,8 @@ CMD_PARAMS_FN(automate, N_("automation"),
 
   make_io_binary();
 
-  automate_command(cmd, cmd_args, name, app, std::cout, std::cin);
+//  automate_command(cmd, cmd_args, name, app, std::cout, std::cin);
+  automate_command(cmd, cmd_args, name, app, std::cout);
 }
 
 std::string commands::cmd_automate::params()
