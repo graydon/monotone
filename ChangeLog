@@ -1,3 +1,8 @@
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/main.cc (interrupt_signal): Newline-terminate our
+	"operation canceled" message.
+
 2006-08-18  Richard Levitte  <richard@levitte.org>
 
 	* INSTALL: Say that a Debian user needs to install

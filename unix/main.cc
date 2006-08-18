@@ -98,6 +98,7 @@ interrupt_signal(int signo)
   write_str_to_stderr(argv0);
   write_str_to_stderr(": operation canceled: ");
   write_str_to_stderr(strsignal(signo));
+  write_str_to_stderr("\n");
   raise(signo);
   // The signal has been reset to the default handler by SA_RESETHAND
   // specified in the sigaction() call, but it's also blocked; it will be
