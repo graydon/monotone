@@ -147,7 +147,7 @@ database::database(system_path const & fn) :
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
   schema("d570d2861caa6f855bd8260f25e3a964294b6cb1"),
-  pending_writes_size(0),
+  delayed_writes_size(0),
   __sql(NULL),
   transaction_level(0)
 {}
@@ -851,7 +851,7 @@ database::begin_transaction(bool exclusive)
 {
   if (transaction_level == 0)
     {
-      I(pending_writes.empty());
+      I(delayed_writes.empty());
       if (exclusive)
         execute(query("BEGIN EXCLUSIVE"));
       else
@@ -869,58 +869,58 @@ database::begin_transaction(bool exclusive)
 
 
 size_t
-database::size_pending_write(pending_where t, string const & id, data const & dat)
+database::size_delayed_write(delayed_type t, string const & id, data const & dat)
 {
   return sizeof(t) + id.size() + dat().size();
 }
 
 bool
-database::have_pending_write(pending_where t, string const & id)
+database::have_delayed_write(delayed_type t, string const & id)
 {
-  return pending_writes.find(make_pair(t, id)) != pending_writes.end();
+  return delayed_writes.find(make_pair(t, id)) != delayed_writes.end();
 }
 
 void
-database::load_pending_write(pending_where t, string const & id, data & dat)
+database::load_delayed_write(delayed_type t, string const & id, data & dat)
 {
-  dat = safe_get(pending_writes, make_pair(t, id));
+  dat = safe_get(delayed_writes, make_pair(t, id));
 }
 
-// precondition: have_pending_write(t, an_id) == true
+// precondition: have_delayed_write(t, an_id) == true
 void
-database::cancel_pending_write(pending_where t, string const & an_id)
+database::cancel_delayed_write(delayed_type t, string const & an_id)
 {
-  data const & dat = safe_get(pending_writes, make_pair(t, an_id));
-  size_t cancel_size = size_pending_write(t, an_id, dat);
-  I(cancel_size < pending_writes_size);
-  pending_writes_size -= cancel_size;
+  data const & dat = safe_get(delayed_writes, make_pair(t, an_id));
+  size_t cancel_size = size_delayed_write(t, an_id, dat);
+  I(cancel_size < delayed_writes_size);
+  delayed_writes_size -= cancel_size;
     
-  safe_erase(pending_writes, make_pair(t, an_id));
+  safe_erase(delayed_writes, make_pair(t, an_id));
 }
 
 void
-database::schedule_write(pending_where t,
+database::schedule_write(delayed_type t,
                          string const & an_id,
                          data const & dat)
 {
-  I(t != pending_manifest);
-  if (!have_pending_write(t, an_id))
+  I(t != delayed_manifest);
+  if (!have_delayed_write(t, an_id))
     {
-      safe_insert(pending_writes, make_pair(make_pair(t, an_id), dat));
-      pending_writes_size += size_pending_write(t, an_id, dat);
+      safe_insert(delayed_writes, make_pair(make_pair(t, an_id), dat));
+      delayed_writes_size += size_delayed_write(t, an_id, dat);
     }
-  if (pending_writes_size > constants::db_max_pending_writes_bytes)
-    flush_pending_writes();
+  if (delayed_writes_size > constants::db_max_delayed_writes_bytes)
+    flush_delayed_writes();
 }
 
 void
-database::flush_pending_writes()
+database::flush_delayed_writes()
 {
-  for (map<pair<pending_where, string>, data>::const_iterator i = pending_writes.begin();
-       i != pending_writes.end(); ++i)
-    put(i->first.second, i->second, i->first.first);
-  pending_writes.clear();
-  pending_writes_size = 0;
+  for (map<pair<delayed_type, string>, data>::const_iterator i = delayed_writes.begin();
+       i != delayed_writes.end(); ++i)
+    write_delayed_object(i->first.first, i->first.second, i->second);
+  delayed_writes.clear();
+  delayed_writes_size = 0;
 }
 
 void
@@ -928,7 +928,7 @@ database::commit_transaction()
 {
   if (transaction_level == 1)
     {
-      flush_pending_writes();
+      flush_delayed_writes();
       execute(query("COMMIT"));
     }
   transaction_level--;
@@ -939,8 +939,8 @@ database::rollback_transaction()
 {
   if (transaction_level == 1)
     {
-      pending_writes.clear();
-      pending_writes_size = 0;
+      delayed_writes.clear();
+      delayed_writes_size = 0;
       execute(query("ROLLBACK"));
     }
   transaction_level--;
@@ -948,29 +948,20 @@ database::rollback_transaction()
 
 
 bool
-database::exists(string const & ident,
-                 pending_where t)
+database::file_or_manifest_base_exists(string const & ident,
+                                       std::string const & table)
 {
-  if (have_pending_write(t, ident))
+  // just check for a delayed file, since there are no delayed manifests
+  if (have_delayed_write(delayed_file, ident))
     return true;
-
-  string table;
-  switch (t)
-    {
-    case pending_file:
-      table = "files";
-      break;
-    case pending_roster:
-      table = "rosters";
-      break;
-    case pending_manifest:
-      table = "manifests";
-      break;
-    }
-
   return table_has_entry(ident, "id", table);
 }
 
+bool
+database::roster_base_exists(roster_id ident)
+{
+  return table_has_entry(lexical_cast<string>
+}
 
 bool
 database::delta_exists(string const & ident,
@@ -1037,12 +1028,12 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 void
 database::get_file_or_manifest_base_unchecked(hexenc<id> const & ident,
                                               data & dat,
-                                              pending_where t,
+                                              delayed_type t,
                                               string const & table)
 {
-  if (have_pending_write(t, ident()))
+  if (have_delayed_write(t, ident()))
     {
-      load_pending_write(t, ident(), dat);
+      load_delayed_write(t, ident(), dat);
       return;
     }
 
@@ -1078,10 +1069,10 @@ void
 database::get_roster_base(string const & ident,
                           roster<data> & dat)
 {
-  if (have_pending_write(pending_roster, ident))
+  if (have_delayed_write(delayed_roster, ident))
     {
       data tmp;
-      load_pending_write(pending_roster, ident, tmp);
+      load_delayed_write(delayed_roster, ident, tmp);
       dat = tmp;
       return;
     }
@@ -1121,16 +1112,16 @@ database::get_roster_delta(string const & ident,
 }
 
 void
-database::put(string const & ident,
-              data const & dat,
-              pending_where t)
+database::write_delayed_object(delayed_type t,
+                               string const & ident,
+                               data const & dat)
 {
   gzip<data> dat_packed;
   encode_gzip(dat, dat_packed);
 
   switch (t)
     {
-    case pending_file:
+    case delayed_file:
       {
         // then ident is a hash, which we should check
         I(ident != "");
@@ -1145,7 +1136,7 @@ database::put(string const & ident,
       }
       break;
 
-    case pending_roster:
+    case delayed_roster:
       {
         // then ident is a number, and we should calculate a checksum on what
         // we write
@@ -1157,7 +1148,7 @@ database::put(string const & ident,
       }
       break;
 
-    case pending_manifest:
+    case delayed_manifest:
       I(false);
       break;
     }
@@ -1219,7 +1210,7 @@ vcache(constants::db_version_cache_sz);
 void
 database::get_version(hexenc<id> const & ident,
                       data & dat,
-                      pending_where t,
+                      delayed_type t,
                       string const & data_table,
                       string const & delta_table)
 {
@@ -1258,7 +1249,7 @@ database::get_version(hexenc<id> const & ident,
       L(FL("following delta %s -> %s") % curr % nxt);
       delta del;
       get_file_or_manifest_delta_unchecked(nxt, curr, del, delta_table);
-      apply_delta (appl, del());
+      apply_delta(appl, del());
       
       appl->next();
       curr = nxt;
@@ -1283,7 +1274,7 @@ database::get_roster_version(roster_id id, roster_data & dat)
 
   reconstruction_path selected_path;
   get_reconstruction_path(id_str,
-                          pending_roster, "rosters", "roster_deltas",
+                          delayed_roster, "rosters", "roster_deltas",
                           selected_path);
   
   I(!selected_path.empty());
@@ -1351,14 +1342,14 @@ bool
 database::file_version_exists(file_id const & id)
 {
   return delta_exists(id.inner()(), "file_deltas")
-    || exists(id.inner()(), pending_file);
+    || exists(id.inner()(), delayed_file);
 }
 
 bool
 database::roster_version_exists(roster_id id)
 {
   return delta_exists(lexical_cast<string>(id), "roster_deltas")
-    || exists(lexical_cast<string>(id), pending_roster);
+    || exists(lexical_cast<string>(id), delayed_roster);
 }
 
 bool
@@ -1447,7 +1438,7 @@ database::get_file_version(file_id const & id,
                            file_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, pending_file, "files", "file_deltas");
+  get_version(id.inner(), tmp, delayed_file, "files", "file_deltas");
   dat = tmp;
 }
 
@@ -1456,7 +1447,7 @@ database::get_manifest_version(manifest_id const & id,
                                manifest_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, pending_manifest, "manifests", "manifest_deltas");
+  get_version(id.inner(), tmp, delayed_manifest, "manifests", "manifest_deltas");
   dat = tmp;
 }
 
@@ -1464,7 +1455,7 @@ void
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
-  schedule_write(pending_file, id.inner()(), dat.inner());
+  schedule_write(delayed_file, id.inner()(), dat.inner());
 }
 
 void
@@ -1493,16 +1484,16 @@ database::put_file_version(file_id const & old_id,
   }
 
   transaction_guard guard(*this);
-  if (exists(old_id.inner()(), pending_file))
+  if (exists(old_id.inner()(), delayed_file))
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
-      if (have_pending_write(pending_file, old_id.inner()()))
-        cancel_pending_write(pending_file, old_id.inner()());
+      if (have_delayed_write(delayed_file, old_id.inner()()))
+        cancel_delayed_write(delayed_file, old_id.inner()());
       else
         drop(old_id.inner()(), "files");
     }
-  schedule_write(pending_file, new_id.inner()(), new_data.inner());
+  schedule_write(delayed_file, new_id.inner()(), new_data.inner());
   put_file_delta(old_id, new_id, reverse_delta);
   guard.commit();
 }
@@ -1656,7 +1647,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (exists(delta_entry_src(j).inner()(), pending_file) &&
+            if (exists(delta_entry_src(j).inner()(), delayed_file) &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -2809,7 +2800,7 @@ database::put_roster(revision_id const & rev_id,
   roster_data new_data; MM(new_data);
   write_roster_and_marking(roster, marks, new_data);
 
-  schedule_write(pending_roster, new_id_str, new_data.inner());
+  schedule_write(delayed_roster, new_id_str, new_data.inner());
 
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
@@ -2825,14 +2816,14 @@ database::put_roster(revision_id const & rev_id,
       revision_id old_rev = *i;
       old_id = get_roster_id_for_revision(old_rev);
       string old_id_str = lexical_cast<string>(old_id);
-      if (exists(old_id_str, pending_roster))
+      if (exists(old_id_str, delayed_roster))
         {
           roster_data old_data; MM(old_data);
           get_roster_version(old_id, old_data);
           delta reverse_delta;
           diff(new_data.inner(), old_data.inner(), reverse_delta);
-          if (have_pending_write(pending_roster, old_id_str))
-            cancel_pending_write(pending_roster, old_id_str);
+          if (have_delayed_write(delayed_roster, old_id_str))
+            cancel_delayed_write(delayed_roster, old_id_str);
           else
             drop(old_id_str, "rosters");
           put_roster_delta(old_id, new_id, reverse_delta);

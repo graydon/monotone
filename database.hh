@@ -157,17 +157,17 @@ private:
   //
 private:
   enum delayed_type { delayed_roster, delayed_file };
-  std::map<std::pair<delayed_type, std::string>, data> pending_writes;
-  size_t pending_writes_size;
+  std::map<std::pair<delayed_type, std::string>, data> delayed_writes;
+  size_t delayed_writes_size;
 
-  size_t size_pending_write(delayed_type t, std::string const & id, data const & dat);
-  bool have_pending_write(delayed_type tab, std::string const & id);
-  void load_pending_write(delayed_type tab, std::string const & id, data & dat);
-  void cancel_pending_write(delayed_type tab, std::string const & id);
+  size_t size_delayed_write(delayed_type t, std::string const & id, data const & dat);
+  bool have_delayed_write(delayed_type tab, std::string const & id);
+  void load_delayed_write(delayed_type tab, std::string const & id, data & dat);
+  void cancel_delayed_write(delayed_type tab, std::string const & id);
   void schedule_write(delayed_type tab, std::string const & id, data const & dat);
-  void flush_pending_writes();
+  void flush_delayed_writes();
 
-  void write_pending_object(delayed_type t,
+  void write_delayed_object(delayed_type t,
                             std::string const & new_id,
                             data const & dat);
 
@@ -176,8 +176,10 @@ private:
   //
 private:
   // "do we have any entry for 'ident' that is a base version"
-  bool exists(std::string const & ident,
-              pending_where t);
+  bool file_or_manifest_base_exists(std::string const & ident,
+                                    std::string const & table);
+  bool roster_base_exists(roster_id ident);
+  
   // "do we have any entry for 'ident' that is a delta"
   bool delta_exists(std::string const & ident,
                     std::string const & table);
