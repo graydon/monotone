@@ -10,7 +10,7 @@ using std::set;
 void
 get_reconstruction_path(std::string const & start,
                         reconstruction_graph const & graph,
-                        reconstruction_path & path);
+                        reconstruction_path & path)
 {
   // This function does a breadth-first search from a starting point, until it
   // finds some node that matches an arbitrary condition.  The intended usage

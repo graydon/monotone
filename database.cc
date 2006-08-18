@@ -39,6 +39,8 @@
 #include "vocab.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
+#include "graph.hh"
+#include "roster_delta.hh"
 
 #undef _REENTRANT
 #include "lru_cache.h"
@@ -146,10 +148,10 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("d570d2861caa6f855bd8260f25e3a964294b6cb1"),
-  delayed_writes_size(0),
   __sql(NULL),
-  transaction_level(0)
+  schema("d570d2861caa6f855bd8260f25e3a964294b6cb1"),
+  transaction_level(0),
+  delayed_writes_size(0)
 {}
 
 bool
@@ -826,13 +828,13 @@ database::fetch(results & res,
     F("wanted %d rows got %d in query: %s") % want_rows % nrow % query.sql_cmd);
 }
 
-void
+bool
 database::table_has_entry(std::string const & key, std::string const & column,
                           std::string const & table)
 {
   results res;
   query q("SELECT 1 FROM " + table + " WHERE " + column + " = ?");
-  fetch(res, one_col, any_rows, q % text(ident));
+  fetch(res, one_col, any_rows, q % text(key));
   I(res.size() <= 1);
   return res.size() == 1;
 }
@@ -851,7 +853,8 @@ database::begin_transaction(bool exclusive)
 {
   if (transaction_level == 0)
     {
-      I(delayed_writes.empty());
+      I(delayed_files.empty());
+      I(delayed_rosters.empty());
       if (exclusive)
         execute(query("BEGIN EXCLUSIVE"));
       else
@@ -869,57 +872,114 @@ database::begin_transaction(bool exclusive)
 
 
 size_t
-database::size_delayed_write(delayed_type t, string const & id, data const & dat)
+database::size_delayed_file(file_id const & id, file_data const & dat)
 {
-  return sizeof(t) + id.size() + dat().size();
+  return id.inner()().size() + dat.inner()().size();
 }
 
 bool
-database::have_delayed_write(delayed_type t, string const & id)
+database::have_delayed_file(file_id const & id)
 {
-  return delayed_writes.find(make_pair(t, id)) != delayed_writes.end();
+  return delayed_files.find(id) != delayed_files.end();
 }
 
 void
-database::load_delayed_write(delayed_type t, string const & id, data & dat)
+database::load_delayed_file(file_id const & id, file_data & dat)
 {
-  dat = safe_get(delayed_writes, make_pair(t, id));
+  dat = safe_get(delayed_files, id);
 }
 
-// precondition: have_delayed_write(t, an_id) == true
+// precondition: have_delayed_file(an_id) == true
 void
-database::cancel_delayed_write(delayed_type t, string const & an_id)
+database::cancel_delayed_file(file_id const & an_id)
 {
-  data const & dat = safe_get(delayed_writes, make_pair(t, an_id));
-  size_t cancel_size = size_delayed_write(t, an_id, dat);
+  file_data const & dat = safe_get(delayed_files, an_id);
+  size_t cancel_size = size_delayed_file(an_id, dat);
   I(cancel_size < delayed_writes_size);
   delayed_writes_size -= cancel_size;
     
-  safe_erase(delayed_writes, make_pair(t, an_id));
+  safe_erase(delayed_files, an_id);
 }
 
 void
-database::schedule_write(delayed_type t,
-                         string const & an_id,
-                         data const & dat)
+database::schedule_delayed_file(file_id const & an_id,
+                                file_data const & dat)
 {
-  I(t != delayed_manifest);
-  if (!have_delayed_write(t, an_id))
+  if (!have_delayed_file(an_id))
     {
-      safe_insert(delayed_writes, make_pair(make_pair(t, an_id), dat));
-      delayed_writes_size += size_delayed_write(t, an_id, dat);
+      safe_insert(delayed_files, make_pair(an_id, dat));
+      delayed_writes_size += size_delayed_file(an_id, dat);
     }
   if (delayed_writes_size > constants::db_max_delayed_writes_bytes)
     flush_delayed_writes();
 }
 
+
+size_t
+database::size_delayed_roster(roster_id id, roster_t const & r, marking_map const & m)
+{
+  // do estimate using a totally made up multiplier, probably wildly off
+  return sizeof(id) + r.all_nodes().size() * 175;
+}
+
+bool
+database::have_delayed_roster(roster_id id)
+{
+  return delayed_rosters.find(id) != delayed_rosters.end();
+}
+
+void
+database::load_delayed_roster(roster_id id, roster_t & dat, marking_map & m)
+{
+  std::pair<roster_t, marking_map> const & v = safe_get(delayed_rosters, id);
+  dat = v.first;
+  m = v.second;
+}
+
+// precondition: have_delayed_roster(an_id) == true
+void
+database::cancel_delayed_roster(roster_id an_id)
+{
+  std::pair<roster_t, marking_map> const & v = safe_get(delayed_rosters, an_id);
+  size_t cancel_size = size_delayed_roster(an_id, v.first, v.second);
+  I(cancel_size < delayed_writes_size);
+  delayed_writes_size -= cancel_size;
+    
+  safe_erase(delayed_rosters, an_id);
+}
+
+void
+database::schedule_delayed_roster(roster_id an_id,
+                                  roster_t const & dat,
+                                  marking_map const & m)
+{
+  if (!have_delayed_roster(an_id))
+    {
+      safe_insert(delayed_rosters, make_pair(an_id, make_pair(dat, m)));
+      delayed_writes_size += size_delayed_roster(an_id, dat, m);
+    }
+  if (delayed_writes_size > constants::db_max_delayed_writes_bytes)
+    flush_delayed_writes();
+}
+
+
 void
 database::flush_delayed_writes()
 {
-  for (map<pair<delayed_type, string>, data>::const_iterator i = delayed_writes.begin();
-       i != delayed_writes.end(); ++i)
-    write_delayed_object(i->first.first, i->first.second, i->second);
-  delayed_writes.clear();
+  for (map<file_id, file_data>::const_iterator i = delayed_files.begin();
+       i != delayed_files.end(); ++i)
+    write_delayed_file(i->first, i->second);
+  for (map<roster_id, pair<roster_t, marking_map> >::const_iterator i = delayed_rosters.begin();
+       i != delayed_rosters.end(); ++i)
+    write_delayed_roster(i->first, i->second.first, i->second.second);
+  clear_delayed_writes();
+}
+
+void
+database::clear_delayed_writes()
+{
+  delayed_files.clear();
+  delayed_rosters.clear();
   delayed_writes_size = 0;
 }
 
@@ -939,8 +999,7 @@ database::rollback_transaction()
 {
   if (transaction_level == 1)
     {
-      delayed_writes.clear();
-      delayed_writes_size = 0;
+      clear_delayed_writes();
       execute(query("ROLLBACK"));
     }
   transaction_level--;
@@ -948,19 +1007,21 @@ database::rollback_transaction()
 
 
 bool
-database::file_or_manifest_base_exists(string const & ident,
+database::file_or_manifest_base_exists(hexenc<id> const & ident,
                                        std::string const & table)
 {
   // just check for a delayed file, since there are no delayed manifests
-  if (have_delayed_write(delayed_file, ident))
+  if (have_delayed_file(ident))
     return true;
-  return table_has_entry(ident, "id", table);
+  return table_has_entry(ident(), "id", table);
 }
 
 bool
 database::roster_base_exists(roster_id ident)
 {
-  return table_has_entry(lexical_cast<string>
+  if (have_delayed_roster(ident))
+    return true;
+  return table_has_entry(lexical_cast<string>(ident), "id", "rosters");
 }
 
 bool
@@ -1028,12 +1089,13 @@ database::get_ids(string const & table, set< hexenc<id> > & ids)
 void
 database::get_file_or_manifest_base_unchecked(hexenc<id> const & ident,
                                               data & dat,
-                                              delayed_type t,
                                               string const & table)
 {
-  if (have_delayed_write(t, ident()))
+  if (have_delayed_file(file_id(ident)))
     {
-      load_delayed_write(t, ident(), dat);
+      file_data tmp;
+      load_delayed_file(file_id(ident), tmp);
+      dat = tmp.inner();
       return;
     }
 
@@ -1066,29 +1128,28 @@ database::get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
 }
 
 void
-database::get_roster_base(string const & ident,
-                          roster<data> & dat)
+database::get_roster_base(string const & ident_str,
+                          roster_t & roster, marking_map & marking)
 {
-  if (have_delayed_write(delayed_roster, ident))
+  roster_id ident = lexical_cast<roster_id>(ident_str);
+  if (have_delayed_roster(ident))
     {
-      data tmp;
-      load_delayed_write(delayed_roster, ident, tmp);
-      dat = tmp;
+      load_delayed_roster(ident, roster, marking);
       return;
     }
   results res;
   query q("SELECT checksum, data FROM rosters WHERE id = ?");
-  fetch(res, 2, one_row, q % text(ident));
+  fetch(res, 2, one_row, q % text(ident_str));
 
   hexenc<id> checksum(res[0][0]);
   hexenc<id> calculated;
   calculate_ident(data(res[0][1]), calculated);
   I(calculated == checksum);
   
-  gzip<data> del_packed(res[0][1]);
-  data tmp;
-  decode_gzip(del_packed, tmp);
-  dat = tmp;
+  gzip<data> dat_packed(res[0][1]);
+  data dat;
+  decode_gzip(dat_packed, dat);
+  read_roster_and_marking(dat, roster, marking);
 }
 
 void
@@ -1112,46 +1173,41 @@ database::get_roster_delta(string const & ident,
 }
 
 void
-database::write_delayed_object(delayed_type t,
-                               string const & ident,
-                               data const & dat)
+database::write_delayed_file(file_id const & ident,
+                             file_data const & dat)
 {
   gzip<data> dat_packed;
-  encode_gzip(dat, dat_packed);
+  encode_gzip(dat.inner(), dat_packed);
 
-  switch (t)
-    {
-    case delayed_file:
-      {
-        // then ident is a hash, which we should check
-        I(ident != "");
-        hexenc<id> tid;
-        calculate_ident(dat, tid);
-        MM(ident);
-        MM(tid);
-        I(tid() == ident);
-        // and then write things to the db
-        query q("INSERT INTO files (id, data) VALUES (?, ?)");
-        execute(q % text(ident) % blob(dat_packed()));
-      }
-      break;
+  // ident is a hash, which we should check
+  I(!null_id(ident));
+  file_id tid;
+  calculate_ident(dat, tid);
+  MM(ident);
+  MM(tid);
+  I(tid == ident);
+  // and then write things to the db
+  query q("INSERT INTO files (id, data) VALUES (?, ?)");
+  execute(q % text(ident.inner()()) % blob(dat_packed()));
+}
 
-    case delayed_roster:
-      {
-        // then ident is a number, and we should calculate a checksum on what
-        // we write
-        hexenc<id> checksum;
-        calculate_ident(data(dat_packed()), checksum);
-        // and then write it
-        query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)");
-        execute(q % text(ident) % text(checksum()) % blob(dat_packed()));
-      }
-      break;
+void
+database::write_delayed_roster(roster_id ident,
+                             roster_t const & roster,
+                             marking_map const & marking)
+{
+  roster_data dat;
+  write_roster_and_marking(roster, marking, dat);
+  gzip<data> dat_packed;
+  encode_gzip(dat.inner(), dat_packed);
 
-    case delayed_manifest:
-      I(false);
-      break;
-    }
+  // ident is a number, and we should calculate a checksum on what
+  // we write
+  hexenc<id> checksum;
+  calculate_ident(data(dat_packed()), checksum);
+  // and then write it
+  query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)");
+  execute(q % integer(ident) % text(checksum()) % blob(dat_packed()));
 }
 
 
@@ -1206,19 +1262,46 @@ struct datasz
 static LRUCache<string, data, datasz>
 vcache(constants::db_version_cache_sz);
 
+struct file_and_manifest_reconstruction_graph : public reconstruction_graph
+{
+  database & db;
+  string const & data_table;
+  string const & delta_table;
+  
+  file_and_manifest_reconstruction_graph(database & db,
+                                         string const & data_table,
+                                         string const & delta_table)
+    : db(db), data_table(data_table), delta_table(delta_table)
+  {}
+  virtual bool is_base(std::string const & node) const
+  {
+    return db.file_or_manifest_base_exists(hexenc<id>(node), data_table);
+  }
+  virtual void get_next(std::string const & from, std::set<std::string> & next) const
+  {
+    next.clear();
+    database::results res;
+    query q("SELECT base FROM " + delta_table + " WHERE id = ?");
+    db.fetch(res, one_col, any_rows, q);
+    for (database::results::const_iterator i = res.begin(); i != res.end(); ++i)
+      next.insert((*i)[0]);
+  }
+};
+
 // used for files and legacy manifest migration
 void
 database::get_version(hexenc<id> const & ident,
                       data & dat,
-                      delayed_type t,
                       string const & data_table,
                       string const & delta_table)
 {
   I(ident() != "");
 
   reconstruction_path selected_path;
-  get_reconstruction_path(ident(), t, data_table, delta_table,
-                          selected_path);
+  {
+    file_and_manifest_reconstruction_graph graph(*this, data_table, delta_table);
+    get_reconstruction_path(ident(), graph, selected_path);
+  }
   
   I(!selected_path.empty());
   
@@ -1229,7 +1312,7 @@ database::get_version(hexenc<id> const & ident,
   if (vcache.exists(curr()))
     I(vcache.fetch(curr(), begin));
   else
-    get_file_or_manifest_base_unchecked(curr, begin, t, data_table);
+    get_file_or_manifest_base_unchecked(curr, begin, data_table);
   
   shared_ptr<delta_applicator> appl = new_piecewise_applicator();
   appl->begin(begin());
@@ -1266,61 +1349,54 @@ database::get_version(hexenc<id> const & ident,
   vcache.insert(ident(), dat);
 }
 
-// used for rosters
+struct roster_reconstruction_graph : public reconstruction_graph
+{
+  database & db;
+  roster_reconstruction_graph(database & db) : db(db) {}
+  virtual bool is_base(std::string const & node) const
+  {
+    return db.roster_base_exists(lexical_cast<database::roster_id>(node));
+  }
+  virtual void get_next(std::string const & from, std::set<std::string> & next) const
+  {
+    next.clear();
+    database::results res;
+    query q("SELECT base FROM roster_deltas WHERE id = ?");
+    db.fetch(res, one_col, any_rows, q);
+    for (database::results::const_iterator i = res.begin(); i != res.end(); ++i)
+      next.insert((*i)[0]);
+  }
+};
+
 void
-database::get_roster_version(roster_id id, roster_data & dat)
+database::get_roster_version(roster_id id,
+                             roster_t & roster,
+                             marking_map & marking)
 {
   string id_str = lexical_cast<string>(id);
 
   reconstruction_path selected_path;
-  get_reconstruction_path(id_str,
-                          delayed_roster, "rosters", "roster_deltas",
-                          selected_path);
+  {
+    roster_reconstruction_graph graph(*this);
+    get_reconstruction_path(id_str, graph, selected_path);
+  }
   
   I(!selected_path.empty());
   
   string curr = selected_path.back();
   selected_path.pop_back();
-  roster_data begin;
-  
-  if (vcache.exists(curr))
-    {
-      data tmp;
-      I(vcache.fetch(curr, tmp));
-      begin = tmp;
-    }
-  else
-    get_roster_base(curr, begin);
-  
-  shared_ptr<delta_applicator> appl = new_piecewise_applicator();
-  appl->begin(begin.inner()());
+  get_roster_base(curr, roster, marking);
   
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
       string const nxt = *i;
-      
-      if (!vcache.exists(curr))
-        {
-          string tmp;
-          appl->finish(tmp);
-          vcache.insert(curr, tmp);
-        }
-      
       L(FL("following delta %s -> %s") % curr % nxt);
       roster_delta del;
       get_roster_delta(nxt, curr, del);
-      apply_delta(appl, del.inner()());
-      
-      appl->next();
+      apply_roster_delta(del, roster, marking);
       curr = nxt;
     }
-  
-  string tmp;
-  appl->finish(tmp);
-  dat = data(tmp);
-  
-  vcache.insert(id_str, dat.inner()());
 }
 
 
@@ -1342,14 +1418,14 @@ bool
 database::file_version_exists(file_id const & id)
 {
   return delta_exists(id.inner()(), "file_deltas")
-    || exists(id.inner()(), delayed_file);
+    || file_or_manifest_base_exists(id.inner()(), "files");
 }
 
 bool
 database::roster_version_exists(roster_id id)
 {
   return delta_exists(lexical_cast<string>(id), "roster_deltas")
-    || exists(lexical_cast<string>(id), delayed_roster);
+    || roster_base_exists(id);
 }
 
 bool
@@ -1438,7 +1514,7 @@ database::get_file_version(file_id const & id,
                            file_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, delayed_file, "files", "file_deltas");
+  get_version(id.inner(), tmp, "files", "file_deltas");
   dat = tmp;
 }
 
@@ -1447,7 +1523,7 @@ database::get_manifest_version(manifest_id const & id,
                                manifest_data & dat)
 {
   data tmp;
-  get_version(id.inner(), tmp, delayed_manifest, "manifests", "manifest_deltas");
+  get_version(id.inner(), tmp, "manifests", "manifest_deltas");
   dat = tmp;
 }
 
@@ -1455,7 +1531,7 @@ void
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
-  schedule_write(delayed_file, id.inner()(), dat.inner());
+  schedule_delayed_file(id, dat);
 }
 
 void
@@ -1484,16 +1560,16 @@ database::put_file_version(file_id const & old_id,
   }
 
   transaction_guard guard(*this);
-  if (exists(old_id.inner()(), delayed_file))
+  if (file_or_manifest_base_exists(old_id.inner(), "files"))
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
-      if (have_delayed_write(delayed_file, old_id.inner()()))
-        cancel_delayed_write(delayed_file, old_id.inner()());
+      if (have_delayed_file(old_id))
+        cancel_delayed_file(old_id);
       else
         drop(old_id.inner()(), "files");
     }
-  schedule_write(delayed_file, new_id.inner()(), new_data.inner());
+  schedule_delayed_file(new_id, new_data);
   put_file_delta(old_id, new_id, reverse_delta);
   guard.commit();
 }
@@ -1647,7 +1723,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (exists(delta_entry_src(j).inner()(), delayed_file) &&
+            if (file_or_manifest_base_exists(delta_entry_src(j).inner()(), "files") &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -2736,58 +2812,34 @@ database::get_roster(revision_id const & rev_id,
   get_roster(rev_id, roster, mm);
 }
 
-static LRUCache<revision_id,
-                shared_ptr<pair<roster_t, marking_map> > >
-rcache(constants::db_roster_cache_sz);
-
 void
 database::get_roster(revision_id const & rev_id,
                      roster_t & roster,
-                     marking_map & marks)
+                     marking_map & marking)
 {
   if (rev_id.inner()().empty())
     {
       roster = roster_t();
-      marks = marking_map();
+      marking = marking_map();
       return;
     }
 
-  shared_ptr<pair<roster_t, marking_map> > sp;
-  if (rcache.fetch(rev_id, sp))
-    {
-      roster = sp->first;
-      marks = sp->second;
-      return;
-    }
-
-  roster_data dat;
-  roster_id ident;
-
-  ident = get_roster_id_for_revision(rev_id);
-  get_roster_version(ident, dat);
-  read_roster_and_marking(dat, roster, marks);
-  sp = shared_ptr<pair<roster_t, marking_map> >
-    (new pair<roster_t, marking_map>(roster, marks));
-  rcache.insert(rev_id, sp);
+  roster_id ident = get_roster_id_for_revision(rev_id);
+  get_roster_version(ident, roster, marking);
 }
 
 
 void
 database::put_roster(revision_id const & rev_id,
                      roster_t & roster,
-                     marking_map & marks)
+                     marking_map & marking)
 {
   MM(rev_id);
 
-  if (!rcache.exists(rev_id))
-    {
-      shared_ptr<pair<roster_t, marking_map> > sp
-        (new pair<roster_t, marking_map>(roster, marks));
-      rcache.insert(rev_id, sp);
-    }
-
   transaction_guard guard(*this);
 
+  // NB: next_roster_id() is database-mutating, so we make sure we're
+  // already in a transaction.
   roster_id new_id = next_roster_id();
   string new_id_str = lexical_cast<string>(new_id);
 
@@ -2797,16 +2849,12 @@ database::put_roster(revision_id const & rev_id,
   // Our task is to add this roster, and deltify all the incoming edges (if
   // they aren't already).
 
-  roster_data new_data; MM(new_data);
-  write_roster_and_marking(roster, marks, new_data);
-
-  schedule_write(delayed_roster, new_id_str, new_data.inner());
+  schedule_delayed_roster(new_id, roster, marking);
 
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
-  // Now do what deltify would do if we bothered (we have the
-  // roster written now, so might as well do it here).
+  // Now do what deltify would do if we bothered
   roster_id old_id;
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
@@ -2815,17 +2863,17 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       old_id = get_roster_id_for_revision(old_rev);
-      string old_id_str = lexical_cast<string>(old_id);
-      if (exists(old_id_str, delayed_roster))
+      if (roster_base_exists(old_id))
         {
-          roster_data old_data; MM(old_data);
-          get_roster_version(old_id, old_data);
-          delta reverse_delta;
-          diff(new_data.inner(), old_data.inner(), reverse_delta);
-          if (have_delayed_write(delayed_roster, old_id_str))
-            cancel_delayed_write(delayed_roster, old_id_str);
+          roster_t old_roster; MM(old_roster);
+          marking_map old_markings; MM(old_markings);
+          get_roster_version(old_id, old_roster, old_markings);
+          roster_delta reverse_delta;
+          delta_rosters(roster, marking, old_roster, old_markings, reverse_delta);
+          if (have_delayed_roster(old_id))
+            cancel_delayed_roster(old_id);
           else
-            drop(old_id_str, "rosters");
+            drop(lexical_cast<string>(old_id), "rosters");
           put_roster_delta(old_id, new_id, reverse_delta);
         }
     }

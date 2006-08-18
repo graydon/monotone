@@ -127,7 +127,7 @@ private:
              query const & q);
   void execute(query const & q);
 
-  void table_has_entry(std::string const & key, std::string const & column,
+  bool table_has_entry(std::string const & key, std::string const & column,
                        std::string const & table);
 
   //
@@ -152,31 +152,46 @@ private:
   friend class transaction_guard;
 
   //
+  // --== A type ==--
+  //
+public:
+  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
+
+  //
   // --== Write-buffering -- tied into transaction  ==--
   // --== machinery and delta compression machinery ==--
   //
 private:
-  enum delayed_type { delayed_roster, delayed_file };
-  std::map<std::pair<delayed_type, std::string>, data> delayed_writes;
+  std::map<file_id, file_data> delayed_files;
+  std::map<roster_id, std::pair<roster_t, marking_map> > delayed_rosters;
   size_t delayed_writes_size;
 
-  size_t size_delayed_write(delayed_type t, std::string const & id, data const & dat);
-  bool have_delayed_write(delayed_type tab, std::string const & id);
-  void load_delayed_write(delayed_type tab, std::string const & id, data & dat);
-  void cancel_delayed_write(delayed_type tab, std::string const & id);
-  void schedule_write(delayed_type tab, std::string const & id, data const & dat);
-  void flush_delayed_writes();
+  size_t size_delayed_file(file_id const & id, file_data const & dat);
+  bool have_delayed_file(file_id const & id);
+  void load_delayed_file(file_id const & id, file_data & dat);
+  void cancel_delayed_file(file_id const & id);
+  void schedule_delayed_file(file_id const & id, file_data const & dat);
 
-  void write_delayed_object(delayed_type t,
-                            std::string const & new_id,
-                            data const & dat);
+  size_t size_delayed_roster(roster_id id, roster_t const & dat, marking_map const & m);
+  bool have_delayed_roster(roster_id id);
+  void load_delayed_roster(roster_id id, roster_t & dat, marking_map & m);
+  void cancel_delayed_roster(roster_id id);
+  void schedule_delayed_roster(roster_id id, roster_t const & dat, marking_map const & m);
+
+  void flush_delayed_writes();
+  void write_delayed_file(file_id const & new_id,
+                          file_data const & dat);
+  void write_delayed_roster(roster_id new_id,
+                            roster_t const & roster,
+                            marking_map const & marking);
+  void clear_delayed_writes();
 
   //
   // --== Reading/writing delta-compressed objects ==--
   //
 private:
   // "do we have any entry for 'ident' that is a base version"
-  bool file_or_manifest_base_exists(std::string const & ident,
+  bool file_or_manifest_base_exists(hexenc<id> const & ident,
                                     std::string const & table);
   bool roster_base_exists(roster_id ident);
   
@@ -186,21 +201,20 @@ private:
 
   void get_file_or_manifest_base_unchecked(hexenc<id> const & new_id,
                                            data & dat,
-                                           pending_where t,
                                            std::string const & table);
   void get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
                                             hexenc<id> const & base,
                                             delta & del,
                                             std::string const & table);
-  void get_roster_base(std::string const & ident, roster<data> & dat);
+  void get_roster_base(std::string const & ident,
+                       roster_t & roster, marking_map & marking);
   void get_roster_delta(std::string const & ident,
                         std::string const & base,
-                        roster<delta> & del);
+                        roster_delta & del);
   friend class file_and_manifest_reconstruction_graph;
   friend class roster_reconstruction_graph;
   void get_version(hexenc<id> const & ident,
                    data & dat,
-                   pending_where t,
                    std::string const & data_table,
                    std::string const & delta_table);
 
@@ -209,8 +223,6 @@ private:
   void put_file_delta(file_id const & ident,
                       file_id const & base,
                       file_delta const & del);
-public:
-  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
 private:
   void put_roster_delta(roster_id ident,
                         roster_id base,
@@ -318,7 +330,7 @@ public:
   void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_roster_ids(std::set<roster_id> & ids);
   roster_id get_roster_id_for_revision(revision_id const & rev_id);
-  void get_roster_version(roster_id ros_id, roster_data & dat);
+  void get_roster_version(roster_id ros_id, roster_t & roster, marking_map & marking);
 
   //
   // --== Keys ==--
