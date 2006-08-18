@@ -52,6 +52,7 @@ get_reconstruction_path(std::string const & start,
     {
       vector< shared_ptr<reconstruction_path> > next_paths;
 
+      I(!live_paths.empty());
       for (vector<shared_ptr<reconstruction_path> >::const_iterator i = live_paths.begin();
            i != live_paths.end(); ++i)
         {
@@ -71,19 +72,34 @@ get_reconstruction_path(std::string const & start,
               I(!next.empty());
 
               // Replicate the path if there's a fork.
+              bool first = true;
               for (set<string>::const_iterator j = next.begin(); j != next.end(); ++j)
                 {
-                  shared_ptr<reconstruction_path> pthN;
-                  if (j == next.begin())
-                    pthN = pth;
-                  else
-                    pthN = shared_ptr<reconstruction_path>(new reconstruction_path(*pth));
-                  // check for a cycle... not that anything will break if
-                  // there is one, but it's nice to let us know we have a bug
-                  for (reconstruction_path::const_iterator k = pthN->begin(); k != pthN->end(); ++k)
-                    I(*k != *j);
+                  L(FL("considering %s -> %s") % tip % *j);
                   if (seen_nodes.find(*j) == seen_nodes.end())
                     {
+                      shared_ptr<reconstruction_path> pthN;
+                      if (first)
+                        {
+                          pthN = pth;
+                          first = false;
+                        }
+                      else
+                        {
+                          // NOTE: this is not the first iteration of the loop, and
+                          // the first iteration appended one item to pth.  So, we
+                          // want to remove one before we use it.  (Why not just
+                          // copy every time?  Because that makes this into an
+                          // O(n^2) algorithm, in the common case where there is
+                          // only one direction to go at each stop.)
+                          pthN = shared_ptr<reconstruction_path>(new reconstruction_path(*pth));
+                          I(!pthN->empty());
+                          pthN->pop_back();
+                        }
+                      // check for a cycle... not that anything would break if
+                      // there were one, but it's nice to let us know we have a bug
+                      for (reconstruction_path::const_iterator k = pthN->begin(); k != pthN->end(); ++k)
+                        I(*k != *j);
                       pthN->push_back(*j);
                       next_paths.push_back(pthN);
                       seen_nodes.insert(*j);

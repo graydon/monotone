@@ -824,8 +824,7 @@ database::fetch(results & res,
 
   i->second.count++;
 
-  E(want_rows == any_rows || want_rows == nrow,
-    F("wanted %d rows got %d in query: %s") % want_rows % nrow % query.sql_cmd);
+  I(want_rows == any_rows || want_rows == nrow);
 }
 
 bool
