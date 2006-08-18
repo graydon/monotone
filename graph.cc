@@ -1,5 +1,6 @@
 #include <boost/shared_ptr.hpp>
 
+#include "sanity.hh"
 #include "graph.hh"
 
 using boost::shared_ptr;
@@ -57,7 +58,7 @@ get_reconstruction_path(std::string const & start,
           shared_ptr<reconstruction_path> pth = *i;
           string tip = pth->back();
 
-          if (graph.is_base(tip)
+          if (graph.is_base(tip))
             {
               selected_path = pth;
               break;

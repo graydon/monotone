@@ -70,14 +70,12 @@ struct checked_roster {
   size_t missing_files; // number of missing files referenced by this roster
   size_t missing_mark_revs; // number of missing revisions referenced in node markings by this roster
 
-  bool parseable;       // read_roster_and_marking does not throw
-
   manifest_id man_id;   // manifest id of this roster's public part
 
   checked_roster():
     found(false), revision_refs(0),
     missing_files(0), missing_mark_revs(0),
-    parseable(false), man_id() {}
+    man_id() {}
 };
 
 // the number of times a revision is referenced (revision_refs)
@@ -176,23 +174,20 @@ check_rosters_manifest(app_state & app,
     {
 
       L(FL("checking roster %s") % *i);
-      roster_data dat;
-      app.db.get_roster_version(*i, dat);
-      checked_rosters[*i].found = true;
 
       roster_t ros;
       marking_map mm;
       try
         {
-          read_roster_and_marking(dat, ros, mm);
+          app.db.get_roster_version(*i, ros, mm);
         }
       catch (logic_error & e)
         {
-          L(FL("error parsing roster %s: %s") % *i % e.what());
-          checked_rosters[*i].parseable = false;
+          L(FL("error loading roster %s: %s") % *i % e.what());
+          checked_rosters[*i].found = false;
           continue;
         }
-      checked_rosters[*i].parseable = true;
+      checked_rosters[*i].found = true;
 
       manifest_id man_id;
       calculate_ident(ros, man_id);
@@ -234,7 +229,7 @@ check_rosters_marking(app_state & app,
     {
       database::roster_id ros_id = i->first;
       L(FL("checking roster %s") % i->first);
-      if (!i->second.parseable)
+      if (!i->second.found)
           continue;
 
       // skip marking check on unreferenced rosters -- they're left by
@@ -243,12 +238,9 @@ check_rosters_marking(app_state & app,
       if (!i->second.revision_refs)
         continue;
 
-      roster_data dat;
-      app.db.get_roster_version(ros_id, dat);
-
       roster_t ros;
       marking_map mm;
-      read_roster_and_marking(dat, ros, mm);
+      app.db.get_roster_version(ros_id, ros, mm);
 
       for (node_map::const_iterator n = ros.all_nodes().begin();
            n != ros.all_nodes().end(); n++)
@@ -542,8 +534,7 @@ report_files(map<file_id, checked_file> const & checked_files,
 static void
 report_rosters(map<database::roster_id, checked_roster> const & checked_rosters,
                  size_t & unreferenced_rosters,
-                 size_t & incomplete_rosters,
-                 size_t & non_parseable_rosters)
+                 size_t & incomplete_rosters)
 {
   for (map<database::roster_id, checked_roster>::const_iterator
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
@@ -568,13 +559,6 @@ report_rosters(map<database::roster_id, checked_roster> const & checked_rosters,
           incomplete_rosters++;
           P(F("roster %s incomplete (%d missing revisions)")
             % i->first % roster.missing_mark_revs);
-        }
-
-      if (!roster.parseable)
-        {
-          non_parseable_rosters++;
-          P(F("roster %s is not parseable (perhaps with unnormalized paths?)")
-            % i->first);
         }
     }
 }
@@ -793,7 +777,6 @@ check_db(app_state & app)
   size_t missing_rosters = 0;
   size_t unreferenced_rosters = 0;
   size_t incomplete_rosters = 0;
-  size_t non_parseable_rosters = 0;
   size_t unreferenced_roster_links = 0;
 
   size_t missing_revisions = 0;
@@ -830,8 +813,7 @@ check_db(app_state & app)
 
   report_rosters(checked_rosters,
                  unreferenced_rosters,
-                 incomplete_rosters,
-                 non_parseable_rosters);
+                 incomplete_rosters);
 
   report_revisions(checked_revisions,
                    missing_revisions, incomplete_revisions,
@@ -861,9 +843,6 @@ check_db(app_state & app)
     W(F("%d unreferenced rosters") % unreferenced_rosters);
   if (incomplete_rosters > 0)
     W(F("%d incomplete rosters") % incomplete_rosters);
-  if (non_parseable_rosters > 0)
-    W(F("%d rosters not parseable (perhaps with invalid paths)")
-      % non_parseable_rosters);
 
   if (missing_revisions > 0)
     W(F("%d missing revisions") % missing_revisions);
@@ -903,7 +882,6 @@ check_db(app_state & app)
 
   size_t total = missing_files + unreferenced_files +
     unreferenced_rosters + incomplete_rosters +
-    non_parseable_rosters +
     missing_revisions + incomplete_revisions +
     non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children +
@@ -916,7 +894,6 @@ check_db(app_state & app)
   // serious errors; odd, but nothing will break.
   size_t serious = missing_files +
     incomplete_rosters + missing_rosters +
-    non_parseable_rosters +
     missing_revisions + incomplete_revisions +
     non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children + manifest_mismatch +
