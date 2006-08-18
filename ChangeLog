@@ -1,3 +1,8 @@
+2006-08-18  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: Say that a Debian user needs to install
+	libboost-program-options-dev as well.
+
 2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* std_hooks.lua: Fix some brokenness from the merge hook changes.
