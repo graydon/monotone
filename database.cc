@@ -833,10 +833,9 @@ database::table_has_entry(std::string const & key, std::string const & column,
                           std::string const & table)
 {
   results res;
-  query q("SELECT 1 FROM " + table + " WHERE " + column + " = ?");
+  query q("SELECT 1 FROM " + table + " WHERE " + column + " = ? LIMIT 1");
   fetch(res, one_col, any_rows, q % text(key));
-  I(res.size() <= 1);
-  return res.size() == 1;
+  return !res.empty();
 }
 
 // general application-level logic
@@ -1282,7 +1281,7 @@ struct file_and_manifest_reconstruction_graph : public reconstruction_graph
     next.clear();
     database::results res;
     query q("SELECT base FROM " + delta_table + " WHERE id = ?");
-    db.fetch(res, one_col, any_rows, q);
+    db.fetch(res, one_col, any_rows, q % text(from));
     for (database::results::const_iterator i = res.begin(); i != res.end(); ++i)
       next.insert((*i)[0]);
   }
@@ -1362,7 +1361,7 @@ struct roster_reconstruction_graph : public reconstruction_graph
     next.clear();
     database::results res;
     query q("SELECT base FROM roster_deltas WHERE id = ?");
-    db.fetch(res, one_col, any_rows, q);
+    db.fetch(res, one_col, any_rows, q % text(from));
     for (database::results::const_iterator i = res.begin(); i != res.end(); ++i)
       next.insert((*i)[0]);
   }
