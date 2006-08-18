@@ -628,6 +628,28 @@ roster_t::detach_node(split_path const & pth)
   return nid;
 }
 
+void
+roster_t::detach_node(node_id nid)
+{
+  node_t n = get_node(nid);
+  if (null_node(n->parent))
+    {
+      // detaching the root dir
+      I(null_name(n->name));
+      safe_insert(old_locations,
+                  make_pair(nid, make_pair(n->parent, n->name)));
+      root_dir.reset();
+      I(!has_root());
+    }
+  else
+    {
+      path_component name = n->name;
+      dir_t parent = downcast_to_dir_t(get_node(n->parent));
+      I(parent->detach_child(name) == n);
+      safe_insert(old_locations,
+                  make_pair(nid, make_pair(n->parent, name)));
+    }
+}
 
 void
 roster_t::drop_detached_node(node_id nid)
@@ -751,6 +773,14 @@ roster_t::apply_delta(split_path const & pth,
   f->content = new_id;
 }
 
+void
+roster_t::set_delta(node_id nid, file_id const & new_id)
+{
+  file_t f = downcast_to_file_t(get_node(nid));
+  I(!(f->content == new_id));
+  f->content = new_id;
+}
+
 
 void
 roster_t::clear_attr(split_path const & pth,
@@ -759,6 +789,13 @@ roster_t::clear_attr(split_path const & pth,
   set_attr(pth, name, make_pair(false, attr_value()));
 }
 
+void
+roster_t::erase_attr(node_id nid,
+                     attr_key const & name)
+{
+  node_t n = get_node(nid);
+  safe_erase(n->attrs, name);
+}
 
 void
 roster_t::set_attr(split_path const & pth,
@@ -774,8 +811,8 @@ roster_t::set_attr(split_path const & pth,
                    attr_key const & name,
                    pair<bool, attr_value> const & val)
 {
-  I(val.first || val.second().empty());
   node_t n = get_node(pth);
+  I(val.first || val.second().empty());
   I(!null_node(n->self));
   full_attr_map_t::iterator i = n->attrs.find(name);
   if (i == n->attrs.end())
@@ -783,6 +820,20 @@ roster_t::set_attr(split_path const & pth,
                                         make_pair(false, attr_value())));
   I(i->second != val);
   i->second = val;
+}
+
+// same as above, but allowing <unknown> -> <dead> transition
+void
+roster_t::set_attr_unknown_to_dead_ok(node_id nid,
+                                      attr_key const & name,
+                                      pair<bool, attr_value> const & val)
+{
+  node_t n = get_node(nid);
+  I(val.first || val.second().empty());
+  full_attr_map_t::iterator i = n->attrs.find(name);
+  if (i != n->attrs.end())
+    I(i->second != val);
+  n->attrs[name] = val;
 }
 
 template <> void
@@ -2372,9 +2423,9 @@ roster_t::extract_path_set(path_set & paths) const
 //   I/O routines
 ////////////////////////////////////////////////////////////////////
 
-static void
+void
 push_marking(basic_io::stanza & st,
-             node_t curr,
+             bool is_file,
              marking_t const & mark)
 {
 
@@ -2385,7 +2436,7 @@ push_marking(basic_io::stanza & st,
        i != mark.parent_name.end(); ++i)
     st.push_hex_pair(basic_io::syms::path_mark, i->inner());
 
-  if (is_file_t(curr))
+  if (is_file)
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
@@ -2394,13 +2445,11 @@ push_marking(basic_io::stanza & st,
   else
     I(mark.file_content.empty());
 
-  for (full_attr_map_t::const_iterator i = curr->attrs.begin();
-       i != curr->attrs.end(); ++i)
+  for (map<attr_key, set<revision_id> >::const_iterator i = mark.attrs.begin();
+       i != mark.attrs.end(); ++i)
     {
-      map<attr_key, set<revision_id> >::const_iterator am = mark.attrs.find(i->first);
-      I(am != mark.attrs.end());
-      for (set<revision_id>::const_iterator j = am->second.begin();
-           j != am->second.end(); ++j)
+      for (set<revision_id>::const_iterator j = i->second.begin();
+           j != i->second.end(); ++j)
         st.push_hex_triple(basic_io::syms::attr_mark, i->first(), j->inner());
     }
 }
@@ -2408,7 +2457,6 @@ push_marking(basic_io::stanza & st,
 
 void
 parse_marking(basic_io::parser & pa,
-              node_t n,
               marking_t & marking)
 {
   while (pa.symp())
@@ -2439,7 +2487,6 @@ parse_marking(basic_io::parser & pa,
           pa.str(k);
           pa.hex(rev);
           attr_key key = attr_key(k);
-          I(n->attrs.find(key) != n->attrs.end());
           safe_insert(marking.attrs[key], revision_id(rev));
         }
       else break;
@@ -2516,7 +2563,7 @@ roster_t::print_to(basic_io::printer & pr,
 
           marking_map::const_iterator m = mm.find(curr->self);
           I(m != mm.end());
-          push_marking(st, curr, m->second);
+          push_marking(st, is_file_t(curr), m->second);
         }
 
       pr.print_stanza(st);
@@ -2631,7 +2678,7 @@ roster_t::parse_from(basic_io::parser & pa,
 
       {
         marking_t & m(safe_insert(mm, make_pair(n->self, marking_t()))->second);
-        parse_marking(pa, n, m);
+        parse_marking(pa, m);
       }
     }
 }
@@ -2708,6 +2755,8 @@ void calculate_ident(roster_t const & ros,
 #include "sanity.hh"
 #include "constants.hh"
 #include "randomizer.hh"
+
+#include "roster_delta.hh"
 
 #include <string>
 #include <cstdlib>
@@ -2887,6 +2936,14 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   make_cset(b2, a2, b2_to_a2);
   do_testing_on_two_equivalent_csets(a_to_b, a2_to_b2);
   do_testing_on_two_equivalent_csets(b_to_a, b2_to_a2);
+  
+  {
+    marking_map a_marking;
+    make_fake_marking_for(a, a_marking);
+    marking_map b_marking;
+    make_fake_marking_for(b, b_marking);
+    test_roster_delta_on(a, a_marking, b, b_marking);
+  }
 }
 
 template<typename M>

@@ -612,6 +612,8 @@ roster_merge(roster_t const & left_parent,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
+#include "roster_delta.hh"
+
 // cases for testing:
 //
 // (DONE:)
@@ -767,6 +769,9 @@ test_a_scalar_merge_impl(scalar_val left_val, string const & left_marks_str,
   roster_merge(left_parent, left_markings, left_uncommon_ancestors,
                right_parent, right_markings, right_uncommon_ancestors,
                result);
+
+  // go ahead and check the roster_delta code too, while we're at it...
+  test_roster_delta_on(left_parent, left_markings, right_parent, right_markings);
 
   scalar.check_result(left_val, right_val, result, expected_outcome);
 }
@@ -1275,6 +1280,8 @@ test_roster_merge_node_lifecycle()
   roster_merge_result result;
   roster_merge(a_roster, a_markings, a_uncommon, b_roster, b_markings, b_uncommon, result);
   I(result.is_clean());
+  // go ahead and check the roster_delta code too, while we're at it...
+  test_roster_delta_on(a_roster, a_markings, b_roster, b_markings);
   // 7 = 1 root + 2 common + 2 safe a + 2 safe b
   I(result.roster.all_nodes().size() == 7);
   // check that they're the right ones...
@@ -1351,6 +1358,8 @@ test_roster_merge_attr_lifecycle()
   roster_merge(left_roster, left_markings, left_revs,
                right_roster, right_markings, right_revs,
                result);
+  // go ahead and check the roster_delta code too, while we're at it...
+  test_roster_delta_on(left_roster, left_markings, right_roster, right_markings);
   I(result.roster.all_nodes().size() == 2);
   I(result.roster.get_node(dir_nid)->attrs.size() == 4);
   I(safe_get(result.roster.get_node(dir_nid)->attrs, attr_key("left_live")) == make_pair(true, attr_value("left_live")));
@@ -1399,6 +1408,8 @@ struct structural_conflict_helper
     roster_merge(left_roster, left_markings, left_revs,
                  right_roster, right_markings, right_revs,
                  result);
+    // go ahead and check the roster_delta code too, while we're at it...
+    test_roster_delta_on(left_roster, left_markings, right_roster, right_markings);
 
     check();
   }

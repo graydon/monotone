@@ -67,6 +67,7 @@ MOST_SOURCES =								\
          legacy.cc legacy.hh                                            \
 	 uri.cc uri.hh                                                  \
 	 graph.cc graph.hh                                              \
+	 roster_delta.cc roster_delta.hh                                \
                                                                         \
          lru_cache.h                                                    \
                                                                         \
