@@ -1271,7 +1271,8 @@ struct file_and_manifest_reconstruction_graph : public reconstruction_graph
   {}
   virtual bool is_base(std::string const & node) const
   {
-    return db.file_or_manifest_base_exists(hexenc<id>(node), data_table);
+    return vcache.exists(node)
+      || db.file_or_manifest_base_exists(hexenc<id>(node), data_table);
   }
   virtual void get_next(std::string const & from, std::set<std::string> & next) const
   {
