@@ -1,5 +1,12 @@
 2006-08-18  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
+	give the background process to die on its own, before we decide it
+	failed and just kill it.  Hopefully will work better on the loaded
+	buildslaves now?
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
 	* unix/main.cc (interrupt_signal): Newline-terminate our
 	"operation canceled" message.
 
