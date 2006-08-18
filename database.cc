@@ -1234,8 +1234,6 @@ database::put_roster_delta(roster_id ident,
                            roster_id base,
                            roster_delta const & del)
 {
-  I(!del.inner()().empty());
-
   gzip<delta> del_packed;
   encode_gzip(del.inner(), del_packed);
 
