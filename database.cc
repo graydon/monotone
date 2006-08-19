@@ -42,7 +42,6 @@
 #include "graph.hh"
 #include "roster_delta.hh"
 
-#undef _REENTRANT
 #include "lru_cache.h"
 
 // defined in schema.sql, converted to header:
