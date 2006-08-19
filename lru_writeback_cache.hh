@@ -16,7 +16,7 @@
 #include "sanity.hh"
 #include "safe_map.hh"
 
-template <typename T> struct Countfn
+template <typename T> struct WritebackCountfn
 {
   unsigned long operator () (T const & x)
   {
@@ -36,7 +36,7 @@ template <typename T> struct Countfn
  */
 // Manager is a concept with a writeout(Key, Data) method
 template <typename Key, typename Data, typename Manager,
-          typename Sizefn = Countfn<Data> >
+          typename Sizefn = WritebackCountfn<Data> >
 class LRUWritebackCache
 {
 public:
@@ -57,7 +57,7 @@ private:
   /// Dirty list
   std::set<Key> _dirty;
   /// Manager
-  Manager & _manager;
+  Manager _manager;
     
   /// Maximum abstract size of the cache
   unsigned long _max_size;
@@ -69,13 +69,13 @@ public:
   /** @brief Creates a cache that holds at most Size worth of elements.
    *  @param Size maximum size of cache
    */
-  LRUCache(const unsigned long Size, Manager & manager)
+  LRUWritebackCache(const unsigned long Size, Manager manager)
     : _manager(manager), _max_size(Size)
   {
   }
 
   /// Destructor - cleans up both index and storage
-  ~LRUCache()
+  ~LRUWritebackCache()
   {
     I(_dirty.empty());
   }
@@ -105,7 +105,7 @@ public:
   /// Cleans all dirty items (do this before a SQL COMMIT)
   void clean_all()
   {
-    for (std::set<Key>::const_iterator i = _dirty.begin(); i != _dirty.end(); ++i)
+    for (typename std::set<Key>::const_iterator i = _dirty.begin(); i != _dirty.end(); ++i)
       this->_writeout(*i);
     _dirty.clear();
   }
@@ -223,7 +223,7 @@ private:
   }
 
   // NB: does _not_ remove 'key' from the dirty set
-  inline void _writeout(Key const & key) const
+  inline void _writeout(Key const & key)
   {
     List_Iter const & i = safe_get(_index, key);
     _manager.writeout(i->first, i->second);

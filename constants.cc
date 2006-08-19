@@ -39,9 +39,11 @@ namespace constants
   // be tweaked further.
   size_t const db_version_cache_sz = 7 * (1 << 20);
 
-  size_t const db_roster_cache_sz = 7;
+  // the value of 7 MB was determined by blindly copying the line above and
+  // not doing any testing at all - it could be tweaked further.
+  size_t const db_roster_cache_sz = 7 * (1 << 20);
 
-  unsigned long const db_max_delayed_writes_bytes = 16 * 1024 * 1024;
+  unsigned long const db_max_delayed_file_bytes = 16 * 1024 * 1024;
  
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.

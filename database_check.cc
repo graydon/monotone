@@ -179,7 +179,7 @@ check_rosters_manifest(app_state & app,
       marking_map mm;
       try
         {
-          app.db.get_roster_version(*i, ros, mm);
+          app.db.get_roster_with_id(*i, ros, mm);
         }
       catch (logic_error & e)
         {
@@ -240,7 +240,7 @@ check_rosters_marking(app_state & app,
 
       roster_t ros;
       marking_map mm;
-      app.db.get_roster_version(ros_id, ros, mm);
+      app.db.get_roster_with_id(ros_id, ros, mm);
 
       for (node_map::const_iterator n = ros.all_nodes().begin();
            n != ros.all_nodes().end(); n++)

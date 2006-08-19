@@ -42,7 +42,7 @@
 #include "graph.hh"
 #include "roster_delta.hh"
 
-#include "lru_cache.h"
+#include "lru_cache.hh"
 
 // defined in schema.sql, converted to header:
 #include "schema.h"
@@ -151,7 +151,8 @@ database::database(system_path const & fn) :
   schema("d570d2861caa6f855bd8260f25e3a964294b6cb1"),
   transaction_level(0),
   delayed_writes_size(0),
-  roster_cache(*this)
+  roster_cache(constants::db_roster_cache_sz,
+               roster_writeback_manager(*this))
 {}
 
 bool
@@ -908,7 +909,7 @@ database::schedule_delayed_file(file_id const & an_id,
       safe_insert(delayed_files, make_pair(an_id, dat));
       delayed_writes_size += size_delayed_file(an_id, dat);
     }
-  if (delayed_writes_size > constants::db_max_delayed_writes_bytes)
+  if (delayed_writes_size > constants::db_max_delayed_file_bytes)
     flush_delayed_writes();
 }
 
@@ -931,6 +932,8 @@ database::clear_delayed_writes()
 void
 database::roster_writeback_manager::writeout(roster_id id, cached_roster const & cr)
 {
+  I(cr.first);
+  I(cr.second);
   db.write_delayed_roster(id, *(cr.first), *(cr.second));
 }
 
@@ -938,6 +941,8 @@ unsigned long
 database::roster_size_estimator::operator()(cached_roster const & cr)
 {
   // do estimate using a totally made up multiplier, probably wildly off
+  I(cr.first);
+  I(cr.second);
   return cr.first->all_nodes().size() * 175;
 }
 
@@ -1099,7 +1104,9 @@ database::get_roster_base(string const & ident_str,
     {
       cached_roster cr;
       roster_cache.fetch(ident, cr);
+      I(cr.first);
       roster = *(cr.first);
+      I(cr.second);
       marking = *(cr.second);
       return;
     }
@@ -1335,22 +1342,31 @@ struct roster_reconstruction_graph : public reconstruction_graph
 
 void
 database::get_roster_version(roster_id id,
-                             roster_t & roster,
-                             marking_map & marking)
+                             cached_roster & cr)
 {
-  string id_str = lexical_cast<string>(id);
+  // if we already have it, exit early
+  if (roster_cache.exists(id))
+    {
+      roster_cache.fetch(id, cr);
+      return;
+    }
+
+  shared_ptr<roster_t> roster(new roster_t);
+  shared_ptr<marking_map> marking(new marking_map);
 
   reconstruction_path selected_path;
   {
     roster_reconstruction_graph graph(*this);
-    get_reconstruction_path(id_str, graph, selected_path);
+    get_reconstruction_path(lexical_cast<string>(id), graph, selected_path);
   }
   
-  I(!selected_path.empty());
+  I(selected_path.size() > 1);
   
   string curr = selected_path.back();
   selected_path.pop_back();
-  get_roster_base(curr, roster, marking);
+  // we know that we'll need to apply some deltas (because of the early exit
+  // above), so we should go ahead and copy the roster/marking_map now
+  get_roster_base(curr, *roster, *marking);
   
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
@@ -1359,9 +1375,14 @@ database::get_roster_version(roster_id id,
       L(FL("following delta %s -> %s") % curr % nxt);
       roster_delta del;
       get_roster_delta(nxt, curr, del);
-      apply_roster_delta(del, roster, marking);
+      apply_roster_delta(del, *roster, *marking);
       curr = nxt;
     }
+
+  // const'ify the objects, to save them and pass them out
+  cr.first = roster;
+  cr.second = marking;
+  roster_cache.insert_clean(id, cr);
 }
 
 
@@ -1766,17 +1787,18 @@ void
 database::put_roster_for_revision(revision_id const & new_id,
                                   revision_t const & rev)
 {
-  roster_t ros; MM(ros);
-  marking_map mm; MM(mm);
   // Construct, the roster, sanity-check the manifest id, and then write it
   // to the db
-  {
-    manifest_id roster_manifest_id;
-    MM(roster_manifest_id);
-    make_roster_for_revision(rev, new_id, ros, mm, *__app);
-    calculate_ident(ros, roster_manifest_id);
-    I(rev.new_manifest == roster_manifest_id);
-  }
+  shared_ptr<roster_t> ros_writeable(new roster_t); MM(*ros_writeable);
+  shared_ptr<marking_map> mm_writeable(new marking_map); MM(*mm_writeable);
+  manifest_id roster_manifest_id;
+  MM(roster_manifest_id);
+  make_roster_for_revision(rev, new_id, *ros_writeable, *mm_writeable, *__app);
+  calculate_ident(*ros_writeable, roster_manifest_id);
+  I(rev.new_manifest == roster_manifest_id);
+  // const'ify the objects, suitable for caching etc.
+  roster_t_cp ros = ros_writeable;
+  marking_map_cp mm = mm_writeable;
   put_roster(new_id, ros, mm);
 }
 
@@ -2789,16 +2811,28 @@ database::get_roster(revision_id const & rev_id,
       return;
     }
 
-  roster_id ident = get_roster_id_for_revision(rev_id);
-  get_roster_version(ident, roster, marking);
+  roster_id ros_id = get_roster_id_for_revision(rev_id);
+  get_roster_with_id(ros_id, roster, marking);
 }
 
+void
+database::get_roster_with_id(roster_id ros_id, roster_t & roster, marking_map & marking)
+{
+  cached_roster cr;
+  get_roster_version(ros_id, cr);
+  I(cr.first);
+  I(cr.second);
+  roster = *cr.first;
+  marking = *cr.second;
+}
 
 void
 database::put_roster(revision_id const & rev_id,
-                     roster_t & roster,
-                     marking_map & marking)
+                     roster_t_cp const & roster,
+                     marking_map_cp const & marking)
 {
+  I(roster);
+  I(marking);
   MM(rev_id);
 
   transaction_guard guard(*this);
@@ -2814,12 +2848,7 @@ database::put_roster(revision_id const & rev_id,
   // Our task is to add this roster, and deltify all the incoming edges (if
   // they aren't already).
 
-  // FIXME: delayed_roster stupidity, clean up
-  {
-    roster_t_cp rcp(new roster_t(roster));
-    marking_map_cp mcp(new marking_map(marking));
-    roster_cache.insert_dirty(new_id, make_pair(rcp, mcp));
-  }
+  roster_cache.insert_dirty(new_id, make_pair(roster, marking));
   
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
@@ -2835,11 +2864,10 @@ database::put_roster(revision_id const & rev_id,
       old_id = get_roster_id_for_revision(old_rev);
       if (roster_base_exists(old_id))
         {
-          roster_t old_roster; MM(old_roster);
-          marking_map old_markings; MM(old_markings);
-          get_roster_version(old_id, old_roster, old_markings);
+          cached_roster cr;
+          get_roster_version(old_id, cr);
           roster_delta reverse_delta;
-          delta_rosters(roster, marking, old_roster, old_markings, reverse_delta);
+          delta_rosters(*roster, *marking, *(cr.first), *(cr.second), reverse_delta);
           if (roster_cache.exists(old_id))
             roster_cache.mark_clean(old_id);
           drop(lexical_cast<string>(old_id), "rosters");

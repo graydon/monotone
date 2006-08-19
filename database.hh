@@ -166,24 +166,24 @@ public:
   //
 private:
   std::map<file_id, file_data> delayed_files;
+  size_t delayed_writes_size;
+
   typedef boost::shared_ptr<roster_t const> roster_t_cp;
   typedef boost::shared_ptr<marking_map const> marking_map_cp;
   typedef std::pair<roster_t_cp, marking_map_cp> cached_roster;
   struct roster_writeback_manager
   {
     database & db;
-    roster_writeback_manager(database & db) : (db) {}
-    void writeout(roster_id, cached_roster);
-  }
+    roster_writeback_manager(database & db) : db(db) {}
+    void writeout(roster_id, cached_roster const &);
+  };
   struct roster_size_estimator
   {
     unsigned long operator() (cached_roster const &);
-  }
-  LRUWritebackCache<roster_id, std::pair<roster_t_cp, marking_map_cp>,
+  };
+  LRUWritebackCache<roster_id, cached_roster,
                     roster_writeback_manager, roster_size_estimator>
     roster_cache;
-  std::map<roster_id, std::pair<roster_t, marking_map> > delayed_rosters;
-  size_t delayed_writes_size;
 
   size_t size_delayed_file(file_id const & id, file_data const & dat);
   bool have_delayed_file(file_id const & id);
@@ -248,8 +248,8 @@ private:
                    std::string const & delta_table);
 
   void put_roster(revision_id const & rev_id,
-                  roster_t & roster,
-                  marking_map & marks);
+                  roster_t_cp const & roster,
+                  marking_map_cp const & marking);
 
 public:
 
@@ -328,6 +328,7 @@ public:
 private:
   u64 next_id_from_table(std::string const & table);
   roster_id next_roster_id();
+  void get_roster_version(roster_id ros_id, cached_roster & cr);
 public:
   node_id next_node_id();
 
@@ -338,13 +339,16 @@ public:
                   roster_t & roster,
                   marking_map & marks);
 
+  // FIXME: add a version that returns a const cached_roster, and teach
+  // various places in the code to use it
+
   // internal implementation details of roster storage -- exposed here for
   // the use of database_check.cc
   bool roster_version_exists(roster_id ident);
   void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_roster_ids(std::set<roster_id> & ids);
   roster_id get_roster_id_for_revision(revision_id const & rev_id);
-  void get_roster_version(roster_id ros_id, roster_t & roster, marking_map & marking);
+  void get_roster_with_id(roster_id ros_id, roster_t & roster, marking_map & marking);
 
   //
   // --== Keys ==--
