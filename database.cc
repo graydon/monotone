@@ -150,7 +150,8 @@ database::database(system_path const & fn) :
   __sql(NULL),
   schema("d570d2861caa6f855bd8260f25e3a964294b6cb1"),
   transaction_level(0),
-  delayed_writes_size(0)
+  delayed_writes_size(0),
+  roster_cache(*this)
 {}
 
 bool
@@ -851,7 +852,7 @@ database::begin_transaction(bool exclusive)
   if (transaction_level == 0)
     {
       I(delayed_files.empty());
-      I(delayed_rosters.empty());
+      I(roster_cache.all_clean());
       if (exclusive)
         execute(query("BEGIN EXCLUSIVE"));
       else
@@ -911,64 +912,12 @@ database::schedule_delayed_file(file_id const & an_id,
     flush_delayed_writes();
 }
 
-
-size_t
-database::size_delayed_roster(roster_id id, roster_t const & r, marking_map const & m)
-{
-  // do estimate using a totally made up multiplier, probably wildly off
-  return sizeof(id) + r.all_nodes().size() * 175;
-}
-
-bool
-database::have_delayed_roster(roster_id id)
-{
-  return delayed_rosters.find(id) != delayed_rosters.end();
-}
-
-void
-database::load_delayed_roster(roster_id id, roster_t & dat, marking_map & m)
-{
-  std::pair<roster_t, marking_map> const & v = safe_get(delayed_rosters, id);
-  dat = v.first;
-  m = v.second;
-}
-
-// precondition: have_delayed_roster(an_id) == true
-void
-database::cancel_delayed_roster(roster_id an_id)
-{
-  std::pair<roster_t, marking_map> const & v = safe_get(delayed_rosters, an_id);
-  size_t cancel_size = size_delayed_roster(an_id, v.first, v.second);
-  I(cancel_size < delayed_writes_size);
-  delayed_writes_size -= cancel_size;
-    
-  safe_erase(delayed_rosters, an_id);
-}
-
-void
-database::schedule_delayed_roster(roster_id an_id,
-                                  roster_t const & dat,
-                                  marking_map const & m)
-{
-  if (!have_delayed_roster(an_id))
-    {
-      safe_insert(delayed_rosters, make_pair(an_id, make_pair(dat, m)));
-      delayed_writes_size += size_delayed_roster(an_id, dat, m);
-    }
-  if (delayed_writes_size > constants::db_max_delayed_writes_bytes)
-    flush_delayed_writes();
-}
-
-
 void
 database::flush_delayed_writes()
 {
   for (map<file_id, file_data>::const_iterator i = delayed_files.begin();
        i != delayed_files.end(); ++i)
     write_delayed_file(i->first, i->second);
-  for (map<roster_id, pair<roster_t, marking_map> >::const_iterator i = delayed_rosters.begin();
-       i != delayed_rosters.end(); ++i)
-    write_delayed_roster(i->first, i->second.first, i->second.second);
   clear_delayed_writes();
 }
 
@@ -976,8 +925,20 @@ void
 database::clear_delayed_writes()
 {
   delayed_files.clear();
-  delayed_rosters.clear();
   delayed_writes_size = 0;
+}
+
+void
+database::roster_writeback_manager::writeout(roster_id id, cached_roster const & cr)
+{
+  db.write_delayed_roster(id, *(cr.first), *(cr.second));
+}
+
+unsigned long
+database::roster_size_estimator::operator()(cached_roster const & cr)
+{
+  // do estimate using a totally made up multiplier, probably wildly off
+  return cr.first->all_nodes().size() * 175;
 }
 
 void
@@ -986,6 +947,7 @@ database::commit_transaction()
   if (transaction_level == 1)
     {
       flush_delayed_writes();
+      roster_cache.clean_all();
       execute(query("COMMIT"));
     }
   transaction_level--;
@@ -997,6 +959,7 @@ database::rollback_transaction()
   if (transaction_level == 1)
     {
       clear_delayed_writes();
+      roster_cache.clear_and_drop_writes();
       execute(query("ROLLBACK"));
     }
   transaction_level--;
@@ -1013,10 +976,13 @@ database::file_or_manifest_base_exists(hexenc<id> const & ident,
   return table_has_entry(ident(), "id", table);
 }
 
+// Warning: the results of this method are invalidated by calling
+// roster_cache.insert_{clean,dirty} (because it might cause the base to be
+// dropped from the cache)
 bool
 database::roster_base_exists(roster_id ident)
 {
-  if (have_delayed_roster(ident))
+  if (roster_cache.exists(ident))
     return true;
   return table_has_entry(lexical_cast<string>(ident), "id", "rosters");
 }
@@ -1129,9 +1095,12 @@ database::get_roster_base(string const & ident_str,
                           roster_t & roster, marking_map & marking)
 {
   roster_id ident = lexical_cast<roster_id>(ident_str);
-  if (have_delayed_roster(ident))
+  if (roster_cache.exists(ident))
     {
-      load_delayed_roster(ident, roster, marking);
+      cached_roster cr;
+      roster_cache.fetch(ident, cr);
+      roster = *(cr.first);
+      marking = *(cr.second);
       return;
     }
   results res;
@@ -1190,8 +1159,8 @@ database::write_delayed_file(file_id const & ident,
 
 void
 database::write_delayed_roster(roster_id ident,
-                             roster_t const & roster,
-                             marking_map const & marking)
+                               roster_t const & roster,
+                               marking_map const & marking)
 {
   roster_data dat;
   write_roster_and_marking(roster, marking, dat);
@@ -2845,8 +2814,13 @@ database::put_roster(revision_id const & rev_id,
   // Our task is to add this roster, and deltify all the incoming edges (if
   // they aren't already).
 
-  schedule_delayed_roster(new_id, roster, marking);
-
+  // FIXME: delayed_roster stupidity, clean up
+  {
+    roster_t_cp rcp(new roster_t(roster));
+    marking_map_cp mcp(new marking_map(marking));
+    roster_cache.insert_dirty(new_id, make_pair(rcp, mcp));
+  }
+  
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
@@ -2866,10 +2840,9 @@ database::put_roster(revision_id const & rev_id,
           get_roster_version(old_id, old_roster, old_markings);
           roster_delta reverse_delta;
           delta_rosters(roster, marking, old_roster, old_markings, reverse_delta);
-          if (have_delayed_roster(old_id))
-            cancel_delayed_roster(old_id);
-          else
-            drop(lexical_cast<string>(old_id), "rosters");
+          if (roster_cache.exists(old_id))
+            roster_cache.mark_clean(old_id);
+          drop(lexical_cast<string>(old_id), "rosters");
           put_roster_delta(old_id, new_id, reverse_delta);
         }
     }

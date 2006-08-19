@@ -96,13 +96,11 @@ public:
     return _max_size;
   }
 
-  /// Clears all storage and indices (do this at SQL ROLLBACK)
-  void clear_and_drop_writes()
+  /// Checks if all items are clean (this should be true before a SQL BEGIN)
+  bool all_clean()
   {
-    _list.clear();
-    _index.clear();
-    _dirty.clear();
-  };
+    return _dirty.empty();
+  }
 
   /// Cleans all dirty items (do this before a SQL COMMIT)
   void clean_all()
@@ -111,6 +109,14 @@ public:
       this->_writeout(*i);
     _dirty.clear();
   }
+
+  /// Clears all storage and indices (do this at SQL ROLLBACK)
+  void clear_and_drop_writes()
+  {
+    _list.clear();
+    _index.clear();
+    _dirty.clear();
+  };
 
   /// Mark an item as not needing to be written back (do this when writing an
   /// alternative form of it to the db, e.g. a delta)

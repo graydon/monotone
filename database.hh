@@ -30,6 +30,9 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "selectors.hh"
 #include "vocab.hh"
 
+// hmm, would be better not to include this everywhere...
+#include "lru_writeback_cache.hh"
+
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
 // the schema, and all SQL statements used to access the schema.
@@ -163,6 +166,22 @@ public:
   //
 private:
   std::map<file_id, file_data> delayed_files;
+  typedef boost::shared_ptr<roster_t const> roster_t_cp;
+  typedef boost::shared_ptr<marking_map const> marking_map_cp;
+  typedef std::pair<roster_t_cp, marking_map_cp> cached_roster;
+  struct roster_writeback_manager
+  {
+    database & db;
+    roster_writeback_manager(database & db) : (db) {}
+    void writeout(roster_id, cached_roster);
+  }
+  struct roster_size_estimator
+  {
+    unsigned long operator() (cached_roster const &);
+  }
+  LRUWritebackCache<roster_id, std::pair<roster_t_cp, marking_map_cp>,
+                    roster_writeback_manager, roster_size_estimator>
+    roster_cache;
   std::map<roster_id, std::pair<roster_t, marking_map> > delayed_rosters;
   size_t delayed_writes_size;
 
@@ -172,19 +191,14 @@ private:
   void cancel_delayed_file(file_id const & id);
   void schedule_delayed_file(file_id const & id, file_data const & dat);
 
-  size_t size_delayed_roster(roster_id id, roster_t const & dat, marking_map const & m);
-  bool have_delayed_roster(roster_id id);
-  void load_delayed_roster(roster_id id, roster_t & dat, marking_map & m);
-  void cancel_delayed_roster(roster_id id);
-  void schedule_delayed_roster(roster_id id, roster_t const & dat, marking_map const & m);
-
   void flush_delayed_writes();
+  void clear_delayed_writes();
   void write_delayed_file(file_id const & new_id,
                           file_data const & dat);
+
   void write_delayed_roster(roster_id new_id,
                             roster_t const & roster,
                             marking_map const & marking);
-  void clear_delayed_writes();
 
   //
   // --== Reading/writing delta-compressed objects ==--
