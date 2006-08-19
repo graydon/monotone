@@ -41,21 +41,14 @@ class LRUCache
 {
 public:
   /// Main cache storage typedef
-  typedef std::list < std::pair < Key, Data > >List;
+  typedef std::list< std::pair<Key, Data> > List;
   /// Main cache iterator
   typedef typename List::iterator List_Iter;
   /// Index typedef
-  typedef std::map < Key, List_Iter > Map;
+  typedef std::map<Key, List_Iter> Map;
   /// Index iterator
   typedef typename Map::iterator Map_Iter;
 
-  /// Deletion strategies for element removal.
-  enum deletion_strategies
-    {
-      LRU_IGNORE,                 ///< Simply set erase the element from the cache and allow it leave scope.
-      LRU_DELETE,                 ///< Delete the Data elements before removal from the cache.
-    };
-    
 private:
   /// Main cache storage
   List _list;
@@ -68,18 +61,15 @@ private:
   /// Current abstract size of the cache
   unsigned long _curr_size;
     
-  /// Current deletion strategy
-  deletion_strategies _deletion_strategy;
-    
 public:
   /** @brief Creates a cache that holds at most Size worth of elements.
    *  @param Size maximum size of cache
-   *  @param DeletionStrategy how we dispose of elements when we remove them from the cache
    */
-  LRUCache(const unsigned long Size, const deletion_strategies DeletionStrategy = LRU_IGNORE)
-    : _max_size(Size), _deletion_strategy(DeletionStrategy)
+  LRUCache(const unsigned long Size)
+    : _max_size(Size)
   {
   }
+
   /// Destructor - cleans up both index and storage
   ~LRUCache()
   {
@@ -199,16 +189,6 @@ public:
         this->_remove(liter->first);
       }
   }
-
-#ifdef DEBUG
-  /** @brief DEBUG only function, this returns the pointer to the internal list.
-   *  @return evil pointer to private data for debugging only.
-   */
-  List *debug_get_list_pointer(void)
-  {
-    return &_list;
-  }
-#endif
 
 private:
   /** @brief Internal touch function.
