@@ -1351,21 +1351,18 @@ database::get_roster_version(roster_id id,
       return;
     }
 
-  shared_ptr<roster_t> roster(new roster_t);
-  shared_ptr<marking_map> marking(new marking_map);
-
   reconstruction_path selected_path;
   {
     roster_reconstruction_graph graph(*this);
     get_reconstruction_path(lexical_cast<string>(id), graph, selected_path);
   }
   
-  I(selected_path.size() > 1);
-  
   string curr = selected_path.back();
   selected_path.pop_back();
-  // we know that we'll need to apply some deltas (because of the early exit
-  // above), so we should go ahead and copy the roster/marking_map now
+  // we know that this isn't already in the cache (because of the early exit
+  // above), so we should create new objects and spend time filling them in.
+  shared_ptr<roster_t> roster(new roster_t);
+  shared_ptr<marking_map> marking(new marking_map);
   get_roster_base(curr, *roster, *marking);
   
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();

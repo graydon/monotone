@@ -120,10 +120,11 @@ public:
   };
 
   /// Mark an item as not needing to be written back (do this when writing an
-  /// alternative form of it to the db, e.g. a delta)
+  /// alternative form of it to the db, e.g. a delta).  No-op if the item was
+  /// already clean.
   void mark_clean(Key const & key)
   {
-    safe_erase(_dirty, key);
+    _dirty.erase(key);
   }
 
   /** @brief Checks for the existance of a key in the cache.
