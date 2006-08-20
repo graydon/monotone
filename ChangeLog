@@ -1,3 +1,15 @@
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Draft 0.29 release notes.
+
+	* cmd_ws_commit.cc (status): Print "no changes", when there are no
+	changes.  Also, use F() for all strings, so that they will be
+	available for translation.
+
+	* monotone.texi (Hooks): Document that you can set MTN_MERGE or
+	lua variable 'merger' to control what merger is selected.
+	(Other Transports): Document the ssh://host/~/foo syntax.
+	
 2006-08-18  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
@@ -62,6 +74,7 @@
 	* m4/boost.m4: Create a new macro to factor out code in common
 	among most of the MTN_BOOST_LIB_* macros.
 	* options.hh: Fix typo.
+	
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* options.hh: Have a non-template option_base class to allow for...
