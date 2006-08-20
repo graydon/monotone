@@ -2424,7 +2424,7 @@ msgstr "%s"
 #: monotone.cc:732
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
-msgstr "[OPTION...] Kommando [Argumente...]"
+msgstr "Aufruf: %s [OPTION...] Kommando [Argumente...]"
 
 #: monotone.cc:737
 #, c-format
