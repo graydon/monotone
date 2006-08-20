@@ -8,6 +8,7 @@
 // PURPOSE.
 
 #include <iostream>
+#include <cstring>
 
 #include "cmd.hh"
 #include "diff_patch.hh"
@@ -26,6 +27,7 @@ using std::map;
 using std::set;
 using std::string;
 using std::vector;
+using std::strlen;
 
 using boost::shared_ptr;
 
