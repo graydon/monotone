@@ -150,9 +150,9 @@ database::database(system_path const & fn) :
   __sql(NULL),
   schema("d570d2861caa6f855bd8260f25e3a964294b6cb1"),
   transaction_level(0),
-  delayed_writes_size(0),
   roster_cache(constants::db_roster_cache_sz,
-               roster_writeback_manager(*this))
+               roster_writeback_manager(*this)),
+  delayed_writes_size(0)
 {}
 
 bool
@@ -2819,8 +2819,20 @@ database::get_roster(revision_id const & rev_id,
       return;
     }
 
+  cached_roster cr;
+  get_roster(rev_id, cr);
+  roster = *cr.first;
+  marking = *cr.second;
+}
+
+void
+database::get_roster(revision_id const & rev_id,
+                     cached_roster & cr)
+{
   roster_id ros_id = get_roster_id_for_revision(rev_id);
-  get_roster_with_id(ros_id, roster, marking);
+  get_roster_version(ros_id, cr);
+  I(cr.first);
+  I(cr.second);
 }
 
 void

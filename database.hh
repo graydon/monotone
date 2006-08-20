@@ -164,13 +164,11 @@ public:
   // --== Write-buffering -- tied into transaction  ==--
   // --== machinery and delta compression machinery ==--
   //
-private:
-  std::map<file_id, file_data> delayed_files;
-  size_t delayed_writes_size;
-
+public:
   typedef boost::shared_ptr<roster_t const> roster_t_cp;
   typedef boost::shared_ptr<marking_map const> marking_map_cp;
   typedef std::pair<roster_t_cp, marking_map_cp> cached_roster;
+private:
   struct roster_writeback_manager
   {
     database & db;
@@ -190,6 +188,9 @@ private:
   void load_delayed_file(file_id const & id, file_data & dat);
   void cancel_delayed_file(file_id const & id);
   void schedule_delayed_file(file_id const & id, file_data const & dat);
+
+  std::map<file_id, file_data> delayed_files;
+  size_t delayed_writes_size;
 
   void flush_delayed_writes();
   void clear_delayed_writes();
@@ -340,8 +341,8 @@ public:
                   roster_t & roster,
                   marking_map & marks);
 
-  // FIXME: add a version that returns a const cached_roster, and teach
-  // various places in the code to use it
+  void get_roster(revision_id const & rid,
+                  cached_roster & cr);
 
   // internal implementation details of roster storage -- exposed here for
   // the use of database_check.cc

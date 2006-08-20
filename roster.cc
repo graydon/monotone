@@ -1694,19 +1694,18 @@ namespace
                         app_state & app)
   {
     I(!null_id(left_rid) && !null_id(right_rid));
-    roster_t left_roster, right_roster;
-    marking_map left_marking, right_marking;
-    app.db.get_roster(left_rid, left_roster, left_marking);
-    app.db.get_roster(right_rid, right_roster, right_marking);
+    database::cached_roster left_cached, right_cached;
+    app.db.get_roster(left_rid, left_cached);
+    app.db.get_roster(right_rid, right_cached);
     true_node_id_source tnis = true_node_id_source(app);
 
     set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
     app.db.get_uncommon_ancestors(left_rid, right_rid,
                                   left_uncommon_ancestors,
                                   right_uncommon_ancestors);
-    make_roster_for_merge(left_rid, left_roster, left_marking, left_cs,
+    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second, left_cs,
                           left_uncommon_ancestors,
-                          right_rid, right_roster, right_marking, right_cs,
+                          right_rid, *right_cached.first, *right_cached.second, right_cs,
                           right_uncommon_ancestors,
                           new_rid,
                           new_roster, new_markings,
