@@ -155,47 +155,53 @@ AC_DEFUN([BOOST_LIB_IFELSE],
 # Checks for specific boost libraries.
 # These are named MTN_BOOST_* because their actions are monotone-specific.
 
+AC_DEFUN([MTN_NEED_BOOST_LIB],
+[BOOST_LIB_IFELSE([$1], [$2],
+    [BOOSTLIBS="$lib $BOOSTLIBS"],
+    [AC_MSG_FAILURE([the boost_$1 library is required])])
+ AC_SUBST(BOOSTLIBS)
+])
+    
+AC_DEFUN([MTN_BOOST_LIB_PROGRAM_OPTIONS],
+[MTN_NEED_BOOST_LIB([program_options],
+  [AC_LANG_PROGRAM([[
+      #include <boost/program_options.hpp>
+      using namespace boost::program_options;
+    ]],[[
+      options_description od("foo"); od.add_options()("test", "a test option");
+    ]])])])
+
 AC_DEFUN([MTN_BOOST_LIB_FILESYSTEM],
-[BOOST_LIB_IFELSE([filesystem],
+[MTN_NEED_BOOST_LIB([filesystem],
   [AC_LANG_PROGRAM([[
       #include <boost/filesystem/path.hpp>
       #include <boost/filesystem/operations.hpp>
       using namespace boost::filesystem;
     ]],[[
       exists(path("/boot"));
-    ]])],
-    [BOOSTLIBS="$lib $BOOSTLIBS"],
-    [AC_MSG_FAILURE([the boost_filesystem library is required])])
- AC_SUBST(BOOSTLIBS)
-])
+    ]])])])
 
 AC_DEFUN([MTN_BOOST_LIB_DATE_TIME],
-[BOOST_LIB_IFELSE([date_time],
+[MTN_NEED_BOOST_LIB([date_time],
   [AC_LANG_PROGRAM([[
       #include <boost/date_time/posix_time/posix_time.hpp>
       #include <iostream>
       using namespace boost::posix_time; 
     ]],[[
       std::cout << to_iso_extended_string(second_clock::universal_time());
-    ]])],
-    [BOOSTLIBS="$lib $BOOSTLIBS"],
-    [AC_MSG_FAILURE([the boost_date_time library is required])])
- AC_SUBST(BOOSTLIBS)
-])
+    ]])])])
 
 AC_DEFUN([MTN_BOOST_LIB_REGEX],
-[BOOST_LIB_IFELSE([regex],
+[MTN_NEED_BOOST_LIB([regex],
   [AC_LANG_PROGRAM([[
       #include <boost/regex.hpp>
       using namespace boost; 
     ]],[[
       regex expr("foo");
-    ]])],
-    [BOOSTLIBS="$lib $BOOSTLIBS"],
-    [AC_MSG_FAILURE([libboost_regex failure])])
- AC_SUBST(BOOSTLIBS)
-])
+    ]])])])
 
+dnl Unlike all the others, if we don't have this library we can still
+dnl build monotone; we just can't do all the tests.
 AC_DEFUN([MTN_BOOST_LIB_UNIT_TEST_FRAMEWORK],
 [BOOST_LIB_IFELSE([unit_test_framework],
   [AC_LANG_SOURCE([[

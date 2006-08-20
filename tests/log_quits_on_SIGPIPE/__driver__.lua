@@ -16,7 +16,7 @@ commit(nil, -- branch name
        "This is the commit message that never ends\n")
 
 check({'mkfifo', 'thefifo'}, 0)
-rename('thefifo', 'ts-stdout')
-proc = bg(mtn('log'), -SIGPIPE, true, true)
+check(get("hookfile"))
+proc = bg(mtn('log', '--rcfile=hookfile'), -SIGPIPE, true, true)
 kill(proc.pid, SIGPIPE)
-proc:finish(1) -- one second timeout
+proc:finish(3) -- three second timeout

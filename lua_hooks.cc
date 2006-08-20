@@ -9,11 +9,9 @@
 
 #include "config.h"
 
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/path.hpp>
@@ -81,17 +79,12 @@ extern "C"
 
 lua_hooks::lua_hooks()
 {
-  st = lua_open ();
+  st = luaL_newstate();
   I(st);
 
   lua_atpanic (st, &panic_thrower);
 
-  luaopen_base(st);
-  luaopen_io(st);
-  luaopen_string(st);
-  luaopen_math(st);
-  luaopen_table(st);
-  luaopen_debug(st);
+  luaL_openlibs(st);
 
   lua_register(st, "get_confdir", monotone_get_confdir_for_lua);
   add_functions(st);

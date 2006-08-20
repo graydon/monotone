@@ -1,3 +1,207 @@
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
+	give the background process to die on its own, before we decide it
+	failed and just kill it.  Hopefully will work better on the loaded
+	buildslaves now?
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/main.cc (interrupt_signal): Newline-terminate our
+	"operation canceled" message.
+
+2006-08-18  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: Say that a Debian user needs to install
+	libboost-program-options-dev as well.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: Fix some brokenness from the merge hook changes.
+
+2006-08-15  Zack Weinberg  <zackw@panix.com>
+
+	* Makefile.am: put the lists back the way they were (mostly).
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/log_quits_on_SIGPIPE/: Try to make the test work.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	The new lua version doesn't like the file objects our mkstemp produces.
+	* mkstemp.cc mkstemp.hh: Don't keep the file open. This is only called
+	from LUAEXT(mkstemp, ), which no longer wants an fd.
+	* luaext_mkstemp.cc: Don't try to make a file object, just have
+	monotone_mkstemp create a file, then let...
+	* std_hooks.lua (temp_file): ... open it with io.open, so lua will
+	be happy with it.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+	* cmd_ws_commit.cc: "status" and "automate get_revision" give
+	identical output, except for leading/trailing whitespace. Make "status"
+	do what "status --brief" used to do, and make status not take the
+	--brief option.
+	* tests/status/__driver__.lua:
+	* tests/use_restrictions_with_--exclude/__driver__.lua:
+	* tests/use_restrictions_with_--exclude_and_inodeprints/__driver__.lua:
+	Update affected tests.
+
+2006-08-15  Zack Weinberg  <zackw@panix.com>
+
+	* configure.ac: Delete MTN_POPT_DEPENDENCIES.  Add strptime to
+	main AC_CHECK_FUNCS list (this is the only thing that
+	MTN_POPT_DEPENDENCIES checked for, that was used outside popt).
+	Also add lrint to this list.  Delete AC_SEARCH_LIBS for libdl.
+	* lua/luaconf.h: Include config.h. Set LUA_USE_POSIX if _WIN32 is
+	not defined.  Add versions of lua_number2int and lua_number2integer
+	that use the C99 lrint() function; remove the unreliable union hack.
+	At end of file, forcibly undefine all LUA_DL_* macros to ensure
+	that lualib.cc uses the stub implementation.
+	* m4/popt.m4: Delete file.
+	* m4/boost.m4: Create a new macro to factor out code in common
+	among most of the MTN_BOOST_LIB_* macros.
+	* options.hh: Fix typo.
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* options.hh: Have a non-template option_base class to allow for...
+	* cmd.hh (command_opts): Keep a set of option_base*, not
+	shared_ptr<option_description>. This is to avoid problems with global
+	object initialization order. Also provide a function to convert a
+	command_opts to an options_description.
+	* commands.cc commands.hh monotone.cc: Adjust accordingly.
+
+2006-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* monotone.cc: work around some boost/stlport4 interaction
+	by explicitely keeping NULL out of shared_ptrs
+
+2006-08-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua/*.c: Lua 5.1 supports raising exceptions using C++ exception
+	handling mechanisms.  Rename to *.cc so that automake compiles
+	with the C++ compiler.  Yes, this is lame, unless an automake guru
+	has a better way...
+	* lua.hh, lua_hooks.cc, tester.cc: Remove 'extern "C"' from around
+	the Lua includes (also change the includes from <> to "" since
+	we're using a local copy of Lua).
+	* Makefile.am: Update for renamed Lua files.
+	* Makefile.am: Post-merge cleanup.
+	* luaext_mkstemp.cc: Slightly cleaner way to create a Lua IO
+	object from a FILE*.
+	* lua/*, Makefile.am: Import Lua 5.1.1 plus fixes for the two
+	5.1.1 bugs listed on the Lua website.
+	* tests/(normal)_netsync_revision_with_no_certs,
+	tests/_MTN_case-folding_security_patch, tests/common/netsync.lua,
+	tests/db_check_and_non-serious_errors,
+	tests/exchanging_work_via_netsync,
+	tests/tags_and_tagging_of_revisions, testsuite.lua, std_hooks.lua:
+	Syntax tweaks and cleanups for Lua 5.1.1.
+	* lua_hooks.cc, tester.cc: Migrate to Lua 5.1 API.
+	* lua.cc: Slightly cleaner FILE* handling.
+
+2006-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.7.
+	* Makefile.am: Disable new SQLite loadable extensions for now since
+	we don't use it.
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (mergers): All the functions in this table
+	returned `outfile' (which is unknown) instead of `tbl.outfile'.
+	(merge3): Incorrect variable `res' used instead of `ret'.
+
+2006-08-14  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* luaext_mkstemp.cc, luaext_platform.cc, tester.cc:
+	Add includes and using std::* statements
+	* mtn-sanity.cc, tester.cc:
+	use slightly more compatible syntax for static reference initialization
+	* options.cc, options.hh:
+	GOPT and COPT macros used <ARGUMENT>, what has been expanded to
+	<vector<string>> at times. sunpro parses that as <vector<string >>
+	* po/sv.po: a newline was missing
+	* m4/boost.m4, configure.ac: move boost_program_options check to
+	boost.m4 because it's cleaner and --enable-static-boost is honored
+	that way
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Add merge.cc and merge.hh.
+	* po/sv.po: Translate the resulting untranslated strings.
+
+2006-08-14  Nathaniel Smith  <njs@pobox.com>
+
+	* safe_map.hh: #include "sanity.hh".
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* tests/drop_directory_with_unversioned_files_and_merge/__driver__.lua:
+	Added test for the case when an update tries to remove a directory
+	that isn't empty (it has unversioned files).
+	* testsuite.lua: Add it to the common tests.
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear a few fuzzies.
+
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: Boost has buggy option completion. Disable guessing of
+	partial options, such as --hel for --help.
+
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* testsuite.lua: Dump "mtn --full-version" output to the logfile.
+
+2006-08-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* cmd_automate.cc monotone.cc options_list.hh: Put back the
+	--automate-stdio-size option.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc options.cc options.hh: Make option parsing not subject
+	to bad_any_cast. Misremembering the option type will now be caught
+	at compile time.
+	* options_list.hh options.cc options.hh: We don't need to list all
+	the options twice.
+	* Makefile.am: Adjust for new file.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make it pass the testsuite.
+	* tests/diff_--external/__driver__.lua:
+	* tests/netsync_permissions/__driver__.lua: "--option=" is not valid
+	anymore, use "--option ''". (appears to be a misfeature of
+	boost::program_options)
+	* options.cc options.hh monotone.cc: Work on option handling.
+	* cmd_netsync.cc: More merge fixes.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix merge, and make unit_tests build.
+	* options.cc monotone.cc: Move option definitions to their own file.
+	* Makefile.am: Adjust accordingly.
+	* cmd.hh cmd_automate.cc cmd_diff_log.cc cmd_files.cc cmd_merging.cc:
+	* cmd_ws_commit.cc commands.cc configure.ac monotone.ac options.hh:
+	Fix enough merge errors that it can compile.
+
+2006-08-12  Derek Scherger  <derek@echologic.com>
+
+	* cmd_list.cc (ls_unknown_or_ignored):
+	* cmd_ws_commit.cc (add): use args as roots to start the tree walk
+	for unknown files rather than walking from the workspace root
+	* work.{cc,hh} (find_unknown_and_ignored): walk tree from the
+	specified roots rather than the workspace root. this can make
+	restricted ls unknown *much* faster in a workspace with large
+	unversioned directories.
+
+2006-08-16  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
 	* xdelta.cc (spin): New utility function for tests.
@@ -5,10 +209,10 @@
 	(xdelta_random_simple_delta_test): Use spin to improve coverage.
 	(xdelta_random_piecewise_delta_test): New test.
 	(compute_delta): Actually work when target == destination.
-	(size_accumulating_delta_applicator, 
+	(size_accumulating_delta_applicator,
 	(measure_delta_target_size): Remove dead code.
 	I believe this file actually has complete unit test coverage now.
-	
+
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 
 	* database.cc (put_roster): We only need one way to reconstruct a
@@ -60,7 +264,7 @@
 	Make the block size for automate stdio configurable:
 	* constants.hh, constants.cc: Remove automate_stdio_size constant.
 	* app_state.cc, app_state.hh, options.hh, monotone.cc: Add new
-	option commandline option '--automate-stdio-size'. Default is 1024, 
+	option commandline option '--automate-stdio-size'. Default is 1024,
 	which is the value of the old constant.
 	* cmd_automate.cc: Use the new commandline option instead of the
 	old onstant.
@@ -18471,4 +18675,3 @@
 2003-04-06  Graydon Hoare  <graydon@pobox.com>
 
 	* initial release.
-

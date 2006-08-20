@@ -94,6 +94,7 @@ find_missing(roster_t const & new_roster_shape, node_restriction const & mask,
 
 void
 find_unknown_and_ignored(app_state & app, path_restriction const & mask,
+                         vector<file_path> const & roots,
                          path_set & unknown, path_set & ignored)
 {
   revision_t rev;
@@ -106,7 +107,11 @@ find_unknown_and_ignored(app_state & app, path_restriction const & mask,
   new_roster.extract_path_set(known);
 
   file_itemizer u(app, known, unknown, ignored, mask);
-  walk_tree(file_path(), u);
+  for (vector<file_path>::const_iterator 
+         i = roots.begin(); i != roots.end(); ++i)
+    {
+      walk_tree(*i, u);
+    }
 }
 
 

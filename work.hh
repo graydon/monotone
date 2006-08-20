@@ -73,6 +73,7 @@ find_missing(roster_t const & new_roster_shape, node_restriction const & mask,
 
 void
 find_unknown_and_ignored(app_state & app, path_restriction const & mask,
+                         std::vector<file_path> const & roots,
                          path_set & unknown, path_set & ignored);
 
 void
