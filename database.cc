@@ -894,7 +894,7 @@ database::cancel_delayed_file(file_id const & an_id)
 {
   file_data const & dat = safe_get(delayed_files, an_id);
   size_t cancel_size = size_delayed_file(an_id, dat);
-  I(cancel_size < delayed_writes_size);
+  I(cancel_size <= delayed_writes_size);
   delayed_writes_size -= cancel_size;
     
   safe_erase(delayed_files, an_id);
