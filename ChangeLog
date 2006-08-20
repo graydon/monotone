@@ -1,5 +1,9 @@
 2006-08-20  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: Translated the last current untranslated string.
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
 	* NEWS: Small typo corrected ("merge" => "merger").
 	* po/sv.po: Fixed a few fuzzies and untranslated strings.
 
