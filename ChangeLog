@@ -1,3 +1,8 @@
+2006-08-20  Zack Weinberg  <zackw@panix.com>
+
+	* tests/log_quits_on_SIGPIPE: Rewrite so it actually tests what we
+	want it to (and hopefully is now race free).
+
 2006-08-20  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* contrib/monotone.zsh_completion: Revised completion for almost
@@ -27,7 +32,7 @@
 	* monotone.texi (Hooks): Document that you can set MTN_MERGE or
 	lua variable 'merger' to control what merger is selected.
 	(Other Transports): Document the ssh://host/~/foo syntax.
-	
+
 2006-08-18  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
@@ -92,7 +97,7 @@
 	* m4/boost.m4: Create a new macro to factor out code in common
 	among most of the MTN_BOOST_LIB_* macros.
 	* options.hh: Fix typo.
-	
+
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* options.hh: Have a non-template option_base class to allow for...
