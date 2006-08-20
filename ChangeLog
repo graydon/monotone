@@ -1,5 +1,11 @@
 2006-08-20  Nathaniel Smith  <njs@pobox.com>
 
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac, UPGRADE: Bump version number to
+	0.29.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Draft 0.29 release notes.
 
 	* cmd_ws_commit.cc (status): Print "no changes", when there are no
