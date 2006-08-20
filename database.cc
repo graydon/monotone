@@ -981,11 +981,22 @@ database::file_or_manifest_base_exists(hexenc<id> const & ident,
   return table_has_entry(ident(), "id", table);
 }
 
-// Warning: the results of this method are invalidated by calling
-// roster_cache.insert_{clean,dirty} (because it might cause the base to be
-// dropped from the cache)
+// returns true if we are currently storing (or planning to store) a
+// full-text for 'ident'
 bool
-database::roster_base_exists(roster_id ident)
+database::roster_base_stored(roster_id ident)
+{
+  if (roster_cache.exists(ident) && roster_cache.is_dirty(ident))
+    return true;
+  return table_has_entry(lexical_cast<string>(ident), "id", "rosters");
+}
+
+// returns true if we currently have a full-text for 'ident' available
+// (possibly cached).  Warning: the results of this method are invalidated
+// by calling roster_cache.insert_{clean,dirty}, because they can trigger
+// cache cleaning.
+bool
+database::roster_base_available(roster_id ident)
 {
   if (roster_cache.exists(ident))
     return true;
@@ -1327,7 +1338,7 @@ struct roster_reconstruction_graph : public reconstruction_graph
   roster_reconstruction_graph(database & db) : db(db) {}
   virtual bool is_base(std::string const & node) const
   {
-    return db.roster_base_exists(lexical_cast<database::roster_id>(node));
+    return db.roster_base_available(lexical_cast<database::roster_id>(node));
   }
   virtual void get_next(std::string const & from, std::set<std::string> & next) const
   {
@@ -1408,7 +1419,7 @@ bool
 database::roster_version_exists(roster_id id)
 {
   return delta_exists(lexical_cast<string>(id), "roster_deltas")
-    || roster_base_exists(id);
+    || roster_base_available(id);
 }
 
 bool
@@ -2859,7 +2870,7 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       old_id = get_roster_id_for_revision(old_rev);
-      if (roster_base_exists(old_id))
+      if (roster_base_stored(old_id))
         {
           cached_roster cr;
           get_roster_version(old_id, cr);

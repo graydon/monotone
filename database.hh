@@ -207,7 +207,8 @@ private:
   // "do we have any entry for 'ident' that is a base version"
   bool file_or_manifest_base_exists(hexenc<id> const & ident,
                                     std::string const & table);
-  bool roster_base_exists(roster_id ident);
+  bool roster_base_stored(roster_id ident);
+  bool roster_base_available(roster_id ident);
   
   // "do we have any entry for 'ident' that is a delta"
   bool delta_exists(std::string const & ident,

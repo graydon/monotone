@@ -127,6 +127,14 @@ public:
     _dirty.erase(key);
   }
 
+  /// Say if we're planning to write back an item (do this to figure out
+  /// whether you should be writing an alternative form of it to the db,
+  /// e.g. a delta).
+  bool is_dirty(Key const & key)
+  {
+    return (_dirty.find(key) != _dirty.end());
+  }
+
   /** @brief Checks for the existance of a key in the cache.
    *  @param key to check for
    *  @return bool indicating whether or not the key was found.
