@@ -1,4 +1,4 @@
-????????????????????????????
+Sun Aug 20 15:58:08 PDT 2006
 
         0.29 release.  Code cleanups and bug fixes.
 
@@ -78,6 +78,11 @@
           some option to the empty string; use --option "".  (This
           change also removes a lot of orphaned and historically buggy
           code from monotone.)
+
+        Other:
+
+        - zsh completion script significantly revised and updated (see
+          contrib/monotone.zsh_completion).
 
 Sat Jul 22 01:39:51 PDT 2006
 
