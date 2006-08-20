@@ -1,13 +1,19 @@
 #compdef mtn # -*-sh-*-
 #
+# ZSH Completion for Monotone
+#
+# Author: Joel Reed  <joelwreed@comcast.com>
+# Last changed by: Thomas Moschny  <thomas.moschny@gmx.de>
+#
+#
 # Installing into /usr/share/zsh/site-functions:
 #
-# 1) If that directory is not already present in $fpath, add the line
-#    "fpath=(/usr/share/zsh/site-functions $fpath)" to either your
-#    system wide zshrc, or user ~/.zshrc.
+# (1) If that directory is not already present in $fpath, add the line
+#     "fpath=(/usr/share/zsh/site-functions $fpath)" to either your
+#     system wide zshrc, or user ~/.zshrc.
 #
-# 2) Copy $MONOTONE/contrib/monotone.zsh_completion (this file) to
-#    /usr/share/zsh/site-functions/_mtn
+# (2) Copy $MONOTONE/contrib/monotone.zsh_completion (this file) to
+#     /usr/share/zsh/site-functions/_mtn
 #
 # Alternatively, you can install this file as _mtn into some directory
 # in your home (e.g. ~/.zsh), and add that directory to the $fpath.
@@ -23,6 +29,7 @@ _mtn() {
     '--dump=[file to dump debugging log to, on failure]:file:_files'\
     '--log=[file to write the log to]:file:_files'\
     '--quiet[suppress log and progress messages]'\
+    '--reallyquiet[suppress warning, verbose, informational and progress messages]'\
     {'-h','--help'}'[display help message]'\
     '(- *)--version[print version number, then exit]'\
     '(- *)--full-version[print detailed version number, then exit]'\
@@ -44,272 +51,331 @@ _mtn() {
 
 (( $+functions[_mtn_command] )) ||
 _mtn_command() {
-  (( $+_mtn_cmds )) || _mtn_cmds=(add annotate approve attr automate cat cert checkout chkeypass ci co comment commit complete cvs_import db diff disapprove drop dropkey explicit_merge fload fmerge genkey get_roster heads help identify list log ls merge merge_into_dir mv pivot_root privkey propagate pubkey pull push rcs_import read refresh_inodeprints rename revert rm serve set setup show_conflicts status sync tag testresult trusted unset update)
-
-  local cmd="$words[1]"
-  if (( CURRENT == 1 )); then
-    _describe -t commands 'monotone command' _mtn_cmds
-  else
-    local curcontext="$curcontext"
-
-    if (( $#cmd )); then
-      curcontext="${curcontext%:*:*}:mtn-${cmd}:"
-      _call_function ret _mtn_$cmd || _message 'no more arguments'
+    (( $+_mtn_cmds )) || 
+    _mtn_cmds=(add annotate approve attr automate cat cert checkout chkeypass \
+	ci co comment commit complete cvs_import db diff disapprove drop dropkey \
+	explicit_merge fload fmerge genkey get_roster heads help identify list log \
+	ls merge merge_into_dir mv pivot_root privkey propagate pubkey pull push \
+	rcs_import read refresh_inodeprints rename revert rm serve set setup \
+	show_conflicts status sync tag testresult trusted unset update)
+    
+    local cmd="$words[1]"
+    if (( CURRENT == 1 )); then
+	_describe -t commands 'monotone command' _mtn_cmds
     else
-      _message "unknown monotone command: $cmd"
+	local curcontext="$curcontext"
+	
+	if [ -n $cmd ]; then
+	    curcontext="${curcontext%:*:*}:mtn-${cmd}:"
+	    _call_function ret _mtn_$cmd || _message 'no more arguments'
+	else
+	    _message "unknown monotone command: $cmd"
+	fi
+	return ret
     fi
-    return ret
-  fi
 }
 
 # define completion functions for each monotone command
 
 (( $+functions[_mtn_add] )) ||
 _mtn_add() {
-    _arguments -s \
+    _arguments -s : \
 	'--unknown[add unknown files from workspace]'\
 	'*:file to add:_mtn_files_unknown'
 }
 
 (( $+functions[_mtn_annotate] )) ||
 _mtn_annotate() {
-    _arguments -s \
+    _arguments -s : \
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
 	'--brief[print a brief version of the normal output]'\
-	'*:file to annotate:_mtn_existing_entries'
+	'(*)*:file to annotate:_mtn_existing_entries'
 }
 
 (( $+functions[_mtn_approve] )) ||
 _mtn_approve() {
-    _arguments -s \
+    _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
 	'(*)*:revision:_mtn_revisions'
 }
 
 (( $+functions[_mtn_attr] )) ||
 _mtn_attr() {
-	if (( CURRENT == 2 )); then	
-		compadd -- set get drop
-	elif (( CURRENT == 3 )); then	
-		compadd -- $(mtn automate attributes)
-	else
-	  local fname="$words[3]";
-		compadd -- $(mtn automate attributes $fname)
-	fi
+    if (( CURRENT == 2 )); then	
+	compadd -- set get drop
+    elif (( CURRENT == 3 )); then	
+	# fixme: should differentiate between set, get and drop
+	compadd -- $(mtn automate attributes)
+    else
+	local fname="$words[3]";
+	compadd -- $(mtn automate attributes $fname)
+    fi
 }
 
 (( $+functions[_mtn_automate] )) ||
 _mtn_automate() {
-	compadd -- \
-	    ancestors ancestry_difference attributes certs children \
-	    descendents erase_ancestors get_file get_manifest_of \
-	    get_revision graph heads interface_version inventory keys \
-	    leaves packet_for_certs packet_for_fdelta packet_for_rdata \
-	    parents select toposort 
+    compadd -- \
+	ancestors ancestry_difference attributes branches certs children \
+	common_ancestors descendents erase_ancestors \
+	get_base_revision_id get_current_revision_id get_file get_manifest_of \
+	get_revision graph heads interface_version inventory keys \
+	leaves packet_for_fdelta packet_for_rdata packets_for_certs \
+	parents select tags toposort 
 }
 
 (( $+functions[_mtn_cat] )) ||
 _mtn_cat() {
-	if (( CURRENT == 2 )); then	
-		compadd -- file manifest revision
-	else
-	  local mtype="$words[2]"
-		if [[ "$mtype" == "revision" ]]; then
-			_mtn_revisions
-		else
-			local id="$words[3]"
-			if (( $#id )); then
-  			compadd -- $(mtn complete $mtype $id 2> /dev/null)
-			fi
-	  fi
-	fi
+    _arguments -s : \
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'*:file to cat:_mtn_existing_entries'
 }
 
 (( $+functions[_mtn_cert] )) ||
 _mtn_cert() {
-	_mtn_revisions
+    _arguments -s : \
+	'1:revision:_mtn_revisions'\
+	'2:certname: '\
+	'3:certval: '
 }
 
 (( $+functions[_mtn_checkout] )) ||
 _mtn_checkout() {
-  _arguments \
-    '--branch=-[branch name]:branch:_mtn_branches' \
-		':revision:_mtn_revisions'
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'(*)*:directory for checkout: '
 }
 
 (( $+functions[_mtn_chkeypass] )) ||
 _mtn_chkeypass() {
-	_mtn_keys
+    _mtn_keys
 }
 
 (( $+functions[_mtn_ci] )) ||
 _mtn_ci() {
-  _mtn_commit
+    _mtn_commit
 }
 
 (( $+functions[_mtn_co] )) ||
 _mtn_co() {
-  _mtn_checkout
+    _mtn_checkout
 }
 
 (( $+functions[_mtn_comment] )) ||
 _mtn_comment() {
-	_mtn_revisions
+    _arguments -s : \
+	'1:revision:_mtn_revisions'\
+	'2:comment: '
 }
 
 (( $+functions[_mtn_commit] )) ||
 _mtn_commit() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
-	{'(--message)-m+','(-m)--message='}'[set commit changelog message]:message'\
+	{'(--message)-m+','(-m)--message='}'[set commit changelog message]:message: '\
 	'--message-file=[set filename containing commit changelog message]:file:_files'\
-	'--date=[override date/time for commit]:date'\
-	'--author=[override author for commit]:author'\
+	'--date=[override date/time for commit]:date: '\
+	'--author=[override author for commit]:author: '\
 	'--depth=[limit the number of levels of directories to descend]:depth'\
-	'*:modified files:_mtn_files_changed'
+	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
+	'*:files to commit:_mtn_files_changed'
 }
 
 (( $+functions[_mtn_complete] )) ||
 _mtn_complete() {
-	compadd -- file key manifest revision 
+    _arguments -s : \
+	'1:what to complete:(file key manifest revision)'\
+	'2:partial id: '
 }
 
 (( $+functions[_mtn_cvs_import] )) ||
 _mtn_cvs_import() {
-  _arguments \
-	  '*:file:_files'
+    _arguments : \
+	'*:file:_files'
 }
 
 (( $+functions[_mtn_db] )) ||
 _mtn_db() {
-	compadd -- init info version dump load migrate check rebuild execute kill_rev_locally
+    compadd -- \
+	init info version dump load migrate execute \
+	kill_rev_locally kill_branch_certs_locally kill_tag_locally \
+	check changesetify rosterify set_epoch
 }
 
 (( $+functions[_mtn_diff] )) ||
 _mtn_diff() {
-  _arguments -s \
-		'*--revision=:revision:_mtn_revisions' \
-	  '*:added file:_mtn_existing_entries'
+    _arguments -s : \
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'--depth=[limit the number of levels of directories to descend]:depth: '\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
+	{'(--unified)-u','(-u)--unified'}'[use unified diff format]'\
+	{'(--contex)-c','(-c)--contex'}'[use context diff format]'\
+	'--external[use external diff hook for generating diffs]'\
+	'--diff-args=[argument to pass external diff hook]:arg: '\
+	{'-no-show-encloser','--no-show-c-function'}'[do not show the function containing each block of changes]'\
+	'*:files to diff:_mtn_files_changed'
 }
 
 (( $+functions[_mtn_disapprove] )) ||
 _mtn_disapprove() {
-	_mtn_revisions
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	'(*)*:revision to disapprove:_mtn_revisions'
 }
 
 (( $+functions[_mtn_drop] )) ||
 _mtn_drop() {
-	_mtn_existing_entries
+    _arguments -s : \
+	{'(--execute)-e','(-e)--execute'}'[perform the associated file operation]'\
+	'--missing[perform the operations for files missing from workspace]'\
+	{'(--recursive)-R','(-R)--recursive'}'[also operate on the contents of any listed directories]'\
+	'*:entries to drop:_mtn_existing_entries'
 }
 
 (( $+functions[_mtn_dropkey] )) ||
 _mtn_dropkey() {
-	_mtn_keys
+    _mtn_keys
 }
 
 (( $+functions[_mtn_explicit_merge] )) ||
 _mtn_explicit_merge() {
-  if (( CURRENT == 2 || CURRENT == 3)); then
-		_mtn_revisions
-	else
-	  _mtn_branches
-	fi
+    _arguments -s : \
+	'1:left revision:_mtn_revisions'\
+	'2:right revision:_mtn_revisions'\
+	'3:dest branch:_mtn_branches'
 }
 
 (( $+functions[_mtn_heads] )) ||
 _mtn_heads() {
-  _arguments -s \
-    '--branch=[branch name]:branch:_mtn_branches'
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'
 }
 
 (( $+functions[_mtn_log] )) ||
 _mtn_log() {
-  _arguments -s \
-    '--last=[n]' \
-		'--revision=:revision:_mtn_revisions' \
-	  '*:added file:_mtn_existing_entries'
+    _arguments -s : \
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'--last=[limit log output to the last number of entries]:last: ' \
+	'--next=[limit log output to the next number of entries]:next: ' \
+	'--brief[print a brief version of the normal output]'\
+	'--diffs[print diffs along with logs]'\
+	'--no-merges[exclude merges when printing logs]'\
+	'--no-files[exclude files when printing logs]'\
+	'*:restriction for log:_mtn_existing_entries'
 }
 
 (( $+functions[_mtn_list] )) ||
 _mtn_list() {
-  _arguments \
-		':op:_mtn_list_ops'
+    compadd -- \
+	certs keys branches epochs tags vars \
+	known unknown ignored missing changed
 }
 
 (( $+functions[_mtn_ls] )) ||
 _mtn_ls() {
-  _mtn_list
+    _mtn_list
 }
 
 (( $+functions[_mtn_merge] )) ||
 _mtn_merge() {
-  _arguments -s \
-    '--branch=[branch name]:branch:_mtn_branches'
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	'--date=[override date/time for commit]:date: '\
+	'--author=[override author for commit]:author: '
 }
 
 (( $+functions[_mtn_propagate] )) ||
 _mtn_propagate() {
-  _mtn_branches
+    _arguments -s : \
+	{'(--message)-m+','(-m)--message='}'[set commit changelog message]:message: '\
+	'--message-file=[set filename containing commit changelog message]:file:_files'\
+	'--date=[override date/time for commit]:date: '\
+	'--author=[override author for commit]:author: '\
+	'1:source branch:_mtn_branches'\
+	'2:dest branch:_mtn_branches'\
 }
 
 (( $+functions[_mtn_pull] )) ||
 _mtn_pull() {
-  _arguments -s \
-		'*:branch:_mtn_branches' 
+    _arguments -s : \
+	'--set-default[use the current arguments as the future default]'\
+	'--exclude=[leave out anything described by its argument]:exclude: '
 }
 
 (( $+functions[_mtn_push] )) ||
 _mtn_push() {
-  _arguments -s \
-		'*:branch:_mtn_branches' 
+    _mtn_sync
 }
 
 (( $+functions[_mtn_rcs_import] )) ||
 _mtn_rcs_import() {
-  _arguments \
-	  '*:file:_files'
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	'*:files to import:_files'
 }
 
 (( $+functions[_mtn_rename] )) ||
 _mtn_rename() {
-	_mtn_existing_entries
+    _arguments -s : \
+	{'(--execute)-e','(-e)--execute'}'[perform the associated file operation]'\
+	'*:files to rename:_mtn_existing_entries'
 }
 
 (( $+functions[_mtn_revert] )) ||
 _mtn_revert() {
-    _mtn_files_changed
+    _arguments -s : \
+	'--depth=[limit the number of levels of directories to descend]:depth: '\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
+	'--missing[perform the operations for files missing from workspace]'\
+	'*:files to revert:_mtn_files_changed'
 }
 
 (( $+functions[_mtn_serve] )) ||
 _mtn_serve() {
-  _arguments -s \
-		'*:branch:_mtn_branches' 
+    _arguments -s : \
+	'--pid-file=[record process id of server]:file:_files'\
+	'--exclude=[leave out anything described by its argument]:exclude: '\
+	'--bind=[address:port to listen on]:bind: '\
+	'--stdio[serve netsync on stdio]'\
+	'--no-transport-auth[disable transport authentication]'\
+	'*:pattern: '
 }
 
 (( $+functions[_mtn_status] )) ||
 _mtn_status() {
-	_mtn_existing_entries
+    _arguments -s : \
+	'--depth=[limit the number of levels of directories to descend]:depth: '\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
+	'*:file:_mtn_existing_entries'
 }
 
 (( $+functions[_mtn_sync] )) ||
 _mtn_sync() {
-  _arguments -s \
-		'*:branch:_mtn_branches' 
+    _arguments -s : \
+	'--set-default[use the current arguments as the future default]'\
+	'--exclude=[leave out anything described by its argument]:exclude: '\
+	'--key-to-push=[push the specified key]:key: '
 }
 
 (( $+functions[_mtn_tag] )) ||
 _mtn_tag() {
-	_mtn_revisions
+    _arguments -s : \
+	'1:revision to tag:_mtn_revisions'\
+	'(1)*:tagname: '
 }
 
 (( $+functions[_mtn_result] )) ||
 _mtn_testresult() {
-	_mtn_revisions
+    _arguments -s : \
+	'1:revision:_mtn_revisions'\
+	'2:result:(pass fail true false yes no 1 0)'
 }
 
 (( $+functions[_mtn_update] )) ||
 _mtn_update() {
-	_mtn_revisions
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'
 }
 
 # define completion functions for files maintained by monotone.
@@ -337,26 +403,23 @@ _mtn_existing_entries() {
 
 (( $+functions[_mtn_branches] )) ||
 _mtn_branches() {
-	compadd -- $(mtn ls branches 2>/dev/null)
+    compadd -- $(mtn ls branches 2>/dev/null)
 }
 
 (( $+functions[_mtn_keys] )) ||
 _mtn_keys() {
-	local id="$words[CURRENT]:gs/-//"
-	if (( $#id )); then
-		compadd -X "$(mtn complete key --verbose $id 2>/dev/null)" -n -- $(mtn complete key $id 2>/dev/null)
-	fi
+    if [ -n $PREFIX ]; then
+	compadd -X "(prefix of a) key id" -n \
+	    -- $(mtn complete key $PREFIX 2>/dev/null)
+    fi
 }
 
 (( $+functions[_mtn_revisions] )) ||
 _mtn_revisions() {
-    compadd -X "(prefix of a) revision" -n \
-	-- $(mtn complete revision $PREFIX 2>/dev/null)
-}
-
-(( $+functions[_mtn_list_ops] )) ||
-_mtn_list_ops() {
-	compadd -- certs keys branches epochs tags vars known unknown ignored missing
+    if [ -n $PREFIX ]; then
+	compadd -X "(prefix of a) revision id" -n \
+	    -- $(mtn complete revision $PREFIX 2>/dev/null)
+    fi
 }
 
 _mtn "$@"
