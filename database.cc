@@ -940,9 +940,9 @@ database::roster_writeback_manager::writeout(roster_id id, cached_roster const &
 unsigned long
 database::roster_size_estimator::operator()(cached_roster const & cr)
 {
-  // do estimate using a totally made up multiplier, probably wildly off
   I(cr.first);
   I(cr.second);
+  // do estimate using a totally made up multiplier, probably wildly off
   return cr.first->all_nodes().size() * 175;
 }
 

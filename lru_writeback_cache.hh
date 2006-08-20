@@ -70,7 +70,7 @@ public:
    *  @param Size maximum size of cache
    */
   LRUWritebackCache(const unsigned long Size, Manager manager)
-    : _manager(manager), _max_size(Size)
+      : _manager(manager), _max_size(Size), _curr_size(0)
   {
   }
 
@@ -116,6 +116,7 @@ public:
     _list.clear();
     _index.clear();
     _dirty.clear();
+    _curr_size = 0;
   };
 
   /// Mark an item as not needing to be written back (do this when writing an
@@ -168,6 +169,10 @@ public:
    */
   inline void insert_clean(Key const & key, const Data & data)
   {
+    // A little sanity check -- if we were empty, then we should have
+    // been zero-size:
+    if (_list.empty())
+      I(_curr_size == 0);
     // Ok, do the actual insert at the head of the list
     _list.push_front(std::make_pair(key, data));
     List_Iter liter = _list.begin();
@@ -179,6 +184,10 @@ public:
       {
         // Remove the last element.
         liter = _list.end();
+        // Unless it's the only element (i.e., the one we just inserted) -- we
+        // never empty ourselves out completely
+        if (liter == _list.begin())
+          break;
         --liter;
         this->_remove(liter->first);
       }
@@ -206,8 +215,6 @@ private:
   }
 
   /** @brief Interal remove function
-   *  @param miter Map_Iter that points to the key to remove
-   *  @warning miter is now longer usable after being passed to this function.
    */
   inline void _remove(const Key & key)
   {
@@ -217,6 +224,7 @@ private:
         safe_erase(_dirty, key);
       }
     Map_Iter miter = _index.find(key);
+    I(miter != _index.end());
     _curr_size -= Sizefn()(miter->second->second);
     _list.erase(miter->second);
     _index.erase(miter);

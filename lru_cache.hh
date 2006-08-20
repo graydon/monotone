@@ -66,7 +66,7 @@ public:
    *  @param Size maximum size of cache
    */
   LRUCache(const unsigned long Size)
-    : _max_size(Size)
+    : _max_size(Size), _curr_size(0)
   {
   }
 
@@ -97,6 +97,7 @@ public:
   {
     _list.clear();
     _index.clear();
+    _curr_size = 0;
   };
 
   /** @brief Checks for the existance of a key in the cache.
