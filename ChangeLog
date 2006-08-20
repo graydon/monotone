@@ -3,6 +3,10 @@
 	* NEWS: Put in date.
 	* INSTALL: Bump boost requirement to 1.33.1.
 
+2006-08-21  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_merging.cc: Add includes and using std::* statements
+
 2006-08-20  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Translated the last current untranslated string.
