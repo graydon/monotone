@@ -1,3 +1,7 @@
+2006-08-19  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc: merge fixes
+
 2006-08-15  Zack Weinberg  <zackw@panix.com>
 
 	* Makefile.am: put the lists back the way they were (mostly).

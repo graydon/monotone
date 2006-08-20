@@ -56,29 +56,6 @@ using std::vector;
 
 using boost::lexical_cast;
 
-static std::string const interface_version = "2.0";
-
-// Name: interface_version
-// Arguments: none
-// Added in: 0.0
-// Purpose: Prints version of automation interface.  Major number increments
-//   whenever a backwards incompatible change is made; minor number increments
-//   whenever any change is made (but is reset when major number increments).
-// Output format: "<decimal number>.<decimal number>\n".  Always matches
-//   "[0-9]+\.[0-9]+\n".
-// Error conditions: None.
-static void
-automate_interface_version(std::vector<utf8> args,
-                           std::string const & help_name,
-                           app_state & app,
-                           std::ostream & output)
-{
-  if (args.size() != 0)
-    throw usage(help_name);
-  
-  output << interface_version << std::endl;
-}
-
 // Name: heads
 // Arguments:
 //   1: branch name (optional, default branch is used if non-existant)
