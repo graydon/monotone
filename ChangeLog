@@ -1,3 +1,7 @@
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Translated the last current untranslated string.
+
 2006-08-20  Zack Weinberg  <zackw@panix.com>
 
 	* tests/log_quits_on_SIGPIPE: Rewrite so it actually tests what we
