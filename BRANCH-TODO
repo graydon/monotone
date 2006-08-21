@@ -4,39 +4,5 @@ _MTN_case-folding_security_patch -- migrate forward, or change test
 
 add test for new format to schema_migration
 
-
-add back some sort of rcache, for 'log' etc. (possibly write-back)
-
-consider reducing roster copying by making the pending cache store
-   pair<shared_ptr<roster_t const>, shared_ptr<marking_map const> >
    
-   writeback cache:
-     keep a dirty set
-     on db commit:
-       write out dirty members, mark them clean
-     on cache flush:
-       if member is dirty, write it out
-       then drop it
-     on db rollback:
-       clear cache
-     on write of fulltext:
-       insert into cache, mark dirty
-     on write of delta:
-       write delta; if fulltext is in hash, mark clean
-
-   roster-no-hash (and maybe mainline) is actually WRONG -- it should
-   clear the vcache on rollback!
-
-consider providing a public api that returns an object of this type,
-   to reduce copying... (esp. if have a proper cache -- if we are
-   going to cache fetched ones anyway, then this is great, if we are
-   not going to cache them, then it actually forces an extra copy for
-   the times when we do need to mutate them... unless there are two
-   apis, I suppose.)
-
-
-on loading a roster, verify its manifest
-
-not really for this branch, but:
-  compute_uncommon_ancestors is being slow; other graph operations are
-   kind of expensive too.  consider a whole-rev-graph memory cache
+on loading a roster, verify its manifest?
