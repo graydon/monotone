@@ -1,3 +1,61 @@
+2006-08-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* debian/control: add libboost-program-options-dev to build dependencies
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST): Remove a trailing comma to get a
+	non-mangled directory layout for tester-tests/ in the distribution
+	tarball.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Put in date.
+	* INSTALL: Bump boost requirement to 1.33.1.
+
+2006-08-21  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_merging.cc: Add includes and using std::* statements
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Translated the last current untranslated string.
+
+2006-08-20  Zack Weinberg  <zackw@panix.com>
+
+	* tests/log_quits_on_SIGPIPE: Rewrite so it actually tests what we
+	want it to (and hopefully is now race free).
+
+2006-08-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Revised completion for almost
+	all commands, especially cat, co, diff, drop, log, propagate,
+	status, and update. Updated list of subcommands for db, ls, and
+	automate. Fixed indentation. Add author information.
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Small typo corrected ("merge" => "merger").
+	* po/sv.po: Fixed a few fuzzies and untranslated strings.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac, UPGRADE: Bump version number to
+	0.29.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Draft 0.29 release notes.
+
+	* cmd_ws_commit.cc (status): Print "no changes", when there are no
+	changes.  Also, use F() for all strings, so that they will be
+	available for translation.
+
+	* monotone.texi (Hooks): Document that you can set MTN_MERGE or
+	lua variable 'merger' to control what merger is selected.
+	(Other Transports): Document the ssh://host/~/foo syntax.
+
 2006-08-18  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
@@ -62,6 +120,7 @@
 	* m4/boost.m4: Create a new macro to factor out code in common
 	among most of the MTN_BOOST_LIB_* macros.
 	* options.hh: Fix typo.
+
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* options.hh: Have a non-template option_base class to allow for...

@@ -2600,7 +2600,11 @@ By default, monotone understands two URI schemes:
 @enumerate
 @item SSH URIs, of the form 
   @code{ssh://[@var{user}@@]@var{hostname}[:@var{port}]/@var{path/to/db.mtn}},
-  to synchronize between private databases on hosts accessible only through SSH.
+  to synchronize between private databases on hosts accessible only
+  through SSH.  (These paths are absolute; to refer to a path relative
+  to a home directory, use
+  @code{ssh://@var{host-part}/~/@var{relative/path.mtn}} or 
+  @code{ssh://@var{host-part}/~@var{user}/@var{relative/path.mtn}}.)
 @item File URIs, of the form
   @code{file:@var{/path/to/db.mtn}}, to synchronize between local databases.
 @end enumerate
@@ -7725,8 +7729,12 @@ on.
 
 Returns a string, which should be the merger of the given texts.  The
 default definition of this hook delegates the actual merge to the
-result of @ref{get_preferred_merge3_command}.  For the default
-definition of this hook, see @ref{Default hooks}.
+result of @ref{get_preferred_merge3_command}.  The default definition
+of @ref{get_preferred_merge3_command} checks to see if the
+@env{MTN_MERGE} environment variable, or the lua variable
+@code{merger} are set to the name of a merge tool that it recognizes,
+and if not, then simply searches for whatever is installed on the
+local system.  For details, see the code in @ref{Default hooks}.
 
 
 @anchor{get_preferred_merge3_command}

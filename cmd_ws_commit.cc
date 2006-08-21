@@ -361,34 +361,40 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
 
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
+      // We intentionally do not collapse the final \n into the format
+      // strings here, for consistency with newline conventions used by most
+      // other format strings.
       if (rev.edges.size() != 1)
         {
           revision_id parent = edge_old_revision(*i);
-          cout << "Changes against parent " << parent << "\n";
+          cout << (F("Changes against parent %s") % parent).str() << "\n";
         }
       cset const & cs = edge_changes(*i);
 
+      if (cs.empty())
+        cout << F("no changes").str() << "\n";
+
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
-        cout << "dropped " << *i << "\n";
+        cout << (F("dropped %s") % *i).str() << "\n";
 
       for (map<split_path, split_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
-        cout << "renamed " << i->first << "\n"
-              << "     to " << i->second << "\n";
+        cout << (F("renamed %s\n"
+                   "     to %s") % i->first % i->second).str() << "\n";
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
-        cout << "added   " << *i << "\n";
+        cout << (F("added   %s") % *i).str() << "\n";
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
-        cout << "added   " << i->first << "\n";
+        cout << (F("added   %s") % i->first).str() << "\n";
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << "patched " << i->first << "\n";
+        cout << (F("patched %s") % (i->first)).str() << "\n";
     }
 }
 
