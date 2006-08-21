@@ -1,3 +1,7 @@
+2006-08-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* debian/control: add libboost-program-options-dev to build dependencies
+
 2006-08-20  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (EXTRA_DIST): Remove a trailing comma to get a
