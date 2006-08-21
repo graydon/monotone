@@ -1,3 +1,9 @@
+2006-08-21  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (pick_branch_for_update): New function split out
+	of CMD(update).
+	(explicit_merge_and_update): New command.
+
 2006-08-08  Zack Weinberg  <zackw@panix.com>
 
 	* tests/migrate_workspace/__driver__.lua: Add migration tests for
