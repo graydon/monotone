@@ -678,7 +678,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           if (print_this)
           {
-            if (global_sanity.brief)
+            if (app.brief)
               {
                 cout << rid;
                 log_certs(app, rid, author_name);

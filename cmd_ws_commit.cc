@@ -419,7 +419,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     {
       // No checkout dir specified, use branch name for dir.
       N(!app.branch_name().empty(), 
-        F("need --branch argument for branch-based checkout"));
+        F("you must specify a destination directory"));
       dir = system_path(app.branch_name());
     }
   else
@@ -438,7 +438,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     {
       // use branch head revision
       N(!app.branch_name().empty(), 
-        F("need --branch argument for branch-based checkout"));
+        F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
