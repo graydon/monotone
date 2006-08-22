@@ -1,5 +1,10 @@
 2006-08-22  Jon Bright  <jon@siliconcircus.com>
 
+	* keys.cc: Fix the unit tests.  Thou shalt (or at least, I shall) 
+	remember to run make check before syncing.
+
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
 	* keys.hh, keys.cc: Make passphrases be UTF-8. Change generate_key_pair
 	to have two prototypes, one of which asks for a passphrase as before and
 	one of which accepts a passphrase as a parameter.
