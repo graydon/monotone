@@ -1,3 +1,7 @@
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Two untranslated strings to translate.
+
 2006-08-22  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* contrib/monotone.zsh_completion: Extended filename completion to
