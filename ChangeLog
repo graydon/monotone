@@ -1,5 +1,11 @@
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_ws_commit.cc (checkout): Allow user to pass -r without
+	either -b or a directory (as per bug #17498).
+	* tests/checkout_-r_no_dir/: New test.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_ws_commit.cc (checkout): Improve error messages.
 
 2006-08-22  Nathaniel Smith  <njs@pobox.com>

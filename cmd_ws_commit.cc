@@ -407,32 +407,11 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
 {
   revision_id ident;
   system_path dir;
-  // We have a special case for "checkout .", i.e., to current dir.
-  bool checkout_dot = false;
 
   transaction_guard guard(app.db, false);
 
   if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
-
-  if (args.size() == 0)
-    {
-      // No checkout dir specified, use branch name for dir.
-      N(!app.branch_name().empty(), 
-        F("you must specify a destination directory"));
-      dir = system_path(app.branch_name());
-    }
-  else
-    {
-      // Checkout to specified dir.
-      dir = system_path(idx(args, 0));
-      if (idx(args, 0) == utf8("."))
-        checkout_dot = true;
-    }
-
-  if (!checkout_dot)
-    require_path_is_nonexistent
-      (dir, F("checkout directory '%s' already exists") % dir);
 
   if (app.revision_selectors.size() == 0)
     {
@@ -480,6 +459,35 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(certs.size() != 0, F("revision %s is not a member of branch %s")
         % ident % app.branch_name);
     }
+  
+  // we do this part of the checking down here, because it is legitimate to
+  // do
+  //  $ mtn co -r h:net.venge.monotone
+  // and have mtn guess the branch, and then use that branch name as the
+  // default directory.  But in this case the branch name will not be set
+  // until after the guess_branch() call above:
+  {
+    bool checkout_dot = false;
+    
+    if (args.size() == 0)
+      {
+        // No checkout dir specified, use branch name for dir.
+        N(!app.branch_name().empty(), 
+          F("you must specify a destination directory"));
+        dir = system_path(app.branch_name());
+      }
+    else
+      {
+        // Checkout to specified dir.
+        dir = system_path(idx(args, 0));
+        if (idx(args, 0) == utf8("."))
+          checkout_dot = true;
+      }
+    
+    if (!checkout_dot)
+      require_path_is_nonexistent
+        (dir, F("checkout directory '%s' already exists") % dir);
+  }
 
   app.create_workspace(dir);
 
