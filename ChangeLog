@@ -1,5 +1,9 @@
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* annotate.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* restrictions.cc (includes): Don't log what's going on when we
 	have a totally unrestricted mask; it's taking several percent of
 	cpu time.
