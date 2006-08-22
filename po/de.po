@@ -810,7 +810,7 @@ msgstr "mehrere Kandidaten für die Aktualisierung:"
 #: cmd_merging.cc:137
 #, c-format
 msgid "choose one with '%s update -r<id>'"
-msgstr "wählen Sie eine mit '%s update -r <id>'"
+msgstr "wählen Sie eine durch '%s update -r<id>'"
 
 #: cmd_merging.cc:138
 #, c-format
@@ -1472,7 +1472,7 @@ msgstr "Zweig %s hat mehrere Köpfe:"
 #: cmd_ws_commit.cc:452
 #, c-format
 msgid "choose one with '%s checkout -r<id>'"
-msgstr "wählen Sie einen mit '%s update -r <id>'"
+msgstr "wählen Sie einen durch '%s update -r<id>'"
 
 #: cmd_ws_commit.cc:453
 #, c-format
