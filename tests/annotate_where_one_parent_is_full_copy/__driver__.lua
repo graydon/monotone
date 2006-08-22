@@ -45,5 +45,5 @@ revs.d = base_revision()
 -- REVA: c
 --
 
-check(mtn("annotate", "foo"), 0, true, false)
+check(mtn("annotate", "--brief", "foo"), 0, true, false)
 check(greplines("stdout", {revs.a, revs.a, revs.b, revs.b, revs.a}))

@@ -240,7 +240,8 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
         }
       else
         {
-          L(FL("empty include of nid %d path '%s'") % nid % file_path(sp));
+          // don't log this, we end up using rather a bit of cpu time just
+          // in the logging code, for totally unrestricted operations.
           return true;
         }
     }

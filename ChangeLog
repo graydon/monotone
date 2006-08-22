@@ -10,6 +10,83 @@
 	subsequent libraries.
 	(BOOST_STATIC_LINK_OPTION): Properly handle BOOST_SUFFIX being a list.
 
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.cc: Fix the unit tests.  Thou shalt (or at least, I shall) 
+	remember to run make check before syncing.
+
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.hh, keys.cc: Make passphrases be UTF-8. Change generate_key_pair
+	to have two prototypes, one of which asks for a passphrase as before and
+	one of which accepts a passphrase as a parameter.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_files.cc (annotate): Invert the meaning of --brief --- now
+	the default is to display name/date, and --brief causes it to
+	simply show revisions.  This functionality should probably move
+	from here to 'automate annotate', but this commit doesn't go that
+	far.
+	* tests/annotate_with_human_output: New test.
+	* tests/*annotate*: Update command line syntax, and add check()
+	calls to some tests that were missing them (!).
+	
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Two untranslated strings to translate.
+
+2006-08-22  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Extended filename completion to
+	subdirs, minor cleanups.
+	(_mtn_files): New function, factored out filename completion.
+	(_mtn_rcwd): New function, determines cwd relative to wd.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (checkout): Allow user to pass -r without
+	either -b or a directory (as per bug #17498).
+	* tests/checkout_-r_no_dir/: New test.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (checkout): Improve error messages.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (sanity): Move 'brief' from here...
+	* app_state.cc (app_state): ...to here, with the rest of the
+	options.
+	* monotone.cc, cmd_diff_log.cc: Adjust accordingly.
+	* cmd_files.cc (annotate): 
+	* annotate.cc (do_annotate): Take the brief option from outside,
+	instead of accessing the global from deep in the middle of
+	annotate.
+	
+	No behavioral changes in this commit.
+	
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* annotate.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.cc (includes): Don't log what's going on when we
+	have a totally unrestricted mask; it's taking several percent of
+	cpu time.
+
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* examples/display_branches.lua (netsync_branches): Change it
+	so internal calls to other hooks are done to private versions.
+	This is so we don't mess with other implementations of the same
+	hooks which may be simultaneously present.
+
 2006-08-21  Matt Johnston  <matt@ucc.asn.au>
 
 	* debian/control: add libboost-program-options-dev to build dependencies
