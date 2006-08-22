@@ -1,5 +1,9 @@
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_ws_commit.cc (checkout): Improve error messages.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.hh (sanity): Move 'brief' from here...
 	* app_state.cc (app_state): ...to here, with the rest of the
 	options.
