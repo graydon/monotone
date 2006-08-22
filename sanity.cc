@@ -121,12 +121,6 @@ sanity::set_debug()
 }
 
 void
-sanity::set_brief()
-{
-  brief = true;
-}
-
-void
 sanity::set_quiet()
 {
   debug = false;

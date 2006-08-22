@@ -67,7 +67,7 @@ public:
   /// return true if we have no more unassigned lines
   bool is_complete() const;
 
-  void dump(app_state & app) const;
+  void dump(app_state & app, bool just_revs) const;
 
   string get_line(int line_index) const
   {
@@ -443,14 +443,14 @@ annotate_context::build_revisions_to_annotations
 
 
 void
-annotate_context::dump(app_state & app) const
+annotate_context::dump(app_state & app, bool just_revs) const
 {
   revision_id nullid;
   I(annotations.size() == file_lines.size());
 
   map<revision_id, string> revs_to_notations;
   string empty_note;
-  if (global_sanity.brief)
+  if (!just_revs)
     {
       build_revisions_to_annotations(app, revs_to_notations);
       size_t max_note_length = revs_to_notations.begin()->second.size();
@@ -461,7 +461,7 @@ annotate_context::dump(app_state & app) const
   for (size_t i = 0; i < file_lines.size(); i++)
     {
       //I(! (annotations[i] == nullid) );
-      if (global_sanity.brief)
+      if (!just_revs)
         {
           if (lastid == annotations[i])
             cout << empty_note << ": "
@@ -903,7 +903,7 @@ find_ancestors(app_state & app,
 }
 
 void
-do_annotate (app_state &app, file_t file_node, revision_id rid)
+do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
 {
   L(FL("annotating file %s with content %s in revision %s")
     % file_node->self % file_node->content % rid);
@@ -940,7 +940,7 @@ do_annotate (app_state &app, file_t file_node, revision_id rid)
   acp->annotate_equivalent_lines();
   I(acp->is_complete());
 
-  acp->dump(app);
+  acp->dump(app, just_revs);
 }
 
 // Local Variables:

@@ -16,7 +16,7 @@
 #include "app_state.hh"
 
 void
-do_annotate(app_state &app, file_t file_node, revision_id rid);
+do_annotate(app_state &app, file_t file_node, revision_id rid, bool just_revs);
 
 // Local Variables:
 // mode: C++

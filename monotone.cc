@@ -523,7 +523,7 @@ cpp_main(int argc, char ** argv)
 
       if (option::brief.given(vm))
         {
-          global_sanity.set_brief();
+          app.brief = true;
         }
 
       if (option::diffs.given(vm))

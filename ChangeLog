@@ -1,5 +1,18 @@
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.hh (sanity): Move 'brief' from here...
+	* app_state.cc (app_state): ...to here, with the rest of the
+	options.
+	* monotone.cc, cmd_diff_log.cc: Adjust accordingly.
+	* cmd_files.cc (annotate): 
+	* annotate.cc (do_annotate): Take the brief option from outside,
+	instead of accessing the global from deep in the middle of
+	annotate.
+	
+	No behavioral changes in this commit.
+	
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* sanity.cc: Remove tabs.
 
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
