@@ -7,6 +7,23 @@
 	notifications for all revisions, unfiltered.  Still, it
 	was time to share this.  Tests are underway.
 
+2006-08-22  Zack Weinberg  <zackw@panix.com>
+
+	* m4/boost.m4 (BOOST_VERSION_SPECIFIC_BUGS): No need to check for
+	1.32.x bugs now we require 1.33.1 or newer.
+	(BOOST_SUFFIX_ARG): Clarify semantics of the variable; set the
+	default here.
+	(BOOST_LIB_IFELSE): Take care to distinguish 'we don't know what
+	suffix to use yet' from 'the selected suffix is the empty string'.
+	Once a suffix has been chosen, use it exclusively for all
+	subsequent libraries.
+	(BOOST_STATIC_LINK_OPTION): Properly handle BOOST_SUFFIX being a list.
+
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.cc: Fix the unit tests.  Thou shalt (or at least, I shall) 
+	remember to run make check before syncing.
+
 2006-08-22  Jon Bright  <jon@siliconcircus.com>
 
 	* keys.hh, keys.cc: Make passphrases be UTF-8. Change generate_key_pair

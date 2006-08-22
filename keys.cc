@@ -609,11 +609,12 @@ signature_round_trip_test()
   app.lua.add_test_hooks();
 
   BOOST_CHECKPOINT("generating key pairs");
-  rsa_keypair_id key("bob123@test.com");
   keypair kp;
-  generate_key_pair(app.lua, key, kp, "bob123@test.com");
+  utf8 passphrase("bob123@test.com");
+  generate_key_pair(kp, passphrase);
 
   BOOST_CHECKPOINT("signing plaintext");
+  rsa_keypair_id key("bob123@test.com");
   string plaintext("test string to sign");
   base64<rsa_sha1_signature> sig;
   make_signature(app, key, kp.priv, plaintext, sig);
