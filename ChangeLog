@@ -1,3 +1,10 @@
+2006-08-22  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Extended filename completion to
+	subdirs, minor cleanups.
+	(_mtn_files): New function, factored out filename completion.
+	(_mtn_rcwd): New function, determines cwd relative to wd.
+
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* restrictions.cc (includes): Don't log what's going on when we

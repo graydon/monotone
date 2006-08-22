@@ -65,7 +65,7 @@ _mtn_command() {
     else
 	local curcontext="$curcontext"
 	
-	if [ -n $cmd ]; then
+	if [[ -n $cmd ]]; then
 	    curcontext="${curcontext%:*:*}:mtn-${cmd}:"
 	    _call_function ret _mtn_$cmd || _message 'no more arguments'
 	else
@@ -89,7 +89,7 @@ _mtn_annotate() {
     _arguments -s : \
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
 	'--brief[print a brief version of the normal output]'\
-	'(*)*:file to annotate:_mtn_existing_entries'
+	'(*)*:file to annotate:_mtn_files_known'
 }
 
 (( $+functions[_mtn_approve] )) ||
@@ -107,7 +107,7 @@ _mtn_attr() {
 	# fixme: should differentiate between set, get and drop
 	compadd -- $(mtn automate attributes)
     else
-	local fname="$words[3]";
+	local fname="$words[3]"
 	compadd -- $(mtn automate attributes $fname)
     fi
 }
@@ -127,7 +127,7 @@ _mtn_automate() {
 _mtn_cat() {
     _arguments -s : \
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
-	'*:file to cat:_mtn_existing_entries'
+	'*:file to cat:_mtn_files_known'
 }
 
 (( $+functions[_mtn_cert] )) ||
@@ -177,7 +177,7 @@ _mtn_commit() {
 	'--date=[override date/time for commit]:date: '\
 	'--author=[override author for commit]:author: '\
 	'--depth=[limit the number of levels of directories to descend]:depth'\
-	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
 	'*:files to commit:_mtn_files_changed'
 }
 
@@ -207,7 +207,7 @@ _mtn_diff() {
     _arguments -s : \
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
 	'--depth=[limit the number of levels of directories to descend]:depth: '\
-	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
 	{'(--unified)-u','(-u)--unified'}'[use unified diff format]'\
 	{'(--contex)-c','(-c)--contex'}'[use context diff format]'\
 	'--external[use external diff hook for generating diffs]'\
@@ -229,7 +229,7 @@ _mtn_drop() {
 	{'(--execute)-e','(-e)--execute'}'[perform the associated file operation]'\
 	'--missing[perform the operations for files missing from workspace]'\
 	{'(--recursive)-R','(-R)--recursive'}'[also operate on the contents of any listed directories]'\
-	'*:entries to drop:_mtn_existing_entries'
+	'*:entries to drop:_mtn_files_known'
 }
 
 (( $+functions[_mtn_dropkey] )) ||
@@ -261,7 +261,7 @@ _mtn_log() {
 	'--diffs[print diffs along with logs]'\
 	'--no-merges[exclude merges when printing logs]'\
 	'--no-files[exclude files when printing logs]'\
-	'*:restriction for log:_mtn_existing_entries'
+	'*:restriction for log:_mtn_files_known'
 }
 
 (( $+functions[_mtn_list] )) ||
@@ -318,14 +318,14 @@ _mtn_rcs_import() {
 _mtn_rename() {
     _arguments -s : \
 	{'(--execute)-e','(-e)--execute'}'[perform the associated file operation]'\
-	'*:files to rename:_mtn_existing_entries'
+	'*:files to rename:_mtn_files_known'
 }
 
 (( $+functions[_mtn_revert] )) ||
 _mtn_revert() {
     _arguments -s : \
 	'--depth=[limit the number of levels of directories to descend]:depth: '\
-	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
 	'--missing[perform the operations for files missing from workspace]'\
 	'*:files to revert:_mtn_files_changed'
 }
@@ -345,8 +345,8 @@ _mtn_serve() {
 _mtn_status() {
     _arguments -s : \
 	'--depth=[limit the number of levels of directories to descend]:depth: '\
-	'--exclude=[leave out anything described by its argument]:file:_mtn_existing_entries'\
-	'*:file:_mtn_existing_entries'
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
+	'*:file:_mtn_files_known'
 }
 
 (( $+functions[_mtn_sync] )) ||
@@ -358,7 +358,7 @@ _mtn_sync() {
 }
 
 (( $+functions[_mtn_tag] )) ||
-_mtn_tag() {
+q_mtn_tag() {
     _arguments -s : \
 	'1:revision to tag:_mtn_revisions'\
 	'(1)*:tagname: '
@@ -382,23 +382,28 @@ _mtn_update() {
 
 (( $+functions[_mtn_files_unknown] )) ||
 _mtn_files_unknown() {
-    for i in $(mtn ls unknown --depth=0 . 2>/dev/null)
-      do compadd -- $i:t
-    done
+    _mtn_files "unknown"
 }
 
 (( $+functions[_mtn_files_changed] )) ||
 _mtn_files_changed() {
-    for i in $(mtn ls changed --depth=0 . 2>/dev/null)
-      do compadd -- $i:t
-    done
+    _mtn_files "changed"
 }
 
-(( $+functions[_mtn_existing_entries] )) ||
-_mtn_existing_entries() {
-    for i in $(mtn ls known --depth=0 . 2>/dev/null)
-      do compadd -- $i:t
-    done
+(( $+functions[_mtn_files_known] )) ||
+_mtn_files_known() {
+    _mtn_files "known"
+}
+
+(( $+functions[_mtn_files] )) ||
+_mtn_files() {
+    # "mtn ls --depth=0 foo ." should output the names of directories
+    # containing suppressed matches
+    local prefix=${PREFIX}X
+    local rcwd="$(_mtn_rcwd)"
+    local -a list
+    list=( ${${${(f)"$(mtn ls --depth=0 $1 ${prefix:h} 2>/dev/null)"}#$rcwd}#/} )
+    compadd -f -a list 
 }
 
 (( $+functions[_mtn_branches] )) ||
@@ -408,7 +413,7 @@ _mtn_branches() {
 
 (( $+functions[_mtn_keys] )) ||
 _mtn_keys() {
-    if [ -n $PREFIX ]; then
+    if [[ -n $PREFIX ]]; then
 	compadd -X "(prefix of a) key id" -n \
 	    -- $(mtn complete key $PREFIX 2>/dev/null)
     fi
@@ -416,10 +421,22 @@ _mtn_keys() {
 
 (( $+functions[_mtn_revisions] )) ||
 _mtn_revisions() {
-    if [ -n $PREFIX ]; then
+    if [[ -n $PREFIX ]]; then
 	compadd -X "(prefix of a) revision id" -n \
 	    -- $(mtn complete revision $PREFIX 2>/dev/null)
     fi
+}
+
+# helper function, determines cwd relative to the root of the workspace
+
+(( $+functions[_mtn_rcwd] )) ||
+_mtn_rcwd() {
+    local current="$(pwd)"
+    local base=$current
+    while [[ "${base}" != "/" && ! -d "${base}/_MTN" ]]; do
+	base=${base:h}
+    done
+    echo ${current#$base/}
 }
 
 _mtn "$@"
