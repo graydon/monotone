@@ -35,6 +35,13 @@
 	have a totally unrestricted mask; it's taking several percent of
 	cpu time.
 
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* examples/display_branches.lua (netsync_branches): Change it
+	so internal calls to other hooks are done to private versions.
+	This is so we don't mess with other implementations of the same
+	hooks which may be simultaneously present.
+
 2006-08-21  Matt Johnston  <matt@ucc.asn.au>
 
 	* debian/control: add libboost-program-options-dev to build dependencies

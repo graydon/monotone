@@ -12,7 +12,7 @@ Sun Aug 20 15:58:08 PDT 2006
         - It is now significantly easier to control what merger
           monotone uses to resolve conflicts; for instance, to use
           emacs to resolve conflicts, add:
-             merge = "emacs"
+             merger = "emacs"
           to your .monotonerc file.  To override temporarily, you can
           also use the environment variable MTN_MERGE, which takes the
           same strings.  Currently recognized strings are "kdiff3",
