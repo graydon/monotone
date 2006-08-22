@@ -1,3 +1,9 @@
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.hh, keys.cc: Make passphrases be UTF-8. Change generate_key_pair
+	to have two prototypes, one of which asks for a passphrase as before and
+	one of which accepts a passphrase as a parameter.
+
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_files.cc (annotate): Invert the meaning of --brief --- now
