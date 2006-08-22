@@ -1,5 +1,9 @@
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
+	* sanity.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
 	* annotate.cc: Remove tabs.
 
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
