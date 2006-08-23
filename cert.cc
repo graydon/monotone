@@ -680,12 +680,6 @@ cert_revision_testresult(revision_id const & r,
   put_simple_revision_cert(r, testresult_cert_name, lexical_cast<string>(passed), app, pc);
 }
 
-
-#ifdef BUILD_UNIT_TESTS
-#include "unit_tests.hh"
-
-#endif // BUILD_UNIT_TESTS
-
 // Local Variables:
 // mode: C++
 // fill-column: 76

@@ -1372,8 +1372,7 @@ static void dump_incorrect_merge(vector<string> const & expected,
 }
 
 // high tech randomizing test
-
-static void randomizing_merge_test()
+UNIT_TEST(diff_patch, randomizing_merge)
 {
   for (int i = 0; i < 30; ++i)
     {
@@ -1395,8 +1394,7 @@ static void randomizing_merge_test()
 
 
 // old boring tests
-
-static void merge_prepend_test()
+UNIT_TEST(diff_patch, merge_prepend)
 {
   BOOST_CHECKPOINT("prepend test");
   vector<string> anc, d1, d2, m1, m2, gm;
@@ -1426,8 +1424,7 @@ static void merge_prepend_test()
   BOOST_CHECK(gm == m2);
 }
 
-
-static void merge_append_test()
+UNIT_TEST(diff_patch, merge_append)
 {
   BOOST_CHECKPOINT("append test");
   vector<string> anc, d1, d2, m1, m2, gm;
@@ -1457,7 +1454,7 @@ static void merge_append_test()
 
 }
 
-static void merge_additions_test()
+UNIT_TEST(diff_patch, merge_additions)
 {
   BOOST_CHECKPOINT("additions test");
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
@@ -1486,7 +1483,7 @@ static void merge_additions_test()
   BOOST_CHECK(!merge3(anc, d1, cf, m1));
 }
 
-static void merge_deletions_test()
+UNIT_TEST(diff_patch, merge_deletions)
 {
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
   string desc2("I like oatmeal\nI like toast");
@@ -1508,18 +1505,6 @@ static void merge_deletions_test()
     dump_incorrect_merge (gm, m2, "merge_deletion 2");
   BOOST_CHECK(gm == m2);
 }
-
-
-void add_diff_patch_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&merge_prepend_test));
-  suite->add(BOOST_TEST_CASE(&merge_append_test));
-  suite->add(BOOST_TEST_CASE(&merge_additions_test));
-  suite->add(BOOST_TEST_CASE(&merge_deletions_test));
-  suite->add(BOOST_TEST_CASE(&randomizing_merge_test));
-}
-
 
 #endif // BUILD_UNIT_TESTS
 

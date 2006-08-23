@@ -1,3 +1,27 @@
+2006-08-23  Zack Weinberg  <zackw@panix.com>
+
+	* unit_tests.cc: Rewrite for declarative registration of test cases,
+	better command line handling, and more useful stderr chatter in
+	normal operation.  All debug output now goes to a logfile (default
+	"unit_tests.log") and can be sent back to stderr with --debug.
+	* unit_tests.hh: Remove declarations of removed functions.
+	Don't include unit_test_suite.hpp.
+	(UNIT_TEST, struct unit_test_case): New.
+	(BOOST_CHECK_NOT_THROW): Reindent and wrap in do { } while (0).
+
+	* charset.cc, crypto_tests.cc, cset.cc, diff_patch.cc, globish.cc
+	* keys.cc, netcmd.cc, netxx_pipe.cc, packet.cc, paths.cc, refiner.cc
+	* restrictions.cc, revision.cc, roster.cc, roster_merge.cc
+	* simplestring_xform.cc, string_queue.cc, transforms.cc, uri.cc
+	* xdelta.cc: Unit tests are now defined like commands, as
+	UNIT_TEST(group, test) { ... } and no registration function is
+	necessary.
+
+	* cert.cc, file_io.cc, vocab.cc: Remove empty BUILD_UNIT_TESTS block.
+
+	* commands.cc (command::command) Remove redundant boolean, just
+	check whether cmds is NULL.
+
 2006-08-23  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* tests/diff_against_empty_file/expected.diff:
