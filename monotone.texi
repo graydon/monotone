@@ -7683,35 +7683,6 @@ can override or extend these hooks if you have a preferred tool, or if
 you have a tool specific to certain file types.
 
 @ftable @code
-@anchor{merge2}
-@item merge2 (@var{left_path}, @var{right_path}, @var{merged_path}, @var{left_text}, @var{right_path})
-
-This hook is called to resolve merges that monotone could not resolve
-automatically.  The left and right contents of the file are passed in
-the @var{left_text}, and @var{right_text} strings.  In addition, the
-hook is given the names that this file had in left (@var{left_path}
-and right (@var{right_path}) trees, and the name it will end up having
-in the merged tree (@var{merged_path}).  These paths are useful for
-merge tools that can display the names of files in their GUI, since
-the actual path names are likely more meaningful than the temporary
-file names the merge tool will actually be working on.
-
-Returns a string, which should be the merger of the given texts.  The
-default definition of this hook delegates the actual merge to the
-result of @ref{get_preferred_merge2_command}.  For the default
-definition of this hook, see @ref{Default hooks}.
-
-
-@anchor{get_preferred_merge2_command}
-@item get_preferred_merge2_command(@var{tbl})
-
-Returns the results of running an external merge on two strings.
-@var{tbl} wraps up the various arguments for each merge command and 
-is always provided by @ref{merge2}. If there is a particular editor
-that you would like to use to perform merge2 operations, override
-this hook to specify it.
-
-
 @anchor{merge3}
 @item merge3 (@var{ancestor_path}, @var{left_path}, @var{right_path}, @var{merged_path}, @var{ancestor_text}, @var{left_text}, @var{right_text})
 

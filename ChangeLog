@@ -7,6 +7,46 @@
 	patch(1) implementations that do not deal correctly with reversed
 	patches applied to empty files.  Problem exposed under NetBSD.
 
+2006-08-23  Jon Bright  <jon@siliconcircus.com>
+
+	* automate.cc: add new automate genkey command, avoiding people
+	having to enter into a little chat script with monotone in order to
+	provide genkey with an alternative interface.
+	* tests/automate_genkey: Test it.
+	* testsuite.lua: Add the test
+	* cmd_automate.cc: Bump the interface version to 3.1
+
+	* tests/automate_genkey: Fix the test.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): The hooks merge2 and
+	get_preferred_merge2_command are dead.  Remove them from
+	documentation as well.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua: The previous change wasn't entirely wise.
+	So, a larger rework is in order to make the merging methods
+	more intelligent, as follows.
+	(mergers): all mergers now have an `available' and a `wanted'
+	function, to distinguish between availability of the programs
+	needed by each merger method and a check if the user wants to
+	use a perticular merger.
+	(mergers.rcsmerge.cmd): Use a hardcoded "vim" instead of the
+	non-existing variable `vim'.  This is untested and may need
+	further correction.
+	(get_preferred_merge3_command): If the user defined $MTN_MERGE
+	or the lua variable `merger', use it if the needed programs
+	are available, and fail if not.  If neither was defined, go
+	through all the mergers and pick the first for which the needed
+	programs are available and the user wants to use it.  Return
+	the name of the merger as well if it was specified through
+	$MTN_MERGE or `merger'.
+	(merge3): If get_preferred_merge2_command failed and returned
+	a merger name, tell the user about $MTN_MERGE and `merger',
+	otherwise, print the same old message as before.
+
 2006-08-23  Richard Levitte  <richard@levitte.org>
 
 	* std_hooks.lua (mergers.emacs.available): Since
@@ -29,6 +69,31 @@
 
 2006-08-22  Zack Weinberg  <zackw@panix.com>
 
+	* app_state.hh (app_state): Remove set_prog_name and prog_name members.
+	* app_state.cc (app_state::app_state): Don't call set_prog_name.
+	(app_state::set_prog_name): Delete definition.
+	* ui.hh (user_interface): Make prog_name member public.  Delete
+	set_prog_name member.
+	* ui.cc (user_interface::user_interface): Initialize prog_name to "?".
+	(user_interface::set_prog_name): Delete definition.
+	* monotone.cc (my_poptStuffArgFile): Delete.
+	(cpp_main): Delete code that was deleted once before and came
+	back in the .boost-program-options merge.  Handle argv[0]
+	separately from the rest of argv.  Update for ui.prog_name being
+	the only copy of the program invocation name.  Use ui.prog_name
+	instead of the local variable.
+	* commands.cc, roster.cc: Include ui.hh.
+	* cmd_merging.cc (update, pluck)
+	* cmd_ws_commit.cc (checkout, commit)
+	* commands.cc (notify_if_multiple_heads)
+	* database.cc (database::check_schema)
+	* netsync.cc (session::process_hello_command)
+	* roster.cc (update_current_roster_from_filesystem):
+	Use ui.prog_name instead of app.prog_name.
+
+
+2006-08-22  Zack Weinberg  <zackw@panix.com>
+
 	* m4/boost.m4 (BOOST_VERSION_SPECIFIC_BUGS): No need to check for
 	1.32.x bugs now we require 1.33.1 or newer.
 	(BOOST_SUFFIX_ARG): Clarify semantics of the variable; set the
@@ -41,7 +106,7 @@
 
 2006-08-22  Jon Bright  <jon@siliconcircus.com>
 
-	* keys.cc: Fix the unit tests.  Thou shalt (or at least, I shall) 
+	* keys.cc: Fix the unit tests.  Thou shalt (or at least, I shall)
 	remember to run make check before syncing.
 
 2006-08-22  Jon Bright  <jon@siliconcircus.com>
@@ -60,7 +125,7 @@
 	* tests/annotate_with_human_output: New test.
 	* tests/*annotate*: Update command line syntax, and add check()
 	calls to some tests that were missing them (!).
-	
+
 2006-08-22  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: Two untranslated strings to translate.
@@ -88,13 +153,13 @@
 	* app_state.cc (app_state): ...to here, with the rest of the
 	options.
 	* monotone.cc, cmd_diff_log.cc: Adjust accordingly.
-	* cmd_files.cc (annotate): 
+	* cmd_files.cc (annotate):
 	* annotate.cc (do_annotate): Take the brief option from outside,
 	instead of accessing the global from deep in the middle of
 	annotate.
-	
+
 	No behavioral changes in this commit.
-	
+
 2006-08-22  Nathaniel Smith  <njs@pobox.com>
 
 	* sanity.cc: Remove tabs.

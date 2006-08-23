@@ -107,45 +107,6 @@ struct ui_library
   }
 };
 
-
-#if 0 // FIXME! need b::po equiv.
-// Read arguments from a file.  The special file '-' means stdin.
-// Returned value must be free()'d, after arg parsing has completed.
-static void
-my_poptStuffArgFile(poptContext con, utf8 const & filename)
-{
-  utf8 argstr;
-  {
-    data dat;
-    read_data_for_command_line(filename, dat);
-    external ext(dat());
-    system_to_utf8(ext, argstr);
-  }
-
-  const char **argv = 0;
-  int argc = 0;
-  int rc;
-
-  // Parse the string.  It's OK if there are no arguments.
-  rc = poptParseArgvString(argstr().c_str(), &argc, &argv);
-  N(rc >= 0 || rc == POPT_ERROR_NOARG,
-    F("problem parsing arguments from file %s: %s")
-    % filename % poptStrerror(rc));
-
-  if (rc != POPT_ERROR_NOARG)
-    {
-      // poptStuffArgs does not take an argc argument, but rather requires that
-      // the argv array be null-terminated.
-      I(argv[argc] == NULL);
-      N((rc = poptStuffArgs(con, argv)) >= 0,
-        F("weird error when stuffing arguments read from %s: %s\n")
-        % filename % poptStrerror(rc));
-    }
-
-  free(argv);
-}
-#endif
-
 void
 tokenize_for_command_line(string const & from, vector<string> & to)
 {
@@ -240,61 +201,35 @@ cpp_main(int argc, char ** argv)
   // Set up secure memory allocation etc
   botan_library acquire_botan;
 
-  // set up some marked strings, so even if our logbuf overflows, we'll get
-  // this data in a crash.
-  string cmdline_string;
-  {
-    ostringstream cmdline_ss;
-    for (int i = 0; i < argc; ++i)
-      {
-        if (i)
-          cmdline_ss << ", ";
-        cmdline_ss << "'" << argv[i] << "'";
-      }
-    cmdline_string = cmdline_ss.str();
-  }
-  MM(cmdline_string);
-  L(FL("command line: %s\n") % cmdline_string);
-
-  string locale_string = (setlocale(LC_ALL, NULL) == NULL ? "n/a" : setlocale(LC_ALL, NULL));
-  MM(locale_string);
-  L(FL("set locale: LC_ALL=%s\n") % locale_string);
-
-  string full_version_string;
-  get_full_version(full_version_string);
-  MM(full_version_string);
-
-  // Set up secure memory allocation etc
-  Botan::Init::initialize();
-  Botan::set_default_allocator("malloc");
+  // Record where we are.  This has to happen before any use of
+  // boost::filesystem.
+  save_initial_path();
 
   // decode all argv values into a UTF-8 array
-  save_initial_path();
   vector<string> args;
-  utf8 progname;
-  for (int i = 0; i < argc; ++i)
+  for (int i = 1; i < argc; ++i)
     {
       external ex(argv[i]);
       utf8 ut;
       system_to_utf8(ex, ut);
-      if (i)
-        args.push_back(ut());
-      else
-        progname = ut;
+      args.push_back(ut());
     }
 
-  // find base name of executable
-  string prog_path = fs::path(progname()).leaf();
-  if (prog_path.rfind(".exe") == prog_path.size() - 4)
-    prog_path = prog_path.substr(0, prog_path.size() - 4);
-  utf8 prog_name(prog_path);
+  // find base name of executable, convert to utf8, and save it in the
+  // global ui object
+  {
+    string prog_name = fs::path(argv[0]).leaf();
+    if (prog_name.rfind(".exe") == prog_name.size() - 4)
+      prog_name = prog_name.substr(0, prog_name.size() - 4);
+    utf8 prog_name_u;
+    system_to_utf8(prog_name, prog_name_u);
+    ui.prog_name = prog_name_u();
+    I(!ui.prog_name.empty());
+  }
 
   app_state app;
   try
     {
-
-      app.set_prog_name(prog_name);
-
       // set up for parsing.  we add a hidden argument that collections all
       // positional arguments, which we process ourselves in a moment.
       po::options_description all_options;
@@ -729,12 +664,12 @@ cpp_main(int argc, char ** argv)
       po::options_description cmd_options_desc = commands::command_options(u.which);
       unsigned count = cmd_options_desc.options().size();
 
-      cout << F("Usage: %s [OPTION...] command [ARG...]") % prog_name << "\n\n";
+      cout << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
       cout << option::global_options << "\n";
 
       if (count > 0)
         {
-          cout << F("Options specific to '%s %s':") % prog_name % u.which << "\n\n";
+          cout << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
           cout << cmd_options_desc << "\n";
         }
 

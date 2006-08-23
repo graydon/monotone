@@ -61,7 +61,6 @@ app_state::app_state()
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
-  set_prog_name(utf8(string("mtn")));
 }
 
 app_state::~app_state()
@@ -357,13 +356,6 @@ void
 app_state::set_recursive(bool r)
 {
   recursive = r;
-}
-
-void
-app_state::set_prog_name(utf8 const & name)
-{
-  prog_name = name;
-  ui.set_prog_name(name());
 }
 
 void
