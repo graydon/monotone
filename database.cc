@@ -823,7 +823,8 @@ database::fetch(results & res,
 
   i->second.count++;
 
-  I(want_rows == any_rows || want_rows == nrow);
+  E(want_rows == any_rows || want_rows == nrow,
+    F("wanted %d rows got %d in query: %s") % want_rows % nrow % query.sql_cmd);
 }
 
 bool
@@ -1327,7 +1328,8 @@ database::get_version(hexenc<id> const & ident,
   calculate_ident(dat, final);
   I(final == ident);
 
-  vcache.insert_clean(ident(), dat);
+  if (!vcache.exists(ident()))
+    vcache.insert_clean(ident(), dat);
 }
 
 struct roster_reconstruction_graph : public reconstruction_graph
