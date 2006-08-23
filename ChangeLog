@@ -11,6 +11,35 @@
 
 2006-08-23  Richard Levitte  <richard@levitte.org>
 
+	* monotone.texi (Hooks): The hooks merge2 and
+	get_preferred_merge2_command are dead.  Remove them from
+	documentation as well.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua: The previous change wasn't entirely wise.
+	So, a larger rework is in order to make the merging methods
+	more intelligent, as follows.
+	(mergers): all mergers now have an `available' and a `wanted'
+	function, to distinguish between availability of the programs
+	needed by each merger method and a check if the user wants to
+	use a perticular merger.
+	(mergers.rcsmerge.cmd): Use a hardcoded "vim" instead of the
+	non-existing variable `vim'.  This is untested and may need
+	further correction.
+	(get_preferred_merge3_command): If the user defined $MTN_MERGE
+	or the lua variable `merger', use it if the needed programs
+	are available, and fail if not.  If neither was defined, go
+	through all the mergers and pick the first for which the needed
+	programs are available and the user wants to use it.  Return
+	the name of the merger as well if it was specified through
+	$MTN_MERGE or `merger'.
+	(merge3): If get_preferred_merge2_command failed and returned
+	a merger name, tell the user about $MTN_MERGE and `merger',
+	otherwise, print the same old message as before.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
 	* std_hooks.lua (mergers.emacs.available): Since
 	mergers.emacs.cmd uses the command names "emacs" or "xemacs",
 	it's quite useless to look at the EDITOR environment variable
