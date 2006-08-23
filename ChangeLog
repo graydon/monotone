@@ -2,6 +2,11 @@
 
 	* po/it.po: Updated and translated a few more strings (40 to go).
 
+2006-08-23  Jon Bright  <jon@siliconcircus.com>
+
+	* tests/diff_against_empty_file/__driver__.lua: Canonicalize the
+	output before checking.
+
 2006-08-23  Julio M. Merino Vidal  <jmmv@NetBSD.org>
 
 	* tests/diff_against_empty_file/expected.diff:
