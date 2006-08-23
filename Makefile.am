@@ -68,8 +68,8 @@ MOST_SOURCES = 								\
 	graph.cc graph.hh						\
 	roster_delta.cc roster_delta.hh					\
 									\
-        lru_cache.h							\
-        lru_writeback_cache.h						\
+        lru_cache.hh							\
+        lru_writeback_cache.hh						\
 									\
 	cleanup.hh unit_tests.hh					\
         cycle_detector.hh randomfile.hh adler32.hh			\

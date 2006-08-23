@@ -42,8 +42,6 @@
 #include "graph.hh"
 #include "roster_delta.hh"
 
-#include "lru_cache.hh"
-
 // defined in schema.sql, converted to header:
 #include "schema.h"
 
@@ -1241,7 +1239,7 @@ struct datasz
   unsigned long operator()(data const & t) { return t().size(); }
 };
 
-static LRUCache<string, data, datasz>
+static LRUWritebackCache<string, data, datasz>
 vcache(constants::db_version_cache_sz);
 
 struct file_and_manifest_reconstruction_graph : public reconstruction_graph
@@ -1309,7 +1307,7 @@ database::get_version(hexenc<id> const & ident,
         {
           string tmp;
           appl->finish(tmp);
-          vcache.insert(curr(), tmp);
+          vcache.insert_clean(curr(), tmp);
         }
       
       L(FL("following delta %s -> %s") % curr % nxt);
@@ -1329,7 +1327,7 @@ database::get_version(hexenc<id> const & ident,
   calculate_ident(dat, final);
   I(final == ident);
 
-  vcache.insert(ident(), dat);
+  vcache.insert_clean(ident(), dat);
 }
 
 struct roster_reconstruction_graph : public reconstruction_graph

@@ -1,15 +1,12 @@
-/**************************************************************************
+/***************************************************************************
  *   Originally copyright (C) 2004 by Patrick Audley                       *
  *   paudley@blackcat.ca                                                   *
  *                                                                         *
+ *   Revised and copyright (C) 2006 by Nathaniel Smith <njs@pobox.com>     *
+ *   for the monotone project.                                             *
+ *                                                                         *
  ***************************************************************************/
 
-/**
- * @file lru_cache.cpp Template cache with an LRU removal policy
- * @author Patrick Audley
- * @version 1.0
- * @date December 2004
- */
 #include <map>
 #include <list>
 
@@ -24,19 +21,34 @@ template <typename T> struct WritebackCountfn
   }
 };
 
+// for use in caches where objects never become dirty
+template <typename Key, typename Data> struct NullManager
+{
+  inline void writeout(Key const &, Data const &)
+  {
+    I(false);
+  }
+};
+
 /**
  * @brief Template cache with an LRU removal policy.
- * @class LRUCache
+ * @class LRUWritebackCache
  *
  * @par
  * This template creats a simple collection of key-value pairs that grows
  * until the size specified at construction is reached and then begins
  * discard the Least Recently Used element on each insertion.
  *
+ * It also tracks a 'dirty set'.  Any given item can be marked clean or dirty.
+ * Importantly, when a dirty item is discarded, a Manager object is first
+ * given the chance to write it out to disk.  All managing of the dirty bit is
+ * done manually by calling code.
+ *
  */
 // Manager is a concept with a writeout(Key, Data) method
-template <typename Key, typename Data, typename Manager,
-          typename Sizefn = WritebackCountfn<Data> >
+template <typename Key, typename Data,
+          typename Sizefn = WritebackCountfn<Data>,
+          typename Manager = NullManager<Key, Data> >
 class LRUWritebackCache
 {
 public:
@@ -71,6 +83,13 @@ public:
    */
   LRUWritebackCache(const unsigned long Size, Manager manager)
       : _manager(manager), _max_size(Size), _curr_size(0)
+  {
+  }
+
+  // Also allow a default-instantiated manager, for using this as a pure LRU
+  // cache with no writeback.
+  LRUWritebackCache(const unsigned long Size)
+      : _max_size(Size), _curr_size(0)
   {
   }
 

@@ -1,7 +1,16 @@
 #ifndef __ROSTER_DELTA_HH__
 
-//////////
-// Experimental roster delta stuff
+// Copyright (C) 2006 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
+// This file contains "diff"/"patch" code that operates directly on rosters
+// (with their associated markings).
 
 #include "vocab.hh"
 #include "roster.hh"

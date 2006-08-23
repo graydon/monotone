@@ -169,18 +169,18 @@ public:
   typedef boost::shared_ptr<marking_map const> marking_map_cp;
   typedef std::pair<roster_t_cp, marking_map_cp> cached_roster;
 private:
+  struct roster_size_estimator
+  {
+    unsigned long operator() (cached_roster const &);
+  };
   struct roster_writeback_manager
   {
     database & db;
     roster_writeback_manager(database & db) : db(db) {}
     void writeout(roster_id, cached_roster const &);
   };
-  struct roster_size_estimator
-  {
-    unsigned long operator() (cached_roster const &);
-  };
   LRUWritebackCache<roster_id, cached_roster,
-                    roster_writeback_manager, roster_size_estimator>
+                    roster_size_estimator, roster_writeback_manager>
     roster_cache;
 
   size_t size_delayed_file(file_id const & id, file_data const & dat);
