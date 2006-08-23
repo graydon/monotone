@@ -1,5 +1,11 @@
 2006-08-23  Richard Levitte  <richard@levitte.org>
 
+	* monotone.texi (Hooks): The hooks merge2 and
+	get_preferred_merge2_command are dead.  Remove them from
+	documentation as well.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
 	* std_hooks.lua: The previous change wasn't entirely wise.
 	So, a larger rework is in order to make the merging methods
 	more intelligent, as follows.
