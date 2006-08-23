@@ -443,9 +443,8 @@ mergers.emacs = {
       return tbl.outfile
    end,
    available = function ()
-      local editor = os.getenv("EDITOR")
-      if editor == nil then return false end
-      return string.find(editor, "emacs") or string.find(editor, "gnu")
+      return program_exists_in_path("xemacs") or
+	 program_exists_in_path("emacs") 
    end
 }
 

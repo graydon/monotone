@@ -1,3 +1,14 @@
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (mergers.emacs.available): Since
+	mergers.emacs.cmd uses the command names "emacs" or "xemacs",
+	it's quite useless to look at the EDITOR environment variable
+	to determine availability.  Check that one of those exist on
+	the path instead.  As a result, the variable `merger' and the
+	environment variable MTN_MERGE can truly be used to tell the
+	merge3 hook what program should be used for conflict resolution
+	without having to define EDITOR as well.
+
 2006-08-22  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-notify-hookversion.lua: New file that
