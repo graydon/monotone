@@ -7,6 +7,8 @@
 	* testsuite.lua: Add the test
 	* cmd_automate.cc: Bump the interface version to 3.1
 
+	* tests/automate_genkey: Fix the test.
+
 2006-08-23  Richard Levitte  <richard@levitte.org>
 
 	* std_hooks.lua (mergers.emacs.available): Since
