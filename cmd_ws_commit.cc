@@ -428,7 +428,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
           P(F("branch %s has multiple heads:") % app.branch_name);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
-          P(F("choose one with '%s checkout -r<id>'") % app.prog_name);
+          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.branch_name);
         }
       ident = *(heads.begin());
@@ -842,7 +842,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
-      % app.prog_name);
+      % ui.prog_name);
   }
 
   update_any_attrs(app);
