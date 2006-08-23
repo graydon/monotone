@@ -1,3 +1,12 @@
+2006-08-23  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* tests/diff_against_empty_file/expected.diff:
+	* tests/diff_against_empty_file/__driver__.lua: Instead of
+	checking if the resulting patch file applies correctly, compare it
+	to a correct prestored copy.  This is to prevent a bug in some
+	patch(1) implementations that do not deal correctly with reversed
+	patches applied to empty files.  Problem exposed under NetBSD.
+
 2006-08-23  Richard Levitte  <richard@levitte.org>
 
 	* std_hooks.lua (mergers.emacs.available): Since
