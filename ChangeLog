@@ -1,3 +1,12 @@
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify-hookversion.lua: New file that
+	implements notification of changes received by netsync.
+	The software is self-contained but depends on some other
+	packages.  It's also not entirely optimal as it will send
+	notifications for all revisions, unfiltered.  Still, it
+	was time to share this.  Tests are underway.
+
 2006-08-22  Zack Weinberg  <zackw@panix.com>
 
 	* m4/boost.m4 (BOOST_VERSION_SPECIFIC_BUGS): No need to check for
