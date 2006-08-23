@@ -1,3 +1,12 @@
+2006-08-23  Jon Bright  <jon@siliconcircus.com>
+
+	* automate.cc: add new automate genkey command, avoiding people
+	having to enter into a little chat script with monotone in order to
+	provide genkey with an alternative interface.
+	* tests/automate_genkey: Test it.
+	* testsuite.lua: Add the test
+	* cmd_automate.cc: Bump the interface version to 3.1
+
 2006-08-23  Richard Levitte  <richard@levitte.org>
 
 	* std_hooks.lua (mergers.emacs.available): Since
