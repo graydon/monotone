@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-08-02 16:49-0700\n"
-"PO-Revision-Date: 2006-08-23 20:00+0100\n"
+"PO-Revision-Date: 2006-08-23 20:26+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -2730,10 +2730,11 @@ msgstr "scambio con ‘%s’ avvenuto con successo"
 msgid "peer %s disconnected after we informed them of error"
 msgstr ""
 
+# TODO: remove \n
 #: netsync.cc:2403
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting\n"
-msgstr "I/O fallito mentrw parlavo col peer ‘%s’, mi scollego\n"
+msgstr "I/O fallito mentre parlavo col peer ‘%s’, mi scollego\n"
 
 #: netsync.cc:2469
 #, c-format
