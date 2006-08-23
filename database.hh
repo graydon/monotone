@@ -30,7 +30,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "selectors.hh"
 #include "vocab.hh"
 
-// hmm, would be better not to include this everywhere...
+// FIXME: would be better not to include this everywhere
 #include "lru_writeback_cache.hh"
 
 // this file defines a public, typed interface to the database.

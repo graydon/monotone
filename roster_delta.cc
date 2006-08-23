@@ -98,7 +98,7 @@ namespace
     // individual node edits now.
     for (deltas_applied_t::const_iterator
            i = deltas_applied.begin(); i != deltas_applied.end(); ++i)
-      roster.set_delta(i->first, i->second);
+      roster.set_content(i->first, i->second);
 
     for (attrs_cleared_t::const_iterator
            i = attrs_cleared.begin(); i != attrs_cleared.end(); ++i)

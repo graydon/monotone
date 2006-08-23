@@ -774,7 +774,7 @@ roster_t::apply_delta(split_path const & pth,
 }
 
 void
-roster_t::set_delta(node_id nid, file_id const & new_id)
+roster_t::set_content(node_id nid, file_id const & new_id)
 {
   file_t f = downcast_to_file_t(get_node(nid));
   I(!(f->content == new_id));

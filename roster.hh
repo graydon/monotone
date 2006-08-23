@@ -14,7 +14,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "basic_io.hh"
 #include "cset.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
@@ -212,8 +211,8 @@ public:
 
   // more direct, lower-level operations, for the use of roster_delta's
   void detach_node(node_id nid);
-  void set_delta(node_id nid,
-                 file_id const & new_id);
+  void set_content(node_id nid,
+                   file_id const & new_id);
   void set_attr_unknown_to_dead_ok(node_id nid,
                                    attr_key const & name,
                                    std::pair<bool, attr_value> const & val);
@@ -426,6 +425,12 @@ write_manifest_of_roster(roster_t const & ros,
 
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident);
+
+namespace basic_io
+{
+  struct stanza;
+  struct parser;
+}
 
 // for roster_delta
 void push_marking(basic_io::stanza & st, bool is_file, marking_t const & mark);

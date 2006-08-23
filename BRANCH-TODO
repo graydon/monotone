@@ -6,3 +6,6 @@ add test for new format to schema_migration
 
    
 on loading a roster, verify its manifest?
+  and/or call check_sane_against?
+
+refine roster_size_estimator?
