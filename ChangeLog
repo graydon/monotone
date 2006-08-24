@@ -1,3 +1,10 @@
+2006-08-24  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* revision.cc (select_nodes_modified_by_rev)
+	* revision.hh (select_nodes_modified_by_rev): Remove unused first
+	argument (rid).
+	* cmd_diff_log.cc (CMD(log)): Adjust sole usage of that function.
+
 2006-08-23  Lapo Luchini  <lapo@lapo.it>
 
 	* po/it.po: Updated and translated a few more strings (40 to go).
