@@ -1,3 +1,9 @@
+2006-08-24  Richard Levitte  <richard@levitte.org>
+
+	* po/ja.po: Change the number of possible plurals to 2.
+	This was done with permission from the official JA
+	translator.
+
 2006-08-25  Matt Johnston  <matt@ucc.asn.au>
 
 	* options.hh: workaround for gcc < 3.4 parse error on
