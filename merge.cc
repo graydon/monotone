@@ -68,10 +68,11 @@ resolve_merge_conflicts(roster_t const & left_roster,
 
           L(FL("examining content conflicts"));
 
+          size_t cnt;
           size_t total_conflicts = result.file_content_conflicts.size();
           std::vector<file_content_conflict>::iterator it;
 
-          for (size_t cnt = 1, it = result.file_content_conflicts.begin();
+          for (cnt = 1, it = result.file_content_conflicts.begin();
                it != result.file_content_conflicts.end(); ++cnt)
             {
               file_content_conflict const & conflict = *it;
