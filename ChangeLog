@@ -1,3 +1,8 @@
+2006-08-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* options.hh: workaround for gcc < 3.4 parse error on
+	vv.as<T)();
+
 2006-08-24  Thomas Moschny <thomas.moschny@gmx.de>
 
 	* revision.cc (select_nodes_modified_by_rev)
