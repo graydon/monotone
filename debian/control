@@ -1,13 +1,11 @@
 Source: monotone
 Section: devel
 Priority: optional
-Maintainer: Tomas Fasth <tomfa@debian.org>
+Maintainer: Shaun Jackman <sjackman@debian.org>
 Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.0.0), autotools-dev,
  libboost-date-time-dev, libboost-filesystem-dev, libboost-regex-dev,
- libboost-test-dev, libboost-program-options-dev, libboost-dev,
- texinfo, libz-dev,
- g++ [!arm !hppa !m68k], g++-3.4 [arm hppa m68k]
-Standards-Version: 3.6.2
+ libboost-test-dev, libboost-dev, texinfo, libz-dev 
+Standards-Version: 3.7.2.1
 
 Package: monotone
 Architecture: any
