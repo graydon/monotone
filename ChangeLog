@@ -1,3 +1,8 @@
+2006-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (status): Print current branch, and parent rev,
+	in 'status'.
+
 2006-08-23  Jon Bright  <jon@siliconcircus.com>
 
 	* automate.cc: add new automate genkey command, avoiding people
