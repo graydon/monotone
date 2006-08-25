@@ -32,6 +32,7 @@
 #include "transforms.hh"
 #include "vocab.hh"
 #include "globish.hh"
+#include "charset.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -1360,6 +1361,89 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"))
     }
   }
   output.write(prt.buf.data(), prt.buf.size());
+}
+
+namespace
+{
+  namespace syms
+  {
+    symbol const key("key");
+    symbol const signature("signature");
+    symbol const name("name");
+    symbol const value("value");
+    symbol const trust("trust");
+
+    symbol const public_hash("public_hash");
+    symbol const private_hash("private_hash");
+    symbol const public_location("public_location");
+    symbol const private_location("private_location");
+  }
+};
+
+// Name: genkey
+// Arguments:
+//   1: the key ID
+//   2: the key passphrase
+// Added in: 3.1
+// Purpose: Generates a key with the given ID and passphrase
+//
+// Output format: a basic_io stanza for the new key, as for ls keys
+//
+// Sample output:
+//               name "tbrownaw@gmail.com"
+//        public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+//       private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+//    public_location "database" "keystore"
+//   private_location "keystore"
+//
+// Error conditions: If the passphrase is empty or the key already exists,
+// prints an error message to stderr and exits with status 1.
+AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  rsa_keypair_id ident;
+  internalize_rsa_keypair_id(idx(args, 0), ident);
+
+  utf8 passphrase = idx(args, 1);
+
+  bool exists = app.keys.key_pair_exists(ident);
+  if (app.db.database_specified())
+    {
+      transaction_guard guard(app.db);
+      exists = exists || app.db.public_key_exists(ident);
+      guard.commit();
+    }
+
+  N(!exists, F("key '%s' already exists") % ident);
+
+  keypair kp;
+  P(F("generating key-pair '%s'") % ident);
+  generate_key_pair(kp, passphrase);
+  P(F("storing key-pair '%s' in %s/") 
+    % ident % app.keys.get_key_dir());
+  app.keys.put_key_pair(ident, kp);
+
+  basic_io::printer prt;
+  basic_io::stanza stz;
+  hexenc<id> privhash, pubhash;
+  vector<string> publocs, privlocs;
+  key_hash_code(ident, kp.pub, pubhash);
+  key_hash_code(ident, kp.priv, privhash);
+
+  publocs.push_back("keystore");
+  privlocs.push_back("keystore");
+
+  stz.push_str_pair(syms::name, ident());
+  stz.push_hex_pair(syms::public_hash, pubhash);
+  stz.push_hex_pair(syms::private_hash, privhash);
+  stz.push_str_multi(syms::public_location, publocs);
+  stz.push_str_multi(syms::private_location, privlocs);
+  prt.print_stanza(stz);
+
+  output.write(prt.buf.data(), prt.buf.size());
+
 }
 
 // Local Variables:

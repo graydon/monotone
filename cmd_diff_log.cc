@@ -635,7 +635,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               app.db.get_roster(rid, roster);
 
               set<node_id> nodes_modified;
-              select_nodes_modified_by_rev(rid, rev, roster,
+              select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
                                            app);
 
@@ -678,7 +678,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           if (print_this)
           {
-            if (global_sanity.brief)
+            if (app.brief)
               {
                 cout << rid;
                 log_certs(app, rid, author_name);

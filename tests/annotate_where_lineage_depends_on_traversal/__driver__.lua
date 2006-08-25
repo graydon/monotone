@@ -49,5 +49,5 @@ L("revs.d = ", revs.d, "\n")
 -- REVD: added line
 --
 
-check(mtn("--debug", "annotate", "foo"), 0, true, true)
-greplines("stdout", {revs.a, revs.a, revs.b, revs.c, revs.a, revs.d})
+check(mtn("--debug", "annotate", "--brief", "foo"), 0, true, true)
+check(greplines("stdout", {revs.a, revs.a, revs.b, revs.c, revs.a, revs.d}))
