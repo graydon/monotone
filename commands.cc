@@ -18,6 +18,11 @@
 
 #include "cmd.hh"
 
+#ifndef _WIN32
+#include <boost/lexical_cast.hpp>
+#include <signal.h>
+#endif
+
 using std::cin;
 using std::pair;
 using std::set;
@@ -25,7 +30,6 @@ using std::string;
 using std::strlen;
 using std::vector;
 
-//
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
 // have one such command on it, followed by a vector of strings which are its
@@ -52,13 +56,13 @@ namespace commands
   // guarantee about what order they'll be initialized in. So have this
   // be something that doesn't get automatic initialization, and initialize
   // it ourselves the first time we use it.
-  static map<string,command *> *cmds;
+  static map<string, command *> * cmds;
   command::command(string const & n,
-                  string const & g,
-                  string const & p,
-                  string const & d,
-                  bool u,
-                  command_opts const & o)
+                   string const & g,
+                   string const & p,
+                   string const & d,
+                   bool u,
+                   command_opts const & o)
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
@@ -229,23 +233,21 @@ namespace commands
       }
   }
 
-  set<int> command_options(string const & cmd)
+  boost::program_options::options_description command_options(string const & cmd)
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
-        return (*cmds)[cmd]->options.opts;
+        return (*cmds)[cmd]->options.as_desc();
       }
     else
       {
-        return set<int>();
+        return boost::program_options::options_description();
       }
   }
-
-  const no_opts OPT_NONE = no_opts();
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), OPT_NONE)
+CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), option::none)
 {
   if (args.size() < 1)
     {
@@ -261,7 +263,7 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group, "{ N | E | I }", "trigger the specified kind of crash", OPT_NONE)
+CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -274,8 +276,43 @@ CMD(crash, hidden_group, "{ N | E | I }", "trigger the specified kind of crash",
     {
       I(spoon_exists);
     }
+#define maybe_throw(ex) if(idx(args,0)()==#ex) throw ex("There is no spoon.")
+#define maybe_throw_bare(ex) if(idx(args,0)()==#ex) throw ex()
+  else maybe_throw_bare(std::bad_alloc);
+  else maybe_throw_bare(std::bad_cast);
+  else maybe_throw_bare(std::bad_typeid);
+  else maybe_throw_bare(std::bad_exception);
+  else maybe_throw_bare(std::exception);
+  else maybe_throw(std::domain_error);
+  else maybe_throw(std::invalid_argument);
+  else maybe_throw(std::length_error);
+  else maybe_throw(std::out_of_range);
+  else maybe_throw(std::range_error);
+  else maybe_throw(std::overflow_error);
+  else maybe_throw(std::underflow_error);
+  else maybe_throw(std::logic_error);
+  else maybe_throw(std::runtime_error);
   else
-    throw usage(name);
+    {
+#ifndef _WIN32
+      try
+        {
+          int signo = boost::lexical_cast<int>(idx(args,0)());
+          if (0 < signo && signo <= 15)
+            {
+              raise(signo);
+              // control should not get here...
+              I(!"crash: raise returned");
+            }
+        }
+      catch (boost::bad_lexical_cast&)
+        { // fall through and throw usage
+        }
+#endif
+      throw usage(name);
+    }
+#undef maybe_throw
+#undef maybe_throw_bare
 }
 
 void
@@ -466,12 +503,12 @@ process_commit_message_args(bool & given,
   N(app.message().length() == 0 || app.message_file().length() == 0,
     F("--message and --message-file are mutually exclusive"));
 
-  if (app.is_explicit_option(OPT_MESSAGE))
+  if (app.is_explicit_option(option::message()))
     {
       log_message = app.message();
       given = true;
     }
-  else if (app.is_explicit_option(OPT_MSGFILE))
+  else if (app.is_explicit_option(option::msgfile()))
     {
       data dat;
       read_data_for_command_line(app.message_file(), dat);

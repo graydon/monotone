@@ -20,10 +20,10 @@ mtn_setup()
 
 -- merge(1) can handle this merge correctly.
 
-get("parent")
-get("left")
-get("right")
-get("correct")
+check(get("parent"))
+check(get("left"))
+check(get("right"))
+check(get("correct"))
 
 copy("parent", "testfile")
 check(mtn("add", "testfile"), 0, false, false)

@@ -9,9 +9,9 @@ mtn_setup()
 
 writefile("initial", "some initial data")
 
-get("foo.alice")
+check(get("foo.alice"))
 
-get("foo.bob")
+check(get("foo.bob"))
 
 -- Alice does her add
 mkdir("alicewd")

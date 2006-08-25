@@ -38,7 +38,7 @@ noterev()
 
 netsync.pull("testbranch")
 
-get("testnotes.test")
+check(get("testnotes.test"))
 evaluate("testnotes.test")
 canonicalize("testnotes.log")
 check(samefile("testnotes.log", "testnotes.test"))
@@ -48,7 +48,7 @@ check(mtn("tag", revs[1].rev, "testtag"), 0, false, false)
 
 netsync.pull("testbranch")
 
-get("testnotes2.test", "testnotes.test")
+check(get("testnotes2.test", "testnotes.test"))
 evaluate("testnotes.test")
 canonicalize("testnotes.log")
 check(samefile("testnotes.log", "testnotes.test"))

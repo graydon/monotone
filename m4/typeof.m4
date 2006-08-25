@@ -7,17 +7,14 @@ dnl @version 2005-08-15
 dnl @license AllPermissive
 
 AC_DEFUN([AC_CXX_TYPEOF],[
+AC_LANG_ASSERT([C++])
 AC_CACHE_CHECK(whether the compiler supports typeof,
 ac_cv_cxx_typeof,
-[AC_LANG_SAVE
- AC_LANG_CPLUSPLUS
- AC_TRY_COMPILE([int x; typeof (x) y[6];],
-  [],
-  ac_cv_cxx_typeof=yes, ac_cv_cxx_typeof=no)
- AC_LANG_RESTORE
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE([[ int x; typeof (x) y[6]; ]])],
+  [ac_cv_cxx_typeof=yes],
+  [ac_cv_cxx_typeof=no])
 ])
 if test "$ac_cv_cxx_typeof" = yes; then
-  AC_DEFINE(HAVE_TYPEOF,,[define if the compiler supports typeof])
+  AC_DEFINE(HAVE_TYPEOF, 1, [Define if the compiler supports typeof.])
 fi 
 ])
-

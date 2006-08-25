@@ -4,7 +4,7 @@ mtn_setup()
 cvs_setup()
 
 mkdir(cvsroot.."/attest")
-get("cvsfile,v", cvsroot.."/attest/cvsfile,v")
+check(get("cvsfile,v", cvsroot.."/attest/cvsfile,v"))
 
 check(cvs("co", "-rABC_BASE", "attest"), 0, false, false)
 tsha = sha1("attest/cvsfile")

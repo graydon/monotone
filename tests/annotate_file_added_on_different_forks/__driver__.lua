@@ -22,7 +22,7 @@ check(mtn("add", "foo"), 0, false, false)
 commit()
 right = base_revision()
 
-get("merge2.lua")
+check(get("merge2.lua"))
 
 xfail_if(true, mtn("--rcfile=merge2.lua", "merge"), 0, false, false)
 check(mtn("update"), 0, false, false)

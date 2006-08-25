@@ -16,7 +16,7 @@ genkey(keys.other)
 netsync.setup()
 
 -- test with open security settings
-get("open")
+check(get("open"))
 
 addfile("badfile", "badfile")
 commit("badbranch", "badfile")
@@ -40,7 +40,7 @@ srv = netsync.start({"testbranch", "--confdir=open"}, nil, true)
 
 clean(2)
 
-srv:pull({"testbranch", "--key="})
+srv:pull({"testbranch", "--key", ""})
 check(mtn2("automate", "get_revision", revs.base), 0, true, true)
 
 -- pull with default key
@@ -102,7 +102,7 @@ check(mtn("automate", "get_revision", revs.unknown), 1, true, true)
 
 
 -- test with closed security settings
-get("closed")
+check(get("closed"))
 
 clean()
 writefile("_MTN/revision", "")
@@ -117,7 +117,7 @@ srv = netsync.start({"testbranch", "--confdir=closed"}, nil, true)
 
 clean(2)
 
-srv:pull({"testbranch", "--key="}, nil, 1)
+srv:pull({"testbranch", "--key", ""}, nil, 1)
 check(mtn2("automate", "get_revision", revs.base), 1, true, true)
 
 -- pull with default key

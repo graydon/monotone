@@ -21,7 +21,7 @@ mtn_setup()
 -- are the only two attrs that get migrated directly...)
 
 remove("test.db")
-get("test.db.dumped", "stdin")
+check(get("test.db.dumped", "stdin"))
 check(mtn("db", "load"), 0, false, false, true)
 
 check(mtn("db", "migrate"), 0, false, false)
@@ -34,11 +34,11 @@ for l in io.lines("stdout") do
   table.insert(revs, l)
 end
 -- check the first manifest
-get("first_manifest_good")
+check(get("first_manifest_good"))
 check(mtn("automate", "get_manifest_of", revs[1]), 0, true)
 check(samefile("stdout", "first_manifest_good"))
 
 -- check the second manifest
-get("second_manifest_good")
+check(get("second_manifest_good"))
 check(mtn("automate", "get_manifest_of", revs[2]), 0, true)
 check(samefile("stdout", "second_manifest_good"))

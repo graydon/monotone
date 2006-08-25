@@ -38,7 +38,8 @@ lcs.cc
 lcs.hh
 lua.cc
 lua.hh
-main.cc
+merge.cc
+merge.hh
 merkle_tree.cc
 merkle_tree.hh
 mkstemp.cc

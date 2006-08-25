@@ -3129,6 +3129,9 @@ run_netsync_protocol(protocol_voice voice,
           "%s\n") % exclude_pattern());
     }
 
+  // We do not want to be killed by SIGPIPE from a network disconnect.
+  ignore_sigpipe();
+
   try
     {
       if (voice == server_voice)

@@ -13,7 +13,7 @@ writefile("foo.C", "a\nb\nq\nd changed in C\ny\n")
 -- e
 -- added line
 
-get("merge.lua")
+check(get("merge.lua"))
 
 
 copy("foo.A", "foo")

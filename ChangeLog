@@ -1,3 +1,630 @@
+2006-08-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* debian/control: add libboost-program-options-dev to build dependencies
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST): Remove a trailing comma to get a
+	non-mangled directory layout for tester-tests/ in the distribution
+	tarball.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Put in date.
+	* INSTALL: Bump boost requirement to 1.33.1.
+
+2006-08-21  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_merging.cc: Add includes and using std::* statements
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Translated the last current untranslated string.
+
+2006-08-20  Zack Weinberg  <zackw@panix.com>
+
+	* tests/log_quits_on_SIGPIPE: Rewrite so it actually tests what we
+	want it to (and hopefully is now race free).
+
+2006-08-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Revised completion for almost
+	all commands, especially cat, co, diff, drop, log, propagate,
+	status, and update. Updated list of subcommands for db, ls, and
+	automate. Fixed indentation. Add author information.
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Small typo corrected ("merge" => "merger").
+	* po/sv.po: Fixed a few fuzzies and untranslated strings.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac, UPGRADE: Bump version number to
+	0.29.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Draft 0.29 release notes.
+
+	* cmd_ws_commit.cc (status): Print "no changes", when there are no
+	changes.  Also, use F() for all strings, so that they will be
+	available for translation.
+
+	* monotone.texi (Hooks): Document that you can set MTN_MERGE or
+	lua variable 'merger' to control what merger is selected.
+	(Other Transports): Document the ssh://host/~/foo syntax.
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
+	give the background process to die on its own, before we decide it
+	failed and just kill it.  Hopefully will work better on the loaded
+	buildslaves now?
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/main.cc (interrupt_signal): Newline-terminate our
+	"operation canceled" message.
+
+2006-08-18  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: Say that a Debian user needs to install
+	libboost-program-options-dev as well.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: Fix some brokenness from the merge hook changes.
+
+2006-08-15  Zack Weinberg  <zackw@panix.com>
+
+	* Makefile.am: put the lists back the way they were (mostly).
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/log_quits_on_SIGPIPE/: Try to make the test work.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	The new lua version doesn't like the file objects our mkstemp produces.
+	* mkstemp.cc mkstemp.hh: Don't keep the file open. This is only called
+	from LUAEXT(mkstemp, ), which no longer wants an fd.
+	* luaext_mkstemp.cc: Don't try to make a file object, just have
+	monotone_mkstemp create a file, then let...
+	* std_hooks.lua (temp_file): ... open it with io.open, so lua will
+	be happy with it.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+	* cmd_ws_commit.cc: "status" and "automate get_revision" give
+	identical output, except for leading/trailing whitespace. Make "status"
+	do what "status --brief" used to do, and make status not take the
+	--brief option.
+	* tests/status/__driver__.lua:
+	* tests/use_restrictions_with_--exclude/__driver__.lua:
+	* tests/use_restrictions_with_--exclude_and_inodeprints/__driver__.lua:
+	Update affected tests.
+
+2006-08-15  Zack Weinberg  <zackw@panix.com>
+
+	* configure.ac: Delete MTN_POPT_DEPENDENCIES.  Add strptime to
+	main AC_CHECK_FUNCS list (this is the only thing that
+	MTN_POPT_DEPENDENCIES checked for, that was used outside popt).
+	Also add lrint to this list.  Delete AC_SEARCH_LIBS for libdl.
+	* lua/luaconf.h: Include config.h. Set LUA_USE_POSIX if _WIN32 is
+	not defined.  Add versions of lua_number2int and lua_number2integer
+	that use the C99 lrint() function; remove the unreliable union hack.
+	At end of file, forcibly undefine all LUA_DL_* macros to ensure
+	that lualib.cc uses the stub implementation.
+	* m4/popt.m4: Delete file.
+	* m4/boost.m4: Create a new macro to factor out code in common
+	among most of the MTN_BOOST_LIB_* macros.
+	* options.hh: Fix typo.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* options.hh: Have a non-template option_base class to allow for...
+	* cmd.hh (command_opts): Keep a set of option_base*, not
+	shared_ptr<option_description>. This is to avoid problems with global
+	object initialization order. Also provide a function to convert a
+	command_opts to an options_description.
+	* commands.cc commands.hh monotone.cc: Adjust accordingly.
+
+2006-08-15  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* monotone.cc: work around some boost/stlport4 interaction
+	by explicitely keeping NULL out of shared_ptrs
+
+2006-08-15  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua/*.c: Lua 5.1 supports raising exceptions using C++ exception
+	handling mechanisms.  Rename to *.cc so that automake compiles
+	with the C++ compiler.  Yes, this is lame, unless an automake guru
+	has a better way...
+	* lua.hh, lua_hooks.cc, tester.cc: Remove 'extern "C"' from around
+	the Lua includes (also change the includes from <> to "" since
+	we're using a local copy of Lua).
+	* Makefile.am: Update for renamed Lua files.
+	* Makefile.am: Post-merge cleanup.
+	* luaext_mkstemp.cc: Slightly cleaner way to create a Lua IO
+	object from a FILE*.
+	* lua/*, Makefile.am: Import Lua 5.1.1 plus fixes for the two
+	5.1.1 bugs listed on the Lua website.
+	* tests/(normal)_netsync_revision_with_no_certs,
+	tests/_MTN_case-folding_security_patch, tests/common/netsync.lua,
+	tests/db_check_and_non-serious_errors,
+	tests/exchanging_work_via_netsync,
+	tests/tags_and_tagging_of_revisions, testsuite.lua, std_hooks.lua:
+	Syntax tweaks and cleanups for Lua 5.1.1.
+	* lua_hooks.cc, tester.cc: Migrate to Lua 5.1 API.
+	* lua.cc: Slightly cleaner FILE* handling.
+
+2006-08-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.7.
+	* Makefile.am: Disable new SQLite loadable extensions for now since
+	we don't use it.
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (mergers): All the functions in this table
+	returned `outfile' (which is unknown) instead of `tbl.outfile'.
+	(merge3): Incorrect variable `res' used instead of `ret'.
+
+2006-08-14  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* luaext_mkstemp.cc, luaext_platform.cc, tester.cc:
+	Add includes and using std::* statements
+	* mtn-sanity.cc, tester.cc:
+	use slightly more compatible syntax for static reference initialization
+	* options.cc, options.hh:
+	GOPT and COPT macros used <ARGUMENT>, what has been expanded to
+	<vector<string>> at times. sunpro parses that as <vector<string >>
+	* po/sv.po: a newline was missing
+	* m4/boost.m4, configure.ac: move boost_program_options check to
+	boost.m4 because it's cleaner and --enable-static-boost is honored
+	that way
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Add merge.cc and merge.hh.
+	* po/sv.po: Translate the resulting untranslated strings.
+
+2006-08-14  Nathaniel Smith  <njs@pobox.com>
+
+	* safe_map.hh: #include "sanity.hh".
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* tests/drop_directory_with_unversioned_files_and_merge/__driver__.lua:
+	Added test for the case when an update tries to remove a directory
+	that isn't empty (it has unversioned files).
+	* testsuite.lua: Add it to the common tests.
+
+2006-08-14  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Clear a few fuzzies.
+
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc: Boost has buggy option completion. Disable guessing of
+	partial options, such as --hel for --help.
+
+2006-08-14  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* testsuite.lua: Dump "mtn --full-version" output to the logfile.
+
+2006-08-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* cmd_automate.cc monotone.cc options_list.hh: Put back the
+	--automate-stdio-size option.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* monotone.cc options.cc options.hh: Make option parsing not subject
+	to bad_any_cast. Misremembering the option type will now be caught
+	at compile time.
+	* options_list.hh options.cc options.hh: We don't need to list all
+	the options twice.
+	* Makefile.am: Adjust for new file.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make it pass the testsuite.
+	* tests/diff_--external/__driver__.lua:
+	* tests/netsync_permissions/__driver__.lua: "--option=" is not valid
+	anymore, use "--option ''". (appears to be a misfeature of
+	boost::program_options)
+	* options.cc options.hh monotone.cc: Work on option handling.
+	* cmd_netsync.cc: More merge fixes.
+
+2006-08-12  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix merge, and make unit_tests build.
+	* options.cc monotone.cc: Move option definitions to their own file.
+	* Makefile.am: Adjust accordingly.
+	* cmd.hh cmd_automate.cc cmd_diff_log.cc cmd_files.cc cmd_merging.cc:
+	* cmd_ws_commit.cc commands.cc configure.ac monotone.ac options.hh:
+	Fix enough merge errors that it can compile.
+
+2006-08-12  Derek Scherger  <derek@echologic.com>
+
+	* cmd_list.cc (ls_unknown_or_ignored):
+	* cmd_ws_commit.cc (add): use args as roots to start the tree walk
+	for unknown files rather than walking from the workspace root
+	* work.{cc,hh} (find_unknown_and_ignored): walk tree from the
+	specified roots rather than the workspace root. this can make
+	restricted ls unknown *much* faster in a workspace with large
+	unversioned directories.
+
+2006-08-16  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-08-12  Nathaniel Smith  <njs@pobox.com>
+
+	* xdelta.cc (spin): New utility function for tests.
+	(xdelta_simple_cases): New test.
+	(xdelta_random_simple_delta_test): Use spin to improve coverage.
+	(xdelta_random_piecewise_delta_test): New test.
+	(compute_delta): Actually work when target == destination.
+	(size_accumulating_delta_applicator,
+	(measure_delta_target_size): Remove dead code.
+	I believe this file actually has complete unit test coverage now.
+
+2006-08-12  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (put_roster): We only need one way to reconstruct a
+	given roster -- check whether the _old_ roster is stored in full
+	before doing deltification, rather than that the _new_ roster
+	(that we stored in full 10 lines up) is stored in full.
+
+2006-08-11  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: merge3 merger selection is horrible. Make it better.
+
+2006-08-10  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD(commit)):
+	* database_check.cc (report_certs): Don't use positional format
+	specifiers in the C++ source files.  Positional format
+	specifiers should only be used in the translation strings, if
+	needed.  For further information/opinions, see
+	http://lists.gnu.org/archive/html/monotone-devel/2006-07/msg00357.html
+	* po/sv.po: Clear the fuzzies created by this change.
+
+2006-08-09  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (record_merge): Don't error out when two merges
+	give the same resulting file.
+
+2006-08-08  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* Makefile.am: Fix run_tester_tests to run tester-testsuite.lua instead
+	of testsuite.lua .
+
+2006-08-07  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (45 to go).
+
+2006-08-07  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Remove main.cc, since it's been removed from
+	the source tree.
+	* po/sv.po: A fuzzy and two untranslated strings to translate.
+
+2006-08-06  Nathaniel Smith  <njs@pobox.com>
+
+	* packet.cc (extract_packets, read_packets): Make some const
+	strings static (patch from Vaclav Haisman).
+
+2006-08-06  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	Make the block size for automate stdio configurable:
+	* constants.hh, constants.cc: Remove automate_stdio_size constant.
+	* app_state.cc, app_state.hh, options.hh, monotone.cc: Add new
+	option commandline option '--automate-stdio-size'. Default is 1024,
+	which is the value of the old constant.
+	* cmd_automate.cc: Use the new commandline option instead of the
+	old onstant.
+	* monotone.texi (Automation): Document the new option.
+
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Make the cute commit
+	message actually a commit message, rather than the world's longest
+	branch name.
+
+2006-08-05  Zack Weinberg  <zackw@panix.com>
+
+	Clean up after merge from mainline:
+	* luaext_globish.cc (match): Use e.what() instead of e.what.c_str(),
+	when e is an informative_failure.
+	* tester.cc (main): Similarly.
+	* monotone.cc (process_all_options): Add an .as_external() that
+	got lost.
+	* mtn-sanity.cc: Include mt_version.hh.
+	(mtn_sanity::initialize): New function.
+	* mtn-sanity.hh: Prototype it.
+	* sanity.hh: Make sanity::initialize virtual.
+	* sanity.cc (sanity::initialize): Remove IN_TESTER #ifdef.
+	Do PERM_MM system_flavour.
+	* unix/main.cc (main): Change i to a size_t.
+	* Makefile.am (tester_CPPFLAGS): Remove -DIN_TESTER kludge.
+
+2006-08-04  Zack Weinberg  <zackw@panix.com>
+
+	* platform.hh: Define ignore_sigpipe as a nop on win32 or declare
+	it as an external on Unix.
+	* unix/process.cc: Define ignore_sigpipe.
+	* netsync.cc: No need to conditionally include signal.h.
+	(run_netsync_protocol): Use ignore_sigpipe.
+	* sanity.hh: Define PERM_MM here, with comment explaining when it
+	is safe to use.
+	* sanity.cc: Don't define PERM_MM.
+	* ui.cc (fatal): Add note about need to keep message in sync with
+	other copies.
+	* unix/main.cc: Correct name in comment.  Downcase
+	WRITE_STR_TO_STDERR and make it an inline function.  Adjust note
+	about need to keep bug_report_message in sync with other copies.
+	* win32/main.cc: Similarly.
+	* commands.cc (crash): Undef maybe_throw_bare at end.
+	* tests/log_quits_on_SIGPIPE: New test.
+	* testsuite.lua: Add it.
+
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_diff_log.cc (log): Call cout.flush() after describing each
+	revision.
+
+2006-08-05  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (visit_file): Print a message when implicitly adding
+	directories, and simplify a bit.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (cancel_pending_write): >, <, what's the difference
+	anyway...
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc: Limit the amount of pending writes we buffer up,
+	from Eric Anderson.  Pluck of 4e99cc37f548b5884d63c48bc486df
+	through	033e5805502c5441ef539ab5cbc1a4, with formatting fixups,
+	factoring out of duplicated code, commented precondition on
+	cancel_pending_write, and removal of comments about the
+	relationship between how often this buffer flushes and how often
+	netsync flushes, since these are logically separate.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* xdelta.cc (piece_table::build, insert_insn): Better handling of
+	string expansion, from Eric Anderson.
+	Pluck of d1e563447ab7d92bb965eb330988c637f3c22d14, plus formatting
+	fixups.
+
+2006-08-04  Nathaniel Smith  <njs@pobox.com>
+
+	* mtn.1, monotone.texi: Who are we kidding?  The man page is more
+	misleading than helpful.  Put a big warning at its top, and delete
+	the yet-even-more-bitrotten copy from the texinfo manual.
+
+2006-08-04  Matt Johnston  <matt@ucc.asn.au>
+
+	* std_hooks.lua: make ssh://host/~/path/file.mtn and
+	ssh://host/~user/path/file.mtn work for paths relative to homedirs.
+
+2006-08-04  Thomas Keller  <me@thomaskeller.biz>
+
+	* automate.cc: reworked `automate attributes`, this now
+	  outputs basic_io and shows the state of each attribute
+	  (added, dropped, changed or unchanged) and also lists
+	  those attributes which have been dropped obviously
+	* monotone.texi: updated the docs for that change
+	* cmd_automate.cc: bumped interface_version to 3.0 since
+	  the new automate attributes is incompatible with the
+	  previous one
+	* tests/automate_attributes/__driver__.lua: updated test
+	* roster.cc: moved syms namespace ...
+	* basic_io.hh: ... here and updated the references in the
+	  former file. This is a first start for a more generic
+	  symbols namespace which should lead to a more consistent
+	  output of the different automate commands which make use
+	  of basic_io
+
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_diff_log.cc: don't include revisions with deleted files
+	when doing "log FILE".
+	* tests/log_with_restriction/: a test
+
+2006-08-03  Matt Johnston  <matt@ucc.asn.au>
+
+	* inodeprints.cc: just silently skip (but L()) inodeprint files
+	if the format version is unknown.
+
+2006-08-02  Zack Weinberg  <zackw@panix.com>
+
+	* acinclude.m4: Rename to m4/inaddrnone.m4; update macro to
+	autoconf 2.5x conventions.
+
+	* m4/ac_compile_check_sizeof.m4: Delete, unused.
+	* m4/acx_pthread.m4, m4/ax_create_stdint_h.m4, m4/externtemplate.m4
+	* m4/fexception.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
+	* m4/typeof.m4: Update to autoconf 2.5x conventions.
+
+	* m4/externtemplate.m4, m4/gnucxxhashmap.m4, m4/stlporthashmap.m4
+	* m4/typeof.m4: Use AC_LANG_SOURCE where appropriate.
+
+	* m4/prog_cxx_warnings.m4: Set CXXFLAGS outside the AC_CACHE_CHECK.
+	* m4/boost.m4: New file.  All boost-related logic goes here now.
+	Cache results of library searches; simplify handling of
+	--enable-static-boost.
+	* m4/tr1unorderedmap.m4: New file with tests for tr1::unordered_*.
+	* configure.ac: Use the macros from the above new files.
+	* Makefile.am: Conditional on STATIC_BOOST is no longer	necessary.
+	Wrap some lines.
+
+	* m4/localeworks.m4, m4/netxx.m4, m4/pch.m4, m4/popt.m4, m4/sqlite.m4
+	* m4/syncwithstdio.m4, m4/tempstatconst.m4, m4/xgettextflag.m4:
+	New files.
+	* configure.ac: Use the macros defined in the above files instead
+	of in-line code.
+
+	* configure.ac: Reorganize tests for ease of reading and to ensure
+	that all tests are performed only once.
+	* m4/acx_pthread.m4, m4/externtemplate.m4, m4/fexception.m4
+	* m4/gnucxxhashmap.m4, m4/stlporthashmap.m4, mtl/tempstatconst.m4
+	* m4/tr1unorderedmap.m4, m4/typeof.m4: Use AC_LANG_ASSERT instead
+	of AC_LANG_PUSH/POP, per autoconf manual's recommendation.
+	* m4/popt.m4: Avoid double tests for headers.
+	* m4/prog_cxx_warnings.m4: Fix typo in last change.
+
+2006-07-31  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Reformat some messages so they fit 80 columns better.
+
+2006-07-28  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (walk_tree_recursive): Walk files first, then
+	directories; cuts down memory usage greatly on reiserfs.
+
+2006-07-27  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac: Add a check for g++ 4.0/4.0.1 std::tr1 hashtable
+	const-correctness bug.
+	* hash_map.hh: Check for new #define.
+
+2006-07-27  Nathaniel Smith  <njs@pobox.com>
+
+	* file_io.cc (guess_binary): Set did_char_is_binary_init to true
+	after initialization.
+	(set_char_is_binary): Make un-public.
+
+2006-07-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (temp_file): Allow callers to pass a filename hint
+	to be included in the temporary file name.
+	(write_to_temporary_file): Pass name hint to temp_file.
+	(merge3): Use left/right/ancestor/merged as name hints for
+	temporary files.
+	(get_netsync_connect_command): Formatting tweak.
+
+2006-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* platform.hh (inodeprint_calculator): Add an empty virtual
+	destructor, as per compiler warning.
+
+2006-07-26  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (dfs_iter): Remove dirname member.
+
+2006-07-26  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* paths.cc: Correct Windows tilde-expansion unit test.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (make_roster_for_base_plus_cset): Remove unused
+	entry-point.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	More cleanups spotten by KingGuppy on IRC:
+	* cset.cc (print_cset):
+	* merkle_tree.cc (insert_into_merkle_tree): Remove some unused code.
+	* refiner.hh: Remove declarations of never-defined functions.
+	* paths.cc (test_system_path): Replace a '=' with a '==' in the
+	unit tests.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* netcmd.cc (write_delta_cmd): Fix logic for compressing large deltas.
+
+2006-07-26  Benoît Dejean  <benoit@placenet.org>
+
+	* cmd_ws_commit.cc (CMD(commit)): Use positional format
+	to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* database_check.cc (report_certs): Switched to
+	positional format to ease translation.
+
+2006-07-25  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
+
+2006-07-25  Zack Weinberg  <zackw@panix.com>
+
+	* vocab.hh: Provide base definition of dump template which
+	generates a compile-time error if ever instantiated.
+	* roster.hh: Correct declaration of dump<set<revision_id>>
+	specialization.
+
+2005-07-25  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rearrange things somewhat, to disentangle tester from the rest
+	of the monotone sorce.
+	* luaext_*.cc: Split out our lua extension functions into multiple
+	files.
+	* lua.hh: Add a LUAEXT(name, [table]) mechanism, similar to CMD() and
+	AUTOMATE().
+	* mtn-sanity.{cc,hh} sanity.{cc,hh}: Make sanity.{cc,hh} not depend
+	on ui.{cc,hh}.
+	* platform-wrapped.hh platform.hh win32/* unix/*: Inline wrappers for
+	various platform functions, so that libplatform doesn't depend on
+	vocab or paths.
+	* many files: Fix includes for the platform and sanity changes.
+	* inodeprint.{cc,hh} {win32,unix}/inodeprint.cc: Rearrange slightly.
+	* Makefile.am: Adjust for all the new files.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* std_hooks.lua (edit_comment): If the user_log_message did not
+	end with a newline, insert one.
+
+2006-07-25  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to take care of.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* merge.cc (resolve_merge_conflicts): Remove unused arguments, and
+	adjust callers.
+	* cmd_merging.cc (three_way_merge): Helper function factored out
+	of pluck.
+	(pluck): Use it.
+	(update): Rewrite for clarity, and use 'three_way_merge'.
+
+2006-07-25  Nathaniel Smith  <njs@pobox.com>
+
+	* boost/format.hpp, boost/format/feed_args.hpp: Drop moldy old
+	files and hope it doesn't make any difference...
+
+2006-07-24  Nathaniel Smith  <njs@pobox.com>
+
+	* diff_patch.cc (struct hunk_consumer): Fix compiler warning about
+	initialization order.
+	(find_encloser): Ditto, signed vs. unsigned comparison.
+
+2006-07-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* visualc/tester.vjproj: Forgot to add this.
+
+2006-07-24  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Updated and fixed fuzzies.
+
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
 	* vocab.cc (fake_id): New function.
@@ -6,6 +633,41 @@
 2006-07-24  Nathaniel Smith  <njs@pobox.com>
 
 	* vocab.cc, vocab.hh: Remove tabs.
+
+2006-07-24  Derek Scherger  <derek@echologic.com>
+
+	* roster.cc (check_restricted_cset): allow temp nodes and ensure
+	the node source does not overlap with any existing temp nodes
+
+2006-07-23  Zack Weinberg  <zackw@panix.com>
+
+	* Makefile.am (tester_CPPFLAGS): Define IN_TESTER.
+	* sanity.cc, sanity.hh: Remove C-string specialization of dump() again.
+	(sanity::initialize): New function with more logic split out of ...
+	* monotone.cc (cpp_main): ... here.  Move exit_after_options catch
+	to main chain of catches.
+
+2006-07-23  Zack Weinberg  <zackw@panix.com>
+
+	* monotone.cc: No need to include <strings.h>.  Reorganize entire
+	file, putting things in logical order and splitting large chunks
+	of cpp_main out to...
+	(process_all_options, hide_irrelevant_options): ... these new
+	functions.
+	(cpp_main): Also, avoid some unnecessary C-string-to-std::string
+	conversions, and use ui.fatal_exception for the outermost catch
+	clauses.
+	* sanity.cc, sanity.hh: Specialize dump() for C strings too.
+
+	* ui.cc: Add conditional compilation goo for systems with or
+	without cxxabi.h.
+	(user_interface::fatal_exception): New function (2 overloads).
+	* ui.hh: Declare new user_interface member functions.
+	* unix/main.cc, win32/main.cc: Remove try/catch in main() and all
+	logic supporting it.
+
+	* commands.cc (crash): Remove ability to throw strings.
+	* tests/dump_on_crash: Don't test throwing strings.
 
 2006-07-23  Benoît Dejean  <benoit@placenet.org>
 
@@ -25,10 +687,66 @@
 	* tests/automate_tags/__driver__.lua: Fix test on Win32 (globs vs
 	quoting).
 
+2006-07-22  Zack Weinberg  <zackw@panix.com>
+
+	* sanity.hh: Remove Q().
+	* unix/main.cc: Delete all code related to deferred exception-throwing
+	on user interrupt.
+	(interrupt_signal): Just exit, telling the user they may have to
+	clean up a locked database.
+	* win32/main.cc: Remove most MSVC/Borland #ifdefs, preserving only
+	the MSVC-specific _CrtSetReportHook call.  Use
+	SetUnhandledExceptionFilter to trap errors reported via SEH.
+	(report_ms_se_error): Rename seh_reporting_function; restructure
+	to be suitable for SetUnhandledExceptionFilter; add cases for all
+	documented exception codes.
+	* netsync.cc: Include signal.h if not Windows.
+	(run_netsync_protocol): Ignore SIGPIPE if not Windows.
+	* tests/database_is_closed_on_signal_exit: Expected to fail.
+
 2006-07-22  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Set date, and it turns out AUTOMATE() was there in
 	0.27...
+
+2006-07-21  Zack Weinberg  <zackw@panix.com>
+
+	* main.cc: Break up into...
+	* unix/main.cc, win32/main.cc: ...these two files specialized for
+	the relevant operating systems.  Revamp Unix signal handling.
+	* Makefile.am: Update to match.
+	* configure.ac: Add tests for <cxxabi.h> interfaces conditionally
+	used by unix/main.cc.
+
+	* sanity.hh (informative_failure): Conform to std::exception interface.
+	(sanity): Remove clean_shutdown member.
+	* sanity.cc (sanity::sanity): Do not do any work here.
+	(sanity::do_format): Catch anything, and do not attempt to refer
+	to what().
+	* cmd_automate.cc, lua.cc, netxx_pipe.cc: informative_failure::what
+	is now a member function returning a char *, conforming to the
+	std::exception interface.
+	* ui.hh (user_interface): Add initialize and deinitialize members.
+	Correct typo in fatal(format_base const&) inline overload.
+	* ui.cc (user_interface::user_interface)
+	(user_interface::~user_interface): Do not do any work here...
+	(user_interface::initialize, user_interface::deinitialize):
+	... do it here instead.
+	* monotone.cc (dumper): Remove.
+	(struct botan_library, struct ui_library): New.
+	(cpp_main): Use struct botan_library and struct ui_library to
+	initialize global state.  Don't muck with global_sanity.clean_shutdown.
+	Catch standard exceptions here.  Log system_flavour here.
+
+	* commands.cc (crash): Add ability to throw any standard library
+	exception, bare strings, or (on Unix) raise any of the basic signals.
+	* unix/process.cc (process_wait): If process exited with a signal,
+	return -WTERMSIG(status) not -1.
+	* tests/database_is_closed_on_signal_exit: Ensure that the mtn
+	process actually exits in response to the signal, with the proper
+	exit status.
+	* tests/dump_on_crash: Add tests of all standard exceptions and
+	some signals.
 
 2006-07-21  Nathaniel Smith  <njs@pobox.com>
 
@@ -18016,4 +18734,3 @@
 2003-04-06  Graydon Hoare  <graydon@pobox.com>
 
 	* initial release.
-

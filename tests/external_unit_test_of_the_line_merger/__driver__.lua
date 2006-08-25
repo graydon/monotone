@@ -3,9 +3,9 @@ skip_if(not existsonpath("diff3"))
 
 mtn_setup()
 
-get("left")
-get("right")
-get("ancestor")
+check(get("left"))
+check(get("right"))
+check(get("ancestor"))
 
 anc = "cec9ec2e479b700ea267e70feb5a4eb15155190d"
 left = "52f65363d555fecd3d2e887a207c3add0a949638"

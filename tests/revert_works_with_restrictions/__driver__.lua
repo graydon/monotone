@@ -8,7 +8,7 @@ writefile("modified1", "this is different 1")
 writefile("modified2", "this is different 2")
 writefile("modified3", "this is different 3")
 
-get("ignore_hook.lua")
+check(get("ignore_hook.lua"))
 
 copy("origfile", "testfile")
 copy("orig.ignore", "file.ignore")

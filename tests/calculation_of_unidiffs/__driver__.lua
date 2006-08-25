@@ -4,13 +4,13 @@ skip_if(not existsonpath("patch"))
 mtn_setup()
 
 -- get first file and commit to db
-get("firstfile", "testfile")
+check(get("firstfile", "testfile"))
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 rename("testfile", "firstfile")
 
 -- get second file
-get("secondfile", "testfile")
+check(get("secondfile", "testfile"))
 
 -- calculate diff to second file using monotone
 check(mtn("diff"), 0, true)

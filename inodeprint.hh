@@ -31,6 +31,8 @@ void write_inodeprint_map(inodeprint_map const & ipm,
                           data & dat);
 
 
+bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

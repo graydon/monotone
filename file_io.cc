@@ -20,7 +20,7 @@
 #include "sanity.hh"
 #include "simplestring_xform.hh"
 #include "charset.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "numeric_vocab.hh"
 
 // this file deals with talking to the filesystem, loading and
@@ -116,7 +116,7 @@ file_exists(any_path const & p)
 static bool did_char_is_binary_init;
 static bool char_is_binary[256];
 
-void
+static void
 set_char_is_binary(char c, bool is_binary)
 {
     char_is_binary[static_cast<uint8_t>(c)] = is_binary;
@@ -132,7 +132,7 @@ init_char_is_binary()
   string nontext_chars("\x01\x02\x03\x04\x05\x06\x0e\x0f"
                        "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
                        "\x19\x1a\x1c\x1d\x1e\x1f");
-  set_char_is_binary('\0',true);
+  set_char_is_binary('\0', true);
   for(size_t i = 0; i < nontext_chars.size(); ++i)
     {
       set_char_is_binary(nontext_chars[i], true);
@@ -144,6 +144,7 @@ bool guess_binary(string const & s)
   if (did_char_is_binary_init == false)
     {
       init_char_is_binary();
+      did_char_is_binary_init = true;
     }
 
   for (size_t i = 0; i < s.size(); ++i)
@@ -421,11 +422,30 @@ write_data(system_path const & path,
 
 tree_walker::~tree_walker() {}
 
+static inline bool
+try_file_pathize(fs::path const & p, file_path & fp)
+{
+  try
+    {
+      // FIXME BUG: This has broken charset handling
+      fp = file_path_internal(p.string());
+      return true;
+    }
+  catch (runtime_error const & c)
+    {
+      // This arguably has broken charset handling too...
+      W(F("caught runtime error %s constructing file path for %s")
+        % c.what() % p.string());
+      return false;
+    }
+}
+
 static void
 walk_tree_recursive(fs::path const & absolute,
                     fs::path const & relative,
                     tree_walker & walker)
 {
+  std::vector<std::pair<fs::path, fs::path> > dirs;
   fs::directory_iterator ei;
   for(fs::directory_iterator di(absolute);
       di != ei; ++di)
@@ -434,8 +454,9 @@ walk_tree_recursive(fs::path const & absolute,
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)
       fs::path rel_entry = relative / fs::path(entry.leaf(), fs::native);
+      rel_entry.normalize();
 
-      if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
+      if (bookkeeping_path::is_bookkeeping_path(rel_entry.string()))
         {
           L(FL("ignoring book keeping entry %s") % rel_entry.string());
           continue;
@@ -450,29 +471,38 @@ walk_tree_recursive(fs::path const & absolute,
         }
       else
         {
-          file_path p;
-          try
-            {
-              // FIXME: BUG: this screws up charsets
-              p = file_path_internal(rel_entry.normalize().string());
-            }
-          catch (runtime_error const & c)
-            {
-              W(F("caught runtime error %s constructing file path for %s")
-                % c.what() % rel_entry.string());
-              continue;
-            }
           if (fs::is_directory(entry))
-            {
-              walker.visit_dir(p);
-              walk_tree_recursive(entry, rel_entry, walker);
-            }
+            dirs.push_back(std::make_pair(entry, rel_entry));
           else
             {
+              file_path p;
+              if (!try_file_pathize(rel_entry, p))
+                continue;
               walker.visit_file(p);
             }
-
         }
+    }
+  // At this point, the directory iterator has gone out of scope, and its
+  // memory released.  This is important, because it can allocate rather a
+  // bit of memory (especially on ReiserFS, see [1]; opendir uses the
+  // filesystem's blocksize as a clue how much memory to allocate).  We used
+  // to recurse into subdirectories directly in the loop above; this left
+  // the memory describing _this_ directory pinned on the heap.  Then our
+  // recursive call itself made another recursive call, etc., causing a huge
+  // spike in peak memory.  By splitting the loop in half, we avoid this
+  // problem.
+  // 
+  // [1] http://lkml.org/lkml/2006/2/24/215
+  for (std::vector<std::pair<fs::path, fs::path> >::const_iterator i = dirs.begin();
+       i != dirs.end(); ++i)
+    {
+      fs::path const & entry = i->first;
+      fs::path const & rel_entry = i->second;
+      file_path p;
+      if (!try_file_pathize(rel_entry, p))
+        continue;
+      walker.visit_dir(p);
+      walk_tree_recursive(entry, rel_entry, walker);
     }
 }
 

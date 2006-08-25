@@ -6,9 +6,9 @@ mtn_setup()
 -- This is a real merge error -- it should be a clean merge, but it
 -- produces a conflict.
 
-get("ancestor")
-get("left")
-get("right")
+check(get("ancestor"))
+check(get("left"))
+check(get("right"))
 
 anc = "4f7cfb26927467e9f2a37070edbb19785cbb2f2d"
 left = "adc1ca256e9313dd387448ffcd5cf7572eb58d8e"
@@ -25,7 +25,7 @@ check(mtn("fload"), 0, false, false, true)
 copy("right", "stdin")
 check(mtn("fload"), 0, false, false, true)
 
-get("merge.diff3")
+check(get("merge.diff3"))
 
 xfail_if(true, mtn("fmerge", anc, left, right), 0, true, false)
 rename("stdout", "merge.monotone")

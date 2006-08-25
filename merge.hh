@@ -25,12 +25,8 @@ struct roster_merge_result;
 struct content_merge_adaptor;
 
 void
-resolve_merge_conflicts(revision_id const & left_rid,
-                        revision_id const & right_rid,
-                        roster_t const & left_roster,
+resolve_merge_conflicts(roster_t const & left_roster,
                         roster_t const & right_roster,
-                        marking_map const & left_marking_map,
-                        marking_map const & right_marking_map,
                         roster_merge_result & result,
                         content_merge_adaptor & adaptor,
                         app_state & app);

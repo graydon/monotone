@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-get("inventory_hooks.lua")
+check(get("inventory_hooks.lua"))
 
 addfile("missing", "missing")
 addfile("dropped", "dropped")

@@ -14,7 +14,7 @@ writefile("foo.C", "c\nident\nx\n")
 -- ident
 -- d
 
-get("merge.lua")
+check(get("merge.lua"))
 
 
 copy("foo.A", "foo")

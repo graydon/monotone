@@ -105,6 +105,62 @@ pid_t process_spawn(const char * const argv[])
         }
 }
 
+struct redir
+{
+  struct bad_redir {};
+  int savedfd;
+  int fd;
+  redir(int which, char const * file);
+  ~redir();
+};
+redir::redir(int which, char const * file)
+ : savedfd(-1), fd(which)
+{
+  int tempfd = open(file, (which==0?O_RDONLY:O_WRONLY|O_CREAT|O_TRUNC), 0664);
+  if (tempfd == -1)
+    {
+      throw redir::bad_redir();
+    }
+  int oldfd = dup(which);
+  if (oldfd == -1)
+    {
+      close(tempfd);
+      throw redir::bad_redir();
+    }
+  close(which);
+  while (dup2(tempfd, which) == -1 && errno == EINTR) ;
+  close(tempfd);
+  fd = which;
+  savedfd = oldfd;
+}
+redir::~redir()
+{
+  if (savedfd != -1)
+    {
+      close(fd);
+      dup2(savedfd, fd);
+      close(savedfd);
+    }
+}
+
+pid_t process_spawn_redirected(char const * in,
+                               char const * out,
+                               char const * err,
+                               char const * const argv[])
+{
+  try
+    {
+      redir i(0, in);
+      redir o(1, out);
+      redir e(2, err);
+      return process_spawn(argv);
+    }
+  catch (redir::bad_redir & r)
+    {
+      return -1;
+    }
+}
+
 int process_wait(pid_t pid, int *res, int timeout)
 {
         int status;
@@ -125,7 +181,7 @@ int process_wait(pid_t pid, int *res, int timeout)
         if (WIFEXITED(status))    
                 *res = WEXITSTATUS(status);
         else
-                *res = -1;
+                *res = -WTERMSIG(status);
         return 0;
 }
 
@@ -142,4 +198,9 @@ int process_sleep(unsigned int seconds)
 pid_t get_process_id()
 {
         return getpid();
+}
+
+void ignore_sigpipe()
+{
+  signal(SIGPIPE, SIG_IGN);
 }

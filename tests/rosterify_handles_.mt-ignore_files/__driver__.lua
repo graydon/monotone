@@ -8,7 +8,7 @@ writefile("bar", "bar")
 -- contents "foo".  rosterify should turn it into .mtn-ignore.
 
 remove("test.db")
-get("ignore-1.db.dump", "stdin")
+check(get("ignore-1.db.dump", "stdin"))
 check(mtn("db", "load"), 0, false, false, true)
 check(mtn("db", "migrate"), 0, false, false)
 check(mtn("db", "rosterify"), 0, false, false)
@@ -22,7 +22,7 @@ check(not exists("codir-1/.mt-ignore"))
 -- contents "foo", and a file ".mtn-ignore" with contents "bar".
 -- rosterify should leave them both alone.
 remove("test.db")
-get("ignore-2.db.dump", "stdin")
+check(get("ignore-2.db.dump", "stdin"))
 check(mtn("db", "load"), 0, false, false, true)
 
 check(mtn("db", "migrate"), 0, false, false)

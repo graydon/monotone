@@ -37,7 +37,7 @@
 #include "keys.hh"
 #include "packet.hh"
 #include "paths.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "rcs_file.hh"
 #include "revision.hh"
 #include "safe_map.hh"

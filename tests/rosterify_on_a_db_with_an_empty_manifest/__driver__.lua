@@ -6,7 +6,7 @@ mtn_setup()
 
 remove("test.db")
 
-get("test.db.dumped", "stdin")
+check(get("test.db.dumped", "stdin"))
 check(mtn("db", "load"), 0, false, false, true)
 check(mtn("db", "migrate"), 0, false, false)
 
@@ -15,8 +15,8 @@ check(mtn("db", "rosterify"), 0, false, false)
 check(mtn("automate", "select", "h:testbranch"), 0, true)
 rev = trim(readfile("stdout"))
 
-get("revision_good")
+check(get("revision_good"))
 check(mtn("automate", "get_revision", rev), 0, {"revision_good"})
 
-get("manifest_good")
+check(get("manifest_good"))
 check(mtn("automate", "get_manifest_of", rev), 0, {"manifest_good"})

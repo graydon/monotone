@@ -10,59 +10,81 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "popt/popt.h"
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
 
-#define OPT_DEBUG 1
-#define OPT_HELP 2
-#define OPT_NOSTD 3
-#define OPT_NORC 4
-#define OPT_RCFILE 5
-#define OPT_DB_NAME 6
-#define OPT_KEY_NAME 7
-#define OPT_BRANCH_NAME 8
-#define OPT_QUIET 9
-#define OPT_VERSION 10
-#define OPT_DUMP 11
-#define OPT_TICKER 12
-#define OPT_FULL_VERSION 13
-#define OPT_REVISION 14
-#define OPT_MESSAGE 15
-#define OPT_ROOT 16
-#define OPT_DEPTH 17
-#define OPT_ARGFILE 18
-#define OPT_DATE 19
-#define OPT_AUTHOR 20
-#define OPT_ALL_FILES 21
-#define OPT_PIDFILE 22
-#define OPT_MSGFILE 23
-#define OPT_BRIEF 24
-#define OPT_DIFFS 25
-#define OPT_NO_MERGES 26
-#define OPT_LAST 27
-#define OPT_NEXT 28
-#define OPT_VERBOSE 29
-#define OPT_SET_DEFAULT 30
-#define OPT_EXCLUDE 31
-#define OPT_UNIFIED_DIFF 32
-#define OPT_CONTEXT_DIFF 33
-#define OPT_EXTERNAL_DIFF 34
-#define OPT_EXTERNAL_DIFF_ARGS 35
-// formerly OPT_LCA was here
-#define OPT_EXECUTE 37
-#define OPT_KEY_DIR 38
-#define OPT_BIND 39
-#define OPT_MISSING 40
-#define OPT_UNKNOWN 41
-#define OPT_KEY_TO_PUSH 42
-#define OPT_CONF_DIR 43
-#define OPT_DROP_ATTR 44
-#define OPT_NO_FILES 45
-#define OPT_LOG 46
-#define OPT_RECURSIVE 47
-#define OPT_REALLYQUIET 48
-#define OPT_STDIO 49
-#define OPT_NO_TRANSPORT_AUTH 50
-#define OPT_NO_SHOW_ENCLOSER 51
+#include <string>
+#include <vector>
+
+namespace option
+{
+  using boost::program_options::option_description;
+  using boost::program_options::options_description;
+  using boost::shared_ptr;
+  using std::string;
+  using std::vector;
+
+  extern options_description global_options;
+  extern options_description specific_options;
+
+  struct option_base
+  {
+    char const * operator()() { return o->long_name().c_str(); }
+    shared_ptr<option_description> ptr() const { return o; }
+  protected:
+    option_base(option_description * p) : o(p) {}
+    shared_ptr<option_description> o;
+  };
+
+  template<typename T>
+  struct option : public option_base
+  {
+    T const & get(boost::program_options::variables_map const & vm)
+    {
+      boost::program_options::variable_value const & vv(vm[(*this)()]);
+      return vv.as<T>();
+    }
+    bool given(boost::program_options::variables_map const & vm)
+    {
+      return vm.count((*this)()) > 0;
+    }
+  protected:
+    option(option_description * p) : option_base(p) {}
+  };
+
+  template<typename T>
+  struct global : public option<T>
+  {
+    global(option_description * p) : option<T>(p)
+    {
+      global_options.add(this->o);
+    }
+  };
+
+  template<typename T>
+  struct specific : public option<T>
+  {
+    specific(option_description * p) : option<T>(p)
+    {
+      specific_options.add(this->o);
+    }
+  };
+
+  struct no_option
+  {
+  };
+  struct nil {};
+
+  extern no_option none;
+
+  // global options
+#define GOPT(NAME, OPT, TYPE, DESC) extern global<TYPE > NAME;
+  // command-specific options
+#define COPT(NAME, OPT, TYPE, DESC) extern specific<TYPE > NAME;
+#include "options_list.hh"
+#undef GOPT
+#undef COPT
+}
 
 // Local Variables:
 // mode: C++

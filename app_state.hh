@@ -22,6 +22,7 @@ class lua_hooks;
 #include "database.hh"
 #include "key_store.hh"
 #include "lua_hooks.hh"
+#include "options.hh"
 #include "paths.hh"
 #include "vocab.hh"
 #include "work.hh"
@@ -87,12 +88,11 @@ public:
   std::set<std::string> attrs_to_drop;
   bool no_files;
   bool requested_help;
+  size_t automate_stdio_size;
 
-  // Set if the value of the flag was explicitly given on the command
-  // line.
-  std::map<int, bool> explicit_option_map;
-  void set_is_explicit_option (int option_id);
-  bool is_explicit_option(int option_id) const;
+  std::set<std::string> explicit_options;  // in set if the value of the flag was explicitly given on the command line
+  void set_is_explicit_option (std::string o);
+  bool is_explicit_option(std::string o) const;
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they
@@ -148,6 +148,7 @@ public:
 
   void set_confdir(system_path const & cd);
   system_path get_confdir();
+  void set_automate_stdio_size(long size);
 
   explicit app_state();
   ~app_state();
