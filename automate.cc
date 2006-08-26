@@ -255,14 +255,22 @@ AUTOMATE(attributes, N_("FILE"))
     // dropped attribute
     if (!i->second.first)
       {
-        state = "dropped";
         // if the attribute is dropped, we should have a base roster
-        // with that node...
+        // with that node. we need to check that for the attribute as well
+        // because if it is dropped there as well it was already deleted
+        // in any previous revision
         I(base.has_node(path));
+        
         node_t prev_node = base.get_node(path);
+        
         // find the attribute in there
         full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
         I(j != prev_node->attrs.end());
+        
+        // was this dropped before? then ignore it
+        if (!j->second.first) { continue; }
+        
+        state = "dropped";
         // output the previous (dropped) value later
         value = j->second.second();
       }
