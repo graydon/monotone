@@ -1,8 +1,26 @@
+monotone (0.29-1) unstable; urgency=low
+
+  * New upstream release.
+  * Use /usr/bin/editor. Closes: #379217.
+  * Depend on libboost-program-options-dev.
+
+ -- Shaun Jackman <sjackman@debian.org>  Wed, 23 Aug 2006 12:01:47 -0600
+
 monotone (0.29-0.1) unstable; urgency=low
 
   * New upstream release.
 
  -- Nathaniel Smith <njs@pobox.com>  Sun, 20 Aug 2006 00:26:56 -0700
+
+monotone (0.28-1) unstable; urgency=low
+
+  * New upstream release.
+  * New maintainer.
+  * Add watch file.
+  * Update policy to version 3.7.2.1. No changes necessary.
+  * Update the FSF address. 
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 24 Jul 2006 10:44:56 -0600
 
 monotone (0.28-0.1) unstable; urgency=low
 
