@@ -1273,9 +1273,12 @@ database::put_version(hexenc<id> const & old_id,
                       string const & data_table,
                       string const & delta_table)
 {
-
+  MM(del);
   data old_data, new_data;
   delta reverse_delta;
+  MM(old_data);
+  MM(new_data);
+  MM(reverse_delta);
 
   get_version(old_id, old_data, data_table, delta_table);
   patch(old_data, del, new_data);
