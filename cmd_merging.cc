@@ -8,6 +8,7 @@
 // PURPOSE.
 
 #include <iostream>
+#include <cstring>
 
 #include "cmd.hh"
 #include "diff_patch.hh"
@@ -26,6 +27,7 @@ using std::map;
 using std::set;
 using std::string;
 using std::vector;
+using std::strlen;
 
 using boost::shared_ptr;
 
@@ -111,7 +113,7 @@ CMD(update, N_("workspace"), "",
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
-          P(F("choose one with '%s update -r<id>'") % app.prog_name);
+          P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
       chosen_rid = *(candidates.begin());
@@ -679,7 +681,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
           "to apply the changes relative to one of its parents, use:\n"
           "  %s pluck -r PARENT -r %s")
         % to_rid
-        % app.prog_name % to_rid);
+        % ui.prog_name % to_rid);
       from_rid = *parents.begin();
     }
   else if (app.revision_selectors.size() == 2)

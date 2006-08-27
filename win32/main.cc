@@ -77,7 +77,7 @@ report_error(char const * msg)
   bug_report_message();
 }
 
-static WINAPI LONG
+static LONG WINAPI
 seh_reporting_function(LPEXCEPTION_POINTERS ep)
 {
   // These are all the exception codes documented at

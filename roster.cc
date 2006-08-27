@@ -27,6 +27,7 @@
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
+#include "ui.hh"
 
 #include <boost/lexical_cast.hpp>
 

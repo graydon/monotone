@@ -20,59 +20,47 @@ AC_DEFUN([BOOST_THREAD_STUBS],
 # Check for suitably new version of boost.
 AC_DEFUN([BOOST_VERSION_CHECK],
 [AC_LANG_ASSERT([C++])
- AC_CACHE_CHECK([boost version 1.32 or newer], ac_cv_boost_version_least_1_32,
+ AC_CACHE_CHECK([boost version 1.33.1 or newer], ac_cv_boost_version_least_1_33_1,
  [
   AC_COMPILE_IFELSE(
   [#include <boost/version.hpp>
-  #if BOOST_VERSION >= 103200
+  #if BOOST_VERSION >= 103301
   int main() { return 0; }
   #else
   #error boost version is too old
   #endif
   ],
-  ac_cv_boost_version_least_1_32=yes,
-  ac_cv_boost_version_least_1_32=no)
+  ac_cv_boost_version_least_1_33_1=yes,
+  ac_cv_boost_version_least_1_33_1=no)
  ])
-  if test x$ac_cv_boost_version_least_1_32 = xno; then
-	AC_MSG_ERROR([boost 1.32 or newer required])
+  if test x$ac_cv_boost_version_least_1_33_1 = xno; then
+	AC_MSG_ERROR([boost 1.33.1 or newer required])
   fi
 ])
 
-# Boost 1.32.0 has some g++ 4.0 incompatibilities.  Fortunately, it's
-# only in deprecated code that we don't use, and that is removed in
-# Boost 1.33.  So use a super-ugly hack to get around it.
+# We currently don't need any checks for boost version-specific bugs,
+# but we have in the past and may again.  They go in this macro.
 AC_DEFUN([BOOST_VERSION_SPECIFIC_BUGS],
 [AC_LANG_ASSERT([C++])
- AC_CACHE_CHECK([whether a workaround for boost 1.32.0 bugs is needed],
-		ac_cv_boost_fix_1_32_0,
- [
-  AC_COMPILE_IFELSE(
-  [#include <boost/version.hpp>
-  #if (BOOST_VERSION == 103200) && defined(__GNUC__)
-  int main() { return 0; }
-  #else
-  #error boost version is not 1.32.0
-  #endif
-  ],
-  ac_cv_boost_fix_1_32_0=yes,
-  ac_cv_boost_fix_1_32_0=no)
-])
-  if test x$ac_cv_boost_fix_1_32_0 = xyes; then
-    CXXFLAGS="$CXXFLAGS -DBOOST_REGEX_V4_CHAR_REGEX_TRAITS_HPP -DBOOST_REGEX_COMPILE_HPP"
-  fi
 ])
 
 # Boost libraries have a string suffix that identifies the compiler
 # they were built with, among other details.  For example, it can be
 # '-gcc', '-gcc-mt', '-gcc-mt-1_31', and many other combinations
-# depending on the build system.
-# Some systems provide symlinks that hide these suffixes, avoiding
-# this mess.  However, other systems don't; we have to provide a way
-# to let the user manually specify a suffix.  Guessing can be very
-# difficult, given the variety of possibilities.
+# depending on the build system.  Some systems provide symlinks that
+# hide these suffixes, avoiding this mess.  However, other systems
+# don't; we have to provide a way to let the user manually specify a
+# suffix.  Guessing can be very difficult, given the variety of
+# possibilities.  Note that you cannot expand a variable inside the
+# second argument to AC_ARG_VAR, so we're stuck listing it twice.
 AC_DEFUN([BOOST_SUFFIX_ARG],
-[AC_ARG_VAR(BOOST_SUFFIX,
-           [String suffix that identifies Boost libraries (empty by default)])
+[AC_ARG_VAR([BOOST_SUFFIX],
+            [Space-separated list of suffixes to try appending to the names
+	     of Boost libraries.  "none" means no suffix. The default is:
+	     "none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"])
+if test x"$BOOST_SUFFIX" = x; then
+  BOOST_SUFFIX="none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"
+fi
 ])
 
 # Option to link statically against Boost.
@@ -93,20 +81,26 @@ AC_DEFUN([BOOST_STATIC_LINK_OPTION],
    AC_MSG_CHECKING([location of static boost libraries])
    for i in ${static_boost_prefixes}
    do
+     for s in $BOOST_SUFFIX
+     do
+        if test "x$s" = xnone; then
+          s=''
+	fi
 	# FIXME: We should not be hardwiring /lib64/ nor should we be
 	# unconditionally overriding it with /lib/ (if there are both
 	# 32- and 64-bit static Boost libraries available, we must
 	# pick the one that matches the code the compiler generates).
 	# Fortunately, this is C++, so we'll get link errors if we get
 	# it wrong.
-	if test -f $i/lib64/libboost_regex${BOOST_SUFFIX}.a
+	if test -f $i/lib64/libboost_regex${s}.a
 	then
 		BOOST_LIBDIR=$i/lib64
 	fi
-	if test -f $i/lib/libboost_regex${BOOST_SUFFIX}.a 
+	if test -f $i/lib/libboost_regex${s}.a 
 	then
 		BOOST_LIBDIR=$i/lib
 	fi
+      done
    done
    if test "x${BOOST_LIBDIR}" = x
    then
@@ -119,25 +113,31 @@ AC_DEFUN([BOOST_STATIC_LINK_OPTION],
 ])
 
 # BOOST_LIB_IFELSE(library, testprog, if_found, if_not_found)
+# This is tricksome, as we only want to process a list of suffixes
+# until we've selected one; once we've done that, it must be used for
+# all libraries.  (But we need the shell loop in all uses, as previous
+# scans might be unsuccessful.)
+
 AC_DEFUN([BOOST_LIB_IFELSE],
 [AC_LANG_ASSERT(C++)
  AC_REQUIRE([BOOST_SUFFIX_ARG])
  AC_REQUIRE([BOOST_STATIC_LINK_OPTION])
  found=no
- suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"}
  OLD_LIBS="$LIBS"
- for BOOST_SUFFIX in ${suffixes}
+ for s in $BOOST_SUFFIX
  do
-    test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
+    if test "x$s" = xnone; then
+      s=''
+    fi
     if test "x${BOOST_LIBDIR}" != x; then
-      lib="${BOOST_LIBDIR}/libboost_$1${BOOST_SUFFIX}.a"
+      lib="${BOOST_LIBDIR}/libboost_$1${s}.a"
     else
-      lib="-lboost_$1${BOOST_SUFFIX}"
+      lib="-lboost_$1$s"
     fi
 
     LIBS="$lib $OLD_LIBS"
-    cv=AS_TR_SH([ac_cv_boost_lib_$1${BOOST_SUFFIX}_${BOOST_LIBDIR}])
-    AC_CACHE_CHECK([for the boost_$1${BOOST_SUFFIX} library],
+    cv=AS_TR_SH([ac_cv_boost_lib_$1${s}_${BOOST_LIBDIR}])
+    AC_CACHE_CHECK([for the boost_$1$s library],
     		   $cv,
       [AC_LINK_IFELSE([$2],
 		      [eval $cv=yes],
@@ -149,7 +149,8 @@ AC_DEFUN([BOOST_LIB_IFELSE],
  done
  LIBS="$OLD_LIBS"
  AS_IF([test $found = yes], 
-        [$3],
+        [BOOST_SUFFIX=${s:-none}
+	 $3],
         [$4])])
 
 # Checks for specific boost libraries.

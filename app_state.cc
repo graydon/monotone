@@ -47,7 +47,7 @@ app_state::app_state()
     diff_show_encloser(true),
     execute(false), bind_address(""), bind_port(""),
     bind_stdio(false), use_transport_auth(true),
-    missing(false), unknown(false),
+    missing(false), unknown(false), brief(false),
     confdir(get_default_confdir()),
     have_set_key_dir(false), have_set_key(false),
     no_files(false), requested_help(false), branch_is_sticky(false),
@@ -56,7 +56,6 @@ app_state::app_state()
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
-  set_prog_name(utf8(string("mtn")));
 }
 
 app_state::~app_state()
@@ -366,13 +365,6 @@ void
 app_state::set_recursive(bool r)
 {
   recursive = r;
-}
-
-void
-app_state::set_prog_name(utf8 const & name)
-{
-  prog_name = name;
-  ui.set_prog_name(name());
 }
 
 void

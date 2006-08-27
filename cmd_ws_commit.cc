@@ -361,36 +361,41 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   app.work.get_revision_id(old_rev_id);
   make_revision(old_rev_id, old_roster, included, rev);
 
+  // We intentionally do not collapse the final \n into the format
+  // strings here, for consistency with newline conventions used by most
+  // other format strings.
+  cout << (F("Current branch: %s") % app.branch_name).str() << "\n";
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
-      if (rev.edges.size() != 1)
-        {
-          revision_id parent = edge_old_revision(*i);
-          cout << "Changes against parent " << parent << "\n";
-        }
+      revision_id parent = edge_old_revision(*i);
+      cout << (F("Changes against parent %s:") % parent).str() << "\n";
+
       cset const & cs = edge_changes(*i);
+
+      if (cs.empty())
+        cout << F("  no changes").str() << "\n";
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
-        cout << "dropped " << *i << "\n";
+        cout << (F("  dropped %s") % *i).str() << "\n";
 
       for (map<split_path, split_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
-        cout << "renamed " << i->first << "\n"
-              << "     to " << i->second << "\n";
+        cout << (F("  renamed %s\n"
+                   "       to %s") % i->first % i->second).str() << "\n";
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
-        cout << "added   " << *i << "\n";
+        cout << (F("  added   %s") % *i).str() << "\n";
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
-        cout << "added   " << i->first << "\n";
+        cout << (F("  added   %s") % i->first).str() << "\n";
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << "patched " << i->first << "\n";
+        cout << (F("  patched %s") % (i->first)).str() << "\n";
     }
 }
 
@@ -403,38 +408,17 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
 {
   revision_id ident;
   system_path dir;
-  // We have a special case for "checkout .", i.e., to current dir.
-  bool checkout_dot = false;
 
   transaction_guard guard(app.db, false);
 
   if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (args.size() == 0)
-    {
-      // No checkout dir specified, use branch name for dir.
-      N(!app.branch_name().empty(), 
-        F("need --branch argument for branch-based checkout"));
-      dir = system_path(app.branch_name());
-    }
-  else
-    {
-      // Checkout to specified dir.
-      dir = system_path(idx(args, 0));
-      if (idx(args, 0) == utf8("."))
-        checkout_dot = true;
-    }
-
-  if (!checkout_dot)
-    require_path_is_nonexistent
-      (dir, F("checkout directory '%s' already exists") % dir);
-
   if (app.revision_selectors.size() == 0)
     {
       // use branch head revision
       N(!app.branch_name().empty(), 
-        F("need --branch argument for branch-based checkout"));
+        F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
@@ -445,7 +429,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
           P(F("branch %s has multiple heads:") % app.branch_name);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
-          P(F("choose one with '%s checkout -r<id>'") % app.prog_name);
+          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.branch_name);
         }
       ident = *(heads.begin());
@@ -476,6 +460,35 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(certs.size() != 0, F("revision %s is not a member of branch %s")
         % ident % app.branch_name);
     }
+  
+  // we do this part of the checking down here, because it is legitimate to
+  // do
+  //  $ mtn co -r h:net.venge.monotone
+  // and have mtn guess the branch, and then use that branch name as the
+  // default directory.  But in this case the branch name will not be set
+  // until after the guess_branch() call above:
+  {
+    bool checkout_dot = false;
+    
+    if (args.size() == 0)
+      {
+        // No checkout dir specified, use branch name for dir.
+        N(!app.branch_name().empty(), 
+          F("you must specify a destination directory"));
+        dir = system_path(app.branch_name());
+      }
+    else
+      {
+        // Checkout to specified dir.
+        dir = system_path(idx(args, 0));
+        if (idx(args, 0) == utf8("."))
+          checkout_dot = true;
+      }
+    
+    if (!checkout_dot)
+      require_path_is_nonexistent
+        (dir, F("checkout directory '%s' already exists") % dir);
+  }
 
   app.create_workspace(dir);
 
@@ -837,7 +850,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
-      % app.prog_name);
+      % ui.prog_name);
   }
 
   app.work.update_any_attrs();

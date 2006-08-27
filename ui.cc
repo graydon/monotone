@@ -397,6 +397,7 @@ void tick_write_dot::clear_line()
 // any real work.  see monotone.cc for how this is handled.
 
 user_interface::user_interface() :
+  prog_name("?"),
   last_write_was_a_tick(false),
   t_writer(0)
 {}
@@ -528,13 +529,6 @@ user_interface::fatal_exception()
     }
   else
     this->fatal("exception of unknown type");
-}
-
-void
-user_interface::set_prog_name(string const & name)
-{
-  prog_name = name;
-  I(!prog_name.empty());
 }
 
 string

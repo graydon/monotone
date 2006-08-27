@@ -23,11 +23,12 @@ class app_state;
 
 class lua_hooks;
 
-void generate_key_pair(lua_hooks & lua,           // to hook for phrase
-                       rsa_keypair_id const & id, // to prompting user for phrase
-                       keypair & kp,
-                       // Used for unit tests only:
-                       std::string const unit_test_passphrase = std::string());
+void generate_key_pair(lua_hooks & lua,              // to hook for phrase
+                       rsa_keypair_id const & id,    // to prompting user for phrase
+                       keypair & kp_out);
+
+void generate_key_pair(keypair & kp_out,
+                       utf8 const phrase);
 
 void change_key_passphrase(lua_hooks & lua,       // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase

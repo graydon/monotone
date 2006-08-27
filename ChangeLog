@@ -1,3 +1,4 @@
+>>>>>>> variant B
 2006-08-08  Zack Weinberg  <zackw@panix.com>
 
 	* tests/migrate_workspace/__driver__.lua: Add migration tests for
@@ -219,9 +220,335 @@
 	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
 	interfaces.
 
+2006-08-27  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/status: Add indentation to match changes in output
+	format.
+	* cmd_ws_commit.cc (status): Remove unsightly extra \n.
+
+2006-08-27  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (put_version): Add some MM()'s, in case the
+	invariant in this function fails again (as reported on the mailing
+	list).
+
+2006-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (status): Print current branch, and parent rev,
+	in 'status'.
+
+2006-08-24  Richard Levitte  <richard@levitte.org>
+
+	* po/ja.po: Change the number of possible plurals to 2.
+	This was done with permission from the official JA
+	translator.
+
+2006-08-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* options.hh: workaround for gcc < 3.4 parse error on
+	vv.as<T)();
+
+2006-08-24  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* revision.cc (select_nodes_modified_by_rev)
+	* revision.hh (select_nodes_modified_by_rev): Remove unused first
+	argument (rid).
+	* cmd_diff_log.cc (CMD(log)): Adjust sole usage of that function.
+
+2006-08-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* merge.cc (resolve_merge_conflicts): Bail out of conflict
+	resolution early if content_merger::try_to_merge_files indicates
+	conflicts remain after a merge attempt.
+
+2006-08-23  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (40 to go).
+
+2006-08-23  Jon Bright  <jon@siliconcircus.com>
+
+	* tests/diff_against_empty_file/__driver__.lua: Canonicalize the
+	output before checking.
+
+2006-08-23  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* tests/diff_against_empty_file/expected.diff:
+	* tests/diff_against_empty_file/__driver__.lua: Instead of
+	checking if the resulting patch file applies correctly, compare it
+	to a correct prestored copy.  This is to prevent a bug in some
+	patch(1) implementations that do not deal correctly with reversed
+	patches applied to empty files.  Problem exposed under NetBSD.
+
+2006-08-23  Jon Bright  <jon@siliconcircus.com>
+
+	* automate.cc: add new automate genkey command, avoiding people
+	having to enter into a little chat script with monotone in order to
+	provide genkey with an alternative interface.
+	* tests/automate_genkey: Test it.
+	* testsuite.lua: Add the test
+	* cmd_automate.cc: Bump the interface version to 3.1
+
+	* tests/automate_genkey: Fix the test.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): The hooks merge2 and
+	get_preferred_merge2_command are dead.  Remove them from
+	documentation as well.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua: The previous change wasn't entirely wise.
+	So, a larger rework is in order to make the merging methods
+	more intelligent, as follows.
+	(mergers): all mergers now have an `available' and a `wanted'
+	function, to distinguish between availability of the programs
+	needed by each merger method and a check if the user wants to
+	use a perticular merger.
+	(mergers.rcsmerge.cmd): Use a hardcoded "vim" instead of the
+	non-existing variable `vim'.  This is untested and may need
+	further correction.
+	(get_preferred_merge3_command): If the user defined $MTN_MERGE
+	or the lua variable `merger', use it if the needed programs
+	are available, and fail if not.  If neither was defined, go
+	through all the mergers and pick the first for which the needed
+	programs are available and the user wants to use it.  Return
+	the name of the merger as well if it was specified through
+	$MTN_MERGE or `merger'.
+	(merge3): If get_preferred_merge2_command failed and returned
+	a merger name, tell the user about $MTN_MERGE and `merger',
+	otherwise, print the same old message as before.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (mergers.emacs.available): Since
+	mergers.emacs.cmd uses the command names "emacs" or "xemacs",
+	it's quite useless to look at the EDITOR environment variable
+	to determine availability.  Check that one of those exist on
+	the path instead.  As a result, the variable `merger' and the
+	environment variable MTN_MERGE can truly be used to tell the
+	merge3 hook what program should be used for conflict resolution
+	without having to define EDITOR as well.
+
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify-hookversion.lua: New file that
+	implements notification of changes received by netsync.
+	The software is self-contained but depends on some other
+	packages.  It's also not entirely optimal as it will send
+	notifications for all revisions, unfiltered.  Still, it
+	was time to share this.  Tests are underway.
+
+2006-08-22  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.hh (app_state): Remove set_prog_name and prog_name members.
+	* app_state.cc (app_state::app_state): Don't call set_prog_name.
+	(app_state::set_prog_name): Delete definition.
+	* ui.hh (user_interface): Make prog_name member public.  Delete
+	set_prog_name member.
+	* ui.cc (user_interface::user_interface): Initialize prog_name to "?".
+	(user_interface::set_prog_name): Delete definition.
+	* monotone.cc (my_poptStuffArgFile): Delete.
+	(cpp_main): Delete code that was deleted once before and came
+	back in the .boost-program-options merge.  Handle argv[0]
+	separately from the rest of argv.  Update for ui.prog_name being
+	the only copy of the program invocation name.  Use ui.prog_name
+	instead of the local variable.
+	* commands.cc, roster.cc: Include ui.hh.
+	* cmd_merging.cc (update, pluck)
+	* cmd_ws_commit.cc (checkout, commit)
+	* commands.cc (notify_if_multiple_heads)
+	* database.cc (database::check_schema)
+	* netsync.cc (session::process_hello_command)
+	* roster.cc (update_current_roster_from_filesystem):
+	Use ui.prog_name instead of app.prog_name.
+
+
+2006-08-22  Zack Weinberg  <zackw@panix.com>
+
+	* m4/boost.m4 (BOOST_VERSION_SPECIFIC_BUGS): No need to check for
+	1.32.x bugs now we require 1.33.1 or newer.
+	(BOOST_SUFFIX_ARG): Clarify semantics of the variable; set the
+	default here.
+	(BOOST_LIB_IFELSE): Take care to distinguish 'we don't know what
+	suffix to use yet' from 'the selected suffix is the empty string'.
+	Once a suffix has been chosen, use it exclusively for all
+	subsequent libraries.
+	(BOOST_STATIC_LINK_OPTION): Properly handle BOOST_SUFFIX being a list.
+
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.cc: Fix the unit tests.  Thou shalt (or at least, I shall)
+	remember to run make check before syncing.
+
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.hh, keys.cc: Make passphrases be UTF-8. Change generate_key_pair
+	to have two prototypes, one of which asks for a passphrase as before and
+	one of which accepts a passphrase as a parameter.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_files.cc (annotate): Invert the meaning of --brief --- now
+	the default is to display name/date, and --brief causes it to
+	simply show revisions.  This functionality should probably move
+	from here to 'automate annotate', but this commit doesn't go that
+	far.
+	* tests/annotate_with_human_output: New test.
+	* tests/*annotate*: Update command line syntax, and add check()
+	calls to some tests that were missing them (!).
+
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Two untranslated strings to translate.
+
+2006-08-22  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Extended filename completion to
+	subdirs, minor cleanups.
+	(_mtn_files): New function, factored out filename completion.
+	(_mtn_rcwd): New function, determines cwd relative to wd.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (checkout): Allow user to pass -r without
+	either -b or a directory (as per bug #17498).
+	* tests/checkout_-r_no_dir/: New test.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (checkout): Improve error messages.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (sanity): Move 'brief' from here...
+	* app_state.cc (app_state): ...to here, with the rest of the
+	options.
+	* monotone.cc, cmd_diff_log.cc: Adjust accordingly.
+	* cmd_files.cc (annotate):
+	* annotate.cc (do_annotate): Take the brief option from outside,
+	instead of accessing the global from deep in the middle of
+	annotate.
+
+	No behavioral changes in this commit.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* annotate.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.cc (includes): Don't log what's going on when we
+	have a totally unrestricted mask; it's taking several percent of
+	cpu time.
+
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* examples/display_branches.lua (netsync_branches): Change it
+	so internal calls to other hooks are done to private versions.
+	This is so we don't mess with other implementations of the same
+	hooks which may be simultaneously present.
+
+2006-08-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* debian/control: add libboost-program-options-dev to build dependencies
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST): Remove a trailing comma to get a
+	non-mangled directory layout for tester-tests/ in the distribution
+	tarball.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Put in date.
+	* INSTALL: Bump boost requirement to 1.33.1.
+
+2006-08-21  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_merging.cc: Add includes and using std::* statements
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Translated the last current untranslated string.
+
+2006-08-20  Zack Weinberg  <zackw@panix.com>
+
+	* tests/log_quits_on_SIGPIPE: Rewrite so it actually tests what we
+	want it to (and hopefully is now race free).
+
+2006-08-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Revised completion for almost
+	all commands, especially cat, co, diff, drop, log, propagate,
+	status, and update. Updated list of subcommands for db, ls, and
+	automate. Fixed indentation. Add author information.
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Small typo corrected ("merge" => "merger").
+	* po/sv.po: Fixed a few fuzzies and untranslated strings.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac, UPGRADE: Bump version number to
+	0.29.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Draft 0.29 release notes.
+
+	* cmd_ws_commit.cc (status): Print "no changes", when there are no
+	changes.  Also, use F() for all strings, so that they will be
+	available for translation.
+
+	* monotone.texi (Hooks): Document that you can set MTN_MERGE or
+	lua variable 'merger' to control what merger is selected.
+	(Other Transports): Document the ssh://host/~/foo syntax.
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
+	give the background process to die on its own, before we decide it
+	failed and just kill it.  Hopefully will work better on the loaded
+	buildslaves now?
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/main.cc (interrupt_signal): Newline-terminate our
+	"operation canceled" message.
+
+2006-08-18  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: Say that a Debian user needs to install
+	libboost-program-options-dev as well.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* std_hooks.lua: Fix some brokenness from the merge hook changes.
+
 2006-08-15  Zack Weinberg  <zackw@panix.com>
 
 	* Makefile.am: put the lists back the way they were (mostly).
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/log_quits_on_SIGPIPE/: Try to make the test work.
+
+2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	The new lua version doesn't like the file objects our mkstemp produces.
+	* mkstemp.cc mkstemp.hh: Don't keep the file open. This is only called
+	from LUAEXT(mkstemp, ), which no longer wants an fd.
+	* luaext_mkstemp.cc: Don't try to make a file object, just have
+	monotone_mkstemp create a file, then let...
+	* std_hooks.lua (temp_file): ... open it with io.open, so lua will
+	be happy with it.
 
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 	* cmd_ws_commit.cc: "status" and "automate get_revision" give
@@ -248,6 +575,7 @@
 	* m4/boost.m4: Create a new macro to factor out code in common
 	among most of the MTN_BOOST_LIB_* macros.
 	* options.hh: Fix typo.
+
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* options.hh: Have a non-template option_base class to allow for...
@@ -383,6 +711,10 @@
 	specified roots rather than the workspace root. this can make
 	restricted ls unknown *much* faster in a workspace with large
 	unversioned directories.
+
+2006-08-16  Benoît Dejean  <benoit@placenet.org>
+
+	* po/fr.po: Updated French translation.
 
 2006-08-12  Nathaniel Smith  <njs@pobox.com>
 

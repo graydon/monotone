@@ -15,7 +15,7 @@
 #include "charset.hh"
 #include "inodeprint.hh"
 #include "cert.hh"
-
+#include "ui.hh"
 #include "cmd.hh"
 
 #ifndef _WIN32
@@ -442,7 +442,7 @@ notify_if_multiple_heads(app_state & app)
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.branch_name % app.prog_name);
+    P(i18n_format(prefixedline) % app.branch_name % ui.prog_name);
   }
 }
 
