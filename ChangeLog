@@ -1,5 +1,10 @@
 2006-08-28  Thomas Moschny  <thomas.moschny@gmx.de>
 
+	* m4/ax_create_stdint_h.m4 (ac_cv_stdint_message): Change the
+	still not portable `head -n 1' into a `sed 1q'.
+
+2006-08-28  Thomas Moschny  <thomas.moschny@gmx.de>
+
 	* m4/ax_create_stdint_h.m4 (ac_cv_stdint_message): Correct
 	non-portable option to the `head' command.
 
