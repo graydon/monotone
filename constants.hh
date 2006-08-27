@@ -20,9 +20,6 @@ namespace constants
   // this file contains magic constants which you could, in theory, tweak.
   // probably best not to tweak them though.
 
-  // block size in bytes for "automate stdio" output
-  extern size_t const automate_stdio_size;
-
   // number of bits in an RSA key we use
   extern size_t const keylen;
 
@@ -54,6 +51,9 @@ namespace constants
 
   // number of rosters in the database roster cache
   extern size_t const db_roster_cache_sz;
+
+  // maximum number of bytes to be consumed with the pending write cache
+  extern unsigned long const db_max_pending_writes_bytes;
 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.

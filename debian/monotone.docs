@@ -1,6 +1,5 @@
 ABOUT-NLS
 AUTHORS
-COPYING
 NEWS
 README
 README.changesets
@@ -8,4 +7,3 @@ UPGRADE
 monotone.html
 figures
 contrib
-examples

@@ -41,11 +41,10 @@ interner
   }
   T intern(std::string const & s, bool & is_new)
   {
-    std::pair<typename hmap::iterator, bool> res;
     T t = rev.size();
     // if fwd already contains an entry with key s, this just finds
     // that and returns it
-    res = fwd.insert(make_pair(s, t));
+    std::pair<typename hmap::iterator, bool> res(fwd.insert(make_pair(s, t)));
     is_new = res.second;
     if (is_new)
       rev.push_back(s);

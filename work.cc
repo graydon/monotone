@@ -17,7 +17,7 @@
 #include "basic_io.hh"
 #include "cset.hh"
 #include "localized_file_io.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "restrictions.hh"
 #include "sanity.hh"
 #include "safe_map.hh"
@@ -94,6 +94,7 @@ find_missing(roster_t const & new_roster_shape, node_restriction const & mask,
 
 void
 find_unknown_and_ignored(app_state & app, path_restriction const & mask,
+                         vector<file_path> const & roots,
                          path_set & unknown, path_set & ignored)
 {
   revision_t rev;
@@ -106,7 +107,11 @@ find_unknown_and_ignored(app_state & app, path_restriction const & mask,
   new_roster.extract_path_set(known);
 
   file_itemizer u(app, known, unknown, ignored, mask);
-  walk_tree(file_path(), u);
+  for (vector<file_path>::const_iterator 
+         i = roots.begin(); i != roots.end(); ++i)
+    {
+      walk_tree(*i, u);
+    }
 }
 
 
@@ -188,23 +193,17 @@ addition_builder::visit_file(file_path const & path)
       return;
     }
 
-  P(F("adding %s to workspace manifest") % path);
-
-  split_path dirname, prefix;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
+  split_path prefix;
   I(ros.has_root());
-  for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
-       ++i)
+  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
     {
       prefix.push_back(*i);
-      if (i == dirname.begin())
-        continue;
       if (!ros.has_node(prefix))
-        add_node_for(prefix);
+        {
+          P(F("adding %s to workspace manifest") % file_path(prefix));
+          add_node_for(prefix);
+        }
     }
-
-  add_node_for(sp);
 }
 
 void

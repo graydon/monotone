@@ -16,7 +16,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "file_io.hh"
 #include "botan/botan.h"
 
 #ifndef O_BINARY
@@ -25,7 +24,7 @@
 
 using std::string;
 
-int
+bool
 monotone_mkstemp(string &tmpl)
 {
   unsigned int len = 0;
@@ -55,12 +54,17 @@ monotone_mkstemp(string &tmpl)
 	  if (fd >= 0)
       {
         tmpl = tmp;
-        return fd;
+#ifdef _MSC_VER
+        _close(fd);
+#else
+	      close(fd);
+#endif
+        return true;
       }
       else if (errno != EEXIST)
         break;
     }
-  return -1;
+  return false;
 }
 
 

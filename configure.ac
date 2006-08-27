@@ -2,318 +2,33 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.28, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.29, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar check-news std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
+AC_CONFIG_FILES([Makefile])
 
 # Checks for programs.
-AC_PROG_CXX
-AC_PROG_CC
+dnl Note: AC_PROG_CC is implied by AM_PROG_CC_C_O and in any case has
+dnl already been done by AM_INIT_AUTOMAKE.
+AM_PROG_CC_C_O
+AC_PROG_GCC_TRADITIONAL
 
-test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
-test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
+AC_PROG_CXX
+AC_PROG_CXX_WARNINGS
+AC_PROG_CXX_PCH
 
 AC_PROG_RANLIB
+
+# ??? Shouldn't be necessary (anymore).
+test "z$GCC" = "zyes" && CFLAGS="$CFLAGS -fno-strict-aliasing"
+test "z$GXX" = "zyes" && CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
+
+AC_C_CONST
+AC_C_INLINE
 AC_CC_FEXCEPTIONS
-AC_LANG(C++)
 
-AC_PROG_CXX_WARNINGS
-AC_CXX_TYPEOF
-
-AC_CXX_GNUCXX_HASHMAP
-AC_CXX_STLPORT_HASHMAP
-
-# check to see how to make objects in subdirs
-AM_PROG_CC_C_O
-
-# check for language features
-AC_CXX_EXTERN_TEMPLATE
-
-# intl / gettext
-# the AM_GNU_GETTEXT macro test won't compile with g++
-AC_LANG_PUSH(C)
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.11.5)
-AM_ICONV
-AC_LANG_POP()
-
-# Check whether xgettext supports the --flag option.  We generate the
-# xgettext.opts file that holds the options to be used when calling this
-# utility.  These options are later added to po/Makefile.
-#
-# Yes, this is a big hack, but due to the way po/Makefile is generated,
-# there is no other way to do this in a dynamic fashion.
-AC_MSG_CHECKING([whether xgettext supports --flag])
-echo 'int main(void) { return 0; }' >> conftest.c
-if ${XGETTEXT} --flag printf:1:c-format -o conftest.po conftest.c \
-    >/dev/null 2>&1
-then
-    xgettext_has_flag=yes
-    touch xgettext.opts
-else
-    echo 'XGETTEXT_OPTIONS = $(XGETTEXT_OPTIONS_NO_FLAG)' >xgettext.opts
-    xgettext_has_flag=no
-fi
-rm -f conftest.c conftest.po
-AC_MSG_RESULT(${xgettext_has_flag})
-
-# Checks for idna stuff
-AC_HEADER_STDC
-AC_CHECK_HEADERS(unistd.h errno.h)
-AC_CACHE_CHECK([if setlocale() and nl_langinfo() works],
-	ac_cv_locale_works, [
-	AC_TRY_RUN([
-#include <locale.h>
-#include <langinfo.h>
-int main ()
-{
-  char* cs;
-  setlocale(LC_CTYPE, "");
-  cs = nl_langinfo(CODESET);
-  return !cs;
-}
-],
-		ac_cv_locale_works=yes,
-		ac_cv_locale_works=no,
-		ac_cv_locale_works=no)
-	])
-if test "$ac_cv_locale_works" = "yes"; then
-  AC_DEFINE(LOCALE_WORKS, 1, [Define if setlocale() and nl_langinfo() works.])
-fi
-
-# check various C++ libs which confuse autoconf
-
-# We don't use threads, but some Boost libraries make locking calls
-# anyway.  So we need to ensure that these symbols are available.  But
-# It's okay if they're just stubs.
-AC_CHECK_FUNC([pthread_mutex_lock], [],
-# But if there isn't even a stub, find the real threading library...
-              [ACX_PTHREAD(
-# ...and if it exists, use it:
-                           [LIBS="$PTHREAD_LIBS $LIBS"
-                            CXXFLAGS="$PTHREAD_CFLAGS $CXXFLAGS"],
-# ...but if it doesn't, oh well, maybe things will work out anyway:
-                           [])])
-# This is technically incorrect if Boost is for some reason compiled
-# without threads on a system that does provide threads; we'll end up
-# compiling monotone with thread support for no reason.
-
-AC_DEFUN([BOOST_VERSION_CHECK],
-[AC_CACHE_CHECK([boost version 1.32 or newer], ac_cv_version_boost,
-[
-  AC_COMPILE_IFELSE(
-  [#include <boost/version.hpp>
-  #if BOOST_VERSION >= 103200
-  int main() { return 0; }
-  #else
-  #error boost version is too old
-  #endif
-  ],
-  ac_cv_version_boost=yes,
-  ac_cv_version_boost=no)
-])
-  if test $ac_cv_version_boost = no; then
-	AC_MSG_ERROR([boost 1.32 or newer required])
-  fi
-])
-BOOST_VERSION_CHECK
-
-# Boost 1.32.0 has some g++ 4.0 incompatibilities.  Fortunately, it's
-# only in deprecated code that we don't use, and that is removed in
-# Boost CVS (and therefore presumably in 1.33).  So use a super-ugly
-# hack to get around it.
-AC_DEFUN([BOOST_FIX_VERSION],
-[AC_CACHE_CHECK([if boost requires extra flags to compile], ac_fix_boost,
-[
-  AC_COMPILE_IFELSE(
-  [#include <boost/version.hpp>
-  #if (BOOST_VERSION == 103200) && defined(__GNUC__)
-  int main() { return 0; }
-  #else
-  #error boost version is not 1.32.0
-  #endif
-  ],
-  ac_fix_boost=yes,
-  ac_fix_boost=no)
-])
-  if test $ac_fix_boost = yes; then
-    CXXFLAGS="$CXXFLAGS -DBOOST_REGEX_V4_CHAR_REGEX_TRAITS_HPP -DBOOST_REGEX_COMPILE_HPP"
-  fi
-])
-BOOST_FIX_VERSION
-
-# Boost libraries have a string suffix that identifies the compiler
-# they were built with, among other details.  For example, it can be
-# '-gcc', '-gcc-mt', '-gcc-mt-1_31', and many other combinations
-# depending on the build system.
-# Some systems provide symlinks that hide these suffixes, avoiding
-# this mess.  However, other systems don't; we have to provide a way
-# to let the user manually specify a suffix.  Guessing can be very
-# difficult, given the variety of possibilities.
-AC_ARG_VAR(BOOST_SUFFIX,
-           [String suffix that identifies Boost libraries (empty by default)])
-AC_SUBST(BOOST_SUFFIX)
-
-# Now check for Boost libraries proper.
-
-found=no
-suffixes=${BOOST_SUFFIX:-"none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"}
-for BOOST_SUFFIX in ${suffixes}
-do
-    test "x${BOOST_SUFFIX}" = "xnone" && BOOST_SUFFIX=
-    LIBS="-lboost_filesystem${BOOST_SUFFIX} $OLD_LIBS"
-    AC_MSG_CHECKING(for the libboost_filesystem${BOOST_SUFFIX} library)
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-      #include <boost/filesystem/path.hpp>
-      #include <boost/filesystem/operations.hpp>
-      using namespace boost::filesystem;
-    ]],
-    [[exists(path("/boot"));]])],
-     [AC_MSG_RESULT([yes])
-      found=yes],
-     [AC_MSG_RESULT([no])])
-    test "x${found}" = "xyes" && break
-done
-if test "x${found}" = "xno"; then
-    AC_MSG_FAILURE([libboost_filesystem failure])
-fi
-
-OLD_LIBS=$LIBS
-LIBS="-lboost_unit_test_framework${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(for the libboost_unit_test_framework${BOOST_SUFFIX} library)
-AC_LINK_IFELSE([AC_LANG_SOURCE([[
-#include <boost/test/unit_test_suite.hpp>
-#include <boost/test/test_tools.hpp>
-using boost::unit_test_framework::test_suite;
-test_suite * init_unit_test_suite(int argc, char * argv[]) 
-{ return NULL; }
-]])],
- [AC_MSG_RESULT([yes])
-  AM_CONDITIONAL(BUILD_UNIT_TESTS, true)],
- [AC_MSG_RESULT([no])
-  AM_CONDITIONAL(BUILD_UNIT_TESTS, false)])
-LIBS=$OLD_LIBS
-
-LIBS="-lboost_date_time${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(for the libboost_date_time${BOOST_SUFFIX} library)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-  #include <boost/date_time/posix_time/posix_time.hpp>
-  #include <iostream>
-  using namespace boost::posix_time; 
-]],
-[[std::cout << to_iso_extended_string(second_clock::universal_time());]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_date_time failure])])
-
-
-LIBS="-lboost_regex${BOOST_SUFFIX} $LIBS"
-AC_MSG_CHECKING(for the libboost_regex${BOOST_SUFFIX} library)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-  #include <boost/regex.hpp>
-  using namespace boost; 
-]],
-[[regex expr("foo");]])],
- [AC_MSG_RESULT([yes])],
- [AC_MSG_FAILURE([libboost_regex failure])])
-
-
-# check for static boost option
-AC_ARG_ENABLE(static-boost,
-AS_HELP_STRING([--enable-static-boost@<:@=prefix@:>@],
-               [use static libs from boost]))
-AM_CONDITIONAL(STATIC_BOOST, test "x${enable_static_boost}" != x)
-if test "x${enable_static_boost}" != x
-then
-   if echo "${enable_static_boost}" | grep '^/' >/dev/null
-   then
-      static_boost_prefixes="${enable_static_boost}"
-   else
-      static_boost_prefixes="/ /usr /opt /usr/local"
-   fi
-   AC_MSG_CHECKING([location of static boost libraries])
-   for i in ${static_boost_prefixes}
-   do
-	if test -f $i/lib64/libboost_regex${BOOST_SUFFIX}.a
-	then
-		BOOST_LIBDIR=$i/lib64
-	fi
-	if test -f $i/lib/libboost_regex${BOOST_SUFFIX}.a 
-	then
-		BOOST_LIBDIR=$i/lib
-	fi
-   done
-   if test "x${BOOST_LIBDIR}" = x
-   then
-        AC_MSG_RESULT([not found])
-	AC_MSG_ERROR([cannot find boost libraries for static link])
-   else
-        AC_MSG_RESULT([${BOOST_LIBDIR}])
-	LIBS=`echo ${LIBS} | tr ' ' '\n' | grep -v boost | tr '\n' ' '`
-	AC_SUBST(BOOST_LIBDIR)
-   fi
-fi
-
-# check for the obnoxious gcc 4.1.[01] template static data bug
-# (see http://gcc.gnu.org/PR28016)
-cv=ac_cv_prog_cxx_`echo $CXX | tr -c A-Za-z0-9_ _`_template_static_const_ok
-
-code='
-template<class T> struct S { static const bool B; };
-template<class T> const bool S<T>::B = true;'
-
-codeA="
-$code
-int foo() { return 0; }"
-
-codeB="
-$code
-extern int foo();
-int main() { return foo(); }"
-
-AC_CACHE_CHECK(
-  [whether $CXX handles templates with static const members correctly],
-  $cv,
-  [AC_LANG_PUSH([C++])
-   # Autoconf doesn't make it easy to do a test involving 
-   # linking two files.  This is the best way I know of.
-   AC_COMPILE_IFELSE([$codeA],
-     [mv conftest.$ac_objext conftestA.$ac_objext
-      save_LIBS="$LIBS"
-      LIBS=conftestA.$ac_objext
-      AC_LINK_IFELSE([$codeB],
-        [eval $cv=yes],
-        [eval $cv=no])
-      LIBS="$save_LIBS"],
-     [eval $cv=no])
-   AC_LANG_POP([C++])])
-if eval "test x\"\${$cv}\" = xno"; then
-  # ??? This is the correct workaround for g++ and gnu ld, but maybe not
-  # for others.  (But this is a GNU-specific bug, so...)
-  LDFLAGS="$LDFLAGS -Wl,-z,muldefs"
-fi
-
-# check for precompiled headers option
-AC_ARG_ENABLE(pch,
-AS_HELP_STRING([--enable-pch],
-               [use precompiled boost headers]))
-AM_CONDITIONAL(BUILD_PCH, false)
-if test x"${enable_pch}" = x"yes"
-then
-	AC_MSG_CHECKING(for gcc with precompiled header support)
-	gxx_version=`${CXX} -dumpversion`
-	case $gxx_version in
-		4.*)
-			AC_MSG_RESULT(found)
-			AM_CONDITIONAL(BUILD_PCH, true)
-			;;
-		*)
-			AC_MSG_RESULT(not found)
-			;;
-	esac
-fi
-
-AC_CACHE_CHECK([if this is Windows],
+AC_CACHE_CHECK([whether this is Windows],
        ac_win32, [
        AC_TRY_COMPILE([#ifdef WIN32
                        #include <windows.h>
@@ -330,283 +45,71 @@ else
    AC_DEFINE(os_err_t, int, [OS-specific error type])
 fi
 
-# Check for IPv6.  Let the user enable or disable it manually using a
-# three-state (yes|no|auto) --enable argument.
-AC_ARG_ENABLE(ipv6,
-   AS_HELP_STRING([--enable-ipv6],[enable IPv6 support (default=auto)]), ,
-   enable_ipv6=auto
-)
-AC_CACHE_CHECK([presence of IPv6],
-   ac_inet6,
-   [
-      ac_inet6=no
-      if test x"${enable_ipv6}" = x"auto" || test x"${enable_ipv6}" = x"yes"
-      then
-         AC_TRY_COMPILE([#ifdef WIN32
-                         #include <winsock2.h>
-                         #else
-                         #include <sys/types.h>
-                         #include <sys/socket.h>
-                         #include <netinet/in.h>
-                         #include <arpa/inet.h>
-                         #endif],
-                        [sockaddr_in6 sa_in6;],
-                        ac_inet6=yes
-         )
-
-         if test x"${enable_ipv6}" = x"yes" && test x"${ac_inet6}" = x"no"
-         then
-            AC_MSG_ERROR([IPv6 explicitly requested but it could not be found])
-         fi
-      fi
-   ]
-)
-AM_CONDITIONAL(MISSING_INET6, test x"${ac_inet6}" = x"no")
-if test x"${ac_inet6}" = xyes; then
-    AC_DEFINE(USE_IPV6, 1, [Define whether to use IPv6.])
-fi
-
-# simple library checks 
-AC_SEARCH_LIBS([dlsym], [dl], AC_DEFINE(USE_DLOPEN))
-AH_TEMPLATE([USE_DLOPEN], [For LUA: use dlopen for loadlib])
-AC_SEARCH_LIBS([inet_aton], [resolv])
-AC_SEARCH_LIBS([accept], [socket])
-AC_SEARCH_LIBS([inet_ntoa], [nsl])
-AC_SEARCH_LIBS([fdatasync], [rt], AC_DEFINE(HAVE_FDATASYNC))
-AH_TEMPLATE([HAVE_FDATASYNC], [For SQLite; use fdatasync if available])
-AC_SEARCH_LIBS([usleep], [rt], AC_DEFINE(HAVE_USLEEP))
-AH_TEMPLATE([HAVE_USLEEP], [For SQLite; use usleep if available])
-AC_CHECK_LIB([z], [deflate], , AC_MSG_FAILURE([zlib is required]))
-
-# Now let the user specify whether he wants large file support or not in
-# sqlite.
-AC_ARG_ENABLE([large-file],
-   AS_HELP_STRING(
-      [--disable-large-file],
-      [Disable large file support in builtin sqlite]
-   ), , enable_large_file=yes
-)
-
-if test "x$enable_large_file" = "xno"; then
-   SQLITE_CPPFLAGS="$SQLITE_CPPFLAGS -DSQLITE_DISABLE_LFS"
-fi
-AC_SUBST(SQLITE_CPPFLAGS)
-
-##########
-# We use our bundled popt unconditionally, because the external one has
-# serious bugs that we can't live with.  Maybe some time in the future...
-# The following was simply taken from the configure.in that comes with popt.
-#AC_LANG_PUSH(C)
-AC_CHECK_HEADERS([alloca.h float.h libintl.h mcheck.h])
-AC_MSG_CHECKING(for /usr/ucblib in LIBS)
-if test -d /usr/ucblib ; then
-	if test "$build" = "mips-sni-sysv4" ; then
-		addlib /usr/ccs/lib -lc
-	fi
-
-	addlib /usr/ucblib
-	
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
-AC_CHECK_FUNCS(strerror strptime mtrace getuid geteuid)
-AC_CHECK_FUNC(setreuid, [], [
-    AC_CHECK_LIB(ucb, setreuid, [if echo $LIBS | grep -- -lucb >/dev/null ;then :; else LIBS="$LIBS -lc -lucb" USEUCB=y;fi])
-])
-
-POPT_SOURCE_PATH="`pwd`"
-AC_DEFINE_UNQUOTED(POPT_SOURCE_PATH, "$POPT_SOURCE_PATH",
-	[Full path to popt top_sourcedir.])
-AC_SUBST(POPT_SOURCE_PATH)
-#AC_LANG_POP()
-
-
-##########
-
-
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/file.h sys/socket.h sys/time.h termios.h unistd.h])
-AX_CREATE_STDINT_H(mt-stdint.h)
-
-# Checks for typedefs, structures, and compiler characteristics.
+# Explicitly specifying AC_INCLUDES_DEFAULT gets autoconf not to do all
+# the tests twice.
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h sys/file.h \
+		  sys/socket.h sys/time.h termios.h errno.h],,,
+		 [AC_INCLUDES_DEFAULT()])
 AC_HEADER_STDBOOL
-AC_C_CONST
-AC_C_INLINE
+AX_CREATE_STDINT_H(mt-stdint.h)
+# gettext is nominally a library, but its tests don't work in C++ mode.
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.11.5)
+AM_ICONV
+AC_PROG_XGETTEXT_FLAG_OPTION
+# similarly, this calls ACX_PTHREAD, which expects C.
+BOOST_THREAD_STUBS
+
+AC_LANG([C++])
+# This header may not be visible to the C compiler.
+AC_CHECK_HEADERS([cxxabi.h],,, [AC_INCLUDES_DEFAULT()])
+
+# check for language features and compiler bugs
+AC_CXX_TYPEOF
+AC_CXX_EXTERN_TEMPLATE
+AC_CXX_GNUCXX_HASHMAP
+AC_CXX_STLPORT_HASHMAP
+AC_CXX_TR1_UNORDERED_MAP
+AC_CXX_TR1_UNORDERED_MAP_CONST_CORRECT
+AC_CXX_SYNC_WITH_STDIO_WORKS
+AC_CXX_TEMPLATE_STATIC_CONST_BUG
+
+# Checks for typedefs and structures.
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
-AC_HAVE_INADDR_NONE
+AC_TYPE_PID_T
 
-AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec, struct stat.st_mtim.tv_nsec])
-AC_CHECK_MEMBERS([struct stat.st_ctimespec.tv_nsec, struct stat.st_mtimespec.tv_nsec])
-AC_CHECK_MEMBERS([struct stat.st_ctimensec, struct stat.st_mtimensec])
-
-# Check type of socklen_t; int on Cygwin, OS X <= 10.3, Win32.  TYPE_SOCKLEN_T
-# function supplied by <lars@nocrew.org> via http://autoconf-archive.cryp.to/
-AC_DEFUN([TYPE_SOCKLEN_T],
-[AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t,
-[
-  AC_TRY_COMPILE(
-  [#include <sys/types.h>
-   #include <sys/socket.h>],
-  [socklen_t len = 42;],
-  ac_cv_type_socklen_t=yes,
-  ac_cv_type_socklen_t=no)
-])
-  if test $ac_cv_type_socklen_t = yes; then
-    AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define if platform has socklen_t.])
-  fi
-])
-TYPE_SOCKLEN_T
-
-AC_DEFUN([TYPE_PID_T],
-[AC_CACHE_CHECK([for pid_t], ac_cv_type_pid_t,
-[
-  AC_TRY_COMPILE(
-  [#include <sys/types.h>],
-  [pid_t pid = 42; ],
-  ac_cv_type_pid_t=yes,
-  ac_cv_type_pid_t=no)
-])
-  if test $ac_cv_type_pid_t = no; then
-    AC_DEFINE(pid_t, long, [pid_t substitute.])
-  fi
-])
-TYPE_PID_T
+AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
+	          struct stat.st_mtim.tv_nsec,
+		  struct stat.st_ctimespec.tv_nsec, 
+	          struct stat.st_mtimespec.tv_nsec,
+		  struct stat.st_ctimensec,
+		  struct stat.st_mtimensec])
 
 # Checks for library functions.
-AC_PROG_GCC_TRADITIONAL
 AC_FUNC_STAT
-AC_CHECK_FUNCS([atexit gethostbyaddr gethostbyname inet_ntoa memset mkstemp setenv socket])
+AC_FUNC_LOCALE_WORKS
+AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint \
+		__cxa_current_exception_type __cxa_demangle])
 
-AC_CHECK_FUNC(inet_pton, [AM_CONDITIONAL(MISSING_INET_PTON, false)], 
-			 [AM_CONDITIONAL(MISSING_INET_PTON, true)])
+# simple library checks
+AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
 
-AC_CHECK_FUNC(inet_ntop, [AM_CONDITIONAL(MISSING_INET_NTOP, false)], 
-			 [AM_CONDITIONAL(MISSING_INET_NTOP, true)])
+# check for all things boost-related
+BOOST_VERSION_CHECK
+BOOST_VERSION_SPECIFIC_BUGS
 
-AC_CHECK_FUNC(getaddrinfo, [AM_CONDITIONAL(MISSING_GETADDRINFO, false)], 
-			   [AM_CONDITIONAL(MISSING_GETADDRINFO, true)])
+MTN_BOOST_LIB_FILESYSTEM
+MTN_BOOST_LIB_DATE_TIME
+MTN_BOOST_LIB_REGEX
+MTN_BOOST_LIB_UNIT_TEST_FRAMEWORK
+MTN_BOOST_LIB_PROGRAM_OPTIONS
 
-# Check whether sync_with_stdio(false) run on C++ streams works correctly.
-# It causes strange problems (EOF returned too early) on some versions of
-# MinGW and OS X.  The first test is for the MinGW issue, the second for
-# the OS X issue.
-#
-# In order to check for this issue, we first generate a large input file
-# (over 128KB) and then try to read it (using a buffer size over 512
-# bytes).  If the amount of bytes read does not match the generated input,
-# the implementation is broken.
-AC_MSG_CHECKING(whether C++ streams support sync_with_stdio)
-AC_RUN_IFELSE([AC_LANG_SOURCE([
-/*
- * Generates the input file.
- */
-#include <cstdlib>
-#include <fstream>
-
-int
-main(void)
-{
-  std::ofstream ofs("_conftest.dat");
-  for (int i = 0; i < 50000; i++)
-    ofs << "0123456789\r\n";
-  ofs.close();
-
-  return EXIT_SUCCESS;
-}
-])])
-AC_RUN_IFELSE([AC_LANG_SOURCE([
-/*
- * Reads the input file.
- */
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-
-int
-main(int argc, char * argv[])
-{
-  if (argc == 1)
-    return EXIT_SUCCESS;
-
-  std::cin.sync_with_stdio(false);
-  int length = 0;
-  while (std::cin.good())
-    {
-      char buffer@<:@1024@:>@;
-      (void)std::cin.read(buffer, sizeof(buffer));
-      length += std::cin.gcount();
-    }
-
-  return length == 600000 ? EXIT_SUCCESS : EXIT_FAILURE;
-}
-])],
- [if ./conftest$ac_exeext check_it_now <_conftest.dat; then
-    AC_MSG_RESULT(yes)
-    ac_cv_sync_with_stdio=yes
-  else
-    AC_MSG_RESULT(no)
-    ac_cv_sync_with_stdio=no
-  fi
-  rm -f _conftest.dat])
-
-
-# To check for this issue, we have a writer with a short delay between writes,
-# and a reader who has set sync_with_stdio(false).
-AC_MSG_CHECKING(whether C++ streams support sync_with_stdio 2)
-AC_RUN_IFELSE([AC_LANG_SOURCE([
-#include <cstdlib>
-#include <iostream>
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#define sleep(x) Sleep((x) * 1000)
-#else
-#include <unistd.h>
-#endif
-
-int
-main(int argc, char * argv[])
-{
-  if (argc == 1)
-    return EXIT_SUCCESS;
-
-  if (argc == 2)
-    {
-      std::cin.sync_with_stdio(false);
-      int length = 0;
-      while (std::cin.good())
-        {
-          char buffer@<:@1024@:>@;
-          (void)std::cin.read(buffer, sizeof(buffer));
-          length += std::cin.gcount();
-        }
-
-      return length == 82 ? EXIT_SUCCESS : EXIT_FAILURE;
-    }
-  else
-    {
-      std::cout << "1234567890123456789012345678901234567890" << std::endl;
-      sleep(1);
-      std::cout << "1234567890123456789012345678901234567890" << std::endl;
-    }
-  return EXIT_SUCCESS;
-}
-])],
- [if ./conftest$ac_exeext check_it_now please | ./conftest$ac_exeext foo; then
-    AC_MSG_RESULT(yes)
-    ac_cv_sync_with_stdio_2=yes
-  else
-    AC_MSG_RESULT(no)
-    ac_cv_sync_with_stdio_2=no
-  fi])
-
-if test $ac_cv_sync_with_stdio = yes && test $ac_cv_sync_with_stdio_2 = yes; then
-  AC_DEFINE(SYNC_WITH_STDIO_WORKS, 1,
-              [Define to 1 if sync_with_stdio works fine on C++ streams])
-fi
+# more complex library checks
+MTN_NETXX_DEPENDENCIES
+MTN_SQLITE_DEPENDENCIES
 
 # allow compiling with different flags/optimisation
 # for monotone versus libs, useful for testing.
@@ -616,6 +119,4 @@ AC_SUBST(MONOTONE_CXXFLAGS)
 AC_SUBST(LIB3RDPARTY_CFLAGS)
 AC_SUBST(LIB3RDPARTY_CXXFLAGS)
 
-AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([po/Makefile.in], [cat xgettext.opts >>po/Makefile.in])
 AC_OUTPUT

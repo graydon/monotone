@@ -19,6 +19,8 @@
 #include "sanity.hh"
 #include "platform.hh"
 
+namespace fs = boost::filesystem;
+
 std::string
 get_current_working_dir()
 {
@@ -29,22 +31,22 @@ get_current_working_dir()
 }
 
 void
-change_current_working_dir(any_path const & to)
+change_current_working_dir(std::string const & to)
 {
-  E(!chdir(to.as_external().c_str()),
+  E(!chdir(to.c_str()),
     F("cannot change to directory %s: %s") % to % os_strerror(errno));
 }
 
-system_path
+std::string
 get_default_confdir()
 {
-  return system_path(get_homedir()) / ".monotone";
+  return get_homedir() + "/.monotone";
 }
 
 // FIXME: BUG: this probably mangles character sets
 // (as in, we're treating system-provided data as utf8, but it's probably in
 // the filesystem charset)
-utf8
+std::string
 get_homedir()
 {
   char * home = getenv("HOME");
@@ -56,19 +58,19 @@ get_homedir()
   return std::string(pw->pw_dir);
 }
 
-utf8
-tilde_expand(utf8 const & in)
+std::string
+tilde_expand(std::string const & in)
 {
-  if (in().empty() || in()[0] != '~')
+  if (in.empty() || in[0] != '~')
     return in;
-  fs::path tmp(in(), fs::native);
+  fs::path tmp(in, fs::native);
   fs::path::iterator i = tmp.begin();
   if (i != tmp.end())
     {
       fs::path res;
       if (*i == "~")
         {
-          res /= get_homedir()();
+          res /= get_homedir();
           ++i;
         }
       else if (i->size() > 1 && i->at(0) == '~')
@@ -92,11 +94,11 @@ tilde_expand(utf8 const & in)
 }
 
 path::status
-get_path_status(any_path const & path)
+get_path_status(std::string const & path)
 {
   struct stat buf;
   int res;
-  res = stat(path.as_external().c_str(), &buf);
+  res = stat(path.c_str(), &buf);
   if (res < 0)
     {
       if (errno == ENOENT)
@@ -116,8 +118,8 @@ get_path_status(any_path const & path)
 }
 
 void
-rename_clobberingly(any_path const & from, any_path const & to)
+rename_clobberingly(std::string const & from, std::string const & to)
 {
-  E(!rename(from.as_external().c_str(), to.as_external().c_str()),
+  E(!rename(from.c_str(), to.c_str()),
     F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(errno));
 }

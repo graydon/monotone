@@ -9,7 +9,7 @@ addfile("testfile", "blah blah")
 -- work?  Well, it did...)
 check({"chmod", "a-w", "test.db"})
 
-get("my_hook.lua")
+check(get("my_hook.lua"))
 
 check(mtn("commit", "-btestbranch", "--rcfile=my_hook.lua"), 1, false, false)
 

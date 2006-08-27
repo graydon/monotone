@@ -4,13 +4,13 @@ mtn_setup()
 -- I don't get it. This seems to work, but WTF is that qgrep looking for?
 
 -- decode first file and commit to db
-get("firstfile", "testfile")
+check(get("firstfile", "testfile"))
 addfile("testfile")
 commit()
 rename("testfile", "firstfile")
 
 -- calculate diff to second file using monotone
-get("secondfile", "testfile")
+check(get("secondfile", "testfile"))
 check(mtn("diff"), 0, true)
 rename("stdout", "monodiff")
 

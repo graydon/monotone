@@ -52,7 +52,7 @@ get_log_message_interactively(revision_t const & cs,
 
 CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
-    OPT_DEPTH % OPT_EXCLUDE % OPT_MISSING)
+    option::depth % option::exclude % option::missing)
 {
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
@@ -168,7 +168,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
 CMD(disapprove, N_("review"), N_("REVISION"),
     N_("disapprove of a particular revision"),
-    OPT_BRANCH_NAME)
+    option::branch_name)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -220,7 +220,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"), OPT_UNKNOWN)
+    N_("add files to workspace"), option::unknown)
 {
   if (!app.unknown && (args.size() < 1))
     throw usage(name);
@@ -230,9 +230,15 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   path_set paths;
   if (app.unknown)
     {
-      path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
+      vector<file_path> roots = args_to_paths(args);
+      path_restriction mask(roots, args_to_paths(app.exclude_patterns), app);
       path_set ignored;
-      find_unknown_and_ignored(app, mask, paths, ignored);
+
+      // if no starting paths have been specified use the workspace root
+      if (roots.empty())
+        roots.push_back(file_path());
+
+      find_unknown_and_ignored(app, mask, roots, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
@@ -248,8 +254,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"), 
-    OPT_EXECUTE % OPT_MISSING % OPT_RECURSIVE)
+    N_("drop files from workspace"), option::execute % option::missing % option::recursive)
 {
   if (!app.missing && (args.size() < 1))
     throw usage(name);
@@ -285,7 +290,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    OPT_EXECUTE)
+    option::execute)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -314,7 +319,7 @@ ALIAS(mv, rename)
          "that is currently the root\n"
          "directory will have name PUT_OLD.\n"
          "Using --execute is strongly recommended."),
-      OPT_EXECUTE)
+    option::execute)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -325,9 +330,8 @@ ALIAS(mv, rename)
   perform_pivot_root(new_root, put_old, app);
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."), 
-    N_("show status of workspace"),
-    OPT_DEPTH % OPT_EXCLUDE % OPT_BRIEF)
+CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
+    option::depth % option::exclude)
 {
   roster_t old_roster, new_roster, restricted_roster;
   cset included, excluded;
@@ -355,37 +359,42 @@ CMD(status, N_("informative"), N_("[PATH]..."),
   get_revision_id(old_rev_id);
   make_revision(old_rev_id, old_roster, restricted_roster, rev);
 
-  if (global_sanity.brief)
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
-      I(rev.edges.size() == 1);
-      cset const & cs = edge_changes(rev.edges.begin());
+      // We intentionally do not collapse the final \n into the format
+      // strings here, for consistency with newline conventions used by most
+      // other format strings.
+      if (rev.edges.size() != 1)
+        {
+          revision_id parent = edge_old_revision(*i);
+          cout << (F("Changes against parent %s") % parent).str() << "\n";
+        }
+      cset const & cs = edge_changes(*i);
+
+      if (cs.empty())
+        cout << F("no changes").str() << "\n";
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
-           i != cs.nodes_deleted.end(); ++i)
-        cout << "dropped " << *i << "\n";
+            i != cs.nodes_deleted.end(); ++i)
+        cout << (F("dropped %s") % *i).str() << "\n";
 
       for (map<split_path, split_path>::const_iterator
-           i = cs.nodes_renamed.begin();
-           i != cs.nodes_renamed.end(); ++i)
-        cout << "renamed " << i->first << "\n"
-             << "     to " << i->second << "\n";
+            i = cs.nodes_renamed.begin();
+            i != cs.nodes_renamed.end(); ++i)
+        cout << (F("renamed %s\n"
+                   "     to %s") % i->first % i->second).str() << "\n";
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
-           i != cs.dirs_added.end(); ++i)
-        cout << "added   " << *i << "\n";
+            i != cs.dirs_added.end(); ++i)
+        cout << (F("added   %s") % *i).str() << "\n";
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-           i != cs.files_added.end(); ++i)
-        cout << "added   " << i->first << "\n";
+            i != cs.files_added.end(); ++i)
+        cout << (F("added   %s") % i->first).str() << "\n";
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
-             i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << "patched " << i->first << "\n";
-    }
-  else
-    {
-      write_revision(rev, tmp);
-      cout << "\n" << tmp << "\n";
+              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+        cout << (F("patched %s") % (i->first)).str() << "\n";
     }
 }
 
@@ -394,42 +403,21 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
        "If no directory is given, the branch name will be used as directory"),
-    OPT_BRANCH_NAME % OPT_REVISION)
+    option::branch_name % option::revision)
 {
   revision_id ident;
   system_path dir;
-  // We have a special case for "checkout .", i.e., to current dir.
-  bool checkout_dot = false;
 
   transaction_guard guard(app.db, false);
 
   if (args.size() > 1 || app.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (args.size() == 0)
-    {
-      // No checkout dir specified, use branch name for dir.
-      N(!app.branch_name().empty(), 
-        F("need --branch argument for branch-based checkout"));
-      dir = system_path(app.branch_name());
-    }
-  else
-    {
-      // Checkout to specified dir.
-      dir = system_path(idx(args, 0));
-      if (idx(args, 0) == utf8("."))
-        checkout_dot = true;
-    }
-
-  if (!checkout_dot)
-    require_path_is_nonexistent
-      (dir, F("checkout directory '%s' already exists") % dir);
-
   if (app.revision_selectors.size() == 0)
     {
       // use branch head revision
       N(!app.branch_name().empty(), 
-        F("need --branch argument for branch-based checkout"));
+        F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
@@ -440,7 +428,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
           P(F("branch %s has multiple heads:") % app.branch_name);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
-          P(F("choose one with '%s checkout -r<id>'") % app.prog_name);
+          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.branch_name);
         }
       ident = *(heads.begin());
@@ -471,6 +459,35 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(certs.size() != 0, F("revision %s is not a member of branch %s")
         % ident % app.branch_name);
     }
+  
+  // we do this part of the checking down here, because it is legitimate to
+  // do
+  //  $ mtn co -r h:net.venge.monotone
+  // and have mtn guess the branch, and then use that branch name as the
+  // default directory.  But in this case the branch name will not be set
+  // until after the guess_branch() call above:
+  {
+    bool checkout_dot = false;
+    
+    if (args.size() == 0)
+      {
+        // No checkout dir specified, use branch name for dir.
+        N(!app.branch_name().empty(), 
+          F("you must specify a destination directory"));
+        dir = system_path(app.branch_name());
+      }
+    else
+      {
+        // Checkout to specified dir.
+        dir = system_path(idx(args, 0));
+        if (idx(args, 0) == utf8("."))
+          checkout_dot = true;
+      }
+    
+    if (!checkout_dot)
+      require_path_is_nonexistent
+        (dir, F("checkout directory '%s' already exists") % dir);
+  }
 
   app.create_workspace(dir);
 
@@ -521,7 +538,7 @@ ALIAS(co, checkout)
 
 CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
     N_("set, get or drop file attributes"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -619,8 +636,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    OPT_BRANCH_NAME % OPT_MESSAGE % OPT_MSGFILE % OPT_DATE %
-    OPT_AUTHOR % OPT_DEPTH % OPT_EXCLUDE)
+    option::branch_name % option::message % option::msgfile % option::date % 
+    option::author % option::depth % option::exclude)
 {
   string log_message("");
   bool log_message_given;
@@ -825,7 +842,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
-      % app.prog_name);
+      % ui.prog_name);
   }
 
   update_any_attrs(app);
@@ -856,9 +873,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 ALIAS(ci, commit);
 
 
-CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"), 
-                 N_("setup a new workspace directory, default to current"),
-                 OPT_BRANCH_NAME)
+CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
+    N_("setup a new workspace directory, default to current"), 
+    option::branch_name)
 {
   if (args.size() > 1)
     throw usage(name);
@@ -877,9 +894,8 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   put_revision_id(null);
 }
 
-CMD(refresh_inodeprints, N_("tree"), "", 
-    N_("refresh the inodeprint cache"),
-    OPT_NONE)
+CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
+    option::none)
 {
   app.require_workspace();
   enable_inodeprints();

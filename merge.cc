@@ -40,12 +40,8 @@ get_file_details(roster_t const & ros, node_id nid,
 }
 
 void
-resolve_merge_conflicts(revision_id const & left_rid,
-                        revision_id const & right_rid,
-                        roster_t const & left_roster,
+resolve_merge_conflicts(roster_t const & left_roster,
                         roster_t const & right_roster,
-                        marking_map const & left_marking_map,
-                        marking_map const & right_marking_map,
                         roster_merge_result & result,
                         content_merge_adaptor & adaptor,
                         app_state & app)
@@ -71,11 +67,15 @@ resolve_merge_conflicts(revision_id const & left_rid,
         {
 
           L(FL("examining content conflicts"));
-          vector<file_content_conflict> residual_conflicts;
 
-          for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
+          size_t cnt;
+          size_t total_conflicts = result.file_content_conflicts.size();
+          std::vector<file_content_conflict>::iterator it;
+
+          for (cnt = 1, it = result.file_content_conflicts.begin();
+               it != result.file_content_conflicts.end(); ++cnt)
             {
-              file_content_conflict const & conflict = result.file_content_conflicts[i];
+              file_content_conflict const & conflict = *it;
 
               shared_ptr<roster_t> roster_for_file_lca;
               adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
@@ -100,14 +100,23 @@ resolve_merge_conflicts(revision_id const & left_rid,
                                         anc_id, left_id, right_id, merged_id))
                 {
                   L(FL("resolved content conflict %d / %d")
-                    % (i+1) % result.file_content_conflicts.size());
+                    % cnt % total_conflicts);
                   file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
                   f->content = merged_id;
+
+                  it = result.file_content_conflicts.erase(it);
                 }
               else
-                residual_conflicts.push_back(conflict);
+                {
+                  ++it;
+
+                  // If the content_merger has failed, there's no point
+                  // trying to continue--we'll only frustrate users by
+                  // encouraging them to continue working with their merge
+                  // tool on a merge that is now destined to fail.
+                  break;
+                }
             }
-          result.file_content_conflicts = residual_conflicts;
         }
     }
 
@@ -145,9 +154,7 @@ interactive_merge_and_store(revision_id const & left_rid,
                result);
 
   content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
-  resolve_merge_conflicts (left_rid, right_rid,
-                           left_roster, right_roster,
-                           left_marking_map, right_marking_map,
+  resolve_merge_conflicts (left_roster, right_roster,
                            result, dba, app);
 
   // write new files into the db

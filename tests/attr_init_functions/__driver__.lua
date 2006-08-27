@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-get("hook.lua")
+check(get("hook.lua"))
 
 writefile("testfile", "foo")
 check(mtn("--rcfile=hook.lua", "add", "testfile"), 0, false, false)

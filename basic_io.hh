@@ -28,6 +28,31 @@
 namespace basic_io
 {
 
+  namespace
+    {
+      namespace syms 
+        {
+          // general format symbol
+          symbol const format_version("format_version");
+          
+          // roster symbols
+          symbol const dir("dir");
+          symbol const file("file");
+          symbol const content("content");
+          symbol const attr("attr");
+      
+          // 'local' roster and marking symbols
+          // FIXME: should these be listed as "general" symbols here as well?
+          symbol const ident("ident");
+          symbol const birth("birth");
+          symbol const dormant_attr("dormant_attr");
+      
+          symbol const path_mark("path_mark");
+          symbol const content_mark("content_mark");
+          symbol const attr_mark("attr_mark");
+        }
+    }
+    
   typedef enum
     {
       TOK_SYMBOL,

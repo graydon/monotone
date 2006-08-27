@@ -27,7 +27,7 @@ check(mtn("add", "foo"), 0, false, false)
 commit()
 right = base_revision()
 
-get("merge2.lua")
+check(get("merge2.lua"))
 
 xfail_if(true, mtn("--rcfile=merge2.lua", "merge"), 0, false, false)
 check(mtn("update"), 0, false, false)
@@ -42,5 +42,5 @@ merge = base_revision()
 --
 -- where REVC (choice) is either REVL or REVR
 
-check(mtn("annotate", "foo"), 0, true, false)
+check(mtn("annotate", "--brief", "foo"), 0, true, false)
 check(greplines("stdout", {"", left, right, ""}))

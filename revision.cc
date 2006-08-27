@@ -35,7 +35,7 @@
 #include "keys.hh"
 #include "numeric_vocab.hh"
 #include "revision.hh"
-#include "sanity.hh"
+#include "mtn-sanity.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
 #include "ui.hh"
@@ -528,8 +528,7 @@ ancestry_difference(revision_id const & a, set<revision_id> const & bs,
 }
 
 void
-select_nodes_modified_by_rev(revision_id const & rid,
-                             revision_t const & rev,
+select_nodes_modified_by_rev(revision_t const & rev,
                              roster_t const new_roster,
                              set<node_id> & nodes_modified,
                              app_state & app)
@@ -1417,7 +1416,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   app.db.ensure_open_for_format_changes();
   app.db.check_is_not_rosterified();
 
-  global_sanity.set_relaxed(true);
+  real_sanity.set_relaxed(true);
   anc_graph graph(true, app);
 
   P(F("converting existing revision graph to new roster-style revisions"));
@@ -1462,7 +1461,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
       graph.add_node_for_oldstyle_revision(*i);
     }
 
-  global_sanity.set_relaxed(false);
+  real_sanity.set_relaxed(false);
   graph.rebuild_ancestry();
 }
 

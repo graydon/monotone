@@ -1,7 +1,7 @@
 
 mtn_setup()
 
-get("ignored.lua")
+check(get("ignored.lua"))
 
 mkdir("work")
 mkdir("work/A")

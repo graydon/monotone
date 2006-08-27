@@ -52,15 +52,15 @@ app_state::app_state()
     diff_show_encloser(true),
     execute(false), bind_address(""), bind_port(""),
     bind_stdio(false), use_transport_auth(true),
-    missing(false), unknown(false),
+    missing(false), unknown(false), brief(false),
     confdir(get_default_confdir()),
     have_set_key_dir(false), no_files(false),
-    requested_help(false)
+    requested_help(false),
+    automate_stdio_size(1024)
 {
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
-  set_prog_name(utf8(string("mtn")));
 }
 
 app_state::~app_state()
@@ -68,17 +68,15 @@ app_state::~app_state()
 }
 
 void
-app_state::set_is_explicit_option (int option_id)
+app_state::set_is_explicit_option (std::string o)
 {
-  explicit_option_map[option_id] = true;
+  explicit_options.insert(o);
 }
 
 bool
-app_state::is_explicit_option(int option_id) const
+app_state::is_explicit_option(std::string o) const
 {
-  map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
-  if (i == explicit_option_map.end()) return false;
-  return i->second;
+  return explicit_options.find(o) != explicit_options.end();
 }
 
 void
@@ -101,7 +99,7 @@ app_state::allow_workspace()
           // The 'true' means that, e.g., if we're running checkout,
           // then it's okay for dumps to go into our starting working
           // dir's _MTN rather than the new workspace dir's _MTN.
-          global_sanity.filename = system_path(dump_path, false);
+          global_sanity.filename = system_path(dump_path, false).as_external();
         }
     }
   load_rcfiles();
@@ -361,13 +359,6 @@ app_state::set_recursive(bool r)
 }
 
 void
-app_state::set_prog_name(utf8 const & name)
-{
-  prog_name = name;
-  ui.set_prog_name(name());
-}
-
-void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
@@ -379,6 +370,14 @@ app_state::set_confdir(system_path const & cd)
   confdir = cd;
   if (!have_set_key_dir)
     keys.set_key_dir(cd / "keys");
+}
+
+void
+app_state::set_automate_stdio_size(long size)
+{
+  N(size > 0,
+    F("illegal argument to --automate-stdio-size: cannot be zero or negative\n"));
+  automate_stdio_size = (size_t)size;
 }
 
 system_path

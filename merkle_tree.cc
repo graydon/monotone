@@ -497,8 +497,6 @@ insert_into_merkle_tree(merkle_table & tab,
               }
             else
               {
-                hexenc<id> existing_hleaf;
-                encode_hexenc(slotval, existing_hleaf);
                 insert_into_merkle_tree(tab, type, slotval, level+1);
                 insert_into_merkle_tree(tab, type, leaf, level+1);
                 id empty_subtree_hash;

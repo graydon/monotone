@@ -25,7 +25,6 @@
 #include "platform.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
-#include "ui.hh"
 
 using std::exception;
 using std::locale;
@@ -41,39 +40,65 @@ using boost::format;
 
 // debugging / logging system
 
-sanity global_sanity;
-
 sanity::sanity() :
-  debug(false), quiet(false), reallyquiet(false), relaxed(false), logbuf(0xffff),
-  already_dumping(false), clean_shutdown(false)
-{
-  string flavour;
-  get_system_flavour(flavour);
-  L(FL("started up on %s") % flavour);
-}
+  debug(false), quiet(false), reallyquiet(false), logbuf(0xffff),
+  already_dumping(false)
+{}
 
 sanity::~sanity()
 {}
+
+void
+sanity::initialize(int argc, char ** argv, char const * lc_all)
+{
+  // set up some marked strings, so even if our logbuf overflows, we'll get
+  // this data in a crash.  This (and subclass overrides) are probably the
+  // only place PERM_MM should ever be used.
+
+  string system_flavour;
+  get_system_flavour(system_flavour);
+  PERM_MM(system_flavour);
+  L(FL("started up on %s") % system_flavour);
+
+  string cmdline_string;
+  {
+    ostringstream cmdline_ss;
+    for (int i = 0; i < argc; ++i)
+      {
+        if (i)
+          cmdline_ss << ", ";
+        cmdline_ss << "'" << argv[i] << "'";
+      }
+    cmdline_string = cmdline_ss.str();
+  }
+  PERM_MM(cmdline_string);
+  L(FL("command line: %s") % cmdline_string);
+
+  if (!lc_all)
+    lc_all = "n/a";
+  PERM_MM(string(lc_all));
+  L(FL("set locale: LC_ALL=%s") % lc_all);
+}
 
 void
 sanity::dump_buffer()
 {
   if (!filename.empty())
     {
-      ofstream out(filename.as_external().c_str());
+      ofstream out(filename.c_str());
       if (out)
         {
           copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
           copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
-          ui.inform((FL("wrote debugging log to %s\n"
+          inform_message((FL("wrote debugging log to %s\n"
                         "if reporting a bug, please include this file")
                        % filename).str());
         }
       else
-        ui.inform((FL("failed to write debugging log to %s") % filename).str());
+        inform_message((FL("failed to write debugging log to %s") % filename).str());
     }
   else
-    ui.inform("discarding debug log, because I have nowhere to write it\n"
+    inform_message("discarding debug log, because I have nowhere to write it\n"
               "(maybe you want --debug or --dump?)");
 }
 
@@ -92,13 +117,7 @@ sanity::set_debug()
   copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(oss));
   split_into_lines(oss.str(), lines);
   for (vector<string>::const_iterator i = lines.begin(); i != lines.end(); ++i)
-    ui.inform((*i) + "\n");
-}
-
-void
-sanity::set_brief()
-{
-  brief = true;
+    inform_log((*i) + "\n");
 }
 
 void
@@ -117,12 +136,6 @@ sanity::set_reallyquiet()
   reallyquiet = true;
 }
 
-void
-sanity::set_relaxed(bool rel)
-{
-  relaxed = rel;
-}
-
 string
 sanity::do_format(format_base const & fmt, char const * file, int line)
 {
@@ -132,10 +145,10 @@ sanity::do_format(format_base const & fmt, char const * file, int line)
     }
   catch (exception & e)
     {
-      ui.inform(F("fatal: formatter failed on %s:%d: %s")
+      inform_error((F("fatal: formatter failed on %s:%d: %s")
                 % file
                 % line
-                % e.what());
+                % e.what()).str());
       throw;
     }
 }
@@ -157,7 +170,7 @@ sanity::log(plain_format const & fmt,
   if (str[str.size() - 1] != '\n')
     logbuf.push_back('\n');
   if (debug)
-    ui.inform(str);
+    inform_log(str);
 }
 
 void
@@ -176,7 +189,7 @@ sanity::progress(i18n_format const & i18nfmt,
   if (str[str.size() - 1] != '\n')
     logbuf.push_back('\n');
   if (! quiet)
-    ui.inform(str);
+    inform_message(str);
 }
 
 void
@@ -196,7 +209,7 @@ sanity::warning(i18n_format const & i18nfmt,
   if (str[str.size() - 1] != '\n')
     logbuf.push_back('\n');
   if (! reallyquiet)
-    ui.warn(str);
+    inform_warning(str);
 }
 
 void
@@ -287,8 +300,8 @@ sanity::gasp()
   L(FL("finished saving work set"));
   if (debug)
     {
-      ui.inform("contents of work set:");
-      ui.inform(gasp_dump);
+      inform_log("contents of work set:");
+      inform_log(gasp_dump);
     }
   already_dumping = false;
 }
@@ -314,7 +327,6 @@ dump(string const & obj, string & out)
   out = obj;
 }
 
-
 void MusingBase::gasp_head(string & out) const
 {
   out = (boost::format("----- begin '%s' (in %s, at %s:%d)\n")
@@ -332,6 +344,26 @@ void MusingBase::gasp_body(const string & objstr, string & out) const
           ).str();
 }
 
+const locale &
+get_user_locale()
+{
+  // this is awkward because if LC_CTYPE is set to something the
+  // runtime doesn't know about, it will fail. in that case,
+  // the default will have to do.
+  static bool init = false;
+  static locale user_locale;
+  if (!init)
+    {
+      init = true;
+      try
+        {
+          user_locale = locale("");
+        }
+      catch( ... )
+        {}
+    }
+  return user_locale;
+}
 
 struct
 format_base::impl
@@ -346,8 +378,8 @@ format_base::impl
   {
     if (&other != this)
       {
-	fmt = other.fmt;
-	oss.str(string());
+        fmt = other.fmt;
+        oss.str(string());
       }
     return *this;
   }
@@ -374,7 +406,7 @@ format_base::format_base(format_base const & other)
 
 format_base::~format_base()
 {
-	delete pimpl;
+        delete pimpl;
 }
 
 format_base &
@@ -385,18 +417,18 @@ format_base::operator=(format_base const & other)
       impl * tmp = NULL;
 
       try
-	{
-	  if (other.pimpl)
-	    tmp = new impl(*(other.pimpl));
-	}
+        {
+          if (other.pimpl)
+            tmp = new impl(*(other.pimpl));
+        }
       catch (...)
-	{
-	  if (tmp)
-	    delete tmp;
-	}
+        {
+          if (tmp)
+            delete tmp;
+        }
 
       if (pimpl)
-	delete pimpl;
+        delete pimpl;
 
       pimpl = tmp;
     }

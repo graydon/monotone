@@ -1,6 +1,11 @@
 #ifndef __LUA_HH__
 #define __LUA_HH__
 
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+
+#include <map>
 #include <set>
 #include <string>
 
@@ -65,6 +70,40 @@ bool run_string(lua_State * st,
                 std::string const & identity);
 bool run_file(lua_State * st, std::string const &filename);
 void add_functions(lua_State * st);
+
+namespace luaext
+{
+  typedef std::map<std::string, int (*)(lua_State*)> fmap;
+  typedef std::map<std::string, fmap> ftmap;
+  extern ftmap *fns;
+  struct extfn
+  {
+    extfn(std::string const & name, std::string const & table, int (*func) (lua_State *));
+  };
+}
+
+// use as:
+//  LUAEXT(foo, ) {...}
+//    -- a function available to lua as "foo".
+//  LUAEXT(foo, bar) {...}
+//    -- a function available to lua as member "foo" of table "bar"
+#define LUAEXT(NAME, TABLE) \
+namespace luaext { \
+  struct extfn_ ## NAME ## _ ## TABLE : public extfn { \
+    extfn_ ## NAME ## _ ## TABLE (); \
+    int call(lua_State * L); \
+  }; \
+  extfn_ ## NAME ## _ ## TABLE TABLE ## _ ## NAME ## _extfn; \
+  extern "C" { \
+    static int TABLE ## _ ## NAME ## _for_lua(lua_State * L) \
+    { \
+      return TABLE ## _ ## NAME ## _extfn . call(L); \
+    } \
+  } \
+  extfn_ ## NAME ## _ ## TABLE :: extfn_ ## NAME ## _ ## TABLE () \
+   : extfn( #NAME , #TABLE , & TABLE ## _## NAME ## _for_lua ) {} \
+} \
+int luaext :: extfn_ ## NAME ## _ ## TABLE :: call(lua_State * L)
 
 // Local Variables:
 // mode: C++

@@ -1242,7 +1242,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                   "I expected %s\n"
                   "'%s unset %s %s' overrides this check")
                 % their_key_hash % expected_key_hash
-                % app.prog_name % their_key_key.first % their_key_key.second);
+                % ui.prog_name % their_key_key.first % their_key_key.second);
               E(false, F("server key changed"));
             }
         }
@@ -3128,6 +3128,9 @@ run_netsync_protocol(protocol_voice voice,
       W(F("exclude branch pattern contains a quote character:\n"
           "%s\n") % exclude_pattern());
     }
+
+  // We do not want to be killed by SIGPIPE from a network disconnect.
+  ignore_sigpipe();
 
   try
     {

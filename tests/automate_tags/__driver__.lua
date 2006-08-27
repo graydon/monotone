@@ -49,5 +49,5 @@ check(get_tag(tag2, "other*") == r2)
 
 -- now ignore a otherbranch completely
 get("ignore_branch.lua")
-check(get_tag(tag1, "*", "--rcfile=ignore_branch.lua") == r1)
+check(get_tag(tag1, "{}*", "--rcfile=ignore_branch.lua") == r1)
 check(get_tag(tag2, "other*", "--rcfile=ignore_branch.lua") == nil)

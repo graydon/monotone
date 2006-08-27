@@ -17,7 +17,7 @@
 
 #include "constants.hh"
 #include "paths.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 #include "sanity.hh"
 #include "interner.hh"
 #include "charset.hh"
@@ -1141,7 +1141,7 @@ static void test_system_path()
   // and check for the weird WIN32 version
 #ifdef WIN32
   string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
-  BOOST_CHECK(tilde_expanded2[0] = '/');
+  BOOST_CHECK(tilde_expanded2[1] == ':');
   BOOST_CHECK(tilde_expanded2.find('~') == string::npos);
 #else
   BOOST_CHECK_THROW(system_path("~this_user_does_not_exist_anywhere"), informative_failure);

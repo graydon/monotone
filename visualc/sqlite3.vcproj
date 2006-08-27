@@ -39,11 +39,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)\..\visualc&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\visualc&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;SQLITE_OMIT_CURSOR"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -110,7 +110,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)\..\visualc&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\visualc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;SQLITE_OMIT_CURSOR"
 				StringPooling="true"
 				EnableFunctionLevelLinking="false"
@@ -218,6 +218,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\sqlite\loadext.c"
+				>
+			</File>
+			<File
 				RelativePath="..\sqlite\main.c"
 				>
 			</File>
@@ -314,6 +318,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\sqlite\vtab.c"
+				>
+			</File>
+			<File
 				RelativePath="..\sqlite\where.c"
 				>
 			</File>
@@ -356,6 +364,10 @@
 			</File>
 			<File
 				RelativePath="..\sqlite\sqlite3.h"
+				>
+			</File>
+			<File
+				RelativePath="..\sqlite\sqlite3ext.h"
 				>
 			</File>
 			<File

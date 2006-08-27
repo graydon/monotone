@@ -32,6 +32,7 @@
 #include "transforms.hh"
 #include "vocab.hh"
 #include "globish.hh"
+#include "charset.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -196,51 +197,119 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 
 // Name: attributes
 // Arguments:
-//   1: file name (optional, if non-existant prints all files with attributes)
+//   1: file name
 // Added in: 1.0
-// Purpose: Prints all attributes for a file, or all  all files with attributes
-//   if a file name provided.
-// Output format: A list of file names in alphabetically sorted order,
-//   or a list of attributes if a file name provided.
-// Error conditions: If the file name has no attributes, prints nothing.
-AUTOMATE(attributes, N_("[FILE]"))
+// Purpose: Prints all attributes for a file
+// Output format: basic_io formatted output, each attribute has its own stanza:
+//
+// 'format_version'
+//         used in case this format ever needs to change.
+//         format: ('format_version', the string "1" currently)
+//         occurs: exactly once
+// 'attr'
+//         represents an attribute entry
+//         format: ('attr', name, value), ('state', [unchanged|changed|added|dropped])
+//         occurs: zero or more times
+//
+// Error conditions: If the file name has no attributes, prints only the 
+//                   format version, if the file is unknown, escalates
+AUTOMATE(attributes, N_("FILE"))
 {
-  if (args.size() > 1)
+  if (args.size() != 1)
     throw usage(help_name);
+
+  // this command requires a workspace to be run on
+  app.require_workspace();
+
+  // retrieve the path
+  split_path path;
+  file_path_external(idx(args,0)).split(path);
 
   roster_t base, current;
   temp_node_id_source nis;
 
+  // get the base and the current roster of this workspace
   get_base_and_current_roster_shape(base, current, nis, app);
 
-  if (args.size() == 1)
-    {
-      // a filename was given, if it has attributes, print them
-      split_path path;
-      file_path_external(idx(args,0)).split(path);
+  // escalate if the given path is unknown to the current roster
+  N(current.has_node(path),
+    F("file %s is unknown to the current workspace") % path);
 
-      if (current.has_node(path))
-        {
-          node_t n = current.get_node(path);
-          for (full_attr_map_t::const_iterator i = n->attrs.begin();
-               i != n->attrs.end(); ++i)
-            if (i->second.first)
-              output << i->first << endl;
-        }
-    }
-  else
-    {
-      for (node_map::const_iterator i = current.all_nodes().begin();
-           i != current.all_nodes().end(); ++i)
-        {
-          if (!i->second->attrs.empty())
-            {
-              split_path path;
-              current.get_name(i->first, path);
-              output << file_path(path) << endl;
-            }
-        }
-    }
+  // create the printer
+  basic_io::printer pr;
+  
+  // print the format version
+  basic_io::stanza st;
+  st.push_str_pair(basic_io::syms::format_version, "1");
+  pr.print_stanza(st);
+    
+  // the current node holds all current attributes (unchanged and new ones)
+  node_t n = current.get_node(path);
+  for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+       i != n->attrs.end(); ++i)
+  {
+    std::string value(i->second.second());
+    std::string state("unchanged");
+    
+    // if if the first value of the value pair is false this marks a
+    // dropped attribute
+    if (!i->second.first)
+      {
+        // if the attribute is dropped, we should have a base roster
+        // with that node. we need to check that for the attribute as well
+        // because if it is dropped there as well it was already deleted
+        // in any previous revision
+        I(base.has_node(path));
+        
+        node_t prev_node = base.get_node(path);
+        
+        // find the attribute in there
+        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
+        I(j != prev_node->attrs.end());
+        
+        // was this dropped before? then ignore it
+        if (!j->second.first) { continue; }
+        
+        state = "dropped";
+        // output the previous (dropped) value later
+        value = j->second.second();
+      }
+    // this marks either a new or an existing attribute
+    else
+      {
+        if (base.has_node(path))
+          {
+            node_t prev_node = base.get_node(path);
+            full_attr_map_t::const_iterator j = 
+              prev_node->attrs.find(i->first());
+            // attribute not found? this is new
+            if (j == prev_node->attrs.end())
+              {
+                state = "added";
+              }
+            // check if this attribute has been changed 
+            // (dropped and set again)
+            else if (i->second.second() != j->second.second())
+              {
+                state = "changed";
+              }
+                
+          }
+        // its added since the whole node has been just added
+        else
+          {
+            state = "added";
+          }
+      }
+      
+    basic_io::stanza st;
+    st.push_str_triple(basic_io::syms::attr, i->first(), value);
+    st.push_str_pair(std::string("state"), state);
+    pr.print_stanza(st);
+  }
+  
+  // print the output  
+  output.write(pr.buf.data(), pr.buf.size());
 }
 
 // Name: toposort
@@ -1300,6 +1369,89 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"))
     }
   }
   output.write(prt.buf.data(), prt.buf.size());
+}
+
+namespace
+{
+  namespace syms
+  {
+    symbol const key("key");
+    symbol const signature("signature");
+    symbol const name("name");
+    symbol const value("value");
+    symbol const trust("trust");
+
+    symbol const public_hash("public_hash");
+    symbol const private_hash("private_hash");
+    symbol const public_location("public_location");
+    symbol const private_location("private_location");
+  }
+};
+
+// Name: genkey
+// Arguments:
+//   1: the key ID
+//   2: the key passphrase
+// Added in: 3.1
+// Purpose: Generates a key with the given ID and passphrase
+//
+// Output format: a basic_io stanza for the new key, as for ls keys
+//
+// Sample output:
+//               name "tbrownaw@gmail.com"
+//        public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+//       private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+//    public_location "database" "keystore"
+//   private_location "keystore"
+//
+// Error conditions: If the passphrase is empty or the key already exists,
+// prints an error message to stderr and exits with status 1.
+AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  rsa_keypair_id ident;
+  internalize_rsa_keypair_id(idx(args, 0), ident);
+
+  utf8 passphrase = idx(args, 1);
+
+  bool exists = app.keys.key_pair_exists(ident);
+  if (app.db.database_specified())
+    {
+      transaction_guard guard(app.db);
+      exists = exists || app.db.public_key_exists(ident);
+      guard.commit();
+    }
+
+  N(!exists, F("key '%s' already exists") % ident);
+
+  keypair kp;
+  P(F("generating key-pair '%s'") % ident);
+  generate_key_pair(kp, passphrase);
+  P(F("storing key-pair '%s' in %s/") 
+    % ident % app.keys.get_key_dir());
+  app.keys.put_key_pair(ident, kp);
+
+  basic_io::printer prt;
+  basic_io::stanza stz;
+  hexenc<id> privhash, pubhash;
+  vector<string> publocs, privlocs;
+  key_hash_code(ident, kp.pub, pubhash);
+  key_hash_code(ident, kp.priv, privhash);
+
+  publocs.push_back("keystore");
+  privlocs.push_back("keystore");
+
+  stz.push_str_pair(syms::name, ident());
+  stz.push_hex_pair(syms::public_hash, pubhash);
+  stz.push_hex_pair(syms::private_hash, privhash);
+  stz.push_str_multi(syms::public_location, publocs);
+  stz.push_str_multi(syms::private_location, privlocs);
+  prt.print_stanza(stz);
+
+  output.write(prt.buf.data(), prt.buf.size());
+
 }
 
 // Local Variables:

@@ -7,14 +7,14 @@ addfile("foo", "irrelevant file\n")
 commit()
 anc = base_revision()
 
-get("left", "testfile")
+check(get("left", "testfile"))
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 left = base_revision()
 
 revert_to(anc)
 
-get("right", "testfile")
+check(get("right", "testfile"))
 check(mtn("add", "testfile"), 0, false, false)
 commit()
 right = base_revision()
