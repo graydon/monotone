@@ -1,3 +1,12 @@
+2006-08-27  Richard Levitte  <richard@levitte.org>
+
+	* debian/examples/read-permissions
+	debian/examples/write-permissions: Move to ...
+	* examples/read-permissions examples/write-permissions:
+	... here.
+	* examples/000README.txt: add a subtle little comment covering
+	the moved files.
+
 2006-07-22  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Set date, and it turns out AUTOMATE() was there in
