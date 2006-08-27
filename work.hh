@@ -120,11 +120,8 @@ struct workspace
                              path_set & changed,
                              path_set & missing);
 
-  void update_current_roster_from_filesystem(roster_t & ros, app_state & app);
   void update_current_roster_from_filesystem(roster_t & ros,
-                                             node_restriction const & mask,
-                                             app_state & app);
-
+                                             node_restriction const & mask);
 
   // the "user log" is a file the user can edit as they program to record
   // changes they make to their source code. Upon commit the file is read
@@ -165,7 +162,7 @@ struct workspace
   // file, work_migration.cc.  finally, write_ws_format is called only when
   // a workspace is created, and simply writes the current workspace format
   // number to _MTN/format.
-  void check_ws_format(app_state & app);
+  void check_ws_format();
   void migrate_ws_format();
   void write_ws_format();
 
@@ -179,9 +176,8 @@ struct workspace
   void enable_inodeprints();
   void maybe_update_inodeprints(app_state & app);
 
-  // constructor and locals.
-  // by caching a pointer to the database, we don't have to pass
-  // app_state into a lot of functions.
+  // constructor and locals.  by caching pointers to the database and the
+  // lua hooks, we don't have to pass app_state into a lot of functions.
   workspace(database & db, lua_hooks & lua) : db(db), lua(lua) {};
 private:
   database & db;

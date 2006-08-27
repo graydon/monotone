@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "app_state.hh"
 #include "sanity.hh"
+#include "ui.hh"
 #include "simplestring_xform.hh"
 #include "revision.hh"
 
@@ -35,7 +35,7 @@ static const unsigned int current_workspace_format = 2;
 
 // This is the oldest released version of monotone that supports the current
 // format.
-static const char first_version_supporting_current_format[] = "0.29";
+static const char first_version_supporting_current_format[] = "0.30";
 
 // In a workspace, the metadata format's revision number is, notionally,
 // stored in the file _MTN/format.  However, this file only appears in
@@ -97,7 +97,7 @@ workspace::write_ws_format()
 // suitable error messages if the workspace's format number is not
 
 void
-workspace::check_ws_format(app_state & app)
+workspace::check_ws_format()
 {
   unsigned int format = get_ws_format();
 
@@ -117,7 +117,7 @@ workspace::check_ws_format(app_state & app)
       "'%s migrate_workspace'.\n"
       "once you have done this, you will not be able to use the workspace\n"
       "with versions of monotone older than %s.")
-    % format % current_workspace_format % app.prog_name
+    % format % current_workspace_format % ui.prog_name
     % first_version_supporting_current_format);
 
   // keep this message in sync with the copy in migrate_ws_format

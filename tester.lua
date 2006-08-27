@@ -288,31 +288,6 @@ function _gettree(tree, prefix)
    end
 end
 
--- Delete a directory tree constructed as above.
-function deltree(tree)
-   if type(tree) == "string" then
-      tree = dofile(testdir .. "/" .. test.name .. "/" .. tree)
-   end
-   if type(tree) ~= "table" then
-      err("gettree called with bad argument")
-   end
-   _deltree(tree, '')
-end
-function _deltree(tree, prefix)
-   for name,content in pairs(tree) do
-      if type(content) == "string" then
-	 remove(prefix .. name)
-      elseif type(content) == "table" then
-	 _deltree(content, prefix .. name .. '/')
-	 remove(prefix .. name)
-      else
-	 err("deltree: bad table content, key " .. prefix .. name .. 
-	     ", type " .. type(content))
-      end
-   end
-end
-   
-
 -- include from the main tests directory; there's no reason
 -- to want to include from the dir for the current test,
 -- since in that case it could just go in the driver file.

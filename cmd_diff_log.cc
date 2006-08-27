@@ -366,7 +366,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
                             args_to_paths(app.exclude_patterns),
                             old_roster, new_roster, app);
 
-      app.work.update_current_roster_from_filesystem(new_roster, mask, app);
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster, 
                             included, excluded, mask);
       check_restricted_cset(old_roster, included);
@@ -394,7 +394,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
                             args_to_paths(app.exclude_patterns), 
                             old_roster, new_roster, app);
 
-      app.work.update_current_roster_from_filesystem(new_roster, mask, app);
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster, 
                             included, excluded, mask);
       check_restricted_cset(old_roster, included);

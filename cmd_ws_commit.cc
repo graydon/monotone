@@ -243,7 +243,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
       if (roots.empty())
         roots.push_back(file_path());
 
-      app.work.find_unknown_and_ignored(app, mask, roots, paths, ignored);
+      app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
     }
   else
     for (vector<utf8>::const_iterator i = args.begin(); 
@@ -353,7 +353,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
                         args_to_paths(app.exclude_patterns),
                         old_roster, new_roster, app);
 
-  app.work.update_current_roster_from_filesystem(new_roster, mask, app);
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_csets(old_roster, new_roster, 
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
@@ -660,7 +660,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                         args_to_paths(app.exclude_patterns),
                         old_roster, new_roster, app);
 
-  app.work.update_current_roster_from_filesystem(new_roster, mask, app);
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_csets(old_roster, new_roster, 
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
@@ -909,7 +909,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
  N_("migrate a workspace directory's metadata to the latest format, "
     "default to current"),
-                 OPT_NONE)
+                 option::none)
 {
   if (args.size() > 1)
     throw usage(name);

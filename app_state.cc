@@ -104,7 +104,7 @@ app_state::process_options()
   if (!found_workspace)
     return;
 
-  work.check_ws_format(*this);
+  work.check_ws_format();
   work.get_ws_options(database_option, branch_option,
                       key_option, keydir_option);
 
