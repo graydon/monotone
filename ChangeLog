@@ -1,5 +1,11 @@
 2006-08-27  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/status: Add indentation to match changes in output
+	format.
+	* cmd_ws_commit.cc (status): Remove unsightly extra \n.
+
+2006-08-27  Nathaniel Smith  <njs@pobox.com>
+
 	* database.cc (put_version): Add some MM()'s, in case the
 	invariant in this function fails again (as reported on the mailing
 	list).

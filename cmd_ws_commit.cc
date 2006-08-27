@@ -362,7 +362,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
   // other format strings.
-  cout << (F("Current branch: %s") % app.branch_name).str() << "\n\n";
+  cout << (F("Current branch: %s") % app.branch_name).str() << "\n";
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
