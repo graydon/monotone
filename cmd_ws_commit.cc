@@ -359,42 +359,41 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   get_revision_id(old_rev_id);
   make_revision(old_rev_id, old_roster, restricted_roster, rev);
 
+  // We intentionally do not collapse the final \n into the format
+  // strings here, for consistency with newline conventions used by most
+  // other format strings.
+  cout << (F("Current branch: %s") % app.branch_name).str() << "\n\n";
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
-      // We intentionally do not collapse the final \n into the format
-      // strings here, for consistency with newline conventions used by most
-      // other format strings.
-      if (rev.edges.size() != 1)
-        {
-          revision_id parent = edge_old_revision(*i);
-          cout << (F("Changes against parent %s") % parent).str() << "\n";
-        }
+      revision_id parent = edge_old_revision(*i);
+      cout << (F("Changes against parent %s:") % parent).str() << "\n";
+
       cset const & cs = edge_changes(*i);
 
       if (cs.empty())
-        cout << F("no changes").str() << "\n";
+        cout << F("  no changes").str() << "\n";
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
-        cout << (F("dropped %s") % *i).str() << "\n";
+        cout << (F("  dropped %s") % *i).str() << "\n";
 
       for (map<split_path, split_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
-        cout << (F("renamed %s\n"
-                   "     to %s") % i->first % i->second).str() << "\n";
+        cout << (F("  renamed %s\n"
+                   "       to %s") % i->first % i->second).str() << "\n";
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
-        cout << (F("added   %s") % *i).str() << "\n";
+        cout << (F("  added   %s") % *i).str() << "\n";
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
-        cout << (F("added   %s") % i->first).str() << "\n";
+        cout << (F("  added   %s") % i->first).str() << "\n";
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << (F("patched %s") % (i->first)).str() << "\n";
+        cout << (F("  patched %s") % (i->first)).str() << "\n";
     }
 }
 
