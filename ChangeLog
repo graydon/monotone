@@ -1,5 +1,17 @@
 2006-08-28  Richard Levitte  <richard@levitte.org>
 
+	* monotone.cc, i18n.h (localize_monotone): New function that does
+	the locale and gettext initialization if it isn't already done.
+	This can be called from anywhere, even from code that's run before
+	main().
+	* options.cc (option::localize_string): New function that calls
+	localize_monotone(), then localizes a string.  This is currently
+	exclusively used by...
+	(GOPT, COPT): ... these macros, so option descriptions get
+	translated properly.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
 	* po/POTFILES.in: Add options_list.hh, since it contains a lot
 	of translatable text.  These strings were previously in
 	monotone.cc.

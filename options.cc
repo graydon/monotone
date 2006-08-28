@@ -1,6 +1,7 @@
 
 #include <string>
 
+#include "config.h"
 #include "i18n.h"
 #include "options.hh"
 #include "sanity.hh"
@@ -108,10 +109,16 @@ namespace option
   // GOPT and COPT defines are just to reduce duplication, maybe there is a
   // cleaner way to do the same thing?
 
+  const char *localize_string(const char *str)
+  {
+    localize_monotone();
+    return gettext(str);
+  }
+
   // global options
-#define GOPT(NAME, OPT, TYPE, DESC) global<TYPE > NAME(new option_description(OPT, value<TYPE >()(), DESC))
+#define GOPT(NAME, OPT, TYPE, DESC) global<TYPE > NAME(new option_description(OPT, value<TYPE >()(), localize_string(DESC)))
   // command-specific options
-#define COPT(NAME, OPT, TYPE, DESC) specific<TYPE > NAME(new option_description(OPT, value<TYPE >()(), DESC))
+#define COPT(NAME, OPT, TYPE, DESC) specific<TYPE > NAME(new option_description(OPT, value<TYPE >()(), localize_string(DESC)))
 #include "options_list.hh"
 #undef OPT
 #undef COPT
