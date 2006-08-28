@@ -28,8 +28,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-28 10:46+0200\n"
-"PO-Revision-Date: 2006-08-28 10:48+0100\n"
+"POT-Creation-Date: 2006-08-28 12:35+0200\n"
+"PO-Revision-Date: 2006-08-28 12:36+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -2915,6 +2915,206 @@ msgstr ""
 msgid "network error: %s"
 msgstr "Netzwerk-Fehler: %s"
 
+#: options_list.hh:2
+msgid "print debug log to stderr while running"
+msgstr "schreibe das Debug-Log nach stderr während der Ausführung"
+
+#: options_list.hh:3
+msgid "file to dump debugging log to, on failure"
+msgstr "Datei, in die das Debug-Log im Fehlerfall geschrieben werden soll"
+
+#: options_list.hh:4
+msgid "file to write the log to"
+msgstr "Datei, in die das Log geschrieben wird"
+
+#: options_list.hh:5
+msgid "suppress verbose, informational and progress messages"
+msgstr "unterdrücke wortreiche, informelle und Fortschrittsmeldungen"
+
+#: options_list.hh:6
+msgid "suppress warning, verbose, informational and progress messages"
+msgstr "unterdrücke Warnungen, wortreiche, informelle und Fortschrittsmeldungen"
+
+#: options_list.hh:7
+msgid "display help message"
+msgstr "zeige Hilfemeldung an"
+
+#: options_list.hh:8
+msgid "print version number, then exit"
+msgstr "zeige Versionsinformationen an und beende dann das Programm"
+
+#: options_list.hh:9
+msgid "print detailed version number, then exit"
+msgstr "zeige detailierte Versionsinformationen an und beende dann das Programm"
+
+#: options_list.hh:10
+msgid "insert command line arguments taken from the given file"
+msgstr "füge Kommandozeilenargumente aus der gegebenen Datei an"
+
+#: options_list.hh:11
+msgid "set ticker style (count|dot|none)"
+msgstr "setzte 'Ticker'-Stil (count|dot|none)"
+
+#: options_list.hh:12
+msgid "do not load standard lua hooks"
+msgstr "lade nicht die Standard-lua-Hooks"
+
+#: options_list.hh:13
+msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
+msgstr "lade nicht ~/.monotone/monotonerc oder _MTN/monotonerc lua-Dateien"
+
+#: options_list.hh:14
+msgid "load extra rc file"
+msgstr "lade zusätzliche rc-Datei"
+
+#: options_list.hh:15
+msgid "set key for signatures"
+msgstr "setze Schlüssel für Signaturen"
+
+#: options_list.hh:16
+msgid "set name of database"
+msgstr "setze Namen der Datenbank"
+
+#: options_list.hh:17
+msgid "limit search for workspace to specified root"
+msgstr "beschränke Suche nach der Arbeitsumgebung auf angegebene Verzeichniswurzel"
+
+#: options_list.hh:18
+msgid "verbose completion output"
+msgstr "ausführliche Komplettierungsausgabe"
+
+#: options_list.hh:19
+msgid "set location of key store"
+msgstr "setze Ort des Schlüsselbundes"
+
+#: options_list.hh:20
+msgid "set location of configuration directory"
+msgstr "setze Verzeichnis des Konfigurationsverzeichnisses"
+
+#: options_list.hh:22
+msgid "override author for commit"
+msgstr "übergehe Autorenangabe für Einpflegen"
+
+#: options_list.hh:23
+msgid "block size in bytes for \"automate stdio\" output"
+msgstr "Blockgröße in Bytes der Ausgabe von \"automate stdio\""
+
+#: options_list.hh:24
+msgid "address:port to listen on (default :4691)"
+msgstr "Adresse:Port, auf den die Anwendung lauschen soll (Standard: :4691)"
+
+#: options_list.hh:25
+msgid "select branch cert for operation"
+msgstr "wähle das Zweigzertifikat für die Operation aus"
+
+#: options_list.hh:26
+msgid "print a brief version of the normal output"
+msgstr "gebe eine Kurzversion der normalen Ausgabe aus"
+
+#: options_list.hh:27
+msgid "use context diff format"
+msgstr "benutze das 'context diff'-Format"
+
+#: options_list.hh:28
+msgid "override date/time for commit"
+msgstr "übergehe Datums-/Zeitangabe für Einpflegen "
+
+#: options_list.hh:29
+msgid "limit the number of levels of directories to descend"
+msgstr "beschränke die Anzahl der einbezogenen Verzeichnisebenen"
+
+#: options_list.hh:30
+msgid "print diffs along with logs"
+msgstr "gebe Differenzen mit den entsprechenden Logeinträgen aus"
+
+#: options_list.hh:31
+msgid "when rosterifying, drop attrs entries with the given key"
+msgstr "während der Katalogisierung, entferne 'attrs'-Einträge mit dem gegebenen Schlüssel"
+
+#: options_list.hh:32
+msgid "leave out anything described by its argument"
+msgstr "lasse etwas durch das Argument beschriebene heraus"
+
+#: options_list.hh:33
+msgid "perform the associated file operation"
+msgstr "führe die zusammenhängende Dateioperation aus"
+
+#: options_list.hh:34
+msgid "use external diff hook for generating diffs"
+msgstr "benutze externe 'diff'-Anwendung für die Erstellung von Differenzen"
+
+#: options_list.hh:35
+msgid "argument to pass external diff hook"
+msgstr "Argument für externe 'diff'-Anwendung"
+
+#: options_list.hh:36
+msgid "push the specified key even if it hasn't signed anything"
+msgstr "exportiere diesen Schlüssel, selbst wenn damit nichts signiert wurde"
+
+#: options_list.hh:37
+msgid "limit log output to the last number of entries"
+msgstr "beschränke Logausgabe auf die letzte Anzahl von Einträgen"
+
+#: options_list.hh:38
+msgid "set commit changelog message"
+msgstr "setze Nachricht für Änderungshistorie"
+
+#: options_list.hh:39
+msgid "perform the operations for files missing from workspace"
+msgstr "führe diese Operationen für fehlende Dateien im Arbeitsbereich aus"
+
+#: options_list.hh:40
+msgid "set filename containing commit changelog message"
+msgstr "setze Dateinamen der Datei, die die Nachricht für die Änderungshistorie beinhaltet"
+
+#: options_list.hh:41
+msgid "limit log output to the next number of entries"
+msgstr "beschränke die Logausgabe auf die nächstfolgende Anzahl von Einträgen"
+
+#: options_list.hh:42
+msgid "exclude files when printing logs"
+msgstr "schließe Dateien bei der Ausgabe der Logeinträge aus"
+
+#: options_list.hh:43
+msgid "exclude merges when printing logs"
+msgstr "schließe Vereinigungen bei der Ausgabe der Logeinträge aus"
+
+#: options_list.hh:44
+msgid "do not show the function containing each block of changes"
+msgstr "zeige nicht die Funktion, die den jeweiligen Änderungsblock beinhaltet"
+
+#: options_list.hh:45
+msgid "disable transport authentication"
+msgstr "deaktiviere Transport-Authentifizierung"
+
+#: options_list.hh:46
+msgid "record process id of server"
+msgstr "merke Prozess-ID des Serverprozesses"
+
+#: options_list.hh:47
+msgid "also operate on the contents of any listed directories"
+msgstr "arbeite auch auf den Inhalten beliebiger aufgeführter Verzeichnisse"
+
+#: options_list.hh:48
+msgid "select revision id for operation"
+msgstr "wähle die Revisions-ID für die Operation aus"
+
+#: options_list.hh:49
+msgid "use the current arguments as the future default"
+msgstr "benutze die derzeitigen Argumente in der Zukunft als Standard"
+
+#: options_list.hh:50
+msgid "serve netsync on stdio"
+msgstr "bediene netsync über stdio"
+
+#: options_list.hh:51
+msgid "use unified diff format"
+msgstr "benutze das 'unified diff'-Format"
+
+#: options_list.hh:52
+msgid "perform the operations for unknown files from workspace"
+msgstr "führe diese Operation für unbekannte Dateien im Arbeitsbereich aus"
+
 #: packet.cc:107
 #, c-format
 msgid "file preimage '%s' missing in db"
@@ -3486,118 +3686,10 @@ msgstr "verändere %s"
 #~ msgstr "unterbrochen"
 #~ msgid "terminated by signal"
 #~ msgstr "beendet durch Signal"
-#~ msgid "select branch cert for operation"
-#~ msgstr "wähle das Zweigzertifikat für die Operation aus"
-#~ msgid "select revision id for operation"
-#~ msgstr "wähle die Revisions-ID für die Operation aus"
-#~ msgid "set commit changelog message"
-#~ msgstr "setze Nachricht für Änderungshistorie"
-#~ msgid "set filename containing commit changelog message"
-#~ msgstr ""
-#~ "setze Dateinamen der Datei, die die Nachricht für die Änderungshistorie "
-#~ "beinhaltet"
-#~ msgid "override date/time for commit"
-#~ msgstr "übergehe Datums-/Zeitangabe für Einpflegen "
-#~ msgid "override author for commit"
-#~ msgstr "übergehe Autorenangabe für Einpflegen"
-#~ msgid "limit the number of levels of directories to descend"
-#~ msgstr "beschränke die Anzahl der einbezogenen Verzeichnisebenen"
-#~ msgid "limit log output to the last number of entries"
-#~ msgstr "beschränke Logausgabe auf die letzte Anzahl von Einträgen"
-#~ msgid "limit log output to the next number of entries"
-#~ msgstr ""
-#~ "beschränke die Logausgabe auf die nächstfolgende Anzahl von Einträgen"
-#~ msgid "record process id of server"
-#~ msgstr "merke Prozess-ID des Serverprozesses"
-#~ msgid "print a brief version of the normal output"
-#~ msgstr "gebe eine Kurzversion der normalen Ausgabe aus"
-#~ msgid "print diffs along with logs"
-#~ msgstr "gebe Differenzen mit den entsprechenden Logeinträgen aus"
-#~ msgid "exclude merges when printing logs"
-#~ msgstr "schließe Vereinigungen bei der Ausgabe der Logeinträge aus"
-#~ msgid "use the current arguments as the future default"
-#~ msgstr "benutze die derzeitigen Argumente in der Zukunft als Standard"
-#~ msgid "leave out anything described by its argument"
-#~ msgstr "lasse etwas durch das Argument beschriebene heraus"
-#~ msgid "use unified diff format"
-#~ msgstr "benutze das 'unified diff'-Format"
-#~ msgid "use context diff format"
-#~ msgstr "benutze das 'context diff'-Format"
-#~ msgid "use external diff hook for generating diffs"
-#~ msgstr "benutze externe 'diff'-Anwendung für die Erstellung von Differenzen"
-#~ msgid "argument to pass external diff hook"
-#~ msgstr "Argument für externe 'diff'-Anwendung"
-#~ msgid "do not show the function containing each block of changes"
-#~ msgstr ""
-#~ "zeige nicht die Funktion, die den jeweiligen Änderungsblock beinhaltet"
 #~ msgid ""
 #~ "another name for --no-show-encloser (for compatibility with GNU diff)"
 #~ msgstr ""
 #~ "anderer Name für '--no-show-encloser' (für Kompatibilität mit GNU diff)"
-#~ msgid "perform the associated file operation"
-#~ msgstr "führe die zusammenhängende Dateioperation aus"
-#~ msgid "address:port to listen on (default :4691)"
-#~ msgstr "Adresse:Port, auf den die Anwendung lauschen soll (Standard: :4691)"
-#~ msgid "perform the operations for files missing from workspace"
-#~ msgstr "führe diese Operationen für fehlende Dateien im Arbeitsbereich aus"
-#~ msgid "perform the operations for unknown files from workspace"
-#~ msgstr "führe diese Operation für unbekannte Dateien im Arbeitsbereich aus"
-#~ msgid "push the specified key even if it hasn't signed anything"
-#~ msgstr ""
-#~ "exportiere diesen Schlüssel, selbst wenn damit nichts signiert wurde"
-#~ msgid "serve netsync on stdio"
-#~ msgstr "bediene netsync über stdio"
-#~ msgid "disable transport authentication"
-#~ msgstr "deaktiviere Transport-Authentifizierung"
-#~ msgid "when rosterifying, drop attrs entries with the given key"
-#~ msgstr ""
-#~ "während der Katalogisierung, entferne 'attrs'-Einträge mit dem gegebenen "
-#~ "Schlüssel"
-#~ msgid "exclude files when printing logs"
-#~ msgstr "schließe Dateien bei der Ausgabe der Logeinträge aus"
-#~ msgid "also operate on the contents of any listed directories"
-#~ msgstr "arbeite auch auf den Inhalten beliebiger aufgeführter Verzeichnisse"
-#~ msgid "print debug log to stderr while running"
-#~ msgstr "schreibe das Debug-Log nach stderr während der Ausführung"
-#~ msgid "file to dump debugging log to, on failure"
-#~ msgstr "Datei, in die das Debug-Log im Fehlerfall geschrieben werden soll"
-#~ msgid "file to write the log to"
-#~ msgstr "Datei, in die das Log geschrieben wird"
-#~ msgid "suppress verbose, informational and progress messages"
-#~ msgstr "unterdrücke wortreiche, informelle und Fortschrittsmeldungen"
-#~ msgid "suppress warning, verbose, informational and progress messages"
-#~ msgstr ""
-#~ "unterdrücke Warnungen, wortreiche, informelle und Fortschrittsmeldungen"
-#~ msgid "display help message"
-#~ msgstr "zeige Hilfemeldung an"
-#~ msgid "print version number, then exit"
-#~ msgstr "zeige Versionsinformationen an und beende dann das Programm"
-#~ msgid "print detailed version number, then exit"
-#~ msgstr ""
-#~ "zeige detailierte Versionsinformationen an und beende dann das Programm"
-#~ msgid "insert command line arguments taken from the given file"
-#~ msgstr "füge Kommandozeilenargumente aus der gegebenen Datei an"
-#~ msgid "set ticker style (count|dot|none)"
-#~ msgstr "setzte 'Ticker'-Stil (count|dot|none)"
-#~ msgid "do not load standard lua hooks"
-#~ msgstr "lade nicht die Standard-lua-Hooks"
-#~ msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
-#~ msgstr "lade nicht ~/.monotone/monotonerc oder _MTN/monotonerc lua-Dateien"
-#~ msgid "load extra rc file"
-#~ msgstr "lade zusätzliche rc-Datei"
-#~ msgid "set key for signatures"
-#~ msgstr "setze Schlüssel für Signaturen"
-#~ msgid "set name of database"
-#~ msgstr "setze Namen der Datenbank"
-#~ msgid "limit search for workspace to specified root"
-#~ msgstr ""
-#~ "beschränke Suche nach der Arbeitsumgebung auf angegebene Verzeichniswurzel"
-#~ msgid "verbose completion output"
-#~ msgstr "ausführliche Komplettierungsausgabe"
-#~ msgid "set location of key store"
-#~ msgstr "setze Ort des Schlüsselbundes"
-#~ msgid "set location of configuration directory"
-#~ msgstr "setze Verzeichnis des Konfigurationsverzeichnisses"
 #~ msgid "syntax error near the \"%s\" option: %s"
 #~ msgstr "Syntaxfehler in der der Option \"%s\": %s"
 #~ msgid "%s %s doesn't use the option %s"
