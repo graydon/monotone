@@ -1,3 +1,9 @@
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone.examples: Added, currently exactly the same
+	as debian/monotone-server.examples.  There's no reason why the
+	"client" should be without some of the examples.
+
 2006-08-28  Matthew Nicholson  <matt@matt-land.com>
 
 	* debian/monotone-server.examples: Dropped.
