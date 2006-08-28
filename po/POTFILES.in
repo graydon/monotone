@@ -53,6 +53,7 @@ netio.hh
 netsync.cc
 netsync.hh
 numeric_vocab.hh
+options_list.hh
 packet.cc
 packet.hh
 platform.hh
