@@ -1,5 +1,11 @@
 2006-08-28  Richard Levitte  <richard@levitte.org>
 
+	* cmd.hh (ALIAS): Rework so gettext() can do its job properly,
+	and get the alias description string translated as well.
+	* po/sv.po: Translate the alias description string.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
 	* po/POTFILES.in: Oh look, automate.cc was missing!
 	* po/sv.po: Adding automate.cc resulted in 7 new fuzzies and 9
 	new untranslated strings.  Fixed.

@@ -141,14 +141,12 @@
 # work set                        arbetsmängd
 # workspace                       arbetskopia (el. kanske arbetskatalog, ibland)
 #
-#: automate.cc:396 automate.cc:482 automate.cc:707 automate.cc:933
-#: automate.cc:954 automate.cc:1265
 msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-28 18:10+0200\n"
-"PO-Revision-Date: 2006-08-28 18:14+0200\n"
+"POT-Creation-Date: 2006-08-28 22:11+0200\n"
+"PO-Revision-Date: 2006-08-28 22:11+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -658,25 +656,30 @@ msgstr "skriv ut angiven fil från databasen"
 msgid "no file '%s' found in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
 
-#: cmd.hh:108
+#: cmd.hh:110
 #, c-format
 msgid "non-hex digits in id"
 msgstr "något tecken i identiteten är inte hexadecimalt"
 
-#: cmd.hh:117
+#: cmd.hh:119
 #, c-format
 msgid "partial id '%s' does not have an expansion"
 msgstr "den partiella identiteten '%s' matchar inte befintliga identiteter"
 
-#: cmd.hh:121
+#: cmd.hh:123
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:\n"
 msgstr "den partiella identiteten '%s' har mer än en uttydning:\n"
 
-#: cmd.hh:129
+#: cmd.hh:131
 #, c-format
 msgid "expanded partial id '%s' to '%s'"
 msgstr "expanderade partiell identitet '%s' till '%s'"
+
+#: cmd.hh:217
+#, c-format
+msgid "Alias for %s"
+msgstr "Synonym för %s"
 
 #: cmd_key_cert.cc:26 cmd_key_cert.cc:51 cmd_key_cert.cc:90
 #: cmd_key_cert.cc:111 cmd_key_cert.cc:147
