@@ -141,12 +141,14 @@
 # work set                        arbetsmängd
 # workspace                       arbetskopia (el. kanske arbetskatalog, ibland)
 #
+#: automate.cc:396 automate.cc:482 automate.cc:707 automate.cc:933
+#: automate.cc:954 automate.cc:1265
 msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-28 12:24+0200\n"
-"PO-Revision-Date: 2006-08-28 09:57+0200\n"
+"POT-Creation-Date: 2006-08-28 18:10+0200\n"
+"PO-Revision-Date: 2006-08-28 18:14+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -215,6 +217,117 @@ msgstr "Misslyckades med att läsa filen %s"
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Misslyckades med att skriva filen %s"
+
+#: automate.cc:65
+msgid "[BRANCH]"
+msgstr "[GREN]"
+
+#: automate.cc:89 automate.cc:136 automate.cc:1202
+msgid "REV1 [REV2 [REV3 [...]]]"
+msgstr "REV1 [REV2 [REV3 [...]]]"
+
+#: automate.cc:99 automate.cc:146 automate.cc:190 automate.cc:331
+#: automate.cc:366 automate.cc:370 automate.cc:429 automate.cc:453
+#: automate.cc:1212 cmd_list.cc:658
+#, c-format
+msgid "No such revision %s"
+msgstr "det finns ingen revision med identiteten %s"
+
+#: automate.cc:184 automate.cc:325
+msgid "[REV1 [REV2 [REV3 [...]]]]"
+msgstr "[REV1 [REV2 [REV3 [...]]]]"
+
+#: automate.cc:216
+msgid "FILE"
+msgstr "FIL"
+
+#: automate.cc:236
+#, c-format
+msgid "file %s is unknown to the current workspace"
+msgstr "filen '%s' är okänd i denna arbetskopia"
+
+#: automate.cc:357
+msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
+msgstr "NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]"
+
+#: automate.cc:424 automate.cc:448 cmd_list.cc:648
+msgid "REV"
+msgstr "REV"
+
+#: automate.cc:525
+msgid "SELECTOR"
+msgstr "VÄLJARE"
+
+#: automate.cc:889 automate.cc:1019
+msgid "[REVID]"
+msgstr "[REVID]"
+
+#: automate.cc:918 automate.cc:1041
+#, c-format
+msgid "no revision %s found in database"
+msgstr "revisionen %s finns inte i i databasen"
+
+#: automate.cc:1062 automate.cc:1141
+msgid "FILEID"
+msgstr "FILID"
+
+#: automate.cc:1069
+#, c-format
+msgid "no file version %s found in database"
+msgstr "filversionen %s finns inte i databasen"
+
+#: automate.cc:1088 automate.cc:1114 cmd_merging.cc:866
+msgid "REVID"
+msgstr "REVID"
+
+#: automate.cc:1099 automate.cc:1125 automate.cc:1180 automate.cc:1182
+#: cmd_db.cc:35 cmd_diff_log.cc:385 cmd_diff_log.cc:417 cmd_diff_log.cc:419
+#: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:148 cmd_merging.cc:701
+#: cmd_merging.cc:716 cmd_merging.cc:719 cmd_ws_commit.cc:440 commands.cc:430
+#, c-format
+msgid "no such revision '%s'"
+msgstr "det finns ingen revision med identiteten '%s'"
+
+#: automate.cc:1152
+#, c-format
+msgid "no such file '%s'"
+msgstr "filen '%s' finns inte"
+
+#: automate.cc:1168
+msgid "OLD_FILE NEW_FILE"
+msgstr "GAMMAL_FIL NYTT_FIL"
+
+#: automate.cc:1313
+msgid "[BRANCH_PATTERN]"
+msgstr "[GREN_MÖNSTER]"
+
+#: automate.cc:1409
+msgid "KEYID PASSPHRASE"
+msgstr "NYCKELID LÖSENFRAS"
+
+#: automate.cc:1427 cmd_key_cert.cc:41
+#, c-format
+msgid "key '%s' already exists"
+msgstr "nyckeln '%s' finns redan"
+
+#: automate.cc:1430 cmd_key_cert.cc:44
+#, c-format
+msgid "generating key-pair '%s'"
+msgstr "skapar nyckelparet '%s'"
+
+#: automate.cc:1432 cmd_key_cert.cc:46
+#, c-format
+msgid "storing key-pair '%s' in %s/"
+msgstr "lagrar nyckelparet '%s' i %s/"
+
+#: automate.cc:1468
+msgid "OPTION"
+msgstr "OPTION"
+
+#: automate.cc:1478
+#, c-format
+msgid "option %s doesn't exist"
+msgstr "optionen %s finns inte"
 
 #: basic_io.cc:33
 #, c-format
@@ -303,13 +416,6 @@ msgstr "automatisering"
 #: cmd_automate.cc:304
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
-
-#: cmd_db.cc:35 cmd_diff_log.cc:385 cmd_diff_log.cc:417 cmd_diff_log.cc:419
-#: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:148 cmd_merging.cc:701
-#: cmd_merging.cc:716 cmd_merging.cc:719 cmd_ws_commit.cc:440 commands.cc:430
-#, c-format
-msgid "no such revision '%s'"
-msgstr "det finns ingen revision med identiteten '%s'"
 
 #: cmd_db.cc:41
 #, c-format
@@ -585,21 +691,6 @@ msgstr "NYCKELID"
 msgid "generate an RSA key-pair"
 msgstr "skapa ett RSA-nyckelpar"
 
-#: cmd_key_cert.cc:41
-#, c-format
-msgid "key '%s' already exists"
-msgstr "nyckeln '%s' finns redan"
-
-#: cmd_key_cert.cc:44
-#, c-format
-msgid "generating key-pair '%s'"
-msgstr "skapar nyckelparet '%s'"
-
-#: cmd_key_cert.cc:46
-#, c-format
-msgid "storing key-pair '%s' in %s/"
-msgstr "lagrar nyckelparet '%s' i %s/"
-
 #: cmd_key_cert.cc:51
 msgid "drop a public and private key"
 msgstr "släng publik och privat nyckel"
@@ -823,15 +914,6 @@ msgid ""
 msgstr ""
 "visa databasobjekten, arbetskopians manifest, okända filer, kända \n"
 "filer, medvetet ignorerade filer, saknade filer eller ändrade filer"
-
-#: cmd_list.cc:648
-msgid "REV"
-msgstr "REV"
-
-#: cmd_list.cc:658
-#, c-format
-msgid "No such revision %s"
-msgstr "det finns ingen revision med identiteten %s"
 
 #: cmd_merging.cc:96 cmd_merging.cc:679 cmd_ws_commit.cc:53
 #: cmd_ws_commit.cc:222 cmd_ws_commit.cc:256 cmd_ws_commit.cc:289
@@ -1188,10 +1270,6 @@ msgstr "grenen '%s' har för tillfället ett löv:"
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "grenen '%s' har för tillfället mer än ett löv:"
-
-#: cmd_merging.cc:866
-msgid "REVID"
-msgstr "REVID"
 
 #: cmd_merging.cc:867
 msgid "dump the roster associated with the given REVID"
@@ -2481,22 +2559,22 @@ msgstr "nodens kontrollsumma %s stämmer inte, %s förväntad"
 msgid "Invalid escape in --xargs file"
 msgstr "Otillåten \\ i filen given med --xargs"
 
-#: monotone.cc:649
+#: monotone.cc:662
 #, c-format
 msgid "%s:\n"
 msgstr "%s:\n"
 
-#: monotone.cc:657
+#: monotone.cc:670
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: monotone.cc:667
+#: monotone.cc:680
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Användning: %s [FLAGGOR...] kommando [ARGUMENT...]"
 
-#: monotone.cc:672
+#: monotone.cc:685
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3947,14 +4025,8 @@ msgstr "ändrar %s"
 #~ "var god kontakta %s så vi kan komma fram till ett bra sätt att migrera "
 #~ "detta"
 
-#~ msgid "OLDID NEWID"
-#~ msgstr "GAMMALT-ID NYTT-ID"
-
 #~ msgid "write file delta packet to stdout"
 #~ msgstr "skriv ut datapaket för fildelta till stdout"
-
-#~ msgid "no such file '%s'"
-#~ msgstr "filen '%s' finns inte"
 
 #~ msgid "write revision data packet to stdout"
 #~ msgstr "skriv ut datapaket för revision till stdout"

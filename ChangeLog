@@ -1,5 +1,11 @@
 2006-08-28  Richard Levitte  <richard@levitte.org>
 
+	* po/POTFILES.in: Oh look, automate.cc was missing!
+	* po/sv.po: Adding automate.cc resulted in 7 new fuzzies and 9
+	new untranslated strings.  Fixed.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
 	* automate.cc (AUTOMATE(get_option)): New automate command to
 	fetch values from _MTN/options in a supported manner.
 
