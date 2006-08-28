@@ -1,6 +1,7 @@
 adler32.hh
 app_state.cc
 app_state.hh
+automate.cc
 basic_io.cc
 basic_io.hh
 cert.cc

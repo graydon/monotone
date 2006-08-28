@@ -1454,6 +1454,35 @@ AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
 
 }
 
+// Name: get_option
+// Arguments:
+//   1: an options name
+// Added in: 3.1
+// Purpose: Show the value of the named option in _MTN/options
+//
+// Output format: A string
+//
+// Sample output (for 'mtn automate get_option branch:
+//   net.venge.monotone
+//
+AUTOMATE(get_option, N_("OPTION"))
+{
+  if (!app.unknown && (args.size() < 1))
+    throw usage(help_name);
+
+  // this command requires a workspace to be run on
+  app.require_workspace();
+
+  utf8 result = app.options[args[0]()];
+  if (result().size() == 0)
+    W(F("option %s doesn't exist") % args[0]);
+  else
+    {
+      std::cout << result << std::endl;
+      return;
+    }
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
