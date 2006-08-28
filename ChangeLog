@@ -1,3 +1,7 @@
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few fuzzies to fix.
+
 2006-08-28  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* m4/ax_create_stdint_h.m4 (ac_cv_stdint_message): Change the
