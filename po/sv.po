@@ -145,7 +145,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-28 09:55+0200\n"
+"POT-Creation-Date: 2006-08-28 12:24+0200\n"
 "PO-Revision-Date: 2006-08-28 09:57+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
@@ -3000,6 +3000,207 @@ msgstr ""
 msgid "network error: %s"
 msgstr "nätverksfel: %s"
 
+#: options_list.hh:2
+msgid "print debug log to stderr while running"
+msgstr "skriv ut felsökningslogg till stderr under körning"
+
+#: options_list.hh:3
+msgid "file to dump debugging log to, on failure"
+msgstr "fil att skriva ut felsökningsloggen till om något gick fel"
+
+#: options_list.hh:4
+msgid "file to write the log to"
+msgstr "fil att skriva ut loggen till"
+
+#: options_list.hh:5
+msgid "suppress verbose, informational and progress messages"
+msgstr "skriv inte ut informations- eller förloppsmeddelanden"
+
+#: options_list.hh:6
+msgid "suppress warning, verbose, informational and progress messages"
+msgstr "skriv inte ut varningar eller informations- eller förloppsmeddelanden"
+
+#: options_list.hh:7
+msgid "display help message"
+msgstr "skriv ut extra hjälptext"
+
+#: options_list.hh:8
+msgid "print version number, then exit"
+msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
+
+#: options_list.hh:9
+msgid "print detailed version number, then exit"
+msgstr "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
+
+#: options_list.hh:10
+msgid "insert command line arguments taken from the given file"
+msgstr "använd kommandoradsargument ur denna fil"
+
+#: options_list.hh:11
+msgid "set ticker style (count|dot|none)"
+msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
+
+#: options_list.hh:12
+msgid "do not load standard lua hooks"
+msgstr "använd inte standard-lua-rutinerna"
+
+#: options_list.hh:13
+msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
+msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
+
+#: options_list.hh:14
+msgid "load extra rc file"
+msgstr "använd denna lua-fil"
+
+#: options_list.hh:15
+msgid "set key for signatures"
+msgstr "ange nyckel att signera med"
+
+#: options_list.hh:16
+msgid "set name of database"
+msgstr "ange databasens filnamn"
+
+#: options_list.hh:17
+msgid "limit search for workspace to specified root"
+msgstr "begränsa sökningen efter arbetskopian till denna katalog"
+
+#: options_list.hh:18
+msgid "verbose completion output"
+msgstr "ge utförlig information"
+
+#: options_list.hh:19
+msgid "set location of key store"
+msgstr "ange i vilken katalog nycklarna finns"
+
+#: options_list.hh:20
+msgid "set location of configuration directory"
+msgstr "ange i vilken katalog konfigurationsfilerna finns"
+
+#: options_list.hh:22
+msgid "override author for commit"
+msgstr "ange annan upphovsman till ändringarna"
+
+#: options_list.hh:23
+msgid "block size in bytes for \"automate stdio\" output"
+msgstr "blockstorlek för utdata från \"automate stdio\", i antal byte"
+
+#: options_list.hh:24
+msgid "address:port to listen on (default :4691)"
+msgstr "adress:port att lyssna på (:4691 om inget anges)"
+
+#: options_list.hh:25
+msgid "select branch cert for operation"
+msgstr "ange den gren som operationen ska utföras i"
+
+#: options_list.hh:26
+msgid "print a brief version of the normal output"
+msgstr "låt utskriften vara mer kortfattad än normalt"
+
+#: options_list.hh:27
+msgid "use context diff format"
+msgstr "använd formatet 'context diff'"
+
+#: options_list.hh:28
+msgid "override date/time for commit"
+msgstr "ange annat datum och tid för ändringarna"
+
+#: options_list.hh:29
+msgid "limit the number of levels of directories to descend"
+msgstr "begränsa hur djupt i katalogstrukturen monotone ska gå ned"
+
+#: options_list.hh:30
+msgid "print diffs along with logs"
+msgstr "skriv ut skillnaden mellan denna och tidigare revision i loggen"
+
+#: options_list.hh:31
+msgid "when rosterifying, drop attrs entries with the given key"
+msgstr "släng attribut med den givna nyckeln vid konvertering till listor"
+
+#: options_list.hh:32
+msgid "leave out anything described by its argument"
+msgstr "utelämna allt som matchar argumentet"
+
+#: options_list.hh:33
+msgid "perform the associated file operation"
+msgstr "genomför den tillhörande operationen på filen/filerna"
+
+#: options_list.hh:34
+msgid "use external diff hook for generating diffs"
+msgstr "använd extern diff för att framställa skillnad mellan revisioner"
+
+#: options_list.hh:35
+msgid "argument to pass external diff hook"
+msgstr "argument att skicka med till extern diff"
+
+#: options_list.hh:36
+msgid "push the specified key even if it hasn't signed anything"
+msgstr "skicka med angiven nyckel även om den inte använts för att signera"
+
+#: options_list.hh:37
+msgid "limit log output to the last number of entries"
+msgstr "begränsa loggutskriften till detta antal poster bakåt i tiden"
+
+#: options_list.hh:38
+msgid "set commit changelog message"
+msgstr "ange loggmeddelandet för arkivering"
+
+#: options_list.hh:39
+msgid "perform the operations for files missing from workspace"
+msgstr "genomför operationen på filer som saknas i arbetskatalogen"
+
+#: options_list.hh:40
+msgid "set filename containing commit changelog message"
+msgstr "ange filnamnet som innehåller loggmeddelandet för arkivering"
+
+#: options_list.hh:41
+msgid "limit log output to the next number of entries"
+msgstr "begränsa loggutskriften till detta antal poster framåt i tiden"
+
+#: options_list.hh:42
+msgid "exclude files when printing logs"
+msgstr ""
+"ta ej med vilka filer som lagts till, tagits bort eller ändrats i loggen"
+
+#: options_list.hh:43
+msgid "exclude merges when printing logs"
+msgstr "ta ej med ihopslagningar i loggen"
+
+#: options_list.hh:44
+msgid "do not show the function containing each block of changes"
+msgstr "visa inte funktionen som innehåller varje ändringsstycke"
+
+#: options_list.hh:45
+msgid "disable transport authentication"
+msgstr "slå av transportautentisering"
+
+#: options_list.hh:46
+msgid "record process id of server"
+msgstr "spara serverns process-ID i denna fil"
+
+#: options_list.hh:47
+msgid "also operate on the contents of any listed directories"
+msgstr "ta även med innehållet för varje listad katalog"
+
+#: options_list.hh:48
+msgid "select revision id for operation"
+msgstr "ange den revision som operationen ska utföras på"
+
+#: options_list.hh:49
+msgid "use the current arguments as the future default"
+msgstr "använd de givna argumenten som framtida standardvärden"
+
+#: options_list.hh:50
+msgid "serve netsync on stdio"
+msgstr "servera netsync via standard input och standard output"
+
+#: options_list.hh:51
+msgid "use unified diff format"
+msgstr "använd formatet 'unified diff'"
+
+#: options_list.hh:52
+msgid "perform the operations for unknown files from workspace"
+msgstr "genomför operationen på okända filer i arbetskatalogen"
+
 #: packet.cc:107
 #, c-format
 msgid "file preimage '%s' missing in db"
@@ -3569,163 +3770,10 @@ msgstr "ändrar %s"
 #~ msgid "need --branch argument for branch-based checkout"
 #~ msgstr "--branch behövs för att kunna hämta en revision med given gren"
 
-#~ msgid "select branch cert for operation"
-#~ msgstr "ange den gren som operationen ska utföras i"
-
-#~ msgid "select revision id for operation"
-#~ msgstr "ange den revision som operationen ska utföras på"
-
-#~ msgid "set commit changelog message"
-#~ msgstr "ange loggmeddelandet för arkivering"
-
-#~ msgid "set filename containing commit changelog message"
-#~ msgstr "ange filnamnet som innehåller loggmeddelandet för arkivering"
-
-#~ msgid "override date/time for commit"
-#~ msgstr "ange annat datum och tid för ändringarna"
-
-#~ msgid "override author for commit"
-#~ msgstr "ange annan upphovsman till ändringarna"
-
-#~ msgid "limit the number of levels of directories to descend"
-#~ msgstr "begränsa hur djupt i katalogstrukturen monotone ska gå ned"
-
-#~ msgid "limit log output to the last number of entries"
-#~ msgstr "begränsa loggutskriften till detta antal poster bakåt i tiden"
-
-#~ msgid "limit log output to the next number of entries"
-#~ msgstr "begränsa loggutskriften till detta antal poster framåt i tiden"
-
-#~ msgid "record process id of server"
-#~ msgstr "spara serverns process-ID i denna fil"
-
-#~ msgid "print a brief version of the normal output"
-#~ msgstr "låt utskriften vara mer kortfattad än normalt"
-
-#~ msgid "print diffs along with logs"
-#~ msgstr "skriv ut skillnaden mellan denna och tidigare revision i loggen"
-
-#~ msgid "exclude merges when printing logs"
-#~ msgstr "ta ej med ihopslagningar i loggen"
-
-#~ msgid "use the current arguments as the future default"
-#~ msgstr "använd de givna argumenten som framtida standardvärden"
-
-#~ msgid "leave out anything described by its argument"
-#~ msgstr "utelämna allt som matchar argumentet"
-
-#~ msgid "use unified diff format"
-#~ msgstr "använd formatet 'unified diff'"
-
-#~ msgid "use context diff format"
-#~ msgstr "använd formatet 'context diff'"
-
-#~ msgid "use external diff hook for generating diffs"
-#~ msgstr "använd extern diff för att framställa skillnad mellan revisioner"
-
-#~ msgid "argument to pass external diff hook"
-#~ msgstr "argument att skicka med till extern diff"
-
-#~ msgid "do not show the function containing each block of changes"
-#~ msgstr "visa inte funktionen som innehåller varje ändringsstycke"
-
 #~ msgid ""
 #~ "another name for --no-show-encloser (for compatibility with GNU diff)"
 #~ msgstr ""
 #~ "ett synonym till --no-show-encloser (for att vara kompatibel med GNU diff)"
-
-#~ msgid "perform the associated file operation"
-#~ msgstr "genomför den tillhörande operationen på filen/filerna"
-
-#~ msgid "address:port to listen on (default :4691)"
-#~ msgstr "adress:port att lyssna på (:4691 om inget anges)"
-
-#~ msgid "perform the operations for files missing from workspace"
-#~ msgstr "genomför operationen på filer som saknas i arbetskatalogen"
-
-#~ msgid "perform the operations for unknown files from workspace"
-#~ msgstr "genomför operationen på okända filer i arbetskatalogen"
-
-#~ msgid "push the specified key even if it hasn't signed anything"
-#~ msgstr "skicka med angiven nyckel även om den inte använts för att signera"
-
-#~ msgid "serve netsync on stdio"
-#~ msgstr "servera netsync via standard input och standard output"
-
-#~ msgid "disable transport authentication"
-#~ msgstr "slå av transportautentisering"
-
-#~ msgid "when rosterifying, drop attrs entries with the given key"
-#~ msgstr "släng attribut med den givna nyckeln vid konvertering till listor"
-
-#~ msgid "exclude files when printing logs"
-#~ msgstr ""
-#~ "ta ej med vilka filer som lagts till, tagits bort eller ändrats i loggen"
-
-#~ msgid "also operate on the contents of any listed directories"
-#~ msgstr "ta även med innehållet för varje listad katalog"
-
-#~ msgid "block size in bytes for \"automate stdio\" output"
-#~ msgstr "blockstorlek för utdata från \"automate stdio\", i antal byte"
-
-#~ msgid "print debug log to stderr while running"
-#~ msgstr "skriv ut felsökningslogg till stderr under körning"
-
-#~ msgid "file to dump debugging log to, on failure"
-#~ msgstr "fil att skriva ut felsökningsloggen till om något gick fel"
-
-#~ msgid "file to write the log to"
-#~ msgstr "fil att skriva ut loggen till"
-
-#~ msgid "suppress verbose, informational and progress messages"
-#~ msgstr "skriv inte ut informations- eller förloppsmeddelanden"
-
-#~ msgid "suppress warning, verbose, informational and progress messages"
-#~ msgstr ""
-#~ "skriv inte ut varningar eller informations- eller förloppsmeddelanden"
-
-#~ msgid "display help message"
-#~ msgstr "skriv ut extra hjälptext"
-
-#~ msgid "print version number, then exit"
-#~ msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
-
-#~ msgid "print detailed version number, then exit"
-#~ msgstr ""
-#~ "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
-
-#~ msgid "insert command line arguments taken from the given file"
-#~ msgstr "använd kommandoradsargument ur denna fil"
-
-#~ msgid "set ticker style (count|dot|none)"
-#~ msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
-
-#~ msgid "do not load standard lua hooks"
-#~ msgstr "använd inte standard-lua-rutinerna"
-
-#~ msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
-#~ msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
-
-#~ msgid "load extra rc file"
-#~ msgstr "använd denna lua-fil"
-
-#~ msgid "set key for signatures"
-#~ msgstr "ange nyckel att signera med"
-
-#~ msgid "set name of database"
-#~ msgstr "ange databasens filnamn"
-
-#~ msgid "limit search for workspace to specified root"
-#~ msgstr "begränsa sökningen efter arbetskopian till denna katalog"
-
-#~ msgid "verbose completion output"
-#~ msgstr "ge utförlig information"
-
-#~ msgid "set location of key store"
-#~ msgstr "ange i vilken katalog nycklarna finns"
-
-#~ msgid "set location of configuration directory"
-#~ msgstr "ange i vilken katalog konfigurationsfilerna finns"
 
 #~ msgid "syntax error near the \"%s\" option: %s"
 #~ msgstr "syntaxfel nära flaggan \"%s\": %s"
