@@ -393,7 +393,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-AUTOMATE(leaves, N_(""))
+AUTOMATE(leaves, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -479,7 +479,7 @@ AUTOMATE(children, N_("REV"))
 //   The output as a whole is alphabetically sorted; additionally, the parents
 //   within each line are alphabetically sorted.
 // Error conditions: None.
-AUTOMATE(graph, N_(""))
+AUTOMATE(graph, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -704,7 +704,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-AUTOMATE(inventory, N_(""))
+AUTOMATE(inventory, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -930,7 +930,7 @@ AUTOMATE(get_revision, N_("[REVID]"))
 //   on. This is the value stored in _MTN/revision
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_base_revision_id, N_(""))
+AUTOMATE(get_base_revision_id, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -951,7 +951,7 @@ AUTOMATE(get_base_revision_id, N_(""))
 //   files in the workspace.
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_current_revision_id, N_(""))
+AUTOMATE(get_current_revision_id, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -1262,7 +1262,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
 //   in alphabetically sorted order.
 // Error conditions:
 //   None.
-AUTOMATE(branches, N_(""))
+AUTOMATE(branches, "")
 {
   if (args.size() > 0)
     throw usage(help_name);

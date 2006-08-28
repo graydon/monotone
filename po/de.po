@@ -28,8 +28,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-28 12:35+0200\n"
-"PO-Revision-Date: 2006-08-28 12:36+0100\n"
+"POT-Creation-Date: 2006-08-28 19:04+0200\n"
+"PO-Revision-Date: 2006-08-28 19:10+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -99,6 +99,149 @@ msgstr "Konnte Optionen-Datei %s nicht lesen"
 #, c-format
 msgid "Failed to write options file %s"
 msgstr "Konnte Optionen-Datei %s nicht schreiben"
+
+#: automate.cc:65
+msgid "[BRANCH]"
+msgstr "[ZWEIG]"
+
+#: automate.cc:89
+#: automate.cc:136
+#: automate.cc:1202
+msgid "REV1 [REV2 [REV3 [...]]]"
+msgstr "REV1 [REV2 [REV3 [...]]]"
+
+#: automate.cc:99
+#: automate.cc:146
+#: automate.cc:190
+#: automate.cc:331
+#: automate.cc:366
+#: automate.cc:370
+#: automate.cc:429
+#: automate.cc:453
+#: automate.cc:1212
+#: cmd_list.cc:658
+#, c-format
+msgid "No such revision %s"
+msgstr "Revision %s nicht gefunden"
+
+#: automate.cc:184
+#: automate.cc:325
+msgid "[REV1 [REV2 [REV3 [...]]]]"
+msgstr "REV1 [REV2 [REV3 [...]]]"
+
+#: automate.cc:216
+msgid "FILE"
+msgstr "DATEI"
+
+#: automate.cc:236
+#, c-format
+msgid "file %s is unknown to the current workspace"
+msgstr "Datei %s existiert nicht im Arbeitsbereich"
+
+#: automate.cc:357
+msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
+msgstr "NEUE_REV [ALTE_REV1 [ALTE_REV2 [...]]]"
+
+#: automate.cc:424
+#: automate.cc:448
+#: cmd_list.cc:648
+msgid "REV"
+msgstr "REV"
+
+#: automate.cc:525
+msgid "SELECTOR"
+msgstr "SELEKTOR"
+
+#: automate.cc:889
+#: automate.cc:1019
+msgid "[REVID]"
+msgstr "[REVISIONS_ID]"
+
+#: automate.cc:918
+#: automate.cc:1041
+#, c-format
+msgid "no revision %s found in database"
+msgstr "Revision %s nicht in Datenbank gefunden"
+
+#: automate.cc:1062
+#: automate.cc:1141
+msgid "FILEID"
+msgstr "DATEI_ID"
+
+#: automate.cc:1069
+#, c-format
+msgid "no file version %s found in database"
+msgstr "Dateiversion %s nicht in Datenbank gefunden"
+
+#: automate.cc:1088
+#: automate.cc:1114
+#: cmd_merging.cc:866
+msgid "REVID"
+msgstr "REVISIONS_ID"
+
+#: automate.cc:1099
+#: automate.cc:1125
+#: automate.cc:1180
+#: automate.cc:1182
+#: cmd_db.cc:35
+#: cmd_diff_log.cc:385
+#: cmd_diff_log.cc:417
+#: cmd_diff_log.cc:419
+#: cmd_files.cc:138
+#: cmd_files.cc:200
+#: cmd_merging.cc:148
+#: cmd_merging.cc:701
+#: cmd_merging.cc:716
+#: cmd_merging.cc:719
+#: cmd_ws_commit.cc:440
+#: commands.cc:430
+#, c-format
+msgid "no such revision '%s'"
+msgstr "Revision nicht gefunden: '%s'"
+
+#: automate.cc:1152
+#, c-format
+msgid "no such file '%s'"
+msgstr "Datei nicht gefunden: '%s'"
+
+#: automate.cc:1168
+msgid "OLD_FILE NEW_FILE"
+msgstr "ALTE_DATEI NEUE_DATEI"
+
+#: automate.cc:1313
+msgid "[BRANCH_PATTERN]"
+msgstr "[ZWEIG_MUSTER]"
+
+#: automate.cc:1409
+msgid "KEYID PASSPHRASE"
+msgstr "SCHLUESSEL_ID PASSWORT"
+
+#: automate.cc:1427
+#: cmd_key_cert.cc:41
+#, c-format
+msgid "key '%s' already exists"
+msgstr "Schlüssel '%s' existiert bereits"
+
+#: automate.cc:1430
+#: cmd_key_cert.cc:44
+#, c-format
+msgid "generating key-pair '%s'"
+msgstr "erzeuge Schlüsselpaar '%s'"
+
+#: automate.cc:1432
+#: cmd_key_cert.cc:46
+#, c-format
+msgid "storing key-pair '%s' in %s/"
+msgstr "speichere Schlüsselpaar '%s' in %s/"
+
+#: automate.cc:1468
+msgid "OPTION"
+msgstr "OPTION"
+
+#: automate.cc:1478
+#, c-format
+msgid "option %s doesn't exist"
+msgstr "Option %s existiert nicht"
 
 #: basic_io.cc:33
 #, c-format
@@ -186,22 +329,6 @@ msgstr "Automatisierung"
 #: cmd_automate.cc:304
 msgid "automation interface"
 msgstr "Schnittstelle für die Automatisierung"
-
-#: cmd_db.cc:35
-#: cmd_diff_log.cc:385
-#: cmd_diff_log.cc:417
-#: cmd_diff_log.cc:419
-#: cmd_files.cc:138
-#: cmd_files.cc:200
-#: cmd_merging.cc:148
-#: cmd_merging.cc:701
-#: cmd_merging.cc:716
-#: cmd_merging.cc:719
-#: cmd_ws_commit.cc:440
-#: commands.cc:430
-#, c-format
-msgid "no such revision '%s'"
-msgstr "Revision nicht gefunden: '%s'"
 
 #: cmd_db.cc:41
 #, c-format
@@ -504,21 +631,6 @@ msgstr "Schlüssel-ID"
 msgid "generate an RSA key-pair"
 msgstr "erzeuge ein RSA-Schlüsselpaar"
 
-#: cmd_key_cert.cc:41
-#, c-format
-msgid "key '%s' already exists"
-msgstr "Schlüssel '%s' existiert bereits"
-
-#: cmd_key_cert.cc:44
-#, c-format
-msgid "generating key-pair '%s'"
-msgstr "erzeuge Schlüsselpaar '%s'"
-
-#: cmd_key_cert.cc:46
-#, c-format
-msgid "storing key-pair '%s' in %s/"
-msgstr "speichere Schlüsselpaar '%s' in %s/"
-
 #: cmd_key_cert.cc:51
 msgid "drop a public and private key"
 msgstr "lösche einen öffentlichen und geheimen Schlüssel"
@@ -743,15 +855,6 @@ msgstr ""
 "zeigt Datenbankobjekte, oder das derzeitige Manifest des \n"
 "Arbeitsbereichs, oder bekannte, unbekannte, absichtlich \n"
 "ignorierte, fehlende oder geänderte Dateien"
-
-#: cmd_list.cc:648
-msgid "REV"
-msgstr "REV"
-
-#: cmd_list.cc:658
-#, c-format
-msgid "No such revision %s"
-msgstr "Revision %s nicht gefunden"
 
 #: cmd_merging.cc:96
 #: cmd_merging.cc:679
@@ -1128,10 +1231,6 @@ msgstr "Zweig '%s' ist derzeit vereinigt:"
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "Zweig '%s' ist derzeit nicht vereinigt:"
-
-#: cmd_merging.cc:866
-msgid "REVID"
-msgstr "REVISIONS_ID"
 
 #: cmd_merging.cc:867
 msgid "dump the roster associated with the given REVID"
@@ -2417,22 +2516,22 @@ msgstr "falsch zugeordneter Knoten-Hashwert %s, %s erwartet"
 msgid "Invalid escape in --xargs file"
 msgstr "ungültiges Escape-Zeichen in --xargs-Datei"
 
-#: monotone.cc:649
+#: monotone.cc:662
 #, c-format
 msgid "%s:\n"
 msgstr "%s:\n"
 
-#: monotone.cc:657
+#: monotone.cc:670
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: monotone.cc:667
+#: monotone.cc:680
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
-msgstr "Aufruf: %s [OPTION...] Kommando [Argumente...]"
+msgstr "Aufruf: %s [OPTION...] Kommando [ARGUMENTE...]"
 
-#: monotone.cc:672
+#: monotone.cc:685
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Spezifische Optionen für '%s %s':"
