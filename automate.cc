@@ -1474,13 +1474,9 @@ AUTOMATE(get_option, N_("OPTION"))
   app.require_workspace();
 
   utf8 result = app.options[args[0]()];
-  if (result().size() == 0)
-    W(F("option %s doesn't exist") % args[0]);
-  else
-    {
-      output << result << endl;
-      return;
-    }
+  N(result().size() > 0,
+    F("option %s doesn't exist") % args[0]);
+  output << result << endl;
 }
 
 // Local Variables:

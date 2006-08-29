@@ -1,5 +1,10 @@
 2006-08-29  Richard Levitte  <richard@levitte.org>
 
+	* automate.cc (AUTOMATE(get_option)): And I did the error
+	report wrong as well...
+
+2006-08-29  Richard Levitte  <richard@levitte.org>
+
 	* automate.cc (AUTOMATE(get_option)): I did the output
 	incorrectly to `std::cout' instead of the `output' stream.
 
