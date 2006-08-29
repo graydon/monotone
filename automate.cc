@@ -1478,7 +1478,7 @@ AUTOMATE(get_option, N_("OPTION"))
     W(F("option %s doesn't exist") % args[0]);
   else
     {
-      std::cout << result << std::endl;
+      output << result << endl;
       return;
     }
 }
