@@ -28,26 +28,38 @@
 // directories). there is no hierarchy of _MTN directories; only one exists,
 // and it is always at the root. it contains the following files:
 //
-// _MTN/revision     -- contains the id of the checked out revision
-// _MTN/work         -- (optional) a set of added, deleted or moved pathnames
-//                      this file is, syntactically, a cset
+
+// _MTN/revision     -- this file can be thought of as an approximation to the
+//                      revision that would be added to the database if one
+//                      were to execute 'mtn commit' with the current set of
+//                      changes.  it records the id of the revision that was
+//                      checked out (the "parent revision") plus a cset
+//                      describing pathname and attribute modifications
+//                      relative to that revision.  if the workspace is the
+//                      result of a merge, the revision will have more than
+//                      one parent and thus more than one cset.  files
+//                      changed solely in content do not appear in
+//                      _MTN/revision; this is the major difference between
+//                      the revision in this file and the revision that 'mtn
+//                      commit' adds to the database.
 // _MTN/options      -- the database, branch and key options currently in use
 // _MTN/log          -- user edited log file
-// _MTN/inodeprints  -- file fingerprint cache, presence turns on "reckless"
-//                      mode
+// _MTN/inodeprints  -- file fingerprint cache, see below
 //
 // as work proceeds, the files in the workspace either change their
 // sha1 fingerprints from those listed in the revision's manifest, or else are
 // added or deleted or renamed (and the paths of those changes recorded in
-// '_MTN/work').
+// '_MTN/revision').
 //
-// when it comes time to commit, the cset in _MTN/work (which can have no
-// deltas) is applied to the base roster, then a new roster is built by
-// analyzing the content of every file in the roster, as it appears in the
-// workspace. a final cset is calculated which contains the requisite
-// deltas, and placed in a rev, which is written to the db.
-//
-// _MTN/inodeprints, if present, can be used to speed up this last step.
+// many operations need to work with a revision that accurately describes
+// both pathname and content changes.  constructing this revision is the
+// function of update_current_roster_from_filesystem().  this operation
+// intrinsically requires reading every file in the workspace, which can be
+// slow.  _MTN/inodeprints, if present, is used to speed up this process; it
+// records information accessible via stat() that is expected to change
+// whenever a file is modified.  this expectation is not true under all
+// conditions, but works in practice (it is, for instance, the same
+// expectation used by "make").  nonetheless, this mode is off by default.
 
 class path_restriction;
 class node_restriction;

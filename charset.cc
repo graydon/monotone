@@ -127,6 +127,7 @@ system_charset_is_ascii_extension_impl()
   return (lc_encoding.find("ascii") != string::npos
           || lc_encoding.find("8859") != string::npos
           || lc_encoding.find("ansi_x3.4") != string::npos
+          || lc_encoding == "646" // another name for ascii
           // http://www.cs.mcgill.ca/~aelias4/encodings.html -- "EUC (Extended
           // Unix Code) is a simple and clean encoding, standard on Unix
           // systems.... It is backwards-compatible with ASCII (i.e. valid

@@ -9,6 +9,10 @@
 	of CMD(update).
 	(explicit_merge_and_update): New command.
 
+2006-08-31  Zack Weinberg  <zackw@panix.com>
+
+	* work.hh: Update comment describing contents of _MTN directory.
+
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc: No need to include app_state.cc.
@@ -275,6 +279,14 @@
 	* app_state.cc, automate.cc, cmd_diff_log.cc, cmd_files.cc, cmd_list.cc
 	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
 	interfaces.
+
+2006-08-31  Nathaniel Smith  <njs@pobox.com>
+
+	* charset.cc (system_charset_is_ascii_extension_impl): Add "646".
+
+2006-08-31  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (update_any_attrs): Remove stale comment.
 
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
