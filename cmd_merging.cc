@@ -750,6 +750,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     app.db.get_roster(to_rid, to_true_roster);
     node_restriction mask(args_to_paths(args),
                           args_to_paths(app.exclude_patterns),
+                          app.depth,
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,

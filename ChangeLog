@@ -255,6 +255,14 @@
 	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
 	interfaces.
 
+2006-08-30  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.{hh,cc}: Don't use app.depth directly -- take depth
+	as a constructor argument.  Now uninitialized masks _do_ always
+	include everything, as some code expected...
+	* cmd_ws_commit.cc, cmd_merging.cc, cmd_list.cc, cmd_diff_log.cc:
+	Adjust calling conventions accordingly.
+
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
 	* unit_tests.cc (localize_monotone): Define as a stub so the
