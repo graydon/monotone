@@ -131,9 +131,6 @@ complete(app_state & app,
 }
 
 void
-maybe_update_inodeprints(app_state & app);
-
-void
 notify_if_multiple_heads(app_state & app);
 
 void
