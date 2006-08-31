@@ -1,3 +1,7 @@
+2006-08-31  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (update_any_attrs): Remove stale comment.
+
 2006-08-30  Nathaniel Smith  <njs@pobox.com>
 
 	* restrictions.{hh,cc}: Don't use app.depth directly -- take depth
