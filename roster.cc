@@ -2347,7 +2347,7 @@ void
 update_current_roster_from_filesystem(roster_t & ros,
                                       app_state & app)
 {
-  node_restriction tmp(app);
+  node_restriction tmp;
   update_current_roster_from_filesystem(ros, tmp, app);
 }
 

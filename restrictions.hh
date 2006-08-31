@@ -62,15 +62,12 @@ class restriction
   bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
 
  protected:
-  restriction(app_state & a) : app(a), depth(-1) {}
+  restriction() : depth(-1) {}
 
   restriction(std::vector<file_path> const & includes,
               std::vector<file_path> const & excludes,
-              long depth,
-              app_state & a);
+              long depth);
 
-  // FIXME: this 'app' member should go away
-  app_state & app;
   path_set included_paths, excluded_paths;
   long depth;
 };
@@ -78,7 +75,7 @@ class restriction
 class node_restriction : public restriction
 {
  public:
-  node_restriction(app_state & a) : restriction(a) {}
+  node_restriction() : restriction() {}
 
   node_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
@@ -113,7 +110,7 @@ class node_restriction : public restriction
 class path_restriction : public restriction
 {
  public:
-  path_restriction(app_state & a) : restriction(a) {}
+  path_restriction() : restriction() {}
 
   path_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,

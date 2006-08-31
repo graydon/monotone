@@ -6,6 +6,21 @@
 
 	* work.cc (update_any_attrs): Remove stale comment.
 
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* restrictions.hh (class restriction): Remove 'app' member.
+	Remove app_state arguments from both constructors.
+	(class node_restriction): Remove app_state argument from
+	the constructor that doesn't take any file_path vectors.
+	(class path_restriction): Likewise.
+	* restrictions.cc: Update to match.  In constructors that do take
+	file_path vectors, pass the app_state argument directly to
+	validate_roster_paths and/or validate_workspace_paths.
+	(test_empty_restriction): Construct empty restrictions without an
+	app_state object.
+	* automate.cc, cmd_diff_log.cc, roster.cc: Construct empty
+	restrictions without an app_state object.
+
 2006-08-30  Nathaniel Smith  <njs@pobox.com>
 
 	* restrictions.{hh,cc}: Don't use app.depth directly -- take depth
