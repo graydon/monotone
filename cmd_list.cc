@@ -348,6 +348,7 @@ ls_known(app_state & app, vector<utf8> const & args)
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
@@ -373,7 +374,7 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
   app.require_workspace();
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app);
+  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.depth, app);
   path_set unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
@@ -400,6 +401,7 @@ ls_missing(app_state & app, vector<utf8> const & args)
   app.work.get_current_roster_shape(current_roster_shape, nis);
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         current_roster_shape, app);
 
   path_set missing;
@@ -427,6 +429,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns), 
+                        app.depth,
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);

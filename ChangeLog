@@ -6,6 +6,16 @@
 
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
+	* work.cc: No need to include app_state.cc.
+	(workspace::update_current_roster_from_filesystem): Put back
+	variant that doesn't take a node_restriction.
+	(workspace::maybe_update_inodeprints): Remove app_state argument.
+	Use 1-argument update_current_roster_from_filesystem.
+	* work.hh: Update to match.
+	* automate.cc, cmd_merging.cc, cmd_ws_commit.cc: All callers changed.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
 	* automate.cc (get_option): Rewrite for revised _MTN/options
 	handling.
 
@@ -260,6 +270,29 @@
 	* app_state.cc, automate.cc, cmd_diff_log.cc, cmd_files.cc, cmd_list.cc
 	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
 	interfaces.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* restrictions.hh (class restriction): Remove 'app' member.
+	Remove app_state arguments from both constructors.
+	(class node_restriction): Remove app_state argument from
+	the constructor that doesn't take any file_path vectors.
+	(class path_restriction): Likewise.
+	* restrictions.cc: Update to match.  In constructors that do take
+	file_path vectors, pass the app_state argument directly to
+	validate_roster_paths and/or validate_workspace_paths.
+	(test_empty_restriction): Construct empty restrictions without an
+	app_state object.
+	* automate.cc, cmd_diff_log.cc, roster.cc: Construct empty
+	restrictions without an app_state object.
+
+2006-08-30  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.{hh,cc}: Don't use app.depth directly -- take depth
+	as a constructor argument.  Now uninitialized masks _do_ always
+	include everything, as some code expected...
+	* cmd_ws_commit.cc, cmd_merging.cc, cmd_list.cc, cmd_diff_log.cc:
+	Adjust calling conventions accordingly.
 
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 

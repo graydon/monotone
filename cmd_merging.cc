@@ -227,8 +227,7 @@ CMD(update, N_("workspace"), "",
   MM(*old_roster);
   roster_t working_roster; MM(working_roster);
   app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster, 
-                                                 node_restriction(app));
+  app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the CHOSEN roster
   roster_t chosen_roster; MM(chosen_roster);
@@ -259,7 +258,7 @@ CMD(update, N_("workspace"), "",
   // small race condition here...
   app.work.put_work_rev(remaining);
   app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints();
 
   if (!app.branch_name().empty())
     app.make_branch_sticky();
@@ -627,7 +626,7 @@ CMD(explicit_merge_and_update, N_("tree"),
   MM(*old_roster);
   roster_t working_roster; MM(working_roster);
   app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster, app);
+  app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the two revisions that we are being asked to merge, and merge them.
   roster_t left_roster, right_roster;
@@ -689,7 +688,7 @@ CMD(explicit_merge_and_update, N_("tree"),
   // small race condition here...
   app.work.put_work_rev(merged_rev);
   app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints();
 
   if (!app.branch_name().empty())
     app.make_branch_sticky();
@@ -854,8 +853,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
   app.work.get_base_and_current_roster_shape(base_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster,
-                                                 node_restriction(app));
+  app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the FROM->TO cset...
   cset from_to_to; MM(from_to_to);
@@ -865,6 +863,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     app.db.get_roster(to_rid, to_true_roster);
     node_restriction mask(args_to_paths(args),
                           args_to_paths(app.exclude_patterns),
+                          app.depth,
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,

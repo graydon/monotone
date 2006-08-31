@@ -14,7 +14,6 @@
 #include <queue>
 
 #include "work.hh"
-#include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
 #include "localized_file_io.hh"
@@ -379,7 +378,7 @@ workspace::enable_inodeprints()
 }
 
 void
-workspace::maybe_update_inodeprints(app_state & app)
+workspace::maybe_update_inodeprints()
 {
   if (!in_inodeprints_mode())
     return;
@@ -389,7 +388,7 @@ workspace::maybe_update_inodeprints(app_state & app)
   roster_t old_roster, new_roster;
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis);
-  update_current_roster_from_filesystem(new_roster, node_restriction(app));
+  update_current_roster_from_filesystem(new_roster);
 
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
@@ -900,6 +899,12 @@ workspace::classify_roster_paths(roster_t const & ros,
             }
         }
     }
+}
+
+void
+workspace::update_current_roster_from_filesystem(roster_t & ros)
+{
+  update_current_roster_from_filesystem(ros, node_restriction());
 }
 
 void

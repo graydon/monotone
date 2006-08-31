@@ -50,9 +50,9 @@
 // _MTN/inodeprints, if present, can be used to speed up this last step.
 
 class path_restriction;
+class node_restriction;
 class content_merge_adaptor;
 class database;
-class app_state;
 class lua_hooks;
 
 struct workspace
@@ -120,8 +120,14 @@ struct workspace
                              path_set & changed,
                              path_set & missing);
 
+  // This updates the file-content hashes in ROSTER, which is assumed to be
+  // the "current" roster returned by one of the above get_*_roster_shape
+  // functions.  If a node_restriction is provided, only the files matching
+  // the restriction have their hashes updated.
+  void update_current_roster_from_filesystem(roster_t & ros);
   void update_current_roster_from_filesystem(roster_t & ros,
                                              node_restriction const & mask);
+
 
   // the "user log" is a file the user can edit as they program to record
   // changes they make to their source code. Upon commit the file is read
@@ -174,10 +180,10 @@ struct workspace
   // the 'inodeprints file' contains inode fingerprints
 
   void enable_inodeprints();
-  void maybe_update_inodeprints(app_state & app);
+  void maybe_update_inodeprints();
 
   // constructor and locals.  by caching pointers to the database and the
-  // lua hooks, we don't have to pass app_state into a lot of functions.
+  // lua hooks, we don't have to know about app_state.
   workspace(database & db, lua_hooks & lua) : db(db), lua(lua) {};
 private:
   database & db;

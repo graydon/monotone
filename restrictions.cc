@@ -161,8 +161,8 @@ validate_workspace_paths(path_set const & included_paths,
 
 restriction::restriction(std::vector<file_path> const & includes,
                          std::vector<file_path> const & excludes,
-                         app_state & a) :
-  app(a)
+                         long depth)
+  : depth(depth)
 {
   make_path_set(includes, included_paths);
   make_path_set(excludes, excluded_paths);
@@ -170,24 +170,26 @@ restriction::restriction(std::vector<file_path> const & includes,
 
 node_restriction::node_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
+                                   long depth,
                                    roster_t const & roster,
                                    app_state & a) :
-  restriction(includes, excludes, a)
+  restriction(includes, excludes, depth)
 {
   map_nodes(node_map, roster, included_paths, known_paths, 
             restricted_path::included);
   map_nodes(node_map, roster, excluded_paths, known_paths, 
             restricted_path::excluded);
 
-  validate_roster_paths(included_paths, excluded_paths, known_paths, app);
+  validate_roster_paths(included_paths, excluded_paths, known_paths, a);
 }
 
 node_restriction::node_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
+                                   long depth,
                                    roster_t const & roster1,
                                    roster_t const & roster2,
                                    app_state & a) :
-  restriction(includes, excludes, a)
+  restriction(includes, excludes, depth)
 {
   map_nodes(node_map, roster1, included_paths, known_paths, 
             restricted_path::included);
@@ -199,18 +201,19 @@ node_restriction::node_restriction(std::vector<file_path> const & includes,
   map_nodes(node_map, roster2, excluded_paths, known_paths, 
             restricted_path::excluded);
 
-  validate_roster_paths(included_paths, excluded_paths, known_paths, app);
+  validate_roster_paths(included_paths, excluded_paths, known_paths, a);
 }
 
 path_restriction::path_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
+                                   long depth,
                                    app_state & a) :
-  restriction(includes, excludes, a)
+  restriction(includes, excludes, depth)
 {
   map_paths(path_map, included_paths, restricted_path::included);
   map_paths(path_map, excluded_paths, restricted_path::excluded);
 
-  validate_workspace_paths(included_paths, excluded_paths, app);
+  validate_workspace_paths(included_paths, excluded_paths, a);
 }
 
 bool
@@ -224,10 +227,10 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
 
   if (empty())
     {
-      if (app.depth != -1)
+      if (depth != -1)
         {
-          int depth = sp.size() - 1; // -1 to not count root path_component
-          if (depth <= app.depth + 1)
+          int path_depth = sp.size() - 1; // -1 to not count root path_component
+          if (path_depth <= depth + 1)
             {
               L(FL("depth includes nid %d path '%s'") % nid % file_path(sp));
               return true;
@@ -247,15 +250,15 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
     }
 
   node_id current = nid;
-  int depth = 0;
+  int path_depth = 0;
 
-  // FIXME: this uses app.depth+1 because the old semantics of depth=0 were
+  // FIXME: this uses depth+1 because the old semantics of depth=0 were
   // something like "the current directory and its immediate children". it
   // seems somewhat more reasonable here to use depth=0 to mean "exactly
   // this directory" and depth=1 to mean "this directory and its immediate
   // children"
 
-  while (!null_node(current) && (app.depth == -1 || depth <= app.depth + 1))
+  while (!null_node(current) && (depth == -1 || path_depth <= depth + 1))
     {
       map<node_id, restricted_path::status>::const_iterator 
         r = node_map.find(current);
@@ -278,7 +281,7 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
 
       node_t node = roster.get_node(current);
       current = node->parent;
-      depth++;
+      path_depth++;
     }
 
   if (included_paths.empty())
@@ -300,10 +303,10 @@ path_restriction::includes(split_path const & sp) const
 {
   if (empty())
     {
-      if (app.depth != -1)
+      if (depth != -1)
         {
-          int depth = sp.size() - 1; // -1 to not count root path_component
-          if (depth <= app.depth + 1)
+          int path_depth = sp.size() - 1; // -1 to not count root path_component
+          if (path_depth <= depth + 1)
             {
               L(FL("depth includes path '%s'") % file_path(sp));
               return true;
@@ -322,15 +325,15 @@ path_restriction::includes(split_path const & sp) const
     }
 
   split_path current(sp);
-  int depth = 0;
+  int path_depth = 0;
 
-  // FIXME: this uses app.depth+1 because the old semantics of depth=0 were
+  // FIXME: this uses depth+1 because the old semantics of depth=0 were
   // something like "the current directory and its immediate children". it
   // seems somewhat more reasonable here to use depth=0 to mean "exactly
   // this directory" and depth=1 to mean "this directory and its immediate
   // children"
 
-  while (!current.empty() && (app.depth == -1 || depth <= app.depth + 1))
+  while (!current.empty() && (depth == -1 || path_depth <= depth + 1))
     {
       map<split_path, restricted_path::status>::const_iterator 
         r = path_map.find(current);
@@ -352,7 +355,7 @@ path_restriction::includes(split_path const & sp) const
         }
 
       current.pop_back();
-      depth++;
+      path_depth++;
     }
 
   if (included_paths.empty())
@@ -543,11 +546,9 @@ test_empty_restriction()
   roster_t roster;
   setup(roster);
 
-  app_state app;
-
   // check restricted nodes
 
-  node_restriction nmask(app);
+  node_restriction nmask;
 
   BOOST_CHECK(nmask.empty());
 
@@ -577,7 +578,7 @@ test_empty_restriction()
 
   // check restricted paths
 
-  path_restriction pmask(app);
+  path_restriction pmask;
 
   BOOST_CHECK(pmask.empty());
 
@@ -620,7 +621,7 @@ test_simple_include()
 
   // check restricted nodes
 
-  node_restriction nmask(includes, excludes, roster, app);
+  node_restriction nmask(includes, excludes, -1, roster, app);
 
   BOOST_CHECK(!nmask.empty());
 
@@ -650,7 +651,7 @@ test_simple_include()
 
   // check restricted paths
 
-  path_restriction pmask(includes, excludes, app);
+  path_restriction pmask(includes, excludes, -1, app);
 
   BOOST_CHECK(!pmask.empty());
 
@@ -693,7 +694,7 @@ test_simple_exclude()
 
   // check restricted nodes
 
-  node_restriction nmask(includes, excludes, roster, app);
+  node_restriction nmask(includes, excludes, -1, roster, app);
 
   BOOST_CHECK(!nmask.empty());
 
@@ -723,7 +724,7 @@ test_simple_exclude()
 
   // check restricted paths
 
-  path_restriction pmask(includes, excludes, app);
+  path_restriction pmask(includes, excludes, -1, app);
 
   BOOST_CHECK(!pmask.empty());
 
@@ -768,7 +769,7 @@ test_include_exclude()
 
   // check restricted nodes
 
-  node_restriction nmask(includes, excludes, roster, app);
+  node_restriction nmask(includes, excludes, -1, roster, app);
 
   BOOST_CHECK(!nmask.empty());
 
@@ -798,7 +799,7 @@ test_include_exclude()
 
   // check restricted paths
 
-  path_restriction pmask(includes, excludes, app);
+  path_restriction pmask(includes, excludes, -1, app);
 
   BOOST_CHECK(!pmask.empty());
 
@@ -846,7 +847,7 @@ test_exclude_include()
 
   // check restricted nodes
 
-  node_restriction nmask(includes, excludes, roster, app);
+  node_restriction nmask(includes, excludes, -1, roster, app);
 
   BOOST_CHECK(!nmask.empty());
 
@@ -876,7 +877,7 @@ test_exclude_include()
 
   // check restricted paths
 
-  path_restriction pmask(includes, excludes, app);
+  path_restriction pmask(includes, excludes, -1, app);
 
   BOOST_CHECK(!pmask.empty());
 
@@ -916,7 +917,7 @@ test_invalid_roster_paths()
   excludes.push_back(file_path_internal("bar"));
 
   app_state app;
-  BOOST_CHECK_THROW(node_restriction(includes, excludes, roster, app), 
+  BOOST_CHECK_THROW(node_restriction(includes, excludes, -1, roster, app), 
                     informative_failure);
 }
 
@@ -931,7 +932,7 @@ test_invalid_workspace_paths()
   excludes.push_back(file_path_internal("bar"));
 
   app_state app;
-  BOOST_CHECK_THROW(path_restriction(includes, excludes, app), 
+  BOOST_CHECK_THROW(path_restriction(includes, excludes, -1, app),
                     informative_failure);
 }
 
@@ -949,11 +950,11 @@ test_include_depth_0()
   // FIXME: depth == 0 currently means directory + immediate children
   // this should be changed to mean just the named directory but for
   // compatibility with old restrictions this behaviour has been preserved
-  app.set_depth(0);
+  long depth = 0;
 
   // check restricted nodes
 
-  node_restriction nmask(includes, excludes, roster, app);
+  node_restriction nmask(includes, excludes, depth, roster, app);
 
   BOOST_CHECK(!nmask.empty());
 
@@ -983,7 +984,7 @@ test_include_depth_0()
 
   // check restricted paths
 
-  path_restriction pmask(includes, excludes, app);
+  path_restriction pmask(includes, excludes, depth, app);
 
   BOOST_CHECK(!pmask.empty());
 
@@ -1024,11 +1025,11 @@ test_include_depth_0_empty_restriction()
   // FIXME: depth == 0 currently means directory + immediate children
   // this should be changed to mean just the named directory but for
   // compatibility with old restrictions this behaviour has been preserved
-  app.set_depth(0);
+  long depth = 0;
 
   // check restricted nodes
 
-  node_restriction nmask(includes, excludes, roster, app);
+  node_restriction nmask(includes, excludes, depth, roster, app);
 
   BOOST_CHECK( nmask.empty());
 
@@ -1058,7 +1059,7 @@ test_include_depth_0_empty_restriction()
 
   // check restricted paths
 
-  path_restriction pmask(includes, excludes, app);
+  path_restriction pmask(includes, excludes, depth, app);
 
   BOOST_CHECK( pmask.empty());
 
@@ -1101,11 +1102,11 @@ test_include_depth_1()
   // FIXME: depth == 1 currently means directory + children + grand children
   // this should be changed to mean directory + immediate children but for
   // compatibility with old restrictions this behaviour has been preserved
-  app.set_depth(1);
+  long depth = 1;
 
   // check restricted nodes
 
-  node_restriction nmask(includes, excludes, roster, app);
+  node_restriction nmask(includes, excludes, depth, roster, app);
 
   BOOST_CHECK(!nmask.empty());
 
@@ -1135,7 +1136,7 @@ test_include_depth_1()
 
   // check restricted paths
 
-  path_restriction pmask(includes, excludes, app);
+  path_restriction pmask(includes, excludes, depth, app);
 
   BOOST_CHECK(!pmask.empty());
 

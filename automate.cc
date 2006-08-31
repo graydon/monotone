@@ -739,7 +739,7 @@ AUTOMATE(inventory, "")
   inventory_post_state(inventory, nodes_added,
                        inventory_item::ADDED_PATH, 0);
 
-  path_restriction mask(app);
+  path_restriction mask;
   vector<file_path> roots;
   roots.push_back(file_path());
 
@@ -903,8 +903,7 @@ AUTOMATE(get_revision, N_("[REVID]"))
 
       app.require_workspace();
       app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-      app.work.update_current_roster_from_filesystem(new_roster,
-                                                     node_restriction(app));
+      app.work.update_current_roster_from_filesystem(new_roster);
 
       app.work.get_revision_id(old_revision_id);
       make_revision(old_revision_id, old_roster, new_roster, rev);
@@ -966,8 +965,7 @@ AUTOMATE(get_current_revision_id, "")
 
   app.require_workspace();
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-  app.work.update_current_roster_from_filesystem(new_roster,
-                                                 node_restriction(app));
+  app.work.update_current_roster_from_filesystem(new_roster);
 
   app.work.get_revision_id(old_revision_id);
   make_revision(old_revision_id, old_roster, new_roster, rev);
@@ -1034,8 +1032,7 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
 
       app.require_workspace();
       app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-      app.work.update_current_roster_from_filesystem(new_roster,
-                                                     node_restriction(app));
+      app.work.update_current_roster_from_filesystem(new_roster);
     }
   else
     {
