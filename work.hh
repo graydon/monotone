@@ -95,12 +95,18 @@ struct workspace
 
   void update_any_attrs();
 
-  // transitional: the write half of this is exposed, the read half isn't.
+
   // write out a new (partial) revision describing the current workspace;
   // the important pieces of this are the base revision id and the "shape"
   // changeset (representing tree rearrangements).
   void put_work_rev(revision_t const & rev);
 
+  // read the (partial) revision describing the current workspace.
+  void get_work_rev(revision_t & rev);
+
+  // convenience wrappers around the above functions.  note that they do
+  // not support multi-parent revisions yet.
+  
   // the current cset representing uncommitted add/drop/rename operations
   // (not deltas)
   void get_work_cset(cset & w);

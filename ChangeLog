@@ -1,3 +1,16 @@
+2006-08-31  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_work_rev): Export as workspace member function.
+	Allow a rev with more than one ancestor.
+	(put_work_rev): Allow a rev with more than one ancestor.
+	(get_work_cset, get_revision_id): Disallow a rev with more than
+	one ancestor.
+	(get_current_roster_shape): Recode to work when the rev has more
+	than one ancestor.
+	* work.hh: Update to match.
+	* tests/explicit_merge_and_update: New (failing) test.
+	* testsuite.lua: Add it.
+
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
 	* cmd_merging.cc (explicit_merge_and_update): Fix for

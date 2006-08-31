@@ -71,8 +71,8 @@ get_inodeprints_path(bookkeeping_path & ip_path)
 // routines for manipulating the bookkeeping directory
 
 // revision file contains a partial revision describing the workspace
-static void
-get_work_rev(revision_t & rev)
+void
+workspace::get_work_rev(revision_t & rev)
 {
   bookkeeping_path rev_path;
   get_revision_path(rev_path);
@@ -89,16 +89,12 @@ get_work_rev(revision_t & rev)
     }
 
   read_revision(rev_data, rev);
-  // Currently the revision must have only one ancestor.
-  I(rev.edges.size() == 1);
 }
 
 void
 workspace::put_work_rev(revision_t const & rev)
 {
-  // Currently the revision must have only one ancestor.
   MM(rev);
-  I(rev.edges.size() == 1);
   rev.check_sane();
 
   data rev_data;
@@ -117,6 +113,10 @@ workspace::get_work_cset(cset & w)
   revision_t rev;
   get_work_rev(rev);
 
+  // If you're using this interface, the revision must have only one
+  // ancestor.
+  I(rev.edges.size() == 1);
+
   w = edge_changes(rev.edges.begin());
 }
 
@@ -126,6 +126,10 @@ workspace::get_revision_id(revision_id & c)
 {
   revision_t rev;
   get_work_rev(rev);
+
+  // If you're using this interface, the revision must have only one
+  // ancestor.
+  I(rev.edges.size() == 1);
   c = edge_old_revision(rev.edges.begin());
 }
 
@@ -169,11 +173,28 @@ workspace::get_base_roster(roster_t & ros)
 void
 workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 {
-  get_base_roster(ros);
-  cset cs;
-  get_work_cset(cs);
+  // The current roster is (supposed to be) the same no matter which edge
+  // you come in along, so we do not need to worry about multiple parents
+  // here.
+  revision_t rev;
+  get_work_rev(rev);
+
+  revision_id rid = edge_old_revision(rev.edges.begin());
+  cset shape = edge_changes(rev.edges.begin());
+
+  // FIXME code duplication with get_base_revision.
+  if (!null_id(rid))
+    {
+      marking_map mm;
+      N(db.revision_exists(rid),
+        F("base revision %s does not exist in database") % rid);
+
+      db.get_roster(rid, ros, mm);
+    }  
+  L(FL("base roster has %d entries") % ros.all_nodes().size());
+
   editable_roster_base er(ros, nis);
-  cs.apply_to(er);
+  shape.apply_to(er);
 }
 
 void
