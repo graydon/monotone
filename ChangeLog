@@ -1,3 +1,8 @@
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* unit_tests.cc (localize_monotone): Define as a stub so the
+	unit_tests binary will link.
+
 2006-08-29  Richard Levitte  <richard@levitte.org>
 
 	* automate.cc (AUTOMATE(get_option)): And I did the error
