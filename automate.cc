@@ -739,7 +739,7 @@ AUTOMATE(inventory, "")
   inventory_post_state(inventory, nodes_added,
                        inventory_item::ADDED_PATH, 0);
 
-  path_restriction mask(app);
+  path_restriction mask;
   vector<file_path> roots;
   roots.push_back(file_path());
 

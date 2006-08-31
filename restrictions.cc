@@ -161,9 +161,8 @@ validate_workspace_paths(path_set const & included_paths,
 
 restriction::restriction(std::vector<file_path> const & includes,
                          std::vector<file_path> const & excludes,
-                         long depth,
-                         app_state & a) :
-  app(a), depth(depth)
+                         long depth)
+  : depth(depth)
 {
   make_path_set(includes, included_paths);
   make_path_set(excludes, excluded_paths);
@@ -174,14 +173,14 @@ node_restriction::node_restriction(std::vector<file_path> const & includes,
                                    long depth,
                                    roster_t const & roster,
                                    app_state & a) :
-  restriction(includes, excludes, depth, a)
+  restriction(includes, excludes, depth)
 {
   map_nodes(node_map, roster, included_paths, known_paths, 
             restricted_path::included);
   map_nodes(node_map, roster, excluded_paths, known_paths, 
             restricted_path::excluded);
 
-  validate_roster_paths(included_paths, excluded_paths, known_paths, app);
+  validate_roster_paths(included_paths, excluded_paths, known_paths, a);
 }
 
 node_restriction::node_restriction(std::vector<file_path> const & includes,
@@ -190,7 +189,7 @@ node_restriction::node_restriction(std::vector<file_path> const & includes,
                                    roster_t const & roster1,
                                    roster_t const & roster2,
                                    app_state & a) :
-  restriction(includes, excludes, depth, a)
+  restriction(includes, excludes, depth)
 {
   map_nodes(node_map, roster1, included_paths, known_paths, 
             restricted_path::included);
@@ -202,19 +201,19 @@ node_restriction::node_restriction(std::vector<file_path> const & includes,
   map_nodes(node_map, roster2, excluded_paths, known_paths, 
             restricted_path::excluded);
 
-  validate_roster_paths(included_paths, excluded_paths, known_paths, app);
+  validate_roster_paths(included_paths, excluded_paths, known_paths, a);
 }
 
 path_restriction::path_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
                                    long depth,
                                    app_state & a) :
-  restriction(includes, excludes, depth, a)
+  restriction(includes, excludes, depth)
 {
   map_paths(path_map, included_paths, restricted_path::included);
   map_paths(path_map, excluded_paths, restricted_path::excluded);
 
-  validate_workspace_paths(included_paths, excluded_paths, app);
+  validate_workspace_paths(included_paths, excluded_paths, a);
 }
 
 bool
@@ -547,11 +546,9 @@ test_empty_restriction()
   roster_t roster;
   setup(roster);
 
-  app_state app;
-
   // check restricted nodes
 
-  node_restriction nmask(app);
+  node_restriction nmask;
 
   BOOST_CHECK(nmask.empty());
 
@@ -581,7 +578,7 @@ test_empty_restriction()
 
   // check restricted paths
 
-  path_restriction pmask(app);
+  path_restriction pmask;
 
   BOOST_CHECK(pmask.empty());
 
