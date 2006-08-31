@@ -69,7 +69,60 @@ three_way_merge(roster_t const & ancestor_roster,
                right_roster, right_markings, right_uncommon_ancestors,
                result);
 }
-  
+
+static bool
+pick_branch_for_update(revision_id chosen_rid, app_state & app)
+{
+  bool switched_branch = false;
+
+  // figure out which branches the target is in
+  vector< revision<cert> > certs;
+  app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
+  erase_bogus_certs(certs, app);
+
+  set< utf8 > branches;
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
+       i != certs.end(); i++)
+    {
+      cert_value b;
+      decode_base64(i->inner().value, b);
+      branches.insert(utf8(b()));
+    }
+
+  if (branches.find(app.branch_name) != branches.end())
+    {
+      L(FL("using existing branch %s") % app.branch_name());
+    }
+  else
+    {
+      P(F("target revision is not in current branch"));
+      if (branches.size() > 1)
+        {
+          // multiple non-matching branchnames
+          string branch_list;
+          for (set<utf8>::const_iterator i = branches.begin();
+               i != branches.end(); i++)
+            branch_list += "\n  " + (*i)();
+          N(false, F("target revision is in multiple branches:%s\n\n"
+                     "try again with explicit --branch") % branch_list);
+        }
+      else if (branches.size() == 1)
+        {
+          // one non-matching, inform and update
+          app.branch_name = (*(branches.begin()))();
+          switched_branch = true;
+        }
+      else
+        {
+          I(branches.size() == 0);
+          W(F("target revision not in any branch\n"
+              "next commit will use branch %s")
+            % app.branch_name());
+        }
+    }
+  return switched_branch;
+}
+
 CMD(update, N_("workspace"), "",
     N_("update workspace.\n"
        "This command modifies your workspace to be based off of a\n"
@@ -145,57 +198,9 @@ CMD(update, N_("workspace"), "",
 
   // Fiddle around with branches, in an attempt to guess what the user
   // wants.
-  
-  bool switched_branch = false;
-  {
-    // figure out which branches the target is in
-    vector< revision<cert> > certs;
-    app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
-    erase_bogus_certs(certs, app);
-
-    set< utf8 > branches;
-    for (vector< revision<cert> >::const_iterator i = certs.begin();
-         i != certs.end(); i++)
-      {
-        cert_value b;
-        decode_base64(i->inner().value, b);
-        branches.insert(utf8(b()));
-      }
-
-    if (branches.find(app.branch_name) != branches.end())
-      {
-        L(FL("using existing branch %s") % app.branch_name());
-      }
-    else
-      {
-        P(F("target revision is not in current branch"));
-        if (branches.size() > 1)
-          {
-            // multiple non-matching branchnames
-            string branch_list;
-            for (set<utf8>::const_iterator i = branches.begin();
-                 i != branches.end(); i++)
-              branch_list += "\n  " + (*i)();
-            N(false, F("target revision is in multiple branches:%s\n\n"
-                       "try again with explicit --branch") % branch_list);
-          }
-        else if (branches.size() == 1)
-          {
-            // one non-matching, inform and update
-            app.branch_name = (*(branches.begin()))();
-            switched_branch = true;
-            P(F("switching to branch %s") % app.branch_name());
-          }
-        else
-          {
-            I(branches.size() == 0);
-            W(F("target revision not in any branch\n"
-                "next commit will use branch %s")
-              % app.branch_name());
-          }
-      }
-  }
-
+  bool switched_branch = pick_branch_for_update(chosen_rid, app);
+  if (switched_branch)
+    P(F("switching to branch %s") % app.branch_name());
 
   // Okay, we have a target, we have a branch, let's do this merge!
 
@@ -253,17 +258,14 @@ CMD(update, N_("workspace"), "",
 
   // small race condition here...
   app.work.put_work_rev(remaining);
+  app.work.update_any_attrs();
+  app.work.maybe_update_inodeprints(app);
 
   if (!app.branch_name().empty())
-    {
-      app.make_branch_sticky();
-    }
+    app.make_branch_sticky();
   if (switched_branch)
     P(F("switched branch; next commit will use branch %s") % app.branch_name());
   P(F("updated to base revision %s") % chosen_rid);
-
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints(app);
 }
 
 // Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
@@ -583,6 +585,119 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
       guard.commit();
       P(F("[merged] %s") % merged);
     }
+}
+
+CMD(explicit_merge_and_update, N_("tree"),
+    N_("LEFT-REVISION RIGHT-REVISION"),
+    N_("merge two explicitly given revisions, "
+       "and update the current workspace with the result"),
+    OPT_DATE % OPT_AUTHOR)
+{
+  revision_id left, right;
+  string branch;
+
+  if (args.size() != 2)
+    throw usage(name);
+
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
+
+  N(!(left == right),
+    F("%s and %s are the same revision, aborting") % left % right);
+  N(!is_ancestor(left, right, app),
+    F("%s is already an ancestor of %s") % left % right);
+  N(!is_ancestor(right, left, app),
+    F("%s is already an ancestor of %s") % right % left);
+
+  bool switched_branch_left = pick_branch_for_update(left, app);
+  bool switched_branch_right = pick_branch_for_update(right, app);
+  N(!(switched_branch_left && switched_branch_right),
+    F("%s and %s are not on the same branch, "
+      "specify target branch explicitly with --branch")
+    % left % right);
+  bool switched_branch = switched_branch_left || switched_branch_right;
+  if (switched_branch)
+    P(F("switching to branch %s") % app.branch_name());
+
+  app.require_workspace();
+
+  // Get the current state of the workspace
+  temp_node_id_source nis;
+  shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
+  MM(*old_roster);
+  roster_t working_roster; MM(working_roster);
+  app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
+  app.work.update_current_roster_from_filesystem(working_roster, app);
+
+  // Get the two revisions that we are being asked to merge, and merge them.
+  roster_t left_roster, right_roster;
+  MM(left_roster);
+  MM(right_roster);
+  marking_map left_marking_map, right_marking_map;
+  set<revision_id> 
+    left_uncommon_ancestors, 
+    right_uncommon_ancestors;
+
+  app.db.get_roster(left, left_roster, left_marking_map);
+  app.db.get_roster(right, right_roster, right_marking_map);
+  app.db.get_uncommon_ancestors(left, right,
+                                left_uncommon_ancestors,
+                                right_uncommon_ancestors);
+
+  roster_merge_result result_one;
+  roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
+               right_roster, right_marking_map, right_uncommon_ancestors,
+               result_one);
+
+  content_merge_workspace_adaptor wca(app, old_roster);
+  resolve_merge_conflicts(left_roster, right_roster,
+                          result_one, wca, app);
+
+  // Make sure it worked...
+  I(result_one.is_clean());
+  result_one.roster.check_sane(true);
+
+  // And now, we merge the merged roster into the workspace, 'as if' by update.
+  // Note that for perform_content_update to work correctly we must use the
+  // same content merge adaptor for both operations.
+  roster_merge_result result_two;
+  three_way_merge(*old_roster, working_roster, result_one.roster, result_two);
+  resolve_merge_conflicts(working_roster, result_one.roster,
+                          result_two, wca, app);
+  
+  // Make sure it worked...
+  I(result_two.is_clean());
+  result_two.roster.check_sane(true);
+
+  roster_t & merged_roster = result_two.roster;
+  cset update;
+  make_cset(working_roster, merged_roster, update);
+  app.work.perform_content_update(update, wca);
+
+  // Two-parent revisions have to be made by hand.
+  revision_t merged_rev;
+  calculate_ident(merged_roster, merged_rev.new_manifest);
+
+  shared_ptr<cset> left_to_merged(new cset);
+  make_cset(left_roster, merged_roster, *left_to_merged);
+  safe_insert(merged_rev.edges, std::make_pair(left, left_to_merged));
+
+  shared_ptr<cset> right_to_merged(new cset);
+  make_cset(right_roster, merged_roster, *right_to_merged);
+  safe_insert(merged_rev.edges, std::make_pair(right, right_to_merged));
+
+  // small race condition here...
+  app.work.put_work_rev(merged_rev);
+  app.work.update_any_attrs();
+  app.work.maybe_update_inodeprints(app);
+
+  if (!app.branch_name().empty())
+    app.make_branch_sticky();
+  if (switched_branch)
+    P(F("switched branch; next commit will use branch %s") % app.branch_name());
+  P(F("updated to result of merge\n"
+      " [left] %s\n"
+      "[right] %s\n") % left % right);
 }
 
 CMD(explicit_merge, N_("tree"),

@@ -1,3 +1,9 @@
+2006-08-21  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (pick_branch_for_update): New function split out
+	of CMD(update).
+	(explicit_merge_and_update): New command.
+
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
 	* automate.cc (get_option): Rewrite for revised _MTN/options
