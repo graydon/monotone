@@ -1,9 +1,6 @@
-
-extern "C" {
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
 
 #include "lua.hh"
 #include "tester.h"
@@ -11,6 +8,7 @@ extern "C" {
 #include "sanity.hh"
 
 #include <cstdio>
+#include <stdlib.h>
 
 #include <exception>
 
@@ -27,6 +25,9 @@ namespace fs = boost::filesystem;
 
 using std::string;
 using std::map;
+using std::memcpy;
+using std::getenv;
+using std::exit;
 using std::make_pair;
 using boost::lexical_cast;
 
@@ -43,7 +44,7 @@ struct tester_sanity : public sanity
   {fprintf(stderr, "error: %s", msg.c_str());};
 };
 tester_sanity real_sanity;
-sanity & global_sanity(real_sanity);
+sanity & global_sanity = real_sanity;
 
 
 #ifdef WIN32
@@ -449,14 +450,9 @@ int main(int argc, char **argv)
       P(F("\tregex      run tests with matching names\n"));
       return 1;
     }
-  st = lua_open();
+  st = luaL_newstate();
   lua_atpanic (st, &panic_thrower);
-  luaopen_base(st);
-  luaopen_io(st);
-  luaopen_string(st);
-  luaopen_math(st);
-  luaopen_table(st);
-  luaopen_debug(st);
+  luaL_openlibs(st);
   add_functions(st);
   
   lua_pushstring(st, "initial_dir");

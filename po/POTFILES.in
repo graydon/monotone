@@ -1,6 +1,7 @@
 adler32.hh
 app_state.cc
 app_state.hh
+automate.cc
 basic_io.cc
 basic_io.hh
 cert.cc
@@ -38,6 +39,8 @@ lcs.cc
 lcs.hh
 lua.cc
 lua.hh
+merge.cc
+merge.hh
 merkle_tree.cc
 merkle_tree.hh
 mkstemp.cc
@@ -51,6 +54,7 @@ netio.hh
 netsync.cc
 netsync.hh
 numeric_vocab.hh
+options_list.hh
 packet.cc
 packet.hh
 platform.hh

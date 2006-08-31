@@ -1,6 +1,9 @@
 #ifndef __CMD_HH__
 #define __CMD_HH__
 
+#include <boost/program_options.hpp>
+#include <boost/shared_ptr.hpp>
+
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -19,20 +22,28 @@
 namespace commands
 {
   extern const std::string hidden_group;
-  const char * safe_gettext(const char * msgid);
-  struct no_opts {};
+  using boost::program_options::option_description;
+  using boost::shared_ptr;
+
   struct command_opts
   {
-    std::set<int> opts;
+    std::set<option::option_base const *> opts;
     command_opts() {}
-    command_opts & operator%(int o)
-    { opts.insert(o); return *this; }
-    command_opts & operator%(no_opts o)
+    command_opts & operator%(option::option_base const & p)
+    { opts.insert(&p); return *this; }
+    command_opts & operator%(option::no_option)
     { return *this; }
     command_opts & operator%(command_opts const &o)
     { opts.insert(o.opts.begin(), o.opts.end()); return *this; }
+    boost::program_options::options_description as_desc()
+    {
+      boost::program_options::options_description d;
+      std::set<option::option_base const *>::const_iterator it;
+      for (it = opts.begin(); it != opts.end(); ++it)
+        if ((*it)->ptr() != 0) d.add((*it)->ptr());
+      return d;
+    }
   };
-  extern const no_opts OPT_NONE;
 
   struct command
   {
@@ -180,9 +191,29 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::vector<utf8> const & args)       \
 
 #define ALIAS(C, realcommand)                                        \
-CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params_,         \
-    realcommand##_cmd.desc_ + "\nAlias for " #realcommand,            \
-    realcommand##_cmd.options)                                       \
+namespace commands {                                                 \
+  struct cmd_ ## C : public command                                  \
+  {                                                                  \
+    cmd_ ## C() : command(#C, realcommand##_cmd.cmdgroup,            \
+                          realcommand##_cmd.params_,                 \
+                          realcommand##_cmd.desc_, true,             \
+                          realcommand##_cmd.options)                 \
+    {}                                                               \
+    virtual std::string desc();                                      \
+    virtual void exec(app_state & app,                               \
+                      std::vector<utf8> const & args);               \
+  };                                                                 \
+  static cmd_ ## C C ## _cmd;                                        \
+}                                                                    \
+std::string commands::cmd_ ## C::desc()                              \
+{                                                                    \
+  std:string result = _(desc_.c_str());                              \
+  result += "\n";                                                    \
+  result += (F("Alias for %s") % #realcommand).str();                \
+  return result;                                                     \
+}                                                                    \
+void commands::cmd_ ## C::exec(app_state & app,                      \
+                               std::vector<utf8> const & args)       \
 {                                                                    \
   process(app, std::string(#realcommand), args);                     \
 }

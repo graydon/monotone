@@ -158,7 +158,7 @@ database::check_schema()
        "wanted schema %s, got %s\n"
        "try '%s db migrate' to upgrade\n"
        "(this is irreversible; you may want to make a backup copy first)")
-     % filename % schema % db_schema_id % __app->prog_name);
+     % filename % schema % db_schema_id % ui.prog_name);
 }
 
 void
@@ -1279,9 +1279,12 @@ database::put_version(hexenc<id> const & old_id,
                       string const & data_table,
                       string const & delta_table)
 {
-
+  MM(del);
   data old_data, new_data;
   delta reverse_delta;
+  MM(old_data);
+  MM(new_data);
+  MM(reverse_delta);
 
   get_version(old_id, old_data, data_table, delta_table);
   patch(old_data, del, new_data);
@@ -2866,7 +2869,7 @@ database::put_roster(revision_id const & rev_id,
         continue;
       revision_id old_rev = *i;
       get_roster_id_for_revision(old_rev, old_id);
-      if (exists(new_id.inner(), data_table))
+      if (exists(old_id.inner(), data_table))
         {
           get_roster_version(old_id, old_data);
           diff(new_data.inner(), old_data.inner(), reverse_delta);

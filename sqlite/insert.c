@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle INSERT statements in SQLite.
 **
-** $Id: insert.c,v 1.164 2006/03/15 16:26:10 drh Exp $
+** $Id: insert.c,v 1.170 2006/06/19 03:05:10 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 
@@ -272,8 +272,10 @@ void sqlite3Insert(
   assert( pTab!=0 );
 
   /* If pTab is really a view, make sure it has been initialized.
+  ** ViewGetColumnNames() is a no-op if pTab is not a view (or virtual 
+  ** module table).
   */
-  if( isView && sqlite3ViewGetColumnNames(pParse, pTab) ){
+  if( sqlite3ViewGetColumnNames(pParse, pTab) ){
     goto insert_cleanup;
   }
 
@@ -371,7 +373,7 @@ void sqlite3Insert(
       ** back up and execute the SELECT code above.
       */
       sqlite3VdbeJumpHere(v, iInitCode);
-      sqlite3VdbeAddOp(v, OP_OpenVirtual, srcTab, 0);
+      sqlite3VdbeAddOp(v, OP_OpenEphemeral, srcTab, 0);
       sqlite3VdbeAddOp(v, OP_SetNumColumns, srcTab, nColumn);
       sqlite3VdbeAddOp(v, OP_Goto, 0, iSelectLoop);
       sqlite3VdbeResolveLabel(v, iCleanup);
@@ -567,6 +569,10 @@ void sqlite3Insert(
   ** case the record number is the same as that column. 
   */
   if( !isView ){
+    if( IsVirtual(pTab) ){
+      /* The row that the VUpdate opcode will delete:  none */
+      sqlite3VdbeAddOp(v, OP_Null, 0, 0);
+    }
     if( keyColumn>=0 ){
       if( useTempTable ){
         sqlite3VdbeAddOp(v, OP_Column, srcTab, keyColumn);
@@ -582,6 +588,8 @@ void sqlite3Insert(
       sqlite3VdbeAddOp(v, OP_Pop, 1, 0);
       sqlite3VdbeAddOp(v, OP_NewRowid, base, counterMem);
       sqlite3VdbeAddOp(v, OP_MustBeInt, 0, 0);
+    }else if( IsVirtual(pTab) ){
+      sqlite3VdbeAddOp(v, OP_Null, 0, 0);
     }else{
       sqlite3VdbeAddOp(v, OP_NewRowid, base, counterMem);
     }
@@ -624,10 +632,19 @@ void sqlite3Insert(
     /* Generate code to check constraints and generate index keys and
     ** do the insertion.
     */
-    sqlite3GenerateConstraintChecks(pParse, pTab, base, 0, keyColumn>=0,
-                                   0, onError, endOfLoop);
-    sqlite3CompleteInsertion(pParse, pTab, base, 0,0,0,
+#ifndef SQLITE_OMIT_VIRTUALTABLE
+    if( IsVirtual(pTab) ){
+      pParse->pVirtualLock = pTab;
+      sqlite3VdbeOp3(v, OP_VUpdate, 1, pTab->nCol+2,
+                     (const char*)pTab->pVtab, P3_VTAB);
+    }else
+#endif
+    {
+      sqlite3GenerateConstraintChecks(pParse, pTab, base, 0, keyColumn>=0,
+                                     0, onError, endOfLoop);
+      sqlite3CompleteInsertion(pParse, pTab, base, 0,0,0,
                             (triggers_exist & TRIGGER_AFTER)!=0 ? newIdx : -1);
+    }
   }
 
   /* Update the count of rows that are inserted
@@ -665,7 +682,7 @@ void sqlite3Insert(
     sqlite3VdbeResolveLabel(v, iCleanup);
   }
 
-  if( !triggers_exist ){
+  if( !triggers_exist && !IsVirtual(pTab) ){
     /* Close all tables opened */
     sqlite3VdbeAddOp(v, OP_Close, base, 0);
     for(idx=1, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, idx++){
@@ -1105,9 +1122,13 @@ void sqlite3OpenTableAndIndices(
   int op           /* OP_OpenRead or OP_OpenWrite */
 ){
   int i;
-  int iDb = sqlite3SchemaToIndex(pParse->db, pTab->pSchema);
+  int iDb;
   Index *pIdx;
-  Vdbe *v = sqlite3GetVdbe(pParse);
+  Vdbe *v;
+
+  if( IsVirtual(pTab) ) return;
+  iDb = sqlite3SchemaToIndex(pParse->db, pTab->pSchema);
+  v = sqlite3GetVdbe(pParse);
   assert( v!=0 );
   sqlite3OpenTable(pParse, base, iDb, pTab, op);
   for(i=1, pIdx=pTab->pIndex; pIdx; pIdx=pIdx->pNext, i++){

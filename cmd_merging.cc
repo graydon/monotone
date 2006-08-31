@@ -8,6 +8,7 @@
 // PURPOSE.
 
 #include <iostream>
+#include <cstring>
 
 #include "cmd.hh"
 #include "diff_patch.hh"
@@ -26,6 +27,7 @@ using std::map;
 using std::set;
 using std::string;
 using std::vector;
+using std::strlen;
 
 using boost::shared_ptr;
 
@@ -127,7 +129,7 @@ CMD(update, N_("workspace"), "",
        "different revision, preserving uncommitted changes as it does so.\n"
        "If a revision is given, update the workspace to that revision.\n"
        "If not, update the workspace to the head of the branch."),
-    OPT_BRANCH_NAME % OPT_REVISION)
+    option::branch_name % option::revision)
 {
   if (args.size() > 0)
     throw usage(name);
@@ -164,7 +166,7 @@ CMD(update, N_("workspace"), "",
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
-          P(F("choose one with '%s update -r<id>'") % app.prog_name);
+          P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
       chosen_rid = *(candidates.begin());
@@ -225,7 +227,8 @@ CMD(update, N_("workspace"), "",
   MM(*old_roster);
   roster_t working_roster; MM(working_roster);
   app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster, app);
+  app.work.update_current_roster_from_filesystem(working_roster, 
+                                                 node_restriction(app));
 
   // Get the CHOSEN roster
   roster_t chosen_roster; MM(chosen_roster);
@@ -317,7 +320,7 @@ merge_two(revision_id const & left, revision_id const & right,
 // (Possibility: append the --message/--message-file text to the synthetic
 // log message constructed in merge_two().)
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
-    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
+    option::branch_name % option::date % option::author)
 {
   typedef std::pair<revision_id, revision_id> revpair;
   typedef set<revision_id>::const_iterator rid_set_iter;
@@ -417,7 +420,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("merge from one branch to another asymmetrically"),
-    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
+    option::date % option::author % option::message % option::msgfile)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -428,7 +431,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
 CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("merge one branch into a subdirectory in another branch"),
-    OPT_DATE % OPT_AUTHOR % OPT_MESSAGE % OPT_MSGFILE)
+    option::date % option::author % option::message % option::msgfile)
 {
   //   This is a special merge operator, but very useful for people
   //   maintaining "slightly disparate but related" trees. It does a one-way
@@ -701,7 +704,7 @@ CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH"),
     N_("merge two explicitly given revisions, "
        "placing result in given branch"),
-    OPT_DATE % OPT_AUTHOR)
+    option::date % option::author)
 {
   revision_id left, right;
   string branch;
@@ -726,7 +729,7 @@ CMD(explicit_merge, N_("tree"),
 CMD(show_conflicts, N_("informative"), N_("REV REV"), 
     N_("Show what conflicts would need to be resolved "
        "to merge the given revisions."),
-    OPT_BRANCH_NAME % OPT_DATE % OPT_AUTHOR)
+    option::branch_name % option::date % option::author)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -776,8 +779,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
        "compared to its parent.\n"                                                                                  
        "\n"
        "If two revisions are given, applies the changes made to get from the\n"  
-       "first revision to the second."),                                                                            
-    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE)
+       "first revision to the second."),
+    option::revision % option::depth % option::exclude)
 {
   // Work out our arguments
   revision_id from_rid, to_rid;
@@ -794,7 +797,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
           "to apply the changes relative to one of its parents, use:\n"
           "  %s pluck -r PARENT -r %s")
         % to_rid
-        % app.prog_name % to_rid);
+        % ui.prog_name % to_rid);
       from_rid = *parents.begin();
     }
   else if (app.revision_selectors.size() == 2)
@@ -851,7 +854,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
   app.work.get_base_and_current_roster_shape(base_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster, app);
+  app.work.update_current_roster_from_filesystem(working_roster,
+                                                 node_restriction(app));
 
   // Get the FROM->TO cset...
   cset from_to_to; MM(from_to_to);
@@ -928,7 +932,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
 }
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
-    OPT_BRANCH_NAME)
+    option::branch_name)
 {
   set<revision_id> heads;
   if (args.size() != 0)
@@ -953,7 +957,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
 
 CMD(get_roster, N_("debug"), N_("REVID"),
     N_("dump the roster associated with the given REVID"),
-    OPT_NONE)
+    option::none)
 {
   revision_id rid;
   if (args.size() == 0)

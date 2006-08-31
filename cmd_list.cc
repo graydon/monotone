@@ -372,9 +372,15 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
 {
   app.require_workspace();
 
-  path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
+  vector<file_path> roots = args_to_paths(args);
+  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app);
   path_set unknown, ignored;
-  app.work.find_unknown_and_ignored(mask, unknown, ignored);
+
+  // if no starting paths have been specified use the workspace root
+  if (roots.empty())
+    roots.push_back(file_path());
+
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); 
@@ -423,7 +429,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
                         args_to_paths(app.exclude_patterns), 
                         old_roster, new_roster, app);
 
-  app.work.update_current_roster_from_filesystem(new_roster, mask, app);
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_csets(old_roster, new_roster, 
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
@@ -460,7 +466,7 @@ CMD(list, N_("informative"),
     N_("show database objects, or the current workspace manifest, \n"
        "or known, unknown, intentionally ignored, missing, or \n"
        "changed-state files"),
-    OPT_DEPTH % OPT_EXCLUDE)
+    option::depth % option::exclude)
 {
   if (args.size() == 0)
     throw usage(name);

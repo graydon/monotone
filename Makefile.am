@@ -2,18 +2,18 @@ AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
 CMD_SOURCES =								\
-	cmd.hh cmd_netsync.cc cmd_list.cc cmd_packet.cc cmd_key_cert.cc	\
-	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc	\
+	cmd.hh cmd_netsync.cc cmd_list.cc cmd_packet.cc	cmd_key_cert.cc \
+	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc 	\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
 SANITY_CORE_SOURCES =							\
 	sanity.cc sanity.hh quick_alloc.hh				\
-	simplestring_xform.cc simplestring_xform.hh			\
-	constants.cc constants.hh numeric_vocab.hh			\
+	simplestring_xform.cc simplestring_xform.hh 			\
+	constants.cc constants.hh numeric_vocab.hh 			\
 	platform.hh
 
 
-LUAEXT_SOURCES =							\
+LUAEXT_SOURCES = 							\
 	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
 	charset.cc charset.hh paths.cc paths.hh				\
 	interner.hh hash_map.hh						\
@@ -22,78 +22,79 @@ LUAEXT_SOURCES =							\
 	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
 	globish.cc globish.hh basic_io.cc basic_io.hh
 
-MOST_SOURCES =								\
-	 $(SANITY_CORE_SOURCES)	$(LUAEXT_SOURCES) platform-wrapped.hh	\
-	 mtn-sanity.cc mtn-sanity.hh ui.cc ui.hh			\
-	 app_state.cc app_state.hh					\
-         commands.cc commands.hh $(CMD_SOURCES)				\
-         diff_patch.cc diff_patch.hh					\
-         lua_hooks.cc lua_hooks.hh					\
-         transforms.cc transforms.hh					\
-         update.cc update.hh						\
-         work.cc work_migration.cc work.hh				\
-         cert.cc cert.hh						\
-         database.cc database.hh					\
-         key_store.cc key_store.hh					\
-         localized_file_io.cc localized_file_io.hh			\
-         keys.cc keys.hh						\
-         packet.cc packet.hh						\
-         rcs_file.cc rcs_file.hh					\
-         xdelta.cc xdelta.hh						\
-         schema_migration.cc schema_migration.hh			\
-         refiner.cc refiner.hh						\
-         enumerator.cc enumerator.hh					\
-         netsync.cc netsync.hh						\
-         netxx_pipe.cc netxx_pipe.hh					\
-         netcmd.cc netcmd.hh						\
-         merkle_tree.cc merkle_tree.hh					\
-         lcs.cc lcs.hh							\
-         rcs_import.cc rcs_import.hh					\
-         revision.cc revision.hh					\
-	 cset.cc cset.hh						\
-	 roster.cc roster.hh						\
-         mt_version.cc mt_version.hh					\
-         automate.cc							\
-         database_check.cc database_check.hh				\
-         epoch.cc epoch.hh						\
-         inodeprint.cc inodeprint.hh					\
-         selectors.cc selectors.hh					\
-         annotate.cc annotate.hh					\
-         restrictions.cc restrictions.hh				\
-         hmac.cc hmac.hh                                                \
-         string_queue.cc string_queue.hh                                \
-         roster_merge.cc roster_merge.hh                                \
-         merge.cc merge.hh                                              \
-         legacy.cc legacy.hh                                            \
-	 uri.cc uri.hh                                                  \
-                                                                        \
-         lru_cache.h                                                    \
-                                                                        \
-	 cleanup.hh unit_tests.hh 					\
-         cycle_detector.hh randomfile.hh adler32.hh 			\
-         randomizer.cc randomizer.hh                                    \
-         netio.hh smap.hh gettext.h					\
-         package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh	\
-         i18n.h parallel_iter.hh safe_map.hh pch.hh
+MOST_SOURCES = 								\
+	$(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) platform-wrapped.hh	\
+	mtn-sanity.cc mtn-sanity.hh ui.cc ui.hh				\
+	app_state.cc app_state.hh					\
+	commands.cc commands.hh $(CMD_SOURCES)				\
+	diff_patch.cc diff_patch.hh					\
+	lua_hooks.cc lua_hooks.hh 					\
+	transforms.cc transforms.hh					\
+	update.cc update.hh						\
+	work.cc work_migration.cc work.hh				\
+	cert.cc cert.hh							\
+	database.cc database.hh						\
+	key_store.cc key_store.hh					\
+	localized_file_io.cc localized_file_io.hh			\
+	keys.cc keys.hh							\
+	packet.cc packet.hh						\
+	rcs_file.cc rcs_file.hh						\
+	xdelta.cc xdelta.hh						\
+	schema_migration.cc schema_migration.hh				\
+	refiner.cc refiner.hh						\
+	enumerator.cc enumerator.hh					\
+	netsync.cc netsync.hh 						\
+	netxx_pipe.cc netxx_pipe.hh					\
+	netcmd.cc netcmd.hh						\
+	merkle_tree.cc merkle_tree.hh 					\
+	lcs.cc lcs.hh							\
+	rcs_import.cc rcs_import.hh 					\
+	revision.cc revision.hh						\
+	cset.cc cset.hh							\
+	roster.cc roster.hh 						\
+	mt_version.cc mt_version.hh					\
+	automate.cc							\
+	database_check.cc database_check.hh				\
+	epoch.cc epoch.hh						\
+	inodeprint.cc inodeprint.hh					\
+	selectors.cc selectors.hh					\
+	annotate.cc annotate.hh						\
+	restrictions.cc	restrictions.hh					\
+	hmac.cc hmac.hh							\
+	string_queue.cc string_queue.hh					\
+	roster_merge.cc roster_merge.hh					\
+	merge.cc merge.hh						\
+	legacy.cc legacy.hh uri.cc uri.hh				\
+									\
+        lru_cache.h							\
+									\
+	cleanup.hh unit_tests.hh					\
+        cycle_detector.hh randomfile.hh adler32.hh			\
+        randomizer.cc randomizer.hh					\
+        netio.hh smap.hh gettext.h					\
+        package_revision.c package_revision.h				\
+        package_full_revision.c package_full_revision.h			\
+        options.cc options.hh options_list.hh				\
+        i18n.h parallel_iter.hh safe_map.hh pch.hh
 
-NETXX_SOURCES =									\
-	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
-	netxx/common.h netxx/compat.h netxx/datagram.cxx			\
-	netxx/datagramserver.cxx netxx/osutil.cxx netxx/osutil.h		\
-	netxx/peer.cxx netxx/probe.cxx netxx/probe_impl.h			\
-	netxx/probe_select.cxx netxx/recvfrom.cxx netxx/recvfrom.h		\
-	netxx/resolve.h netxx/serverbase.cxx netxx/serverbase.h			\
-        netxx/sockaddr.cxx netxx/sockaddr.h netxx/socket.cxx			\
-	netxx/socket.h netxx/sockopt.cxx netxx/stream.cxx			\
-	netxx/streambase.cxx netxx/streamserver.cxx				\
-	netxx/address.h netxx/datagram.h netxx/datagramserver.h			\
-	netxx/netbuf.h netxx/netxx.h netxx/peer.h netxx/probe.h			\
-	netxx/probeinfo.h netxx/sockopt.h netxx/stream.h netxx/streambase.h	\
-	netxx/streamserver.h netxx/timeout.h netxx/types.h
+NETXX_SOURCES =								\
+	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\
+	netxx/common.h netxx/compat.h netxx/datagram.cxx		\
+	netxx/datagramserver.cxx netxx/osutil.cxx netxx/osutil.h	\
+	netxx/peer.cxx netxx/probe.cxx netxx/probe_impl.h		\
+	netxx/probe_select.cxx netxx/recvfrom.cxx netxx/recvfrom.h	\
+	netxx/resolve.h netxx/serverbase.cxx netxx/serverbase.h		\
+	netxx/sockaddr.cxx netxx/sockaddr.h netxx/socket.cxx 		\
+	netxx/socket.h netxx/sockopt.cxx netxx/stream.cxx		\
+	netxx/streambase.cxx netxx/streamserver.cxx			\
+	netxx/address.h netxx/datagram.h netxx/datagramserver.h		\
+	netxx/netbuf.h netxx/netxx.h netxx/peer.h netxx/probe.h 	\
+	netxx/probeinfo.h netxx/sockopt.h netxx/stream.h		\
+	netxx/streambase.h netxx/streamserver.h netxx/timeout.h		\
+	netxx/types.h
 
-BOTAN_SOURCES =                                                                    \
-        botan/aes.cpp botan/aes_tab.cpp botan/algolist.cpp		\
+BOTAN_SOURCES = 							\
+	botan/aes.cpp botan/aes_tab.cpp botan/algolist.cpp		\
         botan/allocate.cpp botan/arc4.cpp botan/asn1_alg.cpp		\
         botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp		\
         botan/asn1_ext.cpp botan/asn1_ku.cpp botan/asn1_oid.cpp		\
@@ -103,49 +104,48 @@ BOTAN_SOURCES =                                                                 
         botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp		\
         botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp		\
         botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp		\
-        botan/cfb.cpp botan/charset.cpp botan/conf.cpp botan/crc32.cpp	\
-        botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp			\
-        botan/data_snk.cpp botan/data_src.cpp \
+	botan/cfb.cpp botan/charset.cpp botan/conf.cpp botan/crc32.cpp	\
+	botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp 			\
+	botan/data_snk.cpp botan/data_src.cpp				\
         botan/def_ops.cpp botan/defalloc.cpp botan/der_code.cpp		\
         botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp		\
-        botan/dl_group.cpp botan/dl_param.cpp		\
-        botan/dl_cache.cpp \
+        botan/dl_group.cpp botan/dl_param.cpp botan/dl_cache.cpp	\
         botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
         botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
-        botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp		\
-        botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp		\
-        botan/exceptn.cpp botan/filter.cpp botan/filters.cpp		\
-        botan/fips140.cpp botan/fused.cpp		\
+	botan/emsa3.cpp	botan/emsa4.cpp botan/emsa_raw.cpp		\
+	botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp		\
+	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp		\
+	botan/fips140.cpp botan/fused.cpp				\
         botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp		\
         botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp	\
         botan/if_algo.cpp botan/inifile.cpp botan/init.cpp		\
-        botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp		\
-        botan/lookup.cpp botan/make_prm.cpp botan/mdx_hash.cpp		\
-        botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp		\
-        botan/mod_exp.cpp botan/mode_pad.cpp botan/modebase.cpp		\
-        botan/mp_comba.cpp botan/mp_core.cpp botan/mp_fkmul.cpp		\
-        botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp		\
-        botan/mp_smul.cpp botan/mutex.cpp botan/numthry.cpp		\
-        botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp	\
-        botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp	\
-        botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
-        botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
-        botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp		\
-        botan/pow_mod.cpp \
-        botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp		\
-        botan/randpool.cpp botan/reducer.cpp botan/rng.cpp		\
+	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp		\
+	botan/lookup.cpp botan/make_prm.cpp botan/mdx_hash.cpp		\
+	botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp		\
+	botan/mod_exp.cpp botan/mode_pad.cpp botan/modebase.cpp		\
+	botan/mp_comba.cpp botan/mp_core.cpp botan/mp_fkmul.cpp		\
+	botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp		\
+	botan/mp_smul.cpp botan/mutex.cpp botan/numthry.cpp		\
+	botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp	\
+	botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp 	\
+	botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
+	botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
+	botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp		\
+        botan/pow_mod.cpp						\
+	botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp		\
+	botan/randpool.cpp botan/reducer.cpp botan/rng.cpp		\
         botan/rsa.cpp botan/s2k.cpp botan/secqueue.cpp			\
-        botan/sha160.cpp botan/symkey.cpp botan/timers.cpp		\
-        botan/ui.cpp botan/util.cpp botan/x509_ca.cpp			\
-        botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp	\
-        botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp		\
-        botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp 		\
-        botan/x509self.cpp botan/x509stor.cpp 				\
-        botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp 		\
-        botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp \
-        \
+	botan/sha160.cpp botan/symkey.cpp botan/timers.cpp		\
+	botan/ui.cpp botan/util.cpp botan/x509_ca.cpp			\
+	botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp	\
+	botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp		\
+	botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp			\
+        botan/x509self.cpp botan/x509stor.cpp				\
+	botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp		\
+	botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp		\
+									\
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
-        botan/lookup.h botan/randpool.h botan/version.h	\
+        botan/lookup.h botan/randpool.h botan/version.h			\
         botan/algolist.h botan/buf_es.h botan/der_enc.h			\
         botan/exceptn.h botan/mdx_hash.h botan/par_hash.h		\
         botan/reducer.h botan/x509_ca.h botan/allocate.h		\
@@ -155,16 +155,16 @@ BOTAN_SOURCES =                                                                 
         botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h	\
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
-        botan/cfb.h botan/dl_param.h botan/modebase.h	\
-        botan/pipe.h botan/x509_obj.h			\
+        botan/cfb.h botan/dl_param.h botan/modebase.h			\
+        botan/pipe.h botan/x509_obj.h					\
         botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
         botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
         botan/hex.h botan/mod_exp.h botan/pk_core.h botan/secqueue.h	\
         botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h	\
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h	\
-        botan/crl_ent.h botan/emsa.h	\
-        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h \
+        botan/crl_ent.h botan/emsa.h					\
+        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h			\
         botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h	\
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h	\
         botan/base.h botan/cts.h botan/enums.h botan/kdf.h		\
@@ -174,69 +174,93 @@ BOTAN_SOURCES =                                                                 
         botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
         botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
         botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h botan/charset.h botan/hash_id.h 			\
+        botan/util.h botan/charset.h botan/hash_id.h			\
         botan/des.h botan/pkcs5.h					\
-        botan/x931_rng.h botan/sha256.h \
+        botan/x931_rng.h botan/sha256.h					\
         botan/parsing.h botan/out_buf.h botan/bit_ops.h
 
+BOOST_SANDBOX_SOURCES =							\
+	boost/circular_buffer_adaptor.hpp				\
+        boost/circular_buffer_base.hpp					\
+	boost/circular_buffer_fwd.hpp					\
+        boost/circular_buffer.hpp
 
-
-BOOST_SANDBOX_SOURCES = \
-        boost/circular_buffer_adaptor.hpp \
-	boost/circular_buffer_base.hpp \
-	boost/circular_buffer_fwd.hpp \
-	boost/circular_buffer.hpp
-
-SQLITE_SOURCES = \
-        sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c \
-        sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
-        sqlite/hash.c sqlite/insert.c \
-        sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
-        sqlite/os.c sqlite/os_unix.c sqlite/os_win.c sqlite/os_os2.c \
-        sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
-        sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
-        sqlite/trigger.c sqlite/update.c sqlite/utf.c \
-        sqlite/util.c sqlite/vacuum.c \
-        sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c \
-        sqlite/vdbemem.c sqlite/where.c \
-	sqlite/prepare.c sqlite/callback.c \
-	sqlite/analyze.c sqlite/vdbefifo.c \
-	sqlite/complete.c \
-	\
-        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h sqlite/os_os2.h \
-        sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
+SQLITE_SOURCES =							\
+	sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c	\
+        sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c	\
+        sqlite/func.c sqlite/hash.c sqlite/insert.c			\
+	sqlite/legacy.c	sqlite/main.c sqlite/opcodes.c			\
+	sqlite/os.c sqlite/os_unix.c sqlite/os_win.c sqlite/os_os2.c	\
+	sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c	\
+	sqlite/random.c sqlite/select.c					\
+	sqlite/table.c sqlite/tokenize.c				\
+	sqlite/trigger.c sqlite/update.c sqlite/utf.c			\
+	sqlite/util.c sqlite/vacuum.c					\
+	sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c			\
+	sqlite/vdbemem.c sqlite/where.c					\
+        sqlite/prepare.c sqlite/callback.c				\
+	sqlite/analyze.c sqlite/vdbefifo.c				\
+	sqlite/complete.c						\
+	sqlite/loadext.c sqlite/vtab.c					\
+									\
+        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h	\
+        sqlite/os_common.h sqlite/os_os2.h				\
+	sqlite/parse.h sqlite/sqlite3.h	sqlite/sqlite3ext.h		\
+	sqlite/sqliteInt.h						\
+	sqlite/vdbe.h sqlite/vdbeInt.h					\
 	sqlite/pager.h
 
-LUA_SOURCES = \
-	lua/lapi.c lua/lapi.h lua/lauxlib.c lua/lauxlib.h lua/lbaselib.c \
-	lua/lcode.c lua/lcode.h lua/ldblib.c lua/ldebug.c lua/ldebug.h lua/ldo.c \
-	lua/ldo.h lua/ldump.c lua/lfunc.c lua/lfunc.h lua/lgc.c lua/lgc.h \
-	lua/liolib.c lua/llex.c lua/llex.h lua/llimits.h lua/lmathlib.c lua/lmem.c \
-	lua/lmem.h lua/loadlib.c lua/lobject.c lua/lobject.h lua/lopcodes.c \
-	lua/lopcodes.h lua/lparser.c lua/lparser.h lua/lstate.c lua/lstate.h \
-	lua/lstring.c lua/lstring.h lua/lstrlib.c lua/ltable.c lua/ltable.h \
-	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
-	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
+LUA_SOURCES =								\
+	lua/lapi.cc lua/lapi.h						\
+	lua/lcode.cc lua/lcode.h					\
+	lua/ldebug.cc lua/ldebug.h					\
+	lua/ldo.cc lua/ldo.h						\
+	lua/ldump.cc							\
+	lua/lfunc.cc lua/lfunc.h					\
+	lua/lgc.cc lua/lgc.h						\
+	lua/linit.cc							\
+	lua/llex.cc lua/llex.h						\
+	lua/lmem.cc lua/lmem.h						\
+	lua/lobject.cc lua/lobject.h					\
+	lua/lopcodes.cc lua/lopcodes.h					\
+	lua/lparser.cc lua/lparser.h					\
+	lua/lstate.cc lua/lstate.h					\
+	lua/lstring.cc lua/lstring.h					\
+	lua/ltable.cc lua/ltable.h					\
+	lua/ltests.cc							\
+	lua/ltm.cc lua/ltm.h						\
+	lua/lundump.cc lua/lundump.h					\
+	lua/lvm.cc lua/lvm.h						\
+	lua/lzio.cc lua/lzio.h						\
+									\
+	lua/luaconf.h lua/llimits.h					\
+	lua/lua.h lua/lauxlib.h	lua/lualib.h				\
+									\
+	lua/lauxlib.cc							\
+	lua/lbaselib.cc							\
+	lua/ldblib.cc							\
+	lua/liolib.cc							\
+	lua/lmathlib.cc							\
+	lua/loadlib.cc							\
+	lua/lstrlib.cc							\
+	lua/ltablib.cc							\
+	lua/loslib.cc
 
-IDNA_SOURCES = \
+IDNA_SOURCES =								\
 	idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\
-	idna/punycode.c idna/rfc3454.c idna/stringprep.h idna/version.c \
+	idna/punycode.c idna/rfc3454.c idna/stringprep.h idna/version.c	\
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
-POPT_SOURCES = \
-	popt/findme.c  popt/poptconfig.c  popt/poptint.h   \
-	popt/findme.h  popt/popt.h        popt/poptparse.c \
-	popt/popt.c    popt/popthelp.c    popt/system.h
+UNIX_PLATFORM_SOURCES =							\
+	unix/read_password.cc unix/get_system_flavour.cc		\
+	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
+	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc
 
-UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
-	unix/inodeprint.cc unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc
-
-WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/inodeprint.cc win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc
+WIN32_PLATFORM_SOURCES =						\
+	win32/read_password.cc win32/get_system_flavour.cc		\
+	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
+	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc
 
 # primaries
 
@@ -257,7 +281,6 @@ libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
-			$(POPT_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
@@ -295,7 +318,7 @@ endif
 SUFFIXES = .gch
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
 AM_LDFLAGS = 
 
@@ -378,45 +401,22 @@ EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.ep
 
 man1_MANS = mtn.1
 info_TEXINFOS = monotone.texi
-EXTRA_DIST = $(man1_MANS) \
-	     $(PDF_FIGURES) \
-	     $(PNG_FIGURES) \
-             INSTALL \
-             README.changesets \
-             UPGRADE \
-             monotone.spec \
-             monotone.html \
-             texinfo.css \
-	     schema.sql \
-	     std_hooks.lua test_hooks.lua tester.lua \
-	     testsuite.lua $(srcdir)/tests \
-	     tester-testsuite.lua $(srcdir)/tester-tests/ \
-	     package.m4 \
-	     package_revision.txt package_full_revision_dist.txt \
-             $(wildcard $(srcdir)/m4/*.m4) \
-             popt/README popt/CHANGES popt/COPYING popt/popt.3 popt/popt.ps \
-             $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
-             sqlite/keywordhash.h \
-             contrib/README \
-             contrib/monoprof.sh \
-             contrib/monotone-notify.pl \
-             contrib/monotone-import.pl \
-             contrib/ciabot_monotone.py \
-             contrib/monotone.el \
-             contrib/monotone-nav.el \
-             contrib/monotone.bash_completion \
-             contrib/monotone.zsh_completion \
-             contrib/mtbrowse.sh \
-             contrib/colorize \
-             contrib/color-logs.sh \
-             contrib/color-logs.conf \
-             contrib/get_stdio.pl \
-             contrib/ciabot_monotone_hookversion.py \
-             contrib/monotone-cvs-ignore.lua \
-             contrib/usher.cc \
-             $(wildcard $(srcdir)/examples/*) \
-             win32/monotone.iss win32/modpath.iss \
-             $(wildcard $(srcdir)/debian/*)
+EXTRA_DIST = $(man1_MANS) $(PDF_FIGURES) $(PNG_FIGURES) INSTALL			\
+	     README.changesets UPGRADE monotone.spec monotone.html		\
+	     texinfo.css schema.sql std_hooks.lua test_hooks.lua tester.lua	\
+	     testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
+	     $(srcdir)/tester-tests package.m4 package_revision.txt		\
+	     package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
+	     sqlite/keywordhash.h contrib/README contrib/monoprof.sh		\
+	     contrib/monotone-notify.pl contrib/monotone-import.pl		\
+	     contrib/ciabot_monotone.py contrib/monotone.el			\
+	     contrib/monotone-nav.el contrib/monotone.bash_completion		\
+	     contrib/monotone.zsh_completion contrib/mtbrowse.sh		\
+	     contrib/colorize contrib/color-logs.sh contrib/color-logs.conf	\
+	     contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
+	     contrib/monotone-cvs-ignore.lua contrib/usher.cc $(wildcard	\
+	     $(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
+	     $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -491,10 +491,9 @@ run_tester_tests: Makefile
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h \
-                      schema.h \
-                      package_revision.c \
-                      package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h schema.h		\
+                      package_revision.c package_full_revision.txt		\
+                      package_full_revision_raw.txt package_full_revision.c	\
                       $(PCH_FILE) $(PCH_BUILD)
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)

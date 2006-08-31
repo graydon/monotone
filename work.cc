@@ -26,6 +26,7 @@
 #include "revision.hh"
 #include "inodeprint.hh"
 #include "diff_patch.hh"
+#include "ui.hh"
 
 using std::deque;
 using std::exception;
@@ -382,12 +383,13 @@ workspace::maybe_update_inodeprints(app_state & app)
 {
   if (!in_inodeprints_mode())
     return;
+
   inodeprint_map ipm_new;
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
 
   get_base_and_current_roster_shape(old_roster, new_roster, nis);
-  update_current_roster_from_filesystem(new_roster, app);
+  update_current_roster_from_filesystem(new_roster, node_restriction(app));
 
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
@@ -902,8 +904,7 @@ workspace::classify_roster_paths(roster_t const & ros,
 
 void
 workspace::update_current_roster_from_filesystem(roster_t & ros,
-                                                 node_restriction const & mask,
-                                                 app_state & app)
+                                                 node_restriction const & mask)
 {
   temp_node_id_source nis;
   inodeprint_map ipm;
@@ -961,16 +962,8 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       "'%s revert FILE' to restore it\n"
       "or to handle all at once, simply '%s drop --missing'\n"
       "or '%s revert --missing'")
-    % missing_files % app.prog_name % app.prog_name % app.prog_name
-    % app.prog_name % app.prog_name);
-}
-
-void
-workspace::update_current_roster_from_filesystem(roster_t & ros,
-                                                 app_state & app)
-{
-  node_restriction tmp(app);
-  update_current_roster_from_filesystem(ros, tmp, app);
+    % missing_files % ui.prog_name % ui.prog_name % ui.prog_name
+    % ui.prog_name % ui.prog_name);
 }
 
 void
@@ -997,6 +990,7 @@ workspace::find_missing(roster_t const & new_roster_shape,
 
 void
 workspace::find_unknown_and_ignored(path_restriction const & mask,
+				    vector<file_path> const & roots,
                                     path_set & unknown, path_set & ignored)
 {
   path_set known;
@@ -1008,9 +1002,12 @@ workspace::find_unknown_and_ignored(path_restriction const & mask,
   new_roster.extract_path_set(known);
 
   file_itemizer u(db, lua, known, unknown, ignored, mask);
-  walk_tree(file_path(), u);
+  for (vector<file_path>::const_iterator 
+         i = roots.begin(); i != roots.end(); ++i)
+    {
+      walk_tree(*i, u);
+    }
 }
-
 
 void
 workspace::perform_additions(path_set const & paths, bool recursive)

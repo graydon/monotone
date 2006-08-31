@@ -104,8 +104,8 @@ public:
   void ensure_clean_line();
   void redirect_log_to(system_path const & filename);
 
-  void set_prog_name(std::string const & name);
   std::string output_prefix();
+  std::string prog_name;
 
 private:
   std::set<std::string> issued_warnings;
@@ -117,8 +117,6 @@ private:
   void finish_ticking();
   void write_ticks();
   std::string tick_trailer;
-
-  std::string prog_name;
 
   friend struct tick_write_dot;
   friend struct tick_write_count;

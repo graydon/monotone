@@ -2,8 +2,12 @@
 #include "lua.hh"
 
 #include <signal.h>
+#include <cstdlib>
 
 #include "platform.hh"
+
+using std::malloc;
+using std::free;
 
 LUAEXT(get_ostype, )
 {

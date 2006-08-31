@@ -47,7 +47,7 @@ app_state::app_state()
     diff_show_encloser(true),
     execute(false), bind_address(""), bind_port(""),
     bind_stdio(false), use_transport_auth(true),
-    missing(false), unknown(false),
+    missing(false), unknown(false), brief(false),
     confdir(get_default_confdir()),
     have_set_key_dir(false), have_set_key(false),
     no_files(false), requested_help(false), branch_is_sticky(false),
@@ -56,7 +56,6 @@ app_state::app_state()
   db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(confdir / "keys");
-  set_prog_name(utf8(string("mtn")));
 }
 
 app_state::~app_state()
@@ -64,17 +63,15 @@ app_state::~app_state()
 }
 
 void
-app_state::set_is_explicit_option (int option_id)
+app_state::set_is_explicit_option (std::string o)
 {
-  explicit_option_map[option_id] = true;
+  explicit_options.insert(o);
 }
 
 bool
-app_state::is_explicit_option(int option_id) const
+app_state::is_explicit_option(std::string o) const
 {
-  map<int, bool>::const_iterator i = explicit_option_map.find(option_id);
-  if (i == explicit_option_map.end()) return false;
-  return i->second;
+  return explicit_options.find(o) != explicit_options.end();
 }
 
 void
@@ -107,7 +104,7 @@ app_state::process_options()
   if (!found_workspace)
     return;
 
-  work.check_ws_format(*this);
+  work.check_ws_format();
   work.get_ws_options(database_option, branch_option,
                       key_option, keydir_option);
 
@@ -368,13 +365,6 @@ void
 app_state::set_recursive(bool r)
 {
   recursive = r;
-}
-
-void
-app_state::set_prog_name(utf8 const & name)
-{
-  prog_name = name;
-  ui.set_prog_name(name());
 }
 
 void

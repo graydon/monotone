@@ -40,7 +40,7 @@ srv = netsync.start({"testbranch", "--confdir=open"}, nil, true)
 
 clean(2)
 
-srv:pull({"testbranch", "--key="})
+srv:pull({"testbranch", "--key", ""})
 check(mtn2("automate", "get_revision", revs.base), 0, true, true)
 
 -- pull with default key
@@ -120,7 +120,7 @@ srv = netsync.start({"testbranch", "--confdir=closed"}, nil, true)
 
 clean(2)
 
-srv:pull({"testbranch", "--key="}, nil, 1)
+srv:pull({"testbranch", "--key", ""}, nil, 1)
 check(mtn2("automate", "get_revision", revs.base), 1, true, true)
 
 -- pull with default key

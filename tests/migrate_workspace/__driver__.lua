@@ -60,15 +60,16 @@ check(qgrep("must be migrated", "stderr"))
 check(mtn("migrate_workspace"), 0, nil, nil)
 check(qgrep("^"..current_workspace_format.."$", "_MTN/format"))
 
-check(mtn("status", "--brief"), 0, nil, nil)
+check(mtn("status"), 0, true, nil)
+check(qgrep("^  no changes$", "stdout"))
 
 -- Now test migration in a workspace with pending content changes.
 -- This has no visible effect on a format-1 bookkeeping directory,
 -- so we can use the same tree file to test it.
 
 writefile("foo", "bar")
-check(mtn("status", "--brief"), 0, true, nil)
-check(qgrep("^patched foo$", "stdout"))
+check(mtn("status"), 0, true, nil)
+check(qgrep("^  patched foo$", "stdout"))
 
 remove("_MTN")
 gettree("format-1-unmodified")
@@ -80,8 +81,8 @@ check(qgrep("must be migrated", "stderr"))
 check(mtn("migrate_workspace"), 0, nil, nil)
 check(qgrep("^"..current_workspace_format.."$", "_MTN/format"))
 
-check(mtn("status", "--brief"), 0, true, nil)
-check(qgrep("^patched foo$", "stdout"))
+check(mtn("status"), 0, true, nil)
+check(qgrep("^  patched foo$", "stdout"))
 
 -- Now test migration in a workspace with a pending rename.
 -- Format 1 represents this with a "work" file; format 2 with additional
@@ -90,9 +91,9 @@ check(qgrep("^patched foo$", "stdout"))
 check(mtn("revert", "foo"), 0, false, false)
 check(mtn("mv", "-e", "foo", "bar"), 0, false, false)
 
-check(mtn("status", "--brief"), 0, true, nil)
-check(qgrep("^renamed foo$", "stdout"))
-check(qgrep("^     to bar$", "stdout"))
+check(mtn("status"), 0, true, nil)
+check(qgrep("^  renamed foo$", "stdout"))
+check(qgrep("^       to bar$", "stdout"))
 
 remove("_MTN")
 gettree("format-1-rename")
@@ -104,6 +105,6 @@ check(qgrep("must be migrated", "stderr"))
 check(mtn("migrate_workspace"), 0, nil, nil)
 check(qgrep("^"..current_workspace_format.."$", "_MTN/format"))
 
-check(mtn("status", "--brief"), 0, true, nil)
-check(qgrep("^renamed foo$", "stdout"))
-check(qgrep("^     to bar$", "stdout"))
+check(mtn("status"), 0, true, nil)
+check(qgrep("^  renamed foo$", "stdout"))
+check(qgrep("^       to bar$", "stdout"))
