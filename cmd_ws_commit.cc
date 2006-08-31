@@ -66,6 +66,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
 
   node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+                        app.depth,
                         old_roster, new_roster, app);
 
   if (app.missing)
@@ -91,6 +92,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
         }
       // replace the original mask with a more restricted one
       mask = node_restriction(missing_files, std::vector<file_path>(),
+                              app.depth,
                               old_roster, new_roster, app);
     }
 
@@ -231,7 +233,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   if (app.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
-      path_restriction mask(roots, args_to_paths(app.exclude_patterns), app);
+      path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.depth, app);
       path_set ignored;
 
       // if no starting paths have been specified use the workspace root
@@ -268,6 +270,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
       roster_t current_roster_shape;
       get_current_roster_shape(current_roster_shape, nis, app);
       node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+                            app.depth,
                             current_roster_shape, app);
       find_missing(current_roster_shape, mask, paths);
     }
@@ -345,6 +348,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         old_roster, new_roster, app);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
@@ -652,6 +656,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         old_roster, new_roster, app);
 
   update_current_roster_from_filesystem(new_roster, mask, app);
