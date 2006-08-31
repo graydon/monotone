@@ -1,5 +1,9 @@
 2006-08-31  Nathaniel Smith  <njs@pobox.com>
 
+	* charset.cc (system_charset_is_ascii_extension_impl): Add "646".
+
+2006-08-31  Nathaniel Smith  <njs@pobox.com>
+
 	* work.cc (update_any_attrs): Remove stale comment.
 
 2006-08-30  Nathaniel Smith  <njs@pobox.com>
