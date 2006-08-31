@@ -365,6 +365,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
+                            app.depth,
                             old_roster, new_roster, app);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
@@ -395,6 +396,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns), 
+                            app.depth,
                             old_roster, new_roster, app);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
@@ -423,6 +425,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
+                            app.depth,
                             old_roster, new_roster, app);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
@@ -586,6 +589,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // all selected revs?
       mask = node_restriction(args_to_paths(args),
                               args_to_paths(app.exclude_patterns), 
+                              app.depth,
                               old_roster, new_roster, app);
     }
 
