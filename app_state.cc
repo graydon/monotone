@@ -35,14 +35,9 @@ using std::string;
 using std::vector;
 using std::vector;
 
-static string const database_option("database");
-static string const branch_option("branch");
-static string const key_option("key");
-static string const keydir_option("keydir");
-
 app_state::app_state()
   : branch_name(""), db(system_path()),
-    keys(this), recursive(false),
+    keys(this), work(db, lua), recursive(false),
     stdhooks(true), rcfiles(true), diffs(false),
     no_merges(false), set_default(false),
     verbose(false), date_set(false),
@@ -54,8 +49,8 @@ app_state::app_state()
     bind_stdio(false), use_transport_auth(true),
     missing(false), unknown(false), brief(false),
     confdir(get_default_confdir()),
-    have_set_key_dir(false), no_files(false),
-    requested_help(false),
+    have_set_key_dir(false), have_set_key(false),
+    no_files(false), requested_help(false), branch_is_sticky(false),
     automate_stdio_size(1024)
 {
   db.set_app(this);
@@ -87,14 +82,10 @@ app_state::allow_workspace()
 
   if (found_workspace)
     {
-      // We read the options, but we don't process them here.  That's
-      // done with process_options().
-      read_options();
-
       if (global_sanity.filename.empty())
         {
           bookkeeping_path dump_path;
-          get_local_dump_path(dump_path);
+          work.get_local_dump_path(dump_path);
           L(FL("setting dump path to %s") % dump_path);
           // The 'true' means that, e.g., if we're running checkout,
           // then it's okay for dumps to go into our starting working
@@ -108,28 +99,49 @@ app_state::allow_workspace()
 void
 app_state::process_options()
 {
-  if (found_workspace) {
-    if (!options[database_option]().empty())
-      {
-        system_path dbname = system_path(options[database_option]);
-        db.set_filename(dbname);
-      }
+  utf8 database_option, branch_option, key_option, keydir_option;
 
-    if (!options[keydir_option]().empty())
-      {
-        system_path keydir = system_path(options[keydir_option]);
-        set_key_dir(keydir);
-      }
+  if (!found_workspace)
+    return;
 
-    if (branch_name().empty() && !options[branch_option]().empty())
-      branch_name = options[branch_option];
+  work.check_ws_format();
+  work.get_ws_options(database_option, branch_option,
+                      key_option, keydir_option);
 
-    L(FL("branch name is '%s'") % branch_name());
+  // Workspace options are not to override the command line.
+  if (db.get_filename().as_internal().empty() && !database_option().empty())
+    db.set_filename(system_path(database_option));
 
-          if (!options[key_option]().empty())
-                  internalize_rsa_keypair_id(options[key_option],
-                                             signing_key);
-  }
+  if (keys.get_key_dir().as_internal().empty() && !keydir_option().empty())
+    set_key_dir(system_path(keydir_option));
+
+  if (branch_name().empty() && !branch_option().empty())
+    {
+      branch_name = branch_option;
+      branch_is_sticky = true;
+    }
+
+  L(FL("branch name is '%s'") % branch_name());
+
+  if (!have_set_key)
+    internalize_rsa_keypair_id(key_option, signing_key);
+}
+
+void
+app_state::write_options()
+{
+  utf8 database_option, branch_option, key_option, keydir_option;
+
+  database_option = db.get_filename().as_internal();
+  keydir_option = keys.get_key_dir().as_internal();
+
+  if (branch_is_sticky)
+    branch_option = branch_name;
+
+  if (have_set_key)
+    externalize_rsa_keypair_id(signing_key, key_option);
+  work.set_ws_options(database_option, branch_option,
+                      key_option, keydir_option);
 }
 
 void
@@ -164,10 +176,11 @@ app_state::create_workspace(system_path const & new_dir)
 
   write_options();
 
-  blank_user_log();
+  work.write_ws_format();
+  work.blank_user_log();
 
   if (lua.hook_use_inodeprints())
-    enable_inodeprints();
+    work.enable_inodeprints();
 
   load_rcfiles();
 }
@@ -175,9 +188,8 @@ app_state::create_workspace(system_path const & new_dir)
 void
 app_state::set_database(system_path const & filename)
 {
-  if (!filename.empty()) db.set_filename(filename);
-
-  options[database_option] = filename.as_internal();
+  if (!filename.empty())
+    db.set_filename(filename);
 }
 
 void
@@ -188,8 +200,6 @@ app_state::set_key_dir(system_path const & filename)
       keys.set_key_dir(filename);
       have_set_key_dir = true;
     }
-
-  options[keydir_option] = filename.as_internal();
 }
 
 void
@@ -201,7 +211,7 @@ app_state::set_branch(utf8 const & branch)
 void
 app_state::make_branch_sticky()
 {
-  options[branch_option] = branch_name();
+  branch_is_sticky = true;
   if (found_workspace)
     {
       // Already have a workspace, can (must) write options directly,
@@ -216,8 +226,7 @@ void
 app_state::set_signing_key(utf8 const & key)
 {
   internalize_rsa_keypair_id(key, signing_key);
-
-  options[key_option] = key;
+  have_set_key = true;
 }
 
 void
@@ -417,43 +426,6 @@ app_state::load_rcfiles()
        i != extra_rcfiles.end(); ++i)
     {
       lua.load_rcfile(*i);
-    }
-}
-
-void
-app_state::read_options()
-{
-  bookkeeping_path o_path;
-  get_options_path(o_path);
-  try
-    {
-      if (path_exists(o_path))
-        {
-          data dat;
-          read_data(o_path, dat);
-          read_options_map(dat, options);
-        }
-    }
-  catch(exception &)
-    {
-      W(F("Failed to read options file %s") % o_path);
-    }
-}
-
-void
-app_state::write_options()
-{
-  bookkeeping_path o_path;
-  get_options_path(o_path);
-  try
-    {
-      data dat;
-      write_options_map(dat, options);
-      write_data(o_path, dat);
-    }
-  catch(exception &)
-    {
-      W(F("Failed to write options file %s") % o_path);
     }
 }
 

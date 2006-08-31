@@ -216,6 +216,8 @@ public:
 
 extern bookkeeping_path const bookkeeping_root;
 extern path_component const bookkeeping_root_component;
+// for migration
+extern file_path const old_bookkeeping_root;
 
 // this will always be an absolute path
 class system_path : public any_path
