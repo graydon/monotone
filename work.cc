@@ -838,10 +838,6 @@ void update_any_attrs(app_state & app)
       split_path sp;
       new_roster.get_name(i->first, sp);
 
-      // FIXME_RESTRICTIONS: do we need this check?
-      // if (!app.restriction_includes(sp))
-      //  continue;
-
       node_t n = i->second;
       for (full_attr_map_t::const_iterator j = n->attrs.begin();
            j != n->attrs.end(); ++j)
