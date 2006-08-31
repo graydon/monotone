@@ -590,7 +590,7 @@ CMD(explicit_merge_and_update, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION"),
     N_("merge two explicitly given revisions, "
        "and update the current workspace with the result"),
-    OPT_DATE % OPT_AUTHOR)
+    option::date % option::author)
 {
   revision_id left, right;
   string branch;

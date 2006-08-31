@@ -1,3 +1,8 @@
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (explicit_merge_and_update): Fix for
+	boost::program_options merge.
+
 2006-08-21  Zack Weinberg  <zackw@panix.com>
 
 	* cmd_merging.cc (pick_branch_for_update): New function split out
