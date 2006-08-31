@@ -1,5 +1,15 @@
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
+	* work.cc: No need to include app_state.cc.
+	(workspace::update_current_roster_from_filesystem): Put back
+	variant that doesn't take a node_restriction.
+	(workspace::maybe_update_inodeprints): Remove app_state argument.
+	Use 1-argument update_current_roster_from_filesystem.
+	* work.hh: Update to match.
+	* automate.cc, cmd_merging.cc, cmd_ws_commit.cc: All callers changed.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
 	* automate.cc (get_option): Rewrite for revised _MTN/options
 	handling.
 

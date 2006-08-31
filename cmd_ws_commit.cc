@@ -170,7 +170,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   // Race.
   app.work.put_work_rev(remaining);
   app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints();
 }
 
 CMD(disapprove, N_("review"), N_("REVISION"),
@@ -273,8 +273,9 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
     {
       temp_node_id_source nis;
       roster_t current_roster_shape;
-      app.work.get_current_roster_shape(current_roster_shape, nis, app);
-      node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+      app.work.get_current_roster_shape(current_roster_shape, nis);
+      node_restriction mask(args_to_paths(args),
+                            args_to_paths(app.exclude_patterns),
                             app.depth,
                             current_roster_shape, app);
       app.work.find_missing(current_roster_shape, mask, paths);
@@ -536,7 +537,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
     }
 
   app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints();
   guard.commit();
 }
 
@@ -858,7 +859,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   }
 
   app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints();
 
   {
     // Tell lua what happened. Yes, we might lose some information
@@ -929,7 +930,7 @@ CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
 {
   app.require_workspace();
   app.work.enable_inodeprints();
-  app.work.maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints();
 }
 
 

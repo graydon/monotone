@@ -222,8 +222,7 @@ CMD(update, N_("workspace"), "",
   MM(*old_roster);
   roster_t working_roster; MM(working_roster);
   app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster, 
-                                                 node_restriction(app));
+  app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the CHOSEN roster
   roster_t chosen_roster; MM(chosen_roster);
@@ -263,7 +262,7 @@ CMD(update, N_("workspace"), "",
   P(F("updated to base revision %s") % chosen_rid);
 
   app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints(app);
+  app.work.maybe_update_inodeprints();
 }
 
 // Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
@@ -739,8 +738,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
   app.work.get_base_and_current_roster_shape(base_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster,
-                                                 node_restriction(app));
+  app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the FROM->TO cset...
   cset from_to_to; MM(from_to_to);
