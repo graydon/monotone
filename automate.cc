@@ -1476,10 +1476,22 @@ AUTOMATE(get_option, N_("OPTION"))
   // this command requires a workspace to be run on
   app.require_workspace();
 
-  utf8 result = app.options[args[0]()];
-  N(result().size() > 0,
-    F("option %s doesn't exist") % args[0]);
-  output << result << endl;
+  utf8 database_option, branch_option, key_option, keydir_option;
+  app.work.get_ws_options(database_option, branch_option,
+                          key_option, keydir_option);
+
+  string opt = args[0]();
+
+  if (opt == "database")
+    output << database_option << endl; 
+  else if (opt == "branch")
+    output << branch_option << endl;
+  else if (opt == "key")
+    output << key_option << endl;
+  else if (opt == "keydir")
+    output << keydir_option << endl;
+  else
+    N(false, F("'%s' is not a recognized workspace option") % opt);
 }
 
 // Local Variables:

@@ -1,3 +1,8 @@
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* automate.cc (get_option): Rewrite for revised _MTN/options
+	handling.
+
 2006-08-27  Zack Weinberg  <zackw@panix.com>
 
 	Cleanup after merge from mainline.
