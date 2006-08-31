@@ -315,50 +315,6 @@ CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the spec
 #undef maybe_throw_bare
 }
 
-void
-maybe_update_inodeprints(app_state & app)
-{
-  if (!in_inodeprints_mode())
-    return;
-  inodeprint_map ipm_new;
-  temp_node_id_source nis;
-  roster_t old_roster, new_roster;
-
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  update_current_roster_from_filesystem(new_roster, app);
-
-  node_map const & new_nodes = new_roster.all_nodes();
-  for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      if (old_roster.has_node(nid))
-        {
-          node_t old_node = old_roster.get_node(nid);
-          if (is_file_t(old_node))
-            {
-              node_t new_node = i->second;
-              I(is_file_t(new_node));
-
-              file_t old_file = downcast_to_file_t(old_node);
-              file_t new_file = downcast_to_file_t(new_node);
-
-              if (new_file->content == old_file->content)
-                {
-                  split_path sp;
-                  new_roster.get_name(nid, sp);
-                  file_path fp(sp);
-                  hexenc<inodeprint> ip;
-                  if (inodeprint_file(fp, ip))
-                    ipm_new.insert(inodeprint_entry(fp, ip));
-                }
-            }
-        }
-    }
-  data dat;
-  write_inodeprint_map(ipm_new, dat);
-  write_inodeprints(dat);
-}
-
 string
 get_stdin()
 {

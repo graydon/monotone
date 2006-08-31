@@ -359,15 +359,14 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       roster_t new_roster, old_roster;
       revision_id old_rid;
 
-      get_base_and_current_roster_shape(old_roster, new_roster, 
-                                        nis, app);
-      get_revision_id(old_rid);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_revision_id(old_rid);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
                             old_roster, new_roster, app);
 
-      update_current_roster_from_filesystem(new_roster, mask, app);
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster, 
                             included, excluded, mask);
       check_restricted_cset(old_roster, included);
@@ -384,9 +383,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
-      get_base_and_current_roster_shape(old_roster, 
-                                        new_roster, 
-                                        nis, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
 
@@ -397,7 +394,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
                             args_to_paths(app.exclude_patterns), 
                             old_roster, new_roster, app);
 
-      update_current_roster_from_filesystem(new_roster, mask, app);
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster, 
                             included, excluded, mask);
       check_restricted_cset(old_roster, included);
@@ -553,7 +550,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
   if (app.revision_selectors.size() == 0)
     {
-      get_revision_id(first_rid);
+      app.work.get_revision_id(first_rid);
       frontier.insert(first_rid);
     }
   else
@@ -577,8 +574,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       roster_t old_roster, new_roster;
 
       if (app.revision_selectors.size() == 0)
-        get_base_and_current_roster_shape(old_roster, 
-                                          new_roster, nis, app);
+        app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       else
         app.db.get_roster(first_rid, new_roster);
 
