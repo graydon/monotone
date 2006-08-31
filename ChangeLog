@@ -1,3 +1,7 @@
+2006-08-31  Zack Weinberg  <zackw@panix.com>
+
+	* work.hh: Update comment describing contents of _MTN directory.
+
 2006-08-30  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc: No need to include app_state.cc.
