@@ -572,7 +572,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         }
     }
 
-  node_restriction mask(app);
+  node_restriction mask;
 
   if (args.size() > 0)
     {

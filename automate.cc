@@ -742,7 +742,7 @@ AUTOMATE(inventory, "")
   classify_roster_paths(curr, unchanged, changed, missing, app);
   curr.extract_path_set(known);
 
-  path_restriction mask(app);
+  path_restriction mask;
   file_itemizer u(app, known, unknown, ignored, mask);
   walk_tree(file_path(), u);
 
