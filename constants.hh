@@ -46,11 +46,17 @@ namespace constants
   // truncated.
   extern size_t const db_log_line_sz;
 
-  // size in bytes of the database xdelta version reconstruction cache
+  // maximum size in bytes of the database xdelta version reconstruction
+  // cache
   extern size_t const db_version_cache_sz;
 
-  // size in bytes of the write-back roster cache
+  // maximum size in bytes of the write-back roster cache
   extern size_t const db_roster_cache_sz;
+
+  // estimated number of bytes taken for a node_t and its corresponding
+  // marking_t.  used to estimate the current size of the write-back roster
+  // cache
+  extern size_t const db_estimated_roster_node_sz;
 
   // maximum number of bytes to be consumed with the delayed write cache
   extern unsigned long const db_max_delayed_file_bytes;

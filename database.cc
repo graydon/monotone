@@ -942,7 +942,7 @@ database::roster_size_estimator::operator()(cached_roster const & cr)
   I(cr.first);
   I(cr.second);
   // do estimate using a totally made up multiplier, probably wildly off
-  return cr.first->all_nodes().size() * 175;
+  return cr.first->all_nodes().size() * constants::db_estimated_roster_node_sz;
 }
 
 void
