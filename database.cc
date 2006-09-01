@@ -231,7 +231,7 @@ database::check_format()
           F("database %s contains revisions but no rosters\n"
             "probably this is because an upgrade cleared the roster cache\n"
             "run '%s db regenerate_rosters' to restore use of this database")
-          % filename % __app->prog_name);
+          % filename % ui.prog_name);
       else
         // we're all good.
         ;
@@ -1386,6 +1386,9 @@ database::get_roster_version(roster_id id,
       apply_roster_delta(del, *roster, *marking);
       curr = nxt;
     }
+
+  // double-check that the thing we got out looks okay
+  roster->check_sane_against(*marking);
 
   // const'ify the objects, to save them and pass them out
   cr.first = roster;
