@@ -528,8 +528,7 @@ ancestry_difference(revision_id const & a, set<revision_id> const & bs,
 }
 
 void
-select_nodes_modified_by_rev(revision_id const & rid,
-                             revision_t const & rev,
+select_nodes_modified_by_rev(revision_t const & rev,
                              roster_t const new_roster,
                              set<node_id> & nodes_modified,
                              app_state & app)

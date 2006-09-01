@@ -61,7 +61,10 @@ AM_ICONV
 AC_PROG_XGETTEXT_FLAG_OPTION
 # similarly, this calls ACX_PTHREAD, which expects C.
 BOOST_THREAD_STUBS
+
 AC_LANG([C++])
+# This header may not be visible to the C compiler.
+AC_CHECK_HEADERS([cxxabi.h],,, [AC_INCLUDES_DEFAULT()])
 
 # check for language features and compiler bugs
 AC_CXX_TYPEOF
@@ -88,7 +91,8 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 # Checks for library functions.
 AC_FUNC_STAT
 AC_FUNC_LOCALE_WORKS
-AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint])
+AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint \
+		__cxa_current_exception_type __cxa_demangle])
 
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))

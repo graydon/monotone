@@ -136,7 +136,7 @@ CMD(update, N_("workspace"), "",
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
-          P(F("choose one with '%s update -r<id>'") % app.prog_name);
+          P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
       chosen_rid = *(candidates.begin());
@@ -706,7 +706,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
           "to apply the changes relative to one of its parents, use:\n"
           "  %s pluck -r PARENT -r %s")
         % to_rid
-        % app.prog_name % to_rid);
+        % ui.prog_name % to_rid);
       from_rid = *parents.begin();
     }
   else if (app.revision_selectors.size() == 2)
@@ -774,6 +774,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     app.db.get_roster(to_rid, to_true_roster);
     node_restriction mask(args_to_paths(args),
                           args_to_paths(app.exclude_patterns),
+                          app.depth,
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,

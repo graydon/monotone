@@ -82,6 +82,7 @@ public:
   bool use_transport_auth;
   bool missing;
   bool unknown;
+  bool brief;
   std::vector<rsa_keypair_id> keys_to_push;
   system_path confdir;
   bool have_set_key_dir;
@@ -139,7 +140,6 @@ public:
   void set_diff_args(utf8 const & args);
   void add_key_to_push(utf8 const & key);
   void set_recursive(bool r = true);
-  void set_prog_name(utf8 const & prog_name);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
@@ -152,10 +152,6 @@ public:
 
   explicit app_state();
   ~app_state();
-
-  // Only use set_prog_name to set this; changes need to be propagated
-  // to the global ui object.
-  utf8 prog_name;
 
 private:
   void load_rcfiles();

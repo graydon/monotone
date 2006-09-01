@@ -142,8 +142,7 @@ ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
 // FIXME: can probably optimize this passing a lookaside cache of the active
 // frontier set of shared_ptr<roster_t>s, while traversing history.
 void
-select_nodes_modified_by_rev(revision_id const & rid,
-                             revision_t const & rev,
+select_nodes_modified_by_rev(revision_t const & rev,
                              roster_t const roster,
                              std::set<node_id> & nodes_modified,
                              app_state & app);

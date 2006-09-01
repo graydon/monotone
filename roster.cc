@@ -28,6 +28,7 @@
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
+#include "ui.hh"
 
 #include <boost/lexical_cast.hpp>
 
@@ -2388,15 +2389,15 @@ update_current_roster_from_filesystem(roster_t & ros,
       "'%s revert FILE' to restore it\n"
       "or to handle all at once, simply '%s drop --missing'\n"
       "or '%s revert --missing'")
-    % missing_files % app.prog_name % app.prog_name % app.prog_name
-    % app.prog_name % app.prog_name);
+    % missing_files % ui.prog_name % ui.prog_name % ui.prog_name
+    % ui.prog_name % ui.prog_name);
 }
 
 void
 update_current_roster_from_filesystem(roster_t & ros,
                                       app_state & app)
 {
-  node_restriction tmp(app);
+  node_restriction tmp;
   update_current_roster_from_filesystem(ros, tmp, app);
 }
 

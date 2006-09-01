@@ -11,14 +11,7 @@ function note_netsync_start(nonce)
    netsync_branches[nonce] = {}
 end
 
-function note_netsync_revision_received(new_id,revision,certs,nonce)
-   for _, item in pairs(certs)
-   do
-      note_netsync_cert_received(new_id,item.key,item.name,item.value,nonce)
-   end
-end
-
-function note_netsync_cert_received(rev_id,key,name,value,nonce)
+function _note_netsync_cert_received(rev_id,key,name,value,nonce)
    if name == "branch" then
       if netsync_branches[nonce][value] == nil then
          netsync_branches[nonce][value] = 1
@@ -26,6 +19,17 @@ function note_netsync_cert_received(rev_id,key,name,value,nonce)
          netsync_branches[nonce][value] = netsync_branches[nonce][value] + 1
       end
    end
+end
+
+function note_netsync_revision_received(new_id,revision,certs,nonce)
+   for _, item in pairs(certs)
+   do
+      _note_netsync_cert_received(new_id,item.key,item.name,item.value,nonce)
+   end
+end
+
+function note_netsync_cert_received(rev_id,key,name,value,nonce)
+   _note_netsync_cert_received(rev_id,key,name,value,nonce)
 end
 
 function note_netsync_end(nonce)

@@ -365,6 +365,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
+                            app.depth,
                             old_roster, new_roster, app);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
@@ -395,6 +396,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns), 
+                            app.depth,
                             old_roster, new_roster, app);
 
       update_current_roster_from_filesystem(new_roster, mask, app);
@@ -423,6 +425,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
+                            app.depth,
                             old_roster, new_roster, app);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
@@ -569,7 +572,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         }
     }
 
-  node_restriction mask(app);
+  node_restriction mask;
 
   if (args.size() > 0)
     {
@@ -586,6 +589,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // all selected revs?
       mask = node_restriction(args_to_paths(args),
                               args_to_paths(app.exclude_patterns), 
+                              app.depth,
                               old_roster, new_roster, app);
     }
 
@@ -635,7 +639,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               app.db.get_roster(rid, roster);
 
               set<node_id> nodes_modified;
-              select_nodes_modified_by_rev(rid, rev, roster,
+              select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
                                            app);
 
@@ -678,7 +682,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           if (print_this)
           {
-            if (global_sanity.brief)
+            if (app.brief)
               {
                 cout << rid;
                 log_certs(app, rid, author_name);

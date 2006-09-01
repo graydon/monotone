@@ -173,7 +173,7 @@ database::check_schema()
        "wanted schema %s, got %s\n"
        "try '%s db migrate' to upgrade\n"
        "(this is irreversible; you may want to make a backup copy first)")
-     % filename % schema % db_schema_id % __app->prog_name);
+     % filename % schema % db_schema_id % ui.prog_name);
 }
 
 void
