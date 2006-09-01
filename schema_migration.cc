@@ -25,6 +25,7 @@
 #include "app_state.hh"
 #include "keys.hh"
 #include "transforms.hh"
+#include "ui.hh"
 
 using std::ctype;
 using std::locale;
@@ -331,13 +332,13 @@ migrator
               P(F("NOTE: because this database was last used by a rather old version\n"
                   "of monotone, you're not done yet.  If you're a project leader, then\n"
                   "see the file UPGRADE for instructions on running '%s db %s'")
-                % __app->prog_name % command_str);
+                % ui.prog_name % command_str);
             }
             break;
           case upgrade_regen_rosters:
             P(F("NOTE: this upgrade cleared the roster cache\n"
                 "you should now run '%s db regenerate_rosters'")
-              % __app->prog_name);
+              % ui.prog_name);
             break;
           case upgrade_none:
             break;
