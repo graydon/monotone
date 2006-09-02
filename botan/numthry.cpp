@@ -165,62 +165,6 @@ BigInt inverse_mod(const BigInt& n, const BigInt& mod)
    }
 
 /*************************************************
-* Calculate the Jacobi symbol                    *
-*************************************************/
-s32bit jacobi(const BigInt& a, const BigInt& n)
-   {
-   if(a.is_negative())
-      throw Invalid_Argument("jacobi: first argument must be non-negative");
-   if(n.is_even() || n < 2)
-      throw Invalid_Argument("jacobi: second argument must be odd and > 1");
-
-   BigInt x = a, y = n;
-   s32bit J = 1;
-
-   while(y > 1)
-      {
-      x %= y;
-      if(x > y / 2)
-         {
-         x = y - x;
-         if(y % 4 == 3)
-            J = -J;
-         }
-      if(x.is_zero())
-         return 0;
-      while(x % 4 == 0)
-         x >>= 2;
-      if(x.is_even())
-         {
-         x >>= 1;
-         if(y % 8 == 3 || y % 8 == 5)
-            J = -J;
-         }
-      if(x % 4 == 3 && y % 4 == 3)
-         J = -J;
-      std::swap(x, y);
-      }
-   return J;
-   }
-
-/*************************************************
-* Exponentiation                                 *
-*************************************************/
-BigInt power(const BigInt& base, u32bit exp)
-   {
-   BigInt x = 1, a = base;
-   while(exp)
-      {
-      if(exp % 2)
-         x *= a;
-      exp >>= 1;
-      if(exp)
-         a = square(a);
-      }
-   return x;
-   }
-
-/*************************************************
 * Modular Exponentiation                         *
 *************************************************/
 BigInt power_mod(const BigInt& base, const BigInt& exp, const BigInt& mod)

@@ -5,7 +5,8 @@
 
 #include <botan/if_algo.h>
 #include <botan/numthry.h>
-#include <botan/asn1.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 
 namespace Botan {
 
@@ -14,12 +15,12 @@ namespace Botan {
 *************************************************/
 MemoryVector<byte> IF_Scheme_PublicKey::DER_encode_pub() const
    {
-   DER_Encoder encoder;
-   encoder.start_sequence();
-   DER::encode(encoder, n);
-   DER::encode(encoder, e);
-   encoder.end_sequence();
-   return encoder.get_contents();
+   return DER_Encoder()
+      .start_cons(SEQUENCE)
+         .encode(n)
+         .encode(e)
+      .end_cons()
+   .get_contents();
    }
 
 /*************************************************
@@ -27,9 +28,7 @@ MemoryVector<byte> IF_Scheme_PublicKey::DER_encode_pub() const
 *************************************************/
 MemoryVector<byte> IF_Scheme_PublicKey::DER_encode_params() const
    {
-   DER_Encoder encoder;
-   DER::encode_null(encoder);
-   return encoder.get_contents();
+   return DER_Encoder().encode_null().get_contents();
    }
 
 /*************************************************
@@ -37,11 +36,12 @@ MemoryVector<byte> IF_Scheme_PublicKey::DER_encode_params() const
 *************************************************/
 void IF_Scheme_PublicKey::BER_decode_pub(DataSource& source)
    {
-   BER_Decoder decoder(source);
-   BER_Decoder sequence = BER::get_subsequence(decoder);
-   BER::decode(sequence, n);
-   BER::decode(sequence, e);
-   sequence.verify_end();
+   BER_Decoder(source)
+      .start_cons(SEQUENCE)
+         .decode(n)
+         .decode(e)
+         .verify_end()
+      .end_cons();
 
    X509_load_hook();
    }
@@ -61,19 +61,19 @@ void IF_Scheme_PublicKey::BER_decode_params(DataSource& source)
 *************************************************/
 SecureVector<byte> IF_Scheme_PrivateKey::DER_encode_priv() const
    {
-   DER_Encoder encoder;
-   encoder.start_sequence();
-   DER::encode(encoder, 0);
-   DER::encode(encoder, n);
-   DER::encode(encoder, e);
-   DER::encode(encoder, d);
-   DER::encode(encoder, p);
-   DER::encode(encoder, q);
-   DER::encode(encoder, d1);
-   DER::encode(encoder, d2);
-   DER::encode(encoder, c);
-   encoder.end_sequence();
-   return encoder.get_contents();
+   return DER_Encoder()
+      .start_cons(SEQUENCE)
+         .encode((u32bit)0)
+         .encode(n)
+         .encode(e)
+         .encode(d)
+         .encode(p)
+         .encode(q)
+         .encode(d1)
+         .encode(d2)
+         .encode(c)
+      .end_cons()
+   .get_contents();
    }
 
 /*************************************************
@@ -83,20 +83,21 @@ void IF_Scheme_PrivateKey::BER_decode_priv(DataSource& source)
    {
    u32bit version;
 
-   BER_Decoder decoder(source);
-   BER_Decoder sequence = BER::get_subsequence(decoder);
-   BER::decode(sequence, version);
+   BER_Decoder(source)
+      .start_cons(SEQUENCE)
+         .decode(version)
+         .decode(n)
+         .decode(e)
+         .decode(d)
+         .decode(p)
+         .decode(q)
+         .decode(d1)
+         .decode(d2)
+         .decode(c)
+      .end_cons();
+
    if(version != 0)
       throw Decoding_Error(algo_name() + ": Unknown PKCS #1 key version");
-   BER::decode(sequence, n);
-   BER::decode(sequence, e);
-   BER::decode(sequence, d);
-   BER::decode(sequence, p);
-   BER::decode(sequence, q);
-   BER::decode(sequence, d1);
-   BER::decode(sequence, d2);
-   BER::decode(sequence, c);
-   sequence.verify_end();
 
    PKCS8_load_hook();
    check_loaded_private();

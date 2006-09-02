@@ -3,7 +3,9 @@
 * (C) 1999-2006 The Botan Project                *
 *************************************************/
 
-#include <botan/asn1.h>
+#include <botan/asn1_oid.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/bit_ops.h>
 #include <botan/parsing.h>
 
@@ -109,46 +111,38 @@ bool operator<(const OID& a, const OID& b)
    return false;
    }
 
-namespace DER {
-
 /*************************************************
 * DER encode an OBJECT IDENTIFIER                *
 *************************************************/
-void encode(DER_Encoder& encoder, const OID& oid_obj)
+void OID::encode_into(DER_Encoder& der) const
    {
-   std::vector<u32bit> oid = oid_obj.get_id();
-
-   if(oid.size() < 2)
-      throw Invalid_Argument("DER::encode(OID): OID is invalid");
+   if(id.size() < 2)
+      throw Invalid_Argument("OID::encode_into: OID is invalid");
 
    MemoryVector<byte> encoding;
-   encoding.append(40 * oid[0] + oid[1]);
+   encoding.append(40 * id[0] + id[1]);
 
-   for(u32bit j = 2; j != oid.size(); ++j)
+   for(u32bit j = 2; j != id.size(); ++j)
       {
-      if(oid[j] == 0)
+      if(id[j] == 0)
          encoding.append(0);
       else
          {
-         u32bit blocks = high_bit(oid[j]) + 6;
+         u32bit blocks = high_bit(id[j]) + 6;
          blocks = (blocks - (blocks % 7)) / 7;
 
          for(u32bit k = 0; k != blocks - 1; ++k)
-            encoding.append(0x80 | ((oid[j] >> 7*(blocks-k-1)) & 0x7F));
-         encoding.append(oid[j] & 0x7F);
+            encoding.append(0x80 | ((id[j] >> 7*(blocks-k-1)) & 0x7F));
+         encoding.append(id[j] & 0x7F);
          }
       }
-   encoder.add_object(OBJECT_ID, UNIVERSAL, encoding);
+   der.add_object(OBJECT_ID, UNIVERSAL, encoding);
    }
-
-}
-
-namespace BER {
 
 /*************************************************
 * Decode a BER encoded OBJECT IDENTIFIER         *
 *************************************************/
-void decode(BER_Decoder& decoder, OID& oid)
+void OID::decode_from(BER_Decoder& decoder)
    {
    BER_Object obj = decoder.get_next_object();
    if(obj.type_tag != OBJECT_ID || obj.class_tag != UNIVERSAL)
@@ -157,9 +151,10 @@ void decode(BER_Decoder& decoder, OID& oid)
    if(obj.value.size() < 2)
       throw BER_Decoding_Error("OID encoding is too short");
 
-   oid.clear();
-   oid += (obj.value[0] / 40);
-   oid += (obj.value[0] % 40);
+
+   clear();
+   id.push_back(obj.value[0] / 40);
+   id.push_back(obj.value[0] % 40);
 
    u32bit j = 0;
    while(j != obj.value.size() - 1)
@@ -172,10 +167,8 @@ void decode(BER_Decoder& decoder, OID& oid)
          if(!(obj.value[j] & 0x80))
             break;
          }
-      oid += component;
+      id.push_back(component);
       }
    }
-
-}
 
 }

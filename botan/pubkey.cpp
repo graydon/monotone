@@ -4,10 +4,12 @@
 *************************************************/
 
 #include <botan/pubkey.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
+#include <botan/bigint.h>
 #include <botan/parsing.h>
 #include <botan/bit_ops.h>
 #include <botan/lookup.h>
-#include <botan/asn1.h>
 #include <memory>
 
 namespace Botan {
@@ -195,13 +197,11 @@ SecureVector<byte> PK_Signer::signature()
       for(u32bit j = 0; j != sig_parts.size(); ++j)
          sig_parts[j].binary_decode(plain_sig + SIZE_OF_PART*j, SIZE_OF_PART);
 
-      DER_Encoder der_sig;
-      der_sig.start_sequence();
-      for(u32bit j = 0; j != sig_parts.size(); ++j)
-         DER::encode(der_sig, sig_parts[j]);
-      der_sig.end_sequence();
-
-      return der_sig.get_contents();
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode_list(sig_parts)
+         .end_cons()
+      .get_contents();
       }
    else
       throw Encoding_Error("PK_Signer: Unknown signature format " +
@@ -289,14 +289,14 @@ bool PK_Verifier::check_signature(const byte sig[], u32bit length)
       else if(sig_format == DER_SEQUENCE)
          {
          BER_Decoder decoder(sig, length);
-         BER_Decoder ber_sig = BER::get_subsequence(decoder);
+         BER_Decoder ber_sig = decoder.start_cons(SEQUENCE);
 
          u32bit count = 0;
          SecureVector<byte> real_sig;
          while(ber_sig.more_items())
             {
             BigInt sig_part;
-            BER::decode(ber_sig, sig_part);
+            ber_sig.decode(sig_part);
             real_sig.append(BigInt::encode_1363(sig_part,
                                                 key.message_part_size()));
             ++count;

@@ -16,13 +16,13 @@ namespace {
 /*************************************************
 * EAX MAC-based PRF                              *
 *************************************************/
-SecureVector<byte> eax_prf(byte param, u32bit BLOCK_SIZE,
+SecureVector<byte> eax_prf(byte tag, u32bit BLOCK_SIZE,
                            MessageAuthenticationCode* mac,
                            const byte in[], u32bit length)
    {
    for(u32bit j = 0; j != BLOCK_SIZE - 1; ++j)
       mac->update(0);
-   mac->update(param);
+   mac->update(tag);
    mac->update(in, length);
    return mac->final();
    }

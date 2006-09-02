@@ -4,45 +4,9 @@
 *************************************************/
 
 #include <botan/mutex.h>
+#include <botan/libstate.h>
 
 namespace Botan {
-
-namespace {
-
-/*************************************************
-* Default Mutex                                  *
-*************************************************/
-class Default_Mutex : public Mutex
-   {
-   public:
-      void lock();
-      void unlock();
-      Default_Mutex() { locked = false; }
-   private:
-      bool locked;
-   };
-
-/*************************************************
-* Lock the mutex                                 *
-*************************************************/
-void Default_Mutex::lock()
-   {
-   if(locked)
-      throw Internal_Error("Default_Mutex::lock: Mutex is already locked");
-   locked = true;
-   }
-
-/*************************************************
-* Unlock the mutex                               *
-*************************************************/
-void Default_Mutex::unlock()
-   {
-   if(!locked)
-      throw Internal_Error("Default_Mutex::unlock: Mutex is already unlocked");
-   locked = false;
-   }
-
-}
 
 /*************************************************
 * Mutex_Holder Constructor                       *
@@ -63,10 +27,57 @@ Mutex_Holder::~Mutex_Holder()
    }
 
 /*************************************************
+* Named_Mutex_Holder Constructor                 *
+*************************************************/
+Named_Mutex_Holder::Named_Mutex_Holder(const std::string& name) :
+   mutex_name(name)
+   {
+   global_state().get_named_mutex(mutex_name)->lock();
+   }
+
+/*************************************************
+* Named_Mutex_Holder Destructor                  *
+*************************************************/
+Named_Mutex_Holder::~Named_Mutex_Holder()
+   {
+   global_state().get_named_mutex(mutex_name)->unlock();
+   }
+
+/*************************************************
 * Default Mutex Factory                          *
 *************************************************/
-Mutex* Mutex_Factory::make()
+Mutex* Default_Mutex_Factory::make()
    {
+   class Default_Mutex : public Mutex
+      {
+      public:
+         class Mutex_State_Error : public Internal_Error
+            {
+            public:
+               Mutex_State_Error(const std::string& where) :
+                  Internal_Error("Default_Mutex::" + where + ": " +
+                                 "Mutex is already " + where + "ed") {}
+            };
+
+         void lock()
+            {
+            if(locked)
+               throw Mutex_State_Error("lock");
+            locked = true;
+            }
+
+         void unlock()
+            {
+            if(!locked)
+               throw Mutex_State_Error("unlock");
+            locked = false;
+            }
+
+         Default_Mutex() { locked = false; }
+      private:
+         bool locked;
+      };
+
    return new Default_Mutex;
    }
 

@@ -4,8 +4,10 @@
 *************************************************/
 
 #include <botan/x509self.h>
+#include <botan/x509_ext.h>
 #include <botan/x509_ca.h>
-#include <botan/conf.h>
+#include <botan/der_enc.h>
+#include <botan/config.h>
 #include <botan/look_pk.h>
 #include <botan/oids.h>
 #include <botan/pipe.h>
@@ -71,71 +73,6 @@ PK_Signer* choose_sig_format(const PKCS8_PrivateKey& key,
    return get_pk_signer(sig_key, padding, format);
    }
 
-/*************************************************
-* Encode an attribute for PKCS #10 request       *
-*************************************************/
-void do_attribute(DER_Encoder& tbs_req, DER_Encoder& attr_bits,
-                  const std::string& oid_str)
-   {
-   Attribute attr(OIDS::lookup(oid_str), attr_bits.get_contents());
-   DER::encode(tbs_req, attr);
-   }
-
-/*************************************************
-* Encode an Extension for a PKCS #10 request     *
-*************************************************/
-void do_ext(DER_Encoder& attr_encoder, DER_Encoder& extn_bits,
-            const std::string& oid)
-   {
-   Extension extn(oid, extn_bits.get_contents());
-   DER::encode(attr_encoder, extn);
-   }
-
-/*************************************************
-* Encode X.509 extensions for a PKCS #10 request *
-*************************************************/
-void encode_extensions(DER_Encoder& attr_encoder,
-                       const AlternativeName& subject_alt,
-                       bool is_CA, u32bit path_limit,
-                       Key_Constraints constraints,
-                       const std::vector<OID>& ex_constraints)
-   {
-   DER_Encoder v3_ext;
-
-   attr_encoder.start_sequence();
-   if(is_CA)
-      {
-      v3_ext.start_sequence();
-      DER::encode(v3_ext, true);
-      if(path_limit != NO_CERT_PATH_LIMIT)
-         DER::encode(v3_ext, path_limit);
-      v3_ext.end_sequence();
-      do_ext(attr_encoder, v3_ext, "X509v3.BasicConstraints");
-      }
-
-   if(subject_alt.has_items())
-      {
-      DER::encode(v3_ext, subject_alt);
-      do_ext(attr_encoder, v3_ext, "X509v3.SubjectAlternativeName");
-      }
-
-   if(constraints != NO_CONSTRAINTS)
-      {
-      DER::encode(v3_ext, constraints);
-      do_ext(attr_encoder, v3_ext, "X509v3.KeyUsage");
-      }
-
-   if(ex_constraints.size())
-      {
-      v3_ext.start_sequence();
-      for(u32bit j = 0; j != ex_constraints.size(); ++j)
-         DER::encode(v3_ext, ex_constraints[j]);
-      v3_ext.end_sequence();
-      do_ext(attr_encoder, v3_ext, "X509v3.ExtendedKeyUsage");
-      }
-   attr_encoder.end_sequence();
-   }
-
 }
 
 namespace X509 {
@@ -160,12 +97,21 @@ X509_Certificate create_self_signed_cert(const X509_Cert_Options& opts,
    else
       constraints = find_constraints(key, opts.constraints);
 
+   Extensions extensions;
+
+   extensions.add(new Cert_Extension::Subject_Key_ID(pub_key));
+   extensions.add(new Cert_Extension::Key_Usage(constraints));
+   extensions.add(
+      new Cert_Extension::Extended_Key_Usage(opts.ex_constraints));
+   extensions.add(
+      new Cert_Extension::Subject_Alternative_Name(subject_alt));
+   extensions.add(
+      new Cert_Extension::Basic_Constraints(opts.is_CA, opts.path_limit));
+
    return X509_CA::make_cert(signer.get(), sig_algo, pub_key,
-                             MemoryVector<byte>(), opts.start, opts.end,
+                             opts.start, opts.end,
                              subject_dn, subject_dn,
-                             opts.is_CA, opts.path_limit,
-                             subject_alt, subject_alt,
-                             constraints, opts.ex_constraints);
+                             extensions);
    }
 
 /*************************************************
@@ -184,49 +130,56 @@ PKCS10_Request create_cert_req(const X509_Cert_Options& opts,
 
    const u32bit PKCS10_VERSION = 0;
 
+   Extensions extensions;
+
+   extensions.add(
+      new Cert_Extension::Basic_Constraints(opts.is_CA, opts.path_limit));
+   extensions.add(
+      new Cert_Extension::Key_Usage(
+         opts.is_CA ? Key_Constraints(KEY_CERT_SIGN | CRL_SIGN) :
+                      find_constraints(key, opts.constraints)
+         )
+      );
+   extensions.add(
+      new Cert_Extension::Extended_Key_Usage(opts.ex_constraints));
+   extensions.add(
+      new Cert_Extension::Subject_Alternative_Name(subject_alt));
+
    DER_Encoder tbs_req;
 
-   tbs_req.start_sequence();
-   DER::encode(tbs_req, PKCS10_VERSION);
-   DER::encode(tbs_req, subject_dn);
-   tbs_req.add_raw_octets(pub_key);
-
-   tbs_req.start_explicit(ASN1_Tag(0));
-
-   DER_Encoder attr_encoder;
+   tbs_req.start_cons(SEQUENCE)
+      .encode(PKCS10_VERSION)
+      .encode(subject_dn)
+      .raw_bytes(pub_key)
+      .start_explicit(0);
 
    if(opts.challenge != "")
       {
       ASN1_String challenge(opts.challenge, DIRECTORY_STRING);
-      DER::encode(attr_encoder, challenge);
-      do_attribute(tbs_req, attr_encoder, "PKCS9.ChallengePassword");
+
+      tbs_req.encode(
+         Attribute("PKCS9.ChallengePassword",
+                   DER_Encoder().encode(challenge).get_contents()
+            )
+         );
       }
 
-   Key_Constraints constraints;
-   if(opts.is_CA)
-      constraints = Key_Constraints(KEY_CERT_SIGN | CRL_SIGN);
-   else
-      constraints = find_constraints(key, opts.constraints);
+   tbs_req.encode(
+      Attribute("PKCS9.ExtensionRequest",
+                DER_Encoder()
+                   .start_cons(SEQUENCE)
+                      .encode(extensions)
+                   .end_cons()
+               .get_contents()
+         )
+      )
+      .end_explicit()
+      .end_cons();
 
-   encode_extensions(attr_encoder, subject_alt, opts.is_CA, opts.path_limit,
-                     constraints, opts.ex_constraints);
-   do_attribute(tbs_req, attr_encoder, "PKCS9.ExtensionRequest");
-
-   tbs_req.end_explicit(ASN1_Tag(0));
-
-   tbs_req.end_sequence();
-
-   MemoryVector<byte> tbs_bits = tbs_req.get_contents();
-   MemoryVector<byte> sig = signer->sign_message(tbs_bits);
-
-   DER_Encoder full_req;
-   full_req.start_sequence();
-   full_req.add_raw_octets(tbs_bits);
-   DER::encode(full_req, sig_algo);
-   DER::encode(full_req, sig, BIT_STRING);
-   full_req.end_sequence();
-
-   DataSource_Memory source(full_req.get_contents());
+   DataSource_Memory source(
+      X509_Object::make_signed(signer.get(), sig_algo,
+                               tbs_req.get_contents())
+      );
 
    return PKCS10_Request(source);
    }

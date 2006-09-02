@@ -6,6 +6,8 @@
 #include <botan/x509_key.h>
 #include <botan/filters.h>
 #include <botan/asn1_obj.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/pk_algs.h>
 #include <botan/oids.h>
 #include <botan/pem.h>
@@ -26,15 +28,15 @@ u64bit X509_PublicKey::key_id() const
    pipe.write(DER_encode_params());
    pipe.end_msg();
 
-   u64bit hash = 0;
+   SecureVector<byte> output = pipe.read_all();
+
+   if(output.size() != 8)
+      throw Internal_Error("X509_PublicKey::key_id: Incorrect output size");
+
+   u64bit id = 0;
    for(u32bit j = 0; j != 8; ++j)
-      {
-      byte next = 0;
-      if(pipe.read(next) != 1)
-         throw Internal_Error("X509_PublicKey::key_id: No more hash bits");
-      hash = (hash << 8) | next;
-      }
-   return hash;
+      id = (id << 8) | output[j];
+   return id;
    }
 
 namespace X509 {
@@ -47,11 +49,12 @@ namespace {
 void X509_extract_info(DataSource& source, AlgorithmIdentifier& alg_id,
                        MemoryVector<byte>& key)
    {
-   BER_Decoder decoder(source);
-   BER_Decoder sequence = BER::get_subsequence(decoder);
-   BER::decode(sequence, alg_id);
-   BER::decode(sequence, key, BIT_STRING);
-   sequence.verify_end();
+   BER_Decoder(source)
+      .start_cons(SEQUENCE)
+         .decode(alg_id)
+         .decode(key, BIT_STRING)
+         .verify_end()
+      .end_cons();
    }
 
 }
@@ -61,15 +64,16 @@ void X509_extract_info(DataSource& source, AlgorithmIdentifier& alg_id,
 *************************************************/
 void encode(const X509_PublicKey& key, Pipe& pipe, X509_Encoding encoding)
    {
-   DER_Encoder encoder;
    AlgorithmIdentifier alg_id(key.get_oid(), key.DER_encode_params());
 
-   encoder.start_sequence();
-   DER::encode(encoder, alg_id);
-   DER::encode(encoder, key.DER_encode_pub(), BIT_STRING);
-   encoder.end_sequence();
+   MemoryVector<byte> der =
+      DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(alg_id)
+            .encode(key.DER_encode_pub(), BIT_STRING)
+         .end_cons()
+      .get_contents();
 
-   MemoryVector<byte> der = encoder.get_contents();
    if(encoding == PEM)
       pipe.write(PEM_Code::encode(der, "PUBLIC KEY"));
    else
@@ -97,7 +101,7 @@ X509_PublicKey* load_key(DataSource& source)
       AlgorithmIdentifier alg_id;
       MemoryVector<byte> key;
 
-      if(BER::maybe_BER(source) && !PEM_Code::matches(source))
+      if(ASN1::maybe_BER(source) && !PEM_Code::matches(source))
          X509_extract_info(source, alg_id, key);
       else
          {

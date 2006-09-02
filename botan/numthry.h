@@ -32,7 +32,6 @@ BigInt square(const BigInt&);
 BigInt inverse_mod(const BigInt&, const BigInt&);
 s32bit jacobi(const BigInt&, const BigInt&);
 
-BigInt power(const BigInt&, u32bit);
 BigInt power_mod(const BigInt&, const BigInt&, const BigInt&);
 
 /*************************************************

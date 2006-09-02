@@ -4,9 +4,13 @@
 *************************************************/
 
 #include <botan/pkcs10.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/parsing.h>
 #include <botan/x509stor.h>
+#include <botan/x509_ext.h>
 #include <botan/oids.h>
+#include <botan/pem.h>
 
 namespace Botan {
 
@@ -16,10 +20,6 @@ namespace Botan {
 PKCS10_Request::PKCS10_Request(DataSource& in) :
    X509_Object(in, "CERTIFICATE REQUEST/NEW CERTIFICATE REQUEST")
    {
-   is_ca = false;
-   max_path_len = 0;
-   constraints_value = NO_CONSTRAINTS;
-
    do_decode();
    }
 
@@ -29,9 +29,6 @@ PKCS10_Request::PKCS10_Request(DataSource& in) :
 PKCS10_Request::PKCS10_Request(const std::string& in) :
    X509_Object(in, "CERTIFICATE REQUEST/NEW CERTIFICATE REQUEST")
    {
-   is_ca = false;
-   max_path_len = 0;
-
    do_decode();
    }
 
@@ -43,18 +40,27 @@ void PKCS10_Request::force_decode()
    BER_Decoder cert_req_info(tbs_bits);
 
    u32bit version;
-   BER::decode(cert_req_info, version);
+   cert_req_info.decode(version);
    if(version != 0)
       throw Decoding_Error("Unknown version code in PKCS #10 request: " +
                            to_string(version));
 
-   BER::decode(cert_req_info, dn);
+   X509_DN dn_subject;
+   cert_req_info.decode(dn_subject);
+
+   info.add(dn_subject.contents());
 
    BER_Object public_key = cert_req_info.get_next_object();
    if(public_key.type_tag != SEQUENCE || public_key.class_tag != CONSTRUCTED)
       throw BER_Bad_Tag("PKCS10_Request: Unexpected tag for public key",
                         public_key.type_tag, public_key.class_tag);
-   pub_key = DER::put_in_sequence(public_key.value);
+
+   info.add("X509.Certificate.public_key",
+            PEM_Code::encode(
+               ASN1::put_in_sequence(public_key.value),
+               "PUBLIC KEY"
+               )
+      );
 
    BER_Object attr_bits = cert_req_info.get_next_object();
 
@@ -65,7 +71,7 @@ void PKCS10_Request::force_decode()
       while(attributes.more_items())
          {
          Attribute attr;
-         BER::decode(attributes, attr);
+         attributes.decode(attr);
          handle_attribute(attr);
          }
       attributes.verify_end();
@@ -75,10 +81,6 @@ void PKCS10_Request::force_decode()
                         attr_bits.type_tag, attr_bits.class_tag);
 
    cert_req_info.verify_end();
-
-   std::vector<std::string> emails = dn.get_attribute("PKCS9.EmailAddress");
-   for(u32bit j = 0; j != emails.size(); ++j)
-      subject_alt.add_attribute("RFC822", emails[j]);
 
    X509_Code sig_check = X509_Store::check_sig(*this, subject_public_key());
    if(sig_check != VERIFIED)
@@ -95,93 +97,23 @@ void PKCS10_Request::handle_attribute(const Attribute& attr)
    if(attr.oid == OIDS::lookup("PKCS9.EmailAddress"))
       {
       ASN1_String email;
-      BER::decode(value, email);
-      subject_alt.add_attribute("RFC822", email.value());
+      value.decode(email);
+      info.add("RFC822", email.value());
       }
    else if(attr.oid == OIDS::lookup("PKCS9.ChallengePassword"))
       {
       ASN1_String challenge_password;
-      BER::decode(value, challenge_password);
-      challenge = challenge_password.value();
+      value.decode(challenge_password);
+      info.add("PKCS9.ChallengePassword", challenge_password.value());
       }
    else if(attr.oid == OIDS::lookup("PKCS9.ExtensionRequest"))
       {
-      BER_Decoder sequence = BER::get_subsequence(value);
+      Extensions extensions;
+      value.decode(extensions).verify_end();
 
-      while(sequence.more_items())
-         {
-         Extension extn;
-         BER::decode(sequence, extn);
-         handle_v3_extension(extn);
-         }
-      sequence.verify_end();
+      Data_Store issuer_info;
+      extensions.contents_to(info, issuer_info);
       }
-   }
-
-/*************************************************
-* Decode a requested X.509v3 extension           *
-*************************************************/
-void PKCS10_Request::handle_v3_extension(const Extension& extn)
-   {
-   BER_Decoder value(extn.value);
-
-   if(extn.oid == OIDS::lookup("X509v3.KeyUsage"))
-      BER::decode(value, constraints_value);
-   else if(extn.oid == OIDS::lookup("X509v3.ExtendedKeyUsage"))
-      {
-      BER_Decoder key_usage = BER::get_subsequence(value);
-      while(key_usage.more_items())
-         {
-         OID usage_oid;
-         BER::decode(key_usage, usage_oid);
-         ex_constraints_list.push_back(usage_oid);
-         }
-      }
-   else if(extn.oid == OIDS::lookup("X509v3.BasicConstraints"))
-      {
-      BER_Decoder constraints = BER::get_subsequence(value);
-      BER::decode_optional(constraints, is_ca, BOOLEAN, UNIVERSAL, false);
-      BER::decode_optional(constraints, max_path_len,
-                           INTEGER, UNIVERSAL, NO_CERT_PATH_LIMIT);
-      }
-   else if(extn.oid == OIDS::lookup("X509v3.SubjectAlternativeName"))
-      BER::decode(value, subject_alt);
-   else
-      return;
-
-   value.verify_end();
-   }
-
-/*************************************************
-* Return the public key of the requestor         *
-*************************************************/
-MemoryVector<byte> PKCS10_Request::raw_public_key() const
-   {
-   return pub_key;
-   }
-
-/*************************************************
-* Return the public key of the requestor         *
-*************************************************/
-X509_PublicKey* PKCS10_Request::subject_public_key() const
-   {
-   return X509::load_key(pub_key);
-   }
-
-/*************************************************
-* Return the name of the requestor               *
-*************************************************/
-X509_DN PKCS10_Request::subject_dn() const
-   {
-   return dn;
-   }
-
-/*************************************************
-* Return the alternative names of the requestor  *
-*************************************************/
-AlternativeName PKCS10_Request::subject_alt_name() const
-   {
-   return subject_alt;
    }
 
 /*************************************************
@@ -189,7 +121,41 @@ AlternativeName PKCS10_Request::subject_alt_name() const
 *************************************************/
 std::string PKCS10_Request::challenge_password() const
    {
-   return challenge;
+   return info.get1("PKCS9.ChallengePassword");
+   }
+
+/*************************************************
+* Return the name of the requestor               *
+*************************************************/
+X509_DN PKCS10_Request::subject_dn() const
+   {
+   return create_dn(info);
+   }
+
+/*************************************************
+* Return the public key of the requestor         *
+*************************************************/
+MemoryVector<byte> PKCS10_Request::raw_public_key() const
+   {
+   DataSource_Memory source(info.get1("X509.Certificate.public_key"));
+   return PEM_Code::decode_check_label(source, "PUBLIC KEY");
+   }
+
+/*************************************************
+* Return the public key of the requestor         *
+*************************************************/
+X509_PublicKey* PKCS10_Request::subject_public_key() const
+   {
+   DataSource_Memory source(info.get1("X509.Certificate.public_key"));
+   return X509::load_key(source);
+   }
+
+/*************************************************
+* Return the alternative names of the requestor  *
+*************************************************/
+AlternativeName PKCS10_Request::subject_alt_name() const
+   {
+   return create_alt_name(info);
    }
 
 /*************************************************
@@ -197,7 +163,7 @@ std::string PKCS10_Request::challenge_password() const
 *************************************************/
 Key_Constraints PKCS10_Request::constraints() const
    {
-   return constraints_value;
+   return Key_Constraints(info.get1_u32bit("X509v3.KeyUsage", NO_CONSTRAINTS));
    }
 
 /*************************************************
@@ -205,7 +171,12 @@ Key_Constraints PKCS10_Request::constraints() const
 *************************************************/
 std::vector<OID> PKCS10_Request::ex_constraints() const
    {
-   return ex_constraints_list;
+   std::vector<std::string> oids = info.get("X509v3.ExtendedKeyUsage");
+
+   std::vector<OID> result;
+   for(u32bit j = 0; j != oids.size(); ++j)
+      result.push_back(OID(oids[j]));
+   return result;
    }
 
 /*************************************************
@@ -213,7 +184,7 @@ std::vector<OID> PKCS10_Request::ex_constraints() const
 *************************************************/
 bool PKCS10_Request::is_CA() const
    {
-   return is_ca;
+   return info.get1_u32bit("X509v3.BasicConstraints.is_ca");
    }
 
 /*************************************************
@@ -221,7 +192,7 @@ bool PKCS10_Request::is_CA() const
 *************************************************/
 u32bit PKCS10_Request::path_limit() const
    {
-   return max_path_len;
+   return info.get1_u32bit("X509v3.BasicConstraints.path_constraint", 0);
    }
 
 }

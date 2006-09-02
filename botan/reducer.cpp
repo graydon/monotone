@@ -8,8 +8,6 @@
 #include <botan/numthry.h>
 #include <botan/mp_core.h>
 
-#include <iostream> // for testing
-
 namespace Botan {
 
 /*************************************************

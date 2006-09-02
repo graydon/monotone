@@ -35,23 +35,29 @@ class Pooling_Allocator : public Allocator
       virtual void* alloc_block(u32bit) = 0;
       virtual void dealloc_block(void*, u32bit) = 0;
 
-      struct Memory_Block
+      class Memory_Block
          {
-         u64bit bitmap;
-         byte* buffer;
-         u32bit block_size;
+         public:
+            Memory_Block(void*, u32bit, u32bit);
 
-         Memory_Block(void*, u32bit, u32bit);
+            static u32bit bitmap_size() { return BITMAP_SIZE; }
 
-         bool contains(void*, u32bit) const throw();
-         byte* alloc(u32bit) throw();
-         void free(void*, u32bit) throw();
+            bool contains(void*, u32bit) const throw();
+            byte* alloc(u32bit) throw();
+            void free(void*, u32bit) throw();
 
-         bool operator<(const void*) const;
-         bool operator<(const Memory_Block&) const;
+            bool cmp_mem(const void* x) const { return (*this) < x; }
+            bool operator<(const void*) const;
+            bool operator<(const Memory_Block&) const;
+         private:
+            typedef u64bit bitmap_type;
+            static const u32bit BITMAP_SIZE = 8 * sizeof(bitmap_type);
+            bitmap_type bitmap;
+            byte* buffer, *buffer_end;
+            u32bit block_size;
          };
 
-      const u32bit PREF_SIZE, BLOCK_SIZE, BITMAP_SIZE;
+      const u32bit PREF_SIZE, BLOCK_SIZE;
 
       std::vector<Memory_Block> blocks;
       std::vector<Memory_Block>::iterator last_used;

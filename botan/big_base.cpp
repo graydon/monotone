@@ -103,7 +103,16 @@ void BigInt::swap(BigInt& other)
 *************************************************/
 void BigInt::grow_reg(u32bit n) const
    {
-   reg.grow_by(round_up(n, 8));
+   reg.grow_to(round_up(size() + n, 8));
+   }
+
+/*************************************************
+* Grow the internal storage                      *
+*************************************************/
+void BigInt::grow_to(u32bit n) const
+   {
+   if(n > size())
+      reg.grow_to(round_up(n, 8));
    }
 
 /*************************************************
@@ -119,15 +128,6 @@ s32bit BigInt::cmp(const BigInt& n, bool check_signs) const
          return (-bigint_cmp(data(), sig_words(), n.data(), n.sig_words()));
       }
    return bigint_cmp(data(), sig_words(), n.data(), n.sig_words());
-   }
-
-/*************************************************
-* Return word n of this number                   *
-*************************************************/
-word BigInt::word_at(u32bit n) const
-   {
-   if(n >= size()) return 0;
-   else            return reg[n];
    }
 
 /*************************************************

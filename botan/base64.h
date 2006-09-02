@@ -20,8 +20,7 @@ class Base64_Encoder : public Filter
 
       void write(const byte[], u32bit);
       void end_msg();
-      // monotone-specific
-      Base64_Encoder(bool = true, u32bit = 72);
+      Base64_Encoder(bool = false, u32bit = 72);
    private:
       void encode_and_send(const byte[], u32bit);
       void do_output(const byte[], u32bit);

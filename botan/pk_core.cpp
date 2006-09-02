@@ -6,7 +6,7 @@
 #include <botan/pk_core.h>
 #include <botan/numthry.h>
 #include <botan/engine.h>
-#include <botan/conf.h>
+#include <botan/config.h>
 #include <algorithm>
 
 namespace Botan {
@@ -18,7 +18,9 @@ namespace {
 *************************************************/
 BigInt blinding_factor(u32bit modulus_size)
    {
-   const u32bit BLINDING_BITS = Config::get_u32bit("pk/blinder_size");
+   const u32bit BLINDING_BITS =
+      global_config().option_as_u32bit("pk/blinder_size");
+
    if(BLINDING_BITS == 0)
       return 0;
    return random_integer(std::min(modulus_size - 1, BLINDING_BITS));

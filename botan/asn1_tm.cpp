@@ -4,9 +4,11 @@
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/charset.h>
 #include <botan/parsing.h>
-#include <botan/conf.h>
+#include <botan/config.h>
 #include <ctime>
 
 namespace Botan {
@@ -38,46 +40,7 @@ std::tm get_tm(u64bit timer)
 *************************************************/
 X509_Time::X509_Time(const std::string& time_str)
    {
-   if(time_str == "")
-      {
-      year = month = day = hour = minute = second = 0;
-      return;
-      }
-
-   std::vector<std::string> params;
-   std::string current;
-
-   for(u32bit j = 0; j != time_str.size(); ++j)
-      {
-      if(is_digit(time_str[j]))
-         current += time_str[j];
-      else
-         {
-         if(current != "")
-            params.push_back(current);
-         current = "";
-         }
-      }
-   if(current != "")
-      params.push_back(current);
-
-   if(params.size() < 3 || params.size() > 6)
-      throw Invalid_Argument("Invalid time specification " + time_str);
-
-   year   = to_u32bit(params[0]);
-   month  = to_u32bit(params[1]);
-   day    = to_u32bit(params[2]);
-   hour   = (params.size() >= 4) ? to_u32bit(params[3]) : 0;
-   minute = (params.size() >= 5) ? to_u32bit(params[4]) : 0;
-   second = (params.size() == 6) ? to_u32bit(params[5]) : 0;
-
-   if(year >= 2050)
-      tag = GENERALIZED_TIME;
-   else
-      tag = UTC_TIME;
-
-   if(!passes_sanity_check())
-      throw Invalid_Argument("Invalid time specification " + time_str);
+   set_to(time_str);
    }
 
 /*************************************************
@@ -105,6 +68,61 @@ X509_Time::X509_Time(u64bit timer)
 *************************************************/
 X509_Time::X509_Time(const std::string& t_spec, ASN1_Tag t) : tag(t)
    {
+   set_to(t_spec, tag);
+   }
+
+/*************************************************
+* Set the time with a human readable string      *
+*************************************************/
+void X509_Time::set_to(const std::string& time_str)
+   {
+   if(time_str == "")
+      {
+      year = month = day = hour = minute = second = 0;
+      return;
+      }
+
+   std::vector<std::string> params;
+   std::string current;
+
+   for(u32bit j = 0; j != time_str.size(); ++j)
+      {
+      if(Charset::is_digit(time_str[j]))
+         current += time_str[j];
+      else
+         {
+         if(current != "")
+            params.push_back(current);
+         current.clear();
+         }
+      }
+   if(current != "")
+      params.push_back(current);
+
+   if(params.size() < 3 || params.size() > 6)
+      throw Invalid_Argument("Invalid time specification " + time_str);
+
+   year   = to_u32bit(params[0]);
+   month  = to_u32bit(params[1]);
+   day    = to_u32bit(params[2]);
+   hour   = (params.size() >= 4) ? to_u32bit(params[3]) : 0;
+   minute = (params.size() >= 5) ? to_u32bit(params[4]) : 0;
+   second = (params.size() == 6) ? to_u32bit(params[5]) : 0;
+
+   if(year >= 2050)
+      tag = GENERALIZED_TIME;
+   else
+      tag = UTC_TIME;
+
+   if(!passes_sanity_check())
+      throw Invalid_Argument("Invalid time specification " + time_str);
+   }
+
+/*************************************************
+* Set the time with an ISO time format string    *
+*************************************************/
+void X509_Time::set_to(const std::string& t_spec, ASN1_Tag tag)
+   {
    if(tag != GENERALIZED_TIME && tag != UTC_TIME)
       throw Invalid_Argument("X509_Time: Invalid tag " + to_string(tag));
    if(tag == GENERALIZED_TIME && t_spec.size() != 13 && t_spec.size() != 15)
@@ -122,7 +140,7 @@ X509_Time::X509_Time(const std::string& t_spec, ASN1_Tag t) : tag(t)
    for(u32bit j = 0; j != YEAR_SIZE; ++j)
       current += t_spec[j];
    params.push_back(current);
-   current = "";
+   current.clear();
 
    for(u32bit j = YEAR_SIZE; j != t_spec.size() - 1; ++j)
       {
@@ -130,7 +148,7 @@ X509_Time::X509_Time(const std::string& t_spec, ASN1_Tag t) : tag(t)
       if(current.size() == 2)
          {
          params.push_back(current);
-         current = "";
+         current.clear();
          }
       }
 
@@ -149,6 +167,18 @@ X509_Time::X509_Time(const std::string& t_spec, ASN1_Tag t) : tag(t)
 
    if(!passes_sanity_check())
       throw Invalid_Argument("Invalid time specification " + t_spec);
+   }
+
+/*************************************************
+* DER encode a X509_Time                         *
+*************************************************/
+void X509_Time::encode_into(DER_Encoder& der) const
+   {
+   if(tag != GENERALIZED_TIME && tag != UTC_TIME)
+      throw Invalid_Argument("X509_Time: Bad encoding tag");
+   der.add_object(tag, UNIVERSAL,
+                  Charset::transcode(as_string(),
+                                     LOCAL_CHARSET, LATIN1_CHARSET));
    }
 
 /*************************************************
@@ -219,14 +249,6 @@ bool X509_Time::passes_sanity_check() const
    }
 
 /*************************************************
-* Return the type of this Time object            *
-*************************************************/
-ASN1_Tag X509_Time::tagging() const
-   {
-   return tag;
-   }
-
-/*************************************************
 * Compare this time against another              *
 *************************************************/
 s32bit X509_Time::cmp(const X509_Time& other) const
@@ -253,14 +275,6 @@ s32bit X509_Time::cmp(const X509_Time& other) const
    }
 
 /*************************************************
-* Compare this time against another              *
-*************************************************/
-s32bit X509_Time::cmp(u64bit seconds) const
-   {
-   return cmp(X509_Time(seconds));
-   }
-
-/*************************************************
 * Compare two X509_Times for in various ways     *
 *************************************************/
 bool operator==(const X509_Time& t1, const X509_Time& t2)
@@ -278,7 +292,9 @@ bool operator>=(const X509_Time& t1, const X509_Time& t2)
 s32bit validity_check(const X509_Time& start, const X509_Time& end,
                       u64bit current_time)
    {
-   const u32bit ALLOWABLE_SLIP = Config::get_time("x509/validity_slack");
+   const u32bit ALLOWABLE_SLIP =
+      global_config().option_as_time("x509/validity_slack");
+
    const s32bit NOT_YET_VALID = -1, VALID_TIME = 0, EXPIRED = 1;
 
    if(start.cmp(current_time + ALLOWABLE_SLIP) > 0)
@@ -288,39 +304,15 @@ s32bit validity_check(const X509_Time& start, const X509_Time& end,
    return VALID_TIME;
    }
 
-namespace DER {
-
-/*************************************************
-* DER encode an X509_Time                        *
-*************************************************/
-void encode(DER_Encoder& encoder, const X509_Time& obj, ASN1_Tag tagging)
-   {
-   if(tagging != GENERALIZED_TIME && tagging != UTC_TIME)
-      throw Invalid_Argument("DER::encode: Bad encoding tag for time value");
-   encoder.add_object(tagging, UNIVERSAL, local2iso(obj.as_string()));
-   }
-
-/*************************************************
-* DER encode an X509_Time                        *
-*************************************************/
-void encode(DER_Encoder& encoder, const X509_Time& obj)
-   {
-   DER::encode(encoder, obj, obj.tagging());
-   }
-
-}
-
-namespace BER {
-
 /*************************************************
 * Decode a BER encoded X509_Time                 *
 *************************************************/
-void decode(BER_Decoder& source, X509_Time& obj)
+void X509_Time::decode_from(BER_Decoder& source)
    {
-   BER_Object ber_obj = source.get_next_object();
-   obj = X509_Time(iso2local(BER::to_string(ber_obj)), ber_obj.type_tag);
+   BER_Object ber_time = source.get_next_object();
+   set_to(Charset::transcode(ASN1::to_string(ber_time),
+                             LATIN1_CHARSET, LOCAL_CHARSET),
+          ber_time.type_tag);
    }
-
-}
 
 }

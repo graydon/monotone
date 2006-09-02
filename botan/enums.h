@@ -12,6 +12,13 @@ namespace Botan {
 * ASN.1 Type and Class Tags                      *
 *************************************************/
 enum ASN1_Tag {
+   UNIVERSAL        = 0x00,
+   APPLICATION      = 0x40,
+   CONTEXT_SPECIFIC = 0x80,
+   PRIVATE          = 0xC0,
+
+   CONSTRUCTED      = 0x20,
+
    EOC              = 0x00,
    BOOLEAN          = 0x01,
    INTEGER          = 0x02,
@@ -33,13 +40,6 @@ enum ASN1_Tag {
 
    UTC_TIME         = 0x17,
    GENERALIZED_TIME = 0x18,
-
-   CONSTRUCTED      = 0x20,
-
-   UNIVERSAL        = 0x00,
-   APPLICATION      = 0x40,
-   CONTEXT_SPECIFIC = 0x80,
-   PRIVATE          = 0xC0,
 
    NO_OBJECT        = 0xFF00,
    DIRECTORY_STRING = 0xFF01
@@ -82,34 +82,6 @@ enum CRL_Code {
 };
 
 /*************************************************
-* X.509 Certificate Validation Result            *
-*************************************************/
-enum X509_Code {
-   VERIFIED,
-   UNKNOWN_X509_ERROR,
-   CANNOT_ESTABLISH_TRUST,
-   CERT_CHAIN_TOO_LONG,
-   SIGNATURE_ERROR,
-   POLICY_ERROR,
-   INVALID_USAGE,
-
-   CERT_FORMAT_ERROR,
-   CERT_ISSUER_NOT_FOUND,
-   CERT_NOT_YET_VALID,
-   CERT_HAS_EXPIRED,
-   CERT_IS_REVOKED,
-
-   CRL_FORMAT_ERROR,
-   CRL_ISSUER_NOT_FOUND,
-   CRL_NOT_YET_VALID,
-   CRL_HAS_EXPIRED,
-
-   CA_CERT_CANNOT_SIGN,
-   CA_CERT_NOT_FOR_CERT_ISSUER,
-   CA_CERT_NOT_FOR_CRL_ISSUER
-};
-
-/*************************************************
 * Various Other Enumerations                     *
 *************************************************/
 enum Decoder_Checking { NONE, IGNORE_WS, FULL_CHECK };
@@ -119,6 +91,13 @@ enum X509_Encoding { RAW_BER, PEM };
 enum Cipher_Dir { ENCRYPTION, DECRYPTION };
 
 enum Signature_Format { IEEE_1363, DER_SEQUENCE };
+
+enum Character_Set {
+   LOCAL_CHARSET,
+   UCS2_CHARSET,
+   UTF8_CHARSET,
+   LATIN1_CHARSET
+};
 
 }
 

@@ -5,6 +5,7 @@
 
 #include <botan/numthry.h>
 #include <botan/mp_core.h>
+#include <botan/util.h>
 #include <algorithm>
 
 namespace Botan {
@@ -16,8 +17,11 @@ BigInt square(const BigInt& x)
    {
    const u32bit x_sw = x.sig_words();
 
-   BigInt z(BigInt::Positive, 2*x_sw);
-   bigint_sqr(z.get_reg(), z.size(), x.data(), x.size(), x_sw);
+   BigInt z(BigInt::Positive, round_up(2*x_sw, 16));
+   SecureVector<word> workspace(z.size());
+
+   bigint_sqr(z.get_reg(), z.size(), workspace,
+              x.data(), x.size(), x_sw);
    return z;
    }
 
@@ -38,7 +42,9 @@ BigInt mul_add(const BigInt& a, const BigInt& b, const BigInt& c)
    const u32bit c_sw = c.sig_words();
 
    BigInt r(sign, std::max(a.size() + b.size(), c_sw) + 1);
-   bigint_mul(r.get_reg(), r.size(),
+   SecureVector<word> workspace(r.size());
+
+   bigint_mul(r.get_reg(), r.size(), workspace,
               a.data(), a.size(), a_sw,
               b.data(), b.size(), b_sw);
    const u32bit r_size = std::max(r.sig_words(), c_sw);

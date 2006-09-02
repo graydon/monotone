@@ -5,12 +5,10 @@
 
 #include <botan/mem_pool.h>
 #include <botan/libstate.h>
-#include <botan/conf.h>
+#include <botan/config.h>
 #include <botan/bit_ops.h>
 #include <botan/util.h>
 #include <algorithm>
-
-#include <assert.h> // testing
 
 namespace Botan {
 
@@ -24,7 +22,7 @@ u32bit choose_pref_size(u32bit provided)
    if(provided)
       return provided;
 
-   u32bit result = Config::get_u32bit("base/memory_chunk");
+   u32bit result = global_config().option_as_u32bit("base/memory_chunk");
    if(result)
       return result;
 
@@ -43,10 +41,12 @@ Pooling_Allocator::Memory_Block::Memory_Block(void* buf, u32bit map_size,
    bitmap = 0;
    this->block_size = block_size;
 
-   clear_mem(buffer, block_size * 64);
+   buffer_end = buffer + (block_size * BITMAP_SIZE);
 
-   if(map_size != 64)
-      throw Invalid_Argument("Memory_Block: Bad bitmap size, must be 64");
+   clear_mem(buffer, block_size * BITMAP_SIZE);
+
+   if(map_size != BITMAP_SIZE)
+      throw Invalid_Argument("Memory_Block: Bad bitmap size");
    }
 
 /*************************************************
@@ -54,7 +54,7 @@ Pooling_Allocator::Memory_Block::Memory_Block(void* buf, u32bit map_size,
 *************************************************/
 bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
    {
-   if(buffer <= other && other < (buffer + 64 * block_size))
+   if(buffer <= other && other < buffer_end)
       return false;
    return (buffer < other);
    }
@@ -73,8 +73,8 @@ bool Pooling_Allocator::Memory_Block::operator<(const Memory_Block& blk) const
 bool Pooling_Allocator::Memory_Block::contains(void* ptr,
                                                u32bit length) const throw()
    {
-   return (buffer <= ptr &&
-          ((byte*)ptr + length * block_size) <= (buffer + 64 * block_size));
+   return ((buffer <= ptr) &&
+           (buffer_end >= (byte*)ptr + length * block_size));
    }
 
 /*************************************************
@@ -82,10 +82,10 @@ bool Pooling_Allocator::Memory_Block::contains(void* ptr,
 *************************************************/
 byte* Pooling_Allocator::Memory_Block::alloc(u32bit n) throw()
    {
-   if(n == 0 || n > 64)
+   if(n == 0 || n > BITMAP_SIZE)
       return 0;
 
-   if(n == 64)
+   if(n == BITMAP_SIZE)
       {
       if(bitmap)
          return 0;
@@ -96,7 +96,7 @@ byte* Pooling_Allocator::Memory_Block::alloc(u32bit n) throw()
          }
       }
 
-   u64bit mask = ((u64bit)1 << n) - 1;
+   bitmap_type mask = ((bitmap_type)1 << n) - 1;
    u32bit offset = 0;
 
    while(bitmap & mask)
@@ -126,12 +126,12 @@ void Pooling_Allocator::Memory_Block::free(void* ptr, u32bit blocks) throw()
 
    const u32bit offset = ((byte*)ptr - buffer) / block_size;
 
-   if(offset == 0 && blocks == 64)
+   if(offset == 0 && blocks == BITMAP_SIZE)
       bitmap = ~bitmap;
    else
       {
       for(u32bit j = 0; j != blocks; ++j)
-         bitmap &= ~((u64bit)1 << (j+offset));
+         bitmap &= ~((bitmap_type)1 << (j+offset));
       }
    }
 
@@ -139,7 +139,7 @@ void Pooling_Allocator::Memory_Block::free(void* ptr, u32bit blocks) throw()
 * Pooling_Allocator Constructor                  *
 *************************************************/
 Pooling_Allocator::Pooling_Allocator(u32bit p_size, bool) :
-   PREF_SIZE(choose_pref_size(p_size)), BLOCK_SIZE(64), BITMAP_SIZE(64)
+   PREF_SIZE(choose_pref_size(p_size)), BLOCK_SIZE(64)
    {
    mutex = global_state().get_mutex();
    last_used = blocks.begin();
@@ -184,6 +184,8 @@ void Pooling_Allocator::destroy()
 *************************************************/
 void* Pooling_Allocator::allocate(u32bit n)
    {
+   const u32bit BITMAP_SIZE = Memory_Block::bitmap_size();
+
    Mutex_Holder lock(mutex);
 
    if(n <= BITMAP_SIZE * BLOCK_SIZE)
@@ -215,6 +217,8 @@ void* Pooling_Allocator::allocate(u32bit n)
 *************************************************/
 void Pooling_Allocator::deallocate(void* ptr, u32bit n)
    {
+   const u32bit BITMAP_SIZE = Memory_Block::bitmap_size();
+
    if(ptr == 0 && n == 0)
       return;
 
@@ -229,7 +233,7 @@ void Pooling_Allocator::deallocate(void* ptr, u32bit n)
       std::vector<Memory_Block>::iterator i =
          std::lower_bound(blocks.begin(), blocks.end(), ptr);
 
-      if(i != blocks.end() && i->contains(ptr, block_no))
+      if(i != blocks.end() && i->contains((byte*)ptr, block_no))
          i->free(ptr, block_no);
       else
          throw Invalid_State("Pointer released to the wrong allocator");
@@ -237,20 +241,18 @@ void Pooling_Allocator::deallocate(void* ptr, u32bit n)
    }
 
 /*************************************************
-* Allocate more memory for the pool              *
+* Try to get some memory from an existing block  *
 *************************************************/
 byte* Pooling_Allocator::allocate_blocks(u32bit n)
    {
-   if(blocks.size() == 0)
+   if(blocks.empty())
       return 0;
-
-   assert(last_used != blocks.end());
 
    std::vector<Memory_Block>::iterator i = last_used;
 
    do
       {
-      i++;
+      ++i;
       if(i == blocks.end())
          i = blocks.begin();
 
@@ -260,7 +262,6 @@ byte* Pooling_Allocator::allocate_blocks(u32bit n)
          last_used = i;
          return mem;
          }
-
       }
    while(i != last_used);
 
@@ -272,6 +273,8 @@ byte* Pooling_Allocator::allocate_blocks(u32bit n)
 *************************************************/
 void Pooling_Allocator::get_more_core(u32bit in_bytes)
    {
+   const u32bit BITMAP_SIZE = Memory_Block::bitmap_size();
+
    const u32bit TOTAL_BLOCK_SIZE = BLOCK_SIZE * BITMAP_SIZE;
 
    const u32bit in_blocks = round_up(in_bytes, BLOCK_SIZE) / TOTAL_BLOCK_SIZE;
@@ -291,6 +294,7 @@ void Pooling_Allocator::get_more_core(u32bit in_bytes)
          Memory_Block(byte_ptr + j * TOTAL_BLOCK_SIZE, BITMAP_SIZE, BLOCK_SIZE)
          );
       }
+
    std::sort(blocks.begin(), blocks.end());
    last_used = std::lower_bound(blocks.begin(), blocks.end(), ptr);
    }

@@ -4,10 +4,11 @@
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/parsing.h>
 #include <botan/lookup.h>
 #include <botan/rng.h>
-#include <botan/asn1.h>
 #include <algorithm>
 #include <memory>
 
@@ -93,12 +94,12 @@ void PBE_PKCS5v15::new_params()
 *************************************************/
 MemoryVector<byte> PBE_PKCS5v15::encode_params() const
    {
-   DER_Encoder encoder;
-   encoder.start_sequence();
-   DER::encode(encoder, salt, OCTET_STRING);
-   DER::encode(encoder, iterations);
-   encoder.end_sequence();
-   return encoder.get_contents();
+   return DER_Encoder()
+      .start_cons(SEQUENCE)
+         .encode(salt, OCTET_STRING)
+         .encode(iterations)
+      .end_cons()
+   .get_contents();
    }
 
 /*************************************************
@@ -106,11 +107,12 @@ MemoryVector<byte> PBE_PKCS5v15::encode_params() const
 *************************************************/
 void PBE_PKCS5v15::decode_params(DataSource& source)
    {
-   BER_Decoder decoder(source);
-   BER_Decoder sequence = BER::get_subsequence(decoder);
-   BER::decode(sequence, salt, OCTET_STRING);
-   BER::decode(sequence, iterations);
-   sequence.verify_end();
+   BER_Decoder(source)
+      .start_cons(SEQUENCE)
+         .decode(salt, OCTET_STRING)
+         .decode(iterations)
+         .verify_end()
+      .end_cons();
 
    if(salt.size() != 8)
       throw Decoding_Error("PBES1: Encoded salt is not 8 octets");

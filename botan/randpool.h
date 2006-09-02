@@ -32,8 +32,8 @@ class Randpool : public RandomNumberGenerator
       BlockCipher* cipher;
       MessageAuthenticationCode* mac;
 
-      SecureVector<byte> pool, buffer;
-      u32bit entropy, counter;
+      SecureVector<byte> pool, buffer, counter;
+      u32bit entropy;
    };
 
 }

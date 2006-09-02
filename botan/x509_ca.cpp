@@ -5,30 +5,20 @@
 
 #include <botan/x509_ca.h>
 #include <botan/x509stor.h>
-#include <botan/conf.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
+#include <botan/config.h>
 #include <botan/lookup.h>
 #include <botan/look_pk.h>
 #include <botan/numthry.h>
 #include <botan/oids.h>
 #include <botan/util.h>
 #include <algorithm>
+#include <typeinfo>
 #include <memory>
 #include <set>
 
 namespace Botan {
-
-namespace {
-
-/*************************************************
-* Load the certificate and private key           *
-*************************************************/
-MemoryVector<byte> make_SKID(const MemoryRegion<byte>& pub_key)
-   {
-   std::auto_ptr<HashFunction> hash(get_hash("SHA-1"));
-   return hash->process(pub_key);
-   }
-
-}
 
 /*************************************************
 * Load the certificate and private key           *
@@ -61,7 +51,7 @@ X509_CA::X509_CA(const X509_Certificate& c,
 X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
                                        u32bit expire_time) const
    {
-   if(req.is_CA() && !Config::get_bool("x509/ca/allow_ca"))
+   if(req.is_CA() && !global_config().option_as_bool("x509/ca/allow_ca"))
       throw Policy_Violation("X509_CA: Attempted to sign new CA certificate");
 
    Key_Constraints constraints;
@@ -73,19 +63,36 @@ X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
       constraints = X509::find_constraints(*key, req.constraints());
       }
 
+   Extensions extensions;
+
+   extensions.add(new Cert_Extension::Authority_Key_ID(cert.subject_key_id()));
+   extensions.add(new Cert_Extension::Subject_Key_ID(req.raw_public_key()));
+
+   extensions.add(
+      new Cert_Extension::Basic_Constraints(req.is_CA(), req.path_limit()));
+
+   extensions.add(new Cert_Extension::Key_Usage(constraints));
+   extensions.add(
+      new Cert_Extension::Extended_Key_Usage(req.ex_constraints()));
+
+   extensions.add(
+      new Cert_Extension::Subject_Alternative_Name(req.subject_alt_name()));
+
+   /*
+   extensions.add(
+      new Cert_Extension::Issuer_Alternative_Name(issuer_alt));
+   */
+
    if(expire_time == 0)
-      expire_time = Config::get_time("x509/ca/default_expire");
+      expire_time = global_config().option_as_time("x509/ca/default_expire");
 
    const u64bit current_time = system_time();
 
-   X509_Time not_before(current_time);
-   X509_Time not_after(current_time + expire_time);
-
    return make_cert(signer, ca_sig_algo, req.raw_public_key(),
-                    cert.subject_key_id(), not_before, not_after,
+                    X509_Time(current_time),
+                    X509_Time(current_time + expire_time),
                     cert.subject_dn(), req.subject_dn(),
-                    req.is_CA(), req.path_limit(), req.subject_alt_name(),
-                    AlternativeName(), constraints, req.ex_constraints());
+                    extensions);
    }
 
 /*************************************************
@@ -94,149 +101,43 @@ X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
 X509_Certificate X509_CA::make_cert(PK_Signer* signer,
                                     const AlgorithmIdentifier& sig_algo,
                                     const MemoryRegion<byte>& pub_key,
-                                    const MemoryRegion<byte>& auth_key_id,
                                     const X509_Time& not_before,
                                     const X509_Time& not_after,
                                     const X509_DN& issuer_dn,
                                     const X509_DN& subject_dn,
-                                    bool is_CA, u32bit path_limit,
-                                    const AlternativeName& subject_alt,
-                                    const AlternativeName& issuer_alt,
-                                    Key_Constraints constraints,
-                                    const std::vector<OID>& ex_constraints)
+                                    const Extensions& extensions)
    {
-   const u32bit X509_CERT_VERSION = 2;
+   const u32bit X509_CERT_VERSION = 3;
    const u32bit SERIAL_BITS = 128;
 
-   DER_Encoder tbs_cert;
+   DataSource_Memory source(X509_Object::make_signed(signer, sig_algo,
+         DER_Encoder().start_cons(SEQUENCE)
+            .start_explicit(0)
+               .encode(X509_CERT_VERSION-1)
+            .end_explicit()
 
-   tbs_cert.start_sequence();
-   tbs_cert.start_explicit(ASN1_Tag(0));
-   DER::encode(tbs_cert, X509_CERT_VERSION);
-   tbs_cert.end_explicit(ASN1_Tag(0));
+            .encode(random_integer(SERIAL_BITS))
+            .encode(sig_algo)
+            .encode(issuer_dn)
 
-   DER::encode(tbs_cert, random_integer(SERIAL_BITS));
-   DER::encode(tbs_cert, sig_algo);
-   DER::encode(tbs_cert, issuer_dn);
-   tbs_cert.start_sequence();
-   DER::encode(tbs_cert, not_before);
-   DER::encode(tbs_cert, not_after);
-   tbs_cert.end_sequence();
-   DER::encode(tbs_cert, subject_dn);
-   tbs_cert.add_raw_octets(pub_key);
+            .start_cons(SEQUENCE)
+               .encode(not_before)
+               .encode(not_after)
+            .end_cons()
 
-   tbs_cert.start_explicit(ASN1_Tag(3));
-   tbs_cert.start_sequence();
+            .encode(subject_dn)
+            .raw_bytes(pub_key)
 
-   DER_Encoder v3_ext;
-
-   DER::encode(v3_ext, make_SKID(pub_key), OCTET_STRING);
-   do_ext(tbs_cert, v3_ext, "X509v3.SubjectKeyIdentifier", "subject_key_id");
-
-   if(auth_key_id.size())
-      {
-      v3_ext.start_sequence();
-      DER::encode(v3_ext, auth_key_id, OCTET_STRING,
-                  ASN1_Tag(0), CONTEXT_SPECIFIC);
-      v3_ext.end_sequence();
-      do_ext(tbs_cert, v3_ext, "X509v3.AuthorityKeyIdentifier",
-             "authority_key_id");
-      }
-
-   if(is_CA || (Config::get_string("x509/ca/basic_constraints") == "always"))
-      {
-      v3_ext.start_sequence();
-      if(is_CA)
-         {
-         DER::encode(v3_ext, true);
-         if(path_limit != NO_CERT_PATH_LIMIT)
-            DER::encode(v3_ext, path_limit);
-         }
-      v3_ext.end_sequence();
-      do_ext(tbs_cert, v3_ext, "X509v3.BasicConstraints", "basic_constraints");
-      }
-
-   if(subject_alt.has_items())
-      {
-      DER::encode(v3_ext, subject_alt);
-      do_ext(tbs_cert, v3_ext, "X509v3.SubjectAlternativeName",
-             "subject_alternative_name");
-      }
-
-   if(issuer_alt.has_items())
-      {
-      DER::encode(v3_ext, issuer_alt);
-      do_ext(tbs_cert, v3_ext, "X509v3.IssuerAlternativeName",
-             "issuer_alternative_name");
-      }
-
-   if(constraints != NO_CONSTRAINTS)
-      {
-      DER::encode(v3_ext, constraints);
-      do_ext(tbs_cert, v3_ext, "X509v3.KeyUsage", "key_usage");
-      }
-
-   if(ex_constraints.size())
-      {
-      v3_ext.start_sequence();
-      for(u32bit j = 0; j != ex_constraints.size(); ++j)
-         DER::encode(v3_ext, ex_constraints[j]);
-      v3_ext.end_sequence();
-      do_ext(tbs_cert, v3_ext, "X509v3.ExtendedKeyUsage",
-             "extended_key_usage");
-      }
-
-   tbs_cert.end_sequence();
-   tbs_cert.end_explicit(ASN1_Tag(3));
-   tbs_cert.end_sequence();
-
-   MemoryVector<byte> tbs_bits = tbs_cert.get_contents();
-   MemoryVector<byte> sig = signer->sign_message(tbs_bits);
-
-   DER_Encoder full_cert;
-   full_cert.start_sequence();
-   full_cert.add_raw_octets(tbs_bits);
-   DER::encode(full_cert, sig_algo);
-   DER::encode(full_cert, sig, BIT_STRING);
-   full_cert.end_sequence();
-
-   DataSource_Memory source(full_cert.get_contents());
+            .start_explicit(3)
+               .start_cons(SEQUENCE)
+                  .encode(extensions)
+                .end_cons()
+            .end_explicit()
+         .end_cons()
+      .get_contents()
+   ));
 
    return X509_Certificate(source);
-   }
-
-/*************************************************
-* Handle encoding a v3 extension                 *
-*************************************************/
-void X509_CA::do_ext(DER_Encoder& new_cert, DER_Encoder& extension,
-                     const std::string& oid, const std::string& opt)
-   {
-   std::string EXT_SETTING = "yes";
-
-   if(opt != "")
-      {
-      EXT_SETTING = Config::get_string("x509/exts/" + opt);
-
-      if(EXT_SETTING == "")
-         throw Exception("X509_CA: No policy setting for using " + oid);
-      }
-
-   if(EXT_SETTING == "no")
-      {
-      extension = DER_Encoder();
-      return;
-      }
-   else if(EXT_SETTING == "yes" || EXT_SETTING == "noncritical" ||
-           EXT_SETTING == "critical")
-      {
-      Extension extn(oid, extension.get_contents());
-      if(EXT_SETTING == "critical")
-         extn.critical = true;
-      DER::encode(new_cert, extn);
-      }
-   else
-      throw Invalid_Argument("X509_CA:: Invalid value for option x509/exts/" +
-                             opt + " of " + EXT_SETTING);
    }
 
 /*************************************************
@@ -266,8 +167,8 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
    std::set<SecureVector<byte> > removed_from_crl;
    for(u32bit j = 0; j != new_revoked.size(); ++j)
       {
-      if(new_revoked[j].reason == DELETE_CRL_ENTRY)
-         removed_from_crl.insert(new_revoked[j].serial);
+      if(new_revoked[j].reason_code() == DELETE_CRL_ENTRY)
+         removed_from_crl.insert(new_revoked[j].serial_number());
       else
          all_revoked.push_back(new_revoked[j]);
       }
@@ -275,7 +176,7 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
    for(u32bit j = 0; j != already_revoked.size(); ++j)
       {
       std::set<SecureVector<byte> >::const_iterator i;
-      i = removed_from_crl.find(already_revoked[j].serial);
+      i = removed_from_crl.find(already_revoked[j].serial_number());
 
       if(i == removed_from_crl.end())
          all_revoked.push_back(already_revoked[j]);
@@ -295,67 +196,39 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
 X509_CRL X509_CA::make_crl(const std::vector<CRL_Entry>& revoked,
                            u32bit crl_number, u32bit next_update) const
    {
-   const u32bit X509_CRL_VERSION = 1;
+   const u32bit X509_CRL_VERSION = 2;
 
    if(next_update == 0)
-      next_update = Config::get_time("x509/crl/next_update");
-
-   DER_Encoder tbs_crl;
+      next_update = global_config().option_as_time("x509/crl/next_update");
 
    const u64bit current_time = system_time();
 
-   tbs_crl.start_sequence();
-   DER::encode(tbs_crl, X509_CRL_VERSION);
-   DER::encode(tbs_crl, ca_sig_algo);
-   DER::encode(tbs_crl, cert.subject_dn());
-   DER::encode(tbs_crl, X509_Time(current_time));
-   DER::encode(tbs_crl, X509_Time(current_time + next_update));
+   Extensions extensions;
+   extensions.add(
+      new Cert_Extension::Authority_Key_ID(cert.subject_key_id()));
+   extensions.add(new Cert_Extension::CRL_Number(crl_number));
 
-   if(revoked.size())
-      {
-      tbs_crl.start_sequence();
-      for(u32bit j = 0; j != revoked.size(); ++j)
-         DER::encode(tbs_crl, revoked[j]);
-      tbs_crl.end_sequence();
-      }
-
-   tbs_crl.start_explicit(ASN1_Tag(0));
-   tbs_crl.start_sequence();
-
-   DER_Encoder crl_ext;
-
-   if(cert.subject_key_id().size())
-      {
-      crl_ext.start_sequence();
-      crl_ext.start_explicit(ASN1_Tag(0));
-      DER::encode(crl_ext, cert.subject_key_id(), OCTET_STRING);
-      crl_ext.end_explicit(ASN1_Tag(0));
-      crl_ext.end_sequence();
-      do_ext(tbs_crl, crl_ext, "X509v3.AuthorityKeyIdentifier",
-             "authority_key_id");
-      }
-
-   if(crl_number)
-      {
-      DER::encode(crl_ext, crl_number);
-      do_ext(tbs_crl, crl_ext, "X509v3.CRLNumber", "crl_number");
-      }
-
-   tbs_crl.end_sequence();
-   tbs_crl.end_explicit(ASN1_Tag(0));
-   tbs_crl.end_sequence();
-
-   MemoryVector<byte> tbs_bits = tbs_crl.get_contents();
-   MemoryVector<byte> sig = signer->sign_message(tbs_bits);
-
-   DER_Encoder full_crl;
-   full_crl.start_sequence();
-   full_crl.add_raw_octets(tbs_bits);
-   DER::encode(full_crl, ca_sig_algo);
-   DER::encode(full_crl, sig, BIT_STRING);
-   full_crl.end_sequence();
-
-   DataSource_Memory source(full_crl.get_contents());
+   DataSource_Memory source(X509_Object::make_signed(signer, ca_sig_algo,
+         DER_Encoder().start_cons(SEQUENCE)
+            .encode(X509_CRL_VERSION-1)
+            .encode(ca_sig_algo)
+            .encode(cert.issuer_dn())
+            .encode(X509_Time(current_time))
+            .encode(X509_Time(current_time + next_update))
+            .encode_if(revoked.size() > 0,
+                 DER_Encoder()
+                    .start_cons(SEQUENCE)
+                       .encode_list(revoked)
+                    .end_cons()
+               )
+            .start_explicit(0)
+               .start_cons(SEQUENCE)
+                  .encode(extensions)
+               .end_cons()
+            .end_explicit()
+         .end_cons()
+      .get_contents()
+   ));
 
    return X509_CRL(source);
    }

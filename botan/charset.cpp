@@ -6,9 +6,21 @@
 #include <botan/charset.h>
 #include <botan/hex.h>
 #include <botan/base64.h>
-#include <ctype.h>
+#include <botan/libstate.h>
+#include <cctype>
 
 namespace Botan {
+
+namespace Charset {
+
+/*************************************************
+* Perform character set transcoding              *
+*************************************************/
+std::string transcode(const std::string& str,
+                      Character_Set to, Character_Set from)
+   {
+   return global_state().transcode(str, to, from);
+   }
 
 /*************************************************
 * Check if a character represents a digit        *
@@ -36,16 +48,19 @@ bool is_space(char c)
 *************************************************/
 byte char2digit(char c)
    {
-   if(c == '0') return 0;
-   if(c == '1') return 1;
-   if(c == '2') return 2;
-   if(c == '3') return 3;
-   if(c == '4') return 4;
-   if(c == '5') return 5;
-   if(c == '6') return 6;
-   if(c == '7') return 7;
-   if(c == '8') return 8;
-   if(c == '9') return 9;
+   switch(c)
+      {
+      case '0': return 0;
+      case '1': return 1;
+      case '2': return 2;
+      case '3': return 3;
+      case '4': return 4;
+      case '5': return 5;
+      case '6': return 6;
+      case '7': return 7;
+      case '8': return 8;
+      case '9': return 9;
+      }
 
    throw Invalid_Argument("char2digit: Input is not a digit character");
    }
@@ -55,43 +70,32 @@ byte char2digit(char c)
 *************************************************/
 char digit2char(byte b)
    {
-   if(b == 0) return '0';
-   if(b == 1) return '1';
-   if(b == 2) return '2';
-   if(b == 3) return '3';
-   if(b == 4) return '4';
-   if(b == 5) return '5';
-   if(b == 6) return '6';
-   if(b == 7) return '7';
-   if(b == 8) return '8';
-   if(b == 9) return '9';
+   switch(b)
+      {
+      case 0: return '0';
+      case 1: return '1';
+      case 2: return '2';
+      case 3: return '3';
+      case 4: return '4';
+      case 5: return '5';
+      case 6: return '6';
+      case 7: return '7';
+      case 8: return '8';
+      case 9: return '9';
+      }
 
    throw Invalid_Argument("digit2char: Input is not a digit");
    }
 
 /*************************************************
-* Return the lower-case representation           *
+* Case-insensitive character comparison          *
 *************************************************/
-char to_lower(char c)
+bool caseless_cmp(char a, char b)
    {
-   return tolower((unsigned char)c);
+   return (std::tolower((unsigned char)a) == std::tolower((unsigned char)b));
    }
 
-/*************************************************
-* Convert from local charset to ISO 8859-1       *
-*************************************************/
-std::string local2iso(const std::string& str)
-   {
-   return str;
-   }
-
-/*************************************************
-* Convert from ISO 8859-1 to local charset       *
-*************************************************/
-std::string iso2local(const std::string& str)
-   {
-   return str;
-   }
+}
 
 /*************************************************
 * Hex Encoder Lookup Tables                      *

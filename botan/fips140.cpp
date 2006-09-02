@@ -147,31 +147,13 @@ bool passes_self_tests()
              "301C393738363533343132343837363932331C", "C209CCB78EE1B606",
              "0123456789ABCDEFFEDCBA9876543210");
   }
-  catch(std::exception& e)
+  catch(std::exception)
      {
      return false;
      }
 
   return true;
   }
-
-/*************************************************
-* Check a SHA-1 EDC                              *
-*************************************************/
-bool good_edc(const std::string& filename, const std::string& edc)
-   {
-   if(filename == "" || edc == "")
-      return false;
-
-   Pipe pipe1(new Hash_Filter("SHA-1"));
-   Pipe pipe2(new Hex_Decoder);
-
-   DataSource_Stream in(filename, true);
-   pipe1.process_msg(in);
-   pipe2.process_msg(edc);
-
-   return (pipe1.read_all() == pipe2.read_all());
-   }
 
 }
 

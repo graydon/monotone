@@ -97,17 +97,17 @@ BOTAN_SOURCES = 							\
         botan/aes.cpp botan/aes_tab.cpp \
         botan/allocate.cpp botan/arc4.cpp botan/asn1_alg.cpp        \
         botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp     \
-        botan/asn1_ext.cpp botan/asn1_ku.cpp botan/asn1_oid.cpp     \
+        botan/asn1_ku.cpp botan/asn1_oid.cpp     \
         botan/asn1_str.cpp botan/asn1_tm.cpp \
         botan/base.cpp botan/base64.cpp botan/basefilt.cpp      \
-        botan/ber_code.cpp botan/ber_dec.cpp botan/big_base.cpp     \
+        botan/ber_dec.cpp botan/big_base.cpp     \
         botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp      \
         botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp      \
         botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp        \
-        botan/cfb.cpp botan/charset.cpp botan/conf.cpp botan/crc32.cpp  \
+        botan/cfb.cpp botan/charset.cpp botan/crc32.cpp  \
         botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp           \
         botan/data_snk.cpp botan/data_src.cpp \
-        botan/def_ops.cpp botan/defalloc.cpp botan/der_code.cpp     \
+        botan/def_ops.cpp botan/defalloc.cpp \
         botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp        \
         botan/dl_group.cpp \
         botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp  \
@@ -147,20 +147,24 @@ BOTAN_SOURCES = 							\
         botan/modules.cpp botan/mp_numth.cpp \
         botan/mp_sqr.cpp botan/powm_fw.cpp \
         botan/powm_mnt.cpp botan/mp_asm.cpp \
-        botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h  \
+		botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
+		botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
+		botan/x509_ext.cpp botan/x509stat.cpp 
+		\
+        botan/aes.h botan/botan.h botan/es_win32.h  \
         botan/lookup.h botan/randpool.h botan/version.h \
         botan/algolist.h botan/buf_es.h botan/der_enc.h         \
-        botan/exceptn.h botan/mdx_hash.h botan/par_hash.h       \
+        botan/exceptn.h botan/mdx_hash.h \
         botan/reducer.h botan/x509_ca.h botan/allocate.h        \
         botan/buf_filt.h botan/dh.h botan/filter.h botan/mem_ops.h  \
         botan/pbe.h botan/rng.h botan/x509cert.h botan/arc4.h       \
         botan/cbc.h botan/dl_algo.h botan/filters.h botan/mem_pool.h    \
-        botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h  \
+        botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h \
         botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h \
         botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h   \
         botan/cfb.h botan/modebase.h    \
         botan/pipe.h botan/x509_obj.h           \
-        botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h      \
+        botan/asn1_oid.h botan/eax.h botan/gzip.h      \
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
         botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h \
         botan/hex.h botan/pk_core.h botan/secqueue.h    \
@@ -168,7 +172,7 @@ BOTAN_SOURCES = 							\
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h  \
         botan/crl_ent.h botan/emsa.h    \
         botan/if_algo.h botan/pkcs8.h \
-        botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h    \
+        botan/basefilt.h botan/ctr.h botan/engine.h    \
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h   \
         botan/base.h botan/cts.h botan/enums.h botan/kdf.h      \
         botan/mutex.h botan/pk_keys.h botan/timers.h botan/ber_dec.h    \
@@ -182,7 +186,9 @@ BOTAN_SOURCES = 							\
         botan/x931_rng.h botan/sha256.h \
         botan/parsing.h botan/out_buf.h botan/bit_ops.h \
         botan/def_powm.h botan/dl_group.h botan/libstate.h \
-        botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h
+        botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h \
+		botan/build.h botan/asn1_int.h botan/datastor.h botan/def_char.h \
+		botan/stl_util.h botan/x509_ext.h botan/x509stat.h
 
 BOOST_SANDBOX_SOURCES =							\
 	boost/circular_buffer_adaptor.hpp				\

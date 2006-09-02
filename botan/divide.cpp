@@ -35,56 +35,68 @@ void divide(const BigInt& x, const BigInt& y_arg, BigInt& q, BigInt& r)
       throw BigInt::DivideByZero();
 
    BigInt y = y_arg;
+   const u32bit y_words = y.sig_words();
    r = x;
 
    r.set_sign(BigInt::Positive);
    y.set_sign(BigInt::Positive);
 
    s32bit compare = r.cmp(y);
-   if(compare == -1) { q = 0; sign_fixup(x, y_arg, q, r); return; }
-   if(compare ==  0) { q = 1; r = 0; sign_fixup(x, y_arg, q, r); return; }
 
-   u32bit shifts = 0;
-   while(y[y.sig_words()-1] < MP_WORD_TOP_BIT)
-      { r <<= 1; y <<= 1; ++shifts; }
-
-   u32bit n = r.sig_words() - 1, t = y.sig_words() - 1;
-   q.get_reg().create(n - t + 1);
-   if(n <= t)
+   if(compare < 0)
+      q = 0;
+   else if(compare ==  0)
       {
-      while(r > y) { r -= y; q++; }
-      r >>= shifts;
-      sign_fixup(x, y_arg, q, r);
-      return;
+      q = 1;
+      r = 0;
       }
-
-   BigInt temp = y << (MP_WORD_BITS * (n-t));
-
-   while(r >= temp) { r -= temp; ++q[n-t]; }
-
-   for(u32bit j = n; j != t; --j)
+   else
       {
-      const word x_j0  = r.word_at(j);
-      const word x_j1 = r.word_at(j-1);
-      const word y_t  = y.word_at(t);
+      u32bit shifts = 0;
+      word y_top = y[y.sig_words()-1];
+      while(y_top < MP_WORD_TOP_BIT) { y_top <<= 1; ++shifts; }
+      y <<= shifts;
+      r <<= shifts;
 
-      if(x_j0 == y_t)
-         q[j-t-1] = MP_WORD_MAX;
-      else
-         q[j-t-1] = bigint_divop(x_j0, x_j1, y_t);
+      const u32bit n = r.sig_words() - 1, t = y_words - 1;
 
-      while(bigint_divcore(q[j-t-1], y_t, y.word_at(t-1),
-                           x_j0, x_j1, r.word_at(j-2)))
-         --q[j-t-1];
-
-      r -= (q[j-t-1] * y) << (MP_WORD_BITS * (j-t-1));
-      if(r.is_negative())
+      q.get_reg().create(n - t + 1);
+      if(n <= t)
          {
-         r += y << (MP_WORD_BITS * (j-t-1));
-         --q[j-t-1];
+         while(r > y) { r -= y; q++; }
+         r >>= shifts;
+         sign_fixup(x, y_arg, q, r);
+         return;
          }
+
+      BigInt temp = y << (MP_WORD_BITS * (n-t));
+
+      while(r >= temp) { r -= temp; ++q[n-t]; }
+
+      for(u32bit j = n; j != t; --j)
+         {
+         const word x_j0  = r.word_at(j);
+         const word x_j1 = r.word_at(j-1);
+         const word y_t  = y.word_at(t);
+
+         if(x_j0 == y_t)
+            q[j-t-1] = MP_WORD_MAX;
+         else
+            q[j-t-1] = bigint_divop(x_j0, x_j1, y_t);
+
+         while(bigint_divcore(q[j-t-1], y_t, y.word_at(t-1),
+                              x_j0, x_j1, r.word_at(j-2)))
+            --q[j-t-1];
+
+         r -= (q[j-t-1] * y) << (MP_WORD_BITS * (j-t-1));
+         if(r.is_negative())
+            {
+            r += y << (MP_WORD_BITS * (j-t-1));
+            --q[j-t-1];
+            }
+         }
+      r >>= shifts;
       }
-   r >>= shifts;
 
    sign_fixup(x, y_arg, q, r);
    }

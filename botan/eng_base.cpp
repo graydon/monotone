@@ -5,7 +5,7 @@
 
 #include <botan/engine.h>
 #include <botan/libstate.h>
-#include <botan/map_util.h>
+#include <botan/stl_util.h>
 #include <botan/lookup.h>
 
 namespace Botan {

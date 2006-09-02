@@ -8,6 +8,7 @@
 
 #include <botan/x509cert.h>
 #include <botan/x509_crl.h>
+#include <botan/x509_ext.h>
 #include <botan/pkcs8.h>
 #include <botan/pkcs10.h>
 #include <botan/pubkey.h>
@@ -30,16 +31,9 @@ class X509_CA
 
       static X509_Certificate make_cert(PK_Signer*, const AlgorithmIdentifier&,
                                         const MemoryRegion<byte>&,
-                                        const MemoryRegion<byte>&,
                                         const X509_Time&, const X509_Time&,
                                         const X509_DN&, const X509_DN&,
-                                        bool, u32bit, const AlternativeName&,
-                                        const AlternativeName&,
-                                        Key_Constraints,
-                                        const std::vector<OID>&);
-
-      static void do_ext(DER_Encoder&, DER_Encoder&,
-                         const std::string&, const std::string&);
+                                        const Extensions&);
 
       X509_CA(const X509_Certificate&, const PKCS8_PrivateKey&);
       ~X509_CA();

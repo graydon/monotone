@@ -4,102 +4,17 @@
 *************************************************/
 
 #include <botan/x509cert.h>
-#include <botan/map_util.h>
+#include <botan/x509_ext.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
+#include <botan/stl_util.h>
 #include <botan/parsing.h>
 #include <botan/bigint.h>
-#include <botan/conf.h>
 #include <botan/oids.h>
+#include <botan/pem.h>
 #include <algorithm>
 
 namespace Botan {
-
-namespace {
-
-/*************************************************
-* Get information from the DistinguishedName     *
-*************************************************/
-void load_info(std::multimap<std::string, std::string>& names,
-               const X509_DN& dn_info)
-   {
-   typedef std::multimap<OID, std::string>::const_iterator rdn_iter;
-   std::multimap<OID, std::string> attr = dn_info.get_attributes();
-
-   for(rdn_iter j = attr.begin(); j != attr.end(); ++j)
-      {
-      const std::string oid_name = OIDS::lookup(j->first);
-
-      if(oid_name == "PKCS9.EmailAddress")
-         multimap_insert(names, std::string("RFC822"), j->second);
-      else
-         multimap_insert(names, oid_name, j->second);
-      }
-   }
-
-/*************************************************
-* Get information from the alternative name      *
-*************************************************/
-void load_info(std::multimap<std::string, std::string>& names,
-               const AlternativeName& alt_info)
-   {
-   typedef std::multimap<std::string, std::string>::const_iterator rdn_iter;
-   std::multimap<std::string, std::string> attr = alt_info.get_attributes();
-
-   for(rdn_iter j = attr.begin(); j != attr.end(); ++j)
-      multimap_insert(names, j->first, j->second);
-
-   typedef std::multimap<OID, ASN1_String>::const_iterator on_iter;
-   std::multimap<OID, ASN1_String> othernames = alt_info.get_othernames();
-   for(on_iter j = othernames.begin(); j != othernames.end(); ++j)
-      multimap_insert(names, OIDS::lookup(j->first), j->second.value());
-
-   }
-
-/*************************************************
-* Get some information from names                *
-*************************************************/
-std::string get_info(const std::multimap<std::string, std::string>& names,
-                     const std::string& info)
-   {
-   typedef std::multimap<std::string, std::string>::const_iterator rdn_iter;
-
-   const std::string what = X509_DN::deref_info_field(info);
-   std::pair<rdn_iter, rdn_iter> range = names.equal_range(what);
-
-   std::vector<std::string> results;
-   for(rdn_iter j = range.first; j != range.second; ++j)
-      {
-      if(std::find(results.begin(), results.end(), j->second) == results.end())
-         results.push_back(j->second);
-      }
-
-   std::string value;
-   for(u32bit j = 0; j != results.size(); ++j)
-      value += results[j] + '/';
-   if(value.size())
-      value.erase(value.size() - 1, 1);
-   return value;
-   }
-
-/*************************************************
-* Create and populate a X509_DN                  *
-*************************************************/
-X509_DN create_dn(const std::multimap<std::string, std::string>& names)
-   {
-   typedef std::multimap<std::string, std::string>::const_iterator rdn_iter;
-
-   X509_DN new_dn;
-   for(rdn_iter j = names.begin(); j != names.end(); ++j)
-      {
-      const std::string oid = j->first;
-      const std::string value = j->second;
-      if(!OIDS::have_oid(oid))
-         continue;
-      new_dn.add_attribute(oid, j->second);
-      }
-   return new_dn;
-   }
-
-}
 
 /*************************************************
 * X509_Certificate Constructor                   *
@@ -107,9 +22,7 @@ X509_DN create_dn(const std::multimap<std::string, std::string>& names)
 X509_Certificate::X509_Certificate(DataSource& in) :
    X509_Object(in, "CERTIFICATE/X509 CERTIFICATE")
    {
-   is_ca = false;
-   version = max_path_len = 0;
-   constraints_value = NO_CONSTRAINTS;
+   self_signed = false;
    do_decode();
    }
 
@@ -119,9 +32,7 @@ X509_Certificate::X509_Certificate(DataSource& in) :
 X509_Certificate::X509_Certificate(const std::string& in) :
    X509_Object(in, "CERTIFICATE/X509 CERTIFICATE")
    {
-   is_ca = false;
-   version = max_path_len = 0;
-   constraints_value = NO_CONSTRAINTS;
+   self_signed = false;
    do_decode();
    }
 
@@ -130,66 +41,55 @@ X509_Certificate::X509_Certificate(const std::string& in) :
 *************************************************/
 void X509_Certificate::force_decode()
    {
+   u32bit version;
+   BigInt serial_bn;
+   AlgorithmIdentifier sig_algo_inner;
+   X509_DN dn_issuer, dn_subject;
+   X509_Time start, end;
+
    BER_Decoder tbs_cert(tbs_bits);
 
-   BER::decode_optional(tbs_cert, version, ASN1_Tag(0),
-                        ASN1_Tag(CONSTRUCTED | CONTEXT_SPECIFIC));
+   tbs_cert.decode_optional(version, ASN1_Tag(0),
+                            ASN1_Tag(CONSTRUCTED | CONTEXT_SPECIFIC))
+      .decode(serial_bn)
+      .decode(sig_algo_inner)
+      .decode(dn_issuer)
+      .start_cons(SEQUENCE)
+         .decode(start)
+         .decode(end)
+         .verify_end()
+      .end_cons()
+      .decode(dn_subject);
 
    if(version > 2)
       throw Decoding_Error("Unknown X.509 cert version " + to_string(version));
-   if(version < 2)
-      {
-      is_ca = Config::get_bool("x509/v1_assume_ca");
-      max_path_len = NO_CERT_PATH_LIMIT;
-      }
-
-   BER::decode(tbs_cert, serial);
-
-   AlgorithmIdentifier sig_algo_inner;
-   BER::decode(tbs_cert, sig_algo_inner);
-
    if(sig_algo != sig_algo_inner)
       throw Decoding_Error("Algorithm identifier mismatch");
 
-   X509_DN dn_issuer;
-   BER::decode(tbs_cert, dn_issuer);
-   load_info(issuer, dn_issuer);
+   self_signed = (dn_subject == dn_issuer);
 
-   BER_Decoder validity = BER::get_subsequence(tbs_cert);
-   BER::decode(validity, start);
-   BER::decode(validity, end);
-   validity.verify_end();
-
-   X509_DN dn_subject;
-   BER::decode(tbs_cert, dn_subject);
-   load_info(subject, dn_subject);
+   subject.add(dn_subject.contents());
+   issuer.add(dn_issuer.contents());
 
    BER_Object public_key = tbs_cert.get_next_object();
    if(public_key.type_tag != SEQUENCE || public_key.class_tag != CONSTRUCTED)
       throw BER_Bad_Tag("X509_Certificate: Unexpected tag for public key",
                         public_key.type_tag, public_key.class_tag);
-   pub_key = DER::put_in_sequence(public_key.value);
 
-   BER::decode_optional_string(tbs_cert, v2_issuer_key_id, BIT_STRING,
-                               ASN1_Tag(1), CONTEXT_SPECIFIC);
-   BER::decode_optional_string(tbs_cert, v2_subject_key_id, BIT_STRING,
-                               ASN1_Tag(2), CONTEXT_SPECIFIC);
+   MemoryVector<byte> v2_issuer_key_id, v2_subject_key_id;
+
+   tbs_cert.decode_optional_string(v2_issuer_key_id, BIT_STRING, 1);
+   tbs_cert.decode_optional_string(v2_subject_key_id, BIT_STRING, 2);
 
    BER_Object v3_exts_data = tbs_cert.get_next_object();
    if(v3_exts_data.type_tag == 3 &&
       v3_exts_data.class_tag == ASN1_Tag(CONSTRUCTED | CONTEXT_SPECIFIC))
       {
-      BER_Decoder v3_exts_decoder(v3_exts_data.value);
-      BER_Decoder sequence = BER::get_subsequence(v3_exts_decoder);
+      Extensions extensions;
 
-      while(sequence.more_items())
-         {
-         Extension extn;
-         BER::decode(sequence, extn);
-         handle_v3_extension(extn);
-         }
-      sequence.verify_end();
-      v3_exts_decoder.verify_end();
+      BER_Decoder(v3_exts_data.value).decode(extensions).verify_end();
+
+      extensions.contents_to(subject, issuer);
       }
    else if(v3_exts_data.type_tag != NO_OBJECT)
       throw BER_Bad_Tag("Unknown tag in X.509 cert",
@@ -197,80 +97,28 @@ void X509_Certificate::force_decode()
 
    if(tbs_cert.more_items())
       throw Decoding_Error("TBSCertificate has more items that expected");
-   }
 
-/*************************************************
-* Decode a particular v3 extension               *
-*************************************************/
-void X509_Certificate::handle_v3_extension(const Extension& extn)
-   {
-   BER_Decoder value(extn.value);
+   subject.add("X509.Certificate.version", version);
+   subject.add("X509.Certificate.serial", BigInt::encode(serial_bn));
+   subject.add("X509.Certificate.start", start.readable_string());
+   subject.add("X509.Certificate.end", end.readable_string());
 
-   if(extn.oid == OIDS::lookup("X509v3.KeyUsage"))
-      BER::decode(value, constraints_value);
-   else if(extn.oid == OIDS::lookup("X509v3.ExtendedKeyUsage"))
-      {
-      BER_Decoder key_usage = BER::get_subsequence(value);
-      while(key_usage.more_items())
-         {
-         OID usage_oid;
-         BER::decode(key_usage, usage_oid);
-         ex_constraints_list.push_back(usage_oid);
-         }
-      std::sort(ex_constraints_list.begin(), ex_constraints_list.end());
-      }
-   else if(extn.oid == OIDS::lookup("X509v3.BasicConstraints"))
-      {
-      BER_Decoder basic_constraints = BER::get_subsequence(value);
-      BER::decode_optional(basic_constraints, is_ca,
-                           BOOLEAN, UNIVERSAL, false);
-      BER::decode_optional(basic_constraints, max_path_len,
-                           INTEGER, UNIVERSAL, NO_CERT_PATH_LIMIT);
-      }
-   else if(extn.oid == OIDS::lookup("X509v3.SubjectKeyIdentifier"))
-      BER::decode(value, v3_subject_key_id, OCTET_STRING);
-   else if(extn.oid == OIDS::lookup("X509v3.AuthorityKeyIdentifier"))
-      {
-      BER_Decoder key_id = BER::get_subsequence(value);
-      BER::decode_optional_string(key_id, v3_issuer_key_id, OCTET_STRING,
-                                  ASN1_Tag(0), CONTEXT_SPECIFIC);
-      }
-   else if(extn.oid == OIDS::lookup("X509v3.SubjectAlternativeName"))
-      {
-      AlternativeName alt_name;
-      BER::decode(value, alt_name);
-      load_info(subject, alt_name);
-      }
-   else if(extn.oid == OIDS::lookup("X509v3.IssuerAlternativeName"))
-      {
-      AlternativeName alt_name;
-      BER::decode(value, alt_name);
-      load_info(issuer, alt_name);
-      }
-   else if(extn.oid == OIDS::lookup("X509v3.CertificatePolicies"))
-      {
-      BER_Decoder ber_policies = BER::get_subsequence(value);
-      while(ber_policies.more_items())
-         {
-         OID oid;
-         BER_Decoder policy = BER::get_subsequence(ber_policies);
-         BER::decode(policy, oid);
+   issuer.add("X509.Certificate.v2.key_id", v2_issuer_key_id);
+   subject.add("X509.Certificate.v2.key_id", v2_subject_key_id);
 
-         if(extn.critical && policy.more_items())
-            throw Decoding_Error("X.509 v3 critical policy has qualifiers");
+   subject.add("X509.Certificate.public_key",
+               PEM_Code::encode(
+                  ASN1::put_in_sequence(public_key.value),
+                  "PUBLIC KEY"
+                  )
+      );
 
-         policies_list.push_back(oid);
-         }
-      }
-   else
+   if(is_CA_cert() &&
+      !subject.has_value("X509v3.BasicConstraints.path_constraint"))
       {
-      if(extn.critical)
-         throw Decoding_Error("Unknown critical X.509 v3 extension: " +
-                              extn.oid.as_string());
-      return;
+      u32bit limit = (x509_version() < 3) ? NO_CERT_PATH_LIMIT : 0;
+      subject.add("X509v3.BasicConstraints.path_constraint", limit);
       }
-
-   value.verify_end();
    }
 
 /*************************************************
@@ -278,7 +126,7 @@ void X509_Certificate::handle_v3_extension(const Extension& extn)
 *************************************************/
 u32bit X509_Certificate::x509_version() const
    {
-   return (version + 1);
+   return (subject.get1_u32bit("X509.Certificate.version") + 1);
    }
 
 /*************************************************
@@ -286,7 +134,7 @@ u32bit X509_Certificate::x509_version() const
 *************************************************/
 std::string X509_Certificate::start_time() const
    {
-   return start.readable_string();
+   return subject.get1("X509.Certificate.start");
    }
 
 /*************************************************
@@ -294,23 +142,25 @@ std::string X509_Certificate::start_time() const
 *************************************************/
 std::string X509_Certificate::end_time() const
    {
-   return end.readable_string();
+   return subject.get1("X509.Certificate.end");
    }
 
 /*************************************************
 * Return information about the subject           *
 *************************************************/
-std::string X509_Certificate::subject_info(const std::string& info) const
+std::vector<std::string>
+X509_Certificate::subject_info(const std::string& what) const
    {
-   return get_info(subject, info);
+   return subject.get(X509_DN::deref_info_field(what));
    }
 
 /*************************************************
 * Return information about the issuer            *
 *************************************************/
-std::string X509_Certificate::issuer_info(const std::string& info) const
+std::vector<std::string>
+X509_Certificate::issuer_info(const std::string& what) const
    {
-   return get_info(issuer, info);
+   return issuer.get(X509_DN::deref_info_field(what));
    }
 
 /*************************************************
@@ -318,25 +168,8 @@ std::string X509_Certificate::issuer_info(const std::string& info) const
 *************************************************/
 X509_PublicKey* X509_Certificate::subject_public_key() const
    {
-   return X509::load_key(pub_key);
-   }
-
-/*************************************************
-* Check if the certificate is self-signed        *
-*************************************************/
-bool X509_Certificate::self_signed() const
-   {
-   return (create_dn(issuer) == create_dn(subject));
-   }
-
-/*************************************************
-* Check if the certificate has a SKID            *
-*************************************************/
-bool X509_Certificate::has_SKID() const
-   {
-   if(v3_subject_key_id.has_items())
-      return true;
-   return false;
+   DataSource_Memory source(subject.get1("X509.Certificate.public_key"));
+   return X509::load_key(source);
    }
 
 /*************************************************
@@ -344,9 +177,9 @@ bool X509_Certificate::has_SKID() const
 *************************************************/
 bool X509_Certificate::is_CA_cert() const
    {
-   if(!is_ca) return false;
-   if((constraints_value & KEY_CERT_SIGN) ||
-      (constraints_value == NO_CONSTRAINTS))
+   if(!subject.get1_u32bit("X509v3.BasicConstraints.is_ca"))
+      return false;
+   if((constraints() & KEY_CERT_SIGN) || (constraints() == NO_CONSTRAINTS))
       return true;
    return false;
    }
@@ -356,7 +189,7 @@ bool X509_Certificate::is_CA_cert() const
 *************************************************/
 u32bit X509_Certificate::path_limit() const
    {
-   return max_path_len;
+   return subject.get1_u32bit("X509v3.BasicConstraints.path_constraint", 0);
    }
 
 /*************************************************
@@ -364,23 +197,24 @@ u32bit X509_Certificate::path_limit() const
 *************************************************/
 Key_Constraints X509_Certificate::constraints() const
    {
-   return constraints_value;
+   return Key_Constraints(subject.get1_u32bit("X509v3.KeyUsage",
+                                              NO_CONSTRAINTS));
    }
 
 /*************************************************
 * Return the list of extended key usage OIDs     *
 *************************************************/
-std::vector<OID> X509_Certificate::ex_constraints() const
+std::vector<std::string> X509_Certificate::ex_constraints() const
    {
-   return ex_constraints_list;
+   return subject.get("X509v3.ExtendedKeyUsage");
    }
 
 /*************************************************
 * Return the list of certificate policies        *
 *************************************************/
-std::vector<OID> X509_Certificate::policies() const
+std::vector<std::string> X509_Certificate::policies() const
    {
-   return policies_list;
+   return subject.get("X509v3.CertificatePolicies");
    }
 
 /*************************************************
@@ -388,7 +222,7 @@ std::vector<OID> X509_Certificate::policies() const
 *************************************************/
 MemoryVector<byte> X509_Certificate::authority_key_id() const
    {
-   return v3_issuer_key_id;
+   return issuer.get1_memvec("X509v3.AuthorityKeyIdentifier");
    }
 
 /*************************************************
@@ -396,7 +230,7 @@ MemoryVector<byte> X509_Certificate::authority_key_id() const
 *************************************************/
 MemoryVector<byte> X509_Certificate::subject_key_id() const
    {
-   return v3_subject_key_id;
+   return subject.get1_memvec("X509v3.SubjectKeyIdentifier");
    }
 
 /*************************************************
@@ -404,15 +238,7 @@ MemoryVector<byte> X509_Certificate::subject_key_id() const
 *************************************************/
 MemoryVector<byte> X509_Certificate::serial_number() const
    {
-   return BigInt::encode(serial);
-   }
-
-/*************************************************
-* Return the certificate serial number           *
-*************************************************/
-BigInt X509_Certificate::serial_number_bn() const
-   {
-   return serial;
+   return subject.get1_memvec("X509.Certificate.serial");
    }
 
 /*************************************************
@@ -434,17 +260,13 @@ X509_DN X509_Certificate::subject_dn() const
 /*************************************************
 * Compare two certificates for equality          *
 *************************************************/
-bool X509_Certificate::operator==(const X509_Certificate& cert) const
+bool X509_Certificate::operator==(const X509_Certificate& other) const
    {
-   if(sig != cert.sig || pub_key != cert.pub_key || sig_algo != cert.sig_algo)
-      return false;
-   if(issuer != cert.issuer || subject != cert.subject)
-      return false;
-   if(serial != cert.serial || version != cert.version)
-      return false;
-   if(start != cert.start || end != cert.end)
-      return false;
-   return true;
+   return (sig == other.sig &&
+           sig_algo == other.sig_algo &&
+           self_signed == other.self_signed &&
+           issuer == other.issuer &&
+           subject == other.subject);
    }
 
 /*************************************************
@@ -453,6 +275,62 @@ bool X509_Certificate::operator==(const X509_Certificate& cert) const
 bool operator!=(const X509_Certificate& cert1, const X509_Certificate& cert2)
    {
    return !(cert1 == cert2);
+   }
+
+/*************************************************
+* Create and populate a X509_DN                  *
+*************************************************/
+X509_DN create_dn(const Data_Store& info)
+   {
+   class DN_Matcher : public Data_Store::Matcher
+      {
+      public:
+         bool operator()(const std::string& key, const std::string&) const
+            {
+            if(key.find("X520.") != std::string::npos)
+               return true;
+            return false;
+            }
+      };
+
+   std::multimap<std::string, std::string> names
+      = info.search_with(DN_Matcher());
+
+   X509_DN dn;
+
+   std::multimap<std::string, std::string>::iterator j;
+   for(j = names.begin(); j != names.end(); ++j)
+      dn.add_attribute(j->first, j->second);
+
+   return dn;
+   }
+
+/*************************************************
+* Create and populate an AlternativeName         *
+*************************************************/
+AlternativeName create_alt_name(const Data_Store& info)
+   {
+   class AltName_Matcher : public Data_Store::Matcher
+      {
+      public:
+         bool operator()(const std::string& key, const std::string&) const
+            {
+            if(key == "RFC882" || key == "DNS" || key == "URI")
+               return true;
+            return false;
+            }
+      };
+
+   std::multimap<std::string, std::string> names
+      = info.search_with(AltName_Matcher());
+
+   AlternativeName alt_name;
+
+   std::multimap<std::string, std::string>::iterator j;
+   for(j = names.begin(); j != names.end(); ++j)
+      alt_name.add_attribute(j->first, j->second);
+
+   return alt_name;
    }
 
 }

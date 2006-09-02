@@ -4,7 +4,11 @@
 *************************************************/
 
 #include <botan/modules.h>
+#include <botan/defalloc.h>
+#include <botan/def_char.h>
+#include <botan/eng_def.h>
 #include <botan/es_file.h>
+#include <botan/timers.h>
 
 #if defined(BOTAN_EXT_MUTEX_PTHREAD)
   #include <botan/mux_pthr.h>
@@ -70,12 +74,10 @@
 
 namespace Botan {
 
-namespace Modules {
-
 /*************************************************
-* Register a mutex type, if possible             *
+* Return a mutex factory, if available           *
 *************************************************/
-Mutex_Factory* get_mutex_factory()
+Mutex_Factory* Builtin_Modules::mutex_factory() const
    {
 #if defined(BOTAN_EXT_MUTEX_PTHREAD)
    return new Pthread_Mutex_Factory;
@@ -83,15 +85,15 @@ Mutex_Factory* get_mutex_factory()
    return new Win32_Mutex_Factory;
 #elif defined(BOTAN_EXT_MUTEX_QT)
    return new Qt_Mutex_Factory;
-#endif
-
+#else
    return 0;
+#endif
    }
 
 /*************************************************
 * Find a high resolution timer, if possible      *
 *************************************************/
-Timer* get_timer()
+Timer* Builtin_Modules::timer() const
    {
 #if defined(BOTAN_EXT_TIMER_HARDWARE)
    return new Hardware_Timer;
@@ -101,29 +103,49 @@ Timer* get_timer()
    return new Unix_Timer;
 #elif defined(BOTAN_EXT_TIMER_WIN32)
    return new Win32_Timer;
+#else
+   return new Timer;
 #endif
-
-   return 0;
    }
 
 /*************************************************
 * Find any usable allocators                     *
 *************************************************/
-std::map<std::string, Allocator*> get_allocators()
+std::vector<Allocator*> Builtin_Modules::allocators() const
    {
-   std::map<std::string, Allocator*> allocators;
+   std::vector<Allocator*> allocators;
 
 #if defined(BOTAN_EXT_ALLOC_MMAP)
-   allocators["mmap"] = new MemoryMapping_Allocator;
+   allocators.push_back(new MemoryMapping_Allocator);
 #endif
+
+   allocators.push_back(new Locking_Allocator);
+   allocators.push_back(new Malloc_Allocator);
 
    return allocators;
    }
 
 /*************************************************
+* Return the default allocator                   *
+*************************************************/
+std::string Builtin_Modules::default_allocator() const
+   {
+   if(should_lock)
+      {
+#if defined(BOTAN_EXT_ALLOC_MMAP)
+      return "mmap";
+#else
+      return "locking";
+#endif
+      }
+   else
+      return "malloc";
+   }
+
+/*************************************************
 * Register any usable entropy sources            *
 *************************************************/
-std::vector<EntropySource*> get_entropy_sources()
+std::vector<EntropySource*> Builtin_Modules::entropy_sources() const
    {
    std::vector<EntropySource*> sources;
 
@@ -163,25 +185,45 @@ std::vector<EntropySource*> get_entropy_sources()
 /*************************************************
 * Find any usable engines                        *
 *************************************************/
-std::vector<Engine*> get_engines()
+std::vector<Engine*> Builtin_Modules::engines() const
    {
    std::vector<Engine*> engines;
 
+   if(use_engines)
+      {
 #if defined(BOTAN_EXT_ENGINE_AEP)
-   engines.push_back(new AEP_Engine);
+      engines.push_back(new AEP_Engine);
 #endif
 
 #if defined(BOTAN_EXT_ENGINE_GNU_MP)
-   engines.push_back(new GMP_Engine);
+      engines.push_back(new GMP_Engine);
 #endif
 
 #if defined(BOTAN_EXT_ENGINE_OPENSSL)
-   engines.push_back(new OpenSSL_Engine);
+      engines.push_back(new OpenSSL_Engine);
 #endif
+      }
+
+   engines.push_back(new Default_Engine);
 
    return engines;
    }
 
-}
+/*************************************************
+* Find the best transcoder option                *
+*************************************************/
+Charset_Transcoder* Builtin_Modules::transcoder() const
+   {
+   return new Default_Charset_Transcoder;
+   }
+
+/*************************************************
+* Builtin_Modules Constructor                    *
+*************************************************/
+Builtin_Modules::Builtin_Modules(const InitializerOptions& args) :
+   should_lock(args.secure_memory()),
+   use_engines(args.use_engines())
+   {
+   }
 
 }

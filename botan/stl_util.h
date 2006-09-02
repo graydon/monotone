@@ -1,14 +1,30 @@
 /*************************************************
-* Map Utility Functions Header File              *
+* STL Utility Functions Header File              *
 * (C) 1999-2006 The Botan Project                *
 *************************************************/
 
-#ifndef BOTAN_MAP_UTIL_H__
-#define BOTAN_MAP_UTIL_H__
+#ifndef BOTAN_STL_UTIL_H__
+#define BOTAN_STL_UTIL_H__
 
 #include <map>
 
 namespace Botan {
+
+/*************************************************
+* Copy-on-Predicate Algorithm                    *
+*************************************************/
+template<typename InputIterator, typename OutputIterator, typename Predicate>
+OutputIterator copy_if(InputIterator current, InputIterator end,
+                       OutputIterator dest, Predicate copy_p)
+   {
+   while(current != end)
+      {
+      if(copy_p(*current))
+         *dest++ = *current;
+      ++current;
+      }
+   return dest;
+   }
 
 /*************************************************
 * Searching through a std::map                   *
@@ -32,6 +48,25 @@ inline R search_map(const std::map<K, V>& mapping, const K& key,
    if(i == mapping.end())
       return null_result;
    return found_result;
+   }
+
+/*************************************************
+* Function adaptor for delete operation          *
+*************************************************/
+template<class T>
+class del_fun : public std::unary_function<T, void>
+   {
+   public:
+      void operator()(T* ptr) { delete ptr; }
+   };
+
+/*************************************************
+* Delete the second half of a pair of objects    *
+*************************************************/
+template<typename Pair>
+void delete2nd(Pair& pair)
+   {
+   delete pair.second;
    }
 
 /*************************************************

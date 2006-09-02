@@ -5,7 +5,8 @@
 
 #include <botan/dl_algo.h>
 #include <botan/numthry.h>
-#include <botan/asn1.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 
 namespace Botan {
 
@@ -14,9 +15,7 @@ namespace Botan {
 *************************************************/
 MemoryVector<byte> DL_Scheme_PublicKey::DER_encode_pub() const
    {
-   DER_Encoder encoder;
-   DER::encode(encoder, y);
-   return encoder.get_contents();
+   return DER_Encoder().encode(y).get_contents();
    }
 
 /*************************************************
@@ -32,8 +31,8 @@ MemoryVector<byte> DL_Scheme_PublicKey::DER_encode_params() const
 *************************************************/
 void DL_Scheme_PublicKey::BER_decode_pub(DataSource& source)
    {
-   BER_Decoder decoder(source);
-   BER::decode(decoder, y);
+   BER_Decoder(source).decode(y);
+
    if(y < 2 || y >= group_p())
       throw Invalid_Argument(algo_name() + ": Invalid public key");
    X509_load_hook();
@@ -52,9 +51,7 @@ void DL_Scheme_PublicKey::BER_decode_params(DataSource& source)
 *************************************************/
 SecureVector<byte> DL_Scheme_PrivateKey::DER_encode_priv() const
    {
-   DER_Encoder encoder;
-   DER::encode(encoder, x);
-   return encoder.get_contents();
+   return DER_Encoder().encode(x).get_contents();
    }
 
 /*************************************************
@@ -62,8 +59,8 @@ SecureVector<byte> DL_Scheme_PrivateKey::DER_encode_priv() const
 *************************************************/
 void DL_Scheme_PrivateKey::BER_decode_priv(DataSource& source)
    {
-   BER_Decoder decoder(source);
-   BER::decode(decoder, x);
+   BER_Decoder(source).decode(x);
+
    PKCS8_load_hook();
    check_loaded_private();
    }

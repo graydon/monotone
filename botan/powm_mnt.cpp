@@ -14,7 +14,7 @@ namespace {
 /*************************************************
 * Try to choose a good window size               *
 *************************************************/
-u32bit choose_window_bits(u32bit exp_bits, u32bit base_bits,
+u32bit choose_window_bits(u32bit exp_bits, u32bit,
                           Power_Mod::Usage_Hints hints)
    {
    static const u32bit wsize[][2] = {
@@ -27,7 +27,7 @@ u32bit choose_window_bits(u32bit exp_bits, u32bit base_bits,
       {
       for(u32bit j = 0; wsize[j][0]; ++j)
          {
-         if(exp_bits >= wsize[j][0] || base_bits >= wsize[j][0])
+         if(exp_bits >= wsize[j][0])
             {
             window_bits += wsize[j][1];
             break;
@@ -64,11 +64,13 @@ void Montgomery_Exponentiator::set_base(const BigInt& base)
    g.resize((1 << window_bits) - 1);
 
    SecureVector<word> z(2 * (mod_words + 1));
+   SecureVector<word> workspace(z.size());
 
    g[0] = (base >= modulus) ? (base % modulus) : base;
-   bigint_mul(z.begin(), z.size(),
+   bigint_mul(z.begin(), z.size(), workspace,
               g[0].data(), g[0].size(), g[0].sig_words(),
               R2.data(), R2.size(), R2.sig_words());
+
    montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_words,
                      mod_prime);
    g[0].get_reg().set(z + mod_words, mod_words + 1);
@@ -82,7 +84,7 @@ void Montgomery_Exponentiator::set_base(const BigInt& base)
       const u32bit y_sig = y.sig_words();
 
       z.clear();
-      bigint_mul(z.begin(), z.size(),
+      bigint_mul(z.begin(), z.size(), workspace,
                  x.data(), x.size(), x_sig,
                  y.data(), y.size(), y_sig);
 
@@ -102,13 +104,14 @@ BigInt Montgomery_Exponentiator::execute() const
 
    BigInt x = R_mod;
    SecureVector<word> z(2 * (mod_words + 1));
+   SecureVector<word> workspace(2 * (mod_words + 1));
 
    for(u32bit j = exp_nibbles; j > 0; --j)
       {
       for(u32bit k = 0; k != window_bits; ++k)
          {
          z.clear();
-         bigint_sqr(z.begin(), z.size(),
+         bigint_sqr(z.begin(), z.size(), workspace,
                     x.data(), x.size(), x.sig_words());
 
          montgomery_reduce(z.begin(), z.size(), modulus.data(), mod_words,
@@ -119,10 +122,10 @@ BigInt Montgomery_Exponentiator::execute() const
       u32bit nibble = exp.get_substring(window_bits*(j-1), window_bits);
       if(nibble)
          {
-         const BigInt& y = g.at(nibble-1);
+         const BigInt& y = g[nibble-1];
 
          z.clear();
-         bigint_mul(z.begin(), z.size(),
+         bigint_mul(z.begin(), z.size(), workspace,
                     x.data(), x.size(), x.sig_words(),
                     y.data(), y.size(), y.sig_words());
 

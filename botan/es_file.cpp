@@ -4,39 +4,19 @@
 *************************************************/
 
 #include <botan/es_file.h>
-#include <botan/conf.h>
-#include <botan/parsing.h>
+#include <botan/config.h>
 #include <fstream>
 
 namespace Botan {
-
-/*************************************************
-* File_EntropySource Constructor                 *
-*************************************************/
-File_EntropySource::File_EntropySource(const std::string& sources)
-   {
-   std::vector<std::string> source_list = split_on(sources, ':');
-   std::vector<std::string> defaults = Config::get_list("rng/es_files");
-
-   for(u32bit j = 0; j != source_list.size(); ++j)
-      add_source(source_list[j]);
-   for(u32bit j = 0; j != defaults.size(); ++j)
-      add_source(defaults[j]);
-   }
-
-/*************************************************
-* Add another file to the list                   *
-*************************************************/
-void File_EntropySource::add_source(const std::string& source)
-   {
-   sources.push_back(source);
-   }
 
 /*************************************************
 * Gather Entropy from Randomness Source          *
 *************************************************/
 u32bit File_EntropySource::slow_poll(byte output[], u32bit length)
    {
+   std::vector<std::string> sources =
+      global_config().option_as_list("rng/es_files");
+
    u32bit read = 0;
    for(u32bit j = 0; j != sources.size(); ++j)
       {

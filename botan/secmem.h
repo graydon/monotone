@@ -53,7 +53,7 @@ class MemoryRegion
       void set(const MemoryRegion<T>& in) { set(in.begin(), in.size()); }
 
       void append(const T data[], u32bit n)
-         { grow_by(n); copy(size() - n, data, n); }
+         { grow_to(size()+n); copy(size() - n, data, n); }
       void append(T x) { append(&x, 1); }
       void append(const MemoryRegion<T>& x) { append(x.begin(), x.size()); }
 
@@ -62,7 +62,6 @@ class MemoryRegion
 
       void create(u32bit);
       void grow_to(u32bit) const;
-      void grow_by(u32bit n) const { grow_to(n + size()); }
       void swap(MemoryRegion<T>&);
 
       ~MemoryRegion() { deallocate(buf, allocated); }
@@ -107,18 +106,20 @@ void MemoryRegion<T>::create(u32bit n)
 template<typename T>
 void MemoryRegion<T>::grow_to(u32bit n) const
    {
-   if(n <= used) return;
-   if(n <= allocated)
+   if(n > used && n <= allocated)
       {
       clear_mem(buf + used, n - used);
       used = n;
       return;
       }
-   T* new_buf = allocate(n);
-   copy_mem(new_buf, buf, used);
-   deallocate(buf, allocated);
-   buf = new_buf;
-   allocated = used = n;
+   else if(n > allocated)
+      {
+      T* new_buf = allocate(n);
+      copy_mem(new_buf, buf, used);
+      deallocate(buf, allocated);
+      buf = new_buf;
+      allocated = used = n;
+      }
    }
 
 /*************************************************

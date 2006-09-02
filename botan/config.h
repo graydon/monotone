@@ -1,31 +1,56 @@
 /*************************************************
-* Configuration Header File                      *
-* (C) 1999-2004 The Botan Project                *
+* Configuration Handling Header File             *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
-#ifndef BOTAN_CONFIG_H__
-#define BOTAN_CONFIG_H__
+#ifndef BOTAN_POLICY_CONF_H__
+#define BOTAN_POLICY_CONF_H__
 
-#define BOTAN_MP_WORD_BITS 32
-#define BOTAN_DEFAULT_BUFFER_SIZE 4096
-#define BOTAN_VECTOR_OVER_ALLOCATE 4
+#include <botan/types.h>
+#include <botan/enums.h>
+#include <string>
+#include <vector>
+#include <map>
 
-#define BOTAN_KARAT_MUL_THRESHOLD 12
-#define BOTAN_KARAT_SQR_THRESHOLD 12
+namespace Botan {
 
-#define BOTAN_GZIP_OS_CODE 255
+/*************************************************
+* Library Configuration Settings                 *
+*************************************************/
+class Config
+   {
+   public:
+      void load_defaults();
 
-#if defined(_MSC_VER)
-   #pragma warning(disable: 4250 4290)
-#define BOTAN_EXT_ENTROPY_SRC_WIN32
-#define BOTAN_EXT_ENTROPY_SRC_CAPI
-#endif
+      std::string get(const std::string&, const std::string&) const;
+      bool is_set(const std::string&, const std::string&) const;
+      void set(const std::string&, const std::string&,
+               const std::string&, bool = true);
 
-#define BOTAN_VERSION_MAJOR 1
-#define BOTAN_VERSION_MINOR 5
-#define BOTAN_VERSION_PATCH 2
+      u32bit option_as_u32bit(const std::string&) const;
+      u32bit option_as_time(const std::string&) const;
+      bool option_as_bool(const std::string&) const;
+      std::vector<std::string> option_as_list(const std::string&) const;
 
-#define BOTAN_EXT_COMPRESSOR_GZIP
-#define BOTAN_EXT_COMPRESSOR_ZLIB
+      void add_alias(const std::string&, const std::string&);
+      std::string deref_alias(const std::string&) const;
+
+      std::string option(const std::string&) const;
+
+      void load_inifile(const std::string&);
+
+      static void choose_sig_format(const std::string&, std::string&,
+                                    Signature_Format&);
+   private:
+
+      std::map<std::string, std::string> settings;
+   };
+
+/*************************************************
+* Hook for the global config                     *
+*************************************************/
+Config& global_config();
+
+}
 
 #endif

@@ -1,28 +1,24 @@
-The following people have contributed substantial patches:
 
-  Peter J. Jones: Wrote the initial version of the comp_bzip2 module
-  Justin Karneges: Contributed the mux_qt module
-  Hany Greiss: Windows port
+The following people (sorted alphabetically) contributed bug reports, useful
+information, or were generally just helpful people to talk to:
 
-AEP Systems Ltd kindly provided an AEP2000 crypto card and drivers, enabling
-the creation of Botan's AEP engine module.
+Jeff B
+Mike Desjardins
+Matthew Gregan
+Hany Greiss
+Friedemann Kleint
+Ying-Chieh Liao
+Dan Nicolaescu
+Vaclav Ovsik
+Ken Perano
+Darren Starsmore
+Kaushik Veeraraghavan
+Dominik Vogt
+James Widener
 
-The author would also like to thank the following people for contributing bug
-reports, useful information, or other assistance:
+Barry Kavanagh of AEP Systems Ltd kindly provided an AEP2000 crypto card and
+drivers, enabling the creation of Botan's AEP engine module.
 
-  Darren Starsmore
-  Dan Nicolaescu
-  Matt Johnston
-  Hany Greiss
-  Dominik Vogt
-  Kaushik Veeraraghavan
-  James Widener
-  Jeff B
-  Ken Perano
-  Mike Desjardins
-  Ying-Chieh Liao
-  Vaclav Ovsik
-  Friedemann Kleint
 
 In addition, the following people have unknowingly contributed help:
 

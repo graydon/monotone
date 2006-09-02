@@ -4,10 +4,11 @@
 *************************************************/
 
 #include <botan/dl_group.h>
-#include <botan/libstate.h>
+#include <botan/config.h>
 #include <botan/parsing.h>
 #include <botan/numthry.h>
-#include <botan/asn1.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/pipe.h>
 #include <botan/util.h>
 #include <botan/pem.h>
@@ -27,7 +28,7 @@ DL_Group::DL_Group()
 *************************************************/
 DL_Group::DL_Group(const std::string& type)
    {
-   DataSource_Memory pem(global_state().get_option("dl", type));
+   DataSource_Memory pem(global_config().get("dl", type));
    PEM_decode(pem);
    }
 
@@ -190,30 +191,37 @@ SecureVector<byte> DL_Group::DER_encode(Format format) const
    if((q == 0) && (format != PKCS_3))
       throw Encoding_Error("The ANSI DL parameter formats require a subgroup");
 
-   DER_Encoder encoder;
-   encoder.start_sequence();
    if(format == ANSI_X9_57)
       {
-      DER::encode(encoder, p);
-      DER::encode(encoder, q);
-      DER::encode(encoder, g);
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(p)
+            .encode(q)
+            .encode(g)
+         .end_cons()
+      .get_contents();
       }
    else if(format == ANSI_X9_42)
       {
-      DER::encode(encoder, p);
-      DER::encode(encoder, g);
-      DER::encode(encoder, q);
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(p)
+            .encode(g)
+            .encode(q)
+         .end_cons()
+      .get_contents();
       }
    else if(format == PKCS_3)
       {
-      DER::encode(encoder, p);
-      DER::encode(encoder, g);
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(p)
+            .encode(g)
+         .end_cons()
+      .get_contents();
       }
-   else
-      throw Invalid_Argument("Unknown DL_Group encoding " + to_string(format));
-   encoder.end_sequence();
 
-   return encoder.get_contents();
+   throw Invalid_Argument("Unknown DL_Group encoding " + to_string(format));
    }
 
 /*************************************************
@@ -240,29 +248,30 @@ void DL_Group::BER_decode(DataSource& source, Format format)
    BigInt new_p, new_q, new_g;
 
    BER_Decoder decoder(source);
-   BER_Decoder sequence = BER::get_subsequence(decoder);
+   BER_Decoder ber = decoder.start_cons(SEQUENCE);
+
    if(format == ANSI_X9_57)
       {
-      BER::decode(sequence, new_p);
-      BER::decode(sequence, new_q);
-      BER::decode(sequence, new_g);
+      ber.decode(new_p)
+         .decode(new_q)
+         .decode(new_g)
+         .verify_end();
       }
    else if(format == ANSI_X9_42)
       {
-      BER::decode(sequence, new_p);
-      BER::decode(sequence, new_g);
-      BER::decode(sequence, new_q);
-      sequence.discard_remaining();
+      ber.decode(new_p)
+         .decode(new_g)
+         .decode(new_q)
+         .discard_remaining();
       }
    else if(format == PKCS_3)
       {
-      BER::decode(sequence, new_p);
-      BER::decode(sequence, new_g);
-      sequence.discard_remaining();
+      ber.decode(new_p)
+         .decode(new_g)
+         .discard_remaining();
       }
    else
       throw Invalid_Argument("Unknown DL_Group encoding " + to_string(format));
-   sequence.verify_end();
 
    initialize(new_p, new_q, new_g);
    }

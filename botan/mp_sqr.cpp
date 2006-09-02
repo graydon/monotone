@@ -111,10 +111,10 @@ void handle_small_sqr(word z[], u32bit z_size,
 /*************************************************
 * Squaring Algorithm Dispatcher                  *
 *************************************************/
-void bigint_sqr(word z[], u32bit z_size,
+void bigint_sqr(word z[], u32bit z_size, word workspace[],
                 const word x[], u32bit x_size, u32bit x_sw)
    {
-   if(x_size <= 8 || x_size <= 8)
+   if(x_size <= 8 || x_sw <= 8)
       {
       handle_small_sqr(z, z_size, x, x_size, x_sw);
       return;
@@ -124,13 +124,8 @@ void bigint_sqr(word z[], u32bit z_size,
 
    if(N)
       {
-      word* workspace = new word[2*N];
       clear_mem(workspace, 2*N);
-
       karatsuba_sqr(z, x, N, workspace);
-
-      clear_mem(workspace, 2*N);
-      delete[] workspace;
       }
    else
       bigint_simple_mul(z, x, x_sw, x, x_sw);

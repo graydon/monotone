@@ -4,6 +4,8 @@
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/oids.h>
 
 namespace Botan {
@@ -11,22 +13,46 @@ namespace Botan {
 /*************************************************
 * Create an AlgorithmIdentifier                  *
 *************************************************/
-AlgorithmIdentifier::AlgorithmIdentifier(const OID& o,
-                                         const MemoryRegion<byte>& p) :
-   oid(o), parameters(p)
+AlgorithmIdentifier::AlgorithmIdentifier(const OID& alg_id,
+                                         const MemoryRegion<byte>& param)
    {
+   oid = alg_id;
+   parameters = param;
    }
 
 /*************************************************
 * Create an AlgorithmIdentifier                  *
 *************************************************/
 AlgorithmIdentifier::AlgorithmIdentifier(const std::string& alg_id,
-                                         bool use_null)
+                                         const MemoryRegion<byte>& param)
+   {
+   oid = OIDS::lookup(alg_id);
+   parameters = param;
+   }
+
+/*************************************************
+* Create an AlgorithmIdentifier                  *
+*************************************************/
+AlgorithmIdentifier::AlgorithmIdentifier(const OID& alg_id,
+                                         Encoding_Option option)
+   {
+   const byte DER_NULL[] = { 0x05, 0x00 };
+
+   oid = alg_id;
+   if(option == USE_NULL_PARAM)
+      parameters.append(DER_NULL, sizeof(DER_NULL));
+   }
+
+/*************************************************
+* Create an AlgorithmIdentifier                  *
+*************************************************/
+AlgorithmIdentifier::AlgorithmIdentifier(const std::string& alg_id,
+                                         Encoding_Option option)
    {
    const byte DER_NULL[] = { 0x05, 0x00 };
 
    oid = OIDS::lookup(alg_id);
-   if(use_null)
+   if(option == USE_NULL_PARAM)
       parameters.append(DER_NULL, sizeof(DER_NULL));
    }
 
@@ -50,34 +76,26 @@ bool operator!=(const AlgorithmIdentifier& a1, const AlgorithmIdentifier& a2)
    return !(a1 == a2);
    }
 
-namespace DER {
-
 /*************************************************
 * DER encode an AlgorithmIdentifier              *
 *************************************************/
-void encode(DER_Encoder& encoder, const AlgorithmIdentifier& alg_id)
+void AlgorithmIdentifier::encode_into(DER_Encoder& codec) const
    {
-   encoder.start_sequence();
-   DER::encode(encoder, alg_id.oid);
-   encoder.add_raw_octets(alg_id.parameters);
-   encoder.end_sequence();
+   codec.start_cons(SEQUENCE)
+      .encode(oid)
+      .raw_bytes(parameters)
+   .end_cons();
    }
-
-}
-
-namespace BER {
 
 /*************************************************
 * Decode a BER encoded AlgorithmIdentifier       *
 *************************************************/
-void decode(BER_Decoder& source, AlgorithmIdentifier& alg_id)
+void AlgorithmIdentifier::decode_from(BER_Decoder& codec)
    {
-   BER_Decoder sequence = BER::get_subsequence(source);
-   BER::decode(sequence, alg_id.oid);
-   alg_id.parameters = sequence.get_remaining();
-   sequence.verify_end();
+   codec.start_cons(SEQUENCE)
+      .decode(oid)
+      .raw_bytes(parameters)
+   .end_cons();
    }
-
-}
 
 }

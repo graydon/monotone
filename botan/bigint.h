@@ -56,7 +56,8 @@ class BigInt
       bool get_bit(u32bit) const;
       u32bit get_substring(u32bit, u32bit) const;
       byte byte_at(u32bit) const;
-      word word_at(u32bit) const;
+      word word_at(u32bit n) const
+         { return ((n < size()) ? reg[n] : 0); }
 
       u32bit to_u32bit() const;
 
@@ -103,8 +104,7 @@ class BigInt
       BigInt(Sign, u32bit);
       BigInt(NumberType, u32bit);
    private:
-      friend void divide(const BigInt&, const BigInt&, BigInt&, BigInt&);
-      void grow_to(u32bit n) const { reg.grow_to(n); }
+      void grow_to(u32bit) const;
       SecureVector<word> reg;
       Sign signedness;
    };

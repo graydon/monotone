@@ -94,7 +94,7 @@ bool have_algorithm(const std::string& name)
 *************************************************/
 bool have_block_cipher(const std::string& name)
    {
-   return retrieve_block_cipher(name);
+   return (retrieve_block_cipher(name) != 0);
    }
 
 /*************************************************
@@ -102,7 +102,7 @@ bool have_block_cipher(const std::string& name)
 *************************************************/
 bool have_stream_cipher(const std::string& name)
    {
-   return retrieve_stream_cipher(name);
+   return (retrieve_stream_cipher(name) != 0);
    }
 
 /*************************************************
@@ -110,7 +110,7 @@ bool have_stream_cipher(const std::string& name)
 *************************************************/
 bool have_hash(const std::string& name)
    {
-   return retrieve_hash(name);
+   return (retrieve_hash(name) != 0);
    }
 
 /*************************************************
@@ -118,7 +118,7 @@ bool have_hash(const std::string& name)
 *************************************************/
 bool have_mac(const std::string& name)
    {
-   return retrieve_mac(name);
+   return (retrieve_mac(name) != 0);
    }
 
 /*************************************************

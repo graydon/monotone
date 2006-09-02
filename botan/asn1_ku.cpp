@@ -4,34 +4,11 @@
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/bit_ops.h>
 
 namespace Botan {
-
-namespace DER {
-
-/*************************************************
-* DER encode a KeyUsage BIT STRING               *
-*************************************************/
-void encode(DER_Encoder& encoder, Key_Constraints usage)
-   {
-   if(usage == NO_CONSTRAINTS)
-      throw Encoding_Error("Cannot encode zero usage constraints");
-
-   const u32bit unused_bits = low_bit(usage) - 1;
-
-   SecureVector<byte> der;
-   der.append(BIT_STRING);
-   der.append(2 + ((unused_bits < 8) ? 1 : 0));
-   der.append(unused_bits % 8);
-   der.append((usage >> 8) & 0xFF);
-   if(usage & 0xFF)
-      der.append(usage & 0xFF);
-
-   encoder.add_raw_octets(der);
-   }
-
-}
 
 namespace BER {
 

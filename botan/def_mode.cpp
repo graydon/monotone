@@ -26,7 +26,7 @@ Keyed_Filter* do_get_cipher(const std::string& algo_spec,
                             Cipher_Dir direction)
    {
    std::vector<std::string> algo_parts = split_on(algo_spec, '/');
-   if(algo_parts.size() == 0)
+   if(algo_parts.empty())
       throw Invalid_Algorithm_Name(algo_spec);
 
    const std::string cipher = algo_parts[0];

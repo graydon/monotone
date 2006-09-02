@@ -8,7 +8,7 @@
 #include <botan/pubkey.h>
 #include <botan/look_pk.h>
 #include <botan/oids.h>
-#include <botan/conf.h>
+#include <botan/config.h>
 #include <botan/util.h>
 #include <algorithm>
 #include <memory>
@@ -53,13 +53,13 @@ bool check_usage(const X509_Certificate& cert, X509_Store::Cert_Usage usage,
    if((usage & check_for) == 0)
       return true;
 
-   const std::vector<OID> constraints = cert.ex_constraints();
+   const std::vector<std::string> constraints = cert.ex_constraints();
 
-   if(constraints.size() == 0)
+   if(constraints.empty())
       return true;
 
    return std::binary_search(constraints.begin(), constraints.end(),
-                             OIDS::lookup(usage_oid));
+                             usage_oid);
    }
 
 /*************************************************
@@ -257,7 +257,8 @@ u32bit X509_Store::find_parent_of(const X509_Certificate& cert)
          {
          std::vector<X509_Certificate> got = stores[j]->by_SKID(auth_key_id);
 
-         if(got.size() == 0) continue;
+         if(got.empty())
+            continue;
 
          for(u32bit k = 0; k != got.size(); ++k)
             add_cert(got[k]);
@@ -293,7 +294,7 @@ X509_Code X509_Store::construct_cert_chain(const X509_Certificate& end_cert,
 
       if(certs[parent].is_trusted())
          break;
-      if(parent_cert.self_signed())
+      if(parent_cert.is_self_signed())
          return CANNOT_ESTABLISH_TRUST;
 
       if(parent_cert.path_limit() < indexes.size() - 1)
@@ -480,7 +481,7 @@ void X509_Store::add_new_certstore(Certificate_Store* certstore)
 *************************************************/
 void X509_Store::add_cert(const X509_Certificate& cert, bool trusted)
    {
-   if(trusted && !cert.self_signed())
+   if(trusted && !cert.is_self_signed())
       throw Invalid_Argument("X509_Store: Trusted certs must be self-signed");
 
    if(find_cert(cert.subject_dn(), cert.subject_key_id()) == NO_CERT_FOUND)
@@ -573,13 +574,13 @@ X509_Code X509_Store::add_crl(const X509_CRL& crl)
       {
       CRL_Data revoked_info;
       revoked_info.issuer = crl.issuer_dn();
-      revoked_info.serial = revoked_certs[j].serial;
+      revoked_info.serial = revoked_certs[j].serial_number();
       revoked_info.auth_key_id = crl.authority_key_id();
 
       std::vector<CRL_Data>::iterator p =
          std::find(revoked.begin(), revoked.end(), revoked_info);
 
-      if(revoked_certs[j].reason == REMOVE_FROM_CRL)
+      if(revoked_certs[j].reason_code() == REMOVE_FROM_CRL)
          {
          if(p == revoked.end()) continue;
          revoked.erase(p);
@@ -657,7 +658,9 @@ bool X509_Store::Cert_Info::is_verified() const
    if(result != VERIFIED && result != CERT_NOT_YET_VALID)
       return true;
 
-   const u32bit CACHE_TIME = Config::get_time("x509/cache_verify_results");
+   const u32bit CACHE_TIME =
+      global_config().option_as_time("x509/cache_verify_results");
+
    const u64bit current_time = system_time();
 
    if(current_time > last_checked + CACHE_TIME)

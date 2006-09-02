@@ -31,44 +31,52 @@ class Library_State
       friend class Engine_Iterator;
 
       Allocator* get_allocator(const std::string& = "") const;
-      void add_allocator(const std::string&, Allocator*);
+      void add_allocator(Allocator*, bool = false);
 
       void set_prng(RandomNumberGenerator*);
       void randomize(byte[], u32bit);
-      void add_entropy_source(EntropySource*, bool = false);
+      void add_entropy_source(EntropySource*, bool = true);
       void add_entropy(const byte[], u32bit);
       void add_entropy(EntropySource&, bool);
       u32bit seed_prng(bool, u32bit);
 
+      void load(class Modules&);
+
+      void set_timer(class Timer*);
       u64bit system_clock() const;
 
-      void set_option(const std::string&, const std::string&,
-                              const std::string&, bool = true);
-      std::string get_option(const std::string&, const std::string&) const;
-      bool option_set(const std::string&, const std::string&) const;
+      class Config& config() const;
 
-      void add_engine(class Engine*);
+      void add_engine(class Engine*, bool);
 
-      class Mutex* get_mutex();
+      class Mutex* get_mutex() const;
+      class Mutex* get_named_mutex(const std::string&);
 
-      Library_State(class Mutex_Factory*, class Timer*);
+      void set_x509_state(class X509_GlobalState*);
+      class X509_GlobalState& x509_state();
+
+      void set_transcoder(class Charset_Transcoder*);
+      std::string transcode(const std::string,
+                            Character_Set, Character_Set) const;
+
+      Library_State(class Mutex_Factory*);
       ~Library_State();
    private:
       Library_State(const Library_State&) {}
       Library_State& operator=(const Library_State&) { return (*this); }
 
       class Engine* get_engine_n(u32bit) const;
-      void set_default_policy();
-
-      std::map<std::string, class Mutex*> locks;
 
       class Mutex_Factory* mutex_factory;
       class Timer* timer;
+      class Config* config_obj;
+      class X509_GlobalState* x509_state_obj;
 
-      std::map<std::string, std::string> settings;
+      std::map<std::string, class Mutex*> locks;
       std::map<std::string, Allocator*> alloc_factory;
       mutable Allocator* cached_default_allocator;
 
+      class Charset_Transcoder* transcoder;
       RandomNumberGenerator* rng;
       std::vector<EntropySource*> entropy_sources;
       std::vector<class Engine*> engines;
@@ -79,6 +87,7 @@ class Library_State
 *************************************************/
 Library_State& global_state();
 void set_global_state(Library_State*);
+Library_State* swap_global_state(Library_State*);
 
 }
 
