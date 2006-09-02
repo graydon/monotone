@@ -82,7 +82,11 @@ function check_migrate_from(version)
      "checking migration from workspace format version ", version, "\n")
    local ws = "test-" .. version
    get(ws, ws)
-   check(readfile(ws .. "/_MTN/format") == (version .. "\n"))
+   if (exists(ws .. "/_MTN/format")) then
+      check(readfile(ws .. "/_MTN/format") == (version .. "\n"))
+   else
+      check(1 == version)
+   end
    if current_workspace_format ~= version then
       -- monotone notices and refuses to work
       check(indir(ws, mtn("status")), 1, false, true)
@@ -96,6 +100,6 @@ function check_migrate_from(version)
    check_workspace_matches_current(ws)
 end
 
-for i = 2,current_workspace_format do
+for i = 1,current_workspace_format do
    check_migrate_from(i)
 end
