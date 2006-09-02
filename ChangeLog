@@ -1,3 +1,8 @@
+2006-09-01  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/explicit_merge_and_update/: Log where we are on each loop
+	iteration, to facilitate debugging.
+
 2006-09-01  Zack Weinberg  <zackw@panix.com>
 
 	* tests/explicit_merge_and_update: Augment to test starting from

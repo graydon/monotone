@@ -35,9 +35,10 @@ rename("stdout", "ancestry")
 
 check(get("otherfile_mod"))
 for d,r in pairs({ anc_d = anc,
-		   unrelated_d = unrelated,
-		   left_d = left,
-		   right_d = right }) do
+                   unrelated_d = unrelated,
+                   left_d = left,
+                   right_d = right }) do
+   L(locheader(), "Testing ", d, "\n")
    check(mtn("checkout", "-r"..r, d), 0, false, false)
    copy("otherfile_mod", d.."/otherfile")
 
@@ -70,9 +71,9 @@ for d,r in pairs({ anc_d = anc,
    log_file_contents("stdout")
    for line in io.open("stdout", "r"):lines() do
       if want[line] then
-	 want[line] = nil
+         want[line] = nil
       else
-	 err("Unexpected or duplicate parent: "..line.."\n", 3)
+         err("Unexpected or duplicate parent: "..line.."\n", 3)
       end
    end
 end
