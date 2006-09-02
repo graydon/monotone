@@ -35,7 +35,10 @@ void clean_shutdown_dummy_test()
 
 test_suite * init_unit_test_suite(int argc, char * argv[])
 {
-  Botan::Init::initialize();
+  Botan::InitializerOptions botan_opt("thread_safe=0 selftest=1 seed_rng=1 "
+                                    "use_engines=0 secure_memory=1 "
+                                    "fips140=1");
+  Botan::Init::initialize(botan_opt);
 
   clean_shutdown = false;
   atexit(&dumper);

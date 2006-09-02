@@ -86,7 +86,10 @@ namespace po = boost::program_options;
 struct botan_library
 {
   botan_library() { 
-    Botan::Init::initialize();
+    Botan::InitializerOptions options("thread_safe=0 selftest=0 seed_rng=1 "
+                                      "use_engines=0 secure_memory=1 "
+                                      "fips140=0");
+    Botan::Init::initialize(options);
   }
   ~botan_library() {
     Botan::Init::deinitialize();

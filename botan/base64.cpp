@@ -118,8 +118,11 @@ void Base64_Encoder::end_msg()
       do_output(out, 4);
       }
 
-   if(counter && line_length)
-      send('\n');
+   // Monotone requires a trailing in newline in 
+   // all cases, for crypto++ compatibility.
+   // if(counter && line_length)
+   //   send('\n');
+   send('\n');
 
    counter = position = 0;
    }

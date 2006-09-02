@@ -1,6 +1,18 @@
 2006-09-02  Matt Johnston  <matt@ucc.asn.au>
 
+    * monotone.cc, unit_test.cc: Botan initialisation has
+    changed.
+    * botan/pkcs8.*: update monotone-specific parts to new botan
+    release.
+    * botan/{arc4.cpp, base64.*}: bring back monotone-specific changes
+
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+
     * netsync.cc (~session): fixup for Botan 1.5
+
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+    
+    * botan/: import of Botan 1.5
 
 2006-08-31  Nathaniel Smith  <njs@pobox.com>
 
