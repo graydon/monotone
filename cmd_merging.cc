@@ -668,7 +668,7 @@ CMD(explicit_merge_and_update, N_("tree"),
   I(result_two.is_clean());
   result_two.roster.check_sane(true);
 
-  roster_t & merged_roster = result_two.roster;
+  roster_t const & merged_roster = result_two.roster;
   cset update;
   make_cset(working_roster, merged_roster, update);
   app.work.perform_content_update(update, wca);
