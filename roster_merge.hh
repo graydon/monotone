@@ -1,11 +1,14 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 #ifndef __ROSTER_MERGE_HH__
 #define __ROSTER_MERGE_HH__
 
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 
@@ -59,7 +62,7 @@ struct node_attr_conflict
 //     'bar', and 'a' and 'b' both being renamed to 'bar'.  Only the former
 //     occurs; 'b' merges cleanly and will be named 'bar' in the resulting
 //     manifest.)
-//   
+//
 
 // orphaned nodes always merged their name cleanly, so we simply put that name
 // here.  the node in the resulting roster is detached.
@@ -138,5 +141,13 @@ roster_merge(roster_t const & left_parent,
              std::set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result);
 
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif

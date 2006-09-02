@@ -14,7 +14,7 @@
 ** This file contains functions for allocating memory, comparing
 ** strings, and stuff like that.
 **
-** $Id: util.c,v 1.188 2006/04/04 01:54:55 drh Exp $
+** $Id: util.c,v 1.192 2006/07/26 01:39:30 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -476,8 +476,9 @@ static int OSSIZEOF(void *p){
 ** pointer to the space allocated for the application to use.
 */
 static void OSFREE(void *pFree){
+  u32 *p;         /* Pointer to the OS-layer allocation */
   sqlite3OsEnterMutex();
-  u32 *p = (u32 *)getOsPointer(pFree);   /* p points to Os level allocation */
+  p = (u32 *)getOsPointer(pFree);
   checkGuards(p);
   unlinkAlloc(p);
   memset(pFree, 0x55, OSSIZEOF(pFree));
@@ -683,11 +684,11 @@ void sqlite3ReallocOrFree(void **pp, int n){
 */
 #ifdef SQLITE_ENABLE_MEMORY_MANAGEMENT
 void *sqlite3ThreadSafeMalloc(int n){
-  ENTER_MALLOC;
+  (void)ENTER_MALLOC;
   return sqlite3Malloc(n, 0);
 }
 void sqlite3ThreadSafeFree(void *p){
-  ENTER_MALLOC;
+  (void)ENTER_MALLOC;
   if( p ){
     OSFREE(p);
   }
@@ -1150,7 +1151,7 @@ int sqlite3SafetyOn(sqlite3 *db){
     return 0;
   }else if( db->magic==SQLITE_MAGIC_BUSY ){
     db->magic = SQLITE_MAGIC_ERROR;
-    db->flags |= SQLITE_Interrupt;
+    db->u1.isInterrupted = 1;
   }
   return 1;
 }
@@ -1166,7 +1167,7 @@ int sqlite3SafetyOff(sqlite3 *db){
     return 0;
   }else if( db->magic==SQLITE_MAGIC_OPEN ){
     db->magic = SQLITE_MAGIC_ERROR;
-    db->flags |= SQLITE_Interrupt;
+    db->u1.isInterrupted = 1;
   }
   return 1;
 }
@@ -1356,8 +1357,10 @@ void *sqlite3HexToBlob(const char *z){
   if( n%2 ) return 0;
 
   zBlob = (char *)sqliteMalloc(n/2);
-  for(i=0; i<n; i+=2){
-    zBlob[i/2] = (hexToInt(z[i])<<4) | hexToInt(z[i+1]);
+  if( zBlob ){
+    for(i=0; i<n; i+=2){
+      zBlob[i/2] = (hexToInt(z[i])<<4) | hexToInt(z[i+1]);
+    }
   }
   return zBlob;
 }

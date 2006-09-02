@@ -1,11 +1,14 @@
 #ifndef __SMAP_HH__
 #define __SMAP_HH__
 
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>,
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>,
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <functional>
 #include <numeric>
@@ -39,11 +42,11 @@
 // We don't use quick_alloc.hh's QA() macro here, because macros don't know
 // about <>'s as grouping mechanisms, so it thinks the "," in the middle of
 // std::pair<K, D> is breaking things into two arguments.
-template<typename K, typename D, 
+template<typename K, typename D,
          typename compare = std::less<K>,
 #if defined(__GNUC__) && __GNUC__ < 3 || (__GNUC__ == 3 && __GNUC_MINOR__ < 4)
-         typename alloc = std::__allocator<std::pair<K, D>, std::__single_client_alloc> > 
-#else 
+         typename alloc = std::__allocator<std::pair<K, D>, std::__single_client_alloc> >
+#else
          typename alloc = std::allocator<std::pair<K, D> > >
 #endif
 class
@@ -61,24 +64,24 @@ protected:
   {
     friend class smap<K,D,compare>;
   protected:
-    compare comp;    
+    compare comp;
     value_compare(compare c) : comp(c) {}
-    
+
   public:
-    bool operator()(const value_type & a, 
+    bool operator()(const value_type & a,
                     const value_type & b) const
-    { 
-      return comp(a.first, b.first); 
+    {
+      return comp(a.first, b.first);
     }
   };
 
   value_compare val_cmp;
 
-  typedef std::vector<value_type> vec_type;  
+  typedef std::vector<value_type> vec_type;
   mutable vec_type vec;
   mutable bool damaged;
 
-  inline void 
+  inline void
   ensure_sort() const
   {
     if (damaged)
@@ -112,43 +115,43 @@ public:
   typedef typename vec_type::iterator iterator;
   typedef typename vec_type::const_iterator const_iterator;
   typedef typename vec_type::reverse_iterator reverse_iterator;
-  typedef typename vec_type::const_reverse_iterator const_reverse_iterator;  
+  typedef typename vec_type::const_reverse_iterator const_reverse_iterator;
 
-  smap() 
-    : val_cmp(compare()), 
-      damaged(false) 
+  smap()
+    : val_cmp(compare()),
+      damaged(false)
   { };
-  
+
   explicit
-  smap(compare const & cmp, 
-       alloc const & a = alloc()) 
-    : val_cmp(cmp), 
+  smap(compare const & cmp,
+       alloc const & a = alloc())
+    : val_cmp(cmp),
       vec(a),
       damaged(false)
   { }
-  
+
   smap(smap const & other)
-    : val_cmp(other.val_cmp),       
+    : val_cmp(other.val_cmp),
       vec(other.vec),
-      damaged(other.damaged)       
+      damaged(other.damaged)
   { }
 
   template <typename InputIterator>
   smap(InputIterator first, InputIterator last)
     : damaged(false)
-  { 
-    insert(first, last); 
+  {
+    insert(first, last);
   }
-  
+
   template <typename InputIterator>
   smap(InputIterator first, InputIterator last,
-       compare const & cmp, 
+       compare const & cmp,
        alloc const & a = alloc())
     : val_cmp(cmp),
       vec(a),
-      damaged(false)      
-  { 
-    insert(first, last); 
+      damaged(false)
+  {
+    insert(first, last);
   }
 
   smap &
@@ -162,7 +165,7 @@ public:
 
 
   allocator_type get_allocator() const { return vec.get_allocator(); }
-  
+
   iterator begin() { return vec.begin(); }
   iterator end() { return vec.end(); }
   reverse_iterator rbegin() { return vec.rbegin(); }
@@ -222,19 +225,19 @@ public:
       i = insert(i, *first++);
     }
   }
-  
-  void 
+
+  void
   erase(iterator i)
   {
     vec.erase(i);
   }
-  
-  size_type 
+
+  size_type
   erase(key_type const & k)
   {
     iterator i = find(k);
     size_type c = 0;
-    while (i != end() && i->first == k) 
+    while (i != end() && i->first == k)
     {
       erase(i);
       ++c;
@@ -242,7 +245,7 @@ public:
     }
     return c;
   }
-  
+
   void
   erase(iterator first, iterator last)
   {
@@ -361,7 +364,7 @@ public:
   friend bool
   operator== (const smap<K1,T1,C1,A1>&,
               const smap<K1,T1,C1,A1>&);
-  
+
   template <typename K1, typename T1, typename C1, typename A1>
   friend bool
   operator< (const smap<K1,T1,C1,A1>&,
@@ -369,79 +372,87 @@ public:
 
 };
 
-template <typename K, typename D, 
-          typename compare, 
+template <typename K, typename D,
+          typename compare,
           typename alloc>
 inline bool
 operator==(smap<K, D, compare, alloc> const & a,
            smap<K, D, compare, alloc> const & b)
-{ 
+{
   a.ensure_sort();
   b.ensure_sort();
   return a.vec == b.vec;
 }
 
-template <typename K, typename D, 
-          typename compare, 
+template <typename K, typename D,
+          typename compare,
           typename alloc>
 inline bool
 operator<(smap<K, D, compare, alloc> const & a,
           smap<K, D, compare, alloc> const & b)
-{ 
+{
   a.ensure_sort();
   b.ensure_sort();
   return a.vec < b.vec;
 }
 
-template <typename K, typename D, 
-          typename compare, 
+template <typename K, typename D,
+          typename compare,
           typename alloc>
 inline bool
 operator!=(smap<K, D, compare, alloc> const & a,
            smap<K, D, compare, alloc> const & b)
-{ 
+{
   return !(a == b);
 }
 
-template <typename K, typename D, 
-          typename compare, 
+template <typename K, typename D,
+          typename compare,
           typename alloc>
 inline bool
 operator>(smap<K, D, compare, alloc> const & a,
           smap<K, D, compare, alloc> const & b)
-{ 
+{
   return b < a;
 }
 
-template <typename K, typename D, 
-          typename compare, 
+template <typename K, typename D,
+          typename compare,
           typename alloc>
 inline bool
 operator<=(smap<K, D, compare, alloc> const & a,
            smap<K, D, compare, alloc> const & b)
-{ 
+{
   return !(b < a);
 }
 
-template <typename K, typename D, 
-          typename compare, 
+template <typename K, typename D,
+          typename compare,
           typename alloc>
 inline bool
 operator>=(smap<K, D, compare, alloc> const & a,
            smap<K, D, compare, alloc> const & b)
-{ 
+{
   return !(a < b);
 }
 
-template <typename K, typename D, 
-          typename compare, 
+template <typename K, typename D,
+          typename compare,
           typename alloc>
 inline void
-swap(smap<K, D, compare, alloc> & a, 
+swap(smap<K, D, compare, alloc> & a,
      smap<K, D, compare, alloc> & b)
-{ 
-  a.swap(b); 
+{
+  a.swap(b);
 }
 
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __SMAP_HH__

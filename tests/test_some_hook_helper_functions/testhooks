@@ -1,0 +1,23 @@
+function ignore_file (name)
+  ok = true
+
+  filename = write_to_temporary_file("foo")
+  dat = read_contents_of_file(filename, "r")
+  if dat ~= "foo" then ok = false end
+
+  if globish_match("a*b", "abc") then ok = false end
+  if not globish_match("a*b", "acb") then ok = false end
+  if globish_match("a{b", "abc") ~= nil then ok = false end
+
+  if ok then
+    if existsonpath("touch") == 0 then
+      execute ("touch", "outfile")
+    else
+      x = io.open("outfile", "w")
+      x:close()
+    end
+  end
+
+  ignore_file = function (name) return true end
+return true
+end

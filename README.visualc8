@@ -1,0 +1,22 @@
+Visual Studio 2005
+
+Install libiconv:
+	http://gnuwin32.sourceforge.net/packages/libiconv.htm
+	"Complete package, except sources"
+	Install to the standard c:\Program Files\GnuWin32\ directory
+Install zlib:
+	http://gnuwin32.sourceforge.net/packages/zlib.htm
+	"Complete package, except sources"
+	Install to the standard c:\Program Files\GnuWin32\ directory
+
+Install Boost
+	download & unpack Boost
+	download bjam to %path%
+	'bjam "-sTOOLS=vc-8_0" install'
+	** don't set a non-default install directory
+
+open visualc/monotone.sln in Visual Studio
+
+compile
+
+make sure libiconv2.dll and zlib1.dll (from c:\Program Files\GnuWin32\bin\) are where the monotone binary can find them (same directory, or a system lib directory)

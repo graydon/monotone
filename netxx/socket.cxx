@@ -85,7 +85,7 @@ Netxx::Socket::Socket (Type type)
 
     if ( (socket_fd = socket(socket_domain, socket_type, 0)) < 0) {
 	std::string error("failure from socket(2): ");
-	error += strerror(get_last_error());
+	error += str_error(get_last_error());
 	throw Exception(error);
     }
 
@@ -133,7 +133,7 @@ Netxx::Socket::Socket (const Socket &other)
 
 	    if (dup_socket < 0) {
 		std::string error("dup(2) call failed: ");
-		error += strerror(get_last_error());
+		error += str_error(get_last_error());
 		throw Exception(error);
 	    }
 #	endif
@@ -204,7 +204,7 @@ Netxx::signed_size_type Netxx::Socket::write (const void *buffer, size_type leng
 		default:
 		{
 		    std::string error("send failed: ");
-		    error += strerror(error_code);
+		    error += str_error(error_code);
 		    throw Exception(error);
 		}
 	    }
@@ -261,7 +261,7 @@ Netxx::signed_size_type Netxx::Socket::read (void *buffer, size_type length, con
 		default:
 		{
 		    std::string error("recv failure: ");
-		    error += strerror(error_code);
+		    error += str_error(error_code);
 		    throw Exception(error);
 		}
 	    }

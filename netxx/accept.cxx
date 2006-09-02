@@ -72,7 +72,7 @@ Netxx::Peer Netxx::call_accept (Socket &socket, bool dont_block)
 	    default:
 	    {
 		std::string error("accept(2) error: ");
-		error += strerror(error_code);
+		error += str_error(error_code);
 		throw Netxx::Exception(error);
 	    }
 	}

@@ -1,15 +1,18 @@
 #ifndef __NETIO_HH__
 #define __NETIO_HH__
 
-// copyright (C) 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // all network i/o decoding and encoding in netcmd and merkle is done using
 // the primitives in this header. it has to be very correct.
 
-#include <boost/format.hpp>
 #include <boost/static_assert.hpp>
 
 #include "numeric_vocab.hh"
@@ -21,10 +24,10 @@ struct bad_decode {
   std::string what;
 };
 
-inline void 
-require_bytes(std::string const & str, 
-              size_t pos, 
-              size_t len, 
+inline void
+require_bytes(std::string const & str,
+              size_t pos,
+              size_t len,
               std::string const & name)
 {
   // if you've gone past the end of the buffer, there's a logic error,
@@ -35,14 +38,14 @@ require_bytes(std::string const & str,
   if (len == 0)
     return;
   if (str.size() < pos + len)
-    throw bad_decode(F("need %d bytes to decode %s at %d, only have %d") 
+    throw bad_decode(F("need %d bytes to decode %s at %d, only have %d")
                      % len % name % pos % (str.size() - pos));
 }
 
-inline void 
-require_bytes(string_queue const & str, 
-              size_t pos, 
-              size_t len, 
+inline void
+require_bytes(string_queue const & str,
+              size_t pos,
+              size_t len,
               std::string const & name)
 {
   // if you've gone past the end of the buffer, there's a logic error,
@@ -53,13 +56,13 @@ require_bytes(string_queue const & str,
   if (len == 0)
     return;
   if (str.size() < pos + len)
-    throw bad_decode(F("need %d bytes to decode %s at %d, only have %d") 
+    throw bad_decode(F("need %d bytes to decode %s at %d, only have %d")
                      % len % name % pos % (str.size() - pos));
 }
 
 template <typename T>
-inline bool 
-try_extract_datum_uleb128(std::string const & in, 
+inline bool
+try_extract_datum_uleb128(std::string const & in,
                           size_t & pos,
                           std::string const & name,
                           T & out)
@@ -74,14 +77,14 @@ try_extract_datum_uleb128(std::string const & in,
         return false;
       T curr = widen<T,u8>(in[pos]);
       ++pos;
-      out |= ((static_cast<u8>(curr) 
+      out |= ((static_cast<u8>(curr)
                & static_cast<u8>(0x7f)) << shift);
       bool finished = ! static_cast<bool>(static_cast<u8>(curr)
                                           & static_cast<u8>(0x80));
       if (finished)
         break;
       else if (maxbytes == 1)
-        throw bad_decode(F("uleb128 decode for '%s' into %d-byte datum overflowed") 
+        throw bad_decode(F("uleb128 decode for '%s' into %d-byte datum overflowed")
                          % name % maxbytes);
       else
         {
@@ -93,8 +96,8 @@ try_extract_datum_uleb128(std::string const & in,
 }
 
 template <typename T>
-inline bool 
-try_extract_datum_uleb128(string_queue const & in, 
+inline bool
+try_extract_datum_uleb128(string_queue const & in,
                           size_t & pos,
                           std::string const & name,
                           T & out)
@@ -109,14 +112,14 @@ try_extract_datum_uleb128(string_queue const & in,
         return false;
       T curr = widen<T,u8>(in[pos]);
       ++pos;
-      out |= ((static_cast<u8>(curr) 
+      out |= ((static_cast<u8>(curr)
                & static_cast<u8>(0x7f)) << shift);
       bool finished = ! static_cast<bool>(static_cast<u8>(curr)
                                           & static_cast<u8>(0x80));
       if (finished)
         break;
       else if (maxbytes == 1)
-        throw bad_decode(F("uleb128 decode for '%s' into %d-byte datum overflowed") 
+        throw bad_decode(F("uleb128 decode for '%s' into %d-byte datum overflowed")
                          % name % maxbytes);
       else
         {
@@ -128,8 +131,8 @@ try_extract_datum_uleb128(string_queue const & in,
 }
 
 template <typename T>
-inline T 
-extract_datum_uleb128(std::string const & in, 
+inline T
+extract_datum_uleb128(std::string const & in,
                       size_t & pos,
                       std::string const & name)
 {
@@ -143,7 +146,7 @@ extract_datum_uleb128(std::string const & in,
 }
 
 template <typename T>
-inline void 
+inline void
 insert_datum_uleb128(T in, std::string & out)
 {
   BOOST_STATIC_ASSERT(std::numeric_limits<T>::is_signed == false);
@@ -168,7 +171,7 @@ insert_datum_uleb128(T in, std::string & out)
 }
 
 template <typename T>
-inline void 
+inline void
 insert_datum_uleb128(T in, string_queue & out)
 {
   BOOST_STATIC_ASSERT(std::numeric_limits<T>::is_signed == false);
@@ -193,9 +196,9 @@ insert_datum_uleb128(T in, string_queue & out)
 }
 
 template <typename T>
-inline T 
-extract_datum_lsb(std::string const & in, 
-                  size_t & pos, 
+inline T
+extract_datum_lsb(std::string const & in,
+                  size_t & pos,
                   std::string const & name)
 {
   size_t nbytes = sizeof(T);
@@ -214,9 +217,9 @@ extract_datum_lsb(std::string const & in,
 }
 
 template <typename T>
-inline T 
-extract_datum_lsb(string_queue const & in, 
-                  size_t & pos, 
+inline T
+extract_datum_lsb(string_queue const & in,
+                  size_t & pos,
                   std::string const & name)
 {
   size_t nbytes = sizeof(T);
@@ -235,7 +238,7 @@ extract_datum_lsb(string_queue const & in,
 }
 
 template <typename T>
-inline void 
+inline void
 insert_datum_lsb(T in, std::string & out)
 {
   size_t const nbytes = sizeof(T);
@@ -249,7 +252,7 @@ insert_datum_lsb(T in, std::string & out)
 }
 
 template <typename T>
-inline void 
+inline void
 insert_datum_lsb(T in, string_queue & out)
 {
   size_t const nbytes = sizeof(T);
@@ -262,7 +265,7 @@ insert_datum_lsb(T in, string_queue & out)
   out.append(std::string(tmp, tmp+nbytes));
 }
 
-inline void 
+inline void
 extract_variable_length_string(std::string const & buf,
                                std::string & out,
                                size_t & pos,
@@ -279,7 +282,7 @@ extract_variable_length_string(std::string const & buf,
   pos += len;
 }
 
-inline void 
+inline void
 insert_variable_length_string(std::string const & in,
                               std::string & buf)
 {
@@ -288,7 +291,7 @@ insert_variable_length_string(std::string const & in,
   buf.append(in);
 }
 
-inline void 
+inline void
 insert_variable_length_string(std::string const & in,
                               string_queue & buf)
 {
@@ -298,9 +301,9 @@ insert_variable_length_string(std::string const & in,
 }
 
 inline std::string
-extract_substring(std::string const & buf, 
+extract_substring(std::string const & buf,
                   size_t & pos,
-                  size_t len, 
+                  size_t len,
                   std::string const & name)
 {
   require_bytes(buf, pos, len, name);
@@ -310,9 +313,9 @@ extract_substring(std::string const & buf,
 }
 
 inline std::string
-extract_substring(string_queue const & buf, 
+extract_substring(string_queue const & buf,
                   size_t & pos,
-                  size_t len, 
+                  size_t len,
                   std::string const & name)
 {
   require_bytes(buf, pos, len, name);
@@ -321,14 +324,22 @@ extract_substring(string_queue const & buf,
   return tmp;
 }
 
-inline void 
-assert_end_of_buffer(std::string const & str, 
-                     size_t pos, 
+inline void
+assert_end_of_buffer(std::string const & str,
+                     size_t pos,
                      std::string const & name)
 {
   if (str.size() != pos)
-    throw bad_decode(F("expected %s to end at %d, have %d bytes") 
+    throw bad_decode(F("expected %s to end at %d, have %d bytes")
                      % name % pos % str.size());
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __NETIO_HH__

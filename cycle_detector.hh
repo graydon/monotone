@@ -1,10 +1,14 @@
 #ifndef __CYCLE_DETECTOR_HH__
 #define __CYCLE_DETECTOR_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <vector>
 #include <stack>
@@ -16,13 +20,13 @@
 template <typename T>
 struct cycle_detector
 {
-  
+
   typedef std::vector< T > edge_vec;
   typedef std::vector <edge_vec > edge_map;
-  typedef std::pair <typename edge_vec::const_iterator, 
+  typedef std::pair <typename edge_vec::const_iterator,
                      typename edge_vec::const_iterator> state;
   typedef std::stack <state > edge_stack;
-  
+
   edge_map edges;
   edge_stack stk;
   std::set<T> global_in_edges;
@@ -39,7 +43,7 @@ struct cycle_detector
     src_edges.push_back(dst);
     global_in_edges.insert(dst);
   }
-  
+
 
   bool edge_makes_cycle(T const & src, T const & dst)
   {
@@ -69,7 +73,7 @@ struct cycle_detector
               {
                 return true;
               }
-            if (val < edges.size() && ! edges.at(val).empty() 
+            if (val < edges.size() && ! edges.at(val).empty()
                 && visited.find(val) == visited.end())
               {
                 visited.insert(val);
@@ -84,5 +88,13 @@ struct cycle_detector
     return false;
   }
 };
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __CYCLE_DETECTOR_HH__

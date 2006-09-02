@@ -51,10 +51,6 @@ boring, but ultimately pretty mechanical. they need doing too.
 JANITORIAL
 ==========
 
-- fix up the namespace issue: add a "using std::foo" for each foo
-  used in the file, and strip "std::" from the uses. remove
-  "using namespace foo" from everywhere. likewise boost.
-
 - librarification: several discrete steps, each mechanical,
   best to do a compile and commit after each.
    - make a struct for each file.
@@ -74,9 +70,6 @@ JANITORIAL
 - as a side note: collect all the command-line options from global_sanity
   and app_state into a single options structure, just to improve
   legibility
-
-- split commands.cc into multiple files, one for each group of
-  commands (or even one per command).
 
 - rewrite the testsuite in some form which does not generate
   a 6mb shell script. bonus points if it can run at a decent

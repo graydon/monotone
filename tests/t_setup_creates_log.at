@@ -1,9 +1,0 @@
-# -*- Autoconf -*-
-
-AT_SETUP([setup creates _MTN/log])
-
-MTN_SETUP
-
-AT_CHECK(test -f _MTN/log -a ! -s _MTN/log)
-        
-AT_CLEANUP

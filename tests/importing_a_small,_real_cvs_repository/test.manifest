@@ -1,0 +1,16 @@
+format_version "1"
+
+dir ""
+
+dir "src"
+
+   file "src/objdump.c"
+content [94c86fa749ed82d76fe8d6cce18d11b8c3f0ee38]
+
+dir "tests"
+
+   file "tests/asm-tst3.c"
+content [01f722126e54806abfa32f867dbeb8529b79298b]
+
+   file "tests/asm-tst4.c"
+content [7968cb0c8f62e6f15d710ce0cd42a65f7acd2567]

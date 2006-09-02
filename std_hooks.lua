@@ -2,13 +2,21 @@
 -- this is the standard set of lua hooks for monotone;
 -- user-provided files can override it or add to it.
 
-function temp_file()
+function temp_file(namehint)
    local tdir
    tdir = os.getenv("TMPDIR")
    if tdir == nil then tdir = os.getenv("TMP") end
    if tdir == nil then tdir = os.getenv("TEMP") end
    if tdir == nil then tdir = "/tmp" end
-   return mkstemp(string.format("%s/mt.XXXXXX", tdir))
+   local filename
+   if namehint == nil then
+      filename = string.format("%s/mtn.XXXXXX", tdir)
+   else
+      filename = string.format("%s/mtn.%s.XXXXXX", tdir, namehint)
+   end
+   local name = mkstemp(filename)
+   local file = io.open(name, "r+")
+   return file, name
 end
 
 function execute(path, ...)   
@@ -24,8 +32,14 @@ end
 -- This is needed to work around some brokenness with some merge tools
 -- (e.g. on OS X)
 function execute_confirm(path, ...)   
-   execute(path, unpack(arg))
-   print(gettext("Press enter when the subprocess has completed"))
+   ret = execute(path, unpack(arg))
+
+   if (ret ~= 0)
+   then
+      print(gettext("Press enter"))
+   else
+      print(gettext("Press enter when the subprocess has completed"))
+   end
    io.read()
    return ret
 end
@@ -33,9 +47,8 @@ end
 -- attributes are persistent metadata about files (such as execute
 -- bit, ACLs, various special flags) which we want to have set and
 -- re-set any time the files are modified. the attributes themselves
--- are stored in a file .mt-attrs, in the workspace (and
--- manifest). each (f,k,v) triple in an attribute file turns into a
--- call to attr_functions[k](f,v) in lua.
+-- are stored in the roster associated with the revision. each (f,k,v)
+-- attribute triple turns into a call to attr_functions[k](f,v) in lua.
 
 if (attr_init_functions == nil) then
    attr_init_functions = {}
@@ -112,6 +125,8 @@ function ignore_file(name)
       -- c/c++
       "%.a$", "%.so$", "%.o$", "%.la$", "%.lo$", "^core$",
       "/core$", "/core%.%d+$",
+      -- java
+      "%.class$",
       -- python
       "%.pyc$", "%.pyo$",
       -- TeX
@@ -175,10 +190,54 @@ function binary_file(name)
    return guess_binary_file_contents(name)
 end
 
+-- given a file name, return a regular expression which will match
+-- lines that name top-level constructs in that file, or "", to disable
+-- matching.
+function get_encloser_pattern(name)
+   -- texinfo has special sectioning commands
+   if (string.find(name, "%.texi$")) then
+      -- sectioning commands in texinfo: @node, @chapter, @top, 
+      -- @((sub)?sub)?section, @unnumbered(((sub)?sub)?sec)?,
+      -- @appendix(((sub)?sub)?sec)?, @(|major|chap|sub(sub)?)heading
+      return ("^@("
+              .. "node|chapter|top"
+              .. "|((sub)?sub)?section"
+              .. "|(unnumbered|appendix)(((sub)?sub)?sec)?"
+              .. "|(major|chap|sub(sub)?)?heading"
+              .. ")")
+   end
+   -- LaTeX has special sectioning commands.  This rule is applied to ordinary
+   -- .tex files too, since there's no reliable way to distinguish those from
+   -- latex files anyway, and there's no good pattern we could use for
+   -- arbitrary plain TeX anyway.
+   if (string.find(name, "%.tex$")
+       or string.find(name, "%.ltx$")
+       or string.find(name, "%.latex$")) then
+      return ("\\\\("
+              .. "part|chapter|paragraph|subparagraph"
+              .. "|((sub)?sub)?section"
+              .. ")")
+   end
+   -- There's no good way to find section headings in raw text, and trying
+   -- just gives distracting output, so don't even try.
+   if (string.find(name, "%.txt$")
+       or string.upper(name) == "README") then
+      return ""
+   end
+   -- This default is correct surprisingly often -- in pretty much any text
+   -- written with code-like indentation.
+   return "^[[:alnum:]$_]"
+end
+
 function edit_comment(basetext, user_log_message)
    local exe = nil
    if (program_exists_in_path("vi")) then exe = "vi" end
    if (program_exists_in_path("notepad.exe")) then exe = "notepad.exe" end
+   local debian_editor = io.open("/usr/bin/editor")
+   if (debian_editor ~= nil) then
+      debian_editor:close()
+      exe = "/usr/bin/editor"
+   end
    local visual = os.getenv("VISUAL")
    if (visual ~= nil) then exe = visual end
    local editor = os.getenv("EDITOR")
@@ -193,10 +252,9 @@ function edit_comment(basetext, user_log_message)
    local tmp, tname = temp_file()
    if (tmp == nil) then return nil end
    basetext = "MTN: " .. string.gsub(basetext, "\n", "\nMTN: ") .. "\n"
-   if user_log_message == "" then
+   tmp:write(user_log_message)
+   if user_log_message == "" or string.sub(user_log_message, -1) ~= "\n" then
       tmp:write("\n")
-   else
-      tmp:write(user_log_message)
    end
    tmp:write(basetext)
    io.close(tmp)
@@ -279,96 +337,218 @@ end
 
 -- merger support
 
-function merge3_meld_cmd(lfile, afile, rfile)
-   return 
-   function()
-      return execute("meld", lfile, afile, rfile)
-   end
-end
+-- Fields in the mergers structure:
+-- cmd       : a function that performs the merge operation using the chosen
+--             program, best try.
+-- available : a function that checks that the needed program is installed and
+--             in $PATH
+-- wanted    : a function that checks if the user doesn't want to use this
+--             method, and returns false if so.  This should normally return
+--             true, but in some cases, especially when the merger is really
+--             an editor, the user might have a preference in EDITOR and we
+--             need to respect that.
+--             NOTE: wanted is only used when the user has NOT defined the
+--             `merger' variable or the MTN_MERGE environment variable.
+mergers = {}
 
-function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
-   return
-   function()
-      return execute("tortoisemerge",
-                     string.format("/base:%s", afile),
-                     string.format("/theirs:%s", lfile),
-                     string.format("/mine:%s", rfile),
-                     string.format("/merged:%s", outfile))
-   end
-end
+mergers.meld = {
+   cmd = function (tbl)
+      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
+          "You should merge all changes to *CENTER* file due to limitation of program\n"..
+          "arguments.\n\n")) 
+      local path = "meld"
+      local ret = execute(path, tbl.lfile, tbl.afile, tbl.rfile)
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
+      end
+      return tbl.afile
+   end ,
+   available = function () return program_exists_in_path("meld") end,
+   wanted = function () return true end
+}
 
-function merge3_vim_cmd(vim, afile, lfile, rfile, outfile)
-   return
-   function()
-      return execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                     afile, lfile, rfile)
-   end
-end
+mergers.tortoise = {
+   cmd = function (tbl)
+      local path = "tortoisemerge"
+      local ret = execute(path,
+                          string.format("/base:%s", tbl.afile),
+                          string.format("/theirs:%s", tbl.lfile),
+                          string.format("/mine:%s", tbl.rfile),
+                          string.format("/merged:%s", tbl.outfile))
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
+      end
+      return tbl.outfile
+   end ,
+   available = function() return program_exists_in_path ("TortoiseMerge") end,
+   wanted = function () return true end
+}
 
-function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
-   return
-   function()
+mergers.vim = {
+   cmd = function (tbl)
+      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
+          "You should merge all changes to *LEFT* file due to limitation of program\n"..
+          "arguments.  The order of the files is ancestor, left, right.\n\n"))
+      local vim
+      local exec
+      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
+	 vim = "gvim"
+	 exec = execute_confirm
+      else
+	 vim = "vim"
+	 exec = execute
+      end
+      local ret = exec(vim, "-f", "-d", "-c", string.format("file %s", tbl.outfile),
+                          tbl.afile, tbl.lfile, tbl.rfile)
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+         return false
+      end
+      return tbl.outfile
+   end ,
+   available =
+      function ()
+	 return program_exists_in_path("vim") or
+	    program_exists_in_path("gvim")
+      end ,
+   wanted =
+      function ()
+	 local editor = os.getenv("EDITOR")
+	 if editor and
+	    not (string.find(editor, "vim") or
+		 string.find(editor, "gvim")) then
+	    return false
+	 end
+	 return true
+      end
+}
+
+mergers.rcsmerge = {
+   cmd = function (tbl)
       -- XXX: This is tough - should we check if conflict markers stay or not?
       -- If so, we should certainly give the user some way to still force
       -- the merge to proceed since they can appear in the files (and I saw
       -- that). --pasky
-      if execute(merge, lfile, afile, rfile) == 0 then
-         copy_text_file(lfile, outfile);
-         return 0
+      local merge = os.getenv("MTN_RCSMERGE")
+      if execute(merge, tbl.lfile, tbl.afile, tbl.rfile) == 0 then
+         copy_text_file(tbl.lfile, tbl.outfile);
+         return tbl.outfile
       end
-      return execute(vim, "-f", "-c", string.format("file %s", outfile),
-                     lfile)
-   end
-end
+      local ret = execute("vim", "-f", "-c", string.format("file %s", tbl.outfile
+),
+                          tbl.lfile)
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), "vim"))
+         return false
+      end
+      return tbl.outfile
+   end,
+   available =
+      function ()
+	 local merge = os.getenv("MTN_RCSMERGE")
+	 return merge and
+	    program_exists_in_path(merge) and program_exists_in_path("vim")
+      end ,
+   wanted = function () return os.getenv("MTN_RCSMERGE") ~= nil end
+}
 
-function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
-   local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
-   return 
-   function()
-      return execute(emacs, "--eval", 
-                     string.format(elisp, lfile, rfile, afile, outfile))
-   end
-end
+mergers.emacs = {
+   cmd = function (tbl)
+      local emacs
+      if program_exists_in_path("xemacs") then
+         emacs = "xemacs"
+      else
+         emacs = "emacs"
+      end
+      local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
+      local ret = execute(emacs, "--eval", 
+                          string.format(elisp, tbl.lfile, tbl.rfile, tbl.afile, tbl.outfile))
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), emacs))
+         return false
+      end
+      return tbl.outfile
+   end,
+   available = 
+      function ()
+	 return program_exists_in_path("xemacs") or
+	    program_exists_in_path("emacs")
+      end ,
+   wanted =
+      function ()
+	 local editor = os.getenv("EDITOR")
+	 if editor and
+	    not (string.find(editor, "emacs") or
+		 string.find(editor, "gnu")) then
+	    return false
+	 end
+	 return true
+      end
+}
 
-function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
-                           lfile, afile, rfile, outfile)
-   return 
-   function()
-      return execute("xxdiff", 
-                     "--title1", left_path,
-                     "--title2", right_path,
-                     "--title3", merged_path,
-                     lfile, afile, rfile, 
-                     "--merge", 
-                     "--merged-filename", outfile,
-                     "--exit-with-merge-status")
-   end
-end
-   
-function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
-                           lfile, afile, rfile, outfile)
-   return 
-   function()
-      return execute("kdiff3", 
-                     "--L1", anc_path,
-                     "--L2", left_path,
-                     "--L3", right_path,
-                     afile, lfile, rfile, 
-                     "--merge", 
-                     "--o", outfile)
-   end
-end
+mergers.xxdiff = {
+   cmd = function (tbl)
+      local path = "xxdiff"
+      local ret = execute(path, 
+                        "--title1", tbl.left_path,
+                        "--title2", tbl.right_path,
+                        "--title3", tbl.merged_path,
+                        tbl.lfile, tbl.afile, tbl.rfile, 
+                        "--merge", 
+                        "--merged-filename", tbl.outfile,
+                        "--exit-with-merge-status")
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
+      end
+      return tbl.outfile
+   end,
+   available = function () return program_exists_in_path("xxdiff") end,
+   wanted = function () return true end
+}
 
-function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
-   return 
-   function()
+mergers.kdiff3 = {
+   cmd = function (tbl)
+      local path = "kdiff3"
+      local ret = execute(path, 
+                          "--L1", tbl.anc_path,
+                          "--L2", tbl.left_path,
+                          "--L3", tbl.right_path,
+                          tbl.afile, tbl.lfile, tbl.rfile, 
+                          "--merge", 
+                          "--o", tbl.outfile)
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
+      end
+      return tbl.outfile
+   end,
+   available = function () return program_exists_in_path("kdiff3") end,
+   wanted = function () return true end
+}
+
+mergers.opendiff = {
+   cmd = function (tbl)
+      local path = "opendiff"
       -- As opendiff immediately returns, let user confirm manually
-      execute_confirm("opendiff",lfile,rfile,"-ancestor",afile,"-merge",outfile)
-   end
-end
+      local ret = execute_confirm(path,
+                                  tbl.lfile,tbl.rfile,
+                                  "-ancestor",tbl.afile,
+                                  "-merge",tbl.outfile)
+      if (ret ~= 0) then
+         io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
+      end
+      return tbl.outfile
+   end,
+   available = function () return program_exists_in_path("opendiff") end,
+   wanted = function () return true end
+}
 
-function write_to_temporary_file(data)
-   tmp, filename = temp_file()
+function write_to_temporary_file(data, namehint)
+   tmp, filename = temp_file(namehint)
    if (tmp == nil) then 
       return nil 
    end;
@@ -408,64 +588,40 @@ function program_exists_in_path(program)
 end
 
 function get_preferred_merge3_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local anc_path = tbl.anc_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local afile = tbl.afile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = os.getenv("EDITOR")
-   if editor ~= nil then editor = string.lower(editor) else editor = "" end
-
-   local merge = os.getenv("MTMERGE")
-   -- TODO: Support for rcsmerge_emacs
-   if merge ~= nil and string.find(editor, "vim") ~= nil then
-      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
-         cmd = merge3_rcsmerge_vim_cmd (merge, "gvim", lfile, afile, rfile, outfile) 
-      elseif program_exists_in_path ("vim") then 
-         cmd = merge3_rcsmerge_vim_cmd (merge, "vim", lfile, afile, rfile, outfile) 
+   local default_order = {"kdiff3", "xxdiff", "opendiff", "tortoise", "emacs", "vim", "meld"}
+   local function existmerger(name)
+      local m = mergers[name]
+      if type(m) == "table" and m.available(tbl) then
+         return m.cmd
       end
-
-   elseif program_exists_in_path("kdiff3") then
-      cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("opendiff") then 
-      cmd = merge3_opendiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("TortoiseMerge") then
-      cmd = merge3_tortoise_cmd(lfile, afile, rfile, outfile)
-   elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
-      if string.find(editor, "xemacs") and program_exists_in_path ("xemacs") then 
-         cmd = merge3_emacs_cmd ("xemacs", lfile, afile, rfile, outfile) 
-      elseif program_exists_in_path ("emacs") then 
-         cmd = merge3_emacs_cmd ("emacs", lfile, afile, rfile, outfile) 
+      return nil
+   end
+   local function trymerger(name)
+      local m = mergers[name]
+      if type(m) == "table" and m.available(tbl) and m.wanted(tbl) then
+         return m.cmd
       end
-   elseif string.find(editor, "vim") ~= nil then
-      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
-          "You should merge all changes to *LEFT* file due to limitation of program\n"..
-          "arguments.  The order of the files is ancestor, left, right.\n\n")) 
-      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
-         cmd = merge3_vim_cmd ("gvim", afile, lfile, rfile, outfile) 
-      elseif program_exists_in_path ("vim") then 
-         cmd = merge3_vim_cmd ("vim", afile, lfile, rfile, outfile) 
-      end
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
-          "You should merge all changes to *CENTER* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      cmd = merge3_meld_cmd (lfile, afile, rfile) 
-   end 
-   
-   return cmd 
-end 
+      return nil
+   end
+   -- Check if there's a merger given by the user.
+   local mkey = os.getenv("MTN_MERGE")
+   if not mkey then mkey = merger end
+   if not mkey and os.getenv("MTN_RCSMERGE") then mkey = "rcsmerge" end
+   -- If there was a user-given merger, see if it exists.  If it does, return
+   -- the cmd function.  If not, return nil.
+   local c
+   if mkey then c = existmerger(mkey) end
+   if c then return c,mkey end
+   if mkey then return nil,mkey end
+   -- If there wasn't any user-given merger, take the first that's available
+   -- and wanted.
+   for _,mkey in ipairs(default_order) do
+      c = trymerger(mkey) ; if c then return c,nil end
+   end
+end
 
 function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, right) 
-   local ret 
+   local ret = nil
    local tbl = {}
    
    tbl.anc_path = anc_path 
@@ -478,33 +634,39 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
    tbl.rfile = nil 
    tbl.outfile = nil 
    tbl.meld_exists = false 
-   tbl.lfile = write_to_temporary_file (left) 
-   tbl.afile =   write_to_temporary_file (ancestor) 
-   tbl.rfile =   write_to_temporary_file (right) 
-   tbl.outfile = write_to_temporary_file ("") 
+   tbl.lfile = write_to_temporary_file (left, "left")
+   tbl.afile = write_to_temporary_file (ancestor, "ancestor")
+   tbl.rfile = write_to_temporary_file (right, "right")
+   tbl.outfile = write_to_temporary_file ("", "merged")
    
    if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil 
    then 
-      local cmd =   get_preferred_merge3_command (tbl) 
+      local cmd,mkey = get_preferred_merge3_command (tbl)
       if cmd ~=nil 
       then 
          io.write (string.format(gettext("executing external 3-way merge command\n")))
-         cmd ()
-         if tbl.meld_exists 
-         then 
-            ret = read_contents_of_file (tbl.afile, "r")
+         ret = cmd (tbl)
+         if not ret then
+            ret = nil
          else
-            ret = read_contents_of_file (tbl.outfile, "r") 
-         end 
-         if string.len (ret) == 0 
-         then 
-            ret = nil 
+            ret = read_contents_of_file (ret, "r")
+            if string.len (ret) == 0 
+            then 
+               ret = nil 
+            end
          end
       else
-         io.write (string.format("No external 3-way merge command found.\n"..
-            "You may want to check that $EDITOR is set to an editor that supports 3-way merge,\n"..
-            "set this explicitly in your get_preferred_merge3_command hook,\n"..
-            "or add a 3-way merge program to your path.\n\n"))
+	 if mkey then
+	    io.write (string.format("The possible commands for the "..mkey.." merger aren't available.\n"..
+                "You may want to check that $MTN_MERGE or the lua variable `merger' is set\n"..
+                "to something available.  If you want to use vim or emacs, you can also\n"..
+		"set $EDITOR to something appropriate"))
+	 else
+	    io.write (string.format("No external 3-way merge command found.\n"..
+                "You may want to check that $EDITOR is set to an editor that supports 3-way\n"..
+                "merge, set this explicitly in your get_preferred_merge3_command hook,\n"..
+                "or add a 3-way merge program to your path.\n\n"))
+	 end
       end
    end
    
@@ -654,16 +816,20 @@ function get_netsync_read_permitted(branch, ident)
       if item.name == "pattern" then
          if matches and not cont then return false end
          matches = false
+         cont = false
          for j, val in pairs(item.values) do
             if globish_match(val, branch) then matches = true end
          end
       elseif item.name == "allow" then if matches then
          for j, val in pairs(item.values) do
             if val == "*" then return true end
+            if val == "" and ident == nil then return true end
             if globish_match(val, ident) then return true end
          end
       end elseif item.name == "deny" then if matches then
          for j, val in pairs(item.values) do
+            if val == "*" then return false end
+            if val == "" and ident == nil then return false end
             if globish_match(val, ident) then return false end
          end
       end elseif item.name == "continue" then if matches then
@@ -694,4 +860,92 @@ function get_netsync_write_permitted(ident)
    end
    io.close(permfile)
    return matches
+end
+
+-- This is a simple funciton which assumes you're going to be spawning
+-- a copy of mtn, so reuses a common bit at the end for converting
+-- local args into remote args. You might need to massage the logic a
+-- bit if this doesn't fit your assumptions.
+
+function get_netsync_connect_command(uri, args)
+
+        local argv = nil
+        local quote_patterns = false
+
+        if uri["scheme"] == "ssh" 
+                and uri["host"] 
+                and uri["path"] then
+
+                argv = { "ssh" }
+                if uri["user"] then
+                        table.insert(argv, "-l")
+                        table.insert(argv, uri["user"])
+                end
+                if uri["port"] then
+                        table.insert(argv, "-p")
+                        table.insert(argv, uri["port"])
+                end
+
+                -- ssh://host/~/dir/file.mtn or 
+                -- ssh://host/~user/dir/file.mtn should be home-relative
+                if string.find(uri["path"], "^/~") then
+                        uri["path"] = string.sub(uri["path"], 2)
+                end
+
+                table.insert(argv, uri["host"])
+		quote_patterns = true
+        end
+        
+        if uri["scheme"] == "file" and uri["path"] then
+                argv = { }
+        end
+
+        if argv then
+
+                table.insert(argv, get_mtn_command(uri["host"]))
+
+                if args["debug"] then
+                        table.insert(argv, "--debug")
+                else
+                        table.insert(argv, "--quiet")
+                end
+
+                table.insert(argv, "--db")
+                table.insert(argv, uri["path"])
+                table.insert(argv, "serve")
+                table.insert(argv, "--stdio")
+                table.insert(argv, "--no-transport-auth")
+
+                -- patterns must be quoted to avoid a remote shell expanding them
+                if args["include"] then
+                        local include = args["include"]
+                        if quote_patterns then
+                                include = "'" .. args["include"] .. "'"
+                        end
+                        table.insert(argv, include)
+                end
+
+                if args["exclude"] then
+                        table.insert(argv, "--exclude")
+                        local exclude = args["exclude"]
+                        if quote_patterns then
+                                exclude = "'" .. args["exclude"] .. "'"
+                        end
+                        table.insert(argv, exclude)
+                end
+        end
+        return argv
+end
+
+function use_transport_auth(uri)
+        if uri["scheme"] == "ssh" 
+        or uri["scheme"] == "file" then
+                return false
+        else
+                return true
+        end
+end
+
+function get_mtn_command(host)
+        return "mtn"
 end

@@ -1,0 +1,24 @@
+
+mtn_setup()
+
+-- A few times in our history we've had to do data migration beyond
+-- what the "db migrate" command can handle -- i.e., "db changesetify"
+-- and "db rosterify".  We would like for it to be the case, that all
+-- other commands give a nice error message if these commands need to
+-- be run.  This test makes sure that monotone exits with an error if
+-- given a db that appears to be very old.
+
+check(get("changesetify.db.dumped", "stdin"))
+check(mtn("-d", "cs-modern.db", "db", "load"), 0, false, false, true)
+check(mtn("-d", "cs-modern.db", "db", "migrate"), 0, false, false)
+
+check(mtn("-d", "cs-modern.db", "ls", "keys"), 1, false, false)
+check(mtn("-d", "cs-modern.db", "serve", "--bind=127.0.0.1:63219", '*'), 1, false, false)
+
+
+check(get("rosterify.db.dumped", "stdin"))
+check(mtn("-d", "ro-modern.db", "db", "load"), 0, false, false, true)
+check(mtn("-d", "ro-modern.db", "db", "migrate"), 0, false, false)
+
+check(mtn("-d", "ro-modern.db", "ls", "keys"), 1, false, false)
+check(mtn("-d", "ro-modern.db", "serve", "--bind=127.0.0.1:63219", '*'), 1, false, false)

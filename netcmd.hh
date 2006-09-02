@@ -1,9 +1,14 @@
 #ifndef __NETCMD_HH__
 #define __NETCMD_HH__
-// copyright (C) 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+
+// Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <string>
 #include <vector>
@@ -15,10 +20,10 @@
 #include "hmac.hh"
 #include "string_queue.hh"
 
-typedef enum 
-  { 
-    source_role = 1, 
-    sink_role = 2, 
+typedef enum
+  {
+    source_role = 1,
+    sink_role = 2,
     source_and_sink_role = 3
   }
 protocol_role;
@@ -30,8 +35,8 @@ typedef enum
   }
 refinement_type;
 
-typedef enum 
-  { 
+typedef enum
+  {
     // general commands
     error_cmd = 0,
     bye_cmd = 1,
@@ -41,11 +46,11 @@ typedef enum
     anonymous_cmd = 3,
     auth_cmd = 4,
     confirm_cmd = 5,
-      
+
     // refinement commands
     refine_cmd = 6,
     done_cmd = 7,
-      
+
     // transmission commands
     data_cmd = 8,
     delta_cmd = 9,
@@ -109,23 +114,23 @@ public:
                           utf8 & include_pattern,
                           utf8 & exclude_pattern,
                           rsa_oaep_sha_data & hmac_key_encrypted) const;
-  void write_anonymous_cmd(protocol_role role, 
+  void write_anonymous_cmd(protocol_role role,
                            utf8 const & include_pattern,
                            utf8 const & exclude_pattern,
                            rsa_oaep_sha_data const & hmac_key_encrypted);
 
-  void read_auth_cmd(protocol_role & role, 
+  void read_auth_cmd(protocol_role & role,
                      utf8 & include_pattern,
                      utf8 & exclude_pattern,
-                     id & client, 
-                     id & nonce1, 
+                     id & client,
+                     id & nonce1,
                      rsa_oaep_sha_data & hmac_key_encrypted,
                      std::string & signature) const;
-  void write_auth_cmd(protocol_role role, 
-                      utf8 const & include_pattern, 
-                      utf8 const & exclude_pattern, 
+  void write_auth_cmd(protocol_role role,
+                      utf8 const & include_pattern,
+                      utf8 const & exclude_pattern,
                       id const & client,
-                      id const & nonce1, 
+                      id const & nonce1,
                       rsa_oaep_sha_data const & hmac_key_encrypted,
                       std::string const & signature);
 
@@ -146,15 +151,23 @@ public:
                       std::string const & dat);
 
   void read_delta_cmd(netcmd_item_type & type,
-                      id & base, id & ident, 
+                      id & base, id & ident,
                       delta & del) const;
   void write_delta_cmd(netcmd_item_type & type,
-                       id const & base, id const & ident, 
+                       id const & base, id const & ident,
                        delta const & del);
 
   void read_usher_cmd(utf8 & greeting) const;
   void write_usher_reply_cmd(utf8 const & server, utf8 const & pattern);
 
 };
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __NETCMD_HH__

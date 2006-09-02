@@ -1,0 +1,100 @@
+head	1.2;
+access;
+symbols
+	XYZZYX_1_0:1.1.1.1.0.2
+	XYZZYX_1_0_BASE:1.1.1.1
+	XYZZYX_1_1:1.1.1.1.0.4
+	XYZZYX_1_1_BASE:1.1.1.1
+	XYZZYX_1_2:1.1.1.1.0.6
+	XYZZYX_1_2_BASE:1.1.1.1
+	XYZZYX_1_3:1.1.1.1.0.8
+	XYZZYX_1_3_BASE:1.1.1.1
+	XYZZYX_1_4:1.1.1.1.0.10
+	XYZZYX_1_4_BASE:1.1.1.1
+	XYZZYX_1_5:1.2.0.2
+	XYZZYX_1_5_BASE:1.2
+	XYZZYX_1_6:1.2.0.4
+	XYZZYX_1_6_BASE:1.2
+	XYZZYX_1_7:1.2.0.8
+	XYZZYX_1_7_BASE:1.2
+	XYZZYX_1_8:1.2.0.10
+	XYZZYX_1_8_BASE:1.2
+	XYZZYX_1_9:1.2.0.12
+	XYZZYX_1_9_BASE:1.2
+	XYZZYX_2_0:1.2.0.14
+	XYZZYX_2_0_BASE:1.2
+	XYZZYX_2_1:1.2.0.18
+	XYZZYX_2_1_BASE:1.2
+	XYZZYX_2_2:1.2.0.20
+	XYZZYX_2_2_BASE:1.2
+	XYZZYX_2_3:1.2.0.22
+	XYZZYX_2_3_BASE:1.2
+	XYZZYX_2_4:1.2.0.24
+	XYZZYX_2_4_BASE:1.2
+	XYZZYX_2_5:1.2.0.26
+	XYZZYX_2_5_BASE:1.2
+	XYZZYX_2_6:1.2.0.28
+	XYZZYX_2_6_BASE:1.2
+	XYZZYX_2_7:1.2.0.30
+	XYZZYX_2_7_BASE:1.2
+	ABC:1.2.0.6
+	ABC_BASE:1.2
+	ABC_SYNC_A:1.2
+	ABC_SYNC_B:1.2
+	ZZZ:1.2.0.16
+	ZZZ_BASE:1.2
+	ZZZ_SYNC_A:1.2
+	ZZZ_SYNC_B:1.2
+	vndr_19991208:1.2
+	vendor_1_1:1.1.1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	99.01.13.07.26.01;	author santa;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	95.10.18.08.50.37;	author bill;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	95.10.18.08.50.37;	author bill;	state Exp;
+branches;
+next	;
+
+
+
+desc
+@@
+
+
+1.2
+log
+@
+@
+text
+@what's this? it's a line of text, sir.
+@
+
+
+1.1
+log
+@add file.
+@
+text
+@d1 1
+@
+
+
+1.1.1.1
+log
+@initial vendor import.
+@
+text
+@@
+

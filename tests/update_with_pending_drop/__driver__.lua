@@ -1,0 +1,26 @@
+
+mtn_setup()
+
+addfile("file", "test1")
+
+commit()
+
+check(mtn("--branch=testbranch", "co", "codir"), 0, false, false)
+
+remove("file")
+check(mtn("drop", "file"), 0, false, false)
+
+commit()
+
+rev = base_revision()
+
+check(indir("codir", mtn("drop", "file")), 0, false, false)
+check(indir("codir", mtn("update")), 0, false, false)
+
+check(indir("codir", mtn("automate", "get_revision", rev)), 0, false, false)
+
+-- make sure there are no changes in the workspace
+
+check(not exists("codir/_MTN/work"))
+check(indir("codir", mtn("diff")), 0, true, false)
+check(grep('no changes', "stdout"), 0, false, false)

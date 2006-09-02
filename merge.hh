@@ -1,11 +1,14 @@
 #ifndef __MERGE_HH__
 #define __MERGE_HH__
 
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <set>
 
@@ -22,12 +25,8 @@ struct roster_merge_result;
 struct content_merge_adaptor;
 
 void
-resolve_merge_conflicts(revision_id const & left_rid,
-                        revision_id const & right_rid,
-                        roster_t const & left_roster, 
+resolve_merge_conflicts(roster_t const & left_roster,
                         roster_t const & right_roster,
-                        marking_map const & left_marking_map, 
-                        marking_map const & right_marking_map,
                         roster_merge_result & result,
                         content_merge_adaptor & adaptor,
                         app_state & app);
@@ -55,5 +54,13 @@ store_roster_merge_result(roster_t const & left_roster,
                           revision_id const & right_rid,
                           revision_id & merged_rid,
                           app_state & app);
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif

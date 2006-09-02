@@ -1,0 +1,73 @@
+
+mtn_setup()
+
+-- This test is a bug report.
+xfail_if(true, false)
+
+-- Todo:
+-- 1) Write monotone-agent
+-- 2) Write tests for it here
+--
+-- Desired user experience:
+--   - start the agent at login time
+--     (it would be nice if we could spawn it automatically the first
+--     time monotone is run, but then how would we communicate the
+--     agent's address to independent processes?  and cause it to exit
+--     when the session ends?)
+--   - first time monotone needs to sign something, it prompts for a
+--     passphrase
+--   - second and later times monotone needs to sign something, no
+--     passphrase is necessary (even if the second time is in a
+--     different monotone process entirely)
+--   - probably have some command that does nothing except prompt for a
+--     passphrase, so people who want to type it once at the beginning
+--     of a session can do that.
+--
+-- Internal design:
+--   - agent opens an access controlled unix-domain socket (what's the
+--     windows equivalent?  cf. pageant below)
+--   - an environment variable saves the socket (and pid, I suppose,
+--     for cleanup), like ssh-agent (again, what's the windows
+--     equivalent?)
+--   - when monotone wants to sign something, it checks to see if the
+--     agent has the private key.
+--     - if it does, then monotone sends the agent the data to be
+--       signed, and waits for the response
+--     - if it doesn't, then monotone requests the passphrase, decrypts
+--       the key, sends the key to the agent, and then either goes to
+--       the above step (maybe simpler) or just signs the data itself
+--       (maybe faster)
+--   - so the agent needs protocol packets:
+--     - do you have key <hash>?
+--       - response
+--     - sign data <data> (or just hash of data <hash>) with key <hash>
+--       - response
+--     - add key <hash> <key pieces>
+--       - response
+--     - for debugging, might want 'list keys' and 'remove key'; 'list
+--       keys' probably means agent should store key ids too?  depends
+--       on how debuggish it is, I guess.
+--   - note that this design assumes that monotone will have
+--     independent access to the list of keys, and so doesn't need to
+--     get the ids and hashes from the agent.  this seems reasonable,
+--     at least for a first pass; it should be simpler to code, and the
+--     cases where it fails (e.g., agent forwarding) don't seem very
+--     compelling to me.
+--
+-- Other similar projects to steal ideas from:
+--   - ssh-agent in openssh
+--     their protocol is documented in
+--     draft-ylonen-ssh-protocol-00.txt.  It's simple enough that this
+--     isn't that useful, though.  (Unfortunately, ssh-agent provides
+--     challenge-responses, not signatures, so we can't use it
+--     directly.  Using it directly would have been much nicer.  I
+--     suppose in the long run we could try and convince the ssh-agent
+--     people that providing signing services for some keys might be
+--     generally useful...)
+--     It's not clear that signing services are something you
+--     want to forward to other machines, though, even if
+--     challenge-response services are...
+--   - "pageant" in putty is a ssh-agent that works on Windows
+--     - how does this work in windows, with no SSH_AUTH_SOCK and no
+--       unix-domain sockets?
+--   - codeville has an agent implementation too

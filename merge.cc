@@ -1,9 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// copyright (C) 2005 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <set>
 
@@ -17,8 +19,11 @@
 #include "safe_map.hh"
 #include "transforms.hh"
 
-using std::map;
 using std::make_pair;
+using std::map;
+using std::set;
+using std::vector;
+
 using boost::shared_ptr;
 
 static void
@@ -35,12 +40,8 @@ get_file_details(roster_t const & ros, node_id nid,
 }
 
 void
-resolve_merge_conflicts(revision_id const & left_rid,
-                        revision_id const & right_rid,
-                        roster_t const & left_roster, 
+resolve_merge_conflicts(roster_t const & left_roster,
                         roster_t const & right_roster,
-                        marking_map const & left_marking_map, 
-                        marking_map const & right_marking_map,
                         roster_merge_result & result,
                         content_merge_adaptor & adaptor,
                         app_state & app)
@@ -65,14 +66,18 @@ resolve_merge_conflicts(revision_id const & left_rid,
       if (!result.file_content_conflicts.empty())
         {
 
-          L(FL("examining content conflicts\n"));
-          std::vector<file_content_conflict> residual_conflicts;
+          L(FL("examining content conflicts"));
 
-          for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
+          size_t cnt;
+          size_t total_conflicts = result.file_content_conflicts.size();
+          std::vector<file_content_conflict>::iterator it;
+
+          for (cnt = 1, it = result.file_content_conflicts.begin();
+               it != result.file_content_conflicts.end(); ++cnt)
             {
-              file_content_conflict const & conflict = result.file_content_conflicts[i];
+              file_content_conflict const & conflict = *it;
 
-              boost::shared_ptr<roster_t> roster_for_file_lca;
+              shared_ptr<roster_t> roster_for_file_lca;
               adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
 
               // Now we should certainly have a roster, which has the node.
@@ -84,25 +89,34 @@ resolve_merge_conflicts(revision_id const & left_rid,
               get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
               get_file_details (left_roster, conflict.nid, left_id, left_path);
               get_file_details (right_roster, conflict.nid, right_id, right_path);
-              
+
               file_id merged_id;
-              
-              content_merger cm(app, *roster_for_file_lca, 
-                                left_roster, right_roster, 
+
+              content_merger cm(app, *roster_for_file_lca,
+                                left_roster, right_roster,
                                 adaptor);
 
               if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
                                         anc_id, left_id, right_id, merged_id))
                 {
-                  L(FL("resolved content conflict %d / %d\n") 
-                    % (i+1) % result.file_content_conflicts.size());
+                  L(FL("resolved content conflict %d / %d")
+                    % cnt % total_conflicts);
                   file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
                   f->content = merged_id;
+
+                  it = result.file_content_conflicts.erase(it);
                 }
               else
-                residual_conflicts.push_back(conflict);
+                {
+                  ++it;
+
+                  // If the content_merger has failed, there's no point
+                  // trying to continue--we'll only frustrate users by
+                  // encouraging them to continue working with their merge
+                  // tool on a merge that is now destined to fail.
+                  break;
+                }
             }
-          result.file_content_conflicts = residual_conflicts;     
         }
     }
 
@@ -118,7 +132,7 @@ interactive_merge_and_store(revision_id const & left_rid,
 {
   roster_t left_roster, right_roster;
   marking_map left_marking_map, right_marking_map;
-  std::set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
 
   app.db.get_roster(left_rid, left_roster, left_marking_map);
   app.db.get_roster(right_rid, right_roster, right_marking_map);
@@ -130,9 +144,9 @@ interactive_merge_and_store(revision_id const & left_rid,
 //   {
 //     data tmp;
 //     write_roster_and_marking(left_roster, left_marking_map, tmp);
-//     P(F("merge left roster: [[[\n%s\n]]]\n") % tmp);
+//     P(F("merge left roster: [[[\n%s\n]]]") % tmp);
 //     write_roster_and_marking(right_roster, right_marking_map, tmp);
-//     P(F("merge right roster: [[[\n%s\n]]]\n") % tmp);
+//     P(F("merge right roster: [[[\n%s\n]]]") % tmp);
 //   }
 
   roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
@@ -140,9 +154,7 @@ interactive_merge_and_store(revision_id const & left_rid,
                result);
 
   content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
-  resolve_merge_conflicts (left_rid, right_rid,
-                           left_roster, right_roster,
-                           left_marking_map, right_marking_map,
+  resolve_merge_conflicts (left_roster, right_roster,
                            result, dba, app);
 
   // write new files into the db
@@ -164,24 +176,24 @@ store_roster_merge_result(roster_t const & left_roster,
   roster_t & merged_roster = result.roster;
   merged_roster.check_sane();
 
-  revision_set merged_rev;
-  
+  revision_t merged_rev;
+
   calculate_ident(merged_roster, merged_rev.new_manifest);
-  
-  boost::shared_ptr<cset> left_to_merged(new cset);
+
+  shared_ptr<cset> left_to_merged(new cset);
   make_cset(left_roster, merged_roster, *left_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(left_rid, left_to_merged));
-  
-  boost::shared_ptr<cset> right_to_merged(new cset);
+  safe_insert(merged_rev.edges, make_pair(left_rid, left_to_merged));
+
+  shared_ptr<cset> right_to_merged(new cset);
   make_cset(right_roster, merged_roster, *right_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(right_rid, right_to_merged));
-  
+  safe_insert(merged_rev.edges, make_pair(right_rid, right_to_merged));
+
   revision_data merged_data;
-  write_revision_set(merged_rev, merged_data);
+  write_revision(merged_rev, merged_data);
   calculate_ident(merged_data, merged_rid);
   {
     transaction_guard guard(app.db);
-  
+
     app.db.put_revision(merged_rid, merged_rev);
     packet_db_writer dbw(app);
     if (app.date_set)
@@ -196,3 +208,11 @@ store_roster_merge_result(roster_t const & left_roster,
     guard.commit();
   }
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

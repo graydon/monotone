@@ -1,0 +1,10 @@
+format_version "1"
+
+new_manifest [407ad1469e65feae6dcecc268e129d9369b69675]
+
+old_revision []
+
+add_dir ""
+
+add_file "foo"
+ content [4cbd040533a2f43fc6691d773d510cda70f4126a]

@@ -1,0 +1,242 @@
+BEGIN TRANSACTION;
+CREATE TABLE branch_epochs
+	(
+	hash not null unique,         -- hash of remaining fields separated by ":"
+	branch not null unique,       -- joins with revision_certs.value
+	epoch not null                -- random hex-encoded id
+	);
+CREATE TABLE db_vars
+        (
+        domain not null,      -- scope of application of a var
+        name not null,        -- var key
+        value not null,       -- var value
+        unique(domain, name)
+        );
+CREATE TABLE file_deltas
+	(	
+	id not null,      -- strong hash of file contents
+	base not null,    -- joins with files.id or file_deltas.id
+	delta not null,   -- rdiff to construct current from base
+	unique(id, base)
+	);
+INSERT INTO file_deltas VALUES('a9ca701697adae066b96d07aabb30f0d6245692c','d4929f246d23a51eba6799685e28f9ab077b483a','H4sIAAAAAAAA//NUMOVKMywz5OICAOrIolkKAAAA
+');
+INSERT INTO file_deltas VALUES('36f92840dcffa22064b2dd9e0848d14350f07c5c','f9d518a4e1308cbe8503bdd8f578b16de4407491','H4sIAAAAAAAA//NUMOVKMyoz5OICADqyAh4KAAAA
+');
+INSERT INTO file_deltas VALUES('09848c4631a20ac166344f58a23fee04a6c646a4','1ece609689fb9462de25716110769bad1a80e8d8','H4sIAAAAAAAA//NUMOVKMykz5OICAJpHQpEKAAAA
+');
+CREATE TABLE files
+	(
+	id primary key,   -- strong hash of file contents
+	data not null     -- compressed, encoded contents of a file
+	);
+INSERT INTO files VALUES('d4929f246d23a51eba6799685e28f9ab077b483a','H4sIAAAAAAAA/0szLDPiAgC5Qx7FBQAAAA==
+');
+INSERT INTO files VALUES('bbeadf8e35428c9e5333e71caf25851498306eb6','H4sIAAAAAAAA/0szLjPkAgDx2DpEBQAAAA==
+');
+INSERT INTO files VALUES('f9d518a4e1308cbe8503bdd8f578b16de4407491','H4sIAAAAAAAA/0szKjPiAgBX7KvXBQAAAA==
+');
+INSERT INTO files VALUES('1ece609689fb9462de25716110769bad1a80e8d8','H4sIAAAAAAAA/0szKTPiAgCLs8DyBQAAAA==
+');
+CREATE TABLE manifest_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with manifests.id or manifest_deltas.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+CREATE TABLE manifest_deltas
+	(
+	id not null,         -- strong hash of all the entries in a manifest
+	base not null,       -- joins with either manifest.id or manifest_deltas.id
+	delta not null,      -- rdiff to construct current from base
+	unique(id, base)
+	);
+INSERT INTO manifest_deltas VALUES('093030979cb9c082418eabd74e91068aee5ea316','c4fb17aca5ca87b49160401282778891a9885a0a','H4sIAAAAAAAA/03LwQ2AIAwF0DtTMMKnlEJHcIxCaWLiTfePHn33d+QCTqbLOopoN7cNkani
+6GZzVgRciJsorZyffT9xXrukKqE0GL4ijAjCk9x1Y/DwwrV9sa/2O5TSC/rOjaZvAAAA
+');
+INSERT INTO manifest_deltas VALUES('093030979cb9c082418eabd74e91068aee5ea316','7d45f98a1b3022c9a6a015addbe5315058d0a7ce','H4sIAAAAAAAA/03LwQ2AIAwF0DtTMMKnlEJHcIxCaWLiTfePHn33d+QCTqbLOopoN7cNkani
+6GZzVgRciJsorZyffT9xXrukKqE0GL4ijAjCk9x1Y/DwwrV9sa/2O5TSC/rOjaZvAAAA
+');
+INSERT INTO manifest_deltas VALUES('c4fb17aca5ca87b49160401282778891a9885a0a','7d1e0aafd07a9403221e7b17070d185f6f857f62','H4sIAAAAAAAA/0XLuw3EMAgA0N5TZATMzzDCjYENSJGuu+yvK/P697mm6Eh29EbWRAqZtUOX
+u5oUWntsWGuzUVzXU7+n72/NQdqOxpCnOxBBeWOmFxhbTiaBhnXkvAfH3hXZViSMdryEiGrN
+E41iMtmNQGvre2iMPxlvMr+jAAAA
+');
+INSERT INTO manifest_deltas VALUES('7d1e0aafd07a9403221e7b17070d185f6f857f62','d5c9e3dea2f4f07a6afbdb9401be34ac3cffb985','H4sIAAAAAAAA/0XMsQ3EMAgF0J4pPALG3xjqqzIGdrAUKV2yv05X3RvgHaULnXDxLdBTWvSa
+M3S4q/UU2x6Tx5iwFqW8+bz7urMSfQqXyqDjN7AbbEFbDeFYVbUBu1tI25mM0KXQwH8A0Rcx
+eey+fAAAAA==
+');
+CREATE TABLE manifests
+	(
+	id primary key,      -- strong hash of all the entries in a manifest
+	data not null        -- compressed, encoded contents of a manifest
+	);
+INSERT INTO manifests VALUES('7d45f98a1b3022c9a6a015addbe5315058d0a7ce','H4sIAAAAAAAA/0XLsQ3DMAwEwN5TeARSer3IcSiRAgKki/dHSl9/4TumKH1GRgm5nCkzYq0u
+R5INg972fT/1e87nW3odz6EWKO1ie5UN6SvTzpi2lFmATLi+p13iBttg12gSW8kOnGHR+qkS
+BDfBwHtw/QFGf42HnAAAAA==
+');
+INSERT INTO manifests VALUES('d5c9e3dea2f4f07a6afbdb9401be34ac3cffb985','H4sIAAAAAAAA/0XLuw3DMAwFwN5TeARS/IgcRxSfgADp4v2R0tffyTaOpWCh2IUwkuqOYzOK
+vaFKU5Pv+8HvOZ8vxlWF1ScgpiN2wkQEk/c6w8JYM4Qc5e+Ri7HhlB55KtVHY9hkZ6bpWat5
+BSE63qPXH/8LfAOcAAAA
+');
+CREATE TABLE public_keys
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id primary key,         -- key identifier chosen by user
+	keydata not null        -- RSA public params
+	);
+INSERT INTO public_keys VALUES('de84b575d5e47254393eba49dce9dc4db98ed42d','njs@pobox.com','MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQC54vVjrrqYoTfPTgWm6JpuL+kOERcN2OSc
+BsWq6cb4Wm3nlymwVqJJywq6cbfygUYwmqyiRLPxRosfLGu228AhEzaM4JbAH1pgg7CwvvVd
+fHRXNAXEMgO89gBjkkecxLi4U/T67DrLjkRPAilCgWLZNv8YeOG9XAPegWyr7hNA9wIBEQ==');
+INSERT INTO public_keys VALUES('c9d80250e944708aab7fe960c1136b517fd30772','tester@test.net','MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQCfN/cAMabgb6T7m8ksGnpQ7LO6hOdnc/7V
+yivrRGtmpwSItljht1bmgLQF37KiSPoMEDUb1stfKxaMsYiy8iTyoQ+M2EVFP37n2rtnNZ0H
+oVcQd2sRsCerQFh9nslRPymlkQXUlOiNFN6RlFNcdjkucqNe+YorFX21EYw7XuT5XwIBEQ==');
+CREATE TABLE revision_ancestry
+	(
+	parent not null,     -- joins with revisions.id
+	child not null,      -- joins with revisions.id
+	unique(parent, child)
+	);
+INSERT INTO revision_ancestry VALUES('','696ab0232841aece22eb2ac30160c0c0ce879a46');
+INSERT INTO revision_ancestry VALUES('696ab0232841aece22eb2ac30160c0c0ce879a46','c606ed519e48f526bb130fd64fef712f795f0625');
+INSERT INTO revision_ancestry VALUES('696ab0232841aece22eb2ac30160c0c0ce879a46','04fe9ed6642b2e258162f948934726a3085e473f');
+INSERT INTO revision_ancestry VALUES('04fe9ed6642b2e258162f948934726a3085e473f','758967c8b6c66c95bcf8fad9f3f76278194c01be');
+INSERT INTO revision_ancestry VALUES('c606ed519e48f526bb130fd64fef712f795f0625','758967c8b6c66c95bcf8fad9f3f76278194c01be');
+INSERT INTO revision_ancestry VALUES('758967c8b6c66c95bcf8fad9f3f76278194c01be','9161ca0e2b8df467cdbecaf359f0f56784222755');
+CREATE TABLE revision_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with revisions.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+INSERT INTO revision_certs VALUES('ef12547bb10d8771a77614aac5e9f40962bc479c','696ab0232841aece22eb2ac30160c0c0ce879a46','branch','dGVzdGJyYW5jaDE=
+','tester@test.net','GnE8iraB+eUtgDFX/0UmaT1XM0jpsX1ZtNYayHceuyvdVLfm4hbHo3l887JITAfRr6L7oPgk
+QlNnE6UYaXco1Z1ILvhBVCFfcBkmHVJUcLWbgduSPfbEQYzBTBPssBuff1aZGMI2hucN8Pzm
+mKsvRlkIOkLfAEYMTI+pfmILUqE=
+');
+INSERT INTO revision_certs VALUES('9f7a88847c247683c5f9d6631e407b72b60842c7','696ab0232841aece22eb2ac30160c0c0ce879a46','author','dGVzdGVyQHRlc3QubmV0
+','tester@test.net','lhEU/k0zzSAy566GJGFzoXzBsTVqBxUfgcU6Ji8gzVwjTc+tZc7SZdGtKK+nPegOzfbJpdw4
+UzGXdjS9Ews4d7XnTyk/I6qr5dXzcsFJiuEZQJ7YQsBpos/+xDiq/JdElxBWpn7fY8oy6N58
+M3AvisNOXBdvhyTO2ItbJh40dwk=
+');
+INSERT INTO revision_certs VALUES('30a6f24ae37d7b4b49f08ed49179d153f1bbc022','696ab0232841aece22eb2ac30160c0c0ce879a46','changelog','YmxhaC1ibGFo
+','tester@test.net','YytH693eNB3wWzZy5tuvN+Fv9I5HmCDOQ+AaejT7WHD2eV9Mt7KUBh/onGmpUu/mej+nZCxB
+7U7hcYMrS6wTV0kJdLN0IfcGXIZDdvH3rTf99eXbESF+og9dHHWoi1IcAyS+gVNASuQD2Ebd
+9pP5soS2Dcbj8awclbSy57NzWkI=
+');
+INSERT INTO revision_certs VALUES('4a12d5fd9b7750d8f3f14c8d7df059450c4b58c1','696ab0232841aece22eb2ac30160c0c0ce879a46','somekey','c29tZXZhbHVl
+','tester@test.net','Wp6ZgxS1lu0RJr7hsfJT73P8V1FecqRpUMwNx33FJY53oeyCLkj0MvwZEL8cv99t9Bs6Okmq
+YZv+HjoSBe4IuYmJobY+a2I0a/CA/ZwL3e7icVHFtR4TohnU7oWtNDl05wj7TSD7lPoVYQ9/
+TIvlT2bs3rHAFhy6WZzz0U2CD0A=
+');
+INSERT INTO revision_certs VALUES('7c5a9f69aa2b5017507a6d52d921b63985e4fa23','c606ed519e48f526bb130fd64fef712f795f0625','branch','dGVzdGJyYW5jaDI=
+','tester@test.net','JnpXgS17t6nJTSsODgTP25ysDBxBgESji5IQzsfWehWPkkpUmBBT+Svcq6GphvXq450N9PA1
+WuGsJ0fKGpe78CswhlC2TXJ11USWTJe6yA4MTviB1MtlpdIwvvDDGRIzq+fJOUvvf8EBZL27
+74qubWb16xbzuY5Z97ZntjSuzx4=
+');
+INSERT INTO revision_certs VALUES('188cd2a7bf9ac97da6931d71925eb6d97671ca8e','c606ed519e48f526bb130fd64fef712f795f0625','author','dGVzdGVyQHRlc3QubmV0
+','tester@test.net','iNZTFVhkg58Xo7R80MzIWd3UIh+oaF9Z89FwMnC3NjqTk62qlqjevrNmakiLGd4H2hbxsfqq
+7/h7/+mmqRbvazVpkKoedTfyIS1agRhL5fol91TRyo2brppzL4LgaMoGvr+pQbX6MFhDvjg7
+8Wk21MG0Wf38cav8s7UcIDCf3QE=
+');
+INSERT INTO revision_certs VALUES('02b5cadd064fb155ac6ec444ac3a90d183eeab9a','c606ed519e48f526bb130fd64fef712f795f0625','changelog','YmxhaC1ibGFo
+','tester@test.net','NRxSQQR0ELdIWNdsocKUxfYyICyhWxd5Q9LK6JUoJ6wSPsOhWD51GgkdCJ/DxLUMdUOFOm71
+g5eIi0nK/lpS7Ke0/nA9QFpFQ/OLg+lfkwxq+YzL7RW5FRVfa7t8IRONHDy8OS0XqDDZwivF
+JYtmUmwX3M8sOqBV68PLO7isalM=
+');
+INSERT INTO revision_certs VALUES('edfa6f6e249d898764a4c7814203253a758af4f5','04fe9ed6642b2e258162f948934726a3085e473f','branch','dGVzdGJyYW5jaDE=
+','tester@test.net','PBZFgFv9UGap/R5OUdDkBCKWkXIP0/0E+iZuiotlr8q7b3z2yGGpQgdZQpAihXA6UFI+s69t
+DYG0TP3tfoHvDBkCBZV+oE6lOyz/Yb5xyq6uO2y163Gb+/FoHg/4FlGFey+BWJgKBV7jwe4L
+o0fsBlhRPWIi6/QYjm1dBjfOVnU=
+');
+INSERT INTO revision_certs VALUES('55794d3f62ad0ba942b029fc4772a9b6c8d7b09e','04fe9ed6642b2e258162f948934726a3085e473f','author','dGVzdGVyQHRlc3QubmV0
+','tester@test.net','J9xA555Q3T1+uVsgp68LJdlLibQz/ew+C4rFZWTbVtp+28dMN1HOqvlKWL64JiTLMsciQRo2
+87WrtnKiHrKFzpgG+L4CYccgKAB3VcWfIaMXQFQEMAqwkVFjpiQDAyv7G57niWLeNrJUo6pL
+ceAs9yhGr3Xml1GnQqNtysUb958=
+');
+INSERT INTO revision_certs VALUES('83e6e0c7549fe3887a382064da4bd5148ba765e1','04fe9ed6642b2e258162f948934726a3085e473f','changelog','YmxhaC1ibGFo
+','tester@test.net','jhZZDvjkM3OkoRhvjy7yAntK1EL8fF8dwavHE7KxXTZMogxrWzYgx64nvpEiZ9+QeSY+0TF+
+kE48zwrO73RZnGuJzpCl04YuBMk+5NPYAE+xfy8sdzbsLsPE+3ZJXIZ/PJ4x+HA8jQwPYdnA
+MTDC3Uho+ohdErvqEZCJQxTwmss=
+');
+INSERT INTO revision_certs VALUES('76b300accd7bb6b6e278b7f3c9f83801b14b5f0a','758967c8b6c66c95bcf8fad9f3f76278194c01be','author','dGVzdGVyQHRlc3QubmV0
+','tester@test.net','dy4R3EjKdrbfKJ3xmX0Xj3XH15ClQOFzAuN6iBX07XmZTBk0wF1G+qiLJoYX8EmVOt8f6wEa
+w2XUgMbHM7qDY2IJ4fmULfgI+iKGpJU+qR94raOwsu+pkaPZ/n+6zmg6x32PeqoGTo5gNp3s
+QOZH0ixftrh1C40vyuHw4WWg/Ps=
+');
+INSERT INTO revision_certs VALUES('041a1a99878d5066fc399f85be3c11bb3bf3d27d','758967c8b6c66c95bcf8fad9f3f76278194c01be','branch','dGVzdGJyYW5jaDE=
+','tester@test.net','DftwXsK6A0Hoi77kKjIuB3wRI9NkfZ20vg5QUAJcb7I30eRZZ+6SwbEm2ourHvc1u6E7jwjO
+a4B8QvOmYtGKusCrDX1KXpCqZ0pnJWnxg8vVRk5npO5qhliz1NsWPEpNAKV6/dU6W3Dzgf5J
+xl3aAP5+XroLsHXL9/FzNDnfvMg=
+');
+INSERT INTO revision_certs VALUES('d908bffb758afe95e4fb380e475fcbb11e91d376','758967c8b6c66c95bcf8fad9f3f76278194c01be','changelog','cHJvcGFnYXRlIGZyb20gYnJhbmNoICd0ZXN0YnJhbmNoMicgKGhlYWQgYzYwNmVkNTE5ZTQ4
+ZjUyNmJiMTMwZmQ2NGZlZjcxMmY3OTVmMDYyNSkKICAgICAgICAgICAgdG8gYnJhbmNoICd0
+ZXN0YnJhbmNoMScgKGhlYWQgMDRmZTllZDY2NDJiMmUyNTgxNjJmOTQ4OTM0NzI2YTMwODVl
+NDczZikK
+','tester@test.net','CkAXf32lcw4+JHqG35dDrUZZBH+keMhHX4Y9nGfOgdWVa1Of6usqlFAJZrkMwjBO/qY3Jzdw
+1dx47a8LuqDLAY7wUMbF6Ry7HEVXFEeaJrRBFADA7MQGvdt9+UIZMQ9D5FxmDZ6EEIb8XCym
++x+XNAElrfEIognCeTgQ3a/39qs=
+');
+INSERT INTO revision_certs VALUES('4a3e67376fc23bfa02ea989936c0736365d831fc','9161ca0e2b8df467cdbecaf359f0f56784222755','branch','dGVzdGJyYW5jaDM=
+','tester@test.net','UMA2Zxyz0KfA3Y/7ICHrT4czGZgBzQyjFcLqCKaKXxsuwfEOZuHvksKep55NZVra+XHzmMDS
+xokNhihk1BTAaR1CH2JTgKWJ5Cf0YAY+8O3Z3WbLuGoW3y/zyyj9dOEJMfiSXwdBpsrXTQvM
+yTxVkrwdgFqcxVDO53Xtp93am+8=
+');
+INSERT INTO revision_certs VALUES('e50413c2a1972047c2f246de7574c4187cbedce8','9161ca0e2b8df467cdbecaf359f0f56784222755','author','dGVzdGVyQHRlc3QubmV0
+','tester@test.net','Dvw+2q6syHBdZx2Cc/jNwNxjtOjfk1Ivr7aZgldOnWc9URPVlg4YCxYrHdFR4nFoE4u4I4xN
+wBcsbIeGJcw7COh6wZvagrl1bbbesKDfCGpH/uD81mH8MzVJmgI+OG1BenXgSGPjIqTMcsxE
+HuSX9pXid9XxU6jBke2cA9vKLJQ=
+');
+INSERT INTO revision_certs VALUES('21b01f4e3cb751c0853a852250d57ce5f0491872','9161ca0e2b8df467cdbecaf359f0f56784222755','changelog','YmxhaC1ibGFo
+','tester@test.net','Cby4qjs1FPRbvf82UJjOUKDoMJQLBIfOy/FIWKVP5EvF67g2RrWOMGAqG33/lXY8NSXwFb9Q
+dTkAHvwGvoKKBWwoonU0dMbm4GdocCYBhpsfuwZ25YhS+PJ2KXjm+hn73CROpjMO1tc5lmUQ
+cqJSB4VMcru3CuGwEywJ1iyMNE8=
+');
+CREATE TABLE revisions
+	(
+	id primary key,      -- SHA1(text of revision)
+	data not null        -- compressed, encoded contents of a revision
+	);
+INSERT INTO revisions VALUES('696ab0232841aece22eb2ac30160c0c0ce879a46','H4sIAAAAAAAA/23MQYrDMAyF4X1PYXoCWXZk6ywhBNmSmUCbDG1or19nNkNpd9LP41vtOV9l
+XZrddzcCBwjAiWvhChmjzyZFUzT2QFnMBpPgaTqdtovON3ss92Vb3Tj9/f9QH4jq3JaLufPe
+03H587eKvf7KXn/ehq7dtuvhOOf2zY3CVRJ44iQqBkSFSSGJlBKggRLGgRjr9IHhJxaoMeYI
+WlsTRKBYUJUNcszqYxi6mOrQsRctJDHlHwEAAA==
+');
+INSERT INTO revisions VALUES('c606ed519e48f526bb130fd64fef712f795f0625','H4sIAAAAAAAA/12QQWoDMQxF93MKkxPIki1LZxlCkG2ZDiSZkg7t9et0kUDRRgj+fzzd/edy
+s/s2/OsIa0ujxmLNcjMpNWlkSBBRsBQRjaYi2cDOy7Jf++Xh39vXtt/DyspWAQklRfPmiF7R
+GsEsaM9xKWqJz3+5NxCUgECLtqoNBFMUt9pLco3AYu7ZjeLMLdb7ZWxXD6djRp8bnZbl0472
+8T7F0xLGY7+F1bRZmXgt1s2BuSp3KGa1EgzojCmzYjsvIYRjD2tPijowcUeyHL0aF1WW7ChD
+p12ZDxF6uv+D0gv6KqvVrQ9xygmlqWci8hKbDcySY1IhYK/T6xdFvbXtgQEAAA==
+');
+INSERT INTO revisions VALUES('04fe9ed6642b2e258162f948934726a3085e473f','H4sIAAAAAAAA/2WOQWoDMQxF9z6FyQkkW5bls4QhyLJMB5JMSYf2+p10kSzK34gPT+/f/edy
+0/s6/WuP5zqozCaKPUNK1pQVsOgY3UvGAkUGaDVfQtiu4/Lw7/Vr3e7xzI21Q8pJCNXNU/Ke
+1DIggz3jUpsSL3/cWwgtQ4ZWm/VmIIlQXPuo5A2BRd2La8aDC8eKy1yvHk/7gT4vOoXwqbt9
+vKt0CnE+tls8Z57tWAPD5tSUgKmnMZqDkAykXGBCtWJLiDHuWzzPNgqKkmMGse5SIPcxZJYq
+HXk4EVRquPyT0kv6egbt0BhxRk2ghsyZaBbRlKc7kLIxsdISfgHKoS95gQEAAA==
+');
+INSERT INTO revisions VALUES('758967c8b6c66c95bcf8fad9f3f76278194c01be','H4sIAAAAAAAA/22RUW5jMQhF/98qnrICjAHDWqIowjZoIrXJqI062x93PtJR0z8LCZ97D9f4
+c3716yXj/b4f2ywB7jmhuRFUxBKtlwYNZlFOSeWWgqdtu73M81t8XN4vt+t+BMqwmCKEHQNZ
+i2AaqVVqKF5BOajVPP3b+x9InKZeegXEYS4OhX3OHlwLA+sEbyMWcA3PeXmJ/XBfq5+veti2
+334fv75G5bDt+XZ73Y9uwxsUsebTA0S6yWct7wuVMAWJxXCctn3f77f9OMnQEkkmVucS3aWZ
+yQqOmuYdWuuk1U9P0PqAPj7rPXymRmVCHbbK1BqtDM/lhguZVpDo8iRyyJpPLhakySi9lxV3
+yvKbrWA24wRB/i5yUK47+XAeriuoFQGCgoqtqVpxU2UH/1EkPYvER6cqaagEc2Q6Igh1nNMC
+lHQWqrxstsFfItNWfnWKlVxHD2Wofc5Vp2kvMoMI2gr4LJKeRYItzCCpxRF8FJFKlKyONSOA
+XIaQOJ22v3wgvJ3KAgAA
+');
+INSERT INTO revisions VALUES('9161ca0e2b8df467cdbecaf359f0f56784222755','H4sIAAAAAAAA/0WPUWrEMAxE/30KkxNYtizLZwkhyLZEA9mk7Ib2+s32Z/+GgZk3c+jv+pBj
+M31dfh65V01DJRpaKEJibbSKAZomlJ66WaucF+fOfaxP/dle23n4uWSuVDo36kS95taNTUa1
+ZIViYajY3yXLf+4DLAM0iNi4YTcmxQhaGpRQwgDORsa5GMUbOHTXS1fbdvXTdaffCibnvuXq
+Xx8LJ+fteT78HCojd6QEEoN0IEqIllliMtWAco9FElyc9/46/QzalUIlrvdLpDg05gIEEArV
+JgOEg/Lgxf0BzXe4vzcBAAA=
+');
+CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
+CREATE INDEX revision_certs__id ON revision_certs (id);
+CREATE INDEX revision_certs__name_value ON revision_certs (name, value);
+COMMIT;

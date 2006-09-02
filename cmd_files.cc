@@ -1,48 +1,65 @@
-#include "cmd.hh"
-
-#include "transforms.hh"
-#include "packet.hh"
-#include "annotate.hh"
-#include "diff_patch.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <iostream>
+
+#include "annotate.hh"
+#include "cmd.hh"
+#include "diff_patch.hh"
+#include "localized_file_io.hh"
+#include "packet.hh"
+#include "simplestring_xform.hh"
+#include "transforms.hh"
+
 using std::cout;
 using std::ostream_iterator;
+using std::string;
+using std::vector;
 
-// fload and fmerge are simple commands for debugging the line
+// fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), OPT_NONE)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
 {
   string s = get_stdin();
 
   file_id f_id;
   file_data f_data(s);
-  
+
   calculate_ident (f_data, f_id);
-  
+
   packet_db_writer dbw(app);
-  dbw.consume_file_data(f_id, f_data);  
+  dbw.consume_file_data(f_id, f_data);
 }
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("merge 3 files and output result"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 3)
     throw usage(name);
 
-  file_id anc_id(idx(args, 0)()), left_id(idx(args, 1)()), right_id(idx(args, 2)());
+  file_id 
+    anc_id(idx(args, 0)()), 
+    left_id(idx(args, 1)()), 
+    right_id(idx(args, 2)());
+
   file_data anc, left, right;
 
   N(app.db.file_version_exists (anc_id),
-  F("ancestor file id does not exist"));
+    F("ancestor file id does not exist"));
 
   N(app.db.file_version_exists (left_id),
-  F("left file id does not exist"));
+    F("left file id does not exist"));
 
   N(app.db.file_version_exists (right_id),
-  F("right file id does not exist"));
+    F("right file id does not exist"));
 
   app.db.get_file_version(anc_id, anc);
   app.db.get_file_version(left_id, left);
@@ -55,12 +72,48 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
   split_into_lines(right.inner()(), right_lines);
   N(merge3(anc_lines, left_lines, right_lines, merged_lines), F("merge failed"));
   copy(merged_lines.begin(), merged_lines.end(), ostream_iterator<string>(cout, "\n"));
-  
+
+}
+
+CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
+    N_("diff 2 files and output result"),
+    option::context_diff % option::unified_diff % option::no_show_encloser)
+{
+  if (args.size() != 4)
+    throw usage(name);
+
+  string const
+    & src_name = idx(args, 0)(),
+    & dst_name = idx(args, 1)();
+
+  file_id 
+    src_id(idx(args, 2)()), 
+    dst_id(idx(args, 3)());
+
+  file_data src, dst;
+
+  N(app.db.file_version_exists (src_id),
+    F("source file id does not exist"));
+
+  N(app.db.file_version_exists (dst_id),
+    F("destination file id does not exist"));
+
+  app.db.get_file_version(src_id, src);
+  app.db.get_file_version(dst_id, dst);
+
+  string pattern("");
+  if (app.diff_show_encloser)
+    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+
+  make_diff(src_name, dst_name,
+            src_id, dst_id,
+            src.inner(), dst.inner(),
+            cout, app.diff_format, pattern);
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    OPT_REVISION % OPT_BRIEF)
+    option::revision % option::brief)
 {
   revision_id rid;
 
@@ -76,30 +129,34 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
-  else 
+  else
     complete(app, idx(app.revision_selectors, 0)(), rid);
 
-  N(!null_id(rid), F("no revision for file '%s' in database") % file);
-  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+  N(!null_id(rid), 
+    F("no revision for file '%s' in database") % file);
+  N(app.db.revision_exists(rid), 
+    F("no such revision '%s'") % rid);
 
-  L(FL("annotate file file_path '%s'\n") % file);
+  L(FL("annotate file file_path '%s'") % file);
 
   // find the version of the file requested
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no such file '%s' in revision '%s'") % file % rid);
+  N(roster.has_node(sp), 
+    F("no such file '%s' in revision '%s'") % file % rid);
   node_t node = roster.get_node(sp);
-  N(is_file_t(node), F("'%s' in revision '%s' is not a file") % file % rid);
+  N(is_file_t(node), 
+    F("'%s' in revision '%s' is not a file") % file % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  L(FL("annotate for file_id %s\n") % file_node->self);
-  do_annotate(app, file_node, rid);
+  L(FL("annotate for file_id %s") % file_node->self);
+  do_annotate(app, file_node, rid, app.brief);
 }
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
-    OPT_NONE)
+    option::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -108,13 +165,14 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path_external(idx(args, 0)), dat, app.lua);
+      read_localized_data(file_path_external(idx(args, 0)), 
+                          dat, app.lua);
     }
   else
     {
       dat = get_stdin();
     }
-  
+
   hexenc<id> ident;
   calculate_ident(dat, ident);
   cout << ident << "\n";
@@ -123,7 +181,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
-    OPT_REVISION)
+    option::revision)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -136,12 +194,13 @@ CMD(cat, N_("informative"),
   revision_id rid;
   if (app.revision_selectors.size() == 0)
     get_revision_id(rid);
-  else 
+  else
     complete(app, idx(app.revision_selectors, 0)(), rid);
-  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+  N(app.db.revision_exists(rid), 
+    F("no such revision '%s'") % rid);
 
-  // paths are interpreted as standard external ones when we're in a
-  // workspace, but as project-rooted external ones otherwise
+  // Paths are interpreted as standard external ones when we're in a
+  // workspace, but as project-rooted external ones otherwise.
   file_path fp;
   split_path sp;
   fp = file_path_external(idx(args, 0));
@@ -150,16 +209,24 @@ CMD(cat, N_("informative"),
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no file '%s' found in revision '%s'\n") % fp % rid);
+  N(roster.has_node(sp), F("no file '%s' found in revision '%s'") % fp % rid);
   node_t node = roster.get_node(sp);
-  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'\n") % fp % rid);
+  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  file_id ident = file_node->content;  
+  file_id ident = file_node->content;
   file_data dat;
-  L(FL("dumping file '%s'\n") % ident);
+  L(FL("dumping file '%s'") % ident);
   app.db.get_file_version(ident, dat);
   cout.write(dat.inner()().data(), dat.inner()().size());
 
   guard.commit();
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

@@ -6,39 +6,50 @@
 #include <sys/stat.h>
 #include <windows.h>
 
-#include "botan/botan.h"
-#include "botan/sha160.h"
-
 #include "platform.hh"
-#include "transforms.hh"
-#include "file_io.hh"
+#include "sanity.hh"
 
-namespace
+inline double difftime(FILETIME now, FILETIME then)
 {
-  template <typename T> void
-  inline add_hash(Botan::SHA_160 & hash, T obj)
-  {
-      size_t size = sizeof(obj);
-      hash.update(reinterpret_cast<Botan::byte const *>(&size),
-                  sizeof(size));
-      hash.update(reinterpret_cast<Botan::byte const *>(&obj),
-                  sizeof(obj));
-  }
-};
+  // 100 ns (1e-7 second) resolution
+  double out = now.dwHighDateTime - then.dwHighDateTime;
+  out *= (1<<16); // 1<<32 gives a compile warning about
+  out *= (1<<16); // shifting by too many bits
+  out += (now.dwLowDateTime - then.dwLowDateTime);
+  return out * 1e-7;
+}
 
-bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
+inline bool is_nowish(FILETIME now, FILETIME then)
+{
+  double diff = difftime(now, then);
+  return (diff >= -3 && diff <= 3);
+}
+
+inline bool is_future(FILETIME now, FILETIME then)
+{
+  double diff = difftime(now, then);
+  return (diff < 0);
+}
+
+
+bool inodeprint_file(std::string const & file, inodeprint_calculator & calc)
 {
   struct _stati64 st;
-  if (_stati64(file.as_external().c_str(), &st) < 0)
+  if (_stati64(file.c_str(), &st) < 0)
     return false;
 
-  Botan::SHA_160 hash;
+  FILETIME now;
+  {
+    SYSTEMTIME now_sys;
+    GetSystemTime(&now_sys);
+    SystemTimeToFileTime(&now_sys, &now);
+  }
 
-  add_hash(hash, st.st_mode);
-  add_hash(hash, st.st_dev);
-  add_hash(hash, st.st_size);
+  calc.add_item(st.st_mode);
+  calc.add_item(st.st_dev);
+  calc.add_item(st.st_size);
 
-  HANDLE filehandle = CreateFile(file.as_external().c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  HANDLE filehandle = CreateFile(file.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (filehandle == INVALID_HANDLE_VALUE)
     return false;
 
@@ -49,18 +60,17 @@ bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip)
       return false;
     }
 
-  add_hash(hash, create.dwLowDateTime);
-  add_hash(hash, create.dwHighDateTime);
-  add_hash(hash, write.dwLowDateTime);
-  add_hash(hash, write.dwHighDateTime);
+  calc.note_nowish(is_nowish(now, create));
+  calc.note_nowish(is_nowish(now, write));
+  calc.note_future(is_future(now, create));
+  calc.note_future(is_future(now, write));
+  calc.add_item(create.dwLowDateTime);
+  calc.add_item(create.dwHighDateTime);
+  calc.add_item(write.dwLowDateTime);
+  calc.add_item(write.dwHighDateTime);
 
   if (CloseHandle(filehandle) == 0)
     return false;
 
-  char digest[hash.OUTPUT_LENGTH];
-  hash.final(reinterpret_cast<Botan::byte *>(digest));
-  std::string out(digest, hash.OUTPUT_LENGTH);
-  inodeprint ip_raw(out);
-  encode_hexenc(ip_raw, ip);
   return true;
 }

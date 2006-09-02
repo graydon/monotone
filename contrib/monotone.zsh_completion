@@ -1,318 +1,442 @@
-#compdef monotone
-
-# Installing into /etc/zsh/:
+#compdef mtn # -*-sh-*-
 #
-# 1) if not present, add the line "fpath=(/etc/zsh $fpath)" to either 
-#    your system wide zshrc, or user ~/.zshrc 
-# 2) cp $MONOTONE/contrib/monotone.zsh_completion /etc/zsh/_monotone
+# ZSH Completion for Monotone
+#
+# Author: Joel Reed  <joelwreed@comcast.com>
+# Last changed by: Thomas Moschny  <thomas.moschny@gmx.de>
+#
+#
+# Installing into /usr/share/zsh/site-functions:
+#
+# (1) If that directory is not already present in $fpath, add the line
+#     "fpath=(/usr/share/zsh/site-functions $fpath)" to either your
+#     system wide zshrc, or user ~/.zshrc.
+#
+# (2) Copy $MONOTONE/contrib/monotone.zsh_completion (this file) to
+#     /usr/share/zsh/site-functions/_mtn
+#
+# Alternatively, you can install this file as _mtn into some directory
+# in your home (e.g. ~/.zsh), and add that directory to the $fpath.
 #
 
-# redefine _monotone.
+# redefine _mtn.
 
-_monotone() {
+_mtn() {
   local extra
 
-  _arguments -s \
-    '(-)--debug[print debug log to stderr while running]' \
-    '(-)--dump=[file to dump debugging log to, on failure]:file:_files' \
-    '(-)--full-version[print full version]' \
-    '(-)--help[print help information]' \
-    '(-)--quiet[suppress log and progress messages]' \
- 	  '(-)--norc[do not load ~/.monotone/monotonerc or MT/monotonerc lua files]'\
-    '(-)--nostd[do not load standard lua hooks]' \
- 	  '(-)--rcfile=[load extra rc file]:file:_files'\
-  	'(-)--root=[limit search for working copy to specified root]:dir:_files -/'\
-  	'(-)--ticker=[set ticker style]'\
-    '(-)--version[print version and copyright information]' \
-  	'(-)'{-@,--xargs}'[insert command line arguments taken from the given]'\
-  	'(-)'{-d=,--db=}'[set name of database]:file:_files'\
-  	'(-)'{-k=,--key=}'[set key for signatures]:keys keys:_monotone_keys'\
-    '*::monotone command:_monotone_command'
+  _arguments -s : \
+    '--debug[print debug log to stderr while running]'\
+    '--dump=[file to dump debugging log to, on failure]:file:_files'\
+    '--log=[file to write the log to]:file:_files'\
+    '--quiet[suppress log and progress messages]'\
+    '--reallyquiet[suppress warning, verbose, informational and progress messages]'\
+    {'-h','--help'}'[display help message]'\
+    '(- *)--version[print version number, then exit]'\
+    '(- *)--full-version[print detailed version number, then exit]'\
+    {'-@+','--xargs='}'[insert command line arguments taken from the given file]:file:_files'\
+    '--ticker=[set ticker style]:style:(count dot none)'\
+    '--nostd[do not load standard lua hooks]'\
+    '--norc[do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files]'\
+    '--rcfile=[load extra rc file]:file:_files'\
+    {'(--key)-k+','(-k)--key='}'[set key for signatures]:keys keys:_mtn_keys'\
+    {'(--db)-d+','(-d)--db='}'[set name of database]:file:_files'\
+    '--root=[limit search for working copy to specified root]:dir:_files -/'\
+    '--verbose[verbose completion output]'\
+    '--keydir=[set location of key store]:dir:_files -/'\
+    '--confdir=[set location of configuration directory]:dir:_files -/'\
+    '*::monotone command:_mtn_command'
 }
 
 # define monotone command dispatch function.
 
-(( $+functions[_monotone_command] )) ||
-_monotone_command() {
-  (( $+_monotone_cmds )) || _monotone_cmds=(add annotate approve attr automate cat checkout commit complete db diff disapprove drop explicit_merge heads merge log ls propagate pull push rename revert serve status sync update fload fmerge lca lcad rcs_import cdiff list cert chkeypass dropkey genkey trusted reindex certs fdata fdelta mdata mdelta privkey pubkey rdata read cvs_import comment tag fcommit refresh_inodeprints setup set unset drop identify testresult)
-
-  local cmd="$words[1]"
-  if (( CURRENT == 1 )); then
-    _describe -t commands 'monotone command' _monotone_cmds
-  else
-    local curcontext="$curcontext"
-
-    if (( $#cmd )); then
-      curcontext="${curcontext%:*:*}:monotone-${cmd}:"
-      _call_function ret _monotone_$cmd || _message 'no more arguments'
+(( $+functions[_mtn_command] )) ||
+_mtn_command() {
+    (( $+_mtn_cmds )) || 
+    _mtn_cmds=(add annotate approve attr automate cat cert checkout chkeypass \
+	ci co comment commit complete cvs_import db diff disapprove drop dropkey \
+	explicit_merge fload fmerge genkey get_roster heads help identify list log \
+	ls merge merge_into_dir mv pivot_root privkey propagate pubkey pull push \
+	rcs_import read refresh_inodeprints rename revert rm serve set setup \
+	show_conflicts status sync tag testresult trusted unset update)
+    
+    local cmd="$words[1]"
+    if (( CURRENT == 1 )); then
+	_describe -t commands 'monotone command' _mtn_cmds
     else
-      _message "unknown monotone command: $cmd"
+	local curcontext="$curcontext"
+	
+	if [[ -n $cmd ]]; then
+	    curcontext="${curcontext%:*:*}:mtn-${cmd}:"
+	    _call_function ret _mtn_$cmd || _message 'no more arguments'
+	else
+	    _message "unknown monotone command: $cmd"
+	fi
+	return ret
     fi
-    return ret
-  fi
 }
 
 # define completion functions for each monotone command
 
-(( $+functions[_monotone_add] )) ||
-_monotone_add() {
-  _arguments -s \
-	  '*:added file:_monotone_files_unmaintained'
+(( $+functions[_mtn_add] )) ||
+_mtn_add() {
+    _arguments -s : \
+	'--unknown[add unknown files from workspace]'\
+	'*:file to add:_mtn_files_unknown'
 }
 
-(( $+functions[_monotone_annotate] )) ||
-_monotone_annotate() {
-  _arguments -s \
-	  '*:added file:_monotone_existing_entries'
+(( $+functions[_mtn_annotate] )) ||
+_mtn_annotate() {
+    _arguments -s : \
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'--brief[print a brief version of the normal output]'\
+	'(*)*:file to annotate:_mtn_files_known'
 }
 
-(( $+functions[_monotone_approve] )) ||
-_monotone_approve() {
-	_monotone_revisions
+(( $+functions[_mtn_approve] )) ||
+_mtn_approve() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	'(*)*:revision:_mtn_revisions'
 }
 
-(( $+functions[_monotone_attr] )) ||
-_monotone_attr() {
-	if (( CURRENT == 2 )); then	
-		compadd -- set get drop
-	elif (( CURRENT == 3 )); then	
-		compadd -- $(monotone automate attributes)
-	else
-	  local fname="$words[3]";
-		compadd -- $(monotone automate attributes $fname)
-	fi
+(( $+functions[_mtn_attr] )) ||
+_mtn_attr() {
+    if (( CURRENT == 2 )); then	
+	compadd -- set get drop
+    elif (( CURRENT == 3 )); then	
+	# fixme: should differentiate between set, get and drop
+	compadd -- $(mtn automate attributes)
+    else
+	local fname="$words[3]"
+	compadd -- $(mtn automate attributes $fname)
+    fi
 }
 
-(( $+functions[_monotone_automate] )) ||
-_monotone_automate() {
-	compadd -- interface_version heads ancestors parents descendents children graph erase_ancestors toposort ancestry_difference leaves inventory
+(( $+functions[_mtn_automate] )) ||
+_mtn_automate() {
+    compadd -- \
+	ancestors ancestry_difference attributes branches certs children \
+	common_ancestors descendents erase_ancestors \
+	get_base_revision_id get_current_revision_id get_file get_manifest_of \
+	get_revision graph heads interface_version inventory keys \
+	leaves packet_for_fdelta packet_for_rdata packets_for_certs \
+	parents select tags toposort 
 }
 
-(( $+functions[_monotone_cat] )) ||
-_monotone_cat() {
-	if (( CURRENT == 2 )); then	
-		compadd -- file manifest revision
-	else
-	  local mtype="$words[2]"
-		if [[ "$mtype" == "revision" ]]; then
-			_monotone_revisions
-		else
-			local id="$words[3]"
-			if (( $#id )); then
-  			compadd -- $(monotone complete $mtype $id 2> /dev/null)
-			fi
-	  fi
-	fi
+(( $+functions[_mtn_cat] )) ||
+_mtn_cat() {
+    _arguments -s : \
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'*:file to cat:_mtn_files_known'
 }
 
-(( $+functions[_monotone_cert] )) ||
-_monotone_cert() {
-	_monotone_revisions
+(( $+functions[_mtn_cert] )) ||
+_mtn_cert() {
+    _arguments -s : \
+	'1:revision:_mtn_revisions'\
+	'2:certname: '\
+	'3:certval: '
 }
 
-(( $+functions[_monotone_checkout] )) ||
-_monotone_checkout() {
-  _arguments \
-    '--branch=-[branch name]:branch:_monotone_branches' \
-		':revision:_monotone_revisions'
+(( $+functions[_mtn_checkout] )) ||
+_mtn_checkout() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'(*)*:directory for checkout: '
 }
 
-(( $+functions[_monotone_chkeypass] )) ||
-_monotone_chkeypass() {
-	_monotone_keys
+(( $+functions[_mtn_chkeypass] )) ||
+_mtn_chkeypass() {
+    _mtn_keys
 }
 
-(( $+functions[_monotone_comment] )) ||
-_monotone_comment() {
-	_monotone_revisions
+(( $+functions[_mtn_ci] )) ||
+_mtn_ci() {
+    _mtn_commit
 }
 
-(( $+functions[_monotone_commit] )) ||
-_monotone_commit() {
-  _arguments -s \
-    '(-)--message=[logmsg]' \
-    '*:modified file:_monotone_existing_entries'
+(( $+functions[_mtn_co] )) ||
+_mtn_co() {
+    _mtn_checkout
 }
 
-(( $+functions[_monotone_complete] )) ||
-_monotone_complete() {
-	compadd -- file key manifest revision 
+(( $+functions[_mtn_comment] )) ||
+_mtn_comment() {
+    _arguments -s : \
+	'1:revision:_mtn_revisions'\
+	'2:comment: '
 }
 
-(( $+functions[_monotone_cvs_import] )) ||
-_monotone_cvs_import() {
-  _arguments \
-	  '*:file:_files'
+(( $+functions[_mtn_commit] )) ||
+_mtn_commit() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	{'(--message)-m+','(-m)--message='}'[set commit changelog message]:message: '\
+	'--message-file=[set filename containing commit changelog message]:file:_files'\
+	'--date=[override date/time for commit]:date: '\
+	'--author=[override author for commit]:author: '\
+	'--depth=[limit the number of levels of directories to descend]:depth'\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
+	'*:files to commit:_mtn_files_changed'
 }
 
-(( $+functions[_monotone_db] )) ||
-_monotone_db() {
-	compadd -- init info version dump load migrate check rebuild execute kill_rev_locally
+(( $+functions[_mtn_complete] )) ||
+_mtn_complete() {
+    _arguments -s : \
+	'1:what to complete:(file key manifest revision)'\
+	'2:partial id: '
 }
 
-(( $+functions[_monotone_diff] )) ||
-_monotone_diff() {
-  _arguments -s \
-		'*--revision=:revision:_monotone_revisions' \
-	  '*:added file:_monotone_existing_entries'
+(( $+functions[_mtn_cvs_import] )) ||
+_mtn_cvs_import() {
+    _arguments : \
+	'*:file:_files'
 }
 
-(( $+functions[_monotone_disapprove] )) ||
-_monotone_disapprove() {
-	_monotone_revisions
+(( $+functions[_mtn_db] )) ||
+_mtn_db() {
+    compadd -- \
+	init info version dump load migrate execute \
+	kill_rev_locally kill_branch_certs_locally kill_tag_locally \
+	check changesetify rosterify set_epoch
 }
 
-(( $+functions[_monotone_drop] )) ||
-_monotone_drop() {
-	_monotone_existing_entries
+(( $+functions[_mtn_diff] )) ||
+_mtn_diff() {
+    _arguments -s : \
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'--depth=[limit the number of levels of directories to descend]:depth: '\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
+	{'(--unified)-u','(-u)--unified'}'[use unified diff format]'\
+	{'(--contex)-c','(-c)--contex'}'[use context diff format]'\
+	'--external[use external diff hook for generating diffs]'\
+	'--diff-args=[argument to pass external diff hook]:arg: '\
+	{'-no-show-encloser','--no-show-c-function'}'[do not show the function containing each block of changes]'\
+	'*:files to diff:_mtn_files_changed'
 }
 
-(( $+functions[_monotone_explicit_merge] )) ||
-_monotone_explicit_merge() {
-  if (( CURRENT == 2 || CURRENT == 3)); then
-		_monotone_revisions
-	else
-	  _monotone_branches
-	fi
+(( $+functions[_mtn_disapprove] )) ||
+_mtn_disapprove() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	'(*)*:revision to disapprove:_mtn_revisions'
 }
 
-(( $+functions[_monotone_dropkey] )) ||
-_monotone_dropkey() {
-	_monotone_keys
+(( $+functions[_mtn_drop] )) ||
+_mtn_drop() {
+    _arguments -s : \
+	{'(--execute)-e','(-e)--execute'}'[perform the associated file operation]'\
+	'--missing[perform the operations for files missing from workspace]'\
+	{'(--recursive)-R','(-R)--recursive'}'[also operate on the contents of any listed directories]'\
+	'*:entries to drop:_mtn_files_known'
 }
 
-(( $+functions[_monotone_heads] )) ||
-_monotone_heads() {
-  _arguments -s \
-    '--branch=[branch name]:branch:_monotone_branches'
+(( $+functions[_mtn_dropkey] )) ||
+_mtn_dropkey() {
+    _mtn_keys
 }
 
-(( $+functions[_monotone_log] )) ||
-_monotone_log() {
-  _arguments -s \
-    '--last=[n]' \
-		'--revision=:revision:_monotone_revisions' \
-	  '*:added file:_monotone_existing_entries'
+(( $+functions[_mtn_explicit_merge] )) ||
+_mtn_explicit_merge() {
+    _arguments -s : \
+	'1:left revision:_mtn_revisions'\
+	'2:right revision:_mtn_revisions'\
+	'3:dest branch:_mtn_branches'
 }
 
-(( $+functions[_monotone_ls] )) ||
-_monotone_ls() {
-  _arguments \
-		':op:_monotone_list_ops'
+(( $+functions[_mtn_heads] )) ||
+_mtn_heads() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'
 }
 
-(( $+functions[_monotone_list] )) ||
-_monotone_list() {
-  _arguments \
-		':op:_monotone_list_ops'
+(( $+functions[_mtn_log] )) ||
+_mtn_log() {
+    _arguments -s : \
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	'--last=[limit log output to the last number of entries]:last: ' \
+	'--next=[limit log output to the next number of entries]:next: ' \
+	'--brief[print a brief version of the normal output]'\
+	'--diffs[print diffs along with logs]'\
+	'--no-merges[exclude merges when printing logs]'\
+	'--no-files[exclude files when printing logs]'\
+	'*:restriction for log:_mtn_files_known'
 }
 
-(( $+functions[_monotone_merge] )) ||
-_monotone_merge() {
-  _arguments -s \
-    '--branch=[branch name]:branch:_monotone_branches'
+(( $+functions[_mtn_list] )) ||
+_mtn_list() {
+    compadd -- \
+	certs keys branches epochs tags vars \
+	known unknown ignored missing changed
 }
 
-(( $+functions[_monotone_propagate] )) ||
-_monotone_propagate() {
-  _monotone_branches
+(( $+functions[_mtn_ls] )) ||
+_mtn_ls() {
+    _mtn_list
 }
 
-(( $+functions[_monotone_pull] )) ||
-_monotone_pull() {
-  _arguments -s \
-		'*:branch:_monotone_branches' 
+(( $+functions[_mtn_merge] )) ||
+_mtn_merge() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	'--date=[override date/time for commit]:date: '\
+	'--author=[override author for commit]:author: '
 }
 
-(( $+functions[_monotone_push] )) ||
-_monotone_push() {
-  _arguments -s \
-		'*:branch:_monotone_branches' 
+(( $+functions[_mtn_propagate] )) ||
+_mtn_propagate() {
+    _arguments -s : \
+	{'(--message)-m+','(-m)--message='}'[set commit changelog message]:message: '\
+	'--message-file=[set filename containing commit changelog message]:file:_files'\
+	'--date=[override date/time for commit]:date: '\
+	'--author=[override author for commit]:author: '\
+	'1:source branch:_mtn_branches'\
+	'2:dest branch:_mtn_branches'\
 }
 
-(( $+functions[_monotone_rcs_import] )) ||
-_monotone_rcs_import() {
-  _arguments \
-	  '*:file:_files'
+(( $+functions[_mtn_pull] )) ||
+_mtn_pull() {
+    _arguments -s : \
+	'--set-default[use the current arguments as the future default]'\
+	'--exclude=[leave out anything described by its argument]:exclude: '
 }
 
-(( $+functions[_monotone_rename] )) ||
-_monotone_rename() {
-	_monotone_existing_entries
+(( $+functions[_mtn_push] )) ||
+_mtn_push() {
+    _mtn_sync
 }
 
-(( $+functions[_monotone_revert] )) ||
-_monotone_revert() {
-	_monotone_existing_entries
+(( $+functions[_mtn_rcs_import] )) ||
+_mtn_rcs_import() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	'*:files to import:_files'
 }
 
-(( $+functions[_monotone_serve] )) ||
-_monotone_serve() {
-  _arguments -s \
-		'*:branch:_monotone_branches' 
+(( $+functions[_mtn_rename] )) ||
+_mtn_rename() {
+    _arguments -s : \
+	{'(--execute)-e','(-e)--execute'}'[perform the associated file operation]'\
+	'*:files to rename:_mtn_files_known'
 }
 
-(( $+functions[_monotone_status] )) ||
-_monotone_status() {
-	_monotone_existing_entries
+(( $+functions[_mtn_revert] )) ||
+_mtn_revert() {
+    _arguments -s : \
+	'--depth=[limit the number of levels of directories to descend]:depth: '\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
+	'--missing[perform the operations for files missing from workspace]'\
+	'*:files to revert:_mtn_files_changed'
 }
 
-(( $+functions[_monotone_sync] )) ||
-_monotone_sync() {
-  _arguments -s \
-		'*:branch:_monotone_branches' 
+(( $+functions[_mtn_serve] )) ||
+_mtn_serve() {
+    _arguments -s : \
+	'--pid-file=[record process id of server]:file:_files'\
+	'--exclude=[leave out anything described by its argument]:exclude: '\
+	'--bind=[address:port to listen on]:bind: '\
+	'--stdio[serve netsync on stdio]'\
+	'--no-transport-auth[disable transport authentication]'\
+	'*:pattern: '
 }
 
-(( $+functions[_monotone_tag] )) ||
-_monotone_tag() {
-	_monotone_revisions
+(( $+functions[_mtn_status] )) ||
+_mtn_status() {
+    _arguments -s : \
+	'--depth=[limit the number of levels of directories to descend]:depth: '\
+	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
+	'*:file:_mtn_files_known'
 }
 
-(( $+functions[_monotone_result] )) ||
-_monotone_testresult() {
-	_monotone_revisions
+(( $+functions[_mtn_sync] )) ||
+_mtn_sync() {
+    _arguments -s : \
+	'--set-default[use the current arguments as the future default]'\
+	'--exclude=[leave out anything described by its argument]:exclude: '\
+	'--key-to-push=[push the specified key]:key: '
 }
 
-(( $+functions[_monotone_update] )) ||
-_monotone_update() {
-	_monotone_revisions
+(( $+functions[_mtn_tag] )) ||
+q_mtn_tag() {
+    _arguments -s : \
+	'1:revision to tag:_mtn_revisions'\
+	'(1)*:tagname: '
+}
+
+(( $+functions[_mtn_result] )) ||
+_mtn_testresult() {
+    _arguments -s : \
+	'1:revision:_mtn_revisions'\
+	'2:result:(pass fail true false yes no 1 0)'
+}
+
+(( $+functions[_mtn_update] )) ||
+_mtn_update() {
+    _arguments -s : \
+	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'
 }
 
 # define completion functions for files maintained by monotone.
 
-(( $+functions[_monotone_files_unmaintained] )) ||
-_monotone_files_unmaintained() {
-	compadd -- $(monotone ls unknown)
+(( $+functions[_mtn_files_unknown] )) ||
+_mtn_files_unknown() {
+    _mtn_files "unknown"
 }
 
-(( $+functions[_monotone_existing_entries] )) ||
-_monotone_existing_entries() {
-	for i in `monotone ls known --depth=0 .`; do compadd -- $i:t; done
+(( $+functions[_mtn_files_changed] )) ||
+_mtn_files_changed() {
+    _mtn_files "changed"
 }
 
-(( $+functions[_monotone_branches] )) ||
-_monotone_branches() {
-	compadd -- $(monotone ls branches)
+(( $+functions[_mtn_files_known] )) ||
+_mtn_files_known() {
+    _mtn_files "known"
 }
 
-(( $+functions[_monotone_keys] )) ||
-_monotone_keys() {
-	local id="$words[CURRENT]:gs/-//"
-	if (( $#id )); then
-		compadd -X "$(monotone complete key --verbose $id 2>/dev/null)" -n -- $(monotone complete key $id 2>/dev/null)
-	fi
+(( $+functions[_mtn_files] )) ||
+_mtn_files() {
+    # "mtn ls --depth=0 foo ." should output the names of directories
+    # containing suppressed matches
+    local prefix=${PREFIX}X
+    local rcwd="$(_mtn_rcwd)"
+    local -a list
+    list=( ${${${(f)"$(mtn ls --depth=0 $1 ${prefix:h} 2>/dev/null)"}#$rcwd}#/} )
+    compadd -f -a list 
 }
 
-(( $+functions[_monotone_revisions] )) ||
-_monotone_revisions() {
-	if ! compset -P '*\='; then
-		compadd -X "$(monotone complete revision --verbose $PREFIX 2>/dev/null)" -n -- $(monotone complete revision $PREFIX 2>/dev/null)
-	fi
+(( $+functions[_mtn_branches] )) ||
+_mtn_branches() {
+    compadd -- $(mtn ls branches 2>/dev/null)
 }
 
-(( $+functions[_monotone_list_ops] )) ||
-_monotone_list_ops() {
-	compadd -- certs keys branches epochs tags vars known unknown ignored missing
+(( $+functions[_mtn_keys] )) ||
+_mtn_keys() {
+    if [[ -n $PREFIX ]]; then
+	compadd -X "(prefix of a) key id" -n \
+	    -- $(mtn complete key $PREFIX 2>/dev/null)
+    fi
 }
 
-_monotone "$@"
+(( $+functions[_mtn_revisions] )) ||
+_mtn_revisions() {
+    if [[ -n $PREFIX ]]; then
+	compadd -X "(prefix of a) revision id" -n \
+	    -- $(mtn complete revision $PREFIX 2>/dev/null)
+    fi
+}
+
+# helper function, determines cwd relative to the root of the workspace
+
+(( $+functions[_mtn_rcwd] )) ||
+_mtn_rcwd() {
+    local current="$(pwd)"
+    local base=$current
+    while [[ "${base}" != "/" && ! -d "${base}/_MTN" ]]; do
+	base=${base:h}
+    done
+    echo ${current#$base/}
+}
+
+_mtn "$@"

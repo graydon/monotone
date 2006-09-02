@@ -1,15 +1,20 @@
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
-// this fragment is included into both vocab.hh and vocab.cc, 
+// this fragment is included into both vocab.hh and vocab.cc,
 // in order to facilitate external instantiation of most of the
 // vocabulary, minimize code duplication, speed up compilation, etc.
 
 ATOMIC_NOVERIFY(external);    // "external" string in unknown system charset
 ATOMIC_NOVERIFY(utf8);        // unknown string in UTF8 charset
 ATOMIC(ace);                  // unknown string in ACE form
+ATOMIC(symbol);               // valid basic io symbol (alphanumeric or _ chars)
 
 ATOMIC(path_component);       // piece of a path (see paths.hh)
 
@@ -42,9 +47,10 @@ ATOMIC_NOVERIFY(attr_key);
 ATOMIC_NOVERIFY(attr_value);
 
 DECORATE(revision);           // thing associated with a revision
+DECORATE(roster);             // thing associated with a roster
 DECORATE(manifest);           // thing associated with a manifest
 DECORATE(file);               // thing associated with a file
-DECORATE(key);               // thing associated with a key
+DECORATE(key);                // thing associated with a key
 DECORATE(epoch);              // thing associated with an epoch
 
 ENCODING(gzip);               // thing which is gzipped
@@ -59,6 +65,7 @@ ATOMIC_NOVERIFY(merkle);      // raw encoding of a merkle tree node
 
 EXTERN template class           hexenc<id>;
 EXTERN template class revision< hexenc<id> >;
+EXTERN template class   roster< hexenc<id> >;
 EXTERN template class manifest< hexenc<id> >;
 EXTERN template class     file< hexenc<id> >;
 EXTERN template class      key< hexenc<id> >;
@@ -73,6 +80,7 @@ EXTERN template class                   gzip<data>;
 EXTERN template class           base64< gzip<data> >;
 
 EXTERN template class revision< data >;
+EXTERN template class   roster< data >;
 EXTERN template class manifest< data >;
 EXTERN template class     file< data >;
 
@@ -102,13 +110,16 @@ EXTERN template class base64<data>;
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<id>   const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, revision< hexenc<id> > const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,   roster< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id> > const &);
 
-EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint>   const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
 
-EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,           roster<data> const &);
+
+EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data>   const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<data> > const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,                   gzip<data>     const &);

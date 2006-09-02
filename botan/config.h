@@ -17,6 +17,8 @@
 
 #if defined(_MSC_VER)
    #pragma warning(disable: 4250 4290)
+#define BOTAN_EXT_ENTROPY_SRC_WIN32
+#define BOTAN_EXT_ENTROPY_SRC_CAPI
 #endif
 
 #define BOTAN_VERSION_MAJOR 1

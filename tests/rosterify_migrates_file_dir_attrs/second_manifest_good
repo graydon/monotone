@@ -1,0 +1,13 @@
+format_version "1"
+
+dir ""
+
+ dir "testdir"
+attr "mtn:manual_merge" "true"
+
+   file "testdir/otherfile"
+content [ee9e51458f4642f48efe956962058245ee7127b1]
+
+   file "testfile"
+content [55ca6286e3e4f4fba5d0448333fa99fc5a404a73]
+   attr "mtn:execute" "yes"

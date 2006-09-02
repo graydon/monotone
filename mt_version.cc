@@ -1,11 +1,15 @@
-// copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // This is split off into its own file to minimize recompilation time; it is
 // the only .cc file that depends on the revision/full_revision header files,
-// which change constantly. 
+// which change constantly.
 
 #include "config.h"
 
@@ -21,26 +25,31 @@
 #include "package_full_revision.h"
 #include "sanity.hh"
 
+using std::cout;
+using std::endl;
+using std::ostringstream;
+using std::string;
+
 void
-get_version(std::string & out)
+get_version(string & out)
 {
   out = (F("%s (base revision: %s)")
-         % PACKAGE_STRING % package_revision_constant).str();
+         % PACKAGE_STRING % string(package_revision_constant)).str();
 }
 
 void
 print_version()
 {
-  std::string s;
+  string s;
   get_version(s);
-  std::cout << s << std::endl;
+  cout << s << endl;
 }
 
 void
-get_full_version(std::string & out)
+get_full_version(string & out)
 {
-  std::ostringstream oss;
-  std::string s;
+  ostringstream oss;
+  string s;
   get_version(s);
   oss << s << "\n";
   get_system_flavour(s);
@@ -54,14 +63,22 @@ get_full_version(std::string & out)
     % BOOST_COMPILER
     % BOOST_STDLIB
     % BOOST_LIB_VERSION
-    % package_full_revision_constant;
+    % string(package_full_revision_constant);
   out = oss.str();
 }
 
 void
 print_full_version()
 {
-  std::string s;
+  string s;
   get_full_version(s);
-  std::cout << s << std::endl;
+  cout << s << endl;
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

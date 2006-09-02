@@ -137,7 +137,7 @@ void Netxx::ServerBase::bind_to(const Address &addr, bool stream_server)
 
 	if (bind(socketfd, sa, sa_size) != 0) {
 	    std::string error("bind(2) error: ");
-	    error += strerror(Netxx::get_last_error());
+	    error += Netxx::str_error(Netxx::get_last_error());
 	    throw NetworkException(error);
 	}
 

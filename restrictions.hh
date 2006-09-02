@@ -1,10 +1,14 @@
 #ifndef __RESTRICTIONS_HH__
 #define __RESTRICTIONS_HH__
 
-// copyright (C) 2005 derek scherger <derek@echologic.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Derek Scherger <derek@echologic.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // the following commands accept file arguments and --exclude and --depth
 // options used to define a restriction on the files that will be processed:
@@ -28,9 +32,6 @@
 #include "roster.hh"
 #include "vocab.hh"
 
-using std::map;
-using std::vector;
-
 // between any two related revisions, A and B, there is a set of changes (a
 // cset) that describes the operations required to get from A to B. for example:
 //
@@ -50,70 +51,84 @@ using std::vector;
 //
 // revision A ... included ... revision X ... excluded ... revision B
 
-enum path_state { included, excluded };
+namespace restricted_path 
+{
+  enum status { included, excluded };
+}
 
 class restriction
 {
  public:
-  restriction(app_state & a) : app(a) {}
+  bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
 
-  restriction(vector<utf8> const & includes,
-              vector<utf8> const & excludes,
-              roster_t const & roster, 
-              app_state & a) :
-    app(a)
-  {
-    map_paths(includes, excludes);
-    map_nodes(roster);
-    validate();
-  }
-  
-  restriction(vector<utf8> const & includes,
-              vector<utf8> const & excludes,
-              roster_t const & roster1,
-              roster_t const & roster2,
-              app_state & a) :
-    app(a)
-  {
-    map_paths(includes, excludes);
-    map_nodes(roster1);
-    map_nodes(roster2);
-    validate();
-  }
+ protected:
+  restriction() : depth(-1) {}
+
+  restriction(std::vector<file_path> const & includes,
+              std::vector<file_path> const & excludes,
+              long depth);
+
+  path_set included_paths, excluded_paths;
+  long depth;
+};
+
+class node_restriction : public restriction
+{
+ public:
+  node_restriction() : restriction() {}
+
+  node_restriction(std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   roster_t const & roster,
+                   app_state & a);
+
+  node_restriction(std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   roster_t const & roster1,
+                   roster_t const & roster2,
+                   app_state & a);
 
   bool includes(roster_t const & roster, node_id nid) const;
 
-  bool includes(split_path const & sp) const;
-
-  bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
-
-  restriction & operator=(restriction const & other)
+  node_restriction & operator=(node_restriction const & other)
   {
     included_paths = other.included_paths;
     excluded_paths = other.excluded_paths;
+    depth = other.depth;
     known_paths = other.known_paths;
     node_map = other.node_map;
-    path_map = other.path_map;
     return *this;
   }
 
  private:
-
-  app_state & app;
-  path_set included_paths, excluded_paths, known_paths;
-
-  // we maintain maps by node_id and also by split_path, which is not
-  // particularly nice, but paths are required for checking unknown and ignored
-  // files
-  map<node_id, path_state> node_map;
-  map<split_path, path_state> path_map;
-
-  void map_paths(vector<utf8> const & includes,
-                 vector<utf8> const & excludes);
-
-  void map_nodes(roster_t const & roster);
-
-  void validate();
+  path_set known_paths;
+  std::map<node_id, restricted_path::status> node_map;
 };
+
+class path_restriction : public restriction
+{
+ public:
+  path_restriction() : restriction() {}
+
+  path_restriction(std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   app_state & a);
+
+  bool includes(split_path const & sp) const;
+
+ private:
+  std::map<split_path, restricted_path::status> path_map;
+};
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif  // header guard

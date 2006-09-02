@@ -1,10 +1,14 @@
 #ifndef __CONSTANTS_HH__
 #define __CONSTANTS_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <unistd.h>
 #include <string>
@@ -16,14 +20,11 @@ namespace constants
   // this file contains magic constants which you could, in theory, tweak.
   // probably best not to tweak them though.
 
-  // block size in bytes for "automate stdio" output
-  extern size_t const automate_stdio_size;
-
   // number of bits in an RSA key we use
-  extern size_t const keylen; 
+  extern size_t const keylen;
 
   // number of characters in a SHA1 id
-  static size_t const idlen = 40; 
+  static size_t const idlen = 40;
 
   // number of characters in an encoded epoch
   static size_t const epochlen = idlen;
@@ -33,7 +34,7 @@ namespace constants
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
-  extern time_t const cvs_window; 
+  extern time_t const cvs_window;
 
   // number of bytes in a password buffer. further bytes will be dropped.
   static size_t const maxpasswd = 0xfff;
@@ -50,6 +51,9 @@ namespace constants
 
   // number of rosters in the database roster cache
   extern size_t const db_roster_cache_sz;
+
+  // maximum number of bytes to be consumed with the pending write cache
+  extern unsigned long const db_max_pending_writes_bytes;
 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
@@ -85,9 +89,6 @@ namespace constants
   // boost regex that matches the bytes in legal_key_name_bytes
   extern std::string const regex_legal_key_name_bytes;
 
-  // all the ASCII characters (bytes) which are illegal in a (file|local)_path
-  extern char const * const illegal_path_bytes;
-
   // remaining constants are related to netsync protocol
 
   // number of bytes in the hash used in netsync
@@ -117,10 +118,9 @@ namespace constants
   // minimum size of any netcmd on the wire
   static size_t const netcmd_minsz = (1     // version
                                       + 1   // cmd code
-                                      + 1   // smallest uleb possible
-                                      + 4); // adler32
+                                      + 1); // smallest uleb possible
 
-  
+
   // largest command *payload* allowed in a netcmd
   // in practice, this sets the size of the largest compressed file
   static size_t const netcmd_payload_limit = 2 << 27;
@@ -151,6 +151,20 @@ namespace constants
 
   // netsync session key default initializer
   extern std::string const & netsync_key_initializer;
+
+  // attributes
+  extern std::string const encoding_attribute;
+  extern std::string const binary_encoding;
+  extern std::string const default_encoding;
+  extern std::string const manual_merge_attribute;
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __CONSTANTS_HH__

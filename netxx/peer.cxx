@@ -165,7 +165,7 @@ Netxx::port_type Netxx::Peer::get_local_port (void) const
     int rc;
 
     if ( (rc = getsockname(get_socketfd(), &sau.sa, sa_size_ptr))) {
-	    throw Exception(strerror(errno));
+	    throw Exception(str_error(errno));
     }
 
    switch (sau.sa.sa_family) {

@@ -1,0 +1,16 @@
+format_version "1"
+
+dir ""
+
+dir "foo"
+
+dir "foo/bar"
+
+   file "foo/bar/testfile2"
+content [85d521304e3660f05bbb458b05d0efc6e981f832]
+
+   file "foo/testfile1"
+content [14c5b672e2181377e41e6d8c5ce21457d8342667]
+
+   file "testfile0"
+content [5c39de9ca49b3aa34fa21f5778954665d947476c]

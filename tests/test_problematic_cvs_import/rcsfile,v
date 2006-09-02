@@ -1,0 +1,2029 @@
+head	1.21;
+access;
+symbols
+	lids:1.21.0.2
+	natix-2_0_0-pre6:1.18
+	natix-2_0_0:1.18
+	natix-2_0-pre4:1.13
+	natix-2_0-pre3:1.13
+	viewxmlschema:1.6.0.4
+	firstrecovery:1.5.0.6
+	TESTED_adarkar_200110160317:1.5
+	TESTED_adarkar_200110140306:1.5
+	TESTED_adarkar_200110130307:1.5
+	TESTED_adarkar_200110120319:1.5
+	TESTED_adarkar_200110110307:1.5
+	TESTED_adarkar_200110100306:1.5
+	TESTED_adarkar_200110090306:1.5
+	TESTED_adarkar_200110080307:1.5
+	TESTED_adarkar_200110070307:1.5
+	TESTED_adarkar_200110060308:1.5
+	TESTED_adarkar_200110050307:1.5
+	TESTED_adarkar_200110041131:1.5
+	TESTED_adarkar_200110031747:1.5
+	TESTED_adarkar_200108290303:1.5
+	TESTED_adarkar_200108280306:1.5
+	abusy_devel_mergepoint:1.5
+	abusy_devel:1.5.0.4
+	NATIXFS_DEMO_R1:1.5.0.2
+	TESTED_adarkar_200103190358:1.5
+	TESTED_adarkar_200103170357:1.5
+	TESTED_manray_200103141332:1.5
+	TESTED_adarkar_200103130435:1.5
+	TESTED_manray_200103130240:1.5
+	TESTED_manray_200103120238:1.5
+	TESTED_manray_200103110239:1.5
+	TESTED_manray_200103100240:1.5
+	TESTED_manray_200103090252:1.5
+	TESTED_manray_200103080246:1.5
+	TESTED_adarkar_200103070435:1.5
+	TESTED_manray_200103070240:1.5
+	TESTED_adarkar_200103060434:1.5
+	TESTED_manray_200103060240:1.5
+	TESTED_adarkar_200103050433:1.5
+	TESTED_manray_200103050239:1.5
+	TESTED_adarkar_200103040437:1.5
+	TESTED_manray_200103010240:1.5
+	TESTED_adarkar_200102280435:1.5
+	TESTED_manray_200102280239:1.5
+	TESTED_adarkar_200102270433:1.5
+	TESTED_manray_200102270238:1.5
+	TESTED_adarkar_200102260433:1.5
+	TESTED_manray_200102260240:1.5
+	TESTED_adarkar_200102250435:1.5
+	TESTED_manray:1.5
+	TESTED_manray_200102250238:1.5
+	TESTED_adarkar_200102070430:1.5
+	TESTED_adarkar_200102060430:1.5
+	TESTED_adarkar_200102050431:1.5
+	TESTED_adarkar_200102040432:1.5
+	TESTED_adarkar_200102030430:1.5
+	TESTED_adarkar_200102020432:1.5
+	TESTED_adarkar_200102010437:1.5
+	TESTED_adarkar_200101310437:1.5
+	TESTED_adarkar_200101240430:1.5
+	REVIEW:1.5
+	TESTED_adarkar_200101221147:1.5
+	TESTED_adarkar_200101192055:1.5
+	TESTED_adarkar_200101171217:1.5
+	TESTED_adarkar_200101080424:1.5
+	TESTED_adarkar:1.5
+	TESTED_adarkar_200101050424:1.5
+	before_sync:1.5
+	sync:1.5
+	start:1.1.1.1
+	aodb:1.1.1;
+locks; strict;
+comment	@// @;
+
+
+1.21
+date	2005.02.25.15.46.29;	author norman;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2005.02.19.17.52.18;	author norman;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2005.01.07.17.35.37;	author norman;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2004.09.17.11.43.47;	author msb;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2004.08.02.09.14.24;	author msb;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2004.07.29.08.46.17;	author msb;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2004.07.22.16.12.51;	author msb;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2004.04.19.20.19.56;	author norman;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2003.10.07.14.32.45;	author msb;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2003.09.24.12.15.51;	author tneumann;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2003.04.03.12.56.48;	author norman;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2003.03.13.17.51.24;	author norman;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2003.02.05.15.24.08;	author norman;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.08.20.15.16.45;	author schiele;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.08.02.10.51.45;	author norman;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.04.25.07.58.35;	author schiele;	state Exp;
+branches
+	1.6.4.1;
+next	1.5;
+
+1.5
+date	2000.06.16.15.42.48;	author westmann;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2000.06.01.12.39.57;	author cc;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2000.04.13.15.11.44;	author westmann;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	99.12.09.12.06.41;	author westmann;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	98.11.26.13.01.34;	author thorsten;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	98.11.26.13.01.34;	author thorsten;	state Exp;
+branches;
+next	;
+
+1.6.4.1
+date	2003.02.12.14.53.35;	author ah;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.21
+log
+@renamed standard iterator to ht_hashtable
+@
+text
+@/***********************************************************************
+
+  AODB-Project
+
+  Lehrstuhl fuer Praktische Informatik III
+  Universitaet Mannheim
+  Germany
+
+  Author: Sven Helmer and Till Westmann
+
+  $Id: hashtable.hh,v 1.20 2005/02/19 17:52:18 norman Exp $
+
+***********************************************************************/
+
+#ifndef HASHTABLE
+#define HASHTABLE
+
+#include "rts/infra/hashtable/hashtablebase.hh"
+
+/**
+ * The hash table uses closed hashing. The items of the buckets are stored
+ * in a buffer. The entries in the hash directory point to the first
+ * item in the bucket. Linking the elements within the buckets is done by
+ * appending a pointer to each item in the buffer which points to the next
+ * item in the bucket.
+ */
+class HashTable : public HashTableBase<ZReg, ht_iterator<ZReg> > {
+
+public:
+
+    typedef ht_iterator<ZReg> iterator;
+
+    HashTable(hash_t     aDirSize,
+	      uint32     aNoOfRegs,
+	      uint32     aResultReg,
+	      AVM::Prog* aInsertHashProg,
+	      AVM::Prog* aLookupHashProg,
+	      AVM::Prog* aLookupCmpProg,
+	      AVM::Prog* aCopyProg,
+	      AVM::Prog* aCleanUpProg,
+	      StmtCB*    aStmtCB,
+	      const size_t  aChunkSize,
+	      const unsigned long aNumberOfBlocks = 0);
+    ~HashTable();
+    
+    void initialize(ZReg* someAuxRegs);
+    ZReg* lookup(ZReg* zRegBank);
+    
+    inline void resetCurrentItem();
+    ZReg* insert(register ZReg*);
+    
+private:
+    /**
+     * the hash value for a item to be inserted
+     */
+    HashValue     theInsertHashValue;
+    
+    /**
+     * the current position in the hash directory during lookup.  the
+     * iterator will only iterate through one bucket collecting
+     * duplicate entries in the hash table.
+     */
+    CollisionList::iterator theCurrentItem;
+  
+};
+
+/**
+ * set theCurrentItem to an invalid position signalling that the
+ * next lookup must reset the iterator
+ */
+void HashTable::resetCurrentItem() {
+  LOGOBJECT;
+  theCurrentItem = theHashDir[theHashDirSize].begin();
+}
+
+#endif // HASHTABLE
+@
+
+
+1.20
+log
+@generalized HashTableBase
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.19 2005/01/07 17:35:37 norman Exp $
+d27 1
+a27 1
+class HashTable : public HashTableBase<ZReg, iterator<ZReg> > {
+d31 1
+a31 1
+    typedef iterator<ZReg> iterator;
+@
+
+
+1.19
+log
+@move fill into gracejoin, unified interface for theHashTable->initialize
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.18 2004/09/17 11:43:47 msb Exp $
+a25 3
+ *
+ * IMPORTANT: HashTable expects an opened PAL_Operator producer and
+ *            will not close producer !!
+d27 1
+a27 1
+class HashTable : public HashTableBase {
+d31 2
+a58 5
+     * the copy prog used in insert if the producer is a pipelinebreaker.
+     */
+    AVM::Prog*    theCopyProg;
+
+    /**
+@
+
+
+1.18
+log
+@strange parameter number in constructor
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.17 2004/08/02 09:14:24 msb Exp $
+a17 1
+#include "rts/algOp/iterator.hh"
+a19 1
+
+d47 1
+a47 3
+    using HashTableBase::initialize;
+    void initialize(PAL_Operator* aProducer, ZReg* someAuxRegs);
+    
+a49 3
+    void fill();
+    void clear();
+    
+a54 5
+     * the data source for the hash table
+     */
+    PAL_Operator* theProducer;
+    
+    /**
+a69 1
+
+@
+
+
+1.17
+log
+@- documentation for the hashtables
+- refactored mapmat operator
+	- do not copy into the hashtable because it is to expensive
+	- only if the producer is a pipelinebreaker
+- renamed the materializedResultProgram into afterStepProgram
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.16 2004/07/29 08:46:17 msb Exp $
+d40 1
+@
+
+
+1.16
+log
+@- refactored the MapMat Operator
+	- it now uses the HashTable and just avoids duplicates implicityl
+	- this should make the operator much cheaper
+- added a cleanup program for the operator
+- the HashTable handles Pipelinebreakers itself by using a copy program
+	- therefor the hash- and bnljoin operators don't need to do this
+- new return value for the insert function of HashTable
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.15 2004/07/22 16:12:51 msb Exp $
+d36 24
+a59 24
+  HashTable(hash_t     aDirSize,
+	    uint32     aNoOfRegs,
+            uint32     aResultReg,
+	    AVM::Prog* aInsertHashProg,
+	    AVM::Prog* aLookupHashProg,
+	    AVM::Prog* aLookupCmpProg,
+	    AVM::Prog* aCopyProg,
+	    AVM::Prog* aCleanUpProg,
+	    StmtCB*    aStmtCB,
+	    const size_t  aChunkSize,
+	    const unsigned long aNumberOfBlocks = 0);
+  ~HashTable();
+
+  using HashTableBase::initialize;
+  void initialize(PAL_Operator* aProducer, ZReg* someAuxRegs);
+
+  ZReg* lookup(ZReg* zRegBank);
+
+  void fill();
+  void clear();
+
+  inline void resetCurrentItem();
+  ZReg* insert(register ZReg*);
+
+d61 21
+a81 28
+  /**
+   * the data source for the hash table
+   */
+  PAL_Operator* theProducer;
+  /**
+   * number of entries to be stored in the buffer
+   */
+  uint32        theNoEntries;
+  /**
+   *
+   */
+  AVM::Prog*    theInsertHashProg;
+
+  /**
+   *
+   */
+  AVM::Prog*    theCopyProg;
+
+  /**
+   * the current position in the hash directory during lookup.  the
+   * iterator will only iterate through one bucket collecting
+   * duplicate entries in the hash table.
+   */
+  CollisionList::iterator theCurrentItem;
+  /**
+   * the hash value for a item to be inserted
+   */
+  HashValue     theInsertHashValue;
+d83 1
+a85 1
+
+@
+
+
+1.15
+log
+@- insert and lookup hashprogram for all operators using the semijoin hashtable
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.14 2004/04/19 20:19:56 norman Exp $
+d42 1
+d58 1
+a58 1
+  bool insert(register ZReg*);
+d75 5
+a102 58
+
+/*
+ * $Log: hashtable.hh,v $
+ * Revision 1.14  2004/04/19 20:19:56  norman
+ * moved isEqual into base class of hash tables
+ *
+ * Revision 1.13  2003/10/07 14:32:45  msb
+ * - changed interfaces of the hashtables
+ * 	- added initialize method which has to be called
+ * 	- AuxRegs are passed as parameter to the initialize method
+ * 	- deleted parameter AuxReg from Constructors
+ * - some cleanup
+ *
+ * Revision 1.12  2003/09/24 12:15:51  tneumann
+ * fixed warnings
+ *
+ * Revision 1.11  2003/04/03 12:56:48  norman
+ * the hash table explicitly assumes the producer not to be a pipeline breaker - or the inserting operator needs to handle this
+ *
+ * Revision 1.10  2003/03/13 17:51:24  norman
+ * refactoring of the hash table data structures:
+ * - seperated the data structure, memory managment, and hash table implementation
+ * - introduced abstract base class HashTableBase which contains common code
+ * - SJHashTable copies only register sets when the producer is pipeline breaker - copying
+ * needs to be done 1:1 now
+ * - SJHashTable applies duplicate elemination on insertion
+ * - all comparissons for group membership are based on the CMP-command instead of
+ * ORDER-command
+ *
+ * Revision 1.9  2003/02/05 15:24:08  norman
+ * added iterator to traverse the hashtable
+ *
+ * Revision 1.8  2002/08/20 15:16:45  schiele
+ * ISO-C++-fixes
+ *
+ * Revision 1.7  2002/08/02 10:51:45  norman
+ * extended data structures that are used by operators that are pipeline breakers with cleanup programs. The cleanup programs are used to release temporary data kept in the data structere
+ *
+ * Revision 1.6  2002/04/25 07:58:35  schiele
+ * ISO C++ fixes
+ *
+ * Revision 1.5  2000/06/16 15:42:48  westmann
+ *  - bnljoin now gets separate hash-programs for the inner and the
+ *    outer producer
+ *  - moved the method definitions of bnljoin into bnljoin.cc
+ *
+ * Revision 1.4  2000/06/01 12:39:57  cc
+ * include files
+ *
+ * Revision 1.3  2000/04/13 15:11:44  westmann
+ *  - the help-registers are now aux-registers
+ *  - the result-registers for comparison-programs are now variable (and they
+ *    have to be specified)
+ *
+ * Revision 1.2  1999/12/09 12:06:41  westmann
+ * renamed the class Iterator to PAL_Operator
+ *
+ */
+@
+
+
+1.14
+log
+@moved isEqual into base class of hash tables
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.13 2003/10/07 14:32:45 msb Exp $
+d39 1
+a39 1
+	    AVM::Prog* anInsertHashProg,
+d72 1
+a72 4
+  /**
+   * computes the hash value for the register
+   */
+  AVM::Prog*    theLookupHashProg;
+d83 1
+a83 4
+  /**
+   * the hash value for a item to be looked up
+   */
+  HashValue     theLookupHashValue;
+d100 3
+@
+
+
+1.13
+log
+@- changed interfaces of the hashtables
+	- added initialize method which has to be called
+	- AuxRegs are passed as parameter to the initialize method
+	- deleted parameter AuxReg from Constructors
+- some cleanup
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.12 2003/09/24 12:15:51 tneumann Exp $
+a59 5
+
+  inline bool isEqual(register ZReg* currentRegBank,
+		      register ZReg* itemRegBank) const;
+
+private:
+d106 7
+@
+
+
+1.12
+log
+@fixed warnings
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.11 2003/04/03 12:56:48 norman Exp $
+d47 2
+d50 1
+d55 1
+a96 3
+/*------------------------------------------------------------*/
+/* the implementations                                        */
+/*------------------------------------------------------------*/
+d111 3
+@
+
+
+1.11
+log
+@the hash table explicitly assumes the producer not to be a pipeline breaker - or the inserting operator needs to handle this
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.10 2003/03/13 17:51:24 norman Exp $
+d36 2
+a37 2
+  HashTable(hash_t     aDirSize, 
+	    uint32     aNoOfRegs, 
+d47 2
+a48 2
+  inline void initialize(PAL_Operator* aProducer, ZReg* someAuxRegs);
+  inline ZReg* lookup(ZReg* zRegBank);
+d50 1
+a50 11
+  /**
+   * fill hashtable
+   * why cannot the producer be handed in here?, Why cannot initialization be done here?
+   */
+  void fill() {
+    LOGOBJECT;
+    while(theProducer->next(theNextFreeItem)) {
+      // insert into hashtable,
+      insert(theNextFreeItem);
+    }
+  }
+a97 70
+ * initialize has to be called between construction and use of the 
+ * hashtable
+ */
+inline void HashTable::initialize(PAL_Operator* aProducer, 
+				  ZReg*         someAuxRegs) {
+  
+  theProducer = aProducer;
+  theAuxRegs = someAuxRegs;
+  clear();
+  
+  resetCurrentItem(); // prepare for lookup
+}
+
+/**
+ * return a value from the hash table with a hash value defined by
+ * zRegBank, duplicates are returned using an iterator through the
+ * collision list
+ */
+inline ZReg* HashTable::lookup(ZReg* zRegBank) {
+  LOGOBJECT;
+  
+  hash_t hv = theLookupHashValue(zRegBank);
+  if( /* check if theCurrentItem was not reset using resetCurrentItem */
+     theCurrentItem != theHashDir[theHashDirSize].begin() &&
+     /* check if next has already been called with the same set of registers */
+     isEqual( zRegBank, *theCurrentItem ) ) {
+    /* take the next item from the collision list */
+    ++theCurrentItem;
+  } else {
+    // otherwise look up new item
+    theCurrentItem = theHashDir[hv].begin();
+  }
+  while( theCurrentItem != theHashDir[hv].end() ) {
+    if( isEqual( zRegBank, *theCurrentItem ) ) {
+      return *theCurrentItem;
+    }
+    ++theCurrentItem;
+  }
+  return 0;
+}
+
+/**
+ * prepares the hashtable for reuse.  It should be compared if it is
+ * cheaper to throw all chunks away (as it is done so far) or to keep
+ * the chunks for reuse and utilize the free memory menagement of the
+ * small chunk allocator
+ */
+inline  void HashTable::clear() {
+  LOGOBJECT;
+
+  /*
+    It would be nice to call doCleanUp here. But clear is also called
+    during the first initialization where the hash table is empty.
+  */
+
+  /* initialize table and buffer */
+  for(unsigned int i = 0; i < theHashDirSize; ++i) {
+    theHashDir[i].clear();
+  }
+  theAllocator.clear();
+
+  /* prepare for insertion of the first entry */
+  createNewEntry();
+
+#ifdef DEBUG
+  theCounter = 0;
+#endif
+}
+
+/**
+d101 1
+a101 1
+inline void HashTable::resetCurrentItem() {
+a105 36
+/**
+ * insert a new zReg into the hash table, the hash table asumes that
+ * the producer inserts only ZRegs, that have been handed to the
+ * producer by the method nextFreeZRegs()
+ */
+inline bool HashTable::insert(register ZReg*) {
+  LOGOBJECT;
+  
+  // add the new item into the hash table
+  register hash_t hv = theInsertHashValue( theNextFreeItem );
+  theHashDir[hv].push_front( theNextFreeItem );
+  
+  // allocate space for the next entry
+  createNewEntry();
+    
+#ifdef DEBUG
+  ++theCounter;
+#endif
+
+  return true;
+}
+
+/**
+ * compares the hash values of two ZRegs
+ * @@returns true if the have equal hash values
+ */
+inline bool HashTable::isEqual(register ZReg* currentRegBank,
+			       register ZReg* itemRegBank) const {
+  LOGOBJECT;
+  AVM::run(theCmpProg, 
+	   theAuxRegs, 
+	   currentRegBank, 
+	   itemRegBank, theStmtCB);
+  return (theAuxRegs[theCmpReg].bo4);
+}
+
+d110 3
+@
+
+
+1.10
+log
+@refactoring of the hash table data structures:
+- seperated the data structure, memory managment, and hash table implementation
+- introduced abstract base class HashTableBase which contains common code
+- SJHashTable copies only register sets when the producer is pipeline breaker - copying
+needs to be done 1:1 now
+- SJHashTable applies duplicate elemination on insertion
+- all comparissons for group membership are based on the CMP-command instead of
+ORDER-command
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.9 2003/02/05 15:24:08 norman Exp $
+d56 3
+a58 5
+    register ZReg* currentRegBank = 0;
+    while(theProducer->next(currentRegBank = nextFreeZRegs())) {
+      // insert into hashtable
+      /* what happens, if the producer is a pipline breaker? */
+      insert(currentRegBank);
+d63 1
+a63 1
+  bool insert(register ZReg* zRegBank);
+d187 3
+a189 1
+ * insert a new zReg into the hash table
+d191 1
+a191 1
+inline bool HashTable::insert(register ZReg* zRegBank) {
+d195 1
+a195 1
+  register hash_t hv = theInsertHashValue(zRegBank);
+d226 10
+@
+
+
+1.9
+log
+@added iterator to traverse the hashtable
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.8 2002/08/20 15:16:45 schiele Exp $
+a17 1
+#ifndef  ITERATOR
+d19 2
+a20 4
+#endif
+#ifndef  HASHVALUE
+#include "rts/infra/hashtable/hashvalue.hh"
+#endif
+d32 1
+a32 1
+class HashTable {
+d36 1
+a36 15
+  /**
+   * @@params aNoOfentries - the maximum number of entries to be stored
+   *                        in the buffer
+   * @@params aDirSize     - the size of the hash directory
+   * @@params aNoOfRegs    - the size of each register stored in the hash table
+   * @@params aResultReg
+   * @@params anInsertHashProg
+   * @@params aLookupHashProg - a AVM program which computes the
+   *                           hash value for the register
+   * @@params aLookupCmpProg  - a AVM Program to compare the content
+   *                           of two RegSets
+   * @@params aStmtCB
+   */
+  HashTable(uint32     aNoOfEntries, 
+	    hash_t     aDirSize, 
+d43 6
+a48 109
+	    StmtCB*    aStmtCB)
+    : theHashDirSize(aDirSize), 
+      theProducer(0),
+      theNoRegs(aNoOfRegs), 
+      theAuxRegs(0),
+      theResultReg(aResultReg),
+      theNoEntries(aNoOfEntries), 
+      theLookupCmpProg(aLookupCmpProg),
+      theCleanUpProg(aCleanUpProg),
+      theStmtCB(aStmtCB),
+#ifdef DEBUG
+      theCounter(0),
+#endif
+      theInsertHashValue(theHashDirSize, anInsertHashProg),
+      theLookupHashValue(theHashDirSize, aLookupHashProg) {
+    LOGOBJECT;
+
+    if(theHashDirSize < 1) {
+      error_handle("HashTable::HashTable",
+		   "theHashDirSize was initialized by " << theHashDirSize,
+		   false);
+      theHashDirSize = 1;
+    }
+
+    // allocate memory for hashtable
+    theHashDir = new char*[theHashDirSize];
+
+    // allocate memory for hash items
+
+    // theNoRegs + 1 because we need space for the next-pointer and we
+    // want to stay aligned
+    theItemSize   = (theNoRegs + 1) * sizeof(ZReg);
+    theBufferSize = theItemSize * theNoEntries;
+
+    theBuffer = new char[theBufferSize];
+  }
+
+  /**
+   *
+   */
+  ~HashTable() {
+    LOGOBJECT;
+    // clean up
+    doCleanUp();
+
+    if(theHashDir) {
+      delete [] theHashDir;
+    }
+    if(theBuffer) {
+      delete [] theBuffer;
+    }
+  }
+  
+  /**
+   * initialize has to be called between construction and use of the 
+   * hashtable
+   */
+  void initialize(PAL_Operator* aProducer, 
+                  ZReg*         someAuxRegs) {
+
+    theProducer = aProducer;
+
+    theAuxRegs = someAuxRegs;
+
+    // initialize table and buffer
+    theEndOfBuffer  = theBuffer + theBufferSize;
+    clear();
+    
+    // prepare for lookup
+    theCurrentItem  = 0;
+    theCurrentEntry = 0;
+  }
+
+  /**
+   * return a value from the hash table with a hash value defined by zRegBank
+   */
+  ZReg* lookup(ZReg* zRegBank) {
+    LOGOBJECT;
+    register hash_t hv;
+
+#ifdef DEBUG
+    //    std::cerr << "lookup: ";
+    //    check(std::cerr);
+#endif
+
+    if(theCurrentItem && isEqual(zRegBank, zregs(theCurrentItem))) {
+      // if next has already been called with the same set of registers,
+      // take the next item from the collision list
+      theCurrentItem = getNextItem(theCurrentItem);
+    } else {
+      // otherwise look up new item
+      hv = theLookupHashValue(zRegBank);
+      theCurrentItem = theHashDir[hv];
+    }
+    while(theCurrentItem) {
+#ifdef DEBUG
+      if (theCurrentItem > theEndOfBuffer) {
+	error_handle("HashTable::lookup",
+		     "trying to lookup item outside hash table space", true);
+      }
+#endif
+      if(isEqual(zRegBank, zregs(theCurrentItem))) {
+	return zregs(theCurrentItem);
+      }
+      theCurrentItem = getNextItem(theCurrentItem);
+    }
+    return 0;
+  }
+
+d52 1
+d63 3
+a65 202
+
+  /**
+   * prepares the hashtable for reuse without new memory allocation
+   */
+  void clear() {
+    LOGOBJECT;
+    unsigned int i;
+
+    /*
+      It would be nice to call doCleanUp here. But clear is also called
+      during the first initialization where the hash table is empty.
+     */
+
+    // initialize table and buffer
+    for(i = 0; i < theHashDirSize; ++i) {
+      theHashDir[i] = 0;
+    }
+    theNextFreeItem = theBuffer - theItemSize;
+
+    register char* cleaner = theBuffer;
+    // std::cerr << "cleaning ... ";
+    while(cleaner < theEndOfBuffer) {
+      *cleaner = 0;
+      ++cleaner;
+    }
+    // std::cerr << "ready" << std::endl;
+
+#ifdef DEBUG
+    theCounter = 0;
+#endif
+  }
+
+  /**
+   * runs theCleanUp on each item stored in the hash table
+   */
+  void doCleanUp() {
+    LOGOBJECT;
+#ifdef DEBUG
+    // check(std::cerr);
+#endif
+    char* curElement;
+    for(unsigned int i = 0; i < theHashDirSize; ++i) {
+      curElement = theHashDir[i];
+      while(curElement) {
+	ZReg* lRegs = zregs(curElement);
+	AVM::run(theCleanUpProg, theAuxRegs, lRegs, 0, theStmtCB);
+	curElement = getNextItem(curElement);
+      }
+    }
+  }
+
+  /**
+   *
+   */
+  void resetCurrentItem() {
+    LOGOBJECT;
+    theCurrentItem = 0;
+  }
+
+  /**
+   * insert a new zReg into the hash table
+   */
+  void insert(register ZReg* zRegBank) {
+    LOGOBJECT;
+    register hash_t hv;
+
+    // advance theNextFreeItem
+    advanceFreeItem();
+
+    // calculate hash value
+    hv = theInsertHashValue(zRegBank);
+
+    // insert into collision list
+    setNextItem(theNextFreeItem, theHashDir[hv]);
+    theHashDir[hv] = theNextFreeItem;
+
+#ifdef DEBUG
+     ++theCounter;
+     // check(std::cerr);
+#endif
+  }
+
+  /**
+   * returns space from the buffer to put a new value into
+   */
+  ZReg* nextFreeZRegs() {
+    LOGOBJECT;
+    return zregs(theNextFreeItem + theItemSize);
+  }
+
+  /**
+   *
+   */
+  void check(std::ostream& os) {
+    LOGOBJECT;
+    int   realCounter = 0;
+    char* curElement;
+    for(unsigned int i = 0; i < theHashDirSize; ++i) {
+      curElement = theHashDir[i];
+      while(curElement) {
+	if(theNextFreeItem >= theEndOfBuffer) {
+	  error_handle("HashTable::advanceFreeItem",
+		       "overflow handling not yet implemented", true);
+	}
+	++realCounter;
+	curElement = getNextItem(curElement);
+      }
+    }
+#ifdef DEBUG
+    if (theCounter != realCounter) {
+    os
+      << "number of inserted elements : " << theCounter << std::endl
+      << "number of existing elements : " << realCounter << std::endl;
+    }
+#endif
+  }
+
+  /* the iterator was introduced, because the PAL_HashOuterJoin needs
+     to find all unmatched tuples in this hash table */
+  friend class iterator;
+
+  class iterator {
+  private:
+    /**
+     * the hash table
+     */
+    HashTable*  theHashTable;
+    /**
+     * the currently inpected bucket in the hash directory
+     */
+    hash_t      theCurrentBucket;
+    /**
+     * the current position in the hash directory
+     */
+    char*       theCurrentItem;
+  public:
+    /**
+     * default constructor
+     */
+    iterator() : theHashTable(0), theCurrentBucket(0), theCurrentItem(0)
+    {}
+
+    /**
+     * constructor
+     */
+    iterator(HashTable* aHashTable, hash_t aBucket, char* aItem)
+      : theHashTable(aHashTable), theCurrentBucket(aBucket), theCurrentItem(aItem)
+    { /* hopefully aItem is an element of the hash table!!! */ }
+
+    /**
+     * go to the next valid item in the hash table 
+     */
+    iterator& operator++() {
+      theCurrentItem = getNextItem(theCurrentItem);
+      while( !theCurrentItem && (theCurrentBucket < theHashTable->theHashDirSize)  ) {
+	++theCurrentBucket;	
+	theCurrentItem = theHashTable->theHashDir[theCurrentBucket];
+      }
+      
+      return *this;
+    }
+
+    ZReg* operator*() const {
+      if ( theCurrentItem ) {
+	return zregs(theCurrentItem);
+      } else {
+	error_handle("HashTable::iterator::operator*",
+		     "iterator points to invalid item - not initialized?", true);
+      }
+      return 0;
+    }
+
+    bool operator==(const iterator& i) const {
+      return ( (theCurrentBucket == i.theCurrentBucket) &&
+	       (theCurrentItem == i.theCurrentItem) );
+    }
+
+    bool operator!=(const iterator& i) const {
+      return ( (theCurrentBucket != i.theCurrentBucket) || 
+	       (theCurrentItem != i.theCurrentItem) );
+    }
+  };
+
+  /**
+   * set the cursor on the first valid item in the hash table
+   */
+  iterator begin() const {
+    hash_t lFirstBucket = 0;
+    char*  lFirstItem = theHashDir[lFirstBucket];
+
+    while( !lFirstItem && (lFirstBucket < theHashDirSize)  ) {
+      ++lFirstBucket;	
+      lFirstItem = theHashDir[lFirstBucket];
+    }
+
+    return iterator(const_cast<HashTable*>(this), lFirstBucket, lFirstItem);
+  }
+
+  iterator end() const {
+    return iterator( const_cast<HashTable*>(this), theHashDirSize,
+		     theHashDir[theHashDirSize] );
+  }
+a68 40
+  /**
+   * 
+   */
+  static char* getNextItem(char* item) {
+    LOGOBJECT;
+    return *((char**) item);
+  }
+
+  /**
+   *
+   */
+  static void setNextItem(char* item, char* nextItem) {
+    LOGOBJECT;
+    *((char**) item) = nextItem;
+  }
+
+  /**
+   *
+   */
+  void advanceFreeItem() {
+    LOGOBJECT;
+    theNextFreeItem += theItemSize;
+    if(theNextFreeItem >= theEndOfBuffer) {
+      error_handle("HashTable::advanceFreeItem",
+		   "overflow handling not yet implemented", true);
+    }
+  }
+
+  /**
+   * converts a item in the buffer back into a ZReg
+   */
+  static ZReg* zregs(char* item) {
+    LOGOBJECT;
+    return (ZReg*) (item + sizeof(ZReg));
+  }
+
+  /**
+   * compares the hash values of two ZRegs
+   * @@returns true if the have equal hash values
+   */
+d70 1
+a70 8
+		      register ZReg* itemRegBank) {
+    LOGOBJECT;
+    AVM::run(theLookupCmpProg, 
+             theAuxRegs, 
+             currentRegBank, 
+             itemRegBank, theStmtCB);
+    return (theAuxRegs[theResultReg].bo4);
+  }
+a72 9
+
+  /**
+   * the size of the hash directory
+   */
+  hash_t        theHashDirSize;
+  /**
+   * the hash directory
+   */
+  char**        theHashDir;
+a77 16
+   * the number of registers of each item to be stored in the hash table
+   */
+  unsigned int  theNoRegs;
+  /**
+   *
+   */
+  ZReg*         theAuxRegs;
+  /**
+   *
+   */
+  uint32        theResultReg;
+  /**
+   * pointer to the buffer
+   */
+  char*         theBuffer;
+  /**
+a81 17
+   * size of each item in the buffer, this is the size for one Regset +
+   * a pointer to the next item in the bucket
+   */
+  uint32        theItemSize;
+  /**
+   * the Size of the Buffer, this is theItemSize * theNoEntries
+   */
+  uint32        theBufferSize;
+  /**
+   * pointer to the end of the buffer
+   */
+  char*         theEndOfBuffer;
+  /**
+   * pointer to the next space in the buffer to insert a item into
+   */
+  char*         theNextFreeItem;
+  /**
+d90 3
+a92 1
+   * compare the content of two RegSets
+d94 1
+a94 1
+  AVM::Prog*    theLookupCmpProg;
+d96 1
+a96 1
+   * releases resources held by the RegSets stored in the hash table
+d98 1
+a98 1
+  AVM::Prog*    theCleanUpProg;
+d100 1
+a100 1
+   *
+d102 76
+a177 1
+  StmtCB*       theStmtCB;
+d179 8
+d188 13
+a200 9
+  // for next
+  /**
+   * pointer to the next item to be read from the Hash Table 
+   */
+  char*         theCurrentItem;
+  /**
+   * seems not to be used any where ?
+   */
+  int           theCurrentEntry;
+d202 1
+a202 4
+  /**
+   *
+   */
+  int           theCounter;
+a203 8
+  /**
+   * the hash value for a item to be inserted
+   */
+  HashValue     theInsertHashValue;
+  /**
+   * the hash value for a item to be looked up
+   */
+  HashValue     theLookupHashValue;
+d205 2
+d208 13
+a220 1
+};
+d226 3
+@
+
+
+1.8
+log
+@ISO-C++-fixes
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.7 2002/08/02 10:51:45 norman Exp $
+d299 85
+d541 3
+@
+
+
+1.7
+log
+@extended data structures that are used by operators that are pipeline breakers with cleanup programs. The cleanup programs are used to release temporary data kept in the data structere
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.6 2002/04/25 07:58:35 schiele Exp $
+d275 1
+a275 1
+  void check(ostream& os) {
+d456 3
+@
+
+
+1.6
+log
+@ISO C++ fixes
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.5 2000/06/16 15:42:48 westmann Exp $
+d26 6
+d40 11
+a50 1
+   *
+d59 1
+d68 1
+d103 2
+d134 1
+a134 1
+   *
+d139 6
+d155 6
+d175 1
+a175 1
+    register ZReg* currentRegBank;
+d178 1
+d189 6
+d202 1
+a202 1
+    //cerr << "cleaning ... ";
+d207 1
+a207 1
+    //cerr << "ready" << std::endl;
+d215 19
+d242 1
+a242 1
+   *
+d259 2
+a260 1
+    ++theCounter;
+d265 1
+a265 1
+   *
+d282 4
+d290 2
+a292 1
+#ifdef DEBUG
+d294 2
+a296 1
+      << "number of existing elements : " << realCounter << std::endl;
+d303 1
+a303 1
+   *
+d331 1
+a331 1
+   *
+d339 2
+a340 1
+   *
+d349 1
+a349 1
+    return (theAuxRegs[theResultReg].si4 == 0);
+d355 1
+a355 1
+   *
+d359 1
+a359 1
+   *
+d363 1
+a363 1
+   *
+d367 1
+a367 1
+   *
+d379 1
+a379 1
+   *
+d383 1
+a383 1
+   *
+d387 2
+a388 1
+   *
+d392 1
+a392 1
+   *
+d396 1
+a396 1
+   *
+d400 1
+a400 1
+   *
+d408 1
+a408 1
+   *
+d412 1
+a412 1
+   *
+d416 4
+d427 1
+a427 1
+   *
+d431 1
+a431 1
+   *
+d441 1
+a441 1
+   *
+d445 1
+a445 1
+   *
+d456 3
+@
+
+
+1.6.4.1
+log
+@
+Changes from the HEAD branch.
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.8 2002/08/20 15:16:45 schiele Exp $
+a25 6
+ * The hash table uses closed hashing. The items of the buckets are stored
+ * in a buffer. The entries in the hash directory point to the first
+ * item in the bucket. Linking the elements within the buckets is done by
+ * appending a pointer to each item in the buffer which points to the next
+ * item in the bucket.
+ *
+d34 1
+a34 11
+   * @@params aNoOfentries - the maximum number of entries to be stored
+   *                        in the buffer
+   * @@params aDirSize     - the size of the hash directory
+   * @@params aNoOfRegs    - the size of each register stored in the hash table
+   * @@params aResultReg
+   * @@params anInsertHashProg
+   * @@params aLookupHashProg - a AVM program which computes the
+   *                           hash value for the register
+   * @@params aLookupCmpProg  - a AVM Program to compare the content
+   *                           of two RegSets
+   * @@params aStmtCB
+a42 1
+	    AVM::Prog* aCleanUpProg,
+a50 1
+      theCleanUpProg(aCleanUpProg),
+a84 2
+    doCleanUp();
+
+d114 1
+a114 1
+   * return a value from the hash table with a hash value defined by zRegBank
+a118 6
+
+#ifdef DEBUG
+    //    std::cerr << "lookup: ";
+    //    check(std::cerr);
+#endif
+
+a128 6
+#ifdef DEBUG
+      if (theCurrentItem > theEndOfBuffer) {
+	error_handle("HashTable::lookup",
+		     "trying to lookup item outside hash table space", true);
+      }
+#endif
+d143 1
+a143 1
+    register ZReg* currentRegBank = 0;
+a145 1
+      /* what happens, if the producer is a pipline breaker? */
+a155 6
+
+    /*
+      It would be nice to call doCleanUp here. But clear is also called
+      during the first initialization where the hash table is empty.
+     */
+
+d163 1
+a163 1
+    // std::cerr << "cleaning ... ";
+d168 1
+a168 1
+    // std::cerr << "ready" << std::endl;
+a175 19
+   * runs theCleanUp on each item stored in the hash table
+   */
+  void doCleanUp() {
+    LOGOBJECT;
+#ifdef DEBUG
+    // check(std::cerr);
+#endif
+    char* curElement;
+    for(unsigned int i = 0; i < theHashDirSize; ++i) {
+      curElement = theHashDir[i];
+      while(curElement) {
+	ZReg* lRegs = zregs(curElement);
+	AVM::run(theCleanUpProg, theAuxRegs, lRegs, 0, theStmtCB);
+	curElement = getNextItem(curElement);
+      }
+    }
+  }
+
+  /**
+d184 1
+a184 1
+   * insert a new zReg into the hash table
+d201 1
+a201 2
+     ++theCounter;
+     // check(std::cerr);
+d206 1
+a206 1
+   * returns space from the buffer to put a new value into
+d216 1
+a216 1
+  void check(std::ostream& os) {
+a222 4
+	if(theNextFreeItem >= theEndOfBuffer) {
+	  error_handle("HashTable::advanceFreeItem",
+		       "overflow handling not yet implemented", true);
+	}
+d227 1
+a228 2
+    if (theCounter != realCounter) {
+    os
+d230 1
+a231 2
+    }
+#endif
+d238 1
+a238 1
+   * 
+d266 1
+a266 1
+   * converts a item in the buffer back into a ZReg
+d274 1
+a274 2
+   * compares the hash values of two ZRegs
+   * @@returns true if the have equal hash values
+d283 1
+a283 1
+    return (theAuxRegs[theResultReg].bo4);
+d289 1
+a289 1
+   * the size of the hash directory
+d293 1
+a293 1
+   * the hash directory
+d297 1
+a297 1
+   * the data source for the hash table
+d301 1
+a301 1
+   * the number of registers of each item to be stored in the hash table
+d313 1
+a313 1
+   * pointer to the buffer
+d317 1
+a317 1
+   * number of entries to be stored in the buffer
+d321 1
+a321 2
+   * size of each item in the buffer, this is the size for one Regset +
+   * a pointer to the next item in the bucket
+d325 1
+a325 1
+   * the Size of the Buffer, this is theItemSize * theNoEntries
+d329 1
+a329 1
+   * pointer to the end of the buffer
+d333 1
+a333 1
+   * pointer to the next space in the buffer to insert a item into
+d341 1
+a341 1
+   * computes the hash value for the register
+d345 1
+a345 1
+   * compare the content of two RegSets
+a348 4
+   * releases resources held by the RegSets stored in the hash table
+   */
+  AVM::Prog*    theCleanUpProg;
+  /**
+d356 1
+a356 1
+   * pointer to the next item to be read from the Hash Table 
+d360 1
+a360 1
+   * seems not to be used any where ?
+d370 1
+a370 1
+   * the hash value for a item to be inserted
+d374 1
+a374 1
+   * the hash value for a item to be looked up
+a384 9
+ * Revision 1.8  2002/08/20 15:16:45  schiele
+ * ISO-C++-fixes
+ *
+ * Revision 1.7  2002/08/02 10:51:45  norman
+ * extended data structures that are used by operators that are pipeline breakers with cleanup programs. The cleanup programs are used to release temporary data kept in the data structere
+ *
+ * Revision 1.6  2002/04/25 07:58:35  schiele
+ * ISO C++ fixes
+ *
+@
+
+
+1.5
+log
+@ - bnljoin now gets separate hash-programs for the inner and the
+   outer producer
+ - moved the method definitions of bnljoin into bnljoin.cc
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.4 2000/06/01 12:39:57 cc Exp $
+d168 1
+a168 1
+    //cerr << "ready" << endl;
+d229 1
+a229 1
+      << "number of inserted elements : " << theCounter << endl
+d231 1
+a231 1
+      << "number of existing elements : " << realCounter << endl;
+d385 5
+@
+
+
+1.4
+log
+@include files
+@
+text
+@d11 1
+a11 1
+  $Id: hashtable.hh,v 1.3 2000/04/13 15:11:44 westmann Exp $
+a30 85
+private:
+
+  /**
+   *
+   */
+  hash_t        theHashDirSize;
+  /**
+   *
+   */
+  char**        theHashDir;
+  /**
+   *
+   */
+  PAL_Operator* theProducer;
+  /**
+   *
+   */
+  unsigned int  theNoRegs;
+  /**
+   *
+   */
+  ZReg*         theAuxRegs;
+  /**
+   *
+   */
+  uint32        theResultReg;
+  /**
+   *
+   */
+  char*         theBuffer;
+  /**
+   *
+   */
+  uint32        theNoEntries;
+  /**
+   *
+   */
+  uint32        theItemSize;
+  /**
+   *
+   */
+  uint32        theBufferSize;
+  /**
+   *
+   */
+  char*         theEndOfBuffer;
+  /**
+   *
+   */
+  char*         theNextFreeItem;
+  /**
+   *
+   */
+  AVM::Prog*    theHashProg;
+  /**
+   *
+   */
+  AVM::Prog*    theCmpProg;
+  /**
+   *
+   */
+  StmtCB*       theStmtCB;
+
+
+  // for next
+  /**
+   *
+   */
+  char*         theCurrentItem;
+  /**
+   *
+   */
+  int           theCurrentEntry;
+#ifdef DEBUG
+  /**
+   *
+   */
+  int           theCounter;
+#endif
+  /**
+   *
+   */
+  HashValue     theHashValue;
+
+
+d40 3
+a42 2
+	    AVM::Prog* aHashProg,
+	    AVM::Prog* aCmpProg,
+d50 1
+a50 1
+      theCmpProg(aCmpProg),
+d55 2
+a56 1
+      theHashValue(theHashDirSize, aHashProg) {
+d125 1
+a125 1
+      hv = theHashValue(zRegBank);
+d194 1
+a194 1
+    hv = theHashValue(zRegBank);
+d279 4
+a282 1
+    AVM::run(theCmpProg, theAuxRegs, currentRegBank, itemRegBank, theStmtCB);
+d286 93
+d385 3
+@
+
+
+1.3
+log
+@ - the help-registers are now aux-registers
+ - the result-registers for comparison-programs are now variable (and they
+   have to be specified)
+@
+text
+@d5 4
+a8 4
+  Lehrstuhl fuer Praktische Informatik III 
+  Universitaet Mannheim 
+  Germany 
+ 
+d11 1
+a11 1
+  $Id: hashtable.hh,v 1.2 1999/12/09 12:06:41 westmann Exp $
+d22 1
+a22 1
+#include "hashvalue.hh"
+d30 1
+a30 1
+  
+d32 1
+a32 1
+  
+d117 1
+a117 1
+  
+d141 1
+a141 1
+    
+d148 1
+a148 1
+    
+d151 1
+a151 1
+    
+d153 2
+a154 2
+    
+    // theNoRegs + 1 because we need space for the next-pointer and we 
+d158 1
+a158 1
+    
+d161 1
+a161 1
+  
+d216 1
+a216 1
+    } 
+d219 2
+a220 2
+  
+  
+d232 1
+a232 1
+  
+d244 1
+a244 1
+    
+d252 1
+a252 1
+    
+d257 1
+a257 1
+  
+d265 1
+a265 1
+  
+d272 1
+a272 1
+    
+d275 1
+a275 1
+    
+d278 1
+a278 1
+    
+d282 1
+a282 1
+    
+d287 1
+a287 1
+  
+d295 1
+a295 1
+  
+d310 1
+a310 1
+    os 
+d316 2
+a317 2
+  
+  
+d319 1
+a319 1
+  
+d327 1
+a327 1
+  
+d335 1
+a335 1
+  
+d343 1
+a343 1
+      error_handle("HashTable::advanceFreeItem", 
+d347 1
+a347 1
+  
+d355 1
+a355 1
+  
+d359 1
+a359 1
+  inline bool isEqual(register ZReg* currentRegBank, 
+d365 1
+a365 1
+  
+d372 5
+@
+
+
+1.2
+log
+@renamed the class Iterator to PAL_Operator
+@
+text
+@d11 1
+a11 1
+  $Id$
+d52 5
+a56 1
+  ZReg*         theHelpRegs;
+d64 1
+a64 1
+  unsigned int  theNoEntries;
+d68 1
+a68 1
+  unsigned int  theItemSize;
+d72 1
+a72 1
+  unsigned int  theBufferSize;
+d121 7
+a127 8
+  HashTable(unsigned int  aNoOfEntries, 
+	    unsigned int  aDirSize, 
+	    PAL_Operator* aProducer, 
+	    unsigned int  aNoOfRegs, 
+	    ZReg*         someHelpRegs,
+	    AVM::Prog*    aHashProg,
+	    AVM::Prog*    aCmpProg,
+	    StmtCB*       aStmtCB)
+d129 1
+a129 1
+      theProducer(aProducer),
+d131 2
+a132 1
+      theHelpRegs(someHelpRegs),
+a159 8
+    
+    // initialize table and buffer
+    theEndOfBuffer  = theBuffer + theBufferSize;
+    clear();
+    
+    // prepare for lookup
+    theCurrentItem  = 0;
+    theCurrentEntry = 0;
+d165 1
+a165 1
+  virtual ~HashTable() {
+d177 20
+d199 1
+a199 1
+  virtual ZReg* lookup(ZReg* zRegBank) {
+d224 1
+a224 1
+  virtual void fill() {
+d236 1
+a236 1
+  virtual void clear() {
+d269 1
+a269 1
+  virtual void insert(register ZReg* zRegBank) {
+d362 2
+a363 2
+    AVM::run(theCmpProg, theHelpRegs, currentRegBank, itemRegBank, theStmtCB);
+    return (theHelpRegs[0].si4 == 0);
+d371 4
+a374 1
+ * $Log$
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 14
+a17 3
+// IMPORTANT: HashTable expects an opened Iterator producer and
+//            will not close producer !!
+
+d25 4
+d33 56
+a88 14
+  hash_t       theHashDirSize;
+  char**       theHashDir;
+  Iterator*    theIter;
+  unsigned int theNoRegs;
+  ZReg*        theHelpRegs;
+  char*        theBuffer;
+  unsigned int theNoEntries;
+  unsigned int theItemSize;
+  unsigned int theBufferSize;
+  char*        theEndOfBuffer;
+  char*        theNextFreeItem;
+  AVM::Prog*   theHashProg;
+  AVM::Prog*   theCmpProg;
+  StmtCB*      theStmtCB;
+d92 8
+a99 2
+  char*        theCurrentItem;
+  int          theCurrentEntry;
+d101 4
+a104 1
+  int          theCounter;
+d106 4
+a109 1
+  HashValue    theHashValue;
+d114 11
+a124 8
+  HashTable(unsigned int aNoOfEntries, 
+	    unsigned int aDirSize, 
+	    Iterator*    aProducer, 
+	    unsigned int aNoOfRegs, 
+	    ZReg*        someHelpRegs,
+	    AVM::Prog*   aHashProg,
+	    AVM::Prog*   aCmpProg,
+	    StmtCB*      aStmtCB)
+d126 1
+a126 1
+      theIter(aProducer),
+d166 3
+d180 3
+d205 3
+a207 1
+  /// fill hashtable
+d211 1
+a211 1
+    while(theIter->next(currentRegBank = nextFreeZRegs())) {
+d217 3
+a219 1
+  /// prepares the hashtable for reuse without new memory allocation
+d242 3
+d250 3
+d272 3
+d280 3
+d304 3
+d312 3
+d320 3
+d332 3
+d340 3
+d353 4
+@
+
+
+1.1.1.1
+log
+@initial
+@
+text
+@@

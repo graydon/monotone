@@ -1,12 +1,14 @@
 #ifndef __FILE_IO_H__
 #define __FILE_IO_H__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
-
-#include "boost/format.hpp"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "vocab.hh"
 #include "paths.hh"
@@ -18,8 +20,6 @@
 // this code mostly deals in any_path's, because these operations are too low
 // level for us to say whether applying them in any given case is valid or
 // not.
-
-struct lua_hooks;
 
 // use I()
 void assert_path_is_nonexistent(any_path const & path);
@@ -43,11 +43,9 @@ bool directory_exists(any_path const & path);
 // returns true if there is a file at 'path'
 bool file_exists(any_path const & path);
 
-bool ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua);
 
 // returns true if the string content is binary according to monotone heuristic
 bool guess_binary(std::string const & s);
-void set_char_is_binary(char c, bool is_binary);
 
 void mkdir_p(any_path const & path);
 void make_dir_for(any_path const & p);
@@ -68,9 +66,6 @@ void move_path(any_path const & old_path,
                any_path const & new_path);
 
 void read_data(any_path const & path, data & data);
-void read_localized_data(file_path const & path, 
-                         data & dat, 
-                         lua_hooks & lua);
 
 void read_directory(any_path const & path,
                     std::vector<utf8> & files,
@@ -86,9 +81,6 @@ void read_data_for_command_line(utf8 const & path, data & dat);
 // workspace.
 void write_data(file_path const & path, data const & data);
 void write_data(bookkeeping_path const & path, data const & data);
-void write_localized_data(file_path const & path, 
-                          data const & dat, 
-                          lua_hooks & lua);
 
 // Version that takes a system_path. To work with the "somewhat atomic"
 // goal, it also takes as an argument the place to put the temp file. Whoever
@@ -114,5 +106,13 @@ void walk_tree(file_path const & path,
                bool require_existing_path = true);
 
 
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __FILE_IO_H__

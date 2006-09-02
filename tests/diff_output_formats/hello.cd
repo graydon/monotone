@@ -1,0 +1,14 @@
+*** hello	80ad86578e12a12c838cd4ff7ca226aa6bcc44e9
+--- hello	94ebfe438b30bf18631c1846b2891b818f46aa23
+***************
+*** 9,11 ****
+--- 9,17 ----
+  {
+          say_hello();
+  }
++ 
++ void say_goodbye()
++ {
++         printf("goodbye\n");
++ }
++ 

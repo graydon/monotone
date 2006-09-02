@@ -133,7 +133,6 @@ BOTAN_SOURCES =                                                                 
         botan/modules.cpp botan/mp_numth.cpp \
         botan/mp_sqr.cpp botan/powm_fw.cpp \
         botan/powm_mnt.cpp botan/mp_asm.cpp \
-        \
         botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h  \
         botan/lookup.h botan/randpool.h botan/version.h \
         botan/algolist.h botan/buf_es.h botan/der_enc.h         \

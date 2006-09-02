@@ -19,7 +19,7 @@ void key_to_string(unsigned long key,
                    std::string & str, 
                    std::string const & def)
 {
-  while (table->val != NULL)
+  while (table->val != 0)
     {
       if (table->key == key) {
         str = std::string(table->val);
@@ -64,7 +64,10 @@ static table_entry processor_types[] = {
 #ifdef PROCESSOR_SHx_SH3DSP
   { PROCESSOR_SHx_SH3DSP, "sh3dsp" },
 #endif
-  { 0, NULL }
+#ifdef PROCESSOR_AMD_X8664
+  { PROCESSOR_AMD_X8664, "amd64" },
+#endif
+  { 0, 0 }
 };
 
 
@@ -93,7 +96,10 @@ static table_entry processors[] = {
 #ifdef PROCESSOR_ARCHITECTURE_ARM
   { PROCESSOR_ARCHITECTURE_ARM, "arm" },
 #endif
-  { 0, NULL }
+#ifdef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
+  { PROCESSOR_ARCHITECTURE_IA32_ON_WIN64, "wow64" },
+#endif
+  { 0, 0 }
 };
 
 
@@ -105,12 +111,12 @@ static table_entry families[] = {
   { VER_PLATFORM_WIN32_WINDOWS, "95/98/SE/ME" },
 #endif
 #ifdef VER_PLATFORM_WIN32_NT
-  { VER_PLATFORM_WIN32_NT, "NT/2000/XP" },
+  { VER_PLATFORM_WIN32_NT, "NT/2000/XP/2003" },
 #endif
 #ifdef VER_PLATFORM_WIN32_CE
   { VER_PLATFORM_WIN32_CE, "CE" },
 #endif
-  { 0, NULL }
+  { 0, 0 }
 };
 
 void get_system_flavour(std::string & ident)
@@ -153,10 +159,11 @@ void get_system_flavour(std::string & ident)
                    % si.wProcessorRevision).str();
     }
 
-  ident = (F("Windows %s (%d.%d, build %d) on %s")
+  ident = (F("Windows %s (%d.%d, build %d, %s) on %s")
            % family 
            % vi.dwMajorVersion
            % vi.dwMinorVersion
            % vi.dwBuildNumber
+           % (vi.szCSDVersion[0] == '\0' ? "none" : vi.szCSDVersion)
            % processor).str();
 }

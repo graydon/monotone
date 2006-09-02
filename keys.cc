@@ -1,3 +1,12 @@
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
 #include <iostream>
 #include <string>
 #include <map>
@@ -13,45 +22,59 @@
 
 #include "constants.hh"
 #include "keys.hh"
-#include "lua.hh"
+#include "lua_hooks.hh"
 #include "netio.hh"
 #include "platform.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "cert.hh"
+#include "app_state.hh"
+#include "charset.hh"
 
-// copyright (C) 2002, 2003, 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+using std::cout;
+using std::endl;
+using std::make_pair;
+using std::map;
+using std::string;
+
+using boost::shared_ptr;
+using boost::shared_dynamic_cast;
+
+using Botan::byte;
+using Botan::get_cipher;
+using Botan::PKCS8_PrivateKey;
+using Botan::PK_Decryptor;
+using Botan::PK_Encryptor;
+using Botan::PK_Signer;
+using Botan::PK_Verifier;
+using Botan::Pipe;
+using Botan::RSA_PrivateKey;
+using Botan::RSA_PublicKey;
+using Botan::SecureVector;
+using Botan::X509_PublicKey;
 
 // there will probably forever be bugs in this file. it's very
 // hard to get right, portably and securely. sorry about that.
 
-using namespace Botan;
-using namespace std;
-
-using boost::shared_ptr;
-using boost::shared_dynamic_cast;
-using Botan::byte;
-
-static void 
-do_arc4(SecureVector<byte> & sym_key,
-        SecureVector<byte> & payload)
+static void
+do_arc4(SecureVector<Botan::byte> & sym_key,
+        SecureVector<Botan::byte> & payload)
 {
-  L(FL("running arc4 process on %d bytes of data\n") % payload.size());
-  Pipe enc(get_cipher("ARC4", sym_key, ENCRYPTION));
+  L(FL("running arc4 process on %d bytes of data") % payload.size());
+  Pipe enc(get_cipher("ARC4", sym_key, Botan::ENCRYPTION));
   enc.process_msg(payload);
   payload = enc.read_all();
 }
 
 // 'force_from_user' means that we don't use the passphrase cache, and we
 // don't use the get_passphrase hook.
-static void 
+static void
 get_passphrase(lua_hooks & lua,
                rsa_keypair_id const & keyid,
-               string & phrase,
+               utf8 & phrase,
                bool confirm_phrase = false,
                bool force_from_user = false,
                string prompt_beginning = "enter passphrase")
@@ -62,22 +85,24 @@ get_passphrase(lua_hooks & lua,
   // you're making a half-dozen certs during a commit or merge or
   // something.
   bool persist_phrase = lua.hook_persist_phrase_ok();
-  static std::map<rsa_keypair_id, string> phrases;
-  
+  static map<rsa_keypair_id, utf8> phrases;
+
   if (!force_from_user && phrases.find(keyid) != phrases.end())
     {
       phrase = phrases[keyid];
       return;
     }
 
-  if (!force_from_user && lua.hook_get_passphrase(keyid, phrase))
+  string lua_phrase;
+  if (!force_from_user && lua.hook_get_passphrase(keyid, lua_phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
-      N(phrase != "",
+      phrase = utf8(lua_phrase);
+      N(phrase != utf8(""),
         F("got empty passphrase from get_passphrase() hook"));
     }
   else
-    { 
+    {
       char pass1[constants::maxpasswd];
       char pass2[constants::maxpasswd];
       for (int i = 0; i < 3; ++i)
@@ -102,15 +127,15 @@ get_passphrase(lua_hooks & lua,
               cout << endl;
               if (strlen(pass1) == 0 || strlen(pass2) == 0)
                 {
-                  P(F("empty passphrases not allowed, try again\n"));
-                  N(i < 2, F("too many failed passphrases\n"));
+                  P(F("empty passphrases not allowed, try again"));
+                  N(i < 2, F("too many failed passphrases"));
                 }
               else if (strcmp(pass1, pass2) == 0)
                 break;
               else
                 {
-                  P(F("passphrases do not match, try again\n"));
-                  N(i < 2, F("too many failed passphrases\n"));
+                  P(F("passphrases do not match, try again"));
+                  N(i < 2, F("too many failed passphrases"));
                 }
             }
           else
@@ -118,17 +143,18 @@ get_passphrase(lua_hooks & lua,
         }
       N(strlen(pass1) != 0, F("no passphrase given"));
 
-      try 
+      try
         {
-          phrase = pass1;
+          external ext_phrase(pass1);
+          system_to_utf8(ext_phrase, phrase);
 
           // permit security relaxation. maybe.
           if (persist_phrase)
             {
               phrases.erase(keyid);
-              safe_insert(phrases, make_pair(keyid, string(pass1)));
+              safe_insert(phrases, make_pair(keyid, phrase));
             }
-        } 
+        }
       catch (...)
         {
           memset(pass1, 0, constants::maxpasswd);
@@ -138,41 +164,43 @@ get_passphrase(lua_hooks & lua,
       memset(pass1, 0, constants::maxpasswd);
       memset(pass2, 0, constants::maxpasswd);
     }
-}  
+}
 
 
-void 
+void
 generate_key_pair(lua_hooks & lua,              // to hook for phrase
                   rsa_keypair_id const & id,    // to prompting user for phrase
-                  keypair & kp_out,
-                  string const unit_test_passphrase)
+                  keypair & kp_out)
 {
-  
-  string phrase;
-  SecureVector<byte> pubkey, privkey;
+  utf8 phrase;
+  get_passphrase(lua, id, phrase, true, true);
+  generate_key_pair(kp_out, phrase);
+}
+
+
+void
+generate_key_pair(keypair & kp_out,
+                  utf8 const phrase)
+{
+  SecureVector<Botan::byte> pubkey, privkey;
   rsa_pub_key raw_pub_key;
   rsa_priv_key raw_priv_key;
-  
+
   // generate private key (and encrypt it)
   RSA_PrivateKey priv(constants::keylen);
 
-  if (unit_test_passphrase.empty())
-    get_passphrase(lua, id, phrase, true, true);
-  else
-    phrase = unit_test_passphrase;
-
   Pipe p;
   p.start_msg();
-  PKCS8::encrypt_key(priv, p, phrase, 
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  Botan::PKCS8::encrypt_key(priv, p, phrase(),
+                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   raw_priv_key = rsa_priv_key(p.read_all_as_string());
-  
+
   // generate public key
   Pipe p2;
   p2.start_msg();
-  X509::encode(priv, p2, RAW_BER);
+  Botan::X509::encode(priv, p2, Botan::RAW_BER);
   raw_pub_key = rsa_pub_key(p2.read_all_as_string());
-  
+
   // if all that worked, we can return our results to caller
   encode_base64(raw_priv_key, kp_out.priv);
   encode_base64(raw_pub_key, kp_out.pub);
@@ -190,22 +218,22 @@ get_private_key(lua_hooks & lua,
                 bool force_from_user = false)
 {
   rsa_priv_key decoded_key;
-  string phrase;
+  utf8 phrase;
   bool force = force_from_user;
 
-  L(FL("base64-decoding %d-byte private key\n") % priv().size());
+  L(FL("base64-decoding %d-byte private key") % priv().size());
   decode_base64(priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
       get_passphrase(lua, id, phrase, false, force);
-      L(FL("have %d-byte encrypted private key\n") % decoded_key().size());
+      L(FL("have %d-byte encrypted private key") % decoded_key().size());
 
       shared_ptr<PKCS8_PrivateKey> pkcs8_key;
-      try 
+      try
         {
           Pipe p;
           p.process_msg(decoded_key());
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p, phrase));
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
         }
       catch (...)
         {
@@ -236,32 +264,32 @@ migrate_private_key(app_state & app,
                     keypair & new_kp)
 {
   arc4<rsa_priv_key> decoded_key;
-  SecureVector<byte> decrypted_key;
-  string phrase;
+  SecureVector<Botan::byte> decrypted_key;
+  utf8 phrase;
 
   bool force = false;
 
   // need to decrypt the old key
   shared_ptr<RSA_PrivateKey> priv_key;
-  L(FL("base64-decoding %d-byte old private key\n") % old_priv().size());
+  L(FL("base64-decoding %d-byte old private key") % old_priv().size());
   decode_base64(old_priv, decoded_key);
   for (int i = 0; i < 3; ++i)
     {
-      decrypted_key.set(reinterpret_cast<byte const *>(decoded_key().data()), 
+      decrypted_key.set(reinterpret_cast<Botan::byte const *>(decoded_key().data()),
                            decoded_key().size());
       get_passphrase(app.lua, id, phrase, false, force);
-      SecureVector<byte> sym_key;
-      sym_key.set(reinterpret_cast<byte const *>(phrase.data()), phrase.size());
+      SecureVector<Botan::byte> sym_key;
+      sym_key.set(reinterpret_cast<Botan::byte const *>(phrase().data()), phrase().size());
       do_arc4(sym_key, decrypted_key);
 
-      L(FL("building signer from %d-byte decrypted private key\n") % decrypted_key.size());
+      L(FL("building signer from %d-byte decrypted private key") % decrypted_key.size());
 
       shared_ptr<PKCS8_PrivateKey> pkcs8_key;
-      try 
+      try
         {
           Pipe p;
           p.process_msg(decrypted_key);
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(PKCS8::load_key(p, "", false));
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, "", false));
         }
       catch (...)
         {
@@ -283,15 +311,15 @@ migrate_private_key(app_state & app,
   // now we can write out the new key
   Pipe p;
   p.start_msg();
-  PKCS8::encrypt_key(*priv_key, p, phrase, 
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  Botan::PKCS8::encrypt_key(*priv_key, p, phrase(),
+                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   rsa_priv_key raw_priv = rsa_priv_key(p.read_all_as_string());
   encode_base64(raw_priv, new_kp.priv);
 
   // also the public portion
   Pipe p2;
   p2.start_msg();
-  X509::encode(*priv_key, p2, RAW_BER);
+  Botan::X509::encode(*priv_key, p2, Botan::RAW_BER);
   rsa_pub_key raw_pub = rsa_pub_key(p2.read_all_as_string());
   encode_base64(raw_pub, new_kp.pub);
 }
@@ -303,26 +331,26 @@ change_key_passphrase(lua_hooks & lua,
 {
   shared_ptr<RSA_PrivateKey> priv = get_private_key(lua, id, encoded_key, true);
 
-  string new_phrase;
+  utf8 new_phrase;
   get_passphrase(lua, id, new_phrase, true, true, "enter new passphrase");
 
   Pipe p;
   p.start_msg();
-  PKCS8::encrypt_key(*priv, p, new_phrase, 
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", RAW_BER);
+  Botan::PKCS8::encrypt_key(*priv, p, new_phrase(),
+                            "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   rsa_priv_key decoded_key = rsa_priv_key(p.read_all_as_string());
 
   encode_base64(decoded_key, encoded_key);
 }
 
-void 
+void
 make_signature(app_state & app,           // to hook for phrase
                rsa_keypair_id const & id, // to prompting user for phrase
                base64< rsa_priv_key > const & priv,
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
-  SecureVector<byte> sig;
+  SecureVector<Botan::byte> sig;
   string sig_string;
 
   // we permit the user to relax security here, by caching a decrypted key
@@ -341,7 +369,7 @@ make_signature(app_state & app,           // to hook for phrase
     {
       priv_key = get_private_key(app.lua, id, priv);
       signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
-      
+
       /* XXX This is ugly. We need to keep the key around as long
        * as the signer is around, but the shared_ptr for the key will go
        * away after we leave this scope. Hence we store a pair of
@@ -350,16 +378,16 @@ make_signature(app_state & app,           // to hook for phrase
         app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
     }
 
-  sig = signer->sign_message(reinterpret_cast<byte const *>(tosign.data()), tosign.size());
+  sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
   sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
-  
-  L(FL("produced %d-byte signature\n") % sig_string.size());
+
+  L(FL("produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
 
-bool 
+bool
 check_signature(app_state &app,
-                rsa_keypair_id const & id, 
+                rsa_keypair_id const & id,
                 base64<rsa_pub_key> const & pub_encoded,
                 string const & alleged_text,
                 base64<rsa_sha1_signature> const & signature)
@@ -370,7 +398,7 @@ check_signature(app_state &app,
 
   shared_ptr<PK_Verifier> verifier;
   shared_ptr<RSA_PublicKey> pub_key;
-  if (persist_phrase 
+  if (persist_phrase
       && app.verifiers.find(id) != app.verifiers.end())
     verifier = app.verifiers[id].first;
 
@@ -378,20 +406,20 @@ check_signature(app_state &app,
     {
       rsa_pub_key pub;
       decode_base64(pub_encoded, pub);
-      SecureVector<byte> pub_block;
-      pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
+      SecureVector<Botan::byte> pub_block;
+      pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
 
-      L(FL("building verifier for %d-byte pub key\n") % pub_block.size());
+      L(FL("building verifier for %d-byte pub key") % pub_block.size());
       shared_ptr<X509_PublicKey> x509_key =
-          shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
+          shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
       pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
       if (!pub_key)
           throw informative_failure("Failed to get RSA verifying key");
 
       verifier = shared_ptr<PK_Verifier>(get_pk_verifier(*pub_key, "EMSA3(SHA-1)"));
 
-      /* XXX This is ugly. We need to keep the key around 
-       * as long as the verifier is around, but the shared_ptr will go 
+      /* XXX This is ugly. We need to keep the key around
+       * as long as the verifier is around, but the shared_ptr will go
        * away after we leave this scope. Hence we store a pair of
        * <verifier,key> so they both exist. */
       if (persist_phrase)
@@ -403,12 +431,12 @@ check_signature(app_state &app,
   decode_base64(signature, sig_decoded);
 
   // check the text+sig against the key
-  L(FL("checking %d-byte (%d decoded) signature\n") % 
+  L(FL("checking %d-byte (%d decoded) signature") %
     signature().size() % sig_decoded().size());
 
   bool valid_sig = verifier->verify_message(
-          reinterpret_cast<byte const*>(alleged_text.data()), alleged_text.size(),
-          reinterpret_cast<byte const*>(sig_decoded().data()), sig_decoded().size());
+          reinterpret_cast<Botan::byte const*>(alleged_text.data()), alleged_text.size(),
+          reinterpret_cast<Botan::byte const*>(sig_decoded().data()), sig_decoded().size());
 
   return valid_sig;
 }
@@ -416,15 +444,15 @@ check_signature(app_state &app,
 void encrypt_rsa(lua_hooks & lua,
                  rsa_keypair_id const & id,
                  base64<rsa_pub_key> & pub_encoded,
-                 std::string const & plaintext,
+                 string const & plaintext,
                  rsa_oaep_sha_data & ciphertext)
 {
   rsa_pub_key pub;
   decode_base64(pub_encoded, pub);
-  SecureVector<byte> pub_block;
-  pub_block.set(reinterpret_cast<byte const *>(pub().data()), pub().size());
+  SecureVector<Botan::byte> pub_block;
+  pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
 
-  shared_ptr<X509_PublicKey> x509_key = shared_ptr<X509_PublicKey>(X509::load_key(pub_block));
+  shared_ptr<X509_PublicKey> x509_key = shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
   shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
   if (!pub_key)
     throw informative_failure("Failed to get RSA encrypting key");
@@ -432,9 +460,9 @@ void encrypt_rsa(lua_hooks & lua,
   shared_ptr<PK_Encryptor> encryptor;
   encryptor = shared_ptr<PK_Encryptor>(get_pk_encryptor(*pub_key, "EME1(SHA-1)"));
 
-  SecureVector<byte> ct;
+  SecureVector<Botan::byte> ct;
   ct = encryptor->encrypt(
-          reinterpret_cast<byte const *>(plaintext.data()), plaintext.size());
+          reinterpret_cast<Botan::byte const *>(plaintext.data()), plaintext.size());
   ciphertext = rsa_oaep_sha_data(string(reinterpret_cast<char const *>(ct.begin()), ct.size()));
 }
 
@@ -442,33 +470,33 @@ void decrypt_rsa(lua_hooks & lua,
                  rsa_keypair_id const & id,
                  base64< rsa_priv_key > const & priv,
                  rsa_oaep_sha_data const & ciphertext,
-                 std::string & plaintext)
+                 string & plaintext)
 {
   shared_ptr<RSA_PrivateKey> priv_key = get_private_key(lua, id, priv);
 
   shared_ptr<PK_Decryptor> decryptor;
   decryptor = shared_ptr<PK_Decryptor>(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
 
-  SecureVector<byte> plain;
+  SecureVector<Botan::byte> plain;
   plain = decryptor->decrypt(
-        reinterpret_cast<byte const *>(ciphertext().data()), ciphertext().size());
+        reinterpret_cast<Botan::byte const *>(ciphertext().data()), ciphertext().size());
   plaintext = string(reinterpret_cast<char const*>(plain.begin()), plain.size());
 }
 
-void 
-read_pubkey(string const & in, 
+void
+read_pubkey(string const & in,
             rsa_keypair_id & id,
             base64<rsa_pub_key> & pub)
 {
   string tmp_id, tmp_key;
   size_t pos = 0;
   extract_variable_length_string(in, tmp_id, pos, "pubkey id");
-  extract_variable_length_string(in, tmp_key, pos, "pubkey value"); 
+  extract_variable_length_string(in, tmp_key, pos, "pubkey value");
   id = tmp_id;
   encode_base64(rsa_pub_key(tmp_key), pub);
 }
 
-void 
+void
 write_pubkey(rsa_keypair_id const & id,
              base64<rsa_pub_key> const & pub,
              string & out)
@@ -480,27 +508,27 @@ write_pubkey(rsa_keypair_id const & id,
 }
 
 
-void 
-key_hash_code(rsa_keypair_id const & id,
+void
+key_hash_code(rsa_keypair_id const & ident,
               base64<rsa_pub_key> const & pub,
               hexenc<id> & out)
 {
-  data tdat(id() + ":" + remove_ws(pub()));
-  calculate_ident(tdat, out);  
+  data tdat(ident() + ":" + remove_ws(pub()));
+  calculate_ident(tdat, out);
 }
 
-void 
-key_hash_code(rsa_keypair_id const & id,
+void
+key_hash_code(rsa_keypair_id const & ident,
               base64< rsa_priv_key > const & priv,
               hexenc<id> & out)
 {
-  data tdat(id() + ":" + remove_ws(priv()));
+  data tdat(ident() + ":" + remove_ws(priv()));
   calculate_ident(tdat, out);
 }
 
 // helper to compare if two keys have the same hash
 // (ie are the same key)
-bool 
+bool
 keys_match(rsa_keypair_id const & id1,
            base64<rsa_pub_key> const & key1,
            rsa_keypair_id const & id2,
@@ -512,7 +540,7 @@ keys_match(rsa_keypair_id const & id1,
   return hash1 == hash2;
 }
 
-bool 
+bool
 keys_match(rsa_keypair_id const & id1,
            base64< rsa_priv_key > const & key1,
            rsa_keypair_id const & id2,
@@ -553,13 +581,13 @@ arc4_test()
   string pt("new fascist tidiness regime in place");
   string phr("still spring water");
 
-  SecureVector<byte> phrase(reinterpret_cast<byte const*>(phr.data()),
+  SecureVector<Botan::byte> phrase(reinterpret_cast<Botan::byte const*>(phr.data()),
     phr.size());
 
-  SecureVector<byte> orig(reinterpret_cast<byte const*>(pt.data()),
+  SecureVector<Botan::byte> orig(reinterpret_cast<Botan::byte const*>(pt.data()),
     pt.size());
 
-  SecureVector<byte> data(orig);
+  SecureVector<Botan::byte> data(orig);
 
   BOOST_CHECKPOINT("encrypting data");
   do_arc4(phrase, data);
@@ -573,7 +601,7 @@ arc4_test()
 
 }
 
-static void 
+static void
 signature_round_trip_test()
 {
   app_state app;
@@ -581,24 +609,25 @@ signature_round_trip_test()
   app.lua.add_test_hooks();
 
   BOOST_CHECKPOINT("generating key pairs");
-  rsa_keypair_id key("bob123@test.com");
   keypair kp;
-  generate_key_pair(app.lua, key, kp, "bob123@test.com");
+  utf8 passphrase("bob123@test.com");
+  generate_key_pair(kp, passphrase);
 
   BOOST_CHECKPOINT("signing plaintext");
+  rsa_keypair_id key("bob123@test.com");
   string plaintext("test string to sign");
   base64<rsa_sha1_signature> sig;
   make_signature(app, key, kp.priv, plaintext, sig);
-  
+
   BOOST_CHECKPOINT("checking signature");
   BOOST_CHECK(check_signature(app, key, kp.pub, plaintext, sig));
-  
+
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
   BOOST_CHECK(!check_signature(app, key, kp.pub, broken_plaintext, sig));
 }
 
-void 
+void
 add_key_tests(test_suite * suite)
 {
   I(suite);
@@ -607,3 +636,11 @@ add_key_tests(test_suite * suite)
 }
 
 #endif // BUILD_UNIT_TESTS
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

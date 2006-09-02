@@ -1,8 +1,11 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil -*-
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <iostream>
 #include <fstream>
@@ -14,15 +17,22 @@
 #include "botan/botan.h"
 
 #include "file_io.hh"
-#include "lua.hh"
 #include "sanity.hh"
-#include "transforms.hh"
-#include "platform.hh"
+#include "simplestring_xform.hh"
+#include "charset.hh"
+#include "platform-wrapped.hh"
+#include "numeric_vocab.hh"
 
 // this file deals with talking to the filesystem, loading and
 // saving files.
 
-using namespace std;
+using std::cin;
+using std::ifstream;
+using std::ios_base;
+using std::ofstream;
+using std::runtime_error;
+using std::string;
+using std::vector;
 
 void
 assert_path_is_nonexistent(any_path const & path)
@@ -85,49 +95,28 @@ require_path_is_directory(any_path const & path,
     }
 }
 
-bool 
-path_exists(any_path const & p) 
-{ 
+bool
+path_exists(any_path const & p)
+{
   return get_path_status(p) != path::nonexistent;
 }
 
-bool 
-directory_exists(any_path const & p) 
-{ 
+bool
+directory_exists(any_path const & p)
+{
   return get_path_status(p) == path::directory;
 }
 
-bool 
-file_exists(any_path const & p) 
-{ 
-  return get_path_status(p) == path::file;
-}
-
 bool
-ident_existing_file(file_path const & p, file_id & ident, lua_hooks & lua)
+file_exists(any_path const & p)
 {
-  switch (get_path_status(p))
-    {
-    case path::nonexistent:
-      return false;
-    case path::file:
-      break;
-    case path::directory:
-      W(F("expected file '%s', but it is a directory.") % p);
-      return false;
-    }
-
-  hexenc<id> id;
-  calculate_ident(p, id, lua);
-  ident = file_id(id);
-
-  return true;
+  return get_path_status(p) == path::file;
 }
 
 static bool did_char_is_binary_init;
 static bool char_is_binary[256];
 
-void
+static void
 set_char_is_binary(char c, bool is_binary)
 {
     char_is_binary[static_cast<uint8_t>(c)] = is_binary;
@@ -143,7 +132,7 @@ init_char_is_binary()
   string nontext_chars("\x01\x02\x03\x04\x05\x06\x0e\x0f"
                        "\x10\x11\x12\x13\x14\x15\x16\x17\x18"
                        "\x19\x1a\x1c\x1d\x1e\x1f");
-  set_char_is_binary('\0',true);
+  set_char_is_binary('\0', true);
   for(size_t i = 0; i < nontext_chars.size(); ++i)
     {
       set_char_is_binary(nontext_chars[i], true);
@@ -155,9 +144,10 @@ bool guess_binary(string const & s)
   if (did_char_is_binary_init == false)
     {
       init_char_is_binary();
+      did_char_is_binary_init = true;
     }
 
-  for (size_t i = 0; i < s.size(); ++i) 
+  for (size_t i = 0; i < s.size(); ++i)
     {
       if (char_is_binary[ static_cast<uint8_t>(s[i]) ])
         return true;
@@ -171,9 +161,9 @@ mkdir(any_path const & p)
   return fs::path(p.as_external(), fs::native);
 }
 
-void 
-mkdir_p(any_path const & p) 
-{ 
+void
+mkdir_p(any_path const & p)
+{
   try
     {
       fs::create_directories(mkdir(p));
@@ -186,16 +176,16 @@ mkdir_p(any_path const & p)
         F("could not create directory '%s'\nit is a file") % p);
       E(false,
         F("could not create directory '%s'\n%s")
-        % err.path1().native_directory_string() % strerror(err.native_error()));
+        % err.path1().native_directory_string() % os_strerror(err.native_error()));
     }
   require_path_is_directory(p,
                             F("could not create directory '%s'") % p,
                             F("could not create directory '%s'\nit is a file") % p);
 }
 
-void 
-make_dir_for(any_path const & p) 
-{ 
+void
+make_dir_for(any_path const & p)
+{
   fs::path tmp(p.as_external(), fs::native);
   if (tmp.has_branch_path())
     {
@@ -218,13 +208,13 @@ do_shallow_deletion_with_sane_error_message(any_path const & p)
     {
       E(false, F("could not remove '%s'\n%s")
         % err.path1().native_directory_string()
-        % strerror(err.native_error()));
+        % os_strerror(err.native_error()));
     }
 }
 
-void 
-delete_file(any_path const & p) 
-{ 
+void
+delete_file(any_path const & p)
+{
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
@@ -247,19 +237,19 @@ delete_file_or_dir_shallow(any_path const & p)
   do_shallow_deletion_with_sane_error_message(p);
 }
 
-void 
-delete_dir_recursive(any_path const & p) 
-{ 
+void
+delete_dir_recursive(any_path const & p)
+{
   require_path_is_directory(p,
                             F("directory to delete, '%s', does not exist") % p,
                             F("directory to delete, '%s', is a file") % p);
   fs::remove_all(mkdir(p));
 }
 
-void 
+void
 move_file(any_path const & old_path,
-          any_path const & new_path) 
-{ 
+          any_path const & new_path)
+{
   require_path_is_file(old_path,
                        F("rename source file '%s' does not exist") % old_path,
                        F("rename source file '%s' is a directory "
@@ -269,10 +259,10 @@ move_file(any_path const & old_path,
   fs::rename(mkdir(old_path), mkdir(new_path));
 }
 
-void 
+void
 move_dir(any_path const & old_path,
-         any_path const & new_path) 
-{ 
+         any_path const & new_path)
+{
   require_path_is_directory(old_path,
                             F("rename source dir '%s' does not exist") % old_path,
                             F("rename source dir '%s' is a file "
@@ -300,7 +290,7 @@ move_path(any_path const & old_path,
     }
 }
 
-void 
+void
 read_data(any_path const & p, data & dat)
 {
   require_path_is_file(p,
@@ -317,39 +307,9 @@ read_data(any_path const & p, data & dat)
   dat = pipe.read_all_as_string();
 }
 
-void 
-read_localized_data(file_path const & path, 
-                    data & dat, 
-                    lua_hooks & lua)
-{
-  string db_linesep, ext_linesep;
-  string db_charset, ext_charset;
-  
-  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
-                      && db_linesep != ext_linesep);
-
-  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
-                      && db_charset != ext_charset);
-
-  data tdat;
-  read_data(path, tdat);
-  
-  string tmp1, tmp2;
-  tmp2 = tdat();
-  if (do_charconv) {
-    tmp1 = tmp2;
-    charset_convert(ext_charset, db_charset, tmp1, tmp2);
-  }
-  if (do_lineconv) {
-    tmp1 = tmp2;
-    line_end_convert(db_linesep, tmp1, tmp2);
-  }
-  dat = tmp2;
-}
-
 void read_directory(any_path const & path,
-                    std::vector<utf8> & files,
-                    std::vector<utf8> & dirs)
+                    vector<utf8> & files,
+                    vector<utf8> & dirs)
 {
   files.clear();
   dirs.clear();
@@ -403,11 +363,11 @@ read_data_for_command_line(utf8 const & path, data & dat)
 // but you might want to make this code a bit tighter.
 
 
-static void 
+static void
 write_data_impl(any_path const & p,
                 data const & dat,
                 any_path const & tmp)
-{  
+{
   N(!directory_exists(p),
     F("file '%s' cannot be overwritten as data; it is a directory") % p);
 
@@ -429,54 +389,26 @@ write_data_impl(any_path const & p,
 static void
 write_data_impl(any_path const & p,
                 data const & dat)
-{  
+{
   // we write, non-atomically, to _MTN/data.tmp.
   // nb: no mucking around with multiple-writer conditions. we're a
   // single-user single-threaded program. you get what you paid for.
   assert_path_is_directory(bookkeeping_root);
-  bookkeeping_path tmp = bookkeeping_root / (boost::format("data.tmp.%d") %
+  bookkeeping_path tmp = bookkeeping_root / (FL("data.tmp.%d") %
                                              get_process_id()).str();
   write_data_impl(p, dat, tmp);
 }
 
-void 
+void
 write_data(file_path const & path, data const & dat)
-{ 
-  write_data_impl(path, dat); 
-}
-
-void 
-write_data(bookkeeping_path const & path, data const & dat)
-{ 
-  write_data_impl(path, dat); 
-}
-
-void 
-write_localized_data(file_path const & path, 
-                     data const & dat, 
-                     lua_hooks & lua)
 {
-  string db_linesep, ext_linesep;
-  string db_charset, ext_charset;
-  
-  bool do_lineconv = (lua.hook_get_linesep_conv(path, db_linesep, ext_linesep) 
-                      && db_linesep != ext_linesep);
+  write_data_impl(path, dat);
+}
 
-  bool do_charconv = (lua.hook_get_charset_conv(path, db_charset, ext_charset) 
-                      && db_charset != ext_charset);
-  
-  string tmp1, tmp2;
-  tmp2 = dat();
-  if (do_lineconv) {
-    tmp1 = tmp2;
-    line_end_convert(ext_linesep, tmp1, tmp2);
-  }
-  if (do_charconv) {
-    tmp1 = tmp2;
-    charset_convert(db_charset, ext_charset, tmp1, tmp2);
-  }
-
-  write_data(path, data(tmp2));
+void
+write_data(bookkeeping_path const & path, data const & dat)
+{
+  write_data_impl(path, dat);
 }
 
 void
@@ -484,17 +416,36 @@ write_data(system_path const & path,
            data const & data,
            system_path const & tmpdir)
 {
-  write_data_impl(path, data, tmpdir / (boost::format("data.tmp.%d") %
+  write_data_impl(path, data, tmpdir / (FL("data.tmp.%d") %
                                              get_process_id()).str());
 }
 
 tree_walker::~tree_walker() {}
 
-static void 
+static inline bool
+try_file_pathize(fs::path const & p, file_path & fp)
+{
+  try
+    {
+      // FIXME BUG: This has broken charset handling
+      fp = file_path_internal(p.string());
+      return true;
+    }
+  catch (runtime_error const & c)
+    {
+      // This arguably has broken charset handling too...
+      W(F("caught runtime error %s constructing file path for %s")
+        % c.what() % p.string());
+      return false;
+    }
+}
+
+static void
 walk_tree_recursive(fs::path const & absolute,
                     fs::path const & relative,
                     tree_walker & walker)
 {
+  std::vector<std::pair<fs::path, fs::path> > dirs;
   fs::directory_iterator ei;
   for(fs::directory_iterator di(absolute);
       di != ei; ++di)
@@ -503,45 +454,55 @@ walk_tree_recursive(fs::path const & absolute,
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)
       fs::path rel_entry = relative / fs::path(entry.leaf(), fs::native);
-      
-      if (bookkeeping_path::is_bookkeeping_path(rel_entry.normalize().string()))
+      rel_entry.normalize();
+
+      if (bookkeeping_path::is_bookkeeping_path(rel_entry.string()))
         {
-          L(FL("ignoring book keeping entry %s\n") % rel_entry.string());
+          L(FL("ignoring book keeping entry %s") % rel_entry.string());
           continue;
         }
-      
-      if (!fs::exists(entry) 
-          || di->string() == "." 
-          || di->string() == "..") 
+
+      if (!fs::exists(entry)
+          || di->string() == "."
+          || di->string() == "..")
         {
           // ignore
           continue;
         }
       else
         {
-          file_path p;
-          try 
-            {
-              // FIXME: BUG: this screws up charsets
-              p = file_path_internal(rel_entry.normalize().string());
-            }
-          catch (std::runtime_error const & c)
-            {
-              W(F("caught runtime error %s constructing file path for %s\n") 
-                % c.what() % rel_entry.string());
-              continue;
-            }
           if (fs::is_directory(entry))
-            {
-              walker.visit_dir(p);
-              walk_tree_recursive(entry, rel_entry, walker);
-            }
+            dirs.push_back(std::make_pair(entry, rel_entry));
           else
             {
+              file_path p;
+              if (!try_file_pathize(rel_entry, p))
+                continue;
               walker.visit_file(p);
             }
-
         }
+    }
+  // At this point, the directory iterator has gone out of scope, and its
+  // memory released.  This is important, because it can allocate rather a
+  // bit of memory (especially on ReiserFS, see [1]; opendir uses the
+  // filesystem's blocksize as a clue how much memory to allocate).  We used
+  // to recurse into subdirectories directly in the loop above; this left
+  // the memory describing _this_ directory pinned on the heap.  Then our
+  // recursive call itself made another recursive call, etc., causing a huge
+  // spike in peak memory.  By splitting the loop in half, we avoid this
+  // problem.
+  // 
+  // [1] http://lkml.org/lkml/2006/2/24/215
+  for (std::vector<std::pair<fs::path, fs::path> >::const_iterator i = dirs.begin();
+       i != dirs.end(); ++i)
+    {
+      fs::path const & entry = i->first;
+      fs::path const & rel_entry = i->second;
+      file_path p;
+      if (!try_file_pathize(rel_entry, p))
+        continue;
+      walker.visit_dir(p);
+      walk_tree_recursive(entry, rel_entry, walker);
     }
 }
 
@@ -552,7 +513,7 @@ tree_walker::visit_dir(file_path const & path)
 
 
 // from some (safe) sub-entry of cwd
-void 
+void
 walk_tree(file_path const & path,
           tree_walker & walker,
           bool require_existing_path)
@@ -562,7 +523,7 @@ walk_tree(file_path const & path,
       walk_tree_recursive(fs::current_path(), fs::path(), walker);
       return;
     }
-      
+
   switch (get_path_status(path))
     {
     case path::nonexistent:
@@ -584,7 +545,7 @@ walk_tree(file_path const & path,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-void 
+void
 add_file_io_tests(test_suite * suite)
 {
   I(suite);
@@ -592,3 +553,11 @@ add_file_io_tests(test_suite * suite)
 }
 
 #endif // BUILD_UNIT_TESTS
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

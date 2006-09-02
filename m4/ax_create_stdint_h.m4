@@ -136,10 +136,12 @@ AC_CACHE_VAL([ac_cv_header_stdint_t],[
 old_CXXFLAGS="$CXXFLAGS" ; CXXFLAGS=""
 old_CPPFLAGS="$CPPFLAGS" ; CPPFLAGS=""
 old_CFLAGS="$CFLAGS"     ; CFLAGS=""
-AC_TRY_COMPILE([#include <stdint.h>],[int_least32_t v = 0;],
-[ac_cv_stdint_result="(assuming C99 compatible system)"
- ac_cv_header_stdint_t="stdint.h"; ],
-[ac_cv_header_stdint_t=""])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+[#include <stdint.h>], 
+[int_least32_t v = 0;])],
+  [ac_cv_stdint_result="(assuming C99 compatible system)"
+   ac_cv_header_stdint_t="stdint.h";],
+  [ac_cv_header_stdint_t=""])
 CXXFLAGS="$old_CXXFLAGS"
 CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS" ])
@@ -212,7 +214,7 @@ AC_CHECK_TYPE(intmax_t,,,[#include <$ac_cv_header_stdint>])
 fi # shortcircut to system "stdint.h"
 # ------------------ PREPARE VARIABLES ------------------------------
 if test "$GCC" = "yes" ; then
-ac_cv_stdint_message="using gnu compiler "`$CC --version | head -1`
+ac_cv_stdint_message="using gnu compiler "`$CC --version | sed 1q`
 else
 ac_cv_stdint_message="using $CC"
 fi

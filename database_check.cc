@@ -1,7 +1,11 @@
-// copyright (C) 2005 derek scherger <derek@echologic.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Derek Scherger <derek@echologic.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <map>
 #include <set>
@@ -14,6 +18,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "transforms.hh"
+#include "cert.hh"
 
 // the database has roughly the following structure
 //
@@ -22,14 +27,17 @@
 //    +---+---+
 //    |       |
 //   keys   revisions
-//            | 
+//            |
 //          rosters
-//            | 
+//            |
 //          files
 //
 
-using std::set;
+using std::logic_error;
 using std::map;
+using std::multimap;
+using std::set;
+using std::string;
 using std::vector;
 
 struct checked_cert {
@@ -67,18 +75,18 @@ struct checked_roster {
 
   manifest_id man_id;   // manifest id of this roster's public part
 
-  checked_roster(): 
-    found(false), revision_refs(0), 
+  checked_roster():
+    found(false), revision_refs(0),
     missing_files(0), missing_mark_revs(0),
     parseable(false), normalized(false), man_id() {}
 };
 
 // the number of times a revision is referenced (revision_refs)
-// should match the number of times it is listed as a parent in 
+// should match the number of times it is listed as a parent in
 // the ancestry cache (ancestry_parent_refs)
 //
 // the number of parents a revision has should match the number
-// of times it is listed as a child in the ancestry cache 
+// of times it is listed as a child in the ancestry cache
 // (ancestry_child_refs)
 
 struct checked_revision {
@@ -87,30 +95,30 @@ struct checked_revision {
   size_t ancestry_parent_refs; // number of references to this revision by ancestry parent
   size_t ancestry_child_refs;  // number of references to this revision by ancestry child
   size_t marking_refs;         // number of references to this revision by roster markings
-  
+
   bool found_roster_link;      // the revision->roster link for this revision exists
   bool found_roster;           // the roster for this revision exists
   bool manifest_mismatch;      // manifest doesn't match the roster for this revision
-  bool incomplete_roster;      // the roster for this revision is missing files 
+  bool incomplete_roster;      // the roster for this revision is missing files
   size_t missing_manifests;    // number of missing manifests referenced by this revision
   size_t missing_revisions;    // number of missing revisions referenced by this revision
-  
+
   size_t cert_refs;            // number of references to this revision by revision certs;
 
-  bool parseable;              // read_revision_set does not throw
-  bool normalized;             // write_revision_set( read_revision_set(dat) ) == dat
+  bool parseable;              // read_revision does not throw
+  bool normalized;             // write_revision( read_revision(dat) ) == dat
 
-  std::string history_error;
+  string history_error;
 
-  std::set<revision_id> parents;
-  std::vector<checked_cert> checked_certs;
+  set<revision_id> parents;
+  vector<checked_cert> checked_certs;
 
-  checked_revision(): 
+  checked_revision():
     found(false),
-    revision_refs(0), ancestry_parent_refs(0), ancestry_child_refs(0), 
+    revision_refs(0), ancestry_parent_refs(0), ancestry_child_refs(0),
     marking_refs(0),
     found_roster(false), manifest_mismatch(false), incomplete_roster(false),
-    missing_manifests(0), missing_revisions(0), 
+    missing_manifests(0), missing_revisions(0),
     cert_refs(0), parseable(false), normalized(false) {}
 };
 
@@ -126,19 +134,19 @@ check_db_integrity_check(app_state & app )
 }
 
 static void
-check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
+check_files(app_state & app, map<file_id, checked_file> & checked_files)
 {
-  std::set<file_id> files;
+  set<file_id> files;
 
   app.db.get_file_ids(files);
-  L(FL("checking %d files\n") % files.size());
+  L(FL("checking %d files") % files.size());
 
   ticker ticks(_("files"), "f", files.size()/70+1);
 
-  for (std::set<file_id>::const_iterator i = files.begin();
-       i != files.end(); ++i) 
+  for (set<file_id>::const_iterator i = files.begin();
+       i != files.end(); ++i)
     {
-      L(FL("checking file %s\n") % *i);
+      L(FL("checking file %s") % *i);
       file_data data;
       app.db.get_file_version(*i, data);
       checked_files[*i].found = true;
@@ -148,29 +156,29 @@ check_files(app_state & app, std::map<file_id, checked_file> & checked_files)
   I(checked_files.size() == files.size());
 }
 
-// first phase of roster checking, checks manifest-related parts of the 
+// first phase of roster checking, checks manifest-related parts of the
 // roster, and general parsability/normalisation
 static void
 check_rosters_manifest(app_state & app,
-              std::map<hexenc<id>, checked_roster> & checked_rosters,
-              std::map<revision_id, checked_revision> & checked_revisions,
-              std::set<manifest_id> & found_manifests,
-              std::map<file_id, checked_file> & checked_files)
+              map<roster_id, checked_roster> & checked_rosters,
+              map<revision_id, checked_revision> & checked_revisions,
+              set<manifest_id> & found_manifests,
+              map<file_id, checked_file> & checked_files)
 {
-  set< hexenc<id> > rosters;
+  set<roster_id> rosters;
 
   app.db.get_roster_ids(rosters);
-  L(FL("checking %d rosters, manifest pass\n") % rosters.size());
+  L(FL("checking %d rosters, manifest pass") % rosters.size());
 
   ticker ticks(_("rosters"), "r", rosters.size()/70+1);
 
-  for (set<hexenc<id> >::const_iterator i = rosters.begin();
-       i != rosters.end(); ++i) 
+  for (set<roster_id>::const_iterator i = rosters.begin();
+       i != rosters.end(); ++i)
     {
 
-      L(FL("checking roster %s\n") % *i);
-      data dat;
-      app.db.get_roster(*i, dat);
+      L(FL("checking roster %s") % *i);
+      roster_data dat;
+      app.db.get_roster_version(*i, dat);
       checked_rosters[*i].found = true;
 
       roster_t ros;
@@ -179,18 +187,18 @@ check_rosters_manifest(app_state & app,
         {
           read_roster_and_marking(dat, ros, mm);
         }
-      catch (std::logic_error & e)
+      catch (logic_error & e)
         {
           L(FL("error parsing roster %s: %s") % *i % e.what());
           checked_rosters[*i].parseable = false;
           continue;
         }
       checked_rosters[*i].parseable = true;
-      
+
       // normalisation check
       {
-        hexenc<id> norm_ident;
-        data norm_data;
+        roster_id norm_ident;
+        roster_data norm_data;
         write_roster_and_marking(ros, mm, norm_data);
         calculate_ident(norm_data, norm_ident);
         if (norm_ident == *i)
@@ -224,28 +232,28 @@ check_rosters_manifest(app_state & app,
 // that the referenced revisions exist.
 static void
 check_rosters_marking(app_state & app,
-              std::map<hexenc<id>, checked_roster> & checked_rosters,
-              std::map<revision_id, checked_revision> & checked_revisions)
+              map<roster_id, checked_roster> & checked_rosters,
+              map<revision_id, checked_revision> & checked_revisions)
 {
-  L(FL("checking %d rosters, marking pass\n") % checked_rosters.size());
+  L(FL("checking %d rosters, marking pass") % checked_rosters.size());
 
   ticker ticks(_("markings"), "m", checked_rosters.size()/70+1);
 
-  for (std::map<hexenc<id>, checked_roster>::const_iterator i 
+  for (map<roster_id, checked_roster>::const_iterator i
        = checked_rosters.begin(); i != checked_rosters.end(); i++)
     {
-      hexenc<id> ros_id = i->first;
-      L(FL("checking roster %s\n") % i->first);
+      roster_id ros_id = i->first;
+      L(FL("checking roster %s") % i->first);
       if (!i->second.parseable)
           continue;
 
-      data dat;
-      app.db.get_roster(ros_id, dat);
+      roster_data dat;
+      app.db.get_roster_version(ros_id, dat);
 
       roster_t ros;
       marking_map mm;
       read_roster_and_marking(dat, ros, mm);
-      
+
       for (node_map::const_iterator n = ros.all_nodes().begin();
            n != ros.all_nodes().end(); n++)
         {
@@ -271,7 +279,7 @@ check_rosters_marking(app_state & app,
                 checked_rosters[ros_id].missing_mark_revs++;
             }
 
-          for (map<attr_key,set<revision_id> >::const_iterator attr = 
+          for (map<attr_key,set<revision_id> >::const_iterator attr =
                mark.attrs.begin(); attr != mark.attrs.end(); attr++)
             for (set<revision_id>::const_iterator r = attr->second.begin();
                  r != attr->second.end(); r++)
@@ -285,30 +293,30 @@ check_rosters_marking(app_state & app,
     }
 }
 
-static void 
-check_roster_links(app_state & app, 
-                   std::map<revision_id, checked_revision> & checked_revisions,
-                   std::map<hexenc<id>, checked_roster> & checked_rosters,
+static void
+check_roster_links(app_state & app,
+                   map<revision_id, checked_revision> & checked_revisions,
+                   map<roster_id, checked_roster> & checked_rosters,
                    size_t & unreferenced_roster_links,
                    size_t & missing_rosters)
 {
   unreferenced_roster_links = 0;
 
-  std::map<revision_id, hexenc<id> > links;
+  map<revision_id, roster_id> links;
   app.db.get_roster_links(links);
 
-  for (std::map<revision_id, hexenc<id> >::const_iterator i = links.begin();
+  for (map<revision_id, roster_id>::const_iterator i = links.begin();
        i != links.end(); ++i)
     {
       revision_id rev(i->first);
-      hexenc<id> ros(i->second);
+      roster_id ros(i->second);
 
-      std::map<revision_id, checked_revision>::const_iterator j 
+      map<revision_id, checked_revision>::const_iterator j
         = checked_revisions.find(rev);
       if (j == checked_revisions.end() || (!j->second.found))
         ++unreferenced_roster_links;
 
-      std::map<hexenc<id>, checked_roster>::const_iterator k 
+      map<roster_id, checked_roster>::const_iterator k
         = checked_rosters.find(ros);
       if (k == checked_rosters.end() || (!k->second.found))
         ++missing_rosters;
@@ -317,32 +325,32 @@ check_roster_links(app_state & app,
 
 
 static void
-check_revisions(app_state & app, 
-                std::map<revision_id, checked_revision> & checked_revisions,
-                std::map<hexenc<id>, checked_roster> & checked_rosters,
-                std::set<manifest_id> const & found_manifests)
+check_revisions(app_state & app,
+                map<revision_id, checked_revision> & checked_revisions,
+                map<roster_id, checked_roster> & checked_rosters,
+                set<manifest_id> const & found_manifests)
 {
-  std::set<revision_id> revisions;
+  set<revision_id> revisions;
 
   app.db.get_revision_ids(revisions);
-  L(FL("checking %d revisions\n") % revisions.size());
+  L(FL("checking %d revisions") % revisions.size());
 
   ticker ticks(_("revisions"), "r", revisions.size()/70+1);
 
-  for (std::set<revision_id>::const_iterator i = revisions.begin();
-       i != revisions.end(); ++i) 
+  for (set<revision_id>::const_iterator i = revisions.begin();
+       i != revisions.end(); ++i)
     {
-      L(FL("checking revision %s\n") % *i);
+      L(FL("checking revision %s") % *i);
       revision_data data;
       app.db.get_revision(*i, data);
       checked_revisions[*i].found = true;
 
-      revision_set rev;
+      revision_t rev;
       try
         {
-          read_revision_set(data, rev);
+          read_revision(data, rev);
         }
-      catch (std::logic_error & e)
+      catch (logic_error & e)
         {
           L(FL("error parsing revision %s: %s") % *i % e.what());
           checked_revisions[*i].parseable = false;
@@ -353,7 +361,7 @@ check_revisions(app_state & app,
       // normalisation check
       revision_id norm_ident;
       revision_data norm_data;
-      write_revision_set(rev, norm_data);
+      write_revision(rev, norm_data);
       calculate_ident(norm_data, norm_ident);
       if (norm_ident == *i)
           checked_revisions[*i].normalized = true;
@@ -361,17 +369,17 @@ check_revisions(app_state & app,
       // roster checks
       if (app.db.roster_link_exists_for_revision(*i))
         {
-          hexenc<id> roster_id;
+          roster_id ros_id;
           checked_revisions[*i].found_roster_link = true;
-          app.db.get_roster_id_for_revision(*i, roster_id);
+          app.db.get_roster_id_for_revision(*i, ros_id);
           if (app.db.roster_exists_for_revision(*i))
             {
               checked_revisions[*i].found_roster = true;
-              I(checked_rosters[roster_id].found);
-              checked_rosters[roster_id].revision_refs++;
-              if (!(rev.new_manifest == checked_rosters[roster_id].man_id))
+              I(checked_rosters[ros_id].found);
+              checked_rosters[ros_id].revision_refs++;
+              if (!(rev.new_manifest == checked_rosters[ros_id].man_id))
                 checked_revisions[*i].manifest_mismatch = true;
-              if (checked_rosters[roster_id].missing_files > 0)
+              if (checked_rosters[ros_id].missing_files > 0)
                 checked_revisions[*i].incomplete_roster = true;
             }
         }
@@ -379,13 +387,13 @@ check_revisions(app_state & app,
       if (found_manifests.find(rev.new_manifest) == found_manifests.end())
         checked_revisions[*i].missing_manifests++;
 
-      for (edge_map::const_iterator edge = rev.edges.begin(); 
+      for (edge_map::const_iterator edge = rev.edges.begin();
            edge != rev.edges.end(); ++edge)
         {
           // ignore [] -> [...] revisions
 
           // delay checking parents until we've processed all revisions
-          if (!null_id(edge_old_revision(edge))) 
+          if (!null_id(edge_old_revision(edge)))
             {
               checked_revisions[edge_old_revision(edge)].revision_refs++;
               checked_revisions[*i].parents.insert(edge_old_revision(edge));
@@ -394,37 +402,37 @@ check_revisions(app_state & app,
           // also check that change_sets applied to old manifests == new
           // manifests (which might be a merge)
         }
-      
+
       ++ticks;
     }
 
   // now check for parent revision existence and problems
 
-  for (std::map<revision_id, checked_revision>::iterator
-         revision = checked_revisions.begin(); 
+  for (map<revision_id, checked_revision>::iterator
+         revision = checked_revisions.begin();
        revision != checked_revisions.end(); ++revision)
     {
-      for (std::set<revision_id>::const_iterator p = revision->second.parents.begin();
+      for (set<revision_id>::const_iterator p = revision->second.parents.begin();
            p != revision->second.parents.end(); ++p)
         {
           if (!checked_revisions[*p].found)
             revision->second.missing_revisions++;
         }
     }
-  
-  L(FL("checked %d revisions after starting with %d\n") 
+
+  L(FL("checked %d revisions after starting with %d")
     % checked_revisions.size()
     % revisions.size());
 }
 
 static void
-check_ancestry(app_state & app, 
-               std::map<revision_id, checked_revision> & checked_revisions)
+check_ancestry(app_state & app,
+               map<revision_id, checked_revision> & checked_revisions)
 {
-  std::multimap<revision_id, revision_id> graph;
+  multimap<revision_id, revision_id> graph;
 
   app.db.get_revision_ancestry(graph);
-  L(FL("checking %d ancestry edges\n") % graph.size());
+  L(FL("checking %d ancestry edges") % graph.size());
 
   ticker ticks(_("ancestry"), "a", graph.size()/70+1);
 
@@ -432,16 +440,16 @@ check_ancestry(app_state & app,
   // graph has revision and associated parents
   // these two representations of the graph should agree!
 
-  std::set<revision_id> seen;
-  for (std::multimap<revision_id, revision_id>::const_iterator i = graph.begin();
+  set<revision_id> seen;
+  for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
        i != graph.end(); ++i)
     {
       // ignore the [] -> [...] edges here too
-      if (!null_id(i->first)) 
+      if (!null_id(i->first))
         {
           checked_revisions[i->first].ancestry_parent_refs++;
 
-          if (!null_id(i->second)) 
+          if (!null_id(i->second))
             checked_revisions[i->second].ancestry_child_refs++;
         }
 
@@ -450,18 +458,18 @@ check_ancestry(app_state & app,
 }
 
 static void
-check_keys(app_state & app, 
-           std::map<rsa_keypair_id, checked_key> & checked_keys)
+check_keys(app_state & app,
+           map<rsa_keypair_id, checked_key> & checked_keys)
 {
-  std::vector<rsa_keypair_id> pubkeys;
+  vector<rsa_keypair_id> pubkeys;
 
   app.db.get_public_keys(pubkeys);
 
-  L(FL("checking %d public keys\n") % pubkeys.size());
+  L(FL("checking %d public keys") % pubkeys.size());
 
   ticker ticks(_("keys"), "k", 1);
 
-  for (std::vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
+  for (vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
        i != pubkeys.end(); ++i)
     {
       app.db.get_key(*i, checked_keys[*i].pub_encoded);
@@ -472,33 +480,33 @@ check_keys(app_state & app,
 }
 
 static void
-check_certs(app_state & app, 
-            std::map<revision_id, checked_revision> & checked_revisions,
-            std::map<rsa_keypair_id, checked_key> & checked_keys,
+check_certs(app_state & app,
+            map<revision_id, checked_revision> & checked_revisions,
+            map<rsa_keypair_id, checked_key> & checked_keys,
             size_t & total_certs)
 {
 
-  std::vector< revision<cert> > certs;
+  vector< revision<cert> > certs;
   app.db.get_revision_certs(certs);
 
   total_certs = certs.size();
 
-  L(FL("checking %d revision certs\n") % certs.size());
+  L(FL("checking %d revision certs") % certs.size());
 
   ticker ticks(_("certs"), "c", certs.size()/70+1);
 
-  for (std::vector< revision<cert> >::const_iterator i = certs.begin();
+  for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
       checked_cert checked(*i);
       checked.found_key = checked_keys[i->inner().key].found;
 
-      if (checked.found_key) 
+      if (checked.found_key)
         {
-          std::string signed_text;
+          string signed_text;
           cert_signable_text(i->inner(), signed_text);
-          checked.good_sig = check_signature(app, i->inner().key, 
-                                             checked_keys[i->inner().key].pub_encoded, 
+          checked.good_sig = check_signature(app, i->inner().key,
+                                             checked_keys[i->inner().key].pub_encoded,
                                              signed_text, i->inner().sig);
         }
 
@@ -510,11 +518,11 @@ check_certs(app_state & app,
 }
 
 static void
-report_files(std::map<file_id, checked_file> const & checked_files, 
-             size_t & missing_files, 
+report_files(map<file_id, checked_file> const & checked_files,
+             size_t & missing_files,
              size_t & unreferenced_files)
 {
-  for (std::map<file_id, checked_file>::const_iterator 
+  for (map<file_id, checked_file>::const_iterator
          i = checked_files.begin(); i != checked_files.end(); ++i)
     {
       checked_file file = i->second;
@@ -522,27 +530,27 @@ report_files(std::map<file_id, checked_file> const & checked_files,
       if (!file.found)
         {
           missing_files++;
-          P(F("file %s missing (%d manifest references)\n") 
+          P(F("file %s missing (%d manifest references)")
             % i->first % file.roster_refs);
         }
 
       if (file.roster_refs == 0)
         {
           unreferenced_files++;
-          P(F("file %s unreferenced\n") % i->first);
+          P(F("file %s unreferenced") % i->first);
         }
 
     }
 }
 
 static void
-report_rosters(std::map<hexenc<id>, checked_roster> const & checked_rosters, 
+report_rosters(map<roster_id, checked_roster> const & checked_rosters,
                  size_t & unreferenced_rosters,
                  size_t & incomplete_rosters,
                  size_t & non_parseable_rosters,
                  size_t & non_normalized_rosters)
 {
-  for (std::map<hexenc<id>, checked_roster>::const_iterator 
+  for (map<roster_id, checked_roster>::const_iterator
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
     {
       checked_roster roster = i->second;
@@ -550,41 +558,41 @@ report_rosters(std::map<hexenc<id>, checked_roster> const & checked_rosters,
       if (roster.revision_refs == 0)
         {
           unreferenced_rosters++;
-          P(F("roster %s unreferenced\n") % i->first);
+          P(F("roster %s unreferenced") % i->first);
         }
 
       if (roster.missing_files > 0)
         {
           incomplete_rosters++;
-          P(F("roster %s incomplete (%d missing files)\n") 
+          P(F("roster %s incomplete (%d missing files)")
             % i->first % roster.missing_files);
         }
 
       if (roster.missing_mark_revs > 0)
         {
           incomplete_rosters++;
-          P(F("roster %s incomplete (%d missing revisions)\n") 
+          P(F("roster %s incomplete (%d missing revisions)")
             % i->first % roster.missing_mark_revs);
         }
 
       if (!roster.parseable)
         {
           non_parseable_rosters++;
-          P(F("roster %s is not parseable (perhaps with unnormalized paths?)\n")
+          P(F("roster %s is not parseable (perhaps with unnormalized paths?)")
             % i->first);
         }
 
       if (roster.parseable && !roster.normalized)
         {
           non_normalized_rosters++;
-          P(F("roster %s is not in normalized form\n")
+          P(F("roster %s is not in normalized form")
             % i->first);
         }
     }
 }
 
 static void
-report_revisions(std::map<revision_id, checked_revision> const & checked_revisions,
+report_revisions(map<revision_id, checked_revision> const & checked_revisions,
                  size_t & missing_revisions,
                  size_t & incomplete_revisions,
                  size_t & mismatched_parents,
@@ -594,7 +602,7 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
                  size_t & non_parseable_revisions,
                  size_t & non_normalized_revisions)
 {
-  for (std::map<revision_id, checked_revision>::const_iterator 
+  for (map<revision_id, checked_revision>::const_iterator
          i = checked_revisions.begin(); i != checked_revisions.end(); ++i)
     {
       checked_revision revision = i->second;
@@ -602,7 +610,7 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
       if (!revision.found)
         {
           missing_revisions++;
-          P(F("revision %s missing (%d revision references; %d cert references; %d parent references; %d child references; %d roster references)\n") 
+          P(F("revision %s missing (%d revision references; %d cert references; %d parent references; %d child references; %d roster references)")
             % i->first % revision.revision_refs % revision.cert_refs % revision.ancestry_parent_refs
             % revision.ancestry_child_refs % revision.marking_refs);
         }
@@ -610,46 +618,46 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
       if (revision.missing_manifests > 0)
         {
           incomplete_revisions++;
-          P(F("revision %s incomplete (%d missing manifests)\n") 
+          P(F("revision %s incomplete (%d missing manifests)")
             % i->first % revision.missing_manifests);
         }
 
       if (revision.missing_revisions > 0)
         {
           incomplete_revisions++;
-          P(F("revision %s incomplete (%d missing revisions)\n") 
+          P(F("revision %s incomplete (%d missing revisions)")
             % i->first % revision.missing_revisions);
         }
 
       if (!revision.found_roster_link)
         {
           incomplete_revisions++;
-          P(F("revision %s incomplete (missing roster link)\n") % i->first);
+          P(F("revision %s incomplete (missing roster link)") % i->first);
         }
 
       if (!revision.found_roster)
         {
           incomplete_revisions++;
-          P(F("revision %s incomplete (missing roster)\n") % i->first);
+          P(F("revision %s incomplete (missing roster)") % i->first);
         }
 
       if (revision.manifest_mismatch)
         {
           manifest_mismatch++;
-          P(F("revision %s mismatched roster and manifest\n") % i->first);
+          P(F("revision %s mismatched roster and manifest") % i->first);
         }
 
       if (revision.incomplete_roster)
         {
           incomplete_revisions++;
-          P(F("revision %s incomplete (incomplete roster)\n") % i->first);
+          P(F("revision %s incomplete (incomplete roster)") % i->first);
         }
 
       if (revision.ancestry_parent_refs != revision.revision_refs)
         {
           mismatched_parents++;
-          P(F("revision %s mismatched parents (%d ancestry parents; %d revision refs)\n") 
-            % i->first 
+          P(F("revision %s mismatched parents (%d ancestry parents; %d revision refs)")
+            % i->first
             % revision.ancestry_parent_refs
             % revision.revision_refs );
         }
@@ -657,8 +665,8 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
       if (revision.ancestry_child_refs != revision.parents.size())
         {
           mismatched_children++;
-          P(F("revision %s mismatched children (%d ancestry children; %d parents)\n") 
-            % i->first 
+          P(F("revision %s mismatched children (%d ancestry children; %d parents)")
+            % i->first
             % revision.ancestry_child_refs
             % revision.parents.size() );
         }
@@ -666,48 +674,48 @@ report_revisions(std::map<revision_id, checked_revision> const & checked_revisio
       if (!revision.history_error.empty())
         {
           bad_history++;
-          std::string tmp = revision.history_error;
+          string tmp = revision.history_error;
           if (tmp[tmp.length() - 1] == '\n')
             tmp.erase(tmp.length() - 1);
-          P(F("revision %s has bad history (%s)\n")
+          P(F("revision %s has bad history (%s)")
             % i->first % tmp);
         }
 
       if (!revision.parseable)
         {
           non_parseable_revisions++;
-          P(F("revision %s is not parseable (perhaps with unnormalized paths?)\n")
+          P(F("revision %s is not parseable (perhaps with unnormalized paths?)")
             % i->first);
         }
 
       if (revision.parseable && !revision.normalized)
         {
           non_normalized_revisions++;
-          P(F("revision %s is not in normalized form\n")
+          P(F("revision %s is not in normalized form")
             % i->first);
         }
     }
 }
 
 static void
-report_keys(std::map<rsa_keypair_id, checked_key> const & checked_keys,
+report_keys(map<rsa_keypair_id, checked_key> const & checked_keys,
             size_t & missing_keys)
 {
-  for (std::map<rsa_keypair_id, checked_key>::const_iterator 
+  for (map<rsa_keypair_id, checked_key>::const_iterator
          i = checked_keys.begin(); i != checked_keys.end(); ++i)
     {
       checked_key key = i->second;
 
       if (key.found)
         {
-          L(FL("key %s signed %d certs\n") 
+          L(FL("key %s signed %d certs")
             % i->first
             % key.sigs);
         }
       else
         {
           missing_keys++;
-          P(F("key %s missing (signed %d certs)\n") 
+          P(F("key %s missing (signed %d certs)")
             % i->first
             % key.sigs);
         }
@@ -715,41 +723,41 @@ report_keys(std::map<rsa_keypair_id, checked_key> const & checked_keys,
 }
 
 static void
-report_certs(std::map<revision_id, checked_revision> const & checked_revisions,
+report_certs(map<revision_id, checked_revision> const & checked_revisions,
              size_t & missing_certs,
              size_t & mismatched_certs,
              size_t & unchecked_sigs,
              size_t & bad_sigs)
 {
-  std::set<cert_name> cnames;
+  set<cert_name> cnames;
 
   cnames.insert(cert_name(author_cert_name));
   cnames.insert(cert_name(branch_cert_name));
   cnames.insert(cert_name(changelog_cert_name));
   cnames.insert(cert_name(date_cert_name));
 
-  for (std::map<revision_id, checked_revision>::const_iterator
+  for (map<revision_id, checked_revision>::const_iterator
          i = checked_revisions.begin(); i != checked_revisions.end(); ++i)
     {
       checked_revision revision = i->second;
-      std::map<cert_name, size_t> cert_counts;
-      
-      for (std::vector<checked_cert>::const_iterator checked = revision.checked_certs.begin();
+      map<cert_name, size_t> cert_counts;
+
+      for (vector<checked_cert>::const_iterator checked = revision.checked_certs.begin();
            checked != revision.checked_certs.end(); ++checked)
         {
           if (!checked->found_key)
             {
               unchecked_sigs++;
-              P(F("revision %s unchecked signature in %s cert from missing key %s\n") 
-                % i->first 
+              P(F("revision %s unchecked signature in %s cert from missing key %s")
+                % i->first
                 % checked->rcert.inner().name
                 % checked->rcert.inner().key);
             }
           else if (!checked->good_sig)
             {
               bad_sigs++;
-              P(F("revision %s bad signature in %s cert from key %s\n") 
-                % i->first 
+              P(F("revision %s bad signature in %s cert from key %s")
+                % i->first
                 % checked->rcert.inner().name
                 % checked->rcert.inner().key);
             }
@@ -757,13 +765,13 @@ report_certs(std::map<revision_id, checked_revision> const & checked_revisions,
           cert_counts[checked->rcert.inner().name]++;
         }
 
-      for (std::set<cert_name>::const_iterator n = cnames.begin(); 
+      for (set<cert_name>::const_iterator n = cnames.begin();
            n != cnames.end(); ++n)
         {
           if (revision.found && cert_counts[*n] == 0)
             {
               missing_certs++;
-              P(F("revision %s missing %s cert\n") % i->first % *n);
+              P(F("revision %s missing %s cert") % i->first % *n);
             }
         }
 
@@ -772,7 +780,7 @@ report_certs(std::map<revision_id, checked_revision> const & checked_revisions,
           cert_counts[cert_name(date_cert_name)]   != cert_counts[cert_name(changelog_cert_name)])
         {
           mismatched_certs++;
-          P(F("revision %s mismatched certs (%d authors %d dates %d changelogs)\n") 
+          P(F("revision %s mismatched certs (%d authors %d dates %d changelogs)")
             % i->first
             % cert_counts[cert_name(author_cert_name)]
             % cert_counts[cert_name(date_cert_name)]
@@ -785,11 +793,11 @@ report_certs(std::map<revision_id, checked_revision> const & checked_revisions,
 void
 check_db(app_state & app)
 {
-  std::map<file_id, checked_file> checked_files;
-  std::set<manifest_id> found_manifests;
-  std::map<hexenc<id>, checked_roster> checked_rosters;
-  std::map<revision_id, checked_revision> checked_revisions;
-  std::map<rsa_keypair_id, checked_key> checked_keys;
+  map<file_id, checked_file> checked_files;
+  set<manifest_id> found_manifests;
+  map<roster_id, checked_roster> checked_rosters;
+  map<revision_id, checked_revision> checked_revisions;
+  map<rsa_keypair_id, checked_key> checked_keys;
 
   size_t missing_files = 0;
   size_t unreferenced_files = 0;
@@ -808,7 +816,7 @@ check_db(app_state & app)
   size_t bad_history = 0;
   size_t non_parseable_revisions = 0;
   size_t non_normalized_revisions = 0;
-  
+
   size_t missing_keys = 0;
 
   size_t total_certs = 0;
@@ -820,11 +828,11 @@ check_db(app_state & app)
 
   check_db_integrity_check(app);
   check_files(app, checked_files);
-  check_rosters_manifest(app, checked_rosters, checked_revisions, 
+  check_rosters_manifest(app, checked_rosters, checked_revisions,
                          found_manifests, checked_files);
   check_revisions(app, checked_revisions, checked_rosters, found_manifests);
   check_rosters_marking(app, checked_rosters, checked_revisions);
-  check_roster_links(app, checked_revisions, checked_rosters, 
+  check_roster_links(app, checked_revisions, checked_rosters,
                      unreferenced_roster_links,
                      missing_rosters);
   check_ancestry(app, checked_revisions);
@@ -833,14 +841,14 @@ check_db(app_state & app)
 
   report_files(checked_files, missing_files, unreferenced_files);
 
-  report_rosters(checked_rosters, 
-                 unreferenced_rosters, 
+  report_rosters(checked_rosters,
+                 unreferenced_rosters,
                  incomplete_rosters,
                  non_parseable_rosters,
                  non_normalized_rosters);
-  
+
   report_revisions(checked_revisions,
-                   missing_revisions, incomplete_revisions, 
+                   missing_revisions, incomplete_revisions,
                    mismatched_parents, mismatched_children,
                    manifest_mismatch,
                    bad_history, non_parseable_revisions,
@@ -858,61 +866,61 @@ check_db(app_state & app)
   //   -- an entry added to the manual, which describes in detail why the
   //      error occurs and what it means to the user
 
-  if (missing_files > 0) 
-    W(F("%d missing files\n") % missing_files);
-  if (unreferenced_files > 0) 
-    W(F("%d unreferenced files\n") % unreferenced_files);
+  if (missing_files > 0)
+    W(F("%d missing files") % missing_files);
+  if (unreferenced_files > 0)
+    W(F("%d unreferenced files") % unreferenced_files);
 
-  if (unreferenced_rosters > 0) 
-    W(F("%d unreferenced rosters\n") % unreferenced_rosters);
+  if (unreferenced_rosters > 0)
+    W(F("%d unreferenced rosters") % unreferenced_rosters);
   if (incomplete_rosters > 0)
-    W(F("%d incomplete rosters\n") % incomplete_rosters);
+    W(F("%d incomplete rosters") % incomplete_rosters);
   if (non_parseable_rosters > 0)
-    W(F("%d rosters not parseable (perhaps with invalid paths)\n")
+    W(F("%d rosters not parseable (perhaps with invalid paths)")
       % non_parseable_rosters);
   if (non_normalized_rosters > 0)
-    W(F("%d rosters not in normalized form\n") % non_normalized_rosters);
+    W(F("%d rosters not in normalized form") % non_normalized_rosters);
 
   if (missing_revisions > 0)
-    W(F("%d missing revisions\n") % missing_revisions);
+    W(F("%d missing revisions") % missing_revisions);
   if (incomplete_revisions > 0)
-    W(F("%d incomplete revisions\n") % incomplete_revisions);
+    W(F("%d incomplete revisions") % incomplete_revisions);
   if (mismatched_parents > 0)
-    W(F("%d mismatched parents\n") % mismatched_parents);
+    W(F("%d mismatched parents") % mismatched_parents);
   if (mismatched_children > 0)
-    W(F("%d mismatched children\n") % mismatched_children);
+    W(F("%d mismatched children") % mismatched_children);
   if (bad_history > 0)
-    W(F("%d revisions with bad history\n") % bad_history);
+    W(F("%d revisions with bad history") % bad_history);
   if (non_parseable_revisions > 0)
-    W(F("%d revisions not parseable (perhaps with invalid paths)\n")
+    W(F("%d revisions not parseable (perhaps with invalid paths)")
       % non_parseable_revisions);
   if (non_normalized_revisions > 0)
-    W(F("%d revisions not in normalized form\n") % non_normalized_revisions);
+    W(F("%d revisions not in normalized form") % non_normalized_revisions);
 
 
   if (unreferenced_roster_links > 0)
-    W(F("%d unreferenced roster links\n") % unreferenced_roster_links);
+    W(F("%d unreferenced roster links") % unreferenced_roster_links);
 
   if (missing_rosters > 0)
-    W(F("%d missing rosters\n") % missing_rosters);
+    W(F("%d missing rosters") % missing_rosters);
 
 
   if (missing_keys > 0)
-    W(F("%d missing keys\n") % missing_keys);
+    W(F("%d missing keys") % missing_keys);
 
   if (missing_certs > 0)
-    W(F("%d missing certs\n") % missing_certs);
+    W(F("%d missing certs") % missing_certs);
   if (mismatched_certs > 0)
-    W(F("%d mismatched certs\n") % mismatched_certs);
+    W(F("%d mismatched certs") % mismatched_certs);
   if (unchecked_sigs > 0)
-    W(F("%d unchecked signatures due to missing keys\n") % unchecked_sigs);
+    W(F("%d unchecked signatures due to missing keys") % unchecked_sigs);
   if (bad_sigs > 0)
-    W(F("%d bad signatures\n") % bad_sigs);
+    W(F("%d bad signatures") % bad_sigs);
 
   size_t total = missing_files + unreferenced_files +
     unreferenced_rosters + incomplete_rosters +
     non_parseable_rosters + non_normalized_rosters +
-    missing_revisions + incomplete_revisions + 
+    missing_revisions + incomplete_revisions +
     non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children +
     bad_history +
@@ -922,10 +930,10 @@ check_db(app_state & app)
     missing_keys;
   // unreferenced files and rosters and mismatched certs are not actually
   // serious errors; odd, but nothing will break.
-  size_t serious = missing_files + 
+  size_t serious = missing_files +
     incomplete_rosters + missing_rosters +
     non_parseable_rosters + non_normalized_rosters +
-    missing_revisions + incomplete_revisions + 
+    missing_revisions + incomplete_revisions +
     non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children + manifest_mismatch +
     bad_history +
@@ -933,17 +941,25 @@ check_db(app_state & app)
     unchecked_sigs + bad_sigs +
     missing_keys;
 
-  P(F("check complete: %d files; %d rosters; %d revisions; %d keys; %d certs\n")
+  P(F("check complete: %d files; %d rosters; %d revisions; %d keys; %d certs")
     % checked_files.size()
     % checked_rosters.size()
     % checked_revisions.size()
     % checked_keys.size()
     % total_certs);
-  P(F("total problems detected: %d (%d serious)\n") % total % serious);
+  P(F("total problems detected: %d (%d serious)") % total % serious);
   if (serious)
     E(false, F("serious problems detected"));
   else if (total)
-    P(F("minor problems detected\n"));
+    P(F("minor problems detected"));
   else
-    P(F("database is good\n"));
+    P(F("database is good"));
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

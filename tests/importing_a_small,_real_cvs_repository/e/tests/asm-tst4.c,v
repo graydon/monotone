@@ -1,0 +1,177 @@
+head	1.2;
+access;
+symbols
+	disasm-branch:1.2.0.2
+	initial:1.1.1.1
+	redhat:1.1.1;
+locks; strict;
+comment	@ * @;
+
+
+1.2
+date	2004.09.25.19.21.35;	author drepper;	state Exp;
+branches
+	1.2.2.1;
+next	1.1;
+
+1.1
+date	2003.08.12.06.47.45;	author drepper;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2003.08.12.06.47.45;	author drepper;	state Exp;
+branches;
+next	;
+
+1.2.2.1
+date	2005.04.21.23.15.43;	author drepper;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@(main): Add LD_LIBRARY_PATH to elflint invocation.
+@
+text
+@/* Copyright (C) 2002, 2004 Red Hat, Inc.
+   Written by Ulrich Drepper <drepper@@redhat.com>, 2002.
+
+   This program is Open Source software; you can redistribute it and/or
+   modify it under the terms of the Open Software License version 1.0 as
+   published by the Open Source Initiative.
+
+   You should have received a copy of the Open Software License along
+   with this program; if not, you may obtain a copy of the Open Software
+   License version 1.0 from http://www.opensource.org/licenses/osl.php or
+   by writing the Open Source Initiative c/o Lawrence Rosen, Esq.,
+   3001 King Ranch Road, Ukiah, CA 95482.   */
+
+#include <fcntl.h>
+#include <libasm.h>
+#include <libelf.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+
+static const char fname[] = "asm-tst4-out.o";
+
+
+int
+main (void)
+{
+  AsmCtx_t *ctx;
+  int result = 0;
+  size_t cnt;
+
+  elf_version (EV_CURRENT);
+
+  ctx = asm_begin (fname, false, EM_386, ELFCLASS32, ELFDATA2LSB);
+  if (ctx == NULL)
+    {
+      printf ("cannot create assembler context: %s\n", asm_errmsg (-1));
+      return 1;
+    }
+
+  /* Create 66000 sections.  */
+  for (cnt = 0; cnt < 66000; ++cnt)
+    {
+      char buf[20];
+      AsmScn_t *scn;
+
+      /* Create a unique name.  */
+      snprintf (buf, sizeof (buf), ".data.%Zu", cnt);
+
+      /* Create the section.  */
+      scn = asm_newscn (ctx, buf, SHT_PROGBITS, SHF_ALLOC | SHF_WRITE);
+      if (scn == NULL)
+	{
+	  printf ("cannot create section \"%s\" in output file: %s\n",
+		  buf, asm_errmsg (-1));
+	  asm_abort (ctx);
+	  return 1;
+	}
+
+      /* Add some content.  */
+      if (asm_adduint32 (scn, cnt) != 0)
+	{
+	  printf ("cannot create content of section \"%s\": %s\n",
+		  buf, asm_errmsg (-1));
+	  asm_abort (ctx);
+	  return 1;
+	}
+    }
+
+  /* Create the output file.  */
+  if (asm_end (ctx) != 0)
+    {
+      printf ("cannot create output file: %s\n", asm_errmsg (-1));
+      asm_abort (ctx);
+      return 1;
+    }
+
+  if (result == 0)
+    result = WEXITSTATUS (system ("\
+env LD_LIBRARY_PATH=../libelf ../src/elflint -q asm-tst4-out.o"));
+
+  /* We don't need the file anymore.  */
+  unlink (fname);
+
+  return result;
+}
+@
+
+
+1.2.2.1
+log
+@Preliminary changs for disasm support.
+@
+text
+@d1 1
+a1 1
+/* Copyright (C) 2002, 2004, 2005 Red Hat, Inc.
+d36 1
+a36 8
+  Ebl *ebl = ebl_openbackend_machine (EM_386);
+  if (ebl == NULL)
+    {
+      puts ("cannot open backend library");
+      return 1;
+    }
+
+  ctx = asm_begin (fname, ebl, false);
+a86 2
+  ebl_closebackend (ebl);
+
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+/* Copyright (C) 2002 Red Hat, Inc.
+d81 2
+a82 1
+    result = WEXITSTATUS (system ("../src/elflint -q asm-tst4-out.o"));
+@
+
+
+1.1.1.1
+log
+@Original import.
+@
+text
+@@

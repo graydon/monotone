@@ -1,10 +1,14 @@
 #ifndef __DIFF_PATCH_HH__
 #define __DIFF_PATCH_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -17,7 +21,7 @@
 #include <string>
 #include <vector>
 
-struct roster_t;
+class roster_t;
 
 struct conflict {};
 
@@ -28,37 +32,38 @@ void make_diff(std::string const & filename1,
                std::string const & filename2,
                file_id const & id1,
                file_id const & id2,
-               std::vector<std::string> const & lines1,
-               std::vector<std::string> const & lines2,
+               data const & data1,
+               data const & data2,
                std::ostream & ost,
-               diff_type type);
+               diff_type type,
+               std::string const & pattern);
 
 bool merge3(std::vector<std::string> const & ancestor,
             std::vector<std::string> const & left,
             std::vector<std::string> const & right,
             std::vector<std::string> & merged);
 
-struct 
+struct
 content_merge_adaptor
 {
-  virtual void record_merge(file_id const & left_ident, 
-                            file_id const & right_ident, 
+  virtual void record_merge(file_id const & left_ident,
+                            file_id const & right_ident,
                             file_id const & merged_ident,
-                            file_data const & left_data, 
+                            file_data const & left_data,
                             file_data const & merged_data) = 0;
 
   virtual void get_ancestral_roster(node_id nid,
                                     boost::shared_ptr<roster_t> & anc) = 0;
-  
+
   virtual void get_version(file_path const & path,
-                           file_id const & ident,                           
+                           file_id const & ident,
                            file_data & dat) = 0;
 
   virtual ~content_merge_adaptor() {}
 };
 
 struct
-content_merge_database_adaptor 
+content_merge_database_adaptor
   : public content_merge_adaptor
 {
   app_state & app;
@@ -69,17 +74,17 @@ content_merge_database_adaptor
                                   revision_id const & left,
                                   revision_id const & right,
                                   marking_map const & mm);
-  void record_merge(file_id const & left_ident, 
-                    file_id const & right_ident, 
+  void record_merge(file_id const & left_ident,
+                    file_id const & right_ident,
                     file_id const & merged_ident,
-                    file_data const & left_data, 
+                    file_data const & left_data,
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
                             boost::shared_ptr<roster_t> & anc);
-  
+
   void get_version(file_path const & path,
-                   file_id const & ident,                           
+                   file_id const & ident,
                    file_data & dat);
 };
 
@@ -91,20 +96,20 @@ content_merge_workspace_adaptor
   app_state & app;
   boost::shared_ptr<roster_t> base;
   content_merge_workspace_adaptor (app_state & app,
-                                   boost::shared_ptr<roster_t> base) 
-    : app(app), base(base) 
+                                   boost::shared_ptr<roster_t> base)
+    : app(app), base(base)
   {}
-  void record_merge(file_id const & left_ident, 
-                    file_id const & right_ident, 
+  void record_merge(file_id const & left_ident,
+                    file_id const & right_ident,
                     file_id const & merged_ident,
-                    file_data const & left_data, 
+                    file_data const & left_data,
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
                             boost::shared_ptr<roster_t> & anc);
-  
+
   void get_version(file_path const & path,
-                   file_id const & ident,                           
+                   file_id const & ident,
                    file_data & dat);
 };
 
@@ -119,7 +124,7 @@ struct content_merger
 
   content_merger(app_state & app,
                  roster_t const & anc_ros,
-                 roster_t const & left_ros, 
+                 roster_t const & left_ros,
                  roster_t const & right_ros,
                  content_merge_adaptor & adaptor);
 
@@ -135,9 +140,17 @@ struct content_merger
 
   std::string get_file_encoding(file_path const & path,
                                 roster_t const & ros);
-  
+
   bool attribute_manual_merge(file_path const & path,
                               roster_t const & ros);
 };
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __DIFF_PATCH_HH__

@@ -1,10 +1,14 @@
 #ifndef __VOCAB_HH__
 #define __VOCAB_HH__
 
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "config.h"
 
@@ -17,110 +21,56 @@
 // generally describe the "vocabulary" (nouns anyways) that modules in this
 // program use.
 
+// this template must be specialized for each type you want to dump.
+// there are a few stock dumpers in appropriate places.
 template <typename T>
-void dump(T const &, std::string &);
+void dump(T const &, std::string &)
+{
+  // the compiler will evaluate this somewhat odd construct (and issue an
+  // error) if and only if this base template is instantiated.  we do not
+  // use BOOST_STATIC_ASSERT mainly to avoid dragging it in everywhere;
+  // also we get better diagnostics this way (the error tells you what is
+  // wrong, not just that there's an assertion failure).
+  enum dummy { d = (sizeof(struct dump_must_be_specialized_for_this_type)
+		    == sizeof(T)) };
+}
 
+#include "vocab_macros.hh"
+#define ENCODING(enc) hh_ENCODING(enc)
+#define DECORATE(dec) hh_DECORATE(dec)
+#define ATOMIC(ty) hh_ATOMIC(ty)
+#define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
 
-#define ENCODING(enc)                                  \
-                                                       \
-template<typename INNER>                               \
-class enc;                                             \
-                                                       \
-template <typename INNER>                              \
-std::ostream & operator<<(std::ostream &,              \
-                          enc<INNER> const &);         \
-                                                       \
-template <typename INNER>                              \
-void dump(enc<INNER> const &, std::string &);          \
-                                                       \
-template<typename INNER>                               \
-class enc {                                            \
-  INNER i;                                             \
-public:                                                \
-  bool ok;                                             \
-  enc() : ok(false) {}                                 \
-  enc(std::string const & s);                          \
-  enc(INNER const & inner);                            \
-  enc(enc<INNER> const & other);                       \
-  std::string const & operator()() const               \
-    { return i(); }                                    \
-  bool operator<(enc<INNER> const & x) const           \
-    { return i() < x(); }                              \
-  enc<INNER> const &                                   \
-  operator=(enc<INNER> const & other);                 \
-  bool operator==(enc<INNER> const & x) const          \
-    { return i() == x(); }                             \
-  friend std::ostream & operator<< <>(std::ostream &,  \
-                                 enc<INNER> const &);  \
-};
+inline bool is_xdigit(char x)
+{
+  return ((x >= '0' && x <= '9')
+          || (x >= 'a' && x <= 'f')
+          || (x >= 'A' && x <= 'F'));
+}
 
+inline bool is_alpha(char x)
+{
+  return ((x >= 'a' && x <= 'z')
+          || (x >= 'A' && x <= 'Z'));
+}
 
-#define DECORATE(dec)                                  \
-                                                       \
-template<typename INNER>                               \
-class dec;                                             \
-                                                       \
-template <typename INNER>                              \
-std::ostream & operator<<(std::ostream &,              \
-                          dec<INNER> const &);         \
-                                                       \
-template <typename INNER>                              \
-void dump(dec<INNER> const &, std::string &);          \
-                                                       \
-template<typename INNER>                               \
-class dec {                                            \
-  INNER i;                                             \
-public:                                                \
-  bool ok;                                             \
-  dec() : ok(false) {}                                 \
-  dec(INNER const & inner);                            \
-  dec(dec<INNER> const & other);                       \
-  bool operator<(dec<INNER> const & x) const           \
-    { return i < x.i; }                                \
-  INNER const & inner() const                          \
-    { return i; }                                      \
-  dec<INNER> const &                                   \
-  operator=(dec<INNER> const & other);                 \
-  bool operator==(dec<INNER> const & x) const          \
-    { return i == x.i; }                               \
-  friend std::ostream & operator<< <>(std::ostream &,  \
-                                 dec<INNER> const &);  \
-};
+inline bool is_alnum(char x)
+{
+  return ((x >= '0' && x <= '9')
+          || (x >= 'a' && x <= 'z')
+          || (x >= 'A' && x <= 'Z'));
+}
 
+inline bool is_space(char x)
+{
+  return (x == ' ')
+    || (x == '\n')
+    || (x == '\t')
+    || (x == '\r')
+    || (x == '\v')
+    || (x == '\f');
+}
 
-#define ATOMIC(ty)                                     \
-class ty {                                             \
-  std::string s;                                       \
-public:                                                \
-  bool ok;                                             \
-  ty() : ok(false) {}                                  \
-  ty(std::string const & str);                         \
-  ty(ty const & other);                                \
-  std::string const & operator()() const               \
-    { return s; }                                      \
-  bool operator<(ty const & other) const               \
-    { return s < other(); }                            \
-  ty const & operator=(ty const & other);              \
-  bool operator==(ty const & other) const              \
-    { return s == other(); }                           \
-  bool operator!=(ty const & other) const              \
-    { return s != other(); }                           \
-  friend void verify(ty &);                            \
-  friend std::ostream & operator<<(std::ostream &,     \
-                                   ty const &);        \
-  struct symtab                                        \
-  {                                                    \
-    symtab();                                          \
-    ~symtab();                                         \
-  };                                                   \
-};                                                     \
-std::ostream & operator<<(std::ostream &, ty const &); \
-template <>                                            \
-void dump(ty const &, std::string &);
-
-#define ATOMIC_NOVERIFY(ty)                            \
-ATOMIC(ty)                                             \
-inline void verify(ty &) {}
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -139,6 +89,7 @@ inline void verify(ty &) {}
 // about the stuff in vocab_terms.hh
 
 typedef revision< hexenc<id> >  revision_id;
+typedef   roster< hexenc<id> >    roster_id;
 typedef manifest< hexenc<id> >  manifest_id;
 typedef     file< hexenc<id> >      file_id;
 typedef      key< hexenc<id> >       key_id;
@@ -146,6 +97,7 @@ typedef    epoch< hexenc<id> >     epoch_id;
 typedef    epoch< hexenc<data> > epoch_data;
 
 typedef revision< data >   revision_data;
+typedef   roster< data >     roster_data;
 typedef manifest< data >   manifest_data;
 typedef     file< data >       file_data;
 
@@ -171,17 +123,8 @@ struct keypair
 // in the filesystem. if you want to *define* or work with any of these you
 // need to include boost/filesystem/path.hpp.
 
-namespace boost { namespace filesystem { struct path; } }
+namespace boost { namespace filesystem { class path; } }
 namespace fs = boost::filesystem;
-
-// kludge: certs are derived types. what else can we do?
-#ifndef __CERT_HH__
-#include "cert.hh"
-EXTERN template class revision<cert>;
-EXTERN template class manifest<cert>;
-#endif
-
-#undef EXTERN
 
 // diff type
 enum diff_type
@@ -192,29 +135,40 @@ enum diff_type
 };
 
 // do these belong here?
-inline bool 
+inline bool
 null_id(hexenc<id> const & i)
 {
   return i().empty();
 }
 
-inline bool 
+inline bool
 null_id(file_id const & i)
 {
   return i.inner()().empty();
 }
 
-inline bool 
+inline bool
 null_id(manifest_id const & i)
 {
   return i.inner()().empty();
 }
 
-inline bool 
+inline bool
 null_id(revision_id const & i)
 {
   return i.inner()().empty();
 }
 
+
+hexenc<id>
+fake_id();
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __VOCAB_HH__

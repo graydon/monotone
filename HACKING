@@ -90,6 +90,10 @@ continued to adhere to the dialect we write in. in particular:
   - generally avoid anything which can generate a SEGV, as it's an
     uninformative error. prefer errors which say what went wrong.
 
+  - for importing symbols in other namespaces add a "using std::foo" 
+    for each foo used in the file and then strip "std::" from the uses. 
+    do not use "using namespace std" anywhere.
+
 
 Test suites, and writing test cases
 ----------------------------------
@@ -114,6 +118,12 @@ When fixing a bug, check for an existing test case for that bug and
 carefully observe the test case's behaviour before and after your fix. If no
 test case exists, it is strongly recommended to write a test case before
 attempting to fix the bug.
+
+Tip: if the unit tests are failing, the quickest way to find the
+problem is to search the output for the regexp \([0-9]+\) -- i.e., a
+number in parentheses.  Or, if using gdb, try setting a breakpoint on
+theboost::unit_test::first_failed_assertion function (see
+results_collector.hpp).
 
 
 Single-character macros
@@ -230,7 +240,7 @@ list.
 All changes to the monotone source require an accompanying ChangeLog entry.
 Any changes that affect the user interface (e.g. adding command-line
 options, changing the output format) or affect the documented behaviour of
-monotone must include appropriate appropriate changes to the documentation.
+monotone must include appropriate changes to the documentation.
 
 The monotone development team review and comment on all patches on a
 best-efforts basis.  Patches are never ignored, but a patch may not be

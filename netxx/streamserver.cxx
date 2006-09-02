@@ -113,7 +113,7 @@ namespace
 	for (Netxx::size_type i=0; i<sockets_size; ++i) {
 	    if (listen(sockets[i].get_socketfd(), backlog) != 0) {
 		std::string error("listen(2) error: ");
-		error += strerror(Netxx::get_last_error());
+		error += Netxx::str_error(Netxx::get_last_error());
 		throw Netxx::Exception(error);
 	    }
 	}

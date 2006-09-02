@@ -1,7 +1,11 @@
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <algorithm>
 #include <string>
@@ -22,6 +26,17 @@
 #include "keys.hh"
 #include "transforms.hh"
 
+using std::ctype;
+using std::locale;
+using std::map;
+using std::pair;
+using std::remove_if;
+using std::string;
+using std::use_facet;
+using std::vector;
+
+using boost::char_separator;
+
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
 // required to get from one hash value to the next. when you do a
@@ -37,8 +52,6 @@
 // remains.  if it becomes a maintainence burden, however, consider
 // refactoring.
 
-using namespace std;
-
 static int logged_sqlite3_exec(sqlite3* db,
                                const char* sql,
                                sqlite3_callback cb,
@@ -53,9 +66,9 @@ static int logged_sqlite3_exec(sqlite3* db,
   return res;
 }
 
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<char_separator<char> > tokenizer;
 
-static string 
+static string
 lowercase_facet(string const & in)
 {
   I(40==in.size());
@@ -67,11 +80,11 @@ lowercase_facet(string const & in)
   return string(buf,sz);
 }
 
-static void 
+static void
 massage_sql_tokens(string const & in,
                    string & out)
 {
-  boost::char_separator<char> sep(" \r\n\t", "(),;");
+  char_separator<char> sep(" \r\n\t", "(),;");
   tokenizer tokens(in, sep);
   out.clear();
   for (tokenizer::iterator i = tokens.begin();
@@ -83,7 +96,7 @@ massage_sql_tokens(string const & in,
     }
 }
 
-static void 
+static void
 calculate_id(string const & in,
              string & ident)
 {
@@ -94,7 +107,7 @@ calculate_id(string const & in,
 }
 
 
-struct 
+struct
 is_ws
 {
   bool operator()(char c) const
@@ -103,7 +116,7 @@ is_ws
     }
 };
 
-static void 
+static void
 sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 {
   string tmp, sha;
@@ -136,21 +149,21 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_text(f,sha.c_str(),sha.size(),SQLITE_TRANSIENT);
 }
 
-int 
-append_sql_stmt(void * vp, 
-                int ncols, 
+int
+append_sql_stmt(void * vp,
+                int ncols,
                 char ** values,
                 char ** colnames)
 {
   if (ncols != 1)
     return 1;
-  
+
   if (vp == NULL)
     return 1;
 
   if (values == NULL)
     return 1;
-  
+
   if (values[0] == NULL)
     return 1;
 
@@ -160,12 +173,12 @@ append_sql_stmt(void * vp,
   return 0;
 }
 
-void 
+void
 calculate_schema_id(sqlite3 *sql, string & id)
 {
   id.clear();
   string tmp, tmp2;
-  int res = logged_sqlite3_exec(sql, 
+  int res = logged_sqlite3_exec(sql,
                                 "SELECT sql FROM sqlite_master "
                                 "WHERE (type = 'table' OR type = 'index') "
                                 // filter out NULL sql statements, because
@@ -173,7 +186,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
                                 // UNIQUE constraints, etc.).
                                 "AND sql IS NOT NULL "
                                 "AND name not like 'sqlite_stat%' "
-                                "ORDER BY name", 
+                                "ORDER BY name",
                                 &append_sql_stmt, &tmp, NULL);
   if (res != SQLITE_OK)
     {
@@ -181,7 +194,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
       // assert_sqlite3_ok() in database.cc
       string errmsg(sqlite3_errmsg(sql));
       L(FL("calculate_schema_id sqlite error: %d: %s") % res % errmsg);
-      std::string auxiliary_message = "";
+      string auxiliary_message = "";
       if (res == SQLITE_ERROR)
         {
       auxiliary_message += _("make sure database and containing directory are writeable\n"
@@ -197,7 +210,7 @@ calculate_schema_id(sqlite3 *sql, string & id)
 
 typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *);
 
-struct 
+struct
 migrator
 {
   vector< pair<string,migrator_cb> > migration_events;
@@ -267,7 +280,7 @@ migrator
               }
           }
       }
-    
+
     // confirm that our target schema was met
     if (migrating)
       {
@@ -300,12 +313,12 @@ migrator
         // (no vacuum or anything, even), so that automated scripts can fire
         // one off optimistically and not have to worry about getting their
         // administrators to do it by hand.
-        P(F("no migration performed; database schema already up-to-date at %s\n") % init);
+        P(F("no migration performed; database schema already up-to-date at %s") % init);
       }
   }
 };
 
-static bool move_table(sqlite3 *sql, char **errmsg, 
+static bool move_table(sqlite3 *sql, char **errmsg,
                        char const * srcname,
                        char const * dstname,
                        char const * dstschema)
@@ -318,7 +331,7 @@ static bool move_table(sqlite3 *sql, char **errmsg,
   int res = logged_sqlite3_exec(sql, create.c_str(), NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  
+
   string insert = "INSERT INTO ";
   insert += dstname;
   insert += " SELECT * FROM ";
@@ -334,21 +347,21 @@ static bool move_table(sqlite3 *sql, char **errmsg,
   res = logged_sqlite3_exec(sql, drop.c_str(), NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-    
+
   return true;
 }
 
 
-static bool 
-migrate_client_merge_url_and_group(sqlite3 * sql, 
+static bool
+migrate_client_merge_url_and_group(sqlite3 * sql,
                                    char ** errmsg,
                                    app_state *)
 {
 
   // migrate the posting_queue table
-  if (!move_table(sql, errmsg, 
-                  "posting_queue", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "posting_queue",
+                  "tmp",
                   "("
                   "url not null,"
                   "groupname not null,"
@@ -371,16 +384,16 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
                             "FROM tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  
+
   res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
 
   // migrate the incoming_queue table
-  if (!move_table(sql, errmsg, 
-                  "incoming_queue", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "incoming_queue",
+                  "tmp",
                   "("
                   "url not null,"
                   "groupname not null,"
@@ -410,9 +423,9 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
 
 
   // migrate the sequence_numbers table
-  if (!move_table(sql, errmsg, 
-                  "sequence_numbers", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "sequence_numbers",
+                  "tmp",
                   "("
                   "url not null,"
                   "groupname not null,"
@@ -422,7 +435,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
                   ")"
                   ))
     return false;
-  
+
   res = logged_sqlite3_exec(sql, "CREATE TABLE sequence_numbers "
                             "("
                             "url primary key, -- URL to read from\n"
@@ -447,9 +460,9 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
 
 
   // migrate the netserver_manifests table
-  if (!move_table(sql, errmsg, 
-                  "netserver_manifests", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "netserver_manifests",
+                  "tmp",
                   "("
                   "url not null,"
                   "groupname not null,"
@@ -458,7 +471,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
                   ")"
                   ))
     return false;
-  
+
   res = logged_sqlite3_exec(sql, "CREATE TABLE netserver_manifests "
                             "("
                             "url not null, -- url of some server\n"
@@ -479,20 +492,20 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  
-  return true;  
+
+  return true;
 }
 
-static bool 
-migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql, 
+static bool
+migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
                                            char ** errmsg,
                                            app_state *)
 {
 
   // add the column to manifest_certs
-  if (!move_table(sql, errmsg, 
-                  "manifest_certs", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "manifest_certs",
+                  "tmp",
                   "("
                   "id not null,"
                   "name not null,"
@@ -529,9 +542,9 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
     return false;
 
   // add the column to file_certs
-  if (!move_table(sql, errmsg, 
-                  "file_certs", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "file_certs",
+                  "tmp",
                   "("
                   "id not null,"
                   "name not null,"
@@ -568,9 +581,9 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
     return false;
 
   // add the column to public_keys
-  if (!move_table(sql, errmsg, 
-                  "public_keys", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "public_keys",
+                  "tmp",
                   "("
                   "id primary key,"
                   "keydata not null"
@@ -599,9 +612,9 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
     return false;
 
   // add the column to private_keys
-  if (!move_table(sql, errmsg, 
-                  "private_keys", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "private_keys",
+                  "tmp",
                   "("
                   "id primary key,"
                   "keydata not null"
@@ -631,7 +644,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
 
   // add the merkle tree stuff
 
-  res = logged_sqlite3_exec(sql, 
+  res = logged_sqlite3_exec(sql,
                             "CREATE TABLE merkle_nodes\n"
                             "(\n"
                             "type not null,                -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
@@ -647,8 +660,8 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   return true;
 }
 
-static bool 
-migrate_client_to_revisions(sqlite3 * sql, 
+static bool
+migrate_client_to_revisions(sqlite3 * sql,
                             char ** errmsg,
                             app_state *)
 {
@@ -682,7 +695,7 @@ migrate_client_to_revisions(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, 
+  res = logged_sqlite3_exec(sql,
                             "CREATE TABLE merkle_nodes\n"
                             "(\n"
                             "type not null,                -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
@@ -724,13 +737,13 @@ migrate_client_to_revisions(sqlite3 * sql,
                             ")", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  
+
   return true;
 }
 
 
-static bool 
-migrate_client_to_epochs(sqlite3 * sql, 
+static bool
+migrate_client_to_epochs(sqlite3 * sql,
                          char ** errmsg,
                          app_state *)
 {
@@ -741,7 +754,7 @@ migrate_client_to_epochs(sqlite3 * sql,
     return false;
 
 
-  res = logged_sqlite3_exec(sql, 
+  res = logged_sqlite3_exec(sql,
                             "CREATE TABLE branch_epochs\n"
                             "(\n"
                             "hash not null unique,         -- hash of remaining fields separated by \":\"\n"
@@ -760,7 +773,7 @@ migrate_client_to_vars(sqlite3 * sql,
                        app_state *)
 {
   int res;
-  
+
   res = logged_sqlite3_exec(sql,
                             "CREATE TABLE db_vars\n"
                             "(\n"
@@ -781,7 +794,7 @@ migrate_client_to_add_indexes(sqlite3 * sql,
                               app_state *)
 {
   int res;
-  
+
   res = logged_sqlite3_exec(sql,
                             "CREATE INDEX revision_ancestry__child "
                             "ON revision_ancestry (child)",
@@ -871,7 +884,7 @@ migrate_client_to_add_rosters(sqlite3 * sql,
                               app_state *)
 {
   int res;
-  
+
   res = logged_sqlite3_exec(sql,
                             "CREATE TABLE rosters\n"
                             "(\n"
@@ -916,7 +929,7 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   return true;
 }
 
-static void 
+static void
 sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 {
   if (nargs != 1)
@@ -936,14 +949,14 @@ migrate_files_BLOB(sqlite3 * sql,
                                     app_state *app)
 {
   int res;
-  I(sqlite3_create_function(sql, "unbase64", -1, 
+  I(sqlite3_create_function(sql, "unbase64", -1,
                            SQLITE_UTF8, NULL,
-                           &sqlite3_unbase64_fn, 
+                           &sqlite3_unbase64_fn,
                            NULL, NULL) == 0);
   // change the encoding of file(_delta)s
-  if (!move_table(sql, errmsg, 
-                  "files", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "files",
+                  "tmp",
                   "("
                   "id primary key,"
                   "data not null"
@@ -968,9 +981,9 @@ migrate_files_BLOB(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  if (!move_table(sql, errmsg, 
-                  "file_deltas", 
-                  "tmp", 
+  if (!move_table(sql, errmsg,
+                  "file_deltas",
+                  "tmp",
                   "("
                   "id not null,"
                   "base not null,"
@@ -999,7 +1012,7 @@ migrate_files_BLOB(sqlite3 * sql,
     return false;
 
   // migrate other contents which are accessed by get|put_version
-  res = logged_sqlite3_exec(sql, "UPDATE manifests SET data=unbase64(data)", 
+  res = logged_sqlite3_exec(sql, "UPDATE manifests SET data=unbase64(data)",
                             NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
@@ -1045,13 +1058,13 @@ migrate_files_BLOB(sqlite3 * sql,
   return true;
 }
 
-void 
+void
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
 
   migrator m;
   m.set_app(app);
-  
+
   m.add("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
         &migrate_client_merge_url_and_group);
 
@@ -1085,3 +1098,11 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
 
   m.migrate(sql, "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df");
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

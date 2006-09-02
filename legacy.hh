@@ -1,10 +1,14 @@
 #ifndef __LEGACY_HH__
 #define __LEGACY_HH__
 
-// copyright (C) 2005 nathaniel smith <njs@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 // old code needed for reading legacy data (so we can then convert it)
 
@@ -13,13 +17,15 @@
 
 #include "paths.hh"
 
+class app_state;
+
 namespace legacy
 {
   ////////
   // parser for old .mt-attrs file format
   typedef std::map<file_path, std::map<std::string, std::string> > dot_mt_attrs_map;
 
-  void 
+  void
   read_dot_mt_attrs(data const & dat, dot_mt_attrs_map & attr);
 
   ///////
@@ -34,7 +40,7 @@ namespace legacy
 
   typedef std::map<revision_id, std::map<split_path, split_path> > renames_map;
 
-  void 
+  void
   get_manifest_and_renames_for_rev(app_state & app,
                                    revision_id const & ident,
                                    manifest_id & mid,
@@ -42,11 +48,19 @@ namespace legacy
 
   ///////
   // parsing old-style manifests, for 'rosterify' and 'changesetify' commands
-  typedef std::map<file_path, file_id, 
+  typedef std::map<file_path, file_id,
                    std::less<file_path> > manifest_map;
   void read_manifest_map(manifest_data const & mdat,
                          manifest_map & man);
 
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif

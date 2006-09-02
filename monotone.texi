@@ -13,10 +13,11 @@ This manual is for the ``monotone'' distributed version control system.
 This edition documents version @value{VERSION}.
 
 Copyright 2003, 2004 Graydon Hoare
-Copyright 2004, 2005 Nathaniel Smith
+Copyright 2004, 2005, 2006 Nathaniel Smith
 Copyright 2005 Derek Scherger
 Copyright 2005 Daniel Carosone
 Copyright 2006 Jeronimo Pellegrini
+Copyright 2006 Alex Queiroz
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -30,7 +31,7 @@ See the file COPYING for details
 @titlepage
 @title Monotone
 @subtitle A distributed version control system
-@author Graydon Hoare
+@author Graydon Hoare and others
 
 @page
 @vskip 0pt plus 1filll
@@ -38,6 +39,7 @@ Copyright @copyright{} 2003, 2004 Graydon Hoare
 Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith
 Copyright @copyright{} 2005 Derek Scherger
 Copyright @copyright{} 2005 Daniel Carosone
+Copyright @copyright{} 2006 Jeronimo Pellegrini
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -80,13 +82,13 @@ version control tools.
 * Command Reference::   Details of each monotone command
 * Hook Reference::      Functions which extend monotone
 * Special Topics::      Extra explanations and details
-* Man Page::            That other document
 * Default hooks::       The standard hook definitions
 * Index::               Index of concepts and functions
 @end menu
 
-
+@ifnottex
 Complete table of contents
+@end ifnottex
 
 @contents
 
@@ -2302,11 +2304,11 @@ change, and two problems are starting to cause occasional difficulties.
 
 @itemize
 @item
-Firstly, Jim is finding that he has to spend more of his time
+First, Jim is finding that he has to spend more of his time
 travelling, demonstrating the new juicebot features to customers; thus
 his laptop is spending more time disconnected from the network, or
 connected at dynamic addresses where it's not convenient for Abe and
-Beth to find him and sync. 
+Beth to find him and sync.
 
 This doesn't prevent them doing any work, but it does have some
 uncomfortable consequences: they're more likely to have to manually
@@ -2317,11 +2319,11 @@ suffers a disk failure before they've had a chance to sync that work
 with another database.
 
 @item
-Secondly, because Jim has been using the one database file both
-for his own local work, and for serving to the others in the team, he
+Second, because Jim has been using the one database file both for his
+own local work, and for serving to the others in the team, he
 occasionally finds that the monotone serve process (busy syncing with
 Abe or Beth) has a lock on the database, while he's trying to do local
-work like updates or commits.  
+work like updates or commits.
 
 The level of project activity is picking up, and there are more and more
 changes to be synced in the narrower window of time while Jim is
@@ -2554,6 +2556,7 @@ and tutorial, and possibly spent some time playing with the program to
 familiarize yourself with its operation.
 
 @menu
+* Other Transports::       Using netsync over SSH, or other transports.
 * Selectors::              Selecting revisions by certificate.
 * Restrictions::           Limit workspace changes to specified files.
 * Scripting::              Running monotone from other programs.
@@ -2570,6 +2573,62 @@ familiarize yourself with its operation.
 * Using packets::          Transferring data ``by hand''.
 @end menu
 
+@page
+@node    Other Transports
+@section Other Transports
+
+Monotone's database synchronization system is based on a protocol
+called netsync. By default, monotone transports this protocol over a
+plain TCP connection, but this is not the only transport monotone can
+use. It can also transport netsync through SSH, or any program which
+can provide a full-duplex connection over @code{stdio}.
+
+When a monotone client initiates a push, pull, or sync operation, it
+parses the first command-line argument as a URI and calls a lua hook
+to convert that URI into a @dfn{connection command}. If the lua hook
+returns a connection command, monotone spawns the command locally and
+speaks netsync over a pipe connected to the command's standard I/O
+handles. 
+
+If the lua hook does not return a connection command, monotone
+attempts to parse the command-line argument as a TCP address -- a
+hostname with an optional port number -- connects a TCP socket the
+host and port, and speaks netsync over the socket.
+
+By default, monotone understands two URI schemes:
+
+@enumerate
+@item SSH URIs, of the form 
+  @code{ssh://[@var{user}@@]@var{hostname}[:@var{port}]/@var{path/to/db.mtn}},
+  to synchronize between private databases on hosts accessible only
+  through SSH.  (These paths are absolute; to refer to a path relative
+  to a home directory, use
+  @code{ssh://@var{host-part}/~/@var{relative/path.mtn}} or 
+  @code{ssh://@var{host-part}/~@var{user}/@var{relative/path.mtn}}.)
+@item File URIs, of the form
+  @code{file:@var{/path/to/db.mtn}}, to synchronize between local databases.
+@end enumerate
+
+In the case of SSH URIs, the @command{ssh} program must be in your
+command execution path, either @var{$PATH} on Unix-like systems or
+@var{%PATH%} on Windows systems. Monotone will execute @command{ssh}
+as a subprocess, running @command{mtn serve} on the other end of the
+SSH connection. You will need @command{mtn} to be in the command
+execution path of the remote shell environment.
+
+In the case of File URIs, @command{mtn} is run locally, so must be 
+in your command execution path. 
+
+In both cases, the database specified in the URI needs to exist
+already, and will be locked for the duration of the synchronization
+operation. Also note that monotone's default transport authentication
+is @emph{disabled} over these transports, to reduce the complexity of
+configuration and eliminate redundant protocol cost.
+
+Additional URI schemes can be supported by customization of the lua
+hooks @code{get_netsync_connect_command} and
+@code{use_transport_auth}. For details on these hooks, see
+@ref{Netsync Transport Hooks}.
 
 @page
 @node    Selectors
@@ -3964,7 +4023,6 @@ computer clocks is not reliable, so monotone usually ignores time.
 
 
 @item mtn merge [--branch=@var{branchname}]
-@item mtn merge --lca [--branch=@var{branchname}]
 This command merges the ``heads'' of @var{branchname}, if there are
 multiple heads, and commits the results to the database, marking the
 resulting merged revision as a member of @var{branchname}. The merged
@@ -3976,17 +4034,7 @@ graph and these 3 revisions are provided to the built-in 3-way merge
 algorithm. The process then repeats for each additional head, using
 the result of each previous merge as an input to the next.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn propagate @var{sourcebranch} @var{destbranch}
-@item mtn propagate --lca @var{sourcebranch} @var{destbranch}
 This command takes a unique head from @var{sourcebranch} and merges it
 with a unique head of @var{destbranch}, using the least common
 ancestor of the two heads for a 3-way merge. The resulting revision is
@@ -4002,26 +4050,14 @@ maintenance branches for stable software releases, trivial bug fix
 branches, public contribution branches, or branches devoted to the
 development of a single module within a larger project.
 
-The @option{--lca} option is provided as a temporary workaround for some
-inherent problems with 3-way merging; if you encounter a huge number of
-spurious conflicts, or get an invariant failure, then you may wish to
-try using @option{--lca}.  Using it @emph{can}, in certain
-circumstances, cause some edits that should be conflicts to merge
-cleanly instead, which is why it is not the default; but these cases are
-rare, and until we can find something better than 3-way merging to use,
-you may find this option more convenient than @command{explicit_merge}
-
 @item mtn explicit_merge @var{id} @var{id} @var{destbranch}
-@itemx mtn explicit_merge @var{id} @var{id} @var{ancestor} @var{destbranch}
 This command merges exactly the two @var{id}s you give it, and places
 the result in branch @var{destbranch}.  It is useful when you need more
 control over the merging process than @code{propagate} or @code{merge}
 give you.  For instance, if you have a branch with three heads, and you
 only want to merge two of them, you can use this command.  Or if you
 have a branch with two heads, and you want to propagate one of them to
-another branch, again, you can use this command. If the optional
-@var{ancestor} argument is given, the merge uses that revision as the
-common ancestor instead of the default ancestor.
+another branch, again, you can use this command.
 
 @item mtn merge_into_dir @var{sourcebranch} @var{destbranch} @var{dir}
 This command takes a unique head from @var{sourcebranch} and merges it
@@ -4111,7 +4147,9 @@ deletion operations in the filesystem.  It will ignore files or
 directories which have already been deleted.
 
 @item mtn [--execute] rename @var{src} @var{dst}
+@item mtn [--execute] mv @var{src} @var{dst}
 @itemx mtn [--execute] rename @var{src1} @var{...} @var{dst/}
+@itemx mtn [--execute] mv @var{src1} @var{...} @var{dst/}
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
@@ -4133,11 +4171,17 @@ rename operations in the filesystem. It will ignore missing source files
 and will not overwrite existing destination files.
 
 @item mtn commit
+@item mtn ci
 @itemx mtn commit --message=@var{logmsg}
+@itemx mtn ci --message=@var{logmsg}
 @itemx mtn commit --message-file=@var{logfile}
+@itemx mtn ci --message-file=@var{logfile}
 @itemx mtn commit @var{pathname...}
+@itemx mtn ci @var{pathname...}
 @itemx mtn commit --message=@var{logmsg} @var{pathname...} 
+@itemx mtn ci --message=@var{logmsg} @var{pathname...} 
 @itemx mtn commit --message-file=@var{logfile} @var{pathname...} 
+@itemx mtn ci --message-file=@var{logfile} @var{pathname...} 
 
 This command looks at your workspace, decides which files have
 changed, and saves the changes to your database. It does this by loading
@@ -4265,6 +4309,39 @@ tries to select the revision to update to from this branch.  The branch
 becomes the new default branch of the workspace (even if you also
 specify an explicit @option{--revision} argument).
 
+@item mtn pluck --revision=@var{to}
+@itemx mtn pluck --revision=@var{from} --revision=@var{to}
+
+This command takes changes made at any point in history, and attempts
+to edit your current workspace to include those changes.  The end
+result is identical to running @code{mtn diff -r FROM -r TO | patch
+-p0}, except that this command uses monotone's merger, and thus
+intelligently handles renames, conflicts, and so on.
+
+If only one revision is given, applies the changes made in @var{to} as
+compared with @var{to}'s parent.  If two revisions are given, applies
+the changes made to get from @var{from} to @var{to}.
+
+Note that this is not a true cherrypick operation.  A true cherrypick,
+as that word is used in version control theory, involves applying some
+changes out of context, and then recording the identity between the
+original changes and the newly applied changes for the use of later
+merges.  This command does the first part, not the second.  As far as
+monotone is concerned, the changes made by @command{mtn pluck} are
+exactly like those made in an editor; the command is simply a
+convenient way to make certain edits quickly.  In practice, this is
+rarely a problem.  @command{mtn pluck} should almost always be used
+between branches that will never be merged --- for instance,
+backporting fixes from a development branch to a stable branch.
+
+When you use @command{pluck} you are going behind monotone's back, and
+reducing its ability to help you keep track of what has happened in
+your history.  Never use @command{pluck} where a true merging command
+like @command{merge}, @command{propagate}, or @command{explicit_merge}
+will do.  If you find yourself using @command{pluck} often, you should
+consider carefully whether there is any way to change your workflow to
+reduce your need for @command{pluck}ing.
+
 @item mtn refresh_inodeprints
 This command puts the current workspace into @ref{Inodeprints} mode,
 if it was not already, and forces a full inodeprints cache refresh.
@@ -4309,23 +4386,48 @@ recommended, though not required.
 
 @ftable @command
 @item mtn serve [--bind=[@var{address}][:@var{port}]] @var{glob} [...] [--exclude=@var{exclude-glob}]
-@itemx mtn pull [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
-@itemx mtn push [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
-@itemx mtn sync [--set-default] [@var{address}[:@var{port}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@item mtn serve --stdio [--no-transport-auth] @var{glob} [...] [--exclude=@var{exclude-glob}]
+@itemx mtn pull [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@itemx mtn push [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
+@itemx mtn sync [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 
 These commands operate the ``netsync'' protocol built into
 monotone. This is a custom protocol for rapidly synchronizing two
 monotone databases using a hash tree index. The protocol is ``peer to
 peer'', but requires one peer to listen for incoming connections (the
-server) and the other peer (the client) to connect to the server.
+server) and the other peer (the client) to connect to the server. When
+run with @option{--stdio}, the server listens for a single connection
+then terminates. When run with @option{--bind}, or with neither
+option, the server listens for TCP connections and serves them
+continuously, until it is shut down.
 
-The network @var{address} specified in each case should be the same: a
-host name to listen on, or connect to, optionally followed by a colon
-and a port number.  The default port number is 4691. The @var{glob}
-parameters indicate a set of branches to exchange.  Multiple @var{glob}
-and @option{--exclude} options can be specified; every branch which
-matches a @var{glob} exactly, and does not match an @var{exclude-glob},
-will be indexed and made available for synchronization.
+The network @var{address} given to @command{serve} as an argument to
+@option{--bind} should be a host name to listen on, optionally
+followed by a colon and a port number. The default port number is
+4691. If no @option{--bind} option is given, the server listens on
+port 4691 of every network interface.
+
+If @command{serve} is run with @option{--stdio}, a single netsync
+session is served over the @code{stdin} and @code{stdout} file
+descriptors. If @option{--no-transport-auth} is provided along with
+@option{--stdio}, transport authentication and access control mechanisms
+are disabled. Only use @option{--no-transport-auth} if you are certain 
+that the transport channel in use already provides sufficient 
+authentication and authorization facilities. 
+
+The @var{uri-or-address} arguments given to @command{push},
+@command{pull}, and @command{sync} can be of two possible forms. If
+the argument is a URI, a lua hook may transform the URI into a
+connection command, and execute the command as a transport channel for
+netsync. If the argument is a simple hostname (with optional port
+number), monotone will use a TCP socket to the specified host and port
+as a transport channel for netsync.
+
+The @var{glob} parameters indicate a set of branches to exchange.
+Multiple @var{glob} and @option{--exclude} options can be specified;
+every branch which matches a @var{glob} exactly, and does not match an
+@var{exclude-glob}, will be indexed and made available for
+synchronization.
 
 For example, perhaps Bob and Alice wish to synchronize their
 @code{net.venge.monotone.win32} and @code{net.venge.monotone.i18n}
@@ -4514,9 +4616,9 @@ $ mt complete revision 01f
 @end group
 @end smallexample
 
-@item mtn diff
-@item mtn diff --context
-@item mtn diff --external [--diff-args=@var{argstring}]
+@item mtn diff [--unified] [--show-encloser]
+@itemx mtn diff --context [--show-encloser]
+@itemx mtn diff --external [--diff-args=@var{argstring}]
 @itemx mtn diff @var{pathname...}
 @itemx mtn diff --revision=@var{id}
 @itemx mtn diff --revision=@var{id} @var{pathname...}
@@ -4551,12 +4653,32 @@ copy.  Specifying only the pathname "." will restrict @command{diff}
 to files changed within the current subdirectory of the workspace.
 
 The output format of @command{diff} is controlled by the options
-@option{--unified}, @option{--context}, and @option{--external}.
-@option{--unified} requests the ``unified diff'' format, the default
-(analogous to running the program @code{diff -u}).  @option{--context}
-request the ``context diff'' format (analogous to running the program
-@code{diff -c}).  Both of these formats are generated directly by
-monotone, using its built-in diff algorithm.
+@option{--unified}, @option{--context}, @option{--show-encloser}, and
+@option{--external}.  By default, monotone uses its built-in diff
+algorithm to produce a listing in ``unified diff'' format (analogous
+to running the program @code{diff -u}); you can also explicitly
+request this with @option{--unified}.  The built-in diff algorithm can
+also produce ``context diff'' format (analogous to @code{diff -c}),
+which you request by specifying @option{--context}.  The short options
+that @command{diff} accepts for these modes, @option{-u} and
+@option{-c}, also work.
+
+In either of these modes, you can request that monotone print the name
+of the top-level code construct that encloses each ``hunk'' of
+changes, with @option{--show-encloser}.  The options that
+@command{diff} accepts for this mode, @option{-p} and
+@option{--show-c-function}, also work.  Monotone finds the enclosing
+construct by scanning backward from the first changed line in each
+hunk for a line that matches a regular expression.  The default
+regular expression is correct for many programming languages.  You can
+adjust the expression used with the Lua hook
+@code{get_encloser_pattern}; @ref{Hooks}.
+
+
+@option{--unified} requests the ``unified diff'' format, the default.
+@option{--context} requests the ``context diff'' format (analogous to
+running the program @code{diff -c}).  Both of these formats are
+generated directly by monotone, using its built-in diff algorithm.
 
 Sometimes, you may want more flexibility in output formats; for these
 cases, you can use @option{--external}, which causes monotone to invoke
@@ -4568,6 +4690,7 @@ passed to it, and so on, are controlled by the hook
 @code{external_diff}; see @ref{Hooks} for more details.
 
 @item mtn list certs @var{id}
+@item mtn ls certs @var{id}
 
 These commands will print out a list of certificates associated with
 a particular revision @var{id}. Each line of the print out will
@@ -4624,7 +4747,9 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 @end smallexample
 
 @item mtn list keys
+@item mtn ls keys
 @itemx mtn list keys @var{pattern}
+@itemx mtn ls keys @var{pattern}
 These commands list @sc{rsa} keys held in your keystore and current database.
 They do not print out any cryptographic information; they simply list the
 names of public and private keys you have on hand.
@@ -4633,21 +4758,27 @@ If @var{pattern} is provided, it is used as a glob to limit the keys
 listed. Otherwise all keys in your database are listed.
 
 @item mtn list branches
+@item mtn ls branches
 
 This command lists all known branches in your database.
 
 @item mtn list tags
+@item mtn ls tags
 
 This command lists all known tags in your database.
 
 @item mtn list vars
+@item mtn ls vars
 @item mtn list vars @var{domain}
+@item mtn ls vars @var{domain}
 
 This command lists all vars in your database, or all vars within a given
 @var{domain}.  See @ref{Vars} for more information.
 
 @item mtn list known
+@item mtn ls known
 @itemx mtn list known @var{pathname...}
+@itemx mtn ls known @var{pathname...}
 
 This command lists all files which would become part of the manifest of
 the next revision if you comitted your workspace at this point.
@@ -4662,7 +4793,9 @@ Specifying only the pathname "." will restrict the search for known
 files to the current subdirectory of the workspace.
 
 @item mtn list unknown
+@item mtn ls unknown
 @itemx mtn list unknown @var{pathname...}
+@itemx mtn ls unknown @var{pathname...}
 
 This command lists all files in your workspace that monotone is 
 either ignoring or knows nothing about.
@@ -4677,7 +4810,9 @@ Specifying only the pathname "." will restrict the search for unknown
 files to the current subdirectory of the workspace.
 
 @item mtn list ignored
+@item mtn ls ignored
 @itemx mtn list ignored @var{pathname...}
+@itemx mtn ls ignored @var{pathname...}
 
 This command lists all files in your workspace that monotone is
 intentionally ignoring, due to the results of the @code{ignore_file
@@ -4693,7 +4828,9 @@ Specifying only the pathname "." will restrict the search for ignored
 files to the current subdirectory of the workspace.
 
 @item mtn list missing
+@item mtn ls missing
 @itemx mtn list missing @var{pathname...}
+@itemx mtn ls missing @var{pathname...}
 
 This command lists all files in your workspace's base manifest,
 which are not present in the workspace.
@@ -4708,7 +4845,9 @@ Specifying only the pathname "." will restrict the search for missing
 files to the current subdirectory of the workspace.
 
 @item mtn list changed
+@item mtn ls changed
 @itemx mtn list changed @var{pathname...}
+@itemx mtn ls changed @var{pathname...}
 
 This command lists all files in your workspace that have changed
 compared to the base revision, including files that are dropped, added
@@ -5276,6 +5415,47 @@ an error message to stderr, and exits with status 1.
 @end table
 
 
+@item mtn automate common_ancestors @var{rev1} [@var{rev2} [...]]
+
+@table @strong
+@item Arguments:
+
+One or more revision IDs, @var{rev1}, @var{rev2}, etc.
+
+@item Added in:
+
+2.1
+
+@item Purpose:
+
+Prints all revisions which are ancestors of all of the revisions given as
+arguments.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+75156724e0e2e3245838f356ec373c50fa469f1f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each giving the ID of one common ancestor of all the given
+revisions.  Each line consists of a revision ID, in hexadecimal,
+followed by a newline.  The lines are printed in alphabetically sorted
+order.
+
+The output will include one of the argument revisions only if that revision is
+an ancestor of all other revisions given as arguments.
+
+@item Error conditions:
+
+If any of the revisions do not exist, prints nothing to stdout, prints
+an error message to stderr, and exits with status 1.
+
+@end table
+
+
 @item mtn automate parents @var{rev}
 
 @table @strong
@@ -5601,6 +5781,121 @@ lines are printed in alphabetically sorted order.
 @item Error conditions:
 
 None.
+
+@end table
+
+
+@item mtn automate branches
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+Prints all branch certs present in the revision graph, that are not
+excluded by the lua hook @code{ignore_branch}.
+
+@item Sample output:
+
+@verbatim
+net.venge.monotone
+net.venge.monotone.win32
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each the name of a branch. The lines are printed
+in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+
+@item mtn automate tags [@var{branch_pattern}]
+
+@table @strong
+@item Arguments:
+
+A branch pattern (optional).
+
+@item Added in:
+
+2.2
+
+@item Purpose:
+
+If a branch pattern is given, prints all tags that are attached to
+revisions on branches matched by the pattern; otherwise prints all
+tags of the revision graph.
+
+If a branch name is ignored by means of the lua hook
+@code{ignore_branch}, it is neither printed, nor can it be matched by
+a pattern.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+     tag "monotree-0.3"
+revision [35cff8e8ba14155f5f7ddf7965073f514fd60f61]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.2"
+revision [5d288b39b49613b0d9dca8ece6b9a42c3773f35b]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.1"
+revision [8a121346ce2920b6f85df68b3b620de96bd14a8d]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib" "net.venge.monotone.contrib.monotree"
+
+     tag "monotree-0.4"
+revision [f1afc520474f83c58262896ede027ef77226046e]
+  signer "njs@pobox.com"
+branches "net.venge.monotone.contrib.monotree"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each tag.
+
+All stanzas are formatted by basic_io. Stanzas are separated by a
+blank line. Values will be escaped, '\' to '\\' and '"' to '\"'.
+
+Each stanza has exactly the following four entries:
+
+@table @option
+@item 'tag'
+the value of the tag cert, i.e. the name of the tag
+
+@item 'revision'
+the hexadecimal id of the revision the tag is attached to
+
+@item 'signer'
+the name of the key used to sign the tag cert
+
+@item 'branches'
+a (possibly empty) list of all branches the tagged revision is on
+@end table
+
+Stanzas are printed in arbitrary order.
+
+@item Error conditions:
+
+A run-time exception occures if an illegal branch pattern is
+specified.
 
 @end table
 
@@ -6010,9 +6305,12 @@ if there is more output to come.
 
 <size> is the number of bytes in the output.
 
-<output> is the output of the command. This will never exceed 1024 bytes.
-If a command produces more than 1024 bytes of output, it will be split into
-multiple pieces, with all but the last having the <last?> field set to 'm'.
+<output> is the output of the command. This will never exceed the
+maximum chunk size, which is 1024 bytes per default and can be
+adjusted using the @option{--automate-stdio-size} option.  If a
+command produces more bytes of output than fit into one chunk, it will
+be split into multiple pieces, with all but the last having the
+<last?> field set to 'm'.
 
 @item Error conditions:
 
@@ -6129,6 +6427,80 @@ If the revision specified is unknown or invalid prints an error message
 to stderr and exits with status 1.
 
 @end table
+
+
+
+@item mtn automate get_base_revision_id
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the revision id the current workspace is based on. This is the
+value stored in _MTN/revision
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+@end verbatim
+
+@item Output format:
+
+One line containing the base revision ID of the current workspace.
+
+@item Error conditions:
+
+If no workspace book keeping _MTN directory is found, prints an error
+message to stderr, and exits with status 1.
+
+@end table
+
+
+
+@item mtn automate get_current_revision_id
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+2.0
+
+@item Purpose:
+
+Prints the revision id of the current workspace. This is the id
+of the revision that would be committed by an unrestricted commit
+calculated from _MTN/revision, _MTN/work and any edits to files in the
+workspace.
+
+@item Sample output:
+
+@verbatim
+28ce076c69eadb9b1ca7bdf9d40ce95fe2f29b61
+@end verbatim
+
+@item Output format:
+
+One line containing the current revision id ID of the current workspace.
+
+@item Error conditions:
+
+If no workspace book keeping _MTN directory is found, prints an error
+message to stderr, and exits with status 1.
+
+
+@end table
+
 
 @item mtn automate get_manifest_of
 @item mtn automate get_manifest_of @var{revid}
@@ -6271,6 +6643,87 @@ Stanzas are sorted by the path string.
 @item Error conditions:
 
 If the revision ID specified is unknown or invalid prints an error
+message to stderr and exits with status 1.
+
+@end table
+
+@item mtn automate attributes @var{file}
+
+@table @strong
+@item Arguments:
+
+The argument @var{file} determines which file's attributes should be printed.
+
+@item Added in:
+
+3.0
+
+@item Purpose:
+
+Prints all attributes of the given file and the attribute states.
+
+@item Sample output:
+
+@verbatim
+format_version "1"
+
+ attr "foo" "bar"
+state "added"
+
+ attr "baz" "bat"
+state "dropped"
+
+ attr "foobar" "foobat"
+state "unchanged"
+@end verbatim
+
+@item Output format:
+
+There is one basic_io stanza for each attribute of the given file.
+
+All stanzas are formatted by basic_io. Stanzas are separated 
+by a blank line and ordered by attribute name. Values will be 
+escaped, '\' to '\\' and '"' to '\"'.
+
+Each attribute stanza also contains another entry which tells the status
+of attribute. This entry can have one of the following four values:
+
+'added': the attribute has just been added to the file
+
+'dropped': the attribute has just been dropped from the file
+
+'unchanged': the attribute has not been changed since the last revision
+
+'changed': the attribute has been changed since the last revision
+
+The status 'changed' can come up if an attribute foo has been dropped and
+added afterwards with another value, like
+
+@verbatim
+# foo has the value "bar"
+$ mtn attr drop foo ; mtn attr set foo baz
+@end verbatim
+
+If an attribute has been dropped, the output will still return the previously
+set value of the dropped attribute for convenience (obviously this is no longer
+recorded in the current workspace).
+
+The complete format:
+
+@verbatim
+'format_version'
+      used in case this format ever needs to change.
+      format: ('format_version', the string "1")
+      occurs: exactly once
+'attr':
+      represents an attribute.
+      format: ('attr', key, value), ('state', [unchanged|changed|added|dropped])
+      occurs: zero or more times
+@end verbatim
+
+@item Error conditions:
+
+If the file specified is unknown to the current workspace prints an error
 message to stderr and exits with status 1.
 
 @end table
@@ -6597,11 +7050,30 @@ files.
 By specifying @option{--rcfile=@var{directory}} you can automatically
 load all the files contained into @var{directory}.
 
+Monotone provides some default hooks, see @ref{Default hooks} for their
+complete source. When writing new hooks, it may be helpful to reuse some code
+from the default ones. Since Lua is a lexically scoped language with closures,
+this can be achieved with the following code:
+
+@smallexample
+@group
+do
+	local old_hook = default_hook
+	function default_hook(arg)
+		if not old_hook(arg) then
+			-- do other stuff
+		end
+	end
+end
+@end group
+@end smallexample
+
+Now the default hook is trapped in a variable local to this block, and can
+only be seen by the new hook. Since in Lua variables default to the global
+scope, the new hook is seen from inside monotone.
+
 Monotone also makes available to hook writers a number of helper
 functions exposing functionality not available with standard lua.
-
-For the complete source of the default hooks see @ref{Default
-hooks}.
 
 @menu
 * Hooks::                     All hooks called by monotone.
@@ -6901,6 +7373,153 @@ database from different authors can be selectively trusted using the
 
 @end ftable
 
+@anchor{Netsync Transport Hooks}
+@subsection Netsync Transport Hooks
+
+When a monotone client initiates a netsync connection, these hooks are
+called to attempt to parse the host argument provided on the command
+line. If the hooks fail or return nil, monotone will interpret the
+host argument as a network name (possibly with a port number) and open
+a TCP socket.
+
+@ftable @code
+@item get_netsync_connect_command (@var{uri}, @var{args})
+
+Returns a table describing a command to run to connect to the
+specified host. The @var{uri} argument is a table containing
+between 0 and 7 components:
+
+@itemize
+@item @code{uri["scheme"]}, such as @code{"ssh"} or @code{"file"}
+@item @code{uri["user"]}, the name of a remote user
+@item @code{uri["host"]}, the name or address of a remote host
+@item @code{uri["port"]}, a network port number
+@item @code{uri["path"]}, a filesystem path
+@item @code{uri["query"]}, for additional parameters
+@item @code{uri["fragment"]}, to describe a sub-location within the remote resource
+@end itemize
+
+The @var{args} argument is a table containing between 0 and 3
+components:
+
+@itemize
+@item @code{args["include"]}, the branch pattern to include
+@item @code{args["exclude"]}, the branch pattern to exclude
+@item @code{args["debug"]}, whether to run the connection in debug mode
+@end itemize
+
+The default definition of this hook follows:
+
+@smallexample
+@group
+function get_netsync_connect_command(uri, args)
+
+        local argv = nil
+
+        if uri["scheme"] == "ssh" 
+                and uri["host"] 
+                and uri["path"] then
+
+                argv = @{ "ssh" @}
+                if uri["user"] then
+                        table.insert(argv, "-l")
+                        table.insert(argv, uri["user"])
+                end
+                if uri["port"] then
+                        table.insert(argv, "-p")
+                        table.insert(argv, uri["port"])
+                end
+
+                table.insert(argv, uri["host"])
+        end
+        
+        if uri["scheme"] == "file" and uri["path"] then
+                argv = @{ @}
+        end
+
+        if argv then
+
+                table.insert(argv, get_mtn_command(uri["host"]))
+
+                if args["debug"] then
+                        table.insert(argv, "--debug")
+                else
+                        table.insert(argv, "--quiet")
+                end
+
+                table.insert(argv, "--db")
+                table.insert(argv, uri["path"])
+                table.insert(argv, "serve")
+                table.insert(argv, "--stdio")
+                table.insert(argv, "--no-transport-auth")
+
+                if args["include"] then
+                        table.insert(argv, args["include"])
+                end
+
+                if args["exclude"] then
+                        table.insert(argv, "--exclude")
+                        table.insert(argv, args["exclude"])
+                end
+        end
+        return argv
+end
+@end group
+@end smallexample
+
+
+@item use_transport_auth (@var{uri})
+
+Returns a boolean indicating whether monotone should use transport
+authentication mechanisms when communicating with @var{uri}. If this
+hook fails, the return value is assumed to be @code{true}. The form of
+the @var{uri} argument is a table, identical to the table provided as
+an argument to @code{get_netsync_connect_command}.
+
+Note that the return value of this hook must "match" the semantics of
+the command returned by @code{get_netsync_connect_command}. In
+particular, if this hook returns @code{false}, the @command{serve}
+command line arguments passed to the remote end of the connection
+should include the @option{--no-transport-auth} option. A mismatch
+between this hook's return value and the command line returned by
+@code{get_netsync_connect_command} will cause a communication failure,
+as the local and remote monotone processes will have mismatched
+authentication assumptions.
+
+
+@smallexample
+@group
+function use_transport_auth(uri)
+        if uri["scheme"] == "ssh" 
+        or uri["scheme"] == "file" then
+                return false
+        else
+                return true
+        end
+end
+@end group
+@end smallexample
+
+@item get_mtn_command(@var{host})
+
+Returns a string containing the monotone command to be executed on
+@var{host} when communicating over @command{ssh}.  The @var{host}
+argument is a string containing the name of the host to which
+@command{ssh} is connecting, from the server URI.  This is useful when
+there are multiple monotone binaries on the remote host, or the
+monotone binary is not in the default path.
+
+@smallexample
+@group
+function get_mtn_command(host)
+	return "mtn"
+end
+@end group
+@end smallexample
+
+@end ftable
+
+
 @anchor{Trust Evaluation Hooks}
 @subsection Trust Evaluation Hooks
 
@@ -7008,15 +7627,31 @@ lenient behavior you must redefine this hook.
 @subsection External Diff Tools
 
 Differences between files can be shown in a number of ways, varying
-according to user preference and file type. This hook allows
+according to user preference and file type. These hooks allow
 customisation of the way file differences are shown.
 
 @ftable @code
+@item get_encloser_pattern (@var{file_path})
+
+Called for each file when @command{diff} is given the
+@option{--show-encloser} option (and @emph{not} the
+@option{--external} option).  @var{file_path} is the pathname of the
+file that is being diffed.  The hook should return a string constant
+containing a regular expression; this regular expression will be used
+to find lines that, in that file, name the ``top-level'' constructs
+enclosing each ``hunk'' of changes.  The default is
+@code{^[[:alnum:]$_]}, which is correct for many programming
+languages; a few text authoring packages, like Texinfo, have special
+regular expressions that match their particular syntax.  If you have a
+better regular expression for some language, you can add it to this
+hook; and if you send it to the monotone developers, we will likely
+make it to the default for that language.
+
 @item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
                      @var{diff_args}, @var{old_rev}, @var{new_rev})
 
 Called for each file when @command{diff} is given the
-@option{--external} command.  @var{file_path} is the pathname of the
+@option{--external} option.  @var{file_path} is the pathname of the
 file that is being diffed.  @var{old_data} and @var{new_data} are the
 data contents of the old and the new file.  If the data is binary,
 @var{is_binary} will be true, otherwise false.  @var{old_rev} and
@@ -7048,35 +7683,6 @@ can override or extend these hooks if you have a preferred tool, or if
 you have a tool specific to certain file types.
 
 @ftable @code
-@anchor{merge2}
-@item merge2 (@var{left_path}, @var{right_path}, @var{merged_path}, @var{left_text}, @var{right_path})
-
-This hook is called to resolve merges that monotone could not resolve
-automatically.  The left and right contents of the file are passed in
-the @var{left_text}, and @var{right_text} strings.  In addition, the
-hook is given the names that this file had in left (@var{left_path}
-and right (@var{right_path}) trees, and the name it will end up having
-in the merged tree (@var{merged_path}).  These paths are useful for
-merge tools that can display the names of files in their GUI, since
-the actual path names are likely more meaningful than the temporary
-file names the merge tool will actually be working on.
-
-Returns a string, which should be the merger of the given texts.  The
-default definition of this hook delegates the actual merge to the
-result of @ref{get_preferred_merge2_command}.  For the default
-definition of this hook, see @ref{Default hooks}.
-
-
-@anchor{get_preferred_merge2_command}
-@item get_preferred_merge2_command(@var{tbl})
-
-Returns the results of running an external merge on two strings.
-@var{tbl} wraps up the various arguments for each merge command and 
-is always provided by @ref{merge2}. If there is a particular editor
-that you would like to use to perform merge2 operations, override
-this hook to specify it.
-
-
 @anchor{merge3}
 @item merge3 (@var{ancestor_path}, @var{left_path}, @var{right_path}, @var{merged_path}, @var{ancestor_text}, @var{left_text}, @var{right_text})
 
@@ -7094,8 +7700,12 @@ on.
 
 Returns a string, which should be the merger of the given texts.  The
 default definition of this hook delegates the actual merge to the
-result of @ref{get_preferred_merge3_command}.  For the default
-definition of this hook, see @ref{Default hooks}.
+result of @ref{get_preferred_merge3_command}.  The default definition
+of @ref{get_preferred_merge3_command} checks to see if the
+@env{MTN_MERGE} environment variable, or the lua variable
+@code{merger} are set to the name of a merge tool that it recognizes,
+and if not, then simply searches for whatever is installed on the
+local system.  For details, see the code in @ref{Default hooks}.
 
 
 @anchor{get_preferred_merge3_command}
@@ -8010,525 +8620,6 @@ yourself in the foot, and it will let you.
 
 Fortunately, this process should be extremely rare; with luck, it will
 never happen at all.  But this way we're prepared.
-
-@node    Man Page
-@chapter Man Page
-@c DEBUG: print_menu("Top")
-
-@ifnottex
-@menu
-* NAME::
-* SYNOPSIS::
-* DESCRIPTION::
-* OPTIONS::
-* ENVIRONMENT::
-* FILES::
-* NOTES::
-* SEE ALSO::
-* BUGS::
-* AUTHOR::
-
-@end menu
-@end ifnottex
-
-
-@comment TROFF INPUT: .SH NAME
-
-@node NAME
-
-@section NAME
-@c DEBUG: print_menu("NAME")
-
-monotone @minus{} distributed version control system
-@comment TROFF INPUT: .SH SYNOPSIS
-
-@node SYNOPSIS
-
-@section SYNOPSIS
-@c DEBUG: print_menu("SYNOPSIS")
-
-@ifnottex
-@menu
-* Note::
-* Commands::
-
-@end menu
-@end ifnottex
-
-
-@b{mtn} @i{[options] <command> [parameters]}
-@comment TROFF INPUT: .P
-@comment .P
-
-Options, which affect global behavior or set default values, come
-first in the argument list. A single command must follow, indicating
-the operation to perform, followed by parameters which vary depending
-on the command.
-@comment TROFF INPUT: .SS Note
-
-@node Note
-
-@subsection Note
-
-This man page is a summary of some of the features and commands of
-@b{monotone}, but it is not the most detailed source of information
-available. For a complete discussion of the concepts and a tutorial on
-its use, please refer to the texinfo manual (via the @b{info
-monotone} command, or online).
-@comment TROFF INPUT: .SS Commands
-
-@node Commands
-
-@subsection Commands
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-@item @b{comment} @i{<id>}
-Write a comment cert for a revision.
-@comment TROFF INPUT: .TP
-
-@item @b{approve} @i{<id>}
-Make a ``branch'' cert approving of a revision's membership in a branch.
-@comment TROFF INPUT: .TP
-
-@item @b{disapprove} @i{<id>}
-Disapprove of a revision, committing the inverse changes as as a
-descendent of the disapproved revision.
-@comment TROFF INPUT: .TP
-
-@item @b{tag} @i{<id> <tagname>}
-Put a symbolic tag cert on a revision.
-@comment TROFF INPUT: .TP
-
-@item @b{testresult} @i{<id> (0|1|true|false|yes|no|pass|fail)}
-Indicate a passing or failing test result on a revision.
-@comment TROFF INPUT: .TP
-
-@item @b{diff} @i{[--revision=<id1> [--revision=<id2>] ] [<pathname>...]}
-Show diffs between workspace and database.
-@comment TROFF INPUT: .TP
-
-@item @b{status} @i{[<pathname>...]}
-Show status of workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{log} @i{[id]}
-Show historical log of revisions, starting from workspace
-base revision, or @i{[id]} if given.
-@comment TROFF INPUT: .TP
-
-@item @b{cert} @i{<id> <certname> [certval]}
-Create a custom cert for a revision. Reads cert value
-from stdin if no value given on command line.
-@comment TROFF INPUT: .TP
-
-@item @b{genkey} @i{<keyid>}
-Generate an @sc{rsa} key-pair and store it in the database.
-@comment TROFF INPUT: .TP
-
-@item @b{dropkey} @i{<keyid>}
-Drop a public and/or private key.
-@comment TROFF INPUT: .TP
-
-@item @b{chkeypass} @i{<keyid>}
-Change passphrase of the private half of a key.
-@comment TROFF INPUT: .TP
-
-@item @b{list certs} @i{<id>}
-@itemx @b{ls certs} @i{ <id>}
-List certs associated with revision.
-@comment TROFF INPUT: .TP
-
-@item @b{list keys} @i{[partial-id]}
-@itemx @b{ls keys} @i{[partial-id]}
-List keys matching glob, or list all keys if no glob given.
-@comment TROFF INPUT: .TP
-
-@item @b{list branches}
-@itemx @b{ls branches}
-List all branches.
-@comment TROFF INPUT: .TP
-
-@item @b{list tags}
-@itemx @b{ls tags}
-List all tags.
-@comment TROFF INPUT: .TP
-
-@item @b{list known} @i{[<pathname>...]}
-@itemx @b{ls known} @i{[<pathname>...]}
-List files which are in revision's manifest, or are on the work list of
-the workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{list unknown} @i{[<pathname>...]}
-@itemx @b{ls unknown} @i{[<pathname>...]}
-List files in workspace, but not in revision's manifest or
-work list.
-@comment TROFF INPUT: .TP
-
-@item @b{list ignored} @i{[<pathname>...]}
-@itemx @b{ls ignored} @i{[<pathname>...]}
-List files intentionally ignored due to the ignore_file hook.
-@comment TROFF INPUT: .TP
-
-@item @b{list missing} @i{[<pathname>...]}
-@itemx @b{ls missing} @i{[<pathname>...]}
-List files in revision's manifest, but not in workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{list changed} @i{[<pathname>...]}
-@itemx @b{ls changed} @i{[<pathname>...]}
-List files in workspace that have changed compared to the base
-revision.
-@comment TROFF INPUT: .TP
-
-@item @b{fdata} @i{<id>}
-Write file data packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{fdelta} @i{<oldid> <newid>}
-Write file delta packet to stdout.
-@comment TROFF INPUT: .TP
- 
-@item @b{mdata} @i{<id>}
-Write manifest data packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{mdelta} @i{<oldid> <newid>}
-Write manifest delta packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{rcerts} @i{<id>}
-Write revision cert packets to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{rdata} @i{<id>}
-Write revision data packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{privkey} @i{<id>}
-Write private key packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{pubkey} @i{<id>}
-Write public key packet to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{read} @i{[<file1> [<file2> [...]]]}
-Read packets from files or stdin.
-@comment TROFF INPUT: .TP
-
-@item @b{cvs_import} @i{<cvsroot>/<module>}
-Import all versions in a CVS module. Reconstructs revisions and converts
-metadata to certificates. A private signing key must already exist in
-the database.
-@comment TROFF INPUT: .TP
-
-@item @b{rcs_import} @i{<rcsfile> ...}
-Import all file versions in RCS files. Does not reconstruct revisions
-across the entire tree.  You do not want this command, it is for
-debugging; use cvs_import.
-@comment TROFF INPUT: .TP
-
-@item @b{checkout} @i{[--revision=revision-id]} @i{[<directory>]}
-@itemx @b{co} @i{[--revision=revision-id]} @i{[<directory>]}
-Check out revision from database, into directory.
-@comment TROFF INPUT: .TP
-
-@item @b{cat} @i{(file <id>|manifest [<id>]|revision [<id>])}
-Write file, manifest or revision from database to stdout.
-@comment TROFF INPUT: .TP
-
-@item @b{heads}
-Show unmerged heads of branch, or report when branch is merged.
-@comment TROFF INPUT: .TP
-
-@item @b{merge}
-Merge unmerged heads of branch.
-@comment TROFF INPUT: .TP
-
-@item @b{add} @i{[--unknown] [<pathname>...]}
-Add files to workspace. adding a file does not copy it into the
-database, merely adds it to the work list. You must @b{commit} your
-changes in order to copy added files to the database.  The missing 
-flag causes those files that @command{mtn ls unknown} would
-display to be added to the project.
-@comment TROFF INPUT: .TP
-
-@item @b{drop} @i{[--missing] [--execute] [<pathname>...]}
-Drop files from workspace. Files are not deleted from workspace,
-merely noted as removals in the work list, unless the @option{--execute}
-flag is given.  If the @option{--missing} flag is given any files that
-monotone is tracking but which are not present in the workspace
-(ie. the output that @command{mtn ls missing} would give) are
-dropped.
-@comment TROFF INPUT: .TP
-
-@item @b{rename} @i{<src> <dst>}
-Rename files from @i{<src>} to @i{<dst>} in workspace.
-@comment TROFF INPUT: .TP
-
-@item @b{commit} @i{[--message=log message | --message-file=log message file] [<pathname>...]}
-Commit workspace to database.  Each commit has a changelog message
-associated with it.  If @option{--message} is provided on the command
-line, it is used; if @option{--message-file} is provided, the content of
-the named file will be used as a commit message.  If the filename is '-'
-the commit message will be read from standard input.  Otherwise a log
-message editor will be invoked.  If the file @file{_MTN/log} exists and is
-non-empty, its content is used to prefill the editor.  You cannot
-specify both @option{--message} and @option{--message-file} at the same
-time, and if @file{_MTN/log} exists and is non-empty, you can cannot
-specify either of them at all.
-@comment TROFF INPUT: .TP
-
-@item @b{update} @i{[--revision=revision]}
-Update workspace.
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{refresh_inodeprints}
-Turn on inodeprints mode, and force a cache refresh.
-
-@item @b{push} @i{<host> <glob>}
-Push contents of branches matching @i{<glob>} to database on @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{pull} @i{<host> <glob>}
-Pull contents of branches matching @i{<glob>} from database on @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{sync} @i{<host> <glob>}
-Sync contents of branches matching @i{<glob>} with database on @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{serve} @i{<host> <glob>}
-Serve contents of branches matching @i{<glob>} at network address @i{<host>}
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@item @b{automate} @i{(interface_version|heads|ancestors|attributes|parents|descendents|children|graph|erase_ancestors|toposort|ancestry_difference|leaves|inventory|stdio|certs|select)}
-Scripting interface.
-
-@item @b{db} @i{(init|info|version|dump|load|migrate|execute <sql>)}
-Manipulate database state.
-@comment TROFF INPUT: .SH DESCRIPTION
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node DESCRIPTION
-
-@section DESCRIPTION
-@c DEBUG: print_menu("DESCRIPTION")
-
-Monotone is a version control system, which allows you to keep old
-versions of files, as well as special @i{revisions} and @i{manifests}
-which describe the edit history, location, and content of files in a
-tree. Unlike other systems, versions in monotone are @i{identified} by
-cryptographic hash, and operations are authenticated by individual
-users' evaluating cryptographic signatures on meta-data, rather than
-any central authority.
-
-Monotone keeps a collection of versions in a single-file relational
-database. It is essentially serverless, using network servers only as
-untrusted communication facilities. A monotone database is a regular
-file, which contains all the information needed to extract previous
-versions of files, verify signatures, merge and modify versions, and
-communicate with network servers.
-@comment TROFF INPUT: .SH OPTIONS
-
-@node OPTIONS
-
-@section OPTIONS
-@c DEBUG: print_menu("OPTIONS")
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-@item @b{--help}
-Print help message.
-@comment TROFF INPUT: .TP
-
-@item @b{--debug}
-Turn on debugging log on standard error stream. This is very
-verbose. Default is to be silent, unless an error occurs, in which
-case failure log is dumped.
-@comment TROFF INPUT: .TP
-
-@item @b{--quiet}
-Turn off normal progress messages.
-@comment TROFF INPUT: .TP
-
-@item @b{--dump=}@i{<file>}
-Dump debugging log to @i{<file>} on failure.
-@comment TROFF INPUT: .TP
-
-@item @b{--log=}@i{<file>}
-Redirect the log lines to to @i{<file>}.
-@comment TROFF INPUT: .TP
-
-@item @b{--nostd}
-Do not evaluate "standard" Lua hooks compiled into @b{mtn}.
-@comment TROFF INPUT: .TP
-
-@item @b{--norc}
-Do not load Lua hooks from user's @b{~/.monotone/monotonerc} or the
-workspace's @b{_MTN/monotonerc} file.
-@comment TROFF INPUT: .TP
-
-@item @b{--rcfile=}@i{<file>}
-Load extra Lua hooks from @i{file} (may be given multiple times).
-@comment TROFF INPUT: .TP
-
-@item @b{--db=}@i{<file>}
-Use database in @i{file}.
-@comment TROFF INPUT: .TP
-
-@item @b{--key=}@i{<keyid>}
-@itemx @b{-k} @i{<keyid>}
-Use @i{keyid} for operations which produce @sc{rsa}
-signatures. Default is inferred from presence of unique private key in
-database. Can also be customized on a per-branch basis with hook
-function @b{get@t{_}branch@t{_}key(branchname)}.
-@comment TROFF INPUT: .TP
-
-@item @b{--branch=}@i{<branchname>}
-@itemx @b{-b} @i{<branchname>}
-Use @i{branchname} for operations on a branch. Default is inferred
-in operations on existing branches (commit, update, etc). 
-@comment TROFF INPUT: .TP
-
-@item @b{--ticker=}[@b{dot}|@b{count}|@b{none}]
-Use the given method to print tickers.  The @b{count} method prints
-the count for each ticker on one line, incrementing the numbers in
-place, while the @b{dot} method prints a continuous string of
-characters (like some programs provide a progress line of dots).
-@b{none} prints nothing.  The default is @b{count}.
-
-@item @b{--revision=}@i{<id>}
-@itemx @b{-r} @i{<id>}
-Use the given revision with the current command. The revision id could be specified as a selector. @ref{Selectors}.
-
-@item @b{--message-file=}@i{<log message file>}
-Use the content of the given file as the changelog when committing a new
-revision rather than invoking the log message editor.  If the filename
-is '-' the changelog is read from standard input.  Currently this option
-only applies to the commit command, but it may also apply to the comment
-command in the future.
-
-@item @b{--message=}@i{<log message>}
-@itemx @b{-m} @i{<log message>}
-Use the given message as the changelog when committing a new revision
-rather than invoking the log message editor. Currently this option only
-applies to the commit command but it may also apply to the comment
-command in the future.
-
-@item @b{--author=}@i{<author email>}
-Use the given author as the value of the @code{author} cert when committing
-a new revision, rather than the default author.  Useful when
-committing a patch on behalf of someone else, or when importing
-history from another version control system.
-
-@item @b{--date=}@i{<date and time>}
-Use the given given date and time as value of the @code{date} cert when
-committing a new revision, rather than the current time.  Useful when
-importing history from another version control system.
-
-@item @b{--root=}@i{<root dir>}
-Stop the search for a workspace (containing the @file{_MTN} directory)
-at the specified root directory rather than at the physical root of the
-filesystem.
-
-@item @b{--xargs=}@i{<file>}
-Inject the contents of the file in place among the command line
-arguments.  This may be useful in case the command line would otherwise
-become too long for your system.  This option can be used more than once
-if needed.
-
-@item @b{-@@} @i{<file>}
-An alias for @b{--xargs=}@i{<file>}.
-
-@comment TROFF INPUT: .SH ENVIRONMENT
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node ENVIRONMENT
-
-@section ENVIRONMENT
-@c DEBUG: print_menu("ENVIRONMENT")
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-
-@item @b{EDITOR}
-Used to edit comments, log messages, etc.
-@comment TROFF INPUT: .TP
-
-@item @b{VISUAL}
-Used in preference to @b{EDITOR}, if set.
-@comment TROFF INPUT: .SH FILES
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node FILES
-
-@section FILES
-@c DEBUG: print_menu("FILES")
-
-@comment TROFF INPUT: .TP
-
-@c ---------------------------------------------------------------------
-@table @code
-@item @b{$HOME/.monotone/monotonerc}
-A Lua script, used as a customization file.
-@comment TROFF INPUT: .SH NOTES
-
-@end table
-
-@c ---------------------------------------------------------------------
-
-@node NOTES
-
-@section NOTES
-@c DEBUG: print_menu("NOTES")
-
-@comment TROFF INPUT: .IP \(bu
-
-Command line options override environment variables and
-settings in Lua scripts (such as @b{monotonerc})
-
-@comment TROFF INPUT: .SH "SEE ALSO"
-
-@node SEE ALSO
-
-@section SEE ALSO
-@c DEBUG: print_menu("SEE ALSO")
-
-@b{info monotone}
-@comment TROFF INPUT: .SH BUGS
-
-@node BUGS
-
-@section BUGS
-@c DEBUG: print_menu("BUGS")
-
-see http://savannah.nongnu.org/bugs/?group=monotone
-@comment TROFF INPUT: .SH AUTHOR
-
-@node AUTHOR
-
-@section AUTHOR
-@c DEBUG: print_menu("AUTHOR")
-
-graydon hoare <graydon@@pobox.com>
 
 @node Default hooks
 @appendix Default hooks

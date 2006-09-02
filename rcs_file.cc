@@ -1,7 +1,11 @@
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include "config.h"
 
@@ -31,15 +35,20 @@
 
 #include <cstdio>
 
+using std::ifstream;
+using std::ios_base;
+using std::istream;
+using std::string;
+
 #ifdef HAVE_MMAP
-struct 
+struct
 file_handle
 {
-  std::string const & filename;
+  string const & filename;
   off_t length;
   int fd;
-  file_handle(std::string const & fn) : 
-    filename(fn), 
+  file_handle(string const & fn) :
+    filename(fn),
     length(0),
     fd(-1)
     {
@@ -51,7 +60,7 @@ file_handle
       if (fd == -1)
         throw oops("open of " + filename + " failed");
     }
-  ~file_handle() 
+  ~file_handle()
     {
       if (close(fd) == -1)
         throw oops("close of " + filename + " failed");
@@ -59,7 +68,7 @@ file_handle
 };
 struct file_source
 {
-  std::string const & filename;
+  string const & filename;
   int fd;
   off_t length;
   off_t pos;
@@ -82,9 +91,9 @@ struct file_source
       ++pos;
     return good();
   }
-  file_source(std::string const & fn, 
-              int f, 
-              off_t len) : 
+  file_source(string const & fn,
+              int f,
+              off_t len) :
     filename(fn),
     fd(f),
     length(len),
@@ -92,7 +101,7 @@ struct file_source
     mapping(NULL)
   {
     mapping = mmap(0, length, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (mapping == MAP_FAILED) 
+    if (mapping == MAP_FAILED)
       throw oops("mmap of " + filename + " failed");
   }
   ~file_source()
@@ -102,14 +111,14 @@ struct file_source
   }
 };
 #elif defined(WIN32)
-struct 
+struct
 file_handle
 {
-  std::string const & filename;
+  string const & filename;
   off_t length;
   HANDLE fd;
-  file_handle(std::string const & fn) : 
-    filename(fn), 
+  file_handle(string const & fn) :
+    filename(fn),
     length(0),
     fd(NULL)
     {
@@ -118,14 +127,14 @@ file_handle
         throw oops("stat of " + filename + " failed");
       length = st.st_size;
       fd = CreateFile(fn.c_str(),
-                      GENERIC_READ, 
+                      GENERIC_READ,
                       FILE_SHARE_READ,
                       NULL,
                       OPEN_EXISTING, 0, NULL);
       if (fd == NULL)
         throw oops("open of " + filename + " failed");
     }
-  ~file_handle() 
+  ~file_handle()
     {
       if (CloseHandle(fd)==0)
         throw oops("close of " + filename + " failed");
@@ -135,7 +144,7 @@ file_handle
 struct
 file_source
 {
-  std::string const & filename;
+  string const & filename;
   HANDLE fd,map;
   off_t length;
   off_t pos;
@@ -158,7 +167,7 @@ file_source
       ++pos;
     return good();
   }
-  file_source(std::string const & fn,
+  file_source(string const & fn,
               HANDLE f,
               off_t len) :
     filename(fn),
@@ -184,18 +193,18 @@ file_source
 };
 #else
 // no mmap at all
-typedef std::istream file_source;
+typedef istream file_source;
 #endif
 
-typedef enum 
+typedef enum
   {
     TOK_STRING,
     TOK_SYMBOL,
     TOK_NUM,
     TOK_SEMI,
     TOK_COLON,
-    TOK_NONE   
-  } 
+    TOK_NONE
+  }
 token_type;
 
 static inline void
@@ -210,17 +219,17 @@ adv(char i, size_t & line, size_t & col)
     ++col;
 }
 
-static token_type 
+static token_type
 get_token(file_source & ist,
-          std::string & str,
-	  size_t & line, 
+          string & str,
+	  size_t & line,
 	  size_t & col)
 {
   bool saw_idchar = false;
   int i = ist.peek();
   char c;
   str.clear();
-  
+
   // eat leading whitespace
   while (true)
     {
@@ -236,11 +245,11 @@ get_token(file_source & ist,
   switch (i)
     {
     case ';':
-      ist.get(c); 
+      ist.get(c);
       ++col;
-      return TOK_SEMI; 
+      return TOK_SEMI;
       break;
-      
+
     case ':':
       ist.get(c);
       ++col;
@@ -269,9 +278,9 @@ get_token(file_source & ist,
       break;
 
     default:
-      while (ist.good() 
-             && i != ';' 
-             && i != ':' 
+      while (ist.good()
+             && i != ';'
+             && i != ':'
              && !isspace(i))
         {
           ist.get(c);
@@ -283,7 +292,7 @@ get_token(file_source & ist,
         }
       break;
     }
-  
+
   if (str.empty())
     return TOK_NONE;
   else if (saw_idchar)
@@ -296,17 +305,17 @@ struct parser
 {
   file_source & ist;
   rcs_file & r;
-  std::string token;
+  string token;
   token_type ttype;
 
   size_t line, col;
 
   parser(file_source & s,
-         rcs_file & r) 
+         rcs_file & r)
     : ist(s), r(r), line(1), col(1)
   {}
-  
-  std::string tt2str(token_type tt)
+
+  string tt2str(token_type tt)
   {
     switch (tt)
       {
@@ -329,13 +338,13 @@ struct parser
   void advance()
   {
     ttype = get_token(ist, token, line, col);
-    // std::cerr << tt2str(ttype) << ": " << token << std::endl;
+    // cerr << tt2str(ttype) << ": " << token << endl;
   }
 
   bool nump() { return ttype == TOK_NUM; }
   bool strp() { return ttype == TOK_STRING; }
   bool symp() { return ttype == TOK_SYMBOL; }
-  bool symp(std::string const & val)
+  bool symp(string const & val)
   {
     return ttype == TOK_SYMBOL && token == val;
   }
@@ -349,17 +358,17 @@ struct parser
 
   // basic "expect / extract" functions
 
-  void str(std::string & v) { v = token; eat(TOK_STRING); }
+  void str(string & v) { v = token; eat(TOK_STRING); }
   void str() { eat(TOK_STRING); }
-  void sym(std::string & v) { v = token; eat(TOK_SYMBOL); }
+  void sym(string & v) { v = token; eat(TOK_SYMBOL); }
   void sym() { eat(TOK_SYMBOL); }
-  void num(std::string & v) { v = token; eat(TOK_NUM); }
+  void num(string & v) { v = token; eat(TOK_NUM); }
   void num() { eat(TOK_NUM); }
-  void semi() { eat(TOK_SEMI); } 
+  void semi() { eat(TOK_SEMI); }
   void colon() { eat(TOK_COLON); }
-  void expect(std::string const & expected)
-  { 
-    std::string tmp;
+  void expect(string const & expected)
+  {
+    string tmp;
     if (!symp(expected))
       throw oops((F("parse failure %d:%d: expecting word '%s'\n")
 		  % line % col % expected).str());
@@ -374,14 +383,14 @@ struct parser
             || ttype == TOK_COLON);
   }
   void word()
-  { 
+  {
     if (!wordp())
       throw oops((F("parse failure %d:%d: expecting word\n")
 		  % line % col).str());
     advance();
   }
 
-  void parse_newphrases(std::string const & terminator)
+  void parse_newphrases(string const & terminator)
   {
     while(symp() && !symp(terminator))
       {
@@ -396,26 +405,26 @@ struct parser
     expect("head"); num(r.admin.head); semi();
     if (symp("branch")) { sym(r.admin.branch); if (nump()) num(); semi(); }
     expect("access"); while(symp()) { sym(); } semi();
-    expect("symbols"); 
+    expect("symbols");
 
     // "man rcsfile" lies: there are real files in the wild which use
     // num tokens as the key value in a symbols entry. for example
     // "3.1:1.1.0.2" is a real sym:num specification, despite "3.1"
     // being a num itself, not a sym.
 
-    while(symp() || nump()) 
-      { 
-        std::string stmp, ntmp;
+    while(symp() || nump())
+      {
+        string stmp, ntmp;
 	if (symp())
 	  {
-	    sym(stmp); colon(); num(ntmp); 
+	    sym(stmp); colon(); num(ntmp);
 	  }
 	else
 	  {
-	    num(stmp); colon(); num(ntmp); 
+	    num(stmp); colon(); num(ntmp);
 	  }
         r.admin.symbols.insert(make_pair(ntmp, stmp));
-      } 
+      }
     semi();
     expect("locks"); while(symp()) { sym(); colon(); num(); } semi();
     if (symp("strict")) { sym(); semi(); }
@@ -425,7 +434,7 @@ struct parser
   }
 
   void parse_deltas()
-  {    
+  {
     while (nump())
       {
         rcs_delta d;
@@ -433,12 +442,12 @@ struct parser
         expect("date"); num(d.date); semi();
         expect("author"); sym(d.author); semi();
         expect("state"); if (symp()) sym(d.state); semi();
-        expect("branches"); 
-        while(nump()) 
-          { 
-            std::string tmp; 
-            num(tmp); 
-            d.branches.push_back(tmp); 
+        expect("branches");
+        while(nump())
+          {
+            string tmp;
+            num(tmp);
+            d.branches.push_back(tmp);
           }
         semi();
         expect("next"); if (nump()) num(d.next); semi();
@@ -458,7 +467,7 @@ struct parser
       {
         rcs_deltatext d;
         num(d.num);
-        expect("log"); str(d.log); 
+        expect("log"); str(d.log);
         parse_newphrases("text");
         expect("text"); str(d.text);
         r.push_deltatext(d);
@@ -477,16 +486,24 @@ struct parser
 };
 
 void
-parse_rcs_file(std::string const & filename, rcs_file & r)
+parse_rcs_file(string const & filename, rcs_file & r)
 {
 #if defined(HAVE_MMAP) || defined(WIN32)
       file_handle handle(filename);
       file_source ifs(filename, handle.fd, handle.length);
 #else
-      std::ifstream ifs(filename.c_str());
-      ifs.unsetf(std::ios_base::skipws);
+      ifstream ifs(filename.c_str());
+      ifs.unsetf(ios_base::skipws);
 #endif
       parser p(ifs, r);
       p.parse_file();
 }
 
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

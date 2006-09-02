@@ -1,16 +1,17 @@
 #ifndef __BASIC_IO_HH__
 #define __BASIC_IO_HH__
 
-// copyright (C) 2004 graydon hoare <graydon@pobox.com>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
+// Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
-// this file provides parsing and printing primitives used by the higher
-// level parser and printer routines for the two datatypes change_set and
-// revision_set. every revision_set contains a number of change_sets, so
-// their i/o routines are somewhat related.
 
+#include <cstdio>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -18,44 +19,40 @@
 
 #include "paths.hh"
 #include "sanity.hh"
+#include "vocab.hh"
 
-#include <cstdio>
+// This file provides parsing and printing primitives used by the
+// higher level parser and printer routines for the datatypes cset,
+// roster/marking_map and revision.
 
 namespace basic_io
 {
 
-  inline bool is_xdigit(char x) 
-  { 
-    return ((x >= '0' && x <= '9')
-	    || (x >= 'a' && x <= 'f')
-	    || (x >= 'A' && x <= 'F'));
-  }
-
-  inline bool is_alpha(char x)
-  {
-    return ((x >= 'a' && x <= 'z')
-	    || (x >= 'A' && x <= 'Z'));
-  }
-
-  inline bool is_alnum(char x)
-  {
-    return ((x >= '0' && x <= '9')
-	    || (x >= 'a' && x <= 'z')
-	    || (x >= 'A' && x <= 'Z'));
-  }
-
-  inline bool is_space(char x)
-  {
-    return (x == ' ') 
-      || (x == '\n')
-      || (x == '\t')
-      || (x == '\r')
-      || (x == '\v')
-      || (x == '\f');
-  }
-	    
+  namespace
+    {
+      namespace syms 
+        {
+          // general format symbol
+          symbol const format_version("format_version");
+          
+          // roster symbols
+          symbol const dir("dir");
+          symbol const file("file");
+          symbol const content("content");
+          symbol const attr("attr");
       
-
+          // 'local' roster and marking symbols
+          // FIXME: should these be listed as "general" symbols here as well?
+          symbol const ident("ident");
+          symbol const birth("birth");
+          symbol const dormant_attr("dormant_attr");
+      
+          symbol const path_mark("path_mark");
+          symbol const content_mark("content_mark");
+          symbol const attr_mark("attr_mark");
+        }
+    }
+    
   typedef enum
     {
       TOK_SYMBOL,
@@ -64,7 +61,7 @@ namespace basic_io
       TOK_NONE
     } token_type;
 
-  struct 
+  struct
   input_source
   {
     size_t line, col;
@@ -74,19 +71,20 @@ namespace basic_io
     int lookahead;
     char c;
     input_source(std::string const & in, std::string const & nm)
-      : line(1), col(1), in(in), curr(in.begin()), name(nm), lookahead(0), c('\0')
+      : line(1), col(1), in(in), curr(in.begin()),
+	name(nm), lookahead(0), c('\0')
     {}
 
-    inline void peek() 
-    { 
+    inline void peek()
+    {
       if (LIKELY(curr != in.end()))
-	lookahead = *curr; 
+	lookahead = *curr;
       else
 	lookahead = EOF;
     }
 
-    inline void advance() 
-    { 
+    inline void advance()
+    {
       if (LIKELY(curr != in.end()))
         {
           c = *curr;
@@ -98,14 +96,14 @@ namespace basic_io
               ++line;
             }
         }
-      peek(); 
+      peek();
     }
     void err(std::string const & s);
   };
 
   struct
   tokenizer
-  {  
+  {
     input_source & in;
     std::string::const_iterator begin;
     std::string::const_iterator end;
@@ -118,7 +116,7 @@ namespace basic_io
       begin = in.curr;
       end = begin;
     }
-    
+
     inline void advance()
     {
       in.advance();
@@ -133,7 +131,7 @@ namespace basic_io
     inline token_type get_token(std::string & val)
     {
       in.peek();
-  
+
       while (true)
         {
           if (UNLIKELY(in.lookahead == EOF))
@@ -163,7 +161,7 @@ namespace basic_io
                 in.err("non-hex character in hex string");
               advance();
 	    }
-	  
+	
 	  store(val);
 
 	  if (UNLIKELY(static_cast<char>(in.lookahead) != ']'))
@@ -190,13 +188,14 @@ namespace basic_io
 
                   // So first, store what we have *before* the escape.
                   store(val);
-                  
+
                   // Then skip over the escape backslash.
 		  in.advance();
 
                   // Make sure it's an escape we recognize.
-		  if (UNLIKELY(!(static_cast<char>(in.lookahead) == '"' 
-                                 || static_cast<char>(in.lookahead) == '\\')))
+		  if (UNLIKELY(!(static_cast<char>(in.lookahead) == '"'
+                                 ||
+				 static_cast<char>(in.lookahead) == '\\')))
                     in.err("unrecognized character escape");
 
                   // Add the escaped character onto the accumulating token.
@@ -211,9 +210,11 @@ namespace basic_io
                       if (UNLIKELY(static_cast<char>(in.lookahead) == '\\'))
                         {
                           // Skip over any further escape marker.
-                          in.advance();                          
-                          if (UNLIKELY(!(static_cast<char>(in.lookahead) == '"' 
-                                         || static_cast<char>(in.lookahead) == '\\')))
+                          in.advance();
+                          if (UNLIKELY
+			      (!(static_cast<char>(in.lookahead) == '"'
+				 ||
+				 static_cast<char>(in.lookahead) == '\\')))
                             in.err("unrecognized character escape");
                         }
                       in.advance();
@@ -223,18 +224,18 @@ namespace basic_io
                   if (static_cast<char>(in.lookahead) != '"')
                     in.err("string did not end with '\"'");
                   in.advance();
-                  
+
                   return basic_io::TOK_STRING;
 		}
 	      advance();
 	    }
-	  
+	
 	  store(val);
 
 	  if (UNLIKELY(static_cast<char>(in.lookahead) != '"'))
 	    in.err("string did not end with '\"'");
 	  in.advance();
-	  
+	
 	  return basic_io::TOK_STRING;
 	}
       else
@@ -245,22 +246,24 @@ namespace basic_io
 
   std::string escape(std::string const & s);
 
-  struct 
+  struct
   stanza
   {
     stanza();
-    size_t indent;  
-    std::vector<std::pair<std::string, std::string> > entries;
-    void push_hex_pair(std::string const & k, std::string const & v);
-    void push_hex_triple(std::string const & k, std::string const & n, std::string const & v);
-    void push_str_pair(std::string const & k, std::string const & v);
-    void push_str_triple(std::string const & k, std::string const & n, std::string const & v);
-    void push_file_pair(std::string const & k, file_path const & v);
-    void push_str_multi(std::string const & k,
+    size_t indent;
+    std::vector<std::pair<symbol, std::string> > entries;
+    void push_hex_pair(symbol const & k, hexenc<id> const & v);
+    void push_hex_triple(symbol const & k, std::string const & n,
+			 hexenc<id> const & v);
+    void push_str_pair(symbol const & k, std::string const & v);
+    void push_str_triple(symbol const & k, std::string const & n,
+			 std::string const & v);
+    void push_file_pair(symbol const & k, file_path const & v);
+    void push_str_multi(symbol const & k,
                         std::vector<std::string> const & v);
   };
 
-  struct 
+  struct
   printer
   {
     static std::string buf;
@@ -277,13 +280,13 @@ namespace basic_io
       token.reserve(128);
       advance();
     }
-    
+
     std::string token;
     token_type ttype;
 
     void err(std::string const & s);
     std::string tt2str(token_type tt);
-    
+
     inline void advance()
     {
       ttype = tok.get_token(token);
@@ -292,42 +295,50 @@ namespace basic_io
     inline void eat(token_type want)
     {
       if (ttype != want)
-        err("wanted " 
+        err("wanted "
             + tt2str(want)
             + ", got "
             + tt2str(ttype)
-            + (token.empty() 
-               ? std::string("") 
+            + (token.empty()
+               ? std::string("")
                : (std::string(" with value ") + token)));
       advance();
     }
-    
+
     inline void str() { eat(basic_io::TOK_STRING); }
     inline void sym() { eat(basic_io::TOK_SYMBOL); }
     inline void hex() { eat(basic_io::TOK_HEX); }
-    
+
     inline void str(std::string & v) { v = token; str(); }
     inline void sym(std::string & v) { v = token; sym(); }
     inline void hex(std::string & v) { v = token; hex(); }
     inline bool symp() { return ttype == basic_io::TOK_SYMBOL; }
-    inline bool symp(std::string const & val) 
+    inline bool symp(symbol const & val)
     {
-      return ttype == basic_io::TOK_SYMBOL && token == val;
+      return ttype == basic_io::TOK_SYMBOL && token == val();
     }
-    inline void esym(std::string const & val)
+    inline void esym(symbol const & val)
     {
-      if (!(ttype == basic_io::TOK_SYMBOL && token == val))
-        err("wanted symbol '" 
-            + val +
+      if (!(ttype == basic_io::TOK_SYMBOL && token == val()))
+        err("wanted symbol '"
+            + val() +
             + "', got "
             + tt2str(ttype)
-            + (token.empty() 
-               ? std::string("") 
+            + (token.empty()
+               ? std::string("")
                : (std::string(" with value ") + token)));
       advance();
     }
   };
 
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __BASIC_IO_HH__

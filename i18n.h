@@ -14,4 +14,6 @@
 #define _(str) gettext(str)
 #define N_(str) gettext_noop(str)
 
+void localize_monotone();
+
 #endif

@@ -48,6 +48,8 @@
 
 namespace Netxx {
 
+class PipeCompatibleProbe;
+
 /**
  * The Netxx::Probe class is a wrapper around one of the Netxx probe
  * classes. The reason that we have a wrapper is because most operating
@@ -55,6 +57,11 @@ namespace Netxx {
  * kqueue(2) or /dev/poll.
 **/
 class Probe {
+   /* 
+    * Probe has no public way to select read only and write only sockets 
+    * needed for probing pipes, so grant PipeCompatibleProbe to use add_socket
+    */
+    friend class PipeCompatibleProbe;
 public:
     /*
      * Bitmask for telling Probe exactly what you want and for testing the

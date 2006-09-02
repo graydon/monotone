@@ -20,15 +20,15 @@ while ! [ $# -eq 0 ] ; do
 	shift
 done
 
-if ! [ -s _MTN/revision ]; then
-	if [ "x$REV" = "x" ] || [ "x$DB" = "x" ]; then
+if [ "x$REV" = "x" ]; then
+	REV=`mtn automate get_base_revision_id 2>/dev/null`
+fi
+
+if [ "x$REV" = "x" ] || [ "x$DB" = "x" ]; then
+	if ! mtn status >/dev/null 2>/dev/null; then
 		echo "Both the -d and -r arguments are needed when this" >&2;
-		echo "script is not run from the root of a monotone workspace." >&2;
+		echo "script is not run from inside a monotone workspace." >&2;
 		exit 1;
-	fi
-else
-	if [ "x$REV" = "x" ]; then
-		REV=`cat _MTN/revision`
 	fi
 fi
 

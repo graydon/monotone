@@ -73,10 +73,13 @@ static std::string munge_argument(const char* arg)
     return result;
   }
 
-  return munge_inner_argument(arg);
+  if (*arg == 0)
+    return "\"\"";
+  else
+    return munge_inner_argument(arg);
 }
 
-static std::string munge_argv_into_cmdline(const char* const argv[])
+std::string munge_argv_into_cmdline(const char* const argv[])
 {
   std::string cmdline;
 
@@ -120,7 +123,8 @@ pid_t process_spawn(const char * const argv[])
   L(FL("searching for exe: %s\n") % argv[0]);
   if (SearchPath(NULL, argv[0], ".exe", realexelen, realexe, &filepart)==0)
     {
-      L(FL("SearchPath failed, err=%d\n") % GetLastError());
+      os_err_t errnum = GetLastError();
+      L(FL("SearchPath failed, err=%s (%d)\n") % os_strerror(errnum) % errnum);
       free(realexe);
       return -1;
     }
@@ -131,9 +135,10 @@ pid_t process_spawn(const char * const argv[])
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
   /* We don't need to set any of the STARTUPINFO members */
-  if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)==0)
+  if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)==0)
     {
-      L(FL("CreateProcess failed, err=%d\n") % GetLastError());
+      os_err_t errnum = GetLastError();
+      L(FL("CreateProcess failed, err=%s (%d)\n") % os_strerror(errnum) % errnum);
       free(realexe);
       return -1;
     }
@@ -142,10 +147,92 @@ pid_t process_spawn(const char * const argv[])
   return (pid_t)pi.hProcess;
 }
 
-int process_wait(pid_t pid, int *res)
+struct redir
+{
+  struct bad_redir {};
+  HANDLE saved;
+  int what;
+  redir(int which, char const * file);
+  ~redir();
+};
+redir::redir(int which, char const * filename)
+ : what(which)
+{
+  HANDLE file;
+  SECURITY_ATTRIBUTES sa;
+  sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+  sa.lpSecurityDescriptor = 0;
+  sa.bInheritHandle = true;
+  
+  file = CreateFile(filename,
+                    (which==0?GENERIC_READ:GENERIC_WRITE),
+                    FILE_SHARE_READ,
+                    &sa,
+                    (which==0?OPEN_EXISTING:CREATE_ALWAYS),
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL);
+  switch(which)
+  {
+  case 0:
+    saved = GetStdHandle(STD_INPUT_HANDLE);
+    SetStdHandle(STD_INPUT_HANDLE, file);
+    break;
+  case 1:
+    saved = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetStdHandle(STD_OUTPUT_HANDLE, file);
+    break;
+  case 2:
+    saved = GetStdHandle(STD_ERROR_HANDLE);
+    SetStdHandle(STD_ERROR_HANDLE, file);
+    break;
+  }
+}
+redir::~redir()
+{
+  switch(what)
+  {
+  case 0:
+    CloseHandle(GetStdHandle(STD_INPUT_HANDLE));
+    SetStdHandle(STD_INPUT_HANDLE, saved);
+    break;
+  case 1:
+    CloseHandle(GetStdHandle(STD_OUTPUT_HANDLE));
+    SetStdHandle(STD_OUTPUT_HANDLE, saved);
+    break;
+  case 2:
+    CloseHandle(GetStdHandle(STD_ERROR_HANDLE));
+    SetStdHandle(STD_ERROR_HANDLE, saved);
+    break;
+  }
+}
+pid_t process_spawn_redirected(char const * in,
+                               char const * out,
+                               char const * err,
+                               char const * const argv[])
+{
+  try
+    {
+      redir i(0, in);
+      redir o(1, out);
+      redir e(2, err);
+      return process_spawn(argv);
+    }
+  catch (redir::bad_redir)
+    {
+      return -1;
+    }
+}
+
+int process_wait(pid_t pid, int *res, int timeout)
 {
   HANDLE hProcess = (HANDLE)pid;
-  if (WaitForSingleObject(hProcess, INFINITE)==WAIT_FAILED)
+  DWORD time = INFINITE;
+  if (timeout != -1)
+    time = timeout * 1000;
+  DWORD r = WaitForSingleObject(hProcess, time);
+  if (r == WAIT_TIMEOUT)
+    return -1;
+  if (r == WAIT_FAILED)
     {
       CloseHandle(hProcess); /* May well not work, but won't harm */
       return -1;

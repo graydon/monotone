@@ -8,14 +8,17 @@
 #include <errno.h>
 #include <windows.h>
 #include <shlobj.h>
+#include <direct.h>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
-#include "vocab.hh"
+//#include "vocab.hh"
 #include "sanity.hh"
 #include "platform.hh"
+
+namespace fs = boost::filesystem;
 
 std::string
 get_current_working_dir()
@@ -30,13 +33,13 @@ get_current_working_dir()
 }
 
 void
-change_current_working_dir(any_path const & to)
+change_current_working_dir(std::string const & to)
 {
-  E(!chdir(to.as_external().c_str()),
+  E(!chdir(to.c_str()),
     F("cannot change to directory %s: %s") % to % strerror(errno));
 }
 
-system_path
+std::string
 get_default_confdir()
 {
   std::string base;
@@ -51,13 +54,13 @@ get_default_confdir()
         base = szPath;
     }
   N(!base.empty(), F("could not determine configuration path"));
-  return system_path(base) / "monotone";
+  return base + "\\monotone";
 }
 
 // FIXME: BUG: this probably mangles character sets
 // (as in, we're treating system-provided data as utf8, but it's probably in
 // the filesystem charset)
-utf8
+std::string
 get_homedir()
 {
   // Windows is fun!
@@ -99,19 +102,19 @@ get_homedir()
   return std::string("C:");
 }
 
-utf8
-tilde_expand(utf8 const & in)
+std::string
+tilde_expand(std::string const & in)
 {
-  if (in().empty() || in()[0] != '~')
+  if (in.empty() || in[0] != '~')
     return in;
-  fs::path tmp(in(), fs::native);
+  fs::path tmp(in, fs::native);
   fs::path::iterator i = tmp.begin();
   if (i != tmp.end())
     {
       fs::path res;
       if (*i == "~" || i->size() > 1 && i->at(0) == '~')
         {
-          fs::path restmp(get_homedir()(), fs::native);
+          fs::path restmp(get_homedir(), fs::native);
           res /= restmp;
           ++i;
         }
@@ -124,9 +127,9 @@ tilde_expand(utf8 const & in)
 }
 
 path::status
-get_path_status(any_path const & path)
+get_path_status(std::string const & path)
 {
-  fs::path p(path.as_external(), fs::native);
+  fs::path p(path, fs::native);
   if (!fs::exists(p))
     return path::nonexistent;
   else if (fs::is_directory(p))
@@ -140,15 +143,15 @@ rename_clobberingly_impl(const char* from, const char* to)
 {
   // MoveFileEx is only available on NT-based systems.  We will revert to a
   // more compatible DeleteFile/MoveFile pair as a compatibility fall-back.
-  typedef BOOL (*MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
-  static MoveFileExFun MoveFileEx = 0;
+  typedef BOOL (WINAPI *MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
+  static MoveFileExFun fnMoveFileEx = 0;
   static bool MoveFileExAvailable = false;
-  if (MoveFileEx == 0) {
+  if (fnMoveFileEx == 0) {
     HMODULE hModule = LoadLibrary("kernel32");
     if (hModule)
-      MoveFileEx = reinterpret_cast<MoveFileExFun>
+      fnMoveFileEx = reinterpret_cast<MoveFileExFun>
         (GetProcAddress(hModule, "MoveFileExA"));
-    if (MoveFileEx) {
+    if (fnMoveFileEx) {
       L(FL("using MoveFileEx for renames"));
       MoveFileExAvailable = true;
     } else
@@ -156,7 +159,7 @@ rename_clobberingly_impl(const char* from, const char* to)
   }
 
   if (MoveFileExAvailable) {
-    if (MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
+    if (fnMoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
       return true;
     else if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
       MoveFileExAvailable = false;
@@ -172,10 +175,8 @@ rename_clobberingly_impl(const char* from, const char* to)
 }
 
 void
-rename_clobberingly(any_path const & from, any_path const & to)
+rename_clobberingly(std::string const & from, std::string const & to)
 {
-  const char* szFrom = from.as_external().c_str();
-  const char* szTo = to.as_external().c_str();
   static const int renameAttempts = 16;
   DWORD sleepTime = 1;
   DWORD lastError = 0;
@@ -185,15 +186,16 @@ rename_clobberingly(any_path const & from, any_path const & to)
   // around the common problem where another process (e.g. a virus checker)
   // will exclusive open a file you've just touched.
   for (int i = 0; i < renameAttempts; ++i) {
-    if (rename_clobberingly_impl(szFrom, szTo))
+    if (rename_clobberingly_impl(from.c_str(), to.c_str()))
       return;
     lastError = GetLastError();
-    L(FL("attempted rename of '%s' to '%s' failed: %d")
-      % szFrom % szTo % lastError);
+    L(FL("attempted rename of '%s' to '%s' failed: (%s) %d")
+      % from % to % os_strerror(lastError) % lastError);
     Sleep(sleepTime);
     if (sleepTime < 250)
       sleepTime *= 2;
   }
-  E(false, F("renaming '%s' to '%s' failed: %d") % from % to % lastError);
+  E(false, F("renaming '%s' to '%s' failed: %s (%d)") % from % to
+           % os_strerror(lastError) % lastError);
 }
 

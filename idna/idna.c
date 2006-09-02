@@ -30,6 +30,10 @@
 
 #include "idna/idna.h"
 
+#ifdef _MSC_VER
+#define strcasecmp(a,b) _stricmp(a,b)
+#endif
+
 #define DOTP(c) ((c) == 0x002E || (c) == 0x3002 ||	\
 		 (c) == 0xFF0E || (c) == 0xFF61)
 

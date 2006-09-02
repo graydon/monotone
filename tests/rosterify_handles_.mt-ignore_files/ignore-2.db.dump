@@ -1,0 +1,116 @@
+BEGIN EXCLUSIVE;
+CREATE TABLE branch_epochs
+	(
+	hash not null unique,         -- hash of remaining fields separated by ":"
+	branch not null unique,       -- joins with revision_certs.value
+	epoch not null                -- random hex-encoded id
+	);
+CREATE TABLE db_vars
+        (
+        domain not null,      -- scope of application of a var
+        name not null,        -- var key
+        value not null,       -- var value
+        unique(domain, name)
+        );
+CREATE TABLE file_deltas
+	(	
+	id not null,      -- strong hash of file contents
+	base not null,    -- joins with files.id or file_deltas.id
+	delta not null,   -- rdiff to construct current from base
+	unique(id, base)
+	);
+CREATE TABLE files
+	(
+	id primary key,   -- strong hash of file contents
+	data not null     -- compressed, encoded contents of a file
+	);
+INSERT INTO files VALUES('f1d2d2f924e986ac86fdf7b36c94bcdf32beec15','H4sIAAAAAAAA/0vLz+cCAKhlMn4EAAAA
+');
+INSERT INTO files VALUES('e242ed3bffccdf271b7fbaf34ed72d089537b42f','H4sIAAAAAAAA/0tKLOICAOmzogQEAAAA
+');
+CREATE TABLE manifest_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with manifests.id or manifest_deltas.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+CREATE TABLE manifest_deltas
+	(
+	id not null,         -- strong hash of all the entries in a manifest
+	base not null,       -- joins with either manifest.id or manifest_deltas.id
+	delta not null,      -- rdiff to construct current from base
+	unique(id, base)
+	);
+CREATE TABLE manifests
+	(
+	id primary key,      -- strong hash of all the entries in a manifest
+	data not null        -- compressed, encoded contents of a manifest
+	);
+INSERT INTO manifests VALUES('99970351c0134c8e5f1fe1a610490568dbe4497b','H4sIAAAAAAAA/zXLSwrCQBAFwL2nyAUU53VneuY46c+TLBJBvD+K4L6KLZHghNYcfYvRmTSX
+HlM9kgKvirYuy+14X/fH+XzVpaCoFCfjS2DNjb5RtNKQ9zFXMVfwl87/+gAlwY5iawAAAA==
+
+');
+CREATE TABLE public_keys
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id primary key,         -- key identifier chosen by user
+	keydata not null        -- RSA public params
+	);
+INSERT INTO public_keys VALUES('de84b575d5e47254393eba49dce9dc4db98ed42d','njs@pobox.com','MIGdMA0GCSqGSIb3DQEBAQUAA4GLADCBhwKBgQC54vVjrrqYoTfPTgWm6JpuL+kOERcN2OSc
+BsWq6cb4Wm3nlymwVqJJywq6cbfygUYwmqyiRLPxRosfLGu228AhEzaM4JbAH1pgg7CwvvVd
+fHRXNAXEMgO89gBjkkecxLi4U/T67DrLjkRPAilCgWLZNv8YeOG9XAPegWyr7hNA9wIBEQ==');
+CREATE TABLE revision_ancestry
+	(
+	parent not null,     -- joins with revisions.id
+	child not null,      -- joins with revisions.id
+	unique(parent, child)
+	);
+INSERT INTO revision_ancestry VALUES('','b283b778201b0e861694437710832da29f94e43e');
+CREATE TABLE revision_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with revisions.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+INSERT INTO revision_certs VALUES('fdb2b361d1b742f3c1a2e9b6f112cfde058d13f3','b283b778201b0e861694437710832da29f94e43e','branch','dGVzdGJyYW5jaA==
+','njs@pobox.com','Mv5IBQF/GRcgOl1uRtUDQWkUKY50B9Bh6D/r5CRxZH/yiVTtrm9vDghmFfCUxdae9z4dl3fA
+9V26uLAXyThqzVFvaVT5e1UnRWWUItqGo5MFLvyOIhBCVCOE42vCIoSareuxWyTEDCNFyJBi
+AQV1Pv0ExSvy+3mnlmWmHtouI3s=
+');
+INSERT INTO revision_certs VALUES('898971fc9a88a9b02af5f5f3232698de972faaa5','b283b778201b0e861694437710832da29f94e43e','date','MjAwNi0wMy0yOVQwNjo0MTo1NQ==
+','njs@pobox.com','mMBymfSfH+y0Ja6qBaHgWD+wCf8U/ob0i+DEipU1IFMHbN67S9FW/z3drE649u9LJ/rIG57p
+ehMPS6ZMbzDof9G9i2t0Kj8CSYHDNA4QTluSIMVCDvda4cj/JJD6caiJcaLhajSBmcl9AvID
+VzF61OvslyaN18SKTUgoiDFGWaU=
+');
+INSERT INTO revision_certs VALUES('48c9a809224b03161c5997afb3f3d587abd07bf2','b283b778201b0e861694437710832da29f94e43e','author','bmpzQHBvYm94LmNvbQ==
+','njs@pobox.com','IYwVpgGKSrFS5JmzvgOIdQPCB8X8wZupa5dyg0Ak2hYSJQB6eEAyxDTOilKa1xvAYDTCn9EV
+BcoEP6EWUAkWAHBW1UQP5zv8NCT2qq99jeb298LSbxM2TTrXVRVPX/n4a/ptH644WaHSuBPX
+Xd5NMp08fwJgzzFCKqnEYbBHWWk=
+');
+INSERT INTO revision_certs VALUES('cd03b4688d69a61d411c9151972376650e6004b2','b283b778201b0e861694437710832da29f94e43e','changelog','Zm9v
+','njs@pobox.com','WJp4ulmN1df78TD4A/gYx+hT4qYdfdGUZN3o/5uhmiju4kPl5GoWS10790eCM8AconzxFhcA
+cqfd8Oprzqe5ikDrOX4kwNve9DyP79Gj5kD0I/DAC8zItY+vE09Pu6QqjFg+2IBtwyc6sQ6p
+CQvBFHC8wG/5MvEKOgk47yhUkFQ=
+');
+CREATE TABLE revisions
+	(
+	id primary key,      -- SHA1(text of revision)
+	data not null        -- compressed, encoded contents of a revision
+	);
+INSERT INTO revisions VALUES('b283b778201b0e861694437710832da29f94e43e','H4sIAAAAAAAA/3WMy2rDMBBF9/4KkX2DNBq9vsUYI2lmWkEsFcc0v5+0m7SFLO/h3NP5tm65
+N+HroeaUUtDWmaqNxRrZiRE22RuNSTsfqTBiCmWZpnGhdeevdm2jq3n52c/QQ8hEq7QLq9N5
+O97aex87n/7h/uSf+agff10l+9i+W0qpY6hZDAGBJEBO0ecavZCEYn1NWCqJhcJcjVt+1/rL
+HAMCky0i9XGGYEqQksUiUwDSMTkbCoIs0x3xOpIuJQEAAA==
+');
+CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
+CREATE INDEX revision_certs__id ON revision_certs (id);
+CREATE INDEX revision_certs__name_value ON revision_certs (name, value);
+COMMIT;

@@ -1,9 +1,0 @@
-AT_SETUP([test the help command])
-MTN_SETUP
-
-AT_CHECK(MTN help mv, [2], [stdout], [])
-AT_CHECK(mv stdout out, [], [], [])
-AT_CHECK(MTN --help mv, [2], [stdout], [])
-AT_CHECK(cmp out stdout, [], [ignore], [ignore])
-
-AT_CLEANUP

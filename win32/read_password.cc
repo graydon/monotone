@@ -20,7 +20,8 @@ read_password(std::string const & prompt, char * buf, size_t bufsz)
   I(buf != NULL);
 
   mt_stdin = GetStdHandle(STD_INPUT_HANDLE);
-  I(mt_stdin != INVALID_HANDLE_VALUE && mt_stdin != NULL); // NULL is non-interactive.  Can't get a passphrase if we're non-interactive
+  I(mt_stdin != INVALID_HANDLE_VALUE);
+  I(mt_stdin != NULL); // NULL is non-interactive.  Can't get a passphrase if we're non-interactive
   if (GetConsoleMode(mt_stdin, &origmode) == 0)
   {
     /* This looks like we're not a real windows console.  

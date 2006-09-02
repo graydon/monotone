@@ -5,6 +5,14 @@
 
 #ifdef WIN32
 #define BOOST_NO_STDC_NAMESPACE
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+
 #endif
 
 #include <boost/bind.hpp>
@@ -17,7 +25,7 @@
 #include <boost/filesystem/exception.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
-#include <boost/format.hpp>
+// We have a local version of this to work around a bug in the MSVC debug checking.
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>

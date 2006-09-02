@@ -32,5 +32,5 @@ licenses.
 
   -- Log2Gxl.java: Removed. Now in branch net.venge.monotone.contrib.monotree
 
-
-
+  -- mtn_cheat_sheet.svg: A SVG image inspired by Mercurial's QuickStart Guides
+     (http://people.type-z.org/seb/mercurial/v1.0/)

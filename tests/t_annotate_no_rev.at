@@ -1,9 +1,0 @@
-AT_SETUP([annotate with no revs])
-MTN_SETUP
-
-ADD_FILE(testfile, [blah blah
-])
-
-AT_CHECK(MTN annotate testfile, [1], [ignore], [ignore])
-
-AT_CLEANUP

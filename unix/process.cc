@@ -50,7 +50,7 @@ bool is_executable(const char *path)
         struct stat s;
 
         int rc = stat(path, &s);
-        N(rc != -1, F("error getting status of file %s: %s") % path % strerror(errno));
+        N(rc != -1, F("error getting status of file %s: %s") % path % os_strerror(errno));
 
         return (s.st_mode & S_IXUSR) && !(s.st_mode & S_IFDIR);
 }
@@ -69,13 +69,13 @@ int make_executable(const char *path)
         mode_t mode;
         struct stat s;
         int fd = open(path, O_RDONLY);
-        N(fd != -1, F("error opening file %s: %s") % path % strerror(errno));
+        N(fd != -1, F("error opening file %s: %s") % path % os_strerror(errno));
         if (fstat(fd, &s))
           return -1;
         mode = s.st_mode;
         mode |= ((S_IXUSR|S_IXGRP|S_IXOTH) & ~read_umask());
         int ret = fchmod(fd, mode);
-        N(close(fd) == 0, F("error closing file %s: %s") % path % strerror(errno));
+        N(close(fd) == 0, F("error closing file %s: %s") % path % os_strerror(errno));
         return ret;
 }
 
@@ -105,14 +105,83 @@ pid_t process_spawn(const char * const argv[])
         }
 }
 
-int process_wait(pid_t pid, int *res)
+struct redir
+{
+  struct bad_redir {};
+  int savedfd;
+  int fd;
+  redir(int which, char const * file);
+  ~redir();
+};
+redir::redir(int which, char const * file)
+ : savedfd(-1), fd(which)
+{
+  int tempfd = open(file, (which==0?O_RDONLY:O_WRONLY|O_CREAT|O_TRUNC), 0664);
+  if (tempfd == -1)
+    {
+      throw redir::bad_redir();
+    }
+  int oldfd = dup(which);
+  if (oldfd == -1)
+    {
+      close(tempfd);
+      throw redir::bad_redir();
+    }
+  close(which);
+  while (dup2(tempfd, which) == -1 && errno == EINTR) ;
+  close(tempfd);
+  fd = which;
+  savedfd = oldfd;
+}
+redir::~redir()
+{
+  if (savedfd != -1)
+    {
+      close(fd);
+      dup2(savedfd, fd);
+      close(savedfd);
+    }
+}
+
+pid_t process_spawn_redirected(char const * in,
+                               char const * out,
+                               char const * err,
+                               char const * const argv[])
+{
+  try
+    {
+      redir i(0, in);
+      redir o(1, out);
+      redir e(2, err);
+      return process_spawn(argv);
+    }
+  catch (redir::bad_redir & r)
+    {
+      return -1;
+    }
+}
+
+int process_wait(pid_t pid, int *res, int timeout)
 {
         int status;
-        pid = waitpid(pid, &status, 0);
+        int flags = 0;
+        if (timeout == -1)
+          timeout = 0;
+        else
+          flags |= WNOHANG;
+        int r;
+        for (r = 0; r == 0 && timeout >= 0; --timeout)
+          {
+            r = waitpid(pid, &status, flags);
+            if (r == 0 && timeout > 0)
+              process_sleep(1);
+          }
+        if (r == 0)
+          return -1;
         if (WIFEXITED(status))    
                 *res = WEXITSTATUS(status);
         else
-                *res = -1;
+                *res = -WTERMSIG(status);
         return 0;
 }
 
@@ -129,4 +198,9 @@ int process_sleep(unsigned int seconds)
 pid_t get_process_id()
 {
         return getpid();
+}
+
+void ignore_sigpipe()
+{
+  signal(SIGPIPE, SIG_IGN);
 }

@@ -1,12 +1,14 @@
-// -*- mode: C++; c-file-style: "gnu"; indent-tabs-mode: nil; c-basic-offset: 2 -*-
-// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
-// copyright (C) 2002, 2003 graydon hoare <graydon@pobox.com>
-// copyright (C) 2006 vinzenz feenstra <evilissimo@c-plusplus.de>
-// all rights reserved.
-// licensed to the public under the terms of the GNU GPL (>= 2)
-// see the file COPYING for details
 #ifndef __DATABASE_HH__
 #define __DATABASE_HH__
+
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 struct sqlite3;
 struct sqlite3_stmt;
@@ -36,7 +38,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 // deals with two sorts of version relationships. the versions
 // stored in the database are all *backwards* from those the program
 // sees. so for example if you have two versions of a file
-// 
+//
 // file.1, file.2
 //
 // where file.2 was a modification of file.1, then as far as the rest of
@@ -61,7 +63,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 // express this in the type system some day, but not presently.
 //
 // the key phrase to keep repeating when working on this code is:
-// 
+//
 // "base files are new, derived files are old"
 //
 // it makes the code confusing, I know. this is possibly the worst part of
@@ -69,8 +71,8 @@ int sqlite3_finalize(sqlite3_stmt *);
 
 class transaction_guard;
 struct posting;
-struct app_state;
-struct revision_set;
+class app_state;
+struct revision_t;
 struct query;
 
 class database
@@ -88,31 +90,33 @@ class database
 
   std::map<std::string, statement> statement_cache;
   std::map<std::pair<std::string, hexenc<id> >, data> pending_writes;
+  size_t pending_writes_size;
 
+  size_t size_pending_write(std::string const & tab, hexenc<id> const & id, data const & dat);
   bool have_pending_write(std::string const & tab, hexenc<id> const & id);
   void load_pending_write(std::string const & tab, hexenc<id> const & id, data & dat);
   void cancel_pending_write(std::string const & tab, hexenc<id> const & id);
   void schedule_write(std::string const & tab, hexenc<id> const & id, data const & dat);
-  
-  struct app_state * __app;
+  void flush_pending_writes();
+
+  app_state * __app;
   struct sqlite3 * __sql;
   struct sqlite3 * sql(bool init = false, bool migrating_format = false);
   int transaction_level;
   bool transaction_exclusive;
 
   void install_functions(app_state * app);
-  void install_views();
 
   typedef std::vector< std::vector<std::string> > results;
- 
+
   void execute(query const & q);
- 
-  void fetch(results & res, 
-             int const want_cols, 
-             int const want_rows, 
+
+  void fetch(results & res,
+             int const want_cols,
+             int const want_rows,
              query const & q);
- 
-  bool exists(hexenc<id> const & ident, 
+
+  bool exists(hexenc<id> const & ident,
               std::string const & table);
   bool delta_exists(hexenc<id> const & ident,
                     std::string const & table);
@@ -123,7 +127,7 @@ class database
   unsigned int page_size();
   unsigned int cache_size();
 
-  void get_ids(std::string const & table, std::set< hexenc<id> > & ids); 
+  void get_ids(std::string const & table, std::set< hexenc<id> > & ids);
 
   void get(hexenc<id> const & new_id,
            data & dat,
@@ -132,17 +136,17 @@ class database
                  hexenc<id> const & base,
                  delta & del,
                  std::string const & table);
-  void get_version(hexenc<id> const & id,
+  void get_version(hexenc<id> const & ident,
                    data & dat,
                    std::string const & data_table,
                    std::string const & delta_table);
-  
+
   void put(hexenc<id> const & new_id,
            data const & dat,
            std::string const & table);
   void drop(hexenc<id> const & base,
             std::string const & table);
-  void put_delta(hexenc<id> const & id,
+  void put_delta(hexenc<id> const & ident,
                  hexenc<id> const & base,
                  delta const & del,
                  std::string const & table);
@@ -159,34 +163,34 @@ class database
 
   bool cert_exists(cert const & t,
                   std::string const & table);
-  void put_cert(cert const & t, std::string const & table);  
+  void put_cert(cert const & t, std::string const & table);
   void results_to_certs(results const & res,
                        std::vector<cert> & certs);
 
   void get_certs(std::vector< cert > & certs,
-                 std::string const & table);  
+                 std::string const & table);
 
-  void get_certs(hexenc<id> const & id, 
-                 std::vector< cert > & certs,
-                 std::string const & table);  
-
-  void get_certs(cert_name const & name,              
+  void get_certs(hexenc<id> const & ident,
                  std::vector< cert > & certs,
                  std::string const & table);
 
-  void get_certs(hexenc<id> const & id,
-                 cert_name const & name,
+  void get_certs(cert_name const & name,
                  std::vector< cert > & certs,
-                 std::string const & table);  
+                 std::string const & table);
 
-  void get_certs(hexenc<id> const & id,
+  void get_certs(hexenc<id> const & ident,
                  cert_name const & name,
-                 base64<cert_value> const & val, 
                  std::vector< cert > & certs,
-                 std::string const & table);  
+                 std::string const & table);
+
+  void get_certs(hexenc<id> const & ident,
+                 cert_name const & name,
+                 base64<cert_value> const & val,
+                 std::vector< cert > & certs,
+                 std::string const & table);
 
   void get_certs(cert_name const & name,
-                 base64<cert_value> const & val, 
+                 base64<cert_value> const & val,
                  std::vector<cert> & certs,
                  std::string const & table);
 
@@ -225,26 +229,26 @@ public:
   void ensure_open_for_format_changes();
   void check_is_not_rosterified();
   bool database_specified();
-  
-  bool file_version_exists(file_id const & id);
-  bool roster_version_exists(hexenc<id> const & id);
-  bool revision_exists(revision_id const & id);
-  bool roster_link_exists_for_revision(revision_id const & id);
-  bool roster_exists_for_revision(revision_id const & id);
 
-  void get_roster_links(std::map<revision_id, hexenc<id> > & links);
+  bool file_version_exists(file_id const & ident);
+  bool roster_version_exists(roster_id const & ident);
+  bool revision_exists(revision_id const & ident);
+  bool roster_link_exists_for_revision(revision_id const & ident);
+  bool roster_exists_for_revision(revision_id const & ident);
+
+  void get_roster_links(std::map<revision_id, roster_id> & links);
   void get_file_ids(std::set<file_id> & ids);
   void get_revision_ids(std::set<revision_id> & ids);
-  void get_roster_ids(std::set< hexenc<id> > & ids) ;
+  void get_roster_ids(std::set<roster_id> & ids) ;
 
 
   bool check_integrity();
 
   void set_app(app_state * app);
-  
+
   // get plain version if it exists, or reconstruct version
   // from deltas (if they exist)
-  void get_file_version(file_id const & id,
+  void get_file_version(file_id const & ident,
                         file_data & dat);
 
   // put file w/o predecessor into db
@@ -261,16 +265,16 @@ public:
                                 file_delta & del);
 
   // get plain version if it exists, or reconstruct version
-  // from deltas (if they exist). 
-  void get_manifest_version(manifest_id const & id,
+  // from deltas (if they exist).
+  void get_manifest_version(manifest_id const & ident,
                             manifest_data & dat);
 
   void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
 
-  void get_revision_parents(revision_id const & id,
+  void get_revision_parents(revision_id const & ident,
                            std::set<revision_id> & parents);
 
-  void get_revision_children(revision_id const & id,
+  void get_revision_children(revision_id const & ident,
                              std::set<revision_id> & children);
 
   void get_revision_manifest(revision_id const & cid,
@@ -278,24 +282,24 @@ public:
 
   void deltify_revision(revision_id const & rid);
 
-  void get_revision(revision_id const & id,
-                    revision_set & cs);
+  void get_revision(revision_id const & ident,
+                    revision_t & cs);
 
-  void get_revision(revision_id const & id,
+  void get_revision(revision_id const & ident,
                     revision_data & dat);
 
   void put_revision(revision_id const & new_id,
-                    revision_set const & rev);
+                    revision_t const & rev);
 
   void put_revision(revision_id const & new_id,
                     revision_data const & dat);
-  
+
   void delete_existing_revs_and_certs();
 
   void delete_existing_manifests();
 
   void delete_existing_rev_and_certs(revision_id const & rid);
-  
+
   void delete_branch_named(cert_value const & branch);
 
   void delete_tag_named(cert_value const & tag);
@@ -308,21 +312,21 @@ public:
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
 
   bool public_key_exists(hexenc<id> const & hash);
-  bool public_key_exists(rsa_keypair_id const & id);
+  bool public_key_exists(rsa_keypair_id const & ident);
 
-  
-  void get_pubkey(hexenc<id> const & hash, 
-                  rsa_keypair_id & id,
+
+  void get_pubkey(hexenc<id> const & hash,
+                  rsa_keypair_id & ident,
                   base64<rsa_pub_key> & pub_encoded);
 
-  void get_key(rsa_keypair_id const & id, 
+  void get_key(rsa_keypair_id const & ident,
                base64<rsa_pub_key> & pub_encoded);
 
-  void put_key(rsa_keypair_id const & id, 
+  void put_key(rsa_keypair_id const & ident,
                base64<rsa_pub_key> const & pub_encoded);
 
   void delete_public_key(rsa_keypair_id const & pub_id);
-  
+
   // note: this section is ridiculous. please do something about it.
 
   bool revision_cert_exists(revision<cert> const & cert);
@@ -336,49 +340,49 @@ public:
 
   void get_revision_certs(std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name, 
+  void get_revision_certs(cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
-                          cert_name const & name, 
+  void get_revision_certs(revision_id const & ident,
+                          cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
   void get_revision_certs(cert_name const & name,
-                          base64<cert_value> const & val, 
+                          base64<cert_value> const & val,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
-                          cert_name const & name, 
+  void get_revision_certs(revision_id const & ident,
+                          cert_name const & name,
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
+  void get_revision_certs(revision_id const & ident,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & id, 
+  void get_revision_certs(revision_id const & ident,
                           std::vector< hexenc<id> > & hashes);
 
   void get_revision_cert(hexenc<id> const & hash,
                          revision<cert> & c);
-  
-  void get_manifest_certs(manifest_id const & id, 
+
+  void get_manifest_certs(manifest_id const & ident,
                           std::vector< manifest<cert> > & certs);
 
-  void get_manifest_certs(cert_name const & name, 
+  void get_manifest_certs(cert_name const & name,
                           std::vector< manifest<cert> > & certs);
 
-  // epochs 
+  // epochs
 
   void get_epochs(std::map<cert_value, epoch_data> & epochs);
 
   void get_epoch(epoch_id const & eid, cert_value & branch, epoch_data & epo);
-  
+
   bool epoch_exists(epoch_id const & eid);
 
-  void set_epoch(cert_value const & branch, epoch_data const & epo);  
+  void set_epoch(cert_value const & branch, epoch_data const & epo);
 
   void clear_epoch(cert_value const & branch);
- 
+
   // vars
 
   void get_vars(std::map<var_key, var_value > & vars);
@@ -396,25 +400,25 @@ public:
 
   // roster and node_id stuff
   void get_roster_id_for_revision(revision_id const & rev_id,
-                                  hexenc<id> & roster_id);
+                                  roster_id & ros_id);
 
-  void get_roster(revision_id const & rid, 
+  void get_roster(revision_id const & rid,
                   roster_t & roster);
 
-  void get_roster(revision_id const & rid, 
+  void get_roster(revision_id const & rid,
                   roster_t & roster,
                   marking_map & marks);
 
-  void get_roster(hexenc<id> const & roster_id,
-                  data & dat);
+  void get_roster_version(roster_id const & ros_id,
+                          roster_data & dat);
 
   void get_uncommon_ancestors(revision_id const & a,
                               revision_id const & b,
                               std::set<revision_id> & a_uncommon_ancs,
                               std::set<revision_id> & b_uncommon_ancs);
-                              
+
   node_id next_node_id();
-  
+
   // completion stuff
 
   void complete(std::string const & partial,
@@ -428,10 +432,10 @@ public:
 
   void complete(selectors::selector_type ty,
                 std::string const & partial,
-                std::vector<std::pair<selectors::selector_type, 
+                std::vector<std::pair<selectors::selector_type,
                                       std::string> > const & limit,
                 std::set<std::string> & completions);
-  
+
   ~database();
 
 };
@@ -446,7 +450,7 @@ public:
 // another process is accessing the database an exception will be thrown -
 // uglier and more confusing for the user - however no data inconsistency
 // should result.
-// 
+//
 // An exception is thrown if an exclusive transaction_guard is created
 // while a non-exclusive transaction_guard exists.
 //
@@ -504,5 +508,13 @@ public:
 void
 close_all_databases();
 
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif // __DATABASE_HH__

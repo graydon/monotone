@@ -1,20 +1,33 @@
-#include "cmd.hh"
-#include "revision.hh"
-#include "database_check.hh"
-#include "transforms.hh"
+// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
 
 #include <iostream>
+#include <utility>
+
+#include "charset.hh"
+#include "cmd.hh"
+#include "database_check.hh"
+#include "revision.hh"
+
 using std::cin;
 using std::cout;
-#include <utility>
+using std::make_pair;
 using std::pair;
-
 using std::set;
+using std::string;
 
-// Deletes a revision from the local database.  This can be used to 'undo' a
-// changed revision from a local database without leaving (much of) a trace.
+// Deletes a revision from the local database.  This can be used to
+// 'undo' a changed revision from a local database without leaving
+// (much of) a trace.
+
 static void
-kill_rev_locally(app_state& app, std::string const& id)
+kill_rev_locally(app_state& app, string const& id)
 {
   revision_id ident;
   complete(app, id, ident);
@@ -30,7 +43,7 @@ kill_rev_locally(app_state& app, std::string const& id)
   app.db.delete_existing_rev_and_certs(ident);
 }
 
-CMD(db, N_("database"), 
+CMD(db, N_("database"),
     N_("init\n"
       "info\n"
       "version\n"
@@ -44,9 +57,9 @@ CMD(db, N_("database"),
       "check\n"
       "changesetify\n"
       "rosterify\n"
-      "set_epoch BRANCH EPOCH\n"), 
+      "set_epoch BRANCH EPOCH\n"),
     N_("manipulate database state"),
-    OPT_DROP_ATTR)
+    option::drop_attr)
 {
   if (args.size() == 1)
     {
@@ -92,7 +105,8 @@ CMD(db, N_("database"),
         {
           epoch_data ed(idx(args,2)());
           N(ed.inner()().size() == constants::epochlen,
-            F("The epoch must be %s characters") % constants::epochlen);
+            F("The epoch must be %s characters") 
+	    % constants::epochlen);
           app.db.set_epoch(cert_value(idx(args, 1)()), ed);
         }
       else
@@ -104,7 +118,7 @@ CMD(db, N_("database"),
 
 CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
     N_("set the database variable NAME to VALUE, in domain DOMAIN"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -115,12 +129,12 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
   internalize_var_domain(idx(args, 0), d);
   n = var_name(idx(args, 1)());
   v = var_value(idx(args, 2)());
-  app.db.set_var(std::make_pair(d, n), v);
+  app.db.set_var(make_pair(d, n), v);
 }
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),
     N_("remove the database variable NAME in domain DOMAIN"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -130,13 +144,14 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
   internalize_var_domain(idx(args, 0), d);
   n = var_name(idx(args, 1)());
   var_key k(d, n);
-  N(app.db.var_exists(k), F("no var with name %s in domain %s") % n % d);
+  N(app.db.var_exists(k), 
+    F("no var with name %s in domain %s") % n % d);
   app.db.clear_var(k);
 }
 
 CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("complete partial id"),
-    OPT_VERBOSE)
+    option::verbose)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -147,7 +162,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     F("non-hex digits in partial id"));
 
   if (idx(args, 0)() == "revision")
-    {      
+    {
       set<revision_id> completions;
       app.db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
@@ -179,6 +194,13 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
         }
     }
   else
-    throw usage(name);  
+    throw usage(name);
 }
 
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
