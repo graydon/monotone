@@ -23,8 +23,9 @@ using boost::lexical_cast;
 // responsible for migrating workspace directories from metadata formats
 // used by older versions of monotone.  This file also defines the other
 // workspace:: functions related to metadata format.  Whenever a new
-// workspace format is added, this file must be updated and tests must be
-// added to tests/migrate_workspace/.
+// workspace format is added, this file must be updated and a test must be
+// added to tests/workspace_migration/, following the instructions in that
+// file.
 
 // Workspace metadata formats have a revision number, which is a simple
 // nonnegative integer.  Any given version of monotone supports normal use
