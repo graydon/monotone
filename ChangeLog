@@ -1,3 +1,28 @@
+2006-09-01  Zack Weinberg  <zackw@panix.com>
+
+	* roster.hh (parent_map, parent_entry): New typedefs.
+	(parent_id, parent_roster): New functions.
+	* restriction.hh, restriction.cc (node_restriction constructor):
+	Add variant that takes a parent_map plus a roster, instead of two
+	rosters.
+	* revision.hh, revision.cc (make_restricted_revision): New function.
+	(make_revision): Add variant that takes a parent_map and a roster.
+	* work.cc (get_roster_for_rid): New static function.
+	(workspace::get_base_revision, workspace::get_current_roster_shape): Use it.
+	(workspace::get_parent_rosters): New member function.
+	* work.hh: Update commentary.  Declare get_parent_rosters.
+
+	* cmd_merging.cc (explicit_merge_and_update): Use new
+	make_revision variant.
+	* cmd_ws_commit.cc (status): Update for multi-parent workspaces,
+	using get_parent_rosters, make_restricted_revision, etc.
+	(commit): Likewise.  Make it an error if the revision already
+	exists in the database.
+
+	* tests/explicit_merge_and_update: Correct check of status output.
+	* tests/restrictions_with_renames_and_adds: Don't commit the same
+	thing twice with the same parent.
+
 2006-08-31  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (get_work_rev): Export as workspace member function.

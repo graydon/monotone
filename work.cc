@@ -135,23 +135,31 @@ workspace::get_revision_id(revision_id & c)
 
 // structures derived from the work revision, the database, and possibly
 // the workspace
+
+static void
+get_roster_for_rid(revision_id const & rid,
+                   roster_t & ros,
+                   marking_map & mm,
+                   database & db)
+{
+  if (!null_id(rid))
+    {
+      N(db.revision_exists(rid),
+        F("base revision %s does not exist in database") % rid);
+
+      db.get_roster(rid, ros, mm);
+    }
+  L(FL("base roster has %d entries") % ros.all_nodes().size());
+}
+
+
 void
 workspace::get_base_revision(revision_id & rid,
                              roster_t & ros,
                              marking_map & mm)
 {
   get_revision_id(rid);
-
-  if (!null_id(rid))
-    {
-
-      N(db.revision_exists(rid),
-        F("base revision %s does not exist in database") % rid);
-
-      db.get_roster(rid, ros, mm);
-    }
-
-  L(FL("base roster has %d entries") % ros.all_nodes().size());
+  get_roster_for_rid(rid, ros, mm, db);
 }
 
 void
@@ -170,6 +178,23 @@ workspace::get_base_roster(roster_t & ros)
   get_base_revision(rid, ros, mm);
 }
 
+// ??? We may want a version of this that returns the marking_maps too.
+void
+workspace::get_parent_rosters(parent_map & parents)
+{
+  revision_t rev;
+  get_work_rev(rev);
+
+  parents.clear();
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); i++)
+    {
+      marking_map mm;
+      roster_t ros;
+      get_roster_for_rid(edge_old_revision(i), ros, mm, db);
+      safe_insert(parents, make_pair(edge_old_revision(i), ros));
+    }
+}
+
 void
 workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 {
@@ -182,16 +207,8 @@ workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
   revision_id rid = edge_old_revision(rev.edges.begin());
   cset shape = edge_changes(rev.edges.begin());
 
-  // FIXME code duplication with get_base_revision.
-  if (!null_id(rid))
-    {
-      marking_map mm;
-      N(db.revision_exists(rid),
-        F("base revision %s does not exist in database") % rid);
-
-      db.get_roster(rid, ros, mm);
-    }  
-  L(FL("base roster has %d entries") % ros.all_nodes().size());
+  marking_map mm;
+  get_roster_for_rid(rid, ros, mm, db);
 
   editable_roster_base er(ros, nis);
   shape.apply_to(er);

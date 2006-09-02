@@ -51,9 +51,9 @@ check(samefile("otherfile_mod", "otherfile"))
 check(mtn("automate", "graph"), 0, {"ancestry"}, nil)
 
 -- both testfile and otherfile should be in state 'patched'
--- [test fails at this point because status has not been updated for
--- multi-parent workspaces]
-check(mtn("status"), 0, "patched testfile\npatched otherfile\n", nil)
+check(mtn("status"), 0, true, nil)
+check(qgrep("patched testfile", "stdout"))
+check(qgrep("patched otherfile", "stdout"))
 
 -- a commit at this point should succeed
 commit()

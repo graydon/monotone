@@ -406,6 +406,35 @@ write_manifest_of_roster(roster_t const & ros,
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident);
 
+
+// Parent maps are used in a number of places to keep track of all the
+// parent rosters of a given revision.
+typedef std::map<revision_id, roster_t>
+parent_map;
+
+typedef parent_map::value_type
+parent_entry;
+
+inline revision_id const & parent_id(parent_entry const & p)
+{
+  return p.first;
+}
+
+inline revision_id const & parent_id(parent_map::const_iterator i)
+{
+  return i->first;
+}
+
+inline roster_t const & parent_roster(parent_entry const & p)
+{
+  return p.second;
+}
+
+inline roster_t const & parent_roster(parent_map::const_iterator i)
+{
+  return i->second;
+}
+
 #ifdef BUILD_UNIT_TESTS
 
 struct testing_node_id_source

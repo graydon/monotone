@@ -104,9 +104,23 @@ struct workspace
   // read the (partial) revision describing the current workspace.
   void get_work_rev(revision_t & rev);
 
-  // convenience wrappers around the above functions.  note that they do
-  // not support multi-parent revisions yet.
-  
+  // convenience wrappers around the above functions.  these interfaces are
+  // safe for use with multi-parent workspaces:
+
+  // This returns the current roster, except it does not bother updating the
+  // hashes in that roster -- the "shape" is correct, all files and dirs exist
+  // and under the correct names -- but do not trust file content hashes.
+  // If you need the current roster with correct file content hashes, call
+  // update_current_roster_from_filesystem on the result of this function.
+  void get_current_roster_shape(roster_t & ros, node_id_source & nis);
+
+  // This returns a map whose keys are revision_ids and whose values are
+  // rosters, there being one such pair for each parent of the current
+  // revision.
+  void get_parent_rosters(parent_map & parents);
+
+  // ... these interfaces can only be used with single-parent workspaces:
+
   // the current cset representing uncommitted add/drop/rename operations
   // (not deltas)
   void get_work_cset(cset & w);
@@ -118,13 +132,6 @@ struct workspace
   void get_base_revision(revision_id & rid, roster_t & ros);
   void get_base_revision(revision_id & rid, roster_t & ros, marking_map & mm);
   void get_base_roster(roster_t & ros);
-
-  // This returns the current roster, except it does not bother updating the
-  // hashes in that roster -- the "shape" is correct, all files and dirs exist
-  // and under the correct names -- but do not trust file content hashes.
-  // If you need the current roster with correct file content hashes, call
-  // update_current_roster_from_filesystem on the result of this function.
-  void get_current_roster_shape(roster_t & ros, node_id_source & nis);
 
   // This returns both the base roster (as get_base_roster would) and the
   // current roster shape (as get_current_roster_shape would).  The caveats

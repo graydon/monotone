@@ -673,17 +673,13 @@ CMD(explicit_merge_and_update, N_("tree"),
   make_cset(working_roster, merged_roster, update);
   app.work.perform_content_update(update, wca);
 
-  // Two-parent revisions have to be made by hand.
+  // Construct the workspace revision.
+  parent_map parents;
+  safe_insert(parents, std::make_pair(left, left_roster));
+  safe_insert(parents, std::make_pair(right, right_roster));
+
   revision_t merged_rev;
-  calculate_ident(merged_roster, merged_rev.new_manifest);
-
-  shared_ptr<cset> left_to_merged(new cset);
-  make_cset(left_roster, merged_roster, *left_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(left, left_to_merged));
-
-  shared_ptr<cset> right_to_merged(new cset);
-  make_cset(right_roster, merged_roster, *right_to_merged);
-  safe_insert(merged_rev.edges, std::make_pair(right, right_to_merged));
+  make_revision(parents, merged_roster, merged_rev);
 
   // small race condition here...
   app.work.put_work_rev(merged_rev);
