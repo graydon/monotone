@@ -515,7 +515,7 @@ session::~session()
   static const char letters[] = "0123456789abcdef";
   string nonce;
   for (int i = 0; i < 16; i++)
-    nonce.append(1, letters[Botan::Global_RNG::random(Botan::Nonce)
+    nonce.append(1, letters[Botan::Global_RNG::random()
                             % (sizeof(letters) - 1)]);
 
   vector<cert> unattached_certs;
