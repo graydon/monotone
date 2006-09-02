@@ -1,5 +1,10 @@
 2006-09-01  Zack Weinberg  <zackw@panix.com>
 
+	* tests/explicit_merge_and_update: Augment to test starting from
+	all four possible base revisions of the workspace.
+
+2006-09-01  Zack Weinberg  <zackw@panix.com>
+
 	* roster.hh (parent_map, parent_entry): New typedefs.
 	(parent_id, parent_roster): New functions.
 	* restriction.hh, restriction.cc (node_restriction constructor):

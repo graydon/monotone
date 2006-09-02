@@ -17,6 +17,7 @@ check(get("merged"))
 
 copy("dont_merge", "testfile")
 commit()
+unrelated = base_revision()
 
 revert_to(anc)
 copy("left", "testfile")
@@ -32,43 +33,47 @@ right = base_revision()
 check(mtn("automate", "graph"), 0, true, nil)
 rename("stdout", "ancestry")
 
--- XXX If we don't do the revert_to(anc) here, we get the wrong
--- merge result.
-revert_to(anc)
 check(get("otherfile_mod"))
-copy("otherfile_mod", "otherfile")
+for d,r in pairs({ anc_d = anc,
+		   unrelated_d = unrelated,
+		   left_d = left,
+		   right_d = right }) do
+   check(mtn("checkout", "-r"..r, d), 0, false, false)
+   copy("otherfile_mod", d.."/otherfile")
 
-check(mtn("explicit_merge_and_update", left, right), 0, false, false)
+   check(indir(d, mtn("explicit_merge_and_update", left, right)), 0, false, false)
 
--- testfile should be the same as merged
-check(samefile("merged", "testfile"))
+   -- testfile should be the same as merged
+   check(samefile("merged", d.."/testfile"))
 
--- otherfile should still be the same as otherfile_mod
-check(samefile("otherfile_mod", "otherfile"))
+   -- otherfile should still be the same as otherfile_mod
+   check(samefile("otherfile_mod", d.."/otherfile"))
 
--- the database should be unaffected, i.e. the operation should not have
--- created any new revisions
-check(mtn("automate", "graph"), 0, {"ancestry"}, nil)
+   -- the database should be unaffected, i.e. the operation
+   -- should not have created any new revisions
+   check(indir(d, mtn("automate", "graph")), 0, {"ancestry"}, nil)
 
--- both testfile and otherfile should be in state 'patched'
-check(mtn("status"), 0, true, nil)
-check(qgrep("patched testfile", "stdout"))
-check(qgrep("patched otherfile", "stdout"))
+   -- both testfile and otherfile should be in state 'patched'
+   check(indir(d, mtn("status")), 0, true, nil)
+   check(qgrep("patched testfile", "stdout"))
+   check(qgrep("patched otherfile", "stdout"))
 
--- a commit at this point should succeed
-commit()
-merged = base_revision()
+   -- a commit at this point should succeed
+   check(indir(d, commit))
+   merged = indir(d, base_revision)
 
--- automate parents 'merged' should list both 'left' and 'right', in
--- no particular order, and nothing else
-check(mtn("automate", "parents", merged), 0, true, nil)
-want = { [left] = true, [right] = true }
-L("parents of revision "..merged..":\n")
-log_file_contents("stdout")
-for line in io.open("stdout", "r"):lines() do
-   if want[line] then
-      want[line] = nil
-   else
-      err("Unexpected or duplicate parent: "..line.."\n", 3)
+   -- automate parents 'merged' should list both 'left' and
+   -- 'right', in no particular order, and nothing else
+   check(indir(d, mtn("automate", "parents", merged)), 0, true, nil)
+   want = { [left] = true, [right] = true }
+   L("parents of revision "..merged..":\n")
+   log_file_contents("stdout")
+   for line in io.open("stdout", "r"):lines() do
+      if want[line] then
+	 want[line] = nil
+      else
+	 err("Unexpected or duplicate parent: "..line.."\n", 3)
+      end
    end
 end
+check(false)
