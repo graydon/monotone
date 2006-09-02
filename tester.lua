@@ -255,39 +255,6 @@ function get(name, as)
   return getstd(test.name .. "/" .. name, as)
 end
 
--- Build a directory tree.  The argument is either a table, or a
--- string naming a file in the test directory which, when evaluated,
--- returns a table.  This table describes a directory tree which is to
--- be created in the current directory, as follows: Keys of the tree
--- are filenames.  If the value associated with a key is a string,
--- then a regular file is created with that name, and the string as
--- its contents.  If the value is a table, then a directory is created
--- with that name, and the contents of the table are interpreted
--- recursively according to the above rules, to give the subdirectory
--- contents.
-function gettree(tree)
-   if type(tree) == "string" then
-      tree = dofile(testdir .. "/" .. test.name .. "/" .. tree)
-   end
-   if type(tree) ~= "table" then
-      err("gettree called with bad argument")
-   end
-   _gettree(tree, '')
-end
-function _gettree(tree, prefix)
-   for name,content in pairs(tree) do
-      if type(content) == "string" then
-	 writefile(prefix .. name, content)
-      elseif type(content) == "table" then
-	 mkdir(prefix .. name)
-	 _gettree(content, prefix .. name .. '/')
-      else
-	 err("gettree: bad table content, key " .. prefix .. name .. 
-	     ", type " .. type(content))
-      end
-   end
-end
-
 -- include from the main tests directory; there's no reason
 -- to want to include from the dir for the current test,
 -- since in that case it could just go in the driver file.
