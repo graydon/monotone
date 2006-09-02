@@ -2,84 +2,98 @@ AUTOMAKE_OPTIONS=subdir-objects 1.7.1
 ACLOCAL_AMFLAGS = -I m4
 
 CMD_SOURCES =								\
-	cmd.hh cmd_netsync.cc cmd_list.cc cmd_packet.cc cmd_key_cert.cc	\
-	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc	\
+	cmd.hh cmd_netsync.cc cmd_list.cc cmd_packet.cc	cmd_key_cert.cc \
+	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc 	\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
-MOST_SOURCES =								\
-	 app_state.cc app_state.hh					\
-         commands.cc commands.hh $(CMD_SOURCES)				\
-         diff_patch.cc diff_patch.hh					\
-         lua.cc lua.hh							\
-         transforms.cc transforms.hh					\
-         update.cc update.hh						\
-         work.cc work.hh						\
-         cert.cc cert.hh						\
-         database.cc database.hh					\
-         key_store.cc key_store.hh					\
-         file_io.cc file_io.hh						\
-         keys.cc keys.hh						\
-         packet.cc packet.hh						\
-         sanity.cc sanity.hh						\
-         vocab.cc vocab.hh vocab_terms.hh numeric_vocab.hh		\
-         rcs_file.cc rcs_file.hh					\
-         xdelta.cc xdelta.hh						\
-         ui.cc ui.hh							\
-         schema_migration.cc schema_migration.hh			\
-         constants.cc constants.hh					\
-         refiner.cc refiner.hh						\
-         enumerator.cc enumerator.hh					\
-         netsync.cc netsync.hh						\
-         netcmd.cc netcmd.hh						\
-         merkle_tree.cc merkle_tree.hh					\
-         basic_io.cc basic_io.hh					\
-         mkstemp.cc mkstemp.hh						\
-         lcs.cc lcs.hh							\
-         rcs_import.cc rcs_import.hh					\
-         revision.cc revision.hh					\
-	 cset.cc cset.hh						\
-	 roster.cc roster.hh						\
-         mt_version.cc mt_version.hh					\
-         automate.cc automate.hh					\
-         database_check.cc database_check.hh				\
-         epoch.cc epoch.hh						\
-         inodeprint.cc inodeprint.hh					\
-         selectors.cc selectors.hh					\
-         annotate.cc annotate.hh					\
-         restrictions.cc restrictions.hh				\
-         hmac.cc hmac.hh                                                \
-         globish.cc globish.hh                                          \
-         string_queue.cc string_queue.hh                                \
-         paths.cc paths.hh                                              \
-         roster_merge.cc roster_merge.hh                                \
-         merge.cc merge.hh                                              \
-         legacy.cc legacy.hh                                            \
-                                                                        \
-         lru_cache.h                                                    \
-                                                                        \
-	 cleanup.hh unit_tests.hh interner.hh				\
-         cycle_detector.hh randomfile.hh adler32.hh quick_alloc.hh	\
-	 netio.hh smap.hh gettext.h					\
-         package_revision.c package_revision.h				\
-         package_full_revision.c package_full_revision.h options.hh	\
-         i18n.h hash_map.hh parallel_iter.hh safe_map.hh pch.hh
+SANITY_CORE_SOURCES =							\
+	sanity.cc sanity.hh quick_alloc.hh				\
+	simplestring_xform.cc simplestring_xform.hh 			\
+	constants.cc constants.hh numeric_vocab.hh 			\
+	platform.hh
 
-NETXX_SOURCES =									\
-	netxx/accept.cxx netxx/accept.h netxx/address.cxx			\
-	netxx/common.h netxx/compat.h netxx/datagram.cxx			\
-	netxx/datagramserver.cxx netxx/osutil.cxx netxx/osutil.h		\
-	netxx/peer.cxx netxx/probe.cxx netxx/probe_impl.h			\
-	netxx/probe_select.cxx netxx/recvfrom.cxx netxx/recvfrom.h		\
-	netxx/resolve.h netxx/serverbase.cxx netxx/serverbase.h			\
-        netxx/sockaddr.cxx netxx/sockaddr.h netxx/socket.cxx			\
-	netxx/socket.h netxx/sockopt.cxx netxx/stream.cxx			\
-	netxx/streambase.cxx netxx/streamserver.cxx				\
-	netxx/address.h netxx/datagram.h netxx/datagramserver.h			\
-	netxx/netbuf.h netxx/netxx.h netxx/peer.h netxx/probe.h			\
-	netxx/probeinfo.h netxx/sockopt.h netxx/stream.h netxx/streambase.h	\
-	netxx/streamserver.h netxx/timeout.h netxx/types.h
 
-BOTAN_SOURCES =                                                                    \
+LUAEXT_SOURCES = 							\
+	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
+	charset.cc charset.hh paths.cc paths.hh				\
+	interner.hh hash_map.hh						\
+	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
+	luaext_guess_binary.cc luaext_platform.cc luaext_globish.cc	\
+	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
+	globish.cc globish.hh basic_io.cc basic_io.hh
+
+MOST_SOURCES = 								\
+	$(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) platform-wrapped.hh	\
+	mtn-sanity.cc mtn-sanity.hh ui.cc ui.hh				\
+	app_state.cc app_state.hh					\
+	commands.cc commands.hh $(CMD_SOURCES)				\
+	diff_patch.cc diff_patch.hh					\
+	lua_hooks.cc lua_hooks.hh 					\
+	transforms.cc transforms.hh					\
+	update.cc update.hh						\
+	work.cc work.hh							\
+	cert.cc cert.hh							\
+	database.cc database.hh						\
+	key_store.cc key_store.hh					\
+	localized_file_io.cc localized_file_io.hh			\
+	keys.cc keys.hh							\
+	packet.cc packet.hh						\
+	rcs_file.cc rcs_file.hh						\
+	xdelta.cc xdelta.hh						\
+	schema_migration.cc schema_migration.hh				\
+	refiner.cc refiner.hh						\
+	enumerator.cc enumerator.hh					\
+	netsync.cc netsync.hh 						\
+	netxx_pipe.cc netxx_pipe.hh					\
+	netcmd.cc netcmd.hh						\
+	merkle_tree.cc merkle_tree.hh 					\
+	lcs.cc lcs.hh							\
+	rcs_import.cc rcs_import.hh 					\
+	revision.cc revision.hh						\
+	cset.cc cset.hh							\
+	roster.cc roster.hh 						\
+	mt_version.cc mt_version.hh					\
+	automate.cc							\
+	database_check.cc database_check.hh				\
+	epoch.cc epoch.hh						\
+	inodeprint.cc inodeprint.hh					\
+	selectors.cc selectors.hh					\
+	annotate.cc annotate.hh						\
+	restrictions.cc	restrictions.hh					\
+	hmac.cc hmac.hh							\
+	string_queue.cc string_queue.hh					\
+	roster_merge.cc roster_merge.hh					\
+	merge.cc merge.hh						\
+	legacy.cc legacy.hh uri.cc uri.hh				\
+									\
+        lru_cache.h							\
+									\
+	cleanup.hh unit_tests.hh					\
+        cycle_detector.hh randomfile.hh adler32.hh			\
+        randomizer.cc randomizer.hh					\
+        netio.hh smap.hh gettext.h					\
+        package_revision.c package_revision.h				\
+        package_full_revision.c package_full_revision.h			\
+        options.cc options.hh options_list.hh				\
+        i18n.h parallel_iter.hh safe_map.hh pch.hh
+
+NETXX_SOURCES =								\
+	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\
+	netxx/common.h netxx/compat.h netxx/datagram.cxx		\
+	netxx/datagramserver.cxx netxx/osutil.cxx netxx/osutil.h	\
+	netxx/peer.cxx netxx/probe.cxx netxx/probe_impl.h		\
+	netxx/probe_select.cxx netxx/recvfrom.cxx netxx/recvfrom.h	\
+	netxx/resolve.h netxx/serverbase.cxx netxx/serverbase.h		\
+	netxx/sockaddr.cxx netxx/sockaddr.h netxx/socket.cxx 		\
+	netxx/socket.h netxx/sockopt.cxx netxx/stream.cxx		\
+	netxx/streambase.cxx netxx/streamserver.cxx			\
+	netxx/address.h netxx/datagram.h netxx/datagramserver.h		\
+	netxx/netbuf.h netxx/netxx.h netxx/peer.h netxx/probe.h 	\
+	netxx/probeinfo.h netxx/sockopt.h netxx/stream.h		\
+	netxx/streambase.h netxx/streamserver.h netxx/timeout.h		\
+	netxx/types.h
+
+BOTAN_SOURCES = 							\
         botan/aes.cpp botan/aes_tab.cpp \
         botan/allocate.cpp botan/arc4.cpp botan/asn1_alg.cpp        \
         botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp     \
@@ -170,75 +184,100 @@ BOTAN_SOURCES =                                                                 
         botan/def_powm.h botan/dl_group.h botan/libstate.h \
         botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h
 
+BOOST_SANDBOX_SOURCES =							\
+	boost/circular_buffer_adaptor.hpp				\
+        boost/circular_buffer_base.hpp					\
+	boost/circular_buffer_fwd.hpp					\
+        boost/circular_buffer.hpp
 
-
-BOOST_SANDBOX_SOURCES = \
-        boost/circular_buffer_adaptor.hpp \
-	boost/circular_buffer_base.hpp \
-	boost/circular_buffer_fwd.hpp \
-	boost/circular_buffer.hpp
-
-SQLITE_SOURCES = \
-        sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c \
-        sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c sqlite/func.c \
-        sqlite/hash.c sqlite/insert.c \
-        sqlite/legacy.c sqlite/main.c sqlite/opcodes.c \
-        sqlite/os.c sqlite/os_unix.c sqlite/os_win.c \
-        sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c \
-        sqlite/random.c sqlite/select.c sqlite/table.c sqlite/tokenize.c \
-        sqlite/trigger.c sqlite/update.c sqlite/utf.c \
-        sqlite/util.c sqlite/vacuum.c \
-        sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c \
-        sqlite/vdbemem.c sqlite/where.c \
-	sqlite/prepare.c sqlite/callback.c \
-	sqlite/analyze.c sqlite/vdbefifo.c \
-	sqlite/complete.c \
-	\
-        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h \
-        sqlite/os_common.h \
-        sqlite/parse.h sqlite/sqlite3.h sqlite/sqliteInt.h sqlite/vdbe.h sqlite/vdbeInt.h \
+SQLITE_SOURCES =							\
+	sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c	\
+        sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c	\
+        sqlite/func.c sqlite/hash.c sqlite/insert.c			\
+	sqlite/legacy.c	sqlite/main.c sqlite/opcodes.c			\
+	sqlite/os.c sqlite/os_unix.c sqlite/os_win.c sqlite/os_os2.c	\
+	sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c	\
+	sqlite/random.c sqlite/select.c					\
+	sqlite/table.c sqlite/tokenize.c				\
+	sqlite/trigger.c sqlite/update.c sqlite/utf.c			\
+	sqlite/util.c sqlite/vacuum.c					\
+	sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c			\
+	sqlite/vdbemem.c sqlite/where.c					\
+        sqlite/prepare.c sqlite/callback.c				\
+	sqlite/analyze.c sqlite/vdbefifo.c				\
+	sqlite/complete.c						\
+	sqlite/loadext.c sqlite/vtab.c					\
+									\
+        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h	\
+        sqlite/os_common.h sqlite/os_os2.h				\
+	sqlite/parse.h sqlite/sqlite3.h	sqlite/sqlite3ext.h		\
+	sqlite/sqliteInt.h						\
+	sqlite/vdbe.h sqlite/vdbeInt.h					\
 	sqlite/pager.h
 
-LUA_SOURCES = \
-	lua/lapi.c lua/lapi.h lua/lauxlib.c lua/lauxlib.h lua/lbaselib.c \
-	lua/lcode.c lua/lcode.h lua/ldblib.c lua/ldebug.c lua/ldebug.h lua/ldo.c \
-	lua/ldo.h lua/ldump.c lua/lfunc.c lua/lfunc.h lua/lgc.c lua/lgc.h \
-	lua/liolib.c lua/llex.c lua/llex.h lua/llimits.h lua/lmathlib.c lua/lmem.c \
-	lua/lmem.h lua/loadlib.c lua/lobject.c lua/lobject.h lua/lopcodes.c \
-	lua/lopcodes.h lua/lparser.c lua/lparser.h lua/lstate.c lua/lstate.h \
-	lua/lstring.c lua/lstring.h lua/lstrlib.c lua/ltable.c lua/ltable.h \
-	lua/ltablib.c lua/ltests.c lua/ltm.c lua/ltm.h lua/lua.h lua/lualib.h \
-	lua/lundump.c lua/lundump.h lua/lvm.c lua/lvm.h lua/lzio.c lua/lzio.h
+LUA_SOURCES =								\
+	lua/lapi.cc lua/lapi.h						\
+	lua/lcode.cc lua/lcode.h					\
+	lua/ldebug.cc lua/ldebug.h					\
+	lua/ldo.cc lua/ldo.h						\
+	lua/ldump.cc							\
+	lua/lfunc.cc lua/lfunc.h					\
+	lua/lgc.cc lua/lgc.h						\
+	lua/linit.cc							\
+	lua/llex.cc lua/llex.h						\
+	lua/lmem.cc lua/lmem.h						\
+	lua/lobject.cc lua/lobject.h					\
+	lua/lopcodes.cc lua/lopcodes.h					\
+	lua/lparser.cc lua/lparser.h					\
+	lua/lstate.cc lua/lstate.h					\
+	lua/lstring.cc lua/lstring.h					\
+	lua/ltable.cc lua/ltable.h					\
+	lua/ltests.cc							\
+	lua/ltm.cc lua/ltm.h						\
+	lua/lundump.cc lua/lundump.h					\
+	lua/lvm.cc lua/lvm.h						\
+	lua/lzio.cc lua/lzio.h						\
+									\
+	lua/luaconf.h lua/llimits.h					\
+	lua/lua.h lua/lauxlib.h	lua/lualib.h				\
+									\
+	lua/lauxlib.cc							\
+	lua/lbaselib.cc							\
+	lua/ldblib.cc							\
+	lua/liolib.cc							\
+	lua/lmathlib.cc							\
+	lua/loadlib.cc							\
+	lua/lstrlib.cc							\
+	lua/ltablib.cc							\
+	lua/loslib.cc
 
-IDNA_SOURCES = \
+IDNA_SOURCES =								\
 	idna/gunibreak.h idna/gunidecomp.h idna/idna.h idna/nfkc.c	\
-	idna/punycode.c idna/rfc3454.c idna/stringprep.h idna/version.c \
+	idna/punycode.c idna/rfc3454.c idna/stringprep.h idna/version.c	\
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
-POPT_SOURCES = \
-	popt/findme.c  popt/poptconfig.c  popt/poptint.h   \
-	popt/findme.h  popt/popt.h        popt/poptparse.c \
-	popt/popt.c    popt/popthelp.c    popt/system.h
+UNIX_PLATFORM_SOURCES =							\
+	unix/read_password.cc unix/get_system_flavour.cc		\
+	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
+	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc
 
-UNIX_PLATFORM_SOURCES = \
-	unix/read_password.cc unix/get_system_flavour.cc unix/process.cc unix/terminal.cc \
-	unix/inodeprint.cc unix/fs.cc unix/make_io_binary.cc
-
-WIN32_PLATFORM_SOURCES = \
-	win32/read_password.cc win32/get_system_flavour.cc win32/process.cc win32/terminal.cc \
-	win32/inodeprint.cc win32/fs.cc win32/make_io_binary.cc
+WIN32_PLATFORM_SOURCES =						\
+	win32/read_password.cc win32/get_system_flavour.cc		\
+	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
+	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc
 
 # primaries
 
 bin_PROGRAMS = mtn
-check_PROGRAMS = unit_tests
-noinst_PROGRAMS = txt2c 
-EXTRA_PROGRAMS = usher 
+check_PROGRAMS = unit_tests tester
+noinst_PROGRAMS = txt2c
+EXTRA_PROGRAMS = usher
 
-mtn_SOURCES = $(MOST_SOURCES) monotone.cc main.cc
+mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
+tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
 
 txt2c_SOURCES = txt2c.cc
 
@@ -247,7 +286,6 @@ libplatform_a_SOURCES = platform.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
-			$(POPT_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
@@ -285,7 +323,7 @@ endif
 SUFFIXES = .gch
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR $(SQLITE_CPPFLAGS)
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
 AM_LDFLAGS = 
 
@@ -297,36 +335,30 @@ mtn_LDFLAGS =
 mtn_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
 mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
+mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua \
+		      -I$(top_srcdir)/sqlite
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
+unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) $(BOOST_UNITTEST) \
+		   libplatform.a $(LIBICONV) $(LIBINTL)
 
-# conditionals from configury
-
-if STATIC_BOOST
-  BOOSTLIBS = @BOOST_LIBDIR@/libboost_filesystem$(BOOST_SUFFIX).a \
-              @BOOST_LIBDIR@/libboost_date_time$(BOOST_SUFFIX).a \
-              @BOOST_LIBDIR@/libboost_regex$(BOOST_SUFFIX).a
-  mtn_LDADD = lib3rdparty.a $(BOOSTLIBS)
-  unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-                     @BOOST_LIBDIR@/libboost_unit_test_framework$(BOOST_SUFFIX).a
-else
-  mtn_LDADD = lib3rdparty.a
-  unit_tests_LDADD = lib3rdparty.a -lboost_unit_test_framework$(BOOST_SUFFIX)
-endif
-
-mtn_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
-unit_tests_LDADD += libplatform.a $(LIBICONV) $(LIBINTL)
+tester_LDFLAGS = 
+tester_CPPFLAGS = -I$(top_srcdir)/lua
+tester_CXXFLAGS = $(AM_CXXFLAGS)
+tester_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
+  mtn_SOURCES += win32/main.cc
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
+  mtn_SOURCES += unix/main.cc
 endif
 
 if MISSING_INET_PTON
@@ -374,47 +406,22 @@ EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.ep
 
 man1_MANS = mtn.1
 info_TEXINFOS = monotone.texi
-EXTRA_DIST = $(man1_MANS) \
-	     $(PDF_FIGURES) \
-	     $(PNG_FIGURES) \
-             INSTALL \
-             README.changesets \
-             UPGRADE \
-             monotone.spec \
-             monotone.html \
-             texinfo.css \
-	     schema.sql views.sql \
-	     std_hooks.lua test_hooks.lua \
-	     testsuite.at \
-	     $(wildcard $(srcdir)/tests/t_*.at) \
-	     testsuite \
-             tests/atconfig.in \
-             tests/atlocal.in  \
-	     package.m4 \
-	     package_revision.txt package_full_revision_dist.txt \
-             $(wildcard $(srcdir)/m4/*.m4) \
-             popt/README popt/CHANGES popt/COPYING popt/popt.3 popt/popt.ps \
-             $(wildcard $(srcdir)/popt/test?.c) popt/testit.sh \
-             sqlite/keywordhash.h \
-             contrib/README \
-             contrib/monoprof.sh \
-             contrib/monotone-notify.pl \
-             contrib/monotone-import.pl \
-             contrib/ciabot_monotone.py \
-             contrib/monotone.el \
-             contrib/monotone-nav.el \
-             contrib/monotone.bash_completion \
-             contrib/monotone.zsh_completion \
-             contrib/mtbrowse.sh \
-             contrib/colorize \
-             contrib/color-logs.sh \
-             contrib/color-logs.conf \
-             contrib/get_stdio.pl \
-             contrib/ciabot_monotone_hookversion.py \
-             contrib/monotone-cvs-ignore.lua \
-             contrib/usher.cc \
-             win32/monotone.iss \
-             $(wildcard $(srcdir)/debian/*)
+EXTRA_DIST = $(man1_MANS) $(PDF_FIGURES) $(PNG_FIGURES) INSTALL			\
+	     README.changesets UPGRADE monotone.spec monotone.html		\
+	     texinfo.css schema.sql std_hooks.lua test_hooks.lua tester.lua	\
+	     testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
+	     $(srcdir)/tester-tests package.m4 package_revision.txt		\
+	     package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
+	     sqlite/keywordhash.h contrib/README contrib/monoprof.sh		\
+	     contrib/monotone-notify.pl contrib/monotone-import.pl		\
+	     contrib/ciabot_monotone.py contrib/monotone.el			\
+	     contrib/monotone-nav.el contrib/monotone.bash_completion		\
+	     contrib/monotone.zsh_completion contrib/mtbrowse.sh		\
+	     contrib/colorize contrib/color-logs.sh contrib/color-logs.conf	\
+	     contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
+	     contrib/monotone-cvs-ignore.lua contrib/usher.cc $(wildcard	\
+	     $(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
+	     $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -442,17 +449,17 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 # testsuite stuff (could this possibly be more ugly?)
 
 if BUILD_UNIT_TESTS
-TESTS = unit_tests $(srcdir)/testsuite
+TESTS = unit_tests run_tester_tests run_lua_tests
 else
-TESTS = $(srcdir)/testsuite
+TESTS = run_tester_tests run_lua_tests
 endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
-	rm -rf testsuite.dir testsuite.log package_full_revision.txt
+	rm -rf tester_dir package_full_revision.txt
 
-DISTCLEANFILES = tests/atconfig mt-stdint.h xgettext.opts pch-build.hh.gch.dep
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_tester_tests run_lua_tests
 
 # distcheck stuff
 
@@ -475,16 +482,23 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo 'm4_define([AT_PACKAGE_BUGREPORT], [@PACKAGE_BUGREPORT@])'; \
 	} >$(srcdir)/package.m4
 
-$(srcdir)/testsuite: $(srcdir)/testsuite.at $(wildcard $(srcdir)/tests/t_*.at) \
-                     $(srcdir)/package.m4 
-	autom4te --language=Autotest -I $(srcdir) $< -o $@.tmp
-	mv -f $@.tmp $@
+run_lua_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
+	chmod 755 $@
+
+run_tester_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/tester-testsuite.lua "$$@"' >> $@ ; \
+	chmod 755 $@
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h schema.h views.h \
-                      package_revision.c \
-                      package_full_revision.txt package_full_revision_raw.txt package_full_revision.c \
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h schema.h		\
+                      package_revision.c package_full_revision.txt		\
+                      package_full_revision_raw.txt package_full_revision.c	\
                       $(PCH_FILE) $(PCH_BUILD)
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
@@ -608,3 +622,10 @@ html: monotone.texi version.texi std_hooks.lua texinfo.css
 		sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $$f.bak >$$f; \
 		rm -f $$f.bak; \
 	done
+
+# Explicit dependencies of object files on generated headers, so Make
+# knows it has to build 'em.
+mtn-lua_hooks.o unit_tests-lua_hooks.o : test_hooks.h std_hooks.h
+mtn-database.o  unit_tests-database.o  : schema.h
+
+tester.o : tester.h
