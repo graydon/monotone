@@ -811,7 +811,7 @@ roster_t::get_attr(file_path const & pth,
   split_path sp;
   pth.split(sp);
   return get_attr(sp, name, val);
- }
+}
 
 
 template <> void

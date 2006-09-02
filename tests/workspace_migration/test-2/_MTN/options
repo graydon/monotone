@@ -1,0 +1,4 @@
+database "/home/njs/src/monotone/workspace-merge/tester_dir/workspace_migration/test.db"
+  branch "testbranch"
+     key "tester@test.net"
+  keydir "/home/njs/src/monotone/workspace-merge/tester_dir/workspace_migration/keys"
