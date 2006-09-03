@@ -1396,19 +1396,26 @@ recursively scans the directory and adds all its files.
 @smallexample
 @group
 $ mtn add include/jb.h src
-mtn: adding include/jb.h to workspace add set
-mtn: adding src/apple.c to workspace add set
-mtn: adding src/banana.c to workspace add set
+mtn: adding include/jb.h to workspace manifest
+mtn: adding src/apple.c to workspace manifest
+mtn: adding src/banana.c to workspace manifest
 @end group
 @end smallexample
 
 This command produces a record of Jim's intentions in a special file
-called @file{_MTN/work}, stored in the workspace. The file is plain
+called @file{_MTN/revision}, stored in the workspace. The file is plain
 text:
 
 @smallexample
 @group
-$ cat _MTN/work
+$ cat _MTN/revision
+
+format_version "1"
+
+new_manifest [2098eddbe833046174de28172a813150a6cbda7b]
+
+old_revision []
+
 add_file "include/jb.h"
  content [3b12b2d0b31439bd50976633db1895cff8b19da0]
 
@@ -1429,22 +1436,11 @@ he has forgotten what he was doing. He asks monotone:
 @smallexample
 @group
 $ mtn status
-
-format_version "1"
-
-new_manifest [2098eddbe833046174de28172a813150a6cbda7b]
-
-old_revision []
-
-add_file "include/jb.h"
- content [3b12b2d0b31439bd50976633db1895cff8b19da0]
-
-add_file "src/apple.c"
- content [2650ffc660dd00a08b659b883b65a060cac7e560]
-
-add_file "src/banana.c"
- content [e8f147e5b4d5667f3228b7bba1c5c1e639f5db9f]
-
+Current branch: jp.co.juicebot.jb7
+Changes against parent :
+  added   include/jb.h
+  added   src/apple.c
+  added   src/banana.c
 @end group
 @end smallexample
 
@@ -1518,7 +1514,7 @@ $ mtn diff
 
 Satisfied with the work he's done, Jim wants to save his changes.  He
 then commits his workspace, which causes monotone to process the
-@file{_MTN/work} file and record the file contents, manifest, and
+@file{_MTN/revision} file and record the file contents, manifest, and
 revision into the database. Since he provided a branch name when he
 ran @command{setup}, monotone will use this as the default branch name
 when he commits.
@@ -1532,15 +1528,14 @@ mtn: committed revision 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
 
-When monotone committed Jim's revision, erased the @file{_MTN/work} file,
-and wrote a new file called @file{_MTN/revision}, which contains the
-workspace's new base revision ID. Jim can use this revision ID in the
-future, as an argument to the @command{checkout} command, if he wishes
-to return to this revision:
+When monotone committed Jim's revision, it updated @file{_MTN/revision}
+to record the workspace's new base revision ID. Jim can use this
+revision ID in the future, as an argument to the @command{checkout}
+command, if he wishes to return to this revision:
 
 @smallexample
 @group
-$ cat _MTN/revision
+$ mtn automate get_base_revision_id
 2e24d49a48adf9acf3a1b6391a080008cbef9c21
 @end group
 @end smallexample
@@ -3131,17 +3126,18 @@ Contains a list of testresult key names, one per line. If it exists, update
 will only select revisions that do not have regressions according to the given
 testresult keys.
 @item _MTN/revision
-Contains the identity of the ``base'' revision of the workspace.
-Each workspace has a base revision. When the workspace is
-committed, the base revision is considered to be the ancestor of the
-committed revision.
+Contains the identity of the ``base'' revision of the workspace, and a
+list of additions, deletions, and renames which have occurred in the
+current workspace, relative to that version.
+
+Every workspace has a base revision, which is the revision that was
+originally checked out to create that workspace.  When the workspace
+is committed, the base revision is considered to be the ancestor of
+the committed revision.
 @item _MTN/options
 Contains ``sticky'' command-line options such as @option{--db} or 
 @option{--branch}, such that you do not need to enter them repeatedly
 after checking out a particular workspace.
-@item _MTN/work
-Contains a list of additions, deletions, and renames which have occurred
-in the current workspace, relative to the base version.
 @item _MTN/log
 Contains log messages to append to the ``changelog'' cert upon
 commit. The user may add content to this file while they work.  Upon a
@@ -3953,8 +3949,8 @@ contents of @var{path} at that revision.
 @itemx mtn --branch=@var{branchname} checkout @var{directory}
 @itemx mtn --branch=@var{branchname} co @var{directory}
 
-These commands copy a revision @var{id} out of your database, writing
-the string @var{id} into the file
+These commands copy a revision @var{id} out of your database,
+recording the chosen revision (the @dfn{base revision}) in the file
 @file{@var{directory}/_MTN/revision}. These commands then copy every
 file version listed in the revision's manifest to paths under
 @var{directory}. For example, if the revision's manifest contains
@@ -4102,8 +4098,8 @@ directory is used.
 @item mtn add @var{pathname...}
 @item mtn add --unknown
 This command places ``add'' entries for the paths specified in
-@var{pathname...} in the workspace's ``work list''. The work list
-of your workspace is located at @file{_MTN/work}, and is a list of
+@var{pathname...} in the workspace's ``work list''. The work list of
+your workspace is stored in @file{_MTN/revision}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal or renaming of files.
 
@@ -4122,7 +4118,7 @@ any added entries inserted in its manifest.
 @itemx mtn drop --missing
 This command places ``drop'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list of
-your workspace is located at @file{_MTN/work}, and is a list of
+your workspace is stored in @file{_MTN/revision}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also removes
 any attributes on @var{pathname}; see @ref{File Attributes} for more
@@ -4153,7 +4149,7 @@ directories which have already been deleted.
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
-list of your workspace is located at @file{_MTN/work}, and is a list of
+list of your workspace is stored in @file{_MTN/revision}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also moves any
 attributes on @var{src} to @var{dst}; see @ref{File Attributes} for more
@@ -4184,26 +4180,27 @@ and will not overwrite existing destination files.
 @itemx mtn ci --message-file=@var{logfile} @var{pathname...} 
 
 This command looks at your workspace, decides which files have
-changed, and saves the changes to your database. It does this by loading
-the revision named in the @file{_MTN/revision} file, locating the base
-manifest for your workspace, applying any changes described in the
-@file{_MTN/work} file, and then comparing the updated base manifest to the
-files it finds in your workspace, to determine which files have been
-edited.
+changed, and saves the changes to your database. It does this by
+loading the revision named in @file{_MTN/revision}, locating the base
+manifest for your workspace, applying any pathname changes described
+in @file{_MTN/revision}, and then comparing the updated base manifest
+to the files it finds in your workspace, to determine which files have
+been edited.
 
 For each edited file, a delta is copied into the database. Then the
 newly constructed manifest is recorded (as a delta) and finally the
 new revision.  Once all these objects are recorded in you database,
-@command{commit} overwrites the @file{_MTN/revision} file with the new
-revision ID, and deletes the @file{_MTN/work} file.
+@command{commit} updates @file{_MTN/revision} to indicate that the base
+revision is now the newly created revision, and that there are no
+pathname changes to apply.
 
 Specifying pathnames to @command{commit} restricts the set of changes
 that are visible and results in only a partial commit of the working
 copy. Changes to files not included in the specified set of pathnames
 will be ignored and will remain in the workspace until they are
 included in a future commit. With a partial commit, only the relevant
-entries in the @file{_MTN/work} file will be removed and other entries
-will remain for future commits.
+entries in @file{_MTN/revision} will be removed and other entries will
+remain for future commits.
 
 From within a subdirectory of the workspace the @command{commit}
 command will, by default, include @emph{all changes} in the working
@@ -4504,16 +4501,11 @@ This command prints a description of the ``status'' of your workspace.
 In particular, it prints:
 @itemize
 @item 
-The ``base revision ID'', which is referenced by the file
-@file{_MTN/revision}, and which your workspace is an in-progress
-descendent of.
+The branch currently selected in @file{_MTN/options} for the
+workspace.
 @item
-The ``current manifest ID'', which is the ID of the manifest which
-results from applying @file{_MTN/work} to the base manifest, and
-updating any @sc{sha1} values of files to reflect changes you have
-made to the workspace. In other words, the current manifest ID is
-the ID which would accompany any revision you would commit, if you ran
-@command{mtn commit}.
+The revision id of the ``parent'' revision of the workspace, on which
+your in-progress changes are based.
 @item
 A list of logical changes between the base and current manifest
 versions, such as adds, drops, renames, and patches.
@@ -6444,7 +6436,7 @@ None.
 @item Purpose:
 
 Prints the revision id the current workspace is based on. This is the
-value stored in _MTN/revision
+``old_revision'' value stored in @file{_MTN/revision}.
 
 @item Sample output:
 
@@ -6480,8 +6472,7 @@ None.
 
 Prints the revision id of the current workspace. This is the id
 of the revision that would be committed by an unrestricted commit
-calculated from _MTN/revision, _MTN/work and any edits to files in the
-workspace.
+in the workspace.
 
 @item Sample output:
 
@@ -8105,8 +8096,8 @@ into UTF-8.
 Monotone's control files are stored in UTF-8. This includes: revisions
 and manifests, both inside the database and when written to the
 @file{_MTN/} directory of the workspace; the @file{_MTN/options} and
-@file{_MTN/work} files. Converting these files to any other character
-set will cause monotone to break; do not do so.
+@file{_MTN/revision} files. Converting these files to any other
+character set will cause monotone to break; do not do so.
 
 @item
 File path names in the workspace are converted to the locale's
@@ -8173,8 +8164,8 @@ loaded.
 
 Monotone's normal form is the UTF-8 character set and the @code{0x0A}
 (LF) line ending form. This form is used in any files monotone needs
-to read, write, and interpret itself, such as: @file{_MTN/revision},
-@file{_MTN/work}, @file{_MTN/options}.
+to read, write, and interpret itself, such as @file{_MTN/revision} and
+@file{_MTN/options}.
 
 @item LDH
 Letters, digits, and hyphen: the set of ASCII bytes @code{0x2D},

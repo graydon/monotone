@@ -96,6 +96,7 @@ workspace::write_ws_format()
 
 // This function is the public face of get_ws_format.  It produces
 // suitable error messages if the workspace's format number is not
+// equal to current_workspace_format.
 
 void
 workspace::check_ws_format()
