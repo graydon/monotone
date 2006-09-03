@@ -1,3 +1,274 @@
+2006-08-31  Zack Weinberg  <zackw@panix.com>
+
+	* work.hh: Update comment describing contents of _MTN directory.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc: No need to include app_state.cc.
+	(workspace::update_current_roster_from_filesystem): Put back
+	variant that doesn't take a node_restriction.
+	(workspace::maybe_update_inodeprints): Remove app_state argument.
+	Use 1-argument update_current_roster_from_filesystem.
+	* work.hh: Update to match.
+	* automate.cc, cmd_merging.cc, cmd_ws_commit.cc: All callers changed.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* automate.cc (get_option): Rewrite for revised _MTN/options
+	handling.
+
+2006-08-27  Zack Weinberg  <zackw@panix.com>
+
+	Cleanup after merge from mainline.
+
+	* cmd_ws_commit.cc (migrate_workspace): OPT_NONE -> option::none.
+	* work.cc: Include ui.hh.
+	(workspace::update_current_roster_from_filesystem):
+	Remove the overload that doesn't take a node_restriction argument.
+	Remove the app_state argument from the overload that does.
+	Use ui.prog_name.
+	* work_migration.cc: Include ui.hh; not app_state.hh.
+	(workspace::check_ws_format): Use ui.prog_name.
+	(first_version_supporting_current_format): Will now be 0.30.
+	* tester.lua (deltree, _deltree): Delete, unused.
+	* tests/migrate_workspace/__driver__.lua: Update for changes in
+	mtn status output.
+
+	* automate.cc (inventory)
+	* cmd_ws_commit.cc (add): Adjust call to find_unknown_and_ignored.
+	* automate.cc (get_revision, get_current_revision_id, get_manifest_of)
+	* cmd_merging.cc (update, pluck)
+	* work.cc (workspace::maybe_update_inodeprints):
+	Call update_current_roster_from_filesystem with a dummy
+	node_restriction.
+	* cmd_diff_log.cc (diff)
+	* cmd_list.cc (ls_changed)
+	* cmd_ws_commit.cc (status, commit): Remove last (app_state)
+	argument from call to update_current_roster_from_filesystem.
+	* app_state.cc (app_state::process_options): Adjust call to
+	check_ws_format.
+
+2006-08-08  Zack Weinberg  <zackw@panix.com>
+
+	* tests/migrate_workspace/__driver__.lua: Add migration tests for
+	format 1.
+	* tests/migrate_workspace/format-1-unmodified
+	* tests/migrate_workspace/format-1-rename: New files.
+	* tester.lua: Fix some typos.
+
+2006-08-05  Zack Weinberg  <zackw@panix.com>
+
+	* tester.lua (gettree, _gettree, deltree, _deltree): New functions.
+
+2006-08-04  Zack Weinberg  <zackw@panix.com>
+
+	"Full revision in _MTN" transition.  Compiles, passes lua
+	testsuite, bizarro failures in unit tests; migration testing needs
+	to be implemented.
+
+	* cmd_ws_commit.cc (setup): Give put_work_rev a revision with a
+	single empty ancestor, not with no ancestors.
+	* testsuite.lua, tests/_MTN_files_handled_correctly_in_aborted_commit
+	* tests/automate_get_base_revision_id, tests/database_check
+	* tests/delete_work_file_on_checkout, tests/netsync_permissions
+	* tests/normalized_filenames, tests/renaming_a_file
+	* tests/revert_file_to_base_revision, tests/revert_renames
+	* tests/update_with_pending_add, tests/update_with_pending_drop
+	* tests/update_with_pending_rename: Update code that looked at
+	_MTN/work and/or _MTN/revision; partial pluck from
+	ca0e87f5aa94378df6e221f06dce5c5058683873, with edits (the revision
+	is in _MTN/revision, not _MTN/workrev).
+
+2006-08-01  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_work_rev, workspace::put_work_rev): New functions.
+	(get_work_path, workspace::remove_work_cset, workspace::put_work_cset)
+	(workspace::put_revision_id): Delete.
+	All callers changed.
+	* work.hh: Update to match.
+	* revision.cc, revision.hh (make_revision): Add an overload that
+	takes a base roster and a cset.
+	* cmd_merging.cc, cmd_ws_commit.cc: Use put_work_rev and the
+	csetful make_revision if appropriate.
+	* work_migration.cc: Fix typos and include some missing headers.
+
+	* work_migration.cc: Bump current_workspace_format to 2 and
+	first_version_supporting_format to 0.29.
+	(migrate_1_to_2): New function.
+	(workspace::migrate_ws_format): Call it.  Add more commentary and
+	an invariant check.
+
+2006-07-30  Zack Weinberg  <zackw@panix.com>
+
+	* work_migration.cc: New file.
+	* Makefile.am (MOST_SOURCES): Add it.
+
+	* app_state.cc (app_state::process_options): Call work.check_ws_format.
+	(app_state::create_workspace): Call work.write_ws_format.
+	* cmd_ws_commit (migrate_workspace): New NO_WORKSPACE command.
+	* paths.cc (old_bookkeeping_root): New global constant.
+	(find_bookdir): Split out of ...
+	(find_and_go_to_workspace): ...here.  If we don't have _MTN, look
+	for MT.
+	* paths.hh: Declare old_bookkeeping_root.
+	* work.hh: Declare check_ws_format, migrate_ws_format, write_ws_format.
+
+	* tests/migrate_workspace: New test.
+	* testsuite.lua: Add it.
+
+2006-07-28  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.hh (app_state): Add boolean field 'have_set_key'.
+	* app_state.cc (app_state constructor): Initialize have_set_key
+	to false.
+	(app_state::set_signing_key): Set have_set_key to true.
+	(app_state::process_options): Do not allow workspace options to
+	override command line settings.
+	(app_state::write_options): Don't write out a key if it wasn't set.
+	* diff_patch.cc (content_merge_workspace_adaptor::get_version):
+	Check the temporary store before the database.
+	* work.cc (workspace::set_ws_options): If any argument is empty,
+	leave the corresponding option as-is in _MTN/options, rather than
+	writing over it with an empty string.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.cc: Delete static strings.
+	(app_state constructor): Initialize branch_is_sticky too.
+	(allow_workspace): Don't call read_options.
+	(process_options): Call work.get_ws_options here. Restructure
+	for new convention.
+	(write_options): Move next to process_options; use
+	work.set_ws_options.
+	(read_options): Delete.
+	(set_database, set_key_dir, set_signing_key): Don't mess with
+	options array.
+	(make_branch_sticky): Set branch_is_sticky, not options array.
+	* app_state.hh (struct app_state): Remove options and read_options;
+	add branch_is_sticky.
+	* database.cc, database.hh (database::get_filename): New method.
+	* work.cc (get_ws_options, set_ws_options): New methods.
+	(read_options_map, write_options_map): Delete.
+	* work.hh: Update to match.  Don't declare options_map.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc: Include work.hh first.  Don't include vocab.hh.
+	(file_itemizer, addition_builder, editable_working_tree)
+	Remove 'app' instance variable; replace with 'db' and/or 'lua'.
+	Update constructor to match.  All constructor users changed.
+	(get_base_revision, get_base_roster, get_current_roster_shape)
+	(get_base_and_current_roster_shape, classify_roster_paths)
+	(find_unknown_and_ignored, perform_additions, perform_content_update)
+	(update_any_attrs): Remove 'app' argument; use 'db' and/or 'lua'
+	instance variables instead.
+	(file_itemizer::visit_file, addition_builder::add_node_for)
+	(addition_builder::visit_file, editable_working_tree::attach_node)
+	(editable_working_tree::apply_delta)
+	Use 'db' and/or 'lua' instance variables, instead of 'app'.
+	(add_parent_dirs): Take 'db' and 'lua' arguments instead of 'app'.
+	All callers changed.
+	(update_current_roster_from_filesystem): Use 'lua' instead of
+	'app.lua' in one place.  Still has and uses an app_state argument.
+	(perform_deletions): Remove app_state argument; add 'recursive'
+	and 'execute' boolean arguments.
+	(perform_rename, perform_pivot_root): Remove app_state argument;
+	add 'execute' boolean argument.
+	* work.hh: Don't include cset.hh or file_io.hh.  Forward declare
+	classes database, app_state, lua_hooks.
+	(workspace): Add data members 'db' and 'lua', cached references to
+	the active database and lua hooks.  Add nontrivial constructor
+	which initializes these.  Update prototypes of changed interfaces.
+	* app_state.cc (app_state constructor): Give db and lua to work
+	constructor.
+	* automate.cc, cmd_diff_log.cc, cmd_list.cc, cmd_merging.cc
+	* cmd_ws_commit.cc: Update callers of changed interfaces.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.cc (read_options): Just call work.read_options_map.
+	(write_options): Just call work.write_options_map.
+
+	* work.cc (get_options_path, get_inodeprints_path): No longer
+	methods; make static, move near the rest of these functions.
+	(read_options_map): Bulk of app_state::read_options folded in here.
+	(write_options_map): Bulk of app_state::write_options folded in here.
+	(in_inodeprints_mode, read_inodeprints, write_inodeprints):
+	No longer methods; make static.
+	(maybe_update_inodeprints): Define here, as a workspace method...
+	* commands.cc: ... not here.
+	* work.hh, cmd.hh, cmd_merging.cc, cmd_ws_commit.cc: Update to match.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc: Reorganize.  No semantic changes.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.hh: Don't declare struct editable_working_tree.
+	Delete file_content_source and empty_file_content_source.
+	Forward declare content_merge_adaptor.
+	(workspace::perform_content_update): New method.
+	* work.cc: Include diff_patch.hh.  Declare struct
+	editable_working_tree here, inside an anonymous namespace.
+	Change its 'source' member from type file_content_source to
+	type content_merge_adaptor.  Wrap all member functions in the
+	anonymous namespace.
+	(editable_working_tree::attach_node)
+	(editable_working_tree::apply_delta): Adjust for different type of
+	'source'.
+	(content_merge_empty_adaptor): New.
+	(workspace::perform_content_update): New.
+	(workspace::perform_pivot_root): Use perform_content_update and
+	content_merge_empty_adaptor.
+
+	* cmd_merging.cc (struct update_source): Delete.
+	(update, pluck): Use workspace::perform_content_update instead of
+	manipulating update_source and editable_working_tree objects.
+	* diff_patch.hh: Make all content_merge_adaptor::get_version variants
+	const methods.
+	* diff_patch.cc (content_merge_workspace_adaptor::get_version):
+	Use E(), not N(), if the idents don't match.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* automate.cc (inventory): Use workspace::find_unknown_and_ignored.
+	* work.hh: Move struct file_itemizer...
+	* work.cc: ...here; wrap it and all its methods in an anonymous
+	namespace.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (addition_builder): Wrap class and all its methods in an
+	anonymous namespace.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_attribute_from_roster): Move ...
+	* roster.cc (roster_t::get_attr): ...here; make into a roster_t
+	method; provide both split_path and file_path variants.
+	* roster.hh, work.hh: Update to match.
+	* diff_patch.cc (content_merger::get_file_encoding)
+	(content_merger::attribute_manual_merge): Update to match.
+
+2006-07-26  Zack Weinberg  <zackw@panix.com>
+
+	* roster.cc: No need to include inodeprint.hh.
+	(inodeprint_unchanged, classify_roster_paths)
+	(update_current_roster_from_filesystem [both overloads]):
+	Move to work.cc.
+	* roster.hh: Remove prototypes of functions moved to work.cc.
+	* work.hh (workspace): New class.  Make all work.cc functions
+	except get_attribute_from_roster into member functions of this
+	class, including the functions moved here from roster.hh.
+	Declare those functions.
+	* work.cc: Include inodeprint.hh.  Adjust function definitions to
+	match changes in work.hh.
+	* app_state.hh (struct app_state): Add 'work' data member.
+	* app_state.cc, automate.cc, cmd_diff_log.cc, cmd_files.cc, cmd_list.cc
+	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
+	interfaces.
+
 2006-08-31  Nathaniel Smith  <njs@pobox.com>
 
 	* charset.cc (system_charset_is_ascii_extension_impl): Add "646".
