@@ -1,5 +1,9 @@
 2006-09-03  Zack Weinberg  <zackw@panix.com>
 
+	* roster.cc (roster_t::get_attr): Make has_node(pth) an invariant.
+
+2006-09-03  Zack Weinberg  <zackw@panix.com>
+
 	* NEWS: Mention workspace format change.
 	* monotone.texi: Update for workspace format change (pluck from
 	nvm.workspace-merge.api [this branch is now dead], with further

@@ -790,15 +790,14 @@ roster_t::get_attr(split_path const & pth,
                    attr_key const & name,
                    attr_value & val) const
 {
-  if (has_node(pth))
+  I(has_node(pth));
+
+  node_t n = get_node(pth);
+  full_attr_map_t::const_iterator i = n->attrs.find(name);
+  if (i != n->attrs.end() && i->second.first)
     {
-      node_t n = get_node(pth);
-      full_attr_map_t::const_iterator i = n->attrs.find(name);
-      if (i != n->attrs.end() && i->second.first)
-        {
-          val = i->second.second;
-          return true;
-        }
+      val = i->second.second;
+      return true;
     }
   return false;
 } 
