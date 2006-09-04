@@ -1,3 +1,11 @@
+2006-09-04  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* schema.sql: new table for the revision heights.
+	* database.cc (database): new schema.
+	* schema_migration.cc (migrate_monotone_schema): add code for the
+	  schema migration.
+	* tests/schema_migration/__driver__.lua: add migration test.
+
 2006-09-04  Alex Queiroz  <alex@ventonegro.org>
 
 	* po/pt_BR.po: Remaining strings translated. Job done, yay!

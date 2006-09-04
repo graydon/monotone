@@ -62,6 +62,13 @@ CREATE TABLE revision_ancestry
 	unique(parent, child)
 	);
 
+CREATE TABLE heights
+	(
+	revision not null,	-- joins with revisions.id
+	height not null,	-- blob containing the height in ubeb64 format
+	unique(revision, height)
+	);
+
 CREATE TABLE rosters
 	(
 	id primary key,         -- strong hash of the roster
