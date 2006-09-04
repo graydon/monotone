@@ -1,3 +1,7 @@
+2006-09-03  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fuzzies fixed and more strings translated.
+
 2006-08-29  Richard Levitte  <richard@levitte.org>
 
 	* automate.cc (AUTOMATE(get_option)): And I did the error
