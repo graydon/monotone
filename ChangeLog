@@ -1,3 +1,7 @@
+2006-09-03  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fuzzies fixed and more strings translated.
+
 2006-08-31  Nathaniel Smith  <njs@pobox.com>
 
 	* charset.cc (system_charset_is_ascii_extension_impl): Add "646".
