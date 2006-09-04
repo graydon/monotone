@@ -1,5 +1,10 @@
 2006-09-04  Nathaniel Smith  <njs@pobox.com>
 
+	* botan/out_buf.cpp (Output_Buffers::retire): Backport memory leak
+	fix from Botan 1.4.12 (trivial change).
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
 	* revision.cc (erase_ancestors_and_failures): New erase_ancestors
 	core algorithm, with linear memory usage and that simultaneously
 	filters the candidate set with an arbitrary predicate.
