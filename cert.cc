@@ -562,6 +562,7 @@ get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  set<revision_id> & heads)
 {
+  L(FL("getting heads of branch %s") % branchname);
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
 
@@ -571,6 +572,7 @@ get_branch_heads(cert_value const & branchname,
 
   not_in_branch p(app, branch_encoded);
   erase_ancestors_and_failures(heads, p, app);
+  L(FL("found heads of branch %s (%s heads)") % branchname % heads.size());
 }
 
 

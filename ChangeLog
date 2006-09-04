@@ -1,5 +1,10 @@
 2006-09-04  Nathaniel Smith  <njs@pobox.com>
 
+	* revision.cc (erase_ancestors_and_failures): 
+	* cert.cc (get_branch_heads): Add some logging.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
 	* botan/out_buf.cpp (Output_Buffers::retire): Backport memory leak
 	fix from Botan 1.4.12 (trivial change).
 

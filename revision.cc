@@ -494,6 +494,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
   vector<revision_id> todo(candidates.begin(), candidates.end());
   std::random_shuffle(todo.begin(), todo.end());
 
+  size_t predicates = 0;
   while (!todo.empty())
     {
       revision_id rid = todo.back();
@@ -502,6 +503,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
       if (all_ancestors.find(rid) != all_ancestors.end())
         continue;
       // and then whether it actually should stay in the running:
+      ++predicates;
       if (p(rid))
         {
           candidates.erase(rid);
@@ -518,6 +520,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
           candidates.erase(*i);
       }
     }
+  L(FL("called predicate %s times") % predicates);
 }
 
 // This function looks at a set of revisions, and for every pair A, B in that
