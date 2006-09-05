@@ -357,6 +357,10 @@ public:
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
 
+  void get_revisions_with_cert(cert_name const & name,
+                               base64<cert_value> const & value,
+                               std::set<revision_id> & revisions);
+
   void get_revision_certs(revision_id const & ident,
                           std::vector< revision<cert> > & certs);
 

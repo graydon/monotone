@@ -133,6 +133,16 @@ toposort(std::set<revision_id> const & revisions,
 void
 erase_ancestors(std::set<revision_id> & revisions, app_state & app);
 
+struct is_failure
+{
+  virtual bool operator()(revision_id const & rid) = 0;
+  virtual ~is_failure() {};
+};
+void
+erase_ancestors_and_failures(std::set<revision_id> & revisions,
+                             is_failure & p,
+                             app_state & app);
+
 void
 ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
                     std::set<revision_id> & new_stuff,
@@ -159,21 +169,6 @@ make_revision(revision_id const & old_rev_id,
               roster_t const & old_roster,
               cset const & changes,
               revision_t & rev);
-
-/*
-void
-calculate_composite_cset(revision_id const & ancestor,
-                         revision_id const & child,
-                         app_state & app,
-                         cset & composed);
-
-void
-calculate_arbitrary_cset(revision_id const & start,
-                         revision_id const & end,
-                         app_state & app,
-                         cset & composed);
-
-*/
 
 void
 build_changesets_from_manifest_ancestry(app_state & app);

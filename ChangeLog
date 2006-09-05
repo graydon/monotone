@@ -288,6 +288,41 @@
 	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
 	interfaces.
 
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac (AM_INIT_AUTOMAKE): Remove check-news option, it
+	causes more trouble than it's worth.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (erase_ancestors_and_failures): 
+	* cert.cc (get_branch_heads): Add some logging.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* botan/out_buf.cpp (Output_Buffers::retire): Backport memory leak
+	fix from Botan 1.4.12 (trivial change).
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (erase_ancestors_and_failures): New erase_ancestors
+	core algorithm, with linear memory usage and that simultaneously
+	filters the candidate set with an arbitrary predicate.
+	(erase_ancestors): Turn into a thin layer over the above.
+	* database.cc (get_revision_certs): Add a quick way to get all
+	revisions that might be in a given branch.
+	* cert.cc (get_branch_heads): Use the above to make branch head
+	calculation take O(n) memory, and roughly O(log n) trust
+	evaluations.
+
+2006-09-04  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Remaining strings translated. Job done, yay!
+
+2006-09-03  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fuzzies fixed and more strings translated.
+
 2006-08-31  Nathaniel Smith  <njs@pobox.com>
 
 	* charset.cc (system_charset_is_ascii_extension_impl): Add "646".
