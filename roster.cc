@@ -17,7 +17,6 @@
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
-#include "inodeprint.hh"
 #include "platform-wrapped.hh"
 #include "roster.hh"
 #include "revision.hh"
@@ -785,6 +784,24 @@ roster_t::set_attr(split_path const & pth,
   I(i->second != val);
   i->second = val;
 }
+
+bool
+roster_t::get_attr(split_path const & pth,
+                   attr_key const & name,
+                   attr_value & val) const
+{
+  I(has_node(pth));
+
+  node_t n = get_node(pth);
+  full_attr_map_t::const_iterator i = n->attrs.find(name);
+  if (i != n->attrs.end() && i->second.first)
+    {
+      val = i->second.second;
+      return true;
+    }
+  return false;
+} 
+
 
 template <> void
 dump(roster_t const & val, string & out)
@@ -2188,167 +2205,6 @@ select_nodes_modified_by_cset(cset const & cs,
       nodes_modified.insert(new_roster.get_node(*i)->self);
     }
 
-}
-
-////////////////////////////////////////////////////////////////////
-//   getting rosters from the workspace
-////////////////////////////////////////////////////////////////////
-
-// TODO: doesn't that mean they should go in work.cc ?
-// perhaps do that after propagating back to n.v.m.experiment.rosters
-// or to mainline so that diffs are more informative
-
-inline static bool
-inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
-{
-  inodeprint_map::const_iterator old_ip = ipm.find(path);
-  if (old_ip != ipm.end())
-    {
-      hexenc<inodeprint> ip;
-      if (inodeprint_file(path, ip) && ip == old_ip->second)
-          return true; // unchanged
-      else
-          return false; // changed or unavailable
-    }
-  else
-    return false; // unavailable
-}
-
-// TODO: unchanged, changed, missing might be better as set<node_id>
-
-// note that this does not take a restriction because it is used only by
-// automate_inventory which operates on the entire, unrestricted, working
-// directory.
-
-void
-classify_roster_paths(roster_t const & ros,
-                      path_set & unchanged,
-                      path_set & changed,
-                      path_set & missing,
-                      app_state & app)
-{
-  temp_node_id_source nis;
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  if (!ros.has_root())
-    return;
-
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      node_t node = i->second;
-
-      split_path sp;
-      ros.get_name(nid, sp);
-
-      file_path fp(sp);
-
-      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
-        {
-          // dirs don't have content changes
-          unchanged.insert(sp);
-        }
-      else
-        {
-          file_t file = downcast_to_file_t(node);
-          file_id fid;
-          if (ident_existing_file(fp, fid, app.lua))
-            {
-              if (file->content == fid)
-                unchanged.insert(sp);
-              else
-                changed.insert(sp);
-            }
-          else
-            {
-              missing.insert(sp);
-            }
-        }
-    }
-}
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      node_restriction const & mask,
-                                      app_state & app)
-{
-  temp_node_id_source nis;
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  size_t missing_files = 0;
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  if (!ros.has_root())
-    return;
-
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      node_t node = i->second;
-
-      // Only analyze files further, not dirs.
-      if (! is_file_t(node))
-        continue;
-
-      // Only analyze restriction-included files.
-      if (!mask.includes(ros, nid))
-        continue;
-
-      split_path sp;
-      ros.get_name(nid, sp);
-      file_path fp(sp);
-
-      // Only analyze changed files (or all files if inodeprints mode
-      // is disabled).
-      if (inodeprint_unchanged(ipm, fp))
-        continue;
-
-      file_t file = downcast_to_file_t(node);
-      if (!ident_existing_file(fp, file->content, app.lua))
-        {
-          W(F("missing %s") % (fp));
-          missing_files++;
-        }
-    }
-
-  N(missing_files == 0,
-    F("%d missing files; use '%s ls missing' to view\n"
-      "to restore consistency, on each missing file run either\n"
-      "'%s drop FILE' to remove it permanently, or\n"
-      "'%s revert FILE' to restore it\n"
-      "or to handle all at once, simply '%s drop --missing'\n"
-      "or '%s revert --missing'")
-    % missing_files % ui.prog_name % ui.prog_name % ui.prog_name
-    % ui.prog_name % ui.prog_name);
-}
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      app_state & app)
-{
-  node_restriction tmp;
-  update_current_roster_from_filesystem(ros, tmp, app);
 }
 
 void

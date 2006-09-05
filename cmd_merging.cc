@@ -31,28 +31,6 @@ using std::strlen;
 
 using boost::shared_ptr;
 
-struct update_source
-  : public file_content_source
-{
-  map<file_id, file_data> & temporary_store;
-  app_state & app;
-  update_source (map<file_id, file_data> & tmp,
-                 app_state & app)
-    : temporary_store(tmp), app(app)
-  {}
-  void get_file_content(file_id const & fid,
-                        file_data & dat) const
-  {
-    map<file_id, file_data>::const_iterator 
-      i = temporary_store.find(fid);
-
-    if (i != temporary_store.end())
-      dat = i->second;
-    else
-      app.db.get_file_version(fid, dat);
-  }
-};
-
 static void
 three_way_merge(roster_t const & ancestor_roster,
                 roster_t const & left_roster, roster_t const & right_roster,
@@ -92,7 +70,6 @@ three_way_merge(roster_t const & ancestor_roster,
                result);
 }
   
-
 CMD(update, N_("workspace"), "",
     N_("update workspace.\n"
        "This command modifies your workspace to be based off of a\n"
@@ -112,7 +89,7 @@ CMD(update, N_("workspace"), "",
   // Figure out where we are
 
   revision_id old_rid;
-  get_revision_id(old_rid);
+  app.work.get_revision_id(old_rid);
 
   N(!null_id(old_rid),
     F("this workspace is a new project; cannot update"));
@@ -244,8 +221,8 @@ CMD(update, N_("workspace"), "",
   shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
   MM(*old_roster);
   roster_t working_roster; MM(working_roster);
-  get_base_and_current_roster_shape(*old_roster, working_roster, nis, app);
-  update_current_roster_from_filesystem(working_roster, app);
+  app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
+  app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the CHOSEN roster
   roster_t chosen_roster; MM(chosen_roster);
@@ -266,17 +243,15 @@ CMD(update, N_("workspace"), "",
   merged_roster.check_sane(true);
 
   // Now finally modify the workspace
-  cset update, remaining;
+  cset update;
   make_cset(working_roster, merged_roster, update);
-  make_cset(chosen_roster, merged_roster, remaining);
+  app.work.perform_content_update(update, wca);
 
-  update_source fsource(wca.temporary_store, app);
-  editable_working_tree ewt(app, fsource);
-  update.apply_to(ewt);
+  revision_t remaining;
+  make_revision(chosen_rid, chosen_roster, merged_roster, remaining);
 
   // small race condition here...
-  put_revision_id(chosen_rid);
-  put_work_cset(remaining);
+  app.work.put_work_rev(remaining);
 
   if (!app.branch_name().empty())
     {
@@ -286,8 +261,8 @@ CMD(update, N_("workspace"), "",
     P(F("switched branch; next commit will use branch %s") % app.branch_name());
   P(F("updated to base revision %s") % chosen_rid);
 
-  update_any_attrs(app);
-  maybe_update_inodeprints(app);
+  app.work.update_any_attrs();
+  app.work.maybe_update_inodeprints();
 }
 
 // Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
@@ -762,9 +737,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   // Get the WORKING roster, and also the base roster while we're at it
   roster_t working_roster; MM(working_roster);
   roster_t base_roster; MM(base_roster);
-  get_base_and_current_roster_shape(base_roster, working_roster,
-                                    nis, app);
-  update_current_roster_from_filesystem(working_roster, app);
+  app.work.get_base_and_current_roster_shape(base_roster, working_roster, nis);
+  app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the FROM->TO cset...
   cset from_to_to; MM(from_to_to);
@@ -804,27 +778,28 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   merged_roster.check_sane(true);
 
   // we apply the working to merged cset to the workspace 
-  // and write the cset from the base to merged roster in _MTN/work
-  cset update, remaining;
+  cset update;
   MM(update);
-  MM(remaining);
   make_cset(working_roster, merged_roster, update);
-  make_cset(base_roster, merged_roster, remaining);
+  app.work.perform_content_update(update, wca);
 
-  update_source fsource(wca.temporary_store, app);
-  editable_working_tree ewt(app, fsource);
-  update.apply_to(ewt);
-  
-  // small race condition here...
   P(F("applied changes to workspace"));
 
-  put_work_cset(remaining);
-  update_any_attrs(app);
+  // and record any remaining changes in _MTN/revision
+  revision_id base_id;
+  revision_t remaining;
+  MM(remaining);
+  app.work.get_revision_id(base_id);
+  make_revision(base_id, base_roster, merged_roster, remaining);
+
+  // small race condition here...
+  app.work.put_work_rev(remaining);
+  app.work.update_any_attrs();
   
   // add a note to the user log file about what we did
   {
     data log;
-    read_user_log(log);
+    app.work.read_user_log(log);
     std::string log_str = log();
     if (!log_str.empty())
       log_str += "\n";
@@ -836,7 +811,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
       log_str += (FL("applied partial changes from %s\n"
                      "                     through %s\n")
                   % from_rid % to_rid).str();
-    write_user_log(data(log_str));
+    app.work.write_user_log(data(log_str));
   }
 }
 
@@ -870,7 +845,7 @@ CMD(get_roster, N_("debug"), N_("REVID"),
 {
   revision_id rid;
   if (args.size() == 0)
-    get_revision_id(rid);
+    app.work.get_revision_id(rid);
   else if (args.size() == 1)
     complete(app, idx(args, 0)(), rid);
   else

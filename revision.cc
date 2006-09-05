@@ -644,6 +644,28 @@ make_revision(revision_id const & old_rev_id,
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
 }
 
+void
+make_revision(revision_id const & old_rev_id,
+              roster_t const & old_roster,
+              cset const & changes,
+              revision_t & rev)
+{
+  roster_t new_roster = old_roster;
+  {
+    temp_node_id_source nis;
+    editable_roster_base er(new_roster, nis);
+    changes.apply_to(er);
+  }
+
+  shared_ptr<cset> cs(new cset(changes));
+  rev.edges.clear();
+
+  calculate_ident(new_roster, rev.new_manifest);
+  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  safe_insert(rev.edges, make_pair(old_rev_id, cs));
+}
+
 
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.

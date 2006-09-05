@@ -1,0 +1,20 @@
+format_version "1"
+
+new_manifest [9296adf6738af28160271dc44c77c4e3927e17b6]
+
+old_revision [c2cdede98d20694daf470055a100bf74fdd8e615]
+
+rename "testfile2"
+    to "renamed-testfile2"
+
+add_dir "newdir"
+
+add_file "newdir/file3"
+ content [6cae7599afc389125f786f1d703ef2a9eea08424]
+
+clear "testfile1"
+ attr "test:attr"
+
+  set "renamed-testfile2"
+ attr "test:attr2"
+value "asdf"

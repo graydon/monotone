@@ -163,6 +163,13 @@ make_revision(revision_id const & old_rev_id,
               roster_t const & new_roster,
               revision_t & rev);
 
+// This overload takes a base roster and a changeset instead.
+void
+make_revision(revision_id const & old_rev_id,
+              roster_t const & old_roster,
+              cset const & changes,
+              revision_t & rev);
+
 void
 build_changesets_from_manifest_ancestry(app_state & app);
 
