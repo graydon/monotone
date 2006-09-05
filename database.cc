@@ -796,6 +796,12 @@ database::set_filename(system_path const & file)
   filename = file;
 }
 
+system_path
+database::get_filename()
+{
+  return filename;
+}
+
 void
 database::begin_transaction(bool exclusive)
 {
@@ -2212,6 +2218,21 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), name, val, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+}
+
+void
+database::get_revisions_with_cert(cert_name const & name,
+                                  base64<cert_value> const & val,
+                                  set<revision_id> & revisions)
+{
+  revisions.clear();
+  results res;
+  query q("SELECT id FROM revision_certs WHERE name = ? AND value = ?");
+  cert_value binvalue;
+  decode_base64(val, binvalue);
+  fetch(res, one_col, any_rows, q % text(name()) % blob(binvalue()));
+  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
+    revisions.insert(revision_id((*i)[0]));
 }
 
 void

@@ -209,6 +209,10 @@ public:
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
 
+  bool get_attr(split_path const & pth,
+                attr_key const & key,
+                attr_value & val) const;
+
   void extract_path_set(path_set & paths) const;
 
   node_map const & all_nodes() const
@@ -352,22 +356,6 @@ select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
                               std::set<node_id> & nodes_modified);
-
-void
-classify_roster_paths(roster_t const & ros,
-                      path_set & unchanged,
-                      path_set & changed,
-                      path_set & missing,
-                      app_state & app);
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      node_restriction const & mask,
-                                      app_state & app);
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      app_state & app);
 
 void
 extract_roster_path_set(roster_t const & ros,

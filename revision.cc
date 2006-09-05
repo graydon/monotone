@@ -430,42 +430,117 @@ toposort(set<revision_id> const & revisions,
     }
 }
 
+static void
+accumulate_strict_ancestors(revision_id const & start,
+                            set<revision_id> & new_ancestors,
+                            set<revision_id> & all_ancestors,
+                            multimap<revision_id, revision_id> const & inverse_graph)
+{
+  typedef multimap<revision_id, revision_id>::const_iterator gi;
+  new_ancestors.clear();
+
+  vector<revision_id> frontier;
+  frontier.push_back(start);
+  while (!frontier.empty())
+    {
+      revision_id rid = frontier.back();
+      frontier.pop_back();
+      pair<gi, gi> parents = inverse_graph.equal_range(rid);
+      for (gi i = parents.first; i != parents.second; ++i)
+        {
+          revision_id const & parent = i->second;
+          if (all_ancestors.find(parent) == all_ancestors.end())
+            {
+              new_ancestors.insert(parent);
+              all_ancestors.insert(parent);
+              frontier.push_back(i->second);
+            }
+        }
+    }
+}
+
+// this call is equivalent to running:
+//   remove_if(candidates.begin(), candidates.end(), p);
+//   erase_ancestors(candidates, app);
+// however, by interleaving the two operations, it can in common cases make
+// many fewer calls to the predicate, which can be a significant speed win.
+//
+// FIXME: once we have heights, we should use them here.  The strategy will
+// be, to calculate the minimum height of all the candidates, and teach
+// accumulate_ancestors to stop at a certain height, and teach the code that
+// removes items from the candidate set to occasionally rescan the candidate
+// set to get a new minimum height (perhaps, whenever we remove the minimum
+// height candidate).
+void
+erase_ancestors_and_failures(std::set<revision_id> & candidates,
+                             is_failure & p,
+                             app_state & app)
+{
+  // Load up the ancestry graph
+  multimap<revision_id, revision_id> inverse_graph;
+  
+  {
+    multimap<revision_id, revision_id> graph;
+    app.db.get_revision_ancestry(graph);
+    for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
+         i != graph.end(); ++i)
+      inverse_graph.insert(make_pair(i->second, i->first));
+  }
+
+  // Keep a set of all ancestors that we've traversed -- to avoid
+  // combinatorial explosion.
+  set<revision_id> all_ancestors;
+
+  vector<revision_id> todo(candidates.begin(), candidates.end());
+  std::random_shuffle(todo.begin(), todo.end());
+
+  size_t predicates = 0;
+  while (!todo.empty())
+    {
+      revision_id rid = todo.back();
+      todo.pop_back();
+      // check if this one has already been eliminated
+      if (all_ancestors.find(rid) != all_ancestors.end())
+        continue;
+      // and then whether it actually should stay in the running:
+      ++predicates;
+      if (p(rid))
+        {
+          candidates.erase(rid);
+          continue;
+        }
+      // okay, it is good enough that all its ancestors should be
+      // eliminated; do that now.
+      {
+        set<revision_id> new_ancestors;
+        accumulate_strict_ancestors(rid, new_ancestors, all_ancestors, inverse_graph);
+        I(new_ancestors.find(rid) == new_ancestors.end());
+        for (set<revision_id>::const_iterator i = new_ancestors.begin();
+             i != new_ancestors.end(); ++i)
+          candidates.erase(*i);
+      }
+    }
+  L(FL("called predicate %s times") % predicates);
+}
+
 // This function looks at a set of revisions, and for every pair A, B in that
 // set such that A is an ancestor of B, it erases A.
 
+namespace
+{
+  struct no_failures : public is_failure
+  {
+    virtual bool operator()(revision_id const & rid)
+    {
+      return false;
+    }
+  };
+}
 void
 erase_ancestors(set<revision_id> & revisions, app_state & app)
 {
-  typedef multimap<revision_id, revision_id>::const_iterator gi;
-  multimap<revision_id, revision_id> graph;
-  multimap<revision_id, revision_id> inverse_graph;
-
-  app.db.get_revision_ancestry(graph);
-  for (gi i = graph.begin(); i != graph.end(); ++i)
-    inverse_graph.insert(make_pair(i->second, i->first));
-
-  interner<ctx> intern;
-  map< ctx, shared_bitmap > ancestors;
-
-  shared_bitmap u = shared_bitmap(new bitmap());
-
-  for (set<revision_id>::const_iterator i = revisions.begin();
-       i != revisions.end(); ++i)
-    {
-      calculate_ancestors_from_graph(intern, *i, inverse_graph, ancestors, u);
-    }
-
-  set<revision_id> tmp;
-  for (set<revision_id>::const_iterator i = revisions.begin();
-       i != revisions.end(); ++i)
-    {
-      ctx id = intern.intern(i->inner()());
-      bool has_ancestor_in_set = id < u->size() && u->test(id);
-      if (!has_ancestor_in_set)
-        tmp.insert(*i);
-    }
-
-  revisions = tmp;
+  no_failures p;
+  erase_ancestors_and_failures(revisions, p, app);
 }
 
 // This function takes a revision A and a set of revision Bs, calculates the
@@ -562,6 +637,28 @@ make_revision(revision_id const & old_rev_id,
 
   rev.edges.clear();
   make_cset(old_roster, new_roster, *cs);
+
+  calculate_ident(new_roster, rev.new_manifest);
+  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  safe_insert(rev.edges, make_pair(old_rev_id, cs));
+}
+
+void
+make_revision(revision_id const & old_rev_id,
+              roster_t const & old_roster,
+              cset const & changes,
+              revision_t & rev)
+{
+  roster_t new_roster = old_roster;
+  {
+    temp_node_id_source nis;
+    editable_roster_base er(new_roster, nis);
+    changes.apply_to(er);
+  }
+
+  shared_ptr<cset> cs(new cset(changes));
+  rev.edges.clear();
 
   calculate_ident(new_roster, rev.new_manifest);
   L(FL("new manifest_id is %s") % rev.new_manifest);

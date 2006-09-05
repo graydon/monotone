@@ -3,7 +3,7 @@ mtn_setup()
 
 -- add a file without attributes
 addfile("testfile", "foo")
-commit("mainbranch");
+commit("mainbranch")
 
 -- at first check for the version on the file w/o attributes
 check(mtn("automate", "attributes", "testfile"), 0, true, true)
@@ -66,4 +66,19 @@ for _,l in pairs(parsed) do
     end
 end
 
-check(checked["key1"] and checked["key2"] and checked["key3"] and checked["key4"]);
+check(checked["key1"] and checked["key2"] and checked["key3"] and checked["key4"])
+
+commit("mainbranch")
+
+-- check that dropped attributes do not popup in further revisions
+check(mtn("automate", "attributes", "testfile"), 0, true, true)
+check(fsize("stderr") == 0)
+parsed = parse_basic_io(readfile("stdout"))
+
+for _,l in pairs(parsed) do
+    if l.name == "attr" then 
+        curkey = l.values[1]
+        check(curkey ~= "key2")
+    end
+end
+

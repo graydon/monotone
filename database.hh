@@ -217,6 +217,7 @@ public:
   database(system_path const & file);
 
   void set_filename(system_path const & file);
+  system_path get_filename();
   bool is_dbfile(any_path const & file);
   void initialize();
   void debug(std::string const & sql, std::ostream & out);
@@ -355,6 +356,10 @@ public:
                           cert_name const & name,
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
+
+  void get_revisions_with_cert(cert_name const & name,
+                               base64<cert_value> const & value,
+                               std::set<revision_id> & revisions);
 
   void get_revision_certs(revision_id const & ident,
                           std::vector< revision<cert> > & certs);
