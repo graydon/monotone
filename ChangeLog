@@ -1,3 +1,10 @@
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (get_attr): Remove file_path overload, for consistency
+	wiht the rest of roster_t.
+	* diff_patch.cc (attribute_manual_merge, get_file_encoding):
+	Adjust accordingly.
+
 2006-09-03  Zack Weinberg  <zackw@panix.com>
 
 	* roster.cc (roster_t::get_attr): Make has_node(pth) an invariant.

@@ -802,16 +802,6 @@ roster_t::get_attr(split_path const & pth,
   return false;
 } 
 
-bool
-roster_t::get_attr(file_path const & pth,
-                   attr_key const & name,
-                   attr_value & val) const
-{
-  split_path sp;
-  pth.split(sp);
-  return get_attr(sp, name, val);
-}
-
 
 template <> void
 dump(roster_t const & val, string & out)

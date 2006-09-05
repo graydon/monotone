@@ -213,10 +213,6 @@ public:
                 attr_key const & key,
                 attr_value & val) const;
 
-  bool get_attr(file_path const & path,
-                attr_key const & key,
-                attr_value & val) const;
-
   void extract_path_set(path_set & paths) const;
 
   node_map const & all_nodes() const
