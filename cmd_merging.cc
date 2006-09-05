@@ -248,7 +248,8 @@ CMD(update, N_("workspace"), "",
   app.work.perform_content_update(update, wca);
 
   revision_t remaining;
-  make_revision(chosen_rid, chosen_roster, merged_roster, remaining);
+  make_revision_for_workspace(chosen_rid, chosen_roster,
+                              merged_roster, remaining);
 
   // small race condition here...
   app.work.put_work_rev(remaining);
@@ -790,7 +791,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   revision_t remaining;
   MM(remaining);
   app.work.get_revision_id(base_id);
-  make_revision(base_id, base_roster, merged_roster, remaining);
+  make_revision_for_workspace(base_id, base_roster, merged_roster, remaining);
 
   // small race condition here...
   app.work.put_work_rev(remaining);

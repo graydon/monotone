@@ -116,10 +116,12 @@ revision_t::is_nontrivial() const
 revision_t::revision_t(revision_t const & other)
 {
   /* behave like normal constructor if other is empty */
+  made_for = made_for_nobody;
   if (null_id(other.new_manifest) && other.edges.empty()) return;
   other.check_sane();
   new_manifest = other.new_manifest;
   edges = other.edges;
+  made_for = other.made_for;
 }
 
 revision_t const &
@@ -128,6 +130,7 @@ revision_t::operator=(revision_t const & other)
   other.check_sane();
   new_manifest = other.new_manifest;
   edges = other.edges;
+  made_for = other.made_for;
   return *this;
 }
 
@@ -642,6 +645,7 @@ make_revision(revision_id const & old_rev_id,
   L(FL("new manifest_id is %s") % rev.new_manifest);
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
+  rev.made_for = made_for_database;
 }
 
 void
@@ -664,8 +668,36 @@ make_revision(revision_id const & old_rev_id,
   L(FL("new manifest_id is %s") % rev.new_manifest);
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
+  rev.made_for = made_for_database;
 }
 
+// Workspace-only revisions, with fake rev.new_manifest and content
+// changes suppressed.
+void
+make_revision_for_workspace(revision_id const & old_rev_id,
+                            cset const & changes,
+                            revision_t & rev)
+{
+  shared_ptr<cset> cs(new cset(changes));
+  cs->deltas_applied.clear();
+
+  rev.edges.clear();
+  safe_insert(rev.edges, make_pair(old_rev_id, cs));
+  if (!null_id(old_rev_id))
+    rev.new_manifest = fake_id();
+  rev.made_for = made_for_workspace;
+}
+
+void
+make_revision_for_workspace(revision_id const & old_rev_id,
+                            roster_t const & old_roster,
+                            roster_t const & new_roster,
+                            revision_t & rev)
+{
+  cset changes;
+  make_cset(old_roster, new_roster, changes);
+  make_revision_for_workspace(old_rev_id, changes, rev);
+}
 
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
@@ -1420,6 +1452,7 @@ anc_graph::construct_revisions_from_ancestry()
           fixup_node_identities(parent_rosters, child_roster, node_to_renames[child]);
 
           revision_t rev;
+          rev.made_for = made_for_database;
           MM(rev);
           calculate_ident(child_roster, rev.new_manifest);
 
@@ -1676,6 +1709,7 @@ parse_revision(basic_io::parser & parser,
 {
   MM(rev);
   rev.edges.clear();
+  rev.made_for = made_for_database;
   string tmp;
   parser.esym(syms::format_version);
   parser.str(tmp);

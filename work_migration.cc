@@ -134,7 +134,10 @@ workspace::check_ws_format()
 // Workspace migration is done incrementally.  The functions defined below
 // each perform one step.  Note that they must access bookkeeping directory
 // files directly, not via work.cc APIs, as those APIs expect a workspace in
-// the current format.
+// the current format.  Also, note that these functions do not have access
+// to the database, lua hooks, or keys; this is because we want the
+// migration command to work without options, but work.cc may not know how
+// to read options from an old workspace.
 
 static void
 migrate_0_to_1()
@@ -156,7 +159,7 @@ migrate_0_to_1()
 }
 
 static void
-migrate_1_to_2(database & db)
+migrate_1_to_2()
 {
   // In format 1, the parent revision ID of the checkout is stored bare in a
   // file named _MTN/revision, and any directory tree operations are in cset
@@ -180,14 +183,8 @@ migrate_1_to_2(database & db)
   revision_id base_rid(remove_ws(base_rev_data())); 
   MM(base_rid);
 
-  roster_t base_ros, current_ros;
-  MM(base_ros);
-  MM(current_ros);
-  
-  marking_map base_mm;
-  db.get_roster(base_rid, base_ros, base_mm);
-  current_ros = base_ros;
-
+  cset workcs; 
+  MM(workcs);
   bookkeeping_path workcs_path = bookkeeping_root / "work";
   bool delete_workcs = false;
   if (file_exists(workcs_path))
@@ -204,12 +201,7 @@ migrate_1_to_2(database & db)
             % workcs_path % e.what());
         }
 
-      cset workcs; 
-      MM(workcs);
       read_cset(workcs_data, workcs);
-      temp_node_id_source nis;
-      editable_roster_base er(current_ros, nis);
-      workcs.apply_to(er);
     }
   else
     require_path_is_nonexistent(workcs_path,
@@ -219,7 +211,7 @@ migrate_1_to_2(database & db)
 
   revision_t rev;
   MM(rev);
-  make_revision(base_rid, base_ros, current_ros, rev);
+  make_revision_for_workspace(base_rid, workcs, rev);
   data rev_data;
   write_revision(rev, rev_data);
   write_data(rev_path, rev_data);
@@ -245,7 +237,7 @@ workspace::migrate_ws_format()
   switch (format)
     {
     case 0: migrate_0_to_1();
-    case 1: migrate_1_to_2(db);
+    case 1: migrate_1_to_2();
 
       // We are now in the current format.
       write_ws_format();

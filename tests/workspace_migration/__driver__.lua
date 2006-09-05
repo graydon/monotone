@@ -47,24 +47,34 @@ writefile("current/_MTN/log", "oh frabjous patch, calloo callay\n")
 writefile("current/_MTN/monotonerc",
           '-- io.stderr:write("warning: bandersnatch insufficiently frumious\\n")\n')
 
+-- _MTN/options
+
+-- we set all the options, by hand, to complete nonsense, because
+-- (a) the migration operation is not supposed to need any information
+-- from this file, and (b) monotone should not clobber the options
+-- file, even if the corresponding command line options are given, when
+-- it doesn't understand the bookkeeping format.  we save the nonsense
+-- separately from current/_MTN/options to ensure that that, too, isn't
+-- getting clobbered.
+
+writefile("nonsense-options",
+          'database "/twas/brillig/and/the/slithy/toves.mtn"\n'..
+	  '  branch "did.gyre.and.gimble.in.the.wabe"\n'..
+	  '     key "all.mimsy.were@the.borogoves"\n'..
+	  '  keydir "/and/the/mome/raths/outgrabe"\n')
+copy("nonsense-options", "current/_MTN/options")
+
 --------------------------------------------------------------------------------------------------------------------------------------------
 ---- End untouchable code
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 function check_workspace_matches_current(ws)
-   -- first check the options file, which will contain absolute paths that
-   -- need special handling, and will need to be redone before we can use the
-   -- workspace
-   check(qgrep('database ".*/test.db"', ws .. "/_MTN/options"))
-   check(qgrep('keydir ".*/keys"', ws .. "/_MTN/options"))
-   check(qgrep('branch "testbranch"', ws .. "/_MTN/options"))
-   check(qgrep('key "tester@test.net"', ws .. "/_MTN/options"))
-   -- now the revision-in-progress
+   check(samefile("nonsense-options", ws.."/_MTN/options"))
    check(indir("current", mtn("automate", "get_revision")), 0, true, false)
    rename("stdout", "current-rev")
    check(indir(ws, mtn("automate", "get_revision")), 0, true, false)
    rename("stdout", ws .. "-current-rev")
-   check(samefile("current-rev", ws .. "-current-rev"))
+   check(samefile("current-rev", ws.."-current-rev"))
    -- and the log file
    check(samefile("current/_MTN/log", ws .. "/_MTN/log"))
    -- we'd like to check that the hook file is being read, but we can't,
@@ -93,11 +103,12 @@ function check_migrate_from(version)
       -- and the error message mentions the command they should run
       check(qgrep("migrate_workspace", "stderr"))
    end
-   check(indir(ws, mtn("migrate_workspace")), 0, false, false)
+   -- use raw_mtn here so it's not getting any help from the command line
+   check(indir(ws, raw_mtn("migrate_workspace")), 0, false, false)
    -- now we should be the current version, and things should work
    check(readfile(ws .. "/_MTN/format") == (current_workspace_format .. "\n"))
-   check(indir(ws, mtn("status")), 0, false, false)
    check_workspace_matches_current(ws)
+   check(indir(ws, mtn("status")), 0, false, false)
 end
 
 for i = 1,current_workspace_format do

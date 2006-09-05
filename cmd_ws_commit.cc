@@ -165,7 +165,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   revision_t remaining;
   revision_id base;
   app.work.get_revision_id(base);
-  make_revision(base, old_roster, excluded, remaining);
+  make_revision_for_workspace(base, excluded, remaining);
 
   // Race.
   app.work.put_work_rev(remaining);
@@ -504,7 +504,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   app.db.get_roster(ident, ros, mm);
 
   revision_t workrev;
-  make_revision(ident, ros, ros, workrev);
+  make_revision_for_workspace(ident, cset(), workrev);
   app.work.put_work_rev(workrev);
 
   node_map const & nodes = ros.all_nodes();
@@ -601,7 +601,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
       app.work.get_revision_id(base);
 
       revision_t new_work;
-      make_revision(base, old_roster, new_roster, new_work);
+      make_revision_for_workspace(base, old_roster, new_roster, new_work);
       app.work.put_work_rev(new_work);
       app.work.update_any_attrs();
     }
@@ -837,13 +837,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   }
 
   // the work revision is now whatever changes remain on top of the revision
-  // we just checked in.  is there a better way to get the base roster than
-  // by reading it back out of the database?
+  // we just checked in.
   revision_t remaining;
-  roster_t new_base_roster;
-  marking_map mm;
-  app.db.get_roster(restricted_rev_id, new_base_roster, mm);
-  make_revision(restricted_rev_id, new_base_roster, excluded, remaining);
+  make_revision_for_workspace(restricted_rev_id, excluded, remaining);
   
   // small race condition here...
   app.work.put_work_rev(remaining);
@@ -905,9 +901,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   app.create_workspace(dir);
 
   revision_t rev;
-  shared_ptr<cset> cs(new cset());
-  rev.edges.insert(make_pair(revision_id(), cs));
-  
+  make_revision_for_workspace(revision_id(), cset(), rev);
   app.work.put_work_rev(rev);
 }
 

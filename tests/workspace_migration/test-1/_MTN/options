@@ -1,4 +1,4 @@
-  branch "testbranch"
-database "/home/njs/src/monotone/workspace-merge-grr/tester_dir/workspace_migration/test.db"
-     key "tester@test.net"
-  keydir "/home/njs/src/monotone/workspace-merge-grr/tester_dir/workspace_migration/keys"
+database "/twas/brillig/and/the/slithy/toves.mtn"
+  branch "did.gyre.and.gimble.in.the.wabe"
+     key "all.mimsy.were@the.borogoves"
+  keydir "/and/the/mome/raths/outgrabe"

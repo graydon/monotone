@@ -177,6 +177,7 @@ store_roster_merge_result(roster_t const & left_roster,
   merged_roster.check_sane();
 
   revision_t merged_rev;
+  merged_rev.made_for = made_for_database;
 
   calculate_ident(merged_roster, merged_rev.new_manifest);
 

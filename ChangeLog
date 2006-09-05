@@ -1,3 +1,33 @@
+2006-09-05  Zack Weinberg  <zackw@panix.com>
+
+	* revision.hh (enum made_for): New.
+	(revision_t): Add 'made_for' field; in default constructor,
+	initialize it to made_for_nobody.
+	(make_revision_for_workspace): Two new functions.
+	* revision.cc: Throughout, set made_for when appropriate.
+	Implement new functions.
+	* work.cc (get_work_rev): Set made_for.
+	(put_work_rev): Invariant failure if made_for is not
+	made_for_workspace.
+	(perform_additions, perform_deletions, perform_rename)
+	(perform_pivot_root): Use make_revision_for_workspace.
+	* database.cc (put_revision): Invariant failure if made_for is not
+	made_for_database.
+	* merge.cc (store_roster_merge_result)
+	* rcs_import.cc (consume_cluster): Set made_for on revision
+	constructed.
+	* cmd_merging.cc, cmd_ws_commit.cc: Use make_revision_for_workspace
+	where appropriate.
+	* work_migration.cc: Add a note to the commentary about not being
+	able to use the database here.
+	(migrate_1_to_2): Remove database argument.
+	Use make_revision_for_workspace instead of messing about with
+	rosters.
+
+	* tests/workspace_migration/__driver__.lua: Strengthen test of
+	options preservation; invoke migrate_workspace using raw_mtn.
+	* tests/workspace_migration/{test-1,test-2}: Update to match.
+
 2006-09-05  Alex Queiroz  <alex@ventonegro.org>
 
 	* luaext_*.cc: Minor cleanups.
@@ -308,7 +338,7 @@
 
 2006-09-04  Nathaniel Smith  <njs@pobox.com>
 
-	* revision.cc (erase_ancestors_and_failures): 
+	* revision.cc (erase_ancestors_and_failures):
 	* cert.cc (get_branch_heads): Add some logging.
 
 2006-09-04  Nathaniel Smith  <njs@pobox.com>

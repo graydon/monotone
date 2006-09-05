@@ -51,6 +51,8 @@ edge_map;
 typedef edge_map::value_type
 edge_entry;
 
+enum made_for { made_for_nobody, made_for_workspace, made_for_database };
+
 struct
 revision_t
 {
@@ -59,11 +61,16 @@ revision_t
   // trivial revisions are ones that have no effect -- e.g., commit should
   // refuse to commit them, saying that there are no changes to commit.
   bool is_nontrivial() const;
-  revision_t() {}
+  revision_t() : made_for(made_for_nobody) {}
   revision_t(revision_t const & other);
   revision_t const & operator=(revision_t const & other);
   manifest_id new_manifest;
   edge_map edges;
+  // workspace::put_work_rev refuses to apply a rev that doesn't have this
+  // set to "workspace", and database::put_revision refuses to apply a rev
+  // that doesn't have it set to "database".  the default constructor sets
+  // it to "nobody".
+  enum made_for made_for;
 };
 
 inline revision_id const &
@@ -169,6 +176,21 @@ make_revision(revision_id const & old_rev_id,
               roster_t const & old_roster,
               cset const & changes,
               revision_t & rev);
+
+// These functions produce a faked "new_manifest" id and discard all
+// content-only changes from the cset.  They are only to be used to
+// construct a revision that will be written to the workspace.  Don't use
+// them for revisions written to the database or presented to the user.
+void
+make_revision_for_workspace(revision_id const & old_rev_id,
+                            cset const & changes,
+                            revision_t & rev);
+
+void
+make_revision_for_workspace(revision_id const & old_rev_id,
+                            roster_t const & old_roster,
+                            roster_t const & new_roster,
+                            revision_t & rev);
 
 void
 build_changesets_from_manifest_ancestry(app_state & app);

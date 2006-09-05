@@ -91,6 +91,9 @@ get_work_rev(revision_t & rev)
   read_revision(rev_data, rev);
   // Currently the revision must have only one ancestor.
   I(rev.edges.size() == 1);
+
+  // Mark it so it doesn't creep into the database.
+  rev.made_for = made_for_workspace;
 }
 
 void
@@ -99,6 +102,7 @@ workspace::put_work_rev(revision_t const & rev)
   // Currently the revision must have only one ancestor.
   MM(rev);
   I(rev.edges.size() == 1);
+  I(rev.made_for == made_for_workspace);
   rev.check_sane();
 
   data rev_data;
@@ -1056,7 +1060,7 @@ workspace::perform_additions(path_set const & paths, bool recursive)
   get_revision_id(base_rev);
 
   revision_t new_work;
-  make_revision(base_rev, base_roster, new_roster, new_work);
+  make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
   put_work_rev(new_work);
   update_any_attrs();
 }
@@ -1128,7 +1132,7 @@ workspace::perform_deletions(path_set const & paths,
   get_revision_id(base_rev);
 
   revision_t new_work;
-  make_revision(base_rev, base_roster, new_roster, new_work);
+  make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
   put_work_rev(new_work);
   update_any_attrs();
 }
@@ -1210,7 +1214,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
   get_revision_id(base_rev);
 
   revision_t new_work;
-  make_revision(base_rev, base_roster, new_roster, new_work);
+  make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
   put_work_rev(new_work);
 
   if (execute)
@@ -1292,15 +1296,11 @@ workspace::perform_pivot_root(file_path const & new_root,
   safe_insert(cs.nodes_renamed, make_pair(new_root_sp, root_sp));
 
   {
-    editable_roster_base e(new_roster, nis);
-    cs.apply_to(e);
-  }
-  {
     revision_id base_rev;
     get_revision_id(base_rev);
 
     revision_t new_work;
-    make_revision(base_rev, base_roster, new_roster, new_work);
+    make_revision_for_workspace(base_rev, cs, new_work);
     put_work_rev(new_work);
   }
   if (execute)

@@ -1714,6 +1714,7 @@ database::put_revision(revision_id const & new_id,
   I(!null_id(new_id));
   I(!revision_exists(new_id));
 
+  I(rev.made_for == made_for_database);
   rev.check_sane();
   revision_data d;
   MM(d.inner());

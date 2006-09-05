@@ -1472,6 +1472,7 @@ cluster_consumer::consume_cluster(cvs_cluster const & c)
   cs->apply_to(editable_ros);
   manifest_id child_mid;
   calculate_ident(ros, child_mid);
+  rev->made_for = made_for_database;
   rev->new_manifest = child_mid;
   rev->edges.insert(make_pair(parent_rid, cs));
   calculate_ident(*rev, child_rid);
