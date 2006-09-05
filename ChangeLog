@@ -1,5 +1,9 @@
 2006-09-05  Richard Levitte  <richard@levitte.org>
 
+	* po/sv.po: 4 more fuzzies, 6 more new strings.
+
+2006-09-05  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: 5 fuzzies and 3 new strings to fix.  New translation
 	for "option" when it's about the options file.
 

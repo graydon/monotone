@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-05 07:37+0200\n"
-"PO-Revision-Date: 2006-09-05 07:51+0200\n"
+"POT-Creation-Date: 2006-09-05 10:38+0200\n"
+"PO-Revision-Date: 2006-09-05 12:19+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1742,11 +1742,9 @@ msgstr "du måste ange en gren med --branch till kommandot \"setup\""
 
 #: cmd_ws_commit.cc:915
 msgid ""
-"migrate a workspace directory's metadata to the latest format, default to "
-"current"
-msgstr ""
-"migrera en arbetskopias (nuvarande om katalog ej anges) metadata till det\n"
-"senaste formatet"
+"migrate a workspace directory's metadata to the latest format; defaults to "
+"the current workspace"
+msgstr "migrera en arbetskopias metadata till det senaste formatet; nuvarande katalog avses om inget annat anges"
 
 #: cmd_ws_commit.cc:928
 msgid "refresh the inodeprint cache"
@@ -2526,7 +2524,7 @@ msgstr "%s anropades med inkorrekt parameter"
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:480 rcs_import.cc:1235 work.cc:1283
+#: lua.cc:480 rcs_import.cc:1235 work.cc:1284
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
@@ -3678,7 +3676,7 @@ msgstr "felaktig nyckellängd, %d byte"
 msgid "Invalid hmac length of %d bytes"
 msgstr "felaktig HMAC-längd, %d byte"
 
-#: work.cc:87
+#: work.cc:87 work_migration.cc:177 work_migration.cc:203
 #, c-format
 msgid "workspace is corrupt: reading %s: %s"
 msgstr "arbetskopian är korrupt: läste %s: %s"
@@ -3772,108 +3770,180 @@ msgstr "saknar %s"
 #, c-format
 msgid ""
 "%d missing files; use '%s ls missing' to view\n"
-"to restore consistency, on each missing file run either\n"
-"'%s drop FILE' to remove it permanently, or\n"
-"'%s revert FILE' to restore it\n"
-"or to handle all at once, simply '%s drop --missing'\n"
-"or '%s revert --missing'"
+"To restore consistency, on each missing file run either\n"
+" '%s drop FILE' to remove it permanently, or\n"
+" '%s revert FILE' to restore it.\n"
+"To handle all at once, simply use\n"
+" '%s drop --missing' or\n"
+" '%s revert --missing'"
 msgstr ""
 "%d saknade filer; använd '%s ls missing' för att se dem\n"
-"för att se till att allt stämmer kan du antingen göra\n"
-"'%s drop FILE' för att ta bort filen permanent, eller\n"
-"'%s revert FILE' för att återställa den.\n"
-"Om du vill ta hand om alla saknade filer på en gång kan\n"
-"du helt enkelt göra '%s drop --missing' eller\n"
-"'%s revert --missing'"
+"För att se till att allt stämmer, gör följande för varje fil:\n"
+" '%s drop FILE' för att ta bort filen permanent, eller\n"
+" '%s revert FILE' för att återställa den.\n"
+"För att ta hand om alla saknade filer på en gång, gör helt enkelt följande:\n"
+" '%s drop --missing' eller\n"
+" '%s revert --missing'"
 
-#: work.cc:1092
+#: work.cc:1093
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "hoppar över %s, ej noterad i arbetskopian för närvarande"
 
-#: work.cc:1102
+#: work.cc:1103
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kan inte ta bort %s/, den är inte tom"
 
-#: work.cc:1113
+#: work.cc:1114
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "tar bort %s från arbetskopians manifest"
 
-#: work.cc:1164
+#: work.cc:1165
 #, c-format
 msgid "destination dir %s/ does not exist in current revision"
 msgstr "målkatalogen %s/ finns inte i nuvarande revision"
 
-#: work.cc:1167
+#: work.cc:1168
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "målet %s är en existerande fil i nuvarande revision"
 
-#: work.cc:1177
+#: work.cc:1178
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "tom sökväg %s ej tillåten"
 
-#: work.cc:1191
+#: work.cc:1192
 #, c-format
 msgid "%s does not exist in current revision"
 msgstr "%s finns inte i nuvarande revision"
 
-#: work.cc:1194
+#: work.cc:1195
 #, c-format
 msgid "destination %s already exists in current revision"
 msgstr "målet %s finns redan i nuvarande revision"
 
-#: work.cc:1203
+#: work.cc:1204
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "byter namn från %s till %s i arbetskopians manifest"
 
-#: work.cc:1231
+#: work.cc:1232
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "hoppar över %s, den existerar inte i arbetskopian"
 
-#: work.cc:1235
+#: work.cc:1236
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "hoppar över %s, den finns redan noterad i arbetskopian"
 
-#: work.cc:1263
+#: work.cc:1264
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' är inte noterad i arbetskopian eller "
 "finns inte"
 
-#: work.cc:1265
+#: work.cc:1266
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "den föreslagna nya rotkatalogen '%s' är inte en katalog"
 
-#: work.cc:1270
+#: work.cc:1271
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' innehåller den otillåtna sökvägen %s"
 
-#: work.cc:1280
+#: work.cc:1281
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "katalogen '%s' är inte noterad i arbetskopian eller finns inte"
 
-#: work.cc:1286
+#: work.cc:1287
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' är i vägen"
 
+#: work_migration.cc:62
+#, c-format
+msgid "workspace required but not found"
+msgstr "arbetskopia behövs men kunde inte hittas"
+
+#: work_migration.cc:71
+#, c-format
+msgid "_MTN/format should not exist in a format 1 workspace; corrected"
+msgstr "_MTN/format borde inte finns i an arbetskopia av format 1; åtgärdat"
+
+#: work_migration.cc:108
+#, c-format
+msgid ""
+"this workspace's metadata is in format 0. to use this workspace\n"
+"with this version of monotone, you must delete it and check it\n"
+"out again (migration from format 0 is not possible).\n"
+"once you have done this, you will not be able to use the workspace\n"
+"with versions of monotone older than %s.\n"
+"we apologize for the inconvenience."
+msgstr ""
+"den här arbetskopians metadata är av format 0.  För att använda den\n"
+"med den här monotone-versionen måste du ta bort den och hämta den\n"
+"igen (migrering från format 0 är inte möjligt).\n"
+"När du väl har gjort detta kommer du inte att kunna använda arbetskopian\n"
+"med monotone-versioner äldre än.\n"
+"Vi ber om ursäkt för besväret."
+
+#: work_migration.cc:117
+#, c-format
+msgid ""
+"to use this workspace with this version of monotone, its metadata\n"
+"must be migrated from format %d to format %d, using the command\n"
+"'%s migrate_workspace'.\n"
+"once you have done this, you will not be able to use the workspace\n"
+"with versions of monotone older than %s."
+msgstr ""
+"för att använda denna arbetskopia med den här monotone-versionen måste\n"
+"dess metadata migreras från format %d till format %d, vilket du gör med\n"
+"kommandot '%s migrate_workspace'.\n"
+"Så snart du har gjort detta kommer du inte att kunna använda denna\n"
+"arbetskopia med äldre monotone-versioner än %s."
+
+#: work_migration.cc:127 work_migration.cc:263
+#, c-format
+msgid ""
+"this version of monotone only understands workspace metadata\n"
+"in formats 0 through %d.  your workspace is in format %d.\n"
+"you need a newer version of monotone to use this workspace."
+msgstr ""
+"Den här monotone-versionen förstår bara metadata i arbetskopian av\n"
+"format 0 till %d.  Din arbetskopia har format %d.  Du behöver en\n"
+"nyare monotone-version för att använda denna arbetskopia."
+
+#: work_migration.cc:153
+#, c-format
+msgid ""
+"it is not possible to migrate from workspace format 0 to any\n"
+"later format.  you must delete this workspace and check it out\n"
+"again.  we apologize for the inconvenience."
+msgstr ""
+"Det går inte att migrera en arbetskopia från format 0 till något\n"
+"senare format.  Du måste radera denna arbetskopia och hämta den\n"
+"på nytt.  Vi ber om ursäkt för besväret."
+
+#: work_migration.cc:216
+#, c-format
+msgid "workspace is corrupt: %s exists but is not a regular file"
+msgstr "arbetskopian är korrupt: %s finns men är inte en vanlig fil"
+
+#: work_migration.cc:255
+#, c-format
+msgid "this workspace is in the current format, no migration is necessary."
+msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
+
 #~ msgid "option %s doesn't exist"
 #~ msgstr "optionen %s finns inte"
-
-#~ msgid "workspace is corrupt: %s is a directory"
-#~ msgstr "arbetskopian är korrupt: %s är en katalog"
 
 #~ msgid "Problem with workspace: %s is unreadable"
 #~ msgstr "Problem med arbetskatalogen: %s är oläsbar"
