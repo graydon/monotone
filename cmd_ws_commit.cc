@@ -342,28 +342,23 @@ ALIAS(mv, rename)
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     option::depth % option::exclude)
 {
-  roster_t old_roster, new_roster;
-  cset included, excluded;
-  revision_id old_rev_id;
+  roster_t new_roster;
+  parent_map old_rosters;
   revision_t rev;
-  data tmp;
   temp_node_id_source nis;
+  cset dummy;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_parent_rosters(old_rosters);
+  app.work.get_current_roster_shape(new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
                         app.depth,
-                        old_roster, new_roster, app);
+                        old_rosters, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster, 
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
-
-  app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, included, rev);
+  make_restricted_revision(old_rosters, new_roster, mask, rev, dummy);
 
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
@@ -651,43 +646,57 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   string log_message("");
   bool log_message_given;
   revision_t restricted_rev;
-  revision_id old_rev_id, restricted_rev_id;
-  roster_t old_roster, new_roster;
+  parent_map old_rosters;
+  roster_t new_roster;
   temp_node_id_source nis;
-  cset included, excluded;
+  cset excluded;
 
   app.make_branch_sticky();
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_parent_rosters(old_rosters);
+  app.work.get_current_roster_shape(new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
                         app.depth,
-                        old_roster, new_roster, app);
+                        old_rosters, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster, 
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
-
-  app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, included, restricted_rev);
-
-  calculate_ident(restricted_rev, restricted_rev_id);
-
+  make_restricted_revision(old_rosters, new_roster, mask, restricted_rev, excluded);
+  restricted_rev.check_sane();
   N(restricted_rev.is_nontrivial(), F("no changes to commit"));
 
   cert_value branchname;
-  I(restricted_rev.edges.size() == 1);
-
-  set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
-  unsigned int old_head_size = heads.size();
-
   if (app.branch_name() != "")
     branchname = app.branch_name();
   else
-    guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
+    {
+      cert_value bn_candidate;
+      for (edge_map::iterator i = restricted_rev.edges.begin();
+           i != restricted_rev.edges.end();
+           i++)
+        {
+          guess_branch(edge_old_revision(i), app, bn_candidate);
+          N(branchname() == "" || branchname() == bn_candidate(),
+            F("parent revisions of this commit are in different branches:\n"
+              "'%s' and '%s'.\n"
+              "please specify a branch name for the commit, with --branch.")
+            % branchname % bn_candidate);
+          branchname = bn_candidate;
+        }
+    }
+
+  revision_id restricted_rev_id;
+  calculate_ident(restricted_rev, restricted_rev_id);
+#if 1
+  MM(restricted_rev);
+  MM(restricted_rev_id);
+  I(!app.db.revision_exists(restricted_rev_id));
+#else
+  E(app.db.revision_exists(restricted_rev_id),
+    F("revision %s is already in the database\n"
+      "(update and try again?)") % restricted_rev_id);
+#endif
 
   P(F("beginning commit on branch '%s'") % branchname);
   L(FL("new manifest '%s'\n"
@@ -736,23 +745,20 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                                        message_validated, reason);
   N(message_validated, F("log message rejected: %s") % reason);
 
+  // for the divergence check, below
+  set<revision_id> heads;
+  get_branch_heads(branchname(), app, heads);
+  unsigned int old_head_size = heads.size();
+  
+  L(FL("inserting new revision %s") % restricted_rev_id);
   {
     transaction_guard guard(app.db);
     packet_db_writer dbw(app);
 
-    if (app.db.revision_exists(restricted_rev_id))
+    for (edge_map::const_iterator edge = restricted_rev.edges.begin();
+         edge != restricted_rev.edges.end();
+         edge++)
       {
-        W(F("revision %s already in database") % restricted_rev_id);
-      }
-    else
-      {
-        // new revision
-        L(FL("inserting new revision %s") % restricted_rev_id);
-
-        I(restricted_rev.edges.size() == 1);
-        edge_map::const_iterator edge = restricted_rev.edges.begin();
-        I(edge != restricted_rev.edges.end());
-
         // process file deltas or new files
         cset const & cs = edge_changes(edge);
 
@@ -851,7 +857,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.blank_user_log();
 
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(branchname(), app, heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
