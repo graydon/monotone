@@ -3892,7 +3892,7 @@ msgstr ""
 "med den här monotone-versionen måste du ta bort den och hämta den\n"
 "igen (migrering från format 0 är inte möjligt).\n"
 "När du väl har gjort detta kommer du inte att kunna använda arbetskopian\n"
-"med monotone-versioner äldre än.\n"
+"med monotone-versioner äldre än %s.\n"
 "Vi ber om ursäkt för besväret."
 
 #: work_migration.cc:117
