@@ -30,6 +30,10 @@
 
 2006-09-05  Alex Queiroz  <alex@ventonegro.org>
 
+	* po/pt_BR.po: Fuzzies fixed and strings translated.
+
+2006-09-05  Alex Queiroz  <alex@ventonegro.org>
+
 	* luaext_*.cc: Minor cleanups.
 
 2006-09-05  Richard Levitte  <richard@levitte.org>
