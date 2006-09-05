@@ -10,8 +10,6 @@ using std::strerror;
 
 LUAEXT(mkstemp, )
 {
-  int fd = -1;
-  FILE **pf = NULL;
   char const *filename = luaL_checkstring (L, -1);
   string dup(filename);
 
@@ -21,3 +19,4 @@ LUAEXT(mkstemp, )
   lua_pushstring(L, dup.c_str());
   return 1;
 }
+

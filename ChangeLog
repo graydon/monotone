@@ -1,3 +1,7 @@
+2006-09-05  Alex Queiroz  <alex@ventonegro.org>
+
+	* luaext_*.cc: Minor cleanups.
+
 2006-09-04  Nathaniel Smith  <njs@pobox.com>
 
 	* revision.cc (erase_ancestors_and_failures): 
