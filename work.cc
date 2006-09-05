@@ -962,11 +962,12 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
 
   N(missing_files == 0,
     F("%d missing files; use '%s ls missing' to view\n"
-      "to restore consistency, on each missing file run either\n"
-      "'%s drop FILE' to remove it permanently, or\n"
-      "'%s revert FILE' to restore it\n"
-      "or to handle all at once, simply '%s drop --missing'\n"
-      "or '%s revert --missing'")
+      "To restore consistency, on each missing file run either\n"
+      " '%s drop FILE' to remove it permanently, or\n"
+      " '%s revert FILE' to restore it.\n"
+      "To handle all at once, simply use\n"
+      " '%s drop --missing' or\n"
+      " '%s revert --missing'")
     % missing_files % ui.prog_name % ui.prog_name % ui.prog_name
     % ui.prog_name % ui.prog_name);
 }

@@ -912,8 +912,8 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
 }
 
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
- N_("migrate a workspace directory's metadata to the latest format, "
-    "default to current"),
+ N_("migrate a workspace directory's metadata to the latest format; "
+    "defaults to the current workspace"),
                  option::none)
 {
   if (args.size() > 1)
