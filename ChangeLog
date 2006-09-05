@@ -1,3 +1,8 @@
+2006-09-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 5 fuzzies and 3 new strings to fix.  New translation
+	for "option" when it's about the options file.
+
 2006-09-04  Nathaniel Smith  <njs@pobox.com>
 
 	* roster.cc (get_attr): Remove file_path overload, for consistency
