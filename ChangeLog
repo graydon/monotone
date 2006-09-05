@@ -1,5 +1,10 @@
 2006-09-04  Nathaniel Smith  <njs@pobox.com>
 
+	* configure.ac (AM_INIT_AUTOMAKE): Remove check-news option, it
+	causes more trouble than it's worth.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
 	* revision.cc (erase_ancestors_and_failures): 
 	* cert.cc (get_branch_heads): Add some logging.
 
