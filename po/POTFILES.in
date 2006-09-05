@@ -84,6 +84,7 @@ vocab.cc
 vocab.hh
 vocab_terms.hh
 work.cc
+work_migration.cc
 work.hh
 xdelta.cc
 xdelta.hh
