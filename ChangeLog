@@ -1,3 +1,17 @@
+2006-09-04  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (explicit_merge_and_update): Rename to
+	merge_into_workspace; take one side of the merge from the
+	workspace's ancestor; disallow the operation if there are
+	pending changes in the workspace; use the correct roster
+	when constructing the content_merge_workspace_adaptor.
+
+	* tests/explicit_merge_and_update: Rename to ...
+	* tests/merge_into_workspace: ... this; update for changed
+	command line API.
+	* tests/merge_into_workspace_no_changes: New test.
+	* testsuite.lua: Update.
+
 2006-09-01  Zack Weinberg  <zackw@panix.com>
 
 	* tests/explicit_merge_and_update: Augment to test starting from

@@ -586,56 +586,50 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     }
 }
 
-CMD(explicit_merge_and_update, N_("tree"),
-    N_("LEFT-REVISION RIGHT-REVISION"),
-    N_("merge two explicitly given revisions, "
-       "and update the current workspace with the result"),
-    option::date % option::author)
+CMD(merge_into_workspace, N_("tree"),
+    N_("OTHER-REVISION"),
+    N_("Merge OTHER-REVISION into the current workspace's base revision, "
+       "and update the current workspace with the result.  There can be no "
+       "pending changes in the current workspace.  Both OTHER-REVISION and "
+       "the workspace's base revision will be recorded as parents on commit. "
+       "The workspace's selected branch is not changed."),
+    option::none)
 {
   revision_id left, right;
-  string branch;
 
-  if (args.size() != 2)
+  if (args.size() != 1)
     throw usage(name);
-
-  complete(app, idx(args, 0)(), left);
-  complete(app, idx(args, 1)(), right);
-
-  N(!(left == right),
-    F("%s and %s are the same revision, aborting") % left % right);
-  N(!is_ancestor(left, right, app),
-    F("%s is already an ancestor of %s") % left % right);
-  N(!is_ancestor(right, left, app),
-    F("%s is already an ancestor of %s") % right % left);
-
-  bool switched_branch_left = pick_branch_for_update(left, app);
-  bool switched_branch_right = pick_branch_for_update(right, app);
-  N(!(switched_branch_left && switched_branch_right),
-    F("%s and %s are not on the same branch, "
-      "specify target branch explicitly with --branch")
-    % left % right);
-  bool switched_branch = switched_branch_left || switched_branch_right;
-  if (switched_branch)
-    P(F("switching to branch %s") % app.branch_name());
 
   app.require_workspace();
 
-  // Get the current state of the workspace
-  temp_node_id_source nis;
-  shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
-  MM(*old_roster);
-  roster_t working_roster; MM(working_roster);
-  app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
-  app.work.update_current_roster_from_filesystem(working_roster);
+  // Get the current state of the workspace.
 
-  // Get the two revisions that we are being asked to merge, and merge them.
+  // This command cannot be applied to a workspace with more than one parent
+  // (revs can have no more than two parents) but we use the multiparent-safe
+  // interface anyway so we can give an N() instead of an invariant failure.
+  {
+    parent_map parents;
+    app.work.get_parent_rosters(parents);
+    N(parents.size() == 1,
+      F("'%s' can only be used in a single-parent workspace") % name);
+
+    temp_node_id_source nis;
+    roster_t working_roster;
+    app.work.get_current_roster_shape(working_roster, nis);
+    app.work.update_current_roster_from_filesystem(working_roster);
+
+    N(parent_roster(parents.begin()) == working_roster,
+      F("'%s' can only be used in a workspace with no pending changes") % name);
+
+    left = parent_id(parents.begin());
+    complete(app, idx(args, 0)(), right);
+  }
+
+  // ??? Provide some way of getting the marking maps out of
+  // get_base_rosters so we don't have to hit the database twice.
   roster_t left_roster, right_roster;
-  MM(left_roster);
-  MM(right_roster);
   marking_map left_marking_map, right_marking_map;
-  set<revision_id> 
-    left_uncommon_ancestors, 
-    right_uncommon_ancestors;
+  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
 
   app.db.get_roster(left, left_roster, left_marking_map);
   app.db.get_roster(right, right_roster, right_marking_map);
@@ -643,35 +637,24 @@ CMD(explicit_merge_and_update, N_("tree"),
                                 left_uncommon_ancestors,
                                 right_uncommon_ancestors);
 
-  roster_merge_result result_one;
+  roster_merge_result merge_result;
   roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
                right_roster, right_marking_map, right_uncommon_ancestors,
-               result_one);
+               merge_result);
 
-  content_merge_workspace_adaptor wca(app, old_roster);
+  revision_id merge_lca;
+  shared_ptr<roster_t> lca_roster(new roster_t);
+  marking_map dummy;
+  find_common_ancestor_for_merge(left, right, merge_lca, app);
+  app.db.get_roster(merge_lca, *lca_roster, dummy);
+
+  content_merge_workspace_adaptor wca(app, lca_roster);
   resolve_merge_conflicts(left_roster, right_roster,
-                          result_one, wca, app);
+                          merge_result, wca, app);
 
   // Make sure it worked...
-  I(result_one.is_clean());
-  result_one.roster.check_sane(true);
-
-  // And now, we merge the merged roster into the workspace, 'as if' by update.
-  // Note that for perform_content_update to work correctly we must use the
-  // same content merge adaptor for both operations.
-  roster_merge_result result_two;
-  three_way_merge(*old_roster, working_roster, result_one.roster, result_two);
-  resolve_merge_conflicts(working_roster, result_one.roster,
-                          result_two, wca, app);
-  
-  // Make sure it worked...
-  I(result_two.is_clean());
-  result_two.roster.check_sane(true);
-
-  roster_t & merged_roster = result_two.roster;
-  cset update;
-  make_cset(working_roster, merged_roster, update);
-  app.work.perform_content_update(update, wca);
+  I(merge_result.is_clean());
+  merge_result.roster.check_sane(true);
 
   // Construct the workspace revision.
   parent_map parents;
@@ -679,17 +662,14 @@ CMD(explicit_merge_and_update, N_("tree"),
   safe_insert(parents, std::make_pair(right, right_roster));
 
   revision_t merged_rev;
-  make_revision(parents, merged_roster, merged_rev);
+  make_revision(parents, merge_result.roster, merged_rev);
 
   // small race condition here...
+  app.work.perform_content_update(*safe_get(merged_rev.edges, left), wca);
   app.work.put_work_rev(merged_rev);
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints();
 
-  if (!app.branch_name().empty())
-    app.make_branch_sticky();
-  if (switched_branch)
-    P(F("switched branch; next commit will use branch %s") % app.branch_name());
   P(F("updated to result of merge\n"
       " [left] %s\n"
       "[right] %s\n") % left % right);
