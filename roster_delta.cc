@@ -119,7 +119,7 @@ namespace
   }
 
   void
-  delta_only_in_to(node_t new_n, roster_delta_t & d)
+  do_delta_for_node_only_in_dest(node_t new_n, roster_delta_t & d)
   {
     node_id nid = new_n->self;
     pair<node_id, path_component> new_loc(new_n->parent, new_n->name);
@@ -138,7 +138,7 @@ namespace
   }
 
   void
-  delta_in_both(node_t old_n, node_t new_n, roster_delta_t & d)
+  do_delta_for_node_in_both(node_t old_n, node_t new_n, roster_delta_t & d)
   {
     I(old_n->self == new_n->self);
     node_id nid = old_n->self;
@@ -211,12 +211,12 @@ namespace
             
             case parallel::in_right:
               // added
-              delta_only_in_to(i.right_data(), d);
+              do_delta_for_node_only_in_dest(i.right_data(), d);
               break;
             
             case parallel::in_both:
               // moved/patched/attribute changes
-              delta_in_both(i.left_data(), i.right_data(), d);
+              do_delta_for_node_in_both(i.left_data(), i.right_data(), d);
               break;
             }
         }

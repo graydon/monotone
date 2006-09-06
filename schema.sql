@@ -64,33 +64,20 @@ CREATE TABLE revision_ancestry
 
 CREATE TABLE rosters
 	(
-	id integer primary key,
+	id primary key,         -- a revision id
 	checksum not null,      -- checksum of 'data', to protect against disk corruption
-        manifest_id not null,   -- checksum of manifest of reconstructed roster
 	data not null           -- compressed, encoded contents of the roster
 	);
 
 CREATE TABLE roster_deltas
 	(
-	id integer primary key,
+	id primary key,         -- a revision id
 	checksum not null,      -- checksum of 'delta', to protect against disk corruption
-        manifest_id not null,   -- checksum of manifest of reconstructed roster
-	base integer not null,  -- joins with either rosters.id or roster_deltas.id
+	base not null,          -- joins with either rosters.id or roster_deltas.id
 	delta not null          -- rdiff to construct current from base
 	);
 
-CREATE TABLE revision_roster
-	(
-	rev_id primary key,        -- joins with revisions.id
-	roster_id integer not null -- joins with either rosters.id or roster_deltas.id
-	);
-
 CREATE TABLE next_roster_node_number
-	(
-	node primary key        -- only one entry in this table, ever
-	);
-
-CREATE TABLE next_roster_number
 	(
 	node primary key        -- only one entry in this table, ever
 	);

@@ -79,7 +79,6 @@ namespace
     enum arg_type { text, blob, s64 };
     arg_type type;
     string data;
-    ::s64 integer;
   };
 
   query_param
@@ -100,17 +99,6 @@ namespace
       query_param::blob,
       blb,
       0,
-    };
-    return q;
-  }
-
-  query_param
-  integer(s64 n)
-  {
-    query_param q = {
-      query_param::s64,
-      "",
-      n,
     };
     return q;
   }
@@ -756,9 +744,6 @@ database::fetch(results & res,
             case query_param::blob:
               log = query.args[param-1].data;
               break;
-            case query_param::s64:
-              log = lexical_cast<string>(query.args[param-1].integer);
-              break;
             }
 
           if (log.size() > constants::log_line_sz)
@@ -780,12 +765,6 @@ database::fetch(results & res,
             sqlite3_bind_blob(i->second.stmt(), param,
                               data.data(), data.size(),
                               SQLITE_STATIC);
-          }
-          break;
-        case query_param::s64:
-          {
-            sqlite3_bind_int64(i->second.stmt(), param,
-                               idx(query.args, param - 1).integer);
           }
           break;
         default:
@@ -929,7 +908,8 @@ database::clear_delayed_writes()
 }
 
 void
-database::roster_writeback_manager::writeout(roster_id id, cached_roster const & cr)
+database::roster_writeback_manager::writeout(revision_id const & id,
+                                             cached_roster const & cr)
 {
   I(cr.first);
   I(cr.second);
@@ -983,11 +963,11 @@ database::file_or_manifest_base_exists(hexenc<id> const & ident,
 // returns true if we are currently storing (or planning to store) a
 // full-text for 'ident'
 bool
-database::roster_base_stored(roster_id ident)
+database::roster_base_stored(revision_id const & ident)
 {
   if (roster_cache.exists(ident) && roster_cache.is_dirty(ident))
     return true;
-  return table_has_entry(lexical_cast<string>(ident), "id", "rosters");
+  return table_has_entry(ident.inner()(), "id", "rosters");
 }
 
 // returns true if we currently have a full-text for 'ident' available
@@ -995,11 +975,11 @@ database::roster_base_stored(roster_id ident)
 // by calling roster_cache.insert_{clean,dirty}, because they can trigger
 // cache cleaning.
 bool
-database::roster_base_available(roster_id ident)
+database::roster_base_available(revision_id const & ident)
 {
   if (roster_cache.exists(ident))
     return true;
-  return table_has_entry(lexical_cast<string>(ident), "id", "rosters");
+  return table_has_entry(ident.inner()(), "id", "rosters");
 }
 
 bool
@@ -1107,10 +1087,9 @@ database::get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
 
 void
 database::get_roster_base(string const & ident_str,
-                          manifest_id & mid,
                           roster_t & roster, marking_map & marking)
 {
-  roster_id ident = lexical_cast<roster_id>(ident_str);
+  revision_id ident(ident_str);
   if (roster_cache.exists(ident))
     {
       cached_roster cr;
@@ -1122,8 +1101,8 @@ database::get_roster_base(string const & ident_str,
       return;
     }
   results res;
-  query q("SELECT checksum, data, manifest_id FROM rosters WHERE id = ?");
-  fetch(res, 3, one_row, q % text(ident_str));
+  query q("SELECT checksum, data FROM rosters WHERE id = ?");
+  fetch(res, 2, one_row, q % text(ident_str));
 
   hexenc<id> checksum(res[0][0]);
   hexenc<id> calculated;
@@ -1134,19 +1113,16 @@ database::get_roster_base(string const & ident_str,
   data dat;
   decode_gzip(dat_packed, dat);
   read_roster_and_marking(dat, roster, marking);
-
-  mid = manifest_id(res[0][2]);
 }
 
 void
 database::get_roster_delta(string const & ident,
                            string const & base,
-                           manifest_id & mid,
                            roster<delta> & del)
 {
   results res;
-  query q("SELECT checksum, delta, manifest_id FROM roster_deltas WHERE id = ? AND base = ?");
-  fetch(res, 3, one_row, q % text(ident) % text(base));
+  query q("SELECT checksum, delta FROM roster_deltas WHERE id = ? AND base = ?");
+  fetch(res, 2, one_row, q % text(ident) % text(base));
 
   hexenc<id> checksum(res[0][0]);
   hexenc<id> calculated;
@@ -1157,8 +1133,6 @@ database::get_roster_delta(string const & ident,
   delta tmp;
   decode_gzip(del_packed, tmp);
   del = tmp;
-
-  mid = manifest_id(res[0][2]);
 }
 
 void
@@ -1181,7 +1155,7 @@ database::write_delayed_file(file_id const & ident,
 }
 
 void
-database::write_delayed_roster(roster_id ident,
+database::write_delayed_roster(revision_id const & ident,
                                roster_t const & roster,
                                marking_map const & marking)
 {
@@ -1195,13 +1169,9 @@ database::write_delayed_roster(roster_id ident,
   hexenc<id> checksum;
   calculate_ident(data(dat_packed()), checksum);
 
-  // and get the manifest_id while we're here...
-  manifest_id mid;
-  calculate_ident(roster, mid);
-
   // and then write it
-  query q("INSERT INTO rosters (id, checksum, manifest_id, data) VALUES (?, ?, ?, ?)");
-  execute(q % integer(ident) % text(checksum()) % text(mid.inner()()) % blob(dat_packed()));
+  query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?, ?)");
+  execute(q % text(ident.inner()()) % text(checksum()) % blob(dat_packed()));
 }
 
 
@@ -1225,9 +1195,8 @@ database::put_file_delta(file_id const & ident,
 }
 
 void
-database::put_roster_delta(roster_id ident,
-                           roster_id base,
-                           manifest_id const & mid,
+database::put_roster_delta(revision_id const & ident,
+                           revision_id const & base,
                            roster_delta const & del)
 {
   gzip<delta> del_packed;
@@ -1236,12 +1205,11 @@ database::put_roster_delta(roster_id ident,
   hexenc<id> checksum;
   calculate_ident(data(del_packed()), checksum);
 
-  query q("INSERT INTO roster_deltas (id, base, checksum, manifest_id, delta) VALUES (?, ?, ?, ?, ?)");
+  query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?, ?)");
   execute(q
-          % integer(ident)
-          % integer(base)
+          % text(ident.inner()())
+          % text(base.inner()())
           % text(checksum())
-          % text(mid.inner()())
           % blob(del_packed()));
 }
 
@@ -1351,7 +1319,7 @@ struct roster_reconstruction_graph : public reconstruction_graph
   roster_reconstruction_graph(database & db) : db(db) {}
   virtual bool is_base(std::string const & node) const
   {
-    return db.roster_base_available(lexical_cast<database::roster_id>(node));
+    return db.roster_base_available(revision_id(node));
   }
   virtual void get_next(std::string const & from, std::set<std::string> & next) const
   {
@@ -1365,7 +1333,7 @@ struct roster_reconstruction_graph : public reconstruction_graph
 };
 
 void
-database::get_roster_version(roster_id id,
+database::get_roster_version(revision_id const & id,
                              cached_roster & cr)
 {
   // if we already have it, exit early
@@ -1378,7 +1346,7 @@ database::get_roster_version(roster_id id,
   reconstruction_path selected_path;
   {
     roster_reconstruction_graph graph(*this);
-    get_reconstruction_path(lexical_cast<string>(id), graph, selected_path);
+    get_reconstruction_path(id.inner()(), graph, selected_path);
   }
   
   string curr = selected_path.back();
@@ -1387,8 +1355,7 @@ database::get_roster_version(roster_id id,
   // above), so we should create new objects and spend time filling them in.
   shared_ptr<roster_t> roster(new roster_t);
   shared_ptr<marking_map> marking(new marking_map);
-  manifest_id curr_mid;
-  get_roster_base(curr, curr_mid, *roster, *marking);
+  get_roster_base(curr, *roster, *marking);
   
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
@@ -1403,9 +1370,6 @@ database::get_roster_version(roster_id id,
 
   // double-check that the thing we got out looks okay
   roster->check_sane_against(*marking);
-  manifest_id calculated_mid;
-  calculate_ident(*roster, calculated_mid);
-  I(calculated_mid == curr_mid);
 
   // const'ify the objects, to save them and pass them out
   cr.first = roster;
@@ -1436,9 +1400,9 @@ database::file_version_exists(file_id const & id)
 }
 
 bool
-database::roster_version_exists(roster_id id)
+database::roster_version_exists(revision_id const & id)
 {
-  return delta_exists(lexical_cast<string>(id), "roster_deltas")
+  return delta_exists(id.inner()(), "roster_deltas")
     || roster_base_available(id);
 }
 
@@ -1450,41 +1414,6 @@ database::revision_exists(revision_id const & id)
   fetch(res, one_col, any_rows, q % text(id.inner()()));
   I(res.size() <= 1);
   return res.size() == 1;
-}
-
-bool
-database::roster_link_exists_for_revision(revision_id const & rev_id)
-{
-  results res;
-  fetch(res, one_col, any_rows,
-        query("SELECT roster_id FROM revision_roster WHERE rev_id = ? ")
-        % text(rev_id.inner()()));
-  I((res.size() == 1) || (res.size() == 0));
-  return res.size() == 1;
-}
-
-bool
-database::roster_exists_for_revision(revision_id const & rev_id)
-{
-  results res;
-  fetch(res, one_col, any_rows,
-        query("SELECT roster_id FROM revision_roster WHERE rev_id = ? ")
-        % text(rev_id.inner()()));
-  I((res.size() == 1) || (res.size() == 0));
-  return (res.size() == 1) && roster_version_exists(lexical_cast<roster_id>(res[0][0]));
-}
-
-void
-database::get_roster_links(map<revision_id, roster_id> & links)
-{
-  links.clear();
-  results res;
-  fetch(res, 2, any_rows, query("SELECT rev_id, roster_id FROM revision_roster"));
-  for (size_t i = 0; i < res.size(); ++i)
-    {
-      links.insert(make_pair(revision_id(res[i][0]),
-                             lexical_cast<roster_id>(res[i][1])));
-    }
 }
 
 void
@@ -1504,23 +1433,6 @@ database::get_revision_ids(set<revision_id> & ids)
   set< hexenc<id> > tmp;
   get_ids("revisions", tmp);
   ids.insert(tmp.begin(), tmp.end());
-}
-
-void
-database::get_roster_ids(set<roster_id> & ids)
-{
-  ids.clear();
-  set< hexenc<id> > tmp;
-
-  results res;
-  query q1("SELECT oid FROM rosters");
-  fetch(res, one_col, any_rows, q1);
-  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
-    ids.insert(lexical_cast<roster_id>((*i)[0]));
-  query q2("SELECT oid FROM roster_deltas");
-  fetch(res, one_col, any_rows, q2);
-  for (results::const_iterator i = res.begin(); i != res.end(); ++i)
-    ids.insert(lexical_cast<roster_id>((*i)[0]));
 }
 
 void
@@ -2807,18 +2719,6 @@ database::get_branches(vector<string> & names)
       }
 }
 
-database::roster_id
-database::get_roster_id_for_revision(revision_id const & rev_id)
-{
-  I(!null_id(rev_id));
-  
-  results res;
-  query q("SELECT roster_id FROM revision_roster WHERE rev_id = ? ");
-  fetch(res, one_col, any_rows, q % text(rev_id.inner()()));
-  I(res.size() == 1);
-  return lexical_cast<roster_id>(res[0][0]);
-}
-
 void
 database::get_roster(revision_id const & rev_id,
                      roster_t & roster)
@@ -2849,21 +2749,9 @@ void
 database::get_roster(revision_id const & rev_id,
                      cached_roster & cr)
 {
-  roster_id ros_id = get_roster_id_for_revision(rev_id);
-  get_roster_version(ros_id, cr);
+  get_roster_version(rev_id, cr);
   I(cr.first);
   I(cr.second);
-}
-
-void
-database::get_roster_with_id(roster_id ros_id, roster_t & roster, marking_map & marking)
-{
-  cached_roster cr;
-  get_roster_version(ros_id, cr);
-  I(cr.first);
-  I(cr.second);
-  roster = *cr.first;
-  marking = *cr.second;
 }
 
 void
@@ -2877,41 +2765,31 @@ database::put_roster(revision_id const & rev_id,
 
   transaction_guard guard(*this);
 
-  // NB: next_roster_id() is database-mutating, so we make sure we're
-  // already in a transaction.
-  roster_id new_id = next_roster_id();
-  string new_id_str = lexical_cast<string>(new_id);
-
-  execute(query("INSERT into revision_roster VALUES (?, ?)")
-          % text(rev_id.inner()()) % integer(new_id));
-
   // Our task is to add this roster, and deltify all the incoming edges (if
   // they aren't already).
 
-  roster_cache.insert_dirty(new_id, make_pair(roster, marking));
+  roster_cache.insert_dirty(rev_id, make_pair(roster, marking));
   
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
   // Now do what deltify would do if we bothered
-  roster_id old_id;
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
     {
       if (null_id(*i))
         continue;
       revision_id old_rev = *i;
-      old_id = get_roster_id_for_revision(old_rev);
-      if (roster_base_stored(old_id))
+      if (roster_base_stored(old_rev))
         {
           cached_roster cr;
-          get_roster_version(old_id, cr);
+          get_roster_version(old_rev, cr);
           roster_delta reverse_delta;
           delta_rosters(*roster, *marking, *(cr.first), *(cr.second), reverse_delta);
-          if (roster_cache.exists(old_id))
-            roster_cache.mark_clean(old_id);
-          drop(lexical_cast<string>(old_id), "rosters");
-          put_roster_delta(old_id, new_id, reverse_delta);
+          if (roster_cache.exists(old_rev))
+            roster_cache.mark_clean(old_rev);
+          drop(old_rev.inner()(), "rosters");
+          put_roster_delta(old_rev, rev_id, reverse_delta);
         }
     }
   guard.commit();
@@ -3023,12 +2901,6 @@ node_id
 database::next_node_id()
 {
   return static_cast<node_id>(next_id_from_table("next_roster_node_number"));
-}
-
-database::roster_id
-database::next_roster_id()
-{
-  return static_cast<roster_id>(next_id_from_table("next_roster_number"));
 }
 
 void

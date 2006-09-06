@@ -155,12 +155,6 @@ private:
   friend class transaction_guard;
 
   //
-  // --== A type ==--
-  //
-public:
-  typedef s64 roster_id;  // use an s64 because that's what sqlite likes
-
-  //
   // --== Write-buffering -- tied into transaction  ==--
   // --== machinery and delta compression machinery ==--
   //
@@ -177,9 +171,9 @@ private:
   {
     database & db;
     roster_writeback_manager(database & db) : db(db) {}
-    void writeout(roster_id, cached_roster const &);
+    void writeout(revision_id const &, cached_roster const &);
   };
-  LRUWritebackCache<roster_id, cached_roster,
+  LRUWritebackCache<revision_id, cached_roster,
                     roster_size_estimator, roster_writeback_manager>
     roster_cache;
 
@@ -197,7 +191,7 @@ private:
   void write_delayed_file(file_id const & new_id,
                           file_data const & dat);
 
-  void write_delayed_roster(roster_id new_id,
+  void write_delayed_roster(revision_id const & new_id,
                             roster_t const & roster,
                             marking_map const & marking);
 
@@ -208,8 +202,8 @@ private:
   // "do we have any entry for 'ident' that is a base version"
   bool file_or_manifest_base_exists(hexenc<id> const & ident,
                                     std::string const & table);
-  bool roster_base_stored(roster_id ident);
-  bool roster_base_available(roster_id ident);
+  bool roster_base_stored(revision_id const & ident);
+  bool roster_base_available(revision_id const & ident);
   
   // "do we have any entry for 'ident' that is a delta"
   bool delta_exists(std::string const & ident,
@@ -223,13 +217,9 @@ private:
                                             delta & del,
                                             std::string const & table);
   void get_roster_base(std::string const & ident,
-                       manifest_id & mid,
                        roster_t & roster, marking_map & marking);
-  void get_roster_base_mid(std::string const & ident,
-                           manifest_id & mid);
   void get_roster_delta(std::string const & ident,
                         std::string const & base,
-                        manifest_id & mid,
                         roster_delta & del);
   friend class file_and_manifest_reconstruction_graph;
   friend class roster_reconstruction_graph;
@@ -244,9 +234,8 @@ private:
                       file_id const & base,
                       file_delta const & del);
 private:
-  void put_roster_delta(roster_id ident,
-                        roster_id base,
-                        manifest_id const & mid,
+  void put_roster_delta(revision_id const & ident,
+                        revision_id const & base,
                         roster_delta const & del);
   void put_version(hexenc<id> const & old_id,
                    hexenc<id> const & new_id,
@@ -334,8 +323,7 @@ public:
   //
 private:
   u64 next_id_from_table(std::string const & table);
-  roster_id next_roster_id();
-  void get_roster_version(roster_id ros_id, cached_roster & cr);
+  void get_roster_version(revision_id const & ros_id, cached_roster & cr);
 public:
   node_id next_node_id();
 
@@ -349,13 +337,8 @@ public:
   void get_roster(revision_id const & rid,
                   cached_roster & cr);
 
-  // internal implementation details of roster storage -- exposed here for
-  // the use of database_check.cc
-  bool roster_version_exists(roster_id ident);
-  void get_roster_links(std::map<revision_id, roster_id> & links);
-  void get_roster_ids(std::set<roster_id> & ids);
-  roster_id get_roster_id_for_revision(revision_id const & rev_id);
-  void get_roster_with_id(roster_id ros_id, roster_t & roster, marking_map & marking);
+  // this is exposed for the use of database_check.cc
+  bool roster_version_exists(revision_id const & ident);
 
   //
   // --== Keys ==--
