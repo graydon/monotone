@@ -1168,7 +1168,7 @@ database::write_delayed_roster(revision_id const & ident,
   calculate_ident(data(dat_packed()), checksum);
 
   // and then write it
-  query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?, ?)");
+  query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)");
   execute(q % text(ident.inner()()) % text(checksum()) % blob(dat_packed()));
 }
 
@@ -1203,7 +1203,7 @@ database::put_roster_delta(revision_id const & ident,
   hexenc<id> checksum;
   calculate_ident(data(del_packed()), checksum);
 
-  query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?, ?)");
+  query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?)");
   execute(q
           % text(ident.inner()())
           % text(base.inner()())
