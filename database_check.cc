@@ -179,7 +179,11 @@ check_rosters_manifest(app_state & app,
         {
           app.db.get_roster(*i, ros, mm);
         }
-      catch (logic_error & e)
+      // When attempting to fetch a roster with no corresponding revision,
+      // we fail with E(), not I() (when it tries to look up the manifest_id
+      // to check).  std::exception catches both informative_failure's and
+      // logic_error's.
+      catch (std::exception & e)
         {
           L(FL("error loading roster %s: %s") % *i % e.what());
           checked_rosters[*i].found = false;
