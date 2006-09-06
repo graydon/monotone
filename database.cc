@@ -1813,7 +1813,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 
   L(FL("Killing revision %s locally") % rid);
 
-  // Kill the certs, ancestry, revision, and roster link.
+  // Kill the certs, ancestry, and revision.
   execute(query("DELETE from revision_certs WHERE id = ?")
           % text(rid.inner()()));
 
