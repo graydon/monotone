@@ -1434,6 +1434,17 @@ database::get_revision_ids(set<revision_id> & ids)
 }
 
 void
+database::get_roster_ids(set<revision_id> & ids)
+{
+  ids.clear();
+  set< hexenc<id> > tmp;
+  get_ids("rosters", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+  get_ids("roster_deltas", tmp);
+  ids.insert(tmp.begin(), tmp.end());
+}
+
+void
 database::get_file_version(file_id const & id,
                            file_data & dat)
 {
@@ -1771,7 +1782,6 @@ database::delete_existing_rosters()
   execute(query("DELETE FROM rosters"));
   execute(query("DELETE FROM roster_deltas"));
   execute(query("DELETE FROM revision_roster"));
-  execute(query("DELETE FROM next_roster_number"));
   execute(query("DELETE FROM next_roster_node_number"));
 }
 

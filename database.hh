@@ -337,8 +337,9 @@ public:
   void get_roster(revision_id const & rid,
                   cached_roster & cr);
 
-  // this is exposed for the use of database_check.cc
+  // these are exposed for the use of database_check.cc
   bool roster_version_exists(revision_id const & ident);
+  void get_roster_ids(std::set<revision_id> & ids);
 
   //
   // --== Keys ==--

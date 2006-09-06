@@ -93,7 +93,6 @@ struct checked_revision {
   size_t ancestry_child_refs;  // number of references to this revision by ancestry child
   size_t marking_refs;         // number of references to this revision by roster markings
 
-  bool found_roster_link;      // the revision->roster link for this revision exists
   bool found_roster;           // the roster for this revision exists
   bool manifest_mismatch;      // manifest doesn't match the roster for this revision
   bool incomplete_roster;      // the roster for this revision is missing files
@@ -157,29 +156,28 @@ check_files(app_state & app, map<file_id, checked_file> & checked_files)
 // roster, and general parsability/normalisation
 static void
 check_rosters_manifest(app_state & app,
-              map<database::roster_id, checked_roster> & checked_rosters,
-              map<revision_id, checked_revision> & checked_revisions,
-              set<manifest_id> & found_manifests,
-              map<file_id, checked_file> & checked_files)
+                       map<revision_id, checked_roster> & checked_rosters,
+                       map<revision_id, checked_revision> & checked_revisions,
+                       set<manifest_id> & found_manifests,
+                       map<file_id, checked_file> & checked_files)
 {
-  set<database::roster_id> rosters;
+  set<revision_id> rosters;
 
   app.db.get_roster_ids(rosters);
   L(FL("checking %d rosters, manifest pass") % rosters.size());
-
+  
   ticker ticks(_("rosters"), "r", rosters.size()/70+1);
-
-  for (set<database::roster_id>::const_iterator i = rosters.begin();
+  
+  for (set<revision_id>::const_iterator i = rosters.begin();
        i != rosters.end(); ++i)
     {
-
       L(FL("checking roster %s") % *i);
 
       roster_t ros;
       marking_map mm;
       try
         {
-          app.db.get_roster_with_id(*i, ros, mm);
+          app.db.get_roster(*i, ros, mm);
         }
       catch (logic_error & e)
         {
@@ -217,17 +215,17 @@ check_rosters_manifest(app_state & app,
 // This function assumes that check_revisions has been called!
 static void
 check_rosters_marking(app_state & app,
-              map<database::roster_id, checked_roster> & checked_rosters,
+              map<revision_id, checked_roster> & checked_rosters,
               map<revision_id, checked_revision> & checked_revisions)
 {
   L(FL("checking %d rosters, marking pass") % checked_rosters.size());
 
   ticker ticks(_("markings"), "m", checked_rosters.size()/70+1);
 
-  for (map<database::roster_id, checked_roster>::const_iterator i
+  for (map<revision_id, checked_roster>::const_iterator i
        = checked_rosters.begin(); i != checked_rosters.end(); i++)
     {
-      database::roster_id ros_id = i->first;
+      revision_id ros_id = i->first;
       L(FL("checking roster %s") % i->first);
       if (!i->second.found)
           continue;
@@ -240,7 +238,7 @@ check_rosters_marking(app_state & app,
 
       roster_t ros;
       marking_map mm;
-      app.db.get_roster_with_id(ros_id, ros, mm);
+      app.db.get_roster(ros_id, ros, mm);
 
       for (node_map::const_iterator n = ros.all_nodes().begin();
            n != ros.all_nodes().end(); n++)
@@ -282,41 +280,11 @@ check_rosters_marking(app_state & app,
 }
 
 static void
-check_roster_links(app_state & app,
-                   map<revision_id, checked_revision> & checked_revisions,
-                   map<database::roster_id, checked_roster> & checked_rosters,
-                   size_t & unreferenced_roster_links,
-                   size_t & missing_rosters)
-{
-  unreferenced_roster_links = 0;
-
-  map<revision_id, database::roster_id> links;
-  app.db.get_roster_links(links);
-
-  for (map<revision_id, database::roster_id>::const_iterator i = links.begin();
-       i != links.end(); ++i)
-    {
-      revision_id rev(i->first);
-      database::roster_id ros(i->second);
-
-      map<revision_id, checked_revision>::const_iterator j
-        = checked_revisions.find(rev);
-      if (j == checked_revisions.end() || (!j->second.found))
-        ++unreferenced_roster_links;
-
-      map<database::roster_id, checked_roster>::const_iterator k
-        = checked_rosters.find(ros);
-      if (k == checked_rosters.end() || (!k->second.found))
-        ++missing_rosters;
-    }
-}
-
-
-static void
 check_revisions(app_state & app,
                 map<revision_id, checked_revision> & checked_revisions,
-                map<database::roster_id, checked_roster> & checked_rosters,
-                set<manifest_id> const & found_manifests)
+                map<revision_id, checked_roster> & checked_rosters,
+                set<manifest_id> const & found_manifests,
+                size_t & missing_rosters)
 {
   set<revision_id> revisions;
 
@@ -355,22 +323,18 @@ check_revisions(app_state & app,
           checked_revisions[*i].normalized = true;
 
       // roster checks
-      if (app.db.roster_link_exists_for_revision(*i))
+      if (app.db.roster_version_exists(*i))
         {
-          database::roster_id ros_id;
-          checked_revisions[*i].found_roster_link = true;
-          ros_id = app.db.get_roster_id_for_revision(*i);
-          if (app.db.roster_exists_for_revision(*i))
-            {
-              checked_revisions[*i].found_roster = true;
-              I(checked_rosters[ros_id].found);
-              checked_rosters[ros_id].revision_refs++;
-              if (!(rev.new_manifest == checked_rosters[ros_id].man_id))
-                checked_revisions[*i].manifest_mismatch = true;
-              if (checked_rosters[ros_id].missing_files > 0)
-                checked_revisions[*i].incomplete_roster = true;
-            }
+          checked_revisions[*i].found_roster = true;
+          I(checked_rosters[*i].found);
+          checked_rosters[*i].revision_refs++;
+          if (!(rev.new_manifest == checked_rosters[*i].man_id))
+            checked_revisions[*i].manifest_mismatch = true;
+          if (checked_rosters[*i].missing_files > 0)
+            checked_revisions[*i].incomplete_roster = true;
         }
+      else
+        ++missing_rosters;
 
       if (found_manifests.find(rev.new_manifest) == found_manifests.end())
         checked_revisions[*i].missing_manifests++;
@@ -532,11 +496,11 @@ report_files(map<file_id, checked_file> const & checked_files,
 }
 
 static void
-report_rosters(map<database::roster_id, checked_roster> const & checked_rosters,
+report_rosters(map<revision_id, checked_roster> const & checked_rosters,
                  size_t & unreferenced_rosters,
                  size_t & incomplete_rosters)
 {
-  for (map<database::roster_id, checked_roster>::const_iterator
+  for (map<revision_id, checked_roster>::const_iterator
          i = checked_rosters.begin(); i != checked_rosters.end(); ++i)
     {
       checked_roster roster = i->second;
@@ -599,12 +563,6 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
           incomplete_revisions++;
           P(F("revision %s incomplete (%d missing revisions)")
             % i->first % revision.missing_revisions);
-        }
-
-      if (!revision.found_roster_link)
-        {
-          incomplete_revisions++;
-          P(F("revision %s incomplete (missing roster link)") % i->first);
         }
 
       if (!revision.found_roster)
@@ -767,7 +725,7 @@ check_db(app_state & app)
 {
   map<file_id, checked_file> checked_files;
   set<manifest_id> found_manifests;
-  map<database::roster_id, checked_roster> checked_rosters;
+  map<revision_id, checked_roster> checked_rosters;
   map<revision_id, checked_revision> checked_revisions;
   map<rsa_keypair_id, checked_key> checked_keys;
 
@@ -777,7 +735,6 @@ check_db(app_state & app)
   size_t missing_rosters = 0;
   size_t unreferenced_rosters = 0;
   size_t incomplete_rosters = 0;
-  size_t unreferenced_roster_links = 0;
 
   size_t missing_revisions = 0;
   size_t incomplete_revisions = 0;
@@ -800,11 +757,9 @@ check_db(app_state & app)
   check_files(app, checked_files);
   check_rosters_manifest(app, checked_rosters, checked_revisions,
                          found_manifests, checked_files);
-  check_revisions(app, checked_revisions, checked_rosters, found_manifests);
+  check_revisions(app, checked_revisions, checked_rosters, found_manifests,
+                  missing_rosters);
   check_rosters_marking(app, checked_rosters, checked_revisions);
-  check_roster_links(app, checked_revisions, checked_rosters,
-                     unreferenced_roster_links,
-                     missing_rosters);
   check_ancestry(app, checked_revisions);
   check_keys(app, checked_keys);
   check_certs(app, checked_revisions, checked_keys, total_certs);
@@ -861,9 +816,6 @@ check_db(app_state & app)
     W(F("%d revisions not in normalized form") % non_normalized_revisions);
 
 
-  if (unreferenced_roster_links > 0)
-    W(F("%d unreferenced roster links") % unreferenced_roster_links);
-
   if (missing_rosters > 0)
     W(F("%d missing rosters") % missing_rosters);
 
@@ -886,7 +838,7 @@ check_db(app_state & app)
     non_parseable_revisions + non_normalized_revisions +
     mismatched_parents + mismatched_children +
     bad_history +
-    unreferenced_roster_links + missing_rosters +
+    missing_rosters +
     missing_certs + mismatched_certs +
     unchecked_sigs + bad_sigs +
     missing_keys;
