@@ -20,17 +20,18 @@ using std::string;
 
 class rev_height
 {
-  char *hv;
-  size_t length, hv_length;
+  string d;
   static size_t const width = sizeof(u64);
-  void resize(size_t length);
   u64 read_at(size_t pos) const;
   void write_at(size_t pos, u64 val);
+  void append(u64 val);
+  size_t size() const;
+  void clear();
 public:
   rev_height();
   rev_height(rev_height const & other);
   void from_string(string const & s);
-  void to_string(string & s) const;
+  string const & operator()() const;
   void child_height(rev_height & child, u64 nr) const;
   static void root_height(rev_height & root);
   void dump(ostream & os) const;
