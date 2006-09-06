@@ -1366,8 +1366,21 @@ database::get_roster_version(revision_id const & id,
       curr = nxt;
     }
 
-  // double-check that the thing we got out looks okay
+  // Double-check that the thing we got out looks okay.  We know that when
+  // the roster was written to the database, it passed both of these tests,
+  // and we also know that the data on disk has passed our checks for data
+  // corruption -- so in theory, we know that what we got out is exactly
+  // what we put in, and these checks are redundant.  (They cannot catch all
+  // possible errors in any case, e.g., they don't test that the marking is
+  // correct.)  What they can do, though, is serve as a sanity check on the
+  // delta reconstruction code; if there is a bug where we put something
+  // into the database and then later get something different back out, then
+  // this is the only thing that can catch it.
   roster->check_sane_against(*marking);
+  manifest_id expected_mid, actual_mid;
+  get_revision_manifest(id, expected_mid);
+  calculate_ident(*roster, actual_mid);
+  I(expected_mid == actual_mid);
 
   // const'ify the objects, to save them and pass them out
   cr.first = roster;
