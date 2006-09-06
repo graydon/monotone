@@ -1794,7 +1794,6 @@ database::delete_existing_rosters()
 {
   execute(query("DELETE FROM rosters"));
   execute(query("DELETE FROM roster_deltas"));
-  execute(query("DELETE FROM revision_roster"));
   execute(query("DELETE FROM next_roster_node_number"));
 }
 
@@ -1822,9 +1821,6 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
           % text(rid.inner()()));
 
   execute(query("DELETE from revisions WHERE id = ?")
-          % text(rid.inner()()));
-
-  execute(query("DELETE from revision_roster WHERE rev_id = ?")
           % text(rid.inner()()));
 
   guard.commit();
