@@ -1,3 +1,8 @@
+2006-09-06  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* rev_height.cc, rev_height.hh: Add a class for the revision
+	height.
+
 2006-09-04  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* schema.sql: new table for the revision heights.
