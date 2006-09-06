@@ -39,6 +39,7 @@
 #include "vocab.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
+#include "rev_height.hh"
 
 #undef _REENTRANT
 #include "lru_cache.h"
@@ -1657,6 +1658,48 @@ database::get_revision(revision_id const & id,
   }
 
   dat = rdat;
+}
+
+void
+database::get_rev_height(revision_id const & id,
+                         rev_height & height)
+{
+  if (null_id(id))
+    {
+      rev_height::root_height(height);
+      return;
+    }
+
+  I(revision_exists(id));
+
+  results res;
+  fetch(res, one_col, one_row,
+        query("SELECT height FROM heights WHERE revision = ?")
+        % text(id.inner()()));
+  height.from_string(res[0][0]);
+}
+
+void
+database::put_rev_height(revision_id const & id,
+                         rev_height const & height)
+{
+  I(!null_id(id));
+  I(revision_exists(id));
+  
+  execute(query("INSERT INTO heights VALUES(?, ?)")
+          % text(id.inner()())
+          % blob(height()));
+}
+
+bool
+database::has_rev_height(rev_height & height)
+{
+  results res;
+  fetch(res, one_col, any_rows,
+        query("SELECT height FROM heights WHERE height = ?")
+        % blob(height()));
+  I((res.size() == 1) || (res.size() == 0));
+  return res.size() == 1;
 }
 
 void

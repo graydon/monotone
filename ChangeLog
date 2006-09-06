@@ -1,3 +1,8 @@
+2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database.cc (get_rev_height, put_rev_height, has_rev_height):
+	New methods for storing and retrieving revision heights.
+
 2006-09-06  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* rev_height.cc (operator<): Fix a logic bug.

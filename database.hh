@@ -29,6 +29,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "roster.hh"
 #include "selectors.hh"
 #include "vocab.hh"
+#include "rev_height.hh"
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -435,6 +436,15 @@ public:
                 std::vector<std::pair<selectors::selector_type,
                                       std::string> > const & limit,
                 std::set<std::string> & completions);
+
+  // heights
+  void get_rev_height(revision_id const & id,
+                      rev_height & height);
+
+  void put_rev_height(revision_id const & id,
+                      rev_height const & height);
+  
+  bool has_rev_height(rev_height & height); // private?
 
   ~database();
 
