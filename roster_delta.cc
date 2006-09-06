@@ -445,7 +445,7 @@ namespace
                                           attr_value(value_value));
         safe_insert(d.attrs_changed,
                     make_pair(nid,
-                              make_pair(attr_key(key), full_value)))
+                              make_pair(attr_key(key), full_value)));
       }
     while (parser.symp(syms::marking))
       {

@@ -76,7 +76,7 @@ namespace
 {
   struct query_param
   {
-    enum arg_type { text, blob, s64 };
+    enum arg_type { text, blob };
     arg_type type;
     string data;
   };
@@ -87,7 +87,6 @@ namespace
     query_param q = {
       query_param::text,
       txt,
-      0,
     };
     return q;
   }
@@ -98,7 +97,6 @@ namespace
     query_param q = {
       query_param::blob,
       blb,
-      0,
     };
     return q;
   }
@@ -1363,7 +1361,7 @@ database::get_roster_version(revision_id const & id,
       string const nxt = *i;
       L(FL("following delta %s -> %s") % curr % nxt);
       roster_delta del;
-      get_roster_delta(nxt, curr, curr_mid, del);
+      get_roster_delta(nxt, curr, del);
       apply_roster_delta(del, *roster, *marking);
       curr = nxt;
     }
