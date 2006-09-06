@@ -223,9 +223,13 @@ private:
                                             delta & del,
                                             std::string const & table);
   void get_roster_base(std::string const & ident,
+                       manifest_id & mid,
                        roster_t & roster, marking_map & marking);
+  void get_roster_base_mid(std::string const & ident,
+                           manifest_id & mid);
   void get_roster_delta(std::string const & ident,
                         std::string const & base,
+                        manifest_id & mid,
                         roster_delta & del);
   friend class file_and_manifest_reconstruction_graph;
   friend class roster_reconstruction_graph;
@@ -242,6 +246,7 @@ private:
 private:
   void put_roster_delta(roster_id ident,
                         roster_id base,
+                        manifest_id const & mid,
                         roster_delta const & del);
   void put_version(hexenc<id> const & old_id,
                    hexenc<id> const & new_id,

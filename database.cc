@@ -1107,6 +1107,7 @@ database::get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
 
 void
 database::get_roster_base(string const & ident_str,
+                          manifest_id & mid,
                           roster_t & roster, marking_map & marking)
 {
   roster_id ident = lexical_cast<roster_id>(ident_str);
@@ -1121,8 +1122,8 @@ database::get_roster_base(string const & ident_str,
       return;
     }
   results res;
-  query q("SELECT checksum, data FROM rosters WHERE id = ?");
-  fetch(res, 2, one_row, q % text(ident_str));
+  query q("SELECT checksum, data, manifest_id FROM rosters WHERE id = ?");
+  fetch(res, 3, one_row, q % text(ident_str));
 
   hexenc<id> checksum(res[0][0]);
   hexenc<id> calculated;
@@ -1133,16 +1134,19 @@ database::get_roster_base(string const & ident_str,
   data dat;
   decode_gzip(dat_packed, dat);
   read_roster_and_marking(dat, roster, marking);
+
+  mid = manifest_id(res[0][2]);
 }
 
 void
 database::get_roster_delta(string const & ident,
                            string const & base,
+                           manifest_id & mid,
                            roster<delta> & del)
 {
   results res;
-  query q("SELECT checksum, delta FROM roster_deltas WHERE id = ? AND base = ?");
-  fetch(res, 2, one_row, q % text(ident) % text(base));
+  query q("SELECT checksum, delta, manifest_id FROM roster_deltas WHERE id = ? AND base = ?");
+  fetch(res, 3, one_row, q % text(ident) % text(base));
 
   hexenc<id> checksum(res[0][0]);
   hexenc<id> calculated;
@@ -1153,6 +1157,8 @@ database::get_roster_delta(string const & ident,
   delta tmp;
   decode_gzip(del_packed, tmp);
   del = tmp;
+
+  mid = manifest_id(res[0][2]);
 }
 
 void
@@ -1188,9 +1194,14 @@ database::write_delayed_roster(roster_id ident,
   // we write
   hexenc<id> checksum;
   calculate_ident(data(dat_packed()), checksum);
+
+  // and get the manifest_id while we're here...
+  manifest_id mid;
+  calculate_ident(roster, mid);
+
   // and then write it
-  query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)");
-  execute(q % integer(ident) % text(checksum()) % blob(dat_packed()));
+  query q("INSERT INTO rosters (id, checksum, manifest_id, data) VALUES (?, ?, ?, ?)");
+  execute(q % integer(ident) % text(checksum()) % text(mid.inner()()) % blob(dat_packed()));
 }
 
 
@@ -1216,6 +1227,7 @@ database::put_file_delta(file_id const & ident,
 void
 database::put_roster_delta(roster_id ident,
                            roster_id base,
+                           manifest_id const & mid,
                            roster_delta const & del)
 {
   gzip<delta> del_packed;
@@ -1224,11 +1236,12 @@ database::put_roster_delta(roster_id ident,
   hexenc<id> checksum;
   calculate_ident(data(del_packed()), checksum);
 
-  query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?)");
+  query q("INSERT INTO roster_deltas (id, base, checksum, manifest_id, delta) VALUES (?, ?, ?, ?, ?)");
   execute(q
           % integer(ident)
           % integer(base)
           % text(checksum())
+          % text(mid.inner()())
           % blob(del_packed()));
 }
 
@@ -1374,7 +1387,8 @@ database::get_roster_version(roster_id id,
   // above), so we should create new objects and spend time filling them in.
   shared_ptr<roster_t> roster(new roster_t);
   shared_ptr<marking_map> marking(new marking_map);
-  get_roster_base(curr, *roster, *marking);
+  manifest_id curr_mid;
+  get_roster_base(curr, curr_mid, *roster, *marking);
   
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
@@ -1382,13 +1396,16 @@ database::get_roster_version(roster_id id,
       string const nxt = *i;
       L(FL("following delta %s -> %s") % curr % nxt);
       roster_delta del;
-      get_roster_delta(nxt, curr, del);
+      get_roster_delta(nxt, curr, curr_mid, del);
       apply_roster_delta(del, *roster, *marking);
       curr = nxt;
     }
 
   // double-check that the thing we got out looks okay
   roster->check_sane_against(*marking);
+  manifest_id calculated_mid;
+  calculate_ident(*roster, calculated_mid);
+  I(calculated_mid == curr_mid);
 
   // const'ify the objects, to save them and pass them out
   cr.first = roster;

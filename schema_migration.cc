@@ -1135,6 +1135,7 @@ migrate_rosters_integer_ids(sqlite3 * sql,
                             "\t(\n"
                             "\tid integer primary key,\n"
                             "\tchecksum not null,      -- checksum of 'data', to protect against disk corruption\n"
+                            "\tmanifest_id not null,   -- checksum of manifest of reconstructed roster\n"
                             "\tdata not null           -- compressed, encoded contents of the roster\n"
                             "\t);",
                             NULL, NULL, errmsg);
@@ -1146,6 +1147,7 @@ migrate_rosters_integer_ids(sqlite3 * sql,
                             "\t(\n"
                             "\tid integer primary key,\n"
                             "\tchecksum not null,      -- checksum of 'delta', to protect against disk corruption\n"
+                            "\tmanifest_id not null,   -- checksum of manifest of reconstructed roster\n"
                             "\tbase integer not null,  -- joins with either rosters.id or roster_deltas.id\n"
                             "\tdelta not null          -- rdiff to construct current from base\n"
                             ");",

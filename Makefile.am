@@ -68,7 +68,6 @@ MOST_SOURCES = 								\
 	graph.cc graph.hh						\
 	roster_delta.cc roster_delta.hh					\
 									\
-        lru_cache.hh							\
         lru_writeback_cache.hh						\
 									\
 	cleanup.hh unit_tests.hh					\

@@ -66,6 +66,7 @@ CREATE TABLE rosters
 	(
 	id integer primary key,
 	checksum not null,      -- checksum of 'data', to protect against disk corruption
+        manifest_id not null,   -- checksum of manifest of reconstructed roster
 	data not null           -- compressed, encoded contents of the roster
 	);
 
@@ -73,6 +74,7 @@ CREATE TABLE roster_deltas
 	(
 	id integer primary key,
 	checksum not null,      -- checksum of 'delta', to protect against disk corruption
+        manifest_id not null,   -- checksum of manifest of reconstructed roster
 	base integer not null,  -- joins with either rosters.id or roster_deltas.id
 	delta not null          -- rdiff to construct current from base
 	);
