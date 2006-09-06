@@ -1799,6 +1799,32 @@ database::put_revision(revision_id const & new_id,
   // Phase 4: write the roster data and commit
   put_roster(new_id, ros, mm);
 
+  // Phase 5: determine the revision height
+  {
+    rev_height height;
+    for (edge_map::const_iterator e = rev.edges.begin();
+         e != rev.edges.end(); ++e)
+      {
+        bool found(false);
+        u64 childnr(0);
+        rev_height candidate;
+        rev_height parent;
+        get_rev_height(edge_old_revision(e), parent);
+        
+        while(!found)
+          {
+            parent.child_height(candidate, childnr++);
+            if (!has_rev_height(candidate))
+              {
+                found = true;
+                if (candidate > height)
+                  height = candidate;
+              }
+          }
+      }
+    put_rev_height(new_id, height);
+  }
+
   guard.commit();
 }
 

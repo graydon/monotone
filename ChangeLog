@@ -1,5 +1,10 @@
 2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
 
+	* database.cc (put_revision): Determine the revision's height and
+	write it to the database.
+
+2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
+
 	* database.cc (get_rev_height, put_rev_height, has_rev_height):
 	New methods for storing and retrieving revision heights.
 
