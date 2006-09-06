@@ -1,5 +1,10 @@
 2006-09-06  Thomas Moschny  <thomas.moschny@gmx.de>
 
+	* rev_height.cc (operator<): Fix a logic bug.
+	(child_height): Fix an index bug introduced by refactoring.
+
+2006-09-06  Thomas Moschny  <thomas.moschny@gmx.de>
+
 	* rev_height.cc, rev_height.hh: Get rid of that ugly
 	char[]. Correct a bug in operator<().
 	* Makefile.am (MOST_SOURCES): Add rev_height.{cc|hh}.

@@ -61,7 +61,7 @@ bool rev_height::operator<(rev_height const & other) const
     return (memcmp(d.data(), other.d.data(), d.size()) <= 0);
 
   // d.size() > other.d.size()
-  return (memcmp(d.data(), other.d.data(), other.d.size()) > 0);
+  return (memcmp(d.data(), other.d.data(), other.d.size()) < 0);
 }
 
 string const & rev_height::operator()() const
@@ -115,7 +115,7 @@ void rev_height::child_height(rev_height & child, u64 nr) const
     {
       size_t pos = size() - 1;
       child.from_string(d);
-      child.write_at(pos - 1, read_at(pos) + 1);
+      child.write_at(pos, read_at(pos) + 1);
     }
   else
     {
