@@ -33,6 +33,7 @@
 #include "vocab.hh"
 #include "globish.hh"
 #include "charset.hh"
+#include "rev_height.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -1477,6 +1478,25 @@ AUTOMATE(get_option, N_("OPTION"))
   N(result().size() > 0,
     F("option %s doesn't exist") % args[0]);
   output << result << endl;
+}
+
+// Name: rev_height
+// Arguments:
+//   1: a revision id
+// Added in: 3.X
+// Purpose: Prints the revision's height in the local database.
+// Output format: A single complex revision height, in dotted notation.
+// Error conditions: If the revision does not exist, prints nothing to stdout,
+//   prints an error message to stderr, and exits with status 1.
+AUTOMATE(rev_height, N_("REV"))
+{
+  if (args.size() != 1)
+    throw usage(help_name);
+  revision_id rid(idx(args, 0)());
+  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  rev_height height;
+  app.db.get_rev_height(rid, height);
+  output << height << endl;
 }
 
 // Local Variables:

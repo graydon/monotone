@@ -1,5 +1,10 @@
 2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
 
+	* automate.cc (rev_height): New command to query a rev's
+	height. Preliminary.
+
+2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
+
 	* database.cc (put_revision): Determine the revision's height and
 	write it to the database.
 
