@@ -1113,10 +1113,10 @@ migrate_files_BLOB(sqlite3 * sql,
 }
 
 static bool
-migrate_rosters_integer_ids(sqlite3 * sql,
-                            char ** errmsg,
-                            app_state * app,
-                            upgrade_regime & regime)
+migrate_rosters_no_hash(sqlite3 * sql,
+                        char ** errmsg,
+                        app_state * app,
+                        upgrade_regime & regime)
 {
   int res;
   
@@ -1146,7 +1146,7 @@ migrate_rosters_integer_ids(sqlite3 * sql,
                             "\t(\n"
                             "\tid primary key,         -- a revision id\n"
                             "\tchecksum not null,      -- checksum of 'delta', to protect against disk corruption\n"
-                            "\tbase integer not null,  -- joins with either rosters.id or roster_deltas.id\n"
+                            "\tbase not null,          -- joins with either rosters.id or roster_deltas.id\n"
                             "\tdelta not null          -- rdiff to construct current from base\n"
                             ");",
                             NULL, NULL, errmsg);
@@ -1194,7 +1194,7 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
         &migrate_files_BLOB);
 
   m.add("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
-        &migrate_rosters_integer_ids);
+        &migrate_rosters_no_hash);
 
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
