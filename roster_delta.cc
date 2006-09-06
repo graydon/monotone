@@ -23,6 +23,7 @@
 
 using boost::lexical_cast;
 using std::pair;
+using std::make_pair;
 
 namespace 
 {
@@ -124,16 +125,16 @@ namespace
     pair<node_id, path_component> new_loc(new_n->parent, new_n->name);
 
     if (is_dir_t(new_n))
-      safe_insert(d.dirs_added, std::make_pair(new_loc, nid));
+      safe_insert(d.dirs_added, make_pair(new_loc, nid));
     else
       {
         file_id const & content = downcast_to_file_t(new_n)->content;
-        safe_insert(d.files_added, std::make_pair(new_loc,
-                                                  std::make_pair(nid, content)));
+        safe_insert(d.files_added, make_pair(new_loc,
+                                             make_pair(nid, content)));
       }
     for (full_attr_map_t::const_iterator i = new_n->attrs.begin();
          i != new_n->attrs.end(); ++i)
-      safe_insert(d.attrs_changed, std::make_pair(nid, *i));
+      safe_insert(d.attrs_changed, make_pair(nid, *i));
   }
 
   void
@@ -146,7 +147,7 @@ namespace
       pair<node_id, path_component> old_loc(old_n->parent, old_n->name);
       pair<node_id, path_component> new_loc(new_n->parent, new_n->name);
       if (old_loc != new_loc)
-        safe_insert(d.nodes_renamed, std::make_pair(nid, new_loc));
+        safe_insert(d.nodes_renamed, make_pair(nid, new_loc));
     }
     // delta?
     if (is_file_t(old_n))
@@ -154,7 +155,7 @@ namespace
         file_id const & old_content = downcast_to_file_t(old_n)->content;
         file_id const & new_content = downcast_to_file_t(new_n)->content;
         if (!(old_content == new_content))
-          safe_insert(d.deltas_applied, std::make_pair(nid, new_content));
+          safe_insert(d.deltas_applied, make_pair(nid, new_content));
       }
     // attrs?
     {
@@ -168,16 +169,16 @@ namespace
               I(false);
 
             case parallel::in_left:
-              safe_insert(d.attrs_cleared, std::make_pair(nid, i.left_key()));
+              safe_insert(d.attrs_cleared, make_pair(nid, i.left_key()));
               break;
 
             case parallel::in_right:
-              safe_insert(d.attrs_changed, std::make_pair(nid, i.right_value()));
+              safe_insert(d.attrs_changed, make_pair(nid, i.right_value()));
               break;
 
             case parallel::in_both:
               if (i.left_data() != i.right_data())
-                safe_insert(d.attrs_changed, std::make_pair(nid, i.right_value()));
+                safe_insert(d.attrs_changed, make_pair(nid, i.right_value()));
               break;
             }
         }
@@ -389,7 +390,7 @@ namespace
         node_id nid = parse_nid(parser);
         pair<node_id, path_component> loc;
         parse_loc(parser, loc);
-        safe_insert(d.nodes_renamed, std::make_pair(nid, loc));
+        safe_insert(d.nodes_renamed, make_pair(nid, loc));
       }
     while (parser.symp(syms::add_dir))
       {
@@ -397,7 +398,7 @@ namespace
         node_id nid = parse_nid(parser);
         pair<node_id, path_component> loc;
         parse_loc(parser, loc);
-        safe_insert(d.dirs_added, std::make_pair(loc, nid));
+        safe_insert(d.dirs_added, make_pair(loc, nid));
       }
     while (parser.symp(syms::add_file))
       {
@@ -409,7 +410,7 @@ namespace
         std::string s;
         parser.hex(s);
         safe_insert(d.files_added,
-                    std::make_pair(loc, std::make_pair(nid, file_id(s))));
+                    make_pair(loc, make_pair(nid, file_id(s))));
       }
     while (parser.symp(syms::delta))
       {
@@ -418,7 +419,7 @@ namespace
         parser.esym(syms::content);
         std::string s;
         parser.hex(s);
-        safe_insert(d.deltas_applied, std::make_pair(nid, file_id(s)));
+        safe_insert(d.deltas_applied, make_pair(nid, file_id(s)));
       }
     while (parser.symp(syms::attr_cleared))
       {
@@ -427,7 +428,7 @@ namespace
         parser.esym(syms::attr);
         std::string key;
         parser.str(key);
-        safe_insert(d.attrs_cleared, std::make_pair(nid, attr_key(key)));
+        safe_insert(d.attrs_cleared, make_pair(nid, attr_key(key)));
       }
     while (parser.symp(syms::attr_changed))
       {
@@ -440,11 +441,11 @@ namespace
         std::string value_bool, value_value;
         parser.str(value_bool);
         parser.str(value_value);
+        pair<bool, attr_value> full_value(lexical_cast<bool>(value_bool),
+                                          attr_value(value_value));
         safe_insert(d.attrs_changed,
-                    std::make_pair(nid,
-                                   std::make_pair(attr_key(key),
-                                                  std::make_pair(lexical_cast<bool>(value_bool),
-                                                                 attr_value(value_value)))));
+                    make_pair(nid,
+                              make_pair(attr_key(key), full_value)))
       }
     while (parser.symp(syms::marking))
       {
@@ -452,7 +453,7 @@ namespace
         node_id nid = parse_nid(parser);
         marking_t m;
         parse_marking(parser, m);
-        safe_insert(d.markings_changed, std::make_pair(nid, m));
+        safe_insert(d.markings_changed, make_pair(nid, m));
       }
   }
   
