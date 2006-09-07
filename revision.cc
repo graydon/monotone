@@ -42,6 +42,7 @@
 #include "vocab.hh"
 #include "safe_map.hh"
 #include "legacy.hh"
+#include "rev_height.hh"
 
 using std::back_inserter;
 using std::copy;
@@ -380,53 +381,27 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
     }
 }
 
-// this function actually toposorts the whole graph, and then filters by the
-// passed in set.  if anyone ever needs to toposort the whole graph, then,
-// this function would be a good thing to generalize...
 void
 toposort(set<revision_id> const & revisions,
          vector<revision_id> & sorted,
          app_state & app)
 {
-  sorted.clear();
-  typedef multimap<revision_id, revision_id>::iterator gi;
-  typedef map<revision_id, int>::iterator pi;
-  multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
-  set<revision_id> leaves;
-  app.db.get_revision_ids(leaves);
-  map<revision_id, int> pcount;
-  for (gi i = graph.begin(); i != graph.end(); ++i)
-    pcount.insert(make_pair(i->first, 0));
-  for (gi i = graph.begin(); i != graph.end(); ++i)
-    ++(pcount[i->second]);
-  // first find the set of graph roots
-  list<revision_id> roots;
-  for (pi i = pcount.begin(); i != pcount.end(); ++i)
-    if(i->second==0)
-      roots.push_back(i->first);
-  while (!roots.empty())
+  map<rev_height, revision_id> work;
+
+  for (set<revision_id>::const_iterator i = revisions.begin();
+       i != revisions.end(); ++i) 
     {
-      // now stick them in our ordering (if wanted) and remove them from the
-      // graph, calculating the new roots as we go
-      L(FL("new root: %s") % (roots.front()));
-      if (revisions.find(roots.front()) != revisions.end())
-        sorted.push_back(roots.front());
-      for(gi i = graph.lower_bound(roots.front());
-          i != graph.upper_bound(roots.front()); i++)
-        if(--(pcount[i->second]) == 0)
-          roots.push_back(i->second);
-      graph.erase(roots.front());
-      leaves.erase(roots.front());
-      roots.pop_front();
+      rev_height height;
+      app.db.get_rev_height(*i, height);
+      work.insert(make_pair(height, *i));
     }
-  I(graph.empty());
-  for (set<revision_id>::const_iterator i = leaves.begin();
-       i != leaves.end(); ++i)
+
+  sorted.clear();
+  
+  for (map<rev_height, revision_id>::const_iterator i = work.begin();
+       i != work.end(); ++i)
     {
-      L(FL("new leaf: %s") % (*i));
-      if (revisions.find(*i) != revisions.end())
-        sorted.push_back(*i);
+      sorted.push_back(i->second);
     }
 }
 

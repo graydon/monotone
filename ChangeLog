@@ -1,5 +1,9 @@
 2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
 
+	* revision.cc (toposort): Use the revision heights.
+
+2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
+
 	* automate.cc (rev_height): New command to query a rev's
 	height. Preliminary.
 
