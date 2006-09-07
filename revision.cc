@@ -1646,7 +1646,7 @@ regenerate_rosters(app_state & app)
 
   std::set<revision_id> ids;
   app.db.get_revision_ids(ids);
-  P(F("calculating revisions to regenerate"));
+  P(F("calculating rosters to regenerate"));
   std::vector<revision_id> sorted_ids;
   toposort(ids, sorted_ids, app);
 

@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-07 04:42+0200\n"
-"PO-Revision-Date: 2006-09-07 04:51+0200\n"
+"POT-Creation-Date: 2006-09-07 16:00+0200\n"
+"PO-Revision-Date: 2006-09-07 16:02+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -251,7 +251,8 @@ msgstr "VÄLJARE"
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:918 automate.cc:1041
+#: automate.cc:918 automate.cc:1041 automate.cc:1527 automate.cc:1585
+#: automate.cc:1590
 #, c-format
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i i databasen"
@@ -317,6 +318,19 @@ msgstr "FLAGGA"
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' är en okänd inställning i arbetskopians metadata"
+
+#: automate.cc:1514
+msgid "REV FILE"
+msgstr "REV FIL"
+
+#: automate.cc:1533 automate.cc:1596
+#, c-format
+msgid "file %s is unknown for revision %s"
+msgstr "filen %s är okänd i revision %s"
+
+#: automate.cc:1573
+msgid "REV1 FILE REV2"
+msgstr "REV1 FIL REV2"
 
 #: basic_io.cc:33
 #, c-format
@@ -2538,27 +2552,27 @@ msgstr "nodnivån är %d, vilket överskrider maxgränsen %d"
 msgid "mismatched node hash value %s, expected %s"
 msgstr "nodens kontrollsumma %s stämmer inte, %s förväntad"
 
-#: monotone.cc:150
+#: monotone.cc:151
 #, c-format
 msgid "Invalid escape in --xargs file"
 msgstr "Otillåten \\ i filen given med --xargs"
 
-#: monotone.cc:662
+#: monotone.cc:663
 #, c-format
 msgid "%s:\n"
 msgstr "%s:\n"
 
-#: monotone.cc:670
+#: monotone.cc:671
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: monotone.cc:680
+#: monotone.cc:681
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Användning: %s [FLAGGOR...] kommando [ARGUMENT...]"
 
-#: monotone.cc:685
+#: monotone.cc:689
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3447,9 +3461,9 @@ msgid "regenerating cached rosters"
 msgstr "återskapar cachade listor"
 
 #: revision.cc:1649
-#, c-format
-msgid "calculating revisions to regenerate"
-msgstr "räknar ut revisioner att göra om"
+#, fuzzy, c-format
+msgid "calculating rosters to regenerate"
+msgstr "räknar ut listor att göras om"
 
 #: revision.cc:1653
 msgid "regenerated"
