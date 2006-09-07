@@ -28,8 +28,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-07 09:29+0200\n"
-"PO-Revision-Date: 2006-09-07 09:40+0100\n"
+"POT-Creation-Date: 2006-09-07 15:20+0200\n"
+"PO-Revision-Date: 2006-09-07 15:21+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -149,6 +149,9 @@ msgstr "[REVISIONS_ID]"
 
 #: automate.cc:918
 #: automate.cc:1041
+#: automate.cc:1527
+#: automate.cc:1585
+#: automate.cc:1590
 #, c-format
 msgid "no revision %s found in database"
 msgstr "Revision %s nicht in Datenbank gefunden"
@@ -232,6 +235,20 @@ msgstr "OPTION"
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
+
+#: automate.cc:1514
+msgid "REV FILE"
+msgstr "REVISION DATEI"
+
+#: automate.cc:1533
+#: automate.cc:1596
+#, c-format
+msgid "file %s is unknown for revision %s"
+msgstr "Datei %s existiert nicht in der Revision %s"
+
+#: automate.cc:1573
+msgid "REV1 FILE REV2"
+msgstr "REV1 DATEI REV2"
 
 #: basic_io.cc:33
 #, c-format
@@ -2495,27 +2512,27 @@ msgstr "Knotenebene ist %d, überschreitet das Maximum %d"
 msgid "mismatched node hash value %s, expected %s"
 msgstr "falsch zugeordneter Knoten-Hashwert %s, %s erwartet"
 
-#: monotone.cc:150
+#: monotone.cc:151
 #, c-format
 msgid "Invalid escape in --xargs file"
 msgstr "ungültiges Escape-Zeichen in --xargs-Datei"
 
-#: monotone.cc:662
+#: monotone.cc:663
 #, c-format
 msgid "%s:\n"
 msgstr "%s:\n"
 
-#: monotone.cc:670
+#: monotone.cc:671
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: monotone.cc:680
+#: monotone.cc:681
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Aufruf: %s [OPTION...] Kommando [ARGUMENTE...]"
 
-#: monotone.cc:685
+#: monotone.cc:689
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Spezifische Optionen für '%s %s':"
