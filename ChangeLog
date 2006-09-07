@@ -1,3 +1,7 @@
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 3 fuzzies.
+
 2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_content_changed, get_corresponding_path)
