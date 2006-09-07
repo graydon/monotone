@@ -97,7 +97,7 @@ function check_migrate_from(id, need_regen_rosters)
      check(mtn("--db="..id..".mtn", "db", "regenerate_rosters"), 0, false, false)
   else
      -- then the migrate should not have warned us
-     check(string.find(readfile("stderr"), "regenerate_rosters") ~= nil)
+     check(string.find(readfile("stderr"), "regenerate_rosters") == nil)
      -- and normal commands on the db should work fine
      check(mtn("--db="..id..".mtn", "ls", "keys"), 0, false, true)
      check(not qgrep("regenerate_rosters", "stderr"))
@@ -107,3 +107,4 @@ end
 
 check_migrate_from("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e", true)
 check_migrate_from("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df", true)
+check_migrate_from("ae196843d368d042f475e3dadfed11e9d7f9f01e", false)
