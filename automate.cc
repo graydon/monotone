@@ -1491,6 +1491,122 @@ AUTOMATE(get_option, N_("OPTION"))
     N(false, F("'%s' is not a recognized workspace option") % opt);
 }
 
+// Name: get_content_changed
+// Arguments:
+//   1: a revision ID
+//   2: a file name
+// Added in: 3.2
+// Purpose: Returns a list of revision IDs in which the content 
+// was most recently changed, relative to the revision ID specified 
+// in argument 1. This equates to a content mark following 
+// the *-merge algorithm.
+//
+// Output format: Zero or more basic_io stanzas, each specifying a 
+// revision ID for which a content mark is set.
+//
+//   Each stanza has exactly one entry:
+//
+//   'content_mark'
+//         the hexadecimal id of the revision the content mark is attached to
+// Sample output (for 'mtn automate get_content_changed 3bccff99d08421df72519b61a4dded16d1139c33 ChangeLog):
+//   content_mark [276264b0b3f1e70fc1835a700e6e61bdbe4c3f2f]
+//
+AUTOMATE(get_content_changed, N_("REV FILE"))
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  basic_io::printer prt;
+  basic_io::stanza st;
+  roster_t new_roster;
+  revision_id ident;
+  marking_map mm;
+
+  ident = revision_id(idx(args, 0)());
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  app.db.get_roster(ident, new_roster, mm);
+
+  split_path path;
+  file_path_external(idx(args,1)).split(path);
+  N(new_roster.has_node(path),
+    F("file %s is unknown for revision %s") % path % ident);
+
+  node_t node = new_roster.get_node(path);
+  marking_map::const_iterator m = mm.find(node->self);
+  I(m != mm.end());
+  marking_t mark = m->second;
+  for (set<revision_id>::const_iterator i = mark.parent_name.begin();
+       i != mark.parent_name.end(); ++i)
+    {
+      revision_id old_ident = i->inner();
+      st.push_hex_pair(basic_io::syms::content_mark, i->inner());
+      prt.print_stanza(st);
+    }
+  output.write(prt.buf.data(), prt.buf.size());
+}
+
+// Name: get_corresponding_path
+// Arguments:
+//   1: a source revision ID
+//   2: a file name (in the source revision)
+//   3: a target revision ID
+// Added in: 3.2
+// Purpose: Given a the file name in the source revision, a filename 
+// will if possible be returned naming the file in the target revision. 
+// This allows the same file to be matched between revisions, accounting 
+// for renames and other changes.
+//
+// Output format: Zero or one basic_io stanzas. Zero stanzas will be 
+// output if the file does not exist within the target revision; this is 
+// not considered an error.
+// If the file does exist in the target revision, a single stanza with the 
+// following details is output.
+//
+//   The stanza has exactly one entry:
+//
+//   'file'
+//         the file name corresponding to "file name" (arg 2) in the target revision
+//
+// Sample output (for automate get_corresponding_path 91f25c8ee830b11b52dd356c925161848d4274d0 foo2 dae0d8e3f944c82a9688bcd6af99f5b837b41968; see automate_get_corresponding_path test)
+// file "foo"
+AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
+{
+  if (args.size() != 3)
+    throw usage(help_name);
+
+  basic_io::printer prt;
+  basic_io::stanza st;
+  roster_t new_roster, old_roster;
+  revision_id ident, old_ident;
+
+  ident = revision_id(idx(args, 0)());
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  app.db.get_roster(ident, new_roster);
+
+  old_ident = revision_id(idx(args, 2)());
+  N(app.db.revision_exists(old_ident),
+    F("no revision %s found in database") % old_ident);
+  app.db.get_roster(old_ident, old_roster);
+
+  split_path path;
+  file_path_external(idx(args,1)).split(path);
+  N(new_roster.has_node(path),
+    F("file %s is unknown for revision %s") % path % ident);
+
+  node_t node = new_roster.get_node(path);
+  if (old_roster.has_node(node->self))
+    {
+      split_path old_path;
+      old_roster.get_name(node->self, old_path);
+      file_path fp = file_path(old_path);
+      st.push_file_pair(basic_io::syms::file, fp);  
+      prt.print_stanza(st);
+    }
+  output.write(prt.buf.data(), prt.buf.size());
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

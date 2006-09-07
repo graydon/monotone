@@ -6985,6 +6985,90 @@ message to stderr and exits with status 1.
 
 @end table
 
+@item mtn automate get_content_changed @var{id} @var{file}
+
+@table @strong
+@item Arguments:
+
+The @var{id} specifies a revision ID, from which content change calculations will be based.
+and @var{file} specifies the file for which to calculate revisions in which it was last changed.
+
+@item Added in:
+
+3.2
+
+@item Purpose:
+
+Returns a list of revision IDs in which the content  was most recently changed, relative to the revision ID specified as @var{id}. This equates to a content mark following the *-merge algorithm.
+
+@item Sample output:
+
+@verbatim
+  content_mark [276264b0b3f1e70fc1835a700e6e61bdbe4c3f2f]
+@end verbatim
+
+@item Output format:
+
+Zero or more basic_io stanzas, each specifying a revision ID in which a content mark is set.
+
+The complete format:
+@verbatim
+'content_mark'
+         the hexadecimal id of the revision the content mark is attached to
+@end verbatim
+
+@item Error conditions:
+
+If @var{id} or @var{file} is unknown or invalid prints an error
+message to stderr and exits with status 1.
+
+@end table
+
+@item mtn automate get_corresponding_path @var{source_id} @var{file} @var{target_id}
+
+@table @strong
+@item Arguments:
+
+The @var{source_id} specifies a revision ID in which @var{file} is current extant.
+and @var{file} specifies the file whose name in @var{target_id} is to be determined; 
+@var{target_id} specifies a revision ID.
+
+@item Added in:
+
+3.2
+
+@item Purpose:
+
+Given a the file name @var{file} in the source revision @var{source_id}, a filename 
+will if possible be returned naming the file in the target revision @var{target_id}. 
+This allows the same file to be matched between revisions, accounting 
+for renames and other changes.
+
+@item Sample output:
+
+@verbatim
+file "foo"
+@end verbatim
+
+@item Output format:
+
+Zero or one basic_io stanzas. Zero stanzas will be output if the file does not exist within the target revision; this is not considered an error. If the file does exist in the target revision, a single stanza with the  following details is output.
+
+The complete format:
+@verbatim
+   'file'
+         the file name corresponding to "file name" (arg 2) in the target revision
+@end verbatim
+
+@item Error conditions:
+
+If the revision IDs @var{source_id} or @var{target_id} are unknown or invalid prints an error
+message to stderr and exits with status 1. If the file path @var{file} does not exist in the 
+revision @var{source_id} or is invalid, prints an error message to stderr and exits with status 
+1. Note that @var{file} not existing in the revision @var{target_id} is not an error.
+
+@end table
+
 @end ftable
 
 @page
