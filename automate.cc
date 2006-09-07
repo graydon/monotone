@@ -229,7 +229,7 @@ AUTOMATE(attributes, N_("FILE"))
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  get_base_and_current_roster_shape(base, current, nis, app);
+  app.work.get_base_and_current_roster_shape(base, current, nis);
 
   // escalate if the given path is unknown to the current roster
   N(current.has_node(path),
@@ -393,7 +393,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-AUTOMATE(leaves, N_(""))
+AUTOMATE(leaves, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -479,7 +479,7 @@ AUTOMATE(children, N_("REV"))
 //   The output as a whole is alphabetically sorted; additionally, the parents
 //   within each line are alphabetically sorted.
 // Error conditions: None.
-AUTOMATE(graph, N_(""))
+AUTOMATE(graph, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -704,7 +704,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-AUTOMATE(inventory, N_(""))
+AUTOMATE(inventory, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -715,9 +715,9 @@ AUTOMATE(inventory, N_(""))
   roster_t base, curr;
   inventory_map inventory;
   cset cs; MM(cs);
-  path_set unchanged, changed, missing, known, unknown, ignored;
+  path_set unchanged, changed, missing, unknown, ignored;
 
-  get_base_and_current_roster_shape(base, curr, nis, app);
+  app.work.get_base_and_current_roster_shape(base, curr, nis);
   make_cset(base, curr, cs);
 
   // The current roster (curr) has the complete set of registered nodes
@@ -739,12 +739,12 @@ AUTOMATE(inventory, N_(""))
   inventory_post_state(inventory, nodes_added,
                        inventory_item::ADDED_PATH, 0);
 
-  classify_roster_paths(curr, unchanged, changed, missing, app);
-  curr.extract_path_set(known);
+  path_restriction mask;
+  vector<file_path> roots;
+  roots.push_back(file_path());
 
-  path_restriction mask(app);
-  file_itemizer u(app, known, unknown, ignored, mask);
-  walk_tree(file_path(), u);
+  app.work.classify_roster_paths(curr, unchanged, changed, missing);
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
   inventory_node_state(inventory, unchanged,
                        inventory_item::UNCHANGED_NODE);
@@ -902,10 +902,10 @@ AUTOMATE(get_revision, N_("[REVID]"))
       revision_t rev;
 
       app.require_workspace();
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-      update_current_roster_from_filesystem(new_roster, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.update_current_roster_from_filesystem(new_roster);
 
-      get_revision_id(old_revision_id);
+      app.work.get_revision_id(old_revision_id);
       make_revision(old_revision_id, old_roster, new_roster, rev);
 
       calculate_ident(rev, ident);
@@ -930,7 +930,7 @@ AUTOMATE(get_revision, N_("[REVID]"))
 //   on. This is the value stored in _MTN/revision
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_base_revision_id, N_(""))
+AUTOMATE(get_base_revision_id, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -938,7 +938,7 @@ AUTOMATE(get_base_revision_id, N_(""))
   app.require_workspace();
 
   revision_id rid;
-  get_revision_id(rid);
+  app.work.get_revision_id(rid);
   output << rid << endl;
 }
 
@@ -951,7 +951,7 @@ AUTOMATE(get_base_revision_id, N_(""))
 //   files in the workspace.
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_current_revision_id, N_(""))
+AUTOMATE(get_current_revision_id, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -964,10 +964,10 @@ AUTOMATE(get_current_revision_id, N_(""))
   temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  update_current_roster_from_filesystem(new_roster, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.update_current_roster_from_filesystem(new_roster);
 
-  get_revision_id(old_revision_id);
+  app.work.get_revision_id(old_revision_id);
   make_revision(old_revision_id, old_roster, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
@@ -1021,7 +1021,7 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
   if (args.size() > 1)
     throw usage(help_name);
 
-  roster_data dat;
+  manifest_data dat;
   manifest_id mid;
   roster_t old_roster, new_roster;
   temp_node_id_source nis;
@@ -1031,8 +1031,8 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
       revision_id old_revision_id;
 
       app.require_workspace();
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-      update_current_roster_from_filesystem(new_roster, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.update_current_roster_from_filesystem(new_roster);
     }
   else
     {
@@ -1262,7 +1262,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
 //   in alphabetically sorted order.
 // Error conditions:
 //   None.
-AUTOMATE(branches, N_(""))
+AUTOMATE(branches, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -1452,6 +1452,43 @@ AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
 
   output.write(prt.buf.data(), prt.buf.size());
 
+}
+
+// Name: get_option
+// Arguments:
+//   1: an options name
+// Added in: 3.1
+// Purpose: Show the value of the named option in _MTN/options
+//
+// Output format: A string
+//
+// Sample output (for 'mtn automate get_option branch:
+//   net.venge.monotone
+//
+AUTOMATE(get_option, N_("OPTION"))
+{
+  if (!app.unknown && (args.size() < 1))
+    throw usage(help_name);
+
+  // this command requires a workspace to be run on
+  app.require_workspace();
+
+  utf8 database_option, branch_option, key_option, keydir_option;
+  app.work.get_ws_options(database_option, branch_option,
+                          key_option, keydir_option);
+
+  string opt = args[0]();
+
+  if (opt == "database")
+    output << database_option << endl; 
+  else if (opt == "branch")
+    output << branch_option << endl;
+  else if (opt == "key")
+    output << key_option << endl;
+  else if (opt == "keydir")
+    output << keydir_option << endl;
+  else
+    N(false, F("'%s' is not a recognized workspace option") % opt);
 }
 
 // Local Variables:

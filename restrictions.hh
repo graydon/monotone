@@ -62,31 +62,33 @@ class restriction
   bool empty() const { return included_paths.empty() && excluded_paths.empty(); }
 
  protected:
-  restriction(app_state & a) : app(a) {}
+  restriction() : depth(-1) {}
 
   restriction(std::vector<file_path> const & includes,
               std::vector<file_path> const & excludes,
-              app_state & a);
+              long depth);
 
-  app_state & app;
   path_set included_paths, excluded_paths;
+  long depth;
 };
 
 class node_restriction : public restriction
 {
  public:
-  node_restriction(app_state & a) : restriction(a) {}
+  node_restriction() : restriction() {}
 
   node_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
+                   long depth,
                    roster_t const & roster,
                    app_state & a);
 
   node_restriction(std::vector<file_path> const & includes,
-                     std::vector<file_path> const & excludes,
-                     roster_t const & roster1,
-                     roster_t const & roster2,
-                     app_state & a);
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   roster_t const & roster1,
+                   roster_t const & roster2,
+                   app_state & a);
 
   bool includes(roster_t const & roster, node_id nid) const;
 
@@ -94,6 +96,7 @@ class node_restriction : public restriction
   {
     included_paths = other.included_paths;
     excluded_paths = other.excluded_paths;
+    depth = other.depth;
     known_paths = other.known_paths;
     node_map = other.node_map;
     return *this;
@@ -107,10 +110,11 @@ class node_restriction : public restriction
 class path_restriction : public restriction
 {
  public:
-  path_restriction(app_state & a) : restriction(a) {}
+  path_restriction() : restriction() {}
 
   path_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
+                   long depth,
                    app_state & a);
 
   bool includes(split_path const & sp) const;

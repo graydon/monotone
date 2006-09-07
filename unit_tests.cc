@@ -122,6 +122,12 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   return suite;
 }
 
+// Stub for options.cc's sake.
+void
+localize_monotone()
+{
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

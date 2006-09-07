@@ -176,15 +176,28 @@ tokenize_for_command_line(string const & from, vector<string> & to)
     to.push_back(cur);
 }
 
+// This is in a sepaarte procedure so it can be called from code that's called
+// before cpp_main(), such as program option object creation code.  It's made
+// so it can be called multiple times as well.
+void localize_monotone()
+{
+  static int init = 0;
+  if (!init)
+    {
+      setlocale(LC_ALL, "");
+      bindtextdomain(PACKAGE, LOCALEDIR);
+      textdomain(PACKAGE);
+      init = 1;
+    }
+}
+
 int
 cpp_main(int argc, char ** argv)
 {
   int ret = 0;
 
   // go-go gadget i18n
-  setlocale(LC_ALL, "");
-  bindtextdomain(PACKAGE, LOCALEDIR);
-  textdomain(PACKAGE);
+  localize_monotone();
 
   // set up global ui object - must occur before anything that might try to
   // issue a diagnostic

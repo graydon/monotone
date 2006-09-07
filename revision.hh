@@ -51,6 +51,8 @@ edge_map;
 typedef edge_map::value_type
 edge_entry;
 
+enum made_for { made_for_nobody, made_for_workspace, made_for_database };
+
 struct
 revision_t
 {
@@ -59,11 +61,16 @@ revision_t
   // trivial revisions are ones that have no effect -- e.g., commit should
   // refuse to commit them, saying that there are no changes to commit.
   bool is_nontrivial() const;
-  revision_t() {}
+  revision_t() : made_for(made_for_nobody) {}
   revision_t(revision_t const & other);
   revision_t const & operator=(revision_t const & other);
   manifest_id new_manifest;
   edge_map edges;
+  // workspace::put_work_rev refuses to apply a rev that doesn't have this
+  // set to "workspace", and database::put_revision refuses to apply a rev
+  // that doesn't have it set to "database".  the default constructor sets
+  // it to "nobody".
+  enum made_for made_for;
 };
 
 inline revision_id const &
@@ -133,6 +140,16 @@ toposort(std::set<revision_id> const & revisions,
 void
 erase_ancestors(std::set<revision_id> & revisions, app_state & app);
 
+struct is_failure
+{
+  virtual bool operator()(revision_id const & rid) = 0;
+  virtual ~is_failure() {};
+};
+void
+erase_ancestors_and_failures(std::set<revision_id> & revisions,
+                             is_failure & p,
+                             app_state & app);
+
 void
 ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
                     std::set<revision_id> & new_stuff,
@@ -153,26 +170,36 @@ make_revision(revision_id const & old_rev_id,
               roster_t const & new_roster,
               revision_t & rev);
 
-/*
+// This overload takes a base roster and a changeset instead.
 void
-calculate_composite_cset(revision_id const & ancestor,
-                         revision_id const & child,
-                         app_state & app,
-                         cset & composed);
+make_revision(revision_id const & old_rev_id,
+              roster_t const & old_roster,
+              cset const & changes,
+              revision_t & rev);
+
+// These functions produce a faked "new_manifest" id and discard all
+// content-only changes from the cset.  They are only to be used to
+// construct a revision that will be written to the workspace.  Don't use
+// them for revisions written to the database or presented to the user.
+void
+make_revision_for_workspace(revision_id const & old_rev_id,
+                            cset const & changes,
+                            revision_t & rev);
 
 void
-calculate_arbitrary_cset(revision_id const & start,
-                         revision_id const & end,
-                         app_state & app,
-                         cset & composed);
-
-*/
+make_revision_for_workspace(revision_id const & old_rev_id,
+                            roster_t const & old_roster,
+                            roster_t const & new_roster,
+                            revision_t & rev);
 
 void
 build_changesets_from_manifest_ancestry(app_state & app);
 
 void
 build_roster_style_revs_from_manifest_style_revs(app_state & app);
+
+void
+regenerate_rosters(app_state & app);
 
 // basic_io access to printers and parsers
 

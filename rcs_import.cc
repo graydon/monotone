@@ -472,9 +472,9 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
     }
   else
     {
-      I(db.exists(new_id, "files")
-        || db.delta_exists(new_id, "file_deltas"));
-      db.put_delta(old_id, new_id, del, "file_deltas");
+      I(db.file_or_manifest_base_exists(new_id(), "files")
+        || db.delta_exists(new_id(), "file_deltas"));
+      db.put_file_delta(file_id(old_id), file_id(new_id), file_delta(del));
     }
 }
 
@@ -1472,6 +1472,7 @@ cluster_consumer::consume_cluster(cvs_cluster const & c)
   cs->apply_to(editable_ros);
   manifest_id child_mid;
   calculate_ident(ros, child_mid);
+  rev->made_for = made_for_database;
   rev->new_manifest = child_mid;
   rev->edges.insert(make_pair(parent_rid, cs));
   calculate_ident(*rev, child_rid);

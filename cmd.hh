@@ -131,9 +131,6 @@ complete(app_state & app,
 }
 
 void
-maybe_update_inodeprints(app_state & app);
-
-void
 notify_if_multiple_heads(app_state & app);
 
 void
@@ -194,9 +191,29 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::vector<utf8> const & args)       \
 
 #define ALIAS(C, realcommand)                                        \
-CMD(C, realcommand##_cmd.cmdgroup, realcommand##_cmd.params_,         \
-    realcommand##_cmd.desc_ + "\nAlias for " #realcommand,            \
-    realcommand##_cmd.options)                                       \
+namespace commands {                                                 \
+  struct cmd_ ## C : public command                                  \
+  {                                                                  \
+    cmd_ ## C() : command(#C, realcommand##_cmd.cmdgroup,            \
+                          realcommand##_cmd.params_,                 \
+                          realcommand##_cmd.desc_, true,             \
+                          realcommand##_cmd.options)                 \
+    {}                                                               \
+    virtual std::string desc();                                      \
+    virtual void exec(app_state & app,                               \
+                      std::vector<utf8> const & args);               \
+  };                                                                 \
+  static cmd_ ## C C ## _cmd;                                        \
+}                                                                    \
+std::string commands::cmd_ ## C::desc()                              \
+{                                                                    \
+  std:string result = _(desc_.c_str());                              \
+  result += "\n";                                                    \
+  result += (F("Alias for %s") % #realcommand).str();                \
+  return result;                                                     \
+}                                                                    \
+void commands::cmd_ ## C::exec(app_state & app,                      \
+                               std::vector<utf8> const & args)       \
 {                                                                    \
   process(app, std::string(#realcommand), args);                     \
 }
