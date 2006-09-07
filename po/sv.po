@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-07 15:55+0200\n"
-"PO-Revision-Date: 2006-09-07 15:58+0200\n"
+"POT-Creation-Date: 2006-09-07 16:00+0200\n"
+"PO-Revision-Date: 2006-09-07 16:02+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -3461,9 +3461,9 @@ msgid "regenerating cached rosters"
 msgstr "återskapar cachade listor"
 
 #: revision.cc:1649
-#, c-format
-msgid "calculating revisions to regenerate"
-msgstr "räknar ut revisioner att göra om"
+#, fuzzy, c-format
+msgid "calculating rosters to regenerate"
+msgstr "räknar ut listor att göras om"
 
 #: revision.cc:1653
 msgid "regenerated"

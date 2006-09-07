@@ -1,5 +1,11 @@
 2006-09-07  Richard Levitte  <richard@levitte.org>
 
+	* revision.cc: It's really rosters, not revisions that are
+	regenerated.
+	* po/sv.po: Clear the resulting fuzzy.
+
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: 3 fuzzies.
 
 2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
