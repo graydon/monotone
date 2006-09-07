@@ -57,6 +57,7 @@ CMD(db, N_("database"),
       "check\n"
       "changesetify\n"
       "rosterify\n"
+      "regenerate_rosters\n"
       "set_epoch BRANCH EPOCH\n"),
     N_("manipulate database state"),
     option::drop_attr)
@@ -81,6 +82,8 @@ CMD(db, N_("database"),
         build_changesets_from_manifest_ancestry(app);
       else if (idx(args, 0)() == "rosterify")
         build_roster_style_revs_from_manifest_style_revs(app);
+      else if (idx(args, 0)() == "regenerate_rosters")
+        regenerate_rosters(app);
       else
         throw usage(name);
     }
@@ -106,7 +109,7 @@ CMD(db, N_("database"),
           epoch_data ed(idx(args,2)());
           N(ed.inner()().size() == constants::epochlen,
             F("The epoch must be %s characters") 
-	    % constants::epochlen);
+            % constants::epochlen);
           app.db.set_epoch(cert_value(idx(args, 1)()), ed);
         }
       else

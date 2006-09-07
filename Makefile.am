@@ -65,8 +65,10 @@ MOST_SOURCES = 								\
 	roster_merge.cc roster_merge.hh					\
 	merge.cc merge.hh						\
 	legacy.cc legacy.hh uri.cc uri.hh				\
+	graph.cc graph.hh						\
+	roster_delta.cc roster_delta.hh					\
 									\
-        lru_cache.h							\
+        lru_writeback_cache.hh						\
 									\
 	cleanup.hh unit_tests.hh					\
         cycle_detector.hh randomfile.hh adler32.hh			\

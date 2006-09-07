@@ -68,7 +68,7 @@ copy("saved_revision", "_MTN/revision")
 dbex("delete from files where id='%s'", files[3])
 
 check(mtn("db", "check", "--ticker=dot"), 1, false, true)
-check(qgrep('1 unreferenced file', "stderr"))
+check(qgrep('2 unreferenced file', "stderr"))
 check(qgrep('1 unreferenced roster', "stderr"))
 check(qgrep('2 missing files', "stderr"))
 

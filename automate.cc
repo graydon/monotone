@@ -1021,7 +1021,7 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
   if (args.size() > 1)
     throw usage(help_name);
 
-  roster_data dat;
+  manifest_data dat;
   manifest_id mid;
   roster_t old_roster, new_roster;
   temp_node_id_source nis;

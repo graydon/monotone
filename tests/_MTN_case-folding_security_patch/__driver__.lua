@@ -31,10 +31,12 @@ check(mtn("ls", "known"), 0)
 for _,i in pairs(names) do remove(i) end
 
 -- assert trips if we have a db that already has a file with this sort
--- of name in it.
+-- of name in it.  it would be better to test that checkout or pull fail, but
+-- it is too difficult to regenerate this database every time things change,
+-- and in fact we know that the same code paths are exercised by this.
 for _,i in pairs({"files", "dirs"}) do
   get(i..".db.dumped", "stdin")
   check(mtn("db", "load", "-d", i..".mtn"), 0, false, false, true)
   check(mtn("db", "migrate", "-d", i..".mtn"), 0, false, false)
-  check(mtn("-d", i..".mtn", "co", "-b", "testbranch", i.."-co-dir"), 3, false, false)
+  check(mtn("-d", i..".mtn", "db", "regenerate_rosters"), 3, false, false)
 end

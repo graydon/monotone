@@ -472,9 +472,9 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
     }
   else
     {
-      I(db.exists(new_id, "files")
-        || db.delta_exists(new_id, "file_deltas"));
-      db.put_delta(old_id, new_id, del, "file_deltas");
+      I(db.file_or_manifest_base_exists(new_id(), "files")
+        || db.delta_exists(new_id(), "file_deltas"));
+      db.put_file_delta(file_id(old_id), file_id(new_id), file_delta(del));
     }
 }
 
