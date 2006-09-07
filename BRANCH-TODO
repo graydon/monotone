@@ -1,5 +1,2 @@
 database_check_for_normalization -- migrate forward, or change test
   (or both)
-_MTN_case-folding_security_patch -- migrate forward, or change test
-
-add test for new format to schema_migration
