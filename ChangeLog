@@ -1,5 +1,11 @@
 2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
 
+	* monotone.texi: add *-merge documentation sourced 
+	from mailing list archives (new entry under "Special 
+	"Topics").
+
+2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
+
 	* automate.cc (get_content_changed, get_corresponding_path)
 	add new functions, allowing determinination of last content 
 	change and also filenames between revisions.
