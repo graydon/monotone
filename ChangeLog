@@ -4,6 +4,10 @@
 	an error, but stdout if it was requested with --help.
 	* tests/usage_output_streams: New test.
 
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 5 fuzzies, 4 new strings.
+
 2006-09-05  Zack Weinberg  <zackw@panix.com>
 
 	* revision.hh (enum made_for): New.
