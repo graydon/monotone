@@ -1,3 +1,9 @@
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Send usage text to stderr if there was
+	an error, but stdout if it was requested with --help.
+	* tests/usage_output_streams: New test.
+
 2006-09-05  Zack Weinberg  <zackw@panix.com>
 
 	* revision.hh (enum made_for): New.

@@ -39,6 +39,7 @@
 #include "paths.hh"
 
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::string;
 using std::ios_base;
@@ -671,22 +672,25 @@ cpp_main(int argc, char ** argv)
     }
   catch (usage & u)
     {
+      // we send --help output to stdout, so that "mtn --help | less" works
+      // but we send error-triggered usage information to stderr, so that if
+      // you screw up in a script, you don't just get usage information sent
+      // merrily down your pipes.
+      std::ostream & usage_stream = (app.requested_help ? cout : cerr);
+
+      usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
+      usage_stream << option::global_options << "\n";
+
       // Make sure to hide documentation that's not part of
       // the current command.
-
       po::options_description cmd_options_desc = commands::command_options(u.which);
-      unsigned count = cmd_options_desc.options().size();
-
-      cout << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
-      cout << option::global_options << "\n";
-
-      if (count > 0)
+      if (!cmd_options_desc.options().empty())
         {
-          cout << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
-          cout << cmd_options_desc << "\n";
+          usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
+          usage_stream << cmd_options_desc << "\n";
         }
 
-      commands::explain_usage(u.which, cout);
+      commands::explain_usage(u.which, usage_stream);
       if (app.requested_help)
         return 0;
       else
