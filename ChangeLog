@@ -1,3 +1,21 @@
+2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_content_changed, get_corresponding_path)
+	add new functions, allowing determinination of last content 
+	change and also filenames between revisions.
+	* monotone.texi: document new automate commands
+	* monotone.texi: document new automate commands
+	  tests/automate_get_content_changed,
+	  tests/automate_get_corresponding_path,
+	  tests/automate_get_content_changed/__driver__.lua,
+	  tests/automate_get_content_changed/expected,
+	  tests/automate_get_corresponding_path/__driver__.lua,
+	  tests/automate_get_corresponding_path/expected,
+	  tests/automate_get_corresponding_path/expected2A:
+	  test new automate commands
+	* testsuite.lua: call automate_get_content_changed, 
+	  automate_get_corresponding_path tests.
+
 2006-09-07  Nathaniel Smith  <njs@pobox.com>
 
 	* monotone.cc (cpp_main): Send usage text to stderr if there was
