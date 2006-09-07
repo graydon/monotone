@@ -1,3 +1,9 @@
+2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
+
+	* monotone.texi: add *-merge documentation sourced 
+	from mailing list archives (new entry under "Special 
+	"Topics").
+
 2006-09-07  Richard Levitte  <richard@levitte.org>
 
 	* revision.cc: It's really rosters, not revisions that are
