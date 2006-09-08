@@ -31,7 +31,7 @@ adler32
 
   inline void in(u8 c)
   {
-    s1 += static_cast<u32>(c);
+    s1 += widen<u32,u8>(c);
     s1 &= mask;
     s2 += s1;
     s2 &= mask;
@@ -40,9 +40,9 @@ adler32
 
   inline void out(u8 c)
   {
-    s1 -= static_cast<u32>(c);
+    s1 -= widen<u32,u8>(c);
     s1 &= mask;
-    s2 -= (len * static_cast<u32>(c)) + 1;
+    s2 -= (len * widen<u32,u8>(c)) + 1;
     s2 &= mask;
     --len;
   }
@@ -60,7 +60,7 @@ adler32
     // and (for s2) (maxs1 = 255*255)*255 < 0xffff_ffff
     while (count--) 
       {
-        u32 c = static_cast<u32>(*(ch++));
+        u32 c = widen<u32,u8>(*(ch++));
         s1 += c;
         s2 += s1;
       }

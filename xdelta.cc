@@ -976,22 +976,6 @@ xdelta_random_piecewise_delta_test()
   }
 }
 
-void 
-widen_sanity_check()
-{
-  // This code just verifies that there isn't something going on where the
-  // widen is required for some weird compiler that incorrectly sign
-  // extends unsigned constants when casting to a wider type
-  for (u32 i = 0; i < 256; ++i) 
-    {
-      u8 v = (u8)(i & 0xFF);
-      u32 v_w = widen<u32,u8>(v);
-      BOOST_CHECK(v_w == i);
-      BOOST_CHECK((static_cast<u32>(v)) == i);
-    }
-  L(FL("widen sanity check passed"));
-}
-
 void
 rolling_sanity_check()
 {
@@ -1035,7 +1019,6 @@ add_xdelta_tests(test_suite * suite)
   suite->add(BOOST_TEST_CASE(&xdelta_simple_cases));
   suite->add(BOOST_TEST_CASE(&xdelta_random_simple_delta_test));
   suite->add(BOOST_TEST_CASE(&xdelta_random_piecewise_delta_test));
-  suite->add(BOOST_TEST_CASE(&widen_sanity_check));
   suite->add(BOOST_TEST_CASE(&rolling_sanity_check));
 }
 
