@@ -31,10 +31,9 @@ function netsync.internal.client(srv, oper, pat, n, res)
   if type(pat) == "string" then
     table.insert(args, pat)
   elseif type(pat) == "table" then
-    local function ins(i,x)
-      table.insert(args,x)
+    for k, v in pairs(pat) do
+      table.insert(args, v)
     end
-    table.foreachi(pat, ins)
   elseif pat ~= nil then
     err("Bad pattern type "..type(pat))
   end
@@ -64,10 +63,9 @@ function netsync.start(pat, n, min)
   if type(pat) == "string" then
     table.insert(args, pat)
   elseif type(pat) == "table" then
-    local function ins(i,x)
-      table.insert(args,x)
+    for k, v in pairs(pat) do
+      table.insert(args, v)
     end
-    table.foreachi(pat, ins)
   else
     err("Bad pattern type "..type(pat))
   end

@@ -50,6 +50,9 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
 
   // call all the adders here
 
+  if (t.empty() || t.find("numeric_vocab") != t.end())
+    add_numeric_vocab_tests(suite);
+
   if (t.empty() || t.find("file_io") != t.end())
     add_file_io_tests(suite);
 
@@ -120,6 +123,12 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   suite->add(BOOST_TEST_CASE(&clean_shutdown_dummy_test));
 
   return suite;
+}
+
+// Stub for options.cc's sake.
+void
+localize_monotone()
+{
 }
 
 // Local Variables:

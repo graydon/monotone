@@ -2,8 +2,12 @@
 #include "lua.hh"
 
 #include <signal.h>
+#include <cstdlib>
 
 #include "platform.hh"
+
+using std::malloc;
+using std::free;
 
 LUAEXT(get_ostype, )
 {
@@ -37,14 +41,14 @@ LUAEXT(make_executable, )
 LUAEXT(spawn, )
 {
   int n = lua_gettop(L);
-  const char *path = luaL_checkstring(L, -n);
+  const char *path = luaL_checkstring(L, 1);
   char **argv = (char**)malloc((n+1)*sizeof(char*));
   int i;
   pid_t ret;
   if (argv==NULL)
     return 0;
   argv[0] = (char*)path;
-  for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
+  for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, i+1);
   argv[i] = NULL;
   ret = process_spawn(argv);
   free(argv);
@@ -54,19 +58,19 @@ LUAEXT(spawn, )
 
 LUAEXT(spawn_redirected, )
 {
-  int n = -lua_gettop(L);
-  char const * infile = luaL_checkstring(L, n++);
-  char const * outfile = luaL_checkstring(L, n++);
-  char const * errfile = luaL_checkstring(L, n++);
-  const char *path = luaL_checkstring(L, n);
-  n = -n;
+  int n = lua_gettop(L);
+  char const * infile = luaL_checkstring(L, 1);
+  char const * outfile = luaL_checkstring(L, 2);
+  char const * errfile = luaL_checkstring(L, 3);
+  const char *path = luaL_checkstring(L, 4);
+  n -= 3;
   char **argv = (char**)malloc((n+1)*sizeof(char*));
   int i;
   pid_t ret;
   if (argv==NULL)
     return 0;
   argv[0] = (char*)path;
-  for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L, -(n - i));
+  for (i=1; i<n; i++) argv[i] = (char*)luaL_checkstring(L,  i+4);
   argv[i] = NULL;
   ret = process_spawn_redirected(infile, outfile, errfile, argv);
   free(argv);
@@ -104,3 +108,4 @@ LUAEXT(sleep, )
   lua_pushnumber(L, process_sleep(seconds));
   return 1;
 }
+

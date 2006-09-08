@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.324 2006/04/04 01:54:55 drh Exp $
+** $Id: btree.c,v 1.326 2006/08/08 13:51:43 drh Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -426,10 +426,10 @@ struct BtCursor {
 #if SQLITE_TEST
 # define TRACE(X)   if( sqlite3_btree_trace )\
                         { sqlite3DebugPrintf X; fflush(stdout); }
+int sqlite3_btree_trace=0;  /* True to enable tracing */
 #else
 # define TRACE(X)
 #endif
-int sqlite3_btree_trace=0;  /* True to enable tracing */
 
 /*
 ** Forward declaration
@@ -2367,7 +2367,7 @@ static int autoVacuumCommit(BtShared *pBt, Pgno *nTrunc){
   MemPage *pFreeMemPage = 0; /* "" */
 
 #ifndef NDEBUG
-  int nRef = *sqlite3pager_stats(pPager);
+  int nRef = sqlite3pager_refcount(pPager);
 #endif
 
   assert( pBt->autoVacuum );
@@ -2475,7 +2475,7 @@ static int autoVacuumCommit(BtShared *pBt, Pgno *nTrunc){
   assert( finSize!=PENDING_BYTE_PAGE(pBt) );
 
 autovacuum_out:
-  assert( nRef==*sqlite3pager_stats(pPager) );
+  assert( nRef==sqlite3pager_refcount(pPager) );
   if( rc!=SQLITE_OK ){
     sqlite3pager_rollback(pPager);
   }
@@ -6388,7 +6388,7 @@ char *sqlite3BtreeIntegrityCheck(Btree *p, int *aRoot, int nRoot){
   IntegrityCk sCheck;
   BtShared *pBt = p->pBt;
 
-  nRef = *sqlite3pager_stats(pBt->pPager);
+  nRef = sqlite3pager_refcount(pBt->pPager);
   if( lockBtreeWithRetry(p)!=SQLITE_OK ){
     return sqliteStrDup("Unable to acquire a read lock on the database");
   }
@@ -6454,10 +6454,10 @@ char *sqlite3BtreeIntegrityCheck(Btree *p, int *aRoot, int nRoot){
   /* Make sure this analysis did not leave any unref() pages
   */
   unlockBtreeIfUnused(pBt);
-  if( nRef != *sqlite3pager_stats(pBt->pPager) ){
+  if( nRef != sqlite3pager_refcount(pBt->pPager) ){
     checkAppendMsg(&sCheck, 0, 
       "Outstanding page count goes from %d to %d during this analysis",
-      nRef, *sqlite3pager_stats(pBt->pPager)
+      nRef, sqlite3pager_refcount(pBt->pPager)
     );
   }
 
@@ -6556,6 +6556,13 @@ int sqlite3BtreeIsInTrans(Btree *p){
 */
 int sqlite3BtreeIsInStmt(Btree *p){
   return (p->pBt && p->pBt->inStmt);
+}
+
+/*
+** Return non-zero if a read (or write) transaction is active.
+*/
+int sqlite3BtreeIsInReadTrans(Btree *p){
+  return (p && (p->inTrans!=TRANS_NONE));
 }
 
 /*

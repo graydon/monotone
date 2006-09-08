@@ -19,7 +19,7 @@ check(mtn("cert", rev, "author", "extra_author"), 0, false, false)
 check(mtn("drop", "testfile"), 0, false, false)
 check(mtn("commit", "-m", "goingaway"), 0, false, false)
 del_rev = base_revision()
-for a,b in {revisions = "id", revision_certs = "id", revision_ancestry = "child"} do
+for a,b in pairs({revisions = "id", revision_certs = "id", revision_ancestry = "child"}) do
   local str = string.format("delete from %s where %s = '%s'", a, b, del_rev)
   check(mtn("db", "execute", str), 0, false, false)
 end
@@ -30,6 +30,6 @@ check(mtn("fload"), 0, false, false, {"fileY"})
 
 check(mtn("db", "check"), 0, false, true)
 
-check(qgrep('problems detected: 5', "stderr"))
+check(qgrep('problems detected: 4', "stderr"))
 check(qgrep('0 serious', "stderr"))
 check(qgrep('minor problems detected', "stderr"))

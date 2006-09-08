@@ -344,10 +344,11 @@ ls_known(app_state & app, vector<utf8> const & args)
   temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
@@ -372,9 +373,15 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
 {
   app.require_workspace();
 
-  path_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns), app);
+  vector<file_path> roots = args_to_paths(args);
+  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.depth, app);
   path_set unknown, ignored;
-  find_unknown_and_ignored(app, mask, unknown, ignored);
+
+  // if no starting paths have been specified use the workspace root
+  if (roots.empty())
+    roots.push_back(file_path());
+
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin(); 
@@ -391,13 +398,14 @@ ls_missing(app_state & app, vector<utf8> const & args)
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  get_current_roster_shape(current_roster_shape, nis, app);
+  app.work.get_current_roster_shape(current_roster_shape, nis);
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         current_roster_shape, app);
 
   path_set missing;
-  find_missing(current_roster_shape, mask, missing);
+  app.work.find_missing(current_roster_shape, mask, missing);
 
   for (path_set::const_iterator i = missing.begin(); 
        i != missing.end(); ++i)
@@ -417,13 +425,14 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   app.require_workspace();
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns), 
+                        app.depth,
                         old_roster, new_roster, app);
 
-  update_current_roster_from_filesystem(new_roster, mask, app);
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_csets(old_roster, new_roster, 
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
@@ -460,7 +469,7 @@ CMD(list, N_("informative"),
     N_("show database objects, or the current workspace manifest, \n"
        "or known, unknown, intentionally ignored, missing, or \n"
        "changed-state files"),
-    OPT_DEPTH % OPT_EXCLUDE)
+    option::depth % option::exclude)
 {
   if (args.size() == 0)
     throw usage(name);

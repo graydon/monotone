@@ -14,7 +14,9 @@ function temp_file(namehint)
    else
       filename = string.format("%s/mtn.%s.XXXXXX", tdir, namehint)
    end
-   return mkstemp(filename)
+   local name = mkstemp(filename)
+   local file = io.open(name, "r+")
+   return file, name
 end
 
 function execute(path, ...)   
@@ -231,6 +233,11 @@ function edit_comment(basetext, user_log_message)
    local exe = nil
    if (program_exists_in_path("vi")) then exe = "vi" end
    if (program_exists_in_path("notepad.exe")) then exe = "notepad.exe" end
+   local debian_editor = io.open("/usr/bin/editor")
+   if (debian_editor ~= nil) then
+      debian_editor:close()
+      exe = "/usr/bin/editor"
+   end
    local visual = os.getenv("VISUAL")
    if (visual ~= nil) then exe = visual end
    local editor = os.getenv("EDITOR")
@@ -330,133 +337,215 @@ end
 
 -- merger support
 
-function merge3_meld_cmd(lfile, afile, rfile)
-   return 
-   function()
+-- Fields in the mergers structure:
+-- cmd       : a function that performs the merge operation using the chosen
+--             program, best try.
+-- available : a function that checks that the needed program is installed and
+--             in $PATH
+-- wanted    : a function that checks if the user doesn't want to use this
+--             method, and returns false if so.  This should normally return
+--             true, but in some cases, especially when the merger is really
+--             an editor, the user might have a preference in EDITOR and we
+--             need to respect that.
+--             NOTE: wanted is only used when the user has NOT defined the
+--             `merger' variable or the MTN_MERGE environment variable.
+mergers = {}
+
+mergers.meld = {
+   cmd = function (tbl)
+      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
+          "You should merge all changes to *CENTER* file due to limitation of program\n"..
+          "arguments.\n\n")) 
       local path = "meld"
-      local ret = execute(path, lfile, afile, rfile)
+      local ret = execute(path, tbl.lfile, tbl.afile, tbl.rfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
       end
-      return ret
-   end
-end
+      return tbl.afile
+   end ,
+   available = function () return program_exists_in_path("meld") end,
+   wanted = function () return true end
+}
 
-function merge3_tortoise_cmd(lfile, afile, rfile, outfile)
-   return
-   function()
+mergers.tortoise = {
+   cmd = function (tbl)
       local path = "tortoisemerge"
       local ret = execute(path,
-                          string.format("/base:%s", afile),
-                          string.format("/theirs:%s", lfile),
-                          string.format("/mine:%s", rfile),
-                          string.format("/merged:%s", outfile))
+                          string.format("/base:%s", tbl.afile),
+                          string.format("/theirs:%s", tbl.lfile),
+                          string.format("/mine:%s", tbl.rfile),
+                          string.format("/merged:%s", tbl.outfile))
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
       end
-      return ret
-   end
-end
+      return tbl.outfile
+   end ,
+   available = function() return program_exists_in_path ("TortoiseMerge") end,
+   wanted = function () return true end
+}
 
-function merge3_vim_cmd(vim, afile, lfile, rfile, outfile)
-   return
-   function()
-      local ret = execute(vim, "-f", "-d", "-c", string.format("file %s", outfile),
-                          afile, lfile, rfile)
+mergers.vim = {
+   cmd = function (tbl)
+      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
+          "You should merge all changes to *LEFT* file due to limitation of program\n"..
+          "arguments.  The order of the files is ancestor, left, right.\n\n"))
+      local vim
+      local exec
+      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
+	 vim = "gvim"
+	 exec = execute_confirm
+      else
+	 vim = "vim"
+	 exec = execute
+      end
+      local ret = exec(vim, "-f", "-d", "-c", string.format("file %s", tbl.outfile),
+                          tbl.afile, tbl.lfile, tbl.rfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+         return false
       end
-      return ret
-   end
-end
+      return tbl.outfile
+   end ,
+   available =
+      function ()
+	 return program_exists_in_path("vim") or
+	    program_exists_in_path("gvim")
+      end ,
+   wanted =
+      function ()
+	 local editor = os.getenv("EDITOR")
+	 if editor and
+	    not (string.find(editor, "vim") or
+		 string.find(editor, "gvim")) then
+	    return false
+	 end
+	 return true
+      end
+}
 
-function merge3_rcsmerge_vim_cmd(merge, vim, lfile, afile, rfile, outfile)
-   return
-   function()
+mergers.rcsmerge = {
+   cmd = function (tbl)
       -- XXX: This is tough - should we check if conflict markers stay or not?
       -- If so, we should certainly give the user some way to still force
       -- the merge to proceed since they can appear in the files (and I saw
       -- that). --pasky
-      if execute(merge, lfile, afile, rfile) == 0 then
-         copy_text_file(lfile, outfile);
-         return 0
+      local merge = os.getenv("MTN_RCSMERGE")
+      if execute(merge, tbl.lfile, tbl.afile, tbl.rfile) == 0 then
+         copy_text_file(tbl.lfile, tbl.outfile);
+         return tbl.outfile
       end
-      local ret = execute(vim, "-f", "-c", string.format("file %s", outfile),
-                          lfile)
+      local ret = execute("vim", "-f", "-c", string.format("file %s", tbl.outfile
+),
+                          tbl.lfile)
       if (ret ~= 0) then
-         io.write(string.format(gettext("Error running merger '%s'\n"), vim))
+         io.write(string.format(gettext("Error running merger '%s'\n"), "vim"))
+         return false
       end
-      return ret
-   end
-end
+      return tbl.outfile
+   end,
+   available =
+      function ()
+	 local merge = os.getenv("MTN_RCSMERGE")
+	 return merge and
+	    program_exists_in_path(merge) and program_exists_in_path("vim")
+      end ,
+   wanted = function () return os.getenv("MTN_RCSMERGE") ~= nil end
+}
 
-function merge3_emacs_cmd(emacs, lfile, afile, rfile, outfile)
-   local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
-   return 
-   function()
+mergers.emacs = {
+   cmd = function (tbl)
+      local emacs
+      if program_exists_in_path("xemacs") then
+         emacs = "xemacs"
+      else
+         emacs = "emacs"
+      end
+      local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
       local ret = execute(emacs, "--eval", 
-                          string.format(elisp, lfile, rfile, afile, outfile))
+                          string.format(elisp, tbl.lfile, tbl.rfile, tbl.afile, tbl.outfile))
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), emacs))
+         return false
       end
-      return ret
-   end
-end
+      return tbl.outfile
+   end,
+   available = 
+      function ()
+	 return program_exists_in_path("xemacs") or
+	    program_exists_in_path("emacs")
+      end ,
+   wanted =
+      function ()
+	 local editor = os.getenv("EDITOR")
+	 if editor and
+	    not (string.find(editor, "emacs") or
+		 string.find(editor, "gnu")) then
+	    return false
+	 end
+	 return true
+      end
+}
 
-function merge3_xxdiff_cmd(left_path, anc_path, right_path, merged_path, 
-                           lfile, afile, rfile, outfile)
-   return 
-   function()
+mergers.xxdiff = {
+   cmd = function (tbl)
       local path = "xxdiff"
       local ret = execute(path, 
-                        "--title1", left_path,
-                        "--title2", right_path,
-                        "--title3", merged_path,
-                        lfile, afile, rfile, 
+                        "--title1", tbl.left_path,
+                        "--title2", tbl.right_path,
+                        "--title3", tbl.merged_path,
+                        tbl.lfile, tbl.afile, tbl.rfile, 
                         "--merge", 
-                        "--merged-filename", outfile,
+                        "--merged-filename", tbl.outfile,
                         "--exit-with-merge-status")
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
       end
-      return ret
-   end
-end
-   
-function merge3_kdiff3_cmd(left_path, anc_path, right_path, merged_path, 
-                           lfile, afile, rfile, outfile)
-   return 
-   function()
+      return tbl.outfile
+   end,
+   available = function () return program_exists_in_path("xxdiff") end,
+   wanted = function () return true end
+}
+
+mergers.kdiff3 = {
+   cmd = function (tbl)
       local path = "kdiff3"
       local ret = execute(path, 
-                          "--L1", anc_path,
-                          "--L2", left_path,
-                          "--L3", right_path,
-                          afile, lfile, rfile, 
+                          "--L1", tbl.anc_path,
+                          "--L2", tbl.left_path,
+                          "--L3", tbl.right_path,
+                          tbl.afile, tbl.lfile, tbl.rfile, 
                           "--merge", 
-                          "--o", outfile)
+                          "--o", tbl.outfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
       end
-      return ret
-   end
-end
+      return tbl.outfile
+   end,
+   available = function () return program_exists_in_path("kdiff3") end,
+   wanted = function () return true end
+}
 
-function merge3_opendiff_cmd(left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile)
-   return 
-   function()
+mergers.opendiff = {
+   cmd = function (tbl)
       local path = "opendiff"
       -- As opendiff immediately returns, let user confirm manually
       local ret = execute_confirm(path,
-                                  lfile,rfile,
-                                  "-ancestor",afile,
-                                  "-merge",outfile)
+                                  tbl.lfile,tbl.rfile,
+                                  "-ancestor",tbl.afile,
+                                  "-merge",tbl.outfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
+         return false
       end
-      return ret
-   end
-end
+      return tbl.outfile
+   end,
+   available = function () return program_exists_in_path("opendiff") end,
+   wanted = function () return true end
+}
 
 function write_to_temporary_file(data, namehint)
    tmp, filename = temp_file(namehint)
@@ -499,64 +588,40 @@ function program_exists_in_path(program)
 end
 
 function get_preferred_merge3_command (tbl)
-   local cmd = nil
-   local left_path = tbl.left_path
-   local anc_path = tbl.anc_path
-   local right_path = tbl.right_path
-   local merged_path = tbl.merged_path
-   local lfile = tbl.lfile
-   local afile = tbl.afile
-   local rfile = tbl.rfile
-   local outfile = tbl.outfile 
-
-   local editor = os.getenv("EDITOR")
-   if editor ~= nil then editor = string.lower(editor) else editor = "" end
-
-   local merge = os.getenv("MTMERGE")
-   -- TODO: Support for rcsmerge_emacs
-   if merge ~= nil and string.find(editor, "vim") ~= nil then
-      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
-         cmd = merge3_rcsmerge_vim_cmd (merge, "gvim", lfile, afile, rfile, outfile) 
-      elseif program_exists_in_path ("vim") then 
-         cmd = merge3_rcsmerge_vim_cmd (merge, "vim", lfile, afile, rfile, outfile) 
+   local default_order = {"kdiff3", "xxdiff", "opendiff", "tortoise", "emacs", "vim", "meld"}
+   local function existmerger(name)
+      local m = mergers[name]
+      if type(m) == "table" and m.available(tbl) then
+         return m.cmd
       end
-
-   elseif program_exists_in_path("kdiff3") then
-      cmd = merge3_kdiff3_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("xxdiff") then 
-      cmd = merge3_xxdiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("opendiff") then 
-      cmd = merge3_opendiff_cmd (left_path, anc_path, right_path, merged_path, lfile, afile, rfile, outfile) 
-   elseif program_exists_in_path ("TortoiseMerge") then
-      cmd = merge3_tortoise_cmd(lfile, afile, rfile, outfile)
-   elseif string.find(editor, "emacs") ~= nil or string.find(editor, "gnu") ~= nil then 
-      if string.find(editor, "xemacs") and program_exists_in_path ("xemacs") then 
-         cmd = merge3_emacs_cmd ("xemacs", lfile, afile, rfile, outfile) 
-      elseif program_exists_in_path ("emacs") then 
-         cmd = merge3_emacs_cmd ("emacs", lfile, afile, rfile, outfile) 
+      return nil
+   end
+   local function trymerger(name)
+      local m = mergers[name]
+      if type(m) == "table" and m.available(tbl) and m.wanted(tbl) then
+         return m.cmd
       end
-   elseif string.find(editor, "vim") ~= nil then
-      io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
-          "You should merge all changes to *LEFT* file due to limitation of program\n"..
-          "arguments.  The order of the files is ancestor, left, right.\n\n")) 
-      if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then 
-         cmd = merge3_vim_cmd ("gvim", afile, lfile, rfile, outfile) 
-      elseif program_exists_in_path ("vim") then 
-         cmd = merge3_vim_cmd ("vim", afile, lfile, rfile, outfile) 
-      end
-   elseif program_exists_in_path ("meld") then 
-      tbl.meld_exists = true 
-      io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
-          "You should merge all changes to *CENTER* file due to limitation of program\n"..
-          "arguments.\n\n")) 
-      cmd = merge3_meld_cmd (lfile, afile, rfile) 
-   end 
-   
-   return cmd 
-end 
+      return nil
+   end
+   -- Check if there's a merger given by the user.
+   local mkey = os.getenv("MTN_MERGE")
+   if not mkey then mkey = merger end
+   if not mkey and os.getenv("MTN_RCSMERGE") then mkey = "rcsmerge" end
+   -- If there was a user-given merger, see if it exists.  If it does, return
+   -- the cmd function.  If not, return nil.
+   local c
+   if mkey then c = existmerger(mkey) end
+   if c then return c,mkey end
+   if mkey then return nil,mkey end
+   -- If there wasn't any user-given merger, take the first that's available
+   -- and wanted.
+   for _,mkey in ipairs(default_order) do
+      c = trymerger(mkey) ; if c then return c,nil end
+   end
+end
 
 function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, right) 
-   local ret 
+   local ret = nil
    local tbl = {}
    
    tbl.anc_path = anc_path 
@@ -576,31 +641,32 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
    
    if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil 
    then 
-      local cmd =   get_preferred_merge3_command (tbl) 
+      local cmd,mkey = get_preferred_merge3_command (tbl)
       if cmd ~=nil 
       then 
          io.write (string.format(gettext("executing external 3-way merge command\n")))
-         -- cmd() return 0 on success.
-         if cmd () ~= 0
-         then
+         ret = cmd (tbl)
+         if not ret then
             ret = nil
          else
-            if tbl.meld_exists 
-            then 
-               ret = read_contents_of_file (tbl.afile, "r")
-            else
-               ret = read_contents_of_file (tbl.outfile, "r") 
-            end 
+            ret = read_contents_of_file (ret, "r")
             if string.len (ret) == 0 
             then 
                ret = nil 
             end
          end
       else
-         io.write (string.format("No external 3-way merge command found.\n"..
-            "You may want to check that $EDITOR is set to an editor that supports 3-way merge,\n"..
-            "set this explicitly in your get_preferred_merge3_command hook,\n"..
-            "or add a 3-way merge program to your path.\n\n"))
+	 if mkey then
+	    io.write (string.format("The possible commands for the "..mkey.." merger aren't available.\n"..
+                "You may want to check that $MTN_MERGE or the lua variable `merger' is set\n"..
+                "to something available.  If you want to use vim or emacs, you can also\n"..
+		"set $EDITOR to something appropriate"))
+	 else
+	    io.write (string.format("No external 3-way merge command found.\n"..
+                "You may want to check that $EDITOR is set to an editor that supports 3-way\n"..
+                "merge, set this explicitly in your get_preferred_merge3_command hook,\n"..
+                "or add a 3-way merge program to your path.\n\n"))
+	 end
       end
    end
    
