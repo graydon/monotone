@@ -1,5 +1,10 @@
 2006-09-07  Nathaniel Smith  <njs@pobox.com>
 
+	* contrib/monotone.el (monotone-vc-prefix-map): Add some more
+	intuitive keys, and some more notes on FIXMEs.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
 	* numeric_vocab.hh (widen): Add a comment documenting what widen<>
 	is for.  Add a fast-path to it for when V is unsigned anyway.
 	Throw in some static stdint-actually-works tests too, while I'm,
