@@ -7,6 +7,10 @@
 	basic_io::printer::~printer): add reference tracking, 
 	and invariant if more than one printer referenced at a time.
 
+2006-09-08  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: 8 fuzzies, 4 new strings.
+
 2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_corresponding_path, get_content_changed):

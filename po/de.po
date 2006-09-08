@@ -28,8 +28,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-07 15:20+0200\n"
-"PO-Revision-Date: 2006-09-07 15:21+0100\n"
+"POT-Creation-Date: 2006-09-08 15:29+0200\n"
+"PO-Revision-Date: 2006-09-08 15:30+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -149,9 +149,9 @@ msgstr "[REVISIONS_ID]"
 
 #: automate.cc:918
 #: automate.cc:1041
-#: automate.cc:1527
-#: automate.cc:1585
-#: automate.cc:1590
+#: automate.cc:1525
+#: automate.cc:1584
+#: automate.cc:1589
 #, c-format
 msgid "no revision %s found in database"
 msgstr "Revision %s nicht in Datenbank gefunden"
@@ -240,13 +240,13 @@ msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
 msgid "REV FILE"
 msgstr "REVISION DATEI"
 
-#: automate.cc:1533
-#: automate.cc:1596
+#: automate.cc:1531
+#: automate.cc:1595
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "Datei %s existiert nicht in der Revision %s"
 
-#: automate.cc:1573
+#: automate.cc:1574
 msgid "REV1 FILE REV2"
 msgstr "REV1 DATEI REV2"
 
@@ -280,13 +280,13 @@ msgstr "Vertrauensfunktion lehnt %d Unterzeichner des Zertifikats %s auf Revisio
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "berechnete Zertifikatsprüfsumme '%s' stimmt nicht mit '%s' überein"
 
-#: cert.cc:379
+#: cert.cc:387
 #: keys.cc:560
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "kein Schlüsselpaar '%s' in Schlüsselbund '%s' gefunden"
 
-#: cert.cc:457
+#: cert.cc:465
 #, c-format
 msgid ""
 "you have no private key to make signatures with\n"
@@ -295,7 +295,7 @@ msgstr ""
 "Sie haben keinen geheimen Schlüssel, um Signaturen zu erstellen.\n"
 "Eventuell müssen Sie 'genkey <ihre_email_adresse>' ausführen."
 
-#: cert.cc:460
+#: cert.cc:468
 #, c-format
 msgid ""
 "you have multiple private keys\n"
@@ -304,17 +304,17 @@ msgstr ""
 "Sie haben mehrere geheime Schlüssel.\n"
 "Um einen davon für die Erstellung von Signaturen auszuwählen, fügen Sie '-k<schluessel_name>' Ihrem Befehl hinzu."
 
-#: cert.cc:477
+#: cert.cc:485
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
 msgstr "kein Zweig für leere Revision gefunden, bitte geben Sie einen Zweignamen an"
 
-#: cert.cc:486
+#: cert.cc:494
 #, c-format
 msgid "no branch certs found for revision %s, please provide a branch name"
 msgstr "keine Zweigzertifikate für Revision %s gefunden, bitte geben Sie einen Zweignamen an"
 
-#: cert.cc:490
+#: cert.cc:498
 #, c-format
 msgid "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "mehrere Zweigzertifikate für Revision %s gefunden, bitte geben Sie einen Zweignamen an"
@@ -3401,8 +3401,8 @@ msgstr "erstelle Katalog-Cache neu"
 
 #: revision.cc:1649
 #, c-format
-msgid "calculating revisions to regenerate"
-msgstr "berechne neu zu erstellende Revisionen"
+msgid "calculating rosters to regenerate"
+msgstr "berechne neu zu erstellende Kataloge"
 
 #: revision.cc:1653
 msgid "regenerated"
@@ -3608,42 +3608,42 @@ msgstr "konnte booleschen Zertifikatswert '%s' nicht dekodieren"
 msgid "cannot determine branch for update"
 msgstr "kann Zweig zur Aktualisierung nicht bestimmen"
 
-#: vocab.cc:65
+#: vocab.cc:67
 #, c-format
 msgid "hex encoded ID '%s' size != %d"
 msgstr "Größe der hex-enkodierten ID '%s' ist ungleich %d"
 
-#: vocab.cc:69
+#: vocab.cc:71
 #, c-format
 msgid "bad character '%c' in id name '%s'"
 msgstr "schlechtes Zeichen '%c' in ID-Name '%s'"
 
-#: vocab.cc:82
+#: vocab.cc:81
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
 msgstr "schlechtes Zeichen '%c' in Zeichenfolge '%s'"
 
-#: vocab.cc:96
+#: vocab.cc:92
 #, c-format
 msgid "bad character '%c' in symbol '%s'"
 msgstr "schlechtes Zeichen '%c' in Symbol '%s'"
 
-#: vocab.cc:110
+#: vocab.cc:103
 #, c-format
 msgid "bad character '%c' in cert name '%s'"
 msgstr "schlechtes Zeichen '%c' in Zertifikatname '%s'"
 
-#: vocab.cc:123
+#: vocab.cc:113
 #, c-format
 msgid "bad character '%c' in key name '%s'"
 msgstr "schlechtes Zeichen '%c' in Schlüsselname '%s'"
 
-#: vocab.cc:141
+#: vocab.cc:128
 #, c-format
 msgid "Invalid key length of %d bytes"
 msgstr "Ungültige Schlüssellänge von %d Bytes"
 
-#: vocab.cc:159
+#: vocab.cc:143
 #, c-format
 msgid "Invalid hmac length of %d bytes"
 msgstr "Ungültige 'hmac'-Länge von %d Bytes"
