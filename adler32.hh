@@ -16,12 +16,13 @@
 
 #include <string>
 #include "numeric_vocab.hh"
+#include "sanity.hh"
 
 struct
 adler32
 {
   u32 s1, s2, len;
-  u32 const mask;
+  static const u32 mask = 0xffff;
 
   inline u32 sum() const
   {
@@ -46,15 +47,34 @@ adler32
     --len;
   }
 
+  // monotone only uses the adler32 in order to do a rolling window over
+  // the data for the purpose of finding matches in xdelta.cc
+  // Optimize for this case avoiding a lot of unneeded masking.
+  inline void replace_with(u8 const * ch, std::string::size_type count) 
+  {
+    I(count < 255);
+    s1 = 1;
+    s2 = 0;
+    len = count;
+    // Can't overflow in this case as (for s1) 255*255 < 0xffff, 
+    // and (for s2) (maxs1 = 255*255)*255 < 0xffff_ffff
+    while (count--) 
+      {
+        u32 c = widen<u32,u8>(*(ch++));
+        s1 += c;
+        s2 += s1;
+      }
+    s1 &= mask;
+    s2 &= mask;
+  }
+
   adler32()
-    : s1(1), s2(0), len(0), mask(widen<u32,u16>(0xffff))
+    : s1(1), s2(0), len(0)
   {}
 
   adler32(u8 const * ch, std::string::size_type count)
-    : s1(1), s2(0), len(0), mask(widen<u32,u16>(0xffff))
   {
-    while(count--)
-      in(*(ch++));
+    replace_with(ch, count);
   }
 };
 
