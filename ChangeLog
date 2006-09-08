@@ -1,5 +1,14 @@
 2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
 
+	* basic_io.hh (basic_io::printer):
+	note that only one printer can be referenced at a time, 
+	due to shared static buffer.
+	* basic_io.cc (basic_io::printer::printer, 
+	basic_io::printer::~printer): add reference tracking, 
+	and invariant if more than one printer referenced at a time.
+
+2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
+
 	* automate.cc (get_corresponding_path, get_content_changed):
 	fix output; roster information was being written to 
 	basic_io::printer mysteriously. Tests now pass.

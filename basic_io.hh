@@ -263,11 +263,17 @@ namespace basic_io
                         std::vector<std::string> const & v);
   };
 
+
+  // Note: printer uses a static buffer; thus only one buffer 
+  // may be referenced (globally). An invariant will be triggered
+  // if more than one basic_io::printer is instantiated.
   struct
   printer
   {
     static std::string buf;
+    static int count;
     printer();
+    ~printer();
     void print_stanza(stanza const & st);
   };
 

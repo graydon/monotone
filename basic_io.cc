@@ -124,10 +124,18 @@ void basic_io::stanza::push_str_triple(symbol const & k,
 
 
 string basic_io::printer::buf;
+int basic_io::printer::count;
 
 basic_io::printer::printer()
 {
+  I(count == 0);
+  count++;
   buf.clear();
+}
+
+basic_io::printer::~printer()
+{
+  count--;
 }
 
 void basic_io::printer::print_stanza(stanza const & st)
