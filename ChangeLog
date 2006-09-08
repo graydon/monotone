@@ -1,5 +1,10 @@
 2006-09-07  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/basic_invocation_and_options: Fix test broken by
+	usage to stdout vs. stderr changes.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
 	* contrib/monotone.el (monotone-vc-prefix-map): Add some more
 	intuitive keys, and some more notes on FIXMEs.
 
