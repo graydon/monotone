@@ -1,3 +1,11 @@
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* numeric_vocab.hh (widen): Add a comment documenting what widen<>
+	is for.  Add a fast-path to it for when V is unsigned anyway.
+	Throw in some static stdint-actually-works tests too, while I'm,
+	here.
+	* numeric_vocab.cc, unit_tests.{hh,cc}: Add tests for widen.
+
 2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
 
 	* monotone.texi: add *-merge documentation sourced 

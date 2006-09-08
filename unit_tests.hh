@@ -25,6 +25,7 @@
 using boost::unit_test_framework::test_suite;
 
 // list the various add-tests-to-the-testsuite functions here
+void add_numeric_vocab_tests(test_suite * suite);
 void add_diff_patch_tests(test_suite * suite);
 void add_file_io_tests(test_suite * suite);
 void add_key_tests(test_suite * suite);
