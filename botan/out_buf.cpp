@@ -65,6 +65,7 @@ void Output_Buffers::retire()
       {
       if(buffers[0] == 0 || buffers[0]->size() == 0)
          {
+         delete buffers[0];
          buffers.pop_front();
          offset++;
          }

@@ -17,7 +17,6 @@
 #include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
-#include "inodeprint.hh"
 #include "platform-wrapped.hh"
 #include "roster.hh"
 #include "revision.hh"
@@ -28,6 +27,7 @@
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
+#include "ui.hh"
 
 #include <boost/lexical_cast.hpp>
 
@@ -628,6 +628,28 @@ roster_t::detach_node(split_path const & pth)
   return nid;
 }
 
+void
+roster_t::detach_node(node_id nid)
+{
+  node_t n = get_node(nid);
+  if (null_node(n->parent))
+    {
+      // detaching the root dir
+      I(null_name(n->name));
+      safe_insert(old_locations,
+                  make_pair(nid, make_pair(n->parent, n->name)));
+      root_dir.reset();
+      I(!has_root());
+    }
+  else
+    {
+      path_component name = n->name;
+      dir_t parent = downcast_to_dir_t(get_node(n->parent));
+      I(parent->detach_child(name) == n);
+      safe_insert(old_locations,
+                  make_pair(nid, make_pair(n->parent, name)));
+    }
+}
 
 void
 roster_t::drop_detached_node(node_id nid)
@@ -751,6 +773,14 @@ roster_t::apply_delta(split_path const & pth,
   f->content = new_id;
 }
 
+void
+roster_t::set_content(node_id nid, file_id const & new_id)
+{
+  file_t f = downcast_to_file_t(get_node(nid));
+  I(!(f->content == new_id));
+  f->content = new_id;
+}
+
 
 void
 roster_t::clear_attr(split_path const & pth,
@@ -759,6 +789,13 @@ roster_t::clear_attr(split_path const & pth,
   set_attr(pth, name, make_pair(false, attr_value()));
 }
 
+void
+roster_t::erase_attr(node_id nid,
+                     attr_key const & name)
+{
+  node_t n = get_node(nid);
+  safe_erase(n->attrs, name);
+}
 
 void
 roster_t::set_attr(split_path const & pth,
@@ -774,8 +811,8 @@ roster_t::set_attr(split_path const & pth,
                    attr_key const & name,
                    pair<bool, attr_value> const & val)
 {
-  I(val.first || val.second().empty());
   node_t n = get_node(pth);
+  I(val.first || val.second().empty());
   I(!null_node(n->self));
   full_attr_map_t::iterator i = n->attrs.find(name);
   if (i == n->attrs.end())
@@ -784,6 +821,38 @@ roster_t::set_attr(split_path const & pth,
   I(i->second != val);
   i->second = val;
 }
+
+// same as above, but allowing <unknown> -> <dead> transition
+void
+roster_t::set_attr_unknown_to_dead_ok(node_id nid,
+                                      attr_key const & name,
+                                      pair<bool, attr_value> const & val)
+{
+  node_t n = get_node(nid);
+  I(val.first || val.second().empty());
+  full_attr_map_t::iterator i = n->attrs.find(name);
+  if (i != n->attrs.end())
+    I(i->second != val);
+  n->attrs[name] = val;
+}
+
+bool
+roster_t::get_attr(split_path const & pth,
+                   attr_key const & name,
+                   attr_value & val) const
+{
+  I(has_node(pth));
+
+  node_t n = get_node(pth);
+  full_attr_map_t::const_iterator i = n->attrs.find(name);
+  if (i != n->attrs.end() && i->second.first)
+    {
+      val = i->second.second;
+      return true;
+    }
+  return false;
+} 
+
 
 template <> void
 dump(roster_t const & val, string & out)
@@ -1643,19 +1712,18 @@ namespace
                         app_state & app)
   {
     I(!null_id(left_rid) && !null_id(right_rid));
-    roster_t left_roster, right_roster;
-    marking_map left_marking, right_marking;
-    app.db.get_roster(left_rid, left_roster, left_marking);
-    app.db.get_roster(right_rid, right_roster, right_marking);
+    database::cached_roster left_cached, right_cached;
+    app.db.get_roster(left_rid, left_cached);
+    app.db.get_roster(right_rid, right_cached);
     true_node_id_source tnis = true_node_id_source(app);
 
     set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
     app.db.get_uncommon_ancestors(left_rid, right_rid,
                                   left_uncommon_ancestors,
                                   right_uncommon_ancestors);
-    make_roster_for_merge(left_rid, left_roster, left_marking, left_cs,
+    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second, left_cs,
                           left_uncommon_ancestors,
-                          right_rid, right_roster, right_marking, right_cs,
+                          right_rid, *right_cached.first, *right_cached.second, right_cs,
                           right_uncommon_ancestors,
                           new_rid,
                           new_roster, new_markings,
@@ -2189,167 +2257,6 @@ select_nodes_modified_by_cset(cset const & cs,
 
 }
 
-////////////////////////////////////////////////////////////////////
-//   getting rosters from the workspace
-////////////////////////////////////////////////////////////////////
-
-// TODO: doesn't that mean they should go in work.cc ?
-// perhaps do that after propagating back to n.v.m.experiment.rosters
-// or to mainline so that diffs are more informative
-
-inline static bool
-inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
-{
-  inodeprint_map::const_iterator old_ip = ipm.find(path);
-  if (old_ip != ipm.end())
-    {
-      hexenc<inodeprint> ip;
-      if (inodeprint_file(path, ip) && ip == old_ip->second)
-          return true; // unchanged
-      else
-          return false; // changed or unavailable
-    }
-  else
-    return false; // unavailable
-}
-
-// TODO: unchanged, changed, missing might be better as set<node_id>
-
-// note that this does not take a restriction because it is used only by
-// automate_inventory which operates on the entire, unrestricted, working
-// directory.
-
-void
-classify_roster_paths(roster_t const & ros,
-                      path_set & unchanged,
-                      path_set & changed,
-                      path_set & missing,
-                      app_state & app)
-{
-  temp_node_id_source nis;
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  if (!ros.has_root())
-    return;
-
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      node_t node = i->second;
-
-      split_path sp;
-      ros.get_name(nid, sp);
-
-      file_path fp(sp);
-
-      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
-        {
-          // dirs don't have content changes
-          unchanged.insert(sp);
-        }
-      else
-        {
-          file_t file = downcast_to_file_t(node);
-          file_id fid;
-          if (ident_existing_file(fp, fid, app.lua))
-            {
-              if (file->content == fid)
-                unchanged.insert(sp);
-              else
-                changed.insert(sp);
-            }
-          else
-            {
-              missing.insert(sp);
-            }
-        }
-    }
-}
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      node_restriction const & mask,
-                                      app_state & app)
-{
-  temp_node_id_source nis;
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  size_t missing_files = 0;
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  if (!ros.has_root())
-    return;
-
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      node_t node = i->second;
-
-      // Only analyze files further, not dirs.
-      if (! is_file_t(node))
-        continue;
-
-      // Only analyze restriction-included files.
-      if (!mask.includes(ros, nid))
-        continue;
-
-      split_path sp;
-      ros.get_name(nid, sp);
-      file_path fp(sp);
-
-      // Only analyze changed files (or all files if inodeprints mode
-      // is disabled).
-      if (inodeprint_unchanged(ipm, fp))
-        continue;
-
-      file_t file = downcast_to_file_t(node);
-      if (!ident_existing_file(fp, file->content, app.lua))
-        {
-          W(F("missing %s") % (fp));
-          missing_files++;
-        }
-    }
-
-  N(missing_files == 0,
-    F("%d missing files; use '%s ls missing' to view\n"
-      "to restore consistency, on each missing file run either\n"
-      "'%s drop FILE' to remove it permanently, or\n"
-      "'%s revert FILE' to restore it\n"
-      "or to handle all at once, simply '%s drop --missing'\n"
-      "or '%s revert --missing'")
-    % missing_files % app.prog_name % app.prog_name % app.prog_name
-    % app.prog_name % app.prog_name);
-}
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      app_state & app)
-{
-  node_restriction tmp(app);
-  update_current_roster_from_filesystem(ros, tmp, app);
-}
-
 void
 roster_t::extract_path_set(path_set & paths) const
 {
@@ -2372,9 +2279,9 @@ roster_t::extract_path_set(path_set & paths) const
 //   I/O routines
 ////////////////////////////////////////////////////////////////////
 
-static void
+void
 push_marking(basic_io::stanza & st,
-             node_t curr,
+             bool is_file,
              marking_t const & mark)
 {
 
@@ -2385,7 +2292,7 @@ push_marking(basic_io::stanza & st,
        i != mark.parent_name.end(); ++i)
     st.push_hex_pair(basic_io::syms::path_mark, i->inner());
 
-  if (is_file_t(curr))
+  if (is_file)
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
@@ -2394,13 +2301,11 @@ push_marking(basic_io::stanza & st,
   else
     I(mark.file_content.empty());
 
-  for (full_attr_map_t::const_iterator i = curr->attrs.begin();
-       i != curr->attrs.end(); ++i)
+  for (map<attr_key, set<revision_id> >::const_iterator i = mark.attrs.begin();
+       i != mark.attrs.end(); ++i)
     {
-      map<attr_key, set<revision_id> >::const_iterator am = mark.attrs.find(i->first);
-      I(am != mark.attrs.end());
-      for (set<revision_id>::const_iterator j = am->second.begin();
-           j != am->second.end(); ++j)
+      for (set<revision_id>::const_iterator j = i->second.begin();
+           j != i->second.end(); ++j)
         st.push_hex_triple(basic_io::syms::attr_mark, i->first(), j->inner());
     }
 }
@@ -2408,7 +2313,6 @@ push_marking(basic_io::stanza & st,
 
 void
 parse_marking(basic_io::parser & pa,
-              node_t n,
               marking_t & marking)
 {
   while (pa.symp())
@@ -2439,7 +2343,6 @@ parse_marking(basic_io::parser & pa,
           pa.str(k);
           pa.hex(rev);
           attr_key key = attr_key(k);
-          I(n->attrs.find(key) != n->attrs.end());
           safe_insert(marking.attrs[key], revision_id(rev));
         }
       else break;
@@ -2516,7 +2419,7 @@ roster_t::print_to(basic_io::printer & pr,
 
           marking_map::const_iterator m = mm.find(curr->self);
           I(m != mm.end());
-          push_marking(st, curr, m->second);
+          push_marking(st, is_file_t(curr), m->second);
         }
 
       pr.print_stanza(st);
@@ -2631,7 +2534,7 @@ roster_t::parse_from(basic_io::parser & pa,
 
       {
         marking_t & m(safe_insert(mm, make_pair(n->self, marking_t()))->second);
-        parse_marking(pa, n, m);
+        parse_marking(pa, m);
       }
     }
 }
@@ -2654,7 +2557,7 @@ read_roster_and_marking(roster_data const & dat,
 static void
 write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
-                         roster_data & dat,
+                         data & dat,
                          bool print_local_parts)
 {
   if (print_local_parts)
@@ -2663,7 +2566,7 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane(true);
   basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = roster_data(pr.buf);
+  dat = pr.buf;
 }
 
 
@@ -2672,29 +2575,31 @@ write_roster_and_marking(roster_t const & ros,
                          marking_map const & mm,
                          roster_data & dat)
 {
-  write_roster_and_marking(ros, mm, dat, true);
+  data tmp;
+  write_roster_and_marking(ros, mm, tmp, true);
+  dat = tmp;
 }
 
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         roster_data & dat)
+                         manifest_data & dat)
 {
+  data tmp;
   marking_map mm;
-  write_roster_and_marking(ros, mm, dat, false);
+  write_roster_and_marking(ros, mm, tmp, false);
+  dat = tmp;
 }
 
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident)
 {
-  roster_data tmp;
-  roster_id tid;
+  manifest_data tmp;
   if (!ros.all_nodes().empty())
     {
       write_manifest_of_roster(ros, tmp);
-      calculate_ident(tmp, tid);
+      calculate_ident(tmp, ident);
     }
-  ident = tid.inner();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -2706,6 +2611,8 @@ void calculate_ident(roster_t const & ros,
 #include "sanity.hh"
 #include "constants.hh"
 #include "randomizer.hh"
+
+#include "roster_delta.hh"
 
 #include <string>
 #include <cstdlib>
@@ -2864,10 +2771,10 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   // will have new ids assigned.
   // But they _will_ have the same manifests, assuming things are working
   // correctly.
-  roster_data a_dat; MM(a_dat);
-  roster_data a2_dat; MM(a2_dat);
-  roster_data b_dat; MM(b_dat);
-  roster_data b2_dat; MM(b2_dat);
+  manifest_data a_dat; MM(a_dat);
+  manifest_data a2_dat; MM(a2_dat);
+  manifest_data b_dat; MM(b_dat);
+  manifest_data b2_dat; MM(b2_dat);
   if (a.has_root())
     write_manifest_of_roster(a, a_dat);
   if (a2.has_root())
@@ -2885,6 +2792,14 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   make_cset(b2, a2, b2_to_a2);
   do_testing_on_two_equivalent_csets(a_to_b, a2_to_b2);
   do_testing_on_two_equivalent_csets(b_to_a, b2_to_a2);
+  
+  {
+    marking_map a_marking;
+    make_fake_marking_for(a, a_marking);
+    marking_map b_marking;
+    make_fake_marking_for(b, b_marking);
+    test_roster_delta_on(a, a_marking, b, b_marking);
+  }
 }
 
 template<typename M>
@@ -4460,10 +4375,10 @@ write_roster_test()
 
   {
     // manifest first
-    roster_data mdat; MM(mdat);
+    manifest_data mdat; MM(mdat);
     write_manifest_of_roster(r, mdat);
 
-    roster_data
+    manifest_data
       expected(string("format_version \"1\"\n"
                       "\n"
                       "dir \"\"\n"

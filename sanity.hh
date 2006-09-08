@@ -59,12 +59,10 @@ struct sanity {
   virtual void initialize(int, char **, char const *);
   void dump_buffer();
   void set_debug();
-  void set_brief();
   void set_quiet();
   void set_reallyquiet();
 
   bool debug;
-  bool brief;
   bool quiet;
   bool reallyquiet;
   boost::circular_buffer<char> logbuf;

@@ -209,9 +209,6 @@ template
 void dump(revision_id const & r, string &);
 
 template
-void dump(roster_id const & r, string &);
-
-template
 void dump(manifest_id const & r, string &);
 
 template
@@ -222,6 +219,12 @@ void dump(hexenc<id> const & r, string &);
 
 template
 void dump(roster_data const & d, string &);
+
+template
+void dump(roster_delta const & d, string &);
+
+template
+void dump(manifest_data const & d, string &);
 
 // the rest is unit tests
 

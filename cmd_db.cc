@@ -57,9 +57,10 @@ CMD(db, N_("database"),
       "check\n"
       "changesetify\n"
       "rosterify\n"
+      "regenerate_rosters\n"
       "set_epoch BRANCH EPOCH\n"),
     N_("manipulate database state"),
-    OPT_DROP_ATTR)
+    option::drop_attr)
 {
   if (args.size() == 1)
     {
@@ -81,6 +82,8 @@ CMD(db, N_("database"),
         build_changesets_from_manifest_ancestry(app);
       else if (idx(args, 0)() == "rosterify")
         build_roster_style_revs_from_manifest_style_revs(app);
+      else if (idx(args, 0)() == "regenerate_rosters")
+        regenerate_rosters(app);
       else
         throw usage(name);
     }
@@ -106,7 +109,7 @@ CMD(db, N_("database"),
           epoch_data ed(idx(args,2)());
           N(ed.inner()().size() == constants::epochlen,
             F("The epoch must be %s characters") 
-	    % constants::epochlen);
+            % constants::epochlen);
           app.db.set_epoch(cert_value(idx(args, 1)()), ed);
         }
       else
@@ -118,7 +121,7 @@ CMD(db, N_("database"),
 
 CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
     N_("set the database variable NAME to VALUE, in domain DOMAIN"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -134,7 +137,7 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),
     N_("remove the database variable NAME in domain DOMAIN"),
-    OPT_NONE)
+    option::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -151,7 +154,7 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
 
 CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("complete partial id"),
-    OPT_VERBOSE)
+    option::verbose)
 {
   if (args.size() != 2)
     throw usage(name);

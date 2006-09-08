@@ -33,16 +33,17 @@ check(qgrep("bleh", "manifest"))
 
 -- rename a rename target
 check(mtn("rename", "bleh", "blah"), 0, false, false)
-check(qgrep("bleh", "_MTN/work"))
-check(qgrep("blah", "_MTN/work"))
+check(qgrep("bleh", "_MTN/revision"))
+check(qgrep("blah", "_MTN/revision"))
 check(mtn("rename", "blah", "blyh"), 0, false, false)
-check(qgrep("bleh", "_MTN/work"))
-check(not qgrep("blah", "_MTN/work"))
-check(qgrep("blyh", "_MTN/work"))
+check(qgrep("bleh", "_MTN/revision"))
+check(not qgrep("blah", "_MTN/revision"))
+check(qgrep("blyh", "_MTN/revision"))
 
 -- undo a rename
 check(mtn("rename", "blyh", "bleh"), 0, false, false)
-check(not exists("_MTN/work"))
+check(not qgrep("blyh", "_MTN/revision"))
+check(not qgrep("bleh", "_MTN/revision"))
 
 -- move file before renaming it
 check(mtn("status"), 0, false, false)

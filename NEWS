@@ -1,3 +1,108 @@
+<fill in date>
+
+        0.30 release.
+
+        In this release, there is a minor change to the format of the
+        data stored in the bookkeeping directory "_MTN".  You must run
+        the command "mtn migrate_workspace" in all your existing
+        workspaces before you can use them with this version of
+        monotone; once you have done this, you will not be able to use
+        those workspaces with older versions of monotone.  Nothing
+        terrible will happen if you try to use an old workspace
+        without migrating it; you'll just get an error message.
+
+	This change makes it possible for a workspace to have more
+	than one parent revision, which will enable a number of
+	long-wanted features.  Those features are not yet complete,
+	but we do not expect to have to change formats again to
+	support them.
+
+Sun Aug 20 15:58:08 PDT 2006
+
+        0.29 release.  Code cleanups and bug fixes.
+
+        New features:
+
+        - The output of 'mtn status' has been changed significantly; the
+          output formerly used by 'mtn status --brief' has become the
+          default.  For output similar to the old 'mtn status', see
+          'mtn automate get_revision'.
+
+        - It is now significantly easier to control what merger
+          monotone uses to resolve conflicts; for instance, to use
+          emacs to resolve conflicts, add:
+             merger = "emacs"
+          to your .monotonerc file.  To override temporarily, you can
+          also use the environment variable MTN_MERGE, which takes the
+          same strings.  Currently recognized strings are "kdiff3",
+          "xxdiff", "opendiff", "tortoisemerge", "emacs", "vim", and
+          "meld".
+
+        - Formerly, monotone's sync-over-ssh support required that an
+          absolute path be used, with a URL like:
+            ssh://venge.net/home/njs/my-db.mtn
+          The following syntaxes are now supported as well:
+            ssh://venge.net/~/my-db.mtn
+            ssh://venge.net/~njs/my-db.mtn
+
+        Bugs fixed:
+
+        - The bug where monotone would sometimes respond to a control-C
+          (or several other signals) by locking up and refusing to exit,
+          has been fixed.
+
+        - Monotone now properly respects SIGPIPE.  In particular, this
+          means that 'mtn log | less' should now exit promptly when
+          'less' is exited.
+
+        - 'mtn log' now flushes its output after each message; this
+          makes 'mtn log <FILES>' significantly more usable.
+
+        - 'mtn log <FILES>' formerly listed irrelevant revisions (in
+          particular, any revision which contained a delete of any files
+          or directories, was always included).  This has been fixed.
+
+        - If, during an update, two files both had conflicts, which,
+          when resolved, resulting the two files becoming identical, the
+          update would error out.  This has been fixed.        
+
+        - If _MTN/log exists and does not end in a newline, we now add a
+          newline before using the log message.  This removes a problem
+          where the string "MTN:" would end up appended to the last line
+          of the log message.
+
+        - We no longer buffer up an arbitrarily large number of pending
+          writes in the database.  This improves speed and memory usage
+          for 'commit', and fixes the problem where 'cvs_import' would
+          run out of memory.
+
+        - Monotone's tree walking code (used by 'ls unknown', 'ls
+          missing', and friends) now uses much less memory, especially
+          on reiserfs.
+
+        Automate changes:
+
+        - 'mtn automate stdio' now uses a configurable block size,
+          controlled by command-line option --automate-stdio-size.  This
+          is mostly useful for testing speed/memory trade-offs.
+
+        - 'automate attributes' has a new format, which includes more
+          information.
+
+        Code cleanup:
+
+        - We now use boost::program_options to parse command line
+          options, rather than popt.  The only user-visible change
+          should be that --option="" no longer works as a way to set
+          some option to the empty string; use --option "".  (This
+          change also removes a lot of orphaned and historically buggy
+          code from monotone.)
+
+        Other:
+
+        - zsh completion script significantly revised and updated (see
+          contrib/monotone.zsh_completion).
+
 Sat Jul 22 01:39:51 PDT 2006
 
         0.28 release. Cherrypicking, a new testsuite, and some fixes

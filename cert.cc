@@ -467,8 +467,7 @@ guess_branch(revision_id const & ident,
              app_state & app,
              cert_value & branchname)
 {
-  if ((app.branch_name() != "") 
-      && app.is_explicit_option(OPT_BRANCH_NAME))
+  if ((app.branch_name() != "") && app.is_explicit_option(option::branch_name()))
     {
       branchname = app.branch_name();
     }
@@ -535,27 +534,45 @@ cert_revision_in_branch(revision_id const & rev,
                             branchname, app, pc);
 }
 
+namespace
+{
+  struct not_in_branch : public is_failure
+  {
+    app_state & app;
+    base64<cert_value > const & branch_encoded;
+    not_in_branch(app_state & app,
+                  base64<cert_value> const & branch_encoded)
+      : app(app), branch_encoded(branch_encoded)
+    {}
+    virtual bool operator()(revision_id const & rid)
+    {
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(rid,
+                                cert_name(branch_cert_name),
+                                branch_encoded,
+                                certs);
+      erase_bogus_certs(certs, app);
+      return certs.empty();
+    }
+  };
+}
+
 void
 get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  set<revision_id> & heads)
 {
-  vector< revision<cert> > certs;
+  L(FL("getting heads of branch %s") % branchname);
   base64<cert_value> branch_encoded;
-
   encode_base64(branchname, branch_encoded);
-  app.db.get_revision_certs(cert_name(branch_cert_name),
-                            branch_encoded, certs);
 
-  erase_bogus_certs(certs, app);
+  app.db.get_revisions_with_cert(cert_name(branch_cert_name),
+                                 branch_encoded,
+                                 heads);
 
-  heads.clear();
-
-  for (vector< revision<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
-    heads.insert(revision_id(i->inner().ident));
-
-  erase_ancestors(heads, app);
+  not_in_branch p(app, branch_encoded);
+  erase_ancestors_and_failures(heads, p, app);
+  L(FL("found heads of branch %s (%s heads)") % branchname % heads.size());
 }
 
 
