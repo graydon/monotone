@@ -1,3 +1,11 @@
+2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_corresponding_path, get_content_changed):
+	fix output; roster information was being written to 
+	basic_io::printer mysteriously. Tests now pass.
+	* testsuite.lua: remove second reference to 
+	automate_get_corresponding_path test
+
 2006-09-07  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/basic_invocation_and_options: Fix test broken by

@@ -1516,8 +1516,6 @@ AUTOMATE(get_content_changed, N_("REV FILE"))
   if (args.size() != 2)
     throw usage(help_name);
 
-  basic_io::printer prt;
-  basic_io::stanza st;
   roster_t new_roster;
   revision_id ident;
   marking_map mm;
@@ -1536,14 +1534,17 @@ AUTOMATE(get_content_changed, N_("REV FILE"))
   marking_map::const_iterator m = mm.find(node->self);
   I(m != mm.end());
   marking_t mark = m->second;
+
+  basic_io::printer prt;
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
     {
+      basic_io::stanza st;
       revision_id old_ident = i->inner();
       st.push_hex_pair(basic_io::syms::content_mark, i->inner());
       prt.print_stanza(st);
     }
-  output.write(prt.buf.data(), prt.buf.size());
+    output.write(prt.buf.data(), prt.buf.size());
 }
 
 // Name: get_corresponding_path
@@ -1575,8 +1576,6 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
   if (args.size() != 3)
     throw usage(help_name);
 
-  basic_io::printer prt;
-  basic_io::stanza st;
   roster_t new_roster, old_roster;
   revision_id ident, old_ident;
 
@@ -1596,9 +1595,11 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
     F("file %s is unknown for revision %s") % path % ident);
 
   node_t node = new_roster.get_node(path);
+  basic_io::printer prt;
   if (old_roster.has_node(node->self))
     {
       split_path old_path;
+      basic_io::stanza st;
       old_roster.get_name(node->self, old_path);
       file_path fp = file_path(old_path);
       st.push_file_pair(basic_io::syms::file, fp);  
