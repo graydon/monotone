@@ -18,7 +18,7 @@
 ** file simultaneously, or one process from reading the database while
 ** another is writing.
 **
-** @(#) $Id: pager.c,v 1.268 2006/05/07 17:49:39 drh Exp $
+** @(#) $Id: pager.c,v 1.271 2006/08/08 13:51:43 drh Exp $
 */
 #ifndef SQLITE_OMIT_DISKIO
 #include "sqliteInt.h"
@@ -161,7 +161,7 @@ struct PgHdr {
   u8 needSync;                   /* Sync journal before writing this page */
   u8 alwaysRollback;             /* Disable dont_rollback() for this page */
   short int nRef;                /* Number of users of this page */
-  PgHdr *pDirty, *pPrevDirty;    /* Dirty pages sorted by PgHdr.pgno */
+  PgHdr *pDirty, *pPrevDirty;    /* Dirty pages */
   u32 notUsed;                   /* Buffer space */
 #ifdef SQLITE_CHECK_PAGES
   u32 pageHash;
@@ -370,7 +370,7 @@ static const unsigned char aJournalMagic[] = {
 /*
 ** Enable reference count tracking (for debugging) here:
 */
-#ifdef SQLITE_DEBUG
+#ifdef SQLITE_TEST
   int pager3_refinfo_enable = 0;
   static void pager_refinfo(PgHdr *p){
     static int cnt = 0;
@@ -403,7 +403,12 @@ static void pager_resize_hash_table(Pager *pPager, int N){
   pPager->nHash = N;
   pPager->aHash = aHash;
   for(pPg=pPager->pAll; pPg; pPg=pPg->pNextAll){
-    int h = pPg->pgno & (N-1);
+    int h;
+    if( pPg->pgno==0 ){
+      assert( pPg->pNextHash==0 && pPg->pPrevHash==0 );
+      continue;
+    }
+    h = pPg->pgno & (N-1);
     pPg->pNextHash = aHash[h];
     if( aHash[h] ){
       aHash[h]->pPrevHash = pPg;
@@ -1530,7 +1535,9 @@ void sqlite3pager_set_safety_level(Pager *pPager, int level, int full_fsync){
 ** attempts to open a temporary file.  This information is used for
 ** testing and analysis only.  
 */
+#ifdef SQLITE_TEST
 int sqlite3_opentemp_count = 0;
+#endif
 
 /*
 ** Open a temporary file.  Write the name of the file into zFile
@@ -1544,7 +1551,9 @@ int sqlite3_opentemp_count = 0;
 static int sqlite3pager_opentemp(char *zFile, OsFile **pFd){
   int cnt = 8;
   int rc;
+#ifdef SQLITE_TEST
   sqlite3_opentemp_count++;  /* Used for testing and analysis only */
+#endif
   do{
     cnt--;
     sqlite3OsTempFileName(zFile);
@@ -1856,7 +1865,7 @@ static int syncJournal(Pager*);
 */
 static void unlinkHashChain(Pager *pPager, PgHdr *pPg){
   if( pPg->pgno==0 ){
-    /* If the page number is zero, then this page is not in any hash chain. */
+    assert( pPg->pNextHash==0 && pPg->pPrevHash==0 );
     return;
   }
   if( pPg->pNextHash ){
@@ -1867,7 +1876,6 @@ static void unlinkHashChain(Pager *pPager, PgHdr *pPg){
     pPg->pPrevHash->pNextHash = pPg->pNextHash;
   }else{
     int h = pPg->pgno & (pPager->nHash-1);
-    assert( pPager->aHash[h]==pPg );
     pPager->aHash[h] = pPg->pNextHash;
   }
   if( MEMDB ){
@@ -2261,6 +2269,68 @@ static int syncJournal(Pager *pPager){
 }
 
 /*
+** Merge two lists of pages connected by pDirty and in pgno order.
+** Do not both fixing the pPrevDirty pointers.
+*/
+static PgHdr *merge_pagelist(PgHdr *pA, PgHdr *pB){
+  PgHdr result, *pTail;
+  pTail = &result;
+  while( pA && pB ){
+    if( pA->pgno<pB->pgno ){
+      pTail->pDirty = pA;
+      pTail = pA;
+      pA = pA->pDirty;
+    }else{
+      pTail->pDirty = pB;
+      pTail = pB;
+      pB = pB->pDirty;
+    }
+  }
+  if( pA ){
+    pTail->pDirty = pA;
+  }else if( pB ){
+    pTail->pDirty = pB;
+  }else{
+    pTail->pDirty = 0;
+  }
+  return result.pDirty;
+}
+
+/*
+** Sort the list of pages in accending order by pgno.  Pages are
+** connected by pDirty pointers.  The pPrevDirty pointers are
+** corrupted by this sort.
+*/
+#define N_SORT_BUCKET 25
+static PgHdr *sort_pagelist(PgHdr *pIn){
+  PgHdr *a[N_SORT_BUCKET], *p;
+  int i;
+  memset(a, 0, sizeof(a));
+  while( pIn ){
+    p = pIn;
+    pIn = p->pDirty;
+    p->pDirty = 0;
+    for(i=0; i<N_SORT_BUCKET-1; i++){
+      if( a[i]==0 ){
+        a[i] = p;
+        break;
+      }else{
+        p = merge_pagelist(a[i], p);
+        a[i] = 0;
+      }
+    }
+    if( i==N_SORT_BUCKET-1 ){
+      a[i] = merge_pagelist(a[i], p);
+    }
+  }
+  p = a[0];
+  for(i=1; i<N_SORT_BUCKET; i++){
+    p = merge_pagelist(p, a[i]);
+  }
+  return p;
+}
+
+/*
 ** Given a list of pages (connected by the PgHdr.pDirty pointer) write
 ** every one of those pages out to the database file and mark them all
 ** as clean.
@@ -2293,6 +2363,7 @@ static int pager_write_pagelist(PgHdr *pList){
     return rc;
   }
 
+  pList = sort_pagelist(pList);
   while( pList ){
     assert( pList->dirty );
     rc = sqlite3OsSeek(pPager->fd, (pList->pgno-1)*(i64)pPager->pageSize);
@@ -2732,6 +2803,7 @@ int sqlite3pager_get(Pager *pPager, Pgno pgno, void **ppPage){
 
     /* Link the page into the page hash table */
     h = pgno & (pPager->nHash-1);
+    assert( pgno!=0 );
     pPg->pNextHash = pPager->aHash[h];
     pPager->aHash[h] = pPg;
     if( pPg->pNextHash ){
@@ -3430,6 +3502,14 @@ int sqlite3pager_isreadonly(Pager *pPager){
 }
 
 /*
+** Return the number of references to the pager.
+*/
+int sqlite3pager_refcount(Pager *pPager){
+  return pPager->nRef;
+}
+
+#ifdef SQLITE_TEST
+/*
 ** This routine is used for testing and analysis only.
 */
 int *sqlite3pager_stats(Pager *pPager){
@@ -3440,15 +3520,14 @@ int *sqlite3pager_stats(Pager *pPager){
   a[3] = pPager->dbSize;
   a[4] = pPager->state;
   a[5] = pPager->errCode;
-#ifdef SQLITE_TEST
   a[6] = pPager->nHit;
   a[7] = pPager->nMiss;
   a[8] = pPager->nOvfl;
   a[9] = pPager->nRead;
   a[10] = pPager->nWrite;
-#endif
   return a;
 }
+#endif
 
 /*
 ** Set the statement rollback point.
@@ -3786,6 +3865,7 @@ int sqlite3pager_movepage(Pager *pPager, void *pData, Pgno pgno){
   }
 
   /* Change the page number for pPg and insert it into the new hash-chain. */
+  assert( pgno!=0 );
   pPg->pgno = pgno;
   h = pgno & (pPager->nHash-1);
   if( pPager->aHash[h] ){

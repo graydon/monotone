@@ -19,6 +19,5 @@ xfail_if(true, indir("codir", mtn("update")), 0, false, false)
 
 -- make sure there are no changes in the workspace
 
-check(not exists("codir/_MTN/work"))
 check(indir("codir", mtn("diff")), 0, true, false)
 check(grep('no changes', "stdout"), 0, false, false)

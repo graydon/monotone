@@ -45,19 +45,21 @@ static inline void
 verify(T & val)
 {}
 
+template <typename T>
+static inline void
+verify_full(T & val)
+{ val.ok = true; }
+
 inline void
-verify(path_component & val)
+verify_full(path_component & val)
 {
   // FIXME: probably ought to do something here?
   val.ok = true;
 }
 
 inline void
-verify(hexenc<id> & val)
+verify_full(hexenc<id> & val)
 {
-  if (val.ok)
-    return;
-
   if (val().empty())
     return;
 
@@ -72,11 +74,8 @@ verify(hexenc<id> & val)
 }
 
 inline void
-verify(ace & val)
+verify_full(ace & val)
 {
-  if (val.ok)
-    return;
-
   string::size_type pos = val().find_first_not_of(constants::legal_ace_bytes);
   N(pos == string::npos,
     F("bad character '%c' in ace string '%s'") % val().at(pos) % val);
@@ -85,11 +84,8 @@ verify(ace & val)
 }
 
 inline void
-verify(symbol & val)
+verify_full(symbol & val)
 {
-  if (val.ok)
-    return;
-
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
     {
       N(is_alnum(*i) || *i == '_',
@@ -100,11 +96,8 @@ verify(symbol & val)
 }
 
 inline void
-verify(cert_name & val)
+verify_full(cert_name & val)
 {
-  if (val.ok)
-    return;
-
   string::size_type pos = val().find_first_not_of(constants::legal_cert_name_bytes);
   N(pos == string::npos,
     F("bad character '%c' in cert name '%s'") % val().at(pos) % val);
@@ -113,11 +106,8 @@ verify(cert_name & val)
 }
 
 inline void
-verify(rsa_keypair_id & val)
+verify_full(rsa_keypair_id & val)
 {
-  if (val.ok)
-    return;
-
   string::size_type pos = val().find_first_not_of(constants::legal_key_name_bytes);
   N(pos == string::npos,
     F("bad character '%c' in key name '%s'") % val().at(pos) % val);
@@ -126,11 +116,8 @@ verify(rsa_keypair_id & val)
 }
 
 inline void
-verify(netsync_session_key & val)
+verify_full(netsync_session_key & val)
 {
-  if (val.ok)
-    return;
-
   if (val().size() == 0)
     {
       val.s.append(constants::netsync_session_key_length_in_bytes, 0);
@@ -144,11 +131,8 @@ verify(netsync_session_key & val)
 }
 
 inline void
-verify(netsync_hmac_value & val)
+verify_full(netsync_hmac_value & val)
 {
-  if (val.ok)
-    return;
-
   if (val().size() == 0)
     {
       val.s.append(constants::netsync_hmac_value_length_in_bytes, 0);
@@ -225,9 +209,6 @@ template
 void dump(revision_id const & r, string &);
 
 template
-void dump(roster_id const & r, string &);
-
-template
 void dump(manifest_id const & r, string &);
 
 template
@@ -238,6 +219,12 @@ void dump(hexenc<id> const & r, string &);
 
 template
 void dump(roster_data const & d, string &);
+
+template
+void dump(roster_delta const & d, string &);
+
+template
+void dump(manifest_data const & d, string &);
 
 // the rest is unit tests
 

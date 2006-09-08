@@ -96,7 +96,7 @@ process_netsync_args(string const & name,
 
 CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
-    OPT_SET_DEFAULT % OPT_EXCLUDE % OPT_KEY_TO_PUSH)
+    option::set_default % option::exclude % option::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -111,7 +111,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
-    OPT_SET_DEFAULT % OPT_EXCLUDE)
+    option::set_default % option::exclude)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -125,7 +125,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
-    OPT_SET_DEFAULT % OPT_EXCLUDE % OPT_KEY_TO_PUSH)
+    option::set_default % option::exclude % option::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -172,7 +172,8 @@ private:
 
 CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
                  N_("serve the branches specified by PATTERNs to connecting clients"),
-                 OPT_BIND % OPT_STDIO % OPT_NO_TRANSPORT_AUTH % OPT_PIDFILE % OPT_EXCLUDE)
+                 option::bind % option::pidfile % option::exclude %
+                 option::stdio % option::no_transport_auth)
 {
   if (args.size() < 1)
     throw usage(name);

@@ -3,7 +3,7 @@
 
 #include <string>
 
-int
+bool
 monotone_mkstemp(std::string &tmpl);
 
 // Local Variables:

@@ -121,12 +121,6 @@ sanity::set_debug()
 }
 
 void
-sanity::set_brief()
-{
-  brief = true;
-}
-
-void
 sanity::set_quiet()
 {
   debug = false;
@@ -384,8 +378,8 @@ format_base::impl
   {
     if (&other != this)
       {
-	fmt = other.fmt;
-	oss.str(string());
+        fmt = other.fmt;
+        oss.str(string());
       }
     return *this;
   }
@@ -412,7 +406,7 @@ format_base::format_base(format_base const & other)
 
 format_base::~format_base()
 {
-	delete pimpl;
+        delete pimpl;
 }
 
 format_base &
@@ -423,18 +417,18 @@ format_base::operator=(format_base const & other)
       impl * tmp = NULL;
 
       try
-	{
-	  if (other.pimpl)
-	    tmp = new impl(*(other.pimpl));
-	}
+        {
+          if (other.pimpl)
+            tmp = new impl(*(other.pimpl));
+        }
       catch (...)
-	{
-	  if (tmp)
-	    delete tmp;
-	}
+        {
+          if (tmp)
+            delete tmp;
+        }
 
       if (pimpl)
-	delete pimpl;
+        delete pimpl;
 
       pimpl = tmp;
     }

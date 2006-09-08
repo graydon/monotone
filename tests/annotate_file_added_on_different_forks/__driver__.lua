@@ -37,5 +37,5 @@ merge = base_revision()
 --
 -- where REVC (choice) is either REVL or REVR
 
-check(mtn("annotate", "foo"), 0, true, false)
+check(mtn("annotate", "--brief", "foo"), 0, true, false)
 check(greplines("stdout", {"", left, right, ""}))

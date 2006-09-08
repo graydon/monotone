@@ -1,8 +1,6 @@
 
 mtn_setup()
 
--- _MTN/* means _MTN/revision and _MTN/work
-
 addfile("testfile", "blah blah")
 commit()
 
@@ -12,7 +10,6 @@ writefile("_MTN/log", "message message")
 
 copy("_MTN/log", "good_log")
 copy("_MTN/revision", "good_revision")
-copy("_MTN/work", "good_work")
 
 check(get("bad_edit_comment.lua"))
 
@@ -22,5 +19,5 @@ check(mtn("commit", "--rcfile=bad_edit_comment.lua"), 1, false, false)
 -- message, the old log message have been preserved
 check(samefile("_MTN/log", "good_log"))
 
+-- The working revision should be unchanged.
 check(samefile("_MTN/revision", "good_revision"))
-check(samefile("_MTN/work", "good_work"))

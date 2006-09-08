@@ -330,13 +330,11 @@ dump_diffs(cset const & cs,
 
 CMD(diff, N_("informative"), N_("[PATH]..."),
     N_("show current diffs on stdout.\n"
-       "If one revision is given, the diff between the workspace and\n"
-       "that revision is shown.  If two revisions are given, the diff\n"
-       "between them is given. If no format is specified, unified\n"
-       "is used by default."),
-    OPT_REVISION % OPT_DEPTH % OPT_EXCLUDE %
-    OPT_UNIFIED_DIFF % OPT_CONTEXT_DIFF % OPT_EXTERNAL_DIFF %
-    OPT_EXTERNAL_DIFF_ARGS % OPT_NO_SHOW_ENCLOSER)
+    "If one revision is given, the diff between the workspace and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.  If no format is specified, unified is used by default."),
+    option::revision % option::depth % option::exclude % option::unified_diff
+    % option::context_diff % option::external_diff % option::external_diff_args)
 {
   bool new_is_archived;
   ostringstream header;
@@ -361,15 +359,15 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       roster_t new_roster, old_roster;
       revision_id old_rid;
 
-      get_base_and_current_roster_shape(old_roster, new_roster, 
-                                        nis, app);
-      get_revision_id(old_rid);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_revision_id(old_rid);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
+                            app.depth,
                             old_roster, new_roster, app);
 
-      update_current_roster_from_filesystem(new_roster, mask, app);
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster, 
                             included, excluded, mask);
       check_restricted_cset(old_roster, included);
@@ -386,9 +384,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
-      get_base_and_current_roster_shape(old_roster, 
-                                        new_roster, 
-                                        nis, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
 
@@ -397,9 +393,10 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns), 
+                            app.depth,
                             old_roster, new_roster, app);
 
-      update_current_roster_from_filesystem(new_roster, mask, app);
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster, 
                             included, excluded, mask);
       check_restricted_cset(old_roster, included);
@@ -425,6 +422,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
+                            app.depth,
                             old_roster, new_roster, app);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
@@ -541,11 +539,10 @@ log_certs(app_state & app, revision_id id, cert_name name)
 }
 
 CMD(log, N_("informative"), N_("[FILE] ..."),
-    N_("print history in reverse order (filtering by 'FILE'). "
-       "If one or more revisions are given, "
-       "use them as a starting point."),
-    OPT_LAST % OPT_NEXT % OPT_REVISION % OPT_BRIEF % OPT_DIFFS 
-    % OPT_NO_MERGES % OPT_NO_FILES)
+    N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
+    "revisions are given, use them as a starting point."),
+    option::last % option::next % option::revision % option::brief
+    % option::diffs % option::no_merges % option::no_files)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
@@ -556,7 +553,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
   if (app.revision_selectors.size() == 0)
     {
-      get_revision_id(first_rid);
+      app.work.get_revision_id(first_rid);
       frontier.insert(first_rid);
     }
   else
@@ -572,7 +569,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         }
     }
 
-  node_restriction mask(app);
+  node_restriction mask;
 
   if (args.size() > 0)
     {
@@ -580,8 +577,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       roster_t old_roster, new_roster;
 
       if (app.revision_selectors.size() == 0)
-        get_base_and_current_roster_shape(old_roster, 
-                                          new_roster, nis, app);
+        app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       else
         app.db.get_roster(first_rid, new_roster);
 
@@ -589,6 +585,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // all selected revs?
       mask = node_restriction(args_to_paths(args),
                               args_to_paths(app.exclude_patterns), 
+                              app.depth,
                               old_roster, new_roster, app);
     }
 
@@ -638,7 +635,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               app.db.get_roster(rid, roster);
 
               set<node_id> nodes_modified;
-              select_nodes_modified_by_rev(rid, rev, roster,
+              select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
                                            app);
 
@@ -681,7 +678,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
           if (print_this)
           {
-            if (global_sanity.brief)
+            if (app.brief)
               {
                 cout << rid;
                 log_certs(app, rid, author_name);
