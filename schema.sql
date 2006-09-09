@@ -65,7 +65,7 @@ CREATE TABLE revision_ancestry
 CREATE TABLE heights
 	(
 	revision not null,	-- joins with revisions.id
-	height not null,	-- blob containing the height in ubeb64 format
+	height not null,	-- complex height, array of big endian u32 integers
 	unique(revision, height)
 	);
 

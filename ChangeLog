@@ -1,3 +1,13 @@
+2006-09-08  Thomas Moschny  <thomas.moschny@gmx.de>
+	
+	* database.cc (info): Show space usage information for the heights.
+	* rev_height.cc (child_height): Overflow check.
+	* database.cc (put_revision): ditto.
+	* rev_height.cc, rev_height.hh: Use u32 integers instead of u64s.
+	* database.cc (database), schema.sql, schema_migration.cc
+	(migrate_monotone_schema), tests/schema_migration/__driver__.lua:
+	Hash changed due to changed comment.
+
 2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* revision.cc (toposort): Use the revision heights.

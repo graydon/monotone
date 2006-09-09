@@ -91,4 +91,4 @@ end
 
 check_migrate_from("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e")
 check_migrate_from("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df")
-check_migrate_from("5fdc2e50f0328d9a663da98722413d964438b5fe")
+check_migrate_from("e802f41be37a38e400bdbbb86b14c24215eca6a6")

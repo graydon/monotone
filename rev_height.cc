@@ -12,6 +12,7 @@
 #include <cstring>
 
 #include "numeric_vocab.hh"
+#include "sanity.hh"
 #include "rev_height.hh"
 
 using std::ostream;
@@ -19,13 +20,13 @@ using std::string;
 
 /*
  * Implementation note: hv, holding the raw revision height, is
- * formally a string, but in fact is an array of u64 integers stored
+ * formally a string, but in fact is an array of u32 integers stored
  * in big endian byte order. The same format is used for storing
  * revision heights in the database. This has the advantage that we
  * can use memcmp() for comparing them, which will be the most common
  * operation for revision heights.
  *
- * One could also use vector<u64>. While this would be cleaner, it
+ * One could also use vector<u32>. While this would be cleaner, it
  * would force us to convert back and forth to the database format
  * every now and then, and additionally inhibit the use of memcmp().
  * 
@@ -69,9 +70,9 @@ string const & rev_height::operator()() const
   return d;
 }
 
-u64 rev_height::read_at(size_t pos) const
+u32 rev_height::read_at(size_t pos) const
 {
-  u64 value = 0;
+  u32 value = 0;
   size_t first = width * pos;
 
   for (size_t i = first; i < first + width;)
@@ -83,7 +84,7 @@ u64 rev_height::read_at(size_t pos) const
   return value;
 }
 
-void rev_height::write_at(size_t pos, u64 value)
+void rev_height::write_at(size_t pos, u32 value)
 {
   size_t first = width * pos;
   for (size_t i = first + width ; i > first;)
@@ -93,7 +94,7 @@ void rev_height::write_at(size_t pos, u64 value)
     }
 }
 
-void rev_height::append(u64 value)
+void rev_height::append(u32 value)
 {
   d.resize(d.size() + width);   // make room
   write_at(size() - 1, value);
@@ -109,17 +110,19 @@ size_t rev_height::size() const
   return d.size() / width;
 }
 
-void rev_height::child_height(rev_height & child, u64 nr) const
+void rev_height::child_height(rev_height & child, u32 nr) const
 {
+  child.from_string(d);
+
   if (nr == 0)
     {
       size_t pos = size() - 1;
-      child.from_string(d);
-      child.write_at(pos, read_at(pos) + 1);
+      u32 tmp = read_at(pos);
+      I(tmp < std::numeric_limits<u32>::max());
+      child.write_at(pos, tmp + 1);
     }
   else
     {
-      child.from_string(d);
       child.append(nr - 1);
       child.append(0);
     }

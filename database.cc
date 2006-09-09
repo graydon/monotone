@@ -133,7 +133,7 @@ database::database(system_path const & fn) :
   // non-alphabetic ordering of tables in sql source files. we could create
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
-  schema("5fdc2e50f0328d9a663da98722413d964438b5fe"),
+  schema("e802f41be37a38e400bdbbb86b14c24215eca6a6"),
   pending_writes_size(0),
   __sql(NULL),
   transaction_level(0)
@@ -581,6 +581,7 @@ database::info(ostream & out)
       "  revisions       : %u\n"
       "  cached ancestry : %u\n"
       "  certs           : %u\n"
+      "  heights         : %u\n"
       "  total           : %u\n"
       "database:\n"
       "  page size       : %u\n"
@@ -605,6 +606,7 @@ database::info(ostream & out)
     % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
     % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
                   " + length(value) + length(keypair) + length(signature)")
+    % SPACE_USAGE("heights","length(revision) + length(height)")
     % total
     % page_size()
     % cache_size();
@@ -1670,12 +1672,13 @@ database::get_rev_height(revision_id const & id,
       return;
     }
 
-  I(revision_exists(id));
-
   results res;
   fetch(res, one_col, one_row,
         query("SELECT height FROM heights WHERE revision = ?")
         % text(id.inner()()));
+
+  I(res.size() == 1);
+  
   height.from_string(res[0][0]);
 }
 
@@ -1806,20 +1809,22 @@ database::put_revision(revision_id const & new_id,
          e != rev.edges.end(); ++e)
       {
         bool found(false);
-        u64 childnr(0);
+        u32 childnr(0);
         rev_height candidate;
         rev_height parent;
         get_rev_height(edge_old_revision(e), parent);
         
         while(!found)
           {
-            parent.child_height(candidate, childnr++);
+            parent.child_height(candidate, childnr);
             if (!has_rev_height(candidate))
               {
                 found = true;
                 if (candidate > height)
                   height = candidate;
               }
+            I(childnr < std::numeric_limits<u32>::max());
+            ++childnr;
           }
       }
     put_rev_height(new_id, height);

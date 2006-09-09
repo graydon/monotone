@@ -34,9 +34,14 @@ INSERT INTO files VALUES('1ece609689fb9462de25716110769bad1a80e8d8',X'1f8b080000
 CREATE TABLE heights
 	(
 	revision not null,	-- joins with revisions.id
-	height not null,	-- blob containing the height in ubeb64 format
+	height not null,	-- complex height, array of big endian u32 integers
 	unique(revision, height)
 	);
+INSERT INTO heights VALUES('bf468e6c22dec9203af6441ad7d20b6ad8af049a',X'00000001');
+INSERT INTO heights VALUES('c81722b0236303685e341e16f0073d665090fb73',X'00000002');
+INSERT INTO heights VALUES('43a2235616452dca74eecf39d645a69da8e0bdd0',X'000000010000000000000000');
+INSERT INTO heights VALUES('4a1274f35812a695e357c6e7c7cd60f449f0cada',X'00000003');
+INSERT INTO heights VALUES('75810233cc39b62341d669b610e9416fd6352869',X'00000004');
 CREATE TABLE manifest_certs
 	(
 	hash not null unique,   -- hash of remaining fields separated by ":"

@@ -21,10 +21,10 @@ using std::string;
 class rev_height
 {
   string d;
-  static size_t const width = sizeof(u64);
-  u64 read_at(size_t pos) const;
-  void write_at(size_t pos, u64 val);
-  void append(u64 val);
+  static size_t const width = sizeof(u32);
+  u32 read_at(size_t pos) const;
+  void write_at(size_t pos, u32 val);
+  void append(u32 val);
   size_t size() const;
   void clear();
 public:
@@ -32,7 +32,7 @@ public:
   rev_height(rev_height const & other);
   void from_string(string const & s);
   string const & operator()() const;
-  void child_height(rev_height & child, u64 nr) const;
+  void child_height(rev_height & child, u32 nr) const;
   static void root_height(rev_height & root);
   void dump(ostream & os) const;
 

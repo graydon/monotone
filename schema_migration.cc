@@ -1067,7 +1067,7 @@ migrate_add_heights(sqlite3 *sql, char ** errmsg, app_state *app)
                             "CREATE TABLE heights\n"
                             "(\n"
                             "revision not null,	-- joins with revisions.id\n"
-                            "height not null,	-- blob containing the height in ubeb64 format\n"
+                            "height not null,	-- complex height, array of big endian u32 integers\n"
                             "unique(revision, height)\n"
                             ");", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
@@ -1116,7 +1116,7 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
   // also add a new migration test for the new schema version.  See
   // tests/t_migrate_schema.at for details.
 
-  m.migrate(sql, "5fdc2e50f0328d9a663da98722413d964438b5fe");
+  m.migrate(sql, "e802f41be37a38e400bdbbb86b14c24215eca6a6");
 }
 
 // Local Variables:
