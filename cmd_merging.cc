@@ -756,6 +756,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
                           mask);
     check_restricted_cset(*from_roster, from_to_to);
   }
+  N(!from_to_to.empty(), F("no changes to be applied"));
   // ...and use it to create the TO roster
   roster_t to_roster; MM(to_roster);
   {
@@ -782,6 +783,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   cset update;
   MM(update);
   make_cset(working_roster, merged_roster, update);
+  E(!update.empty(), F("no changes were applied"));
   app.work.perform_content_update(update, wca);
 
   P(F("applied changes to workspace"));

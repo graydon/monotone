@@ -1,3 +1,9 @@
+2006-09-09  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (pluck): Error out if there is no work to be
+	done, or if the merge resulting in no changes to be applied.
+	* tests/pluck_restricted/__driver__.lua: Test for this.
+
 2006-09-07  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/basic_invocation_and_options: Fix test broken by
