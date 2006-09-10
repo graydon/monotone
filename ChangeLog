@@ -1,3 +1,8 @@
+2006-09-10  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* cmd_diff_log.cc (CMD(log)): Traverse the tree in topological
+	order, using heights and a priority queue.
+
 2006-09-08  Thomas Moschny  <thomas.moschny@gmx.de>
 	
 	* database.cc (info): Show space usage information for the heights.

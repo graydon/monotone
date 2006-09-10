@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <queue>
 
 #include "cmd.hh"
 #include "diff_patch.hh"
@@ -30,6 +31,7 @@ using std::pair;
 using std::set;
 using std::string;
 using std::vector;
+using std::priority_queue;
 
 using boost::lexical_cast;
 
@@ -541,6 +543,19 @@ log_certs(app_state & app, revision_id id, cert_name name)
   log_certs(app, id, name, " ", ",", false, false);
 }
 
+
+struct rev_cmp
+{
+  bool dir;
+  rev_cmp(bool _dir) : dir(_dir) {}
+  bool operator() (pair<rev_height, revision_id> const & x,
+                   pair<rev_height, revision_id> const & y) const
+  {
+    return dir ? (x.first < y.first) : (x.first > y.first) ;
+  }
+};
+
+
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
@@ -551,13 +566,23 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     app.require_workspace("try passing a --revision to start at");
 
   temp_node_id_source nis;
-  set<revision_id> frontier;
+
+  long last = app.last;
+  long next = app.next;
+
+  N(last == -1 || next == -1,
+    F("only one of --last/--next allowed"));
+
+  priority_queue<pair<rev_height, revision_id>,
+    vector<pair<rev_height, revision_id> >, rev_cmp> frontier(rev_cmp(next<0));
   revision_id first_rid;
 
   if (app.revision_selectors.size() == 0)
     {
       get_revision_id(first_rid);
-      frontier.insert(first_rid);
+      rev_height height;
+      app.db.get_rev_height(first_rid, height);
+      frontier.push(make_pair(height, first_rid));
     }
   else
     {
@@ -566,7 +591,13 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
         {
           set<revision_id> rids;
           complete(app, (*i)(), rids);
-          frontier.insert(rids.begin(), rids.end());
+          for (set<revision_id>::const_iterator j = rids.begin();
+               j != rids.end(); ++j)
+            {
+              rev_height height;
+              app.db.get_rev_height(*j, height);
+              frontier.push(make_pair(height, *j));
+            }
           if (i == app.revision_selectors.begin())
             first_rid = *rids.begin();
         }
@@ -601,155 +632,148 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   cert_name comment_name(comment_cert_name);
 
   set<revision_id> seen;
-  long last = app.last;
-  long next = app.next;
-
-  N(last == -1 || next == -1,
-    F("only one of --last/--next allowed"));
-
   revision_t rev;
 
   while(! frontier.empty() && (last == -1 || last > 0) 
         && (next == -1 || next > 0))
     {
-      set<revision_id> next_frontier;
+      revision_id const & rid = frontier.top().second;
+      
+      bool print_this = mask.empty();
+      set<split_path> diff_paths;
 
-      for (set<revision_id>::const_iterator i = frontier.begin();
-           i != frontier.end(); ++i)
+      if (null_id(rid) || seen.find(rid) != seen.end())
         {
-          revision_id rid = *i;
+          frontier.pop();
+          continue;
+        }
 
-          bool print_this = mask.empty();
-          set<  revision<id> > parents;
-          vector< revision<cert> > tmp;
-          set<split_path> diff_paths;
+      seen.insert(rid);
+      app.db.get_revision(rid, rev);
 
-          if (null_id(rid) || seen.find(rid) != seen.end())
-            continue;
+      if (!mask.empty())
+        {
+          // TODO: stop if the restriction is pre-dated by the
+          // current roster i.e. the restriction's nodes are not
+          // born in the current roster
+          roster_t roster;
+          app.db.get_roster(rid, roster);
 
-          seen.insert(rid);
-          app.db.get_revision(rid, rev);
+          set<node_id> nodes_modified;
+          select_nodes_modified_by_rev(rev, roster,
+                                       nodes_modified,
+                                       app);
 
-          if (!mask.empty())
+          for (set<node_id>::const_iterator n = nodes_modified.begin();
+               n != nodes_modified.end(); ++n)
             {
-              // TODO: stop if the restriction is pre-dated by the
-              // current roster i.e. the restriction's nodes are not
-              // born in the current roster
-              roster_t roster;
-              app.db.get_roster(rid, roster);
-
-              set<node_id> nodes_modified;
-              select_nodes_modified_by_rev(rev, roster,
-                                           nodes_modified,
-                                           app);
-
-              for (set<node_id>::const_iterator n = nodes_modified.begin();
-                   n != nodes_modified.end(); ++n)
+              // a deleted node will be "modified" but won't
+              // exist in the result. 
+              // we don't want to print them.
+              if (roster.has_node(*n) && mask.includes(roster, *n))
                 {
-                  // a deleted node will be "modified" but won't
-                  // exist in the result. 
-                  // we don't want to print them.
-                  if (roster.has_node(*n) && mask.includes(roster, *n))
+                  print_this = true;
+                  if (app.diffs)
                     {
-                      print_this = true;
-                      if (app.diffs)
-                        {
-                          split_path sp;
-                          roster.get_name(*n, sp);
-                          diff_paths.insert(sp);
-                        }
+                      split_path sp;
+                      roster.get_name(*n, sp);
+                      diff_paths.insert(sp);
                     }
+                }
+            }
+        }
+
+      if (app.no_merges && rev.is_merge_node())
+        print_this = false;
+      
+      if (print_this)
+        {
+          if (app.brief)
+            {
+              cout << rid;
+              log_certs(app, rid, author_name);
+              log_certs(app, rid, date_name);
+              log_certs(app, rid, branch_name);
+              cout << "\n";
+            }
+          else
+            {
+              cout << string(65, '-') << "\n";
+              cout << "Revision: " << rid << "\n";
+              
+              changes_summary csum;
+              
+              set<revision_id> ancestors;
+              
+              for (edge_map::const_iterator e = rev.edges.begin();
+                   e != rev.edges.end(); ++e)
+                {
+                  ancestors.insert(edge_old_revision(e));
+                  csum.add_change_set(edge_changes(e));
+                }
+              
+              for (set<revision_id>::const_iterator 
+                     anc = ancestors.begin();
+                   anc != ancestors.end(); ++anc)
+                cout << "Ancestor: " << *anc << "\n";
+
+              log_certs(app, rid, author_name, "Author: ", false);
+              log_certs(app, rid, date_name,   "Date: ",   false);
+              log_certs(app, rid, branch_name, "Branch: ", false);
+              log_certs(app, rid, tag_name,    "Tag: ",    false);
+
+              if (!app.no_files && !csum.cs.empty())
+                {
+                  cout << "\n";
+                  csum.print(cout, 70);
+                  cout << "\n";
+                }
+              
+              log_certs(app, rid, changelog_name, "ChangeLog: ", true);
+              log_certs(app, rid, comment_name,   "Comments: ",  true);
+            }
+
+          if (app.diffs)
+            {
+              for (edge_map::const_iterator e = rev.edges.begin();
+                   e != rev.edges.end(); ++e)
+                {
+                  dump_diffs(edge_changes(e), app, true, diff_paths,
+                             !mask.empty());
                 }
             }
 
           if (next > 0)
             {
-              set<revision_id> children;
-              app.db.get_revision_children(rid, children);
-              copy(children.begin(), children.end(),
-                   inserter(next_frontier, next_frontier.end()));
+              next--;
             }
-          else // work backwards by default
+          else if (last > 0)
             {
-              set<revision_id> parents;
-              app.db.get_revision_parents(rid, parents);
-              copy(parents.begin(), parents.end(),
-                   inserter(next_frontier, next_frontier.end()));
+              last--;
             }
 
-          if (app.no_merges && rev.is_merge_node())
-            print_this = false;
-
-          if (print_this)
-          {
-            if (app.brief)
-              {
-                cout << rid;
-                log_certs(app, rid, author_name);
-                log_certs(app, rid, date_name);
-                log_certs(app, rid, branch_name);
-                cout << "\n";
-              }
-            else
-              {
-                cout << string(65, '-') << "\n";
-                cout << "Revision: " << rid << "\n";
-
-                changes_summary csum;
-
-                set<revision_id> ancestors;
-
-                for (edge_map::const_iterator e = rev.edges.begin();
-                     e != rev.edges.end(); ++e)
-                  {
-                    ancestors.insert(edge_old_revision(e));
-                    csum.add_change_set(edge_changes(e));
-                  }
-
-                for (set<revision_id>::const_iterator 
-                       anc = ancestors.begin();
-                     anc != ancestors.end(); ++anc)
-                  cout << "Ancestor: " << *anc << "\n";
-
-                log_certs(app, rid, author_name, "Author: ", false);
-                log_certs(app, rid, date_name,   "Date: ",   false);
-                log_certs(app, rid, branch_name, "Branch: ", false);
-                log_certs(app, rid, tag_name,    "Tag: ",    false);
-
-                if (!app.no_files && !csum.cs.empty())
-                  {
-                    cout << "\n";
-                    csum.print(cout, 70);
-                    cout << "\n";
-                  }
-
-                log_certs(app, rid, changelog_name, "ChangeLog: ", true);
-                log_certs(app, rid, comment_name,   "Comments: ",  true);
-              }
-
-            if (app.diffs)
-              {
-                for (edge_map::const_iterator e = rev.edges.begin();
-                     e != rev.edges.end(); ++e)
-                  {
-                    dump_diffs(edge_changes(e), app, true, diff_paths,
-                               !mask.empty());
-                  }
-              }
-
-            if (next > 0)
-              {
-                next--;
-              }
-            else if (last > 0)
-              {
-                last--;
-              }
-
-            cout.flush();
-          }
+          cout.flush();
         }
-      frontier = next_frontier;
+
+      set<revision_id> relatives;
+      if (next > 0) 
+        {
+          app.db.get_revision_children(rid, relatives);
+        }
+      else // walk backwards by default
+        {
+          app.db.get_revision_parents(rid, relatives);
+        }
+      
+      frontier.pop(); // beware: rid is invalid from now on
+
+      for (set<revision_id>::const_iterator i = relatives.begin();
+           i != relatives.end(); ++i)
+        {
+          rev_height height;
+          app.db.get_rev_height(*i, height);
+          frontier.push(make_pair(height, *i));
+        }
     }
 }
 
