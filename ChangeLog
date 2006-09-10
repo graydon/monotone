@@ -1,3 +1,7 @@
+2006-09-11  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 2 fuzzies.
+
 2006-09-09  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_merging.cc (pluck): Error out if there is no work to be
