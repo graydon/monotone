@@ -2,6 +2,10 @@
 
 	* po/sv.po: 2 fuzzies.
 
+2006-09-09  Benoît Dejean  <benoit@placenet.org>
+
+	* fr.po: Updated French translation.
+
 2006-09-09  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_merging.cc (pluck): Error out if there is no work to be
