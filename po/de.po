@@ -28,8 +28,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-08 15:29+0200\n"
-"PO-Revision-Date: 2006-09-08 15:30+0100\n"
+"POT-Creation-Date: 2006-09-11 15:10+0200\n"
+"PO-Revision-Date: 2006-09-11 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -168,7 +168,7 @@ msgstr "Dateiversion %s nicht in Datenbank gefunden"
 
 #: automate.cc:1088
 #: automate.cc:1114
-#: cmd_merging.cc:843
+#: cmd_merging.cc:845
 msgid "REVID"
 msgstr "REVISIONS_ID"
 
@@ -502,7 +502,7 @@ msgstr "'--last' und '--next' sind nur einmal erlaubt"
 #: cmd_files.cc:41
 #: cmd_files.cc:78
 #: cmd_files.cc:157
-#: cmd_merging.cc:843
+#: cmd_merging.cc:845
 #: cmd_othervcs.cc:15
 msgid "debug"
 msgstr "Debugging"
@@ -1002,7 +1002,7 @@ msgstr "[vereinigt] %s"
 #: cmd_merging.cc:419
 #: cmd_merging.cc:430
 #: cmd_merging.cc:588
-#: cmd_merging.cc:819
+#: cmd_merging.cc:821
 #: cmd_ws_commit.cc:406
 #: cmd_ws_commit.cc:885
 #: cmd_ws_commit.cc:908
@@ -1015,7 +1015,7 @@ msgid "merge unmerged heads of branch"
 msgstr "führe nicht-vereinigte Köpfe des Zweigs zusammen"
 
 #: cmd_merging.cc:330
-#: cmd_merging.cc:827
+#: cmd_merging.cc:829
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "bitte geben Sie einen Zweig mit '--branch=ZWEIG' an"
@@ -1023,7 +1023,7 @@ msgstr "bitte geben Sie einen Zweig mit '--branch=ZWEIG' an"
 #: cmd_merging.cc:335
 #: cmd_merging.cc:469
 #: cmd_merging.cc:472
-#: cmd_merging.cc:832
+#: cmd_merging.cc:834
 #: cmd_ws_commit.cc:430
 #, c-format
 msgid "branch '%s' is empty"
@@ -1228,26 +1228,36 @@ msgstr ""
 msgid "no changes to apply"
 msgstr "keine Änderungen anwendbar"
 
-#: cmd_merging.cc:787
+#: cmd_merging.cc:759
+#, c-format
+msgid "no changes to be applied"
+msgstr "Es gab keine Änderungen vorzunehmen."
+
+#: cmd_merging.cc:786
+#, c-format
+msgid "no changes were applied"
+msgstr "Es wurden keine Änderungen vorgenommen."
+
+#: cmd_merging.cc:789
 #, c-format
 msgid "applied changes to workspace"
 msgstr "Änderungen auf Arbeitsbereich angewendet"
 
-#: cmd_merging.cc:819
+#: cmd_merging.cc:821
 msgid "show unmerged head revisions of branch"
 msgstr "zeige nicht-vereinigte Revisionen des Zweigs"
 
-#: cmd_merging.cc:834
+#: cmd_merging.cc:836
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "Zweig '%s' ist derzeit vereinigt:"
 
-#: cmd_merging.cc:836
+#: cmd_merging.cc:838
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "Zweig '%s' ist derzeit nicht vereinigt:"
 
-#: cmd_merging.cc:844
+#: cmd_merging.cc:846
 msgid "dump the roster associated with the given REVID"
 msgstr "Exportiere den Katalog, welcher mit der gegebenen REVID verknüpft ist"
 
