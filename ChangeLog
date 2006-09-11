@@ -1,3 +1,10 @@
+2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* Makefile.am (package_revision.txt): Follow-up for the merge of
+	the workspace-merge.migration branch: Use 'mtn automate
+	get_base_revision' to get the base revision instead of copying the
+	contents of _MTN/revision.
+
 2006-09-11  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: 2 fuzzies.
