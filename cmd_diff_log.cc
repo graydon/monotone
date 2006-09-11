@@ -577,12 +577,17 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     vector<pair<rev_height, revision_id> >, rev_cmp> frontier(rev_cmp(next<0));
   revision_id first_rid;
 
+  bool use_markings(!(next>0));
+  set<revision_id> interesting;
+
   if (app.revision_selectors.size() == 0)
     {
       get_revision_id(first_rid);
       rev_height height;
       app.db.get_rev_height(first_rid, height);
       frontier.push(make_pair(height, first_rid));
+      if (use_markings)
+        interesting.insert(first_rid);
     }
   else
     {
@@ -597,6 +602,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               rev_height height;
               app.db.get_rev_height(*j, height);
               frontier.push(make_pair(height, *j));
+              if (use_markings)
+                interesting.insert(*j);
             }
           if (i == app.revision_selectors.begin())
             first_rid = *rids.begin();
@@ -651,13 +658,15 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       seen.insert(rid);
       app.db.get_revision(rid, rev);
 
-      if (!mask.empty())
+      if (!mask.empty()
+          && !(use_markings && interesting.find(rid) == interesting.end()))
         {
           // TODO: stop if the restriction is pre-dated by the
           // current roster i.e. the restriction's nodes are not
           // born in the current roster
           roster_t roster;
-          app.db.get_roster(rid, roster);
+          marking_map markings;
+          app.db.get_roster(rid, roster, markings);
 
           set<node_id> nodes_modified;
           select_nodes_modified_by_rev(rev, roster,
@@ -681,6 +690,32 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                     }
                 }
             }
+
+          if (use_markings)
+            if (!print_this)
+              {
+                for (marking_map::const_iterator m = markings.begin();
+                     m != markings.end(); ++m)
+                  {
+                    node_id node = m->first;
+                    marking_t marking = m->second;
+                    
+                    if (mask.includes(roster, node))
+                      {
+                        interesting.insert(marking.file_content.begin(), marking.file_content.end());
+                        interesting.insert(marking.parent_name.begin(), marking.parent_name.end());
+                        for (map<attr_key, set<revision_id> >::const_iterator a = marking.attrs.begin();
+                             a != marking.attrs.begin(); ++a)
+                          interesting.insert(a->second.begin(), a->second.end());
+                      }
+                  }
+              }
+            else
+              {
+                set<revision_id> parents;
+                app.db.get_revision_parents(rid, parents);
+                interesting.insert(parents.begin(), parents.end());
+              }
         }
 
       if (app.no_merges && rev.is_merge_node())
