@@ -1,3 +1,7 @@
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 4 fuzzies, one new string.
+
 2006-09-12  Nathaniel Smith  <njs@pobox.com>
 
 	* roster.cc (has_node): Do not crash when has_node(foo/bar) is
