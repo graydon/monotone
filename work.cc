@@ -1032,6 +1032,8 @@ workspace::perform_additions(path_set const & paths, bool recursive)
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   editable_roster_base er(new_roster, nis);
@@ -1079,6 +1081,8 @@ workspace::perform_deletions(path_set const & paths,
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   // we traverse the the paths backwards, so that we always hit deep paths
@@ -1149,6 +1153,8 @@ workspace::perform_rename(set<file_path> const & src_paths,
 {
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   split_path dst;
   set<split_path> srcs;
   set< pair<split_path, split_path> > renames;
@@ -1266,6 +1272,8 @@ workspace::perform_pivot_root(file_path const & new_root,
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   I(new_roster.has_root());

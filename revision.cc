@@ -678,6 +678,9 @@ make_revision_for_workspace(revision_id const & old_rev_id,
                             cset const & changes,
                             revision_t & rev)
 {
+  MM(old_rev_id);
+  MM(changes);
+  MM(rev);
   shared_ptr<cset> cs(new cset(changes));
   cs->deltas_applied.clear();
 
@@ -694,6 +697,10 @@ make_revision_for_workspace(revision_id const & old_rev_id,
                             roster_t const & new_roster,
                             revision_t & rev)
 {
+  MM(old_rev_id);
+  MM(old_roster);
+  MM(new_roster);
+  MM(rev);
   cset changes;
   make_cset(old_roster, new_roster, changes);
   make_revision_for_workspace(old_rev_id, changes, rev);

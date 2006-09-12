@@ -1,3 +1,9 @@
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (perform_additions, perform_deletions) 
+	(perform_rename, perform_pivot_root): 
+	* revision.cc (make_revision_for_workspace): Add some MMs.
+
 2006-09-11  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/commit_validation_lua_hook/errmsg: Update for new phrasing
