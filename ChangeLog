@@ -1,5 +1,10 @@
 2006-09-11  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/commit_validation_lua_hook/errmsg: Update for new phrasing
+	of error message.
+
+2006-09-11  Nathaniel Smith  <njs@pobox.com>
+
 	* cert.{cc,hh} (cert_revision_changelog): Take utf8 instead of string.
 
 	* work.cc (read_user_log, write_user_log):
