@@ -1,3 +1,9 @@
+2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* .mtn-ignore: Ignore mtn instead of monotone; additionally ignore
+	tester and tester.h, package_full_revision_raw.txt and
+	package_revision_raw.txt.
+
 2006-09-12  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: 4 fuzzies, one new string.
