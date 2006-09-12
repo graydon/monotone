@@ -1,3 +1,9 @@
+2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* cmd_diff_log.cc (CMD(log)): If we use the markings, skip
+	uninteresting nodes while traversing the tree. Fix: Now revisions
+	are printed only if they are marked.
+
 2006-09-11  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* cmd_diff_log.cc (CMD(log)): Now using the markings to avoid

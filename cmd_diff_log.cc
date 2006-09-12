@@ -551,10 +551,13 @@ struct rev_cmp
   bool operator() (pair<rev_height, revision_id> const & x,
                    pair<rev_height, revision_id> const & y) const
   {
-    return dir ? (x.first < y.first) : (x.first > y.first) ;
+    return dir ? (x.first < y.first) : (x.first > y.first);
   }
 };
 
+typedef priority_queue<pair<rev_height, revision_id>,
+                       vector<pair<rev_height, revision_id> >,
+                       rev_cmp> frontier_t;
 
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
@@ -565,20 +568,14 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
 
-  temp_node_id_source nis;
-
   long last = app.last;
   long next = app.next;
 
-  N(last == -1 || next == -1,
+  N(app.last == -1 || app.next == -1,
     F("only one of --last/--next allowed"));
 
-  priority_queue<pair<rev_height, revision_id>,
-    vector<pair<rev_height, revision_id> >, rev_cmp> frontier(rev_cmp(next<0));
+  frontier_t frontier(rev_cmp(!(next>0)));
   revision_id first_rid;
-
-  bool use_markings(!(next>0));
-  set<revision_id> interesting;
 
   if (app.revision_selectors.size() == 0)
     {
@@ -586,8 +583,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       rev_height height;
       app.db.get_rev_height(first_rid, height);
       frontier.push(make_pair(height, first_rid));
-      if (use_markings)
-        interesting.insert(first_rid);
     }
   else
     {
@@ -602,8 +597,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               rev_height height;
               app.db.get_rev_height(*j, height);
               frontier.push(make_pair(height, *j));
-              if (use_markings)
-                interesting.insert(*j);
             }
           if (i == app.revision_selectors.begin())
             first_rid = *rids.begin();
@@ -618,8 +611,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       roster_t old_roster, new_roster;
 
       if (app.revision_selectors.size() == 0)
-        get_base_and_current_roster_shape(old_roster, 
-                                          new_roster, nis, app);
+        {
+          temp_node_id_source nis;
+          get_base_and_current_roster_shape(old_roster,
+                                            new_roster, nis, app);
+        }
       else
         app.db.get_roster(first_rid, new_roster);
 
@@ -637,6 +633,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   cert_name tag_name(tag_cert_name);
   cert_name changelog_name(changelog_cert_name);
   cert_name comment_name(comment_cert_name);
+
+  // we can use the markings if we walk backwards for a restricted log
+  bool use_markings(!(next>0) && !mask.empty());
 
   set<revision_id> seen;
   revision_t rev;
@@ -658,64 +657,58 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       seen.insert(rid);
       app.db.get_revision(rid, rev);
 
-      if (!mask.empty()
-          && !(use_markings && interesting.find(rid) == interesting.end()))
+      set<revision_id> marked_revs;
+
+      if (!mask.empty())
         {
-          // TODO: stop if the restriction is pre-dated by the
-          // current roster i.e. the restriction's nodes are not
-          // born in the current roster
           roster_t roster;
           marking_map markings;
           app.db.get_roster(rid, roster, markings);
 
-          set<node_id> nodes_modified;
-          select_nodes_modified_by_rev(rev, roster,
-                                       nodes_modified,
-                                       app);
-
-          for (set<node_id>::const_iterator n = nodes_modified.begin();
-               n != nodes_modified.end(); ++n)
+          // get all revision ids mentioned in one of the markings
+          for (marking_map::const_iterator m = markings.begin();
+               m != markings.end(); ++m)
             {
-              // a deleted node will be "modified" but won't
-              // exist in the result. 
-              // we don't want to print them.
-              if (roster.has_node(*n) && mask.includes(roster, *n))
+              node_id node = m->first;
+              marking_t marking = m->second;
+              
+              if (mask.includes(roster, node))
                 {
-                  print_this = true;
-                  if (app.diffs)
-                    {
-                      split_path sp;
-                      roster.get_name(*n, sp);
-                      diff_paths.insert(sp);
-                    }
+                  marked_revs.insert(marking.file_content.begin(), marking.file_content.end());
+                  marked_revs.insert(marking.parent_name.begin(), marking.parent_name.end());
+                  for (map<attr_key, set<revision_id> >::const_iterator a = marking.attrs.begin();
+                       a != marking.attrs.begin(); ++a)
+                    marked_revs.insert(a->second.begin(), a->second.end());
                 }
             }
 
-          if (use_markings)
-            if (!print_this)
-              {
-                for (marking_map::const_iterator m = markings.begin();
-                     m != markings.end(); ++m)
-                  {
-                    node_id node = m->first;
-                    marking_t marking = m->second;
-                    
-                    if (mask.includes(roster, node))
-                      {
-                        interesting.insert(marking.file_content.begin(), marking.file_content.end());
-                        interesting.insert(marking.parent_name.begin(), marking.parent_name.end());
-                        for (map<attr_key, set<revision_id> >::const_iterator a = marking.attrs.begin();
-                             a != marking.attrs.begin(); ++a)
-                          interesting.insert(a->second.begin(), a->second.end());
-                      }
-                  }
-              }
-            else
-              {
-                set<revision_id> parents;
-                app.db.get_revision_parents(rid, parents);
-                interesting.insert(parents.begin(), parents.end());
-              }
+          // find out whether the current rev is to be printed
+          // we don't care about changed paths if it is not marked
+          if (!use_markings || marked_revs.find(rid) != marked_revs.end())
+            {
+              set<node_id> nodes_modified;
+              select_nodes_modified_by_rev(rev, roster,
+                                           nodes_modified,
+                                           app);
+              
+              for (set<node_id>::const_iterator n = nodes_modified.begin();
+                   n != nodes_modified.end(); ++n)
+                {
+                  // a deleted node will be "modified" but won't
+                  // exist in the result. 
+                  // we don't want to print them.
+                  if (roster.has_node(*n) && mask.includes(roster, *n))
+                    {
+                      print_this = true;
+                      if (app.diffs)
+                        {
+                          split_path sp;
+                          roster.get_name(*n, sp);
+                          diff_paths.insert(sp);
+                        }
+                    }
+                }
+            }
         }
 
       if (app.no_merges && rev.is_merge_node())
@@ -790,20 +783,29 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           cout.flush();
         }
 
-      set<revision_id> relatives;
-      if (next > 0) 
+      set<revision_id> interesting;
+      // if rid is not marked we can jump directly to the marked ancestors,
+      // otherwise we need to visit the parents
+      if (use_markings && marked_revs.find(rid) == marked_revs.end())
         {
-          app.db.get_revision_children(rid, relatives);
+          interesting.insert(marked_revs.begin(), marked_revs.end());
         }
-      else // walk backwards by default
+      else
         {
-          app.db.get_revision_parents(rid, relatives);
+          if (next > 0) 
+            {
+              app.db.get_revision_children(rid, interesting);
+            }
+          else // walk backwards by default
+            {
+              app.db.get_revision_parents(rid, interesting);
+            }
         }
-      
+
       frontier.pop(); // beware: rid is invalid from now on
 
-      for (set<revision_id>::const_iterator i = relatives.begin();
-           i != relatives.end(); ++i)
+      for (set<revision_id>::const_iterator i = interesting.begin();
+           i != interesting.end(); ++i)
         {
           rev_height height;
           app.db.get_rev_height(*i, height);
