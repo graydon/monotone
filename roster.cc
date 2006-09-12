@@ -546,7 +546,10 @@ roster_t::has_node(split_path const & sp) const
     {
       if (d->children.find(*i) == d->children.end())
         return false;
-      d = downcast_to_dir_t(d->get_child(*i));
+      node_t child = d->get_child(*i);
+      if (!is_dir_t(child))
+        return false;
+      d = downcast_to_dir_t(child);
     }
   return d->children.find(basename) != d->children.end();
 }

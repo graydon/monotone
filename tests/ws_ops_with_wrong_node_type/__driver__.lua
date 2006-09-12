@@ -9,7 +9,7 @@ check(mtn("automate", "get_revision"), 0, true, false)
 rename("stdout", "orig_rev")
 
 -- fail to move a dir under a file
-xfail(mtn("rename", "dir", "file/subdir"), 1, false, false)
+check(mtn("rename", "dir", "file/subdir"), 1, false, false)
 check(mtn("automate", "get_revision"), 0, true, false)
 check(samefile("stdout", "orig_rev"))
 
@@ -17,4 +17,4 @@ check(samefile("stdout", "orig_rev"))
 -- dir...
 mkdir("dir2")
 check(mtn("rename", "file", "dir2"), 0, false, false)
-xfail(mtn("add", "dir2"), 0, false, false)
+check(mtn("add", "dir2"), 0, false, false)

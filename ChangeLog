@@ -1,5 +1,12 @@
 2006-09-12  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.cc (has_node): Do not crash when has_node(foo/bar) is
+	called, and foo exists but is a file.
+	* work.cc (perform_rename, visit_file): Add more sanity checking.
+	* tests/ws_ops_with_wrong_node_type: Un-xfail.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
 	* tests/ws_ops_with_wrong_node_type: Add two failing test cases,
 	from bug report from Albert Ramstedt.
 

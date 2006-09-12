@@ -559,6 +559,13 @@ addition_builder::visit_file(file_path const & path)
           P(F("adding %s to workspace manifest") % file_path(prefix));
           add_node_for(prefix);
         }
+      if (!is_dir_t(ros.get_node(prefix)))
+        {
+          N(prefix == sp,
+            F("cannot add %s, because %s is recorded as a file in the workspace manifest")
+            % file_path(sp) % file_path(sp));
+          break;
+        }
     }
 }
 
@@ -1204,10 +1211,18 @@ workspace::perform_rename(set<file_path> const & src_paths,
        i != renames.end(); i++)
     {
       N(new_roster.has_node(i->first),
-        F("%s does not exist in current revision") % file_path(i->first));
+        F("%s does not exist in current manifest") % file_path(i->first));
 
       N(!new_roster.has_node(i->second),
-        F("destination %s already exists in current revision") % file_path(i->second));
+        F("destination %s already exists in current manifest") % file_path(i->second));
+
+      split_path parent;
+      path_component basename;
+      dirname_basename(i->second, parent, basename);
+      N(new_roster.has_node(parent),
+        F("destination directory %s does not exist in current manifest") % file_path(parent));
+      N(is_dir_t(new_roster.get_node(parent)),
+        F("destination directory %s is not a directory") % file_path(parent));
     }
 
   // do the attach/detaching
