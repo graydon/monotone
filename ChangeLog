@@ -16,6 +16,10 @@
 	(perform_rename, perform_pivot_root): 
 	* revision.cc (make_revision_for_workspace): Add some MMs.
 
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 3 fuzzies.
+
 2006-09-11  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/commit_validation_lua_hook/errmsg: Update for new phrasing
