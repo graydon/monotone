@@ -80,10 +80,10 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
   i18n_format fmt;
   if (checked_db)
     fmt = F("public or private key '%s' does not exist "
-	    "in keystore or database");
+            "in keystore or database");
   else
     fmt = F("public or private key '%s' does not exist "
-	    "in keystore, and no database was specified");
+            "in keystore, and no database was specified");
   N(key_deleted, fmt % idx(args, 0)());
 }
 
@@ -239,14 +239,18 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
 
-  string comment;
+  utf8 comment;
   if (args.size() == 2)
     comment = idx(args, 1)();
   else
-    N(app.lua.hook_edit_comment("", "", comment),
-      F("edit comment failed"));
+    {
+      external comment_external;
+      N(app.lua.hook_edit_comment(external(""), external(""), comment_external),
+        F("edit comment failed"));
+      system_to_utf8(comment_external, comment);
+    }
 
-  N(comment.find_first_not_of("\n\r\t ") != string::npos,
+  N(comment().find_first_not_of("\n\r\t ") != string::npos,
     F("empty comment"));
 
   revision_id r;

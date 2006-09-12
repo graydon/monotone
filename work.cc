@@ -26,6 +26,7 @@
 #include "inodeprint.hh"
 #include "diff_patch.hh"
 #include "ui.hh"
+#include "charset.hh"
 
 using std::deque;
 using std::exception;
@@ -203,24 +204,28 @@ workspace::get_user_log_path(bookkeeping_path & ul_path)
 }
 
 void
-workspace::read_user_log(data & dat)
+workspace::read_user_log(utf8 & dat)
 {
   bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
   if (file_exists(ul_path))
     {
-      read_data(ul_path, dat);
+      data tmp;
+      read_data(ul_path, tmp);
+      system_to_utf8(external(tmp()), dat);
     }
 }
 
 void
-workspace::write_user_log(data const & dat)
+workspace::write_user_log(utf8 const & dat)
 {
   bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
-  write_data(ul_path, dat);
+  external tmp;
+  utf8_to_system(dat, tmp);
+  write_data(ul_path, data(tmp()));
 }
 
 void
@@ -235,7 +240,7 @@ workspace::blank_user_log()
 bool
 workspace::has_contents_user_log()
 {
-  data user_log_message;
+  utf8 user_log_message;
   read_user_log(user_log_message);
   return user_log_message().length() > 0;
 }
@@ -1000,7 +1005,7 @@ workspace::find_missing(roster_t const & new_roster_shape,
 
 void
 workspace::find_unknown_and_ignored(path_restriction const & mask,
-				    vector<file_path> const & roots,
+                                    vector<file_path> const & roots,
                                     path_set & unknown, path_set & ignored)
 {
   path_set known;

@@ -74,7 +74,7 @@ struct workspace
                     path_set & missing);
 
   void find_unknown_and_ignored(path_restriction const & mask,
-				std::vector<file_path> const & roots,
+                                std::vector<file_path> const & roots,
                                 path_set & unknown, path_set & ignored);
 
   void perform_additions(path_set const & targets, bool recursive = true);
@@ -148,8 +148,8 @@ struct workspace
   // change is made to the user log file.
 
   void get_user_log_path(bookkeeping_path & ul_path);
-  void read_user_log(data & dat);
-  void write_user_log(data const & dat);
+  void read_user_log(utf8 & dat);
+  void write_user_log(utf8 const & dat);
   void blank_user_log();
   bool has_contents_user_log();
 

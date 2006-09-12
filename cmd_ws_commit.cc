@@ -18,6 +18,7 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "work.hh"
+#include "charset.hh"
 
 using std::cout;
 using std::make_pair;
@@ -32,22 +33,34 @@ using boost::shared_ptr;
 static void
 get_log_message_interactively(revision_t const & cs,
                               app_state & app,
-                              string & log_message)
+                              utf8 & log_message)
 {
-  string commentary;
-  data summary, user_log_message;
+  revision_data summary;
   write_revision(cs, summary);
-  app.work.read_user_log(user_log_message);
-  commentary += string(70, '-') + "\n";
-  commentary += _("Enter a description of this change.\n"
-                  "Lines beginning with `MTN:' "
-                  "are removed automatically.\n");
-  commentary += "\n";
-  commentary += summary();
-  commentary += string(70, '-') + "\n";
+  external summary_external;
+  utf8_to_system(utf8(summary.inner()()), summary_external);
 
-  N(app.lua.hook_edit_comment(commentary, user_log_message(), log_message),
+  string commentary_str;
+  commentary_str += string(70, '-') + "\n";
+  commentary_str += _("Enter a description of this change.\n"
+                      "Lines beginning with `MTN:' "
+                      "are removed automatically.");
+  commentary_str += "\n\n";
+  commentary_str += summary_external();
+  commentary_str += string(70, '-') + "\n";
+
+  external commentary(commentary_str);
+
+  utf8 user_log_message;
+  app.work.read_user_log(user_log_message);
+  external user_log_message_external;
+  utf8_to_system(user_log_message, user_log_message_external);
+
+  external log_message_external;
+  N(app.lua.hook_edit_comment(commentary, user_log_message_external,
+                              log_message_external),
     F("edit of log message failed"));
+  system_to_utf8(log_message_external, log_message);
 }
 
 CMD(revert, N_("workspace"), N_("[PATH]..."),
@@ -648,7 +661,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     option::branch_name % option::message % option::msgfile % option::date % 
     option::author % option::depth % option::exclude)
 {
-  string log_message("");
+  utf8 log_message("");
   bool log_message_given;
   revision_t restricted_rev;
   revision_id old_rev_id, restricted_rev_id;
@@ -712,7 +725,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       // We only check for empty log messages when the user entered them
       // interactively.  Consensus was that if someone wanted to explicitly
       // type --message="", then there wasn't any reason to stop them.
-      N(log_message.find_first_not_of("\n\r\t ") != string::npos,
+      N(log_message().find_first_not_of("\n\r\t ") != string::npos,
         F("empty log message; commit canceled"));
 
       // We save interactively entered log messages to _MTN/log, so if
@@ -723,18 +736,19 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       // hit up-arrow to try again, you get an "_MTN/log non-empty and
       // message given on command line" error... which is annoying.
 
-      app.work.write_user_log(data(log_message));
+      app.work.write_user_log(log_message);
     }
 
   // If the hook doesn't exist, allow the message to be used.
   bool message_validated;
   string reason, new_manifest_text;
 
-  dump(restricted_rev, new_manifest_text);
+  revision_data new_rev;
+  write_revision(restricted_rev, new_rev);
 
-  app.lua.hook_validate_commit_message(log_message, new_manifest_text,
+  app.lua.hook_validate_commit_message(log_message, new_rev,
                                        message_validated, reason);
-  N(message_validated, F("log message rejected: %s") % reason);
+  N(message_validated, F("log message rejected by hook: %s") % reason);
 
   {
     transaction_guard guard(app.db);

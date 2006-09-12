@@ -663,22 +663,22 @@ cert_revision_tag(revision_id const & m,
 
 void
 cert_revision_changelog(revision_id const & m,
-                        string const & changelog,
+                        utf8 const & changelog,
                         app_state & app,
                         packet_consumer & pc)
 {
   put_simple_revision_cert(m, changelog_cert_name,
-                           changelog, app, pc);
+                           changelog(), app, pc);
 }
 
 void
 cert_revision_comment(revision_id const & m,
-                      string const & comment,
+                      utf8 const & comment,
                       app_state & app,
                       packet_consumer & pc)
 {
   put_simple_revision_cert(m, comment_cert_name,
-                           comment, app, pc);
+                           comment(), app, pc);
 }
 
 void
