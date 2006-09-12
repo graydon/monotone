@@ -1,5 +1,10 @@
 2006-09-12  Nathaniel Smith  <njs@pobox.com>
 
+	* tests/ws_ops_with_wrong_node_type: Add two failing test cases,
+	from bug report from Albert Ramstedt.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
 	* work.cc (perform_additions, perform_deletions) 
 	(perform_rename, perform_pivot_root): 
 	* revision.cc (make_revision_for_workspace): Add some MMs.
