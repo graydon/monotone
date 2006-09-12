@@ -4,6 +4,10 @@
 	tester and tester.h, package_full_revision_raw.txt and
 	package_revision_raw.txt.
 
+2006-09-12  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: 8 fuzzies, 1 new string.
+
 2006-09-12  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: 4 fuzzies, one new string.
