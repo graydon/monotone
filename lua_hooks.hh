@@ -47,9 +47,9 @@ public:
   bool hook_get_branch_key(cert_value const & branchname, rsa_keypair_id & k);
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_get_author(cert_value const & branchname, std::string & author);
-  bool hook_edit_comment(std::string const & commentary,
-                         std::string const & user_log_message,
-                         std::string & result);
+  bool hook_edit_comment(external const & commentary,
+                         external const & user_log_message,
+                         external & result);
   bool hook_persist_phrase_ok();
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
                                    hexenc<id> const & id,
@@ -64,12 +64,12 @@ public:
 
   // network hooks
   bool hook_get_netsync_connect_command(uri const & u,
-					std::string const & include_pattern,
-					std::string const & exclude_pattern,
-					bool debug,
-					std::vector<std::string> & argv);
+                                        std::string const & include_pattern,
+                                        std::string const & exclude_pattern,
+                                        bool debug,
+                                        std::vector<std::string> & argv);
   bool hook_use_transport_auth(uri const & u);
-			
+                        
   bool hook_get_netsync_read_permitted(std::string const & branch,
                                        rsa_keypair_id const & identity);
   // anonymous no-key version
@@ -118,8 +118,8 @@ public:
                              std::string & db, std::string & ext);
 
   // validation hooks
-  bool hook_validate_commit_message(std::string const & message,
-                                    std::string const & new_manifest_text,
+  bool hook_validate_commit_message(utf8 const & message,
+                                    revision_data const & new_rev,
                                     bool & validated,
                                     std::string & reason);
 
@@ -134,14 +134,14 @@ public:
                         std::set<std::pair<rsa_keypair_id,
                                          std::pair<cert_name,
                                                 cert_value> > > const & certs,
-					   std::string nonce);
+                                           std::string nonce);
   bool hook_note_netsync_pubkey_received(rsa_keypair_id const & kid,
-					 std::string nonce);
+                                         std::string nonce);
   bool hook_note_netsync_cert_received(revision_id const & rid,
                                        rsa_keypair_id const & kid,
                                        cert_name const & name,
                                        cert_value const & value,
-				       std::string nonce);
+                                       std::string nonce);
   bool hook_note_netsync_end(std::string nonce);
 };
 

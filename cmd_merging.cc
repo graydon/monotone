@@ -570,7 +570,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
       cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
 
       bool log_message_given;
-      string log_message;
+      utf8 log_message;
       process_commit_message_args(log_message_given, log_message, app);
       if (!log_message_given)
         log_message = (FL("propagate from branch '%s' (head %s)\n"
@@ -801,7 +801,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   
   // add a note to the user log file about what we did
   {
-    data log;
+    utf8 log;
     app.work.read_user_log(log);
     std::string log_str = log();
     if (!log_str.empty())
@@ -814,7 +814,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
       log_str += (FL("applied partial changes from %s\n"
                      "                     through %s\n")
                   % from_rid % to_rid).str();
-    app.work.write_user_log(data(log_str));
+    app.work.write_user_log(utf8(log_str));
   }
 }
 

@@ -446,13 +446,9 @@ notify_if_multiple_heads(app_state & app)
   }
 }
 
-// FIXME BUG: our log message handling is terribly locale-unaware -- if it's
-// passed as -m, we convert to unicode, if it's passed as --message-file or
-// entered interactively, we simply pass it through as bytes.
-
 void
 process_commit_message_args(bool & given,
-                            string & log_message,
+                            utf8 & log_message,
                             app_state & app)
 {
   // can't have both a --message and a --message-file ...
@@ -461,14 +457,15 @@ process_commit_message_args(bool & given,
 
   if (app.is_explicit_option(option::message()))
     {
-      log_message = app.message();
+      log_message = app.message;
       given = true;
     }
   else if (app.is_explicit_option(option::msgfile()))
     {
       data dat;
       read_data_for_command_line(app.message_file(), dat);
-      log_message = dat();
+      external dat2 = dat();
+      system_to_utf8(dat2, log_message);
       given = true;
     }
   else

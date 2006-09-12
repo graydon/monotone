@@ -1,3 +1,19 @@
+2006-09-11  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.{cc,hh} (cert_revision_changelog): Take utf8 instead of string.
+
+	* work.cc (read_user_log, write_user_log):
+	* lua_hooks.{hh,cc} (hook_validate_commit_message):
+	(hook_edit_comment):
+	* cmd_ws_commit.cc (get_log_message_interactively): 
+	* commands.cc (process_commit_message_args): Type properly, and do
+	charset conversion when necessary.
+
+	* cmd_merging.cc (merge_into_dir): 
+	* cmd_ws_commit.cc (commit): Generate utf8 changelogs.
+
+	* tests/i18n_commit_messages/: New test.
+	
 2006-09-09  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_merging.cc (pluck): Error out if there is no work to be
