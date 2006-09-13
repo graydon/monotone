@@ -1,3 +1,8 @@
+2006-09-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* cmd_diff_log.cc (CMD(log)): Fix a bad typo that prevented the
+	attribute markings from being used.
+
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* cmd_diff_log.cc (CMD(log)): If we use the markings, skip

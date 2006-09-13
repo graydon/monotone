@@ -677,7 +677,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   marked_revs.insert(marking.file_content.begin(), marking.file_content.end());
                   marked_revs.insert(marking.parent_name.begin(), marking.parent_name.end());
                   for (map<attr_key, set<revision_id> >::const_iterator a = marking.attrs.begin();
-                       a != marking.attrs.begin(); ++a)
+                       a != marking.attrs.end(); ++a)
                     marked_revs.insert(a->second.begin(), a->second.end());
                 }
             }
