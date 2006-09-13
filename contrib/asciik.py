@@ -55,10 +55,11 @@
 #   node, and then an "interline", which contains edges that will link us to
 #   the next line.
 #
-#   A design goal of the system is that you can always trivially the space
-#   between two "lines", by adding another "| | | |"-type interline after the
-#   real interline.  This allows us to put arbitrarily long annotations in the
-#   space to the right of the graph, for each revision.
+#   A design goal of the system is that you can always trivially increase the
+#   space between two "lines", by adding another "| | | |"-type interline
+#   after the real interline.  This allows us to put arbitrarily long
+#   annotations in the space to the right of the graph, for each revision --
+#   we can just stretch the graph portion to give us more space.
 #   
 # Loop:
 #   We start knowing, for each logical column, what thing has to go there
