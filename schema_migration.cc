@@ -1159,6 +1159,23 @@ migrate_rosters_no_hash(sqlite3 * sql,
 }
 
 
+static bool
+migrate_add_heights(sqlite3 *sql, char ** errmsg, app_state *app)
+{
+  int res;
+
+  res = logged_sqlite3_exec(sql,
+                            "CREATE TABLE heights\n"
+                            "(\n"
+                            "revision not null,	-- joins with revisions.id\n"
+                            "height not null,	-- complex height, array of big endian u32 integers\n"
+                            "unique(revision, height)\n"
+                            ");", NULL, NULL, errmsg);
+  if (res != SQLITE_OK)
+    return false;
+  return true;
+}
+
 void
 migrate_monotone_schema(sqlite3 *sql, app_state *app)
 {
@@ -1195,6 +1212,9 @@ migrate_monotone_schema(sqlite3 *sql, app_state *app)
 
   m.add("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
         &migrate_rosters_no_hash);
+
+  m.add("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
+        &migrate_add_heights);
 
   // IMPORTANT: whenever you modify this to add a new schema version, you must
   // also add a new migration test for the new schema version.  See
