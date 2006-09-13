@@ -3,32 +3,6 @@
 # BUGS:
 #
 # 1)
-# 
-# | | | | | |/ / /
-# | | | o | | | |    9d60709de95de51104c80696aeee771b5e3bba69
-# | | |  \ / / / 
-# | | o-. | | |    0b96de216534d45b353bd94199ce7055de2d3048
-# | | | |\| | |
-#
-# should be:
-#
-# | | | | | |/ / /
-# | | | o | | | |    9d60709de95de51104c80696aeee771b5e3bba69
-# | | |  X / / / 
-# | | o-. | | |    0b96de216534d45b353bd94199ce7055de2d3048
-# | | | |\| | |
-#
-# or:
-#
-# | | | | | |/ / /
-# | | | o-. | | |    9d60709de95de51104c80696aeee771b5e3bba69
-# | | |   |\| | | 
-# | | o---. | | |    0b96de216534d45b353bd94199ce7055de2d3048
-# | | |   |\| | |
-# | | |   | | o |
-# | | |  / / / /
-#
-# 2)
 #
 # | | | | | | |\ \ \ \ 
 # | | | | | | o | | | |    145c71fb56cff358dd711773586ae6b5219b0cfc
@@ -42,6 +16,20 @@
 #
 # need some sort "inertia", if we moved sideways before and are moving
 # sideways now...
+#
+# 2)
+#
+# We don't draw things like
+#
+# | o | | | | | |
+# | | | | | | | |
+# | | .-----.-o |
+# | |/| | |/|  /
+# | | | | | | o
+# | | | | | | |
+#
+# right -- one of the dots may get overwritten by the other -- line.
+
 
 
 # How this works:
@@ -79,6 +67,7 @@
 #   Having found a layout that works, we draw lines connecting things!  Yay.
 
 import sys
+from sets import Set as set
 
 # returns a dict {node: (parents,)}
 def parsegraph(f):
@@ -145,6 +134,15 @@ def with_a_ghost_added(next_row, loc):
     w.insert(loc, None)
     return w
 
+# coordinates of the columns where we draw sideways-moving links
+def links_cross(links):
+    crosses = set()
+    for i, j in links:
+        if i != j:
+            for coord in xrange(2 * min(i, j) + 1, 2 * max(i, j)):
+                crosses.add(coord)
+    return crosses
+
 def try_draw(curr_row, next_row, curr_loc, parents):
     curr_items = len(curr_row)
     next_items = len(next_row)
@@ -152,7 +150,7 @@ def try_draw(curr_row, next_row, curr_loc, parents):
     for i in xrange(curr_items):
         if curr_row[i] is None:
             curr_ghosts.append(i)
-    links = []
+    preservation_links = []
     have_shift = False
     for rev in curr_row:
         if rev is not None and rev in next_row:
@@ -162,14 +160,21 @@ def try_draw(curr_row, next_row, curr_loc, parents):
                 have_shift = True
             if abs(i - j) > 1:
                 return False
-            links.append((i, j))
+            preservation_links.append((i, j))
+    parent_links = []
     for p in parents:
         i = curr_loc
         j = next_row.index(p)
         if abs(i - j) > 1 and have_shift:
             return False
-        links.append((i, j))
+        parent_links.append((i, j))
 
+    preservation_crosses = links_cross(preservation_links)
+    parent_crosses = links_cross(parent_links)
+    if preservation_crosses.intersection(parent_crosses):
+        return False
+
+    links = preservation_links + parent_links
     draw(curr_items, next_items, curr_loc, links, curr_ghosts, curr_row[curr_loc])
     return True
 
