@@ -16,19 +16,6 @@
 #
 # need some sort "inertia", if we moved sideways before and are moving
 # sideways now...
-#
-# 2)
-#
-# We don't draw things like
-#
-# | o | | | | | |
-# | | | | | | | |
-# | | .-----.-o |
-# | |/| | |/|  /
-# | | | | | | o
-# | | | | | | |
-#
-# right -- one of the dots may get overwritten by the other -- line.
 
 
 
@@ -189,6 +176,7 @@ def draw(curr_items, next_items, curr_loc, links, curr_ghosts, annotation):
     for i in curr_ghosts:
         line[i * 2] = " "
     # then the links
+    dots = set()
     for i, j in links:
         if i == j:
             interline[2 * i] = "|"
@@ -216,9 +204,16 @@ def draw(curr_items, next_items, curr_loc, links, curr_ghosts, annotation):
                 dot = end
                 interline[dot + 1] = "\\"
             if end - start >= 1:
-                line[dot] = "."
+                dots.add(dot)
             line[start:end] = "-" * (end - start)
-    # and add the main attraction (may overwrite a ".")
+    # add any dots (must do this in a second pass, so that if there are 
+    # cases like:
+    #   | .-----.-o
+    #   |/| | |/|
+    # where we want to make sure the second dot overwrites the first --.
+    for dot in dots:
+        line[dot] = "."
+    # and add the main attraction (may overwrite a ".").
     line[curr_loc * 2] = "o"
 
     print "".join(line) + "    " + annotation
