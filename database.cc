@@ -133,7 +133,7 @@ database::database(system_path const & fn) :
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
   __sql(NULL),
-  schema("ae196843d368d042f475e3dadfed11e9d7f9f01e"),
+  schema("48fd5d84f1e5a949ca093e87e5ac558da6e5956d"),
   transaction_level(0),
   roster_cache(constants::db_roster_cache_sz,
                roster_writeback_manager(*this)),

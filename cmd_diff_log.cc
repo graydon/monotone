@@ -608,7 +608,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       roster_t old_roster, new_roster;
 
       if (app.revision_selectors.size() == 0)
-        app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+        {
+          temp_node_id_source nis;
+          app.work.get_base_and_current_roster_shape(old_roster,
+                                                     new_roster, nis);
+        }
       else
         app.db.get_roster(first_rid, new_roster);
 
