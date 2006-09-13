@@ -3,16 +3,6 @@
 # BUGS:
 #
 # 1)
-#
-# | | | | | o |     | |
-# | | | | | | |    / / 
-# | | | | o | | .-.-|
-# | | | | |/ / / /
-#
-# ^^ seems to be jumping two columns?  It is not supposed to do that.
-#
-#
-# 2)
 # 
 # | | | | | |/ / /
 # | | | o | | | |    9d60709de95de51104c80696aeee771b5e3bba69
@@ -38,7 +28,7 @@
 # | | |   | | o |
 # | | |  / / / /
 #
-# 3)
+# 2)
 #
 # | | | | | | |\ \ \ \ 
 # | | | | | | o | | | |    145c71fb56cff358dd711773586ae6b5219b0cfc
@@ -169,6 +159,8 @@ def try_draw(curr_row, next_row, curr_loc, parents):
             j = next_row.index(rev)
             if i != j:
                 have_shift = True
+            if abs(i - j) > 1:
+                return False
             links.append((i, j))
     for p in parents:
         i = curr_loc
