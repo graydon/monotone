@@ -1,77 +1,26 @@
 2006-09-13  Thomas Moschny  <thomas.moschny@gmx.de>
 
-	* cmd_diff_log.cc (CMD(log)): Fix a bad typo that prevented the
-	attribute markings from being used.
-
-2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* cmd_diff_log.cc (CMD(log)): If we use the markings, skip
-	uninteresting nodes while traversing the tree. Fix: Now revisions
-	are printed only if they are marked.
-
-2006-09-11  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* cmd_diff_log.cc (CMD(log)): Now using the markings to avoid
-	fetching rosters for uninteresting revisions. Needs some testing
-	though.
-
-2006-09-10  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* cmd_diff_log.cc (CMD(log)): Traverse the tree in topological
-	order, using heights and a priority queue.
-
-2006-09-08  Thomas Moschny  <thomas.moschny@gmx.de>
-	
-	* database.cc (info): Show space usage information for the heights.
-	* rev_height.cc (child_height): Overflow check.
-	* database.cc (put_revision): ditto.
-	* rev_height.cc, rev_height.hh: Use u32 integers instead of u64s.
-	* database.cc (database), schema.sql, schema_migration.cc
-	(migrate_monotone_schema), tests/schema_migration/__driver__.lua:
-	Hash changed due to changed comment.
-
-2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* revision.cc (toposort): Use the revision heights.
-
-2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* automate.cc (rev_height): New command to query a rev's
-	height. Preliminary.
-
-2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* database.cc (put_revision): Determine the revision's height and
-	write it to the database.
-
-2006-09-07  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* database.cc (get_rev_height, put_rev_height, has_rev_height):
-	New methods for storing and retrieving revision heights.
-
-2006-09-06  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* rev_height.cc (operator<): Fix a logic bug.
-	(child_height): Fix an index bug introduced by refactoring.
-
-2006-09-06  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* rev_height.cc, rev_height.hh: Get rid of that ugly
-	char[]. Correct a bug in operator<().
-	* Makefile.am (MOST_SOURCES): Add rev_height.{cc|hh}.
-
-2006-09-06  Thomas Moschny  <thomas.moschny@gmx.de>
-
+	* schema.sql: New table for the revision heights.
+	* schema_migration.cc (migrate_monotone_schema): Add code for the
+	  schema migration.
+	* tests/schema_migration/__driver__.lua: Add migration test.
 	* rev_height.cc, rev_height.hh: Add a class for the revision
 	height.
-
-2006-09-04  Thomas Moschny  <thomas.moschny@gmx.de>
-
-	* schema.sql: new table for the revision heights.
-	* database.cc (database): new schema.
-	* schema_migration.cc (migrate_monotone_schema): add code for the
-	  schema migration.
-	* tests/schema_migration/__driver__.lua: add migration test.
+	* Makefile.am (MOST_SOURCES): Add rev_height.{cc|hh}.
+	* database.cc (database): New schema.
+	* database.cc (get_rev_height, put_rev_height, has_rev_height):
+	New methods for storing and retrieving revision heights.
+	* database.cc (put_revision): Determine the revision's height and
+	write it into the database.
+	* database.cc (info): Show space usage information for the
+	heights.
+	* automate.cc (rev_height): New command to query a rev's
+	height. Preliminary.
+	* revision.cc (toposort): Use the revision heights.
+	* cmd_diff_log.cc (CMD(log)): Use the heights to traverse the
+	graph in topological order. Use the markings to avoid fetching
+	rosters for uninteresting revisions for restricted, backwards
+	walking logs.
 
 2006-09-04  Alex Queiroz  <alex@ventonegro.org>
 
