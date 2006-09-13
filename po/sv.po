@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-12 08:53+0200\n"
-"PO-Revision-Date: 2006-09-12 08:54+0200\n"
+"POT-Creation-Date: 2006-09-12 12:48+0200\n"
+"PO-Revision-Date: 2006-09-12 12:51+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2532,7 +2532,7 @@ msgstr "%s anropades med inkorrekt parameter"
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:480 rcs_import.cc:1235 work.cc:1293
+#: lua.cc:480 rcs_import.cc:1235 work.cc:1316
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
@@ -3400,47 +3400,47 @@ msgstr "sökvägen %s finns inte"
 msgid "tags"
 msgstr "taggar"
 
-#: revision.cc:858
+#: revision.cc:865
 #, c-format
 msgid "scanning for bogus merge edges"
 msgstr "letar efter felaktiga ihopslagningsbågar"
 
-#: revision.cc:900
+#: revision.cc:907
 #, c-format
 msgid "optimizing out redundant edge %d -> %d"
 msgstr "optimerar bort onödig båge %d -> %d"
 
-#: revision.cc:909
+#: revision.cc:916
 #, c-format
 msgid "failed to eliminate edge %d -> %d"
 msgstr "misslyckades med att ta bort bågen %d -> %d"
 
-#: revision.cc:920
+#: revision.cc:927
 #, c-format
 msgid "rebuilding %d nodes"
 msgstr "bygger om %d noder"
 
-#: revision.cc:1125
+#: revision.cc:1132
 #, c-format
 msgid "Path %s added to child roster multiple times\n"
 msgstr "Sökvägen %s tillagd till listan mer än en gång\n"
 
-#: revision.cc:1138
+#: revision.cc:1145
 #, c-format
 msgid "Directory for path %s cannot be added, as there is a file in the way\n"
 msgstr "Katalogen %s kan inte läggas till, det finns en fil i vägen\n"
 
-#: revision.cc:1149
+#: revision.cc:1156
 #, c-format
 msgid "Path %s cannot be added, as there is a directory in the way"
 msgstr "Filen %s kan inte läggas till, det finns en katalog i vägen"
 
-#: revision.cc:1152
+#: revision.cc:1159
 #, c-format
 msgid "Path %s added twice with differing content\n"
 msgstr "Sökvägen %s tillagd två gånger med olika innehåll\n"
 
-#: revision.cc:1439
+#: revision.cc:1446
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -3455,31 +3455,31 @@ msgstr ""
 "attributet hjälper vi gärna till att klura ut ett bra sätt att hantera\n"
 "det på)"
 
-#: revision.cc:1552
+#: revision.cc:1559
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions"
 msgstr "konverterar existerande revisionsgraf till nya revisioner i liststil"
 
-#: revision.cc:1607
+#: revision.cc:1614
 #, c-format
 msgid "rebuilding revision graph from manifest certs"
 msgstr "bygger om revisionsgrafen från manifestcert"
 
-#: revision.cc:1640
+#: revision.cc:1647
 #, c-format
 msgid "regenerating cached rosters"
 msgstr "återskapar cachade listor"
 
-#: revision.cc:1649
+#: revision.cc:1656
 #, c-format
 msgid "calculating rosters to regenerate"
 msgstr "räknar ut listor att göras om"
 
-#: revision.cc:1653
+#: revision.cc:1660
 msgid "regenerated"
 msgstr "omgjorda"
 
-#: revision.cc:1748
+#: revision.cc:1755
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -3758,57 +3758,63 @@ msgstr "hoppar över %s, den finns redan noterad i arbetskopian"
 msgid "adding %s to workspace manifest"
 msgstr "lägger till %s i arbetskopians manifest"
 
-#: work.cc:673
+#: work.cc:565
+#, c-format
+msgid ""
+"cannot add %s, because %s is recorded as a file in the workspace manifest"
+msgstr "kan inte lägga till %s eftersom %s redan är registrerat som en fil i arbetskopians manifest"
+
+#: work.cc:680
 #, c-format
 msgid "dropping %s"
 msgstr "slänger %s"
 
-#: work.cc:684 work.cc:695
+#: work.cc:691 work.cc:702
 #, c-format
 msgid "path %s already exists"
 msgstr "sökvägen %s finns redan"
 
-#: work.cc:717 work.cc:744
+#: work.cc:724 work.cc:751
 #, c-format
 msgid "adding %s"
 msgstr "lägger till %s"
 
-#: work.cc:733
+#: work.cc:740
 #, c-format
 msgid "path '%s' already exists, cannot create"
 msgstr "sökvägen '%s' finns redan, kan inte skapa den"
 
-#: work.cc:740
+#: work.cc:747
 #, c-format
 msgid "renaming %s to %s"
 msgstr "byter namn på %s till %s"
 
-#: work.cc:775
+#: work.cc:782
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "filen '%s' finns inte"
 
-#: work.cc:776
+#: work.cc:783
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "filen '%s' är en katalog"
 
-#: work.cc:781
+#: work.cc:788
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 
-#: work.cc:782
+#: work.cc:789
 #, c-format
 msgid "modifying %s"
 msgstr "ändrar %s"
 
-#: work.cc:967
+#: work.cc:974
 #, c-format
 msgid "missing %s"
 msgstr "saknar %s"
 
-#: work.cc:973
+#: work.cc:980
 #, c-format
 msgid ""
 "%d missing files; use '%s ls missing' to view\n"
@@ -3827,85 +3833,95 @@ msgstr ""
 " '%s drop --missing' eller\n"
 " '%s revert --missing'"
 
-#: work.cc:1102
+#: work.cc:1113
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "hoppar över %s, ej noterad i arbetskopian för närvarande"
 
-#: work.cc:1112
+#: work.cc:1123
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kan inte ta bort %s/, den är inte tom"
 
-#: work.cc:1123
+#: work.cc:1134
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "tar bort %s från arbetskopians manifest"
 
-#: work.cc:1174
+#: work.cc:1187
 #, c-format
 msgid "destination dir %s/ does not exist in current revision"
 msgstr "målkatalogen %s/ finns inte i nuvarande revision"
 
-#: work.cc:1177
+#: work.cc:1190
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "målet %s är en existerande fil i nuvarande revision"
 
-#: work.cc:1187
+#: work.cc:1200
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "tom sökväg %s ej tillåten"
 
-#: work.cc:1201
+#: work.cc:1214
 #, c-format
-msgid "%s does not exist in current revision"
-msgstr "%s finns inte i nuvarande revision"
+msgid "%s does not exist in current manifest"
+msgstr "%s finns inte i nuvarande manifest"
 
-#: work.cc:1204
+#: work.cc:1217
 #, c-format
-msgid "destination %s already exists in current revision"
-msgstr "målet %s finns redan i nuvarande revision"
+msgid "destination %s already exists in current manifest"
+msgstr "målet %s finns redan i nuvarande manifest"
 
-#: work.cc:1213
+#: work.cc:1223
+#, c-format
+msgid "destination directory %s does not exist in current manifest"
+msgstr "målkatalogen %s finns inte i nuvarande manifest"
+
+#: work.cc:1225
+#, c-format
+msgid "destination directory %s is not a directory"
+msgstr "målkatalogen %s är inte en katalog"
+
+#: work.cc:1234
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "byter namn från %s till %s i arbetskopians manifest"
 
-#: work.cc:1241
+#: work.cc:1262
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "hoppar över %s, den existerar inte i arbetskopian"
 
-#: work.cc:1245
+#: work.cc:1266
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "hoppar över %s, den finns redan noterad i arbetskopian"
 
-#: work.cc:1273
+#: work.cc:1296
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' är inte noterad i arbetskopian eller "
 "finns inte"
 
-#: work.cc:1275
+#: work.cc:1298
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "den föreslagna nya rotkatalogen '%s' är inte en katalog"
 
-#: work.cc:1280
+#: work.cc:1303
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' innehåller den otillåtna sökvägen %s"
 
-#: work.cc:1290
+#: work.cc:1313
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "katalogen '%s' är inte noterad i arbetskopian eller finns inte"
 
-#: work.cc:1296
+#: work.cc:1319
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' är i vägen"
