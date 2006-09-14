@@ -72,8 +72,8 @@ get_inodeprints_path(bookkeeping_path & ip_path)
 // routines for manipulating the bookkeeping directory
 
 // revision file contains a partial revision describing the workspace
-static void
-get_work_rev(revision_t & rev)
+void
+workspace::get_work_rev(revision_t & rev)
 {
   bookkeeping_path rev_path;
   get_revision_path(rev_path);
@@ -90,9 +90,6 @@ get_work_rev(revision_t & rev)
     }
 
   read_revision(rev_data, rev);
-  // Currently the revision must have only one ancestor.
-  I(rev.edges.size() == 1);
-
   // Mark it so it doesn't creep into the database.
   rev.made_for = made_for_workspace;
 }
@@ -100,9 +97,7 @@ get_work_rev(revision_t & rev)
 void
 workspace::put_work_rev(revision_t const & rev)
 {
-  // Currently the revision must have only one ancestor.
   MM(rev);
-  I(rev.edges.size() == 1);
   I(rev.made_for == made_for_workspace);
   rev.check_sane();
 
@@ -122,6 +117,10 @@ workspace::get_work_cset(cset & w)
   revision_t rev;
   get_work_rev(rev);
 
+  // If you're using this interface, the revision must have only one
+  // ancestor.
+  I(rev.edges.size() == 1);
+
   w = edge_changes(rev.edges.begin());
 }
 
@@ -131,28 +130,40 @@ workspace::get_revision_id(revision_id & c)
 {
   revision_t rev;
   get_work_rev(rev);
+
+  // If you're using this interface, the revision must have only one
+  // ancestor.
+  I(rev.edges.size() == 1);
   c = edge_old_revision(rev.edges.begin());
 }
 
 // structures derived from the work revision, the database, and possibly
 // the workspace
+
+static void
+get_roster_for_rid(revision_id const & rid,
+                   roster_t & ros,
+                   marking_map & mm,
+                   database & db)
+{
+  if (!null_id(rid))
+    {
+      N(db.revision_exists(rid),
+        F("base revision %s does not exist in database") % rid);
+
+      db.get_roster(rid, ros, mm);
+    }
+  L(FL("base roster has %d entries") % ros.all_nodes().size());
+}
+
+
 void
 workspace::get_base_revision(revision_id & rid,
                              roster_t & ros,
                              marking_map & mm)
 {
   get_revision_id(rid);
-
-  if (!null_id(rid))
-    {
-
-      N(db.revision_exists(rid),
-        F("base revision %s does not exist in database") % rid);
-
-      db.get_roster(rid, ros, mm);
-    }
-
-  L(FL("base roster has %d entries") % ros.all_nodes().size());
+  get_roster_for_rid(rid, ros, mm, db);
 }
 
 void
@@ -171,14 +182,40 @@ workspace::get_base_roster(roster_t & ros)
   get_base_revision(rid, ros, mm);
 }
 
+// ??? We may want a version of this that returns the marking_maps too.
+void
+workspace::get_parent_rosters(parent_map & parents)
+{
+  revision_t rev;
+  get_work_rev(rev);
+
+  parents.clear();
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); i++)
+    {
+      marking_map mm;
+      roster_t ros;
+      get_roster_for_rid(edge_old_revision(i), ros, mm, db);
+      safe_insert(parents, make_pair(edge_old_revision(i), ros));
+    }
+}
+
 void
 workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 {
-  get_base_roster(ros);
-  cset cs;
-  get_work_cset(cs);
+  // The current roster is (supposed to be) the same no matter which edge
+  // you come in along, so we do not need to worry about multiple parents
+  // here.
+  revision_t rev;
+  get_work_rev(rev);
+
+  revision_id rid = edge_old_revision(rev.edges.begin());
+  cset shape = edge_changes(rev.edges.begin());
+
+  marking_map mm;
+  get_roster_for_rid(rid, ros, mm, db);
+
   editable_roster_base er(ros, nis);
-  cs.apply_to(er);
+  shape.apply_to(er);
 }
 
 void

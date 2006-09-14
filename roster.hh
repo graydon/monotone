@@ -424,6 +424,33 @@ namespace basic_io
 void push_marking(basic_io::stanza & st, bool is_file, marking_t const & mark);
 void parse_marking(basic_io::parser & pa, marking_t & marking);
 
+// Parent maps are used in a number of places to keep track of all the
+// parent rosters of a given revision.
+typedef std::map<revision_id, roster_t>
+parent_map;
+
+typedef parent_map::value_type
+parent_entry;
+
+inline revision_id const & parent_id(parent_entry const & p)
+{
+  return p.first;
+}
+
+inline revision_id const & parent_id(parent_map::const_iterator i)
+{
+  return i->first;
+}
+
+inline roster_t const & parent_roster(parent_entry const & p)
+{
+  return p.second;
+}
+
+inline roster_t const & parent_roster(parent_map::const_iterator i)
+{
+  return i->second;
+}
 
 #ifdef BUILD_UNIT_TESTS
 
