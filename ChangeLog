@@ -1,3 +1,13 @@
+2006-09-14  Zack Weinberg  <zackw@panix.com>
+
+	Use the roster cache in content_merge_adaptors.
+	* diff_patch.hh: Constify all shared_ptr<roster_t>s.
+	* diff_patch.cc: Similarly.
+	(load_and_cache_roster): Use the db.get_roster overload
+	that returns a cached_roster.
+	* merge.cc (resolve_merge_conflicts): Constify a shared_ptr<roster_t>.
+	* work.cc (content_merge_empty_adaptor): Similarly.
+
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* .mtn-ignore: Ignore mtn instead of monotone; additionally ignore
@@ -26,8 +36,8 @@
 
 2006-09-12  Nathaniel Smith  <njs@pobox.com>
 
-	* work.cc (perform_additions, perform_deletions) 
-	(perform_rename, perform_pivot_root): 
+	* work.cc (perform_additions, perform_deletions)
+	(perform_rename, perform_pivot_root):
 	* revision.cc (make_revision_for_workspace): Add some MMs.
 
 2006-09-12  Richard Levitte  <richard@levitte.org>
@@ -46,15 +56,15 @@
 	* work.cc (read_user_log, write_user_log):
 	* lua_hooks.{hh,cc} (hook_validate_commit_message):
 	(hook_edit_comment):
-	* cmd_ws_commit.cc (get_log_message_interactively): 
+	* cmd_ws_commit.cc (get_log_message_interactively):
 	* commands.cc (process_commit_message_args): Type properly, and do
 	charset conversion when necessary.
 
-	* cmd_merging.cc (merge_into_dir): 
+	* cmd_merging.cc (merge_into_dir):
 	* cmd_ws_commit.cc (commit): Generate utf8 changelogs.
 
 	* tests/i18n_commit_messages/: New test.
-	
+
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* Makefile.am (package_revision.txt): Follow-up for the merge of
@@ -79,10 +89,10 @@
 2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
 
 	* basic_io.hh (basic_io::printer):
-	note that only one printer can be referenced at a time, 
+	note that only one printer can be referenced at a time,
 	due to shared static buffer.
-	* basic_io.cc (basic_io::printer::printer, 
-	basic_io::printer::~printer): add reference tracking, 
+	* basic_io.cc (basic_io::printer::printer,
+	basic_io::printer::~printer): add reference tracking,
 	and invariant if more than one printer referenced at a time.
 
 2006-09-08  Alex Queiroz  <alex@ventonegro.org>
@@ -92,9 +102,9 @@
 2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_corresponding_path, get_content_changed):
-	fix output; roster information was being written to 
+	fix output; roster information was being written to
 	basic_io::printer mysteriously. Tests now pass.
-	* testsuite.lua: remove second reference to 
+	* testsuite.lua: remove second reference to
 	automate_get_corresponding_path test
 
 2006-09-07  Nathaniel Smith  <njs@pobox.com>
@@ -117,8 +127,8 @@
 
 2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
 
-	* monotone.texi: add *-merge documentation sourced 
-	from mailing list archives (new entry under "Special 
+	* monotone.texi: add *-merge documentation sourced
+	from mailing list archives (new entry under "Special
 	"Topics").
 
 2006-09-07  Richard Levitte  <richard@levitte.org>
@@ -134,7 +144,7 @@
 2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_content_changed, get_corresponding_path)
-	add new functions, allowing determinination of last content 
+	add new functions, allowing determinination of last content
 	change and also filenames between revisions.
 	* monotone.texi: document new automate commands
 	* monotone.texi: document new automate commands
@@ -146,7 +156,7 @@
 	  tests/automate_get_corresponding_path/expected,
 	  tests/automate_get_corresponding_path/expected2A:
 	  test new automate commands
-	* testsuite.lua: call automate_get_content_changed, 
+	* testsuite.lua: call automate_get_content_changed,
 	  automate_get_corresponding_path tests.
 
 2006-09-07  Nathaniel Smith  <njs@pobox.com>
