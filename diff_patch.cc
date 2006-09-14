@@ -520,24 +520,25 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 
 static void
 load_and_cache_roster(revision_id const & rid,
-                      map<revision_id, shared_ptr<roster_t> > & rmap,
-                      shared_ptr<roster_t> & rout,
+                      map<revision_id, shared_ptr<roster_t const> > & rmap,
+                      shared_ptr<roster_t const> & rout,
                       app_state & app)
 {
-  map<revision_id, shared_ptr<roster_t> >::const_iterator i = rmap.find(rid);
+  map<revision_id, shared_ptr<roster_t const> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
     rout = i->second;
   else
     {
-      rout = shared_ptr<roster_t>(new roster_t());
-      app.db.get_roster(rid, *rout);
-      safe_insert(rmap, make_pair(rid, rout));
+      database::cached_roster cr;
+      app.db.get_roster(rid, cr);
+      safe_insert(rmap, make_pair(rid, cr.first));
+      rout = cr.first;
     }
 }
 
 void
 content_merge_database_adaptor::get_ancestral_roster(node_id nid,
-                                                     shared_ptr<roster_t> & anc)
+                                                     shared_ptr<roster_t const> & anc)
 {
   // Given a file, if the lca is nonzero and its roster contains the file,
   // then we use its roster.  Otherwise we use the roster at the file's
@@ -588,7 +589,7 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 
 void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
-                                                      shared_ptr<roster_t> & anc)
+                                                      shared_ptr<roster_t const> & anc)
 {
   // When doing an update, the base revision is always the ancestor to
   // use for content merging.
