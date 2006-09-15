@@ -142,18 +142,26 @@ workspace::get_revision_id(revision_id & c)
 
 static void
 get_roster_for_rid(revision_id const & rid,
-                   roster_t & ros,
-                   marking_map & mm,
+                   database::cached_roster & cr,
                    database & db)
 {
-  if (!null_id(rid))
+  // We may be asked for a roster corresponding to the null rid, which
+  // is not in the database.  In this situation, what is wanted is an empty
+  // roster (and marking map).
+  if (null_id(rid))
+    {
+      cr.first = boost::shared_ptr<roster_t const>(new roster_t);
+      cr.second = boost::shared_ptr<marking_map const>(new marking_map);
+    }
+  else
     {
       N(db.revision_exists(rid),
         F("base revision %s does not exist in database") % rid);
+      db.get_roster(rid, cr);
 
-      db.get_roster(rid, ros, mm);
+      L(FL("base roster has %d entries")
+        % cr.first->all_nodes().size());
     }
-  L(FL("base roster has %d entries") % ros.all_nodes().size());
 }
 
 
@@ -162,27 +170,30 @@ workspace::get_base_revision(revision_id & rid,
                              roster_t & ros,
                              marking_map & mm)
 {
+  database::cached_roster cr;
   get_revision_id(rid);
-  get_roster_for_rid(rid, ros, mm, db);
+  get_roster_for_rid(rid, cr, db);
+  ros = *cr.first;
+  mm = *cr.second;
 }
 
 void
 workspace::get_base_revision(revision_id & rid,
                              roster_t & ros)
 {
-  marking_map mm;
-  get_base_revision(rid, ros, mm);
+  database::cached_roster cr;
+  get_revision_id(rid);
+  get_roster_for_rid(rid, cr, db);
+  ros = *cr.first;
 }
 
 void
 workspace::get_base_roster(roster_t & ros)
 {
   revision_id rid;
-  marking_map mm;
-  get_base_revision(rid, ros, mm);
+  get_base_revision(rid, ros);
 }
 
-// ??? We may want a version of this that returns the marking_maps too.
 void
 workspace::get_parent_rosters(parent_map & parents)
 {
@@ -192,10 +203,9 @@ workspace::get_parent_rosters(parent_map & parents)
   parents.clear();
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); i++)
     {
-      marking_map mm;
-      roster_t ros;
-      get_roster_for_rid(edge_old_revision(i), ros, mm, db);
-      safe_insert(parents, make_pair(edge_old_revision(i), ros));
+      database::cached_roster cr;
+      get_roster_for_rid(edge_old_revision(i), cr, db);
+      safe_insert(parents, make_pair(edge_old_revision(i), cr));
     }
 }
 
@@ -211,8 +221,9 @@ workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
   revision_id rid = edge_old_revision(rev.edges.begin());
   cset shape = edge_changes(rev.edges.begin());
 
-  marking_map mm;
-  get_roster_for_rid(rid, ros, mm, db);
+  database::cached_roster cr;
+  get_roster_for_rid(rid, cr, db);
+  ros = *cr.first;
 
   editable_roster_base er(ros, nis);
   shape.apply_to(er);

@@ -716,7 +716,7 @@ make_restricted_revision(parent_map const & old_rosters,
   // parent roster/cset pairs we use for this; by construction, they must
   // all produce the same result.
   revision_id id = parent_id(old_rosters.begin());
-  roster_t restricted_roster = safe_get(old_rosters, id);
+  roster_t restricted_roster = *(safe_get(old_rosters, id).first);
 
   temp_node_id_source nis;
   editable_roster_base er(restricted_roster, nis);
@@ -761,6 +761,28 @@ make_revision_for_workspace(revision_id const & old_rev_id,
   make_cset(old_roster, new_roster, changes);
   make_revision_for_workspace(old_rev_id, changes, rev);
 }
+
+void
+make_revision_for_workspace(parent_map const & old_rosters,
+                            roster_t const & new_roster,
+                            revision_t & rev)
+{
+  edge_map edges;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> cs(new cset());
+      make_cset(parent_roster(i), new_roster, *cs);
+      cs->deltas_applied.clear();
+      safe_insert(edges, make_pair(parent_id(i), cs));
+    }
+
+  rev.edges = edges;
+  rev.new_manifest = fake_id();
+  rev.made_for = made_for_workspace;
+}
+
 
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.

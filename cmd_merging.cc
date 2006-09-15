@@ -596,7 +596,8 @@ CMD(merge_into_workspace, N_("tree"),
        "The workspace's selected branch is not changed."),
     option::none)
 {
-  revision_id left, right;
+  revision_id left_id, right_id;
+  database::cached_roster left, right;
 
   if (args.size() != 1)
     throw usage(name);
@@ -608,6 +609,7 @@ CMD(merge_into_workspace, N_("tree"),
   // This command cannot be applied to a workspace with more than one parent
   // (revs can have no more than two parents) but we use the multiparent-safe
   // interface anyway so we can give an N() instead of an invariant failure.
+  // (Also, it gives us the cached_roster we want with no special handling.)
   {
     parent_map parents;
     app.work.get_parent_rosters(parents);
@@ -622,36 +624,31 @@ CMD(merge_into_workspace, N_("tree"),
     N(parent_roster(parents.begin()) == working_roster,
       F("'%s' can only be used in a workspace with no pending changes") % name);
 
-    left = parent_id(parents.begin());
-    complete(app, idx(args, 0)(), right);
+    left_id = parents.begin()->first;
+    left = parents.begin()->second;
   }
 
-  // ??? Provide some way of getting the marking maps out of
-  // get_base_rosters so we don't have to hit the database twice.
-  roster_t left_roster, right_roster;
-  marking_map left_marking_map, right_marking_map;
-  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  complete(app, idx(args, 0)(), right_id);
+  app.db.get_roster(right_id, right);
 
-  app.db.get_roster(left, left_roster, left_marking_map);
-  app.db.get_roster(right, right_roster, right_marking_map);
-  app.db.get_uncommon_ancestors(left, right,
+  set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+  app.db.get_uncommon_ancestors(left_id, right_id,
                                 left_uncommon_ancestors,
                                 right_uncommon_ancestors);
 
   roster_merge_result merge_result;
-  roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
-               right_roster, right_marking_map, right_uncommon_ancestors,
+  MM(merge_result);
+  roster_merge(*left.first, *left.second, left_uncommon_ancestors,
+               *right.first, *right.second, right_uncommon_ancestors,
                merge_result);
 
-  revision_id merge_lca;
-  shared_ptr<roster_t> lca_roster(new roster_t);
-  marking_map dummy;
-  find_common_ancestor_for_merge(left, right, merge_lca, app);
-  app.db.get_roster(merge_lca, *lca_roster, dummy);
+  revision_id lca_id;
+  database::cached_roster lca;
+  find_common_ancestor_for_merge(left_id, right_id, lca_id, app);
+  app.db.get_roster(lca_id, lca);
 
-  content_merge_workspace_adaptor wca(app, lca_roster);
-  resolve_merge_conflicts(left_roster, right_roster,
-                          merge_result, wca, app);
+  content_merge_workspace_adaptor wca(app, lca.first);
+  resolve_merge_conflicts(*left.first, *right.first, merge_result, wca, app);
 
   // Make sure it worked...
   I(merge_result.is_clean());
@@ -659,21 +656,26 @@ CMD(merge_into_workspace, N_("tree"),
 
   // Construct the workspace revision.
   parent_map parents;
-  safe_insert(parents, std::make_pair(left, left_roster));
-  safe_insert(parents, std::make_pair(right, right_roster));
+  safe_insert(parents, std::make_pair(left_id, left));
+  safe_insert(parents, std::make_pair(right_id, right));
 
   revision_t merged_rev;
-  make_revision(parents, merge_result.roster, merged_rev);
+  make_revision_for_workspace(parents, merge_result.roster, merged_rev);
 
+  // Note: the csets in merged_rev are _not_ suitable for submission to
+  // perform_content_update, because content changes have been dropped.
+  cset update;
+  make_cset(*left.first, merge_result.roster, update);
+  
   // small race condition here...
-  app.work.perform_content_update(*safe_get(merged_rev.edges, left), wca);
+  app.work.perform_content_update(update, wca);
   app.work.put_work_rev(merged_rev);
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints();
 
   P(F("updated to result of merge\n"
       " [left] %s\n"
-      "[right] %s\n") % left % right);
+      "[right] %s\n") % left_id % right_id);
 }
 
 CMD(explicit_merge, N_("tree"),
@@ -933,23 +935,71 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
     cout << describe_revision(app, *i) << "\n";
 }
 
-CMD(get_roster, N_("debug"), N_("REVID"),
-    N_("dump the roster associated with the given REVID"),
+CMD(get_roster, N_("debug"), N_("[REVID]"),
+    N_("dump the roster associated with the given REVID, "
+       "or the workspace if no REVID is given"),
     option::none)
 {
   revision_id rid;
+  roster_t roster;
+  marking_map mm;
+  
   if (args.size() == 0)
-    app.work.get_revision_id(rid);
+    {
+      parent_map parents;
+      temp_node_id_source nis;
+      rid = fake_id();
+      
+      app.require_workspace();
+      app.work.get_parent_rosters(parents);
+      app.work.get_current_roster_shape(roster, nis);
+      app.work.update_current_roster_from_filesystem(roster);
+
+      if (parents.size() == 0)
+        {
+          mark_roster_with_no_parents(rid, roster, mm);
+        }
+      else if (parents.size() == 1)
+        {
+          roster_t parent = parent_roster(parents.begin());
+          marking_map parent_mm = parent_marking(parents.begin());
+          mark_roster_with_one_parent(parent, parent_mm, rid, roster, mm);
+        }
+      else
+        {
+          parent_map::const_iterator i = parents.begin();
+          revision_id left_id = parent_id(i);
+          roster_t const & left_roster = parent_roster(i);
+          marking_map const & left_markings = parent_marking(i);
+
+          i++;
+          revision_id right_id = parent_id(i);
+          roster_t const & right_roster = parent_roster(i);
+          marking_map const & right_markings = parent_marking(i);
+
+          i++; I(i == parents.end());
+
+          set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
+          app.db.get_uncommon_ancestors(left_id, right_id,
+                                        left_uncommon_ancestors,
+                                        right_uncommon_ancestors);
+
+          mark_merge_roster(left_roster, left_markings,
+                            left_uncommon_ancestors,
+                            right_roster, right_markings,
+                            right_uncommon_ancestors,
+                            rid, roster, mm);
+        }
+    }
   else if (args.size() == 1)
-    complete(app, idx(args, 0)(), rid);
+    {
+      complete(app, idx(args, 0)(), rid);
+      I(!null_id(rid));
+      app.db.get_roster(rid, roster, mm);
+    }
   else
     throw usage(name);
 
-  I(!null_id(rid));
-
-  roster_t roster;
-  marking_map mm;
-  app.db.get_roster(rid, roster, mm);
 
   roster_data dat;
   write_roster_and_marking(roster, mm, dat);

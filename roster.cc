@@ -1478,73 +1478,76 @@ namespace
       I(n->attrs.find(i->first) != n->attrs.end());
   }
 
+} // anonymous namespace
 
-  // This function is also responsible for verifying ancestry invariants --
-  // those invariants on a roster that involve the structure of the roster's
-  // parents, rather than just the structure of the roster itself.
-  void
-  mark_merge_roster(roster_t const & left_roster,
-                    marking_map const & left_markings,
-                    set<revision_id> const & left_uncommon_ancestors,
-                    roster_t const & right_roster,
-                    marking_map const & right_markings,
-                    set<revision_id> const & right_uncommon_ancestors,
-                    revision_id const & new_rid,
-                    roster_t const & merge,
-                    marking_map & new_markings)
-  {
-    for (node_map::const_iterator i = merge.all_nodes().begin();
-         i != merge.all_nodes().end(); ++i)
-      {
-        node_t const & n = i->second;
-        // SPEEDUP?: instead of using find repeatedly, iterate everything in
-        // parallel
-        map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
-        map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
 
-        bool exists_in_left = (lni != left_roster.all_nodes().end());
-        bool exists_in_right = (rni != right_roster.all_nodes().end());
+// This function is also responsible for verifying ancestry invariants --
+// those invariants on a roster that involve the structure of the roster's
+// parents, rather than just the structure of the roster itself.
+void
+mark_merge_roster(roster_t const & left_roster,
+                  marking_map const & left_markings,
+                  set<revision_id> const & left_uncommon_ancestors,
+                  roster_t const & right_roster,
+                  marking_map const & right_markings,
+                  set<revision_id> const & right_uncommon_ancestors,
+                  revision_id const & new_rid,
+                  roster_t const & merge,
+                  marking_map & new_markings)
+{
+  for (node_map::const_iterator i = merge.all_nodes().begin();
+       i != merge.all_nodes().end(); ++i)
+    {
+      node_t const & n = i->second;
+      // SPEEDUP?: instead of using find repeatedly, iterate everything in
+      // parallel
+      map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
+      map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
 
-        marking_t new_marking;
+      bool exists_in_left = (lni != left_roster.all_nodes().end());
+      bool exists_in_right = (rni != right_roster.all_nodes().end());
 
-        if (!exists_in_left && !exists_in_right)
-          mark_new_node(new_rid, n, new_marking);
+      marking_t new_marking;
 
-        else if (!exists_in_left && exists_in_right)
-          {
-            node_t const & right_node = rni->second;
-            marking_t const & right_marking = safe_get(right_markings, n->self);
-            // must be unborn on the left (as opposed to dead)
-            I(right_uncommon_ancestors.find(right_marking.birth_revision)
-              != right_uncommon_ancestors.end());
-            mark_unmerged_node(right_marking, right_node,
-                               new_rid, n, new_marking);
-          }
-        else if (exists_in_left && !exists_in_right)
-          {
-            node_t const & left_node = lni->second;
-            marking_t const & left_marking = safe_get(left_markings, n->self);
-            // must be unborn on the right (as opposed to dead)
-            I(left_uncommon_ancestors.find(left_marking.birth_revision)
-              != left_uncommon_ancestors.end());
-            mark_unmerged_node(left_marking, left_node,
-                               new_rid, n, new_marking);
-          }
-        else
-          {
-            node_t const & left_node = lni->second;
-            node_t const & right_node = rni->second;
-            mark_merged_node(safe_get(left_markings, n->self),
-                             left_uncommon_ancestors, left_node,
-                             safe_get(right_markings, n->self),
-                             right_uncommon_ancestors, right_node,
+      if (!exists_in_left && !exists_in_right)
+        mark_new_node(new_rid, n, new_marking);
+
+      else if (!exists_in_left && exists_in_right)
+        {
+          node_t const & right_node = rni->second;
+          marking_t const & right_marking = safe_get(right_markings, n->self);
+          // must be unborn on the left (as opposed to dead)
+          I(right_uncommon_ancestors.find(right_marking.birth_revision)
+            != right_uncommon_ancestors.end());
+          mark_unmerged_node(right_marking, right_node,
                              new_rid, n, new_marking);
-          }
+        }
+      else if (exists_in_left && !exists_in_right)
+        {
+          node_t const & left_node = lni->second;
+          marking_t const & left_marking = safe_get(left_markings, n->self);
+          // must be unborn on the right (as opposed to dead)
+          I(left_uncommon_ancestors.find(left_marking.birth_revision)
+            != left_uncommon_ancestors.end());
+          mark_unmerged_node(left_marking, left_node,
+                             new_rid, n, new_marking);
+        }
+      else
+        {
+          node_t const & left_node = lni->second;
+          node_t const & right_node = rni->second;
+          mark_merged_node(safe_get(left_markings, n->self),
+                           left_uncommon_ancestors, left_node,
+                           safe_get(right_markings, n->self),
+                           right_uncommon_ancestors, right_node,
+                           new_rid, n, new_marking);
+        }
 
-        safe_insert(new_markings, make_pair(i->first, new_marking));
-      }
-  }
+      safe_insert(new_markings, make_pair(i->first, new_marking));
+    }
+}
 
+namespace {
 
   class editable_roster_for_nonmerge
     : public editable_roster_base

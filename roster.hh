@@ -373,8 +373,8 @@ void
 extract_roster_path_set(roster_t const & ros,
                         path_set & paths);
 
-// These two functions are for the use of things like 'update' or 'pluck',
-// that need to construct fake rosters and/or markings in-memory, to achieve
+// These functions are for the use of things like 'update' or 'pluck', that
+// need to construct fake rosters and/or markings in-memory, to achieve
 // particular merge results.
 void
 mark_roster_with_no_parents(revision_id const & rid,
@@ -386,6 +386,17 @@ mark_roster_with_one_parent(roster_t const & parent,
                             revision_id const & child_rid,
                             roster_t const & child,
                             marking_map & child_markings);
+
+void
+mark_merge_roster(roster_t const & left_roster,
+                  marking_map const & left_markings,
+                  std::set<revision_id> const & left_uncommon_ancestors,
+                  roster_t const & right_roster,
+                  marking_map const & right_markings,
+                  std::set<revision_id> const & right_uncommon_ancestors,
+                  revision_id const & new_rid,
+                  roster_t const & merge,
+                  marking_map & new_markings);
 
 // This is for revisions that are being written to the db, only.  It assigns
 // permanent node ids.
@@ -423,34 +434,6 @@ namespace basic_io
 // for roster_delta
 void push_marking(basic_io::stanza & st, bool is_file, marking_t const & mark);
 void parse_marking(basic_io::parser & pa, marking_t & marking);
-
-// Parent maps are used in a number of places to keep track of all the
-// parent rosters of a given revision.
-typedef std::map<revision_id, roster_t>
-parent_map;
-
-typedef parent_map::value_type
-parent_entry;
-
-inline revision_id const & parent_id(parent_entry const & p)
-{
-  return p.first;
-}
-
-inline revision_id const & parent_id(parent_map::const_iterator i)
-{
-  return i->first;
-}
-
-inline roster_t const & parent_roster(parent_entry const & p)
-{
-  return p.second;
-}
-
-inline roster_t const & parent_roster(parent_map::const_iterator i)
-{
-  return i->second;
-}
 
 #ifdef BUILD_UNIT_TESTS
 

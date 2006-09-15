@@ -897,17 +897,16 @@ AUTOMATE(get_revision, N_("[REVID]"))
 
   if (args.size() == 0)
     {
-      roster_t old_roster, new_roster;
-      revision_id old_revision_id;
+      roster_t new_roster;
+      parent_map old_rosters;
       revision_t rev;
 
       app.require_workspace();
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_parent_rosters(old_rosters);
+      app.work.get_current_roster_shape(new_roster, nis);
       app.work.update_current_roster_from_filesystem(new_roster);
 
-      app.work.get_revision_id(old_revision_id);
-      make_revision(old_revision_id, old_roster, new_roster, rev);
-
+      make_revision(old_rosters, new_roster, rev);
       calculate_ident(rev, ident);
       write_revision(rev, dat);
     }

@@ -17,6 +17,7 @@
 #include "vocab.hh"
 #include "paths.hh"
 #include "roster.hh"
+#include "database.hh"
 
 //
 // this file defines structures to deal with the "workspace" of a tree
@@ -64,7 +65,6 @@
 class path_restriction;
 class node_restriction;
 class content_merge_adaptor;
-class database;
 class lua_hooks;
 
 struct workspace
