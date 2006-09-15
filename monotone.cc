@@ -37,6 +37,7 @@
 #include "mt_version.hh"
 #include "options.hh"
 #include "paths.hh"
+#include "sha1.hh"
 
 using std::cout;
 using std::cerr;
@@ -89,6 +90,7 @@ struct botan_library
   botan_library() { 
     Botan::Init::initialize();
     Botan::set_default_allocator("malloc");
+    hook_botan_sha1();
   }
   ~botan_library() {
     Botan::Init::deinitialize();

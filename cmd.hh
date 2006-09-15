@@ -21,7 +21,7 @@
 
 namespace commands
 {
-  extern const std::string hidden_group;
+  std::string const & hidden_group();
   using boost::program_options::option_description;
   using boost::shared_ptr;
 

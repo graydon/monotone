@@ -1,3 +1,14 @@
+2006-09-14  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd.hh: Make hidden_group a proper singleton, so it is safe to
+	use in other files.
+	* platform.hh, {unix,win32}/cputime.cc (cpu_now): New function for
+	measuring cpu time, for benchmarking.
+	* sha1.{hh,cc}, sha1_engine.hh: Framework for adding new SHA-1
+	cores.  New hidden command benchmark_sha1 to benchmark them.
+	* monotone.cc (botan_library): Call hook_botan_sha1().
+	* Makefile.am: Add new files.
+
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* .mtn-ignore: Ignore mtn instead of monotone; additionally ignore

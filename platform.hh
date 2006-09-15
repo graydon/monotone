@@ -123,6 +123,11 @@ void rename_clobberingly(std::string const & from, std::string const & to);
 // strerror wrapper for OS-specific errors (e.g. use FormatMessage on Win32)
 std::string os_strerror(os_err_t errnum);
 
+// for running cpu benchmarks
+// Returns the processor time used by the current process, plus some
+// arbitrary constant, measured in seconds.
+double cpu_now();
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

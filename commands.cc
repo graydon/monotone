@@ -76,7 +76,11 @@ namespace commands
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
   bool operator<(command const & self, command const & other);
-  const std::string hidden_group("");
+  std::string const & hidden_group()
+  {
+    static const std::string the_hidden_group("");
+    return the_hidden_group;
+  }
 };
 
 namespace std
@@ -173,7 +177,7 @@ namespace commands
     out << _("commands:") << endl;
     for (i = (*cmds).begin(); i != (*cmds).end(); ++i)
       {
-        if (i->second->cmdgroup != hidden_group)
+        if (i->second->cmdgroup != hidden_group())
           sorted.push_back(i->second);
       }
 
@@ -263,7 +267,7 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
 {
   if (args.size() != 1)
     throw usage(name);
