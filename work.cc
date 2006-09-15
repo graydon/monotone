@@ -613,7 +613,7 @@ struct content_merge_empty_adaptor : public content_merge_adaptor
                             file_id const &, file_data const &,
                             file_data const &)
   { I(false); }
-  virtual void get_ancestral_roster(node_id, boost::shared_ptr<roster_t> &)
+  virtual void get_ancestral_roster(node_id, boost::shared_ptr<roster_t const> &)
   { I(false); }
 };
 

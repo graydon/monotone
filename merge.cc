@@ -77,7 +77,7 @@ resolve_merge_conflicts(roster_t const & left_roster,
             {
               file_content_conflict const & conflict = *it;
 
-              shared_ptr<roster_t> roster_for_file_lca;
+              shared_ptr<roster_t const> roster_for_file_lca;
               adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
 
               // Now we should certainly have a roster, which has the node.
