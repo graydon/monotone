@@ -19,6 +19,30 @@
 	* merge.cc (resolve_merge_conflicts): Constify a shared_ptr<roster_t>.
 	* work.cc (content_merge_empty_adaptor): Similarly.
 
+2006-09-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* schema.sql: New table for the revision heights.
+	* schema_migration.cc (migrate_monotone_schema): Add code for the
+	  schema migration.
+	* tests/schema_migration/__driver__.lua: Add migration test.
+	* rev_height.cc, rev_height.hh: Add a class for the revision
+	height.
+	* Makefile.am (MOST_SOURCES): Add rev_height.{cc|hh}.
+	* database.cc (database): New schema.
+	* database.cc (get_rev_height, put_rev_height, has_rev_height):
+	New methods for storing and retrieving revision heights.
+	* database.cc (put_revision): Determine the revision's height and
+	write it into the database.
+	* database.cc (info): Show space usage information for the
+	heights.
+	* automate.cc (rev_height): New command to query a rev's
+	height. Preliminary.
+	* revision.cc (toposort): Use the revision heights.
+	* cmd_diff_log.cc (CMD(log)): Use the heights to traverse the
+	graph in topological order. Use the markings to avoid fetching
+	rosters for uninteresting revisions for restricted, backwards
+	walking logs.
+
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* .mtn-ignore: Ignore mtn instead of monotone; additionally ignore
