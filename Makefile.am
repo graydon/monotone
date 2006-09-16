@@ -77,8 +77,7 @@ MOST_SOURCES = 								\
         netio.hh smap.hh gettext.h					\
         package_revision.c package_revision.h				\
         package_full_revision.c package_full_revision.h			\
-        options.cc options.hh options_list.hh				\
-        opts.cc opts.hh opts_list.hh					\
+        option.cc option.hh option_list.hh				\
         i18n.h parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =								\

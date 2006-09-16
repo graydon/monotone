@@ -62,7 +62,7 @@ namespace commands
                    string const & p,
                    string const & d,
                    bool u,
-                   command_opts const & o)
+                   option::optset const & o)
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
@@ -237,25 +237,25 @@ namespace commands
       }
   }
 
-  boost::program_options::options_description command_options(string const & cmd)
+  option::optset command_options(string const & cmd)
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
-        return (*cmds)[cmd]->options.as_desc();
+        return (*cmds)[cmd]->options;
       }
     else
       {
-        return boost::program_options::options_description();
+        return option::optset();
       }
   }
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), option::none)
+CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), &option::none)
 {
   if (args.size() < 1)
     {
-      app.requested_help = true;
+      app.opts.help = true;
       throw usage("");
     }
 
@@ -263,11 +263,11 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   if ((*cmds).find(full_cmd) == (*cmds).end())
     throw usage("");
 
-  app.requested_help = true;
+  app.opts.help = true;
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", &option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -459,12 +459,12 @@ process_commit_message_args(bool & given,
   N(app.message().length() == 0 || app.message_file().length() == 0,
     F("--message and --message-file are mutually exclusive"));
 
-  if (app.is_explicit_option(option::message()))
+  if (app.opts.message_given)
     {
       log_message = app.message;
       given = true;
     }
-  else if (app.is_explicit_option(option::msgfile()))
+  else if (app.opts.msgfile_given)
     {
       data dat;
       read_data_for_command_line(app.message_file(), dat);

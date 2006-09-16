@@ -25,7 +25,7 @@
 #include "interner.hh"
 #include "keys.hh"
 #include "netio.hh"
-#include "options.hh"
+#include "option.hh"
 #include "packet.hh"
 #include "revision.hh"
 #include "sanity.hh"
@@ -475,9 +475,9 @@ guess_branch(revision_id const & ident,
              app_state & app,
              cert_value & branchname)
 {
-  if ((app.branch_name() != "") && app.is_explicit_option(option::branch_name()))
+  if ((app.branch_name() != "") && app.opts.branch_name_given)
     {
-      branchname = app.branch_name();
+      branchname = app.opts.branch_name;
     }
   else
     {

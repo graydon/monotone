@@ -162,15 +162,6 @@ AC_DEFUN([MTN_NEED_BOOST_LIB],
     [AC_MSG_FAILURE([the boost_$1 library is required])])
  AC_SUBST(BOOSTLIBS)
 ])
-    
-AC_DEFUN([MTN_BOOST_LIB_PROGRAM_OPTIONS],
-[MTN_NEED_BOOST_LIB([program_options],
-  [AC_LANG_PROGRAM([[
-      #include <boost/program_options.hpp>
-      using namespace boost::program_options;
-    ]],[[
-      options_description od("foo"); od.add_options()("test", "a test option");
-    ]])])])
 
 AC_DEFUN([MTN_BOOST_LIB_FILESYSTEM],
 [MTN_NEED_BOOST_LIB([filesystem],

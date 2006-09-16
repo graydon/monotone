@@ -333,8 +333,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "If one revision is given, the diff between the workspace and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
-    option::revision % option::depth % option::exclude % option::unified_diff
-    % option::context_diff % option::external_diff % option::external_diff_args)
+    &option::revision % &option::depth % &option::exclude
+    % &option::unified_diff % &option::context_diff % &option::external_diff
+    % &option::external_diff_args)
 {
   bool new_is_archived;
   ostringstream header;
@@ -541,8 +542,8 @@ log_certs(app_state & app, revision_id id, cert_name name)
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    option::last % option::next % option::revision % option::brief
-    % option::diffs % option::no_merges % option::no_files)
+    &option::last % &option::next % &option::revision % &option::brief
+    % &option::diffs % &option::no_merges % &option::no_files)
 {
   if (app.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");

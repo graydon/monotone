@@ -22,7 +22,7 @@ class lua_hooks;
 #include "database.hh"
 #include "key_store.hh"
 #include "lua_hooks.hh"
-#include "options.hh"
+#include "option.hh"
 #include "paths.hh"
 #include "vocab.hh"
 #include "work.hh"
@@ -44,6 +44,7 @@ namespace Botan
 class app_state
 {
 public:
+  option opts;
   rsa_keypair_id signing_key;
   utf8 branch_name;
   database db;

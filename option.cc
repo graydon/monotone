@@ -1,0 +1,401 @@
+#include "charset.hh"
+#include "file_io.hh"
+#include "option.hh"
+#include "sanity.hh"
+#include "ui.hh"
+
+using std::map;
+using std::set;
+using std::string;
+using std::vector;
+
+option::nothing option::none;
+
+option_error::option_error(std::string const & str)
+ : std::invalid_argument((F("option error: %s") % str).str())
+{}
+unknown_option::unknown_option(std::string const & opt)
+ : option_error((F("unknown option '%s'") % opt).str())
+{}
+missing_arg::missing_arg(std::string const & opt)
+ : option_error((F("missing argument to option '%s'") % opt).str())
+{}
+extra_arg::extra_arg(std::string const & opt)
+ : option_error((F("option '%s' does not take an argument") % opt).str())
+{}
+bad_arg::bad_arg(std::string const & opt, std::string const & arg)
+ : option_error((F("bad argument '%s' to option '%s'") % arg % opt).str())
+{}
+
+static void splitname(string const & from, string & name, string & n)
+{
+  // from looks like "foo" or "foo,f"
+  string::size_type comma = from.find(',');
+  name = from.substr(0, comma);
+  if (comma != string::npos)
+    n = from.substr(comma+1, 1);
+  else
+    n = "";
+}
+
+template<typename T>
+void option::map_opt(void (option::*setter)(string const &),
+                   string const & optname,
+                   bool has_arg,
+                   T option::* ptr,
+                   string const & description)
+{
+  option::opt o;
+  o.setter = setter;
+  o.has_arg = has_arg;
+  o.desc = gettext(description.c_str());
+  o.id = optset::conv(ptr);
+  string name, n;
+  splitname(/*gettext*/(optname.c_str()), name, n);
+  opt_map.insert(make_pair(name, o));
+  if (n != "")
+    opt_map.insert(make_pair(n, o));
+}
+
+option::option()
+{
+# define GOPT(varname, optname, type, has_arg, description)         \
+    map_opt(&option::set_ ## varname, optname, has_arg,             \
+            &option:: varname, description);                        \
+    global_option.add( &option:: varname );                         \
+    varname ## _given = false;
+# define COPT(varname, optname, type, has_arg, description)         \
+    map_opt(&option::set_ ## varname, optname, has_arg,             \
+            &option:: varname, description);                        \
+    all_cmd_option.add( &option:: varname );                        \
+    varname ## _given = false;
+# include "option_list.hh"
+# undef GOPT
+# undef COPT
+}
+
+void option::clear_cmd_options()
+{
+# define GOPT(varname, optname, type, has_arg, description)
+# define COPT(varname, optname, type, has_arg, description) \
+    varname = type ();                                      \
+    varname ## _given = false;
+# include "option_list.hh"
+# undef GOPT
+# undef COPT
+}
+
+void option::clear_global_options()
+{
+# define GOPT(varname, optname, type, has_arg, description) \
+    varname = type ();                                      \
+    varname ## _given = false;
+# define COPT(varname, optname, type, has_arg, description)
+# include "option_list.hh"
+# undef GOPT
+# undef COPT
+}
+
+#define GOPT(varname, optname, type, has_arg, description)        \
+  void option::set_ ## varname (std::string const & arg)          \
+  {                                                               \
+    varname ## _given = true;                                     \
+    try {set_ ## varname ## _helper (arg); }                      \
+    catch (boost::bad_lexical_cast)                               \
+    { throw bad_arg( #varname, arg); }                            \
+  }                                                               \
+  void option::set_ ## varname ## _helper (string const & arg)
+#define COPT(varname, optname, type, has_arg, description)        \
+  void option::set_ ## varname (std::string const & arg)          \
+  {                                                               \
+    varname ## _given = true;                                     \
+    try {set_ ## varname ## _helper (arg); }                      \
+    catch (boost::bad_lexical_cast)                               \
+    { throw bad_arg( #varname, arg); }                            \
+  }                                                               \
+  void option::set_ ## varname ## _helper (string const & arg)
+#define option_bodies
+#include "option_list.hh"
+#undef GOPT
+#undef COPT
+#undef option_bodies
+
+option::opt const & option::getopt(string const & name, optset const & allowed)
+{
+  map<string, opt>::iterator i = opt_map.find(name);
+  if (i == opt_map.end())
+    throw unknown_option(name);
+  else if (!global_option.contains(i->second.id)
+           && !allowed.contains(i->second.id))
+    throw unknown_option(name);
+  else
+    return i->second;
+}
+
+void option::set(string const & name, string const & given,
+               optset const & allowed)
+{
+  (this->*getopt(name, allowed).setter)(given);
+}
+
+static void
+tokenize_for_command_line(string const & from, vector<string> & to)
+{
+  // Unfortunately, the tokenizer in basic_io is too format-specific
+  to.clear();
+  enum quote_type {none, one, two};
+  string cur;
+  quote_type type = none;
+  bool have_tok(false);
+  
+  for (string::const_iterator i = from.begin(); i != from.end(); ++i)
+    {
+      if (*i == '\'')
+        {
+          if (type == none)
+            type = one;
+          else if (type == one)
+            type = none;
+          else
+            {
+              cur += *i;
+              have_tok = true;
+            }
+        }
+      else if (*i == '"')
+        {
+          if (type == none)
+            type = two;
+          else if (type == two)
+            type = none;
+          else
+            {
+              cur += *i;
+              have_tok = true;
+            }
+        }
+      else if (*i == '\\')
+        {
+          if (type != one)
+            ++i;
+          N(i != from.end(), F("Invalid escape in --xargs file"));
+          cur += *i;
+          have_tok = true;
+        }
+      else if (string(" \n\t").find(*i) != string::npos)
+        {
+          if (type == none)
+            {
+              if (have_tok)
+                to.push_back(cur);
+              cur.clear();
+              have_tok = false;
+            }
+          else
+            {
+              cur += *i;
+              have_tok = true;
+            }
+        }
+      else
+        {
+          cur += *i;
+          have_tok = true;
+        }
+    }
+  if (have_tok)
+    to.push_back(cur);
+}
+
+void option::from_cmdline_restricted(std::vector<std::string> & args,
+                                     optset allowed,
+                                     bool allow_xargs)
+{
+  for (unsigned int i = 0; i < args.size(); ++i)
+    {
+      opt o;
+      string name, arg;
+      bool separate_arg(false);
+      if (idx(args,i).substr(0,2) == "--")
+        {
+          string::size_type equals = idx(args,i).find('=');
+          if (equals == string::npos)
+            name = idx(args,i).substr(2);
+          else
+            name = idx(args,i).substr(2, equals-2);
+
+          o = getopt(name, allowed);
+          if (!o.has_arg && equals != string::npos)
+            throw extra_arg(name);
+
+          if (o.has_arg)
+            {
+              if (equals == string::npos)
+                {
+                  separate_arg = true;
+                  if (i+1 == args.size())
+                    throw missing_arg(name);
+                  arg = idx(args,i+1);
+                }
+              else
+                arg = idx(args,i).substr(equals+1);
+            }
+        }
+      else if (idx(args,i).substr(0,1) == "-")
+        {
+          name = idx(args,i).substr(1,1);
+          
+          o = getopt(name, allowed);
+          if (!o.has_arg && idx(args,i).size() != 2)
+            throw extra_arg(name);
+          
+          if (o.has_arg)
+            {
+              if (idx(args,i).size() == 2)
+                {
+                  separate_arg = true;
+                  if (i+1 == args.size())
+                    throw missing_arg(name);
+                  arg = idx(args,i+1);
+                }
+              else
+                arg = idx(args,i).substr(2);
+            }
+        }
+      else
+        {
+          name = "";
+          o = getopt(name, allowed);
+          arg = idx(args,i);
+        }
+      if (allow_xargs && (name == "xargs" || name == "@"))
+        {
+          // expand the --xargs in place
+          data dat;
+          read_data_for_command_line(arg, dat);
+          vector<string> fargs;
+          tokenize_for_command_line(dat(), fargs);
+          
+          args.erase(args.begin() + i);
+          if (separate_arg)
+            args.erase(args.begin() + i);
+          args.insert(args.begin()+i, fargs.begin(), fargs.end());
+        }
+      else
+        {
+          if (separate_arg)
+            ++i;
+          (this->*o.setter)(arg);
+        }
+    }
+}
+
+void option::from_cmdline(vector<string> & args, bool allow_xargs)
+{
+  from_cmdline_restricted(args, all_cmd_option, allow_xargs);
+}
+
+static vector<string> wordwrap(string str, unsigned int width)
+{
+  vector<string> out;
+  while (str.size() > width)
+    {
+      string::size_type pos = str.find_last_of(" ", width);
+      if (pos == string::npos)
+        { // bah. we have to break a word
+          out.push_back(str.substr(0, width));
+          str = str.substr(width);
+        }
+      else
+        {
+          out.push_back(str.substr(0, pos));
+          str = str.substr(pos+1);
+        }
+    }
+  out.push_back(str);
+  return out;
+}
+
+struct optstrings
+{
+  string longname;
+  string shortname;
+  string desc;
+};
+std::string option::get_usage_str(optset const & opts) const
+{
+  // collect the options we want to show (opt_map has separate
+  // entries for the short and long versions of each option)
+  map<optset::opt_id, optstrings> option_strings;
+  for (map<string, opt>::const_iterator i = opt_map.begin();
+       i != opt_map.end(); ++i)
+    {
+      if (opts.contains(i->second.id) && !i->first.empty())
+        { // i->first.empty() indicates that this is the entry for
+          // positional args; we don't want to include that here
+          optstrings & strs = option_strings[i->second.id];
+          strs.desc = i->second.desc;
+          if (i->first.size() == 1)
+            strs.shortname = i->first;
+          else
+            strs.longname = i->first;
+        }
+    }
+
+  // combind the name strings like "--long [ -s ]"
+  map<string, string> to_display;
+  unsigned int namelen = 0; // the longest option name string
+  for (map<optset::opt_id, optstrings>::iterator i = option_strings.begin();
+       i != option_strings.end(); ++i)
+    {
+      optstrings const & strings = i->second;
+      string names;
+      if (!strings.longname.empty() && !strings.shortname.empty())
+        {
+          names = "--" + strings.longname + " [ -" + strings.shortname + " ]";
+        }
+      else if (!strings.longname.empty())
+        {
+          names = "--" + strings.longname;
+        }
+      else // short name only
+        {
+          names = "-" + strings.shortname;
+        }
+      to_display.insert(make_pair(names, strings.desc));
+      if (names.size() > namelen)
+        namelen = names.size();
+    }
+
+  // "    --long [ -s ]    description goes here"
+  //  ^  ^^           ^^  ^^                          ^
+  //  |  | \ namelen / |  | \        descwidth       /| <- edge of screen
+  //  ^^^^             ^^^^
+  // pre_indent        space
+  string result;
+  int pre_indent = 2; // empty space on the left
+  int space = 2; // space after the longest option, before the description
+  for (map<string, string>::const_iterator i = to_display.begin();
+       i != to_display.end(); ++i)
+    {
+      string const & names = i->first;
+      int descindent = pre_indent + namelen + space;
+      int descwidth = guess_terminal_width() - descindent;
+      vector<string> desclines = wordwrap(i->second, descwidth);
+
+      result += string(pre_indent, ' ')
+              + names + string(namelen - names.size(), ' ')
+              + string(space, ' ');
+      vector<string>::const_iterator line = desclines.begin();
+      if (line != desclines.end())
+        {
+          result += *line + "\n";
+          ++line;
+        }
+      else // no description
+        result += "\n";
+      for (; line != desclines.end(); ++line)
+        result += string(descindent, ' ') + *line + "\n";
+    }
+  return result;
+}
