@@ -1,5 +1,10 @@
 2006-09-17  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_ws_commit.cc (status): Don't put a colon after parent
+	revision ids, to ease double-click copying from terminals.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Insert date.
 
 2006-09-17  Nathaniel Smith  <njs@pobox.com>
