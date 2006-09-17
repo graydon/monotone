@@ -1,3 +1,9 @@
+monotone (0.30-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Nathaniel Smith <njs@pobox.com>  Sun, 17 Sep 2006 02:53:11 -0700
+
 monotone (0.29-1) unstable; urgency=low
 
   * New upstream release.

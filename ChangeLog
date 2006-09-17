@@ -1,5 +1,10 @@
 2006-09-17  Nathaniel Smith  <njs@pobox.com>
 
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac: Bump version numbers to 0.30.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: First draft of 0.30 release notes.
 	* UPGRADE: Update for 0.30.
 
