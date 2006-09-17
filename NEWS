@@ -64,7 +64,7 @@
         - 'mtn status' now includes the branch name and parent
           revision id in its output.
 
-        - The output of 'mtn annotate' and 'mtn automate --brief' has
+        - The output of 'mtn annotate' and 'mtn annotate --brief' has
           been switched.  The more human-readable output is now the
           default.        
 
@@ -81,6 +81,10 @@
         - While changelog messages have always been defined to UTF-8,
           we were not properly converting messages from the user's
           locale.  This has now been fixed.
+
+        - An off-by-one error that caused some operations to abort
+          with an error message about "cancel_size <
+          pending_writes_size" has been fixed.
 
         - In 0.29, --help output was not localized.  This has been
           fixed.
