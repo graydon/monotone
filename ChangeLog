@@ -1,6 +1,6 @@
 2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
-	* win32/cputime.cc: GetProcessTimes returns non-zero on success.
+	* win32/cputime.cc: GetProcessTimes returns non-zero on failure.
 
 2006-09-17  Nathaniel Smith  <njs@pobox.com>
 
