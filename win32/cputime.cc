@@ -5,6 +5,8 @@
 
 #include <windows.h>
 
+#include "numeric_vocab.hh"
+
 u64 to_ticks(FILETIME const & ft)
 {
   u64 ticks = ft.dwHighDateTime;
