@@ -1,5 +1,7 @@
 2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* win32/cputime.cc: Include cstdlib, define WIN32_LEAN_AND_MEAN,
+	correct case of FILETIME member.
 	* std_hooks.lua (mergers.tortoise): Be consistent about case.
 
 2006-09-16  Nathaniel Smith  <njs@pobox.com>
