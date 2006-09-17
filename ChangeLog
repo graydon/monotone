@@ -1,3 +1,7 @@
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/cputime.cc: GetProcessTimes returns non-zero on success.
+
 2006-09-17  Nathaniel Smith  <njs@pobox.com>
 
 	* win32/monotone.iss, visualc/config.h, monotone.spec:

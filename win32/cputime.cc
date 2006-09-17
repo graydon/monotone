@@ -23,7 +23,7 @@ cpu_now()
   FILETIME creation_time, exit_time, kernel_time, user_time;
   if (GetProcessTimes(GetCurrentProcess(),
                       &creation_time, &exit_time,
-                      &kernel_time, &user_time))
+                      &kernel_time, &user_time) == 0)
     return -1;
 
   u64 total_ticks = 0;
