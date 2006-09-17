@@ -1,3 +1,7 @@
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* std_hooks.lua (mergers.tortoise): Be consistent about case.
+
 2006-09-16  Nathaniel Smith  <njs@pobox.com>
 
 	* win32/cputime.cc: Include numeric_vocab.hh.
