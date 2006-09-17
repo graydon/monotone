@@ -99,14 +99,14 @@ CMD(update, N_("workspace"), "",
   revision_id chosen_rid;
   if (app.revision_selectors.size() == 0)
     {
-      P(F("updating along branch '%s'") % app.branch_name);
+      P(F("updating along branch '%s'") % app.opts.branch_name);
       set<revision_id> candidates;
       pick_update_candidates(old_rid, app, candidates);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
           "maybe you want something like --revision=h:%s")
-        % app.branch_name);
+        % app.opts.branch_name);
       if (candidates.size() != 1)
         {
           P(F("multiple update candidates:"));
@@ -136,7 +136,7 @@ CMD(update, N_("workspace"), "",
       P(F("already up to date at %s") % old_rid);
       // do still switch the workspace branch, in case they have used
       // update to switch branches.
-      if (!app.branch_name().empty())
+      if (!app.opts.branch_name().empty())
         app.make_branch_sticky();
       return;
     }
@@ -162,9 +162,9 @@ CMD(update, N_("workspace"), "",
         branches.insert(utf8(b()));
       }
 
-    if (branches.find(app.branch_name) != branches.end())
+    if (branches.find(app.opts.branch_name) != branches.end())
       {
-        L(FL("using existing branch %s") % app.branch_name());
+        L(FL("using existing branch %s") % app.opts.branch_name());
       }
     else
       {
@@ -182,16 +182,16 @@ CMD(update, N_("workspace"), "",
         else if (branches.size() == 1)
           {
             // one non-matching, inform and update
-            app.branch_name = (*(branches.begin()))();
+            app.opts.branch_name = (*(branches.begin()))();
             switched_branch = true;
-            P(F("switching to branch %s") % app.branch_name());
+            P(F("switching to branch %s") % app.opts.branch_name());
           }
         else
           {
             I(branches.size() == 0);
             W(F("target revision not in any branch\n"
                 "next commit will use branch %s")
-              % app.branch_name());
+              % app.opts.branch_name());
           }
       }
   }
@@ -254,12 +254,12 @@ CMD(update, N_("workspace"), "",
   // small race condition here...
   app.work.put_work_rev(remaining);
 
-  if (!app.branch_name().empty())
+  if (!app.opts.branch_name().empty())
     {
       app.make_branch_sticky();
     }
   if (switched_branch)
-    P(F("switched branch; next commit will use branch %s") % app.branch_name());
+    P(F("switched branch; next commit will use branch %s") % app.opts.branch_name());
   P(F("updated to base revision %s") % chosen_rid);
 
   app.work.update_any_attrs();
@@ -287,14 +287,14 @@ merge_two(revision_id const & left, revision_id const & right,
   ostringstream log;
   size_t fieldwidth = max(caller.size() + strlen(" of '"), strlen("and '"));
 
-  if (branch != app.branch_name())
+  if (branch != app.opts.branch_name())
     fieldwidth = max(fieldwidth, strlen("to branch '"));
 
   log << setw(fieldwidth - strlen(" of '")) << caller << " of '" << left
       << "'\n" << setw(fieldwidth) << "and '" << right
       << "'\n";
 
-  if (branch != app.branch_name())
+  if (branch != app.opts.branch_name())
     log << setw(fieldwidth) << "to branch '" << branch << "'\n";
 
   // Now it's time for the real work.
@@ -326,21 +326,21 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   if (args.size() != 0)
     throw usage(name);
 
-  N(app.branch_name() != "",
+  N(app.opts.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
   set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(app.opts.branch_name(), app, heads);
 
-  N(heads.size() != 0, F("branch '%s' is empty") % app.branch_name);
+  N(heads.size() != 0, F("branch '%s' is empty") % app.opts.branch_name);
   if (heads.size() == 1)
     {
-      P(F("branch '%s' is already merged") % app.branch_name);
+      P(F("branch '%s' is already merged") % app.opts.branch_name);
       return;
     }
 
   P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
-    % heads.size() % app.branch_name);
+    % heads.size() % app.opts.branch_name);
 
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
@@ -394,11 +394,11 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       // corresponding pair of heads.
       revpair p = heads_for_ancestor[*ancestors.begin()];
       
-      merge_two(p.first, p.second, app.branch_name(), string("merge"), app);
+      merge_two(p.first, p.second, app.opts.branch_name(), string("merge"), app);
 
       ancestors.clear();
       heads_for_ancestor.clear();
-      get_branch_heads(app.branch_name(), app, heads);
+      get_branch_heads(app.opts.branch_name(), app, heads);
       pass++;
     }
 
@@ -412,7 +412,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   revision_id right = *i++;
   I(i == heads.end());
   
-  merge_two(left, right, app.branch_name(), string("merge"), app);
+  merge_two(left, right, app.opts.branch_name(), string("merge"), app);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -749,7 +749,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     app.db.get_roster(to_rid, to_true_roster);
     node_restriction mask(args_to_paths(args),
                           args_to_paths(app.exclude_patterns),
-                          app.depth,
+                          app.opts.depth,
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,
@@ -825,17 +825,17 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
   if (args.size() != 0)
     throw usage(name);
 
-  N(app.branch_name() != "",
+  N(app.opts.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(app.opts.branch_name(), app, heads);
 
   if (heads.size() == 0)
-    P(F("branch '%s' is empty") % app.branch_name);
+    P(F("branch '%s' is empty") % app.opts.branch_name);
   else if (heads.size() == 1)
-    P(F("branch '%s' is currently merged:") % app.branch_name);
+    P(F("branch '%s' is currently merged:") % app.opts.branch_name);
   else
-    P(F("branch '%s' is currently unmerged:") % app.branch_name);
+    P(F("branch '%s' is currently unmerged:") % app.opts.branch_name);
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)

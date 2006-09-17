@@ -26,6 +26,17 @@ extra_arg::extra_arg(std::string const & opt)
 bad_arg::bad_arg(std::string const & opt, std::string const & arg)
  : option_error((F("bad argument '%s' to option '%s'") % arg % opt).str())
 {}
+bad_arg::bad_arg(std::string const & opt,
+                 std::string const & arg,
+                 std::string const & reason)
+ : option_error((F("bad argument '%s' to option '%s': %s")
+                   % arg % opt % reason).str())
+{}
+struct bad_arg_internal
+{
+  string reason;
+  bad_arg_internal(string const & str = "") : reason(str) {}
+};
 
 static void splitname(string const & from, string & name, string & n)
 {
@@ -39,15 +50,19 @@ static void splitname(string const & from, string & name, string & n)
 }
 
 template<typename T>
+bool has_arg() { return true; }
+template<>
+bool has_arg<bool>() { return false; }
+
+template<typename T>
 void option::map_opt(void (option::*setter)(string const &),
                    string const & optname,
-                   bool has_arg,
                    T option::* ptr,
                    string const & description)
 {
   option::opt o;
   o.setter = setter;
-  o.has_arg = has_arg;
+  o.has_arg = has_arg<T>();
   o.desc = gettext(description.c_str());
   o.id = optset::conv(ptr);
   string name, n;
@@ -59,13 +74,13 @@ void option::map_opt(void (option::*setter)(string const &),
 
 option::option()
 {
-# define GOPT(varname, optname, type, has_arg, description)         \
-    map_opt(&option::set_ ## varname, optname, has_arg,             \
+# define GOPT(varname, optname, type, default_, description)        \
+    map_opt(&option::set_ ## varname, optname,                      \
             &option:: varname, description);                        \
     global_option.add( &option:: varname );                         \
     varname ## _given = false;
-# define COPT(varname, optname, type, has_arg, description)         \
-    map_opt(&option::set_ ## varname, optname, has_arg,             \
+# define COPT(varname, optname, type, default_, description)        \
+    map_opt(&option::set_ ## varname, optname,                      \
             &option:: varname, description);                        \
     all_cmd_option.add( &option:: varname );                        \
     varname ## _given = false;
@@ -76,9 +91,9 @@ option::option()
 
 void option::clear_cmd_options()
 {
-# define GOPT(varname, optname, type, has_arg, description)
-# define COPT(varname, optname, type, has_arg, description) \
-    varname = type ();                                      \
+# define GOPT(varname, optname, type, default_, description)
+# define COPT(varname, optname, type, default_, description) \
+    varname = type ( default_ );                             \
     varname ## _given = false;
 # include "option_list.hh"
 # undef GOPT
@@ -87,31 +102,45 @@ void option::clear_cmd_options()
 
 void option::clear_global_options()
 {
-# define GOPT(varname, optname, type, has_arg, description) \
-    varname = type ();                                      \
+# define GOPT(varname, optname, type, default_, description) \
+    varname = type ( default_ );                             \
     varname ## _given = false;
-# define COPT(varname, optname, type, has_arg, description)
+# define COPT(varname, optname, type, default_, description)
 # include "option_list.hh"
 # undef GOPT
 # undef COPT
 }
 
-#define GOPT(varname, optname, type, has_arg, description)        \
+#define GOPT(varname, optname, type, default_, description)       \
   void option::set_ ## varname (std::string const & arg)          \
   {                                                               \
     varname ## _given = true;                                     \
     try {set_ ## varname ## _helper (arg); }                      \
     catch (boost::bad_lexical_cast)                               \
     { throw bad_arg( #varname, arg); }                            \
+    catch (bad_arg_internal & e)                                  \
+    {                                                             \
+      if (e.reason == "")                                         \
+        throw bad_arg( #varname, arg);                            \
+      else                                                        \
+        throw bad_arg( #varname, arg, e.reason);                  \
+    }                                                             \
   }                                                               \
   void option::set_ ## varname ## _helper (string const & arg)
-#define COPT(varname, optname, type, has_arg, description)        \
+#define COPT(varname, optname, type, default_, description)       \
   void option::set_ ## varname (std::string const & arg)          \
   {                                                               \
     varname ## _given = true;                                     \
     try {set_ ## varname ## _helper (arg); }                      \
     catch (boost::bad_lexical_cast)                               \
     { throw bad_arg( #varname, arg); }                            \
+    catch (bad_arg_internal & e)                                  \
+    {                                                             \
+      if (e.reason == "")                                         \
+        throw bad_arg( #varname, arg);                            \
+      else                                                        \
+        throw bad_arg( #varname, arg, e.reason);                  \
+    }                                                             \
   }                                                               \
   void option::set_ ## varname ## _helper (string const & arg)
 #define option_bodies

@@ -255,7 +255,7 @@ AUTOMATE(stdio, "")
           int outpos=0;
           int err;
           std::ostringstream s;
-          my_stringbuf sb(app.automate_stdio_size);
+          my_stringbuf sb(app.opts.automate_stdio_size);
           sb.set_on_write(boost::bind(print_some_output,
                                       cmdnum,
                                       boost::ref(err),
@@ -264,7 +264,7 @@ AUTOMATE(stdio, "")
                                       boost::ref(output),
                                       boost::ref(outpos),
                                       _1,
-                                      app.automate_stdio_size));
+                                      app.opts.automate_stdio_size));
           {
             // Do not use s.std::basic_ios<...>::rdbuf here, 
             // it confuses VC8.
@@ -293,7 +293,7 @@ AUTOMATE(stdio, "")
               s<<f.what();
             }
             print_some_output(cmdnum, err, true, sb.str(),
-                              output, outpos, -1, app.automate_stdio_size);
+                              output, outpos, -1, app.opts.automate_stdio_size);
         }
       cmdnum++;
     }

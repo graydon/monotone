@@ -69,10 +69,10 @@ AUTOMATE(heads, N_("[BRANCH]"))
 
   if (args.size() ==1 ) {
     // branchname was explicitly given, use that
-    app.set_branch(idx(args, 0));
+    app.opts.branch_name = idx(args, 0);
   }
   set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(app.opts.branch_name(), app, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << endl;
 }
@@ -1467,7 +1467,7 @@ AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
 //
 AUTOMATE(get_option, N_("OPTION"))
 {
-  if (!app.unknown && (args.size() < 1))
+  if (!app.opts.unknown && (args.size() < 1))
     throw usage(help_name);
 
   // this command requires a workspace to be run on

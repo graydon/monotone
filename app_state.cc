@@ -36,22 +36,17 @@ using std::vector;
 using std::vector;
 
 app_state::app_state()
-  : branch_name(""), db(system_path()),
-    keys(this), work(db, lua), recursive(false),
-    stdhooks(true), rcfiles(true), diffs(false),
-    no_merges(false), set_default(false),
-    verbose(false), date_set(false),
+  : db(system_path()),
+    keys(this), work(db, lua),
+    date_set(false),
     search_root(current_root_path()),
-    depth(-1), last(-1), next(-1),
     diff_format(unified_diff), diff_args_provided(false),
     diff_show_encloser(true),
-    execute(false), bind_address(""), bind_port(""),
+    bind_address(""), bind_port(""),
     bind_stdio(false), use_transport_auth(true),
-    missing(false), unknown(false), brief(false),
     confdir(get_default_confdir()),
     have_set_key_dir(false), have_set_key(false),
-    no_files(false), requested_help(false), branch_is_sticky(false),
-    automate_stdio_size(1024)
+    branch_is_sticky(false)
 {
   db.set_app(this);
   lua.set_app(this);
@@ -115,16 +110,16 @@ app_state::process_options()
   if (keys.get_key_dir().as_internal().empty() && !keydir_option().empty())
     set_key_dir(system_path(keydir_option));
 
-  if (branch_name().empty() && !branch_option().empty())
+  if (opts.branch_name().empty() && !branch_option().empty())
     {
-      branch_name = branch_option;
+      opts.branch_name = branch_option;
       branch_is_sticky = true;
     }
 
-  L(FL("branch name is '%s'") % branch_name());
+  L(FL("branch name is '%s'") % opts.branch_name);
 
   if (!have_set_key)
-    internalize_rsa_keypair_id(key_option, signing_key);
+    internalize_rsa_keypair_id(key_option, opts.signing_key);
 }
 
 void
@@ -136,10 +131,10 @@ app_state::write_options()
   keydir_option = keys.get_key_dir().as_internal();
 
   if (branch_is_sticky)
-    branch_option = branch_name;
+    branch_option = opts.branch_name;
 
   if (have_set_key)
-    externalize_rsa_keypair_id(signing_key, key_option);
+    externalize_rsa_keypair_id(opts.signing_key, key_option);
   work.set_ws_options(database_option, branch_option,
                       key_option, keydir_option);
 }
@@ -203,12 +198,6 @@ app_state::set_key_dir(system_path const & filename)
 }
 
 void
-app_state::set_branch(utf8 const & branch)
-{
-  branch_name = branch();
-}
-
-void
 app_state::make_branch_sticky()
 {
   branch_is_sticky = true;
@@ -220,13 +209,6 @@ app_state::make_branch_sticky()
       // write_options when it finds one.
       write_options();
     }
-}
-
-void
-app_state::set_signing_key(utf8 const & key)
-{
-  internalize_rsa_keypair_id(key, signing_key);
-  have_set_key = true;
 }
 
 void
@@ -246,18 +228,6 @@ app_state::set_root(system_path const & path)
      F("search root '%s' is not a directory\n") % path);
   search_root = path;
   L(FL("set search root to %s") % search_root);
-}
-
-void
-app_state::set_message(utf8 const & m)
-{
-  message = m;
-}
-
-void
-app_state::set_message_file(utf8 const & m)
-{
-  message_file = m;
 }
 
 void
@@ -286,30 +256,6 @@ void
 app_state::set_author(utf8 const & a)
 {
   author = a;
-}
-
-void
-app_state::set_depth(long d)
-{
-  N(d >= 0,
-    F("negative depth not allowed\n"));
-  depth = d;
-}
-
-void
-app_state::set_last(long l)
-{
-  N(l > 0,
-    F("illegal argument to --last: cannot be zero or negative\n"));
-  last = l;
-}
-
-void
-app_state::set_next(long l)
-{
-  N(l > 0,
-    F("illegal argument to --next: cannot be zero or negative\n"));
-  next = l;
 }
 
 void
@@ -344,30 +290,6 @@ app_state::set_diff_args(utf8 const & args)
 }
 
 void
-app_state::set_stdhooks(bool b)
-{
-  stdhooks = b;
-}
-
-void
-app_state::set_rcfiles(bool b)
-{
-  rcfiles = b;
-}
-
-void
-app_state::set_verbose(bool b)
-{
-  verbose = b;
-}
-
-void
-app_state::set_recursive(bool r)
-{
-  recursive = r;
-}
-
-void
 app_state::add_rcfile(utf8 const & filename)
 {
   extra_rcfiles.push_back(filename);
@@ -379,14 +301,6 @@ app_state::set_confdir(system_path const & cd)
   confdir = cd;
   if (!have_set_key_dir)
     keys.set_key_dir(cd / "keys");
-}
-
-void
-app_state::set_automate_stdio_size(long size)
-{
-  N(size > 0,
-    F("illegal argument to --automate-stdio-size: cannot be zero or negative\n"));
-  automate_stdio_size = (size_t)size;
 }
 
 system_path
@@ -404,13 +318,13 @@ app_state::load_rcfiles()
 {
   // Built-in rc settings are defaults.
 
-  if (stdhooks)
+  if (!opts.nostd)
     lua.add_std_hooks();
 
   // ~/.monotone/monotonerc overrides that, and
   // _MTN/monotonerc overrides *that*.
 
-  if (rcfiles)
+  if (!opts.norc)
     {
       system_path default_rcfile;
       bookkeeping_path workspace_rcfile;

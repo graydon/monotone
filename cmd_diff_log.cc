@@ -365,7 +365,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
-                            app.depth,
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -394,7 +394,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns), 
-                            app.depth,
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -423,7 +423,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.exclude_patterns),
-                            app.depth,
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
@@ -586,7 +586,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // all selected revs?
       mask = node_restriction(args_to_paths(args),
                               args_to_paths(app.exclude_patterns), 
-                              app.depth,
+                              app.opts.depth,
                               old_roster, new_roster, app);
     }
 
@@ -598,8 +598,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   cert_name comment_name(comment_cert_name);
 
   set<revision_id> seen;
-  long last = app.last;
-  long next = app.next;
+  long last = app.opts.last;
+  long next = app.opts.next;
 
   N(last == -1 || next == -1,
     F("only one of --last/--next allowed"));
@@ -649,7 +649,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   if (roster.has_node(*n) && mask.includes(roster, *n))
                     {
                       print_this = true;
-                      if (app.diffs)
+                      if (app.opts.diffs)
                         {
                           split_path sp;
                           roster.get_name(*n, sp);
@@ -674,12 +674,12 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    inserter(next_frontier, next_frontier.end()));
             }
 
-          if (app.no_merges && rev.is_merge_node())
+          if (app.opts.no_merges && rev.is_merge_node())
             print_this = false;
 
           if (print_this)
           {
-            if (app.brief)
+            if (app.opts.brief)
               {
                 cout << rid;
                 log_certs(app, rid, author_name);
@@ -713,7 +713,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 log_certs(app, rid, branch_name, "Branch: ", false);
                 log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-                if (!app.no_files && !csum.cs.empty())
+                if (!app.opts.no_files && !csum.cs.empty())
                   {
                     cout << "\n";
                     csum.print(cout, 70);
@@ -724,7 +724,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 log_certs(app, rid, comment_name,   "Comments: ",  true);
               }
 
-            if (app.diffs)
+            if (app.opts.diffs)
               {
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)

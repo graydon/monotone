@@ -1,11 +1,11 @@
-GOPT(args, "", std::vector<utf8>, true, "")
+GOPT(args, "", std::vector<utf8>, , "")
 #ifdef option_bodies
 {
   args.push_back(utf8(arg));
 }
 #endif
 
-COPT(author, "author", std::string, true,
+COPT(author, "author", std::string, ,
      gettext_noop("override author for commit"))
 #ifdef option_bodies
 {
@@ -13,15 +13,17 @@ COPT(author, "author", std::string, true,
 }
 #endif
 
-COPT(automate_stdio_size, "automate-stdio-size", long, true,
+COPT(automate_stdio_size, "automate-stdio-size", size_t, 1024,
      gettext_noop("block size in bytes for \"automate stdio\" output"))
 #ifdef option_bodies
 {
   automate_stdio_size = boost::lexical_cast<long>(arg);
+  if (automate_stdio_size <= 0)
+    throw bad_arg_internal(F("cannot be zero or negative").str());
 }
 #endif
 
-COPT(bind, "bind", std::string, true,
+COPT(bind, "bind", std::string, ,
      gettext_noop("address:port to listen on (default :4691)"))
 #ifdef option_bodies
 {
@@ -29,11 +31,11 @@ COPT(bind, "bind", std::string, true,
 }
 #endif
 
-COPT(branch_name, "branch,b", std::string, true,
+COPT(branch_name, "branch,b", utf8, ,
      gettext_noop("select branch cert for operation"))
 #ifdef option_bodies
 {
-  branch_name = arg;
+  branch_name = utf8(arg);
 }
 #endif
 
@@ -45,7 +47,7 @@ COPT(brief, "brief", bool, false,
 }
 #endif
 
-GOPT(conf_dir, "confdir", system_path, true,
+GOPT(conf_dir, "confdir", system_path, ,
      gettext_noop("set location of configuration directory"))
 #ifdef option_bodies
 {
@@ -63,7 +65,7 @@ COPT(context_diff, "context", bool, false,
 }
 #endif
 
-COPT(date, "date", std::string, true,
+COPT(date, "date", std::string, ,
      gettext_noop("override date/time for commit"))
 #ifdef option_bodies
 {
@@ -71,7 +73,7 @@ COPT(date, "date", std::string, true,
 }
 #endif
 
-GOPT(dbname, "db,d", system_path, true, gettext_noop("set name of database"))
+GOPT(dbname, "db,d", system_path, , gettext_noop("set name of database"))
 #ifdef option_bodies
 {
   dbname = system_path(arg);
@@ -87,15 +89,17 @@ GOPT(debug, "debug", bool, false,
 }
 #endif
 
-COPT(depth, "depth", long, true,
+COPT(depth, "depth", long, -1,
      gettext_noop("limit the number of levels of directories to descend"))
 #ifdef option_bodies
 {
   depth = boost::lexical_cast<long>(arg);
+  if (depth < 0)
+    throw bad_arg_internal(F("cannot be negative").str());
 }
 #endif
 
-COPT(external_diff_args, "diff-args", std::string, true,
+COPT(external_diff_args, "diff-args", std::string, ,
      gettext_noop("argument to pass external diff hook"))
 #ifdef option_bodies
 {
@@ -110,7 +114,7 @@ COPT(diffs, "diffs", bool, false, gettext_noop("print diffs along with logs"))
 }
 #endif
 
-COPT(drop_attr, "drop-attr", std::vector<std::string>, true,
+COPT(drop_attr, "drop-attr", std::vector<std::string>, ,
      gettext_noop("when rosterifying, drop attrs entries with the given key"))
 #ifdef option_bodies
 {
@@ -118,7 +122,7 @@ COPT(drop_attr, "drop-attr", std::vector<std::string>, true,
 }
 #endif
 
-GOPT(dump, "dump", system_path, true,
+GOPT(dump, "dump", system_path, ,
      gettext_noop("file to dump debugging log to, on failure"))
 #ifdef option_bodies
 {
@@ -127,7 +131,7 @@ GOPT(dump, "dump", system_path, true,
 }
 #endif
 
-COPT(exclude, "exclude", std::vector<std::string>, true,
+COPT(exclude, "exclude", std::vector<std::string>, ,
      gettext_noop("leave out anything described by its argument"))
 #ifdef option_bodies
 {
@@ -167,7 +171,7 @@ GOPT(help, "help,h", bool, false,
 }
 #endif
 
-GOPT(signing_key, "key,k", rsa_keypair_id, true,
+GOPT(signing_key, "key,k", rsa_keypair_id, ,
      gettext_noop("set key for signatures"))
 #ifdef option_bodies
 {
@@ -175,7 +179,7 @@ GOPT(signing_key, "key,k", rsa_keypair_id, true,
 }
 #endif
 
-GOPT(key_dir, "keydir", system_path, true,
+GOPT(key_dir, "keydir", system_path, ,
      gettext_noop("set location of key store"))
 #ifdef option_bodies
 {
@@ -183,7 +187,7 @@ GOPT(key_dir, "keydir", system_path, true,
 }
 #endif
 
-COPT(key_to_push, "key-to-push", std::vector<std::string>, true,
+COPT(key_to_push, "key-to-push", std::vector<std::string>, ,
      gettext_noop("push the specified key even if it hasn't signed anything"))
 #ifdef option_bodies
 {
@@ -191,15 +195,17 @@ COPT(key_to_push, "key-to-push", std::vector<std::string>, true,
 }
 #endif
 
-COPT(last, "last", long, true,
+COPT(last, "last", long, -1,
      gettext_noop("limit log output to the last number of entries"))
 #ifdef option_bodies
 {
   last = boost::lexical_cast<long>(arg);
+  if (last <= 0)
+    throw bad_arg_internal(F("cannot be zero or negative").str());
 }
 #endif
 
-GOPT(log, "log", system_path, true,
+GOPT(log, "log", system_path, ,
      gettext_noop("file to write the log to"))
 #ifdef option_bodies
 {
@@ -208,7 +214,7 @@ GOPT(log, "log", system_path, true,
 }
 #endif
 
-COPT(message, "message,m", std::string, true,
+COPT(message, "message,m", utf8, ,
      gettext_noop("set commit changelog message"))
 #ifdef option_bodies
 {
@@ -216,11 +222,11 @@ COPT(message, "message,m", std::string, true,
 }
 #endif
 
-COPT(msgfile, "message-file", system_path, true,
+COPT(msgfile, "message-file", utf8, ,
      gettext_noop("set filename containing commit changelog message"))
 #ifdef option_bodies
 {
-  msgfile = system_path(arg);
+  msgfile = utf8(arg);
 }
 #endif
 
@@ -232,11 +238,13 @@ COPT(missing, "missing", bool, false,
 }
 #endif
 
-COPT(next, "next", long, true,
+COPT(next, "next", long, -1,
      gettext_noop("limit log output to the next number of entries"))
 #ifdef option_bodies
 {
   next = boost::lexical_cast<long>(arg);
+  if (next <= 0)
+    throw bad_arg_internal(F("cannot be zero or negative").str());
 }
 #endif
 
@@ -288,7 +296,7 @@ COPT(no_transport_auth, "no-transport-auth", bool, false,
 }
 #endif
 
-COPT(pidfile, "pid-file", system_path, true,
+COPT(pidfile, "pid-file", system_path, ,
      gettext_noop("record process id of server"))
 #ifdef option_bodies
 {
@@ -306,7 +314,7 @@ GOPT(quiet, "quiet", bool, false,
 }
 #endif
 
-GOPT(rcfile, "rcfile", std::vector<std::string>, true,
+GOPT(rcfile, "rcfile", std::vector<std::string>, ,
      gettext_noop("load extra rc file"))
 #ifdef option_bodies
 {
@@ -332,7 +340,7 @@ COPT(recursive, "recursive,R", bool, false,
 }
 #endif
 
-COPT(revision, "revision,r", std::vector<std::string>, true,
+COPT(revision, "revision,r", std::vector<std::string>, ,
      gettext_noop("select revision id for operation"))
 #ifdef option_bodies
 {
@@ -340,7 +348,7 @@ COPT(revision, "revision,r", std::vector<std::string>, true,
 }
 #endif
 
-GOPT(root, "root", std::string, true,
+GOPT(root, "root", std::string, ,
      gettext_noop("limit search for workspace to specified root"))
 #ifdef option_bodies
 {
@@ -363,7 +371,7 @@ COPT(stdio, "stdio", bool, false, gettext_noop("serve netsync on stdio"))
 }
 #endif
 
-GOPT(ticker, "ticker", std::string, true,
+GOPT(ticker, "ticker", std::string, ,
      gettext_noop("set ticker style (count|dot|none)"))
 #ifdef option_bodies
 {
@@ -411,7 +419,7 @@ GOPT(version, "version", bool, false,
 }
 #endif
 
-GOPT(argfile, "xargs,@", std::vector<std::string>, true,
+GOPT(argfile, "xargs,@", std::vector<std::string>, ,
      gettext_noop("insert command line arguments taken from the given file"))
 #ifdef option_bodies
 {

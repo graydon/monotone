@@ -159,7 +159,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
   if (args.size() != 2)
     throw usage(name);
 
-  bool verbose = app.verbose;
+  bool verbose = app.opts.verbose;
 
   N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
     F("non-hex digits in partial id"));

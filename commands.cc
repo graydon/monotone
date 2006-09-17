@@ -439,14 +439,14 @@ void
 notify_if_multiple_heads(app_state & app)
 {
   set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(app.opts.branch_name(), app, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.branch_name % ui.prog_name);
+    P(i18n_format(prefixedline) % app.opts.branch_name % ui.prog_name);
   }
 }
 
@@ -456,18 +456,18 @@ process_commit_message_args(bool & given,
                             app_state & app)
 {
   // can't have both a --message and a --message-file ...
-  N(app.message().length() == 0 || app.message_file().length() == 0,
+  N(!app.opts.message_given || !app.opts.msgfile_given,
     F("--message and --message-file are mutually exclusive"));
 
   if (app.opts.message_given)
     {
-      log_message = app.message;
+      log_message = app.opts.message;
       given = true;
     }
   else if (app.opts.msgfile_given)
     {
       data dat;
-      read_data_for_command_line(app.message_file(), dat);
+      read_data_for_command_line(app.opts.msgfile, dat);
       external dat2 = dat();
       system_to_utf8(dat2, log_message);
       given = true;

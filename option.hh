@@ -32,6 +32,9 @@ struct extra_arg : public option_error
 struct bad_arg : public option_error
 {
   bad_arg(std::string const & opt, std::string const & arg);
+  bad_arg(std::string const & opt,
+          std::string const & arg,
+          std::string const & reason);
 };
 
 struct option
@@ -97,20 +100,20 @@ struct option
 
   std::string get_usage_str(optset const & opts) const;
 
-# define GOPT(varname, optname, type, has_arg, description)   \
+# define GOPT(varname, optname, type, default_, description)  \
     type varname;                                             \
     bool varname ## _given;
-# define COPT(varname, optname, type, has_arg, description)   \
+# define COPT(varname, optname, type, default_, description)  \
     type varname;                                             \
     bool varname ## _given;
 # include "option_list.hh"
 # undef GOPT
 # undef COPT
 private:
-# define GOPT(varname, optname, type, has_arg, description)   \
+# define GOPT(varname, optname, type, default_, description)  \
     void set_ ## varname (std::string const & arg);           \
     void set_ ## varname ## _helper (std::string const & arg);
-# define COPT(varname, optname, type, has_arg, description)   \
+# define COPT(varname, optname, type, default_, description)  \
     void set_ ## varname (std::string const & arg);           \
     void set_ ## varname ## _helper (std::string const & arg);
 # include "option_list.hh"
@@ -132,7 +135,6 @@ private:
   template<typename T>
   void map_opt(void (option::*setter)(std::string const &),
                std::string const & optname,
-               bool has_arg,
                T option::* ptr,
                std::string const & description);
 };

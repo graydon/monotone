@@ -231,8 +231,8 @@ CMD(approve, N_("review"), N_("REVISION"),
   packet_db_writer dbw(app);
   cert_value branchname;
   guess_branch(r, app, branchname);
-  N(app.branch_name() != "", F("need --branch argument for approval"));
-  cert_revision_in_branch(r, app.branch_name(), app, dbw);
+  N(app.opts.branch_name() != "", F("need --branch argument for approval"));
+  cert_revision_in_branch(r, app.opts.branch_name(), app, dbw);
 }
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),

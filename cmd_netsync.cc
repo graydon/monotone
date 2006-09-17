@@ -35,7 +35,8 @@ process_netsync_args(string const & name,
         {
           addr = idx(args, 0);
           if (use_defaults
-              && (!app.db.var_exists(default_server_key) || app.set_default))
+              && (!app.db.var_exists(default_server_key)
+                  || app.opts.set_default))
             {
               P(F("setting default server to %s") % addr);
               app.db.set_var(default_server_key, var_value(addr()));
@@ -62,13 +63,15 @@ process_netsync_args(string const & name,
       combine_and_check_globish(patterns, include_pattern);
       combine_and_check_globish(app.exclude_patterns, exclude_pattern);
       if (use_defaults &&
-          (!app.db.var_exists(default_include_pattern_key) || app.set_default))
+          (!app.db.var_exists(default_include_pattern_key)
+           || app.opts.set_default))
         {
           P(F("setting default branch include pattern to '%s'") % include_pattern);
           app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
         }
       if (use_defaults &&
-          (!app.db.var_exists(default_exclude_pattern_key) || app.set_default))
+          (!app.db.var_exists(default_exclude_pattern_key)
+           || app.opts.set_default))
         {
           P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
           app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
@@ -103,7 +106,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
   rsa_keypair_id key;
   get_user_key(key, app);
-  app.signing_key = key;
+  app.opts.signing_key = key;
 
   run_netsync_protocol(client_voice, source_role, addr,
                        include_pattern, exclude_pattern, app);
@@ -116,7 +119,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
 
-  if (app.signing_key() == "")
+  if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
   run_netsync_protocol(client_voice, sink_role, addr,
@@ -132,7 +135,7 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
   rsa_keypair_id key;
   get_user_key(key, app);
-  app.signing_key = key;
+  app.opts.signing_key = key;
 
   run_netsync_protocol(client_voice, source_and_sink_role, addr,
                        include_pattern, exclude_pattern, app);
@@ -184,7 +187,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
     {
       rsa_keypair_id key;
       get_user_key(key, app);
-      app.signing_key = key;
+      app.opts.signing_key = key;
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));

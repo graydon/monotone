@@ -709,9 +709,9 @@ session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
   if (app.use_transport_auth)
     {
       keypair our_kp;
-      load_key_pair(app, app.signing_key, our_kp);
+      load_key_pair(app, app.opts.signing_key, our_kp);
       string hmac_key;
-      decrypt_rsa(app.lua, app.signing_key, our_kp.priv,
+      decrypt_rsa(app.lua, app.opts.signing_key, our_kp.priv,
                   hmac_key_encrypted, hmac_key);
       set_session_key(hmac_key);
     }
@@ -1289,22 +1289,22 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   setup_client_tickers();
 
   if (app.use_transport_auth &&
-      app.signing_key() != "")
+      app.opts.signing_key() != "")
     {
       // get our key pair
       keypair our_kp;
-      load_key_pair(app, app.signing_key, our_kp);
+      load_key_pair(app, app.opts.signing_key, our_kp);
 
       // get the hash identifier for our pubkey
       hexenc<id> our_key_hash;
       id our_key_hash_raw;
-      key_hash_code(app.signing_key, our_kp.pub, our_key_hash);
+      key_hash_code(app.opts.signing_key, our_kp.pub, our_key_hash);
       decode_hexenc(our_key_hash, our_key_hash_raw);
 
       // make a signature
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
-      make_signature(app, app.signing_key, our_kp.priv, nonce(), sig);
+      make_signature(app, app.opts.signing_key, our_kp.priv, nonce(), sig);
       decode_base64(sig, sig_raw);
 
       // make a new nonce of our own and send off the 'auth'
@@ -2161,8 +2161,8 @@ session::begin_service()
 {
   keypair kp;
   if (app.use_transport_auth)
-    app.keys.get_key_pair(app.signing_key, kp);
-  queue_hello_cmd(app.signing_key, kp.pub, mk_nonce());
+    app.keys.get_key_pair(app.opts.signing_key, kp);
+  queue_hello_cmd(app.opts.signing_key, kp.pub, mk_nonce());
 }
 
 void
