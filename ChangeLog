@@ -1,3 +1,7 @@
+2006-09-18  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (DISTCLEANFILES): Add unit_tests.log.
+
 2006-09-18  Zack Weinberg  <zackw@panix.com>
 
 	* unit_tests.cc: Rewrite for declarative registration of test cases,
