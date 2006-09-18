@@ -1,3 +1,8 @@
+2006-09-18  Matt Johnston  <matt@ucc.asn.au>
+
+    * cmd.hh (ALIAS macro): somehow g++ 4.x is happy with std:string.
+    g++ 3.3.5 isn't.
+
 2006-09-17  Nathaniel Smith  <njs@pobox.com>
 
 	* NEWS: Insert date.
