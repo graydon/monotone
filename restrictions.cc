@@ -567,8 +567,7 @@ static void setup(roster_t & roster)
 
 }
 
-static void
-test_empty_restriction()
+UNIT_TEST(restrictions, empty_restriction)
 {
   roster_t roster;
   setup(roster);
@@ -634,8 +633,7 @@ test_empty_restriction()
   BOOST_CHECK(pmask.includes(sp_yyg));
 }
 
-static void
-test_simple_include()
+UNIT_TEST(restrictions, simple_include)
 {
   roster_t roster;
   setup(roster);
@@ -707,8 +705,7 @@ test_simple_include()
   BOOST_CHECK( pmask.includes(sp_yyg));
 }
 
-static void
-test_simple_exclude()
+UNIT_TEST(restrictions, simple_exclude)
 {
   roster_t roster;
   setup(roster);
@@ -780,8 +777,7 @@ test_simple_exclude()
   BOOST_CHECK(!pmask.includes(sp_yyg));
 }
 
-static void
-test_include_exclude()
+UNIT_TEST(restrictions, include_exclude)
 {
   roster_t roster;
   setup(roster);
@@ -855,8 +851,7 @@ test_include_exclude()
   BOOST_CHECK(!pmask.includes(sp_yyg));
 }
 
-static void
-test_exclude_include()
+UNIT_TEST(restrictions, exclude_include)
 {
   roster_t roster;
   setup(roster);
@@ -933,8 +928,7 @@ test_exclude_include()
   BOOST_CHECK( pmask.includes(sp_yyg));
 }
 
-static void
-test_invalid_roster_paths()
+UNIT_TEST(restrictions, invalid_roster_paths)
 {
   roster_t roster;
   setup(roster);
@@ -948,8 +942,7 @@ test_invalid_roster_paths()
                     informative_failure);
 }
 
-static void
-test_invalid_workspace_paths()
+UNIT_TEST(restrictions, invalid_workspace_paths)
 {
   roster_t roster;
   setup(roster);
@@ -963,8 +956,7 @@ test_invalid_workspace_paths()
                     informative_failure);
 }
 
-static void
-test_include_depth_0()
+UNIT_TEST(restrictions, include_depth_0)
 {
   roster_t roster;
   setup(roster);
@@ -1040,8 +1032,7 @@ test_include_depth_0()
   BOOST_CHECK(!pmask.includes(sp_yyg));
 }
 
-static void
-test_include_depth_0_empty_restriction()
+UNIT_TEST(restrictions, include_depth_0_empty_restriction)
 {
   roster_t roster;
   setup(roster);
@@ -1115,8 +1106,7 @@ test_include_depth_0_empty_restriction()
   BOOST_CHECK(!pmask.includes(sp_yyg));
 }
 
-static void
-test_include_depth_1()
+UNIT_TEST(restrictions, include_depth_1)
 {
   roster_t roster;
   setup(roster);
@@ -1192,22 +1182,6 @@ test_include_depth_1()
   BOOST_CHECK( pmask.includes(sp_yyg));
 }
 
-void
-add_restrictions_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&test_empty_restriction));
-  suite->add(BOOST_TEST_CASE(&test_simple_include));
-  suite->add(BOOST_TEST_CASE(&test_simple_exclude));
-  suite->add(BOOST_TEST_CASE(&test_include_exclude));
-  suite->add(BOOST_TEST_CASE(&test_exclude_include));
-  suite->add(BOOST_TEST_CASE(&test_invalid_roster_paths));
-  suite->add(BOOST_TEST_CASE(&test_invalid_workspace_paths));
-  suite->add(BOOST_TEST_CASE(&test_include_depth_0));
-  suite->add(BOOST_TEST_CASE(&test_include_depth_0_empty_restriction));
-  suite->add(BOOST_TEST_CASE(&test_include_depth_1));
-
-}
 #endif // BUILD_UNIT_TESTS
 
 // Local Variables:

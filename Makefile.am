@@ -67,6 +67,7 @@ MOST_SOURCES = 								\
 	legacy.cc legacy.hh uri.cc uri.hh				\
 	graph.cc graph.hh						\
 	roster_delta.cc roster_delta.hh					\
+	sha1.hh sha1.cc sha1_engine.hh                                  \
 									\
         lru_writeback_cache.hh						\
 									\
@@ -257,12 +258,14 @@ IDNA_SOURCES =								\
 UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
-	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc
+	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc           \
+	unix/cputime.cc
 
 WIN32_PLATFORM_SOURCES =						\
 	win32/read_password.cc win32/get_system_flavour.cc		\
 	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
-	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc
+	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc        \
+	win32/cputime.cc
 
 # primaries
 

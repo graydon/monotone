@@ -556,8 +556,7 @@ netcmd::write_usher_reply_cmd(utf8 const & server, utf8 const & pattern)
 #include "transforms.hh"
 #include <boost/lexical_cast.hpp>
 
-void
-test_netcmd_mac()
+UNIT_TEST(netcmd, mac)
 {
   netcmd out_cmd, in_cmd;
   string buf;
@@ -615,8 +614,7 @@ do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
   BOOST_CHECK(in_cmd == out_cmd);
 }
 
-void
-test_netcmd_functions()
+UNIT_TEST(netcmd, functions)
 {
 
   try
@@ -812,13 +810,6 @@ test_netcmd_functions()
       L(FL("bad decode exception: '%s'") % d.what);
       throw;
     }
-}
-
-void
-add_netcmd_tests(test_suite * suite)
-{
-  suite->add(BOOST_TEST_CASE(&test_netcmd_functions));
-  suite->add(BOOST_TEST_CASE(&test_netcmd_mac));
 }
 
 #endif // BUILD_UNIT_TESTS

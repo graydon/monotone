@@ -15,8 +15,7 @@
 #include "sanity.hh"
 #include "numeric_vocab.hh"
 
-static void
-widen_test()
+UNIT_TEST(widen, widen)
 {
   // These all have double-parens to stop the C preprocessor from becoming
   // confused by the commas in the template arguments.  The static_cast<u8>'s
@@ -43,12 +42,6 @@ widen_test()
   I((widen<u32,int8_t>(-1) == 255));
   // contrasts with:
   I((static_cast<u32>(int8_t(-1)) == u32(4294967295)));
-}
-
-void add_numeric_vocab_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&widen_test));
 }
 
 #endif // BUILD_UNIT_TESTS

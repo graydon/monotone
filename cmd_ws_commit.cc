@@ -380,7 +380,9 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
-      cout << (F("Changes against parent %s:") % parent).str() << "\n";
+      // A colon at the end of this string looked nicer, but it made
+      // double-click copying from terminals annoying.
+      cout << (F("Changes against parent %s") % parent).str() << "\n";
 
       cset const & cs = edge_changes(*i);
 

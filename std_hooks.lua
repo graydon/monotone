@@ -382,7 +382,7 @@ mergers.tortoise = {
       end
       return tbl.outfile
    end ,
-   available = function() return program_exists_in_path ("TortoiseMerge") end,
+   available = function() return program_exists_in_path ("tortoisemerge") end,
    wanted = function () return true end
 }
 

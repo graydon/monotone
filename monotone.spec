@@ -1,14 +1,14 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.29
-Release: 1
+Version: 0.30
+Release: 0.mtn.1%{?dist}
 License: GPL
 Group: Development/Tools
 URL: http://www.venge.net/monotone
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 BuildRequires: boost-devel >= 1.32.0, texinfo, zlib-devel
-Requires: boost >= 1.32.0, zlib
+Requires: boost >= 1.32.0
 
 %description
 monotone is a free, distributed version control system. It provides
@@ -22,40 +22,35 @@ functions to client-side RSA certificates.
 %setup -q
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" \
-CXXFLAGS="$RPM_OPT_FLAGS" \
-./configure --prefix=$RPM_BUILD_ROOT%{_prefix} \
-            --datadir=$RPM_BUILD_ROOT%{_datadir} \
-            --infodir=$RPM_BUILD_ROOT%{_infodir} \
-            --mandir=$RPM_BUILD_ROOT%{_mandir}
-make
+%configure
+make %{?_smp_mflags}
 
 %install
-rm -rf $RPM_BUILD_ROOT
-make install
-rm -f $RPM_BUILD_ROOT%{_infodir}/dir
+rm -rf %{buildroot}
+make install DESTDIR=%{buildroot}
 # remove x permission in contrib to avoid messing the dependencies
 chmod -x contrib/*
+# clean up contrib
+rm -Rf contrib/.deps
+# let RPM copy this file
+rm -f %{buildroot}%{_datadir}/doc/monotone/monotone.html
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %post
-if [ -x /sbin/install-info ] 
-then
-/sbin/install-info --info-dir=%{_infodir} \
-	     %{_infodir}/monotone.info.gz
+if [ -x /sbin/install-info ]; then
+  /sbin/install-info --info-dir=%{_infodir} %{_infodir}/monotone.info.gz || :
 fi
-
-%preun
-if [ -x /sbin/install-info ]
-then
-/sbin/install-info --info-dir=%{_infodir} --remove monotone
+ 
+%postun
+if [ $1 -eq 0 -a -x /sbin/install-info ]; then
+  /sbin/install-info --info-dir=%{_infodir} --remove monotone || :
 fi
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS COPYING NEWS README README.changesets UPGRADE contrib
+%doc AUTHORS COPYING NEWS README README.changesets UPGRADE monotone.html contrib
 %{_bindir}/mtn
 %{_mandir}/man1/mtn.1.gz
 %{_infodir}/*.info*.gz
@@ -63,6 +58,9 @@ fi
 
 
 %changelog
+* Sun Sep 17 2006 nathaniel smith <njs@pobox.com>
+- 0.30 release
+
 * Sun Aug 20 2006 nathaniel smith <njs@pobox.com>
 - 0.29 release
 

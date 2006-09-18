@@ -3041,8 +3041,7 @@ dump(int const & i, string & out)
   out = lexical_cast<string>(i) + "\n";
 }
 
-static void
-automaton_roster_test()
+UNIT_TEST(roster, random_actions)
 {
   roster_t r;
   change_automaton aut;
@@ -3143,8 +3142,7 @@ check_sane_roster_do_tests(int to_run, int& total)
 
 #undef MAYBE
 
-static void
-check_sane_roster_test()
+UNIT_TEST(roster, check_sane_roster)
 {
   int total;
   check_sane_roster_do_tests(-1, total);
@@ -3156,8 +3154,7 @@ check_sane_roster_test()
     }
 }
 
-static void
-check_sane_roster_loop_test()
+UNIT_TEST(roster, check_sane_roster_loop)
 {
   testing_node_id_source nis;
   roster_t r; MM(r);
@@ -3172,8 +3169,7 @@ check_sane_roster_loop_test()
   BOOST_CHECK_THROW(r.check_sane(true), logic_error);
 }
 
-static void
-check_sane_roster_screwy_dir_map()
+UNIT_TEST(roster, check_sane_roster_screwy_dir_map)
 {
   testing_node_id_source nis;
   roster_t r; MM(r);
@@ -3199,8 +3195,7 @@ check_sane_roster_screwy_dir_map()
   BOOST_CHECK_THROW(r.check_sane(), logic_error);
 }
 
-static void
-bad_attr_test()
+UNIT_TEST(roster, bad_attr)
 {
   testing_node_id_source nis;
   roster_t r; MM(r);
@@ -3910,8 +3905,7 @@ run_a_0_scalar_parent_mark_scenario()
 // These functions contain the actual list of *-merge cases that we would like
 // to test.
 
-static void
-test_all_0_scalar_parent_mark_scenarios()
+UNIT_TEST(roster, all_0_scalar_parent_mark_scenarios)
 {
   L(FL("TEST: begin checking 0-parent marking"));
   // a*
@@ -3919,8 +3913,7 @@ test_all_0_scalar_parent_mark_scenarios()
   L(FL("TEST: end checking 0-parent marking"));
 }
 
-static void
-test_all_1_scalar_parent_mark_scenarios()
+UNIT_TEST(roster, all_1_scalar_parent_mark_scenarios)
 {
   L(FL("TEST: begin checking 1-parent marking"));
   //  a
@@ -3960,8 +3953,7 @@ test_all_1_scalar_parent_mark_scenarios()
   L(FL("TEST: end checking 1-parent marking"));
 }
 
-static void
-test_all_2_scalar_parent_mark_scenarios()
+UNIT_TEST(roster, all_2_scalar_parent_mark_scenarios)
 {
   L(FL("TEST: begin checking 2-parent marking"));
   ///////////////////////////////////////////////////////////////////
@@ -4135,8 +4127,7 @@ namespace
   };
 }
 
-static void
-test_residual_attr_mark_scenario()
+UNIT_TEST(roster, residual_attr_mark_scenario)
 {
   L(FL("TEST: begin checking residual attr marking case"));
   {
@@ -4178,15 +4169,6 @@ test_residual_attr_mark_scenario()
   L(FL("TEST: end checking residual attr marking case"));
 }
 
-static void
-test_all_mark_scenarios()
-{
-  test_all_0_scalar_parent_mark_scenarios();
-  test_all_1_scalar_parent_mark_scenarios();
-  test_all_2_scalar_parent_mark_scenarios();
-  test_residual_attr_mark_scenario();
-}
-
 ////////////////////////////////////////////////////////////////////////
 // end of exhaustive tests
 ////////////////////////////////////////////////////////////////////////
@@ -4196,8 +4178,7 @@ test_all_mark_scenarios()
 ////////////////////////////////////////////////////////////////////////
 
 // nodes can't survive dying on one side of a merge
-static void
-test_die_die_die_merge()
+UNIT_TEST(roster, die_die_die_merge)
 {
   roster_t left_roster; MM(left_roster);
   marking_map left_markings; MM(left_markings);
@@ -4255,8 +4236,7 @@ test_die_die_die_merge()
 //    merging a file and a dir with the same nid and no mention of what should
 //      happen to them fails
 
-static void
-test_same_nid_diff_type()
+UNIT_TEST(roster, same_nid_diff_type)
 {
   testing_node_id_source nis;
 
@@ -4315,9 +4295,7 @@ test_same_nid_diff_type()
 
 }
 
-
-static void
-write_roster_test()
+UNIT_TEST(roster, write_roster)
 {
   L(FL("TEST: write_roster_test"));
   roster_t r; MM(r);
@@ -4468,8 +4446,7 @@ write_roster_test()
   }
 }
 
-static void
-check_sane_against_test()
+UNIT_TEST(roster, check_sane_against)
 {
   testing_node_id_source nis;
   split_path root, foo, bar;
@@ -4726,8 +4703,7 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
     }
 }
 
-static void
-test_unify_rosters_randomized()
+UNIT_TEST(roster, unify_rosters_randomized)
 {
   L(FL("TEST: begin checking unification of rosters (randomly)"));
   temp_node_id_source tmp_nis;
@@ -4744,8 +4720,7 @@ test_unify_rosters_randomized()
   L(FL("TEST: end checking unification of rosters (randomly)"));
 }
 
-static void
-test_unify_rosters_end_to_end_ids()
+UNIT_TEST(roster, unify_rosters_end_to_end_ids)
 {
   L(FL("TEST: begin checking unification of rosters (end to end, ids)"));
   revision_id has_rid = left_rid;
@@ -4823,8 +4798,7 @@ test_unify_rosters_end_to_end_ids()
   L(FL("TEST: end checking unification of rosters (end to end, ids)"));
 }
 
-static void
-test_unify_rosters_end_to_end_attr_corpses()
+UNIT_TEST(roster, unify_rosters_end_to_end_attr_corpses)
 {
   L(FL("TEST: begin checking unification of rosters (end to end, attr corpses)"));
   revision_id first_rid = left_rid;
@@ -4917,26 +4891,6 @@ test_unify_rosters_end_to_end_attr_corpses()
 
   L(FL("TEST: end checking unification of rosters (end to end, attr corpses)"));
 }
-
-void
-add_roster_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&check_sane_roster_screwy_dir_map));
-  suite->add(BOOST_TEST_CASE(&test_die_die_die_merge));
-  suite->add(BOOST_TEST_CASE(&test_same_nid_diff_type));
-  suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end_ids));
-  suite->add(BOOST_TEST_CASE(&test_unify_rosters_end_to_end_attr_corpses));
-  suite->add(BOOST_TEST_CASE(&test_unify_rosters_randomized));
-  suite->add(BOOST_TEST_CASE(&test_all_mark_scenarios));
-  suite->add(BOOST_TEST_CASE(&bad_attr_test));
-  suite->add(BOOST_TEST_CASE(&check_sane_roster_loop_test));
-  suite->add(BOOST_TEST_CASE(&check_sane_roster_test));
-  suite->add(BOOST_TEST_CASE(&write_roster_test));
-  suite->add(BOOST_TEST_CASE(&check_sane_against_test));
-  suite->add(BOOST_TEST_CASE(&automaton_roster_test));
-}
-
 
 #endif // BUILD_UNIT_TESTS
 

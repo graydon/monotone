@@ -28,8 +28,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-12 14:24+0200\n"
-"PO-Revision-Date: 2006-09-12 14:29+0100\n"
+"POT-Creation-Date: 2006-09-14 10:08+0200\n"
+"PO-Revision-Date: 2006-09-15 23:54+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -1547,7 +1547,7 @@ msgstr "  keine Änderungen"
 #: cmd_ws_commit.cc:397
 #, c-format
 msgid "  dropped %s"
-msgstr "  %s entfernt"
+msgstr "  entfernt: %s"
 
 #: cmd_ws_commit.cc:402
 #, c-format
@@ -1555,19 +1555,19 @@ msgid ""
 "  renamed %s\n"
 "       to %s"
 msgstr ""
-"  %s umbenannt nach\n"
-"  %s"
+"  umbenannt: %s nach\n"
+"             %s"
 
 #: cmd_ws_commit.cc:407
 #: cmd_ws_commit.cc:411
 #, c-format
 msgid "  added   %s"
-msgstr "  %s hinzugefügt"
+msgstr "  hinzugefügt: %s"
 
 #: cmd_ws_commit.cc:415
 #, c-format
 msgid "  patched %s"
-msgstr "  %s verändert"
+msgstr "  verändert: %s"
 
 #: cmd_ws_commit.cc:419
 msgid "[DIRECTORY]\n"

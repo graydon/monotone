@@ -16,6 +16,50 @@
 #
 # need some sort "inertia", if we moved sideways before and are moving
 # sideways now...
+#
+# 2)
+#
+# It actually is possible to remove a ghost on the same line as a long
+# rightwards edge -- and it even looks better than not doing it, at least in
+# some cases.  Consider:
+#
+# Current:
+# 
+# | | | o | | | | |    0f07da5974be8bf91495a34093efc635dcf1f01c
+# | | | |\ \ \ \ \ \ 
+# | | | | .-o | | | |    20037e09def77cc217679bf2f72baf5fa0415649
+# | | | |/|   | | | |
+# | | | o---. | | | |    de74b6e2bd612ba40f1afc3eba3f9a3d8f419135
+# | | | | |  \| | | |
+# | | | o |   | | | |    3fd16665caab9d942e6c5254b477587ff7d3722d
+# | | | | |  / / / / 
+# | | | o | | | | |    38f3561cc4bf294b99436f98cd97fc707b422bfa
+# | | | | | | | | |
+# | | | | .-o | | |    59017bc836986a59fd1ac6fba4f78fe1045c67e9
+# | | | |/| | | | |
+# | | | o | | | | |    97e8f96bb34774003de428292edbdd562ca6d867
+# | | | | | | | | |
+#
+# Desired:
+# 
+# | | | o | | | | |    0f07da5974be8bf91495a34093efc635dcf1f01c
+# | | | |\ \ \ \ \ \ 
+# | | | | .-o | | | |    20037e09def77cc217679bf2f72baf5fa0415649
+# | | | |/|   | | | |
+# | | | o-.   | | | |    de74b6e2bd612ba40f1afc3eba3f9a3d8f419135
+# | | | | |\ / / / /
+# | | | o | | | | |    3fd16665caab9d942e6c5254b477587ff7d3722d
+# | | | | | | | | | 
+# | | | o | | | | |    38f3561cc4bf294b99436f98cd97fc707b422bfa
+# | | | | | | | | |
+# | | | | .-o | | |    59017bc836986a59fd1ac6fba4f78fe1045c67e9
+# | | | |/| | | | |
+# | | | o | | | | |    97e8f96bb34774003de428292edbdd562ca6d867
+# | | | | | | | | |
+#
+# Possibly the no-shift-while-drawing-long-edges code could even be removed,
+# deferring to the no-edge-crossings code.
+
 
 
 
