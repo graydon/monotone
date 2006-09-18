@@ -13,9 +13,9 @@
 	* keys.cc, netcmd.cc, netxx_pipe.cc, packet.cc, paths.cc, refiner.cc
 	* restrictions.cc, revision.cc, roster.cc, roster_merge.cc
 	* simplestring_xform.cc, string_queue.cc, transforms.cc, uri.cc
-	* xdelta.cc: Unit tests are now defined like commands, as
-	UNIT_TEST(group, test) { ... } and no registration function is
-	necessary.
+	* numeric_vocab.cc, xdelta.cc: Unit tests are now defined like
+	commands, as UNIT_TEST(group, test) { ... } and no registration
+	function is necessary.
 
 	* cert.cc, file_io.cc, vocab.cc: Remove empty BUILD_UNIT_TESTS block.
 
