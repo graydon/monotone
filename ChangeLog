@@ -1,5 +1,23 @@
 2006-09-18  Zack Weinberg  <zackw@panix.com>
 
+	* roster.cc (unify_roster_oneway): Rename to union_new_nodes;
+	rework to remove need for true node IDs.
+	(unify_rosters): Update to match; only call union_new_nodes once.
+	(check_post_roster_unification_ok): Add argument saying whether
+	temp nodes are OK; pass it to check_sane.
+	(create_some_new_temp_nodes): Rename create_random_unification_task;
+	construct asymmetric cases (new in A, not in B) as well as
+	symmetric cases.
+	(unify_rosters_randomized): Bulk of work moved to
+	unify_rosters_randomized_core; diverge into two tests, probing
+	both the situation where true node IDs are in use, and the
+	situation where they aren't.
+
+	N.B. this patchset breaks the random_actions unit test for no
+	apparent reason; will fix later.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
 	* unit_tests.cc: Rewrite for declarative registration of test cases,
 	better command line handling, and more useful stderr chatter in
 	normal operation.  All debug output now goes to a logfile (default

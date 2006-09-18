@@ -33,6 +33,11 @@
 //          files
 //
 
+// FIXME: add a test that for each revision, generates that rev's roster
+// from scratch, and compares it to the one stored in the db.  (Do the
+// comparison using something like equal_up_to_renumbering, except should
+// say if (!temp_node(a) && !temp_node(b)) I(a == b).)
+
 using std::logic_error;
 using std::map;
 using std::multimap;

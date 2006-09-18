@@ -1091,11 +1091,19 @@ namespace
   };
 
 
-  // This handles all the stuff in a_new.
-  void unify_roster_oneway(roster_t & a, set<node_id> & a_new,
-                           roster_t & b, set<node_id> & b_new,
-                           node_id_source & nis)
+  void union_new_nodes(roster_t & a, set<node_id> & a_new,
+                       roster_t & b, set<node_id> & b_new,
+                       node_id_source & nis)
   {
+    // We must not replace a node whose id is in both a_new and b_new
+    // with a new temp id that is already in either set.  b_new is
+    // destructively modified, so record the union of both sets now.
+    set<node_id> all_new_nids;
+    std::set_union(a_new.begin(), a_new.end(),
+                   b_new.begin(), b_new.end(),
+                   std::inserter(all_new_nids, all_new_nids.begin()));
+
+    // First identify nodes that are new in A but not in B, or new in both.
     for (set<node_id>::const_iterator i = a_new.begin(); i != a_new.end(); ++i)
       {
         node_id const aid = *i;
@@ -1106,22 +1114,14 @@ namespace
         // get out in any case)
         a.get_name(aid, sp);
         node_id bid = b.get_node(sp)->self;
-        if (temp_node(bid))
+        if (b_new.find(bid) != b_new.end())
           {
-            node_id new_nid = nis.next();
-            // the node_id_source provided to this function must only generate
-            // true node ids, because this code was written with the
-            // assumption that only true nids would come in or go out, and
-            // temp ids are used as an intermediate stage to indicate nodes
-            // that need true ids installed.
-            // FIXME: make everything work correctly when this node_id_source
-            // returns temp ids.  This is needed for workspace merge support.
-            // FIXME: having done this, add a test in database_check.cc that
-            // for each revision, generates that rev's roster from scratch,
-            // and compares it to the one stored in the db.  (Do the
-            // comparison using something like equal_up_to_renumbering, except
-            // should say if (!temp_node(a) && !temp_node(b)) I(a == b).)
-            I(!temp_node(new_nid));
+            I(temp_node(bid));
+            node_id new_nid;
+            do
+              new_nid = nis.next();
+            while (all_new_nids.find(new_nid) != all_new_nids.end());
+
             a.replace_node_id(aid, new_nid);
             b.replace_node_id(bid, new_nid);
             b_new.erase(bid);
@@ -1131,8 +1131,22 @@ namespace
             a.replace_node_id(aid, bid);
           }
       }
-  }
 
+    // Now identify nodes that are new in B but not A.
+    for (set<node_id>::const_iterator i = b_new.begin(); i != b_new.end(); i++)
+      {
+        node_id const bid = *i;
+        split_path sp;
+        // SPEEDUP?: climb out only so far as is necessary to find a shared
+        // id?  possibly faster (since usually will get a hit immediately),
+        // but may not be worth the effort (since it doesn't take that long to
+        // get out in any case)
+        b.get_name(bid, sp);
+        node_id aid = a.get_node(sp)->self;
+        I(a_new.find(aid) == a_new.end());
+        b.replace_node_id(bid, aid);
+      }
+  }
 
   void
   union_corpses(roster_t & left, roster_t & right)
@@ -1212,8 +1226,7 @@ namespace
     // "add_file", then this really is a new id; both rosters will have temp
     // ids, and we replace both of them with a newly allocated id.  After
     // this, the two rosters will have identical node_ids at every path.
-    unify_roster_oneway(left, left_new, right, right_new, nis);
-    unify_roster_oneway(right, right_new, left, left_new, nis);
+    union_new_nodes(left, left_new, right, right_new, nis);
 
     // The other thing we need to fix up is attr corpses.  Live attrs are made
     // identical by the csets; but if, say, on one side of a fork an attr is
@@ -4629,67 +4642,74 @@ UNIT_TEST(roster, check_sane_against)
 
 static void
 check_post_roster_unification_ok(roster_t const & left,
-                                 roster_t const & right)
+                                 roster_t const & right,
+                                 bool temp_nodes_ok)
 {
   MM(left);
   MM(right);
   I(left == right);
-  left.check_sane();
-  right.check_sane();
+  left.check_sane(temp_nodes_ok);
+  right.check_sane(temp_nodes_ok);
 }
 
 static void
-create_some_new_temp_nodes(temp_node_id_source & nis,
-                           roster_t & left_ros,
-                           set<node_id> & left_new_nodes,
-                           roster_t & right_ros,
-                           set<node_id> & right_new_nodes)
+create_random_unification_task(roster_t & left,
+                               roster_t & right,
+                               editable_roster_base & left_erb,
+                               editable_roster_base & right_erb,
+                               editable_roster_for_merge & left_erm,
+                               editable_roster_for_merge & right_erm)
 {
-  size_t n_nodes = 10 + (uniform(30));
-  editable_roster_base left_er(left_ros, nis);
-  editable_roster_base right_er(right_ros, nis);
-
+  size_t n_nodes = 20 + uniform(60);
+  
   // Stick in a root if there isn't one.
-  if (!left_ros.has_root())
+  if (!left.has_root())
     {
-      I(!right_ros.has_root());
+      I(!right.has_root());
       split_path root;
       root.push_back(the_null_component);
 
-      node_id left_nid = left_er.create_dir_node();
-      left_new_nodes.insert(left_nid);
-      left_er.attach_node(left_nid, root);
+      node_id left_nid = left_erm.create_dir_node();
+      left_erm.attach_node(left_nid, root);
 
-      node_id right_nid = right_er.create_dir_node();
-      right_new_nodes.insert(right_nid);
-      right_er.attach_node(right_nid, root);
+      node_id right_nid = right_erm.create_dir_node();
+      right_erm.attach_node(right_nid, root);
     }
 
   // Now throw in a bunch of others
   for (size_t i = 0; i < n_nodes; ++i)
     {
-      node_t left_n = random_element(left_ros.all_nodes())->second;
+      node_t left_n = random_element(left.all_nodes())->second;
+
+      // With equal probability, choose to make the new node appear to
+      // be new in just the left, just the right, or both.
+      editable_roster_base * left_er;
+      editable_roster_base * right_er;
+      switch (uniform(2))
+        {
+        case 0: left_er = &left_erm; right_er = &right_erm; break;
+        case 1: left_er = &left_erb; right_er = &right_erm; break;
+        case 2: left_er = &left_erm; right_er = &right_erb; break;
+        default: I(false);
+        }
 
       node_id left_nid, right_nid;
       if (flip())
         {
-          left_nid = left_er.create_dir_node();
-          right_nid = right_er.create_dir_node();
+          left_nid = left_er->create_dir_node();
+          right_nid = right_er->create_dir_node();
         }
       else
         {
           file_id fid = new_ident();
-          left_nid = left_er.create_file_node(fid);
-          right_nid = right_er.create_file_node(fid);
+          left_nid = left_er->create_file_node(fid);
+          right_nid = right_er->create_file_node(fid);
         }
 
-      left_new_nodes.insert(left_nid);
-      right_new_nodes.insert(right_nid);
-
       split_path pth;
-      left_ros.get_name(left_n->self, pth);
+      left.get_name(left_n->self, pth);
 
-      I(right_ros.has_node(pth));
+      I(right.has_node(pth));
 
       if (is_file_t(left_n) || (pth.size() > 1 && flip()))
         // Add a sibling of an existing entry.
@@ -4698,26 +4718,49 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
         // Add a child of an existing entry.
         pth.push_back(new_component());
 
-      left_er.attach_node(left_nid, pth);
-      right_er.attach_node(right_nid, pth);
+      left_er->attach_node(left_nid, pth);
+      right_er->attach_node(right_nid, pth);
     }
 }
 
-UNIT_TEST(roster, unify_rosters_randomized)
+static void
+unify_rosters_randomized_core(node_id_source & tmp_nis,
+                              node_id_source & test_nis,
+                              bool temp_nodes_ok)
 {
-  L(FL("TEST: begin checking unification of rosters (randomly)"));
-  temp_node_id_source tmp_nis;
-  testing_node_id_source test_nis;
   roster_t left, right;
   for (size_t i = 0; i < 30; ++i)
     {
-      set<node_id> left_new, right_new;
-      create_some_new_temp_nodes(tmp_nis, left, left_new, right, right_new);
-      create_some_new_temp_nodes(tmp_nis, right, right_new, left, left_new);
-      unify_rosters(left, left_new, right, right_new, test_nis);
-      check_post_roster_unification_ok(left, right);
+      editable_roster_base left_erb(left, test_nis);
+      editable_roster_base right_erb(right, test_nis);
+      editable_roster_for_merge left_erm(left, tmp_nis);
+      editable_roster_for_merge right_erm(right, tmp_nis);
+
+      create_random_unification_task(left, right,
+                                     left_erb, right_erb,
+                                     left_erm, right_erm);
+      unify_rosters(left, left_erm.new_nodes,
+                    right, right_erm.new_nodes,
+                    test_nis);
+      check_post_roster_unification_ok(left, right, temp_nodes_ok);
     }
-  L(FL("TEST: end checking unification of rosters (randomly)"));
+}
+
+UNIT_TEST(roster, unify_rosters_randomized_trueids)
+{
+  L(FL("TEST: begin checking unification of rosters (randomly, true IDs)"));
+  temp_node_id_source tmp_nis;
+  testing_node_id_source test_nis;
+  unify_rosters_randomized_core(tmp_nis, test_nis, false);
+  L(FL("TEST: end checking unification of rosters (randomly, true IDs)"));
+}
+
+UNIT_TEST(roster, unify_rosters_randomized_tempids)
+{
+  L(FL("TEST: begin checking unification of rosters (randomly, temp IDs)"));
+  temp_node_id_source tmp_nis;
+  unify_rosters_randomized_core(tmp_nis, tmp_nis, true);
+  L(FL("TEST: end checking unification of rosters (randomly, temp IDs)"));
 }
 
 UNIT_TEST(roster, unify_rosters_end_to_end_ids)
