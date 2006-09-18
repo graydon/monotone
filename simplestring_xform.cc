@@ -140,11 +140,11 @@ prefix_lines_with(string const & prefix, string const & lines, string & out)
   out = oss.str();
 }
 
-string
-remove_ws(string const & s)
+void
+append_without_ws(string & appendto, string const & s)
 {
-  string tmp;
-  tmp.reserve(s.size());
+  unsigned pos = appendto.size();
+  appendto.resize(pos + s.size());
   for (string::const_iterator i = s.begin();
        i != s.end(); ++i)
     {
@@ -156,10 +156,19 @@ remove_ws(string const & s)
         case ' ':
           break;
         default:
-          tmp += *i;
+          appendto[pos] = *i;
+          ++pos;
           break;
         }
     }
+  appendto.resize(pos);
+}
+
+string
+remove_ws(string const & s)
+{
+  string tmp;
+  append_without_ws(tmp, s);
   return tmp;
 }
 

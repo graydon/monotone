@@ -139,7 +139,12 @@ function mtn_setup()
 end
 
 function base_revision()
-  return (string.gsub(readfile("_MTN/revision"), "%s*$", ""))
+  local workrev = readfile("_MTN/revision")
+  local extract = string.gsub(workrev, "^.*old_revision %[(%x*)%].*$", "%1")
+  if extract == workrev then
+    err("failed to extract base revision from _MTN/revision")
+  end
+  return extract
 end
 
 function base_manifest()
@@ -562,7 +567,7 @@ table.insert(tests, "b_and_t_selector_globbing")
 table.insert(tests, "diff_--external")
 table.insert(tests, "db_migrate_on_bad_schema")
 table.insert(tests, "list_branches")
-table.insert(tests, "database_check_for_normalization")
+table.insert(tests, "unnormalized_paths_in_database")
 table.insert(tests, "annotate_with_no_revs")
 table.insert(tests, "merging_(add_a,_rename_a_b)_with_(add_b)")
 table.insert(tests, "update_-b_foo_updates__MTN_options_correctly")
@@ -670,3 +675,9 @@ table.insert(tests, "drop_directory_with_unversioned_files_and_merge")
 table.insert(tests, "checkout_-r_no_dir")
 table.insert(tests, "annotate_with_human_output")
 table.insert(tests, "automate_genkey")
+table.insert(tests, "migrate_workspace")
+table.insert(tests, "workspace_migration")
+table.insert(tests, "usage_output_streams")
+table.insert(tests, "automate_get_content_changed")
+table.insert(tests, "i18n_commit_messages")
+table.insert(tests, "ws_ops_with_wrong_node_type")

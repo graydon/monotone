@@ -67,13 +67,17 @@ resolve_merge_conflicts(roster_t const & left_roster,
         {
 
           L(FL("examining content conflicts"));
-          vector<file_content_conflict> residual_conflicts;
 
-          for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
+          size_t cnt;
+          size_t total_conflicts = result.file_content_conflicts.size();
+          std::vector<file_content_conflict>::iterator it;
+
+          for (cnt = 1, it = result.file_content_conflicts.begin();
+               it != result.file_content_conflicts.end(); ++cnt)
             {
-              file_content_conflict const & conflict = result.file_content_conflicts[i];
+              file_content_conflict const & conflict = *it;
 
-              shared_ptr<roster_t> roster_for_file_lca;
+              shared_ptr<roster_t const> roster_for_file_lca;
               adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
 
               // Now we should certainly have a roster, which has the node.
@@ -96,14 +100,23 @@ resolve_merge_conflicts(roster_t const & left_roster,
                                         anc_id, left_id, right_id, merged_id))
                 {
                   L(FL("resolved content conflict %d / %d")
-                    % (i+1) % result.file_content_conflicts.size());
+                    % cnt % total_conflicts);
                   file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
                   f->content = merged_id;
+
+                  it = result.file_content_conflicts.erase(it);
                 }
               else
-                residual_conflicts.push_back(conflict);
+                {
+                  ++it;
+
+                  // If the content_merger has failed, there's no point
+                  // trying to continue--we'll only frustrate users by
+                  // encouraging them to continue working with their merge
+                  // tool on a merge that is now destined to fail.
+                  break;
+                }
             }
-          result.file_content_conflicts = residual_conflicts;
         }
     }
 
@@ -164,6 +177,7 @@ store_roster_merge_result(roster_t const & left_roster,
   merged_roster.check_sane();
 
   revision_t merged_rev;
+  merged_rev.made_for = made_for_database;
 
   calculate_ident(merged_roster, merged_rev.new_manifest);
 

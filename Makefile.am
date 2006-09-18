@@ -10,7 +10,7 @@ SANITY_CORE_SOURCES =							\
 	sanity.cc sanity.hh quick_alloc.hh				\
 	simplestring_xform.cc simplestring_xform.hh 			\
 	constants.cc constants.hh numeric_vocab.hh 			\
-	platform.hh
+	platform.hh numeric_vocab.cc
 
 
 LUAEXT_SOURCES = 							\
@@ -31,7 +31,7 @@ MOST_SOURCES = 								\
 	lua_hooks.cc lua_hooks.hh 					\
 	transforms.cc transforms.hh					\
 	update.cc update.hh						\
-	work.cc work.hh							\
+	work.cc work_migration.cc work.hh				\
 	cert.cc cert.hh							\
 	database.cc database.hh						\
 	key_store.cc key_store.hh					\
@@ -65,8 +65,11 @@ MOST_SOURCES = 								\
 	roster_merge.cc roster_merge.hh					\
 	merge.cc merge.hh						\
 	legacy.cc legacy.hh uri.cc uri.hh				\
+	graph.cc graph.hh						\
+	roster_delta.cc roster_delta.hh					\
+	sha1.hh sha1.cc sha1_engine.hh                                  \
 									\
-        lru_cache.h							\
+        lru_writeback_cache.hh						\
 									\
 	cleanup.hh unit_tests.hh					\
         cycle_detector.hh randomfile.hh adler32.hh			\
@@ -255,12 +258,14 @@ IDNA_SOURCES =								\
 UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
-	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc
+	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc           \
+	unix/cputime.cc
 
 WIN32_PLATFORM_SOURCES =						\
 	win32/read_password.cc win32/get_system_flavour.cc		\
 	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
-	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc
+	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc        \
+	win32/cputime.cc
 
 # primaries
 
@@ -517,13 +522,23 @@ apidocs:
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
-# A fake target so we can use _MTN/revision as a prerequisite, yet not
-# crash if _MTN/revision does not exist.
-$(srcdir)/_MTN/revision:
-	true
-package_revision.txt: $(srcdir)/_MTN/revision
-	if [ -f $< ]; then cp $< $@; fi
-	if [ ! -f $@ ]; then echo "unknown" > $@; fi
+# This is phony, so that we always try to rebuild it.  If it succeeds
+# in calculating changes, it produces its target; otherwise, its
+# target does not exist.
+.PHONY: package_revision_raw.txt
+# if both attempts fail, then we need to remove the empty file that >
+# creates, and also make sure that the shell command exits
+# successfully; the rm -f ensures both
+package_revision_raw.txt:
+	REAL_BLDDIR=$$PWD/$(top_builddir); \
+	(cd $(srcdir) && $$REAL_BLDDIR/mtn --root=. automate get_base_revision_id) 2>/dev/null >$@ \
+	|| (cd $(srcdir) && mtn --root=. automate get_base_revision_id) 2>/dev/null >$@ \
+	|| rm -f $@
+package_revision.txt: package_revision_raw.txt
+	if [ -f $< ]; then \
+	  cp $< $@; \
+	fi
+	[ -f $@ ] || echo "unknown" > $@
 package_revision.c: package_revision.txt txt2c Makefile
 	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
@@ -538,14 +553,9 @@ package_revision.c: package_revision.txt txt2c Makefile
 #              |           /        
 #          package_full_revision.txt
 
-# This is phony, so that we always try to rebuild it.  If it succeeds
-# in calculating changes, it produces its target; otherwise, its
-# target does not exist.
+# See above comment.
 .PHONY: package_full_revision_raw.txt
 package_full_revision_raw.txt:
-# if both attempts fail, then we need to remove the empty file that >
-# creates, and also make sure that the shell command exits
-# successfully; the rm -f ensures both
 	REAL_BLDDIR=$$PWD/$(top_builddir); \
 	(cd $(srcdir) && $$REAL_BLDDIR/mtn --root=. automate get_revision) 2>/dev/null >$@ \
 	|| (cd $(srcdir) && mtn --root=. automate get_revision) 2>/dev/null >$@ \

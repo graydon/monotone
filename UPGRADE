@@ -1,4 +1,4 @@
-upgrading monotone to 0.29
+upgrading monotone to 0.30
 ==========================
 
 How to read this file:
@@ -16,6 +16,13 @@ How to read this file:
     will be described there, not here.
 
 If you are upgrading from:
+  - 0.29 or earlier: The database format has changed.  You must run:
+       $ mtn -d mydb.mtn db migrate
+       $ mtn -d mydb.mtn db regenerate_rosters
+    on each of your databases.  Also, the workspace format has
+    changed.  You must run:
+       $ mtn migrate_workspace
+    in each of your workspaces.
   - 0.25 or earlier: Please read this section carefully.  We have
     modified the textual format used by revisions and manifests; old
     monotones cannot parse the new format, and new monotones cannot

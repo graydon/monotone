@@ -520,24 +520,25 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 
 static void
 load_and_cache_roster(revision_id const & rid,
-                      map<revision_id, shared_ptr<roster_t> > & rmap,
-                      shared_ptr<roster_t> & rout,
+                      map<revision_id, shared_ptr<roster_t const> > & rmap,
+                      shared_ptr<roster_t const> & rout,
                       app_state & app)
 {
-  map<revision_id, shared_ptr<roster_t> >::const_iterator i = rmap.find(rid);
+  map<revision_id, shared_ptr<roster_t const> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
     rout = i->second;
   else
     {
-      rout = shared_ptr<roster_t>(new roster_t());
-      app.db.get_roster(rid, *rout);
-      safe_insert(rmap, make_pair(rid, rout));
+      database::cached_roster cr;
+      app.db.get_roster(rid, cr);
+      safe_insert(rmap, make_pair(rid, cr.first));
+      rout = cr.first;
     }
 }
 
 void
 content_merge_database_adaptor::get_ancestral_roster(node_id nid,
-                                                     shared_ptr<roster_t> & anc)
+                                                     shared_ptr<roster_t const> & anc)
 {
   // Given a file, if the lca is nonzero and its roster contains the file,
   // then we use its roster.  Otherwise we use the roster at the file's
@@ -561,7 +562,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
 void
 content_merge_database_adaptor::get_version(file_path const & path,
                                             file_id const & ident,
-                                            file_data & dat)
+                                            file_data & dat) const
 {
   app.db.get_file_version(ident, dat);
 }
@@ -588,7 +589,7 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 
 void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
-                                                      shared_ptr<roster_t> & anc)
+                                                      shared_ptr<roster_t const> & anc)
 {
   // When doing an update, the base revision is always the ancestor to
   // use for content merging.
@@ -598,9 +599,12 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
 void
 content_merge_workspace_adaptor::get_version(file_path const & path,
                                              file_id const & ident,
-                                             file_data & dat)
+                                             file_data & dat) const
 {
-  if (app.db.file_version_exists(ident))
+  map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
+  if (i != temporary_store.end())
+    dat = i->second;
+  else if (app.db.file_version_exists(ident))
     app.db.get_file_version(ident, dat);
   else
     {
@@ -611,7 +615,7 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
                            F("'%s' in workspace is a directory, not a file") % path);
       read_localized_data(path, tmp, app.lua);
       calculate_ident(tmp, fid);
-      N(fid == ident,
+      E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
         % path % fid % ident);
       dat = tmp;
@@ -640,7 +644,9 @@ content_merger::get_file_encoding(file_path const & path,
                                   roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, constants::encoding_attribute, v))
+  split_path sp;
+  path.split(sp);
+  if (ros.get_attr(sp, constants::encoding_attribute, v))
     return v();
   return constants::default_encoding;
 }
@@ -650,7 +656,9 @@ content_merger::attribute_manual_merge(file_path const & path,
                                        roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, constants::manual_merge_attribute, v)
+  split_path sp;
+  path.split(sp);
+  if (ros.get_attr(sp, constants::manual_merge_attribute, v)
       && v() == "true")
     return true;
   return false; // default: enable auto merge

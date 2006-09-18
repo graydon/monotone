@@ -1,3 +1,135 @@
+Sun Sep 17 12:27:08 PDT 2006
+
+        0.30 release.  Speed improvements, bug fixes, and improved
+        infrastructure.
+
+        Several internal data formats have changed with this release;
+        migration is straight-forward, but slightly more complicated
+        than usual:
+          -- The formats used to store some cached data in the
+             database have changed.  To upgrade your databases, you
+             must run:
+               $ mtn -d mydb.mtn db migrate
+               $ mtn -d mydb.mtn db regenerate_rosters
+          -- The metadata stored in _MTN in each workspace has been
+             rearranged slightly.  To upgrade your workspaces, you
+             must run
+               $ mtn migrate_workspace
+             in each workspace.
+        All of these operations are completely lossless, and 0.30
+        remains compatible with earlier versions with regards to
+        netsync.
+
+        Speed improvements:
+
+        - Algorithm used to find branch heads rewritten, to use vastly
+          less memory and cpu.  This not only makes 'mtn heads'
+          faster, but also 'mtn commit', 'mtn update', and other
+          commands, which were spending most of their time in this
+          code.
+        
+        - The format used in the database to store the roster cache
+          was rewritten.  This makes initial pull approximately twice
+          as fast, and somewhat improves the speed of restricted log,
+          annotate, and so on.
+
+        - The xdelta algorithm was further optimized.
+
+        - A memory leak in Botan was fixed, which was causing
+          excessive memory and CPU time to be spent during 'mtn
+          checkout'.
+
+        - Monotone has fast-paths for doing character set conversion
+          when the system it is running on uses plain ASCII.  These
+          fast-paths now know that "646" is another name used for
+          ASCII, and systems that use this name (like some BSDs) now
+          benefit from the fast-paths.
+
+        - Miscellaneous other improvements.
+
+        Workspace format changes:
+
+        - It is now possible to write down a multi-parent (merge)
+          workspace.  However, monotone will still refuse to work with
+          such a workspace, and there is no way to create one.  This
+          change merely sets up infrastructure for further changes.
+
+        - _MTN/revision no longer contains only the parent revision
+          id; if you depended on this in scripts, use 'mtn automate
+          get_base_revision_id' instead.  Also, _MTN/work has been
+          removed.
+
+        UI changes:
+
+        - 'mtn status' now includes the branch name and parent
+          revision id in its output.
+
+        - The output of 'mtn annotate' and 'mtn annotate --brief' has
+          been switched.  The more human-readable output is now the
+          default.        
+
+        - 'mtn pluck' now gives an error message if the requested
+          operation would have no effect.
+
+        - On command line syntax errors, usage information is now
+          printed to stderr instead of stdout.  (Output requested with
+          --help still goes to stdout.)  This should make it easier to
+          find bugs in scripts.
+
+        Bug fixes:
+
+        - While changelog messages have always been defined to UTF-8,
+          we were not properly converting messages from the user's
+          locale.  This has now been fixed.
+
+        - An off-by-one error that caused some operations to abort
+          with an error message about "cancel_size <
+          pending_writes_size" has been fixed.
+
+        - In 0.29, --help output was not localized.  This has been
+          fixed.
+
+        - In 0.29, setting merger = "emacs" would not work unless
+          EDITOR was also set to "emacs" (and similar for vi).  This
+          has been fixed.
+
+        - A rare invariant violation seen when performing certain
+          sequences of renames/adds in the workspace has been fixed.
+
+        - If a user failed to resolve the conflicts in a text file, we
+          would continue asking them to resolve conflicts in remaining
+          files, even though the merge could not succeed.  We now exit
+          immediately on failure.
+
+        - Work around some g++ 3.3 brokenness.
+
+        Documentation changes:
+
+        - Imported *-merge documents into the manual (they still need
+          to be cleaned up to fit in better).
+
+        Changes to automate:
+
+        - Bug fix in 'attributes': this command is supposed to list
+          attributes that were removed from a file in the current
+          revision; instead, it was listing all attributes that had
+          ever been removed from that file.  Now fixed.
+
+        - New command 'get_corresponding_path': given a revision A, a
+          path P, and a revision B, looks up the file with name P in
+          revision A, and states what path it had in revision B.
+
+        - New command 'get_content_changed': given a revision A and a
+          path P, gives the ancestor of A in which P was last
+          modified.
+
+        - New command 'get_option': Fetches variables from
+          _MTN/options (e.g., the current workspace's branch and
+          database).
+
+        - New command 'genkey': an automate-friendly way to generate a
+          new monotone key.
+
 Sun Aug 20 15:58:08 PDT 2006
 
         0.29 release.  Code cleanups and bug fixes.

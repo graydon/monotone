@@ -39,9 +39,25 @@ namespace constants
   // be tweaked further.
   size_t const db_version_cache_sz = 7 * (1 << 20);
 
-  size_t const db_roster_cache_sz = 7;
+  // the value of 7 MB was determined by blindly copying the line above and
+  // not doing any testing at all - it could be tweaked further.
+  size_t const db_roster_cache_sz = 7 * (1 << 20);
 
-  unsigned long const db_max_pending_writes_bytes = 16 * 1024 * 1024;
+  // this value is very much an estimate.  the calculation is:
+  //   -- 40 bytes content hash
+  //   -- a path component, maybe 10 or 15 bytes
+  //   -- 40 bytes birth revision
+  //   -- 40 bytes name marking hash
+  //   -- 40 bytes content marking hash
+  //   -- plus internal pointers, etc., for strings, sets, shared_ptrs, heap
+  //      overhead, ...
+  //   -- plus any space taken for attrs
+  // so ~175 bytes for a file node, plus internal slop, plus attrs (another
+  // 60 bytes per attr, or so), minus 80 bytes for dir nodes.  So this just
+  // picks a number that seems a reasonable amount over 175.
+  size_t const db_estimated_roster_node_sz = 210;
+
+  unsigned long const db_max_delayed_file_bytes = 16 * 1024 * 1024;
  
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.

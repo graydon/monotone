@@ -123,9 +123,6 @@ void calculate_ident(manifest_data const & dat,
 void calculate_ident(revision_data const & dat,
                      revision_id & ident);
 
-void calculate_ident(roster_data const & dat,
-                     roster_id & ident);
-
 // canonicalize base64 encoding
 std::string canonical_base64(std::string const & s);
 

@@ -150,15 +150,15 @@ cert_revision_tag(revision_id const & m,
 
 void
 cert_revision_changelog(revision_id const & m,
-                       std::string const & changelog,
-                       app_state & app,
-                       packet_consumer & pc);
+                        utf8 const & changelog,
+                        app_state & app,
+                        packet_consumer & pc);
 
 void
 cert_revision_comment(revision_id const & m,
-                     std::string const & comment,
-                     app_state & app,
-                     packet_consumer & pc);
+                      utf8 const & comment,
+                      app_state & app,
+                      packet_consumer & pc);
 
 void
 cert_revision_testresult(revision_id const & m,

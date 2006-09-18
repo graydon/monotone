@@ -340,11 +340,19 @@ cert_signable_text(cert const & t,
 void
 cert_hash_code(cert const & t, hexenc<id> & out)
 {
-  string tmp(t.ident()
-             + ":" + t.name()
-             + ":" + remove_ws(t.value())
-             + ":" + t.key()
-             + ":" + remove_ws(t.sig()));
+  string tmp;
+  tmp.reserve(4+t.ident().size() + t.name().size() + t.value().size() +
+              t.key().size() + t.sig().size());
+  tmp.append(t.ident());
+  tmp += ':';
+  tmp.append(t.name());
+  tmp += ':';
+  append_without_ws(tmp,t.value());
+  tmp += ':';
+  tmp.append(t.key());
+  tmp += ':';
+  append_without_ws(tmp,t.sig());
+
   data tdat(tmp);
   calculate_ident(tdat, out);
 }
@@ -534,27 +542,45 @@ cert_revision_in_branch(revision_id const & rev,
                             branchname, app, pc);
 }
 
+namespace
+{
+  struct not_in_branch : public is_failure
+  {
+    app_state & app;
+    base64<cert_value > const & branch_encoded;
+    not_in_branch(app_state & app,
+                  base64<cert_value> const & branch_encoded)
+      : app(app), branch_encoded(branch_encoded)
+    {}
+    virtual bool operator()(revision_id const & rid)
+    {
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(rid,
+                                cert_name(branch_cert_name),
+                                branch_encoded,
+                                certs);
+      erase_bogus_certs(certs, app);
+      return certs.empty();
+    }
+  };
+}
+
 void
 get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  set<revision_id> & heads)
 {
-  vector< revision<cert> > certs;
+  L(FL("getting heads of branch %s") % branchname);
   base64<cert_value> branch_encoded;
-
   encode_base64(branchname, branch_encoded);
-  app.db.get_revision_certs(cert_name(branch_cert_name),
-                            branch_encoded, certs);
 
-  erase_bogus_certs(certs, app);
+  app.db.get_revisions_with_cert(cert_name(branch_cert_name),
+                                 branch_encoded,
+                                 heads);
 
-  heads.clear();
-
-  for (vector< revision<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
-    heads.insert(revision_id(i->inner().ident));
-
-  erase_ancestors(heads, app);
+  not_in_branch p(app, branch_encoded);
+  erase_ancestors_and_failures(heads, p, app);
+  L(FL("found heads of branch %s (%s heads)") % branchname % heads.size());
 }
 
 
@@ -637,22 +663,22 @@ cert_revision_tag(revision_id const & m,
 
 void
 cert_revision_changelog(revision_id const & m,
-                        string const & changelog,
+                        utf8 const & changelog,
                         app_state & app,
                         packet_consumer & pc)
 {
   put_simple_revision_cert(m, changelog_cert_name,
-                           changelog, app, pc);
+                           changelog(), app, pc);
 }
 
 void
 cert_revision_comment(revision_id const & m,
-                      string const & comment,
+                      utf8 const & comment,
                       app_state & app,
                       packet_consumer & pc)
 {
   put_simple_revision_cert(m, comment_cert_name,
-                           comment, app, pc);
+                           comment(), app, pc);
 }
 
 void

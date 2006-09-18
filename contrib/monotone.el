@@ -35,6 +35,8 @@
 ;; FIXME: handle aborts better and kill monotone.
 ;; FIXME: given an id, suck out the file with "mtn cat"
 ;; FIXME: handle diff --revision XXX path/to/file
+;;        -- Prefix arg on diff should probably prompt for parent
+;;        -- Have a version that diffs against branch-point
 
 ;;; User vars:
 ;; These vars are likley to be changed by the user.
@@ -168,12 +170,18 @@ Type C-c C-c to commit, kill the buffer to abort.
 ;;; Key maps
 (defvar monotone-vc-prefix-map
   (let ((map (make-sparse-keymap)))
+    ; keys for compatibility with vc-mode (and anyone who has those binding
+    ; burned into their fingers)
     (define-key map "="    'monotone-vc-diff)
-    (define-key map "P"    'monotone-push)
     (define-key map "\C-q" 'monotone-vc-commit)
     (define-key map "i"    'monotone-vc-register)
-    (define-key map "6"    'monotone-grab-id)
     (define-key map "l"    'monotone-vc-print-log)
+    ; new keys, perhaps more sensible
+    (define-key map "d"    'monotone-vc-diff)
+    (define-key map "c"    'monotone-vc-commit)
+    (define-key map "a"    'monotone-vc-register)
+    (define-key map "6"    'monotone-grab-id)
+    (define-key map "P"    'monotone-push)
     (define-key map "p"    'monotone-pull)
     (define-key map "q"    'monotone-vc-commit) ;; i am a lazy typist
     (define-key map "s"    'monotone-vc-status)

@@ -1,0 +1,54 @@
+// Copyright (C) 2006 Nathaniel Smith <njs@pobox.com>
+//
+// This program is made available under the GNU GPL version 2.0 or
+// greater. See the accompanying file COPYING for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY; without even the
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+// PURPOSE.
+
+// Currently, this file just contains unit tests for widen<>.
+
+#ifdef BUILD_UNIT_TESTS
+
+#include "unit_tests.hh"
+#include "sanity.hh"
+#include "numeric_vocab.hh"
+
+static void
+widen_test()
+{
+  // These all have double-parens to stop the C preprocessor from becoming
+  // confused by the commas in the template arguments.  The static_cast<u8>'s
+  // are to shut up compiler warnings.
+
+  // unsigned -> unsigned
+  I((widen<u8,u8>(1) == 1));
+  I((widen<u8,u8>(255) == 255));
+  I((widen<u8,u8>(static_cast<u8>(-1)) == 255));
+  I((widen<u32,u8>(1) == 1));
+  I((widen<u32,u8>(255) == 255));
+  I((widen<u32,u8>(static_cast<u8>(-1)) == 255));
+  // unsigned -> signed
+  I((widen<int32_t,u8>(1) == 1));
+  I((widen<int32_t,u8>(255) == 255));
+  I((widen<int32_t,u8>(static_cast<u8>(-1)) == 255));
+  // signed -> signed
+  I((widen<int32_t,int8_t>(1) == 1));
+  I((widen<int32_t,int8_t>(255) == -1));
+  I((widen<int32_t,int8_t>(-1) == -1));
+  // signed -> unsigned ((critical case!))
+  I((widen<u32,int8_t>(1) == 1));
+  I((widen<u32,int8_t>(255) == 255));
+  I((widen<u32,int8_t>(-1) == 255));
+  // contrasts with:
+  I((static_cast<u32>(int8_t(-1)) == u32(4294967295)));
+}
+
+void add_numeric_vocab_tests(test_suite * suite)
+{
+  I(suite);
+  suite->add(BOOST_TEST_CASE(&widen_test));
+}
+
+#endif // BUILD_UNIT_TESTS

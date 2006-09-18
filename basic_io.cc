@@ -29,9 +29,8 @@ using std::vector;
 
 void basic_io::input_source::err(string const & s)
 {
-  L(FL("error in %s:%d:%d:E: %s") % name % line % col % s);
-  throw logic_error((F("error in %s:%d:%d:E: %s")
-                     % name % line % col % s).str());
+  E(false,
+    F("parsing a %s at %d:%d:E: %s") % name % line % col % s);
 }
 
 
@@ -76,8 +75,8 @@ void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
 }
 
 void basic_io::stanza::push_hex_triple(symbol const & k,
-				       string const & n,
-				       hexenc<id> const & v)
+                                       string const & n,
+                                       hexenc<id> const & v)
 {
   entries.push_back(make_pair(k, escape(n) + " " + "[" + v() + "]"));
   if (k().size() > indent)
@@ -125,10 +124,18 @@ void basic_io::stanza::push_str_triple(symbol const & k,
 
 
 string basic_io::printer::buf;
+int basic_io::printer::count;
 
 basic_io::printer::printer()
 {
+  I(count == 0);
+  count++;
   buf.clear();
+}
+
+basic_io::printer::~printer()
+{
+  count--;
 }
 
 void basic_io::printer::print_stanza(stanza const & st)
