@@ -1,3 +1,15 @@
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	Fix a latent bug in the roster random actions test, and make it
+	somewhat more rigorous.
+	* roster.cc (random_actions): Always compare with the
+	just-previous roster; the random walk can return to an earlier
+	position.  Restructure with nested loops; run tests_on_two_rosters
+	more frequently.  Set up the scratch roster with a root here.
+	(perform_random_action): Invariant on entry that r has
+	a root already.  Do not delete the root node.  Add commented L()
+	for content changes.
+
 2006-09-18  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (DISTCLEANFILES): Add unit_tests.log.

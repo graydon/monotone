@@ -2890,128 +2890,128 @@ change_automaton
   void perform_random_action(roster_t & r, node_id_source & nis)
   {
     cset c;
+    I(r.has_root());
     while (c.empty())
       {
-        if (r.all_nodes().empty())
-          {
-            // Must add, couldn't find anything to work with
-            split_path root;
-            root.push_back(the_null_component);
-            c.dirs_added.insert(root);
-          }
-        else
-          {
-            node_t n = random_element(r.all_nodes())->second;
-            split_path pth;
-            r.get_name(n->self, pth);
-            // L(FL("considering acting on '%s'") % file_path(pth));
+        node_t n = random_element(r.all_nodes())->second;
+        split_path pth;
+        r.get_name(n->self, pth);
+        // L(FL("considering acting on '%s'") % file_path(pth));
 
-            switch (uniform(7))
+        switch (uniform(7))
+          {
+          default:
+          case 0:
+          case 1:
+          case 2:
+            if (is_file_t(n) || (pth.size() > 1 && flip()))
+              // Add a sibling of an existing entry.
+              pth[pth.size() - 1] = new_component();
+
+            else
+              // Add a child of an existing entry.
+              pth.push_back(new_component());
+
+            if (flip())
               {
-              default:
-              case 0:
-              case 1:
-              case 2:
-                if (is_file_t(n) || (pth.size() > 1 && flip()))
-                  // Add a sibling of an existing entry.
-                  pth[pth.size() - 1] = new_component();
+                // L(FL("adding dir '%s'") % file_path(pth));
+                safe_insert(c.dirs_added, pth);
+              }
+            else
+              {
+                // L(FL("adding file '%s'") % file_path(pth));
+                safe_insert(c.files_added, make_pair(pth, new_ident()));
+              }
+            break;
 
-                else
-                  // Add a child of an existing entry.
-                  pth.push_back(new_component());
+          case 3:
+            if (is_file_t(n))
+              {
+                // L(FL("altering content of file '%s'") % file_path(pth));
+                safe_insert(c.deltas_applied,
+                            make_pair
+                            (pth, make_pair(downcast_to_file_t(n)->content,
+                                            new_ident())));
+              }
+            break;
 
-                if (flip())
-                  {
-                    // L(FL("adding dir '%s'") % file_path(pth));
-                    safe_insert(c.dirs_added, pth);
-                  }
-                else
-                  {
-                    // L(FL("adding file '%s'") % file_path(pth));
-                    safe_insert(c.files_added, make_pair(pth, new_ident()));
-                  }
-                break;
+          case 4:
+            {
+              node_t n2 = random_element(r.all_nodes())->second;
+              split_path pth2;
+              r.get_name(n2->self, pth2);
 
-              case 3:
-                if (is_file_t(n))
-                  {
-                    safe_insert(c.deltas_applied,
-                                make_pair
-                                (pth, make_pair(downcast_to_file_t(n)->content,
-                                                new_ident())));
-                  }
-                break;
+              if (n == n2)
+                continue;
 
-              case 4:
+              if (is_file_t(n2) || (pth2.size() > 1 && flip()))
                 {
-                  node_t n2 = random_element(r.all_nodes())->second;
-                  split_path pth2;
-                  r.get_name(n2->self, pth2);
-
-                  if (n == n2)
-                    continue;
-
-                  if (is_file_t(n2) || (pth2.size() > 1 && flip()))
-                    {
-                      // L(FL("renaming to a sibling of an existing entry '%s'") % file_path(pth2));
-                      // Move to a sibling of an existing entry.
-                      pth2[pth2.size() - 1] = new_component();
-                    }
-
-                  else
-                    {
-                      // L(FL("renaming to a child of an existing entry '%s'") % file_path(pth2));
-                      // Move to a child of an existing entry.
-                      pth2.push_back(new_component());
-                    }
-
-                  if (!parent_of(pth, pth2))
-                    {
-                      // L(FL("renaming '%s' -> '%s") % file_path(pth) % file_path(pth2));
-                      safe_insert(c.nodes_renamed, make_pair(pth, pth2));
-                    }
+                  // L(FL("renaming to a sibling of an existing entry '%s'")
+                  //   % file_path(pth2));
+                  // Move to a sibling of an existing entry.
+                  pth2[pth2.size() - 1] = new_component();
                 }
-                break;
 
-              case 5:
-                if (!null_node(n->parent) &&
-                    (is_file_t(n) || downcast_to_dir_t(n)->children.empty()))
-                  {
-                    // L(FL("deleting '%s'") % file_path(pth));
-                    safe_insert(c.nodes_deleted, pth);
-                  }
-                break;
+              else
+                {
+                  // L(FL("renaming to a child of an existing entry '%s'")
+                  //   % file_path(pth2));
+                  // Move to a child of an existing entry.
+                  pth2.push_back(new_component());
+                }
 
-              case 6:
-                if (!n->attrs.empty() && flip())
+              if (!parent_of(pth, pth2))
+                {
+                  // L(FL("renaming '%s' -> '%s")
+                  //   % file_path(pth) % file_path(pth2));
+                  safe_insert(c.nodes_renamed, make_pair(pth, pth2));
+                }
+            }
+            break;
+
+          case 5:
+            if (!null_node(n->parent)
+                && (is_file_t(n) || downcast_to_dir_t(n)->children.empty())
+                && r.all_nodes().size() > 1) // do not delete the root
+              {
+                // L(FL("deleting '%s'") % file_path(pth));
+                safe_insert(c.nodes_deleted, pth);
+              }
+            break;
+
+          case 6:
+            if (!n->attrs.empty() && flip())
+              {
+                attr_key k = pick_attr(n->attrs);
+                if (safe_get(n->attrs, k).first)
                   {
-                    attr_key k = pick_attr(n->attrs);
-                    if (safe_get(n->attrs, k).first)
+                    if (flip())
                       {
-                        if (flip())
-                          {
-                            // L(FL("clearing attr on '%s'") % file_path(pth));
-                            safe_insert(c.attrs_cleared, make_pair(pth, k));
-                          }
-                        else
-                          {
-                            // L(FL("changing attr on '%s'\n) % file_path(pth));
-                            safe_insert(c.attrs_set, make_pair(make_pair(pth, k), new_word()));
-                          }
+                        // L(FL("clearing attr on '%s'") % file_path(pth));
+                        safe_insert(c.attrs_cleared, make_pair(pth, k));
                       }
                     else
                       {
-                        // L(FL("setting previously set attr on '%s'") % file_path(pth));
-                        safe_insert(c.attrs_set, make_pair(make_pair(pth, k), new_word()));
+                        // L(FL("changing attr on '%s'\n") % file_path(pth));
+                        safe_insert(c.attrs_set,
+                                    make_pair(make_pair(pth, k), new_word()));
                       }
                   }
                 else
                   {
-                    // L(FL("setting attr on '%s'") % file_path(pth));
-                    safe_insert(c.attrs_set, make_pair(make_pair(pth, new_word()), new_word()));
+                    // L(FL("setting previously set attr on '%s'")
+                    //   % file_path(pth));
+                    safe_insert(c.attrs_set,
+                                make_pair(make_pair(pth, k), new_word()));
                   }
-                break;
               }
+            else
+              {
+                // L(FL("setting attr on '%s'") % file_path(pth));
+                safe_insert(c.attrs_set,
+                            make_pair(make_pair(pth, new_word()), new_word()));
+              }
+            break;
           }
       }
     // now do it
@@ -3044,33 +3044,43 @@ UNIT_TEST(roster, random_actions)
   change_automaton aut;
   testing_node_id_source nis;
 
-  roster_t empty, prev;
+  roster_t empty, prev, recent, ancient;
 
-  for (int i = 0; i < 2000; ++i)
+  {
+    // give all the rosters a root
+    split_path root;
+    cset c;
+    root.push_back(the_null_component);
+    c.dirs_added.insert(root);
+    apply_cset_and_do_testing(r, c, nis);
+  }
+
+  empty = ancient = recent = prev = r;
+  for (int i = 0; i < 2000; )
     {
-      MM(i);
-      if (i % 100 == 0)
-        P(F("performing random action %d") % i);
-      // test operator==
-      I(r == r);
-      aut.perform_random_action(r, nis);
-      if (i == 0)
-        prev = r;
-      else
+      int manychanges = 100 + uniform(300);
+      P(F("random roster actions: outer step at %d, making %d changes")
+        % i % manychanges);
+
+      for (int outer_limit = i + manychanges; i < outer_limit; )
         {
-          // test operator==
-          I(!(prev == r));
-        }
-      // some randomly made up magic numbers, just to make sure we do tests on
-      // rosters that have a number of changes between them, not just a single
-      // change.
-      if (i == 4 || i == 50 || i == 100 || i == 200 || i == 205
-          || i == 500 || i == 640 || i == 1200 || i == 1900 || i == 1910)
-        {
-          tests_on_two_rosters(prev, r, nis);
+          int fewchanges = 5 + uniform(10);
+          // P(F("random roster actions: inner step at %d, making %d changes")
+          //   % i % fewchanges);
+
+          for (int inner_limit = i + fewchanges; i < inner_limit; i++)
+            {
+              // P(F("random roster actions: change %d") % i);
+              aut.perform_random_action(r, nis);
+              I(!(prev == r));
+              prev = r;
+            }
+          tests_on_two_rosters(recent, r, nis);
           tests_on_two_rosters(empty, r, nis);
-          prev = r;
+          recent = r;
         }
+      tests_on_two_rosters(ancient, r, nis);
+      ancient = r;
     }
 }
 
