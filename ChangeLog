@@ -1,5 +1,17 @@
 2006-09-18  Zack Weinberg  <zackw@panix.com>
 
+	Fix unit test broken by previous change (due to ill luck,
+	basically); also makes this test somewhat more rigorous.
+	* roster.cc (random_actions): Always compare with the
+	just-previous roster; the random walk can return to an earlier
+	position.  Restructure with nested loops; run tests_on_two_rosters
+	more frequently.  Set up the scratch roster with a root here.
+	(perform_random_action): Invariant on entry that r has
+	a root already.  Do not delete the root node.  Add commented L()
+	for content changes.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
 	* roster.cc (unify_roster_oneway): Rename to union_new_nodes;
 	rework to remove need for true node IDs.
 	(unify_rosters): Update to match; only call union_new_nodes once.
