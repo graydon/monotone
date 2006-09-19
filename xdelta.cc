@@ -837,8 +837,7 @@ spin(string a, string b)
   BOOST_CHECK(b == apply_via_piecewise(a, ba_inverted));
 }
 
-void
-xdelta_simple_cases()
+UNIT_TEST(xdelta, simple_cases)
 {
   L(FL("empty/empty"));
   spin("", "");
@@ -933,8 +932,7 @@ xdelta_randomly_delete(string & str)
     }
 }
 
-void
-xdelta_random_simple_delta_test()
+UNIT_TEST(xdelta, random_simple_delta)
 {
   for (int i = 0; i < 100; ++i)
     {
@@ -948,8 +946,7 @@ xdelta_random_simple_delta_test()
     }
 }
 
-void
-xdelta_random_piecewise_delta_test()
+UNIT_TEST(xdelta, random_piecewise_delta)
 {
   for (int i = 0; i < 50; ++i)
     {
@@ -976,8 +973,7 @@ xdelta_random_piecewise_delta_test()
   }
 }
 
-void
-rolling_sanity_check()
+UNIT_TEST(xdelta, rolling_sanity_check)
 {
   const unsigned testbufsize = 512;
   static const string::size_type blocksz = 64;
@@ -1011,16 +1007,6 @@ rolling_sanity_check()
     }
   L(FL("rolling sanity check passed"));
 }                   
-
-void
-add_xdelta_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&xdelta_simple_cases));
-  suite->add(BOOST_TEST_CASE(&xdelta_random_simple_delta_test));
-  suite->add(BOOST_TEST_CASE(&xdelta_random_piecewise_delta_test));
-  suite->add(BOOST_TEST_CASE(&rolling_sanity_check));
-}
 
 #endif // BUILD_UNIT_TESTS
 

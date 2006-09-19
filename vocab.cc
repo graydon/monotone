@@ -226,19 +226,6 @@ void dump(roster_delta const & d, string &);
 template
 void dump(manifest_data const & d, string &);
 
-// the rest is unit tests
-
-#ifdef BUILD_UNIT_TESTS
-#include "unit_tests.hh"
-
-void add_vocab_tests(test_suite * suite)
-{
-  I(suite);
-  // None, ATM.
-}
-
-#endif // BUILD_UNIT_TESTS
-
 // Local Variables:
 // mode: C++
 // fill-column: 76

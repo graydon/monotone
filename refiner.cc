@@ -715,8 +715,7 @@ check_with_count(size_t base_set_size)
     }          
 }
 
-void 
-check_various_counts()
+UNIT_TEST(refiner, various_counts)
 {
   { 
     // Once with zero-zero, for good measure.
@@ -731,12 +730,6 @@ check_various_counts()
   check_with_count(1); 
   check_with_count(128); 
   check_with_count(1024); 
-}
-
-void
-add_refiner_tests(test_suite * suite)
-{
-  suite->add(BOOST_TEST_CASE(&check_various_counts));
 }
 
 #endif

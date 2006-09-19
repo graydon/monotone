@@ -542,18 +542,6 @@ walk_tree(file_path const & path,
     }
 }
 
-#ifdef BUILD_UNIT_TESTS
-#include "unit_tests.hh"
-
-void
-add_file_io_tests(test_suite * suite)
-{
-  I(suite);
-  // none, ATM.
-}
-
-#endif // BUILD_UNIT_TESTS
-
 // Local Variables:
 // mode: C++
 // fill-column: 76

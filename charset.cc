@@ -599,8 +599,7 @@ idna
       IDNA_SUCCESS, IDNA_SUCCESS},
   };
 
-static void
-check_idna_encoding()
+UNIT_TEST(charset, idna_encoding)
 {
   putenv("CHARSET=UTF-8");
 
@@ -626,12 +625,7 @@ check_idna_encoding()
     }
 }
 
-static void encode_test()
-{
-  check_idna_encoding();
-}
-
-static void utf8_validation_test()
+UNIT_TEST(charset, utf8_validation)
 {
   // these tests are based on the tests from the file utf8-validate.c of the
   // GLib library, and also include sequences from Markus Kuhn's UTF-8
@@ -852,15 +846,6 @@ static void utf8_validation_test()
 
   for (int i = 0; bad_strings[i]; ++i)
     BOOST_CHECK(utf8_validate(string(bad_strings[i])) == false);
-}
-
-
-void
-add_charset_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&encode_test));
-  suite->add(BOOST_TEST_CASE(&utf8_validation_test));
 }
 
 #endif // BUILD_UNIT_TESTS

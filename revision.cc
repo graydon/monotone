@@ -1832,8 +1832,7 @@ void calculate_ident(revision_t const & cs,
 #include "unit_tests.hh"
 #include "sanity.hh"
 
-static void
-test_find_old_new_path_for()
+UNIT_TEST(revision, find_old_new_path_for)
 {
   map<split_path, split_path> renames;
   split_path foo, foo_bar, foo_baz, quux, quux_baz;
@@ -1857,14 +1856,6 @@ test_find_old_new_path_for()
   I(foo_baz == find_old_path_for(renames, foo_bar));
   I(foo_bar == find_new_path_for(renames, foo_baz));
 }
-
-void
-add_revision_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&test_find_old_new_path_for));
-}
-
 
 #endif // BUILD_UNIT_TESTS
 
