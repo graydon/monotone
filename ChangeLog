@@ -1,5 +1,10 @@
 2006-09-20  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.hh: *sigh* Previous changes were just dumb.  Remove
+	them again.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.hh: Oops.
 
 2006-09-20  Nathaniel Smith  <njs@pobox.com>
