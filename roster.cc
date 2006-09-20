@@ -1654,6 +1654,18 @@ namespace {
     marking_map & markings;
   };
 
+  // Interface note: make_roster_for_merge and make_roster_for_nonmerge
+  // each exist in two variants:
+  //
+  // 1. A variant that does all of the actual work, taking every single
+  //    relevant base-level data object as a separate argument.  This
+  //    variant is called directly by the unit tests, and also by variant 2.
+  //
+  // 2. A variant that takes a revision object, a revision ID, a database,
+  //    and a node_id_source.  This variant uses those four things to look
+  //    up all of the low-level data required by variant 1, then calls
+  //    variant 1 to get the real work done.  This is the one called by
+  //    (one variant of) make_roster_for_revision.
 
   // yes, this function takes 14 arguments.  I'm very sorry.
   void
@@ -1708,7 +1720,17 @@ namespace {
       unify_rosters(new_roster, from_left_er.new_nodes,
                     from_right_r, from_right_er.new_nodes,
                     nis);
-      I(new_roster == from_right_r);
+
+      // Kluge: If both csets have no content changes, and the node_id_source
+      // passed to this function is a temp_node_id_source, then we are being
+      // called from get_current_roster_shape, and we should not attempt to
+      // verify that these rosters match as far as content IDs.
+      if (left_cs.deltas_applied.size() == 0
+          && right_cs.deltas_applied.size() == 0
+          && typeid(nis) == typeid(temp_node_id_source))
+        I(equal_shapes(new_roster, from_right_r));
+      else
+        I(new_roster == from_right_r);
     }
 
     // SPEEDUP?: instead of constructing new marking from scratch, track which
@@ -1724,29 +1746,34 @@ namespace {
   // WARNING: this function is not tested directly (no unit tests).  Do not
   // put real logic in it.
   void
-  make_roster_for_merge(revision_id const & left_rid, cset const & left_cs,
-                        revision_id const & right_rid, cset const & right_cs,
-                        revision_id const & new_rid,
+  make_roster_for_merge(revision_t const & rev, revision_id const & new_rid,
                         roster_t & new_roster, marking_map & new_markings,
-                        app_state & app)
+                        database & db, node_id_source & nis)
   {
+    edge_map::const_iterator i = rev.edges.begin();
+    revision_id const & left_rid = edge_old_revision(i);
+    cset const & left_cs = edge_changes(i);
+    ++i;
+    revision_id const & right_rid = edge_old_revision(i);
+    cset const & right_cs = edge_changes(i);
+
     I(!null_id(left_rid) && !null_id(right_rid));
     database::cached_roster left_cached, right_cached;
-    app.db.get_roster(left_rid, left_cached);
-    app.db.get_roster(right_rid, right_cached);
-    true_node_id_source tnis = true_node_id_source(app);
+    db.get_roster(left_rid, left_cached);
+    db.get_roster(right_rid, right_cached);
 
     set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
-    app.db.get_uncommon_ancestors(left_rid, right_rid,
+    db.get_uncommon_ancestors(left_rid, right_rid,
                                   left_uncommon_ancestors,
                                   right_uncommon_ancestors);
-    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second, left_cs,
-                          left_uncommon_ancestors,
-                          right_rid, *right_cached.first, *right_cached.second, right_cs,
-                          right_uncommon_ancestors,
+
+    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second,
+                          left_cs, left_uncommon_ancestors,
+                          right_rid, *right_cached.first, *right_cached.second,
+                          right_cs, right_uncommon_ancestors,
                           new_rid,
                           new_roster, new_markings,
-                          tnis);
+                          nis);
   }
 
   // Warning: this function expects the parent's roster and markings in the
@@ -1768,14 +1795,14 @@ namespace {
   // WARNING: this function is not tested directly (no unit tests).  Do not
   // put real logic in it.
   void
-  make_roster_for_nonmerge(revision_id const & parent_rid,
-                           cset const & parent_cs,
+  make_roster_for_nonmerge(revision_t const & rev,
                            revision_id const & new_rid,
                            roster_t & new_roster, marking_map & new_markings,
-                           app_state & app)
+                           database & db, node_id_source & nis)
   {
-    app.db.get_roster(parent_rid, new_roster, new_markings);
-    true_node_id_source nis(app);
+    revision_id const & parent_rid = edge_old_revision(rev.edges.begin());
+    cset const & parent_cs = edge_changes(rev.edges.begin());
+    db.get_roster(parent_rid, new_roster, new_markings);
     make_roster_for_nonmerge(parent_cs, new_rid, new_roster, new_markings, nis);
   }
 }
@@ -1828,31 +1855,33 @@ mark_roster_with_one_parent(roster_t const & parent,
 void
 make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
                          roster_t & new_roster, marking_map & new_markings,
-                         app_state & app)
+                         database & db, node_id_source & nis)
 {
   MM(rev);
   MM(new_rid);
   MM(new_roster);
   MM(new_markings);
   if (rev.edges.size() == 1)
-    make_roster_for_nonmerge(edge_old_revision(rev.edges.begin()),
-                             edge_changes(rev.edges.begin()),
-                             new_rid, new_roster, new_markings, app);
+    make_roster_for_nonmerge(rev, new_rid, new_roster, new_markings, db, nis);
   else if (rev.edges.size() == 2)
-    {
-      edge_map::const_iterator i = rev.edges.begin();
-      revision_id const & left_rid = edge_old_revision(i);
-      cset const & left_cs = edge_changes(i);
-      ++i;
-      revision_id const & right_rid = edge_old_revision(i);
-      cset const & right_cs = edge_changes(i);
-      make_roster_for_merge(left_rid, left_cs, right_rid, right_cs,
-                            new_rid, new_roster, new_markings, app);
-    }
+    make_roster_for_merge(rev, new_rid, new_roster, new_markings, db, nis);
   else
     I(false);
 
-  new_roster.check_sane_against(new_markings);
+  // If nis is not a true_node_id_source, we have to assume we can get temp
+  // node ids out of it.  ??? Provide a predicate method on node_id_sources
+  // instead of doing a typeinfo comparison.
+  new_roster.check_sane_against(new_markings,
+                                typeid(nis) != typeid(true_node_id_source));
+}
+
+void
+make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings,
+                         app_state & app)
+{
+  true_node_id_source nis(app);
+  make_roster_for_revision(rev, new_rid, new_roster, new_markings, app.db, nis);
 }
 
 

@@ -212,21 +212,23 @@ workspace::get_parent_rosters(parent_map & parents)
 void
 workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 {
-  // The current roster is (supposed to be) the same no matter which edge
-  // you come in along, so we do not need to worry about multiple parents
-  // here.
   revision_t rev;
   get_work_rev(rev);
+  revision_id new_rid = fake_id();
 
-  revision_id rid = edge_old_revision(rev.edges.begin());
-  cset shape = edge_changes(rev.edges.begin());
-
-  database::cached_roster cr;
-  get_roster_for_rid(rid, cr, db);
-  ros = *cr.first;
-
-  editable_roster_base er(ros, nis);
-  shape.apply_to(er);
+  // If there is just one parent, it might be the null ID, which
+  // make_roster_for_revision does not handle correctly.
+  if (rev.edges.size() == 1 && null_id(edge_old_revision(rev.edges.begin())))
+    {
+      I(ros.all_nodes().size() == 0);
+      editable_roster_base er(ros, nis);
+      edge_changes(rev.edges.begin()).apply_to(er);
+    }
+  else
+    {
+      marking_map dummy;
+      make_roster_for_revision(rev, new_rid, ros, dummy, db, nis);
+    }
 }
 
 void

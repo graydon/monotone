@@ -314,6 +314,7 @@ struct temp_node_id_source
 template <> void dump(roster_t const & val, std::string & out);
 
 class app_state;
+class database;
 struct revision_t;
 
 // adaptor class to enable cset application on rosters.
@@ -406,6 +407,16 @@ make_roster_for_revision(revision_t const & rev,
                          roster_t & result,
                          marking_map & marking,
                          app_state & app);
+
+// This is for revisions that are not necessarily going to be written to the
+// db; you can specify your own node_id_source.
+void
+make_roster_for_revision(revision_t const & rev,
+                         revision_id const & rid,
+                         roster_t & result,
+                         marking_map & marking,
+                         database & db,
+                         node_id_source & nis);
 
 void
 read_roster_and_marking(roster_data const & dat,
