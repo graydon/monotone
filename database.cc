@@ -180,6 +180,7 @@ database::check_format()
   query manifests_query("SELECT 1 FROM manifests LIMIT 1");
   query revisions_query("SELECT 1 FROM revisions LIMIT 1");
   query rosters_query("SELECT 1 FROM rosters LIMIT 1");
+  query heights_query("SELECT 1 FROM heights LIMIT 1");
 
   fetch(res, one_col, any_rows, revisions_query);
   bool have_revisions = !res.empty();
@@ -187,6 +188,8 @@ database::check_format()
   bool have_manifests = !res.empty();
   fetch(res, one_col, any_rows, rosters_query);
   bool have_rosters = !res.empty();
+  fetch(res, one_col, any_rows, heights_query);
+  bool have_heights = !res.empty();
 
   if (have_manifests)
     {
@@ -212,12 +215,11 @@ database::check_format()
   else
     {
       // no manifests
-      if (have_revisions && !have_rosters)
+      if (have_revisions && (!have_rosters || !have_heights))
         // must be an upgrade that requires rosters be regenerated
         E(false,
-          F("database %s contains revisions but no rosters\n"
-            "probably this is because an upgrade cleared the roster cache\n"
-            "run '%s db regenerate_rosters' to restore use of this database")
+          F("database %s misses some cached data\n"
+            "run '%s db regenerate_caches' to restore use of this database")
           % filename % ui.prog_name);
       else
         // we're all good.
@@ -1695,7 +1697,7 @@ database::put_rev_height(revision_id const & id,
 }
 
 bool
-database::has_rev_height(rev_height & height)
+database::has_rev_height(rev_height const & height)
 {
   results res;
   fetch(res, one_col, any_rows,
@@ -1876,6 +1878,12 @@ database::delete_existing_rosters()
   execute(query("DELETE FROM rosters"));
   execute(query("DELETE FROM roster_deltas"));
   execute(query("DELETE FROM next_roster_node_number"));
+}
+
+void
+database::delete_existing_heights()
+{
+  execute(query("DELETE FROM heights"));
 }
 
 /// Deletes one revision from the local database.

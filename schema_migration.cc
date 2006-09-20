@@ -215,7 +215,7 @@ enum upgrade_regime
   {
     upgrade_changesetify,
     upgrade_rosterify,
-    upgrade_regen_rosters,
+    upgrade_regen_caches,
     upgrade_none, 
   };
 
@@ -335,9 +335,9 @@ migrator
                 % ui.prog_name % command_str);
             }
             break;
-          case upgrade_regen_rosters:
-            P(F("NOTE: this upgrade cleared the roster cache\n"
-                "you should now run '%s db regenerate_rosters'")
+          case upgrade_regen_caches:
+            P(F("NOTE: this upgrade cleared monotone's caches\n"
+                "you should now run '%s db regenerate_caches'")
               % ui.prog_name);
             break;
           case upgrade_none:
@@ -1153,7 +1153,7 @@ migrate_rosters_no_hash(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  set_regime(upgrade_regen_rosters, regime);
+  set_regime(upgrade_regen_caches, regime);
 
   return true;
 }
@@ -1176,6 +1176,9 @@ migrate_add_heights(sqlite3 *sql,
                             ");", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
+
+  set_regime(upgrade_regen_caches, regime);
+  
   return true;
 }
 

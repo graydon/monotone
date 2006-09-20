@@ -547,8 +547,8 @@ public:
   void put_rev_height(revision_id const & id,
                       rev_height const & height);
   
-  bool has_rev_height(rev_height & height); // private?
-
+  bool has_rev_height(rev_height const & height);
+  void delete_existing_heights();
 
   // for regenerate_rosters
   void delete_existing_rosters();

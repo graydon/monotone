@@ -1616,12 +1616,90 @@ build_changesets_from_manifest_ancestry(app_state & app)
   graph.rebuild_ancestry();
 }
 
+
+// Warning: may contain traces of the old toposort method :-)
+void
+regenerate_heights(app_state & app)
+{
+  typedef multimap<revision_id, revision_id>::const_iterator gi;
+  typedef map<revision_id, int>::iterator pi;
+
+  P(F("determining revision heights"));
+
+  transaction_guard guard(app.db);
+
+  app.db.delete_existing_heights();
+
+  // get the complete ancestry
+  multimap<revision_id, revision_id> graph, inverse_graph;
+  app.db.get_revision_ancestry(graph);
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    inverse_graph.insert(make_pair(i->second, i->first));
+
+  // determine the number of parents for each rev
+  map<revision_id, int> pcount;
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    pcount.insert(make_pair(i->first, 0));
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    ++(pcount[i->second]);
+
+  // find the set of graph roots
+  list<revision_id> roots;
+  for (pi i = pcount.begin(); i != pcount.end(); ++i)
+    if(i->second==0)
+      roots.push_back(i->first);
+
+  // now iterate
+  while (!roots.empty())
+    {
+      revision_id cur = roots.front();
+      roots.pop_front();
+
+      rev_height height;
+
+      for (gi i = inverse_graph.lower_bound(cur);
+           i != inverse_graph.upper_bound(cur); ++i)
+        {
+          bool found(false);
+          u32 childnr(0);
+          rev_height candidate;
+          rev_height parent;
+          app.db.get_rev_height(i->second, parent);
+
+          while(!found)
+            {
+              parent.child_height(candidate, childnr);
+              if (!app.db.has_rev_height(candidate))
+                {
+                  found = true;
+                  if (candidate > height)
+                    height = candidate;
+                }
+              I(childnr < std::numeric_limits<u32>::max());
+              ++childnr;
+            }
+        }
+
+      // FIXME: add ticker here
+
+      if (!null_id(cur))
+        app.db.put_rev_height(cur, height);
+
+      for(gi i = graph.lower_bound(cur);
+          i != graph.upper_bound(cur); i++)
+        if(--(pcount[i->second]) == 0)
+          roots.push_back(i->second);
+    }
+
+  guard.commit();
+  P(F("finished determining heights"));
+}
+
 void
 regenerate_rosters(app_state & app)
 {
   P(F("regenerating cached rosters"));
 
-  app.db.ensure_open_for_format_changes();
   transaction_guard guard(app.db);
 
   app.db.delete_existing_rosters();

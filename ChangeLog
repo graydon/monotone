@@ -1,3 +1,21 @@
+2006-09-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* revision.cc, revision.hh (regenerate_heights): New function,
+	uses toposort code from mainline to traverse the graph and assign
+	heights to all revisions.
+	(regenerate_rosters): Removed call to
+	app.db.ensure_open_for_format_changes, now done by
+	regenerate_caches.
+	* cmd_db.cc (CMD(db)): New command `regenerate_caches', calls
+	`regenerate_rosters' and `regenerate_heights'.
+	* schema_migration.cc: Replace occurrences of `regenerate_rosters'
+	with `regenerate_caches'.
+	(migrate_add_heights): set upgrade_regen_caches regime.
+	* database.cc, database.hh (check_format): Check whether the
+	database has heights.
+	(delete_existing_heights): New function.
+	(has_rev_height): Make parameter const.
+
 2006-09-14  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd.hh: Make hidden_group a proper singleton, so it is safe to
