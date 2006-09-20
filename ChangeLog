@@ -1,5 +1,9 @@
 2006-09-20  Nathaniel Smith  <njs@pobox.com>
 
+	* roster.hh: Oops.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
 	* roster.hh: Expose some useful dump() overloads that are already
 	defined in roster.cc.
 

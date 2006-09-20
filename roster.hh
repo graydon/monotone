@@ -52,9 +52,9 @@ typedef std::map<path_component, node_t> dir_map;
 typedef std::map<node_id, node_t> node_map;
 
 template <> void dump(full_attr_map_t const & val, std::string & out);
-template <> void dump(set<revision_id> const & revids, string & out);
-template <> void dump(marking_t const & marking, string & out);
-template <> void dump(marking_map const & markings, string & out);
+template <> void dump(std::set<revision_id> const & revids, std::string & out);
+template <> void dump(marking_t const & marking, std::string & out);
+template <> void dump(marking_map const & markings, std::string & out);
 
 
 struct node
