@@ -61,4 +61,3 @@ for line in io.open("stdout", "r"):lines() do
       err("Unexpected or duplicate parent: "..line.."\n", 3)
    end
 end
-check(false)

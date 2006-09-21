@@ -1,3 +1,24 @@
+2006-09-21  Zack Weinberg  <zackw@panix.com>
+
+	* roster.cc (equal_shapes): New function.
+	(shallow_equal): Add boolean argument which says whether to
+	compare file contents.
+	(unify_rosters): Add kluge to detect shape rosters, which may not
+	agree on file contents even after unification.
+	(make_roster_for_merge, make_roster_for_nonmerge): Add note about
+	interfaces.  Simplify the interface not used by the unit tests.
+	Don't pass an app_state down to this level.
+	(make_roster_for_revision): Add variant that takes a database and
+	a node_id_source.  Logic for extracting rosters and csets from
+	revisions moved down to make_roster_for_(non)merge level.
+	* roster.hh: Update prototype of shallow_equal; new argument
+	defaults to true.  Declare equal_shapes a friend of roster_t.
+	Declare new make_roster_for_revision variant.
+	* work.cc (workspace::get_current_roster_shape): Use
+	make_roster_for_revision, except when the parent is the null ID.
+
+	* tests/merge_into_workspace_files_added: Don't force failure.
+
 2006-09-18  Zack Weinberg  <zackw@panix.com>
 
 	Fix unit test broken by previous change (due to ill luck,

@@ -142,7 +142,8 @@ downcast_to_file_t(node_t const n)
 }
 
 bool
-shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children);
+shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children,
+              bool compare_file_contents = true);
 
 template <> void dump(node_t const & n, std::string & out);
 
@@ -233,6 +234,8 @@ public:
   }
 
   bool operator==(roster_t const & other) const;
+
+  friend bool equal_shapes(roster_t const & a, roster_t const & b);
 
   void check_sane(bool temp_nodes_ok=false) const;
 

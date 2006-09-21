@@ -398,7 +398,8 @@ same_type(node_t a, node_t b)
 
 inline bool
 shallow_equal(node_t a, node_t b,
-              bool shallow_compare_dir_children)
+              bool shallow_compare_dir_children,
+              bool compare_file_contents)
 {
   if (a->self != b->self)
     return false;
@@ -417,10 +418,13 @@ shallow_equal(node_t a, node_t b,
 
   if (is_file_t(a))
     {
-      file_t fa = downcast_to_file_t(a);
-      file_t fb = downcast_to_file_t(b);
-      if (!(fa->content == fb->content))
-        return false;
+      if (compare_file_contents)
+        {
+          file_t fa = downcast_to_file_t(a);
+          file_t fb = downcast_to_file_t(b);
+          if (!(fa->content == fb->content))
+            return false;
+        }
     }
   else
     {
@@ -476,6 +480,40 @@ roster_t::operator==(roster_t const & other) const
   while (! (p.finished() || q.finished()))
     {
       if (!shallow_equal(*p, *q, true))
+        return false;
+      ++p;
+      ++q;
+    }
+
+  if (!(p.finished() && q.finished()))
+    return false;
+
+  return true;
+}
+
+// This is exactly the same as roster_t::operator== (and the same FIXME
+// above applies) except that it does not compare file contents.
+bool
+equal_shapes(roster_t const & a, roster_t const & b)
+{
+  node_map::const_iterator i = a.nodes.begin(), j = b.nodes.begin();
+  while (i != a.nodes.end() && j != b.nodes.end())
+    {
+      if (i->first != j->first)
+        return false;
+      if (!shallow_equal(i->second, j->second, true, false))
+        return false;
+      ++i;
+      ++j;
+    }
+
+  if (i != a.nodes.end() || j != b.nodes.end())
+    return false;
+
+  dfs_iter p(a.root_dir), q(b.root_dir);
+  while (! (p.finished() || q.finished()))
+    {
+      if (!shallow_equal(*p, *q, true, false))
         return false;
       ++p;
       ++q;
