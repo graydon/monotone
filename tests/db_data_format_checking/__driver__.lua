@@ -23,6 +23,6 @@ check(mtn("-d", "ro-modern.db", "db", "migrate"), 0, false, false)
 check(mtn("-d", "ro-modern.db", "ls", "keys"), 1, false, false)
 check(mtn("-d", "ro-modern.db", "serve", "--bind=127.0.0.1:63219", '*'), 1, false, false)
 
--- arguably "db regenerate_rosters" should go here too -- it's treated
+-- arguably "db regenerate_caches" should go here too -- it's treated
 -- similarly.  But the test "schema_migration" tests for its behavior in this
 -- case.
