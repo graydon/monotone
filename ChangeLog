@@ -1,5 +1,10 @@
 2006-09-22	Matt Johnston  <matt@ucc.asn.au>
 
+	* tests/pivot_root_to_new_dir/: new test for pivot_root into
+	a directory that hasn't been committed yet (xfailed, 0.30 regression)
+
+2006-09-22	Matt Johnston  <matt@ucc.asn.au>
+
 	* tests/{--*/}: rename to tests/_--*/ so that using 
 	the * wildcard in tests/ isn't awkward.
 
