@@ -1798,34 +1798,44 @@ database::put_revision(revision_id const & new_id,
   deltify_revision(new_id);
 
   // Phase 5: determine the revision height
-  {
-    rev_height height;
-    for (edge_map::const_iterator e = rev.edges.begin();
-         e != rev.edges.end(); ++e)
-      {
-        bool found(false);
-        u32 childnr(0);
-        rev_height candidate;
-        rev_height parent;
-        get_rev_height(edge_old_revision(e), parent);
-        
-        while(!found)
-          {
-            parent.child_height(candidate, childnr);
-            if (!has_rev_height(candidate))
-              {
-                found = true;
-                if (candidate > height)
-                  height = candidate;
-              }
-            I(childnr < std::numeric_limits<u32>::max());
-            ++childnr;
-          }
-      }
-    put_rev_height(new_id, height);
-  }
+
+  put_height_for_revision(new_id, rev);
+
+  // Finally, commit.
 
   guard.commit();
+}
+
+void
+database::put_height_for_revision(revision_id const & new_id,
+                                  revision_t const & rev)
+{
+  I(!null_id(new_id));
+  
+  rev_height height;
+  for (edge_map::const_iterator e = rev.edges.begin();
+       e != rev.edges.end(); ++e)
+    {
+      bool found(false);
+      u32 childnr(0);
+      rev_height candidate;
+      rev_height parent;
+      get_rev_height(edge_old_revision(e), parent);
+      
+      while(!found)
+        {
+          parent.child_height(candidate, childnr);
+          if (!has_rev_height(candidate))
+            {
+              found = true;
+              if (candidate > height)
+                height = candidate;
+            }
+          I(childnr < std::numeric_limits<u32>::max());
+          ++childnr;
+        }
+    }
+  put_rev_height(new_id, height);
 }
 
 void

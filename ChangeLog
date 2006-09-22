@@ -1,3 +1,12 @@
+2006-09-23  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database.cc, database.hh (put_height_for_revision): New method.
+	* database.cc (put_revision): Use put_height_for_revision.
+	* revision.cc, revision.hh (regenerate_caches): Combined
+	regenerate_heights and regenerate_rosters; using
+	put_height_for_revision.
+	* cmd_db.cc: Now using regenerate_caches.
+
 2006-09-21  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* revision.cc, revision.hh (regenerate_heights): New function,

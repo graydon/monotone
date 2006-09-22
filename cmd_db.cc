@@ -83,11 +83,7 @@ CMD(db, N_("database"),
       else if (idx(args, 0)() == "rosterify")
         build_roster_style_revs_from_manifest_style_revs(app);
       else if (idx(args, 0)() == "regenerate_caches")
-        {
-          app.db.ensure_open_for_format_changes();
-          regenerate_heights(app);
-          regenerate_rosters(app);
-        }
+        regenerate_caches(app);
       else
         throw usage(name);
     }

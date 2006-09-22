@@ -540,6 +540,7 @@ public:
   void delete_existing_revs_and_certs();
 
   void delete_existing_manifests();
+
   // heights
   void get_rev_height(revision_id const & id,
                       rev_height & height);
@@ -549,6 +550,9 @@ public:
   
   bool has_rev_height(rev_height const & height);
   void delete_existing_heights();
+
+  void put_height_for_revision(revision_id const & new_id,
+                               revision_t const & rev);
 
   // for regenerate_rosters
   void delete_existing_rosters();
