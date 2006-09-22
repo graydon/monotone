@@ -1,3 +1,8 @@
+2006-09-22	Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/{--*/}: rename to tests/_--*/ so that using 
+	the * wildcard in tests/ isn't awkward.
+
 2006-09-21  Nathaniel Smith  <njs@pobox.com>
 
 	* lru_writeback_cache.hh (clean_insert): Correct the cache
