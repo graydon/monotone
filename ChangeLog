@@ -1,11 +1,20 @@
-2006-09-22	Matt Johnston  <matt@ucc.asn.au>
+2006-09-22  Zack Weinberg  <zackw@panix.com>
 
-	* tests/pivot_root_to_new_dir/: new test for pivot_root into
+	* work.cc (workspace::perform_pivot_root): Partially revert
+	revision 7e648a47fdd80f004a529ef5ddba9428f59f673d: apply the
+	renames to the current roster and then calculate the complete set
+	of changes, instead of just blindly writing the changeset to the
+	workspace revision.
+	* tests/pivot_root_to_new_dir: No longer expected to fail.
+
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/pivot_root_to_new_dir: new test for pivot_root into
 	a directory that hasn't been committed yet (xfailed, 0.30 regression)
 
-2006-09-22	Matt Johnston  <matt@ucc.asn.au>
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
 
-	* tests/{--*/}: rename to tests/_--*/ so that using 
+	* tests/{--*/}: rename to tests/_--*/ so that using
 	the * wildcard in tests/ isn't awkward.
 
 2006-09-21  Nathaniel Smith  <njs@pobox.com>
