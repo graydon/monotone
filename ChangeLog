@@ -1,3 +1,10 @@
+2006-09-21  Nathaniel Smith  <njs@pobox.com>
+
+	* lru_writeback_cache.hh (clean_insert): Correct the cache
+	overflow logic so as to _actually_ never remove the last element.
+	Add an invariant to verify this.
+	(insert_dirty): Add an invariant here too.
+
 2006-09-20  Nathaniel Smith  <njs@pobox.com>
 
 	* roster.hh: *sigh* Previous changes were just dumb.  Remove
