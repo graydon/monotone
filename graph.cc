@@ -116,6 +116,8 @@ get_reconstruction_path(std::string const & start,
 }
 
 #ifdef BUILD_UNIT_TESTS
+
+#include <map>
 #include "unit_tests.hh"
 #include "randomizer.hh"
 

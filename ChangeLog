@@ -1,5 +1,9 @@
 2006-09-22  Nathaniel Smith  <njs@pobox.com>
 
+	* graph.cc: I dunno, maybe this will make the buildslaves happier?
+	
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
 	* graph.cc: Add randomized tests for get_reconstruction_path.
 
 2006-09-22  Zack Weinberg  <zackw@panix.com>
