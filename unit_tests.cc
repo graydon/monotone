@@ -302,7 +302,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   ui.initialize();
   ui.prog_name = argv[0];
   global_sanity.initialize(argc, argv, "C");  // we didn't call setlocale
-  Botan::Init::initialize();
+  Botan::LibraryInitializer::initialize();
 
   if (vm.count("debug") == 0)
     {

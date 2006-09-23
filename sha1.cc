@@ -14,6 +14,7 @@
 #include <map>
 #include <iostream>
 #include <botan/engine.h>
+#include <botan/libstate.h>
 
 #include "sha1.hh"
 #include "sha1_engine.hh"
@@ -89,7 +90,7 @@ sha1_registerer::sha1_registerer(int priority, string const & name, sha1_maker *
 
 void hook_botan_sha1()
 {
-  Botan::Engine_Core::add_engine(new Monotone_SHA1_Engine);
+  Botan::global_state().add_engine(new Monotone_SHA1_Engine);
 }
 
 CMD(benchmark_sha1, hidden_group(), "", "benchmark SHA-1 cores", option::none)
