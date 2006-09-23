@@ -11,8 +11,7 @@
 
 using std::logic_error;
 
-void
-test_string_queue()
+UNIT_TEST(string_queue, string_queue)
 {
   string_queue sq1;
 
@@ -67,12 +66,6 @@ test_string_queue()
 
   // it's empty again
   BOOST_CHECK( sq1.size() == 0 );
-}
-
-void
-add_string_queue_tests(test_suite * suite)
-{
-  suite->add(BOOST_TEST_CASE(&test_string_queue));
 }
 
 #endif // BUILD_UNIT_TESTS

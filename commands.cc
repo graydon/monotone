@@ -66,10 +66,8 @@ namespace commands
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
-    static bool first(true);
-    if (first)
+    if (cmds == NULL)
       cmds = new map<string, command *>;
-    first = false;
     (*cmds)[n] = this;
   }
   command::~command() {}

@@ -18,19 +18,24 @@
 
 struct file_randomizer
 {
+  randomizer & rng;
   std::vector<std::string> lines;
   std::string prefix;
+
+  file_randomizer(randomizer & rng)
+    : rng(rng)
+  {}
 
   size_t random_index(bool last_line_ok = true)
   {
     if (last_line_ok)
-      return static_cast<size_t>(randomizer::uniform(lines.size()));
+      return static_cast<size_t>(rng.uniform(lines.size()));
     else
       {
         if (lines.size() == 0)
           return 0;
         else
-          return static_cast<size_t>(randomizer::uniform(lines.size() - 1));
+          return static_cast<size_t>(rng.uniform(lines.size() - 1));
       }
   }
 
@@ -93,18 +98,19 @@ struct file_randomizer
                                 std::vector<std::string> & left,
                                 std::vector<std::string> & right,
                                 std::vector<std::string> & merged,
-                                int n_hunks = 10)
+                                int n_hunks,
+                                randomizer & rng)
   {
     bool last_was_insert = false;
     bool last_insert_was_left = false;
 
-    file_randomizer fr;
+    file_randomizer fr(rng);
     // maybe prepend something to one side or the other
-    if (randomizer::flip())
+    if (rng.flip())
       {
         last_was_insert = true;
         fr.prepend_sequential_lines();
-        last_insert_was_left = randomizer::flip();
+        last_insert_was_left = rng.flip();
         if (last_insert_was_left)
           fr.append_to(left);
         else
@@ -115,12 +121,12 @@ struct file_randomizer
 
     for (int h = 0; h < n_hunks; ++h)
       {
-        file_randomizer hr;
+        file_randomizer hr(rng);
         hr.set_prefix(std::string("hunk ") + boost::lexical_cast<std::string>(h) + " -- ");
         hr.initial_sequential_lines(10);
-        if (randomizer::flip())
+        if (rng.flip())
           {
-            bool this_insert_is_left = randomizer::flip();
+            bool this_insert_is_left = rng.flip();
             if (last_was_insert && (this_insert_is_left != last_insert_was_left))
               {
                 fr.set_prefix("spacer ");
@@ -155,7 +161,7 @@ struct file_randomizer
           {
             // doing a delete
             hr.append_to(ancestor);
-            if (randomizer::flip())
+            if (rng.flip())
               {
                 // deleting in left
                 hr.append_to(right);
@@ -175,9 +181,9 @@ struct file_randomizer
       }
 
     // maybe append something to one side or the other
-    if (randomizer::flip())
+    if (rng.flip())
       {
-        bool this_insert_is_left = randomizer::flip();
+        bool this_insert_is_left = rng.flip();
         if (last_was_insert && (this_insert_is_left != last_insert_was_left))
           {
             fr.set_prefix("spacer ");

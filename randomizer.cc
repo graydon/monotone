@@ -8,37 +8,23 @@
 // PURPOSE.
 
 #include "randomizer.hh"
-#include <boost/random.hpp>
 
-namespace randomizer
-{
-  static boost::mt19937 *rng = NULL;
-
-  boost::mt19937 &get_rng() 
-  {
-    if (!rng)
-      rng = new boost::mt19937;
-    return *rng;
-  }
-  
-  bool flip(size_t n)
-  { 
-    return bernoulli(1.0 / static_cast<double>(n)); 
-  }
-
-  size_t uniform(size_t n)
-  {        
-    return boost::random_number_generator<boost::mt19937>(get_rng())(n);
-  }  
-
-  bool bernoulli(double p)
-  {
-    typedef boost::mt19937& rng_t;
-    typedef boost::bernoulli_distribution<double> dist_t;
-    return boost::variate_generator<rng_t, dist_t>(get_rng(), dist_t(p))();
-  }  
-
+bool randomizer::flip(size_t n)
+{ 
+  return bernoulli(1.0 / static_cast<double>(n)); 
 }
+
+size_t randomizer::uniform(size_t n)
+{        
+  return boost::random_number_generator<boost::mt19937>(rng)(n);
+}  
+
+bool randomizer::bernoulli(double p)
+{
+  typedef boost::mt19937& rng_t;
+  typedef boost::bernoulli_distribution<double> dist_t;
+  return boost::variate_generator<rng_t, dist_t>(rng, dist_t(p))();
+}  
 
 // Local Variables:
 // mode: C++

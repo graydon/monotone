@@ -1537,8 +1537,8 @@ AUTOMATE(get_content_changed, N_("REV FILE"))
   marking_t mark = m->second;
 
   basic_io::printer prt;
-  for (set<revision_id>::const_iterator i = mark.parent_name.begin();
-       i != mark.parent_name.end(); ++i)
+  for (set<revision_id>::const_iterator i = mark.file_content.begin();
+       i != mark.file_content.end(); ++i)
     {
       basic_io::stanza st;
       revision_id old_ident = i->inner();
