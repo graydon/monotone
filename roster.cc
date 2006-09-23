@@ -2626,9 +2626,6 @@ using std::search;
 
 using boost::shared_ptr;
 
-using randomizer::uniform;
-using randomizer::flip;
-
 static void
 make_fake_marking_for(roster_t const & r, marking_map & mm)
 {
@@ -2807,9 +2804,9 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
 
 template<typename M>
 typename M::const_iterator
-random_element(M const & m)
+random_element(M const & m, randomizer & rng)
 {
-  size_t i = randomizer::uniform(m.size());
+  size_t i = rng.uniform(m.size());
   typename M::const_iterator j = m.begin();
   while (i > 0)
     {
@@ -2820,45 +2817,45 @@ random_element(M const & m)
   return j;
 }
 
-string new_word()
+string new_word(randomizer & rng)
 {
   static string wordchars = "abcdefghijlkmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   static unsigned tick = 0;
   string tmp;
   do
     {
-      tmp += wordchars[uniform(wordchars.size())];
+      tmp += wordchars[rng.uniform(wordchars.size())];
     }
-  while (tmp.size() < 10 && !flip(10));
+  while (tmp.size() < 10 && !rng.flip(10));
   return tmp + lexical_cast<string>(tick++);
 }
 
-file_id new_ident()
+file_id new_ident(randomizer & rng)
 {
   static string tab = "0123456789abcdef";
   string tmp;
   tmp.reserve(constants::idlen);
   for (unsigned i = 0; i < constants::idlen; ++i)
-    tmp += tab[uniform(tab.size())];
+    tmp += tab[rng.uniform(tab.size())];
   return file_id(tmp);
 }
 
-path_component new_component()
+path_component new_component(randomizer & rng)
 {
   split_path pieces;
-  file_path_internal(new_word()).split(pieces);
+  file_path_internal(new_word(rng)).split(pieces);
   return pieces.back();
 }
 
 
-attr_key pick_attr(full_attr_map_t const & attrs)
+attr_key pick_attr(full_attr_map_t const & attrs, randomizer & rng)
 {
-  return random_element(attrs)->first;
+  return random_element(attrs, rng)->first;
 }
 
-attr_key pick_attr(attr_map_t const & attrs)
+attr_key pick_attr(attr_map_t const & attrs, randomizer & rng)
 {
-  return random_element(attrs)->first;
+  return random_element(attrs, rng)->first;
 }
 
 bool parent_of(split_path const & p,
@@ -2883,141 +2880,136 @@ bool parent_of(split_path const & p,
   return is_parent;
 }
 
-struct
-change_automaton
+void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
 {
+  cset c;
+  I(r.has_root());
+  while (c.empty())
+    {
+      node_t n = random_element(r.all_nodes(), rng)->second;
+      split_path pth;
+      r.get_name(n->self, pth);
+      // L(FL("considering acting on '%s'") % file_path(pth));
 
-  void perform_random_action(roster_t & r, node_id_source & nis)
-  {
-    cset c;
-    I(r.has_root());
-    while (c.empty())
-      {
-        node_t n = random_element(r.all_nodes())->second;
-        split_path pth;
-        r.get_name(n->self, pth);
-        // L(FL("considering acting on '%s'") % file_path(pth));
+      switch (rng.uniform(7))
+        {
+        default:
+        case 0:
+        case 1:
+        case 2:
+          if (is_file_t(n) || (pth.size() > 1 && rng.flip()))
+            // Add a sibling of an existing entry.
+            pth[pth.size() - 1] = new_component(rng);
 
-        switch (uniform(7))
-          {
-          default:
-          case 0:
-          case 1:
-          case 2:
-            if (is_file_t(n) || (pth.size() > 1 && flip()))
-              // Add a sibling of an existing entry.
-              pth[pth.size() - 1] = new_component();
+          else
+            // Add a child of an existing entry.
+            pth.push_back(new_component(rng));
 
-            else
-              // Add a child of an existing entry.
-              pth.push_back(new_component());
-
-            if (flip())
-              {
-                // L(FL("adding dir '%s'") % file_path(pth));
-                safe_insert(c.dirs_added, pth);
-              }
-            else
-              {
-                // L(FL("adding file '%s'") % file_path(pth));
-                safe_insert(c.files_added, make_pair(pth, new_ident()));
-              }
-            break;
-
-          case 3:
-            if (is_file_t(n))
-              {
-                // L(FL("altering content of file '%s'") % file_path(pth));
-                safe_insert(c.deltas_applied,
-                            make_pair
-                            (pth, make_pair(downcast_to_file_t(n)->content,
-                                            new_ident())));
-              }
-            break;
-
-          case 4:
+          if (rng.flip())
             {
-              node_t n2 = random_element(r.all_nodes())->second;
-              split_path pth2;
-              r.get_name(n2->self, pth2);
+              // L(FL("adding dir '%s'") % file_path(pth));
+              safe_insert(c.dirs_added, pth);
+            }
+          else
+            {
+              // L(FL("adding file '%s'") % file_path(pth));
+              safe_insert(c.files_added, make_pair(pth, new_ident(rng)));
+            }
+          break;
 
-              if (n == n2)
-                continue;
+        case 3:
+          if (is_file_t(n))
+            {
+              // L(FL("altering content of file '%s'") % file_path(pth));
+              safe_insert(c.deltas_applied,
+                          make_pair
+                          (pth, make_pair(downcast_to_file_t(n)->content,
+                                          new_ident(rng))));
+            }
+          break;
 
-              if (is_file_t(n2) || (pth2.size() > 1 && flip()))
+        case 4:
+          {
+            node_t n2 = random_element(r.all_nodes(), rng)->second;
+            split_path pth2;
+            r.get_name(n2->self, pth2);
+
+            if (n == n2)
+              continue;
+
+            if (is_file_t(n2) || (pth2.size() > 1 && rng.flip()))
+              {
+                // L(FL("renaming to a sibling of an existing entry '%s'")
+                //   % file_path(pth2));
+                // Move to a sibling of an existing entry.
+                pth2[pth2.size() - 1] = new_component(rng);
+              }
+
+            else
+              {
+                // L(FL("renaming to a child of an existing entry '%s'")
+                //   % file_path(pth2));
+                // Move to a child of an existing entry.
+                pth2.push_back(new_component(rng));
+              }
+
+            if (!parent_of(pth, pth2))
+              {
+                // L(FL("renaming '%s' -> '%s")
+                //   % file_path(pth) % file_path(pth2));
+                safe_insert(c.nodes_renamed, make_pair(pth, pth2));
+              }
+          }
+          break;
+
+        case 5:
+          if (!null_node(n->parent)
+              && (is_file_t(n) || downcast_to_dir_t(n)->children.empty())
+              && r.all_nodes().size() > 1) // do not delete the root
+            {
+              // L(FL("deleting '%s'") % file_path(pth));
+              safe_insert(c.nodes_deleted, pth);
+            }
+          break;
+
+        case 6:
+          if (!n->attrs.empty() && rng.flip())
+            {
+              attr_key k = pick_attr(n->attrs, rng);
+              if (safe_get(n->attrs, k).first)
                 {
-                  // L(FL("renaming to a sibling of an existing entry '%s'")
-                  //   % file_path(pth2));
-                  // Move to a sibling of an existing entry.
-                  pth2[pth2.size() - 1] = new_component();
+                  if (rng.flip())
+                    {
+                      // L(FL("clearing attr on '%s'") % file_path(pth));
+                      safe_insert(c.attrs_cleared, make_pair(pth, k));
+                    }
+                  else
+                    {
+                      // L(FL("changing attr on '%s'\n") % file_path(pth));
+                      safe_insert(c.attrs_set,
+                                  make_pair(make_pair(pth, k), new_word(rng)));
+                    }
                 }
-
               else
                 {
-                  // L(FL("renaming to a child of an existing entry '%s'")
-                  //   % file_path(pth2));
-                  // Move to a child of an existing entry.
-                  pth2.push_back(new_component());
-                }
-
-              if (!parent_of(pth, pth2))
-                {
-                  // L(FL("renaming '%s' -> '%s")
-                  //   % file_path(pth) % file_path(pth2));
-                  safe_insert(c.nodes_renamed, make_pair(pth, pth2));
+                  // L(FL("setting previously set attr on '%s'")
+                  //   % file_path(pth));
+                  safe_insert(c.attrs_set,
+                              make_pair(make_pair(pth, k), new_word(rng)));
                 }
             }
-            break;
-
-          case 5:
-            if (!null_node(n->parent)
-                && (is_file_t(n) || downcast_to_dir_t(n)->children.empty())
-                && r.all_nodes().size() > 1) // do not delete the root
-              {
-                // L(FL("deleting '%s'") % file_path(pth));
-                safe_insert(c.nodes_deleted, pth);
-              }
-            break;
-
-          case 6:
-            if (!n->attrs.empty() && flip())
-              {
-                attr_key k = pick_attr(n->attrs);
-                if (safe_get(n->attrs, k).first)
-                  {
-                    if (flip())
-                      {
-                        // L(FL("clearing attr on '%s'") % file_path(pth));
-                        safe_insert(c.attrs_cleared, make_pair(pth, k));
-                      }
-                    else
-                      {
-                        // L(FL("changing attr on '%s'\n") % file_path(pth));
-                        safe_insert(c.attrs_set,
-                                    make_pair(make_pair(pth, k), new_word()));
-                      }
-                  }
-                else
-                  {
-                    // L(FL("setting previously set attr on '%s'")
-                    //   % file_path(pth));
-                    safe_insert(c.attrs_set,
-                                make_pair(make_pair(pth, k), new_word()));
-                  }
-              }
-            else
-              {
-                // L(FL("setting attr on '%s'") % file_path(pth));
-                safe_insert(c.attrs_set,
-                            make_pair(make_pair(pth, new_word()), new_word()));
-              }
-            break;
-          }
-      }
-    // now do it
-    apply_cset_and_do_testing(r, c, nis);
-  }
-};
+          else
+            {
+              // L(FL("setting attr on '%s'") % file_path(pth));
+              safe_insert(c.attrs_set,
+                          make_pair(make_pair(pth, new_word(rng)), new_word(rng)));
+            }
+          break;
+        }
+    }
+  // now do it
+  apply_cset_and_do_testing(r, c, nis);
+}
 
 testing_node_id_source::testing_node_id_source()
   : curr(first_node)
@@ -3040,8 +3032,8 @@ dump(int const & i, string & out)
 
 UNIT_TEST(roster, random_actions)
 {
+  randomizer rng;
   roster_t r;
-  change_automaton aut;
   testing_node_id_source nis;
 
   roster_t empty, prev, recent, ancient;
@@ -3058,20 +3050,20 @@ UNIT_TEST(roster, random_actions)
   empty = ancient = recent = prev = r;
   for (int i = 0; i < 2000; )
     {
-      int manychanges = 100 + uniform(300);
+      int manychanges = 100 + rng.uniform(300);
       P(F("random roster actions: outer step at %d, making %d changes")
         % i % manychanges);
 
       for (int outer_limit = i + manychanges; i < outer_limit; )
         {
-          int fewchanges = 5 + uniform(10);
+          int fewchanges = 5 + rng.uniform(10);
           // P(F("random roster actions: inner step at %d, making %d changes")
           //   % i % fewchanges);
 
           for (int inner_limit = i + fewchanges; i < inner_limit; i++)
             {
               // P(F("random roster actions: change %d") % i);
-              aut.perform_random_action(r, nis);
+              perform_random_action(r, nis, rng);
               I(!(prev == r));
               prev = r;
             }
@@ -4245,6 +4237,7 @@ UNIT_TEST(roster, die_die_die_merge)
 
 UNIT_TEST(roster, same_nid_diff_type)
 {
+  randomizer rng;
   testing_node_id_source nis;
 
   roster_t dir_roster; MM(dir_roster);
@@ -4267,7 +4260,7 @@ UNIT_TEST(roster, same_nid_diff_type)
   dir_roster.attach_node(nid, split("foo"));
   safe_insert(dir_markings, make_pair(nid, marking));
 
-  file_roster.create_file_node(new_ident(), nid);
+  file_roster.create_file_node(new_ident(rng), nid);
   file_roster.attach_node(nid, split("foo"));
   marking.file_content = singleton(old_rid);
   safe_insert(file_markings, make_pair(nid, marking));
@@ -4650,9 +4643,10 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
                            roster_t & left_ros,
                            set<node_id> & left_new_nodes,
                            roster_t & right_ros,
-                           set<node_id> & right_new_nodes)
+                           set<node_id> & right_new_nodes,
+                           randomizer & rng)
 {
-  size_t n_nodes = 10 + (uniform(30));
+  size_t n_nodes = 10 + (rng.uniform(30));
   editable_roster_base left_er(left_ros, nis);
   editable_roster_base right_er(right_ros, nis);
 
@@ -4675,17 +4669,17 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
   // Now throw in a bunch of others
   for (size_t i = 0; i < n_nodes; ++i)
     {
-      node_t left_n = random_element(left_ros.all_nodes())->second;
+      node_t left_n = random_element(left_ros.all_nodes(), rng)->second;
 
       node_id left_nid, right_nid;
-      if (flip())
+      if (rng.flip())
         {
           left_nid = left_er.create_dir_node();
           right_nid = right_er.create_dir_node();
         }
       else
         {
-          file_id fid = new_ident();
+          file_id fid = new_ident(rng);
           left_nid = left_er.create_file_node(fid);
           right_nid = right_er.create_file_node(fid);
         }
@@ -4698,12 +4692,12 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
 
       I(right_ros.has_node(pth));
 
-      if (is_file_t(left_n) || (pth.size() > 1 && flip()))
+      if (is_file_t(left_n) || (pth.size() > 1 && rng.flip()))
         // Add a sibling of an existing entry.
-        pth[pth.size() - 1] = new_component();
+        pth[pth.size() - 1] = new_component(rng);
       else
         // Add a child of an existing entry.
-        pth.push_back(new_component());
+        pth.push_back(new_component(rng));
 
       left_er.attach_node(left_nid, pth);
       right_er.attach_node(right_nid, pth);
@@ -4716,11 +4710,12 @@ UNIT_TEST(roster, unify_rosters_randomized)
   temp_node_id_source tmp_nis;
   testing_node_id_source test_nis;
   roster_t left, right;
+  randomizer rng;
   for (size_t i = 0; i < 30; ++i)
     {
       set<node_id> left_new, right_new;
-      create_some_new_temp_nodes(tmp_nis, left, left_new, right, right_new);
-      create_some_new_temp_nodes(tmp_nis, right, right_new, left, left_new);
+      create_some_new_temp_nodes(tmp_nis, left, left_new, right, right_new, rng);
+      create_some_new_temp_nodes(tmp_nis, right, right_new, left, left_new, rng);
       unify_rosters(left, left_new, right, right_new, test_nis);
       check_post_roster_unification_ok(left, right);
     }

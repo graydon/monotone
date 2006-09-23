@@ -1382,11 +1382,12 @@ static void dump_incorrect_merge(vector<string> const & expected,
 // high tech randomizing test
 UNIT_TEST(diff_patch, randomizing_merge)
 {
+  randomizer rng;
   for (int i = 0; i < 30; ++i)
     {
       vector<string> anc, d1, d2, m1, m2, gm;
 
-      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i));
+      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i), rng);
 
       BOOST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)

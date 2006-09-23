@@ -398,9 +398,6 @@ refiner::process_refinement_command(refinement_type ty,
 
 using std::deque;
 using boost::shared_ptr;
-using randomizer::flip;
-using randomizer::uniform;
-using randomizer::bernoulli;
 
 struct 
 refiner_pair
@@ -623,18 +620,18 @@ check_combinations_of_sets(set<id> const & s0,
 
 
 void 
-build_random_set(set<id> & s, size_t sz, bool clumpy)
+build_random_set(set<id> & s, size_t sz, bool clumpy, randomizer & rng)
 {
   while (s.size() < sz)
     {
       string str(constants::merkle_hash_length_in_bytes, ' ');
       for (size_t i = 0; i < constants::merkle_hash_length_in_bytes; ++i)
-        str[i] = static_cast<char>(uniform(0xff));
+        str[i] = static_cast<char>(rng.uniform(0xff));
       s.insert(id(str));
-      if (clumpy && flip())
+      if (clumpy && rng.flip())
         {
-          size_t clumpsz = uniform(7) + 1;
-          size_t pos = flip() ? str.size() - 1 : uniform(str.size());
+          size_t clumpsz = rng.uniform(7) + 1;
+          size_t pos = rng.flip() ? str.size() - 1 : rng.uniform(str.size());
           for (size_t i = 0; s.size() < sz && i < clumpsz; ++i)
             {
               char c = str[pos];
@@ -649,11 +646,11 @@ build_random_set(set<id> & s, size_t sz, bool clumpy)
 }
 
 size_t 
-perturbed(size_t n)
+perturbed(size_t n, randomizer & rng)
 {
   // we sometimes perturb sizes to deviate a bit from natural word-multiple sizes
-  if (flip())
-    return n + uniform(5);
+  if (rng.flip())
+    return n + rng.uniform(5);
   return n;
 }
 
@@ -669,7 +666,7 @@ modulated_size(size_t base_set_size, size_t i)
 
 
 void 
-check_with_count(size_t base_set_size)
+check_with_count(size_t base_set_size, randomizer & rng)
 {
   if (base_set_size == 0) 
     return;
@@ -698,17 +695,17 @@ check_with_count(size_t base_set_size)
   for (size_t c = 0; c < 2; ++c)
     {
       set<id> s0;
-      build_random_set(s0, perturbed(base_set_size), c == 0);
+      build_random_set(s0, perturbed(base_set_size, rng), c == 0, rng);
 
       for (size_t a = 0; a < 6; ++a)
         {
           set<id> sa;
-          build_random_set(sa, modulated_size(perturbed(base_set_size), a), false);
+          build_random_set(sa, modulated_size(perturbed(base_set_size, rng), a), false, rng);
           
           for (size_t b = 0; b < 6; ++b)
             {
               set<id> sb;
-              build_random_set(sb, modulated_size(perturbed(base_set_size), b), false);
+              build_random_set(sb, modulated_size(perturbed(base_set_size, rng), b), false, rng);
               check_combinations_of_sets(s0, sa, sb);
             }
         }
@@ -727,9 +724,10 @@ UNIT_TEST(refiner, various_counts)
   // perturbation within the test, so we're not likely to feel side effects
   // of landing on such pleasant round numbers.
 
-  check_with_count(1); 
-  check_with_count(128); 
-  check_with_count(1024); 
+  randomizer rng;
+  check_with_count(1, rng); 
+  check_with_count(128, rng); 
+  check_with_count(1024, rng); 
 }
 
 #endif

@@ -125,7 +125,6 @@ get_reconstruction_path(std::string const & start,
 
 using boost::lexical_cast;
 using std::pair;
-using namespace randomizer;
 
 typedef std::multimap<string, string> rg_map;
 struct mock_reconstruction_graph : public reconstruction_graph
@@ -152,7 +151,8 @@ static void
 make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
                                  size_t num_random_bases,
                                  vector<string> & all_nodes, rg_map & ancestry,
-                                 set<string> & bases)
+                                 set<string> & bases,
+                                 randomizer & rng)
 {
   for (size_t i = 0; i != num_nodes; ++i)
     all_nodes.push_back(lexical_cast<string>(i));
@@ -166,14 +166,14 @@ make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
   // unhappy).
   for (size_t i = 0; i != num_random_edges; ++i)
     {
-      size_t from_idx = uniform(all_nodes.size() - 1);
-      size_t to_idx = from_idx + 1 + uniform(all_nodes.size() - 1 - from_idx);
+      size_t from_idx = rng.uniform(all_nodes.size() - 1);
+      size_t to_idx = from_idx + 1 + rng.uniform(all_nodes.size() - 1 - from_idx);
       ancestry.insert(make_pair(idx(all_nodes, from_idx),
                                 idx(all_nodes, to_idx)));
     }
   // And a bunch of random bases.
   for (size_t i = 0; i != num_random_bases; ++i)
-    bases.insert(idx(all_nodes, uniform(all_nodes.size())));
+    bases.insert(idx(all_nodes, rng.uniform(all_nodes.size())));
 }
 
 static void
@@ -198,13 +198,15 @@ check_reconstruction_path(string const & start, reconstruction_graph const & gra
 static void
 run_get_reconstruction_path_tests_on_random_graph(size_t num_nodes,
                                                   size_t num_random_edges,
-                                                  size_t num_random_bases)
+                                                  size_t num_random_bases,
+                                                  randomizer & rng)
 {
   vector<string> all_nodes;
   rg_map ancestry;
   set<string> bases;
   make_random_reconstruction_graph(num_nodes, num_random_edges, num_random_bases,
-                                   all_nodes, ancestry, bases);
+                                   all_nodes, ancestry, bases,
+                                   rng);
   mock_reconstruction_graph graph(ancestry, bases);
   for (vector<string>::const_iterator i = all_nodes.begin();
        i != all_nodes.end(); ++i)
@@ -217,11 +219,12 @@ run_get_reconstruction_path_tests_on_random_graph(size_t num_nodes,
 
 UNIT_TEST(graph, random_get_reconstruction_path)
 {
+  randomizer rng;
   // Some arbitrary numbers.
-  run_get_reconstruction_path_tests_on_random_graph(100, 100, 10);
-  run_get_reconstruction_path_tests_on_random_graph(100, 200, 5);
-  run_get_reconstruction_path_tests_on_random_graph(1000, 1000, 50);
-  run_get_reconstruction_path_tests_on_random_graph(1000, 2000, 100);
+  run_get_reconstruction_path_tests_on_random_graph(100, 100, 10, rng);
+  run_get_reconstruction_path_tests_on_random_graph(100, 200, 5, rng);
+  run_get_reconstruction_path_tests_on_random_graph(1000, 1000, 50, rng);
+  run_get_reconstruction_path_tests_on_random_graph(1000, 2000, 100, rng);
 }
 
 #endif // BUILD_UNIT_TESTS

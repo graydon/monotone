@@ -1,3 +1,15 @@
+2006-09-23  Nathaniel Smith  <njs@pobox.com>
+
+	* randomizer.{cc,hh}: Make randomizer a stateful struct, not a
+	namespace.  Now, each test must instantiate its own randomizer,
+	and the randomizer is deterministically seeded at each test, so
+	the actual tests performed no longer depend on what other tests
+	were run in this session.
+	* diff_patch.cc, graph.cc, randomfile.hh, refiner.cc, roster.cc:
+	Adjust accordingly.
+	* roster.cc (perform_random_action): Remove stateless
+	change_automaton struct.
+
 2006-09-22  Nathaniel Smith  <njs@pobox.com>
 
 	* graph.cc: I dunno, maybe this will make the buildslaves happier?
