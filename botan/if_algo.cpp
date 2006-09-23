@@ -11,96 +11,145 @@
 namespace Botan {
 
 /*************************************************
-* Return the X.509 public key encoding           *
+* Return the X.509 public key encoder            *
 *************************************************/
-MemoryVector<byte> IF_Scheme_PublicKey::DER_encode_pub() const
+X509_Encoder* IF_Scheme_PublicKey::x509_encoder() const
    {
-   return DER_Encoder()
-      .start_cons(SEQUENCE)
-         .encode(n)
-         .encode(e)
-      .end_cons()
-   .get_contents();
+   class IF_Scheme_Encoder : public X509_Encoder
+      {
+      public:
+         AlgorithmIdentifier alg_id() const
+            {
+            return AlgorithmIdentifier(key->get_oid(),
+                                       AlgorithmIdentifier::USE_NULL_PARAM);
+            }
+
+         MemoryVector<byte> key_bits() const
+            {
+            return DER_Encoder()
+               .start_cons(SEQUENCE)
+                  .encode(key->n)
+                  .encode(key->e)
+               .end_cons()
+            .get_contents();
+            }
+
+         IF_Scheme_Encoder(const IF_Scheme_PublicKey* k) : key(k) {}
+      private:
+         const IF_Scheme_PublicKey* key;
+      };
+
+   return new IF_Scheme_Encoder(this);
    }
 
 /*************************************************
-* Return the X.509 parameters encoding           *
+* Return the X.509 public key decoder            *
 *************************************************/
-MemoryVector<byte> IF_Scheme_PublicKey::DER_encode_params() const
+X509_Decoder* IF_Scheme_PublicKey::x509_decoder()
    {
-   return DER_Encoder().encode_null().get_contents();
+   class IF_Scheme_Decoder : public X509_Decoder
+      {
+      public:
+         void alg_id(const AlgorithmIdentifier&) {}
+
+         void key_bits(const MemoryRegion<byte>& bits)
+            {
+            BER_Decoder(bits)
+               .start_cons(SEQUENCE)
+               .decode(key->n)
+               .decode(key->e)
+               .verify_end()
+               .end_cons();
+
+            key->X509_load_hook();
+            }
+
+         IF_Scheme_Decoder(IF_Scheme_PublicKey* k) : key(k) {}
+      private:
+         IF_Scheme_PublicKey* key;
+      };
+
+   return new IF_Scheme_Decoder(this);
    }
 
 /*************************************************
-* Decode X.509 public key encoding               *
+* Return the PKCS #8 public key encoder          *
 *************************************************/
-void IF_Scheme_PublicKey::BER_decode_pub(DataSource& source)
+PKCS8_Encoder* IF_Scheme_PrivateKey::pkcs8_encoder() const
    {
-   BER_Decoder(source)
-      .start_cons(SEQUENCE)
-         .decode(n)
-         .decode(e)
-         .verify_end()
-      .end_cons();
+   class IF_Scheme_Encoder : public PKCS8_Encoder
+      {
+      public:
+         AlgorithmIdentifier alg_id() const
+            {
+            return AlgorithmIdentifier(key->get_oid(),
+                                       AlgorithmIdentifier::USE_NULL_PARAM);
+            }
 
-   X509_load_hook();
+         MemoryVector<byte> key_bits() const
+            {
+            return DER_Encoder()
+               .start_cons(SEQUENCE)
+                  .encode((u32bit)0)
+                  .encode(key->n)
+                  .encode(key->e)
+                  .encode(key->d)
+                  .encode(key->p)
+                  .encode(key->q)
+                  .encode(key->d1)
+                  .encode(key->d2)
+                  .encode(key->c)
+               .end_cons()
+            .get_contents();
+            }
+
+         IF_Scheme_Encoder(const IF_Scheme_PrivateKey* k) : key(k) {}
+      private:
+         const IF_Scheme_PrivateKey* key;
+      };
+
+   return new IF_Scheme_Encoder(this);
    }
 
 /*************************************************
-* Decode X.509 algorithm parameters              *
+* Return the PKCS #8 public key decoder          *
 *************************************************/
-void IF_Scheme_PublicKey::BER_decode_params(DataSource& source)
+PKCS8_Decoder* IF_Scheme_PrivateKey::pkcs8_decoder()
    {
-   byte dummy = 0;
-   while(!source.end_of_data())
-      source.read_byte(dummy);
-   }
+   class IF_Scheme_Decoder : public PKCS8_Decoder
+      {
+      public:
+         void alg_id(const AlgorithmIdentifier&) {}
 
-/*************************************************
-* Return the PKCS #1 private key encoding        *
-*************************************************/
-SecureVector<byte> IF_Scheme_PrivateKey::DER_encode_priv() const
-   {
-   return DER_Encoder()
-      .start_cons(SEQUENCE)
-         .encode((u32bit)0)
-         .encode(n)
-         .encode(e)
-         .encode(d)
-         .encode(p)
-         .encode(q)
-         .encode(d1)
-         .encode(d2)
-         .encode(c)
-      .end_cons()
-   .get_contents();
-   }
+         void key_bits(const MemoryRegion<byte>& bits)
+            {
+            u32bit version;
 
-/*************************************************
-* Decode a PKCS #1 private key encoding          *
-*************************************************/
-void IF_Scheme_PrivateKey::BER_decode_priv(DataSource& source)
-   {
-   u32bit version;
+            BER_Decoder(bits)
+               .start_cons(SEQUENCE)
+                  .decode(version)
+                  .decode(key->n)
+                  .decode(key->e)
+                  .decode(key->d)
+                  .decode(key->p)
+                  .decode(key->q)
+                  .decode(key->d1)
+                  .decode(key->d2)
+                  .decode(key->c)
+               .end_cons();
 
-   BER_Decoder(source)
-      .start_cons(SEQUENCE)
-         .decode(version)
-         .decode(n)
-         .decode(e)
-         .decode(d)
-         .decode(p)
-         .decode(q)
-         .decode(d1)
-         .decode(d2)
-         .decode(c)
-      .end_cons();
+            if(version != 0)
+               throw Decoding_Error("Unknown PKCS #1 key format version");
 
-   if(version != 0)
-      throw Decoding_Error(algo_name() + ": Unknown PKCS #1 key version");
+            key->PKCS8_load_hook();
+            }
 
-   PKCS8_load_hook();
-   check_loaded_private();
+         IF_Scheme_Decoder(IF_Scheme_PrivateKey* k) : key(k) {}
+      private:
+         IF_Scheme_PrivateKey* key;
+      };
+
+   return new IF_Scheme_Decoder(this);
    }
 
 /*************************************************
@@ -109,13 +158,13 @@ void IF_Scheme_PrivateKey::BER_decode_priv(DataSource& source)
 void IF_Scheme_PublicKey::X509_load_hook()
    {
    core = IF_Core(e, n);
-   check_loaded_public();
+   load_check();
    }
 
 /*************************************************
 * Algorithm Specific PKCS #8 Initialization Code *
 *************************************************/
-void IF_Scheme_PrivateKey::PKCS8_load_hook()
+void IF_Scheme_PrivateKey::PKCS8_load_hook(bool generated)
    {
    if(n == 0)  n = p * q;
    if(d1 == 0) d1 = d % (p - 1);
@@ -123,6 +172,11 @@ void IF_Scheme_PrivateKey::PKCS8_load_hook()
    if(c == 0)  c = inverse_mod(q, p);
 
    core = IF_Core(e, n, d, p, q, d1, d2, c);
+
+   if(generated)
+      gen_check();
+   else
+      load_check();
    }
 
 /*************************************************

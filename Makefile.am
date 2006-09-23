@@ -95,7 +95,7 @@ NETXX_SOURCES =								\
 
 BOTAN_SOURCES = 							\
         botan/aes.cpp botan/aes_tab.cpp \
-        botan/allocate.cpp botan/arc4.cpp botan/asn1_alg.cpp        \
+        botan/arc4.cpp botan/alg_id.cpp        \
         botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp     \
         botan/asn1_ku.cpp botan/asn1_oid.cpp     \
         botan/asn1_str.cpp botan/asn1_tm.cpp \
@@ -123,7 +123,7 @@ BOTAN_SOURCES = 							\
         botan/make_prm.cpp botan/mdx_hash.cpp       \
         botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp       \
         botan/mode_pad.cpp botan/modebase.cpp       \
-        botan/mp_comba.cpp \
+        botan/mp_comba.cpp botan/mp_muladd.cpp \
         botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp       \
         botan/mutex.cpp botan/numthry.cpp       \
         botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp  \
@@ -188,7 +188,8 @@ BOTAN_SOURCES = 							\
         botan/def_powm.h botan/dl_group.h botan/libstate.h \
         botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h \
 		botan/build.h botan/asn1_int.h botan/datastor.h botan/def_char.h \
-		botan/stl_util.h botan/x509_ext.h botan/x509stat.h
+		botan/stl_util.h botan/x509_ext.h botan/x509stat.h \
+		botan/alg_id.h
 
 BOOST_SANDBOX_SOURCES =							\
 	boost/circular_buffer_adaptor.hpp				\

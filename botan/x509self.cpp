@@ -21,9 +21,9 @@ namespace {
 * Shared setup for self-signed items             *
 *************************************************/
 MemoryVector<byte> shared_setup(const X509_Cert_Options& opts,
-                                const PKCS8_PrivateKey& key)
+                                const Private_Key& key)
    {
-   const PKCS8_PrivateKey* key_pointer = &key;
+   const Private_Key* key_pointer = &key;
    if(!dynamic_cast<const PK_Signing_Key*>(key_pointer))
       throw Invalid_Argument("Key type " + key.algo_name() + " cannot sign");
 
@@ -55,24 +55,6 @@ void load_info(const X509_Cert_Options& opts, X509_DN& subject_dn,
                              opts.xmpp, UTF8_STRING);
    }
 
-/*************************************************
-* Choose a signing format for the key            *
-*************************************************/
-PK_Signer* choose_sig_format(const PKCS8_PrivateKey& key,
-                             AlgorithmIdentifier& sig_algo)
-   {
-   std::string padding;
-   Signature_Format format;
-   Config::choose_sig_format(key.algo_name(), padding, format);
-
-   sig_algo.oid = OIDS::lookup(key.algo_name() + "/" + padding);
-   sig_algo.parameters = key.DER_encode_params();
-
-   const PK_Signing_Key& sig_key = dynamic_cast<const PK_Signing_Key&>(key);
-
-   return get_pk_signer(sig_key, padding, format);
-   }
-
 }
 
 namespace X509 {
@@ -81,7 +63,7 @@ namespace X509 {
 * Create a new self-signed X.509 certificate     *
 *************************************************/
 X509_Certificate create_self_signed_cert(const X509_Cert_Options& opts,
-                                         const PKCS8_PrivateKey& key)
+                                         const Private_Key& key)
    {
    AlgorithmIdentifier sig_algo;
    X509_DN subject_dn;
@@ -118,7 +100,7 @@ X509_Certificate create_self_signed_cert(const X509_Cert_Options& opts,
 * Create a PKCS #10 certificate request          *
 *************************************************/
 PKCS10_Request create_cert_req(const X509_Cert_Options& opts,
-                               const PKCS8_PrivateKey& key)
+                               const Private_Key& key)
    {
    AlgorithmIdentifier sig_algo;
    X509_DN subject_dn;

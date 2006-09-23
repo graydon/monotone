@@ -89,10 +89,10 @@ struct botan_library
     Botan::InitializerOptions options("thread_safe=0 selftest=0 seed_rng=1 "
                                       "use_engines=0 secure_memory=1 "
                                       "fips140=0");
-    Botan::Init::initialize(options);
+    Botan::LibraryInitializer::initialize(options);
   }
   ~botan_library() {
-    Botan::Init::deinitialize();
+    Botan::LibraryInitializer::deinitialize();
   }
 };
 

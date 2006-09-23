@@ -16,6 +16,26 @@
 
 namespace Botan {
 
+namespace {
+
+/*************************************************
+* Lookup each OID in the vector                  *
+*************************************************/
+std::vector<std::string> lookup_oids(const std::vector<std::string>& in)
+   {
+   std::vector<std::string> out;
+
+   std::vector<std::string>::const_iterator i = in.begin();
+   while(i != in.end())
+      {
+      out.push_back(OIDS::lookup(OID(*i)));
+      ++i;
+      }
+   return out;
+   }
+
+}
+
 /*************************************************
 * X509_Certificate Constructor                   *
 *************************************************/
@@ -166,7 +186,7 @@ X509_Certificate::issuer_info(const std::string& what) const
 /*************************************************
 * Return the public key in this certificate      *
 *************************************************/
-X509_PublicKey* X509_Certificate::subject_public_key() const
+Public_Key* X509_Certificate::subject_public_key() const
    {
    DataSource_Memory source(subject.get1("X509.Certificate.public_key"));
    return X509::load_key(source);
@@ -206,7 +226,7 @@ Key_Constraints X509_Certificate::constraints() const
 *************************************************/
 std::vector<std::string> X509_Certificate::ex_constraints() const
    {
-   return subject.get("X509v3.ExtendedKeyUsage");
+   return lookup_oids(subject.get("X509v3.ExtendedKeyUsage"));
    }
 
 /*************************************************
@@ -214,7 +234,7 @@ std::vector<std::string> X509_Certificate::ex_constraints() const
 *************************************************/
 std::vector<std::string> X509_Certificate::policies() const
    {
-   return subject.get("X509v3.CertificatePolicies");
+   return lookup_oids(subject.get("X509v3.CertificatePolicies"));
    }
 
 /*************************************************
@@ -315,14 +335,22 @@ AlternativeName create_alt_name(const Data_Store& info)
       public:
          bool operator()(const std::string& key, const std::string&) const
             {
-            if(key == "RFC882" || key == "DNS" || key == "URI")
-               return true;
+            for(u32bit j = 0; j != matches.size(); j++)
+               if(key.compare(matches[j]) == 0)
+                  return true;
             return false;
             }
+
+         AltName_Matcher(const std::string& match_any_of)
+            {
+            matches = split_on(match_any_of, '/');
+            }
+      private:
+         std::vector<std::string> matches;
       };
 
    std::multimap<std::string, std::string> names
-      = info.search_with(AltName_Matcher());
+      = info.search_with(AltName_Matcher("RFC882/DNS/URI"));
 
    AlternativeName alt_name;
 

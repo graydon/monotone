@@ -76,7 +76,7 @@ class X509_Store
 
       void add_new_certstore(Certificate_Store*);
 
-      static X509_Code check_sig(const X509_Object&, X509_PublicKey*);
+      static X509_Code check_sig(const X509_Object&, Public_Key*);
 
       X509_Store();
       X509_Store(const X509_Store&);
@@ -128,22 +128,6 @@ class X509_Store
       std::vector<Certificate_Store*> stores;
       mutable bool revoked_info_valid;
    };
-
-namespace X509_Store_Search {
-
-/*************************************************
-* Methods to search through a X509_Store         *
-*************************************************/
-std::vector<X509_Certificate> by_email(const X509_Store&, const std::string&);
-std::vector<X509_Certificate> by_name(const X509_Store&, const std::string&);
-std::vector<X509_Certificate> by_dns(const X509_Store&, const std::string&);
-std::vector<X509_Certificate> by_keyid(const X509_Store&, u64bit);
-std::vector<X509_Certificate> by_iands(const X509_Store&, const X509_DN&,
-                                       const MemoryRegion<byte>&);
-std::vector<X509_Certificate> by_SKID(const X509_Store&,
-                                      const MemoryRegion<byte>&);
-
-}
 
 }
 

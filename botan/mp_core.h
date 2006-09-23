@@ -40,16 +40,16 @@ void bigint_shr2(word[], const word[], u32bit, u32bit, u32bit);
 /*************************************************
 * Multiplication and Squaring Operations         *
 *************************************************/
+word bigint_mul_add_words(word[], const word[], u32bit, word);
+
 void bigint_linmul2(word[], u32bit, word);
 void bigint_linmul3(word[], const word[], u32bit, word);
-
-void bigint_simple_mul(word[], const word[], u32bit, const word[], u32bit);
 void bigint_linmul_add(word[], u32bit, const word[], u32bit, word);
 
 /*************************************************
-* Modular Reduction                              *
+* Montgomery Reduction                           *
 *************************************************/
-void montgomery_reduce(word[], u32bit, const word[], u32bit, word);
+void bigint_monty_redc(word[], u32bit, const word[], u32bit, word);
 
 /*************************************************
 * Misc Utility Operations                        *

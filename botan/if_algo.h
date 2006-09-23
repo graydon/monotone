@@ -15,7 +15,7 @@ namespace Botan {
 /*************************************************
 * IF Public Key                                  *
 *************************************************/
-class IF_Scheme_PublicKey : public virtual X509_PublicKey
+class IF_Scheme_PublicKey : public virtual Public_Key
    {
    public:
       bool check_key(bool) const;
@@ -25,23 +25,19 @@ class IF_Scheme_PublicKey : public virtual X509_PublicKey
 
       u32bit max_input_bits() const { return (n.bits() - 1); }
 
-      virtual ~IF_Scheme_PublicKey() {}
+      X509_Encoder* x509_encoder() const;
+      X509_Decoder* x509_decoder();
    protected:
       virtual void X509_load_hook();
       BigInt n, e;
       IF_Core core;
-   private:
-      MemoryVector<byte> DER_encode_pub() const;
-      MemoryVector<byte> DER_encode_params() const;
-      void BER_decode_params(DataSource&);
-      void BER_decode_pub(DataSource&);
    };
 
 /*************************************************
 * IF Private Key                                 *
 *************************************************/
 class IF_Scheme_PrivateKey : public virtual IF_Scheme_PublicKey,
-                             public virtual PKCS8_PrivateKey
+                             public virtual Private_Key
    {
    public:
       bool check_key(bool) const;
@@ -50,13 +46,11 @@ class IF_Scheme_PrivateKey : public virtual IF_Scheme_PublicKey,
       const BigInt& get_q() const { return q; }
       const BigInt& get_d() const { return d; }
 
-      virtual ~IF_Scheme_PrivateKey() {}
+      PKCS8_Encoder* pkcs8_encoder() const;
+      PKCS8_Decoder* pkcs8_decoder();
    protected:
-      virtual void PKCS8_load_hook();
+      virtual void PKCS8_load_hook(bool = false);
       BigInt d, p, q, d1, d2, c;
-   private:
-      SecureVector<byte> DER_encode_priv() const;
-      void BER_decode_priv(DataSource&);
    };
 
 }

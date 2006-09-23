@@ -30,31 +30,25 @@ Certificate_Extension* X509_GlobalState::get_extension(const OID& oid) const
    }
 
 /*************************************************
-* Destroy this global state object               *
-*************************************************/
-X509_GlobalState::~X509_GlobalState()
-   {
-   for(u32bit j = 0; j != prototypes.size(); ++j)
-      delete prototypes[j];
-   prototypes.clear();
-   }
-
-/*************************************************
 * Set up a new global state for X.509            *
 *************************************************/
 X509_GlobalState::X509_GlobalState()
    {
-#define CREATE_PROTOTYPE(NAME, TYPE)                      \
-   struct TYPE ## _Prototype : public Extension_Prototype \
-      {                                                   \
-      Certificate_Extension* make(const OID& oid)         \
-         {                                                \
-         if(oid == OIDS::lookup(NAME))                    \
-            return new Cert_Extension::TYPE();            \
-         return 0;                                        \
-         }                                                \
-      };                                                  \
-   add(new TYPE ## _Prototype);
+
+#define CREATE_PROTOTYPE(NAME, TYPE)                         \
+   do {                                                      \
+      struct TYPE ## _Prototype : public Extension_Prototype \
+         {                                                   \
+         Certificate_Extension* make(const OID& oid)         \
+            {                                                \
+            if(OIDS::name_of(oid, NAME))                     \
+               return new Cert_Extension::TYPE();            \
+            return 0;                                        \
+            }                                                \
+         };                                                  \
+                                                             \
+      add(new TYPE ## _Prototype);                           \
+   } while(0);
 
    CREATE_PROTOTYPE("X509v3.KeyUsage", Key_Usage);
    CREATE_PROTOTYPE("X509v3.BasicConstraints", Basic_Constraints);
@@ -65,6 +59,18 @@ X509_GlobalState::X509_GlobalState()
    CREATE_PROTOTYPE("X509v3.SubjectAlternativeName", Subject_Alternative_Name);
    CREATE_PROTOTYPE("X509v3.CRLNumber", CRL_Number);
    CREATE_PROTOTYPE("X509v3.CertificatePolicies", Certificate_Policies);
+
+#undef CREATE_PROTOTYPE
+   }
+
+/*************************************************
+* Destroy this global state object               *
+*************************************************/
+X509_GlobalState::~X509_GlobalState()
+   {
+   for(u32bit j = 0; j != prototypes.size(); ++j)
+      delete prototypes[j];
+   prototypes.clear();
    }
 
 }

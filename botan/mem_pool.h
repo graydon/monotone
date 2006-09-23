@@ -23,7 +23,6 @@ class Pooling_Allocator : public Allocator
       void* allocate(u32bit);
       void deallocate(void*, u32bit);
 
-      void init();
       void destroy();
 
       Pooling_Allocator(u32bit, bool);
@@ -46,9 +45,9 @@ class Pooling_Allocator : public Allocator
             byte* alloc(u32bit) throw();
             void free(void*, u32bit) throw();
 
-            bool cmp_mem(const void* x) const { return (*this) < x; }
             bool operator<(const void*) const;
-            bool operator<(const Memory_Block&) const;
+            bool operator<(const Memory_Block& other) const
+               { return (buffer < other.buffer); }
          private:
             typedef u64bit bitmap_type;
             static const u32bit BITMAP_SIZE = 8 * sizeof(bitmap_type);

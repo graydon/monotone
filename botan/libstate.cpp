@@ -110,21 +110,28 @@ Allocator* Library_State::get_allocator(const std::string& type) const
 /*************************************************
 * Create a new name to object mapping            *
 *************************************************/
-void Library_State::add_allocator(Allocator* allocator,
-                                  bool set_as_default)
+void Library_State::add_allocator(Allocator* allocator)
    {
    Named_Mutex_Holder lock("allocator");
 
    allocator->init();
 
-   const std::string type = allocator->type();
-   if(alloc_factory[type])
-      delete alloc_factory[type];
+   allocators.push_back(allocator);
+   alloc_factory[allocator->type()] = allocator;
+   }
 
-   alloc_factory[type] = allocator;
+/*************************************************
+* Set the default allocator type                 *
+*************************************************/
+void Library_State::set_default_allocator(const std::string& type) const
+   {
+   Named_Mutex_Holder lock("allocator");
 
-   if(set_as_default)
-      config().set("conf", "base/default_allocator", type);
+   if(type == "")
+      return;
+
+   config().set("conf", "base/default_allocator", type);
+   cached_default_allocator = 0;
    }
 
 /*************************************************
@@ -235,14 +242,10 @@ Engine* Library_State::get_engine_n(u32bit n) const
 /*************************************************
 * Add a new engine to the list                   *
 *************************************************/
-void Library_State::add_engine(Engine* engine, bool in_front)
+void Library_State::add_engine(Engine* engine)
    {
    Named_Mutex_Holder lock("engine");
-
-   if(in_front)
-      engines.insert(engines.begin(), engine);
-   else
-      engines.push_back(engine);
+   engines.insert(engines.begin(), engine);
    }
 
 /*************************************************
@@ -307,15 +310,18 @@ void Library_State::load(Modules& modules)
    set_timer(modules.timer());
    set_transcoder(modules.transcoder());
 
-   std::vector<Allocator*> allocators = modules.allocators();
+   std::vector<Allocator*> mod_allocs = modules.allocators();
+   for(u32bit j = 0; j != mod_allocs.size(); j++)
+      add_allocator(mod_allocs[j]);
 
-   for(u32bit j = 0; j != allocators.size(); j++)
-      add_allocator(allocators[j],
-                    allocators[j]->type() == modules.default_allocator());
+   set_default_allocator(modules.default_allocator());
 
-   std::vector<Engine*> engines = modules.engines();
-   for(u32bit j = 0; j != engines.size(); ++j)
-      add_engine(engines[j], false);
+   std::vector<Engine*> mod_engines = modules.engines();
+   for(u32bit j = 0; j != mod_engines.size(); ++j)
+      {
+      Named_Mutex_Holder lock("engine");
+      engines.push_back(mod_engines[j]);
+      }
 
    std::vector<EntropySource*> sources = modules.entropy_sources();
    for(u32bit j = 0; j != sources.size(); ++j)
@@ -361,11 +367,10 @@ Library_State::~Library_State()
 
    cached_default_allocator = 0;
 
-   for(std::map<std::string, Allocator*>::iterator j = alloc_factory.begin();
-       j != alloc_factory.end(); ++j)
+   for(u32bit j = 0; j != allocators.size(); j++)
       {
-      j->second->destroy();
-      delete j->second;
+      allocators[j]->destroy();
+      delete allocators[j];
       }
 
    std::for_each(locks.begin(), locks.end(),

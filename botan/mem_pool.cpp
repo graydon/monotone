@@ -52,19 +52,11 @@ Pooling_Allocator::Memory_Block::Memory_Block(void* buf, u32bit map_size,
 /*************************************************
 * Compare a Memory_Block with a void pointer     *
 *************************************************/
-bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
+inline bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
    {
    if(buffer <= other && other < buffer_end)
       return false;
    return (buffer < other);
-   }
-
-/*************************************************
-* Compare two Memory_Block objects               *
-*************************************************/
-bool Pooling_Allocator::Memory_Block::operator<(const Memory_Block& blk) const
-   {
-   return (buffer < blk.buffer);
    }
 
 /*************************************************
@@ -156,16 +148,6 @@ Pooling_Allocator::~Pooling_Allocator()
    }
 
 /*************************************************
-* Allocate some initial buffers                  *
-*************************************************/
-void Pooling_Allocator::init()
-   {
-   Mutex_Holder lock(mutex);
-
-   get_more_core(PREF_SIZE);
-   }
-
-/*************************************************
 * Free all remaining memory                      *
 *************************************************/
 void Pooling_Allocator::destroy()
@@ -252,16 +234,16 @@ byte* Pooling_Allocator::allocate_blocks(u32bit n)
 
    do
       {
-      ++i;
-      if(i == blocks.end())
-         i = blocks.begin();
-
       byte* mem = i->alloc(n);
       if(mem)
          {
          last_used = i;
          return mem;
          }
+
+      ++i;
+      if(i == blocks.end())
+         i = blocks.begin();
       }
    while(i != last_used);
 

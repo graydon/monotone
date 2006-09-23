@@ -25,7 +25,7 @@ void dumper()
 {
   if (!clean_shutdown)
         global_sanity.dump_buffer();
-  Botan::Init::deinitialize();
+  Botan::LibraryInitializer::deinitialize();
 }
 
 void clean_shutdown_dummy_test()
@@ -38,7 +38,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   Botan::InitializerOptions botan_opt("thread_safe=0 selftest=1 seed_rng=1 "
                                     "use_engines=0 secure_memory=1 "
                                     "fips140=1");
-  Botan::Init::initialize(botan_opt);
+  Botan::LibraryInitializer::initialize(botan_opt);
 
   clean_shutdown = false;
   atexit(&dumper);

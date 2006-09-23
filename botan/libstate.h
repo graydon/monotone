@@ -31,10 +31,13 @@ class Library_State
       friend class Engine_Iterator;
 
       Allocator* get_allocator(const std::string& = "") const;
-      void add_allocator(Allocator*, bool = false);
+      void add_allocator(Allocator*);
+      void set_default_allocator(const std::string&) const;
+
+      bool rng_is_seeded() const { return rng->is_seeded(); }
+      void randomize(byte[], u32bit);
 
       void set_prng(RandomNumberGenerator*);
-      void randomize(byte[], u32bit);
       void add_entropy_source(EntropySource*, bool = true);
       void add_entropy(const byte[], u32bit);
       void add_entropy(EntropySource&, bool);
@@ -47,7 +50,7 @@ class Library_State
 
       class Config& config() const;
 
-      void add_engine(class Engine*, bool);
+      void add_engine(class Engine*);
 
       class Mutex* get_mutex() const;
       class Mutex* get_named_mutex(const std::string&);
@@ -78,6 +81,7 @@ class Library_State
 
       class Charset_Transcoder* transcoder;
       RandomNumberGenerator* rng;
+      std::vector<Allocator*> allocators;
       std::vector<EntropySource*> entropy_sources;
       std::vector<class Engine*> engines;
    };

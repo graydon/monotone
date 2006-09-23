@@ -20,37 +20,6 @@ namespace PKCS8 {
 
 namespace {
 
-/* This is monotone specific */
-/*************************************************
-* Get info from an RAW_BER pkcs8 key.            *
-* Whether it is encrypted will be determined,    *
-* returned in is_encrypted.                      *
-*************************************************/
-  SecureVector<byte> PKCS8_extract_unencrypted(DataSource& source,
-                                               AlgorithmIdentifier& alg_id)
-   {
-   SecureVector<byte> enc_pkcs8_key;
-   u32bit version = 0;
-
-   try {
-      BER_Decoder decoder(source);
-      BER_Decoder sequence = decoder.start_cons(SEQUENCE);
-      sequence.decode(version);
-      sequence.decode(alg_id);
-      sequence.decode(enc_pkcs8_key, OCTET_STRING);
-      sequence.verify_end();
-      }
-   catch(Decoding_Error)
-      {
-      throw PKCS8_Exception("Private key decoding failed");
-      }
-
-   if (version != 0)
-      throw Decoding_Error("PKCS #8: Unknown version number");
-
-   return enc_pkcs8_key;
-   }
-
 /*************************************************
 * Get info from an EncryptedPrivateKeyInfo       *
 *************************************************/
@@ -78,29 +47,15 @@ SecureVector<byte> PKCS8_extract(DataSource& source,
 * PEM decode and/or decrypt a private key        *
 *************************************************/
 SecureVector<byte> PKCS8_decode(DataSource& source, const User_Interface& ui,
-                                AlgorithmIdentifier& pk_alg_id, 
-                                bool encrypted = true)
+                                AlgorithmIdentifier& pk_alg_id)
    {
    AlgorithmIdentifier pbe_alg_id;
    SecureVector<byte> key_data, key;
    bool is_encrypted = true;
 
    try {
-      // monotone-specific
       if(ASN1::maybe_BER(source) && !PEM_Code::matches(source))
-         {
-         if (encrypted)
-           key_data = PKCS8_extract(source, pbe_alg_id);
-         else
-            {
-            // monotone specific, for unencrypted non-PEM
-            key_data = PKCS8_extract_unencrypted(source, pbe_alg_id);
-            pk_alg_id = pbe_alg_id;
-            return key_data; // just plain unencrypted BER
-            }
-         if(key_data.is_empty())
-            throw Decoding_Error("PKCS #8 private key decoding failed");
-         }
+         key_data = PKCS8_extract(source, pbe_alg_id);
       else
          {
          std::string label;
@@ -127,7 +82,7 @@ SecureVector<byte> PKCS8_decode(DataSource& source, const User_Interface& ui,
    if(!is_encrypted)
       key = key_data;
 
-   const u32bit MAX_TRIES = 
+   const u32bit MAX_TRIES =
       global_config().option_as_u32bit("base/pkcs8_tries");
 
    u32bit tries = 0;
@@ -186,18 +141,20 @@ SecureVector<byte> PKCS8_decode(DataSource& source, const User_Interface& ui,
 /*************************************************
 * DER or PEM encode a PKCS #8 private key        *
 *************************************************/
-void encode(const PKCS8_PrivateKey& key, Pipe& pipe, X509_Encoding encoding)
+void encode(const Private_Key& key, Pipe& pipe, X509_Encoding encoding)
    {
-   const u32bit PKCS8_VERSION = 0;
+   std::auto_ptr<PKCS8_Encoder> encoder(key.pkcs8_encoder());
+   if(!encoder.get())
+      throw Encoding_Error("PKCS8::encode: Key does not support encoding");
 
-   AlgorithmIdentifier alg_id(key.get_oid(), key.DER_encode_params());
+   const u32bit PKCS8_VERSION = 0;
 
    SecureVector<byte> contents =
       DER_Encoder()
          .start_cons(SEQUENCE)
             .encode(PKCS8_VERSION)
-            .encode(alg_id)
-            .encode(key.DER_encode_priv(), OCTET_STRING)
+            .encode(encoder->alg_id())
+            .encode(encoder->key_bits(), OCTET_STRING)
          .end_cons()
       .get_contents();
 
@@ -210,7 +167,7 @@ void encode(const PKCS8_PrivateKey& key, Pipe& pipe, X509_Encoding encoding)
 /*************************************************
 * Encode and encrypt a PKCS #8 private key       *
 *************************************************/
-void encrypt_key(const PKCS8_PrivateKey& key, Pipe& pipe,
+void encrypt_key(const Private_Key& key, Pipe& pipe,
                  const std::string& pass, const std::string& pbe_algo,
                  X509_Encoding encoding)
    {
@@ -244,7 +201,7 @@ void encrypt_key(const PKCS8_PrivateKey& key, Pipe& pipe,
 /*************************************************
 * PEM encode a PKCS #8 private key               *
 *************************************************/
-std::string PEM_encode(const PKCS8_PrivateKey& key)
+std::string PEM_encode(const Private_Key& key)
    {
    Pipe pem;
    pem.start_msg();
@@ -256,7 +213,7 @@ std::string PEM_encode(const PKCS8_PrivateKey& key)
 /*************************************************
 * Encrypt and PEM encode a PKCS #8 private key   *
 *************************************************/
-std::string PEM_encode(const PKCS8_PrivateKey& key, const std::string& pass,
+std::string PEM_encode(const Private_Key& key, const std::string& pass,
                        const std::string& pbe_algo)
    {
    if(pass == "")
@@ -272,31 +229,28 @@ std::string PEM_encode(const PKCS8_PrivateKey& key, const std::string& pass,
 /*************************************************
 * Extract a private key and return it            *
 *************************************************/
-// monotone-specific
-PKCS8_PrivateKey* load_key(DataSource& source, const User_Interface& ui,
-                           bool encrypted)
+Private_Key* load_key(DataSource& source, const User_Interface& ui)
    {
    AlgorithmIdentifier alg_id;
-
-   SecureVector<byte> pkcs8_key = PKCS8_decode(source, ui, alg_id, encrypted);
+   SecureVector<byte> pkcs8_key = PKCS8_decode(source, ui, alg_id);
 
    const std::string alg_name = OIDS::lookup(alg_id.oid);
    if(alg_name == "" || alg_name == alg_id.oid.as_string())
       throw PKCS8_Exception("Unknown algorithm OID: " +
                             alg_id.oid.as_string());
 
-   std::auto_ptr<PKCS8_PrivateKey> key(get_private_key(alg_name));
+   std::auto_ptr<Private_Key> key(get_private_key(alg_name));
 
    if(!key.get())
       throw PKCS8_Exception("Unknown PK algorithm/OID: " + alg_name + ", " +
                            alg_id.oid.as_string());
 
-   Pipe output;
-   output.process_msg(alg_id.parameters);
-   output.process_msg(pkcs8_key);
-   key->BER_decode_params(output);
-   output.set_default_msg(1);
-   key->BER_decode_priv(output);
+   std::auto_ptr<PKCS8_Decoder> decoder(key->pkcs8_decoder());
+   if(!decoder.get())
+      throw Decoding_Error("Key does not support PKCS #8 decoding");
+
+   decoder->alg_id(alg_id);
+   decoder->key_bits(pkcs8_key);
 
    return key.release();
    }
@@ -304,35 +258,32 @@ PKCS8_PrivateKey* load_key(DataSource& source, const User_Interface& ui,
 /*************************************************
 * Extract a private key and return it            *
 *************************************************/
-PKCS8_PrivateKey* load_key(const std::string& fsname, const User_Interface& ui,
-                           bool encrypted)
+Private_Key* load_key(const std::string& fsname, const User_Interface& ui)
    {
-   DataSource_Stream source(fsname);
-   return PKCS8::load_key(source, ui, encrypted);
+   DataSource_Stream source(fsname, true);
+   return PKCS8::load_key(source, ui);
    }
 
 /*************************************************
 * Extract a private key and return it            *
 *************************************************/
-PKCS8_PrivateKey* load_key(DataSource& source, const std::string& pass,
-                           bool encrypted)
+Private_Key* load_key(DataSource& source, const std::string& pass)
    {
-   return PKCS8::load_key(source, User_Interface(pass), encrypted);
+   return PKCS8::load_key(source, User_Interface(pass));
    }
 
 /*************************************************
 * Extract a private key and return it            *
 *************************************************/
-PKCS8_PrivateKey* load_key(const std::string& fsname, const std::string& pass,
-                           bool encrypted)
+Private_Key* load_key(const std::string& fsname, const std::string& pass)
    {
-   return PKCS8::load_key(fsname, User_Interface(pass), encrypted);
+   return PKCS8::load_key(fsname, User_Interface(pass));
    }
 
 /*************************************************
 * Make a copy of this private key                *
 *************************************************/
-PKCS8_PrivateKey* copy_key(const PKCS8_PrivateKey& key)
+Private_Key* copy_key(const Private_Key& key)
    {
    Pipe bits;
 
