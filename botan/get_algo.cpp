@@ -1,6 +1,6 @@
 /*************************************************
 * Algorithm Retrieval Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/lookup.h>
@@ -94,9 +94,7 @@ bool have_algorithm(const std::string& name)
 *************************************************/
 bool have_block_cipher(const std::string& name)
    {
-   if(retrieve_block_cipher(name))
-      return true;
-   return false;
+   return (retrieve_block_cipher(name) != 0);
    }
 
 /*************************************************
@@ -104,9 +102,7 @@ bool have_block_cipher(const std::string& name)
 *************************************************/
 bool have_stream_cipher(const std::string& name)
    {
-   if(retrieve_stream_cipher(name))
-      return true;
-   return false;
+   return (retrieve_stream_cipher(name) != 0);
    }
 
 /*************************************************
@@ -114,9 +110,7 @@ bool have_stream_cipher(const std::string& name)
 *************************************************/
 bool have_hash(const std::string& name)
    {
-   if(retrieve_hash(name))
-      return true;
-   return false;
+   return (retrieve_hash(name) != 0);
    }
 
 /*************************************************
@@ -124,19 +118,22 @@ bool have_hash(const std::string& name)
 *************************************************/
 bool have_mac(const std::string& name)
    {
-   if(retrieve_mac(name))
-      return true;
-   return false;
+   return (retrieve_mac(name) != 0);
    }
 
 /*************************************************
-* Query the BLOCK_SIZE of a block cipher         *
+* Query the block size of a cipher or hash       *
 *************************************************/
 u32bit block_size_of(const std::string& name)
    {
    const BlockCipher* cipher = retrieve_block_cipher(name);
    if(cipher)
       return cipher->BLOCK_SIZE;
+
+   const HashFunction* hash = retrieve_hash(name);
+   if(hash)
+      return hash->HASH_BLOCK_SIZE;
+
    throw Algorithm_Not_Found(name);
    }
 

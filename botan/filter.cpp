@@ -1,6 +1,6 @@
 /*************************************************
 * Filter Source File                             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/filter.h>
@@ -17,6 +17,7 @@ Filter::Filter()
    next.resize(1);
    port_num = 0;
    filter_owns = 0;
+   owned = false;
    }
 
 /*************************************************
@@ -27,7 +28,7 @@ void Filter::send(const byte input[], u32bit length)
    UI::pulse(UI::PIPE_WRITE);
 
    bool nothing_attached = true;
-   for(u32bit j = 0; j != total_ports(); j++)
+   for(u32bit j = 0; j != total_ports(); ++j)
       if(next[j])
          {
          if(write_queue.has_items())
@@ -47,7 +48,7 @@ void Filter::send(const byte input[], u32bit length)
 void Filter::new_msg()
    {
    start_msg();
-   for(u32bit j = 0; j != total_ports(); j++)
+   for(u32bit j = 0; j != total_ports(); ++j)
       if(next[j])
          next[j]->new_msg();
    }
@@ -58,7 +59,7 @@ void Filter::new_msg()
 void Filter::finish_msg()
    {
    end_msg();
-   for(u32bit j = 0; j != total_ports(); j++)
+   for(u32bit j = 0; j != total_ports(); ++j)
       if(next[j])
          next[j]->finish_msg();
    }
@@ -103,7 +104,7 @@ Filter* Filter::get_next() const
 void Filter::set_next(Filter* filters[], u32bit size)
    {
    while(size && filters && filters[size-1] == 0)
-      size--;
+      --size;
 
    next.clear();
    next.resize(size);
@@ -111,7 +112,7 @@ void Filter::set_next(Filter* filters[], u32bit size)
    port_num = 0;
    filter_owns = 0;
 
-   for(u32bit j = 0; j != size; j++)
+   for(u32bit j = 0; j != size; ++j)
       next[j] = filters[j];
    }
 

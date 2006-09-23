@@ -1,3 +1,8 @@
+2006-09-23  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/, Makefile.am: update to current botan devel branch,
+    copied manually from au.asn.ucc.matt.botan.monotone-2 import branch.
+
 2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_content_changed): use the file_content 
@@ -706,6 +711,22 @@
 2006-09-03  Alex Queiroz  <alex@ventonegro.org>
 
 	* po/pt_BR.po: Fuzzies fixed and more strings translated.
+
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+    * monotone.cc, unit_test.cc: Botan initialisation has
+    changed.
+    * botan/pkcs8.*: update monotone-specific parts to new botan
+    release.
+    * botan/{arc4.cpp, base64.*}: bring back monotone-specific changes
+
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+    * netsync.cc (~session): fixup for Botan 1.5
+
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+    
+    * botan/: import of Botan 1.5
 
 2006-08-31  Nathaniel Smith  <njs@pobox.com>
 
@@ -5972,6 +5993,14 @@
 2006-01-23  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (update): Hopefully improve wording of help a bit.
+
+2006-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* merged in Botan 1.5.3 experimental release
+
+2006-01-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* merged in Botan 1.5.2 experimental release
 
 2006-01-21  Nathaniel Smith  <njs@pobox.com>
 

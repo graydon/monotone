@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Self-Signed Certificate Header File      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_SELF_H__
@@ -56,13 +56,13 @@ namespace X509 {
 * Create a self-signed X.509 certificate         *
 *************************************************/
 X509_Certificate create_self_signed_cert(const X509_Cert_Options&,
-                                         const PKCS8_PrivateKey&);
+                                         const Private_Key&);
 
 /*************************************************
 * Create a PKCS #10 certificate request          *
 *************************************************/
 PKCS10_Request create_cert_req(const X509_Cert_Options&,
-                               const PKCS8_PrivateKey&);
+                               const Private_Key&);
 
 }
 

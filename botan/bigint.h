@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Header File                             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BIGINT_H__
@@ -35,16 +35,13 @@ class BigInt
       BigInt& operator<<=(u32bit);
       BigInt& operator>>=(u32bit);
 
-      BigInt& operator++();
-      BigInt& operator--();
-      BigInt  operator++(int) { BigInt tmp = (*this); ++(*this); return tmp; }
-      BigInt  operator--(int) { BigInt tmp = (*this); --(*this); return tmp; }
+      BigInt& operator++() { return (*this += 1); }
+      BigInt& operator--() { return (*this -= 1); }
+      BigInt  operator++(int) { BigInt x = (*this); ++(*this); return x; }
+      BigInt  operator--(int) { BigInt x = (*this); --(*this); return x; }
 
       BigInt operator-() const;
       bool operator !() const { return (!is_nonzero()); }
-
-      void add(word);
-      void sub(word);
 
       s32bit cmp(const BigInt&, bool = true) const;
       bool is_even() const { return (get_bit(0) == 0); }
@@ -57,9 +54,10 @@ class BigInt
       void mask_bits(u32bit);
 
       bool get_bit(u32bit) const;
-      u32bit get_nibble(u32bit, u32bit) const;
+      u32bit get_substring(u32bit, u32bit) const;
       byte byte_at(u32bit) const;
-      word word_at(u32bit) const;
+      word word_at(u32bit n) const
+         { return ((n < size()) ? reg[n] : 0); }
 
       u32bit to_u32bit() const;
 
@@ -78,13 +76,13 @@ class BigInt
 
       const word* data() const { return reg.begin(); }
       SecureVector<word>& get_reg() { return reg; }
-      void grow_reg(u32bit n) const { reg.grow_by(n); }
+      void grow_reg(u32bit) const;
 
       word& operator[](u32bit index) { return reg[index]; }
       word operator[](u32bit index) const { return reg[index]; }
       void clear() { reg.clear(); }
 
-      void randomize(u32bit = 0, RNG_Quality = SessionKey);
+      void randomize(u32bit = 0);
 
       void binary_encode(byte[]) const;
       void binary_decode(const byte[], u32bit);
@@ -98,17 +96,17 @@ class BigInt
 
       void swap(BigInt&);
 
-      BigInt(u64bit = 0);
+      BigInt() { signedness = Positive; }
+      BigInt(u64bit);
       BigInt(const BigInt&);
       BigInt(const std::string&);
       BigInt(const byte[], u32bit, Base = Binary);
       BigInt(Sign, u32bit);
       BigInt(NumberType, u32bit);
    private:
-      friend void modifying_divide(BigInt&, BigInt&, BigInt&);
-      void grow_to(u32bit n) const { reg.grow_to(n); }
-      Sign signedness;
+      void grow_to(u32bit) const;
       SecureVector<word> reg;
+      Sign signedness;
    };
 
 /*************************************************

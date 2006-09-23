@@ -97,90 +97,102 @@ NETXX_SOURCES =								\
 	netxx/types.h
 
 BOTAN_SOURCES = 							\
-	botan/aes.cpp botan/aes_tab.cpp botan/algolist.cpp		\
-        botan/allocate.cpp botan/arc4.cpp botan/asn1_alg.cpp		\
-        botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp		\
-        botan/asn1_ext.cpp botan/asn1_ku.cpp botan/asn1_oid.cpp		\
-        botan/asn1_str.cpp botan/asn1_tm.cpp botan/barrett.cpp		\
-        botan/base.cpp botan/base64.cpp botan/basefilt.cpp		\
-        botan/ber_code.cpp botan/ber_dec.cpp botan/big_base.cpp		\
-        botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp		\
-        botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp		\
-        botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp		\
-	botan/cfb.cpp botan/charset.cpp botan/conf.cpp botan/crc32.cpp	\
-	botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp 			\
-	botan/data_snk.cpp botan/data_src.cpp				\
-        botan/def_ops.cpp botan/defalloc.cpp botan/der_code.cpp		\
-        botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp		\
-        botan/dl_group.cpp botan/dl_param.cpp botan/dl_cache.cpp	\
-        botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
-        botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
-	botan/emsa3.cpp	botan/emsa4.cpp botan/emsa_raw.cpp		\
-	botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp		\
-	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp		\
-	botan/fips140.cpp botan/fused.cpp				\
-        botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp		\
-        botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp	\
-        botan/if_algo.cpp botan/inifile.cpp botan/init.cpp		\
-	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp		\
-	botan/lookup.cpp botan/make_prm.cpp botan/mdx_hash.cpp		\
-	botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp		\
-	botan/mod_exp.cpp botan/mode_pad.cpp botan/modebase.cpp		\
-	botan/mp_comba.cpp botan/mp_core.cpp botan/mp_fkmul.cpp		\
-	botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp		\
-	botan/mp_smul.cpp botan/mutex.cpp botan/numthry.cpp		\
-	botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp	\
-	botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp 	\
-	botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
-	botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
-	botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp		\
-        botan/pow_mod.cpp						\
-	botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp		\
-	botan/randpool.cpp botan/reducer.cpp botan/rng.cpp		\
-        botan/rsa.cpp botan/s2k.cpp botan/secqueue.cpp			\
-	botan/sha160.cpp botan/symkey.cpp botan/timers.cpp		\
-	botan/ui.cpp botan/util.cpp botan/x509_ca.cpp			\
-	botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp	\
-	botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp		\
-	botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp			\
-        botan/x509self.cpp botan/x509stor.cpp				\
-	botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp		\
-	botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp		\
-									\
-        botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
-        botan/lookup.h botan/randpool.h botan/version.h			\
-        botan/algolist.h botan/buf_es.h botan/der_enc.h			\
-        botan/exceptn.h botan/mdx_hash.h botan/par_hash.h		\
-        botan/reducer.h botan/x509_ca.h botan/allocate.h		\
-        botan/buf_filt.h botan/dh.h botan/filter.h botan/mem_ops.h	\
-        botan/pbe.h botan/rng.h botan/x509cert.h botan/arc4.h		\
-        botan/cbc.h botan/dl_algo.h botan/filters.h botan/mem_pool.h	\
-        botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h	\
-        botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
-        botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
-        botan/cfb.h botan/dl_param.h botan/modebase.h			\
-        botan/pipe.h botan/x509_obj.h					\
-        botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
-        botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
-        botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
-        botan/hex.h botan/mod_exp.h botan/pk_core.h botan/secqueue.h	\
-        botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h	\
-        botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h	\
-        botan/crl_ent.h botan/emsa.h					\
-        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h			\
-        botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h	\
-        botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h	\
-        botan/base.h botan/cts.h botan/enums.h botan/kdf.h		\
-        botan/mutex.h botan/pk_keys.h botan/timers.h botan/ber_dec.h	\
-        botan/data_snk.h botan/es_capi.h botan/keypair.h		\
-        botan/numthry.h botan/pk_ops.h botan/types.h botan/bigint.h	\
-        botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
-        botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
-        botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h botan/charset.h botan/hash_id.h			\
-        botan/des.h botan/pkcs5.h					\
-        botan/x931_rng.h botan/sha256.h					\
-        botan/parsing.h botan/out_buf.h botan/bit_ops.h
+        botan/aes.cpp botan/aes_tab.cpp \
+        botan/arc4.cpp botan/alg_id.cpp        \
+        botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp     \
+        botan/asn1_ku.cpp botan/asn1_oid.cpp     \
+        botan/asn1_str.cpp botan/asn1_tm.cpp \
+        botan/base.cpp botan/base64.cpp botan/basefilt.cpp      \
+        botan/ber_dec.cpp botan/big_base.cpp     \
+        botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp      \
+        botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp      \
+        botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp        \
+        botan/cfb.cpp botan/charset.cpp botan/crc32.cpp  \
+        botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp           \
+        botan/data_snk.cpp botan/data_src.cpp \
+        botan/def_ops.cpp botan/defalloc.cpp \
+        botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp        \
+        botan/dl_group.cpp \
+        botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp  \
+        botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp      \
+        botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp      \
+        botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp       \
+        botan/exceptn.cpp botan/filter.cpp botan/filters.cpp        \
+        botan/fips140.cpp \
+        botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
+        botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
+        botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
+        botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
+        botan/make_prm.cpp botan/mdx_hash.cpp       \
+        botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp       \
+        botan/mode_pad.cpp botan/modebase.cpp       \
+        botan/mp_comba.cpp botan/mp_muladd.cpp \
+        botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp       \
+        botan/mutex.cpp botan/numthry.cpp       \
+        botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp  \
+        botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp  \
+        botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp       \
+        botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp      \
+        botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp       \
+        botan/pow_mod.cpp \
+        botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp        \
+        botan/randpool.cpp botan/reducer.cpp botan/rng.cpp      \
+        botan/rsa.cpp botan/s2k.cpp botan/secqueue.cpp          \
+        botan/sha160.cpp botan/symkey.cpp botan/timers.cpp      \
+        botan/ui.cpp botan/util.cpp botan/x509_ca.cpp           \
+        botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp    \
+        botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp     \
+        botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp         \
+        botan/x509self.cpp botan/x509stor.cpp               \
+        botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp       \
+        botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp \
+        botan/big_rand.cpp botan/def_powm.cpp botan/libstate.cpp \
+        botan/modules.cpp botan/mp_numth.cpp \
+        botan/mp_sqr.cpp botan/powm_fw.cpp \
+        botan/powm_mnt.cpp botan/mp_asm.cpp \
+		botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
+		botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
+		botan/x509_ext.cpp botan/x509stat.cpp 
+		\
+        botan/aes.h botan/botan.h botan/es_win32.h  \
+        botan/lookup.h botan/randpool.h botan/version.h \
+        botan/algolist.h botan/buf_es.h botan/der_enc.h         \
+        botan/exceptn.h botan/mdx_hash.h \
+        botan/reducer.h botan/x509_ca.h botan/allocate.h        \
+        botan/buf_filt.h botan/dh.h botan/filter.h botan/mem_ops.h  \
+        botan/pbe.h botan/rng.h botan/x509cert.h botan/arc4.h       \
+        botan/cbc.h botan/dl_algo.h botan/filters.h botan/mem_pool.h    \
+        botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h \
+        botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h \
+        botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h   \
+        botan/cfb.h botan/modebase.h    \
+        botan/pipe.h botan/x509_obj.h           \
+        botan/asn1_oid.h botan/eax.h botan/gzip.h      \
+        botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
+        botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h \
+        botan/hex.h botan/pk_core.h botan/secqueue.h    \
+        botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h   \
+        botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h  \
+        botan/crl_ent.h botan/emsa.h    \
+        botan/if_algo.h botan/pkcs8.h \
+        botan/basefilt.h botan/ctr.h botan/engine.h    \
+        botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h   \
+        botan/base.h botan/cts.h botan/enums.h botan/kdf.h      \
+        botan/mutex.h botan/pk_keys.h botan/timers.h botan/ber_dec.h    \
+        botan/data_snk.h botan/es_capi.h botan/keypair.h        \
+        botan/numthry.h botan/pk_ops.h botan/types.h botan/bigint.h \
+        botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h    \
+        botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h    \
+        botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h \
+        botan/util.h botan/charset.h botan/hash_id.h            \
+        botan/des.h botan/pkcs5.h                   \
+        botan/x931_rng.h botan/sha256.h \
+        botan/parsing.h botan/out_buf.h botan/bit_ops.h \
+        botan/def_powm.h botan/dl_group.h botan/libstate.h \
+        botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h \
+		botan/build.h botan/asn1_int.h botan/datastor.h botan/def_char.h \
+		botan/stl_util.h botan/x509_ext.h botan/x509stat.h \
+		botan/alg_id.h
 
 BOOST_SANDBOX_SOURCES =							\
 	boost/circular_buffer_adaptor.hpp				\

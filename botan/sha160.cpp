@@ -1,6 +1,6 @@
 /*************************************************
 * SHA-160 Source File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/sha160.h>
@@ -53,9 +53,9 @@ inline void F4(u32bit A, u32bit& B, u32bit C, u32bit D, u32bit& E, u32bit msg)
 *************************************************/
 void SHA_160::hash(const byte input[])
    {
-   for(u32bit j = 0; j != 16; j++)
+   for(u32bit j = 0; j != 16; ++j)
       W[j] = make_u32bit(input[4*j], input[4*j+1], input[4*j+2], input[4*j+3]);
-   for(u32bit j = 16; j != 80; j++)
+   for(u32bit j = 16; j != 80; ++j)
       W[j] = rotate_left((W[j-3] ^ W[j-8] ^ W[j-14] ^ W[j-16]), 1);
 
    u32bit A = digest[0], B = digest[1], C = digest[2],
@@ -102,7 +102,7 @@ void SHA_160::hash(const byte input[])
 *************************************************/
 void SHA_160::copy_out(byte output[])
    {
-   for(u32bit j = 0; j != OUTPUT_LENGTH; j++)
+   for(u32bit j = 0; j != OUTPUT_LENGTH; ++j)
       output[j] = get_byte(j % 4, digest[j/4]);
    }
 
@@ -112,11 +112,20 @@ void SHA_160::copy_out(byte output[])
 void SHA_160::clear() throw()
    {
    MDx_HashFunction::clear();
+   W.clear();
    digest[0] = 0x67452301;
    digest[1] = 0xEFCDAB89;
    digest[2] = 0x98BADCFE;
    digest[3] = 0x10325476;
    digest[4] = 0xC3D2E1F0;
+   }
+
+/*************************************************
+* SHA_160 Constructor                            *
+*************************************************/
+SHA_160::SHA_160() : MDx_HashFunction(20, 64, true, true), W(80)
+   {
+   clear();
    }
 
 }
