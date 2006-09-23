@@ -6,6 +6,8 @@
 	regenerate_heights and regenerate_rosters; using
 	put_height_for_revision.
 	* cmd_db.cc: Now using regenerate_caches.
+	* automate.cc, revision.cc: Changed `rev_height' from an
+	automation subcmd into a normal, but hidden command.
 
 2006-09-21  Thomas Moschny  <thomas.moschny@gmx.de>
 

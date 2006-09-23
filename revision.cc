@@ -43,6 +43,7 @@
 #include "safe_map.hh"
 #include "legacy.hh"
 #include "rev_height.hh"
+#include "cmd.hh"
 
 using std::back_inserter;
 using std::copy;
@@ -1690,7 +1691,18 @@ regenerate_caches(app_state & app)
   guard.commit();
 
   P(F("finished regenerating cached rosters and heights"));
+}
 
+CMD(rev_height, hidden_group(), N_("REV"), "show the height for REV",
+    option::none)
+{
+  if (args.size() != 1)
+    throw usage(name);
+  revision_id rid(idx(args, 0)());
+  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  rev_height height;
+  app.db.get_rev_height(rid, height);
+  P(F("cached height: %s") % height);
 }
 
 // i/o stuff

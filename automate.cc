@@ -1609,25 +1609,6 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
   output.write(prt.buf.data(), prt.buf.size());
 }
 
-// Name: rev_height
-// Arguments:
-//   1: a revision id
-// Added in: 3.X
-// Purpose: Prints the revision's height in the local database.
-// Output format: A single complex revision height, in dotted notation.
-// Error conditions: If the revision does not exist, prints nothing to stdout,
-//   prints an error message to stderr, and exits with status 1.
-AUTOMATE(rev_height, N_("REV"))
-{
-  if (args.size() != 1)
-    throw usage(help_name);
-  revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
-  rev_height height;
-  app.db.get_rev_height(rid, height);
-  output << height << endl;
-}
-
 // Local Variables:
 // mode: C++
 // fill-column: 76
