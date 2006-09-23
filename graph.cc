@@ -33,7 +33,7 @@ get_reconstruction_path(std::string const & start,
   // and merging.
 
   // Long ago, we used to do this with the boost graph library, but it
-  // invovled loading too much of the storage graph into memory at any
+  // involved loading too much of the storage graph into memory at any
   // moment. this imperative version only loads the descendents of the
   // reconstruction node, so it much cheaper in terms of memory.
 
@@ -115,3 +115,119 @@ get_reconstruction_path(std::string const & start,
   path = *selected_path;
 }
 
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+#include "randomizer.hh"
+
+#include <boost/lexical_cast.hpp>
+
+using boost::lexical_cast;
+using std::pair;
+using namespace randomizer;
+
+typedef std::multimap<string, string> rg_map;
+struct mock_reconstruction_graph : public reconstruction_graph
+{
+  rg_map ancestry;
+  set<string> bases;
+  mock_reconstruction_graph(rg_map const & ancestry, set<string> const & bases)
+    : ancestry(ancestry), bases(bases)
+  {}
+  virtual bool is_base(string const & node) const
+  {
+    return bases.find(node) != bases.end();
+  }
+  virtual void get_next(string const & from, set<string> & next) const
+  {
+    typedef rg_map::const_iterator ci;
+    pair<ci, ci> range = ancestry.equal_range(from);
+    for (ci i = range.first; i != range.second; ++i)
+      next.insert(i->second);
+  }
+};
+
+static void
+make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
+                                 size_t num_random_bases,
+                                 vector<string> & all_nodes, rg_map & ancestry,
+                                 set<string> & bases)
+{
+  for (size_t i = 0; i != num_nodes; ++i)
+    all_nodes.push_back(lexical_cast<string>(i));
+  // We put a single long chain of edges in, to make sure that everything is
+  // reconstructable somehow.
+  for (size_t i = 1; i != num_nodes; ++i)
+    ancestry.insert(make_pair(idx(all_nodes, i - 1), idx(all_nodes, i)));
+  bases.insert(all_nodes.back());
+  // Then we insert a bunch of random edges too.  These edges always go
+  // forwards, to avoid creating cycles (which make get_reconstruction_path
+  // unhappy).
+  for (size_t i = 0; i != num_random_edges; ++i)
+    {
+      size_t from_idx = uniform(all_nodes.size() - 1);
+      size_t to_idx = from_idx + 1 + uniform(all_nodes.size() - 1 - from_idx);
+      ancestry.insert(make_pair(idx(all_nodes, from_idx),
+                                idx(all_nodes, to_idx)));
+    }
+  // And a bunch of random bases.
+  for (size_t i = 0; i != num_random_bases; ++i)
+    bases.insert(idx(all_nodes, uniform(all_nodes.size())));
+}
+
+static void
+check_reconstruction_path(string const & start, reconstruction_graph const & graph,
+                          reconstruction_path const & path)
+{
+  I(!path.empty());
+  I(*path.begin() == start);
+  reconstruction_path::const_iterator last = path.end();
+  --last;
+  I(graph.is_base(*last));
+  for (reconstruction_path::const_iterator i = path.begin(); i != last; ++i)
+    {
+      set<string> children;
+      graph.get_next(*i, children);
+      reconstruction_path::const_iterator next = i;
+      ++next;
+      I(children.find(*next) != children.end());
+    }
+}
+
+static void
+run_get_reconstruction_path_tests_on_random_graph(size_t num_nodes,
+                                                  size_t num_random_edges,
+                                                  size_t num_random_bases)
+{
+  vector<string> all_nodes;
+  rg_map ancestry;
+  set<string> bases;
+  make_random_reconstruction_graph(num_nodes, num_random_edges, num_random_bases,
+                                   all_nodes, ancestry, bases);
+  mock_reconstruction_graph graph(ancestry, bases);
+  for (vector<string>::const_iterator i = all_nodes.begin();
+       i != all_nodes.end(); ++i)
+    {
+      reconstruction_path path;
+      get_reconstruction_path(*i, graph, path);
+      check_reconstruction_path(*i, graph, path);
+    }
+}
+
+UNIT_TEST(graph, random_get_reconstruction_path)
+{
+  // Some arbitrary numbers.
+  run_get_reconstruction_path_tests_on_random_graph(100, 100, 10);
+  run_get_reconstruction_path_tests_on_random_graph(100, 200, 5);
+  run_get_reconstruction_path_tests_on_random_graph(1000, 1000, 50);
+  run_get_reconstruction_path_tests_on_random_graph(1000, 2000, 100);
+}
+
+#endif // BUILD_UNIT_TESTS
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

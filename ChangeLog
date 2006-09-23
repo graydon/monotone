@@ -1,3 +1,7 @@
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
+	* graph.cc: Add randomized tests for get_reconstruction_path.
+
 2006-09-21  Nathaniel Smith  <njs@pobox.com>
 
 	* lru_writeback_cache.hh (clean_insert): Correct the cache
