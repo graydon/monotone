@@ -3,10 +3,13 @@ tester_dir
 \.dirstamp
 ^txt2c$
 ^unit_tests$
-^monotone$
+^mtn$
 ^testsuite$
 ^testsuite\.log$
-package_full_revision(\.c|\.txt|_dist\.txt)
+^tester$
+^tester\.h$
+^package_full_revision(\.c|\.txt|_dist\.txt|_raw\.txt)$
+^package_revision_raw.txt$
 ^config\.
 ^configure$
 ^schema.h$
@@ -19,6 +22,7 @@ package_full_revision(\.c|\.txt|_dist\.txt)
 ^stamp-
 /stamp-
 ^monotone\.info
+^monotone\.html$
 ^compile$
 ^depcomp$
 ^install-sh$

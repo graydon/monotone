@@ -16,9 +16,12 @@
 // tests. Nothing fancy.
 
 #include <stdlib.h>
+#include <boost/random.hpp>
 
-namespace randomizer
+struct randomizer
 {
+  boost::mt19937 rng;
+
   // uniform process in [0,n]
   size_t uniform(size_t n);
 

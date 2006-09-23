@@ -30,6 +30,6 @@ check(mtn("fload"), 0, false, false, {"fileY"})
 
 check(mtn("db", "check"), 0, false, true)
 
-check(qgrep('problems detected: 5', "stderr"))
+check(qgrep('problems detected: 4', "stderr"))
 check(qgrep('0 serious', "stderr"))
 check(qgrep('minor problems detected', "stderr"))

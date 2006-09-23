@@ -37,8 +37,10 @@
 #include "mt_version.hh"
 #include "options.hh"
 #include "paths.hh"
+#include "sha1.hh"
 
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::string;
 using std::ios_base;
@@ -88,6 +90,7 @@ struct botan_library
   botan_library() { 
     Botan::Init::initialize();
     Botan::set_default_allocator("malloc");
+    hook_botan_sha1();
   }
   ~botan_library() {
     Botan::Init::deinitialize();
@@ -176,15 +179,28 @@ tokenize_for_command_line(string const & from, vector<string> & to)
     to.push_back(cur);
 }
 
+// This is in a sepaarte procedure so it can be called from code that's called
+// before cpp_main(), such as program option object creation code.  It's made
+// so it can be called multiple times as well.
+void localize_monotone()
+{
+  static int init = 0;
+  if (!init)
+    {
+      setlocale(LC_ALL, "");
+      bindtextdomain(PACKAGE, LOCALEDIR);
+      textdomain(PACKAGE);
+      init = 1;
+    }
+}
+
 int
 cpp_main(int argc, char ** argv)
 {
   int ret = 0;
 
   // go-go gadget i18n
-  setlocale(LC_ALL, "");
-  bindtextdomain(PACKAGE, LOCALEDIR);
-  textdomain(PACKAGE);
+  localize_monotone();
 
   // set up global ui object - must occur before anything that might try to
   // issue a diagnostic
@@ -658,22 +674,25 @@ cpp_main(int argc, char ** argv)
     }
   catch (usage & u)
     {
+      // we send --help output to stdout, so that "mtn --help | less" works
+      // but we send error-triggered usage information to stderr, so that if
+      // you screw up in a script, you don't just get usage information sent
+      // merrily down your pipes.
+      std::ostream & usage_stream = (app.requested_help ? cout : cerr);
+
+      usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
+      usage_stream << option::global_options << "\n";
+
       // Make sure to hide documentation that's not part of
       // the current command.
-
       po::options_description cmd_options_desc = commands::command_options(u.which);
-      unsigned count = cmd_options_desc.options().size();
-
-      cout << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
-      cout << option::global_options << "\n";
-
-      if (count > 0)
+      if (!cmd_options_desc.options().empty())
         {
-          cout << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
-          cout << cmd_options_desc << "\n";
+          usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
+          usage_stream << cmd_options_desc << "\n";
         }
 
-      commands::explain_usage(u.which, cout);
+      commands::explain_usage(u.which, usage_stream);
       if (app.requested_help)
         return 0;
       else

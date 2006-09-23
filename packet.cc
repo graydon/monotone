@@ -505,8 +505,7 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
 using std::istringstream;
 using std::ostringstream;
 
-static void
-packet_roundabout_test()
+UNIT_TEST(packet, roundabout)
 {
   string tmp;
 
@@ -582,13 +581,6 @@ packet_roundabout_test()
       BOOST_CHECK(oss.str() == tmp);
       tmp = oss.str();
     }
-}
-
-void
-add_packet_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&packet_roundabout_test));
 }
 
 #endif // BUILD_UNIT_TESTS

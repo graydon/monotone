@@ -17,18 +17,13 @@ LUAEXT(match, globish)
     string s(str);
     result = globish_matcher(r, n)(s);
   } catch (informative_failure & e) {
-    lua_pushstring(L, e.what());
-    lua_error(L);
-    return 0;
+    return luaL_error(L, e.what());
   } catch (boost::bad_pattern & e) {
-    lua_pushstring(L, e.what());
-    lua_error(L);
-    return 0;
+    return luaL_error(L, e.what());
   } catch (...) {
-    lua_pushstring(L, "Unknown error.");
-    lua_error(L);
-    return 0;
+    return luaL_error(L, "Unknown error.");
   }
   lua_pushboolean(L, result);
   return 1;
 }
+

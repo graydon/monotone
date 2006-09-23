@@ -86,6 +86,7 @@ public:                                                \
   bool operator!=(ty const & other) const              \
     { return s != other(); }                           \
   friend void verify(ty &);                            \
+  friend void verify_full(ty &);                       \
   friend std::ostream & operator<<(std::ostream &,     \
                                    ty const &);        \
   struct symtab                                        \
@@ -96,11 +97,13 @@ public:                                                \
 };                                                     \
 std::ostream & operator<<(std::ostream &, ty const &); \
 template <>                                            \
-void dump(ty const &, std::string &);
+void dump(ty const &, std::string &);                  \
+inline void verify(ty &t)                              \
+  { if(!t.ok) verify_full(t); }; 
 
 #define hh_ATOMIC_NOVERIFY(ty)                         \
 ATOMIC(ty)                                             \
-inline void verify(ty &) {}
+inline void verify_full(ty &) {}
 
 
 //CC

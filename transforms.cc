@@ -117,8 +117,8 @@ decode_hex_char(char c)
     return c - '0';
   else
   {
-	  I(c >= 'a' && c <= 'f');
-	  return c - 'a' + 10;
+          I(c >= 'a' && c <= 'f');
+          return c - 'a' + 10;
   }
 }
 
@@ -241,8 +241,8 @@ calculate_ident(file_data const & dat,
 }
 
 void
-calculate_ident(revision_data const & dat,
-                revision_id & ident)
+calculate_ident(manifest_data const & dat,
+                manifest_id & ident)
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
@@ -250,8 +250,8 @@ calculate_ident(revision_data const & dat,
 }
 
 void
-calculate_ident(roster_data const & dat,
-                roster_id & ident)
+calculate_ident(revision_data const & dat,
+                revision_id & ident)
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
@@ -270,8 +270,7 @@ canonical_base64(string const & s)
 #include "unit_tests.hh"
 #include <stdlib.h>
 
-static void
-enc_test()
+UNIT_TEST(transform, enc)
 {
   data d2, d1("the rain in spain");
   gzip<data> gzd1, gzd2;
@@ -284,8 +283,7 @@ enc_test()
   BOOST_CHECK(d2 == d1);
 }
 
-static void
-rdiff_test()
+UNIT_TEST(transform, rdiff)
 {
   data dat1(string("the first day of spring\nmakes me want to sing\n"));
   data dat2(string("the first day of summer\nis a major bummer\n"));
@@ -297,23 +295,13 @@ rdiff_test()
   BOOST_CHECK(dat3 == dat2);
 }
 
-static void
-calculate_ident_test()
+UNIT_TEST(transform, calculate_ident)
 {
   data input(string("the only blender which can be turned into the most powerful vaccum cleaner"));
   hexenc<id> output;
   string ident("86e03bdb3870e2a207dfd0dcbfd4c4f2e3bc97bd");
   calculate_ident(input, output);
   BOOST_CHECK(output() == ident);
-}
-
-void
-add_transform_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&enc_test));
-  suite->add(BOOST_TEST_CASE(&rdiff_test));
-  suite->add(BOOST_TEST_CASE(&calculate_ident_test));
 }
 
 #endif // BUILD_UNIT_TESTS

@@ -209,6 +209,22 @@ public:
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
 
+  // more direct, lower-level operations, for the use of roster_delta's
+  void detach_node(node_id nid);
+  void set_content(node_id nid,
+                   file_id const & new_id);
+  void set_attr_unknown_to_dead_ok(node_id nid,
+                                   attr_key const & name,
+                                   std::pair<bool, attr_value> const & val);
+  void erase_attr(node_id nid,
+                  attr_key const & name);
+
+  // misc.
+
+  bool get_attr(split_path const & pth,
+                attr_key const & key,
+                attr_value & val) const;
+
   void extract_path_set(path_set & paths) const;
 
   node_map const & all_nodes() const
@@ -354,22 +370,6 @@ select_nodes_modified_by_cset(cset const & cs,
                               std::set<node_id> & nodes_modified);
 
 void
-classify_roster_paths(roster_t const & ros,
-                      path_set & unchanged,
-                      path_set & changed,
-                      path_set & missing,
-                      app_state & app);
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      node_restriction const & mask,
-                                      app_state & app);
-
-void
-update_current_roster_from_filesystem(roster_t & ros,
-                                      app_state & app);
-
-void
 extract_roster_path_set(roster_t const & ros,
                         path_set & paths);
 
@@ -408,11 +408,22 @@ write_roster_and_marking(roster_t const & ros,
 
 void
 write_manifest_of_roster(roster_t const & ros,
-                         roster_data & dat);
+                         manifest_data & dat);
 
 
 void calculate_ident(roster_t const & ros,
                      manifest_id & ident);
+
+namespace basic_io
+{
+  struct stanza;
+  struct parser;
+}
+
+// for roster_delta
+void push_marking(basic_io::stanza & st, bool is_file, marking_t const & mark);
+void parse_marking(basic_io::parser & pa, marking_t & marking);
+
 
 #ifdef BUILD_UNIT_TESTS
 

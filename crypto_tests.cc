@@ -1019,8 +1019,7 @@ static string expected_SHA_MCT[] = {
   "25f67e9875a90aee60bf1dc1b26c2750294aa7b7",
   "8fa552efdcb67d98b5e0189144e99607f5a807fe" };
 
-static void
-calculate_ident_test()
+UNIT_TEST(crypto, calculate_ident)
 {
   // NIST checks all SHA implementations using a test system
   // outlined in the SHA Verification System PDF obtained at
@@ -1123,15 +1122,6 @@ calculate_ident_test()
 
   L(FL("SHA Monte Carlo Test:  Passed\n\n"));
 }
-
-
-void
-add_crypto_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&calculate_ident_test));
-}
-
 
 #endif // BUILD_UNIT_TESTS
 

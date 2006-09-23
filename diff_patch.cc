@@ -520,24 +520,25 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 
 static void
 load_and_cache_roster(revision_id const & rid,
-                      map<revision_id, shared_ptr<roster_t> > & rmap,
-                      shared_ptr<roster_t> & rout,
+                      map<revision_id, shared_ptr<roster_t const> > & rmap,
+                      shared_ptr<roster_t const> & rout,
                       app_state & app)
 {
-  map<revision_id, shared_ptr<roster_t> >::const_iterator i = rmap.find(rid);
+  map<revision_id, shared_ptr<roster_t const> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
     rout = i->second;
   else
     {
-      rout = shared_ptr<roster_t>(new roster_t());
-      app.db.get_roster(rid, *rout);
-      safe_insert(rmap, make_pair(rid, rout));
+      database::cached_roster cr;
+      app.db.get_roster(rid, cr);
+      safe_insert(rmap, make_pair(rid, cr.first));
+      rout = cr.first;
     }
 }
 
 void
 content_merge_database_adaptor::get_ancestral_roster(node_id nid,
-                                                     shared_ptr<roster_t> & anc)
+                                                     shared_ptr<roster_t const> & anc)
 {
   // Given a file, if the lca is nonzero and its roster contains the file,
   // then we use its roster.  Otherwise we use the roster at the file's
@@ -561,7 +562,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
 void
 content_merge_database_adaptor::get_version(file_path const & path,
                                             file_id const & ident,
-                                            file_data & dat)
+                                            file_data & dat) const
 {
   app.db.get_file_version(ident, dat);
 }
@@ -588,7 +589,7 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 
 void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
-                                                      shared_ptr<roster_t> & anc)
+                                                      shared_ptr<roster_t const> & anc)
 {
   // When doing an update, the base revision is always the ancestor to
   // use for content merging.
@@ -598,9 +599,12 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
 void
 content_merge_workspace_adaptor::get_version(file_path const & path,
                                              file_id const & ident,
-                                             file_data & dat)
+                                             file_data & dat) const
 {
-  if (app.db.file_version_exists(ident))
+  map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
+  if (i != temporary_store.end())
+    dat = i->second;
+  else if (app.db.file_version_exists(ident))
     app.db.get_file_version(ident, dat);
   else
     {
@@ -611,7 +615,7 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
                            F("'%s' in workspace is a directory, not a file") % path);
       read_localized_data(path, tmp, app.lua);
       calculate_ident(tmp, fid);
-      N(fid == ident,
+      E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
         % path % fid % ident);
       dat = tmp;
@@ -640,7 +644,9 @@ content_merger::get_file_encoding(file_path const & path,
                                   roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, constants::encoding_attribute, v))
+  split_path sp;
+  path.split(sp);
+  if (ros.get_attr(sp, constants::encoding_attribute, v))
     return v();
   return constants::default_encoding;
 }
@@ -650,7 +656,9 @@ content_merger::attribute_manual_merge(file_path const & path,
                                        roster_t const & ros)
 {
   attr_value v;
-  if (get_attribute_from_roster(ros, path, constants::manual_merge_attribute, v)
+  split_path sp;
+  path.split(sp);
+  if (ros.get_attr(sp, constants::manual_merge_attribute, v)
       && v() == "true")
     return true;
   return false; // default: enable auto merge
@@ -1372,14 +1380,14 @@ static void dump_incorrect_merge(vector<string> const & expected,
 }
 
 // high tech randomizing test
-
-static void randomizing_merge_test()
+UNIT_TEST(diff_patch, randomizing_merge)
 {
+  randomizer rng;
   for (int i = 0; i < 30; ++i)
     {
       vector<string> anc, d1, d2, m1, m2, gm;
 
-      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i));
+      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i), rng);
 
       BOOST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)
@@ -1395,8 +1403,7 @@ static void randomizing_merge_test()
 
 
 // old boring tests
-
-static void merge_prepend_test()
+UNIT_TEST(diff_patch, merge_prepend)
 {
   BOOST_CHECKPOINT("prepend test");
   vector<string> anc, d1, d2, m1, m2, gm;
@@ -1426,8 +1433,7 @@ static void merge_prepend_test()
   BOOST_CHECK(gm == m2);
 }
 
-
-static void merge_append_test()
+UNIT_TEST(diff_patch, merge_append)
 {
   BOOST_CHECKPOINT("append test");
   vector<string> anc, d1, d2, m1, m2, gm;
@@ -1457,7 +1463,7 @@ static void merge_append_test()
 
 }
 
-static void merge_additions_test()
+UNIT_TEST(diff_patch, merge_additions)
 {
   BOOST_CHECKPOINT("additions test");
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
@@ -1486,7 +1492,7 @@ static void merge_additions_test()
   BOOST_CHECK(!merge3(anc, d1, cf, m1));
 }
 
-static void merge_deletions_test()
+UNIT_TEST(diff_patch, merge_deletions)
 {
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
   string desc2("I like oatmeal\nI like toast");
@@ -1508,18 +1514,6 @@ static void merge_deletions_test()
     dump_incorrect_merge (gm, m2, "merge_deletion 2");
   BOOST_CHECK(gm == m2);
 }
-
-
-void add_diff_patch_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&merge_prepend_test));
-  suite->add(BOOST_TEST_CASE(&merge_append_test));
-  suite->add(BOOST_TEST_CASE(&merge_additions_test));
-  suite->add(BOOST_TEST_CASE(&merge_deletions_test));
-  suite->add(BOOST_TEST_CASE(&randomizing_merge_test));
-}
-
 
 #endif // BUILD_UNIT_TESTS
 
