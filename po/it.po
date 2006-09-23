@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-02 16:49-0700\n"
-"PO-Revision-Date: 2006-09-23 14:48+0100\n"
+"POT-Creation-Date: 2006-09-23 14:09+0200\n"
+"PO-Revision-Date: 2006-09-23 16:11+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -671,7 +671,7 @@ msgid ""
 "by current settings"
 msgstr ""
 "verifica se un ipotetico certificato sarebbe fidato\n"
-"secondo la configurazione corrente"
+"secondo la configurazione attuale"
 
 #: cmd_key_cert.cc:182
 #, c-format
@@ -837,7 +837,7 @@ msgid ""
 "changed-state files"
 msgstr ""
 "mostra gli oggetti del database, o il manifesto dello spazio di lavoro\n"
-"corrente, o i file conosciuti, sconosciuti, intenzionalmente ignorati,\n"
+"attuale, o i file conosciuti, sconosciuti, intenzionalmente ignorati,\n"
 "mancanti o modificati"
 
 #: cmd_merging.cc:73
@@ -948,7 +948,7 @@ msgstr "ramo cambiato: il prossimo commit userà il ramo ‘%s’"
 #: cmd_merging.cc:263
 #, c-format
 msgid "updated to base revision %s"
-msgstr "aggiorno alla revisione base %s"
+msgstr "aggiornato alla revisione base %s"
 
 #: cmd_merging.cc:301
 #, c-format
@@ -2751,7 +2751,7 @@ msgstr "firma del client non valida"
 #: netsync.cc:1572
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
-msgstr ""
+msgstr "Comando ‘refine’ non atteso su un elemento di tipo non-refined"
 
 #: netsync.cc:1669
 #, c-format
@@ -2761,7 +2761,7 @@ msgstr "ricevuta fase di saluto %d sconosciuta"
 #: netsync.cc:1684
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type"
-msgstr ""
+msgstr "Comando ‘done’ non atteso su un elemento di tipo non-refined"
 
 #: netsync.cc:1756
 #, c-format
@@ -2915,10 +2915,11 @@ msgstr "attivo il servizio su %s : %s"
 msgid "<all interfaces>"
 msgstr "<tutte le interfacce>"
 
+# TODO: ends with newline
 #: netsync.cc:2724
-#, fuzzy, c-format
+#, c-format
 msgid "session limit %d reached, some connections will be refused\n"
-msgstr "numero limite di sessioni raggiunto (%d), alcune connessioni verrano rifiutate"
+msgstr "numero limite di sessioni (%d) raggiunto, alcune connessioni verrano rifiutate\n"
 
 #: netsync.cc:2789
 #, c-format
@@ -2976,7 +2977,6 @@ msgid "print debug log to stderr while running"
 msgstr "stampa i log di debug su stderr (sempre)"
 
 #: options_list.hh:3
-#, fuzzy
 msgid "file to dump debugging log to, on failure"
 msgstr "file su cui salvare i log di debug (in caso di fallimento)"
 
@@ -3034,7 +3034,7 @@ msgstr "imposta il nome del database"
 
 #: options_list.hh:17
 msgid "limit search for workspace to specified root"
-msgstr ""
+msgstr "limita la ricerca di uno spazio di lavoro alla radice specificata"
 
 #: options_list.hh:18
 msgid "verbose completion output"
@@ -3093,19 +3093,16 @@ msgid "leave out anything described by its argument"
 msgstr ""
 
 #: options_list.hh:33
-#, fuzzy
 msgid "perform the associated file operation"
-msgstr "Avvertimento di operazione su file del mixer dei canali"
+msgstr "esegue l'operazione associata al file"
 
 #: options_list.hh:34
-#, fuzzy
 msgid "use external diff hook for generating diffs"
-msgstr "utilizza l'hook per generare le diff esternamente"
+msgstr ""
 
 #: options_list.hh:35
-#, fuzzy
 msgid "argument to pass external diff hook"
-msgstr "argomenti da passare all'hook per le diff esterne"
+msgstr ""
 
 #: options_list.hh:36
 msgid "push the specified key even if it hasn't signed anything"
@@ -3141,7 +3138,7 @@ msgstr "esclude i merge dalla stampa dei log"
 
 #: options_list.hh:44
 msgid "do not show the function containing each block of changes"
-msgstr ""
+msgstr "non mostrare la funzione che contiene il blocco di modifiche"
 
 #: options_list.hh:45
 msgid "disable transport authentication"
@@ -3467,6 +3464,8 @@ msgid ""
 "NOTE: this upgrade cleared the roster cache\n"
 "you should now run '%s db regenerate_rosters'"
 msgstr ""
+"NOTA: questo aggiornamento ha svuotato la cache dei roster;\n"
+"adesso dovresti eseguire ‘%s db regenerate_rosters’"
 
 #: schema_migration.cc:352
 #, c-format
@@ -3525,8 +3524,9 @@ msgstr "%d"
 msgid "warning: "
 msgstr "attenzione: "
 
+# TODO: ends with newline
 #: ui.cc:477
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "fatal: %s\n"
 "this is almost certainly a bug in monotone.\n"
@@ -3534,9 +3534,9 @@ msgid ""
 "and a description of what you were doing to %s.\n"
 msgstr ""
 "errore fatale: %s\n"
-"this is almost certainly a bug in monotone.\n"
-"please send this error message, the output of '%s --full-version',\n"
-"and a description of what you were doing to %s.\n"
+"questo è quasi sicuramente un bug in monotone.\n"
+"per favore invia questo messaggio di errore, l'output di ‘%s --full-version’\n"
+"e una descrizione di quello che stavi facendo a ‘%s’.\n"
 
 #: ui.cc:512
 #, c-format
@@ -3741,24 +3741,24 @@ msgid "empty path %s is not allowed"
 msgstr "il percorso vuoto ‘%s’ non è permesso"
 
 #: work.cc:1214
-#, fuzzy, c-format
+#, c-format
 msgid "%s does not exist in current manifest"
-msgstr "la chiave `%s' non è in database"
+msgstr "‘%s’ non esiste nel manifesto attuale"
 
 #: work.cc:1217
-#, fuzzy, c-format
+#, c-format
 msgid "destination %s already exists in current manifest"
-msgstr "salto ‘%s’, esiste già nello spazio di lavoro"
+msgstr "la destinazione ‘%s’ esiste già nel manifesto attuale"
 
 #: work.cc:1223
-#, fuzzy, c-format
+#, c-format
 msgid "destination directory %s does not exist in current manifest"
-msgstr "la directory di destinazione ‘%s/’ non esiste nella revisione attuale"
+msgstr "la directory di destinazione ‘%s’ non esiste nel manifesto attuale"
 
 #: work.cc:1225
-#, fuzzy, c-format
+#, c-format
 msgid "destination directory %s is not a directory"
-msgstr "la directory `%s' non è leggibile"
+msgstr "la directory di destinazione ‘%s’ non è una directory"
 
 #: work.cc:1234
 #, c-format
