@@ -4311,7 +4311,7 @@ msgstr "caractère invalide « %c » dans le nom de l'id « %s »"
 #: ../vocab.cc:81
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
-msgstr "caractère invalude « %c » dans la chaîne ace « %s »"
+msgstr "caractère invalide « %c » dans la chaîne ace « %s »"
 
 #: ../vocab.cc:92
 #, c-format
@@ -4541,9 +4541,9 @@ msgid "'%s' is in the way"
 msgstr "« %s » fait obstacle"
 
 #: ../work_migration.cc:62
-#, fuzzy, c-format
+#, c-format
 msgid "workspace required but not found"
-msgstr "espace de travail requis mais pas trouvé%s%s"
+msgstr "espace de travail requis mais pas trouvé"
 
 #: ../work_migration.cc:71
 #, c-format
@@ -4580,6 +4580,11 @@ msgid ""
 "in formats 0 through %d.  your workspace is in format %d.\n"
 "you need a newer version of monotone to use this workspace."
 msgstr ""
+"Cette version de monotone prends en charge uniquement les "
+"méta-données d'espace de travail de format 0 jusqu'à %d. "
+"Votre espace de travail est au format %d.\n"
+"Vous avez besoin d'une version plus récente de monotone pour "
+"utiliser cet espace de travail."
 
 #: ../work_migration.cc:156
 #, c-format
@@ -4588,17 +4593,23 @@ msgid ""
 "later format.  you must delete this workspace and check it out\n"
 "again.  we apologize for the inconvenience."
 msgstr ""
+"Il est impossible de migrer cet espace de travail au format 0 vers "
+"un autre format plus récent. Vous devez supprimer cet espace de "
+"travail et récupérer à nouveau les données. Nous nous excusons "
+"pour le dérangemente."
 
 #: ../work_migration.cc:208
 #, c-format
 msgid "workspace is corrupt: %s exists but is not a regular file"
 msgstr ""
-"l'espace de travail est corrompu : %s existe mais n'est pas un fichier normal"
+"l'espace de travail est corrompu : %s existe mais n'est pas un fichier "
+"normal"
 
 #: ../work_migration.cc:247
 #, c-format
 msgid "this workspace is in the current format, no migration is necessary."
-msgstr ""
+msgstr "cet espace de travail est dans le format actuel, aucune migration "
+"n'est nécessaire"
 
 #~ msgid "option %s doesn't exist"
 #~ msgstr "l'option %s n'existe pas"
