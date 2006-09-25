@@ -109,21 +109,6 @@ workspace::put_work_rev(revision_t const & rev)
   write_data(rev_path, rev_data);
 }
 
-
-// work file containing rearrangement from uncommitted adds/drops/renames
-void
-workspace::get_work_cset(cset & w)
-{
-  revision_t rev;
-  get_work_rev(rev);
-
-  // If you're using this interface, the revision must have only one
-  // ancestor.
-  I(rev.edges.size() == 1);
-
-  w = edge_changes(rev.edges.begin());
-}
-
 // base revision ID
 void
 workspace::get_revision_id(revision_id & c)
@@ -163,7 +148,6 @@ get_roster_for_rid(revision_id const & rid,
         % cr.first->all_nodes().size());
     }
 }
-
 
 void
 workspace::get_base_revision(revision_id & rid,
@@ -236,12 +220,18 @@ workspace::get_base_and_current_roster_shape(roster_t & base_roster,
                                              roster_t & current_roster,
                                              node_id_source & nis)
 {
-  get_base_roster(base_roster);
-  current_roster = base_roster;
-  cset cs;
-  get_work_cset(cs);
+  // If you're using this interface, the revision must have only one
+  // ancestor.
+  revision_t rev;
+  get_work_rev(rev);
+  I(rev.edges.size() == 1);
+
+  database::cached_roster cr;
+  get_roster_for_rid(edge_old_revision(rev.edges.begin()), cr, db);
+
+  base_roster = current_roster = *cr.first;
   editable_roster_base er(current_roster, nis);
-  cs.apply_to(er);
+  edge_changes(rev.edges.begin()).apply_to(er);
 }
 
 // user log file

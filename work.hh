@@ -121,10 +121,6 @@ struct workspace
 
   // ... these interfaces can only be used with single-parent workspaces:
 
-  // the current cset representing uncommitted add/drop/rename operations
-  // (not deltas)
-  void get_work_cset(cset & w);
-
   // the base revision id that the current working copy was checked out from
   void get_revision_id(revision_id & c);
 

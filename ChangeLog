@@ -1,3 +1,9 @@
+2006-09-25  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (workspace::get_work_rev): Fold into sole caller,
+	get_base_and_current_roster_shape.
+	* work.hh: Don't declare get_work_rev.
+
 2006-09-21  Zack Weinberg  <zackw@panix.com>
 
 	* roster.cc (equal_shapes): New function.
