@@ -932,9 +932,9 @@ msgid "read from client failed with error code: %d"
 msgstr "la lecture depuis le client a échoué avec le code d'erreur : %d"
 
 #: ../cmd_automate.cc:249
-#, fuzzy, c-format
+#, c-format
 msgid "Bad input to automate stdio"
-msgstr "mauvaise entrée à parse_basic_io"
+msgstr "mauvaise donnée en entrée à parse_basic_io"
 
 #: ../cmd_automate.cc:303
 msgid "automation"
@@ -1033,7 +1033,7 @@ msgstr "information"
 
 #: ../cmd_db.cc:155
 msgid "(revision|file|key) PARTIAL-ID"
-msgstr "(revision|file|key) ID-PARTIELLE"
+msgstr "(révision|fichier|clef) ID-PARTIELLE"
 
 #: ../cmd_db.cc:156
 msgid "complete partial id"
@@ -1209,7 +1209,7 @@ msgstr "l'identité partielle « %s » n'a pas d'expansions"
 #: ../cmd.hh:115
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:\n"
-msgstr "l'identité partielle « %s » a plusieurs expansions ambigües : \n"
+msgstr "l'identité partielle « %s » a plusieurs expansions ambiguës : \n"
 
 #: ../cmd.hh:123
 #, c-format
@@ -1556,7 +1556,7 @@ msgstr ""
 #: ../cmd_merging.cc:262
 #, c-format
 msgid "switched branch; next commit will use branch %s"
-msgstr ""
+msgstr "changement de branche; le prochain commit utilisera la branche %s"
 
 #: ../cmd_merging.cc:263
 #, c-format
@@ -1800,32 +1800,32 @@ msgid "no changes were applied"
 msgstr "aucun changement n'ont été appliqués"
 
 #: ../cmd_merging.cc:789
-#, fuzzy, c-format
+#, c-format
 msgid "applied changes to workspace"
-msgstr "ajouter des fichiers à l'espace de travail"
+msgstr "les changements ont été appliqués l'espace de travail"
 
 #: ../cmd_merging.cc:821
 msgid "show unmerged head revisions of branch"
 msgstr "affiche les entrées non fusionné de la branche"
 
 #: ../cmd_merging.cc:836
-#, fuzzy, c-format
+#, c-format
 msgid "branch '%s' is currently merged:"
-msgstr "la branche « %s » est actuellement fusionnée :\n"
+msgstr "la branche « %s » est actuellement fusionnée :"
 
 #: ../cmd_merging.cc:838
-#, fuzzy, c-format
+#, c-format
 msgid "branch '%s' is currently unmerged:"
-msgstr "la branche « %s » n'est actuellement pas fusionnée :\n"
+msgstr "la branche « %s » n'est actuellement pas fusionnée :"
 
 #: ../cmd_merging.cc:846
 msgid "dump the roster associated with the given REVID"
 msgstr "décharge la list associée avec l'ID_RÉV donnée"
 
 #: ../cmd_netsync.cc:40
-#, fuzzy, c-format
+#, c-format
 msgid "setting default server to %s"
-msgstr "mettant l'adresse par défaut du serveur à %s\n"
+msgstr "paramétrage de l'adresse par défaut du serveur à %s"
 
 #: ../cmd_netsync.cc:46
 #, c-format
@@ -1848,9 +1848,9 @@ msgid "setting default branch include pattern to '%s'"
 msgstr "établi le motif de branche à inclure par défaut à « %s »\n"
 
 #: ../cmd_netsync.cc:73
-#, fuzzy, c-format
+#, c-format
 msgid "setting default branch exclude pattern to '%s'"
-msgstr "établi le motif de branche à exclure par défaut à « %s »\n"
+msgstr "paramétrage du motif de branche à exclure par défaut à « %s »"
 
 #: ../cmd_netsync.cc:81
 #, c-format
@@ -1933,7 +1933,7 @@ msgid ""
 "cvs_import"
 msgstr ""
 "analyse les versions dans des fichiers RCS\n"
-"cette command ne reconstruit ou n'importe pas des révisions.  Vous voulez\n"
+"cette commande ne reconstruit ou n'importe pas des révisions. Vous voulez\n"
 "probablement cvs_import"
 
 #: ../cmd_othervcs.cc:32
@@ -2115,31 +2115,37 @@ msgid "Changes against parent %s"
 msgstr "Changement par rapport au parent %s"
 
 #: ../cmd_ws_commit.cc:395
-#, fuzzy, c-format
+#, c-format
 msgid "  no changes"
-msgstr "aucun changement"
+msgstr ""
+"  aucun changement"
 
 #: ../cmd_ws_commit.cc:399
-#, fuzzy, c-format
+#, c-format
 msgid "  dropped %s"
-msgstr "supprime %s"
+msgstr ""
+"  supprime %s"
 
 #: ../cmd_ws_commit.cc:404
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  renamed %s\n"
 "       to %s"
-msgstr "renommage de %s en %s"
+msgstr ""
+"   renomme %s\n"
+"        en %s"
 
 #: ../cmd_ws_commit.cc:409 ../cmd_ws_commit.cc:413
 #, c-format
 msgid "  added   %s"
 msgstr ""
+"    ajoute %s"
 
 #: ../cmd_ws_commit.cc:417
 #, c-format
 msgid "  patched %s"
 msgstr ""
+"        modifie %s"
 
 #: ../cmd_ws_commit.cc:421
 msgid "[DIRECTORY]\n"
@@ -2155,7 +2161,7 @@ msgstr ""
 "récupère une révision depuis une base de données dans un dossier. Si une\n"
 "révision est spécifiée, c'est celle-ci qui sera récupérée. Sinon, il "
 "s'agira\n"
-"que la versionde de tête (spécifiée ou implicite).\n"
+"que la version de de tête (spécifiée ou implicite).\n"
 "Si aucun nom de dossier n'est fourni, le nom de la branche sera utilisé\n"
 "comme nom de dossier"
 
@@ -2265,9 +2271,9 @@ msgid "empty log message; commit canceled"
 msgstr "message du journal vide; confidence arrêtée"
 
 #: ../cmd_ws_commit.cc:753
-#, fuzzy, c-format
+#, c-format
 msgid "log message rejected by hook: %s"
-msgstr "entrée du journal rejetée: %s"
+msgstr "entrée du journal rejetée par le hook : %s"
 
 #: ../cmd_ws_commit.cc:761
 #, c-format
@@ -2285,9 +2291,9 @@ msgid "Your database is missing version %s of file '%s'"
 msgstr "le sondage de la version de la base de données dans « %s » a échouée"
 
 #: ../cmd_ws_commit.cc:862
-#, fuzzy, c-format
+#, c-format
 msgid "committed revision %s"
-msgstr "révision %s confié\n"
+msgstr "révision %s commitée"
 
 #: ../cmd_ws_commit.cc:868
 #, c-format
@@ -2296,7 +2302,7 @@ msgid ""
 "note: you may (or may not) wish to run '%s merge'"
 msgstr ""
 "note: cette révision a créé une divergence\n"
-"note: peut-être (ou peut-être pas) voullez-vous exécuter « %s merge »"
+"note: peut-être (ou peut-être pas) voulez-vous exécuter « %s merge » ?"
 
 #: ../cmd_ws_commit.cc:901 ../cmd_ws_commit.cc:924
 msgid "[DIRECTORY]"
@@ -2388,7 +2394,7 @@ msgstr "--message et --message-file sont mutuellement exclusifs"
 #, c-format
 msgid "file structure is corrupted; cannot check further"
 msgstr ""
-"la structure du fichier est corrompue ; impossible de faire plus de "
+"la structure du fichier est corrompue; impossible de faire plus de "
 "vérifications"
 
 #: ../database_check.cc:140
@@ -2422,9 +2428,9 @@ msgid "certs"
 msgstr "certifs"
 
 #: ../database_check.cc:489
-#, fuzzy, c-format
+#, c-format
 msgid "file %s missing (%d manifest references)"
-msgstr "fichier %s manquant (%d références du manifeste)\n"
+msgstr "fichier %s manquant (%d références du manifeste)"
 
 #: ../database_check.cc:496
 #, c-format
@@ -2447,39 +2453,39 @@ msgid "roster %s incomplete (%d missing revisions)"
 msgstr "liste %s incomplète (%d révisions manquantes)"
 
 #: ../database_check.cc:553
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "revision %s missing (%d revision references; %d cert references; %d parent "
 "references; %d child references; %d roster references)"
 msgstr ""
 "révision %s manquante (%d révisions référencées; %d certifs référencés; %d "
-"parents référencés; %d enfants référencés; %d listes référencées)\n"
+"parents référencés; %d enfants référencés; %d listes référencées)"
 
 #: ../database_check.cc:561
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (%d missing manifests)"
-msgstr "révision %s incomplète (%d manifestes manquants)\n"
+msgstr "révision %s incomplète (%d manifestes manquants)"
 
 #: ../database_check.cc:568
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (%d missing revisions)"
-msgstr "révision %s incomplète (%d révisions manquantes)\n"
+msgstr "révision %s incomplète (%d révisions manquantes)"
 
 #: ../database_check.cc:575
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (missing roster)"
-msgstr "révision %s incomplète (la liste manque)\n"
+msgstr "révision %s incomplète (la liste manque)"
 
 #: ../database_check.cc:581
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s mismatched roster and manifest"
 msgstr ""
-"la liste et la manifeste de la révision %s ne s'entre-correspondent pas\n"
+"la liste et la manifeste de la révision %s ne s'entre-correspondent pas"
 
 #: ../database_check.cc:587
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s incomplete (incomplete roster)"
-msgstr "révision %s incomplète (liste incomplète)\n"
+msgstr "révision %s incomplète (liste incomplète)"
 
 #: ../database_check.cc:593
 #, fuzzy, c-format
@@ -2489,10 +2495,10 @@ msgstr ""
 "référencées)\n"
 
 #: ../database_check.cc:602
-#, fuzzy, c-format
+#, c-format
 msgid "revision %s mismatched children (%d ancestry children; %d parents)"
 msgstr ""
-"révision %s a des enfants non-correspondents (%d enfants; %d parents)\n"
+"révision %s a des enfants non-correspondant (%d enfants; %d parents)"
 
 #: ../database_check.cc:614
 #, fuzzy, c-format
@@ -2539,7 +2545,7 @@ msgstr "la révision %s manque le certif %s\n"
 #, fuzzy, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)"
 msgstr ""
-"révision %s a des certifs non-correspondents (%d auteurs %d dates %d entrées "
+"révision %s a des certifs non-correspondant (%d auteurs %d dates %d entrées "
 "de journal)\n"
 
 #: ../database_check.cc:797
@@ -3333,14 +3339,14 @@ msgid "saving public key for %s to database"
 msgstr "enregistrement de la clef publique « %s » dans la base de données"
 
 #: ../netsync.cc:1352
-#, fuzzy, c-format
+#, c-format
 msgid "rejected attempt at anonymous connection for write"
-msgstr "essai de connexion anonyme pour écrire rejeté\n"
+msgstr "tentative de connexion anonyme pour écrire rejeté"
 
 #: ../netsync.cc:1358
 #, fuzzy, c-format
 msgid "rejected attempt at anonymous connection while running as sink"
-msgstr "essai de connexion anonyme en étant un puits rejeté\n"
+msgstr "tentative de connexion anonyme en étant un puits rejeté"
 
 #: ../netsync.cc:1372 ../netsync.cc:1496
 #, c-format
@@ -3353,21 +3359,21 @@ msgid "anonymous access to branch '%s' denied by server"
 msgstr "accès anonyme à la branche « %s » refusé par le serveur"
 
 #: ../netsync.cc:1385
-#, fuzzy, c-format
+#, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'"
 msgstr ""
-"permission de lecture anonyme accordée pour « %s » en excluant « %s »\n"
+"permission de lecture anonyme accordée pour « %s » en excluant « %s »"
 
 #: ../netsync.cc:1391
-#, fuzzy, c-format
+#, c-format
 msgid "allowed anonymous read/write permission for '%s' excluding '%s'"
 msgstr ""
-"permission de lecture anonyme accordée pour « %s » en excluant « %s »\n"
+"permission de lecture anonyme accordée pour « %s » en excluant « %s »"
 
 #: ../netsync.cc:1447
 #, fuzzy, c-format
 msgid "detected replay attack in auth netcmd"
-msgstr "détecté une attaque de repasse dans la phase auth de netcmd\n"
+msgstr "une attaque de type re-jeu a été détectée dans la phase auth de netcmd\n"
 
 #: ../netsync.cc:1468
 #, c-format
@@ -3394,19 +3400,19 @@ msgstr ""
 #. If we're source_and_sink_role, continue even with no branches readable
 #. eg. serve --db=empty.db
 #: ../netsync.cc:1511
-#, fuzzy, c-format
+#, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'"
 msgstr ""
-"permission de lecture accordée à « %s » pour « %s » en excluant « %s »\n"
+"permission de lecture accordée à « %s » pour « %s » en excluant « %s »"
 
 #: ../netsync.cc:1521
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
 "source"
 msgstr ""
-"permission d'écrire refusée à « %s » pour « %s » en excluant « %s » en étant "
-"un source pure\n"
+"permission d'écriture refusée à « %s » pour « %s » en excluant « %s » en étant "
+"un source pure"
 
 #: ../netsync.cc:1528
 #, c-format
@@ -3431,7 +3437,7 @@ msgstr "Commande « refine » inattenue pour type d'objet non raffiné\n"
 #: ../netsync.cc:1669
 #, c-format
 msgid "unknown bye phase %d received"
-msgstr "phase d'adieu %d inconnue reçue"
+msgstr "phase d'aurevoir %d inconnue reçue"
 
 #: ../netsync.cc:1684
 #, fuzzy, c-format
