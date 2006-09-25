@@ -1,3 +1,11 @@
+2006-09-25  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Applied a patch by Bruce
+	Stephens <monotone@cenderis.demon.co.uk>: Selectors can now be
+	completed in addition to revision ids, using the new functions
+	_mtn_tags and _mtn_public_keys together with _mtn_branches.
+	Selector completion is done by _mtn_selector_or_revision.
+
 2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_content_changed): use the file_content 
