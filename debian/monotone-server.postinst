@@ -25,6 +25,85 @@ set -e
 
 MTN=/usr/bin/mtn
 
+function monotone_check_minimum_previous_version ()
+{
+    if dpkg --compare-versions "$MTN_VERSION" lt "0.17"; then 
+	# monotone version to old to automatically upgrade
+	echo "Cannot automatically upgrade from monotone version $2." >&2
+	echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
+	echo "information on manually upgrading your database." >&2
+	/bin/false
+    else
+	/bin/true
+    fi
+}
+
+function monotone_migrate ()
+{
+    if dpkg --compare-versions "$MTN_VERSION" lt "0.30"; then 
+	# upgradable version of monotone
+	echo "Attempting to migrate monotone database..." >&2
+	echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
+
+	cp $MTN_DB $MTN_DB~
+
+	if $MTN --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua \
+	    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2; then
+	    echo "Database successfully migrated." >&2
+	    /bin/true
+	else
+	    echo "*** Error migrating database. ***" >&2
+	    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
+	    echo "information on manually upgrading your database." >&2
+	    /bin/false
+	fi
+    else
+	/bin/true
+    fi
+}
+
+function monotone_rosterify ()
+{
+    if dpkg --compare-versions "$MTN_VERSION" lt "0.26"; then 
+	# now we need to rosterify
+	echo "Attempting to rosterify monotone database..." >&2
+
+	if $MTN --db=$MTN_DB db rosterify --rcfile=$MTN_CONFDIR/hooks.lua \
+	    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2; then
+	    echo "Database successfully rosterified." >&2
+	    /bin/true
+	else
+	    echo "*** Error rosterifying database. ***" >&2
+	    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
+	    echo "information on manually upgrading your database." >&2
+	    /bin/false
+	fi
+    else
+	/bin/true
+    fi
+}
+
+function monotone_regenerate_rosters ()
+{
+    if dpkg --compare-versions "$MTN_VERSION" lt "0.30"; then
+	# now we need to regenerate rosters
+	echo "Attempting to regenerate rosters..." >&2
+
+	if $MTN --db=$MTN_DB db regenerate_rosters --rcfile=$MTN_CONFDIR/hooks.lua \
+	    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2; then
+	    echo "Rosters successfully regenerated." >&2
+	    /bin/true
+	else
+	    echo "*** Error regenerating roster. ***" >&2
+	    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
+	    echo "information on manually upgrading your database." >&2
+	    /bin/false
+	fi
+    else
+	/bin/true
+    fi
+}
+
 case "$1" in
     configure)
 
@@ -104,46 +183,13 @@ case "$1" in
 
                   echo "Monotone database created successfully." >&2
               fi
-           elif dpkg --compare-versions "$MTN_VERSION" lt "0.17"; then 
-              # monotone version to old to automatically upgrade
-              echo "Cannot automatically upgrade from monotone version $2." >&2
-              echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
-              echo "information on manually upgrading your database." >&2
-
-           elif dpkg --compare-versions "$MTN_VERSION" lt "0.26"; then 
-              # upgradable version of monotone
-              echo "Attempting to migrate monotone database..." >&2
-              echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
-
-              cp $MTN_DB $MTN_DB~
-
-              set +e
-              $MTN --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua \
-                 --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2
-
-              # make sure the migration was successful
-              if [ $? -eq 0 ]; then
-                 echo "Database successfully migrated." >&2
-
-                 # now we need to rosterify
-                 echo "Attempting to rosterify monotone database..." >&2
-                 $MTN --db=$MTN_DB db rosterify --rcfile=$MTN_CONFDIR/hooks.lua \
-                    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2
-
-                 # check for errors
-                 if [ $? -eq 0 ]; then
-                    echo "Database successfully rosterified." >&2
-                 else
-                    echo "*** Error rosterifying database. ***" >&2
-                    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
-                    echo "information on manually upgrading your database." >&2
-                 fi
-              else
-                 echo "*** Error migrating database. ***" >&2
-                 echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
-                 echo "information on manually upgrading your database." >&2
-              fi
-              set -e
+	   else
+	      set -e
+	      monotone_check_minimum_previous_version && \
+		 monotone_migrate && \
+		 monotone_rosterify && \
+		 monotone_regenerate_rosters
+	      set +e
            fi
 
            echo "$MTN_KEY \"$MTN_KEY_PASSWD\"" > $MTN_CONFDIR/passphrases
