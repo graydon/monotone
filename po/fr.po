@@ -137,7 +137,7 @@
 # a selector              sélecteur
 # a server                un serveur
 # a service               un service
-# a sink                  puit
+# a sink                  puits
 # a source                source
 # state                   état
 # a subcommand            une sous-commande
@@ -760,12 +760,12 @@ msgstr "la clef « %s » existe déjà"
 #: ../automate.cc:1430 ../cmd_key_cert.cc:44
 #, c-format
 msgid "generating key-pair '%s'"
-msgstr "génératio de la paire de clef « %s »"
+msgstr "génération de la paire de clef « %s »"
 
 #: ../automate.cc:1432 ../cmd_key_cert.cc:46
 #, c-format
 msgid "storing key-pair '%s' in %s/"
-msgstr "sauvegarde la paire de clefs « %s » dans « %s »"
+msgstr "enregistrement de la paire de clefs « %s » dans %s/"
 
 #. Name: get_option
 #. Arguments:
@@ -1473,7 +1473,7 @@ msgid ""
 "If not, update the workspace to the head of the branch."
 msgstr ""
 "met à jour l'espace de travail.\n"
-"Cetta commande modifie vôtre espace de travail, basé sur une révision\n"
+"Cette commande modifie vôtre espace de travail, basé sur une révision\n"
 "différent, tout en préservent les changements local non confiés.\n"
 "Si une révision est donnée, met à jour l'espace de travail basé sur\n"
 "cette révision.  Sinon, met à jour basé sur la révision d'entré de\n"
@@ -1637,7 +1637,7 @@ msgstr "BRANCHE-SOURCE BRANCHE-DESTINATION"
 
 #: ../cmd_merging.cc:420
 msgid "merge from one branch to another asymmetrically"
-msgstr "fusionnez d'une branche à une autre asymétriquement"
+msgstr "fusion d'une branche à une autre asymétriquement"
 
 #: ../cmd_merging.cc:430
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
@@ -2090,7 +2090,7 @@ msgid ""
 "Using --execute is strongly recommended."
 msgstr ""
 "change le nom de la racine\n"
-"après cette commande, le dossier actuallement nommé RACINE_NOUVELLE\n"
+"après cette commande, le dossier actuellement nommé RACINE_NOUVELLE\n"
 "deviendra la racine, et le dossier qui est actuellement la racine\n"
 "deviendra le dossier appelé PLACE_ANCIENNE.\n"
 "Il est fortement recommandé d'employer --execute."
@@ -2332,7 +2332,7 @@ msgstr "commande inconnue « %s »"
 #: ../commands.cc:142
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:\n"
-msgstr "la commande « %s » a plusieurs expansions ambigües : \n"
+msgstr "la commande « %s » a plusieurs expansions ambiguës : \n"
 
 #: ../commands.cc:175
 msgid "commands:"
@@ -2364,7 +2364,7 @@ msgstr "expansion à « %s »\n"
 #: ../commands.cc:426
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions: \n"
-msgstr "la sélection « %s » a plusieurs expansions ambigües : \n"
+msgstr "la sélection « %s » a plusieurs expansions ambiguës : \n"
 
 #: ../commands.cc:443
 msgid "note: "
@@ -2666,7 +2666,7 @@ msgstr ""
 "la disposition de la base de données %s ne correspond pas a cette version de "
 "monotone\n"
 "voulais le schéma %s, trouvais %s\n"
-"essaiyez « %s db migrate » pour mettre la base de données à niveau\n"
+"essayez « %s db migrate » pour mettre la base de données à niveau\n"
 "(cette opération est irréversible; vous voudrez probablement prendre une "
 "copie d'abord)"
 
@@ -2687,12 +2687,12 @@ msgid ""
 "sorry about the inconvenience."
 msgstr ""
 "la base de données %s contient des révisions mais pas de listes\n"
-"si vous êtes le leader d'un projet ou faites des testes localement/?/:\n"
-"  voyez le fichier UPGRADE pour les instructions de mise à niveau.\n"
-"si vous n'êtes pas le leader d'un projet:\n"
-"  attendez que le leader ait migré les données du projet, et\n"
-"  récupérez de nouveau dans une base de données fraiche.\n"
-"désolé pour l'inconvenience."
+"si vous êtes le chef de projet ou faites des testes localement :\n"
+"  voyez le fichier UPGRADE pour les instructions de mise à jour.\n"
+"si vous n'êtes pas le chef de projet :\n"
+"  attendez que le chef ait migré les données du projet, et\n"
+"  récupérez de nouveau dans une nouvelle base de données.\n"
+"désolé pour le dérangement."
 
 #: ../database.cc:206
 #, c-format
@@ -2702,9 +2702,9 @@ msgid ""
 "please see README.changesets for details"
 msgstr ""
 "la base de données %s contient des manifestes mais aucune révision\n"
-"ceçi est un base de données tr ancienne; eller a besoin d'être mise à "
-"niveau\n"
-"veuillez lire lest détails dans README.changesets"
+"ceci est un base de données très ancienne; elle a besoin d'être mise à "
+"jour\n"
+"veuillez lire les détails dans README.changesets"
 
 #: ../database.cc:217
 #, c-format
@@ -3026,11 +3026,11 @@ msgstr "impossible d'ouvrir le fichier %s pour l'écrire"
 
 #. This arguably has broken charset handling too...
 #: ../file_io.cc:437
-#, fuzzy, c-format
+#, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr ""
-"attrape une erreur %s en cours d'exécution au milieu de la construction du "
-"cheming de fichier pour %s\n"
+"une erreur d'exécution %s est survenue au milieu de la construction du "
+"chemin de fichier pour %s"
 
 #: ../file_io.cc:530
 #, c-format
@@ -3180,7 +3180,7 @@ msgid ""
 "protocol version mismatch: wanted '%d' got '%d'\n"
 "%s"
 msgstr ""
-"discordance de versions de protocol: voulais « %d », reçu « %d »\n"
+"discordance de versions de protocoles: attendu « %d », reçu « %d »\n"
 "%s"
 
 #: ../netcmd.cc:125
@@ -3194,7 +3194,7 @@ msgstr "l'autre côté emploi une ancienne version incompatible de monotone"
 #: ../netcmd.cc:136
 #, c-format
 msgid "oversized payload of '%d' bytes"
-msgstr "charge utile surdimensionnée de '%d' octets"
+msgstr "charge utile sur-dimensionnée de '%d' octets"
 
 #: ../netcmd.cc:176
 #, c-format
@@ -3257,7 +3257,7 @@ msgstr "octets sortants"
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:730
 msgid "certs in"
-msgstr "certs entrants"
+msgstr "certifs entrants"
 
 # msgstr "certs ⇩"
 #. xgettext: please use short message and try to avoid multibytes chars
@@ -3269,7 +3269,7 @@ msgstr "révs entrantes"
 #. xgettext: please use short message and try to avoid multibytes chars
 #: ../netsync.cc:737
 msgid "certs out"
-msgstr "certs entrants"
+msgstr "certifs entrants"
 
 # msgstr "certs ⇧"
 #. xgettext: please use short message and try to avoid multibytes chars
@@ -3340,7 +3340,7 @@ msgstr "essai de connexion anonyme pour écrire rejeté\n"
 #: ../netsync.cc:1358
 #, fuzzy, c-format
 msgid "rejected attempt at anonymous connection while running as sink"
-msgstr "essai de connexion anonyme en étant un puit rejeté\n"
+msgstr "essai de connexion anonyme en étant un puits rejeté\n"
 
 #: ../netsync.cc:1372 ../netsync.cc:1496
 #, c-format
@@ -3381,7 +3381,7 @@ msgid ""
 "sink"
 msgstr ""
 "permission de lecture refusée à « %s » pour « %s » en excluant « %s » et en "
-"étant un puit pure"
+"étant un puits pure"
 
 #: ../netsync.cc:1501
 #, c-format
@@ -3475,7 +3475,7 @@ msgstr "Alerte reçu de usher : %s"
 
 #: ../netsync.cc:2038 ../netsync.cc:2069
 msgid "source and sink"
-msgstr "source et puit"
+msgstr "source et puits"
 
 #: ../netsync.cc:2039 ../netsync.cc:2070
 msgid "source"
@@ -3483,7 +3483,7 @@ msgstr "source"
 
 #: ../netsync.cc:2039 ../netsync.cc:2070
 msgid "sink"
-msgstr "puit"
+msgstr "puits"
 
 #: ../netsync.cc:2226
 #, c-format
@@ -3775,7 +3775,7 @@ msgstr "limite le niveau de dossier à descendre"
 
 #: ../options_list.hh:30
 msgid "print diffs along with logs"
-msgstr "affiche la différnce en affichant le journal"
+msgstr "affiche la différence en affichant le journal"
 
 #: ../options_list.hh:31
 msgid "when rosterifying, drop attrs entries with the given key"
@@ -3970,14 +3970,14 @@ msgid ""
 "%s appears to be a CVS repository root directory\n"
 "try importing a module instead, with 'cvs_import %s/<module_name>"
 msgstr ""
-"%s a l'air d'aitre la racine d'un dépôt CVS\n"
-"essaie d'importer un module à la place, en employent « cvs_import %s/<nomo "
+"%s a l'air d'être la racine d'un dépôt CVS\n"
+"tentative d'importer un module, en employant « cvs_import %s/<nom_du_"
 "module>"
 
 #: ../rcs_import.cc:1222
 #, c-format
 msgid "need base --branch argument for importing"
-msgstr "il faut un argument --branch come base pour importer"
+msgstr "il faut un argument --branch pour importer"
 
 #: ../rcs_import.cc:1234
 #, c-format
@@ -4093,7 +4093,7 @@ msgid ""
 msgstr ""
 "rencontré une révision d'un format inconnu, version « %s »\n"
 "je ne comprend que le format version « 1 »\n"
-"il faut une version monotone plus nouvelle pour complèter cette opération"
+"il faut une version monotone plus nouvelle pour compléter cette opération"
 
 #: ../sanity.cc:148
 #, c-format
