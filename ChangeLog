@@ -1,3 +1,8 @@
+2006-09-26  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl: Change the default monotone program
+	from "monotone" to "mtn".
+
 2006-09-26  Matt Johnston  <matt@ucc.asn.au>
 
 	* cmd_netsync.cc (CMD(push/sync)): don't require a -k
