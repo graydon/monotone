@@ -1,3 +1,11 @@
+2006-09-26  Marcel van der Boom  <marcel@hsdev.com>
+
+	* lua_hooks.cc (hook_validate_commit_message): Add a branchname
+	argument.
+	* cmd_ws_commit.cc (commit): Pass it.
+	* monotone.texi (Hooks): Document it.
+	* tests/commit_validation_lua_hook/commit_validate.lua: Test it.
+
 2006-09-25  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* contrib/monotone.zsh_completion: Applied a patch by Bruce
