@@ -704,6 +704,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   else
     guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
 
+  {
+    // fail early if there isn't a key
+    rsa_keypair_id key;
+    get_user_key(key, app);
+  }
+
   P(F("beginning commit on branch '%s'") % branchname);
   L(FL("new manifest '%s'\n"
        "new revision '%s'\n")

@@ -1,3 +1,8 @@
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_ws_commit.cc (CMD(commit)): fail early if a key
+	wasn't set.
+
 2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_content_changed): use the file_content 
