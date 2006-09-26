@@ -1,5 +1,10 @@
 2006-09-26  Matt Johnston  <matt@ucc.asn.au>
 
+	* cmd_netsync.cc (CMD(push/sync)): don't require a -k
+    argument for a non-authed transport.
+
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
 	* cmd_ws_commit.cc (CMD(commit)): fail early if a key
 	wasn't set.
 
