@@ -8,6 +8,22 @@
 	* cmd_ws_commit.cc (CMD(commit)): fail early if a key
 	wasn't set.
 
+2006-09-26  Marcel van der Boom  <marcel@hsdev.com>
+
+	* lua_hooks.cc (hook_validate_commit_message): Add a branchname
+	argument.
+	* cmd_ws_commit.cc (commit): Pass it.
+	* monotone.texi (Hooks): Document it.
+	* tests/commit_validation_lua_hook/commit_validate.lua: Test it.
+
+2006-09-25  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Applied a patch by Bruce
+	Stephens <monotone@cenderis.demon.co.uk>: Selectors can now be
+	completed in addition to revision ids, using the new functions
+	_mtn_tags and _mtn_public_keys together with _mtn_branches.
+	Selector completion is done by _mtn_selector_or_revision.
+
 2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
 
 	* automate.cc (get_content_changed): use the file_content 

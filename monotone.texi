@@ -7983,16 +7983,18 @@ If there is a policy decision to make, Monotone defines certain hooks to
 allow a client to validate or reject certain behaviors.
 
 @ftable @code
-@item validate_commit_message (@var{message}, @var{revision_text})
+@item validate_commit_message (@var{message}, @var{revision_text}, @var{branchname})
 
 This hook is called after the user has entered his/her commit message.
 @var{message} is the commit message that the user has entered and 
 @var{revision_text} is the full text of the changes for this revision,
-which can be parsed with the parse_basic_io function. If the hook finds the
-commit message satisfactory, it can return @code{true, ""}. If it finds
-fault, then it can return @code{false, reason} where @var{reason} is the
-reason the message was rejected. By default, this hook rejects empty log
-messages.
+which can be parsed with the parse_basic_io function. The @var{branchname} on
+which the new revision will be committed if all goes well is passed in as the third
+parameter.
+If the hook finds the commit message satisfactory, it can return @code{true,
+""}. If it finds fault, then it can return @code{false, reason} where
+@var{reason} is the reason the message was rejected. By default, this hook
+rejects empty log messages.
 
 @end ftable
 

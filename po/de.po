@@ -1,13 +1,13 @@
 # ##############################################################################
-# 
+#
 # German language file
 # Copyright (C) 2006  Thomas Keller <me AT thomaskeller DOT biz>
 # This file is distributed under the same license as the monotone package.
-# 
-# 
+#
+#
 # Wiederzuverwendende Übersetzungen:
 # ----------------------------------
-# 
+#
 # branch         -> Zweig
 # tag            -> Marke
 # public         -> öffentlich
@@ -23,15 +23,14 @@
 # (to) update    -> etw. aktualisieren / die Aktualisierung
 # (to) merge     -> etw. vereinigen / die Vereinigung
 # directory      -> Verzeichnis (NICHT "Ordner")
-# 
+#
 # ##############################################################################
-
 msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-09-22 00:19+0200\n"
-"PO-Revision-Date: 2006-09-15 23:54+0100\n"
+"POT-Creation-Date: 2006-09-25 16:12+0200\n"
+"PO-Revision-Date: 2006-09-26 09:56+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -1489,9 +1488,9 @@ msgid "Current branch: %s"
 msgstr "Derzeitiger Zweig: %s"
 
 #: cmd_ws_commit.cc:390
-#, fuzzy, c-format
+#, c-format
 msgid "Changes against parent %s"
-msgstr "Veränderungen gegenüber der Eltern-Revision %s"
+msgstr "Veränderungen gegenüber Eltern-Revision %s"
 
 #: cmd_ws_commit.cc:395
 #, c-format
@@ -3556,7 +3555,7 @@ msgstr ""
 #: schema_migration.cc:916
 #, c-format
 msgid "public and private keys for %s don't match"
-msgstr "öffentlicher und privater Schlüssel von %s stimmen nicht überbein"
+msgstr "öffentlicher und privater Schlüssel von %s stimmen nicht überein"
 
 #: schema_migration.cc:919
 #, c-format

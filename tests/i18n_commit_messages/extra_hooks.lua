@@ -33,7 +33,7 @@ end
 -- If the file "fail_comment" exists, then this causes the commit to fail,
 -- so we can check that the write-out-message-to-_MTN/log-on-failure stuff
 -- works.
-function validate_commit_message(message, revision)
+function validate_commit_message(message, revision, branchname)
    wanted = slurp("utf8.txt")
 
    if wanted == message then

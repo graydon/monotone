@@ -754,7 +754,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   revision_data new_rev;
   write_revision(restricted_rev, new_rev);
 
-  app.lua.hook_validate_commit_message(log_message, new_rev,
+  app.lua.hook_validate_commit_message(log_message, new_rev, branchname,
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
