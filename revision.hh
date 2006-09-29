@@ -199,7 +199,7 @@ void
 build_roster_style_revs_from_manifest_style_revs(app_state & app);
 
 void
-regenerate_rosters(app_state & app);
+regenerate_caches(app_state & app);
 
 // basic_io access to printers and parsers
 

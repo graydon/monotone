@@ -29,6 +29,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "roster.hh"
 #include "selectors.hh"
 #include "vocab.hh"
+#include "rev_height.hh"
 
 // FIXME: would be better not to include this everywhere
 #include "lru_writeback_cache.hh"
@@ -539,6 +540,19 @@ public:
   void delete_existing_revs_and_certs();
 
   void delete_existing_manifests();
+
+  // heights
+  void get_rev_height(revision_id const & id,
+                      rev_height & height);
+
+  void put_rev_height(revision_id const & id,
+                      rev_height const & height);
+  
+  bool has_rev_height(rev_height const & height);
+  void delete_existing_heights();
+
+  void put_height_for_revision(revision_id const & new_id,
+                               revision_t const & rev);
 
   // for regenerate_rosters
   void delete_existing_rosters();

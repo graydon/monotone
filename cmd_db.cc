@@ -57,7 +57,7 @@ CMD(db, N_("database"),
       "check\n"
       "changesetify\n"
       "rosterify\n"
-      "regenerate_rosters\n"
+      "regenerate_caches\n"
       "set_epoch BRANCH EPOCH\n"),
     N_("manipulate database state"),
     option::drop_attr)
@@ -82,8 +82,8 @@ CMD(db, N_("database"),
         build_changesets_from_manifest_ancestry(app);
       else if (idx(args, 0)() == "rosterify")
         build_roster_style_revs_from_manifest_style_revs(app);
-      else if (idx(args, 0)() == "regenerate_rosters")
-        regenerate_rosters(app);
+      else if (idx(args, 0)() == "regenerate_caches")
+        regenerate_caches(app);
       else
         throw usage(name);
     }

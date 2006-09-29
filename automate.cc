@@ -33,6 +33,7 @@
 #include "vocab.hh"
 #include "globish.hh"
 #include "charset.hh"
+#include "rev_height.hh"
 
 using std::allocator;
 using std::basic_ios;

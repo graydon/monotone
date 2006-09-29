@@ -62,6 +62,13 @@ CREATE TABLE revision_ancestry
 	unique(parent, child)
 	);
 
+CREATE TABLE heights
+	(
+	revision not null,	-- joins with revisions.id
+	height not null,	-- complex height, array of big endian u32 integers
+	unique(revision, height)
+	);
+
 CREATE TABLE rosters
 	(
 	id primary key,         -- a revision id
