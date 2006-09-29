@@ -1,3 +1,9 @@
+2006-09-29  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/workspace_inventory/__driver__.lua: This test has been
+	broken since efe5767b8eebbc5440f543a08b8a3521e760a02a ; added files
+	should also be marked as patched.
+
 2006-09-26  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-notify.pl: Change the default monotone program
