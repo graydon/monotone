@@ -1,3 +1,7 @@
+2006-10-03  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* visualc/lua.vcproj visualc/monotone.vcproj: Make it build again.
+
 2006-09-29  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tests/workspace_inventory/__driver__.lua: This test has been
