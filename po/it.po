@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-09-23 14:09+0200\n"
-"PO-Revision-Date: 2006-09-23 16:11+0100\n"
+"PO-Revision-Date: 2006-09-29 23:49+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -593,9 +593,9 @@ msgid "expanded partial id '%s' to '%s'"
 msgstr "id parziale ‘%s’ espanso in ‘%s’"
 
 #: cmd.hh:212
-#, fuzzy, c-format
+#, c-format
 msgid "Alias for %s"
-msgstr "%s/%s cifrato per: \"%s\"\n"
+msgstr "Alias per %s"
 
 #: cmd_key_cert.cc:26
 #: cmd_key_cert.cc:51
@@ -1172,6 +1172,9 @@ msgid ""
 "to apply the changes relative to one of its parents, use:\n"
 "  %s pluck -r PARENT -r %s"
 msgstr ""
+"la revisione ‘%s’ è frutto di un merge\n"
+"per applicare le modifiche relative a uno dei suoi genitori, usa:\n"
+"  %s pluck -r GENITORE -r %s"
 
 #: cmd_merging.cc:702
 #, c-format
@@ -2475,13 +2478,13 @@ msgstr "l'hash del nodo non corrisponde: è %s ma era atteso %s"
 msgid "Invalid escape in --xargs file"
 msgstr "Dato UTF-8 non valido nel file '%s'"
 
-# TODO: remove from monotone soruces
+# TODO: remove from monotone sources
 #: monotone.cc:665
 #, c-format
 msgid "%s:\n"
 msgstr ""
 
-# TODO: remove from monotone soruces
+# TODO: remove from monotone sources
 #: monotone.cc:673
 #, c-format
 msgid "%s"
@@ -3098,11 +3101,11 @@ msgstr "esegue l'operazione associata al file"
 
 #: options_list.hh:34
 msgid "use external diff hook for generating diffs"
-msgstr ""
+msgstr "utilizza l'hook per generare le diff esternamente"
 
 #: options_list.hh:35
 msgid "argument to pass external diff hook"
-msgstr ""
+msgstr "argomenti da passare all'hook per le diff esterne"
 
 #: options_list.hh:36
 msgid "push the specified key even if it hasn't signed anything"
@@ -3699,7 +3702,7 @@ msgid "missing %s"
 msgstr "manca ‘%s’"
 
 #: work.cc:980
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "%d missing files; use '%s ls missing' to view\n"
 "To restore consistency, on each missing file run either\n"
@@ -3709,6 +3712,13 @@ msgid ""
 " '%s drop --missing' or\n"
 " '%s revert --missing'"
 msgstr ""
+"%d file mancanti; usa ‘%s ls missing’ per elencarli.\n"
+"To restore consistency, on each missing file run either\n"
+" '%s drop FILE' to remove it permanently, or\n"
+" '%s revert FILE' to restore it.\n"
+"To handle all at once, simply use\n"
+" '%s drop --missing' or\n"
+" '%s revert --missing'"
 
 #: work.cc:1113
 #, c-format
