@@ -258,7 +258,7 @@ cpp_main(int argc, char ** argv)
                     port_part = "";
                   }
               }
-            app.bind_stdio = false;
+            app.opts.bind_stdio = false;
             app.bind_address = utf8(addr_part);
             app.bind_port = utf8(port_part);
           }

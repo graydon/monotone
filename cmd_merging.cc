@@ -81,7 +81,7 @@ CMD(update, N_("workspace"), "",
   if (args.size() > 0)
     throw usage(name);
 
-  if (app.revision_selectors.size() > 1)
+  if (app.opts.revision.size() > 1)
     throw usage(name);
 
   app.require_workspace();
@@ -97,7 +97,7 @@ CMD(update, N_("workspace"), "",
   // Figure out where we're going
 
   revision_id chosen_rid;
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision.size() == 0)
     {
       P(F("updating along branch '%s'") % app.opts.branch_name);
       set<revision_id> candidates;
@@ -120,7 +120,7 @@ CMD(update, N_("workspace"), "",
     }
   else
     {
-      complete(app, app.revision_selectors[0](), chosen_rid);
+      complete(app, app.opts.revision[0](), chosen_rid);
       N(app.db.revision_exists(chosen_rid),
         F("no such revision '%s'") % chosen_rid);
     }
@@ -670,9 +670,9 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   // Work out our arguments
   revision_id from_rid, to_rid;
 
-  if (app.revision_selectors.size() == 1)
+  if (app.opts.revision.size() == 1)
     {
-      complete(app, idx(app.revision_selectors, 0)(), to_rid);
+      complete(app, idx(app.opts.revision, 0)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
@@ -685,12 +685,12 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
         % ui.prog_name % to_rid);
       from_rid = *parents.begin();
     }
-  else if (app.revision_selectors.size() == 2)
+  else if (app.opts.revision.size() == 2)
     {
-      complete(app, idx(app.revision_selectors, 0)(), from_rid);
+      complete(app, idx(app.opts.revision, 0)(), from_rid);
       N(app.db.revision_exists(from_rid),
         F("no such revision '%s'") % from_rid);
-      complete(app, idx(app.revision_selectors, 1)(), to_rid);
+      complete(app, idx(app.opts.revision, 1)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
     }
@@ -748,7 +748,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     roster_t to_true_roster;
     app.db.get_roster(to_rid, to_true_roster);
     node_restriction mask(args_to_paths(args),
-                          args_to_paths(app.exclude_patterns),
+                          args_to_paths(app.opts.exclude),
                           app.opts.depth,
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,

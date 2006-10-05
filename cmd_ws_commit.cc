@@ -71,14 +71,14 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   roster_t old_roster, new_roster;
   cset included, excluded;
 
-  N(app.opts.missing || !args.empty() || !app.exclude_patterns.empty(),
+  N(app.opts.missing || !args.empty() || !app.opts.exclude.empty(),
     F("you must pass at least one path to 'revert' (perhaps '.')"));
 
   app.require_workspace();
 
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
-  node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
+  node_restriction mask(args_to_paths(args), args_to_paths(app.opts.exclude),
                         app.opts.depth,
                         old_roster, new_roster, app);
 
@@ -251,7 +251,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
-      path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.opts.depth, app);
+      path_restriction mask(roots, args_to_paths(app.opts.exclude), app.opts.depth, app);
       path_set ignored;
 
       // if no starting paths have been specified use the workspace root
@@ -289,7 +289,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
       roster_t current_roster_shape;
       app.work.get_current_roster_shape(current_roster_shape, nis);
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns),
+                            args_to_paths(app.opts.exclude),
                             app.opts.depth,
                             current_roster_shape, app);
       app.work.find_missing(current_roster_shape, mask, paths);
@@ -367,7 +367,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
+                        args_to_paths(app.opts.exclude),
                         app.opts.depth,
                         old_roster, new_roster, app);
 
@@ -429,10 +429,10 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
 
   transaction_guard guard(app.db, false);
 
-  if (args.size() > 1 || app.revision_selectors.size() > 1)
+  if (args.size() > 1 || app.opts.revision.size() > 1)
     throw usage(name);
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision.size() == 0)
     {
       // use branch head revision
       N(!app.opts.branch_name().empty(), 
@@ -452,10 +452,10 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         }
       ident = *(heads.begin());
     }
-  else if (app.revision_selectors.size() == 1)
+  else if (app.opts.revision.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.revision_selectors, 0)(), ident);
+      complete(app, idx(app.opts.revision, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
@@ -675,7 +675,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
+                        args_to_paths(app.opts.exclude),
                         app.opts.depth,
                         old_roster, new_roster, app);
 
@@ -837,13 +837,13 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
     cert_revision_in_branch(restricted_rev_id, branchname, app, dbw);
-    if (app.date_set)
-      cert_revision_date_time(restricted_rev_id, app.date, app, dbw);
+    if (app.opts.date_given)
+      cert_revision_date_time(restricted_rev_id, app.opts.date, app, dbw);
     else
       cert_revision_date_now(restricted_rev_id, app, dbw);
 
-    if (app.author().length() > 0)
-      cert_revision_author(restricted_rev_id, app.author(), app, dbw);
+    if (app.opts.author_given > 0)
+      cert_revision_author(restricted_rev_id, app.opts.author(), app, dbw);
     else
       cert_revision_author_default(restricted_rev_id, app, dbw);
 

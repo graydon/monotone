@@ -102,7 +102,7 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
   app.db.get_file_version(dst_id, dst);
 
   string pattern("");
-  if (app.diff_show_encloser)
+  if (!app.opts.no_show_encloser)
     app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
 
   make_diff(src_name, dst_name,
@@ -117,20 +117,20 @@ CMD(annotate, N_("informative"), N_("PATH"),
 {
   revision_id rid;
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision.size() == 0)
     app.require_workspace();
 
-  if ((args.size() != 1) || (app.revision_selectors.size() > 1))
+  if ((args.size() != 1) || (app.opts.revision.size() > 1))
     throw usage(name);
 
   file_path file = file_path_external(idx(args, 0));
   split_path sp;
   file.split(sp);
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision.size() == 0)
     app.work.get_revision_id(rid);
   else
-    complete(app, idx(app.revision_selectors, 0)(), rid);
+    complete(app, idx(app.opts.revision, 0)(), rid);
 
   N(!null_id(rid), 
     F("no revision for file '%s' in database") % file);
@@ -186,16 +186,16 @@ CMD(cat, N_("informative"),
   if (args.size() != 1)
     throw usage(name);
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision.size() == 0)
     app.require_workspace();
 
   transaction_guard guard(app.db, false);
 
   revision_id rid;
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision.size() == 0)
     app.work.get_revision_id(rid);
   else
-    complete(app, idx(app.revision_selectors, 0)(), rid);
+    complete(app, idx(app.opts.revision, 0)(), rid);
   N(app.db.revision_exists(rid), 
     F("no such revision '%s'") % rid);
 

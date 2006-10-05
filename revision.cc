@@ -1434,7 +1434,7 @@ anc_graph::construct_revisions_from_ancestry()
                              k != fattrs.end(); ++k)
                           {
                             string key = k->first;
-                            if (app.attrs_to_drop.find(key) != app.attrs_to_drop.end())
+                            if (app.opts.drop_attr.find(key) != app.opts.drop_attr.end())
                               {
                                 // ignore it
                               }

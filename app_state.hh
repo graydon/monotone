@@ -51,28 +51,12 @@ public:
 
   option opts;
 
-  bool date_set;
-  boost::posix_time::ptime date;
-  utf8 author;
   system_path search_root;
-  std::vector<utf8> revision_selectors;
-  std::vector<utf8> exclude_patterns;
-  std::vector<utf8> extra_rcfiles;
   bool found_workspace;
-  system_path pidfile;
   diff_type diff_format;
-  bool diff_args_provided;
-  bool diff_show_encloser;
-  utf8 diff_args;
   utf8 bind_address;
   utf8 bind_port;
-  bool bind_stdio;
-  bool use_transport_auth;
-  std::vector<rsa_keypair_id> keys_to_push;
   system_path confdir;
-  bool have_set_key_dir;
-  bool have_set_key;
-  std::set<std::string> attrs_to_drop;
   bool branch_is_sticky;
 
   std::set<std::string> explicit_options;  // in set if the value of the flag was explicitly given on the command line
@@ -108,23 +92,10 @@ public:
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);
   void set_root(system_path const & root);
-  void set_date(utf8 const & date);
-  void set_author(utf8 const & author);
-  void set_pidfile(system_path const & pidfile);
-  void add_revision(utf8 const & selector);
-  void add_exclude(utf8 const & exclude_pattern);
   void set_diff_format(diff_type dtype);
-  void set_diff_args(utf8 const & args);
-  void add_key_to_push(utf8 const & key);
-
-  void set_stdhooks(bool b);
-  void set_rcfiles(bool b);
-  void set_verbose(bool b);
-  void add_rcfile(utf8 const & filename);
 
   void set_confdir(system_path const & cd);
   system_path get_confdir();
-  void set_automate_stdio_size(long size);
 
   explicit app_state();
   ~app_state();

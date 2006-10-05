@@ -1,3 +1,6 @@
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "charset.hh"
 #include "file_io.hh"
 #include "option.hh"

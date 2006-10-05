@@ -38,14 +38,10 @@ using std::vector;
 app_state::app_state()
   : db(system_path()),
     keys(this), work(db, lua),
-    date_set(false),
     search_root(current_root_path()),
-    diff_format(unified_diff), diff_args_provided(false),
-    diff_show_encloser(true),
+    diff_format(unified_diff),
     bind_address(""), bind_port(""),
-    bind_stdio(false), use_transport_auth(true),
     confdir(get_default_confdir()),
-    have_set_key_dir(false), have_set_key(false),
     branch_is_sticky(false)
 {
   db.set_app(this);
@@ -118,7 +114,7 @@ app_state::process_options()
 
   L(FL("branch name is '%s'") % opts.branch_name);
 
-  if (!have_set_key)
+  if (!opts.signing_key_given)
     internalize_rsa_keypair_id(key_option, opts.signing_key);
 }
 
@@ -133,7 +129,7 @@ app_state::write_options()
   if (branch_is_sticky)
     branch_option = opts.branch_name;
 
-  if (have_set_key)
+  if (opts.signing_key_given)
     externalize_rsa_keypair_id(opts.signing_key, key_option);
   work.set_ws_options(database_option, branch_option,
                       key_option, keydir_option);
@@ -193,7 +189,6 @@ app_state::set_key_dir(system_path const & filename)
   if (!filename.empty())
     {
       keys.set_key_dir(filename);
-      have_set_key_dir = true;
     }
 }
 
@@ -212,14 +207,6 @@ app_state::make_branch_sticky()
 }
 
 void
-app_state::add_key_to_push(utf8 const & key)
-{
-  rsa_keypair_id k;
-  internalize_rsa_keypair_id(key, k);
-  keys_to_push.push_back(k);
-}
-
-void
 app_state::set_root(system_path const & path)
 {
   require_path_is_directory
@@ -231,75 +218,16 @@ app_state::set_root(system_path const & path)
 }
 
 void
-app_state::set_date(utf8 const & d)
-{
-  try
-    {
-      // boost::posix_time can parse "basic" ISO times, of the form
-      // 20000101T120000, but not "extended" ISO times, of the form
-      // 2000-01-01T12:00:00. So convert one to the other.
-      string tmp = d();
-      string::size_type pos = 0;
-      while ((pos = tmp.find_first_of("-:")) != string::npos)
-        tmp.erase(pos, 1);
-      date = boost::posix_time::from_iso_string(tmp);
-      date_set = true;
-    }
-  catch (exception &e)
-    {
-      N(false, F("failed to parse date string '%s': %s")
-        % d % e.what());
-    }
-}
-
-void
-app_state::set_author(utf8 const & a)
-{
-  author = a;
-}
-
-void
-app_state::set_pidfile(system_path const & p)
-{
-  pidfile = p;
-}
-
-void
-app_state::add_revision(utf8 const & selector)
-{
-  revision_selectors.push_back(selector);
-}
-
-void
-app_state::add_exclude(utf8 const & exclude_pattern)
-{
-  exclude_patterns.push_back(exclude_pattern);
-}
-
-void
 app_state::set_diff_format(diff_type dtype)
 {
   diff_format = dtype;
 }
 
 void
-app_state::set_diff_args(utf8 const & args)
-{
-  diff_args_provided = true;
-  diff_args = args;
-}
-
-void
-app_state::add_rcfile(utf8 const & filename)
-{
-  extra_rcfiles.push_back(filename);
-}
-
-void
 app_state::set_confdir(system_path const & cd)
 {
   confdir = cd;
-  if (!have_set_key_dir)
+  if (!opts.key_dir_given)
     keys.set_key_dir(cd / "keys");
 }
 
@@ -336,8 +264,8 @@ app_state::load_rcfiles()
 
   // Command-line rcfiles override even that.
 
-  for (vector<utf8>::const_iterator i = extra_rcfiles.begin();
-       i != extra_rcfiles.end(); ++i)
+  for (vector<utf8>::const_iterator i = opts.extra_rcfiles.begin();
+       i != opts.extra_rcfiles.end(); ++i)
     {
       lua.load_rcfile(*i);
     }

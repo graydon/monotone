@@ -55,13 +55,13 @@ process_netsync_args(string const & name,
     }
 
   // handle include/exclude args
-  if (serve_mode || (args.size() >= 2 || !app.exclude_patterns.empty()))
+  if (serve_mode || (args.size() >= 2 || app.opts.exclude_given))
     {
       E(serve_mode || args.size() >= 2, F("no branch pattern given"));
       int pattern_offset = (serve_mode ? 0 : 1);
       vector<utf8> patterns(args.begin() + pattern_offset, args.end());
       combine_and_check_globish(patterns, include_pattern);
-      combine_and_check_globish(app.exclude_patterns, exclude_pattern);
+      combine_and_check_globish(app.opts.exclude, exclude_pattern);
       if (use_defaults &&
           (!app.db.var_exists(default_include_pattern_key)
            || app.opts.set_default))
@@ -176,14 +176,14 @@ private:
 CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
                  N_("serve the branches specified by PATTERNs to connecting clients"),
                  &option::bind % &option::pidfile % &option::exclude %
-                 &option::stdio % &option::no_transport_auth)
+                 &option::bind_stdio % &option::no_transport_auth)
 {
   if (args.size() < 1)
     throw usage(name);
 
-  pid_file pid(app.pidfile);
+  pid_file pid(app.opts.pidfile);
 
-  if (app.use_transport_auth)
+  if (!app.opts.no_transport_auth)
     {
       rsa_keypair_id key;
       get_user_key(key, app);
@@ -195,7 +195,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
     }
   else
     {
-      E(app.bind_stdio,
+      E(app.opts.bind_stdio,
 	F("The --no-transport-auth option is only permitted in combination with --stdio"));
     }
 

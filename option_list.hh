@@ -5,7 +5,7 @@ GOPT(args, "", std::vector<utf8>, , "")
 }
 #endif
 
-COPT(author, "author", std::string, ,
+COPT(author, "author", utf8, ,
      gettext_noop("override author for commit"))
 #ifdef option_bodies
 {
@@ -65,11 +65,25 @@ COPT(context_diff, "context", bool, false,
 }
 #endif
 
-COPT(date, "date", std::string, ,
+COPT(date, "date", boost::posix_time::ptime, ,
      gettext_noop("override date/time for commit"))
 #ifdef option_bodies
 {
-  date = arg;
+  try
+    {
+      // boost::posix_time can parse "basic" ISO times, of the form
+      // 20000101T120000, but not "extended" ISO times, of the form
+      // 2000-01-01T12:00:00. So convert one to the other.
+      string tmp = arg;
+      string::size_type pos = 0;
+      while ((pos = tmp.find_first_of("-:")) != string::npos)
+        tmp.erase(pos, 1);
+      date = boost::posix_time::from_iso_string(tmp);
+    }
+  catch (std::exception &e)
+    {
+      throw bad_arg_internal(e.what());
+    }
 }
 #endif
 
@@ -114,11 +128,11 @@ COPT(diffs, "diffs", bool, false, gettext_noop("print diffs along with logs"))
 }
 #endif
 
-COPT(drop_attr, "drop-attr", std::vector<std::string>, ,
+COPT(drop_attr, "drop-attr", std::set<std::string>, ,
      gettext_noop("when rosterifying, drop attrs entries with the given key"))
 #ifdef option_bodies
 {
-  drop_attr.push_back(arg);
+  drop_attr.insert(arg);
 }
 #endif
 
@@ -131,11 +145,11 @@ GOPT(dump, "dump", system_path, ,
 }
 #endif
 
-COPT(exclude, "exclude", std::vector<std::string>, ,
+COPT(exclude, "exclude", std::vector<utf8>, ,
      gettext_noop("leave out anything described by its argument"))
 #ifdef option_bodies
 {
-  exclude.push_back(arg);
+  exclude.push_back(utf8(arg));
 }
 #endif
 
@@ -187,11 +201,13 @@ GOPT(key_dir, "keydir", system_path, ,
 }
 #endif
 
-COPT(key_to_push, "key-to-push", std::vector<std::string>, ,
+COPT(key_to_push, "key-to-push", std::vector<rsa_keypair_id>, ,
      gettext_noop("push the specified key even if it hasn't signed anything"))
 #ifdef option_bodies
 {
-  key_to_push.push_back(arg);
+  rsa_keypair_id keyid;
+  internalize_rsa_keypair_id(utf8(arg), keyid);
+  key_to_push.push_back(keyid);
 }
 #endif
 
@@ -314,11 +330,11 @@ GOPT(quiet, "quiet", bool, false,
 }
 #endif
 
-GOPT(rcfile, "rcfile", std::vector<std::string>, ,
+GOPT(extra_rcfiles, "rcfile", std::vector<utf8>, ,
      gettext_noop("load extra rc file"))
 #ifdef option_bodies
 {
-  rcfile.push_back(arg);
+  extra_rcfiles.push_back(utf8(arg));
 }
 #endif
 
@@ -340,7 +356,7 @@ COPT(recursive, "recursive,R", bool, false,
 }
 #endif
 
-COPT(revision, "revision,r", std::vector<std::string>, ,
+COPT(revision, "revision,r", std::vector<utf8>, ,
      gettext_noop("select revision id for operation"))
 #ifdef option_bodies
 {
@@ -364,10 +380,10 @@ COPT(set_default, "set-default", bool, false,
 }
 #endif
 
-COPT(stdio, "stdio", bool, false, gettext_noop("serve netsync on stdio"))
+COPT(bind_stdio, "stdio", bool, false, gettext_noop("serve netsync on stdio"))
 #ifdef option_bodies
 {
-  stdio = true;
+  bind_stdio = true;
 }
 #endif
 
