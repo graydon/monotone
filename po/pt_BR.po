@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Monotone 0.29\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-09-19 09:14-0300\n"
-"PO-Revision-Date: 2006-09-19 09:14-0300\n"
+"PO-Revision-Date: 2006-10-05 14:21-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -1222,7 +1222,7 @@ msgstr "recebe ramos que combinam com PADRÃO do servidor netsync em ENDEREÇO"
 #, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication"
 msgstr ""
-"recebendo dados anonimamente; user -kNOMEDACHAVE se for necessária "
+"recebendo dados anonimamente; use -kNOMEDACHAVE se for necessária "
 "autenticação"
 
 #: cmd_netsync.cc:127
