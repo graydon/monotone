@@ -3679,6 +3679,39 @@ monotone is explicit: committing changes only saves them to the local
 database. A separate command, @command{push}, sends the changes to a
 remote database.
 
+@heading Undoing Changes
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs update -C file
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ mtn revert file
+@end group
+@end smallexample
+@end multitable
+
+Unlike CVS, monotone includes a separate @command{revert} command for
+undoing local changes and restoring the workspace to the original
+contents of the base revision. Because this can be dangerous,
+@command{revert} insists on an explicit argument to name the files or
+directories to be reverted; use the current directory "@file{.}" at the
+top of the workspace to revert everything.  The @command{revert} command
+is also used to restore deleted files (with a convenient @command{update
+--missing} shortcut for naming these files).
+
+In CVS, you would need to use @command{update} to restore missing or
+changed files, and you might get back a newer version of the file than
+you started with. In monotone, @command{revert} always takes you back to
+where you started, and the @command{update} command is only used to move
+the workspace to a different (usually newer) base revision.
+
+
 @heading Incorporating New Changes
 
 @multitable @columnfractions .4 .4
