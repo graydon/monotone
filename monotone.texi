@@ -695,8 +695,8 @@ you ever want to know if a directory is a monotone workspace, just
 look for this @file{_MTN} directory.
 
 Aside from the special @file{_MTN} directory, a workspace is just a
-normal tree of files. You can directly edit the files in a working
-copy using a plain text editor or other program; monotone will
+normal tree of files. You can directly edit the files in a workspace
+using a plain text editor or other program; monotone will
 automatically notice when you make any changes. If you wish to add
 files, remove files, or move files within your workspace, you must
 tell monotone explicitly what you are doing, as these actions cannot
@@ -1090,10 +1090,10 @@ Many commands operate on a subset of the database, called a
 @i{branch}, which is selected with the @option{--branch} option.
 @end itemize
 
-Monotone will cache the settings for these options in your working
-copy, so ordinarily once you have checked out a project, you will not
-need to specify them again.  We will therefore only mention these
-arguments in the first example.
+Monotone will cache the settings for these options in your workspace, so
+ordinarily once you have checked out a project, you will not need to
+specify them again.  We will therefore only mention these arguments in
+the first example.
 
 @subsection Revision Selectors
 Many commands require you to supply 40-character @sc{sha1} values as
@@ -1389,8 +1389,8 @@ dispense_banana_juice()
 @end group
 @end smallexample
 
-Now Jim tells monotone to add these files to its record of his working
-copy. He specifies one filename and one directory; monotone
+Now Jim tells monotone to add these files to its record of his
+workspace.  He specifies one filename and one directory; monotone
 recursively scans the directory and adds all its files.
 
 @smallexample
@@ -2522,13 +2522,13 @@ current contents into monotone on a new branch,
 
 Now he can use monotone to work on the website offline, and let other
 team members add and edit the content; he can also preview changes
-locally before updating the production content.  He keeps a working
-directory checkout of this content in the webroot on the server, and
-runs a monotone @command{update} in there when he wants to bring the
-public web site up to date. Later, he'll think about using monotone's
-@ref{Quality Assurance} mechanisms and Event Notification @ref{Hooks},
-so that the web server can update itself automatically when appropriate
-new revisions are received.
+locally before updating the production content.  He keeps a workspace
+checkout of this content in the webroot on the server, and runs a
+monotone @command{update} in there when he wants to bring the public web
+site up to date. Later, he'll think about using monotone's @ref{Quality
+Assurance} mechanisms and Event Notification @ref{Hooks}, so that the
+web server can update itself automatically when appropriate new
+revisions are received.
 @item
 Jim also knows that even if someone should break into the shared hosting
 server and tamper with the database, they won't be able to inject
@@ -2835,9 +2835,9 @@ development.
 @heading Subdirectory restrictions
 
 The restrictions facility also allows commands to operate from within a
-subdirectory of the workspace.  By default, the @i{entire working
-copy} is always examined for changes. However, specifying an explicit
-"."  pathname to a command will restrict it to the current subdirectory.
+subdirectory of the workspace.  By default, the @i{entire workspace} is
+always examined for changes. However, specifying an explicit "."
+pathname to a command will restrict it to the current subdirectory.
 Note that this is quite different from other version control systems and
 may seem somewhat surprising.
 
@@ -2862,8 +2862,8 @@ subdirectory.
 Monotone only stores a single @file{_MTN} directory at the root of a
 workspace. Because of this, a search is done to find the @file{_MTN}
 directory in case a command is executed from within a subdirectory of a
-workspace. Before a command is executed, the search for a working
-copy directory is done by traversing parent directories until an
+workspace. Before a command is executed, the search for a workspace
+directory is done by traversing parent directories until an
 @file{_MTN} directory is found or the filesystem root is reached. Upon
 finding an @file{_MTN} directory, the @file{_MTN/options} file is read for
 default options. The @option{--root} option may be used to stop the 
@@ -3412,8 +3412,7 @@ The CVS module name for your project, @code{wobbler} in this example.
 
 Accounting for these differences at your site, the following is an
 example procedure for importing a CVS repository ``from scratch'', and
-checking the resulting head version of the import out into a working
-copy:
+checking the resulting head version of the import out into a workspace:
 
 @smallexample
 @group
@@ -3890,9 +3889,9 @@ $ mtn log [file]
 @end smallexample
 @end multitable
 
-Unlike CVS log, monotone log can also be used without a working
-directory; but in this case you must pass a @option{--revision} argument
-to tell monotone where to start displaying the log from.
+Unlike CVS log, monotone log can also be used without a workspace; but
+in this case you must pass a @option{--revision} argument to tell
+monotone where to start displaying the log from.
 
 @heading Importing a New Project
 
@@ -4228,17 +4227,17 @@ revision is now the newly created revision, and that there are no
 pathname changes to apply.
 
 Specifying pathnames to @command{commit} restricts the set of changes
-that are visible and results in only a partial commit of the working
-copy. Changes to files not included in the specified set of pathnames
-will be ignored and will remain in the workspace until they are
-included in a future commit. With a partial commit, only the relevant
-entries in @file{_MTN/revision} will be removed and other entries will
-remain for future commits.
+that are visible and results in only a partial commit of the workspace.
+Changes to files not included in the specified set of pathnames will be
+ignored and will remain in the workspace until they are included in a
+future commit. With a partial commit, only the relevant entries in
+@file{_MTN/revision} will be removed and other entries will remain for
+future commits.
 
-From within a subdirectory of the workspace the @command{commit}
-command will, by default, include @emph{all changes} in the working
-copy.  Specifying only the pathname "." will restrict @command{commit}
-to files changed within the current subdirectory of the workspace.
+From within a subdirectory of the workspace the @command{commit} command
+will, by default, include @emph{all changes} in the workspace.
+Specifying only the pathname "." will restrict @command{commit} to files
+changed within the current subdirectory of the workspace.
 
 The @option{--message} and @option{--message-file} options are mutually
 exclusive.  Both provide a @var{logmsg} describing the commit. 
@@ -4309,16 +4308,16 @@ fails, the update aborts, doing nothing. The stages are:
 @itemize
 @item
 Examine the ancestry graph of revisions in your database, and (subject
-to trust evaluation) select the set of all descendents of your working
-copy's base revision. Call this set the ``candidates'' of the update.
+to trust evaluation) select the set of all descendents of your
+workspace's base revision. Call this set the ``candidates'' of the
+update.
 @item
 Remove any candidates which lack acceptable testresult
 certificates. From the remaining candidates, select the deepest child
 by ancestry and call it the ``target'' of the update.
 @item 
 Merge the target of the update with the workspace, in memory, and
-if the merge is successful, write the result over top of the working
-copy.
+if the merge is successful, write the result over top of the workspace.
 @end itemize
 
 With an explicit @option{--revision} argument, the command uses that revision
@@ -4550,10 +4549,10 @@ command restricts the set of changes that are visible and results in
 only a partial status of the workspace. Changes to files not included
 in the specified set of pathnames will be ignored.
 
-From within a subdirectory of the workspace the @command{status}
-command will, by default, include @emph{all changes} in the working
-copy.  Specifying only the pathname "." will restrict @command{status}
-to files changed within the current subdirectory of the workspace.
+From within a subdirectory of the workspace the @command{status} command
+will, by default, include @emph{all changes} in the workspace.
+Specifying only the pathname "." will restrict @command{status} to files
+changed within the current subdirectory of the workspace.
 
 @item mtn log
 @itemx mtn log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
@@ -4673,10 +4672,10 @@ changes that are visible and results in only a partial diff between
 two revisions. Changes to files not included in the specified set of
 pathnames will be ignored.
 
-From within a subdirectory of the workspace the @command{diff}
-command will, by default, include @emph{all changes} in the working
-copy.  Specifying only the pathname "." will restrict @command{diff}
-to files changed within the current subdirectory of the workspace.
+From within a subdirectory of the workspace the @command{diff} command
+will, by default, include @emph{all changes} in the workspace.
+Specifying only the pathname "." will restrict @command{diff} to files
+changed within the current subdirectory of the workspace.
 
 The output format of @command{diff} is controlled by the options
 @option{--unified}, @option{--context}, @option{--show-encloser}, and
@@ -7954,7 +7953,7 @@ and a attribute value @var{value}. The function should ``apply'' the
 attribute to the file, possibly in a platform-specific way.
 
 Hook functions from this table are called for each existing attr,
-after any command which modifies the working copy. This facility can
+after any command which modifies the workspace. This facility can
 be used to extend monotone's understanding of files with
 platform-specific attributes, such as permission bits, access control
 lists, or special file types.
