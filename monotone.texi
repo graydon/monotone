@@ -3702,8 +3702,8 @@ contents of the base revision. Because this can be dangerous,
 @command{revert} insists on an explicit argument to name the files or
 directories to be reverted; use the current directory "@file{.}" at the
 top of the workspace to revert everything.  The @command{revert} command
-is also used to restore deleted files (with a convenient @command{update
---missing} shortcut for naming these files).
+is also used to restore deleted files (with a convenient
+@option{--missing} option for naming these files).
 
 In CVS, you would need to use @command{update} to restore missing or
 changed files, and you might get back a newer version of the file than
