@@ -1364,11 +1364,16 @@ workspace::perform_pivot_root(file_path const & new_root,
   safe_insert(cs.nodes_renamed, make_pair(new_root_sp, root_sp));
 
   {
+    editable_roster_base e(new_roster, nis);
+    cs.apply_to(e);
+  }
+
+  {
     revision_id base_rev;
     get_revision_id(base_rev);
 
     revision_t new_work;
-    make_revision_for_workspace(base_rev, cs, new_work);
+    make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
     put_work_rev(new_work);
   }
   if (execute)

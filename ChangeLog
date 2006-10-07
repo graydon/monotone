@@ -55,82 +55,6 @@
 	N.B. this patchset breaks the random_actions unit test for no
 	apparent reason; will fix later.
 
-2006-09-18  Zack Weinberg  <zackw@panix.com>
-
-	* unit_tests.cc: Rewrite for declarative registration of test cases,
-	better command line handling, and more useful stderr chatter in
-	normal operation.  All debug output now goes to a logfile (default
-	"unit_tests.log") and can be sent back to stderr with --debug.
-	* unit_tests.hh: Remove declarations of removed functions.
-	Don't include unit_test_suite.hpp.
-	(UNIT_TEST, struct unit_test_case): New.
-	(BOOST_CHECK_NOT_THROW): Reindent and wrap in do { } while (0).
-
-	* charset.cc, crypto_tests.cc, cset.cc, diff_patch.cc, globish.cc
-	* keys.cc, netcmd.cc, netxx_pipe.cc, packet.cc, paths.cc, refiner.cc
-	* restrictions.cc, revision.cc, roster.cc, roster_merge.cc
-	* simplestring_xform.cc, string_queue.cc, transforms.cc, uri.cc
-	* numeric_vocab.cc, xdelta.cc: Unit tests are now defined like
-	commands, as UNIT_TEST(group, test) { ... } and no registration
-	function is necessary.
-
-	* cert.cc, file_io.cc, vocab.cc: Remove empty BUILD_UNIT_TESTS block.
-
-	* commands.cc (command::command) Remove redundant boolean, just
-	check whether cmds is NULL.
-
-2006-09-18  Richard Levitte  <richard@levitte.org>
-
-	* po/sv.po: 1 fuzzy.
-
-2006-09-17  Nathaniel Smith  <njs@pobox.com>
-
-	* cmd_ws_commit.cc (status): Don't put a colon after parent
-	revision ids, to ease double-click copying from terminals.
-
-2006-09-17  Nathaniel Smith  <njs@pobox.com>
-
-	* NEWS: Insert date.
-
-2006-09-17  Nathaniel Smith  <njs@pobox.com>
-
-	* NEWS: Fixes suggested on IRC.
-
-2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
-
-	* win32/cputime.cc: GetProcessTimes returns non-zero on failure.
-
-2006-09-17  Nathaniel Smith  <njs@pobox.com>
-
-	* win32/monotone.iss, visualc/config.h, monotone.spec:
-	* debian/changelog, configure.ac: Bump version numbers to 0.30.
-
-2006-09-17  Nathaniel Smith  <njs@pobox.com>
-
-	* NEWS: First draft of 0.30 release notes.
-	* UPGRADE: Update for 0.30.
-
-2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
-
-	* win32/cputime.cc: Include cstdlib, define WIN32_LEAN_AND_MEAN,
-	correct case of FILETIME member.
-	* std_hooks.lua (mergers.tortoise): Be consistent about case.
-
-2006-09-16  Nathaniel Smith  <njs@pobox.com>
-
-	* win32/cputime.cc: Include numeric_vocab.hh.
-
-2006-09-14  Nathaniel Smith  <njs@pobox.com>
-
-	* cmd.hh: Make hidden_group a proper singleton, so it is safe to
-	use in other files.
-	* platform.hh, {unix,win32}/cputime.cc (cpu_now): New function for
-	measuring cpu time, for benchmarking.
-	* sha1.{hh,cc}, sha1_engine.hh: Framework for adding new SHA-1
-	cores.  New hidden command benchmark_sha1 to benchmark them.
-	* monotone.cc (botan_library): Call hook_botan_sha1().
-	* Makefile.am: Add new files.
-
 2006-09-14  Zack Weinberg  <zackw@panix.com>
 
 	* tests/merge_into_workspace_attr_corpse
@@ -230,6 +154,147 @@
 	* cmd_merging.cc (pick_branch_for_update): New function split out
 	of CMD(update).
 	(explicit_merge_and_update): New command.
+
+2006-09-22  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (workspace::perform_pivot_root): Partially revert
+	revision 7e648a47fdd80f004a529ef5ddba9428f59f673d: apply the
+	renames to the current roster and then calculate the complete set
+	of changes, instead of just blindly writing the changeset to the
+	workspace revision.
+	* tests/pivot_root_to_new_dir: No longer expected to fail.
+
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/pivot_root_to_new_dir: new test for pivot_root into
+	a directory that hasn't been committed yet (xfailed, 0.30 regression)
+
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/{--*/}: rename to tests/_--*/ so that using
+	the * wildcard in tests/ isn't awkward.
+
+2006-09-21  Nathaniel Smith  <njs@pobox.com>
+
+	* lru_writeback_cache.hh (clean_insert): Correct the cache
+	overflow logic so as to _actually_ never remove the last element.
+	Add an invariant to verify this.
+	(insert_dirty): Add an invariant here too.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: *sigh* Previous changes were just dumb.  Remove
+	them again.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: Oops.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: Expose some useful dump() overloads that are already
+	defined in roster.cc.
+
+2006-09-19  Alex Queiroz <alex@ventonegro.org>
+
+	* po/pt_BR.po: 1 fuzzy fixed.
+
+2006-09-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd.hh (ALIAS macro): somehow g++ 4.x is happy with std:string.
+	g++ 3.3.5 isn't.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	Fix a latent bug in the roster random actions test, and make it
+	somewhat more rigorous.
+	* roster.cc (random_actions): Always compare with the
+	just-previous roster; the random walk can return to an earlier
+	position.  Restructure with nested loops; run tests_on_two_rosters
+	more frequently.  Set up the scratch roster with a root here.
+	(perform_random_action): Invariant on entry that r has
+	a root already.  Do not delete the root node.  Add commented L()
+	for content changes.
+
+2006-09-18  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (DISTCLEANFILES): Add unit_tests.log.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	* unit_tests.cc: Rewrite for declarative registration of test cases,
+	better command line handling, and more useful stderr chatter in
+	normal operation.  All debug output now goes to a logfile (default
+	"unit_tests.log") and can be sent back to stderr with --debug.
+	* unit_tests.hh: Remove declarations of removed functions.
+	Don't include unit_test_suite.hpp.
+	(UNIT_TEST, struct unit_test_case): New.
+	(BOOST_CHECK_NOT_THROW): Reindent and wrap in do { } while (0).
+
+	* charset.cc, crypto_tests.cc, cset.cc, diff_patch.cc, globish.cc
+	* keys.cc, netcmd.cc, netxx_pipe.cc, packet.cc, paths.cc, refiner.cc
+	* restrictions.cc, revision.cc, roster.cc, roster_merge.cc
+	* simplestring_xform.cc, string_queue.cc, transforms.cc, uri.cc
+	* numeric_vocab.cc, xdelta.cc: Unit tests are now defined like
+	commands, as UNIT_TEST(group, test) { ... } and no registration
+	function is necessary.
+
+	* cert.cc, file_io.cc, vocab.cc: Remove empty BUILD_UNIT_TESTS block.
+
+	* commands.cc (command::command) Remove redundant boolean, just
+	check whether cmds is NULL.
+
+2006-09-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 1 fuzzy.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (status): Don't put a colon after parent
+	revision ids, to ease double-click copying from terminals.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Insert date.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Fixes suggested on IRC.
+
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/cputime.cc: GetProcessTimes returns non-zero on failure.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac: Bump version numbers to 0.30.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: First draft of 0.30 release notes.
+	* UPGRADE: Update for 0.30.
+
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/cputime.cc: Include cstdlib, define WIN32_LEAN_AND_MEAN,
+	correct case of FILETIME member.
+	* std_hooks.lua (mergers.tortoise): Be consistent about case.
+
+2006-09-16  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/cputime.cc: Include numeric_vocab.hh.
+
+2006-09-14  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd.hh: Make hidden_group a proper singleton, so it is safe to
+	use in other files.
+	* platform.hh, {unix,win32}/cputime.cc (cpu_now): New function for
+	measuring cpu time, for benchmarking.
+	* sha1.{hh,cc}, sha1_engine.hh: Framework for adding new SHA-1
+	cores.  New hidden command benchmark_sha1 to benchmark them.
+	* monotone.cc (botan_library): Call hook_botan_sha1().
+	* Makefile.am: Add new files.
 
 2006-09-14  Zack Weinberg  <zackw@panix.com>
 
