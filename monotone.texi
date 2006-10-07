@@ -5063,12 +5063,12 @@ Deletes any value associated with @var{name} in @var{domain}.  See
 
 @item mtn db init --db=@var{dbfile} 
 
-This command initializes a new monotone database at @file{dbfile}.
+This command initializes a new monotone database at @var{dbfile}.
 
 @item mtn db rebuild --db=@var{dbfile} 
 
 This command rebuilds the ancestry graph of the monotone database at
-@file{dbfile}, which may become necessary if future bugs in monotone
+@var{dbfile}, which may become necessary if future bugs in monotone
 allow invalid changesets to be saved in your database.  This command is
 destructive, and you should make a backup copy of your database before
 running it.  It will preserve the contents of each revision, but it will
@@ -5079,18 +5079,18 @@ incompatible with that of anyone else working on the same project!  Read
 
 @item mtn db info --db=@var{dbfile} 
 
-This command prints information about the monotone database @file{dbfile},
+This command prints information about the monotone database @var{dbfile},
 including its schema version and various table size statistics.
 
 @item mtn db version --db=@var{dbfile} 
 
 This command prints out just the schema version of the monotone
-database @file{dbfile}.
+database @var{dbfile}.
 
 @item mtn db dump --db=@var{dbfile} 
 
 This command dumps an SQL statement representing the entire state of
-@file{dbfile} to the standard output stream. It is a very low-level
+@var{dbfile} to the standard output stream. It is a very low-level
 command, and produces the most ``recoverable'' dumps of your database
 possible. It is sometimes also useful when migrating databases between
 variants of the underlying sqlite database format.
@@ -5098,7 +5098,7 @@ variants of the underlying sqlite database format.
 @item mtn db load --db=@var{dbfile} 
 
 This command applies a raw SQL statement, read from the standard input
-stream, to the database @file{dbfile}. It is most useful when loading
+stream, to the database @var{dbfile}. It is most useful when loading
 a database dumped with the @command{dump} command.
 
 Note that when reloading a dumped database, the schema of the dumped
@@ -5107,7 +5107,7 @@ database is @emph{included} in the dump, so you should not try to
 
 @item mtn db migrate --db=@var{dbfile} 
 
-This command attempts to migrate the database @file{dbfile} to the
+This command attempts to migrate the database @var{dbfile} to the
 newest schema known by the version of monotone you are currently
 running.  If the migration fails, no changes should be made to the
 database.
@@ -5126,7 +5126,7 @@ you garbage data.
 
 However, it's also nice to notice such problems early, and in rarely
 used parts of history, while you still have backups.  That's what this
-command is for.  It systematically checks the database @file{dbfile} to
+command is for.  It systematically checks the database @var{dbfile} to
 ensure that it is complete and consistent. The following problems are
 detected:
 
