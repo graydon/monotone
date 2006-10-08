@@ -32,7 +32,7 @@ Description: A distributed version (revision) control system
  .
  This package contains files to make running a monotone server easier.
 
-Package: monotone
+Package: monotone-doc
 Section: doc
 Architecture: any
 Description: A distributed version (revision) control system
