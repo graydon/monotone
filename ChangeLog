@@ -1,5 +1,10 @@
 2006-10-08  Richard Levitte  <richard@levitte.org>
 
+	* debian/control (monotone-doc): Set up build dependencies for the
+	tools needed to make the documentation.
+
+2006-10-08  Richard Levitte  <richard@levitte.org>
+
 	* debian/control (monotone-doc): New package that contains all
 	the documentation.
 	* debian/rules (binary-install/monotone-server): Add special rule

@@ -35,6 +35,7 @@ Description: A distributed version (revision) control system
 Package: monotone-doc
 Section: doc
 Architecture: any
+Build-Depends: tetex-bin, texinfo, xpdf-utils, ps2eps
 Description: A distributed version (revision) control system
  This is the documentation for monotone in HTML and PDF formats.  See
  the monotone description for more details.
