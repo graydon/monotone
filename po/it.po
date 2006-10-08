@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-09-23 14:09+0200\n"
-"PO-Revision-Date: 2006-10-08 03:01+0100\n"
+"PO-Revision-Date: 2006-10-08 13:32+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -132,7 +132,7 @@ msgstr "[ID_REV]"
 #: automate.cc:1594
 #, c-format
 msgid "no revision %s found in database"
-msgstr "nel database non è presente la revisione ‘%s’"
+msgstr "nel database non è presente la revisione %s"
 
 #: automate.cc:1067
 #: automate.cc:1146
@@ -220,9 +220,9 @@ msgstr "REV FILE"
 
 #: automate.cc:1536
 #: automate.cc:1600
-#, fuzzy, c-format
+#, c-format
 msgid "file %s is unknown for revision %s"
-msgstr "Spiacente, formato del file sconosciuto."
+msgstr "il file ‘%s’ è sconosciuto per la revisione %s"
 
 #: automate.cc:1579
 msgid "REV1 FILE REV2"
@@ -910,7 +910,7 @@ msgstr "già aggiornato a ‘%s’"
 #: cmd_merging.cc:144
 #, c-format
 msgid "selected update target %s"
-msgstr "selezionata revisione ‘%s’ per l'update"
+msgstr "selezionata revisione %s per l'update"
 
 #: cmd_merging.cc:171
 #, c-format
@@ -1174,7 +1174,7 @@ msgid ""
 "to apply the changes relative to one of its parents, use:\n"
 "  %s pluck -r PARENT -r %s"
 msgstr ""
-"la revisione ‘%s’ è frutto di un merge\n"
+"la revisione %s è frutto di un merge\n"
 "per applicare le modifiche relative a uno dei suoi genitori, usa:\n"
 "  %s pluck -r GENITORE -r %s"
 
@@ -1430,6 +1430,7 @@ msgstr "ri-creo ‘%s/’"
 msgid "disapprove of a particular revision"
 msgstr "disapprova una particolare revisione"
 
+# TODO: remove '\n' from monotone sources
 #: cmd_ws_commit.cc:203
 #, c-format
 msgid "revision '%s' has %d changesets, cannot invert\n"
@@ -1888,12 +1889,12 @@ msgstr "chiave %s mancante (firma %d certificati)"
 #: database_check.cc:685
 #, c-format
 msgid "revision %s unchecked signature in %s cert from missing key %s"
-msgstr "revisione ‘%s’ firma non controllata nel certificato ‘%s’ per chiave ‘%s’ mancante"
+msgstr "revisione %s firma non controllata nel certificato ‘%s’ per chiave ‘%s’ mancante"
 
 #: database_check.cc:693
 #, c-format
 msgid "revision %s bad signature in %s cert from key %s"
-msgstr "revisione ‘%s’ firma non ammessa per certificato ‘%s’ della chiave ‘%s’"
+msgstr "revisione %s firma non ammessa per certificato ‘%s’ della chiave ‘%s’"
 
 #: database_check.cc:708
 #, c-format
@@ -1903,7 +1904,7 @@ msgstr "alla revisione %s manca il certificato ‘%s’"
 #: database_check.cc:717
 #, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)"
-msgstr "la revisione ‘%s’ non corrisponde ai certificati (%d autori %d date %d changelogs)"
+msgstr "la revisione %s non corrisponde ai certificati (%d autori %d date %d changelogs)"
 
 #: database_check.cc:797
 #, c-format
@@ -2455,10 +2456,11 @@ msgstr "‘%s’ non è una directory"
 msgid "lua error while loading rcfile '%s'"
 msgstr "errore lua caricando il file rc ‘%s’"
 
+# TODO: "non di contenuto"?
 #: merge.cc:60
 #, c-format
 msgid "resolve non-content conflicts and then try again."
-msgstr ""
+msgstr "risolvi i conflitti non di contenuto e poi riprova."
 
 #: merge.cc:124
 #, c-format
@@ -3466,6 +3468,10 @@ msgid ""
 "of monotone, you're not done yet.  If you're a project leader, then\n"
 "see the file UPGRADE for instructions on running '%s db %s'"
 msgstr ""
+"NOTA: dato che questo database è stato utilizzato l'ultima volta da\n"
+"una versione di monotone piuttosto vecchia, non hai ancora finito.\n"
+"Se sei un capo progetto leggi il file UPGRADE per istruzioni\n"
+"sull'esecuzione di ‘%s db %s’"
 
 #: schema_migration.cc:339
 #, c-format
