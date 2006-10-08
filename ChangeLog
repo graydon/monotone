@@ -1,3 +1,14 @@
+2006-10-08  Richard Levitte  <richard@levitte.org>
+
+	* debian/control (monotone-doc): New package that contains all
+	the documentation.
+	* debian/rules (binary-install/monotone-server): Add special rule
+	so the PDF document really gets created.
+	* debian/monotone.docs: Move the documentation referenses from
+	here ...
+	* debian/monotone-doc.docs: ... to here, since we have a separate
+	package for documentation.
+
 2006-09-12  Richard Levitte  <richard@levitte.org>
 
 	* debian/monotone-server.postinst: Add code to regenerate

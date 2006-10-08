@@ -31,3 +31,10 @@ Description: A distributed version (revision) control system
  trust functions to client-side RSA certificates.
  .
  This package contains files to make running a monotone server easier.
+
+Package: monotone
+Section: doc
+Architecture: any
+Description: A distributed version (revision) control system
+ This is the documentation for monotone in HTML and PDF formats.  See
+ the monotone description for more details.
