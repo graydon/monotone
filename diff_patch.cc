@@ -745,7 +745,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       "[ancestor] %s\n"
       "[    left] %s\n"
       "[   right] %s\n"
-      "[  merged] %s\n")
+      "[  merged] %s")
     % anc_path
     % left_path
     % right_path
@@ -812,7 +812,7 @@ struct hunk_consumer
 /* Find, and write to ENCLOSER, the nearest line before POS which matches
    ENCLOSER_PATTERN.  We remember the last line scanned, and the matched, to
    avoid duplication of effort.  */
-   
+
 void
 hunk_consumer::find_encloser(size_t pos, string & encloser)
 {
@@ -973,7 +973,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
               first_mod = i - hunk.begin();
               break;
             }
-        
+
         find_encloser(a_begin + first_mod, encloser);
         ost << " @@" << encloser << endl;
       }
@@ -1110,7 +1110,7 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
 
         find_encloser(a_begin + min(first_insert, first_delete),
                       encloser);
-        
+
         ost << "***************" << encloser << endl;
       }
 
@@ -1282,7 +1282,7 @@ make_diff(string const & filename1,
   //   If there is a tab, considers everything up to that tab to be the
   //   filename.  If there is not a tab, considers everything up to the
   //   first whitespace to be the filename.
-  //   
+  //
   //   Contains comment: 'If the [file]name is "/dev/null", ignore the name
   //   and mark the file as being nonexistent.  The name "/dev/null" appears
   //   in patches regardless of how NULL_DEVICE is spelled.'  Also detects

@@ -153,7 +153,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
   if (hmac.is_active() && cmd_code != usher_cmd)
     {
       // grab it before the data gets munged
-      I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);	
+      I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
       digest = hmac.process(inbuf, 0, pos + payload_len);
     }
 
@@ -174,7 +174,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
       && cmd_digest != digest)
     {
       throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
-			 "this suggests data was corrupted in transit\n")
+			 "this suggests data was corrupted in transit")
 		       % encode_hexenc(cmd_digest)
 		       % encode_hexenc(digest));
     }

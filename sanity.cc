@@ -252,7 +252,7 @@ sanity::index_failure(string const & vec_expr,
                       unsigned long idx,
                       string const & file, int line)
 {
-  char const * pattern = N_("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n");
+  char const * pattern = N_("%s:%d: index '%s' = %d overflowed vector '%s' with size %d");
   log(FL(pattern) % file % line % idx_expr % idx % vec_expr % sz,
       file.c_str(), line);
   gasp();
@@ -273,7 +273,8 @@ sanity::gasp()
   already_dumping = true;
   L(FL("saving current work set: %i items") % musings.size());
   ostringstream out;
-  out << F("Current work set: %i items\n") % musings.size();
+  out << (F("Current work set: %i items") % musings.size())
+      << "\n"; // final newline is kept out of the translation
   for (vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
     {

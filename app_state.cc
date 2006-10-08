@@ -243,7 +243,7 @@ app_state::set_root(system_path const & path)
   require_path_is_directory
     (path,
      F("search root '%s' does not exist") % path,
-     F("search root '%s' is not a directory\n") % path);
+     F("search root '%s' is not a directory") % path);
   search_root = path;
   L(FL("set search root to %s") % search_root);
 }
@@ -292,7 +292,7 @@ void
 app_state::set_depth(long d)
 {
   N(d >= 0,
-    F("negative depth not allowed\n"));
+    F("negative depth not allowed"));
   depth = d;
 }
 
@@ -300,7 +300,7 @@ void
 app_state::set_last(long l)
 {
   N(l > 0,
-    F("illegal argument to --last: cannot be zero or negative\n"));
+    F("illegal argument to --last: cannot be zero or negative"));
   last = l;
 }
 
@@ -308,7 +308,7 @@ void
 app_state::set_next(long l)
 {
   N(l > 0,
-    F("illegal argument to --next: cannot be zero or negative\n"));
+    F("illegal argument to --next: cannot be zero or negative"));
   next = l;
 }
 
@@ -385,7 +385,7 @@ void
 app_state::set_automate_stdio_size(long size)
 {
   N(size > 0,
-    F("illegal argument to --automate-stdio-size: cannot be zero or negative\n"));
+    F("illegal argument to --automate-stdio-size: cannot be zero or negative"));
   automate_stdio_size = (size_t)size;
 }
 
