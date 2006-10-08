@@ -477,7 +477,7 @@ user_interface::fatal(string const & fatal)
   inform(F("fatal: %s\n"
            "this is almost certainly a bug in monotone.\n"
            "please send this error message, the output of '%s --full-version',\n"
-           "and a description of what you were doing to %s.\n")
+           "and a description of what you were doing to %s.")
          % fatal % prog_name % PACKAGE_BUGREPORT);
   global_sanity.dump_buffer();
 }
@@ -509,7 +509,7 @@ user_interface::fatal_exception(std::exception const & ex)
       || !strcmp(ex_what, ex_dem))
     this->fatal(ex_dem);
   else
-    this->fatal(F("%s: %s") % ex_dem % ex_what);
+    this->fatal(i18n_format("%s: %s") % ex_dem % ex_what);
 }
 
 // Report what we can about a fatal exception (caught in the outermost catch

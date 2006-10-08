@@ -27,7 +27,7 @@ check(mtn("drop", "dropped"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 check(grep('^  M 0 0 missing$', "stdout"), 0, false, false)
-check(grep('^ A  0 0 added$', "stdout"), 0, false, false)
+check(grep('^ AP 0 0 added$', "stdout"), 0, false, false)
 check(grep('^D   0 0 dropped$', "stdout"), 0, false, false)
 check(grep('^R   1 0 original$', "stdout"), 0, false, false)
 check(grep('^ R  0 1 renamed$', "stdout"), 0, false, false)
@@ -66,7 +66,7 @@ check(mtn("rename", "original", "renamed"), 0, false, false)
 check(mtn("add", "original"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
-check(grep('^RA  1 0 original$', "stdout"), 0, false, false)
+check(grep('^RAP 1 0 original$', "stdout"), 0, false, false)
 check(grep('^ R  0 1 renamed$', "stdout"), 0, false, false)
 
 -- rotated but not moved

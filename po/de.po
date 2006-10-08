@@ -76,18 +76,18 @@ msgstr "negative Tiefe nicht erlaubt\n"
 #: app_state.cc:303
 #, c-format
 msgid "illegal argument to --last: cannot be zero or negative\n"
-msgstr "ungültiges Argument für --last: kann nicht null oder negativ sein\n"
+msgstr "ungültiges Argument für --last: kann nicht Null oder negativ sein\n"
 
 #: app_state.cc:311
 #, c-format
 msgid "illegal argument to --next: cannot be zero or negative\n"
-msgstr "ungültiges Argument für --next: kann nicht null oder negativ sein\n"
+msgstr "ungültiges Argument für --next: kann nicht Null oder negativ sein\n"
 
 #: app_state.cc:388
 #, c-format
 msgid "illegal argument to --automate-stdio-size: cannot be zero or negative\n"
 msgstr ""
-"ungültiges Argument für --automate-stdio-size: kann nicht null oder negativ "
+"ungültiges Argument für --automate-stdio-size: kann nicht Null oder negativ "
 "sein\n"
 
 #: automate.cc:65
@@ -176,7 +176,7 @@ msgstr "[ZWEIG_MUSTER]"
 
 #: automate.cc:1409
 msgid "KEYID PASSPHRASE"
-msgstr "SCHLUESSEL_ID PASSWORT"
+msgstr "SCHLÜSSEL_ID PASSWORT"
 
 #: automate.cc:1427 cmd_key_cert.cc:41
 #, c-format
@@ -469,7 +469,7 @@ msgstr "Debugging"
 
 #: cmd_files.cc:28
 msgid "load file contents into db"
-msgstr "läd Dateiinhalte in Datenbank"
+msgstr "lädt Dateiinhalte in Datenbank"
 
 #: cmd_files.cc:41
 msgid "<parent> <left> <right>"
@@ -505,7 +505,7 @@ msgstr "QUELLNAME ZIELNAME QUELLID ZIELID"
 
 #: cmd_files.cc:79
 msgid "diff 2 files and output result"
-msgstr "kalkuliere die Differenzen zweier Dateien und gibt das Ergebnis aus"
+msgstr "bestimmt den Unterschied zwischen zwei Dateien und gibt das Ergebnis aus"
 
 #: cmd_files.cc:96
 #, c-format
@@ -546,7 +546,7 @@ msgstr "[PFAD]"
 
 #: cmd_files.cc:158
 msgid "calculate identity of PATH or stdin"
-msgstr "berechnet die Identitat (ID) von PFAD oder stdin"
+msgstr "berechnet die Identität (ID) von PFAD oder der Standardeingabe"
 
 #: cmd_files.cc:182
 msgid "FILENAME"
@@ -554,7 +554,7 @@ msgstr "DATEINAME"
 
 #: cmd_files.cc:183
 msgid "write file from database to stdout"
-msgstr "schreibt Dateiinhalte aus der Datenbank nach stdout"
+msgstr "schreibt Dateiinhalte aus der Datenbank zur Standardausgabe"
 
 #: cmd_files.cc:212 cmd_files.cc:214
 #, c-format
@@ -697,7 +697,7 @@ msgstr "REVISION MARKENNAME"
 
 #: cmd_key_cert.cc:195
 msgid "put a symbolic tag cert on a revision"
-msgstr "setze eine symbolische Marke auf eine Revisions"
+msgstr "setze eine symbolische Marke auf eine Revision"
 
 #: cmd_key_cert.cc:207
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
@@ -821,8 +821,8 @@ msgid ""
 "or known, unknown, intentionally ignored, missing, or \n"
 "changed-state files"
 msgstr ""
-"zeigt Datenbankobjekte, oder das derzeitige Manifest des \n"
-"Arbeitsbereichs, oder bekannte, unbekannte, absichtlich \n"
+"zeigt Datenbankobjekte oder das derzeitige Manifest des \n"
+"Arbeitsbereichs oder bekannte, unbekannte, absichtlich \n"
 "ignorierte, fehlende oder geänderte Dateien"
 
 #: cmd_merging.cc:73 cmd_merging.cc:655 cmd_ws_commit.cc:66
@@ -956,7 +956,7 @@ msgstr "Baum"
 
 #: cmd_merging.cc:320
 msgid "merge unmerged heads of branch"
-msgstr "führe nicht-vereinigte Köpfe des Zweigs zusammen"
+msgstr "führe nicht-vereinigte Köpfe des Zweiges zusammen"
 
 #: cmd_merging.cc:330 cmd_merging.cc:829
 #, c-format
@@ -1015,7 +1015,7 @@ msgstr "QUELL-ZWEIG ZIEL-ZWEIG VERZEICHNIS"
 msgid "merge one branch into a subdirectory in another branch"
 msgstr ""
 "schiebe die Dateien und Verzeichnisse eines Zweig in ein Unterverzeichnis "
-"eines anderen Zweigs"
+"eines anderen Zweiges"
 
 #: cmd_merging.cc:470 cmd_merging.cc:473
 #, c-format
@@ -1192,7 +1192,7 @@ msgstr "Änderungen auf Arbeitsbereich angewendet"
 
 #: cmd_merging.cc:821
 msgid "show unmerged head revisions of branch"
-msgstr "zeige nicht-vereinigte Revisionen des Zweigs"
+msgstr "zeige nicht-vereinigte Revisionen des Zweiges"
 
 #: cmd_merging.cc:836
 #, c-format
@@ -1231,12 +1231,12 @@ msgstr "kein Zweigmuster gegeben"
 #: cmd_netsync.cc:67
 #, c-format
 msgid "setting default branch include pattern to '%s'"
-msgstr "setze 'include'-Muster des Standardzweigs auf '%s'"
+msgstr "setze 'include'-Muster des Standardzweiges auf '%s'"
 
 #: cmd_netsync.cc:73
 #, c-format
 msgid "setting default branch exclude pattern to '%s'"
-msgstr "setze 'exclude'-Muster des Standardzweigs auf '%s'"
+msgstr "setze 'exclude'-Muster des Standardzweiges auf '%s'"
 
 #: cmd_netsync.cc:81
 #, c-format
@@ -1316,7 +1316,7 @@ msgid ""
 "cvs_import"
 msgstr ""
 "Analysiert Versionen in RCS-Dateien\n"
-"Durch dieses Kommando werden keine Revision rekonstrustuiert oder "
+"Durch dieses Kommando werden keine Revision rekonstruiert oder "
 "importiert. Sie möchten eventuell 'cvs_import' ausführen."
 
 #: cmd_othervcs.cc:32
@@ -1341,7 +1341,7 @@ msgstr "ID"
 
 #: cmd_packet.cc:22
 msgid "write public key packet to stdout"
-msgstr "schreibe Datenpaket des öffentlichen Schlüssels nach stdout"
+msgstr "schreibe Datenpaket des öffentlichen Schlüssels zur Standardausgabe"
 
 #: cmd_packet.cc:44
 #, c-format
@@ -1350,7 +1350,7 @@ msgstr "öffentlicher Schlüssel '%s' existiert nicht"
 
 #: cmd_packet.cc:51
 msgid "write private key packet to stdout"
-msgstr "schreibe Datenpaket des geheimen Schlüssels nach stdout"
+msgstr "schreibe Datenpaket des geheimen Schlüssels zur Standardausgabe"
 
 #: cmd_packet.cc:59
 #, c-format
@@ -1360,12 +1360,12 @@ msgstr ""
 
 #: cmd_packet.cc:70
 msgid "read packets from files or stdin"
-msgstr "lese Datenpakete von Dateien oder stdin"
+msgstr "lese Datenpakete von Dateien oder der Standardeingabe"
 
 #: cmd_packet.cc:78
 #, c-format
 msgid "no packets found on stdin"
-msgstr "keine Datenpakete auf stdin gefunden"
+msgstr "keine Datenpakete in der Standardeingabe gefunden"
 
 #: cmd_packet.cc:90
 #, c-format
@@ -1454,7 +1454,7 @@ msgid ""
 "SRC1 [SRC2 [...]] DEST_DIR"
 msgstr ""
 "QUELLE ZIEL\n"
-"QUELLE1 [QUELLE2 [...]] ZIEL_VERZ"
+"QUELLE1 [QUELLE2 [...]] ZIEL_VERZEICHNIS"
 
 #: cmd_ws_commit.cc:314
 msgid "rename entries in the workspace"
@@ -1535,7 +1535,7 @@ msgstr ""
 "Checkt eine Revision aus der Datenbank in ein Verzeichnis aus.\n"
 "Wenn eine Revision angegeben wird, ist diese die einzige, die ausgecheckt "
 "wird.\n"
-"Andernfalls wird der Kopf des Zweigs (gegeben oder implizit) ausgecheckt.\n"
+"Andernfalls wird der Kopf des Zweiges (gegeben oder implizit) ausgecheckt.\n"
 "Wenn kein Verzeichnis angegeben wird, wird der Zweigname als Verzeichnisname "
 "verwendet."
 
@@ -1564,12 +1564,12 @@ msgstr "Zweig %s hat mehrere Köpfe"
 #: cmd_ws_commit.cc:479
 #, c-format
 msgid "revision %s is not a member of branch %s"
-msgstr "Revision %s ist nicht Mitglied des Zweigs %s"
+msgstr "Revision %s ist nicht Mitglied des Zweiges %s"
 
 #: cmd_ws_commit.cc:496
 #, c-format
 msgid "you must specify a destination directory"
-msgstr "Es muß ein Zielverzeichnis angegeben werden."
+msgstr "Es muss ein Zielverzeichnis angegeben werden."
 
 #: cmd_ws_commit.cc:509
 #, c-format
@@ -2066,7 +2066,7 @@ msgstr ""
 "Wenn Sie nicht der Projektleiter sind:\n"
 "  Warten Sie bitte, bis ein Projektleiter die Projektdaten migriert hat\n"
 "  und holen Sie sich dann eine aktualisierte Kopie.\n"
-"Wir bitten die Unanehmlichkeiten zu entschuldigen."
+"Wir bitten die Unannehmlichkeiten zu entschuldigen."
 
 #: database.cc:206
 #, c-format
@@ -2101,7 +2101,7 @@ msgstr "kann Datenbankversion der Datei %s nicht bestimmen"
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
 "Datenbank %s ist keine SQLite-Version-3-Datei, versuchen Sie ein Export und "
-"anschliessenden Import"
+"anschließenden Import"
 
 #: database.cc:292 schema_migration.cc:201
 msgid ""
@@ -2209,7 +2209,7 @@ msgstr "erwarte %d, erhielt %d Spalten in Anfrage: %s"
 #: database.cc:786
 #, c-format
 msgid "null result in query: %s"
-msgstr "null-Ergebnis in Anfrage: %s"
+msgstr "Null-Ergebnis in Anfrage: %s"
 
 #: database.cc:804
 #, c-format
@@ -2394,7 +2394,7 @@ msgstr "Kann Datei %s nicht zum Lesen öffnen"
 #: file_io.cc:341
 #, c-format
 msgid "Cannot read standard input multiple times"
-msgstr "Kann stdin nicht mehrmals lesen"
+msgstr "Kann nicht mehrmals von der Standardeingabe lesen"
 
 #: file_io.cc:372
 #, c-format
@@ -2475,7 +2475,7 @@ msgstr "'%s' ist kein Verzeichnis"
 #: lua.cc:499
 #, c-format
 msgid "lua error while loading rcfile '%s'"
-msgstr "lua-Fehler während dem Laden der rc-Datei '%s'"
+msgstr "lua-Fehler beim Laden der rc-Datei '%s'"
 
 #: merge.cc:60
 #, c-format
@@ -2539,7 +2539,7 @@ msgid ""
 "%s"
 msgstr ""
 "Laufe auf              : %s\n"
-"C++-Kompiler           : %s\n"
+"C++-Compiler           : %s\n"
 "C++-Standard-Bibliothek: %s\n"
 "Boost-Version          : %s\n"
 "Änderungen seit der Basis-Revision:\n"
@@ -2577,7 +2577,7 @@ msgstr ""
 #: netcmd.cc:136
 #, c-format
 msgid "oversized payload of '%d' bytes"
-msgstr "übergröße Nutzlast von '%d' Bytes"
+msgstr "übergroße Nutzlast von '%d' Bytes"
 
 #: netcmd.cc:176
 #, c-format
@@ -2675,7 +2675,7 @@ msgstr ""
 "@ WARNUNG: SERVERIDENTIFIKATION HAT SICH GEÄNDERT         @\n"
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 "ES IST MÖGLICH DAS JEMAND ETWAS BÖSES MACHT\n"
-"Es ist auch möglich, daß sich einfach nur der Server-Schlüssel geändert "
+"Es ist auch möglich, dass sich einfach nur der Server-Schlüssel geändert "
 "hat.\n"
 "Der entfernte Rechner hat den Schlüssel %s gesendet,\n"
 "ich habe %s erwartet\n"
@@ -2693,8 +2693,8 @@ msgid ""
 "I'll assume it's really them, but you might want to double-check\n"
 "their key's fingerprint: %s\n"
 msgstr ""
-"Das ist das erste Mal, daß Sie sich mit dem Server %s verbinden\n"
-"Ich nehme an, daß Sie die Serveridentität verifiziert haben,\n"
+"Das ist das erste Mal, dass Sie sich mit dem Server %s verbinden\n"
+"Ich nehme an, dass Sie die Serveridentität verifiziert haben,\n"
 "Sie können jedoch nochmal den Fingerprint des Schlüssels prüfen: %s\n"
 
 #: netsync.cc:1258
@@ -2912,7 +2912,7 @@ msgstr ""
 #: netsync.cc:2549
 #, c-format
 msgid "peer %s read failed in working state (error)"
-msgstr "Peer %s konnte nicht im 'working state' (error) gelesen werden"
+msgstr "Peer %s konnte nicht im 'working state' gelesen werden (Fehler)"
 
 #: netsync.cc:2554
 #, c-format
@@ -2925,12 +2925,12 @@ msgstr ""
 #: netsync.cc:2560
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
-msgstr "Peer %s konnte nicht im 'confirmed state' (success) gelesen werden"
+msgstr "Peer %s konnte nicht im 'confirmed state' gelesen werden (Erfolg)"
 
 #: netsync.cc:2581
 #, c-format
 msgid "peer %s write failed in working state (error)"
-msgstr "Peer %s konnte nicht im 'working state' (error) geschrieben werden"
+msgstr "Peer %s konnte nicht im 'working state' geschrieben werden (Fehler)"
 
 #: netsync.cc:2586
 #, c-format
@@ -2943,7 +2943,7 @@ msgstr ""
 #: netsync.cc:2592
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
-msgstr "Peer %s konnte nicht im 'confirmed state' (success) geschrieben werden"
+msgstr "Peer %s konnte nicht im 'confirmed state' geschrieben werden (Erfolg)"
 
 #: netsync.cc:2619
 #, c-format
@@ -3025,11 +3025,11 @@ msgstr "Netzwerk-Fehler: %s"
 
 #: options_list.hh:2
 msgid "print debug log to stderr while running"
-msgstr "schreibe das Debug-Log nach stderr während der Ausführung"
+msgstr "schreibe während der Ausführung ein Protokoll zur Fehlerausgabe"
 
 #: options_list.hh:3
 msgid "file to dump debugging log to, on failure"
-msgstr "Datei, in die das Debug-Log im Fehlerfall geschrieben werden soll"
+msgstr "Datei, in die das Protokoll im Fehlerfall geschrieben werden soll"
 
 #: options_list.hh:4
 msgid "file to write the log to"
@@ -3141,8 +3141,8 @@ msgstr "gebe Differenzen mit den entsprechenden Logeinträgen aus"
 #: options_list.hh:31
 msgid "when rosterifying, drop attrs entries with the given key"
 msgstr ""
-"während der Katalogisierung, entferne 'attrs'-Einträge mit dem gegebenen "
-"Schlüssel"
+"entferne 'attrs'-Einträge mit dem gegebenen Schlüssel "
+"während der Katalogisierung"
 
 #: options_list.hh:32
 msgid "leave out anything described by its argument"
@@ -3220,7 +3220,7 @@ msgstr "benutze die derzeitigen Argumente in der Zukunft als Standard"
 
 #: options_list.hh:50
 msgid "serve netsync on stdio"
-msgstr "bediene netsync über stdio"
+msgstr "bediene netsync über die Standard-Ein-/Ausgabe"
 
 #: options_list.hh:51
 msgid "use unified diff format"
@@ -3401,7 +3401,7 @@ msgstr ""
 "werden kann\n"
 "(wenn Ihnen das Attribut nicht wichtig ist, können Sie es über --drop-attr "
 "entfernen,\n"
-"nichtsdestotrotz würden wir gerne darüber bescheid wissen, um es dennoch "
+"nichtsdestotrotz würden wir gerne darüber Bescheid wissen, um es dennoch "
 "migrierbar zu machen)"
 
 #: revision.cc:1559
@@ -3625,7 +3625,7 @@ msgstr "konnte Logdatei '%s' nicht öffnen"
 #: update.cc:72
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'"
-msgstr "konnte booleschen Zertifikatswert '%s' nicht dekodieren"
+msgstr "konnte boolschen Zertifikatswert '%s' nicht dekodieren"
 
 #: update.cc:166
 #, c-format
@@ -3783,7 +3783,7 @@ msgid ""
 " '%s revert --missing'"
 msgstr ""
 "%d fehlende Dateien; benutzen Sie '%s ls missing' zur Anzeige\n"
-"Um die Konsistenz wiederherzustellen, muß auf jede Datei entweder\n"
+"Um die Konsistenz wiederherzustellen, muss auf jede Datei entweder\n"
 " '%s drop DATEI' zum permanenten Löschen oder\n"
 " '%s revert DATEI' zur Wiederherstellung des vorherigen Zustands\n"
 "ausgeführt werden.\n"

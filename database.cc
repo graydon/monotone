@@ -574,7 +574,7 @@ database::info(ostream & out)
 
 #define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
 
-  out << \
+  out << ( \
     F("schema version    : %s\n"
       "counts:\n"
       "  full rosters    : %u\n"
@@ -597,7 +597,7 @@ database::info(ostream & out)
       "  total           : %u\n"
       "database:\n"
       "  page size       : %u\n"
-      "  cache size      : %u\n"
+      "  cache size      : %u"
       )
     % id
     // counts
@@ -621,7 +621,8 @@ database::info(ostream & out)
     % SPACE_USAGE("heights","length(revision) + length(height)")
     % total
     % page_size()
-    % cache_size();
+    % cache_size()
+    ) << "\n"; // final newline is kept out of the translation
 
 #undef SPACE_USAGE
 }
@@ -716,7 +717,7 @@ database::fetch(results & res,
 
       // no support for multiple statements here
       E(*tail == 0,
-        F("multiple statements in query: %s\n") % query.sql_cmd);
+        F("multiple statements in query: %s") % query.sql_cmd);
     }
 
   ncol = sqlite3_column_count(i->second.stmt());
@@ -883,7 +884,7 @@ database::cancel_delayed_file(file_id const & an_id)
   size_t cancel_size = size_delayed_file(an_id, dat);
   I(cancel_size <= delayed_writes_size);
   delayed_writes_size -= cancel_size;
-    
+
   safe_erase(delayed_files, an_id);
 }
 
@@ -1117,7 +1118,7 @@ database::get_roster_base(string const & ident_str,
   hexenc<id> calculated;
   calculate_ident(data(res[0][1]), calculated);
   I(calculated == checksum);
-  
+
   gzip<data> dat_packed(res[0][1]);
   data dat;
   decode_gzip(dat_packed, dat);
@@ -1137,7 +1138,7 @@ database::get_roster_delta(string const & ident,
   hexenc<id> calculated;
   calculate_ident(data(res[0][1]), calculated);
   I(calculated == checksum);
-  
+
   gzip<delta> del_packed(res[0][1]);
   delta tmp;
   decode_gzip(del_packed, tmp);
@@ -1238,7 +1239,7 @@ struct file_and_manifest_reconstruction_graph : public reconstruction_graph
   database & db;
   string const & data_table;
   string const & delta_table;
-  
+
   file_and_manifest_reconstruction_graph(database & db,
                                          string const & data_table,
                                          string const & delta_table)
@@ -1274,46 +1275,46 @@ database::get_version(hexenc<id> const & ident,
     file_and_manifest_reconstruction_graph graph(*this, data_table, delta_table);
     get_reconstruction_path(ident(), graph, selected_path);
   }
-  
+
   I(!selected_path.empty());
-  
+
   hexenc<id> curr = selected_path.back();
   selected_path.pop_back();
   data begin;
-  
+
   if (vcache.exists(curr()))
     I(vcache.fetch(curr(), begin));
   else
     get_file_or_manifest_base_unchecked(curr, begin, data_table);
-  
+
   shared_ptr<delta_applicator> appl = new_piecewise_applicator();
   appl->begin(begin());
-  
+
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
       hexenc<id> const nxt = *i;
-      
+
       if (!vcache.exists(curr()))
         {
           string tmp;
           appl->finish(tmp);
           vcache.insert_clean(curr(), tmp);
         }
-      
+
       L(FL("following delta %s -> %s") % curr % nxt);
       delta del;
       get_file_or_manifest_delta_unchecked(nxt, curr, del, delta_table);
       apply_delta(appl, del());
-      
+
       appl->next();
       curr = nxt;
     }
-  
+
   string tmp;
   appl->finish(tmp);
   dat = data(tmp);
-  
+
   hexenc<id> final;
   calculate_ident(dat, final);
   I(final == ident);
@@ -1357,7 +1358,7 @@ database::get_roster_version(revision_id const & id,
     roster_reconstruction_graph graph(*this);
     get_reconstruction_path(id.inner()(), graph, selected_path);
   }
-  
+
   string curr = selected_path.back();
   selected_path.pop_back();
   // we know that this isn't already in the cache (because of the early exit
@@ -1365,7 +1366,7 @@ database::get_roster_version(revision_id const & id,
   shared_ptr<roster_t> roster(new roster_t);
   shared_ptr<marking_map> marking(new marking_map);
   get_roster_base(curr, *roster, *marking);
-  
+
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
@@ -2900,7 +2901,7 @@ database::put_roster(revision_id const & rev_id,
   // they aren't already).
 
   roster_cache.insert_dirty(rev_id, make_pair(roster, marking));
-  
+
   set<revision_id> parents;
   get_revision_parents(rev_id, parents);
 
