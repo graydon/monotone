@@ -1,3 +1,9 @@
+2006-10-09  Nathaniel Smith  <njs@pobox.com>
+
+	* automate.cc: Remove spurious #include of rev_height.hh.
+	* revision.cc (allrevs_toposorted): Add a comment describing this
+	function's purpose.
+
 2006-09-26  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-notify.pl: Change the default monotone program
