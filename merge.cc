@@ -121,7 +121,7 @@ resolve_merge_conflicts(roster_t const & left_roster,
     }
 
   E(result.is_clean(),
-    F("merge failed due to unresolved conflicts\n"));
+    F("merge failed due to unresolved conflicts"));
 }
 
 void

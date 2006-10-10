@@ -223,7 +223,7 @@ with the storage and management of @i{multiple} versions of some files.
 One way to store multiple versions of a file is, literally, to save a
 separate @i{complete} copy of the file, every time you make a
 change. When necessary, monotone will save complete copies of your
-files, compressed with the @command{zlib} compression format.
+files, compressed with the @code{zlib} compression format.
 
 @ifinfo
 @smallexample
@@ -259,7 +259,7 @@ storing complete versions of files. It lets you undo changes from a
 new version, by applying the delta backwards, and lets your friends
 change their old version of the file into the new version, by applying
 the delta forwards. Deltas are usually smaller than full files, so
-when possible monotone stores deltas, using a modified @command{xdelta}
+when possible monotone stores deltas, using a modified @code{xdelta}
 format. The details of this format are beyond the scope of this
 document.
 
@@ -695,8 +695,8 @@ you ever want to know if a directory is a monotone workspace, just
 look for this @file{_MTN} directory.
 
 Aside from the special @file{_MTN} directory, a workspace is just a
-normal tree of files. You can directly edit the files in a working
-copy using a plain text editor or other program; monotone will
+normal tree of files. You can directly edit the files in a workspace
+using a plain text editor or other program; monotone will
 automatically notice when you make any changes. If you wish to add
 files, remove files, or move files within your workspace, you must
 tell monotone explicitly what you are doing, as these actions cannot
@@ -926,7 +926,7 @@ that the fork has produced a new @dfn{branch}. Branches tell monotone
 which revisions you would like to merge, and which you would like to
 keep separate.
 
-You can see all the available branches using @code{mtn list branches}.
+You can see all the available branches using @command{mtn list branches}.
 
 Branches are indicated with certs.  The cert name @code{branch} is
 reserved for use by monotone, for the purpose of identifying the
@@ -1090,10 +1090,10 @@ Many commands operate on a subset of the database, called a
 @i{branch}, which is selected with the @option{--branch} option.
 @end itemize
 
-Monotone will cache the settings for these options in your working
-copy, so ordinarily once you have checked out a project, you will not
-need to specify them again.  We will therefore only mention these
-arguments in the first example.
+Monotone will cache the settings for these options in your workspace, so
+ordinarily once you have checked out a project, you will not need to
+specify them again.  We will therefore only mention these arguments in
+the first example.
 
 @subsection Revision Selectors
 Many commands require you to supply 40-character @sc{sha1} values as
@@ -1157,7 +1157,7 @@ example team; other tasks involve only one member.
 @section Creating a Database
 
 The first step Jim, Abe and Beth each need to perform is to create a
-new database. This is done with the @code{mtn db init} command,
+new database. This is done with the @command{mtn db init} command,
 providing a @option{--db} option to specify the location of the new
 database. Each programmer creates their own database, which will
 reside in their home directory and store all the revisions, files and
@@ -1275,7 +1275,7 @@ successfully generated and stored. On subsequent commands, Jim will need
 to re-enter his passphrase in order to perform security-sensitive
 tasks. Jim isn't very worried about security (and, more importantly, it
 simplifies the tutorial text to skip the passphrase prompts) so he
-decides to store his passphrase in his @code{monotonerc} file.  He does
+decides to store his passphrase in his @file{monotonerc} file.  He does
 this by writing a @emph{hook function} which returns the passphrase:
 
 @smallexample
@@ -1304,9 +1304,9 @@ Abe and Beth do the same, with their secret passphrases.
 Before he can begin work on the project, Jim needs to create a
 @i{workspace} --- a directory whose contents monotone will keep track
 of.  Often, one works on projects that someone else has started, and
-creates workspaces with the @code{checkout} command, which you'll
+creates workspaces with the @command{checkout} command, which you'll
 learn about later.  Jim is starting a new project, though, so he does
-something a little bit different.  He uses the @code{mtn setup}
+something a little bit different.  He uses the @command{mtn setup}
 command to create a new workspace.
 
 This command creates the named directory (if it doesn't already exist),
@@ -1314,7 +1314,7 @@ and creates the @file{_MTN} directory within it.  The @file{_MTN} directory
 is how monotone recognizes that a directory is a workspace, and
 monotone stores some bookkeeping files within it.  For instance, command
 line values for the @option{--db}, @option{--branch} or @option{--key}
-options to the @code{setup} command will be cached in a file called
+options to the @command{setup} command will be cached in a file called
 @file{_MTN/options}, so you don't have to keep passing them to monotone
 all the time.
 
@@ -1389,8 +1389,8 @@ dispense_banana_juice()
 @end group
 @end smallexample
 
-Now Jim tells monotone to add these files to its record of his working
-copy. He specifies one filename and one directory; monotone
+Now Jim tells monotone to add these files to its record of his
+workspace.  He specifies one filename and one directory; monotone
 recursively scans the directory and adds all its files.
 
 @smallexample
@@ -1714,7 +1714,7 @@ from expansion by the shell; they have no meaning to monotone.
 @section Synchronising Databases
 
 With Jim's server preparations done, now Abe is ready to fetch Jim's
-code. To do this he issues the monotone @code{sync} command:
+code. To do this he issues the monotone @command{sync} command:
 
 @smallexample
 @group
@@ -2421,7 +2421,7 @@ restrictive about which interfaces and addresses his new server process
 will listen on. He should only accept connections at the address used
 for his website, because some of the provider's other customers might
 also want to publish their own monotone projects on this host.  Jim uses
-the @code{--bind=address:port} argument like so:
+the @option{--bind=@var{address}:@var{port}} argument like so:
 
 @smallexample
 @group
@@ -2437,12 +2437,12 @@ IP address belonging to the server, each customer could bind a different
 port number on that address.
 
 While he's first testing the setup, Jim uses
-@code{--bind=localhost:1234}. This causes the monotone process to listen
+@option{--bind=localhost:1234}. This causes the monotone process to listen
 only to port 1234 on the loopback interface 127.0.0.1, which is not
 accessible from the network, so Jim doesn't expose an open port to the
 rest of the world until he's satisfied with the permissions
 configuration.  You can cause monotone to listen on all interfaces on
-port 1234 by leaving out the address part like @code{--bind=:1234}.
+port 1234 by leaving out the address part like @option{--bind=:1234}.
 
 When he's satisfied the server is set up correctly, Jim does an initial
 @command{sync} with the new database, filling it with all the revision
@@ -2522,13 +2522,13 @@ current contents into monotone on a new branch,
 
 Now he can use monotone to work on the website offline, and let other
 team members add and edit the content; he can also preview changes
-locally before updating the production content.  He keeps a working
-directory checkout of this content in the webroot on the server, and
-runs a monotone @command{update} in there when he wants to bring the
-public web site up to date. Later, he'll think about using monotone's
-@ref{Quality Assurance} mechanisms and Event Notification @ref{Hooks},
-so that the web server can update itself automatically when appropriate
-new revisions are received.
+locally before updating the production content.  He keeps a workspace
+checkout of this content in the webroot on the server, and runs a
+monotone @command{update} in there when he wants to bring the public web
+site up to date. Later, he'll think about using monotone's @ref{Quality
+Assurance} mechanisms and Event Notification @ref{Hooks}, so that the
+web server can update itself automatically when appropriate new
+revisions are received.
 @item
 Jim also knows that even if someone should break into the shared hosting
 server and tamper with the database, they won't be able to inject
@@ -2835,9 +2835,9 @@ development.
 @heading Subdirectory restrictions
 
 The restrictions facility also allows commands to operate from within a
-subdirectory of the workspace.  By default, the @i{entire working
-copy} is always examined for changes. However, specifying an explicit
-"."  pathname to a command will restrict it to the current subdirectory.
+subdirectory of the workspace.  By default, the @i{entire workspace} is
+always examined for changes. However, specifying an explicit "."
+pathname to a command will restrict it to the current subdirectory.
 Note that this is quite different from other version control systems and
 may seem somewhat surprising.
 
@@ -2862,8 +2862,8 @@ subdirectory.
 Monotone only stores a single @file{_MTN} directory at the root of a
 workspace. Because of this, a search is done to find the @file{_MTN}
 directory in case a command is executed from within a subdirectory of a
-workspace. Before a command is executed, the search for a working
-copy directory is done by traversing parent directories until an
+workspace. Before a command is executed, the search for a workspace
+directory is done by traversing parent directories until an
 @file{_MTN} directory is found or the filesystem root is reached. Upon
 finding an @file{_MTN} directory, the @file{_MTN/options} file is read for
 default options. The @option{--root} option may be used to stop the 
@@ -2898,7 +2898,7 @@ Rather than trying to design output to work for both humans and
 computers, and serving neither audience well, we elected to create a
 separate interface to make programmatically extracting information from
 monotone easier.  The command line interface has a command
-@code{automate}; this command has subcommands that print various sorts
+@command{automate}; this command has subcommands that print various sorts
 of information on standard output, in simple, consistent, and easily
 parseable form.
 
@@ -2961,7 +2961,7 @@ nodes carrying a particular @code{branch} cert.
 Many of monotone's operations involve searching the revision graph for
 the ancestors or descendents of a particular revision, or extracting
 the ``heads'' of a subgraph, which is the subgraph's set of nodes with
-no descendents. For example, when you run the @code{update} command,
+no descendents. For example, when you run the @command{update} command,
 monotone searches the subgraph consisting of descendents of the base
 revision of the current workspace, trying to locate a unique head to
 update the base revision to.
@@ -3179,41 +3179,41 @@ The pre-defined, reserved certificate names are:
 @item author
 This cert's value is the name of a person who committed the revision
 the cert is attached to. The cert is generated when you commit a
-revision. It is displayed by the @code{log} command.
+revision. It is displayed by the @command{log} command.
 
 @item branch
 This cert's value is the name of a branch. A @code{branch} cert
 associates a revision with a branch. The revision is said to be ``in
 the branch'' named by the cert. The cert is generated when you commit
-a revision, either directly with the @code{commit} command or
-indirectly with the @code{merge} or @code{propagate} commands. The
+a revision, either directly with the @command{commit} command or
+indirectly with the @command{merge} or @command{propagate} commands. The
 @code{branch} certs are read and directly interpreted by @emph{many}
 monotone commands, and play a fundamental role in organizing work in
 any monotone database.
 
 @item changelog
 This cert's value is the change log message you provide when you
-commit a revision. It is displayed by the @code{log} command.
+commit a revision. It is displayed by the @command{log} command.
 
 @item comment
 This cert's value is an additional comment, usually provided after
 committing, about a revision. Certs with the name @code{comment} can
-be applied to files as well, and will be shown by the @code{log}
+be applied to files as well, and will be shown by the @command{log}
 command.
 
 @item date
 This cert's value is an ISO date string indicating the time at which a
-revision was committed. It is displayed by the @code{log} command, and
+revision was committed. It is displayed by the @command{log} command, and
 may be used as an additional heuristic or selection criterion in other
 commands in the future.
 
 @item tag
 This cert's value is a symbolic name given to a revision, which may be
-used in the future as a way of selecting versions for @code{checkout}.
+used in the future as a way of selecting versions for @command{checkout}.
 
 @item testresult
 This cert's value is interpreted as a boolean string, either @code{0}
-or @code{1}. It is generated by the @code{testresult} command and
+or @code{1}. It is generated by the @command{testresult} command and
 represents the results of running a particular test on the underlying
 revision. Typically you will make a separate signing key for each test
 you intend to run on revisions. This cert influences the
@@ -3267,7 +3267,7 @@ merge attrs.
 The attribute mechanism was originally motivated by the fact that some
 people like to store executable programs in version control systems,
 and would like the programs to remain executable when they check out a
-workspace.  For example, the @code{configure} shell script commonly
+workspace.  For example, the @command{configure} shell script commonly
 shipped with many programs should be executable.  Similarly, some
 people would like to store devices, symbolic links, read-only files,
 and all manner of extra attributes of a file, not directly related to
@@ -3283,7 +3283,7 @@ be set.  However, monotone will still know that the attr is set, and
 Windows users can view and modify the attr like anyone else.)
 
 Attrs in the current workspace can be seen and modified using the
-@code{mtn attr} command; see @ref{Workspace}.  Attrs can also be found
+@command{mtn attr} command; see @ref{Workspace}.  Attrs can also be found
 by examining any manifest directly.
 
 You can tell monotone to automatically take actions based on these
@@ -3412,8 +3412,7 @@ The CVS module name for your project, @code{wobbler} in this example.
 
 Accounting for these differences at your site, the following is an
 example procedure for importing a CVS repository ``from scratch'', and
-checking the resulting head version of the import out into a working
-copy:
+checking the resulting head version of the import out into a workspace:
 
 @smallexample
 @group
@@ -3679,6 +3678,39 @@ monotone is explicit: committing changes only saves them to the local
 database. A separate command, @command{push}, sends the changes to a
 remote database.
 
+@heading Undoing Changes
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs update -C file
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ mtn revert file
+@end group
+@end smallexample
+@end multitable
+
+Unlike CVS, monotone includes a separate @command{revert} command for
+undoing local changes and restoring the workspace to the original
+contents of the base revision. Because this can be dangerous,
+@command{revert} insists on an explicit argument to name the files or
+directories to be reverted; use the current directory "@file{.}" at the
+top of the workspace to revert everything.  The @command{revert} command
+is also used to restore deleted files (with a convenient
+@option{--missing} option for naming these files).
+
+In CVS, you would need to use @command{update} to restore missing or
+changed files, and you might get back a newer version of the file than
+you started with. In monotone, @command{revert} always takes you back to
+where you started, and the @command{update} command is only used to move
+the workspace to a different (usually newer) base revision.
+
+
 @heading Incorporating New Changes
 
 @multitable @columnfractions .4 .4
@@ -3836,7 +3868,7 @@ $ mtn drop file.txt
 
 Monotone does not require that you erase a file from the workspace
 before you drop it. Dropping a file merely removes its entry in the
-manifest of the current revision unless you give it the @command{--execute}
+manifest of the current revision unless you give it the @option{--execute}
 flag, which tells monotone to go ahead and also remove it from the filesystem.
 
 
@@ -3857,9 +3889,9 @@ $ mtn log [file]
 @end smallexample
 @end multitable
 
-Unlike CVS log, monotone log can also be used without a working
-directory; but in this case you must pass a @option{--revision} argument
-to tell monotone where to start displaying the log from.
+Unlike CVS log, monotone log can also be used without a workspace; but
+in this case you must pass a @option{--revision} argument to tell
+monotone where to start displaying the log from.
 
 @heading Importing a New Project
 
@@ -3998,11 +4030,11 @@ changes as a new revision descending from @var{id}. The new revision
 will show up as a new head and thus a subsequent @command{merge} will
 incorporate the inverse of the disapproved changes in the other head(s).
 
-Conceptually, @code{disapprove}s contract is that disapprove(A) gives a 
+Conceptually, @command{disapprove}s contract is that disapprove(A) gives a 
 revision B such that whenever B is merged with a descendent D of A the merge 
 will result in what D ``would have looked like'' if A had never happened.
 
-Note that as a consequence of this contract the @code{disapprove} command 
+Note that as a consequence of this contract the @command{disapprove} command 
 only works if @var{id} has exactly one ancestor, since it hasn't been 
 worked out how to generate such a descendent in the multi-ancestor case.
 
@@ -4049,7 +4081,7 @@ development of a single module within a larger project.
 @item mtn explicit_merge @var{id} @var{id} @var{destbranch}
 This command merges exactly the two @var{id}s you give it, and places
 the result in branch @var{destbranch}.  It is useful when you need more
-control over the merging process than @code{propagate} or @code{merge}
+control over the merging process than @command{propagate} or @command{merge}
 give you.  For instance, if you have a branch with three heads, and you
 only want to merge two of them, you can use this command.  Or if you
 have a branch with two heads, and you want to propagate one of them to
@@ -4195,17 +4227,17 @@ revision is now the newly created revision, and that there are no
 pathname changes to apply.
 
 Specifying pathnames to @command{commit} restricts the set of changes
-that are visible and results in only a partial commit of the working
-copy. Changes to files not included in the specified set of pathnames
-will be ignored and will remain in the workspace until they are
-included in a future commit. With a partial commit, only the relevant
-entries in @file{_MTN/revision} will be removed and other entries will
-remain for future commits.
+that are visible and results in only a partial commit of the workspace.
+Changes to files not included in the specified set of pathnames will be
+ignored and will remain in the workspace until they are included in a
+future commit. With a partial commit, only the relevant entries in
+@file{_MTN/revision} will be removed and other entries will remain for
+future commits.
 
-From within a subdirectory of the workspace the @command{commit}
-command will, by default, include @emph{all changes} in the working
-copy.  Specifying only the pathname "." will restrict @command{commit}
-to files changed within the current subdirectory of the workspace.
+From within a subdirectory of the workspace the @command{commit} command
+will, by default, include @emph{all changes} in the workspace.
+Specifying only the pathname "." will restrict @command{commit} to files
+changed within the current subdirectory of the workspace.
 
 The @option{--message} and @option{--message-file} options are mutually
 exclusive.  Both provide a @var{logmsg} describing the commit. 
@@ -4276,16 +4308,16 @@ fails, the update aborts, doing nothing. The stages are:
 @itemize
 @item
 Examine the ancestry graph of revisions in your database, and (subject
-to trust evaluation) select the set of all descendents of your working
-copy's base revision. Call this set the ``candidates'' of the update.
+to trust evaluation) select the set of all descendents of your
+workspace's base revision. Call this set the ``candidates'' of the
+update.
 @item
 Remove any candidates which lack acceptable testresult
 certificates. From the remaining candidates, select the deepest child
 by ancestry and call it the ``target'' of the update.
 @item 
 Merge the target of the update with the workspace, in memory, and
-if the merge is successful, write the result over top of the working
-copy.
+if the merge is successful, write the result over top of the workspace.
 @end itemize
 
 With an explicit @option{--revision} argument, the command uses that revision
@@ -4309,11 +4341,12 @@ specify an explicit @option{--revision} argument).
 @item mtn pluck --revision=@var{to}
 @itemx mtn pluck --revision=@var{from} --revision=@var{to}
 
-This command takes changes made at any point in history, and attempts
-to edit your current workspace to include those changes.  The end
-result is identical to running @code{mtn diff -r FROM -r TO | patch
--p0}, except that this command uses monotone's merger, and thus
-intelligently handles renames, conflicts, and so on.
+This command takes changes made at any point in history, and attempts to
+edit your current workspace to include those changes.  The end result is
+identical to running @command{mtn diff @option{-r} @var{from}
+@option{-r} @var{to} | patch @option{-p0}}, except that this command
+uses monotone's merger, and thus intelligently handles renames,
+conflicts, and so on.
 
 If only one revision is given, applies the changes made in @var{to} as
 compared with @var{to}'s parent.  If two revisions are given, applies
@@ -4516,10 +4549,10 @@ command restricts the set of changes that are visible and results in
 only a partial status of the workspace. Changes to files not included
 in the specified set of pathnames will be ignored.
 
-From within a subdirectory of the workspace the @command{status}
-command will, by default, include @emph{all changes} in the working
-copy.  Specifying only the pathname "." will restrict @command{status}
-to files changed within the current subdirectory of the workspace.
+From within a subdirectory of the workspace the @command{status} command
+will, by default, include @emph{all changes} in the workspace.
+Specifying only the pathname "." will restrict @command{status} to files
+changed within the current subdirectory of the workspace.
 
 @item mtn log
 @itemx mtn log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
@@ -4528,26 +4561,26 @@ This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and
 comment information associated with a revision.
 
-If @code{--brief} is given, the output consists of one line per revision
+If @option{--brief} is given, the output consists of one line per revision
 with the revision ID, the author, the date and the branches (separated
 with commas).
 
-If @code{--last=}@var{n} is given, at most @var{n} log entries will be
+If @option{--last=}@var{n} is given, at most @var{n} log entries will be
 given.
 
-If @code{--next=}@var{n} is given, at most @var{n} log entries towards
+If @option{--next=}@var{n} is given, at most @var{n} log entries towards
 the current head revision will be given from the workspace's base
 revision in forward-ancestry order.  This is useful to review changes
 that will be applied to the workspace when @command{update} is run.
 
 By default, the log entries for merge nodes are shown.  If
-@code{--no-merges} is given, the log entries for these nodes will be
+@option{--no-merges} is given, the log entries for these nodes will be
 excluded.
 
-If @code{--no-files} is given, the log output excludes the list of
+If @option{--no-files} is given, the log output excludes the list of
 files changed in each revision.
 
-Specifying @code{--diffs} causes the log output to include a unified
+Specifying @option{--diffs} causes the log output to include a unified
 diff of the changes in each revision.
 
 If one or more revision IDs are given, the command starts tracing back
@@ -4561,11 +4594,11 @@ where those files are changed.
 @itemx mtn annotate [--revision=@var{id}] [--brief] @var{file}
 
 Dumps an annotated copy of the file to stdout.  In the absence of the 
-@code{--brief} flag, each line of the file
+@option{--brief} flag, each line of the file
 is translated to <revision id>: <line> in the output, where <revision id>
 is the revision in which that line of the file was last edited.
 
-If @code{--brief} is specified, the output is in the form
+If @option{--brief} is specified, the output is in the form
 <short revision id>.. by <author> <date>: <line>
 Only the first 8 characters of the revision id are displayed, the  
 author cert value is truncated at the first @code{@@} or space
@@ -4594,8 +4627,8 @@ about, in its database, which begin with the 4 hex digits
 @code{fa36}. This command is intended to be used by programmable
 completion systems, such as those in @command{bash} and @command{zsh}.
 
-The complete command for keys and revisions have a @code{--verbose} option.
-Programmable completion systems can use @code{--verbose} output to 
+The complete command for keys and revisions have a @option{--verbose} option.
+Programmable completion systems can use @option{--verbose} output to 
 present users with additional information about each completion option.
 
 For example, verbose output for @code{revision} looks like this:
@@ -4639,18 +4672,18 @@ changes that are visible and results in only a partial diff between
 two revisions. Changes to files not included in the specified set of
 pathnames will be ignored.
 
-From within a subdirectory of the workspace the @command{diff}
-command will, by default, include @emph{all changes} in the working
-copy.  Specifying only the pathname "." will restrict @command{diff}
-to files changed within the current subdirectory of the workspace.
+From within a subdirectory of the workspace the @command{diff} command
+will, by default, include @emph{all changes} in the workspace.
+Specifying only the pathname "." will restrict @command{diff} to files
+changed within the current subdirectory of the workspace.
 
 The output format of @command{diff} is controlled by the options
 @option{--unified}, @option{--context}, @option{--show-encloser}, and
 @option{--external}.  By default, monotone uses its built-in diff
 algorithm to produce a listing in ``unified diff'' format (analogous
-to running the program @code{diff -u}); you can also explicitly
+to running the program @command{diff @option{-u}}); you can also explicitly
 request this with @option{--unified}.  The built-in diff algorithm can
-also produce ``context diff'' format (analogous to @code{diff -c}),
+also produce ``context diff'' format (analogous to @command{diff @option{-c}}),
 which you request by specifying @option{--context}.  The short options
 that @command{diff} accepts for these modes, @option{-u} and
 @option{-c}, also work.
@@ -4669,7 +4702,7 @@ adjust the expression used with the Lua hook
 
 @option{--unified} requests the ``unified diff'' format, the default.
 @option{--context} requests the ``context diff'' format (analogous to
-running the program @code{diff -c}).  Both of these formats are
+running the program @command{diff @option{-c}}).  Both of these formats are
 generated directly by monotone, using its built-in diff algorithm.
 
 Sometimes, you may want more flexibility in output formats; for these
@@ -4677,7 +4710,7 @@ cases, you can use @option{--external}, which causes monotone to invoke
 an external program to generate the actual output.  By default, the
 external program is @code{diff}, and you can use the option
 @option{--diff-args} to pass additional arguments controlling
-formatting.  The actual invocation of @code{diff}, default arguments
+formatting.  The actual invocation of @command{diff}, default arguments
 passed to it, and so on, are controlled by the hook
 @code{external_diff}; see @ref{Hooks} for more details.
 
@@ -4923,7 +4956,7 @@ those keys.
 @ftable @command
 @item mtn approve @var{id}
 
-This command is a synonym for @code{mtn cert @var{id} branch
+This command is a synonym for @command{mtn cert @var{id} branch
 @var{branchname}} where @var{branchname} is the current branch name
 (either deduced from the workspace or from the @option{--branch}
 option).
@@ -4932,21 +4965,21 @@ option).
 @item mtn comment @var{id}
 @itemx mtn comment @var{id} @var{comment}
 
-These commands are synonyms for @code{mtn cert @var{id}
+These commands are synonyms for @command{mtn cert @var{id}
 comment @var{comment}}. If @var{comment} is not provided, it is read
 from @code{stdin}.
 
 
 @item mtn tag @var{id} @var{tagname}
 
-This command is a synonym for @code{mtn cert @var{id} tag
+This command is a synonym for @command{mtn cert @var{id} tag
 @var{tagname}}.
 
 @item mtn testresult @var{id} 0
 @itemx mtn testresult @var{id} 1
 
-These commands are synonyms for @code{mtn cert @var{id}
-testresult 0} or @code{mtn cert @var{id} testresult 1}.
+These commands are synonyms for @command{mtn cert @var{id}
+testresult 0} or @command{mtn cert @var{id} testresult 1}.
 
 @end ftable
 
@@ -5029,12 +5062,12 @@ Deletes any value associated with @var{name} in @var{domain}.  See
 
 @item mtn db init --db=@var{dbfile} 
 
-This command initializes a new monotone database at @file{dbfile}.
+This command initializes a new monotone database at @var{dbfile}.
 
 @item mtn db rebuild --db=@var{dbfile} 
 
 This command rebuilds the ancestry graph of the monotone database at
-@file{dbfile}, which may become necessary if future bugs in monotone
+@var{dbfile}, which may become necessary if future bugs in monotone
 allow invalid changesets to be saved in your database.  This command is
 destructive, and you should make a backup copy of your database before
 running it.  It will preserve the contents of each revision, but it will
@@ -5045,18 +5078,18 @@ incompatible with that of anyone else working on the same project!  Read
 
 @item mtn db info --db=@var{dbfile} 
 
-This command prints information about the monotone database @file{dbfile},
+This command prints information about the monotone database @var{dbfile},
 including its schema version and various table size statistics.
 
 @item mtn db version --db=@var{dbfile} 
 
 This command prints out just the schema version of the monotone
-database @file{dbfile}.
+database @var{dbfile}.
 
 @item mtn db dump --db=@var{dbfile} 
 
 This command dumps an SQL statement representing the entire state of
-@file{dbfile} to the standard output stream. It is a very low-level
+@var{dbfile} to the standard output stream. It is a very low-level
 command, and produces the most ``recoverable'' dumps of your database
 possible. It is sometimes also useful when migrating databases between
 variants of the underlying sqlite database format.
@@ -5064,7 +5097,7 @@ variants of the underlying sqlite database format.
 @item mtn db load --db=@var{dbfile} 
 
 This command applies a raw SQL statement, read from the standard input
-stream, to the database @file{dbfile}. It is most useful when loading
+stream, to the database @var{dbfile}. It is most useful when loading
 a database dumped with the @command{dump} command.
 
 Note that when reloading a dumped database, the schema of the dumped
@@ -5073,7 +5106,7 @@ database is @emph{included} in the dump, so you should not try to
 
 @item mtn db migrate --db=@var{dbfile} 
 
-This command attempts to migrate the database @file{dbfile} to the
+This command attempts to migrate the database @var{dbfile} to the
 newest schema known by the version of monotone you are currently
 running.  If the migration fails, no changes should be made to the
 database.
@@ -5092,7 +5125,7 @@ you garbage data.
 
 However, it's also nice to notice such problems early, and in rarely
 used parts of history, while you still have backups.  That's what this
-command is for.  It systematically checks the database @file{dbfile} to
+command is for.  It systematically checks the database @var{dbfile} to
 ensure that it is complete and consistent. The following problems are
 detected:
 
@@ -5287,9 +5320,9 @@ help diagnose failures.
 @node    Automation
 @section Automation
 
-This section contains subcommands of the @code{mtn automate}
-command, used for scripting monotone.  All give output on stdout; they
-may also give useful chatter on stderr, including warnings and error
+This section contains subcommands of the @command{mtn automate} command,
+used for scripting monotone.  All give output on @code{stdout}; they may
+also give useful chatter on @code{stderr}, including warnings and error
 messages.
 
 
@@ -5308,7 +5341,7 @@ None.
 @item Purpose:
 
 Prints version of the automation interface.  Major number increments
-whenever a backwards incompatible change is made to the @code{automate}
+whenever a backwards incompatible change is made to the @command{automate}
 command; minor number increments whenever any change is made (but is
 reset when major number increments).
 
@@ -7661,7 +7694,7 @@ by at least one of three ``trusted'' keys, unless it is an
 @code{branch} certificate, in which case it must be signed by
 @emph{two} or more trusted keys. This is one way of requiring that
 the revision has been approved by an extra ``reviewer'' who used the
-@code{approve} command.
+@command{approve} command.
 
 @item accept_testresult_change (@var{old_results}, @var{new_results})
 
@@ -7736,7 +7769,7 @@ If an extra arguments are given via @option{--diff-args}, the string
 will be passed in as @var{diff_args}.  Otherwise @var{diff_args} will
 be nil.
 
-The default implementation of this hook calls the program @code{diff},
+The default implementation of this hook calls the program @command{diff},
 and if @option{--diff-args} were not passed, takes default arguments
 from the lua variable @code{external_diff_default_args}.  You can
 override this variable in your configuration file, without overriding
@@ -7920,7 +7953,7 @@ and a attribute value @var{value}. The function should ``apply'' the
 attribute to the file, possibly in a platform-specific way.
 
 Hook functions from this table are called for each existing attr,
-after any command which modifies the working copy. This facility can
+after any command which modifies the workspace. This facility can
 be used to extend monotone's understanding of files with
 platform-specific attributes, such as permission bits, access control
 lists, or special file types.
@@ -8346,7 +8379,7 @@ conversion.
 @item
 File SHA1 values are calculated from the internal form of the
 conversions. If the external form of a file differs from the internal
-form, running a 3rd party program such as @code{sha1sum} will produce
+form, running a 3rd party program such as @command{sha1sum} will produce
 different results than those entries shown in a corresponding manifest.
 
 @end itemize
@@ -8605,7 +8638,7 @@ prepared.
 If either of these events occur, we will provide migration commands
 and explain how to use them for the situation in question; this much
 is necessarily somewhat unpredictable.  In the past we've used the
-@code{db rebuild} command, which extracts the ancestry graph from the
+@command{db rebuild} command, which extracts the ancestry graph from the
 database and then recreates revisions from the manifests only --- this
 preserves the contents of each snapshot, but breaks tracking of file
 identity across renames --- and then reissues all existing certs that
@@ -8615,7 +8648,7 @@ means you should be somewhat careful when rebuilding, but it is
 unavoidable --- if you could sign with other people's keys, that would
 be a rather serious security problem!}
 
-While the @code{db rebuild} command can reconstruct the ancestry graph
+While the @command{db rebuild} command can reconstruct the ancestry graph
 in @emph{your} database, there are practical problems which arise when
 working in a distributed work group.  For example, suppose our group
 consists of the fictional developers Jim and Beth, and they need to
@@ -8688,7 +8721,7 @@ In complicated situations, where people have private branches, or
 ancestries cross organizational boundaries, matters are more complex.
 The basic approach is to do a local rebuild, then after carefully
 examining the new revision IDs to convince yourself that the rebuilt
-graph is the same as the upstream subgraph, use the special @code{db
+graph is the same as the upstream subgraph, use the special @command{db
 epoch} commands to force your local epochs to match the upstream ones.
 (You may also want to do some fiddling with certs, to avoid getting
 duplicate copies of all of them; if this situation ever arises in real
