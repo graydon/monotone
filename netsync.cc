@@ -2667,8 +2667,8 @@ serve_connections(protocol_role role,
     timeout(static_cast<long>(timeout_seconds)),
     instant(0,1);
 
-  if (!app.bind_port().empty())
-    default_port = std::atoi(app.bind_port().c_str());
+  if (!app.opts.bind.port().empty())
+    default_port = std::atoi(app.opts.bind.port().c_str());
 #ifdef USE_IPV6
   bool use_ipv6=true;
 #else
@@ -2686,8 +2686,8 @@ serve_connections(protocol_role role,
 
           Netxx::Address addr(use_ipv6);
 
-          if (!app.bind_address().empty())
-            addr.add_address(app.bind_address().c_str(), default_port);
+          if (!app.opts.bind.address().empty())
+            addr.add_address(app.opts.bind.address().c_str(), default_port);
           else
             addr.add_all_addresses (default_port);
 
@@ -3136,7 +3136,7 @@ run_netsync_protocol(protocol_voice voice,
     {
       if (voice == server_voice)
         {
-          if (app.opts.bind_stdio)
+          if (app.opts.bind.stdio)
             {
               shared_ptr<Netxx::PipeStream> str(new Netxx::PipeStream(0,1));
               shared_ptr<session> sess(new session(role, server_voice,

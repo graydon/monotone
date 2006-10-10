@@ -4,6 +4,7 @@
 #include "charset.hh"
 #include "file_io.hh"
 #include "option.hh"
+#include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
 
@@ -12,7 +13,6 @@ using std::set;
 using std::string;
 using std::vector;
 
-option::nothing option::none;
 
 option_error::option_error(std::string const & str)
  : std::invalid_argument((F("option error: %s") % str).str())
@@ -41,6 +41,41 @@ struct bad_arg_internal
   bad_arg_internal(string const & str = "") : reason(str) {}
 };
 
+void bind_opt::set(string const & arg)
+{
+  string addr_part, port_part;
+  size_t l_colon = arg.find(':');
+  size_t r_colon = arg.rfind(':');
+
+  // not an ipv6 address, as that would have at least two colons
+  if (l_colon == r_colon)
+    {
+      addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
+      port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+    }
+  else
+    {
+      // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
+      size_t squareb = arg.rfind(']');
+      if ((arg.find('[') == 0) && (squareb != string::npos))
+        {
+          if (squareb < r_colon)
+            port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+          else
+            port_part = "";
+          addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+        }
+      else
+        {
+          addr_part = arg;
+          port_part = "";
+        }
+    }
+  stdio = false;
+  address = utf8(addr_part);
+  port = utf8(port_part);
+}
+
 static void splitname(string const & from, string & name, string & n)
 {
   // from looks like "foo" or "foo,f"
@@ -57,17 +92,18 @@ bool has_arg() { return true; }
 template<>
 bool has_arg<bool>() { return false; }
 
-template<typename T>
-void option::map_opt(void (option::*setter)(string const &),
-                   string const & optname,
-                   T option::* ptr,
-                   string const & description)
+
+void option::options::map_opt(void (option::options::*setter)(string const &),
+                              string const & optname,
+                              option::optid id,
+                              bool has_arg,
+                              string const & description)
 {
-  option::opt o;
+  opt o;
   o.setter = setter;
-  o.has_arg = has_arg<T>();
+  o.has_arg = has_arg;
   o.desc = gettext(description.c_str());
-  o.id = optset::conv(ptr);
+  o.id = id;
   string name, n;
   splitname(/*gettext*/(optname.c_str()), name, n);
   opt_map.insert(make_pair(name, o));
@@ -75,24 +111,26 @@ void option::map_opt(void (option::*setter)(string const &),
     opt_map.insert(make_pair(n, o));
 }
 
-option::option()
+option::options::options()
 {
 # define GOPT(varname, optname, type, default_, description)        \
-    map_opt(&option::set_ ## varname, optname,                      \
-            &option:: varname, description);                        \
-    global_option.add( &option:: varname );                         \
+    map_opt(&options::set_ ## varname, optname,                     \
+            option:: varname, has_arg<type>(),  description);       \
+    global_option.add( option:: varname );                          \
+    varname = type ( default_ );                                    \
     varname ## _given = false;
 # define COPT(varname, optname, type, default_, description)        \
-    map_opt(&option::set_ ## varname, optname,                      \
-            &option:: varname, description);                        \
-    all_cmd_option.add( &option:: varname );                        \
+    map_opt(&options::set_ ## varname, optname,                     \
+            option:: varname, has_arg<type>(),  description);       \
+    all_cmd_option.add( option:: varname );                         \
+    varname = type ( default_ );                                    \
     varname ## _given = false;
 # include "option_list.hh"
 # undef GOPT
 # undef COPT
 }
 
-void option::clear_cmd_options()
+void option::options::clear_cmd_options()
 {
 # define GOPT(varname, optname, type, default_, description)
 # define COPT(varname, optname, type, default_, description) \
@@ -103,7 +141,7 @@ void option::clear_cmd_options()
 # undef COPT
 }
 
-void option::clear_global_options()
+void option::options::clear_global_options()
 {
 # define GOPT(varname, optname, type, default_, description) \
     varname = type ( default_ );                             \
@@ -115,7 +153,7 @@ void option::clear_global_options()
 }
 
 #define GOPT(varname, optname, type, default_, description)       \
-  void option::set_ ## varname (std::string const & arg)          \
+  void option::options::set_ ## varname (std::string const & arg) \
   {                                                               \
     varname ## _given = true;                                     \
     try {set_ ## varname ## _helper (arg); }                      \
@@ -129,9 +167,9 @@ void option::clear_global_options()
         throw bad_arg( #varname, arg, e.reason);                  \
     }                                                             \
   }                                                               \
-  void option::set_ ## varname ## _helper (string const & arg)
+  void option::options::set_ ## varname ## _helper (string const & arg)
 #define COPT(varname, optname, type, default_, description)       \
-  void option::set_ ## varname (std::string const & arg)          \
+  void option::options::set_ ## varname (std::string const & arg) \
   {                                                               \
     varname ## _given = true;                                     \
     try {set_ ## varname ## _helper (arg); }                      \
@@ -145,14 +183,15 @@ void option::clear_global_options()
         throw bad_arg( #varname, arg, e.reason);                  \
     }                                                             \
   }                                                               \
-  void option::set_ ## varname ## _helper (string const & arg)
+  void option::options::set_ ## varname ## _helper (string const & arg)
 #define option_bodies
 #include "option_list.hh"
 #undef GOPT
 #undef COPT
 #undef option_bodies
 
-option::opt const & option::getopt(string const & name, optset const & allowed)
+option::options::opt const &
+option::options::getopt(string const & name, optset const & allowed)
 {
   map<string, opt>::iterator i = opt_map.find(name);
   if (i == opt_map.end())
@@ -164,8 +203,8 @@ option::opt const & option::getopt(string const & name, optset const & allowed)
     return i->second;
 }
 
-void option::set(string const & name, string const & given,
-               optset const & allowed)
+void option::options::set(string const & name, string const & given,
+                          optset const & allowed)
 {
   (this->*getopt(name, allowed).setter)(given);
 }
@@ -239,9 +278,9 @@ tokenize_for_command_line(string const & from, vector<string> & to)
     to.push_back(cur);
 }
 
-void option::from_cmdline_restricted(std::vector<std::string> & args,
-                                     optset allowed,
-                                     bool allow_xargs)
+void option::options::from_cmdline_restricted(std::vector<std::string> & args,
+                                              optset allowed,
+                                              bool allow_xargs)
 {
   for (unsigned int i = 0; i < args.size(); ++i)
     {
@@ -322,7 +361,7 @@ void option::from_cmdline_restricted(std::vector<std::string> & args,
     }
 }
 
-void option::from_cmdline(vector<string> & args, bool allow_xargs)
+void option::options::from_cmdline(vector<string> & args, bool allow_xargs)
 {
   from_cmdline_restricted(args, all_cmd_option, allow_xargs);
 }
@@ -354,11 +393,11 @@ struct optstrings
   string shortname;
   string desc;
 };
-std::string option::get_usage_str(optset const & opts) const
+std::string option::options::get_usage_str(optset const & opts) const
 {
   // collect the options we want to show (opt_map has separate
   // entries for the short and long versions of each option)
-  map<optset::opt_id, optstrings> option_strings;
+  map<optid, optstrings> option_strings;
   for (map<string, opt>::const_iterator i = opt_map.begin();
        i != opt_map.end(); ++i)
     {
@@ -377,7 +416,7 @@ std::string option::get_usage_str(optset const & opts) const
   // combind the name strings like "--long [ -s ]"
   map<string, string> to_display;
   unsigned int namelen = 0; // the longest option name string
-  for (map<optset::opt_id, optstrings>::iterator i = option_strings.begin();
+  for (map<optid, optstrings>::iterator i = option_strings.begin();
        i != option_strings.end(); ++i)
     {
       optstrings const & strings = i->second;
@@ -431,3 +470,11 @@ std::string option::get_usage_str(optset const & opts) const
     }
   return result;
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

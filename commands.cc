@@ -251,7 +251,7 @@ namespace commands
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), &option::none)
+CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), option::none)
 {
   if (args.size() < 1)
     {
@@ -267,7 +267,7 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", &option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
 {
   if (args.size() != 1)
     throw usage(name);

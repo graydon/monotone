@@ -37,107 +37,105 @@ struct bad_arg : public option_error
           std::string const & reason);
 };
 
-struct option
+struct bind_opt
 {
-  struct nothing {};
-  static nothing none;
+  utf8 address;
+  utf8 port;
+  bool stdio;
+  bind_opt() : stdio(false) {}
+  void set(std::string const & arg);
+};
+
+namespace option {
+  enum optid {
+#   define GOPT(varname, optname, type, default_, description)  \
+      varname,
+#   define COPT(varname, optname, type, default_, description)  \
+      GOPT(varname, optname, type, default_, description)
+#   include "option_list.hh"
+#   undef GOPT
+#   undef COPT
+    none
+  };
   class optset
   {
+    std::set<option::optid> items;
   public:
-    // This has to convert pointer-to-arbitrary-member-of-option into
-    // something uniform that can be put in a set (ie, has '<' and '==').
-    typedef void * opt_id;
-    template<typename T>
-    static opt_id conv(T option::* item)
+    void add(option::optid item)
     {
-      return reinterpret_cast<opt_id>(&((*((option*)0)).*item));
+      items.insert(item);
     }
-  private:
-    std::set<opt_id> items;
-  public:
-    template<typename T>
-    void add(T option::* item)
-    {
-      items.insert(conv(item));
-    }
-    template<typename T>
-    optset & operator%(T option::* item)
+    optset & operator%(option::optid item)
     {
       add(item);
       return *this;
     }
-    optset & operator%(nothing*)
-    {
-      return *this;
-    }
-    bool contains(opt_id id) const
+    bool contains(option::optid id) const
     {
       return items.find(id) != items.end();
-    }
-    template<typename T>
-    bool contains(T option::* item) const
-    {
-      return contains(conv(item));
     }
     bool empty() const
     {
       return items.empty();
     }
   };
-  option();
-  void clear_cmd_options();
-  void clear_global_options();
-  void set(std::string const & name, std::string const & given)
-  { set(name, given, all_cmd_option); }
-  // if allow_xargs is true, then any instances of --xargs (or -@) in
-  // args will be replaced with the parsed contents of the referenced file
-  void from_cmdline(std::vector<std::string> & args, bool allow_xargs = true);
-  void from_cmdline_restricted(std::vector<std::string> & args,
-                               optset allowed,
-                               bool allow_xargs = true);
-  optset const & global_opts() const { return global_option; }
-  optset const & specific_opts() const { return all_cmd_option; }
 
-  std::string get_usage_str(optset const & opts) const;
-
-# define GOPT(varname, optname, type, default_, description)  \
-    type varname;                                             \
-    bool varname ## _given;
-# define COPT(varname, optname, type, default_, description)  \
-    type varname;                                             \
-    bool varname ## _given;
-# include "option_list.hh"
-# undef GOPT
-# undef COPT
-private:
-# define GOPT(varname, optname, type, default_, description)  \
-    void set_ ## varname (std::string const & arg);           \
-    void set_ ## varname ## _helper (std::string const & arg);
-# define COPT(varname, optname, type, default_, description)  \
-    void set_ ## varname (std::string const & arg);           \
-    void set_ ## varname ## _helper (std::string const & arg);
-# include "option_list.hh"
-# undef GOPT
-# undef COPT
-
-  struct opt
+  struct options
   {
-    void (option::*setter)(std::string const &);
-    std::string desc;
-    bool has_arg;
-    option::optset::opt_id id;
+    options();
+    void clear_cmd_options();
+    void clear_global_options();
+    void set(std::string const & name, std::string const & given)
+    { set(name, given, all_cmd_option); }
+    // if allow_xargs is true, then any instances of --xargs (or -@) in
+    // args will be replaced with the parsed contents of the referenced file
+    void from_cmdline(std::vector<std::string> & args, bool allow_xargs = true);
+    void from_cmdline_restricted(std::vector<std::string> & args,
+                                 optset allowed,
+                                 bool allow_xargs = true);
+    optset const & global_opts() const { return global_option; }
+    optset const & specific_opts() const { return all_cmd_option; }
+
+    std::string get_usage_str(optset const & opts) const;
+
+#   define GOPT(varname, optname, type, default_, description)  \
+      type varname;                                             \
+      bool varname ## _given;
+#   define COPT(varname, optname, type, default_, description)  \
+      GOPT(varname, optname, type, default_, description)
+#   include "option_list.hh"
+#   undef GOPT
+#   undef COPT
+  private:
+#   define GOPT(varname, optname, type, default_, description)  \
+      void set_ ## varname (std::string const & arg);           \
+      void set_ ## varname ## _helper (std::string const & arg);
+#   define COPT(varname, optname, type, default_, description)  \
+      void set_ ## varname (std::string const & arg);           \
+      void set_ ## varname ## _helper (std::string const & arg);
+#   include "option_list.hh"
+#   undef GOPT
+#   undef COPT
+
+    struct opt
+    {
+      void (options::*setter)(std::string const &);
+      std::string desc;
+      bool has_arg;
+      option::optid id;
+    };
+    std::map<std::string, opt> opt_map;
+    optset global_option, all_cmd_option;
+    opt const & getopt(std::string const & name, optset const & allowed);
+    void set(std::string const & name, std::string const & given,
+             optset const & allowed);
+    void map_opt(void (options::*setter)(std::string const &),
+                 std::string const & optname,
+                 optid id,
+                 bool has_arg,
+                 std::string const & description);
   };
-  std::map<std::string, opt> opt_map;
-  optset global_option, all_cmd_option;
-  opt const & getopt(std::string const & name, optset const & allowed);
-  void set(std::string const & name, std::string const & given,
-           optset const & allowed);
-  template<typename T>
-  void map_opt(void (option::*setter)(std::string const &),
-               std::string const & optname,
-               T option::* ptr,
-               std::string const & description);
-};
+}
 
 
 #endif

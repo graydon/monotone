@@ -99,7 +99,7 @@ process_netsync_args(string const & name,
 
 CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
-    &option::set_default % &option::exclude % &option::key_to_push)
+    option::set_default % option::exclude % option::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -114,7 +114,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
-    &option::set_default % &option::exclude)
+    option::set_default % option::exclude)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -128,7 +128,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
-    &option::set_default % &option::exclude % &option::key_to_push)
+    option::set_default % option::exclude % option::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
@@ -175,8 +175,8 @@ private:
 
 CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
                  N_("serve the branches specified by PATTERNs to connecting clients"),
-                 &option::bind % &option::pidfile % &option::exclude %
-                 &option::bind_stdio % &option::no_transport_auth)
+                 option::bind % option::pidfile % option::exclude %
+                 option::bind_stdio % option::no_transport_auth)
 {
   if (args.size() < 1)
     throw usage(name);
@@ -195,7 +195,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
     }
   else
     {
-      E(app.opts.bind_stdio,
+      E(app.opts.bind.stdio,
 	F("The --no-transport-auth option is only permitted in combination with --stdio"));
     }
 
@@ -203,7 +203,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
 
   utf8 dummy_addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, false, true, app);
-  run_netsync_protocol(server_voice, source_and_sink_role, app.bind_address,
+  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind.address,
                        include_pattern, exclude_pattern, app);
 }
 

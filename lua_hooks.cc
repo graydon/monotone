@@ -67,7 +67,7 @@ extern "C"
     map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(L);
     if (i != map_of_lua_to_app.end())
       {
-        system_path dir = i->second->get_confdir();
+        system_path dir = i->second->opts.conf_dir;
         string confdir = dir.as_external();
         lua_pushstring(L, confdir.c_str());
       }
@@ -136,7 +136,7 @@ lua_hooks::default_rcfilename(system_path & file)
 {
   map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(st);
   I(i != map_of_lua_to_app.end());
-  file = i->second->get_confdir() / "monotonerc";
+  file = i->second->opts.conf_dir / "monotonerc";
 }
 
 void

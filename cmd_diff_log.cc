@@ -259,7 +259,7 @@ dump_diffs(cset const & cs,
                 i->second,
                 i->second,
                 data(), unpacked,
-                cout, app.diff_format, pattern);
+                cout, app.opts.diff_format, pattern);
     }
 
   map<split_path, split_path> reverse_rename_map;
@@ -315,7 +315,7 @@ dump_diffs(cset const & cs,
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                cout, app.diff_format, pattern);
+                cout, app.opts.diff_format, pattern);
     }
 }
 
@@ -333,16 +333,16 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "If one revision is given, the diff between the workspace and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
-    &option::revision % &option::depth % &option::exclude
-    % &option::unified_diff % &option::context_diff % &option::external_diff
-    % &option::external_diff_args)
+    option::revision % option::depth % option::exclude
+    % option::diff_format % option::no_show_encloser
+    % option::external_diff_args)
 {
   bool new_is_archived;
   ostringstream header;
   temp_node_id_source nis;
 
   if (app.opts.external_diff_args_given)
-    N(app.diff_format == external_diff,
+    N(app.opts.diff_format == external_diff,
       F("--diff-args requires --external\n"
         "try adding --external or removing --diff-args?"));
 
@@ -479,7 +479,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   cout << "# " << "\n";
 
-  if (app.diff_format == external_diff) {
+  if (app.opts.diff_format == external_diff) {
     do_external_diff(included, app, new_is_archived);
   } else
     dump_diffs(included, app, new_is_archived);
@@ -542,8 +542,8 @@ log_certs(app_state & app, revision_id id, cert_name name)
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    &option::last % &option::next % &option::revision % &option::brief
-    % &option::diffs % &option::no_merges % &option::no_files)
+    option::last % option::next % option::revision % option::brief
+    % option::diffs % option::no_merges % option::no_files)
 {
   if (app.opts.revision.size() == 0)
     app.require_workspace("try passing a --revision to start at");

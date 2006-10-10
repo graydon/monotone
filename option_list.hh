@@ -23,11 +23,11 @@ COPT(automate_stdio_size, "automate-stdio-size", size_t, 1024,
 }
 #endif
 
-COPT(bind, "bind", std::string, ,
+COPT(bind, "bind", bind_opt, ,
      gettext_noop("address:port to listen on (default :4691)"))
 #ifdef option_bodies
 {
-  bind = arg;
+  bind.set(arg);
 }
 #endif
 
@@ -47,21 +47,13 @@ COPT(brief, "brief", bool, false,
 }
 #endif
 
-GOPT(conf_dir, "confdir", system_path, ,
+GOPT(conf_dir, "confdir", system_path, get_default_confdir(),
      gettext_noop("set location of configuration directory"))
 #ifdef option_bodies
 {
   conf_dir = system_path(arg);
   if (!key_dir_given)
     key_dir = (conf_dir / "keys");
-}
-#endif
-
-COPT(context_diff, "context", bool, false,
-     gettext_noop("use context diff format"))
-#ifdef option_bodies
-{
-  context_diff = true;
 }
 #endif
 
@@ -121,6 +113,21 @@ COPT(external_diff_args, "diff-args", std::string, ,
 }
 #endif
 
+COPT(diff_format, "diff-type", diff_type, unified_diff,
+     gettext_noop("argument to pass external diff hook"))
+#ifdef option_bodies
+{
+  if (arg == _("context"))
+    diff_format = context_diff;
+  else if (arg == _("external"))
+    diff_format = external_diff;
+  else if (arg == _("unified"))
+    diff_format = unified_diff;
+  else
+    throw bad_arg_internal(F("unknown diff type").str());
+}
+#endif
+
 COPT(diffs, "diffs", bool, false, gettext_noop("print diffs along with logs"))
 #ifdef option_bodies
 {
@@ -158,14 +165,6 @@ COPT(execute, "execute,e", bool, false,
 #ifdef option_bodies
 {
   execute = true;
-}
-#endif
-
-COPT(external_diff, "external", bool, false,
-     gettext_noop("use external diff hook for generating diffs"))
-#ifdef option_bodies
-{
-  external_diff = true;
 }
 #endif
 
@@ -364,11 +363,11 @@ COPT(revision, "revision,r", std::vector<utf8>, ,
 }
 #endif
 
-GOPT(root, "root", std::string, ,
+GOPT(root, "root", system_path, current_root_path(),
      gettext_noop("limit search for workspace to specified root"))
 #ifdef option_bodies
 {
-  root = arg;
+  root = system_path(arg);
 }
 #endif
 
@@ -383,7 +382,8 @@ COPT(set_default, "set-default", bool, false,
 COPT(bind_stdio, "stdio", bool, false, gettext_noop("serve netsync on stdio"))
 #ifdef option_bodies
 {
-  bind_stdio = true;
+  // Yes, this sets a field in the structure belonging to the "bind" option.
+  bind.stdio = true;
 }
 #endif
 
@@ -400,14 +400,6 @@ GOPT(ticker, "ticker", std::string, ,
     ui.set_tick_writer(new tick_write_count);
   else
     help = true;
-}
-#endif
-
-COPT(unified_diff, "unified", bool, false,
-     gettext_noop("use unified diff format"))
-#ifdef option_bodies
-{
-  unified_diff = true;
 }
 #endif
 

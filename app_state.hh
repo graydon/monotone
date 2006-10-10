@@ -49,19 +49,10 @@ public:
   key_store keys;
   workspace work;
 
-  option opts;
+  option::options opts;
 
-  system_path search_root;
   bool found_workspace;
-  diff_type diff_format;
-  utf8 bind_address;
-  utf8 bind_port;
-  system_path confdir;
   bool branch_is_sticky;
-
-  std::set<std::string> explicit_options;  // in set if the value of the flag was explicitly given on the command line
-  void set_is_explicit_option (std::string o);
-  bool is_explicit_option(std::string o) const;
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they
@@ -93,9 +84,6 @@ public:
   void set_key_dir(system_path const & filename);
   void set_root(system_path const & root);
   void set_diff_format(diff_type dtype);
-
-  void set_confdir(system_path const & cd);
-  system_path get_confdir();
 
   explicit app_state();
   ~app_state();

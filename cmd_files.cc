@@ -25,7 +25,7 @@ using std::vector;
 // fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), &option::none)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
 {
   string s = get_stdin();
 
@@ -40,7 +40,7 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), &option::none)
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("merge 3 files and output result"),
-    &option::none)
+    option::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -77,7 +77,8 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
-    &option::context_diff % &option::unified_diff % &option::no_show_encloser)
+    option::diff_format % option::no_show_encloser
+    % option::external_diff_args)
 {
   if (args.size() != 4)
     throw usage(name);
@@ -108,12 +109,12 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
   make_diff(src_name, dst_name,
             src_id, dst_id,
             src.inner(), dst.inner(),
-            cout, app.diff_format, pattern);
+            cout, app.opts.diff_format, pattern);
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    &option::revision % &option::brief)
+    option::revision % option::brief)
 {
   revision_id rid;
 
@@ -156,7 +157,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
-    &option::none)
+    option::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -181,7 +182,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
-    &option::revision)
+    option::revision)
 {
   if (args.size() != 1)
     throw usage(name);

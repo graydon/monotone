@@ -125,7 +125,7 @@ void localize_monotone()
 }
 
 // read command-line options and return the command name
-string read_options(option & opts, vector<string> args)
+string read_options(option::options & opts, vector<string> args)
 {
       opts.from_cmdline(args);
 
@@ -226,45 +226,6 @@ cpp_main(int argc, char ** argv)
             app.keys.set_key_dir(app.opts.key_dir);
         }
 
-      if (app.opts.bind_given)
-        {
-          {
-            string arg = app.opts.bind;
-            string addr_part, port_part;
-            size_t l_colon = arg.find(':');
-            size_t r_colon = arg.rfind(':');
-
-            // not an ipv6 address, as that would have at least two colons
-            if (l_colon == r_colon)
-              {
-                addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
-                port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-              }
-            else
-              {
-                // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
-                size_t squareb = arg.rfind(']');
-                if ((arg.find('[') == 0) && (squareb != string::npos))
-                  {
-                    if (squareb < r_colon)
-                      port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-                    else
-                      port_part = "";
-                    addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
-                  }
-                else
-                  {
-                    addr_part = arg;
-                    port_part = "";
-                  }
-              }
-            app.opts.bind_stdio = false;
-            app.bind_address = utf8(addr_part);
-            app.bind_port = utf8(port_part);
-          }
-          app.set_is_explicit_option(app.opts.bind);
-        }
-
       // stop here if they asked for help
       if (app.opts.help)
         {
@@ -280,7 +241,7 @@ cpp_main(int argc, char ** argv)
       app.allow_workspace();
 
       if (!app.found_workspace && global_sanity.filename.empty())
-        global_sanity.filename = (app.get_confdir() / "dump").as_external();
+        global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
 
       // main options processed, now invoke the
       // sub-command w/ remaining args

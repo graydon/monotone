@@ -24,7 +24,7 @@ using std::set;
 using std::string;
 
 CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
-    &option::none)
+    option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -50,7 +50,7 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
 }
 
 CMD(dropkey, N_("key and cert"), N_("KEYID"),
-    N_("drop a public and private key"), &option::none)
+    N_("drop a public and private key"), option::none)
 {
   bool key_deleted = false;
 
@@ -91,7 +91,7 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"),
 
 CMD(chkeypass, N_("key and cert"), N_("KEYID"),
     N_("change passphrase of a private RSA key"),
-    &option::none)
+    option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -111,7 +111,7 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
 }
 
 CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
-    N_("create a cert for a revision"), &option::none)
+    N_("create a cert for a revision"), option::none)
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
@@ -150,7 +150,7 @@ CMD(trusted, N_("key and cert"),
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
     N_("test whether a hypothetical cert would be trusted\n"
        "by current settings"),
-    &option::none)
+    option::none)
 {
   if (args.size() < 4)
     throw usage(name);
@@ -194,7 +194,7 @@ CMD(trusted, N_("key and cert"),
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
-    N_("put a symbolic tag cert on a revision"), &option::none)
+    N_("put a symbolic tag cert on a revision"), option::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -207,7 +207,7 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
 
 
 CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
-    N_("note the results of running a test on a revision"), &option::none)
+    N_("note the results of running a test on a revision"), option::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -221,7 +221,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 
 CMD(approve, N_("review"), N_("REVISION"),
     N_("approve of a particular revision"),
-    &option::branch_name)
+    option::branch_name)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -236,7 +236,7 @@ CMD(approve, N_("review"), N_("REVISION"),
 }
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
-    N_("comment on a particular revision"), &option::none)
+    N_("comment on a particular revision"), option::none)
 {
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);

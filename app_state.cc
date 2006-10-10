@@ -38,38 +38,25 @@ using std::vector;
 app_state::app_state()
   : db(system_path()),
     keys(this), work(db, lua),
-    search_root(current_root_path()),
-    diff_format(unified_diff),
-    bind_address(""), bind_port(""),
-    confdir(get_default_confdir()),
+//    search_root(current_root_path()),
+//    diff_format(unified_diff),
     branch_is_sticky(false)
 {
   db.set_app(this);
   lua.set_app(this);
-  keys.set_key_dir(confdir / "keys");
+  keys.set_key_dir(opts.conf_dir / "keys");
 }
 
 app_state::~app_state()
 {
 }
 
-void
-app_state::set_is_explicit_option (std::string o)
-{
-  explicit_options.insert(o);
-}
-
-bool
-app_state::is_explicit_option(std::string o) const
-{
-  return explicit_options.find(o) != explicit_options.end();
-}
 
 void
 app_state::allow_workspace()
 {
   L(FL("initializing from directory %s") % fs::initial_path().string());
-  found_workspace = find_and_go_to_workspace(search_root);
+  found_workspace = find_and_go_to_workspace(opts.root);
 
   if (found_workspace)
     {
@@ -213,28 +200,8 @@ app_state::set_root(system_path const & path)
     (path,
      F("search root '%s' does not exist") % path,
      F("search root '%s' is not a directory\n") % path);
-  search_root = path;
-  L(FL("set search root to %s") % search_root);
-}
-
-void
-app_state::set_diff_format(diff_type dtype)
-{
-  diff_format = dtype;
-}
-
-void
-app_state::set_confdir(system_path const & cd)
-{
-  confdir = cd;
-  if (!opts.key_dir_given)
-    keys.set_key_dir(cd / "keys");
-}
-
-system_path
-app_state::get_confdir()
-{
-  return confdir;
+  opts.root = path;
+  L(FL("set search root to %s") % opts.root);
 }
 
 // rc files are loaded after we've changed to the workspace so that
