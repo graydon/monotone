@@ -1,3 +1,12 @@
+2006-10-03  Evan Deaubl  <evan@warpedview.com>
+
+	* monotone.cc, options_list.hh: Added ability to specify
+	multiple --message arguments.
+	* monotone.texi: Added documentation for multiple --message
+	arguments.
+	* tests/multiple_message_commit/__driver__.lua, testsuite.lua:
+	Added integration test for multiple --message arguments.
+	
 2006-10-09  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: 35 fuzzies cleared,

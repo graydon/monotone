@@ -38,6 +38,7 @@
 #include "options.hh"
 #include "paths.hh"
 #include "sha1.hh"
+#include "simplestring_xform.hh"
 
 using std::cout;
 using std::cerr;
@@ -432,7 +433,9 @@ cpp_main(int argc, char ** argv)
 
       if (option::message.given(vm))
         {
-          app.set_message(option::message.get(vm));
+          string combined_message = "";
+          join_lines(option::message.get(vm), combined_message);
+          app.set_message(combined_message);
           app.set_is_explicit_option(option::message());
         }
 
