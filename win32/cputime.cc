@@ -3,13 +3,17 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include <cstdlib>
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+#include "numeric_vocab.hh"
 
 u64 to_ticks(FILETIME const & ft)
 {
   u64 ticks = ft.dwHighDateTime;
   ticks <<= 32;
-  ticks += ft.dwLowDatetime;
+  ticks += ft.dwLowDateTime;
   return ticks;
 }
 
@@ -19,7 +23,7 @@ cpu_now()
   FILETIME creation_time, exit_time, kernel_time, user_time;
   if (GetProcessTimes(GetCurrentProcess(),
                       &creation_time, &exit_time,
-                      &kernel_time, &user_time))
+                      &kernel_time, &user_time) == 0)
     return -1;
 
   u64 total_ticks = 0;

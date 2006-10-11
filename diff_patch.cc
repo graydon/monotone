@@ -745,7 +745,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       "[ancestor] %s\n"
       "[    left] %s\n"
       "[   right] %s\n"
-      "[  merged] %s\n")
+      "[  merged] %s")
     % anc_path
     % left_path
     % right_path
@@ -812,7 +812,7 @@ struct hunk_consumer
 /* Find, and write to ENCLOSER, the nearest line before POS which matches
    ENCLOSER_PATTERN.  We remember the last line scanned, and the matched, to
    avoid duplication of effort.  */
-   
+
 void
 hunk_consumer::find_encloser(size_t pos, string & encloser)
 {
@@ -973,7 +973,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
               first_mod = i - hunk.begin();
               break;
             }
-        
+
         find_encloser(a_begin + first_mod, encloser);
         ost << " @@" << encloser << endl;
       }
@@ -1110,7 +1110,7 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
 
         find_encloser(a_begin + min(first_insert, first_delete),
                       encloser);
-        
+
         ost << "***************" << encloser << endl;
       }
 
@@ -1282,7 +1282,7 @@ make_diff(string const & filename1,
   //   If there is a tab, considers everything up to that tab to be the
   //   filename.  If there is not a tab, considers everything up to the
   //   first whitespace to be the filename.
-  //   
+  //
   //   Contains comment: 'If the [file]name is "/dev/null", ignore the name
   //   and mark the file as being nonexistent.  The name "/dev/null" appears
   //   in patches regardless of how NULL_DEVICE is spelled.'  Also detects
@@ -1380,14 +1380,14 @@ static void dump_incorrect_merge(vector<string> const & expected,
 }
 
 // high tech randomizing test
-
-static void randomizing_merge_test()
+UNIT_TEST(diff_patch, randomizing_merge)
 {
+  randomizer rng;
   for (int i = 0; i < 30; ++i)
     {
       vector<string> anc, d1, d2, m1, m2, gm;
 
-      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i));
+      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i), rng);
 
       BOOST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)
@@ -1403,8 +1403,7 @@ static void randomizing_merge_test()
 
 
 // old boring tests
-
-static void merge_prepend_test()
+UNIT_TEST(diff_patch, merge_prepend)
 {
   BOOST_CHECKPOINT("prepend test");
   vector<string> anc, d1, d2, m1, m2, gm;
@@ -1434,8 +1433,7 @@ static void merge_prepend_test()
   BOOST_CHECK(gm == m2);
 }
 
-
-static void merge_append_test()
+UNIT_TEST(diff_patch, merge_append)
 {
   BOOST_CHECKPOINT("append test");
   vector<string> anc, d1, d2, m1, m2, gm;
@@ -1465,7 +1463,7 @@ static void merge_append_test()
 
 }
 
-static void merge_additions_test()
+UNIT_TEST(diff_patch, merge_additions)
 {
   BOOST_CHECKPOINT("additions test");
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
@@ -1494,7 +1492,7 @@ static void merge_additions_test()
   BOOST_CHECK(!merge3(anc, d1, cf, m1));
 }
 
-static void merge_deletions_test()
+UNIT_TEST(diff_patch, merge_deletions)
 {
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
   string desc2("I like oatmeal\nI like toast");
@@ -1516,18 +1514,6 @@ static void merge_deletions_test()
     dump_incorrect_merge (gm, m2, "merge_deletion 2");
   BOOST_CHECK(gm == m2);
 }
-
-
-void add_diff_patch_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&merge_prepend_test));
-  suite->add(BOOST_TEST_CASE(&merge_append_test));
-  suite->add(BOOST_TEST_CASE(&merge_additions_test));
-  suite->add(BOOST_TEST_CASE(&merge_deletions_test));
-  suite->add(BOOST_TEST_CASE(&randomizing_merge_test));
-}
-
 
 #endif // BUILD_UNIT_TESTS
 

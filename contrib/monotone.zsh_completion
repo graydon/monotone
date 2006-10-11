@@ -87,7 +87,7 @@ _mtn_add() {
 (( $+functions[_mtn_annotate] )) ||
 _mtn_annotate() {
     _arguments -s : \
-	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'\
 	'--brief[print a brief version of the normal output]'\
 	'(*)*:file to annotate:_mtn_files_known'
 }
@@ -96,7 +96,7 @@ _mtn_annotate() {
 _mtn_approve() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
-	'(*)*:revision:_mtn_revisions'
+	'(*)*:revision:_mtn_selector_or_revision'
 }
 
 (( $+functions[_mtn_attr] )) ||
@@ -126,14 +126,14 @@ _mtn_automate() {
 (( $+functions[_mtn_cat] )) ||
 _mtn_cat() {
     _arguments -s : \
-	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'\
 	'*:file to cat:_mtn_files_known'
 }
 
 (( $+functions[_mtn_cert] )) ||
 _mtn_cert() {
     _arguments -s : \
-	'1:revision:_mtn_revisions'\
+	'1:revision:_mtn_selector_or_revision'\
 	'2:certname: '\
 	'3:certval: '
 }
@@ -142,7 +142,7 @@ _mtn_cert() {
 _mtn_checkout() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
-	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'\
 	'(*)*:directory for checkout: '
 }
 
@@ -164,7 +164,7 @@ _mtn_co() {
 (( $+functions[_mtn_comment] )) ||
 _mtn_comment() {
     _arguments -s : \
-	'1:revision:_mtn_revisions'\
+	'1:revision:_mtn_selector_or_revision'\
 	'2:comment: '
 }
 
@@ -205,7 +205,7 @@ _mtn_db() {
 (( $+functions[_mtn_diff] )) ||
 _mtn_diff() {
     _arguments -s : \
-	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'\
 	'--depth=[limit the number of levels of directories to descend]:depth: '\
 	'--exclude=[leave out anything described by its argument]:file:_mtn_files_known'\
 	{'(--unified)-u','(-u)--unified'}'[use unified diff format]'\
@@ -220,7 +220,7 @@ _mtn_diff() {
 _mtn_disapprove() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
-	'(*)*:revision to disapprove:_mtn_revisions'
+	'(*)*:revision to disapprove:_mtn_selector_or_revision'
 }
 
 (( $+functions[_mtn_drop] )) ||
@@ -240,8 +240,8 @@ _mtn_dropkey() {
 (( $+functions[_mtn_explicit_merge] )) ||
 _mtn_explicit_merge() {
     _arguments -s : \
-	'1:left revision:_mtn_revisions'\
-	'2:right revision:_mtn_revisions'\
+	'1:left revision:_mtn_selector_or_revision'\
+	'2:right revision:_mtn_selector_or_revision'\
 	'3:dest branch:_mtn_branches'
 }
 
@@ -254,7 +254,7 @@ _mtn_heads() {
 (( $+functions[_mtn_log] )) ||
 _mtn_log() {
     _arguments -s : \
-	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'\
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'\
 	'--last=[limit log output to the last number of entries]:last: ' \
 	'--next=[limit log output to the next number of entries]:next: ' \
 	'--brief[print a brief version of the normal output]'\
@@ -358,16 +358,16 @@ _mtn_sync() {
 }
 
 (( $+functions[_mtn_tag] )) ||
-q_mtn_tag() {
+_mtn_tag() {
     _arguments -s : \
-	'1:revision to tag:_mtn_revisions'\
+	'1:revision to tag:_mtn_selector_or_revision'\
 	'(1)*:tagname: '
 }
 
 (( $+functions[_mtn_result] )) ||
 _mtn_testresult() {
     _arguments -s : \
-	'1:revision:_mtn_revisions'\
+	'1:revision:_mtn_selector_or_revision'\
 	'2:result:(pass fail true false yes no 1 0)'
 }
 
@@ -375,7 +375,7 @@ _mtn_testresult() {
 _mtn_update() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
-	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_revisions'
+	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'
 }
 
 # define completion functions for files maintained by monotone.
@@ -411,6 +411,16 @@ _mtn_branches() {
     compadd -- $(mtn ls branches 2>/dev/null)
 }
 
+(( $+functions[_mtn_tags] )) ||
+_mtn_tags() {
+    compadd -- ${(u)${(f)"$(mtn ls tags 2>/dev/null)"}%% *}
+}
+
+(( $+functions[_mtn_public_keys] )) ||
+_mtn_public_keys() {
+    compadd -- ${${${(@M)${(f)"$(mtn ls keys 2>/dev/null)"}:#*@*}#* }%%* *}
+}
+
 (( $+functions[_mtn_keys] )) ||
 _mtn_keys() {
     if [[ -n $PREFIX ]]; then
@@ -425,6 +435,25 @@ _mtn_revisions() {
 	compadd -X "(prefix of a) revision id" -n \
 	    -- $(mtn complete revision $PREFIX 2>/dev/null)
     fi
+}
+
+(( $+functions[_mtn_selectors] )) ||
+_mtn_selectors() {
+    _values -s / -S : selector \
+	'*b[branches]:branch:_mtn_branches' \
+	'*h[branch heads]:branch head:_mtn_branches' \
+	'*t[tags]:tag:_mtn_tags' \
+	'*a[authors]:author:_mtn_public_keys' \
+	'*d[date]:date:' \
+	'*e[earlier than]:date:' \
+	'*l[later than]:date:' \
+	'*i[revision id]:revision id:_mtn_revisions'
+}
+
+(( $+functions[_mtn_selector_or_revision] )) ||
+_mtn_selector_or_revision() {
+    _alternative 'selector:selector:_mtn_selectors' \
+	'revision:revision:_mtn_revisions'
 }
 
 # helper function, determines cwd relative to the root of the workspace

@@ -1129,7 +1129,7 @@ insert_into_roster(roster_t & child_roster,
   pth.split(sp);
 
   E(!child_roster.has_node(sp),
-    F("Path %s added to child roster multiple times\n") % pth);
+    F("Path %s added to child roster multiple times") % pth);
 
   dirname_basename(sp, dirname, basename);
 
@@ -1142,7 +1142,7 @@ insert_into_roster(roster_t & child_roster,
         if (child_roster.has_node(tmp_pth))
           {
             E(is_dir_t(child_roster.get_node(tmp_pth)),
-              F("Directory for path %s cannot be added, as there is a file in the way\n") % pth);
+              F("Directory for path %s cannot be added, as there is a file in the way") % pth);
           }
         else
           child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
@@ -1156,7 +1156,7 @@ insert_into_roster(roster_t & child_roster,
         F("Path %s cannot be added, as there is a directory in the way") % sp);
       file_t f = downcast_to_file_t(n);
       E(f->content == fid,
-        F("Path %s added twice with differing content\n") % sp);
+        F("Path %s added twice with differing content") % sp);
     }
   else
     child_roster.attach_node(child_roster.create_file_node(fid, nis), sp);
@@ -1832,8 +1832,7 @@ void calculate_ident(revision_t const & cs,
 #include "unit_tests.hh"
 #include "sanity.hh"
 
-static void
-test_find_old_new_path_for()
+UNIT_TEST(revision, find_old_new_path_for)
 {
   map<split_path, split_path> renames;
   split_path foo, foo_bar, foo_baz, quux, quux_baz;
@@ -1857,14 +1856,6 @@ test_find_old_new_path_for()
   I(foo_baz == find_old_path_for(renames, foo_bar));
   I(foo_bar == find_new_path_for(renames, foo_baz));
 }
-
-void
-add_revision_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&test_find_old_new_path_for));
-}
-
 
 #endif // BUILD_UNIT_TESTS
 

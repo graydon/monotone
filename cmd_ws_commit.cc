@@ -119,7 +119,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   check_restricted_cset(old_roster, excluded);
 
   node_map const & nodes = old_roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); 
+  for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
       node_id nid = i->first;
@@ -200,7 +200,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   app.db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
-    F("revision '%s' has %d changesets, cannot invert\n") % r % rev.edges.size());
+    F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
   cert_value branchname;
   guess_branch(r, app, branchname);
@@ -231,8 +231,8 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_in_branch(inv_id, branchname, app, dbw);
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, 
-                            (FL("disapproval of revision '%s'") 
+    cert_revision_changelog(inv_id,
+                            (FL("disapproval of revision '%s'")
                              % r).str(), app, dbw);
     guard.commit();
   }
@@ -261,7 +261,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
       app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin(); 
+    for (vector<utf8>::const_iterator i = args.begin();
          i != args.end(); ++i)
       {
         split_path sp;
@@ -295,7 +295,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
       app.work.find_missing(current_roster_shape, mask, paths);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin(); 
+    for (vector<utf8>::const_iterator i = args.begin();
          i != args.end(); ++i)
       {
         split_path sp;
@@ -372,7 +372,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster, 
+  make_restricted_csets(old_roster, new_roster,
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
@@ -386,7 +386,9 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
-      cout << (F("Changes against parent %s:") % parent).str() << "\n";
+      // A colon at the end of this string looked nicer, but it made
+      // double-click copying from terminals annoying.
+      cout << (F("Changes against parent %s") % parent).str() << "\n";
 
       cset const & cs = edge_changes(*i);
 
@@ -417,7 +419,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     }
 }
 
-CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
+CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
     N_("check out a revision from database into directory.\n"
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
@@ -435,12 +437,12 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   if (app.opts.revision_selectors.size() == 0)
     {
       // use branch head revision
-      N(!app.opts.branch_name().empty(), 
+      N(!app.opts.branch_name().empty(),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
       get_branch_heads(app.opts.branch_name(), app, heads);
-      N(heads.size() > 0, 
+      N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branch_name);
       if (heads.size() > 1)
         {
@@ -478,7 +480,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(certs.size() != 0, F("revision %s is not a member of branch %s")
         % ident % app.opts.branch_name);
     }
-  
+
   // we do this part of the checking down here, because it is legitimate to
   // do
   //  $ mtn co -r h:net.venge.monotone
@@ -487,11 +489,11 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   // until after the guess_branch() call above:
   {
     bool checkout_dot = false;
-    
+
     if (args.size() == 0)
       {
         // No checkout dir specified, use branch name for dir.
-        N(!app.opts.branch_name().empty(), 
+        N(!app.opts.branch_name().empty(),
           F("you must specify a destination directory"));
         dir = system_path(app.opts.branch_name());
       }
@@ -502,7 +504,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         if (idx(args, 0) == utf8("."))
           checkout_dot = true;
       }
-    
+
     if (!checkout_dot)
       require_path_is_nonexistent
         (dir, F("checkout directory '%s' already exists") % dir);
@@ -522,7 +524,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   app.work.put_work_rev(workrev);
 
   node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); 
+  for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
       node_t node = i->second;
@@ -604,7 +606,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             {
               attr_key a_key = idx(args, 2)();
               N(node->attrs.find(a_key) != node->attrs.end(),
-                F("Path '%s' does not have attribute '%s'\n")
+                F("Path '%s' does not have attribute '%s'")
                 % path % a_key);
               node->attrs[a_key] = make_pair(false, "");
             }
@@ -628,8 +630,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
                i != node->attrs.end(); ++i)
             if (i->second.first)
               {
-                cout << path << " : " 
-                     << i->first << "=" 
+                cout << path << " : "
+                     << i->first << "="
                      << i->second.second << "\n";
                 has_any_live_attrs = true;
               }
@@ -641,11 +643,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           attr_key a_key = idx(args, 2)();
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
-            cout << path << " : " 
-                 << i->first << "=" 
+            cout << path << " : "
+                 << i->first << "="
                  << i->second.second << "\n";
           else
-            cout << (F("No attribute '%s' on path '%s'") 
+            cout << (F("No attribute '%s' on path '%s'")
                      % a_key % path) << "\n";
         }
       else
@@ -680,7 +682,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster, 
+  make_restricted_csets(old_roster, new_roster,
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
@@ -702,6 +704,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     branchname = app.opts.branch_name();
   else
     guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
+
+  {
+    // fail early if there isn't a key
+    rsa_keypair_id key;
+    get_user_key(key, app);
+  }
 
   P(F("beginning commit on branch '%s'") % branchname);
   L(FL("new manifest '%s'\n"
@@ -747,7 +755,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   revision_data new_rev;
   write_revision(restricted_rev, new_rev);
 
-  app.lua.hook_validate_commit_message(log_message, new_rev,
+  app.lua.hook_validate_commit_message(log_message, new_rev, branchname,
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
@@ -771,7 +779,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         // process file deltas or new files
         cset const & cs = edge_changes(edge);
 
-        for (map<split_path, pair<file_id, file_id> >::const_iterator 
+        for (map<split_path, pair<file_id, file_id> >::const_iterator
                i = cs.deltas_applied.begin();
              i != cs.deltas_applied.end(); ++i)
           {
@@ -807,12 +815,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
             else
               // If we don't err out here, our packet writer will
               // later.
-              E(false, 
+              E(false,
                 F("Your database is missing version %s of file '%s'")
                 % old_content % path);
           }
 
-        for (map<split_path, file_id>::const_iterator 
+        for (map<split_path, file_id>::const_iterator
                i = cs.files_added.begin();
              i != cs.files_added.end(); ++i)
           {
@@ -855,7 +863,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   // we just checked in.
   revision_t remaining;
   make_revision_for_workspace(restricted_rev_id, excluded, remaining);
-  
+
   // small race condition here...
   app.work.put_work_rev(remaining);
   P(F("committed revision %s") % restricted_rev_id);
@@ -898,7 +906,7 @@ ALIAS(ci, commit);
 
 
 CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
-    N_("setup a new workspace directory, default to current"), 
+    N_("setup a new workspace directory, default to current"),
     option::branch)
 {
   if (args.size() > 1)
@@ -930,7 +938,7 @@ CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
 
   if (args.size() == 1)
     go_to_workspace(system_path(idx(args, 0)));
-  
+
   app.work.migrate_ws_format();
 }
 

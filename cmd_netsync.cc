@@ -4,6 +4,7 @@
 #include "globish.hh"
 #include "keys.hh"
 #include "cert.hh"
+#include "uri.hh"
 
 #include <fstream>
 
@@ -26,6 +27,7 @@ process_netsync_args(string const & name,
                      utf8 & include_pattern, utf8 & exclude_pattern,
                      bool use_defaults,
                      bool serve_mode,
+                     bool needs_key,
                      app_state & app)
 {
   // handle host argument
@@ -51,6 +53,23 @@ process_netsync_args(string const & name,
           app.db.get_var(default_server_key, addr_value);
           addr = utf8(addr_value());
           L(FL("using default server address: %s") % addr);
+        }
+    }
+
+  // if a key is required and one isn't specified, we should fail.
+  if (needs_key)
+    {
+      uri u;
+      bool transport_requires_auth(true);
+      if (parse_uri(addr(), u))
+        {
+          transport_requires_auth = app.lua.hook_use_transport_auth(u);
+        }
+      if (transport_requires_auth)
+        {
+          rsa_keypair_id key;
+          get_user_key(key, app);
+          app.signing_key = key;
         }
     }
 
@@ -102,11 +121,9 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     option::set_default % option::exclude % option::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, 
+                       true, false, true, app);
 
-  rsa_keypair_id key;
-  get_user_key(key, app);
-  app.opts.signing_key = key;
 
   run_netsync_protocol(client_voice, source_role, addr,
                        include_pattern, exclude_pattern, app);
@@ -117,7 +134,8 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     option::set_default % option::exclude)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, 
+                       true, false, false, app);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -131,11 +149,8 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     option::set_default % option::exclude % option::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
-
-  rsa_keypair_id key;
-  get_user_key(key, app);
-  app.opts.signing_key = key;
+  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, 
+                       true, false, true, app);
 
   run_netsync_protocol(client_voice, source_and_sink_role, addr,
                        include_pattern, exclude_pattern, app);
@@ -202,7 +217,8 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
   app.db.ensure_open();
 
   utf8 dummy_addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, false, true, app);
+  process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, 
+                       false, true, false, app);
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind.address,
                        include_pattern, exclude_pattern, app);
 }

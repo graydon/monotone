@@ -181,16 +181,17 @@ CMD(trusted, N_("key and cert"),
   copy(signers.begin(), signers.end(),
        ostream_iterator<rsa_keypair_id>(all_signers, " "));
 
-  cout << F("if a cert on: %s\n"
+  cout << (F("if a cert on: %s\n"
             "with key: %s\n"
             "and value: %s\n"
             "was signed by: %s\n"
-            "it would be: %s\n")
+            "it would be: %s")
     % ident
     % name
     % value
     % all_signers.str()
-    % (trusted ? _("trusted") : _("UNtrusted"));
+    % (trusted ? _("trusted") : _("UNtrusted")))
+    << "\n"; // final newline is kept out of the translation
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),

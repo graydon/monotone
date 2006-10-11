@@ -280,6 +280,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\win32\cputime.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\cset.cc"
 				>
 			</File>
@@ -317,6 +321,10 @@
 			</File>
 			<File
 				RelativePath="..\globish.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\graph.cc"
 				>
 			</File>
 			<File
@@ -547,6 +555,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\roster_delta.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\roster_merge.cc"
 				>
 			</File>
@@ -560,6 +572,10 @@
 			</File>
 			<File
 				RelativePath="..\selectors.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\sha1.cc"
 				>
 			</File>
 			<File
@@ -596,6 +612,10 @@
 			</File>
 			<File
 				RelativePath="..\work.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\work_migration.cc"
 				>
 			</File>
 			<File
@@ -693,6 +713,10 @@
 			</File>
 			<File
 				RelativePath="..\globish.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\graph.hh"
 				>
 			</File>
 			<File
@@ -856,6 +880,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\roster_delta.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\roster_merge.hh"
 				>
 			</File>
@@ -877,6 +905,14 @@
 			</File>
 			<File
 				RelativePath="..\selectors.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\sha1.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\sha1_engine.hh"
 				>
 			</File>
 			<File

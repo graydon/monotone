@@ -37,6 +37,7 @@
 #include "option.hh"
 #include "paths.hh"
 #include "sha1.hh"
+#include "simplestring_xform.hh"
 
 using std::cout;
 using std::cerr;
@@ -85,7 +86,7 @@ using boost::shared_ptr;
 // Wrapper class to ensure Botan is properly initialized and deinitialized.
 struct botan_library
 {
-  botan_library() { 
+  botan_library() {
     Botan::Init::initialize();
     Botan::set_default_allocator("malloc");
     hook_botan_sha1();
@@ -257,7 +258,7 @@ cpp_main(int argc, char ** argv)
     }
   catch (option_error const & e)
     {
-      N(false, F("%s") % e.what());
+      N(false, i18n_format("%s") % e.what());
     }
   catch (usage & u)
     {

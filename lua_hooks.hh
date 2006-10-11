@@ -120,6 +120,7 @@ public:
   // validation hooks
   bool hook_validate_commit_message(utf8 const & message,
                                     revision_data const & new_rev,
+                                    cert_value const & branchname,
                                     bool & validated,
                                     std::string & reason);
 

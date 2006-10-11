@@ -66,10 +66,8 @@ namespace commands
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
-    static bool first(true);
-    if (first)
+    if (cmds == NULL)
       cmds = new map<string, command *>;
-    first = false;
     (*cmds)[n] = this;
   }
   command::~command() {}
@@ -141,7 +139,7 @@ namespace commands
       }
 
     // more than one matched command
-    string err = (F("command '%s' has multiple ambiguous expansions:\n") % cmd).str();
+    string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
     for (vector<string>::iterator i = matched.begin();
          i != matched.end(); ++i)
       err += (*i + "\n");
@@ -425,10 +423,10 @@ complete(app_state & app,
 
   if (completions.size() > 1)
     {
-      string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
+      string err = (F("selection '%s' has multiple ambiguous expansions:") % str).str();
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (describe_revision(app, *i) + "\n");
+        err += ("\n" + describe_revision(app, *i));
       N(completions.size() == 1, i18n_format(err));
     }
 

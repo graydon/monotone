@@ -800,7 +800,12 @@ AUTOMATE(inventory, "")
 
       switch (i->second.node_state)
         {
-        case inventory_item::UNCHANGED_NODE: output << " "; break;
+        case inventory_item::UNCHANGED_NODE:
+          if (i->second.post_state == inventory_item::ADDED_PATH)
+            output << "P";
+          else
+            output << " ";
+          break;
         case inventory_item::PATCHED_NODE: output << "P"; break;
         case inventory_item::UNKNOWN_NODE: output << "U"; break;
         case inventory_item::IGNORED_NODE: output << "I"; break;
@@ -1536,8 +1541,8 @@ AUTOMATE(get_content_changed, N_("REV FILE"))
   marking_t mark = m->second;
 
   basic_io::printer prt;
-  for (set<revision_id>::const_iterator i = mark.parent_name.begin();
-       i != mark.parent_name.end(); ++i)
+  for (set<revision_id>::const_iterator i = mark.file_content.begin();
+       i != mark.file_content.end(); ++i)
     {
       basic_io::stanza st;
       revision_id old_ident = i->inner();

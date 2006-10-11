@@ -199,7 +199,7 @@ app_state::set_root(system_path const & path)
   require_path_is_directory
     (path,
      F("search root '%s' does not exist") % path,
-     F("search root '%s' is not a directory\n") % path);
+     F("search root '%s' is not a directory") % path);
   opts.root = path;
   L(FL("set search root to %s") % opts.root);
 }

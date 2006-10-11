@@ -44,7 +44,7 @@ namespace commands
     virtual ~command();
     virtual std::string params();
     virtual std::string desc();
-    virtual void exec(app_state & app, 
+    virtual void exec(app_state & app,
                       std::vector<utf8> const & args) = 0;
   };
 };
@@ -96,8 +96,8 @@ complete(app_state & app,
     F("partial id '%s' does not have an expansion") % str);
   if (completions.size() > 1)
     {
-      std::string err = 
-        (F("partial id '%s' has multiple ambiguous expansions:\n") 
+      std::string err =
+        (F("partial id '%s' has multiple ambiguous expansions:")
          % str).str();
       for (typename std::set<ID>::const_iterator i = completions.begin();
             i != completions.end(); ++i)
@@ -186,7 +186,7 @@ namespace commands {                                                 \
 }                                                                    \
 std::string commands::cmd_ ## C::desc()                              \
 {                                                                    \
-  std:string result = _(desc_.c_str());                              \
+  std::string result = _(desc_.c_str());                             \
   result += "\n";                                                    \
   result += (F("Alias for %s") % #realcommand).str();                \
   return result;                                                     \
