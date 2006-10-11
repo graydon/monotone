@@ -1,3 +1,10 @@
+#define COPT(name, string, type, default_, description) \
+  COPTVAR(type, name, default_)                         \
+  COPTION(name, name, has_arg<type>(), string, description)
+#define GOPT(name, string, type, default_, description) \
+  GOPTVAR(type, name, default_)                         \
+  GOPTION(name, name, has_arg<type>(), string, description)
+
 GOPT(args, "", std::vector<utf8>, , "")
 #ifdef option_bodies
 {
@@ -5,8 +12,7 @@ GOPT(args, "", std::vector<utf8>, , "")
 }
 #endif
 
-COPT(author, "author", utf8, ,
-     gettext_noop("override author for commit"))
+COPT(author, "author", utf8, , gettext_noop("override author for commit"))
 #ifdef option_bodies
 {
   author = arg;
@@ -30,9 +36,24 @@ COPT(bind, "bind", bind_opt, ,
   bind.set(arg);
 }
 #endif
+COPT(no_transport_auth, "no-transport-auth", bool, false,
+     gettext_noop("disable transport authentication"))
+#ifdef option_bodies
+{
+  no_transport_auth = true;
+}
+#endif
+COPT(bind_stdio, "stdio", bool, false, gettext_noop("serve netsync on stdio"))
+#ifdef option_bodies
+{
+  // Yes, this sets a field in the structure belonging to the "bind" option.
+  bind.stdio = true;
+}
+#endif
 
-COPT(branch_name, "branch,b", utf8, ,
-     gettext_noop("select branch cert for operation"))
+COPTVAR(utf8, branch_name, )
+COPTION(branch, branch, true, "branch,b",
+        gettext_noop("select branch cert for operation"))
 #ifdef option_bodies
 {
   branch_name = utf8(arg);
@@ -86,11 +107,10 @@ GOPT(dbname, "db,d", system_path, , gettext_noop("set name of database"))
 }
 #endif
 
-GOPT(debug, "debug", bool, false,
-     gettext_noop("print debug log to stderr while running"))
+GOPTION(debug, debug, false, "debug",
+        gettext_noop("print debug log to stderr while running"))
 #ifdef option_bodies
 {
-  debug = true;
   global_sanity.set_debug();
 }
 #endif
@@ -105,26 +125,46 @@ COPT(depth, "depth", long, -1,
 }
 #endif
 
-COPT(external_diff_args, "diff-args", std::string, ,
-     gettext_noop("argument to pass external diff hook"))
+
+COPTSET(diff_options)
+
+COPTVAR(std::string, external_diff_args, )
+COPTION(diff_options, external_diff_args, true, "diff-args",
+        gettext_noop("argument to pass external diff hook"))
 #ifdef option_bodies
 {
   external_diff_args = arg;
 }
 #endif
 
-COPT(diff_format, "diff-type", diff_type, unified_diff,
-     gettext_noop("argument to pass external diff hook"))
+COPTVAR(diff_type, diff_format, unified_diff)
+COPTION(diff_options, diff_context, false, "context",
+        gettext_noop("use context diff format"))
 #ifdef option_bodies
 {
-  if (arg == _("context"))
-    diff_format = context_diff;
-  else if (arg == _("external"))
-    diff_format = external_diff;
-  else if (arg == _("unified"))
-    diff_format = unified_diff;
-  else
-    throw bad_arg_internal(F("unknown diff type").str());
+  diff_format = context_diff;
+}
+#endif
+COPTION(diff_options, diff_external, false, "external",
+        gettext_noop("use external diff hook for generating diffs"))
+#ifdef option_bodies
+{
+  diff_format = external_diff;
+}
+#endif
+COPTION(diff_options, diff_unified, false, "unified",
+        gettext_noop("use unified diff format"))
+#ifdef option_bodies
+{
+  diff_format = unified_diff;
+}
+#endif
+COPTVAR(bool, no_show_encloser, false)
+COPTION(diff_options, no_show_encloser, false, "no-show-encloser",
+     gettext_noop("do not show the function containing each block of changes"))
+#ifdef option_bodies
+{
+  no_show_encloser = true;
 }
 #endif
 
@@ -135,33 +175,34 @@ COPT(diffs, "diffs", bool, false, gettext_noop("print diffs along with logs"))
 }
 #endif
 
-COPT(drop_attr, "drop-attr", std::set<std::string>, ,
-     gettext_noop("when rosterifying, drop attrs entries with the given key"))
+COPTVAR(std::set<std::string>, attrs_to_drop, )
+COPTION(drop_attr, drop_attr, true, "drop-attr",
+        gettext_noop("when rosterifying, drop attrs entries with the given key"))
 #ifdef option_bodies
 {
-  drop_attr.insert(arg);
+  attrs_to_drop.insert(arg);
 }
 #endif
 
-GOPT(dump, "dump", system_path, ,
-     gettext_noop("file to dump debugging log to, on failure"))
+GOPTION(dump, dump, true, "dump",
+        gettext_noop("file to dump debugging log to, on failure"))
 #ifdef option_bodies
 {
-  dump = system_path(arg);
-  global_sanity.filename = system_path(dump).as_external();
+  global_sanity.filename = system_path(arg).as_external();
 }
 #endif
 
-COPT(exclude, "exclude", std::vector<utf8>, ,
-     gettext_noop("leave out anything described by its argument"))
+COPTVAR(std::vector<utf8>, exclude_patterns, )
+COPTION(exclude, exclude, true, "exclude",
+        gettext_noop("leave out anything described by its argument"))
 #ifdef option_bodies
 {
-  exclude.push_back(utf8(arg));
+  exclude_patterns.push_back(utf8(arg));
 }
 #endif
 
 COPT(execute, "execute,e", bool, false,
-     gettext_noop("perform the associated file operation"))
+        gettext_noop("perform the associated file operation"))
 #ifdef option_bodies
 {
   execute = true;
@@ -176,16 +217,15 @@ GOPT(full_version, "full-version", bool, false,
 }
 #endif
 
-GOPT(help, "help,h", bool, false,
-     gettext_noop("display help message"))
+GOPT(help, "help,h", bool, false, gettext_noop("display help message"))
 #ifdef option_bodies
 {
   help = true;
 }
 #endif
 
-GOPT(signing_key, "key,k", rsa_keypair_id, ,
-     gettext_noop("set key for signatures"))
+GOPTVAR(rsa_keypair_id, signing_key, )
+GOPTION(key, key, true, "key,k", gettext_noop("set key for signatures"))
 #ifdef option_bodies
 {
   internalize_rsa_keypair_id(utf8(arg), signing_key);
@@ -200,13 +240,14 @@ GOPT(key_dir, "keydir", system_path, ,
 }
 #endif
 
-COPT(key_to_push, "key-to-push", std::vector<rsa_keypair_id>, ,
-     gettext_noop("push the specified key even if it hasn't signed anything"))
+COPTVAR(std::vector<rsa_keypair_id>, keys_to_push, )
+COPTION(key_to_push, key_to_push, true, "key-to-push",
+        gettext_noop("push the specified key even if it hasn't signed anything"))
 #ifdef option_bodies
 {
   rsa_keypair_id keyid;
   internalize_rsa_keypair_id(utf8(arg), keyid);
-  key_to_push.push_back(keyid);
+  keys_to_push.push_back(keyid);
 }
 #endif
 
@@ -220,25 +261,25 @@ COPT(last, "last", long, -1,
 }
 #endif
 
-GOPT(log, "log", system_path, ,
-     gettext_noop("file to write the log to"))
+GOPTION(log, log, true, "log", gettext_noop("file to write the log to"))
 #ifdef option_bodies
 {
-  log = system_path(arg);
-  ui.redirect_log_to(log);
+  ui.redirect_log_to(system_path(arg));
 }
 #endif
 
-COPT(message, "message,m", utf8, ,
-     gettext_noop("set commit changelog message"))
+COPTSET(messages)
+COPTVAR(utf8, message, )
+COPTVAR(utf8, msgfile, )
+COPTION(messages, message, true, "message,m",
+        gettext_noop("set commit changelog message"))
 #ifdef option_bodies
 {
-  message = arg;
+  message = utf8(arg);
 }
 #endif
-
-COPT(msgfile, "message-file", utf8, ,
-     gettext_noop("set filename containing commit changelog message"))
+COPTION(messages, msgfile, true, "message-file",
+        gettext_noop("set filename containing commit changelog message"))
 #ifdef option_bodies
 {
   msgfile = utf8(arg);
@@ -287,27 +328,11 @@ gettext_noop("do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"))
 }
 #endif
 
-COPT(no_show_encloser, "no-show-encloser", bool, false,
-     gettext_noop("do not show the function containing each block of changes"))
-#ifdef option_bodies
-{
-  no_show_encloser = true;
-}
-#endif
-
 GOPT(nostd, "nostd", bool, false,
      gettext_noop("do not load standard lua hooks"))
 #ifdef option_bodies
 {
   nostd = true;
-}
-#endif
-
-COPT(no_transport_auth, "no-transport-auth", bool, false,
-     gettext_noop("disable transport authentication"))
-#ifdef option_bodies
-{
-  no_transport_auth = true;
 }
 #endif
 
@@ -355,11 +380,12 @@ COPT(recursive, "recursive,R", bool, false,
 }
 #endif
 
-COPT(revision, "revision,r", std::vector<utf8>, ,
+COPTVAR(std::vector<utf8>, revision_selectors, )
+COPTION(revision, revision, true, "revision,r",
      gettext_noop("select revision id for operation"))
 #ifdef option_bodies
 {
-  revision.push_back(arg);
+  revision_selectors.push_back(arg);
 }
 #endif
 
@@ -379,14 +405,6 @@ COPT(set_default, "set-default", bool, false,
 }
 #endif
 
-COPT(bind_stdio, "stdio", bool, false, gettext_noop("serve netsync on stdio"))
-#ifdef option_bodies
-{
-  // Yes, this sets a field in the structure belonging to the "bind" option.
-  bind.stdio = true;
-}
-#endif
-
 GOPT(ticker, "ticker", std::string, ,
      gettext_noop("set ticker style (count|dot|none)"))
 #ifdef option_bodies
@@ -399,7 +417,7 @@ GOPT(ticker, "ticker", std::string, ,
   else if (ticker == "count")
     ui.set_tick_writer(new tick_write_count);
   else
-    help = true;
+    throw bad_arg_internal(F("argument must be 'none', 'dot', or 'count'").str());
 }
 #endif
 

@@ -3069,8 +3069,8 @@ session::rebuild_merkle_trees(app_state & app,
 
   // Add any keys specified on the command line.
   for (vector<rsa_keypair_id>::const_iterator key
-         = app.opts.key_to_push.begin();
-       key != app.opts.key_to_push.end(); ++key)
+         = app.opts.keys_to_push.begin();
+       key != app.opts.keys_to_push.end(); ++key)
     {
       if (inserted_keys.find(*key) == inserted_keys.end())
         {

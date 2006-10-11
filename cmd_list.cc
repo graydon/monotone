@@ -238,7 +238,7 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     inc = idx(args,0);
   else if (args.size() > 1)
     throw usage(name);
-  combine_and_check_globish(app.opts.exclude, exc);
+  combine_and_check_globish(app.opts.exclude_patterns, exc);
   globish_matcher match(inc, exc);
   vector<string> names;
   app.db.get_branches(names);
@@ -347,7 +347,7 @@ ls_known(app_state & app, vector<utf8> const & args)
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.opts.exclude),
+                        args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         new_roster, app);
 
@@ -374,7 +374,7 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
   app.require_workspace();
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(roots, args_to_paths(app.opts.exclude),
+  path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth, app);
   path_set unknown, ignored;
 
@@ -401,7 +401,7 @@ ls_missing(app_state & app, vector<utf8> const & args)
   roster_t current_roster_shape;
   app.work.get_current_roster_shape(current_roster_shape, nis);
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.opts.exclude),
+                        args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         current_roster_shape, app);
 
@@ -429,7 +429,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.opts.exclude), 
+                        args_to_paths(app.opts.exclude_patterns), 
                         app.opts.depth,
                         old_roster, new_roster, app);
 

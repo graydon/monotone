@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -40,6 +42,70 @@ struct bad_arg_internal
   string reason;
   bad_arg_internal(string const & str = "") : reason(str) {}
 };
+
+
+
+map<option::optid, set<option::optid> > & option_groups()
+{
+  static map<option::optid, set<option::optid> > val;
+  bool first(true);
+  if (first)
+    {
+#     define COPTSET(name)
+#     define GOPTSET(name)
+#     define COPTVAR(type, name, default_)
+#     define GOPTVAR(type, name, default_)
+#     define COPTION(optset, name, hasarg, optstring, description) \
+        val[option:: name].insert(option:: name);          \
+        val[option:: name].insert(option:: optset);
+#     define GOPTION(optset, name, hasarg, optstring, description) \
+        val[option:: name].insert(option:: name);          \
+        val[option:: name].insert(option:: optset);
+#     define OPTSET_REL(parent, child) \
+        val[option:: child].insert(option:: parent);
+
+#     include "option_list.hh"
+
+#     undef COPTSET
+#     undef GOPTSET
+#     undef COPTVAR
+#     undef GOPTVAR
+#     undef COPTION
+#     undef GOPTION
+#     undef OPTSET_REL
+
+      first = false;
+    }
+  return val;
+}
+void note_relation(option::optid opt, option::optid group)
+{
+  option_groups()[opt].insert(group);
+}
+
+void option::optset::add(option::optid item)
+{
+  items.insert(item);
+}
+option::optset & option::optset::operator%(option::optid item)
+{
+  add(item);
+  return *this;
+}
+bool option::optset::contains(option::optid id) const
+{
+  set<option::optid> intersect;
+  set<option::optid> &groups = option_groups()[id];
+  set_intersection(items.begin(), items.end(),
+                   groups.begin(), groups.end(),
+                   std::inserter(intersect, intersect.begin()));
+  return !intersect.empty();
+}
+bool option::optset::empty() const
+{
+  return items.empty();
+}
+
 
 void bind_opt::set(string const & arg)
 {
@@ -113,82 +179,106 @@ void option::options::map_opt(void (option::options::*setter)(string const &),
 
 option::options::options()
 {
-# define GOPT(varname, optname, type, default_, description)        \
-    map_opt(&options::set_ ## varname, optname,                     \
-            option:: varname, has_arg<type>(),  description);       \
-    global_option.add( option:: varname );                          \
-    varname = type ( default_ );                                    \
-    varname ## _given = false;
-# define COPT(varname, optname, type, default_, description)        \
-    map_opt(&options::set_ ## varname, optname,                     \
-            option:: varname, has_arg<type>(),  description);       \
-    all_cmd_option.add( option:: varname );                         \
-    varname = type ( default_ );                                    \
-    varname ## _given = false;
+# define COPTSET(name) \
+    name ## _given = false;
+# define GOPTSET(name) \
+    name ## _given = false;
+# define COPTVAR(type, name, default_) \
+    name = type ( default_ );
+# define GOPTVAR(type, name, default_) \
+    name = type ( default_ );
+# define COPTION(optset, name, hasarg, optstring, description)     \
+    map_opt(&options::set_ ## name, optstring,             \
+            option:: name, hasarg,  description); \
+    all_cmd_option.add( option:: name );          \
+    name ## _given = false;
+# define GOPTION(optset, name, hasarg, optstring, description)     \
+    map_opt(&options::set_ ## name, optstring,             \
+            option:: name, hasarg,  description); \
+    global_option.add( option:: name );          \
+    name ## _given = false;
+# define OPTSET_REL(parent, child)
+
 # include "option_list.hh"
-# undef GOPT
-# undef COPT
+
+# undef COPTSET
+# undef GOPTSET
+# undef COPTVAR
+# undef GOPTVAR
+# undef COPTION
+# undef GOPTION
+# undef OPTSET_REL
 }
 
 void option::options::clear_cmd_options()
 {
-# define GOPT(varname, optname, type, default_, description)
-# define COPT(varname, optname, type, default_, description) \
-    varname = type ( default_ );                             \
-    varname ## _given = false;
+# define COPTSET(name) \
+    name ## _given = false;
+# define GOPTSET(name)
+# define COPTVAR(type, name, default_) \
+    name = type ( default_ );
+# define GOPTVAR(type, name, default_)
+# define COPTION(optset, name, hasarg, optstring, description) \
+    name ## _given = false;
+# define GOPTION(optset, name, hasarg, optstring, description)
+# define OPTSET_REL(parent, child)
+
 # include "option_list.hh"
-# undef GOPT
-# undef COPT
+
+# undef COPTSET
+# undef GOPTSET
+# undef COPTVAR
+# undef GOPTVAR
+# undef COPTION
+# undef GOPTION
+# undef OPTSET_REL
 }
 
 void option::options::clear_global_options()
 {
-# define GOPT(varname, optname, type, default_, description) \
-    varname = type ( default_ );                             \
-    varname ## _given = false;
-# define COPT(varname, optname, type, default_, description)
+# define COPTSET(name)
+# define GOPTSET(name) \
+    name ## _given = false;
+# define COPTVAR(type, name, default_)
+# define GOPTVAR(type, name, default_) \
+    name = type ( default_ );
+# define COPTION(optset, name, hasarg, optstring, description)
+# define GOPTION(optset, name, hasarg, optstring, description) \
+    name ## _given = false;
+# define OPTSET_REL(parent, child)
+
 # include "option_list.hh"
-# undef GOPT
-# undef COPT
+
+# undef COPTSET
+# undef GOPTSET
+# undef COPTVAR
+# undef GOPTVAR
+# undef COPTION
+# undef GOPTION
+# undef OPTSET_REL
 }
 
-#define GOPT(varname, optname, type, default_, description)       \
-  void option::options::set_ ## varname (std::string const & arg) \
-  {                                                               \
-    varname ## _given = true;                                     \
-    try {set_ ## varname ## _helper (arg); }                      \
-    catch (boost::bad_lexical_cast)                               \
-    { throw bad_arg( #varname, arg); }                            \
-    catch (bad_arg_internal & e)                                  \
-    {                                                             \
-      if (e.reason == "")                                         \
-        throw bad_arg( #varname, arg);                            \
-      else                                                        \
-        throw bad_arg( #varname, arg, e.reason);                  \
-    }                                                             \
-  }                                                               \
-  void option::options::set_ ## varname ## _helper (string const & arg)
-#define COPT(varname, optname, type, default_, description)       \
-  void option::options::set_ ## varname (std::string const & arg) \
-  {                                                               \
-    varname ## _given = true;                                     \
-    try {set_ ## varname ## _helper (arg); }                      \
-    catch (boost::bad_lexical_cast)                               \
-    { throw bad_arg( #varname, arg); }                            \
-    catch (bad_arg_internal & e)                                  \
-    {                                                             \
-      if (e.reason == "")                                         \
-        throw bad_arg( #varname, arg);                            \
-      else                                                        \
-        throw bad_arg( #varname, arg, e.reason);                  \
-    }                                                             \
-  }                                                               \
-  void option::options::set_ ## varname ## _helper (string const & arg)
+# define COPTSET(name)
+# define GOPTSET(name)
+# define COPTVAR(type, name, default_)
+# define GOPTVAR(type, name, default_)
+# define COPTION(optset, name, hasarg, optstring, description) \
+  void option::options::set_ ## name (std::string const & arg)
+# define GOPTION(optset, name, hasarg, optstring, description) \
+  void option::options::set_ ## name (std::string const & arg)
+# define OPTSET_REL(parent, child)
+
 #define option_bodies
-#include "option_list.hh"
-#undef GOPT
-#undef COPT
+# include "option_list.hh"
 #undef option_bodies
+
+# undef COPTSET
+# undef GOPTSET
+# undef COPTVAR
+# undef GOPTVAR
+# undef COPTION
+# undef GOPTION
+# undef OPTSET_REL
 
 option::options::opt const &
 option::options::getopt(string const & name, optset const & allowed)
@@ -203,10 +293,70 @@ option::options::getopt(string const & name, optset const & allowed)
     return i->second;
 }
 
+void
+option::options::note_given(optid id)
+{
+  static map<optid, bool options::*> givens;
+  static bool first(true);
+  if (first)
+    {
+#     define COPTSET(name) \
+        givens[option:: name] = &options:: name ## _given;
+#     define GOPTSET(name) \
+        givens[option:: name] = &options:: name ## _given;
+#     define COPTVAR(type, name, default_)
+#     define GOPTVAR(type, name, default_)
+#     define COPTION(optset, name, hasarg, optstring, description) \
+        givens[option:: name] = &options:: name ## _given;
+#     define GOPTION(optset, name, hasarg, optstring, description) \
+        givens[option:: name] = &options:: name ## _given;
+#     define OPTSET_REL(parent, child)
+
+#     include "option_list.hh"
+
+#     undef COPTSET
+#     undef GOPTSET
+#     undef COPTVAR
+#     undef GOPTVAR
+#     undef COPTION
+#     undef GOPTION
+#     undef OPTSET_REL
+      first = false;
+    }
+
+  // keep the std:: ; we have a member function called 'set'
+  std::set<optid> const &which = option_groups()[id];
+  for (std::set<optid>::const_iterator i = which.begin();
+       i != which.end(); ++i)
+    this->*givens[*i] = true;
+}
+
+void option::options::set(string const & name,
+                          opt const & o,
+                          string const & given)
+{
+  note_given(o.id);
+  try
+    {
+      (this->*o.setter)(given);
+    }
+  catch (boost::bad_lexical_cast)
+    {
+      throw bad_arg(name, given);
+    }
+  catch (bad_arg_internal & e)
+    {
+      if (e.reason == "")
+        throw bad_arg(name, given);
+      else
+        throw bad_arg(name, given, e.reason);
+    }
+}
+
 void option::options::set(string const & name, string const & given,
                           optset const & allowed)
 {
-  (this->*getopt(name, allowed).setter)(given);
+  set(name, getopt(name, allowed), given);
 }
 
 static void
@@ -351,12 +501,13 @@ void option::options::from_cmdline_restricted(std::vector<std::string> & args,
           if (separate_arg)
             args.erase(args.begin() + i);
           args.insert(args.begin()+i, fargs.begin(), fargs.end());
+          --i;
         }
       else
         {
           if (separate_arg)
             ++i;
-          (this->*o.setter)(arg);
+          set(name, o, arg);
         }
     }
 }

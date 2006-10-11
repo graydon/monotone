@@ -221,7 +221,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 
 CMD(approve, N_("review"), N_("REVISION"),
     N_("approve of a particular revision"),
-    option::branch_name)
+    option::branch)
 {
   if (args.size() != 1)
     throw usage(name);

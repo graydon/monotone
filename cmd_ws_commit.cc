@@ -71,14 +71,14 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   roster_t old_roster, new_roster;
   cset included, excluded;
 
-  N(app.opts.missing || !args.empty() || !app.opts.exclude.empty(),
+  N(app.opts.missing || !args.empty() || !app.opts.exclude_patterns.empty(),
     F("you must pass at least one path to 'revert' (perhaps '.')"));
 
   app.require_workspace();
 
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
-  node_restriction mask(args_to_paths(args), args_to_paths(app.opts.exclude),
+  node_restriction mask(args_to_paths(args), args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_roster, new_roster, app);
 
@@ -188,7 +188,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
 CMD(disapprove, N_("review"), N_("REVISION"),
     N_("disapprove of a particular revision"),
-    option::branch_name)
+    option::branch)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -251,7 +251,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
-      path_restriction mask(roots, args_to_paths(app.opts.exclude), app.opts.depth, app);
+      path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns), app.opts.depth, app);
       path_set ignored;
 
       // if no starting paths have been specified use the workspace root
@@ -289,7 +289,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
       roster_t current_roster_shape;
       app.work.get_current_roster_shape(current_roster_shape, nis);
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.opts.exclude),
+                            args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
                             current_roster_shape, app);
       app.work.find_missing(current_roster_shape, mask, paths);
@@ -367,7 +367,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.opts.exclude),
+                        args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_roster, new_roster, app);
 
@@ -422,17 +422,17 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
        "If no directory is given, the branch name will be used as directory"),
-    option::branch_name % option::revision)
+    option::branch % option::revision)
 {
   revision_id ident;
   system_path dir;
 
   transaction_guard guard(app.db, false);
 
-  if (args.size() > 1 || app.opts.revision.size() > 1)
+  if (args.size() > 1 || app.opts.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
       // use branch head revision
       N(!app.opts.branch_name().empty(), 
@@ -452,10 +452,10 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         }
       ident = *(heads.begin());
     }
-  else if (app.opts.revision.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision, 0)(), ident);
+      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
@@ -659,7 +659,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    option::branch_name % option::message % option::msgfile % option::date
+    option::branch % option::message % option::msgfile % option::date
     % option::author % option::depth % option::exclude)
 {
   utf8 log_message("");
@@ -675,7 +675,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.opts.exclude),
+                        args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_roster, new_roster, app);
 
@@ -899,7 +899,7 @@ ALIAS(ci, commit);
 
 CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
     N_("setup a new workspace directory, default to current"), 
-    option::branch_name)
+    option::branch)
 {
   if (args.size() > 1)
     throw usage(name);

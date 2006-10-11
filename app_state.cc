@@ -101,7 +101,7 @@ app_state::process_options()
 
   L(FL("branch name is '%s'") % opts.branch_name);
 
-  if (!opts.signing_key_given)
+  if (!opts.key_given)
     internalize_rsa_keypair_id(key_option, opts.signing_key);
 }
 
@@ -116,7 +116,7 @@ app_state::write_options()
   if (branch_is_sticky)
     branch_option = opts.branch_name;
 
-  if (opts.signing_key_given)
+  if (opts.key_given)
     externalize_rsa_keypair_id(opts.signing_key, key_option);
   work.set_ws_options(database_option, branch_option,
                       key_option, keydir_option);

@@ -48,36 +48,38 @@ struct bind_opt
 
 namespace option {
   enum optid {
-#   define GOPT(varname, optname, type, default_, description)  \
-      varname,
-#   define COPT(varname, optname, type, default_, description)  \
-      GOPT(varname, optname, type, default_, description)
+#   define COPTSET(name) \
+      name,
+#   define GOPTSET(name) \
+      name,
+#   define COPTVAR(type, name, default_)
+#   define GOPTVAR(type, name, default_)
+#   define COPTION(optset, name, hasarg, optstring, description) \
+      name,
+#   define GOPTION(optset, name, hasarg, optstring, description) \
+      name,
+#   define OPTSET_REL(parent, child)
+
 #   include "option_list.hh"
-#   undef GOPT
-#   undef COPT
+
+#   undef COPTSET
+#   undef GOPTSET
+#   undef COPTVAR
+#   undef GOPTVAR
+#   undef COPTION
+#   undef GOPTION
+#   undef OPTSET_REL
+
     none
   };
   class optset
   {
     std::set<option::optid> items;
   public:
-    void add(option::optid item)
-    {
-      items.insert(item);
-    }
-    optset & operator%(option::optid item)
-    {
-      add(item);
-      return *this;
-    }
-    bool contains(option::optid id) const
-    {
-      return items.find(id) != items.end();
-    }
-    bool empty() const
-    {
-      return items.empty();
-    }
+    void add(option::optid item);
+    optset & operator%(option::optid item);
+    bool contains(option::optid id) const;
+    bool empty() const;
   };
 
   struct options
@@ -98,24 +100,51 @@ namespace option {
 
     std::string get_usage_str(optset const & opts) const;
 
-#   define GOPT(varname, optname, type, default_, description)  \
-      type varname;                                             \
-      bool varname ## _given;
-#   define COPT(varname, optname, type, default_, description)  \
-      GOPT(varname, optname, type, default_, description)
+#   define COPTSET(name) \
+      bool name ## _given;
+#   define GOPTSET(name) \
+      bool name ## _given;
+#   define COPTVAR(type, name, default_) \
+      type name;
+#   define GOPTVAR(type, name, default_) \
+      type name;
+#   define COPTION(optset, name, hasarg, optstring, description) \
+      bool name ## _given;
+#   define GOPTION(optset, name, hasarg, optstring, description) \
+      bool name ## _given;
+#   define OPTSET_REL(parent, child)
+
 #   include "option_list.hh"
-#   undef GOPT
-#   undef COPT
+
+#   undef COPTSET
+#   undef GOPTSET
+#   undef COPTVAR
+#   undef GOPTVAR
+#   undef COPTION
+#   undef GOPTION
+#   undef OPTSET_REL
+
   private:
-#   define GOPT(varname, optname, type, default_, description)  \
-      void set_ ## varname (std::string const & arg);           \
-      void set_ ## varname ## _helper (std::string const & arg);
-#   define COPT(varname, optname, type, default_, description)  \
-      void set_ ## varname (std::string const & arg);           \
-      void set_ ## varname ## _helper (std::string const & arg);
+
+#   define COPTSET(name)
+#   define GOPTSET(name)
+#   define COPTVAR(type, name, default_)
+#   define GOPTVAR(type, name, default_)
+#   define COPTION(optset, name, hasarg, optstring, description) \
+      void set_ ## name (std::string const & arg);
+#   define GOPTION(optset, name, hasarg, optstring, description) \
+      void set_ ## name (std::string const & arg);
+#   define OPTSET_REL(parent, child)
+
 #   include "option_list.hh"
-#   undef GOPT
-#   undef COPT
+
+#   undef COPTSET
+#   undef GOPTSET
+#   undef COPTVAR
+#   undef GOPTVAR
+#   undef COPTION
+#   undef GOPTION
+#   undef OPTSET_REL
 
     struct opt
     {
@@ -124,11 +153,15 @@ namespace option {
       bool has_arg;
       option::optid id;
     };
+    void note_given(optid id);
     std::map<std::string, opt> opt_map;
     optset global_option, all_cmd_option;
     opt const & getopt(std::string const & name, optset const & allowed);
     void set(std::string const & name, std::string const & given,
              optset const & allowed);
+    void set(std::string const & name,
+             opt const & o,
+             std::string const & given);
     void map_opt(void (options::*setter)(std::string const &),
                  std::string const & optname,
                  optid id,

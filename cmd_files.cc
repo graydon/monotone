@@ -77,8 +77,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
-    option::diff_format % option::no_show_encloser
-    % option::external_diff_args)
+    option::diff_options)
 {
   if (args.size() != 4)
     throw usage(name);
@@ -118,20 +117,20 @@ CMD(annotate, N_("informative"), N_("PATH"),
 {
   revision_id rid;
 
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
 
-  if ((args.size() != 1) || (app.opts.revision.size() > 1))
+  if ((args.size() != 1) || (app.opts.revision_selectors.size() > 1))
     throw usage(name);
 
   file_path file = file_path_external(idx(args, 0));
   split_path sp;
   file.split(sp);
 
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.work.get_revision_id(rid);
   else
-    complete(app, idx(app.opts.revision, 0)(), rid);
+    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
   N(!null_id(rid), 
     F("no revision for file '%s' in database") % file);
@@ -187,16 +186,16 @@ CMD(cat, N_("informative"),
   if (args.size() != 1)
     throw usage(name);
 
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
 
   transaction_guard guard(app.db, false);
 
   revision_id rid;
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.work.get_revision_id(rid);
   else
-    complete(app, idx(app.opts.revision, 0)(), rid);
+    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
   N(app.db.revision_exists(rid), 
     F("no such revision '%s'") % rid);
 

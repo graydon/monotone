@@ -446,7 +446,7 @@ void
 get_user_key(rsa_keypair_id & key, app_state & app)
 {
 
-  if (app.opts.signing_key_given)
+  if (app.opts.key_given)
     {
       key = app.opts.signing_key;
       return;
@@ -475,7 +475,7 @@ guess_branch(revision_id const & ident,
              app_state & app,
              cert_value & branchname)
 {
-  if ((app.opts.branch_name() != "") && app.opts.branch_name_given)
+  if ((app.opts.branch_name() != "") && app.opts.branch_given)
     {
       branchname = app.opts.branch_name();
     }

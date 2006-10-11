@@ -334,8 +334,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
     option::revision % option::depth % option::exclude
-    % option::diff_format % option::no_show_encloser
-    % option::external_diff_args)
+    % option::diff_options)
 {
   bool new_is_archived;
   ostringstream header;
@@ -350,12 +349,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
   // initialize before transaction so we have a database to work with.
 
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
-  else if (app.opts.revision.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     app.require_workspace();
 
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
       roster_t new_roster, old_roster;
       revision_id old_rid;
@@ -364,7 +363,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.work.get_revision_id(old_rid);
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.opts.exclude),
+                            args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
                             old_roster, new_roster, app);
 
@@ -376,12 +375,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       new_is_archived = false;
       header << "# old_revision [" << old_rid << "]" << "\n";
     }
-  else if (app.opts.revision.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     {
       roster_t new_roster, old_roster;
       revision_id r_old_id;
 
-      complete(app, idx(app.opts.revision, 0)(), r_old_id);
+      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
@@ -393,7 +392,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.opts.exclude), 
+                            args_to_paths(app.opts.exclude_patterns), 
                             app.opts.depth,
                             old_roster, new_roster, app);
 
@@ -405,13 +404,13 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]" << "\n";
     }
-  else if (app.opts.revision.size() == 2)
+  else if (app.opts.revision_selectors.size() == 2)
     {
       roster_t new_roster, old_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, idx(app.opts.revision, 0)(), r_old_id);
-      complete(app, idx(app.opts.revision, 1)(), r_new_id);
+      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
@@ -422,7 +421,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_new_id, new_roster);
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.opts.exclude),
+                            args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
                             old_roster, new_roster, app);
 
@@ -545,27 +544,27 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     option::last % option::next % option::revision % option::brief
     % option::diffs % option::no_merges % option::no_files)
 {
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
 
   temp_node_id_source nis;
   set<revision_id> frontier;
   revision_id first_rid;
 
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
       app.work.get_revision_id(first_rid);
       frontier.insert(first_rid);
     }
   else
     {
-      for (vector<utf8>::const_iterator i = app.opts.revision.begin();
-           i != app.opts.revision.end(); i++)
+      for (vector<utf8>::const_iterator i = app.opts.revision_selectors.begin();
+           i != app.opts.revision_selectors.end(); i++)
         {
           set<revision_id> rids;
           complete(app, (*i)(), rids);
           frontier.insert(rids.begin(), rids.end());
-          if (i == app.opts.revision.begin())
+          if (i == app.opts.revision_selectors.begin())
             first_rid = *rids.begin();
         }
     }
@@ -577,7 +576,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // User wants to trace only specific files
       roster_t old_roster, new_roster;
 
-      if (app.opts.revision.size() == 0)
+      if (app.opts.revision_selectors.size() == 0)
         app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       else
         app.db.get_roster(first_rid, new_roster);
@@ -585,7 +584,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // FIXME_RESTRICTIONS: should this add paths from the rosters of
       // all selected revs?
       mask = node_restriction(args_to_paths(args),
-                              args_to_paths(app.opts.exclude), 
+                              args_to_paths(app.opts.exclude_patterns), 
                               app.opts.depth,
                               old_roster, new_roster, app);
     }

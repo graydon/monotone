@@ -61,7 +61,7 @@ process_netsync_args(string const & name,
       int pattern_offset = (serve_mode ? 0 : 1);
       vector<utf8> patterns(args.begin() + pattern_offset, args.end());
       combine_and_check_globish(patterns, include_pattern);
-      combine_and_check_globish(app.opts.exclude, exclude_pattern);
+      combine_and_check_globish(app.opts.exclude_patterns, exclude_pattern);
       if (use_defaults &&
           (!app.db.var_exists(default_include_pattern_key)
            || app.opts.set_default))

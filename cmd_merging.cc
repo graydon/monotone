@@ -76,12 +76,12 @@ CMD(update, N_("workspace"), "",
        "different revision, preserving uncommitted changes as it does so.\n"
        "If a revision is given, update the workspace to that revision.\n"
        "If not, update the workspace to the head of the branch."),
-    option::branch_name % option::revision)
+    option::branch % option::revision)
 {
   if (args.size() > 0)
     throw usage(name);
 
-  if (app.opts.revision.size() > 1)
+  if (app.opts.revision_selectors.size() > 1)
     throw usage(name);
 
   app.require_workspace();
@@ -97,7 +97,7 @@ CMD(update, N_("workspace"), "",
   // Figure out where we're going
 
   revision_id chosen_rid;
-  if (app.opts.revision.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
       P(F("updating along branch '%s'") % app.opts.branch_name);
       set<revision_id> candidates;
@@ -120,7 +120,7 @@ CMD(update, N_("workspace"), "",
     }
   else
     {
-      complete(app, app.opts.revision[0](), chosen_rid);
+      complete(app, app.opts.revision_selectors[0](), chosen_rid);
       N(app.db.revision_exists(chosen_rid),
         F("no such revision '%s'") % chosen_rid);
     }
@@ -318,7 +318,7 @@ merge_two(revision_id const & left, revision_id const & right,
 // (Possibility: append the --message/--message-file text to the synthetic
 // log message constructed in merge_two().)
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
-    option::branch_name % option::date % option::author)
+    option::branch % option::date % option::author)
 {
   typedef std::pair<revision_id, revision_id> revpair;
   typedef set<revision_id>::const_iterator rid_set_iter;
@@ -614,7 +614,7 @@ CMD(explicit_merge, N_("tree"),
 CMD(show_conflicts, N_("informative"), N_("REV REV"), 
     N_("Show what conflicts would need to be resolved "
        "to merge the given revisions."),
-    option::branch_name % option::date % option::author)
+    option::branch % option::date % option::author)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -670,9 +670,9 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   // Work out our arguments
   revision_id from_rid, to_rid;
 
-  if (app.opts.revision.size() == 1)
+  if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app, idx(app.opts.revision, 0)(), to_rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
@@ -685,12 +685,12 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
         % ui.prog_name % to_rid);
       from_rid = *parents.begin();
     }
-  else if (app.opts.revision.size() == 2)
+  else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app, idx(app.opts.revision, 0)(), from_rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), from_rid);
       N(app.db.revision_exists(from_rid),
         F("no such revision '%s'") % from_rid);
-      complete(app, idx(app.opts.revision, 1)(), to_rid);
+      complete(app, idx(app.opts.revision_selectors, 1)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
     }
@@ -748,7 +748,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     roster_t to_true_roster;
     app.db.get_roster(to_rid, to_true_roster);
     node_restriction mask(args_to_paths(args),
-                          args_to_paths(app.opts.exclude),
+                          args_to_paths(app.opts.exclude_patterns),
                           app.opts.depth,
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,
@@ -819,7 +819,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
 }
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
-    option::branch_name)
+    option::branch)
 {
   set<revision_id> heads;
   if (args.size() != 0)
