@@ -5,9 +5,3 @@ include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 #include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
-GCC4_ICES_HERE := arm m68k hppa
-DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
-
-ifneq (,$(filter $(DEB_HOST_ARCH),$(GCC4_ICES_HERE)))
-	DEB_CONFIGURE_EXTRA_FLAGS = CC=gcc-3.4 CXX=g++-3.4
-endif

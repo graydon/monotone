@@ -1242,7 +1242,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                   "I expected %s\n"
                   "'%s unset %s %s' overrides this check")
                 % their_key_hash % expected_key_hash
-                % app.prog_name % their_key_key.first % their_key_key.second);
+                % ui.prog_name % their_key_key.first % their_key_key.second);
               E(false, F("server key changed"));
             }
         }
@@ -1250,7 +1250,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
         {
           P(F("first time connecting to server %s\n"
               "I'll assume it's really them, but you might want to double-check\n"
-              "their key's fingerprint: %s\n") % peer_id % their_key_hash);
+              "their key's fingerprint: %s") % peer_id % their_key_hash);
           app.db.set_var(their_key_key, var_value(their_key_hash()));
         }
       if (!app.db.public_key_exists(their_key_hash))
@@ -2224,7 +2224,7 @@ bool session::process(transaction_guard & guard)
 
       if (inbuf.size() >= constants::netcmd_maxsz)
         W(F("input buffer for peer %s is overfull "
-            "after netcmd dispatch\n") % peer_id);
+            "after netcmd dispatch") % peer_id);
 
       guard.maybe_checkpoint(sz);
 
@@ -2350,7 +2350,7 @@ call_server(protocol_role role,
       if (fd == -1 && !armed)
         {
           E(false, (F("timed out waiting for I/O with "
-                      "peer %s, disconnecting\n")
+                      "peer %s, disconnecting")
                     % sess.peer_id));
         }
 
@@ -2373,7 +2373,7 @@ call_server(protocol_role role,
             // error from our server (which is translated to a decode
             // exception). We call these cases E() errors.
             E(false, F("processing failure while talking to "
-                       "peer %s, disconnecting\n")
+                       "peer %s, disconnecting")
               % sess.peer_id);
             return;
           }
@@ -2401,7 +2401,7 @@ call_server(protocol_role role,
             }
           else
             E(false, (F("I/O failure while talking to "
-                        "peer %s, disconnecting\n")
+                        "peer %s, disconnecting")
                       % sess.peer_id));
         }
     }
@@ -2552,7 +2552,7 @@ handle_read_available(Netxx::socket_type fd,
 
         case session::shutdown_state:
           P(F("peer %s read failed in shutdown state "
-              "(possibly client misreported error)\n")
+              "(possibly client misreported error)")
             % sess->peer_id);
           break;
 
@@ -2584,7 +2584,7 @@ handle_write_available(Netxx::socket_type fd,
 
         case session::shutdown_state:
           P(F("peer %s write failed in shutdown state "
-              "(possibly client misreported error)\n")
+              "(possibly client misreported error)")
             % sess->peer_id);
           break;
 
@@ -2722,7 +2722,7 @@ serve_connections(protocol_role role,
 
               if (sessions.size() >= session_limit)
                 W(F("session limit %d reached, some connections "
-                    "will be refused\n") % session_limit);
+                    "will be refused") % session_limit);
               else
                 probe.add(server);
 
@@ -3120,13 +3120,13 @@ run_netsync_protocol(protocol_voice voice,
   if (include_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("include branch pattern contains a quote character:\n"
-          "%s\n") % include_pattern());
+          "%s") % include_pattern());
     }
 
   if (exclude_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("exclude branch pattern contains a quote character:\n"
-          "%s\n") % exclude_pattern());
+          "%s") % exclude_pattern());
     }
 
   // We do not want to be killed by SIGPIPE from a network disconnect.

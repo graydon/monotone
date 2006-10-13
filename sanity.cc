@@ -121,12 +121,6 @@ sanity::set_debug()
 }
 
 void
-sanity::set_brief()
-{
-  brief = true;
-}
-
-void
 sanity::set_quiet()
 {
   debug = false;
@@ -258,7 +252,7 @@ sanity::index_failure(string const & vec_expr,
                       unsigned long idx,
                       string const & file, int line)
 {
-  char const * pattern = N_("%s:%d: index '%s' = %d overflowed vector '%s' with size %d\n");
+  char const * pattern = N_("%s:%d: index '%s' = %d overflowed vector '%s' with size %d");
   log(FL(pattern) % file % line % idx_expr % idx % vec_expr % sz,
       file.c_str(), line);
   gasp();
@@ -279,7 +273,8 @@ sanity::gasp()
   already_dumping = true;
   L(FL("saving current work set: %i items") % musings.size());
   ostringstream out;
-  out << F("Current work set: %i items\n") % musings.size();
+  out << (F("Current work set: %i items") % musings.size())
+      << "\n"; // final newline is kept out of the translation
   for (vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
     {
@@ -384,8 +379,8 @@ format_base::impl
   {
     if (&other != this)
       {
-	fmt = other.fmt;
-	oss.str(string());
+        fmt = other.fmt;
+        oss.str(string());
       }
     return *this;
   }
@@ -412,7 +407,7 @@ format_base::format_base(format_base const & other)
 
 format_base::~format_base()
 {
-	delete pimpl;
+        delete pimpl;
 }
 
 format_base &
@@ -423,18 +418,18 @@ format_base::operator=(format_base const & other)
       impl * tmp = NULL;
 
       try
-	{
-	  if (other.pimpl)
-	    tmp = new impl(*(other.pimpl));
-	}
+        {
+          if (other.pimpl)
+            tmp = new impl(*(other.pimpl));
+        }
       catch (...)
-	{
-	  if (tmp)
-	    delete tmp;
-	}
+        {
+          if (tmp)
+            delete tmp;
+        }
 
       if (pimpl)
-	delete pimpl;
+        delete pimpl;
 
       pimpl = tmp;
     }

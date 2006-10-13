@@ -49,6 +49,7 @@ public:
   database db;
   lua_hooks lua;
   key_store keys;
+  workspace work;
   bool recursive;
   bool stdhooks;
   bool rcfiles;
@@ -56,7 +57,6 @@ public:
   bool no_merges;
   bool set_default;
   bool verbose;
-  options_map options;
   utf8 message;
   utf8 message_file;
   bool date_set;
@@ -82,12 +82,15 @@ public:
   bool use_transport_auth;
   bool missing;
   bool unknown;
+  bool brief;
   std::vector<rsa_keypair_id> keys_to_push;
   system_path confdir;
   bool have_set_key_dir;
+  bool have_set_key;
   std::set<std::string> attrs_to_drop;
   bool no_files;
   bool requested_help;
+  bool branch_is_sticky;
   size_t automate_stdio_size;
 
   std::set<std::string> explicit_options;  // in set if the value of the flag was explicitly given on the command line
@@ -139,7 +142,6 @@ public:
   void set_diff_args(utf8 const & args);
   void add_key_to_push(utf8 const & key);
   void set_recursive(bool r = true);
-  void set_prog_name(utf8 const & prog_name);
 
   void set_stdhooks(bool b);
   void set_rcfiles(bool b);
@@ -153,13 +155,8 @@ public:
   explicit app_state();
   ~app_state();
 
-  // Only use set_prog_name to set this; changes need to be propagated
-  // to the global ui object.
-  utf8 prog_name;
-
 private:
   void load_rcfiles();
-  void read_options();
   void write_options();
 };
 

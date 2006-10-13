@@ -153,7 +153,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
   if (hmac.is_active() && cmd_code != usher_cmd)
     {
       // grab it before the data gets munged
-      I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);	
+      I(hmac.hmac_length == constants::netsync_hmac_value_length_in_bytes);
       digest = hmac.process(inbuf, 0, pos + payload_len);
     }
 
@@ -174,7 +174,7 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
       && cmd_digest != digest)
     {
       throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
-			 "this suggests data was corrupted in transit\n")
+			 "this suggests data was corrupted in transit")
 		       % encode_hexenc(cmd_digest)
 		       % encode_hexenc(digest));
     }
@@ -556,8 +556,7 @@ netcmd::write_usher_reply_cmd(utf8 const & server, utf8 const & pattern)
 #include "transforms.hh"
 #include <boost/lexical_cast.hpp>
 
-void
-test_netcmd_mac()
+UNIT_TEST(netcmd, mac)
 {
   netcmd out_cmd, in_cmd;
   string buf;
@@ -615,8 +614,7 @@ do_netcmd_roundtrip(netcmd const & out_cmd, netcmd & in_cmd, string & buf)
   BOOST_CHECK(in_cmd == out_cmd);
 }
 
-void
-test_netcmd_functions()
+UNIT_TEST(netcmd, functions)
 {
 
   try
@@ -812,13 +810,6 @@ test_netcmd_functions()
       L(FL("bad decode exception: '%s'") % d.what);
       throw;
     }
-}
-
-void
-add_netcmd_tests(test_suite * suite)
-{
-  suite->add(BOOST_TEST_CASE(&test_netcmd_functions));
-  suite->add(BOOST_TEST_CASE(&test_netcmd_mac));
 }
 
 #endif // BUILD_UNIT_TESTS

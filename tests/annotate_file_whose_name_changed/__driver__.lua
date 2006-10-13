@@ -32,5 +32,5 @@ revs.merged = base_revision()
 -- right: x
 --
 
-check(mtn("annotate", "foo.new"), 0, true, false)
-greplines("stdout", {revs.base, revs.base, revs.right})
+check(mtn("annotate", "--brief", "foo.new"), 0, true, false)
+check(greplines("stdout", {revs.base, revs.base, revs.right}))

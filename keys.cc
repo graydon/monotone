@@ -32,6 +32,7 @@
 #include "ui.hh"
 #include "cert.hh"
 #include "app_state.hh"
+#include "charset.hh"
 
 using std::cout;
 using std::endl;
@@ -73,7 +74,7 @@ do_arc4(SecureVector<Botan::byte> & sym_key,
 static void
 get_passphrase(lua_hooks & lua,
                rsa_keypair_id const & keyid,
-               string & phrase,
+               utf8 & phrase,
                bool confirm_phrase = false,
                bool force_from_user = false,
                string prompt_beginning = "enter passphrase")
@@ -84,7 +85,7 @@ get_passphrase(lua_hooks & lua,
   // you're making a half-dozen certs during a commit or merge or
   // something.
   bool persist_phrase = lua.hook_persist_phrase_ok();
-  static map<rsa_keypair_id, string> phrases;
+  static map<rsa_keypair_id, utf8> phrases;
 
   if (!force_from_user && phrases.find(keyid) != phrases.end())
     {
@@ -92,10 +93,12 @@ get_passphrase(lua_hooks & lua,
       return;
     }
 
-  if (!force_from_user && lua.hook_get_passphrase(keyid, phrase))
+  string lua_phrase;
+  if (!force_from_user && lua.hook_get_passphrase(keyid, lua_phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
-      N(phrase != "",
+      phrase = utf8(lua_phrase);
+      N(phrase != utf8(""),
         F("got empty passphrase from get_passphrase() hook"));
     }
   else
@@ -142,13 +145,14 @@ get_passphrase(lua_hooks & lua,
 
       try
         {
-          phrase = pass1;
+          external ext_phrase(pass1);
+          system_to_utf8(ext_phrase, phrase);
 
           // permit security relaxation. maybe.
           if (persist_phrase)
             {
               phrases.erase(keyid);
-              safe_insert(phrases, make_pair(keyid, string(pass1)));
+              safe_insert(phrases, make_pair(keyid, phrase));
             }
         }
       catch (...)
@@ -166,11 +170,18 @@ get_passphrase(lua_hooks & lua,
 void
 generate_key_pair(lua_hooks & lua,              // to hook for phrase
                   rsa_keypair_id const & id,    // to prompting user for phrase
-                  keypair & kp_out,
-                  string const unit_test_passphrase)
+                  keypair & kp_out)
 {
+  utf8 phrase;
+  get_passphrase(lua, id, phrase, true, true);
+  generate_key_pair(kp_out, phrase);
+}
 
-  string phrase;
+
+void
+generate_key_pair(keypair & kp_out,
+                  utf8 const phrase)
+{
   SecureVector<Botan::byte> pubkey, privkey;
   rsa_pub_key raw_pub_key;
   rsa_priv_key raw_priv_key;
@@ -178,14 +189,9 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
   // generate private key (and encrypt it)
   RSA_PrivateKey priv(constants::keylen);
 
-  if (unit_test_passphrase.empty())
-    get_passphrase(lua, id, phrase, true, true);
-  else
-    phrase = unit_test_passphrase;
-
   Pipe p;
   p.start_msg();
-  Botan::PKCS8::encrypt_key(priv, p, phrase,
+  Botan::PKCS8::encrypt_key(priv, p, phrase(),
                      "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   raw_priv_key = rsa_priv_key(p.read_all_as_string());
 
@@ -212,7 +218,7 @@ get_private_key(lua_hooks & lua,
                 bool force_from_user = false)
 {
   rsa_priv_key decoded_key;
-  string phrase;
+  utf8 phrase;
   bool force = force_from_user;
 
   L(FL("base64-decoding %d-byte private key") % priv().size());
@@ -227,7 +233,7 @@ get_private_key(lua_hooks & lua,
         {
           Pipe p;
           p.process_msg(decoded_key());
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase));
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
         }
       catch (...)
         {
@@ -259,7 +265,7 @@ migrate_private_key(app_state & app,
 {
   arc4<rsa_priv_key> decoded_key;
   SecureVector<Botan::byte> decrypted_key;
-  string phrase;
+  utf8 phrase;
 
   bool force = false;
 
@@ -273,7 +279,7 @@ migrate_private_key(app_state & app,
                            decoded_key().size());
       get_passphrase(app.lua, id, phrase, false, force);
       SecureVector<Botan::byte> sym_key;
-      sym_key.set(reinterpret_cast<Botan::byte const *>(phrase.data()), phrase.size());
+      sym_key.set(reinterpret_cast<Botan::byte const *>(phrase().data()), phrase().size());
       do_arc4(sym_key, decrypted_key);
 
       L(FL("building signer from %d-byte decrypted private key") % decrypted_key.size());
@@ -305,7 +311,7 @@ migrate_private_key(app_state & app,
   // now we can write out the new key
   Pipe p;
   p.start_msg();
-  Botan::PKCS8::encrypt_key(*priv_key, p, phrase,
+  Botan::PKCS8::encrypt_key(*priv_key, p, phrase(),
                      "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   rsa_priv_key raw_priv = rsa_priv_key(p.read_all_as_string());
   encode_base64(raw_priv, new_kp.priv);
@@ -325,12 +331,12 @@ change_key_passphrase(lua_hooks & lua,
 {
   shared_ptr<RSA_PrivateKey> priv = get_private_key(lua, id, encoded_key, true);
 
-  string new_phrase;
+  utf8 new_phrase;
   get_passphrase(lua, id, new_phrase, true, true, "enter new passphrase");
 
   Pipe p;
   p.start_msg();
-  Botan::PKCS8::encrypt_key(*priv, p, new_phrase,
+  Botan::PKCS8::encrypt_key(*priv, p, new_phrase(),
                             "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
   rsa_priv_key decoded_key = rsa_priv_key(p.read_all_as_string());
 
@@ -568,8 +574,7 @@ require_password(rsa_keypair_id const & key,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void
-arc4_test()
+UNIT_TEST(key, arc4)
 {
 
   string pt("new fascist tidiness regime in place");
@@ -595,19 +600,19 @@ arc4_test()
 
 }
 
-static void
-signature_round_trip_test()
+UNIT_TEST(key, signature_round_trip)
 {
   app_state app;
   app.lua.add_std_hooks();
   app.lua.add_test_hooks();
 
   BOOST_CHECKPOINT("generating key pairs");
-  rsa_keypair_id key("bob123@test.com");
   keypair kp;
-  generate_key_pair(app.lua, key, kp, "bob123@test.com");
+  utf8 passphrase("bob123@test.com");
+  generate_key_pair(kp, passphrase);
 
   BOOST_CHECKPOINT("signing plaintext");
+  rsa_keypair_id key("bob123@test.com");
   string plaintext("test string to sign");
   base64<rsa_sha1_signature> sig;
   make_signature(app, key, kp.priv, plaintext, sig);
@@ -618,14 +623,6 @@ signature_round_trip_test()
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
   BOOST_CHECK(!check_signature(app, key, kp.pub, broken_plaintext, sig));
-}
-
-void
-add_key_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&arc4_test));
-  suite->add(BOOST_TEST_CASE(&signature_round_trip_test));
 }
 
 #endif // BUILD_UNIT_TESTS

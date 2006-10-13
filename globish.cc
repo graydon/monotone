@@ -157,8 +157,7 @@ globish_matcher::operator()(string const & s)
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void
-checked_globish_to_regex_test()
+UNIT_TEST(globish, checked_globish_to_regex)
 {
   string pat;
 
@@ -189,8 +188,7 @@ checked_globish_to_regex_test()
   BOOST_CHECK_THROW(checked_globish_to_regex("{{{{{{{{{{a,b},c},d},e},f},g},h},i},j},k}", pat), informative_failure);
 }
 
-static void
-combine_and_check_globish_test()
+UNIT_TEST(globish, combine_and_check_globish)
 {
   vector<utf8> s;
   s.push_back(utf8("a"));
@@ -201,8 +199,7 @@ combine_and_check_globish_test()
   BOOST_CHECK(combined() == "{a,b,c}");
 }
 
-static void
-globish_matcher_test()
+UNIT_TEST(globish, globish_matcher)
 {
   {
     globish_matcher m(utf8("{a,b}?*\\*|"), utf8("*c*"));
@@ -233,15 +230,6 @@ globish_matcher_test()
     BOOST_CHECK(m("foo"));
     BOOST_CHECK(!m("bar"));
   }
-}
-
-
-void add_globish_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&checked_globish_to_regex_test));
-  suite->add(BOOST_TEST_CASE(&combine_and_check_globish_test));
-  suite->add(BOOST_TEST_CASE(&globish_matcher_test));
 }
 
 #endif // BUILD_UNIT_TESTS

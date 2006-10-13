@@ -32,12 +32,12 @@
 #include "transforms.hh"
 #include "vocab.hh"
 #include "globish.hh"
+#include "charset.hh"
 
 using std::allocator;
 using std::basic_ios;
 using std::basic_stringbuf;
 using std::char_traits;
-using std::endl;
 using std::inserter;
 using std::make_pair;
 using std::map;
@@ -73,7 +73,7 @@ AUTOMATE(heads, N_("[BRANCH]"))
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: ancestors
@@ -119,7 +119,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
   for (set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << endl;
+      output << (*i).inner()() << "\n";
 }
 
 
@@ -163,7 +163,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"))
     }
   for (set<revision_id>::const_iterator i = descendents.begin();
        i != descendents.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 
@@ -191,7 +191,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
     }
   erase_ancestors(revs, app);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: attributes
@@ -228,7 +228,7 @@ AUTOMATE(attributes, N_("FILE"))
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  get_base_and_current_roster_shape(base, current, nis, app);
+  app.work.get_base_and_current_roster_shape(base, current, nis);
 
   // escalate if the given path is unknown to the current roster
   N(current.has_node(path),
@@ -254,14 +254,22 @@ AUTOMATE(attributes, N_("FILE"))
     // dropped attribute
     if (!i->second.first)
       {
-        state = "dropped";
         // if the attribute is dropped, we should have a base roster
-        // with that node...
+        // with that node. we need to check that for the attribute as well
+        // because if it is dropped there as well it was already deleted
+        // in any previous revision
         I(base.has_node(path));
+        
         node_t prev_node = base.get_node(path);
+        
         // find the attribute in there
         full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
         I(j != prev_node->attrs.end());
+        
+        // was this dropped before? then ignore it
+        if (!j->second.first) { continue; }
+        
+        state = "dropped";
         // output the previous (dropped) value later
         value = j->second.second();
       }
@@ -326,7 +334,7 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"))
   toposort(revs, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: ancestry_difference
@@ -368,7 +376,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
   toposort(ancestors, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: leaves
@@ -384,7 +392,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-AUTOMATE(leaves, N_(""))
+AUTOMATE(leaves, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -399,7 +407,7 @@ AUTOMATE(leaves, N_(""))
     leaves.erase(i->first);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: parents
@@ -423,7 +431,7 @@ AUTOMATE(parents, N_("REV"))
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << endl;
+          output << (*i).inner()() << "\n";
 }
 
 // Name: children
@@ -447,7 +455,7 @@ AUTOMATE(children, N_("REV"))
   for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << endl;
+          output << (*i).inner()() << "\n";
 }
 
 // Name: graph
@@ -470,7 +478,7 @@ AUTOMATE(children, N_("REV"))
 //   The output as a whole is alphabetically sorted; additionally, the parents
 //   within each line are alphabetically sorted.
 // Error conditions: None.
-AUTOMATE(graph, N_(""))
+AUTOMATE(graph, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -501,7 +509,7 @@ AUTOMATE(graph, N_(""))
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
         output << " " << (*j).inner()();
-      output << endl;
+      output << "\n";
     }
 }
 
@@ -528,7 +536,7 @@ AUTOMATE(select, N_("SELECTOR"))
 
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    output << *i << endl;
+    output << *i << "\n";
 }
 
 // consider a changeset with the following
@@ -695,7 +703,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-AUTOMATE(inventory, N_(""))
+AUTOMATE(inventory, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -706,9 +714,9 @@ AUTOMATE(inventory, N_(""))
   roster_t base, curr;
   inventory_map inventory;
   cset cs; MM(cs);
-  path_set unchanged, changed, missing, known, unknown, ignored;
+  path_set unchanged, changed, missing, unknown, ignored;
 
-  get_base_and_current_roster_shape(base, curr, nis, app);
+  app.work.get_base_and_current_roster_shape(base, curr, nis);
   make_cset(base, curr, cs);
 
   // The current roster (curr) has the complete set of registered nodes
@@ -730,12 +738,12 @@ AUTOMATE(inventory, N_(""))
   inventory_post_state(inventory, nodes_added,
                        inventory_item::ADDED_PATH, 0);
 
-  classify_roster_paths(curr, unchanged, changed, missing, app);
-  curr.extract_path_set(known);
+  path_restriction mask;
+  vector<file_path> roots;
+  roots.push_back(file_path());
 
-  path_restriction mask(app);
-  file_itemizer u(app, known, unknown, ignored, mask);
-  walk_tree(file_path(), u);
+  app.work.classify_roster_paths(curr, unchanged, changed, missing);
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
   inventory_node_state(inventory, unchanged,
                        inventory_item::UNCHANGED_NODE);
@@ -791,7 +799,12 @@ AUTOMATE(inventory, N_(""))
 
       switch (i->second.node_state)
         {
-        case inventory_item::UNCHANGED_NODE: output << " "; break;
+        case inventory_item::UNCHANGED_NODE:
+          if (i->second.post_state == inventory_item::ADDED_PATH)
+            output << "P";
+          else
+            output << " ";
+          break;
         case inventory_item::PATCHED_NODE: output << "P"; break;
         case inventory_item::UNKNOWN_NODE: output << "U"; break;
         case inventory_item::IGNORED_NODE: output << "I"; break;
@@ -810,7 +823,7 @@ AUTOMATE(inventory, N_(""))
 
       output << path_suffix;
 
-      output << endl;
+      output << "\n";
     }
 }
 
@@ -893,10 +906,10 @@ AUTOMATE(get_revision, N_("[REVID]"))
       revision_t rev;
 
       app.require_workspace();
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-      update_current_roster_from_filesystem(new_roster, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.update_current_roster_from_filesystem(new_roster);
 
-      get_revision_id(old_revision_id);
+      app.work.get_revision_id(old_revision_id);
       make_revision(old_revision_id, old_roster, new_roster, rev);
 
       calculate_ident(rev, ident);
@@ -921,7 +934,7 @@ AUTOMATE(get_revision, N_("[REVID]"))
 //   on. This is the value stored in _MTN/revision
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_base_revision_id, N_(""))
+AUTOMATE(get_base_revision_id, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -929,8 +942,8 @@ AUTOMATE(get_base_revision_id, N_(""))
   app.require_workspace();
 
   revision_id rid;
-  get_revision_id(rid);
-  output << rid << endl;
+  app.work.get_revision_id(rid);
+  output << rid << "\n";
 }
 
 // Name: get_current_revision_id
@@ -942,7 +955,7 @@ AUTOMATE(get_base_revision_id, N_(""))
 //   files in the workspace.
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_current_revision_id, N_(""))
+AUTOMATE(get_current_revision_id, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -955,15 +968,15 @@ AUTOMATE(get_current_revision_id, N_(""))
   temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  update_current_roster_from_filesystem(new_roster, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.update_current_roster_from_filesystem(new_roster);
 
-  get_revision_id(old_revision_id);
+  app.work.get_revision_id(old_revision_id);
   make_revision(old_revision_id, old_roster, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
 
-  output << new_revision_id << endl;
+  output << new_revision_id << "\n";
 }
 
 // Name: get_manifest_of
@@ -1012,7 +1025,7 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
   if (args.size() > 1)
     throw usage(help_name);
 
-  roster_data dat;
+  manifest_data dat;
   manifest_id mid;
   roster_t old_roster, new_roster;
   temp_node_id_source nis;
@@ -1022,8 +1035,8 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
       revision_id old_revision_id;
 
       app.require_workspace();
-      get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-      update_current_roster_from_filesystem(new_roster, app);
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.update_current_roster_from_filesystem(new_roster);
     }
   else
     {
@@ -1238,7 +1251,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
   for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << endl;
+      output << (*i).inner()() << "\n";
 }
 
 // Name: branches
@@ -1253,7 +1266,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
 //   in alphabetically sorted order.
 // Error conditions:
 //   None.
-AUTOMATE(branches, N_(""))
+AUTOMATE(branches, "")
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -1266,7 +1279,7 @@ AUTOMATE(branches, N_(""))
   for (vector<string>::const_iterator i = names.begin();
        i != names.end(); ++i)
     if (!app.lua.hook_ignore_branch(*i))
-      output << (*i) << endl;
+      output << (*i) << "\n";
 }
 
 // Name: tags
@@ -1359,6 +1372,243 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"))
       prt.print_stanza(stz);
     }
   }
+  output.write(prt.buf.data(), prt.buf.size());
+}
+
+namespace
+{
+  namespace syms
+  {
+    symbol const key("key");
+    symbol const signature("signature");
+    symbol const name("name");
+    symbol const value("value");
+    symbol const trust("trust");
+
+    symbol const public_hash("public_hash");
+    symbol const private_hash("private_hash");
+    symbol const public_location("public_location");
+    symbol const private_location("private_location");
+  }
+};
+
+// Name: genkey
+// Arguments:
+//   1: the key ID
+//   2: the key passphrase
+// Added in: 3.1
+// Purpose: Generates a key with the given ID and passphrase
+//
+// Output format: a basic_io stanza for the new key, as for ls keys
+//
+// Sample output:
+//               name "tbrownaw@gmail.com"
+//        public_hash [475055ec71ad48f5dfaf875b0fea597b5cbbee64]
+//       private_hash [7f76dae3f91bb48f80f1871856d9d519770b7f8a]
+//    public_location "database" "keystore"
+//   private_location "keystore"
+//
+// Error conditions: If the passphrase is empty or the key already exists,
+// prints an error message to stderr and exits with status 1.
+AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  rsa_keypair_id ident;
+  internalize_rsa_keypair_id(idx(args, 0), ident);
+
+  utf8 passphrase = idx(args, 1);
+
+  bool exists = app.keys.key_pair_exists(ident);
+  if (app.db.database_specified())
+    {
+      transaction_guard guard(app.db);
+      exists = exists || app.db.public_key_exists(ident);
+      guard.commit();
+    }
+
+  N(!exists, F("key '%s' already exists") % ident);
+
+  keypair kp;
+  P(F("generating key-pair '%s'") % ident);
+  generate_key_pair(kp, passphrase);
+  P(F("storing key-pair '%s' in %s/") 
+    % ident % app.keys.get_key_dir());
+  app.keys.put_key_pair(ident, kp);
+
+  basic_io::printer prt;
+  basic_io::stanza stz;
+  hexenc<id> privhash, pubhash;
+  vector<string> publocs, privlocs;
+  key_hash_code(ident, kp.pub, pubhash);
+  key_hash_code(ident, kp.priv, privhash);
+
+  publocs.push_back("keystore");
+  privlocs.push_back("keystore");
+
+  stz.push_str_pair(syms::name, ident());
+  stz.push_hex_pair(syms::public_hash, pubhash);
+  stz.push_hex_pair(syms::private_hash, privhash);
+  stz.push_str_multi(syms::public_location, publocs);
+  stz.push_str_multi(syms::private_location, privlocs);
+  prt.print_stanza(stz);
+
+  output.write(prt.buf.data(), prt.buf.size());
+
+}
+
+// Name: get_option
+// Arguments:
+//   1: an options name
+// Added in: 3.1
+// Purpose: Show the value of the named option in _MTN/options
+//
+// Output format: A string
+//
+// Sample output (for 'mtn automate get_option branch:
+//   net.venge.monotone
+//
+AUTOMATE(get_option, N_("OPTION"))
+{
+  if (!app.unknown && (args.size() < 1))
+    throw usage(help_name);
+
+  // this command requires a workspace to be run on
+  app.require_workspace();
+
+  utf8 database_option, branch_option, key_option, keydir_option;
+  app.work.get_ws_options(database_option, branch_option,
+                          key_option, keydir_option);
+
+  string opt = args[0]();
+
+  if (opt == "database")
+    output << database_option << "\n"; 
+  else if (opt == "branch")
+    output << branch_option << "\n";
+  else if (opt == "key")
+    output << key_option << "\n";
+  else if (opt == "keydir")
+    output << keydir_option << "\n";
+  else
+    N(false, F("'%s' is not a recognized workspace option") % opt);
+}
+
+// Name: get_content_changed
+// Arguments:
+//   1: a revision ID
+//   2: a file name
+// Added in: 3.2
+// Purpose: Returns a list of revision IDs in which the content 
+// was most recently changed, relative to the revision ID specified 
+// in argument 1. This equates to a content mark following 
+// the *-merge algorithm.
+//
+// Output format: Zero or more basic_io stanzas, each specifying a 
+// revision ID for which a content mark is set.
+//
+//   Each stanza has exactly one entry:
+//
+//   'content_mark'
+//         the hexadecimal id of the revision the content mark is attached to
+// Sample output (for 'mtn automate get_content_changed 3bccff99d08421df72519b61a4dded16d1139c33 ChangeLog):
+//   content_mark [276264b0b3f1e70fc1835a700e6e61bdbe4c3f2f]
+//
+AUTOMATE(get_content_changed, N_("REV FILE"))
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  roster_t new_roster;
+  revision_id ident;
+  marking_map mm;
+
+  ident = revision_id(idx(args, 0)());
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  app.db.get_roster(ident, new_roster, mm);
+
+  split_path path;
+  file_path_external(idx(args,1)).split(path);
+  N(new_roster.has_node(path),
+    F("file %s is unknown for revision %s") % path % ident);
+
+  node_t node = new_roster.get_node(path);
+  marking_map::const_iterator m = mm.find(node->self);
+  I(m != mm.end());
+  marking_t mark = m->second;
+
+  basic_io::printer prt;
+  for (set<revision_id>::const_iterator i = mark.file_content.begin();
+       i != mark.file_content.end(); ++i)
+    {
+      basic_io::stanza st;
+      revision_id old_ident = i->inner();
+      st.push_hex_pair(basic_io::syms::content_mark, i->inner());
+      prt.print_stanza(st);
+    }
+    output.write(prt.buf.data(), prt.buf.size());
+}
+
+// Name: get_corresponding_path
+// Arguments:
+//   1: a source revision ID
+//   2: a file name (in the source revision)
+//   3: a target revision ID
+// Added in: 3.2
+// Purpose: Given a the file name in the source revision, a filename 
+// will if possible be returned naming the file in the target revision. 
+// This allows the same file to be matched between revisions, accounting 
+// for renames and other changes.
+//
+// Output format: Zero or one basic_io stanzas. Zero stanzas will be 
+// output if the file does not exist within the target revision; this is 
+// not considered an error.
+// If the file does exist in the target revision, a single stanza with the 
+// following details is output.
+//
+//   The stanza has exactly one entry:
+//
+//   'file'
+//         the file name corresponding to "file name" (arg 2) in the target revision
+//
+// Sample output (for automate get_corresponding_path 91f25c8ee830b11b52dd356c925161848d4274d0 foo2 dae0d8e3f944c82a9688bcd6af99f5b837b41968; see automate_get_corresponding_path test)
+// file "foo"
+AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
+{
+  if (args.size() != 3)
+    throw usage(help_name);
+
+  roster_t new_roster, old_roster;
+  revision_id ident, old_ident;
+
+  ident = revision_id(idx(args, 0)());
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  app.db.get_roster(ident, new_roster);
+
+  old_ident = revision_id(idx(args, 2)());
+  N(app.db.revision_exists(old_ident),
+    F("no revision %s found in database") % old_ident);
+  app.db.get_roster(old_ident, old_roster);
+
+  split_path path;
+  file_path_external(idx(args,1)).split(path);
+  N(new_roster.has_node(path),
+    F("file %s is unknown for revision %s") % path % ident);
+
+  node_t node = new_roster.get_node(path);
+  basic_io::printer prt;
+  if (old_roster.has_node(node->self))
+    {
+      split_path old_path;
+      basic_io::stanza st;
+      old_roster.get_name(node->self, old_path);
+      file_path fp = file_path(old_path);
+      st.push_file_pair(basic_io::syms::file, fp);  
+      prt.print_stanza(st);
+    }
   output.write(prt.buf.data(), prt.buf.size());
 }
 

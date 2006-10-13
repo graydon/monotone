@@ -89,6 +89,10 @@ static access_tracker<system_path> working_root;
 bookkeeping_path const bookkeeping_root("_MTN");
 path_component const bookkeeping_root_component("_MTN");
 
+// this is a file_path because it does not conform to the invariant that
+// bookkeeping paths always start with the _current_ bookkeeping root.
+file_path const old_bookkeeping_root = file_path_internal("MT");
+
 void
 save_initial_path()
 {
@@ -586,14 +590,11 @@ current_root_path()
   return system_path(fs::initial_path().root_path().string());
 }
 
-
-bool
-find_and_go_to_workspace(system_path const & search_root)
+static bool
+find_bookdir(fs::path const & root, fs::path const & bookdir, 
+             fs::path & current, fs::path & removed)
 {
-  fs::path root(search_root.as_external(), fs::native);
-  fs::path bookdir(bookkeeping_root.as_external(), fs::native);
-  fs::path current(fs::initial_path());
-  fs::path removed;
+  current = fs::initial_path();
   fs::path check = current / bookdir;
 
   // check that the current directory is below the specified search root
@@ -654,6 +655,24 @@ find_and_go_to_workspace(system_path const & search_root)
       L(FL("problems with '%s' (missing '.' or '..')") % check.string());
       return false;
     }
+  return true;
+}
+
+
+bool
+find_and_go_to_workspace(system_path const & search_root)
+{
+  fs::path root(search_root.as_external(), fs::native);
+  fs::path bookdir(bookkeeping_root.as_external(), fs::native);
+  fs::path oldbookdir(old_bookkeeping_root.as_external(), fs::native);
+  fs::path current, removed;
+
+  // first look for the current name of the bookkeeping directory.
+  // if we don't find it, look for it under the old name, so that
+  // migration has a chance to work.
+  if (!find_bookdir(root, bookdir, current, removed))
+    if (!find_bookdir(root, oldbookdir, current, removed))
+      return false;
 
   working_root.set(current.native_file_string(), true);
   initial_rel_path.set(removed, true);
@@ -683,12 +702,12 @@ go_to_workspace(system_path const & new_workspace)
 
 using std::logic_error;
 
-static void test_null_name()
+UNIT_TEST(paths, null_name)
 {
   BOOST_CHECK(null_name(the_null_component));
 }
 
-static void test_file_path_internal()
+UNIT_TEST(paths, file_path_internal)
 {
   char const * baddies[] = {"/foo",
                             "foo//bar",
@@ -798,7 +817,7 @@ static void check_fp_normalizes_to(char * before, char * after)
     BOOST_CHECK(!null_name(*i));
 }
 
-static void test_file_path_external_null_prefix()
+UNIT_TEST(paths, file_path_external_null_prefix)
 {
   initial_rel_path.unset();
   initial_rel_path.set(fs::path(), true);
@@ -865,7 +884,7 @@ static void test_file_path_external_null_prefix()
   initial_rel_path.unset();
 }
 
-static void test_file_path_external_prefix__MTN()
+UNIT_TEST(paths, file_path_external_prefix__MTN)
 {
   initial_rel_path.unset();
   initial_rel_path.set(fs::path("_MTN"), true);
@@ -877,7 +896,7 @@ static void test_file_path_external_prefix__MTN()
   check_fp_normalizes_to("../foo", "foo");
 }
 
-static void test_file_path_external_prefix_a_b()
+UNIT_TEST(paths, file_path_external_prefix_a_b)
 {
   initial_rel_path.unset();
   initial_rel_path.set(fs::path("a/b"), true);
@@ -955,7 +974,7 @@ static void test_file_path_external_prefix_a_b()
   initial_rel_path.unset();
 }
 
-static void test_split_join()
+UNIT_TEST(paths, split_join)
 {
   file_path fp1 = file_path_internal("foo/bar/baz");
   file_path fp2 = file_path_internal("bar/baz/foo");
@@ -1051,7 +1070,7 @@ static void check_bk_normalizes_to(char * before, char * after)
   BOOST_CHECK(bookkeeping_path(bp.as_internal()).as_internal() == bp.as_internal());
 }
 
-static void test_bookkeeping_path()
+UNIT_TEST(paths, bookkeeping)
 {
   char const * baddies[] = {"/foo",
                             "foo//bar",
@@ -1093,7 +1112,7 @@ static void check_system_normalizes_to(char * before, char * after)
   BOOST_CHECK(system_path(sp.as_internal()).as_internal() == sp.as_internal());
 }
 
-static void test_system_path()
+UNIT_TEST(paths, system)
 {
   initial_abs_path.unset();
   initial_abs_path.set(system_path("/a/b"), true);
@@ -1179,7 +1198,7 @@ static void test_system_path()
   initial_rel_path.unset();
 }
 
-static void test_access_tracker()
+UNIT_TEST(paths, access_tracker)
 {
   access_tracker<int> a;
   BOOST_CHECK_THROW(a.get(), logic_error);
@@ -1208,7 +1227,7 @@ static void test_a_path_ordering(string const & left, string const & right)
   I(left_sp < right_sp);
 }
 
-static void test_path_ordering()
+UNIT_TEST(paths, ordering)
 {
   // this ordering is very important:
   //   -- it is used to determine the textual form of csets and manifests
@@ -1233,22 +1252,6 @@ static void test_path_ordering()
   // would catch this sort of brokenness.
   test_a_path_ordering("fallanopic_not_otherwise_mentioned", "xyzzy");
   test_a_path_ordering("fallanoooo_not_otherwise_mentioned_and_smaller", "fallanopic_not_otherwise_mentioned");
-}
-
-
-void add_paths_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&test_path_ordering));
-  suite->add(BOOST_TEST_CASE(&test_null_name));
-  suite->add(BOOST_TEST_CASE(&test_file_path_internal));
-  suite->add(BOOST_TEST_CASE(&test_file_path_external_null_prefix));
-  suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix__MTN));
-  suite->add(BOOST_TEST_CASE(&test_file_path_external_prefix_a_b));
-  suite->add(BOOST_TEST_CASE(&test_split_join));
-  suite->add(BOOST_TEST_CASE(&test_bookkeeping_path));
-  suite->add(BOOST_TEST_CASE(&test_system_path));
-  suite->add(BOOST_TEST_CASE(&test_access_tracker));
 }
 
 #endif // BUILD_UNIT_TESTS

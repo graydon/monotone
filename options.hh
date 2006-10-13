@@ -42,7 +42,8 @@ namespace option
     T const & get(boost::program_options::variables_map const & vm)
     {
       boost::program_options::variable_value const & vv(vm[(*this)()]);
-      return vv.as<T>();
+      // Workaround for gcc < 3.4. was return vv.as<T>();
+      return boost::any_cast<const T&>(vv.value());
     }
     bool given(boost::program_options::variables_map const & vm)
     {

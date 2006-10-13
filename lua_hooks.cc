@@ -281,17 +281,20 @@ lua_hooks::hook_get_author(cert_value const & branchname,
 }
 
 bool
-lua_hooks::hook_edit_comment(string const & commentary,
-                             string const & user_log_message,
-                             string & result)
+lua_hooks::hook_edit_comment(external const & commentary,
+                             external const & user_log_message,
+                             external & result)
 {
-  return Lua(st)
-    .func("edit_comment")
-    .push_str(commentary)
-    .push_str(user_log_message)
-    .call(2,1)
-    .extract_str(result)
-    .ok();
+  string result_str;
+  bool is_ok = Lua(st)
+                 .func("edit_comment")
+                 .push_str(commentary())
+                 .push_str(user_log_message())
+                 .call(2,1)
+                 .extract_str(result_str)
+                 .ok();
+  result = result_str;
+  return is_ok;
 }
 
 bool
@@ -783,17 +786,19 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 }
 
 bool
-lua_hooks::hook_validate_commit_message(string const & message,
-                                        string const & new_manifest_text,
+lua_hooks::hook_validate_commit_message(utf8 const & message,
+                                        revision_data const & new_rev,
+                                        cert_value const & branchname,
                                         bool & validated,
                                         string & reason)
 {
   validated = true;
   return Lua(st)
     .func("validate_commit_message")
-    .push_str(message)
-    .push_str(new_manifest_text)
-    .call(2, 2)
+    .push_str(message())
+    .push_str(new_rev.inner()())
+    .push_str(branchname())
+    .call(3, 2)
     .extract_str(reason)
     // XXX When validated, the extra returned string is superfluous.
     .pop()

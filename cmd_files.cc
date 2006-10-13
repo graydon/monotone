@@ -128,7 +128,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
   file.split(sp);
 
   if (app.revision_selectors.size() == 0)
-    get_revision_id(rid);
+    app.work.get_revision_id(rid);
   else
     complete(app, idx(app.revision_selectors, 0)(), rid);
 
@@ -151,7 +151,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid);
+  do_annotate(app, file_node, rid, app.brief);
 }
 
 CMD(identify, N_("debug"), N_("[PATH]"),
@@ -193,7 +193,7 @@ CMD(cat, N_("informative"),
 
   revision_id rid;
   if (app.revision_selectors.size() == 0)
-    get_revision_id(rid);
+    app.work.get_revision_id(rid);
   else
     complete(app, idx(app.revision_selectors, 0)(), rid);
   N(app.db.revision_exists(rid), 

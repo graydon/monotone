@@ -541,8 +541,7 @@ Netxx::PipeCompatibleProbe::add(const StreamServer &ss, ready_type rt)
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void
-simple_pipe_test()
+UNIT_TEST(pipe, simple_pipe)
 { try
   {
   Netxx::PipeStream pipe("cat",vector<string>());
@@ -606,13 +605,6 @@ catch (informative_failure &e)
     W(F("Failure %s") % e.what());
     throw;
   }
-}
-
-void
-add_pipe_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&simple_pipe_test));
 }
 #endif
 

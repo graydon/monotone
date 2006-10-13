@@ -1,3 +1,1181 @@
+2006-10-12  Thomas Keller <me@thomaskeller.biz>
+
+	* automate.cc: replaced std::endl in favour of simple unix
+	unix line endings which is useful if these commands are used
+	over automate stdio (flushing is expensive...)
+
+2006-10-03  Evan Deaubl  <evan@warpedview.com>
+
+	* monotone.cc, options_list.hh: Added ability to specify
+	multiple --message arguments.
+	* monotone.texi: Added documentation for multiple --message
+	arguments.
+	* tests/multiple_message_commit/__driver__.lua, testsuite.lua:
+	Added integration test for multiple --message arguments.
+	
+2006-10-09  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 35 fuzzies cleared,
+
+2006-10-04  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix automate inventory.
+	"workspace_inventory" test should be named "automate_inventory".
+
+2006-10-03  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* visualc/lua.vcproj visualc/monotone.vcproj: Make it build again.
+
+2006-09-29  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/workspace_inventory/__driver__.lua: This test has been
+	broken since efe5767b8eebbc5440f543a08b8a3521e760a02a ; added files
+	should also be marked as patched.
+
+2006-09-26  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl: Change the default monotone program
+	from "monotone" to "mtn".
+
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_netsync.cc (CMD(push/sync)): don't require a -k
+    argument for a non-authed transport.
+
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_ws_commit.cc (CMD(commit)): fail early if a key
+	wasn't set.
+
+2006-09-26  Marcel van der Boom  <marcel@hsdev.com>
+
+	* lua_hooks.cc (hook_validate_commit_message): Add a branchname
+	argument.
+	* cmd_ws_commit.cc (commit): Pass it.
+	* monotone.texi (Hooks): Document it.
+	* tests/commit_validation_lua_hook/commit_validate.lua: Test it.
+
+2006-09-25  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Applied a patch by Bruce
+	Stephens <monotone@cenderis.demon.co.uk>: Selectors can now be
+	completed in addition to revision ids, using the new functions
+	_mtn_tags and _mtn_public_keys together with _mtn_branches.
+	Selector completion is done by _mtn_selector_or_revision.
+
+2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_content_changed): use the file_content 
+	make rather than the parent_name mark.
+
+2006-09-23  Nathaniel Smith  <njs@pobox.com>
+
+	* randomizer.{cc,hh}: Make randomizer a stateful struct, not a
+	namespace.  Now, each test must instantiate its own randomizer,
+	and the randomizer is deterministically seeded at each test, so
+	the actual tests performed no longer depend on what other tests
+	were run in this session.
+	* diff_patch.cc, graph.cc, randomfile.hh, refiner.cc, roster.cc:
+	Adjust accordingly.
+	* roster.cc (perform_random_action): Remove stateless
+	change_automaton struct.
+
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
+	* graph.cc: I dunno, maybe this will make the buildslaves happier?
+	
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
+	* graph.cc: Add randomized tests for get_reconstruction_path.
+
+2006-09-22  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (workspace::perform_pivot_root): Partially revert
+	revision 7e648a47fdd80f004a529ef5ddba9428f59f673d: apply the
+	renames to the current roster and then calculate the complete set
+	of changes, instead of just blindly writing the changeset to the
+	workspace revision.
+	* tests/pivot_root_to_new_dir: No longer expected to fail.
+
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/pivot_root_to_new_dir: new test for pivot_root into
+	a directory that hasn't been committed yet (xfailed, 0.30 regression)
+
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/{--*/}: rename to tests/_--*/ so that using
+	the * wildcard in tests/ isn't awkward.
+
+2006-09-21  Nathaniel Smith  <njs@pobox.com>
+
+	* lru_writeback_cache.hh (clean_insert): Correct the cache
+	overflow logic so as to _actually_ never remove the last element.
+	Add an invariant to verify this.
+	(insert_dirty): Add an invariant here too.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: *sigh* Previous changes were just dumb.  Remove
+	them again.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: Oops.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: Expose some useful dump() overloads that are already
+	defined in roster.cc.
+
+2006-09-19  Alex Queiroz <alex@ventonegro.org>
+
+	* po/pt_BR.po: 1 fuzzy fixed.
+
+2006-09-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd.hh (ALIAS macro): somehow g++ 4.x is happy with std:string.
+	g++ 3.3.5 isn't.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	Fix a latent bug in the roster random actions test, and make it
+	somewhat more rigorous.
+	* roster.cc (random_actions): Always compare with the
+	just-previous roster; the random walk can return to an earlier
+	position.  Restructure with nested loops; run tests_on_two_rosters
+	more frequently.  Set up the scratch roster with a root here.
+	(perform_random_action): Invariant on entry that r has
+	a root already.  Do not delete the root node.  Add commented L()
+	for content changes.
+
+2006-09-18  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (DISTCLEANFILES): Add unit_tests.log.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	* unit_tests.cc: Rewrite for declarative registration of test cases,
+	better command line handling, and more useful stderr chatter in
+	normal operation.  All debug output now goes to a logfile (default
+	"unit_tests.log") and can be sent back to stderr with --debug.
+	* unit_tests.hh: Remove declarations of removed functions.
+	Don't include unit_test_suite.hpp.
+	(UNIT_TEST, struct unit_test_case): New.
+	(BOOST_CHECK_NOT_THROW): Reindent and wrap in do { } while (0).
+
+	* charset.cc, crypto_tests.cc, cset.cc, diff_patch.cc, globish.cc
+	* keys.cc, netcmd.cc, netxx_pipe.cc, packet.cc, paths.cc, refiner.cc
+	* restrictions.cc, revision.cc, roster.cc, roster_merge.cc
+	* simplestring_xform.cc, string_queue.cc, transforms.cc, uri.cc
+	* numeric_vocab.cc, xdelta.cc: Unit tests are now defined like
+	commands, as UNIT_TEST(group, test) { ... } and no registration
+	function is necessary.
+
+	* cert.cc, file_io.cc, vocab.cc: Remove empty BUILD_UNIT_TESTS block.
+
+	* commands.cc (command::command) Remove redundant boolean, just
+	check whether cmds is NULL.
+
+2006-09-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 1 fuzzy.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (status): Don't put a colon after parent
+	revision ids, to ease double-click copying from terminals.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Insert date.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Fixes suggested on IRC.
+
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/cputime.cc: GetProcessTimes returns non-zero on failure.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac: Bump version numbers to 0.30.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: First draft of 0.30 release notes.
+	* UPGRADE: Update for 0.30.
+
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/cputime.cc: Include cstdlib, define WIN32_LEAN_AND_MEAN,
+	correct case of FILETIME member.
+	* std_hooks.lua (mergers.tortoise): Be consistent about case.
+
+2006-09-16  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/cputime.cc: Include numeric_vocab.hh.
+
+2006-09-14  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd.hh: Make hidden_group a proper singleton, so it is safe to
+	use in other files.
+	* platform.hh, {unix,win32}/cputime.cc (cpu_now): New function for
+	measuring cpu time, for benchmarking.
+	* sha1.{hh,cc}, sha1_engine.hh: Framework for adding new SHA-1
+	cores.  New hidden command benchmark_sha1 to benchmark them.
+	* monotone.cc (botan_library): Call hook_botan_sha1().
+	* Makefile.am: Add new files.
+
+2006-09-14  Zack Weinberg  <zackw@panix.com>
+
+	Use the roster cache in content_merge_adaptors.
+	* diff_patch.hh: Constify all shared_ptr<roster_t>s.
+	* diff_patch.cc: Similarly.
+	(load_and_cache_roster): Use the db.get_roster overload
+	that returns a cached_roster.
+	* merge.cc (resolve_merge_conflicts): Constify a shared_ptr<roster_t>.
+	* work.cc (content_merge_empty_adaptor): Similarly.
+
+2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* .mtn-ignore: Ignore mtn instead of monotone; additionally ignore
+	tester and tester.h, package_full_revision_raw.txt and
+	package_revision_raw.txt.
+
+2006-09-12  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: 8 fuzzies, 1 new string.
+
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 4 fuzzies, one new string.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (has_node): Do not crash when has_node(foo/bar) is
+	called, and foo exists but is a file.
+	* work.cc (perform_rename, visit_file): Add more sanity checking.
+	* tests/ws_ops_with_wrong_node_type: Un-xfail.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/ws_ops_with_wrong_node_type: Add two failing test cases,
+	from bug report from Albert Ramstedt.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (perform_additions, perform_deletions)
+	(perform_rename, perform_pivot_root):
+	* revision.cc (make_revision_for_workspace): Add some MMs.
+
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 3 fuzzies.
+
+2006-09-11  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/commit_validation_lua_hook/errmsg: Update for new phrasing
+	of error message.
+
+2006-09-11  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.{cc,hh} (cert_revision_changelog): Take utf8 instead of string.
+
+	* work.cc (read_user_log, write_user_log):
+	* lua_hooks.{hh,cc} (hook_validate_commit_message):
+	(hook_edit_comment):
+	* cmd_ws_commit.cc (get_log_message_interactively):
+	* commands.cc (process_commit_message_args): Type properly, and do
+	charset conversion when necessary.
+
+	* cmd_merging.cc (merge_into_dir):
+	* cmd_ws_commit.cc (commit): Generate utf8 changelogs.
+
+	* tests/i18n_commit_messages/: New test.
+
+2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* Makefile.am (package_revision.txt): Follow-up for the merge of
+	the workspace-merge.migration branch: Use 'mtn automate
+	get_base_revision' to get the base revision instead of copying the
+	contents of _MTN/revision.
+
+2006-09-11  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 2 fuzzies.
+
+2006-09-09  Benoît Dejean  <benoit@placenet.org>
+
+	* fr.po: Updated French translation.
+
+2006-09-09  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (pluck): Error out if there is no work to be
+	done, or if the merge resulting in no changes to be applied.
+	* tests/pluck_restricted/__driver__.lua: Test for this.
+
+2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
+
+	* basic_io.hh (basic_io::printer):
+	note that only one printer can be referenced at a time,
+	due to shared static buffer.
+	* basic_io.cc (basic_io::printer::printer,
+	basic_io::printer::~printer): add reference tracking,
+	and invariant if more than one printer referenced at a time.
+
+2006-09-08  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: 8 fuzzies, 4 new strings.
+
+2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_corresponding_path, get_content_changed):
+	fix output; roster information was being written to
+	basic_io::printer mysteriously. Tests now pass.
+	* testsuite.lua: remove second reference to
+	automate_get_corresponding_path test
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/basic_invocation_and_options: Fix test broken by
+	usage to stdout vs. stderr changes.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/monotone.el (monotone-vc-prefix-map): Add some more
+	intuitive keys, and some more notes on FIXMEs.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* numeric_vocab.hh (widen): Add a comment documenting what widen<>
+	is for.  Add a fast-path to it for when V is unsigned anyway.
+	Throw in some static stdint-actually-works tests too, while I'm,
+	here.
+	* numeric_vocab.cc, unit_tests.{hh,cc}: Add tests for widen.
+
+2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
+
+	* monotone.texi: add *-merge documentation sourced
+	from mailing list archives (new entry under "Special
+	"Topics").
+
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
+	* revision.cc: It's really rosters, not revisions that are
+	regenerated.
+	* po/sv.po: Clear the resulting fuzzy.
+
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 3 fuzzies.
+
+2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_content_changed, get_corresponding_path)
+	add new functions, allowing determinination of last content
+	change and also filenames between revisions.
+	* monotone.texi: document new automate commands
+	* monotone.texi: document new automate commands
+	  tests/automate_get_content_changed,
+	  tests/automate_get_corresponding_path,
+	  tests/automate_get_content_changed/__driver__.lua,
+	  tests/automate_get_content_changed/expected,
+	  tests/automate_get_corresponding_path/__driver__.lua,
+	  tests/automate_get_corresponding_path/expected,
+	  tests/automate_get_corresponding_path/expected2A:
+	  test new automate commands
+	* testsuite.lua: call automate_get_content_changed,
+	  automate_get_corresponding_path tests.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Send usage text to stderr if there was
+	an error, but stdout if it was requested with --help.
+	* tests/usage_output_streams: New test.
+
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 5 fuzzies, 4 new strings.
+
+2006-09-05  Zack Weinberg  <zackw@panix.com>
+
+	* revision.hh (enum made_for): New.
+	(revision_t): Add 'made_for' field; in default constructor,
+	initialize it to made_for_nobody.
+	(make_revision_for_workspace): Two new functions.
+	* revision.cc: Throughout, set made_for when appropriate.
+	Implement new functions.
+	* work.cc (get_work_rev): Set made_for.
+	(put_work_rev): Invariant failure if made_for is not
+	made_for_workspace.
+	(perform_additions, perform_deletions, perform_rename)
+	(perform_pivot_root): Use make_revision_for_workspace.
+	* database.cc (put_revision): Invariant failure if made_for is not
+	made_for_database.
+	* merge.cc (store_roster_merge_result)
+	* rcs_import.cc (consume_cluster): Set made_for on revision
+	constructed.
+	* cmd_merging.cc, cmd_ws_commit.cc: Use make_revision_for_workspace
+	where appropriate.
+	* work_migration.cc: Add a note to the commentary about not being
+	able to use the database here.
+	(migrate_1_to_2): Remove database argument.
+	Use make_revision_for_workspace instead of messing about with
+	rosters.
+
+	* tests/workspace_migration/__driver__.lua: Strengthen test of
+	options preservation; invoke migrate_workspace using raw_mtn.
+	* tests/workspace_migration/{test-1,test-2}: Update to match.
+
+2006-09-05  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fuzzies fixed and strings translated.
+
+2006-09-05  Alex Queiroz  <alex@ventonegro.org>
+
+	* luaext_*.cc: Minor cleanups.
+
+2006-09-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 4 more fuzzies, 6 more new strings.
+
+2006-09-05  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 5 fuzzies and 3 new strings to fix.  New translation
+	for "option" when it's about the options file.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (get_attr): Remove file_path overload, for consistency
+	wiht the rest of roster_t.
+	* diff_patch.cc (attribute_manual_merge, get_file_encoding):
+	Adjust accordingly.
+
+2006-09-03  Zack Weinberg  <zackw@panix.com>
+
+	* roster.cc (roster_t::get_attr): Make has_node(pth) an invariant.
+
+2006-09-03  Zack Weinberg  <zackw@panix.com>
+
+	* NEWS: Mention workspace format change.
+	* monotone.texi: Update for workspace format change (pluck from
+	nvm.workspace-merge.api [this branch is now dead], with further
+	tweaks)
+	* work_migration.cc: Correct comment.
+
+2006-08-31  Zack Weinberg  <zackw@panix.com>
+
+	* work.hh: Update comment describing contents of _MTN directory.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc: No need to include app_state.cc.
+	(workspace::update_current_roster_from_filesystem): Put back
+	variant that doesn't take a node_restriction.
+	(workspace::maybe_update_inodeprints): Remove app_state argument.
+	Use 1-argument update_current_roster_from_filesystem.
+	* work.hh: Update to match.
+	* automate.cc, cmd_merging.cc, cmd_ws_commit.cc: All callers changed.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* automate.cc (get_option): Rewrite for revised _MTN/options
+	handling.
+
+2006-08-27  Zack Weinberg  <zackw@panix.com>
+
+	Cleanup after merge from mainline.
+
+	* cmd_ws_commit.cc (migrate_workspace): OPT_NONE -> option::none.
+	* work.cc: Include ui.hh.
+	(workspace::update_current_roster_from_filesystem):
+	Remove the overload that doesn't take a node_restriction argument.
+	Remove the app_state argument from the overload that does.
+	Use ui.prog_name.
+	* work_migration.cc: Include ui.hh; not app_state.hh.
+	(workspace::check_ws_format): Use ui.prog_name.
+	(first_version_supporting_current_format): Will now be 0.30.
+	* tester.lua (deltree, _deltree): Delete, unused.
+	* tests/migrate_workspace/__driver__.lua: Update for changes in
+	mtn status output.
+
+	* automate.cc (inventory)
+	* cmd_ws_commit.cc (add): Adjust call to find_unknown_and_ignored.
+	* automate.cc (get_revision, get_current_revision_id, get_manifest_of)
+	* cmd_merging.cc (update, pluck)
+	* work.cc (workspace::maybe_update_inodeprints):
+	Call update_current_roster_from_filesystem with a dummy
+	node_restriction.
+	* cmd_diff_log.cc (diff)
+	* cmd_list.cc (ls_changed)
+	* cmd_ws_commit.cc (status, commit): Remove last (app_state)
+	argument from call to update_current_roster_from_filesystem.
+	* app_state.cc (app_state::process_options): Adjust call to
+	check_ws_format.
+
+2006-08-08  Zack Weinberg  <zackw@panix.com>
+
+	* tests/migrate_workspace/__driver__.lua: Add migration tests for
+	format 1.
+	* tests/migrate_workspace/format-1-unmodified
+	* tests/migrate_workspace/format-1-rename: New files.
+	* tester.lua: Fix some typos.
+
+2006-08-05  Zack Weinberg  <zackw@panix.com>
+
+	* tester.lua (gettree, _gettree, deltree, _deltree): New functions.
+
+2006-08-04  Zack Weinberg  <zackw@panix.com>
+
+	"Full revision in _MTN" transition.  Compiles, passes lua
+	testsuite, bizarro failures in unit tests; migration testing needs
+	to be implemented.
+
+	* cmd_ws_commit.cc (setup): Give put_work_rev a revision with a
+	single empty ancestor, not with no ancestors.
+	* testsuite.lua, tests/_MTN_files_handled_correctly_in_aborted_commit
+	* tests/automate_get_base_revision_id, tests/database_check
+	* tests/delete_work_file_on_checkout, tests/netsync_permissions
+	* tests/normalized_filenames, tests/renaming_a_file
+	* tests/revert_file_to_base_revision, tests/revert_renames
+	* tests/update_with_pending_add, tests/update_with_pending_drop
+	* tests/update_with_pending_rename: Update code that looked at
+	_MTN/work and/or _MTN/revision; partial pluck from
+	ca0e87f5aa94378df6e221f06dce5c5058683873, with edits (the revision
+	is in _MTN/revision, not _MTN/workrev).
+
+2006-08-01  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_work_rev, workspace::put_work_rev): New functions.
+	(get_work_path, workspace::remove_work_cset, workspace::put_work_cset)
+	(workspace::put_revision_id): Delete.
+	All callers changed.
+	* work.hh: Update to match.
+	* revision.cc, revision.hh (make_revision): Add an overload that
+	takes a base roster and a cset.
+	* cmd_merging.cc, cmd_ws_commit.cc: Use put_work_rev and the
+	csetful make_revision if appropriate.
+	* work_migration.cc: Fix typos and include some missing headers.
+
+	* work_migration.cc: Bump current_workspace_format to 2 and
+	first_version_supporting_format to 0.29.
+	(migrate_1_to_2): New function.
+	(workspace::migrate_ws_format): Call it.  Add more commentary and
+	an invariant check.
+
+2006-07-30  Zack Weinberg  <zackw@panix.com>
+
+	* work_migration.cc: New file.
+	* Makefile.am (MOST_SOURCES): Add it.
+
+	* app_state.cc (app_state::process_options): Call work.check_ws_format.
+	(app_state::create_workspace): Call work.write_ws_format.
+	* cmd_ws_commit (migrate_workspace): New NO_WORKSPACE command.
+	* paths.cc (old_bookkeeping_root): New global constant.
+	(find_bookdir): Split out of ...
+	(find_and_go_to_workspace): ...here.  If we don't have _MTN, look
+	for MT.
+	* paths.hh: Declare old_bookkeeping_root.
+	* work.hh: Declare check_ws_format, migrate_ws_format, write_ws_format.
+
+	* tests/migrate_workspace: New test.
+	* testsuite.lua: Add it.
+
+2006-07-28  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.hh (app_state): Add boolean field 'have_set_key'.
+	* app_state.cc (app_state constructor): Initialize have_set_key
+	to false.
+	(app_state::set_signing_key): Set have_set_key to true.
+	(app_state::process_options): Do not allow workspace options to
+	override command line settings.
+	(app_state::write_options): Don't write out a key if it wasn't set.
+	* diff_patch.cc (content_merge_workspace_adaptor::get_version):
+	Check the temporary store before the database.
+	* work.cc (workspace::set_ws_options): If any argument is empty,
+	leave the corresponding option as-is in _MTN/options, rather than
+	writing over it with an empty string.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.cc: Delete static strings.
+	(app_state constructor): Initialize branch_is_sticky too.
+	(allow_workspace): Don't call read_options.
+	(process_options): Call work.get_ws_options here. Restructure
+	for new convention.
+	(write_options): Move next to process_options; use
+	work.set_ws_options.
+	(read_options): Delete.
+	(set_database, set_key_dir, set_signing_key): Don't mess with
+	options array.
+	(make_branch_sticky): Set branch_is_sticky, not options array.
+	* app_state.hh (struct app_state): Remove options and read_options;
+	add branch_is_sticky.
+	* database.cc, database.hh (database::get_filename): New method.
+	* work.cc (get_ws_options, set_ws_options): New methods.
+	(read_options_map, write_options_map): Delete.
+	* work.hh: Update to match.  Don't declare options_map.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc: Include work.hh first.  Don't include vocab.hh.
+	(file_itemizer, addition_builder, editable_working_tree)
+	Remove 'app' instance variable; replace with 'db' and/or 'lua'.
+	Update constructor to match.  All constructor users changed.
+	(get_base_revision, get_base_roster, get_current_roster_shape)
+	(get_base_and_current_roster_shape, classify_roster_paths)
+	(find_unknown_and_ignored, perform_additions, perform_content_update)
+	(update_any_attrs): Remove 'app' argument; use 'db' and/or 'lua'
+	instance variables instead.
+	(file_itemizer::visit_file, addition_builder::add_node_for)
+	(addition_builder::visit_file, editable_working_tree::attach_node)
+	(editable_working_tree::apply_delta)
+	Use 'db' and/or 'lua' instance variables, instead of 'app'.
+	(add_parent_dirs): Take 'db' and 'lua' arguments instead of 'app'.
+	All callers changed.
+	(update_current_roster_from_filesystem): Use 'lua' instead of
+	'app.lua' in one place.  Still has and uses an app_state argument.
+	(perform_deletions): Remove app_state argument; add 'recursive'
+	and 'execute' boolean arguments.
+	(perform_rename, perform_pivot_root): Remove app_state argument;
+	add 'execute' boolean argument.
+	* work.hh: Don't include cset.hh or file_io.hh.  Forward declare
+	classes database, app_state, lua_hooks.
+	(workspace): Add data members 'db' and 'lua', cached references to
+	the active database and lua hooks.  Add nontrivial constructor
+	which initializes these.  Update prototypes of changed interfaces.
+	* app_state.cc (app_state constructor): Give db and lua to work
+	constructor.
+	* automate.cc, cmd_diff_log.cc, cmd_list.cc, cmd_merging.cc
+	* cmd_ws_commit.cc: Update callers of changed interfaces.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.cc (read_options): Just call work.read_options_map.
+	(write_options): Just call work.write_options_map.
+
+	* work.cc (get_options_path, get_inodeprints_path): No longer
+	methods; make static, move near the rest of these functions.
+	(read_options_map): Bulk of app_state::read_options folded in here.
+	(write_options_map): Bulk of app_state::write_options folded in here.
+	(in_inodeprints_mode, read_inodeprints, write_inodeprints):
+	No longer methods; make static.
+	(maybe_update_inodeprints): Define here, as a workspace method...
+	* commands.cc: ... not here.
+	* work.hh, cmd.hh, cmd_merging.cc, cmd_ws_commit.cc: Update to match.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc: Reorganize.  No semantic changes.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.hh: Don't declare struct editable_working_tree.
+	Delete file_content_source and empty_file_content_source.
+	Forward declare content_merge_adaptor.
+	(workspace::perform_content_update): New method.
+	* work.cc: Include diff_patch.hh.  Declare struct
+	editable_working_tree here, inside an anonymous namespace.
+	Change its 'source' member from type file_content_source to
+	type content_merge_adaptor.  Wrap all member functions in the
+	anonymous namespace.
+	(editable_working_tree::attach_node)
+	(editable_working_tree::apply_delta): Adjust for different type of
+	'source'.
+	(content_merge_empty_adaptor): New.
+	(workspace::perform_content_update): New.
+	(workspace::perform_pivot_root): Use perform_content_update and
+	content_merge_empty_adaptor.
+
+	* cmd_merging.cc (struct update_source): Delete.
+	(update, pluck): Use workspace::perform_content_update instead of
+	manipulating update_source and editable_working_tree objects.
+	* diff_patch.hh: Make all content_merge_adaptor::get_version variants
+	const methods.
+	* diff_patch.cc (content_merge_workspace_adaptor::get_version):
+	Use E(), not N(), if the idents don't match.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* automate.cc (inventory): Use workspace::find_unknown_and_ignored.
+	* work.hh: Move struct file_itemizer...
+	* work.cc: ...here; wrap it and all its methods in an anonymous
+	namespace.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (addition_builder): Wrap class and all its methods in an
+	anonymous namespace.
+
+2006-07-27  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_attribute_from_roster): Move ...
+	* roster.cc (roster_t::get_attr): ...here; make into a roster_t
+	method; provide both split_path and file_path variants.
+	* roster.hh, work.hh: Update to match.
+	* diff_patch.cc (content_merger::get_file_encoding)
+	(content_merger::attribute_manual_merge): Update to match.
+
+2006-07-26  Zack Weinberg  <zackw@panix.com>
+
+	* roster.cc: No need to include inodeprint.hh.
+	(inodeprint_unchanged, classify_roster_paths)
+	(update_current_roster_from_filesystem [both overloads]):
+	Move to work.cc.
+	* roster.hh: Remove prototypes of functions moved to work.cc.
+	* work.hh (workspace): New class.  Make all work.cc functions
+	except get_attribute_from_roster into member functions of this
+	class, including the functions moved here from roster.hh.
+	Declare those functions.
+	* work.cc: Include inodeprint.hh.  Adjust function definitions to
+	match changes in work.hh.
+	* app_state.hh (struct app_state): Add 'work' data member.
+	* app_state.cc, automate.cc, cmd_diff_log.cc, cmd_files.cc, cmd_list.cc
+	* cmd_merging.cc, cmd_ws_commit.cc, commands.cc: Update calls to work
+	interfaces.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* configure.ac (AM_INIT_AUTOMAKE): Remove check-news option, it
+	causes more trouble than it's worth.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (erase_ancestors_and_failures):
+	* cert.cc (get_branch_heads): Add some logging.
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* botan/out_buf.cpp (Output_Buffers::retire): Backport memory leak
+	fix from Botan 1.4.12 (trivial change).
+
+2006-09-04  Nathaniel Smith  <njs@pobox.com>
+
+	* revision.cc (erase_ancestors_and_failures): New erase_ancestors
+	core algorithm, with linear memory usage and that simultaneously
+	filters the candidate set with an arbitrary predicate.
+	(erase_ancestors): Turn into a thin layer over the above.
+	* database.cc (get_revision_certs): Add a quick way to get all
+	revisions that might be in a given branch.
+	* cert.cc (get_branch_heads): Use the above to make branch head
+	calculation take O(n) memory, and roughly O(log n) trust
+	evaluations.
+
+2006-09-04  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Remaining strings translated. Job done, yay!
+
+2006-09-03  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: Fuzzies fixed and more strings translated.
+
+2006-08-31  Nathaniel Smith  <njs@pobox.com>
+
+	* charset.cc (system_charset_is_ascii_extension_impl): Add "646".
+
+2006-08-31  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (update_any_attrs): Remove stale comment.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* restrictions.hh (class restriction): Remove 'app' member.
+	Remove app_state arguments from both constructors.
+	(class node_restriction): Remove app_state argument from
+	the constructor that doesn't take any file_path vectors.
+	(class path_restriction): Likewise.
+	* restrictions.cc: Update to match.  In constructors that do take
+	file_path vectors, pass the app_state argument directly to
+	validate_roster_paths and/or validate_workspace_paths.
+	(test_empty_restriction): Construct empty restrictions without an
+	app_state object.
+	* automate.cc, cmd_diff_log.cc, roster.cc: Construct empty
+	restrictions without an app_state object.
+
+2006-08-30  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.{hh,cc}: Don't use app.depth directly -- take depth
+	as a constructor argument.  Now uninitialized masks _do_ always
+	include everything, as some code expected...
+	* cmd_ws_commit.cc, cmd_merging.cc, cmd_list.cc, cmd_diff_log.cc:
+	Adjust calling conventions accordingly.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* unit_tests.cc (localize_monotone): Define as a stub so the
+	unit_tests binary will link.
+
+2006-08-29  Richard Levitte  <richard@levitte.org>
+
+	* automate.cc (AUTOMATE(get_option)): And I did the error
+	report wrong as well...
+
+2006-08-29  Richard Levitte  <richard@levitte.org>
+
+	* automate.cc (AUTOMATE(get_option)): I did the output
+	incorrectly to `std::cout' instead of the `output' stream.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* cmd.hh (ALIAS): Rework so gettext() can do its job properly,
+	and get the alias description string translated as well.
+	* po/sv.po: Translate the alias description string.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Oh look, automate.cc was missing!
+	* po/sv.po: Adding automate.cc resulted in 7 new fuzzies and 9
+	new untranslated strings.  Fixed.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* automate.cc (AUTOMATE(get_option)): New automate command to
+	fetch values from _MTN/options in a supported manner.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* monotone.cc, i18n.h (localize_monotone): New function that does
+	the locale and gettext initialization if it isn't already done.
+	This can be called from anywhere, even from code that's run before
+	main().
+	* options.cc (option::localize_string): New function that calls
+	localize_monotone(), then localizes a string.  This is currently
+	exclusively used by...
+	(GOPT, COPT): ... these macros, so option descriptions get
+	translated properly.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* po/POTFILES.in: Add options_list.hh, since it contains a lot
+	of translatable text.  These strings were previously in
+	monotone.cc.
+	* po/sv.po: Updated automatically.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A few fuzzies to fix.
+
+2006-08-28  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* m4/ax_create_stdint_h.m4 (ac_cv_stdint_message): Change the
+	still not portable `head -n 1' into a `sed 1q'.
+
+2006-08-28  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* m4/ax_create_stdint_h.m4 (ac_cv_stdint_message): Correct
+	non-portable option to the `head' command.
+
+2006-08-27  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/status: Add indentation to match changes in output
+	format.
+	* cmd_ws_commit.cc (status): Remove unsightly extra \n.
+
+2006-08-27  Nathaniel Smith  <njs@pobox.com>
+
+	* database.cc (put_version): Add some MM()'s, in case the
+	invariant in this function fails again (as reported on the mailing
+	list).
+
+2006-08-25  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (status): Print current branch, and parent rev,
+	in 'status'.
+
+2006-08-24  Richard Levitte  <richard@levitte.org>
+
+	* po/ja.po: Change the number of possible plurals to 2.
+	This was done with permission from the official JA
+	translator.
+
+2006-08-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* options.hh: workaround for gcc < 3.4 parse error on
+	vv.as<T)();
+
+2006-08-24  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* revision.cc (select_nodes_modified_by_rev)
+	* revision.hh (select_nodes_modified_by_rev): Remove unused first
+	argument (rid).
+	* cmd_diff_log.cc (CMD(log)): Adjust sole usage of that function.
+
+2006-08-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* merge.cc (resolve_merge_conflicts): Bail out of conflict
+	resolution early if content_merger::try_to_merge_files indicates
+	conflicts remain after a merge attempt.
+
+2006-08-23  Lapo Luchini  <lapo@lapo.it>
+
+	* po/it.po: Updated and translated a few more strings (40 to go).
+
+2006-08-23  Jon Bright  <jon@siliconcircus.com>
+
+	* tests/diff_against_empty_file/__driver__.lua: Canonicalize the
+	output before checking.
+
+2006-08-23  Julio M. Merino Vidal  <jmmv@NetBSD.org>
+
+	* tests/diff_against_empty_file/expected.diff:
+	* tests/diff_against_empty_file/__driver__.lua: Instead of
+	checking if the resulting patch file applies correctly, compare it
+	to a correct prestored copy.  This is to prevent a bug in some
+	patch(1) implementations that do not deal correctly with reversed
+	patches applied to empty files.  Problem exposed under NetBSD.
+
+2006-08-23  Jon Bright  <jon@siliconcircus.com>
+
+	* automate.cc: add new automate genkey command, avoiding people
+	having to enter into a little chat script with monotone in order to
+	provide genkey with an alternative interface.
+	* tests/automate_genkey: Test it.
+	* testsuite.lua: Add the test
+	* cmd_automate.cc: Bump the interface version to 3.1
+
+	* tests/automate_genkey: Fix the test.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* monotone.texi (Hooks): The hooks merge2 and
+	get_preferred_merge2_command are dead.  Remove them from
+	documentation as well.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua: The previous change wasn't entirely wise.
+	So, a larger rework is in order to make the merging methods
+	more intelligent, as follows.
+	(mergers): all mergers now have an `available' and a `wanted'
+	function, to distinguish between availability of the programs
+	needed by each merger method and a check if the user wants to
+	use a perticular merger.
+	(mergers.rcsmerge.cmd): Use a hardcoded "vim" instead of the
+	non-existing variable `vim'.  This is untested and may need
+	further correction.
+	(get_preferred_merge3_command): If the user defined $MTN_MERGE
+	or the lua variable `merger', use it if the needed programs
+	are available, and fail if not.  If neither was defined, go
+	through all the mergers and pick the first for which the needed
+	programs are available and the user wants to use it.  Return
+	the name of the merger as well if it was specified through
+	$MTN_MERGE or `merger'.
+	(merge3): If get_preferred_merge2_command failed and returned
+	a merger name, tell the user about $MTN_MERGE and `merger',
+	otherwise, print the same old message as before.
+
+2006-08-23  Richard Levitte  <richard@levitte.org>
+
+	* std_hooks.lua (mergers.emacs.available): Since
+	mergers.emacs.cmd uses the command names "emacs" or "xemacs",
+	it's quite useless to look at the EDITOR environment variable
+	to determine availability.  Check that one of those exist on
+	the path instead.  As a result, the variable `merger' and the
+	environment variable MTN_MERGE can truly be used to tell the
+	merge3 hook what program should be used for conflict resolution
+	without having to define EDITOR as well.
+
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify-hookversion.lua: New file that
+	implements notification of changes received by netsync.
+	The software is self-contained but depends on some other
+	packages.  It's also not entirely optimal as it will send
+	notifications for all revisions, unfiltered.  Still, it
+	was time to share this.  Tests are underway.
+
+2006-08-22  Zack Weinberg  <zackw@panix.com>
+
+	* app_state.hh (app_state): Remove set_prog_name and prog_name members.
+	* app_state.cc (app_state::app_state): Don't call set_prog_name.
+	(app_state::set_prog_name): Delete definition.
+	* ui.hh (user_interface): Make prog_name member public.  Delete
+	set_prog_name member.
+	* ui.cc (user_interface::user_interface): Initialize prog_name to "?".
+	(user_interface::set_prog_name): Delete definition.
+	* monotone.cc (my_poptStuffArgFile): Delete.
+	(cpp_main): Delete code that was deleted once before and came
+	back in the .boost-program-options merge.  Handle argv[0]
+	separately from the rest of argv.  Update for ui.prog_name being
+	the only copy of the program invocation name.  Use ui.prog_name
+	instead of the local variable.
+	* commands.cc, roster.cc: Include ui.hh.
+	* cmd_merging.cc (update, pluck)
+	* cmd_ws_commit.cc (checkout, commit)
+	* commands.cc (notify_if_multiple_heads)
+	* database.cc (database::check_schema)
+	* netsync.cc (session::process_hello_command)
+	* roster.cc (update_current_roster_from_filesystem):
+	Use ui.prog_name instead of app.prog_name.
+
+
+2006-08-22  Zack Weinberg  <zackw@panix.com>
+
+	* m4/boost.m4 (BOOST_VERSION_SPECIFIC_BUGS): No need to check for
+	1.32.x bugs now we require 1.33.1 or newer.
+	(BOOST_SUFFIX_ARG): Clarify semantics of the variable; set the
+	default here.
+	(BOOST_LIB_IFELSE): Take care to distinguish 'we don't know what
+	suffix to use yet' from 'the selected suffix is the empty string'.
+	Once a suffix has been chosen, use it exclusively for all
+	subsequent libraries.
+	(BOOST_STATIC_LINK_OPTION): Properly handle BOOST_SUFFIX being a list.
+
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.cc: Fix the unit tests.  Thou shalt (or at least, I shall)
+	remember to run make check before syncing.
+
+2006-08-22  Jon Bright  <jon@siliconcircus.com>
+
+	* keys.hh, keys.cc: Make passphrases be UTF-8. Change generate_key_pair
+	to have two prototypes, one of which asks for a passphrase as before and
+	one of which accepts a passphrase as a parameter.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_files.cc (annotate): Invert the meaning of --brief --- now
+	the default is to display name/date, and --brief causes it to
+	simply show revisions.  This functionality should probably move
+	from here to 'automate annotate', but this commit doesn't go that
+	far.
+	* tests/annotate_with_human_output: New test.
+	* tests/*annotate*: Update command line syntax, and add check()
+	calls to some tests that were missing them (!).
+
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Two untranslated strings to translate.
+
+2006-08-22  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Extended filename completion to
+	subdirs, minor cleanups.
+	(_mtn_files): New function, factored out filename completion.
+	(_mtn_rcwd): New function, determines cwd relative to wd.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (checkout): Allow user to pass -r without
+	either -b or a directory (as per bug #17498).
+	* tests/checkout_-r_no_dir/: New test.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (checkout): Improve error messages.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.hh (sanity): Move 'brief' from here...
+	* app_state.cc (app_state): ...to here, with the rest of the
+	options.
+	* monotone.cc, cmd_diff_log.cc: Adjust accordingly.
+	* cmd_files.cc (annotate):
+	* annotate.cc (do_annotate): Take the brief option from outside,
+	instead of accessing the global from deep in the middle of
+	annotate.
+
+	No behavioral changes in this commit.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* sanity.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* annotate.cc: Remove tabs.
+
+2006-08-22  Nathaniel Smith  <njs@pobox.com>
+
+	* restrictions.cc (includes): Don't log what's going on when we
+	have a totally unrestricted mask; it's taking several percent of
+	cpu time.
+
+2006-08-22  Richard Levitte  <richard@levitte.org>
+
+	* examples/display_branches.lua (netsync_branches): Change it
+	so internal calls to other hooks are done to private versions.
+	This is so we don't mess with other implementations of the same
+	hooks which may be simultaneously present.
+
+2006-08-21  Matt Johnston  <matt@ucc.asn.au>
+
+	* debian/control: add libboost-program-options-dev to build dependencies
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (EXTRA_DIST): Remove a trailing comma to get a
+	non-mangled directory layout for tester-tests/ in the distribution
+	tarball.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Put in date.
+	* INSTALL: Bump boost requirement to 1.33.1.
+
+2006-08-21  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* cmd_merging.cc: Add includes and using std::* statements
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: Translated the last current untranslated string.
+
+2006-08-20  Zack Weinberg  <zackw@panix.com>
+
+	* tests/log_quits_on_SIGPIPE: Rewrite so it actually tests what we
+	want it to (and hopefully is now race free).
+
+2006-08-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Revised completion for almost
+	all commands, especially cat, co, diff, drop, log, propagate,
+	status, and update. Updated list of subcommands for db, ls, and
+	automate. Fixed indentation. Add author information.
+
+2006-08-20  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Small typo corrected ("merge" => "merger").
+	* po/sv.po: Fixed a few fuzzies and untranslated strings.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac, UPGRADE: Bump version number to
+	0.29.
+
+2006-08-20  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Draft 0.29 release notes.
+
+	* cmd_ws_commit.cc (status): Print "no changes", when there are no
+	changes.  Also, use F() for all strings, so that they will be
+	available for translation.
+
+	* monotone.texi (Hooks): Document that you can set MTN_MERGE or
+	lua variable 'merger' to control what merger is selected.
+	(Other Transports): Document the ssh://host/~/foo syntax.
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/log_quits_on_SIGPIPE/__driver__.lua: Increase the time we
+	give the background process to die on its own, before we decide it
+	failed and just kill it.  Hopefully will work better on the loaded
+	buildslaves now?
+
+2006-08-18  Nathaniel Smith  <njs@pobox.com>
+
+	* unix/main.cc (interrupt_signal): Newline-terminate our
+	"operation canceled" message.
+
+2006-08-18  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: Say that a Debian user needs to install
+	libboost-program-options-dev as well.
+
 2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* cmd.hh cmd_automate.cc monotone.text tests/automate_stdio/:
@@ -50,6 +1228,7 @@
 	* m4/boost.m4: Create a new macro to factor out code in common
 	among most of the MTN_BOOST_LIB_* macros.
 	* options.hh: Fix typo.
+
 2006-08-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* options.hh: Have a non-template option_base class to allow for...

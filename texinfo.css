@@ -52,6 +52,25 @@ ul.menu li a
 	}
 
 
+span.command
+	{
+  		font-family: sans-serif;
+		font-weight: bold;
+	}
+
+span.option
+	{ 
+  		font-family: sans-serif;
+		font-weight: bold;
+		font-style: italic;
+	}
+
+span.file
+	{ 
+  		font-family: monospace;
+		color: #aa00aa;
+	}
+
 dt 
 	{ 
 		background-color: #eeeeee;

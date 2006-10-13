@@ -41,11 +41,11 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm200"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\GnuWin32\include&quot;;&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;;&quot;C:\Boost\include\boost-1_33_1&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="pch.hh"
 				WarningLevel="3"
@@ -66,10 +66,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)\mtn.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\GnuWin32\lib&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Debug&quot;;C:\Boost\lib"
+				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Debug&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(outdir)/visualc.pdb"
 				SubSystem="1"
@@ -132,7 +132,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\GnuWin32\include&quot;;&quot;C:\Program Files\Microsoft Platform SDK\Include&quot;;&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;;&quot;C:\Boost\include\boost-1_33_1&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\sqlite&quot;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -160,7 +160,7 @@
 				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)/mtn.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\GnuWin32\lib&quot;;&quot;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;;C:\Boost\lib"
+				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;"
 				GenerateDebugInformation="true"
 				GenerateMapFile="false"
 				SubSystem="1"
@@ -280,6 +280,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\win32\cputime.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\cset.cc"
 				>
 			</File>
@@ -317,6 +321,10 @@
 			</File>
 			<File
 				RelativePath="..\globish.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\graph.cc"
 				>
 			</File>
 			<File
@@ -398,7 +406,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\main.cc"
+				RelativePath="..\win32\main.cc"
 				>
 			</File>
 			<File
@@ -439,6 +447,10 @@
 			</File>
 			<File
 				RelativePath="..\netxx_pipe.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\options.cc"
 				>
 			</File>
 			<File
@@ -543,6 +555,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\roster_delta.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\roster_merge.cc"
 				>
 			</File>
@@ -556,6 +572,10 @@
 			</File>
 			<File
 				RelativePath="..\selectors.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\sha1.cc"
 				>
 			</File>
 			<File
@@ -592,6 +612,10 @@
 			</File>
 			<File
 				RelativePath="..\work.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\work_migration.cc"
 				>
 			</File>
 			<File
@@ -692,6 +716,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\graph.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\hash_map.hh"
 				>
 			</File>
@@ -788,6 +816,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\options_list.hh"
+				>
+			</File>
+			<File
 				RelativePath="package_full_revision.h"
 				>
 			</File>
@@ -848,6 +880,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\roster_delta.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\roster_merge.hh"
 				>
 			</File>
@@ -869,6 +905,14 @@
 			</File>
 			<File
 				RelativePath="..\selectors.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\sha1.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\sha1_engine.hh"
 				>
 			</File>
 			<File

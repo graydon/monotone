@@ -15,7 +15,7 @@
 #include "charset.hh"
 #include "inodeprint.hh"
 #include "cert.hh"
-
+#include "ui.hh"
 #include "cmd.hh"
 
 #ifndef _WIN32
@@ -66,17 +66,19 @@ namespace commands
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
-    static bool first(true);
-    if (first)
+    if (cmds == NULL)
       cmds = new map<string, command *>;
-    first = false;
     (*cmds)[n] = this;
   }
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
   bool operator<(command const & self, command const & other);
-  const std::string hidden_group("");
+  std::string const & hidden_group()
+  {
+    static const std::string the_hidden_group("");
+    return the_hidden_group;
+  }
 };
 
 namespace std
@@ -137,7 +139,7 @@ namespace commands
       }
 
     // more than one matched command
-    string err = (F("command '%s' has multiple ambiguous expansions:\n") % cmd).str();
+    string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
     for (vector<string>::iterator i = matched.begin();
          i != matched.end(); ++i)
       err += (*i + "\n");
@@ -173,7 +175,7 @@ namespace commands
     out << _("commands:") << endl;
     for (i = (*cmds).begin(); i != (*cmds).end(); ++i)
       {
-        if (i->second->cmdgroup != hidden_group)
+        if (i->second->cmdgroup != hidden_group())
           sorted.push_back(i->second);
       }
 
@@ -263,7 +265,7 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -313,50 +315,6 @@ CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the spec
     }
 #undef maybe_throw
 #undef maybe_throw_bare
-}
-
-void
-maybe_update_inodeprints(app_state & app)
-{
-  if (!in_inodeprints_mode())
-    return;
-  inodeprint_map ipm_new;
-  temp_node_id_source nis;
-  roster_t old_roster, new_roster;
-
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
-  update_current_roster_from_filesystem(new_roster, app);
-
-  node_map const & new_nodes = new_roster.all_nodes();
-  for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      if (old_roster.has_node(nid))
-        {
-          node_t old_node = old_roster.get_node(nid);
-          if (is_file_t(old_node))
-            {
-              node_t new_node = i->second;
-              I(is_file_t(new_node));
-
-              file_t old_file = downcast_to_file_t(old_node);
-              file_t new_file = downcast_to_file_t(new_node);
-
-              if (new_file->content == old_file->content)
-                {
-                  split_path sp;
-                  new_roster.get_name(nid, sp);
-                  file_path fp(sp);
-                  hexenc<inodeprint> ip;
-                  if (inodeprint_file(fp, ip))
-                    ipm_new.insert(inodeprint_entry(fp, ip));
-                }
-            }
-        }
-    }
-  data dat;
-  write_inodeprint_map(ipm_new, dat);
-  write_inodeprints(dat);
 }
 
 string
@@ -465,10 +423,10 @@ complete(app_state & app,
 
   if (completions.size() > 1)
     {
-      string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
+      string err = (F("selection '%s' has multiple ambiguous expansions:") % str).str();
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (describe_revision(app, *i) + "\n");
+        err += ("\n" + describe_revision(app, *i));
       N(completions.size() == 1, i18n_format(err));
     }
 
@@ -486,17 +444,13 @@ notify_if_multiple_heads(app_state & app)
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.branch_name % app.prog_name);
+    P(i18n_format(prefixedline) % app.branch_name % ui.prog_name);
   }
 }
 
-// FIXME BUG: our log message handling is terribly locale-unaware -- if it's
-// passed as -m, we convert to unicode, if it's passed as --message-file or
-// entered interactively, we simply pass it through as bytes.
-
 void
 process_commit_message_args(bool & given,
-                            string & log_message,
+                            utf8 & log_message,
                             app_state & app)
 {
   // can't have both a --message and a --message-file ...
@@ -505,14 +459,15 @@ process_commit_message_args(bool & given,
 
   if (app.is_explicit_option(option::message()))
     {
-      log_message = app.message();
+      log_message = app.message;
       given = true;
     }
   else if (app.is_explicit_option(option::msgfile()))
     {
       data dat;
       read_data_for_command_line(app.message_file(), dat);
-      log_message = dat();
+      external dat2 = dat();
+      system_to_utf8(dat2, log_message);
       given = true;
     }
   else

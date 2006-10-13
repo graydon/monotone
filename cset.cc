@@ -503,8 +503,7 @@ setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
   }
 }
 
-static void
-cset_written_test()
+UNIT_TEST(cset, cset_written)
 {
   {
     L(FL("TEST: cset reading - operation misordering"));
@@ -755,8 +754,7 @@ cset_written_test()
   }
 }
 
-static void
-basic_csets_test()
+UNIT_TEST(cset, basic_csets)
 {
 
   temp_node_id_source nis;
@@ -937,8 +935,7 @@ basic_csets_test()
   }
 }
 
-static void
-invalid_csets_test()
+UNIT_TEST(cset, invalid_csets)
 {
   temp_node_id_source nis;
   roster_t r;
@@ -1112,8 +1109,7 @@ invalid_csets_test()
   }
 }
 
-void
-root_dir_test()
+UNIT_TEST(cset, root_dir)
 {
   temp_node_id_source nis;
   roster_t r;
@@ -1156,16 +1152,6 @@ root_dir_test()
     cs.apply_to(tree);
     r.check_sane(true);
   }
-}
-
-void
-add_cset_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&basic_csets_test));
-  suite->add(BOOST_TEST_CASE(&invalid_csets_test));
-  suite->add(BOOST_TEST_CASE(&cset_written_test));
-  suite->add(BOOST_TEST_CASE(&root_dir_test));
 }
 
 #endif // BUILD_UNIT_TESTS

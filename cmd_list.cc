@@ -137,7 +137,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_keys(string const & name, app_state & app, 
+ls_keys(string const & name, app_state & app,
         vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubs;
@@ -199,7 +199,7 @@ ls_keys(string const & name, app_state & app,
             cout << hash_code << " " << keyid << "   (*)" << "\n";
         }
       if (!all_in_db)
-        cout << (F("(*) - only in %s/") 
+        cout << (F("(*) - only in %s/")
                  % app.keys.get_key_dir()) << "\n";
       cout << "\n";
     }
@@ -245,7 +245,7 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 
   sort(names.begin(), names.end());
   for (size_t i = 0; i < names.size(); ++i)
-    if (match(idx(names, i)) 
+    if (match(idx(names, i))
         && !app.lua.hook_ignore_branch(idx(names, i)))
       cout << idx(names, i) << "\n";
 }
@@ -258,7 +258,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 
   if (args.size() == 0)
     {
-      for (map<cert_value, epoch_data>::const_iterator 
+      for (map<cert_value, epoch_data>::const_iterator
              i = epochs.begin();
            i != epochs.end(); ++i)
         {
@@ -267,7 +267,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
     }
   else
     {
-      for (vector<utf8>::const_iterator i = args.begin(); 
+      for (vector<utf8>::const_iterator i = args.begin();
            i != args.end();
            ++i)
         {
@@ -284,7 +284,7 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
   vector< revision<cert> > certs;
   app.db.get_revision_certs(tag_cert_name, certs);
 
-  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > > 
+  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > >
     sorted_vals;
 
   for (vector< revision<cert> >::const_iterator i = certs.begin();
@@ -331,8 +331,8 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
         continue;
       external ext_domain, ext_name;
       externalize_var_domain(i->first.first, ext_domain);
-      cout << ext_domain << ": " 
-           << i->first.second << " " 
+      cout << ext_domain << ": "
+           << i->first.second << " "
            << i->second << "\n";
     }
 }
@@ -344,19 +344,20 @@ ls_known(app_state & app, vector<utf8> const & args)
   temp_node_id_source nis;
 
   app.require_workspace();
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); 
+  for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
       node_id nid = i->first;
 
-      if (!new_roster.is_root(nid) 
+      if (!new_roster.is_root(nid)
           && mask.includes(new_roster, nid))
         {
           split_path sp;
@@ -367,27 +368,27 @@ ls_known(app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_unknown_or_ignored(app_state & app, bool want_ignored, 
+ls_unknown_or_ignored(app_state & app, bool want_ignored,
                       vector<utf8> const & args)
 {
   app.require_workspace();
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app);
+  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.depth, app);
   path_set unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
   if (roots.empty())
     roots.push_back(file_path());
 
-  find_unknown_and_ignored(app, mask, roots, unknown, ignored);
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
   if (want_ignored)
-    for (path_set::const_iterator i = ignored.begin(); 
+    for (path_set::const_iterator i = ignored.begin();
          i != ignored.end(); ++i)
       cout << file_path(*i) << "\n";
   else
-    for (path_set::const_iterator i = unknown.begin(); 
+    for (path_set::const_iterator i = unknown.begin();
          i != unknown.end(); ++i)
       cout << file_path(*i) << "\n";
 }
@@ -397,15 +398,16 @@ ls_missing(app_state & app, vector<utf8> const & args)
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  get_current_roster_shape(current_roster_shape, nis, app);
+  app.work.get_current_roster_shape(current_roster_shape, nis);
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.exclude_patterns),
+                        app.depth,
                         current_roster_shape, app);
 
   path_set missing;
-  find_missing(current_roster_shape, mask, missing);
+  app.work.find_missing(current_roster_shape, mask, missing);
 
-  for (path_set::const_iterator i = missing.begin(); 
+  for (path_set::const_iterator i = missing.begin();
        i != missing.end(); ++i)
     {
       cout << file_path(*i) << "\n";
@@ -423,21 +425,22 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   app.require_workspace();
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis, app);
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns), 
+                        args_to_paths(app.exclude_patterns),
+                        app.depth,
                         old_roster, new_roster, app);
 
-  update_current_roster_from_filesystem(new_roster, mask, app);
-  make_restricted_csets(old_roster, new_roster, 
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
+  make_restricted_csets(old_roster, new_roster,
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
   set<node_id> nodes;
   select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
 
-  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end(); 
+  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
        ++i)
     {
       split_path sp;
