@@ -6291,14 +6291,6 @@ none
 
 1.0
 
-@item Modifications:
-@table @strong
-@item 2.3
-
-Added the 'o' and 'i' items to the recognized input. This change should not
-break anything.
-@end table
-
 @item Purpose:
 
 Allow multiple automate commands to be run from one instance of monotone.
@@ -6308,30 +6300,14 @@ Allow multiple automate commands to be run from one instance of monotone.
 @verbatim
 l6:leavese
 l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
-@c l4:teste i5:ab de5:f 8 x1:qe
 @end verbatim
 
 @item Input format:
 
-@verbatim
-[ 'o' <string> <string> [<string> <string> [ ... ] ] 'e' ]
-'l' <string> [ <string> [ ... ] ] 'e'
-@c [ 'i' [<string> [ ... ] ] 'e' ]
-@end verbatim
-
-The input is a series of commands. The command name plus arguments are
-provided as 'l' <string> [<string> ...] 'e', where <string> = <size> colon
-<data> . This may optionally be preceeded by a set of key=value pairs
-(command options) as 'o' <string> <string> [<string> <string> ...] 'e', where
-strings come in pairs, key followed by value.
-
-@c It may also be followed by an input stream, encoded as 'i' [<string> ...] 'e'. The strings are concatentated to provide the input stream. A command which reads this input stream will block until the stream is
-@c terminated with the closing 'e'. If no input stream is provided, it will block
-@c until the opening character ('o' or 'l') of the next command is given.
-
-The space between the ending 'e' of one group of strings and the beginning
-'l' or 'o' of the next is reserved. Unknown characters will be ignored,
-but characters other than whitespace should not be present.
+The input is a series of commands of the form 'l' <token> [<token> ...] 'e',
+where <token> = <size> colon <string> . Characters between the ending 'e'
+of one commad and the beginning 'l' of the next are ignored, but characters
+other than '\n' should not be present as this space is reserved.
 
 @item Sample output:
 
@@ -6358,8 +6334,12 @@ if there is more output to come.
 
 <size> is the number of bytes in the output.
 
-<output> is a piece of the output of the command. The output may be split into
-multiple pieces, with all but the last having the <last?> field set to 'm'.
+<output> is the output of the command. This will never exceed the
+maximum chunk size, which is 1024 bytes per default and can be
+adjusted using the @option{--automate-stdio-size} option.  If a
+command produces more bytes of output than fit into one chunk, it will
+be split into multiple pieces, with all but the last having the
+<last?> field set to 'm'.
 
 @item Error conditions:
 

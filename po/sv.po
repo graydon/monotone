@@ -146,7 +146,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-09 00:32+0200\n"
+"POT-Creation-Date: 2006-10-13 10:22-0500\n"
 "PO-Revision-Date: 2006-10-09 00:36+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
@@ -203,72 +203,74 @@ msgstr "felaktigt argument till --next: får ej vara noll eller negativt"
 #: app_state.cc:388
 #, c-format
 msgid "illegal argument to --automate-stdio-size: cannot be zero or negative"
-msgstr "felaktigt argument till --automate-stdio-size: får ej vara noll eller negativt"
+msgstr ""
+"felaktigt argument till --automate-stdio-size: får ej vara noll eller "
+"negativt"
 
-#: automate.cc:65
+#: automate.cc:64
 msgid "[BRANCH]"
 msgstr "[GREN]"
 
-#: automate.cc:89 automate.cc:136 automate.cc:1207
+#: automate.cc:88 automate.cc:135 automate.cc:1206
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
-#: automate.cc:99 automate.cc:146 automate.cc:190 automate.cc:331
-#: automate.cc:366 automate.cc:370 automate.cc:429 automate.cc:453
-#: automate.cc:1217 cmd_list.cc:661
+#: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
+#: automate.cc:365 automate.cc:369 automate.cc:428 automate.cc:452
+#: automate.cc:1216 cmd_list.cc:661
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
 
-#: automate.cc:184 automate.cc:325
+#: automate.cc:183 automate.cc:324
 msgid "[REV1 [REV2 [REV3 [...]]]]"
 msgstr "[REV1 [REV2 [REV3 [...]]]]"
 
-#: automate.cc:216
+#: automate.cc:215
 msgid "FILE"
 msgstr "FIL"
 
-#: automate.cc:236
+#: automate.cc:235
 #, c-format
 msgid "file %s is unknown to the current workspace"
 msgstr "filen '%s' är okänd i denna arbetskopia"
 
-#: automate.cc:357
+#: automate.cc:356
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]"
 
-#: automate.cc:424 automate.cc:448 cmd_list.cc:651
+#: automate.cc:423 automate.cc:447 cmd_list.cc:651
 msgid "REV"
 msgstr "REV"
 
-#: automate.cc:525
+#: automate.cc:524
 msgid "SELECTOR"
 msgstr "VÄLJARE"
 
-#: automate.cc:894 automate.cc:1024
+#: automate.cc:893 automate.cc:1023
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:923 automate.cc:1046 automate.cc:1530 automate.cc:1589
-#: automate.cc:1594
+#: automate.cc:922 automate.cc:1045 automate.cc:1529 automate.cc:1588
+#: automate.cc:1593
 #, c-format
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i i databasen"
 
-#: automate.cc:1067 automate.cc:1146
+#: automate.cc:1066 automate.cc:1145
 msgid "FILEID"
 msgstr "FILID"
 
-#: automate.cc:1074
+#: automate.cc:1073
 #, c-format
 msgid "no file version %s found in database"
 msgstr "filversionen %s finns inte i databasen"
 
-#: automate.cc:1093 automate.cc:1119 cmd_merging.cc:845
+#: automate.cc:1092 automate.cc:1118 cmd_merging.cc:845
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1104 automate.cc:1130 automate.cc:1185 automate.cc:1187
+#: automate.cc:1103 automate.cc:1129 automate.cc:1184 automate.cc:1186
 #: cmd_db.cc:35 cmd_diff_log.cc:385 cmd_diff_log.cc:416 cmd_diff_log.cc:418
 #: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:125 cmd_merging.cc:677
 #: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:461 commands.cc:388
@@ -276,57 +278,57 @@ msgstr "REVID"
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1157
+#: automate.cc:1156
 #, c-format
 msgid "no such file '%s'"
 msgstr "filen '%s' finns inte"
 
-#: automate.cc:1173
+#: automate.cc:1172
 msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NYTT_FIL"
 
-#: automate.cc:1318
+#: automate.cc:1317
 msgid "[BRANCH_PATTERN]"
 msgstr "[GREN_MÖNSTER]"
 
-#: automate.cc:1414
+#: automate.cc:1413
 msgid "KEYID PASSPHRASE"
 msgstr "NYCKELID LÖSENFRAS"
 
-#: automate.cc:1432 cmd_key_cert.cc:41
+#: automate.cc:1431 cmd_key_cert.cc:41
 #, c-format
 msgid "key '%s' already exists"
 msgstr "nyckeln '%s' finns redan"
 
-#: automate.cc:1435 cmd_key_cert.cc:44
+#: automate.cc:1434 cmd_key_cert.cc:44
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "skapar nyckelparet '%s'"
 
-#: automate.cc:1437 cmd_key_cert.cc:46
+#: automate.cc:1436 cmd_key_cert.cc:46
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "lagrar nyckelparet '%s' i %s/"
 
-#: automate.cc:1473
+#: automate.cc:1472
 msgid "OPTION"
 msgstr "FLAGGA"
 
-#: automate.cc:1496
+#: automate.cc:1495
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' är en okänd inställning i arbetskopians metadata"
 
-#: automate.cc:1519
+#: automate.cc:1518
 msgid "REV FILE"
 msgstr "REV FIL"
 
-#: automate.cc:1536 automate.cc:1600
+#: automate.cc:1535 automate.cc:1599
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "filen %s är okänd i revision %s"
 
-#: automate.cc:1579
+#: automate.cc:1578
 msgid "REV1 FILE REV2"
 msgstr "REV1 FIL REV2"
 
@@ -400,21 +402,26 @@ msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "flera grencert funna för revision %s, var god ange en gren"
 
-#: cmd_automate.cc:206
-#, c-format
-msgid "read from client failed with error code: %d"
-msgstr "läsning från klienten misslyckades med följande felkod: %d"
-
-#: cmd_automate.cc:249
+#: cmd_automate.cc:157 cmd_automate.cc:226
 #, c-format
 msgid "Bad input to automate stdio"
 msgstr "felaktigt indata till automate stdio"
 
-#: cmd_automate.cc:303
+#: cmd_automate.cc:176
+#, c-format
+msgid "read from client failed with error code: %d"
+msgstr "läsning från klienten misslyckades med följande felkod: %d"
+
+#: cmd_automate.cc:177
+#, fuzzy, c-format
+msgid "Bad input to automate stdio (unexpected EOF)"
+msgstr "felaktigt indata till automate stdio"
+
+#: cmd_automate.cc:459
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:304
+#: cmd_automate.cc:460
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
@@ -2556,17 +2563,17 @@ msgstr "nodnivån är %d, vilket överskrider maxgränsen %d"
 msgid "mismatched node hash value %s, expected %s"
 msgstr "nodens kontrollsumma %s stämmer inte, %s förväntad"
 
-#: monotone.cc:153
+#: monotone.cc:154
 #, c-format
 msgid "Invalid escape in --xargs file"
 msgstr "Otillåten \\ i filen given med --xargs"
 
-#: monotone.cc:683
+#: monotone.cc:686
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Användning: %s [FLAGGOR...] kommando [ARGUMENT...]"
 
-#: monotone.cc:691
+#: monotone.cc:694
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -2965,7 +2972,9 @@ msgstr "läsning från %s fallerade i tillståndet \"working\" (fel)"
 #, c-format
 msgid ""
 "peer %s read failed in shutdown state (possibly client misreported error)"
-msgstr "läsning från %s fallerade i tillståndet \"shutdown\" (klienten kan felaktigt ha rapporterat ett fel)"
+msgstr ""
+"läsning från %s fallerade i tillståndet \"shutdown\" (klienten kan felaktigt "
+"ha rapporterat ett fel)"
 
 #: netsync.cc:2560
 #, c-format
@@ -2981,7 +2990,9 @@ msgstr "skrivning till %s fallerade i tillståndet \"working\" (fel)"
 #, c-format
 msgid ""
 "peer %s write failed in shutdown state (possibly client misreported error)"
-msgstr "skrivning till %s fallerade i tillståndet \"shutdown\" (klienten kan felaktigt ha rapporterat ett fel)"
+msgstr ""
+"skrivning till %s fallerade i tillståndet \"shutdown\" (klienten kan "
+"felaktigt ha rapporterat ett fel)"
 
 #: netsync.cc:2592
 #, c-format
@@ -3010,7 +3021,9 @@ msgstr "<alla gränssnitt>"
 #: netsync.cc:2724
 #, c-format
 msgid "session limit %d reached, some connections will be refused"
-msgstr "gränsen för antalet sessioner, %d, är nådd, en del uppkopplingar kommer att nekas"
+msgstr ""
+"gränsen för antalet sessioner, %d, är nådd, en del uppkopplingar kommer att "
+"nekas"
 
 #: netsync.cc:2789
 #, c-format

@@ -18,16 +18,9 @@ function parse_stdio(dat, which)
 end
 
 writefile("output", "file contents")
-writefile("output2", "other contents")
 
 check(mtn("automate", "inventory"), 0, true, false)
 canonicalize("stdout")
 rename("stdout", "output")
--- check(mtn("automate", "test"), 0, true, false, "ab def 8 xq")
--- canonicalize("stdout")
--- rename("stdout", "output2")
--- check(mtn("automate", "stdio", "--debug"), 0, true, true, "l9:inventorye o4:fork5:spoone l4:teste i5:ab de5:f 8 x1:qe")
-check(mtn("automate", "stdio"), 0, true, true, "l9:inventorye")
--- check(qgrep("fork = spoon", "stderr"))
+check(mtn("automate", "stdio"), 0, true, false, "l9:inventorye")
 check(parse_stdio(readfile("stdout"), 0) == readfile("output"))
--- check(parse_stdio(readfile("stdout"), 1) == readfile("output2"))
