@@ -17,6 +17,8 @@ mtn_setup()
 ---- databases if you do!
 --------------------------------------------------------------------------------------------------------------------------------------------
 
+writefile("blah_blah.txt", "blah-blah")
+
 -- We don't want the standard db, we want full control ourselves
 remove("test.db")
 remove("keys")
@@ -28,20 +30,20 @@ check(mtn("read"), 0, false, false, {"migrate_keys"})
 
 addfile("testfile1", "f1v1\n")
 addfile("testfile2", "f2v1\n")
-commit("testbranch1")
+check(mtn("commit", "--branch=testbranch1", "--message-file=blah_blah.txt"), 0, false, false)
 rev=base_revision()
 
 check(mtn("cert", rev, "somekey", "somevalue"), 0, false, false)
 
 writefile("testfile1", "f1v2\n")
 addfile("testfile3", "f3v1\n")
-commit("testbranch2")
+check(mtn("commit", "--branch=testbranch2", "--message-file=blah_blah.txt"), 0, false, false)
 
 revert_to(rev)
 
 writefile("testfile2", "f2v2\n")
 addfile("testfile4", "f4v1\n")
-commit("testbranch1")
+check(mtn("commit", "--branch=testbranch1", "--message-file=blah_blah.txt"), 0, false, false)
 
 check(get("old_revs_propagate_log"))
 check(mtn("propagate", "testbranch2", "testbranch1",
@@ -50,7 +52,7 @@ check(mtn("update"), 0, false, false)
 
 check(mtn("drop", "testfile1"), 0, false, false)
 writefile("testfile4", "f4v2\n")
-commit("testbranch3")
+check(mtn("commit", "--branch=testbranch3", "--message-file=blah_blah.txt"), 0, false, false)
 
 -- Exception to this code being untouchable:
 -- This line may have to be modified at a later date; this won't cause
