@@ -1,3 +1,9 @@
+2006-10-12  Thomas Keller <me@thomaskeller.biz>
+
+	* automate.cc: replaced std::endl in favour of simple unix
+	unix line endings which is useful if these commands are used
+	over automate stdio (flushing is expensive...)
+
 2006-10-03  Evan Deaubl  <evan@warpedview.com>
 
 	* monotone.cc, options_list.hh: Added ability to specify
