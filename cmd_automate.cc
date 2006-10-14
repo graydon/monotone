@@ -12,7 +12,7 @@
 #include <map>
 #include <utility>
 
-#include <boost/function.hpp>
+//#include <boost/function.hpp>
 #include <boost/bind.hpp>
 
 #include "cmd.hh"
@@ -48,15 +48,14 @@ void
 automate_command(utf8 cmd, vector<utf8> args,
                  string const & root_cmd_name,
                  app_state & app,
-                 ostream & output/*,
-                 istream & input*/)
+                 ostream & output)
 {
   map<string, automation::automate * const>::const_iterator
     i = automation::automations->find(cmd());
   if (i == automation::automations->end())
     throw usage(root_cmd_name);
   else
-    i->second->run(args, root_cmd_name, app, output/*, input*/);
+    i->second->run(args, root_cmd_name, app, output);
 }
 
 static string const interface_version = "3.1";
@@ -364,7 +363,6 @@ CMD_PARAMS_FN(automate, N_("automation"),
 
   make_io_binary();
 
-//  automate_command(cmd, cmd_args, name, app, std::cout, std::cin);
   automate_command(cmd, cmd_args, name, app, std::cout);
 }
 

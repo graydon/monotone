@@ -1,3 +1,9 @@
+2006-10-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Revert automate stdio extensions (never were on mainline) so
+	that the only change is that automate stdio is implemented
+	more cleanly.
+
 2006-10-12  Thomas Keller <me@thomaskeller.biz>
 
 	* automate.cc: replaced std::endl in favour of simple unix
