@@ -10,20 +10,13 @@
 #include <iosfwd>
 #include <iostream>
 #include <map>
-#include <utility>
-
-//#include <boost/function.hpp>
-#include <boost/bind.hpp>
 
 #include "cmd.hh"
 
 using std::map;
 using std::ostream;
-using std::istream;
 using std::string;
 using std::vector;
-using std::pair;
-using std::make_pair;
 
 namespace automation {
   // When this is split into multiple files, there will not be any
@@ -114,9 +107,8 @@ AUTOMATE(interface_version, "")
 //   the error code in the output for that command. Malformed input
 //   results in exit with a non-zero return value and an error message.
 
-// We use our own stringbuf class so we can put in a callback on write.
-// This lets us dump output at a set length, rather than waiting until
-// we have all of the output.
+// automate_streambuf and automate_ostream are so we can dump output at a
+// set length, rather than waiting until we have all of the output.
 
 
 class automate_reader
@@ -195,7 +187,6 @@ public:
   bool get_command(std::vector<std::string> & cmdline)
   {
     cmdline.clear();
-    //done_input = false;
     while (loc == none)
       go_to_next_item();
     if (loc == eof)
@@ -213,26 +204,26 @@ public:
 struct automate_streambuf : public std::streambuf
 {
 private:
-  static size_t const _bufsize = 8192;
+  size_t _bufsize;
   std::ostream *out;
   automate_reader *in;
   int cmdnum;
   int err;
 public:
-  automate_streambuf()
-   : std::streambuf(), out(0), in(0), cmdnum(0), err(0)
+  automate_streambuf(size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(0), in(0), cmdnum(0), err(0)
   {
     char *inbuf = new char[_bufsize];
     setp(inbuf, inbuf + _bufsize);
   }
-  automate_streambuf(std::ostream & o)
-   : std::streambuf(), out(&o), in(0), cmdnum(0), err(0)
+  automate_streambuf(std::ostream & o, size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(&o), in(0), cmdnum(0), err(0)
   {
     char *inbuf = new char[_bufsize];
     setp(inbuf, inbuf + _bufsize);
   }
-  automate_streambuf(automate_reader & i)
-   : std::streambuf(), out(0), in(&i), cmdnum(0), err(0)
+  automate_streambuf(automate_reader & i, size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(0), in(&i), cmdnum(0), err(0)
   {
     char *inbuf = new char[_bufsize];
     setp(inbuf, inbuf + _bufsize);
@@ -290,9 +281,9 @@ struct automate_ostream : public std::ostream
 {
   automate_streambuf _M_autobuf;
   
-  automate_ostream(std::ostream &out)
+  automate_ostream(std::ostream &out, size_t blocksize)
    : std::ostream(&_M_autobuf),
-     _M_autobuf(out)
+     _M_autobuf(out, blocksize)
   {}
   
   ~automate_ostream()
@@ -314,7 +305,7 @@ AUTOMATE(stdio, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
-  automate_ostream os(output);
+  automate_ostream os(output, app.automate_stdio_size);
   automate_reader ar(std::cin);
   vector<string> cmdline;
   while(ar.get_command(cmdline))//while(!EOF)
