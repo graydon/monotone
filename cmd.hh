@@ -21,7 +21,7 @@
 
 namespace commands
 {
-  extern const std::string hidden_group;
+  std::string const & hidden_group();
   using boost::program_options::option_description;
   using boost::shared_ptr;
 
@@ -65,7 +65,7 @@ namespace commands
     virtual ~command();
     virtual std::string params();
     virtual std::string desc();
-    virtual void exec(app_state & app, 
+    virtual void exec(app_state & app,
                       std::vector<utf8> const & args) = 0;
   };
 };
@@ -117,8 +117,8 @@ complete(app_state & app,
     F("partial id '%s' does not have an expansion") % str);
   if (completions.size() > 1)
     {
-      std::string err = 
-        (F("partial id '%s' has multiple ambiguous expansions:\n") 
+      std::string err =
+        (F("partial id '%s' has multiple ambiguous expansions:")
          % str).str();
       for (typename std::set<ID>::const_iterator i = completions.begin();
             i != completions.end(); ++i)
@@ -135,7 +135,7 @@ notify_if_multiple_heads(app_state & app);
 
 void
 process_commit_message_args(bool & given,
-                            std::string & log_message,
+                            utf8 & log_message,
                             app_state & app);
 
 #define CMD(C, group, params, desc, opts)                            \
@@ -207,7 +207,7 @@ namespace commands {                                                 \
 }                                                                    \
 std::string commands::cmd_ ## C::desc()                              \
 {                                                                    \
-  std:string result = _(desc_.c_str());                              \
+  std::string result = _(desc_.c_str());                             \
   result += "\n";                                                    \
   result += (F("Alias for %s") % #realcommand).str();                \
   return result;                                                     \

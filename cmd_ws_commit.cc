@@ -18,6 +18,7 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "work.hh"
+#include "charset.hh"
 
 using std::cout;
 using std::make_pair;
@@ -32,22 +33,34 @@ using boost::shared_ptr;
 static void
 get_log_message_interactively(revision_t const & cs,
                               app_state & app,
-                              string & log_message)
+                              utf8 & log_message)
 {
-  string commentary;
-  data summary, user_log_message;
+  revision_data summary;
   write_revision(cs, summary);
-  app.work.read_user_log(user_log_message);
-  commentary += string(70, '-') + "\n";
-  commentary += _("Enter a description of this change.\n"
-                  "Lines beginning with `MTN:' "
-                  "are removed automatically.\n");
-  commentary += "\n";
-  commentary += summary();
-  commentary += string(70, '-') + "\n";
+  external summary_external;
+  utf8_to_system(utf8(summary.inner()()), summary_external);
 
-  N(app.lua.hook_edit_comment(commentary, user_log_message(), log_message),
+  string commentary_str;
+  commentary_str += string(70, '-') + "\n";
+  commentary_str += _("Enter a description of this change.\n"
+                      "Lines beginning with `MTN:' "
+                      "are removed automatically.");
+  commentary_str += "\n\n";
+  commentary_str += summary_external();
+  commentary_str += string(70, '-') + "\n";
+
+  external commentary(commentary_str);
+
+  utf8 user_log_message;
+  app.work.read_user_log(user_log_message);
+  external user_log_message_external;
+  utf8_to_system(user_log_message, user_log_message_external);
+
+  external log_message_external;
+  N(app.lua.hook_edit_comment(commentary, user_log_message_external,
+                              log_message_external),
     F("edit of log message failed"));
+  system_to_utf8(log_message_external, log_message);
 }
 
 CMD(revert, N_("workspace"), N_("[PATH]..."),
@@ -106,7 +119,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   check_restricted_cset(old_roster, excluded);
 
   node_map const & nodes = old_roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); 
+  for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
       node_id nid = i->first;
@@ -187,7 +200,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   app.db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
-    F("revision '%s' has %d changesets, cannot invert\n") % r % rev.edges.size());
+    F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
   cert_value branchname;
   guess_branch(r, app, branchname);
@@ -218,8 +231,8 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     cert_revision_in_branch(inv_id, branchname, app, dbw);
     cert_revision_date_now(inv_id, app, dbw);
     cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, 
-                            (FL("disapproval of revision '%s'") 
+    cert_revision_changelog(inv_id,
+                            (FL("disapproval of revision '%s'")
                              % r).str(), app, dbw);
     guard.commit();
   }
@@ -248,7 +261,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
       app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin(); 
+    for (vector<utf8>::const_iterator i = args.begin();
          i != args.end(); ++i)
       {
         split_path sp;
@@ -281,7 +294,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
       app.work.find_missing(current_roster_shape, mask, paths);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin(); 
+    for (vector<utf8>::const_iterator i = args.begin();
          i != args.end(); ++i)
       {
         split_path sp;
@@ -358,7 +371,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster, 
+  make_restricted_csets(old_roster, new_roster,
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
@@ -372,7 +385,9 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
-      cout << (F("Changes against parent %s:") % parent).str() << "\n";
+      // A colon at the end of this string looked nicer, but it made
+      // double-click copying from terminals annoying.
+      cout << (F("Changes against parent %s") % parent).str() << "\n";
 
       cset const & cs = edge_changes(*i);
 
@@ -403,7 +418,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     }
 }
 
-CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
+CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
     N_("check out a revision from database into directory.\n"
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
@@ -421,12 +436,12 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   if (app.revision_selectors.size() == 0)
     {
       // use branch head revision
-      N(!app.branch_name().empty(), 
+      N(!app.branch_name().empty(),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
       get_branch_heads(app.branch_name(), app, heads);
-      N(heads.size() > 0, 
+      N(heads.size() > 0,
         F("branch '%s' is empty") % app.branch_name);
       if (heads.size() > 1)
         {
@@ -464,7 +479,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
       N(certs.size() != 0, F("revision %s is not a member of branch %s")
         % ident % app.branch_name);
     }
-  
+
   // we do this part of the checking down here, because it is legitimate to
   // do
   //  $ mtn co -r h:net.venge.monotone
@@ -473,11 +488,11 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   // until after the guess_branch() call above:
   {
     bool checkout_dot = false;
-    
+
     if (args.size() == 0)
       {
         // No checkout dir specified, use branch name for dir.
-        N(!app.branch_name().empty(), 
+        N(!app.branch_name().empty(),
           F("you must specify a destination directory"));
         dir = system_path(app.branch_name());
       }
@@ -488,7 +503,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
         if (idx(args, 0) == utf8("."))
           checkout_dot = true;
       }
-    
+
     if (!checkout_dot)
       require_path_is_nonexistent
         (dir, F("checkout directory '%s' already exists") % dir);
@@ -508,7 +523,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]\n"),
   app.work.put_work_rev(workrev);
 
   node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); 
+  for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
       node_t node = i->second;
@@ -590,7 +605,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             {
               attr_key a_key = idx(args, 2)();
               N(node->attrs.find(a_key) != node->attrs.end(),
-                F("Path '%s' does not have attribute '%s'\n")
+                F("Path '%s' does not have attribute '%s'")
                 % path % a_key);
               node->attrs[a_key] = make_pair(false, "");
             }
@@ -614,8 +629,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
                i != node->attrs.end(); ++i)
             if (i->second.first)
               {
-                cout << path << " : " 
-                     << i->first << "=" 
+                cout << path << " : "
+                     << i->first << "="
                      << i->second.second << "\n";
                 has_any_live_attrs = true;
               }
@@ -627,11 +642,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           attr_key a_key = idx(args, 2)();
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
-            cout << path << " : " 
-                 << i->first << "=" 
+            cout << path << " : "
+                 << i->first << "="
                  << i->second.second << "\n";
           else
-            cout << (F("No attribute '%s' on path '%s'") 
+            cout << (F("No attribute '%s' on path '%s'")
                      % a_key % path) << "\n";
         }
       else
@@ -645,10 +660,10 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    option::branch_name % option::message % option::msgfile % option::date % 
+    option::branch_name % option::message % option::msgfile % option::date %
     option::author % option::depth % option::exclude)
 {
-  string log_message("");
+  utf8 log_message("");
   bool log_message_given;
   revision_t restricted_rev;
   revision_id old_rev_id, restricted_rev_id;
@@ -666,7 +681,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster, 
+  make_restricted_csets(old_roster, new_roster,
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
@@ -688,6 +703,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     branchname = app.branch_name();
   else
     guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
+
+  {
+    // fail early if there isn't a key
+    rsa_keypair_id key;
+    get_user_key(key, app);
+  }
 
   P(F("beginning commit on branch '%s'") % branchname);
   L(FL("new manifest '%s'\n"
@@ -712,7 +733,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       // We only check for empty log messages when the user entered them
       // interactively.  Consensus was that if someone wanted to explicitly
       // type --message="", then there wasn't any reason to stop them.
-      N(log_message.find_first_not_of("\n\r\t ") != string::npos,
+      N(log_message().find_first_not_of("\n\r\t ") != string::npos,
         F("empty log message; commit canceled"));
 
       // We save interactively entered log messages to _MTN/log, so if
@@ -723,18 +744,19 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       // hit up-arrow to try again, you get an "_MTN/log non-empty and
       // message given on command line" error... which is annoying.
 
-      app.work.write_user_log(data(log_message));
+      app.work.write_user_log(log_message);
     }
 
   // If the hook doesn't exist, allow the message to be used.
   bool message_validated;
   string reason, new_manifest_text;
 
-  dump(restricted_rev, new_manifest_text);
+  revision_data new_rev;
+  write_revision(restricted_rev, new_rev);
 
-  app.lua.hook_validate_commit_message(log_message, new_manifest_text,
+  app.lua.hook_validate_commit_message(log_message, new_rev, branchname,
                                        message_validated, reason);
-  N(message_validated, F("log message rejected: %s") % reason);
+  N(message_validated, F("log message rejected by hook: %s") % reason);
 
   {
     transaction_guard guard(app.db);
@@ -756,7 +778,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         // process file deltas or new files
         cset const & cs = edge_changes(edge);
 
-        for (map<split_path, pair<file_id, file_id> >::const_iterator 
+        for (map<split_path, pair<file_id, file_id> >::const_iterator
                i = cs.deltas_applied.begin();
              i != cs.deltas_applied.end(); ++i)
           {
@@ -792,12 +814,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
             else
               // If we don't err out here, our packet writer will
               // later.
-              E(false, 
+              E(false,
                 F("Your database is missing version %s of file '%s'")
                 % old_content % path);
           }
 
-        for (map<split_path, file_id>::const_iterator 
+        for (map<split_path, file_id>::const_iterator
                i = cs.files_added.begin();
              i != cs.files_added.end(); ++i)
           {
@@ -840,7 +862,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   // we just checked in.
   revision_t remaining;
   make_revision_for_workspace(restricted_rev_id, excluded, remaining);
-  
+
   // small race condition here...
   app.work.put_work_rev(remaining);
   P(F("committed revision %s") % restricted_rev_id);
@@ -883,7 +905,7 @@ ALIAS(ci, commit);
 
 
 CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
-    N_("setup a new workspace directory, default to current"), 
+    N_("setup a new workspace directory, default to current"),
     option::branch_name)
 {
   if (args.size() > 1)
@@ -915,7 +937,7 @@ CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
 
   if (args.size() == 1)
     go_to_workspace(system_path(idx(args, 0)));
-  
+
   app.work.migrate_ws_format();
 }
 

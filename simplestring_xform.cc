@@ -140,11 +140,11 @@ prefix_lines_with(string const & prefix, string const & lines, string & out)
   out = oss.str();
 }
 
-string
-remove_ws(string const & s)
+void
+append_without_ws(string & appendto, string const & s)
 {
-  string tmp;
-  tmp.reserve(s.size());
+  unsigned pos = appendto.size();
+  appendto.resize(pos + s.size());
   for (string::const_iterator i = s.begin();
        i != s.end(); ++i)
     {
@@ -156,10 +156,19 @@ remove_ws(string const & s)
         case ' ':
           break;
         default:
-          tmp += *i;
+          appendto[pos] = *i;
+          ++pos;
           break;
         }
     }
+  appendto.resize(pos);
+}
+
+string
+remove_ws(string const & s)
+{
+  string tmp;
+  append_without_ws(tmp, s);
   return tmp;
 }
 
@@ -201,8 +210,7 @@ line_end_convert(string const & linesep, string const & src, string & dst)
 #include "unit_tests.hh"
 #include <stdlib.h>
 
-static void
-caseconv_test()
+UNIT_TEST(simplestring_xform, caseconv)
 {
   BOOST_CHECK(uppercase("hello") == "HELLO");
   BOOST_CHECK(uppercase("heLlO") == "HELLO");
@@ -212,8 +220,7 @@ caseconv_test()
   BOOST_CHECK(lowercase("!@#$%^&*()") == "!@#$%^&*()");
 }
 
-static void
-join_lines_test()
+UNIT_TEST(simplestring_xform, join_lines)
 {
   vector<string> strs;
   string joined;
@@ -235,23 +242,13 @@ join_lines_test()
   BOOST_CHECK(joined == "hi\nthere\nuser\n");
 }
 
-static void
-strip_ws_test()
+UNIT_TEST(simplestring_xform, strip_ws)
 {
   BOOST_CHECK(trim_ws("\n  leading space") == "leading space");
   BOOST_CHECK(trim_ws("trailing space  \n") == "trailing space");
   BOOST_CHECK(trim_ws("\t\n both \r \n\r\n") == "both");
   BOOST_CHECK(remove_ws("  I like going\tfor walks\n  ")
               == "Ilikegoingforwalks");
-}
-
-void
-add_simplestring_xform_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&caseconv_test));
-  suite->add(BOOST_TEST_CASE(&join_lines_test));
-  suite->add(BOOST_TEST_CASE(&strip_ws_test));
 }
 
 #endif // BUILD_UNIT_TESTS

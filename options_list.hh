@@ -35,7 +35,7 @@ COPT(external_diff, "external", nil, gettext_noop("use external diff hook for ge
 COPT(external_diff_args, "diff-args", string, gettext_noop("argument to pass external diff hook"));
 COPT(key_to_push, "key-to-push", vector<string>, gettext_noop("push the specified key even if it hasn't signed anything"));
 COPT(last, "last", long, gettext_noop("limit log output to the last number of entries"));
-COPT(message, "message,m", string, gettext_noop("set commit changelog message"));
+COPT(message, "message,m", vector<string>, gettext_noop("set commit changelog message"));
 COPT(missing, "missing", nil, gettext_noop("perform the operations for files missing from workspace"));
 COPT(msgfile, "message-file", string, gettext_noop("set filename containing commit changelog message"));
 COPT(next, "next", long, gettext_noop("limit log output to the next number of entries"));

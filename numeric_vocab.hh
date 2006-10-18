@@ -22,13 +22,23 @@ typedef uint64_t u64;
 
 BOOST_STATIC_ASSERT(sizeof(char) == 1);
 BOOST_STATIC_ASSERT(CHAR_BIT == 8);
+BOOST_STATIC_ASSERT(sizeof(u8) == 1);
+BOOST_STATIC_ASSERT(sizeof(u16) == 2);
+BOOST_STATIC_ASSERT(sizeof(u32) == 4);
+BOOST_STATIC_ASSERT(sizeof(u64) == 8);
 
+// This is similar to static_cast<T>(v).  The difference is that when T is
+// unsigned, this cast does not sign-extend:
+//   static_cast<u32>((signed char) -1) = 4294967295
+//   widen<u32,signed char>(-1) == 255
 template <typename T, typename V>
 inline T
 widen(V const & v)
 {
   BOOST_STATIC_ASSERT(sizeof(T) >= sizeof(V));
   if (std::numeric_limits<T>::is_signed)
+    return static_cast<T>(v);
+  else if (!std::numeric_limits<V>::is_signed)
     return static_cast<T>(v);
   else
     {

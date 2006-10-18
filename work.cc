@@ -26,6 +26,7 @@
 #include "inodeprint.hh"
 #include "diff_patch.hh"
 #include "ui.hh"
+#include "charset.hh"
 
 using std::deque;
 using std::exception;
@@ -203,24 +204,28 @@ workspace::get_user_log_path(bookkeeping_path & ul_path)
 }
 
 void
-workspace::read_user_log(data & dat)
+workspace::read_user_log(utf8 & dat)
 {
   bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
   if (file_exists(ul_path))
     {
-      read_data(ul_path, dat);
+      data tmp;
+      read_data(ul_path, tmp);
+      system_to_utf8(external(tmp()), dat);
     }
 }
 
 void
-workspace::write_user_log(data const & dat)
+workspace::write_user_log(utf8 const & dat)
 {
   bookkeeping_path ul_path;
   get_user_log_path(ul_path);
 
-  write_data(ul_path, dat);
+  external tmp;
+  utf8_to_system(dat, tmp);
+  write_data(ul_path, data(tmp()));
 }
 
 void
@@ -235,7 +240,7 @@ workspace::blank_user_log()
 bool
 workspace::has_contents_user_log()
 {
-  data user_log_message;
+  utf8 user_log_message;
   read_user_log(user_log_message);
   return user_log_message().length() > 0;
 }
@@ -554,6 +559,13 @@ addition_builder::visit_file(file_path const & path)
           P(F("adding %s to workspace manifest") % file_path(prefix));
           add_node_for(prefix);
         }
+      if (!is_dir_t(ros.get_node(prefix)))
+        {
+          N(prefix == sp,
+            F("cannot add %s, because %s is recorded as a file in the workspace manifest")
+            % file_path(sp) % file_path(sp));
+          break;
+        }
     }
 }
 
@@ -601,7 +613,7 @@ struct content_merge_empty_adaptor : public content_merge_adaptor
                             file_id const &, file_data const &,
                             file_data const &)
   { I(false); }
-  virtual void get_ancestral_roster(node_id, boost::shared_ptr<roster_t> &)
+  virtual void get_ancestral_roster(node_id, boost::shared_ptr<roster_t const> &)
   { I(false); }
 };
 
@@ -1000,7 +1012,7 @@ workspace::find_missing(roster_t const & new_roster_shape,
 
 void
 workspace::find_unknown_and_ignored(path_restriction const & mask,
-				    vector<file_path> const & roots,
+                                    vector<file_path> const & roots,
                                     path_set & unknown, path_set & ignored)
 {
   path_set known;
@@ -1027,6 +1039,8 @@ workspace::perform_additions(path_set const & paths, bool recursive)
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   editable_roster_base er(new_roster, nis);
@@ -1074,6 +1088,8 @@ workspace::perform_deletions(path_set const & paths,
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   // we traverse the the paths backwards, so that we always hit deep paths
@@ -1144,6 +1160,8 @@ workspace::perform_rename(set<file_path> const & src_paths,
 {
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   split_path dst;
   set<split_path> srcs;
   set< pair<split_path, split_path> > renames;
@@ -1193,10 +1211,18 @@ workspace::perform_rename(set<file_path> const & src_paths,
        i != renames.end(); i++)
     {
       N(new_roster.has_node(i->first),
-        F("%s does not exist in current revision") % file_path(i->first));
+        F("%s does not exist in current manifest") % file_path(i->first));
 
       N(!new_roster.has_node(i->second),
-        F("destination %s already exists in current revision") % file_path(i->second));
+        F("destination %s already exists in current manifest") % file_path(i->second));
+
+      split_path parent;
+      path_component basename;
+      dirname_basename(i->second, parent, basename);
+      N(new_roster.has_node(parent),
+        F("destination directory %s does not exist in current manifest") % file_path(parent));
+      N(is_dir_t(new_roster.get_node(parent)),
+        F("destination directory %s is not a directory") % file_path(parent));
     }
 
   // do the attach/detaching
@@ -1261,6 +1287,8 @@ workspace::perform_pivot_root(file_path const & new_root,
 
   temp_node_id_source nis;
   roster_t base_roster, new_roster;
+  MM(base_roster);
+  MM(new_roster);
   get_base_and_current_roster_shape(base_roster, new_roster, nis);
 
   I(new_roster.has_root());
@@ -1296,11 +1324,16 @@ workspace::perform_pivot_root(file_path const & new_root,
   safe_insert(cs.nodes_renamed, make_pair(new_root_sp, root_sp));
 
   {
+    editable_roster_base e(new_roster, nis);
+    cs.apply_to(e);
+  }
+
+  {
     revision_id base_rev;
     get_revision_id(base_rev);
 
     revision_t new_work;
-    make_revision_for_workspace(base_rev, cs, new_work);
+    make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
     put_work_rev(new_work);
   }
   if (execute)

@@ -66,17 +66,19 @@ namespace commands
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
-    static bool first(true);
-    if (first)
+    if (cmds == NULL)
       cmds = new map<string, command *>;
-    first = false;
     (*cmds)[n] = this;
   }
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
   bool operator<(command const & self, command const & other);
-  const std::string hidden_group("");
+  std::string const & hidden_group()
+  {
+    static const std::string the_hidden_group("");
+    return the_hidden_group;
+  }
 };
 
 namespace std
@@ -137,7 +139,7 @@ namespace commands
       }
 
     // more than one matched command
-    string err = (F("command '%s' has multiple ambiguous expansions:\n") % cmd).str();
+    string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
     for (vector<string>::iterator i = matched.begin();
          i != matched.end(); ++i)
       err += (*i + "\n");
@@ -173,7 +175,7 @@ namespace commands
     out << _("commands:") << endl;
     for (i = (*cmds).begin(); i != (*cmds).end(); ++i)
       {
-        if (i->second->cmdgroup != hidden_group)
+        if (i->second->cmdgroup != hidden_group())
           sorted.push_back(i->second);
       }
 
@@ -263,7 +265,7 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group, "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -421,10 +423,10 @@ complete(app_state & app,
 
   if (completions.size() > 1)
     {
-      string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
+      string err = (F("selection '%s' has multiple ambiguous expansions:") % str).str();
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (describe_revision(app, *i) + "\n");
+        err += ("\n" + describe_revision(app, *i));
       N(completions.size() == 1, i18n_format(err));
     }
 
@@ -446,13 +448,9 @@ notify_if_multiple_heads(app_state & app)
   }
 }
 
-// FIXME BUG: our log message handling is terribly locale-unaware -- if it's
-// passed as -m, we convert to unicode, if it's passed as --message-file or
-// entered interactively, we simply pass it through as bytes.
-
 void
 process_commit_message_args(bool & given,
-                            string & log_message,
+                            utf8 & log_message,
                             app_state & app)
 {
   // can't have both a --message and a --message-file ...
@@ -461,14 +459,15 @@ process_commit_message_args(bool & given,
 
   if (app.is_explicit_option(option::message()))
     {
-      log_message = app.message();
+      log_message = app.message;
       given = true;
     }
   else if (app.is_explicit_option(option::msgfile()))
     {
       data dat;
       read_data_for_command_line(app.message_file(), dat);
-      log_message = dat();
+      external dat2 = dat();
+      system_to_utf8(dat2, log_message);
       given = true;
     }
   else

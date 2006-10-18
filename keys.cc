@@ -574,8 +574,7 @@ require_password(rsa_keypair_id const & key,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-static void
-arc4_test()
+UNIT_TEST(key, arc4)
 {
 
   string pt("new fascist tidiness regime in place");
@@ -601,8 +600,7 @@ arc4_test()
 
 }
 
-static void
-signature_round_trip_test()
+UNIT_TEST(key, signature_round_trip)
 {
   app_state app;
   app.lua.add_std_hooks();
@@ -625,14 +623,6 @@ signature_round_trip_test()
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
   BOOST_CHECK(!check_signature(app, key, kp.pub, broken_plaintext, sig));
-}
-
-void
-add_key_tests(test_suite * suite)
-{
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&arc4_test));
-  suite->add(BOOST_TEST_CASE(&signature_round_trip_test));
 }
 
 #endif // BUILD_UNIT_TESTS

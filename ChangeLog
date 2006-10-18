@@ -1,3 +1,35 @@
+2006-10-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Propagate the rerwite of 'automate stdio' (in branch
+	...automate-stdio-extensions) to mainline. It doesn't actually
+	have any extensions anymore, just a rewrite that should make
+	the code cleaner.
+
+2006-10-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Revert automate stdio extensions (never were on mainline) so
+	that the only change is that automate stdio is implemented
+	more cleanly.
+
+2006-10-12  Thomas Keller <me@thomaskeller.biz>
+
+	* automate.cc: replaced std::endl in favour of simple unix
+	unix line endings which is useful if these commands are used
+	over automate stdio (flushing is expensive...)
+
+2006-10-03  Evan Deaubl  <evan@warpedview.com>
+
+	* monotone.cc, options_list.hh: Added ability to specify
+	multiple --message arguments.
+	* monotone.texi: Added documentation for multiple --message
+	arguments.
+	* tests/multiple_message_commit/__driver__.lua, testsuite.lua:
+	Added integration test for multiple --message arguments.
+	
+2006-10-09  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 35 fuzzies cleared,
+
 2006-10-08  Richard Levitte  <richard@levitte.org>
 
 	* debian/control (monotone-doc): Set up build dependencies for the
@@ -14,10 +46,389 @@
 	* debian/monotone-doc.docs: ... to here, since we have a separate
 	package for documentation.
 
+2006-10-04  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix automate inventory.
+	"workspace_inventory" test should be named "automate_inventory".
+
+2006-10-03  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* visualc/lua.vcproj visualc/monotone.vcproj: Make it build again.
+
+2006-09-29  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/workspace_inventory/__driver__.lua: This test has been
+	broken since efe5767b8eebbc5440f543a08b8a3521e760a02a ; added files
+	should also be marked as patched.
+
+2006-09-26  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl: Change the default monotone program
+	from "monotone" to "mtn".
+
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_netsync.cc (CMD(push/sync)): don't require a -k
+    argument for a non-authed transport.
+
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_ws_commit.cc (CMD(commit)): fail early if a key
+	wasn't set.
+
+2006-09-26  Marcel van der Boom  <marcel@hsdev.com>
+
+	* lua_hooks.cc (hook_validate_commit_message): Add a branchname
+	argument.
+	* cmd_ws_commit.cc (commit): Pass it.
+	* monotone.texi (Hooks): Document it.
+	* tests/commit_validation_lua_hook/commit_validate.lua: Test it.
+
+2006-09-25  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Applied a patch by Bruce
+	Stephens <monotone@cenderis.demon.co.uk>: Selectors can now be
+	completed in addition to revision ids, using the new functions
+	_mtn_tags and _mtn_public_keys together with _mtn_branches.
+	Selector completion is done by _mtn_selector_or_revision.
+
+2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_content_changed): use the file_content 
+	make rather than the parent_name mark.
+
+2006-09-23  Nathaniel Smith  <njs@pobox.com>
+
+	* randomizer.{cc,hh}: Make randomizer a stateful struct, not a
+	namespace.  Now, each test must instantiate its own randomizer,
+	and the randomizer is deterministically seeded at each test, so
+	the actual tests performed no longer depend on what other tests
+	were run in this session.
+	* diff_patch.cc, graph.cc, randomfile.hh, refiner.cc, roster.cc:
+	Adjust accordingly.
+	* roster.cc (perform_random_action): Remove stateless
+	change_automaton struct.
+
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
+	* graph.cc: I dunno, maybe this will make the buildslaves happier?
+	
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
+	* graph.cc: Add randomized tests for get_reconstruction_path.
+
+2006-09-22  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (workspace::perform_pivot_root): Partially revert
+	revision 7e648a47fdd80f004a529ef5ddba9428f59f673d: apply the
+	renames to the current roster and then calculate the complete set
+	of changes, instead of just blindly writing the changeset to the
+	workspace revision.
+	* tests/pivot_root_to_new_dir: No longer expected to fail.
+
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/pivot_root_to_new_dir: new test for pivot_root into
+	a directory that hasn't been committed yet (xfailed, 0.30 regression)
+
+2006-09-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/{--*/}: rename to tests/_--*/ so that using
+	the * wildcard in tests/ isn't awkward.
+
+2006-09-21  Nathaniel Smith  <njs@pobox.com>
+
+	* lru_writeback_cache.hh (clean_insert): Correct the cache
+	overflow logic so as to _actually_ never remove the last element.
+	Add an invariant to verify this.
+	(insert_dirty): Add an invariant here too.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: *sigh* Previous changes were just dumb.  Remove
+	them again.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: Oops.
+
+2006-09-20  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.hh: Expose some useful dump() overloads that are already
+	defined in roster.cc.
+
+2006-09-19  Alex Queiroz <alex@ventonegro.org>
+
+	* po/pt_BR.po: 1 fuzzy fixed.
+
+2006-09-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd.hh (ALIAS macro): somehow g++ 4.x is happy with std:string.
+	g++ 3.3.5 isn't.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	Fix a latent bug in the roster random actions test, and make it
+	somewhat more rigorous.
+	* roster.cc (random_actions): Always compare with the
+	just-previous roster; the random walk can return to an earlier
+	position.  Restructure with nested loops; run tests_on_two_rosters
+	more frequently.  Set up the scratch roster with a root here.
+	(perform_random_action): Invariant on entry that r has
+	a root already.  Do not delete the root node.  Add commented L()
+	for content changes.
+
+2006-09-18  Nathaniel Smith  <njs@pobox.com>
+
+	* Makefile.am (DISTCLEANFILES): Add unit_tests.log.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	* unit_tests.cc: Rewrite for declarative registration of test cases,
+	better command line handling, and more useful stderr chatter in
+	normal operation.  All debug output now goes to a logfile (default
+	"unit_tests.log") and can be sent back to stderr with --debug.
+	* unit_tests.hh: Remove declarations of removed functions.
+	Don't include unit_test_suite.hpp.
+	(UNIT_TEST, struct unit_test_case): New.
+	(BOOST_CHECK_NOT_THROW): Reindent and wrap in do { } while (0).
+
+	* charset.cc, crypto_tests.cc, cset.cc, diff_patch.cc, globish.cc
+	* keys.cc, netcmd.cc, netxx_pipe.cc, packet.cc, paths.cc, refiner.cc
+	* restrictions.cc, revision.cc, roster.cc, roster_merge.cc
+	* simplestring_xform.cc, string_queue.cc, transforms.cc, uri.cc
+	* numeric_vocab.cc, xdelta.cc: Unit tests are now defined like
+	commands, as UNIT_TEST(group, test) { ... } and no registration
+	function is necessary.
+
+	* cert.cc, file_io.cc, vocab.cc: Remove empty BUILD_UNIT_TESTS block.
+
+	* commands.cc (command::command) Remove redundant boolean, just
+	check whether cmds is NULL.
+
+2006-09-18  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 1 fuzzy.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_ws_commit.cc (status): Don't put a colon after parent
+	revision ids, to ease double-click copying from terminals.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Insert date.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Fixes suggested on IRC.
+
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/cputime.cc: GetProcessTimes returns non-zero on failure.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/monotone.iss, visualc/config.h, monotone.spec:
+	* debian/changelog, configure.ac: Bump version numbers to 0.30.
+
+2006-09-17  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: First draft of 0.30 release notes.
+	* UPGRADE: Update for 0.30.
+
+2006-09-17  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/cputime.cc: Include cstdlib, define WIN32_LEAN_AND_MEAN,
+	correct case of FILETIME member.
+	* std_hooks.lua (mergers.tortoise): Be consistent about case.
+
+2006-09-16  Nathaniel Smith  <njs@pobox.com>
+
+	* win32/cputime.cc: Include numeric_vocab.hh.
+
+2006-09-14  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd.hh: Make hidden_group a proper singleton, so it is safe to
+	use in other files.
+	* platform.hh, {unix,win32}/cputime.cc (cpu_now): New function for
+	measuring cpu time, for benchmarking.
+	* sha1.{hh,cc}, sha1_engine.hh: Framework for adding new SHA-1
+	cores.  New hidden command benchmark_sha1 to benchmark them.
+	* monotone.cc (botan_library): Call hook_botan_sha1().
+	* Makefile.am: Add new files.
+
+2006-09-14  Zack Weinberg  <zackw@panix.com>
+
+	Use the roster cache in content_merge_adaptors.
+	* diff_patch.hh: Constify all shared_ptr<roster_t>s.
+	* diff_patch.cc: Similarly.
+	(load_and_cache_roster): Use the db.get_roster overload
+	that returns a cached_roster.
+	* merge.cc (resolve_merge_conflicts): Constify a shared_ptr<roster_t>.
+	* work.cc (content_merge_empty_adaptor): Similarly.
+
+2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* .mtn-ignore: Ignore mtn instead of monotone; additionally ignore
+	tester and tester.h, package_full_revision_raw.txt and
+	package_revision_raw.txt.
+
+2006-09-12  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: 8 fuzzies, 1 new string.
+
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 4 fuzzies, one new string.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
+	* roster.cc (has_node): Do not crash when has_node(foo/bar) is
+	called, and foo exists but is a file.
+	* work.cc (perform_rename, visit_file): Add more sanity checking.
+	* tests/ws_ops_with_wrong_node_type: Un-xfail.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/ws_ops_with_wrong_node_type: Add two failing test cases,
+	from bug report from Albert Ramstedt.
+
+2006-09-12  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (perform_additions, perform_deletions)
+	(perform_rename, perform_pivot_root):
+	* revision.cc (make_revision_for_workspace): Add some MMs.
+
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 3 fuzzies.
+
+2006-09-11  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/commit_validation_lua_hook/errmsg: Update for new phrasing
+	of error message.
+
+2006-09-11  Nathaniel Smith  <njs@pobox.com>
+
+	* cert.{cc,hh} (cert_revision_changelog): Take utf8 instead of string.
+
+	* work.cc (read_user_log, write_user_log):
+	* lua_hooks.{hh,cc} (hook_validate_commit_message):
+	(hook_edit_comment):
+	* cmd_ws_commit.cc (get_log_message_interactively):
+	* commands.cc (process_commit_message_args): Type properly, and do
+	charset conversion when necessary.
+
+	* cmd_merging.cc (merge_into_dir):
+	* cmd_ws_commit.cc (commit): Generate utf8 changelogs.
+
+	* tests/i18n_commit_messages/: New test.
+
 2006-09-12  Richard Levitte  <richard@levitte.org>
 
 	* debian/monotone-server.postinst: Add code to regenerate
 	rosters when appropriate.
+
+2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* Makefile.am (package_revision.txt): Follow-up for the merge of
+	the workspace-merge.migration branch: Use 'mtn automate
+	get_base_revision' to get the base revision instead of copying the
+	contents of _MTN/revision.
+
+2006-09-11  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 2 fuzzies.
+
+2006-09-09  Benoît Dejean  <benoit@placenet.org>
+
+	* fr.po: Updated French translation.
+
+2006-09-09  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_merging.cc (pluck): Error out if there is no work to be
+	done, or if the merge resulting in no changes to be applied.
+	* tests/pluck_restricted/__driver__.lua: Test for this.
+
+2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
+
+	* basic_io.hh (basic_io::printer):
+	note that only one printer can be referenced at a time,
+	due to shared static buffer.
+	* basic_io.cc (basic_io::printer::printer,
+	basic_io::printer::~printer): add reference tracking,
+	and invariant if more than one printer referenced at a time.
+
+2006-09-08  Alex Queiroz  <alex@ventonegro.org>
+
+	* po/pt_BR.po: 8 fuzzies, 4 new strings.
+
+2006-09-08  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_corresponding_path, get_content_changed):
+	fix output; roster information was being written to
+	basic_io::printer mysteriously. Tests now pass.
+	* testsuite.lua: remove second reference to
+	automate_get_corresponding_path test
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/basic_invocation_and_options: Fix test broken by
+	usage to stdout vs. stderr changes.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* contrib/monotone.el (monotone-vc-prefix-map): Add some more
+	intuitive keys, and some more notes on FIXMEs.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* numeric_vocab.hh (widen): Add a comment documenting what widen<>
+	is for.  Add a fast-path to it for when V is unsigned anyway.
+	Throw in some static stdint-actually-works tests too, while I'm,
+	here.
+	* numeric_vocab.cc, unit_tests.{hh,cc}: Add tests for widen.
+
+2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
+
+	* monotone.texi: add *-merge documentation sourced
+	from mailing list archives (new entry under "Special
+	"Topics").
+
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
+	* revision.cc: It's really rosters, not revisions that are
+	regenerated.
+	* po/sv.po: Clear the resulting fuzzy.
+
+2006-09-07  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 3 fuzzies.
+
+2006-09-07  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_content_changed, get_corresponding_path)
+	add new functions, allowing determinination of last content
+	change and also filenames between revisions.
+	* monotone.texi: document new automate commands
+	* monotone.texi: document new automate commands
+	  tests/automate_get_content_changed,
+	  tests/automate_get_corresponding_path,
+	  tests/automate_get_content_changed/__driver__.lua,
+	  tests/automate_get_content_changed/expected,
+	  tests/automate_get_corresponding_path/__driver__.lua,
+	  tests/automate_get_corresponding_path/expected,
+	  tests/automate_get_corresponding_path/expected2A:
+	  test new automate commands
+	* testsuite.lua: call automate_get_content_changed,
+	  automate_get_corresponding_path tests.
+
+2006-09-07  Nathaniel Smith  <njs@pobox.com>
+
+	* monotone.cc (cpp_main): Send usage text to stderr if there was
+	an error, but stdout if it was requested with --help.
+	* tests/usage_output_streams: New test.
 
 2006-09-07  Richard Levitte  <richard@levitte.org>
 
@@ -821,6 +1232,11 @@
 
 2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* cmd.hh cmd_automate.cc monotone.text tests/automate_stdio/:
+	Comment out stuff related to giving automate commands an input stream.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* std_hooks.lua: Fix some brokenness from the merge hook changes.
 
 2006-08-15  Zack Weinberg  <zackw@panix.com>
@@ -1236,6 +1652,19 @@
 	* file_io.cc (walk_tree_recursive): Walk files first, then
 	directories; cuts down memory usage greatly on reiserfs.
 
+2006-07-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Implement the automate stdio extensions mentioned on the ML.
+	- options: can be given, but don't do anything yet. Fixing this will
+	  probably be easier after landing the boost-program-options branch.
+	- input stream: there has been some discussion on IRC as to whether we
+	actually want to keep this.
+	* cmd_automate.cc: Redo automate stdio I/O parsing.
+	* cmd.hh: Automate commands now get an input stream, and can take
+	options (but the options are currently just discared, since I'm not
+	sure how to make it work with our current option-parsing machinery).
+	* monotone.texi: Update the documentation of automate stdio.
+
 2006-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: Add a check for g++ 4.0/4.0.1 std::tr1 hashtable
@@ -1449,11 +1878,6 @@
 	* netsync.cc: Include signal.h if not Windows.
 	(run_netsync_protocol): Ignore SIGPIPE if not Windows.
 	* tests/database_is_closed_on_signal_exit: Expected to fail.
-
-2006-07-22  Nathaniel Smith  <njs@pobox.com>
-
-	* NEWS: Set date, and it turns out AUTOMATE() was there in
-	0.27...
 
 2006-07-21  Zack Weinberg  <zackw@panix.com>
 

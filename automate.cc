@@ -38,7 +38,6 @@ using std::allocator;
 using std::basic_ios;
 using std::basic_stringbuf;
 using std::char_traits;
-using std::endl;
 using std::inserter;
 using std::make_pair;
 using std::map;
@@ -74,7 +73,7 @@ AUTOMATE(heads, N_("[BRANCH]"))
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: ancestors
@@ -120,7 +119,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
   for (set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << endl;
+      output << (*i).inner()() << "\n";
 }
 
 
@@ -164,7 +163,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"))
     }
   for (set<revision_id>::const_iterator i = descendents.begin();
        i != descendents.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 
@@ -192,7 +191,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
     }
   erase_ancestors(revs, app);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: attributes
@@ -335,7 +334,7 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"))
   toposort(revs, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: ancestry_difference
@@ -377,7 +376,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
   toposort(ancestors, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: leaves
@@ -408,7 +407,7 @@ AUTOMATE(leaves, "")
     leaves.erase(i->first);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: parents
@@ -432,7 +431,7 @@ AUTOMATE(parents, N_("REV"))
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << endl;
+          output << (*i).inner()() << "\n";
 }
 
 // Name: children
@@ -456,7 +455,7 @@ AUTOMATE(children, N_("REV"))
   for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << endl;
+          output << (*i).inner()() << "\n";
 }
 
 // Name: graph
@@ -510,7 +509,7 @@ AUTOMATE(graph, "")
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
         output << " " << (*j).inner()();
-      output << endl;
+      output << "\n";
     }
 }
 
@@ -537,7 +536,7 @@ AUTOMATE(select, N_("SELECTOR"))
 
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    output << *i << endl;
+    output << *i << "\n";
 }
 
 // consider a changeset with the following
@@ -800,7 +799,12 @@ AUTOMATE(inventory, "")
 
       switch (i->second.node_state)
         {
-        case inventory_item::UNCHANGED_NODE: output << " "; break;
+        case inventory_item::UNCHANGED_NODE:
+          if (i->second.post_state == inventory_item::ADDED_PATH)
+            output << "P";
+          else
+            output << " ";
+          break;
         case inventory_item::PATCHED_NODE: output << "P"; break;
         case inventory_item::UNKNOWN_NODE: output << "U"; break;
         case inventory_item::IGNORED_NODE: output << "I"; break;
@@ -819,7 +823,7 @@ AUTOMATE(inventory, "")
 
       output << path_suffix;
 
-      output << endl;
+      output << "\n";
     }
 }
 
@@ -939,7 +943,7 @@ AUTOMATE(get_base_revision_id, "")
 
   revision_id rid;
   app.work.get_revision_id(rid);
-  output << rid << endl;
+  output << rid << "\n";
 }
 
 // Name: get_current_revision_id
@@ -972,7 +976,7 @@ AUTOMATE(get_current_revision_id, "")
 
   calculate_ident(rev, new_revision_id);
 
-  output << new_revision_id << endl;
+  output << new_revision_id << "\n";
 }
 
 // Name: get_manifest_of
@@ -1247,7 +1251,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
   for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << endl;
+      output << (*i).inner()() << "\n";
 }
 
 // Name: branches
@@ -1275,7 +1279,7 @@ AUTOMATE(branches, "")
   for (vector<string>::const_iterator i = names.begin();
        i != names.end(); ++i)
     if (!app.lua.hook_ignore_branch(*i))
-      output << (*i) << endl;
+      output << (*i) << "\n";
 }
 
 // Name: tags
@@ -1480,15 +1484,132 @@ AUTOMATE(get_option, N_("OPTION"))
   string opt = args[0]();
 
   if (opt == "database")
-    output << database_option << endl; 
+    output << database_option << "\n"; 
   else if (opt == "branch")
-    output << branch_option << endl;
+    output << branch_option << "\n";
   else if (opt == "key")
-    output << key_option << endl;
+    output << key_option << "\n";
   else if (opt == "keydir")
-    output << keydir_option << endl;
+    output << keydir_option << "\n";
   else
     N(false, F("'%s' is not a recognized workspace option") % opt);
+}
+
+// Name: get_content_changed
+// Arguments:
+//   1: a revision ID
+//   2: a file name
+// Added in: 3.2
+// Purpose: Returns a list of revision IDs in which the content 
+// was most recently changed, relative to the revision ID specified 
+// in argument 1. This equates to a content mark following 
+// the *-merge algorithm.
+//
+// Output format: Zero or more basic_io stanzas, each specifying a 
+// revision ID for which a content mark is set.
+//
+//   Each stanza has exactly one entry:
+//
+//   'content_mark'
+//         the hexadecimal id of the revision the content mark is attached to
+// Sample output (for 'mtn automate get_content_changed 3bccff99d08421df72519b61a4dded16d1139c33 ChangeLog):
+//   content_mark [276264b0b3f1e70fc1835a700e6e61bdbe4c3f2f]
+//
+AUTOMATE(get_content_changed, N_("REV FILE"))
+{
+  if (args.size() != 2)
+    throw usage(help_name);
+
+  roster_t new_roster;
+  revision_id ident;
+  marking_map mm;
+
+  ident = revision_id(idx(args, 0)());
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  app.db.get_roster(ident, new_roster, mm);
+
+  split_path path;
+  file_path_external(idx(args,1)).split(path);
+  N(new_roster.has_node(path),
+    F("file %s is unknown for revision %s") % path % ident);
+
+  node_t node = new_roster.get_node(path);
+  marking_map::const_iterator m = mm.find(node->self);
+  I(m != mm.end());
+  marking_t mark = m->second;
+
+  basic_io::printer prt;
+  for (set<revision_id>::const_iterator i = mark.file_content.begin();
+       i != mark.file_content.end(); ++i)
+    {
+      basic_io::stanza st;
+      revision_id old_ident = i->inner();
+      st.push_hex_pair(basic_io::syms::content_mark, i->inner());
+      prt.print_stanza(st);
+    }
+    output.write(prt.buf.data(), prt.buf.size());
+}
+
+// Name: get_corresponding_path
+// Arguments:
+//   1: a source revision ID
+//   2: a file name (in the source revision)
+//   3: a target revision ID
+// Added in: 3.2
+// Purpose: Given a the file name in the source revision, a filename 
+// will if possible be returned naming the file in the target revision. 
+// This allows the same file to be matched between revisions, accounting 
+// for renames and other changes.
+//
+// Output format: Zero or one basic_io stanzas. Zero stanzas will be 
+// output if the file does not exist within the target revision; this is 
+// not considered an error.
+// If the file does exist in the target revision, a single stanza with the 
+// following details is output.
+//
+//   The stanza has exactly one entry:
+//
+//   'file'
+//         the file name corresponding to "file name" (arg 2) in the target revision
+//
+// Sample output (for automate get_corresponding_path 91f25c8ee830b11b52dd356c925161848d4274d0 foo2 dae0d8e3f944c82a9688bcd6af99f5b837b41968; see automate_get_corresponding_path test)
+// file "foo"
+AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
+{
+  if (args.size() != 3)
+    throw usage(help_name);
+
+  roster_t new_roster, old_roster;
+  revision_id ident, old_ident;
+
+  ident = revision_id(idx(args, 0)());
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  app.db.get_roster(ident, new_roster);
+
+  old_ident = revision_id(idx(args, 2)());
+  N(app.db.revision_exists(old_ident),
+    F("no revision %s found in database") % old_ident);
+  app.db.get_roster(old_ident, old_roster);
+
+  split_path path;
+  file_path_external(idx(args,1)).split(path);
+  N(new_roster.has_node(path),
+    F("file %s is unknown for revision %s") % path % ident);
+
+  node_t node = new_roster.get_node(path);
+  basic_io::printer prt;
+  if (old_roster.has_node(node->self))
+    {
+      split_path old_path;
+      basic_io::stanza st;
+      old_roster.get_name(node->self, old_path);
+      file_path fp = file_path(old_path);
+      st.push_file_pair(basic_io::syms::file, fp);  
+      prt.print_stanza(st);
+    }
+  output.write(prt.buf.data(), prt.buf.size());
 }
 
 // Local Variables:

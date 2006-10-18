@@ -83,7 +83,7 @@ ostream & operator<<(ostream & ost, insn const & i)
 
 static inline void
 init_match_table(string const & a,
-                 string::size_type blocksz,
+                 const string::size_type blocksz,
                  match_table & tab)
 {
   string::size_type sz = a.size();
@@ -134,9 +134,9 @@ find_match(match_table const & matches,
   string::const_iterator bi = b.begin() + bpos + tlen;
   string::const_iterator be = b.end();
 
-  while((ai != ae)
-        && (bi != be)
-        && (*ai == *bi))
+  while ((ai != ae)
+         && (bi != be)
+         && (*ai == *bi))
     {
       ++tlen;
       ++ai;
@@ -149,10 +149,10 @@ find_match(match_table const & matches,
   // see if we can extend backwards into a previous insert hunk
   if (! delta.empty() && delta.back().code == insn::insert)
     {
-      while(apos > 0
-            && bpos > 0
-            && a[apos - 1] == b[bpos - 1]
-            && !delta.back().payload.empty())
+      while (apos > 0
+             && bpos > 0
+             && a[apos - 1] == b[bpos - 1]
+             && !delta.back().payload.empty())
         {
           I(a[apos - 1] == *(delta.back().payload.rbegin()));
           I(delta.back().payload.size() > 0);
@@ -210,7 +210,7 @@ compute_delta_insns(string const & a,
                     string const & b,
                     vector<insn> & delta)
 {
-  string::size_type blocksz = 64;
+  static const string::size_type blocksz = 64;
   match_table matches;
   init_match_table(a, blocksz, matches);
 
@@ -225,17 +225,57 @@ compute_delta_insns(string const & a,
 
   for (string::size_type
        sz = b.size(),
-       lo = 0,
-       hi = blocksz;
+       lo = 0; 
        lo < sz; )
     {
       string::size_type apos = 0, alen = 1, badvance = 1;
 
       bool found_match = find_match(matches, delta, rolling, a, b, lo, apos, alen, badvance);
 
+      // There are basically three cases:
+      // 1) advance by 1 (common, no match found)
+      // 2) advance by >blocksz (semi-common, usual case when a match is found)
+      // 3) advance by <blocksz (rare, unusual case when a match is found)
+      // in case (2), all of the rolling checksum data will be entirely replaced, so
+      // we can do a fast skip forward.
       if (found_match)
         {
           copy_insn(delta, apos, alen);
+          u32 save_lo = lo;
+          if (badvance <= blocksz) 
+            {
+              string::size_type next = lo;
+              I(next < b.size() && (lo + badvance - 1) < b.size());
+              for (; next < lo + badvance; ++next)
+                {
+                  rolling.out(static_cast<u8>(b[next]));
+                  if (next + blocksz < b.size())
+                    rolling.in(static_cast<u8>(b[next + blocksz]));
+                }
+              lo = next;
+            }
+
+          // Skip advancement is always correct; however, for a small
+          // increment it is more expensive than incremental advancement
+          // Cost of doing a in() + out() is roughly the same as doing a
+          // replace_with for 1 character, so if we are advancing more than
+          // blocksz/2, it will be better to do a replacement than an
+          // incremental advance.  The out could be more expensive because
+          // it does a multiply, but for now, ignore this; it turns out that
+          // advancements in the range of [2..blocksz-1] are actually really
+          // rare.
+          if (badvance >= blocksz/2) 
+            {
+              u32 new_lo = save_lo + badvance;
+              u32 new_hi = new_lo + blocksz;
+              if (new_hi > b.size()) 
+                {
+                  new_hi = b.size();
+                }
+              I(new_lo <= new_hi);
+              rolling.replace_with(reinterpret_cast<u8 const *>(b.data() + new_lo), new_hi-new_lo);
+              lo = new_lo;
+            }
         }
       else
         {
@@ -244,18 +284,13 @@ compute_delta_insns(string const & a,
           I(alen < blocksz);
           I(lo < b.size());
           insert_insn(delta, b[lo]);
+          rolling.out(static_cast<u8>(b[lo]));
+          if (lo + blocksz < b.size()) 
+            {
+              rolling.in(static_cast<u8>(b[lo+blocksz]));
+            }
+          ++lo;
         }
-
-      string::size_type next = lo;
-      for (; next < lo + badvance; ++next)
-        {
-          I(next < b.size());
-          rolling.out(static_cast<u8>(b[next]));
-          if (next + blocksz < b.size())
-            rolling.in(static_cast<u8>(b[next + blocksz]));
-        }
-      lo = next;
-      hi = lo + blocksz;
     }
 }
 
@@ -802,8 +837,7 @@ spin(string a, string b)
   BOOST_CHECK(b == apply_via_piecewise(a, ba_inverted));
 }
 
-void
-xdelta_simple_cases()
+UNIT_TEST(xdelta, simple_cases)
 {
   L(FL("empty/empty"));
   spin("", "");
@@ -842,7 +876,7 @@ xdelta_random_string(string & str)
   size_t sz = xdelta_sizegen(PRNG);
   str.clear();
   str.reserve(sz);
-  while(sz-- > 0)
+  while (sz-- > 0)
     {
       str += xdelta_chargen(PRNG);
     }
@@ -898,8 +932,7 @@ xdelta_randomly_delete(string & str)
     }
 }
 
-void
-xdelta_random_simple_delta_test()
+UNIT_TEST(xdelta, random_simple_delta)
 {
   for (int i = 0; i < 100; ++i)
     {
@@ -913,8 +946,7 @@ xdelta_random_simple_delta_test()
     }
 }
 
-void
-xdelta_random_piecewise_delta_test()
+UNIT_TEST(xdelta, random_piecewise_delta)
 {
   for (int i = 0; i < 50; ++i)
     {
@@ -941,14 +973,40 @@ xdelta_random_piecewise_delta_test()
   }
 }
 
-void
-add_xdelta_tests(test_suite * suite)
+UNIT_TEST(xdelta, rolling_sanity_check)
 {
-  I(suite);
-  suite->add(BOOST_TEST_CASE(&xdelta_simple_cases));
-  suite->add(BOOST_TEST_CASE(&xdelta_random_simple_delta_test));
-  suite->add(BOOST_TEST_CASE(&xdelta_random_piecewise_delta_test));
-}
+  const unsigned testbufsize = 512;
+  static const string::size_type blocksz = 64;
+  char testbuf[testbufsize];
+
+  for(unsigned i = 0; i < testbufsize; ++i) 
+    {
+      testbuf[i] = xdelta_chargen(PRNG);
+    }
+  for(unsigned advanceby = 0; advanceby < testbufsize; ++advanceby) 
+    {
+      adler32 incremental(reinterpret_cast<u8 const *>(testbuf), blocksz);
+      for(unsigned i = 0; i < advanceby; ++i) 
+        {
+          incremental.out(static_cast<u8>(testbuf[i]));
+          if ((i + blocksz) < testbufsize) 
+            {
+              incremental.in(static_cast<u8>(testbuf[i+blocksz]));
+            }
+        }
+      adler32 skip(reinterpret_cast<u8 const *>(testbuf), blocksz);
+      u32 new_lo = advanceby;
+      u32 new_hi = new_lo + blocksz;
+      if (new_hi > testbufsize) 
+        {
+          new_hi = testbufsize;
+        }
+      skip.replace_with(reinterpret_cast<u8 const *>(testbuf + new_lo), new_hi - new_lo);
+
+      BOOST_CHECK(skip.sum() == incremental.sum());
+    }
+  L(FL("rolling sanity check passed"));
+}                   
 
 #endif // BUILD_UNIT_TESTS
 
