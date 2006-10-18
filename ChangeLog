@@ -1,3 +1,16 @@
+2006-10-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Propagate the rerwite of 'automate stdio' (in branch
+	...automate-stdio-extensions) to mainline. It doesn't actually
+	have any extensions anymore, just a rewrite that should make
+	the code cleaner.
+
+2006-10-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Revert automate stdio extensions (never were on mainline) so
+	that the only change is that automate stdio is implemented
+	more cleanly.
+
 2006-10-12  Thomas Keller <me@thomaskeller.biz>
 
 	* automate.cc: replaced std::endl in favour of simple unix
@@ -1178,6 +1191,11 @@
 
 2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	* cmd.hh cmd_automate.cc monotone.text tests/automate_stdio/:
+	Comment out stuff related to giving automate commands an input stream.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	* std_hooks.lua: Fix some brokenness from the merge hook changes.
 
 2006-08-15  Zack Weinberg  <zackw@panix.com>
@@ -1593,6 +1611,19 @@
 	* file_io.cc (walk_tree_recursive): Walk files first, then
 	directories; cuts down memory usage greatly on reiserfs.
 
+2006-07-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Implement the automate stdio extensions mentioned on the ML.
+	- options: can be given, but don't do anything yet. Fixing this will
+	  probably be easier after landing the boost-program-options branch.
+	- input stream: there has been some discussion on IRC as to whether we
+	actually want to keep this.
+	* cmd_automate.cc: Redo automate stdio I/O parsing.
+	* cmd.hh: Automate commands now get an input stream, and can take
+	options (but the options are currently just discared, since I'm not
+	sure how to make it work with our current option-parsing machinery).
+	* monotone.texi: Update the documentation of automate stdio.
+
 2006-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: Add a check for g++ 4.0/4.0.1 std::tr1 hashtable
@@ -1806,11 +1837,6 @@
 	* netsync.cc: Include signal.h if not Windows.
 	(run_netsync_protocol): Ignore SIGPIPE if not Windows.
 	* tests/database_is_closed_on_signal_exit: Expected to fail.
-
-2006-07-22  Nathaniel Smith  <njs@pobox.com>
-
-	* NEWS: Set date, and it turns out AUTOMATE() was there in
-	0.27...
 
 2006-07-21  Zack Weinberg  <zackw@panix.com>
 
