@@ -65,7 +65,7 @@ get_log_message_interactively(revision_t const & cs,
 
 CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
-    option::depth % option::exclude % option::missing)
+    options::opts::depth % options::opts::exclude % options::opts::missing)
 {
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
@@ -188,7 +188,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
 CMD(disapprove, N_("review"), N_("REVISION"),
     N_("disapprove of a particular revision"),
-    option::branch)
+    options::opts::branch)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -240,7 +240,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"), option::unknown)
+    N_("add files to workspace"), options::opts::unknown)
 {
   if (!app.opts.unknown && (args.size() < 1))
     throw usage(name);
@@ -275,7 +275,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
     N_("drop files from workspace"),
-    option::execute % option::missing % option::recursive)
+    options::opts::execute % options::opts::missing % options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
     throw usage(name);
@@ -313,7 +313,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    option::execute)
+    options::opts::execute)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -342,7 +342,7 @@ ALIAS(mv, rename)
          "that is currently the root\n"
          "directory will have name PUT_OLD.\n"
          "Using --execute is strongly recommended."),
-    option::execute)
+    options::opts::execute)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -354,7 +354,7 @@ ALIAS(mv, rename)
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
-    option::depth % option::exclude)
+    options::opts::depth % options::opts::exclude)
 {
   roster_t old_roster, new_roster;
   cset included, excluded;
@@ -424,7 +424,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
        "If no directory is given, the branch name will be used as directory"),
-    option::branch % option::revision)
+    options::opts::branch % options::opts::revision)
 {
   revision_id ident;
   system_path dir;
@@ -561,7 +561,7 @@ ALIAS(co, checkout)
 
 CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
     N_("set, get or drop file attributes"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -661,8 +661,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    option::branch % option::message % option::msgfile % option::date
-    % option::author % option::depth % option::exclude)
+    options::opts::branch % options::opts::message % options::opts::msgfile % options::opts::date
+    % options::opts::author % options::opts::depth % options::opts::exclude)
 {
   utf8 log_message("");
   bool log_message_given;
@@ -907,7 +907,7 @@ ALIAS(ci, commit);
 
 CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
     N_("setup a new workspace directory, default to current"),
-    option::branch)
+    options::opts::branch)
 {
   if (args.size() > 1)
     throw usage(name);
@@ -931,7 +931,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
   N_("migrate a workspace directory's metadata to the latest format; "
      "defaults to the current workspace"),
-  option::none)
+  options::opts::none)
 {
   if (args.size() > 1)
     throw usage(name);
@@ -943,7 +943,7 @@ CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
 }
 
 CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
-    option::none)
+    options::opts::none)
 {
   app.require_workspace();
   app.work.enable_inodeprints();

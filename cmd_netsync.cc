@@ -69,7 +69,7 @@ process_netsync_args(string const & name,
         {
           rsa_keypair_id key;
           get_user_key(key, app);
-          app.signing_key = key;
+          app.opts.signing_key = key;
         }
     }
 
@@ -118,7 +118,7 @@ process_netsync_args(string const & name,
 
 CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
-    option::set_default % option::exclude % option::key_to_push)
+    options::opts::set_default % options::opts::exclude % options::opts::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, 
@@ -131,7 +131,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
-    option::set_default % option::exclude)
+    options::opts::set_default % options::opts::exclude)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, 
@@ -146,7 +146,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
 
 CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
-    option::set_default % option::exclude % option::key_to_push)
+    options::opts::set_default % options::opts::exclude % options::opts::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, addr, include_pattern, exclude_pattern, 
@@ -190,8 +190,8 @@ private:
 
 CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
                  N_("serve the branches specified by PATTERNs to connecting clients"),
-                 option::bind % option::pidfile % option::exclude %
-                 option::bind_stdio % option::no_transport_auth)
+                 options::opts::bind % options::opts::pidfile % options::opts::exclude %
+                 options::opts::bind_stdio % options::opts::no_transport_auth)
 {
   if (args.size() < 1)
     throw usage(name);

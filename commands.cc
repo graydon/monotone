@@ -62,7 +62,7 @@ namespace commands
                    string const & p,
                    string const & d,
                    bool u,
-                   option::optset const & o)
+                   options::options_type const & o)
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
@@ -235,7 +235,7 @@ namespace commands
       }
   }
 
-  option::optset command_options(string const & cmd)
+  options::options_type command_options(string const & cmd)
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
@@ -243,13 +243,14 @@ namespace commands
       }
     else
       {
-        return option::optset();
+        return options::options_type();
       }
   }
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), option::none)
+CMD(help, N_("informative"), N_("command [ARGS...]"),
+    N_("display command help"), options::opts::none)
 {
   if (args.size() < 1)
     {
@@ -265,7 +266,8 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
+    "trigger the specified kind of crash", options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -459,7 +461,9 @@ process_commit_message_args(bool & given,
 
   if (app.opts.message_given)
     {
-      log_message = app.opts.message;
+      std::string msg;
+      join_lines(app.opts.message, msg);
+      log_message = utf8(msg);
       given = true;
     }
   else if (app.opts.msgfile_given)

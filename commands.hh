@@ -15,7 +15,7 @@
 #include <set>
 #include <boost/shared_ptr.hpp>
 
-#include "option.hh"
+#include "options.hh"
 
 using boost::shared_ptr;
 
@@ -36,7 +36,7 @@ namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
   std::string complete_command(std::string const & cmd);
   int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
-  option::optset command_options(std::string const & cmd);
+  options::options_type command_options(std::string const & cmd);
 };
 
 // Local Variables:

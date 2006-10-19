@@ -15,8 +15,9 @@
 #include "app_state.hh"
 #include "commands.hh"
 #include "constants.hh"
-#include "option.hh"
+#include "options.hh"
 #include "sanity.hh"
+
 
 namespace commands
 {
@@ -34,13 +35,13 @@ namespace commands
     std::string params_;
     std::string desc_;
     bool use_workspace_options;
-    option::optset options;
+    options::options_type options;
     command(std::string const & n,
             std::string const & g,
             std::string const & p,
             std::string const & d,
             bool u,
-            option::optset const & o);
+            options::options_type const & o);
     virtual ~command();
     virtual std::string params();
     virtual std::string desc();
@@ -122,7 +123,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, params, desc, true,             \
-                          option::optset() % opts)                   \
+                          options::options_type() % opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
@@ -140,7 +141,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, "", desc, true,                 \
-                          option::optset() % opts)                   \
+                          options::options_type() % opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
@@ -159,7 +160,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, params, desc, false,            \
-                          option::optset() % opts)                   \
+                          options::options_type() % opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \

@@ -126,27 +126,28 @@ void localize_monotone()
 }
 
 // read command-line options and return the command name
-string read_options(option::options & opts, vector<string> args)
+string read_options(options & opts, vector<string> args)
 {
-      opts.from_cmdline(args);
+  option::concrete_option_set optset = options::opts::all_options().instantiate(&opts);
+  optset.from_command_line(args);
 
-      // consume the command, and perform completion if necessary
-      string cmd;
-      if (!opts.args.empty())
-        cmd = commands::complete_command(idx(opts.args, 0)());
+  // consume the command, and perform completion if necessary
+  string cmd;
+  if (!opts.args.empty())
+    cmd = commands::complete_command(idx(opts.args, 0)());
 
-      option::optset cmdopts = commands::command_options(cmd);
+  options::options_type cmdopts = commands::command_options(cmd);
+  optset = options::opts::globals().instantiate(&opts) % cmdopts.instantiate(&opts);
 
-      // reparse options, now that we know what command-specific
-      // options are allowed.
+  // reparse options, now that we know what command-specific
+  // options are allowed.
 
-      opts.clear_cmd_options();
-      opts.clear_global_options();
-      opts.from_cmdline_restricted(args, cmdopts, false);
+  opts = options();
+  optset.from_command_line(args, false);
 
-      if (!opts.args.empty())
-        opts.args.erase(opts.args.begin());
-      return cmd;
+  if (!opts.args.empty())
+    opts.args.erase(opts.args.begin());
+  return cmd;
 }
 
 int
@@ -256,7 +257,7 @@ cpp_main(int argc, char ** argv)
           return commands::process(app, cmd, args);
         }
     }
-  catch (option_error const & e)
+  catch (option::option_error const & e)
     {
       N(false, i18n_format("%s") % e.what());
     }
@@ -269,15 +270,15 @@ cpp_main(int argc, char ** argv)
       std::ostream & usage_stream = (app.opts.help ? cout : cerr);
 
       usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
-      usage_stream << app.opts.get_usage_str(app.opts.global_opts()) << "\n";
+      usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << "\n";
 
       // Make sure to hide documentation that's not part of
       // the current command.
-      option::optset cmd_options = commands::command_options(u.which);
+      options::options_type cmd_options = commands::command_options(u.which);
       if (!cmd_options.empty())
         {
           usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
-          usage_stream << app.opts.get_usage_str(cmd_options) << "\n";
+          usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << "\n";
         }
 
       commands::explain_usage(u.which, usage_stream);

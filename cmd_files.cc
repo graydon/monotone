@@ -25,7 +25,7 @@ using std::vector;
 // fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
 {
   string s = get_stdin();
 
@@ -40,7 +40,7 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("merge 3 files and output result"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -77,7 +77,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
-    option::diff_options)
+    options::opts::diff_options)
 {
   if (args.size() != 4)
     throw usage(name);
@@ -113,7 +113,7 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    option::revision % option::brief)
+    options::opts::revision % options::opts::brief)
 {
   revision_id rid;
 
@@ -156,7 +156,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
-    option::none)
+    options::opts::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -181,7 +181,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
-    option::revision)
+    options::opts::revision)
 {
   if (args.size() != 1)
     throw usage(name);

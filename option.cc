@@ -1,20 +1,16 @@
-#include <algorithm>
 
-#include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-#include "charset.hh"
 #include "file_io.hh"
 #include "option.hh"
-#include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"
 
 using std::map;
+using std::pair;
 using std::set;
 using std::string;
 using std::vector;
 
+namespace option {
 
 option_error::option_error(std::string const & str)
  : std::invalid_argument((F("option error: %s") % str).str())
@@ -37,112 +33,13 @@ bad_arg::bad_arg(std::string const & opt,
  : option_error((F("bad argument '%s' to option '%s': %s")
                    % arg % opt % reason).str())
 {}
-struct bad_arg_internal
-{
-  string reason;
-  bad_arg_internal(string const & str = "") : reason(str) {}
-};
+bad_arg_internal::bad_arg_internal(string const & str)
+ : reason(str)
+{}
 
 
 
-map<option::optid, set<option::optid> > & option_groups()
-{
-  static map<option::optid, set<option::optid> > val;
-  bool first(true);
-  if (first)
-    {
-#     define COPTSET(name)
-#     define GOPTSET(name)
-#     define COPTVAR(type, name, default_)
-#     define GOPTVAR(type, name, default_)
-#     define COPTION(optset, name, hasarg, optstring, description) \
-        val[option:: name].insert(option:: name);          \
-        val[option:: name].insert(option:: optset);
-#     define GOPTION(optset, name, hasarg, optstring, description) \
-        val[option:: name].insert(option:: name);          \
-        val[option:: name].insert(option:: optset);
-#     define OPTSET_REL(parent, child) \
-        val[option:: child].insert(option:: parent);
-
-#     include "option_list.hh"
-
-#     undef COPTSET
-#     undef GOPTSET
-#     undef COPTVAR
-#     undef GOPTVAR
-#     undef COPTION
-#     undef GOPTION
-#     undef OPTSET_REL
-
-      first = false;
-    }
-  return val;
-}
-void note_relation(option::optid opt, option::optid group)
-{
-  option_groups()[opt].insert(group);
-}
-
-void option::optset::add(option::optid item)
-{
-  items.insert(item);
-}
-option::optset & option::optset::operator%(option::optid item)
-{
-  add(item);
-  return *this;
-}
-bool option::optset::contains(option::optid id) const
-{
-  set<option::optid> intersect;
-  set<option::optid> &groups = option_groups()[id];
-  set_intersection(items.begin(), items.end(),
-                   groups.begin(), groups.end(),
-                   std::inserter(intersect, intersect.begin()));
-  return !intersect.empty();
-}
-bool option::optset::empty() const
-{
-  return items.empty();
-}
-
-
-void bind_opt::set(string const & arg)
-{
-  string addr_part, port_part;
-  size_t l_colon = arg.find(':');
-  size_t r_colon = arg.rfind(':');
-
-  // not an ipv6 address, as that would have at least two colons
-  if (l_colon == r_colon)
-    {
-      addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
-      port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-    }
-  else
-    {
-      // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
-      size_t squareb = arg.rfind(']');
-      if ((arg.find('[') == 0) && (squareb != string::npos))
-        {
-          if (squareb < r_colon)
-            port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-          else
-            port_part = "";
-          addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
-        }
-      else
-        {
-          addr_part = arg;
-          port_part = "";
-        }
-    }
-  stdio = false;
-  address = utf8(addr_part);
-  port = utf8(port_part);
-}
-
-static void splitname(string const & from, string & name, string & n)
+void splitname(string const & from, string & name, string & n)
 {
   // from looks like "foo" or "foo,f"
   string::size_type comma = from.find(',');
@@ -153,210 +50,89 @@ static void splitname(string const & from, string & name, string & n)
     n = "";
 }
 
-template<typename T>
-bool has_arg() { return true; }
-template<>
-bool has_arg<bool>() { return false; }
 
-
-void option::options::map_opt(void (option::options::*setter)(string const &),
-                              string const & optname,
-                              option::optid id,
-                              bool has_arg,
-                              string const & description)
+concrete_option::concrete_option()
+  : has_arg(false)
+{}
+concrete_option::concrete_option(std::string const & names,
+                                 std::string const & desc,
+                                 bool arg,
+                                 boost::function<void (std::string)> set,
+                                 boost::function<void ()> reset)
 {
-  opt o;
-  o.setter = setter;
-  o.has_arg = has_arg;
-  o.desc = gettext(description.c_str());
-  o.id = id;
-  string name, n;
-  splitname(/*gettext*/(optname.c_str()), name, n);
-  opt_map.insert(make_pair(name, o));
-  if (n != "")
-    opt_map.insert(make_pair(n, o));
+  description = desc;
+  splitname(names, longname, shortname);
+  has_arg = arg;
+  setter = set;
+  resetter = reset;
 }
 
-option::options::options()
+bool concrete_option::operator<(concrete_option const & other) const
 {
-# define COPTSET(name) \
-    name ## _given = false;
-# define GOPTSET(name) \
-    name ## _given = false;
-# define COPTVAR(type, name, default_) \
-    name = type ( default_ );
-# define GOPTVAR(type, name, default_) \
-    name = type ( default_ );
-# define COPTION(optset, name, hasarg, optstring, description)     \
-    map_opt(&options::set_ ## name, optstring,             \
-            option:: name, hasarg,  description); \
-    all_cmd_option.add( option:: name );          \
-    name ## _given = false;
-# define GOPTION(optset, name, hasarg, optstring, description)     \
-    map_opt(&options::set_ ## name, optstring,             \
-            option:: name, hasarg,  description); \
-    global_option.add( option:: name );          \
-    name ## _given = false;
-# define OPTSET_REL(parent, child)
-
-# include "option_list.hh"
-
-# undef COPTSET
-# undef GOPTSET
-# undef COPTVAR
-# undef GOPTVAR
-# undef COPTION
-# undef GOPTION
-# undef OPTSET_REL
+  return longname < other.longname && (shortname.empty() || shortname != other.shortname);
 }
 
-void option::options::clear_cmd_options()
+concrete_option_set::concrete_option_set()
+{}
+concrete_option_set::concrete_option_set(std::set<concrete_option> const & other)
+  : options(other)
+{}
+concrete_option_set::concrete_option_set(concrete_option const & opt)
 {
-# define COPTSET(name) \
-    name ## _given = false;
-# define GOPTSET(name)
-# define COPTVAR(type, name, default_) \
-    name = type ( default_ );
-# define GOPTVAR(type, name, default_)
-# define COPTION(optset, name, hasarg, optstring, description) \
-    name ## _given = false;
-# define GOPTION(optset, name, hasarg, optstring, description)
-# define OPTSET_REL(parent, child)
-
-# include "option_list.hh"
-
-# undef COPTSET
-# undef GOPTSET
-# undef COPTVAR
-# undef GOPTVAR
-# undef COPTION
-# undef GOPTION
-# undef OPTSET_REL
+  options.insert(opt);
 }
-
-void option::options::clear_global_options()
+class discard_argument : public boost::function<void (std::string const &)>
 {
-# define COPTSET(name)
-# define GOPTSET(name) \
-    name ## _given = false;
-# define COPTVAR(type, name, default_)
-# define GOPTVAR(type, name, default_) \
-    name = type ( default_ );
-# define COPTION(optset, name, hasarg, optstring, description)
-# define GOPTION(optset, name, hasarg, optstring, description) \
-    name ## _given = false;
-# define OPTSET_REL(parent, child)
-
-# include "option_list.hh"
-
-# undef COPTSET
-# undef GOPTSET
-# undef COPTVAR
-# undef GOPTVAR
-# undef COPTION
-# undef GOPTION
-# undef OPTSET_REL
+  boost::function<void()> functor;
+ public:
+  discard_argument(boost::function<void()> const & from)
+    : functor(from)
+    {}
+    void operator()(std::string const &)
+    { return functor(); }
+};
+concrete_option_set &
+concrete_option_set::operator()(string const & names,
+                                string const & desc,
+                                boost::function<void ()> set,
+                                boost::function<void ()> reset())
+{
+  options.insert(concrete_option(names, desc, false, discard_argument(set), reset));
+  return *this;
 }
-
-# define COPTSET(name)
-# define GOPTSET(name)
-# define COPTVAR(type, name, default_)
-# define GOPTVAR(type, name, default_)
-# define COPTION(optset, name, hasarg, optstring, description) \
-  void option::options::set_ ## name (std::string const & arg)
-# define GOPTION(optset, name, hasarg, optstring, description) \
-  void option::options::set_ ## name (std::string const & arg)
-# define OPTSET_REL(parent, child)
-
-#define option_bodies
-# include "option_list.hh"
-#undef option_bodies
-
-# undef COPTSET
-# undef GOPTSET
-# undef COPTVAR
-# undef GOPTVAR
-# undef COPTION
-# undef GOPTION
-# undef OPTSET_REL
-
-option::options::opt const &
-option::options::getopt(string const & name, optset const & allowed)
+concrete_option_set &
+concrete_option_set::operator()(string const & names,
+                                string const & desc,
+                                boost::function<void (string)> set,
+                                boost::function<void ()> reset())
 {
-  map<string, opt>::iterator i = opt_map.find(name);
-  if (i == opt_map.end())
-    throw unknown_option(name);
-  else if (!global_option.contains(i->second.id)
-           && !allowed.contains(i->second.id))
-    throw unknown_option(name);
-  else
-    return i->second;
+  options.insert(concrete_option(names, desc, true, set, reset));
+  return *this;
 }
-
-void
-option::options::note_given(optid id)
+concrete_option_set &
+concrete_option_set::operator % (concrete_option_set const & other)
 {
-  static map<optid, bool options::*> givens;
-  static bool first(true);
-  if (first)
+  std::set<concrete_option> combined;
+  std::set_union(options.begin(), options.end(),
+                 other.options.begin(), other.options.end(),
+                 std::inserter(combined, combined.begin()));
+  options = combined;
+  return *this;
+}
+concrete_option_set &
+concrete_option_set::operator % (concrete_option const & opt)
+{
+  options.insert(opt);
+  return *this;
+}
+void concrete_option_set::reset() const
+{
+  for (std::set<concrete_option>::const_iterator i = options.begin();
+       i != options.end(); ++i)
     {
-#     define COPTSET(name) \
-        givens[option:: name] = &options:: name ## _given;
-#     define GOPTSET(name) \
-        givens[option:: name] = &options:: name ## _given;
-#     define COPTVAR(type, name, default_)
-#     define GOPTVAR(type, name, default_)
-#     define COPTION(optset, name, hasarg, optstring, description) \
-        givens[option:: name] = &options:: name ## _given;
-#     define GOPTION(optset, name, hasarg, optstring, description) \
-        givens[option:: name] = &options:: name ## _given;
-#     define OPTSET_REL(parent, child)
-
-#     include "option_list.hh"
-
-#     undef COPTSET
-#     undef GOPTSET
-#     undef COPTVAR
-#     undef GOPTVAR
-#     undef COPTION
-#     undef GOPTION
-#     undef OPTSET_REL
-      first = false;
+      if (i->resetter)
+        i->resetter();
     }
-
-  // keep the std:: ; we have a member function called 'set'
-  std::set<optid> const &which = option_groups()[id];
-  for (std::set<optid>::const_iterator i = which.begin();
-       i != which.end(); ++i)
-    this->*givens[*i] = true;
-}
-
-void option::options::set(string const & name,
-                          opt const & o,
-                          string const & given)
-{
-  note_given(o.id);
-  try
-    {
-      (this->*o.setter)(given);
-    }
-  catch (boost::bad_lexical_cast)
-    {
-      throw bad_arg(name, given);
-    }
-  catch (bad_arg_internal & e)
-    {
-      if (e.reason == "")
-        throw bad_arg(name, given);
-      else
-        throw bad_arg(name, given, e.reason);
-    }
-}
-
-void option::options::set(string const & name, string const & given,
-                          optset const & allowed)
-{
-  set(name, getopt(name, allowed), given);
 }
 
 static void
@@ -428,16 +204,54 @@ tokenize_for_command_line(string const & from, vector<string> & to)
     to.push_back(cur);
 }
 
-void option::options::from_cmdline_restricted(std::vector<std::string> & args,
-                                              optset allowed,
-                                              bool allow_xargs)
+void concrete_option_set::from_command_line(int argc, char const * const * argv)
 {
+  vector<string> arguments;
+  for (int i = 1; i < argc; ++i)
+    arguments.push_back(argv[i]);
+  from_command_line(arguments, true);
+}
+static concrete_option const &
+getopt(map<string, concrete_option> const & by_name, string const & name)
+{
+  map<string, concrete_option>::const_iterator i = by_name.find(name);
+  if (i != by_name.end())
+    return i->second;
+  else
+    throw option::unknown_option(name);
+}
+
+void concrete_option_set::from_command_line(std::vector<std::string> & args,
+                                            bool allow_xargs)
+{
+  map<string, concrete_option> by_name;
+  for (std::set<concrete_option>::const_iterator i = options.begin();
+       i != options.end(); ++i)
+    {
+      if (!i->longname.empty())
+        by_name.insert(make_pair(i->longname, *i));
+      if (!i->shortname.empty())
+        by_name.insert(make_pair(i->shortname, *i));
+    }
+  bool seen_dashdash = false;
   for (unsigned int i = 0; i < args.size(); ++i)
     {
-      opt o;
+      concrete_option o;
       string name, arg;
       bool separate_arg(false);
-      if (idx(args,i).substr(0,2) == "--")
+      if (idx(args,i) == "--" || seen_dashdash)
+        {
+          if (!seen_dashdash)
+            {
+              seen_dashdash = true;
+              allow_xargs = false;
+              continue;
+            }
+          name = "--";
+          o = getopt(by_name, name);
+          arg = idx(args,i);
+        }
+      else if (idx(args,i).substr(0,2) == "--")
         {
           string::size_type equals = idx(args,i).find('=');
           if (equals == string::npos)
@@ -445,7 +259,7 @@ void option::options::from_cmdline_restricted(std::vector<std::string> & args,
           else
             name = idx(args,i).substr(2, equals-2);
 
-          o = getopt(name, allowed);
+          o = getopt(by_name, name);
           if (!o.has_arg && equals != string::npos)
             throw extra_arg(name);
 
@@ -466,7 +280,7 @@ void option::options::from_cmdline_restricted(std::vector<std::string> & args,
         {
           name = idx(args,i).substr(1,1);
           
-          o = getopt(name, allowed);
+          o = getopt(by_name, name);
           if (!o.has_arg && idx(args,i).size() != 2)
             throw extra_arg(name);
           
@@ -485,10 +299,11 @@ void option::options::from_cmdline_restricted(std::vector<std::string> & args,
         }
       else
         {
-          name = "";
-          o = getopt(name, allowed);
+          name = "--";
+          o = getopt(by_name, name);
           arg = idx(args,i);
         }
+
       if (allow_xargs && (name == "xargs" || name == "@"))
         {
           // expand the --xargs in place
@@ -507,14 +322,26 @@ void option::options::from_cmdline_restricted(std::vector<std::string> & args,
         {
           if (separate_arg)
             ++i;
-          set(name, o, arg);
+          try
+            {
+              if (o.setter)
+                {
+                  o.setter(arg);
+                }
+            }
+          catch (boost::bad_lexical_cast)
+            {
+              throw bad_arg(o.longname, arg);
+            }
+          catch (bad_arg_internal & e)
+            {
+              if (e.reason == "")
+                throw bad_arg(o.longname, arg);
+              else
+                throw bad_arg(o.longname, arg, e.reason);
+            }
         }
     }
-}
-
-void option::options::from_cmdline(vector<string> & args, bool allow_xargs)
-{
-  from_cmdline_restricted(args, all_cmd_option, allow_xargs);
 }
 
 static vector<string> wordwrap(string str, unsigned int width)
@@ -538,72 +365,56 @@ static vector<string> wordwrap(string str, unsigned int width)
   return out;
 }
 
-struct optstrings
+static string usagestr(option::concrete_option const & opt)
 {
-  string longname;
-  string shortname;
-  string desc;
-};
-std::string option::options::get_usage_str(optset const & opts) const
-{
-  // collect the options we want to show (opt_map has separate
-  // entries for the short and long versions of each option)
-  map<optid, optstrings> option_strings;
-  for (map<string, opt>::const_iterator i = opt_map.begin();
-       i != opt_map.end(); ++i)
-    {
-      if (opts.contains(i->second.id) && !i->first.empty())
-        { // i->first.empty() indicates that this is the entry for
-          // positional args; we don't want to include that here
-          optstrings & strs = option_strings[i->second.id];
-          strs.desc = i->second.desc;
-          if (i->first.size() == 1)
-            strs.shortname = i->first;
-          else
-            strs.longname = i->first;
-        }
-    }
+  string out;
+  if (opt.longname == "--")
+    return "";
+  if (!opt.longname.empty() && !opt.shortname.empty())
+    out = "--" + opt.longname + " [ -" + opt.shortname + " ]";
+  else if (!opt.longname.empty())
+    out = "--" + opt.longname;
+  else if (!opt.shortname.empty())
+    out = "-" + opt.shortname;
+  else
+    return "";
+  if (opt.has_arg)
+    return out + " <arg>";
+  else
+    return out;
+}
 
-  // combind the name strings like "--long [ -s ]"
+std::string concrete_option_set::get_usage_str() const
+{
+  // combine the name strings like "--long [ -s ]"
   map<string, string> to_display;
   unsigned int namelen = 0; // the longest option name string
-  for (map<optid, optstrings>::iterator i = option_strings.begin();
-       i != option_strings.end(); ++i)
+  for (std::set<concrete_option>::const_iterator i = options.begin();
+       i != options.end(); ++i)
     {
-      optstrings const & strings = i->second;
-      string names;
-      if (!strings.longname.empty() && !strings.shortname.empty())
-        {
-          names = "--" + strings.longname + " [ -" + strings.shortname + " ]";
-        }
-      else if (!strings.longname.empty())
-        {
-          names = "--" + strings.longname;
-        }
-      else // short name only
-        {
-          names = "-" + strings.shortname;
-        }
-      to_display.insert(make_pair(names, strings.desc));
+      string names = usagestr(*i);
       if (names.size() > namelen)
         namelen = names.size();
     }
 
-  // "    --long [ -s ]    description goes here"
-  //  ^  ^^           ^^  ^^                          ^
-  //  |  | \ namelen / |  | \        descwidth       /| <- edge of screen
-  //  ^^^^             ^^^^
-  // pre_indent        space
+  // "    --long [ -s ] <arg>    description goes here"
+  //  ^  ^^                 ^^  ^^                          ^
+  //  |  | \    namelen    / |  | \        descwidth       /| <- edge of screen
+  //  ^^^^                   ^^^^
+  // pre_indent              space
   string result;
   int pre_indent = 2; // empty space on the left
   int space = 2; // space after the longest option, before the description
-  for (map<string, string>::const_iterator i = to_display.begin();
-       i != to_display.end(); ++i)
+  int termwidth = guess_terminal_width();
+  int descindent = pre_indent + namelen + space;
+  int descwidth = termwidth - descindent;
+  for (std::set<concrete_option>::const_iterator i = options.begin();
+       i != options.end(); ++i)
     {
-      string const & names = i->first;
-      int descindent = pre_indent + namelen + space;
-      int descwidth = guess_terminal_width() - descindent;
-      vector<string> desclines = wordwrap(i->second, descwidth);
+      string names = usagestr(*i);
+      if (names.empty())
+        continue;
+      vector<string> desclines = wordwrap(i->description, descwidth);
 
       result += string(pre_indent, ' ')
               + names + string(namelen - names.size(), ' ')
@@ -621,6 +432,8 @@ std::string option::options::get_usage_str(optset const & opts) const
     }
   return result;
 }
+
+} // namespace option
 
 // Local Variables:
 // mode: C++

@@ -1,5 +1,5 @@
-#ifndef __OPTS_HH__
-#define __OPTS_HH__
+#ifndef __OPTION_HH__
+#define __OPTION_HH__
 
 #include <stdexcept>
 #include <map>
@@ -7,168 +7,199 @@
 #include <string>
 #include <vector>
 
+#include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "i18n.h"
-#include "paths.hh"
-#include "vocab.hh"
-
-struct option_error : public std::invalid_argument
-{
-  option_error(std::string const & str);
-};
-struct unknown_option : public option_error
-{
-  unknown_option(std::string const & opt);
-};
-struct missing_arg : public option_error
-{
-  missing_arg(std::string const & opt);
-};
-struct extra_arg : public option_error
-{
-  extra_arg(std::string const & opt);
-};
-struct bad_arg : public option_error
-{
-  bad_arg(std::string const & opt, std::string const & arg);
-  bad_arg(std::string const & opt,
-          std::string const & arg,
-          std::string const & reason);
-};
-
-struct bind_opt
-{
-  utf8 address;
-  utf8 port;
-  bool stdio;
-  bind_opt() : stdio(false) {}
-  void set(std::string const & arg);
-};
-
 namespace option {
-  enum optid {
-#   define COPTSET(name) \
-      name,
-#   define GOPTSET(name) \
-      name,
-#   define COPTVAR(type, name, default_)
-#   define GOPTVAR(type, name, default_)
-#   define COPTION(optset, name, hasarg, optstring, description) \
-      name,
-#   define GOPTION(optset, name, hasarg, optstring, description) \
-      name,
-#   define OPTSET_REL(parent, child)
-
-#   include "option_list.hh"
-
-#   undef COPTSET
-#   undef GOPTSET
-#   undef COPTVAR
-#   undef GOPTVAR
-#   undef COPTION
-#   undef GOPTION
-#   undef OPTSET_REL
-
-    none
-  };
-  class optset
+  struct option_error : public std::invalid_argument
   {
-    std::set<option::optid> items;
-  public:
-    void add(option::optid item);
-    optset & operator%(option::optid item);
-    bool contains(option::optid id) const;
-    bool empty() const;
+    option_error(std::string const & str);
+  };
+  struct unknown_option : public option_error
+  {
+    unknown_option(std::string const & opt);
+  };
+  struct missing_arg : public option_error
+  {
+    missing_arg(std::string const & opt);
+  };
+  struct extra_arg : public option_error
+  {
+    extra_arg(std::string const & opt);
+  };
+  struct bad_arg : public option_error
+  {
+    bad_arg(std::string const & opt, std::string const & arg);
+    bad_arg(std::string const & opt,
+	    std::string const & arg,
+	    std::string const & reason);
+  };
+  struct bad_arg_internal
+  {
+    std::string reason;
+    bad_arg_internal(std::string const & str = "");
   };
 
-  struct options
+  void splitname(std::string const & from, std::string & name, std::string & n);
+  struct concrete_option
   {
-    options();
-    void clear_cmd_options();
-    void clear_global_options();
-    void set(std::string const & name, std::string const & given)
-    { set(name, given, all_cmd_option); }
-    // if allow_xargs is true, then any instances of --xargs (or -@) in
-    // args will be replaced with the parsed contents of the referenced file
-    void from_cmdline(std::vector<std::string> & args, bool allow_xargs = true);
-    void from_cmdline_restricted(std::vector<std::string> & args,
-                                 optset allowed,
-                                 bool allow_xargs = true);
-    optset const & global_opts() const { return global_option; }
-    optset const & specific_opts() const { return all_cmd_option; }
+    std::string description;
+    std::string longname;
+    std::string shortname;
+    bool has_arg;
+    boost::function<void (std::string)> setter;
+    boost::function<void ()> resetter;
 
-    std::string get_usage_str(optset const & opts) const;
+    concrete_option();
+    concrete_option(std::string const & names,
+		    std::string const & desc,
+		    bool arg,
+		    boost::function<void (std::string)> set,
+		    boost::function<void ()> reset);
 
-#   define COPTSET(name) \
-      bool name ## _given;
-#   define GOPTSET(name) \
-      bool name ## _given;
-#   define COPTVAR(type, name, default_) \
-      type name;
-#   define GOPTVAR(type, name, default_) \
-      type name;
-#   define COPTION(optset, name, hasarg, optstring, description) \
-      bool name ## _given;
-#   define GOPTION(optset, name, hasarg, optstring, description) \
-      bool name ## _given;
-#   define OPTSET_REL(parent, child)
-
-#   include "option_list.hh"
-
-#   undef COPTSET
-#   undef GOPTSET
-#   undef COPTVAR
-#   undef GOPTVAR
-#   undef COPTION
-#   undef GOPTION
-#   undef OPTSET_REL
-
-  private:
-
-#   define COPTSET(name)
-#   define GOPTSET(name)
-#   define COPTVAR(type, name, default_)
-#   define GOPTVAR(type, name, default_)
-#   define COPTION(optset, name, hasarg, optstring, description) \
-      void set_ ## name (std::string const & arg);
-#   define GOPTION(optset, name, hasarg, optstring, description) \
-      void set_ ## name (std::string const & arg);
-#   define OPTSET_REL(parent, child)
-
-#   include "option_list.hh"
-
-#   undef COPTSET
-#   undef GOPTSET
-#   undef COPTVAR
-#   undef GOPTVAR
-#   undef COPTION
-#   undef GOPTION
-#   undef OPTSET_REL
-
-    struct opt
+    bool operator<(concrete_option const & other) const;
+  };
+  struct concrete_option_set
+  {
+    std::set<concrete_option> options;
+    concrete_option_set();
+    concrete_option_set(std::set<concrete_option> const & other);
+    concrete_option_set(concrete_option const & opt);
+    concrete_option_set &
+    operator()(std::string const & names,
+	       std::string const & desc,
+	       boost::function<void ()> set,
+	       boost::function<void ()> reset() = 0);
+    concrete_option_set &
+    operator()(std::string const & names,
+	       std::string const & desc,
+	       boost::function<void (std::string)> set,
+	       boost::function<void ()> reset() = 0);
+    concrete_option_set & operator % (concrete_option_set const & other);
+    concrete_option_set & operator % (concrete_option const & opt);
+    void reset() const;
+    std::string get_usage_str() const;
+    void from_command_line(std::vector<std::string> & args, bool allow_xargs = true);
+    void from_command_line(int argc, char const * const * argv);
+  };
+  // because std::bind1st can't handle producing a nullary functor
+  template<typename T>
+  struct binder_only : boost::function<void()>
+  {
+    T * obj;
+    boost::function<void(T*)> fun;
+    binder_only(boost::function<void(T*)> const & f, T * o)
+      : obj(o), fun(f)
+      {}
+    void operator()()
     {
-      void (options::*setter)(std::string const &);
-      std::string desc;
-      bool has_arg;
-      option::optid id;
-    };
-    void note_given(optid id);
-    std::map<std::string, opt> opt_map;
-    optset global_option, all_cmd_option;
-    opt const & getopt(std::string const & name, optset const & allowed);
-    void set(std::string const & name, std::string const & given,
-             optset const & allowed);
-    void set(std::string const & name,
-             opt const & o,
-             std::string const & given);
-    void map_opt(void (options::*setter)(std::string const &),
-                 std::string const & optname,
-                 optid id,
-                 bool has_arg,
-                 std::string const & description);
+      fun(obj);
+    }
   };
+  template<typename T>
+  binder_only<T> bind_only(boost::function<void(T*)> const & f, T * o)
+  {
+    return binder_only<T>(f, o);
+  }
+  template<typename T>
+  struct option
+  {
+    std::string description;
+    std::string names;
+    bool has_arg;
+    boost::function<void (T*, std::string)> setter;
+    boost::function<void (T*)> resetter;
+
+    option(std::string const & name,
+	   std::string const & desc,
+	   bool arg,
+	   void(T::*set)(std::string),
+	   void(T::*reset)())
+    {
+      description = desc;
+      names = name;
+      has_arg = arg;
+      setter = set;
+      resetter = reset;
+    }
+
+    concrete_option instantiate(T * obj) const
+    {
+      concrete_option out;
+      out.description = description;
+      splitname(names, out.longname, out.shortname);
+      out.has_arg = has_arg;
+
+      if (setter)
+	out.setter = std::bind1st(setter, obj);
+      if (resetter)
+	out.resetter = bind_only(resetter, obj);
+      return out;
+    }
+
+    bool operator<(option const & other) const
+    {
+      return names < other.names;
+    }
+  };
+  template<typename T>
+  struct option_set
+  {
+    std::set<option<T> > options;
+    option_set(){}
+    option_set(option_set<T> const & other)
+      : options(other.options)
+    {}
+    option_set(option<T> const & opt)
+    {
+      options.insert(opt);
+    }
+
+    option_set(std::string const & name,
+	       std::string const & desc,
+	       bool arg,
+	       void(T::*set)(std::string),
+	       void(T::*reset)())
+    {
+      options.insert(option<T>(name, desc, arg, set, reset));
+    }
+    concrete_option_set instantiate(T * obj) const
+    {
+      std::set<concrete_option> out;
+      for (typename std::set<option<T> >::const_iterator i = options.begin();
+	   i != options.end(); ++i)
+	out.insert(i->instantiate(obj));
+      return out;
+    }
+    option_set<T> & operator % (option_set<T> const & other)
+    {
+      std::set<option<T> > combined;
+      std::set_union(options.begin(), options.end(),
+		     other.options.begin(), other.options.end(),
+		     std::inserter(combined, combined.begin()));
+      options = combined;
+      return *this;
+    }
+    option_set<T> & operator % (option_set<T> const & (*fun)())
+    {
+      return *this % fun();
+    }
+    option_set<T> & operator % (option_set<T> & (*fun)())
+    {
+      return *this % fun();
+    }
+    bool empty() const {return options.empty();}
+  };
+
 }
 
 
 #endif
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

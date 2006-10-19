@@ -470,7 +470,7 @@ CMD(list, N_("informative"),
     N_("show database objects, or the current workspace manifest, \n"
        "or known, unknown, intentionally ignored, missing, or \n"
        "changed-state files"),
-    option::depth % option::exclude)
+    options::opts::depth % options::opts::exclude)
 {
   if (args.size() == 0)
     throw usage(name);

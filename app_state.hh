@@ -22,7 +22,7 @@ class lua_hooks;
 #include "database.hh"
 #include "key_store.hh"
 #include "lua_hooks.hh"
-#include "option.hh"
+#include "options.hh"
 #include "paths.hh"
 #include "vocab.hh"
 #include "work.hh"
@@ -49,7 +49,7 @@ public:
   key_store keys;
   workspace work;
 
-  option::options opts;
+  options opts;
 
   bool found_workspace;
   bool branch_is_sticky;
