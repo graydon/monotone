@@ -33,25 +33,61 @@ OPT(automate_stdio_size, "automate-stdio-size", size_t, 1024,
 }
 #endif
 
-OPT(bind, "bind", bind_opt, ,
-     gettext_noop("address:port to listen on (default :4691)"))
+OPTSET(bind_opts)
+OPTVAR(bind, utf8, bind_address, )
+OPTVAR(bind, utf8, bind_port, )
+OPTVAR(bind, bool, bind_stdio, false)
+OPTVAR(bind, bool, use_transport_auth, true)
+
+OPTION(bind_opts, bind, true, "bind",
+       gettext_noop("address:port to listen on (default :4691)"))
 #ifdef option_bodies
 {
-  bind.set(arg);
+  string addr_part, port_part;
+  size_t l_colon = arg.find(':');
+  size_t r_colon = arg.rfind(':');
+
+  // not an ipv6 address, as that would have at least two colons
+  if (l_colon == r_colon)
+    {
+      addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
+      port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+    }
+  else
+    {
+      // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
+      size_t squareb = arg.rfind(']');
+      if ((arg.find('[') == 0) && (squareb != string::npos))
+        {
+          if (squareb < r_colon)
+            port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
+          else
+            port_part = "";
+          addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
+        }
+      else
+        {
+          addr_part = arg;
+          port_part = "";
+        }
+    }
+  bind_stdio = false;
+  bind_address = utf8(addr_part);
+  bind_port = utf8(port_part);
 }
 #endif
-OPT(no_transport_auth, "no-transport-auth", bool, false,
-     gettext_noop("disable transport authentication"))
+OPTION(bind_opts, no_transport_auth, false, "no-transport-auth",
+       gettext_noop("disable transport authentication"))
 #ifdef option_bodies
 {
-  no_transport_auth = true;
+  use_transport_auth = false;
 }
 #endif
-OPT(bind_stdio, "stdio", bool, false, gettext_noop("serve netsync on stdio"))
+OPTION(bind_opts, bind_stdio, false, "stdio",
+       gettext_noop("serve netsync on stdio"))
 #ifdef option_bodies
 {
-  // Yes, this sets a field in the structure belonging to the "bind" option.
-  bind.stdio = true;
+  bind_stdio = true;
 }
 #endif
 

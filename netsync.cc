@@ -481,8 +481,8 @@ session::session(protocol_role role,
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
   session_key(constants::netsync_key_initializer),
-  read_hmac(constants::netsync_key_initializer, !app.opts.no_transport_auth),
-  write_hmac(constants::netsync_key_initializer, !app.opts.no_transport_auth),
+  read_hmac(constants::netsync_key_initializer, app.opts.use_transport_auth),
+  write_hmac(constants::netsync_key_initializer, app.opts.use_transport_auth),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -706,7 +706,7 @@ session::set_session_key(string const & key)
 void
 session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
 {
-  if (!app.opts.no_transport_auth)
+  if (app.opts.use_transport_auth)
     {
       keypair our_kp;
       load_key_pair(app, app.opts.signing_key, our_kp);
@@ -1060,7 +1060,7 @@ session::queue_hello_cmd(rsa_keypair_id const & key_name,
                          id const & nonce)
 {
   rsa_pub_key pub;
-  if (!app.opts.no_transport_auth)
+  if (app.opts.use_transport_auth)
     decode_base64(pub_encoded, pub);
   cmd.write_hello_cmd(key_name, pub, nonce);
   write_netcmd_and_try_flush(cmd);
@@ -1075,7 +1075,7 @@ session::queue_anonymous_cmd(protocol_role role,
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
-  if (!app.opts.no_transport_auth)
+  if (app.opts.use_transport_auth)
     encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
                 nonce2(), hmac_key_encrypted);
   cmd.write_anonymous_cmd(role, include_pattern, exclude_pattern,
@@ -1096,7 +1096,7 @@ session::queue_auth_cmd(protocol_role role,
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
-  I(!app.opts.no_transport_auth);
+  I(app.opts.use_transport_auth);
   encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
               nonce2(), hmac_key_encrypted);
   cmd.write_auth_cmd(role, include_pattern, exclude_pattern, client,
@@ -1220,7 +1220,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
   base64<rsa_pub_key> their_key_encoded;
 
-  if (!app.opts.no_transport_auth)
+  if (app.opts.use_transport_auth)
     {
       hexenc<id> their_key_hash;
       encode_base64(their_key, their_key_encoded);
@@ -1288,7 +1288,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
   setup_client_tickers();
 
-  if (!app.opts.no_transport_auth &&
+  if (app.opts.use_transport_auth &&
       app.opts.signing_key() != "")
     {
       // get our key pair
@@ -1344,7 +1344,7 @@ session::process_anonymous_cmd(protocol_role their_role,
   // If running in no-transport-auth mode, we operate anonymously and
   // permit adoption of any role.
 
-  if (!app.opts.no_transport_auth)
+  if (app.opts.use_transport_auth)
     {
       if (their_role != sink_role)
         {
@@ -1371,7 +1371,7 @@ session::process_anonymous_cmd(protocol_role their_role,
           {
             error((F("not serving branch '%s'") % *i).str());
           }
-        else if (!app.opts.no_transport_auth &&
+        else if (app.opts.use_transport_auth &&
                  !app.lua.hook_get_netsync_read_permitted(*i))
           {
             error((F("anonymous access to branch '%s' denied by server") % *i).str());
@@ -1380,7 +1380,7 @@ session::process_anonymous_cmd(protocol_role their_role,
           ok_branches.insert(utf8(*i));
     }
 
-  if (!app.opts.no_transport_auth)
+  if (app.opts.use_transport_auth)
     {
       P(F("allowed anonymous read permission for '%s' excluding '%s'")
         % their_include_pattern % their_exclude_pattern);
@@ -2160,7 +2160,7 @@ void
 session::begin_service()
 {
   keypair kp;
-  if (!app.opts.no_transport_auth)
+  if (app.opts.use_transport_auth)
     app.keys.get_key_pair(app.opts.signing_key, kp);
   queue_hello_cmd(app.opts.signing_key, kp.pub, mk_nonce());
 }
@@ -2270,7 +2270,7 @@ build_stream_to_server(app_state & app,
       I(argv.size() > 0);
       string cmd = argv[0];
       argv.erase(argv.begin());
-      app.opts.no_transport_auth = !app.lua.hook_use_transport_auth(u);
+      app.opts.use_transport_auth = app.lua.hook_use_transport_auth(u);
       return shared_ptr<Netxx::StreamBase>
         (new Netxx::PipeStream(cmd, argv));
 
@@ -2667,8 +2667,8 @@ serve_connections(protocol_role role,
     timeout(static_cast<long>(timeout_seconds)),
     instant(0,1);
 
-  if (!app.opts.bind.port().empty())
-    default_port = std::atoi(app.opts.bind.port().c_str());
+  if (!app.opts.bind_port().empty())
+    default_port = std::atoi(app.opts.bind_port().c_str());
 #ifdef USE_IPV6
   bool use_ipv6=true;
 #else
@@ -2686,8 +2686,8 @@ serve_connections(protocol_role role,
 
           Netxx::Address addr(use_ipv6);
 
-          if (!app.opts.bind.address().empty())
-            addr.add_address(app.opts.bind.address().c_str(), default_port);
+          if (!app.opts.bind_address().empty())
+            addr.add_address(app.opts.bind_address().c_str(), default_port);
           else
             addr.add_all_addresses (default_port);
 
@@ -3136,7 +3136,7 @@ run_netsync_protocol(protocol_voice voice,
     {
       if (voice == server_voice)
         {
-          if (app.opts.bind.stdio)
+          if (app.opts.bind_stdio)
             {
               shared_ptr<Netxx::PipeStream> str(new Netxx::PipeStream(0,1));
               shared_ptr<session> sess(new session(role, server_voice,

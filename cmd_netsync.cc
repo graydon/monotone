@@ -198,7 +198,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
 
   pid_file pid(app.opts.pidfile);
 
-  if (!app.opts.no_transport_auth)
+  if (!app.opts.use_transport_auth)
     {
       rsa_keypair_id key;
       get_user_key(key, app);
@@ -210,7 +210,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
     }
   else
     {
-      E(app.opts.bind.stdio,
+      E(app.opts.bind_stdio,
 	F("The --no-transport-auth option is only permitted in combination with --stdio"));
     }
 
@@ -219,7 +219,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
   utf8 dummy_addr, include_pattern, exclude_pattern;
   process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, 
                        false, true, false, app);
-  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind.address,
+  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_address,
                        include_pattern, exclude_pattern, app);
 }
 
