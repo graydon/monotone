@@ -198,7 +198,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
 
   pid_file pid(app.opts.pidfile);
 
-  if (!app.opts.use_transport_auth)
+  if (app.opts.use_transport_auth)
     {
       rsa_keypair_id key;
       get_user_key(key, app);
