@@ -1499,7 +1499,7 @@ AUTOMATE(get_option, N_("OPTION"))
 // Arguments:
 //   1: a revision ID
 //   2: a file name
-// Added in: 3.2
+// Added in: 3.1
 // Purpose: Returns a list of revision IDs in which the content 
 // was most recently changed, relative to the revision ID specified 
 // in argument 1. This equates to a content mark following 
@@ -1556,7 +1556,7 @@ AUTOMATE(get_content_changed, N_("REV FILE"))
 //   1: a source revision ID
 //   2: a file name (in the source revision)
 //   3: a target revision ID
-// Added in: 3.2
+// Added in: 3.1
 // Purpose: Given a the file name in the source revision, a filename 
 // will if possible be returned naming the file in the target revision. 
 // This allows the same file to be matched between revisions, accounting 
@@ -1610,6 +1610,154 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
       prt.print_stanza(st);
     }
   output.write(prt.buf.data(), prt.buf.size());
+}
+
+// Name: content_diff
+// Arguments:
+//   1: (optional) one or more files to include
+//   2: (optional) if given, left rev is workspace and right is this rev 
+//   3: (optional) if given, 2) is left rev and this is the right rev
+// Added in: 3.2
+// Purpose: Availability of mtn diff as automate command.
+//
+// Output format: Like mtn diff, but with the header part omitted (as this is
+// doubles the output of automate get_revision). If no content changes happened,
+// the output is empty. All file operations beside mtn add are omitted,
+// as they don't change the content of the file.
+AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
+{
+  vector<revision_id> rev_ids;
+  vector<utf8> other_args;
+  revision_id ident;
+  
+  // check for revision and file arguments, go from right to left
+  for (int i=args.size()-1; i>=0; i--)
+    {
+      ident = revision_id();
+      if (app.db.revision_exists(ident))
+        {
+          rev_ids.push_back(ident);
+          continue;
+        }
+      
+      // then maybe this is a path...?
+      other_args.push_back(utf8(idx(args, i)()));
+    }
+  
+  int rev_count  = rev_ids.size();
+  
+  // check if we got more than the expected two revids
+  N(rev_count <= 2,
+    F("expected zero, one or two REVISION arguments"));
+  
+  // if we didn't receive two revision ids, we require a workspace against
+  // we can diff
+  if (rev_count < 2)
+    app.require_workspace();
+  
+  temp_node_id_source nis;
+  cset included, excluded;
+  bool new_is_archived;
+  
+  //
+  // What follows is pretty much copied from cmd_diff_log.cc line 202ff
+  // with some slight adaptions noted with separate FIXMEs
+  // TODO: someone with a better overview should probably factor this 
+  // out somewhere
+  //
+  if (rev_count == 0)
+    {
+      roster_t new_roster, old_roster;
+      revision_id old_rid;
+
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_revision_id(old_rid);
+
+      //node_restriction mask(args_to_paths(args),
+      node_restriction mask(args_to_paths(other_args),
+                            args_to_paths(app.exclude_patterns),
+                            app.depth,
+                            old_roster, new_roster, app);
+
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
+      make_restricted_csets(old_roster, new_roster, 
+                            included, excluded, mask);
+      check_restricted_cset(old_roster, included);
+
+      new_is_archived = false;
+      // FIXME: not needed here, automate get_revision does the same 
+      //header << "# old_revision [" << old_rid << "]" << "\n";
+    }
+  else if (rev_count == 1)
+    {
+      roster_t new_roster, old_roster;
+      revision_id r_old_id;
+
+      // FIXME: not needed here, since we require complete revids and
+      // already have checked their existence
+      //complete(app, idx(app.revision_selectors, 0)(), r_old_id);
+      //N(app.db.revision_exists(r_old_id),
+      //  F("no such revision '%s'") % r_old_id);
+
+      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      // Clobber old_roster with the one specified
+      app.db.get_roster(r_old_id, old_roster);
+
+      // FIXME: handle no ancestor case
+      // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
+
+      //node_restriction mask(args_to_paths(args),
+      node_restriction mask(args_to_paths(other_args),
+                            args_to_paths(app.exclude_patterns), 
+                            app.depth,
+                            old_roster, new_roster, app);
+
+      app.work.update_current_roster_from_filesystem(new_roster, mask);
+      make_restricted_csets(old_roster, new_roster, 
+                            included, excluded, mask);
+      check_restricted_cset(old_roster, included);
+
+      new_is_archived = false;
+      // FIXME: not needed here, automate get_revision does the same
+      //header << "# old_revision [" << r_old_id << "]" << "\n";
+    }
+  else
+    {
+      roster_t new_roster, old_roster;
+      revision_id r_old_id, r_new_id;
+
+      // FIXME: not needed here, since we require complete revids and
+      // already have checked their existence
+      //complete(app, idx(app.revision_selectors, 0)(), r_old_id);
+      //complete(app, idx(app.revision_selectors, 1)(), r_new_id);
+      //N(app.db.revision_exists(r_old_id),
+      //  F("no such revision '%s'") % r_old_id);
+      //N(app.db.revision_exists(r_new_id),
+      //  F("no such revision '%s'") % r_new_id);
+
+      app.db.get_roster(r_old_id, old_roster);
+      app.db.get_roster(r_new_id, new_roster);
+
+      node_restriction mask(args_to_paths(args),
+                            args_to_paths(app.exclude_patterns),
+                            app.depth,
+                            old_roster, new_roster, app);
+
+      // FIXME: this is *possibly* a UI bug, insofar as we [...]
+      // (see cmd_diff_log.cc for the full comment)
+      
+      make_restricted_csets(old_roster, new_roster, 
+                            included, excluded, mask);
+      check_restricted_cset(old_roster, included);
+
+      new_is_archived = true;
+    }
+
+  //
+  // copy from cmd_diff_log.cc end
+  //
+  
+  dump_diffs(included, app, new_is_archived, output);
 }
 
 // Local Variables:
