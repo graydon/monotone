@@ -25,7 +25,7 @@ using std::vector;
 // fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
 {
   string s = get_stdin();
 
@@ -40,7 +40,7 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("merge 3 files and output result"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -77,7 +77,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
-    option::context_diff % option::unified_diff % option::no_show_encloser)
+    options::opts::diff_options)
 {
   if (args.size() != 4)
     throw usage(name);
@@ -102,35 +102,35 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
   app.db.get_file_version(dst_id, dst);
 
   string pattern("");
-  if (app.diff_show_encloser)
+  if (!app.opts.no_show_encloser)
     app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
 
   make_diff(src_name, dst_name,
             src_id, dst_id,
             src.inner(), dst.inner(),
-            cout, app.diff_format, pattern);
+            cout, app.opts.diff_format, pattern);
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    option::revision % option::brief)
+    options::opts::revision % options::opts::brief)
 {
   revision_id rid;
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
 
-  if ((args.size() != 1) || (app.revision_selectors.size() > 1))
+  if ((args.size() != 1) || (app.opts.revision_selectors.size() > 1))
     throw usage(name);
 
   file_path file = file_path_external(idx(args, 0));
   split_path sp;
   file.split(sp);
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.work.get_revision_id(rid);
   else
-    complete(app, idx(app.revision_selectors, 0)(), rid);
+    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
   N(!null_id(rid), 
     F("no revision for file '%s' in database") % file);
@@ -151,12 +151,12 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.brief);
+  do_annotate(app, file_node, rid, app.opts.brief);
 }
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
-    option::none)
+    options::opts::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -181,21 +181,21 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
-    option::revision)
+    options::opts::revision)
 {
   if (args.size() != 1)
     throw usage(name);
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
 
   transaction_guard guard(app.db, false);
 
   revision_id rid;
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.work.get_revision_id(rid);
   else
-    complete(app, idx(app.revision_selectors, 0)(), rid);
+    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
   N(app.db.revision_exists(rid), 
     F("no such revision '%s'") % rid);
 

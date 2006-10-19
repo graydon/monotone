@@ -62,7 +62,7 @@ namespace commands
                    string const & p,
                    string const & d,
                    bool u,
-                   command_opts const & o)
+                   options::options_type const & o)
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
       options(o)
   {
@@ -235,25 +235,26 @@ namespace commands
       }
   }
 
-  boost::program_options::options_description command_options(string const & cmd)
+  options::options_type command_options(string const & cmd)
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
-        return (*cmds)[cmd]->options.as_desc();
+        return (*cmds)[cmd]->options;
       }
     else
       {
-        return boost::program_options::options_description();
+        return options::options_type();
       }
   }
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), option::none)
+CMD(help, N_("informative"), N_("command [ARGS...]"),
+    N_("display command help"), options::opts::none)
 {
   if (args.size() < 1)
     {
-      app.requested_help = true;
+      app.opts.help = true;
       throw usage("");
     }
 
@@ -261,11 +262,12 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   if ((*cmds).find(full_cmd) == (*cmds).end())
     throw usage("");
 
-  app.requested_help = true;
+  app.opts.help = true;
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
+    "trigger the specified kind of crash", options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -437,14 +439,14 @@ void
 notify_if_multiple_heads(app_state & app)
 {
   set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(app.opts.branch_name(), app, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.branch_name % ui.prog_name);
+    P(i18n_format(prefixedline) % app.opts.branch_name % ui.prog_name);
   }
 }
 
@@ -454,18 +456,20 @@ process_commit_message_args(bool & given,
                             app_state & app)
 {
   // can't have both a --message and a --message-file ...
-  N(app.message().length() == 0 || app.message_file().length() == 0,
+  N(!app.opts.message_given || !app.opts.msgfile_given,
     F("--message and --message-file are mutually exclusive"));
 
-  if (app.is_explicit_option(option::message()))
+  if (app.opts.message_given)
     {
-      log_message = app.message;
+      std::string msg;
+      join_lines(app.opts.message, msg);
+      log_message = utf8(msg);
       given = true;
     }
-  else if (app.is_explicit_option(option::msgfile()))
+  else if (app.opts.msgfile_given)
     {
       data dat;
-      read_data_for_command_line(app.message_file(), dat);
+      read_data_for_command_line(app.opts.msgfile, dat);
       external dat2 = dat();
       system_to_utf8(dat2, log_message);
       given = true;

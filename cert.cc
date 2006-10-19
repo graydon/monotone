@@ -25,7 +25,7 @@
 #include "interner.hh"
 #include "keys.hh"
 #include "netio.hh"
-#include "options.hh"
+#include "option.hh"
 #include "packet.hh"
 #include "revision.hh"
 #include "sanity.hh"
@@ -446,15 +446,15 @@ void
 get_user_key(rsa_keypair_id & key, app_state & app)
 {
 
-  if (app.signing_key() != "")
+  if (app.opts.key_given)
     {
-      key = app.signing_key;
+      key = app.opts.signing_key;
       return;
     }
 
-  if (app.branch_name() != "")
+  if (app.opts.branch_name() != "")
     {
-      cert_value branch(app.branch_name());
+      cert_value branch(app.opts.branch_name());
       if (app.lua.hook_get_branch_key(branch, key))
         return;
     }
@@ -475,9 +475,9 @@ guess_branch(revision_id const & ident,
              app_state & app,
              cert_value & branchname)
 {
-  if ((app.branch_name() != "") && app.is_explicit_option(option::branch_name()))
+  if ((app.opts.branch_name() != "") && app.opts.branch_given)
     {
-      branchname = app.branch_name();
+      branchname = app.opts.branch_name();
     }
   else
     {
@@ -499,7 +499,7 @@ guess_branch(revision_id const & ident,
           "please provide a branch name") % ident);
 
       decode_base64(certs[0].inner().value, branchname);
-      app.set_branch(branchname());
+      app.opts.branch_name = branchname();
     }
 }
 
@@ -641,7 +641,7 @@ cert_revision_author_default(revision_id const & m,
                              packet_consumer & pc)
 {
   string author;
-  if (!app.lua.hook_get_author(app.branch_name(), author))
+  if (!app.lua.hook_get_author(app.opts.branch_name(), author))
     {
       rsa_keypair_id key;
       get_user_key(key, app),

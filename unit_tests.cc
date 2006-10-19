@@ -15,11 +15,16 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+
+#include <boost/function.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/lambda/lambda.hpp>
+
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include <boost/program_options.hpp>
 
 #include "botan/botan.h"
+#include "option.hh"
 #include "unit_tests.hh"
 #include "sanity.hh"
 #include "ui.hh"
@@ -37,7 +42,6 @@ using std::exit;
 using std::atexit;
 using boost::unit_test::test_suite;
 typedef boost::unit_test::test_case boost_unit_test_case;
-namespace po = boost::program_options;
 
 // This must be a pointer.  It is used by the constructor below, which is
 // used to construct file-scope objects in different files; if it were the
@@ -147,52 +151,49 @@ namespace {
 
 test_suite * init_unit_test_suite(int argc, char * argv[])
 {
-  po::variables_map vm;
+  bool help(false);
+  bool list_groups(false);
+  bool list_tests(false);
+  bool debug(false);
+  string log;
+  vector<string> tests;
+  using boost::lambda::var;
+  using boost::lambda::bind;
+  using boost::lambda::_1;
+  using boost::function;
   try
     {
-      po::options_description od((FL("Usage: %s [options] [tests]\nOptions")
-                                  % argv[0]).str());
-      od.add_options()
-        ("help,h", "display help message")
-        ("list-groups,l", "list all test groups")
-        ("list-tests,L", "list all test cases")
-        ("debug", "write verbose debug log to stderr")
-        ("log", po::value<string>(),
-         "write verbose debug log to this file"
-         " (default is unit_tests.log)");
+      option::concrete_option_set os;
+      os("help,h", "display help message",
+         function<void()>(var(help) = true))
+        ("list-groups,l", "list all test groups",
+         function<void()>(var(list_groups) = true))
+        ("list-tests,L", "list all test cases",
+         function<void()>(var(list_tests) = true))
+        ("debug", "write verbose debug log to stderr",
+         function<void()>(var(debug) = true))
+        ("log", "write verbose debug log to this file"
+         " (default is unit_tests.log)",
+         function<void(string)>(var(log) = _1))
+        ("", "", function<void(string)>(bind(&vector<string>::push_back,
+                                             &tests, _1)));
 
-      // we have to do this silly thing to get positional arguments to work
-      // without an extra entry appearing in --help output.  even this does
-      // not prevent the use of --tests= on the command line.  bug in library.
-      po::options_description odx("");
-      odx.add(od);
-      odx.add_options()("tests", po::value< vector<string> >());
-      po::positional_options_description pd;
-      pd.add("tests", -1);
+      os.from_command_line(argc, argv);
 
-      po::store(po::command_line_parser(argc, argv).
-                options(odx).positional(pd).run(), vm);
-      po::notify(vm);
-      if (vm.count("help"))
+      if (help)
         {
-          cout << od << endl;
+          cout << (FL("Usage: %s [options] [tests]\nOptions") % argv[0])
+               << os.get_usage_str() << endl;
           exit(0);
         }
     }
-  catch (po::ambiguous_option const & e)
-    {
-      cerr << argv[0] << ": " << e.what() << endl;
-      vector<string>::const_iterator it = e.alternatives.begin();
-      for (; it != e.alternatives.end(); ++it)
-        cerr << *it << endl;
-      exit(2);
-    }
-  catch (po::error const & e)
+  catch (option::option_error const & e)
     {
       cerr << argv[0] << ": " << e.what() << endl;
       exit(2);
     }
-  if (vm.count("list-groups") && vm.count("list-tests"))
+
+  if (list_groups && list_tests)
     {
       cerr << argv[0]
            << ": only one of --list-groups and --list-tests at a time"
@@ -200,7 +201,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
       exit(2);
     }
 
-  if (vm.count("list-groups"))
+  if (list_groups)
     {
       string last;
       for (unit_test_list_t::const_iterator i = unit_tests->begin();
@@ -214,7 +215,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
       exit(0);
     }
 
-  if (vm.count("list-tests"))
+  if (list_tests)
     {
       for (unit_test_list_t::const_iterator i = unit_tests->begin();
            i != unit_tests->end();
@@ -226,7 +227,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   // If we get here, we are really running the test suite.
   test_suite * suite = BOOST_TEST_SUITE("monotone unit tests");
 
-  if (vm.count("tests") == 0) // run all tests
+  if (tests.size() == 0) // run all tests
     {
       string last;
       for (unit_test_list_t::const_iterator i = unit_tests->begin();
@@ -245,7 +246,6 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
     }
   else
     {
-      vector<string> tests = vm["tests"].as< vector<string> >();
       bool unrecognized = false;
 
       for(vector<string>::const_iterator i = tests.begin();
@@ -304,15 +304,15 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   global_sanity.initialize(argc, argv, "C");  // we didn't call setlocale
   Botan::Init::initialize();
 
-  if (vm.count("debug") == 0)
+  if (!debug)
     {
       // We would _like_ to use ui.redirect_log_to() but it takes a
       // system_path and we're not set up to use that here.
       char const * logname;
-      if (vm.count("log"))
-        logname = vm["log"].as<string>().c_str();
-      else
+      if (log.empty())
         logname = "unit_tests.log";
+      else
+        logname = log.c_str();
 
       std::filebuf * logbuf = new std::filebuf;
       if (!logbuf->open(logname, std::ios_base::out|std::ios_base::trunc))
@@ -332,7 +332,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
     }
   else
     {
-      if (vm.count("log"))
+      if (!log.empty())
         {
           cerr << argv[0]
                << ": only one of --debug and --log at a time"

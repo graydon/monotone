@@ -2491,7 +2491,7 @@ void database::complete(selector_type ty,
               if (i->second.size() == 0)
                 {
                   __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.push_back((__app->branch_name)());
+                  branch_names.push_back((__app->opts.branch_name)());
                 }
               else
                 {
@@ -2543,8 +2543,8 @@ void database::complete(selector_type ty,
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name) % text(__app->branch_name());
-                  L(FL("limiting to current branch '%s'") % __app->branch_name);
+                  lim % text(branch_cert_name) % text(__app->opts.branch_name());
+                  L(FL("limiting to current branch '%s'") % __app->opts.branch_name);
                 }
               else
                 {
