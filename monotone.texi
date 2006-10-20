@@ -4200,14 +4200,14 @@ and will not overwrite existing destination files.
 
 @item mtn commit
 @item mtn ci
-@itemx mtn commit --message=@var{logmsg}
-@itemx mtn ci --message=@var{logmsg}
+@itemx mtn commit --message=@var{logmsg} [--message=@var{logmsg}...]
+@itemx mtn ci --message=@var{logmsg} [--message=@var{logmsg}...]
 @itemx mtn commit --message-file=@var{logfile}
 @itemx mtn ci --message-file=@var{logfile}
 @itemx mtn commit @var{pathname...}
 @itemx mtn ci @var{pathname...}
-@itemx mtn commit --message=@var{logmsg} @var{pathname...} 
-@itemx mtn ci --message=@var{logmsg} @var{pathname...} 
+@itemx mtn commit --message=@var{logmsg} [--message=@var{logmsg}...] @var{pathname...} 
+@itemx mtn ci --message=@var{logmsg} [--message=@var{logmsg}...] @var{pathname...} 
 @itemx mtn commit --message-file=@var{logfile} @var{pathname...} 
 @itemx mtn ci --message-file=@var{logfile} @var{pathname...} 
 
@@ -4243,6 +4243,10 @@ The @option{--message} and @option{--message-file} options are mutually
 exclusive.  Both provide a @var{logmsg} describing the commit. 
 @option{--message-file} actually specifies the name of the file containing
 the log message, while @option{--message} provides it directly.
+
+Multiple @option{--message} options may be provided on the command line.
+The log message will be formed by concatenating the @option{--message}
+options provided, with each one starting at the beginning of a new line.
 
 The @file{_MTN/log} file can be edited by the user during their daily work
 to record the changes made to the workspace. When running the

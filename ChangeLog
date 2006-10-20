@@ -10,6 +10,54 @@
 	* revision.cc (allrevs_toposorted): Add a comment describing this
 	function's purpose.
 
+2006-10-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Propagate the rerwite of 'automate stdio' (in branch
+	...automate-stdio-extensions) to mainline. It doesn't actually
+	have any extensions anymore, just a rewrite that should make
+	the code cleaner.
+
+2006-10-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Revert automate stdio extensions (never were on mainline) so
+	that the only change is that automate stdio is implemented
+	more cleanly.
+
+2006-10-12  Thomas Keller <me@thomaskeller.biz>
+
+	* automate.cc: replaced std::endl in favour of simple unix
+	unix line endings which is useful if these commands are used
+	over automate stdio (flushing is expensive...)
+
+2006-10-03  Evan Deaubl  <evan@warpedview.com>
+
+	* monotone.cc, options_list.hh: Added ability to specify
+	multiple --message arguments.
+	* monotone.texi: Added documentation for multiple --message
+	arguments.
+	* tests/multiple_message_commit/__driver__.lua, testsuite.lua:
+	Added integration test for multiple --message arguments.
+	
+2006-10-09  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 35 fuzzies cleared,
+
+2006-10-08  Richard Levitte  <richard@levitte.org>
+
+	* debian/control (monotone-doc): Set up build dependencies for the
+	tools needed to make the documentation.
+
+2006-10-08  Richard Levitte  <richard@levitte.org>
+
+	* debian/control (monotone-doc): New package that contains all
+	the documentation.
+	* debian/rules (binary-install/monotone-server): Add special rule
+	so the PDF document really gets created.
+	* debian/monotone.docs: Move the documentation referenses from
+	here ...
+	* debian/monotone-doc.docs: ... to here, since we have a separate
+	package for documentation.
+
 2006-10-04  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* automate.cc: Fix automate inventory.
@@ -343,6 +391,11 @@
 	* cmd_ws_commit.cc (commit): Generate utf8 changelogs.
 
 	* tests/i18n_commit_messages/: New test.
+
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.postinst: Add code to regenerate
+	rosters when appropriate.
 
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
@@ -904,6 +957,26 @@
 
 2006-08-28  Richard Levitte  <richard@levitte.org>
 
+	* debian/monotone.examples: Added, currently exactly the same
+	as debian/monotone-server.examples.  There's no reason why the
+	"client" should be without some of the examples.
+
+2006-08-28  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.examples: Dropped.
+	* debian/examples: Renamed to debian/monotone-server.examples.
+
+2006-08-27  Richard Levitte  <richard@levitte.org>
+
+	* debian/examples/read-permissions
+	debian/examples/write-permissions: Move to ...
+	* examples/read-permissions examples/write-permissions:
+	... here.
+	* examples/000README.txt: add a subtle little comment covering
+	the moved files.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
 	* po/sv.po: A few fuzzies to fix.
 
 2006-08-28  Thomas Moschny  <thomas.moschny@gmx.de>
@@ -1223,6 +1296,11 @@
 
 	* INSTALL: Say that a Debian user needs to install
 	libboost-program-options-dev as well.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* cmd.hh cmd_automate.cc monotone.text tests/automate_stdio/:
+	Comment out stuff related to giving automate commands an input stream.
 
 2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
@@ -1641,6 +1719,19 @@
 	* file_io.cc (walk_tree_recursive): Walk files first, then
 	directories; cuts down memory usage greatly on reiserfs.
 
+2006-07-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Implement the automate stdio extensions mentioned on the ML.
+	- options: can be given, but don't do anything yet. Fixing this will
+	  probably be easier after landing the boost-program-options branch.
+	- input stream: there has been some discussion on IRC as to whether we
+	actually want to keep this.
+	* cmd_automate.cc: Redo automate stdio I/O parsing.
+	* cmd.hh: Automate commands now get an input stream, and can take
+	options (but the options are currently just discared, since I'm not
+	sure how to make it work with our current option-parsing machinery).
+	* monotone.texi: Update the documentation of automate stdio.
+
 2006-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: Add a check for g++ 4.0/4.0.1 std::tr1 hashtable
@@ -1854,11 +1945,6 @@
 	* netsync.cc: Include signal.h if not Windows.
 	(run_netsync_protocol): Ignore SIGPIPE if not Windows.
 	* tests/database_is_closed_on_signal_exit: Expected to fail.
-
-2006-07-22  Nathaniel Smith  <njs@pobox.com>
-
-	* NEWS: Set date, and it turns out AUTOMATE() was there in
-	0.27...
 
 2006-07-21  Zack Weinberg  <zackw@panix.com>
 
@@ -3697,6 +3783,14 @@
 	* work.cc (editable_working_tree::apply_delta): filename argument
 	was missing for E() format string.
 
+2006-05-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.monotone.default: Removed BRANCHES option and
+	make all other options optional.  Also DB became MTN_DB.
+	* debian/monotone-server.monotone.init: Set defaults for every option
+	in /etc/default/monotone, also serve '*' instead of specific branches.
+	Restrictions can be added using the read and write permissions files.
+
 2006-05-02  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A few new strings to translate.
@@ -3742,6 +3836,11 @@
 	(database::put_file_version): Use invert_xdelta.
 	* netsync.cc (session::note_file_delta):
 	Use get_arbitrary_file_delta.
+
+2006-04-30  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Change $MONOTONE to $MTN.  Added
+	--quite flag to key generation.
 
 2006-04-29  Richard Levitte  <richard@levitte.org>
 
@@ -4072,6 +4171,18 @@
 	reference in HTML files.  Perl is not available in some systems
 	by default so this avoids an extra build-time dependency.
 
+2006-04-13  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Only try to
+	migrate/rosterify/whatever database once.  If it fails print a
+	message.  This is how the script was coded but 'set -e' prevented it
+	from working properly.
+
+2006-04-13  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/control: Made monotone-server's Architecture 'all' instead of
+	'any', as it does not contain any architecture dependent files.
+
 2006-04-12  Nathaniel Smith  <njs@pobox.com>
 
 	* unix/process.cc (read_umask): New function.
@@ -4092,6 +4203,10 @@
 	(tick_write_count::write_ticks): Specialise the test for the
 	count/total case, since we know the exact maximum and therefore
 	don't need to make space for a ludicrously large number.
+
+2006-04-12  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone.docs: Added monotone.html back in.
 
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
@@ -4385,6 +4500,16 @@
 	* tests/t_mtn_ignore.at: Shuffle the output grepping tests a bit
 	to make failure cases more obvious.
 
+2006-04-06  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postrm: Fix purging of monotone-server
+	package by not using debconf in postrm script.
+
+2006-04-06  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.examples: Don't install entire directory
+	hierarchy.
+
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (mostlyclean-local): Delete
@@ -4548,6 +4673,26 @@
 
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
 
+	* ChangeLog: Fix typo and merge goofs.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.monotone.init: Clean up monotone's pid file
+	for it.  This is a temporary work around until monotone learns to
+	clean up after itself.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.TODO.Debian: Added.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Changed to use the
+	get_passphrase_from_file.lua file as the default hooks file for the
+	server.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
 	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
 	passphrases from 'confdir/passphrases'.
 
@@ -4564,6 +4709,25 @@
 
 	* ui.cc (user_interface::redirect_log_to): Someone correctly
 	pointed out that the log gets clobbered.  Now corrected.
+
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+
+	* po/ja.po, po/pt_BR.po: Import from net.venge.monotone.
+
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.examples: Added.
+	* debian/monotone-server.install: Removed.  The
+	monotone-server.examples file handles this now.
+
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.dirs: Added new /var/log/monotone and
+	/var/run/monotone directories.
+	* debian/monotone-server.postinst: Set ownership and on new
+	directories.
+	* debian/monotone-server.monotone.init: Modified to use new log and
+	pid file locations and new --log option.
 
 2006-04-01  Lapo Luchini  <lapo@lapo.it>
 
@@ -4596,6 +4760,11 @@
 2006-04-01  Henry Nestler  <Henry@BigFoot.de>
 
 	* contrib/mtbrowse.sh: Bookkeeping directory _MTN
+
+2006-03-31  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.monotone.init: Fix pidfile saving.
+
 
 2006-03-31  Lapo Luchini  <lapo@lapo.it>
 
