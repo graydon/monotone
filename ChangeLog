@@ -1,3 +1,9 @@
+2006-10-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database_check.cc: Add checks for the heights. It is checked
+	that every revision has a unique height that is greater than that
+	of all it's parents.
+
 2006-10-09  Nathaniel Smith  <njs@pobox.com>
 
 	* automate.cc: Remove spurious #include of rev_height.hh.
