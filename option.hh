@@ -10,6 +10,8 @@
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "sanity.hh"
+
 namespace option {
   // Base for errors thrown by this code.
   struct option_error : public std::invalid_argument
