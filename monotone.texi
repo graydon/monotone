@@ -6716,13 +6716,16 @@ escaped, '\' to '\\' and '"' to '\"'.
 Each attribute stanza also contains another entry which tells the status
 of attribute. This entry can have one of the following four values:
 
+@itemize
+@item
 'added': the attribute has just been added to the file
-
+@item
 'dropped': the attribute has just been dropped from the file
-
+@item
 'unchanged': the attribute has not been changed since the last revision
-
+@item
 'changed': the attribute has been changed since the last revision
+@end itemize
 
 The status 'changed' can come up if an attribute foo has been dropped and
 added afterwards with another value, like
@@ -6761,15 +6764,22 @@ message to stderr and exits with status 1.
 @item Arguments:
 
 One or more @var{file} arguments restrict the diff output to these files,
-otherwise all changed files in the current workspace are considered. Furthermore
-zero, one or two revisions can be given as last arguments, where for
+otherwise all changed files in the given revision(s) and/or current workspace
+are considered.
 
-  no revision: the diff is done between the workspace revision and the
-  	parent (base) revision of this workspace,
-  one revision: the diff is done between the workspace revision and the
-  	given revision @var{rev1},
-  two revisions: the diff is done between @var{rev1} and @var{rev2}; no
-  	workspace is needed in this case.
+Furthermore zero, one or two revisions can be given as last arguments, where for
+
+@itemize
+@item
+no revision: the diff is done between the workspace revision and the 
+parent (base) revision of this workspace
+@item
+one revision: the diff is done between the workspace revision and the
+given revision @var{rev1},
+@item
+two revisions: the diff is done between @var{rev1} and @var{rev2}; no
+workspace is needed in this case.
+@end itemize
 
 @item Added in:
 
@@ -6807,8 +6817,8 @@ is empty.
 
 If an incorrect number of revisions are given or a workspace is required, but
 not found, prints to stderr and exits with status 1. If a certain given revision
-does not exist, it is interpreted as file path. If one or more file restrictions
-can't be applied, the command prints to stderr as well and exits.
+does not exist, it is interpreted as file restriction. If one or more file 
+restrictions can't be applied, the command prints to stderr and exits, too.
 
 @end table
 
