@@ -1,0 +1,16 @@
+# init.d config file for monotone
+
+# this must be set to 1 for monotone to start
+START=0
+
+# the address and or port (ADDRESS[:PORT]) monotone should listen on
+#ADDRESS=0.0.0.0
+
+# the database to use
+#MTN_DB=/var/lib/monotone/default.mtn
+
+# Various other options, don't touch unless you know what you are doing.
+#MTN_HOME=/var/lib/monotone
+#MTN_CONFDIR=/etc/monotone
+#MTN_KEYDIR=$MTN_HOME/keys
+

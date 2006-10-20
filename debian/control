@@ -18,3 +18,24 @@ Description: A distributed version (revision) control system
  branches and extensible metadata, uses an efficient peer-to-peer
  network protocol, performs history-sensitive merging, and delegates
  trust functions to client-side RSA certificates.
+
+Package: monotone-server
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, monotone (= ${Source-Version}), adduser, ucf (>= 0.28)
+Description: A distributed version (revision) control system
+ Monotone is a free, distributed version control system. It provides
+ fully disconnected operation, manages complete tree versions, keeps
+ its state in a local transactional database, supports overlapping
+ branches and extensible metadata, uses an efficient peer-to-peer
+ network protocol, performs history-sensitive merging, and delegates
+ trust functions to client-side RSA certificates.
+ .
+ This package contains files to make running a monotone server easier.
+
+Package: monotone-doc
+Section: doc
+Architecture: any
+Build-Depends: tetex-bin, texinfo, xpdf-utils, ps2eps
+Description: A distributed version (revision) control system
+ This is the documentation for monotone in HTML and PDF formats.  See
+ the monotone description for more details.
