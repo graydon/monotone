@@ -15,24 +15,30 @@ namespace option {
 option_error::option_error(std::string const & str)
  : std::invalid_argument((F("option error: %s") % str).str())
 {}
+
 unknown_option::unknown_option(std::string const & opt)
  : option_error((F("unknown option '%s'") % opt).str())
 {}
+
 missing_arg::missing_arg(std::string const & opt)
  : option_error((F("missing argument to option '%s'") % opt).str())
 {}
+
 extra_arg::extra_arg(std::string const & opt)
  : option_error((F("option '%s' does not take an argument") % opt).str())
 {}
+
 bad_arg::bad_arg(std::string const & opt, std::string const & arg)
  : option_error((F("bad argument '%s' to option '%s'") % arg % opt).str())
 {}
+
 bad_arg::bad_arg(std::string const & opt,
                  std::string const & arg,
                  std::string const & reason)
  : option_error((F("bad argument '%s' to option '%s': %s")
                    % arg % opt % reason).str())
 {}
+
 bad_arg_internal::bad_arg_internal(string const & str)
  : reason(str)
 {}
@@ -48,12 +54,22 @@ void splitname(string const & from, string & name, string & n)
     n = from.substr(comma+1, 1);
   else
     n = "";
+
+  // "o" is equivalent to ",o"; it gives an option
+  // with only a short name
+  if (name.size() == 1)
+    {
+      I(n.empty());
+      n = name;
+      name = "";
+    }
 }
 
 
 concrete_option::concrete_option()
   : has_arg(false)
 {}
+
 concrete_option::concrete_option(std::string const & names,
                                  std::string const & desc,
                                  bool arg,
@@ -62,6 +78,7 @@ concrete_option::concrete_option(std::string const & names,
 {
   description = desc;
   splitname(names, longname, shortname);
+  I(!description.empty() || !longname.empty() || !shortname.empty());
   has_arg = arg;
   setter = set;
   resetter = reset;
@@ -69,18 +86,32 @@ concrete_option::concrete_option(std::string const & names,
 
 bool concrete_option::operator<(concrete_option const & other) const
 {
-  return longname < other.longname && (shortname.empty() || shortname != other.shortname);
+  if (longname != other.longname)
+    return longname < other.longname;
+  if (shortname != other.shortname)
+    return shortname < other.shortname;
+  return description < other.description;
+}
+
+concrete_option_set
+operator | (concrete_option const & a, concrete_option const & b)
+{
+  return concrete_option_set(a) | b;
 }
 
 concrete_option_set::concrete_option_set()
 {}
+
 concrete_option_set::concrete_option_set(std::set<concrete_option> const & other)
   : options(other)
 {}
+
 concrete_option_set::concrete_option_set(concrete_option const & opt)
 {
   options.insert(opt);
 }
+
+// essentially the opposite of std::bind1st
 class discard_argument : public boost::function<void (std::string const &)>
 {
   boost::function<void()> functor;
@@ -91,6 +122,7 @@ class discard_argument : public boost::function<void (std::string const &)>
     void operator()(std::string const &)
     { return functor(); }
 };
+
 concrete_option_set &
 concrete_option_set::operator()(string const & names,
                                 string const & desc,
@@ -100,6 +132,7 @@ concrete_option_set::operator()(string const & names,
   options.insert(concrete_option(names, desc, false, discard_argument(set), reset));
   return *this;
 }
+
 concrete_option_set &
 concrete_option_set::operator()(string const & names,
                                 string const & desc,
@@ -109,22 +142,17 @@ concrete_option_set::operator()(string const & names,
   options.insert(concrete_option(names, desc, true, set, reset));
   return *this;
 }
-concrete_option_set &
-concrete_option_set::operator % (concrete_option_set const & other)
+
+concrete_option_set
+concrete_option_set::operator | (concrete_option_set const & other) const
 {
-  std::set<concrete_option> combined;
+  concrete_option_set combined;
   std::set_union(options.begin(), options.end(),
                  other.options.begin(), other.options.end(),
-                 std::inserter(combined, combined.begin()));
-  options = combined;
-  return *this;
+                 std::inserter(combined.options, combined.options.begin()));
+  return combined;
 }
-concrete_option_set &
-concrete_option_set::operator % (concrete_option const & opt)
-{
-  options.insert(opt);
-  return *this;
-}
+
 void concrete_option_set::reset() const
 {
   for (std::set<concrete_option>::const_iterator i = options.begin();
@@ -211,6 +239,7 @@ void concrete_option_set::from_command_line(int argc, char const * const * argv)
     arguments.push_back(argv[i]);
   from_command_line(arguments, true);
 }
+
 static concrete_option const &
 getopt(map<string, concrete_option> const & by_name, string const & name)
 {
@@ -233,6 +262,7 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
       if (!i->shortname.empty())
         by_name.insert(make_pair(i->shortname, *i));
     }
+
   bool seen_dashdash = false;
   for (unsigned int i = 0; i < args.size(); ++i)
     {
@@ -325,9 +355,7 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
           try
             {
               if (o.setter)
-                {
-                  o.setter(arg);
-                }
+                o.setter(arg);
             }
           catch (boost::bad_lexical_cast)
             {
@@ -365,6 +393,8 @@ static vector<string> wordwrap(string str, unsigned int width)
   return out;
 }
 
+// Get the non-description part of the usage string,
+// looks like "--long [ -s ] <arg>".
 static string usagestr(option::concrete_option const & opt)
 {
   string out;
@@ -386,8 +416,6 @@ static string usagestr(option::concrete_option const & opt)
 
 std::string concrete_option_set::get_usage_str() const
 {
-  // combine the name strings like "--long [ -s ]"
-  map<string, string> to_display;
   unsigned int namelen = 0; // the longest option name string
   for (std::set<concrete_option>::const_iterator i = options.begin();
        i != options.end(); ++i)

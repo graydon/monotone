@@ -123,7 +123,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, params, desc, true,             \
-                          options::options_type() % opts)            \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
@@ -141,7 +141,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, "", desc, true,                 \
-                          options::options_type() % opts)            \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
@@ -160,7 +160,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, params, desc, false,            \
-                          options::options_type() % opts)            \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \

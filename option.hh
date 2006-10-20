@@ -11,6 +11,7 @@
 #include <boost/lexical_cast.hpp>
 
 namespace option {
+  // Base for errors thrown by this code.
   struct option_error : public std::invalid_argument
   {
     option_error(std::string const & str);
@@ -23,10 +24,13 @@ namespace option {
   {
     missing_arg(std::string const & opt);
   };
+  // -ofoo or --opt=foo when the option doesn't take an argument
   struct extra_arg : public option_error
   {
     extra_arg(std::string const & opt);
   };
+  // thrown by from_command_line when setting an option fails
+  // by either boost::bad_lexical_cast or bad_arg_internal
   struct bad_arg : public option_error
   {
     bad_arg(std::string const & opt, std::string const & arg);
@@ -34,13 +38,18 @@ namespace option {
 	    std::string const & arg,
 	    std::string const & reason);
   };
+  // from_command_line() catches this and boost::bad_lexical_cast
+  // and converts them to bad_arg exceptions
   struct bad_arg_internal
   {
     std::string reason;
     bad_arg_internal(std::string const & str = "");
   };
 
+  // Split a "long,s" option name into long and short names.
   void splitname(std::string const & from, std::string & name, std::string & n);
+
+  // An option that can be set and reset.
   struct concrete_option
   {
     std::string description;
@@ -59,12 +68,18 @@ namespace option {
 
     bool operator<(concrete_option const & other) const;
   };
+
+  // A group of options, which can be set from a command line
+  // and can produce a usage string.
   struct concrete_option_set
   {
     std::set<concrete_option> options;
     concrete_option_set();
     concrete_option_set(std::set<concrete_option> const & other);
     concrete_option_set(concrete_option const & opt);
+
+    // for building a concret_option_set directly (as done in unit_tests.cc),
+    // rather than using intermediate machinery like in options*
     concrete_option_set &
     operator()(std::string const & names,
 	       std::string const & desc,
@@ -75,16 +90,19 @@ namespace option {
 	       std::string const & desc,
 	       boost::function<void (std::string)> set,
 	       boost::function<void ()> reset() = 0);
-    concrete_option_set & operator % (concrete_option_set const & other);
-    concrete_option_set & operator % (concrete_option const & opt);
+
+    concrete_option_set operator | (concrete_option_set const & other) const;
     void reset() const;
     std::string get_usage_str() const;
     void from_command_line(std::vector<std::string> & args, bool allow_xargs = true);
     void from_command_line(int argc, char const * const * argv);
   };
+  concrete_option_set
+  operator | (concrete_option const & a, concrete_option const & b);
+
   // because std::bind1st can't handle producing a nullary functor
   template<typename T>
-  struct binder_only : boost::function<void()>
+  struct binder_only
   {
     T * obj;
     boost::function<void(T*)> fun;
@@ -101,6 +119,9 @@ namespace option {
   {
     return binder_only<T>(f, o);
   }
+
+  // Options that need to be attached to some other object
+  // in order for set and reset to be meaningful.
   template<typename T>
   struct option
   {
@@ -116,6 +137,7 @@ namespace option {
 	   void(T::*set)(std::string),
 	   void(T::*reset)())
     {
+      I(!name.empty() || !desc.empty());
       description = desc;
       names = name;
       has_arg = arg;
@@ -139,9 +161,14 @@ namespace option {
 
     bool operator<(option const & other) const
     {
-      return names < other.names;
+      if (names != other.names)
+        return names < other.names;
+      return description < other.description;
     }
   };
+
+  // A group of unattached options, which can be given an object
+  // to attach themselves to.
   template<typename T>
   struct option_set
   {
@@ -171,25 +198,22 @@ namespace option {
 	out.insert(i->instantiate(obj));
       return out;
     }
-    option_set<T> & operator % (option_set<T> const & other)
+    option_set<T> operator | (option_set<T> const & other) const
     {
-      std::set<option<T> > combined;
+      option_set<T> combined;
       std::set_union(options.begin(), options.end(),
 		     other.options.begin(), other.options.end(),
-		     std::inserter(combined, combined.begin()));
-      options = combined;
-      return *this;
-    }
-    option_set<T> & operator % (option_set<T> const & (*fun)())
-    {
-      return *this % fun();
-    }
-    option_set<T> & operator % (option_set<T> & (*fun)())
-    {
-      return *this % fun();
+		     std::inserter(combined.options, combined.options.begin()));
+      return combined;
     }
     bool empty() const {return options.empty();}
   };
+  template<typename T>
+  option_set<T>
+  operator | (option<T> const & a, option<T> const & b)
+  {
+    return option_set<T>(a) | b;
+  }
 
 }
 

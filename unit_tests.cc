@@ -175,8 +175,8 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
         ("log", "write verbose debug log to this file"
          " (default is unit_tests.log)",
          function<void(string)>(var(log) = _1))
-        ("", "", function<void(string)>(bind(&vector<string>::push_back,
-                                             &tests, _1)));
+        ("--", "", function<void(string)>(bind(&vector<string>::push_back,
+                                               &tests, _1)));
 
       os.from_command_line(argc, argv);
 

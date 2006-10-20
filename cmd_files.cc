@@ -113,7 +113,7 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    options::opts::revision % options::opts::brief)
+    options::opts::revision | options::opts::brief)
 {
   revision_id rid;
 

@@ -128,25 +128,26 @@ void localize_monotone()
 // read command-line options and return the command name
 string read_options(options & opts, vector<string> args)
 {
-  option::concrete_option_set optset = options::opts::all_options().instantiate(&opts);
+  option::concrete_option_set optset =
+    options::opts::all_options().instantiate(&opts);
   optset.from_command_line(args);
 
   // consume the command, and perform completion if necessary
   string cmd;
   if (!opts.args.empty())
     cmd = commands::complete_command(idx(opts.args, 0)());
-
-  options::options_type cmdopts = commands::command_options(cmd);
-  optset = options::opts::globals().instantiate(&opts) % cmdopts.instantiate(&opts);
+  optset.reset();
 
   // reparse options, now that we know what command-specific
   // options are allowed.
 
-  opts = options();
+  options::options_type cmdopts = commands::command_options(cmd);
+  optset = (options::opts::globals() | cmdopts).instantiate(&opts);
   optset.from_command_line(args, false);
 
   if (!opts.args.empty())
     opts.args.erase(opts.args.begin());
+
   return cmd;
 }
 

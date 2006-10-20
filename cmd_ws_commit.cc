@@ -65,7 +65,7 @@ get_log_message_interactively(revision_t const & cs,
 
 CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
-    options::opts::depth % options::opts::exclude % options::opts::missing)
+    options::opts::depth | options::opts::exclude | options::opts::missing)
 {
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
@@ -275,7 +275,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
     N_("drop files from workspace"),
-    options::opts::execute % options::opts::missing % options::opts::recursive)
+    options::opts::execute | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
     throw usage(name);
@@ -354,7 +354,7 @@ ALIAS(mv, rename)
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
-    options::opts::depth % options::opts::exclude)
+    options::opts::depth | options::opts::exclude)
 {
   roster_t old_roster, new_roster;
   cset included, excluded;
@@ -424,7 +424,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
        "If no directory is given, the branch name will be used as directory"),
-    options::opts::branch % options::opts::revision)
+    options::opts::branch | options::opts::revision)
 {
   revision_id ident;
   system_path dir;
@@ -661,8 +661,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    options::opts::branch % options::opts::message % options::opts::msgfile % options::opts::date
-    % options::opts::author % options::opts::depth % options::opts::exclude)
+    options::opts::branch | options::opts::message | options::opts::msgfile | options::opts::date
+    | options::opts::author | options::opts::depth | options::opts::exclude)
 {
   utf8 log_message("");
   bool log_message_given;
