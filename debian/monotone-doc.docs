@@ -4,8 +4,6 @@ NEWS
 README
 README.changesets
 UPGRADE
+monotone.pdf
 monotone.html
 figures
-contrib
-debian/README.Debian
-debian/TODO.Debian

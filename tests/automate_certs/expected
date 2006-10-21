@@ -13,7 +13,8 @@ signature "ok"
       key "tester@test.net"
 signature "ok"
      name "changelog"
-    value "blah-blah"
+    value "blah-blah
+"
     trust "trusted"
 
       key "tester@test.net"

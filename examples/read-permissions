@@ -1,0 +1,6 @@
+comment "Read permissions go here.  See the manual for proper syntax"
+pattern "tld.domain.branch"
+allow "user@domain.tld"
+
+pattern "domain.tld/branch"
+allow "user@domain.tld"
