@@ -238,7 +238,7 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     inc = idx(args,0);
   else if (args.size() > 1)
     throw usage(name);
-  combine_and_check_globish(app.exclude_patterns, exc);
+  combine_and_check_globish(app.opts.exclude_patterns, exc);
   globish_matcher match(inc, exc);
   vector<string> names;
   app.db.get_branches(names);
@@ -347,8 +347,8 @@ ls_known(app_state & app, vector<utf8> const & args)
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         new_roster, app);
 
   node_map const & nodes = new_roster.all_nodes();
@@ -374,7 +374,8 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
   app.require_workspace();
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.depth, app);
+  path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth, app);
   path_set unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
@@ -400,8 +401,8 @@ ls_missing(app_state & app, vector<utf8> const & args)
   roster_t current_roster_shape;
   app.work.get_current_roster_shape(current_roster_shape, nis);
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         current_roster_shape, app);
 
   path_set missing;
@@ -428,8 +429,8 @@ ls_changed(app_state & app, vector<utf8> const & args)
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -469,7 +470,7 @@ CMD(list, N_("informative"),
     N_("show database objects, or the current workspace manifest, \n"
        "or known, unknown, intentionally ignored, missing, or \n"
        "changed-state files"),
-    option::depth % option::exclude)
+    options::opts::depth | options::opts::exclude)
 {
   if (args.size() == 0)
     throw usage(name);
