@@ -1,3 +1,10 @@
+2006-10-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rewrite options handling. Options are listed in options_list.hh.
+	options.{cc,hh} is support for this; option.{cc,hh} is options
+	infrastructure. unit_tests.cc uses this infrastructure directly for
+	handling the options that it accepts.
+
 2006-10-22  Matthew Nicholson  <matt@matt-land.com>
 
 	* debian/monotone-server.postinst: Swap execution of 'set +e' and 'set

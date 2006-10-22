@@ -116,11 +116,6 @@ namespace option {
       fun(obj);
     }
   };
-  template<typename T>
-  binder_only<T> bind_only(boost::function<void(T*)> const & f, T * o)
-  {
-    return binder_only<T>(f, o);
-  }
 
   // Options that need to be attached to some other object
   // in order for set and reset to be meaningful.
@@ -157,7 +152,7 @@ namespace option {
       if (setter)
 	out.setter = std::bind1st(setter, obj);
       if (resetter)
-	out.resetter = bind_only(resetter, obj);
+	out.resetter = binder_only<T>(resetter, obj);
       return out;
     }
 

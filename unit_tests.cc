@@ -17,8 +17,6 @@
 #include <cerrno>
 
 #include <boost/function.hpp>
-#include <boost/lambda/bind.hpp>
-#include <boost/lambda/lambda.hpp>
 
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/test/parameterized_test.hpp>
@@ -149,6 +147,55 @@ namespace {
   typedef basic_teebuf<char> teebuf;
 }
 
+template<typename T>
+struct setter_class
+{
+  T & item;
+  setter_class(T & i)
+    : item(i)
+  {}
+  void operator()(string s)
+  {
+    item = boost::lexical_cast<T>(s);
+  }
+};
+
+template<>
+struct setter_class<bool>
+{
+  bool & item;
+  setter_class(bool & i)
+    : item(i)
+    {}
+  void operator()()
+  {
+    item = true;
+  }
+};
+template<typename T>
+struct setter_class<vector<T> >
+{
+  vector<T> & items;
+  setter_class(vector<T> & i)
+    : items(i)
+  {}
+  void operator()(string s)
+  {
+    items.push_back(boost::lexical_cast<T>(s));
+  }
+};
+
+template<typename T>
+boost::function<void(string)> setter(T & item)
+{
+  return setter_class<T>(item);
+}
+
+boost::function<void()> setter(bool & item)
+{
+  return setter_class<bool>(item);
+}
+
 test_suite * init_unit_test_suite(int argc, char * argv[])
 {
   bool help(false);
@@ -157,26 +204,16 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   bool debug(false);
   string log;
   vector<string> tests;
-  using boost::lambda::var;
-  using boost::lambda::bind;
-  using boost::lambda::_1;
-  using boost::function;
   try
     {
       option::concrete_option_set os;
-      os("help,h", "display help message",
-         function<void()>(var(help) = true))
-        ("list-groups,l", "list all test groups",
-         function<void()>(var(list_groups) = true))
-        ("list-tests,L", "list all test cases",
-         function<void()>(var(list_tests) = true))
-        ("debug", "write verbose debug log to stderr",
-         function<void()>(var(debug) = true))
+      os("help,h", "display help message", setter(help))
+        ("list-groups,l", "list all test groups", setter(list_groups))
+        ("list-tests,L", "list all test cases", setter(list_tests))
+        ("debug", "write verbose debug log to stderr", setter(debug))
         ("log", "write verbose debug log to this file"
-         " (default is unit_tests.log)",
-         function<void(string)>(var(log) = _1))
-        ("--", "", function<void(string)>(bind(&vector<string>::push_back,
-                                               &tests, _1)));
+         " (default is unit_tests.log)", setter(log))
+        ("--", "", setter(tests));
 
       os.from_command_line(argc, argv);
 
