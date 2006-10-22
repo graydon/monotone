@@ -162,11 +162,11 @@ void pick_update_candidates(revision_id const & base_ident,
                             app_state & app,
                             set<revision_id> & candidates)
 {
-  N(app.branch_name() != "",
+  N(app.opts.branch_name() != "",
     F("cannot determine branch for update"));
   I(!null_id(base_ident));
 
-  calculate_update_set(base_ident, cert_value(app.branch_name()),
+  calculate_update_set(base_ident, cert_value(app.opts.branch_name()),
                        app, candidates);
 }
 

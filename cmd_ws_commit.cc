@@ -65,24 +65,24 @@ get_log_message_interactively(revision_t const & cs,
 
 CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
-    option::depth % option::exclude % option::missing)
+    options::opts::depth | options::opts::exclude | options::opts::missing)
 {
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
   cset included, excluded;
 
-  N(app.missing || !args.empty() || !app.exclude_patterns.empty(),
+  N(app.opts.missing || !args.empty() || !app.opts.exclude_patterns.empty(),
     F("you must pass at least one path to 'revert' (perhaps '.')"));
 
   app.require_workspace();
 
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
-  node_restriction mask(args_to_paths(args), args_to_paths(app.exclude_patterns),
-                        app.depth,
+  node_restriction mask(args_to_paths(args), args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         old_roster, new_roster, app);
 
-  if (app.missing)
+  if (app.opts.missing)
     {
       // --missing is a further filter on the files included by a
       // restriction we first find all missing files included by the
@@ -105,7 +105,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
         }
       // replace the original mask with a more restricted one
       mask = node_restriction(missing_files, std::vector<file_path>(),
-                              app.depth,
+                              app.opts.depth,
                               old_roster, new_roster, app);
     }
 
@@ -188,7 +188,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
 CMD(disapprove, N_("review"), N_("REVISION"),
     N_("disapprove of a particular revision"),
-    option::branch_name)
+    options::opts::branch)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -204,7 +204,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
   cert_value branchname;
   guess_branch(r, app, branchname);
-  N(app.branch_name() != "", F("need --branch argument for disapproval"));
+  N(app.opts.branch_name() != "", F("need --branch argument for disapproval"));
 
   edge_entry const & old_edge (*rev.edges.begin());
   app.db.get_revision_manifest(edge_old_revision(old_edge),
@@ -240,18 +240,18 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"), option::unknown)
+    N_("add files to workspace"), options::opts::unknown)
 {
-  if (!app.unknown && (args.size() < 1))
+  if (!app.opts.unknown && (args.size() < 1))
     throw usage(name);
 
   app.require_workspace();
 
   path_set paths;
-  if (app.unknown)
+  if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
-      path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.depth, app);
+      path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns), app.opts.depth, app);
       path_set ignored;
 
       // if no starting paths have been specified use the workspace root
@@ -269,27 +269,28 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  bool add_recursive = !app.unknown;
+  bool add_recursive = !app.opts.unknown;
   app.work.perform_additions(paths, add_recursive);
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"), option::execute % option::missing % option::recursive)
+    N_("drop files from workspace"),
+    options::opts::execute | options::opts::missing | options::opts::recursive)
 {
-  if (!app.missing && (args.size() < 1))
+  if (!app.opts.missing && (args.size() < 1))
     throw usage(name);
 
   app.require_workspace();
 
   path_set paths;
-  if (app.missing)
+  if (app.opts.missing)
     {
       temp_node_id_source nis;
       roster_t current_roster_shape;
       app.work.get_current_roster_shape(current_roster_shape, nis);
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns),
-                            app.depth,
+                            args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth,
                             current_roster_shape, app);
       app.work.find_missing(current_roster_shape, mask, paths);
     }
@@ -302,7 +303,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  app.work.perform_deletions(paths, app.recursive, app.execute);
+  app.work.perform_deletions(paths, app.opts.recursive, app.opts.execute);
 }
 
 ALIAS(rm, drop);
@@ -312,7 +313,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    option::execute)
+    options::opts::execute)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -327,7 +328,7 @@ CMD(rename, N_("workspace"),
       file_path s = file_path_external(idx(args, i));
       src_paths.insert(s);
     }
-  app.work.perform_rename(src_paths, dst_path, app.execute);
+  app.work.perform_rename(src_paths, dst_path, app.opts.execute);
 }
 
 ALIAS(mv, rename)
@@ -341,7 +342,7 @@ ALIAS(mv, rename)
          "that is currently the root\n"
          "directory will have name PUT_OLD.\n"
          "Using --execute is strongly recommended."),
-    option::execute)
+    options::opts::execute)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -349,11 +350,11 @@ ALIAS(mv, rename)
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
   file_path put_old = file_path_external(idx(args, 1));
-  app.work.perform_pivot_root(new_root, put_old, app.execute);
+  app.work.perform_pivot_root(new_root, put_old, app.opts.execute);
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
-    option::depth % option::exclude)
+    options::opts::depth | options::opts::exclude)
 {
   roster_t old_roster, new_roster;
   cset included, excluded;
@@ -366,8 +367,8 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -381,7 +382,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
   // other format strings.
-  cout << (F("Current branch: %s") % app.branch_name).str() << "\n";
+  cout << (F("Current branch: %s") % app.opts.branch_name).str() << "\n";
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
@@ -423,48 +424,48 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
        "If a revision is given, that's the one that will be checked out.\n"
        "Otherwise, it will be the head of the branch (given or implicit).\n"
        "If no directory is given, the branch name will be used as directory"),
-    option::branch_name % option::revision)
+    options::opts::branch | options::opts::revision)
 {
   revision_id ident;
   system_path dir;
 
   transaction_guard guard(app.db, false);
 
-  if (args.size() > 1 || app.revision_selectors.size() > 1)
+  if (args.size() > 1 || app.opts.revision_selectors.size() > 1)
     throw usage(name);
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
       // use branch head revision
-      N(!app.branch_name().empty(),
+      N(!app.opts.branch_name().empty(),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      get_branch_heads(app.branch_name(), app, heads);
+      get_branch_heads(app.opts.branch_name(), app, heads);
       N(heads.size() > 0,
-        F("branch '%s' is empty") % app.branch_name);
+        F("branch '%s' is empty") % app.opts.branch_name);
       if (heads.size() > 1)
         {
-          P(F("branch %s has multiple heads:") % app.branch_name);
+          P(F("branch %s has multiple heads:") % app.opts.branch_name);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
-          E(false, F("branch %s has multiple heads") % app.branch_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branch_name);
         }
       ident = *(heads.begin());
     }
-  else if (app.revision_selectors.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.revision_selectors, 0)(), ident);
+      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
       cert_value b;
       guess_branch(ident, app, b);
 
-      I(!app.branch_name().empty());
-      cert_value branch_name(app.branch_name());
+      I(!app.opts.branch_name().empty());
+      cert_value branch_name(app.opts.branch_name());
       base64<cert_value> branch_encoded;
       encode_base64(branch_name, branch_encoded);
 
@@ -473,11 +474,11 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
 
       L(FL("found %d %s branch certs on revision %s")
         % certs.size()
-        % app.branch_name
+        % app.opts.branch_name
         % ident);
 
       N(certs.size() != 0, F("revision %s is not a member of branch %s")
-        % ident % app.branch_name);
+        % ident % app.opts.branch_name);
     }
 
   // we do this part of the checking down here, because it is legitimate to
@@ -492,9 +493,9 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
     if (args.size() == 0)
       {
         // No checkout dir specified, use branch name for dir.
-        N(!app.branch_name().empty(),
+        N(!app.opts.branch_name().empty(),
           F("you must specify a destination directory"));
-        dir = system_path(app.branch_name());
+        dir = system_path(app.opts.branch_name());
       }
     else
       {
@@ -560,7 +561,7 @@ ALIAS(co, checkout)
 
 CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
     N_("set, get or drop file attributes"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
@@ -660,8 +661,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    option::branch_name % option::message % option::msgfile % option::date %
-    option::author % option::depth % option::exclude)
+    options::opts::branch | options::opts::message | options::opts::msgfile | options::opts::date
+    | options::opts::author | options::opts::depth | options::opts::exclude)
 {
   utf8 log_message("");
   bool log_message_given;
@@ -676,8 +677,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -696,11 +697,11 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   I(restricted_rev.edges.size() == 1);
 
   set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(app.opts.branch_name(), app, heads);
   unsigned int old_head_size = heads.size();
 
-  if (app.branch_name() != "")
-    branchname = app.branch_name();
+  if (app.opts.branch_name() != "")
+    branchname = app.opts.branch_name();
   else
     guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
 
@@ -844,13 +845,13 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
     cert_revision_in_branch(restricted_rev_id, branchname, app, dbw);
-    if (app.date_set)
-      cert_revision_date_time(restricted_rev_id, app.date, app, dbw);
+    if (app.opts.date_given)
+      cert_revision_date_time(restricted_rev_id, app.opts.date, app, dbw);
     else
       cert_revision_date_now(restricted_rev_id, app, dbw);
 
-    if (app.author().length() > 0)
-      cert_revision_author(restricted_rev_id, app.author(), app, dbw);
+    if (app.opts.author_given > 0)
+      cert_revision_author(restricted_rev_id, app.opts.author(), app, dbw);
     else
       cert_revision_author_default(restricted_rev_id, app, dbw);
 
@@ -869,7 +870,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.blank_user_log();
 
-  get_branch_heads(app.branch_name(), app, heads);
+  get_branch_heads(app.opts.branch_name(), app, heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
@@ -906,12 +907,12 @@ ALIAS(ci, commit);
 
 CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
     N_("setup a new workspace directory, default to current"),
-    option::branch_name)
+    options::opts::branch)
 {
   if (args.size() > 1)
     throw usage(name);
 
-  N(!app.branch_name().empty(), F("need --branch argument for setup"));
+  N(!app.opts.branch_name().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
 
   string dir;
@@ -928,9 +929,9 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
 }
 
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
- N_("migrate a workspace directory's metadata to the latest format; "
-    "defaults to the current workspace"),
-                 option::none)
+  N_("migrate a workspace directory's metadata to the latest format; "
+     "defaults to the current workspace"),
+  options::opts::none)
 {
   if (args.size() > 1)
     throw usage(name);
@@ -942,7 +943,7 @@ CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
 }
 
 CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
-    option::none)
+    options::opts::none)
 {
   app.require_workspace();
   app.work.enable_inodeprints();

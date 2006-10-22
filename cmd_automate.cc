@@ -305,7 +305,7 @@ AUTOMATE(stdio, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
-  automate_ostream os(output, app.automate_stdio_size);
+  automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);
   vector<string> cmdline;
   while(ar.get_command(cmdline))//while(!EOF)
@@ -342,7 +342,7 @@ AUTOMATE(stdio, "")
 
 CMD_PARAMS_FN(automate, N_("automation"),
               N_("automation interface"),
-    option::automate_stdio_size)
+    options::opts::automate_stdio_size)
 {
   if (args.size() == 0)
     throw usage(name);
