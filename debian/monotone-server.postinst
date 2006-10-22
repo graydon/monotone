@@ -184,12 +184,12 @@ case "$1" in
                   echo "Monotone database created successfully." >&2
               fi
 	   else
-	      set -e
+	      set +e
 	      monotone_check_minimum_previous_version && \
 		 monotone_migrate && \
 		 monotone_rosterify && \
 		 monotone_regenerate_rosters
-	      set +e
+	      set -e
            fi
 
            echo "$MTN_KEY \"$MTN_KEY_PASSWD\"" > $MTN_CONFDIR/passphrases

@@ -1,3 +1,8 @@
+2006-10-22  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Swap execution of 'set +e' and 'set
+	-e'.
+
 2006-10-15  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Propagate the rerwite of 'automate stdio' (in branch
