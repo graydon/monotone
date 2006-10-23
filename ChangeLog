@@ -1,3 +1,7 @@
+2006-10-23  Thomas Keller <me@thomaskeller.biz>
+
+    Make test case pass, code cleanup.
+
 2006-10-20  Thomas Keller <me@thomaskeller.biz>
 
     Docs added for automate content_diff

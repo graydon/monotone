@@ -1661,7 +1661,6 @@ AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
   
   //
   // What follows is pretty much copied from cmd_diff_log.cc:CMD(diff,...)
-  // with some slight adaptions noted with separate FIXMEs
   // TODO: someone with a better overview should probably factor this 
   // out somewhere
   //
@@ -1673,7 +1672,6 @@ AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
       app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       app.work.get_revision_id(old_rid);
 
-      //node_restriction mask(args_to_paths(args),
       node_restriction mask(args_to_paths(other_args),
                             args_to_paths(app.exclude_patterns),
                             app.depth,
@@ -1694,10 +1692,6 @@ AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
       // Clobber old_roster with the one specified
       app.db.get_roster(rev_ids.at(0), old_roster);
 
-      // FIXME: handle no ancestor case
-      // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
-
-      //node_restriction mask(args_to_paths(args),
       node_restriction mask(args_to_paths(other_args),
                             args_to_paths(app.exclude_patterns), 
                             app.depth,
