@@ -1633,17 +1633,17 @@ AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
   // check for revision and file arguments, go from right to left
   for (int i=args.size()-1; i>=0; i--)
     {
-      ident = revision_id();
+      ident = revision_id(idx(args,i)()); 
       if (app.db.revision_exists(ident))
         {
-          rev_ids.push_back(ident);
+          rev_ids.insert(rev_ids.begin(), ident);
           continue;
         }
       
       // then maybe this is a path...?
-      other_args.push_back(utf8(idx(args, i)()));
+      other_args.insert(other_args.begin(), utf8(idx(args,i)()));
     }
-  
+ 
   int rev_count  = rev_ids.size();
   
   // check if we got more than the expected two revids
@@ -1660,7 +1660,7 @@ AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
   bool new_is_archived;
   
   //
-  // What follows is pretty much copied from cmd_diff_log.cc line 202ff
+  // What follows is pretty much copied from cmd_diff_log.cc:CMD(diff,...)
   // with some slight adaptions noted with separate FIXMEs
   // TODO: someone with a better overview should probably factor this 
   // out somewhere
@@ -1685,23 +1685,14 @@ AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
-      // FIXME: not needed here, automate get_revision does the same 
-      //header << "# old_revision [" << old_rid << "]" << "\n";
     }
   else if (rev_count == 1)
     {
       roster_t new_roster, old_roster;
-      revision_id r_old_id;
-
-      // FIXME: not needed here, since we require complete revids and
-      // already have checked their existence
-      //complete(app, idx(app.revision_selectors, 0)(), r_old_id);
-      //N(app.db.revision_exists(r_old_id),
-      //  F("no such revision '%s'") % r_old_id);
 
       app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       // Clobber old_roster with the one specified
-      app.db.get_roster(r_old_id, old_roster);
+      app.db.get_roster(rev_ids.at(0), old_roster);
 
       // FIXME: handle no ancestor case
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
@@ -1718,44 +1709,25 @@ AUTOMATE(content_diff, N_("[FILE [...] [REV1 [REV2]]]"))
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
-      // FIXME: not needed here, automate get_revision does the same
-      //header << "# old_revision [" << r_old_id << "]" << "\n";
     }
   else
     {
       roster_t new_roster, old_roster;
-      revision_id r_old_id, r_new_id;
+      
+      app.db.get_roster(rev_ids.at(0), old_roster);
+      app.db.get_roster(rev_ids.at(1), new_roster);
 
-      // FIXME: not needed here, since we require complete revids and
-      // already have checked their existence
-      //complete(app, idx(app.revision_selectors, 0)(), r_old_id);
-      //complete(app, idx(app.revision_selectors, 1)(), r_new_id);
-      //N(app.db.revision_exists(r_old_id),
-      //  F("no such revision '%s'") % r_old_id);
-      //N(app.db.revision_exists(r_new_id),
-      //  F("no such revision '%s'") % r_new_id);
-
-      app.db.get_roster(r_old_id, old_roster);
-      app.db.get_roster(r_new_id, new_roster);
-
-      node_restriction mask(args_to_paths(args),
+      node_restriction mask(args_to_paths(other_args),
                             args_to_paths(app.exclude_patterns),
                             app.depth,
                             old_roster, new_roster, app);
 
-      // FIXME: this is *possibly* a UI bug, insofar as we [...]
-      // (see cmd_diff_log.cc for the full comment)
-      
       make_restricted_csets(old_roster, new_roster, 
                             included, excluded, mask);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = true;
     }
-
-  //
-  // copy from cmd_diff_log.cc end
-  //
   
   dump_diffs(included, app, new_is_archived, output);
 }
