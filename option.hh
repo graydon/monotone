@@ -86,12 +86,12 @@ namespace option {
     operator()(std::string const & names,
 	       std::string const & desc,
 	       boost::function<void ()> set,
-	       boost::function<void ()> reset() = 0);
+	       boost::function<void ()> reset = 0);
     concrete_option_set &
     operator()(std::string const & names,
 	       std::string const & desc,
 	       boost::function<void (std::string)> set,
-	       boost::function<void ()> reset() = 0);
+	       boost::function<void ()> reset = 0);
 
     concrete_option_set operator | (concrete_option_set const & other) const;
     void reset() const;
@@ -101,6 +101,74 @@ namespace option {
   };
   concrete_option_set
   operator | (concrete_option const & a, concrete_option const & b);
+
+  // used by the setter() functions below
+  template<typename T>
+  struct setter_class
+  {
+    T & item;
+    setter_class(T & i)
+      : item(i)
+    {}
+    void operator()(std::string s)
+    {
+      item = boost::lexical_cast<T>(s);
+    }
+  };
+  template<>
+  struct setter_class<bool>
+  {
+    bool & item;
+    setter_class(bool & i)
+      : item(i)
+    {}
+    void operator()()
+    {
+      item = true;
+    }
+  };
+  template<typename T>
+  struct setter_class<std::vector<T> >
+  {
+    std::vector<T> & items;
+    setter_class(std::vector<T> & i)
+      : items(i)
+    {}
+    void operator()(std::string s)
+    {
+      items.push_back(boost::lexical_cast<T>(s));
+    }
+  };
+  template<typename T>
+  struct resetter_class
+  {
+    T & item;
+    T value;
+    resetter_class(T & i, T const & v)
+      : item(i), value(v)
+    {}
+    void operator()()
+    {
+      item = value;
+    }
+  };
+
+  // convenience functions to generate a setter for a var
+  template<typename T> inline
+  boost::function<void(std::string)> setter(T & item)
+  {
+    return setter_class<T>(item);
+  }
+  inline boost::function<void()> setter(bool & item)
+  {
+    return setter_class<bool>(item);
+  }
+  // convenience function to generate a resetter for a var
+  template<typename T> inline
+  boost::function<void()> resetter(T & item, T const & value = T())
+  {
+    return resetter_class<T>(item, value);
+  }
 
   // because std::bind1st can't handle producing a nullary functor
   template<typename T>

@@ -79,6 +79,8 @@ concrete_option::concrete_option(std::string const & names,
   description = desc;
   splitname(names, longname, shortname);
   I(!description.empty() || !longname.empty() || !shortname.empty());
+  // If an option has a name (ie, can be set), it must have a setter function
+  I(set || (longname.empty() && shortname.empty()));
   has_arg = arg;
   setter = set;
   resetter = reset;
@@ -112,7 +114,7 @@ concrete_option_set::concrete_option_set(concrete_option const & opt)
 }
 
 // essentially the opposite of std::bind1st
-class discard_argument : public boost::function<void (std::string const &)>
+class discard_argument
 {
   boost::function<void()> functor;
  public:
@@ -127,7 +129,7 @@ concrete_option_set &
 concrete_option_set::operator()(string const & names,
                                 string const & desc,
                                 boost::function<void ()> set,
-                                boost::function<void ()> reset())
+                                boost::function<void ()> reset)
 {
   options.insert(concrete_option(names, desc, false, discard_argument(set), reset));
   return *this;
@@ -137,7 +139,7 @@ concrete_option_set &
 concrete_option_set::operator()(string const & names,
                                 string const & desc,
                                 boost::function<void (string)> set,
-                                boost::function<void ()> reset())
+                                boost::function<void ()> reset)
 {
   options.insert(concrete_option(names, desc, true, set, reset));
   return *this;
@@ -462,6 +464,78 @@ std::string concrete_option_set::get_usage_str() const
 }
 
 } // namespace option
+
+
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+UNIT_TEST(option, concrete_options)
+{
+  bool b = false;
+  string s;
+  int i = -1;
+  vector<string> v;
+
+  option::concrete_option_set os;
+  os("--", "", option::setter(v), option::resetter(v))
+    ("bool,b", "", option::setter(b), option::resetter(b, false))
+    ("s", "", option::setter(s))
+    ("int", "", option::setter(i));
+
+  {
+    char const * cmdline[] = {"progname", "pos", "-s", "str ing", "--int", "10",
+                              "--int", "45", "--", "--bad", "foo", "-b"};
+    os.from_command_line(12, cmdline);
+  }
+  BOOST_CHECK(!b);
+  BOOST_CHECK(i == 45);
+  BOOST_CHECK(s == "str ing");
+  BOOST_CHECK(v.size() == 4);// pos --bad foo -b
+  os.reset();
+  BOOST_CHECK(v.empty());
+
+  {
+    vector<string> cmdline;
+    cmdline.push_back("--bool");
+    cmdline.push_back("-s");
+    cmdline.push_back("-s");
+    cmdline.push_back("foo");
+    os.from_command_line(cmdline);
+  }
+  BOOST_CHECK(b);
+  BOOST_CHECK(s == "-s");
+  BOOST_CHECK(v.size() == 1);
+  BOOST_CHECK(v[0] == "foo");
+  os.reset();
+  BOOST_CHECK(!b);
+
+  {
+    char const * cmdline[] = {"progname", "--bad_arg", "x"};
+    BOOST_CHECK_THROW(os.from_command_line(3, cmdline), option::unknown_option);
+  }
+
+  {
+    char const * cmdline[] = {"progname", "--bool=x"};
+    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::extra_arg);
+  }
+
+  {
+    char const * cmdline[] = {"progname", "-bx"};
+    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::extra_arg);
+  }
+
+  {
+    char const * cmdline[] = {"progname", "-s"};
+    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::missing_arg);
+  }
+
+  {
+    char const * cmdline[] = {"progname", "--int=x"};
+    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::bad_arg);
+  }
+}
+
+#endif // BUILD_UNIT_TESTS
 
 // Local Variables:
 // mode: C++

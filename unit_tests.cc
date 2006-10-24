@@ -147,55 +147,6 @@ namespace {
   typedef basic_teebuf<char> teebuf;
 }
 
-template<typename T>
-struct setter_class
-{
-  T & item;
-  setter_class(T & i)
-    : item(i)
-  {}
-  void operator()(string s)
-  {
-    item = boost::lexical_cast<T>(s);
-  }
-};
-
-template<>
-struct setter_class<bool>
-{
-  bool & item;
-  setter_class(bool & i)
-    : item(i)
-    {}
-  void operator()()
-  {
-    item = true;
-  }
-};
-template<typename T>
-struct setter_class<vector<T> >
-{
-  vector<T> & items;
-  setter_class(vector<T> & i)
-    : items(i)
-  {}
-  void operator()(string s)
-  {
-    items.push_back(boost::lexical_cast<T>(s));
-  }
-};
-
-template<typename T>
-boost::function<void(string)> setter(T & item)
-{
-  return setter_class<T>(item);
-}
-
-boost::function<void()> setter(bool & item)
-{
-  return setter_class<bool>(item);
-}
-
 test_suite * init_unit_test_suite(int argc, char * argv[])
 {
   bool help(false);
@@ -204,16 +155,17 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
   bool debug(false);
   string log;
   vector<string> tests;
+
   try
     {
       option::concrete_option_set os;
-      os("help,h", "display help message", setter(help))
-        ("list-groups,l", "list all test groups", setter(list_groups))
-        ("list-tests,L", "list all test cases", setter(list_tests))
-        ("debug", "write verbose debug log to stderr", setter(debug))
+      os("help,h", "display help message", option::setter(help))
+        ("list-groups,l", "list all test groups", option::setter(list_groups))
+        ("list-tests,L", "list all test cases", option::setter(list_tests))
+        ("debug", "write verbose debug log to stderr", option::setter(debug))
         ("log", "write verbose debug log to this file"
-         " (default is unit_tests.log)", setter(log))
-        ("--", "", setter(tests));
+         " (default is unit_tests.log)", option::setter(log))
+        ("--", "", option::setter(tests));
 
       os.from_command_line(argc, argv);
 
