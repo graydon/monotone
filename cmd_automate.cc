@@ -145,7 +145,7 @@ class automate_reader
         got += n;
       }
     out = std::string(str, size);
-    delete str;
+    delete[] str;
     L(FL("Got string '%s'") % out);
     return true;
   }

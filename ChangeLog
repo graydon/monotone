@@ -1,3 +1,8 @@
+2006-10-24  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_automate.cc (automate_reader): Use delete[] to free array
+	allocated with new[].
+
 2006-10-22  Matthew Nicholson  <matt@matt-land.com>
 
 	* debian/monotone-server.postinst: Swap execution of 'set +e' and 'set
