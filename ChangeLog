@@ -1,5 +1,12 @@
 2006-10-24  Nathaniel Smith  <njs@pobox.com>
 
+	* cmd_automate.cc (automate stdio): Do not run randomly through
+	memory doing random things when we get a 0-length stdio command
+	list.
+	* tests/automate_stdio/__driver__.lua: Add some bad-input tests.
+
+2006-10-24  Nathaniel Smith  <njs@pobox.com>
+
 	* cmd_automate.cc (automate_reader): Use delete[] to free array
 	allocated with new[].
 

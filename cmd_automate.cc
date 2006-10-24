@@ -313,8 +313,8 @@ AUTOMATE(stdio, "")
       utf8 cmd;
       vector<utf8> args;
       vector<string>::iterator i = cmdline.begin();
-      if (i != cmdline.end())
-        cmd = utf8(*i);
+      E(i != cmdline.end(), F("Bad input to automate stdio"));
+      cmd = utf8(*i);
       for (++i; i != cmdline.end(); ++i)
         {
           args.push_back(utf8(*i));
