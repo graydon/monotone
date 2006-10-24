@@ -41,6 +41,7 @@
 #include "epoch.hh"
 #include "graph.hh"
 #include "roster_delta.hh"
+#include "rev_height.hh"
 
 // defined in schema.sql, converted to header:
 #include "schema.h"
@@ -132,7 +133,7 @@ database::database(system_path const & fn) :
   // a temporary db, write our intended schema into it, and read it back,
   // but this seems like it would be too rude. possibly revisit this issue.
   __sql(NULL),
-  schema("ae196843d368d042f475e3dadfed11e9d7f9f01e"),
+  schema("48fd5d84f1e5a949ca093e87e5ac558da6e5956d"),
   transaction_level(0),
   roster_cache(constants::db_roster_cache_sz,
                roster_writeback_manager(*this)),
@@ -179,6 +180,7 @@ database::check_format()
   query manifests_query("SELECT 1 FROM manifests LIMIT 1");
   query revisions_query("SELECT 1 FROM revisions LIMIT 1");
   query rosters_query("SELECT 1 FROM rosters LIMIT 1");
+  query heights_query("SELECT 1 FROM heights LIMIT 1");
 
   fetch(res, one_col, any_rows, revisions_query);
   bool have_revisions = !res.empty();
@@ -186,6 +188,8 @@ database::check_format()
   bool have_manifests = !res.empty();
   fetch(res, one_col, any_rows, rosters_query);
   bool have_rosters = !res.empty();
+  fetch(res, one_col, any_rows, heights_query);
+  bool have_heights = !res.empty();
 
   if (have_manifests)
     {
@@ -211,12 +215,11 @@ database::check_format()
   else
     {
       // no manifests
-      if (have_revisions && !have_rosters)
+      if (have_revisions && (!have_rosters || !have_heights))
         // must be an upgrade that requires rosters be regenerated
         E(false,
-          F("database %s contains revisions but no rosters\n"
-            "probably this is because an upgrade cleared the roster cache\n"
-            "run '%s db regenerate_rosters' to restore use of this database")
+          F("database %s misses some cached data\n"
+            "run '%s db regenerate_caches' to restore use of this database")
           % filename % ui.prog_name);
       else
         // we're all good.
@@ -590,6 +593,7 @@ database::info(ostream & out)
       "  revisions       : %u\n"
       "  cached ancestry : %u\n"
       "  certs           : %u\n"
+      "  heights         : %u\n"
       "  total           : %u\n"
       "database:\n"
       "  page size       : %u\n"
@@ -614,6 +618,7 @@ database::info(ostream & out)
     % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
     % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
                   " + length(value) + length(keypair) + length(signature)")
+    % SPACE_USAGE("heights","length(revision) + length(height)")
     % total
     % page_size()
     % cache_size()
@@ -1661,6 +1666,49 @@ database::get_revision(revision_id const & id,
 }
 
 void
+database::get_rev_height(revision_id const & id,
+                         rev_height & height)
+{
+  if (null_id(id))
+    {
+      rev_height::root_height(height);
+      return;
+    }
+
+  results res;
+  fetch(res, one_col, one_row,
+        query("SELECT height FROM heights WHERE revision = ?")
+        % text(id.inner()()));
+
+  I(res.size() == 1);
+  
+  height.from_string(res[0][0]);
+}
+
+void
+database::put_rev_height(revision_id const & id,
+                         rev_height const & height)
+{
+  I(!null_id(id));
+  I(revision_exists(id));
+  
+  execute(query("INSERT INTO heights VALUES(?, ?)")
+          % text(id.inner()())
+          % blob(height()));
+}
+
+bool
+database::has_rev_height(rev_height const & height)
+{
+  results res;
+  fetch(res, one_col, any_rows,
+        query("SELECT height FROM heights WHERE height = ?")
+        % blob(height()));
+  I((res.size() == 1) || (res.size() == 0));
+  return res.size() == 1;
+}
+
+void
 database::deltify_revision(revision_id const & rid)
 {
   transaction_guard guard(*this);
@@ -1750,7 +1798,45 @@ database::put_revision(revision_id const & new_id,
 
   deltify_revision(new_id);
 
+  // Phase 5: determine the revision height
+
+  put_height_for_revision(new_id, rev);
+
+  // Finally, commit.
+
   guard.commit();
+}
+
+void
+database::put_height_for_revision(revision_id const & new_id,
+                                  revision_t const & rev)
+{
+  I(!null_id(new_id));
+  
+  rev_height height;
+  for (edge_map::const_iterator e = rev.edges.begin();
+       e != rev.edges.end(); ++e)
+    {
+      bool found(false);
+      u32 childnr(0);
+      rev_height candidate;
+      rev_height parent;
+      get_rev_height(edge_old_revision(e), parent);
+      
+      while(!found)
+        {
+          parent.child_height(candidate, childnr);
+          if (!has_rev_height(candidate))
+            {
+              found = true;
+              if (candidate > height)
+                height = candidate;
+            }
+          I(childnr < std::numeric_limits<u32>::max());
+          ++childnr;
+        }
+    }
+  put_rev_height(new_id, height);
 }
 
 void
@@ -1803,6 +1889,12 @@ database::delete_existing_rosters()
   execute(query("DELETE FROM rosters"));
   execute(query("DELETE FROM roster_deltas"));
   execute(query("DELETE FROM next_roster_node_number"));
+}
+
+void
+database::delete_existing_heights()
+{
+  execute(query("DELETE FROM heights"));
 }
 
 /// Deletes one revision from the local database.
