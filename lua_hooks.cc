@@ -788,6 +788,7 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 bool
 lua_hooks::hook_validate_commit_message(utf8 const & message,
                                         revision_data const & new_rev,
+                                        cert_value const & branchname,
                                         bool & validated,
                                         string & reason)
 {
@@ -796,7 +797,8 @@ lua_hooks::hook_validate_commit_message(utf8 const & message,
     .func("validate_commit_message")
     .push_str(message())
     .push_str(new_rev.inner()())
-    .call(2, 2)
+    .push_str(branchname())
+    .call(3, 2)
     .extract_str(reason)
     // XXX When validated, the extra returned string is superfluous.
     .pop()

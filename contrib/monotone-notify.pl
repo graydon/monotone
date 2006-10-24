@@ -55,7 +55,7 @@ my $since = undef;
 my $workdir = undef;
 my $quiet = 0;
 my $debug = 0;
-my $monotone = "monotone";
+my $monotone = "mtn";
 
 GetOptions('help|?' => \$help,
 	   'man' => \$man,

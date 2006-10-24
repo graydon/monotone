@@ -38,7 +38,6 @@ using std::allocator;
 using std::basic_ios;
 using std::basic_stringbuf;
 using std::char_traits;
-using std::endl;
 using std::inserter;
 using std::make_pair;
 using std::map;
@@ -74,7 +73,7 @@ AUTOMATE(heads, N_("[BRANCH]"))
   set<revision_id> heads;
   get_branch_heads(app.branch_name(), app, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: ancestors
@@ -120,7 +119,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
   for (set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << endl;
+      output << (*i).inner()() << "\n";
 }
 
 
@@ -164,7 +163,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"))
     }
   for (set<revision_id>::const_iterator i = descendents.begin();
        i != descendents.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 
@@ -192,7 +191,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
     }
   erase_ancestors(revs, app);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: attributes
@@ -335,7 +334,7 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"))
   toposort(revs, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: ancestry_difference
@@ -377,7 +376,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
   toposort(ancestors, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: leaves
@@ -408,7 +407,7 @@ AUTOMATE(leaves, "")
     leaves.erase(i->first);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
-    output << (*i).inner()() << endl;
+    output << (*i).inner()() << "\n";
 }
 
 // Name: parents
@@ -432,7 +431,7 @@ AUTOMATE(parents, N_("REV"))
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << endl;
+          output << (*i).inner()() << "\n";
 }
 
 // Name: children
@@ -456,7 +455,7 @@ AUTOMATE(children, N_("REV"))
   for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << endl;
+          output << (*i).inner()() << "\n";
 }
 
 // Name: graph
@@ -510,7 +509,7 @@ AUTOMATE(graph, "")
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
         output << " " << (*j).inner()();
-      output << endl;
+      output << "\n";
     }
 }
 
@@ -537,7 +536,7 @@ AUTOMATE(select, N_("SELECTOR"))
 
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    output << *i << endl;
+    output << *i << "\n";
 }
 
 // consider a changeset with the following
@@ -800,7 +799,12 @@ AUTOMATE(inventory, "")
 
       switch (i->second.node_state)
         {
-        case inventory_item::UNCHANGED_NODE: output << " "; break;
+        case inventory_item::UNCHANGED_NODE:
+          if (i->second.post_state == inventory_item::ADDED_PATH)
+            output << "P";
+          else
+            output << " ";
+          break;
         case inventory_item::PATCHED_NODE: output << "P"; break;
         case inventory_item::UNKNOWN_NODE: output << "U"; break;
         case inventory_item::IGNORED_NODE: output << "I"; break;
@@ -819,7 +823,7 @@ AUTOMATE(inventory, "")
 
       output << path_suffix;
 
-      output << endl;
+      output << "\n";
     }
 }
 
@@ -939,7 +943,7 @@ AUTOMATE(get_base_revision_id, "")
 
   revision_id rid;
   app.work.get_revision_id(rid);
-  output << rid << endl;
+  output << rid << "\n";
 }
 
 // Name: get_current_revision_id
@@ -972,7 +976,7 @@ AUTOMATE(get_current_revision_id, "")
 
   calculate_ident(rev, new_revision_id);
 
-  output << new_revision_id << endl;
+  output << new_revision_id << "\n";
 }
 
 // Name: get_manifest_of
@@ -1247,7 +1251,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
   for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << endl;
+      output << (*i).inner()() << "\n";
 }
 
 // Name: branches
@@ -1275,7 +1279,7 @@ AUTOMATE(branches, "")
   for (vector<string>::const_iterator i = names.begin();
        i != names.end(); ++i)
     if (!app.lua.hook_ignore_branch(*i))
-      output << (*i) << endl;
+      output << (*i) << "\n";
 }
 
 // Name: tags
@@ -1480,13 +1484,13 @@ AUTOMATE(get_option, N_("OPTION"))
   string opt = args[0]();
 
   if (opt == "database")
-    output << database_option << endl; 
+    output << database_option << "\n"; 
   else if (opt == "branch")
-    output << branch_option << endl;
+    output << branch_option << "\n";
   else if (opt == "key")
-    output << key_option << endl;
+    output << key_option << "\n";
   else if (opt == "keydir")
-    output << keydir_option << endl;
+    output << keydir_option << "\n";
   else
     N(false, F("'%s' is not a recognized workspace option") % opt);
 }

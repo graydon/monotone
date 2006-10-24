@@ -11,9 +11,6 @@
 #include <iostream>
 #include <map>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-
 #include "cmd.hh"
 
 using std::map;
@@ -73,12 +70,6 @@ AUTOMATE(interface_version, "")
   output << interface_version << "\n";
 }
 
-void
-automate_command(utf8 cmd, std::vector<utf8> args,
-                 std::string const & root_cmd_name,
-                 app_state & app,
-                 std::ostream & output);
-
 // Name: stdio
 // Arguments: none
 // Added in: 1.0
@@ -116,186 +107,235 @@ automate_command(utf8 cmd, std::vector<utf8> args,
 //   the error code in the output for that command. Malformed input
 //   results in exit with a non-zero return value and an error message.
 
-// We use our own stringbuf class so we can put in a callback on write.
-// This lets us dump output at a set length, rather than waiting until
-// we have all of the output.
+// automate_streambuf and automate_ostream are so we can dump output at a
+// set length, rather than waiting until we have all of the output.
 
-typedef std::basic_stringbuf<char,
-                             std::char_traits<char>,
-                             std::allocator<char> > char_stringbuf;
-struct my_stringbuf : public char_stringbuf
+
+class automate_reader
 {
-private:
-  std::streamsize written;
-  boost::function1<void, int> on_write;
-  std::streamsize last_call;
-  std::streamsize call_every;
-  bool clear;
-public:
-  my_stringbuf(std::streamsize _call_every) : char_stringbuf(),
-                                              written(0),
-                                              last_call(0),
-                                              call_every(_call_every)
-  {}
-  virtual std::streamsize
-  xsputn(const char_stringbuf::char_type* __s, std::streamsize __n)
+  std::istream & in;
+  enum location {cmd, none, eof};
+  location loc;
+  bool get_string(std::string & out)
   {
-    std::streamsize ret=char_stringbuf::xsputn(__s, __n);
-    written+=__n;
-    while(written>=last_call+call_every)
+    out.clear();
+    if (loc == none || loc == eof)
       {
-        if(on_write)
-          on_write(call_every);
-        last_call+=call_every;
+        return false;
       }
-    return ret;
+    size_t size(0);
+    char c;
+    read(&c, 1);
+    if (c == 'e')
+      {
+        loc = none;
+        return false;
+      }
+    while(c <= '9' && c >= '0')
+      {
+        size = (size*10)+(c-'0');
+        read(&c, 1);
+      }
+    E(c == ':', F("Bad input to automate stdio"));
+    char *str = new char[size];
+    size_t got = 0;
+    while(got < size)
+      {
+        int n = read(str, size-got);
+        got += n;
+      }
+    out = std::string(str, size);
+    delete[] str;
+    L(FL("Got string '%s'") % out);
+    return true;
   }
-  virtual int sync()
+  static ssize_t read(void *buf, size_t nbytes, bool eof_ok = false)
   {
-    int ret=char_stringbuf::sync();
-    if(on_write)
-      on_write(-1);
-    last_call=written;
-    return ret;
+    ssize_t rv;
+
+    rv = ::read(0, buf, nbytes);
+
+    E(rv >= 0, F("read from client failed with error code: %d") % rv);
+    E(eof_ok || rv > 0, F("Bad input to automate stdio (unexpected EOF)"));
+    return rv;
   }
-  void set_on_write(boost::function1<void, int> x)
+  void go_to_next_item()
   {
-    on_write = x;
+    if (loc == eof)
+      return;
+    std::string starters("l");
+    std::string foo;
+    while (loc != none)
+      get_string(foo);
+    char c('e');
+    while (starters.find(c) == std::string::npos)
+      {
+        if (read(&c, 1, true) == 0)
+          {
+            loc = eof;
+            return;
+          }
+      }
+    switch (c)
+      {
+      case 'l': loc = cmd; break;
+      }
+  }
+public:
+  automate_reader(std::istream & is) : in(is), loc(none)
+  {}
+  bool get_command(std::vector<std::string> & cmdline)
+  {
+    cmdline.clear();
+    while (loc == none)
+      go_to_next_item();
+    if (loc == eof)
+      return false;
+    E(loc == cmd, F("Bad input to automate stdio"));
+    string item;
+    while (get_string(item))
+      {
+        cmdline.push_back(item);
+      }
+    return true;
   }
 };
 
-void print_some_output(int cmdnum,
-                       int err,
-                       bool last,
-                       string const & text,
-                       ostream & s,
-                       int & pos,
-                       int size,
-                       size_t automate_stdio_size)
+struct automate_streambuf : public std::streambuf
 {
-  if(size==-1)
-    {
-      while(text.size()-pos > automate_stdio_size)
-        {
-          s<<cmdnum<<':'<<err<<':'<<'m'<<':';
-          s<<automate_stdio_size<<':'
-           <<text.substr(pos, automate_stdio_size);
-          pos+=automate_stdio_size;
-          s.flush();
-        }
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<(text.size()-pos)<<':'<<text.substr(pos);
-      pos=text.size();
-    }
-  else
-    {
-      I((unsigned int)(size) <= automate_stdio_size);
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<size<<':'<<text.substr(pos, size);
-      pos+=size;
-    }
-  s.flush();
-}
+private:
+  size_t _bufsize;
+  std::ostream *out;
+  automate_reader *in;
+  int cmdnum;
+  int err;
+public:
+  automate_streambuf(size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(0), in(0), cmdnum(0), err(0)
+  {
+    char *inbuf = new char[_bufsize];
+    setp(inbuf, inbuf + _bufsize);
+  }
+  automate_streambuf(std::ostream & o, size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(&o), in(0), cmdnum(0), err(0)
+  {
+    char *inbuf = new char[_bufsize];
+    setp(inbuf, inbuf + _bufsize);
+  }
+  automate_streambuf(automate_reader & i, size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(0), in(&i), cmdnum(0), err(0)
+  {
+    char *inbuf = new char[_bufsize];
+    setp(inbuf, inbuf + _bufsize);
+  }
+  ~automate_streambuf()
+  {}
+  
+  void set_err(int e)
+  {
+    sync();
+    err = e;
+  }
+  
+  void end_cmd()
+  {
+    _M_sync(true);
+    ++cmdnum;
+    err = 0;
+  }
+  
+  virtual int sync()
+  {
+    _M_sync();
+    return 0;
+  }
+  
+  void _M_sync(bool end = false)
+  {
+    if (!out)
+      {
+        setp(pbase(), pbase() + _bufsize);
+        return;
+      }
+    int num = pptr() - pbase();
+    if (num || end)
+      {
+        (*out) << cmdnum << ":"
+            << err << ":"
+            << (end?'l':'m') << ":"
+            << num << ":" << std::string(pbase(), num);
+        setp(pbase(), pbase() + _bufsize);
+        out->flush();
+      }
+  }
+  int_type
+  overflow(int_type c = traits_type::eof())
+  {
+    sync();
+    sputc(c);
+    return 0;
+  }
+};
 
-static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
+struct automate_ostream : public std::ostream
 {
-  ssize_t rv;
+  automate_streambuf _M_autobuf;
+  
+  automate_ostream(std::ostream &out, size_t blocksize)
+   : std::ostream(&_M_autobuf),
+     _M_autobuf(out, blocksize)
+  {}
+  
+  ~automate_ostream()
+  {}
+  
+  automate_streambuf *
+  rdbuf() const
+  { return const_cast<automate_streambuf *>(&_M_autobuf); }
+  
+  void set_err(int e)
+  { _M_autobuf.set_err(e); }
+  
+  void end_cmd()
+  { _M_autobuf.end_cmd(); }
+};
 
-  rv = read(d, buf, nbytes);
-
-  E(rv >= 0, F("read from client failed with error code: %d") % rv);
-  return rv;
-}
 
 AUTOMATE(stdio, "")
 {
   if (args.size() != 0)
     throw usage(help_name);
-  int cmdnum = 0;
-  char c;
-  ssize_t n=1;
-  while(n)//while(!EOF)
+  automate_ostream os(output, app.automate_stdio_size);
+  automate_reader ar(std::cin);
+  vector<string> cmdline;
+  while(ar.get_command(cmdline))//while(!EOF)
     {
-      string x;
       utf8 cmd;
-      args.clear();
-      bool first=true;
-      int toklen=0;
-      bool firstchar=true;
-      for(n=automate_stdio_read(0, &c, 1); c != 'l' && n; n=automate_stdio_read(0, &c, 1))
-        ;
-      for(n=automate_stdio_read(0, &c, 1); c!='e' && n; n=automate_stdio_read(0, &c, 1))
+      vector<utf8> args;
+      vector<string>::iterator i = cmdline.begin();
+      E(i != cmdline.end(), F("Bad input to automate stdio"));
+      cmd = utf8(*i);
+      for (++i; i != cmdline.end(); ++i)
         {
-          if(c<='9' && c>='0')
-            {
-              toklen=(toklen*10)+(c-'0');
-            }
-          else if(c == ':')
-            {
-              char *tok=new char[toklen];
-              int count=0;
-              while(count<toklen)
-                count+=automate_stdio_read(0, tok+count, toklen-count);
-              if(first)
-                cmd=utf8(string(tok, toklen));
-              else
-                args.push_back(utf8(string(tok, toklen)));
-              toklen=0;
-              delete[] tok;
-              first=false;
-            }
-          else
-            {
-              N(false, F("Bad input to automate stdio"));
-            }
-          firstchar=false;
+          args.push_back(utf8(*i));
         }
-      if(cmd() != "")
+      try
         {
-          int outpos=0;
-          int err;
-          std::ostringstream s;
-          my_stringbuf sb(app.automate_stdio_size);
-          sb.set_on_write(boost::bind(print_some_output,
-                                      cmdnum,
-                                      boost::ref(err),
-                                      false,
-                                      boost::bind(&my_stringbuf::str, &sb),
-                                      boost::ref(output),
-                                      boost::ref(outpos),
-                                      _1,
-                                      app.automate_stdio_size));
-          {
-            // Do not use s.std::basic_ios<...>::rdbuf here, 
-            // it confuses VC8.
-            using std::basic_ios;
-            s.basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
-          }
-          try
-            {
-              err=0;
-              automate_command(cmd, args, help_name, app, s);
-            }
-          catch(usage &)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=1;
-              commands::explain_usage(help_name, s);
-            }
-          catch(informative_failure & f)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=2;
-              //Do this instead of printing f.what directly so the output
-              //will be split into properly-sized blocks automatically.
-              s<<f.what();
-            }
-            print_some_output(cmdnum, err, true, sb.str(),
-                              output, outpos, -1, app.automate_stdio_size);
+          automate_command(cmd, args, help_name, app, os);
         }
-      cmdnum++;
+      catch(usage &)
+        {
+          os.set_err(1);
+          commands::explain_usage(help_name, os);
+        }
+      catch(informative_failure & f)
+        {
+          os.set_err(2);
+          //Do this instead of printing f.what directly so the output
+          //will be split into properly-sized blocks automatically.
+          os<<f.what();
+        }
+      os.end_cmd();
     }
 }
 

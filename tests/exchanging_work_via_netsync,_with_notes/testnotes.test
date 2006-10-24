@@ -16,6 +16,7 @@ revision: cert.value = testbranch
 revision: cert.key   = tester@test.net
 revision: cert.name  = changelog
 revision: cert.value = blah-blah
+
 revision: cert.key   = tester@test.net
 revision: cert.name  = date
 revision: cert.value = DATE1
@@ -39,6 +40,7 @@ revision: cert.value = testbranch
 revision: cert.key   = tester@test.net
 revision: cert.name  = changelog
 revision: cert.value = blah-blah
+
 revision: cert.key   = tester@test.net
 revision: cert.name  = date
 revision: cert.value = DATE2
