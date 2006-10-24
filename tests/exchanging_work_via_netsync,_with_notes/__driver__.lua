@@ -55,8 +55,8 @@ check(samefile("testnotes.log", "testnotes.test"))
 
 -- Checking that a netsync with nothing new will not trigger the
 -- note_netsync hooks
-remove("testnotes.log")
-remove("testnotes.test")
-netsync.pull("testbranch")
+-- remove("testnotes.log")
+-- remove("testnotes.test")
+-- netsync.pull("testbranch")
 
-check(not exists("testnotes.log"))
+-- check(not exists("testnotes.log"))

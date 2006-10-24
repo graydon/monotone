@@ -305,6 +305,15 @@ session:
   auto_ptr<ticker> cert_out_ticker;
   auto_ptr<ticker> revision_in_ticker;
   auto_ptr<ticker> revision_out_ticker;
+  size_t bytes_in, bytes_out;
+  size_t certs_in, certs_out;
+  size_t revs_in, revs_out;
+  size_t keys_in, keys_out;
+  // used to identify this session to the netsync hooks.
+  // We can't just use saved_nonce, because that's blank for all
+  // anonymous connections and could lead to confusion.
+  size_t session_id;
+  static size_t session_count;
 
   vector<revision_id> written_revisions;
   vector<rsa_keypair_id> written_keys;
@@ -320,7 +329,17 @@ session:
       confirmed_state
     }
     protocol_state;
+
   bool encountered_error;
+
+  const static int no_error = 200;
+  const static int bad_request = 400;
+  const static int protocol_error = 401;
+  const static int permission_error = 403;
+  const static int other_error = 500;
+  const static int connection_broken = 504;
+  int error_code;
+
   bool set_totals;
 
   // Interface to refinement.
@@ -378,7 +397,7 @@ session:
   bool read_some();
   bool write_some();
 
-  void error(string const & errmsg);
+  void error(int errcode, string const & errmsg);
 
   void write_netcmd_and_try_flush(netcmd const & cmd);
 
@@ -458,7 +477,7 @@ session:
   void begin_service();
   bool process(transaction_guard & guard);
 };
-
+size_t session::session_count = 0;
 
 session::session(protocol_role role,
                  protocol_voice voice,
@@ -491,10 +510,16 @@ session::session(protocol_role role,
   cert_out_ticker(NULL),
   revision_in_ticker(NULL),
   revision_out_ticker(NULL),
+  bytes_in(0), bytes_out(0),
+  certs_in(0), certs_out(0),
+  revs_in(0), revs_out(0),
+  keys_in(0), keys_out(0),
+  session_id(++session_count),
   saved_nonce(""),
   dbw(app),
   protocol_state(working_state),
   encountered_error(false),
+  error_code(connection_broken),
   set_totals(false),
   epoch_refiner(epoch_item, voice, *this),
   key_refiner(key_item, voice, *this),
@@ -512,11 +537,8 @@ session::session(protocol_role role,
 
 session::~session()
 {
-  static const char letters[] = "0123456789abcdef";
-  string nonce;
-  for (int i = 0; i < 16; i++)
-    nonce.append(1, letters[Botan::Global_RNG::random(Botan::Nonce)
-                            % (sizeof(letters) - 1)]);
+  if (protocol_state == confirmed_state)
+    error_code = no_error;
 
   vector<cert> unattached_certs;
   map<revision_id, vector<cert> > revcerts;
@@ -539,14 +561,12 @@ session::~session()
       || !written_revisions.empty()
       || !written_certs.empty())
     {
-      //Start
-      app.lua.hook_note_netsync_start(nonce);
 
       //Keys
       for (vector<rsa_keypair_id>::iterator i = written_keys.begin();
            i != written_keys.end(); ++i)
         {
-          app.lua.hook_note_netsync_pubkey_received(*i, nonce);
+          app.lua.hook_note_netsync_pubkey_received(*i, session_id);
         }
 
       //Revisions
@@ -564,7 +584,8 @@ session::~session()
             }
           revision_data rdat;
           app.db.get_revision(*i, rdat);
-          app.lua.hook_note_netsync_revision_received(*i, rdat, certs, nonce);
+          app.lua.hook_note_netsync_revision_received(*i, rdat, certs,
+                                                      session_id);
         }
 
       //Certs (not attached to a new revision)
@@ -574,12 +595,14 @@ session::~session()
           cert_value tmp;
           decode_base64(i->value, tmp);
           app.lua.hook_note_netsync_cert_received(i->ident, i->key,
-                                                  i->name, tmp, nonce);
+                                                  i->name, tmp, session_id);
         }
-
-      //Start
-      app.lua.hook_note_netsync_end(nonce);
     }
+  app.lua.hook_note_netsync_end(session_id, error_code,
+                                bytes_in, bytes_out,
+                                certs_in, certs_out,
+                                revs_in, revs_out,
+                                keys_in, keys_out);
 }
 
 bool
@@ -853,6 +876,12 @@ decrement_if_nonzero(netcmd_item_type ty,
       E(false, F("underflow on count of %s items to receive") % typestr);
     }
   --n;
+  if (n == 0)
+    {
+      string typestr;
+      netcmd_item_type_to_string(ty, typestr);
+      L(FL("count of %s items to receive has reached zero") % typestr);
+    }
 }
 
 void
@@ -864,14 +893,17 @@ session::note_item_arrived(netcmd_item_type ty, id const & ident)
       decrement_if_nonzero(ty, cert_refiner.items_to_receive);
       if (cert_in_ticker.get() != NULL)
         ++(*cert_in_ticker);
+      ++certs_in;
       break;
     case revision_item:
       decrement_if_nonzero(ty, rev_refiner.items_to_receive);
       if (revision_in_ticker.get() != NULL)
         ++(*revision_in_ticker);
+      ++revs_in;
       break;
     case key_item:
       decrement_if_nonzero(ty, key_refiner.items_to_receive);
+      ++keys_in;
       break;
     case epoch_item:
       decrement_if_nonzero(ty, epoch_refiner.items_to_receive);
@@ -893,14 +925,17 @@ session::note_item_sent(netcmd_item_type ty, id const & ident)
       cert_refiner.items_to_send.erase(ident);
       if (cert_out_ticker.get() != NULL)
         ++(*cert_out_ticker);
+      ++certs_out;
       break;
     case revision_item:
       rev_refiner.items_to_send.erase(ident);
       if (revision_out_ticker.get() != NULL)
         ++(*revision_out_ticker);
+      ++revs_out;
       break;
     case key_item:
       key_refiner.items_to_send.erase(ident);
+      ++keys_out;
       break;
     case epoch_item:
       epoch_refiner.items_to_send.erase(ident);
@@ -935,8 +970,9 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
 // ensure that our peer receives the error message.
 // Affects read_some, write_some, and process .
 void
-session::error(string const & errmsg)
+session::error(int errcode, string const & errmsg)
 {
+  error_code = errcode;
   throw netsync_error(errmsg);
 }
 
@@ -978,6 +1014,7 @@ session::read_some()
       mark_recent_io();
       if (byte_in_ticker.get() != NULL)
         (*byte_in_ticker) += count;
+      bytes_in += count;
       return true;
     }
   else
@@ -1008,6 +1045,7 @@ session::write_some()
       mark_recent_io();
       if (byte_out_ticker.get() != NULL)
         (*byte_out_ticker) += count;
+      bytes_out += count;
       if (encountered_error && outbuf.empty())
         {
           // we've flushed our error message, so it's time to get out.
@@ -1198,6 +1236,23 @@ session::queue_delta_cmd(netcmd_item_type type,
 bool
 session::process_error_cmd(string const & errmsg)
 {
+  // "xxx string" with xxx being digits means there's an error code
+  if (errmsg.size() > 4 && errmsg.substr(3,1) == " ")
+    {
+      try
+        {
+          int err = boost::lexical_cast<int>(errmsg.substr(0,3));
+          if (err >= 100)
+            {
+              error_code = err;
+              throw bad_decode(F("received network error: %s")
+                               % errmsg.substr(4));
+            }
+        }
+      catch (boost::bad_lexical_cast)
+        { // ok, so it wasn't a number
+        }
+    }
   throw bad_decode(F("received network error: %s") % errmsg);
 }
 
@@ -1318,6 +1373,10 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                           our_exclude_pattern, mk_nonce(), their_key_encoded);
     }
 
+  app.lua.hook_note_netsync_start(session_id, "client", this->role,
+                                  peer_id, their_keyname,
+                                  our_include_pattern, our_exclude_pattern);
+
   return true;
 }
 
@@ -1338,6 +1397,10 @@ session::process_anonymous_cmd(protocol_role their_role,
   //     in our this->role field.
   //
 
+  app.lua.hook_note_netsync_start(session_id, "server", their_role,
+                                  peer_id, rsa_keypair_id(),
+                                  their_include_pattern, their_exclude_pattern);
+
   // Client must be a sink and server must be a source (anonymous
   // read-only), unless transport auth is disabled.
   //
@@ -1349,13 +1412,15 @@ session::process_anonymous_cmd(protocol_role their_role,
       if (their_role != sink_role)
         {
           this->saved_nonce = id("");
-          error(F("rejected attempt at anonymous connection for write").str());
+          error(permission_error,
+                F("rejected attempt at anonymous connection for write").str());
         }
 
       if (this->role == sink_role)
         {
           this->saved_nonce = id("");
-          error(F("rejected attempt at anonymous connection while running as sink").str());
+          error(protocol_error,
+                F("rejected attempt at anonymous connection while running as sink").str());
         }
     }
 
@@ -1369,12 +1434,14 @@ session::process_anonymous_cmd(protocol_role their_role,
       if (their_matcher(*i))
         if (!our_matcher(*i))
           {
-            error((F("not serving branch '%s'") % *i).str());
+            error(permission_error,
+                  (F("not serving branch '%s'") % *i).str());
           }
         else if (app.use_transport_auth &&
                  !app.lua.hook_get_netsync_read_permitted(*i))
           {
-            error((F("anonymous access to branch '%s' denied by server") % *i).str());
+            error(permission_error,
+                  (F("anonymous access to branch '%s' denied by server") % *i).str());
           }
         else
           ok_branches.insert(utf8(*i));
@@ -1444,7 +1511,7 @@ session::process_auth_cmd(protocol_role their_role,
   if (!(nonce1 == this->saved_nonce))
     {
       this->saved_nonce = id("");
-      error(F("detected replay attack in auth netcmd").str());
+      error(bad_request, F("detected replay attack in auth netcmd").str());
     }
 
   // Internally netsync thinks in terms of sources and sinks. users like
@@ -1465,7 +1532,8 @@ session::process_auth_cmd(protocol_role their_role,
       if (!app.keys.try_ensure_in_db(their_key_hash))
         {
           this->saved_nonce = id("");
-          error((F("remote public key hash '%s' is unknown") % their_key_hash).str());
+          error(permission_error,
+                (F("remote public key hash '%s' is unknown") % their_key_hash).str());
         }
     }
 
@@ -1474,6 +1542,10 @@ session::process_auth_cmd(protocol_role their_role,
   base64<rsa_pub_key> their_key;
   app.db.get_pubkey(their_key_hash, their_id, their_key);
 
+  app.lua.hook_note_netsync_start(session_id, "server", their_role,
+                                  peer_id, their_id,
+                                  their_include_pattern, their_exclude_pattern);
+
   // Client as sink, server as source (reading).
 
   if (their_role == sink_role || their_role == source_and_sink_role)
@@ -1481,8 +1553,9 @@ session::process_auth_cmd(protocol_role their_role,
       if (this->role != source_role && this->role != source_and_sink_role)
         {
           this->saved_nonce = id("");
-          error((F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink")
-            % their_id % their_include_pattern % their_exclude_pattern).str());
+          error(protocol_error,
+                (F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink")
+                 % their_id % their_include_pattern % their_exclude_pattern).str());
         }
     }
 
@@ -1493,13 +1566,14 @@ session::process_auth_cmd(protocol_role their_role,
         {
           if (!our_matcher(*i))
             {
-              error((F("not serving branch '%s'") % *i).str());
+              error(permission_error, (F("not serving branch '%s'") % *i).str());
 
             }
           else if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
             {
-              error((F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")
-                % their_id % their_include_pattern % their_exclude_pattern % *i).str());
+              error(permission_error,
+                    (F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")
+                     % their_id % their_include_pattern % their_exclude_pattern % *i).str());
             }
           else
             ok_branches.insert(utf8(*i));
@@ -1518,15 +1592,17 @@ session::process_auth_cmd(protocol_role their_role,
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
           this->saved_nonce = id("");
-          error((F("denied '%s' write permission for '%s' excluding '%s' while running as pure source")
-            % their_id % their_include_pattern % their_exclude_pattern).str());
+          error(protocol_error,
+                (F("denied '%s' write permission for '%s' excluding '%s' while running as pure source")
+                 % their_id % their_include_pattern % their_exclude_pattern).str());
         }
 
       if (!app.lua.hook_get_netsync_write_permitted(their_id))
         {
           this->saved_nonce = id("");
-          error((F("denied '%s' write permission for '%s' excluding '%s'")
-            % their_id % their_include_pattern % their_exclude_pattern).str());
+          error(permission_error,
+                (F("denied '%s' write permission for '%s' excluding '%s'")
+                 % their_id % their_include_pattern % their_exclude_pattern).str());
         }
 
       P(F("allowed '%s' write permission for '%s' excluding '%s'")
@@ -1553,7 +1629,7 @@ session::process_auth_cmd(protocol_role their_role,
     }
   else
     {
-      error((F("bad client signature")).str());
+      error(bad_request, (F("bad client signature")).str());
     }
   return false;
 }
@@ -1640,7 +1716,7 @@ session::process_bye_cmd(u8 phase,
           queue_bye_cmd(1);
         }
       else
-        error("unexpected bye phase 0 received");
+        error(protocol_error, "unexpected bye phase 0 received");
       break;
 
     case 1:
@@ -1651,7 +1727,7 @@ session::process_bye_cmd(u8 phase,
           queue_bye_cmd(2);
         }
       else
-        error("unexpected bye phase 1 received");
+        error(protocol_error, "unexpected bye phase 1 received");
       break;
 
     case 2:
@@ -1662,11 +1738,11 @@ session::process_bye_cmd(u8 phase,
           return false;
         }
       else
-        error("unexpected bye phase 2 received");
+        error(protocol_error, "unexpected bye phase 2 received");
       break;
 
     default:
-      error((F("unknown bye phase %d received") % phase).str());
+      error(protocol_error, (F("unknown bye phase %d received") % phase).str());
     }
 
   return true;
@@ -1856,7 +1932,8 @@ session::process_data_cmd(netcmd_item_type type,
             // It is safe to call 'error' here, because if we get here,
             // then the current netcmd packet cannot possibly have
             // written anything to the database.
-            error((F("Mismatched epoch on branch %s."
+            error(bad_request,
+                  (F("Mismatched epoch on branch %s."
                      " Server has '%s', client has '%s'.")
                    % branch
                    % (voice == server_voice ? i->second : epoch)
@@ -2244,7 +2321,7 @@ bool session::process(transaction_guard & guard)
   catch (netsync_error & err)
     {
       W(F("error: %s") % err.msg);
-      queue_error_cmd(err.msg);
+      queue_error_cmd(boost::lexical_cast<string>(error_code) + " " + err.msg);
       encountered_error = true;
       return true; // Don't terminate until we've send the error_cmd.
     }
