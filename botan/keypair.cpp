@@ -17,6 +17,9 @@ namespace KeyPair {
 *************************************************/
 void check_key(PK_Encryptor* encryptor, PK_Decryptor* decryptor)
    {
+   if(encryptor->maximum_input_size() == 0)
+      return;
+
    std::auto_ptr<PK_Encryptor> enc(encryptor);
    std::auto_ptr<PK_Decryptor> dec(decryptor);
 
@@ -43,7 +46,15 @@ void check_key(PK_Signer* signer, PK_Verifier* verifier)
    SecureVector<byte> message(16);
    Global_RNG::randomize(message, message.size());
 
-   SecureVector<byte> signature = sig->sign_message(message);
+   SecureVector<byte> signature;
+
+   try {
+      signature = sig->sign_message(message);
+   }
+   catch(Encoding_Error)
+      {
+      return;
+      }
 
    if(!ver->verify_message(message, signature))
       throw Self_Test_Failure("Signature key pair consistency failure");

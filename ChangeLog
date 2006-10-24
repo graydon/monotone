@@ -1,3 +1,7 @@
+2006-10-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/: pull in changes from net.randombit.botan head.
+
 2006-10-24  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_automate.cc (automate stdio): Do not run randomly through
