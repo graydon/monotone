@@ -1,3 +1,9 @@
+2006-10-24  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* tests/db_check_(heights)/: Test the heights related checks of
+	'db check'.
+	* testsuite.lua: Add the test to the lists of tests.
+
 2006-10-20  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* database_check.cc: Add checks for the heights. It is checked
