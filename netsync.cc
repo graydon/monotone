@@ -1820,6 +1820,8 @@ session::process_data_cmd(netcmd_item_type type,
   if (data_exists(type, item))
     {
       L(FL("%s '%s' already exists in our database") % typestr % hitem);
+      if (type == epoch_item)
+        maybe_note_epochs_finished();
       return true;
     }
 
