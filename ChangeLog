@@ -1,3 +1,11 @@
+2006-10-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix an epoch refinement bug. If we already have an epoch for a branch
+	we're receiving and don't have any revisions for, we will be re-sent
+	that epoch. There is code to ignore received items that we already
+	have. This code needs to call maybe_note_epochs_finished() for
+	epoch items.
+
 2006-10-24  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_automate.cc (automate stdio): Do not run randomly through
