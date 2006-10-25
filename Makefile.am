@@ -421,7 +421,6 @@ EXTRA_DIST = $(man1_MANS) $(PDF_FIGURES) $(PNG_FIGURES) INSTALL			\
 	     contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
 	     contrib/monotone-cvs-ignore.lua contrib/usher.cc $(wildcard	\
 	     $(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	     contrib/netsync_display_branches.lua \
 	     $(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
