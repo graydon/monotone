@@ -1,3 +1,9 @@
+2006-10-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* contrib/netsync_display_branches.lua: Add Richard Levitte's 
+	hook for displaying pulled branches. (see 
+	http://lists.gnu.org/archive/html/monotone-devel/2006-04/msg00249.html )
+
 2006-10-24  Nathaniel Smith  <njs@pobox.com>
 
 	* cmd_automate.cc (automate stdio): Do not run randomly through
