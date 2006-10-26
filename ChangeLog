@@ -1,5 +1,10 @@
 2006-10-26  Richard Levitte  <richard@levitte.org>
 
+	* commands.cc (process_commit_message_args): Only prepend the
+	message prefix is it's more than 0 characters.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
 	* cmd_ws_commit.cc (CMD(disapprove)): Make it possible to specify
 	extra message lines to be added after the standard "disapprove"
 	line, as well as author and date.  Makes use of the following

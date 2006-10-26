@@ -460,7 +460,10 @@ process_commit_message_args(bool & given,
 
   if (app.is_explicit_option(option::message()))
     {
-      log_message = message_prefix() + "\n\n" + app.message();
+      if (message_prefix().length() != 0)
+        log_message = message_prefix() + "\n\n" + app.message();
+      else
+        log_message = app.message();
       given = true;
     }
   else if (app.is_explicit_option(option::msgfile()))
@@ -469,7 +472,8 @@ process_commit_message_args(bool & given,
       read_data_for_command_line(app.message_file(), dat);
       external dat2 = dat();
       system_to_utf8(dat2, log_message);
-      log_message = message_prefix() + "\n\n" + log_message();
+      if (message_prefix().length() != 0)
+        log_message = message_prefix() + "\n\n" + log_message();
       given = true;
     }
   else if (message_prefix().length() != 0)
