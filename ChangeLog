@@ -1,5 +1,11 @@
 2006-10-26  Richard Levitte  <richard@levitte.org>
 
+	* tests/disapproving_with_message/__driver__.lua (r_sha): New
+	rudimentary test to check that disapprove with messages works.
+	* testsuite.lua: Add it.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
 	* commands.cc (process_commit_message_args): Only prepend the
 	message prefix is it's more than 0 characters.
 
