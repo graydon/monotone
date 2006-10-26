@@ -136,7 +136,8 @@ notify_if_multiple_heads(app_state & app);
 void
 process_commit_message_args(bool & given,
                             utf8 & log_message,
-                            app_state & app);
+                            app_state & app,
+                            utf8 message_prefix = utf8(""));
 
 #define CMD(C, group, params, desc, opts)                            \
 namespace commands {                                                 \
