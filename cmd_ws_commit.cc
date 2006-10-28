@@ -188,11 +188,14 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
 CMD(disapprove, N_("review"), N_("REVISION"),
     N_("disapprove of a particular revision"),
-    options::opts::branch)
+    options::opts::branch | options::opts::messages | options::opts::date |
+    options::opts::author)
 {
   if (args.size() != 1)
     throw usage(name);
 
+  utf8 log_message("");
+  bool log_message_given;
   revision_id r;
   revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
@@ -205,6 +208,9 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   cert_value branchname;
   guess_branch(r, app, branchname);
   N(app.opts.branch_name() != "", F("need --branch argument for disapproval"));
+
+  process_commit_message_args(log_message_given, log_message, app,
+                              (FL("disapproval of revision '%s'") % r).str());
 
   edge_entry const & old_edge (*rev.edges.begin());
   app.db.get_revision_manifest(edge_old_revision(old_edge),
@@ -229,11 +235,15 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     dbw.consume_revision_data(inv_id, rdat);
 
     cert_revision_in_branch(inv_id, branchname, app, dbw);
-    cert_revision_date_now(inv_id, app, dbw);
-    cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id,
-                            (FL("disapproval of revision '%s'")
-                             % r).str(), app, dbw);
+    if (app.date_set)
+      cert_revision_date_time(inv_id, app.date, app, dbw);
+    else
+      cert_revision_date_now(inv_id, app, dbw);
+    if (app.author().length() > 0)
+      cert_revision_author(inv_id, app.author(), app, dbw);
+    else
+      cert_revision_author_default(inv_id, app, dbw);
+    cert_revision_changelog(inv_id, log_message, app, dbw);
     guard.commit();
   }
 }

@@ -11,8 +11,7 @@ using std::string;
 
 LUAEXT(guess_binary_file_contents, )
 {
-  const char *path = luaL_checkstring(L, -1);
-  N(path, F("%s called with an invalid parameter") % "guess_binary");
+  const char *path = luaL_checkstring(L, 1);
 
   ifstream file(path, ios_base::binary);
   if (!file)
