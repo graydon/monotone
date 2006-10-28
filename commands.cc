@@ -453,7 +453,8 @@ notify_if_multiple_heads(app_state & app)
 void
 process_commit_message_args(bool & given,
                             utf8 & log_message,
-                            app_state & app)
+                            app_state & app,
+                            utf8 message_prefix)
 {
   // can't have both a --message and a --message-file ...
   N(!app.opts.message_given || !app.opts.msgfile_given,
@@ -464,6 +465,8 @@ process_commit_message_args(bool & given,
       std::string msg;
       join_lines(app.opts.message, msg);
       log_message = utf8(msg);
+      if (message_prefix().length() != 0)
+        log_message = message_prefix() + "\n\n" + log_message();
       given = true;
     }
   else if (app.opts.msgfile_given)
@@ -472,6 +475,13 @@ process_commit_message_args(bool & given,
       read_data_for_command_line(app.opts.msgfile, dat);
       external dat2 = dat();
       system_to_utf8(dat2, log_message);
+      if (message_prefix().length() != 0)
+        log_message = message_prefix() + "\n\n" + log_message();
+      given = true;
+    }
+  else if (message_prefix().length() != 0)
+    {
+      log_message = message_prefix;
       given = true;
     }
   else
