@@ -47,23 +47,19 @@ LUAEXT(parse_basic_io, )
   for (vector<pair<string, vector<string> > >::const_iterator i = res.begin();
         i != res.end(); ++i)
     {
-      lua_pushnumber(L, n++);
       lua_newtable(L);
-      lua_pushstring(L, "name");
       lua_pushstring(L, i->first.c_str());
-      lua_settable(L, -3);
-      lua_pushstring(L, "values");
+      lua_setfield(L, -2, "name");
       lua_newtable(L);
       int m = 1;
       for (vector<string>::const_iterator j = i->second.begin();
             j != i->second.end(); ++j)
         {
-          lua_pushnumber(L, m++);
           lua_pushstring(L, j->c_str());
-          lua_settable(L, -3);
+          lua_rawseti(L, -2, m++);
         }
-      lua_settable(L, -3);
-      lua_settable(L, -3);
+      lua_setfield(L, -2, "values");
+      lua_rawseti(L, -2, n++);
     }
   return 1;
 }
