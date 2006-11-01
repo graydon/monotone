@@ -31,219 +31,212 @@ command-line arguments and runs whichever tests have been asked for. It also
 resets most of the environment between tests.
 
 
+Variable reference
+------------------
+
 tests
 
-Global table, containing all tests. The testsuite should contain lines of
-   table.insert(tests, "test-name")
-.
+	Global table, containing all tests. The testsuite should contain lines 
+	of table.insert(tests, "test-name")
 
 test.root
 
-The scratch directory.
+	The scratch directory.
 
 test.name
 
-The name of the test.
+	The name of the test.
 
 test.wanted_fail
 
-Set when an xfailed command succeeds.
+	Set when an xfailed command succeeds.
 
 test.partial_skip
 
-Set this if you want to note that part of a test is being skipped.
+	Set this if you want to note that part of a test is being skipped.
 
 test.log
 
-The logfile for this individual test.
+	The logfile for this individual test.
 
 srcdir
 
-Set to the dir containing the testsuite.
+	Set to the dir containing the testsuite.
 
 testdir
 
-The directory containing all test stuff. Initially set to srcdir. Where all
-testsuite-related files are in a subdir except for the testsuite itself, the
-testsuite should set this to that dir. For example, the monotone testsuite
-sets this to srcdir.."/tests" .
+	The directory containing all test stuff. Initially set to srcdir. Where 
+	all testsuite-related files are in a subdir except for the testsuite 
+	itself, the testsuite should set this to that dir. For example, the 
+	monotone testsuite sets this to srcdir.."/tests" .
 
 debugging
 
-Set to true if the -d option was given.
+	Set to true if the -d option was given.
 
 logfile
 
-The general log.
+	The general log.
 
 failed_testlogs
 
-List of logfiles for failed tests, to be appended to the general log.
+	List of logfiles for failed tests, to be appended to the general log.
 
 files
 
-Table of files for built-in commands (grep, cat, sort, etc) to use for i/o.
+	Table of files for built-in commands (grep, cat, sort, etc) to use 
+	for i/o.
+
+posix_umask
+
+	Set the umask on posix systems, do nothing on Windows. If a test uses 
+	this, it should have a relevant skip_if.
+  
+initial_dir
+
+	Global variable, set to the directory the test program was started in.
+
+	
+Function reference
+------------------
+
+a) monotone Lua interface
++++++++++++++++++++++++++
+
+regex.search()
+globish.match()
+parse_basic_io()
+
+	These functions are the same as in monotone.
 
 
-
-P(...)
-
-Print arguments (written to stdout and to the main logfile).
-
-L(...)
-
-Log arguments (written to the test logfile, which will be appended to the main
-logfile if this test fails).
-
-getsrcline()
-
-returns (test.name, sourceline), where sourceline is the line number of the
-oldest stack frame which is in the driver file for the current test
-
-locheader()
-
-Line getsrcline(), except that it returns a string suitable for prefixing log
-lines, as L(locheader(), message).
-
-err(what [, level])
-
-Cause the test to fail, by throwing an error. This is like error(), except
-that it records the getsrcline() of where the error was thrown.
-
+b) File functions
++++++++++++++++++
+	
 mtime(filename) [logged]
 
-Returns the file modification time.
+	Returns the file modification time.
 
 mkdir(filename) [logged]
 
-Create the specified directory.
+	Create the specified directory.
+
+chdir()
+
+	Go to a directory. You probably want to use indir() instead.
+
+exists()
+isdir()
+
+	File status checks.
 
 existsonpath(name) [logged]
 
-Returns true if "name" is on the path.
+	Returns true if "name" is on the path.
 
 numlines(filename) [logged]
 
-Count the lines in a file.
+	Count the lines in a file.
 
 open_or_err()
 
-Wrapper around io.open, that throws instead of returning an error code.
+	Wrapper around io.open, that throws instead of returning an error code.
 
 fsize(filename)
 
-Return the size of the given file.
+	Return the size of the given file.
 
 readfile(filename) [logged]
 
-Return the contents of a file. The unlogged version is readfile_q.
+	Return the contents of a file. The unlogged version is readfile_q.
 
 readstdfile(filename)
 
-Calls readfile(), taking filename as relative to the testsuite directory.
+	Calls readfile(), taking filename as relative to the testsuite directory.
 
 writefile(filename [, dat]) [logged]
 
-If dat is given, set the file contents to dat. If dat is not given, only make
-sure that the file exists. The unlogged version is writefile_q.
+	If dat is given, set the file contents to dat. If dat is not given, only
+	make sure that the file exists. The unlogged version is writefile_q.
 
 append(filename [, dat]) [logged]
 
-Append dat to the given file.
+	Append dat to the given file.
 
 copy(from, to) [logged]
 
-Copy a file or a directory tree. The unlogged version is unlogged_copy.
+	Copy a file or a directory tree. The unlogged version is unlogged_copy.
 
 rename(from, to) [logged]
 
-Like os.rename except that it removes the destination if it already exists
-(because os.rename on Windows will not replace an existing destination). The
-unlogged version is unlogged_rename.
+	Like os.rename except that it removes the destination if it already 
+	exists (because os.rename on Windows will not replace an existing 
+	destination). The unlogged version is unlogged_rename.
 
 remove(filename) [logged]
 
-Remove a file or a directory tree. The unlogged version is unlogged_remove.
+	Remove a file or a directory tree. The unlogged version is 
+	unlogged_remove.
 
 getstd(name [, as])
 
-Copy a file or a directory tree named 'name' from the testsuite directory to
-the scratch directory, giving it the name 'as', or 'name' is as is not given.
+	Copy a file or a directory tree named 'name' from the testsuite 
+	directory to the scratch directory, giving it the name 'as', or 'name' 
+	is as is not given.
 
 get(name [, as])
 
-Copy a file or a directory tree named 'name' from the test directory to
-the scratch directory, giving it the name 'as', or 'name' is as is not given.
+	Copy a file or a directory tree named 'name' from the test directory to
+	the scratch directory, giving it the name 'as', or 'name' is as is not 
+	given.
 
-include(filename)
+indir(dir, cmd)
 
-Load and execute a file, named relative to the testsuite directory.
+	cmd is a command table, as would be passed to check(). This wraps what 
+	it would do with a chdir() pair to run it in the given directory.
 
-trim(string)
 
-Return the string, with leading and trailing whitespace removed.
+c) Command execution
+++++++++++++++++++++
 
 execute(path, ...) [internal]
 
-Run an external program, and return the program's return code.
+	Run an external program, and return the program's return code.
 
 runcmd(cmd, prefix, bgnd) [internal]
 
-Run cmd under i/o redirection. cmd is a table giving either a function and
-arguments, or an external program name and agruments.
-
-samefile(left, right)
-
-Return true if the given files have identical contents, or false otherwise.
-
-samelines(file, table)
-
-Split the file into lines, and check that each line matches the corresponding
-element of the table. This function doesn't care what the line endings are.
-
-greplines(file, table)
-
-Split the file into lines, and check that each line is matched by the regex
-given in the corresponding table element.
-
-grep(["-qv"], "what" [, "filename"])
-cat(...)
-tail(file, num)
-sort([filename])
-
-These functions each return a table, suitable for passing to pcall() or check().
-They are meant to be used in place of the shell utilities of the same names.
-
-log_file_contents(filename)
-
-Write the contents of the given file to the test log.
+	Run cmd under i/o redirection. cmd is a table giving either a function 
+	and arguments, or an external program name and agruments.
 
 pre_cmd() [internal]
 
-Set up the files used for i/o redirection of commands.
+	Set up the files used for i/o redirection of commands.
 
 post_cmd() [internal]
 
-Verify that a command gave the expected results, and throw an error if it
-did not.
+	Verify that a command gave the expected results, and throw an error if 
+	it did not.
 
 bg(torun, ret, stdout, stderr, stdin)
 
-Run a command in the background. The arguments are:
+	Run a command in the background. The arguments are:
+	
 	torun	list of strings, {"program", "arg1", "arg2" ,...}
 	ret	expected return code
 	std{out,err}
-		false	ignore output
-		true	save the output in a file named stdout or stderr
-		string	the string must match the output
-		{string} the named file must match the output
-		nil (not given)	the output must be empty
+		false           ignore output
+		true            save the output in a file named stdout or stderr
+		string          the string must match the output
+		{string}        the named file must match the output
+		nil (not given) the output must be empty
 	stdin
-		true	use existing "stdin" file
-		nil, false	empty input
-		string	contents of string are used as input
-		{string} contents of named file are used as input
-The returned object has two methods:
+		true            use existing "stdin" file
+		nil, false      empty input
+		string          contents of string are used as input
+		{string}        contents of named file are used as input
+
+	The returned object has two methods:
+	
 	finish(timeout)
 		wait for the given timeout, then kill the program and check
 		the results. Returns true.
@@ -251,56 +244,116 @@ The returned object has two methods:
 		wait for the given timeout. If the program has ended, check
 		the results and return true. Otherwise, return false.
 
+
+d) Checks
++++++++++
+
 runcheck() [internal]
 
-check(), minus some of the input validation
-
-indir(dir, cmd)
-
-cmd is a command table, as would be passed to check(). This wraps what it would
-do with a chdir() pair to run it in the given directory.
+	check(), minus some of the input validation
 
 check(first, ...)
 
-Run a command, and verify the results:
+	Run a command, and verify the results:
+	
 	check(torun, ret, stdout, stderr, stdin)
 		Inputs are the same as to bg().
 	check(bool)
 		Throw an error if the argument is false.
 	check(number)
 		Check that the argument is zero.
-If the command fails, abort the test.
+
+	If the command fails, abort the test.
 
 skip_if(bool)
 
-If the argument is true, abort the test (throw true) and mark it as skipped.
+	If the argument is true, abort the test (throw true) and mark it as 
+	skipped.
 
 xfail(...)
 
-Equivalent to xfail_if(true, ...).
+	Equivalent to xfail_if(true, ...).
 
 xfail_if(chk, ...)
 
-Give the ... arguments to check(), and catch any errors. If chk is false just
-rethrow anything caught, so this wrapper is transparent. If chk is true, then
-either mark the test for unexpected success (if the command succeeded), or
-abort and mark it as an expected failure (throw false).
+	Give the ... arguments to check(), and catch any errors. If chk is false
+	just rethrow anything caught, so this wrapper is transparent. If chk is 
+	true, then either mark the test for unexpected success (if the command 
+	succeeded), or abort and mark it as an expected failure (throw false).
+
+
+e) Printing and Logging
++++++++++++++++++++++++
+	
+P(...)
+
+	Print arguments (written to stdout and to the main logfile).
+
+L(...)
+
+	Log arguments (written to the test logfile, which will be appended to 
+	the main logfile if this test fails).
+
+log_file_contents(filename)
+
+	Write the contents of the given file to the test log.
+
+getsrcline()
+
+	Returns (test.name, sourceline), where sourceline is the line number of 
+	the oldest stack frame which is in the driver file for the current test
+
+locheader()
+
+	Line getsrcline(), except that it returns a string suitable for 
+	prefixing log lines, as L(locheader(), message).
+
+err(what [, level])
+
+	Cause the test to fail, by throwing an error. This is like error(), 
+	except that it records the getsrcline() of where the error was thrown.
 
 log_error() [internal]
 
-Write a caught error to the test log.
+	Write a caught error to the test log.
+
+
+f) Content functions (matching, comparison, etc.)
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+samefile(left, right)
+
+	Return true if the given files have identical contents, or false 
+	otherwise.
+
+samelines(file, table)
+
+	Split the file into lines, and check that each line matches the 
+	corresponding element of the table. This function doesn't care what the 
+	line endings are.
+
+greplines(file, table)
+
+	Split the file into lines, and check that each line is matched by the 
+	regex given in the corresponding table element.
+
+grep(["-qv"], "what" [, "filename"])
+cat(...)
+tail(file, num)
+sort([filename])
+
+	These functions each return a table, suitable for passing to pcall() or 
+	check(). They are meant to be used in place of the shell utilities of 
+	the same names.
+
+
+g) Utility functions
+++++++++++++++++++++
 
 run_tests() [internal]
 
-Parse command line arguments, load the testsuite, and run specified tests.
-
-
-regex.search()
-globish.match()
-parse_basic_io()
-
-These functions are the same as in monotone.
-
+	Parse command line arguments, load the testsuite, and run specified 
+	tests.
 
 go_to_test_dir() [internal]
 set_redirect() [internal]
@@ -310,39 +363,26 @@ leave_test_dir() [internal]
 save_env() [internal]
 restore_env() [internal]
 
-Misc. infrastructure.
+	Misc. infrastructure.
 
 get_source_dir()
 
-Return the directory the testsuite file was in.
-
-chdir()
-
-Go to a directory. You probably want to use indir() instead.
-
-exists()
-isdir()
-
-File status checks.
-
-get_ostype
-
-Return a string representing the OS. You probably care mostly about the
-first word.
+	Return the directory the testsuite file was in.
 
 set_env()
 
-Set an environment variable.
+	Set an environment variable.
 
-posix_umask
+get_ostype()
 
-Set the umask on posix systems, do nothing on Windows. If a test uses this, it
-should have a relevant skip_if.
-  
-initial_dir
+	Return a string representing the OS. You probably care mostly about the
+	first word.
 
-Global variable, set to the directory the test program was started in.
+include(filename)
 
+	Load and execute a file, named relative to the testsuite directory.
 
+trim(string)
 
+	Return the string, with leading and trailing whitespace removed.
 

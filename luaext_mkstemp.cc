@@ -10,7 +10,7 @@ using std::strerror;
 
 LUAEXT(mkstemp, )
 {
-  char const *filename = luaL_checkstring (L, -1);
+  char const *filename = luaL_checkstring (L, 1);
   string dup(filename);
 
   if (!monotone_mkstemp(dup))

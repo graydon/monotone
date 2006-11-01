@@ -1,0 +1,18 @@
+monotone for Debian
+-------------------
+
+In order to use the monotone-server package, the server should first be
+configured in the /etc/monotone/write-permissions,
+/etc/monotone/read-permissions, and /etc/default/monotone files.  The server
+will not start until this is done.
+
+The read-permissions and write-permissions files are in the standard format as
+specified in the monotone manual.  The /etc/default/monotone file contains
+options such as what interface the server should listen on and what branches it
+should serve.
+
+The /var/lib/monotone/default.mtn database will only be removed if the
+monotone-server package is purged (it is left intact upon normal package
+removal).
+
+ -- Matthew A. Nicholson <matt@matt-land.com> Tue, 6 Dec 2005 7:38:00 -0600

@@ -1,5 +1,10 @@
-
 mtn_setup()
+
+-- a number of broken input strings
+check(mtn("automate", "stdio"), 1, false, false, "le")
+check(mtn("automate", "stdio"), 1, false, false, "l")
+check(mtn("automate", "stdio"), 1, false, false, "l5:a")
+check(mtn("automate", "stdio"), 1, false, false, "l5:aaaaaaaa")
 
 function parse_stdio(dat, which)
   local got = {}
