@@ -333,11 +333,19 @@ session:
   bool encountered_error;
 
   const static int no_error = 200;
-  const static int bad_request = 400;
-  const static int protocol_error = 401;
-  const static int permission_error = 403;
-  const static int other_error = 500;
-  const static int connection_broken = 504;
+  const static int partial_transfer = 211;
+  const static int no_transfer = 212;
+
+  const static int not_permitted = 412;
+  const static int unknown_key = 422;
+  const static int mixing_versions = 432;
+
+  const static int role_mismatch = 512;
+  const static int bad_command = 521;
+
+  const static int failed_identification = 532;
+  //const static int bad_data = 541;
+
   int error_code;
 
   bool set_totals;
@@ -519,7 +527,7 @@ session::session(protocol_role role,
   dbw(app),
   protocol_state(working_state),
   encountered_error(false),
-  error_code(connection_broken),
+  error_code(no_transfer),
   set_totals(false),
   epoch_refiner(epoch_item, voice, *this),
   key_refiner(key_item, voice, *this),
@@ -539,6 +547,11 @@ session::~session()
 {
   if (protocol_state == confirmed_state)
     error_code = no_error;
+  else if (error_code = no_transfer &&
+           (revs_in || revs_out ||
+            certs_in || certs_out ||
+            keys_in || keys_out))
+    error_code = partial_transfer;
 
   vector<cert> unattached_certs;
   map<revision_id, vector<cert> > revcerts;
@@ -1412,14 +1425,14 @@ session::process_anonymous_cmd(protocol_role their_role,
       if (their_role != sink_role)
         {
           this->saved_nonce = id("");
-          error(permission_error,
+          error(not_permitted,
                 F("rejected attempt at anonymous connection for write").str());
         }
 
       if (this->role == sink_role)
         {
           this->saved_nonce = id("");
-          error(protocol_error,
+          error(role_mismatch,
                 F("rejected attempt at anonymous connection while running as sink").str());
         }
     }
@@ -1434,13 +1447,13 @@ session::process_anonymous_cmd(protocol_role their_role,
       if (their_matcher(*i))
         if (!our_matcher(*i))
           {
-            error(permission_error,
+            error(not_permitted,
                   (F("not serving branch '%s'") % *i).str());
           }
         else if (app.use_transport_auth &&
                  !app.lua.hook_get_netsync_read_permitted(*i))
           {
-            error(permission_error,
+            error(not_permitted,
                   (F("anonymous access to branch '%s' denied by server") % *i).str());
           }
         else
@@ -1511,7 +1524,8 @@ session::process_auth_cmd(protocol_role their_role,
   if (!(nonce1 == this->saved_nonce))
     {
       this->saved_nonce = id("");
-      error(bad_request, F("detected replay attack in auth netcmd").str());
+      error(failed_identification,
+            F("detected replay attack in auth netcmd").str());
     }
 
   // Internally netsync thinks in terms of sources and sinks. users like
@@ -1532,7 +1546,7 @@ session::process_auth_cmd(protocol_role their_role,
       if (!app.keys.try_ensure_in_db(their_key_hash))
         {
           this->saved_nonce = id("");
-          error(permission_error,
+          error(unknown_key,
                 (F("remote public key hash '%s' is unknown") % their_key_hash).str());
         }
     }
@@ -1553,7 +1567,7 @@ session::process_auth_cmd(protocol_role their_role,
       if (this->role != source_role && this->role != source_and_sink_role)
         {
           this->saved_nonce = id("");
-          error(protocol_error,
+          error(not_permitted,
                 (F("denied '%s' read permission for '%s' excluding '%s' while running as pure sink")
                  % their_id % their_include_pattern % their_exclude_pattern).str());
         }
@@ -1566,12 +1580,12 @@ session::process_auth_cmd(protocol_role their_role,
         {
           if (!our_matcher(*i))
             {
-              error(permission_error, (F("not serving branch '%s'") % *i).str());
+              error(not_permitted, (F("not serving branch '%s'") % *i).str());
 
             }
           else if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
             {
-              error(permission_error,
+              error(not_permitted,
                     (F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")
                      % their_id % their_include_pattern % their_exclude_pattern % *i).str());
             }
@@ -1592,7 +1606,7 @@ session::process_auth_cmd(protocol_role their_role,
       if (this->role != sink_role && this->role != source_and_sink_role)
         {
           this->saved_nonce = id("");
-          error(protocol_error,
+          error(not_permitted,
                 (F("denied '%s' write permission for '%s' excluding '%s' while running as pure source")
                  % their_id % their_include_pattern % their_exclude_pattern).str());
         }
@@ -1600,7 +1614,7 @@ session::process_auth_cmd(protocol_role their_role,
       if (!app.lua.hook_get_netsync_write_permitted(their_id))
         {
           this->saved_nonce = id("");
-          error(permission_error,
+          error(not_permitted,
                 (F("denied '%s' write permission for '%s' excluding '%s'")
                  % their_id % their_include_pattern % their_exclude_pattern).str());
         }
@@ -1629,7 +1643,7 @@ session::process_auth_cmd(protocol_role their_role,
     }
   else
     {
-      error(bad_request, (F("bad client signature")).str());
+      error(failed_identification, (F("bad client signature")).str());
     }
   return false;
 }
@@ -1716,7 +1730,7 @@ session::process_bye_cmd(u8 phase,
           queue_bye_cmd(1);
         }
       else
-        error(protocol_error, "unexpected bye phase 0 received");
+        error(bad_command, "unexpected bye phase 0 received");
       break;
 
     case 1:
@@ -1727,7 +1741,7 @@ session::process_bye_cmd(u8 phase,
           queue_bye_cmd(2);
         }
       else
-        error(protocol_error, "unexpected bye phase 1 received");
+        error(bad_command, "unexpected bye phase 1 received");
       break;
 
     case 2:
@@ -1738,11 +1752,11 @@ session::process_bye_cmd(u8 phase,
           return false;
         }
       else
-        error(protocol_error, "unexpected bye phase 2 received");
+        error(bad_command, "unexpected bye phase 2 received");
       break;
 
     default:
-      error(protocol_error, (F("unknown bye phase %d received") % phase).str());
+      error(bad_command, (F("unknown bye phase %d received") % phase).str());
     }
 
   return true;
@@ -1932,7 +1946,7 @@ session::process_data_cmd(netcmd_item_type type,
             // It is safe to call 'error' here, because if we get here,
             // then the current netcmd packet cannot possibly have
             // written anything to the database.
-            error(bad_request,
+            error(mixing_versions,
                   (F("Mismatched epoch on branch %s."
                      " Server has '%s', client has '%s'.")
                    % branch
