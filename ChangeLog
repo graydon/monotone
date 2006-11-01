@@ -1,3 +1,77 @@
+2006-10-31  Benoît Dejean  <benoit@placenet.org>
+
+	* std_hooks.lua (ignore_file): Fixed many patterns.
+	Also added gettext and intltool related patterns.
+
+2006-10-31  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (perform_rename): Tweak error message that just annoyed
+	me.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
+	* tests/disapproving_with_message/__driver__.lua (r_sha): New
+	rudimentary test to check that disapprove with messages works.
+	* testsuite.lua: Add it.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (process_commit_message_args): Only prepend the
+	message prefix is it's more than 0 characters.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD(disapprove)): Make it possible to specify
+	extra message lines to be added after the standard "disapprove"
+	line, as well as author and date.  Makes use of the following
+	change:
+	* commands.cc,cmd.hh (process_commit_message_args): Add an extra
+	parameter to have as a prefix of the user message.  If the prefix
+	exists, there will always be a message containing it.
+
+2006-10-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua/lstrlib.cc: Patch for Lua 5.1.1 bug #3, from
+	lua.org/bugs.html.
+
+2006-10-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix an epoch refinement bug. If we already have an epoch for a branch
+	we're receiving and don't have any revisions for, we will be re-sent
+	that epoch. There is code to ignore received items that we already
+	have. This code needs to call maybe_note_epochs_finished() for
+	epoch items.
+
+2006-10-24  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_automate.cc (automate stdio): Do not run randomly through
+	memory doing random things when we get a 0-length stdio command
+	list.
+	* tests/automate_stdio/__driver__.lua: Add some bad-input tests.
+
+2006-10-24  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_automate.cc (automate_reader): Use delete[] to free array
+	allocated with new[].
+
+2006-10-22  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Swap execution of 'set +e' and 'set
+	-e'.
+
+2006-10-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Propagate the rerwite of 'automate stdio' (in branch
+	...automate-stdio-extensions) to mainline. It doesn't actually
+	have any extensions anymore, just a rewrite that should make
+	the code cleaner.
+
+2006-10-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Revert automate stdio extensions (never were on mainline) so
+	that the only change is that automate stdio is implemented
+	more cleanly.
+
 2006-10-12  Thomas Keller <me@thomaskeller.biz>
 
 	* automate.cc: replaced std::endl in favour of simple unix
