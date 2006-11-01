@@ -1184,7 +1184,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
     {
       // "rename SRC1 SRC2 DST" case
       N(new_roster.has_node(dst),
-        F("destination dir %s/ does not exist in current revision") % dst_path);
+        F("destination dir %s/ is not versioned (perhaps add it?)") % dst_path);
 
       N(is_dir_t(new_roster.get_node(dst)),
         F("destination %s is an existing file in current revision") % dst_path);

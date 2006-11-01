@@ -278,15 +278,13 @@ assert_sqlite3_ok(sqlite3 *s)
 
   const char * errmsg = sqlite3_errmsg(s);
 
+  // first log the code so we can find _out_ what the confusing code
+  // was... note that code does not uniquely identify the errmsg, unlike
+  // errno's.
+  L(FL("sqlite error: %d: %s") % errcode % errmsg);
+  
   // sometimes sqlite is not very helpful
   // so we keep a table of errors people have gotten and more helpful versions
-  if (errcode != SQLITE_OK)
-    {
-      // first log the code so we can find _out_ what the confusing code
-      // was... note that code does not uniquely identify the errmsg, unlike
-      // errno's.
-      L(FL("sqlite error: %d: %s") % errcode % errmsg);
-    }
   // note: if you update this, try to keep calculate_schema_id() in
   // schema_migration.cc consistent.
   string auxiliary_message = "";
@@ -296,9 +294,7 @@ assert_sqlite3_ok(sqlite3 *s)
                              "and you have not run out of disk space");
     }
   // if the last message is empty, the \n will be stripped off too
-  E(errcode == SQLITE_OK,
-    // kind of string surgery to avoid ~duplicate strings
-    F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
+  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
 }
 
 struct sqlite3 *
