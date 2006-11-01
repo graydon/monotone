@@ -1,3 +1,7 @@
+2006-11-01  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
 2006-10-31  Benoît Dejean  <benoit@placenet.org>
 
 	* std_hooks.lua (ignore_file): Fixed many patterns.
