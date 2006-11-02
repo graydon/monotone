@@ -1,125 +1,200 @@
 
-#include <string>
+#include <algorithm>
 
-#include "config.h"
-#include "i18n.h"
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include "charset.hh"
 #include "options.hh"
+#include "platform.hh"
 #include "sanity.hh"
+#include "ui.hh"
 
+using std::list;
+using std::map;
+using std::set;
 using std::string;
-using std::vector;
 
-namespace option
+using option::bad_arg_internal;
+
+template<typename T>
+bool has_arg() { return true; }
+template<>
+bool has_arg<bool>() { return false; }
+
+
+
+std::map<options::static_options_fun, std::set<options::static_options_fun> > &
+options::children()
 {
-  namespace po = boost::program_options;
-  //using boost::program_options::value;
-  using boost::program_options::option_description;
-  using boost::program_options::options_description;
+  static map<static_options_fun, set<static_options_fun> > val;
+  static bool first(true);
+  if (first)
+    {
+#     define OPTSET(name) \
+      val[&options::opts::all_options].insert(&options::opts::name);
+#     define OPTVAR(optset, type, name, default_)
+#     define OPTION(optset, name, hasarg, optstring, description) \
+      val[&options::opts:: optset].insert(&options::opts:: name); \
+      val[&options::opts::all_options].insert(&options::opts::name);
+#     define OPTSET_REL(parent, child) \
+      val[&options::opts:: parent].insert(&options::opts:: child);
 
-  options_description global_options;
-  options_description specific_options;
+#     include "options_list.hh"
 
-  no_option none;
+#     undef OPTSET
+#     undef OPTVAR
+#     undef OPTION
+#     undef OPTSET_REL
 
-//    {"no-show-c-function", 0, POPT_ARG_NONE, NULL, OPT_NO_SHOW_ENCLOSER, gettext_noop("another name for --no-show-encloser (for compatibility with GNU diff)"), NULL},
-//    {"stdio", 0, POPT_ARG_NONE, NULL, OPT_STDIO, gettext_noop("serve netsync on stdio"), NULL},
-//    {"no-transport-auth", 0, POPT_ARG_NONE, NULL, OPT_NO_TRANSPORT_AUTH, gettext_noop("disable transport authentication"), NULL},
-//    {"automate-stdio-size", 's', POPT_ARG_LONG, &arglong, OPT_AUTOMATE_STDIO_SIZE, gettext_noop("block size in bytes for \"automate stdio\" output"), NULL},
+      first = false;
+    }
+  return val;
+}
 
-  struct argless_value : public po::value_semantic
-  {
-    std::string name() const { return ""; }
-    unsigned min_tokens() const { return 0; }
-    unsigned max_tokens() const { return 0; }
-    bool is_composing() const { return false; }
-    void parse(boost::any & value_store, 
-               const std::vector<std::string> & new_tokens,
-               bool utf8) const
+std::map<options::static_options_fun, std::list<void(options::*)()> > &
+options::var_membership()
+{
+  static map<static_options_fun, std::list<void(options::*)()> > val;
+  static bool first(true);
+  if (first)
     {
-      value_store = true;
-    }
-    bool apply_default(boost::any & value_store) const
-    {
-      return false;
-    }
-    void notify(const boost::any& value_store) const {}
-  };
-  template<typename T>
-  struct repeatable_value : public po::value_semantic
-  {
-    std::string name() const { return ""; }
-    unsigned min_tokens() const { return 1; }
-    unsigned max_tokens() const { return 1; }
-    bool is_composing() const { return false; }
-    void parse(boost::any & value_store, 
-               const std::vector<std::string> & new_tokens,
-               bool utf8) const
-    {
-      value_store = boost::lexical_cast<T>(idx(new_tokens, 0));
-    }
-    bool apply_default(boost::any & value_store) const { return false; }
-    void notify(const boost::any& value_store) const {}
-  };
-  template<typename T>
-  struct repeated_value : public po::value_semantic
-  {
-    std::string name() const { return ""; }
-    unsigned min_tokens() const { return 1; }
-    unsigned max_tokens() const { return 1; }
-    bool is_composing() const { return false; }
-    void parse(boost::any & value_store, 
-               const std::vector<std::string> & new_tokens,
-               bool utf8) const
-    {
-      if (value_store.empty())
-        value_store = std::vector<T>();
-      std::vector<T> & val(boost::any_cast<std::vector<T>&>(value_store));
-      val.push_back(boost::lexical_cast<T>(idx(new_tokens, 0)));
-    }
-    bool apply_default(boost::any & value_store) const { return false; }
-    void notify(const boost::any& value_store) const {}
-  };
-  
-  template<typename T>
-  struct value
-  {
-    po::value_semantic * operator ()()
-    {
-      return new repeatable_value<T>();
-    }
-  };
-  template<typename T>
-  struct value<std::vector<T> >
-  {
-    po::value_semantic * operator ()()
-    {
-      return new repeated_value<T>();
-    }
-  };
-  template<>
-  struct value<nil>
-  {
-    po::value_semantic * operator ()()
-    {
-      return new argless_value();
-    }
-  };
+#     define OPTSET(name)
+#     define OPTVAR(optset, type, name, default_) \
+      val[&opts:: optset ].push_back(&options::reset_ ## name );
+#     define OPTION(optset, name, hasarg, optstring, description)
+#     define OPTSET_REL(parent, child)
 
-  // the options below are also declared in options.hh for other users.  the
-  // GOPT and COPT defines are just to reduce duplication, maybe there is a
-  // cleaner way to do the same thing?
+#     include "options_list.hh"
 
-  const char *localize_string(const char *str)
-  {
-    localize_monotone();
-    return gettext(str);
+#     undef OPTSET
+#     undef OPTVAR
+#     undef OPTION
+#     undef OPTSET_REL
+
+      first = false;
+    }
+  return val;
+}
+
+
+options::options()
+{
+# define OPTSET(name)
+# define OPTVAR(group, type, name, default_)	\
+    name = type ( default_ );
+# define OPTION(optset, name, hasarg, optstring, description)	\
+    name ## _given = false;
+# define OPTSET_REL(parent, child)
+
+# include "options_list.hh"
+
+# undef OPTSET
+# undef OPTVAR
+# undef OPTION
+# undef OPTSET_REL
+}
+
+static options::options_type
+collect_children(options::static_options_fun opt)
+{
+  options::options_type out;
+  set<options::static_options_fun> const & ch = options::children()[opt];
+  for (set<options::static_options_fun>::const_iterator i = ch.begin();
+       i != ch.end(); ++i)
+    {
+      if (*i != opt)
+	out = out | (*(*i))();
+    }
+  return out;
+}
+
+void options::reset_optset(options::static_options_fun opt)
+{
+  list<void(options::*)()> const & vars = var_membership()[opt];
+  for (list<void(options::*)()>::const_iterator i = vars.begin();
+       i != vars.end(); ++i)
+    {
+      (this->*(*i))();
+    }
+}
+
+options::options_type const & options::opts::none()
+{
+  static options::options_type val;
+  return val;
+}
+
+options::options_type const & options::opts::all_options()
+{
+  static options::options_type val = collect_children(&options::opts::all_options);
+  return val;
+}
+
+# define OPTSET(name) \
+  options::options_type const & options::opts::name()			\
+  {									\
+    static options::options_type val =					\
+      collect_children(&options::opts::name)				\
+      | options::option_type("", #name, false, 0,                       \
+			     &options::reset_optset_ ## name );		\
+    return val;								\
+  }									\
+  void options::reset_optset_ ## name ()				\
+  {									\
+    reset_optset(&opts:: name);						\
   }
 
-  // global options
-#define GOPT(NAME, OPT, TYPE, DESC) global<TYPE > NAME(new option_description(OPT, value<TYPE >()(), localize_string(DESC)))
-  // command-specific options
-#define COPT(NAME, OPT, TYPE, DESC) specific<TYPE > NAME(new option_description(OPT, value<TYPE >()(), localize_string(DESC)))
-#include "options_list.hh"
-#undef OPT
-#undef COPT
+# define OPTVAR(optset, type, name, default_)		      \
+  void options::reset_ ## name ()			      \
+  {							      \
+    name = type ( default_ );				      \
+  }
+
+# define OPTION(optset, name, hasarg, optstring, description)		\
+  options::options_type const & options::opts::name()			\
+  {									\
+    static options::options_type val(optstring,				\
+				     gettext(description), hasarg,	\
+				     &options::set_ ## name ,		\
+				     &options::reset_opt_ ## name );	\
+    return val;								\
+  }									\
+  void options::reset_opt_ ## name ()					\
+  {									\
+    name ## _given = false;						\
+    reset_optset(&opts:: name);						\
+  }									\
+  void options::set_ ## name (std::string arg)   			\
+  {									\
+    name ## _given = true;						\
+    real_set_ ## name (arg);						\
+  }									\
+  void options::real_set_ ## name (std::string arg)
+
+# define OPTSET_REL(parent, child)
+
+#define option_bodies
+# include "options_list.hh"
+#undef option_bodies
+
+# undef OPTSET
+# undef OPTVAR
+# undef OPTION
+# undef OPTSET_REL
+
+
+option::option_set<options>
+operator | (option::option_set<options> const & opts,
+	    option::option_set<options> const & (*fun)())
+{
+  return opts | fun();
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

@@ -1219,8 +1219,8 @@ import_cvs_repo(system_path const & cvsroot,
   }
 
   cvs_history cvs;
-  N(app.branch_name() != "", F("need base --branch argument for importing"));
-  cvs.base_branch = app.branch_name();
+  N(app.opts.branch_name() != "", F("need base --branch argument for importing"));
+  cvs.base_branch = app.opts.branch_name();
 
   // push the trunk
   cvs.trunk = shared_ptr<cvs_branch>(new cvs_branch());

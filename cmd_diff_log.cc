@@ -209,8 +209,8 @@ do_external_diff(cset const & cs,
                                  data_old,
                                  data_new,
                                  is_binary,
-                                 app.diff_args_provided,
-                                 app.diff_args(),
+                                 app.opts.external_diff_args_given,
+                                 app.opts.external_diff_args,
                                  delta_entry_src(i).inner()(),
                                  delta_entry_dst(i).inner()());
     }
@@ -250,7 +250,7 @@ dump_diffs(cset const & cs,
         }
 
       std::string pattern("");
-      if (app.diff_show_encloser)
+      if (!app.opts.no_show_encloser)
         app.lua.hook_get_encloser_pattern(file_path(i->first),
                                           pattern);
 
@@ -259,7 +259,7 @@ dump_diffs(cset const & cs,
                 i->second,
                 i->second,
                 data(), unpacked,
-                cout, app.diff_format, pattern);
+                cout, app.opts.diff_format, pattern);
     }
 
   map<split_path, split_path> reverse_rename_map;
@@ -306,7 +306,7 @@ dump_diffs(cset const & cs,
         src_path = re->second;
 
       std::string pattern("");
-      if (app.diff_show_encloser)
+      if (!app.opts.no_show_encloser)
         app.lua.hook_get_encloser_pattern(file_path(src_path),
                                           pattern);
 
@@ -315,7 +315,7 @@ dump_diffs(cset const & cs,
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                cout, app.diff_format, pattern);
+                cout, app.opts.diff_format, pattern);
     }
 }
 
@@ -333,15 +333,15 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     "If one revision is given, the diff between the workspace and\n"
     "that revision is shown.  If two revisions are given, the diff between\n"
     "them is given.  If no format is specified, unified is used by default."),
-    option::revision % option::depth % option::exclude % option::unified_diff
-    % option::context_diff % option::external_diff % option::external_diff_args)
+    options::opts::revision | options::opts::depth | options::opts::exclude
+    | options::opts::diff_options)
 {
   bool new_is_archived;
   ostringstream header;
   temp_node_id_source nis;
 
-  if (app.diff_args_provided)
-    N(app.diff_format == external_diff,
+  if (app.opts.external_diff_args_given)
+    N(app.opts.diff_format == external_diff,
       F("--diff-args requires --external\n"
         "try adding --external or removing --diff-args?"));
 
@@ -349,12 +349,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
 
   // initialize before transaction so we have a database to work with.
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
-  else if (app.revision_selectors.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     app.require_workspace();
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
       roster_t new_roster, old_roster;
       revision_id old_rid;
@@ -363,8 +363,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.work.get_revision_id(old_rid);
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns),
-                            app.depth,
+                            args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -375,12 +375,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       new_is_archived = false;
       header << "# old_revision [" << old_rid << "]" << "\n";
     }
-  else if (app.revision_selectors.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     {
       roster_t new_roster, old_roster;
       revision_id r_old_id;
 
-      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
+      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
@@ -392,8 +392,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns), 
-                            app.depth,
+                            args_to_paths(app.opts.exclude_patterns), 
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -404,13 +404,13 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]" << "\n";
     }
-  else if (app.revision_selectors.size() == 2)
+  else if (app.opts.revision_selectors.size() == 2)
     {
       roster_t new_roster, old_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
-      complete(app, idx(app.revision_selectors, 1)(), r_new_id);
+      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
@@ -421,8 +421,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_new_id, new_roster);
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns),
-                            app.depth,
+                            args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
@@ -478,7 +478,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   cout << "# " << "\n";
 
-  if (app.diff_format == external_diff) {
+  if (app.opts.diff_format == external_diff) {
     do_external_diff(included, app, new_is_archived);
   } else
     dump_diffs(included, app, new_is_archived);
@@ -541,30 +541,30 @@ log_certs(app_state & app, revision_id id, cert_name name)
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    option::last % option::next % option::revision % option::brief
-    % option::diffs % option::no_merges % option::no_files)
+    options::opts::last | options::opts::next | options::opts::revision | options::opts::brief
+    | options::opts::diffs | options::opts::no_merges | options::opts::no_files)
 {
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
 
   temp_node_id_source nis;
   set<revision_id> frontier;
   revision_id first_rid;
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
       app.work.get_revision_id(first_rid);
       frontier.insert(first_rid);
     }
   else
     {
-      for (vector<utf8>::const_iterator i = app.revision_selectors.begin();
-           i != app.revision_selectors.end(); i++)
+      for (vector<utf8>::const_iterator i = app.opts.revision_selectors.begin();
+           i != app.opts.revision_selectors.end(); i++)
         {
           set<revision_id> rids;
           complete(app, (*i)(), rids);
           frontier.insert(rids.begin(), rids.end());
-          if (i == app.revision_selectors.begin())
+          if (i == app.opts.revision_selectors.begin())
             first_rid = *rids.begin();
         }
     }
@@ -576,7 +576,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // User wants to trace only specific files
       roster_t old_roster, new_roster;
 
-      if (app.revision_selectors.size() == 0)
+      if (app.opts.revision_selectors.size() == 0)
         app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
       else
         app.db.get_roster(first_rid, new_roster);
@@ -584,8 +584,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // FIXME_RESTRICTIONS: should this add paths from the rosters of
       // all selected revs?
       mask = node_restriction(args_to_paths(args),
-                              args_to_paths(app.exclude_patterns), 
-                              app.depth,
+                              args_to_paths(app.opts.exclude_patterns), 
+                              app.opts.depth,
                               old_roster, new_roster, app);
     }
 
@@ -597,8 +597,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   cert_name comment_name(comment_cert_name);
 
   set<revision_id> seen;
-  long last = app.last;
-  long next = app.next;
+  long last = app.opts.last;
+  long next = app.opts.next;
 
   N(last == -1 || next == -1,
     F("only one of --last/--next allowed"));
@@ -648,7 +648,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   if (roster.has_node(*n) && mask.includes(roster, *n))
                     {
                       print_this = true;
-                      if (app.diffs)
+                      if (app.opts.diffs)
                         {
                           split_path sp;
                           roster.get_name(*n, sp);
@@ -673,12 +673,12 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    inserter(next_frontier, next_frontier.end()));
             }
 
-          if (app.no_merges && rev.is_merge_node())
+          if (app.opts.no_merges && rev.is_merge_node())
             print_this = false;
 
           if (print_this)
           {
-            if (app.brief)
+            if (app.opts.brief)
               {
                 cout << rid;
                 log_certs(app, rid, author_name);
@@ -712,7 +712,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 log_certs(app, rid, branch_name, "Branch: ", false);
                 log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-                if (!app.no_files && !csum.cs.empty())
+                if (!app.opts.no_files && !csum.cs.empty())
                   {
                     cout << "\n";
                     csum.print(cout, 70);
@@ -723,7 +723,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 log_certs(app, rid, comment_name,   "Comments: ",  true);
               }
 
-            if (app.diffs)
+            if (app.opts.diffs)
               {
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)

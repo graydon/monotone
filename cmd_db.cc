@@ -60,7 +60,7 @@ CMD(db, N_("database"),
       "regenerate_rosters\n"
       "set_epoch BRANCH EPOCH\n"),
     N_("manipulate database state"),
-    option::drop_attr)
+    options::opts::drop_attr)
 {
   if (args.size() == 1)
     {
@@ -121,7 +121,7 @@ CMD(db, N_("database"),
 
 CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
     N_("set the database variable NAME to VALUE, in domain DOMAIN"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -137,7 +137,7 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),
     N_("remove the database variable NAME in domain DOMAIN"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -154,12 +154,12 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
 
 CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("complete partial id"),
-    option::verbose)
+    options::opts::verbose)
 {
   if (args.size() != 2)
     throw usage(name);
 
-  bool verbose = app.verbose;
+  bool verbose = app.opts.verbose;
 
   N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
     F("non-hex digits in partial id"));

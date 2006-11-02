@@ -1,91 +1,80 @@
 #ifndef __OPTIONS_HH__
 #define __OPTIONS_HH__
 
-// Copyright (C) 2005 Richard Levitte <richard@levitte.org>
-//
-// This program is made available under the GNU GPL version 2.0 or
-// greater. See the accompanying file COPYING for details.
-//
-// This program is distributed WITHOUT ANY WARRANTY; without even the
-// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-// PURPOSE.
+#include <list>
 
-#include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
+#include "option.hh"
+#include "paths.hh"
 
-#include <string>
-#include <vector>
 
-namespace option
+struct options
 {
-  using boost::program_options::option_description;
-  using boost::program_options::options_description;
-  using boost::shared_ptr;
-  using std::string;
-  using std::vector;
+  options();
 
-  extern options_description global_options;
-  extern options_description specific_options;
+  typedef boost::function<void()> reset_function;
+  typedef option::option<options> option_type;
+  typedef option::option_set<options> options_type;
+  typedef options_type const & (*static_options_fun)();
 
-  struct option_base
+  static std::map<static_options_fun, std::set<static_options_fun> > &children();
+  static std::map<static_options_fun, std::list<void(options::*)()> > &var_membership();
+
+  void reset_optset(static_options_fun opt);
+
+  struct opts
   {
-    char const * operator()() { return o->long_name().c_str(); }
-    shared_ptr<option_description> ptr() const { return o; }
-  protected:
-    option_base(option_description * p) : o(p) {}
-    shared_ptr<option_description> o;
+    static options_type const & none ();
+    static options_type const & all_options ();
+# define OPTSET(name)	     \
+    static options_type const & name ();
+
+# define OPTVAR(optset, type, name, default_)
+
+#define OPTION(optset, name, hasarg, optstring, description)	 \
+    static options_type const & name ();
+
+# define OPTSET_REL(parent, child)
+
+# include "options_list.hh"
+
+# undef OPTSET
+# undef OPTVAR
+# undef OPTION
+# undef OPTSET_REL
   };
 
-  template<typename T>
-  struct option : public option_base
-  {
-    T const & get(boost::program_options::variables_map const & vm)
-    {
-      boost::program_options::variable_value const & vv(vm[(*this)()]);
-      // Workaround for gcc < 3.4. was return vv.as<T>();
-      return boost::any_cast<const T&>(vv.value());
-    }
-    bool given(boost::program_options::variables_map const & vm)
-    {
-      return vm.count((*this)()) > 0;
-    }
-  protected:
-    option(option_description * p) : option_base(p) {}
-  };
+# define OPTSET(name)				\
+  private:					\
+  void reset_optset_ ## name ();
 
-  template<typename T>
-  struct global : public option<T>
-  {
-    global(option_description * p) : option<T>(p)
-    {
-      global_options.add(this->o);
-    }
-  };
+# define OPTVAR(optset, type, name, default_)	\
+  public:					\
+  type name;					\
+  void reset_ ## name ();
 
-  template<typename T>
-  struct specific : public option<T>
-  {
-    specific(option_description * p) : option<T>(p)
-    {
-      specific_options.add(this->o);
-    }
-  };
+#define OPTION(optset, name, hasarg, optstring, description)	 \
+  public:							 \
+  bool name ## _given;						 \
+private:							 \
+  void set_ ## name (std::string arg);				 \
+  void real_set_ ## name (std::string arg);			 \
+  void reset_opt_ ## name ();
 
-  struct no_option
-  {
-  };
-  struct nil {};
+# define OPTSET_REL(parent, child)
 
-  extern no_option none;
+# include "options_list.hh"
 
-  // global options
-#define GOPT(NAME, OPT, TYPE, DESC) extern global<TYPE > NAME;
-  // command-specific options
-#define COPT(NAME, OPT, TYPE, DESC) extern specific<TYPE > NAME;
-#include "options_list.hh"
-#undef GOPT
-#undef COPT
-}
+# undef OPTSET
+# undef OPTVAR
+# undef OPTION
+# undef OPTSET_REL
+};
+
+option::option_set<options>
+operator | (option::option_set<options> const & opts,
+	    option::option_set<options> const & (*fun)());
+
+#endif
 
 // Local Variables:
 // mode: C++
@@ -94,5 +83,3 @@ namespace option
 // indent-tabs-mode: nil
 // End:
 // vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
-
-#endif // __OPTIONS_HH__

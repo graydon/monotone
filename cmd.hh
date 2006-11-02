@@ -1,7 +1,6 @@
 #ifndef __CMD_HH__
 #define __CMD_HH__
 
-#include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
@@ -19,31 +18,12 @@
 #include "options.hh"
 #include "sanity.hh"
 
+
 namespace commands
 {
   std::string const & hidden_group();
-  using boost::program_options::option_description;
   using boost::shared_ptr;
 
-  struct command_opts
-  {
-    std::set<option::option_base const *> opts;
-    command_opts() {}
-    command_opts & operator%(option::option_base const & p)
-    { opts.insert(&p); return *this; }
-    command_opts & operator%(option::no_option)
-    { return *this; }
-    command_opts & operator%(command_opts const &o)
-    { opts.insert(o.opts.begin(), o.opts.end()); return *this; }
-    boost::program_options::options_description as_desc()
-    {
-      boost::program_options::options_description d;
-      std::set<option::option_base const *>::const_iterator it;
-      for (it = opts.begin(); it != opts.end(); ++it)
-        if ((*it)->ptr() != 0) d.add((*it)->ptr());
-      return d;
-    }
-  };
 
   struct command
   {
@@ -55,13 +35,13 @@ namespace commands
     std::string params_;
     std::string desc_;
     bool use_workspace_options;
-    command_opts options;
+    options::options_type options;
     command(std::string const & n,
             std::string const & g,
             std::string const & p,
             std::string const & d,
             bool u,
-            command_opts const & o);
+            options::options_type const & o);
     virtual ~command();
     virtual std::string params();
     virtual std::string desc();
@@ -144,7 +124,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, params, desc, true,             \
-                          command_opts() % opts)                     \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
@@ -157,12 +137,12 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // Use this for commands that want to define a params() function
 // instead of having a static description. (Good for "automate"
 // and possibly "list".)
-#define CMD_PARAMS_FN(C, group, desc, opts)                        \
+#define CMD_PARAMS_FN(C, group, desc, opts)                          \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, "", desc, true,               \
-                          command_opts() % opts)                     \
+    cmd_ ## C() : command(#C, group, "", desc, true,                 \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
@@ -181,7 +161,7 @@ namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
     cmd_ ## C() : command(#C, group, params, desc, false,            \
-                          command_opts() % opts)                     \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
