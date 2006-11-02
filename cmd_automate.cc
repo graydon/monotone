@@ -282,9 +282,8 @@ struct automate_ostream : public std::ostream
   automate_streambuf _M_autobuf;
   
   automate_ostream(std::ostream &out, size_t blocksize)
-   : std::ostream(&_M_autobuf),
-     _M_autobuf(out, blocksize)
-  {}
+    : _M_autobuf(out, blocksize)
+  { this->init(&_M_autobuf); }
   
   ~automate_ostream()
   {}
