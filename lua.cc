@@ -297,7 +297,7 @@ Lua::push_int(int num)
 }
 
 Lua &
-Lua::push_int(double num)
+Lua::push_double(double num)
 {
   if (failed) return *this;
   I(lua_checkstack (st, 1));
