@@ -98,6 +98,7 @@ namespace option {
     std::string get_usage_str() const;
     void from_command_line(std::vector<std::string> & args, bool allow_xargs = true);
     void from_command_line(int argc, char const * const * argv);
+    void from_key_value_pairs(std::vector<std::pair<std::string, std::string> > const & keyvals);
   };
   concrete_option_set
   operator | (concrete_option const & a, concrete_option const & b);

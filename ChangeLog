@@ -1,3 +1,10 @@
+2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Allow automate commands to take options. Change "automate stdio"
+	error handling (exit instead of returning usage information when
+	given an invalid command line) and bump automate version. Increase
+	default "automate stdio" blocksize to 32k.
+
 2006-11-01  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A fuzzy to fix.

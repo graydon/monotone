@@ -23,7 +23,7 @@ OPT(author, "author", utf8, , gettext_noop("override author for commit"))
 }
 #endif
 
-OPT(automate_stdio_size, "automate-stdio-size", size_t, 1024,
+OPT(automate_stdio_size, "automate-stdio-size", size_t, 32768,
      gettext_noop("block size in bytes for \"automate stdio\" output"))
 #ifdef option_bodies
 {
@@ -264,6 +264,15 @@ GOPT(help, "help,h", bool, false, gettext_noop("display help message"))
 }
 #endif
 
+OPTVAR(include, std::vector<utf8>, include_patterns, )
+OPTION(include, include, true, "include",
+        gettext_noop("include anything described by its argument"))
+#ifdef option_bodies
+{
+  include_patterns.push_back(utf8(arg));
+}
+#endif
+
 OPTVAR(key, rsa_keypair_id, signing_key, )
 OPTION(globals, key, true, "key,k", gettext_noop("set key for signatures"))
 #ifdef option_bodies
@@ -375,7 +384,7 @@ GOPT(nostd, "nostd", bool, false,
   nostd = true;
 }
 #endif
-
+ 
 GOPT(pidfile, "pid-file", system_path, ,
      gettext_noop("record process id of server"))
 #ifdef option_bodies
