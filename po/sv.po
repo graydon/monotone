@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-02 10:27+0100\n"
-"PO-Revision-Date: 2006-11-02 10:28+0100\n"
+"POT-Creation-Date: 2006-11-02 19:57+0100\n"
+"PO-Revision-Date: 2006-11-02 20:03+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -246,7 +246,7 @@ msgstr "REVID"
 #: automate.cc:1103 automate.cc:1129 automate.cc:1184 automate.cc:1186
 #: cmd_db.cc:35 cmd_diff_log.cc:385 cmd_diff_log.cc:416 cmd_diff_log.cc:418
 #: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:125 cmd_merging.cc:677
-#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:472 commands.cc:390
+#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:472 commands.cc:409
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
@@ -375,26 +375,27 @@ msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "flera grencert funna för revision %s, var god ange en gren"
 
-#: cmd_automate.cc:139 cmd_automate.cc:194 cmd_automate.cc:315
+#: cmd_automate.cc:149 cmd_automate.cc:195 cmd_automate.cc:217
+#: cmd_automate.cc:340
 #, c-format
 msgid "Bad input to automate stdio"
 msgstr "felaktigt indata till automate stdio"
 
-#: cmd_automate.cc:158
+#: cmd_automate.cc:168
 #, c-format
 msgid "read from client failed with error code: %d"
 msgstr "läsning från klienten misslyckades med följande felkod: %d"
 
-#: cmd_automate.cc:159
+#: cmd_automate.cc:169
 #, c-format
 msgid "Bad input to automate stdio (unexpected EOF)"
 msgstr "felaktigt indata till automate stdio (oväntat filslut)"
 
-#: cmd_automate.cc:342
+#: cmd_automate.cc:365
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:343
+#: cmd_automate.cc:366
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
@@ -477,7 +478,7 @@ msgstr "det finns inga variabler med namnet %s i domänen %s"
 
 #: cmd_db.cc:155 cmd_diff_log.cc:331 cmd_diff_log.cc:541 cmd_files.cc:114
 #: cmd_files.cc:181 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:366
-#: commands.cc:252
+#: commands.cc:271
 msgid "informative"
 msgstr "informativ"
 
@@ -641,27 +642,27 @@ msgstr "skriv ut angiven fil från databasen"
 msgid "no file '%s' found in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
 
-#: cmd.hh:88
+#: cmd.hh:89
 #, c-format
 msgid "non-hex digits in id"
 msgstr "något tecken i identiteten är inte hexadecimalt"
 
-#: cmd.hh:97
+#: cmd.hh:98
 #, c-format
 msgid "partial id '%s' does not have an expansion"
 msgstr "den partiella identiteten '%s' matchar inte befintliga identiteter"
 
-#: cmd.hh:101
+#: cmd.hh:102
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:"
 msgstr "den partiella identiteten '%s' har mer än en uttydning:"
 
-#: cmd.hh:109
+#: cmd.hh:110
 #, c-format
 msgid "expanded partial id '%s' to '%s'"
 msgstr "expanderade partiell identitet '%s' till '%s'"
 
-#: cmd.hh:193
+#: cmd.hh:195
 #, c-format
 msgid "Alias for %s"
 msgstr "Synonym för %s"
@@ -1752,53 +1753,53 @@ msgstr ""
 msgid "refresh the inodeprint cache"
 msgstr "uppdatera inodeprint-cachen"
 
-#: commands.cc:131 commands.cc:233
+#: commands.cc:135 commands.cc:237
 #, c-format
 msgid "unknown command '%s'"
 msgstr "okänt kommando '%s'"
 
-#: commands.cc:142
+#: commands.cc:146
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:"
 msgstr "kommandot '%s' har mer än en betydelse:"
 
-#: commands.cc:175
+#: commands.cc:179
 msgid "commands:"
 msgstr "kommandon:"
 
-#: commands.cc:252
+#: commands.cc:271
 msgid "command [ARGS...]"
 msgstr "kommandon [ARGUMENT...]"
 
-#: commands.cc:253
+#: commands.cc:272
 msgid "display command help"
 msgstr "skriv ut hjälptext"
 
-#: commands.cc:397
+#: commands.cc:416
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expanderar valet '%s'"
 
-#: commands.cc:405
+#: commands.cc:424
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "det finns inget som matchar '%s'"
 
-#: commands.cc:411
+#: commands.cc:430
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expanderar till '%s'"
 
-#: commands.cc:428
+#: commands.cc:447
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "valet '%s' har mer än en möjlig betydelse:"
 
-#: commands.cc:445
+#: commands.cc:464
 msgid "note: "
 msgstr "obs: "
 
-#: commands.cc:446
+#: commands.cc:465
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1807,7 +1808,7 @@ msgstr ""
 "grenen '%s' har mer än ett löv\n"
 "du kanske borde överväga '%s merge'"
 
-#: commands.cc:461
+#: commands.cc:480
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message och --message-file får inte anges samtidigt"
@@ -2536,12 +2537,12 @@ msgstr "nodnivån är %d, vilket överskrider maxgränsen %d"
 msgid "mismatched node hash value %s, expected %s"
 msgstr "nodens kontrollsumma %s stämmer inte, %s förväntad"
 
-#: monotone.cc:273
+#: monotone.cc:274
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Användning: %s [FLAGGOR...] kommando [ARGUMENT...]"
 
-#: monotone.cc:281
+#: monotone.cc:282
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3053,7 +3054,7 @@ msgstr "ange annan upphovsman till ändringarna"
 msgid "block size in bytes for \"automate stdio\" output"
 msgstr "blockstorlek för utdata från \"automate stdio\", i antal byte"
 
-#: options_list.hh:32 options_list.hh:300 options_list.hh:343
+#: options_list.hh:32 options_list.hh:309 options_list.hh:352
 #, c-format
 msgid "cannot be zero or negative"
 msgstr "får ej vara noll eller negativt"
@@ -3151,113 +3152,117 @@ msgstr "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
 msgid "display help message"
 msgstr "skriv ut extra hjälptext"
 
-#: options_list.hh:268
+#: options_list.hh:269
+msgid "include anything described by its argument"
+msgstr "ta med allt allt som matchar argumentet"
+
+#: options_list.hh:277
 msgid "set key for signatures"
 msgstr "ange nyckel att signera med"
 
-#: options_list.hh:276
+#: options_list.hh:285
 msgid "set location of key store"
 msgstr "ange i vilken katalog nycklarna finns"
 
-#: options_list.hh:285
+#: options_list.hh:294
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "skicka med angiven nyckel även om den inte använts för att signera"
 
-#: options_list.hh:295
+#: options_list.hh:304
 msgid "limit log output to the last number of entries"
 msgstr "begränsa loggutskriften till detta antal poster bakåt i tiden"
 
-#: options_list.hh:304
+#: options_list.hh:313
 msgid "file to write the log to"
 msgstr "fil att skriva ut loggen till"
 
-#: options_list.hh:315
+#: options_list.hh:324
 msgid "set commit changelog message"
 msgstr "ange loggmeddelandet för arkivering"
 
-#: options_list.hh:322
+#: options_list.hh:331
 msgid "set filename containing commit changelog message"
 msgstr "ange filnamnet som innehåller loggmeddelandet för arkivering"
 
-#: options_list.hh:330
+#: options_list.hh:339
 msgid "perform the operations for files missing from workspace"
 msgstr "genomför operationen på filer som saknas i arbetskatalogen"
 
-#: options_list.hh:338
+#: options_list.hh:347
 msgid "limit log output to the next number of entries"
 msgstr "begränsa loggutskriften till detta antal poster framåt i tiden"
 
-#: options_list.hh:348
+#: options_list.hh:357
 msgid "exclude files when printing logs"
 msgstr ""
 "ta ej med vilka filer som lagts till, tagits bort eller ändrats i loggen"
 
-#: options_list.hh:356
+#: options_list.hh:365
 msgid "exclude merges when printing logs"
 msgstr "ta ej med ihopslagningar i loggen"
 
-#: options_list.hh:364
+#: options_list.hh:373
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
 
-#: options_list.hh:372
+#: options_list.hh:381
 msgid "do not load standard lua hooks"
 msgstr "använd inte standard-lua-rutinerna"
 
-#: options_list.hh:380
+#: options_list.hh:389
 msgid "record process id of server"
 msgstr "spara serverns process-ID i denna fil"
 
-#: options_list.hh:388
+#: options_list.hh:397
 msgid "suppress verbose, informational and progress messages"
 msgstr "skriv inte ut informations- eller förloppsmeddelanden"
 
-#: options_list.hh:398
+#: options_list.hh:407
 msgid "load extra rc file"
 msgstr "använd denna lua-fil"
 
-#: options_list.hh:406
+#: options_list.hh:415
 msgid "suppress warning, verbose, informational and progress messages"
 msgstr "skriv inte ut varningar eller informations- eller förloppsmeddelanden"
 
-#: options_list.hh:416
+#: options_list.hh:425
 msgid "also operate on the contents of any listed directories"
 msgstr "ta även med innehållet för varje listad katalog"
 
-#: options_list.hh:425
+#: options_list.hh:434
 msgid "select revision id for operation"
 msgstr "ange den revision som operationen ska utföras på"
 
-#: options_list.hh:433
+#: options_list.hh:442
 msgid "limit search for workspace to specified root"
 msgstr "begränsa sökningen efter arbetskopian till denna katalog"
 
-#: options_list.hh:441
+#: options_list.hh:450
 msgid "use the current arguments as the future default"
 msgstr "använd de givna argumenten som framtida standardvärden"
 
-#: options_list.hh:449
+#: options_list.hh:458
 msgid "set ticker style (count|dot|none)"
 msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
 
-#: options_list.hh:460
+#: options_list.hh:469
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "argumentet måste vara 'none', 'dot' eller 'count'"
 
-#: options_list.hh:465
+#: options_list.hh:474
 msgid "perform the operations for unknown files from workspace"
 msgstr "genomför operationen på okända filer i arbetskatalogen"
 
-#: options_list.hh:473
+#: options_list.hh:482
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: options_list.hh:481
+#: options_list.hh:490
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: options_list.hh:489
+#: options_list.hh:498
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
