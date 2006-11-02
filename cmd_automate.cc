@@ -13,8 +13,11 @@
 
 #include "cmd.hh"
 
+using std::istream;
+using std::make_pair;
 using std::map;
 using std::ostream;
+using std::pair;
 using std::string;
 using std::vector;
 
@@ -51,7 +54,7 @@ automate_command(utf8 cmd, vector<utf8> args,
     i->second->run(args, root_cmd_name, app, output);
 }
 
-static string const interface_version = "3.1";
+static string const interface_version = "4.0";
 
 // Name: interface_version
 // Arguments: none
@@ -113,8 +116,8 @@ AUTOMATE(interface_version, "")
 
 class automate_reader
 {
-  std::istream & in;
-  enum location {cmd, none, eof};
+  istream & in;
+  enum location {opt, cmd, none, eof};
   location loc;
   bool get_string(std::string & out)
   {
@@ -163,12 +166,13 @@ class automate_reader
   {
     if (loc == eof)
       return;
-    std::string starters("l");
-    std::string foo;
+    string starters("ol");
+    string whitespace(" \r\n\t");
+    string foo;
     while (loc != none)
       get_string(foo);
     char c('e');
-    while (starters.find(c) == std::string::npos)
+    while (whitespace.find(c) != std::string::npos)
       {
         if (read(&c, 1, true) == 0)
           {
@@ -176,21 +180,37 @@ class automate_reader
             return;
           }
       }
+    if (read(&c, 1, true) == 0)
+      {
+        loc = eof;
+        return;
+      }
     switch (c)
       {
+      case 'o': loc = opt; break;
       case 'l': loc = cmd; break;
+      default: E(false, F("Bad input to automate stdio"));
       }
   }
 public:
-  automate_reader(std::istream & is) : in(is), loc(none)
+  automate_reader(istream & is) : in(is), loc(none)
   {}
-  bool get_command(std::vector<std::string> & cmdline)
+  bool get_command(vector<pair<string, string> > & params,
+                   vector<string> & cmdline)
   {
+    params.clear();
     cmdline.clear();
     while (loc == none)
       go_to_next_item();
     if (loc == eof)
       return false;
+    else if (loc == opt)
+      {
+        string key, val;
+        while(get_string(key) && get_string(val))
+          params.push_back(make_pair(key, val));
+        go_to_next_item();
+      }
     E(loc == cmd, F("Bad input to automate stdio"));
     string item;
     while (get_string(item))
@@ -307,8 +327,9 @@ AUTOMATE(stdio, "")
     throw usage(help_name);
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);
+  vector<pair<string, string> > params;
   vector<string> cmdline;
-  while(ar.get_command(cmdline))//while(!EOF)
+  while(ar.get_command(params, cmdline))//while(!EOF)
     {
       utf8 cmd;
       vector<utf8> args;
@@ -321,12 +342,10 @@ AUTOMATE(stdio, "")
         }
       try
         {
+          option::concrete_option_set opts;
+          opts = options::opts::all_options().instantiate(&app.opts);
+          opts.from_key_value_pairs(params);
           automate_command(cmd, args, help_name, app, os);
-        }
-      catch(usage &)
-        {
-          os.set_err(1);
-          commands::explain_usage(help_name, os);
         }
       catch(informative_failure & f)
         {
@@ -342,7 +361,8 @@ AUTOMATE(stdio, "")
 
 CMD_PARAMS_FN(automate, N_("automation"),
               N_("automation interface"),
-    options::opts::automate_stdio_size)
+              /*options::opts::automate_stdio_size*/
+              options::opts::all_options)
 {
   if (args.size() == 0)
     throw usage(name);
