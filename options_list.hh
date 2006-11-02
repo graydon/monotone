@@ -1,10 +1,10 @@
 #define OPT(name, string, type, default_, description)			\
   OPTVAR(name, type, name, default_)					\
-  OPTION(name, name, has_arg<type>(), string, description)
+  OPTION(name, name, has_arg<type >(), string, description)
 
 #define GOPT(name, string, type, default_, description)			\
   OPTVAR(globals, type, name, default_)					\
-  OPTION(globals, name, has_arg<type>(), string, description)
+  OPTION(globals, name, has_arg<type >(), string, description)
 
 OPTSET(globals)
 

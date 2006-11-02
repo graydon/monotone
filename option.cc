@@ -249,7 +249,7 @@ getopt(map<string, concrete_option> const & by_name, string const & name)
   if (i != by_name.end())
     return i->second;
   else
-    throw option::unknown_option(name);
+    throw unknown_option(name);
 }
 
 void concrete_option_set::from_command_line(std::vector<std::string> & args,
@@ -397,7 +397,7 @@ static vector<string> wordwrap(string str, unsigned int width)
 
 // Get the non-description part of the usage string,
 // looks like "--long [ -s ] <arg>".
-static string usagestr(option::concrete_option const & opt)
+static string usagestr(concrete_option const & opt)
 {
   string out;
   if (opt.longname == "--")

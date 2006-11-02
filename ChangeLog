@@ -1,3 +1,7 @@
+2006-11-02  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	*  cmd_automate.cc, option.cc, options_list.hh: fixes for sun studio
+
 2006-11-01  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A fuzzy to fix.
