@@ -26,8 +26,9 @@ namespace automation {
   // guarantees about initialization order. So, use something we can
   // initialize ourselves.
   static map<string, automate * const> * automations;
-  automate::automate(string const &n, string const &p)
-   : name(n), params(p)
+  automate::automate(string const &n, string const &p,
+                     options::options_type const & o)
+    : name(n), params(p), options(o)
   {
     static bool first(true);
     if (first)
@@ -40,18 +41,24 @@ namespace automation {
   automate::~automate() {}
 }
 
+automation::automate &
+find_automation(utf8 const & name, string const & root_cmd_name)
+{
+  map<string, automation::automate * const>::const_iterator
+    i = automation::automations->find(name());
+  if (i == automation::automations->end())
+    throw usage(root_cmd_name);
+  else
+    return *(i->second);
+}
+
 void
 automate_command(utf8 cmd, vector<utf8> args,
                  string const & root_cmd_name,
                  app_state & app,
                  ostream & output)
 {
-  map<string, automation::automate * const>::const_iterator
-    i = automation::automations->find(cmd());
-  if (i == automation::automations->end())
-    throw usage(root_cmd_name);
-  else
-    i->second->run(args, root_cmd_name, app, output);
+  find_automation(cmd, root_cmd_name).run(args, root_cmd_name, app, output);
 }
 
 static string const interface_version = "4.0";
@@ -65,7 +72,7 @@ static string const interface_version = "4.0";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version, "")
+AUTOMATE(interface_version, "", options::opts::none)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -172,7 +179,7 @@ class automate_reader
     while (loc != none)
       get_string(foo);
     char c('e');
-    while (whitespace.find(c) != std::string::npos)
+    do
       {
         if (read(&c, 1, true) == 0)
           {
@@ -180,11 +187,7 @@ class automate_reader
             return;
           }
       }
-    if (read(&c, 1, true) == 0)
-      {
-        loc = eof;
-        return;
-      }
+    while (whitespace.find(c) != std::string::npos);
     switch (c)
       {
       case 'o': loc = opt; break;
@@ -200,7 +203,7 @@ public:
   {
     params.clear();
     cmdline.clear();
-    while (loc == none)
+    if (loc == none)
       go_to_next_item();
     if (loc == eof)
       return false;
@@ -302,8 +305,8 @@ struct automate_ostream : public std::ostream
   automate_streambuf _M_autobuf;
   
   automate_ostream(std::ostream &out, size_t blocksize)
-    : _M_autobuf(out, blocksize)
-    , std::ostream(NULL)
+    : std::ostream(NULL),
+      _M_autobuf(out, blocksize)
   { this->init(&_M_autobuf); }
   
   ~automate_ostream()
@@ -321,7 +324,7 @@ struct automate_ostream : public std::ostream
 };
 
 
-AUTOMATE(stdio, "")
+AUTOMATE(stdio, "", options::opts::automate_stdio_size)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -342,9 +345,9 @@ AUTOMATE(stdio, "")
         }
       try
         {
-          option::concrete_option_set opts;
-          opts = options::opts::all_options().instantiate(&app.opts);
-          opts.from_key_value_pairs(params);
+          options::options_type opts = options::opts::globals();
+          opts = opts | find_automation(cmd, help_name).options;
+          opts.instantiate(&app.opts).from_key_value_pairs(params);
           automate_command(cmd, args, help_name, app, os);
         }
       catch(informative_failure & f)
@@ -359,10 +362,9 @@ AUTOMATE(stdio, "")
 }
 
 
-CMD_PARAMS_FN(automate, N_("automation"),
-              N_("automation interface"),
-              /*options::opts::automate_stdio_size*/
-              options::opts::all_options)
+CMD_WITH_SUBCMDS(automate, N_("automation"),
+                 N_("automation interface"),
+                 options::opts::none)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -389,6 +391,14 @@ std::string commands::cmd_automate::params()
         out += "\n";
     }
   return out;
+}
+
+options::options_type
+commands::cmd_automate::get_options(vector<utf8> const & args)
+{
+  if (args.size() < 2)
+    return options::options_type();
+  return find_automation(idx(args,1), idx(args,0)()).options;
 }
 
 

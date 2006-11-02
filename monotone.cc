@@ -136,12 +136,13 @@ string read_options(options & opts, vector<string> args)
   string cmd;
   if (!opts.args.empty())
     cmd = commands::complete_command(idx(opts.args, 0)());
-  optset.reset();
 
   // reparse options, now that we know what command-specific
   // options are allowed.
 
-  options::options_type cmdopts = commands::command_options(cmd);
+  options::options_type cmdopts = commands::command_options(opts.args);
+  optset.reset();
+
   optset = (options::opts::globals() | cmdopts).instantiate(&opts);
   optset.from_command_line(args, false);
 
@@ -275,7 +276,7 @@ cpp_main(int argc, char ** argv)
 
       // Make sure to hide documentation that's not part of
       // the current command.
-      options::options_type cmd_options = commands::command_options(u.which);
+      options::options_type cmd_options = commands::toplevel_command_options(u.which);
       if (!cmd_options.empty())
         {
           usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";

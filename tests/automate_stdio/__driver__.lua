@@ -8,9 +8,11 @@ check(mtn("automate", "stdio"), 1, false, false, "l5:aaaaaaaa")
 check(mtn("automate", "stdio"), 1, false, false, "xl6:leavese")
 check(mtn("automate", "stdio"), 1, false, false, "o3:key0:exl6:leavese")
 check(mtn("automate", "stdio"), 1, false, false, "o3:ke0:el6:leavese")
+check(mtn("automate", "stdio"), 1, false, false, "o6:author3:fooe l6:leavese")
 
 -- not broken
 check(mtn("automate", "stdio"), 0, false, false, "o3:key0:el6:leavese")
+check(mtn("automate", "stdio"), 0, false, false, "o3:key0:e l6:leavese")
 
 function parse_stdio(dat, which)
   local got = {}

@@ -61,7 +61,7 @@ using std::vector;
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the branch does not exist, prints nothing.  (There are
 //   no heads.)
-AUTOMATE(heads, N_("[BRANCH]"))
+AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -85,7 +85,7 @@ AUTOMATE(heads, N_("[BRANCH]"))
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
+AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -132,7 +132,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"))
+AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -180,7 +180,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"))
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
+AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
 {
   set<revision_id> revs;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -212,7 +212,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"))
 //
 // Error conditions: If the file name has no attributes, prints only the 
 //                   format version, if the file is unknown, escalates
-AUTOMATE(attributes, N_("FILE"))
+AUTOMATE(attributes, N_("FILE"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -321,7 +321,7 @@ AUTOMATE(attributes, N_("FILE"))
 //   newline.  Revisions are printed in topologically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"))
+AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
 {
   set<revision_id> revs;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -353,7 +353,7 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"))
 //   newline.  Revisions are printed in topologically sorted order.
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
-AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
+AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options::opts::none)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -392,7 +392,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"))
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-AUTOMATE(leaves, "")
+AUTOMATE(leaves, "", options::opts::none)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -420,7 +420,7 @@ AUTOMATE(leaves, "")
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(parents, N_("REV"))
+AUTOMATE(parents, N_("REV"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -444,7 +444,7 @@ AUTOMATE(parents, N_("REV"))
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(children, N_("REV"))
+AUTOMATE(children, N_("REV"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -478,7 +478,7 @@ AUTOMATE(children, N_("REV"))
 //   The output as a whole is alphabetically sorted; additionally, the parents
 //   within each line are alphabetically sorted.
 // Error conditions: None.
-AUTOMATE(graph, "")
+AUTOMATE(graph, "", options::opts::none)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -521,7 +521,7 @@ AUTOMATE(graph, "")
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-AUTOMATE(select, N_("SELECTOR"))
+AUTOMATE(select, N_("SELECTOR"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -703,7 +703,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-AUTOMATE(inventory, "")
+AUTOMATE(inventory, "", options::opts::none)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -890,7 +890,7 @@ AUTOMATE(inventory, "")
 //   the same type will be sorted by the filename they refer to.
 // Error conditions: If the revision specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
-AUTOMATE(get_revision, N_("[REVID]"))
+AUTOMATE(get_revision, N_("[REVID]"), options::opts::none)
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -934,7 +934,7 @@ AUTOMATE(get_revision, N_("[REVID]"))
 //   on. This is the value stored in _MTN/revision
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_base_revision_id, "")
+AUTOMATE(get_base_revision_id, "", options::opts::none)
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -955,7 +955,7 @@ AUTOMATE(get_base_revision_id, "")
 //   files in the workspace.
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
-AUTOMATE(get_current_revision_id, "")
+AUTOMATE(get_current_revision_id, "", options::opts::none)
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -1020,7 +1020,7 @@ AUTOMATE(get_current_revision_id, "")
 //
 // Error conditions: If the revision ID specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
-AUTOMATE(get_manifest_of, N_("[REVID]"))
+AUTOMATE(get_manifest_of, N_("[REVID]"), options::opts::none)
 {
   if (args.size() > 1)
     throw usage(help_name);
@@ -1063,7 +1063,7 @@ AUTOMATE(get_manifest_of, N_("[REVID]"))
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file, N_("FILEID"))
+AUTOMATE(get_file, N_("FILEID"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1089,7 +1089,7 @@ AUTOMATE(get_file, N_("FILEID"))
 //
 // Error conditions: If the revision id specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
-AUTOMATE(packet_for_rdata, N_("REVID"))
+AUTOMATE(packet_for_rdata, N_("REVID"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1115,7 +1115,7 @@ AUTOMATE(packet_for_rdata, N_("REVID"))
 //
 // Error conditions: If the revision id specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
-AUTOMATE(packets_for_certs, N_("REVID"))
+AUTOMATE(packets_for_certs, N_("REVID"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1142,7 +1142,7 @@ AUTOMATE(packets_for_certs, N_("REVID"))
 //
 // Error conditions: If the file id specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
-AUTOMATE(packet_for_fdata, N_("FILEID"))
+AUTOMATE(packet_for_fdata, N_("FILEID"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
@@ -1169,7 +1169,7 @@ AUTOMATE(packet_for_fdata, N_("FILEID"))
 //
 // Error conditions: If any of the file ids specified are unknown or
 // invalid prints an error message to stderr and exits with status 1.
-AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"))
+AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"), options::opts::none)
 {
   if (args.size() != 2)
     throw usage(help_name);
@@ -1203,7 +1203,7 @@ AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"))
 // Error conditions: If any of the revisions do not exist, prints
 //   nothing to stdout, prints an error message to stderr, and exits
 //   with status 1.
-AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
+AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 {
   if (args.size() == 0)
     throw usage(help_name);
@@ -1266,7 +1266,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"))
 //   in alphabetically sorted order.
 // Error conditions:
 //   None.
-AUTOMATE(branches, "")
+AUTOMATE(branches, "", options::opts::none)
 {
   if (args.size() > 0)
     throw usage(help_name);
@@ -1314,7 +1314,7 @@ AUTOMATE(branches, "")
 //   Stanzas are printed in arbitrary order.
 // Error conditions:
 //   A run-time exception is thrown for illegal patterns.
-AUTOMATE(tags, N_("[BRANCH_PATTERN]"))
+AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
 {
   utf8 incl("*");
   bool filtering(false);
@@ -1410,7 +1410,7 @@ namespace
 //
 // Error conditions: If the passphrase is empty or the key already exists,
 // prints an error message to stderr and exits with status 1.
-AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
+AUTOMATE(genkey, N_("KEYID PASSPHRASE"), options::opts::none)
 {
   if (args.size() != 2)
     throw usage(help_name);
@@ -1469,7 +1469,7 @@ AUTOMATE(genkey, N_("KEYID PASSPHRASE"))
 // Sample output (for 'mtn automate get_option branch:
 //   net.venge.monotone
 //
-AUTOMATE(get_option, N_("OPTION"))
+AUTOMATE(get_option, N_("OPTION"), options::opts::none)
 {
   if (!app.opts.unknown && (args.size() < 1))
     throw usage(help_name);
@@ -1515,7 +1515,7 @@ AUTOMATE(get_option, N_("OPTION"))
 // Sample output (for 'mtn automate get_content_changed 3bccff99d08421df72519b61a4dded16d1139c33 ChangeLog):
 //   content_mark [276264b0b3f1e70fc1835a700e6e61bdbe4c3f2f]
 //
-AUTOMATE(get_content_changed, N_("REV FILE"))
+AUTOMATE(get_content_changed, N_("REV FILE"), options::opts::none)
 {
   if (args.size() != 2)
     throw usage(help_name);
@@ -1575,7 +1575,7 @@ AUTOMATE(get_content_changed, N_("REV FILE"))
 //
 // Sample output (for automate get_corresponding_path 91f25c8ee830b11b52dd356c925161848d4274d0 foo2 dae0d8e3f944c82a9688bcd6af99f5b837b41968; see automate_get_corresponding_path test)
 // file "foo"
-AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"))
+AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
 {
   if (args.size() != 3)
     throw usage(help_name);

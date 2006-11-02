@@ -73,6 +73,10 @@ namespace commands
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
+  options::options_type command::get_options(vector<utf8> const & args)
+  {
+    return options;
+  }
   bool operator<(command const & self, command const & other);
   std::string const & hidden_group()
   {
@@ -235,7 +239,22 @@ namespace commands
       }
   }
 
-  options::options_type command_options(string const & cmd)
+  options::options_type command_options(vector<utf8> const & cmdline)
+  {
+    if (cmdline.empty())
+      return options::options_type();
+    string cmd = complete_command(idx(cmdline,0)());
+    if ((*cmds).find(cmd) != (*cmds).end())
+      {
+        return (*cmds)[cmd]->get_options(cmdline);
+      }
+    else
+      {
+        return options::options_type();
+      }
+  }
+
+  options::options_type toplevel_command_options(string const & cmd)
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {

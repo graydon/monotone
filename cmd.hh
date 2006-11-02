@@ -45,6 +45,7 @@ namespace commands
     virtual ~command();
     virtual std::string params();
     virtual std::string desc();
+    virtual options::options_type get_options(std::vector<utf8> const & args);
     virtual void exec(app_state & app,
                       std::vector<utf8> const & args) = 0;
   };
@@ -137,7 +138,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // Use this for commands that want to define a params() function
 // instead of having a static description. (Good for "automate"
 // and possibly "list".)
-#define CMD_PARAMS_FN(C, group, desc, opts)                          \
+#define CMD_WITH_SUBCMDS(C, group, desc, opts)                       \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
@@ -147,6 +148,7 @@ namespace commands {                                                 \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
     std::string params();                                            \
+    options::options_type get_options(vector<utf8> const & args);    \
   };                                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
@@ -204,7 +206,9 @@ namespace automation {
   {
     std::string name;
     std::string params;
-    automate(std::string const & n, std::string const & p);
+    options::options_type options;
+    automate(std::string const & n, std::string const & p,
+             options::options_type const & o);
     virtual void run(std::vector<utf8> args,
                      std::string const & help_name,
                      app_state & app,
@@ -213,11 +217,13 @@ namespace automation {
   };
 }
 
-#define AUTOMATE(NAME, PARAMS)                                      \
+#define AUTOMATE(NAME, PARAMS, OPTIONS)                             \
 namespace automation {                                              \
   struct auto_ ## NAME : public automate                            \
   {                                                                 \
-    auto_ ## NAME () : automate(#NAME, PARAMS) {}                   \
+    auto_ ## NAME ()                                                \
+      : automate(#NAME, PARAMS, options::options_type() | OPTIONS)  \
+    {}                                                              \
     void run(std::vector<utf8> args, std::string const & help_name, \
                      app_state & app, std::ostream & output) const; \
     virtual ~auto_ ## NAME() {}                                     \

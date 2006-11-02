@@ -558,7 +558,7 @@ namespace
 //   private_location "keystore"
 //
 // Error conditions: None.
-AUTOMATE(keys, "")
+AUTOMATE(keys, "", options::opts::none)
 {
   if (args.size() != 0)
     throw usage(help_name);
@@ -649,7 +649,7 @@ AUTOMATE(keys, "")
 // key, a warning message is printed to stderr. If the revision
 // specified is unknown or invalid prints an error message to stderr
 // and exits with status 1.
-AUTOMATE(certs, N_("REV"))
+AUTOMATE(certs, N_("REV"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(help_name);
