@@ -547,7 +547,7 @@ session::~session()
 {
   if (protocol_state == confirmed_state)
     error_code = no_error;
-  else if (error_code = no_transfer &&
+  else if (error_code == no_transfer &&
            (revs_in || revs_out ||
             certs_in || certs_out ||
             keys_in || keys_out))
