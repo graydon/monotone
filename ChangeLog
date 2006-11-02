@@ -1,3 +1,17 @@
+2006-11-01  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
+2006-10-31  Benoît Dejean  <benoit@placenet.org>
+
+	* std_hooks.lua (ignore_file): Fixed many patterns.
+	Also added gettext and intltool related patterns.
+
+2006-10-31  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (perform_rename): Tweak error message that just annoyed
+	me.
+
 2006-10-26  Richard Levitte  <richard@levitte.org>
 
 	* tests/disapproving_with_message/__driver__.lua (r_sha): New

@@ -129,6 +129,10 @@ function ignore_file(name)
       "%.class$",
       -- python
       "%.pyc$", "%.pyo$",
+      -- gettext
+      "%.g?mo$",
+      -- intltool
+      "%.intltool%-merge%-cache$",
       -- TeX
       "%.aux$",
       -- backup files
@@ -140,16 +144,16 @@ function ignore_file(name)
       -- other VCSes (where metadata is stored in named files):
       "%.scc$",
       -- desktop/directory configuration metadata
-      "^.DS_Store$", "/.DS_Store$", "^desktop.ini$", "/desktop.ini$"
+      "^%.DS_Store$", "/%.DS_Store$", "^desktop%.ini$", "/desktop%.ini$"
    }
 
    local dir_pats = {
       -- autotools detritus:
-      "autom4te.cache", ".deps",
+      "autom4te%.cache", "%.deps", "%.libs",
       -- Cons/SCons detritus:
-      ".consign", ".sconsign",
+      "%.consign", "%.sconsign",
       -- other VCSes (where metadata is stored in named dirs):
-      "CVS", ".svn", "SCCS", "_darcs", ".cdv", ".git", ".bzr", ".hg"
+      "CVS", "%.svn", "SCCS", "_darcs", "%.cdv", "%.git", "%.bzr", "%.hg"
    }
 
    for _, pat in ipairs(file_pats) do
