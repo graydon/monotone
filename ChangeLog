@@ -1,3 +1,9 @@
+2006-11-03  Richard Levitte  <richard@levitte.org>
+
+	* cert.cc (get_user_key): app.opts.key_given is only true when
+	-k is given.  However, the signing key may be given in
+	_MTN/options as well, and that should be respected.
+
 2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Allow commands with subcommands (such as automate) to take

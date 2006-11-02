@@ -446,7 +446,7 @@ void
 get_user_key(rsa_keypair_id & key, app_state & app)
 {
 
-  if (app.opts.key_given)
+  if (app.opts.signing_key() != "")
     {
       key = app.opts.signing_key;
       return;
