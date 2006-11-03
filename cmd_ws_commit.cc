@@ -250,10 +250,16 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"), options::opts::unknown)
+    N_("add files to workspace"),
+    options::opts::unknown | options::opts::no_ignore |
+    options::opts::recursive)
 {
   if (!app.opts.unknown && (args.size() < 1))
     throw usage(name);
+  N(!app.opts.unknown || !app.opts.recursive,
+    F("cannot set unknown and recursive at the same time"));
+  N(!app.opts.unknown || !app.opts.no_ignore,
+    F("cannot set unknown and no-ignore at the same time"));
 
   app.require_workspace();
 
@@ -261,7 +267,8 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
-      path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns), app.opts.depth, app);
+      path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth, app);
       path_set ignored;
 
       // if no starting paths have been specified use the workspace root
@@ -279,8 +286,8 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
         paths.insert(sp);
       }
 
-  bool add_recursive = !app.opts.unknown;
-  app.work.perform_additions(paths, add_recursive);
+  bool add_recursive = app.opts.recursive;
+  app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),

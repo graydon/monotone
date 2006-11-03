@@ -89,7 +89,7 @@ end
 mkdir("foo")
 mkdir("foo/bar")
 patch_files("initial addition of files")
-check(mtn("add", "file1", "file2", "foo"), 0, false, false)
+check(mtn("add", "-R", "file1", "file2", "foo"), 0, false, false)
 commit()
 
 -- check that ls unknown/ignored/missing/known, status, diff, revert and commit

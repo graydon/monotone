@@ -1,0 +1,8 @@
+format_version "1"
+
+dir ""
+
+dir "foo"
+
+   file "testfile0"
+content [5c39de9ca49b3aa34fa21f5778954665d947476c]

@@ -361,6 +361,14 @@ OPT(no_files, "no-files", bool, false,
 }
 #endif
 
+OPT(no_ignore, "no-respect-ignore", bool, false,
+     gettext_noop("do not ignore any files"))
+#ifdef option_bodies
+{
+  no_ignore = true;
+}
+#endif
+
 OPT(no_merges, "no-merges", bool, false,
      gettext_noop("exclude merges when printing logs"))
 #ifdef option_bodies

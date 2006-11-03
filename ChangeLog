@@ -1,5 +1,10 @@
 2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	Make add non-recursive by default, and also give it a
+	--no-respect-ignore switch.
+
+2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Allow commands with subcommands (such as automate) to take
 	different options depending on which subcommand was called.
 	Make AUTOMATE() specify what options are taken. Test (and

@@ -9,8 +9,8 @@ mkdir("dir3")
 -- Check both implicit recursive add...
 writefile("dir1/_MTN/testfile1", "testfile 1")
 writefile("dir2/_MTN", "_MTN file 1")
-check(mtn("add", "dir1"), 0, false, false)
-check(mtn("add", "dir2"), 0, false, false)
+check(mtn("add", "-R", "dir1"), 0, false, false)
+check(mtn("add", "-R", "dir2"), 0, false, false)
 commit()
 
 -- ...and explicit add.

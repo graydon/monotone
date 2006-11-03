@@ -1,5 +1,7 @@
 testsuite\.dir
 tester_dir
+^build$
+^build/
 \.dirstamp
 ^txt2c$
 ^unit_tests$

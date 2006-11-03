@@ -77,7 +77,9 @@ struct workspace
                                 std::vector<file_path> const & roots,
                                 path_set & unknown, path_set & ignored);
 
-  void perform_additions(path_set const & targets, bool recursive = true);
+  void perform_additions(path_set const & targets,
+                         bool recursive = false,
+                         bool respect_ignore = true);
 
   void perform_deletions(path_set const & targets, bool recursive, 
                          bool execute);

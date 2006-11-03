@@ -17,7 +17,8 @@ inline void change_current_working_dir(any_path const & to)
 
 inline path::status get_path_status(any_path const & path)
 {
-  return get_path_status(path.as_external());
+  std::string p(path.as_external());
+  return get_path_status(p.empty()?".":p);
 }
 
 inline void rename_clobberingly(any_path const & from, any_path const & to)
