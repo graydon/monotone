@@ -5105,18 +5105,6 @@ Deletes any value associated with @var{name} in @var{domain}.  See
 
 This command initializes a new monotone database at @var{dbfile}.
 
-@item mtn db rebuild --db=@var{dbfile} 
-
-This command rebuilds the ancestry graph of the monotone database at
-@var{dbfile}, which may become necessary if future bugs in monotone
-allow invalid changesets to be saved in your database.  This command is
-destructive, and you should make a backup copy of your database before
-running it.  It will preserve the contents of each revision, but it will
-lose rename history.  Use it carefully, and only after understanding
-@ref{Rebuilding ancestry}.  Note that it will make your history
-incompatible with that of anyone else working on the same project!  Read
-@ref{Rebuilding ancestry}.
-
 @item mtn db info --db=@var{dbfile} 
 
 This command prints information about the monotone database @var{dbfile},
@@ -8696,32 +8684,31 @@ Obviously, we hope neither of these things will happen, and we've taken
 lots of precautions against the first recurring; but it is better to be
 prepared.
 
-If either of these events occur, we will provide migration commands
-and explain how to use them for the situation in question; this much
-is necessarily somewhat unpredictable.  In the past we've used the
-@command{db rebuild} command, which extracts the ancestry graph from the
-database and then recreates revisions from the manifests only --- this
-preserves the contents of each snapshot, but breaks tracking of file
-identity across renames --- and then reissues all existing certs that
-you trust, signed with your key.@footnote{Regardless of who originally
+If either of these events occur, we will provide migration commands and
+explain how to use them for the situation in question; this much is
+necessarily somewhat unpredictable.  In the past we've used the (now
+defunct) @command{db rebuild} command, and more recently the @command{db
+rosterify} command, for such changes as monotone developed.  These
+commands were used to recreate revisions with new formats.  Because the
+revision id's changed, all the existing certs that you trust also must
+be reissued, signed with your key.@footnote{Regardless of who originally
 signed the certs, after the rebuild they will be signed by you.  This
 means you should be somewhat careful when rebuilding, but it is
 unavoidable --- if you could sign with other people's keys, that would
 be a rather serious security problem!}
 
-While the @command{db rebuild} command can reconstruct the ancestry graph
-in @emph{your} database, there are practical problems which arise when
-working in a distributed work group.  For example, suppose our group
-consists of the fictional developers Jim and Beth, and they need to
-rebuild their ancestry graph. Jim performs a rebuild, and sends Beth
-an email telling her that he has done so, but the email gets caught by
-Beth's spam filter, she doesn't see it, and she blithely syncs her
-database with Jim's. This creates a problem: Jim and Beth have
-combined the pre-rebuild and post-rebuild databases.  Their databases
-now contain two complete, parallel (but possibly overlapping) copies
-of their project's ancestry.  The ``bad'' old revisions that they were
-trying to get rid of are still there, mixed up with the ``good'' new
-revisions.
+While such commands can reconstruct the ancestry graph in @emph{your}
+database, there are practical problems which arise when working in a
+distributed work group.  For example, suppose our group consists of the
+fictional developers Jim and Beth, and they need to rebuild their
+ancestry graph. Jim performs a rebuild, and sends Beth an email telling
+her that he has done so, but the email gets caught by Beth's spam
+filter, she doesn't see it, and she blithely syncs her database with
+Jim's. This creates a problem: Jim and Beth have combined the
+pre-rebuild and post-rebuild databases.  Their databases now contain two
+complete, parallel (but possibly overlapping) copies of their project's
+ancestry.  The ``bad'' old revisions that they were trying to get rid of
+are still there, mixed up with the ``good'' new revisions.
 
 To prevent such messy situations, monotone keeps a table of branch
 @dfn{epochs} in each database. An epoch is just a large bit string
