@@ -15,7 +15,7 @@ This edition documents version @value{VERSION}.
 Copyright 2003, 2004 Graydon Hoare
 Copyright 2004, 2005, 2006 Nathaniel Smith
 Copyright 2005 Derek Scherger
-Copyright 2005 Daniel Carosone
+Copyright 2005, 2006 Daniel Carosone
 Copyright 2006 Jeronimo Pellegrini
 Copyright 2006 Alex Queiroz
 All rights reserved
@@ -38,8 +38,9 @@ See the file COPYING for details
 Copyright @copyright{} 2003, 2004 Graydon Hoare
 Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith
 Copyright @copyright{} 2005 Derek Scherger
-Copyright @copyright{} 2005 Daniel Carosone
+Copyright @copyright{} 2005, 2006 Daniel Carosone
 Copyright @copyright{} 2006 Jeronimo Pellegrini
+Copyright @copyright{} 2006 Alex Queiroz
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
