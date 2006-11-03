@@ -3168,9 +3168,14 @@ certificate becomes widely used, monotone will likely adopt it as a
 reserved cert name and standardize its semantics.
 
 Most reserved certificate names have no meaning yet; some do. Usually
-monotone is also responsible for @emph{generating} these certificates,
-so you should generally have no cause to make them yourself. They are
-described here to help you understand monotone's operation.
+monotone is also responsible for @emph{generating} many of these certs
+as part of normal operation, such as during a @command{commit}. Others
+will be added explicitly via other commands, like @command{tag} or
+@command{approve}.
+
+As well as carrying other information, certs (and combinations of certs)
+are useful for identifying revisions with @ref{Selectors}; in
+particular, this is the primary purpose of the @code{tag} cert.
 
 The pre-defined, reserved certificate names are:
 
@@ -3197,9 +3202,8 @@ commit a revision. It is displayed by the @command{log} command.
 
 @item comment
 This cert's value is an additional comment, usually provided after
-committing, about a revision. Certs with the name @code{comment} can
-be applied to files as well, and will be shown by the @command{log}
-command.
+committing, about a revision. Certs with the name @code{comment} will be
+shown together with @code{changelog} certs by the @command{log} command.
 
 @item date
 This cert's value is an ISO date string indicating the time at which a
@@ -3209,7 +3213,8 @@ commands in the future.
 
 @item tag
 This cert's value is a symbolic name given to a revision, which may be
-used in the future as a way of selecting versions for @command{checkout}.
+used as a way of selecting the revision by name for later commands like
+@command{checkout} and @command{diff}.  
 
 @item testresult
 This cert's value is interpreted as a boolean string, either @code{0}
@@ -3737,6 +3742,31 @@ omit the @command{merge} step if you only want @command{update} to
 examine descendents of your base revision, and ignore other heads on
 your branch.
 
+
+@heading Tagging Revisions
+
+@multitable @columnfractions .4 .4
+@item
+@smallexample
+@group
+$ cvs tag FOO_TAG .
+@end group
+@end smallexample
+@tab
+@smallexample
+@group
+$ mtn tag h: FOO_TAG
+@end group
+@end smallexample
+@end multitable
+
+With CVS, tags are placed on individual files, and the closest thing to
+identifying a consistent repository-wide revision is a set of files with
+the same tag.  In monotone, all changes are part of a repository-wide
+revision, and some of those revisions may be tagged.  Monotone has no
+partial tags that apply only to a subset of files.
+
+
 @heading Moving Workspace to Another Revision
 
 @multitable @columnfractions .4 .4
@@ -3950,8 +3980,8 @@ all, commands are grouped into logical categories.
 * Workspace::        Operations on your workspace
 * Network::          Communication with the network
 * Informative::      Production of descriptive reports
-* Key and Cert::     General operations on keys or certificates
-* Certificate::      Special operations on certificates
+* Key and Cert Trust::     Keys and Trust Evaluations based on them
+* Certificate::      Creation of certificates
 * Packet I/O::       Production or consumption of packets
 * Database::         Manipulation of your database as a whole
 * Automation::       Running monotone from other programs
@@ -4899,8 +4929,8 @@ the given revisions.
 
 
 @page
-@node    Key and Cert
-@section Key and Cert
+@node    Key and Cert Trust
+@section Key and Cert Trust
 
 @ftable @command
 @item mtn genkey @var{keyid}
@@ -4932,14 +4962,6 @@ the key(s) that were dropped.
 This command lets you change the passphrase of the private half of the
 key @var{id}.
 
-@item mtn cert @var{id} @var{certname} 
-@itemx mtn cert @var{id} @var{certname} @var{certval}
-
-These commands create a new certificate with name @var{certname}, for
-a revision with version @var{id}. If @var{certval} is provided, it is
-the value of the certificate.  Otherwise the certificate value is read
-from @code{stdin}.
-
 @item mtn trusted @var{id} @var{certname} @var{certval} @var{signers}
 
 This command lets you test your revision trust hook
@@ -4958,6 +4980,16 @@ those keys.
 @section Certificate
 
 @ftable @command
+@item mtn cert @var{id} @var{certname} 
+@itemx mtn cert @var{id} @var{certname} @var{certval}
+
+These commands create a new certificate with name @var{certname}, for a
+revision with version @var{id}.  The @var{id} argument can be a selector
+using certs already on the revision, such as @code{h:@var{branchname}}.
+
+If @var{certval} is provided, it is the value of the certificate.
+Otherwise the certificate value is read from @code{stdin}.
+
 @item mtn approve @var{id}
 
 This command is a synonym for @command{mtn cert @var{id} branch
@@ -4975,6 +5007,11 @@ from @code{stdin}.
 
 
 @item mtn tag @var{id} @var{tagname}
+
+This command associates the symbolic name @var{tagname} with the
+revision @var{id}, so that symbolic name can later be used in
+@ref{Selectors} for specifying revisions for commands like
+@command{update} or @command{diff}.  
 
 This command is a synonym for @command{mtn cert @var{id} tag
 @var{tagname}}.

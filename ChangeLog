@@ -1,3 +1,13 @@
+2006-11-03  Daniel Carosone  <dan@geek.com.au>
+
+	Tidy up some description of certs and the tag command:
+	 * mention the purpose of tag certs
+	 * remove stale mention of file certs in the description of "comment"
+	 * move "mtn cert" to the certificate section, together with all the
+	   things that are synonyms for it.
+	 * rename the "key and cert" section accordingly
+	 * add a "tag" section to the cvs phrasebook.
+
 2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Allow commands with subcommands (such as automate) to take
