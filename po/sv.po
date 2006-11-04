@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-03 02:26+0100\n"
-"PO-Revision-Date: 2006-11-03 02:29+0100\n"
+"POT-Creation-Date: 2006-11-05 00:21+0100\n"
+"PO-Revision-Date: 2006-11-05 00:22+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1503,13 +1503,13 @@ msgstr "lägg till filer i arbetskopian"
 
 #: cmd_ws_commit.cc:260
 #, c-format
-msgid "cannot set unknown and recursive at the same time"
+msgid "cannot set '--unknown' and '--recursive' at the same time"
 msgstr "kan inte använda '--unknown' och '--recursive' samtidigt"
 
 #: cmd_ws_commit.cc:262
 #, c-format
-msgid "cannot set unknown and no-ignore at the same time"
-msgstr "kan inte använda --unknown och --no-respect-ignore samtidigt"
+msgid "cannot set '--unknown' and '--no-respect-ignore' at the same time"
+msgstr "kan inte använda '--unknown' och '--no-respect-ignore' samtidigt"
 
 #: cmd_ws_commit.cc:294
 msgid "drop files from workspace"
