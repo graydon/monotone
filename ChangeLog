@@ -1,3 +1,19 @@
+2006-10-20  Thomas Keller <me@thomaskeller.biz>
+
+    Docs added for automate content_diff
+
+2006-10-19  Thomas Keller <me@thomaskeller.biz>
+
+    * automate.cc: added content_diff command which makes the output of mtn diff
+    (minus the revision part) available via mtn automate
+    * automate.cc: fixed "introduced in" of get_content_changed and 
+    get_corresponding_path (this was in 3.1, not 3.2)
+    * cmd_automate.cc: bumped interface version to 3.2
+    * cmd_diff_log.cc: moved dump_diff and do_external_diff ...
+    * commands.*: ...here and added an additional ostream parameter to
+    dump_diff to be able to use this with automate stdio
+    * TODO: docs and tests
+
 2006-11-03  Richard Levitte  <richard@levitte.org>
 
 	* cert.cc (get_user_key): app.opts.key_given is only true when

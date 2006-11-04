@@ -6762,20 +6762,22 @@ escaped, '\' to '\\' and '"' to '\"'.
 Each attribute stanza also contains another entry which tells the status
 of attribute. This entry can have one of the following four values:
 
+@itemize
+@item
 'added': the attribute has just been added to the file
-
+@item
 'dropped': the attribute has just been dropped from the file
-
+@item
 'unchanged': the attribute has not been changed since the last revision
-
+@item
 'changed': the attribute has been changed since the last revision
+@end itemize
 
 The status 'changed' can come up if an attribute foo has been dropped and
 added afterwards with another value, like
 
 @verbatim
-# foo has the value "bar"
-$ mtn attr drop foo ; mtn attr set foo baz
+$ mtn attr drop file.txt foo ; mtn attr set file.txt foo baz
 @end verbatim
 
 If an attribute has been dropped, the output will still return the previously
@@ -6799,6 +6801,70 @@ The complete format:
 
 If the file specified is unknown to the current workspace prints an error
 message to stderr and exits with status 1.
+
+@end table
+
+@item mtn automate content_diff [@var{file} [...] [@var{rev1} [@var{rev2}]]]
+
+@table @strong
+@item Arguments:
+
+One or more @var{file} arguments restrict the diff output to these files,
+otherwise all changed files in the given revision(s) and/or current workspace
+are considered.
+
+Furthermore zero, one or two revisions can be given as last arguments, where for
+
+@itemize
+@item
+no revision: the diff is done between the workspace revision and the 
+parent (base) revision of this workspace
+@item
+one revision: the diff is done between the workspace revision and the
+given revision @var{rev1},
+@item
+two revisions: the diff is done between @var{rev1} and @var{rev2}; no
+workspace is needed in this case.
+@end itemize
+
+@item Added in:
+
+3.2
+
+@item Purpose:
+
+Prints the content changes between two revisions or a revision and the current
+workspace. This command differs from @command{mtn diff} in that way that it only
+outputs content changes and keeps quite on renames or drops, as the header of
+@command{mtn diff} is omitted (this is what @command{mtn automate get_revision} 
+already provides).
+
+@item Sample output:
+
+@verbatim
+============================================================
+--- guitone/res/i18n/guitone_de.ts      9857927823e1d6a0339b531c120dcaadd22d25e9
++++ guitone/res/i18n/guitone_de.ts      0b4715dc296b1955b0707923d45d79ca7769dd3f
+@@ -1,6 +1,14 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <!DOCTYPE TS><TS version="1.1">
+ <context>
++    <name>AncestryGraph</name>
++    <message>
+[...]
+@end verbatim
+
+@item Output format:
+
+The GNU unified diff format. If there have been no content changes, the output
+is empty.
+
+@item Error conditions:
+
+If an incorrect number of revisions are given or a workspace is required, but
+not found, prints to stderr and exits with status 1. If a certain given revision
+does not exist, it is interpreted as file restriction. If one or more file 
+restrictions can't be applied, the command prints to stderr and exits, too.
 
 @end table
 
