@@ -257,9 +257,9 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   if (!app.opts.unknown && (args.size() < 1))
     throw usage(name);
   N(!app.opts.unknown || !app.opts.recursive,
-    F("cannot set unknown and recursive at the same time"));
+    F("cannot set '--unknown' and '--recursive' at the same time"));
   N(!app.opts.unknown || !app.opts.no_ignore,
-    F("cannot set unknown and no-ignore at the same time"));
+    F("cannot set '--unknown' and '--no-respect-ignore' at the same time"));
 
   app.require_workspace();
 
