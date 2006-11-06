@@ -76,6 +76,8 @@ transforms.hh
 txt2c.cc
 ui.cc
 ui.hh
+uri.hh
+uri.cc
 unit_tests.cc
 unit_tests.hh
 update.cc
