@@ -58,7 +58,10 @@ parse_uri(string const & in, uri & out)
 	  string port_part = "(?::([[:digit:]]+))?";
 	  string auth_rx = user_part + host_part + port_part;
 	  boost::match_results<std::string::const_iterator> auth_matches;
-	  I(boost::regex_match(authority, auth_matches, boost::regex(auth_rx)));
+	  
+      N(boost::regex_match(authority, auth_matches, boost::regex(auth_rx)),
+        F("The URI syntax is invalid. Maybe you used a scp-style ssh uri?"));
+      
 	  u.user = auth_matches.str(1);
 	  u.port = auth_matches.str(4);
 	  if (auth_matches[2].matched)	
