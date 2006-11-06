@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-05 00:21+0100\n"
-"PO-Revision-Date: 2006-11-05 00:22+0100\n"
+"POT-Creation-Date: 2006-11-06 13:39+0100\n"
+"PO-Revision-Date: 2006-11-06 13:40+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -3655,6 +3655,11 @@ msgstr ""
 #, c-format
 msgid "failed to open log file '%s'"
 msgstr "Misslyckades med att öppna log-filen %s"
+
+#: uri.cc:63
+#, c-format
+msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
+msgstr "URI-syntaxen är ogiltig.  Kanske använde du en URI i bästa scp-stil?"
 
 #: update.cc:72
 #, c-format
