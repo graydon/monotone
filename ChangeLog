@@ -1,3 +1,7 @@
+2006-11-06  Thomas Keller <me@thomaskeller.biz>
+
+	Improved error message for invalid uri's (per bug #17736)
+
 2006-11-03  Richard Levitte  <richard@levitte.org>
 
 	* cert.cc (get_user_key): app.opts.key_given is only true when
