@@ -1,3 +1,9 @@
+2006-11-11  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* rev_height.hh, rev_height.cc: remove the dump method, add an
+	overload to the dump function to make heights work with MM().
+	* database.cc (put_height_for_revision): Add some MM() calls.
+	
 2006-10-31  Nathaniel Smith  <njs@pobox.com>
 
 	* work.cc (perform_rename): Tweak error message that just annoyed

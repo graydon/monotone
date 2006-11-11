@@ -1815,8 +1815,8 @@ database::put_height_for_revision(revision_id const & new_id,
     {
       bool found(false);
       u32 childnr(0);
-      rev_height candidate;
-      rev_height parent;
+      rev_height candidate; MM(candidate);
+      rev_height parent; MM(parent);
       get_rev_height(edge_old_revision(e), parent);
       
       while(!found)

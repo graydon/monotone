@@ -34,7 +34,6 @@ public:
   string const & operator()() const;
   void child_height(rev_height & child, u32 nr) const;
   static void root_height(rev_height & root);
-  void dump(ostream & os) const;
 
   bool operator ==(rev_height const & other) const;
   bool operator < (rev_height const & other) const;
@@ -55,8 +54,9 @@ public:
   {
     return !(*this < other);
   }
+  friend ostream & operator <<(ostream & os, rev_height const & h);
 };
 
-ostream & operator <<(ostream & os, rev_height const & h);
+void dump(rev_height const & h, string & out);
 
 #endif // __REV_HEIGHT_HH_

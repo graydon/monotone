@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <sstream>
 
 #include "numeric_vocab.hh"
 #include "sanity.hh"
@@ -17,6 +18,7 @@
 
 using std::ostream;
 using std::string;
+using std::ostringstream;
 
 /*
  * Implementation note: hv, holding the raw revision height, is
@@ -134,23 +136,23 @@ void rev_height::root_height(rev_height & root)
   root.append(0);
 }
 
-// for debugging purposes
-
-void rev_height::dump(ostream & os) const
+ostream & operator <<(ostream & os, rev_height const & h)
 {
   bool first(true);
-  for (size_t i = 0; i < size(); ++i)
+
+  for (size_t i = 0; i < h.size(); ++i)
     {
       if (!first)
 	os << '.';
-      os << read_at(i);
+      os << h.read_at(i);
       first = false;
     }
-}
-
-ostream & operator <<(ostream & os, rev_height const & h)
-{
-  h.dump(os);
   return os;
 }
 
+void dump(rev_height const & h, string & out)
+{
+  ostringstream os;
+  os << h;
+  out = os.str();
+}
