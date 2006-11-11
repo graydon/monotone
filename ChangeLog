@@ -1,3 +1,7 @@
+2006-11-11  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Set release date.
+
 2006-11-10  Nathaniel Smith  <njs@pobox.com>
 
 	* debian/control (Build-Depends): Remove
