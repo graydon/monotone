@@ -1,3 +1,10 @@
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
+	* INSTALL: Remove libboost-program-options-dev from the list of
+	debian packages.
+
+	* NEWS: First draft of 0.31 release notes.
+	
 2006-11-06  Thomas Keller <me@thomaskeller.biz>
 
 	Improved error message for invalid uri's (per bug #17736)
