@@ -1,5 +1,11 @@
 2006-11-10  Nathaniel Smith  <njs@pobox.com>
 
+	* UPGRADE, configure.ac, monotone.spec, debian/changelog:
+	* win32/monotone.iss, visualc/config.h: Bump version numbers to
+	0.31.
+
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
 	* INSTALL: Remove libboost-program-options-dev from the list of
 	debian packages.
 
