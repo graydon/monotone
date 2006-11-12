@@ -1,5 +1,13 @@
 2006-11-11  Nathaniel Smith  <njs@pobox.com>
 
+	* notes/: New directory for developer docs.
+	* notes/release-checklist.txt: Neaten up my release checklist and
+	commit it.
+	* tests/README, tester.txt, testsuite.txt: Move to notes/.
+	* HACKING: Add a mention of notes/.
+
+2006-11-11  Nathaniel Smith  <njs@pobox.com>
+
 	* NEWS: Set release date.
 
 2006-11-10  Nathaniel Smith  <njs@pobox.com>
