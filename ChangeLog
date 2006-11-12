@@ -1,18 +1,36 @@
-2006-10-20  Thomas Keller <me@thomaskeller.biz>
+2006-11-11  Nathaniel Smith  <njs@pobox.com>
 
-    Docs added for automate content_diff
+	* notes/: New directory for developer docs.
+	* notes/release-checklist.txt: Neaten up my release checklist and
+	commit it.
+	* tests/README, tester.txt, testsuite.txt: Move to notes/.
+	* HACKING: Add a mention of notes/.
 
-2006-10-19  Thomas Keller <me@thomaskeller.biz>
+2006-11-11  Nathaniel Smith  <njs@pobox.com>
 
-    * automate.cc: added content_diff command which makes the output of mtn diff
-    (minus the revision part) available via mtn automate
-    * automate.cc: fixed "introduced in" of get_content_changed and 
-    get_corresponding_path (this was in 3.1, not 3.2)
-    * cmd_automate.cc: bumped interface version to 3.2
-    * cmd_diff_log.cc: moved dump_diff and do_external_diff ...
-    * commands.*: ...here and added an additional ostream parameter to
-    dump_diff to be able to use this with automate stdio
-    * TODO: docs and tests
+	* NEWS: Set release date.
+
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
+	* debian/control (Build-Depends): Remove
+	libboost-program-options-dev.
+
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE, configure.ac, monotone.spec, debian/changelog:
+	* win32/monotone.iss, visualc/config.h: Bump version numbers to
+	0.31.
+
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
+	* INSTALL: Remove libboost-program-options-dev from the list of
+	debian packages.
+
+	* NEWS: First draft of 0.31 release notes.
+	
+2006-11-06  Thomas Keller <me@thomaskeller.biz>
+
+	Improved error message for invalid uri's (per bug #17736)
 
 2006-11-03  Richard Levitte  <richard@levitte.org>
 

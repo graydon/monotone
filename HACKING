@@ -1,6 +1,11 @@
 Contributing to monotone
 ========================
 
+This file gives a number of basic guidelines and tips for hacking on
+monotone.  For more specific topics (for instance, documentation on
+writing tests, or the release process), see also the files in the
+notes/ directory.
+
 Coding standards
 ----------------
 

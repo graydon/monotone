@@ -1,3 +1,71 @@
+Sat Nov 11 11:06:44 PST 2006
+
+        0.31 release.  Code cleanups and bug fixes.
+
+        New features:
+
+        - If multiple --message (or -m) arguments are passed to
+          'commit', then they will be concatenated on separate lines.
+
+        - The validate_commit_message hook is now told what branch the
+          commit is on.
+
+        Bugs fixed:
+
+        - The typo that prevented building with gcc 3.3 has been
+          fixed.
+
+        - Attempting to commit without a signing key available now
+          fails earlier.
+
+        - Command-line option parsing has been redone yet again; this
+          should fix a number of bugs caused by the use of
+          boost::program_options.  For instance, command line error
+          messages are now l10nized again, "--depth=asdf" now gives a
+          sensible error message instead of crashing, and --key= now
+          works as an alternative to -k "".
+
+        - A bug in the new roster caching logic that caused assertion
+          failures on very large trees has been fixed.
+
+        - A rare bug in the "epoch refinement" phase of the netsync
+          protocol has been fixed.
+
+        - Accidental (and undocumented) change to 'automate inventory'
+          output format reverted; documentation is now correct again.
+
+        - Some obscure error conditions with 'pivot_root' fixed.
+
+        Many fixes to 'automate stdio':
+
+        - IO handling has been rewritten, to remove some
+          obscure bugs and clean up the code.
+
+        - automate commands can now take options (even when used with
+          'automate stdio').
+
+        - The default block size has been increased to 32k (which
+          should considerably reduce overhead).
+
+        - Many automate commands were flushing their output far too
+          often, causing major slowdowns when used with 'automate
+          stdio'; this has been fixed.
+
+        - Syntax errors now cause 'automate stdio' to exit, rather
+          than attempting to provide usage information for the calling
+          program to read.
+
+        Other:
+
+        - New large-coverage random testsuite for delta reconstruction
+          path finding algorithm.
+
+        - Miscellaneous code cleanups and improved error messages.
+
+        - Enhancements to debian packaging.
+
+        - New translation to es (Spanish).
+
 Sun Sep 17 12:27:08 PDT 2006
 
         0.30 release.  Speed improvements, bug fixes, and improved
