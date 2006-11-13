@@ -1,3 +1,9 @@
+2006-11-11  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* rev_height.hh, rev_height.cc: remove the dump method, add an
+	overload to the dump function to make heights work with MM().
+	* database.cc (put_height_for_revision): Add some MM() calls.
+	
 2006-11-11  Nathaniel Smith  <njs@pobox.com>
 
 	* notes/: New directory for developer docs.
@@ -110,6 +116,24 @@
 
 	* lua/lstrlib.cc: Patch for Lua 5.1.1 bug #3, from
 	lua.org/bugs.html.
+
+2006-10-24  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* tests/db_check_(heights)/: Test the heights related checks of
+	'db check'.
+	* testsuite.lua: Add the test to the lists of tests.
+
+2006-10-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database_check.cc: Add checks for the heights. It is checked
+	that every revision has a unique height that is greater than that
+	of all it's parents.
+
+2006-10-09  Nathaniel Smith  <njs@pobox.com>
+
+	* automate.cc: Remove spurious #include of rev_height.hh.
+	* revision.cc (allrevs_toposorted): Add a comment describing this
+	function's purpose.
 
 2006-10-24  Timothy Brownawell  <tbrownaw@gmail.com>
 
@@ -236,6 +260,37 @@
 	completed in addition to revision ids, using the new functions
 	_mtn_tags and _mtn_public_keys together with _mtn_branches.
 	Selector completion is done by _mtn_selector_or_revision.
+
+2006-09-23  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database.cc, database.hh (put_height_for_revision): New method.
+	* database.cc (put_revision): Use put_height_for_revision.
+	* revision.cc, revision.hh (regenerate_caches): Combined
+	regenerate_heights and regenerate_rosters; using
+	put_height_for_revision.
+	* cmd_db.cc: Now using regenerate_caches.
+	* automate.cc, revision.cc: Changed `rev_height' from an
+	automation subcmd into a normal, but hidden command.
+
+2006-09-21  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* revision.cc, revision.hh (regenerate_heights): New function,
+	uses toposort code from mainline to traverse the graph and assign
+	heights to all revisions.
+	(regenerate_rosters): Removed call to
+	app.db.ensure_open_for_format_changes, now done by
+	regenerate_caches.
+	* cmd_db.cc (CMD(db)): New command `regenerate_caches', calls
+	`regenerate_rosters' and `regenerate_heights'.
+	* schema_migration.cc: Replace occurrences of `regenerate_rosters'
+	with `regenerate_caches'.
+	(migrate_add_heights): set upgrade_regen_caches regime.
+	* database.cc, database.hh (check_format): Check whether the
+	database has heights.
+	(delete_existing_heights): New function.
+	(has_rev_height): Make parameter const.
+	* tests/*/__driver__.lua: Adjust some tests to account for the
+	renaming of regenerate_rosters.
 
 2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
 
@@ -412,6 +467,30 @@
 	that returns a cached_roster.
 	* merge.cc (resolve_merge_conflicts): Constify a shared_ptr<roster_t>.
 	* work.cc (content_merge_empty_adaptor): Similarly.
+
+2006-09-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* schema.sql: New table for the revision heights.
+	* schema_migration.cc (migrate_monotone_schema): Add code for the
+	  schema migration.
+	* tests/schema_migration/__driver__.lua: Add migration test.
+	* rev_height.cc, rev_height.hh: Add a class for the revision
+	height.
+	* Makefile.am (MOST_SOURCES): Add rev_height.{cc|hh}.
+	* database.cc (database): New schema.
+	* database.cc (get_rev_height, put_rev_height, has_rev_height):
+	New methods for storing and retrieving revision heights.
+	* database.cc (put_revision): Determine the revision's height and
+	write it into the database.
+	* database.cc (info): Show space usage information for the
+	heights.
+	* automate.cc (rev_height): New command to query a rev's
+	height. Preliminary.
+	* revision.cc (toposort): Use the revision heights.
+	* cmd_diff_log.cc (CMD(log)): Use the heights to traverse the
+	graph in topological order. Use the markings to avoid fetching
+	rosters for uninteresting revisions for restricted, backwards
+	walking logs.
 
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
