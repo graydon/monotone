@@ -4,6 +4,12 @@ monotone (0.31-0.1) unstable; urgency=low
 
  -- Nathaniel Smith <njs@pobox.com>  Fri, 10 Nov 2006 21:57:59 -0800
 
+monotone (0.30-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Shaun Jackman <sjackman@debian.org>  Wed, 20 Sep 2006 12:51:24 -0600
+
 monotone (0.30-0.1) unstable; urgency=low
 
   * New upstream release.
