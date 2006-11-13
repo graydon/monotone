@@ -2759,6 +2759,15 @@
 
 	* po/it.po: Translated a few more strings to Italian (42 to go).
 
+2006-07-12  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (inventory): merge fixups; add basic_io symbols;
+	combine two node id/type lines into a single line
+	* inodeprint.hh: add header
+	* roster.{cc,hh}: (inodeprint_unchanged, classify_roster_paths): remove 
+	(update_restricted_roster_from_filesystem): rename to ...
+	(update_current_roster_from_filesystem): ... this
+
 2006-07-02  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* tester.txt: Short descriptions of the functions provided for use

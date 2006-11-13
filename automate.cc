@@ -17,6 +17,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include "app_state.hh"
@@ -25,7 +26,9 @@
 #include "cmd.hh"
 #include "commands.hh"
 #include "constants.hh"
+#include "inodeprint.hh"
 #include "keys.hh"
+#include "localized_file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
@@ -51,6 +54,7 @@ using std::streamsize;
 using std::string;
 using std::vector;
 
+using boost::lexical_cast;
 
 // Name: heads
 // Arguments:
@@ -539,133 +543,140 @@ AUTOMATE(select, N_("SELECTOR"), options::opts::none)
     output << *i << "\n";
 }
 
-// consider a changeset with the following
-//
-// deletions
-// renames from to
-// additions
-//
-// pre-state  corresponds to deletions and the "from" side of renames
-// post-state corresponds to the "to" side of renames and additions
-// node-state corresponds to the state of the node with the given name
-//
-// pre/post state are related to the path rearrangement in _MTN/work
-// node state is related to the details of the resulting path
+struct node_info 
+{ 
+  bool exists;
+  node_id id;
+  path::status type;
+  file_id ident;
+  full_attr_map_t attrs;
+
+  node_info() : exists(false), type(path::nonexistent) {}
+};
+
+static void
+get_node_info(roster_t const & roster, split_path const & path, node_info & info)
+{
+  if (roster.has_node(path))
+    {
+      node_t node = roster.get_node(path);
+      info.exists = true;
+      info.id = node->self;
+      info.attrs = node->attrs;
+      if (is_file_t(node))
+        {
+          info.type = path::file;
+          info.ident = downcast_to_file_t(node)->content;
+        }
+      else if (is_dir_t(node))
+        info.type = path::directory;
+      else
+        I(false);
+    }
+}
 
 struct inventory_item
 {
-  // pre/post rearrangement state
-  enum pstate
-    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH }
-    pre_state, post_state;
+  node_info old_node;
+  node_info new_node;
 
-  enum nstate
-    { UNCHANGED_NODE, PATCHED_NODE, MISSING_NODE,
-      UNKNOWN_NODE, IGNORED_NODE }
-    node_state;
+  path::status fs_type;
+  file_id fs_ident;
 
-  size_t pre_id, post_id;
-
-  inventory_item():
-    pre_state(UNCHANGED_PATH), post_state(UNCHANGED_PATH),
-    node_state(UNCHANGED_NODE),
-    pre_id(0), post_id(0) {}
+  inventory_item() : fs_type(path::nonexistent) {}
 };
 
-typedef map<split_path, inventory_item> inventory_map;
-typedef map<split_path, split_path> rename_map; // this might be good in cset.hh
-typedef map<split_path, file_id> addition_map;  // ditto
+typedef std::map<split_path, inventory_item> inventory_map;
 
 static void
-inventory_pre_state(inventory_map & inventory,
-                    path_set const & paths,
-                    inventory_item::pstate pre_state,
-                    size_t rename_id)
+inventory_rosters(roster_t const & old_roster, 
+                  roster_t const & new_roster,
+                  inventory_map & inventory)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+  node_map const & old_nodes = old_roster.all_nodes();
+  for (node_map::const_iterator i = old_nodes.begin(); i != old_nodes.end(); ++i)
     {
-      L(FL("%d %d %s") % inventory[*i].pre_state % pre_state % file_path(*i));
-      I(inventory[*i].pre_state == inventory_item::UNCHANGED_PATH);
-      inventory[*i].pre_state = pre_state;
-      if (rename_id != 0)
-        {
-          I(inventory[*i].pre_id == 0);
-          inventory[*i].pre_id = rename_id;
-        }
+      split_path sp;
+      old_roster.get_name(i->first, sp);
+      get_node_info(old_roster, sp, inventory[sp].old_node);
+    }
+
+  node_map const & new_nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
+    {
+      split_path sp;
+      new_roster.get_name(i->first, sp);
+      get_node_info(new_roster, sp, inventory[sp].new_node);
+    }
+  
+}
+
+struct inventory_itemizer : public tree_walker
+{
+  app_state & app;
+  inventory_map & inventory;
+  inodeprint_map ipm;
+
+  inventory_itemizer(app_state & a, inventory_map & i) : 
+    app(a), inventory(i)
+  {
+    if (in_inodeprints_mode())
+      {
+        data dat;
+        read_inodeprints(dat);
+        read_inodeprint_map(dat, ipm);
+      }
+  }
+  virtual void visit_dir(file_path const & path);
+  virtual void visit_file(file_path const & path);
+};
+
+void
+inventory_itemizer::visit_dir(file_path const & path)
+{
+  split_path sp;
+  path.split(sp);
+  inventory[sp].fs_type = path::directory;
+}
+
+void
+inventory_itemizer::visit_file(file_path const & path)
+{
+  split_path sp;
+  path.split(sp);
+
+  inventory_item & item = inventory[sp];
+
+  item.fs_type = path::file;
+
+  if (item.new_node.exists)
+    {
+      if (inodeprint_unchanged(ipm, path))
+        item.fs_ident = item.old_node.ident;
+      else
+        ident_existing_file(path, item.fs_ident, app.lua);
     }
 }
 
 static void
-inventory_post_state(inventory_map & inventory,
-                     path_set const & paths,
-                     inventory_item::pstate post_state,
-                     size_t rename_id)
+inventory_filesystem(app_state & app, inventory_map & inventory)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
-    {
-      L(FL("%d %d %s") % inventory[*i].post_state
-        % post_state % file_path(*i));
-      I(inventory[*i].post_state == inventory_item::UNCHANGED_PATH);
-      inventory[*i].post_state = post_state;
-      if (rename_id != 0)
-        {
-          I(inventory[*i].post_id == 0);
-          inventory[*i].post_id = rename_id;
-        }
-    }
+  inventory_itemizer itemizer(app, inventory);
+  walk_tree(file_path(), itemizer);
 }
 
-static void
-inventory_node_state(inventory_map & inventory,
-                     path_set const & paths,
-                     inventory_item::nstate node_state)
+namespace
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
-    {
-      L(FL("%d %d %s") % inventory[*i].node_state
-        % node_state % file_path(*i));
-      I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
-      inventory[*i].node_state = node_state;
-    }
+  namespace syms
+  {
+    symbol const path("path");
+    symbol const old_node("old_node");
+    symbol const new_node("new_node");
+    symbol const fs_type("fs_type");
+    symbol const status("status");
+    symbol const changes("changes");
+  }
 }
-
-static void
-inventory_renames(inventory_map & inventory,
-                  rename_map const & renames)
-{
-  path_set old_name;
-  path_set new_name;
-
-  static size_t rename_id = 1;
-
-  for (rename_map::const_iterator i = renames.begin();
-       i != renames.end(); i++)
-    {
-      old_name.clear();
-      new_name.clear();
-
-      old_name.insert(i->first);
-      new_name.insert(i->second);
-
-      inventory_pre_state(inventory, old_name,
-                          inventory_item::RENAMED_PATH, rename_id);
-      inventory_post_state(inventory, new_name,
-                           inventory_item::RENAMED_PATH, rename_id);
-
-      rename_id++;
-    }
-}
-
-static void
-extract_added_file_paths(addition_map const & additions, path_set & paths)
-{
-  for (addition_map::const_iterator i = additions.begin();
-       i != additions.end(); ++i)
-    {
-      paths.insert(i->first);
-    }
-}
-
 
 // Name: inventory
 // Arguments: none

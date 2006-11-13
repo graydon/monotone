@@ -369,7 +369,8 @@ select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & new_roster,
                               std::set<node_id> & nodes_modified);
 
-void
+void 
+update_current_roster_from_filesystem(roster_t & ros, 
 extract_roster_path_set(roster_t const & ros,
                         path_set & paths);
 
