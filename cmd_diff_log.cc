@@ -565,10 +565,10 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (app.opts.revision_selectors.size() == 0)
     app.require_workspace("try passing a --revision to start at");
 
-  long last = app.last;
-  long next = app.next;
+  long last = app.opts.last;
+  long next = app.opts.next;
 
-  N(app.last == -1 || app.next == -1,
+  N(last == -1 || next == -1,
     F("only one of --last/--next allowed"));
 
   frontier_t frontier(rev_cmp(!(next>0)));
@@ -708,12 +708,12 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
             }
         }
 
-      if (app.no_merges && rev.is_merge_node())
+      if (app.opts.no_merges && rev.is_merge_node())
         print_this = false;
       
       if (print_this)
         {
-          if (app.brief)
+          if (app.opts.brief)
             {
               cout << rid;
               log_certs(app, rid, author_name);
@@ -747,7 +747,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               log_certs(app, rid, branch_name, "Branch: ", false);
               log_certs(app, rid, tag_name,    "Tag: ",    false);
 
-              if (!app.no_files && !csum.cs.empty())
+              if (!app.opts.no_files && !csum.cs.empty())
                 {
                   cout << "\n";
                   csum.print(cout, 70);
@@ -758,7 +758,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               log_certs(app, rid, comment_name,   "Comments: ",  true);
             }
 
-          if (app.diffs)
+          if (app.opts.diffs)
             {
               for (edge_map::const_iterator e = rev.edges.begin();
                    e != rev.edges.end(); ++e)

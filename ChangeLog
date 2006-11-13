@@ -1,3 +1,9 @@
+2006-11-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* cmd_diff_log.cc (CMD(log)): Fix-ups from last propagate nvm ->
+	nvm.heights.
+	* revision.cc (CMD(rev_height)): dito.
+
 2006-11-11  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* rev_height.hh, rev_height.cc: remove the dump method, add an
