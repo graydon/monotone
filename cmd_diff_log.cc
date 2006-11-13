@@ -220,6 +220,7 @@ static void
 dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
+           std::ostream & output,
            set<split_path> const & paths,
            bool limit_paths = false)
 {
@@ -233,7 +234,7 @@ dump_diffs(cset const & cs,
       if (limit_paths && paths.find(i->first) == paths.end())
         continue;
 
-      cout << patch_sep << "\n";
+      output << patch_sep << "\n";
       data unpacked;
       vector<string> lines;
 
@@ -259,7 +260,7 @@ dump_diffs(cset const & cs,
                 i->second,
                 i->second,
                 data(), unpacked,
-                cout, app.opts.diff_format, pattern);
+                output, app.opts.diff_format, pattern);
     }
 
   map<split_path, split_path> reverse_rename_map;
@@ -281,7 +282,7 @@ dump_diffs(cset const & cs,
       file_data f_old;
       data data_old, data_new;
 
-      cout << patch_sep << "\n";
+      output << patch_sep << "\n";
 
       app.db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
@@ -315,37 +316,32 @@ dump_diffs(cset const & cs,
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                cout, app.opts.diff_format, pattern);
+                output, app.opts.diff_format, pattern);
     }
 }
 
 static void
 dump_diffs(cset const & cs,
            app_state & app,
-           bool new_is_archived)
+           bool new_is_archived,
+           std::ostream & output)
 {
   set<split_path> dummy;
-  dump_diffs(cs, app, new_is_archived, dummy);
+  dump_diffs(cs, app, new_is_archived, output, dummy);
 }
 
-CMD(diff, N_("informative"), N_("[PATH]..."),
-    N_("show current diffs on stdout.\n"
-    "If one revision is given, the diff between the workspace and\n"
-    "that revision is shown.  If two revisions are given, the diff between\n"
-    "them is given.  If no format is specified, unified is used by default."),
-    options::opts::revision | options::opts::depth | options::opts::exclude
-    | options::opts::diff_options)
+// common functionality for diff and automate content_diff to determine
+// revisions and rosters which should be diffed
+static void 
+prepare_diff(cset & included,
+             app_state & app, 
+             std::vector<utf8> args,
+             bool & new_is_archived,
+             std::string & revheader)
 {
-  bool new_is_archived;
-  ostringstream header;
   temp_node_id_source nis;
-
-  if (app.opts.external_diff_args_given)
-    N(app.opts.diff_format == external_diff,
-      F("--diff-args requires --external\n"
-        "try adding --external or removing --diff-args?"));
-
-  cset included, excluded;
+  ostringstream header;
+  cset excluded;
 
   // initialize before transaction so we have a database to work with.
 
@@ -354,6 +350,9 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   else if (app.opts.revision_selectors.size() == 1)
     app.require_workspace();
 
+  N(app.opts.revision_selectors.size() <= 2,
+    F("more than two revisions given"));
+  
   if (app.opts.revision_selectors.size() == 0)
     {
       roster_t new_roster, old_roster;
@@ -455,10 +454,31 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   else
     {
-      throw usage(name);
+      I(false);
     }
 
+    revheader = header.str();
+}
 
+CMD(diff, N_("informative"), N_("[PATH]..."),
+    N_("show current diffs on stdout.\n"
+    "If one revision is given, the diff between the workspace and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.  If no format is specified, unified is used by default."),
+    options::opts::revision | options::opts::depth | options::opts::exclude
+    | options::opts::diff_options)
+{
+  if (app.opts.external_diff_args_given)
+    N(app.opts.diff_format == external_diff,
+      F("--diff-args requires --external\n"
+        "try adding --external or removing --diff-args?"));
+
+  cset included;
+  std::string revs;
+  bool new_is_archived;
+  
+  prepare_diff(included, app, args, new_is_archived, revs);
+  
   data summary;
   write_cset(included, summary);
 
@@ -467,7 +487,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   cout << "# " << "\n";
   if (summary().size() > 0)
     {
-      cout << header.str() << "# " << "\n";
+      cout << revs << "# " << "\n";
       for (vector<string>::iterator i = lines.begin(); 
            i != lines.end(); ++i)
         cout << "# " << *i << "\n";
@@ -481,8 +501,32 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   if (app.opts.diff_format == external_diff) {
     do_external_diff(included, app, new_is_archived);
   } else
-    dump_diffs(included, app, new_is_archived);
+    dump_diffs(included, app, new_is_archived, cout);
 }
+
+
+// Name: content_diff
+// Arguments:
+//   (optional) one or more files to include
+// Added in: 4.0
+// Purpose: Availability of mtn diff as automate command.
+//
+// Output format: Like mtn diff, but with the header part omitted (as this is
+// doubles the output of automate get_revision). If no content changes happened,
+// the output is empty. All file operations beside mtn add are omitted,
+// as they don't change the content of the file.
+AUTOMATE(content_diff, N_("[FILE [...]]"),
+    options::opts::revision | options::opts::depth | options::opts::exclude)
+{
+  cset included;
+  std::string dummy_header;
+  bool new_is_archived;
+  
+  prepare_diff(included, app, args, new_is_archived, dummy_header);
+  
+  dump_diffs(included, app, new_is_archived, output);
+}
+
 
 static void
 log_certs(app_state & app, revision_id id, cert_name name,
@@ -728,8 +772,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                 for (edge_map::const_iterator e = rev.edges.begin();
                      e != rev.edges.end(); ++e)
                   {
-                    dump_diffs(edge_changes(e), app, true, diff_paths,
-                               !mask.empty());
+                    dump_diffs(edge_changes(e), app, true, cout,
+                               diff_paths, !mask.empty());
                   }
               }
 

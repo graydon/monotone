@@ -6804,7 +6804,7 @@ message to stderr and exits with status 1.
 
 @end table
 
-@item mtn automate content_diff [@var{file} [...] [@var{rev1} [@var{rev2}]]]
+@item mtn automate content_diff [--revision=@var{id1} [--revision=@var{id2}]] [@var{files} ...]
 
 @table @strong
 @item Arguments:
@@ -6813,7 +6813,7 @@ One or more @var{file} arguments restrict the diff output to these files,
 otherwise all changed files in the given revision(s) and/or current workspace
 are considered.
 
-Furthermore zero, one or two revisions can be given as last arguments, where for
+If zero or more revisions are given, the command behaves as follows:
 
 @itemize
 @item
@@ -6821,15 +6821,15 @@ no revision: the diff is done between the workspace revision and the
 parent (base) revision of this workspace
 @item
 one revision: the diff is done between the workspace revision and the
-given revision @var{rev1},
+given revision @option{id1},
 @item
-two revisions: the diff is done between @var{rev1} and @var{rev2}; no
+two revisions: the diff is done between @option{id1} and @option{id2}; no
 workspace is needed in this case.
 @end itemize
 
 @item Added in:
 
-3.2
+4.0
 
 @item Purpose:
 
@@ -6861,10 +6861,9 @@ is empty.
 
 @item Error conditions:
 
-If an incorrect number of revisions are given or a workspace is required, but
-not found, prints to stderr and exits with status 1. If a certain given revision
-does not exist, it is interpreted as file restriction. If one or more file 
-restrictions can't be applied, the command prints to stderr and exits, too.
+If more than two revisions are given or a workspace is required, but
+not found, prints to stderr and exits with status 1. If one or more file 
+restrictions can't be applied, the command prints to stderr and exits as well.
 
 @end table
 

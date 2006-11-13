@@ -68,25 +68,6 @@ describe_revision(app_state & app,
                   revision_id const & id);
 
 void
-dump_diffs(cset const & cs,
-           app_state & app,
-           bool new_is_archived,
-           std::ostream & output);
-
-void
-dump_diffs(cset const & cs,
-           app_state & app,
-           bool new_is_archived,
-           std::ostream & output,
-           std::set<split_path> const & paths,
-           bool limit_paths=false);
-
-void
-do_external_diff(cset const & cs,
-                 app_state & app,
-                 bool new_is_archived);
-
-void
 complete(app_state & app,
          std::string const & str,
          revision_id & completion,
