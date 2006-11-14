@@ -1,8 +1,13 @@
-HOWTO make tests
-================
+HOWTO handle external (blackbox) tests
+======================================
 
-Quick and dirty howto, to get you up to create and run tests.
-Very early draft. Feel free to improve.
+Quick and dirty howto on how we do "blackbox" tests, the kind of tests
+that are run against the mtn executable as a whole, and live in the
+tests/ directory.  Very early draft.  Feel free to improve.
+
+See also the "tester.txt" and "testsuite.txt" files, which
+respectively describe the basic testing framework's API, and the
+monotone-specific addons.
 
 Running tests:
 --------------

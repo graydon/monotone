@@ -1,0 +1,55 @@
+monotone (0.31-90.1) unstable; urgency=low
+
+  * Another efficiency change.  You need to do the following on each
+    of your databases (except for the server database handled by the
+    monotone-server package, for which this is done automatically):
+
+	mtn db migrate
+	# ... possibly other commands, depending on how old your previous
+	#     mtn version was
+	mtn db regenerate_caches
+
+    This does NOT affect remote participants of your projects, the
+    changes are only local.
+
+ -- Richard Levitte <richard@levitte.org>  Mon, 13 Nov 2006 22:56:10 +0100
+
+monotone (0.30-0.1) unstable; urgency=low
+
+  * Efficiency changes have been implemented, which changes the rosters
+    (and internal file description structure).  It means that you will
+    have to do the following on each of your databases (except for the
+    server database handled by the monotone-server package, for which
+    this is done automatically):
+
+	mtn db migrate
+	# ... possibly other commands, depending on how old your previous
+	#     mtn version was
+	mtn db regenerate_rosters
+
+    This does NOT affect remote participants of your projects, the
+    changes are only local.
+
+ -- Richard Levitte <richard@levitte.org>  Thu,  7 Sep 2006 05:15:43 +0200
+
+monotone (0.30-0.1) unstable; urgency=low
+
+  * [this is copied from the normal monotone NEWS file]
+
+        In this release, there is a minor change to the format of the
+        data stored in the bookkeeping directory "_MTN".  You must run
+        the command "mtn migrate_workspace" in all your existing
+        workspaces before you can use them with this version of
+        monotone; once you have done this, you will not be able to use
+        those workspaces with older versions of monotone.  Nothing
+        terrible will happen if you try to use an old workspace
+        without migrating it; you'll just get an error message.
+
+        This change makes it possible for a workspace to have more
+        than one parent revision, which will enable a number of
+        long-wanted features.  Those features are not yet complete,
+        but we do not expect to have to change formats again to
+        support them.
+
+ -- Richard Levitte <richard@levitte.org>  Tue,  5 Sep 2006 08:18:34 +0200
+
