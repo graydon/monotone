@@ -42,7 +42,7 @@ function monotone_migrate ()
 {
     if dpkg --compare-versions "$MTN_VERSION" lt "0.31-90.1"; then 
 	# upgradable version of monotone
-	echo "Attempting to migrate monotone database..." >&2
+	echo "Attempting to migrate monotone database.  This may take a while..." >&2
 	echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
 
 	cp $MTN_DB $MTN_DB~
