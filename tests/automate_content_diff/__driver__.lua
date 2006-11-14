@@ -25,10 +25,12 @@ writefile("existing", "foo foo bar")
 commit()
 R3=base_revision()
 
--- two revisions should work
-check(mtn("automate", "content_diff", R1, R2), 0, true, true)
+-- one and two revisions should work
+check(mtn("automate", "content_diff", "-r", R1), 0, true, true)
+check(fsize("stdout") ~= 0)
+check(mtn("automate", "content_diff", "-r", R1, "-r", R2), 0, true, true)
 check(fsize("stdout") ~= 0)
 
--- three do not
-check(mtn("automate", "content_diff", R1, R2, R3), 1, true, true)
+-- three and more should not
+check(mtn("automate", "content_diff", "-r", R1, "-r", R2, "-r", R3), 1, true, true)
 
