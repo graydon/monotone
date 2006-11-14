@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: tomfa@debian.org\n"
-"POT-Creation-Date: 2005-12-06 10:24-0600\n"
+"Report-Msgid-Bugs-To: sjackman@debian.org\n"
+"POT-Creation-Date: 2006-11-13 14:30-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,24 +34,26 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../monotone-server.templates:11
-msgid "Monotone key id."
+msgid "Monotone key id:"
 msgstr ""
 
 #. Type: string
 #. Description
 #: ../monotone-server.templates:11
-msgid "Enter the id of the key your monotone server will use."
+msgid ""
+"Enter the id of the key your monotone server will use. The key id is "
+"typically an email address."
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../monotone-server.templates:16
+#: ../monotone-server.templates:17
 msgid "Monotone key passphrase:"
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../monotone-server.templates:16
+#: ../monotone-server.templates:17
 msgid ""
 "Please choose a passphrase for your monotone key. If left blank, one will be "
 "generated for you."

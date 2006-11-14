@@ -1,3 +1,12 @@
+monotone (0.31-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update policy to version 3.7.2.2. No changes were necessary.
+  * New packages: monotone-doc and monotone-server.
+  * Add ps2eps, tetex-bin, texinfo, xpdf-utils to Build-Depends-Indep.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 13 Nov 2006 10:16:14 -0700
+
 monotone (0.31-0.1) unstable; urgency=low
 
   * New upstream release.

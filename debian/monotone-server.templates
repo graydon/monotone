@@ -8,8 +8,9 @@ _Description: Automatically manage monotone database?
 
 Template: monotone-server/key
 Type: string
-_Description: Monotone key id.
- Enter the id of the key your monotone server will use.
+_Description: Monotone key id:
+ Enter the id of the key your monotone server will use. The key id
+ is typically an email address.
 
 Template: monotone-server/passphrase
 Type: password
