@@ -1,3 +1,11 @@
+monotone (0.31-90.1) unstable; urgency=low
+
+  * Pre-0.32 "release", serving as a marker for a new infrastructure which
+    has been merged into mainline and that requires database upgrades,
+    which is reflected in monotone-server.postinst.
+
+ -- Richard Levitte <richard@levitte.org>  Mon, 13 Nov 2006 23:50:45 +0100
+
 monotone (0.31-0.1) unstable; urgency=low
 
   * New upstream release.

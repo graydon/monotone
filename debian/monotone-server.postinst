@@ -40,7 +40,7 @@ function monotone_check_minimum_previous_version ()
 
 function monotone_migrate ()
 {
-    if dpkg --compare-versions "$MTN_VERSION" lt "0.30"; then 
+    if dpkg --compare-versions "$MTN_VERSION" lt "0.31-90.1"; then 
 	# upgradable version of monotone
 	echo "Attempting to migrate monotone database..." >&2
 	echo "A backup named '`basename $MTN_DB~`' will be created in $MTN_HOME." >&2
@@ -83,15 +83,15 @@ function monotone_rosterify ()
     fi
 }
 
-function monotone_regenerate_rosters ()
+function monotone_regenerate_caches ()
 {
-    if dpkg --compare-versions "$MTN_VERSION" lt "0.30"; then
-	# now we need to regenerate rosters
-	echo "Attempting to regenerate rosters..." >&2
+    if dpkg --compare-versions "$MTN_VERSION" lt "0.31-90.1"; then
+	# now we need to regenerate caches
+	echo "Attempting to regenerate caches..." >&2
 
-	if $MTN --db=$MTN_DB db regenerate_rosters --rcfile=$MTN_CONFDIR/hooks.lua \
+	if $MTN --db=$MTN_DB db regenerate_caches --rcfile=$MTN_CONFDIR/hooks.lua \
 	    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2; then
-	    echo "Rosters successfully regenerated." >&2
+	    echo "Caches successfully regenerated." >&2
 	    /bin/true
 	else
 	    echo "*** Error regenerating roster. ***" >&2
@@ -188,7 +188,7 @@ case "$1" in
 	      monotone_check_minimum_previous_version && \
 		 monotone_migrate && \
 		 monotone_rosterify && \
-		 monotone_regenerate_rosters
+		 monotone_regenerate_caches
 	      set -e
            fi
 
