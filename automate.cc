@@ -1499,7 +1499,7 @@ AUTOMATE(get_option, N_("OPTION"), options::opts::none)
 // Arguments:
 //   1: a revision ID
 //   2: a file name
-// Added in: 3.2
+// Added in: 3.1
 // Purpose: Returns a list of revision IDs in which the content 
 // was most recently changed, relative to the revision ID specified 
 // in argument 1. This equates to a content mark following 
@@ -1556,7 +1556,7 @@ AUTOMATE(get_content_changed, N_("REV FILE"), options::opts::none)
 //   1: a source revision ID
 //   2: a file name (in the source revision)
 //   3: a target revision ID
-// Added in: 3.2
+// Added in: 3.1
 // Purpose: Given a the file name in the source revision, a filename 
 // will if possible be returned naming the file in the target revision. 
 // This allows the same file to be matched between revisions, accounting 

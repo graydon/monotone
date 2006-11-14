@@ -1,3 +1,15 @@
+2006-11-14  Thomas Keller  <me@thomaskeller.biz>
+	
+	* new automate content_diff command which is basically
+	the same like mtn diff (also uses most of its infrastructure)
+	minus the display of the basic_io revision header
+	* tests/automate_content_diff: test for that
+	* tests/automate_automate_version test renamed to
+	automate_interface_version
+	* monotone.texi: list formatting for automate attributes
+	documentation, docs for automate content_diff
+	* fixed commented version number for two commands
+
 2006-11-14  Richard Levitte  <richard@levitte.org>
 
 	NOTE: I bumped the Debian version number to 0.31-90.1 in this

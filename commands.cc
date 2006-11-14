@@ -12,7 +12,9 @@
 
 #include "transforms.hh"
 #include "simplestring_xform.hh"
+#include "localized_file_io.hh"
 #include "charset.hh"
+#include "diff_patch.hh"
 #include "inodeprint.hh"
 #include "cert.hh"
 #include "ui.hh"
@@ -24,6 +26,8 @@
 #endif
 
 using std::cin;
+using std::map;
+using std::ostream;
 using std::pair;
 using std::set;
 using std::string;
