@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-13 22:21+0100\n"
-"PO-Revision-Date: 2006-11-13 22:28+0100\n"
+"POT-Creation-Date: 2006-11-14 23:43+0100\n"
+"PO-Revision-Date: 2006-11-14 23:45+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -244,9 +244,9 @@ msgid "REVID"
 msgstr "REVID"
 
 #: automate.cc:1103 automate.cc:1129 automate.cc:1184 automate.cc:1186
-#: cmd_db.cc:35 cmd_diff_log.cc:387 cmd_diff_log.cc:418 cmd_diff_log.cc:420
+#: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
 #: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:125 cmd_merging.cc:677
-#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:409
+#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:413
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
@@ -476,9 +476,9 @@ msgstr "ta bort databasvariabeln NAMN från domänen DOMÄN"
 msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
-#: cmd_db.cc:155 cmd_diff_log.cc:333 cmd_diff_log.cc:559 cmd_files.cc:114
+#: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
 #: cmd_files.cc:181 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:373
-#: commands.cc:271
+#: commands.cc:275
 msgid "informative"
 msgstr "informativ"
 
@@ -495,12 +495,17 @@ msgstr "utöka den partiella identiteten"
 msgid "non-hex digits in partial id"
 msgstr "något tecken i den partiella identiteten är inte hexadecimalt"
 
-#: cmd_diff_log.cc:333 cmd_ws_commit.cc:66 cmd_ws_commit.cc:252
+#: cmd_diff_log.cc:356
+#, c-format
+msgid "more than two revisions given"
+msgstr "fler än två revisioner angivna"
+
+#: cmd_diff_log.cc:465 cmd_ws_commit.cc:66 cmd_ws_commit.cc:252
 #: cmd_ws_commit.cc:293 cmd_ws_commit.cc:373 cmd_ws_commit.cc:679
 msgid "[PATH]..."
 msgstr "[SÖKVÄG]..."
 
-#: cmd_diff_log.cc:334
+#: cmd_diff_log.cc:466
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -512,7 +517,7 @@ msgstr ""
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
 
-#: cmd_diff_log.cc:347
+#: cmd_diff_log.cc:475
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -521,15 +526,19 @@ msgstr ""
 "--diff-args kräver att även --external anges\n"
 "lägg till --external eller ta bort --diff-args?"
 
-#: cmd_diff_log.cc:479
+#: cmd_diff_log.cc:499
 msgid "no changes"
 msgstr "inga ändringar"
 
-#: cmd_diff_log.cc:559
+#: cmd_diff_log.cc:520
+msgid "[FILE [...]]"
+msgstr "[FIL [...]]"
+
+#: cmd_diff_log.cc:603
 msgid "[FILE] ..."
 msgstr "[FIL] ..."
 
-#: cmd_diff_log.cc:560
+#: cmd_diff_log.cc:604
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -538,7 +547,7 @@ msgstr ""
 "arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
 "angivits används de som utgångspunkter."
 
-#: cmd_diff_log.cc:572
+#: cmd_diff_log.cc:616
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
@@ -1763,53 +1772,53 @@ msgstr ""
 msgid "refresh the inodeprint cache"
 msgstr "uppdatera inodeprint-cachen"
 
-#: commands.cc:135 commands.cc:237
+#: commands.cc:139 commands.cc:241
 #, c-format
 msgid "unknown command '%s'"
 msgstr "okänt kommando '%s'"
 
-#: commands.cc:146
+#: commands.cc:150
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:"
 msgstr "kommandot '%s' har mer än en betydelse:"
 
-#: commands.cc:179
+#: commands.cc:183
 msgid "commands:"
 msgstr "kommandon:"
 
-#: commands.cc:271
+#: commands.cc:275
 msgid "command [ARGS...]"
 msgstr "kommandon [ARGUMENT...]"
 
-#: commands.cc:272
+#: commands.cc:276
 msgid "display command help"
 msgstr "skriv ut hjälptext"
 
-#: commands.cc:416
+#: commands.cc:420
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expanderar valet '%s'"
 
-#: commands.cc:424
+#: commands.cc:428
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "det finns inget som matchar '%s'"
 
-#: commands.cc:430
+#: commands.cc:434
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expanderar till '%s'"
 
-#: commands.cc:447
+#: commands.cc:451
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "valet '%s' har mer än en möjlig betydelse:"
 
-#: commands.cc:464
+#: commands.cc:468
 msgid "note: "
 msgstr "obs: "
 
-#: commands.cc:465
+#: commands.cc:469
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1818,7 +1827,7 @@ msgstr ""
 "grenen '%s' har mer än ett löv\n"
 "du kanske borde överväga '%s merge'"
 
-#: commands.cc:480
+#: commands.cc:484
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message och --message-file får inte anges samtidigt"
@@ -2101,7 +2110,9 @@ msgstr "%d inkorrekta höjder"
 msgid ""
 "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs; %d "
 "heights"
-msgstr "kontroll klar: %d filer; %d listor; %d revisioner; %d nycklar; %d cert; %d höjder"
+msgstr ""
+"kontroll klar: %d filer; %d listor; %d revisioner; %d nycklar; %d cert; %d "
+"höjder"
 
 #: database_check.cc:1024
 #, c-format

@@ -54,7 +54,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-07 20:12+0100\n"
+"POT-Creation-Date: 2006-11-14 23:43+0100\n"
 "PO-Revision-Date: 2006-11-07 09:30-0400\n"
 "Last-Translator: Nicolás Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team: Nicolás Ruiz <juan.ruiz at ula.ve>\n"
@@ -98,7 +98,7 @@ msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
 #: automate.cc:365 automate.cc:369 automate.cc:428 automate.cc:452
-#: automate.cc:1216 cmd_list.cc:662
+#: automate.cc:1216 cmd_list.cc:662 revision.cc:1705
 #, c-format
 msgid "No such revision %s"
 msgstr "La revisión %s no existe"
@@ -120,7 +120,7 @@ msgstr "archivo %s no es conocido en el área de trabajo actual"
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "REV_NUEVA [REV_VIEJA1 [REV_VIEJA2 [...]]]"
 
-#: automate.cc:423 automate.cc:447 cmd_list.cc:652
+#: automate.cc:423 automate.cc:447 cmd_list.cc:652 revision.cc:1699
 msgid "REV"
 msgstr "REV"
 
@@ -152,9 +152,9 @@ msgid "REVID"
 msgstr "ID_REV"
 
 #: automate.cc:1103 automate.cc:1129 automate.cc:1184 automate.cc:1186
-#: cmd_db.cc:35 cmd_diff_log.cc:385 cmd_diff_log.cc:416 cmd_diff_log.cc:418
+#: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
 #: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:125 cmd_merging.cc:677
-#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:409
+#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:413
 #, c-format
 msgid "no such revision '%s'"
 msgstr "la revisión '%s' no existe"
@@ -325,6 +325,7 @@ msgid "database"
 msgstr "base de datos"
 
 #: cmd_db.cc:47
+#, fuzzy
 msgid ""
 "init\n"
 "info\n"
@@ -339,7 +340,7 @@ msgid ""
 "check\n"
 "changesetify\n"
 "rosterify\n"
-"regenerate_rosters\n"
+"regenerate_caches\n"
 "set_epoch BRANCH EPOCH\n"
 msgstr ""
 "init\n"
@@ -394,9 +395,9 @@ msgstr "elimina la variable de la base de datos NOMBRE en el dominio DOMAIN"
 msgid "no var with name %s in domain %s"
 msgstr "ninguna variable tiene nombre %s en el dominino %s"
 
-#: cmd_db.cc:155 cmd_diff_log.cc:331 cmd_diff_log.cc:541 cmd_files.cc:114
+#: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
 #: cmd_files.cc:181 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:373
-#: commands.cc:271
+#: commands.cc:275
 msgid "informative"
 msgstr "informativo"
 
@@ -413,12 +414,17 @@ msgstr "completa un identificador parcial"
 msgid "non-hex digits in partial id"
 msgstr "digitos no hexadecimales en el identificador parcial"
 
-#: cmd_diff_log.cc:331 cmd_ws_commit.cc:66 cmd_ws_commit.cc:252
+#: cmd_diff_log.cc:356
+#, c-format
+msgid "more than two revisions given"
+msgstr ""
+
+#: cmd_diff_log.cc:465 cmd_ws_commit.cc:66 cmd_ws_commit.cc:252
 #: cmd_ws_commit.cc:293 cmd_ws_commit.cc:373 cmd_ws_commit.cc:679
 msgid "[PATH]..."
 msgstr "[CAMINO]..."
 
-#: cmd_diff_log.cc:332
+#: cmd_diff_log.cc:466
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -431,7 +437,7 @@ msgstr ""
 "muestran las diferencias entre ambas revisiones. Si no se especifica\n"
 "formato, se utiliza formato unificado por omisión."
 
-#: cmd_diff_log.cc:345
+#: cmd_diff_log.cc:475
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -440,15 +446,20 @@ msgstr ""
 "--diff-args requiere --external\n"
 "pruebe agregando --external o eliminando --diff-args?"
 
-#: cmd_diff_log.cc:477
+#: cmd_diff_log.cc:499
 msgid "no changes"
 msgstr "no hay cambios"
 
-#: cmd_diff_log.cc:541
+#: cmd_diff_log.cc:520
+#, fuzzy
+msgid "[FILE [...]]"
+msgstr "[ARCHIVO]..."
+
+#: cmd_diff_log.cc:603
 msgid "[FILE] ..."
 msgstr "[ARCHIVO]..."
 
-#: cmd_diff_log.cc:542
+#: cmd_diff_log.cc:604
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -456,7 +467,7 @@ msgstr ""
 "imprime la historia en orden reverso (filtrado por 'ARCHIVO'). Si una\n"
 "o más revisiones son especificadas, se utilizan estas como punto de partida."
 
-#: cmd_diff_log.cc:604
+#: cmd_diff_log.cc:616
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "solo se permite una de las opciones --last/--next"
@@ -1692,53 +1703,53 @@ msgstr ""
 msgid "refresh the inodeprint cache"
 msgstr "refresca el cache inodeprint"
 
-#: commands.cc:135 commands.cc:237
+#: commands.cc:139 commands.cc:241
 #, c-format
 msgid "unknown command '%s'"
 msgstr "comando desconocido '%s'"
 
-#: commands.cc:146
+#: commands.cc:150
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:"
 msgstr "comando '%s' tiene múltiple expansiones ambiguas:"
 
-#: commands.cc:179
+#: commands.cc:183
 msgid "commands:"
 msgstr "comandos:"
 
-#: commands.cc:271
+#: commands.cc:275
 msgid "command [ARGS...]"
 msgstr "comando [ARGUMENTOS...]"
 
-#: commands.cc:272
+#: commands.cc:276
 msgid "display command help"
 msgstr "muestra la ayuda del comando"
 
-#: commands.cc:416
+#: commands.cc:420
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expandiendo selección '%s'"
 
-#: commands.cc:424
+#: commands.cc:428
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "no hay concordancia para la selección '%s'"
 
-#: commands.cc:430
+#: commands.cc:434
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expandido a '%s'"
 
-#: commands.cc:447
+#: commands.cc:451
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "selección '%s' tiene múltiple expansiones ambiguas:"
 
-#: commands.cc:464
+#: commands.cc:468
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:465
+#: commands.cc:469
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1747,70 +1758,78 @@ msgstr ""
 "rama '%s' tiene múltiples cabezas\n"
 "considere utilizar '%s merge'"
 
-#: commands.cc:480
+#: commands.cc:484
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "'--message' y '--message-file' son mutuamente exclusivos"
 
-#: database_check.cc:129
+#: database_check.cc:137
 #, c-format
 msgid "file structure is corrupted; cannot check further"
 msgstr "la estructura del archivo está corrupta; no puedo chequear más"
 
-#: database_check.cc:140
+#: database_check.cc:148
 msgid "files"
 msgstr "archivos"
 
-#: database_check.cc:169
+#: database_check.cc:177
 msgid "rosters"
 msgstr "rosters"
 
-#: database_check.cc:227
+#: database_check.cc:235
 msgid "markings"
 msgstr "marcas"
 
-#: database_check.cc:298 netsync.cc:2969 rcs_import.cc:1244
+#: database_check.cc:306 netsync.cc:2969 rcs_import.cc:1244
 msgid "revisions"
 msgstr "revisiones"
 
-#: database_check.cc:393
+#: database_check.cc:401
 msgid "ancestry"
 msgstr "ascendencia"
 
-#: database_check.cc:426 netsync.cc:2973
+#: database_check.cc:434 netsync.cc:2973
 msgid "keys"
 msgstr "llaves"
 
-#: database_check.cc:452
+#: database_check.cc:460
 msgid "certs"
 msgstr "certificados"
 
-#: database_check.cc:489
+#: database_check.cc:504
+msgid "heights"
+msgstr ""
+
+#: database_check.cc:548
+msgid "height relations"
+msgstr ""
+
+#: database_check.cc:594
 #, c-format
 msgid "file %s missing (%d manifest references)"
 msgstr "archivo %s faltante (%d referencias en el manifiesto)"
 
-#: database_check.cc:496
+#: database_check.cc:601
 #, c-format
 msgid "file %s unreferenced"
 msgstr "archivo %s sin referencias"
 
-#: database_check.cc:515
+#: database_check.cc:620
 #, c-format
 msgid "roster %s unreferenced"
 msgstr "roster %s sin referencias"
 
-#: database_check.cc:521
+#: database_check.cc:626
 #, c-format
 msgid "roster %s incomplete (%d missing files)"
 msgstr "roster %s incompleto (%d archivos faltantes)"
 
-#: database_check.cc:528
+#: database_check.cc:633
 #, c-format
 msgid "roster %s incomplete (%d missing revisions)"
 msgstr "roster %s incompleto (%d revisiones faltantes)"
 
-#: database_check.cc:553
+#: database_check.cc:658
 #, c-format
 msgid ""
 "revision %s missing (%d revision references; %d cert references; %d parent "
@@ -1820,204 +1839,236 @@ msgstr ""
 "certificados; %d referencias a padres; %d referencias a rosters; %d "
 "referencias a rosters)"
 
-#: database_check.cc:561
+#: database_check.cc:666
 #, c-format
 msgid "revision %s incomplete (%d missing manifests)"
 msgstr "revisión %s incompleta (%d manifiestos faltantes)"
 
-#: database_check.cc:568
+#: database_check.cc:673
 #, c-format
 msgid "revision %s incomplete (%d missing revisions)"
 msgstr "revisión %s incompleta (%d revisiones faltantes)"
 
-#: database_check.cc:575
+#: database_check.cc:680
 #, c-format
 msgid "revision %s incomplete (missing roster)"
 msgstr "revisión %s incompleta (roster faltante)"
 
-#: database_check.cc:581
+#: database_check.cc:686
 #, c-format
 msgid "revision %s mismatched roster and manifest"
 msgstr "revisión %s no hay concordancia entre roster y manifiesto"
 
-#: database_check.cc:587
+#: database_check.cc:692
 #, c-format
 msgid "revision %s incomplete (incomplete roster)"
 msgstr "revisión %s incompleta (roster incompleto)"
 
-#: database_check.cc:593
+#: database_check.cc:698
 #, c-format
 msgid "revision %s mismatched parents (%d ancestry parents; %d revision refs)"
 msgstr ""
 "revisión %s padres no concordantes (%d padres en la ascendencia; %d "
 "referencias a revisiones)"
 
-#: database_check.cc:602
+#: database_check.cc:707
 #, c-format
 msgid "revision %s mismatched children (%d ancestry children; %d parents)"
 msgstr ""
 "revisión %s tiene hijos no concordantes (%d hijos en la ascendencia; %d "
 "padres)"
 
-#: database_check.cc:614
+#: database_check.cc:719
 #, c-format
 msgid "revision %s has bad history (%s)"
 msgstr "revisión %s tiene historia inválida (%s)"
 
-#: database_check.cc:621
+#: database_check.cc:726
 #, c-format
 msgid "revision %s is not parseable (perhaps with unnormalized paths?)"
 msgstr ""
 "revisión %s no es sintácticamente válidda (quizas con caminos no "
 "normalizados?)"
 
-#: database_check.cc:628
+#: database_check.cc:733
 #, c-format
 msgid "revision %s is not in normalized form"
 msgstr "revisión %s no está en forma normalizada"
 
-#: database_check.cc:652
+#: database_check.cc:757
 #, c-format
 msgid "key %s missing (signed %d certs)"
 msgstr "llave %s faltante (%d certificados firmados)"
 
-#: database_check.cc:685
+#: database_check.cc:790
 #, c-format
 msgid "revision %s unchecked signature in %s cert from missing key %s"
 msgstr ""
 "revisión %s tiene firma no verificada en certificado %s por la llave "
 "faltante %s"
 
-#: database_check.cc:693
+#: database_check.cc:798
 #, c-format
 msgid "revision %s bad signature in %s cert from key %s"
 msgstr "revisión %s tiene firma incorrecta en certificado %s por la llave %s"
 
-#: database_check.cc:708
+#: database_check.cc:813
 #, c-format
 msgid "revision %s missing %s cert"
 msgstr "revisión %s le falta el certificado %s"
 
-#: database_check.cc:717
+#: database_check.cc:822
 #, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)"
 msgstr ""
 "revisión %s tiene certificados no concordantes (%d autores %d fechas %d "
 "changelogs)"
 
-#: database_check.cc:797
+#: database_check.cc:846
+#, fuzzy, c-format
+msgid "height missing for revision %s"
+msgstr "%d revisiones faltantes"
+
+#: database_check.cc:853
+#, fuzzy, c-format
+msgid "duplicate height for revision %s"
+msgstr "actualizado a la revisión base %s"
+
+#: database_check.cc:859
+#, c-format
+msgid "height of revision %s not greater than that of parent"
+msgstr ""
+
+#: database_check.cc:944
 #, c-format
 msgid "%d missing files"
 msgstr "%d archivos faltantes"
 
-#: database_check.cc:799
+#: database_check.cc:946
 #, c-format
 msgid "%d unreferenced files"
 msgstr "%d archivos no referenciados"
 
-#: database_check.cc:802
+#: database_check.cc:949
 #, c-format
 msgid "%d unreferenced rosters"
 msgstr "%d rosters no referenciados"
 
-#: database_check.cc:804
+#: database_check.cc:951
 #, c-format
 msgid "%d incomplete rosters"
 msgstr "%d rosters incompletos"
 
-#: database_check.cc:807
+#: database_check.cc:954
 #, c-format
 msgid "%d missing revisions"
 msgstr "%d revisiones faltantes"
 
-#: database_check.cc:809
+#: database_check.cc:956
 #, c-format
 msgid "%d incomplete revisions"
 msgstr "%d revisiones incompletas"
 
-#: database_check.cc:811
+#: database_check.cc:958
 #, c-format
 msgid "%d mismatched parents"
 msgstr "%d padres no concordantes"
 
-#: database_check.cc:813
+#: database_check.cc:960
 #, c-format
 msgid "%d mismatched children"
 msgstr "%d hijos no concordantes"
 
-#: database_check.cc:815
+#: database_check.cc:962
 #, c-format
 msgid "%d revisions with bad history"
 msgstr "%d revisiones con historia incorrecta"
 
-#: database_check.cc:817
+#: database_check.cc:964
 #, c-format
 msgid "%d revisions not parseable (perhaps with invalid paths)"
 msgstr "%d revisiones no analizables (quizas tengan caminos inválidos)"
 
-#: database_check.cc:820
+#: database_check.cc:967
 #, c-format
 msgid "%d revisions not in normalized form"
 msgstr "%d revisiones no estan en forma normalizada"
 
-#: database_check.cc:824
+#: database_check.cc:971
 #, c-format
 msgid "%d missing rosters"
 msgstr "%d rosters faltantes"
 
-#: database_check.cc:828
+#: database_check.cc:975
 #, c-format
 msgid "%d missing keys"
 msgstr "%d llaves faltantes"
 
-#: database_check.cc:831
+#: database_check.cc:978
 #, c-format
 msgid "%d missing certs"
 msgstr "%d certificados faltantes"
 
-#: database_check.cc:833
+#: database_check.cc:980
 #, c-format
 msgid "%d mismatched certs"
 msgstr "%d certificados no concordantes"
 
-#: database_check.cc:835
+#: database_check.cc:982
 #, c-format
 msgid "%d unchecked signatures due to missing keys"
 msgstr "%d firmas no verificadas debido a llaves faltantes"
 
-#: database_check.cc:837
+#: database_check.cc:984
 #, c-format
 msgid "%d bad signatures"
 msgstr "%d firmas incorrectas"
 
-#: database_check.cc:861
+#: database_check.cc:987
+#, fuzzy, c-format
+msgid "%d missing heights"
+msgstr "%d certificados faltantes"
+
+#: database_check.cc:989
 #, c-format
-msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs"
+msgid "%d duplicate heights"
+msgstr ""
+
+#: database_check.cc:991
+#, fuzzy, c-format
+msgid "%d incorrect heights"
+msgstr "%d revisiones incompletas"
+
+#: database_check.cc:1017
+#, fuzzy, c-format
+msgid ""
+"check complete: %d files; %d rosters; %d revisions; %d keys; %d certs; %d "
+"heights"
 msgstr ""
 "chequeo completo: %d archivos; %d rosters; %d revisiones; %d llaves, %d "
 "certificados"
 
-#: database_check.cc:867
+#: database_check.cc:1024
 #, c-format
 msgid "total problems detected: %d (%d serious)"
 msgstr "total de problemas detectados: %d (%d serios)"
 
-#: database_check.cc:869
+#: database_check.cc:1026
 #, c-format
 msgid "serious problems detected"
 msgstr "problemas serios detectados"
 
-#: database_check.cc:871
+#: database_check.cc:1028
 #, c-format
 msgid "minor problems detected"
 msgstr "problemas menores detectados"
 
-#: database_check.cc:873
+#: database_check.cc:1030
 #, c-format
 msgid "database is good"
 msgstr "base de datos está bien"
 
-#: database.cc:158
+#: database.cc:159
 #, c-format
 msgid ""
 "layout of database %s doesn't match this version of monotone\n"
@@ -2031,12 +2082,12 @@ msgstr ""
 "pruebe '%s db migrate' para actualizarla\n"
 "(esto es irreversible, primero haga una copia de seguridad)"
 
-#: database.cc:172
+#: database.cc:173
 #, c-format
 msgid "this database already contains rosters"
 msgstr "esta base de datos ya contiene rosters"
 
-#: database.cc:196
+#: database.cc:200
 #, c-format
 msgid ""
 "database %s contains old-style revisions\n"
@@ -2055,7 +2106,7 @@ msgstr ""
 "  hale la data a una nueva base de datos.\n"
 "disculpe por el inconveniente."
 
-#: database.cc:206
+#: database.cc:210
 #, c-format
 msgid ""
 "database %s contains manifests but no revisions\n"
@@ -2066,31 +2117,30 @@ msgstr ""
 "esta es una base de datos muy vieja; necesita ser actualizada\n"
 "por favor lea los detalles en README.changesets"
 
-#: database.cc:217
-#, c-format
+#: database.cc:221
+#, fuzzy, c-format
 msgid ""
-"database %s contains revisions but no rosters\n"
-"probably this is because an upgrade cleared the roster cache\n"
-"run '%s db regenerate_rosters' to restore use of this database"
+"database %s misses some cached data\n"
+"run '%s db regenerate_caches' to restore use of this database"
 msgstr ""
 "base de datos %s contiene revisiones pero no rosters\n"
 "probablemente esto es porque una actualización limpió el cache de rosters\n"
 "ejecute '%s db regenerate_rosters' para restablecer el uso de esta base de "
 "datos"
 
-#: database.cc:256
+#: database.cc:259
 #, c-format
 msgid "unable to probe database version in file %s"
 msgstr "incapaz de determinar la versión de la base de datos en el archivo %s"
 
-#: database.cc:263
+#: database.cc:266
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
 "base de datos %s no es un archivo sqlite versión 3,\n"
 "intente un 'dump' y 'reload'"
 
-#: database.cc:290 schema_migration.cc:201
+#: database.cc:293 schema_migration.cc:201
 msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
@@ -2098,7 +2148,7 @@ msgstr ""
 "asegurese que la base de datos y el directorio que la contiene tengan\n"
 "permiso de escritura y que no se haya quedado sin espacio en disco"
 
-#: database.cc:294 schema_migration.cc:206
+#: database.cc:297 schema_migration.cc:206
 #, c-format
 msgid ""
 "sqlite error: %s\n"
@@ -2107,12 +2157,12 @@ msgstr ""
 "error sqlite: %s\n"
 "%s"
 
-#: database.cc:339
+#: database.cc:342
 #, c-format
 msgid "could not initialize database: %s: already exists"
 msgstr "no puede inicializar la base de datos: %s: ya existe"
 
-#: database.cc:344
+#: database.cc:347
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2123,13 +2173,13 @@ msgstr ""
 "raiz que la nueva base de datos '%s'\n"
 "cancelando la creación de la base de datos"
 
-#: database.cc:494
+#: database.cc:497
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr "no puede crear %s; ya existe"
 
-#: database.cc:571
-#, c-format
+#: database.cc:574
+#, fuzzy, c-format
 msgid ""
 "schema version    : %s\n"
 "counts:\n"
@@ -2149,6 +2199,7 @@ msgid ""
 "  revisions       : %u\n"
 "  cached ancestry : %u\n"
 "  certs           : %u\n"
+"  heights         : %u\n"
 "  total           : %u\n"
 "database:\n"
 "  page size       : %u\n"
@@ -2177,52 +2228,52 @@ msgstr ""
 "  tamaño de página          : %u\n"
 "  tamaño del cache          : %u"
 
-#: database.cc:634
+#: database.cc:639
 #, c-format
 msgid "database schema version: %s"
 msgstr "versión del esquema de la base de datos: %s"
 
-#: database.cc:711
+#: database.cc:716
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "múltiples statements en el query: %s"
 
-#: database.cc:717
+#: database.cc:722
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "queria %d columnas y obtuvo %d en el query: %s"
 
-#: database.cc:783
+#: database.cc:788
 #, c-format
 msgid "null result in query: %s"
 msgstr "resultado nulo en el query: %s"
 
-#: database.cc:801
+#: database.cc:806
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "queria %d filas y obtuvo %d en el query: %s"
 
-#: database.cc:1948
+#: database.cc:2040
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "ya existe otra llave con nombre '%s'"
 
-#: database.cc:2945
+#: database.cc:3037
 #, c-format
 msgid "no database specified"
 msgstr "no se especificó base de datos"
 
-#: database.cc:2953
+#: database.cc:3045
 #, c-format
 msgid "database %s does not exist"
 msgstr "base de datos %s inexistente"
 
-#: database.cc:2954
+#: database.cc:3046
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s es un directorio, no una base de datos"
 
-#: database.cc:2979
+#: database.cc:3071
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "no puede abrir base de datos '%s': %s"
@@ -3338,49 +3389,49 @@ msgstr "camino %s no existe"
 msgid "tags"
 msgstr "etiquetas"
 
-#: revision.cc:865
+#: revision.cc:841
 #, c-format
 msgid "scanning for bogus merge edges"
 msgstr "buscando aristas de 'merge' incorrectos"
 
-#: revision.cc:907
+#: revision.cc:883
 #, c-format
 msgid "optimizing out redundant edge %d -> %d"
 msgstr "removiendo aristas redundantes %d -> %d"
 
-#: revision.cc:916
+#: revision.cc:892
 #, c-format
 msgid "failed to eliminate edge %d -> %d"
 msgstr "falla en la eliminación de arista %d -> %d"
 
-#: revision.cc:927
+#: revision.cc:903
 #, c-format
 msgid "rebuilding %d nodes"
 msgstr "reconstruyendo %d nodos"
 
-#: revision.cc:1132
+#: revision.cc:1108
 #, c-format
 msgid "Path %s added to child roster multiple times"
 msgstr "Camino %s agregado al roster hijo múltiples veces"
 
-#: revision.cc:1145
+#: revision.cc:1121
 #, c-format
 msgid "Directory for path %s cannot be added, as there is a file in the way"
 msgstr ""
 "Directorio para el camino %s no puede ser agregado, hay un archivo en el "
 "camino"
 
-#: revision.cc:1156
+#: revision.cc:1132
 #, c-format
 msgid "Path %s cannot be added, as there is a directory in the way"
 msgstr "Camino %s no puede ser agregado, hay un directorio en el camino"
 
-#: revision.cc:1159
+#: revision.cc:1135
 #, c-format
 msgid "Path %s added twice with differing content"
 msgstr "Camino %s agregado dos veces con contenido diferente"
 
-#: revision.cc:1446
+#: revision.cc:1422
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -3393,36 +3444,41 @@ msgstr ""
 "(si solamente quiere eliminarlo, use el argumento '--drop-attr', pero\n"
 "si realmente quiere mantener el atributo, lo podemos ayudar)"
 
-#: revision.cc:1559
+#: revision.cc:1535
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions"
 msgstr ""
 "convirtiendo el grafo de revisiones existentes a las nuevas revisiones con "
 "rosters"
 
-#: revision.cc:1614
+#: revision.cc:1590
 #, c-format
 msgid "rebuilding revision graph from manifest certs"
 msgstr ""
 "reconstruyendo el grafo de revisiones a partir de los certificados de "
 "manifiestos"
 
-#: revision.cc:1647
-#, c-format
-msgid "regenerating cached rosters"
+#: revision.cc:1668
+#, fuzzy, c-format
+msgid "regenerating cached rosters and heights"
 msgstr "regenerando los rosters en cache"
 
-#: revision.cc:1656
-#, c-format
-msgid "calculating rosters to regenerate"
-msgstr "calculando los rosters a regenerar"
-
-#: revision.cc:1660
+#: revision.cc:1680
 msgid "regenerated"
 msgstr "regenerado"
 
+#: revision.cc:1696
+#, fuzzy, c-format
+msgid "finished regenerating cached rosters and heights"
+msgstr "regenerando los rosters en cache"
+
+#: revision.cc:1708
+#, c-format
+msgid "cached height: %s"
+msgstr ""
+
 # TODO: Use a variable here instead of hardwire "version '1'"
-#: revision.cc:1755
+#: revision.cc:1791
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -3525,10 +3581,10 @@ msgstr ""
 "ejecutar '%s db %s'"
 
 #: schema_migration.cc:339
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"NOTE: this upgrade cleared the roster cache\n"
-"you should now run '%s db regenerate_rosters'"
+"NOTE: this upgrade cleared monotone's caches\n"
+"you should now run '%s db regenerate_caches'"
 msgstr ""
 "NOTA: esta actualización limpió el cache de rosters\n"
 "ud. debe ahora ejecutar '%s db regenerate_rosters'"
@@ -3949,3 +4005,6 @@ msgstr "área de trabajo corrupta: %s existe pero no es un archivo regular"
 #, c-format
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "esta área de trabajo está en el formato actual, no es necesario migrar"
+
+#~ msgid "calculating rosters to regenerate"
+#~ msgstr "calculando los rosters a regenerar"

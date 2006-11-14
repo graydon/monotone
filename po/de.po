@@ -30,7 +30,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-13 23:13+0100\n"
+"POT-Creation-Date: 2006-11-14 23:43+0100\n"
 "PO-Revision-Date: 2006-11-06 12:50+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -128,9 +128,9 @@ msgid "REVID"
 msgstr "REVISIONS_ID"
 
 #: automate.cc:1103 automate.cc:1129 automate.cc:1184 automate.cc:1186
-#: cmd_db.cc:35 cmd_diff_log.cc:387 cmd_diff_log.cc:418 cmd_diff_log.cc:420
+#: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
 #: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:125 cmd_merging.cc:677
-#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:409
+#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:413
 #, c-format
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
@@ -369,9 +369,9 @@ msgstr "entfernt die Datenbankvariable NAME in der Domäne DOMÄNE"
 msgid "no var with name %s in domain %s"
 msgstr "keine Variable mit dem Namen %s in der Domäne %s"
 
-#: cmd_db.cc:155 cmd_diff_log.cc:333 cmd_diff_log.cc:559 cmd_files.cc:114
+#: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
 #: cmd_files.cc:181 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:373
-#: commands.cc:271
+#: commands.cc:275
 msgid "informative"
 msgstr "Informativ"
 
@@ -388,13 +388,18 @@ msgstr "vervollständige Teil-ID"
 msgid "non-hex digits in partial id"
 msgstr "nicht-hexadezimale Zeichen in Teil-ID"
 
-#: cmd_diff_log.cc:333 cmd_ws_commit.cc:66 cmd_ws_commit.cc:252
+#: cmd_diff_log.cc:356
+#, c-format
+msgid "more than two revisions given"
+msgstr ""
+
+#: cmd_diff_log.cc:465 cmd_ws_commit.cc:66 cmd_ws_commit.cc:252
 #: cmd_ws_commit.cc:293 cmd_ws_commit.cc:373 cmd_ws_commit.cc:679
 msgid "[PATH]..."
 msgstr "[PFAD]..."
 
 #
-#: cmd_diff_log.cc:334
+#: cmd_diff_log.cc:466
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -409,7 +414,7 @@ msgstr ""
 "beiden ausgegeben. Wenn kein Format angegeben\n"
 "wurde, wird standardmäßig 'unified' verwendet."
 
-#: cmd_diff_log.cc:347
+#: cmd_diff_log.cc:475
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -418,16 +423,21 @@ msgstr ""
 "--diff-args benötigt --external\n"
 "Fügen Sie --external hinzu oder entfernen Sie --diff-args."
 
-#: cmd_diff_log.cc:479
+#: cmd_diff_log.cc:499
 msgid "no changes"
 msgstr "keine Änderungen"
 
-#: cmd_diff_log.cc:559
+#: cmd_diff_log.cc:520
+#, fuzzy
+msgid "[FILE [...]]"
+msgstr "[DATEI] ..."
+
+#: cmd_diff_log.cc:603
 msgid "[FILE] ..."
 msgstr "[DATEI] ..."
 
 #
-#: cmd_diff_log.cc:560
+#: cmd_diff_log.cc:604
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -437,7 +447,7 @@ msgstr ""
 "Revisionen übergeben wurden, werden diese als\n"
 "Ausgangspunkt genutzt."
 
-#: cmd_diff_log.cc:572
+#: cmd_diff_log.cc:616
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "'--last' und '--next' sind nur einmal erlaubt"
@@ -1696,53 +1706,53 @@ msgstr ""
 msgid "refresh the inodeprint cache"
 msgstr "aktualisiere den 'inodeprint'-Cache"
 
-#: commands.cc:135 commands.cc:237
+#: commands.cc:139 commands.cc:241
 #, c-format
 msgid "unknown command '%s'"
 msgstr "unbekanntes Kommando '%s'"
 
-#: commands.cc:146
+#: commands.cc:150
 #, c-format
 msgid "command '%s' has multiple ambiguous expansions:"
 msgstr "Das Kommando '%s' kann auf mehrere Arten erweitert werden:"
 
-#: commands.cc:179
+#: commands.cc:183
 msgid "commands:"
 msgstr "Kommandos:"
 
-#: commands.cc:271
+#: commands.cc:275
 msgid "command [ARGS...]"
 msgstr "Kommando [ARGUMENTE...]"
 
-#: commands.cc:272
+#: commands.cc:276
 msgid "display command help"
 msgstr "zeige Hilfe für Kommando"
 
-#: commands.cc:416
+#: commands.cc:420
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expandiere Auswahl '%s'"
 
-#: commands.cc:424
+#: commands.cc:428
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "kein Treffer für Auswahl '%s'"
 
-#: commands.cc:430
+#: commands.cc:434
 #, c-format
 msgid "expanded to '%s'"
 msgstr "erweitert zu '%s'"
 
-#: commands.cc:447
+#: commands.cc:451
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "Die Auswahl '%s' kann auf mehrere Arten erweitert werden:"
 
-#: commands.cc:464
+#: commands.cc:468
 msgid "note: "
 msgstr "Hinweis: "
 
-#: commands.cc:465
+#: commands.cc:469
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1751,7 +1761,7 @@ msgstr ""
 "Der Zweig '%s' hat mehrere Köpfe.\n"
 "Eventuell möchten Sie '%s merge' ausführen."
 
-#: commands.cc:480
+#: commands.cc:484
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message und --message-file können nicht zusammen verwendet werden"
@@ -1927,7 +1937,8 @@ msgstr "doppelte Höhenangabe für Revision %s"
 #: database_check.cc:859
 #, c-format
 msgid "height of revision %s not greater than that of parent"
-msgstr "Höhenangabe für Revision %s ist nicht größer als die der Eltern-Revision"
+msgstr ""
+"Höhenangabe für Revision %s ist nicht größer als die der Eltern-Revision"
 
 #: database_check.cc:944
 #, c-format
