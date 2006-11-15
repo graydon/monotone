@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-14 23:43+0100\n"
-"PO-Revision-Date: 2006-11-14 23:45+0100\n"
+"POT-Creation-Date: 2006-11-15 06:43+0100\n"
+"PO-Revision-Date: 2006-11-15 06:46+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -375,27 +375,41 @@ msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "flera grencert funna för revision %s, var god ange en gren"
 
-#: cmd_automate.cc:149 cmd_automate.cc:195 cmd_automate.cc:217
-#: cmd_automate.cc:340
+#: cmd_automate.cc:150
 #, c-format
-msgid "Bad input to automate stdio"
-msgstr "felaktigt indata till automate stdio"
+msgid "Bad input to automate stdio: expected ':' after string size"
+msgstr "Felaktigt indata till automate stdio: ':' förväntad efter strängstorlek"
 
-#: cmd_automate.cc:168
+#: cmd_automate.cc:169
 #, c-format
 msgid "read from client failed with error code: %d"
 msgstr "läsning från klienten misslyckades med följande felkod: %d"
 
-#: cmd_automate.cc:169
+#: cmd_automate.cc:170
 #, c-format
-msgid "Bad input to automate stdio (unexpected EOF)"
-msgstr "felaktigt indata till automate stdio (oväntat filslut)"
+msgid "Bad input to automate stdio: unexpected EOF"
+msgstr "Felaktigt indata till automate stdio: oväntat filslut"
 
-#: cmd_automate.cc:365
+#: cmd_automate.cc:198
+#, c-format
+msgid "Bad input to automate stdio: unknown start token '%c'"
+msgstr "felaktigt indata till automate stdio: '%c' är ett okänt nyckelord"
+
+#: cmd_automate.cc:220
+#, c-format
+msgid "Bad input to automate stdio: expected '%c' token"
+msgstr "Felaktigt indata till automate stdio: nyckelordet '%c' förväntat"
+
+#: cmd_automate.cc:344
+#, c-format
+msgid "Bad input to automate stdio: command name is missing"
+msgstr "Felaktigt indata till automate stdio: saknar kommandonamn"
+
+#: cmd_automate.cc:369
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:366
+#: cmd_automate.cc:370
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
