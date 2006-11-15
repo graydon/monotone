@@ -1,3 +1,8 @@
+2006-11-15  Thomas Keller  <me@thomaskeller.biz>
+
+	* cmd_automate.cc: defined equal sounding error message
+	"Bad input to stdio" further
+
 2006-11-14  Thomas Keller  <me@thomaskeller.biz>
 	
 	* new automate content_diff command which is basically
