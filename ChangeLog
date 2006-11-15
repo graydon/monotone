@@ -1,10 +1,15 @@
+2006-11-15  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.postinst: Add a note that a db migration
+	may take a while.
+
 2006-11-15  Thomas Keller  <me@thomaskeller.biz>
 
 	* cmd_automate.cc: defined equal sounding error message
 	"Bad input to stdio" further
 
 2006-11-14  Thomas Keller  <me@thomaskeller.biz>
-	
+
 	* new automate content_diff command which is basically
 	the same like mtn diff (also uses most of its infrastructure)
 	minus the display of the basic_io revision header
