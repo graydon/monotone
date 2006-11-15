@@ -1,5 +1,16 @@
 2006-11-15  Richard Levitte  <richard@levitte.org>
 
+	* lua.cc (LUAEXT): Implement includedirpattern(), which is like
+	includedir() but also takes a glob pattern for the files to load.
+	* monotone.texi (Additional Lua Functions): Document
+	includedirpattern().
+	* testsuite.lua,
+	tests/include()_and_includedir()_lua_functions/:
+	Renamed to include()_includedir()_and_includedirpattern()_lua_functions
+	__driver__.lua: Test includedirpattern().
+
+2006-11-15  Richard Levitte  <richard@levitte.org>
+
 	* debian/monotone-server.postinst: Add a note that a db migration
 	may take a while.
 

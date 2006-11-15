@@ -8191,6 +8191,13 @@ contained into the directory scriptpath.
 If one of the scripts has an error, the functions doesn't process the
 remaining scripts and immediately returns false.
 
+@item includedirpattern(@var{scriptpath}, @var{pattern})
+
+This function loads and executes in alphabetical order all the scripts
+contained into the directory scriptpath that match the given pattern.
+If one of the scripts has an error, the functions doesn't process the
+remaining scripts and immediately returns false.
+
 @item is_executable(@var{filespec})
 
 This function returns true if the file is executable, false

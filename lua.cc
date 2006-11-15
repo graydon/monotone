@@ -3,6 +3,7 @@
 
 #include "lua.hh"
 
+#include "globish.hh"
 #include "sanity.hh"
 
 #include <string>
@@ -486,6 +487,44 @@ LUAEXT(includedir, )
   while (it != fs::directory_iterator())
     {
       if (!fs::is_directory(*it))
+        arr.push_back(*it);
+      ++it;
+    }
+  sort(arr.begin(), arr.end());
+  for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+    {
+      bool res =Lua(L)
+      .loadfile(i->string())
+      .call(0,1)
+      .ok();
+      N(res, F("lua error while loading rcfile '%s'") % i->string());
+    }
+
+  lua_pushboolean(L, true);
+  return 1;
+}
+
+LUAEXT(includedirpattern, )
+{
+  const char *pathstr = luaL_checkstring(L, -2);
+  const char *pattern = luaL_checkstring(L, -1);
+  N(pathstr && pattern,
+    F("%s called with an invalid parameter") % "IncludeDirPattern");
+
+  fs::path locpath(pathstr, fs::native);
+  N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
+  N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
+
+  // directory, iterate over it, skipping subdirs, taking every filename
+  // matching the pattern, sorting them and loading in sorted order
+  fs::directory_iterator it(locpath);
+  string r(pattern);
+  string n;
+  globish_matcher glob(r, n);
+  vector<fs::path> arr;
+  while (it != fs::directory_iterator())
+    {
+      if (!fs::is_directory(*it) && glob(it->string()))
         arr.push_back(*it);
       ++it;
     }
