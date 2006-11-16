@@ -1,3 +1,14 @@
+2006-11-16  Richard Levitte  <richard@levitte.org>
+
+	* contrib/ext_hooks.lua.in, contrib/ext_hooks_expand.pl: New
+	files that implement a system that allows easy addition of hooks
+	implementations without having to edit any file. You need to
+	run the perl script contrib/ext_hooks_expand.pl to produce the
+	file contrib/ext_hooks.lua, using contrib/ext_hooks.lua.in as
+	a template and the hook function definitions found in
+	monotone.texi.
+	* README: Add a small blurb about the above files.
+
 2006-11-15  Richard Levitte  <richard@levitte.org>
 
 	* lua.cc (LUAEXT): Implement includedirpattern(), which is like

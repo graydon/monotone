@@ -34,3 +34,10 @@ licenses.
 
   -- mtn_cheat_sheet.svg: A SVG image inspired by Mercurial's QuickStart Guides
      (http://people.type-z.org/seb/mercurial/v1.0/)
+
+  -- ext_hooks.lua.in, ext_hooks_expand.pl: run ext_hooks_expand.pl and you
+     will get ext_hooks.lua, a hooks system that allows loading several
+     implementations of the same hooks from a bunch of .lua files stored in
+     a directory pointed at by $MTN_LUAHOOKSDIR.  Hooks are commonly added
+     using the function add_hook().  There is simple documentation at the
+     top of ext_hooks.lua.in.
