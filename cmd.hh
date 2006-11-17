@@ -35,7 +35,7 @@ namespace commands
     std::string params_;
     std::string desc_;
     bool use_workspace_options;
-    options::options_type my_options;
+    options::options_type options;
     command(std::string const & n,
             std::string const & g,
             std::string const & p,
@@ -180,7 +180,7 @@ namespace commands {                                                 \
     cmd_ ## C() : command(#C, realcommand##_cmd.cmdgroup,            \
                           realcommand##_cmd.params_,                 \
                           realcommand##_cmd.desc_, true,             \
-                          realcommand##_cmd.my_options)              \
+                          realcommand##_cmd.options)                 \
     {}                                                               \
     virtual std::string desc();                                      \
     virtual void exec(app_state & app,                               \
@@ -206,7 +206,7 @@ namespace automation {
   {
     std::string name;
     std::string params;
-    options::options_type my_options;
+    options::options_type options;
     automate(std::string const & n, std::string const & p,
              options::options_type const & o);
     virtual void run(std::vector<utf8> args,
