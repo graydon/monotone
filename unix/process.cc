@@ -116,6 +116,8 @@ struct redir
 redir::redir(int which, char const * file)
  : savedfd(-1), fd(which)
 {
+  if (!file || *file == '\0')
+    return;
   int tempfd = open(file, (which==0?O_RDONLY:O_WRONLY|O_CREAT|O_TRUNC), 0664);
   if (tempfd == -1)
     {
