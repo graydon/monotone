@@ -838,12 +838,28 @@ lua_hooks::hook_note_netsync_start(size_t session_id, string my_role,
                                    utf8 include_pattern,
                                    utf8 exclude_pattern)
 {
+  string type;
+  switch (sync_type)
+    {
+    case 1:
+      type = "push";
+      break;
+    case 2:
+      type = "pull";
+      break;
+    case 3:
+      type = "sync";
+      break;
+    default:
+      type = "unknown";
+      break;
+    }
   Lua ll(st);
   return ll
     .func("note_netsync_start")
     .push_int(session_id)
     .push_str(my_role)
-    .push_int(sync_type)
+    .push_str(type)
     .push_str(remote_host)
     .push_str(remote_keyname())
     .push_str(include_pattern())

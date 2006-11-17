@@ -13,8 +13,9 @@ function noterev()
   table.insert(revs, t)
 end
 
-function evaluate(filename)
-  local dat = readfile(filename)
+function evaluate(correctfile, logfile)
+  check(get(correctfile))
+  local dat = readfile(correctfile)
   dat = string.gsub(dat, "REV1", revs[1].rev)
   dat = string.gsub(dat, "MAN1", revs[1].man)
   dat = string.gsub(dat, "FILE1", revs[1].f)
@@ -23,7 +24,17 @@ function evaluate(filename)
   dat = string.gsub(dat, "MAN2", revs[2].man)
   dat = string.gsub(dat, "FILE2", revs[2].f)
   dat = string.gsub(dat, "DATE2", revs[2].date)
-  writefile(filename, dat)
+  writefile(correctfile, dat)
+
+  canonicalize(logfile)
+  dat = readfile(logfile)
+  dat = string.gsub(dat, "^%d+ ", "")
+  dat = string.gsub(dat, "\n%d+ ", "\n")
+  dat = string.gsub(dat, "\n[^\n]*remote_host[^\n]*\n", "\n")
+  dat = string.gsub(dat, "\n[^\n]*bytes in/out[^\n]*\n", "\n")
+  writefile(logfile, dat)
+
+  check(samefile(logfile, correctfile))
 end
 
 -- Checking the effect of a new revisions
@@ -38,20 +49,14 @@ noterev()
 
 netsync.pull("testbranch")
 
-check(get("testnotes.test"))
-evaluate("testnotes.test")
-canonicalize("testnotes.log")
-check(samefile("testnotes.log", "testnotes.test"))
+evaluate("testnotes.test", "testnotes-client.log")
 
 -- Checking the effect of a simple cert change
 check(mtn("tag", revs[1].rev, "testtag"), 0, false, false)
 
 netsync.pull("testbranch")
 
-check(get("testnotes2.test", "testnotes.test"))
-evaluate("testnotes.test")
-canonicalize("testnotes.log")
-check(samefile("testnotes.log", "testnotes.test"))
+evaluate("testnotes2.test", "testnotes-client.log")
 
 -- Checking that a netsync with nothing new will not trigger the
 -- note_netsync hooks
