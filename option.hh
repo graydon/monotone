@@ -272,6 +272,15 @@ namespace option {
 		     std::inserter(combined.options, combined.options.begin()));
       return combined;
     }
+    option_set<T> operator - (option_set<T> const & other) const
+    {
+      option_set<T> combined;
+      std::set_difference(options.begin(), options.end(),
+                          other.options.begin(), other.options.end(),
+                          std::inserter(combined.options,
+                                        combined.options.begin()));
+      return combined;
+    }
     bool empty() const {return options.empty();}
   };
   template<typename T>

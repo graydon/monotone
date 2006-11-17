@@ -349,7 +349,11 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
         }
       try
         {
-          options::options_type opts = options::opts::globals();
+          options::options_type opts;
+          opts = options::opts::all_options() - options::opts::globals();
+          opts.instantiate(&app.opts).reset();
+
+          opts = options::opts::globals();
           opts = opts | find_automation(cmd, help_name).options;
           opts.instantiate(&app.opts).from_key_value_pairs(params);
           automate_command(cmd, args, help_name, app, os);
