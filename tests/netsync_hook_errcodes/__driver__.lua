@@ -10,6 +10,7 @@ netsync.setup_with_notes()
 -- speaking the protocol correctly.
 
 function get_errcode(who)
+   canonicalize("testnotes-" .. who .. ".log")
    local dat = readfile("testnotes-" .. who .. ".log")
    local _, _, errcode = string.find(dat, "\n%d+ end: status = (%d%d%d)\n")
    L("Error code for ", who, " is ", errcode)
