@@ -28,7 +28,7 @@ namespace automation {
   static map<string, automate * const> * automations;
   automate::automate(string const &n, string const &p,
                      options::options_type const & o)
-    : name(n), params(p), options(o)
+    : name(n), params(p), my_options(o)
   {
     static bool first(true);
     if (first)
@@ -354,7 +354,7 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
           opts.instantiate(&app.opts).reset();
 
           opts = options::opts::globals();
-          opts = opts | find_automation(cmd, help_name).options;
+          opts = opts | find_automation(cmd, help_name).my_options;
           opts.instantiate(&app.opts).from_key_value_pairs(params);
           automate_command(cmd, args, help_name, app, os);
         }
@@ -406,7 +406,7 @@ commands::cmd_automate::get_options(vector<utf8> const & args)
 {
   if (args.size() < 2)
     return options::options_type();
-  return find_automation(idx(args,1), idx(args,0)()).options;
+  return find_automation(idx(args,1), idx(args,0)()).my_options;
 }
 
 

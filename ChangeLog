@@ -1,5 +1,9 @@
 2006-11-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
+	gcc 3 compile fix (should work)
+
+2006-11-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
 	Add status code reporting to the note_netsync_{begin,end} hooks.
 
 2006-11-16  Richard Levitte  <richard@levitte.org>
