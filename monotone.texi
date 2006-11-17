@@ -7347,7 +7347,7 @@ throughout all netsync notification hooks.
 
 The other arguments are:
 
-@table
+@table @strong
 
 @item @var{my_role}
 
@@ -7423,7 +7423,7 @@ to be displayed through something like viewmtn.
 @var{status} is a three digit integer that tells whether there was an error,
 and if so what kind of error it was:
 
-@table
+@table @strong
 
 @item 200
 
