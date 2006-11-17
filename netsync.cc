@@ -1520,6 +1520,32 @@ session::process_auth_cmd(protocol_role their_role,
   get_branches(app, branchnames);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
 
+  if (!app.db.public_key_exists(their_key_hash))
+    {
+      // If it's not in the db, it still could be in the keystore if we
+      // have the private key that goes with it.
+      if (!app.keys.try_ensure_in_db(their_key_hash))
+        {
+          this->saved_nonce = id("");
+
+          app.lua.hook_note_netsync_start(session_id, "server", their_role,
+                                          peer_id, rsa_keypair_id("-unknown-"),
+                                          their_include_pattern,
+                                          their_exclude_pattern);
+          error(unknown_key,
+                (F("remote public key hash '%s' is unknown") % their_key_hash).str());
+        }
+    }
+
+  // Get their public key.
+  rsa_keypair_id their_id;
+  base64<rsa_pub_key> their_key;
+  app.db.get_pubkey(their_key_hash, their_id, their_key);
+
+  app.lua.hook_note_netsync_start(session_id, "server", their_role,
+                                  peer_id, their_id,
+                                  their_include_pattern, their_exclude_pattern);
+
   // Check that they replied with the nonce we asked for.
   if (!(nonce1 == this->saved_nonce))
     {
@@ -1538,27 +1564,6 @@ session::process_auth_cmd(protocol_role their_role,
   // nb: The "their_role" here is the role the *client* wants to play
   //     so we need to check that the opposite role is allowed for us,
   //     in our this->role field.
-
-  if (!app.db.public_key_exists(their_key_hash))
-    {
-      // If it's not in the db, it still could be in the keystore if we
-      // have the private key that goes with it.
-      if (!app.keys.try_ensure_in_db(their_key_hash))
-        {
-          this->saved_nonce = id("");
-          error(unknown_key,
-                (F("remote public key hash '%s' is unknown") % their_key_hash).str());
-        }
-    }
-
-  // Get their public key.
-  rsa_keypair_id their_id;
-  base64<rsa_pub_key> their_key;
-  app.db.get_pubkey(their_key_hash, their_id, their_key);
-
-  app.lua.hook_note_netsync_start(session_id, "server", their_role,
-                                  peer_id, their_id,
-                                  their_include_pattern, their_exclude_pattern);
 
   // Client as sink, server as source (reading).
 

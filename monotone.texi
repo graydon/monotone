@@ -7272,14 +7272,45 @@ hook is only intended as an aid for integrating monotone with informal
 commit-notification systems such as mailing lists or news services. It
 should not perform any security-critical operations.
 
-@item note_netsync_start (@var{nonce})
+@item note_netsync_start (@var{session_id}, @var{my_role}, @var{sync_type},
+@var{remote_host}, @var{remote_keyname}, @var{includes}, @var{excludes})
 
 Called by monotone before any other of the netsync notification hooks
-are called.  The @var{nonce} helps keep track of the current netsync
+are called.  The @var{session_id} helps keep track of the current netsync
 session in case several are happening at the same time, and is used
 throughout all netsync notification hooks.
 
-@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs}, @var{nonce})
+The other arguments are:
+
+@table
+
+@item @var{my_role}
+
+This will be either "client" or "server".
+
+@item @var{sync_type}
+
+This will be one of "sync", "push", or "pull".
+
+@item @var{remote_host}
+
+The network address of the remote host. At the client, this will be the name
+it was told to connect to; at the server, this will use the numerical IP address
+the connection was received from.
+
+@item @var{remote_keyname}
+
+The name of the key being used by the other end of the connection. This may be
+set to "-unknown-" at the server if the key used by the client is not present
+at the server.
+
+@item @var{includes} and @var{excludes}
+
+The include and exclude patterns used by the client.
+
+@end table
+
+@item note_netsync_revision_received (@var{new_id}, @var{revision}, @var{certs}, @var{session_id})
 
 Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
@@ -7289,11 +7320,11 @@ cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
 the name of the cert, and the value of the cert. There is no default
 definition for this hook.
-@var{nonce} is used together with @code{note_netsync_start} and
+@var{session_id} is used together with @code{note_netsync_start} and
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.
 
-@item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value}, @var{nonce})
+@item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value}, @var{session_id})
 
 Called by monotone after a cert is received through netsync, iff the revision
 that the cert is attached to was not also received in the same netsync
@@ -7301,19 +7332,21 @@ operation. @var{rev_id} is the revision id that the cert is attached to,
 @var{key} is the key that the cert is signed with, @var{name} is the name
 of the cert, and @var{value} is the cert value. There is no default
 definition for this hook. 
-@var{nonce} is used together with @code{note_netsync_start} and
+@var{session_id} is used together with @code{note_netsync_start} and
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.
 
-@item note_netsync_pubkey_received (@var{keyname}, @var{nonce})
+@item note_netsync_pubkey_received (@var{keyname}, @var{session_id})
 
 Called by monotone after a pubkey is received through netsync. @var{keyname}
 is the name of the key received. There is no default definition for this hook. 
-@var{nonce} is used together with @code{note_netsync_start} and
+@var{session_id} is used together with @code{note_netsync_start} and
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.
 
-@item note_netsync_end (@var{nonce})
+@item note_netsync_end (@var{session_id}, @var{status},
+@var{bytes_in}, @var{bytes_out}, @var{certs_in}, @var{certs_out},
+@var{revs_in}, @var{revs_out}, @var{keys_in}, @var{keys_out})
 
 Called by monotone after all other the netsync notification hooks have
 been called.  This hook would usually be used for post-netsync purposes,
@@ -7321,6 +7354,54 @@ like collecting all the data from all other netsync notification hooks,
 make some nice output from them and finally send the result somewhere.
 It could also be used to prepare parallell databases with all the data
 to be displayed through something like viewmtn.
+
+@var{status} is a three digit integer that tells whether there was an error,
+and if so what kind of error it was:
+
+@table
+
+@item 200
+
+No error, connection successful.
+
+@item 211
+
+The connection was interrupted after some data may have been transferred.
+
+@item 212
+
+The connection was interrupted before any data could be transferred.
+
+@item 412
+
+The request is not permitted.
+
+@item 422
+
+The client tried to use a key that the server doesn't know about.
+
+@item 432
+
+The client and server have different epochs for a branch.
+
+@item 512
+
+Protocol error (source/sink confusion).
+
+@item 521
+
+Protocol error (packet received at a time when it doesn't make sense).
+
+@item 532
+
+The client did not identify itself correctly. (Possible replay attack?)
+
+@end table
+
+In general, 2xx means there was no error, 4xx means there was a permissions
+error, and 5xx means there was a protocol error. xx1 means some data may
+have been transferred, xx2 means no data was transferred, and xx0 means all
+data was transferred.
 
 @end ftable
 

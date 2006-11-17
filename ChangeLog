@@ -1,3 +1,7 @@
+2006-11-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add status code reporting to the note_netsync_{begin,end} hooks.
+
 2006-11-14  Richard Levitte  <richard@levitte.org>
 
 	NOTE: I bumped the Debian version number to 0.31-90.1 in this
