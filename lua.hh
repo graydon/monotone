@@ -53,7 +53,7 @@ Lua
   // pushers
   Lua & push_str(std::string const & str);
   Lua & push_int(int num);
-  Lua & push_int(double num);
+  Lua & push_double(double num);
   Lua & push_bool(bool b);
   Lua & push_nil();
   Lua & push_table();
