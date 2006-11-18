@@ -71,13 +71,26 @@ function netsync.start(opts, n, min)
   elseif type(opts) ~= "nil" then
     err("netsync.start wants a table, not a "..type(opts).." as a first argument")
   end
-  local out = bg(fn(unpack(args)), false, false, false)
+  local argv = fn(unpack(args))
+  local out = bg(argv, false, false, false)
   out.address = addr
+  out.argv = argv
   local mt = getmetatable(out)
   mt.client = netsync.internal.client
   mt.pull = netsync.internal.pull
   mt.push = netsync.internal.push
   mt.sync = netsync.internal.sync
+  mt.restart = function(obj)
+		  local newobj = bg(obj.argv, false, false, false)
+		  for x,y in pairs(newobj) do
+		     obj[x] = y
+		  end
+		  -- wait for "beginning service..."
+		  while fsize(obj.prefix .. "stderr") == 0 do
+		     sleep(1)
+		     check(out:check())
+		  end
+	       end
   local mt_wait = mt.wait
   mt.check = function(obj) return not mt_wait(obj, 0) end
   mt.wait = nil -- using this would hang; don't allow it
