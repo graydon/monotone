@@ -7,7 +7,7 @@ addfile("input.txt", "version 0 of the file")
 commit()
 
 -- check that tickers are quiet
-srv = netsync.start("testbranch")
+srv = netsync.start()
 
 check(mtn2("--rcfile=netsync.lua", "pull", srv.address, "testbranch", "--quiet"), 0, nil, true)
 check(qgrep(': warning: ', "stderr"))

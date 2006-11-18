@@ -21,7 +21,7 @@ writefile("otherfile", "other data")
 check(mtn2("add", "otherfile"), 0, false, false)
 check(mtn2("commit", "--message=foo", "--branch=otherbranch"), 0, false, false)
 -- Run an irrelevant netsync, just to force epochs to be regenerated
-srv = netsync.start("otherbranch", 2)
+srv = netsync.start(2)
 srv:sync("otherbranch", 3)
 srv:finish()
 -- Run the real netsync
@@ -40,7 +40,7 @@ check(mtn("db", "set_epoch", "testbranch", string.rep("a", 40)), 0, false, false
 check(mtn("db", "set_epoch", "otherbranch", string.rep("a", 40)), 0, false, false)
 
 -- this should *fail* to sync 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 -- This should probably expect an exit value of 1, but ATM the netsync
 -- client doesn't report errors in its exit value.
 -- srv:pull("testbranch", 2, 1)

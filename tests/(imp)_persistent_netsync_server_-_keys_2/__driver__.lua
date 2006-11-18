@@ -23,7 +23,7 @@ addfile("foo", "data data blah")
 check(mtn2("status"), 0, false, false)
 check(mtn2("commit", "--key=foo@bar", "--branch=testbranch", "-m", 'commit foo'), 0, false, false)
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 srv:push("testbranch", 2)
 srv:pull("testbranch", 3)
 srv:finish()

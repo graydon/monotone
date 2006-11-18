@@ -14,7 +14,7 @@ netsync.pull("testbranch")
 
 -- Then again with a different key; should fail.
 math.randomseed(seed)
-srv = netsync.start{"--key=foo@bar", "testbranch"}
+srv = netsync.start{"--key=foo@bar"}
 
 srv:pull("testbranch", nil, 1)
 -- It shouldn't have absorbed the key, either.

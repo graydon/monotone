@@ -19,14 +19,14 @@ t2 = base_revision()
 
 -- make sure the defaults really were set to 'testbranch'
 math.randomseed(rseed)
-srv = netsync.start("testbranch")
+srv = netsync.start()
 check(mtn2("pull"), 0, false, false)
 srv:stop()
 check(mtn2("automate", "get_revision", t2), 0, false, false)
 
 -- do a --set-default pull of another branch
 math.randomseed(rseed)
-srv = netsync.start("otherbranch")
+srv = netsync.start()
 srv:pull({"otherbranch", "--set-default"})
 srv:stop()
 
@@ -37,7 +37,7 @@ o1 = base_revision()
 
 -- and make sure that our default is now it
 math.randomseed(rseed)
-srv = netsync.start("otherbranch")
+srv = netsync.start()
 check(mtn2("pull"), 0, false, false)
 srv:stop()
 

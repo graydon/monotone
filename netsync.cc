@@ -1445,13 +1445,8 @@ session::process_anonymous_cmd(protocol_role their_role,
       i != branchnames.end(); i++)
     {
       if (their_matcher(*i))
-        if (!our_matcher(*i))
-          {
-            error(not_permitted,
-                  (F("not serving branch '%s'") % *i).str());
-          }
-        else if (app.opts.use_transport_auth &&
-                 !app.lua.hook_get_netsync_read_permitted(*i))
+        if (app.opts.use_transport_auth &&
+            !app.lua.hook_get_netsync_read_permitted(*i))
           {
             error(not_permitted,
                   (F("anonymous access to branch '%s' denied by server") % *i).str());
@@ -1583,12 +1578,7 @@ session::process_auth_cmd(protocol_role their_role,
     {
       if (their_matcher(*i))
         {
-          if (!our_matcher(*i))
-            {
-              error(not_permitted, (F("not serving branch '%s'") % *i).str());
-
-            }
-          else if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
+          if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
             {
               error(not_permitted,
                     (F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")

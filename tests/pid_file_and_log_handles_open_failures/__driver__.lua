@@ -22,7 +22,7 @@ else
   check({"chmod", "100", "noaccess"})
   check(mtn("--log=noaccess/my.log", "status"), 1, false, false)
 
-  srv = bg(mtn("serve", "--bind=127.0.0.2:55597", "testbranch", "--pid-file=noaccess/my.pid"), 1, false, false)
+  srv = bg(mtn("serve", "--bind=127.0.0.2:55597", "--pid-file=noaccess/my.pid"), 1, false, false)
   
   check(srv:wait(5))
 end

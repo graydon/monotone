@@ -92,8 +92,8 @@ function raw_mtn(...)
 end
 
 function mtn(...)
-  return raw_mtn("--rcfile", test.root .. "/test_hooks.lua",
-         "--nostd", "--db=" .. test.root .. "/test.db",
+  return raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
+         "--db=" .. test.root .. "/test.db",
          "--keydir", test.root .. "/keys",
          "--key=tester@test.net", unpack(arg))
 end

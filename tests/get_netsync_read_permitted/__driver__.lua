@@ -26,7 +26,7 @@ B4=base_revision()
 mkdir("perm")
 check(get("read-permissions", "perm/read-permissions"))
 
-srv = netsync.start({"--confdir=perm", "branch*"}, nil, true)
+srv = netsync.start({"--confdir=perm"}, nil, true)
 
 srv:pull("branch*", nil, 1)
 check(mtn2("automate", "get_revision", B1), 1, false, false)

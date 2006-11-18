@@ -19,7 +19,7 @@ writefile("bar", "bar")
 check(mtn2("add", "bar"), 0, false, false)
 check(mtn2("commit", "-m", "blah-blah"), 0, false, false)
 
-srv = netsync.start("*branch")
+srv = netsync.start()
 
 -- We don't want the standard function, because we don't want to hang if it hangs.
 -- srv.push("*branch")

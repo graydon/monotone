@@ -1,3 +1,14 @@
+2006-11-18  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	Make 'serve' always serve everything, and no longer take
+	include/exclude patterns on the command line.
+
+	Make the testsuite not use --nostd, so it can use the standard
+	permissions hooks for tests that need restricted serve.
+
+	Un-xfail the mtn:execute / umask test, since not having the
+	standard hooks available was what made it not work.
+
 2006-11-17  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make spawn_redirected work with blank filenames to not redirect

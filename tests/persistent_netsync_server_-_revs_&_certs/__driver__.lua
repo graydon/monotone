@@ -17,7 +17,7 @@ check(mtn3("add", "otherfile"), 0, false, false)
 check(mtn3("commit", "--branch=testbranch", "--message=foo"), 0, false, false)
 revs[2] = base_revision()
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 
 srv:sync("testbranch", 2)
 srv:sync("testbranch", 3)

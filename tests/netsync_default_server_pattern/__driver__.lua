@@ -16,7 +16,7 @@ writefile("testfile", "nonsense nonsense")
 commit("thirdbranch")
 revs.thirdbranch = base_revision()
 
-srv = netsync.start({"testbranch", "otherbranch", "thirdbranch"})
+srv = netsync.start()
 
 -- First make sure netsync with explicit server/pattern override defaults
 check(mtn2("set", "database", "default-server", "nonsense"), 0, false, false)
