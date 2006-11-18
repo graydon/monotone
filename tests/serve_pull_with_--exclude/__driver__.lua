@@ -23,8 +23,9 @@ B4=base_revision()
 -- attempting to pull them should fail
 -- pulling everything but them should give revs B1, B2, B3; and only
 -- give branch certs on B1, B3.
+get("read-permissions")
 
-srv = netsync.start({'branch*', "--exclude=branch2", "--exclude=branch4"})
+srv = netsync.start()
 
 -- it is apparently a permissions error to pull a branch that is not served
 -- i.e. 'received network error: access to branch 'branch2' denied by server'

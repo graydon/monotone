@@ -15,6 +15,6 @@ writefile("_MTN/options", string.gsub(opts, 'key ".*"', 'key "foobar@hacked.com"
 check(not qgrep('key "tester@test.net"', "_MTN/options"))
 check(qgrep('key "foobar@hacked.com"', "_MTN/options"))
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 srv:push({"testbranch", "--key=tester@test.net"})
 srv:stop()

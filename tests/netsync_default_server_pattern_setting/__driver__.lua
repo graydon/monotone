@@ -6,7 +6,7 @@ netsync.setup()
 addfile("testfile", "blah blah")
 commit()
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 srv:pull("testbranch")
 
 writefile("testfile", "other stuff")

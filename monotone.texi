@@ -1699,16 +1699,12 @@ the monotone @command{serve} command:
 
 @smallexample
 @group
-$ mtn --db=jim.mtn serve "jp.co.juicebot.jb7*"
+$ mtn --db=jim.mtn serve
 @end group
 @end smallexample
 
 This command starts monotone listening on all network interfaces of 
-his laptop on the default port 4691, serving any branch matching
-@code{jp.co.juicebot.jb7*}. This will naturally include the
-@code{jp.co.juicebot.jb7} branch, and any sub-branches.  The quotes
-around @code{"jp.co.juicebot.jb7*"} are there to protect the @code{*}
-from expansion by the shell; they have no meaning to monotone.
+his laptop on the default port 4691, serving everything in his database.
 
 @page
 @node    Synchronising Databases
@@ -2426,7 +2422,7 @@ the @option{--bind=@var{address}:@var{port}} argument like so:
 
 @smallexample
 @group
-$ mtn --db=server.mtn --bind=www.juicebot.co.jp serve "jp.co.juicebot.jb7*"
+$ mtn --db=server.mtn --bind=www.juicebot.co.jp serve
 @end group
 @end smallexample
 
@@ -4450,8 +4446,8 @@ recommended, though not required.
 @section Network
 
 @ftable @command
-@item mtn serve [--bind=[@var{address}][:@var{port}]] @var{glob} [...] [--exclude=@var{exclude-glob}]
-@item mtn serve --stdio [--no-transport-auth] @var{glob} [...] [--exclude=@var{exclude-glob}]
+@item mtn serve [--bind=[@var{address}][:@var{port}]]
+@item mtn serve --stdio [--no-transport-auth]
 @itemx mtn pull [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 @itemx mtn push [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
 @itemx mtn sync [--set-default] [@var{uri-or-address}] [@var{glob} [...] [--exclude=@var{exclude-glob}]]]
@@ -4501,7 +4497,7 @@ branches. Supposing Alice's computer has hostname
 
 @smallexample
 @group
-$ mtn --bind=alice.someisp.com serve "net.venge.monotone*"
+$ mtn --bind=alice.someisp.com serve
 @end group
 @end smallexample
 

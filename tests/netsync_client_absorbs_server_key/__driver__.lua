@@ -11,7 +11,7 @@ check(mtn("pubkey", "foo@bar"), 0, true, false)
 canonicalize("stdout")
 copy("stdout", "foo_public")
 
-srv = netsync.start({"--key=foo@bar", "testbranch"})
+srv = netsync.start({"--key=foo@bar"})
 srv:pull("testbranch")
 srv:stop()
 

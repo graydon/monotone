@@ -874,7 +874,6 @@ end
 function get_netsync_connect_command(uri, args)
 
         local argv = nil
-        local quote_patterns = false
 
         if uri["scheme"] == "ssh" 
                 and uri["host"] 
@@ -897,7 +896,6 @@ function get_netsync_connect_command(uri, args)
                 end
 
                 table.insert(argv, uri["host"])
-		quote_patterns = true
         end
         
         if uri["scheme"] == "file" and uri["path"] then
@@ -920,23 +918,6 @@ function get_netsync_connect_command(uri, args)
                 table.insert(argv, "--stdio")
                 table.insert(argv, "--no-transport-auth")
 
-                -- patterns must be quoted to avoid a remote shell expanding them
-                if args["include"] then
-                        local include = args["include"]
-                        if quote_patterns then
-                                include = "'" .. args["include"] .. "'"
-                        end
-                        table.insert(argv, include)
-                end
-
-                if args["exclude"] then
-                        table.insert(argv, "--exclude")
-                        local exclude = args["exclude"]
-                        if quote_patterns then
-                                exclude = "'" .. args["exclude"] .. "'"
-                        end
-                        table.insert(argv, exclude)
-                end
         end
         return argv
 end

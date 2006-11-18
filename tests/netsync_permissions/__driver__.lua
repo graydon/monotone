@@ -34,7 +34,7 @@ addfile("testfile", "testfile")
 commit("testbranch", "testfile")
 revs.base = base_revision()
 
-srv = netsync.start({"testbranch", "--confdir=open"}, nil, true)
+srv = netsync.start({"--confdir=open"}, nil, true)
 
 -- anonymous pull 
 
@@ -114,7 +114,7 @@ addfile("testfile", "testfile", mtn2)
 commit("testbranch", "testfile")
 revs.base = base_revision()
 
-srv = netsync.start({"testbranch", "--confdir=closed"}, nil, true)
+srv = netsync.start({"--confdir=closed"}, nil, true)
 
 -- anonymous pull fails
 
