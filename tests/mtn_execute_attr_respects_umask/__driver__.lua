@@ -16,7 +16,8 @@ L(posix_umask(077), "\n")
 check(mtn("co", "-r", R, "077-co"), 0, false, false)
 check(is_executable("077-co/foo"))
 check(not is_executable("077-co/bar"))
-check({"stat", "-c", "%a", "077-co/foo"}, 0, "700\n", false)
+check({"stat", "-c", "%a", "077-co/foo"}, 0, true, false)
+check(string.find(readfile("stdout"), "700") ~= nil)
 
 
 -- Don't do this one; it makes the directories also 200, which
