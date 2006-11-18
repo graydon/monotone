@@ -1,3 +1,10 @@
+monotone (0.31-90.2) unstable; urgency=low
+
+  * Another pre-0.32 "release", just to mark that an important behavior
+    change has been made to the "mtn serve" command.
+
+ -- Richard Levitte <richard@levitte.org>  Sat, 18 Nov 2006 22:25:11 +0100
+
 monotone (0.31-90.1) unstable; urgency=low
 
   * Pre-0.32 "release", serving as a marker for a new infrastructure which
