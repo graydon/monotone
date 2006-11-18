@@ -2875,13 +2875,21 @@ serve_connections(protocol_role role,
                           shared_ptr<session> sess = i->second;
                           bool live_p = true;
 
-                          if (event & Netxx::Probe::ready_read)
-                            handle_read_available(fd, sess, sessions,
-                                                  armed_sessions, live_p);
+                          try
+                            {
+                              if (event & Netxx::Probe::ready_read)
+                                handle_read_available(fd, sess, sessions,
+                                                      armed_sessions, live_p);
 
-                          if (live_p && (event & Netxx::Probe::ready_write))
-                            handle_write_available(fd, sess, sessions, live_p);
-
+                              if (live_p && (event & Netxx::Probe::ready_write))
+                                handle_write_available(fd, sess, sessions, live_p);
+                            }
+                          catch (Netxx::Exception &)
+                            {
+                              P(F("Nework error on peer %s, disconnecting")
+                                % sess->peer_id);
+                              drop_session_associated_with_fd(sessions, fd);
+                            }
                           if (live_p && (event & Netxx::Probe::ready_oobd))
                             {
                               P(F("got OOB from peer %s, disconnecting")
