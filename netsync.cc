@@ -2886,7 +2886,7 @@ serve_connections(protocol_role role,
                             }
                           catch (Netxx::Exception &)
                             {
-                              P(F("Nework error on peer %s, disconnecting")
+                              P(F("Network error on peer %s, disconnecting")
                                 % sess->peer_id);
                               drop_session_associated_with_fd(sessions, fd);
                             }
