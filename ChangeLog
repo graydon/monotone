@@ -1,3 +1,13 @@
+2006-11-18  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.monotone.init (d_start): Remove the
+	branch argument, which was all-inklusive anyway.
+	* debian/changelog: Mark a new version to make it possible to
+	write a ...
+	* debian/NEWS: New news item indicating to Debian users that
+	they may need to do some changes if they want their servers
+	to still run.
+
 2006-11-18  Timtohy Brownawell  <tbrownaw@gmail.com>
 
 	Make 'serve' always serve everything, and no longer take
