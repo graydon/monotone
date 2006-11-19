@@ -620,10 +620,10 @@ struct inventory_itemizer : public tree_walker
   inventory_itemizer(app_state & a, inventory_map & i) : 
     app(a), inventory(i)
   {
-    if (in_inodeprints_mode())
+    if (app.work.in_inodeprints_mode())
       {
         data dat;
-        read_inodeprints(dat);
+        app.work.read_inodeprints(dat);
         read_inodeprint_map(dat, ipm);
       }
   }
@@ -722,120 +722,133 @@ AUTOMATE(inventory, "", options::opts::none)
   app.require_workspace();
 
   temp_node_id_source nis;
-  roster_t base, curr;
+  roster_t old_roster, new_roster;
+
+  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+
   inventory_map inventory;
-  cset cs; MM(cs);
-  path_set unchanged, changed, missing, unknown, ignored;
 
-  app.work.get_base_and_current_roster_shape(base, curr, nis);
-  make_cset(base, curr, cs);
+  inventory_rosters(old_roster, new_roster, inventory);
+  inventory_filesystem(app, inventory);
 
-  // The current roster (curr) has the complete set of registered nodes
-  // conveniently with unchanged sha1 hash values.
+  basic_io::printer pr;
 
-  // The cset (cs) has the list of drops/renames/adds that have
-  // occurred between the two rosters along with an empty list of
-  // deltas.  this list is empty only because the current roster used
-  // to generate the cset does not have current hash values as
-  // recorded on the filesystem (because get_..._shape was used to
-  // build it).
-
-  path_set nodes_added(cs.dirs_added);
-  extract_added_file_paths(cs.files_added, nodes_added);
-
-  inventory_pre_state(inventory, cs.nodes_deleted,
-                      inventory_item::DROPPED_PATH, 0);
-  inventory_renames(inventory, cs.nodes_renamed);
-  inventory_post_state(inventory, nodes_added,
-                       inventory_item::ADDED_PATH, 0);
-
-  path_restriction mask;
-  vector<file_path> roots;
-  roots.push_back(file_path());
-
-  app.work.classify_roster_paths(curr, unchanged, changed, missing);
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
-
-  inventory_node_state(inventory, unchanged,
-                       inventory_item::UNCHANGED_NODE);
-
-  inventory_node_state(inventory, changed,
-                       inventory_item::PATCHED_NODE);
-
-  inventory_node_state(inventory, missing,
-                       inventory_item::MISSING_NODE);
-
-  inventory_node_state(inventory, unknown,
-                       inventory_item::UNKNOWN_NODE);
-
-  inventory_node_state(inventory, ignored,
-                       inventory_item::IGNORED_NODE);
-
-  // FIXME: do we want to report on attribute changes here?!?
-
-  for (inventory_map::const_iterator i = inventory.begin();
-       i != inventory.end(); ++i)
+  for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end(); 
+       ++i)
     {
+      basic_io::stanza st;
+      inventory_item const & item = i->second;
 
-      string path_suffix;
+      st.push_file_pair(syms::path, i->first);
 
-      if (curr.has_node(i->first))
+      if (item.old_node.exists)
         {
-          // Explicitly skip the root dir for now. The trailing / dir
-          // format isn't going to work here.
-          node_t n = curr.get_node(i->first);
-          if (is_root_dir_t(n)) continue;
-          if (is_dir_t(n)) path_suffix = "/";
-        }
-      else if (directory_exists(file_path(i->first)))
-        {
-          path_suffix = "/";
-        }
-
-      switch (i->second.pre_state)
-        {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::DROPPED_PATH: output << "D"; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
-        default: I(false); // invalid pre_state
+          string id = lexical_cast<string>(item.old_node.id);
+//           st.push_str_pair("old_id", lexical_cast<string>(item.old_node.id));
+          switch (item.old_node.type)
+            {
+            case path::file: st.push_str_triple(syms::old_node, id, "file"); break;
+            case path::directory: st.push_str_triple(syms::old_node, id, "directory"); break;
+//             case path::file: st.push_str_pair("old_type", "file"); break;
+//             case path::directory: st.push_str_pair("old_type", "directory"); break;
+            case path::nonexistent: I(false);
+            }
         }
 
-      switch (i->second.post_state)
+      if (item.new_node.exists)
         {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
-        case inventory_item::ADDED_PATH:   output << "A"; break;
-        default: I(false); // invalid post_state
+          string id = lexical_cast<string>(item.new_node.id);
+//           st.push_str_pair("new_id", lexical_cast<string>(item.new_node.id));
+          switch (item.new_node.type)
+            {
+            case path::file: st.push_str_triple(syms::new_node, id, "file"); break;
+            case path::directory: st.push_str_triple(syms::new_node, id, "directory"); break;
+//             case path::file: st.push_str_pair("new_type", "file"); break;
+//             case path::directory: st.push_str_pair("new_type", "directory"); break;
+            case path::nonexistent: I(false);
+            }
         }
 
-      switch (i->second.node_state)
+      switch (item.fs_type)
         {
-        case inventory_item::UNCHANGED_NODE:
-          if (i->second.post_state == inventory_item::ADDED_PATH)
-            output << "P";
+        case path::file: st.push_str_pair(syms::fs_type, "file"); break;
+        case path::directory: st.push_str_pair(syms::fs_type, "directory"); break;
+        case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
+        }
+
+      if (item.fs_type == path::nonexistent)
+        {
+          if (item.new_node.exists)
+            st.push_str_pair(syms::status, "missing");
+        }
+      else // exists on filesystem
+        {
+          if (!item.new_node.exists)
+            {
+              if (app.lua.hook_ignore_file(i->first))
+                st.push_str_pair(syms::status, "ignored");
+              else 
+                st.push_str_pair(syms::status, "unknown");
+            }
+          else if (item.new_node.type != item.fs_type)
+            st.push_str_pair(syms::status, "invalid");
+          // TODO: would an ls_invalid command be good for listing these paths?
           else
-            output << " ";
-          break;
-        case inventory_item::PATCHED_NODE: output << "P"; break;
-        case inventory_item::UNKNOWN_NODE: output << "U"; break;
-        case inventory_item::IGNORED_NODE: output << "I"; break;
-        case inventory_item::MISSING_NODE: output << "M"; break;
-        default: I(false); // invalid node_state
+            st.push_str_pair(syms::status, "known");
         }
 
-      output << " " << i->second.pre_id
-             << " " << i->second.post_id
-             << " " << i->first;
+      // note that we have three sources of information here
+      //
+      // the old roster
+      // the new roster
+      // the filesystem
+      //
+      // the new roster is synthesised from the old roster and the contents of
+      // _MTN/work and has *not* been updated with content hashes from the
+      // filesystem.
+      //
+      // one path can represent different nodes in the old and new rosters and
+      // the two different nodes can potentially be different types (file vs dir).
+      //
+      // we're interested in comparing the content and attributes of the current
+      // path in the new roster against their corresponding values in the old
+      // roster.
+      // 
+      // the new content hash comes from the filesystem since the new roster has
+      // not been updated. the new attributes can come directly from the new
+      // roster.
+      //
+      // the old content hash and attributes both come from the old roster but
+      // we must use the node id of the path in the new roster to get the node
+      // from the old roster to compare against.
 
-      // FIXME: it's possible that a directory was deleted and a file
-      // was added in it's place (or vice-versa) so we need something
-      // like pre/post node type indicators rather than a simple path
-      // suffix! ugh.
+      if (item.new_node.exists)
+        {
+          std::vector<string> changes;
 
-      output << path_suffix;
+          if (item.new_node.type == path::file && old_roster.has_node(item.new_node.id))
+            {
+              file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
+              old_file->content;
+              if (item.fs_type == path::file && !(item.fs_ident == old_file->content))
+                changes.push_back("content");
+            }
 
-      output << "\n";
+          if (old_roster.has_node(item.new_node.id))
+            {
+              node_t old_node = old_roster.get_node(item.new_node.id);
+              if (old_node->attrs != item.new_node.attrs)
+                changes.push_back("attrs");
+            }
+
+          if (!changes.empty())
+            st.push_str_multi(syms::changes, changes);
+        }
+
+      pr.print_stanza(st);
     }
+
+  output.write(pr.buf.data(), pr.buf.size());
 }
 
 // Name: get_revision

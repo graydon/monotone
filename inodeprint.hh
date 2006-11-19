@@ -31,6 +31,8 @@ void read_inodeprint_map(data const & dat,
 void write_inodeprint_map(inodeprint_map const & ipm,
                           data & dat);
 
+bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
+
 inline bool
 inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path) 
 {
@@ -47,8 +49,6 @@ inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
     return false; // unavailable
 }
 
-
-bool inodeprint_file(file_path const & file, hexenc<inodeprint> & ip);
 
 // Local Variables:
 // mode: C++

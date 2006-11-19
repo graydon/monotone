@@ -351,16 +351,16 @@ workspace::get_local_dump_path(bookkeeping_path & d_path)
 
 // inodeprint file
 
-static bool
-in_inodeprints_mode()
+bool
+workspace::in_inodeprints_mode()
 {
   bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   return file_exists(ip_path);
 }
 
-static void
-read_inodeprints(data & dat)
+void
+workspace::read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -368,8 +368,8 @@ read_inodeprints(data & dat)
   read_data(ip_path, dat);
 }
 
-static void
-write_inodeprints(data const & dat)
+void
+workspace::write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -841,86 +841,7 @@ add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis,
   build.visit_dir(dirname);
 }
 
-inline static bool
-inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
-{
-  inodeprint_map::const_iterator old_ip = ipm.find(path);
-  if (old_ip != ipm.end())
-    {
-      hexenc<inodeprint> ip;
-      if (inodeprint_file(path, ip) && ip == old_ip->second)
-          return true; // unchanged
-      else
-          return false; // changed or unavailable
-    }
-  else
-    return false; // unavailable
-}
-
 // updating rosters from the workspace
-
-// TODO: unchanged, changed, missing might be better as set<node_id>
-
-// note that this does not take a restriction because it is used only by
-// automate_inventory which operates on the entire, unrestricted, working
-// directory.
-
-void
-workspace::classify_roster_paths(roster_t const & ros,
-                                 path_set & unchanged,
-                                 path_set & changed,
-                                 path_set & missing)
-{
-  temp_node_id_source nis;
-  inodeprint_map ipm;
-
-  if (in_inodeprints_mode())
-    {
-      data dat;
-      read_inodeprints(dat);
-      read_inodeprint_map(dat, ipm);
-    }
-
-  // this code is speed critical, hence the use of inode fingerprints so be
-  // careful when making changes in here and preferably do some timing tests
-
-  if (!ros.has_root())
-    return;
-
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_id nid = i->first;
-      node_t node = i->second;
-
-      split_path sp;
-      ros.get_name(nid, sp);
-
-      file_path fp(sp);
-
-      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
-        {
-          // dirs don't have content changes
-          unchanged.insert(sp);
-        }
-      else
-        {
-          file_t file = downcast_to_file_t(node);
-          file_id fid;
-          if (ident_existing_file(fp, fid, lua))
-            {
-              if (file->content == fid)
-                unchanged.insert(sp);
-              else
-                changed.insert(sp);
-            }
-          else
-            {
-              missing.insert(sp);
-            }
-        }
-    }
-}
 
 void
 workspace::update_current_roster_from_filesystem(roster_t & ros)

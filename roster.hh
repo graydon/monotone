@@ -369,11 +369,6 @@ select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & new_roster,
                               std::set<node_id> & nodes_modified);
 
-void 
-update_current_roster_from_filesystem(roster_t & ros, 
-extract_roster_path_set(roster_t const & ros,
-                        path_set & paths);
-
 // These two functions are for the use of things like 'update' or 'pluck',
 // that need to construct fake rosters and/or markings in-memory, to achieve
 // particular merge results.

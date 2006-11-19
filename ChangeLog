@@ -1,3 +1,19 @@
+2006-11-18  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (struct inventory_itemizer): account for inodeprints
+	code moving into struct workspace; merge fixups
+	* inodeprint.hh (inodeprint_file): move declaration above
+	inodeprint_unchanged which seems to need it
+	* roster.cc (update_current_roster_from_filesystem): 
+	* work.{cc,hh} (in_inodeprints_mode): 
+	(read_inodeprints):
+	(write_inodeprints): make these available in struct workspace so
+	that inventory can use them
+	(inodeprint_unchanged): removed again; previously moved to
+	inodeprint.hh; merges seem to keep resurrecting this
+	(classify_roster_paths): removed again; merges seem to keep
+	resurrecting this
+
 2006-11-13  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* cmd_diff_log.cc (CMD(log)): Fix-ups from last propagate nvm ->
