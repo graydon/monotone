@@ -1,3 +1,8 @@
+2006-11-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/mtn_execute_attr_respects_umask/: use ls -l rather than
+	stat -c, since the former is posix defined.
+
 2006-11-18  Richard Levitte  <richard@levitte.org>
 
 	* debian/monotone-server.monotone.init (d_start): Remove the
