@@ -250,7 +250,7 @@ CMD(cat, N_("informative"),
 AUTOMATE(get_file, N_("FILEID"), options::opts::none)
 {
   N(args.size() == 1,
-    F("no argument given"));
+    F("wrong argument count"));
 
   file_id ident(idx(args, 0)());
   dump_file(output, app, ident);
@@ -273,7 +273,7 @@ AUTOMATE(get_file, N_("FILEID"), options::opts::none)
 AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
 {
   N(args.size() == 1,
-    F("no argument given"));
+    F("wrong argument count"));
 
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)

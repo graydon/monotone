@@ -63,8 +63,8 @@ using std::vector;
 //   no heads.)
 AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
 {
-  if (args.size() > 1)
-    throw usage(help_name);
+  N(args.size() < 2,
+    F("wrong argument count"));
 
   if (args.size() ==1 ) {
     // branchname was explicitly given, use that
@@ -87,9 +87,9 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
 //   stdout, prints an error message to stderr, and exits with status 1.
 AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 {
-  if (args.size() == 0)
-    throw usage(help_name);
-
+  N(args.size() > 0,
+    F("wrong argument count"));
+  
   set<revision_id> ancestors;
   vector<revision_id> frontier;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -134,8 +134,8 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 //   stdout, prints an error message to stderr, and exits with status 1.
 AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 {
-  if (args.size() == 0)
-    throw usage(help_name);
+  N(args.size() > 0,
+    F("wrong argument count"));
 
   set<revision_id> descendents;
   vector<revision_id> frontier;
@@ -214,8 +214,8 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
 //                   format version, if the file is unknown, escalates
 AUTOMATE(attributes, N_("FILE"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() > 0,
+    F("wrong argument count"));
 
   // this command requires a workspace to be run on
   app.require_workspace();
@@ -355,9 +355,9 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
 //   stdout, prints an error message to stderr, and exits with status 1.
 AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options::opts::none)
 {
-  if (args.size() == 0)
-    throw usage(help_name);
-
+  N(args.size() > 0,
+    F("wrong argument count"));
+    
   revision_id a;
   set<revision_id> bs;
   vector<utf8>::const_iterator i = args.begin();
@@ -394,8 +394,8 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options
 // Error conditions: None.
 AUTOMATE(leaves, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   // this might be more efficient in SQL, but for now who cares.
   set<revision_id> leaves;
@@ -422,8 +422,9 @@ AUTOMATE(leaves, "", options::opts::none)
 //   prints an error message to stderr, and exits with status 1.
 AUTOMATE(parents, N_("REV"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
+  
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   set<revision_id> parents;
@@ -446,8 +447,9 @@ AUTOMATE(parents, N_("REV"), options::opts::none)
 //   prints an error message to stderr, and exits with status 1.
 AUTOMATE(children, N_("REV"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
+  
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   set<revision_id> children;
@@ -480,8 +482,8 @@ AUTOMATE(children, N_("REV"), options::opts::none)
 // Error conditions: None.
 AUTOMATE(graph, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   multimap<revision_id, revision_id> edges_mmap;
   map<revision_id, set<revision_id> > child_to_parents;
@@ -523,8 +525,8 @@ AUTOMATE(graph, "", options::opts::none)
 // Error conditions: None.
 AUTOMATE(select, N_("SELECTOR"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   vector<pair<selectors::selector_type, string> >
     sels(selectors::parse_selector(args[0](), app));
@@ -705,8 +707,8 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 
 AUTOMATE(inventory, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   app.require_workspace();
 
@@ -892,8 +894,8 @@ AUTOMATE(inventory, "", options::opts::none)
 // prints an error message to stderr and exits with status 1.
 AUTOMATE(get_revision, N_("[REVID]"), options::opts::none)
 {
-  if (args.size() > 1)
-    throw usage(help_name);
+  N(args.size() < 2,
+    F("wrong argument count"));
 
   temp_node_id_source nis;
   revision_data dat;
@@ -936,8 +938,8 @@ AUTOMATE(get_revision, N_("[REVID]"), options::opts::none)
 //   prints an error message to stderr, and exits with status 1.
 AUTOMATE(get_base_revision_id, "", options::opts::none)
 {
-  if (args.size() > 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   app.require_workspace();
 
@@ -957,8 +959,8 @@ AUTOMATE(get_base_revision_id, "", options::opts::none)
 //   prints an error message to stderr, and exits with status 1.
 AUTOMATE(get_current_revision_id, "", options::opts::none)
 {
-  if (args.size() > 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   app.require_workspace();
 
@@ -1022,8 +1024,8 @@ AUTOMATE(get_current_revision_id, "", options::opts::none)
 // invalid prints an error message to stderr and exits with status 1.
 AUTOMATE(get_manifest_of, N_("[REVID]"), options::opts::none)
 {
-  if (args.size() > 1)
-    throw usage(help_name);
+  N(args.size() < 2,
+    F("wrong argument count"));
 
   manifest_data dat;
   manifest_id mid;
@@ -1066,8 +1068,8 @@ AUTOMATE(get_manifest_of, N_("[REVID]"), options::opts::none)
 // invalid prints an error message to stderr and exits with status 1.
 AUTOMATE(packet_for_rdata, N_("REVID"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   packet_writer pw(output);
 
@@ -1092,8 +1094,8 @@ AUTOMATE(packet_for_rdata, N_("REVID"), options::opts::none)
 // invalid prints an error message to stderr and exits with status 1.
 AUTOMATE(packets_for_certs, N_("REVID"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   packet_writer pw(output);
 
@@ -1119,8 +1121,8 @@ AUTOMATE(packets_for_certs, N_("REVID"), options::opts::none)
 // prints an error message to stderr and exits with status 1.
 AUTOMATE(packet_for_fdata, N_("FILEID"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   packet_writer pw(output);
 
@@ -1146,8 +1148,8 @@ AUTOMATE(packet_for_fdata, N_("FILEID"), options::opts::none)
 // invalid prints an error message to stderr and exits with status 1.
 AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"), options::opts::none)
 {
-  if (args.size() != 2)
-    throw usage(help_name);
+  N(args.size() == 2,
+    F("wrong argument count"));
 
   packet_writer pw(output);
 
@@ -1180,8 +1182,8 @@ AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"), options::opts::none)
 //   with status 1.
 AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 {
-  if (args.size() == 0)
-    throw usage(help_name);
+  N(args.size() > 0,
+    F("wrong argument count"));
 
   set<revision_id> ancestors, common_ancestors;
   vector<revision_id> frontier;
@@ -1243,8 +1245,8 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 //   None.
 AUTOMATE(branches, "", options::opts::none)
 {
-  if (args.size() > 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   vector<string> names;
 
@@ -1291,6 +1293,9 @@ AUTOMATE(branches, "", options::opts::none)
 //   A run-time exception is thrown for illegal patterns.
 AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
 {
+  N(args.size() < 2,
+    F("wrong argument count"));
+
   utf8 incl("*");
   bool filtering(false);
   
@@ -1298,8 +1303,6 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
     incl = idx(args, 0);
     filtering = true;
   }
-  else if (args.size() > 1)
-    throw usage(name);
 
   globish_matcher match(incl, utf8());
   basic_io::printer prt;
@@ -1387,8 +1390,8 @@ namespace
 // prints an error message to stderr and exits with status 1.
 AUTOMATE(genkey, N_("KEYID PASSPHRASE"), options::opts::none)
 {
-  if (args.size() != 2)
-    throw usage(help_name);
+  N(args.size() == 2,
+    F("wrong argument count"));
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -1446,8 +1449,8 @@ AUTOMATE(genkey, N_("KEYID PASSPHRASE"), options::opts::none)
 //
 AUTOMATE(get_option, N_("OPTION"), options::opts::none)
 {
-  if (!app.opts.unknown && (args.size() < 1))
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   // this command requires a workspace to be run on
   app.require_workspace();
@@ -1492,8 +1495,8 @@ AUTOMATE(get_option, N_("OPTION"), options::opts::none)
 //
 AUTOMATE(get_content_changed, N_("REV FILE"), options::opts::none)
 {
-  if (args.size() != 2)
-    throw usage(help_name);
+  N(args.size() == 2,
+    F("wrong argument count"));
 
   roster_t new_roster;
   revision_id ident;
@@ -1552,8 +1555,8 @@ AUTOMATE(get_content_changed, N_("REV FILE"), options::opts::none)
 // file "foo"
 AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
 {
-  if (args.size() != 3)
-    throw usage(help_name);
+  N(args.size() == 3,
+    F("wrong argument count"));
 
   roster_t new_roster, old_roster;
   revision_id ident, old_ident;

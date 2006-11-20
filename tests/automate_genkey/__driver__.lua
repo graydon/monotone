@@ -19,7 +19,7 @@ check(mtn("automate", "genkey", "foo@bar.com", "foopass"), 1, false, false)
 check(mtn("automate", "genkey", "dbkey@bar.com", "foopass"), 1, false, false)
 
 -- Should fail, missing parameters
-check(mtn("automate", "genkey", "bar@foo.com"), 2, false, false)
+check(mtn("automate", "genkey", "bar@foo.com"), 1, false, false)
 
 -- Should work, we'll check the output below
 check(mtn("automate", "genkey", "foo@baz.com", "foopass"), 0, true, false)
