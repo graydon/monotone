@@ -560,8 +560,9 @@ namespace
 // Error conditions: None.
 AUTOMATE(keys, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
+  
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
   // public_hash, private_hash, public_location, private_location
@@ -651,8 +652,8 @@ AUTOMATE(keys, "", options::opts::none)
 // and exits with status 1.
 AUTOMATE(certs, N_("REV"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   vector<cert> certs;
 

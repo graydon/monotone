@@ -74,8 +74,8 @@ static string const interface_version = "4.0";
 // Error conditions: None.
 AUTOMATE(interface_version, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   output << interface_version << "\n";
 }
@@ -329,8 +329,9 @@ struct automate_ostream : public std::ostream
 
 AUTOMATE(stdio, "", options::opts::automate_stdio_size)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
+
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);
   vector<pair<string, string> > params;
