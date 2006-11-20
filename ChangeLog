@@ -1,3 +1,10 @@
+2006-11-20  Thomas Keller  <me@thomaskeller.biz>
+
+       * moved automate get_file into cmd_files.cc
+       * new automate command get_file_of which is basically mtn cat
+       * replaced exception by user error for get_file and get_file_of
+       if no arguments are given 
+
 2006-11-18  Richard Levitte  <richard@levitte.org>
 
 	* debian/monotone-server.monotone.init (d_start): Remove the
