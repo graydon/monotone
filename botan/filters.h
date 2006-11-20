@@ -1,6 +1,6 @@
 /*************************************************
 * Filters Header File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_FILTERS_H__
@@ -28,6 +28,7 @@ class StreamCipher_Filter : public Keyed_Filter
       void write(const byte[], u32bit);
 
       StreamCipher_Filter(const std::string&);
+      StreamCipher_Filter(const std::string&, const SymmetricKey&);
       ~StreamCipher_Filter() { delete cipher; }
    private:
       SecureVector<byte> buffer;

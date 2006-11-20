@@ -1,12 +1,12 @@
 /*************************************************
 * CBC Padding Methods Header File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_CBC_PADDING_H__
 #define BOTAN_CBC_PADDING_H__
 
-#include <botan/exceptn.h>
+#include <botan/base.h>
 #include <string>
 
 namespace Botan {

@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe Header File                               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_PIPE_H__
@@ -18,8 +18,7 @@ namespace Botan {
 class Pipe : public DataSource
    {
    public:
-      static const u32bit LAST_MESSAGE    = 0xFFFFFFFE;
-      static const u32bit DEFAULT_MESSAGE = 0xFFFFFFFF;
+      static const u32bit LAST_MESSAGE, DEFAULT_MESSAGE;
 
       void write(const byte[], u32bit);
       void write(const MemoryRegion<byte>&);

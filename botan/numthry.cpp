@@ -1,10 +1,11 @@
 /*************************************************
 * Number Theory Source File                      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/numthry.h>
 #include <botan/ui.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -53,7 +54,7 @@ u32bit miller_rabin_test_iterations(u32bit bits, bool verify)
       {    0,  0,  0 }
    };
 
-   for(u32bit j = 0; tests[j].bits; j++)
+   for(u32bit j = 0; tests[j].bits; ++j)
       {
       if(bits <= tests[j].bits)
          if(verify)
@@ -74,7 +75,8 @@ u32bit low_zero_bits(const BigInt& n)
    if(n.is_zero()) return 0;
 
    u32bit bits = 0, max_bits = n.bits();
-   while((n.get_bit(bits) == 0) && bits < max_bits) bits++;
+   while((n.get_bit(bits) == 0) && bits < max_bits)
+      ++bits;
    return bits;
    }
 
@@ -114,14 +116,6 @@ BigInt lcm(const BigInt& a, const BigInt& b)
    }
 
 /*************************************************
-* Square a BigInt                                *
-*************************************************/
-BigInt square(const BigInt& a)
-   {
-   return (a * a);
-   }
-
-/*************************************************
 * Find the Modular Inverse                       *
 *************************************************/
 BigInt inverse_mod(const BigInt& n, const BigInt& mod)
@@ -141,7 +135,7 @@ BigInt inverse_mod(const BigInt& n, const BigInt& mod)
       {
       u32bit zero_bits = low_zero_bits(u);
       u >>= zero_bits;
-      for(u32bit j = 0; j != zero_bits; j++)
+      for(u32bit j = 0; j != zero_bits; ++j)
          {
          if(A.is_odd() || B.is_odd())
             { A += y; B -= x; }
@@ -150,7 +144,7 @@ BigInt inverse_mod(const BigInt& n, const BigInt& mod)
 
       zero_bits = low_zero_bits(v);
       v >>= zero_bits;
-      for(u32bit j = 0; j != zero_bits; j++)
+      for(u32bit j = 0; j != zero_bits; ++j)
          {
          if(C.is_odd() || D.is_odd())
             { C += y; D -= x; }
@@ -171,59 +165,14 @@ BigInt inverse_mod(const BigInt& n, const BigInt& mod)
    }
 
 /*************************************************
-* Calculate the Jacobi symbol                    *
+* Modular Exponentiation                         *
 *************************************************/
-s32bit jacobi(const BigInt& a, const BigInt& n)
+BigInt power_mod(const BigInt& base, const BigInt& exp, const BigInt& mod)
    {
-   if(a.is_negative())
-      throw Invalid_Argument("jacobi: first argument must be non-negative");
-   if(n.is_even() || n < 2)
-      throw Invalid_Argument("jacobi: second argument must be odd and > 1");
-
-   BigInt x = a, y = n;
-   s32bit J = 1;
-
-   while(y > 1)
-      {
-      x %= y;
-      if(x > y / 2)
-         {
-         x = y - x;
-         if(y % 4 == 3)
-            J = -J;
-         }
-      if(x.is_zero())
-         return 0;
-      while(x % 4 == 0)
-         x >>= 2;
-      if(x.is_even())
-         {
-         x >>= 1;
-         if(y % 8 == 3 || y % 8 == 5)
-            J = -J;
-         }
-      if(x % 4 == 3 && y % 4 == 3)
-         J = -J;
-      std::swap(x, y);
-      }
-   return J;
-   }
-
-/*************************************************
-* Exponentiation                                 *
-*************************************************/
-BigInt power(const BigInt& base, u32bit exp)
-   {
-   BigInt x = 1, a = base;
-   while(exp)
-      {
-      if(exp % 2)
-         x *= a;
-      exp >>= 1;
-      if(exp)
-         a = square(a);
-      }
-   return x;
+   Power_Mod pow_mod(mod);
+   pow_mod.set_base(base);
+   pow_mod.set_exponent(exp);
+   return pow_mod.execute();
    }
 
 /*************************************************
@@ -241,7 +190,7 @@ s32bit simple_primality_tests(const BigInt& n)
    if(n <= PRIMES[PRIME_TABLE_SIZE-1])
       {
       const word num = n.word_at(0);
-      for(u32bit j = 0; PRIMES[j]; j++)
+      for(u32bit j = 0; PRIMES[j]; ++j)
          {
          if(num == PRIMES[j]) return PRIME;
          if(num <  PRIMES[j]) return NOT_PRIME;
@@ -250,7 +199,7 @@ s32bit simple_primality_tests(const BigInt& n)
       }
 
    u32bit check_first = std::min(n.bits() / 32, PRIME_PRODUCTS_TABLE_SIZE);
-   for(u32bit j = 0; j != check_first; j++)
+   for(u32bit j = 0; j != check_first; ++j)
       if(gcd(n, PRIME_PRODUCTS[j]) != 1)
          return NOT_PRIME;
 
@@ -316,9 +265,9 @@ bool passes_mr_tests(const BigInt& n, u32bit level)
    u32bit tests = miller_rabin_test_iterations(n.bits(), verify);
 
    BigInt nonce;
-   for(u32bit j = 0; j != tests; j++)
+   for(u32bit j = 0; j != tests; ++j)
       {
-      if(verify) nonce = random_integer(NONCE_BITS, Nonce);
+      if(verify) nonce = random_integer(NONCE_BITS);
       else       nonce = PRIMES[j];
 
       if(!mr.passes_test(nonce))
@@ -336,15 +285,16 @@ bool MillerRabin_Test::passes_test(const BigInt& a)
       throw Invalid_Argument("Bad size for nonce in Miller-Rabin test");
 
    UI::pulse(UI::PRIME_TESTING);
-   BigInt y = power_mod(a, r, reducer);
 
+   BigInt y = pow_mod(a);
    if(y == 1 || y == n_minus_1)
       return true;
 
-   for(u32bit j = 1; j != s; j++)
+   for(u32bit j = 1; j != s; ++j)
       {
       UI::pulse(UI::PRIME_TESTING);
-      y = reducer->square(y);
+      y = reducer.square(y);
+
       if(y == 1)
          return false;
       if(y == n_minus_1)
@@ -366,7 +316,8 @@ MillerRabin_Test::MillerRabin_Test(const BigInt& num)
    s = low_zero_bits(n_minus_1);
    r = n_minus_1 >> s;
 
-   reducer = get_reducer(n);
+   pow_mod = Fixed_Exponent_Power_Mod(r, n);
+   reducer = Modular_Reducer(n);
    }
 
 }

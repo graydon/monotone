@@ -1,10 +1,11 @@
 /*************************************************
 * Base64 Encoder/Decoder Source File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/base64.h>
 #include <botan/charset.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -117,8 +118,10 @@ void Base64_Encoder::end_msg()
       do_output(out, 4);
       }
 
-   // XXX: monotone requires a terminating newline in all cases,
-   // for compatibility with cryptopp.
+   // Monotone requires a trailing in newline in 
+   // all cases, for crypto++ compatibility.
+   // if(counter && line_length)
+   //   send('\n');
    send('\n');
 
    counter = position = 0;
@@ -169,8 +172,12 @@ void Base64_Decoder::decode_and_send(const byte block[], u32bit length)
 *************************************************/
 void Base64_Decoder::handle_bad_char(byte c)
    {
-   if(checking == NONE) return;
-   if((checking == IGNORE_WS) && is_space(c)) return;
+   if(checking == NONE)
+      return;
+
+   if((checking == IGNORE_WS) && Charset::is_space(c))
+      return;
+
    throw Decoding_Error("Base64_Decoder: Invalid base64 character: " + c);
    }
 
@@ -179,7 +186,7 @@ void Base64_Decoder::handle_bad_char(byte c)
 *************************************************/
 void Base64_Decoder::write(const byte input[], u32bit length)
    {
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       {
       if(is_valid(input[j]))
          in[position++] = input[j];

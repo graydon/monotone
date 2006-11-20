@@ -1,11 +1,10 @@
 /*************************************************
 * AES Source File                                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/aes.h>
 #include <botan/bit_ops.h>
-#include <botan/parsing.h>
 
 namespace Botan {
 
@@ -14,6 +13,11 @@ namespace Botan {
 *************************************************/
 void AES::enc(const byte in[], byte out[]) const
    {
+   const u32bit* TE0 = TE;
+   const u32bit* TE1 = TE + 256;
+   const u32bit* TE2 = TE + 512;
+   const u32bit* TE3 = TE + 768;
+
    u32bit T0, T1, T2, T3, B0, B1, B2, B3;
    B0 = TE0[in[ 0] ^ ME[ 0]] ^ TE1[in[ 5] ^ ME[ 5]] ^
         TE2[in[10] ^ ME[10]] ^ TE3[in[15] ^ ME[15]] ^ EK[0];
@@ -65,6 +69,11 @@ void AES::enc(const byte in[], byte out[]) const
 *************************************************/
 void AES::dec(const byte in[], byte out[]) const
    {
+   const u32bit* TD0 = TD;
+   const u32bit* TD1 = TD + 256;
+   const u32bit* TD2 = TD + 512;
+   const u32bit* TD3 = TD + 768;
+
    u32bit T0, T1, T2, T3, B0, B1, B2, B3;
    B0 = TD0[in[ 0] ^ MD[ 0]] ^ TD1[in[13] ^ MD[13]] ^
         TD2[in[10] ^ MD[10]] ^ TD3[in[ 7] ^ MD[ 7]] ^ DK[0];
@@ -124,12 +133,12 @@ void AES::key(const byte key[], u32bit length)
    SecureBuffer<u32bit, 64> XEK, XDK;
 
    const u32bit X = length / 4;
-   for(u32bit j = 0; j != X; j++)
+   for(u32bit j = 0; j != X; ++j)
       XEK[j] = make_u32bit(key[4*j], key[4*j+1], key[4*j+2], key[4*j+3]);
    for(u32bit j = X; j < 4*(ROUNDS+1); j += X)
       {
       XEK[j] = XEK[j-X] ^ S(rotate_left(XEK[j-1], 8)) ^ RC[(j-X)/X];
-      for(u32bit k = 1; k != X; k++)
+      for(u32bit k = 1; k != X; ++k)
          {
          if(X == 8 && k == 4)
             XEK[j+k] = XEK[j+k-X] ^ S(XEK[j+k-1]);
@@ -145,12 +154,15 @@ void AES::key(const byte key[], u32bit length)
       XDK[j+2] = XEK[4*ROUNDS-j+2];
       XDK[j+3] = XEK[4*ROUNDS-j+3];
       }
-   for(u32bit j = 4; j != length + 24; j++)
-      XDK[j] = TD0[SE[get_byte(0, XDK[j])]] ^ TD1[SE[get_byte(1, XDK[j])]] ^
-               TD2[SE[get_byte(2, XDK[j])]] ^ TD3[SE[get_byte(3, XDK[j])]];
 
-   for(u32bit j = 0; j != 4; j++)
-      for(u32bit k = 0; k != 4; k++)
+   for(u32bit j = 4; j != length + 24; ++j)
+      XDK[j] = TD[SE[get_byte(0, XDK[j])] +   0] ^
+               TD[SE[get_byte(1, XDK[j])] + 256] ^
+               TD[SE[get_byte(2, XDK[j])] + 512] ^
+               TD[SE[get_byte(3, XDK[j])] + 768];
+
+   for(u32bit j = 0; j != 4; ++j)
+      for(u32bit k = 0; k != 4; ++k)
          {
          ME[4*j+k   ] = get_byte(k, XEK[j]);
          ME[4*j+k+16] = get_byte(k, XEK[j+4*ROUNDS]);
@@ -177,7 +189,7 @@ u32bit AES::S(u32bit input)
 AES::AES(u32bit key_size) : BlockCipher(16, key_size)
    {
    if(key_size != 16 && key_size != 24 && key_size != 32)
-      throw Invalid_Argument("AES: Bad key size " + to_string(key_size));
+      throw Invalid_Key_Length(name(), key_size);
    ROUNDS = (key_size / 4) + 6;
    }
 

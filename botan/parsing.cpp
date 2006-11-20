@@ -1,6 +1,6 @@
 /*************************************************
 * Parser Functions Source File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/parsing.h>
@@ -16,11 +16,11 @@ u32bit to_u32bit(const std::string& number)
    {
    u32bit n = 0;
 
-   for(std::string::const_iterator j = number.begin(); j != number.end(); j++)
+   for(std::string::const_iterator j = number.begin(); j != number.end(); ++j)
       {
       const u32bit OVERFLOW_MARK = 0xFFFFFFFF / 10;
 
-      byte digit = char2digit(*j);
+      byte digit = Charset::char2digit(*j);
 
       if((n > OVERFLOW_MARK) || (n == OVERFLOW_MARK && digit > 5))
          throw Decoding_Error("to_u32bit: Integer overflow");
@@ -41,7 +41,7 @@ std::string to_string(u64bit n, u32bit min_len)
       {
       while(n > 0)
          {
-         lenstr = digit2char(n % 10) + lenstr;
+         lenstr = Charset::digit2char(n % 10) + lenstr;
          n /= 10;
          }
       }
@@ -70,12 +70,12 @@ std::vector<std::string> parse_algorithm_name(const std::string& namex)
    elems.push_back(name.substr(0, name.find('(')));
    name = name.substr(name.find('('));
 
-   for(std::string::const_iterator j = name.begin(); j != name.end(); j++)
+   for(std::string::const_iterator j = name.begin(); j != name.end(); ++j)
       {
       char c = *j;
 
       if(c == '(')
-         level++;
+         ++level;
       if(c == ')')
          {
          if(level == 1 && j == name.end() - 1)
@@ -89,7 +89,7 @@ std::vector<std::string> parse_algorithm_name(const std::string& namex)
 
          if(level == 0 || (level == 1 && j != name.end() - 1))
             throw Invalid_Algorithm_Name(namex);
-         level--;
+         --level;
          }
 
       if(c == ',' && level == 1)
@@ -98,7 +98,7 @@ std::vector<std::string> parse_algorithm_name(const std::string& namex)
             elems.push_back(substring.substr(1));
          else
             elems.push_back(substring);
-         substring = "";
+         substring.clear();
          }
       else
          substring += c;
@@ -119,12 +119,13 @@ std::vector<std::string> split_on(const std::string& str, char delim)
    if(str == "") return elems;
 
    std::string substr;
-   for(std::string::const_iterator j = str.begin(); j != str.end(); j++)
+   for(std::string::const_iterator j = str.begin(); j != str.end(); ++j)
       {
       if(*j == delim)
          {
-         elems.push_back(substr);
-         substr = "";
+         if(substr != "")
+            elems.push_back(substr);
+         substr.clear();
          }
       else
          substr += *j;
@@ -145,7 +146,7 @@ std::vector<u32bit> parse_asn1_oid(const std::string& oid)
    std::string substring;
    std::vector<u32bit> oid_elems;
 
-   for(std::string::const_iterator j = oid.begin(); j != oid.end(); j++)
+   for(std::string::const_iterator j = oid.begin(); j != oid.end(); ++j)
       {
       char c = *j;
 
@@ -154,7 +155,7 @@ std::vector<u32bit> parse_asn1_oid(const std::string& oid)
          if(substring == "")
             throw Invalid_OID(oid);
          oid_elems.push_back(to_u32bit(substring));
-         substring = "";
+         substring.clear();
          }
       else
          substring += c;
@@ -178,90 +179,35 @@ bool x500_name_cmp(const std::string& name1, const std::string& name2)
    std::string::const_iterator p1 = name1.begin();
    std::string::const_iterator p2 = name2.begin();
 
-   while((p1 != name1.end()) && is_space(*p1)) p1++;
-   while((p2 != name2.end()) && is_space(*p2)) p2++;
+   while((p1 != name1.end()) && Charset::is_space(*p1)) ++p1;
+   while((p2 != name2.end()) && Charset::is_space(*p2)) ++p2;
 
    while(p1 != name1.end() && p2 != name2.end())
       {
-      if(is_space(*p1))
+      if(Charset::is_space(*p1))
          {
-         if(!is_space(*p2))
+         if(!Charset::is_space(*p2))
             return false;
 
-         while((p1 != name1.end()) && is_space(*p1)) p1++;
-         while((p2 != name2.end()) && is_space(*p2)) p2++;
+         while((p1 != name1.end()) && Charset::is_space(*p1)) ++p1;
+         while((p2 != name2.end()) && Charset::is_space(*p2)) ++p2;
 
          if(p1 == name1.end() && p2 == name2.end())
             return true;
          }
 
-      if(to_lower(*p1) != to_lower(*p2))
+      if(!Charset::caseless_cmp(*p1, *p2))
          return false;
-      p1++;
-      p2++;
+      ++p1;
+      ++p2;
       }
 
-   while((p1 != name1.end()) && is_space(*p1)) p1++;
-   while((p2 != name2.end()) && is_space(*p2)) p2++;
+   while((p1 != name1.end()) && Charset::is_space(*p1)) ++p1;
+   while((p2 != name2.end()) && Charset::is_space(*p2)) ++p2;
 
    if((p1 != name1.end()) || (p2 != name2.end()))
       return false;
    return true;
-   }
-
-/*************************************************
-* Convert from UTF-8 to ISO 8859-1               *
-*************************************************/
-std::string utf2iso(const std::string& utf8)
-   {
-   std::string iso8859;
-
-   u32bit position = 0;
-   while(position != utf8.size())
-      {
-      const byte c1 = (byte)utf8[position++];
-
-      if(c1 <= 0x7F)
-         iso8859 += (char)c1;
-      else if(c1 >= 0xC0 && c1 <= 0xC7)
-         {
-         if(position == utf8.size())
-            throw Decoding_Error("UTF-8: sequence truncated");
-
-         const byte c2 = (byte)utf8[position++];
-         const byte iso_char = ((c1 & 0x07) << 6) | (c2 & 0x3F);
-
-         if(iso_char <= 0x7F)
-            throw Decoding_Error("UTF-8: sequence longer than needed");
-
-         iso8859 += (char)iso_char;
-         }
-      else
-         throw Decoding_Error("UTF-8: Unicode chars not in Latin1 used");
-      }
-
-   return iso8859;
-   }
-
-/*************************************************
-* Convert from ISO 8859-1 to UTF-8               *
-*************************************************/
-std::string iso2utf(const std::string& iso8859)
-   {
-   std::string utf8;
-   for(u32bit j = 0; j != iso8859.size(); j++)
-      {
-      const byte c = (byte)iso8859[j];
-
-      if(c <= 0x7F)
-         utf8 += (char)c;
-      else
-         {
-         utf8 += (char)(0xC0 | (c >> 6));
-         utf8 += (char)(0x80 | (c & 0x3F));
-         }
-      }
-   return utf8;
    }
 
 /*************************************************
@@ -276,7 +222,7 @@ u32bit parse_expr(const std::string& expr)
       {
       std::vector<std::string> sub_expr = split_on(expr, '+');
       u32bit result = 0;
-      for(u32bit j = 0; j != sub_expr.size(); j++)
+      for(u32bit j = 0; j != sub_expr.size(); ++j)
          result += parse_expr(sub_expr[j]);
       return result;
       }
@@ -284,7 +230,7 @@ u32bit parse_expr(const std::string& expr)
       {
       std::vector<std::string> sub_expr = split_on(expr, '*');
       u32bit result = 1;
-      for(u32bit j = 0; j != sub_expr.size(); j++)
+      for(u32bit j = 0; j != sub_expr.size(); ++j)
          result *= parse_expr(sub_expr[j]);
       return result;
       }

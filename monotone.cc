@@ -87,12 +87,13 @@ using boost::shared_ptr;
 struct botan_library
 {
   botan_library() {
-    Botan::Init::initialize();
-    Botan::set_default_allocator("malloc");
-    hook_botan_sha1();
+    Botan::InitializerOptions options("thread_safe=0 selftest=0 seed_rng=1 "
+                                      "use_engines=0 secure_memory=1 "
+                                      "fips140=0");
+    Botan::LibraryInitializer::initialize(options);
   }
   ~botan_library() {
-    Botan::Init::deinitialize();
+    Botan::LibraryInitializer::deinitialize();
   }
 };
 

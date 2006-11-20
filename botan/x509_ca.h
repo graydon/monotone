@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Authority Header File        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_CA_H__
@@ -8,6 +8,7 @@
 
 #include <botan/x509cert.h>
 #include <botan/x509_crl.h>
+#include <botan/x509_ext.h>
 #include <botan/pkcs8.h>
 #include <botan/pkcs10.h>
 #include <botan/pubkey.h>
@@ -30,17 +31,11 @@ class X509_CA
 
       static X509_Certificate make_cert(PK_Signer*, const AlgorithmIdentifier&,
                                         const MemoryRegion<byte>&,
-                                        const MemoryRegion<byte>&,
                                         const X509_Time&, const X509_Time&,
                                         const X509_DN&, const X509_DN&,
-                                        bool, u32bit, const AlternativeName&,
-                                        Key_Constraints,
-                                        const std::vector<OID>&);
+                                        const Extensions&);
 
-      static void do_ext(DER_Encoder&, DER_Encoder&,
-                         const std::string&, const std::string&);
-
-      X509_CA(const X509_Certificate&, const PKCS8_PrivateKey&);
+      X509_CA(const X509_Certificate&, const Private_Key&);
       ~X509_CA();
    private:
       X509_CA(const X509_CA&) {}
@@ -52,6 +47,12 @@ class X509_CA
       X509_Certificate cert;
       PK_Signer* signer;
    };
+
+/*************************************************
+* Choose a signing format for the key            *
+*************************************************/
+PK_Signer* choose_sig_format(const Private_Key&, AlgorithmIdentifier&);
+
 
 }
 
