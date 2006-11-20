@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-18 22:17+0100\n"
-"PO-Revision-Date: 2006-11-18 22:18+0100\n"
+"POT-Creation-Date: 2006-11-20 12:25+0100\n"
+"PO-Revision-Date: 2006-11-20 12:25+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -184,13 +184,13 @@ msgstr "sökroten '%s' är inte en katalog"
 msgid "[BRANCH]"
 msgstr "[GREN]"
 
-#: automate.cc:88 automate.cc:135 automate.cc:1206
+#: automate.cc:88 automate.cc:135 automate.cc:1181
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
 #: automate.cc:365 automate.cc:369 automate.cc:428 automate.cc:452
-#: automate.cc:1216 cmd_list.cc:662 revision.cc:1705
+#: automate.cc:1191 cmd_list.cc:662 revision.cc:1705
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
@@ -224,84 +224,79 @@ msgstr "VÄLJARE"
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:922 automate.cc:1045 automate.cc:1529 automate.cc:1588
-#: automate.cc:1593
+#: automate.cc:922 automate.cc:1045 automate.cc:1504 automate.cc:1563
+#: automate.cc:1568
 #, c-format
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i i databasen"
 
-#: automate.cc:1066 automate.cc:1145
-msgid "FILEID"
-msgstr "FILID"
-
-#: automate.cc:1073
-#, c-format
-msgid "no file version %s found in database"
-msgstr "filversionen %s finns inte i databasen"
-
-#: automate.cc:1092 automate.cc:1118 cmd_merging.cc:845
+#: automate.cc:1067 automate.cc:1093 cmd_merging.cc:845
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1103 automate.cc:1129 automate.cc:1184 automate.cc:1186
+#: automate.cc:1078 automate.cc:1104 automate.cc:1159 automate.cc:1161
 #: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
-#: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:125 cmd_merging.cc:677
+#: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:677
 #: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:413
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1156
+#: automate.cc:1120 cmd_files.cc:250
+msgid "FILEID"
+msgstr "FILID"
+
+#: automate.cc:1131
 #, c-format
 msgid "no such file '%s'"
 msgstr "filen '%s' finns inte"
 
-#: automate.cc:1172
+#: automate.cc:1147
 msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NYTT_FIL"
 
-#: automate.cc:1317
+#: automate.cc:1292
 msgid "[BRANCH_PATTERN]"
 msgstr "[GREN_MÖNSTER]"
 
-#: automate.cc:1413
+#: automate.cc:1388
 msgid "KEYID PASSPHRASE"
 msgstr "NYCKELID LÖSENFRAS"
 
-#: automate.cc:1431 cmd_key_cert.cc:42
+#: automate.cc:1406 cmd_key_cert.cc:42
 #, c-format
 msgid "key '%s' already exists"
 msgstr "nyckeln '%s' finns redan"
 
-#: automate.cc:1434 cmd_key_cert.cc:45
+#: automate.cc:1409 cmd_key_cert.cc:45
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "skapar nyckelparet '%s'"
 
-#: automate.cc:1436 cmd_key_cert.cc:47
+#: automate.cc:1411 cmd_key_cert.cc:47
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "lagrar nyckelparet '%s' i %s/"
 
-#: automate.cc:1472
+#: automate.cc:1447
 msgid "OPTION"
 msgstr "FLAGGA"
 
-#: automate.cc:1495
+#: automate.cc:1470
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' är en okänd inställning i arbetskopians metadata"
 
-#: automate.cc:1518
+#: automate.cc:1493
 msgid "REV FILE"
 msgstr "REV FIL"
 
-#: automate.cc:1535 automate.cc:1599
+#: automate.cc:1510 automate.cc:1574
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "filen %s är okänd i revision %s"
 
-#: automate.cc:1578
+#: automate.cc:1553
 msgid "REV1 FILE REV2"
 msgstr "REV1 FIL REV2"
 
@@ -492,7 +487,7 @@ msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
 #: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
-#: cmd_files.cc:181 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:373
+#: cmd_files.cc:220 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:373
 #: commands.cc:275
 msgid "informative"
 msgstr "informativ"
@@ -653,18 +648,28 @@ msgstr "[SÖKVÄG]"
 msgid "calculate identity of PATH or stdin"
 msgstr "räkna ut identiteten för SÖKVÄG eller stdin"
 
-#: cmd_files.cc:182
-msgid "FILENAME"
-msgstr "FILNAMN"
+#: cmd_files.cc:185
+#, c-format
+msgid "no file version %s found in database"
+msgstr "filversionen %s finns inte i databasen"
 
-#: cmd_files.cc:183
-msgid "write file from database to stdout"
-msgstr "skriv ut angiven fil från databasen"
-
-#: cmd_files.cc:212 cmd_files.cc:214
+#: cmd_files.cc:210 cmd_files.cc:214
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
+
+#: cmd_files.cc:221 cmd_files.cc:273
+msgid "FILENAME"
+msgstr "FILNAMN"
+
+#: cmd_files.cc:222
+msgid "write file from database to stdout"
+msgstr "skriv ut angiven fil från databasen"
+
+#: cmd_files.cc:253 cmd_files.cc:276
+#, c-format
+msgid "no argument given"
+msgstr "inget argument givet"
 
 #: cmd.hh:89
 #, c-format
@@ -4057,9 +4062,6 @@ msgstr "arbetskopian är korrupt: %s finns men är inte en vanlig fil"
 #, c-format
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
-
-#~ msgid "no hostname given"
-#~ msgstr "inget värdnamn angivet"
 
 #~ msgid "PATTERN ..."
 #~ msgstr "MÖNSTER ..."
