@@ -1053,31 +1053,6 @@ AUTOMATE(get_manifest_of, N_("[REVID]"), options::opts::none)
 }
 
 
-// Name: get_file
-// Arguments:
-//   1: a file id
-// Added in: 1.0
-// Purpose: Prints the contents of the specified file.
-//
-// Output format: The file contents are output without modification.
-//
-// Error conditions: If the file id specified is unknown or invalid prints
-// an error message to stderr and exits with status 1.
-AUTOMATE(get_file, N_("FILEID"), options::opts::none)
-{
-  if (args.size() != 1)
-    throw usage(help_name);
-
-  file_id ident(idx(args, 0)());
-  N(app.db.file_version_exists(ident),
-    F("no file version %s found in database") % ident);
-
-  file_data dat;
-  L(FL("dumping file %s") % ident);
-  app.db.get_file_version(ident, dat);
-  output.write(dat.inner()().data(), dat.inner()().size());
-}
-
 // Name: packet_for_rdata
 // Arguments:
 //   1: a revision id

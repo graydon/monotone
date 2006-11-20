@@ -178,6 +178,45 @@ CMD(identify, N_("debug"), N_("[PATH]"),
   cout << ident << "\n";
 }
 
+static void
+dump_file(std::ostream & output, app_state & app, file_id & ident)
+{
+  N(app.db.file_version_exists(ident),
+    F("no file version %s found in database") % ident);
+
+  file_data dat;
+  L(FL("dumping file %s") % ident);
+  app.db.get_file_version(ident, dat);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+static void
+dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename)
+{
+  N(app.db.revision_exists(rid), 
+    F("no such revision '%s'") % rid);
+
+  // Paths are interpreted as standard external ones when we're in a
+  // workspace, but as project-rooted external ones otherwise.
+  file_path fp;
+  split_path sp;
+  fp = file_path_external(filename);
+  fp.split(sp);
+
+  roster_t roster;
+  marking_map marks;
+  app.db.get_roster(rid, roster, marks);
+  N(roster.has_node(sp), 
+    F("no file '%s' found in revision '%s'") % fp % rid);
+  
+  node_t node = roster.get_node(sp);
+  N((!null_node(node->self) && is_file_t(node)), 
+    F("no file '%s' found in revision '%s'") % fp % rid);
+
+  file_t file_node = downcast_to_file_t(node);
+  dump_file(output, app, file_node->content);
+}
+
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("write file from database to stdout"),
@@ -186,41 +225,66 @@ CMD(cat, N_("informative"),
   if (args.size() != 1)
     throw usage(name);
 
+  revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
-    app.require_workspace();
+    {
+      app.require_workspace();
+      app.work.get_revision_id(rid);
+    }
+  else
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
-  transaction_guard guard(app.db, false);
+  dump_file(cout, app, rid, idx(args, 0));
+}
+
+// Name: get_file
+// Arguments:
+//   1: a file id
+// Added in: 1.0
+// Purpose: Prints the contents of the specified file.
+//
+// Output format: The file contents are output without modification.
+//
+// Error conditions: If the file id specified is unknown or invalid prints
+// an error message to stderr and exits with status 1.
+AUTOMATE(get_file, N_("FILEID"), options::opts::none)
+{
+  N(args.size() == 1,
+    F("no argument given"));
+
+  file_id ident(idx(args, 0)());
+  dump_file(output, app, ident);
+}
+
+// Name: get_fileof
+// Arguments:
+//   1: a filename
+//
+// Options:
+//   r: a revision id
+//
+// Added in: 4.0
+// Purpose: Prints the contents of the specified file.
+//
+// Output format: The file contents are output without modification.
+//
+// Error conditions: If the file id specified is unknown or invalid prints
+// an error message to stderr and exits with status 1.
+AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
+{
+  N(args.size() == 1,
+    F("no argument given"));
 
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
-    app.work.get_revision_id(rid);
+    {
+      app.require_workspace();
+      app.work.get_revision_id(rid);
+    }
   else
-    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
-  N(app.db.revision_exists(rid), 
-    F("no such revision '%s'") % rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
-  // Paths are interpreted as standard external ones when we're in a
-  // workspace, but as project-rooted external ones otherwise.
-  file_path fp;
-  split_path sp;
-  fp = file_path_external(idx(args, 0));
-  fp.split(sp);
-
-  roster_t roster;
-  marking_map marks;
-  app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no file '%s' found in revision '%s'") % fp % rid);
-  node_t node = roster.get_node(sp);
-  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'") % fp % rid);
-
-  file_t file_node = downcast_to_file_t(node);
-  file_id ident = file_node->content;
-  file_data dat;
-  L(FL("dumping file '%s'") % ident);
-  app.db.get_file_version(ident, dat);
-  cout.write(dat.inner()().data(), dat.inner()().size());
-
-  guard.commit();
+  dump_file(output, app, rid, idx(args, 0));
 }
 
 // Local Variables:
