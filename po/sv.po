@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-20 12:25+0100\n"
-"PO-Revision-Date: 2006-11-20 12:25+0100\n"
+"POT-Creation-Date: 2006-11-20 14:39+0100\n"
+"PO-Revision-Date: 2006-11-20 14:40+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -184,13 +184,23 @@ msgstr "sökroten '%s' är inte en katalog"
 msgid "[BRANCH]"
 msgstr "[GREN]"
 
-#: automate.cc:88 automate.cc:135 automate.cc:1181
+#: automate.cc:67 automate.cc:91 automate.cc:138 automate.cc:218
+#: automate.cc:359 automate.cc:426 automate.cc:451 automate.cc:529
+#: automate.cc:898 automate.cc:1028 automate.cc:1072 automate.cc:1098
+#: automate.cc:1125 automate.cc:1152 automate.cc:1186 automate.cc:1297
+#: automate.cc:1394 automate.cc:1453 automate.cc:1499 automate.cc:1559
+#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:656
+#, c-format
+msgid "wrong argument count"
+msgstr "felaktig antal givna argument"
+
+#: automate.cc:88 automate.cc:135 automate.cc:1183
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
-#: automate.cc:365 automate.cc:369 automate.cc:428 automate.cc:452
-#: automate.cc:1191 cmd_list.cc:662 revision.cc:1705
+#: automate.cc:365 automate.cc:369 automate.cc:429 automate.cc:454
+#: automate.cc:1193 cmd_list.cc:663 revision.cc:1705
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
@@ -212,29 +222,36 @@ msgstr "filen '%s' är okänd i denna arbetskopia"
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]"
 
-#: automate.cc:423 automate.cc:447 cmd_list.cc:652 revision.cc:1699
+#: automate.cc:398 automate.cc:486 automate.cc:711 automate.cc:942
+#: automate.cc:963 automate.cc:1249 cmd_automate.cc:78 cmd_automate.cc:333
+#: cmd_list.cc:564
+#, c-format
+msgid "no arguments needed"
+msgstr "inga argument behövs"
+
+#: automate.cc:423 automate.cc:448 cmd_list.cc:653 revision.cc:1699
 msgid "REV"
 msgstr "REV"
 
-#: automate.cc:524
+#: automate.cc:526
 msgid "SELECTOR"
 msgstr "VÄLJARE"
 
-#: automate.cc:893 automate.cc:1023
+#: automate.cc:895 automate.cc:1025
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:922 automate.cc:1045 automate.cc:1504 automate.cc:1563
-#: automate.cc:1568
+#: automate.cc:924 automate.cc:1047 automate.cc:1507 automate.cc:1566
+#: automate.cc:1571
 #, c-format
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i i databasen"
 
-#: automate.cc:1067 automate.cc:1093 cmd_merging.cc:845
+#: automate.cc:1069 automate.cc:1095 cmd_merging.cc:845
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1078 automate.cc:1104 automate.cc:1159 automate.cc:1161
+#: automate.cc:1080 automate.cc:1106 automate.cc:1161 automate.cc:1163
 #: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
 #: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:677
 #: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:413
@@ -242,61 +259,61 @@ msgstr "REVID"
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1120 cmd_files.cc:250
+#: automate.cc:1122 cmd_files.cc:250
 msgid "FILEID"
 msgstr "FILID"
 
-#: automate.cc:1131
+#: automate.cc:1133
 #, c-format
 msgid "no such file '%s'"
 msgstr "filen '%s' finns inte"
 
-#: automate.cc:1147
+#: automate.cc:1149
 msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NYTT_FIL"
 
-#: automate.cc:1292
+#: automate.cc:1294
 msgid "[BRANCH_PATTERN]"
 msgstr "[GREN_MÖNSTER]"
 
-#: automate.cc:1388
+#: automate.cc:1391
 msgid "KEYID PASSPHRASE"
 msgstr "NYCKELID LÖSENFRAS"
 
-#: automate.cc:1406 cmd_key_cert.cc:42
+#: automate.cc:1409 cmd_key_cert.cc:42
 #, c-format
 msgid "key '%s' already exists"
 msgstr "nyckeln '%s' finns redan"
 
-#: automate.cc:1409 cmd_key_cert.cc:45
+#: automate.cc:1412 cmd_key_cert.cc:45
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "skapar nyckelparet '%s'"
 
-#: automate.cc:1411 cmd_key_cert.cc:47
+#: automate.cc:1414 cmd_key_cert.cc:47
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "lagrar nyckelparet '%s' i %s/"
 
-#: automate.cc:1447
+#: automate.cc:1450
 msgid "OPTION"
 msgstr "FLAGGA"
 
-#: automate.cc:1470
+#: automate.cc:1473
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' är en okänd inställning i arbetskopians metadata"
 
-#: automate.cc:1493
+#: automate.cc:1496
 msgid "REV FILE"
 msgstr "REV FIL"
 
-#: automate.cc:1510 automate.cc:1574
+#: automate.cc:1513 automate.cc:1577
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "filen %s är okänd i revision %s"
 
-#: automate.cc:1553
+#: automate.cc:1556
 msgid "REV1 FILE REV2"
 msgstr "REV1 FIL REV2"
 
@@ -396,16 +413,16 @@ msgstr "felaktigt indata till automate stdio: '%c' är ett okänt nyckelord"
 msgid "Bad input to automate stdio: expected '%c' token"
 msgstr "Felaktigt indata till automate stdio: nyckelordet '%c' förväntat"
 
-#: cmd_automate.cc:344
+#: cmd_automate.cc:345
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
 msgstr "Felaktigt indata till automate stdio: saknar kommandonamn"
 
-#: cmd_automate.cc:373
+#: cmd_automate.cc:374
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:374
+#: cmd_automate.cc:375
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
@@ -666,11 +683,6 @@ msgstr "FILNAMN"
 msgid "write file from database to stdout"
 msgstr "skriv ut angiven fil från databasen"
 
-#: cmd_files.cc:253 cmd_files.cc:276
-#, c-format
-msgid "no argument given"
-msgstr "inget argument givet"
-
 #: cmd.hh:89
 #, c-format
 msgid "non-hex digits in id"
@@ -848,7 +860,7 @@ msgstr "misslyckades med att redigera kommentaren"
 msgid "empty comment"
 msgstr "tom kommentar"
 
-#: cmd_list.cc:64 cmd_list.cc:676
+#: cmd_list.cc:64 cmd_list.cc:677
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "den publika nyckeln '%s' finns inte i databasen"
