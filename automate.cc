@@ -591,34 +591,42 @@ typedef std::map<split_path, inventory_item> inventory_map;
 static void
 inventory_rosters(roster_t const & old_roster, 
                   roster_t const & new_roster,
+                  node_restriction const & mask,
                   inventory_map & inventory)
 {
   node_map const & old_nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = old_nodes.begin(); i != old_nodes.end(); ++i)
     {
-      split_path sp;
-      old_roster.get_name(i->first, sp);
-      get_node_info(old_roster, sp, inventory[sp].old_node);
+      if (mask.includes(old_roster, i->first))
+        {
+          split_path sp;
+          old_roster.get_name(i->first, sp);
+          get_node_info(old_roster, sp, inventory[sp].old_node);
+        }
     }
 
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
     {
-      split_path sp;
-      new_roster.get_name(i->first, sp);
-      get_node_info(new_roster, sp, inventory[sp].new_node);
+      if (mask.includes(new_roster, i->first))
+        {
+          split_path sp;
+          new_roster.get_name(i->first, sp);
+          get_node_info(new_roster, sp, inventory[sp].new_node);
+        }
     }
   
 }
 
 struct inventory_itemizer : public tree_walker
 {
-  app_state & app;
+  path_restriction const & mask;
   inventory_map & inventory;
+  app_state & app;
   inodeprint_map ipm;
 
-  inventory_itemizer(app_state & a, inventory_map & i) : 
-    app(a), inventory(i)
+  inventory_itemizer(path_restriction const & m, inventory_map & i, app_state & a) : 
+    mask(m), inventory(i), app(a)
   {
     if (app.work.in_inodeprints_mode())
       {
@@ -636,7 +644,10 @@ inventory_itemizer::visit_dir(file_path const & path)
 {
   split_path sp;
   path.split(sp);
-  inventory[sp].fs_type = path::directory;
+  if(mask.includes(sp))
+    {
+      inventory[sp].fs_type = path::directory;
+    }
 }
 
 void
@@ -644,24 +655,26 @@ inventory_itemizer::visit_file(file_path const & path)
 {
   split_path sp;
   path.split(sp);
-
-  inventory_item & item = inventory[sp];
-
-  item.fs_type = path::file;
-
-  if (item.new_node.exists)
+  if(mask.includes(sp))
     {
-      if (inodeprint_unchanged(ipm, path))
-        item.fs_ident = item.old_node.ident;
-      else
-        ident_existing_file(path, item.fs_ident, app.lua);
+      inventory_item & item = inventory[sp];
+
+      item.fs_type = path::file;
+
+      if (item.new_node.exists)
+        {
+          if (inodeprint_unchanged(ipm, path))
+            item.fs_ident = item.old_node.ident;
+          else
+            ident_existing_file(path, item.fs_ident, app.lua);
+        }
     }
 }
 
 static void
-inventory_filesystem(app_state & app, inventory_map & inventory)
+inventory_filesystem(path_restriction const & mask, inventory_map & inventory, app_state & app)
 {
-  inventory_itemizer itemizer(app, inventory);
+  inventory_itemizer itemizer(mask, inventory, app);
   walk_tree(file_path(), itemizer);
 }
 
@@ -714,22 +727,24 @@ namespace
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-AUTOMATE(inventory, "", options::opts::none)
+AUTOMATE(inventory, "[PATH]...", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
-
   app.require_workspace();
 
   temp_node_id_source nis;
   roster_t old_roster, new_roster;
+  vector<file_path> includes = args_to_paths(args);
+  vector<file_path> excludes = args_to_paths(app.opts.exclude_patterns);
 
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   inventory_map inventory;
 
-  inventory_rosters(old_roster, new_roster, inventory);
-  inventory_filesystem(app, inventory);
+  node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
+  inventory_rosters(old_roster, new_roster, nmask, inventory);
+  
+  path_restriction pmask(includes, excludes, app.opts.depth, app);
+  inventory_filesystem(pmask, inventory, app);
 
   basic_io::printer pr;
 
@@ -775,6 +790,10 @@ AUTOMATE(inventory, "", options::opts::none)
         case path::directory: st.push_str_pair(syms::fs_type, "directory"); break;
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
+
+      // perhaps include all relevant status flags...
+      // status "unknown", "renamed", "added", "dropped", "missing", ...
+      // note that many/most of these can be inferred from the old/new node entries
 
       if (item.fs_type == path::nonexistent)
         {

@@ -1,3 +1,9 @@
+2006-11-19  Derek Scherger  <derek@echologic.com>
+
+	* automate.cc (inventory_rosters,struct inventory_itemizer,
+	visit_dir,visit_file,inventory_filesystem,inventory): add
+	restrictions support to automate inventory
+
 2006-11-18  Derek Scherger  <derek@echologic.com>
 
 	* automate.cc (struct inventory_itemizer): account for inodeprints
