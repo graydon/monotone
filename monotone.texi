@@ -6868,7 +6868,7 @@ restrictions can't be applied, the command prints to stderr and exits as well.
 @table @strong
 @item Arguments:
 
-The  @var{id} argument specifies the file to be output.
+The  @var{id} argument specifies the file hash of the file to be output.
 
 @item Added in:
 
@@ -6899,6 +6899,45 @@ to stderr and exits with status 1.
 
 @end table
 
+@item mtn automate get_file_of @var{filename} [--revision=@var{id}]
+
+@table @strong
+@item Arguments:
+
+The  @var{filename} argument specifies the filename of the file to be output.
+
+If a revision @var{id} is given, the file's contents in that specific revision
+are printed. If no revision is given, the workspace's revision is used.
+
+@item Added in:
+
+4.0
+
+@item Purpose:
+
+Prints the contents of the specified file.
+
+@item Sample output:
+
+@verbatim
+If you've downloaded a release, see INSTALL for installation
+instructions.  If you've checked this out, the generated files are not
+included, and you must use "autoreconf --install" to create them.
+
+"make html" for docs, or read the .info file and / or man page.
+@end verbatim
+
+@item Output format:
+
+The file contents are output without modification.
+
+@item Error conditions:
+
+If the filename specified is unknown in the given revision or invalid, or
+if the given revision is unknown, prints an error message to stderr and exits
+with status 1.
+
+@end table
 
 @item mtn automate keys
 
