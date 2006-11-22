@@ -19,6 +19,7 @@
 using std::ostream;
 using std::string;
 using std::ostringstream;
+using std::memcmp;
 
 /*
  * Implementation note: hv, holding the raw revision height, is

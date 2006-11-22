@@ -1,3 +1,7 @@
+2006-11-22  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* rev_height.cc: add memcmp to global namespace for sunpro.
+
 2006-11-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/mtn_execute_attr_respects_umask/: use ls -l rather than
