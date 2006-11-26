@@ -5,6 +5,7 @@
 
 #include "globish.hh"
 #include "sanity.hh"
+#include "pcrewrap.hh"
 
 #include <string>
 #include <set>
@@ -13,7 +14,6 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/regex.hpp>
 
 using std::pair;
 using std::set;
@@ -546,15 +546,14 @@ LUAEXT(search, regex)
 {
   const char *re = luaL_checkstring(L, -2);
   const char *str = luaL_checkstring(L, -1);
-  boost::cmatch what;
 
   bool result = false;
   try {
-    result = boost::regex_search(str, what, boost::regex(re));
-  } catch (boost::bad_pattern e) {
-    lua_pushstring(L, e.what());
-    lua_error(L);
-    return 0;
+    result = pcre::regex(re).match(str);
+  } catch (pcre::compile_error e) {
+    return luaL_error(L, (string("error parsing regex: ") + e.what()).c_str());
+  } catch (pcre::match_error e) {
+    return luaL_error(L, (string("error during match: ") + e.what()).c_str());
   }
   lua_pushboolean(L, result);
   return 1;

@@ -10,7 +10,6 @@
 #include <iostream>
 #include <string>
 
-#include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "app_state.hh"
@@ -23,6 +22,7 @@
 #include "simplestring_xform.hh"
 #include "keys.hh"
 #include "cert.hh"
+#include "pcrewrap.hh"
 
 using std::endl;
 using std::istream;
@@ -33,9 +33,6 @@ using std::pair;
 using std::string;
 
 using boost::lexical_cast;
-using boost::match_default;
-using boost::match_results;
-using boost::regex;
 using boost::shared_ptr;
 
 void
@@ -330,15 +327,14 @@ struct
 feed_packet_consumer
 {
   app_state & app;
-  size_t & count;
   packet_consumer & cons;
   string ident;
   string key;
   string certname;
   string base;
   string sp;
-  feed_packet_consumer(size_t & count, packet_consumer & c, app_state & app_)
-   : app(app_), count(count), cons(c),
+  feed_packet_consumer(packet_consumer & c, app_state & app_)
+   : app(app_), cons(c),
      ident(constants::regex_legal_id_bytes),
      key(constants::regex_legal_key_name_bytes),
      certname(constants::regex_legal_cert_name_bytes),
@@ -349,23 +345,23 @@ feed_packet_consumer
   {
     E(x, F("malformed packet"));
   }
-  bool operator()(match_results<string::const_iterator> const & res) const
+  void operator()(pcre::matches &res) const
   {
     if (res.size() != 4)
       throw oops("matched impossible packet with "
                  + lexical_cast<string>(res.size()) + " matching parts: " +
                  string(res[0].first, res[0].second));
-    I(res[1].matched);
-    I(res[2].matched);
-    I(res[3].matched);
+    I(res[1].matched());
+    I(res[2].matched());
+    I(res[3].matched());
     string type(res[1].first, res[1].second);
     string args(res[2].first, res[2].second);
     string body(res[3].first, res[3].second);
-    if (regex_match(type, regex("[fr]data")))
+    if (pcre::regex("[fr]data").match(type))
       {
         L(FL("read data packet"));
-        require(regex_match(args, regex(ident)));
-        require(regex_match(body, regex(base)));
+        require(pcre::regex(ident).match(args));
+        require(pcre::regex(base).match(body));
         base64<gzip<data> > body_packed(trim_ws(body));
         data contents;
         unpack(body_packed, contents);
@@ -381,11 +377,11 @@ feed_packet_consumer
     else if (type == "fdelta")
       {
         L(FL("read delta packet"));
-        match_results<string::const_iterator> matches;
-        require(regex_match(args, matches, regex(ident + sp + ident)));
-        string src_id(matches[1].first, matches[1].second);
-        string dst_id(matches[2].first, matches[2].second);
-        require(regex_match(body, regex(base)));
+        pcre::matches matches;
+        require(pcre::regex(ident + sp + ident).match(args, matches));
+        string src_id(matches[1].str());
+        string dst_id(matches[2].str());
+        require(pcre::regex(base).match(body));
         base64<gzip<delta> > body_packed(trim_ws(body));
         delta contents;
         unpack(body_packed, contents);
@@ -396,13 +392,13 @@ feed_packet_consumer
     else if (type == "rcert")
       {
         L(FL("read cert packet"));
-        match_results<string::const_iterator> matches;
-        require(regex_match(args, matches, regex(ident + sp + certname
-                                                 + sp + key + sp + base)));
-        string certid(matches[1].first, matches[1].second);
-        string name(matches[2].first, matches[2].second);
-        string keyid(matches[3].first, matches[3].second);
-        string val(matches[4].first, matches[4].second);
+        pcre::matches matches;
+        require(pcre::regex(ident + sp + certname + sp + key + sp + base)
+                .match(args, matches));
+        string certid(matches[1].str());
+        string name(matches[2].str());
+        string keyid(matches[3].str());
+        string val(matches[4].str());
         string contents(trim_ws(body));
 
         // canonicalize the base64 encodings to permit searches
@@ -416,8 +412,8 @@ feed_packet_consumer
     else if (type == "pubkey")
       {
         L(FL("read pubkey data packet"));
-        require(regex_match(args, regex(key)));
-        require(regex_match(body, regex(base)));
+        require(pcre::regex(key).match(args));
+        require(pcre::regex(base).match(body));
         string contents(trim_ws(body));
         cons.consume_public_key(rsa_keypair_id(args),
                                 base64<rsa_pub_key>(contents));
@@ -425,18 +421,19 @@ feed_packet_consumer
     else if (type == "keypair")
       {
         L(FL("read keypair data packet"));
-        require(regex_match(args, regex(key)));
-        match_results<string::const_iterator> matches;
-        require(regex_match(body, matches, regex(base + "#" + base)));
-        string pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
-        string priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
+        require(pcre::regex(key).match(args));
+
+        pcre::matches matches;
+        require(pcre::regex(base + "#" + base).match(body, matches));
+        string pub_dat(trim_ws(matches[1].str()));
+        string priv_dat(trim_ws(matches[2].str()));
         cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
       }
     else if (type == "privkey")
       {
         L(FL("read pubkey data packet"));
-        require(regex_match(args, regex(key)));
-        require(regex_match(body, regex(base)));
+        require(pcre::regex(key).match(args));
+        require(pcre::regex(base).match(body));
         string contents(trim_ws(body));
         keypair kp;
         migrate_private_key(app,
@@ -448,23 +445,25 @@ feed_packet_consumer
     else
       {
         W(F("unknown packet type: '%s'") % type);
-        return true;
       }
-    ++count;
-    return true;
   }
 };
 
 static size_t
 extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
-  static string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
-  static string const body("([^\\[\\]]+)");
-  static string const tail("\\[end\\]");
-  static string const whole = head + body + tail;
-  regex expr(whole);
+  static pcre::regex expr("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]"
+                          "([^\\[\\]]+)"
+                          "\\[end\\]");
   size_t count = 0;
-  regex_grep(feed_packet_consumer(count, cons, app), s, expr, match_default);
+  pcre::matches m;
+  feed_packet_consumer fcons(cons, app);
+
+  while (expr.nextmatch(s, m))
+    {
+      fcons(m);
+      count++;
+    }
   return count;
 }
 

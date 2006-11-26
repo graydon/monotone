@@ -1,3 +1,15 @@
+2006-11-25  Zack Weinberg  <zackw@panix.com>
+
+	* pcrewrap.cc, pcrewrap.hh: New files.
+	* Makefile.am: Add them to MOST_SOURCES.  Add pcrewrap.cc to
+	tester_SOURCES.
+	* configure.ac: Look for libpcre, not libboost-regex.
+	* pch.hh: Don't include boost/regex.hpp.
+	* diff_patch.cc, globish.cc, lua.cc, luaext_globish.cc
+	* packet.cc, uri.cc: Update to new regex interface.
+	* netsync.cc: Remove vestigial include of boost/regex.hpp
+	(there are no uses of regular expressions in this file).
+
 2006-11-20  Matt Johnston  <matt@ucc.asn.au>
 
 	* tests/mtn_execute_attr_respects_umask/: use ls -l rather than
@@ -8,7 +20,7 @@
        * moved automate get_file into cmd_files.cc
        * new automate command get_file_of which is basically mtn cat
        * replaced exception by user error for get_file and get_file_of
-       if no arguments are given 
+       if no arguments are given
 
 2006-11-18  Richard Levitte  <richard@levitte.org>
 
@@ -53,7 +65,7 @@
 
 2006-11-17  Thomas Keller  <me@thomaskeller.biz>
 
-	* cmd_automate.cc, cmd.hh, ...: renamed member variable 
+	* cmd_automate.cc, cmd.hh, ...: renamed member variable
 	"options" to "opts" to make (hopefully) the gcc-3.3 build
 	slaves happy
 
@@ -116,7 +128,7 @@
 	* rev_height.hh, rev_height.cc: remove the dump method, add an
 	overload to the dump function to make heights work with MM().
 	* database.cc (put_height_for_revision): Add some MM() calls.
-	
+
 2006-11-11  Nathaniel Smith  <njs@pobox.com>
 
 	* notes/: New directory for developer docs.
@@ -146,7 +158,7 @@
 	debian packages.
 
 	* NEWS: First draft of 0.31 release notes.
-	
+
 2006-11-06  Thomas Keller <me@thomaskeller.biz>
 
 	Improved error message for invalid uri's (per bug #17736)
@@ -307,7 +319,7 @@
 	arguments.
 	* tests/multiple_message_commit/__driver__.lua, testsuite.lua:
 	Added integration test for multiple --message arguments.
-	
+
 2006-10-09  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: 35 fuzzies cleared,
@@ -407,7 +419,7 @@
 
 2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
 
-	* automate.cc (get_content_changed): use the file_content 
+	* automate.cc (get_content_changed): use the file_content
 	make rather than the parent_name mark.
 
 2006-09-23  Nathaniel Smith  <njs@pobox.com>
@@ -425,7 +437,7 @@
 2006-09-22  Nathaniel Smith  <njs@pobox.com>
 
 	* graph.cc: I dunno, maybe this will make the buildslaves happier?
-	
+
 2006-09-22  Nathaniel Smith  <njs@pobox.com>
 
 	* graph.cc: Add randomized tests for get_reconstruction_path.

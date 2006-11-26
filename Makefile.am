@@ -68,6 +68,7 @@ MOST_SOURCES = 								\
 	graph.cc graph.hh						\
 	roster_delta.cc roster_delta.hh					\
 	sha1.hh sha1.cc sha1_engine.hh                                  \
+	pcrewrap.cc pcrewrap.hh						\
 	rev_height.cc rev_height.hh					\
 									\
         lru_writeback_cache.hh						\
@@ -278,7 +279,7 @@ EXTRA_PROGRAMS = usher
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
-tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
+tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) pcrewrap.cc tester.cc
 
 txt2c_SOURCES = txt2c.cc
 

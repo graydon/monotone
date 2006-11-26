@@ -13,11 +13,9 @@
 using std::string;
 using std::vector;
 
-using boost::regex_match;
-
-// this converts a globish pattern to a regex.  The regex should be usable by
-// the Boost regex library operating in default mode, i.e., it should be a
-// valid ECMAscript regex.
+// this converts a globish pattern to a regex.  The regex should be usable
+// by the PCRE library operating in default mode, i.e., it should be a valid
+// (close approximation to) Perl regex.
 //
 // Pattern tranformation:
 //
@@ -46,21 +44,20 @@ maybe_quote(char c, string & re)
   re += c;
 }
 
-static void
-checked_globish_to_regex(string const & glob, string & regex)
+static string
+checked_globish_to_regex(string const & glob)
 {
   int in_braces = 0;            // counter for levels if {}
+  string regex;
 
-  regex.clear();
   regex.reserve(glob.size() * 2);
 
   L(FL("checked_globish_to_regex: input = '%s'") % glob);
 
   if (glob == "")
-    {
-      regex = "$.^";
-      // and the below loop will do nothing
-    }
+    return "$.^";
+
+  regex += '^';
   for (string::const_iterator i = glob.begin(); i != glob.end(); ++i)
     {
       char c = *i;
@@ -77,7 +74,7 @@ checked_globish_to_regex(string const & glob, string & regex)
           break;
         case '{':
           in_braces++;
-          regex += '(';
+          regex += "(?:";
           break;
         case '}':
           N(in_braces != 0,
@@ -100,11 +97,14 @@ checked_globish_to_regex(string const & glob, string & regex)
           break;
         }
     }
+  regex += '$';
 
   N(in_braces == 0,
     F("run-away brace expression in pattern '%s'") % glob);
 
   L(FL("checked_globish_to_regex: output = '%s'") % regex);
+
+  return regex;
 }
 
 void
@@ -116,9 +116,8 @@ combine_and_check_globish(vector<utf8> const & patterns, utf8 & pattern)
   bool first = true;
   for (vector<utf8>::const_iterator i = patterns.begin(); i != patterns.end(); ++i)
     {
-      string tmp;
       // run for the checking it does
-      checked_globish_to_regex((*i)(), tmp);
+      checked_globish_to_regex((*i)());
       if (!first)
         p += ',';
       first = false;
@@ -129,13 +128,14 @@ combine_and_check_globish(vector<utf8> const & patterns, utf8 & pattern)
   pattern = utf8(p);
 }
 
-globish_matcher::globish_matcher(utf8 const & include_pat, utf8 const & exclude_pat)
+globish_matcher::globish_matcher(utf8 const & include_pat,
+                                 utf8 const & exclude_pat)
+  : iglob(include_pat()), xglob(exclude_pat()),
+    ipat(checked_globish_to_regex(iglob)), 
+    xpat(checked_globish_to_regex(xglob)),
+    r_inc(ipat),
+    r_exc(xpat)
 {
-  string re;
-  checked_globish_to_regex(include_pat(), re);
-  r_inc = re;
-  checked_globish_to_regex(exclude_pat(), re);
-  r_exc = re;
 }
 
 bool
@@ -143,11 +143,11 @@ globish_matcher::operator()(string const & s)
 {
   // regex_match may throw a runtime_error, if the regex turns out to be
   // really pathological
-  bool inc_match = regex_match(s, r_inc);
-  bool exc_match = regex_match(s, r_exc);
+  bool inc_match = r_inc.match(s);
+  bool exc_match = r_exc.match(s);
   bool result = inc_match && !exc_match;
   L(FL("matching '%s' against '%s' excluding '%s': %s, %s: %s")
-    % s % r_inc % r_exc
+    % s % ipat % xpat
     % (inc_match ? "included" : "not included")
     % (exc_match ? "excluded" : "not excluded")
     % (result ? "matches" : "does not match"));
@@ -161,31 +161,31 @@ UNIT_TEST(globish, checked_globish_to_regex)
 {
   string pat;
 
-  checked_globish_to_regex("*", pat);
-  BOOST_CHECK(pat == ".*");
-  checked_globish_to_regex("?", pat);
-  BOOST_CHECK(pat == ".");
-  checked_globish_to_regex("{a,b,c}d", pat);
-  BOOST_CHECK(pat == "(a|b|c)d");
-  checked_globish_to_regex("foo{a,{b,c},?*}d", pat);
-  BOOST_CHECK(pat == "foo(a|(b|c)|..*)d");
-  checked_globish_to_regex("\\a\\b\\|\\{\\*", pat);
-  BOOST_CHECK(pat == "ab\\|\\{\\*");
-  checked_globish_to_regex(".+$^{}", pat);
-  BOOST_CHECK(pat == "\\.\\+\\$\\^()");
-  checked_globish_to_regex(",", pat);
+  pat = checked_globish_to_regex("*");
+  BOOST_CHECK(pat == "^.*$");
+  pat = checked_globish_to_regex("?");
+  BOOST_CHECK(pat == "^.$");
+  pat = checked_globish_to_regex("{a,b,c}d");
+  BOOST_CHECK(pat == "^(?:a|b|c)d$");
+  pat = checked_globish_to_regex("foo{a,{b,c},?*}d");
+  BOOST_CHECK(pat == "^foo(?:a|(?:b|c)|..*)d$");
+  pat = checked_globish_to_regex("\\a\\b\\|\\{\\*");
+  BOOST_CHECK(pat == "^ab\\|\\{\\*$");
+  pat = checked_globish_to_regex(".+$^{}");
+  BOOST_CHECK(pat == "^\\.\\+\\$\\^(?:)$");
+  pat = checked_globish_to_regex(",");
   // we're very conservative about metacharacters, and quote all
   // non-alphanumerics, hence the backslash
-  BOOST_CHECK(pat == "\\,");
-  checked_globish_to_regex("\\.\\+\\$\\^\\(\\)", pat);
-  BOOST_CHECK(pat == "\\.\\+\\$\\^\\(\\)");
+  BOOST_CHECK(pat == "^\\,$");
+  pat = checked_globish_to_regex("\\.\\+\\$\\^\\(\\)");
+  BOOST_CHECK(pat == "^\\.\\+\\$\\^\\(\\)$");
 
-  BOOST_CHECK_THROW(checked_globish_to_regex("foo\\", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("{foo", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("{foo,bar{baz,quux}", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("foo}", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("foo,bar{baz,quux}}", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("{{{{{{{{{{a,b},c},d},e},f},g},h},i},j},k}", pat), informative_failure);
+  BOOST_CHECK_THROW(checked_globish_to_regex("foo\\"), informative_failure);
+  BOOST_CHECK_THROW(checked_globish_to_regex("{foo"), informative_failure);
+  BOOST_CHECK_THROW(checked_globish_to_regex("{foo,bar{baz,quux}"), informative_failure);
+  BOOST_CHECK_THROW(checked_globish_to_regex("foo}"), informative_failure);
+  BOOST_CHECK_THROW(checked_globish_to_regex("foo,bar{baz,quux}}"), informative_failure);
+  BOOST_CHECK_THROW(checked_globish_to_regex("{{{{{{{{{{a,b},c},d},e},f},g},h},i},j},k}"), informative_failure);
 }
 
 UNIT_TEST(globish, combine_and_check_globish)
