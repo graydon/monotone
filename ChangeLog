@@ -1,3 +1,8 @@
+2006-11-27  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate, do_annotate_node): use markings
+	together with heights in order to significantly speed up annotate.
+
 2006-11-22  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* rev_height.cc: add memcmp to global namespace for sunpro.
