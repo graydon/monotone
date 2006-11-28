@@ -1,3 +1,8 @@
+2006-11-28  Christian Ohler <ohler+mtn@fastmail.net>
+
+	Fix automate bug where input would be garbled if a string needed
+	multiple read() calls. (patch from ML; applied by Timothy Brownawell)
+
 2006-11-28  Matt Johnston  <matt@ucc.asn.au>
 
 	* restrictions.cc: limit some verbose debugging that slows "log <file>"

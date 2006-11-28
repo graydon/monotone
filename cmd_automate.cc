@@ -152,7 +152,7 @@ class automate_reader
     size_t got = 0;
     while(got < size)
       {
-        int n = read(str, size-got);
+        int n = read(str+got, size-got);
         got += n;
       }
     out = std::string(str, size);
