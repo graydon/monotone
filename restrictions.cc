@@ -292,8 +292,12 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
     }
   else
     {
-      L(FL("default exclude of nid %d path '%s'") 
-        % nid % file_path(sp));
+      if (global_sanity.debug)
+      {
+        // printing this slows down "log <file>".
+        L(FL("(debug) default exclude of nid %d path '%s'") 
+          % nid % file_path(sp));
+      }
       return false;
     }
 }
