@@ -100,3 +100,11 @@ check(mtn("checkout", "exportdir6", "--branch", "importbranch"),
 check(not exists("exportdir6/importmefirst"))
 check(not exists("exportdir6/importmesecond"))
 check(samefile("importdir/importmethird", "exportdir6/importmethird"))
+
+------------------------------------------------------------------------------
+-- Seventh attempt, importing from one of the export checkouts.
+-- This attempt is expected to FAIL, because import should refuse to
+-- import from a workspace.
+check(mtn("import", "exportdir2",
+	  "--message", "Import seven, trying to import a workspace",
+	  "--branch", "importbranch"), 1, false, false)

@@ -1,5 +1,10 @@
 2006-11-30  Richard Levitte  <richard@levitte.org>
 
+	* tests/import/__driver__.lua: Add a test to show that it really
+	doesn't import a workspace.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
 	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Add import command.
 	It's quite simplistic, it basically creates a _MTN bookkeeping
 	directory filled with information derived from a given branch or
