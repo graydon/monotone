@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-20 14:39+0100\n"
-"PO-Revision-Date: 2006-11-20 14:40+0100\n"
+"POT-Creation-Date: 2006-11-30 15:44+0100\n"
+"PO-Revision-Date: 2006-11-30 15:46+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -223,7 +223,7 @@ msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]"
 
 #: automate.cc:398 automate.cc:486 automate.cc:711 automate.cc:942
-#: automate.cc:963 automate.cc:1249 cmd_automate.cc:78 cmd_automate.cc:333
+#: automate.cc:963 automate.cc:1249 cmd_automate.cc:78 cmd_automate.cc:332
 #: cmd_list.cc:564
 #, c-format
 msgid "no arguments needed"
@@ -254,7 +254,8 @@ msgstr "REVID"
 #: automate.cc:1080 automate.cc:1106 automate.cc:1161 automate.cc:1163
 #: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
 #: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:677
-#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:413
+#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479
+#: cmd_ws_commit.cc:963 commands.cc:413
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
@@ -395,34 +396,29 @@ msgstr ""
 
 #: cmd_automate.cc:169
 #, c-format
-msgid "read from client failed with error code: %d"
-msgstr "läsning från klienten misslyckades med följande felkod: %d"
-
-#: cmd_automate.cc:170
-#, c-format
 msgid "Bad input to automate stdio: unexpected EOF"
 msgstr "Felaktigt indata till automate stdio: oväntat filslut"
 
-#: cmd_automate.cc:198
+#: cmd_automate.cc:197
 #, c-format
 msgid "Bad input to automate stdio: unknown start token '%c'"
 msgstr "felaktigt indata till automate stdio: '%c' är ett okänt nyckelord"
 
-#: cmd_automate.cc:220
+#: cmd_automate.cc:219
 #, c-format
 msgid "Bad input to automate stdio: expected '%c' token"
 msgstr "Felaktigt indata till automate stdio: nyckelordet '%c' förväntat"
 
-#: cmd_automate.cc:345
+#: cmd_automate.cc:344
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
 msgstr "Felaktigt indata till automate stdio: saknar kommandonamn"
 
-#: cmd_automate.cc:374
+#: cmd_automate.cc:373
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:375
+#: cmd_automate.cc:374
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
@@ -1068,7 +1064,7 @@ msgstr "[ihopslagen] %s"
 
 #: cmd_merging.cc:320 cmd_merging.cc:419 cmd_merging.cc:430 cmd_merging.cc:588
 #: cmd_merging.cc:821 cmd_ws_commit.cc:439 cmd_ws_commit.cc:925
-#: cmd_ws_commit.cc:948 cmd_ws_commit.cc:962
+#: cmd_ws_commit.cc:948 cmd_ws_commit.cc:1034 cmd_ws_commit.cc:1048
 msgid "tree"
 msgstr "träd"
 
@@ -1620,7 +1616,7 @@ msgstr "      la till %s"
 msgid "  patched %s"
 msgstr "      ändrade %s"
 
-#: cmd_ws_commit.cc:439 cmd_ws_commit.cc:925 cmd_ws_commit.cc:948
+#: cmd_ws_commit.cc:439 cmd_ws_commit.cc:925 cmd_ws_commit.cc:1034
 msgid "[DIRECTORY]"
 msgstr "[KATALOG]"
 
@@ -1636,27 +1632,27 @@ msgstr ""
 "kommer lövet i grenen (implicit eller angiven) att hämtas. Om\n"
 "ingen katalog anges kommer grenens namn att användas som katalognamn."
 
-#: cmd_ws_commit.cc:458
+#: cmd_ws_commit.cc:458 cmd_ws_commit.cc:988
 #, c-format
 msgid "use --revision or --branch to specify what to checkout"
 msgstr "använd --revision eller --branch för att tala om vad som ska hämtas"
 
-#: cmd_ws_commit.cc:466
+#: cmd_ws_commit.cc:466 cmd_ws_commit.cc:994
 #, c-format
 msgid "branch %s has multiple heads:"
 msgstr "grenen %s har flera löv:"
 
-#: cmd_ws_commit.cc:469
+#: cmd_ws_commit.cc:469 cmd_ws_commit.cc:997
 #, c-format
 msgid "choose one with '%s checkout -r<id>'"
 msgstr "välj en med '%s update -r<id>'"
 
-#: cmd_ws_commit.cc:470
+#: cmd_ws_commit.cc:470 cmd_ws_commit.cc:998
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr "grenen %s har flera löv"
 
-#: cmd_ws_commit.cc:497
+#: cmd_ws_commit.cc:497 cmd_ws_commit.cc:981
 #, c-format
 msgid "revision %s is not a member of branch %s"
 msgstr "revisionen %s är inte med i grenen %s"
@@ -1783,7 +1779,30 @@ msgstr "initiera en ny arbetskatalog (nuvarande om katalog ej anges)"
 msgid "need --branch argument for setup"
 msgstr "du måste ange en gren med --branch till kommandot \"setup\""
 
+#: cmd_ws_commit.cc:948
+msgid "DIRECTORY"
+msgstr "KATALOG"
+
 #: cmd_ws_commit.cc:949
+msgid "import the contents of the given directory tree into a given branch"
+msgstr "importera innhållet av den givna katalogen till den givna grenen"
+
+#: cmd_ws_commit.cc:956
+#, c-format
+msgid "you must specify a directory to import"
+msgstr "du måste ange en katalog att importera"
+
+#: cmd_ws_commit.cc:1007
+#, c-format
+msgid "import directory '%s' doesn't exists"
+msgstr "importkatalogen '%s' finns inte"
+
+#: cmd_ws_commit.cc:1008
+#, c-format
+msgid "import directory '%s' is a file"
+msgstr "importkatalogen '%s' är en fil"
+
+#: cmd_ws_commit.cc:1035
 msgid ""
 "migrate a workspace directory's metadata to the latest format; defaults to "
 "the current workspace"
@@ -1791,7 +1810,7 @@ msgstr ""
 "migrera en arbetskopias metadata till det senaste formatet; nuvarande "
 "katalog avses om inget annat anges"
 
-#: cmd_ws_commit.cc:962
+#: cmd_ws_commit.cc:1048
 msgid "refresh the inodeprint cache"
 msgstr "uppdatera inodeprint-cachen"
 
@@ -4075,6 +4094,9 @@ msgstr "arbetskopian är korrupt: %s finns men är inte en vanlig fil"
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 
+#~ msgid "read from client failed with error code: %d"
+#~ msgstr "läsning från klienten misslyckades med följande felkod: %d"
+
 #~ msgid "PATTERN ..."
 #~ msgstr "MÖNSTER ..."
 
@@ -4378,9 +4400,6 @@ msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 
 #~ msgid "SRC DST"
 #~ msgstr "KÄLLA MÅL"
-
-#~ msgid "DIRECTORY"
-#~ msgstr "KATALOG"
 
 #~ msgid ""
 #~ "Attempt to start exclusive transaction within non-exclusive transaction."

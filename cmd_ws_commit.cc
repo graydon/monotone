@@ -945,6 +945,92 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   app.work.put_work_rev(rev);
 }
 
+CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
+  N_("import the contents of the given directory tree into a given branch"),
+  options::opts::branch | options::opts::revision | options::opts::message)
+{
+  revision_id ident;
+  system_path dir;
+
+  N(args.size() == 1,
+    F("you must specify a directory to import"));
+
+  if (app.opts.revision_selectors.size() == 1)
+    {
+      // use specified revision
+      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
+      N(app.db.revision_exists(ident),
+        F("no such revision '%s'") % ident);
+
+      cert_value b;
+      guess_branch(ident, app, b);
+
+      I(!app.opts.branch_name().empty());
+      cert_value branch_name(app.opts.branch_name());
+      base64<cert_value> branch_encoded;
+      encode_base64(branch_name, branch_encoded);
+
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
+
+      L(FL("found %d %s branch certs on revision %s")
+        % certs.size()
+        % app.opts.branch_name
+        % ident);
+
+      N(certs.size() != 0, F("revision %s is not a member of branch %s")
+        % ident % app.opts.branch_name);
+    }
+  else
+    {
+      // use branch head revision
+      N(!app.opts.branch_name().empty(),
+        F("use --revision or --branch to specify what to checkout"));
+
+      set<revision_id> heads;
+      get_branch_heads(app.opts.branch_name(), app, heads);
+      if (heads.size() > 1)
+        {
+          P(F("branch %s has multiple heads:") % app.opts.branch_name);
+          for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+            P(i18n_format("  %s") % describe_revision(app, *i));
+          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branch_name);
+        }
+      if (heads.size() > 0)
+        ident = *(heads.begin());
+    }
+
+  dir = system_path(idx(args, 0));
+  require_path_is_directory
+    (dir,
+     F("import directory '%s' doesn't exists") % dir,
+     F("import directory '%s' is a file") % dir);
+
+  app.create_workspace(dir);
+
+  revision_t rev;
+  make_revision_for_workspace(ident, cset(), rev);
+  app.work.put_work_rev(rev);
+
+  vector<utf8> empty_args;
+  // add --unknown
+  app.opts.unknown = true;
+  process(app, "add", empty_args);
+  app.opts.unknown = false;
+
+  // drop --missing
+  app.opts.missing = true;
+  process(app, "drop", empty_args);
+  app.opts.missing = false;
+
+  // commit
+  process(app, "commit", empty_args);
+
+  // clean up
+  delete_dir_recursive(bookkeeping_root);
+}
+
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
   N_("migrate a workspace directory's metadata to the latest format; "
      "defaults to the current workspace"),
