@@ -38,9 +38,10 @@ check(samefile("importdir/importmefirst", "exportdir2/importmefirst"))
 ------------------------------------------------------------------------------
 -- Third attempt, import something with an added file.
 writefile("importdir/importmesecond", "version 0 of second test file\n")
+writefile("message", "Import three, an added file")
 
 check(mtn("import", "importdir",
-	  "--message", "Import three, an added file",
+	  "--message-file", "message",
 	  "--branch", "importbranch"), 0, false, false)
 
 check(mtn("checkout", "exportdir3", "--branch", "importbranch"),
