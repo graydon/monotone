@@ -1,3 +1,9 @@
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Add the usual
+	restriction options, as well as --author and --date.
+	* tests/import/__driver__.lua: Test the restrictions a bit.
+
 2006-11-30  Richard Levitte  <richard@levitte.org>
 
 	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)), options_list.hh:

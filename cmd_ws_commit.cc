@@ -947,8 +947,11 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
 
 CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   N_("import the contents of the given directory tree into a given branch"),
-  options::opts::branch | options::opts::revision | options::opts::message |
-  options::opts::dryrun)
+  options::opts::branch | options::opts::revision |
+  options::opts::message | options::opts::msgfile |
+  options::opts::dryrun |
+  options::opts::no_ignore | options::opts::exclude |
+  options::opts::author | options::opts::date)
 {
   revision_id ident;
   system_path dir;
@@ -1015,10 +1018,17 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   app.work.put_work_rev(rev);
 
   vector<utf8> empty_args;
+  options save_opts;
   // add --unknown
+  save_opts.no_ignore = app.opts.no_ignore;
+  save_opts.exclude_patterns = app.opts.exclude_patterns;
+  app.opts.no_ignore = false;
+  app.opts.exclude_patterns = std::vector<utf8>();
   app.opts.unknown = true;
   process(app, "add", empty_args);
   app.opts.unknown = false;
+  app.opts.no_ignore = save_opts.no_ignore;
+  app.opts.exclude_patterns = save_opts.exclude_patterns;
 
   // drop --missing
   app.opts.missing = true;
