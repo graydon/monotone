@@ -108,3 +108,12 @@ check(samefile("importdir/importmethird", "exportdir6/importmethird"))
 check(mtn("import", "exportdir2",
 	  "--message", "Import seven, trying to import a workspace",
 	  "--branch", "importbranch"), 1, false, false)
+
+------------------------------------------------------------------------------
+-- Eight attempt, this time just doing a dry run.
+remove("importdir/importmethird")
+check(mtn("import", "importdir",
+	  "--dry-run",
+	  "--message", "Import eight, dry run so shouldn't commit",
+	  "--branch", "importbranch"), 0, false, true)
+check(not qgrep("committed revision ", "stderr"))

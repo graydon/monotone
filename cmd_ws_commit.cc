@@ -947,7 +947,8 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
 
 CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   N_("import the contents of the given directory tree into a given branch"),
-  options::opts::branch | options::opts::revision | options::opts::message)
+  options::opts::branch | options::opts::revision | options::opts::message |
+  options::opts::dryrun)
 {
   revision_id ident;
   system_path dir;
@@ -1025,7 +1026,8 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   app.opts.missing = false;
 
   // commit
-  process(app, "commit", empty_args);
+  if (!app.opts.dryrun)
+    process(app, "commit", empty_args);
 
   // clean up
   delete_dir_recursive(bookkeeping_root);

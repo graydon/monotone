@@ -4133,8 +4133,8 @@ both projects nested as in @var{destbranch} instead of only the project
 originally in @var{sourcebranch}, which is almost certainly not what would be
 intended.
 
-@item mtn import --branch=@var{branch} [--message=@var{message}] @var{dir}
-@item mtn import --revision=@var{revision} [--message=@var{message}] @var{dir}
+@item mtn import --branch=@var{branch} [--message=@var{message}] [--dry-run] @var{dir}
+@item mtn import --revision=@var{revision} [--message=@var{message}] [--dry-run] @var{dir}
 This command imports the contents of the given directory and commits it
 to the head of the given branch or as a child of the given revision (and
 consequently into the branch that revision resides in).
@@ -4142,6 +4142,8 @@ consequently into the branch that revision resides in).
 If the given branch doesn't exist, it is created automatically.  If the
 branch already exists, any missing files are dropped and any unknown
 files are added before commiting.
+
+If @command{--dry-run} is given, no commit is done.
 @end ftable
 
 

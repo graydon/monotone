@@ -224,6 +224,14 @@ OPTION(drop_attr, drop_attr, true, "drop-attr",
 }
 #endif
 
+OPT(dryrun, "dry-run", bool, false,
+     gettext_noop("don't perform the operation, just show what would have happened"))
+#ifdef option_bodies
+{
+  dryrun = true;
+}
+#endif
+
 OPTION(globals, dump, true, "dump",
         gettext_noop("file to dump debugging log to, on failure"))
 #ifdef option_bodies

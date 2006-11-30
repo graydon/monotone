@@ -1,5 +1,13 @@
 2006-11-30  Richard Levitte  <richard@levitte.org>
 
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)), options_list.hh:
+	Implement --dry-run, locally for the import command for now.
+	* po/sv.po: Adjust for the added string.
+	* tests/import/__driver__.lua: Test it.
+	* monotone.texi (Tree): Document it.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
 	* tests/import/__driver__.lua: Add a test to show that it really
 	doesn't import a workspace.
 
@@ -15,7 +23,7 @@
 	It will refuse to import from a workspace.
 	* po/sv.po: Adjust for the added and changed strings.
 	* tests/import/__driver__.lua, testsuite.lua: Test it.
-	* monotone.texi: Document it.
+	* monotone.texi (Tree): Document it.
 
 2006-11-28  Christian Ohler <ohler+mtn@fastmail.net>
 
