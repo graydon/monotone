@@ -1018,7 +1018,7 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   app.work.put_work_rev(rev);
 
   // prepare stuff for 'add' and so on.
-  app.allow_workspace();
+  app.found_workspace = true;       // Yup, this is cheating!
 
   vector<utf8> empty_args;
   options save_opts;
