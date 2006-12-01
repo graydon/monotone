@@ -1017,6 +1017,9 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   make_revision_for_workspace(ident, cset(), rev);
   app.work.put_work_rev(rev);
 
+  // prepare stuff for 'add' and so on.
+  app.allow_workspace();
+
   vector<utf8> empty_args;
   options save_opts;
   // add --unknown
