@@ -1,5 +1,11 @@
 2006-12-01  Richard Levitte  <richard@levitte.org>
 
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Make sure some
+	global variables, like found_workspace, are properly initialised
+	after the temporary bookkeeping directory is created.
+
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
 	* tests/import/__driver__.lua: Test using --message-file.
 
 2006-12-01  Richard Levitte  <richard@levitte.org>
