@@ -709,12 +709,11 @@ do_annotate_node
       revision_id parent_revision = *i;
 
       roster_t parent_roster;
-      marking_map parent_marks;
       L(FL("do_annotate_node processing edge from parent %s to child %s")
         % parent_revision % work_unit.revision);
 
       I(!(work_unit.revision == parent_revision));
-      app.db.get_roster(parent_revision, parent_roster, parent_marks);
+      app.db.get_roster(parent_revision, parent_roster);
 
       if (!parent_roster.has_node(work_unit.fid))
         {
