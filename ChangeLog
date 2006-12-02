@@ -1,3 +1,7 @@
+2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Minor cleanups.
+
 2006-12-01  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* annotate.cc (do_annotate_node): Remove unnecessary variable.

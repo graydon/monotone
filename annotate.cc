@@ -243,7 +243,6 @@ annotate_context::evaluate(revision_id rev)
       I(*i < annotations.size());
       if (annotations[*i] == nullid)
         {
-        
           // L(FL("evaluate setting annotations[%d] -> %s, since "
           //      "touched_lines contained %d, copied_lines didn't and "
           //      "annotations[%d] was nullid\n") % *i % rev % *i % *i);
@@ -773,9 +772,7 @@ do_annotate_node
         }
       else
         {
-          // Already a pending node, so we just have to merge the lineage
-          // and decide whether to move it over to the nodes_to_process
-          // queue.
+          // Already a pending node, so we just have to merge the lineage.
           L(FL("merging lineage from node %s to parent %s")
             % work_unit.revision % parent_revision);
           
