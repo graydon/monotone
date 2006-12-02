@@ -8,11 +8,12 @@
 // PURPOSE.
 
 #include <set>
-#include <sstream>
 #include <string>
-#include <queue>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/key_extractors.hpp>
 
 #include "annotate.hh"
 #include "app_state.hh"
@@ -34,16 +35,21 @@ using std::back_insert_iterator;
 using std::back_inserter;
 using std::cout;
 using std::endl;
-using std::make_pair;
 using std::map;
 using std::min;
 using std::set;
 using std::string;
 using std::vector;
 using std::pair;
-using std::priority_queue;
 
 using boost::shared_ptr;
+
+using boost::multi_index::multi_index_container;
+using boost::multi_index::indexed_by;
+using boost::multi_index::ordered_unique;
+using boost::multi_index::tag;
+using boost::multi_index::member;
+
 
 class annotate_lineage_mapping;
 
@@ -153,41 +159,32 @@ struct annotate_node_work
 {
   annotate_node_work(shared_ptr<annotate_context> annotations_,
                      shared_ptr<annotate_lineage_mapping> lineage_,
-                     revision_id revision_, node_id fid_)
+                     revision_id revision_, node_id fid_,
+                     rev_height height_)
     : annotations(annotations_),
       lineage(lineage_),
       revision(revision_),
-      fid(fid_)
-  {}
-
-  annotate_node_work(annotate_node_work const & w)
-    : annotations(w.annotations),
-      lineage(w.lineage),
-      revision(w.revision),
-      fid(w.fid)
+      fid(fid_),
+      height(height_)
   {}
 
   shared_ptr<annotate_context> annotations;
   shared_ptr<annotate_lineage_mapping> lineage;
   revision_id revision;
   node_id fid;
+  rev_height height;
 };
 
+struct by_rev {};
 
-struct rev_cmp
-{
-  bool dir;
-  rev_cmp(bool _dir) : dir(_dir) {}
-  bool operator() (pair<rev_height, revision_id> const & x,
-                   pair<rev_height, revision_id> const & y) const
-  {
-    return dir ? (x.first < y.first) : (x.first > y.first);
-  }
-};
-
-typedef priority_queue<pair<rev_height, revision_id>,
-                       vector<pair<rev_height, revision_id> >,
-                       rev_cmp> rev_queue;
+typedef multi_index_container<
+  annotate_node_work,
+  indexed_by<
+    ordered_unique<member<annotate_node_work,rev_height,&annotate_node_work::height> >,
+    ordered_unique<tag<by_rev>,
+                   member<annotate_node_work,revision_id,&annotate_node_work::revision> >
+    >
+  > work_units;
 
 
 annotate_context::annotate_context(file_id fid, app_state & app)
@@ -666,8 +663,7 @@ static void
 do_annotate_node
 (annotate_node_work const & work_unit,
  app_state & app,
- rev_queue & revs_to_visit,
- map<revision_id, annotate_node_work> & work_units)
+ work_units & work_units)
 {
   L(FL("do_annotate_node for node %s") % work_unit.revision);
 
@@ -751,24 +747,22 @@ do_annotate_node
 
       // If this parent has not yet been queued for processing, create the
       // work unit for it.
-      map<revision_id, annotate_node_work>::iterator lmn
-        = work_units.find(parent_revision);
+      work_units::index<by_rev>::type::iterator lmn =
+        work_units.get<by_rev>().find(parent_revision);
 
-      if (lmn == work_units.end()) // not yet seen
+      if (lmn == work_units.get<by_rev>().end()) // not yet seen
         {
           // Once we move on to processing the parent that this file was
           // renamed from, we'll need the old name
+          rev_height parent_height;
+          app.db.get_rev_height(parent_revision, parent_height);
           annotate_node_work newunit(work_unit.annotations,
                                      parent_lineage,
                                      parent_revision,
-                                     work_unit.fid);
+                                     work_unit.fid,
+                                     parent_height);
 
-          work_units.insert(make_pair(parent_revision, newunit));
-          {
-            rev_height height;
-            app.db.get_rev_height(parent_revision, height);
-            revs_to_visit.push(make_pair(height, parent_revision));
-          }
+          work_units.insert(newunit);
         }
       else
         {
@@ -776,7 +770,7 @@ do_annotate_node
           L(FL("merging lineage from node %s to parent %s")
             % work_unit.revision % parent_revision);
           
-          lmn->second.lineage->merge(*parent_lineage, work_unit.annotations);
+          lmn->lineage->merge(*parent_lineage, work_unit.annotations);
         }
     }
 
@@ -800,28 +794,20 @@ do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
   shared_ptr<annotate_lineage_mapping> lineage
     = acp->initial_lineage();
 
-  // toposorted queue of nodes (revision ids) to visit
-  rev_queue revs_to_visit(rev_cmp(true)); // fixme
+  work_units work_units;
   {
     rev_height height;
     app.db.get_rev_height(rid, height);
-    revs_to_visit.push(make_pair(height, rid));
+    annotate_node_work workunit(acp, lineage, rid, file_node->self, height);
+    work_units.insert(workunit);
   }
-
-  // maps rev_id -> workunit
-  map<revision_id, annotate_node_work> work_units;
-  annotate_node_work workunit(acp, lineage, rid, file_node->self);
-  work_units.insert(make_pair(rid, workunit));
   
-  while (!(revs_to_visit.empty() || acp->is_complete()))
+  while (!(work_units.empty() || acp->is_complete()))
     {
-      revision_id const & rev = revs_to_visit.top().second;
-
-      map<revision_id, annotate_node_work>::iterator work =
-        work_units.find(rev);
-      I(work  != work_units.end());
-      do_annotate_node(work->second, app, revs_to_visit, work_units);
-      revs_to_visit.pop();
+      work_units::iterator work = work_units.begin();
+      I(work != work_units.end());
+      do_annotate_node(*work, app, work_units);
+      work_units.erase(work);
     }
 
   acp->annotate_equivalent_lines();
