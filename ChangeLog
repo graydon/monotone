@@ -1,3 +1,10 @@
+2006-12-04  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Bugfix: the heights index in the
+	multi_index_container was using the wrong sort order.
+	* annotate.cc (do_annotate): Calling do_annotate_node() might
+	invalidate the iterator pointing to the current work unit.
+
 2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* annotate.cc (do_annotate, do_annotate_node): Use a

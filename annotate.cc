@@ -180,9 +180,12 @@ struct by_rev {};
 typedef multi_index_container<
   annotate_node_work,
   indexed_by<
-    ordered_unique<member<annotate_node_work,rev_height,&annotate_node_work::height> >,
-    ordered_unique<tag<by_rev>,
-                   member<annotate_node_work,revision_id,&annotate_node_work::revision> >
+    ordered_unique<
+      member<annotate_node_work,rev_height,&annotate_node_work::height>,
+      std::greater<rev_height> >,
+    ordered_unique<
+      tag<by_rev>,
+      member<annotate_node_work,revision_id,&annotate_node_work::revision> >
     >
   > work_units;
 
@@ -804,10 +807,16 @@ do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
   
   while (!(work_units.empty() || acp->is_complete()))
     {
-      work_units::iterator work = work_units.begin();
-      I(work != work_units.end());
-      do_annotate_node(*work, app, work_units);
-      work_units.erase(work);
+      // get the work unit for the revision with the greatest height
+      work_units::iterator w = work_units.begin();
+      I(w != work_units.end());
+      
+      // do_annotate_node() might insert new work units into work_units, and
+      // thus might invalidate the iterator
+      annotate_node_work work = *w;
+      work_units.erase(w);
+
+      do_annotate_node(work, app, work_units);
     }
 
   acp->annotate_equivalent_lines();
