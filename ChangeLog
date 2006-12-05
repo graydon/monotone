@@ -1,10 +1,14 @@
-2006-12-04  Richard Levitte  <richard@levitte.org>
+2006-12-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* ChangeLog: Fixed name on previous entry.
+
+2006-12-04  Matthew Nicholson  <matt@matt-land.com>
 
 	* contrib/monotone.bash_completion: Updated and reformated some what.
 	Still needs work.  The bulk of this could probably be generated
 	automatically.
 
-2006-12-01  Richard Levitte  <richard@levitte.org>
+2006-12-01  Matthew Nicholson  <richard@levitte.org>
 
 	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Make sure some
 	global variables, like found_workspace, are properly initialised
