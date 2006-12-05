@@ -13,6 +13,12 @@ monotone (0.31-90.1) unstable; urgency=low
 
  -- Richard Levitte <richard@levitte.org>  Mon, 13 Nov 2006 23:50:45 +0100
 
+monotone (0.31-2) unstable; urgency=medium
+
+  *  Remove -DBOOST_SP_DISABLE_THREADS. Closes: #384565.
+
+ -- Shaun Jackman <sjackman@debian.org>  Wed, 22 Nov 2006 09:53:37 -0700
+
 monotone (0.31-1) unstable; urgency=low
 
   * New upstream release.
