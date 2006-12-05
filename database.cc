@@ -2478,6 +2478,7 @@ static void selector_to_certname(selector_type ty,
   switch (ty)
     {
     case selectors::sel_author:
+      prefix = suffix = "";
       s = author_cert_name;
       break;
     case selectors::sel_branch:
