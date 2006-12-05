@@ -210,7 +210,7 @@ msgstr "Analysiere %s bei %d:%d:E: %s"
 #: cert.cc:83
 #, c-format
 msgid "ignoring bad signature by '%s' on '%s'"
-msgstr "ignoriere schlechte Signatur von '%s' vom '%s'"
+msgstr "ignoriere ungültige Signatur von '%s' vom '%s'"
 
 #: cert.cc:91
 #, c-format
@@ -3741,27 +3741,27 @@ msgstr "Größe der hex-enkodierten ID '%s' ist ungleich %d"
 #: vocab.cc:71
 #, c-format
 msgid "bad character '%c' in id name '%s'"
-msgstr "schlechtes Zeichen '%c' in ID-Name '%s'"
+msgstr "ungültiges Zeichen '%c' in ID-Name '%s'"
 
 #: vocab.cc:81
 #, c-format
 msgid "bad character '%c' in ace string '%s'"
-msgstr "schlechtes Zeichen '%c' in Zeichenfolge '%s'"
+msgstr "ungültiges Zeichen '%c' in Zeichenfolge '%s'"
 
 #: vocab.cc:92
 #, c-format
 msgid "bad character '%c' in symbol '%s'"
-msgstr "schlechtes Zeichen '%c' in Symbol '%s'"
+msgstr "ungültiges Zeichen '%c' in Symbol '%s'"
 
 #: vocab.cc:103
 #, c-format
 msgid "bad character '%c' in cert name '%s'"
-msgstr "schlechtes Zeichen '%c' in Zertifikatname '%s'"
+msgstr "ungültiges Zeichen '%c' in Zertifikatname '%s'"
 
 #: vocab.cc:113
 #, c-format
 msgid "bad character '%c' in key name '%s'"
-msgstr "schlechtes Zeichen '%c' in Schlüsselname '%s'"
+msgstr "ungültiges Zeichen '%c' in Schlüsselname '%s'"
 
 #: vocab.cc:128
 #, c-format
