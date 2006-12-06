@@ -11,7 +11,6 @@
 #include <string>
 #include <sstream>
 
-#include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
@@ -27,6 +26,7 @@ using std::exception;
 using std::ostream;
 using std::ostringstream;
 using std::string;
+
 
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure
