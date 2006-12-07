@@ -78,6 +78,32 @@
 
 	* restrictions.cc: limit some verbose debugging that slows "log <file>"
 
+2006-12-04  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Bugfix: the heights index in the
+	multi_index_container was using the wrong sort order.
+	* annotate.cc (do_annotate): Calling do_annotate_node() might
+	invalidate the iterator pointing to the current work unit.
+
+2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate, do_annotate_node): Use a
+	boost::multi_index_container instead of a priority_queue together
+	with a map to store the work units to be processed.
+
+2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Minor cleanups.
+
+2006-12-01  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate_node): Remove unnecessary variable.
+
+2006-11-27  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate, do_annotate_node): use markings
+	together with heights in order to significantly speed up annotate.
+
 2006-11-22  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* rev_height.cc: add memcmp to global namespace for sunpro.
