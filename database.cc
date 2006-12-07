@@ -1916,6 +1916,9 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   execute(query("DELETE from revision_ancestry WHERE child = ?")
           % text(rid.inner()()));
 
+  execute(query("DELETE from heights WHERE revision = ?")
+          % text(rid.inner()()));
+
   execute(query("DELETE from revisions WHERE id = ?")
           % text(rid.inner()()));
 
