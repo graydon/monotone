@@ -4,7 +4,10 @@ mtn_setup()
 
 netsync.setup()
 
-srv = netsync.start({"--confdir=."}, nil, true)
+check(get("read-permissions"))
+check(get("write-permissions"))
+
+srv = netsync.start({"--confdir=."}, nil, false)
 
 -- Try pushing just one exact branch
 addfile("testfile1", "test file 1")
