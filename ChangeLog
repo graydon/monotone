@@ -1,3 +1,12 @@
+2006-12-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/netsync_permissions_wildcards/__driver__.lua,
+	tests/netsync_permissions_wildcards/read-permissions,
+	tests/netsync_permissions_wildcards/write-permissions,
+	testsuite.lus: Test how well netsync works when read-permissions
+	contains wildcards as part of the pattern.
+	THIS IS REALLY A BUG REPORT
+
 2006-12-08  Richard Levitte  <richard@levitte.org>
 
 	* INSTALL: A build failure showed me I needed to install
