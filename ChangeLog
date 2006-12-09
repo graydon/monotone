@@ -3,7 +3,7 @@
 	* tests/netsync_permissions_wildcards/__driver__.lua,
 	tests/netsync_permissions_wildcards/read-permissions,
 	tests/netsync_permissions_wildcards/write-permissions,
-	testsuite.lus: Test how well netsync works when read-permissions
+	testsuite.lua: Test how well netsync works when read-permissions
 	contains wildcards as part of the pattern.
 	THIS IS REALLY A BUG REPORT
 
