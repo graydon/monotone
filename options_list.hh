@@ -486,12 +486,20 @@ GOPT(ticker, "ticker", std::string, ,
 }
 #endif
 
+OPT(to, "to", std::vector<utf8>, , gettext_noop("revision(s) to stop logging at"))
+#ifdef option_bodies
+{
+  to.push_back(utf8(arg));
+}
+#endif
+
 OPT(unknown, "unknown", bool, false,
      gettext_noop("perform the operations for unknown files from workspace"))
 #ifdef option_bodies
 {
   unknown = true;
 }
+
 #endif
 
 OPT(verbose, "verbose", bool, false,
