@@ -12,9 +12,11 @@ xxx Dec xx xx:xx:xx UTC 2006
 
 	Speed improvements
 
-	- faster annotate
-
-	- heights
+	- "mtn annotate file" and "mtn log file" are generally much
+	  faster now, dependant on the number of revisions that
+	  changed the file. Both commands as well as "mtn automate
+	  toposort" make use of data called "heights" caching the
+	  topological order of all revisions.
 
 
 	New features
