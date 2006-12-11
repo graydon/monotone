@@ -30,7 +30,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-30 21:41+0100\n"
+"POT-Creation-Date: 2006-12-11 13:51+0100\n"
 "PO-Revision-Date: 2006-11-20 14:06+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -139,7 +139,7 @@ msgstr "REVISIONS_ID"
 #: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
 #: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:677
 #: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479
-#: cmd_ws_commit.cc:964 commands.cc:413
+#: cmd_ws_commit.cc:967 commands.cc:413
 #, c-format
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
@@ -469,7 +469,7 @@ msgstr ""
 "Revisionen übergeben wurden, werden diese als\n"
 "Ausgangspunkt genutzt."
 
-#: cmd_diff_log.cc:616
+#: cmd_diff_log.cc:617
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "'--last' und '--next' sind nur einmal erlaubt"
@@ -970,7 +970,7 @@ msgstr "[vereinigt] %s"
 
 #: cmd_merging.cc:320 cmd_merging.cc:419 cmd_merging.cc:430 cmd_merging.cc:588
 #: cmd_merging.cc:821 cmd_ws_commit.cc:439 cmd_ws_commit.cc:925
-#: cmd_ws_commit.cc:948 cmd_ws_commit.cc:1036 cmd_ws_commit.cc:1050
+#: cmd_ws_commit.cc:948 cmd_ws_commit.cc:1049 cmd_ws_commit.cc:1063
 msgid "tree"
 msgstr "Baum"
 
@@ -1543,7 +1543,7 @@ msgstr "  hinzugefügt: %s"
 msgid "  patched %s"
 msgstr "  verändert: %s"
 
-#: cmd_ws_commit.cc:439 cmd_ws_commit.cc:925 cmd_ws_commit.cc:1036
+#: cmd_ws_commit.cc:439 cmd_ws_commit.cc:925 cmd_ws_commit.cc:1049
 msgid "[DIRECTORY]"
 msgstr "[VERZEICHNIS]"
 
@@ -1561,29 +1561,29 @@ msgstr ""
 "Wenn kein Verzeichnis angegeben wird, wird der Zweigname als Verzeichnisname "
 "verwendet."
 
-#: cmd_ws_commit.cc:458 cmd_ws_commit.cc:989
+#: cmd_ws_commit.cc:458 cmd_ws_commit.cc:992
 #, c-format
 msgid "use --revision or --branch to specify what to checkout"
 msgstr ""
 "Nutzen Sie --revision oder --branch um festzulegen, was ausgecheckt werden "
 "soll."
 
-#: cmd_ws_commit.cc:466 cmd_ws_commit.cc:995
+#: cmd_ws_commit.cc:466 cmd_ws_commit.cc:998
 #, c-format
 msgid "branch %s has multiple heads:"
 msgstr "Zweig %s hat mehrere Köpfe:"
 
-#: cmd_ws_commit.cc:469 cmd_ws_commit.cc:998
+#: cmd_ws_commit.cc:469 cmd_ws_commit.cc:1001
 #, c-format
 msgid "choose one with '%s checkout -r<id>'"
 msgstr "wählen Sie einen durch '%s checkout -r<id>'"
 
-#: cmd_ws_commit.cc:470 cmd_ws_commit.cc:999
+#: cmd_ws_commit.cc:470 cmd_ws_commit.cc:1002
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr "Zweig %s hat mehrere Köpfe"
 
-#: cmd_ws_commit.cc:497 cmd_ws_commit.cc:982
+#: cmd_ws_commit.cc:497 cmd_ws_commit.cc:985
 #, c-format
 msgid "revision %s is not a member of branch %s"
 msgstr "Revision %s ist nicht Mitglied des Zweiges %s"
@@ -1720,24 +1720,26 @@ msgstr "VERZEICHNIS"
 
 #: cmd_ws_commit.cc:949
 msgid "import the contents of the given directory tree into a given branch"
-msgstr "Importiert die Inhalte des gegebenen Verzeichnisses in einen angegebenen Zweig."
+msgstr ""
+"Importiert die Inhalte des gegebenen Verzeichnisses in einen angegebenen "
+"Zweig."
 
-#: cmd_ws_commit.cc:957
+#: cmd_ws_commit.cc:960
 #, c-format
 msgid "you must specify a directory to import"
 msgstr "Es muss ein Verzeichnis für den Import angegeben werden."
 
-#: cmd_ws_commit.cc:1008
+#: cmd_ws_commit.cc:1011
 #, c-format
 msgid "import directory '%s' doesn't exists"
 msgstr "Das Import-Verzeichnis '%s' existiert nicht."
 
-#: cmd_ws_commit.cc:1009
+#: cmd_ws_commit.cc:1012
 #, c-format
 msgid "import directory '%s' is a file"
 msgstr "Der Import-Pfad '%s' ist eine Datei und kein Verzeichnis."
 
-#: cmd_ws_commit.cc:1037
+#: cmd_ws_commit.cc:1050
 msgid ""
 "migrate a workspace directory's metadata to the latest format; defaults to "
 "the current workspace"
@@ -1745,7 +1747,7 @@ msgstr ""
 "Migriert die Metadaten eines Arbeitsbereichs auf das neueste Format; "
 "standardmäßig wird der aktuelle Arbeitsbereich genutzt"
 
-#: cmd_ws_commit.cc:1050
+#: cmd_ws_commit.cc:1063
 msgid "refresh the inodeprint cache"
 msgstr "aktualisiere den 'inodeprint'-Cache"
 
@@ -2298,27 +2300,27 @@ msgstr "Null-Ergebnis in Anfrage: %s"
 msgid "wanted %d rows got %d in query: %s"
 msgstr "erwarte %d, erhielt %d Zeilen in Anfrage: %s"
 
-#: database.cc:2040
+#: database.cc:2043
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "ein anderer Schlüssel mit dem Namen '%s' existiert bereits"
 
-#: database.cc:3037
+#: database.cc:3041
 #, c-format
 msgid "no database specified"
 msgstr "keine Datenbank spezifiziert"
 
-#: database.cc:3045
+#: database.cc:3049
 #, c-format
 msgid "database %s does not exist"
 msgstr "Datenbank %s existiert nicht"
 
-#: database.cc:3046
+#: database.cc:3050
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s ist ein Verzeichnis, keine Datenbank"
 
-#: database.cc:3071
+#: database.cc:3075
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "Konnte Datenbank '%s' nicht öffnen: %s"
@@ -2353,7 +2355,7 @@ msgstr ""
 "[   rechts] %s\n"
 "[vereinigt] %s"
 
-#: file_io.cc:176 file_io.cc:183
+#: file_io.cc:194 file_io.cc:201
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -2362,7 +2364,7 @@ msgstr ""
 "konnte Verzeichnis '%s' nicht erstellen,\n"
 "da es eine existierende Datei ist"
 
-#: file_io.cc:178
+#: file_io.cc:196
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -2371,17 +2373,17 @@ msgstr ""
 "konnte Verzeichnis '%s' nicht erstellen\n"
 "%s"
 
-#: file_io.cc:182
+#: file_io.cc:200
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "konnte Verzeichnis '%s' nicht erstellen"
 
-#: file_io.cc:195
+#: file_io.cc:213
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
 msgstr "konnte Verzeichnis '%s' für '%s' nicht erstellen"
 
-#: file_io.cc:209
+#: file_io.cc:227
 #, c-format
 msgid ""
 "could not remove '%s'\n"
@@ -2390,111 +2392,111 @@ msgstr ""
 "konnte '%s' nicht entfernen\n"
 "%s"
 
-#: file_io.cc:219
+#: file_io.cc:237
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "zu löschende Datei '%s' existiert nicht"
 
-#: file_io.cc:220
+#: file_io.cc:238
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "die zu löschende Datei '%s' ist keine Datei, sondern ein Verzeichnis"
 
-#: file_io.cc:228
+#: file_io.cc:246
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "zu löschendes Verzeichnis '%s' existiert nicht"
 
-#: file_io.cc:229
+#: file_io.cc:247
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr ""
 "das zu löschende Verzeichnis '%s' ist kein Verzeichnis, sondern eine Datei"
 
-#: file_io.cc:236
+#: file_io.cc:254
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "zu löschendes Objekt '%s' existiert nicht"
 
-#: file_io.cc:244
+#: file_io.cc:262
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "zu löschendes Verzeichnis '%s' existiert nicht"
 
-#: file_io.cc:245
+#: file_io.cc:263
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "zu löschendes Verzeichnis '%s' ist eine Datei"
 
-#: file_io.cc:254
+#: file_io.cc:272
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "Quelldatei für Umbenennung '%s' existiert nicht"
 
-#: file_io.cc:255
+#: file_io.cc:273
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr ""
 "Quelldatei für Umbenennung '%s ist ein Verzeichnis -- Fehler in monotone?"
 
-#: file_io.cc:258 file_io.cc:271
+#: file_io.cc:276 file_io.cc:289
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "Zieldatei für Umbenennung '%s' existiert bereits"
 
-#: file_io.cc:267
+#: file_io.cc:285
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "Quellverzeichnis für Umbenennung '%s' existiert nicht"
 
-#: file_io.cc:268
+#: file_io.cc:286
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr ""
 "Quellverzeichnis für Umbenennung '%s ist eine Datei -- Fehler in monotone?"
 
-#: file_io.cc:282
+#: file_io.cc:300
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "Quellpfad für Umbenennung '%s' existiert nicht"
 
-#: file_io.cc:297
+#: file_io.cc:315
 #, c-format
 msgid "file %s does not exist"
 msgstr "Datei %s existiert nicht"
 
-#: file_io.cc:298
+#: file_io.cc:316
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "Datei %s kann nicht eingelesen werden; sie ist ein Verzeichnis"
 
-#: file_io.cc:302
+#: file_io.cc:320
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "Kann Datei %s nicht zum Lesen öffnen"
 
-#: file_io.cc:341
+#: file_io.cc:359
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Kann nicht mehrmals von der Standardeingabe lesen"
 
-#: file_io.cc:372
+#: file_io.cc:390
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr ""
 "Datei %s kann nicht mit Daten überschrieben werden; sie ist ein Verzeichnis"
 
-#: file_io.cc:380
+#: file_io.cc:398
 #, c-format
 msgid "cannot open file %s for writing"
 msgstr "Kann Datei %s nicht zum schreiben öffnen"
 
-#: file_io.cc:437
+#: file_io.cc:455
 #, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "Laufzeitfehler %s während der Erstellung des Dateipfades für %s"
 
-#: file_io.cc:530 work.cc:1079
+#: file_io.cc:548 work.cc:1079
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
@@ -3308,19 +3310,23 @@ msgstr "setzte 'Ticker'-Stil (count|dot|none)"
 msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "Argument muß 'none', 'dot' oder 'count' sein"
 
-#: options_list.hh:490
+#: options_list.hh:489
+msgid "revision(s) to stop logging at"
+msgstr "Revision(en), bei denen die Logausgabe gestoppt wird"
+
+#: options_list.hh:497
 msgid "perform the operations for unknown files from workspace"
 msgstr "führe diese Operation für unbekannte Dateien im Arbeitsbereich aus"
 
-#: options_list.hh:498
+#: options_list.hh:506
 msgid "verbose completion output"
 msgstr "ausführliche Komplettierungsausgabe"
 
-#: options_list.hh:506
+#: options_list.hh:514
 msgid "print version number, then exit"
 msgstr "zeige Versionsinformationen an und beende dann das Programm"
 
-#: options_list.hh:514
+#: options_list.hh:522
 msgid "insert command line arguments taken from the given file"
 msgstr "füge Kommandozeilenargumente aus der gegebenen Datei an"
 
