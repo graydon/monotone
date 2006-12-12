@@ -4287,13 +4287,16 @@ Multiple @option{--message} options may be provided on the command line.
 The log message will be formed by concatenating the @option{--message}
 options provided, with each one starting at the beginning of a new line.
 
-The @file{_MTN/log} file can be edited by the user during their daily work
-to record the changes made to the workspace. When running the
-@command{commit} command without a @var{logmsg} supplied, the contents
-of the @file{_MTN/log} file will be read and passed to the Lua hook
+The @file{_MTN/log} file can be edited by the user during their daily
+work to record the changes made to the workspace. When running the
+@command{commit} command without a @var{logmsg} supplied, the contents of
+the @file{_MTN/log} file will be read and passed to the Lua hook
 @code{edit_comment} as a second parameter named @var{user_log_content}.
-If the commit is successful, the @file{_MTN/log} file is cleared of
-all content making it ready for another edit/commit cycle.
+The log message will be prepended with a 'magic' string that must be
+removed to confirm the commit.  This allows the user to easily cancel a
+commit, without emptying the entire log message.  If the commit is
+successful, the @file{_MTN/log} file is cleared of all content making it
+ready for another edit/commit cycle.
 
 If a @option{--branch} option is specified, the @command{commit} command
 commits to this branch (creating it if necessary).  The branch becomes

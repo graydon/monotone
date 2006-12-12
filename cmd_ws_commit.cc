@@ -40,6 +40,7 @@ get_log_message_interactively(revision_t const & cs,
   external summary_external;
   utf8_to_system(utf8(summary.inner()()), summary_external);
 
+  string magic_line = _("*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****");
   string commentary_str;
   commentary_str += string(70, '-') + "\n";
   commentary_str += _("Enter a description of this change.\n"
@@ -53,13 +54,25 @@ get_log_message_interactively(revision_t const & cs,
 
   utf8 user_log_message;
   app.work.read_user_log(user_log_message);
+
+  //if the _MTN/log file was non-empty, we'll append the 'magic' line
+  utf8 user_log;
+  if (user_log_message().length() > 0)
+    user_log = magic_line + "\n" + user_log_message();
+  else
+    user_log = user_log_message();
+    
   external user_log_message_external;
-  utf8_to_system(user_log_message, user_log_message_external);
+  utf8_to_system(user_log, user_log_message_external);
 
   external log_message_external;
   N(app.lua.hook_edit_comment(commentary, user_log_message_external,
                               log_message_external),
     F("edit of log message failed"));
+
+  N(log_message_external().find(magic_line) == string::npos,
+    F("failed to remove magic line; commit cancelled"));
+
   system_to_utf8(log_message_external, log_message);
 }
 

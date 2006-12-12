@@ -1,3 +1,13 @@
+2006-12-11  Ben Walton  <bdwalton@gmail.com>
+ 
+        * cmd_ws_commit.cc,
+        tests/commit_using__MTN_log/commit_log_modified_return.lua,
+        tests/commit_using__MTN_log/__driver__.lua:
+        Added the requirement that when _MTN/log is pre-specified by
+        the user, that the user remove a 'magic' line prior to the
+        commit being accepted.  Modified the units tests to verify this.
+        Updated texinfo to match this new behaviour.
+
 2006-12-10  Timothy Brownawell <tbrownaw@gmail.com>
 
 	Implement a "mtn log --to <revision>", that doesn't log the
