@@ -253,7 +253,8 @@ Please review your patch prior to submission, to not include
 accidental white-space-only changes or changes to the language
 files. Usually you should revert po/*.po files before generating a
 patch - unfortunately these are often changed when you build but do
-not contain any reasonable changes.
+not contain any reasonable changes. Alternatively restrict mtn diff to
+the files you've actually changed.
 
 The monotone development team review and comment on all patches on a
 best-efforts basis.  Patches are never ignored, but a patch may not be
@@ -299,9 +300,3 @@ Compiling Hints
 
   - ccache (http://ccache.samba.org/) is quite effective for speeding up
   repeated compiles of the same source
-
-  - if you're creating a patch from a just built workspace, make sure you've
-  reverted the translated language files in po/ before you create the patch 
-  (a simple mtn revert po/*.po should be sufficient). Alternatively restrict
-  your commit to the files you've actually changed.
-
