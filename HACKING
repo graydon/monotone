@@ -298,4 +298,10 @@ Compiling Hints
   you get strange compilation errors, try disabling them.
 
   - ccache (http://ccache.samba.org/) is quite effective for speeding up
-  repeated compiles of the same source.
+  repeated compiles of the same source
+
+  - if you're creating a patch from a just built workspace, make sure you've
+  reverted the translated language files in po/ before you create the patch 
+  (a simple mtn revert po/*.po should be sufficient). Alternatively restrict
+  your commit to the files you've actually changed.
+
