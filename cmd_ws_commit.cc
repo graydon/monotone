@@ -261,6 +261,49 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   }
 }
 
+CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
+    N_("create one or more directories and add them to the workspace"),
+    options::opts::no_ignore)
+{
+  if (args.size() < 1)
+    throw usage(name);
+
+  app.require_workspace();
+
+  path_set paths;
+  //spin through args and try to ensure that we won't have any collisions
+  //before doing any real filesystem modification.  we'll also verify paths
+  //against .mtn-ignore here.
+  for (vector<utf8>::const_iterator i = args.begin();
+       i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      file_path fp(sp);
+
+      require_path_is_nonexistent
+        (fp, F("directory '%s' already exists") % fp);
+
+      //we'll treat this as a user (fatal) error.  it really
+      //wouldn't make sense to add a dir to .mtn-ignore and then
+      //try to add it to the project with a mkdir statement, but
+      //one never can tell...
+      N(app.opts.no_ignore || !app.lua.hook_ignore_file(fp),
+        F("ignoring directory '%s' [see .mtn-ignore]") % fp);
+
+      paths.insert(sp);
+    }
+
+  //this time, since we've verified that there should be no collisions,
+  //we'll just go ahead and do the filesystem additions.
+  for (path_set::const_iterator i = paths.begin();
+       i != paths.end(); ++i)
+    {
+      mkdir_p(file_path(*i));
+    }
+
+  app.work.perform_additions(paths, false, true);
+}
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
     N_("add files to workspace"),

@@ -694,3 +694,5 @@ table.insert(tests, "spawn_redirected_hook_helper")
 table.insert(tests, "import")
 table.insert(tests, "netsync_permissions_wildcards")
 table.insert(tests, "log_--to")
+table.insert(tests, "mkdir")
+
