@@ -1,3 +1,7 @@
+2006-12-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* HACKING: Updated "Patch submission guidelines" section.
+
 2006-12-11  Ben Walton  <bdwalton@gmail.com>
  
         * cmd_ws_commit.cc,

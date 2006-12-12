@@ -242,10 +242,18 @@ or text/x-patch attachment.  Make sure your mailer does not mangle the
 patch (e.g. by wrapping lines in the patch) before sending your patch to the
 list.
 
-All changes to the monotone source require an accompanying ChangeLog entry.
-Any changes that affect the user interface (e.g. adding command-line
-options, changing the output format) or affect the documented behaviour of
-monotone must include appropriate changes to the documentation.
+All changes to the monotone source require an accompanying ChangeLog
+entry (except translation updates, and changes to the ChangeLog itself
+[e.g. typos], obviously).  Any changes that affect the user interface
+(e.g. adding command-line options, changing the output format) or
+affect the documented behaviour of monotone must include appropriate
+changes to the documentation.
+
+Please review your patch prior to submission, to not include
+accidental white-space-only changes or changes to the language
+files. Usually you should revert po/*.po files before generating a
+patch - unfortunately these are often changed when you build but do
+not contain any reasonable changes.
 
 The monotone development team review and comment on all patches on a
 best-efforts basis.  Patches are never ignored, but a patch may not be
