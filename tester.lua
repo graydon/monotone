@@ -388,8 +388,13 @@ function samelines(f, t)
   end
   for i=1,table.getn(t) do
     if fl[i] ~= t[i] then
-      L(locheader(), string.format("file[i] = '%s'; table[i] = '%s'\n",
-                                   fl[i], t[i]))
+      if fl[i] then
+        L(locheader(), string.format("file[i] = '%s'; table[i] = '%s'\n",
+                                     fl[i], t[i]))
+      else
+        L(locheader(), string.format("file[i] = ''; table[i] = '%s'\n",
+                                     t[i]))
+      end
       return false
     end
   end
