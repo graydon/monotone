@@ -156,7 +156,7 @@ validate_workspace_paths(path_set const & included_paths,
         }
     }
 
-  N(bad == 0, F("%d unknown paths") % bad);
+  N(bad == 0, FP("%d unknown path", "%d unknown paths", bad) % bad);
 }
 
 restriction::restriction(std::vector<file_path> const & includes,
