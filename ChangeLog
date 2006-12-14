@@ -1,3 +1,8 @@
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* POTFILES.in: added missing restrictions.cc
+	* restrictions.cc: pluralized "%d missing paths"
+
 2006-12-13  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* options.cc (name): Call localize_monotone() before fetching an
