@@ -10,6 +10,10 @@
 	* tester.lua (samelines): do not throw a format error if
 	the file ends before expected.
 
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* NEWS: added note about new automate get_file_of
+
 2006-12-12  Ben Walton  <bdwalton@gmail.com>
  
         * cmd_ws_cc: Added mtn mkdir

@@ -23,6 +23,9 @@ xxx Dec xx xx:xx:xx UTC 2006
 
 	- automate content_diff
 
+	- automate get_file_of (same as get_file, but expects a
+	  file path and optionally a revision)
+
 	- "mtn import" command
 
 	- "mtn log --to"
