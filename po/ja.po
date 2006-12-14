@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone HEAD\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-14 23:43+0100\n"
+"POT-Creation-Date: 2006-12-15 00:27+0100\n"
 "PO-Revision-Date: 2006-08-24 13:11+0200\n"
 "Last-Translator: Satoru SATOH <ss@gnome.gr.jp>\n"
 "Language-Team: Japanese <gnome-translation@gnome.gr.jp>\n"
@@ -45,13 +45,23 @@ msgstr "検索ルート '%s' はディレクトリではありません\n"
 msgid "[BRANCH]"
 msgstr ""
 
-#: automate.cc:88 automate.cc:135 automate.cc:1206
+#: automate.cc:67 automate.cc:91 automate.cc:138 automate.cc:218
+#: automate.cc:359 automate.cc:426 automate.cc:451 automate.cc:529
+#: automate.cc:898 automate.cc:1028 automate.cc:1072 automate.cc:1098
+#: automate.cc:1125 automate.cc:1152 automate.cc:1186 automate.cc:1297
+#: automate.cc:1394 automate.cc:1453 automate.cc:1499 automate.cc:1559
+#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:656
+#, c-format
+msgid "wrong argument count"
+msgstr ""
+
+#: automate.cc:88 automate.cc:135 automate.cc:1183
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr ""
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
-#: automate.cc:365 automate.cc:369 automate.cc:428 automate.cc:452
-#: automate.cc:1216 cmd_list.cc:662 revision.cc:1705
+#: automate.cc:365 automate.cc:369 automate.cc:429 automate.cc:454
+#: automate.cc:1193 cmd_list.cc:663 revision.cc:1705
 #, fuzzy, c-format
 msgid "No such revision %s"
 msgstr "リビジョン '%s' は存在しません"
@@ -74,99 +84,102 @@ msgstr "ファイル '%s' はワークスペース内に存在しません"
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr ""
 
-#: automate.cc:423 automate.cc:447 cmd_list.cc:652 revision.cc:1699
+#: automate.cc:398 automate.cc:486 automate.cc:711 automate.cc:942
+#: automate.cc:963 automate.cc:1249 cmd_automate.cc:78 cmd_automate.cc:332
+#: cmd_list.cc:564
+#, c-format
+msgid "no arguments needed"
+msgstr ""
+
+#: automate.cc:423 automate.cc:448 cmd_list.cc:653 revision.cc:1699
 #, fuzzy
 msgid "REV"
 msgstr "REVID"
 
-#: automate.cc:524
+#: automate.cc:526
 msgid "SELECTOR"
 msgstr ""
 
-#: automate.cc:893 automate.cc:1023
+#: automate.cc:895 automate.cc:1025
 #, fuzzy
 msgid "[REVID]"
 msgstr "REVID"
 
-#: automate.cc:922 automate.cc:1045 automate.cc:1529 automate.cc:1588
-#: automate.cc:1593
+#: automate.cc:924 automate.cc:1047 automate.cc:1507 automate.cc:1566
+#: automate.cc:1571
 #, fuzzy, c-format
 msgid "no revision %s found in database"
 msgstr "バージョン %s のファイルはデータベース内にみつかりません (対象: %s)"
 
-#: automate.cc:1066 automate.cc:1145
-msgid "FILEID"
-msgstr ""
-
-#: automate.cc:1073
-#, fuzzy, c-format
-msgid "no file version %s found in database"
-msgstr "バージョン %s のファイルはデータベース内にみつかりません (対象: %s)"
-
-#: automate.cc:1092 automate.cc:1118 cmd_merging.cc:845
+#: automate.cc:1069 automate.cc:1095 cmd_merging.cc:845
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1103 automate.cc:1129 automate.cc:1184 automate.cc:1186
+#: automate.cc:1080 automate.cc:1106 automate.cc:1161 automate.cc:1163
 #: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
-#: cmd_files.cc:138 cmd_files.cc:200 cmd_merging.cc:125 cmd_merging.cc:677
-#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:479 commands.cc:413
+#: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:677
+#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:535
+#: cmd_ws_commit.cc:1023 commands.cc:413
 #, c-format
 msgid "no such revision '%s'"
 msgstr "リビジョン '%s' は存在しません"
 
-#: automate.cc:1156
+#: automate.cc:1122 cmd_files.cc:250
+msgid "FILEID"
+msgstr ""
+
+#: automate.cc:1133
 #, fuzzy, c-format
 msgid "no such file '%s'"
 msgstr "リビジョン '%s' は存在しません"
 
-#: automate.cc:1172
+#: automate.cc:1149
 msgid "OLD_FILE NEW_FILE"
 msgstr ""
 
-#: automate.cc:1317
+#: automate.cc:1294
 msgid "[BRANCH_PATTERN]"
 msgstr ""
 
-#: automate.cc:1413
+#: automate.cc:1391
 msgid "KEYID PASSPHRASE"
 msgstr ""
 
-#: automate.cc:1431 cmd_key_cert.cc:42
+#: automate.cc:1409 cmd_key_cert.cc:42
 #, c-format
 msgid "key '%s' already exists"
 msgstr "鍵 '%s' は既に存在しています"
 
-#: automate.cc:1434 cmd_key_cert.cc:45
+#: automate.cc:1412 cmd_key_cert.cc:45
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "鍵対 '%s' を生成しています"
 
-#: automate.cc:1436 cmd_key_cert.cc:47
+#: automate.cc:1414 cmd_key_cert.cc:47
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "鍵対 '%s' を %s/ に保存しています"
 
-#: automate.cc:1472
+#: automate.cc:1450
 msgid "OPTION"
 msgstr ""
 
-#: automate.cc:1495
+#: automate.cc:1473
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr ""
 
-#: automate.cc:1518
+#: automate.cc:1496
 #, fuzzy
 msgid "REV FILE"
 msgstr "REV REV"
 
-#: automate.cc:1535 automate.cc:1599
+#: automate.cc:1513 automate.cc:1577
 #, fuzzy, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "ファイル '%s' はリビジョン '%s' にはありませんでした\n"
 
-#: automate.cc:1578
+#: automate.cc:1556
 #, fuzzy
 msgid "REV1 FILE REV2"
 msgstr "REV REV"
@@ -241,27 +254,36 @@ msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "リビジョン %s のブランチ証明は複数あります. ブランチ名を指定して下さい"
 
-#: cmd_automate.cc:149 cmd_automate.cc:195 cmd_automate.cc:217
-#: cmd_automate.cc:340
+#: cmd_automate.cc:150
 #, fuzzy, c-format
-msgid "Bad input to automate stdio"
+msgid "Bad input to automate stdio: expected ':' after string size"
 msgstr "parse_basic_io に対し不正な入力"
-
-#: cmd_automate.cc:168
-#, c-format
-msgid "read from client failed with error code: %d"
-msgstr ""
 
 #: cmd_automate.cc:169
 #, fuzzy, c-format
-msgid "Bad input to automate stdio (unexpected EOF)"
+msgid "Bad input to automate stdio: unexpected EOF"
 msgstr "parse_basic_io に対し不正な入力"
 
-#: cmd_automate.cc:365
+#: cmd_automate.cc:197
+#, fuzzy, c-format
+msgid "Bad input to automate stdio: unknown start token '%c'"
+msgstr "parse_basic_io に対し不正な入力"
+
+#: cmd_automate.cc:219
+#, fuzzy, c-format
+msgid "Bad input to automate stdio: expected '%c' token"
+msgstr "parse_basic_io に対し不正な入力"
+
+#: cmd_automate.cc:344
+#, fuzzy, c-format
+msgid "Bad input to automate stdio: command name is missing"
+msgstr "parse_basic_io に対し不正な入力"
+
+#: cmd_automate.cc:373
 msgid "automation"
 msgstr "自動化"
 
-#: cmd_automate.cc:366
+#: cmd_automate.cc:374
 msgid "automation interface"
 msgstr "自動化インターフェース"
 
@@ -343,7 +365,7 @@ msgid "no var with name %s in domain %s"
 msgstr "%s という変数はドメイン %s 内にはありません"
 
 #: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
-#: cmd_files.cc:181 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:373
+#: cmd_files.cc:220 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:429
 #: commands.cc:275
 msgid "informative"
 msgstr "情報"
@@ -366,8 +388,8 @@ msgstr "部分 ID に十六進数が含まれていません"
 msgid "more than two revisions given"
 msgstr ""
 
-#: cmd_diff_log.cc:465 cmd_ws_commit.cc:66 cmd_ws_commit.cc:252
-#: cmd_ws_commit.cc:293 cmd_ws_commit.cc:373 cmd_ws_commit.cc:679
+#: cmd_diff_log.cc:465 cmd_ws_commit.cc:79 cmd_ws_commit.cc:308
+#: cmd_ws_commit.cc:349 cmd_ws_commit.cc:429 cmd_ws_commit.cc:735
 msgid "[PATH]..."
 msgstr "[PATH]..."
 
@@ -415,7 +437,7 @@ msgstr ""
 "降順で履歴を表示 ('FILE' でフィルタ)。一つ以上のリビジョンが指定されて\n"
 "いればそれを開始点として利用。"
 
-#: cmd_diff_log.cc:616
+#: cmd_diff_log.cc:617
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "--last/--next のどちらかのみが許されています"
@@ -507,18 +529,23 @@ msgstr "[PATH]"
 msgid "calculate identity of PATH or stdin"
 msgstr "PATH または標準入力を識別"
 
-#: cmd_files.cc:182
-msgid "FILENAME"
-msgstr "FILENAME"
+#: cmd_files.cc:185
+#, fuzzy, c-format
+msgid "no file version %s found in database"
+msgstr "バージョン %s のファイルはデータベース内にみつかりません (対象: %s)"
 
-#: cmd_files.cc:183
-msgid "write file from database to stdout"
-msgstr "データベースのファイルを標準出力に書き出し"
-
-#: cmd_files.cc:212 cmd_files.cc:214
+#: cmd_files.cc:210 cmd_files.cc:214
 #, fuzzy, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "ファイル '%s' はリビジョン '%s' にはありませんでした\n"
+
+#: cmd_files.cc:221 cmd_files.cc:273
+msgid "FILENAME"
+msgstr "FILENAME"
+
+#: cmd_files.cc:222
+msgid "write file from database to stdout"
+msgstr "データベースのファイルを標準出力に書き出し"
 
 #: cmd.hh:89
 #, c-format
@@ -642,7 +669,7 @@ msgid "UNtrusted"
 msgstr "UNtrusted"
 
 #: cmd_key_cert.cc:197 cmd_key_cert.cc:210 cmd_key_cert.cc:223
-#: cmd_key_cert.cc:239 cmd_ws_commit.cc:189
+#: cmd_key_cert.cc:239 cmd_ws_commit.cc:202
 msgid "review"
 msgstr "レビュー"
 
@@ -662,7 +689,7 @@ msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 msgid "note the results of running a test on a revision"
 msgstr "リビジョンのテストの実行結果を記録"
 
-#: cmd_key_cert.cc:223 cmd_ws_commit.cc:189
+#: cmd_key_cert.cc:223 cmd_ws_commit.cc:202
 msgid "REVISION"
 msgstr "REVISION"
 
@@ -693,7 +720,7 @@ msgstr "コメント編集に失敗"
 msgid "empty comment"
 msgstr "空のコメント"
 
-#: cmd_list.cc:64 cmd_list.cc:676
+#: cmd_list.cc:64 cmd_list.cc:677
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "データベース内に公開鍵 '%s' はありません"
@@ -780,9 +807,10 @@ msgstr ""
 "データベースオブジェクト、現在のワークスペースのマニフェスト、\n"
 "既知または不明な、意図的に無視、または失なわれた状態のファイルを表示"
 
-#: cmd_merging.cc:73 cmd_merging.cc:655 cmd_ws_commit.cc:66
-#: cmd_ws_commit.cc:252 cmd_ws_commit.cc:293 cmd_ws_commit.cc:329
-#: cmd_ws_commit.cc:354 cmd_ws_commit.cc:579 cmd_ws_commit.cc:679
+#: cmd_merging.cc:73 cmd_merging.cc:655 cmd_ws_commit.cc:79
+#: cmd_ws_commit.cc:264 cmd_ws_commit.cc:308 cmd_ws_commit.cc:349
+#: cmd_ws_commit.cc:385 cmd_ws_commit.cc:410 cmd_ws_commit.cc:635
+#: cmd_ws_commit.cc:735
 msgid "workspace"
 msgstr "ワークスペース"
 
@@ -900,8 +928,8 @@ msgid "[merged] %s"
 msgstr "[統合済み] %s\n"
 
 #: cmd_merging.cc:320 cmd_merging.cc:419 cmd_merging.cc:430 cmd_merging.cc:588
-#: cmd_merging.cc:821 cmd_ws_commit.cc:439 cmd_ws_commit.cc:925
-#: cmd_ws_commit.cc:948 cmd_ws_commit.cc:962
+#: cmd_merging.cc:821 cmd_ws_commit.cc:495 cmd_ws_commit.cc:981
+#: cmd_ws_commit.cc:1004 cmd_ws_commit.cc:1105 cmd_ws_commit.cc:1119
 msgid "tree"
 msgstr "ツリー"
 
@@ -915,7 +943,7 @@ msgid "please specify a branch, with --branch=BRANCH"
 msgstr "--branch=BRANCH というようにブランチを指定して下さい"
 
 #: cmd_merging.cc:335 cmd_merging.cc:469 cmd_merging.cc:472 cmd_merging.cc:834
-#: cmd_ws_commit.cc:463
+#: cmd_ws_commit.cc:519
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "ブランチ '%s' は空です"
@@ -1130,85 +1158,77 @@ msgstr "ブランチ '%s' は現在未統合です:\n"
 msgid "dump the roster associated with the given REVID"
 msgstr "指定の REVID について関連づけられた名簿をダンプ"
 
-#: cmd_netsync.cc:43
+#: cmd_netsync.cc:33
 #, fuzzy, c-format
 msgid "setting default server to %s"
 msgstr "デフォルトのサーバーを %s に設定\n"
 
-#: cmd_netsync.cc:49
-#, c-format
-msgid "no hostname given"
-msgstr "ホスト名を指定して下さい"
-
-#: cmd_netsync.cc:51
+#: cmd_netsync.cc:40
 #, c-format
 msgid "no server given and no default server set"
 msgstr "サーバが未指定であり、デフォルトのサーバーも設定されていません"
 
-#: cmd_netsync.cc:79 cmd_netsync.cc:101
+#: cmd_netsync.cc:72
 #, c-format
 msgid "no branch pattern given"
 msgstr "ブランチ名を指定して下さい"
 
-#: cmd_netsync.cc:88
+#: cmd_netsync.cc:80
 #, fuzzy, c-format
 msgid "setting default branch include pattern to '%s'"
 msgstr "ブランチ名に含めるデフォルトパターンを '%s' に設定\n"
 
-#: cmd_netsync.cc:95
+#: cmd_netsync.cc:86
 #, fuzzy, c-format
 msgid "setting default branch exclude pattern to '%s'"
 msgstr "ブランチ名に含めないデフォルトパターンを '%s' に設定\n"
 
-#: cmd_netsync.cc:103
+#: cmd_netsync.cc:93
 #, c-format
 msgid "no branch pattern given and no default pattern set"
 msgstr "ブランチパターンが未指定、かつデフォルトパターンも設定されていません"
 
-#: cmd_netsync.cc:119 cmd_netsync.cc:132 cmd_netsync.cc:147 cmd_netsync.cc:191
+#: cmd_netsync.cc:109 cmd_netsync.cc:123 cmd_netsync.cc:138 cmd_netsync.cc:184
 msgid "network"
 msgstr "ネットワーク"
 
-#: cmd_netsync.cc:119 cmd_netsync.cc:132 cmd_netsync.cc:147
+#: cmd_netsync.cc:109 cmd_netsync.cc:123 cmd_netsync.cc:138
 msgid "[ADDRESS[:PORTNUMBER] [PATTERN]]"
 msgstr "[ADDRESS[:PORTNUMBER] [PATTERN]]"
 
-#: cmd_netsync.cc:120
+#: cmd_netsync.cc:110
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
 msgstr "PATTERN に合うブランチを netsync サーバー (ADDRESS) にプッシュ"
 
-#: cmd_netsync.cc:133
+#: cmd_netsync.cc:124
 msgid "pull branches matching PATTERN from netsync server at ADDRESS"
 msgstr "PATTERN に合うブランチを netsync サーバー (ADDRESS) から取り込み"
 
-#: cmd_netsync.cc:141
+#: cmd_netsync.cc:132
 #, fuzzy, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication"
 msgstr "匿名で取り込んでいます; 認証が必要な場合は -kKEYNAME を使って下さい\n"
 
-#: cmd_netsync.cc:148
+#: cmd_netsync.cc:139
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
 msgstr "PATTERN に合うブランチを netsync サーバー (ADDRESS) と同期"
 
-#: cmd_netsync.cc:167
+#: cmd_netsync.cc:160
 #, c-format
 msgid "pid file '%s' already exists"
 msgstr "PID ファイル '%s' は既に存在しています"
 
-#: cmd_netsync.cc:169
+#: cmd_netsync.cc:162
 #, fuzzy, c-format
 msgid "failed to create pid file '%s'"
 msgstr "オプションファイル '%s' の解析に失敗"
 
-#: cmd_netsync.cc:191
-msgid "PATTERN ..."
-msgstr "PATTERN..."
-
-#: cmd_netsync.cc:192
-msgid "serve the branches specified by PATTERNs to connecting clients"
+#: cmd_netsync.cc:185
+#, fuzzy
+msgid "serve the database to connecting clients"
 msgstr "PATTERNs で指定したブランチを接続クライアントに提供"
 
-#: cmd_netsync.cc:208
+#: cmd_netsync.cc:201
 #, c-format
 msgid ""
 "need permission to store persistent passphrase (see hook persist_phrase_ok())"
@@ -1216,7 +1236,7 @@ msgstr ""
 "パスフレーズをずっと保存しておきたいのなら権限が必要です。 (フック "
 "persist_phrase_ok() を参照)"
 
-#: cmd_netsync.cc:214
+#: cmd_netsync.cc:207
 #, c-format
 msgid ""
 "The --no-transport-auth option is only permitted in combination with --stdio"
@@ -1297,7 +1317,11 @@ msgid_plural "read %d packets"
 msgstr[0] "%d パケット読み込み"
 msgstr[1] "%d パケット読み込み"
 
-#: cmd_ws_commit.cc:45
+#: cmd_ws_commit.cc:43
+msgid "*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****"
+msgstr ""
+
+#: cmd_ws_commit.cc:46
 #, fuzzy
 msgid ""
 "Enter a description of this change.\n"
@@ -1306,73 +1330,98 @@ msgstr ""
 "この変更の説明を入力して下さい\n"
 "'MTN:' で始まる行は自動的に削除されます\n"
 
-#: cmd_ws_commit.cc:62
+#: cmd_ws_commit.cc:71
 #, c-format
 msgid "edit of log message failed"
 msgstr "ログメッセージの編集に失敗しました"
 
-#: cmd_ws_commit.cc:67
+#: cmd_ws_commit.cc:74
+#, fuzzy, c-format
+msgid "failed to remove magic line; commit cancelled"
+msgstr "空のログメッセージ; コミットは取り消されました"
+
+#: cmd_ws_commit.cc:80
 msgid "revert file(s), dir(s) or entire workspace (\".\")"
 msgstr "ファイル、ディレクトリまたは完全なワークスペース (\".\") の変更を破棄"
 
-#: cmd_ws_commit.cc:75
+#: cmd_ws_commit.cc:88
 #, c-format
 msgid "you must pass at least one path to 'revert' (perhaps '.')"
 msgstr ""
 
-#: cmd_ws_commit.cc:95
+#: cmd_ws_commit.cc:108
 #, fuzzy, c-format
 msgid "no missing files to revert"
 msgstr "みつからないファイル: %d\n"
 
-#: cmd_ws_commit.cc:150
+#: cmd_ws_commit.cc:163
 #, c-format
 msgid "reverting %s"
 msgstr "%s を戻しています"
 
-#: cmd_ws_commit.cc:154
+#: cmd_ws_commit.cc:167
 #, c-format
 msgid "no file version %s found in database for %s"
 msgstr "バージョン %s のファイルはデータベース内にみつかりません (対象: %s)"
 
-#: cmd_ws_commit.cc:167
+#: cmd_ws_commit.cc:180
 #, c-format
 msgid "recreating %s/"
 msgstr "%s/ を戻しています"
 
-#: cmd_ws_commit.cc:190
+#: cmd_ws_commit.cc:203
 msgid "disapprove of a particular revision"
 msgstr "特定のリビジョンを非承認"
 
-#: cmd_ws_commit.cc:206
+#: cmd_ws_commit.cc:219
 #, fuzzy, c-format
 msgid "revision %s has %d changesets, cannot invert"
 msgstr "リビジョン '%s' には %d 個の変更セットがあり、反転できません\n"
 
-#: cmd_ws_commit.cc:210
+#: cmd_ws_commit.cc:223
 #, c-format
 msgid "need --branch argument for disapproval"
 msgstr "非承認とするには --branch 引数が必要です"
 
-#: cmd_ws_commit.cc:253
+#: cmd_ws_commit.cc:264
+#, fuzzy
+msgid "[DIRECTORY...]"
+msgstr "[DIRECTORY]"
+
+#: cmd_ws_commit.cc:265
+#, fuzzy
+msgid "create one or more directories and add them to the workspace"
+msgstr "ワークスペース内のエントリの名称を変更"
+
+#: cmd_ws_commit.cc:285
+#, fuzzy, c-format
+msgid "directory '%s' already exists"
+msgstr "取り出すディレクトリ '%s' は既に存在しています"
+
+#: cmd_ws_commit.cc:292
+#, c-format
+msgid "ignoring directory '%s' [see .mtn-ignore]"
+msgstr ""
+
+#: cmd_ws_commit.cc:309
 msgid "add files to workspace"
 msgstr "ファイルをワークスペースに追加"
 
-#: cmd_ws_commit.cc:260
+#: cmd_ws_commit.cc:316
 #, c-format
 msgid "cannot set '--unknown' and '--recursive' at the same time"
 msgstr ""
 
-#: cmd_ws_commit.cc:262
+#: cmd_ws_commit.cc:318
 #, c-format
 msgid "cannot set '--unknown' and '--no-respect-ignore' at the same time"
 msgstr ""
 
-#: cmd_ws_commit.cc:294
+#: cmd_ws_commit.cc:350
 msgid "drop files from workspace"
 msgstr "ファイルをワークスペースから削除"
 
-#: cmd_ws_commit.cc:330
+#: cmd_ws_commit.cc:386
 msgid ""
 "SRC DEST\n"
 "SRC1 [SRC2 [...]] DEST_DIR"
@@ -1380,15 +1429,15 @@ msgstr ""
 "SRC DEST\n"
 "SRC1 [SRC2 [...]] DEST_DIR"
 
-#: cmd_ws_commit.cc:332
+#: cmd_ws_commit.cc:388
 msgid "rename entries in the workspace"
 msgstr "ワークスペース内のエントリの名称を変更"
 
-#: cmd_ws_commit.cc:354
+#: cmd_ws_commit.cc:410
 msgid "NEW_ROOT PUT_OLD"
 msgstr "NEW_ROOT PUT_OLD"
 
-#: cmd_ws_commit.cc:355
+#: cmd_ws_commit.cc:411
 msgid ""
 "rename the root directory\n"
 "after this command, the directory that currently has the name NEW_ROOT\n"
@@ -1401,52 +1450,52 @@ msgstr ""
 "ディレクトリと、PUT_OLD という名前の現在のルートディレクトリを指定します。\n"
 "--execute の使用を強く推奨します。"
 
-#: cmd_ws_commit.cc:373
+#: cmd_ws_commit.cc:429
 msgid "show status of workspace"
 msgstr "ワークスペースの状態を表示"
 
-#: cmd_ws_commit.cc:402
+#: cmd_ws_commit.cc:458
 #, fuzzy, c-format
 msgid "Current branch: %s"
 msgstr "ブランチ '%s' についてコミット開始\n"
 
-#: cmd_ws_commit.cc:408
+#: cmd_ws_commit.cc:464
 #, c-format
 msgid "Changes against parent %s"
 msgstr ""
 
-#: cmd_ws_commit.cc:413
+#: cmd_ws_commit.cc:469
 #, fuzzy, c-format
 msgid "  no changes"
 msgstr "変更なし"
 
-#: cmd_ws_commit.cc:417
+#: cmd_ws_commit.cc:473
 #, fuzzy, c-format
 msgid "  dropped %s"
 msgstr "%s を破棄しています"
 
-#: cmd_ws_commit.cc:422
+#: cmd_ws_commit.cc:478
 #, fuzzy, c-format
 msgid ""
 "  renamed %s\n"
 "       to %s"
 msgstr "%s から %s に名称変更しています"
 
-#: cmd_ws_commit.cc:427 cmd_ws_commit.cc:431
+#: cmd_ws_commit.cc:483 cmd_ws_commit.cc:487
 #, c-format
 msgid "  added   %s"
 msgstr ""
 
-#: cmd_ws_commit.cc:435
+#: cmd_ws_commit.cc:491
 #, c-format
 msgid "  patched %s"
 msgstr ""
 
-#: cmd_ws_commit.cc:439 cmd_ws_commit.cc:925 cmd_ws_commit.cc:948
+#: cmd_ws_commit.cc:495 cmd_ws_commit.cc:981 cmd_ws_commit.cc:1105
 msgid "[DIRECTORY]"
 msgstr "[DIRECTORY]"
 
-#: cmd_ws_commit.cc:440
+#: cmd_ws_commit.cc:496
 msgid ""
 "check out a revision from database into directory.\n"
 "If a revision is given, that's the one that will be checked out.\n"
@@ -1459,47 +1508,47 @@ msgstr ""
 "取り出します。ディレクトリが未指定ならディレクトリ名として\n"
 "ブランチ名を使います"
 
-#: cmd_ws_commit.cc:458
+#: cmd_ws_commit.cc:514 cmd_ws_commit.cc:1048
 #, c-format
 msgid "use --revision or --branch to specify what to checkout"
 msgstr ""
 
-#: cmd_ws_commit.cc:466
+#: cmd_ws_commit.cc:522 cmd_ws_commit.cc:1054
 #, c-format
 msgid "branch %s has multiple heads:"
 msgstr "ブランチ %s には複数の最新版 (HEAD) が存在しています:"
 
-#: cmd_ws_commit.cc:469
+#: cmd_ws_commit.cc:525 cmd_ws_commit.cc:1057
 #, c-format
 msgid "choose one with '%s checkout -r<id>'"
 msgstr "'%s update -r<id>' で一つを選択して下さい"
 
-#: cmd_ws_commit.cc:470
+#: cmd_ws_commit.cc:526 cmd_ws_commit.cc:1058
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr "ブランチ %s には複数の最新版 (HEAD) が存在しています"
 
-#: cmd_ws_commit.cc:497
+#: cmd_ws_commit.cc:553 cmd_ws_commit.cc:1041
 #, fuzzy, c-format
 msgid "revision %s is not a member of branch %s"
 msgstr "リビジョン %s はブランチ %s には属していません\n"
 
-#: cmd_ws_commit.cc:514
+#: cmd_ws_commit.cc:570
 #, c-format
 msgid "you must specify a destination directory"
 msgstr ""
 
-#: cmd_ws_commit.cc:527
+#: cmd_ws_commit.cc:583
 #, c-format
 msgid "checkout directory '%s' already exists"
 msgstr "取り出すディレクトリ '%s' は既に存在しています"
 
-#: cmd_ws_commit.cc:561
+#: cmd_ws_commit.cc:617
 #, c-format
 msgid "no file %s found in database for %s"
 msgstr "ファイル %s (対象 %s)はデータベース内にはみつかりません"
 
-#: cmd_ws_commit.cc:579
+#: cmd_ws_commit.cc:635
 msgid ""
 "set PATH ATTR VALUE\n"
 "get PATH [ATTR]\n"
@@ -1509,45 +1558,45 @@ msgstr ""
 "get PATH [ATTR]\n"
 "drop PATH [ATTR]"
 
-#: cmd_ws_commit.cc:580
+#: cmd_ws_commit.cc:636
 msgid "set, get or drop file attributes"
 msgstr "ファイル属性を設定/取得/削除"
 
-#: cmd_ws_commit.cc:597
+#: cmd_ws_commit.cc:653
 #, c-format
 msgid "Unknown path '%s'"
 msgstr "不明なパス '%s'"
 
-#: cmd_ws_commit.cc:626
+#: cmd_ws_commit.cc:682
 #, fuzzy, c-format
 msgid "Path '%s' does not have attribute '%s'"
 msgstr "パス '%s' には属性 '%s' がありません\n"
 
-#: cmd_ws_commit.cc:656
+#: cmd_ws_commit.cc:712
 #, c-format
 msgid "No attributes for '%s'"
 msgstr "'%s' について属性はありません"
 
-#: cmd_ws_commit.cc:667
+#: cmd_ws_commit.cc:723
 #, c-format
 msgid "No attribute '%s' on path '%s'"
 msgstr "パス '%s' について '%s' という属性はありません"
 
-#: cmd_ws_commit.cc:680
+#: cmd_ws_commit.cc:736
 msgid "commit workspace to database"
 msgstr "ワークスペースをデータベースにコミット"
 
-#: cmd_ws_commit.cc:711
+#: cmd_ws_commit.cc:767
 #, fuzzy, c-format
 msgid "no changes to commit"
 msgstr "コミットする変更がありません\n"
 
-#: cmd_ws_commit.cc:731
+#: cmd_ws_commit.cc:787
 #, fuzzy, c-format
 msgid "beginning commit on branch '%s'"
 msgstr "ブランチ '%s' についてコミット開始\n"
 
-#: cmd_ws_commit.cc:740
+#: cmd_ws_commit.cc:796
 #, c-format
 msgid ""
 "_MTN/log is non-empty and log message was specified on command line\n"
@@ -1558,37 +1607,37 @@ msgstr ""
 "_MTN/log を移動/削除するか、コマンド行から --message/--message-file を\n"
 "消して下さい。"
 
-#: cmd_ws_commit.cc:755
+#: cmd_ws_commit.cc:811
 #, c-format
 msgid "empty log message; commit canceled"
 msgstr "空のログメッセージ; コミットは取り消されました"
 
-#: cmd_ws_commit.cc:777
+#: cmd_ws_commit.cc:833
 #, fuzzy, c-format
 msgid "log message rejected by hook: %s"
 msgstr "ログメッセージを拒否: %s\n"
 
-#: cmd_ws_commit.cc:785
+#: cmd_ws_commit.cc:841
 #, fuzzy, c-format
 msgid "revision %s already in database"
 msgstr "リビジョン %s は既にデータベース内に存在しています\n"
 
-#: cmd_ws_commit.cc:824 cmd_ws_commit.cc:854
+#: cmd_ws_commit.cc:880 cmd_ws_commit.cc:910
 #, c-format
 msgid "file '%s' modified during commit, aborting"
 msgstr "ファイル '%s' は commit 前に変更されました. 中止します"
 
-#: cmd_ws_commit.cc:836
+#: cmd_ws_commit.cc:892
 #, fuzzy, c-format
 msgid "Your database is missing version %s of file '%s'"
 msgstr "ファイル %s 内のデータベースバージョンを検出できませんでした"
 
-#: cmd_ws_commit.cc:886
+#: cmd_ws_commit.cc:942
 #, fuzzy, c-format
 msgid "committed revision %s"
 msgstr "リビジョン %s をコミット\n"
 
-#: cmd_ws_commit.cc:892
+#: cmd_ws_commit.cc:948
 #, c-format
 msgid ""
 "note: this revision creates divergence\n"
@@ -1597,22 +1646,48 @@ msgstr ""
 "注意: このリビジョンによって分岐が生じます\n"
 "注意: 分岐を望まないなら '%s merge' を実行して下さい"
 
-#: cmd_ws_commit.cc:926
+#: cmd_ws_commit.cc:982
 msgid "setup a new workspace directory, default to current"
 msgstr "新しいワークスペースディレクトリを作成 (デフォルト: 現在の場所)"
 
-#: cmd_ws_commit.cc:932
+#: cmd_ws_commit.cc:988
 #, c-format
 msgid "need --branch argument for setup"
 msgstr "作成には --branch 引数が必要です"
 
-#: cmd_ws_commit.cc:949
+#: cmd_ws_commit.cc:1004
+#, fuzzy
+msgid "DIRECTORY"
+msgstr "[DIRECTORY]"
+
+#: cmd_ws_commit.cc:1005
+msgid "import the contents of the given directory tree into a given branch"
+msgstr ""
+
+#: cmd_ws_commit.cc:1016
+#, c-format
+msgid "you must specify a directory to import"
+msgstr ""
+
+#: cmd_ws_commit.cc:1067
+#, fuzzy, c-format
+msgid "import directory '%s' doesn't exists"
+msgstr "ディレクトリ '%s' は存在しません"
+
+#: cmd_ws_commit.cc:1068
+#, fuzzy, c-format
+msgid "import directory '%s' is a file"
+msgstr ""
+"ディレクトリ '%s' を作成できませんでした\n"
+"ファイルです"
+
+#: cmd_ws_commit.cc:1106
 msgid ""
 "migrate a workspace directory's metadata to the latest format; defaults to "
 "the current workspace"
 msgstr ""
 
-#: cmd_ws_commit.cc:962
+#: cmd_ws_commit.cc:1119
 msgid "refresh the inodeprint cache"
 msgstr "i-node 表示キャッシュを更新"
 
@@ -1693,7 +1768,7 @@ msgstr "名簿"
 msgid "markings"
 msgstr "印"
 
-#: database_check.cc:306 netsync.cc:2969 rcs_import.cc:1244
+#: database_check.cc:306 netsync.cc:3063 rcs_import.cc:1244
 msgid "revisions"
 msgstr "リビジョン"
 
@@ -1701,7 +1776,7 @@ msgstr "リビジョン"
 msgid "ancestry"
 msgstr "祖先"
 
-#: database_check.cc:434 netsync.cc:2973
+#: database_check.cc:434 netsync.cc:3067
 msgid "keys"
 msgstr "鍵"
 
@@ -2148,27 +2223,27 @@ msgstr "クエリ中に結果 null が含まれています: %s\n"
 msgid "wanted %d rows got %d in query: %s"
 msgstr "クエリで %d 行要求しましたが得たのは %s です: %s\n"
 
-#: database.cc:2040
+#: database.cc:2043
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "'%s' という名前の他の鍵が既に存在しています"
 
-#: database.cc:3037
+#: database.cc:3041
 #, c-format
 msgid "no database specified"
 msgstr "データベース未指定"
 
-#: database.cc:3045
+#: database.cc:3049
 #, c-format
 msgid "database %s does not exist"
 msgstr "データベース %s は存在しません"
 
-#: database.cc:3046
+#: database.cc:3050
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s はデータベースではなくディレクトリです"
 
-#: database.cc:3071
+#: database.cc:3075
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "データベース '%s': %s を開けませんでした"
@@ -2204,7 +2279,7 @@ msgstr ""
 "[    右] %s\n"
 "[統合済] %s\n"
 
-#: file_io.cc:176 file_io.cc:183
+#: file_io.cc:194 file_io.cc:201
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -2213,7 +2288,7 @@ msgstr ""
 "ディレクトリ '%s' を作成できませんでした\n"
 "ファイルです"
 
-#: file_io.cc:178
+#: file_io.cc:196
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -2222,17 +2297,17 @@ msgstr ""
 "ディレクトリ '%s' を作成できませんでした\n"
 "%s"
 
-#: file_io.cc:182
+#: file_io.cc:200
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "ディレクトリ '%s' を作成できませんでした"
 
-#: file_io.cc:195
+#: file_io.cc:213
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
 msgstr "ディレクトリ '%s' ('%s' のための)の作成に失敗しました"
 
-#: file_io.cc:209
+#: file_io.cc:227
 #, c-format
 msgid ""
 "could not remove '%s'\n"
@@ -2241,107 +2316,107 @@ msgstr ""
 "'%s' を削除できませんでした\n"
 "%s"
 
-#: file_io.cc:219
+#: file_io.cc:237
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "削除するファイル '%s' は存在しません"
 
-#: file_io.cc:220
+#: file_io.cc:238
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "削除するファイル '%s' はファイルでなく、ディレクトリです"
 
-#: file_io.cc:228
+#: file_io.cc:246
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "削除するディレクトリ '%s' は存在しません"
 
-#: file_io.cc:229
+#: file_io.cc:247
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr "削除するディレクトリ '%s' はディレクトリではなくファイルです"
 
-#: file_io.cc:236
+#: file_io.cc:254
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "削除するオブジェクト '%s' は存在しません"
 
-#: file_io.cc:244
+#: file_io.cc:262
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "削除するディレクトリ '%s' は存在しません"
 
-#: file_io.cc:245
+#: file_io.cc:263
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "削除するディレクトリ '%s' はファイルです"
 
-#: file_io.cc:254
+#: file_io.cc:272
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "名称変更する元のファイル '%s' は存在しません"
 
-#: file_io.cc:255
+#: file_io.cc:273
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr "名称変更元のファイル '%s' はディレクトリです -- monotone のバグ?"
 
-#: file_io.cc:258 file_io.cc:271
+#: file_io.cc:276 file_io.cc:289
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "名称変更ターゲット '%s' は既に存在しています"
 
-#: file_io.cc:267
+#: file_io.cc:285
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "名称変更元のディレクトリ '%s' は存在しません"
 
-#: file_io.cc:268
+#: file_io.cc:286
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr "名称変更元のディレクトリ '%s' はファイルです -- monotone のバグ?"
 
-#: file_io.cc:282
+#: file_io.cc:300
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "名称変更元のパス '%s' は存在しません"
 
-#: file_io.cc:297
+#: file_io.cc:315
 #, c-format
 msgid "file %s does not exist"
 msgstr "ファイル %s は存在しません"
 
-#: file_io.cc:298
+#: file_io.cc:316
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "'%s' は期待していたファイルではなく、ディレクトリです"
 
-#: file_io.cc:302
+#: file_io.cc:320
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "ファイル %s を読み込みのために開くことができません"
 
-#: file_io.cc:341
+#: file_io.cc:359
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "標準入力を何度も読み込むことはできません"
 
-#: file_io.cc:372
+#: file_io.cc:390
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "'%s' にデータを上書きできません。ディレクトリです"
 
-#: file_io.cc:380
+#: file_io.cc:398
 #, c-format
 msgid "cannot open file %s for writing"
 msgstr "ファイル %s を書き込みのために開くことができません"
 
-#: file_io.cc:437
+#: file_io.cc:455
 #, fuzzy, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "%s についてファイルパス作成中に実行時エラー %s 発生\n"
 
-#: file_io.cc:530 work.cc:1079
+#: file_io.cc:548 work.cc:1079
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "そのようなファイルまたはディレクトリはありません: '%s'"
@@ -2386,22 +2461,22 @@ msgstr "パスフレーズを指定して下さい"
 msgid "passphrase for '%s' is incorrect"
 msgstr "'%s' に対するパスフレーズが間違っています"
 
-#: lua.cc:462 lua.cc:476
+#: lua.cc:463 lua.cc:477 lua.cc:512
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s 呼出し時の引数が不適切です"
 
-#: lua.cc:479
+#: lua.cc:480 lua.cc:515
 #, fuzzy, c-format
 msgid "Directory '%s' does not exist"
 msgstr "ディレクトリ '%s' は存在しません"
 
-#: lua.cc:480 rcs_import.cc:1235 work.cc:1334
+#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1334
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' はディレクトリではありません"
 
-#: lua.cc:499
+#: lua.cc:500 lua.cc:538
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "初期化ファイル '%s' を読み込み中に lua のエラー"
@@ -2537,41 +2612,41 @@ msgstr "%s について終端 %d、容量 %d バイトであることを期待"
 msgid "check of '%s' failed"
 msgstr "'%s' の検証に失敗"
 
-#: netsync.cc:724
+#: netsync.cc:760
 msgid "bytes in"
 msgstr "バイト (入)"
 
-#: netsync.cc:726
+#: netsync.cc:762
 msgid "bytes out"
 msgstr "バイト (出)"
 
-#: netsync.cc:730
+#: netsync.cc:766
 msgid "certs in"
 msgstr "証明 (入)"
 
-#: netsync.cc:732 netsync.cc:745
+#: netsync.cc:768 netsync.cc:781
 msgid "revs in"
 msgstr "リビジョン (入)"
 
-#: netsync.cc:737
+#: netsync.cc:773
 msgid "certs out"
 msgstr "証明 (出)"
 
-#: netsync.cc:739 netsync.cc:747
+#: netsync.cc:775 netsync.cc:783
 msgid "revs out"
 msgstr "リビジョン (出)"
 
-#: netsync.cc:853
+#: netsync.cc:889
 #, c-format
 msgid "underflow on count of %s items to receive"
 msgstr "受け取る %s アイテムについて個数がアンダーフロー"
 
-#: netsync.cc:1201
+#: netsync.cc:1261 netsync.cc:1269
 #, c-format
 msgid "received network error: %s"
 msgstr "ネットワークエラーを受信: %s"
 
-#: netsync.cc:1236
+#: netsync.cc:1304
 #, fuzzy, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
@@ -2592,12 +2667,12 @@ msgstr ""
 "期待値 %s\n"
 "'%s unset %s %s' とすると検証結果を無視するようになります\n"
 
-#: netsync.cc:1246
+#: netsync.cc:1314
 #, c-format
 msgid "server key changed"
 msgstr "サーバー鍵が変更されました"
 
-#: netsync.cc:1251
+#: netsync.cc:1319
 #, fuzzy, c-format
 msgid ""
 "first time connecting to server %s\n"
@@ -2608,52 +2683,47 @@ msgstr ""
 "偽物でないとは思いますが、鍵の指紋を二重にチェックしてみるといいでしょう: %"
 "s\n"
 
-#: netsync.cc:1258
+#: netsync.cc:1326
 #, fuzzy, c-format
 msgid "saving public key for %s to database"
 msgstr "%s の公開鍵をデータベースに保存中\n"
 
-#: netsync.cc:1352
+#: netsync.cc:1429
 #, fuzzy, c-format
 msgid "rejected attempt at anonymous connection for write"
 msgstr "匿名での接続からの書き込みを拒否\n"
 
-#: netsync.cc:1358
+#: netsync.cc:1436
 #, fuzzy, c-format
 msgid "rejected attempt at anonymous connection while running as sink"
 msgstr "シンクとして実行中の匿名での接続からの書き込みを拒否\n"
 
-#: netsync.cc:1372 netsync.cc:1496
-#, c-format
-msgid "not serving branch '%s'"
-msgstr "ブランチ '%s' は提供していません"
-
-#: netsync.cc:1377
+#: netsync.cc:1452
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr "ブランチ '%s' への匿名アクセスはサーバーによって拒否されました"
 
-#: netsync.cc:1385
+#: netsync.cc:1460
 #, fuzzy, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'"
 msgstr "匿名での '%s' ('%s' を除く)の読み込みを許可しました\n"
 
-#: netsync.cc:1391
+#: netsync.cc:1466
 #, fuzzy, c-format
 msgid "allowed anonymous read/write permission for '%s' excluding '%s'"
 msgstr "匿名での '%s' ('%s' を除く)の読み込みを許可しました\n"
 
-#: netsync.cc:1447
-#, fuzzy, c-format
-msgid "detected replay attack in auth netcmd"
-msgstr "auth netcmd 中に繰り返し攻撃を検出\n"
-
-#: netsync.cc:1468
+#: netsync.cc:1531
 #, fuzzy, c-format
 msgid "remote public key hash '%s' is unknown"
 msgstr "リモートの公開鍵ハッシュ '%s' は不明なものです\n"
 
-#: netsync.cc:1484
+#: netsync.cc:1549
+#, fuzzy, c-format
+msgid "detected replay attack in auth netcmd"
+msgstr "auth netcmd 中に繰り返し攻撃を検出\n"
+
+#: netsync.cc:1571
 #, fuzzy, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
@@ -2662,19 +2732,19 @@ msgstr ""
 "純粋シンクとして実行中の '%s' の '%s' ('%s' を除く) の読み込みを拒否しまし"
 "た\n"
 
-#: netsync.cc:1501
+#: netsync.cc:1584
 #, fuzzy, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
 msgstr ""
 "'%s' の '%s' ('%s' を除く)の読み込みをブランチ '%s' のために拒否しました\n"
 
-#: netsync.cc:1511
+#: netsync.cc:1594
 #, fuzzy, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'"
 msgstr "'%s' の匿名での '%s' ('%s' を除く)の読み込みを許可しました\n"
 
-#: netsync.cc:1521
+#: netsync.cc:1605
 #, fuzzy, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
@@ -2683,141 +2753,141 @@ msgstr ""
 "純粋ソースとして実行中の '%s' の '%s' ('%s' を除く) への書き込みを拒否しまし"
 "た\n"
 
-#: netsync.cc:1528
+#: netsync.cc:1613
 #, fuzzy, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'"
 msgstr "'%s' の '%s' ('%s' を除く)への書き込みを拒否しました\n"
 
-#: netsync.cc:1532
+#: netsync.cc:1617
 #, fuzzy, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'"
 msgstr "'%s' の '%s' ('%s' を除く)への書き込みを許可しました\n"
 
-#: netsync.cc:1556
+#: netsync.cc:1641
 #, fuzzy, c-format
 msgid "bad client signature"
 msgstr "不正なクライアント署名\n"
 
-#: netsync.cc:1572
+#: netsync.cc:1657
 #, fuzzy, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
 msgstr "refine されていないアイテム型について予期しない 'refine' コマンド\n"
 
-#: netsync.cc:1669
+#: netsync.cc:1754
 #, c-format
 msgid "unknown bye phase %d received"
 msgstr "不明な bye フェーズ %d を受信"
 
-#: netsync.cc:1684
+#: netsync.cc:1769
 #, fuzzy, c-format
 msgid "Unexpected 'done' command on non-refined item type"
 msgstr "refine されていないアイテム型について予期しない 'done' コマンド\n"
 
-#: netsync.cc:1756
+#: netsync.cc:1841
 #, fuzzy, c-format
 msgid "%s with hash '%s' does not exist in our database"
 msgstr "こちらのデータベースにはハッシュ '%s' の epoch は含まれていません"
 
-#: netsync.cc:1859
+#: netsync.cc:1945
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr ""
 "ブランチ %s について epoch が一致しません。サーバー側 '%s', クライアント側 '%"
 "s'"
 
-#: netsync.cc:1877
+#: netsync.cc:1963
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr "公開鍵 '%s' (%s) についてハッシュ検証に失敗。期待値 '%s'、計算値 '%s'"
 
-#: netsync.cc:1891
+#: netsync.cc:1977
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr "リビジョン証明 '%s' についてハッシュ検証に失敗"
 
-#: netsync.cc:1953
+#: netsync.cc:2039
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "門番から警告を受信: %s"
 
-#: netsync.cc:2040 netsync.cc:2071
+#: netsync.cc:2126 netsync.cc:2157
 msgid "source and sink"
 msgstr "ソースとシンク"
 
-#: netsync.cc:2041 netsync.cc:2072
+#: netsync.cc:2127 netsync.cc:2158
 msgid "source"
 msgstr "ソース"
 
-#: netsync.cc:2041 netsync.cc:2072
+#: netsync.cc:2127 netsync.cc:2158
 msgid "sink"
 msgstr "シンク"
 
-#: netsync.cc:2228
+#: netsync.cc:2314
 #, fuzzy, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr "netcmd dispatch の後でピーア %s の入力バッファがあふれました\n"
 
-#: netsync.cc:2240 netsync.cc:2339
+#: netsync.cc:2326 netsync.cc:2425
 #, fuzzy, c-format
 msgid "protocol error while processing peer %s: '%s'"
 msgstr "ピーア %s: '%s' を処理中にプロトコルエラー発生\n"
 
-#: netsync.cc:2246
+#: netsync.cc:2332
 #, fuzzy, c-format
 msgid "error: %s"
 msgstr "エラー: %s\n"
 
-#: netsync.cc:2310
+#: netsync.cc:2396
 #, fuzzy, c-format
 msgid "connecting to %s"
 msgstr "%s に接続中\n"
 
-#: netsync.cc:2354
+#: netsync.cc:2440
 #, fuzzy, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting"
 msgstr "ピーア %s の I/O を待っている間にタイムアウト, 切断中\n"
 
-#: netsync.cc:2377
+#: netsync.cc:2463
 #, fuzzy, c-format
 msgid "processing failure while talking to peer %s, disconnecting"
 msgstr "ピーア %s と通信中に処理が失敗し、切断中\n"
 
-#: netsync.cc:2394
+#: netsync.cc:2480
 #, fuzzy, c-format
 msgid "successful exchange with %s"
 msgstr "%s との交換に成功\n"
 
-#: netsync.cc:2400
+#: netsync.cc:2486
 #, fuzzy, c-format
 msgid "peer %s disconnected after we informed them of error"
 msgstr "ピーア %s にエラーを報告後に切断されました\n"
 
-#: netsync.cc:2405
+#: netsync.cc:2491
 #, fuzzy, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
 msgstr "ピーア %s と通信中に I/O の失敗、切断中\n"
 
-#: netsync.cc:2471
+#: netsync.cc:2557
 #, fuzzy, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
 msgstr "ピーア %s: '%s' を処理中にプロトコルエラー発生、誤りとして印付け\n"
 
-#: netsync.cc:2503
+#: netsync.cc:2589
 #, fuzzy, c-format
 msgid "accepted new client connection from %s : %s"
 msgstr "%s : %s からの新しいクライアント接続を受理\n"
 
-#: netsync.cc:2540
+#: netsync.cc:2626
 #, fuzzy, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr "ピーア %s: '%s' からを処理中にプロトコルエラー発生、切断中\n"
 
-#: netsync.cc:2551
+#: netsync.cc:2637
 #, fuzzy, c-format
 msgid "peer %s read failed in working state (error)"
 msgstr "ピーア %s についてワーキングステートで読み込みに失敗 (エラー)\n"
 
-#: netsync.cc:2556
+#: netsync.cc:2642
 #, fuzzy, c-format
 msgid ""
 "peer %s read failed in shutdown state (possibly client misreported error)"
@@ -2825,17 +2895,17 @@ msgstr ""
 "ピーア %s についてシャットダウンステートで読み込みに失敗 (おそらくクライアン"
 "トの誤ったエラー報告です)\n"
 
-#: netsync.cc:2562
+#: netsync.cc:2648
 #, fuzzy, c-format
 msgid "peer %s read failed in confirmed state (success)"
 msgstr "ピーア %s について確認ステートで読み込みに失敗 (成功)\n"
 
-#: netsync.cc:2583
+#: netsync.cc:2669
 #, fuzzy, c-format
 msgid "peer %s write failed in working state (error)"
 msgstr "ピーア %s についてワーキングステートで書き込みに失敗 (エラー)\n"
 
-#: netsync.cc:2588
+#: netsync.cc:2674
 #, fuzzy, c-format
 msgid ""
 "peer %s write failed in shutdown state (possibly client misreported error)"
@@ -2843,65 +2913,70 @@ msgstr ""
 "ピーア %s についてシャットダウンステートで書き込みに失敗 (おそらくクライアン"
 "トの誤ったエラー報告です)\n"
 
-#: netsync.cc:2594
+#: netsync.cc:2680
 #, fuzzy, c-format
 msgid "peer %s write failed in confirmed state (success)"
 msgstr "ピーア %s について確認ステートで書き込みに失敗 (成功)\n"
 
-#: netsync.cc:2621
+#: netsync.cc:2707
 #, fuzzy, c-format
 msgid "peer %s processing finished, disconnecting"
 msgstr "ピーア %s 処理終了、切断中\n"
 
-#: netsync.cc:2643
+#: netsync.cc:2729
 #, fuzzy, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
 msgstr "fd %d (ピーア %s) はアイドル時間が長すぎます。切断中\n"
 
-#: netsync.cc:2711
+#: netsync.cc:2797
 #, fuzzy, c-format
 msgid "beginning service on %s : %s"
 msgstr "%s : %s でサービスを開始\n"
 
-#: netsync.cc:2712
+#: netsync.cc:2798
 msgid "<all interfaces>"
 msgstr "<すべてのインターフェース>"
 
-#: netsync.cc:2726
+#: netsync.cc:2812
 #, fuzzy, c-format
 msgid "session limit %d reached, some connections will be refused"
 msgstr "セッション制限 %d に達しました。いくつかの接続は拒否されます\n"
 
-#: netsync.cc:2791
+#: netsync.cc:2879
+#, fuzzy, c-format
+msgid "Network error on peer %s, disconnecting"
+msgstr "ピーア %s から OOB データを受信、切断中\n"
+
+#: netsync.cc:2885
 #, fuzzy, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "ピーア %s から OOB データを受信、切断中\n"
 
-#: netsync.cc:2851
+#: netsync.cc:2945
 #, fuzzy, c-format
 msgid "beginning service on %s"
 msgstr "%s : %s でサービスを開始\n"
 
-#: netsync.cc:2914
+#: netsync.cc:3008
 #, fuzzy, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "ピーア %s から OOB データを受信し、切断中\n"
 
-#: netsync.cc:2963
+#: netsync.cc:3057
 #, fuzzy, c-format
 msgid "finding items to synchronize:"
 msgstr "同期アイテムを検索中:\n"
 
-#: netsync.cc:2971
+#: netsync.cc:3065
 msgid "certificates"
 msgstr "証明書"
 
-#: netsync.cc:3084
+#: netsync.cc:3178
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "鍵 '%s' をみつけることができません"
 
-#: netsync.cc:3124
+#: netsync.cc:3218
 #, fuzzy, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -2910,7 +2985,7 @@ msgstr ""
 "引用符を含むブランチパターンを含める:\n"
 "%s\n"
 
-#: netsync.cc:3130
+#: netsync.cc:3224
 #, fuzzy, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -2919,7 +2994,7 @@ msgstr ""
 "引用符を含むブランチパターンを含めない:\n"
 "%s\n"
 
-#: netsync.cc:3165 netsync.cc:3169
+#: netsync.cc:3259 netsync.cc:3263
 #, c-format
 msgid "network error: %s"
 msgstr "ネットワークエラー: %s"
@@ -2932,7 +3007,7 @@ msgstr "コミット時の作成者を上書き指定"
 msgid "block size in bytes for \"automate stdio\" output"
 msgstr ""
 
-#: options_list.hh:32 options_list.hh:309 options_list.hh:352
+#: options_list.hh:32 options_list.hh:317 options_list.hh:360
 #, c-format
 msgid "cannot be zero or negative"
 msgstr ""
@@ -3011,143 +3086,151 @@ msgid "when rosterifying, drop attrs entries with the given key"
 msgstr "名簿作成中に指定の鍵のエントリの属性を破棄"
 
 #: options_list.hh:228
+msgid "don't perform the operation, just show what would have happened"
+msgstr ""
+
+#: options_list.hh:236
 msgid "file to dump debugging log to, on failure"
 msgstr "失敗時にデバッグログを出力するファイル"
 
-#: options_list.hh:237
+#: options_list.hh:245
 msgid "leave out anything described by its argument"
 msgstr "引数によって説明されるすべてを省く"
 
-#: options_list.hh:245
+#: options_list.hh:253
 msgid "perform the associated file operation"
 msgstr "関連付けられたファイル操作を実行"
 
-#: options_list.hh:253
+#: options_list.hh:261
 msgid "print detailed version number, then exit"
 msgstr "詳細なバージョン番号を表示し、終了"
 
-#: options_list.hh:260
+#: options_list.hh:268
 msgid "display help message"
 msgstr "ヘルプメッセージを表示"
 
-#: options_list.hh:269
+#: options_list.hh:277
 #, fuzzy
 msgid "include anything described by its argument"
 msgstr "引数によって説明されるすべてを省く"
 
-#: options_list.hh:277
+#: options_list.hh:285
 msgid "set key for signatures"
 msgstr "署名の鍵を設定"
 
-#: options_list.hh:285
+#: options_list.hh:293
 msgid "set location of key store"
 msgstr "鍵の保存場所を設定"
 
-#: options_list.hh:294
+#: options_list.hh:302
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "指定の鍵について署名の有無にかかわらず取り込み"
 
-#: options_list.hh:304
+#: options_list.hh:312
 msgid "limit log output to the last number of entries"
 msgstr "ログ出力のエントリ数(最近)を制限"
 
-#: options_list.hh:313
+#: options_list.hh:321
 msgid "file to write the log to"
 msgstr "ログを書き込むファイル"
 
-#: options_list.hh:324
+#: options_list.hh:332
 msgid "set commit changelog message"
 msgstr "コミット変更記録メッセージを設定"
 
-#: options_list.hh:331
+#: options_list.hh:339
 msgid "set filename containing commit changelog message"
 msgstr "コミット変更記録メッセージを含むファイルを設定"
 
-#: options_list.hh:339
+#: options_list.hh:347
 msgid "perform the operations for files missing from workspace"
 msgstr "ワークスペース内ではみつからないファイルについて操作を実行"
 
-#: options_list.hh:347
+#: options_list.hh:355
 msgid "limit log output to the next number of entries"
 msgstr "ログ出力のエントリ数(次)を制限"
 
-#: options_list.hh:357
+#: options_list.hh:365
 msgid "exclude files when printing logs"
 msgstr "ログを表示する際にファイルについては省略"
 
-#: options_list.hh:365
+#: options_list.hh:373
 msgid "do not ignore any files"
 msgstr ""
 
-#: options_list.hh:373
+#: options_list.hh:381
 msgid "exclude merges when printing logs"
 msgstr "ログを表示する際に統合については省略"
 
-#: options_list.hh:381
+#: options_list.hh:389
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr ""
 "~/.monotone/monotonerc または _MTN/monotonerc lua ファイルを読み込まない"
 
-#: options_list.hh:389
+#: options_list.hh:397
 msgid "do not load standard lua hooks"
 msgstr "標準 lua フックを読み込まない"
 
-#: options_list.hh:397
+#: options_list.hh:405
 msgid "record process id of server"
 msgstr "サーバーのプロセス ID を記録"
 
-#: options_list.hh:405
+#: options_list.hh:413
 #, fuzzy
 msgid "suppress verbose, informational and progress messages"
 msgstr "ログおよび進捗を示すメッセージを表示しない"
 
-#: options_list.hh:415
+#: options_list.hh:423
 msgid "load extra rc file"
 msgstr "別の初期化ファイルを読み込む"
 
-#: options_list.hh:423
+#: options_list.hh:431
 #, fuzzy
 msgid "suppress warning, verbose, informational and progress messages"
 msgstr "ログおよび進捗を示すメッセージを表示しない"
 
-#: options_list.hh:433
+#: options_list.hh:441
 msgid "also operate on the contents of any listed directories"
 msgstr "一覧のディレクトリの内容についても処理"
 
-#: options_list.hh:442
+#: options_list.hh:450
 msgid "select revision id for operation"
 msgstr "操作のためのリビジョン ID を選択"
 
-#: options_list.hh:450
+#: options_list.hh:458
 msgid "limit search for workspace to specified root"
 msgstr "ワークスペースの検索を指定のルート下に制限"
 
-#: options_list.hh:458
+#: options_list.hh:466
 msgid "use the current arguments as the future default"
 msgstr "現在の引数を将来のデフォルトとして使用"
 
-#: options_list.hh:466
+#: options_list.hh:474
 msgid "set ticker style (count|dot|none)"
 msgstr "ティッカーのスタイルを設定 (count|dot|none)"
 
-#: options_list.hh:477
+#: options_list.hh:485
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
 msgstr ""
 
-#: options_list.hh:482
+#: options_list.hh:489
+msgid "revision(s) to stop logging at"
+msgstr ""
+
+#: options_list.hh:497
 msgid "perform the operations for unknown files from workspace"
 msgstr "ワークスペース内では不明なファイルについて操作を実行"
 
-#: options_list.hh:490
+#: options_list.hh:506
 msgid "verbose completion output"
 msgstr "冗長な完了メッセージ"
 
-#: options_list.hh:498
+#: options_list.hh:514
 msgid "print version number, then exit"
 msgstr "バージョン番号を表示し、終了"
 
-#: options_list.hh:506
+#: options_list.hh:522
 msgid "insert command line arguments taken from the given file"
 msgstr "指定のファイルの内容をコマンド行引数に挿入"
 
@@ -3263,6 +3346,28 @@ msgstr "パス %s は存在しません"
 #: rcs_import.cc:1269
 msgid "tags"
 msgstr "タグ"
+
+#: restrictions.cc:60 restrictions.cc:77
+#, c-format
+msgid "conflicting include/exclude on path '%s'"
+msgstr ""
+
+#: restrictions.cc:103 restrictions.cc:141
+#, fuzzy, c-format
+msgid "restriction includes unknown path '%s'"
+msgstr "不明なパス '%s'\n"
+
+#: restrictions.cc:114 restrictions.cc:155
+#, fuzzy, c-format
+msgid "restriction excludes unknown path '%s'"
+msgstr "不明なパス '%s'\n"
+
+#: restrictions.cc:118 restrictions.cc:159
+#, fuzzy, c-format
+msgid "%d unknown path"
+msgid_plural "%d unknown paths"
+msgstr[0] "不明なパス '%s'\n"
+msgstr[1] "不明なパス '%s'\n"
 
 #: revision.cc:841
 #, fuzzy, c-format
@@ -3840,6 +3945,15 @@ msgstr "ワークスペースは壊れています: %s は存在しません"
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 
+#~ msgid "no hostname given"
+#~ msgstr "ホスト名を指定して下さい"
+
+#~ msgid "PATTERN ..."
+#~ msgstr "PATTERN..."
+
+#~ msgid "not serving branch '%s'"
+#~ msgstr "ブランチ '%s' は提供していません"
+
 #~ msgid "failed to parse date string '%s': %s"
 #~ msgstr "データ文字列 '%s' の解析に失敗: %s"
 
@@ -3917,9 +4031,6 @@ msgstr ""
 
 #~ msgid "updating %s"
 #~ msgstr "%s を更新しています"
-
-#~ msgid "unknown path '%s'\n"
-#~ msgstr "不明なパス '%s'\n"
 
 #~ msgid "negative or zero last not allowed\n"
 #~ msgstr "最終値を負または零にすることはできません\n"

@@ -146,8 +146,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-12 21:50+0100\n"
-"PO-Revision-Date: 2006-12-12 21:54+0100\n"
+"POT-Creation-Date: 2006-12-15 00:27+0100\n"
+"PO-Revision-Date: 2006-12-15 00:30+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -3522,6 +3522,28 @@ msgstr "sökvägen %s finns inte"
 msgid "tags"
 msgstr "taggar"
 
+#: restrictions.cc:60 restrictions.cc:77
+#, c-format
+msgid "conflicting include/exclude on path '%s'"
+msgstr "motsägelsefulla include och exclude för sökvägen '%s'"
+
+#: restrictions.cc:103 restrictions.cc:141
+#, c-format
+msgid "restriction includes unknown path '%s'"
+msgstr "restriktionen har med okänd sökväg '%s'"
+
+#: restrictions.cc:114 restrictions.cc:155
+#, c-format
+msgid "restriction excludes unknown path '%s'"
+msgstr "restriktionen utesluter ökänd sökväg '%s'"
+
+#: restrictions.cc:118 restrictions.cc:159
+#, c-format
+msgid "%d unknown path"
+msgid_plural "%d unknown paths"
+msgstr[0] "%d okänd sökväg"
+msgstr[1] "%d okända sökvägar"
+
 #: revision.cc:841
 #, c-format
 msgid "scanning for bogus merge edges"
@@ -4341,9 +4363,6 @@ msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 #~ msgstr ""
 #~ "revisionen %s är inte med i någon gren,\n"
 #~ "använder grenen %s till arbetskopian"
-
-#~ msgid "unknown path '%s'\n"
-#~ msgstr "okänd sökväg '%s'\n"
 
 #~ msgid "Unknown file '%s' for log command"
 #~ msgstr "Okänd fil '%s'"
