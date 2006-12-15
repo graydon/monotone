@@ -1,3 +1,9 @@
+2006-12-15  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/fail_cleanly_when__MTN_format_empty: Rename to...
+	* tests/fail_cleanly_when__MTN_format_corrupt: ...this, and
+	add a few more test cases.
+
 2006-12-15  Tero Koskinen  <tero.koskinen@iki.fi>
 
 	* work_migration.cc (get_ws_format): Fail cleanly when _MTN/format
