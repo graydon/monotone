@@ -901,7 +901,10 @@ workspace::classify_roster_paths(roster_t const & ros,
       if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
         {
           // dirs don't have content changes
-          unchanged.insert(sp);
+          if (directory_exists(fp))
+              unchanged.insert(sp);
+          else
+              missing.insert(sp);
         }
       else
         {
