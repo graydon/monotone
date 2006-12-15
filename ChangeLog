@@ -1,5 +1,13 @@
 2006-12-14  Thomas Keller  <me@thomaskeller.biz>
 
+	* work.cc: handle missing directories properly in 
+        classify_roster_paths
+        * automate.cc: trailing slash also for missing directories
+        * tests/...: adapted automate_inventory test which now tests
+        for unknown, added (but missing) and dropped (uncommitted) dirs
+
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
 	* POTFILES.in: added missing restrictions.cc
 	* restrictions.cc: pluralized "%d missing paths"
 

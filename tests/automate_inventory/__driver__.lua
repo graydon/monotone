@@ -150,4 +150,28 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 check(grep('^R   1 0 original$', "stdout"), 0, false, false)
 check(grep('^ RP 0 1 renamed$', "stdout"), 0, false, false)
 
--- need tests for deleted and renamed directories, once these actually work!
+-- check if unknown/missing/dropped directories are recognized as such
+
+mkdir("new_dir")
+check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
+check(grep('^  U 0 0 new_dir\/$', "stdout"), 0, false, false)
+
+check(mtn("add", "new_dir"), 0, false, false)
+remove("new_dir");
+
+check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
+check(grep('^ AM 0 0 new_dir\/$', "stdout"), 0, false, false)
+
+mkdir("new_dir")
+commit()
+
+check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
+check(grep('^    0 0 new_dir\/$', "stdout"), 0, false, false)
+
+remove("new_dir")
+check(mtn("drop", "new_dir"), 0, false, false)
+
+check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
+check(grep('^D   0 0 new_dir\/$', "stdout"), 0, false, false)
+
+-- some tests for renaming directories are still missing here!
