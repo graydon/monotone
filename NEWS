@@ -48,6 +48,8 @@ xxx Dec xx xx:xx:xx UTC 2006
 
 	- reset options between "automate stdio" commands
 
+	- another compile fix for gcc3
+
 
 	Other
 
