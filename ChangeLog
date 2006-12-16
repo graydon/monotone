@@ -1,3 +1,6 @@
+2006-12-16  Matt Johnston  <matt@ucc.asn.au>
+	* cmd_list.cc: ls_known, ls_changed: sort path output.
+
 2006-12-15  Nathaniel Smith  <njs@pobox.com>
 
 	* paths.cc: Add a few more normalization tests for things like
