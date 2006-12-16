@@ -770,11 +770,18 @@ AUTOMATE(inventory, "", options::opts::none)
 
       string path_suffix;
 
+      // ensure that directory nodes always get a trailing slash even
+      // if they're missing from the workspace or have been deleted
+      // but skip the root node which do not get this trailing slash appended
       if (curr.has_node(i->first))
         {
-          // Explicitly skip the root dir for now. The trailing / dir
-          // format isn't going to work here.
           node_t n = curr.get_node(i->first);
+          if (is_root_dir_t(n)) continue;
+          if (is_dir_t(n)) path_suffix = "/";
+        }
+      else if (base.has_node(i->first))
+        {
+          node_t n = base.get_node(i->first);
           if (is_root_dir_t(n)) continue;
           if (is_dir_t(n)) path_suffix = "/";
         }

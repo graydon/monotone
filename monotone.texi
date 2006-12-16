@@ -4132,6 +4132,18 @@ contained project in @var{destbranch} to be propagated back to
 both projects nested as in @var{destbranch} instead of only the project
 originally in @var{sourcebranch}, which is almost certainly not what would be
 intended.
+
+@item mtn import --branch=@var{branch} [--message=@var{message}] [--dry-run] @var{dir}
+@item mtn import --revision=@var{revision} [--message=@var{message}] [--dry-run] @var{dir}
+This command imports the contents of the given directory and commits it
+to the head of the given branch or as a child of the given revision (and
+consequently into the branch that revision resides in).
+
+If the given branch doesn't exist, it is created automatically.  If the
+branch already exists, any missing files are dropped and any unknown
+files are added before commiting.
+
+If @command{--dry-run} is given, no commit is done.
 @end ftable
 
 
@@ -4172,6 +4184,12 @@ workspace, monotone will use the work list to build a new revision,
 which it will then commit to the database. The new revision will have
 any added entries inserted in its manifest.
 
+@item mtn [--no-respect-ignore] mkdir @var{directory...}
+This command creates a directory in the filesystem relative to your
+current location and adds it to your workspace's ``work list''.  The
+changes are not reflected in your database until such time as you
+perform a commit.  If you use the @option{--no-respect-ignore} flag,
+entries in .mtn-ignore will not be honoured.
 
 @item mtn [--execute] drop @var{pathname...}
 @itemx mtn drop --missing
@@ -4275,13 +4293,16 @@ Multiple @option{--message} options may be provided on the command line.
 The log message will be formed by concatenating the @option{--message}
 options provided, with each one starting at the beginning of a new line.
 
-The @file{_MTN/log} file can be edited by the user during their daily work
-to record the changes made to the workspace. When running the
-@command{commit} command without a @var{logmsg} supplied, the contents
-of the @file{_MTN/log} file will be read and passed to the Lua hook
+The @file{_MTN/log} file can be edited by the user during their daily
+work to record the changes made to the workspace. When running the
+@command{commit} command without a @var{logmsg} supplied, the contents of
+the @file{_MTN/log} file will be read and passed to the Lua hook
 @code{edit_comment} as a second parameter named @var{user_log_content}.
-If the commit is successful, the @file{_MTN/log} file is cleared of
-all content making it ready for another edit/commit cycle.
+The log message will be prepended with a 'magic' string that must be
+removed to confirm the commit.  This allows the user to easily cancel a
+commit, without emptying the entire log message.  If the commit is
+successful, the @file{_MTN/log} file is cleared of all content making it
+ready for another edit/commit cycle.
 
 If a @option{--branch} option is specified, the @command{commit} command
 commits to this branch (creating it if necessary).  The branch becomes
@@ -4586,7 +4607,7 @@ Specifying only the pathname "." will restrict @command{status} to files
 changed within the current subdirectory of the workspace.
 
 @item mtn log
-@itemx mtn log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
+@itemx mtn log [--last=@var{n}] [--next=@var{n}] [--revision=@var{id} [...]] [--to=@var{id} [...]] [--brief] [--no-merges] [--no-files] [--diffs] [@var{file} [...]]
 
 This command prints out a log, in reverse-ancestry order, of small
 history summaries.  Each summary contains author, date, changelog and
@@ -4603,6 +4624,11 @@ If @option{--next=}@var{n} is given, at most @var{n} log entries towards
 the current head revision will be given from the workspace's base
 revision in forward-ancestry order.  This is useful to review changes
 that will be applied to the workspace when @command{update} is run.
+
+if @option{--to=}@var{id} is given, log will only print entries for revisions
+that would not also be printed when logging from the revisions specified in
+@option{--to}. This is useful for reviewing changes between two points
+in history.
 
 By default, the log entries for merge nodes are shown.  If
 @option{--no-merges} is given, the log entries for these nodes will be

@@ -115,7 +115,7 @@ validate_roster_paths(path_set const & included_paths,
         }
     }
 
-  N(bad == 0, F("%d unknown paths") % bad);
+  N(bad == 0, FP("%d unknown path", "%d unknown paths", bad) % bad);
 }
 
 void
@@ -156,7 +156,7 @@ validate_workspace_paths(path_set const & included_paths,
         }
     }
 
-  N(bad == 0, F("%d unknown paths") % bad);
+  N(bad == 0, FP("%d unknown path", "%d unknown paths", bad) % bad);
 }
 
 restriction::restriction(std::vector<file_path> const & includes,
@@ -292,8 +292,12 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
     }
   else
     {
-      L(FL("default exclude of nid %d path '%s'") 
-        % nid % file_path(sp));
+      if (global_sanity.debug)
+      {
+        // printing this slows down "log <file>".
+        L(FL("(debug) default exclude of nid %d path '%s'") 
+          % nid % file_path(sp));
+      }
       return false;
     }
 }

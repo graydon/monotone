@@ -1,3 +1,214 @@
+2006-12-16  Matt Johnston  <matt@ucc.asn.au>
+	* cmd_list.cc: ls_known, ls_changed: sort path output.
+
+2006-12-15  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Add a few more normalization tests for things like
+	"foo/.".
+
+2006-12-15  Derek Scherger  <derek@echologic.com>
+
+	* monotone.cc (cpp_main): indent try/catch block properly
+
+2006-12-15  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/fail_cleanly_when__MTN_format_empty: Rename to...
+	* tests/fail_cleanly_when__MTN_format_corrupt: ...this, and
+	add a few more test cases.
+
+2006-12-15  Tero Koskinen  <tero.koskinen@iki.fi>
+
+	* work_migration.cc (get_ws_format): Fail cleanly when _MTN/format
+	is broken.
+	* tests/fail_cleanly_when__MTN_format_empty: Test.
+
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* work.cc: handle missing directories properly in 
+        classify_roster_paths
+        * automate.cc: trailing slash also for missing directories
+        * tests/...: adapted automate_inventory test which now tests
+        for unknown, added (but missing) and dropped (uncommitted) dirs
+
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* POTFILES.in: added missing restrictions.cc
+	* restrictions.cc: pluralized "%d missing paths"
+
+2006-12-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* options.cc (name): Call localize_monotone() before fetching an
+	option's description, to make sure that it is translated properly.
+
+2006-12-13  Markus Schiltknecht  <markus@bluegap.ch>
+
+	Made a lua tester function more bullet proof.
+
+	* tester.lua (samelines): do not throw a format error if
+	the file ends before expected.
+
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* NEWS: added note about new automate get_file_of
+
+2006-12-12  Ben Walton  <bdwalton@gmail.com>
+ 
+        * cmd_ws_cc: Added mtn mkdir
+        * testsuite.lua: added mtn mkdir test
+        * included tests/mkdir as unit testing for mtn mkdir
+        * added documentation to monotone.texi
+
+2006-12-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* HACKING: Updated "Patch submission guidelines" section.
+
+2006-12-11  Ben Walton  <bdwalton@gmail.com>
+ 
+        * cmd_ws_commit.cc,
+        tests/commit_using__MTN_log/commit_log_modified_return.lua,
+        tests/commit_using__MTN_log/__driver__.lua:
+        Added the requirement that when _MTN/log is pre-specified by
+        the user, that the user remove a 'magic' line prior to the
+        commit being accepted.  Modified the units tests to verify this.
+        Updated texinfo to match this new behaviour.
+
+2006-12-10  Timothy Brownawell <tbrownaw@gmail.com>
+
+	Implement a "mtn log --to <revision>", that doesn't log the
+	revisions that would be logged when <revision> was given as
+	the starting revision.
+
+2006-12-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/netsync_permissions_wildcards/__driver__.lua:
+	Don't forget to get() read-permissions and write-permissions.
+	Also, netsync.start should use the full blown netsync.lua,
+	not the minimal start.
+
+2006-12-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/netsync_permissions_wildcards/__driver__.lua,
+	tests/netsync_permissions_wildcards/read-permissions,
+	tests/netsync_permissions_wildcards/write-permissions,
+	testsuite.lua: Test how well netsync works when read-permissions
+	contains wildcards as part of the pattern.
+
+2006-12-08  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: A build failure showed me I needed to install
+	libboost-serialization-dev, so let's share that information.
+
+2006-12-07  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database.cc (delete_existing_rev_and_certs): When killing a
+	revision, also remove it's height from the database.
+
+2006-12-06  Thomas Keller <me@thomaskeller.biz>
+
+	Existing test for previous change in author cert selection
+	tweaked (previously b_and_t_selector_globbing)
+
+2006-12-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Version 1.34 of boost changes some things. In particular fs::path
+	is now a typedef (breaks the declaration we had in vocab.hh), and
+	some of our exceptions are different.
+
+	Remove the vocab.hh declaration of fs::path, and #if/#else some things in
+	file_io.cc to handle the changing names.
+
+2006-12-05  Thomas Keller  <me@thomaskeller.biz>
+
+	* database.cc: removed implicit wildcards for author cert selections
+
+2006-12-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* ChangeLog: Fixed name on previous entry.
+
+2006-12-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* contrib/monotone.bash_completion: Updated and reformated some what.
+	Still needs work.  The bulk of this could probably be generated
+	automatically.
+
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Make sure some
+	global variables, like found_workspace, are properly initialised
+	after the temporary bookkeeping directory is created.
+
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
+	* tests/import/__driver__.lua: Test using --message-file.
+
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Add the usual
+	restriction options, as well as --author and --date.
+	* tests/import/__driver__.lua: Test the restrictions a bit.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)), options_list.hh:
+	Implement --dry-run, locally for the import command for now.
+	* po/sv.po: Adjust for the added string.
+	* tests/import/__driver__.lua: Test it.
+	* monotone.texi (Tree): Document it.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
+	* tests/import/__driver__.lua: Add a test to show that it really
+	doesn't import a workspace.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Add import command.
+	It's quite simplistic, it basically creates a _MTN bookkeeping
+	directory filled with information derived from a given branch or
+	revision, then does the following:
+		mtn add --unknown
+		mtn drop --missing
+		mtn commit
+	It will refuse to import from a workspace.
+	* po/sv.po: Adjust for the added and changed strings.
+	* tests/import/__driver__.lua, testsuite.lua: Test it.
+	* monotone.texi (Tree): Document it.
+
+2006-11-28  Christian Ohler <ohler+mtn@fastmail.net>
+
+	Fix automate bug where input would be garbled if a string needed
+	multiple read() calls. (patch from ML; applied by Timothy Brownawell)
+
+2006-11-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* restrictions.cc: limit some verbose debugging that slows "log <file>"
+
+2006-12-04  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Bugfix: the heights index in the
+	multi_index_container was using the wrong sort order.
+	* annotate.cc (do_annotate): Calling do_annotate_node() might
+	invalidate the iterator pointing to the current work unit.
+
+2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate, do_annotate_node): Use a
+	boost::multi_index_container instead of a priority_queue together
+	with a map to store the work units to be processed.
+
+2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Minor cleanups.
+
+2006-12-01  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate_node): Remove unnecessary variable.
+
+2006-11-27  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate, do_annotate_node): use markings
+	together with heights in order to significantly speed up annotate.
+
 2006-11-22  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
 
 	* rev_height.cc: add memcmp to global namespace for sunpro.

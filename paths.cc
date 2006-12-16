@@ -11,7 +11,6 @@
 #include <string>
 #include <sstream>
 
-#include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
@@ -27,6 +26,7 @@ using std::exception;
 using std::ostream;
 using std::ostringstream;
 using std::string;
+
 
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure
@@ -716,6 +716,8 @@ UNIT_TEST(paths, file_path_internal)
                             "_MTN",
                             "_MTN/blah",
                             "foo/bar/",
+                            "foo/bar/.",
+                            "foo/bar/./",
                             "foo/./bar",
                             "./foo",
                             ".",
@@ -877,6 +879,8 @@ UNIT_TEST(paths, file_path_external_null_prefix)
   //check_fp_normalizes_to("foo//bar", "foo/bar");
   check_fp_normalizes_to("foo/../bar", "bar");
   check_fp_normalizes_to("foo/bar/", "foo/bar");
+  check_fp_normalizes_to("foo/bar/.", "foo/bar");
+  check_fp_normalizes_to("foo/bar/./", "foo/bar");
   check_fp_normalizes_to("foo/./bar/", "foo/bar");
   check_fp_normalizes_to("./foo", "foo");
   //check_fp_normalizes_to("foo///.//", "foo");
@@ -957,6 +961,8 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
   //check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/../bar", "a/b/bar");
   check_fp_normalizes_to("foo/bar/", "a/b/foo/bar");
+  check_fp_normalizes_to("foo/bar/.", "a/b/foo/bar");
+  check_fp_normalizes_to("foo/bar/./", "a/b/foo/bar");
   check_fp_normalizes_to("foo/./bar/", "a/b/foo/bar");
   check_fp_normalizes_to("./foo", "a/b/foo");
   //check_fp_normalizes_to("foo///.//", "a/b/foo");
@@ -1077,6 +1083,8 @@ UNIT_TEST(paths, bookkeeping)
                             "foo/../bar",
                             "../bar",
                             "foo/bar/",
+                            "foo/bar/.",
+                            "foo/bar/./",
                             "foo/./bar",
                             "./foo",
                             ".",

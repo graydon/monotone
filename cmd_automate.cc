@@ -152,7 +152,7 @@ class automate_reader
     size_t got = 0;
     while(got < size)
       {
-        int n = read(str, size-got);
+        int n = read(str+got, size-got);
         got += n;
       }
     out = std::string(str, size);
@@ -160,13 +160,12 @@ class automate_reader
     L(FL("Got string '%s'") % out);
     return true;
   }
-  static ssize_t read(void *buf, size_t nbytes, bool eof_ok = false)
+  std::streamsize read(char *buf, size_t nbytes, bool eof_ok = false)
   {
-    ssize_t rv;
+    std::streamsize rv;
 
-    rv = ::read(0, buf, nbytes);
+    rv = in.rdbuf()->sgetn(buf, nbytes);
 
-    E(rv >= 0, F("read from client failed with error code: %d") % rv);
     E(eof_ok || rv > 0, F("Bad input to automate stdio: unexpected EOF"));
     return rv;
   }

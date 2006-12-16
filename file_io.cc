@@ -23,6 +23,24 @@
 #include "platform-wrapped.hh"
 #include "numeric_vocab.hh"
 
+
+// Parts of boost::filesystem change in 1.34 . One particular
+// difference is that some exceptions are different now.
+
+#include <boost/version.hpp>
+
+#if BOOST_VERSION < 103400
+# define FS_ERROR fs::filesystem_error
+# define FS_ERROR_SYSTEM native_error
+#else
+# define FS_ERROR fs::filesystem_path_error
+# define FS_ERROR_SYSTEM system_error
+#endif
+
+
+
+
+
 // this file deals with talking to the filesystem, loading and
 // saving files.
 
@@ -168,7 +186,7 @@ mkdir_p(any_path const & p)
     {
       fs::create_directories(mkdir(p));
     }
-  catch (fs::filesystem_error & err)
+  catch (FS_ERROR & err)
     {
       // check for this case first, because in this case, the next line will
       // print "could not create directory: Success".  Which is unhelpful.
@@ -176,7 +194,7 @@ mkdir_p(any_path const & p)
         F("could not create directory '%s'\nit is a file") % p);
       E(false,
         F("could not create directory '%s'\n%s")
-        % err.path1().native_directory_string() % os_strerror(err.native_error()));
+        % err.path1().native_directory_string() % os_strerror(err.FS_ERROR_SYSTEM()));
     }
   require_path_is_directory(p,
                             F("could not create directory '%s'") % p,
@@ -204,11 +222,11 @@ do_shallow_deletion_with_sane_error_message(any_path const & p)
     {
       fs::remove(fp);
     }
-  catch (fs::filesystem_error & err)
+  catch (FS_ERROR & err)
     {
       E(false, F("could not remove '%s'\n%s")
         % err.path1().native_directory_string()
-        % os_strerror(err.native_error()));
+        % os_strerror(err.FS_ERROR_SYSTEM()));
     }
 }
 

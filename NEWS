@@ -1,3 +1,61 @@
+xxx Dec xx xx:xx:xx UTC 2006
+
+	0.32 release.
+
+	Changes
+
+	- "mtn serve" no longer takes patterns on the command line.
+	  Use the permissions hooks instead.
+
+	- author selectors no longer have implicit wildcarding
+
+
+	Speed improvements
+
+	- "mtn annotate file" and "mtn log file" are generally much
+	  faster now, dependant on the number of revisions that
+	  changed the file. Both commands as well as "mtn automate
+	  toposort" make use of data called "heights" caching the
+	  topological order of all revisions.
+
+
+	New features
+
+	- automate content_diff
+
+	- automate get_file_of (same as get_file, but expects a
+	  file path and optionally a revision)
+
+	- "mtn import" command
+
+	- "mtn log --to"
+
+	- netsync_note_* hooks are given much more information,
+	  inlcuding a http/smtp/etc style status code
+
+	- includedirpattern(dir, fileglob) function for hooks
+
+
+	Bug fixed
+
+	- bug in "automate stdio" that would result in monotone
+	  garbling its input in some circumstances fixed
+
+	- spawn_redirected hook function now understands a blank
+	  filename to mean not to redirect that stream
+
+	- "mtn log" is now in proper topological order
+
+	- reset options between "automate stdio" commands
+
+	- another compile fix for gcc3
+
+
+	Other
+
+	- notes/ directory
+
+
 Sat Nov 11 11:06:44 PST 2006
 
         0.31 release.  Code cleanups and bug fixes.
