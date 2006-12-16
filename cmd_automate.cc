@@ -74,8 +74,8 @@ static string const interface_version = "4.0";
 // Error conditions: None.
 AUTOMATE(interface_version, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   output << interface_version << "\n";
 }
@@ -152,7 +152,7 @@ class automate_reader
     size_t got = 0;
     while(got < size)
       {
-        int n = read(str, size-got);
+        int n = read(str+got, size-got);
         got += n;
       }
     out = std::string(str, size);
@@ -160,13 +160,12 @@ class automate_reader
     L(FL("Got string '%s'") % out);
     return true;
   }
-  static ssize_t read(void *buf, size_t nbytes, bool eof_ok = false)
+  std::streamsize read(char *buf, size_t nbytes, bool eof_ok = false)
   {
-    ssize_t rv;
+    std::streamsize rv;
 
-    rv = ::read(0, buf, nbytes);
+    rv = in.rdbuf()->sgetn(buf, nbytes);
 
-    E(rv >= 0, F("read from client failed with error code: %d") % rv);
     E(eof_ok || rv > 0, F("Bad input to automate stdio: unexpected EOF"));
     return rv;
   }
@@ -329,8 +328,9 @@ struct automate_ostream : public std::ostream
 
 AUTOMATE(stdio, "", options::opts::automate_stdio_size)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
+
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);
   vector<pair<string, string> > params;

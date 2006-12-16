@@ -110,6 +110,10 @@
 
 #include "vocab.hh"
 
+#include <boost/filesystem/path.hpp>
+
+namespace fs = boost::filesystem;
+
 typedef std::vector<path_component> split_path;
 
 const path_component the_null_component;

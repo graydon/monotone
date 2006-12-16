@@ -1916,6 +1916,9 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   execute(query("DELETE from revision_ancestry WHERE child = ?")
           % text(rid.inner()()));
 
+  execute(query("DELETE from heights WHERE revision = ?")
+          % text(rid.inner()()));
+
   execute(query("DELETE from revisions WHERE id = ?")
           % text(rid.inner()()));
 
@@ -2478,6 +2481,7 @@ static void selector_to_certname(selector_type ty,
   switch (ty)
     {
     case selectors::sel_author:
+      prefix = suffix = "";
       s = author_cert_name;
       break;
     case selectors::sel_branch:

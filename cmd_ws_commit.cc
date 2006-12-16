@@ -40,6 +40,7 @@ get_log_message_interactively(revision_t const & cs,
   external summary_external;
   utf8_to_system(utf8(summary.inner()()), summary_external);
 
+  string magic_line = _("*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****");
   string commentary_str;
   commentary_str += string(70, '-') + "\n";
   commentary_str += _("Enter a description of this change.\n"
@@ -53,13 +54,25 @@ get_log_message_interactively(revision_t const & cs,
 
   utf8 user_log_message;
   app.work.read_user_log(user_log_message);
+
+  //if the _MTN/log file was non-empty, we'll append the 'magic' line
+  utf8 user_log;
+  if (user_log_message().length() > 0)
+    user_log = magic_line + "\n" + user_log_message();
+  else
+    user_log = user_log_message();
+    
   external user_log_message_external;
-  utf8_to_system(user_log_message, user_log_message_external);
+  utf8_to_system(user_log, user_log_message_external);
 
   external log_message_external;
   N(app.lua.hook_edit_comment(commentary, user_log_message_external,
                               log_message_external),
     F("edit of log message failed"));
+
+  N(log_message_external().find(magic_line) == string::npos,
+    F("failed to remove magic line; commit cancelled"));
+
   system_to_utf8(log_message_external, log_message);
 }
 
@@ -248,6 +261,49 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   }
 }
 
+CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
+    N_("create one or more directories and add them to the workspace"),
+    options::opts::no_ignore)
+{
+  if (args.size() < 1)
+    throw usage(name);
+
+  app.require_workspace();
+
+  path_set paths;
+  //spin through args and try to ensure that we won't have any collisions
+  //before doing any real filesystem modification.  we'll also verify paths
+  //against .mtn-ignore here.
+  for (vector<utf8>::const_iterator i = args.begin();
+       i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      file_path fp(sp);
+
+      require_path_is_nonexistent
+        (fp, F("directory '%s' already exists") % fp);
+
+      //we'll treat this as a user (fatal) error.  it really
+      //wouldn't make sense to add a dir to .mtn-ignore and then
+      //try to add it to the project with a mkdir statement, but
+      //one never can tell...
+      N(app.opts.no_ignore || !app.lua.hook_ignore_file(fp),
+        F("ignoring directory '%s' [see .mtn-ignore]") % fp);
+
+      paths.insert(sp);
+    }
+
+  //this time, since we've verified that there should be no collisions,
+  //we'll just go ahead and do the filesystem additions.
+  for (path_set::const_iterator i = paths.begin();
+       i != paths.end(); ++i)
+    {
+      mkdir_p(file_path(*i));
+    }
+
+  app.work.perform_additions(paths, false, true);
+}
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
     N_("add files to workspace"),
@@ -943,6 +999,107 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   revision_t rev;
   make_revision_for_workspace(revision_id(), cset(), rev);
   app.work.put_work_rev(rev);
+}
+
+CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
+  N_("import the contents of the given directory tree into a given branch"),
+  options::opts::branch | options::opts::revision |
+  options::opts::message | options::opts::msgfile |
+  options::opts::dryrun |
+  options::opts::no_ignore | options::opts::exclude |
+  options::opts::author | options::opts::date)
+{
+  revision_id ident;
+  system_path dir;
+
+  N(args.size() == 1,
+    F("you must specify a directory to import"));
+
+  if (app.opts.revision_selectors.size() == 1)
+    {
+      // use specified revision
+      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
+      N(app.db.revision_exists(ident),
+        F("no such revision '%s'") % ident);
+
+      cert_value b;
+      guess_branch(ident, app, b);
+
+      I(!app.opts.branch_name().empty());
+      cert_value branch_name(app.opts.branch_name());
+      base64<cert_value> branch_encoded;
+      encode_base64(branch_name, branch_encoded);
+
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
+
+      L(FL("found %d %s branch certs on revision %s")
+        % certs.size()
+        % app.opts.branch_name
+        % ident);
+
+      N(certs.size() != 0, F("revision %s is not a member of branch %s")
+        % ident % app.opts.branch_name);
+    }
+  else
+    {
+      // use branch head revision
+      N(!app.opts.branch_name().empty(),
+        F("use --revision or --branch to specify what to checkout"));
+
+      set<revision_id> heads;
+      get_branch_heads(app.opts.branch_name(), app, heads);
+      if (heads.size() > 1)
+        {
+          P(F("branch %s has multiple heads:") % app.opts.branch_name);
+          for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+            P(i18n_format("  %s") % describe_revision(app, *i));
+          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branch_name);
+        }
+      if (heads.size() > 0)
+        ident = *(heads.begin());
+    }
+
+  dir = system_path(idx(args, 0));
+  require_path_is_directory
+    (dir,
+     F("import directory '%s' doesn't exists") % dir,
+     F("import directory '%s' is a file") % dir);
+
+  app.create_workspace(dir);
+
+  revision_t rev;
+  make_revision_for_workspace(ident, cset(), rev);
+  app.work.put_work_rev(rev);
+
+  // prepare stuff for 'add' and so on.
+  app.found_workspace = true;       // Yup, this is cheating!
+
+  vector<utf8> empty_args;
+  options save_opts;
+  // add --unknown
+  save_opts.no_ignore = app.opts.no_ignore;
+  save_opts.exclude_patterns = app.opts.exclude_patterns;
+  app.opts.no_ignore = false;
+  app.opts.exclude_patterns = std::vector<utf8>();
+  app.opts.unknown = true;
+  process(app, "add", empty_args);
+  app.opts.unknown = false;
+  app.opts.no_ignore = save_opts.no_ignore;
+  app.opts.exclude_patterns = save_opts.exclude_patterns;
+
+  // drop --missing
+  app.opts.missing = true;
+  process(app, "drop", empty_args);
+  app.opts.missing = false;
+
+  // commit
+  if (!app.opts.dryrun)
+    process(app, "commit", empty_args);
+
+  // clean up
+  delete_dir_recursive(bookkeeping_root);
 }
 
 CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),

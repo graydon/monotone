@@ -351,6 +351,9 @@ ls_known(app_state & app, vector<utf8> const & args)
                         app.opts.depth,
                         new_roster, app);
 
+  // to be printed sorted
+  vector<split_path> print_paths;
+
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
@@ -362,9 +365,16 @@ ls_known(app_state & app, vector<utf8> const & args)
         {
           split_path sp;
           new_roster.get_name(nid, sp);
-          cout << file_path(sp) << "\n";
+          print_paths.push_back(sp);
         }
     }
+    
+  sort(print_paths.begin(), print_paths.end());
+  for (vector<split_path>::const_iterator sp = print_paths.begin();
+       sp != print_paths.end(); sp++)
+  {
+    cout << *sp << "\n";
+  }
 }
 
 static void
@@ -441,6 +451,9 @@ ls_changed(app_state & app, vector<utf8> const & args)
   set<node_id> nodes;
   select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
 
+  // to be printed sorted
+  vector<split_path> print_paths;
+
   for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
        ++i)
     {
@@ -449,7 +462,14 @@ ls_changed(app_state & app, vector<utf8> const & args)
         old_roster.get_name(*i, sp);
       else
         new_roster.get_name(*i, sp);
-      cout << sp << endl;
+      print_paths.push_back(sp);
+    }
+
+    sort(print_paths.begin(), print_paths.end());
+    for (vector<split_path>::const_iterator sp = print_paths.begin();
+         sp != print_paths.end(); sp++)
+    {
+      cout << *sp << endl;
     }
 
 }
@@ -560,8 +580,9 @@ namespace
 // Error conditions: None.
 AUTOMATE(keys, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
+  
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
   // public_hash, private_hash, public_location, private_location
@@ -651,8 +672,8 @@ AUTOMATE(keys, "", options::opts::none)
 // and exits with status 1.
 AUTOMATE(certs, N_("REV"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   vector<cert> certs;
 
