@@ -1,3 +1,7 @@
+2006-12-16  Joel Rosdahl  <joel@rosdahl.net>
+
+	* po/sv.po: Corrections of Swedish translation.
+
 2006-12-16  Matt Johnston  <matt@ucc.asn.au>
 	* cmd_list.cc: ls_known, ls_changed: sort path output.
 
