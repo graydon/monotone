@@ -3,6 +3,10 @@
 	* paths.cc: Add a few more normalization tests for things like
 	"foo/.".
 
+2006-12-15  Derek Scherger  <derek@echologic.com>
+
+	* monotone.cc (cpp_main): indent try/catch block properly
+
 2006-12-15  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/fail_cleanly_when__MTN_format_empty: Rename to...
