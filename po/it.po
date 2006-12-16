@@ -589,7 +589,7 @@ msgstr "cancella una coppia di chiavi"
 #: cmd_key_cert.cc:67
 #, c-format
 msgid "dropping public key '%s' from database"
-msgstr "sto cancellando la chiave pubblica ‘%s’ dal database"
+msgstr "cancello la chiave pubblica ‘%s’ dal database"
 
 #: cmd_key_cert.cc:77
 #, c-format
@@ -3793,7 +3793,7 @@ msgstr ""
 #: work.cc:682
 #, c-format
 msgid "dropping %s"
-msgstr "sto cancellando ‘%s’"
+msgstr "cancello ‘%s’"
 
 #: work.cc:693 work.cc:704
 #, c-format
