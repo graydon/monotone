@@ -148,7 +148,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-12-16 00:23+0100\n"
-"PO-Revision-Date: 2006-12-16 00:24+0100\n"
+"PO-Revision-Date: 2006-12-16 08:08+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -4085,7 +4085,7 @@ msgid "workspace required but not found"
 msgstr "arbetskopia behövs men kunde inte hittas"
 
 #: work_migration.cc:74
-#, fuzzy, c-format
+#, c-format
 msgid "workspace is corrupt: %s is invalid"
 msgstr "arbetskopian är korrupt: %s är ogilltig"
 
