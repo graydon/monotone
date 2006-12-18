@@ -176,6 +176,32 @@ string basic_io::parser::tt2str(token_type tt)
   return "TOK_UNKNOWN";
 }
 
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+UNIT_TEST(basic_io, binary_transparency)
+{
+  std::string testpattern;
+  for (unsigned i=0; i<256; ++i) testpattern+=char(i);
+
+  static symbol test("test");
+
+  basic_io::printer printer;
+  basic_io::stanza st;
+  st.push_str_pair(test, testpattern);
+  printer.print_stanza(st);
+
+  basic_io::input_source source(printer.buf, "unit test string");
+  basic_io::tokenizer tokenizer(source);
+  basic_io::parser parser(tokenizer);
+  std::string t1;
+  parser.esym(test);
+  parser.str(t1);
+  I(testpattern==t1);
+}
+
+#endif // BUILD_UNIT_TESTS
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
