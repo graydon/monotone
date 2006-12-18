@@ -78,7 +78,7 @@ namespace basic_io
     inline void peek()
     {
       if (LIKELY(curr != in.end()))
-	lookahead = *curr;
+	lookahead = widen<int,char>(*curr);
       else
 	lookahead = EOF;
     }
