@@ -132,6 +132,8 @@ workspace::get_revision_id(revision_id & c)
   revision_t rev;
   get_work_rev(rev);
   c = edge_old_revision(rev.edges.begin());
+  N(null_id(c) || db.revision_exists(c),
+    F("workspace base revision %s does not exist in database") % c);
 }
 
 // structures derived from the work revision, the database, and possibly
@@ -145,10 +147,6 @@ workspace::get_base_revision(revision_id & rid,
 
   if (!null_id(rid))
     {
-
-      N(db.revision_exists(rid),
-        F("base revision %s does not exist in database") % rid);
-
       db.get_roster(rid, ros, mm);
     }
 
