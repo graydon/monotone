@@ -31,7 +31,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-17 23:35+0100\n"
+"POT-Creation-Date: 2006-12-18 12:54+0100\n"
 "PO-Revision-Date: 2006-11-20 14:06+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -237,7 +237,7 @@ msgstr ""
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "berechnete Zertifikatsprüfsumme '%s' stimmt nicht mit '%s' überein"
 
-#: cert.cc:387 keys.cc:560
+#: cert.cc:387 keys.cc:561
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "kein Schlüsselpaar '%s' in Schlüsselbund '%s' gefunden"
@@ -2254,7 +2254,7 @@ msgstr ""
 msgid "cannot create %s; it already exists"
 msgstr "Kann %s nicht erzeugen; es existiert bereits"
 
-#: database.cc:574
+#: database.cc:573
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -2305,52 +2305,52 @@ msgstr ""
 "  Seitengröße          : %u\n"
 "  Cache-Größe          : %u"
 
-#: database.cc:639
+#: database.cc:638
 #, c-format
 msgid "database schema version: %s"
 msgstr "Datenbank Schema-Version: %s"
 
-#: database.cc:716
+#: database.cc:715
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "mehrere Angaben in Anfrage: %s"
 
-#: database.cc:722
+#: database.cc:721
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "erwarte %d, erhielt %d Spalten in Anfrage: %s"
 
-#: database.cc:788
+#: database.cc:787
 #, c-format
 msgid "null result in query: %s"
 msgstr "Null-Ergebnis in Anfrage: %s"
 
-#: database.cc:806
+#: database.cc:805
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "erwarte %d, erhielt %d Zeilen in Anfrage: %s"
 
-#: database.cc:2043
+#: database.cc:2042
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "ein anderer Schlüssel mit dem Namen '%s' existiert bereits"
 
-#: database.cc:3041
+#: database.cc:3040
 #, c-format
 msgid "no database specified"
 msgstr "keine Datenbank spezifiziert"
 
-#: database.cc:3049
+#: database.cc:3048
 #, c-format
 msgid "database %s does not exist"
 msgstr "Datenbank %s existiert nicht"
 
-#: database.cc:3050
+#: database.cc:3049
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s ist ein Verzeichnis, keine Datenbank"
 
-#: database.cc:3075
+#: database.cc:3074
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "Konnte Datenbank '%s' nicht öffnen: %s"
@@ -2526,47 +2526,47 @@ msgstr "Kann Datei %s nicht zum schreiben öffnen"
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "Laufzeitfehler %s während der Erstellung des Dateipfades für %s"
 
-#: file_io.cc:548 work.cc:1082
+#: file_io.cc:548 work.cc:1080
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
 
-#: keys.cc:102
+#: keys.cc:103
 #, c-format
 msgid "got empty passphrase from get_passphrase() hook"
 msgstr "erhielt leeres Passwort von get_passphrase()-Hook"
 
-#: keys.cc:118
+#: keys.cc:119
 #, c-format
 msgid "empty passphrase not allowed"
 msgstr "leere Passwörter sind nicht erlaubt"
 
-#: keys.cc:125
+#: keys.cc:126
 #, c-format
 msgid "confirm passphrase for key ID [%s]: "
 msgstr "bestätige Passwort für Schlüssel-ID [%s]: "
 
-#: keys.cc:130
+#: keys.cc:131
 #, c-format
 msgid "empty passphrases not allowed, try again"
 msgstr "leere Passwörter sind nicht erlaubt, versuchen Sie es noch einmal"
 
-#: keys.cc:131 keys.cc:138
+#: keys.cc:132 keys.cc:139
 #, c-format
 msgid "too many failed passphrases"
 msgstr "Passwort zu oft falsch eingegeben"
 
-#: keys.cc:137
+#: keys.cc:138
 #, c-format
 msgid "passphrases do not match, try again"
 msgstr "Passwörter stimmen nicht überein, versuchen Sie es noch einmal"
 
-#: keys.cc:144
+#: keys.cc:145
 #, c-format
 msgid "no passphrase given"
 msgstr "kein Passwort angegeben"
 
-#: keys.cc:570
+#: keys.cc:571
 #, c-format
 msgid "passphrase for '%s' is incorrect"
 msgstr "Passwort für '%s' ist nicht korrekt"
@@ -2581,7 +2581,7 @@ msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
 msgid "Directory '%s' does not exist"
 msgstr "Das Verzeichnis '%s' existiert nicht"
 
-#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1337
+#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1335
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
@@ -2612,12 +2612,12 @@ msgstr "Knotenebene ist %d, überschreitet das Maximum %d"
 msgid "mismatched node hash value %s, expected %s"
 msgstr "falsch zugeordneter Knoten-Hashwert %s, %s erwartet"
 
-#: monotone.cc:274
+#: monotone.cc:275
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Aufruf: %s [OPTION...] Kommando [ARGUMENTE...]"
 
-#: monotone.cc:282
+#: monotone.cc:283
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Spezifische Optionen für '%s %s':"
@@ -3672,12 +3672,7 @@ msgstr "optimiere Datenbank"
 msgid "error vacuuming after migration"
 msgstr "Fehler beim Ausführen von VACUUM nach der Migration"
 
-#: schema_migration.cc:323
-#, c-format
-msgid "error running analyze after migration"
-msgstr "Fehler beim Ausführen von ANALYZE nach der Migration"
-
-#: schema_migration.cc:332
+#: schema_migration.cc:329
 #, c-format
 msgid ""
 "NOTE: because this database was last used by a rather old version\n"
@@ -3689,7 +3684,7 @@ msgstr ""
 "sind, dann lesen Sie bitte die Datei UPGRADE für Hinweise bei der\n"
 "Ausführung von '%s db %s'."
 
-#: schema_migration.cc:339
+#: schema_migration.cc:336
 #, c-format
 msgid ""
 "NOTE: this upgrade cleared monotone's caches\n"
@@ -3698,23 +3693,23 @@ msgstr ""
 "HINWEIS: Dieses Upgrade hat monotones Caches gelöscht.\n"
 "Sie sollten nun '%s db regenerate_caches' ausführen."
 
-#: schema_migration.cc:352
+#: schema_migration.cc:349
 #, c-format
 msgid "database schema %s is unknown; cannot perform migration"
 msgstr "Datenbankschema %s ist unbekannt; kann Migration nicht durchführen"
 
-#: schema_migration.cc:357
+#: schema_migration.cc:354
 #, c-format
 msgid "no migration performed; database schema already up-to-date at %s"
 msgstr ""
 "keine Migration durchgeführt; Datenbankschema ist bereits aktualisiert auf %s"
 
-#: schema_migration.cc:916
+#: schema_migration.cc:913
 #, c-format
 msgid "public and private keys for %s don't match"
 msgstr "öffentlicher und privater Schlüssel von %s stimmen nicht überein"
 
-#: schema_migration.cc:919
+#: schema_migration.cc:916
 #, c-format
 msgid "moving key '%s' from database to %s"
 msgstr "verschiebe Schlüssel '%s' von Datenbank nach %s"
@@ -3836,42 +3831,42 @@ msgstr "Ungültige 'hmac'-Länge von %d Bytes"
 msgid "workspace is corrupt: reading %s: %s"
 msgstr "Arbeitsbereich ist beschädigt: lese %s: %s"
 
-#: work.cc:150
+#: work.cc:136
 #, c-format
-msgid "base revision %s does not exist in database"
-msgstr "Basis-Revision %s existiert nicht in der Datenbank"
+msgid "workspace base revision %s does not exist in database"
+msgstr "Arbeitsbereich-Revision %s existiert nicht in der Datenbank"
 
-#: work.cc:284
+#: work.cc:282
 #, c-format
 msgid "unrecognized key '%s' in options file %s - ignored"
 msgstr "nicht erkannter Schlüssel '%s' in Optionen-Datei %s - wird ignoriert"
 
-#: work.cc:291
+#: work.cc:289
 #, c-format
 msgid "Failed to read options file %s: %s"
 msgstr "Konnte Optionen-Datei %s nicht lesen: %s"
 
-#: work.cc:339
+#: work.cc:337
 #, c-format
 msgid "Failed to write options file %s: %s"
 msgstr "Konnte Optionen-Datei %s nicht schreiben: %s"
 
-#: work.cc:541
+#: work.cc:539
 #, c-format
 msgid "skipping ignorable file %s"
 msgstr "übergehe ignorierbare Datei %s"
 
-#: work.cc:550
+#: work.cc:548
 #, c-format
 msgid "skipping %s, already accounted for in workspace"
 msgstr "übergehe %s, bereits im Arbeitsbereich festgehalten"
 
-#: work.cc:561
+#: work.cc:559
 #, c-format
 msgid "adding %s to workspace manifest"
 msgstr "füge %s dem Arbeitsbereich-Manifest hinzu"
 
-#: work.cc:567
+#: work.cc:565
 #, c-format
 msgid ""
 "cannot add %s, because %s is recorded as a file in the workspace manifest"
@@ -3879,58 +3874,58 @@ msgstr ""
 "Kann %s nicht hinzufügen, da %s als Datei im  Arbeitsbereich-Manifest "
 "aufgenommen wurde."
 
-#: work.cc:682
+#: work.cc:680
 #, c-format
 msgid "dropping %s"
 msgstr "entferne %s"
 
-#: work.cc:693 work.cc:704
+#: work.cc:691 work.cc:702
 #, c-format
 msgid "path %s already exists"
 msgstr "Pfad %s existiert bereits"
 
-#: work.cc:726 work.cc:756
+#: work.cc:724 work.cc:754
 #, c-format
 msgid "adding %s"
 msgstr "füge %s hinzu"
 
-#: work.cc:744
+#: work.cc:742
 #, c-format
 msgid "path '%s' already exists, cannot create"
 msgstr "Pfad '%s' existiert bereits, kann ihn nicht erzeugen"
 
-#: work.cc:752
+#: work.cc:750
 #, c-format
 msgid "renaming %s to %s"
 msgstr "benenne %s nach %s um"
 
-#: work.cc:787
+#: work.cc:785
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "Datei '%s' existiert nicht"
 
-#: work.cc:788
+#: work.cc:786
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "Datei '%s' ist ein Verzeichnis"
 
-#: work.cc:793
+#: work.cc:791
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr ""
 "Inhalt der Datei '%s' hat sich geändert, Datei wird nicht überschrieben"
 
-#: work.cc:794
+#: work.cc:792
 #, c-format
 msgid "modifying %s"
 msgstr "verändere %s"
 
-#: work.cc:982
+#: work.cc:980
 #, c-format
 msgid "missing %s"
 msgstr "%s fehlt"
 
-#: work.cc:988
+#: work.cc:986
 #, c-format
 msgid ""
 "%d missing files; use '%s ls missing' to view\n"
@@ -3950,99 +3945,99 @@ msgstr ""
 " '%s drop --missing' bzw.\n"
 " '%s revert --missing'."
 
-#: work.cc:1134
+#: work.cc:1132
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "übergehe %s, wird derzeit nicht verfolgt"
 
-#: work.cc:1144
+#: work.cc:1142
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kann %s/ nicht entfernen, Verzeichnis ist nicht leer"
 
-#: work.cc:1155
+#: work.cc:1153
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "entferne %s vom Arbeitsbereich-Manifest"
 
-#: work.cc:1208
+#: work.cc:1206
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr ""
 "Zielverzeichnis %s/ ist nicht unter Versionskontrolle (vielleicht soll es "
 "hinzugefügt werden?)"
 
-#: work.cc:1211
+#: work.cc:1209
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "Ziel %s ist eine existierende Datei in der derzeitigen Revision"
 
-#: work.cc:1221
+#: work.cc:1219
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "leerer Pfad %s ist nicht erlaubt"
 
-#: work.cc:1235
+#: work.cc:1233
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "%s existiert nicht im derzeitigen Manifest"
 
-#: work.cc:1238
+#: work.cc:1236
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "Ziel %s existiert bereits im derzeitigen Manifest"
 
-#: work.cc:1244
+#: work.cc:1242
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "Zielverzeichnis %s existiert nicht im derzeitigen Manifest"
 
-#: work.cc:1246
+#: work.cc:1244
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "Das Zielverzeichnis %s ist kein Verzeichnis"
 
-#: work.cc:1255
+#: work.cc:1253
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "benenne %s zu %s im Arbeitsbereich-Manifest um"
 
-#: work.cc:1283
+#: work.cc:1281
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "%s existiert nicht im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1287
+#: work.cc:1285
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "Ziel %s existiert bereits im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1317
+#: work.cc:1315
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' ist nicht unter "
 "Versionkontrolle oder existiert nicht"
 
-#: work.cc:1319
+#: work.cc:1317
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "das neu vorgeschlagene Wurzelverzeichnis '%s' ist kein Verzeichnis"
 
-#: work.cc:1324
+#: work.cc:1322
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' beinhaltet den ungültigen Pfad "
 "%s"
 
-#: work.cc:1334
+#: work.cc:1332
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr ""
 "das Verzeichnis '%s' ist nicht unter Versionskontrolle oder existiert nicht"
 
-#: work.cc:1340
+#: work.cc:1338
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' ist im Weg"
@@ -4132,6 +4127,9 @@ msgstr ""
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "Der Arbeitsbereich hat bereits das neueste Format, keine Migration notwendig."
+
+#~ msgid "error running analyze after migration"
+#~ msgstr "Fehler beim Ausführen von ANALYZE nach der Migration"
 
 #~ msgid "%d unknown paths"
 #~ msgstr "Unbekannter Pfad '%d'"
