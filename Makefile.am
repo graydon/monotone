@@ -107,7 +107,7 @@ BOTAN_SOURCES = 							\
         botan/ber_dec.cpp botan/big_base.cpp     \
         botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp      \
         botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp      \
-        botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp        \
+        botan/buf_filt.cpp botan/cbc.cpp botan/certstor.cpp        \
         botan/cfb.cpp botan/charset.cpp botan/crc32.cpp  \
         botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp           \
         botan/data_snk.cpp botan/data_src.cpp \
@@ -127,7 +127,7 @@ BOTAN_SOURCES = 							\
         botan/make_prm.cpp botan/mdx_hash.cpp       \
         botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp       \
         botan/mode_pad.cpp botan/modebase.cpp       \
-        botan/mp_comba.cpp botan/mp_muladd.cpp \
+        botan/mp_comba.cpp botan/mp_mulop.cpp \
         botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp       \
         botan/mutex.cpp botan/numthry.cpp       \
         botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp  \
