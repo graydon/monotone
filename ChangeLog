@@ -1,5 +1,22 @@
 2006-12-18  Christof Petig <christof.petig@arcor.de>
 
+	* automate.cc: add new automate commands:
+		put_file: add a file to the database
+		put_revision: add a revision (after adding files)
+		cert: create certificate
+		db_set: set a database variable
+		db_get: query a database variable
+
+	* cmd_automate.cc: raise interface version
+
+	* tests/automate_cert/*,
+	  tests/automate_db_set,get/__driver__.lua,
+	  tests/automate_put_file/__driver__.lua,
+	  tests/automate_put_revision/__driver__.lua:
+		tests for the new features
+
+2006-12-18  Christof Petig <christof.petig@arcor.de>
+
 	* basic_io.hh (peek): use widen to distinguish '\xff' and EOF
 	* basic_io.cc (binary_transparency): add an unit test for this
 
