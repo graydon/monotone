@@ -79,7 +79,9 @@ namespace basic_io
     inline void peek()
     {
       if (LIKELY(curr != in.end()))
-	lookahead = widen<int,char>(*curr);
+        // we do want to distinguish between EOF and '\xff', 
+        // so we translate '\xff' to 255u
+	lookahead = widen<unsigned int,char>(*curr);
       else
 	lookahead = EOF;
     }
