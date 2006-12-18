@@ -7,6 +7,14 @@ end
 
 -- this should get the commit message in current locale
 function edit_comment(basetext, user_log_message)
+   -- we now mangle this to become the same as the content of the text file,
+   -- as it will have the 'magic line' prepended to it, which will cause the
+   -- test to fail.
+   -- this is only done if the message was pre-specified in _MTN/log
+   if user_log_message ~= "" then
+      user_log_message = "ワークスペースが必要ですがみつかりませんでした"
+   end
+
    wanted = slurp("euc-jp.txt")
 
    if string.find(basetext, wanted) ~= nil then
