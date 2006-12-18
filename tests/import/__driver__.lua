@@ -125,3 +125,13 @@ check(mtn("import", "importdir",
 	  "--message", "Import eight, dry run so shouldn't commit",
 	  "--branch", "importbranch"), 0, false, true)
 check(not qgrep("committed revision ", "stderr"))
+
+------------------------------------------------------------------------------
+-- Ninth attempt, importing from one of the export checkouts.
+-- This attempt is expected to FAIL, because we gave it a non-existing key.
+-- However, we want to check that such an error didn't leave a _MTN behind.
+check(mtn("import", "importdir",
+	  "--message", "Import seven, trying to import a workspace",
+	  "--branch", "importbranch",
+	  "--key", "bozo@bozoland.com"), 1, false, false)
+check(not exists("importdir/_MTN"))
