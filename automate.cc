@@ -1774,7 +1774,14 @@ AUTOMATE(db_get, N_("DOMAIN NAME"), options::opts::none)
   utf8 name = idx(args, 1);
   var_key key(domain, var_name(name()));
   var_value value;
-  app.db.get_var(key, value);
+  try
+  {
+    app.db.get_var(key, value);
+  }
+  catch (std::logic_error)
+  {
+    N(false, F("variable not found"));
+  }
   output << value();
 }
 
