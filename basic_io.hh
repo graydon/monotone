@@ -20,6 +20,7 @@
 #include "paths.hh"
 #include "sanity.hh"
 #include "vocab.hh"
+#include "numeric_vocab.hh"
 
 // This file provides parsing and printing primitives used by the
 // higher level parser and printer routines for the datatypes cset,
