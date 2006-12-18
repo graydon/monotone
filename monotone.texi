@@ -7280,7 +7280,8 @@ revision @var{source_id} or is invalid, prints an error message to stderr and ex
 
 @item mtn automate db_get @var{domain} @var{name}
 
-@table @strong item Arguments:
+@table @strong 
+@item Arguments:
 
 The @var{domain} and @var{name} specify the database variable 
 which is returned.
@@ -7295,7 +7296,8 @@ Read a database variable, see also @ref{Vars}.
 
 @item Sample output:
 
-@verbatim off.net end verbatim
+@verbatim off.net 
+@end verbatim
 
 @item Output format:
 
@@ -7309,9 +7311,10 @@ status 1.
 
 @end table
 
-@item mtn automate db_put @var{domain} @var{name} @{value}
+@item mtn automate db_put @var{domain} @var{name} @var{value}
 
-@table @strong item Arguments:
+@table @strong
+@item Arguments:
 
 The @var{domain} and @var{name} specify the database variable 
 which is changed to @var{value}.
@@ -7326,7 +7329,8 @@ Change a database variable, see also @ref{Vars}.
 
 @item Sample usage:
 
-@verbatim mtn automate db_set database default-server off.net end verbatim
+@verbatim mtn automate db_set database default-server off.net 
+@end verbatim
 
 @item Output format:
 
@@ -7338,9 +7342,10 @@ None.
 
 @end table
 
-@item mtn automate put_file @var{[base-id]} @var{contents}
+@item mtn automate put_file [@var{base-id}] @var{contents}
 
-@table @strong item Arguments:
+@table @strong 
+@item Arguments:
 
 The optional @var{base-id} specifies a file-id on which the contents are
 based on. This is used for diff encoding. @var{contents} are the contents of
@@ -7358,7 +7363,8 @@ See also @command{automate put_revision}. Normally used via
 
 @item Sample output:
 
-@verbatim 70a0f283898a18815a83df37c902e5f1492e9aa2 end verbatim
+@verbatim 70a0f283898a18815a83df37c902e5f1492e9aa2 
+@end verbatim
 
 @item Output format:
 
@@ -7373,7 +7379,8 @@ exits with status 1.
 
 @item mtn automate put_revision @var{change-set-data}
 
-@table @strong item Arguments:
+@table @strong 
+@item Arguments:
 
 @var{change-set-data} is one changeset part of a revision. See example
 below.
@@ -7401,7 +7408,7 @@ content [5bf1fd927dfb8679496a2e6cf00cbe50c1c87145]
 
 @item Sample output:
 
-@verbatim 4c2c1d846fa561601254200918fba1fd71e6795d end verbatim
+@verbatim 4c2c1d846fa561601254200918fba1fd71e6795d @end verbatim
 
 @item Output format:
 
@@ -7416,10 +7423,11 @@ exits with status 1. May abort on invalid formats.
 
 @item mtn automate cert @var{revision} @var{name} @var{value}
 
-@table @strong item Arguments:
+@table @strong 
+@item Arguments:
 
 @var{revision} is an existing revision, @var{name} is the certificate name
-and @{value} its value.
+and @var{value} its value.
 
 @item Added in:
 
@@ -7431,7 +7439,8 @@ and @{value} its value.
 
 @item Sample usage:
 
-@verbatim mtn automate cert 4c2c1d846fa561601254200918fba1fd71e6795d author tester@test.net end verbatim
+@verbatim mtn automate cert 4c2c1d846fa561601254200918fba1fd71e6795d author tester@test.net 
+@end verbatim
 
 @item Output format:
 
