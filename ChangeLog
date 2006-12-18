@@ -1,5 +1,11 @@
 2006-12-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* database.cc (database::load),
+	schema_migration.cc (migrator::migrate):
+	PerformanceWork/SQLiteAnalyzeDiscussion in the wiki makes a strong
+	argument that ANALYZE provides no benefit for our use profile.
+	Remove ANALYZE calls from the post-load and post-migrate code.
+
 	* win32/monotone.iss: Don't ask the user a bunch of questions
 	about repositories, keys, branches, and workspaces at a point
 	where they might not know the answers.  Based on feedback from new

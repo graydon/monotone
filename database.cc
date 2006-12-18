@@ -514,7 +514,6 @@ database::load(istream & in)
     }
 
   assert_sqlite3_ok(__sql);
-  execute(query("ANALYZE"));
 }
 
 
