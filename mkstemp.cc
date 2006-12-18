@@ -45,7 +45,7 @@ monotone_mkstemp(string &tmpl)
       tmp = tmpl.substr(0, len-6);
 
       for (i = 0; i < 6; ++i)
-        tmp.append(1, letters[Botan::Global_RNG::random(Botan::Nonce) % NLETTERS]);
+        tmp.append(1, letters[Botan::Global_RNG::random() % NLETTERS]);
 #ifdef _MSC_VER
       fd = _open(tmp.c_str(), _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY, 0600);
 #else

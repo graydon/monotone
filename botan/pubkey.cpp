@@ -1,13 +1,15 @@
 /*************************************************
 * Public Key Base Source File                    *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pubkey.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
+#include <botan/bigint.h>
 #include <botan/parsing.h>
 #include <botan/bit_ops.h>
 #include <botan/lookup.h>
-#include <botan/asn1.h>
 #include <memory>
 
 namespace Botan {
@@ -192,16 +194,14 @@ SecureVector<byte> PK_Signer::signature()
       const u32bit SIZE_OF_PART = plain_sig.size() / key.message_parts();
 
       std::vector<BigInt> sig_parts(key.message_parts());
-      for(u32bit j = 0; j != sig_parts.size(); j++)
+      for(u32bit j = 0; j != sig_parts.size(); ++j)
          sig_parts[j].binary_decode(plain_sig + SIZE_OF_PART*j, SIZE_OF_PART);
 
-      DER_Encoder der_sig;
-      der_sig.start_sequence();
-      for(u32bit j = 0; j != sig_parts.size(); j++)
-         DER::encode(der_sig, sig_parts[j]);
-      der_sig.end_sequence();
-
-      return der_sig.get_contents();
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode_list(sig_parts)
+         .end_cons()
+      .get_contents();
       }
    else
       throw Encoding_Error("PK_Signer: Unknown signature format " +
@@ -211,10 +211,18 @@ SecureVector<byte> PK_Signer::signature()
 /*************************************************
 * PK_Verifier Constructor                        *
 *************************************************/
-PK_Verifier::PK_Verifier(const PK_Key& k, const std::string& emsa_name) :
-   emsa(get_emsa(emsa_name)), key(k)
+PK_Verifier::PK_Verifier(const std::string& emsa_name)
    {
+   emsa = get_emsa(emsa_name);
    sig_format = IEEE_1363;
+   }
+
+/*************************************************
+* PK_Verifier Destructor                         *
+*************************************************/
+PK_Verifier::~PK_Verifier()
+   {
+   delete emsa;
    }
 
 /*************************************************
@@ -222,7 +230,7 @@ PK_Verifier::PK_Verifier(const PK_Key& k, const std::string& emsa_name) :
 *************************************************/
 void PK_Verifier::set_input_format(Signature_Format format)
    {
-   if(key.message_parts() == 1 && format != IEEE_1363)
+   if(key_message_parts() == 1 && format != IEEE_1363)
       throw Invalid_State("PK_Verifier: This algorithm always uses IEEE 1363");
    sig_format = format;
    }
@@ -289,19 +297,19 @@ bool PK_Verifier::check_signature(const byte sig[], u32bit length)
       else if(sig_format == DER_SEQUENCE)
          {
          BER_Decoder decoder(sig, length);
-         BER_Decoder ber_sig = BER::get_subsequence(decoder);
+         BER_Decoder ber_sig = decoder.start_cons(SEQUENCE);
 
          u32bit count = 0;
          SecureVector<byte> real_sig;
          while(ber_sig.more_items())
             {
             BigInt sig_part;
-            BER::decode(ber_sig, sig_part);
+            ber_sig.decode(sig_part);
             real_sig.append(BigInt::encode_1363(sig_part,
-                                                key.message_part_size()));
-            count++;
+                                                key_message_part_size()));
+            ++count;
             }
-         if(count != key.message_parts())
+         if(count != key_message_parts())
             throw Decoding_Error("PK_Verifier: signature size invalid");
 
          return validate_signature(emsa->raw_data(),
@@ -320,7 +328,7 @@ bool PK_Verifier::check_signature(const byte sig[], u32bit length)
 *************************************************/
 PK_Verifier_with_MR::PK_Verifier_with_MR(const PK_Verifying_with_MR_Key& k,
                                          const std::string& emsa_name) :
-   PK_Verifier(k, emsa_name), key(k)
+   PK_Verifier(emsa_name), key(k)
    {
    }
 
@@ -339,7 +347,7 @@ bool PK_Verifier_with_MR::validate_signature(const MemoryRegion<byte>& msg,
 *************************************************/
 PK_Verifier_wo_MR::PK_Verifier_wo_MR(const PK_Verifying_wo_MR_Key& k,
                                      const std::string& emsa_name) :
-   PK_Verifier(k, emsa_name), key(k)
+   PK_Verifier(emsa_name), key(k)
    {
    }
 

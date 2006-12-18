@@ -1,6 +1,6 @@
 /*************************************************
 * Utility Functions Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/util.h>
@@ -57,7 +57,7 @@ u32bit entropy_estimate(const byte buffer[], u32bit length)
    u32bit estimate = 0;
    byte last = 0, last_delta = 0, last_delta2 = 0;
 
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       {
       byte delta = last ^ buffer[j];
       last = buffer[j];

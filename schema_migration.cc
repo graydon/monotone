@@ -319,9 +319,6 @@ migrator
         E(logged_sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) == SQLITE_OK,
           F("error vacuuming after migration"));
 
-        E(logged_sqlite3_exec(sql, "ANALYZE", NULL, NULL, NULL) == SQLITE_OK,
-          F("error running analyze after migration"));
-
         switch (regime)
           {
           case upgrade_changesetify:

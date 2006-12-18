@@ -1,101 +1,84 @@
 /*************************************************
 * Mutex Source File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mutex.h>
-#include <botan/exceptn.h>
-#include <botan/init.h>
+#include <botan/libstate.h>
 
 namespace Botan {
 
-namespace {
-
 /*************************************************
-* Global Mutex Variables                         *
+* Mutex_Holder Constructor                       *
 *************************************************/
-Mutex* mutex_factory = 0;
-Mutex* mutex_init_lock = 0;
-
-/*************************************************
-* Default Mutex                                  *
-*************************************************/
-class Default_Mutex : public Mutex
+Mutex_Holder::Mutex_Holder(Mutex* m) : mux(m)
    {
-   public:
-      void lock();
-      void unlock();
-      Mutex* clone() const { return new Default_Mutex; }
-      Default_Mutex() { locked = false; }
-   private:
-      bool locked;
-   };
-
-/*************************************************
-* Lock the mutex                                 *
-*************************************************/
-void Default_Mutex::lock()
-   {
-   if(locked)
-      throw Internal_Error("Default_Mutex::lock: Mutex is already locked");
-   locked = true;
+   if(!mux)
+      throw Invalid_Argument("Mutex_Holder: Argument was NULL");
+   mux->lock();
    }
 
 /*************************************************
-* Unlock the mutex                               *
+* Mutex_Holder Destructor                        *
 *************************************************/
-void Default_Mutex::unlock()
+Mutex_Holder::~Mutex_Holder()
    {
-   if(!locked)
-      throw Internal_Error("Default_Mutex::unlock: Mutex is already unlocked");
-   locked = false;
-   }
-
-}
-
-/*************************************************
-* Get a mew mutex                                *
-*************************************************/
-Mutex* get_mutex()
-   {
-   if(mutex_factory == 0)
-      return new Default_Mutex;
-   return mutex_factory->clone();
+   mux->unlock();
    }
 
 /*************************************************
-* Initialize a mutex atomically                  *
+* Named_Mutex_Holder Constructor                 *
 *************************************************/
-void initialize_mutex(Mutex*& mutex)
+Named_Mutex_Holder::Named_Mutex_Holder(const std::string& name) :
+   mutex_name(name)
    {
-   if(mutex) return;
+   global_state().get_named_mutex(mutex_name)->lock();
+   }
 
-   if(mutex_init_lock)
+/*************************************************
+* Named_Mutex_Holder Destructor                  *
+*************************************************/
+Named_Mutex_Holder::~Named_Mutex_Holder()
+   {
+   global_state().get_named_mutex(mutex_name)->unlock();
+   }
+
+/*************************************************
+* Default Mutex Factory                          *
+*************************************************/
+Mutex* Default_Mutex_Factory::make()
+   {
+   class Default_Mutex : public Mutex
       {
-      Mutex_Holder lock(mutex_init_lock);
-      if(mutex == 0)
-         mutex = get_mutex();
-      }
-   else
-      mutex = get_mutex();
+      public:
+         class Mutex_State_Error : public Internal_Error
+            {
+            public:
+               Mutex_State_Error(const std::string& where) :
+                  Internal_Error("Default_Mutex::" + where + ": " +
+                                 "Mutex is already " + where + "ed") {}
+            };
+
+         void lock()
+            {
+            if(locked)
+               throw Mutex_State_Error("lock");
+            locked = true;
+            }
+
+         void unlock()
+            {
+            if(!locked)
+               throw Mutex_State_Error("unlock");
+            locked = false;
+            }
+
+         Default_Mutex() { locked = false; }
+      private:
+         bool locked;
+      };
+
+   return new Default_Mutex;
    }
-
-namespace Init {
-
-/*************************************************
-* Set the Mutex type                             *
-*************************************************/
-void set_mutex_type(Mutex* mutex)
-   {
-   delete mutex_factory;
-   delete mutex_init_lock;
-
-   mutex_factory = mutex;
-
-   if(mutex) mutex_init_lock = get_mutex();
-   else      mutex_init_lock = 0;
-   }
-
-}
 
 }

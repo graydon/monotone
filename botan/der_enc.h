@@ -1,13 +1,13 @@
 /*************************************************
 * DER Encoder Header File                        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_DER_ENCODER_H__
 #define BOTAN_DER_ENCODER_H__
 
-#include <botan/asn1_oid.h>
-#include <botan/bigint.h>
+#include <botan/secmem.h>
+#include <botan/enums.h>
 #include <vector>
 
 namespace Botan {
@@ -20,76 +20,70 @@ class DER_Encoder
    public:
       SecureVector<byte> get_contents();
 
-      void start_sequence(ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-      void end_sequence(ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-      void start_set(ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-      void end_set(ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
+      DER_Encoder& start_cons(ASN1_Tag, ASN1_Tag = UNIVERSAL);
+      DER_Encoder& end_cons();
 
-      void start_sequence();
-      void end_sequence();
-      void start_set();
-      void end_set();
+      DER_Encoder& start_explicit(u16bit);
+      DER_Encoder& end_explicit();
 
-      void start_explicit(ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-      void end_explicit(ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
+      DER_Encoder& raw_bytes(const byte[], u32bit);
+      DER_Encoder& raw_bytes(const MemoryRegion<byte>&);
 
-      void add_raw_octets(const byte[], u32bit);
-      void add_raw_octets(const MemoryRegion<byte>&);
+      DER_Encoder& encode_null();
+      DER_Encoder& encode(bool);
+      DER_Encoder& encode(u32bit);
+      DER_Encoder& encode(const class BigInt&);
+      DER_Encoder& encode(const MemoryRegion<byte>&, ASN1_Tag);
+      DER_Encoder& encode(const byte[], u32bit, ASN1_Tag);
 
-      void add_object(ASN1_Tag, ASN1_Tag, const byte[], u32bit);
-      void add_object(ASN1_Tag, ASN1_Tag, const MemoryRegion<byte>&);
-      void add_object(ASN1_Tag, ASN1_Tag, const std::string&);
-      void add_object(ASN1_Tag, ASN1_Tag, byte);
+      DER_Encoder& encode(bool, ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
+      DER_Encoder& encode(u32bit, ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
+      DER_Encoder& encode(const class BigInt&, ASN1_Tag,
+                          ASN1_Tag = CONTEXT_SPECIFIC);
+      DER_Encoder& encode(const MemoryRegion<byte>&, ASN1_Tag,
+                          ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
+      DER_Encoder& encode(const byte[], u32bit, ASN1_Tag,
+                          ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
 
-      DER_Encoder();
+      template<typename T>
+      DER_Encoder& encode_optional(const T& value, const T& default_value)
+         {
+         if(value != default_value)
+            encode(value);
+         return (*this);
+         }
+
+      template<typename T>
+      DER_Encoder& encode_list(const std::vector<T>& values)
+         {
+         for(u32bit j = 0; j != values.size(); ++j)
+            encode(values[j]);
+         return (*this);
+         }
+
+      DER_Encoder& encode(const class ASN1_Object&);
+      DER_Encoder& encode_if(bool, DER_Encoder&);
+
+      DER_Encoder& add_object(ASN1_Tag, ASN1_Tag, const byte[], u32bit);
+      DER_Encoder& add_object(ASN1_Tag, ASN1_Tag, const MemoryRegion<byte>&);
+      DER_Encoder& add_object(ASN1_Tag, ASN1_Tag, const std::string&);
+      DER_Encoder& add_object(ASN1_Tag, ASN1_Tag, byte);
    private:
-      void start_cons(ASN1_Tag, ASN1_Tag, bool);
-      void end_cons(ASN1_Tag, ASN1_Tag);
       class DER_Sequence
          {
          public:
             ASN1_Tag tag_of() const;
             SecureVector<byte> get_contents();
             void add_bytes(const byte[], u32bit);
-            DER_Sequence(ASN1_Tag, ASN1_Tag, bool = false);
+            DER_Sequence(ASN1_Tag, ASN1_Tag);
          private:
             ASN1_Tag type_tag, class_tag;
-            bool is_a_set;
             SecureVector<byte> contents;
             std::vector< SecureVector<byte> > set_contents;
          };
       SecureVector<byte> contents;
       std::vector<DER_Sequence> subsequences;
-      u32bit sequence_level;
    };
-
-/*************************************************
-* DER Encoding Functions                         *
-*************************************************/
-namespace DER {
-
-void encode_null(DER_Encoder&);
-void encode(DER_Encoder&, const OID&);
-
-void encode(DER_Encoder&, bool);
-void encode(DER_Encoder&, int);
-void encode(DER_Encoder&, u32bit);
-void encode(DER_Encoder&, const BigInt&);
-void encode(DER_Encoder&, const MemoryRegion<byte>&, ASN1_Tag);
-void encode(DER_Encoder&, const byte[], u32bit, ASN1_Tag);
-
-void encode(DER_Encoder&, bool, ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-void encode(DER_Encoder&, u32bit, ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-void encode(DER_Encoder&, const BigInt&, ASN1_Tag,
-            ASN1_Tag = CONTEXT_SPECIFIC);
-void encode(DER_Encoder&, const MemoryRegion<byte>&,
-            ASN1_Tag, ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-void encode(DER_Encoder&, const byte[], u32bit,
-            ASN1_Tag, ASN1_Tag, ASN1_Tag = CONTEXT_SPECIFIC);
-
-SecureVector<byte> put_in_sequence(const MemoryRegion<byte>&);
-
-}
 
 }
 

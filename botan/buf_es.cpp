@@ -1,11 +1,12 @@
 /*************************************************
 * Buffered EntropySource Source File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/buf_es.h>
 #include <botan/bit_ops.h>
 #include <botan/util.h>
+#include <algorithm>
 
 namespace Botan {
 

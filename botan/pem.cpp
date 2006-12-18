@@ -1,10 +1,10 @@
 /*************************************************
 * PEM Encoding/Decoding Source File              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pem.h>
-#include <botan/conf.h>
+#include <botan/config.h>
 #include <botan/filters.h>
 #include <botan/parsing.h>
 
@@ -17,7 +17,7 @@ namespace PEM_Code {
 *************************************************/
 std::string encode(const byte der[], u32bit length, const std::string& label)
    {
-   const u32bit PEM_WIDTH = Config::get_u32bit("pem/width");
+   const u32bit PEM_WIDTH = global_config().option_as_u32bit("pem/width");
 
    if(PEM_WIDTH < 50 || PEM_WIDTH > 76)
       throw Encoding_Error("PEM: Invalid line width " + to_string(PEM_WIDTH));
@@ -57,7 +57,8 @@ SecureVector<byte> decode_check_label(DataSource& source,
 *************************************************/
 SecureVector<byte> decode(DataSource& source, std::string& label)
    {
-   const u32bit RANDOM_CHAR_LIMIT = Config::get_u32bit("pem/forgive");
+   const u32bit RANDOM_CHAR_LIMIT =
+      global_config().option_as_u32bit("pem/forgive");
 
    const std::string PEM_HEADER1 = "-----BEGIN ";
    const std::string PEM_HEADER2 = "-----";
@@ -69,7 +70,7 @@ SecureVector<byte> decode(DataSource& source, std::string& label)
       if(!source.read_byte(b))
          throw Decoding_Error("PEM: No PEM header found");
       if(b == PEM_HEADER1[position])
-         position++;
+         ++position;
       else if(position >= RANDOM_CHAR_LIMIT)
          throw Decoding_Error("PEM: Malformed PEM header");
       else
@@ -82,7 +83,7 @@ SecureVector<byte> decode(DataSource& source, std::string& label)
       if(!source.read_byte(b))
          throw Decoding_Error("PEM: No PEM header found");
       if(b == PEM_HEADER2[position])
-         position++;
+         ++position;
       else if(position)
          throw Decoding_Error("PEM: Malformed PEM header");
 
@@ -101,7 +102,7 @@ SecureVector<byte> decode(DataSource& source, std::string& label)
       if(!source.read_byte(b))
          throw Decoding_Error("PEM: No PEM trailer found");
       if(b == PEM_TRAILER[position])
-         position++;
+         ++position;
       else if(position)
          throw Decoding_Error("PEM: Malformed PEM trailer");
 
@@ -117,7 +118,9 @@ SecureVector<byte> decode(DataSource& source, std::string& label)
 *************************************************/
 bool matches(DataSource& source, const std::string& extra)
    {
-   const u32bit PEM_SEARCH_RANGE = Config::get_u32bit("pem/search");
+   const u32bit PEM_SEARCH_RANGE =
+      global_config().option_as_u32bit("pem/search");
+
    const std::string PEM_HEADER = "-----BEGIN " + extra;
 
    SecureVector<byte> search_buf(PEM_SEARCH_RANGE);
@@ -128,10 +131,10 @@ bool matches(DataSource& source, const std::string& extra)
 
    u32bit index = 0;
 
-   for(u32bit j = 0; j != got; j++)
+   for(u32bit j = 0; j != got; ++j)
       {
       if(search_buf[j] == PEM_HEADER[index])
-         index++;
+         ++index;
       else
          index = 0;
       if(index == PEM_HEADER.size())

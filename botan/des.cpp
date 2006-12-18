@@ -1,6 +1,6 @@
 /*************************************************
 * DES Source File                                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/des.h>
@@ -159,7 +159,7 @@ void DES::key(const byte key[], u32bit)
               ((key[1] & 0x08) <<  2) | ((key[0] & 0x08) <<  1) |
               ((key[3] & 0x10) >>  1) | ((key[2] & 0x10) >>  2) |
               ((key[1] & 0x10) >>  3) | ((key[0] & 0x10) >>  4);
-   for(u32bit j = 0; j != 16; j++)
+   for(u32bit j = 0; j != 16; ++j)
       {
       C = ((C << ROT[j]) | (C >> (28-ROT[j]))) & 0x0FFFFFFF;
       D = ((D << ROT[j]) | (D >> (28-ROT[j]))) & 0x0FFFFFFF;

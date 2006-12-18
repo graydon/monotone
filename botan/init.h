@@ -1,48 +1,35 @@
 /*************************************************
 * Library Initialization Header File             *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_INIT_H__
 #define BOTAN_INIT_H__
 
-#include <botan/mutex.h>
-#include <botan/timers.h>
 #include <string>
+#include <map>
 
 namespace Botan {
 
-namespace Init {
-
 /*************************************************
-* Main Library Initialization/Shutdown Functions *
+* Options for initializing the library           *
 *************************************************/
-void initialize(const std::string& = "");
-void deinitialize();
+class InitializerOptions
+   {
+   public:
+      bool thread_safe() const;
+      bool use_engines() const;
+      bool seed_rng() const;
+      bool secure_memory() const;
+      bool fips_mode() const;
+      bool self_test() const;
 
-/*************************************************
-* Internal Initialization/Shutdown Functions     *
-*************************************************/
-void set_mutex_type(Mutex*);
-void set_timer_type(Timer*);
+      std::string config_file() const;
 
-void startup_memory_subsystem();
-void shutdown_memory_subsystem();
-
-void startup_engines();
-void shutdown_engines();
-
-void startup_dl_cache();
-void shutdown_dl_cache();
-
-void startup_oids();
-void shutdown_oids();
-
-void startup_conf();
-void shutdown_conf();
-void set_default_options();
-
-}
+      InitializerOptions(const std::string&);
+   private:
+      std::map<std::string, std::string> args;
+   };
 
 /*************************************************
 * Library Initialization/Shutdown Object         *
@@ -50,8 +37,14 @@ void set_default_options();
 class LibraryInitializer
    {
    public:
-      LibraryInitializer(const std::string& = "");
-      ~LibraryInitializer();
+      static void initialize(const std::string& = "");
+      static void initialize(const InitializerOptions&);
+      static void initialize(const InitializerOptions&, class Modules&);
+      static void deinitialize();
+
+      LibraryInitializer(const std::string& args = "") { initialize(args); }
+      LibraryInitializer(const InitializerOptions& args) { initialize(args); }
+      ~LibraryInitializer() { deinitialize(); }
    };
 
 }

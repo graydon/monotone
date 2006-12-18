@@ -1,10 +1,11 @@
 /*************************************************
 * Filters Source File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/filters.h>
 #include <botan/lookup.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -15,6 +16,17 @@ StreamCipher_Filter::StreamCipher_Filter(const std::string& sc_name) :
    buffer(DEFAULT_BUFFERSIZE)
    {
    base_ptr = cipher = get_stream_cipher(sc_name);
+   }
+
+/*************************************************
+* StreamCipher_Filter Constructor                *
+*************************************************/
+StreamCipher_Filter::StreamCipher_Filter(const std::string& sc_name,
+                                         const SymmetricKey& key) :
+   buffer(DEFAULT_BUFFERSIZE)
+   {
+   base_ptr = cipher = get_stream_cipher(sc_name);
+   cipher->set_key(key);
    }
 
 /*************************************************

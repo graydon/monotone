@@ -1,10 +1,11 @@
 /*************************************************
 * DataSource Source File                         *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/data_src.h>
 #include <fstream>
+#include <algorithm>
 
 namespace Botan {
 
@@ -31,7 +32,7 @@ u32bit DataSource::discard_next(u32bit n)
    {
    u32bit discarded = 0;
    byte dummy;
-   for(u32bit j = 0; j != n; j++)
+   for(u32bit j = 0; j != n; ++j)
       discarded = read_byte(dummy);
    return discarded;
    }
@@ -84,6 +85,15 @@ DataSource_Memory::DataSource_Memory(const byte in[], u32bit length)
 DataSource_Memory::DataSource_Memory(const MemoryRegion<byte>& in)
    {
    source = in;
+   offset = 0;
+   }
+
+/*************************************************
+* DataSource_Memory Constructor                  *
+*************************************************/
+DataSource_Memory::DataSource_Memory(const std::string& in)
+   {
+   source.set((const byte*)in.c_str(), in.length());
    offset = 0;
    }
 
