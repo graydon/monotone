@@ -1,0 +1,8 @@
+This is most of pcre 6.7.  Configuration settings have been HARDWIRED.
+(pcre does not have any portability constraints that we need to worry
+about.)  Unicode support has been removed, and the "dftables.c"
+program has been run and its result checked in.  pcre_internal.h has
+been modified to include pcre_config.h instead of bare config.h.  Some
+#ifdefs have been added to pcre_tables.c, pcre_internal.h, and
+pcre_dfa_exec.c to dike out Unicode more thoroughly.
+

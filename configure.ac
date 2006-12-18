@@ -97,8 +97,7 @@ AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint \
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
 
-# FIXME Use pcre-config; bundled pcre support.
-AC_SEARCH_LIBS([pcre_exec], [pcre], , AC_MSG_FAILURE([libpcre is required]))
+MTN_LIB_PCRE
 
 # check for all things boost-related
 BOOST_VERSION_CHECK

@@ -1,3 +1,16 @@
+2006-12-18  Zack Weinberg  <zackw@panix.com>
+
+	* pcre: New directory, contains trimmed-down version of PCRE library.
+	* Makefile.am: Add support for compiling either with our bundled
+	PCRE or with a system-provided library.
+	* m4/pcre.m4: New file, provides MTN_LIB_PCRE.
+	* configure.ac: Use MTN_LIB_PCRE.
+	* debian/control: Adjust Build-Depends.
+
+	* m4/boost.m4: Use libboost_filesystem, not libboost_regex, in
+	BOOST_STATIC_LINK_OPTION.  Kill MTN_BOOST_LIB_REGEX.
+	* .mtn-ignore: Add a few missing files.
+
 2006-11-27  Zack Weinberg  <zackw@panix.com>
 
 	* packet.cc (feed_packet_consumer): Convert from functor object

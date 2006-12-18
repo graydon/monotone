@@ -257,6 +257,15 @@ IDNA_SOURCES =								\
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+PCRE_SOURCES =								\
+	pcre/pcre_chartables.c pcre/pcre_compile.c pcre/pcre_config.c	\
+	pcre/pcre_config.h pcre/pcre_dfa_exec.c pcre/pcre_exec.c	\
+	pcre/pcre_fullinfo.c pcre/pcre_get.c pcre/pcre_globals.c	\
+	pcre/pcre.h pcre/pcre_info.c pcre/pcre_internal.h		\
+	pcre/pcre_maketables.c pcre/pcre_refcount.c pcre/pcre_study.c	\
+	pcre/pcre_tables.c pcre/pcre_try_flipped.c pcre/pcre_version.c	\
+	pcre/pcre_xclass.c
+
 UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
@@ -291,6 +300,10 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
+
+if INCLUDED_PCRE
+lib3rdparty_a_SOURCES += $(PCRE_SOURCES)
+endif
 
 htmldir = $(datadir)/doc/monotone
 html_DATA = monotone.html
@@ -350,6 +363,21 @@ tester_LDFLAGS =
 tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
 tester_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
+
+if INCLUDED_PCRE
+  lib3rdparty_a_CPPFLAGS += -I$(top_srcdir)/pcre
+  mtn_CPPFLAGS += -I$(top_srcdir)/pcre
+  unit_tests_CPPFLAGS += -I$(top_srcdir)/pcre
+  tester_CPPFLAGS += -I$(top_srcdir)/pcre
+else
+  mtn_CPPFLAGS += $(PCRE_CFLAGS)
+  unit_tests_CPPFLAGS += $(PCRE_CFLAGS)
+  tester_CPPFLAGS += $(PCRE_CFLAGS)
+
+  mtn_LDADD += $(PCRE_LIBS)
+  unit_tests_LDADD += $(PCRE_LIBS)
+  tester_LDADD += $(PCRE_LIBS)
+endif
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
