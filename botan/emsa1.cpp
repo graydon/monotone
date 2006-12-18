@@ -1,6 +1,6 @@
 /*************************************************
 * EMSA1 Source File                              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/emsa.h>
@@ -31,22 +31,22 @@ SecureVector<byte> EMSA1::encoding_of(const MemoryRegion<byte>& msg,
                                       u32bit output_bits)
    {
    if(msg.size() != hash->OUTPUT_LENGTH)
-      throw Invalid_Argument("EMSA1::encoding_of: Invalid size for input");
-   if(msg.bits() <= output_bits)
+      throw Encoding_Error("EMSA1::encoding_of: Invalid size for input");
+   if(8*msg.size() <= output_bits)
       return msg;
 
-   u32bit shift = msg.bits() - output_bits;
+   u32bit shift = 8*msg.size() - output_bits;
 
    u32bit byte_shift = shift / 8, bit_shift = shift % 8;
    SecureVector<byte> digest(msg.size() - byte_shift);
 
-   for(u32bit j = 0; j != msg.size() - byte_shift; j++)
+   for(u32bit j = 0; j != msg.size() - byte_shift; ++j)
       digest[j] = msg[j];
 
    if(bit_shift)
       {
       byte carry = 0;
-      for(u32bit j = 0; j != digest.size(); j++)
+      for(u32bit j = 0; j != digest.size(); ++j)
          {
          byte temp = digest[j];
          digest[j] = (temp >> bit_shift) | carry;
@@ -71,11 +71,11 @@ bool EMSA1::verify(const MemoryRegion<byte>& coded,
 
       u32bit offset = 0;
       while(our_coding[offset] == 0 && offset < our_coding.size())
-         offset++;
+         ++offset;
       if(our_coding.size() - offset != coded.size())
          return false;
 
-      for(u32bit j = 0; j != coded.size(); j++)
+      for(u32bit j = 0; j != coded.size(); ++j)
          if(coded[j] != our_coding[j+offset])
             return false;
 

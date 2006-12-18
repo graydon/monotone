@@ -1,6 +1,6 @@
 /*************************************************
 * Secure Memory Buffers Header File              *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_SECURE_MEMORY_BUFFERS_H__
@@ -8,7 +8,6 @@
 
 #include <botan/allocate.h>
 #include <botan/mem_ops.h>
-#include <algorithm>
 
 namespace Botan {
 
@@ -20,7 +19,6 @@ class MemoryRegion
    {
    public:
       u32bit size() const { return used; }
-      u32bit bits() const { return 8*used; }
       u32bit is_empty() const { return (used == 0); }
       u32bit has_items() const { return (used != 0); }
 
@@ -33,11 +31,10 @@ class MemoryRegion
       T* end() { return (buf + size()); }
       const T* end() const { return (buf + size()); }
 
-      bool operator==(const MemoryRegion<T>& in) const
+      bool operator==(const MemoryRegion<T>& other) const
          {
-         if(size() == in.size() && std::equal(begin(), end(), in.begin()))
-            return true;
-         return false;
+         return (size() == other.size() &&
+                 same_mem(buf, other.buf, size()));
          }
 
       bool operator<(const MemoryRegion<T>&) const;
@@ -48,15 +45,15 @@ class MemoryRegion
          { if(this != &in) set(in); return (*this); }
 
       void copy(const T in[], u32bit n)
-         { copy_mem(buf, in, std::min(size(), n)); }
+         { copy(0, in, n); }
       void copy(u32bit off, const T in[], u32bit n)
-         { copy_mem(buf + off, in, std::min(size() - off, n)); }
+         { copy_mem(buf + off, in, (n > size() - off) ? (size() - off) : n); }
 
       void set(const T in[], u32bit n)    { create(n); copy(in, n); }
       void set(const MemoryRegion<T>& in) { set(in.begin(), in.size()); }
 
       void append(const T data[], u32bit n)
-         { grow_by(n); copy(size() - n, data, n); }
+         { grow_to(size()+n); copy(size() - n, data, n); }
       void append(T x) { append(&x, 1); }
       void append(const MemoryRegion<T>& x) { append(x.begin(), x.size()); }
 
@@ -65,7 +62,6 @@ class MemoryRegion
 
       void create(u32bit);
       void grow_to(u32bit) const;
-      void grow_by(u32bit n) const { grow_to(n + size()); }
       void swap(MemoryRegion<T>&);
 
       ~MemoryRegion() { deallocate(buf, allocated); }
@@ -79,8 +75,8 @@ class MemoryRegion
          set(copy.buf, copy.used);
          }
 
-      void init(bool lock, u32bit size = 0)
-         { alloc = get_allocator(lock ? "" : "malloc"); create(size); }
+      void init(bool locking, u32bit size = 0)
+         { alloc = Allocator::get(locking); create(size); }
    private:
       T* allocate(u32bit n) const { return (T*)alloc->allocate(sizeof(T)*n); }
       void deallocate(T* p, u32bit n) const
@@ -89,7 +85,7 @@ class MemoryRegion
       mutable T* buf;
       mutable u32bit used;
       mutable u32bit allocated;
-      const Allocator* alloc;
+      mutable Allocator* alloc;
    };
 
 /*************************************************
@@ -110,21 +106,20 @@ void MemoryRegion<T>::create(u32bit n)
 template<typename T>
 void MemoryRegion<T>::grow_to(u32bit n) const
    {
-   const u32bit VECTOR_OVER_ALLOCATE = BOTAN_VECTOR_OVER_ALLOCATE;
-
-   if(n <= used) return;
-   if(n <= allocated)
+   if(n > used && n <= allocated)
       {
       clear_mem(buf + used, n - used);
       used = n;
       return;
       }
-   T* new_buf = allocate(n + VECTOR_OVER_ALLOCATE);
-   copy_mem(new_buf, buf, used);
-   deallocate(buf, allocated);
-   buf = new_buf;
-   used = n;
-   allocated = n + VECTOR_OVER_ALLOCATE;
+   else if(n > allocated)
+      {
+      T* new_buf = allocate(n);
+      copy_mem(new_buf, buf, used);
+      deallocate(buf, allocated);
+      buf = new_buf;
+      allocated = used = n;
+      }
    }
 
 /*************************************************

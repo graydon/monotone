@@ -1,11 +1,13 @@
 /*************************************************
 * Hex Encoder/Decoder Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/hex.h>
 #include <botan/bit_ops.h>
+#include <botan/parsing.h>
 #include <botan/charset.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -47,7 +49,7 @@ void Hex_Encoder::encode(byte in, byte out[2], Hex_Encoder::Case casing)
 *************************************************/
 void Hex_Encoder::encode_and_send(const byte block[], u32bit length)
    {
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       encode(block[j], out + 2*j, casing);
 
    if(line_length == 0)
@@ -128,9 +130,14 @@ bool Hex_Decoder::is_valid(byte in)
 *************************************************/
 void Hex_Decoder::handle_bad_char(byte c)
    {
-   if(checking == NONE) return;
-   if((checking == IGNORE_WS) && is_space(c)) return;
-   throw Decoding_Error("Hex_Decoder: Invalid hex character: " + c);
+   if(checking == NONE)
+      return;
+
+   if((checking == IGNORE_WS) && Charset::is_space(c))
+      return;
+
+   throw Decoding_Error("Hex_Decoder: Invalid hex character: " +
+                        to_string(c));
    }
 
 /*************************************************
@@ -146,7 +153,7 @@ byte Hex_Decoder::decode(const byte hex[2])
 *************************************************/
 void Hex_Decoder::decode_and_send(const byte block[], u32bit length)
    {
-   for(u32bit j = 0; j != length / 2; j++)
+   for(u32bit j = 0; j != length / 2; ++j)
       out[j] = decode(block + 2*j);
    send(out, length / 2);
    }
@@ -156,7 +163,7 @@ void Hex_Decoder::decode_and_send(const byte block[], u32bit length)
 *************************************************/
 void Hex_Decoder::write(const byte input[], u32bit length)
    {
-   for(u32bit j = 0; j != length; j++)
+   for(u32bit j = 0; j != length; ++j)
       {
       if(is_valid(input[j]))
          in[position++] = input[j];

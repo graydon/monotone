@@ -1,14 +1,17 @@
 /*************************************************
 * PKCS #5 PBES2 Source File                      *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/parsing.h>
 #include <botan/lookup.h>
 #include <botan/rng.h>
 #include <botan/asn1_obj.h>
 #include <botan/oids.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {
@@ -84,8 +87,8 @@ void PBE_PKCS5v20::new_params()
    key_length = max_keylength_of(cipher_algo);
    salt.create(8);
    iv.create(block_size_of(cipher_algo));
-   Global_RNG::randomize(salt, salt.size(), Nonce);
-   Global_RNG::randomize(iv, iv.size(), Nonce);
+   Global_RNG::randomize(salt, salt.size());
+   Global_RNG::randomize(iv, iv.size());
    }
 
 /*************************************************
@@ -93,26 +96,28 @@ void PBE_PKCS5v20::new_params()
 *************************************************/
 MemoryVector<byte> PBE_PKCS5v20::encode_params() const
    {
-   AlgorithmIdentifier kdf_algo, enc_algo;
-
-   DER_Encoder encoder;
-   encoder.start_sequence();
-   DER::encode(encoder, salt, OCTET_STRING);
-   DER::encode(encoder, iterations);
-   DER::encode(encoder, key_length);
-   encoder.end_sequence();
-   kdf_algo.parameters = encoder.get_contents();
-   kdf_algo.oid = OIDS::lookup("PKCS5.PBKDF2");
-
-   enc_algo.oid = OIDS::lookup(cipher);
-   DER::encode(encoder, iv, OCTET_STRING);
-   enc_algo.parameters = encoder.get_contents();
-
-   encoder.start_sequence();
-   DER::encode(encoder, kdf_algo);
-   DER::encode(encoder, enc_algo);
-   encoder.end_sequence();
-   return encoder.get_contents();
+   return DER_Encoder()
+      .start_cons(SEQUENCE)
+      .encode(
+         AlgorithmIdentifier("PKCS5.PBKDF2",
+            DER_Encoder()
+               .start_cons(SEQUENCE)
+                  .encode(salt, OCTET_STRING)
+                  .encode(iterations)
+                  .encode(key_length)
+               .end_cons()
+            .get_contents()
+            )
+         )
+      .encode(
+         AlgorithmIdentifier(cipher,
+            DER_Encoder()
+               .encode(iv, OCTET_STRING)
+            .get_contents()
+            )
+         )
+      .end_cons()
+      .get_contents();
    }
 
 /*************************************************
@@ -122,22 +127,24 @@ void PBE_PKCS5v20::decode_params(DataSource& source)
    {
    AlgorithmIdentifier kdf_algo, enc_algo;
 
-   BER_Decoder decoder(source);
-   BER_Decoder sequence = BER::get_subsequence(decoder);
-   BER::decode(sequence, kdf_algo);
-   BER::decode(sequence, enc_algo);
-   sequence.verify_end();
+   BER_Decoder(source)
+      .start_cons(SEQUENCE)
+         .decode(kdf_algo)
+         .decode(enc_algo)
+         .verify_end()
+      .end_cons();
 
    if(kdf_algo.oid == OIDS::lookup("PKCS5.PBKDF2"))
       {
       digest = "SHA-160";
-      BER_Decoder pbkdf2_params(kdf_algo.parameters);
-      BER_Decoder algo_params = BER::get_subsequence(pbkdf2_params);
-      BER::decode(algo_params, salt, OCTET_STRING);
-      BER::decode(algo_params, iterations);
-      BER::decode_optional(algo_params, key_length, INTEGER, UNIVERSAL);
 
-      algo_params.verify_end();
+      BER_Decoder(kdf_algo.parameters)
+         .start_cons(SEQUENCE)
+            .decode(salt, OCTET_STRING)
+            .decode(iterations)
+            .decode_optional(key_length, INTEGER, UNIVERSAL)
+            .verify_end()
+         .end_cons();
       }
    else
       throw Decoding_Error("PBE-PKCS5 v2.0: Unknown KDF algorithm " +
@@ -153,8 +160,7 @@ void PBE_PKCS5v20::decode_params(DataSource& source)
       throw Decoding_Error("PBE-PKCS5 v2.0: Don't know param format for " +
                            cipher);
 
-   BER_Decoder algo_params(enc_algo.parameters);
-   BER::decode(algo_params, iv, OCTET_STRING);
+   BER_Decoder(enc_algo.parameters).decode(iv, OCTET_STRING).verify_end();
 
    if(key_length == 0)
       key_length = max_keylength_of(cipher_algo);

@@ -1,12 +1,13 @@
 /*************************************************
 * PKCS #5 Source File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pkcs5.h>
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
 #include <botan/hmac.h>
+#include <algorithm>
 #include <memory>
 
 namespace Botan {
@@ -30,7 +31,7 @@ OctetString PKCS5_PBKDF1::derive(u32bit key_len,
    hash->update(salt, salt_size);
    SecureVector<byte> key = hash->final();
 
-   for(u32bit j = 1; j != iterations; j++)
+   for(u32bit j = 1; j != iterations; ++j)
       {
       hash->update(key);
       hash->final(key);
@@ -83,12 +84,12 @@ OctetString PKCS5_PBKDF2::derive(u32bit key_len,
       SecureVector<byte> U(hmac.OUTPUT_LENGTH);
 
       hmac.update(salt, salt_size);
-      for(u32bit j = 0; j != 4; j++)
+      for(u32bit j = 0; j != 4; ++j)
          hmac.update(get_byte(j, counter));
       hmac.final(U);
       xor_buf(T, U, T_size);
 
-      for(u32bit j = 1; j != iterations; j++)
+      for(u32bit j = 1; j != iterations; ++j)
          {
          hmac.update(U);
          hmac.final(U);
@@ -97,7 +98,7 @@ OctetString PKCS5_PBKDF2::derive(u32bit key_len,
 
       key_len -= T_size;
       T += T_size;
-      counter++;
+      ++counter;
       }
 
    return key;

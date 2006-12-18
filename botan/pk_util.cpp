@@ -1,6 +1,6 @@
 /*************************************************
 * PK Utility Classes Source File                 *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pk_util.h>
@@ -57,60 +57,6 @@ bool EMSA::verify(const MemoryRegion<byte>& coded,
       {
       return false;
       }
-   }
-
-/*************************************************
-* Derive a key                                   *
-*************************************************/
-SecureVector<byte> KDF::derive_key(u32bit key_len,
-                                   const MemoryRegion<byte>& secret,
-                                   const std::string& salt) const
-   {
-   return derive_key(key_len, secret, secret.size(),
-                     (const byte*)salt.c_str(), salt.length());
-   }
-
-/*************************************************
-* Derive a key                                   *
-*************************************************/
-SecureVector<byte> KDF::derive_key(u32bit key_len,
-                                   const MemoryRegion<byte>& secret,
-                                   const byte salt[], u32bit salt_len) const
-   {
-   return derive_key(key_len, secret.begin(), secret.size(),
-                     salt, salt_len);
-   }
-
-/*************************************************
-* Derive a key                                   *
-*************************************************/
-SecureVector<byte> KDF::derive_key(u32bit key_len,
-                                   const MemoryRegion<byte>& secret,
-                                   const MemoryRegion<byte>& salt) const
-   {
-   return derive_key(key_len, secret.begin(), secret.size(),
-                     salt.begin(), salt.size());
-   }
-
-/*************************************************
-* Derive a key                                   *
-*************************************************/
-SecureVector<byte> KDF::derive_key(u32bit key_len,
-                                   const byte secret[], u32bit secret_len,
-                                   const std::string& salt) const
-   {
-   return derive_key(key_len, secret, secret_len,
-                     (const byte*)salt.c_str(), salt.length());
-   }
-
-/*************************************************
-* Derive a key                                   *
-*************************************************/
-SecureVector<byte> KDF::derive_key(u32bit key_len,
-                                   const byte secret[], u32bit secret_len,
-                                   const byte salt[], u32bit salt_len) const
-   {
-   return derive(key_len, secret, secret_len, salt, salt_len);
    }
 
 }

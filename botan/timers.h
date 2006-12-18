@@ -1,6 +1,6 @@
 /*************************************************
 * Timestamp Functions Header File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_TIMERS_H__
@@ -16,7 +16,7 @@ namespace Botan {
 class Timer
    {
    public:
-      virtual u64bit clock() const = 0;
+      virtual u64bit clock() const;
       virtual ~Timer() {}
    };
 

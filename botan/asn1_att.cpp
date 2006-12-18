@@ -1,9 +1,11 @@
 /*************************************************
 * Attribute Source File                          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/oids.h>
 
 namespace Botan {
@@ -27,40 +29,30 @@ Attribute::Attribute(const std::string& attr_oid,
    parameters = attr_value;
    }
 
-namespace DER {
-
 /*************************************************
 * DER encode a Attribute                         *
 *************************************************/
-void encode(DER_Encoder& encoder, const Attribute& attr)
+void Attribute::encode_into(DER_Encoder& codec) const
    {
-   encoder.start_sequence();
-     DER::encode(encoder, attr.oid);
-     encoder.start_set();
-       encoder.add_raw_octets(attr.parameters);
-     encoder.end_set();
-   encoder.end_sequence();
+   codec.start_cons(SEQUENCE)
+      .encode(oid)
+      .start_cons(SET)
+         .raw_bytes(parameters)
+      .end_cons()
+   .end_cons();
    }
-
-}
-
-namespace BER {
 
 /*************************************************
 * Decode a BER encoded Attribute                 *
 *************************************************/
-void decode(BER_Decoder& source, Attribute& attr)
+void Attribute::decode_from(BER_Decoder& codec)
    {
-   BER_Decoder decoder = BER::get_subsequence(source);
-   BER::decode(decoder, attr.oid);
-
-   BER_Decoder attributes = BER::get_subset(decoder);
-   attr.parameters = attributes.get_remaining();
-   attributes.verify_end();
-
-   decoder.verify_end();
+   codec.start_cons(SEQUENCE)
+      .decode(oid)
+      .start_cons(SET)
+         .raw_bytes(parameters)
+      .end_cons()
+   .end_cons();
    }
-
-}
 
 }

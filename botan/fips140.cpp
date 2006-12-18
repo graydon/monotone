@@ -1,6 +1,6 @@
 /*************************************************
 * FIPS-140 Self Tests Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/fips140.h>
@@ -106,14 +106,6 @@ bool passes_self_tests()
                 "E26BA806A59B03307DE2BCC25A08BA40A8BA335F5D604C62",
                 "E26BA806A59B03303C62C2EFF32D3ACDD5D5F35EBCC53371");
 
-     cipher_kat("Skipjack", "1555E5531C3A169B2D65", "6EC9795701F49864",
-                "00AFA48E9621E52E8CBDA312660184EDDB1F33D9DACDA8DA",
-                "DBEC73562EFCAEB56204EB8AE9557EBF77473FBB52D17CD1",
-                "0C7B0B74E21F99B8F2C8DF37879F6C044967F42A796DCA8B",
-                "79FDDA9724E36CC2E023E9A5C717A8A8A7FDA465CADCBF63",
-                "79FDDA9724E36CC26CACBD83C1ABC06EAF5B249BE5B1E040",
-                "79FDDA9724E36CC211B0AEC607B95A96BCDA318440B82F49");
-
      cipher_kat("AES",
                 "2B7E151628AED2A6ABF7158809CF4F3C",
                 "000102030405060708090A0B0C0D0E0F",
@@ -154,24 +146,6 @@ bool passes_self_tests()
 
   return true;
   }
-
-/*************************************************
-* Check a SHA-1 EDC                              *
-*************************************************/
-bool good_edc(const std::string& filename, const std::string& edc)
-   {
-   if(filename == "" || edc == "")
-      return false;
-
-   Pipe pipe1(new Hash_Filter("SHA-1"));
-   Pipe pipe2(new Hex_Decoder);
-
-   DataSource_Stream in(filename, true);
-   pipe1.process_msg(in);
-   pipe2.process_msg(edc);
-
-   return (pipe1.read_all() == pipe2.read_all());
-   }
 
 }
 

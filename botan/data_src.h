@@ -1,6 +1,6 @@
 /*************************************************
 * DataSource Header File                         *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_DATA_SRC_H__
@@ -43,6 +43,7 @@ class DataSource_Memory : public DataSource
       u32bit peek(byte[], u32bit, u32bit) const;
       bool end_of_data() const;
 
+      DataSource_Memory(const std::string&);
       DataSource_Memory(const byte[], u32bit);
       DataSource_Memory(const MemoryRegion<byte>&);
    private:

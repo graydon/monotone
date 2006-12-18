@@ -1,6 +1,6 @@
 /*************************************************
 * ARC4 Source File                               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/arc4.h>
@@ -60,9 +60,9 @@ void ARC4::generate()
 void ARC4::key(const byte key[], u32bit length)
    {
    clear();
-   for(u32bit j = 0; j != 256; j++)
+   for(u32bit j = 0; j != 256; ++j)
       state[j] = j;
-   for(u32bit j = 0, state_index = 0; j != 256; j++)
+   for(u32bit j = 0, state_index = 0; j != 256; ++j)
       {
       state_index = (state_index + key[j % length] + state[j]) % 256;
       std::swap(state[j], state[state_index]);
@@ -95,7 +95,6 @@ void ARC4::clear() throw()
 /*************************************************
 * ARC4 Constructor                               *
 *************************************************/
-// monotone-specific: max keysize is 256 bytes
 ARC4::ARC4(u32bit s) : StreamCipher(1, 256), SKIP(s)
    {
    clear();

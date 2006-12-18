@@ -1,10 +1,10 @@
 /*************************************************
 * EGD EntropySource Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/es_egd.h>
-#include <botan/conf.h>
+#include <botan/config.h>
 #include <botan/bit_ops.h>
 #include <botan/parsing.h>
 #include <cstring>
@@ -26,7 +26,8 @@ namespace Botan {
 EGD_EntropySource::EGD_EntropySource(const std::string& egd_paths)
    {
    std::vector<std::string> path_list = split_on(egd_paths, ':');
-   std::vector<std::string> defaults = Config::get_list("rng/egd_path");
+   std::vector<std::string> defaults =
+      global_config().option_as_list("rng/egd_path");
 
    for(u32bit j = 0; j != path_list.size(); j++)
       paths.push_back(path_list[j]);

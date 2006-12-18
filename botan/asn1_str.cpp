@@ -1,12 +1,14 @@
 /*************************************************
 * Simple ASN.1 String Types Source File          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/charset.h>
 #include <botan/parsing.h>
-#include <botan/conf.h>
+#include <botan/config.h>
 
 namespace Botan {
 
@@ -41,10 +43,11 @@ ASN1_Tag choose_encoding(const std::string& str)
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00 };
 
-   for(u32bit j = 0; j != str.size(); j++)
+   for(u32bit j = 0; j != str.size(); ++j)
       if(!IS_PRINTABLE[(byte)str[j]])
          {
-         const std::string type = Config::get_string("x509/ca/str_type");
+         const std::string type = global_config().option("x509/ca/str_type");
+
          if(type == "utf8")   return UTF8_STRING;
          if(type == "latin1") return T61_STRING;
          throw Invalid_Argument("Bad setting for x509/ca/str_type: " + type);
@@ -71,7 +74,8 @@ bool is_string_type(ASN1_Tag tag)
 *************************************************/
 ASN1_String::ASN1_String(const std::string& str, ASN1_Tag t) : tag(t)
    {
-   iso_8859_str = local2iso(str);
+   iso_8859_str = Charset::transcode(str, LOCAL_CHARSET, LATIN1_CHARSET);
+
    if(tag == DIRECTORY_STRING)
       tag = choose_encoding(iso_8859_str);
 
@@ -91,7 +95,7 @@ ASN1_String::ASN1_String(const std::string& str, ASN1_Tag t) : tag(t)
 *************************************************/
 ASN1_String::ASN1_String(const std::string& str)
    {
-   iso_8859_str = local2iso(str);
+   iso_8859_str = Charset::transcode(str, LOCAL_CHARSET, LATIN1_CHARSET);
    tag = choose_encoding(iso_8859_str);
    }
 
@@ -108,7 +112,7 @@ std::string ASN1_String::iso_8859() const
 *************************************************/
 std::string ASN1_String::value() const
    {
-   return iso2local(iso_8859_str);
+   return Charset::transcode(iso_8859_str, LATIN1_CHARSET, LOCAL_CHARSET);
    }
 
 /*************************************************
@@ -119,87 +123,36 @@ ASN1_Tag ASN1_String::tagging() const
    return tag;
    }
 
-namespace DER {
-
 /*************************************************
 * DER encode an ASN1_String                      *
 *************************************************/
-void encode(DER_Encoder& encoder, const ASN1_String& string,
-            ASN1_Tag type_tag, ASN1_Tag class_tag)
+void ASN1_String::encode_into(DER_Encoder& encoder) const
    {
-   if(string.tagging() == UTF8_STRING)
-      encoder.add_object(type_tag, class_tag, iso2utf(string.iso_8859()));
-   else
-      encoder.add_object(type_tag, class_tag, string.iso_8859());
-   }
-
-/*************************************************
-* DER encode an ASN1_String                      *
-*************************************************/
-void encode(DER_Encoder& encoder, const ASN1_String& string)
-   {
-   DER::encode(encoder, string, string.tagging(), UNIVERSAL);
-   }
-
-}
-
-namespace BER {
-
-namespace {
-
-/*************************************************
-* Do any UTF-8/Unicode decoding needed           *
-*************************************************/
-std::string convert_string(BER_Object obj, ASN1_Tag type)
-   {
-   if(type == BMP_STRING)
-      {
-      if(obj.value.size() % 2 == 1)
-         throw BER_Decoding_Error("BMP STRING has an odd number of bytes");
-
-      std::string value;
-      for(u32bit j = 0; j != obj.value.size(); j += 2)
-         {
-         const byte c1 = obj.value[j];
-         const byte c2 = obj.value[j+1];
-
-         if(c1 != 0)
-            throw BER_Decoding_Error("BMP STRING has non-Latin1 characters");
-
-         value += (char)c2;
-         }
-      return iso2local(value);
-      }
-   else if(type == UTF8_STRING)
-      return iso2local(utf2iso(BER::to_string(obj)));
-   else
-      return iso2local(BER::to_string(obj));
-   }
-
-}
-
-/*************************************************
-* Decode a BER encoded ASN1_String               *
-*************************************************/
-void decode(BER_Decoder& source, ASN1_String& string,
-            ASN1_Tag expected_tag, ASN1_Tag real_tag)
-   {
-   BER_Object obj = source.get_next_object();
-   if(obj.type_tag != expected_tag)
-      throw BER_Bad_Tag("Unexpected string tag", obj.type_tag);
-
-   string = ASN1_String(convert_string(obj, real_tag),  real_tag);
+   std::string value = iso_8859();
+   if(tagging() == UTF8_STRING)
+      value = Charset::transcode(value, LATIN1_CHARSET, UTF8_CHARSET);
+   encoder.add_object(tagging(), UNIVERSAL, value);
    }
 
 /*************************************************
 * Decode a BER encoded ASN1_String               *
 *************************************************/
-void decode(BER_Decoder& source, ASN1_String& string)
+void ASN1_String::decode_from(BER_Decoder& source)
    {
    BER_Object obj = source.get_next_object();
-   string = ASN1_String(convert_string(obj, obj.type_tag), obj.type_tag);
-   }
 
-}
+   Character_Set charset_is;
+
+   if(obj.type_tag == BMP_STRING)
+      charset_is = UCS2_CHARSET;
+   else if(obj.type_tag == UTF8_STRING)
+      charset_is = UTF8_CHARSET;
+   else
+      charset_is = LATIN1_CHARSET;
+
+   *this = ASN1_String(
+      Charset::transcode(ASN1::to_string(obj), charset_is, LOCAL_CHARSET),
+      obj.type_tag);
+   }
 
 }

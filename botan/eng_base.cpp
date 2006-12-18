@@ -1,12 +1,66 @@
 /*************************************************
 * Basic No-Op Engine Source File                 *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/engine.h>
+#include <botan/libstate.h>
+#include <botan/stl_util.h>
 #include <botan/lookup.h>
 
 namespace Botan {
+
+namespace {
+
+/*************************************************
+* Algorithm Cache                                *
+*************************************************/
+template<typename T>
+class Algorithm_Cache_Impl : public Engine::Algorithm_Cache<T>
+   {
+   public:
+      T* get(const std::string& name) const
+         {
+         Mutex_Holder lock(mutex);
+         return search_map(mappings, name);
+         }
+
+      void add(T* algo) const
+         {
+         if(!algo)
+            return;
+
+         Mutex_Holder lock(mutex);
+
+         const std::string algo_name = algo->name();
+         if(mappings.find(algo_name) != mappings.end())
+            delete mappings[algo_name];
+         mappings[algo_name] = algo;
+         }
+
+      Algorithm_Cache_Impl()
+         {
+         mutex = global_state().get_mutex();
+         }
+
+      ~Algorithm_Cache_Impl()
+         {
+         typename std::map<std::string, T*>::iterator i
+            = mappings.begin();
+         while(i != mappings.end())
+            {
+            delete i->second;
+            ++i;
+            }
+         delete mutex;
+         }
+   private:
+      Mutex* mutex;
+      mutable std::map<std::string, T*> mappings;
+   };
+
+
+}
 
 /*************************************************
 * Basic No-Op Engine Implementation              *
@@ -56,7 +110,8 @@ DH_Operation* Engine::dh_op(const DL_Group&, const BigInt&) const
 /*************************************************
 * Basic No-Op Engine Implementation              *
 *************************************************/
-ModularReducer* Engine::reducer(const BigInt&, bool) const
+Modular_Exponentiator* Engine::mod_exp(const BigInt&,
+                                       Power_Mod::Usage_Hints) const
    {
    return 0;
    }
@@ -66,19 +121,8 @@ ModularReducer* Engine::reducer(const BigInt&, bool) const
 *************************************************/
 const BlockCipher* Engine::block_cipher(const std::string& name) const
    {
-   BlockCipher* retval = 0;
-   bc_map_lock->lock();
-   std::map<std::string, BlockCipher*>::const_iterator algo;
-   algo = bc_map.find(deref_alias(name));
-   if(algo != bc_map.end())
-      retval = algo->second;
-   bc_map_lock->unlock();
-   if(!retval)
-      {
-      retval = find_block_cipher(deref_alias(name));
-      add_algorithm(retval);
-      }
-   return retval;
+   return lookup_algo(cache_of_bc, deref_alias(name),
+                      this, &Engine::find_block_cipher);
    }
 
 /*************************************************
@@ -86,19 +130,8 @@ const BlockCipher* Engine::block_cipher(const std::string& name) const
 *************************************************/
 const StreamCipher* Engine::stream_cipher(const std::string& name) const
    {
-   StreamCipher* retval = 0;
-   sc_map_lock->lock();
-   std::map<std::string, StreamCipher*>::const_iterator algo;
-   algo = sc_map.find(deref_alias(name));
-   if(algo != sc_map.end())
-      retval = algo->second;
-   sc_map_lock->unlock();
-   if(!retval)
-      {
-      retval = find_stream_cipher(deref_alias(name));
-      add_algorithm(retval);
-      }
-   return retval;
+   return lookup_algo(cache_of_sc, deref_alias(name),
+                      this, &Engine::find_stream_cipher);
    }
 
 /*************************************************
@@ -106,19 +139,8 @@ const StreamCipher* Engine::stream_cipher(const std::string& name) const
 *************************************************/
 const HashFunction* Engine::hash(const std::string& name) const
    {
-   HashFunction* retval = 0;
-   hf_map_lock->lock();
-   std::map<std::string, HashFunction*>::const_iterator algo;
-   algo = hf_map.find(deref_alias(name));
-   if(algo != hf_map.end())
-      retval = algo->second;
-   hf_map_lock->unlock();
-   if(!retval)
-      {
-      retval = find_hash(deref_alias(name));
-      add_algorithm(retval);
-      }
-   return retval;
+   return lookup_algo(cache_of_hf, deref_alias(name),
+                      this, &Engine::find_hash);
    }
 
 /*************************************************
@@ -126,19 +148,27 @@ const HashFunction* Engine::hash(const std::string& name) const
 *************************************************/
 const MessageAuthenticationCode* Engine::mac(const std::string& name) const
    {
-   MessageAuthenticationCode* retval = 0;
-   mac_map_lock->lock();
-   std::map<std::string, MessageAuthenticationCode*>::const_iterator algo;
-   algo = mac_map.find(deref_alias(name));
-   if(algo != mac_map.end())
-      retval = algo->second;
-   mac_map_lock->unlock();
-   if(!retval)
-      {
-      retval = find_mac(deref_alias(name));
-      add_algorithm(retval);
-      }
-   return retval;
+   return lookup_algo(cache_of_mac, deref_alias(name),
+                      this, &Engine::find_mac);
+   }
+
+/*************************************************
+* Acquire a S2K object                           *
+*************************************************/
+const S2K* Engine::s2k(const std::string& name) const
+   {
+   return lookup_algo(cache_of_s2k, deref_alias(name),
+                      this, &Engine::find_s2k);
+   }
+
+/*************************************************
+* Acquire a cipher padding object                *
+*************************************************/
+const BlockCipherModePaddingMethod*
+Engine::bc_pad(const std::string& name) const
+   {
+   return lookup_algo(cache_of_bc_pad, deref_alias(name),
+                      this, &Engine::find_bc_pad);
    }
 
 /*************************************************
@@ -146,12 +176,7 @@ const MessageAuthenticationCode* Engine::mac(const std::string& name) const
 *************************************************/
 void Engine::add_algorithm(BlockCipher* algo) const
    {
-   if(!algo) return;
-   bc_map_lock->lock();
-   if(bc_map.find(algo->name()) != bc_map.end())
-      delete bc_map[algo->name()];
-   bc_map[algo->name()] = algo;
-   bc_map_lock->unlock();
+   cache_of_bc->add(algo);
    }
 
 /*************************************************
@@ -159,12 +184,7 @@ void Engine::add_algorithm(BlockCipher* algo) const
 *************************************************/
 void Engine::add_algorithm(StreamCipher* algo) const
    {
-   if(!algo) return;
-   sc_map_lock->lock();
-   if(sc_map.find(algo->name()) != sc_map.end())
-      delete sc_map[algo->name()];
-   sc_map[algo->name()] = algo;
-   sc_map_lock->unlock();
+   cache_of_sc->add(algo);
    }
 
 /*************************************************
@@ -172,12 +192,7 @@ void Engine::add_algorithm(StreamCipher* algo) const
 *************************************************/
 void Engine::add_algorithm(HashFunction* algo) const
    {
-   if(!algo) return;
-   hf_map_lock->lock();
-   if(hf_map.find(algo->name()) != hf_map.end())
-      delete hf_map[algo->name()];
-   hf_map[algo->name()] = algo;
-   hf_map_lock->unlock();
+   cache_of_hf->add(algo);
    }
 
 /*************************************************
@@ -185,12 +200,23 @@ void Engine::add_algorithm(HashFunction* algo) const
 *************************************************/
 void Engine::add_algorithm(MessageAuthenticationCode* algo) const
    {
-   if(!algo) return;
-   mac_map_lock->lock();
-   if(mac_map.find(algo->name()) != mac_map.end())
-      delete mac_map[algo->name()];
-   mac_map[algo->name()] = algo;
-   mac_map_lock->unlock();
+   cache_of_mac->add(algo);
+   }
+
+/*************************************************
+* Add a S2K to the lookup table                  *
+*************************************************/
+void Engine::add_algorithm(S2K* algo) const
+   {
+   cache_of_s2k->add(algo);
+   }
+
+/*************************************************
+* Add a cipher pad method to the lookup table    *
+*************************************************/
+void Engine::add_algorithm(BlockCipherModePaddingMethod* algo) const
+   {
+   cache_of_bc_pad->add(algo);
    }
 
 /*************************************************
@@ -198,10 +224,13 @@ void Engine::add_algorithm(MessageAuthenticationCode* algo) const
 *************************************************/
 Engine::Engine()
    {
-   bc_map_lock = get_mutex();
-   sc_map_lock = get_mutex();
-   hf_map_lock = get_mutex();
-   mac_map_lock = get_mutex();
+   cache_of_bc = new Algorithm_Cache_Impl<BlockCipher>();
+   cache_of_sc = new Algorithm_Cache_Impl<StreamCipher>();
+   cache_of_hf = new Algorithm_Cache_Impl<HashFunction>();
+   cache_of_mac = new Algorithm_Cache_Impl<MessageAuthenticationCode>();
+   cache_of_s2k = new Algorithm_Cache_Impl<S2K>();
+   cache_of_bc_pad =
+      new Algorithm_Cache_Impl<BlockCipherModePaddingMethod>();
    }
 
 /*************************************************
@@ -209,26 +238,12 @@ Engine::Engine()
 *************************************************/
 Engine::~Engine()
    {
-   std::map<std::string, BlockCipher*>::iterator bc_iter;
-   for(bc_iter = bc_map.begin(); bc_iter != bc_map.end(); bc_iter++)
-      delete bc_iter->second;
-
-   std::map<std::string, StreamCipher*>::iterator sc_iter;
-   for(sc_iter = sc_map.begin(); sc_iter != sc_map.end(); sc_iter++)
-      delete sc_iter->second;
-
-   std::map<std::string, HashFunction*>::iterator hf_iter;
-   for(hf_iter = hf_map.begin(); hf_iter != hf_map.end(); hf_iter++)
-      delete hf_iter->second;
-
-   std::map<std::string, MessageAuthenticationCode*>::iterator mac_iter;
-   for(mac_iter = mac_map.begin(); mac_iter != mac_map.end(); mac_iter++)
-      delete mac_iter->second;
-
-   delete bc_map_lock;
-   delete sc_map_lock;
-   delete hf_map_lock;
-   delete mac_map_lock;
+   delete cache_of_bc;
+   delete cache_of_sc;
+   delete cache_of_hf;
+   delete cache_of_mac;
+   delete cache_of_s2k;
+   delete cache_of_bc_pad;
    }
 
 /*************************************************
@@ -259,6 +274,22 @@ HashFunction* Engine::find_hash(const std::string&) const
 * Basic No-Op Engine Implementation              *
 *************************************************/
 MessageAuthenticationCode* Engine::find_mac(const std::string&) const
+   {
+   return 0;
+   }
+
+/*************************************************
+* Basic No-Op Engine Implementation              *
+*************************************************/
+S2K* Engine::find_s2k(const std::string&) const
+   {
+   return 0;
+   }
+
+/*************************************************
+* Basic No-Op Engine Implementation              *
+*************************************************/
+BlockCipherModePaddingMethod* Engine::find_bc_pad(const std::string&) const
    {
    return 0;
    }

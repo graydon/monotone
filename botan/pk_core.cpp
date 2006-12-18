@@ -1,12 +1,13 @@
 /*************************************************
 * PK Algorithm Core Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pk_core.h>
 #include <botan/numthry.h>
 #include <botan/engine.h>
-#include <botan/conf.h>
+#include <botan/config.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -17,10 +18,12 @@ namespace {
 *************************************************/
 BigInt blinding_factor(u32bit modulus_size)
    {
-   const u32bit BLINDING_BITS = Config::get_u32bit("pk/blinder_size");
+   const u32bit BLINDING_BITS =
+      global_config().option_as_u32bit("pk/blinder_size");
+
    if(BLINDING_BITS == 0)
       return 0;
-   return random_integer(std::min(modulus_size - 1, BLINDING_BITS), Nonce);
+   return random_integer(std::min(modulus_size - 1, BLINDING_BITS));
    }
 
 }
@@ -38,7 +41,7 @@ IF_Core::IF_Core(const BigInt& e, const BigInt& n, const BigInt& d,
       {
       BigInt k = blinding_factor(n.bits());
       if(k != 0)
-         blinder.initialize(power_mod(k, e, n), inverse_mod(k, n), n);
+         blinder = Blinder(power_mod(k, e, n), inverse_mod(k, n), n);
       }
    }
 
@@ -189,7 +192,7 @@ ELG_Core::ELG_Core(const DL_Group& group, const BigInt& y, const BigInt& x)
 
       BigInt k = blinding_factor(p.bits());
       if(k != 0)
-         blinder.initialize(k, power_mod(k, x, p), p);
+         blinder = Blinder(k, power_mod(k, x, p), p);
       }
    }
 
@@ -251,7 +254,7 @@ DH_Core::DH_Core(const DL_Group& group, const BigInt& x)
    const BigInt& p = group.get_p();
    BigInt k = blinding_factor(p.bits());
    if(k != 0)
-      blinder.initialize(k, power_mod(inverse_mod(k, p), x, p), p);
+      blinder = Blinder(k, power_mod(inverse_mod(k, p), x, p), p);
    }
 
 /*************************************************
