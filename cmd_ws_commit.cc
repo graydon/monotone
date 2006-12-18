@@ -1069,34 +1069,43 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
 
   app.create_workspace(dir);
 
-  revision_t rev;
-  make_revision_for_workspace(ident, cset(), rev);
-  app.work.put_work_rev(rev);
+  try
+    {
+      revision_t rev;
+      make_revision_for_workspace(ident, cset(), rev);
+      app.work.put_work_rev(rev);
 
-  // prepare stuff for 'add' and so on.
-  app.found_workspace = true;       // Yup, this is cheating!
+      // prepare stuff for 'add' and so on.
+      app.found_workspace = true;       // Yup, this is cheating!
 
-  vector<utf8> empty_args;
-  options save_opts;
-  // add --unknown
-  save_opts.no_ignore = app.opts.no_ignore;
-  save_opts.exclude_patterns = app.opts.exclude_patterns;
-  app.opts.no_ignore = false;
-  app.opts.exclude_patterns = std::vector<utf8>();
-  app.opts.unknown = true;
-  process(app, "add", empty_args);
-  app.opts.unknown = false;
-  app.opts.no_ignore = save_opts.no_ignore;
-  app.opts.exclude_patterns = save_opts.exclude_patterns;
+      vector<utf8> empty_args;
+      options save_opts;
+      // add --unknown
+      save_opts.no_ignore = app.opts.no_ignore;
+      save_opts.exclude_patterns = app.opts.exclude_patterns;
+      app.opts.no_ignore = false;
+      app.opts.exclude_patterns = std::vector<utf8>();
+      app.opts.unknown = true;
+      process(app, "add", empty_args);
+      app.opts.unknown = false;
+      app.opts.no_ignore = save_opts.no_ignore;
+      app.opts.exclude_patterns = save_opts.exclude_patterns;
 
-  // drop --missing
-  app.opts.missing = true;
-  process(app, "drop", empty_args);
-  app.opts.missing = false;
+      // drop --missing
+      app.opts.missing = true;
+      process(app, "drop", empty_args);
+      app.opts.missing = false;
 
-  // commit
-  if (!app.opts.dryrun)
-    process(app, "commit", empty_args);
+      // commit
+      if (!app.opts.dryrun)
+	process(app, "commit", empty_args);
+    }
+  catch (...)
+    {
+      // clean up before rethrowing
+      delete_dir_recursive(bookkeeping_root);
+      throw;
+    }
 
   // clean up
   delete_dir_recursive(bookkeeping_root);
