@@ -1,6 +1,6 @@
 /*************************************************
 * Diffie-Hellman Header File                     *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_DIFFIE_HELLMAN_H__
@@ -17,14 +17,16 @@ namespace Botan {
 class DH_PublicKey : public virtual DL_Scheme_PublicKey
    {
    public:
-      MemoryVector<byte> public_value() const;
-      DH_PublicKey(const DL_Group&, const BigInt&);
-   protected:
       std::string algo_name() const { return "DH"; }
-      DH_PublicKey() {}
-   private:
-      friend X509_PublicKey* get_public_key(const std::string&);
+
+      MemoryVector<byte> public_value() const;
+      u32bit max_input_bits() const;
+
       DL_Group::Format group_format() const { return DL_Group::ANSI_X9_42; }
+
+      DH_PublicKey() {}
+      DH_PublicKey(const DL_Group&, const BigInt&);
+   private:
       void X509_load_hook();
    };
 
@@ -42,13 +44,11 @@ class DH_PrivateKey : public DH_PublicKey,
 
       MemoryVector<byte> public_value() const;
 
+      DH_PrivateKey() {}
       DH_PrivateKey(const DL_Group&);
       DH_PrivateKey(const DL_Group&, const BigInt&, const BigInt& = 0);
    private:
-      friend PKCS8_PrivateKey* get_private_key(const std::string&);
-      void PKCS8_load_hook();
-      DH_PrivateKey() {}
-
+      void PKCS8_load_hook(bool = false);
       DH_Core core;
    };
 

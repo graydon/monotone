@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe Source File                               *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/pipe.h>
@@ -41,7 +41,7 @@ Pipe::Pipe(Filter* f1, Filter* f2, Filter* f3, Filter* f4)
 Pipe::Pipe(Filter* filter_array[], u32bit count)
    {
    init();
-   for(u32bit j = 0; j != count; j++)
+   for(u32bit j = 0; j != count; ++j)
       append(filter_array[j]);
    }
 
@@ -84,7 +84,7 @@ void Pipe::destruct(Filter* to_kill)
    {
    if(!to_kill || dynamic_cast<SecureQueue*>(to_kill))
       return;
-   for(u32bit j = 0; j != to_kill->total_ports(); j++)
+   for(u32bit j = 0; j != to_kill->total_ports(); ++j)
       destruct(to_kill->next[j]);
    delete to_kill;
    }
@@ -181,7 +181,7 @@ void Pipe::end_msg()
 *************************************************/
 void Pipe::find_endpoints(Filter* f)
    {
-   for(u32bit j = 0; j != f->total_ports(); j++)
+   for(u32bit j = 0; j != f->total_ports(); ++j)
       if(f->next[j] && !dynamic_cast<SecureQueue*>(f->next[j]))
          find_endpoints(f->next[j]);
       else
@@ -198,7 +198,7 @@ void Pipe::find_endpoints(Filter* f)
 void Pipe::clear_endpoints(Filter* f)
    {
    if(!f) return;
-   for(u32bit j = 0; j != f->total_ports(); j++)
+   for(u32bit j = 0; j != f->total_ports(); ++j)
       {
       if(f->next[j] && dynamic_cast<SecureQueue*>(f->next[j]))
          f->next[j] = 0;
@@ -217,6 +217,10 @@ void Pipe::append(Filter* filter)
       return;
    if(dynamic_cast<SecureQueue*>(filter))
       throw Invalid_Argument("Pipe::append: SecureQueue cannot be used");
+   if(filter->owned)
+      throw Invalid_Argument("Filters cannot be shared among multiple Pipes");
+
+   filter->owned = true;
 
    if(!pipe) pipe = filter;
    else      pipe->attach(filter);
@@ -233,6 +237,10 @@ void Pipe::prepend(Filter* filter)
       return;
    if(dynamic_cast<SecureQueue*>(filter))
       throw Invalid_Argument("Pipe::prepend: SecureQueue cannot be used");
+   if(filter->owned)
+      throw Invalid_Argument("Filters cannot be shared among multiple Pipes");
+
+   filter->owned = true;
 
    if(pipe) filter->attach(pipe);
    pipe = filter;
@@ -272,5 +280,11 @@ u32bit Pipe::message_count() const
    {
    return outputs->message_count();
    }
+
+/*************************************************
+* Static Member Variables                        *
+*************************************************/
+const u32bit Pipe::LAST_MESSAGE    = 0xFFFFFFFE;
+const u32bit Pipe::DEFAULT_MESSAGE = 0xFFFFFFFF;
 
 }

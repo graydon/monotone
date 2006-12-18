@@ -1,11 +1,13 @@
 /*************************************************
 * X.509 Public Key Source File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/x509_key.h>
 #include <botan/filters.h>
 #include <botan/asn1_obj.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
 #include <botan/pk_algs.h>
 #include <botan/oids.h>
 #include <botan/pem.h>
@@ -13,63 +15,25 @@
 
 namespace Botan {
 
-/*************************************************
-* Compute the key id                             *
-*************************************************/
-u64bit X509_PublicKey::key_id() const
-   {
-   Pipe pipe(new Hash_Filter("SHA-1", 8));
-
-   pipe.start_msg();
-   pipe.write(algo_name());
-   pipe.write(DER_encode_pub());
-   pipe.write(DER_encode_params());
-   pipe.end_msg();
-
-   u64bit hash = 0;
-   for(u32bit j = 0; j != 8; j++)
-      {
-      byte next = 0;
-      if(pipe.read(next) != 1)
-         throw Internal_Error("X509_PublicKey::key_id: No more hash bits");
-      hash = (hash << 8) | next;
-      }
-   return hash;
-   }
-
 namespace X509 {
-
-namespace {
-
-/*************************************************
-* Extract the fields of a subjectPublicKeyInfo   *
-*************************************************/
-void X509_extract_info(DataSource& source, AlgorithmIdentifier& alg_id,
-                       MemoryVector<byte>& key)
-   {
-   BER_Decoder decoder(source);
-   BER_Decoder sequence = BER::get_subsequence(decoder);
-   BER::decode(sequence, alg_id);
-   BER::decode(sequence, key, BIT_STRING);
-   sequence.verify_end();
-   }
-
-}
 
 /*************************************************
 * DER or PEM encode a X.509 public key           *
 *************************************************/
-void encode(const X509_PublicKey& key, Pipe& pipe, X509_Encoding encoding)
+void encode(const Public_Key& key, Pipe& pipe, X509_Encoding encoding)
    {
-   DER_Encoder encoder;
-   AlgorithmIdentifier alg_id(key.get_oid(), key.DER_encode_params());
+   std::auto_ptr<X509_Encoder> encoder(key.x509_encoder());
+   if(!encoder.get())
+      throw Encoding_Error("X509::encode: Key does not support encoding");
 
-   encoder.start_sequence();
-   DER::encode(encoder, alg_id);
-   DER::encode(encoder, key.DER_encode_pub(), BIT_STRING);
-   encoder.end_sequence();
+   MemoryVector<byte> der =
+      DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(encoder->alg_id())
+            .encode(encoder->key_bits(), BIT_STRING)
+         .end_cons()
+      .get_contents();
 
-   MemoryVector<byte> der = encoder.get_contents();
    if(encoding == PEM)
       pipe.write(PEM_Code::encode(der, "PUBLIC KEY"));
    else
@@ -79,7 +43,7 @@ void encode(const X509_PublicKey& key, Pipe& pipe, X509_Encoding encoding)
 /*************************************************
 * PEM encode a X.509 public key                  *
 *************************************************/
-std::string PEM_encode(const X509_PublicKey& key)
+std::string PEM_encode(const Public_Key& key)
    {
    Pipe pem;
    pem.start_msg();
@@ -91,23 +55,36 @@ std::string PEM_encode(const X509_PublicKey& key)
 /*************************************************
 * Extract a public key and return it             *
 *************************************************/
-X509_PublicKey* load_key(DataSource& source)
+Public_Key* load_key(DataSource& source)
    {
    try {
       AlgorithmIdentifier alg_id;
-      MemoryVector<byte> key;
+      MemoryVector<byte> key_bits;
 
-      if(BER::maybe_BER(source) && !PEM_Code::matches(source))
-         X509_extract_info(source, alg_id, key);
+      if(ASN1::maybe_BER(source) && !PEM_Code::matches(source))
+         {
+         BER_Decoder(source)
+            .start_cons(SEQUENCE)
+            .decode(alg_id)
+            .decode(key_bits, BIT_STRING)
+            .verify_end()
+         .end_cons();
+         }
       else
          {
          DataSource_Memory ber(
             PEM_Code::decode_check_label(source, "PUBLIC KEY")
             );
-         X509_extract_info(ber, alg_id, key);
+
+         BER_Decoder(ber)
+            .start_cons(SEQUENCE)
+            .decode(alg_id)
+            .decode(key_bits, BIT_STRING)
+            .verify_end()
+         .end_cons();
          }
 
-      if(key.is_empty())
+      if(key_bits.is_empty())
          throw Decoding_Error("X.509 public key decoding failed");
 
       const std::string alg_name = OIDS::lookup(alg_id.oid);
@@ -115,17 +92,17 @@ X509_PublicKey* load_key(DataSource& source)
          throw Decoding_Error("Unknown algorithm OID: " +
                               alg_id.oid.as_string());
 
-      std::auto_ptr<X509_PublicKey> key_obj(get_public_key(alg_name));
+      std::auto_ptr<Public_Key> key_obj(get_public_key(alg_name));
       if(!key_obj.get())
          throw Decoding_Error("Unknown PK algorithm/OID: " + alg_name + ", " +
                               alg_id.oid.as_string());
 
-      Pipe output;
-      output.process_msg(alg_id.parameters);
-      output.process_msg(key);
-      key_obj->BER_decode_params(output);
-      output.set_default_msg(1);
-      key_obj->BER_decode_pub(output);
+      std::auto_ptr<X509_Decoder> decoder(key_obj->x509_decoder());
+      if(!decoder.get())
+         throw Decoding_Error("Key does not support X.509 decoding");
+
+      decoder->alg_id(alg_id);
+      decoder->key_bits(key_bits);
 
       return key_obj.release();
       }
@@ -138,7 +115,7 @@ X509_PublicKey* load_key(DataSource& source)
 /*************************************************
 * Extract a public key and return it             *
 *************************************************/
-X509_PublicKey* load_key(const std::string& fsname)
+Public_Key* load_key(const std::string& fsname)
    {
    DataSource_Stream source(fsname, true);
    return X509::load_key(source);
@@ -147,7 +124,7 @@ X509_PublicKey* load_key(const std::string& fsname)
 /*************************************************
 * Extract a public key and return it             *
 *************************************************/
-X509_PublicKey* load_key(const MemoryRegion<byte>& mem)
+Public_Key* load_key(const MemoryRegion<byte>& mem)
    {
    DataSource_Memory source(mem);
    return X509::load_key(source);
@@ -156,7 +133,7 @@ X509_PublicKey* load_key(const MemoryRegion<byte>& mem)
 /*************************************************
 * Make a copy of this public key                 *
 *************************************************/
-X509_PublicKey* copy_key(const X509_PublicKey& key)
+Public_Key* copy_key(const Public_Key& key)
    {
    Pipe bits;
    bits.start_msg();
@@ -169,10 +146,10 @@ X509_PublicKey* copy_key(const X509_PublicKey& key)
 /*************************************************
 * Find the allowable key constraints             *
 *************************************************/
-Key_Constraints find_constraints(const X509_PublicKey& pub_key,
+Key_Constraints find_constraints(const Public_Key& pub_key,
                                  Key_Constraints limits)
    {
-   const X509_PublicKey* key = &pub_key;
+   const Public_Key* key = &pub_key;
    u32bit constraints = 0;
 
    if(dynamic_cast<const PK_Encrypting_Key*>(key))

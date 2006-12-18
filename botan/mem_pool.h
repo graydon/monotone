@@ -1,6 +1,6 @@
 /*************************************************
 * Pooling Allocator Header File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_POOLING_ALLOCATOR_H__
@@ -9,6 +9,7 @@
 #include <botan/allocate.h>
 #include <botan/exceptn.h>
 #include <botan/mutex.h>
+#include <utility>
 #include <vector>
 
 namespace Botan {
@@ -19,57 +20,48 @@ namespace Botan {
 class Pooling_Allocator : public Allocator
    {
    public:
-      void* allocate(u32bit) const;
-      void deallocate(void*, u32bit) const;
+      void* allocate(u32bit);
+      void deallocate(void*, u32bit);
 
-      void init();
       void destroy();
 
-      Pooling_Allocator(u32bit = 0);
+      Pooling_Allocator(u32bit, bool);
       ~Pooling_Allocator();
    private:
-      class Buffer
+      void get_more_core(u32bit);
+      byte* allocate_blocks(u32bit);
+
+      virtual void* alloc_block(u32bit) = 0;
+      virtual void dealloc_block(void*, u32bit) = 0;
+
+      class Memory_Block
          {
          public:
-            void* buf;
-            u32bit length;
-            bool in_use;
+            Memory_Block(void*, u32bit, u32bit);
 
-            bool operator<(const Buffer& x) const
-               { return ((const byte*)buf < (const byte*)x.buf); }
+            static u32bit bitmap_size() { return BITMAP_SIZE; }
 
-            Buffer() { buf = 0; length = 0; in_use = false; }
-            Buffer(void* b, u32bit l, bool used = false)
-               { buf = b; length = l; in_use = used; }
+            bool contains(void*, u32bit) const throw();
+            byte* alloc(u32bit) throw();
+            void free(void*, u32bit) throw();
+
+            bool operator<(const void*) const;
+            bool operator<(const Memory_Block& other) const
+               { return (buffer < other.buffer); }
+         private:
+            typedef u64bit bitmap_type;
+            static const u32bit BITMAP_SIZE = 8 * sizeof(bitmap_type);
+            bitmap_type bitmap;
+            byte* buffer, *buffer_end;
+            u32bit block_size;
          };
 
-      void* get_block(u32bit) const;
-      void free_block(void*, u32bit) const;
+      const u32bit PREF_SIZE, BLOCK_SIZE;
 
-      virtual void* alloc_block(u32bit) const = 0;
-      virtual void dealloc_block(void*, u32bit) const = 0;
-      virtual u32bit prealloc_bytes() const { return 0; }
-      virtual u32bit keep_free() const { return 64*1024; }
-
-      void* alloc_hook(void*, u32bit) const;
-      void dealloc_hook(void*, u32bit) const;
-      void consistency_check() const;
-
-      void* find_free_block(u32bit) const;
-      void defrag_free_list() const;
-
-      u32bit find_block(void*) const;
-      bool same_buffer(Buffer&, Buffer&) const;
-      void remove_empty_buffers(std::vector<Buffer>&) const;
-
-      static bool is_empty_buffer(const Buffer&);
-      static bool are_contiguous(const Buffer&, const Buffer&);
-
-      const u32bit PREF_SIZE, ALIGN_TO;
-      mutable std::vector<Buffer> real_mem, free_list;
-      mutable Mutex* lock;
-      mutable u32bit defrag_counter;
-      bool initialized, destroyed;
+      std::vector<Memory_Block> blocks;
+      std::vector<Memory_Block>::iterator last_used;
+      std::vector<std::pair<void*, u32bit> > allocated;
+      Mutex* mutex;
    };
 
 }

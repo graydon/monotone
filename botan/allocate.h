@@ -1,6 +1,6 @@
 /*************************************************
 * Allocator Header File                          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_ALLOCATOR_H__
@@ -17,8 +17,12 @@ namespace Botan {
 class Allocator
    {
    public:
-      virtual void* allocate(u32bit) const = 0;
-      virtual void deallocate(void*, u32bit) const = 0;
+      static Allocator* get(bool);
+
+      virtual void* allocate(u32bit) = 0;
+      virtual void deallocate(void*, u32bit) = 0;
+
+      virtual std::string type() const = 0;
 
       virtual void init() {}
       virtual void destroy() {}
@@ -29,17 +33,6 @@ class Allocator
 /*************************************************
 * Get an allocator                               *
 *************************************************/
-Allocator* get_allocator(const std::string& = "");
-
-/*************************************************
-* Set the default allocator type                 *
-*************************************************/
-std::string set_default_allocator(const std::string&);
-
-/*************************************************
-* Add new allocator type                         *
-*************************************************/
-bool add_allocator_type(const std::string&, Allocator*);
 
 }
 

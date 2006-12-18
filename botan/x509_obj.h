@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 SIGNED Object Header File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_OBJECT_H__
@@ -21,6 +21,12 @@ class X509_Object
       SecureVector<byte> tbs_data() const;
       SecureVector<byte> signature() const;
       AlgorithmIdentifier signature_algorithm() const;
+
+      static MemoryVector<byte> make_signed(class PK_Signer*,
+                                            const AlgorithmIdentifier&,
+                                            const MemoryRegion<byte>&);
+
+      bool check_signature(class Public_Key&) const;
 
       void encode(Pipe&, X509_Encoding = PEM) const;
       SecureVector<byte> BER_encode() const;

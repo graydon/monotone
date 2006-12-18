@@ -1,6 +1,6 @@
 /*************************************************
 * Modular Reducer Header File                    *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_MODARITH_H__
@@ -11,32 +11,23 @@
 namespace Botan {
 
 /*************************************************
-* Modular Reducer Base Class                     *
+* Modular Reducer                                *
 *************************************************/
-class ModularReducer
+class Modular_Reducer
    {
    public:
-      virtual BigInt multiply(const BigInt&, const BigInt&) const;
-      virtual BigInt square(const BigInt&) const;
-      virtual BigInt reduce(const BigInt&) const = 0;
+      BigInt multiply(const BigInt&, const BigInt&) const;
+      BigInt square(const BigInt&) const;
+      BigInt reduce(const BigInt&) const;
 
-      virtual bool must_convert() const { return false; }
+      bool initialized() const { return (mod_words != 0); }
 
-      virtual BigInt convert_in(const BigInt&) const;
-      virtual BigInt convert_out(const BigInt&) const;
-
-      const BigInt& get_modulus() const { return modulus; }
-
-      ModularReducer(const BigInt&);
-      virtual ~ModularReducer() {}
-   protected:
-      const BigInt modulus;
+      Modular_Reducer() { mod_words = 0; }
+      Modular_Reducer(const BigInt&);
+   private:
+      BigInt modulus, modulus_2, mu;
+      u32bit mod_words, mod2_words, mu_words;
    };
-
-/*************************************************
-* Get a modular reducer                          *
-*************************************************/
-ModularReducer* get_reducer(const BigInt&, bool = false);
 
 }
 
