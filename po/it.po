@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-12-15 00:27+0100\n"
-"PO-Revision-Date: 2006-11-21 09:36+0100\n"
+"PO-Revision-Date: 2006-12-06 17:43+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -163,7 +163,7 @@ msgstr "OPZIONE"
 #: automate.cc:1473
 #, c-format
 msgid "'%s' is not a recognized workspace option"
-msgstr ""
+msgstr "‘%s’ non è un'opzione riconosciuta per la copia di lavoro"
 
 #: automate.cc:1496
 msgid "REV FILE"
@@ -253,29 +253,29 @@ msgstr ""
 "inserisci il nome di un ramo"
 
 #: cmd_automate.cc:150
-#, fuzzy, c-format
+#, c-format
 msgid "Bad input to automate stdio: expected ':' after string size"
-msgstr "Input non valido per ‘automate stdio’"
+msgstr "Input non valido per ‘automate stdio’: atteso ‘:’ dopo la dimensione della stringa"
 
 #: cmd_automate.cc:169
-#, fuzzy, c-format
+#, c-format
 msgid "Bad input to automate stdio: unexpected EOF"
-msgstr "Input non valido per ‘automate stdio’"
+msgstr "Input non valido per ‘automate stdio’: EOF inatteso"
 
 #: cmd_automate.cc:197
-#, fuzzy, c-format
+#, c-format
 msgid "Bad input to automate stdio: unknown start token '%c'"
-msgstr "Input non valido per ‘automate stdio’"
+msgstr "Input non valido per ‘automate stdio’: il token iniziale ‘%c’ è sconosciuto"
 
 #: cmd_automate.cc:219
-#, fuzzy, c-format
+#, c-format
 msgid "Bad input to automate stdio: expected '%c' token"
-msgstr "Input non valido per ‘automate stdio’"
+msgstr "Input non valido per ‘automate stdio’: atteso il token ‘%c’"
 
 #: cmd_automate.cc:344
-#, fuzzy, c-format
+#, c-format
 msgid "Bad input to automate stdio: command name is missing"
-msgstr "Input non valido per ‘automate stdio’"
+msgstr "Input non valido per ‘automate stdio’: nome di comando assente"
 
 #: cmd_automate.cc:373
 msgid "automation"
@@ -386,7 +386,7 @@ msgstr "cifre non decimali nell'ID parziale"
 #: cmd_diff_log.cc:356
 #, c-format
 msgid "more than two revisions given"
-msgstr ""
+msgstr "selezionate più di due revisioni"
 
 #: cmd_diff_log.cc:465 cmd_ws_commit.cc:79 cmd_ws_commit.cc:308
 #: cmd_ws_commit.cc:349 cmd_ws_commit.cc:429 cmd_ws_commit.cc:735
@@ -589,7 +589,7 @@ msgstr "cancella una coppia di chiavi"
 #: cmd_key_cert.cc:67
 #, c-format
 msgid "dropping public key '%s' from database"
-msgstr "sto cancellando la chiave pubblica ‘%s’ dal database"
+msgstr "cancello la chiave pubblica ‘%s’ dal database"
 
 #: cmd_key_cert.cc:77
 #, c-format
@@ -1004,7 +1004,7 @@ msgstr "il ramo ‘%s’ è separato"
 #: cmd_merging.cc:478
 #, c-format
 msgid "propagating %s -> %s"
-msgstr "propago ‘%s’ → ‘%s’"
+msgstr "propago da ‘%s’ a ‘%s’"
 
 #: cmd_merging.cc:479
 #, c-format
@@ -1242,6 +1242,7 @@ msgstr "il file pid ‘%s’ esiste già"
 msgid "failed to create pid file '%s'"
 msgstr "creazione del file PID ‘%s’ fallita"
 
+# TODO: cambiare l'originale
 #: cmd_netsync.cc:185
 msgid "serve the database to connecting clients"
 msgstr ""
@@ -1427,12 +1428,12 @@ msgstr "aggiunge file allo spazio di lavoro"
 #: cmd_ws_commit.cc:316
 #, c-format
 msgid "cannot set '--unknown' and '--recursive' at the same time"
-msgstr ""
+msgstr "non si può selezionare contemporaneamente ‘--unknown’ e ‘--recursive’"
 
 #: cmd_ws_commit.cc:318
 #, c-format
 msgid "cannot set '--unknown' and '--no-respect-ignore' at the same time"
-msgstr ""
+msgstr "non si può selezionare contemporaneamente ‘--unknown’ e ‘--no-respect-ignore’"
 
 #: cmd_ws_commit.cc:350
 msgid "drop files from workspace"
@@ -1914,7 +1915,7 @@ msgstr "la revisione %s non in forma normalizzata"
 #: database_check.cc:757
 #, c-format
 msgid "key %s missing (signed %d certs)"
-msgstr "chiave %s mancante (firma %d certificati)"
+msgstr "chiave %s mancante (ha firmato %d certificati)"
 
 #: database_check.cc:790
 #, c-format
@@ -2187,7 +2188,7 @@ msgid "cannot create %s; it already exists"
 msgstr "non posso creare ‘%s’: esiste già"
 
 #: database.cc:574
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "schema version    : %s\n"
 "counts:\n"
@@ -2231,6 +2232,7 @@ msgstr ""
 "  revisioni           : %u\n"
 "  parentele in cache  : %u\n"
 "  certificati         : %u\n"
+"  altezze             : %u\n"
 "  totale              : %u\n"
 "database:\n"
 "  dimensione pagine   : %u\n"
@@ -2614,6 +2616,8 @@ msgid ""
 "bad HMAC checksum (got %s, wanted %s)\n"
 "this suggests data was corrupted in transit"
 msgstr ""
+"valore HMAC errato (ottenuto %s, atteso %s)\n"
+"questo indica che i dati ricevuti sono corrotti"
 
 #: netcmd.cc:272 netcmd.cc:318
 #, c-format
@@ -2625,11 +2629,11 @@ msgstr "specificatore di ruolo %d sconosciuto"
 msgid "need %d bytes to decode %s at %d, only have %d"
 msgstr ""
 
-# TODO: come tradurre "datum"? o "overflow"?
+# TODO: come tradurre "datum"?
 #: netio.hh:87 netio.hh:122
-#, fuzzy, c-format
+#, c-format
 msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-msgstr "la decodifica uleb128 per ‘%s’ in ***datum*** %d-byte ***overflow***"
+msgstr "la decodifica uleb128 per ‘%s’ in ***datum*** %d-byte ha dato overflow"
 
 #: netio.hh:142
 #, c-format
@@ -2680,7 +2684,7 @@ msgstr "rev. ↑"
 #: netsync.cc:889
 #, c-format
 msgid "underflow on count of %s items to receive"
-msgstr ""
+msgstr "underflow del numero di elementi %s da ricevere"
 
 #: netsync.cc:1261 netsync.cc:1269
 #, c-format
@@ -2907,7 +2911,6 @@ msgstr "scambio con ‘%s’ avvenuto con successo"
 msgid "peer %s disconnected after we informed them of error"
 msgstr ""
 
-# TODO: remove \n
 #: netsync.cc:2491
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
@@ -2989,9 +2992,9 @@ msgstr ""
 "rifiutate"
 
 #: netsync.cc:2879
-#, fuzzy, c-format
+#, c-format
 msgid "Network error on peer %s, disconnecting"
-msgstr "ricevuti dati OOB dal peer ‘%s’, mi scollego"
+msgstr "Errore di rete con il peer ‘%s’, mi scollego"
 
 #: netsync.cc:2885
 #, c-format
@@ -3126,7 +3129,7 @@ msgstr "stampa i diff assieme ai log"
 
 #: options_list.hh:220
 msgid "when rosterifying, drop attrs entries with the given key"
-msgstr ""
+msgstr "durante la conversione al formato con roster, elimina gli attributi con una chiave specificata"
 
 #: options_list.hh:228
 msgid "don't perform the operation, just show what would have happened"
@@ -3530,7 +3533,7 @@ msgstr ""
 #: sanity.cc:276
 #, c-format
 msgid "Current work set: %i items"
-msgstr ""
+msgstr "Insieme di lavoro attuale: %i elementi"
 
 #: schema_migration.cc:258
 #, c-format
@@ -3790,7 +3793,7 @@ msgstr ""
 #: work.cc:682
 #, c-format
 msgid "dropping %s"
-msgstr "sto cancellando ‘%s’"
+msgstr "cancello ‘%s’"
 
 #: work.cc:693 work.cc:704
 #, c-format
@@ -3838,7 +3841,7 @@ msgid "missing %s"
 msgstr "manca ‘%s’"
 
 #: work.cc:985
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%d missing files; use '%s ls missing' to view\n"
 "To restore consistency, on each missing file run either\n"
@@ -3849,12 +3852,12 @@ msgid ""
 " '%s revert --missing'"
 msgstr ""
 "%d file mancanti; usa ‘%s ls missing’ per elencarli.\n"
-"To restore consistency, on each missing file run either\n"
-" '%s drop FILE' to remove it permanently, or\n"
-" '%s revert FILE' to restore it.\n"
-"To handle all at once, simply use\n"
-" '%s drop --missing' or\n"
-" '%s revert --missing'"
+"Per riottenere la consistenza, eseguire su ogni file mancante\n"
+"‘%s drop FILE’'per eliminarlo permanentemente oppure\n"
+"‘%s’ revert FILE’ per recuperarlo.\n"
+"Per gestirli tutti in una volta, utilizzare\n"
+"‘%s drop --missing’ oppure\n"
+"‘%s revert --missing’"
 
 #: work.cc:1131
 #, c-format
@@ -3872,9 +3875,9 @@ msgid "dropping %s from workspace manifest"
 msgstr "elimino ‘%s’ dal manifesto dello spazio di lavoro"
 
 #: work.cc:1205
-#, fuzzy, c-format
+#, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
-msgstr "la directory di destinazione ‘%s/’ non esiste nella revisione attuale"
+msgstr "la directory di destinazione ‘%s/’ non è versionata (in caso, usare ‘add’)"
 
 #: work.cc:1208
 #, c-format

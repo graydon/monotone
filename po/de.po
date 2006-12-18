@@ -31,7 +31,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-14 23:45+0100\n"
+"POT-Creation-Date: 2006-12-17 23:35+0100\n"
 "PO-Revision-Date: 2006-11-20 14:06+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -71,21 +71,21 @@ msgstr "[ZWEIG]"
 
 #: automate.cc:67 automate.cc:91 automate.cc:138 automate.cc:218
 #: automate.cc:359 automate.cc:426 automate.cc:451 automate.cc:529
-#: automate.cc:898 automate.cc:1028 automate.cc:1072 automate.cc:1098
-#: automate.cc:1125 automate.cc:1152 automate.cc:1186 automate.cc:1297
-#: automate.cc:1394 automate.cc:1453 automate.cc:1499 automate.cc:1559
-#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:656
+#: automate.cc:905 automate.cc:1035 automate.cc:1079 automate.cc:1105
+#: automate.cc:1132 automate.cc:1159 automate.cc:1193 automate.cc:1304
+#: automate.cc:1401 automate.cc:1460 automate.cc:1506 automate.cc:1566
+#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:676
 #, c-format
 msgid "wrong argument count"
 msgstr "falsche Anzahl an Argumenten"
 
-#: automate.cc:88 automate.cc:135 automate.cc:1183
+#: automate.cc:88 automate.cc:135 automate.cc:1190
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
 #: automate.cc:365 automate.cc:369 automate.cc:429 automate.cc:454
-#: automate.cc:1193 cmd_list.cc:663 revision.cc:1705
+#: automate.cc:1200 cmd_list.cc:683 revision.cc:1705
 #, c-format
 msgid "No such revision %s"
 msgstr "Revision %s nicht gefunden"
@@ -107,14 +107,14 @@ msgstr "Datei %s existiert nicht im Arbeitsbereich"
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "NEUE_REV [ALTE_REV1 [ALTE_REV2 [...]]]"
 
-#: automate.cc:398 automate.cc:486 automate.cc:711 automate.cc:942
-#: automate.cc:963 automate.cc:1249 cmd_automate.cc:78 cmd_automate.cc:332
-#: cmd_list.cc:564
+#: automate.cc:398 automate.cc:486 automate.cc:711 automate.cc:949
+#: automate.cc:970 automate.cc:1256 cmd_automate.cc:78 cmd_automate.cc:332
+#: cmd_list.cc:584
 #, c-format
 msgid "no arguments needed"
 msgstr "keine Parameter benötigt"
 
-#: automate.cc:423 automate.cc:448 cmd_list.cc:653 revision.cc:1699
+#: automate.cc:423 automate.cc:448 cmd_list.cc:673 revision.cc:1699
 msgid "REV"
 msgstr "REV"
 
@@ -122,21 +122,21 @@ msgstr "REV"
 msgid "SELECTOR"
 msgstr "SELEKTOR"
 
-#: automate.cc:895 automate.cc:1025
+#: automate.cc:902 automate.cc:1032
 msgid "[REVID]"
 msgstr "[REVISIONS_ID]"
 
-#: automate.cc:924 automate.cc:1047 automate.cc:1507 automate.cc:1566
-#: automate.cc:1571
+#: automate.cc:931 automate.cc:1054 automate.cc:1514 automate.cc:1573
+#: automate.cc:1578
 #, c-format
 msgid "no revision %s found in database"
 msgstr "Revision %s nicht in Datenbank gefunden"
 
-#: automate.cc:1069 automate.cc:1095 cmd_merging.cc:845
+#: automate.cc:1076 automate.cc:1102 cmd_merging.cc:845
 msgid "REVID"
 msgstr "REVISIONS_ID"
 
-#: automate.cc:1080 automate.cc:1106 automate.cc:1161 automate.cc:1163
+#: automate.cc:1087 automate.cc:1113 automate.cc:1168 automate.cc:1170
 #: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
 #: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:677
 #: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:535
@@ -145,61 +145,61 @@ msgstr "REVISIONS_ID"
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
 
-#: automate.cc:1122 cmd_files.cc:250
+#: automate.cc:1129 cmd_files.cc:250
 msgid "FILEID"
 msgstr "DATEI_ID"
 
-#: automate.cc:1133
+#: automate.cc:1140
 #, c-format
 msgid "no such file '%s'"
 msgstr "Datei nicht gefunden: '%s'"
 
-#: automate.cc:1149
+#: automate.cc:1156
 msgid "OLD_FILE NEW_FILE"
 msgstr "ALTE_DATEI NEUE_DATEI"
 
-#: automate.cc:1294
+#: automate.cc:1301
 msgid "[BRANCH_PATTERN]"
 msgstr "[ZWEIG_MUSTER]"
 
-#: automate.cc:1391
+#: automate.cc:1398
 msgid "KEYID PASSPHRASE"
 msgstr "SCHLÜSSEL_ID PASSWORT"
 
-#: automate.cc:1409 cmd_key_cert.cc:42
+#: automate.cc:1416 cmd_key_cert.cc:42
 #, c-format
 msgid "key '%s' already exists"
 msgstr "Schlüssel '%s' existiert bereits"
 
-#: automate.cc:1412 cmd_key_cert.cc:45
+#: automate.cc:1419 cmd_key_cert.cc:45
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "erzeuge Schlüsselpaar '%s'"
 
-#: automate.cc:1414 cmd_key_cert.cc:47
+#: automate.cc:1421 cmd_key_cert.cc:47
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "speichere Schlüsselpaar '%s' in %s/"
 
-#: automate.cc:1450
+#: automate.cc:1457
 msgid "OPTION"
 msgstr "OPTION"
 
-#: automate.cc:1473
+#: automate.cc:1480
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
 
-#: automate.cc:1496
+#: automate.cc:1503
 msgid "REV FILE"
 msgstr "REVISION DATEI"
 
-#: automate.cc:1513 automate.cc:1577
+#: automate.cc:1520 automate.cc:1584
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "Datei %s existiert nicht in der Revision %s"
 
-#: automate.cc:1556
+#: automate.cc:1563
 msgid "REV1 FILE REV2"
 msgstr "REV1 DATEI REV2"
 
@@ -394,7 +394,7 @@ msgid "no var with name %s in domain %s"
 msgstr "keine Variable mit dem Namen %s in der Domäne %s"
 
 #: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
-#: cmd_files.cc:220 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:429
+#: cmd_files.cc:220 cmd_list.cc:478 cmd_merging.cc:614 cmd_ws_commit.cc:429
 #: commands.cc:275
 msgid "informative"
 msgstr "Informativ"
@@ -759,7 +759,7 @@ msgstr "Bearbeiten des Kommentars fehlgeschlagen"
 msgid "empty comment"
 msgstr "leerer Kommentar"
 
-#: cmd_list.cc:64 cmd_list.cc:677
+#: cmd_list.cc:64 cmd_list.cc:697
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "Der öffentliche Schlüssel '%s' wurde nicht in der Datenbank gefunden."
@@ -809,7 +809,7 @@ msgstr "keine Schlüssel gefunden, die auf '%s' passen"
 msgid "no epoch for branch %s"
 msgstr "kein Zeitraum für Zweig %s"
 
-#: cmd_list.cc:459
+#: cmd_list.cc:479
 msgid ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -836,7 +836,7 @@ msgstr ""
 "changed"
 
 #
-#: cmd_list.cc:470
+#: cmd_list.cc:490
 msgid ""
 "show database objects, or the current workspace manifest, \n"
 "or known, unknown, intentionally ignored, missing, or \n"
@@ -2526,7 +2526,7 @@ msgstr "Kann Datei %s nicht zum schreiben öffnen"
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "Laufzeitfehler %s während der Erstellung des Dateipfades für %s"
 
-#: file_io.cc:548 work.cc:1079
+#: file_io.cc:548 work.cc:1082
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
@@ -2581,7 +2581,7 @@ msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
 msgid "Directory '%s' does not exist"
 msgstr "Das Verzeichnis '%s' existiert nicht"
 
-#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1334
+#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1337
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
@@ -3831,7 +3831,7 @@ msgstr "Ungültige Schlüssellänge von %d Bytes"
 msgid "Invalid hmac length of %d bytes"
 msgstr "Ungültige 'hmac'-Länge von %d Bytes"
 
-#: work.cc:88 work_migration.cc:180 work_migration.cc:200
+#: work.cc:88 work_migration.cc:188 work_migration.cc:208
 #, c-format
 msgid "workspace is corrupt: reading %s: %s"
 msgstr "Arbeitsbereich ist beschädigt: lese %s: %s"
@@ -3925,12 +3925,12 @@ msgstr ""
 msgid "modifying %s"
 msgstr "verändere %s"
 
-#: work.cc:979
+#: work.cc:982
 #, c-format
 msgid "missing %s"
 msgstr "%s fehlt"
 
-#: work.cc:985
+#: work.cc:988
 #, c-format
 msgid ""
 "%d missing files; use '%s ls missing' to view\n"
@@ -3950,99 +3950,99 @@ msgstr ""
 " '%s drop --missing' bzw.\n"
 " '%s revert --missing'."
 
-#: work.cc:1131
+#: work.cc:1134
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "übergehe %s, wird derzeit nicht verfolgt"
 
-#: work.cc:1141
+#: work.cc:1144
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kann %s/ nicht entfernen, Verzeichnis ist nicht leer"
 
-#: work.cc:1152
+#: work.cc:1155
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "entferne %s vom Arbeitsbereich-Manifest"
 
-#: work.cc:1205
+#: work.cc:1208
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr ""
 "Zielverzeichnis %s/ ist nicht unter Versionskontrolle (vielleicht soll es "
 "hinzugefügt werden?)"
 
-#: work.cc:1208
+#: work.cc:1211
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "Ziel %s ist eine existierende Datei in der derzeitigen Revision"
 
-#: work.cc:1218
+#: work.cc:1221
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "leerer Pfad %s ist nicht erlaubt"
 
-#: work.cc:1232
+#: work.cc:1235
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "%s existiert nicht im derzeitigen Manifest"
 
-#: work.cc:1235
+#: work.cc:1238
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "Ziel %s existiert bereits im derzeitigen Manifest"
 
-#: work.cc:1241
+#: work.cc:1244
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "Zielverzeichnis %s existiert nicht im derzeitigen Manifest"
 
-#: work.cc:1243
+#: work.cc:1246
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "Das Zielverzeichnis %s ist kein Verzeichnis"
 
-#: work.cc:1252
+#: work.cc:1255
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "benenne %s zu %s im Arbeitsbereich-Manifest um"
 
-#: work.cc:1280
+#: work.cc:1283
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "%s existiert nicht im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1284
+#: work.cc:1287
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "Ziel %s existiert bereits im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1314
+#: work.cc:1317
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' ist nicht unter "
 "Versionkontrolle oder existiert nicht"
 
-#: work.cc:1316
+#: work.cc:1319
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "das neu vorgeschlagene Wurzelverzeichnis '%s' ist kein Verzeichnis"
 
-#: work.cc:1321
+#: work.cc:1324
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' beinhaltet den ungültigen Pfad "
 "%s"
 
-#: work.cc:1331
+#: work.cc:1334
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr ""
 "das Verzeichnis '%s' ist nicht unter Versionskontrolle oder existiert nicht"
 
-#: work.cc:1337
+#: work.cc:1340
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' ist im Weg"
@@ -4052,14 +4052,19 @@ msgstr "'%s' ist im Weg"
 msgid "workspace required but not found"
 msgstr "Arbeitsverzeichnis benötigt, jedoch nicht gefunden"
 
-#: work_migration.cc:71
+#: work_migration.cc:74
+#, c-format
+msgid "workspace is corrupt: %s is invalid"
+msgstr "Arbeitsbereich ist beschädigt: %s ist ungültig"
+
+#: work_migration.cc:79
 #, c-format
 msgid "_MTN/format should not exist in a format 1 workspace; corrected"
 msgstr ""
 "_MTN/format sollte nicht in einem Arbeitsbereich des Formats 1 existieren; "
 "korrigiert"
 
-#: work_migration.cc:108
+#: work_migration.cc:116
 #, c-format
 msgid ""
 "this workspace's metadata is in format 0. to use this workspace\n"
@@ -4076,7 +4081,7 @@ msgstr ""
 "Nachdem dies durchgeführt wurde, können Sie diesen Arbeitsbereich\n"
 "nicht mehr mit Versionen von monotone nutzen, die älter als %s sind."
 
-#: work_migration.cc:117
+#: work_migration.cc:125
 #, c-format
 msgid ""
 "to use this workspace with this version of monotone, its metadata\n"
@@ -4093,7 +4098,7 @@ msgstr ""
 "Nachdem dies durchgeführt wurde, können Sie diesen Arbeitsbereich\n"
 "nicht mehr mit Versionen von monotone nutzen, die älter als %s sind."
 
-#: work_migration.cc:127 work_migration.cc:255
+#: work_migration.cc:135 work_migration.cc:263
 #, c-format
 msgid ""
 "this version of monotone only understands workspace metadata\n"
@@ -4105,7 +4110,7 @@ msgstr ""
 "die Formatversion %d. Sie benötigen eine neuere Version von\n"
 "monotone, um diesen Arbeitsbereich nutzen zu können."
 
-#: work_migration.cc:156
+#: work_migration.cc:164
 #, c-format
 msgid ""
 "it is not possible to migrate from workspace format 0 to any\n"
@@ -4116,13 +4121,13 @@ msgstr ""
 "beliebigen späteren Format zu migrieren. Sie müssen diesen\n"
 "Arbeitsbereich löschen und neu auschecken."
 
-#: work_migration.cc:208
+#: work_migration.cc:216
 #, c-format
 msgid "workspace is corrupt: %s exists but is not a regular file"
 msgstr ""
 "Arbeitsbereich ist beschädigt: %s existiert, ist aber keine reguläre Datei"
 
-#: work_migration.cc:247
+#: work_migration.cc:255
 #, c-format
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""

@@ -71,7 +71,7 @@
 # initialize                      initiera
 # (an) input                      indata
 # interface                       gränssnitt
-# invalid                         ogilltig
+# invalid                         ogiltig
 # keystore                        nyckellager
 # log                             logg
 # malformed                       otydbart
@@ -193,7 +193,7 @@ msgstr "[GREN]"
 #: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:656
 #, c-format
 msgid "wrong argument count"
-msgstr "felaktig antal givna argument"
+msgstr "felaktigt antal givna argument"
 
 #: automate.cc:88 automate.cc:135 automate.cc:1190
 msgid "REV1 [REV2 [REV3 [...]]]"
@@ -246,7 +246,7 @@ msgstr "[REVID]"
 #: automate.cc:1578
 #, c-format
 msgid "no revision %s found in database"
-msgstr "revisionen %s finns inte i i databasen"
+msgstr "revisionen %s finns inte i databasen"
 
 #: automate.cc:1076 automate.cc:1102 cmd_merging.cc:845
 msgid "REVID"
@@ -272,15 +272,15 @@ msgstr "filen '%s' finns inte"
 
 #: automate.cc:1156
 msgid "OLD_FILE NEW_FILE"
-msgstr "GAMMAL_FIL NYTT_FIL"
+msgstr "GAMMAL_FIL NY_FIL"
 
 #: automate.cc:1301
 msgid "[BRANCH_PATTERN]"
-msgstr "[GREN_MÖNSTER]"
+msgstr "[GRENMÖNSTER]"
 
 #: automate.cc:1398
 msgid "KEYID PASSPHRASE"
-msgstr "NYCKELID LÖSENFRAS"
+msgstr "NYCKELID LÖSEN"
 
 #: automate.cc:1416 cmd_key_cert.cc:42
 #, c-format
@@ -637,7 +637,7 @@ msgstr "SÖKVÄG"
 
 #: cmd_files.cc:115
 msgid "print annotated copy of the file from REVISION"
-msgstr "skriv ut filen ur REVISION med extra detaljer"
+msgstr "skriv ut filen från REVISION med extra detaljer"
 
 #: cmd_files.cc:136
 #, c-format
@@ -1021,7 +1021,7 @@ msgid ""
 "\n"
 "try again with explicit --branch"
 msgstr ""
-"denna revisionen är med i multipla grenar:%s\n"
+"denna revision är med i multipla grenar:%s\n"
 "\n"
 "försök igen med en explicit --branch"
 
@@ -1036,7 +1036,7 @@ msgid ""
 "target revision not in any branch\n"
 "next commit will use branch %s"
 msgstr ""
-"Denna revision är inte i någon gren\n"
+"denna revision är inte i någon gren\n"
 "nästa ändring hamnar i grenen %s"
 
 #: cmd_merging.cc:262
@@ -1252,16 +1252,16 @@ msgid ""
 "first revision to the second."
 msgstr ""
 "Tar ändringar från vald(a) revision(er) och utför dem i arbetskopian.\n"
-"Det här kommandot plockar ändringar från någon punkt i historien, och\n"
-"skriver om din arbetskopia i enlighet med dessa ändringar.  Slut-\n"
-"resultatet är exakt som 'mtn diff -r FRÅN -r TILL | patch -p0', utom\n"
-"att det använder monotones ihopslagningsmekanism, och därmed hanterar\n"
+"Det här kommandot plockar ändringar från någon punkt i historien och\n"
+"skriver om din arbetskopia i enlighet med dessa ändringar. Slut-\n"
+"resultatet är exakt som 'mtn diff -r FRÅN -r TILL | patch -p0', förutom\n"
+"att monotones ihopslagningsmekanism används, och därmed hanteras\n"
 "namnbyten, konflikter och så vidare.\n"
 "\n"
 "Om enbart en revision har givits utförs ändringarna gjorda i den\n"
 "revisionen jämfört med dess förälder.\n"
 "\n"
-"Om två revision har givits utförs alla ändringar som gjorts för att\n"
+"Om två revisioner har givits utförs alla ändringar som gjorts för att\n"
 "komma från den första till den andra."
 
 #: cmd_merging.cc:681
@@ -1376,7 +1376,7 @@ msgstr "pid-filen '%s' finns redan"
 #: cmd_netsync.cc:162
 #, c-format
 msgid "failed to create pid file '%s'"
-msgstr "Misslyckades med att skapa pid-filen %s"
+msgstr "misslyckades med att skapa pid-filen %s"
 
 #: cmd_netsync.cc:185
 msgid "serve the database to connecting clients"
@@ -1674,7 +1674,7 @@ msgstr "grenen %s har flera löv:"
 #: cmd_ws_commit.cc:525 cmd_ws_commit.cc:1057
 #, c-format
 msgid "choose one with '%s checkout -r<id>'"
-msgstr "välj en med '%s update -r<id>'"
+msgstr "välj ett med '%s update -r<id>'"
 
 #: cmd_ws_commit.cc:526 cmd_ws_commit.cc:1058
 #, c-format
@@ -1814,7 +1814,7 @@ msgstr "KATALOG"
 
 #: cmd_ws_commit.cc:1005
 msgid "import the contents of the given directory tree into a given branch"
-msgstr "importera innhållet av den givna katalogen till den givna grenen"
+msgstr "importera den givna katalogens innehåll till den givna grenen"
 
 #: cmd_ws_commit.cc:1016
 #, c-format
@@ -2361,7 +2361,7 @@ msgstr ""
 "  cert                : %u\n"
 "  höjder              : %u\n"
 "  total               : %u\n"
-"database:\n"
+"databas:\n"
 "  sidstorlek          : %u\n"
 "  cachestorlek        : %u"
 
@@ -2698,7 +2698,7 @@ msgstr ""
 "C++, kompilator       : %s\n"
 "C++, standardbibliotek: %s\n"
 "Boost-version         : %s\n"
-"Ändringar sen grundrevisionen:\n"
+"Ändringar sedan grundrevisionen:\n"
 "%s"
 
 #: netcmd.cc:43
@@ -3124,7 +3124,7 @@ msgstr ""
 #: netsync.cc:2879
 #, c-format
 msgid "Network error on peer %s, disconnecting"
-msgstr "Nätverksfel med %s, kopplar ifrån"
+msgstr "Nätverksfel för %s, kopplar ifrån"
 
 #: netsync.cc:2885
 #, c-format
@@ -3595,7 +3595,7 @@ msgid ""
 msgstr ""
 "sökvägen '%2$s' har ett okänt attribut '%1$s'\n"
 "var god ta kontakt med '%3$s' så att ni kan komma överens om det rätta\n"
-"sättet att migrera (om du bara vill att det här felet försvinner kan\n"
+"sättet att migrera (om du bara vill att det här felet ska försvinna kan\n"
 "du prova --drop-attr, men allvarligt talat, om du vill behålla det här\n"
 "attributet hjälper vi gärna till att klura ut ett bra sätt att hantera\n"
 "det på)"
@@ -3725,8 +3725,8 @@ msgid ""
 "of monotone, you're not done yet.  If you're a project leader, then\n"
 "see the file UPGRADE for instructions on running '%s db %s'"
 msgstr ""
-"OBS: eftersom den här databasen senast användes av en rätt gammal\n"
-"monotone-version så är du inte klar än.  Om du är projektledaren\n"
+"OBS: Eftersom den här databasen senast användes av en rätt gammal\n"
+"monotone-version så är du inte klar än. Om du är projektledaren\n"
 "bör du titta i filen UPGRADE för instruktion om '%s db %s'"
 
 #: schema_migration.cc:339
@@ -3811,12 +3811,12 @@ msgstr ""
 #: ui.cc:581
 #, c-format
 msgid "failed to open log file '%s'"
-msgstr "Misslyckades med att öppna log-filen %s"
+msgstr "misslyckades med att öppna loggfilen %s"
 
 #: uri.cc:63
 #, c-format
 msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
-msgstr "URI-syntaxen är ogiltig.  Kanske använde du en URI i bästa scp-stil?"
+msgstr "URI-syntaxen är ogiltig. Kanske använde du en URI i bästa scp-stil?"
 
 #: update.cc:72
 #, c-format
@@ -3913,7 +3913,7 @@ msgstr "lägger till %s i arbetskopians manifest"
 msgid ""
 "cannot add %s, because %s is recorded as a file in the workspace manifest"
 msgstr ""
-"kan inte lägga till %s eftersom %s redan är registrerat som en fil i "
+"kan inte lägga till %s eftersom %s redan är registrerad som en fil i "
 "arbetskopians manifest"
 
 #: work.cc:682
@@ -4087,12 +4087,12 @@ msgstr "arbetskopia behövs men kunde inte hittas"
 #: work_migration.cc:74
 #, c-format
 msgid "workspace is corrupt: %s is invalid"
-msgstr "arbetskopian är korrupt: %s är ogilltig"
+msgstr "arbetskopian är korrupt: %s är ogiltig"
 
 #: work_migration.cc:79
 #, c-format
 msgid "_MTN/format should not exist in a format 1 workspace; corrected"
-msgstr "_MTN/format borde inte finns i an arbetskopia av format 1; åtgärdat"
+msgstr "_MTN/format borde inte finnas i en arbetskopia av format 1; åtgärdat"
 
 #: work_migration.cc:116
 #, c-format
@@ -4104,7 +4104,7 @@ msgid ""
 "with versions of monotone older than %s.\n"
 "we apologize for the inconvenience."
 msgstr ""
-"den här arbetskopians metadata är av format 0.  För att använda den\n"
+"Den här arbetskopians metadata är av format 0. För att använda den\n"
 "med den här monotone-versionen måste du ta bort den och hämta den\n"
 "igen (migrering från format 0 är inte möjligt).\n"
 "När du väl har gjort detta kommer du inte att kunna använda arbetskopian\n"
@@ -4120,7 +4120,7 @@ msgid ""
 "once you have done this, you will not be able to use the workspace\n"
 "with versions of monotone older than %s."
 msgstr ""
-"för att använda denna arbetskopia med den här monotone-versionen måste\n"
+"För att använda denna arbetskopia med den här monotone-versionen måste\n"
 "dess metadata migreras från format %d till format %d, vilket du gör med\n"
 "kommandot '%s migrate_workspace'.\n"
 "Så snart du har gjort detta kommer du inte att kunna använda denna\n"
@@ -4134,7 +4134,7 @@ msgid ""
 "you need a newer version of monotone to use this workspace."
 msgstr ""
 "Den här monotone-versionen förstår bara metadata i arbetskopian av\n"
-"format 0 till %d.  Din arbetskopia har format %d.  Du behöver en\n"
+"format 0 till %d. Din arbetskopia har format %d. Du behöver en\n"
 "nyare monotone-version för att använda denna arbetskopia."
 
 #: work_migration.cc:164
@@ -4145,8 +4145,8 @@ msgid ""
 "again.  we apologize for the inconvenience."
 msgstr ""
 "Det går inte att migrera en arbetskopia från format 0 till något\n"
-"senare format.  Du måste radera denna arbetskopia och hämta den\n"
-"på nytt.  Vi ber om ursäkt för besväret."
+"senare format. Du måste radera denna arbetskopia och hämta den\n"
+"på nytt. Vi ber om ursäkt för besväret."
 
 #: work_migration.cc:216
 #, c-format
@@ -4238,7 +4238,7 @@ msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 #~ msgid ""
 #~ "another name for --no-show-encloser (for compatibility with GNU diff)"
 #~ msgstr ""
-#~ "ett synonym till --no-show-encloser (for att vara kompatibel med GNU diff)"
+#~ "en synonym till --no-show-encloser (for att vara kompatibel med GNU diff)"
 
 #~ msgid "syntax error near the \"%s\" option: %s"
 #~ msgstr "syntaxfel nära flaggan \"%s\": %s"
