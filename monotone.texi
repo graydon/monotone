@@ -7296,7 +7296,8 @@ Read a database variable, see also @ref{Vars}.
 
 @item Sample output:
 
-@verbatim off.net 
+@verbatim 
+off.net 
 @end verbatim
 
 @item Output format:
@@ -7329,7 +7330,8 @@ Change a database variable, see also @ref{Vars}.
 
 @item Sample usage:
 
-@verbatim mtn automate db_set database default-server off.net 
+@verbatim 
+mtn automate db_set database default-server off.net 
 @end verbatim
 
 @item Output format:
@@ -7363,7 +7365,8 @@ See also @command{automate put_revision}. Normally used via
 
 @item Sample output:
 
-@verbatim 70a0f283898a18815a83df37c902e5f1492e9aa2 
+@verbatim 
+70a0f283898a18815a83df37c902e5f1492e9aa2 
 @end verbatim
 
 @item Output format:
@@ -7408,7 +7411,9 @@ content [5bf1fd927dfb8679496a2e6cf00cbe50c1c87145]
 
 @item Sample output:
 
-@verbatim 4c2c1d846fa561601254200918fba1fd71e6795d @end verbatim
+@verbatim 
+4c2c1d846fa561601254200918fba1fd71e6795d 
+@end verbatim
 
 @item Output format:
 
@@ -7439,7 +7444,8 @@ and @var{value} its value.
 
 @item Sample usage:
 
-@verbatim mtn automate cert 4c2c1d846fa561601254200918fba1fd71e6795d author tester@test.net 
+@verbatim 
+mtn automate cert 4c2c1d846fa561601254200918fba1fd71e6795d author tester@test.net 
 @end verbatim
 
 @item Output format:
