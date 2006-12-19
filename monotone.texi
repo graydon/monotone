@@ -6965,6 +6965,39 @@ with status 1.
 
 @end table
 
+@item mtn automate get_option @var{option}
+
+@table @strong
+@item Arguments:
+
+The @var{option} argument specifies the option name of the option to be output.
+
+@item Added in:
+
+3.1
+
+@item Purpose:
+
+Prints an option from _MTN/option of the current workspace.
+
+@item Sample output:
+
+@verbatim
+net.venge.monotone
+@end verbatim
+
+@item Output format:
+
+The option value is written out without modification.
+
+@item Error conditions:
+
+If the option is unknown, prints an error message to stderr and exits
+with status 1.
+
+@end table
+
+
 @item mtn automate keys
 
 @table @strong
