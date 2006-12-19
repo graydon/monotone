@@ -1,3 +1,9 @@
+2006-12-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/main.cc: Disable the C runtime's built-in globbing.  This
+	piece of magic causes more trouble and UI inconsistency than it
+	seems to solve.
+
 2006-12-18  Richard Levitte  <richard@levitte.org>
 
 	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Wrap the add,
