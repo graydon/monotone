@@ -1,3 +1,11 @@
+2006-12-18  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Wrap the add,
+	drop and commit calls in a try block so the temporary
+	bookkeeping directory can be properly cleared even when
+	there's an exception.
+	* tests/import/__driver__.lua: Add a test
+
 2006-12-18  Christof Petig <christof.petig@arcor.de>
 
 	* automate.cc: add new automate commands:

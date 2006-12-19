@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-16 00:23+0100\n"
-"PO-Revision-Date: 2006-12-16 08:08+0100\n"
+"POT-Creation-Date: 2006-12-18 15:12+0100\n"
+"PO-Revision-Date: 2006-12-18 15:12+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -190,7 +190,7 @@ msgstr "[GREN]"
 #: automate.cc:905 automate.cc:1035 automate.cc:1079 automate.cc:1105
 #: automate.cc:1132 automate.cc:1159 automate.cc:1193 automate.cc:1304
 #: automate.cc:1401 automate.cc:1460 automate.cc:1506 automate.cc:1566
-#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:656
+#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:676
 #, c-format
 msgid "wrong argument count"
 msgstr "felaktigt antal givna argument"
@@ -201,7 +201,7 @@ msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
 #: automate.cc:365 automate.cc:369 automate.cc:429 automate.cc:454
-#: automate.cc:1200 cmd_list.cc:663 revision.cc:1705
+#: automate.cc:1200 cmd_list.cc:683 revision.cc:1705
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
@@ -225,12 +225,12 @@ msgstr "NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]"
 
 #: automate.cc:398 automate.cc:486 automate.cc:711 automate.cc:949
 #: automate.cc:970 automate.cc:1256 cmd_automate.cc:78 cmd_automate.cc:332
-#: cmd_list.cc:564
+#: cmd_list.cc:584
 #, c-format
 msgid "no arguments needed"
 msgstr "inga argument behövs"
 
-#: automate.cc:423 automate.cc:448 cmd_list.cc:653 revision.cc:1699
+#: automate.cc:423 automate.cc:448 cmd_list.cc:673 revision.cc:1699
 msgid "REV"
 msgstr "REV"
 
@@ -349,7 +349,7 @@ msgstr "tillitsfunktionen ogillar %d signerare av certet %s i revisionen %s"
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "den beräknade kontrollsumman '%s' på certet skiljer sig ifrån '%s'"
 
-#: cert.cc:387 keys.cc:560
+#: cert.cc:387 keys.cc:561
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "nyckelparet '%s' finns inte i katalogen '%s'"
@@ -501,7 +501,7 @@ msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
 #: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
-#: cmd_files.cc:220 cmd_list.cc:458 cmd_merging.cc:614 cmd_ws_commit.cc:429
+#: cmd_files.cc:220 cmd_list.cc:478 cmd_merging.cc:614 cmd_ws_commit.cc:429
 #: commands.cc:275
 msgid "informative"
 msgstr "informativ"
@@ -857,7 +857,7 @@ msgstr "misslyckades med att redigera kommentaren"
 msgid "empty comment"
 msgstr "tom kommentar"
 
-#: cmd_list.cc:64 cmd_list.cc:677
+#: cmd_list.cc:64 cmd_list.cc:697
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "den publika nyckeln '%s' finns inte i databasen"
@@ -907,7 +907,7 @@ msgstr "hittade inga nycklar som matchar '%s'"
 msgid "no epoch for branch %s"
 msgstr "ingen epok i grenen %s"
 
-#: cmd_list.cc:459
+#: cmd_list.cc:479
 msgid ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -933,7 +933,7 @@ msgstr ""
 "missing\n"
 "changed"
 
-#: cmd_list.cc:470
+#: cmd_list.cc:490
 msgid ""
 "show database objects, or the current workspace manifest, \n"
 "or known, unknown, intentionally ignored, missing, or \n"
@@ -1066,7 +1066,7 @@ msgstr "[ihopslagen] %s"
 
 #: cmd_merging.cc:320 cmd_merging.cc:419 cmd_merging.cc:430 cmd_merging.cc:588
 #: cmd_merging.cc:821 cmd_ws_commit.cc:495 cmd_ws_commit.cc:981
-#: cmd_ws_commit.cc:1004 cmd_ws_commit.cc:1105 cmd_ws_commit.cc:1119
+#: cmd_ws_commit.cc:1004 cmd_ws_commit.cc:1114 cmd_ws_commit.cc:1128
 msgid "tree"
 msgstr "träd"
 
@@ -1645,7 +1645,7 @@ msgstr "      la till %s"
 msgid "  patched %s"
 msgstr "      ändrade %s"
 
-#: cmd_ws_commit.cc:495 cmd_ws_commit.cc:981 cmd_ws_commit.cc:1105
+#: cmd_ws_commit.cc:495 cmd_ws_commit.cc:981 cmd_ws_commit.cc:1114
 msgid "[DIRECTORY]"
 msgstr "[KATALOG]"
 
@@ -1831,7 +1831,7 @@ msgstr "importkatalogen '%s' finns inte"
 msgid "import directory '%s' is a file"
 msgstr "importkatalogen '%s' är en fil"
 
-#: cmd_ws_commit.cc:1106
+#: cmd_ws_commit.cc:1115
 msgid ""
 "migrate a workspace directory's metadata to the latest format; defaults to "
 "the current workspace"
@@ -1839,7 +1839,7 @@ msgstr ""
 "migrera en arbetskopias metadata till det senaste formatet; nuvarande "
 "katalog avses om inget annat anges"
 
-#: cmd_ws_commit.cc:1119
+#: cmd_ws_commit.cc:1128
 msgid "refresh the inodeprint cache"
 msgstr "uppdatera inodeprint-cachen"
 
@@ -2314,7 +2314,7 @@ msgstr ""
 msgid "cannot create %s; it already exists"
 msgstr "kan inte skapa %s; den finns redan"
 
-#: database.cc:574
+#: database.cc:573
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -2365,52 +2365,52 @@ msgstr ""
 "  sidstorlek          : %u\n"
 "  cachestorlek        : %u"
 
-#: database.cc:639
+#: database.cc:638
 #, c-format
 msgid "database schema version: %s"
 msgstr "databasens schemaversion: %s"
 
-#: database.cc:716
+#: database.cc:715
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "multipla kommandon i databasfråga: %s"
 
-#: database.cc:722
+#: database.cc:721
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "ville ha %d kolumner, fick %d i databasfråga: %s"
 
-#: database.cc:788
+#: database.cc:787
 #, c-format
 msgid "null result in query: %s"
 msgstr "inget resultat med databasfråga: %s"
 
-#: database.cc:806
+#: database.cc:805
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "ville ha %d rader, fick %d i databasfråga: %s"
 
-#: database.cc:2043
+#: database.cc:2042
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "det finns redan en annan nyckel med namnet '%s'"
 
-#: database.cc:3041
+#: database.cc:3040
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:3049
+#: database.cc:3048
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:3050
+#: database.cc:3049
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:3075
+#: database.cc:3074
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
@@ -2584,47 +2584,47 @@ msgstr "kan inte öppna filen %s för skrivning"
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "fick felet %s när sökväg för %s byggdes"
 
-#: file_io.cc:548 work.cc:1082
+#: file_io.cc:548 work.cc:1080
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "ingen sådan fil eller katalog: '%s'"
 
-#: keys.cc:102
+#: keys.cc:103
 #, c-format
 msgid "got empty passphrase from get_passphrase() hook"
 msgstr "fick tomt lösen från lua-rutinen get_passphrase()"
 
-#: keys.cc:118
+#: keys.cc:119
 #, c-format
 msgid "empty passphrase not allowed"
 msgstr "tomt lösen ej tillåtet"
 
-#: keys.cc:125
+#: keys.cc:126
 #, c-format
 msgid "confirm passphrase for key ID [%s]: "
 msgstr "bekräfta lösen för nyckelidentitet [%s]:"
 
-#: keys.cc:130
+#: keys.cc:131
 #, c-format
 msgid "empty passphrases not allowed, try again"
 msgstr "tomt lösen ej tillåtet, försök igen"
 
-#: keys.cc:131 keys.cc:138
+#: keys.cc:132 keys.cc:139
 #, c-format
 msgid "too many failed passphrases"
 msgstr "för många misslyckade försök"
 
-#: keys.cc:137
+#: keys.cc:138
 #, c-format
 msgid "passphrases do not match, try again"
 msgstr "lösen stämmer inte, försök igen"
 
-#: keys.cc:144
+#: keys.cc:145
 #, c-format
 msgid "no passphrase given"
 msgstr "inget lösen givet"
 
-#: keys.cc:570
+#: keys.cc:571
 #, c-format
 msgid "passphrase for '%s' is incorrect"
 msgstr "lösen för '%s' stämmer inte"
@@ -2639,7 +2639,7 @@ msgstr "%s anropades med inkorrekt parameter"
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1337
+#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1335
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
@@ -2669,12 +2669,12 @@ msgstr "nodnivån är %d, vilket överskrider maxgränsen %d"
 msgid "mismatched node hash value %s, expected %s"
 msgstr "nodens kontrollsumma %s stämmer inte, %s förväntad"
 
-#: monotone.cc:274
+#: monotone.cc:275
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Användning: %s [FLAGGOR...] kommando [ARGUMENT...]"
 
-#: monotone.cc:282
+#: monotone.cc:283
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Specifika flaggor för '%s %s':"
@@ -3713,12 +3713,7 @@ msgstr "optimerar databasen"
 msgid "error vacuuming after migration"
 msgstr "fel vid dammsugning av databasen efter migreringen"
 
-#: schema_migration.cc:323
-#, c-format
-msgid "error running analyze after migration"
-msgstr "fel under analys efter migreringen"
-
-#: schema_migration.cc:332
+#: schema_migration.cc:329
 #, c-format
 msgid ""
 "NOTE: because this database was last used by a rather old version\n"
@@ -3729,7 +3724,7 @@ msgstr ""
 "monotone-version så är du inte klar än. Om du är projektledaren\n"
 "bör du titta i filen UPGRADE för instruktion om '%s db %s'"
 
-#: schema_migration.cc:339
+#: schema_migration.cc:336
 #, c-format
 msgid ""
 "NOTE: this upgrade cleared monotone's caches\n"
@@ -3738,22 +3733,22 @@ msgstr ""
 "OBS: den här uppgraderingen raderade monotones cachar\n"
 "nu bör du göra '%s db regenerate_caches'"
 
-#: schema_migration.cc:352
+#: schema_migration.cc:349
 #, c-format
 msgid "database schema %s is unknown; cannot perform migration"
 msgstr "databasschemat %s är okänt; kan inte genomföra migreringen"
 
-#: schema_migration.cc:357
+#: schema_migration.cc:354
 #, c-format
 msgid "no migration performed; database schema already up-to-date at %s"
 msgstr "migreringen genomfördes inte; databasschemat redan uppdaterat till %s"
 
-#: schema_migration.cc:916
+#: schema_migration.cc:913
 #, c-format
 msgid "public and private keys for %s don't match"
 msgstr "publik och privat nyckel för %s stämmer inte överens"
 
-#: schema_migration.cc:919
+#: schema_migration.cc:916
 #, c-format
 msgid "moving key '%s' from database to %s"
 msgstr "flyttar nyckeln '%s' från databasen till %s"
@@ -3873,42 +3868,42 @@ msgstr "felaktig HMAC-längd, %d byte"
 msgid "workspace is corrupt: reading %s: %s"
 msgstr "arbetskopian är korrupt: läste %s: %s"
 
-#: work.cc:150
+#: work.cc:136
 #, c-format
-msgid "base revision %s does not exist in database"
-msgstr "grundrevisionen %s finns inte i databasen"
+msgid "workspace base revision %s does not exist in database"
+msgstr "arbetskopians grundrevision %s finns inte i databasen"
 
-#: work.cc:284
+#: work.cc:282
 #, c-format
 msgid "unrecognized key '%s' in options file %s - ignored"
 msgstr "okänd nyckel '%s' i inställningsfilen %s - ignorerad"
 
-#: work.cc:291
+#: work.cc:289
 #, c-format
 msgid "Failed to read options file %s: %s"
 msgstr "Misslyckades med att läsa inställningsfilen %s: %s"
 
-#: work.cc:339
+#: work.cc:337
 #, c-format
 msgid "Failed to write options file %s: %s"
 msgstr "Misslyckades med att skriva inställningsfilen %s: %s"
 
-#: work.cc:541
+#: work.cc:539
 #, c-format
 msgid "skipping ignorable file %s"
 msgstr "hoppar över ignorerbar fil %s"
 
-#: work.cc:550
+#: work.cc:548
 #, c-format
 msgid "skipping %s, already accounted for in workspace"
 msgstr "hoppar över %s, den finns redan noterad i arbetskopian"
 
-#: work.cc:561
+#: work.cc:559
 #, c-format
 msgid "adding %s to workspace manifest"
 msgstr "lägger till %s i arbetskopians manifest"
 
-#: work.cc:567
+#: work.cc:565
 #, c-format
 msgid ""
 "cannot add %s, because %s is recorded as a file in the workspace manifest"
@@ -3916,57 +3911,57 @@ msgstr ""
 "kan inte lägga till %s eftersom %s redan är registrerad som en fil i "
 "arbetskopians manifest"
 
-#: work.cc:682
+#: work.cc:680
 #, c-format
 msgid "dropping %s"
 msgstr "slänger %s"
 
-#: work.cc:693 work.cc:704
+#: work.cc:691 work.cc:702
 #, c-format
 msgid "path %s already exists"
 msgstr "sökvägen %s finns redan"
 
-#: work.cc:726 work.cc:756
+#: work.cc:724 work.cc:754
 #, c-format
 msgid "adding %s"
 msgstr "lägger till %s"
 
-#: work.cc:744
+#: work.cc:742
 #, c-format
 msgid "path '%s' already exists, cannot create"
 msgstr "sökvägen '%s' finns redan, kan inte skapa den"
 
-#: work.cc:752
+#: work.cc:750
 #, c-format
 msgid "renaming %s to %s"
 msgstr "byter namn på %s till %s"
 
-#: work.cc:787
+#: work.cc:785
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "filen '%s' finns inte"
 
-#: work.cc:788
+#: work.cc:786
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "filen '%s' är en katalog"
 
-#: work.cc:793
+#: work.cc:791
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr "innehållet i filen '%s' har ändrats, skriver inte över"
 
-#: work.cc:794
+#: work.cc:792
 #, c-format
 msgid "modifying %s"
 msgstr "ändrar %s"
 
-#: work.cc:982
+#: work.cc:980
 #, c-format
 msgid "missing %s"
 msgstr "saknar %s"
 
-#: work.cc:988
+#: work.cc:986
 #, c-format
 msgid ""
 "%d missing files; use '%s ls missing' to view\n"
@@ -3985,96 +3980,96 @@ msgstr ""
 " '%s drop --missing' eller\n"
 " '%s revert --missing'"
 
-#: work.cc:1134
+#: work.cc:1132
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "hoppar över %s, ej noterad i arbetskopian för närvarande"
 
-#: work.cc:1144
+#: work.cc:1142
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kan inte ta bort %s/, den är inte tom"
 
-#: work.cc:1155
+#: work.cc:1153
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "tar bort %s från arbetskopians manifest"
 
-#: work.cc:1208
+#: work.cc:1206
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr ""
 "målkatalogen %s/ är inte noterad i arbetskopian (kanske du ska addera den?)"
 
-#: work.cc:1211
+#: work.cc:1209
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "målet %s är en existerande fil i nuvarande revision"
 
-#: work.cc:1221
+#: work.cc:1219
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "tom sökväg %s ej tillåten"
 
-#: work.cc:1235
+#: work.cc:1233
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "%s finns inte i nuvarande manifest"
 
-#: work.cc:1238
+#: work.cc:1236
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "målet %s finns redan i nuvarande manifest"
 
-#: work.cc:1244
+#: work.cc:1242
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "målkatalogen %s finns inte i nuvarande manifest"
 
-#: work.cc:1246
+#: work.cc:1244
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "målkatalogen %s är inte en katalog"
 
-#: work.cc:1255
+#: work.cc:1253
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "byter namn från %s till %s i arbetskopians manifest"
 
-#: work.cc:1283
+#: work.cc:1281
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "hoppar över %s, den existerar inte i arbetskopian"
 
-#: work.cc:1287
+#: work.cc:1285
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "hoppar över %s, den finns redan noterad i arbetskopian"
 
-#: work.cc:1317
+#: work.cc:1315
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' är inte noterad i arbetskopian eller "
 "finns inte"
 
-#: work.cc:1319
+#: work.cc:1317
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "den föreslagna nya rotkatalogen '%s' är inte en katalog"
 
-#: work.cc:1324
+#: work.cc:1322
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' innehåller den otillåtna sökvägen %s"
 
-#: work.cc:1334
+#: work.cc:1332
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "katalogen '%s' är inte noterad i arbetskopian eller finns inte"
 
-#: work.cc:1340
+#: work.cc:1338
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' är i vägen"
@@ -4157,6 +4152,9 @@ msgstr "arbetskopian är korrupt: %s finns men är inte en vanlig fil"
 #, c-format
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
+
+#~ msgid "error running analyze after migration"
+#~ msgstr "fel under analys efter migreringen"
 
 #~ msgid "read from client failed with error code: %d"
 #~ msgstr "läsning från klienten misslyckades med följande felkod: %d"
