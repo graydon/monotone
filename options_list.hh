@@ -486,6 +486,13 @@ GOPT(ticker, "ticker", std::string, ,
 }
 #endif
 
+OPT(from, "from", std::vector<utf8>, , gettext_noop("revision(s) to start logging at"))
+#ifdef option_bodies
+{
+  from.push_back(utf8(arg));
+}
+#endif
+
 OPT(to, "to", std::vector<utf8>, , gettext_noop("revision(s) to stop logging at"))
 #ifdef option_bodies
 {

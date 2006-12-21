@@ -7,6 +7,10 @@ xxx Dec xx xx:xx:xx UTC 2006
 	- "mtn serve" no longer takes patterns on the command line.
 	  Use the permissions hooks instead.
 
+	- the name of the option that denoted the revision from which 
+	  "mtn log" should start logging was renamed from "--revision"
+	  to "--from"
+
 	- author selectors no longer have implicit wildcarding
 
 	- if you manually add entries to MTN/log while you are

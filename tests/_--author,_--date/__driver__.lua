@@ -4,7 +4,7 @@ mtn_setup()
 addfile("testfile", "floooooo")
 check(mtn("commit", "--author=the_author", "--date=1999-12-31T12:00:00", "--branch=foo", "--message=foo"), 0, false, false)
 rev = base_revision()
-check(mtn("log", "--revision", rev), 0, true, false)
+check(mtn("log", "--from", rev), 0, true, false)
 
 check(qgrep('^Author: the_author', "stdout"))
 check(qgrep('^Date: 1999-12-31T12:00:00', "stdout"))

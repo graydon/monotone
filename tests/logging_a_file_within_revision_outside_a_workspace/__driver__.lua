@@ -9,4 +9,4 @@ commit()
 rev = base_revision()
 
 remove("_MTN")
-check(mtn("log", "--revision", rev, "foo1"), 0, false, false)
+check(mtn("log", "--from", rev, "foo1"), 0, false, false)

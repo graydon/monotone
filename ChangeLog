@@ -1,5 +1,13 @@
 2006-12-21  Thomas Keller  <me@thomaskeller.biz>
 
+	* cmd_diff_log.cc: renamed --revision option to --to
+	* option_list.hh: new block for --to
+        * monotone.texi: ...documented here
+	* NEWS: ...noted here
+	* tests/*: ..honored appropriately
+
+2006-12-21  Thomas Keller  <me@thomaskeller.biz>
+
 	* NEWS: refined some sections and added notes about
         fixes in automate inventory and the localization code
 
