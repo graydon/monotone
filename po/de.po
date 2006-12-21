@@ -31,7 +31,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-18 12:54+0100\n"
+"POT-Creation-Date: 2006-12-21 12:36+0100\n"
 "PO-Revision-Date: 2006-11-20 14:06+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -470,7 +470,7 @@ msgstr ""
 "Revisionen übergeben wurden, werden diese als\n"
 "Ausgangspunkt genutzt."
 
-#: cmd_diff_log.cc:617
+#: cmd_diff_log.cc:618
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "'--last' und '--next' sind nur einmal erlaubt"
@@ -972,7 +972,7 @@ msgstr "[vereinigt] %s"
 
 #: cmd_merging.cc:320 cmd_merging.cc:419 cmd_merging.cc:430 cmd_merging.cc:588
 #: cmd_merging.cc:821 cmd_ws_commit.cc:495 cmd_ws_commit.cc:981
-#: cmd_ws_commit.cc:1004 cmd_ws_commit.cc:1105 cmd_ws_commit.cc:1119
+#: cmd_ws_commit.cc:1004 cmd_ws_commit.cc:1114 cmd_ws_commit.cc:1128
 msgid "tree"
 msgstr "Baum"
 
@@ -1573,7 +1573,7 @@ msgstr "  hinzugefügt: %s"
 msgid "  patched %s"
 msgstr "  verändert: %s"
 
-#: cmd_ws_commit.cc:495 cmd_ws_commit.cc:981 cmd_ws_commit.cc:1105
+#: cmd_ws_commit.cc:495 cmd_ws_commit.cc:981 cmd_ws_commit.cc:1114
 msgid "[DIRECTORY]"
 msgstr "[VERZEICHNIS]"
 
@@ -1769,7 +1769,7 @@ msgstr "Das Import-Verzeichnis '%s' existiert nicht."
 msgid "import directory '%s' is a file"
 msgstr "Der Import-Pfad '%s' ist eine Datei und kein Verzeichnis."
 
-#: cmd_ws_commit.cc:1106
+#: cmd_ws_commit.cc:1115
 msgid ""
 "migrate a workspace directory's metadata to the latest format; defaults to "
 "the current workspace"
@@ -1777,7 +1777,7 @@ msgstr ""
 "Migriert die Metadaten eines Arbeitsbereichs auf das neueste Format; "
 "standardmäßig wird der aktuelle Arbeitsbereich genutzt"
 
-#: cmd_ws_commit.cc:1119
+#: cmd_ws_commit.cc:1128
 msgid "refresh the inodeprint cache"
 msgstr "aktualisiere den 'inodeprint'-Cache"
 
@@ -3341,22 +3341,26 @@ msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "Argument muß 'none', 'dot' oder 'count' sein"
 
 #: options_list.hh:489
+msgid "revision(s) to start logging at"
+msgstr "Revision(en), bei denen die Logausgabe gestartet wird"
+
+#: options_list.hh:496
 msgid "revision(s) to stop logging at"
 msgstr "Revision(en), bei denen die Logausgabe gestoppt wird"
 
-#: options_list.hh:497
+#: options_list.hh:504
 msgid "perform the operations for unknown files from workspace"
 msgstr "führe diese Operation für unbekannte Dateien im Arbeitsbereich aus"
 
-#: options_list.hh:506
+#: options_list.hh:513
 msgid "verbose completion output"
 msgstr "ausführliche Komplettierungsausgabe"
 
-#: options_list.hh:514
+#: options_list.hh:521
 msgid "print version number, then exit"
 msgstr "zeige Versionsinformationen an und beende dann das Programm"
 
-#: options_list.hh:522
+#: options_list.hh:529
 msgid "insert command line arguments taken from the given file"
 msgstr "füge Kommandozeilenargumente aus der gegebenen Datei an"
 
