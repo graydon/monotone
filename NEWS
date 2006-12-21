@@ -9,6 +9,19 @@ xxx Dec xx xx:xx:xx UTC 2006
 
 	- author selectors no longer have implicit wildcarding
 
+	- if you manually add entries to MTN/log while you are
+	  working, in preparation for an eventual commit, you will now
+	  be required to remove a "magic" template line from the file
+	  before the commit will succeed. This, like the test for an
+	  empty log file, helps to prevent accidents.
+
+	- the "db regenerate_caches" migration command replaces the
+	  previous "db regenerate_rosters", generalising the task of
+	  rebuilding or generating cached data that may be added
+	  across an upgrade.  Like "db migrate", which upgrades the
+	  database schema, this command fills in the data for new
+	  features. In this release, as well as rosters, it also adds
+	  "heights" information used to speed up topology operations.
 
 	Speed improvements
 
@@ -16,8 +29,11 @@ xxx Dec xx xx:xx:xx UTC 2006
 	  faster now, dependant on the number of revisions that
 	  changed the file. Both commands as well as "mtn automate
 	  toposort" make use of data called "heights" caching the
-	  topological order of all revisions.
+	  topological order of all revisions.  In order to create and
+	  use this data, the following must be run once for each db
+	  after upgrading:
 
+               $ mtn -d mydb.mtn db regenerate_caches
 
 	New features
 
@@ -36,7 +52,7 @@ xxx Dec xx xx:xx:xx UTC 2006
 	- includedirpattern(dir, fileglob) function for hooks
 
 
-	Bug fixed
+	Bugs fixed
 
 	- bug in "automate stdio" that would result in monotone
 	  garbling its input in some circumstances fixed
@@ -44,7 +60,8 @@ xxx Dec xx xx:xx:xx UTC 2006
 	- spawn_redirected hook function now understands a blank
 	  filename to mean not to redirect that stream
 
-	- "mtn log" is now in proper topological order
+	- "mtn log" is now in proper topological order, also due to
+	  the use of cached "heights" data
 
 	- reset options between "automate stdio" commands
 
@@ -53,7 +70,12 @@ xxx Dec xx xx:xx:xx UTC 2006
 
 	Other
 
+	- botan library upgraded to 1.6.0
+
+	- accommodate changes in boost 1.34
+
 	- notes/ directory
+
 
 
 Sat Nov 11 11:06:44 PST 2006
