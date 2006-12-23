@@ -524,7 +524,7 @@ CMD(list, N_("informative"),
     throw usage(name);
 }
 
-ALIAS(ls, list)
+ALIAS(ls, list);
 
 namespace
 {

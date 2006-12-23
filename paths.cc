@@ -26,6 +26,7 @@ using std::exception;
 using std::ostream;
 using std::ostringstream;
 using std::string;
+using std::vector;
 
 
 // some structure to ensure we aren't doing anything broken when resolving
@@ -379,6 +380,18 @@ file_path::split(split_path & sp) const
         }
       sp.push_back(s.substr(start, stop - start));
       start = stop + 1;
+    }
+}
+
+void
+split_paths(std::vector<file_path> const & file_paths, path_set & split_paths)
+{
+  for (vector<file_path>::const_iterator i = file_paths.begin();
+       i != file_paths.end(); ++i)
+    {
+      split_path sp;
+      i->split(sp);
+      split_paths.insert(sp);
     }
 }
 

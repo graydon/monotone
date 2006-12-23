@@ -334,13 +334,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
       app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin();
-         i != args.end(); ++i)
-      {
-        split_path sp;
-        file_path_external(*i).split(sp);
-        paths.insert(sp);
-      }
+    split_paths(args_to_paths(args), paths);
 
   bool add_recursive = app.opts.recursive;
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
@@ -368,13 +362,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
       app.work.find_missing(current_roster_shape, mask, paths);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin();
-         i != args.end(); ++i)
-      {
-        split_path sp;
-        file_path_external(*i).split(sp);
-        paths.insert(sp);
-      }
+    split_paths(args_to_paths(args), paths);
 
   app.work.perform_deletions(paths, app.opts.recursive, app.opts.execute);
 }
@@ -404,17 +392,17 @@ CMD(rename, N_("workspace"),
   app.work.perform_rename(src_paths, dst_path, app.opts.execute);
 }
 
-ALIAS(mv, rename)
+ALIAS(mv, rename);
 
 
-  CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
-      N_("rename the root directory\n"
-         "after this command, the directory that currently "
-         "has the name NEW_ROOT\n"
-         "will be the root directory, and the directory "
-         "that is currently the root\n"
-         "directory will have name PUT_OLD.\n"
-         "Using --execute is strongly recommended."),
+CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
+    N_("rename the root directory\n"
+       "after this command, the directory that currently "
+       "has the name NEW_ROOT\n"
+       "will be the root directory, and the directory "
+       "that is currently the root\n"
+       "directory will have name PUT_OLD.\n"
+       "Using --execute is strongly recommended."),
     options::opts::execute)
 {
   if (args.size() != 2)
@@ -630,7 +618,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
   guard.commit();
 }
 
-ALIAS(co, checkout)
+ALIAS(co, checkout);
 
 CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
     N_("set, get or drop file attributes"),
