@@ -56,7 +56,12 @@ args_to_paths(std::vector<utf8> const & args)
 {
   std::vector<file_path> paths;
   for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(file_path_external(*i));
+    {
+      if (bookkeeping_path::is_bookkeeping_path((*i)()))
+        W(F("ignored bookkeeping path '%s'") % *i);
+      else 
+        paths.push_back(file_path_external(*i));
+    }
   return paths;
 }
 
