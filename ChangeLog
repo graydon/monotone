@@ -1,5 +1,11 @@
 2006-12-22  Derek Scherger  <derek@echologic.com>
 
+	* tests/add_ignores__MTN/__driver__.lua: new xfailed test for add *
+	which fails on seeing _MTN
+	* testsuite.lua: add it
+
+2006-12-22  Derek Scherger  <derek@echologic.com>
+
 	* cmd_list.cc (ls):
 	* cmd_ws_commit.cc (mv,co): add semi's to ALIASes so indent-region works
 	(pivot_root): tweak indentation
