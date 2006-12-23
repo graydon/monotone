@@ -77,6 +77,25 @@
 
 2006-12-18  Christof Petig <christof.petig@arcor.de>
 
+	* automate.cc: add new automate commands:
+		put_file: add a file to the database
+		put_revision: add a revision (after adding files)
+		cert: create certificate
+		db_set: set a database variable
+		db_get: query a database variable
+
+	* cmd_automate.cc: raise interface version
+
+	* tests/automate_cert/*,
+	  tests/automate_db_set,get/__driver__.lua,
+	  tests/automate_put_file/__driver__.lua,
+	  tests/automate_put_revision/__driver__.lua:
+		tests for the new features
+
+	* monotone.texi: document new commands
+
+2006-12-18  Christof Petig <christof.petig@arcor.de>
+
 	* basic_io.hh (peek): use widen to distinguish '\xff' and EOF
 	* basic_io.cc (binary_transparency): add an unit test for this
 
@@ -94,11 +113,11 @@
 	users on Win32, a simpler installer UI with an option to read the
 	documentation after the install is the way to go.
 
-2006-12-18  Matt Johnston  <matt@ucc.asn.au>
+2006-12-18  Matthew Gregan  <kinetik@orcon.net.nz>
 
-	* botan/: Update to Botan 1.6.0, add botan/README.botan-monotone
-	with maintainence details.
-
+	* database.cc (database::load),
+	schema_migration.cc (migrator::migrate):
+	PerformanceWork/SQLiteAnalyzeDiscussion in the wiki makes a strong
 2006-12-18  Matt Johnston  <matt@ucc.asn.au>
 
 	* work.cc (get_revision_id): check that the workspace revision
