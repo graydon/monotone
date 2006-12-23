@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-18 15:12+0100\n"
-"PO-Revision-Date: 2006-12-18 15:12+0100\n"
+"POT-Creation-Date: 2006-12-21 14:15+0100\n"
+"PO-Revision-Date: 2006-12-21 14:15+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -571,7 +571,7 @@ msgstr ""
 "arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
 "angivits används de som utgångspunkter."
 
-#: cmd_diff_log.cc:617
+#: cmd_diff_log.cc:618
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
@@ -1348,8 +1348,8 @@ msgid "network"
 msgstr "nätverk"
 
 #: cmd_netsync.cc:109 cmd_netsync.cc:123 cmd_netsync.cc:138
-msgid "[ADDRESS[:PORTNUMBER] [PATTERN]]"
-msgstr "[ADRESS[:PORTNUMMER] [MÖNSTER]]"
+msgid "[ADDRESS[:PORTNUMBER] [PATTERN ...]]"
+msgstr "[ADRESS[:PORTNUMMER] [MÖNSTER ...]]"
 
 #: cmd_netsync.cc:110
 msgid "push branches matching PATTERN to netsync server at ADDRESS"
@@ -3391,22 +3391,26 @@ msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "argumentet måste vara 'none', 'dot' eller 'count'"
 
 #: options_list.hh:489
+msgid "revision(s) to start logging at"
+msgstr "revision(er) där loggen ska börja"
+
+#: options_list.hh:496
 msgid "revision(s) to stop logging at"
 msgstr "revision(er) där loggen ska sluta"
 
-#: options_list.hh:497
+#: options_list.hh:504
 msgid "perform the operations for unknown files from workspace"
 msgstr "genomför operationen på okända filer i arbetskatalogen"
 
-#: options_list.hh:506
+#: options_list.hh:513
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: options_list.hh:514
+#: options_list.hh:521
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: options_list.hh:522
+#: options_list.hh:529
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 

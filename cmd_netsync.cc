@@ -106,7 +106,7 @@ extract_patterns(vector<utf8> const & args,
     }
 }
 
-CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
@@ -120,7 +120,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude)
 {
@@ -135,7 +135,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
