@@ -11,4 +11,4 @@ check(mtn("add", "-R", "."), 0, false, false)
 check(mtn("add", "-R", "_MTN", "subdir"), 0, false, false)
 
 -- simulate shell glob of "../*" from workspace subdir
-xfail(indir("subdir", mtn("add", "-R", "../_MTN", "../subdir")), 0, false, false)
+check(indir("subdir", mtn("add", "-R", "../_MTN", "../subdir")), 0, false, false)

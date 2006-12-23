@@ -752,6 +752,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
     }
   else
     P(F("adding %s") % dst_pth);
+
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself

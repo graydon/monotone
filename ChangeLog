@@ -1,5 +1,20 @@
 2006-12-22  Derek Scherger  <derek@echologic.com>
 
+	* paths.cc (normalize_external_path): factor new function out of
+	file_path constructor's external path normalization code
+	(file_path::file_path): call new normalization function for
+	external paths
+	(bookkeeping_path::is_bookkeeping_path): normalize strings as
+	external paths before checking for _MTN prefix
+	* tests/add_ignores__MTN/__driver__.lua: un-xfail subdir testcase
+	* tests/add_inside__MTN_/__driver__.lua: add now ignores
+	bookkeeping paths rather than failing on them. account for this
+	and check for associated warning on stderr
+	* work.cc (editable_working_tree::attach_node): add some
+	whitespace, it's cheap
+
+2006-12-22  Derek Scherger  <derek@echologic.com>
+
 	* cmd.hh (args_to_paths): warn about bookkeeping paths but ignore them
 	* tests/_MTN_case-folding_security_patch/__driver__.lua:
 	mtn add no longer fails but still reports warnings on stderr

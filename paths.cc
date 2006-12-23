@@ -156,9 +156,9 @@ has_bad_chars(string const & path)
   return false;
 }
 
-// fully_normalized_path performs very similar function to file_path.split().
-// if want_split is set, split_path will be filled with the '/' separated
-// components of the path.
+// fully_normalized_path_split performs very similar function to
+// file_path.split().  if want_split is set, split_path will be filled with
+// the '/' separated components of the path.
 static inline bool
 fully_normalized_path_split(string const & path, bool want_split,
                             split_path & sp)
@@ -250,28 +250,22 @@ internal_string_to_split_path(string const & path, split_path & sp)
   I(fully_normalized_path_split(path, true, sp));
 }
 
-file_path::file_path(file_path::source_type type, string const & path)
+static void
+normalize_external_path(string const & path, string & normalized)
 {
-  MM(path);
-  I(utf8_validate(path));
-  switch (type)
+  if (!initial_rel_path.initialized)
     {
-    case internal:
-      data = path;
-      break;
-    case external:
-      if (!initial_rel_path.initialized)
-        {
-          // we are not in a workspace; treat this as an internal
-          // path, and set the access_tracker() into a very uninitialised
-          // state so that we will hit an exception if we do eventually
-          // enter a workspace
-          initial_rel_path.may_not_initialize();
-          data = path;
-          N(is_valid_internal(path) && !in_bookkeeping_dir(path),
-            F("path '%s' is invalid") % path);
-          break;
-        }
+      // we are not in a workspace; treat this as an internal
+      // path, and set the access_tracker() into a very uninitialised
+      // state so that we will hit an exception if we do eventually
+      // enter a workspace
+      initial_rel_path.may_not_initialize();
+      normalized = path;
+      N(is_valid_internal(path),
+        F("path '%s' is invalid") % path);
+    }
+  else
+    {
       N(!path.empty(), F("empty path '%s' is invalid") % path);
       fs::path out, base, relative;
       try
@@ -285,12 +279,28 @@ file_path::file_path(file_path::source_type type, string const & path)
         {
           N(false, F("path '%s' is invalid") % path);
         }
-      data = utf8(out.string());
-      if (data() == ".")
-        data = string("");
+      normalized = out.string();
+      if (normalized == ".")
+        normalized = string("");
       N(!relative.has_root_path(),
         F("absolute path '%s' is invalid") % relative.string());
-      N(fully_normalized_path(data()), F("path '%s' is invalid") % data);
+      N(fully_normalized_path(normalized), F("path '%s' is invalid") % normalized);
+    }
+}
+
+file_path::file_path(file_path::source_type type, string const & path)
+{
+  string normalized;
+  MM(path);
+  I(utf8_validate(path));
+  switch (type)
+    {
+    case internal:
+      data = path;
+      break;
+    case external:
+      normalize_external_path(path, normalized);
+      data = utf8(normalized);
       N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
       break;
     }
@@ -308,7 +318,9 @@ bookkeeping_path::bookkeeping_path(string const & path)
 bool
 bookkeeping_path::is_bookkeeping_path(string const & path)
 {
-  return in_bookkeeping_dir(path);
+  string normalized;
+  normalize_external_path(path, normalized);
+  return in_bookkeeping_dir(normalized);
 }
 
 ///////////////////////////////////////////////////////////////////////////
