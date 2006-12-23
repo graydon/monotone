@@ -38,6 +38,11 @@
 	* paths.{cc,hh} (split_paths): new function to split a vector of
 	file_paths into a set of split_paths
 
+2006-12-21  Richard Levitte  <richard@levitte.org>
+
+	* cmd_netsync.cc (CMD(pull), CMD(push), CMD(sync)): Make it
+	visible that more than one pattern can be given.
+
 2006-12-21  Thomas Keller  <me@thomaskeller.biz>
 
 	* cmd_diff_log.cc: renamed --revision option to --to
