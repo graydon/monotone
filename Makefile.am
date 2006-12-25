@@ -157,7 +157,7 @@ BOTAN_SOURCES = 							\
 	\
         botan/aes.h botan/botan.h botan/es_win32.h  \
         botan/lookup.h botan/randpool.h botan/version.h \
-        botan/algolist.h botan/buf_es.h botan/der_enc.h         \
+        botan/buf_es.h botan/der_enc.h         \
         botan/exceptn.h botan/mdx_hash.h \
         botan/reducer.h botan/x509_ca.h botan/allocate.h        \
         botan/buf_filt.h botan/dh.h botan/filter.h botan/mem_ops.h  \
@@ -170,11 +170,11 @@ BOTAN_SOURCES = 							\
         botan/pipe.h botan/x509_obj.h           \
         botan/asn1_oid.h botan/eax.h botan/gzip.h      \
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
-        botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h \
+        botan/x509find.h botan/x509self.h botan/config.h botan/ecb.h \
         botan/hex.h botan/pk_core.h botan/secqueue.h    \
         botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h   \
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h  \
-        botan/crl_ent.h botan/emsa.h    \
+        botan/crl_ent.h botan/emsa.h botan/eng_def.h \
         botan/if_algo.h botan/pkcs8.h \
         botan/basefilt.h botan/ctr.h botan/engine.h    \
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h   \
