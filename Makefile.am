@@ -151,10 +151,10 @@ BOTAN_SOURCES = 							\
         botan/modules.cpp botan/mp_numth.cpp \
         botan/mp_sqr.cpp botan/powm_fw.cpp \
         botan/powm_mnt.cpp botan/mp_asm.cpp \
-		botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
-		botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
-		botan/x509_ext.cpp botan/x509stat.cpp 
-		\
+	botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
+	botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
+	botan/x509_ext.cpp botan/x509stat.cpp \
+	\
         botan/aes.h botan/botan.h botan/es_win32.h  \
         botan/lookup.h botan/randpool.h botan/version.h \
         botan/algolist.h botan/buf_es.h botan/der_enc.h         \
