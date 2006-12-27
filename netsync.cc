@@ -332,19 +332,19 @@ session:
 
   bool encountered_error;
 
-  const static int no_error = 200;
-  const static int partial_transfer = 211;
-  const static int no_transfer = 212;
+  static const int no_error = 200;
+  static const int partial_transfer = 211;
+  static const int no_transfer = 212;
 
-  const static int not_permitted = 412;
-  const static int unknown_key = 422;
-  const static int mixing_versions = 432;
+  static const int not_permitted = 412;
+  static const int unknown_key = 422;
+  static const int mixing_versions = 432;
 
-  const static int role_mismatch = 512;
-  const static int bad_command = 521;
+  static const int role_mismatch = 512;
+  static const int bad_command = 521;
 
-  const static int failed_identification = 532;
-  //const static int bad_data = 541;
+  static const int failed_identification = 532;
+  //static const int bad_data = 541;
 
   int error_code;
 
