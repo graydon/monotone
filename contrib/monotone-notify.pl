@@ -268,7 +268,7 @@ if ($mail || $debug) {
     foreach my $revision (keys %revisions) {
 	$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("$monotone$database log --last=1 --revision=$revision") ];
+	      my_backtick("$monotone$database log --last=1 --from=$revision") ];
 	my $date = (split(' ', (grep(/^Date:/, @{$revision_data{$revision}}))[0]))[1];
 
 	if (defined $before && $date ge $before) {
@@ -582,7 +582,7 @@ sub revision_is_in_branch
     if (!defined $$revision_data{$revision}) {
 	$$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("$monotone$database log --last=1 --revision=$revision") ];
+	      my_backtick("$monotone$database log --last=1 --from=$revision") ];
     }
 
     map {
