@@ -16,7 +16,8 @@ How to read this file:
     will be described there, not here.
 
 If you are upgrading from:
-  - 0.31 or earlier: The database format has changed.  You must run:
+  - 0.31 or earlier: The database format has changed.  You must run
+    (after remembering to take a backup copy):
        $ mtn -d mydb.mtn db migrate
        $ mtn -d mydb.mtn db regenerate_caches
     on each of your databases.

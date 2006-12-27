@@ -1,3 +1,12 @@
+2006-12-27  Richard Levitte  <richard@levitte.org>
+
+	* UPGRADE: Gently remind people to take a backup before migrating.
+
+2006-12-27  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl: For all places where 'mtn log' is
+	used, change '--revision' to '--from'.
+
 2006-12-27  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* UPGRADE: Update for 0.32.
