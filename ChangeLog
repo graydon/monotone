@@ -1,5 +1,10 @@
 2006-12-27  Richard Levitte  <richard@levitte.org>
 
+	* configure.ac, debian/changelog, monotone.spec,
+	win32/monotone.iss, visualc/config.h: Bumped to version 0.32.
+
+2006-12-27  Richard Levitte  <richard@levitte.org>
+
 	* UPGRADE: Gently remind people to take a backup before migrating.
 
 2006-12-27  Richard Levitte  <richard@levitte.org>
