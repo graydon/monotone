@@ -67,12 +67,12 @@
 //      information exposure?  Allows anonymous people to probe what branches
 //      a key has access to.)
 //   -- "warning" packet type?
-//   -- Richard Levitte wants, when you (e.g.) request '*' but don't access to
-//      all of it, you just get the parts you have access to (maybe with
-//      warnings about skipped branches).  to do this right, should have a way
-//      for the server to send back to the client "right, you're not getting
-//      the following branches: ...", so the client will not include them in
-//      its merkle trie.
+//   -- Richard Levitte wants, when you (e.g.) request '*' but don't have
+//      access to all of it, you just get the parts you have access to
+//      (maybe with warnings about skipped branches).  to do this right,
+//      should have a way for the server to send back to the client "right,
+//      you're not getting the following branches: ...", so the client will
+//      not include them in its merkle trie.
 //   -- add some sort of vhost field to the client's first packet, saying who
 //      they expect to talk to
 
@@ -170,7 +170,7 @@
 //
 // An "anonymous (source|sink|both) <include_pattern> <exclude_pattern>
 // <hmac key>" command, which identifies the role it wishes to play in the
-// synchronization, the pattern it ishes to sync with, and the HMAC key it
+// synchronization, the pattern it wishes to sync with, and the HMAC key it
 // wishes to use for this session (also encrypted with the server's public
 // key).
 //
@@ -235,7 +235,7 @@
 // This protocol is "raw binary" (non-text) because coding density is
 // actually important here, and each packet consists of very
 // information-dense material that you wouldn't have a hope of typing in,
-// interpreting manually anyways.
+// or interpreting manually anyways.
 //
 
 using std::auto_ptr;

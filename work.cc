@@ -736,6 +736,8 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   // middle of an update to avoid clobbering a file, we just end up leaving
   // the working copy in an inconsistent state instead.  so for now, we leave
   // this check down here.
+  // where are "here" and "there" ?!?
+
   if (!workspace_root(dst))
     {
       require_path_is_nonexistent(dst_pth,

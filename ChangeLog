@@ -3,6 +3,18 @@
 	* netsync.cc (struct session): Fix a very minor warning: const
 	static vs static const.
 
+2006-12-26  Derek Scherger  <derek@echologic.com>
+
+	* netsync.cc:
+	* roster.hh:
+	* work.{cc,hh}: fix some comment typos
+	
+2006-12-26  Derek Scherger  <derek@echologic.com>
+
+	* unix/process.cc (is_executable, make_executable, process_spawn,
+	process_spawn, redir, process_wait, process_kill, process_sleep,
+	get_process_id): fix indentation
+
 2006-12-26  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* Makefile.am (BOTAN_SOURCES): Remove entries for missing headers,
