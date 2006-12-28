@@ -66,7 +66,7 @@ check(mtn("propagate", "branch.main", "branch.fork"), 0, false, false)
 
 -- check
 remove("_MTN")
-check(mtn("--branch=branch.fork", "checkout", "."))
+check(mtn("--branch=branch.fork", "checkout", "."), 0, false, true)
 
 check(mtn("automate", "get_manifest_of"), 0, true)
 rename("stdout", "manifest")

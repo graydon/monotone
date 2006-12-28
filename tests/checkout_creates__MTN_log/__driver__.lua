@@ -11,7 +11,7 @@ check(mtn("add", "input.txt"), 0, false, false)
 
 check(mtn("--branch=testbranch", "--rcfile=commit_log.lua", "commit"), 0, false, false)
 
-check(mtn("--branch=testbranch", "co", "testbranch"))
+check(mtn("--branch=testbranch", "checkout", "testbranch"), 0, false, true)
 
 check(exists("testbranch/_MTN/log"))
 check(fsize("_MTN/log") == 0)
