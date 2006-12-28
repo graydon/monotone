@@ -151,7 +151,7 @@ _monotone() {
         db )
           COMPREPLY=( $(compgen -W 'init info version dump load migrate execute
              kill_rev_locally kill_branch_certs_locally kill_tag_locally check
-             changesetify rosterify regenerate_rosters set_epoch' -- $cur ) )
+             changesetify rosterify regenerate_caches set_epoch' -- $cur ) )
           ;;
         cdiff | diff | annotate )
           COMPREPLY=( $(compgen -W '--revision -r' -- $cur ) )
