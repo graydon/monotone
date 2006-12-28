@@ -1,3 +1,10 @@
+2006-12-28  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-mirror.sh: Mirroring script.
+	* contrib/monotone-mirror-postaction-update.sh: Postaction script
+	that goes with contrib/monotone-mirror.sh.
+	* contrib/README: Describe them.
+
 2006-12-28  Derek Scherger  <derek@echologic.com>
 
 	* tests/checkout_clobbers_workspace/__driver__.lua: new test to
