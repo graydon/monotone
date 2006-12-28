@@ -1,5 +1,19 @@
 2006-12-27  Zack Weinberg  <zackw@panix.com>
 
+	* pcrewrap.hh (pcre::compile_error, pcre::match_error): Simplify.
+	Constructor now takes an i18n_format const &.
+	(pcre::study_error, pcre::fullinfo_error): Delete.
+	* pcrewrap.cc (pcre_compile_error, pcre_study_error, pcre_match_error):
+	New functions.
+	(compile, get_capturecount, match): Use them.
+	(compile_error_message, compile_error::compile_error)
+	(match_error::match_error, fullinfo_error::fullinfo_error): Delete.
+
+	* lua.cc (regex.search): Simplify error handling.
+	* luaext_globish.cc (globish.match): Likewise.
+	* po/POTFILES.in: Add pcrewrap.cc.
+
+2006-12-27  Zack Weinberg  <zackw@panix.com>
 	* pcrewrap.cc, pcrewrap.hh: Change "const T" to "T const" throughout.
 
 2006-12-27  Zack Weinberg  <zackw@panix.com>

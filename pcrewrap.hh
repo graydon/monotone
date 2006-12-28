@@ -124,26 +124,15 @@ namespace pcre
   // exceptions thrown for errors from PCRE APIs
   struct compile_error : public std::runtime_error
   {
-    explicit compile_error(char const * error, int offset,
-                           char const * pattern);
+    explicit compile_error(i18n_format const & e)
+      : runtime_error(e.str().c_str()) {}
     virtual ~compile_error() throw() {}
-  };
-
-  struct study_error : public std::runtime_error
-  {
-    explicit study_error(char const * error) : runtime_error(error) {};
-    virtual ~study_error() throw() {}
-  };
-
-  struct fullinfo_error : public std::runtime_error
-  {
-    explicit fullinfo_error(int code);
-    virtual ~fullinfo_error() throw() {}
   };
 
   struct match_error : public std::runtime_error
   {
-    explicit match_error(int code);
+    explicit match_error(i18n_format const & e)
+      : runtime_error(e.str().c_str()) {}
     virtual ~match_error() throw() {}
   };
 

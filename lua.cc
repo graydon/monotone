@@ -550,10 +550,10 @@ LUAEXT(search, regex)
   bool result = false;
   try {
     result = pcre::regex(re).match(str);
-  } catch (pcre::compile_error e) {
-    return luaL_error(L, (string("error parsing regex: ") + e.what()).c_str());
-  } catch (pcre::match_error e) {
-    return luaL_error(L, (string("error during match: ") + e.what()).c_str());
+  } catch (pcre::compile_error & e) {
+    return luaL_error(L, e.what());
+  } catch (pcre::match_error & e) {
+    return luaL_error(L, e.what());
   }
   lua_pushboolean(L, result);
   return 1;
