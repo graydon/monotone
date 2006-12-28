@@ -699,4 +699,8 @@ table.insert(tests, "fail_cleanly_when__MTN_format_corrupt")
 table.insert(tests, "add_ignores__MTN")
 table.insert(tests, "missing_empty_dir")
 table.insert(tests, "checkout_clobbers_workspace")
+table.insert(tests, "automate_db_set,get")
+table.insert(tests, "automate_cert")
+table.insert(tests, "automate_put_file")
+table.insert(tests, "automate_put_revision")
 
