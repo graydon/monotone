@@ -1,5 +1,9 @@
 2006-12-27  Zack Weinberg  <zackw@panix.com>
 
+	* pcrewrap.cc, pcrewrap.hh: Change "const T" to "T const" throughout.
+
+2006-12-27  Zack Weinberg  <zackw@panix.com>
+
 	* pcrewrap.cc, pcrewrap.hh: Remove redundant includes.
 	Add a couple of "using"s.  Improve commentary.  Fix formatting.
 	Add editor control comments to bottoms of files, and de-tabify.

@@ -32,29 +32,29 @@ flags_to_internal(pcre::flags f)
   return i;
 }
 
-inline std::pair<const void *, const void *>
+inline std::pair<void const *, void const *>
 compile(const char * pattern, pcre::flags options)
 {
   int erroff;
-  const char * err;
-  const pcre_t * basedat = pcre_compile(pattern, flags_to_internal(options),
+  char const * err;
+  pcre_t const * basedat = pcre_compile(pattern, flags_to_internal(options),
                                         &err, &erroff, 0);
   if (!basedat)
     throw pcre::compile_error(err, erroff, pattern);
 
-  const pcre_extra * extradat = pcre_study(basedat, 0, &err);
+  pcre_extra const * extradat = pcre_study(basedat, 0, &err);
   if (err)
     throw pcre::study_error(err);
 
-  return std::make_pair(static_cast<const void *>(basedat),
-                        static_cast<const void *>(extradat));
+  return std::make_pair(static_cast<void const *>(basedat),
+                        static_cast<void const *>(extradat));
 }
 
 inline unsigned int
-get_capturecount(const void * bd)
+get_capturecount(void const * bd)
 {
   unsigned int cc;
-  int err = pcre_fullinfo(static_cast<const pcre_t *>(bd), 0,
+  int err = pcre_fullinfo(static_cast<pcre_t const *>(bd), 0,
                           PCRE_INFO_CAPTURECOUNT,
                           static_cast<void *>(&cc));
   if (err < 0)
@@ -64,11 +64,11 @@ get_capturecount(const void * bd)
 
 namespace pcre
 {
-  regex::regex(const char * pattern, flags options)
+  regex::regex(char const * pattern, flags options)
     : basic_regex(compile(pattern, options))
   {}
 
-  regex::regex(const string & pattern, flags options)
+  regex::regex(string const & pattern, flags options)
     : basic_regex(compile(pattern.c_str(), options))
   {}
 
@@ -81,7 +81,7 @@ namespace pcre
   }
 
   bool
-  basic_regex::match(const string & subject, matches & result,
+  basic_regex::match(string const & subject, matches & result,
                      string::const_iterator startptr,
                      flags options) const
   {
@@ -102,8 +102,8 @@ namespace pcre
     if (startptr != string::const_iterator(0))
       startoffset = &*startptr - &*subject.data();
 
-    int rc = pcre_exec(static_cast<const pcre_t *>(basedat),
-                       static_cast<const pcre_extra *>(extradat),
+    int rc = pcre_exec(static_cast<pcre_t const *>(basedat),
+                       static_cast<pcre_extra const *>(extradat),
                        subject.data(), subject.size(),
                        startoffset,
                        flags_to_internal(options),
@@ -147,7 +147,7 @@ namespace pcre
   // This overload is for when you don't care about captures, only
   // whether or not it matched.
   bool
-  basic_regex::match(const string & subject,
+  basic_regex::match(string const & subject,
                      string::const_iterator startptr,
                      flags options) const
   {
@@ -155,8 +155,8 @@ namespace pcre
     if (startptr != string::const_iterator(0))
       startoffset = &*startptr - &*subject.data();
  
-    int rc = pcre_exec(static_cast<const pcre_t *>(basedat),
-                       static_cast<const pcre_extra *>(extradat),
+    int rc = pcre_exec(static_cast<pcre_t const *>(basedat),
+                       static_cast<pcre_extra const *>(extradat),
                        subject.data(), subject.size(),
                        startoffset, flags_to_internal(options), 0, 0);
     if (rc == 0)
@@ -170,14 +170,14 @@ namespace pcre
   // error handling.
 
   static string
-  compile_error_message(const char * err, int offset, const char * pattern)
+  compile_error_message(char const * err, int offset, char const * pattern)
   {
     return (F("parse error at char %d in pattern '%s': %s")
             % offset % pattern % err).str();
   }
 
-  compile_error::compile_error(const char * err, int offset,
-                               const char * pattern)
+  compile_error::compile_error(char const * err, int offset,
+                               char const * pattern)
     : std::runtime_error(compile_error_message(err, offset, pattern))
   {}
 

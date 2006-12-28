@@ -76,27 +76,26 @@ namespace pcre
   private:
     // disable the default and copy constructors
     basic_regex();
-    basic_regex(const basic_regex &);
-    basic_regex & operator=(const basic_regex &);
+    basic_regex(basic_regex const &);
+    basic_regex & operator=(basic_regex const &);
 
   protected:
-    const void * const basedat;
-    const void * const extradat;
+    void const * const basedat;
+    void const * const extradat;
 
     // for use only by subclass constructors
-    basic_regex(const void * b, const void * e) : basedat(b), extradat(e) {}
-    basic_regex(std::pair<const void *, const void *> p)
+    basic_regex(std::pair<void const *, void const *> p)
       : basedat(p.first), extradat(p.second) {}
 
   public:
     ~basic_regex() {}
 
-    bool match(const std::string & subject, matches & result,
+    bool match(std::string const & subject, matches & result,
                std::string::const_iterator startoffset 
                = std::string::const_iterator(),
                pcre::flags options = DEFAULT) const;
 
-    bool match(const std::string & subject,
+    bool match(std::string const & subject,
                std::string::const_iterator startoffset 
                = std::string::const_iterator(),
                pcre::flags options = DEFAULT) const;
@@ -104,7 +103,7 @@ namespace pcre
 
     // helper function which starts successive matches at the position
     // where the last match left off.
-    bool nextmatch(const std::string & subject, matches & result,
+    bool nextmatch(std::string const & subject, matches & result,
                    pcre::flags options = DEFAULT) const
     {
       std::string::const_iterator startoffset(0);
@@ -117,8 +116,8 @@ namespace pcre
   // A regex is the class you are intended to use directly, in normal usage.
   struct regex : public basic_regex
   {
-    regex(const char * pattern, pcre::flags options = DEFAULT);
-    regex(const std::string & pattern, pcre::flags options = DEFAULT);
+    regex(char const * pattern, pcre::flags options = DEFAULT);
+    regex(std::string const & pattern, pcre::flags options = DEFAULT);
     ~regex();
   };
 
