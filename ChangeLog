@@ -1,3 +1,14 @@
+2006-12-28  Derek Scherger  <derek@echologic.com>
+
+	* tests/missing_empty_dir/__driver__.lua: new test for missing,
+	empty, versioned directories 
+	* testsuite.lua: call it
+	* work.cc (update_current_roster_from_filesystem): abort if there
+	are missing directories, whether they contained files or
+	not. tweak the associated messages so they're a bit more specific
+	about missing things verses things that are not what they should
+	be, like files that should be directories and vice-versa.
+	
 2006-12-27  Richard Levitte  <richard@levitte.org>
 
 	* NEWS: Date the release.
