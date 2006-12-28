@@ -19,12 +19,12 @@ namespace pcre
       NEWLINE_CR      = 0x0001,                    // newline is \r
       NEWLINE_LF      = 0x0002,                    // newline is \n
       NEWLINE_CRLF    = (NEWLINE_CR|NEWLINE_LF),   // newline is \r\n
-      ANCHORED        = 0x0004,			   // match only at beginning
+      ANCHORED        = 0x0004,                    // match only at beginning
                                                    // of string (\A in pat)
       // flags usable only with pcre_exec
-      NOTBOL	      = 0x0008,	// beginning of string isn't beginning of line
-      NOTEOL	      = 0x0010, // end of string isn't end of line
-      NOTEMPTY	      = 0x0020, // an empty match is a match failure
+      NOTBOL          = 0x0008, // beginning of string isn't beginning of line
+      NOTEOL          = 0x0010, // end of string isn't end of line
+      NOTEMPTY        = 0x0020, // an empty match is a match failure
 
       // flags usable only with pcre_compile
       CASELESS        = 0x0040, // case insensitive match (?i)
@@ -47,16 +47,16 @@ namespace pcre
   // object provides a couple of helper operations, matched() and str(),
   // for common use cases.
   struct capture : public std::pair<std::string::const_iterator,
-				    std::string::const_iterator>
+                                    std::string::const_iterator>
   {
     capture(std::string::const_iterator a,
-	    std::string::const_iterator b)
+            std::string::const_iterator b)
       : std::pair<std::string::const_iterator, std::string::const_iterator>
-	(a, b)
+        (a, b)
     { I((a == std::string::const_iterator(0)
-	 && b == std::string::const_iterator(0))
-	|| (a != std::string::const_iterator(0)
-	    && b != std::string::const_iterator(0))); }
+         && b == std::string::const_iterator(0))
+        || (a != std::string::const_iterator(0)
+            && b != std::string::const_iterator(0))); }
 
     bool matched() { return (this->first != std::string::const_iterator(0)); }
     std::string str() { return std::string(this->first, this->second); }
@@ -69,73 +69,92 @@ namespace pcre
   // expression.
   typedef std::vector<capture> matches;
   
-  // A regex object is the compiled form of a PCRE regular expression.
-  class regex
+  // A basic_regex object is the compiled form of a PCRE regular expression.
+  // You never construct this directly.
+  struct basic_regex
   {
-    const void *basedat;
-    const void *extradat;
-    int capturecount;
+  private:
+    // disable the default and copy constructors
+    basic_regex();
+    basic_regex(const basic_regex &);
+    basic_regex & operator=(const basic_regex &);
 
-    // default and copy constructors are restricted
-    regex();
-    regex(const regex &);
-    regex &operator=(const regex &);
+  protected:
+    const void * const basedat;
+    const void * const extradat;
 
-    // thanks to silly C++ we have to have an internal "initialize" method
-    void init(const char *, pcre::flags);
+    // for use only by subclass constructors
+    basic_regex(const void * b, const void * e) : basedat(b), extradat(e) {}
+    basic_regex(std::pair<const void *, const void *> p)
+      : basedat(p.first), extradat(p.second) {}
 
   public:
-    regex(const char *pattern, pcre::flags options = DEFAULT);
-    regex(const std::string &pattern, pcre::flags options = DEFAULT);
-    ~regex();
+    ~basic_regex() {}
 
-    void study();  // do extra upfront work to speed up subsequent matches
+    bool match(const std::string & subject, matches & result,
+               std::string::const_iterator startoffset 
+               = std::string::const_iterator(),
+               pcre::flags options = DEFAULT) const;
 
-    bool match(const std::string &subject, matches &result,
-	       std::string::const_iterator startoffset 
-	       = std::string::const_iterator(),
-	       pcre::flags options = DEFAULT) const;
-
-    bool match(const std::string &subject,
-	       std::string::const_iterator startoffset 
-	       = std::string::const_iterator(),
-	       pcre::flags options = DEFAULT) const;
+    bool match(const std::string & subject,
+               std::string::const_iterator startoffset 
+               = std::string::const_iterator(),
+               pcre::flags options = DEFAULT) const;
 
 
     // helper function which starts successive matches at the position
     // where the last match left off.
-    bool nextmatch(const std::string &subject, matches &result,
-		   pcre::flags options = DEFAULT) const
+    bool nextmatch(const std::string & subject, matches & result,
+                   pcre::flags options = DEFAULT) const
     {
       std::string::const_iterator startoffset(0);
       if (result.size() > 0 && result[0].matched())
-	startoffset = result[0].second;
+        startoffset = result[0].second;
       return match(subject, result, startoffset, options);
     }
   };
 
-  // For later: regex variant that takes monotone's "utf8" pseudostrings and
-  // sets PCRE_UTF8; named capture support.
+  // A regex is the class you are intended to use directly, in normal usage.
+  struct regex : public basic_regex
+  {
+    regex(const char * pattern, pcre::flags options = DEFAULT);
+    regex(const std::string & pattern, pcre::flags options = DEFAULT);
+    ~regex();
+  };
 
   // exceptions thrown for errors from PCRE APIs
   struct compile_error : public std::runtime_error
   {
     explicit compile_error(char const * error, int offset,
-			   char const * pattern);
-    virtual ~compile_error() throw() {};
+                           char const * pattern);
+    virtual ~compile_error() throw() {}
   };
 
   struct study_error : public std::runtime_error
   {
     explicit study_error(char const * error) : runtime_error(error) {};
-    virtual ~study_error() throw() {};
+    virtual ~study_error() throw() {}
+  };
+
+  struct fullinfo_error : public std::runtime_error
+  {
+    explicit fullinfo_error(int code);
+    virtual ~fullinfo_error() throw() {}
   };
 
   struct match_error : public std::runtime_error
   {
     explicit match_error(int code);
-    virtual ~match_error() throw() {};
+    virtual ~match_error() throw() {}
   };
 
 } // namespace pcre
 #endif
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

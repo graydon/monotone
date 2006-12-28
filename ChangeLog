@@ -1,3 +1,12 @@
+2006-12-27  Zack Weinberg  <zackw@panix.com>
+
+	* pcrewrap.cc, pcrewrap.hh: Remove redundant includes.
+	Add a couple of "using"s.  Improve commentary.  Fix formatting.
+	Add editor control comments to bottoms of files, and de-tabify.
+	Refactor construction of regex objects to facilitate precompilation.
+	Always call pcre_study at construction time, and remove separate
+	study() method.
+
 2006-12-18  Zack Weinberg  <zackw@panix.com>
 
 	* pcre: New directory, contains trimmed-down version of PCRE library.

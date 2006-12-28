@@ -1,15 +1,13 @@
-#include <string>
-#include <vector>
-#include <exception>
-#include <sstream>
-
 #include "pcrewrap.hh"
 
 #define pcre pcre_t
 #include "pcre.h"
 #undef pcre
 
-static unsigned int
+using std::string;
+using std::runtime_error;
+
+inline unsigned int
 flags_to_internal(pcre::flags f)
 {
   using namespace pcre;
@@ -17,7 +15,7 @@ flags_to_internal(pcre::flags f)
   unsigned int i = 0;
   i |= C(f, NEWLINE_CR);
   i |= C(f, NEWLINE_LF);
-  // NEWLINE_CRLF is handled above
+  // NEWLINE_CRLF == NEWLINE_CR|NEWLINE_LF and so is handled above
   i |= C(f, ANCHORED);
   i |= C(f, NOTBOL);
   i |= C(f, NOTEOL);
@@ -30,110 +28,117 @@ flags_to_internal(pcre::flags f)
   i |= C(f, FIRSTLINE);
   i |= C(f, MULTILINE);
   i |= C(f, UNGREEDY);
+#undef C
   return i;
+}
+
+inline std::pair<const void *, const void *>
+compile(const char * pattern, pcre::flags options)
+{
+  int erroff;
+  const char * err;
+  const pcre_t * basedat = pcre_compile(pattern, flags_to_internal(options),
+                                        &err, &erroff, 0);
+  if (!basedat)
+    throw pcre::compile_error(err, erroff, pattern);
+
+  const pcre_extra * extradat = pcre_study(basedat, 0, &err);
+  if (err)
+    throw pcre::study_error(err);
+
+  return std::make_pair(static_cast<const void *>(basedat),
+                        static_cast<const void *>(extradat));
+}
+
+inline unsigned int
+get_capturecount(const void * bd)
+{
+  unsigned int cc;
+  int err = pcre_fullinfo(static_cast<const pcre_t *>(bd), 0,
+                          PCRE_INFO_CAPTURECOUNT,
+                          static_cast<void *>(&cc));
+  if (err < 0)
+    throw pcre::fullinfo_error(err);
+  return cc;
 }
 
 namespace pcre
 {
-  void regex::init(const char *pattern, pcre::flags options)
-  {
-    int erroff;
-    const char *err;
-    basedat = static_cast<const void *>
-      (pcre_compile(pattern, flags_to_internal(options), &err, &erroff, 0));
-    if (!basedat)
-      throw compile_error(err, erroff, pattern);
+  regex::regex(const char * pattern, flags options)
+    : basic_regex(compile(pattern, options))
+  {}
 
-    int errcode = pcre_fullinfo(static_cast<const pcre_t *>(basedat), 0,
-				PCRE_INFO_CAPTURECOUNT,
-				static_cast<void *>(&capturecount));
-    if (errcode < 0)
-      throw compile_error((F("pcre_fullinfo error %d") % errcode).str().c_str(),
-			  0, pattern);
-  }
-
-  regex::regex(const char *pattern, pcre::flags options)
-    : basedat(0), extradat(0), capturecount(0)
-  {
-    this->init(pattern, options);
-  }
-
-  regex::regex(const std::string &pattern, pcre::flags options)
-    : basedat(0), extradat(0), capturecount(0)
-  {
-    this->init(pattern.c_str(), options);
-  }
+  regex::regex(const string & pattern, flags options)
+    : basic_regex(compile(pattern.c_str(), options))
+  {}
 
   regex::~regex()
   {
     if (basedat)
-      pcre_free(const_cast<void*>(basedat));
+      pcre_free(const_cast<void *>(basedat));
     if (extradat)
-      pcre_free(const_cast<void*>(extradat));
-  }
-
-  void regex::study()
-  {
-    const char *err;
-    extradat = static_cast<const void *>
-      (pcre_study(static_cast<const pcre_t *>(basedat), 0, &err));
-    if (err)
-      throw study_error(err);
+      pcre_free(const_cast<void *>(extradat));
   }
 
   bool
-  regex::match(const std::string &subject, matches &result,
-	       std::string::const_iterator startptr,
-	       pcre::flags options) const
+  basic_regex::match(const string & subject, matches & result,
+                     string::const_iterator startptr,
+                     flags options) const
   {
-    int startoffset = 0;
-    if (startptr != std::string::const_iterator(0))
-      startoffset = &*startptr - &*subject.data();
- 
-    // pcre_exec has a bizarro calling convention.  It wants ovec to
-    // provide three integer slots per capturing paren, plus three
-    // more (for the whole-pattern match).  The first two-thirds of
-    // the vector will contain useful pairs of integers on exit from
-    // pcre_exec; the last third will be used as scribble space by
-    // pcre_exec.  (Why can't it allocate its own damn scribble space?)
+    // pcre_exec wants its caller to provide three integer slots per
+    // capturing paren, plus three more for the whole-pattern match.
+    // On exit from pcre_exec, the first two-thirds of the vector will be
+    // pairs of integers representing [start, end) offsets within the
+    // string.  pcre_exec uses the remaining third of the vector for a
+    // scratchpad.  (Why can't it allocate its own damn scratchpad?)
+    unsigned int capturecount = get_capturecount(basedat);
     std::vector<int> ovec((capturecount + 1) * 3);
+
+    // convert the start pointer to an offset within the string (the &*
+    // converts each iterator to a bare pointer, which can be subtracted --
+    // you should be able to subtract random-access iterators directly,
+    // grumble)
+    int startoffset = 0;
+    if (startptr != string::const_iterator(0))
+      startoffset = &*startptr - &*subject.data();
+
     int rc = pcre_exec(static_cast<const pcre_t *>(basedat),
-		       static_cast<const pcre_extra *>(extradat),
-		       subject.data(), subject.size(),
-		       startoffset,
-		       flags_to_internal(options),
-		       &ovec.front(), ovec.size());  // ??? ovec.data()
+                       static_cast<const pcre_extra *>(extradat),
+                       subject.data(), subject.size(),
+                       startoffset,
+                       flags_to_internal(options),
+                       &ovec.front(), ovec.size());  // ??? ovec.data()
     if (rc >= 0)
       {
-	// If the return value is nonnegative, the pattern matched,
-	// and rc is one more than the number of pairs of integers in
-	// ovec that are meaningful.
-	result.clear();
-	result.reserve(capturecount + 1);
-	for (int i = 0; i < rc * 2; i += 2)
-	  {
-	    if (ovec[i] == -1 && ovec[i+1] == -1)
-	      result.push_back(capture(std::string::const_iterator(0),
-				       std::string::const_iterator(0)));
-	    else if (ovec[i] == -1 || ovec[i+1] == -1)
-	      throw match_error(PCRE_ERROR_INTERNAL);  // should never happen
-	    else
-	      result.push_back(capture(subject.begin() + ovec[i],
-				       subject.begin() + ovec[i+1]));
-	  }
-	for (int i = rc; i < capturecount + 1; i++)
-	  result.push_back(capture(std::string::const_iterator(0),
-				   std::string::const_iterator(0)));
-	I(result.size() == capturecount + 1);
-	return true;
+        // If the return value is nonnegative, the pattern matched,
+        // and rc is one more than the number of pairs of integers in
+        // ovec that are meaningful.
+        result.clear();
+        result.reserve(capturecount + 1);
+        for (int i = 0; i < rc * 2; i += 2)
+          {
+            if (ovec[i] == -1 && ovec[i+1] == -1)
+              result.push_back(capture(string::const_iterator(0),
+                                       string::const_iterator(0)));
+            else if (ovec[i] == -1 || ovec[i+1] == -1)
+              throw match_error(PCRE_ERROR_INTERNAL);  // should never happen
+            else
+              result.push_back(capture(subject.begin() + ovec[i],
+                                       subject.begin() + ovec[i+1]));
+          }
+        for (unsigned int i = rc; i < capturecount + 1; i++)
+          result.push_back(capture(string::const_iterator(0),
+                                   string::const_iterator(0)));
+        I(result.size() == capturecount + 1);
+        return true;
       }
     else if (rc == PCRE_ERROR_NOMATCH)
       {
-	result = matches(capturecount + 1,
-			 capture(std::string::const_iterator(0),
-				 std::string::const_iterator(0)));
-	I(result.size() == capturecount + 1);
-	return false;
+        result = matches(capturecount + 1,
+                         capture(string::const_iterator(0),
+                                 string::const_iterator(0)));
+        I(result.size() == capturecount + 1);
+        return false;
       }
     else 
       throw match_error(rc);
@@ -142,18 +147,18 @@ namespace pcre
   // This overload is for when you don't care about captures, only
   // whether or not it matched.
   bool
-  regex::match(const std::string &subject,
-	       std::string::const_iterator startptr,
-	       pcre::flags options) const
+  basic_regex::match(const string & subject,
+                     string::const_iterator startptr,
+                     flags options) const
   {
     int startoffset = 0;
-    if (startptr != std::string::const_iterator(0))
+    if (startptr != string::const_iterator(0))
       startoffset = &*startptr - &*subject.data();
  
     int rc = pcre_exec(static_cast<const pcre_t *>(basedat),
-		       static_cast<const pcre_extra *>(extradat),
-		       subject.data(), subject.size(),
-		       startoffset, flags_to_internal(options), 0, 0);
+                       static_cast<const pcre_extra *>(extradat),
+                       subject.data(), subject.size(),
+                       startoffset, flags_to_internal(options), 0, 0);
     if (rc == 0)
       return true;
     else if (rc == PCRE_ERROR_NOMATCH)
@@ -164,14 +169,15 @@ namespace pcre
 
   // error handling.
 
-  static std::string
-  compile_error_message(const char *err, int offset, const char *pattern)
+  static string
+  compile_error_message(const char * err, int offset, const char * pattern)
   {
     return (F("parse error at char %d in pattern '%s': %s")
-	    % offset % pattern % err).str();
+            % offset % pattern % err).str();
   }
 
-  compile_error::compile_error(const char *err, int offset, const char *pattern)
+  compile_error::compile_error(const char * err, int offset,
+                               const char * pattern)
     : std::runtime_error(compile_error_message(err, offset, pattern))
   {}
 
@@ -179,4 +185,17 @@ namespace pcre
     : std::runtime_error((F("Error during matching, code %d") % code).str())
   {}
 
+  fullinfo_error::fullinfo_error(int code)
+    : std::runtime_error((F("Error getting capture count, code %d") % code)
+                         .str())
+  {}
+
 } // namespace pcre
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
