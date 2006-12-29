@@ -41,3 +41,11 @@ licenses.
      a directory pointed at by $MTN_LUAHOOKSDIR.  Hooks are commonly added
      using the function add_hook().  There is simple documentation at the
      top of ext_hooks.lua.in.
+
+  -- monotone-mirror.sh: script to mirror another (remote) database and to
+     perform actions after mirroring, all according to a specification file.
+     monotone-mirror-postaction-update.sh: a post action script that updates
+     directories after a database has been mirrored according to a
+     specification file.
+     Both files has comments in the beginning, explaining how the specification
+     files should be written.
