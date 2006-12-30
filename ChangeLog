@@ -9,6 +9,7 @@
 	regex compile or match failures.
 	* tests/syntax_errors_in_.mtn-ignore: New test.
 	* testsuite.lua: Add it.
+	* tests/things_in_.mtn-ignore_get_ignored: Adjust expectations.
 
 2006-12-27  Zack Weinberg  <zackw@panix.com>
 
