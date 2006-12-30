@@ -1,3 +1,15 @@
+2006-12-29  Zack Weinberg  <zackw@panix.com>
+
+	* pcrewrap.cc (pcre_match_error): Remove "subject" parameter.
+	All callers changed.
+	(pcre_compile_error): Improve diagnostics.
+	* std_hooks.lua (ignore_file): Fix logic to skip malformed regexes
+	on subsequent calls.  Improve diagnostics.
+	* lua.cc (regex.search): Use bare lua_error, not luaL_error, for
+	regex compile or match failures.
+	* tests/syntax_errors_in_.mtn-ignore: New test.
+	* testsuite.lua: Add it.
+
 2006-12-27  Zack Weinberg  <zackw@panix.com>
 
 	* pcrewrap.hh (pcre::compile_error, pcre::match_error): Simplify.

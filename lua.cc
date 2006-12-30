@@ -551,9 +551,11 @@ LUAEXT(search, regex)
   try {
     result = pcre::regex(re).match(str);
   } catch (pcre::compile_error & e) {
-    return luaL_error(L, e.what());
+    lua_pushstring(L, e.what());
+    return lua_error(L);
   } catch (pcre::match_error & e) {
-    return luaL_error(L, e.what());
+    lua_pushstring(L, e.what());
+    return lua_error(L);
   }
   lua_pushboolean(L, result);
   return 1;

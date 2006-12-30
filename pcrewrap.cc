@@ -11,7 +11,7 @@ using std::runtime_error;
 static void pcre_compile_error(char const * err, int erroff,
                                char const * pattern) NORETURN;
 static void pcre_study_error(char const * err) NORETURN;
-static void pcre_match_error(int errcode, string const & subject) NORETURN;
+static void pcre_match_error(int errcode) NORETURN;
 
 inline unsigned int
 flags_to_internal(pcre::flags f)
@@ -147,7 +147,7 @@ namespace pcre
         return false;
       }
     else 
-      pcre_match_error(rc, subject);
+      pcre_match_error(rc);
   }
 
   // This overload is for when you don't care about captures, only
@@ -170,7 +170,7 @@ namespace pcre
     else if (rc == PCRE_ERROR_NOMATCH)
       return false;
     else 
-      pcre_match_error(rc, subject);
+      pcre_match_error(rc);
   }
 } // namespace pcre
 
@@ -199,10 +199,10 @@ pcre_compile_error(char const *err, int erroff, char const * pattern)
   // position-ful variant for all errors, but I'm leaving the == -1 check
   // here in case PCRE gets fixed.
   if (erroff == -1)
-    throw pcre::compile_error(F("Error in regex \"%s\": %s")
+    throw pcre::compile_error(F("error in regex \"%s\": %s")
                               % pattern % gettext(err));
   else
-    throw pcre::compile_error(F("Error at character %d of regex \"%s\": %s")
+    throw pcre::compile_error(F("error near char %d of regex \"%s\": %s")
                               % (erroff + 1) % pattern % gettext(err));
 }
 
@@ -215,7 +215,7 @@ pcre_study_error(char const * err)
 }
 
 static void
-pcre_match_error(int errcode, string const & subject)
+pcre_match_error(int errcode)
 {
   // This one actually has error codes!  Almost all of which indicate bugs
   // in monotone.
@@ -225,12 +225,11 @@ pcre_match_error(int errcode, string const & subject)
       throw std::bad_alloc();
 
     case PCRE_ERROR_MATCHLIMIT:
-      throw pcre::match_error(F("backtrack limit exceeded, matching \"%s\"")
-                              % subject);
+      throw pcre::match_error(F("backtrack limit exceeded"));
       
     case PCRE_ERROR_RECURSIONLIMIT:
-      throw pcre::match_error(F("recursion limit exceeded, matching \"%s\"")
-                              % subject);
+      throw pcre::match_error(F("recursion limit exceeded"));
+
     default:
       global_sanity.invariant_failure((FL("pcre_match returned %d") % errcode)
                                       .str().c_str(), __FILE__, __LINE__);
