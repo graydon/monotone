@@ -1,3 +1,9 @@
+2006-12-31  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am (AM_CFLAGS, AM_CXXFLAGS): Add
+	BOOST_MULTI_INDEX_DISABLE_SERIALIZATION define to avoid pulling in
+	serialization support that we don't need.
+
 2006-12-31  Richard Levitte  <richard@levitte.org>
 
 	* contrib/monotone-mirror-postaction-update.sh (database):
