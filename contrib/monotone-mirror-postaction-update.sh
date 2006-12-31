@@ -47,16 +47,28 @@ cat "$rc" | while read DIRECTORY BRANCH; do
 	    echo "Skipping..." >&2
 	elif [ -d "$DIRECTORY" ]; then
 	    (
-		cd $DIRECTORY
-		thisbranch=
-		if [ -f _MTN/options ]; then
-		    thisbranch=`grep '^ *branch ' _MTN/options | sed -e 's/^ *branch *"//' -e 's/" *$//'`
-		fi
-		if [ "$thisbranch" = "$BRANCH" ]; then
-		    mtn update
+		if [ -d $DIRECTORY/_MTN ]; then
+		    thisbranch=
+		    if [ -f $DIRECTORY/_MTN/options ]; then
+			thisbranch=`grep '^ *branch ' $DIRECTORY/_MTN/options | sed -e 's/^ *branch *"//' -e 's/" *$//'`
+		    fi
+		    if [ "$thisbranch" = "$BRANCH" ]; then
+			echo "Updating the directory $DIRECTORY" >&2
+			( cd $DIRECTORY; mtn update )
+		    else
+			echo "The directory $DIRECTORY doesn't contain the branch $BRANCH" >&2
+			echo "Skipping..." >&2
+		    fi
 		else
-		    echo "The directory $DIRECTORY doesn't contain the branch $BRANCH" >&2
-		    echo "Skipping..." >&2
+		    filesn=`ls -1 -a $DIRECTORY | egrep -v '^\.\.?$' | wc -l`
+		    if [ "$filesn" -eq 0 ]; then
+			echo "Extracting branch $BRANCH into empty directory $DIRECTORY" >&2
+			( cd $DIRECTORY; mtn -d "$database" -b "$BRANCH" co . )
+		    else
+			
+			echo "The directory $DIRECTORY doesn't contain the branch $BRANCH" >&2
+			echo "Skipping..." >&2
+		    fi
 		fi
 	    )
 	elif [ -e "$DIRECTORY" ]; then

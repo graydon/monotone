@@ -1,5 +1,11 @@
 2006-12-31  Richard Levitte  <richard@levitte.org>
 
+	* contrib/monotone-mirror-postaction-update.sh (database):
+	Make it possible to checkout into an empty directory.  Add a
+	bit more logging.
+
+2006-12-31  Richard Levitte  <richard@levitte.org>
+
 	* debian/control (Build-Depends): Add a dependency to the
 	libboost-serialization-dev package.  It's unfortunate that I
 	forgot to do this before the release of 0.32...
