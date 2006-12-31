@@ -28,11 +28,11 @@
 // matches nothing, not even the empty string.  this hardly ever matters, but
 // it's nice to have some way to say "don't exclude anything", for instance.
 
-#include <set>
+#include <vector>
 #include <string>
-#include <boost/regex.hpp>
 
 #include "vocab.hh"
+#include "pcrewrap.hh"
 
 void combine_and_check_globish(std::vector<utf8> const &patterns, utf8 & pattern);
 
@@ -45,7 +45,8 @@ public:
   // pathological
   bool operator()(std::string const & s);
 private:
-  boost::regex r_inc, r_exc;
+  std::string iglob, xglob, ipat, xpat;
+  pcre::regex r_inc, r_exc;
 };
 
 // Local Variables:

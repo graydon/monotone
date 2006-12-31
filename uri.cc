@@ -9,67 +9,62 @@
 
 #include <string>
 
-#include <boost/regex.hpp>
-
+#include "pcrewrap.hh"
 #include "sanity.hh"
 #include "uri.hh"
 
 using std::string;
 
+static pcre::regex uri_rx(
+  "^"
+  "(?:([^:/?#]+):)?"            // scheme
+  "(?://([^/?#]*))?"            // authority
+  "([^?#]*)"                    // path
+  "(?:\\?([^#]*))?"             // query
+  "(?:#(.*))?"                  // fragment
+  "$");
+
+static pcre::regex auth_rx(
+  "(?:([^@]+)@)?"               // user
+  "(?:"
+  "\\[([^\\]]+)]\\]"            // ipv6 host
+  "|"
+  "([^:/]+)"                    // normal host
+  ")"
+  "(?::([[:digit:]]+))?");      // port
+
 bool
 parse_uri(string const & in, uri & out)
 {
   uri u;
-
-  // This is a simplified URI grammar. It does the basics.
-
-  string scheme_part = "(?:([^:/?#]+):)?";
-  string authority_part = "(?://([^/?#]*))?";
-  string path_part = "([^?#]*)";
-  string query_part = "(?:\\?([^#]*))?";
-  string fragment_part = "(?:#(.*))?";
-
-  string uri_rx = (string("^")
-		   + scheme_part
-		   + authority_part
-		   + path_part
-		   + query_part
-		   + fragment_part
-		   + "$");
-
-  boost::match_results<std::string::const_iterator> uri_matches;
-  if (boost::regex_match(in, uri_matches, boost::regex(uri_rx)))
+  pcre::matches uri_matches;
+  
+  if (uri_rx.match(in, uri_matches))
     {
-
-      u.scheme = uri_matches.str(1);
+      u.scheme = uri_matches[1].str();
 
       // The "authority" fragment gets a bit more post-processing.
       L(FL("matched URI scheme: '%s'") % u.scheme);
 
-      if (uri_matches[2].matched)
+      if (uri_matches[2].matched())
 	{
-	  string authority = uri_matches.str(2);
+	  string authority = uri_matches[2].str();
 	  L(FL("matched URI authority: '%s'") % authority);
 
-	  string user_part = "(?:([^@]+)@)?";
-	  string ipv6_host_part = "\\[([^\\]]+)]\\]";
-	  string normal_host_part = "([^:/]+)";
-	  string host_part = "(?:" + ipv6_host_part + "|" + normal_host_part + ")";
-	  string port_part = "(?::([[:digit:]]+))?";
-	  string auth_rx = user_part + host_part + port_part;
-	  boost::match_results<std::string::const_iterator> auth_matches;
+          pcre::matches auth_matches;
 	  
-      N(boost::regex_match(authority, auth_matches, boost::regex(auth_rx)),
-        F("The URI syntax is invalid. Maybe you used an URI in scp-style?"));
+          N(auth_rx.match(authority, auth_matches),
+            F("Invalid URI authority '%s'.\n"
+              "Maybe you used an URI in scp-style?") % authority);
       
-	  u.user = auth_matches.str(1);
-	  u.port = auth_matches.str(4);
-	  if (auth_matches[2].matched)	
-	    u.host = auth_matches.str(2);
+	  u.user = auth_matches[1].str();
+	  u.port = auth_matches[4].str();
+	  if (auth_matches[2].matched())	
+	    u.host = auth_matches[2].str();
 	  else
 	    {
-	      I(auth_matches[3].matched);
-	      u.host = auth_matches.str(3);
+	      I(auth_matches[3].matched());
+	      u.host = auth_matches[3].str();
 	    }
 	  L(FL("matched URI user: '%s'") % u.user);
 	  L(FL("matched URI host: '%s'") % u.host);
@@ -77,9 +72,9 @@ parse_uri(string const & in, uri & out)
 
 	}
 
-      u.path = uri_matches.str(3);
-      u.query = uri_matches.str(4);
-      u.fragment = uri_matches.str(5);
+      u.path = uri_matches[3].str();
+      u.query = uri_matches[4].str();
+      u.fragment = uri_matches[5].str();
       L(FL("matched URI path: '%s'") % u.path);
       L(FL("matched URI query: '%s'") % u.query);
       L(FL("matched URI fragment: '%s'") % u.fragment);

@@ -18,7 +18,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/regex.hpp>
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -32,6 +31,7 @@
 #include "revision.hh"
 #include "constants.hh"
 #include "localized_file_io.hh"
+#include "pcrewrap.hh"
 
 using std::endl;
 using std::make_pair;
@@ -782,7 +782,7 @@ struct hunk_consumer
   vector<string> const & b;
   size_t ctx;
   ostream & ost;
-  boost::scoped_ptr<boost::regex const> encloser_re;
+  boost::scoped_ptr<pcre::regex const> encloser_re;
   size_t a_begin, b_begin, a_len, b_len;
   long skew;
 
@@ -805,7 +805,7 @@ struct hunk_consumer
       encloser_last_match(a.rend()), encloser_last_search(a.rend())
   {
     if (encloser_pattern != "")
-      encloser_re.reset(new boost::regex(encloser_pattern));
+      encloser_re.reset(new pcre::regex(encloser_pattern));
   }
 };
 
@@ -835,7 +835,7 @@ hunk_consumer::find_encloser(size_t pos, string & encloser)
 
   // i is a reverse_iterator, so this loop goes backward through the vector.
   for (; i != last; i++)
-    if (boost::regex_search (*i, *encloser_re))
+    if (encloser_re->match(*i))
       {
         encloser_last_match = i;
         break;

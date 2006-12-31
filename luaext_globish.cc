@@ -18,7 +18,9 @@ LUAEXT(match, globish)
     result = globish_matcher(r, n)(s);
   } catch (informative_failure & e) {
     return luaL_error(L, e.what());
-  } catch (boost::bad_pattern & e) {
+  } catch (pcre::compile_error & e) {
+    return luaL_error(L, e.what());
+  } catch (pcre::match_error & e) {
     return luaL_error(L, e.what());
   } catch (...) {
     return luaL_error(L, "Unknown error.");

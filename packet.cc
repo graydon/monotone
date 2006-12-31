@@ -10,7 +10,6 @@
 #include <iostream>
 #include <string>
 
-#include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "app_state.hh"
@@ -23,6 +22,7 @@
 #include "simplestring_xform.hh"
 #include "keys.hh"
 #include "cert.hh"
+#include "pcrewrap.hh"
 
 using std::endl;
 using std::istream;
@@ -33,9 +33,6 @@ using std::pair;
 using std::string;
 
 using boost::lexical_cast;
-using boost::match_default;
-using boost::match_results;
-using boost::regex;
 using boost::shared_ptr;
 
 void
@@ -325,146 +322,150 @@ packet_writer::consume_key_pair(rsa_keypair_id const & ident,
 
 
 // -- remainder just deals with the regexes for reading packets off streams
+//
+// Note: If these change, the character sets in constants.cc may need to
+// change too.
 
-struct
-feed_packet_consumer
+static pcre::regex identr("\\A[[:xdigit:]]{40}\\Z");
+static pcre::regex keyr("\\A[-a-zA-Z0-9\\.@\\+_]+\\Z");
+static pcre::regex base64r("\\A[a-zA-Z0-9+/=[:space:]]+\\Z");
+
+static pcre::regex fdelta_hdr("\\A([[:xdigit:]]{40})"          // ident
+                              "[[:space:]]+"
+                              "([[:xdigit:]]{40})\\Z");        // ident
+
+static pcre::regex rcert_hdr("\\A([[:xdigit:]]{40})"           // ident
+                             "[[:space:]]+"
+                             "([-a-zA-Z0-9]+)"                 // certname
+                             "[[:space:]]+"
+                             "([-a-zA-Z0-9\\.@\\+_]+)"         // key
+                             "[[:space:]]+"
+                             "([a-zA-Z0-9+/=[:space:]]+)\\Z"); // base64
+
+static pcre::regex keypair_body("\\A([a-zA-Z0-9+/=[:space:]]+)"   // base64
+                                "#"
+                                "([a-zA-Z0-9+/=[:space:]]+)\\Z"); // base64
+
+inline void require(bool x)
 {
-  app_state & app;
-  size_t & count;
-  packet_consumer & cons;
-  string ident;
-  string key;
-  string certname;
-  string base;
-  string sp;
-  feed_packet_consumer(size_t & count, packet_consumer & c, app_state & app_)
-   : app(app_), count(count), cons(c),
-     ident(constants::regex_legal_id_bytes),
-     key(constants::regex_legal_key_name_bytes),
-     certname(constants::regex_legal_cert_name_bytes),
-     base(constants::regex_legal_packet_bytes),
-     sp("[[:space:]]+")
-  {}
-  void require(bool x) const
-  {
-    E(x, F("malformed packet"));
-  }
-  bool operator()(match_results<string::const_iterator> const & res) const
-  {
-    if (res.size() != 4)
-      throw oops("matched impossible packet with "
-                 + lexical_cast<string>(res.size()) + " matching parts: " +
-                 string(res[0].first, res[0].second));
-    I(res[1].matched);
-    I(res[2].matched);
-    I(res[3].matched);
-    string type(res[1].first, res[1].second);
-    string args(res[2].first, res[2].second);
-    string body(res[3].first, res[3].second);
-    if (regex_match(type, regex("[fr]data")))
-      {
-        L(FL("read data packet"));
-        require(regex_match(args, regex(ident)));
-        require(regex_match(body, regex(base)));
-        base64<gzip<data> > body_packed(trim_ws(body));
-        data contents;
-        unpack(body_packed, contents);
-        if (type == "rdata")
-          cons.consume_revision_data(revision_id(hexenc<id>(args)),
-                                     revision_data(contents));
-        else if (type == "fdata")
-          cons.consume_file_data(file_id(hexenc<id>(args)),
-                                 file_data(contents));
-        else
-          throw oops("matched impossible data packet with head '" + type + "'");
-      }
-    else if (type == "fdelta")
-      {
-        L(FL("read delta packet"));
-        match_results<string::const_iterator> matches;
-        require(regex_match(args, matches, regex(ident + sp + ident)));
-        string src_id(matches[1].first, matches[1].second);
-        string dst_id(matches[2].first, matches[2].second);
-        require(regex_match(body, regex(base)));
-        base64<gzip<delta> > body_packed(trim_ws(body));
-        delta contents;
-        unpack(body_packed, contents);
-        cons.consume_file_delta(file_id(hexenc<id>(src_id)),
-                                file_id(hexenc<id>(dst_id)),
-                                file_delta(contents));
-      }
-    else if (type == "rcert")
-      {
-        L(FL("read cert packet"));
-        match_results<string::const_iterator> matches;
-        require(regex_match(args, matches, regex(ident + sp + certname
-                                                 + sp + key + sp + base)));
-        string certid(matches[1].first, matches[1].second);
-        string name(matches[2].first, matches[2].second);
-        string keyid(matches[3].first, matches[3].second);
-        string val(matches[4].first, matches[4].second);
-        string contents(trim_ws(body));
+  E(x, F("malformed packet"));
+}
 
-        // canonicalize the base64 encodings to permit searches
-        cert t = cert(hexenc<id>(certid),
-                      cert_name(name),
-                      base64<cert_value>(canonical_base64(val)),
-                      rsa_keypair_id(keyid),
-                      base64<rsa_sha1_signature>(canonical_base64(contents)));
-        cons.consume_revision_cert(revision<cert>(t));
-      }
-    else if (type == "pubkey")
-      {
-        L(FL("read pubkey data packet"));
-        require(regex_match(args, regex(key)));
-        require(regex_match(body, regex(base)));
-        string contents(trim_ws(body));
-        cons.consume_public_key(rsa_keypair_id(args),
-                                base64<rsa_pub_key>(contents));
-      }
-    else if (type == "keypair")
-      {
-        L(FL("read keypair data packet"));
-        require(regex_match(args, regex(key)));
-        match_results<string::const_iterator> matches;
-        require(regex_match(body, matches, regex(base + "#" + base)));
-        string pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
-        string priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
-        cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
-      }
-    else if (type == "privkey")
-      {
-        L(FL("read pubkey data packet"));
-        require(regex_match(args, regex(key)));
-        require(regex_match(body, regex(base)));
-        string contents(trim_ws(body));
-        keypair kp;
-        migrate_private_key(app,
-                            rsa_keypair_id(args),
-                            base64<arc4<rsa_priv_key> >(contents),
-                            kp);
-        cons.consume_key_pair(rsa_keypair_id(args), kp);
-      }
-    else
-      {
-        W(F("unknown packet type: '%s'") % type);
-        return true;
-      }
-    ++count;
-    return true;
-  }
-};
+static void feed_packet_consumer(pcre::matches & res,
+                                 packet_consumer & cons,
+                                 app_state & app)
+{
+  if (res.size() != 4)
+    throw oops("matched impossible packet with "
+               + lexical_cast<string>(res.size()) + " matching parts: " +
+               string(res[0].first, res[0].second));
+  I(res[1].matched());
+  I(res[2].matched());
+  I(res[3].matched());
+  string type(res[1].first, res[1].second);
+  string args(res[2].first, res[2].second);
+  string body(res[3].first, res[3].second);
+  if ((type[0] == 'f' || type[0] == 'r')
+      && type.compare(1, type.size()-1, "data") == 0)
+    {
+      L(FL("read data packet"));
+      require(identr.match(args));
+      require(base64r.match(body));
+      base64<gzip<data> > body_packed(trim_ws(body));
+      data contents;
+      unpack(body_packed, contents);
+      if (type == "rdata")
+        cons.consume_revision_data(revision_id(hexenc<id>(args)),
+                                   revision_data(contents));
+      else if (type == "fdata")
+        cons.consume_file_data(file_id(hexenc<id>(args)),
+                               file_data(contents));
+      else
+        throw oops("matched impossible data packet with head '" + type + "'");
+    }
+  else if (type == "fdelta")
+    {
+      L(FL("read delta packet"));
+      pcre::matches matches;
+      require(fdelta_hdr.match(args, matches));
+      require(base64r.match(body));
+      file_id src_id(hexenc<id>(matches[1].str()));
+      file_id dst_id(hexenc<id>(matches[2].str()));
+
+      base64<gzip<delta> > body_packed(trim_ws(body));
+      delta contents;
+      unpack(body_packed, contents);
+      cons.consume_file_delta(src_id, dst_id, file_delta(contents));
+    }
+  else if (type == "rcert")
+    {
+      L(FL("read cert packet"));
+      pcre::matches matches;
+      require(rcert_hdr.match(args, matches));
+      require(base64r.match(body));
+
+      // canonicalize the base64 encodings to permit searches
+      hexenc<id> certid(matches[1].str());
+      cert_name name(matches[2].str());
+      rsa_keypair_id keyid(matches[3].str());
+      base64<cert_value> val(canonical_base64(matches[4].str()));
+      base64<rsa_sha1_signature> contents(canonical_base64(trim_ws(body)));
+
+      cert t(certid, name, val, keyid, contents);
+      cons.consume_revision_cert(revision<cert>(t));
+    }
+  else if (type == "pubkey")
+    {
+      L(FL("read pubkey data packet"));
+      require(keyr.match(args));
+      require(base64r.match(body));
+
+      base64<rsa_pub_key> contents(trim_ws(body));
+      cons.consume_public_key(rsa_keypair_id(args), contents);
+    }
+  else if (type == "keypair")
+    {
+      L(FL("read keypair data packet"));
+      pcre::matches matches;
+      require(keyr.match(args));
+      require(keypair_body.match(body, matches));
+
+      string pub_dat(trim_ws(matches[1].str()));
+      string priv_dat(trim_ws(matches[2].str()));
+      cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
+    }
+  else if (type == "privkey")
+    {
+      L(FL("read privkey data packet"));
+      require(keyr.match(args));
+      require(base64r.match(body));
+
+      rsa_keypair_id keyid(args);
+      base64<arc4<rsa_priv_key> > contents (trim_ws(body));
+      keypair kp;
+      migrate_private_key(app, keyid, contents, kp);
+      cons.consume_key_pair(keyid, kp);
+    }
+  else
+    {
+      W(F("unknown packet type: '%s'") % type);
+    }
+}
 
 static size_t
 extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
-  static string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
-  static string const body("([^\\[\\]]+)");
-  static string const tail("\\[end\\]");
-  static string const whole = head + body + tail;
-  regex expr(whole);
+  static pcre::regex expr("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]"
+                          "([^\\[\\]]+)"
+                          "\\[end\\]");
   size_t count = 0;
-  regex_grep(feed_packet_consumer(count, cons, app), s, expr, match_default);
+  pcre::matches m;
+
+  while (expr.nextmatch(s, m))
+    {
+      feed_packet_consumer(m, cons, app);
+      count++;
+    }
   return count;
 }
 

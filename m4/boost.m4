@@ -92,11 +92,11 @@ AC_DEFUN([BOOST_STATIC_LINK_OPTION],
 	# pick the one that matches the code the compiler generates).
 	# Fortunately, this is C++, so we'll get link errors if we get
 	# it wrong.
-	if test -f $i/lib64/libboost_regex${s}.a
+	if test -f $i/lib64/libboost_filesystem${s}.a
 	then
 		BOOST_LIBDIR=$i/lib64
 	fi
-	if test -f $i/lib/libboost_regex${s}.a 
+	if test -f $i/lib/libboost_filesystem${s}.a 
 	then
 		BOOST_LIBDIR=$i/lib
 	fi
@@ -181,15 +181,6 @@ AC_DEFUN([MTN_BOOST_LIB_DATE_TIME],
       using namespace boost::posix_time; 
     ]],[[
       std::cout << to_iso_extended_string(second_clock::universal_time());
-    ]])])])
-
-AC_DEFUN([MTN_BOOST_LIB_REGEX],
-[MTN_NEED_BOOST_LIB([regex],
-  [AC_LANG_PROGRAM([[
-      #include <boost/regex.hpp>
-      using namespace boost; 
-    ]],[[
-      regex expr("foo");
     ]])])])
 
 dnl Unlike all the others, if we don't have this library we can still

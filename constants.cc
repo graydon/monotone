@@ -63,29 +63,13 @@ namespace constants
   // truncated.
   size_t const log_line_sz = 0x300;
 
-  // all the ASCII characters (bytes) which are legal in a packet.
-  char const * const legal_packet_bytes =
-  // LDH characters
-  "abcdefghijklmnopqrstuvwxyz"
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  "0123456789"
-  "-"
-  // extra base64 codes
-  "+/="
-  // separators
-  ".@[]"
-  // whitespace
-  " \r\n\t"
-  ;
-
-  string const regex_legal_packet_bytes("([a-zA-Z0-9+/=[:space:]]+)");
+  // Note: If these change, the regular expressions in packet.cc may need to
+  // change too.
 
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   char const * const legal_id_bytes =
   "0123456789abcdef"
   ;
-
-  string const regex_legal_id_bytes("([[:xdigit:]]{40})");
 
   // all the ASCII characters (bytes) which are legal in an ACE string
   char const * const legal_ace_bytes =
@@ -107,8 +91,6 @@ namespace constants
   "-"
   ;
 
-  string const regex_legal_cert_name_bytes("([-a-zA-Z0-9]+)");
-
   // all the ASCII characters (bytes) which can occur in key names
   char const * const legal_key_name_bytes =
   // LDH characters
@@ -122,8 +104,6 @@ namespace constants
   // label and component separators
   ".@"
   ;
-
-  string const regex_legal_key_name_bytes("([-a-zA-Z0-9\\.@\\+_]+)");
 
   // merkle tree / netcmd / netsync related stuff
 

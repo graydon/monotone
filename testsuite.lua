@@ -696,4 +696,4 @@ table.insert(tests, "netsync_permissions_wildcards")
 table.insert(tests, "log_--to")
 table.insert(tests, "mkdir")
 table.insert(tests, "fail_cleanly_when__MTN_format_corrupt")
-
+table.insert(tests, "syntax_errors_in_.mtn-ignore")
