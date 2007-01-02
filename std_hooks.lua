@@ -866,7 +866,7 @@ function get_netsync_write_permitted(ident)
    return matches
 end
 
--- This is a simple funciton which assumes you're going to be spawning
+-- This is a simple function which assumes you're going to be spawning
 -- a copy of mtn, so reuses a common bit at the end for converting
 -- local args into remote args. You might need to massage the logic a
 -- bit if this doesn't fit your assumptions.
