@@ -31,7 +31,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-27 10:15+0100\n"
+"POT-Creation-Date: 2007-01-02 12:36+0100\n"
 "PO-Revision-Date: 2006-11-20 14:06+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -2531,7 +2531,7 @@ msgstr "Kann Datei %s nicht zum schreiben öffnen"
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "Laufzeitfehler %s während der Erstellung des Dateipfades für %s"
 
-#: file_io.cc:548 work.cc:1083
+#: file_io.cc:548 work.cc:1103
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
@@ -2586,7 +2586,7 @@ msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
 msgid "Directory '%s' does not exist"
 msgstr "Das Verzeichnis '%s' existiert nicht"
 
-#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1338
+#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1358
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
@@ -3929,124 +3929,139 @@ msgstr ""
 msgid "modifying %s"
 msgstr "verändere %s"
 
-#: work.cc:983
+#: work.cc:975
 #, c-format
-msgid "missing %s"
-msgstr "%s fehlt"
+msgid "missing directory '%s'"
+msgstr "fehlendes Verzeichnis '%s'"
 
-#: work.cc:989
+#: work.cc:980
+#, c-format
+msgid "not a directory '%s'"
+msgstr "'%s' ist kein Verzeichnis"
+
+#: work.cc:993
+#, c-format
+msgid "missing file '%s'"
+msgstr "fehlende Datei '%s'"
+
+#: work.cc:998
+#, c-format
+msgid "not a file '%s'"
+msgstr "'%s' ist keine Datei"
+
+#: work.cc:1009
 #, c-format
 msgid ""
-"%d missing files; use '%s ls missing' to view\n"
-"To restore consistency, on each missing file run either\n"
-" '%s drop FILE' to remove it permanently, or\n"
-" '%s revert FILE' to restore it.\n"
+"%d missing items; use '%s ls missing' to view\n"
+"To restore consistency, on each missing item run either\n"
+" '%s drop ITEM' to remove it permanently, or\n"
+" '%s revert ITEM' to restore it.\n"
 "To handle all at once, simply use\n"
 " '%s drop --missing' or\n"
 " '%s revert --missing'"
 msgstr ""
-"%d fehlende Dateien; benutzen Sie '%s ls missing' zur Anzeige\n"
+"%d fehlende Elemente; benutzen Sie '%s ls missing' zur Anzeige\n"
 "Um die Konsistenz wiederherzustellen, muss auf jede Datei entweder\n"
-" '%s drop DATEI' zum permanenten Löschen oder\n"
-" '%s revert DATEI' zur Wiederherstellung des vorherigen Zustands\n"
+" '%s drop ELEMENT' zum permanenten Löschen oder\n"
+" '%s revert ELEMENT' zur Wiederherstellung des vorherigen Zustands\n"
 "ausgeführt werden.\n"
-"Um alle Dateien auf einmal zu behandeln, nutzen Sie\n"
+"Um alle Elemente auf einmal zu behandeln, nutzen Sie\n"
 " '%s drop --missing' bzw.\n"
 " '%s revert --missing'."
 
-#: work.cc:1135
+#: work.cc:1155
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "übergehe %s, wird derzeit nicht verfolgt"
 
-#: work.cc:1145
+#: work.cc:1165
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kann %s/ nicht entfernen, Verzeichnis ist nicht leer"
 
-#: work.cc:1156
+#: work.cc:1176
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "entferne %s vom Arbeitsbereich-Manifest"
 
-#: work.cc:1209
+#: work.cc:1229
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr ""
 "Zielverzeichnis %s/ ist nicht unter Versionskontrolle (vielleicht soll es "
 "hinzugefügt werden?)"
 
-#: work.cc:1212
+#: work.cc:1232
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "Ziel %s ist eine existierende Datei in der derzeitigen Revision"
 
-#: work.cc:1222
+#: work.cc:1242
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "leerer Pfad %s ist nicht erlaubt"
 
-#: work.cc:1236
+#: work.cc:1256
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "%s existiert nicht im derzeitigen Manifest"
 
-#: work.cc:1239
+#: work.cc:1259
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "Ziel %s existiert bereits im derzeitigen Manifest"
 
-#: work.cc:1245
+#: work.cc:1265
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "Zielverzeichnis %s existiert nicht im derzeitigen Manifest"
 
-#: work.cc:1247
+#: work.cc:1267
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "Das Zielverzeichnis %s ist kein Verzeichnis"
 
-#: work.cc:1256
+#: work.cc:1276
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "benenne %s zu %s im Arbeitsbereich-Manifest um"
 
-#: work.cc:1284
+#: work.cc:1304
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "%s existiert nicht im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1288
+#: work.cc:1308
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "Ziel %s existiert bereits im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1318
+#: work.cc:1338
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' ist nicht unter "
 "Versionkontrolle oder existiert nicht"
 
-#: work.cc:1320
+#: work.cc:1340
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "das neu vorgeschlagene Wurzelverzeichnis '%s' ist kein Verzeichnis"
 
-#: work.cc:1325
+#: work.cc:1345
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' beinhaltet den ungültigen Pfad "
 "%s"
 
-#: work.cc:1335
+#: work.cc:1355
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr ""
 "das Verzeichnis '%s' ist nicht unter Versionskontrolle oder existiert nicht"
 
-#: work.cc:1341
+#: work.cc:1361
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' ist im Weg"
@@ -4136,6 +4151,9 @@ msgstr ""
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "Der Arbeitsbereich hat bereits das neueste Format, keine Migration notwendig."
+
+#~ msgid "missing %s"
+#~ msgstr "%s fehlt"
 
 #~ msgid "error running analyze after migration"
 #~ msgstr "Fehler beim Ausführen von ANALYZE nach der Migration"
