@@ -1,3 +1,10 @@
+2007-01-03  Thomas Keller  <me@thomaskeller.biz>
+
+	* work.cc: classify_roster_paths: if the inodeprints cache
+	is enabled, unchanged and missing files are now handled
+	properly for use in automate inventory (before any unchanged
+	file was wrongly determined as missing)
+ 
 2007-01-02  Thomas Moschny <thomas.moschny@gmx.de>
 
 	* std_hooks.lua (get_netsync_connect_command): Fix a typo.

@@ -899,29 +899,38 @@ workspace::classify_roster_paths(roster_t const & ros,
 
       file_path fp(sp);
 
-      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
+      // if this node is a file, check the inodeprint cache for changes
+      if (!is_dir_t(node) && inodeprint_unchanged(ipm, fp))
         {
-          // dirs don't have content changes
+          unchanged.insert(sp);
+          continue;
+        }
+      
+      // if the node is a directory, check if it exists
+      // directories do not have content changes, thus are inserted in the
+      // unchanged set
+      if (is_dir_t(node))
+        {
           if (directory_exists(fp))
               unchanged.insert(sp);
           else
               missing.insert(sp);
+          continue;
+        }
+      
+      // the node is a file, check if it exists and has been changed
+      file_t file = downcast_to_file_t(node);
+      file_id fid;
+      if (ident_existing_file(fp, fid, lua))
+        {
+          if (file->content == fid)
+            unchanged.insert(sp);
+          else
+            changed.insert(sp);
         }
       else
         {
-          file_t file = downcast_to_file_t(node);
-          file_id fid;
-          if (ident_existing_file(fp, fid, lua))
-            {
-              if (file->content == fid)
-                unchanged.insert(sp);
-              else
-                changed.insert(sp);
-            }
-          else
-            {
-              missing.insert(sp);
-            }
+          missing.insert(sp);
         }
     }
 }
