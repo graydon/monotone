@@ -1,10 +1,20 @@
+2007-01-04  Zack Weinberg  <zackw@panix.com>
+
+	* botan/gzip.cpp: Use specific subclasses of Botan::Exception
+	throughout.
+	* transforms.cc (error_in_transform): New function.
+	(xform, pack, calculate_ident): Wrap use of Botan in try/catch,
+	and call error_in_transform if we catch a Botan exception.
+	(canonical_base64): Use Botan directly; add similar try/catch clause.
+	(corruption_check): New unit test.
+
 2007-01-03  Thomas Keller  <me@thomaskeller.biz>
 
 	* work.cc: classify_roster_paths: if the inodeprints cache
 	is enabled, unchanged and missing files are now handled
 	properly for use in automate inventory (before any unchanged
 	file was wrongly determined as missing)
- 
+
 2007-01-02  Thomas Moschny <thomas.moschny@gmx.de>
 
 	* std_hooks.lua (get_netsync_connect_command): Fix a typo.
@@ -49,18 +59,18 @@
 	* tests/checkout_clobbers_workspace/__driver__.lua: new test to
 	see how checkout handles various workspace conflicts
 	* testsuite.lua: call it
-	
+
 2006-12-28  Derek Scherger  <derek@echologic.com>
 
 	* tests/missing_empty_dir/__driver__.lua: new test for missing,
-	empty, versioned directories 
+	empty, versioned directories
 	* testsuite.lua: call it
 	* work.cc (update_current_roster_from_filesystem): abort if there
 	are missing directories, whether they contained files or
 	not. tweak the associated messages so they're a bit more specific
 	about missing things verses things that are not what they should
 	be, like files that should be directories and vice-versa.
-	
+
 2006-12-27  Richard Levitte  <richard@levitte.org>
 
 	* NEWS: Date the release.
@@ -155,14 +165,14 @@
 
 	* cmd_diff_log.cc: renamed --revision option to --to
 	* option_list.hh: new block for --to
-        * monotone.texi: ...documented here
+	* monotone.texi: ...documented here
 	* NEWS: ...noted here
 	* tests/*: ..honored appropriately
 
 2006-12-21  Thomas Keller  <me@thomaskeller.biz>
 
 	* NEWS: refined some sections and added notes about
-        fixes in automate inventory and the localization code
+	fixes in automate inventory and the localization code
 
 2006-12-19  Thomas Keller  <me@thomaskeller.biz>
 
@@ -243,11 +253,11 @@
 
 2006-12-14  Thomas Keller  <me@thomaskeller.biz>
 
-	* work.cc: handle missing directories properly in 
-        classify_roster_paths
-        * automate.cc: trailing slash also for missing directories
-        * tests/...: adapted automate_inventory test which now tests
-        for unknown, added (but missing) and dropped (uncommitted) dirs
+	* work.cc: handle missing directories properly in
+	classify_roster_paths
+	* automate.cc: trailing slash also for missing directories
+	* tests/...: adapted automate_inventory test which now tests
+	for unknown, added (but missing) and dropped (uncommitted) dirs
 
 2006-12-14  Thomas Keller  <me@thomaskeller.biz>
 
@@ -271,25 +281,25 @@
 	* NEWS: added note about new automate get_file_of
 
 2006-12-12  Ben Walton  <bdwalton@gmail.com>
- 
-        * cmd_ws_cc: Added mtn mkdir
-        * testsuite.lua: added mtn mkdir test
-        * included tests/mkdir as unit testing for mtn mkdir
-        * added documentation to monotone.texi
+
+	* cmd_ws_cc: Added mtn mkdir
+	* testsuite.lua: added mtn mkdir test
+	* included tests/mkdir as unit testing for mtn mkdir
+	* added documentation to monotone.texi
 
 2006-12-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* HACKING: Updated "Patch submission guidelines" section.
 
 2006-12-11  Ben Walton  <bdwalton@gmail.com>
- 
-        * cmd_ws_commit.cc,
-        tests/commit_using__MTN_log/commit_log_modified_return.lua,
-        tests/commit_using__MTN_log/__driver__.lua:
-        Added the requirement that when _MTN/log is pre-specified by
-        the user, that the user remove a 'magic' line prior to the
-        commit being accepted.  Modified the units tests to verify this.
-        Updated texinfo to match this new behaviour.
+
+	* cmd_ws_commit.cc,
+	tests/commit_using__MTN_log/commit_log_modified_return.lua,
+	tests/commit_using__MTN_log/__driver__.lua:
+	Added the requirement that when _MTN/log is pre-specified by
+	the user, that the user remove a 'magic' line prior to the
+	commit being accepted.  Modified the units tests to verify this.
+	Updated texinfo to match this new behaviour.
 
 2006-12-10  Timothy Brownawell <tbrownaw@gmail.com>
 
@@ -442,7 +452,7 @@
        * moved automate get_file into cmd_files.cc
        * new automate command get_file_of which is basically mtn cat
        * replaced exception by user error for get_file and get_file_of
-       if no arguments are given 
+       if no arguments are given
 
 2006-11-18  Richard Levitte  <richard@levitte.org>
 
@@ -487,7 +497,7 @@
 
 2006-11-17  Thomas Keller  <me@thomaskeller.biz>
 
-	* cmd_automate.cc, cmd.hh, ...: renamed member variable 
+	* cmd_automate.cc, cmd.hh, ...: renamed member variable
 	"options" to "opts" to make (hopefully) the gcc-3.3 build
 	slaves happy
 
@@ -550,7 +560,7 @@
 	* rev_height.hh, rev_height.cc: remove the dump method, add an
 	overload to the dump function to make heights work with MM().
 	* database.cc (put_height_for_revision): Add some MM() calls.
-	
+
 2006-11-11  Nathaniel Smith  <njs@pobox.com>
 
 	* notes/: New directory for developer docs.
@@ -580,7 +590,7 @@
 	debian packages.
 
 	* NEWS: First draft of 0.31 release notes.
-	
+
 2006-11-06  Thomas Keller <me@thomaskeller.biz>
 
 	Improved error message for invalid uri's (per bug #17736)
@@ -745,7 +755,7 @@
 	arguments.
 	* tests/multiple_message_commit/__driver__.lua, testsuite.lua:
 	Added integration test for multiple --message arguments.
-	
+
 2006-10-09  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: 35 fuzzies cleared,
@@ -850,7 +860,7 @@
 
 2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
 
-	* automate.cc (get_content_changed): use the file_content 
+	* automate.cc (get_content_changed): use the file_content
 	make rather than the parent_name mark.
 
 2006-09-23  Nathaniel Smith  <njs@pobox.com>
@@ -868,7 +878,7 @@
 2006-09-22  Nathaniel Smith  <njs@pobox.com>
 
 	* graph.cc: I dunno, maybe this will make the buildslaves happier?
-	
+
 2006-09-22  Nathaniel Smith  <njs@pobox.com>
 
 	* graph.cc: Add randomized tests for get_reconstruction_path.
@@ -1599,7 +1609,7 @@
     * netsync.cc (~session): fixup for Botan 1.5
 
 2006-09-02  Matt Johnston  <matt@ucc.asn.au>
-    
+
     * botan/: import of Botan 1.5
 
 2006-08-31  Nathaniel Smith  <njs@pobox.com>

@@ -14,7 +14,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <wchar.h>
+
 
 #include <boost/tokenizer.hpp>
 #include <boost/scoped_array.hpp>
@@ -60,13 +60,61 @@ using boost::scoped_array;
 // paradigm "must" be used. this program is intended for source code
 // control and I make no bones about it.
 
+static void NORETURN
+error_in_transform(Botan::Exception & e)
+{
+  // why do people make up their own out-of-memory exceptions?
+  if (typeid(e) == typeid(Botan::Memory_Exhaustion))
+    throw std::bad_alloc();
+
+  // these classes can all indicate data corruption
+  else if (typeid(e) == typeid(Botan::Encoding_Error)
+           || typeid(e) == typeid(Botan::Decoding_Error)
+           || typeid(e) == typeid(Botan::Stream_IO_Error)
+           || typeid(e) == typeid(Botan::Integrity_Failure))
+    {
+      // clean up the what() string a little: throw away the
+      // "botan: TYPE: " part...
+      string w(e.what());
+      string::size_type pos = w.find(':');
+      pos = w.find(':', pos+1);
+      w = string(w.begin() + pos + 2, w.end());
+
+      // ... downcase the rest of it and replace underscores with spaces.
+      for (string::iterator p = w.begin(); p != w.end(); p++)
+        if (::isupper(*p))
+          *p = ::tolower(*p);
+        else if (*p == '_')
+          *p = ' ';
+
+      E(false,
+        F("%s\n"
+          "this may be due to a memory glitch, data corruption during\n"
+          "a network transfer, corruption of your database or workspace,\n"
+          "or a bug in monotone.  if the error persists, please contact\n"
+          "%s for assistance.\n")
+        % w % PACKAGE_BUGREPORT);
+    }
+  else
+    throw;
+
+  I(false);  // can't get here
+}
+
 // the generic function
 template<typename XFM> string xform(string const & in)
 {
   string out;
-  Botan::Pipe pipe(new XFM());
-  pipe.process_msg(in);
-  out = pipe.read_all_as_string();
+  try
+    {
+      Botan::Pipe pipe(new XFM());
+      pipe.process_msg(in);
+      out = pipe.read_all_as_string();
+    }
+  catch (Botan::Exception & e)
+    {
+      error_in_transform(e);
+    }
   return out;
 }
 
@@ -160,10 +208,18 @@ void pack(T const & in, base64< gzip<T> > & out)
   string tmp;
   tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
 
-  Botan::Pipe pipe(new Botan::Gzip_Compression(), new Botan::Base64_Encoder);
-  pipe.process_msg(in());
-  tmp = pipe.read_all_as_string();
-  out = tmp;
+  try
+    {
+      Botan::Pipe pipe(new Botan::Gzip_Compression(),
+                       new Botan::Base64_Encoder);
+      pipe.process_msg(in());
+      tmp = pipe.read_all_as_string();
+      out = tmp;
+    }
+  catch (Botan::Exception & e)
+    {
+      error_in_transform(e);
+    }
 }
 
 template <typename T>
@@ -172,11 +228,18 @@ void unpack(base64< gzip<T> > const & in, T & out)
   string tmp;
   tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
 
-  Botan::Pipe pipe(new Botan::Base64_Decoder(), new Botan::Gzip_Decompression());
-  pipe.process_msg(in());
-  tmp = pipe.read_all_as_string();
-
-  out = tmp;
+  try
+    {
+      Botan::Pipe pipe(new Botan::Base64_Decoder(),
+                       new Botan::Gzip_Decompression());
+      pipe.process_msg(in());
+      tmp = pipe.read_all_as_string();
+      out = tmp;
+    }
+  catch (Botan::Exception & e)
+    {
+      error_in_transform(e);
+    }
 }
 
 // specialise them
@@ -213,10 +276,19 @@ void
 calculate_ident(data const & dat,
                 hexenc<id> & ident)
 {
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-160"));
-  p.process_msg(dat());
-
-  id ident_decoded(p.read_all_as_string());
+  string s;
+  try
+    {
+      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"));
+      p.process_msg(dat());
+      s = p.read_all_as_string();
+    }
+  catch (Botan::Exception & e)
+    {
+      error_in_transform(e);
+    }
+  
+  id ident_decoded(s);
   encode_hexenc(ident_decoded, ident);
 }
 
@@ -261,8 +333,17 @@ calculate_ident(revision_data const & dat,
 string
 canonical_base64(string const & s)
 {
-  return xform<Botan::Base64_Encoder>
-    (xform<Botan::Base64_Decoder>(s));
+  try
+    {
+      Botan::Pipe pipe(new Botan::Base64_Decoder(),
+                       new Botan::Base64_Encoder());
+      pipe.process_msg(s);
+      return pipe.read_all_as_string();
+    }
+  catch (Botan::Exception & e)
+    {
+      error_in_transform(e);
+    }
 }
 
 
@@ -302,6 +383,24 @@ UNIT_TEST(transform, calculate_ident)
   string ident("86e03bdb3870e2a207dfd0dcbfd4c4f2e3bc97bd");
   calculate_ident(input, output);
   BOOST_CHECK(output() == ident);
+}
+
+UNIT_TEST(transform, corruption_check)
+{
+  data input(string("i'm so fragile, fragile when you're here"));
+  gzip<data> gzd;
+  encode_gzip(input, gzd);
+
+  // fake a single-bit error
+  string gzs = gzd();
+  string::iterator i = gzs.begin();
+  while (*i != '+')
+    i++;
+  *i = 'k';
+
+  gzip<data> gzbad(gzs);
+  data output;
+  BOOST_CHECK_THROW(decode_gzip(gzbad, output), informative_failure);
 }
 
 #endif // BUILD_UNIT_TESTS
