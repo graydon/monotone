@@ -157,7 +157,12 @@ _monotone() {
           COMPREPLY=( $(compgen -W '--revision -r' -- $cur ) )
           _filedir
           ;;
-        log | approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
+        log )
+          COMPREPLY=( $(compgen -W '--brief --diffs --last --next --no-files
+          --no-merges --revision -r' -- $cur ) )
+          _filedir
+          ;;
+        approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
           _monotone_complete revision
           ;;
         ls | list )
@@ -204,7 +209,7 @@ _monotone() {
               cat )
                 _monotone_complete $prev
                 ;;
-              log | attr )
+              attr )
                 _filedir
                 ;;
               list )
