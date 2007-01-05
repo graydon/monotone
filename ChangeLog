@@ -1,3 +1,8 @@
+2007-01-05  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* netsync.cc (queue_delta_cmd): The invariant was based on the
+	(wrong) assumption that an empty xdelta means no change.
+
 2007-01-05  Matthew Nicholson  <matt@matt-land.com>
 
 	* contrib/monotone.bash_completion: Updated completion for "mtn log".
