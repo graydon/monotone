@@ -1,3 +1,9 @@
+monotone (0.32-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Richard Levitte <richard@levitte.org>  Wed, 27 Dec 2006 10:57:48 +0100
+
 monotone (0.31-90.2) unstable; urgency=low
 
   * Another pre-0.32 "release", just to mark that an important behavior

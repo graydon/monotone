@@ -736,6 +736,8 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   // middle of an update to avoid clobbering a file, we just end up leaving
   // the working copy in an inconsistent state instead.  so for now, we leave
   // this check down here.
+  // where are "here" and "there" ?!?
+
   if (!workspace_root(dst))
     {
       require_path_is_nonexistent(dst_pth,
@@ -897,29 +899,38 @@ workspace::classify_roster_paths(roster_t const & ros,
 
       file_path fp(sp);
 
-      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
+      // if this node is a file, check the inodeprint cache for changes
+      if (!is_dir_t(node) && inodeprint_unchanged(ipm, fp))
         {
-          // dirs don't have content changes
+          unchanged.insert(sp);
+          continue;
+        }
+      
+      // if the node is a directory, check if it exists
+      // directories do not have content changes, thus are inserted in the
+      // unchanged set
+      if (is_dir_t(node))
+        {
           if (directory_exists(fp))
               unchanged.insert(sp);
           else
               missing.insert(sp);
+          continue;
+        }
+      
+      // the node is a file, check if it exists and has been changed
+      file_t file = downcast_to_file_t(node);
+      file_id fid;
+      if (ident_existing_file(fp, fid, lua))
+        {
+          if (file->content == fid)
+            unchanged.insert(sp);
+          else
+            changed.insert(sp);
         }
       else
         {
-          file_t file = downcast_to_file_t(node);
-          file_id fid;
-          if (ident_existing_file(fp, fid, lua))
-            {
-              if (file->content == fid)
-                unchanged.insert(sp);
-              else
-                changed.insert(sp);
-            }
-          else
-            {
-              missing.insert(sp);
-            }
+          missing.insert(sp);
         }
     }
 }
@@ -944,7 +955,7 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       read_inodeprint_map(dat, ipm);
     }
 
-  size_t missing_files = 0;
+  size_t missing_items = 0;
 
   // this code is speed critical, hence the use of inode fingerprints so be
   // careful when making changes in here and preferably do some timing tests
@@ -958,11 +969,7 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       node_id nid = i->first;
       node_t node = i->second;
 
-      // Only analyze files further, not dirs.
-      if (! is_file_t(node))
-        continue;
-
-      // Only analyze restriction-included files.
+      // Only analyze restriction-included files and dirs
       if (!mask.includes(ros, nid))
         continue;
 
@@ -970,28 +977,52 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       ros.get_name(nid, sp);
       file_path fp(sp);
 
-      // Only analyze changed files (or all files if inodeprints mode
-      // is disabled).
-      if (inodeprint_unchanged(ipm, fp))
-        continue;
-
-      file_t file = downcast_to_file_t(node);
-      if (!ident_existing_file(fp, file->content, lua))
+      if (is_dir_t(node))
         {
-          W(F("missing %s") % (fp));
-          missing_files++;
+          if (!path_exists(fp))
+            {
+              W(F("missing directory '%s'") % (fp));
+              missing_items++;
+            }
+          else if (!directory_exists(fp))
+            {
+              W(F("not a directory '%s'") % (fp));
+              missing_items++;
+            }
         }
+      else
+        {
+          // Only analyze changed files (or all files if inodeprints mode
+          // is disabled).
+          if (inodeprint_unchanged(ipm, fp))
+            continue;
+
+          if (!path_exists(fp))
+            {
+              W(F("missing file '%s'") % (fp));
+              missing_items++;
+            }
+          else if (!file_exists(fp))
+            {
+              W(F("not a file '%s'") % (fp));
+              missing_items++;
+            }
+
+          file_t file = downcast_to_file_t(node);
+          ident_existing_file(fp, file->content, lua);
+        }
+
     }
 
-  N(missing_files == 0,
-    F("%d missing files; use '%s ls missing' to view\n"
-      "To restore consistency, on each missing file run either\n"
-      " '%s drop FILE' to remove it permanently, or\n"
-      " '%s revert FILE' to restore it.\n"
+  N(missing_items == 0,
+    F("%d missing items; use '%s ls missing' to view\n"
+      "To restore consistency, on each missing item run either\n"
+      " '%s drop ITEM' to remove it permanently, or\n"
+      " '%s revert ITEM' to restore it.\n"
       "To handle all at once, simply use\n"
       " '%s drop --missing' or\n"
       " '%s revert --missing'")
-    % missing_files % ui.prog_name % ui.prog_name % ui.prog_name
+    % missing_items % ui.prog_name % ui.prog_name % ui.prog_name
     % ui.prog_name % ui.prog_name);
 }
 

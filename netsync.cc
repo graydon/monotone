@@ -67,12 +67,12 @@
 //      information exposure?  Allows anonymous people to probe what branches
 //      a key has access to.)
 //   -- "warning" packet type?
-//   -- Richard Levitte wants, when you (e.g.) request '*' but don't access to
-//      all of it, you just get the parts you have access to (maybe with
-//      warnings about skipped branches).  to do this right, should have a way
-//      for the server to send back to the client "right, you're not getting
-//      the following branches: ...", so the client will not include them in
-//      its merkle trie.
+//   -- Richard Levitte wants, when you (e.g.) request '*' but don't have
+//      access to all of it, you just get the parts you have access to
+//      (maybe with warnings about skipped branches).  to do this right,
+//      should have a way for the server to send back to the client "right,
+//      you're not getting the following branches: ...", so the client will
+//      not include them in its merkle trie.
 //   -- add some sort of vhost field to the client's first packet, saying who
 //      they expect to talk to
 
@@ -170,7 +170,7 @@
 //
 // An "anonymous (source|sink|both) <include_pattern> <exclude_pattern>
 // <hmac key>" command, which identifies the role it wishes to play in the
-// synchronization, the pattern it ishes to sync with, and the HMAC key it
+// synchronization, the pattern it wishes to sync with, and the HMAC key it
 // wishes to use for this session (also encrypted with the server's public
 // key).
 //
@@ -235,7 +235,7 @@
 // This protocol is "raw binary" (non-text) because coding density is
 // actually important here, and each packet consists of very
 // information-dense material that you wouldn't have a hope of typing in,
-// interpreting manually anyways.
+// or interpreting manually anyways.
 //
 
 using std::auto_ptr;
@@ -332,19 +332,19 @@ session:
 
   bool encountered_error;
 
-  const static int no_error = 200;
-  const static int partial_transfer = 211;
-  const static int no_transfer = 212;
+  static const int no_error = 200;
+  static const int partial_transfer = 211;
+  static const int no_transfer = 212;
 
-  const static int not_permitted = 412;
-  const static int unknown_key = 422;
-  const static int mixing_versions = 432;
+  static const int not_permitted = 412;
+  static const int unknown_key = 422;
+  static const int mixing_versions = 432;
 
-  const static int role_mismatch = 512;
-  const static int bad_command = 521;
+  static const int role_mismatch = 512;
+  static const int bad_command = 521;
 
-  const static int failed_identification = 532;
-  //const static int bad_data = 541;
+  static const int failed_identification = 532;
+  //static const int bad_data = 541;
 
   int error_code;
 
@@ -1220,7 +1220,6 @@ session::queue_delta_cmd(netcmd_item_type type,
                          delta const & del)
 {
   I(type == file_item);
-  I(! del().empty() || ident == base);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   hexenc<id> base_hid;

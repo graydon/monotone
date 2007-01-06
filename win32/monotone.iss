@@ -1,8 +1,8 @@
 [Setup]
 AppName=monotone
-AppVersion=0.31
-AppVerName=monotone 0.31
-OutputBaseFileName=monotone-0.31-setup
+AppVersion=0.32
+AppVerName=monotone 0.32
+OutputBaseFileName=monotone-0.32-setup
 AppCopyright=Copyright © 2002-2006 Graydon Hoare et al.
 AppPublisher=venge.net
 AppPublisherURL=http://venge.net/monotone

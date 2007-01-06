@@ -151,13 +151,13 @@ BOTAN_SOURCES = 							\
         botan/modules.cpp botan/mp_numth.cpp \
         botan/mp_sqr.cpp botan/powm_fw.cpp \
         botan/powm_mnt.cpp botan/mp_asm.cpp \
-		botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
-		botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
-		botan/x509_ext.cpp botan/x509stat.cpp 
-		\
+	botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
+	botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
+	botan/x509_ext.cpp botan/x509stat.cpp \
+	\
         botan/aes.h botan/botan.h botan/es_win32.h  \
         botan/lookup.h botan/randpool.h botan/version.h \
-        botan/algolist.h botan/buf_es.h botan/der_enc.h         \
+        botan/buf_es.h botan/der_enc.h         \
         botan/exceptn.h botan/mdx_hash.h \
         botan/reducer.h botan/x509_ca.h botan/allocate.h        \
         botan/buf_filt.h botan/dh.h botan/filter.h botan/mem_ops.h  \
@@ -170,11 +170,11 @@ BOTAN_SOURCES = 							\
         botan/pipe.h botan/x509_obj.h           \
         botan/asn1_oid.h botan/eax.h botan/gzip.h      \
         botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
-        botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h \
+        botan/x509find.h botan/x509self.h botan/config.h botan/ecb.h \
         botan/hex.h botan/pk_core.h botan/secqueue.h    \
         botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h   \
         botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h  \
-        botan/crl_ent.h botan/emsa.h    \
+        botan/crl_ent.h botan/emsa.h botan/eng_def.h \
         botan/if_algo.h botan/pkcs8.h \
         botan/basefilt.h botan/ctr.h botan/engine.h    \
         botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h   \
@@ -336,8 +336,8 @@ endif
 SUFFIXES = .gch
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
+AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
