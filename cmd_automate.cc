@@ -331,6 +331,10 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
   N(args.size() == 0,
     F("no arguments needed"));
 
+    // initialize the database early so any calling process is notified
+    // immediately if a version discrepancy exists 
+  app.db.ensure_open();
+
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);
   vector<pair<string, string> > params;
