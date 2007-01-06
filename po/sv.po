@@ -148,7 +148,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-06 11:35+0100\n"
-"PO-Revision-Date: 2007-01-06 11:42+0100\n"
+"PO-Revision-Date: 2007-01-06 12:32+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -3783,7 +3783,7 @@ msgstr ""
 "det här kan handla om ett temporärt minnesfel, datafel i\n"
 "nätverksöverföringen, felaktiga data i din databas eller\n"
 "arbetskopia eller en bugg i monotone.  Var god kontakta\n"
-"%s och be om hjälp om felet kvarstår envist."
+"%s och be om hjälp om felet kvarstår envist.\n"
 
 #: ui.cc:158
 #, c-format
