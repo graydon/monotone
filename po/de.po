@@ -25,6 +25,8 @@
 # (to) update    -> etw. aktualisieren / die Aktualisierung
 # (to) merge     -> etw. vereinigen / die Vereinigung
 # directory      -> Verzeichnis (NICHT "Ordner")
+# argument       -> Parameter
+# option         -> Option
 #
 # ##############################################################################
 msgid ""
@@ -77,7 +79,7 @@ msgstr "[ZWEIG]"
 #: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:676
 #, c-format
 msgid "wrong argument count"
-msgstr "falsche Anzahl an Argumenten"
+msgstr "falsche Anzahl an Parametern"
 
 #: automate.cc:88 automate.cc:135 automate.cc:1190
 msgid "REV1 [REV2 [REV3 [...]]]"
@@ -744,7 +746,7 @@ msgstr "Überprüfung einer bestimmten Revision"
 #: cmd_key_cert.cc:235
 #, c-format
 msgid "need --branch argument for approval"
-msgstr "benötige '--branch'-Argument für das Akzeptieren"
+msgstr "benötige '--branch'-Parameter für das Akzeptieren"
 
 #: cmd_key_cert.cc:239
 msgid "REVISION [COMMENT]"
@@ -1465,7 +1467,7 @@ msgstr "Revision '%s' hat %d Veränderungen, kann nicht umkehren"
 #: cmd_ws_commit.cc:223
 #, c-format
 msgid "need --branch argument for disapproval"
-msgstr "benötige '--branch'-Argument für das Verwerfen"
+msgstr "benötige '--branch'-Parameter für das Verwerfen"
 
 #: cmd_ws_commit.cc:264
 msgid "[DIRECTORY...]"
@@ -1696,7 +1698,7 @@ msgstr ""
 "_MTN/log ist nicht leer und ein Kommentar wurde über die Kommandozeile "
 "spezifiziert.\n"
 "Verschieben oder löschen Sie _MTN/log oder\n"
-"entfernen Sie das '--message'-/'--message-file'-Argument aus der "
+"entfernen Sie den '--message'-/'--message-file'-Parameter aus der "
 "Kommandozeile."
 
 #: cmd_ws_commit.cc:799
@@ -1747,7 +1749,7 @@ msgstr ""
 #: cmd_ws_commit.cc:976
 #, c-format
 msgid "need --branch argument for setup"
-msgstr "benötige '--branch'-Argument für das aufsetzen"
+msgstr "benötige '--branch'-Parameter für das Setup"
 
 #: cmd_ws_commit.cc:992
 msgid "DIRECTORY"
@@ -3187,7 +3189,7 @@ msgstr "kann nicht negativ sein"
 
 #: options_list.hh:173
 msgid "argument to pass external diff hook"
-msgstr "Argument für externe 'diff'-Anwendung"
+msgstr "Parameter für externe 'diff'-Anwendung"
 
 #: options_list.hh:182
 msgid "use context diff format"
@@ -3225,7 +3227,7 @@ msgstr "Datei, in die das Protokoll im Fehlerfall geschrieben werden soll"
 
 #: options_list.hh:245
 msgid "leave out anything described by its argument"
-msgstr "lasse etwas durch das Argument beschriebene heraus"
+msgstr "lasse etwas durch den Parameter beschriebene heraus"
 
 #: options_list.hh:253
 msgid "perform the associated file operation"
@@ -3242,7 +3244,7 @@ msgstr "zeige Hilfemeldung an"
 
 #: options_list.hh:277
 msgid "include anything described by its argument"
-msgstr "beziehe etwas durch das Argument beschriebene mit ein"
+msgstr "beziehe etwas durch den Parameter beschriebene mit ein"
 
 #: options_list.hh:285
 msgid "set key for signatures"
@@ -3334,7 +3336,7 @@ msgstr ""
 
 #: options_list.hh:466
 msgid "use the current arguments as the future default"
-msgstr "benutze die derzeitigen Argumente in der Zukunft als Standard"
+msgstr "benutze die derzeitigen Parameter in Zukunft als Standard"
 
 #: options_list.hh:474
 msgid "set ticker style (count|dot|none)"
@@ -3343,7 +3345,7 @@ msgstr "setzte 'Ticker'-Stil (count|dot|none)"
 #: options_list.hh:485
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
-msgstr "Argument muß 'none', 'dot' oder 'count' sein"
+msgstr "Parameter muß 'none', 'dot' oder 'count' sein"
 
 #: options_list.hh:489
 msgid "revision(s) to start logging at"
@@ -3473,7 +3475,7 @@ msgstr ""
 #: rcs_import.cc:1222
 #, c-format
 msgid "need base --branch argument for importing"
-msgstr "benötige Basis '--branch'-Argument für den Import"
+msgstr "benötige Basis '--branch'-Parameter für den Import"
 
 #: rcs_import.cc:1234
 #, c-format
