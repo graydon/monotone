@@ -1220,7 +1220,6 @@ session::queue_delta_cmd(netcmd_item_type type,
                          delta const & del)
 {
   I(type == file_item);
-  I(! del().empty() || ident == base);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   hexenc<id> base_hid;

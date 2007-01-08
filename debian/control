@@ -5,7 +5,7 @@ Maintainer: Shaun Jackman <sjackman@debian.org>
 Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.0.0), autotools-dev,
  libboost-date-time-dev, libboost-filesystem-dev, libboost-regex-dev,
  libboost-test-dev, libboost-dev, libz-dev,
-Build-Depends-Indep: ps2eps, tetex-bin, texinfo, xpdf-utils
+Build-Depends-Indep: ps2eps, tetex-bin | texlive-base-bin, texinfo, xpdf-utils
 Standards-Version: 3.7.2.2
 
 Package: monotone
