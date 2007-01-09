@@ -17,6 +17,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <time.h>
 
+#include "outdated_indicator.hh"
 #include "vocab.hh"
 
 // Certs associate an opaque name/value pair with a revision ID, and
@@ -89,7 +90,7 @@ cert_revision_in_branch(revision_id const & ctx,
                         app_state & app,
                         packet_consumer & pc);
 
-void
+outdated_indicator
 get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  std::set<revision_id> & heads);

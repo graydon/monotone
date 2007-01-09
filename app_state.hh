@@ -19,6 +19,7 @@ class lua_hooks;
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "branch.hh"
 #include "database.hh"
 #include "key_store.hh"
 #include "lua_hooks.hh"
@@ -79,6 +80,11 @@ public:
   // function updates the workspace).
 
   void make_branch_sticky();
+
+private:
+  std::map<utf8, branch> branch_map;
+public:
+  branch & get_branch(utf8 const & name);
 
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);

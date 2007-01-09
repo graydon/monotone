@@ -1,0 +1,108 @@
+// 2007 Timothy Brownawell <tbrownaw@gmail.com>
+// GNU GPL V2 or later
+
+#include "outdated_indicator.hh"
+#include "sanity.hh"
+
+class outdated_indicator_factory_impl
+{
+  unsigned int changed;
+  unsigned int dispensed;
+public:
+  outdated_indicator_factory_impl();
+  void note_change();
+  unsigned int last_change() const;
+  unsigned int dispense();
+};
+
+outdated_indicator_factory_impl::outdated_indicator_factory_impl()
+  : changed(0), dispensed(0)
+{}
+
+unsigned int
+outdated_indicator_factory_impl::last_change() const
+{
+  return changed;
+}
+
+unsigned int
+outdated_indicator_factory_impl::dispense()
+{
+  I(changed == dispensed || changed == dispensed + 1);
+  dispensed = changed;
+  return dispensed;
+}
+
+void
+outdated_indicator_factory_impl::note_change()
+{
+  I(changed == dispensed || changed == dispensed + 1);
+  if (changed == dispensed)
+    ++changed;
+}
+
+
+outdated_indicator::outdated_indicator()
+  : parent(), when(0)
+{}
+
+outdated_indicator::outdated_indicator(boost::shared_ptr<outdated_indicator_factory_impl> p)
+  : parent(p), when(p->dispense())
+{}
+
+bool
+outdated_indicator::outdated()
+{
+  if (parent)
+    {
+      I(when <= parent->last_change());
+      return when < parent->last_change();
+    }
+  else
+    return true;
+}
+
+
+outdated_indicator_factory::outdated_indicator_factory()
+  : impl(new outdated_indicator_factory_impl)
+{}
+
+outdated_indicator_factory::~outdated_indicator_factory()
+{
+  impl->note_change();
+}
+
+outdated_indicator
+outdated_indicator_factory::get_notifier()
+{
+  return outdated_indicator(impl);
+}
+
+void
+outdated_indicator_factory::note_change()
+{
+  impl->note_change();
+}
+
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+UNIT_TEST(outdated_indicator, )
+{
+  outdated_indicator indicator;
+  {
+    outdated_indicator_factory factory;
+    BOOST_CHECK(indicator.outdated());
+    indicator = factory.get_notifier();
+    BOOST_CHECK(!indicator.outdated());
+    factory.note_change();
+    BOOST_CHECK(indicator.outdated());
+    factory.note_change();
+    factory.note_change();
+    indicator = factory.get_notifier();
+    BOOST_CHECK(!indicator.outdated());
+  }
+  BOOST_CHECK(indicator.outdated());
+}
+
+#endif

@@ -1,3 +1,16 @@
+2007-01-09  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* outdated_indicator.{cc,hh}: Allows code that caches replys to
+	find out when those replys may be outdated. Used by...
+	* branch.{cc,hh}: Give us a concept of a 'branch'. Currently, this
+	only lets you find branch heads. Branch heads are cached and only
+	recalculated if certs have been added to / removed from the db.
+	* database.{cc,hh}: Enable the use of outdated_indicator s for
+	operations that return sets of certs.
+	* many: Use the new way to calculate heads. Right now, the main
+	effect is that 'automate heads' of the same branch is very fast
+	on subsequent calls from 'automate stdio'.
+
 2007-01-06  Thomas Keller  <me@thomaskeller.biz>
 
 	* cmd_automate.cc: automate stdio now opens the database 

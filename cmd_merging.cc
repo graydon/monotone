@@ -330,7 +330,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     F("please specify a branch, with --branch=BRANCH"));
 
   set<revision_id> heads;
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.get_branch(app.opts.branch_name()).heads(heads);
 
   N(heads.size() != 0, F("branch '%s' is empty") % app.opts.branch_name);
   if (heads.size() == 1)
@@ -398,7 +398,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
       ancestors.clear();
       heads_for_ancestor.clear();
-      get_branch_heads(app.opts.branch_name(), app, heads);
+      app.get_branch(app.opts.branch_name()).heads(heads);
       pass++;
     }
 
@@ -463,8 +463,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
   if (args.size() != 3)
     throw usage(name);
 
-  get_branch_heads(idx(args, 0)(), app, src_heads);
-  get_branch_heads(idx(args, 1)(), app, dst_heads);
+  app.get_branch(idx(args, 0)()).heads(src_heads);
+  app.get_branch(idx(args, 1)()).heads(dst_heads);
 
   N(src_heads.size() != 0, F("branch '%s' is empty") % idx(args, 0)());
   N(src_heads.size() == 1, F("branch '%s' is not merged") % idx(args, 0)());
@@ -828,7 +828,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
   N(app.opts.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.get_branch(app.opts.branch_name()).heads(heads);
 
   if (heads.size() == 0)
     P(F("branch '%s' is empty") % app.opts.branch_name);

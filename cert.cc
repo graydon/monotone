@@ -565,7 +565,7 @@ namespace
   };
 }
 
-void
+outdated_indicator
 get_branch_heads(cert_value const & branchname,
                  app_state & app,
                  set<revision_id> & heads)
@@ -574,13 +574,15 @@ get_branch_heads(cert_value const & branchname,
   base64<cert_value> branch_encoded;
   encode_base64(branchname, branch_encoded);
 
-  app.db.get_revisions_with_cert(cert_name(branch_cert_name),
-                                 branch_encoded,
-                                 heads);
+  outdated_indicator stamp;
+  stamp = app.db.get_revisions_with_cert(cert_name(branch_cert_name),
+                                         branch_encoded,
+                                         heads);
 
   not_in_branch p(app, branch_encoded);
   erase_ancestors_and_failures(heads, p, app);
   L(FL("found heads of branch %s (%s heads)") % branchname % heads.size());
+  return stamp;
 }
 
 

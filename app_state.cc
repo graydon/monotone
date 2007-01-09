@@ -193,6 +193,14 @@ app_state::make_branch_sticky()
     }
 }
 
+branch &
+app_state::get_branch(utf8 const & name)
+{
+  std::pair<std::map<utf8, branch>::iterator, bool> res;
+  res = branch_map.insert(std::make_pair(name, branch(*this, name)));
+  return res.first->second;
+}
+
 void
 app_state::set_root(system_path const & path)
 {

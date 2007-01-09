@@ -1911,6 +1911,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   // Kill the certs, ancestry, and revision.
   execute(query("DELETE from revision_certs WHERE id = ?")
           % text(rid.inner()()));
+  cert_stamper.note_change();
 
   execute(query("DELETE from revision_ancestry WHERE child = ?")
           % text(rid.inner()()));
@@ -1931,6 +1932,7 @@ database::delete_branch_named(cert_value const & branch)
   L(FL("Deleting all references to branch %s") % branch);
   execute(query("DELETE FROM revision_certs WHERE name='branch' AND value =?")
           % blob(branch()));
+  cert_stamper.note_change();
   execute(query("DELETE FROM branch_epochs WHERE branch=?")
           % blob(branch()));
 }
@@ -1942,6 +1944,7 @@ database::delete_tag_named(cert_value const & tag)
   L(FL("Deleting all references to tag %s") % tag);
   execute(query("DELETE FROM revision_certs WHERE name='tag' AND value =?")
           % blob(tag()));
+  cert_stamper.note_change();
 }
 
 // crypto key management
@@ -2241,10 +2244,12 @@ void
 database::put_revision_cert(revision<cert> const & cert)
 {
   put_cert(cert.inner(), "revision_certs");
+  cert_stamper.note_change();
 }
 
-void database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
-                                                pair<revision_id, rsa_keypair_id> > > & idx)
+outdated_indicator
+database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
+                                           pair<revision_id, rsa_keypair_id> > > & idx)
 {
   results res;
   fetch(res, 3, any_rows,
@@ -2259,18 +2264,20 @@ void database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
                               make_pair(revision_id((*i)[1]),
                                         rsa_keypair_id((*i)[2]))));
     }
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(cert_name const & name,
                             vector< revision<cert> > & ts)
 {
@@ -2278,9 +2285,10 @@ database::get_revision_certs(cert_name const & name,
   get_certs(name, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & id,
                              cert_name const & name,
                              vector< revision<cert> > & ts)
@@ -2289,9 +2297,10 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), name, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & id,
                              cert_name const & name,
                              base64<cert_value> const & val,
@@ -2301,9 +2310,10 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), name, val, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revisions_with_cert(cert_name const & name,
                                   base64<cert_value> const & val,
                                   set<revision_id> & revisions)
@@ -2316,9 +2326,10 @@ database::get_revisions_with_cert(cert_name const & name,
   fetch(res, one_col, any_rows, q % text(name()) % blob(binvalue()));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     revisions.insert(revision_id((*i)[0]));
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(cert_name const & name,
                              base64<cert_value> const & val,
                              vector< revision<cert> > & ts)
@@ -2327,9 +2338,10 @@ database::get_revision_certs(cert_name const & name,
   get_certs(name, val, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & id,
                              vector< revision<cert> > & ts)
 {
@@ -2337,9 +2349,10 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
+  return cert_stamper.get_notifier();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & ident,
                              vector< hexenc<id> > & ts)
 {
@@ -2353,6 +2366,7 @@ database::get_revision_certs(revision_id const & ident,
   ts.clear();
   for (size_t i = 0; i < res.size(); ++i)
     ts.push_back(hexenc<id>(res[i][0]));
+  return cert_stamper.get_notifier();
 }
 
 void

@@ -28,6 +28,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "cleanup.hh"
 #include "roster.hh"
 #include "selectors.hh"
+#include "outdated_indicator.hh"
 #include "vocab.hh"
 #include "rev_height.hh"
 
@@ -407,42 +408,44 @@ private:
                  std::vector<cert> & certs,
                  std::string const & table);
 
+  outdated_indicator_factory cert_stamper;
 public:
+
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
   void put_revision_cert(revision<cert> const & cert);
 
   // this variant has to be rather coarse and fast, for netsync's use
-  void get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
-                               std::pair<revision_id, rsa_keypair_id> > > & idx);
+  outdated_indicator get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
+                              std::pair<revision_id, rsa_keypair_id> > > & idx);
 
-  void get_revision_certs(std::vector< revision<cert> > & certs);
+  outdated_indicator get_revision_certs(std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  outdated_indicator get_revision_certs(cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  outdated_indicator get_revision_certs(cert_name const & name,
                           base64<cert_value> const & val,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
 
-  void get_revisions_with_cert(cert_name const & name,
+  outdated_indicator get_revisions_with_cert(cert_name const & name,
                                base64<cert_value> const & value,
                                std::set<revision_id> & revisions);
 
-  void get_revision_certs(revision_id const & ident,
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< hexenc<id> > & hashes);
 
   void get_revision_cert(hexenc<id> const & hash,
