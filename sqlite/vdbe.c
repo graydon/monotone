@@ -43,7 +43,7 @@
 ** in this file for details.  If in doubt, do not deviate from existing
 ** commenting and indentation practices when changing or adding code.
 **
-** $Id: vdbe.c,v 1.573 2006/08/08 13:51:43 drh Exp $
+** $Id: vdbe.c,v 1.583 2007/01/04 01:20:11 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -1812,32 +1812,31 @@ case OP_IfNot: {            /* no-push */
 
 /* Opcode: IsNull P1 P2 *
 **
-** If any of the top abs(P1) values on the stack are NULL, then jump
-** to P2.  Pop the stack P1 times if P1>0.   If P1<0 leave the stack
-** unchanged.
+** Check the top of the stack and jump to P2 if the top of the stack
+** is NULL.  If P1 is positive, then pop P1 elements from the stack
+** regardless of whether or not the jump is taken.  If P1 is negative,
+** pop -P1 elements from the stack only if the jump is taken and leave
+** the stack unchanged if the jump is not taken.
 */
 case OP_IsNull: {            /* same as TK_ISNULL, no-push */
-  int i, cnt;
-  Mem *pTerm;
-  cnt = pOp->p1;
-  if( cnt<0 ) cnt = -cnt;
-  pTerm = &pTos[1-cnt];
-  assert( pTerm>=p->aStack );
-  for(i=0; i<cnt; i++, pTerm++){
-    if( pTerm->flags & MEM_Null ){
-      pc = pOp->p2-1;
-      break;
+  if( pTos->flags & MEM_Null ){
+    pc = pOp->p2-1;
+    if( pOp->p1<0 ){
+      popStack(&pTos, -pOp->p1);
     }
   }
-  if( pOp->p1>0 ) popStack(&pTos, cnt);
+  if( pOp->p1>0 ){
+    popStack(&pTos, pOp->p1);
+  }
   break;
 }
 
 /* Opcode: NotNull P1 P2 *
 **
-** Jump to P2 if the top P1 values on the stack are all not NULL.  Pop the
-** stack if P1 times if P1 is greater than zero.  If P1 is less than
-** zero then leave the stack unchanged.
+** Jump to P2 if the top abs(P1) values on the stack are all not NULL.  
+** Regardless of whether or not the jump is taken, pop the stack
+** P1 times if P1 is greater than zero.  But if P1 is negative,
+** leave the stack unchanged.
 */
 case OP_NotNull: {            /* same as TK_NOTNULL, no-push */
   int i, cnt;
@@ -2010,7 +2009,9 @@ case OP_Column: {
         pC->aRow = 0;
       }
     }
-    assert( zRec!=0 || avail>=payloadSize || avail>=9 );
+    /* The following assert is true in all cases accept when
+    ** the database file has been corrupted externally.
+    **    assert( zRec!=0 || avail>=payloadSize || avail>=9 ); */
     szHdrSz = GetVarint((u8*)zData, offset);
 
     /* The KeyFetch() or DataFetch() above are fast and will get the entire
@@ -2980,7 +2981,7 @@ case OP_IsUnique: {        /* no-push */
   R = pTos->i;
   assert( (pTos->flags & MEM_Dyn)==0 );
   pTos--;
-  assert( i>=0 && i<=p->nCursor );
+  assert( i>=0 && i<p->nCursor );
   pCx = p->apCsr[i];
   assert( pCx!=0 );
   pCrsr = pCx->pCursor;
@@ -3081,6 +3082,9 @@ case OP_NotExists: {        /* no-push */
     pC->rowidIsValid = res==0;
     pC->nullRow = 0;
     pC->cacheStatus = CACHE_STALE;
+    /* res might be uninitialized if rc!=SQLITE_OK.  But if rc!=SQLITE_OK
+    ** processing is about to abort so we really do not care whether or not
+    ** the following jump is taken. */
     if( res!=0 ){
       pc = pOp->p2 - 1;
       pC->rowidIsValid = 0;
@@ -3852,38 +3856,6 @@ case OP_IdxGE: {        /* no-push */
   break;
 }
 
-/* Opcode: IdxIsNull P1 P2 *
-**
-** The top of the stack contains an index entry such as might be generated
-** by the MakeIdxRec opcode.  This routine looks at the first P1 fields of
-** that key.  If any of the first P1 fields are NULL, then a jump is made
-** to address P2.  Otherwise we fall straight through.
-**
-** The index entry is always popped from the stack.
-*/
-case OP_IdxIsNull: {        /* no-push */
-  int i = pOp->p1;
-  int k, n;
-  const char *z;
-  u32 serial_type;
-
-  assert( pTos>=p->aStack );
-  assert( pTos->flags & MEM_Blob );
-  z = pTos->z;
-  n = pTos->n;
-  k = sqlite3GetVarint32((u8*)z, &serial_type);
-  for(; k<n && i>0; i--){
-    k += sqlite3GetVarint32((u8*)&z[k], &serial_type);
-    if( serial_type==0 ){   /* Serial type 0 is a NULL */
-      pc = pOp->p2-1;
-      break;
-    }
-  }
-  Release(pTos);
-  pTos--;
-  break;
-}
-
 /* Opcode: Destroy P1 P2 *
 **
 ** Delete an entire database table or index whose root page in the database
@@ -4050,10 +4022,11 @@ case OP_ParseSchema: {        /* no-push */
   if( !DbHasProperty(db, iDb, DB_SchemaLoaded) ) break;
   zMaster = SCHEMA_TABLE(iDb);
   initData.db = db;
+  initData.iDb = pOp->p1;
   initData.pzErrMsg = &p->zErrMsg;
   zSql = sqlite3MPrintf(
-     "SELECT name, rootpage, sql, %d FROM '%q'.%s WHERE %s",
-     pOp->p1, db->aDb[iDb].zName, zMaster, pOp->p3);
+     "SELECT name, rootpage, sql FROM '%q'.%s WHERE %s",
+     db->aDb[iDb].zName, zMaster, pOp->p3);
   if( zSql==0 ) goto no_mem;
   sqlite3SafetyOff(db);
   assert( db->init.busy==0 );
@@ -4499,6 +4472,7 @@ case OP_AggFinal: {        /* no-push */
 }
 
 
+#ifndef SQLITE_OMIT_VACUUM
 /* Opcode: Vacuum * * *
 **
 ** Vacuum the entire database.  This opcode will cause other virtual
@@ -4511,6 +4485,7 @@ case OP_Vacuum: {        /* no-push */
   if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
   break;
 }
+#endif
 
 /* Opcode: Expire P1 * *
 **
@@ -4672,9 +4647,9 @@ case OP_VFilter: {   /* no-push */
   assert( (pTos[0].flags&MEM_Int)!=0 && pTos[-1].flags==MEM_Int );
   nArg = pTos[-1].i;
 
-  /* Invoke the xFilter method if one is defined. */
-  if( pModule->xFilter ){
-    int res;
+  /* Invoke the xFilter method */
+  {
+    int res = 0;
     int i;
     Mem **apArg = p->apArg;
     for(i = 0; i<nArg; i++){
@@ -4857,7 +4832,9 @@ case OP_VUpdate: {   /* no-push */
       apArg[i] = pX;
     }
     if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
+    sqlite3VtabLock(pVtab);
     rc = pModule->xUpdate(pVtab, nArg, apArg, &rowid);
+    sqlite3VtabUnlock(pVtab);
     if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
     if( pOp->p1 && rc==SQLITE_OK ){
       assert( nArg>1 && apArg[0] && (apArg[0]->flags&MEM_Null) );
