@@ -1,3 +1,7 @@
+2007-01-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.9.
+
 2007-01-08  Richard Levitte  <richard@levitte.org>
 
 	* debian/control (Build-Depends-Indep): Have texlive-base-bin as
