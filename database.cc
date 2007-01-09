@@ -418,7 +418,7 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   string table_name(vals[0]);
   string query = "SELECT * FROM " + table_name;
   sqlite3_stmt *stmt = 0;
-  sqlite3_prepare(dump->sql, query.c_str(), -1, &stmt, NULL);
+  sqlite3_prepare_v2(dump->sql, query.c_str(), -1, &stmt, NULL);
   assert_sqlite3_ok(dump->sql);
 
   int stepresult = SQLITE_DONE;
@@ -706,7 +706,7 @@ database::fetch(results & res,
       I(i != statement_cache.end());
 
       const char * tail;
-      sqlite3_prepare(sql(), query.sql_cmd.c_str(), -1, i->second.stmt.paddr(), &tail);
+      sqlite3_prepare_v2(sql(), query.sql_cmd.c_str(), -1, i->second.stmt.paddr(), &tail);
       assert_sqlite3_ok(sql());
       L(FL("prepared statement %s") % query.sql_cmd);
 

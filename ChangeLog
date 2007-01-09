@@ -1,5 +1,6 @@
 2007-01-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
+	* database.cc: Migrate to new sqlite3_prepare_v2 API.
 	* sqlite/*: Import SQLite 3.3.9.
 
 2007-01-08  Richard Levitte  <richard@levitte.org>
