@@ -37,7 +37,7 @@ class outdated_indicator_factory
 public:
   outdated_indicator_factory();
   ~outdated_indicator_factory();
-  outdated_indicator get_notifier();
+  outdated_indicator get_indicator();
   void note_change();
 };
 

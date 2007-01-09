@@ -2264,7 +2264,7 @@ database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
                               make_pair(revision_id((*i)[1]),
                                         rsa_keypair_id((*i)[2]))));
     }
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2274,7 +2274,7 @@ database::get_revision_certs(vector< revision<cert> > & ts)
   get_certs(certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2285,7 +2285,7 @@ database::get_revision_certs(cert_name const & name,
   get_certs(name, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2297,7 +2297,7 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), name, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2310,7 +2310,7 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), name, val, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2326,7 +2326,7 @@ database::get_revisions_with_cert(cert_name const & name,
   fetch(res, one_col, any_rows, q % text(name()) % blob(binvalue()));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     revisions.insert(revision_id((*i)[0]));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2338,7 +2338,7 @@ database::get_revision_certs(cert_name const & name,
   get_certs(name, val, certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2349,7 +2349,7 @@ database::get_revision_certs(revision_id const & id,
   get_certs(id.inner(), certs, "revision_certs");
   ts.clear();
   copy(certs.begin(), certs.end(), back_inserter(ts));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 outdated_indicator
@@ -2366,7 +2366,7 @@ database::get_revision_certs(revision_id const & ident,
   ts.clear();
   for (size_t i = 0; i < res.size(); ++i)
     ts.push_back(hexenc<id>(res[i][0]));
-  return cert_stamper.get_notifier();
+  return cert_stamper.get_indicator();
 }
 
 void
@@ -2851,7 +2851,7 @@ database::clear_var(var_key const & key)
 
 // branches
 
-void
+outdated_indicator
 database::get_branches(vector<string> & names)
 {
     results res;
@@ -2862,6 +2862,7 @@ database::get_branches(vector<string> & names)
       {
         names.push_back(res[i][0]);
       }
+    return cert_stamper.get_indicator();
 }
 
 void

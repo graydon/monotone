@@ -81,10 +81,8 @@ public:
 
   void make_branch_sticky();
 
-private:
-  std::map<utf8, branch> branch_map;
-public:
-  branch & get_branch(utf8 const & name);
+
+  branch_list branches;
 
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);

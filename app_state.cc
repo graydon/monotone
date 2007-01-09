@@ -40,7 +40,8 @@ app_state::app_state()
     keys(this), work(db, lua),
 //    search_root(current_root_path()),
 //    diff_format(unified_diff),
-    branch_is_sticky(false)
+    branch_is_sticky(false),
+    branches(*this)
 {
   db.set_app(this);
   lua.set_app(this);
@@ -191,14 +192,6 @@ app_state::make_branch_sticky()
       // write_options when it finds one.
       write_options();
     }
-}
-
-branch &
-app_state::get_branch(utf8 const & name)
-{
-  std::pair<std::map<utf8, branch>::iterator, bool> res;
-  res = branch_map.insert(std::make_pair(name, branch(*this, name)));
-  return res.first->second;
 }
 
 void
