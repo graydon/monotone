@@ -1,3 +1,18 @@
+2007-01-09  Zack Weinberg  <zackw@panix.com>
+
+	* transforms.hh (xform): Make the generic template produce a
+	compile error if instantiated.  Use standard declarations of
+	partial specializations for the usable cases of xform, not the g++
+	"extern template" extension.
+	* transforms.cc (xform): Rewrite with a helper template and a
+	bunch of explicit partial specializations.  Put Base64_Decoder and
+	Hex_Decoder into IGNORE_WS mode (i.e. garbage in their input will
+	now give an error)
+
+	* botan/base64.cpp (Base64_Decoder::handle_bad_char): Always
+	ignore equals signs; correct generation of diagnostic message.
+	Patches from upstream Botan.
+
 2007-01-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.cc: Migrate to new sqlite3_prepare_v2 API.
@@ -11,7 +26,7 @@
 
 2007-01-06  Thomas Keller  <me@thomaskeller.biz>
 
-	* cmd_automate.cc: automate stdio now opens the database 
+	* cmd_automate.cc: automate stdio now opens the database
 	before any command is triggered, this ensures that it early
 	checks for a correct database version
 
