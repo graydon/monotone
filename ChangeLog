@@ -1,3 +1,7 @@
+2007-01-10  Thomas Keller  <me@thomaskeller.biz>
+
+	* po/POTFILES.in: another missing candidate: selectors.cc
+
 2007-01-09  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* database.cc: Migrate to new sqlite3_prepare_v2 API.
