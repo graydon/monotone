@@ -40,7 +40,8 @@ app_state::app_state()
     keys(this), work(db, lua),
 //    search_root(current_root_path()),
 //    diff_format(unified_diff),
-    branch_is_sticky(false)
+    branch_is_sticky(false),
+    project(*this)
 {
   db.set_app(this);
   lua.set_app(this);

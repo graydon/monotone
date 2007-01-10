@@ -89,10 +89,6 @@ cert_revision_in_branch(revision_id const & ctx,
                         app_state & app,
                         packet_consumer & pc);
 
-void
-get_branch_heads(cert_value const & branchname,
-                 app_state & app,
-                 std::set<revision_id> & heads);
 
 // We also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling

@@ -71,7 +71,7 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
     app.opts.branch_name = idx(args, 0);
   }
   set<revision_id> heads;
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.project.get_branch(app.opts.branch_name()).heads(heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << "\n";
 }
@@ -1255,15 +1255,16 @@ AUTOMATE(branches, "", options::opts::none)
   N(args.size() == 0,
     F("no arguments needed"));
 
-  vector<string> names;
+  set<utf8> names;
 
-  app.db.get_branches(names);
-  sort(names.begin(), names.end());
+  app.project.get_branch_list(names);
 
-  for (vector<string>::const_iterator i = names.begin();
+  for (set<utf8>::const_iterator i = names.begin();
        i != names.end(); ++i)
-    if (!app.lua.hook_ignore_branch(*i))
-      output << (*i) << "\n";
+    {
+      if (!app.lua.hook_ignore_branch((*i)()))
+        output << (*i) << "\n";
+    }
 }
 
 // Name: tags

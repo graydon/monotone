@@ -24,6 +24,7 @@ class lua_hooks;
 #include "lua_hooks.hh"
 #include "options.hh"
 #include "paths.hh"
+#include "project.hh"
 #include "vocab.hh"
 #include "work.hh"
 
@@ -79,6 +80,9 @@ public:
   // function updates the workspace).
 
   void make_branch_sticky();
+
+
+  project_t project;
 
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);
