@@ -502,7 +502,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.branches.get(app.opts.branch_name).heads(heads);
+      app.project.get_branch(app.opts.branch_name).heads(heads);
       N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branch_name);
       if (heads.size() > 1)
@@ -758,7 +758,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   I(restricted_rev.edges.size() == 1);
 
   set<revision_id> heads;
-  app.branches.get(app.opts.branch_name).heads(heads);
+  app.project.get_branch(app.opts.branch_name).heads(heads);
   unsigned int old_head_size = heads.size();
 
   if (app.opts.branch_name() != "")
@@ -931,7 +931,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.blank_user_log();
 
-  app.branches.get(app.opts.branch_name).heads(heads);
+  app.project.get_branch(app.opts.branch_name).heads(heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
@@ -1036,7 +1036,7 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.branches.get(app.opts.branch_name).heads(heads);
+      app.project.get_branch(app.opts.branch_name).heads(heads);
       if (heads.size() > 1)
         {
           P(F("branch %s has multiple heads:") % app.opts.branch_name);

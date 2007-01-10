@@ -2592,31 +2592,24 @@ void database::complete(selector_type ty,
           else if (i->first == selectors::sel_head)
             {
               // get branch names
-              vector<cert_value> branch_names;
+              set<utf8> branch_names;
               if (i->second.size() == 0)
                 {
                   __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.push_back((__app->opts.branch_name)());
+                  branch_names.insert(__app->opts.branch_name);
                 }
               else
                 {
-                  query subquery("SELECT DISTINCT value FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?");
-                  subquery % text(branch_cert_name) % text(i->second);
-                  results res;
-                  fetch(res, one_col, any_rows, subquery);
-                  for (size_t i = 0; i < res.size(); ++i)
-                    {
-                      data row_decoded(res[i][0]);
-                      branch_names.push_back(row_decoded());
-                    }
+                  __app->project.get_branch_list(i->second, branch_names);
                 }
 
               // for each branch name, get the branch heads
               set<revision_id> heads;
-              for (vector<cert_value>::const_iterator bn = branch_names.begin(); bn != branch_names.end(); bn++)
+              for (set<utf8>::const_iterator bn = branch_names.begin();
+                   bn != branch_names.end(); bn++)
                 {
                   set<revision_id> branch_heads;
-                  get_branch_heads(*bn, *__app, branch_heads);
+                  __app->project.get_branch(*bn).heads(branch_heads);
                   heads.insert(branch_heads.begin(), branch_heads.end());
                   L(FL("after get_branch_heads for %s, heads has %d entries") % (*bn) % heads.size());
                 }
@@ -2858,6 +2851,21 @@ database::get_branches(vector<string> & names)
     query q("SELECT DISTINCT value FROM revision_certs WHERE name = ?");
     string cert_name = "branch";
     fetch(res, one_col, any_rows, q % text(cert_name));
+    for (size_t i = 0; i < res.size(); ++i)
+      {
+        names.push_back(res[i][0]);
+      }
+    return cert_stamper.get_indicator();
+}
+
+outdated_indicator
+database::get_branches(string const & glob,
+                       vector<string> & names)
+{
+    results res;
+    query q("SELECT DISTINCT value FROM revision_certs WHERE name = ? AND CAST(value AS TEXT) glob ?");
+    string cert_name = "branch";
+    fetch(res, one_col, any_rows, q % text(cert_name) % text(glob));
     for (size_t i = 0; i < res.size(); ++i)
       {
         names.push_back(res[i][0]);

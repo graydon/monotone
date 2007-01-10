@@ -19,12 +19,12 @@ class lua_hooks;
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "branch.hh"
 #include "database.hh"
 #include "key_store.hh"
 #include "lua_hooks.hh"
 #include "options.hh"
 #include "paths.hh"
+#include "project.hh"
 #include "vocab.hh"
 #include "work.hh"
 
@@ -82,7 +82,7 @@ public:
   void make_branch_sticky();
 
 
-  branch_list branches;
+  project_t project;
 
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);

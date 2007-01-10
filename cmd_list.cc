@@ -240,14 +240,17 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     throw usage(name);
   combine_and_check_globish(app.opts.exclude_patterns, exc);
   globish_matcher match(inc, exc);
-  vector<string> names;
-  app.db.get_branches(names);
+  set<utf8> names;
+  app.project.get_branch_list(names);
 
-  sort(names.begin(), names.end());
-  for (size_t i = 0; i < names.size(); ++i)
-    if (match(idx(names, i))
-        && !app.lua.hook_ignore_branch(idx(names, i)))
-      cout << idx(names, i) << "\n";
+  for (set<utf8>::const_iterator i = names.begin();
+       i != names.end(); ++i)
+    {
+      if (match((*i)()) && !app.lua.hook_ignore_branch((*i)()))
+        {
+          cout << *i << "\n";
+        }
+    }
 }
 
 static void

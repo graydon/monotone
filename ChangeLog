@@ -1,3 +1,10 @@
+2007-01-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rename branch.* to project.* .
+	Have places that used get_branches() now go through this code.
+	The general idea here is to prepare for having actual projects,
+	with policy branches and whatnot.
+
 2007-01-09  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	* outdated_indicator.{cc,hh}: Allows code that caches replys to

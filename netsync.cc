@@ -1268,13 +1268,6 @@ session::process_error_cmd(string const & errmsg)
   throw bad_decode(F("received network error: %s") % errmsg);
 }
 
-void
-get_branches(app_state & app, vector<string> & names)
-{
-  app.db.get_branches(names);
-  sort(names.begin(), names.end());
-}
-
 static const var_domain known_servers_domain = var_domain("known-servers");
 
 bool
@@ -1343,7 +1336,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   // clients always include in the synchronization set, every branch that the
   // user requested
   set<utf8> all_branches, ok_branches;
-  app.branches.list_all(all_branches);
+  app.project.get_branch_list(all_branches);
   for (set<utf8>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
     {
@@ -1436,7 +1429,7 @@ session::process_anonymous_cmd(protocol_role their_role,
     }
 
   set<utf8> all_branches, ok_branches;
-  app.branches.list_all(all_branches);
+  app.project.get_branch_list(all_branches);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
   for (set<utf8>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
@@ -1569,7 +1562,7 @@ session::process_auth_cmd(protocol_role their_role,
     }
 
   set<utf8> all_branches, ok_branches;
-  app.branches.list_all(all_branches);
+  app.project.get_branch_list(all_branches);
   for (set<utf8>::const_iterator i = all_branches.begin();
        i != all_branches.end(); i++)
     {

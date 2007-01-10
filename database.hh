@@ -531,6 +531,8 @@ private:
 public:
     // branches
   outdated_indicator get_branches(std::vector<std::string> & names);
+  outdated_indicator get_branches(std::string const & glob,
+                                  std::vector<std::string> & names);
 
   bool check_integrity();
 
