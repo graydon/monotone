@@ -1,8 +1,8 @@
 // 2007 Timothy Brownawell <tbrownaw@gmail.com>
 // GNU GPL V2 or later
 
-#ifndef __BRANCH_HH__
-#define __BRANCH_HH__
+#ifndef __PROJECT_HH__
+#define __PROJECT_HH__
 
 #include <map>
 #include <set>
@@ -12,18 +12,6 @@
 #include "vocab.hh"
 
 class app_state;
-
-class branch
-{
-  app_state & app;
-  utf8 name;
-  outdated_indicator stamp;
-  std::set<revision_id> _heads;
-public:
-  branch(app_state & app, utf8 const & name);
-
-  void heads(std::set<revision_id> & h);
-};
 
 class tag_t
 {
@@ -38,8 +26,8 @@ bool operator < (tag_t const & a, tag_t const & b);
 class project_t
 {
   app_state & app;
-  std::map<utf8, branch> known_branches;
-  std::set<utf8> actual_branches;
+  std::map<utf8, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
+  std::set<utf8> branches;
   outdated_indicator indicator;
 
 public:
@@ -47,7 +35,7 @@ public:
 
   void get_branch_list(std::set<utf8> & names);
   void get_branch_list(utf8 const & glob, std::set<utf8> & names);
-  branch & get_branch(utf8 const & name);
+  void get_branch_heads(utf8 const & name, std::set<revision_id> & heads);
 
   outdated_indicator get_tags(std::set<tag_t> & tags);
 

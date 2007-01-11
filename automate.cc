@@ -71,7 +71,7 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
     app.opts.branch_name = idx(args, 0);
   }
   set<revision_id> heads;
-  app.project.get_branch(app.opts.branch_name()).heads(heads);
+  app.project.get_branch_heads(app.opts.branch_name(), heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << "\n";
 }

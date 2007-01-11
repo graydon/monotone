@@ -460,7 +460,7 @@ void
 notify_if_multiple_heads(app_state & app)
 {
   set<revision_id> heads;
-  app.project.get_branch(app.opts.branch_name).heads(heads);
+  app.project.get_branch_heads(app.opts.branch_name, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
