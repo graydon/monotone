@@ -55,8 +55,7 @@ get_test_results_for_revision(revision_id const & id,
                               app_state & app)
 {
   vector< revision<cert> > certs;
-  app.db.get_revision_certs(id, testresult_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  app.project.get_revision_certs_by_name(id, testresult_cert_name, certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -84,12 +83,7 @@ acceptable_descendent(cert_value const & branch,
   L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
-  base64<cert_value> val;
-  encode_base64(branch, val);
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(target, branch_cert_name, val, certs);
-  erase_bogus_certs(certs, app);
-  if (certs.empty())
+  if (!app.project.revision_is_in_branch(target, branch()))
     {
       L(FL("%s not in branch %s") % target % branch);
       return false;

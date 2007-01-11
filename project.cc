@@ -113,3 +113,118 @@ project_t::get_branch(utf8 const & name)
   res = known_branches.insert(std::make_pair(name, branch(app, name)));
   return res.first->second;
 }
+
+bool
+project_t::revision_is_in_branch(revision_id const & id,
+				 utf8 const & branch)
+{
+  base64<cert_value> branch_encoded;
+  encode_base64(cert_value(branch()), branch_encoded);
+
+  vector<revision<cert> > certs;
+  app.db.get_revision_certs(id, branch_cert_name, branch_encoded, certs);
+
+  int num = certs.size();
+
+  erase_bogus_certs(certs, app);
+
+  L(FL("found %d (%d valid) %s branch certs on revision %s")
+    % num
+    % certs.size()
+    % branch
+    % id);
+
+  return !certs.empty();
+}
+
+outdated_indicator
+project_t::get_revision_cert_hashes(revision_id const & id,
+                                    std::vector<hexenc<id> > & hashes)
+{
+  return app.db.get_revision_certs(id, hashes);
+}
+
+outdated_indicator
+project_t::get_revision_certs(revision_id const & id,
+			      std::vector<revision<cert> > & certs)
+{
+  return app.db.get_revision_certs(id, certs);
+}
+
+outdated_indicator
+project_t::get_revision_certs_by_name(revision_id const & id,
+				      cert_name const & name,
+				      std::vector<revision<cert> > & certs)
+{
+  outdated_indicator i = app.db.get_revision_certs(id, name, certs);
+  erase_bogus_certs(certs, app);
+  return i;
+}
+
+outdated_indicator
+project_t::get_revision_branches(revision_id const & id,
+				 std::set<utf8> & branches)
+{
+  std::vector<revision<cert> > certs;
+  outdated_indicator i = get_revision_certs_by_name(id, branch_cert_name, certs);
+  branches.clear();
+  for (std::vector<revision<cert> >::const_iterator i = certs.begin();
+       i != certs.end(); ++i)
+    {
+      cert_value b;
+      decode_base64(i->inner().value, b);
+      branches.insert(utf8(b()));
+    }
+  return i;
+}
+
+outdated_indicator
+project_t::get_branch_certs(utf8 const & branch,
+			    std::vector<revision<cert> > & certs)
+{
+  base64<cert_value> branch_encoded;
+  encode_base64(cert_value(branch()), branch_encoded);
+
+  return app.db.get_revision_certs(branch_cert_name, branch_encoded, certs);
+}
+
+tag_t::tag_t(revision_id const & ident,
+	     utf8 const & name,
+	     rsa_keypair_id const & key)
+  : ident(ident), name(name), key(key)
+{}
+
+bool
+operator < (tag_t const & a, tag_t const & b)
+{
+  if (a.name < b.name)
+    return true;
+  else if (a.name == b.name)
+    {
+      if (a.ident < b.ident)
+	return true;
+      else if (a.ident == b.ident)
+	{
+	  if (a.key < b.key)
+	    return true;
+	}
+    }
+  return false;
+}
+
+outdated_indicator
+project_t::get_tags(set<tag_t> & tags)
+{
+  std::vector<revision<cert> > certs;
+  outdated_indicator i = app.db.get_revision_certs(tag_cert_name, certs);
+  erase_bogus_certs(certs, app);
+  tags.clear();
+  for (std::vector<revision<cert> >::const_iterator i = certs.begin();
+       i != certs.end(); ++i)
+    {
+      cert_value value;
+      decode_base64(i->inner().value, value);
+      tags.insert(tag_t(i->inner().ident, value(), i->inner().key));
+    }
+  return i;
+}

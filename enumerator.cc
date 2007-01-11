@@ -202,7 +202,7 @@ revision_enumerator::get_revision_certs(revision_id const & rid,
     }
   if (!found_one)
     {
-      app.db.get_revision_certs(rid, hashes);
+      app.project.get_revision_cert_hashes(rid, hashes);
     }
 }
 

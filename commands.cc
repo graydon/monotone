@@ -368,8 +368,7 @@ describe_revision(app_state & app,
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;
-  app.db.get_revision_certs(id, author_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.project.get_revision_certs_by_name(id, author_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -378,8 +377,7 @@ describe_revision(app_state & app,
       description += " ";
       description += tv();
     }
-  app.db.get_revision_certs(id, date_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.project.get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {

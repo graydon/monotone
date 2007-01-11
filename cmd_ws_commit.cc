@@ -526,19 +526,9 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
       guess_branch(ident, app, b);
 
       I(!app.opts.branch_name().empty());
-      cert_value branch_name(app.opts.branch_name());
-      base64<cert_value> branch_encoded;
-      encode_base64(branch_name, branch_encoded);
 
-      vector< revision<cert> > certs;
-      app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
-
-      L(FL("found %d %s branch certs on revision %s")
-        % certs.size()
-        % app.opts.branch_name
-        % ident);
-
-      N(certs.size() != 0, F("revision %s is not a member of branch %s")
+      N(app.project.revision_is_in_branch(ident, app.opts.branch_name),
+        F("revision %s is not a member of branch %s")
         % ident % app.opts.branch_name);
     }
 
@@ -949,7 +939,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     // later.
     map<cert_name, cert_value> certs;
     vector< revision<cert> > ctmp;
-    app.db.get_revision_certs(restricted_rev_id, ctmp);
+    app.project.get_revision_certs(restricted_rev_id, ctmp);
     for (vector< revision<cert> >::const_iterator i = ctmp.begin();
          i != ctmp.end(); ++i)
       {
@@ -1014,19 +1004,9 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       guess_branch(ident, app, b);
 
       I(!app.opts.branch_name().empty());
-      cert_value branch_name(app.opts.branch_name());
-      base64<cert_value> branch_encoded;
-      encode_base64(branch_name, branch_encoded);
 
-      vector< revision<cert> > certs;
-      app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
-
-      L(FL("found %d %s branch certs on revision %s")
-        % certs.size()
-        % app.opts.branch_name
-        % ident);
-
-      N(certs.size() != 0, F("revision %s is not a member of branch %s")
+      N(app.project.revision_is_in_branch(ident, app.opts.branch_name),
+        F("revision %s is not a member of branch %s")
         % ident % app.opts.branch_name);
     }
   else

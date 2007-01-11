@@ -149,18 +149,8 @@ CMD(update, N_("workspace"), "",
   bool switched_branch = false;
   {
     // figure out which branches the target is in
-    vector< revision<cert> > certs;
-    app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
-    erase_bogus_certs(certs, app);
-
     set< utf8 > branches;
-    for (vector< revision<cert> >::const_iterator i = certs.begin();
-         i != certs.end(); i++)
-      {
-        cert_value b;
-        decode_base64(i->inner().value, b);
-        branches.insert(utf8(b()));
-      }
+    app.project.get_revision_branches(chosen_rid, branches);
 
     if (branches.find(app.opts.branch_name) != branches.end())
       {

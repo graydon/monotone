@@ -485,21 +485,21 @@ guess_branch(revision_id const & ident,
         F("no branch found for empty revision, "
           "please provide a branch name"));
 
-      vector< revision<cert> > certs;
-      cert_name branch(branch_cert_name);
-      app.db.get_revision_certs(ident, branch, certs);
-      erase_bogus_certs(certs, app);
+      set<utf8> branches;
+      app.project.get_revision_branches(ident, branches);
 
-      N(certs.size() != 0,
+      N(branches.size() != 0,
         F("no branch certs found for revision %s, "
           "please provide a branch name") % ident);
 
-      N(certs.size() == 1,
+      N(branches.size() == 1,
         F("multiple branch certs found for revision %s, "
           "please provide a branch name") % ident);
 
-      decode_base64(certs[0].inner().value, branchname);
-      app.opts.branch_name = branchname();
+      set<utf8>::iterator i = branches.begin();
+      I(i != branches.end());
+      app.opts.branch_name = *i;
+      branchname = (*i)();
     }
 }
 

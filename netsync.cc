@@ -3065,9 +3065,10 @@ session::rebuild_merkle_trees(app_state & app,
       {
         // Get branch certs.
         vector< revision<cert> > certs;
-        base64<cert_value> encoded_name;
-        encode_base64(cert_value((*i)()),encoded_name);
-        app.db.get_revision_certs(branch_cert_name, encoded_name, certs);
+        // FIXME_PROJECTS: probably something like
+        // app.get_project(i->project).get_branch_certs(i->branch)
+        // or so.
+        app.project.get_branch_certs(*i, certs);
         for (vector< revision<cert> >::const_iterator j = certs.begin();
              j != certs.end(); j++)
           {
