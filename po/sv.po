@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-10 16:22+0100\n"
-"PO-Revision-Date: 2007-01-10 16:25+0100\n"
+"POT-Creation-Date: 2007-01-12 21:55+0100\n"
+"PO-Revision-Date: 2007-01-12 21:59+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2210,26 +2210,12 @@ msgstr "småproblem funna"
 msgid "database is good"
 msgstr "databasen är i gott skick"
 
-#: database.cc:159
-#, c-format
-msgid ""
-"layout of database %s doesn't match this version of monotone\n"
-"wanted schema %s, got %s\n"
-"try '%s db migrate' to upgrade\n"
-"(this is irreversible; you may want to make a backup copy first)"
-msgstr ""
-"strukturen i databasen %s matchar inte denna version av monotone\n"
-"förväntade schemat %s, fann %s\n"
-"prova '%s db migrate' för att uppgradera databasen\n"
-"(detta går inte att ångra; du vill nog ta en säkerhetskopia av\n"
-"databasen först)"
-
-#: database.cc:173
+#: database.cc:154
 #, c-format
 msgid "this database already contains rosters"
 msgstr "den här databasen har redan listor"
 
-#: database.cc:200
+#: database.cc:181
 #, c-format
 msgid ""
 "database %s contains old-style revisions\n"
@@ -2248,7 +2234,7 @@ msgstr ""
 "  sedan databasen på nytt.\n"
 "ursäkta besväret."
 
-#: database.cc:210
+#: database.cc:191
 #, c-format
 msgid ""
 "database %s contains manifests but no revisions\n"
@@ -2259,7 +2245,7 @@ msgstr ""
 "detta är en väldigt gammal databas; den behöver uppgraderas\n"
 "var god läs README.changesets för detaljer"
 
-#: database.cc:221
+#: database.cc:202
 #, c-format
 msgid ""
 "database %s misses some cached data\n"
@@ -2268,19 +2254,19 @@ msgstr ""
 "databasen %s saknar cache-data\n"
 "kör '%s db regenerate_caches' för att göra databasen användbar igen"
 
-#: database.cc:259
+#: database.cc:240
 #, c-format
 msgid "unable to probe database version in file %s"
 msgstr "kunde inte hitta någon databasversion i filen %s"
 
-#: database.cc:266
+#: database.cc:247
 #, c-format
 msgid "database %s is not an sqlite version 3 file, try dump and reload"
 msgstr ""
 "databasen %s är inte skapad med SQLite version 3; testa att dumpa\n"
 "och ladda på nytt"
 
-#: database.cc:293 schema_migration.cc:201
+#: database.cc:274 schema_migration.cc:189
 msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
@@ -2289,7 +2275,7 @@ msgstr ""
 "den ligger i samt att det finns tillräckligt med ledigt utrymme\n"
 "på disken"
 
-#: database.cc:297 schema_migration.cc:206
+#: database.cc:278 schema_migration.cc:194
 #, c-format
 msgid ""
 "sqlite error: %s\n"
@@ -2298,12 +2284,12 @@ msgstr ""
 "sqlite-fel: %s\n"
 "%s"
 
-#: database.cc:342
+#: database.cc:323
 #, c-format
 msgid "could not initialize database: %s: already exists"
 msgstr "kunde inte initiera databasen: %s: den finns redan"
 
-#: database.cc:347
+#: database.cc:328
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2314,12 +2300,12 @@ msgstr ""
 "databasen '%s'\n"
 "avbryter skapandet av databasen"
 
-#: database.cc:497
+#: database.cc:478
 #, c-format
 msgid "cannot create %s; it already exists"
 msgstr "kan inte skapa %s; den finns redan"
 
-#: database.cc:573
+#: database.cc:554
 #, c-format
 msgid ""
 "schema version    : %s\n"
@@ -2370,52 +2356,52 @@ msgstr ""
 "  sidstorlek          : %u\n"
 "  cachestorlek        : %u"
 
-#: database.cc:638
+#: database.cc:619
 #, c-format
 msgid "database schema version: %s"
 msgstr "databasens schemaversion: %s"
 
-#: database.cc:715
+#: database.cc:696
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "multipla kommandon i databasfråga: %s"
 
-#: database.cc:721
+#: database.cc:702
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "ville ha %d kolumner, fick %d i databasfråga: %s"
 
-#: database.cc:787
+#: database.cc:768
 #, c-format
 msgid "null result in query: %s"
 msgstr "inget resultat med databasfråga: %s"
 
-#: database.cc:805
+#: database.cc:786
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "ville ha %d rader, fick %d i databasfråga: %s"
 
-#: database.cc:2042
+#: database.cc:2023
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "det finns redan en annan nyckel med namnet '%s'"
 
-#: database.cc:3040
+#: database.cc:3021
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:3048
+#: database.cc:3029
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:3049
+#: database.cc:3030
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:3074
+#: database.cc:3055
 #, c-format
 msgid "could not open database '%s': %s"
 msgstr "kunde inte öppna databasen '%s': %s"
@@ -3702,52 +3688,98 @@ msgstr "väljaren '%s' är inte en korrekt datumangivelse (%s)"
 msgid "expanded date '%s' -> '%s'\n"
 msgstr "expanderade datumangivelsen '%s' -> '%s'\n"
 
-#: schema_migration.cc:258
+#: schema_migration.cc:770
 #, c-format
-msgid "calculating necessary migration steps"
-msgstr "beräknar antalet nödvändiga steg för migrering"
+msgid "public and private keys for %s don't match"
+msgstr "publik och privat nyckel för %s stämmer inte överens"
 
-#: schema_migration.cc:270
+#: schema_migration.cc:773
 #, c-format
-msgid "error at transaction BEGIN statement"
-msgstr "fel vid transaktionens början (kommandot BEGIN)"
+msgid "moving key '%s' from database to %s"
+msgstr "flyttar nyckeln '%s' från databasen till %s"
 
-#: schema_migration.cc:271
+#: schema_migration.cc:1116
+#, c-format
+msgid ""
+"cannot use the empty sqlite database %s\n"
+"(monotone databases must be created with '%s db init')"
+msgstr ""
+"kan inte använda den tomma databasen %s\n"
+"(monotonedatabaser måste skapar med '%s db init')"
+
+#: schema_migration.cc:1135
+#, c-format
+msgid ""
+"%s does not appear to be a monotone database\n"
+"(schema %s, core tables missing)"
+msgstr ""
+"%s ser inte ut som en monotonedatabase\n"
+"(schema %s, centrala tabeller saknas)"
+
+#: schema_migration.cc:1140
+#, c-format
+msgid ""
+"%s appears to be a monotone database, but this version of\n"
+"monotone does not recognize its schema (%s).\n"
+"you probably need a newer version of monotone."
+msgstr ""
+"%s ser ut som en monotonedatabas, men den här monotoneversionen\n"
+"känner inte igen dess schema (%s).\n"
+"du behöver antagligen en nyare monotoneversion."
+
+#: schema_migration.cc:1163
+#, c-format
+msgid ""
+"database %s is laid out according to an old schema, %s\n"
+"try '%s db migrate' to upgrade\n"
+"(this is irreversible; you may want to make a backup copy first)"
+msgstr ""
+"strukturen i databasen %s är enligt ett äldre schema, %s\n"
+"prova '%s db migrate' för att uppgradera databasen\n"
+"(detta går inte att ångra; du vill nog ta en säkerhetskopia av\n"
+"databasen först)"
+
+#: schema_migration.cc:1179
+#, c-format
+msgid "calculating migration for schema %s"
+msgstr "beräknar antalet nödvändiga steg för migrering till schema %s"
+
+#: schema_migration.cc:1192
+#, c-format
+msgid "no migration performed; database schema already up-to-date"
+msgstr "migreringen genomfördes inte; databasschemat redan uppdaterat"
+
+#: schema_migration.cc:1197
 #, c-format
 msgid "migrating data"
 msgstr "migrerar data"
 
-#: schema_migration.cc:297
+#: schema_migration.cc:1200
+#, c-format
+msgid "error at transaction BEGIN statement"
+msgstr "fel vid transaktionens början (kommandot BEGIN)"
+
+#: schema_migration.cc:1220
 #, c-format
 msgid "migration step failed: %s"
 msgstr "migreringssteg misslyckades: %s"
 
-#: schema_migration.cc:311
-#, c-format
-msgid "mismatched result of migration, got %s, wanted %s"
-msgstr "resultatet av migreringen stämde inte, fick %s, ville ha %s"
-
-#: schema_migration.cc:314
+#: schema_migration.cc:1232
 #, c-format
 msgid "committing changes to database"
 msgstr "arkiverar ändringar i databasen"
 
-#: schema_migration.cc:316
+#: schema_migration.cc:1234
 #, c-format
 msgid "failure on COMMIT"
 msgstr "databaskommandot COMMIT misslyckades"
 
-#: schema_migration.cc:318
+#: schema_migration.cc:1236
 #, c-format
 msgid "optimizing database"
 msgstr "optimerar databasen"
 
-#: schema_migration.cc:320
-#, c-format
-msgid "error vacuuming after migration"
-msgstr "fel vid dammsugning av databasen efter migreringen"
-
-#: schema_migration.cc:329
+#: schema_migration.cc:1246
 #, c-format
 msgid ""
 "NOTE: because this database was last used by a rather old version\n"
@@ -3758,7 +3790,7 @@ msgstr ""
 "monotone-version så är du inte klar än. Om du är projektledaren\n"
 "bör du titta i filen UPGRADE för instruktion om '%s db %s'"
 
-#: schema_migration.cc:336
+#: schema_migration.cc:1253
 #, c-format
 msgid ""
 "NOTE: this upgrade cleared monotone's caches\n"
@@ -3766,26 +3798,6 @@ msgid ""
 msgstr ""
 "OBS: den här uppgraderingen raderade monotones cachar\n"
 "nu bör du göra '%s db regenerate_caches'"
-
-#: schema_migration.cc:349
-#, c-format
-msgid "database schema %s is unknown; cannot perform migration"
-msgstr "databasschemat %s är okänt; kan inte genomföra migreringen"
-
-#: schema_migration.cc:354
-#, c-format
-msgid "no migration performed; database schema already up-to-date at %s"
-msgstr "migreringen genomfördes inte; databasschemat redan uppdaterat till %s"
-
-#: schema_migration.cc:913
-#, c-format
-msgid "public and private keys for %s don't match"
-msgstr "publik och privat nyckel för %s stämmer inte överens"
-
-#: schema_migration.cc:916
-#, c-format
-msgid "moving key '%s' from database to %s"
-msgstr "flyttar nyckeln '%s' från databasen till %s"
 
 #: std_hooks.lua:39
 msgid "Press enter"
@@ -4217,6 +4229,15 @@ msgstr "arbetskopian är korrupt: %s finns men är inte en vanlig fil"
 #, c-format
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
+
+#~ msgid "mismatched result of migration, got %s, wanted %s"
+#~ msgstr "resultatet av migreringen stämde inte, fick %s, ville ha %s"
+
+#~ msgid "error vacuuming after migration"
+#~ msgstr "fel vid dammsugning av databasen efter migreringen"
+
+#~ msgid "database schema %s is unknown; cannot perform migration"
+#~ msgstr "databasschemat %s är okänt; kan inte genomföra migreringen"
 
 #~ msgid "missing %s"
 #~ msgstr "saknar %s"
