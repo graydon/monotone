@@ -1,4 +1,4 @@
-2007-01-09  Zack Weinberg  <zackw@panix.com>
+2007-01-12  Zack Weinberg  <zackw@panix.com>
 
 	* tests/db_migrate_on_bad_schema: Rename to schema_migration_bad_schema.
 	Rewrite to test for specific error messages corresponding to the
@@ -38,6 +38,10 @@
 	* botan/base64.cpp (Base64_Decoder::handle_bad_char): Always
 	ignore equals signs; correct generation of diagnostic message.
 	Patches from upstream Botan.
+
+2007-01-10  Thomas Keller  <me@thomaskeller.biz>
+
+	* po/POTFILES.in: another missing candidate: selectors.cc
 
 2007-01-09  Matthew Gregan  <kinetik@orcon.net.nz>
 

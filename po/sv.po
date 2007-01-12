@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-06 11:35+0100\n"
-"PO-Revision-Date: 2007-01-06 12:32+0100\n"
+"POT-Creation-Date: 2007-01-10 16:22+0100\n"
+"PO-Revision-Date: 2007-01-10 16:25+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -410,16 +410,16 @@ msgstr "felaktigt indata till automate stdio: '%c' är ett okänt nyckelord"
 msgid "Bad input to automate stdio: expected '%c' token"
 msgstr "Felaktigt indata till automate stdio: nyckelordet '%c' förväntat"
 
-#: cmd_automate.cc:344
+#: cmd_automate.cc:348
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
 msgstr "Felaktigt indata till automate stdio: saknar kommandonamn"
 
-#: cmd_automate.cc:373
+#: cmd_automate.cc:377
 msgid "automation"
 msgstr "automatisering"
 
-#: cmd_automate.cc:374
+#: cmd_automate.cc:378
 msgid "automation interface"
 msgstr "automatiseringsgränssnitt"
 
@@ -3676,6 +3676,31 @@ msgstr "%s:%d; index '%s' = %d blev större än vektorn '%s' med storlek %d"
 #, c-format
 msgid "Current work set: %i items"
 msgstr "Nuvarande arbetsmängd: %i delar"
+
+#: selectors.cc:43
+#, c-format
+msgid "expanded selector '%s' -> '%s'"
+msgstr "expanderar valet '%s' -> '%s'"
+
+#: selectors.cc:80
+#, c-format
+msgid "unknown selector type: %c"
+msgstr "okänd väljartyp: %c"
+
+#: selectors.cc:89
+#, c-format
+msgid "selector '%s' is not a valid date\n"
+msgstr "väljaren '%s' är inte en korrekt datumangivelse\n"
+
+#: selectors.cc:95
+#, c-format
+msgid "selector '%s' is not a valid date (%s)"
+msgstr "väljaren '%s' är inte en korrekt datumangivelse (%s)"
+
+#: selectors.cc:98
+#, c-format
+msgid "expanded date '%s' -> '%s'\n"
+msgstr "expanderade datumangivelsen '%s' -> '%s'\n"
 
 #: schema_migration.cc:258
 #, c-format

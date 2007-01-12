@@ -33,8 +33,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-05 12:01+0100\n"
-"PO-Revision-Date: 2007-01-05 12:07+0100\n"
+"POT-Creation-Date: 2007-01-10 14:49+0100\n"
+"PO-Revision-Date: 2007-01-10 14:58+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -354,16 +354,16 @@ msgstr "Falsche Eingabe für 'automate stdio': unbekanntes Startzeichen '%c'."
 msgid "Bad input to automate stdio: expected '%c' token"
 msgstr "Falsche Eingabe für 'automate stdio': erwartete Zeichen '%c'."
 
-#: cmd_automate.cc:344
+#: cmd_automate.cc:348
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
 msgstr "Falsche Eingabe für 'automate stdio': Kommandoname fehlt."
 
-#: cmd_automate.cc:373
+#: cmd_automate.cc:377
 msgid "automation"
 msgstr "Automatisierung"
 
-#: cmd_automate.cc:374
+#: cmd_automate.cc:378
 msgid "automation interface"
 msgstr "Schnittstelle für die Automatisierung"
 
@@ -1768,8 +1768,7 @@ msgid ""
 msgstr ""
 "_MTN/log ist nicht leer und ein Kommentar wurde über die Kommandozeile spezifiziert.\n"
 "Verschieben oder löschen Sie _MTN/log oder\n"
-"entfernen Sie den '--message'-/'--message-file'-Parameter aus der "
-"Kommandozeile."
+"entfernen Sie den '--message'-/'--message-file'-Parameter aus der Kommandozeile."
 
 #: cmd_ws_commit.cc:799
 #, c-format
@@ -1930,7 +1929,7 @@ msgid "markings"
 msgstr "Kennzeichen"
 
 #: database_check.cc:306
-#: netsync.cc:3063
+#: netsync.cc:3062
 #: rcs_import.cc:1244
 msgid "revisions"
 msgstr "Revisionen"
@@ -1940,7 +1939,7 @@ msgid "ancestry"
 msgstr "Vorfahren"
 
 #: database_check.cc:434
-#: netsync.cc:3067
+#: netsync.cc:3066
 msgid "keys"
 msgstr "Schlüssel"
 
@@ -2812,13 +2811,13 @@ msgstr "Revisionen raus"
 msgid "underflow on count of %s items to receive"
 msgstr "Unterlauf bei Zählung von %s Elementen zum Empfangen"
 
-#: netsync.cc:1261
-#: netsync.cc:1269
+#: netsync.cc:1260
+#: netsync.cc:1268
 #, c-format
 msgid "received network error: %s"
 msgstr "erhielt Netzwerk-Fehler: %s"
 
-#: netsync.cc:1304
+#: netsync.cc:1303
 #, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
@@ -2839,12 +2838,12 @@ msgstr ""
 "ich habe %s erwartet\n"
 "'%s unset %s %s' übergeht diese Prüfung."
 
-#: netsync.cc:1314
+#: netsync.cc:1313
 #, c-format
 msgid "server key changed"
 msgstr "Server-Schlüssel hat sich geändert"
 
-#: netsync.cc:1319
+#: netsync.cc:1318
 #, c-format
 msgid ""
 "first time connecting to server %s\n"
@@ -2855,286 +2854,286 @@ msgstr ""
 "Ich nehme an, dass Sie die Serveridentität verifiziert haben.\n"
 "Sie können jedoch nochmal den Fingerprint des Schlüssels prüfen: %s"
 
-#: netsync.cc:1326
+#: netsync.cc:1325
 #, c-format
 msgid "saving public key for %s to database"
 msgstr "speichere öffentlichen Schlüssel von %s in die Datenbank"
 
-#: netsync.cc:1429
+#: netsync.cc:1428
 #, c-format
 msgid "rejected attempt at anonymous connection for write"
 msgstr "verweigerte Schreibversuch von anonymer Verbindung"
 
-#: netsync.cc:1436
+#: netsync.cc:1435
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink"
 msgstr "verweigerte anonyme Verbindung im Datensenke-Modus"
 
-#: netsync.cc:1452
+#: netsync.cc:1451
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr "anonymer Zugriff auf Zweig '%s' vom Server verweigert"
 
-#: netsync.cc:1460
+#: netsync.cc:1459
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'"
 msgstr "erlaube anonyme Leseberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1466
+#: netsync.cc:1465
 #, c-format
 msgid "allowed anonymous read/write permission for '%s' excluding '%s'"
 msgstr "erlaube anonyme Leseberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1531
+#: netsync.cc:1530
 #, c-format
 msgid "remote public key hash '%s' is unknown"
 msgstr "Prüfsumme '%s' des entfernten öffentlichen Schlüssels ist unbekannt"
 
-#: netsync.cc:1549
+#: netsync.cc:1548
 #, c-format
 msgid "detected replay attack in auth netcmd"
 msgstr "entdeckte 'replay'-Attacke in 'auth netcmd'"
 
-#: netsync.cc:1571
+#: netsync.cc:1570
 #, c-format
 msgid "denied '%s' read permission for '%s' excluding '%s' while running as pure sink"
 msgstr "verweigere '%s' Leseberechtigung für '%s' außer '%s' im reinen Datensenke-Modus"
 
-#: netsync.cc:1584
+#: netsync.cc:1583
 #, c-format
 msgid "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
 msgstr "verweigerte '%s' Leseberechtigung für '%s' außer '%s' wegen Zweig '%s'"
 
-#: netsync.cc:1594
+#: netsync.cc:1593
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'"
 msgstr "erlaube '%s' Leseberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1605
+#: netsync.cc:1604
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s' while running as pure source"
 msgstr "verweigere '%s' Schreibberechtigung für '%s' außer '%s' im reinen Datensenke-Modus"
 
-#: netsync.cc:1613
+#: netsync.cc:1612
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'"
 msgstr "verweigere '%s' Schreibberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1617
+#: netsync.cc:1616
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'"
 msgstr "erlaube '%s' Schreibberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1641
+#: netsync.cc:1640
 #, c-format
 msgid "bad client signature"
 msgstr "ungültige Client-Signatur"
 
-#: netsync.cc:1657
+#: netsync.cc:1656
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
 msgstr "Unerwartetes 'refine'-Kommando auf nicht verfeinerbaren Elementtyp"
 
-#: netsync.cc:1754
+#: netsync.cc:1753
 #, c-format
 msgid "unknown bye phase %d received"
 msgstr "unbekannte 'bye phase' %d erhalten"
 
-#: netsync.cc:1769
+#: netsync.cc:1768
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type"
 msgstr "Unerwartetes 'done'-Kommando auf nicht verfeinerbaren Elementtyp"
 
-#: netsync.cc:1841
+#: netsync.cc:1840
 #, c-format
 msgid "%s with hash '%s' does not exist in our database"
 msgstr "%s mit der Prüfsumme '%s' existiert nicht in unserer Datenbank"
 
-#: netsync.cc:1945
+#: netsync.cc:1944
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr "Falsch zugeordneter Zeitraum in Zweig %s. Server hat '%s', Client hat '%s'."
 
-#: netsync.cc:1963
+#: netsync.cc:1962
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr "Prüfsummen-Check für öffentlichen Schlüssel '%s' (%s) fehlgeschlagen; benötigte '%s', bekam '%s'"
 
-#: netsync.cc:1977
+#: netsync.cc:1976
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr "Prüfsummen-Check für Revisionszertifikat '%s' fehlgeschlagen"
 
-#: netsync.cc:2039
+#: netsync.cc:2038
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "Erhielt Warnung von 'usher': %s"
 
-#: netsync.cc:2126
-#: netsync.cc:2157
+#: netsync.cc:2125
+#: netsync.cc:2156
 msgid "source and sink"
 msgstr "Datenquelle und -senke"
 
-#: netsync.cc:2127
-#: netsync.cc:2158
+#: netsync.cc:2126
+#: netsync.cc:2157
 msgid "source"
 msgstr "Datenquelle"
 
-#: netsync.cc:2127
-#: netsync.cc:2158
+#: netsync.cc:2126
+#: netsync.cc:2157
 msgid "sink"
 msgstr "Datensenke"
 
-#: netsync.cc:2314
+#: netsync.cc:2313
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr "Eingabepuffer für Peer %s ist nach netcmd-Absendung übervoll."
 
-#: netsync.cc:2326
-#: netsync.cc:2425
+#: netsync.cc:2325
+#: netsync.cc:2424
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
 msgstr "Protokoll-Fehler während der Bearbeitung von Peer %s: '%s'"
 
-#: netsync.cc:2332
+#: netsync.cc:2331
 #, c-format
 msgid "error: %s"
 msgstr "Fehler: %s"
 
-#: netsync.cc:2396
+#: netsync.cc:2395
 #, c-format
 msgid "connecting to %s"
 msgstr "verbinde zu %s"
 
-#: netsync.cc:2440
+#: netsync.cc:2439
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting"
 msgstr "Zeitüberschreitung während Warten auf E/A mit Peer %s, trenne Verbindung."
 
-#: netsync.cc:2463
+#: netsync.cc:2462
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting"
 msgstr "Bearbeitungsfehler während Kommunikation mit Peer %s, trenne Verbindung"
 
-#: netsync.cc:2480
+#: netsync.cc:2479
 #, c-format
 msgid "successful exchange with %s"
 msgstr "erfolgreicher Austausch mit %s"
 
-#: netsync.cc:2486
+#: netsync.cc:2485
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
 msgstr "Peer %s hat Verbindung getrennt, nachdem wir ihn vom Fehler unterrichtet haben"
 
-#: netsync.cc:2491
+#: netsync.cc:2490
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
 msgstr "E/A-Fehler während der Kommunikation mit Peer %s, trenne Verbindung"
 
-#: netsync.cc:2557
+#: netsync.cc:2556
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
 msgstr "Protokoll-Fehler während Bearbeitung des Peers %s: '%s', als ungültig markiert"
 
-#: netsync.cc:2589
+#: netsync.cc:2588
 #, c-format
 msgid "accepted new client connection from %s : %s"
 msgstr "akzeptiere neue Client-Verbindung von %s: %s"
 
-#: netsync.cc:2626
+#: netsync.cc:2625
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr "Protokoll-Fehler während der Bearbeitung des Peers %s: '%s', trenne Verbindung"
 
-#: netsync.cc:2637
+#: netsync.cc:2636
 #, c-format
 msgid "peer %s read failed in working state (error)"
 msgstr "Peer %s konnte nicht im 'working state' gelesen werden (Fehler)"
 
-#: netsync.cc:2642
+#: netsync.cc:2641
 #, c-format
 msgid "peer %s read failed in shutdown state (possibly client misreported error)"
 msgstr "Peer %s konnte nicht im 'shutdown state' gelesen werden (evtl. vom Client falsch berichteter Fehler)"
 
-#: netsync.cc:2648
+#: netsync.cc:2647
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
 msgstr "Peer %s konnte nicht im 'confirmed state' gelesen werden (Erfolg)"
 
-#: netsync.cc:2669
+#: netsync.cc:2668
 #, c-format
 msgid "peer %s write failed in working state (error)"
 msgstr "Peer %s konnte nicht im 'working state' geschrieben werden (Fehler)"
 
-#: netsync.cc:2674
+#: netsync.cc:2673
 #, c-format
 msgid "peer %s write failed in shutdown state (possibly client misreported error)"
 msgstr "Peer %s konnte nicht im 'shutdown state' geschrieben werden (evtl. vom Client falsch berichteter Fehler)"
 
-#: netsync.cc:2680
+#: netsync.cc:2679
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
 msgstr "Peer %s konnte nicht im 'confirmed state' geschrieben werden (Erfolg)"
 
-#: netsync.cc:2707
+#: netsync.cc:2706
 #, c-format
 msgid "peer %s processing finished, disconnecting"
 msgstr "Bearbeitung des Peers %s abgeschlossen, trenne Verbindung"
 
-#: netsync.cc:2729
+#: netsync.cc:2728
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
 msgstr "fd %d (Peer %s) war zu lange untätig, trenne Verbindung"
 
-#: netsync.cc:2797
+#: netsync.cc:2796
 #, c-format
 msgid "beginning service on %s : %s"
 msgstr "beginne Service auf %s : %s"
 
-#: netsync.cc:2798
+#: netsync.cc:2797
 msgid "<all interfaces>"
 msgstr "<alle Schnittstellen>"
 
-#: netsync.cc:2812
+#: netsync.cc:2811
 #, c-format
 msgid "session limit %d reached, some connections will be refused"
 msgstr "Maximale Anzahl an Sitzungen %d erreicht; einige Verbindungen werden abgelehnt werden."
 
-#: netsync.cc:2879
+#: netsync.cc:2878
 #, c-format
 msgid "Network error on peer %s, disconnecting"
 msgstr "Netzwerk-Fehler an Peer %s, trenne Verbindung"
 
-#: netsync.cc:2885
+#: netsync.cc:2884
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "erhielt OOB vom Peer %s, trenne Verbindung"
 
-#: netsync.cc:2945
+#: netsync.cc:2944
 #, c-format
 msgid "beginning service on %s"
 msgstr "beginne Service auf %s"
 
-#: netsync.cc:3008
+#: netsync.cc:3007
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "erhielt einige OOB Daten auf 'fd' %d (Peer %s), trenne Verbindung"
 
-#: netsync.cc:3057
+#: netsync.cc:3056
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "finde Elemente zum Synchronisieren:"
 
-#: netsync.cc:3065
+#: netsync.cc:3064
 msgid "certificates"
 msgstr "Zertifikate"
 
-#: netsync.cc:3178
+#: netsync.cc:3177
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Kann Schlüssel '%s' nicht finden"
 
-#: netsync.cc:3218
+#: netsync.cc:3217
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -3143,7 +3142,7 @@ msgstr ""
 "Das 'include branch'-Muster beinhaltet ein Quotierungszeichen:\n"
 "%s"
 
-#: netsync.cc:3224
+#: netsync.cc:3223
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -3152,8 +3151,8 @@ msgstr ""
 "Das 'exclude branch'-Muster beinhaltet ein Quotierungszeichen:\n"
 "%s"
 
-#: netsync.cc:3259
-#: netsync.cc:3263
+#: netsync.cc:3258
+#: netsync.cc:3262
 #, c-format
 msgid "network error: %s"
 msgstr "Netzwerk-Fehler: %s"
@@ -3657,6 +3656,31 @@ msgstr "%s:%d: Index '%s' = %d übergelaufener Vektor '%s' der Größe %d"
 #, c-format
 msgid "Current work set: %i items"
 msgstr "Derzeitige Arbeitsgruppe: %i Elemente"
+
+#: selectors.cc:43
+#, c-format
+msgid "expanded selector '%s' -> '%s'"
+msgstr "expandiere Selektor '%s' -> '%s'"
+
+#: selectors.cc:80
+#, c-format
+msgid "unknown selector type: %c"
+msgstr "unbekannter Selektor-Typ: %c"
+
+#: selectors.cc:89
+#, c-format
+msgid "selector '%s' is not a valid date\n"
+msgstr "Der Selektor '%s' ist kein gültiges Datum\n"
+
+#: selectors.cc:95
+#, c-format
+msgid "selector '%s' is not a valid date (%s)"
+msgstr "Der Selektor '%s' ist kein gültiges Datum (%s)"
+
+#: selectors.cc:98
+#, c-format
+msgid "expanded date '%s' -> '%s'\n"
+msgstr "expandierte Datum '%s' -> '%s'\n"
 
 #: schema_migration.cc:258
 #, c-format

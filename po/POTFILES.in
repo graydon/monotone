@@ -69,6 +69,7 @@ revision.cc
 revision.hh
 sanity.cc
 sanity.hh
+selectors.cc
 schema_migration.cc
 schema_migration.hh
 std_hooks.lua
