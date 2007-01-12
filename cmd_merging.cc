@@ -296,8 +296,10 @@ merge_two(revision_id const & left, revision_id const & right,
   interactive_merge_and_store(left, right, merged, app);
 
   packet_db_writer dbw(app);
-  cert_revision_in_branch(merged, branch, app, dbw);
-  cert_revision_changelog(merged, log.str(), app, dbw);
+  app.project.put_standard_certs_from_options(merged,
+                                              branch,
+                                              log.str(),
+                                              dbw);
 
   guard.commit();
   P(F("[merged] %s") % merged);
@@ -482,7 +484,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
       packet_db_writer dbw(app);
-      cert_revision_in_branch(*src_i, idx(args, 1)(), app, dbw);
+      app.project.put_revision_in_branch(*src_i, idx(args, 1), dbw);
       guard.commit();
     }
   else
@@ -555,10 +557,6 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
                                   app);
       }
 
-      packet_db_writer dbw(app);
-
-      cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
-
       bool log_message_given;
       utf8 log_message;
       process_commit_message_args(log_message_given, log_message, app);
@@ -568,7 +566,11 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
                        % idx(args, 0) % (*src_i)
                        % idx(args, 1) % (*dst_i)).str();
 
-      cert_revision_changelog(merged, log_message, app, dbw);
+      packet_db_writer dbw(app);
+      app.project.put_standard_certs_from_options(merged,
+                                                  idx(args, 1),
+                                                  log_message(),
+                                                  dbw);
 
       guard.commit();
       P(F("[merged] %s") % merged);

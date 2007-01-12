@@ -247,16 +247,10 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     calculate_ident(rdat, inv_id);
     dbw.consume_revision_data(inv_id, rdat);
 
-    cert_revision_in_branch(inv_id, branchname, app, dbw);
-    if (app.opts.date_given)
-      cert_revision_date_time(inv_id, app.opts.date, app, dbw);
-    else
-      cert_revision_date_now(inv_id, app, dbw);
-    if (app.opts.author().length() > 0)
-      cert_revision_author(inv_id, app.opts.author(), app, dbw);
-    else
-      cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, log_message, app, dbw);
+    app.project.put_standard_certs_from_options(inv_id,
+                                                branchname(),
+                                                log_message(),
+                                                dbw);
     guard.commit();
   }
 }
@@ -895,18 +889,10 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     write_revision(restricted_rev, rdat);
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
-    cert_revision_in_branch(restricted_rev_id, branchname, app, dbw);
-    if (app.opts.date_given)
-      cert_revision_date_time(restricted_rev_id, app.opts.date, app, dbw);
-    else
-      cert_revision_date_now(restricted_rev_id, app, dbw);
-
-    if (app.opts.author_given > 0)
-      cert_revision_author(restricted_rev_id, app.opts.author(), app, dbw);
-    else
-      cert_revision_author_default(restricted_rev_id, app, dbw);
-
-    cert_revision_changelog(restricted_rev_id, log_message, app, dbw);
+    app.project.put_standard_certs_from_options(restricted_rev_id,
+                                                branchname(),
+                                                log_message(),
+                                                dbw);
     guard.commit();
   }
 

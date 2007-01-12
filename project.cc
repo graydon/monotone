@@ -5,12 +5,23 @@
 
 #include "app_state.hh"
 #include "cert.hh"
+#include "packet.hh"
 #include "project.hh"
 #include "revision.hh"
 #include "transforms.hh"
 
+#include <boost/date_time/gregorian/gregorian.hpp>
+
+
 using std::set;
 using std::vector;
+
+boost::posix_time::ptime time_from_time_t(time_t time)
+{
+  boost::gregorian::date the_epoch(1970, 1, 1);
+  boost::posix_time::seconds seconds(static_cast<long>(time));
+  return boost::posix_time::ptime(the_epoch, seconds);
+}
 
 
 project_t::project_t(app_state & app)
@@ -118,6 +129,15 @@ project_t::revision_is_in_branch(revision_id const & id,
   return !certs.empty();
 }
 
+void
+project_t::put_revision_in_branch(revision_id const & id,
+				  utf8 const & branch,
+				  packet_consumer & pc)
+{
+  cert_revision_in_branch(id, cert_value(branch()), app, pc);
+}
+
+
 outdated_indicator
 project_t::get_revision_cert_hashes(revision_id const & id,
                                     std::vector<hexenc<id> > & hashes)
@@ -208,4 +228,52 @@ project_t::get_tags(set<tag_t> & tags)
       tags.insert(tag_t(i->inner().ident, value(), i->inner().key));
     }
   return i;
+}
+
+void
+project_t::put_tag(revision_id const & id,
+		   string const & name,
+		   packet_consumer & pc)
+{
+  cert_revision_tag(id, name, app, pc);
+}
+
+
+void
+project_t::put_standard_certs(revision_id const & id,
+			      utf8 const & branch,
+			      string const & changelog,
+			      boost::posix_time::ptime const & time,
+			      utf8 const & author,
+			      packet_consumer & pc)
+{
+  cert_revision_in_branch(id, cert_value(branch()), app, pc);
+  cert_revision_changelog(id, changelog, app, pc);
+  cert_revision_date_time(id, time, app, pc);
+  if (!author().empty())
+    cert_revision_author(id, author(), app, pc);
+  else
+    cert_revision_author_default(id, app, pc);
+}
+
+void
+project_t::put_standard_certs_from_options(revision_id const & id,
+					   utf8 const & branch,
+					   string const & changelog,
+					   packet_consumer & pc)
+{
+  put_standard_certs(id,
+		     branch,
+		     changelog,
+		     app.opts.date_given?app.opts.date:now(),
+		     app.opts.author,
+		     pc);
+}
+void
+project_t::put_cert(revision_id const & id,
+		    cert_name const & name,
+		    cert_value const & value,
+		    packet_consumer & pc)
+{
+  put_simple_revision_cert(id, name, value, app, pc);
 }
