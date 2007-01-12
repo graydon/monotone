@@ -1,5 +1,24 @@
 2007-01-09  Zack Weinberg  <zackw@panix.com>
 
+	* schema_migration.cc: Prune headers and using-declarations.  Make
+	various things static and/or wrapped in the anonymous namespace.
+	(struct migrator): Delete.
+	(migrator_cb): Move definition to just above first use.
+	(struct migration_event, migration_events, n_migration_events)
+	(schema_to_migration, diagnose_unrecognized_schema, check_sql_schema):
+	New functions and data.
+	(migrate_monotone_schema): Put all the logic that used to be in
+	migrator::migrate here instead.  Use two loops instead of one loop
+	and a state boolean, for clarity.
+	* schema_migration.hh: Prune headers.  Forward-declare system_path.
+	Declare check_sql_schema.  Adjust spacing.
+	* database.cc (database::database): Delete initialization of "schema".
+	(database::check_schema, close_all_databases): Delete.
+	(database::sql): Call check_sql_schema instead of check_schema.
+	* database.hh (database): Remove "schema" data-member and
+	check_schema function-member.
+	(close_all_databases): Delete declaration.
+
 	* transforms.hh (xform): Make the generic template produce a
 	compile error if instantiated.  Use standard declarations of
 	partial specializations for the usable cases of xform, not the g++

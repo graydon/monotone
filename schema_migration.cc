@@ -7,21 +7,12 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <locale>
-#include <stdexcept>
-#include <iostream>
-#include <map>
-
 #include <boost/tokenizer.hpp>
-
 #include <sqlite3.h>
+#include "botan/botan.h"
 
 #include "sanity.hh"
 #include "schema_migration.hh"
-#include "botan/botan.h"
 #include "app_state.hh"
 #include "keys.hh"
 #include "transforms.hh"
@@ -30,12 +21,8 @@
 using std::ctype;
 using std::locale;
 using std::map;
-using std::pair;
-using std::remove_if;
-using std::string;
 using std::use_facet;
 using std::vector;
-
 using boost::char_separator;
 
 // this file knows how to migrate schema databases. the general strategy is
@@ -107,7 +94,7 @@ calculate_id(string const & in,
   ident = lowercase_facet(p.read_all_as_string());
 }
 
-
+namespace {
 struct
 is_ws
 {
@@ -116,6 +103,7 @@ is_ws
       return c == '\r' || c == '\n' || c == '\t' || c == ' ';
     }
 };
+}
 
 static void
 sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
@@ -150,7 +138,7 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_text(f,sha.c_str(),sha.size(),SQLITE_TRANSIENT);
 }
 
-int
+static int
 append_sql_stmt(void * vp,
                 int ncols,
                 char ** values,
@@ -224,137 +212,6 @@ set_regime(upgrade_regime new_regime, upgrade_regime & regime)
 {
   regime = std::min(new_regime, regime);
 }
-
-typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *, upgrade_regime &);
-
-struct
-migrator
-{
-  vector< pair<string,migrator_cb> > migration_events;
-  app_state * __app;
-
-  void set_app(app_state *app)
-  {
-    __app = app;
-  }
-
-  void add(string schema_id, migrator_cb cb)
-  {
-    migration_events.push_back(make_pair(schema_id, cb));
-  }
-
-  void migrate(sqlite3 *sql, string target_id)
-  {
-    string init;
-
-    I(sql != NULL);
-
-    calculate_schema_id(sql, init);
-
-    I(!sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
-                               &sqlite_sha1_fn, NULL, NULL));
-
-
-    P(F("calculating necessary migration steps"));
-
-    upgrade_regime regime = upgrade_none;
-
-    bool migrating = false;
-    for (vector< pair<string, migrator_cb> >::const_iterator i = migration_events.begin();
-         i != migration_events.end(); ++i)
-      {
-
-        if (i->first == init)
-          {
-            E(logged_sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) == SQLITE_OK,
-              F("error at transaction BEGIN statement"));
-            P(F("migrating data"));
-            migrating = true;
-          }
-
-        if (migrating)
-          {
-            // confirm that we are where we ought to be
-            string curr;
-            char *errmsg = NULL;
-            calculate_schema_id(sql, curr);
-            if (curr != i->first)
-              {
-                logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-                I(false);
-              }
-
-            if (i->second == NULL)
-              {
-                logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-                I(false);
-              }
-
-            // do this migration step
-            else if (! i->second(sql, &errmsg, __app, regime))
-              {
-                logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-                E(false, F("migration step failed: %s")
-                  % (errmsg ? errmsg : "unknown error"));
-              }
-          }
-      }
-
-    // confirm that our target schema was met
-    if (migrating)
-      {
-        string curr;
-        calculate_schema_id(sql, curr);
-        if (curr != target_id)
-          {
-            logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-            E(false, F("mismatched result of migration, got %s, wanted %s")
-                     % curr % target_id);
-          }
-        P(F("committing changes to database"));
-        E(logged_sqlite3_exec(sql, "COMMIT", NULL, NULL, NULL) == SQLITE_OK,
-          F("failure on COMMIT"));
-
-        P(F("optimizing database"));
-        E(logged_sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL) == SQLITE_OK,
-          F("error vacuuming after migration"));
-
-        switch (regime)
-          {
-          case upgrade_changesetify:
-          case upgrade_rosterify:
-            {
-              string command_str = (regime == upgrade_changesetify
-                                    ? "changesetify" : "rosterify");
-              P(F("NOTE: because this database was last used by a rather old version\n"
-                  "of monotone, you're not done yet.  If you're a project leader, then\n"
-                  "see the file UPGRADE for instructions on running '%s db %s'")
-                % ui.prog_name % command_str);
-            }
-            break;
-          case upgrade_regen_caches:
-            P(F("NOTE: this upgrade cleared monotone's caches\n"
-                "you should now run '%s db regenerate_caches'")
-              % ui.prog_name);
-            break;
-          case upgrade_none:
-            break;
-          }
-      }
-    else
-      {
-        // if we didn't do anything, make sure that it's because we were
-        // already up to date.
-        E(init == target_id,
-          F("database schema %s is unknown; cannot perform migration") % init);
-        // We really want 'db migrate' on an up-to-date schema to be a no-op
-        // (no vacuum or anything, even), so that automated scripts can fire
-        // one off optimistically and not have to worry about getting their
-        // administrators to do it by hand.
-        P(F("no migration performed; database schema already up-to-date at %s") % init);
-      }
-  }
-};
 
 static bool move_table(sqlite3 *sql, char **errmsg,
                        char const * srcname,
@@ -1179,52 +1036,229 @@ migrate_add_heights(sqlite3 *sql,
   return true;
 }
 
-void
-migrate_monotone_schema(sqlite3 *sql, app_state *app)
+typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *, upgrade_regime &);
+struct migration_event
 {
+  char const * id;
+  migrator_cb migrator;
+};
 
-  migrator m;
-  m.set_app(app);
+// IMPORTANT: whenever you modify this to add a new schema version, you must
+// also add a new migration test for the new schema version.  See
+// tests/schema_migration for details.
 
-  m.add("edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
-        &migrate_client_merge_url_and_group);
+const migration_event migration_events[] = {
+  { "edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
+    migrate_client_merge_url_and_group },
 
-  m.add("f042f3c4d0a4f98f6658cbaf603d376acf88ff4b",
-        &migrate_client_add_hashes_and_merkle_trees);
+  { "f042f3c4d0a4f98f6658cbaf603d376acf88ff4b",
+    migrate_client_add_hashes_and_merkle_trees },
 
-  m.add("8929e54f40bf4d3b4aea8b037d2c9263e82abdf4",
-        &migrate_client_to_revisions);
+  { "8929e54f40bf4d3b4aea8b037d2c9263e82abdf4",
+    migrate_client_to_revisions },
 
-  m.add("c1e86588e11ad07fa53e5d294edc043ce1d4005a",
-        &migrate_client_to_epochs);
+  { "c1e86588e11ad07fa53e5d294edc043ce1d4005a",
+    migrate_client_to_epochs },
 
-  m.add("40369a7bda66463c5785d160819ab6398b9d44f4",
-        &migrate_client_to_vars);
+  { "40369a7bda66463c5785d160819ab6398b9d44f4",
+    migrate_client_to_vars },
 
-  m.add("e372b508bea9b991816d1c74680f7ae10d2a6d94",
-        &migrate_client_to_add_indexes);
+  { "e372b508bea9b991816d1c74680f7ae10d2a6d94",
+    migrate_client_to_add_indexes },
 
-  m.add("1509fd75019aebef5ac3da3a5edf1312393b70e9",
-        &migrate_client_to_external_privkeys);
+  { "1509fd75019aebef5ac3da3a5edf1312393b70e9",
+    migrate_client_to_external_privkeys },
 
-  m.add("bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
-        &migrate_client_to_add_rosters);
+  { "bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
+    migrate_client_to_add_rosters },
 
-  m.add("1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
-        &migrate_files_BLOB);
+  { "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
+    migrate_files_BLOB },
 
-  m.add("9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
-        &migrate_rosters_no_hash);
+  { "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
+    migrate_rosters_no_hash },
 
-  m.add("ae196843d368d042f475e3dadfed11e9d7f9f01e",
-        &migrate_add_heights);
+  { "ae196843d368d042f475e3dadfed11e9d7f9f01e",
+    migrate_add_heights },
 
-  // IMPORTANT: whenever you modify this to add a new schema version, you must
-  // also add a new migration test for the new schema version.  See
-  // tests/t_migrate_schema.at for details.
+  // The last entry in this table should always be the current
+  // schema ID, with 0 for the migrator.
 
-  m.migrate(sql, "48fd5d84f1e5a949ca093e87e5ac558da6e5956d");
+  { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d", 0 }
+};
+const size_t n_migration_events = (sizeof migration_events
+                                   / sizeof migration_events[0]);
+
+// Look through the migration_events table and return the index of the
+// entry corresponding to schema ID, or -1 if it isn't there (i.e. if
+// the database schema is not one we know).
+static int
+schema_to_migration(string const & id)
+{
+  int i;
+  for (i = n_migration_events - 1; i >= 0; i--)
+    if (migration_events[i].id == id)
+      break;
+
+  return i;
 }
+
+// Provide sensible diagnostics for a database schema whose hash we do not
+// recognize.
+static void NORETURN
+diagnose_unrecognized_schema(sqlite3 * sql, system_path const & filename,
+                             string const & id)
+{
+  // Give a special message for an utterly empty sqlite3 database, such as
+  // is created by "mtn db load < /dev/null", or by the sqlite3 command line
+  // utility if you don't give it anything to do.
+  N(id != "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+    F("cannot use the empty sqlite database %s\n"
+      "(monotone databases must be created with '%s db init')")
+    % filename % ui.prog_name);
+
+  // Do a sanity check to make sure we are actually looking at a monotone
+  // database, not some other sqlite3 database.  Every version of the schema
+  // has included tables named 'files', 'file_deltas', 'manifests', and
+  // 'manifest_deltas'.
+  // ??? Use PRAGMA user_version to record an additional magic number in
+  // monotone databases.
+  string tmp;
+  logged_sqlite3_exec(sql,
+                      "SELECT COUNT(*) FROM sqlite_master "
+                      "WHERE type = 'table' AND sql IS NOT NULL "
+                      "AND (name = 'files' OR name = 'file_deltas'"
+                      "     OR name = 'manifests'"
+                      "     OR name = 'manifest_deltas')",
+                      append_sql_stmt, &tmp, 0);
+  N(tmp == "4\n",
+    F("%s does not appear to be a monotone database\n"
+      "(schema %s, core tables missing)")
+    % filename % id);
+
+  N(false,
+    F("%s appears to be a monotone database, but this version of\n"
+      "monotone does not recognize its schema (%s).\n"
+      "you probably need a newer version of monotone.")
+    % filename % id);
+}
+ 
+// check_sql_schema is called by database.cc on open, to determine whether
+// the schema is up to date.  If it returns at all, the schema is indeed
+// up to date (otherwise it throws a diagnostic).
+void
+check_sql_schema(sqlite3 * sql, system_path const & filename)
+{
+  I(sql != NULL);
+ 
+  string id;
+  calculate_schema_id(sql, id);
+ 
+  int migration = schema_to_migration(id);
+ 
+  if (migration == -1)
+    diagnose_unrecognized_schema(sql, filename, id);
+ 
+  N(migration_events[migration].migrator == 0,
+    F("database %s is laid out according to an old schema, %s\n"
+      "try '%s db migrate' to upgrade\n"
+      "(this is irreversible; you may want to make a backup copy first)")
+    % filename % id % ui.prog_name);
+}
+
+void
+migrate_monotone_schema(sqlite3 * sql, app_state * app)
+{
+  I(sql != NULL);
+  I(!sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
+                             &sqlite_sha1_fn, NULL, NULL));
+
+  string init;
+  calculate_schema_id(sql, init);
+
+  P(F("calculating migration for schema %s") % init);
+
+  int i = schema_to_migration(init);
+
+  if (i == -1)
+    diagnose_unrecognized_schema(sql, app->db.get_filename(), init);
+
+  // We really want 'db migrate' on an up-to-date schema to be a no-op
+  // (no vacuum or anything, even), so that automated scripts can fire
+  // one off optimistically and not have to worry about getting their
+  // administrators to do it by hand.
+  if (migration_events[i].migrator == 0)
+    {
+      P(F("no migration performed; database schema already up-to-date"));
+      return;
+    }
+
+  upgrade_regime regime = upgrade_none;
+  P(F("migrating data"));
+
+  E(logged_sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) == SQLITE_OK,
+    F("error at transaction BEGIN statement"));
+
+  for (;;)
+    {
+      // confirm that we are where we ought to be
+      string curr;
+      calculate_schema_id(sql, curr);
+      if (curr != migration_events[i].id)
+        {
+          logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+          I(false);
+        }
+
+      if (migration_events[i].migrator == 0)
+        break;
+
+      char * errmsg;
+      if (! migration_events[i].migrator(sql, &errmsg, app, regime))
+        {
+          logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+          E(false, F("migration step failed: %s")
+            % (errmsg ? errmsg : "unknown error"));
+        }
+
+      i++;
+      if ((size_t)i >= n_migration_events)
+        {
+          logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
+          I(false);
+        }
+    }
+
+  P(F("committing changes to database"));
+  E(logged_sqlite3_exec(sql, "COMMIT", NULL, NULL, NULL) == SQLITE_OK,
+    F("failure on COMMIT"));
+
+  P(F("optimizing database"));
+  logged_sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL);
+
+  switch (regime)
+    {
+    case upgrade_changesetify:
+    case upgrade_rosterify:
+      {
+        string command_str = (regime == upgrade_changesetify
+                              ? "changesetify" : "rosterify");
+        P(F("NOTE: because this database was last used by a rather old version\n"
+            "of monotone, you're not done yet.  If you're a project leader, then\n"
+            "see the file UPGRADE for instructions on running '%s db %s'")
+          % ui.prog_name % command_str);
+      }
+      break;
+    case upgrade_regen_caches:
+      P(F("NOTE: this upgrade cleared monotone's caches\n"
+          "you should now run '%s db regenerate_caches'")
+        % ui.prog_name);
+      break;
+    case upgrade_none:
+      break;
+    }
+}
+
 
 // Local Variables:
 // mode: C++

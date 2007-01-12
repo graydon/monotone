@@ -11,7 +11,6 @@
 // PURPOSE.
 
 #include <string>
-#include <vector>
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -22,9 +21,11 @@
 
 struct sqlite3;
 class app_state;
+class system_path;
 
-void calculate_schema_id(sqlite3 *sql, std::string & id);
-void migrate_monotone_schema(sqlite3 *sql, app_state *app);
+void calculate_schema_id(sqlite3 * sql, std::string & id);
+void migrate_monotone_schema(sqlite3 * sql, app_state * app);
+void check_sql_schema(sqlite3 * sql, system_path const & filename);
 
 // Local Variables:
 // mode: C++

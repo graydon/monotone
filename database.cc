@@ -127,13 +127,7 @@ struct query
 
 database::database(system_path const & fn) :
   filename(fn),
-  // nb. update this if you change the schema. unfortunately we are not
-  // using self-digesting schemas due to comment irregularities and
-  // non-alphabetic ordering of tables in sql source files. we could create
-  // a temporary db, write our intended schema into it, and read it back,
-  // but this seems like it would be too rude. possibly revisit this issue.
   __sql(NULL),
-  schema("48fd5d84f1e5a949ca093e87e5ac558da6e5956d"),
   transaction_level(0),
   roster_cache(constants::db_roster_cache_sz,
                roster_writeback_manager(*this)),
@@ -148,19 +142,6 @@ database::is_dbfile(any_path const & file)
   if (same)
     L(FL("'%s' is the database file") % file);
   return same;
-}
-
-void
-database::check_schema()
-{
-  string db_schema_id;
-  calculate_schema_id (__sql, db_schema_id);
-  N (schema == db_schema_id,
-     F("layout of database %s doesn't match this version of monotone\n"
-       "wanted schema %s, got %s\n"
-       "try '%s db migrate' to upgrade\n"
-       "(this is irreversible; you may want to make a backup copy first)")
-     % filename % schema % db_schema_id % ui.prog_name);
 }
 
 void
@@ -318,7 +299,7 @@ database::sql(bool init, bool migrating_format)
           assert_sqlite3_ok(__sql);
         }
 
-      check_schema();
+      check_sql_schema(__sql, filename);
       install_functions(__app);
 
       if (!migrating_format)
@@ -3133,27 +3114,6 @@ void
 transaction_guard::commit()
 {
   committed = true;
-}
-
-
-
-// called to avoid foo.db-journal files hanging around if we exit cleanly
-// without unwinding the stack (happens with SIGINT & SIGTERM)
-void
-close_all_databases()
-{
-  L(FL("attempting to rollback and close %d databases") % sql_contexts.size());
-  for (set<sqlite3*>::iterator i = sql_contexts.begin();
-       i != sql_contexts.end(); i++)
-    {
-      // the ROLLBACK is required here, even though the sqlite docs
-      // imply that transactions are rolled back on database closure
-      int exec_err = sqlite3_exec(*i, "ROLLBACK", NULL, NULL, NULL);
-      int close_err = sqlite3_close(*i);
-
-      L(FL("exec_err = %d, close_err = %d") % exec_err % close_err);
-    }
-  sql_contexts.clear();
 }
 
 // Local Variables:
