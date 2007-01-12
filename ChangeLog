@@ -1,5 +1,12 @@
 2007-01-09  Zack Weinberg  <zackw@panix.com>
 
+	* tests/db_migrate_on_bad_schema: Rename to schema_migration_bad_schema.
+	Rewrite to test for specific error messages corresponding to the
+	five-way distinction made by check_sql_schema.
+	* tests/migrate_with_rosterify: Rename to
+	schema_migration_with_rosterify.
+	* testsuite.lua: Update.
+
 	* schema_migration.cc: Prune headers and using-declarations.  Make
 	various things static and/or wrapped in the anonymous namespace.
 	(struct migrator): Delete.
