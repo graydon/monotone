@@ -1,5 +1,16 @@
 2007-01-13  Zack Weinberg  <zackw@panix.com>
 
+	* schema_migration.cc: Further prune includes and using-declarations.
+	(lowercase_facet, calculate_id): Delete.
+	(is_ws): Convert from class to predicate function.
+	(sqlite3_value_cstr): New, type-adjustment wrapper around _value_text.
+	(sqlite_sha1_fn): Clarify logic by using remove_copy_if,
+	sqlite3_value_cstr, and a simpler loop in the args>1 case.
+	Use transforms.hh's calculate_ident instead of calculate_id.
+	(massage_sql_tokens): Move to directly above sole user.
+	(calculate_schema_id): Use calculate_ident.
+	(sqlite_unbase64_fn): Use sqlite_value_cstr.
+
 	* transforms.cc (encode_hexenc_inner, encode_hexenc, decode_hex_char)
 	(decode_hexenc_inner, decode_hexenc): Delete.
 	(xform<Botan::Hex_Encoder>): Request lowercase output.

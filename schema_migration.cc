@@ -9,7 +9,6 @@
 
 #include <boost/tokenizer.hpp>
 #include <sqlite3.h>
-#include "botan/botan.h"
 
 #include "sanity.hh"
 #include "schema_migration.hh"
@@ -18,12 +17,8 @@
 #include "transforms.hh"
 #include "ui.hh"
 
-using std::ctype;
-using std::locale;
 using std::map;
-using std::use_facet;
 using std::vector;
-using boost::char_separator;
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -33,12 +28,10 @@ using boost::char_separator;
 // of the migration.
 
 // you will notice a little bit of duplicated code between here and
-// transforms.cc / database.cc; this was originally to facilitate inclusion of
-// migration capability into the depot code, which did not link against those
-// objects.  the depot code is gone, but this isn't the sort of code that
-// should ever be touched after being written, so the duplication currently
-// remains.  if it becomes a maintainence burden, however, consider
-// refactoring.
+// database.cc; this was originally to facilitate inclusion of migration
+// capability into the depot code, but is now preserved because the code
+// in this file is easier to write and understand if it speaks directly
+// to sqlite.
 
 static int logged_sqlite3_exec(sqlite3* db,
                                const char* sql,
@@ -54,24 +47,61 @@ static int logged_sqlite3_exec(sqlite3* db,
   return res;
 }
 
-typedef boost::tokenizer<char_separator<char> > tokenizer;
-
-static string
-lowercase_facet(string const & in)
+// sqlite3_value_text returns unsigned char const *, which is inconvenient
+inline char const *
+sqlite3_value_cstr(sqlite3_value * arg)
 {
-  I(40==in.size());
-  const int sz=40;
-  char buf[sz];
-  in.copy(buf, sz);
-  locale loc;
-  use_facet< ctype<char> >(loc).tolower(buf, buf+sz);
-  return string(buf,sz);
+  return reinterpret_cast<char const *>(sqlite3_value_text(arg));
 }
+
+inline bool is_ws(char c)
+{
+  return c == '\r' || c == '\n' || c == '\t' || c == ' ';
+}
+
+static void
+sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
+{
+  if (nargs <= 1)
+    {
+      sqlite3_result_error(f, "need at least 1 arg to sha1()", -1);
+      return;
+    }
+
+  string tmp;
+  if (nargs == 1)
+    {
+      char const * s = sqlite3_value_cstr(args[0]);
+      char const * end = s + sqlite3_value_bytes(args[0]) - 1;
+      remove_copy_if(s, end, back_inserter(tmp), is_ws);
+    }
+  else
+    {
+      char const * sep = sqlite3_value_cstr(args[0]);
+
+      for (int i = 1; i < nargs; ++i)
+        {
+          if (i > 1)
+            tmp += sep;
+          char const * s = sqlite3_value_cstr(args[i]);
+          char const * end = s + sqlite3_value_bytes(args[i]) - 1;
+          remove_copy_if(s, end, back_inserter(tmp), is_ws);
+        }
+    }
+
+  hexenc<id> sha;
+  calculate_ident(data(tmp), sha);
+  sqlite3_result_text(f, sha().c_str(), sha().size(), SQLITE_TRANSIENT);
+}
+
 
 static void
 massage_sql_tokens(string const & in,
                    string & out)
 {
+  using boost::char_separator;
+  typedef boost::tokenizer<char_separator<char> > tokenizer;
+
   char_separator<char> sep(" \r\n\t", "(),;");
   tokenizer tokens(in, sep);
   out.clear();
@@ -82,60 +112,6 @@ massage_sql_tokens(string const & in,
         out += " ";
       out += *i;
     }
-}
-
-static void
-calculate_id(string const & in,
-             string & ident)
-{
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-1"), new Botan::Hex_Encoder());
-  p.process_msg(in);
-
-  ident = lowercase_facet(p.read_all_as_string());
-}
-
-namespace {
-struct
-is_ws
-{
-  bool operator()(char c) const
-    {
-      return c == '\r' || c == '\n' || c == '\t' || c == ' ';
-    }
-};
-}
-
-static void
-sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
-{
-  string tmp, sha;
-  if (nargs <= 1)
-    {
-      sqlite3_result_error(f, "need at least 1 arg to sha1()", -1);
-      return;
-    }
-
-  if (nargs == 1)
-    {
-      string s = reinterpret_cast<char const*>(sqlite3_value_text(args[0]));
-      s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
-      tmp = s;
-    }
-  else
-    {
-      string sep = string(reinterpret_cast<char const*>(sqlite3_value_text(args[0])));
-      string s = reinterpret_cast<char const*>(sqlite3_value_text(args[1]));
-      s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
-      tmp = s;
-      for (int i = 2; i < nargs; ++i)
-        {
-          s = string(reinterpret_cast<char const*>(sqlite3_value_text(args[i])));
-          s.erase(remove_if(s.begin(), s.end(), is_ws()),s.end());
-          tmp += sep + s;
-        }
-    }
-  calculate_id(tmp, sha);
-  sqlite3_result_text(f,sha.c_str(),sha.size(),SQLITE_TRANSIENT);
 }
 
 static int
@@ -163,9 +139,9 @@ append_sql_stmt(void * vp,
 }
 
 void
-calculate_schema_id(sqlite3 *sql, string & id)
+calculate_schema_id(sqlite3 *sql, string & ident)
 {
-  id.clear();
+  ident.clear();
   string tmp, tmp2;
   int res = logged_sqlite3_exec(sql,
                                 "SELECT sql FROM sqlite_master "
@@ -194,7 +170,10 @@ calculate_schema_id(sqlite3 *sql, string & id)
       E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
     }
   massage_sql_tokens(tmp, tmp2);
-  calculate_id(tmp2, id);
+
+  hexenc<id> tid;
+  calculate_ident(data(tmp2), tid);
+  ident = tid();
 }
 
 // these must be listed in order so that ones listed earlier override ones
@@ -845,7 +824,7 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
       return;
     }
   data decoded;
-  decode_base64(base64<data>(string(reinterpret_cast<char const*>(sqlite3_value_text(args[0])))), decoded);
+  decode_base64(base64<data>(string(sqlite3_value_cstr(args[0]))), decoded);
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
