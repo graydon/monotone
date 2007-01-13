@@ -1,3 +1,15 @@
+2007-01-13  Zack Weinberg  <zackw@panix.com>
+
+	* transforms.cc (encode_hexenc_inner, encode_hexenc, decode_hex_char)
+	(decode_hexenc_inner, decode_hexenc): Delete.
+	(xform<Botan::Hex_Encoder>): Request lowercase output.
+	(calculate_ident): Put a Botan::Hex_Encoder in the pipeline rather
+	than doing a separate call to encode_hexenc.  Delete unused overload.
+	* transforms.hh (encode_hexenc, decode_hexenc): Define in terms of
+	appropriate xform<> instantiations.
+	(pack, unpack): Delete unnecessary extern-template declarations.
+	(calculate_ident): Delete unused overload.
+
 2007-01-12  Zack Weinberg  <zackw@panix.com>
 
 	* tests/db_migrate_on_bad_schema: Rename to schema_migration_bad_schema.

@@ -59,16 +59,18 @@ void decode_base64(base64<T> const & in, T & out)
 
 // hex encoding
 
-std::string encode_hexenc(std::string const & in);
-std::string decode_hexenc(std::string const & in);
+template <typename T>
+void encode_hexenc(T const & in, hexenc<T> & out)
+{ out = xform<Botan::Hex_Encoder>(in()); }
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
-{ out = decode_hexenc(in()); }
+{ out = xform<Botan::Hex_Decoder>(in()); }
 
-template <typename T>
-void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = encode_hexenc(in()); }
+inline std::string encode_hexenc(std::string const & in)
+{ return xform<Botan::Hex_Encoder>(in); }
+inline std::string decode_hexenc(std::string const & in)
+{ return xform<Botan::Hex_Decoder>(in); }
 
 
 // gzip
@@ -87,16 +89,13 @@ void encode_gzip(std::string const & in, gzip<T> & out)
 { out = xform<Botan::Gzip_Compression>(in); }
 
 // both at once (this is relatively common)
+// these are usable for T = data and T = delta
 
 template <typename T>
 void pack(T const & in, base64< gzip<T> > & out);
-EXTERN template void pack<data>(data const &, base64< gzip<data> > &);
-EXTERN template void pack<delta>(delta const &, base64< gzip<delta> > &);
 
 template <typename T>
 void unpack(base64< gzip<T> > const & in, T & out);
-EXTERN template void unpack<data>(base64< gzip<data> > const &, data &);
-EXTERN template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 
 // diffing and patching
@@ -113,9 +112,6 @@ void patch(data const & olddata,
 // version (a.k.a. sha1 fingerprint) calculation
 
 void calculate_ident(data const & dat,
-                     hexenc<id> & ident);
-
-void calculate_ident(base64< gzip<data> > const & dat,
                      hexenc<id> & ident);
 
 void calculate_ident(file_data const & dat,

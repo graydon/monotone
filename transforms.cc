@@ -128,86 +128,10 @@ template<typename XFM> string xform(XFM * x, string const & in)
 
 SPECIALIZE_XFORM(Botan::Base64_Encoder,);
 SPECIALIZE_XFORM(Botan::Base64_Decoder, Botan::IGNORE_WS);
-SPECIALIZE_XFORM(Botan::Hex_Encoder,);
+SPECIALIZE_XFORM(Botan::Hex_Encoder, Botan::Hex_Encoder::Lowercase);
 SPECIALIZE_XFORM(Botan::Hex_Decoder, Botan::IGNORE_WS);
 SPECIALIZE_XFORM(Botan::Gzip_Compression,);
 SPECIALIZE_XFORM(Botan::Gzip_Decompression,);
-
-// for use in hexenc encoding
-
-static inline void
-encode_hexenc_inner(string::const_iterator i,
-                    string::const_iterator end,
-                    char *out)
-{
-  static char const *tab = "0123456789abcdef";
-  for (; i != end; ++i)
-    {
-      *out++ = tab[(*i >> 4) & 0xf];
-      *out++ = tab[*i & 0xf];
-    }
-}
-
-
-string encode_hexenc(string const & in)
-{
-  if (LIKELY(in.size() == constants::idlen / 2))
-    {
-      char buf[constants::idlen];
-      encode_hexenc_inner(in.begin(), in.end(), buf);
-      return string(buf, constants::idlen);
-    }
-  else
-    {
-      scoped_array<char> buf(new char[in.size() * 2]);
-      encode_hexenc_inner(in.begin(), in.end(), buf.get());
-      return string(buf.get(), in.size() *2);
-    }
-}
-
-static inline char
-decode_hex_char(char c)
-{
-  if (c >= '0' && c <= '9')
-    return c - '0';
-  else
-  {
-          I(c >= 'a' && c <= 'f');
-          return c - 'a' + 10;
-  }
-}
-
-static inline void
-decode_hexenc_inner(string::const_iterator i,
-                    string::const_iterator end,
-                    char *out)
-{
-  for (; i != end; ++i)
-    {
-      char t = decode_hex_char(*i++);
-      t <<= 4;
-      t |= decode_hex_char(*i);
-      *out++ = t;
-    }
-}
-
-string decode_hexenc(string const & in)
-{
-
-  I(in.size() % 2 == 0);
-  if (LIKELY(in.size() == constants::idlen))
-    {
-      char buf[constants::idlen / 2];
-      decode_hexenc_inner(in.begin(), in.end(), buf);
-      return string(buf, constants::idlen / 2);
-    }
-  else
-    {
-      scoped_array<char> buf(new char[in.size() / 2]);
-      decode_hexenc_inner(in.begin(), in.end(), buf.get());
-      return string(buf.get(), in.size() / 2);
-    }
-}
 
 template <typename T>
 void pack(T const & in, base64< gzip<T> > & out)
@@ -283,31 +207,17 @@ void
 calculate_ident(data const & dat,
                 hexenc<id> & ident)
 {
-  string s;
   try
     {
-      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"));
+      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"),
+                    new Botan::Hex_Encoder(Botan::Hex_Encoder::Lowercase));
       p.process_msg(dat());
-      s = p.read_all_as_string();
+      ident = p.read_all_as_string();
     }
   catch (Botan::Exception & e)
     {
       error_in_transform(e);
     }
-  
-  id ident_decoded(s);
-  encode_hexenc(ident_decoded, ident);
-}
-
-void
-calculate_ident(base64< gzip<data> > const & dat,
-                hexenc<id> & ident)
-{
-  gzip<data> data_decoded;
-  data data_decompressed;
-  decode_base64(dat, data_decoded);
-  decode_gzip(data_decoded, data_decompressed);
-  calculate_ident(data_decompressed, ident);
 }
 
 void
