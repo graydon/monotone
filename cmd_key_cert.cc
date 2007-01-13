@@ -136,7 +136,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
     val = cert_value(get_stdin());
 
   packet_db_writer dbw(app);
-  app.project.put_cert(ident, name, val, dbw);
+  app.get_project().put_cert(ident, name, val, dbw);
   guard.commit();
 }
 

@@ -485,7 +485,7 @@ guess_branch(revision_id const & ident,
           "please provide a branch name"));
 
       set<utf8> branches;
-      app.project.get_revision_branches(ident, branches);
+      app.get_project().get_revision_branches(ident, branches);
 
       N(branches.size() != 0,
         F("no branch certs found for revision %s, "

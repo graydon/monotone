@@ -541,7 +541,7 @@ log_certs(app_state & app, revision_id id, cert_name name,
   if (multiline)
     newline = true;
 
-  app.project.get_revision_certs_by_name(id, name, certs);
+  app.get_project().get_revision_certs_by_name(id, name, certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {

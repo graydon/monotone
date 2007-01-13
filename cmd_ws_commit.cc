@@ -247,7 +247,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     calculate_ident(rdat, inv_id);
     dbw.consume_revision_data(inv_id, rdat);
 
-    app.project.put_standard_certs_from_options(inv_id,
+    app.get_project().put_standard_certs_from_options(inv_id,
                                                 branchname(),
                                                 log_message(),
                                                 dbw);
@@ -496,7 +496,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.project.get_branch_heads(app.opts.branch_name, heads);
+      app.get_project().get_branch_heads(app.opts.branch_name, heads);
       N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branch_name);
       if (heads.size() > 1)
@@ -521,7 +521,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
 
       I(!app.opts.branch_name().empty());
 
-      N(app.project.revision_is_in_branch(ident, app.opts.branch_name),
+      N(app.get_project().revision_is_in_branch(ident, app.opts.branch_name),
         F("revision %s is not a member of branch %s")
         % ident % app.opts.branch_name);
     }
@@ -742,7 +742,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   I(restricted_rev.edges.size() == 1);
 
   set<revision_id> heads;
-  app.project.get_branch_heads(app.opts.branch_name, heads);
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
   unsigned int old_head_size = heads.size();
 
   if (app.opts.branch_name() != "")
@@ -889,7 +889,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     write_revision(restricted_rev, rdat);
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
-    app.project.put_standard_certs_from_options(restricted_rev_id,
+    app.get_project().put_standard_certs_from_options(restricted_rev_id,
                                                 branchname(),
                                                 log_message(),
                                                 dbw);
@@ -907,7 +907,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.blank_user_log();
 
-  app.project.get_branch_heads(app.opts.branch_name, heads);
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
@@ -925,7 +925,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     // later.
     map<cert_name, cert_value> certs;
     vector< revision<cert> > ctmp;
-    app.project.get_revision_certs(restricted_rev_id, ctmp);
+    app.get_project().get_revision_certs(restricted_rev_id, ctmp);
     for (vector< revision<cert> >::const_iterator i = ctmp.begin();
          i != ctmp.end(); ++i)
       {
@@ -991,7 +991,7 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
 
       I(!app.opts.branch_name().empty());
 
-      N(app.project.revision_is_in_branch(ident, app.opts.branch_name),
+      N(app.get_project().revision_is_in_branch(ident, app.opts.branch_name),
         F("revision %s is not a member of branch %s")
         % ident % app.opts.branch_name);
     }
@@ -1002,7 +1002,7 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.project.get_branch_heads(app.opts.branch_name, heads);
+      app.get_project().get_branch_heads(app.opts.branch_name, heads);
       if (heads.size() > 1)
         {
           P(F("branch %s has multiple heads:") % app.opts.branch_name);

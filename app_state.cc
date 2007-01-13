@@ -194,6 +194,12 @@ app_state::make_branch_sticky()
     }
 }
 
+project_t &
+app_state::get_project()
+{
+  return project;
+}
+
 void
 app_state::set_root(system_path const & path)
 {

@@ -55,7 +55,7 @@ get_test_results_for_revision(revision_id const & id,
                               app_state & app)
 {
   vector< revision<cert> > certs;
-  app.project.get_revision_certs_by_name(id, testresult_cert_name, certs);
+  app.get_project().get_revision_certs_by_name(id, testresult_cert_name, certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -83,7 +83,7 @@ acceptable_descendent(cert_value const & branch,
   L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
-  if (!app.project.revision_is_in_branch(target, branch()))
+  if (!app.get_project().revision_is_in_branch(target, branch()))
     {
       L(FL("%s not in branch %s") % target % branch);
       return false;

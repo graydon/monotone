@@ -71,7 +71,7 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
     app.opts.branch_name = idx(args, 0);
   }
   set<revision_id> heads;
-  app.project.get_branch_heads(app.opts.branch_name(), heads);
+  app.get_project().get_branch_heads(app.opts.branch_name(), heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << "\n";
 }
@@ -1111,7 +1111,7 @@ AUTOMATE(packets_for_certs, N_("REVID"), options::opts::none)
 
   N(app.db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
-  app.project.get_revision_certs(r_id, certs);
+  app.get_project().get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs,i));
 }
@@ -1257,7 +1257,7 @@ AUTOMATE(branches, "", options::opts::none)
 
   set<utf8> names;
 
-  app.project.get_branch_list(names);
+  app.get_project().get_branch_list(names);
 
   for (set<utf8>::const_iterator i = names.begin();
        i != names.end(); ++i)
@@ -1319,13 +1319,13 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
   prt.print_stanza(stz);
   
   set<tag_t> tags;
-  app.project.get_tags(tags);
+  app.get_project().get_tags(tags);
 
   for (set<tag_t>::const_iterator tag = tags.begin();
        tag != tags.end(); ++tag)
     {
       set<utf8> branches;
-      app.project.get_revision_branches(tag->ident, branches);
+      app.get_project().get_revision_branches(tag->ident, branches);
     
       bool show(!filtering);
       vector<string> branch_names;

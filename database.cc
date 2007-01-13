@@ -2600,7 +2600,7 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  __app->project.get_branch_list(i->second, branch_names);
+                  __app->get_project().get_branch_list(i->second, branch_names);
                 }
 
               // for each branch name, get the branch heads
@@ -2609,7 +2609,7 @@ void database::complete(selector_type ty,
                    bn != branch_names.end(); bn++)
                 {
                   set<revision_id> branch_heads;
-                  __app->project.get_branch_heads(*bn, branch_heads);
+                  __app->get_project().get_branch_heads(*bn, branch_heads);
                   heads.insert(branch_heads.begin(), branch_heads.end());
                   L(FL("after get_branch_heads for %s, heads has %d entries") % (*bn) % heads.size());
                 }

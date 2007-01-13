@@ -1336,7 +1336,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   // clients always include in the synchronization set, every branch that the
   // user requested
   set<utf8> all_branches, ok_branches;
-  app.project.get_branch_list(all_branches);
+  app.get_project().get_branch_list(all_branches);
   for (set<utf8>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
     {
@@ -1429,7 +1429,7 @@ session::process_anonymous_cmd(protocol_role their_role,
     }
 
   set<utf8> all_branches, ok_branches;
-  app.project.get_branch_list(all_branches);
+  app.get_project().get_branch_list(all_branches);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
   for (set<utf8>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
@@ -1562,7 +1562,7 @@ session::process_auth_cmd(protocol_role their_role,
     }
 
   set<utf8> all_branches, ok_branches;
-  app.project.get_branch_list(all_branches);
+  app.get_project().get_branch_list(all_branches);
   for (set<utf8>::const_iterator i = all_branches.begin();
        i != all_branches.end(); i++)
     {
@@ -3068,7 +3068,7 @@ session::rebuild_merkle_trees(app_state & app,
         // FIXME_PROJECTS: probably something like
         // app.get_project(i->project).get_branch_certs(i->branch)
         // or so.
-        app.project.get_branch_certs(*i, certs);
+        app.get_project().get_branch_certs(*i, certs);
         for (vector< revision<cert> >::const_iterator j = certs.begin();
              j != certs.end(); j++)
           {

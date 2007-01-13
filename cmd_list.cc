@@ -53,7 +53,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
   // use the app.db version instead if no project is specified.
-  app.project.get_revision_certs(ident, ts);
+  app.get_project().get_revision_certs(ident, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
@@ -244,7 +244,7 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
   combine_and_check_globish(app.opts.exclude_patterns, exc);
   globish_matcher match(inc, exc);
   set<utf8> names;
-  app.project.get_branch_list(names);
+  app.get_project().get_branch_list(names);
 
   for (set<utf8>::const_iterator i = names.begin();
        i != names.end(); ++i)
@@ -288,7 +288,7 @@ static void
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
   set<tag_t> tags;
-  app.project.get_tags(tags);
+  app.get_project().get_tags(tags);
 
   for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
@@ -679,7 +679,7 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
   // use the app.db version instead if no project is specified.
-  app.project.get_revision_certs(rid, ts);
+  app.get_project().get_revision_certs(rid, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());

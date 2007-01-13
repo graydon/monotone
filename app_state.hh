@@ -81,8 +81,11 @@ public:
 
   void make_branch_sticky();
 
-
+private:
   project_t project;
+public:
+  //project_t & get_project(string const & name);
+  project_t & get_project(); // get_project(opts.project) or I()
 
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);

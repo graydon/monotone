@@ -150,7 +150,7 @@ CMD(update, N_("workspace"), "",
   {
     // figure out which branches the target is in
     set< utf8 > branches;
-    app.project.get_revision_branches(chosen_rid, branches);
+    app.get_project().get_revision_branches(chosen_rid, branches);
 
     if (branches.find(app.opts.branch_name) != branches.end())
       {
@@ -296,7 +296,7 @@ merge_two(revision_id const & left, revision_id const & right,
   interactive_merge_and_store(left, right, merged, app);
 
   packet_db_writer dbw(app);
-  app.project.put_standard_certs_from_options(merged,
+  app.get_project().put_standard_certs_from_options(merged,
                                               branch,
                                               log.str(),
                                               dbw);
@@ -322,7 +322,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
     F("please specify a branch, with --branch=BRANCH"));
 
   set<revision_id> heads;
-  app.project.get_branch_heads(app.opts.branch_name(), heads);
+  app.get_project().get_branch_heads(app.opts.branch_name(), heads);
 
   N(heads.size() != 0, F("branch '%s' is empty") % app.opts.branch_name);
   if (heads.size() == 1)
@@ -390,7 +390,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 
       ancestors.clear();
       heads_for_ancestor.clear();
-      app.project.get_branch_heads(app.opts.branch_name(), heads);
+      app.get_project().get_branch_heads(app.opts.branch_name(), heads);
       pass++;
     }
 
@@ -455,8 +455,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
   if (args.size() != 3)
     throw usage(name);
 
-  app.project.get_branch_heads(idx(args, 0)(), src_heads);
-  app.project.get_branch_heads(idx(args, 1)(), dst_heads);
+  app.get_project().get_branch_heads(idx(args, 0)(), src_heads);
+  app.get_project().get_branch_heads(idx(args, 1)(), dst_heads);
 
   N(src_heads.size() != 0, F("branch '%s' is empty") % idx(args, 0)());
   N(src_heads.size() == 1, F("branch '%s' is not merged") % idx(args, 0)());
@@ -484,7 +484,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
       packet_db_writer dbw(app);
-      app.project.put_revision_in_branch(*src_i, idx(args, 1), dbw);
+      app.get_project().put_revision_in_branch(*src_i, idx(args, 1), dbw);
       guard.commit();
     }
   else
@@ -567,7 +567,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
                        % idx(args, 1) % (*dst_i)).str();
 
       packet_db_writer dbw(app);
-      app.project.put_standard_certs_from_options(merged,
+      app.get_project().put_standard_certs_from_options(merged,
                                                   idx(args, 1),
                                                   log_message(),
                                                   dbw);
@@ -820,7 +820,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
   N(app.opts.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
-  app.project.get_branch_heads(app.opts.branch_name(), heads);
+  app.get_project().get_branch_heads(app.opts.branch_name(), heads);
 
   if (heads.size() == 0)
     P(F("branch '%s' is empty") % app.opts.branch_name);
