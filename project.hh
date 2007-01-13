@@ -53,36 +53,36 @@ public:
 
   bool revision_is_in_branch(revision_id const & id, utf8 const & branch);
   void put_revision_in_branch(revision_id const & id,
-			      utf8 const & branch,
-			      packet_consumer & pc);
+                              utf8 const & branch,
+                              packet_consumer & pc);
 
   outdated_indicator get_revision_cert_hashes(revision_id const & id,
                                               std::vector<hexenc<id> > & hashes);
   outdated_indicator get_revision_certs(revision_id const & id,
-					std::vector<revision<cert> > & certs);
+                                        std::vector<revision<cert> > & certs);
   outdated_indicator get_revision_certs_by_name(revision_id const & id,
-						cert_name const & name,
-						std::vector<revision<cert> > & certs);
+                                                cert_name const & name,
+                                                std::vector<revision<cert> > & certs);
   outdated_indicator get_revision_branches(revision_id const & id,
-					   std::set<utf8> & branches);
+                                           std::set<utf8> & branches);
   outdated_indicator get_branch_certs(utf8 const & branch,
-				      std::vector<revision<cert> > & certs);
+                                      std::vector<revision<cert> > & certs);
 
   void put_standard_certs(revision_id const & id,
-			  utf8 const & branch,
-			  string const & changelog,
-			  boost::posix_time::ptime const & time,
-			  utf8 const & author,
-			  packet_consumer & pc);
+                          utf8 const & branch,
+                          string const & changelog,
+                          boost::posix_time::ptime const & time,
+                          utf8 const & author,
+                          packet_consumer & pc);
   void put_standard_certs_from_options(revision_id const & id,
-				       utf8 const & branch,
-				       string const & changelog,
-				       packet_consumer & pc);
+                                       utf8 const & branch,
+                                       string const & changelog,
+                                       packet_consumer & pc);
 
   void put_cert(revision_id const & id,
-		cert_name const & name,
-		cert_value const & value,
-		packet_consumer & pc);
+                cert_name const & name,
+                cert_value const & value,
+                packet_consumer & pc);
 };
 
 #endif

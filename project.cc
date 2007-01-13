@@ -37,10 +37,10 @@ project_t::get_branch_list(std::set<utf8> & names)
       indicator = app.db.get_branches(got);
       branches.clear();
       for (std::vector<std::string>::iterator i = got.begin();
-	   i != got.end(); ++i)
-	{
-	  branches.insert(*i);
-	}
+           i != got.end(); ++i)
+        {
+          branches.insert(*i);
+        }
     }
 
   names = branches;
@@ -48,7 +48,7 @@ project_t::get_branch_list(std::set<utf8> & names)
 
 void
 project_t::get_branch_list(utf8 const & glob,
-			   std::set<utf8> & names)
+                           std::set<utf8> & names)
 {
   std::vector<std::string> got;
   app.db.get_branches(glob(), got);
@@ -95,20 +95,20 @@ project_t::get_branch_heads(utf8 const & name, std::set<revision_id> & heads)
 
       outdated_indicator stamp;
       branch.first = app.db.get_revisions_with_cert(cert_name(branch_cert_name),
-						    branch_encoded,
-						    branch.second);
+                                                    branch_encoded,
+                                                    branch.second);
 
       not_in_branch p(app, branch_encoded);
       erase_ancestors_and_failures(branch.second, p, app);
       L(FL("found heads of branch %s (%s heads)")
-	% name % branch.second.size());
+        % name % branch.second.size());
     }
   heads = branch.second;
 }
 
 bool
 project_t::revision_is_in_branch(revision_id const & id,
-				 utf8 const & branch)
+                                 utf8 const & branch)
 {
   base64<cert_value> branch_encoded;
   encode_base64(cert_value(branch()), branch_encoded);
@@ -131,8 +131,8 @@ project_t::revision_is_in_branch(revision_id const & id,
 
 void
 project_t::put_revision_in_branch(revision_id const & id,
-				  utf8 const & branch,
-				  packet_consumer & pc)
+                                  utf8 const & branch,
+                                  packet_consumer & pc)
 {
   cert_revision_in_branch(id, cert_value(branch()), app, pc);
 }
@@ -147,15 +147,15 @@ project_t::get_revision_cert_hashes(revision_id const & id,
 
 outdated_indicator
 project_t::get_revision_certs(revision_id const & id,
-			      std::vector<revision<cert> > & certs)
+                              std::vector<revision<cert> > & certs)
 {
   return app.db.get_revision_certs(id, certs);
 }
 
 outdated_indicator
 project_t::get_revision_certs_by_name(revision_id const & id,
-				      cert_name const & name,
-				      std::vector<revision<cert> > & certs)
+                                      cert_name const & name,
+                                      std::vector<revision<cert> > & certs)
 {
   outdated_indicator i = app.db.get_revision_certs(id, name, certs);
   erase_bogus_certs(certs, app);
@@ -164,7 +164,7 @@ project_t::get_revision_certs_by_name(revision_id const & id,
 
 outdated_indicator
 project_t::get_revision_branches(revision_id const & id,
-				 std::set<utf8> & branches)
+                                 std::set<utf8> & branches)
 {
   std::vector<revision<cert> > certs;
   outdated_indicator i = get_revision_certs_by_name(id, branch_cert_name, certs);
@@ -181,7 +181,7 @@ project_t::get_revision_branches(revision_id const & id,
 
 outdated_indicator
 project_t::get_branch_certs(utf8 const & branch,
-			    std::vector<revision<cert> > & certs)
+                            std::vector<revision<cert> > & certs)
 {
   base64<cert_value> branch_encoded;
   encode_base64(cert_value(branch()), branch_encoded);
@@ -190,8 +190,8 @@ project_t::get_branch_certs(utf8 const & branch,
 }
 
 tag_t::tag_t(revision_id const & ident,
-	     utf8 const & name,
-	     rsa_keypair_id const & key)
+             utf8 const & name,
+             rsa_keypair_id const & key)
   : ident(ident), name(name), key(key)
 {}
 
@@ -203,12 +203,12 @@ operator < (tag_t const & a, tag_t const & b)
   else if (a.name == b.name)
     {
       if (a.ident < b.ident)
-	return true;
+        return true;
       else if (a.ident == b.ident)
-	{
-	  if (a.key < b.key)
-	    return true;
-	}
+        {
+          if (a.key < b.key)
+            return true;
+        }
     }
   return false;
 }
@@ -232,8 +232,8 @@ project_t::get_tags(set<tag_t> & tags)
 
 void
 project_t::put_tag(revision_id const & id,
-		   string const & name,
-		   packet_consumer & pc)
+                   string const & name,
+                   packet_consumer & pc)
 {
   cert_revision_tag(id, name, app, pc);
 }
@@ -241,11 +241,11 @@ project_t::put_tag(revision_id const & id,
 
 void
 project_t::put_standard_certs(revision_id const & id,
-			      utf8 const & branch,
-			      string const & changelog,
-			      boost::posix_time::ptime const & time,
-			      utf8 const & author,
-			      packet_consumer & pc)
+                              utf8 const & branch,
+                              string const & changelog,
+                              boost::posix_time::ptime const & time,
+                              utf8 const & author,
+                              packet_consumer & pc)
 {
   cert_revision_in_branch(id, cert_value(branch()), app, pc);
   cert_revision_changelog(id, changelog, app, pc);
@@ -258,22 +258,22 @@ project_t::put_standard_certs(revision_id const & id,
 
 void
 project_t::put_standard_certs_from_options(revision_id const & id,
-					   utf8 const & branch,
-					   string const & changelog,
-					   packet_consumer & pc)
+                                           utf8 const & branch,
+                                           string const & changelog,
+                                           packet_consumer & pc)
 {
   put_standard_certs(id,
-		     branch,
-		     changelog,
-		     app.opts.date_given?app.opts.date:now(),
-		     app.opts.author,
-		     pc);
+                     branch,
+                     changelog,
+                     app.opts.date_given?app.opts.date:now(),
+                     app.opts.author,
+                     pc);
 }
 void
 project_t::put_cert(revision_id const & id,
-		    cert_name const & name,
-		    cert_value const & value,
-		    packet_consumer & pc)
+                    cert_name const & name,
+                    cert_value const & value,
+                    packet_consumer & pc)
 {
   put_simple_revision_cert(id, name, value, app, pc);
 }
