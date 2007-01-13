@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
@@ -485,21 +484,21 @@ guess_branch(revision_id const & ident,
         F("no branch found for empty revision, "
           "please provide a branch name"));
 
-      vector< revision<cert> > certs;
-      cert_name branch(branch_cert_name);
-      app.db.get_revision_certs(ident, branch, certs);
-      erase_bogus_certs(certs, app);
+      set<utf8> branches;
+      app.get_project().get_revision_branches(ident, branches);
 
-      N(certs.size() != 0,
+      N(branches.size() != 0,
         F("no branch certs found for revision %s, "
           "please provide a branch name") % ident);
 
-      N(certs.size() == 1,
+      N(branches.size() == 1,
         F("multiple branch certs found for revision %s, "
           "please provide a branch name") % ident);
 
-      decode_base64(certs[0].inner().value, branchname);
-      app.opts.branch_name = branchname();
+      set<utf8>::iterator i = branches.begin();
+      I(i != branches.end());
+      app.opts.branch_name = *i;
+      branchname = (*i)();
     }
 }
 
@@ -519,7 +518,7 @@ make_simple_cert(hexenc<id> const & id,
   c = t;
 }
 
-static void
+void
 put_simple_revision_cert(revision_id const & id,
                          cert_name const & nm,
                          cert_value const & val,
@@ -540,47 +539,6 @@ cert_revision_in_branch(revision_id const & rev,
 {
   put_simple_revision_cert (rev, branch_cert_name,
                             branchname, app, pc);
-}
-
-namespace
-{
-  struct not_in_branch : public is_failure
-  {
-    app_state & app;
-    base64<cert_value > const & branch_encoded;
-    not_in_branch(app_state & app,
-                  base64<cert_value> const & branch_encoded)
-      : app(app), branch_encoded(branch_encoded)
-    {}
-    virtual bool operator()(revision_id const & rid)
-    {
-      vector< revision<cert> > certs;
-      app.db.get_revision_certs(rid,
-                                cert_name(branch_cert_name),
-                                branch_encoded,
-                                certs);
-      erase_bogus_certs(certs, app);
-      return certs.empty();
-    }
-  };
-}
-
-void
-get_branch_heads(cert_value const & branchname,
-                 app_state & app,
-                 set<revision_id> & heads)
-{
-  L(FL("getting heads of branch %s") % branchname);
-  base64<cert_value> branch_encoded;
-  encode_base64(branchname, branch_encoded);
-
-  app.db.get_revisions_with_cert(cert_name(branch_cert_name),
-                                 branch_encoded,
-                                 heads);
-
-  not_in_branch p(app, branch_encoded);
-  erase_ancestors_and_failures(heads, p, app);
-  L(FL("found heads of branch %s (%s heads)") % branchname % heads.size());
 }
 
 

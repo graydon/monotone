@@ -368,8 +368,7 @@ describe_revision(app_state & app,
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;
-  app.db.get_revision_certs(id, author_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.get_project().get_revision_certs_by_name(id, author_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -378,8 +377,7 @@ describe_revision(app_state & app,
       description += " ";
       description += tv();
     }
-  app.db.get_revision_certs(id, date_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.get_project().get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -462,7 +460,7 @@ void
 notify_if_multiple_heads(app_state & app)
 {
   set<revision_id> heads;
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),

@@ -377,7 +377,7 @@ annotate_context::build_revisions_to_annotations
        i != seen.end(); i++)
     {
       vector< revision<cert> > certs;
-      app.db.get_revision_certs(*i, certs);
+      app.get_project().get_revision_certs(*i, certs);
       erase_bogus_certs(certs, app);
 
       string author(cert_string_value(certs, author_cert_name,

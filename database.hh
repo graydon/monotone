@@ -28,6 +28,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "cleanup.hh"
 #include "roster.hh"
 #include "selectors.hh"
+#include "outdated_indicator.hh"
 #include "vocab.hh"
 #include "rev_height.hh"
 
@@ -405,42 +406,51 @@ private:
                  std::vector<cert> & certs,
                  std::string const & table);
 
+  outdated_indicator_factory cert_stamper;
 public:
+
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
   void put_revision_cert(revision<cert> const & cert);
 
   // this variant has to be rather coarse and fast, for netsync's use
-  void get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
-                               std::pair<revision_id, rsa_keypair_id> > > & idx);
+  outdated_indicator get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
+                              std::pair<revision_id, rsa_keypair_id> > > & idx);
 
-  void get_revision_certs(std::vector< revision<cert> > & certs);
+  // Only used by database_check.cc
+  outdated_indicator get_revision_certs(std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  outdated_indicator get_revision_certs(cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  // Only used by get_branch_certs (project.cc)
+  outdated_indicator get_revision_certs(cert_name const & name,
                           base64<cert_value> const & val,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  // Only used by revision_is_in_branch (project.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
 
-  void get_revisions_with_cert(cert_name const & name,
+  // Only used by get_branch_heads (project.cc)
+  outdated_indicator get_revisions_with_cert(cert_name const & name,
                                base64<cert_value> const & value,
                                std::set<revision_id> & revisions);
 
-  void get_revision_certs(revision_id const & ident,
+  // Used through project.cc, and by
+  // anc_graph::add_node_for_oldstyle_revision (revision.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  // Used through get_revision_cert_hashes (project.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< hexenc<id> > & hashes);
 
   void get_revision_cert(hexenc<id> const & hash,
@@ -525,7 +535,9 @@ private:
                                     database & db);
 public:
     // branches
-  void get_branches(std::vector<std::string> & names);
+  outdated_indicator get_branches(std::vector<std::string> & names);
+  outdated_indicator get_branches(std::string const & glob,
+                                  std::vector<std::string> & names);
 
   bool check_integrity();
 

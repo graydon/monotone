@@ -135,14 +135,8 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   else
     val = cert_value(get_stdin());
 
-  base64<cert_value> val_encoded;
-  encode_base64(val, val_encoded);
-
-  cert t(ident, name, val_encoded, key);
-
   packet_db_writer dbw(app);
-  calculate_cert(app, t);
-  dbw.consume_revision_cert(revision<cert>(t));
+  app.get_project().put_cert(ident, name, val, dbw);
   guard.commit();
 }
 

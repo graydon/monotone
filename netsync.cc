@@ -1268,13 +1268,6 @@ session::process_error_cmd(string const & errmsg)
   throw bad_decode(F("received network error: %s") % errmsg);
 }
 
-void
-get_branches(app_state & app, vector<string> & names)
-{
-  app.db.get_branches(names);
-  sort(names.begin(), names.end());
-}
-
 static const var_domain known_servers_domain = var_domain("known-servers");
 
 bool
@@ -1342,14 +1335,13 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
   // clients always include in the synchronization set, every branch that the
   // user requested
-  vector<string> branchnames;
-  set<utf8> ok_branches;
-  get_branches(app, branchnames);
-  for (vector<string>::const_iterator i = branchnames.begin();
-      i != branchnames.end(); i++)
+  set<utf8> all_branches, ok_branches;
+  app.get_project().get_branch_list(all_branches);
+  for (set<utf8>::const_iterator i = all_branches.begin();
+      i != all_branches.end(); i++)
     {
-      if (our_matcher(*i))
-        ok_branches.insert(utf8(*i));
+      if (our_matcher((*i)()))
+        ok_branches.insert(*i);
     }
   rebuild_merkle_trees(app, ok_branches);
 
@@ -1436,22 +1428,21 @@ session::process_anonymous_cmd(protocol_role their_role,
         }
     }
 
-  vector<string> branchnames;
-  set<utf8> ok_branches;
-  get_branches(app, branchnames);
+  set<utf8> all_branches, ok_branches;
+  app.get_project().get_branch_list(all_branches);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
-  for (vector<string>::const_iterator i = branchnames.begin();
-      i != branchnames.end(); i++)
+  for (set<utf8>::const_iterator i = all_branches.begin();
+      i != all_branches.end(); i++)
     {
-      if (their_matcher(*i))
+      if (their_matcher((*i)()))
         if (app.opts.use_transport_auth &&
-            !app.lua.hook_get_netsync_read_permitted(*i))
+            !app.lua.hook_get_netsync_read_permitted((*i)()))
           {
             error(not_permitted,
                   (F("anonymous access to branch '%s' denied by server") % *i).str());
           }
         else
-          ok_branches.insert(utf8(*i));
+          ok_branches.insert(*i);
     }
 
   if (app.opts.use_transport_auth)
@@ -1509,9 +1500,7 @@ session::process_auth_cmd(protocol_role their_role,
 
   hexenc<id> their_key_hash;
   encode_hexenc(client, their_key_hash);
-  set<utf8> ok_branches;
-  vector<string> branchnames;
-  get_branches(app, branchnames);
+
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
 
   if (!app.db.public_key_exists(their_key_hash))
@@ -1572,19 +1561,21 @@ session::process_auth_cmd(protocol_role their_role,
         }
     }
 
-  for (vector<string>::const_iterator i = branchnames.begin();
-       i != branchnames.end(); i++)
+  set<utf8> all_branches, ok_branches;
+  app.get_project().get_branch_list(all_branches);
+  for (set<utf8>::const_iterator i = all_branches.begin();
+       i != all_branches.end(); i++)
     {
-      if (their_matcher(*i))
+      if (their_matcher((*i)()))
         {
-          if (!app.lua.hook_get_netsync_read_permitted(*i, their_id))
+          if (!app.lua.hook_get_netsync_read_permitted((*i)(), their_id))
             {
               error(not_permitted,
                     (F("denied '%s' read permission for '%s' excluding '%s' because of branch '%s'")
                      % their_id % their_include_pattern % their_exclude_pattern % *i).str());
             }
           else
-            ok_branches.insert(utf8(*i));
+            ok_branches.insert(*i);
         }
     }
 
@@ -3069,34 +3060,30 @@ session::rebuild_merkle_trees(app_state & app,
   set<rsa_keypair_id> inserted_keys;
 
   {
-    // Get our branches
-    vector<string> names;
-    get_branches(app, names);
-    for (size_t i = 0; i < names.size(); ++i)
+    for (set<utf8>::const_iterator i = branchnames.begin();
+         i != branchnames.end(); ++i)
       {
-        if(branchnames.find(names[i]) != branchnames.end())
+        // Get branch certs.
+        vector< revision<cert> > certs;
+        // FIXME_PROJECTS: probably something like
+        // app.get_project(i->project).get_branch_certs(i->branch)
+        // or so.
+        app.get_project().get_branch_certs(*i, certs);
+        for (vector< revision<cert> >::const_iterator j = certs.begin();
+             j != certs.end(); j++)
           {
-            // Branch matches, get its certs.
-            vector< revision<cert> > certs;
-            base64<cert_value> encoded_name;
-            encode_base64(cert_value(names[i]),encoded_name);
-            app.db.get_revision_certs(branch_cert_name, encoded_name, certs);
-            for (vector< revision<cert> >::const_iterator j = certs.begin();
-                 j != certs.end(); j++)
-              {
-                revision_id rid(j->inner().ident);
-                insert_with_parents(rid, rev_refiner, rev_enumerator,
-                                    revision_ids, app, revisions_ticker);
-                // Granch certs go in here, others later on.
-                hexenc<id> tmp;
-                id item;
-                cert_hash_code(j->inner(), tmp);
-                decode_hexenc(tmp, item);
-                cert_refiner.note_local_item(item);
-                rev_enumerator.note_cert(rid, tmp);
-                if (inserted_keys.find(j->inner().key) == inserted_keys.end())
-                    inserted_keys.insert(j->inner().key);
-              }
+            revision_id rid(j->inner().ident);
+            insert_with_parents(rid, rev_refiner, rev_enumerator,
+                                revision_ids, app, revisions_ticker);
+            // Branch certs go in here, others later on.
+            hexenc<id> tmp;
+            id item;
+            cert_hash_code(j->inner(), tmp);
+            decode_hexenc(tmp, item);
+            cert_refiner.note_local_item(item);
+            rev_enumerator.note_cert(rid, tmp);
+            if (inserted_keys.find(j->inner().key) == inserted_keys.end())
+              inserted_keys.insert(j->inner().key);
           }
       }
   }

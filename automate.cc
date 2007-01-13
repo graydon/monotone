@@ -71,7 +71,7 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
     app.opts.branch_name = idx(args, 0);
   }
   set<revision_id> heads;
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branch_name(), heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << "\n";
 }
@@ -1111,7 +1111,7 @@ AUTOMATE(packets_for_certs, N_("REVID"), options::opts::none)
 
   N(app.db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
-  app.db.get_revision_certs(r_id, certs);
+  app.get_project().get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs,i));
 }
@@ -1255,15 +1255,16 @@ AUTOMATE(branches, "", options::opts::none)
   N(args.size() == 0,
     F("no arguments needed"));
 
-  vector<string> names;
+  set<utf8> names;
 
-  app.db.get_branches(names);
-  sort(names.begin(), names.end());
+  app.get_project().get_branch_list(names);
 
-  for (vector<string>::const_iterator i = names.begin();
+  for (set<utf8>::const_iterator i = names.begin();
        i != names.end(); ++i)
-    if (!app.lua.hook_ignore_branch(*i))
-      output << (*i) << "\n";
+    {
+      if (!app.lua.hook_ignore_branch((*i)()))
+        output << (*i) << "\n";
+    }
 }
 
 // Name: tags
@@ -1317,46 +1318,39 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
   stz.push_str_pair(symbol("format_version"), "1");
   prt.print_stanza(stz);
   
-  vector<revision<cert> > tag_certs;
-  app.db.get_revision_certs(tag_cert_name, tag_certs);
+  set<tag_t> tags;
+  app.get_project().get_tags(tags);
 
-  for (vector<revision<cert> >::const_iterator i = tag_certs.begin();
-       i != tag_certs.end(); ++i) {
-
-    cert tagcert(i->inner());
-    vector<revision<cert> > branch_certs;
-    app.db.get_revision_certs(tagcert.ident, branch_cert_name, branch_certs);
+  for (set<tag_t>::const_iterator tag = tags.begin();
+       tag != tags.end(); ++tag)
+    {
+      set<utf8> branches;
+      app.get_project().get_revision_branches(tag->ident, branches);
     
-    bool show(!filtering);
-    vector<string> branch_names;
+      bool show(!filtering);
+      vector<string> branch_names;
 
-    for (vector<revision<cert> >::const_iterator j = branch_certs.begin();
-         j != branch_certs.end(); ++j) {
-
-      cert branchcert(j->inner());
-      cert_value branch;
-      decode_base64(branchcert.value, branch);
-      string branch_name(branch());
+      for (set<utf8>::const_iterator branch = branches.begin();
+           branch != branches.end(); ++branch)
+        {
+          if (app.lua.hook_ignore_branch((*branch)()))
+            continue;
       
-      if (app.lua.hook_ignore_branch(branch_name))
-        continue;
-      
-      if (!show && match(branch_name)) 
-        show = true;
-      branch_names.push_back(branch_name);
-    }
+          if (!show && match((*branch)()))
+            show = true;
+          branch_names.push_back((*branch)());
+        }
 
-    if (show) {
-      basic_io::stanza stz;
-      cert_value tag;
-      decode_base64(tagcert.value, tag);
-      stz.push_str_pair(symbol("tag"), tag());
-      stz.push_hex_pair(symbol("revision"), tagcert.ident);
-      stz.push_str_pair(symbol("signer"), tagcert.key());
-      stz.push_str_multi(symbol("branches"), branch_names);
-      prt.print_stanza(stz);
+      if (show)
+        {
+          basic_io::stanza stz;
+          stz.push_str_pair(symbol("tag"), tag->name());
+          stz.push_hex_pair(symbol("revision"), tag->ident.inner());
+          stz.push_str_pair(symbol("signer"), tag->key());
+          stz.push_str_multi(symbol("branches"), branch_names);
+          prt.print_stanza(stz);
+        }
     }
-  }
   output.write(prt.buf.data(), prt.buf.size());
 }
 

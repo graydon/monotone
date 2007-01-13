@@ -33,6 +33,8 @@ MOST_SOURCES = 								\
 	update.cc update.hh						\
 	work.cc work_migration.cc work.hh				\
 	cert.cc cert.hh							\
+	project.cc project.hh						\
+	outdated_indicator.cc outdated_indicator.hh			\
 	database.cc database.hh						\
 	key_store.cc key_store.hh					\
 	localized_file_io.cc localized_file_io.hh			\

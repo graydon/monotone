@@ -66,12 +66,20 @@ bool priv_key_exists(app_state & app, rsa_keypair_id const & id);
 void load_key_pair(app_state & app,
                    rsa_keypair_id const & id,
                    keypair & kp);
-void calculate_cert(app_state & app, cert & t);
+
+// Only used in cert.cc, and in revision.cc in what looks
+// like migration code.
 void make_simple_cert(hexenc<id> const & id,
                       cert_name const & nm,
                       cert_value const & cv,
                       app_state & app,
                       cert & c);
+
+void put_simple_revision_cert(revision_id const & id,
+                              cert_name const & nm,
+                              cert_value const & val,
+                              app_state & app,
+                              packet_consumer & pc);
 
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
                        app_state & app);
@@ -89,10 +97,6 @@ cert_revision_in_branch(revision_id const & ctx,
                         app_state & app,
                         packet_consumer & pc);
 
-void
-get_branch_heads(cert_value const & branchname,
-                 app_state & app,
-                 std::set<revision_id> & heads);
 
 // We also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling

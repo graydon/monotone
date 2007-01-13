@@ -51,7 +51,10 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   revision_id ident;
   complete(app, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
-  app.db.get_revision_certs(ident, ts);
+  // FIXME_PROJECTS: after projects are implemented,
+  // use the app.db version instead if no project is specified.
+  app.get_project().get_revision_certs(ident, ts);
+
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
 
@@ -240,14 +243,17 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     throw usage(name);
   combine_and_check_globish(app.opts.exclude_patterns, exc);
   globish_matcher match(inc, exc);
-  vector<string> names;
-  app.db.get_branches(names);
+  set<utf8> names;
+  app.get_project().get_branch_list(names);
 
-  sort(names.begin(), names.end());
-  for (size_t i = 0; i < names.size(); ++i)
-    if (match(idx(names, i))
-        && !app.lua.hook_ignore_branch(idx(names, i)))
-      cout << idx(names, i) << "\n";
+  for (set<utf8>::const_iterator i = names.begin();
+       i != names.end(); ++i)
+    {
+      if (match((*i)()) && !app.lua.hook_ignore_branch((*i)()))
+        {
+          cout << *i << "\n";
+        }
+    }
 }
 
 static void
@@ -281,27 +287,14 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 static void
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(tag_cert_name, certs);
+  set<tag_t> tags;
+  app.get_project().get_tags(tags);
 
-  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > >
-    sorted_vals;
-
-  for (vector< revision<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
+  for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
-      cert_value name;
-      cert c = i->inner();
-      decode_base64(c.value, name);
-      sorted_vals.insert(make_pair(name, make_pair(c.ident, c.key)));
-    }
-  for (set<pair<cert_value, pair<revision_id,
-         rsa_keypair_id> > >::const_iterator i = sorted_vals.begin();
-       i != sorted_vals.end(); ++i)
-    {
-      cout << i->first << " "
-           << i->second.first  << " "
-           << i->second.second  << "\n";
+      cout << i->name << " "
+           << i->ident  << " "
+           << i->key  << "\n";
     }
 }
 
@@ -684,7 +677,10 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
   hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;
-  app.db.get_revision_certs(rid, ts);
+  // FIXME_PROJECTS: after projects are implemented,
+  // use the app.db version instead if no project is specified.
+  app.get_project().get_revision_certs(rid, ts);
+
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
 
