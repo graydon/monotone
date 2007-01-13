@@ -101,13 +101,14 @@ error_in_transform(Botan::Exception & e)
   I(false);  // can't get here
 }
 
-// the generic function
-template<typename XFM> string xform(string const & in)
+// worker function for the visible functions below
+namespace {
+template<typename XFM> string xform(XFM * x, string const & in)
 {
   string out;
   try
     {
-      Botan::Pipe pipe(new XFM());
+      Botan::Pipe pipe(x);
       pipe.process_msg(in);
       out = pipe.read_all_as_string();
     }
@@ -117,14 +118,20 @@ template<typename XFM> string xform(string const & in)
     }
   return out;
 }
+}
 
-// specialize it
-template string xform<Botan::Base64_Encoder>(string const &);
-template string xform<Botan::Base64_Decoder>(string const &);
-template string xform<Botan::Hex_Encoder>(string const &);
-template string xform<Botan::Hex_Decoder>(string const &);
-template string xform<Botan::Gzip_Compression>(string const &);
-template string xform<Botan::Gzip_Decompression>(string const &);
+// full specializations for the usable cases of xform<XFM>()
+// use extra error checking in base64 and hex decoding
+#define SPECIALIZE_XFORM(T, carg) \
+  template<> string xform<T>(string const &in) \
+  { return xform(new T(carg), in); }
+
+SPECIALIZE_XFORM(Botan::Base64_Encoder,);
+SPECIALIZE_XFORM(Botan::Base64_Decoder, Botan::IGNORE_WS);
+SPECIALIZE_XFORM(Botan::Hex_Encoder,);
+SPECIALIZE_XFORM(Botan::Hex_Decoder, Botan::IGNORE_WS);
+SPECIALIZE_XFORM(Botan::Gzip_Compression,);
+SPECIALIZE_XFORM(Botan::Gzip_Decompression,);
 
 // for use in hexenc encoding
 

@@ -97,8 +97,6 @@ private:
   void open();
   void close();
 
-  std::string const schema;
-  void check_schema();
   void check_format();
 
 public:
@@ -623,11 +621,6 @@ public:
   void maybe_checkpoint(size_t nbytes);
   void commit();
 };
-
-
-void
-close_all_databases();
-
 
 // Local Variables:
 // mode: C++

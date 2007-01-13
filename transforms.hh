@@ -28,19 +28,23 @@ namespace Botan {
   class Gzip_Decompression;
 }
 
-#ifdef HAVE_EXTERN_TEMPLATE
-#define EXTERN extern
-#else
-#define EXTERN /* */
-#endif
+// this generic template cannot actually be used, except with the
+// specializations given below.  give a compile error instead of a link
+// error.
+template<typename XFM> std::string xform(std::string const & in)
+{
+  enum dummy { d = (sizeof(struct xform_must_be_specialized_for_this_type)
+                    == sizeof(XFM)) };
+  return in; // avoid warnings about no return statement
+}
 
-template<typename XFM> std::string xform(std::string const &);
-EXTERN template std::string xform<Botan::Base64_Encoder>(std::string const &);
-EXTERN template std::string xform<Botan::Base64_Decoder>(std::string const &);
-EXTERN template std::string xform<Botan::Hex_Encoder>(std::string const &);
-EXTERN template std::string xform<Botan::Hex_Decoder>(std::string const &);
-EXTERN template std::string xform<Botan::Gzip_Compression>(std::string const &);
-EXTERN template std::string xform<Botan::Gzip_Decompression>(std::string const &);
+// these specializations of the template are defined in transforms.hh
+template<> std::string xform<Botan::Base64_Encoder>(std::string const &);
+template<> std::string xform<Botan::Base64_Decoder>(std::string const &);
+template<> std::string xform<Botan::Hex_Encoder>(std::string const &);
+template<> std::string xform<Botan::Hex_Decoder>(std::string const &);
+template<> std::string xform<Botan::Gzip_Compression>(std::string const &);
+template<> std::string xform<Botan::Gzip_Decompression>(std::string const &);
 
 // base64 encoding
 

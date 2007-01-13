@@ -1,3 +1,44 @@
+2007-01-12  Zack Weinberg  <zackw@panix.com>
+
+	* tests/db_migrate_on_bad_schema: Rename to schema_migration_bad_schema.
+	Rewrite to test for specific error messages corresponding to the
+	five-way distinction made by check_sql_schema.
+	* tests/migrate_with_rosterify: Rename to
+	schema_migration_with_rosterify.
+	* testsuite.lua: Update.
+
+	* schema_migration.cc: Prune headers and using-declarations.  Make
+	various things static and/or wrapped in the anonymous namespace.
+	(struct migrator): Delete.
+	(migrator_cb): Move definition to just above first use.
+	(struct migration_event, migration_events, n_migration_events)
+	(schema_to_migration, diagnose_unrecognized_schema, check_sql_schema):
+	New functions and data.
+	(migrate_monotone_schema): Put all the logic that used to be in
+	migrator::migrate here instead.  Use two loops instead of one loop
+	and a state boolean, for clarity.
+	* schema_migration.hh: Prune headers.  Forward-declare system_path.
+	Declare check_sql_schema.  Adjust spacing.
+	* database.cc (database::database): Delete initialization of "schema".
+	(database::check_schema, close_all_databases): Delete.
+	(database::sql): Call check_sql_schema instead of check_schema.
+	* database.hh (database): Remove "schema" data-member and
+	check_schema function-member.
+	(close_all_databases): Delete declaration.
+
+	* transforms.hh (xform): Make the generic template produce a
+	compile error if instantiated.  Use standard declarations of
+	partial specializations for the usable cases of xform, not the g++
+	"extern template" extension.
+	* transforms.cc (xform): Rewrite with a helper template and a
+	bunch of explicit partial specializations.  Put Base64_Decoder and
+	Hex_Decoder into IGNORE_WS mode (i.e. garbage in their input will
+	now give an error)
+
+	* botan/base64.cpp (Base64_Decoder::handle_bad_char): Always
+	ignore equals signs; correct generation of diagnostic message.
+	Patches from upstream Botan.
+
 2007-01-10  Thomas Keller  <me@thomaskeller.biz>
 
 	* po/POTFILES.in: another missing candidate: selectors.cc
@@ -15,7 +56,7 @@
 
 2007-01-06  Thomas Keller  <me@thomaskeller.biz>
 
-	* cmd_automate.cc: automate stdio now opens the database 
+	* cmd_automate.cc: automate stdio now opens the database
 	before any command is triggered, this ensures that it early
 	checks for a correct database version
 
