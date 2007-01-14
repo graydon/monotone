@@ -520,6 +520,7 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate();
+  void test_migration_step(std::string const &);
   // for kill_rev_locally:
   void delete_existing_rev_and_certs(revision_id const & rid);
   // for kill_branch_certs_locally:

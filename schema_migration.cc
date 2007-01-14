@@ -17,9 +17,6 @@
 #include "transforms.hh"
 #include "ui.hh"
 
-using std::map;
-using std::vector;
-
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
 // required to get from one hash value to the next. when you do a
@@ -185,19 +182,6 @@ namespace
   };
 }
 
-// transitional
-static int
-logged_sqlite3_exec(sqlite3 * db, char const * cmd,
-                    void* d1 = 0, void* d2 = 0, char **errmsg = 0)
-{
-  I(d1 == 0);
-  I(d2 == 0);
-  I(errmsg == 0);
-
-  sql::exec(db, cmd);
-  return SQLITE_OK;
-}
-
 // SQL extension functions.
 
 // sqlite3_value_text returns unsigned char const *, which is inconvenient
@@ -271,540 +255,256 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
-// these must be listed in order so that ones listed earlier override ones
-// listed later
-enum upgrade_regime
-  {
-    upgrade_changesetify,
-    upgrade_rosterify,
-    upgrade_regen_caches,
-    upgrade_none, 
-  };
-
 static void
-set_regime(upgrade_regime new_regime, upgrade_regime & regime)
+migrate_merge_url_and_group(sqlite3 * db, app_state &)
 {
-  regime = std::min(new_regime, regime);
-}
-
-static bool move_table(sqlite3 *db, char **errmsg,
-                       char const * srcname,
-                       char const * dstname,
-                       char const * dstschema)
-{
-  string create = "CREATE TABLE ";
-  create += dstname;
-  create += " ";
-  create += dstschema;
-
-  int res = logged_sqlite3_exec(db, create.c_str(), NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  string insert = "INSERT INTO ";
-  insert += dstname;
-  insert += " SELECT * FROM ";
-  insert += srcname;
-
-  res =  logged_sqlite3_exec(db, insert.c_str(), NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  string drop = "DROP TABLE ";
-  drop += srcname;
-
-  res = logged_sqlite3_exec(db, drop.c_str(), NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  return true;
-}
-
-
-static bool
-migrate_client_merge_url_and_group(sqlite3 * db,
-                                   char ** errmsg,
-                                   app_state *,
-                                   upgrade_regime & regime)
-{
-
   // migrate the posting_queue table
-  if (!move_table(db, errmsg,
-                  "posting_queue",
-                  "tmp",
-                  "("
-                  "url not null,"
-                  "groupname not null,"
-                  "content not null"
-                  ")"))
-    return false;
+  sql::exec(db, "ALTER TABLE posting_queue RENAME TO tmp");
 
-  int res = logged_sqlite3_exec(db, "CREATE TABLE posting_queue "
-                                "("
-                                "url not null, -- URL we are going to send this to\n"
-                                "content not null -- the packets we're going to send\n"
-                                ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE posting_queue "
+            "("
+            "url not null, -- URL we are going to send this to\n"
+            "content not null -- the packets we're going to send\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO posting_queue "
-                            "SELECT "
-                            "(url || '/' || groupname), "
-                            "content "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO posting_queue "
+            "SELECT (url || '/' || groupname), content FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE tmp");
 
 
   // migrate the incoming_queue table
-  if (!move_table(db, errmsg,
-                  "incoming_queue",
-                  "tmp",
-                  "("
-                  "url not null,"
-                  "groupname not null,"
-                  "content not null"
-                  ")"))
-    return false;
+  sql::exec(db, "ALTER TABLE incoming_queue RENAME TO tmp");
 
-  res = logged_sqlite3_exec(db, "CREATE TABLE incoming_queue "
-                            "("
-                            "url not null, -- URL we got this bundle from\n"
-                            "content not null -- the packets we're going to read\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE incoming_queue "
+            "("
+            "url not null, -- URL we got this bundle from\n"
+            "content not null -- the packets we're going to read\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO incoming_queue "
-                            "SELECT "
-                            "(url || '/' || groupname), "
-                            "content "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO incoming_queue "
+            "SELECT (url || '/' || groupname), content FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE tmp");
 
 
   // migrate the sequence_numbers table
-  if (!move_table(db, errmsg,
-                  "sequence_numbers",
-                  "tmp",
-                  "("
-                  "url not null,"
-                  "groupname not null,"
-                  "major not null,"
-                  "minor not null,"
-                  "unique(url, groupname)"
-                  ")"
-                  ))
-    return false;
+  sql::exec(db, "ALTER TABLE sequence_numbers RENAME TO tmp");
 
-  res = logged_sqlite3_exec(db, "CREATE TABLE sequence_numbers "
-                            "("
-                            "url primary key, -- URL to read from\n"
-                            "major not null, -- 0 in news servers, may be higher in depots\n"
-                            "minor not null -- last article / packet sequence number we got\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE sequence_numbers "
+            "("
+            "url primary key, -- URL to read from\n"
+            "major not null, -- 0 in news servers, may be higher in depots\n"
+            "minor not null -- last article / packet sequence number we got\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO sequence_numbers "
-                            "SELECT "
-                            "(url || '/' || groupname), "
-                            "major, "
-                            "minor "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO sequence_numbers "
+            "SELECT (url || '/' || groupname), major, minor FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE tmp");
 
 
   // migrate the netserver_manifests table
-  if (!move_table(db, errmsg,
-                  "netserver_manifests",
-                  "tmp",
-                  "("
-                  "url not null,"
-                  "groupname not null,"
-                  "manifest not null,"
-                  "unique(url, groupname, manifest)"
-                  ")"
-                  ))
-    return false;
+  sql::exec(db, "ALTER TABLE netserver_manifests RENAME TO tmp");
 
-  res = logged_sqlite3_exec(db, "CREATE TABLE netserver_manifests "
-                            "("
-                            "url not null, -- url of some server\n"
-                            "manifest not null, -- manifest which exists on url\n"
-                            "unique(url, manifest)"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE netserver_manifests "
+            "("
+            "url not null, -- url of some server\n"
+            "manifest not null, -- manifest which exists on url\n"
+            "unique(url, manifest)"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO netserver_manifests "
-                            "SELECT "
-                            "(url || '/' || groupname), "
-                            "manifest "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO netserver_manifests "
+            "SELECT (url || '/' || groupname), manifest FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  return true;
+  sql::exec(db, "DROP TABLE tmp");
 }
 
-static bool
-migrate_client_add_hashes_and_merkle_trees(sqlite3 * db,
-                                           char ** errmsg,
-                                           app_state *,
-                                           upgrade_regime & regime)
+static void
+migrate_add_hashes_and_merkle_trees(sqlite3 * db, app_state &)
 {
-
   // add the column to manifest_certs
-  if (!move_table(db, errmsg,
-                  "manifest_certs",
-                  "tmp",
-                  "("
-                  "id not null,"
-                  "name not null,"
-                  "value not null,"
-                  "keypair not null,"
-                  "signature not null,"
-                  "unique(name, id, value, keypair, signature)"
-                  ")"))
-    return false;
+  sql::exec(db, "ALTER TABLE manifest_certs RENAME TO tmp");
 
-  int res = logged_sqlite3_exec(db, "CREATE TABLE manifest_certs\n"
-                                "(\n"
-                                "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-                                "id not null,            -- joins with manifests.id or manifest_deltas.id\n"
-                                "name not null,          -- opaque string chosen by user\n"
-                                "value not null,         -- opaque blob\n"
-                                "keypair not null,       -- joins with public_keys.id\n"
-                                "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
-                                "unique(name, id, value, keypair, signature)\n"
-                                ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE manifest_certs\n"
+            "(\n"
+            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+            "id not null,            -- joins with manifests.id or manifest_deltas.id\n"
+            "name not null,          -- opaque string chosen by user\n"
+            "value not null,         -- opaque blob\n"
+            "keypair not null,       -- joins with public_keys.id\n"
+            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+            "unique(name, id, value, keypair, signature)\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO manifest_certs "
-                            "SELECT "
-                            "sha1(':', id, name, value, keypair, signature), "
-                            "id, name, value, keypair, signature "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO manifest_certs SELECT "
+            "sha1(':', id, name, value, keypair, signature), "
+            "id, name, value, keypair, signature "
+            "FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE tmp");
 
   // add the column to file_certs
-  if (!move_table(db, errmsg,
-                  "file_certs",
-                  "tmp",
-                  "("
-                  "id not null,"
-                  "name not null,"
-                  "value not null,"
-                  "keypair not null,"
-                  "signature not null,"
-                  "unique(name, id, value, keypair, signature)"
-                  ")"))
-    return false;
+  sql::exec(db, "ALTER TABLE file_certs RENAME TO tmp");
 
-  res = logged_sqlite3_exec(db, "CREATE TABLE file_certs\n"
-                            "(\n"
-                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-                            "id not null,            -- joins with files.id or file_deltas.id\n"
-                            "name not null,          -- opaque string chosen by user\n"
-                            "value not null,         -- opaque blob\n"
-                            "keypair not null,       -- joins with public_keys.id\n"
-                            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
-                            "unique(name, id, value, keypair, signature)\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE file_certs\n"
+            "(\n"
+            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+            "id not null,            -- joins with files.id or file_deltas.id\n"
+            "name not null,          -- opaque string chosen by user\n"
+            "value not null,         -- opaque blob\n"
+            "keypair not null,       -- joins with public_keys.id\n"
+            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+            "unique(name, id, value, keypair, signature)\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO file_certs "
-                            "SELECT "
-                            "sha1(':', id, name, value, keypair, signature), "
-                            "id, name, value, keypair, signature "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO file_certs SELECT "
+            "sha1(':', id, name, value, keypair, signature), "
+            "id, name, value, keypair, signature "
+            "FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE tmp");
 
   // add the column to public_keys
-  if (!move_table(db, errmsg,
-                  "public_keys",
-                  "tmp",
-                  "("
-                  "id primary key,"
-                  "keydata not null"
-                  ")"))
-    return false;
+  sql::exec(db, "ALTER TABLE public_keys RENAME TO tmp");
 
-  res = logged_sqlite3_exec(db, "CREATE TABLE public_keys\n"
-                            "(\n"
-                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-                            "id primary key,         -- key identifier chosen by user\n"
-                            "keydata not null        -- RSA public params\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE public_keys\n"
+            "(\n"
+            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+            "id primary key,         -- key identifier chosen by user\n"
+            "keydata not null        -- RSA public params\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO public_keys "
-                            "SELECT "
-                            "sha1(':', id, keydata), "
-                            "id, keydata "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO public_keys "
+            "SELECT sha1(':', id, keydata), id, keydata FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE tmp");
 
   // add the column to private_keys
-  if (!move_table(db, errmsg,
-                  "private_keys",
-                  "tmp",
-                  "("
-                  "id primary key,"
-                  "keydata not null"
-                  ")"))
-    return false;
+  sql::exec(db, "ALTER TABLE private_keys RENAME TO tmp");
 
-  res = logged_sqlite3_exec(db, "CREATE TABLE private_keys\n"
-                            "(\n"
-                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-                            "id primary key,         -- as in public_keys (same identifiers, in fact)\n"
-                            "keydata not null        -- encrypted RSA private params\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE private_keys\n"
+            "(\n"
+            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+            "id primary key,         -- as in public_keys (same identifiers, in fact)\n"
+            "keydata not null        -- encrypted RSA private params\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "INSERT INTO private_keys "
-                            "SELECT "
-                            "sha1(':', id, keydata), "
-                            "id, keydata "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "INSERT INTO private_keys "
+            "SELECT sha1(':', id, keydata), id, keydata FROM tmp");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE tmp");
 
   // add the merkle tree stuff
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE merkle_nodes\n"
-                            "(\n"
-                            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
-                            "collection not null,          -- name chosen by user\n"
-                            "level not null,               -- tree level this prefix encodes\n"
-                            "prefix not null,              -- label identifying node in tree\n"
-                            "body not null,                -- binary, base64'ed node contents\n"
-                            "unique(type, collection, level, prefix)\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  return true;
+  sql::exec(db,
+            "CREATE TABLE merkle_nodes\n"
+            "(\n"
+            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
+            "collection not null,          -- name chosen by user\n"
+            "level not null,               -- tree level this prefix encodes\n"
+            "prefix not null,              -- label identifying node in tree\n"
+            "body not null,                -- binary, base64'ed node contents\n"
+            "unique(type, collection, level, prefix)\n"
+            ")");
 }
 
-static bool
-migrate_client_to_revisions(sqlite3 * db,
-                            char ** errmsg,
-                            app_state *,
-                            upgrade_regime & regime)
+static void
+migrate_to_revisions(sqlite3 * db,app_state &)
 {
-  int res;
+  sql::exec(db, "DROP TABLE schema_version");
+  sql::exec(db, "DROP TABLE posting_queue");
+  sql::exec(db, "DROP TABLE incoming_queue");
+  sql::exec(db, "DROP TABLE sequence_numbers");
+  sql::exec(db, "DROP TABLE file_certs");
+  sql::exec(db, "DROP TABLE netserver_manifests");
+  sql::exec(db, "DROP TABLE merkle_nodes");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE schema_version;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db,
+            "CREATE TABLE merkle_nodes\n"
+            "(\n"
+            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
+            "collection not null,          -- name chosen by user\n"
+            "level not null,               -- tree level this prefix encodes\n"
+            "prefix not null,              -- label identifying node in tree\n"
+            "body not null,                -- binary, base64'ed node contents\n"
+            "unique(type, collection, level, prefix)\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE posting_queue;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE revision_certs\n"
+            "(\n"
+            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+            "id not null,            -- joins with revisions.id\n"
+            "name not null,          -- opaque string chosen by user\n"
+            "value not null,         -- opaque blob\n"
+            "keypair not null,       -- joins with public_keys.id\n"
+            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+            "unique(name, id, value, keypair, signature)\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE incoming_queue;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "CREATE TABLE revisions\n"
+            "(\n"
+            "id primary key,      -- SHA1(text of revision)\n"
+            "data not null        -- compressed, encoded contents of a revision\n"
+            ")");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE sequence_numbers;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "DROP TABLE file_certs;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "DROP TABLE netserver_manifests;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE merkle_nodes\n"
-                            "(\n"
-                            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
-                            "collection not null,          -- name chosen by user\n"
-                            "level not null,               -- tree level this prefix encodes\n"
-                            "prefix not null,              -- label identifying node in tree\n"
-                            "body not null,                -- binary, base64'ed node contents\n"
-                            "unique(type, collection, level, prefix)\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "CREATE TABLE revision_certs\n"
-                            "(\n"
-                            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-                            "id not null,            -- joins with revisions.id\n"
-                            "name not null,          -- opaque string chosen by user\n"
-                            "value not null,         -- opaque blob\n"
-                            "keypair not null,       -- joins with public_keys.id\n"
-                            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
-                            "unique(name, id, value, keypair, signature)\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "CREATE TABLE revisions\n"
-                            "(\n"
-                            "id primary key,      -- SHA1(text of revision)\n"
-                            "data not null        -- compressed, encoded contents of a revision\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "CREATE TABLE revision_ancestry\n"
-                            "(\n"
-                            "parent not null,     -- joins with revisions.id\n"
-                            "child not null,      -- joins with revisions.id\n"
-                            "unique(parent, child)\n"
-                            ")", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  set_regime(upgrade_changesetify, regime);
-
-  return true;
+  sql::exec(db, "CREATE TABLE revision_ancestry\n"
+            "(\n"
+            "parent not null,     -- joins with revisions.id\n"
+            "child not null,      -- joins with revisions.id\n"
+            "unique(parent, child)\n"
+            ")");
 }
 
 
-static bool
-migrate_client_to_epochs(sqlite3 * db,
-                         char ** errmsg,
-                         app_state *,
-                         upgrade_regime & regime)
+static void
+migrate_to_epochs(sqlite3 * db, app_state &)
 {
-  int res;
+  sql::exec(db, "DROP TABLE merkle_nodes");
 
-  res = logged_sqlite3_exec(db, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE branch_epochs\n"
-                            "(\n"
-                            "hash not null unique,         -- hash of remaining fields separated by \":\"\n"
-                            "branch not null unique,       -- joins with revision_certs.value\n"
-                            "epoch not null                -- random hex-encoded id\n"
-                            ");", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  return true;
+  sql::exec(db,
+            "CREATE TABLE branch_epochs\n"
+            "(\n"
+            "hash not null unique,         -- hash of remaining fields separated by \":\"\n"
+            "branch not null unique,       -- joins with revision_certs.value\n"
+            "epoch not null                -- random hex-encoded id\n"
+            ")");
 }
 
-static bool
-migrate_client_to_vars(sqlite3 * db,
-                       char ** errmsg,
-                       app_state *,
-                       upgrade_regime & regime)
+static void
+migrate_to_vars(sqlite3 * db, app_state &)
 {
-  int res;
-
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE db_vars\n"
-                            "(\n"
-                            "domain not null,      -- scope of application of a var\n"
-                            "name not null,        -- var key\n"
-                            "value not null,       -- var value\n"
-                            "unique(domain, name)\n"
-                            ");", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  return true;
+  sql::exec(db,
+            "CREATE TABLE db_vars\n"
+            "(\n"
+            "domain not null,      -- scope of application of a var\n"
+            "name not null,        -- var key\n"
+            "value not null,       -- var value\n"
+            "unique(domain, name)\n"
+            ")");
 }
 
-static bool
-migrate_client_to_add_indexes(sqlite3 * db,
-                              char ** errmsg,
-                              app_state *,
-                              upgrade_regime & regime)
+static void
+migrate_add_indexes(sqlite3 * db, app_state &)
 {
-  int res;
+  sql::exec(db,
+            "CREATE INDEX revision_ancestry__child "
+            "ON revision_ancestry (child)");
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE INDEX revision_ancestry__child "
-                            "ON revision_ancestry (child)",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db,
+            "CREATE INDEX revision_certs__id "
+            "ON revision_certs (id)");
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE INDEX revision_certs__id "
-                            "ON revision_certs (id);",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db,
-                            "CREATE INDEX revision_certs__name_value "
-                            "ON revision_certs (name, value);",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  return true;
+  sql::exec(db,
+            "CREATE INDEX revision_certs__name_value "
+            "ON revision_certs (name, value)");
 }
 
-static bool
-migrate_client_to_external_privkeys(sqlite3 * db,
-                                    char ** errmsg,
-                                    app_state *app,
-                                    upgrade_regime & regime)
+static void
+migrate_to_external_privkeys(sqlite3 * db, app_state &app)
 {
-  int res;
+  using std::map;
   map<string, string> pub, priv;
-  vector<keypair> pairs;
 
   {
     sql stmt(db, 2, "SELECT id, keydata FROM private_keys");
@@ -826,7 +526,7 @@ migrate_client_to_external_privkeys(sqlite3 * db,
       base64< arc4<rsa_priv_key> > old_priv = i->second;
       map<string, string>::const_iterator j = pub.find(i->first);
       keypair kp;
-      migrate_private_key(*app, ident, old_priv, kp);
+      migrate_private_key(app, ident, old_priv, kp);
       MM(kp.pub);
       if (j != pub.end())
         {
@@ -837,261 +537,142 @@ migrate_client_to_external_privkeys(sqlite3 * db,
         }
 
       P(F("moving key '%s' from database to %s")
-        % ident % app->keys.get_key_dir());
-      app->keys.put_key_pair(ident, kp);
+        % ident % app.keys.get_key_dir());
+      app.keys.put_key_pair(ident, kp);
     }
 
-  res = logged_sqlite3_exec(db, "DROP TABLE private_keys;", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  return true;
+  sql::exec(db, "DROP TABLE private_keys");
 }
 
-static bool
-migrate_client_to_add_rosters(sqlite3 * db,
-                              char ** errmsg,
-                              app_state *,
-                              upgrade_regime & regime)
+static void
+migrate_add_rosters(sqlite3 * db, app_state &)
 {
-  int res;
+  sql::exec(db,
+            "CREATE TABLE rosters\n"
+            "(\n"
+            "id primary key,         -- strong hash of the roster\n"
+            "data not null           -- compressed, encoded contents of the roster\n"
+            ")");
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE rosters\n"
-                            "(\n"
-                            "id primary key,         -- strong hash of the roster\n"
-                            "data not null           -- compressed, encoded contents of the roster\n"
-                            ");",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db,
+            "CREATE TABLE roster_deltas\n"
+            "(\n"
+            "id not null,            -- strong hash of the roster\n"
+            "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
+            "delta not null,         -- rdiff to construct current from base\n"
+            "unique(id, base)\n"
+            ")");
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE roster_deltas\n"
-                            "(\n"
-                            "id not null,            -- strong hash of the roster\n"
-                            "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
-                            "delta not null,         -- rdiff to construct current from base\n"
-                            "unique(id, base)\n"
-                            ");",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db,
+            "CREATE TABLE revision_roster\n"
+            "(\n"
+            "rev_id primary key,     -- joins with revisions.id\n"
+            "roster_id not null      -- joins with either rosters.id or roster_deltas.id\n"
+            ")");
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE revision_roster\n"
-                            "(\n"
-                            "rev_id primary key,     -- joins with revisions.id\n"
-                            "roster_id not null      -- joins with either rosters.id or roster_deltas.id\n"
-                            ");",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE next_roster_node_number\n"
-                            "(\n"
-                            "node primary key        -- only one entry in this table, ever\n"
-                            ");",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  set_regime(upgrade_rosterify, regime);
-
-  return true;
+  sql::exec(db,
+            "CREATE TABLE next_roster_node_number\n"
+            "(\n"
+            "node primary key        -- only one entry in this table, ever\n"
+            ")");
 }
 
 // I wish I had a form of ALTER TABLE COMMENT on sqlite3
-static bool
-migrate_files_BLOB(sqlite3 * db,
-                   char ** errmsg,
-                   app_state *app,
-                   upgrade_regime & regime)
+static void
+migrate_files_BLOB(sqlite3 * db, app_state &)
 {
-  int res;
-  sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
-
   // change the encoding of file(_delta)s
-  if (!move_table(db, errmsg,
-                  "files",
-                  "tmp",
-                  "("
-                  "id primary key,"
-                  "data not null"
-                  ")"))
-    return false;
+  sql::exec(db, "ALTER TABLE files RENAME TO tmp");
+  sql::exec(db, "CREATE TABLE files\n"
+            "(\n"
+            "id primary key,   -- strong hash of file contents\n"
+            "data not null     -- compressed contents of a file\n"
+            ")");
+  sql::exec(db, "INSERT INTO files SELECT id, unbase64(data) FROM tmp");
+  sql::exec(db, "DROP TABLE tmp");
 
-  res = logged_sqlite3_exec(db, "CREATE TABLE files\n"
-                            "\t(\n"
-                            "\tid primary key,   -- strong hash of file contents\n"
-                            "\tdata not null     -- compressed contents of a file\n"
-                            "\t)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "INSERT INTO files "
-                            "SELECT id, unbase64(data) "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  if (!move_table(db, errmsg,
-                  "file_deltas",
-                  "tmp",
-                  "("
-                  "id not null,"
-                  "base not null,"
-                  "delta not null"
-                  ")"))
-    return false;
-
-  res = logged_sqlite3_exec(db, "CREATE TABLE file_deltas\n"
-                            "\t(\n"
-                            "\tid not null,      -- strong hash of file contents\n"
-                            "\tbase not null,    -- joins with files.id or file_deltas.id\n"
-                            "\tdelta not null,   -- compressed rdiff to construct current from base\n"
-                            "\tunique(id, base)\n"
-                            "\t)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "INSERT INTO file_deltas "
-                            "SELECT id, base, unbase64(delta) "
-                            "FROM tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "ALTER TABLE file_deltas RENAME TO tmp");
+  sql::exec(db, "CREATE TABLE file_deltas\n"
+            "(\n"
+            "id not null,      -- strong hash of file contents\n"
+            "base not null,    -- joins with files.id or file_deltas.id\n"
+            "delta not null,   -- compressed rdiff to construct current from base\n"
+            "unique(id, base)\n"
+            ")");
+  sql::exec(db, "INSERT INTO file_deltas SELECT id, base, unbase64(delta) "
+            "FROM tmp");
+  sql::exec(db, "DROP TABLE tmp");
 
   // migrate other contents which are accessed by get|put_version
-  res = logged_sqlite3_exec(db, "UPDATE manifests SET data=unbase64(data)",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE manifest_deltas "
-                            "SET delta=unbase64(delta)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE rosters SET data=unbase64(data) ",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE roster_deltas "
-                            "SET delta=unbase64(delta)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  res = logged_sqlite3_exec(db, "UPDATE db_vars "
-      "SET value=unbase64(value),name=unbase64(name)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE public_keys "
-      "SET keydata=unbase64(keydata)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE revision_certs "
-      "SET value=unbase64(value),signature=unbase64(signature)",
-      NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE manifest_certs "
-      "SET value=unbase64(value),signature=unbase64(signature) ",
-      NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE revisions "
-      "SET data=unbase64(data)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "UPDATE branch_epochs "
-      "SET branch=unbase64(branch)", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  return true;
+  sql::exec(db, "UPDATE manifests SET data=unbase64(data)");
+  sql::exec(db, "UPDATE manifest_deltas SET delta=unbase64(delta)");
+  sql::exec(db, "UPDATE rosters SET data=unbase64(data) ");
+  sql::exec(db, "UPDATE roster_deltas SET delta=unbase64(delta)");
+  sql::exec(db, "UPDATE db_vars SET value=unbase64(value),name=unbase64(name)");
+  sql::exec(db, "UPDATE public_keys SET keydata=unbase64(keydata)");
+  sql::exec(db, "UPDATE revision_certs "
+            "SET value=unbase64(value),signature=unbase64(signature)");
+  sql::exec(db, "UPDATE manifest_certs "
+            "SET value=unbase64(value),signature=unbase64(signature)");
+  sql::exec(db, "UPDATE revisions SET data=unbase64(data)");
+  sql::exec(db, "UPDATE branch_epochs SET branch=unbase64(branch)");
 }
 
-static bool
-migrate_rosters_no_hash(sqlite3 * db,
-                        char ** errmsg,
-                        app_state * app,
-                        upgrade_regime & regime)
+static void
+migrate_rosters_no_hash(sqlite3 * db, app_state &)
 {
-  int res;
-  
-  res = logged_sqlite3_exec(db, "DROP TABLE rosters", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "DROP TABLE roster_deltas", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-  res = logged_sqlite3_exec(db, "DROP TABLE revision_roster", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db, "DROP TABLE rosters");
+  sql::exec(db, "DROP TABLE roster_deltas");
+  sql::exec(db, "DROP TABLE revision_roster");
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE rosters\n"
-                            "\t(\n"
-                            "\tid primary key,         -- a revision id\n"
-                            "\tchecksum not null,      -- checksum of 'data', to protect against disk corruption\n"
-                            "\tdata not null           -- compressed, encoded contents of the roster\n"
-                            "\t);",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  sql::exec(db,
+            "CREATE TABLE rosters\n"
+            "(\n"
+            "id primary key,         -- a revision id\n"
+            "checksum not null,      -- checksum of 'data', to protect against disk corruption\n"
+            "data not null           -- compressed, encoded contents of the roster\n"
+            ")");
 
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE roster_deltas\n"
-                            "\t(\n"
-                            "\tid primary key,         -- a revision id\n"
-                            "\tchecksum not null,      -- checksum of 'delta', to protect against disk corruption\n"
-                            "\tbase not null,          -- joins with either rosters.id or roster_deltas.id\n"
-                            "\tdelta not null          -- rdiff to construct current from base\n"
-                            ");",
-                            NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  set_regime(upgrade_regen_caches, regime);
-
-  return true;
+  sql::exec(db,
+            "CREATE TABLE roster_deltas\n"
+            "(\n"
+            "id primary key,         -- a revision id\n"
+            "checksum not null,      -- checksum of 'delta', to protect against disk corruption\n"
+            "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
+            "delta not null          -- rdiff to construct current from base\n"
+            ")");
 }
 
 
-static bool
-migrate_add_heights(sqlite3 *db,
-                    char ** errmsg,
-                    app_state *app,
-                    upgrade_regime & regime)
+static void
+migrate_add_heights(sqlite3 * db, app_state &)
 {
-  int res;
-
-  res = logged_sqlite3_exec(db,
-                            "CREATE TABLE heights\n"
-                            "(\n"
-                            "revision not null,	-- joins with revisions.id\n"
-                            "height not null,	-- complex height, array of big endian u32 integers\n"
-                            "unique(revision, height)\n"
-                            ");", NULL, NULL, errmsg);
-  if (res != SQLITE_OK)
-    return false;
-
-  set_regime(upgrade_regen_caches, regime);
-  
-  return true;
+  sql::exec(db,
+            "CREATE TABLE heights\n"
+            "(\n"
+            "revision not null,	-- joins with revisions.id\n"
+            "height not null,	-- complex height, array of big endian u32 integers\n"
+            "unique(revision, height)\n"
+            ")");
 }
 
-typedef bool (*migrator_cb)(sqlite3 *, char **, app_state *, upgrade_regime &);
+// these must be listed in order so that ones listed earlier override ones
+// listed later
+enum upgrade_regime
+  {
+    upgrade_changesetify,
+    upgrade_rosterify,
+    upgrade_regen_caches,
+    upgrade_none, 
+  };
+
+typedef void (*migrator_cb)(sqlite3 *, app_state &);
+
 struct migration_event
 {
   char const * id;
   migrator_cb migrator;
+  upgrade_regime regime;
 };
 
 // IMPORTANT: whenever you modify this to add a new schema version, you must
@@ -1100,42 +681,53 @@ struct migration_event
 
 const migration_event migration_events[] = {
   { "edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
-    migrate_client_merge_url_and_group },
+    migrate_merge_url_and_group,
+    upgrade_none },
 
   { "f042f3c4d0a4f98f6658cbaf603d376acf88ff4b",
-    migrate_client_add_hashes_and_merkle_trees },
+    migrate_add_hashes_and_merkle_trees,
+    upgrade_none },
 
   { "8929e54f40bf4d3b4aea8b037d2c9263e82abdf4",
-    migrate_client_to_revisions },
+    migrate_to_revisions,
+    upgrade_changesetify },
 
   { "c1e86588e11ad07fa53e5d294edc043ce1d4005a",
-    migrate_client_to_epochs },
+    migrate_to_epochs,
+    upgrade_none },
 
   { "40369a7bda66463c5785d160819ab6398b9d44f4",
-    migrate_client_to_vars },
+    migrate_to_vars,
+    upgrade_none },
 
   { "e372b508bea9b991816d1c74680f7ae10d2a6d94",
-    migrate_client_to_add_indexes },
+    migrate_add_indexes,
+    upgrade_none },
 
   { "1509fd75019aebef5ac3da3a5edf1312393b70e9",
-    migrate_client_to_external_privkeys },
+    migrate_to_external_privkeys,
+    upgrade_none },
 
   { "bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
-    migrate_client_to_add_rosters },
+    migrate_add_rosters,
+    upgrade_rosterify },
 
   { "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
-    migrate_files_BLOB },
+    migrate_files_BLOB,
+    upgrade_none },
 
   { "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
-    migrate_rosters_no_hash },
+    migrate_rosters_no_hash,
+    upgrade_regen_caches },
 
   { "ae196843d368d042f475e3dadfed11e9d7f9f01e",
-    migrate_add_heights },
+    migrate_add_heights,
+    upgrade_regen_caches },
 
   // The last entry in this table should always be the current
   // schema ID, with 0 for the migrator.
 
-  { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d", 0 }
+  { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d", 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
@@ -1250,10 +842,11 @@ check_sql_schema(sqlite3 * db, system_path const & filename)
 }
 
 void
-migrate_monotone_schema(sqlite3 * db, app_state * app)
+migrate_sql_schema(sqlite3 * db, app_state & app)
 {
   I(db != NULL);
   sql::create_function(db, "sha1", sqlite_sha1_fn);
+  sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
 
   upgrade_regime regime = upgrade_none;
   
@@ -1274,7 +867,7 @@ migrate_monotone_schema(sqlite3 * db, app_state * app)
     int i = schema_to_migration(init);
 
     if (i == -1)
-      diagnose_unrecognized_schema(db, app->db.get_filename(), init);
+      diagnose_unrecognized_schema(db, app.db.get_filename(), init);
 
     // We really want 'db migrate' on an up-to-date schema to be a no-op
     // (no vacuum or anything, even), so that automated scripts can fire
@@ -1298,7 +891,8 @@ migrate_monotone_schema(sqlite3 * db, app_state * app)
         if (migration_events[i].migrator == 0)
           break;
 
-        migration_events[i].migrator(db, 0, app, regime);
+        migration_events[i].migrator(db, app);
+        regime = std::min(regime, migration_events[i].regime);
 
         i++;
         I((size_t)i < n_migration_events);
@@ -1309,7 +903,7 @@ migrate_monotone_schema(sqlite3 * db, app_state * app)
   }
 
   P(F("optimizing database"));
-  logged_sqlite3_exec(db, "VACUUM");
+  sql::exec(db, "VACUUM");
 
   switch (regime)
     {
@@ -1332,6 +926,34 @@ migrate_monotone_schema(sqlite3 * db, app_state * app)
     case upgrade_none:
       break;
     }
+}
+
+// test_migration_step runs the migration step from SCHEMA to its successor,
+// *without* validating that the database actually conforms to that schema
+// first.  the point of this is to test error recovery from conditions that
+// are not accessible through normal malformed dumps (because the schema
+// conformance check will reject them).
+
+void
+test_migration_step(sqlite3 * db, app_state & app, string const & schema)
+{
+  I(db != NULL);
+  sql::create_function(db, "sha1", sqlite_sha1_fn);
+  sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
+
+  transaction guard(db);
+
+  int i = schema_to_migration(schema);
+  N(i > 0, F("cannot test migration from unknown schema %s") % schema);
+  N(migration_events[i].migrator, F("schema %s is up to date") % schema);
+
+  L(FL("testing migration from %s to %s\n in database %s")
+    % schema % migration_events[i+1].id % app.db.get_filename());
+
+  migration_events[i].migrator(db, app);
+  // in the unlikely event that we get here ...
+  P(F("successful migration to schema %s") % migration_events[i+1].id);
+  guard.commit();
 }
 
 

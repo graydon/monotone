@@ -1,5 +1,23 @@
 2007-01-13  Zack Weinberg  <zackw@panix.com>
 
+	* schema_migration.cc: Further prune using-declarations.
+	(migrate_*): Use sql::exec directly.  Shorten names.  Don't call
+	set_regime.  Remove errmsg and upgrade_regime arguments.  Change
+	app_state argument to a reference.  Return void.
+	(logged_sqlite3_exec, set_regime, move_table): Delete.
+	(enum upgrade_regime): Move to just above the migration_events table.
+	(struct migration_event): Add third 'regime' field.
+	(migration_events): Fill in the migration regimes.
+	(migrator_cb): Adjust.
+	(migrate_monotone_schema): Rename migrate_sql_schema.  Register
+	unbase64 here.  Change app_state argument to a refernece.  Handle
+	calculation of upgrade regime here.  Use sql::exec.
+	(test_migration_step): New function, for debugging.
+	* cmd_db.cc (test_migration_step): New debugging command.
+	* database.cc, database.hh: Adjust call of migrate_sql_schema.
+	(test_migration_step): New member function.
+	* tests/schema_migration_error_recovery: Add several more subcases.
+
 	* schema_migration.cc: Replace logged_sqlite3_* with a new, tidier
 	class-based API.  (logged_sqlite3_exec remains for transitional
 	purposes.)  Globally change "sql" local variables to "db" to avoid
@@ -10,6 +28,7 @@
 	not after calculating migration steps.  Trap Botan errors in
 	sqlite3_unbase64_fn.  Give helpful additional message for more
 	sqlite error codes.
+
 	* tests/schema_migration_error_recovery: New test.
 	* testsuite.lua: Update.
 

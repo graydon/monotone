@@ -634,7 +634,19 @@ database::migrate()
   check_db_exists();
   open();
 
-  migrate_monotone_schema(__sql, __app);
+  migrate_sql_schema(__sql, *__app);
+
+  close();
+}
+
+void
+database::test_migration_step(string const & schema)
+{
+  check_filename();
+  check_db_exists();
+  open();
+
+  ::test_migration_step(__sql, *__app, schema);
 
   close();
 }

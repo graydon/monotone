@@ -200,6 +200,15 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(name);
 }
 
+CMD(test_migration_step, hidden_group(), "SCHEMA",
+    "run one step of migration - from SCHEMA to its successor -\n"
+    "on the specified database", options::opts::none)
+{
+  if (args.size() != 1)
+    throw usage(name);
+  app.db.test_migration_step(idx(args,0)());
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
