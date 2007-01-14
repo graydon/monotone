@@ -1,3 +1,7 @@
+2007-01-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.10.
+
 2007-01-13  Zack Weinberg  <zackw@panix.com>
 
 	* schema_migration.cc (sql::exec): Process an entire sequence of

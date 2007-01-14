@@ -12,7 +12,7 @@
 ** This header file defines the interface that the SQLite library
 ** presents to client programs.
 **
-** @(#) $Id: sqlite.h.in,v 1.195 2006/11/09 00:24:54 drh Exp $
+** @(#) $Id: sqlite.h.in,v 1.197 2007/01/10 12:57:29 drh Exp $
 */
 #ifndef _SQLITE3_H_
 #define _SQLITE3_H_
@@ -31,7 +31,7 @@ extern "C" {
 #ifdef SQLITE_VERSION
 # undef SQLITE_VERSION
 #endif
-#define SQLITE_VERSION         "3.3.9"
+#define SQLITE_VERSION         "3.3.10"
 
 /*
 ** The format of the version string is "X.Y.Z<trailing string>", where
@@ -48,7 +48,7 @@ extern "C" {
 #ifdef SQLITE_VERSION_NUMBER
 # undef SQLITE_VERSION_NUMBER
 #endif
-#define SQLITE_VERSION_NUMBER 3003009
+#define SQLITE_VERSION_NUMBER 3003010
 
 /*
 ** The version string is also compiled into the library so that a program
@@ -125,7 +125,7 @@ typedef int (*sqlite3_callback)(void*,int,char**, char**);
 ** value then the query is aborted, all subsequent SQL statements
 ** are skipped and the sqlite3_exec() function returns the SQLITE_ABORT.
 **
-** The 4th parameter is an arbitrary pointer that is passed
+** The 1st parameter is an arbitrary pointer that is passed
 ** to the callback function as its first parameter.
 **
 ** The 2nd parameter to the callback function is the number of
@@ -315,12 +315,29 @@ int sqlite3_complete16(const void *sql);
 ** currently locked by another process or thread.  If the busy callback
 ** is NULL, then sqlite3_exec() returns SQLITE_BUSY immediately if
 ** it finds a locked table.  If the busy callback is not NULL, then
-** sqlite3_exec() invokes the callback with three arguments.  The
-** second argument is the name of the locked table and the third
-** argument is the number of times the table has been busy.  If the
+** sqlite3_exec() invokes the callback with two arguments.  The
+** first argument to the handler is a copy of the void* pointer which
+** is the third argument to this routine.  The second argument to
+** the handler is the number of times that the busy handler has
+** been invoked for this locking event.  If the
 ** busy callback returns 0, then sqlite3_exec() immediately returns
 ** SQLITE_BUSY.  If the callback returns non-zero, then sqlite3_exec()
 ** tries to open the table again and the cycle repeats.
+**
+** The presence of a busy handler does not guarantee that
+** it will be invoked when there is lock contention.
+** If SQLite determines that invoking the busy handler could result in
+** a deadlock, it will return SQLITE_BUSY instead.
+** Consider a scenario where one process is holding a read lock that
+** it is trying to promote to a reserved lock and
+** a second process is holding a reserved lock that it is trying
+** to promote to an exclusive lock.  The first process cannot proceed
+** because it is blocked by the second and the second process cannot
+** proceed because it is blocked by the first.  If both processes
+** invoke the busy handlers, neither will make any progress.  Therefore,
+** SQLite returns SQLITE_BUSY for the first process, hoping that this
+** will induce the first process to release its read lock and allow
+** the second process to proceed.
 **
 ** The default busy callback is NULL.
 **

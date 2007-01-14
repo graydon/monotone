@@ -65,19 +65,27 @@ const char *sqlite3VdbeGetSql(Vdbe *p){
 }
 
 /*
-** Swap the set of Opcodes between to Vdbe structures.  No
-** other parts of either Vdbe structure are changed.
+** Swap all content between two VDBE structures.
 */
-void sqlite3VdbeSwapOps(Vdbe *pA, Vdbe *pB){
-  Op *aOp;
-  int nOp;
-  
-  aOp = pA->aOp;
-  nOp = pA->nOp;
-  pA->aOp = pB->aOp;
-  pA->nOp = pB->nOp;
-  pB->aOp = aOp;
-  pB->nOp = nOp;
+void sqlite3VdbeSwap(Vdbe *pA, Vdbe *pB){
+  Vdbe tmp, *pTmp;
+  char *zTmp;
+  int nTmp;
+  tmp = *pA;
+  *pA = *pB;
+  *pB = tmp;
+  pTmp = pA->pNext;
+  pA->pNext = pB->pNext;
+  pB->pNext = pTmp;
+  pTmp = pA->pPrev;
+  pA->pPrev = pB->pPrev;
+  pB->pPrev = pTmp;
+  zTmp = pA->zSql;
+  pA->zSql = pB->zSql;
+  pB->zSql = zTmp;
+  nTmp = pA->nSql;
+  pA->nSql = pB->nSql;
+  pB->nSql = nTmp;
 }
 
 /*
@@ -844,21 +852,6 @@ void sqlite3VdbeMakeReady(
     p->aMem[n].flags = MEM_Null;
   }
 
-#ifdef SQLITE_DEBUG
-  if( (p->db->flags & SQLITE_VdbeListing)!=0
-    || sqlite3OsFileExists("vdbe_explain")
-  ){
-    int i;
-    printf("VDBE Program Listing:\n");
-    sqlite3VdbePrintSql(p);
-    for(i=0; i<p->nOp; i++){
-      sqlite3VdbePrintOp(stdout, i, &p->aOp[i]);
-    }
-  }
-  if( sqlite3OsFileExists("vdbe_trace") ){
-    p->trace = stdout;
-  }
-#endif
   p->pTos = &p->aStack[-1];
   p->pc = -1;
   p->rc = SQLITE_OK;
@@ -1454,6 +1447,14 @@ int sqlite3VdbeHalt(Vdbe *p){
   checkActiveVdbeCnt(db);
 
   return SQLITE_OK;
+}
+
+/*
+** Each VDBE holds the result of the most recent sqlite3_step() call
+** in p->rc.  This routine sets that result back to SQLITE_OK.
+*/
+void sqlite3VdbeResetStepResult(Vdbe *p){
+  p->rc = SQLITE_OK;
 }
 
 /*
