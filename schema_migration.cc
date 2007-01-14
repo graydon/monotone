@@ -37,19 +37,22 @@ namespace
 {
   struct sql
   {
-    sql(sqlite3 * db, int cols, char const *cmd)
+    sql(sqlite3 * db, int cols, char const *cmd, char const **afterp = 0)
       : stmt(0), ncols(cols)
     {
       sqlite3_stmt * s;
-      char const * after;
 
+      char const * after;
       L(FL("executing SQL '%s'") % cmd);
 
       if (sqlite3_prepare_v2(db, cmd, strlen(cmd), &s, &after))
         error(db);
 
       I(s);
-      I(*after == 0);
+      if (afterp)
+        *afterp = after;
+      else
+        I(*after == 0);
       I(sqlite3_column_count(s) == ncols);
       stmt = s;
     }
@@ -88,14 +91,25 @@ namespace
       return string(reinterpret_cast<char const *>
                     (sqlite3_column_text(stmt, col)));
     }
-
-    // convenience API if you don't need to get rows
-    static void exec(sqlite3 * db, char const * cmd)
+    bool column_nonnull(int col)
     {
-      sql stmt(db, 0, cmd);
-      I(stmt.step() == false);
+      I(col >= 0 && col < ncols);
+      return sqlite3_column_type(stmt, col) != SQLITE_NULL;
     }
 
+    // convenience for executing a sequence of sql statements,
+    // none of which returns any rows.
+    static void exec(sqlite3 * db, char const * cmd)
+    {
+      do
+        {
+          sql stmt(db, 0, cmd, &cmd);
+          I(stmt.step() == false);
+        }
+      while (*cmd != '\0');
+    }
+
+    // convenience for evaluating an expression that returns a single number.
     static int value(sqlite3 * db, char const * cmd)
     {
       sql stmt(db, 1, cmd);
@@ -143,7 +157,9 @@ namespace
       char const * auxiliary_message = "";
       switch (errcode)
         {
-        case SQLITE_ERROR:
+        case SQLITE_ERROR: // ??? take this out - 3.3.9 seems to generate
+                           // it mostly for logic errors in the SQL,
+                           // not environmental problems
         case SQLITE_IOERR:
         case SQLITE_CANTOPEN:
         case SQLITE_PROTOCOL:
@@ -255,406 +271,314 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
-static void
-migrate_merge_url_and_group(sqlite3 * db, app_state &)
-{
+// Here are all of the migration steps.  Almost all of them can be expressed
+// entirely as a series of SQL statements; those statements are packaged
+// into a long, continued string constant for the step.  One step requires a
+// function instead.
+
+char const migrate_merge_url_and_group[] =
   // migrate the posting_queue table
-  sql::exec(db, "ALTER TABLE posting_queue RENAME TO tmp");
-
-  sql::exec(db, "CREATE TABLE posting_queue "
-            "("
-            "url not null, -- URL we are going to send this to\n"
-            "content not null -- the packets we're going to send\n"
-            ")");
-
-  sql::exec(db, "INSERT INTO posting_queue "
-            "SELECT (url || '/' || groupname), content FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
-
-
+  "ALTER TABLE posting_queue RENAME TO tmp;"
+  "CREATE TABLE posting_queue"
+  "  ( url not null,   -- URL we are going to send this to\n"
+  "    content not null -- the packets we're going to send\n"
+  "  );"
+  "INSERT INTO posting_queue"
+  "  SELECT (url || '/' || groupname), content FROM tmp;"
+  "DROP TABLE tmp;"
+  
   // migrate the incoming_queue table
-  sql::exec(db, "ALTER TABLE incoming_queue RENAME TO tmp");
-
-  sql::exec(db, "CREATE TABLE incoming_queue "
-            "("
-            "url not null, -- URL we got this bundle from\n"
-            "content not null -- the packets we're going to read\n"
-            ")");
-
-  sql::exec(db, "INSERT INTO incoming_queue "
-            "SELECT (url || '/' || groupname), content FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
-
+  "ALTER TABLE incoming_queue RENAME TO tmp;"
+  "CREATE TABLE incoming_queue "
+  "  ( url not null,    -- URL we got this bundle from\n"
+  "    content not null -- the packets we're going to read\n"
+  "  );"
+  "INSERT INTO incoming_queue"
+  "  SELECT (url || '/' || groupname), content FROM tmp;"
+  "DROP TABLE tmp;"
 
   // migrate the sequence_numbers table
-  sql::exec(db, "ALTER TABLE sequence_numbers RENAME TO tmp");
-
-  sql::exec(db, "CREATE TABLE sequence_numbers "
-            "("
-            "url primary key, -- URL to read from\n"
-            "major not null, -- 0 in news servers, may be higher in depots\n"
-            "minor not null -- last article / packet sequence number we got\n"
-            ")");
-
-  sql::exec(db, "INSERT INTO sequence_numbers "
-            "SELECT (url || '/' || groupname), major, minor FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
+  "ALTER TABLE sequence_numbers RENAME TO tmp;"
+  "CREATE TABLE sequence_numbers "
+  "  ( url primary key, -- URL to read from\n"
+  "    major not null,  -- 0 in news servers, may be higher in depots\n"
+  "    minor not null   -- last article / packet sequence number we got\n"
+  "  );"
+  "INSERT INTO sequence_numbers"
+  "  SELECT (url || '/' || groupname), major, minor FROM tmp;"
+  "DROP TABLE tmp;"
 
 
   // migrate the netserver_manifests table
-  sql::exec(db, "ALTER TABLE netserver_manifests RENAME TO tmp");
+  "ALTER TABLE netserver_manifests RENAME TO tmp;"
+  "CREATE TABLE netserver_manifests"
+  "  ( url not null, -- url of some server\n"
+  "    manifest not null, -- manifest which exists on url\n"
+  "    unique(url, manifest)"
+  "  );"
+  "INSERT INTO netserver_manifests"
+  "  SELECT (url || '/' || groupname), manifest FROM tmp;"
 
-  sql::exec(db, "CREATE TABLE netserver_manifests "
-            "("
-            "url not null, -- url of some server\n"
-            "manifest not null, -- manifest which exists on url\n"
-            "unique(url, manifest)"
-            ")");
+  "DROP TABLE tmp;"
+  ;
 
-  sql::exec(db, "INSERT INTO netserver_manifests "
-            "SELECT (url || '/' || groupname), manifest FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
-}
-
-static void
-migrate_add_hashes_and_merkle_trees(sqlite3 * db, app_state &)
-{
+char const migrate_add_hashes_and_merkle_trees[] = 
   // add the column to manifest_certs
-  sql::exec(db, "ALTER TABLE manifest_certs RENAME TO tmp");
-
-  sql::exec(db, "CREATE TABLE manifest_certs\n"
-            "(\n"
-            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-            "id not null,            -- joins with manifests.id or manifest_deltas.id\n"
-            "name not null,          -- opaque string chosen by user\n"
-            "value not null,         -- opaque blob\n"
-            "keypair not null,       -- joins with public_keys.id\n"
-            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
-            "unique(name, id, value, keypair, signature)\n"
-            ")");
-
-  sql::exec(db, "INSERT INTO manifest_certs SELECT "
-            "sha1(':', id, name, value, keypair, signature), "
-            "id, name, value, keypair, signature "
-            "FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
+  "ALTER TABLE manifest_certs RENAME TO tmp;"
+  "CREATE TABLE manifest_certs"
+  "  ( hash not null unique, -- hash of remaining fields separated by \":\"\n"
+  "    id not null,          -- joins with manifests.id or manifest_deltas.id\n"
+  "    name not null,        -- opaque string chosen by user\n"
+  "    value not null,       -- opaque blob\n"
+  "    keypair not null,     -- joins with public_keys.id\n"
+  "    signature not null,   -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+  "    unique(name, id, value, keypair, signature)"
+  "  );"
+  "INSERT INTO manifest_certs"
+  "  SELECT sha1(':', id, name, value, keypair, signature),"
+  "         id, name, value, keypair, signature"
+  "         FROM tmp;"
+  "DROP TABLE tmp;"
 
   // add the column to file_certs
-  sql::exec(db, "ALTER TABLE file_certs RENAME TO tmp");
-
-  sql::exec(db, "CREATE TABLE file_certs\n"
-            "(\n"
-            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-            "id not null,            -- joins with files.id or file_deltas.id\n"
-            "name not null,          -- opaque string chosen by user\n"
-            "value not null,         -- opaque blob\n"
-            "keypair not null,       -- joins with public_keys.id\n"
-            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
-            "unique(name, id, value, keypair, signature)\n"
-            ")");
-
-  sql::exec(db, "INSERT INTO file_certs SELECT "
-            "sha1(':', id, name, value, keypair, signature), "
-            "id, name, value, keypair, signature "
-            "FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
+  "ALTER TABLE file_certs RENAME TO tmp;"
+  "CREATE TABLE file_certs"
+  "  ( hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+  "    id not null,            -- joins with files.id or file_deltas.id\n"
+  "    name not null,          -- opaque string chosen by user\n"
+  "    value not null,         -- opaque blob\n"
+  "    keypair not null,       -- joins with public_keys.id\n"
+  "    signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+  "    unique(name, id, value, keypair, signature)"
+  "  );"
+  "INSERT INTO file_certs"
+  "  SELECT sha1(':', id, name, value, keypair, signature),"
+  "         id, name, value, keypair, signature"
+  "         FROM tmp;"
+  "DROP TABLE tmp;"
 
   // add the column to public_keys
-  sql::exec(db, "ALTER TABLE public_keys RENAME TO tmp");
-
-  sql::exec(db, "CREATE TABLE public_keys\n"
-            "(\n"
-            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-            "id primary key,         -- key identifier chosen by user\n"
-            "keydata not null        -- RSA public params\n"
-            ")");
-
-  sql::exec(db, "INSERT INTO public_keys "
-            "SELECT sha1(':', id, keydata), id, keydata FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
+  "ALTER TABLE public_keys RENAME TO tmp;"
+  "CREATE TABLE public_keys"
+  "  ( hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+  "    id primary key,         -- key identifier chosen by user\n"
+  "    keydata not null        -- RSA public params\n"
+  "  );"
+  "INSERT INTO public_keys SELECT sha1(':',id,keydata), id, keydata FROM tmp;"
+  "DROP TABLE tmp;"
 
   // add the column to private_keys
-  sql::exec(db, "ALTER TABLE private_keys RENAME TO tmp");
-
-  sql::exec(db, "CREATE TABLE private_keys\n"
-            "(\n"
-            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-            "id primary key,         -- as in public_keys (same identifiers, in fact)\n"
-            "keydata not null        -- encrypted RSA private params\n"
-            ")");
-
-  sql::exec(db, "INSERT INTO private_keys "
-            "SELECT sha1(':', id, keydata), id, keydata FROM tmp");
-
-  sql::exec(db, "DROP TABLE tmp");
+  "ALTER TABLE private_keys RENAME TO tmp;"
+  "CREATE TABLE private_keys"
+  "  ( hash not null unique, -- hash of remaining fields separated by \":\"\n"
+  "    id primary key,       -- as in public_keys (same identifiers, in fact)\n"
+  "    keydata not null      -- encrypted RSA private params\n"
+  "  );"
+  "INSERT INTO private_keys SELECT sha1(':',id,keydata), id, keydata FROM tmp;"
+  "DROP TABLE tmp;"
 
   // add the merkle tree stuff
+  "CREATE TABLE merkle_nodes"
+  "  ( type not null,        -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
+  "    collection not null,  -- name chosen by user\n"
+  "    level not null,       -- tree level this prefix encodes\n"
+  "    prefix not null,      -- label identifying node in tree\n"
+  "    body not null,        -- binary, base64'ed node contents\n"
+  "    unique(type, collection, level, prefix)"
+  ");"
+  ;
 
-  sql::exec(db,
-            "CREATE TABLE merkle_nodes\n"
-            "(\n"
-            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
-            "collection not null,          -- name chosen by user\n"
-            "level not null,               -- tree level this prefix encodes\n"
-            "prefix not null,              -- label identifying node in tree\n"
-            "body not null,                -- binary, base64'ed node contents\n"
-            "unique(type, collection, level, prefix)\n"
-            ")");
-}
+char const migrate_to_revisions[] =
+  "DROP TABLE schema_version;"
+  "DROP TABLE posting_queue;"
+  "DROP TABLE incoming_queue;"
+  "DROP TABLE sequence_numbers;"
+  "DROP TABLE file_certs;"
+  "DROP TABLE netserver_manifests;"
+  "DROP TABLE merkle_nodes;"
 
-static void
-migrate_to_revisions(sqlite3 * db,app_state &)
-{
-  sql::exec(db, "DROP TABLE schema_version");
-  sql::exec(db, "DROP TABLE posting_queue");
-  sql::exec(db, "DROP TABLE incoming_queue");
-  sql::exec(db, "DROP TABLE sequence_numbers");
-  sql::exec(db, "DROP TABLE file_certs");
-  sql::exec(db, "DROP TABLE netserver_manifests");
-  sql::exec(db, "DROP TABLE merkle_nodes");
+  "CREATE TABLE merkle_nodes"
+  "  ( type not null,          -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
+  "    collection not null,    -- name chosen by user\n"
+  "    level not null,         -- tree level this prefix encodes\n"
+  "    prefix not null,        -- label identifying node in tree\n"
+  "    body not null,          -- binary, base64'ed node contents\n"
+  "    unique(type, collection, level, prefix)"
+  "  );"
 
-  sql::exec(db,
-            "CREATE TABLE merkle_nodes\n"
-            "(\n"
-            "type not null,                -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
-            "collection not null,          -- name chosen by user\n"
-            "level not null,               -- tree level this prefix encodes\n"
-            "prefix not null,              -- label identifying node in tree\n"
-            "body not null,                -- binary, base64'ed node contents\n"
-            "unique(type, collection, level, prefix)\n"
-            ")");
+  "CREATE TABLE revision_certs"
+  "  ( hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+  "    id not null,            -- joins with revisions.id\n"
+  "    name not null,          -- opaque string chosen by user\n"
+  "    value not null,         -- opaque blob\n"
+  "    keypair not null,       -- joins with public_keys.id\n"
+  "    signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+  "    unique(name, id, value, keypair, signature)"
+  "  );"
 
-  sql::exec(db, "CREATE TABLE revision_certs\n"
-            "(\n"
-            "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
-            "id not null,            -- joins with revisions.id\n"
-            "name not null,          -- opaque string chosen by user\n"
-            "value not null,         -- opaque blob\n"
-            "keypair not null,       -- joins with public_keys.id\n"
-            "signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
-            "unique(name, id, value, keypair, signature)\n"
-            ")");
+  "CREATE TABLE revisions"
+  "  ( id primary key,      -- SHA1(text of revision)\n"
+  "    data not null        -- compressed, encoded contents of a revision\n"
+  "  );"
 
-  sql::exec(db, "CREATE TABLE revisions\n"
-            "(\n"
-            "id primary key,      -- SHA1(text of revision)\n"
-            "data not null        -- compressed, encoded contents of a revision\n"
-            ")");
+  "CREATE TABLE revision_ancestry"
+  "  ( parent not null,     -- joins with revisions.id\n"
+  "    child not null,      -- joins with revisions.id\n"
+  "    unique(parent, child)"
+  "  );"
+  ;
 
-  sql::exec(db, "CREATE TABLE revision_ancestry\n"
-            "(\n"
-            "parent not null,     -- joins with revisions.id\n"
-            "child not null,      -- joins with revisions.id\n"
-            "unique(parent, child)\n"
-            ")");
-}
+char const migrate_to_epochs[] =
+  "DROP TABLE merkle_nodes;"
+  "CREATE TABLE branch_epochs\n"
+  "  ( hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+  "    branch not null unique, -- joins with revision_certs.value\n"
+  "    epoch not null          -- random hex-encoded id\n"
+  "  );"
+  ;
 
+char const migrate_to_vars[] = 
+  "CREATE TABLE db_vars\n"
+  "  ( domain not null,      -- scope of application of a var\n"
+  "    name not null,        -- var key\n"
+  "    value not null,       -- var value\n"
+  "    unique(domain, name)"
+  "  );"
+  ;
 
-static void
-migrate_to_epochs(sqlite3 * db, app_state &)
-{
-  sql::exec(db, "DROP TABLE merkle_nodes");
+char const migrate_add_indexes[] =
+  "CREATE INDEX revision_ancestry__child ON revision_ancestry (child);"
+  "CREATE INDEX revision_certs__id ON revision_certs (id);"
+  "CREATE INDEX revision_certs__name_value ON revision_certs (name, value);"
+  ;
 
-  sql::exec(db,
-            "CREATE TABLE branch_epochs\n"
-            "(\n"
-            "hash not null unique,         -- hash of remaining fields separated by \":\"\n"
-            "branch not null unique,       -- joins with revision_certs.value\n"
-            "epoch not null                -- random hex-encoded id\n"
-            ")");
-}
-
-static void
-migrate_to_vars(sqlite3 * db, app_state &)
-{
-  sql::exec(db,
-            "CREATE TABLE db_vars\n"
-            "(\n"
-            "domain not null,      -- scope of application of a var\n"
-            "name not null,        -- var key\n"
-            "value not null,       -- var value\n"
-            "unique(domain, name)\n"
-            ")");
-}
-
-static void
-migrate_add_indexes(sqlite3 * db, app_state &)
-{
-  sql::exec(db,
-            "CREATE INDEX revision_ancestry__child "
-            "ON revision_ancestry (child)");
-
-  sql::exec(db,
-            "CREATE INDEX revision_certs__id "
-            "ON revision_certs (id)");
-
-  sql::exec(db,
-            "CREATE INDEX revision_certs__name_value "
-            "ON revision_certs (name, value)");
-}
-
+// There is, perhaps, an argument for turning the logic inside the
+// while-loop into a callback function like unbase64().  We would then not
+// need a special case for this step in the master migration loop.  However,
+// we'd have to get the app_state in there somehow, we might in the future
+// need to do other things that can't be easily expressed in pure SQL, and
+// besides I think it's clearer this way.
 static void
 migrate_to_external_privkeys(sqlite3 * db, app_state &app)
 {
-  using std::map;
-  map<string, string> pub, priv;
-
   {
-    sql stmt(db, 2, "SELECT id, keydata FROM private_keys");
+    sql stmt(db, 3,
+             "SELECT private_keys.id, private_keys.keydata, public_keys.keydata"
+             "  FROM private_keys LEFT OUTER JOIN public_keys"
+             "  ON private_keys.id = public_keys.id");
 
     while (stmt.step())
-      priv.insert(make_pair(stmt.column_string(0), stmt.column_string(1)));
+      {
+        rsa_keypair_id ident = stmt.column_string(0);
+        base64< arc4<rsa_priv_key> > old_priv = stmt.column_string(1);
+
+        keypair kp;
+        migrate_private_key(app, ident, old_priv, kp);
+        MM(kp.pub);
+
+        if (stmt.column_nonnull(2))
+          {
+            base64< rsa_pub_key > pub = stmt.column_string(2);
+            MM(pub);
+            N(keys_match(ident, pub, ident, kp.pub),
+              F("public and private keys for %s don't match") % ident);
+          }
+        P(F("moving key '%s' from database to %s")
+          % ident % app.keys.get_key_dir());
+        app.keys.put_key_pair(ident, kp);
+      }
   }
-  {
-    sql stmt(db, 2, "SELECT id, keydata FROM public_keys");
 
-    while (stmt.step())
-      pub.insert(make_pair(stmt.column_string(0), stmt.column_string(1)));
-  }
-
-  for (map<string, string>::const_iterator i = priv.begin();
-       i != priv.end(); ++i)
-    {
-      rsa_keypair_id ident = i->first;
-      base64< arc4<rsa_priv_key> > old_priv = i->second;
-      map<string, string>::const_iterator j = pub.find(i->first);
-      keypair kp;
-      migrate_private_key(app, ident, old_priv, kp);
-      MM(kp.pub);
-      if (j != pub.end())
-        {
-          base64< rsa_pub_key > pub = j->second;
-          MM(pub);
-          N(keys_match(ident, pub, ident, kp.pub),
-            F("public and private keys for %s don't match") % ident);
-        }
-
-      P(F("moving key '%s' from database to %s")
-        % ident % app.keys.get_key_dir());
-      app.keys.put_key_pair(ident, kp);
-    }
-
-  sql::exec(db, "DROP TABLE private_keys");
+  sql::exec(db, "DROP TABLE private_keys;");
 }
 
-static void
-migrate_add_rosters(sqlite3 * db, app_state &)
-{
-  sql::exec(db,
-            "CREATE TABLE rosters\n"
-            "(\n"
-            "id primary key,         -- strong hash of the roster\n"
-            "data not null           -- compressed, encoded contents of the roster\n"
-            ")");
+char const migrate_add_rosters[] =
+  "CREATE TABLE rosters"
+  "  ( id primary key,   -- strong hash of the roster\n"
+  "    data not null     -- compressed, encoded contents of the roster\n"
+  "  );"
 
-  sql::exec(db,
-            "CREATE TABLE roster_deltas\n"
-            "(\n"
-            "id not null,            -- strong hash of the roster\n"
-            "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
-            "delta not null,         -- rdiff to construct current from base\n"
-            "unique(id, base)\n"
-            ")");
+  "CREATE TABLE roster_deltas"
+  "  ( id not null,      -- strong hash of the roster\n"
+  "    base not null,    -- joins with either rosters.id or roster_deltas.id\n"
+  "    delta not null,   -- rdiff to construct current from base\n"
+  "    unique(id, base)"
+  "  );"
 
-  sql::exec(db,
-            "CREATE TABLE revision_roster\n"
-            "(\n"
-            "rev_id primary key,     -- joins with revisions.id\n"
-            "roster_id not null      -- joins with either rosters.id or roster_deltas.id\n"
-            ")");
+  "CREATE TABLE revision_roster"
+  "  ( rev_id primary key, -- joins with revisions.id\n"
+  "    roster_id not null -- joins with either rosters.id or roster_deltas.id\n"
+  "  );"
 
-  sql::exec(db,
-            "CREATE TABLE next_roster_node_number\n"
-            "(\n"
-            "node primary key        -- only one entry in this table, ever\n"
-            ")");
-}
+  "CREATE TABLE next_roster_node_number"
+  "  ( node primary key        -- only one entry in this table, ever\n"
+  "  );"
+  ;
 
 // I wish I had a form of ALTER TABLE COMMENT on sqlite3
-static void
-migrate_files_BLOB(sqlite3 * db, app_state &)
-{
+char const migrate_files_BLOB[] = 
   // change the encoding of file(_delta)s
-  sql::exec(db, "ALTER TABLE files RENAME TO tmp");
-  sql::exec(db, "CREATE TABLE files\n"
-            "(\n"
-            "id primary key,   -- strong hash of file contents\n"
-            "data not null     -- compressed contents of a file\n"
-            ")");
-  sql::exec(db, "INSERT INTO files SELECT id, unbase64(data) FROM tmp");
-  sql::exec(db, "DROP TABLE tmp");
+  "ALTER TABLE files RENAME TO tmp;"
+  "CREATE TABLE files"
+  "  ( id primary key,   -- strong hash of file contents\n"
+  "    data not null     -- compressed contents of a file\n"
+  "  );"
+  "INSERT INTO files SELECT id, unbase64(data) FROM tmp;"
+  "DROP TABLE tmp;"
 
-  sql::exec(db, "ALTER TABLE file_deltas RENAME TO tmp");
-  sql::exec(db, "CREATE TABLE file_deltas\n"
-            "(\n"
-            "id not null,      -- strong hash of file contents\n"
-            "base not null,    -- joins with files.id or file_deltas.id\n"
-            "delta not null,   -- compressed rdiff to construct current from base\n"
-            "unique(id, base)\n"
-            ")");
-  sql::exec(db, "INSERT INTO file_deltas SELECT id, base, unbase64(delta) "
-            "FROM tmp");
-  sql::exec(db, "DROP TABLE tmp");
+  "ALTER TABLE file_deltas RENAME TO tmp;"
+  "CREATE TABLE file_deltas"
+  "  ( id not null,      -- strong hash of file contents\n"
+  "    base not null,    -- joins with files.id or file_deltas.id\n"
+  "    delta not null,   -- compressed rdiff to construct current from base\n"
+  "    unique(id, base)"
+  "  );"
+  "INSERT INTO file_deltas SELECT id, base, unbase64(delta) FROM tmp;"
+  "DROP TABLE tmp;"
 
   // migrate other contents which are accessed by get|put_version
-  sql::exec(db, "UPDATE manifests SET data=unbase64(data)");
-  sql::exec(db, "UPDATE manifest_deltas SET delta=unbase64(delta)");
-  sql::exec(db, "UPDATE rosters SET data=unbase64(data) ");
-  sql::exec(db, "UPDATE roster_deltas SET delta=unbase64(delta)");
-  sql::exec(db, "UPDATE db_vars SET value=unbase64(value),name=unbase64(name)");
-  sql::exec(db, "UPDATE public_keys SET keydata=unbase64(keydata)");
-  sql::exec(db, "UPDATE revision_certs "
-            "SET value=unbase64(value),signature=unbase64(signature)");
-  sql::exec(db, "UPDATE manifest_certs "
-            "SET value=unbase64(value),signature=unbase64(signature)");
-  sql::exec(db, "UPDATE revisions SET data=unbase64(data)");
-  sql::exec(db, "UPDATE branch_epochs SET branch=unbase64(branch)");
-}
+  "UPDATE manifests       SET data=unbase64(data);"
+  "UPDATE manifest_deltas SET delta=unbase64(delta);"
+  "UPDATE rosters         SET data=unbase64(data) ;"
+  "UPDATE roster_deltas   SET delta=unbase64(delta);"
+  "UPDATE db_vars         SET value=unbase64(value), name=unbase64(name);"
+  "UPDATE public_keys     SET keydata=unbase64(keydata);"
+  "UPDATE revision_certs  SET value=unbase64(value),"
+  "                           signature=unbase64(signature);"
+  "UPDATE manifest_certs  SET value=unbase64(value),"
+  "                           signature=unbase64(signature);"
+  "UPDATE revisions       SET data=unbase64(data);"
+  "UPDATE branch_epochs   SET branch=unbase64(branch);"
+  ;
 
-static void
-migrate_rosters_no_hash(sqlite3 * db, app_state &)
-{
-  sql::exec(db, "DROP TABLE rosters");
-  sql::exec(db, "DROP TABLE roster_deltas");
-  sql::exec(db, "DROP TABLE revision_roster");
+char const migrate_rosters_no_hash[] =
+  "DROP TABLE rosters;"
+  "DROP TABLE roster_deltas;"
+  "DROP TABLE revision_roster;"
 
-  sql::exec(db,
-            "CREATE TABLE rosters\n"
-            "(\n"
-            "id primary key,         -- a revision id\n"
-            "checksum not null,      -- checksum of 'data', to protect against disk corruption\n"
-            "data not null           -- compressed, encoded contents of the roster\n"
-            ")");
+  "CREATE TABLE rosters"
+  "  ( id primary key,    -- a revision id\n"
+  "    checksum not null, -- checksum of 'data', to protect against"
+  "                          disk corruption\n"
+  "    data not null      -- compressed, encoded contents of the roster\n"
+  "  );"
 
-  sql::exec(db,
-            "CREATE TABLE roster_deltas\n"
-            "(\n"
-            "id primary key,         -- a revision id\n"
-            "checksum not null,      -- checksum of 'delta', to protect against disk corruption\n"
-            "base not null,          -- joins with either rosters.id or roster_deltas.id\n"
-            "delta not null          -- rdiff to construct current from base\n"
-            ")");
-}
+  "CREATE TABLE roster_deltas"
+  "  ( id primary key,    -- a revision id\n"
+  "    checksum not null, -- checksum of 'delta', to protect against"
+  "                          disk corruption\n"
+  "    base not null,     -- joins with either rosters.id or roster_deltas.id\n"
+  "    delta not null     -- rdiff to construct current from base\n"
+  "  );"
+  ;
 
-
-static void
-migrate_add_heights(sqlite3 * db, app_state &)
-{
-  sql::exec(db,
-            "CREATE TABLE heights\n"
-            "(\n"
-            "revision not null,	-- joins with revisions.id\n"
-            "height not null,	-- complex height, array of big endian u32 integers\n"
-            "unique(revision, height)\n"
-            ")");
-}
+char const migrate_add_heights[] =
+  "CREATE TABLE heights"
+  "  ( revision not null,	-- joins with revisions.id\n"
+  "    height not null,	-- complex height, array of big endian u32 integers\n"
+  "    unique(revision, height)"
+  "  );"
+  ;
 
 // these must be listed in order so that ones listed earlier override ones
 // listed later
@@ -668,10 +592,13 @@ enum upgrade_regime
 
 typedef void (*migrator_cb)(sqlite3 *, app_state &);
 
+// Exactly one of migrator_sql and migrator_func should be non-null in
+// all entries in migration_events, except the very last.
 struct migration_event
 {
   char const * id;
-  migrator_cb migrator;
+  char const * migrator_sql;
+  migrator_cb migrator_func;
   upgrade_regime regime;
 };
 
@@ -681,53 +608,42 @@ struct migration_event
 
 const migration_event migration_events[] = {
   { "edb5fa6cef65bcb7d0c612023d267c3aeaa1e57a",
-    migrate_merge_url_and_group,
-    upgrade_none },
+    migrate_merge_url_and_group, 0, upgrade_none },
 
   { "f042f3c4d0a4f98f6658cbaf603d376acf88ff4b",
-    migrate_add_hashes_and_merkle_trees,
-    upgrade_none },
+    migrate_add_hashes_and_merkle_trees, 0, upgrade_none },
 
   { "8929e54f40bf4d3b4aea8b037d2c9263e82abdf4",
-    migrate_to_revisions,
-    upgrade_changesetify },
+    migrate_to_revisions, 0, upgrade_changesetify },
 
   { "c1e86588e11ad07fa53e5d294edc043ce1d4005a",
-    migrate_to_epochs,
-    upgrade_none },
+    migrate_to_epochs, 0, upgrade_none },
 
   { "40369a7bda66463c5785d160819ab6398b9d44f4",
-    migrate_to_vars,
-    upgrade_none },
+    migrate_to_vars, 0, upgrade_none },
 
   { "e372b508bea9b991816d1c74680f7ae10d2a6d94",
-    migrate_add_indexes,
-    upgrade_none },
+    migrate_add_indexes, 0, upgrade_none },
 
   { "1509fd75019aebef5ac3da3a5edf1312393b70e9",
-    migrate_to_external_privkeys,
-    upgrade_none },
+    0, migrate_to_external_privkeys, upgrade_none },
 
   { "bd86f9a90b5d552f0be1fa9aee847ea0f317778b",
-    migrate_add_rosters,
-    upgrade_rosterify },
+    migrate_add_rosters, 0, upgrade_rosterify },
 
   { "1db80c7cee8fa966913db1a463ed50bf1b0e5b0e",
-    migrate_files_BLOB,
-    upgrade_none },
+    migrate_files_BLOB, 0, upgrade_none },
 
   { "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
-    migrate_rosters_no_hash,
-    upgrade_regen_caches },
+    migrate_rosters_no_hash, 0, upgrade_regen_caches },
 
   { "ae196843d368d042f475e3dadfed11e9d7f9f01e",
-    migrate_add_heights,
-    upgrade_regen_caches },
+    migrate_add_heights, 0, upgrade_regen_caches },
 
   // The last entry in this table should always be the current
-  // schema ID, with 0 for the migrator.
+  // schema ID, with 0 for the migrators.
 
-  { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d", 0, upgrade_none }
+  { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d", 0, 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
@@ -767,18 +683,19 @@ calculate_schema_id(sqlite3 *db, string & ident)
   ident = tid();
 }
 
-// Look through the migration_events table and return the index of the
-// entry corresponding to schema ID, or -1 if it isn't there (i.e. if
+// Look through the migration_events table and return a pointer to the
+// entry corresponding to schema ID, or null if it isn't there (i.e. if
 // the database schema is not one we know).
-static int
+static migration_event const *
 schema_to_migration(string const & id)
 {
-  int i;
-  for (i = n_migration_events - 1; i >= 0; i--)
-    if (migration_events[i].id == id)
-      break;
+  migration_event const *p;
+  for (p = migration_events + n_migration_events - 1;
+       p >= migration_events; p--)
+    if (p->id == id)
+      return p;
 
-  return i;
+  return 0;
 }
 
 // Provide sensible diagnostics for a database schema whose hash we do not
@@ -829,12 +746,12 @@ check_sql_schema(sqlite3 * db, system_path const & filename)
   string id;
   calculate_schema_id(db, id);
  
-  int migration = schema_to_migration(id);
+  migration_event const *m = schema_to_migration(id);
  
-  if (migration == -1)
+  if (m == 0)
     diagnose_unrecognized_schema(db, filename, id);
  
-  N(migration_events[migration].migrator == 0,
+  N(m->migrator_sql == 0 && m->migrator_func == 0,
     F("database %s is laid out according to an old schema, %s\n"
       "try '%s db migrate' to upgrade\n"
       "(this is irreversible; you may want to make a backup copy first)")
@@ -864,16 +781,16 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 
     P(F("calculating migration for schema %s") % init);
 
-    int i = schema_to_migration(init);
+    migration_event const *m = schema_to_migration(init);
 
-    if (i == -1)
+    if (m == 0)
       diagnose_unrecognized_schema(db, app.db.get_filename(), init);
 
     // We really want 'db migrate' on an up-to-date schema to be a no-op
     // (no vacuum or anything, even), so that automated scripts can fire
     // one off optimistically and not have to worry about getting their
     // administrators to do it by hand.
-    if (migration_events[i].migrator == 0)
+    if (m->migrator_func == 0 && m->migrator_sql == 0)
       {
         P(F("no migration performed; database schema already up-to-date"));
         return;
@@ -886,16 +803,20 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
         // confirm that we are where we ought to be
         string curr;
         calculate_schema_id(db, curr);
-        I(curr == migration_events[i].id);
+        I(curr == m->id);
+        I(!m->migrator_sql || !m->migrator_func);
 
-        if (migration_events[i].migrator == 0)
+        if (m->migrator_sql)
+          sql::exec(db, m->migrator_sql);
+        else if (m->migrator_func)
+          m->migrator_func(db, app);
+        else
           break;
 
-        migration_events[i].migrator(db, app);
-        regime = std::min(regime, migration_events[i].regime);
+        regime = std::min(regime, m->regime);
 
-        i++;
-        I((size_t)i < n_migration_events);
+        m++;
+        I(m < migration_events + n_migration_events);
       }
 
     P(F("committing changes to database"));
@@ -943,16 +864,21 @@ test_migration_step(sqlite3 * db, app_state & app, string const & schema)
 
   transaction guard(db);
 
-  int i = schema_to_migration(schema);
-  N(i > 0, F("cannot test migration from unknown schema %s") % schema);
-  N(migration_events[i].migrator, F("schema %s is up to date") % schema);
+  migration_event const *m = schema_to_migration(schema);
+  N(m, F("cannot test migration from unknown schema %s") % schema);
+
+  N(m->migrator_sql || m->migrator_func, F("schema %s is up to date") % schema);
 
   L(FL("testing migration from %s to %s\n in database %s")
-    % schema % migration_events[i+1].id % app.db.get_filename());
+    % schema % m[1].id % app.db.get_filename());
 
-  migration_events[i].migrator(db, app);
+  if (m->migrator_sql)
+    sql::exec(db, m->migrator_sql);
+  else
+    m->migrator_func(db, app);
+
   // in the unlikely event that we get here ...
-  P(F("successful migration to schema %s") % migration_events[i+1].id);
+  P(F("successful migration to schema %s") % m[1].id);
   guard.commit();
 }
 

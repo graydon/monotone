@@ -1,5 +1,22 @@
 2007-01-13  Zack Weinberg  <zackw@panix.com>
 
+	* schema_migration.cc (sql::exec): Process an entire sequence of
+	SQL statements.
+	(migrate_sql_schema, test_migration_step): Handle all-SQL
+	migrators (i.e. pass the strings to sql::exec).
+	(migrate_*): Where entirely composed of calls to sql::exec,
+	replace with a giant string constant containing all the SQL
+	statements in order.
+	(sql::sql): Support more than one statement per string.
+	(sql::column_nonnull): New.
+	(struct migration_event): Replace migrator field with migrator_sql
+	and migrator_func.
+	(migration_events): Put each entry's migrator in the appropriate field.
+	(schema_to_migration): Return a migration_event *, not an integer.
+	(migrate_to_external_privkeys): This is the only migration step
+	that still needs to be a function.  Simplify by using a single
+	joined SELECT rather than copying everything into maps.
+
 	* schema_migration.cc: Further prune using-declarations.
 	(migrate_*): Use sql::exec directly.  Shorten names.  Don't call
 	set_regime.  Remove errmsg and upgrade_regime arguments.  Change
