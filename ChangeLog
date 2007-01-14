@@ -1,5 +1,12 @@
 2007-01-13  Zack Weinberg  <zackw@panix.com>
 
+	* sqlite/pager.c, sqlite/btree.c: Apply upstream change #3563 -
+	fixes crash when db is writable but directory isn't.
+	* database.cc (assert_sqlite_ok): Give helpful additional message
+	for more sqlite error codes.
+	* tests/fail_cleanly_on_unreadable_db: Test unwritable db,
+	unwritable directory, and -r+wx directory too.
+
 	* schema_migration.cc (logged_sqlite3_prepare, report_sqlite_error)
 	(logged_sqlite3_exec_int, sqlite3_column_string): New functions.
 	(logged_sqlite3_exec, calculate_schema_id)

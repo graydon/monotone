@@ -1931,13 +1931,15 @@ static int lockBtreeWithRetry(Btree *pRef){
 */
 static void unlockBtreeIfUnused(BtShared *pBt){
   if( pBt->inTransaction==TRANS_NONE && pBt->pCursor==0 && pBt->pPage1!=0 ){
-    if( pBt->pPage1->aData==0 ){
-      MemPage *pPage = pBt->pPage1;
-      pPage->aData = &((u8*)pPage)[-pBt->pageSize];
-      pPage->pBt = pBt;
-      pPage->pgno = 1;
+    if( sqlite3pager_refcount(pBt->pPager)>=1 ){
+      if( pBt->pPage1->aData==0 ){
+        MemPage *pPage = pBt->pPage1;
+        pPage->aData = &((u8*)pPage)[-pBt->pageSize];
+        pPage->pBt = pBt;
+        pPage->pgno = 1;
+      }
+      releasePage(pBt->pPage1);
     }
-    releasePage(pBt->pPage1);
     pBt->pPage1 = 0;
     pBt->inStmt = 0;
   }
@@ -6424,7 +6426,6 @@ int sqlite3BtreeCopyFile(Btree *pTo, Btree *pFrom){
     rc = sqlite3pager_get(pBtFrom->pPager, i, &pPage);
     if( rc ) break;
     rc = sqlite3pager_overwrite(pBtTo->pPager, i, pPage);
-    if( rc ) break;
     sqlite3pager_unref(pPage);
   }
   for(i=nPage+1; rc==SQLITE_OK && i<=nToPage; i++){

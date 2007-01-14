@@ -266,13 +266,21 @@ assert_sqlite3_ok(sqlite3 *s)
   
   // sometimes sqlite is not very helpful
   // so we keep a table of errors people have gotten and more helpful versions
-  // note: if you update this, try to keep calculate_schema_id() in
+  // note: if you update this, try to keep the similar function in
   // schema_migration.cc consistent.
-  string auxiliary_message = "";
-  if (errcode == SQLITE_ERROR)
+  const char * auxiliary_message = "";
+  switch (errcode)
     {
-      auxiliary_message += _("make sure database and containing directory are writeable\n"
-                             "and you have not run out of disk space");
+    case SQLITE_ERROR:
+    case SQLITE_IOERR:
+    case SQLITE_CANTOPEN:
+    case SQLITE_PROTOCOL:
+      auxiliary_message
+        = _("make sure database and containing directory are writeable\n"
+            "and you have not run out of disk space");
+      break;
+    default:
+      break;
     }
   // if the last message is empty, the \n will be stripped off too
   E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
