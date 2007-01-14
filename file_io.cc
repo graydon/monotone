@@ -481,8 +481,8 @@ walk_tree_recursive(fs::path const & absolute,
         }
 
       if (!fs::exists(entry)
-          || di->string() == "."
-          || di->string() == "..")
+          || entry.string() == "."
+          || entry.string() == "..")
         {
           // ignore
           continue;
@@ -533,8 +533,7 @@ tree_walker::visit_dir(file_path const & path)
 // from some (safe) sub-entry of cwd
 void
 walk_tree(file_path const & path,
-          tree_walker & walker,
-          bool require_existing_path)
+          tree_walker & walker)
 {
   if (path.empty())
     {
@@ -545,8 +544,7 @@ walk_tree(file_path const & path,
   switch (get_path_status(path))
     {
     case path::nonexistent:
-      N(!require_existing_path, F("no such file or directory: '%s'") % path);
-      walker.visit_file(path);
+      N(false, F("no such file or directory: '%s'") % path);
       break;
     case path::file:
       walker.visit_file(path);

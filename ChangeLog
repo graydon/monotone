@@ -1,3 +1,9 @@
+2007-01-14  Derek Scherger  <derek@echologic.com>
+
+	* file_io.{cc,hh} (walk_tree_recursive): use entry instead of di
+	for consistency
+	(walk_tree): remove unused require_existing_path arg
+
 2007-01-14  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*: Import SQLite 3.3.10.

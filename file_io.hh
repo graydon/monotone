@@ -102,8 +102,7 @@ public:
 // from some safe sub-dir of cwd
 // file_path of "" means cwd
 void walk_tree(file_path const & path,
-               tree_walker & walker,
-               bool require_existing_path = true);
+               tree_walker & walker);
 
 
 
