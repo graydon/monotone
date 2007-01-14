@@ -1,3 +1,8 @@
+2007-01-14  Nathaniel Smith  <njs@pobox.com>
+
+	* m4/boost.m4: Check for another possible library suffix used on
+	some Cygwin builds (patch from Vaclav Haisman).
+
 2007-01-14  Derek Scherger  <derek@echologic.com>
 
 	* file_io.{cc,hh} (walk_tree_recursive): use entry instead of di

@@ -57,9 +57,9 @@ AC_DEFUN([BOOST_SUFFIX_ARG],
 [AC_ARG_VAR([BOOST_SUFFIX],
             [Space-separated list of suffixes to try appending to the names
 	     of Boost libraries.  "none" means no suffix. The default is:
-	     "none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"])
+	     "none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt -gcc-mt-s"])
 if test x"$BOOST_SUFFIX" = x; then
-  BOOST_SUFFIX="none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"
+  BOOST_SUFFIX="none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt -gcc-mt-s"
 fi
 ])
 
