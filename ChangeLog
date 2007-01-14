@@ -1,5 +1,18 @@
 2007-01-13  Zack Weinberg  <zackw@panix.com>
 
+	* schema_migration.cc: Replace logged_sqlite3_* with a new, tidier
+	class-based API.  (logged_sqlite3_exec remains for transitional
+	purposes.)  Globally change "sql" local variables to "db" to avoid
+	conflict with new "sql" class. Introduce RAII class to ensure that
+	database rollback happens when necessary.  Report errors with
+	exceptions (migrator functions have not been fully updated for this).
+	Take the database lock at the beginning of migrate_monotone_schema,
+	not after calculating migration steps.  Trap Botan errors in
+	sqlite3_unbase64_fn.  Give helpful additional message for more
+	sqlite error codes.
+	* tests/schema_migration_error_recovery: New test.
+	* testsuite.lua: Update.
+
 	* sqlite/pager.c, sqlite/btree.c: Apply upstream change #3563 -
 	fixes crash when db is writable but directory isn't.
 	* database.cc (assert_sqlite_ok): Give helpful additional message

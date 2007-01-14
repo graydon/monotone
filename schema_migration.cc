@@ -33,113 +33,178 @@ using std::vector;
 // in this file is easier to write and understand if it speaks directly
 // to sqlite.
 
-// we do not use sqlite3_exec because we want the better error handling that
-// sqlite3_prepare_v2 gives us.
+// Wrappers around the bare sqlite3 API.  We do not use sqlite3_exec because
+// we want the better error handling that sqlite3_prepare_v2 gives us.
 
-static sqlite3_stmt *
-logged_sqlite3_prepare(sqlite3 * sql, char const * cmd)
+namespace
 {
-  sqlite3_stmt * stmt;
-  char const * after;
-
-  L(FL("executing SQL '%s'") % cmd);
-
-  int res = sqlite3_prepare_v2(sql, cmd, strlen(cmd), &stmt, &after);
-  if (res != SQLITE_OK)
+  struct sql
+  {
+    sql(sqlite3 * db, int cols, char const *cmd)
+      : stmt(0), ncols(cols)
     {
-      L(FL("prepare failure: %s") % sqlite3_errmsg(sql));
-      return 0;
-    }
-  //I(stmt);
-  //I(after == 0);
+      sqlite3_stmt * s;
+      char const * after;
 
-  return stmt;
+      L(FL("executing SQL '%s'") % cmd);
+
+      if (sqlite3_prepare_v2(db, cmd, strlen(cmd), &s, &after))
+        error(db);
+
+      I(s);
+      I(*after == 0);
+      I(sqlite3_column_count(s) == ncols);
+      stmt = s;
+    }
+    ~sql()
+    {
+      if (stmt)
+        sqlite3_finalize(stmt);
+    }
+
+    bool step()
+    {
+      int res = sqlite3_step(stmt);
+      if (res == SQLITE_ROW)
+        return true;
+      if (res == SQLITE_DONE)
+        {
+          L(FL("success"));
+          return false;
+        }
+      // Diagnostics from sqlite3_result_error show up in sqlite3_errmsg
+      // only after sqlite3_finalize or sqlite3_reset are called on the
+      // stmt object.  See SQLite ticket #1640.
+      sqlite3 * db = sqlite3_db_handle(stmt);
+      sqlite3_finalize(stmt);
+      stmt = 0;
+      error(db);
+    }
+    int column_int(int col)
+    {
+      I(col >= 0 && col < ncols);
+      return sqlite3_column_int(stmt, col);
+    }
+    string column_string(int col)
+    {
+      I(col >= 0 && col < ncols);
+      return string(reinterpret_cast<char const *>
+                    (sqlite3_column_text(stmt, col)));
+    }
+
+    // convenience API if you don't need to get rows
+    static void exec(sqlite3 * db, char const * cmd)
+    {
+      sql stmt(db, 0, cmd);
+      I(stmt.step() == false);
+    }
+
+    static int value(sqlite3 * db, char const * cmd)
+    {
+      sql stmt(db, 1, cmd);
+
+      I(stmt.step() == true);
+      int res = stmt.column_int(0);
+      I(stmt.step() == false);
+
+      return res;
+    }
+
+    // convenience for making functions
+    static void create_function(sqlite3 * db, char const * name,
+                                void (*fn)(sqlite3_context *,
+                                           int, sqlite3_value **))
+    {
+      if (sqlite3_create_function(db, name, -1, SQLITE_UTF8, 0, fn, 0, 0))
+        error(db);
+    }
+
+  private:
+    sqlite3_stmt * stmt;
+    int ncols;
+
+    static void NORETURN
+    error(sqlite3 * db)
+    {
+      // note: useful error messages should be kept consistent with
+      // assert_sqlite3_ok() in database.cc
+      char const * errmsg = sqlite3_errmsg(db);
+      int errcode = sqlite3_errcode(db);
+
+      L(FL("sqlite error: %d: %s") % errcode % errmsg);
+
+      // Check the string to see if it looks like an informative_failure
+      // thrown from within an SQL extension function, caught, and turned
+      // into a call to sqlite3_result_error.  (Extension functions have to
+      // do this to avoid corrupting sqlite's internal state.)  If it is,
+      // rethrow it rather than feeding it to E(), lest we get "error:
+      // sqlite error: error: " ugliness.
+      char const *pfx = _("error: ");
+      if (!std::strncmp(errmsg, pfx, strlen(pfx)))
+        throw informative_failure(errmsg);
+  
+      char const * auxiliary_message = "";
+      switch (errcode)
+        {
+        case SQLITE_ERROR:
+        case SQLITE_IOERR:
+        case SQLITE_CANTOPEN:
+        case SQLITE_PROTOCOL:
+          auxiliary_message
+            = _("make sure database and containing directory are writeable\n"
+                "and you have not run out of disk space");
+          break;
+        default: break;
+        }
+
+      E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
+    }
+  };
+
+  struct transaction
+  {
+    transaction(sqlite3 * s) : db(s), committed(false)
+    {
+      sql::exec(db, "BEGIN EXCLUSIVE");
+    }
+    void commit()
+    {
+      I(committed == false);
+      committed = true;
+    }
+    ~transaction()
+    {
+      if (committed)
+        sql::exec(db, "COMMIT");
+      else
+        sql::exec(db, "ROLLBACK");
+    }
+  private:
+    sqlite3 * db;
+    bool committed;
+  };
 }
 
-// this function can only be used with statements that do not return rows.
+// transitional
 static int
-logged_sqlite3_exec(sqlite3 * sql, char const * cmd,
-                    void* d1, void* d2, char **errmsg)
+logged_sqlite3_exec(sqlite3 * db, char const * cmd,
+                    void* d1 = 0, void* d2 = 0, char **errmsg = 0)
 {
   I(d1 == 0);
   I(d2 == 0);
+  I(errmsg == 0);
 
-  sqlite3_stmt * stmt = logged_sqlite3_prepare(sql, cmd);
-  if (stmt == 0)
-    return SQLITE_ERROR;
-  //I(sqlite3_column_count(stmt) == 0);
-
-  int res = sqlite3_step(stmt);
-
-  //I(res != SQLITE_ROW);
-  if (res == SQLITE_DONE)
-    {
-      // callers expect OK
-      L(FL("success"));
-      res = SQLITE_OK;
-    }
-  else if (errmsg)
-    *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
-
-  sqlite3_finalize(stmt);
-  return res;
+  sql::exec(db, cmd);
+  return SQLITE_OK;
 }
 
-static void NORETURN
-report_sqlite_error(sqlite3 * sql)
-{
-  // note: useful error messages should be kept consistent with
-  // assert_sqlite3_ok() in database.cc
-  char const * errmsg = sqlite3_errmsg(sql);
-  char const * auxiliary_message = "";
-
-  L(FL("sqlite error: %s") % errmsg);
-  
-  if (sqlite3_errcode(sql) == SQLITE_ERROR)
-    auxiliary_message
-      = _("make sure database and containing directory are writeable\n"
-          "and you have not run out of disk space");
-
-  logged_sqlite3_exec(sql, "ROLLBACK", 0, 0, 0);
-  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
-}
-
-// execute an sql statement and return the single integer value that it
-// should produce.
-static int
-logged_sqlite3_exec_int(sqlite3 * sql, char const * cmd)
-{
-  sqlite3_stmt * stmt = logged_sqlite3_prepare(sql, cmd);
-  if (stmt == 0)
-    report_sqlite_error(sql);
-  //I(sqlite3_column_count(stmt) == 1);
-
-  if (sqlite3_step(stmt) != SQLITE_ROW)
-    report_sqlite_error(sql);
-
-  int res = sqlite3_column_int(stmt, 0);
-
-  if (sqlite3_step(stmt) != SQLITE_DONE)
-    report_sqlite_error(sql);
-
-  L(FL("success"));
-
-  sqlite3_finalize(stmt);
-  return res;
-}
+// SQL extension functions.
 
 // sqlite3_value_text returns unsigned char const *, which is inconvenient
 inline char const *
 sqlite3_value_cstr(sqlite3_value * arg)
 {
   return reinterpret_cast<char const *>(sqlite3_value_text(arg));
-}
-
-// sqlite3_column_text also returns unsigned char const *
-inline string
-sqlite3_column_string(sqlite3_stmt * stmt, int col)
-{
-  return string(reinterpret_cast<char const *>(sqlite3_column_text(stmt, col)));
 }
 
 inline bool is_ws(char c)
@@ -182,50 +247,28 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_text(f, sha().c_str(), sha().size(), SQLITE_TRANSIENT);
 }
 
-void
-calculate_schema_id(sqlite3 *sql, string & ident)
+static void
+sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 {
-  sqlite3_stmt * stmt
-    = logged_sqlite3_prepare(sql,
-                             "SELECT sql FROM sqlite_master "
-                             "WHERE (type = 'table' OR type = 'index') "
-                             // filter out NULL sql statements, because
-                             // those are auto-generated indices (for
-                             // UNIQUE constraints, etc.).
-                             "AND sql IS NOT NULL "
-                             "AND name not like 'sqlite_stat%' "
-                             "ORDER BY name");
-  if (!stmt)
-    report_sqlite_error(sql);
-  //I(sqlite3_column_count(stmt) == 1);
-
-  int res;
-  string schema;
-  using boost::char_separator;
-  typedef boost::tokenizer<char_separator<char> > tokenizer;
-  char_separator<char> sep(" \r\n\t", "(),;");
-
-  while ((res = sqlite3_step(stmt)) == SQLITE_ROW)
+  if (nargs != 1)
     {
-      string table_schema(sqlite3_column_string(stmt, 0));
-      tokenizer tokens(table_schema, sep);
-      for (tokenizer::iterator i = tokens.begin(); i != tokens.end(); i++)
-        {
-          if (schema.size() != 0)
-            schema += " ";
-          schema += *i;
-        }
+      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
+      return;
     }
+  data decoded;
 
-  if (res != SQLITE_DONE)
-    report_sqlite_error(sql);
-
-  sqlite3_finalize(stmt);
-  L(FL("success"));
-
-  hexenc<id> tid;
-  calculate_ident(data(schema), tid);
-  ident = tid();
+  // This operation may throw informative_failure.  We must intercept that
+  // and turn it into a call to sqlite3_result_error, or rollback will fail.
+  try
+    {
+      decode_base64(base64<data>(string(sqlite3_value_cstr(args[0]))), decoded);
+    }
+  catch (informative_failure & e)
+    {
+      sqlite3_result_error(f, e.what(), -1);
+      return;
+    }
+  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
 // these must be listed in order so that ones listed earlier override ones
@@ -244,7 +287,7 @@ set_regime(upgrade_regime new_regime, upgrade_regime & regime)
   regime = std::min(new_regime, regime);
 }
 
-static bool move_table(sqlite3 *sql, char **errmsg,
+static bool move_table(sqlite3 *db, char **errmsg,
                        char const * srcname,
                        char const * dstname,
                        char const * dstschema)
@@ -254,7 +297,7 @@ static bool move_table(sqlite3 *sql, char **errmsg,
   create += " ";
   create += dstschema;
 
-  int res = logged_sqlite3_exec(sql, create.c_str(), NULL, NULL, errmsg);
+  int res = logged_sqlite3_exec(db, create.c_str(), NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -263,14 +306,14 @@ static bool move_table(sqlite3 *sql, char **errmsg,
   insert += " SELECT * FROM ";
   insert += srcname;
 
-  res =  logged_sqlite3_exec(sql, insert.c_str(), NULL, NULL, errmsg);
+  res =  logged_sqlite3_exec(db, insert.c_str(), NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   string drop = "DROP TABLE ";
   drop += srcname;
 
-  res = logged_sqlite3_exec(sql, drop.c_str(), NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, drop.c_str(), NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -279,14 +322,14 @@ static bool move_table(sqlite3 *sql, char **errmsg,
 
 
 static bool
-migrate_client_merge_url_and_group(sqlite3 * sql,
+migrate_client_merge_url_and_group(sqlite3 * db,
                                    char ** errmsg,
                                    app_state *,
                                    upgrade_regime & regime)
 {
 
   // migrate the posting_queue table
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "posting_queue",
                   "tmp",
                   "("
@@ -296,7 +339,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
                   ")"))
     return false;
 
-  int res = logged_sqlite3_exec(sql, "CREATE TABLE posting_queue "
+  int res = logged_sqlite3_exec(db, "CREATE TABLE posting_queue "
                                 "("
                                 "url not null, -- URL we are going to send this to\n"
                                 "content not null -- the packets we're going to send\n"
@@ -304,7 +347,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO posting_queue "
+  res = logged_sqlite3_exec(db, "INSERT INTO posting_queue "
                             "SELECT "
                             "(url || '/' || groupname), "
                             "content "
@@ -312,13 +355,13 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
 
   // migrate the incoming_queue table
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "incoming_queue",
                   "tmp",
                   "("
@@ -328,7 +371,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
                   ")"))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE incoming_queue "
+  res = logged_sqlite3_exec(db, "CREATE TABLE incoming_queue "
                             "("
                             "url not null, -- URL we got this bundle from\n"
                             "content not null -- the packets we're going to read\n"
@@ -336,7 +379,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO incoming_queue "
+  res = logged_sqlite3_exec(db, "INSERT INTO incoming_queue "
                             "SELECT "
                             "(url || '/' || groupname), "
                             "content "
@@ -344,13 +387,13 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
 
   // migrate the sequence_numbers table
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "sequence_numbers",
                   "tmp",
                   "("
@@ -363,7 +406,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
                   ))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE sequence_numbers "
+  res = logged_sqlite3_exec(db, "CREATE TABLE sequence_numbers "
                             "("
                             "url primary key, -- URL to read from\n"
                             "major not null, -- 0 in news servers, may be higher in depots\n"
@@ -372,7 +415,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO sequence_numbers "
+  res = logged_sqlite3_exec(db, "INSERT INTO sequence_numbers "
                             "SELECT "
                             "(url || '/' || groupname), "
                             "major, "
@@ -381,13 +424,13 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
 
   // migrate the netserver_manifests table
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "netserver_manifests",
                   "tmp",
                   "("
@@ -399,7 +442,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
                   ))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE netserver_manifests "
+  res = logged_sqlite3_exec(db, "CREATE TABLE netserver_manifests "
                             "("
                             "url not null, -- url of some server\n"
                             "manifest not null, -- manifest which exists on url\n"
@@ -408,7 +451,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO netserver_manifests "
+  res = logged_sqlite3_exec(db, "INSERT INTO netserver_manifests "
                             "SELECT "
                             "(url || '/' || groupname), "
                             "manifest "
@@ -416,7 +459,7 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -424,14 +467,14 @@ migrate_client_merge_url_and_group(sqlite3 * sql,
 }
 
 static bool
-migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
+migrate_client_add_hashes_and_merkle_trees(sqlite3 * db,
                                            char ** errmsg,
                                            app_state *,
                                            upgrade_regime & regime)
 {
 
   // add the column to manifest_certs
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "manifest_certs",
                   "tmp",
                   "("
@@ -444,7 +487,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
                   ")"))
     return false;
 
-  int res = logged_sqlite3_exec(sql, "CREATE TABLE manifest_certs\n"
+  int res = logged_sqlite3_exec(db, "CREATE TABLE manifest_certs\n"
                                 "(\n"
                                 "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                                 "id not null,            -- joins with manifests.id or manifest_deltas.id\n"
@@ -457,7 +500,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO manifest_certs "
+  res = logged_sqlite3_exec(db, "INSERT INTO manifest_certs "
                             "SELECT "
                             "sha1(':', id, name, value, keypair, signature), "
                             "id, name, value, keypair, signature "
@@ -465,12 +508,12 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   // add the column to file_certs
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "file_certs",
                   "tmp",
                   "("
@@ -483,7 +526,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
                   ")"))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE file_certs\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE file_certs\n"
                             "(\n"
                             "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                             "id not null,            -- joins with files.id or file_deltas.id\n"
@@ -496,7 +539,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO file_certs "
+  res = logged_sqlite3_exec(db, "INSERT INTO file_certs "
                             "SELECT "
                             "sha1(':', id, name, value, keypair, signature), "
                             "id, name, value, keypair, signature "
@@ -504,12 +547,12 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   // add the column to public_keys
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "public_keys",
                   "tmp",
                   "("
@@ -518,7 +561,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
                   ")"))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE public_keys\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE public_keys\n"
                             "(\n"
                             "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                             "id primary key,         -- key identifier chosen by user\n"
@@ -527,7 +570,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO public_keys "
+  res = logged_sqlite3_exec(db, "INSERT INTO public_keys "
                             "SELECT "
                             "sha1(':', id, keydata), "
                             "id, keydata "
@@ -535,12 +578,12 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   // add the column to private_keys
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "private_keys",
                   "tmp",
                   "("
@@ -549,7 +592,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
                   ")"))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE private_keys\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE private_keys\n"
                             "(\n"
                             "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                             "id primary key,         -- as in public_keys (same identifiers, in fact)\n"
@@ -558,7 +601,7 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO private_keys "
+  res = logged_sqlite3_exec(db, "INSERT INTO private_keys "
                             "SELECT "
                             "sha1(':', id, keydata), "
                             "id, keydata "
@@ -566,13 +609,13 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   // add the merkle tree stuff
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE merkle_nodes\n"
                             "(\n"
                             "type not null,                -- \"key\", \"mcert\", \"fcert\", \"manifest\"\n"
@@ -589,42 +632,42 @@ migrate_client_add_hashes_and_merkle_trees(sqlite3 * sql,
 }
 
 static bool
-migrate_client_to_revisions(sqlite3 * sql,
+migrate_client_to_revisions(sqlite3 * db,
                             char ** errmsg,
                             app_state *,
                             upgrade_regime & regime)
 {
   int res;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE schema_version;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE schema_version;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE posting_queue;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE posting_queue;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE incoming_queue;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE incoming_queue;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE sequence_numbers;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE sequence_numbers;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE file_certs;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE file_certs;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE netserver_manifests;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE netserver_manifests;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE merkle_nodes\n"
                             "(\n"
                             "type not null,                -- \"key\", \"mcert\", \"fcert\", \"rcert\"\n"
@@ -637,7 +680,7 @@ migrate_client_to_revisions(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE revision_certs\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE revision_certs\n"
                             "(\n"
                             "hash not null unique,   -- hash of remaining fields separated by \":\"\n"
                             "id not null,            -- joins with revisions.id\n"
@@ -650,7 +693,7 @@ migrate_client_to_revisions(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE revisions\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE revisions\n"
                             "(\n"
                             "id primary key,      -- SHA1(text of revision)\n"
                             "data not null        -- compressed, encoded contents of a revision\n"
@@ -658,7 +701,7 @@ migrate_client_to_revisions(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE revision_ancestry\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE revision_ancestry\n"
                             "(\n"
                             "parent not null,     -- joins with revisions.id\n"
                             "child not null,      -- joins with revisions.id\n"
@@ -674,19 +717,19 @@ migrate_client_to_revisions(sqlite3 * sql,
 
 
 static bool
-migrate_client_to_epochs(sqlite3 * sql,
+migrate_client_to_epochs(sqlite3 * db,
                          char ** errmsg,
                          app_state *,
                          upgrade_regime & regime)
 {
   int res;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE merkle_nodes;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE branch_epochs\n"
                             "(\n"
                             "hash not null unique,         -- hash of remaining fields separated by \":\"\n"
@@ -700,14 +743,14 @@ migrate_client_to_epochs(sqlite3 * sql,
 }
 
 static bool
-migrate_client_to_vars(sqlite3 * sql,
+migrate_client_to_vars(sqlite3 * db,
                        char ** errmsg,
                        app_state *,
                        upgrade_regime & regime)
 {
   int res;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE db_vars\n"
                             "(\n"
                             "domain not null,      -- scope of application of a var\n"
@@ -722,28 +765,28 @@ migrate_client_to_vars(sqlite3 * sql,
 }
 
 static bool
-migrate_client_to_add_indexes(sqlite3 * sql,
+migrate_client_to_add_indexes(sqlite3 * db,
                               char ** errmsg,
                               app_state *,
                               upgrade_regime & regime)
 {
   int res;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE INDEX revision_ancestry__child "
                             "ON revision_ancestry (child)",
                             NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE INDEX revision_certs__id "
                             "ON revision_certs (id);",
                             NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE INDEX revision_certs__name_value "
                             "ON revision_certs (name, value);",
                             NULL, NULL, errmsg);
@@ -754,7 +797,7 @@ migrate_client_to_add_indexes(sqlite3 * sql,
 }
 
 static bool
-migrate_client_to_external_privkeys(sqlite3 * sql,
+migrate_client_to_external_privkeys(sqlite3 * db,
                                     char ** errmsg,
                                     app_state *app,
                                     upgrade_regime & regime)
@@ -762,46 +805,19 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
   int res;
   map<string, string> pub, priv;
   vector<keypair> pairs;
-  sqlite3_stmt * stmt;
 
-  stmt = logged_sqlite3_prepare(sql, "SELECT id, keydata FROM private_keys;");
-  if (stmt == 0)
-    {
-      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
-      return false;
-    }
-  //I(sqlite3_column_count(stmt) == 2);
+  {
+    sql stmt(db, 2, "SELECT id, keydata FROM private_keys");
 
-  while ((res = sqlite3_step(stmt)) == SQLITE_ROW)
-    priv.insert(make_pair(sqlite3_column_string(stmt, 0),
-                          sqlite3_column_string(stmt, 1)));
+    while (stmt.step())
+      priv.insert(make_pair(stmt.column_string(0), stmt.column_string(1)));
+  }
+  {
+    sql stmt(db, 2, "SELECT id, keydata FROM public_keys");
 
-  if (res != SQLITE_DONE)
-    {
-      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
-      return false;
-    }
-  sqlite3_finalize(stmt);
-
-  stmt = logged_sqlite3_prepare(sql, "SELECT id, keydata FROM public_keys;");
-  if (stmt == 0)
-    {
-      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
-      return false;
-    }
-  //I(sqlite3_column_count(stmt) == 2);
-
-  while ((res = sqlite3_step(stmt)) == SQLITE_ROW)
-    pub.insert(make_pair(sqlite3_column_string(stmt, 0),
-                         sqlite3_column_string(stmt, 1)));
-
-  if (res != SQLITE_DONE)
-    {
-      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
-      return false;
-    }
-  sqlite3_finalize(stmt);
-
+    while (stmt.step())
+      pub.insert(make_pair(stmt.column_string(0), stmt.column_string(1)));
+  }
 
   for (map<string, string>::const_iterator i = priv.begin();
        i != priv.end(); ++i)
@@ -825,7 +841,7 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
       app->keys.put_key_pair(ident, kp);
     }
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE private_keys;", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE private_keys;", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
@@ -833,14 +849,14 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
 }
 
 static bool
-migrate_client_to_add_rosters(sqlite3 * sql,
+migrate_client_to_add_rosters(sqlite3 * db,
                               char ** errmsg,
                               app_state *,
                               upgrade_regime & regime)
 {
   int res;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE rosters\n"
                             "(\n"
                             "id primary key,         -- strong hash of the roster\n"
@@ -850,7 +866,7 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE roster_deltas\n"
                             "(\n"
                             "id not null,            -- strong hash of the roster\n"
@@ -862,7 +878,7 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE revision_roster\n"
                             "(\n"
                             "rev_id primary key,     -- joins with revisions.id\n"
@@ -872,7 +888,7 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE next_roster_node_number\n"
                             "(\n"
                             "node primary key        -- only one entry in this table, ever\n"
@@ -886,33 +902,18 @@ migrate_client_to_add_rosters(sqlite3 * sql,
   return true;
 }
 
-static void
-sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
-{
-  if (nargs != 1)
-    {
-      sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
-      return;
-    }
-  data decoded;
-  decode_base64(base64<data>(string(sqlite3_value_cstr(args[0]))), decoded);
-  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
-}
-
 // I wish I had a form of ALTER TABLE COMMENT on sqlite3
 static bool
-migrate_files_BLOB(sqlite3 * sql,
+migrate_files_BLOB(sqlite3 * db,
                    char ** errmsg,
                    app_state *app,
                    upgrade_regime & regime)
 {
   int res;
-  I(sqlite3_create_function(sql, "unbase64", -1,
-                           SQLITE_UTF8, NULL,
-                           &sqlite3_unbase64_fn,
-                           NULL, NULL) == 0);
+  sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
+
   // change the encoding of file(_delta)s
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "files",
                   "tmp",
                   "("
@@ -921,7 +922,7 @@ migrate_files_BLOB(sqlite3 * sql,
                   ")"))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE files\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE files\n"
                             "\t(\n"
                             "\tid primary key,   -- strong hash of file contents\n"
                             "\tdata not null     -- compressed contents of a file\n"
@@ -929,17 +930,17 @@ migrate_files_BLOB(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO files "
+  res = logged_sqlite3_exec(db, "INSERT INTO files "
                             "SELECT id, unbase64(data) "
                             "FROM tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  if (!move_table(sql, errmsg,
+  if (!move_table(db, errmsg,
                   "file_deltas",
                   "tmp",
                   "("
@@ -949,7 +950,7 @@ migrate_files_BLOB(sqlite3 * sql,
                   ")"))
     return false;
 
-  res = logged_sqlite3_exec(sql, "CREATE TABLE file_deltas\n"
+  res = logged_sqlite3_exec(db, "CREATE TABLE file_deltas\n"
                             "\t(\n"
                             "\tid not null,      -- strong hash of file contents\n"
                             "\tbase not null,    -- joins with files.id or file_deltas.id\n"
@@ -959,57 +960,57 @@ migrate_files_BLOB(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "INSERT INTO file_deltas "
+  res = logged_sqlite3_exec(db, "INSERT INTO file_deltas "
                             "SELECT id, base, unbase64(delta) "
                             "FROM tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "DROP TABLE tmp", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE tmp", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
   // migrate other contents which are accessed by get|put_version
-  res = logged_sqlite3_exec(sql, "UPDATE manifests SET data=unbase64(data)",
+  res = logged_sqlite3_exec(db, "UPDATE manifests SET data=unbase64(data)",
                             NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE manifest_deltas "
+  res = logged_sqlite3_exec(db, "UPDATE manifest_deltas "
                             "SET delta=unbase64(delta)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE rosters SET data=unbase64(data) ",
+  res = logged_sqlite3_exec(db, "UPDATE rosters SET data=unbase64(data) ",
                             NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE roster_deltas "
+  res = logged_sqlite3_exec(db, "UPDATE roster_deltas "
                             "SET delta=unbase64(delta)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql, "UPDATE db_vars "
+  res = logged_sqlite3_exec(db, "UPDATE db_vars "
       "SET value=unbase64(value),name=unbase64(name)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE public_keys "
+  res = logged_sqlite3_exec(db, "UPDATE public_keys "
       "SET keydata=unbase64(keydata)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE revision_certs "
+  res = logged_sqlite3_exec(db, "UPDATE revision_certs "
       "SET value=unbase64(value),signature=unbase64(signature)",
       NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE manifest_certs "
+  res = logged_sqlite3_exec(db, "UPDATE manifest_certs "
       "SET value=unbase64(value),signature=unbase64(signature) ",
       NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE revisions "
+  res = logged_sqlite3_exec(db, "UPDATE revisions "
       "SET data=unbase64(data)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "UPDATE branch_epochs "
+  res = logged_sqlite3_exec(db, "UPDATE branch_epochs "
       "SET branch=unbase64(branch)", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
@@ -1017,24 +1018,24 @@ migrate_files_BLOB(sqlite3 * sql,
 }
 
 static bool
-migrate_rosters_no_hash(sqlite3 * sql,
+migrate_rosters_no_hash(sqlite3 * db,
                         char ** errmsg,
                         app_state * app,
                         upgrade_regime & regime)
 {
   int res;
   
-  res = logged_sqlite3_exec(sql, "DROP TABLE rosters", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE rosters", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "DROP TABLE roster_deltas", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE roster_deltas", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
-  res = logged_sqlite3_exec(sql, "DROP TABLE revision_roster", NULL, NULL, errmsg);
+  res = logged_sqlite3_exec(db, "DROP TABLE revision_roster", NULL, NULL, errmsg);
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE rosters\n"
                             "\t(\n"
                             "\tid primary key,         -- a revision id\n"
@@ -1045,7 +1046,7 @@ migrate_rosters_no_hash(sqlite3 * sql,
   if (res != SQLITE_OK)
     return false;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE roster_deltas\n"
                             "\t(\n"
                             "\tid primary key,         -- a revision id\n"
@@ -1064,14 +1065,14 @@ migrate_rosters_no_hash(sqlite3 * sql,
 
 
 static bool
-migrate_add_heights(sqlite3 *sql,
+migrate_add_heights(sqlite3 *db,
                     char ** errmsg,
                     app_state *app,
                     upgrade_regime & regime)
 {
   int res;
 
-  res = logged_sqlite3_exec(sql,
+  res = logged_sqlite3_exec(db,
                             "CREATE TABLE heights\n"
                             "(\n"
                             "revision not null,	-- joins with revisions.id\n"
@@ -1139,6 +1140,41 @@ const migration_event migration_events[] = {
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
 
+void
+calculate_schema_id(sqlite3 *db, string & ident)
+{
+  sql stmt(db, 1,
+           "SELECT sql FROM sqlite_master "
+           "WHERE (type = 'table' OR type = 'index') "
+           // filter out NULL statements, because
+           // those are auto-generated indices (for
+           // UNIQUE constraints, etc.).
+           "AND sql IS NOT NULL "
+           "AND name not like 'sqlite_stat%' "
+           "ORDER BY name");
+
+  string schema;
+  using boost::char_separator;
+  typedef boost::tokenizer<char_separator<char> > tokenizer;
+  char_separator<char> sep(" \r\n\t", "(),;");
+
+  while (stmt.step())
+    {
+      string table_schema(stmt.column_string(0));
+      tokenizer tokens(table_schema, sep);
+      for (tokenizer::iterator i = tokens.begin(); i != tokens.end(); i++)
+        {
+          if (schema.size() != 0)
+            schema += " ";
+          schema += *i;
+        }
+    }
+
+  hexenc<id> tid;
+  calculate_ident(data(schema), tid);
+  ident = tid();
+}
+
 // Look through the migration_events table and return the index of the
 // entry corresponding to schema ID, or -1 if it isn't there (i.e. if
 // the database schema is not one we know).
@@ -1156,7 +1192,7 @@ schema_to_migration(string const & id)
 // Provide sensible diagnostics for a database schema whose hash we do not
 // recognize.
 static void NORETURN
-diagnose_unrecognized_schema(sqlite3 * sql, system_path const & filename,
+diagnose_unrecognized_schema(sqlite3 * db, system_path const & filename,
                              string const & id)
 {
   // Give a special message for an utterly empty sqlite3 database, such as
@@ -1173,12 +1209,11 @@ diagnose_unrecognized_schema(sqlite3 * sql, system_path const & filename,
   // 'manifest_deltas'.
   // ??? Use PRAGMA user_version to record an additional magic number in
   // monotone databases.
-  int n = logged_sqlite3_exec_int(sql,
-                                  "SELECT COUNT(*) FROM sqlite_master "
-                                  "WHERE type = 'table' AND sql IS NOT NULL "
-                                  "AND (name = 'files' OR name = 'file_deltas'"
-                                  "     OR name = 'manifests'"
-                                  "     OR name = 'manifest_deltas')");
+  int n = sql::value(db,
+                     "SELECT COUNT(*) FROM sqlite_master "
+                     "WHERE type = 'table' AND sql IS NOT NULL "
+                     "AND (name = 'files' OR name = 'file_deltas'"
+                     "     OR name = 'manifests' OR name = 'manifest_deltas')");
   N(n == 4,
     F("%s does not appear to be a monotone database\n"
       "(schema %s, core tables missing)")
@@ -1190,22 +1225,22 @@ diagnose_unrecognized_schema(sqlite3 * sql, system_path const & filename,
       "you probably need a newer version of monotone.")
     % filename % id);
 }
- 
+
 // check_sql_schema is called by database.cc on open, to determine whether
 // the schema is up to date.  If it returns at all, the schema is indeed
 // up to date (otherwise it throws a diagnostic).
 void
-check_sql_schema(sqlite3 * sql, system_path const & filename)
+check_sql_schema(sqlite3 * db, system_path const & filename)
 {
-  I(sql != NULL);
+  I(db != NULL);
  
   string id;
-  calculate_schema_id(sql, id);
+  calculate_schema_id(db, id);
  
   int migration = schema_to_migration(id);
  
   if (migration == -1)
-    diagnose_unrecognized_schema(sql, filename, id);
+    diagnose_unrecognized_schema(db, filename, id);
  
   N(migration_events[migration].migrator == 0,
     F("database %s is laid out according to an old schema, %s\n"
@@ -1215,74 +1250,66 @@ check_sql_schema(sqlite3 * sql, system_path const & filename)
 }
 
 void
-migrate_monotone_schema(sqlite3 * sql, app_state * app)
+migrate_monotone_schema(sqlite3 * db, app_state * app)
 {
-  I(sql != NULL);
-  I(!sqlite3_create_function(sql, "sha1", -1, SQLITE_UTF8, NULL,
-                             &sqlite_sha1_fn, NULL, NULL));
-
-  string init;
-  calculate_schema_id(sql, init);
-
-  P(F("calculating migration for schema %s") % init);
-
-  int i = schema_to_migration(init);
-
-  if (i == -1)
-    diagnose_unrecognized_schema(sql, app->db.get_filename(), init);
-
-  // We really want 'db migrate' on an up-to-date schema to be a no-op
-  // (no vacuum or anything, even), so that automated scripts can fire
-  // one off optimistically and not have to worry about getting their
-  // administrators to do it by hand.
-  if (migration_events[i].migrator == 0)
-    {
-      P(F("no migration performed; database schema already up-to-date"));
-      return;
-    }
+  I(db != NULL);
+  sql::create_function(db, "sha1", sqlite_sha1_fn);
 
   upgrade_regime regime = upgrade_none;
-  P(F("migrating data"));
+  
+  // Take an exclusive lock on the database before we try to read anything
+  // from it.  If we don't take this lock until the beginning of the
+  // "migrating data" phase, two simultaneous "db migrate" processes could
+  // race through the "calculating migration" phase; then one of them would
+  // wait for the other to finish all the migration steps, and trip over the
+  // invariant check inside the for loop.
+  {
+    transaction guard(db);
 
-  E(logged_sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) == SQLITE_OK,
-    F("error at transaction BEGIN statement: %s") % sqlite3_errmsg(sql));
+    string init;
+    calculate_schema_id(db, init);
 
-  for (;;)
-    {
-      // confirm that we are where we ought to be
-      string curr;
-      calculate_schema_id(sql, curr);
-      if (curr != migration_events[i].id)
-        {
-          logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-          I(false);
-        }
+    P(F("calculating migration for schema %s") % init);
 
-      if (migration_events[i].migrator == 0)
-        break;
+    int i = schema_to_migration(init);
 
-      char * errmsg;
-      if (! migration_events[i].migrator(sql, &errmsg, app, regime))
-        {
-          logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-          E(false, F("migration step failed: %s")
-            % (errmsg ? errmsg : "unknown error"));
-        }
+    if (i == -1)
+      diagnose_unrecognized_schema(db, app->db.get_filename(), init);
 
-      i++;
-      if ((size_t)i >= n_migration_events)
-        {
-          logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-          I(false);
-        }
-    }
+    // We really want 'db migrate' on an up-to-date schema to be a no-op
+    // (no vacuum or anything, even), so that automated scripts can fire
+    // one off optimistically and not have to worry about getting their
+    // administrators to do it by hand.
+    if (migration_events[i].migrator == 0)
+      {
+        P(F("no migration performed; database schema already up-to-date"));
+        return;
+      }
 
-  P(F("committing changes to database"));
-  E(logged_sqlite3_exec(sql, "COMMIT", NULL, NULL, NULL) == SQLITE_OK,
-    F("failure on COMMIT"));
+    P(F("migrating data"));
+
+    for (;;)
+      {
+        // confirm that we are where we ought to be
+        string curr;
+        calculate_schema_id(db, curr);
+        I(curr == migration_events[i].id);
+
+        if (migration_events[i].migrator == 0)
+          break;
+
+        migration_events[i].migrator(db, 0, app, regime);
+
+        i++;
+        I((size_t)i < n_migration_events);
+      }
+
+    P(F("committing changes to database"));
+    guard.commit();
+  }
 
   P(F("optimizing database"));
-  logged_sqlite3_exec(sql, "VACUUM", NULL, NULL, NULL);
+  logged_sqlite3_exec(db, "VACUUM");
 
   switch (regime)
     {
