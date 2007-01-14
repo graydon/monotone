@@ -1,5 +1,13 @@
 2007-01-13  Zack Weinberg  <zackw@panix.com>
 
+	* schema_migration.cc (logged_sqlite3_prepare, report_sqlite_error)
+	(logged_sqlite3_exec_int, sqlite3_column_string): New functions.
+	(logged_sqlite3_exec, calculate_schema_id)
+	(migrate_client_to_external_privkeys): Rewrite using
+	logged_sqlite3_prepare and sqlite3_step.
+	(massage_sql_tokens, append_sql_stmt, extract_key): Delete.
+	(diagnose_unrecognized_schema): Use logged_sqlite3_exec_int.
+
 	* schema_migration.cc: Further prune includes and using-declarations.
 	(lowercase_facet, calculate_id): Delete.
 	(is_ws): Convert from class to predicate function.

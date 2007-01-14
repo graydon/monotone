@@ -33,17 +33,98 @@ using std::vector;
 // in this file is easier to write and understand if it speaks directly
 // to sqlite.
 
-static int logged_sqlite3_exec(sqlite3* db,
-                               const char* sql,
-                               sqlite3_callback cb,
-                               void* data,
-                               char** errmsg)
+// we do not use sqlite3_exec because we want the better error handling that
+// sqlite3_prepare_v2 gives us.
+
+static sqlite3_stmt *
+logged_sqlite3_prepare(sqlite3 * sql, char const * cmd)
 {
-  L(FL("executing SQL '%s'") % sql);
-  int res = sqlite3_exec(db, sql, cb, data, errmsg);
-  L(FL("result: %i (%s)") % res % sqlite3_errmsg(db));
-  if (errmsg && ((*errmsg)!=0))
-    L(FL("errmsg: %s") % *errmsg);
+  sqlite3_stmt * stmt;
+  char const * after;
+
+  L(FL("executing SQL '%s'") % cmd);
+
+  int res = sqlite3_prepare_v2(sql, cmd, strlen(cmd), &stmt, &after);
+  if (res != SQLITE_OK)
+    {
+      L(FL("prepare failure: %s") % sqlite3_errmsg(sql));
+      return 0;
+    }
+  //I(stmt);
+  //I(after == 0);
+
+  return stmt;
+}
+
+// this function can only be used with statements that do not return rows.
+static int
+logged_sqlite3_exec(sqlite3 * sql, char const * cmd,
+                    void* d1, void* d2, char **errmsg)
+{
+  I(d1 == 0);
+  I(d2 == 0);
+
+  sqlite3_stmt * stmt = logged_sqlite3_prepare(sql, cmd);
+  if (stmt == 0)
+    return SQLITE_ERROR;
+  //I(sqlite3_column_count(stmt) == 0);
+
+  int res = sqlite3_step(stmt);
+
+  //I(res != SQLITE_ROW);
+  if (res == SQLITE_DONE)
+    {
+      // callers expect OK
+      L(FL("success"));
+      res = SQLITE_OK;
+    }
+  else if (errmsg)
+    *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
+
+  sqlite3_finalize(stmt);
+  return res;
+}
+
+static void NORETURN
+report_sqlite_error(sqlite3 * sql)
+{
+  // note: useful error messages should be kept consistent with
+  // assert_sqlite3_ok() in database.cc
+  char const * errmsg = sqlite3_errmsg(sql);
+  char const * auxiliary_message = "";
+
+  L(FL("sqlite error: %s") % errmsg);
+  
+  if (sqlite3_errcode(sql) == SQLITE_ERROR)
+    auxiliary_message
+      = _("make sure database and containing directory are writeable\n"
+          "and you have not run out of disk space");
+
+  logged_sqlite3_exec(sql, "ROLLBACK", 0, 0, 0);
+  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
+}
+
+// execute an sql statement and return the single integer value that it
+// should produce.
+static int
+logged_sqlite3_exec_int(sqlite3 * sql, char const * cmd)
+{
+  sqlite3_stmt * stmt = logged_sqlite3_prepare(sql, cmd);
+  if (stmt == 0)
+    report_sqlite_error(sql);
+  //I(sqlite3_column_count(stmt) == 1);
+
+  if (sqlite3_step(stmt) != SQLITE_ROW)
+    report_sqlite_error(sql);
+
+  int res = sqlite3_column_int(stmt, 0);
+
+  if (sqlite3_step(stmt) != SQLITE_DONE)
+    report_sqlite_error(sql);
+
+  L(FL("success"));
+
+  sqlite3_finalize(stmt);
   return res;
 }
 
@@ -52,6 +133,13 @@ inline char const *
 sqlite3_value_cstr(sqlite3_value * arg)
 {
   return reinterpret_cast<char const *>(sqlite3_value_text(arg));
+}
+
+// sqlite3_column_text also returns unsigned char const *
+inline string
+sqlite3_column_string(sqlite3_stmt * stmt, int col)
+{
+  return string(reinterpret_cast<char const *>(sqlite3_column_text(stmt, col)));
 }
 
 inline bool is_ws(char c)
@@ -94,85 +182,49 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_text(f, sha().c_str(), sha().size(), SQLITE_TRANSIENT);
 }
 
-
-static void
-massage_sql_tokens(string const & in,
-                   string & out)
-{
-  using boost::char_separator;
-  typedef boost::tokenizer<char_separator<char> > tokenizer;
-
-  char_separator<char> sep(" \r\n\t", "(),;");
-  tokenizer tokens(in, sep);
-  out.clear();
-  for (tokenizer::iterator i = tokens.begin();
-       i != tokens.end(); ++i)
-    {
-      if (i != tokens.begin())
-        out += " ";
-      out += *i;
-    }
-}
-
-static int
-append_sql_stmt(void * vp,
-                int ncols,
-                char ** values,
-                char ** colnames)
-{
-  if (ncols != 1)
-    return 1;
-
-  if (vp == NULL)
-    return 1;
-
-  if (values == NULL)
-    return 1;
-
-  if (values[0] == NULL)
-    return 1;
-
-  string *str = reinterpret_cast<string *>(vp);
-  str->append(values[0]);
-  str->append("\n");
-  return 0;
-}
-
 void
 calculate_schema_id(sqlite3 *sql, string & ident)
 {
-  ident.clear();
-  string tmp, tmp2;
-  int res = logged_sqlite3_exec(sql,
-                                "SELECT sql FROM sqlite_master "
-                                "WHERE (type = 'table' OR type = 'index') "
-                                // filter out NULL sql statements, because
-                                // those are auto-generated indices (for
-                                // UNIQUE constraints, etc.).
-                                "AND sql IS NOT NULL "
-                                "AND name not like 'sqlite_stat%' "
-                                "ORDER BY name",
-                                &append_sql_stmt, &tmp, NULL);
-  if (res != SQLITE_OK)
-    {
-      // note: useful error messages should be kept consistent with
-      // assert_sqlite3_ok() in database.cc
-      string errmsg(sqlite3_errmsg(sql));
-      L(FL("calculate_schema_id sqlite error: %d: %s") % res % errmsg);
-      string auxiliary_message = "";
-      if (res == SQLITE_ERROR)
-        {
-      auxiliary_message += _("make sure database and containing directory are writeable\n"
-                             "and you have not run out of disk space");
+  sqlite3_stmt * stmt
+    = logged_sqlite3_prepare(sql,
+                             "SELECT sql FROM sqlite_master "
+                             "WHERE (type = 'table' OR type = 'index') "
+                             // filter out NULL sql statements, because
+                             // those are auto-generated indices (for
+                             // UNIQUE constraints, etc.).
+                             "AND sql IS NOT NULL "
+                             "AND name not like 'sqlite_stat%' "
+                             "ORDER BY name");
+  if (!stmt)
+    report_sqlite_error(sql);
+  //I(sqlite3_column_count(stmt) == 1);
 
+  int res;
+  string schema;
+  using boost::char_separator;
+  typedef boost::tokenizer<char_separator<char> > tokenizer;
+  char_separator<char> sep(" \r\n\t", "(),;");
+
+  while ((res = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+      string table_schema(sqlite3_column_string(stmt, 0));
+      tokenizer tokens(table_schema, sep);
+      for (tokenizer::iterator i = tokens.begin(); i != tokens.end(); i++)
+        {
+          if (schema.size() != 0)
+            schema += " ";
+          schema += *i;
         }
-      logged_sqlite3_exec(sql, "ROLLBACK", NULL, NULL, NULL);
-      E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
     }
-  massage_sql_tokens(tmp, tmp2);
+
+  if (res != SQLITE_DONE)
+    report_sqlite_error(sql);
+
+  sqlite3_finalize(stmt);
+  L(FL("success"));
 
   hexenc<id> tid;
-  calculate_ident(data(tmp2), tid);
+  calculate_ident(data(schema), tid);
   ident = tid();
 }
 
@@ -701,15 +753,6 @@ migrate_client_to_add_indexes(sqlite3 * sql,
   return true;
 }
 
-static int
-extract_key(void *ptr, int ncols, char **values, char **names)
-{
-  // This is stupid. The cast should not be needed.
-  map<string, string> *out = (map<string, string>*)ptr;
-  I(ncols == 2);
-  out->insert(make_pair(string(values[0]), string(values[1])));
-  return 0;
-}
 static bool
 migrate_client_to_external_privkeys(sqlite3 * sql,
                                     char ** errmsg,
@@ -719,18 +762,46 @@ migrate_client_to_external_privkeys(sqlite3 * sql,
   int res;
   map<string, string> pub, priv;
   vector<keypair> pairs;
+  sqlite3_stmt * stmt;
 
-  res = logged_sqlite3_exec(sql,
-                            "SELECT id, keydata FROM private_keys;",
-                            &extract_key, &priv, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  stmt = logged_sqlite3_prepare(sql, "SELECT id, keydata FROM private_keys;");
+  if (stmt == 0)
+    {
+      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
+      return false;
+    }
+  //I(sqlite3_column_count(stmt) == 2);
 
-  res = logged_sqlite3_exec(sql,
-                            "SELECT id, keydata FROM public_keys;",
-                            &extract_key, &pub, errmsg);
-  if (res != SQLITE_OK)
-    return false;
+  while ((res = sqlite3_step(stmt)) == SQLITE_ROW)
+    priv.insert(make_pair(sqlite3_column_string(stmt, 0),
+                          sqlite3_column_string(stmt, 1)));
+
+  if (res != SQLITE_DONE)
+    {
+      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
+      return false;
+    }
+  sqlite3_finalize(stmt);
+
+  stmt = logged_sqlite3_prepare(sql, "SELECT id, keydata FROM public_keys;");
+  if (stmt == 0)
+    {
+      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
+      return false;
+    }
+  //I(sqlite3_column_count(stmt) == 2);
+
+  while ((res = sqlite3_step(stmt)) == SQLITE_ROW)
+    pub.insert(make_pair(sqlite3_column_string(stmt, 0),
+                         sqlite3_column_string(stmt, 1)));
+
+  if (res != SQLITE_DONE)
+    {
+      *errmsg = const_cast<char *>(sqlite3_errmsg(sql));
+      return false;
+    }
+  sqlite3_finalize(stmt);
+
 
   for (map<string, string>::const_iterator i = priv.begin();
        i != priv.end(); ++i)
@@ -1102,15 +1173,13 @@ diagnose_unrecognized_schema(sqlite3 * sql, system_path const & filename,
   // 'manifest_deltas'.
   // ??? Use PRAGMA user_version to record an additional magic number in
   // monotone databases.
-  string tmp;
-  logged_sqlite3_exec(sql,
-                      "SELECT COUNT(*) FROM sqlite_master "
-                      "WHERE type = 'table' AND sql IS NOT NULL "
-                      "AND (name = 'files' OR name = 'file_deltas'"
-                      "     OR name = 'manifests'"
-                      "     OR name = 'manifest_deltas')",
-                      append_sql_stmt, &tmp, 0);
-  N(tmp == "4\n",
+  int n = logged_sqlite3_exec_int(sql,
+                                  "SELECT COUNT(*) FROM sqlite_master "
+                                  "WHERE type = 'table' AND sql IS NOT NULL "
+                                  "AND (name = 'files' OR name = 'file_deltas'"
+                                  "     OR name = 'manifests'"
+                                  "     OR name = 'manifest_deltas')");
+  N(n == 4,
     F("%s does not appear to be a monotone database\n"
       "(schema %s, core tables missing)")
     % filename % id);
@@ -1176,7 +1245,7 @@ migrate_monotone_schema(sqlite3 * sql, app_state * app)
   P(F("migrating data"));
 
   E(logged_sqlite3_exec(sql, "BEGIN EXCLUSIVE", NULL, NULL, NULL) == SQLITE_OK,
-    F("error at transaction BEGIN statement"));
+    F("error at transaction BEGIN statement: %s") % sqlite3_errmsg(sql));
 
   for (;;)
     {
