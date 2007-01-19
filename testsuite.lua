@@ -701,4 +701,5 @@ table.insert(tests, "add_ignores__MTN")
 table.insert(tests, "missing_empty_dir")
 table.insert(tests, "checkout_clobbers_workspace")
 table.insert(tests, "update_clobbers_workspace")
+table.insert(tests, "ls_unknown_in_subdir")
 

@@ -1,3 +1,9 @@
+2007-01-18  Derek Scherger  <derek@echologic.com>
+
+	* tests/ls_unknown_in_subdir/__driver__.lua: new xfailed test of
+	ls uknown in a subdir
+	* testsuite.lua: call it
+	
 2007-01-14  Nathaniel Smith  <njs@pobox.com>
 
 	* m4/boost.m4: Check for another possible library suffix used on
