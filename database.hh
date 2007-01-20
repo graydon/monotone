@@ -138,9 +138,10 @@ private:
   // --== Generic database metadata gathering ==--
   //
 private:
-  unsigned long count(std::string const & table);
-  unsigned long space_usage(std::string const & table,
-                            std::string const & concatenated_columns);
+  std::string count(std::string const & table);
+  std::string space(std::string const & table,
+                    std::string const & concatenated_columns,
+                    u64 & total);
   unsigned int page_size();
   unsigned int cache_size();
 

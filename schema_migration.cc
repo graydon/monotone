@@ -648,7 +648,7 @@ const migration_event migration_events[] = {
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
 
-void
+static void
 calculate_schema_id(sqlite3 *db, string & ident)
 {
   sql stmt(db, 1,
@@ -698,37 +698,96 @@ schema_to_migration(string const & id)
   return 0;
 }
 
+// This enumerates the possible mismatches between the monotone executable
+// and its database.
+enum schema_mismatch_case
+  {
+    SCHEMA_MATCHES = 0,
+    SCHEMA_MIGRATION_NEEDED,
+    SCHEMA_TOO_NEW,
+    SCHEMA_NOT_MONOTONE,
+    SCHEMA_EMPTY
+  };
+
+static schema_mismatch_case
+classify_schema(sqlite3 * db, string const & id, migration_event const * m)
+{
+  if (m)
+    {
+      if (m->migrator_sql || m->migrator_func)
+        return SCHEMA_MIGRATION_NEEDED;
+      else
+        return SCHEMA_MATCHES;
+    }
+  else
+    {
+      // Distinguish an utterly empty database, such as is created by
+      // "mtn db load < /dev/null", or by the sqlite3 command line utility
+      // if you don't give it anything to do.
+      if (id == "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+        return SCHEMA_EMPTY;
+
+      // Every version of the schema has included tables named 'files',
+      // 'file_deltas', 'manifests', and 'manifest_deltas'.
+      // FIXME: Instead, use PRAGMA user_version to record an additional
+      // magic number in monotone databases.
+      int n = sql::value(db,
+                         "SELECT COUNT(*) FROM sqlite_master "
+                         "WHERE type = 'table' AND sql IS NOT NULL AND ("
+                         "   name = 'files' OR name = 'file_deltas'"
+                         "OR name = 'manifests' OR name = 'manifest_deltas')");
+      if (n != 4)
+        return SCHEMA_NOT_MONOTONE;
+
+      return SCHEMA_TOO_NEW;
+    }
+}
+
+string
+describe_sql_schema(sqlite3 * db)
+{
+  I(db != NULL);
+ 
+  string id;
+  calculate_schema_id(db, id);
+  migration_event const *m = schema_to_migration(id);
+  schema_mismatch_case cat = classify_schema(db, id, m);
+
+  switch (cat)
+    {
+    case SCHEMA_MATCHES:
+      return (F("%s (usable)") % id).str();
+    case SCHEMA_MIGRATION_NEEDED:
+      return (F("%s (migration needed)") % id).str();
+    case SCHEMA_TOO_NEW:
+      return (F("%s (too new, cannot use)") % id).str();
+    case SCHEMA_NOT_MONOTONE:
+      return (F("%s (not a monotone database)") % id).str();
+    case SCHEMA_EMPTY:
+      return (F("%s (database has no tables!)") % id).str();
+    default:
+      I(false);
+    }
+}
+
 // Provide sensible diagnostics for a database schema whose hash we do not
-// recognize.
-static void NORETURN
-diagnose_unrecognized_schema(sqlite3 * db, system_path const & filename,
+// recognize.  (Shared between check_sql_schema and migrate_sql_schema.)
+static void
+diagnose_unrecognized_schema(schema_mismatch_case cat,
+                             system_path const & filename,
                              string const & id)
 {
-  // Give a special message for an utterly empty sqlite3 database, such as
-  // is created by "mtn db load < /dev/null", or by the sqlite3 command line
-  // utility if you don't give it anything to do.
-  N(id != "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+  N(cat != SCHEMA_EMPTY,
     F("cannot use the empty sqlite database %s\n"
       "(monotone databases must be created with '%s db init')")
     % filename % ui.prog_name);
 
-  // Do a sanity check to make sure we are actually looking at a monotone
-  // database, not some other sqlite3 database.  Every version of the schema
-  // has included tables named 'files', 'file_deltas', 'manifests', and
-  // 'manifest_deltas'.
-  // ??? Use PRAGMA user_version to record an additional magic number in
-  // monotone databases.
-  int n = sql::value(db,
-                     "SELECT COUNT(*) FROM sqlite_master "
-                     "WHERE type = 'table' AND sql IS NOT NULL "
-                     "AND (name = 'files' OR name = 'file_deltas'"
-                     "     OR name = 'manifests' OR name = 'manifest_deltas')");
-  N(n == 4,
+  N(cat != SCHEMA_NOT_MONOTONE,
     F("%s does not appear to be a monotone database\n"
       "(schema %s, core tables missing)")
     % filename % id);
 
-  N(false,
+  N(cat != SCHEMA_TOO_NEW,
     F("%s appears to be a monotone database, but this version of\n"
       "monotone does not recognize its schema (%s).\n"
       "you probably need a newer version of monotone.")
@@ -745,13 +804,12 @@ check_sql_schema(sqlite3 * db, system_path const & filename)
  
   string id;
   calculate_schema_id(db, id);
- 
   migration_event const *m = schema_to_migration(id);
+  schema_mismatch_case cat = classify_schema(db, id, m);
  
-  if (m == 0)
-    diagnose_unrecognized_schema(db, filename, id);
+  diagnose_unrecognized_schema(cat, filename, id);
  
-  N(m->migrator_sql == 0 && m->migrator_func == 0,
+  N(cat != SCHEMA_MIGRATION_NEEDED,
     F("database %s is laid out according to an old schema, %s\n"
       "try '%s db migrate' to upgrade\n"
       "(this is irreversible; you may want to make a backup copy first)")
@@ -782,15 +840,15 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
     P(F("calculating migration for schema %s") % init);
 
     migration_event const *m = schema_to_migration(init);
+    schema_mismatch_case cat = classify_schema(db, init, m);
 
-    if (m == 0)
-      diagnose_unrecognized_schema(db, app.db.get_filename(), init);
+    diagnose_unrecognized_schema(cat, app.db.get_filename(), init);
 
     // We really want 'db migrate' on an up-to-date schema to be a no-op
     // (no vacuum or anything, even), so that automated scripts can fire
     // one off optimistically and not have to worry about getting their
     // administrators to do it by hand.
-    if (m->migrator_func == 0 && m->migrator_sql == 0)
+    if (cat == SCHEMA_MATCHES)
       {
         P(F("no migration performed; database schema already up-to-date"));
         return;

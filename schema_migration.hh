@@ -23,9 +23,10 @@ struct sqlite3;
 class app_state;
 class system_path;
 
-void calculate_schema_id(sqlite3 * db, std::string & id);
 void migrate_sql_schema(sqlite3 * db, app_state & app);
 void check_sql_schema(sqlite3 * db, system_path const & filename);
+std::string describe_sql_schema(sqlite3 * db);
+
 void test_migration_step(sqlite3 * db, app_state & app,
                          std::string const & schema);
 

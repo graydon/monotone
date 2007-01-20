@@ -447,6 +447,7 @@ database::dump(ostream & out)
   // don't care about schema checking etc.
   check_filename();
   check_db_exists();
+  check_sqlite_format_version(filename);
   open();
   {
     transaction_guard guard(*this);
@@ -524,107 +525,174 @@ database::debug(string const & sql, ostream & out)
     }
 }
 
-
-namespace
+// Subroutine of info().  This compares strings that might either be numbers
+// or error messages surrounded by square brackets.  We want the longest
+// number, even if there's an error message that's longer than that.
+static bool longest_number(string a, string b)
 {
-  unsigned long
-  add(unsigned long count, unsigned long & total)
-  {
-    total += count;
-    return count;
-  }
+  if(a.length() > 0 && a[0] == '[')
+    return true;  // b is longer
+  if(b.length() > 0 && b[0] == '[')
+    return false; // a is longer
+
+  return a.length() < b.length();
 }
+
+// Subroutine of info() and some things it calls.
+// Given an informative_failure which is believed to represent an SQLite
+// error, either return a string version of the error message (if it was an
+// SQLite error) or rethrow the execption (if it wasn't).
+static string
+format_sqlite_error_for_info(informative_failure const & e)
+{
+  string err(e.what());
+  string prefix = _("error: ");
+  prefix.append("sqlite error: ");
+  if (err.find(prefix) != 0)
+    throw;
+
+  err.replace(0, prefix.length(), "[");
+  string::size_type nl = err.find('\n');
+  if (nl != string::npos)
+    err.erase(nl);
+
+  err.append("]");
+  return err;
+}
+  
 
 void
 database::info(ostream & out)
 {
-  string id;
-  calculate_schema_id(sql(), id);
+  // don't check the schema
+  check_filename();
+  check_db_exists();
+  check_sqlite_format_version(filename);
+  open();
+  
+  vector<string> counts;
+  counts.push_back(count("rosters"));
+  counts.push_back(count("roster_deltas"));
+  counts.push_back(count("files"));
+  counts.push_back(count("file_deltas"));
+  counts.push_back(count("revisions"));
+  counts.push_back(count("revision_ancestry"));
+  counts.push_back(count("revision_certs"));
 
-  unsigned long total = 0UL;
-
-  u64 num_nodes;
   {
     results res;
-    fetch(res, one_col, any_rows, query("SELECT node FROM next_roster_node_number"));
-    if (res.empty())
-      num_nodes = 0;
-    else
+    try
       {
-        I(res.size() == 1);
-        num_nodes = lexical_cast<u64>(res[0][0]) - 1;
+        fetch(res, one_col, any_rows,
+              query("SELECT node FROM next_roster_node_number"));
+        if (res.empty())
+          counts.push_back("0");
+        else
+          {
+            I(res.size() == 1);
+            counts.push_back((F("%u")
+                              % (lexical_cast<u64>(res[0][0]) - 1)).str());
+          }
+      }
+    catch (informative_failure const & e)
+      {
+        counts.push_back(format_sqlite_error_for_info(e));
       }
   }
 
-#define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
+  vector<string> bytes;
+  {
+    u64 total = 0;
+    bytes.push_back(space("rosters",
+                          "length(id) + length(checksum) + length(data)",
+                          total));
+    bytes.push_back(space("roster_deltas",
+                          "length(id) + length(checksum)"
+                          "+ length(base) + length(delta)", total));
+    bytes.push_back(space("files", "length(id) + length(data)", total));
+    bytes.push_back(space("file_deltas",
+                          "length(id) + length(base) + length(delta)", total));
+    bytes.push_back(space("revisions", "length(id) + length(data)", total));
+    bytes.push_back(space("revision_ancestry",
+                          "length(parent) + length(child)", total));
+    bytes.push_back(space("revision_certs",
+                          "length(hash) + length(id) + length(name)"
+                          "+ length(value) + length(keypair)"
+                          "+ length(signature)", total));
+    bytes.push_back(space("heights", "length(revision) + length(height)",
+                          total));
+    bytes.push_back((F("%u") % total).str());
+  }
 
-  out << ( \
+  // pad each vector's strings on the left with spaces to make them all the
+  // same length
+  {
+    string::size_type width
+      = max_element(counts.begin(), counts.end(), longest_number)->length();
+    for(vector<string>::iterator i = counts.begin(); i != counts.end(); i++)
+      if (width > i->length() && (*i)[0] != '[')
+        i->insert(0, width - i->length(), ' ');
+
+    width = max_element(bytes.begin(), bytes.end(), longest_number)->length();
+    for(vector<string>::iterator i = bytes.begin(); i != bytes.end(); i++)
+      if (width > i->length() && (*i)[0] != '[')
+        i->insert(0, width - i->length(), ' ');
+  }
+
+  i18n_format form =
     F("schema version    : %s\n"
       "counts:\n"
-      "  full rosters    : %u\n"
-      "  roster deltas   : %u\n"
-      "  full files      : %u\n"
-      "  file deltas     : %u\n"
-      "  revisions       : %u\n"
-      "  ancestry edges  : %u\n"
-      "  certs           : %u\n"
-      "  logical files   : %u\n"
+      "  full rosters    : %s\n"
+      "  roster deltas   : %s\n"
+      "  full files      : %s\n"
+      "  file deltas     : %s\n"
+      "  revisions       : %s\n"
+      "  ancestry edges  : %s\n"
+      "  certs           : %s\n"
+      "  logical files   : %s\n"
       "bytes:\n"
-      "  full rosters    : %u\n"
-      "  roster deltas   : %u\n"
-      "  full files      : %u\n"
-      "  file deltas     : %u\n"
-      "  revisions       : %u\n"
-      "  cached ancestry : %u\n"
-      "  certs           : %u\n"
-      "  heights         : %u\n"
-      "  total           : %u\n"
+      "  full rosters    : %s\n"
+      "  roster deltas   : %s\n"
+      "  full files      : %s\n"
+      "  file deltas     : %s\n"
+      "  revisions       : %s\n"
+      "  cached ancestry : %s\n"
+      "  certs           : %s\n"
+      "  heights         : %s\n"
+      "  total           : %s\n"
       "database:\n"
-      "  page size       : %u\n"
-      "  cache size      : %u"
-      )
-    % id
-    // counts
-    % count("rosters")
-    % count("roster_deltas")
-    % count("files")
-    % count("file_deltas")
-    % count("revisions")
-    % count("revision_ancestry")
-    % count("revision_certs")
-    % num_nodes
-    // bytes
-    % SPACE_USAGE("rosters", "length(id) + length(checksum) + length(data)")
-    % SPACE_USAGE("roster_deltas", "length(id) + length(checksum) + length(base) + length(delta)")
-    % SPACE_USAGE("files", "length(id) + length(data)")
-    % SPACE_USAGE("file_deltas", "length(id) + length(base) + length(delta)")
-    % SPACE_USAGE("revisions", "length(id) + length(data)")
-    % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
-    % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
-                  " + length(value) + length(keypair) + length(signature)")
-    % SPACE_USAGE("heights","length(revision) + length(height)")
-    % total
-    % page_size()
-    % cache_size()
-    ) << "\n"; // final newline is kept out of the translation
+      "  page size       : %s\n"
+      "  cache size      : %s"
+      );
 
-#undef SPACE_USAGE
+  form = form % describe_sql_schema(__sql);
+
+  for (vector<string>::iterator i = counts.begin(); i != counts.end(); i++)
+    form = form % *i;
+
+  for (vector<string>::iterator i = bytes.begin(); i != bytes.end(); i++)
+    form = form % *i;
+
+  form = form % page_size();
+  form = form % cache_size();
+
+  out << form.str() << "\n"; // final newline is kept out of the translation
+
+  close();
 }
 
 void
 database::version(ostream & out)
 {
-  string id;
-
   check_filename();
   check_db_exists();
+  check_sqlite_format_version(filename);
   open();
 
-  calculate_schema_id(__sql, id);
+  out << (F("database schema version: %s") % describe_sql_schema(__sql)).str()
+      << "\n";
 
   close();
-
-  out << F("database schema version: %s") % id << endl;
 }
 
 void
@@ -632,6 +700,7 @@ database::migrate()
 {
   check_filename();
   check_db_exists();
+  check_sqlite_format_version(filename);
   open();
 
   migrate_sql_schema(__sql, *__app);
@@ -644,6 +713,7 @@ database::test_migration_step(string const & schema)
 {
   check_filename();
   check_db_exists();
+  check_sqlite_format_version(filename);
   open();
 
   ::test_migration_step(__sql, *__app, schema);
@@ -995,24 +1065,40 @@ database::delta_exists(string const & ident,
   return table_has_entry(ident, "id", table);
 }
 
-unsigned long
+string
 database::count(string const & table)
 {
-  results res;
-  query q("SELECT COUNT(*) FROM " + table);
-  fetch(res, one_col, one_row, q);
-  return lexical_cast<unsigned long>(res[0][0]);
+  try
+    {
+      results res;
+      query q("SELECT COUNT(*) FROM " + table);
+      fetch(res, one_col, one_row, q);
+      return (F("%u") % lexical_cast<u64>(res[0][0])).str();
+    }
+  catch (informative_failure const & e)
+    {
+      return format_sqlite_error_for_info(e);
+    }
+        
 }
 
-unsigned long
-database::space_usage(string const & table, string const & rowspace)
+string
+database::space(string const & table, string const & rowspace, u64 & total)
 {
-  results res;
-  // COALESCE is required since SUM({empty set}) is NULL.
-  // the sqlite docs for SUM suggest this as a workaround
-  query q("SELECT COALESCE(SUM(" + rowspace + "), 0) FROM " + table);
-  fetch(res, one_col, one_row, q);
-  return lexical_cast<unsigned long>(res[0][0]);
+  try
+    {
+      results res;
+      // SUM({empty set}) is NULL; TOTAL({empty set}) is 0.0
+      query q("SELECT TOTAL(" + rowspace + ") FROM " + table);
+      fetch(res, one_col, one_row, q);
+      u64 bytes = static_cast<u64>(lexical_cast<double>(res[0][0]));
+      total += bytes;
+      return (F("%u") % bytes).str();
+    }
+  catch (informative_failure & e)
+    {
+      return format_sqlite_error_for_info(e);
+    }
 }
 
 unsigned int

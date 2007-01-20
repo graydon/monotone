@@ -1,3 +1,14 @@
+2007-01-20  Zack Weinberg  <zackw@panix.com>
+
+	* database.cc: Make database::info work on arbitrarily screwed up
+	databases.  Also make its output consistently formatted and easier
+	to read.  Check for SQLite 3 database in more places.
+	* database.hh: Tweaks to database private member declarations.
+	* schema_migration.cc: Restructure diagnostics of mismatched
+	schemas so we can provide a classification in database::info.
+	* schema_migration.hh: New interface, describe_sql_schema.
+	calculate_schema_id is no longer visible.
+
 2007-01-14  Nathaniel Smith  <njs@pobox.com>
 
 	* m4/boost.m4: Check for another possible library suffix used on
