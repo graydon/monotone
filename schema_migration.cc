@@ -33,6 +33,70 @@
 // Wrappers around the bare sqlite3 API.  We do not use sqlite3_exec because
 // we want the better error handling that sqlite3_prepare_v2 gives us.
 
+void
+assert_sqlite3_ok(sqlite3 * db)
+{
+  int errcode = sqlite3_errcode(db);
+
+  if (errcode == SQLITE_OK)
+    return;
+
+  char const * errmsg = sqlite3_errmsg(db);
+
+  // first log the code so we can find _out_ what the confusing code
+  // was... note that code does not uniquely identify the errmsg, unlike
+  // errno's.
+  L(FL("sqlite error: %d: %s") % errcode % errmsg);
+
+  // Check the string to see if it looks like an informative_failure
+  // thrown from within an SQL extension function, caught, and turned
+  // into a call to sqlite3_result_error.  (Extension functions have to
+  // do this to avoid corrupting sqlite's internal state.)  If it is,
+  // rethrow it rather than feeding it to E(), lest we get "error:
+  // sqlite error: error: " ugliness.
+  char const *pfx = _("error: ");
+  if (!std::strncmp(errmsg, pfx, strlen(pfx)))
+    throw informative_failure(errmsg);
+
+  // sometimes sqlite is not very helpful
+  // so we keep a table of errors people have gotten and more helpful versions
+  char const * auxiliary_message = "";
+  switch (errcode)
+    {
+      // All memory-exhaustion conditions should give the same diagnostic.
+    case SQLITE_NOMEM:
+      throw std::bad_alloc();
+
+      // These diagnostics generally indicate an operating-system-level
+      // failure.  It would be nice to throw strerror(errno) in there but
+      // we cannot assume errno is still valid by the time we get here.
+    case SQLITE_IOERR:
+    case SQLITE_CANTOPEN:
+    case SQLITE_PROTOCOL:
+      auxiliary_message
+        = _("make sure database and containing directory are writeable\n"
+            "and you have not run out of disk space");
+      break;
+
+      // These error codes may indicate someone is trying to load a database
+      // so old that it's in sqlite 2's disk format (monotone 0.16 or
+      // older).
+    case SQLITE_CORRUPT:
+    case SQLITE_NOTADB:
+      auxiliary_message 
+        = _("(if this is a database last used by monotone 0.16 or older,\n"
+            "you must follow a special procedure to make it usable again.\n"
+            "see the file UPGRADE, in the distribution, for instructions.)");
+
+    default:
+      break;
+    }
+
+  // if the auxiliary message is empty, the \n will be stripped off too
+  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
+}
+
+
 namespace
 {
   struct sql
@@ -45,8 +109,8 @@ namespace
       char const * after;
       L(FL("executing SQL '%s'") % cmd);
 
-      if (sqlite3_prepare_v2(db, cmd, strlen(cmd), &s, &after))
-        error(db);
+      sqlite3_prepare_v2(db, cmd, strlen(cmd), &s, &after);
+      assert_sqlite3_ok(db);
 
       I(s);
       if (afterp)
@@ -78,7 +142,8 @@ namespace
       sqlite3 * db = sqlite3_db_handle(stmt);
       sqlite3_finalize(stmt);
       stmt = 0;
-      error(db);
+      assert_sqlite3_ok(db);
+      I(false);
     }
     int column_int(int col)
     {
@@ -126,52 +191,13 @@ namespace
                                 void (*fn)(sqlite3_context *,
                                            int, sqlite3_value **))
     {
-      if (sqlite3_create_function(db, name, -1, SQLITE_UTF8, 0, fn, 0, 0))
-        error(db);
+      sqlite3_create_function(db, name, -1, SQLITE_UTF8, 0, fn, 0, 0);
+      assert_sqlite3_ok(db);
     }
 
   private:
     sqlite3_stmt * stmt;
     int ncols;
-
-    static void NORETURN
-    error(sqlite3 * db)
-    {
-      // note: useful error messages should be kept consistent with
-      // assert_sqlite3_ok() in database.cc
-      char const * errmsg = sqlite3_errmsg(db);
-      int errcode = sqlite3_errcode(db);
-
-      L(FL("sqlite error: %d: %s") % errcode % errmsg);
-
-      // Check the string to see if it looks like an informative_failure
-      // thrown from within an SQL extension function, caught, and turned
-      // into a call to sqlite3_result_error.  (Extension functions have to
-      // do this to avoid corrupting sqlite's internal state.)  If it is,
-      // rethrow it rather than feeding it to E(), lest we get "error:
-      // sqlite error: error: " ugliness.
-      char const *pfx = _("error: ");
-      if (!std::strncmp(errmsg, pfx, strlen(pfx)))
-        throw informative_failure(errmsg);
-  
-      char const * auxiliary_message = "";
-      switch (errcode)
-        {
-        case SQLITE_ERROR: // ??? take this out - 3.3.9 seems to generate
-                           // it mostly for logic errors in the SQL,
-                           // not environmental problems
-        case SQLITE_IOERR:
-        case SQLITE_CANTOPEN:
-        case SQLITE_PROTOCOL:
-          auxiliary_message
-            = _("make sure database and containing directory are writeable\n"
-                "and you have not run out of disk space");
-          break;
-        default: break;
-        }
-
-      E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
-    }
   };
 
   struct transaction

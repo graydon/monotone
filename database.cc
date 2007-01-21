@@ -101,9 +101,6 @@ namespace
     };
     return q;
   }
-
-  // track all open databases for close_all_databases() handler
-  set<sqlite3*> sql_contexts;
 }
 
 struct query
@@ -199,7 +196,7 @@ database::check_format()
       if (have_revisions && (!have_rosters || !have_heights))
         // must be an upgrade that requires rosters be regenerated
         E(false,
-          F("database %s misses some cached data\n"
+          F("database %s lacks some cached data\n"
             "run '%s db regenerate_caches' to restore use of this database")
           % filename % ui.prog_name);
       else
@@ -229,119 +226,43 @@ database::set_app(app_state * app)
   __app = app;
 }
 
-static void
-check_sqlite_format_version(system_path const & filename)
-{
-  // sqlite 3 files begin with this constant string
-  // (version 2 files begin with a different one)
-  string version_string("SQLite format 3");
-
-  ifstream file(filename.as_external().c_str());
-  N(file, F("unable to probe database version in file %s") % filename);
-
-  for (string::const_iterator i = version_string.begin();
-       i != version_string.end(); ++i)
-    {
-      char c;
-      file.get(c);
-      N(c == *i, F("database %s is not an sqlite version 3 file, "
-                   "try dump and reload") % filename);
-    }
-}
-
-
-static void
-assert_sqlite3_ok(sqlite3 *s)
-{
-  int errcode = sqlite3_errcode(s);
-
-  if (errcode == SQLITE_OK) return;
-
-  const char * errmsg = sqlite3_errmsg(s);
-
-  // first log the code so we can find _out_ what the confusing code
-  // was... note that code does not uniquely identify the errmsg, unlike
-  // errno's.
-  L(FL("sqlite error: %d: %s") % errcode % errmsg);
-  
-  // sometimes sqlite is not very helpful
-  // so we keep a table of errors people have gotten and more helpful versions
-  // note: if you update this, try to keep the similar function in
-  // schema_migration.cc consistent.
-  const char * auxiliary_message = "";
-  switch (errcode)
-    {
-    case SQLITE_ERROR:
-    case SQLITE_IOERR:
-    case SQLITE_CANTOPEN:
-    case SQLITE_PROTOCOL:
-      auxiliary_message
-        = _("make sure database and containing directory are writeable\n"
-            "and you have not run out of disk space");
-      break;
-    default:
-      break;
-    }
-  // if the last message is empty, the \n will be stripped off too
-  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
-}
-
 struct sqlite3 *
-database::sql(bool init, bool migrating_format)
+database::sql(enum open_mode mode)
 {
   if (! __sql)
     {
       check_filename();
-
-      if (! init)
-        {
-          check_db_exists();
-          check_sqlite_format_version(filename);
-        }
-
+      check_db_exists();
       open();
 
-      if (init)
+      if (mode != schema_bypass_mode)
         {
-          sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
-          assert_sqlite3_ok(__sql);
+          check_sql_schema(__sql, filename);
+          install_functions(__app);
+
+          if (mode != format_bypass_mode)
+            check_format();
         }
-
-      check_sql_schema(__sql, filename);
-      install_functions(__app);
-
-      if (!migrating_format)
-        check_format();
     }
   else
-    {
-      I(!init);
-      I(!migrating_format);
-    }
+    I(mode == normal_mode);
+
   return __sql;
 }
 
 void
 database::initialize()
 {
-  if (__sql)
-    throw oops("cannot initialize database while it is open");
+  check_filename();
+  check_db_nonexistent();
+  open();
 
-  require_path_is_nonexistent(filename,
-                              F("could not initialize database: %s: already exists")
-                              % filename);
+  sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
 
-  system_path journal(filename.as_internal() + "-journal");
-  require_path_is_nonexistent(journal,
-                              F("existing (possibly stale) journal file '%s' "
-                                "has same stem as new database '%s'\n"
-                                "cancelling database creation")
-                              % journal % filename);
-
-  sqlite3 *s = sql(true);
-  I(s != NULL);
+  // make sure what we wanted is what we got
+  check_sql_schema(__sql, filename);
 }
-
 
 struct
 dump_request
@@ -444,11 +365,8 @@ dump_index_cb(void *data, int n, char **vals, char **cols)
 void
 database::dump(ostream & out)
 {
-  // don't care about schema checking etc.
-  check_filename();
-  check_db_exists();
-  check_sqlite_format_version(filename);
-  open();
+  ensure_open_for_maintenance();
+
   {
     transaction_guard guard(*this);
     dump_request req;
@@ -472,7 +390,6 @@ database::dump(ostream & out)
     out << "COMMIT;\n";
     guard.commit();
   }
-  close();
 }
 
 void
@@ -482,10 +399,7 @@ database::load(istream & in)
   string sql_stmt;
 
   check_filename();
-
-  require_path_is_nonexistent(filename,
-                              F("cannot create %s; it already exists") % filename);
-
+  check_db_nonexistent();
   open();
 
   // the page size can only be set before any other commands have been executed
@@ -559,17 +473,21 @@ format_sqlite_error_for_info(informative_failure const & e)
   err.append("]");
   return err;
 }
-  
 
 void
 database::info(ostream & out)
 {
   // don't check the schema
-  check_filename();
-  check_db_exists();
-  check_sqlite_format_version(filename);
-  open();
-  
+  ensure_open_for_maintenance();
+
+  // do a dummy query to confirm that the database file is an sqlite3
+  // database.  (this doesn't happen on open() because sqlite postpones the
+  // actual file open until the first access.  we can't piggyback this on
+  // any of the real queries because they all trap errors in case tables are
+  // missing.)
+  sqlite3_exec(__sql, "SELECT 1 FROM sqlite_master LIMIT 0", 0, 0, 0);
+  assert_sqlite3_ok(__sql);
+
   vector<string> counts;
   counts.push_back(count("rosters"));
   counts.push_back(count("roster_deltas"));
@@ -677,62 +595,46 @@ database::info(ostream & out)
   form = form % cache_size();
 
   out << form.str() << "\n"; // final newline is kept out of the translation
-
-  close();
 }
 
 void
 database::version(ostream & out)
 {
-  check_filename();
-  check_db_exists();
-  check_sqlite_format_version(filename);
-  open();
-
+  ensure_open_for_maintenance();
   out << (F("database schema version: %s") % describe_sql_schema(__sql)).str()
       << "\n";
-
-  close();
 }
 
 void
 database::migrate()
 {
-  check_filename();
-  check_db_exists();
-  check_sqlite_format_version(filename);
-  open();
-
+  ensure_open_for_maintenance();
   migrate_sql_schema(__sql, *__app);
-
-  close();
 }
 
 void
 database::test_migration_step(string const & schema)
 {
-  check_filename();
-  check_db_exists();
-  check_sqlite_format_version(filename);
-  open();
-
+  ensure_open_for_maintenance();
   ::test_migration_step(__sql, *__app, schema);
-
-  close();
 }
 
 void
 database::ensure_open()
 {
-  sqlite3 *s = sql();
-  I(s != NULL);
+  sql();
 }
 
 void
 database::ensure_open_for_format_changes()
 {
-  sqlite3 *s = sql(false, true);
-  I(s != NULL);
+  sql(format_bypass_mode);
+}
+
+void
+database::ensure_open_for_maintenance()
+{
+  sql(schema_bypass_mode);
 }
 
 database::~database()
@@ -746,7 +648,11 @@ database::~database()
   // trigger destructors to finalize cached statements
   statement_cache.clear();
 
-  close();
+  if (__sql)
+    {
+      sqlite3_close(__sql);
+      __sql = 0;
+    }
 }
 
 void
@@ -3159,6 +3065,22 @@ database::check_db_exists()
                        F("%s is a directory, not a database") % filename);
 }
 
+void
+database::check_db_nonexistent()
+{
+  require_path_is_nonexistent(filename,
+                              F("database %s already exists")
+                              % filename);
+
+  system_path journal(filename.as_internal() + "-journal");
+  require_path_is_nonexistent(journal,
+                              F("existing (possibly stale) journal file '%s' "
+                                "has same stem as new database '%s'\n"
+                                "cancelling database creation")
+                              % journal % filename);
+
+}
+
 bool
 database::database_specified()
 {
@@ -3169,34 +3091,14 @@ database::database_specified()
 void
 database::open()
 {
-  int error;
-
   I(!__sql);
 
-  error = sqlite3_open(filename.as_external().c_str(), &__sql);
+  if (sqlite3_open(filename.as_external().c_str(), &__sql) == SQLITE_NOMEM)
+    throw std::bad_alloc();
 
-  if (__sql)
-    {
-      I(sql_contexts.find(__sql) == sql_contexts.end());
-      sql_contexts.insert(__sql);
-    }
-
-  N(!error, (F("could not open database '%s': %s")
-             % filename % string(sqlite3_errmsg(__sql))));
+  I(__sql);
+  assert_sqlite3_ok(__sql);
 }
-
-void
-database::close()
-{
-  if (__sql)
-    {
-      sqlite3_close(__sql);
-      I(sql_contexts.find(__sql) != sql_contexts.end());
-      sql_contexts.erase(__sql);
-      __sql = 0;
-    }
-}
-
 
 // transaction guards
 

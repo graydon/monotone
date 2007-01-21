@@ -1,5 +1,33 @@
 2007-01-20  Zack Weinberg  <zackw@panix.com>
 
+	* database.cc (sql_contexts): Delete write-only variable and all
+	code that touches it.
+	(database::check_format): Fix grammar error.
+	(check_sqlite_format_version): Delete.
+	(database::sql): Restructure with a single N-way mode argument.
+	Move logic for creating new databases ...
+	(database::initialize): ... here.  Use open() directly.
+	(database::ensure_open_for_maintenance)
+	(database::check_db_nonexistent): New functions.
+	(database::dump, database::load, database::version, database::migrate)
+	(database::test_migration_step): Use new functions as
+	appropriate. Don't call close().
+	(database::info): Similarly.  Do a dummy query first thing to force
+	sqlite to look at the file and tell us if it's a database or not.
+	(database::close): Collapse into database destructor.
+	(database::open): Use assert_sqlite3_ok instead of hand-rolled
+	diagnostic; special case SQLITE_NOMEM.
+	(assert_sqlite3_ok): Move to ...
+	* schema_migration.cc: ... here; merge with 'error'.  Adjust users
+	of 'error' to match.  Add aux message for SQLITE_{CORRUPT,NOTADB}.
+	Don't give aux message for SQLITE_ERROR anymore.  Special case
+	SQLITE_NOMEM.
+	* schema_migration.hh, database.hh: Update declarations.
+
+	* monotone.cc (cpp_main): Report bad_alloc as what it is: memory
+	exhaustion, not a bug.
+	* tests/dump_on_crash: Adjust to match.
+
 	* database.cc: Make database::info work on arbitrarily screwed up
 	databases.  Also make its output consistently formatted and easier
 	to read.  Check for SQLite 3 database in more places.

@@ -27,6 +27,10 @@ void migrate_sql_schema(sqlite3 * db, app_state & app);
 void check_sql_schema(sqlite3 * db, system_path const & filename);
 std::string describe_sql_schema(sqlite3 * db);
 
+// utility routine shared with database.cc
+void assert_sqlite3_ok(sqlite3 * db);
+
+// debugging
 void test_migration_step(sqlite3 * db, app_state & app,
                          std::string const & schema);
 
