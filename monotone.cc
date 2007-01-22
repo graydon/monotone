@@ -302,6 +302,11 @@ cpp_main(int argc, char ** argv)
       // an error has already been printed
       return 1;
     }
+  catch (std::bad_alloc)
+    {
+      ui.inform(_("error: memory exhausted"));
+      return 1;
+    }
   catch (std::exception const & ex)
     {
       ui.fatal_exception (ex);

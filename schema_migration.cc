@@ -8,6 +8,7 @@
 // PURPOSE.
 
 #include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 #include <sqlite3.h>
 
 #include "sanity.hh"
@@ -33,6 +34,70 @@
 // Wrappers around the bare sqlite3 API.  We do not use sqlite3_exec because
 // we want the better error handling that sqlite3_prepare_v2 gives us.
 
+void
+assert_sqlite3_ok(sqlite3 * db)
+{
+  int errcode = sqlite3_errcode(db);
+
+  if (errcode == SQLITE_OK)
+    return;
+
+  char const * errmsg = sqlite3_errmsg(db);
+
+  // first log the code so we can find _out_ what the confusing code
+  // was... note that code does not uniquely identify the errmsg, unlike
+  // errno's.
+  L(FL("sqlite error: %d: %s") % errcode % errmsg);
+
+  // Check the string to see if it looks like an informative_failure
+  // thrown from within an SQL extension function, caught, and turned
+  // into a call to sqlite3_result_error.  (Extension functions have to
+  // do this to avoid corrupting sqlite's internal state.)  If it is,
+  // rethrow it rather than feeding it to E(), lest we get "error:
+  // sqlite error: error: " ugliness.
+  char const *pfx = _("error: ");
+  if (!std::strncmp(errmsg, pfx, strlen(pfx)))
+    throw informative_failure(errmsg);
+
+  // sometimes sqlite is not very helpful
+  // so we keep a table of errors people have gotten and more helpful versions
+  char const * auxiliary_message = "";
+  switch (errcode)
+    {
+      // All memory-exhaustion conditions should give the same diagnostic.
+    case SQLITE_NOMEM:
+      throw std::bad_alloc();
+
+      // These diagnostics generally indicate an operating-system-level
+      // failure.  It would be nice to throw strerror(errno) in there but
+      // we cannot assume errno is still valid by the time we get here.
+    case SQLITE_IOERR:
+    case SQLITE_CANTOPEN:
+    case SQLITE_PROTOCOL:
+      auxiliary_message
+        = _("make sure database and containing directory are writeable\n"
+            "and you have not run out of disk space");
+      break;
+
+      // These error codes may indicate someone is trying to load a database
+      // so old that it's in sqlite 2's disk format (monotone 0.16 or
+      // older).
+    case SQLITE_CORRUPT:
+    case SQLITE_NOTADB:
+      auxiliary_message 
+        = _("(if this is a database last used by monotone 0.16 or older,\n"
+            "you must follow a special procedure to make it usable again.\n"
+            "see the file UPGRADE, in the distribution, for instructions.)");
+
+    default:
+      break;
+    }
+
+  // if the auxiliary message is empty, the \n will be stripped off too
+  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
+}
+
+
 namespace
 {
   struct sql
@@ -45,8 +110,8 @@ namespace
       char const * after;
       L(FL("executing SQL '%s'") % cmd);
 
-      if (sqlite3_prepare_v2(db, cmd, strlen(cmd), &s, &after))
-        error(db);
+      sqlite3_prepare_v2(db, cmd, strlen(cmd), &s, &after);
+      assert_sqlite3_ok(db);
 
       I(s);
       if (afterp)
@@ -78,7 +143,8 @@ namespace
       sqlite3 * db = sqlite3_db_handle(stmt);
       sqlite3_finalize(stmt);
       stmt = 0;
-      error(db);
+      assert_sqlite3_ok(db);
+      I(false);
     }
     int column_int(int col)
     {
@@ -126,52 +192,13 @@ namespace
                                 void (*fn)(sqlite3_context *,
                                            int, sqlite3_value **))
     {
-      if (sqlite3_create_function(db, name, -1, SQLITE_UTF8, 0, fn, 0, 0))
-        error(db);
+      sqlite3_create_function(db, name, -1, SQLITE_UTF8, 0, fn, 0, 0);
+      assert_sqlite3_ok(db);
     }
 
   private:
     sqlite3_stmt * stmt;
     int ncols;
-
-    static void NORETURN
-    error(sqlite3 * db)
-    {
-      // note: useful error messages should be kept consistent with
-      // assert_sqlite3_ok() in database.cc
-      char const * errmsg = sqlite3_errmsg(db);
-      int errcode = sqlite3_errcode(db);
-
-      L(FL("sqlite error: %d: %s") % errcode % errmsg);
-
-      // Check the string to see if it looks like an informative_failure
-      // thrown from within an SQL extension function, caught, and turned
-      // into a call to sqlite3_result_error.  (Extension functions have to
-      // do this to avoid corrupting sqlite's internal state.)  If it is,
-      // rethrow it rather than feeding it to E(), lest we get "error:
-      // sqlite error: error: " ugliness.
-      char const *pfx = _("error: ");
-      if (!std::strncmp(errmsg, pfx, strlen(pfx)))
-        throw informative_failure(errmsg);
-  
-      char const * auxiliary_message = "";
-      switch (errcode)
-        {
-        case SQLITE_ERROR: // ??? take this out - 3.3.9 seems to generate
-                           // it mostly for logic errors in the SQL,
-                           // not environmental problems
-        case SQLITE_IOERR:
-        case SQLITE_CANTOPEN:
-        case SQLITE_PROTOCOL:
-          auxiliary_message
-            = _("make sure database and containing directory are writeable\n"
-                "and you have not run out of disk space");
-          break;
-        default: break;
-        }
-
-      E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
-    }
   };
 
   struct transaction
@@ -580,6 +607,37 @@ char const migrate_add_heights[] =
   "  );"
   ;
 
+// this is a function because it has to refer to the numeric constant
+// defined in schema_migration.hh; also because it has to carry out the
+// removal of stale tables left behind by old versions of 'changesetify',
+// but only if those tables still exist and are empty.
+static void
+migrate_add_ccode_and_drop_manifest_tables(sqlite3 * db, app_state &)
+{
+  string cmd = "PRAGMA user_version = ";
+  cmd += boost::lexical_cast<string>(mtn_creator_code);
+  sql::exec(db, cmd.c_str());
+
+  try
+    {
+      if (sql::value(db, "SELECT COUNT(*) FROM manifests")
+          + sql::value(db, "SELECT COUNT(*) FROM manifest_certs")
+          + sql::value(db, "SELECT COUNT(*) FROM manifest_deltas") > 0)
+        return;
+    }
+  catch (informative_failure & e)
+    {
+      // this should be a "no such table" error
+      I(string(e.what()).find("no such table") != string::npos);
+      return;
+    }
+
+  sql::exec(db, "DROP TABLE manifests;"
+            "DROP TABLE manifest_certs;"
+            "DROP TABLE manifest_deltas;");
+}
+
+
 // these must be listed in order so that ones listed earlier override ones
 // listed later
 enum upgrade_regime
@@ -640,16 +698,20 @@ const migration_event migration_events[] = {
   { "ae196843d368d042f475e3dadfed11e9d7f9f01e",
     migrate_add_heights, 0, upgrade_regen_caches },
 
+  { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d",
+    0, migrate_add_ccode_and_drop_manifest_tables, upgrade_none },
+
   // The last entry in this table should always be the current
   // schema ID, with 0 for the migrators.
-
-  { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d", 0, 0, upgrade_none }
+  { "2881277287f6ee9bfc5ee255a503a6dc20dd5994", 0, 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
 
-void
-calculate_schema_id(sqlite3 *db, string & ident)
+// The next several functions are concerned with calculating the schema hash
+// and determining whether a database is usable (with or without migration).
+static void
+get_schema_data(sqlite3 * db, string & schema)
 {
   sql stmt(db, 1,
            "SELECT sql FROM sqlite_master "
@@ -661,7 +723,6 @@ calculate_schema_id(sqlite3 *db, string & ident)
            "AND name not like 'sqlite_stat%' "
            "ORDER BY name");
 
-  string schema;
   using boost::char_separator;
   typedef boost::tokenizer<char_separator<char> > tokenizer;
   char_separator<char> sep(" \r\n\t", "(),;");
@@ -678,61 +739,187 @@ calculate_schema_id(sqlite3 *db, string & ident)
         }
     }
 
-  hexenc<id> tid;
-  calculate_ident(data(schema), tid);
-  ident = tid();
+  uint32_t code = sql::value(db, "PRAGMA user_version");
+  if (code != 0)
+    {
+      schema += " PRAGMA user_version = ";
+      schema += boost::lexical_cast<string>(code);
+    }
 }
 
-// Look through the migration_events table and return a pointer to the
-// entry corresponding to schema ID, or null if it isn't there (i.e. if
-// the database schema is not one we know).
-static migration_event const *
-schema_to_migration(string const & id)
+// On rare occasions, a migration event leaves tables behind that will be
+// deleted by a post-migration conversion.  When this happens, all the
+// entries in the migration-event array after that point must record the
+// schema hash as it will be *after* the tables are deleted, because that is
+// the state during normal operation and during migrations that start from a
+// later epoch.  However, that means the schema will fail to match *before*
+// the tables are deleted.  To handle this, we have this array, which
+// records blocks of text to try removing from the schema-as-we-hash-it.
+// They are removed in sequence, and we stop as soon as we get a match.
+// It is database.cc's responsibility to ensure that a database in
+// "migrated but not converted" state is only usable for the conversion
+// operation; we report it just as if it were normally usable.
+//
+// Text in this array has to be in a particular format; see
+// contrib/mashschema.cc for instructions.
+
+char const * const temporarily_allowed_tables[] = {
+  // manifests - obsoleted by migrate_to_revisions, but not actually dropped
+  // until migrate_add_ccode_and_drop_manifest_tables.
+
+  "CREATE TABLE manifest_certs ( hash not null unique , -- hash of remaining "
+  "fields separated by \":\" id not null , -- joins with manifests.id or "
+  "manifest_deltas.id name not null , -- opaque string chosen by user value "
+  "not null , -- opaque blob keypair not null , -- joins with public_keys.id "
+  "signature not null , -- RSA/SHA1 signature of \"[name@id:val]\" unique ( "
+  "name , id , value , keypair , signature ) ) CREATE TABLE manifest_deltas "
+  "( id not null , -- strong hash of all the entries in a manifest base "
+  "not null , -- joins with either manifest.id or manifest_deltas.id delta "
+  "not null , -- rdiff to construct current from base unique ( id , base ) "
+  ") CREATE TABLE manifests ( id primary key , -- strong hash of all the "
+  "entries in a manifest data not null -- compressed , encoded contents of "
+  "a manifest )",
+  0
+};
+
+static bool
+compare_schema_hash(string const & s, string const & hash)
 {
-  migration_event const *p;
-  for (p = migration_events + n_migration_events - 1;
+  {
+    hexenc<id> tid;
+    calculate_ident(data(s), tid);
+    if (hash == tid())
+      return true;
+  }
+
+  string schema = s;
+  for (char const * const * t = temporarily_allowed_tables; *t; t++)
+    {
+      string::size_type pos = schema.find(*t);
+      if (pos == string::npos)
+        break;
+
+      string::size_type len = strlen(*t);
+      if (schema.at(pos + len) == ' ')
+        len ++;
+
+      schema.erase(pos, len);
+      
+      hexenc<id> tid;
+      calculate_ident(data(schema), tid);
+      if (hash == tid())
+        return true;
+    }
+  return false;
+}
+
+// Look through the migration_events table and return a pointer to the entry
+// corresponding to database DB, or null if it isn't there (i.e. if the
+// database schema is not one we know).
+static migration_event const *
+find_migration(sqlite3 * db)
+{
+  string schema;
+  get_schema_data(db, schema);
+
+  for (migration_event const *p = migration_events + n_migration_events - 1;
        p >= migration_events; p--)
-    if (p->id == id)
+    if (compare_schema_hash(schema, p->id))
       return p;
 
   return 0;
 }
 
-// Provide sensible diagnostics for a database schema whose hash we do not
-// recognize.
-static void NORETURN
-diagnose_unrecognized_schema(sqlite3 * db, system_path const & filename,
-                             string const & id)
+// This enumerates the possible mismatches between the monotone executable
+// and its database.
+enum schema_mismatch_case
+  {
+    SCHEMA_MATCHES = 0,
+    SCHEMA_MIGRATION_NEEDED,
+    SCHEMA_TOO_NEW,
+    SCHEMA_NOT_MONOTONE,
+    SCHEMA_EMPTY
+  };
+
+static schema_mismatch_case
+classify_schema(sqlite3 * db, migration_event const * m = 0)
 {
-  // Give a special message for an utterly empty sqlite3 database, such as
-  // is created by "mtn db load < /dev/null", or by the sqlite3 command line
-  // utility if you don't give it anything to do.
-  N(id != "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+  if (!m)
+    m = find_migration(db);
+
+  if (m)
+    {
+      if (m->migrator_sql || m->migrator_func)
+        return SCHEMA_MIGRATION_NEEDED;
+      else
+        return SCHEMA_MATCHES;
+    }
+  else
+    {
+      // Distinguish an utterly empty database, such as is created by
+      // "mtn db load < /dev/null", or by the sqlite3 command line utility
+      // if you don't give it anything to do.
+      if (sql::value(db, "SELECT COUNT(*) FROM sqlite_master") == 0)
+        return SCHEMA_EMPTY;
+
+      // monotone started setting this value in database headers only with
+      // version 0.33, but all previous versions' databases are recognized
+      // by their schema hashes.
+
+      uint32_t code = sql::value(db, "PRAGMA user_version");
+      if (code != mtn_creator_code)
+        return SCHEMA_NOT_MONOTONE;
+
+      return SCHEMA_TOO_NEW;
+    }
+}
+
+string
+describe_sql_schema(sqlite3 * db)
+{
+  I(db != NULL);
+  string schema;
+  get_schema_data(db, schema);
+  hexenc<id> hash;
+  calculate_ident(data(schema), hash);
+
+  switch (classify_schema(db))
+    {
+    case SCHEMA_MATCHES:
+      return (F("%s (usable)") % hash).str();
+    case SCHEMA_MIGRATION_NEEDED:
+      return (F("%s (migration needed)") % hash).str();
+    case SCHEMA_TOO_NEW:
+      return (F("%s (too new, cannot use)") % hash).str();
+    case SCHEMA_NOT_MONOTONE:
+      return (F("%s (not a monotone database)") % hash).str();
+    case SCHEMA_EMPTY:
+      return (F("%s (database has no tables!)") % hash).str();
+    default:
+      I(false);
+    }
+}
+
+// Provide sensible diagnostics for a database schema whose hash we do not
+// recognize.  (Shared between check_sql_schema and migrate_sql_schema.)
+static void
+diagnose_unrecognized_schema(schema_mismatch_case cat,
+                             system_path const & filename)
+{
+  N(cat != SCHEMA_EMPTY,
     F("cannot use the empty sqlite database %s\n"
       "(monotone databases must be created with '%s db init')")
     % filename % ui.prog_name);
 
-  // Do a sanity check to make sure we are actually looking at a monotone
-  // database, not some other sqlite3 database.  Every version of the schema
-  // has included tables named 'files', 'file_deltas', 'manifests', and
-  // 'manifest_deltas'.
-  // ??? Use PRAGMA user_version to record an additional magic number in
-  // monotone databases.
-  int n = sql::value(db,
-                     "SELECT COUNT(*) FROM sqlite_master "
-                     "WHERE type = 'table' AND sql IS NOT NULL "
-                     "AND (name = 'files' OR name = 'file_deltas'"
-                     "     OR name = 'manifests' OR name = 'manifest_deltas')");
-  N(n == 4,
-    F("%s does not appear to be a monotone database\n"
-      "(schema %s, core tables missing)")
-    % filename % id);
+  N(cat != SCHEMA_NOT_MONOTONE,
+    F("%s does not appear to be a monotone database\n")
+    % filename);
 
-  N(false,
+  N(cat != SCHEMA_TOO_NEW,
     F("%s appears to be a monotone database, but this version of\n"
-      "monotone does not recognize its schema (%s).\n"
+      "monotone does not recognize its schema.\n"
       "you probably need a newer version of monotone.")
-    % filename % id);
+    % filename);
 }
 
 // check_sql_schema is called by database.cc on open, to determine whether
@@ -743,27 +930,21 @@ check_sql_schema(sqlite3 * db, system_path const & filename)
 {
   I(db != NULL);
  
-  string id;
-  calculate_schema_id(db, id);
+  schema_mismatch_case cat = classify_schema(db);
  
-  migration_event const *m = schema_to_migration(id);
+  diagnose_unrecognized_schema(cat, filename);
  
-  if (m == 0)
-    diagnose_unrecognized_schema(db, filename, id);
- 
-  N(m->migrator_sql == 0 && m->migrator_func == 0,
-    F("database %s is laid out according to an old schema, %s\n"
+  N(cat != SCHEMA_MIGRATION_NEEDED,
+    F("database %s is laid out according to an old schema\n"
       "try '%s db migrate' to upgrade\n"
       "(this is irreversible; you may want to make a backup copy first)")
-    % filename % id % ui.prog_name);
+    % filename % ui.prog_name);
 }
 
 void
 migrate_sql_schema(sqlite3 * db, app_state & app)
 {
   I(db != NULL);
-  sql::create_function(db, "sha1", sqlite_sha1_fn);
-  sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
 
   upgrade_regime regime = upgrade_none;
   
@@ -776,34 +957,35 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
   {
     transaction guard(db);
 
-    string init;
-    calculate_schema_id(db, init);
+    P(F("calculating migration..."));
 
-    P(F("calculating migration for schema %s") % init);
+    migration_event const *m = find_migration(db);
+    schema_mismatch_case cat = classify_schema(db, m);
 
-    migration_event const *m = schema_to_migration(init);
-
-    if (m == 0)
-      diagnose_unrecognized_schema(db, app.db.get_filename(), init);
+    diagnose_unrecognized_schema(cat, app.db.get_filename());
 
     // We really want 'db migrate' on an up-to-date schema to be a no-op
     // (no vacuum or anything, even), so that automated scripts can fire
     // one off optimistically and not have to worry about getting their
     // administrators to do it by hand.
-    if (m->migrator_func == 0 && m->migrator_sql == 0)
+    if (cat == SCHEMA_MATCHES)
       {
         P(F("no migration performed; database schema already up-to-date"));
         return;
       }
 
-    P(F("migrating data"));
+    sql::create_function(db, "sha1", sqlite_sha1_fn);
+    sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
+
+    P(F("migrating data..."));
 
     for (;;)
       {
         // confirm that we are where we ought to be
-        string curr;
-        calculate_schema_id(db, curr);
-        I(curr == m->id);
+        string schema;
+        get_schema_data(db, schema);
+
+        I(compare_schema_hash(schema, m->id));
         I(!m->migrator_sql || !m->migrator_func);
 
         if (m->migrator_sql)
@@ -817,6 +999,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 
         m++;
         I(m < migration_events + n_migration_events);
+        P(F("migrated to schema %s") % m->id);
       }
 
     P(F("committing changes to database"));
@@ -864,10 +1047,17 @@ test_migration_step(sqlite3 * db, app_state & app, string const & schema)
 
   transaction guard(db);
 
-  migration_event const *m = schema_to_migration(schema);
-  N(m, F("cannot test migration from unknown schema %s") % schema);
+  migration_event const *m;
+  for (m = migration_events + n_migration_events - 1;
+       m >= migration_events; m--)
+    if (schema == m->id)
+      break;
 
-  N(m->migrator_sql || m->migrator_func, F("schema %s is up to date") % schema);
+  N(m >= migration_events,
+    F("cannot test migration from unknown schema %s") % schema);
+
+  N(m->migrator_sql || m->migrator_func,
+    F("schema %s is up to date") % schema);
 
   L(FL("testing migration from %s to %s\n in database %s")
     % schema % m[1].id % app.db.get_filename());
