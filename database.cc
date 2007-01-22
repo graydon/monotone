@@ -155,23 +155,39 @@ void
 database::check_format()
 {
   results res;
-  query manifests_query("SELECT 1 FROM manifests LIMIT 1");
-  query revisions_query("SELECT 1 FROM revisions LIMIT 1");
-  query rosters_query("SELECT 1 FROM rosters LIMIT 1");
-  query heights_query("SELECT 1 FROM heights LIMIT 1");
 
-  fetch(res, one_col, any_rows, revisions_query);
+  // Check for revisions, rosters, and heights.  We need these on both sides
+  // of the major decision below.
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM revisions LIMIT 1"));
   bool have_revisions = !res.empty();
-  fetch(res, one_col, any_rows, manifests_query);
-  bool have_manifests = !res.empty();
-  fetch(res, one_col, any_rows, rosters_query);
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM rosters LIMIT 1"));
   bool have_rosters = !res.empty();
-  fetch(res, one_col, any_rows, heights_query);
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM heights LIMIT 1"));
   bool have_heights = !res.empty();
-
-  if (have_manifests)
+  
+  // Find out if the manifest tables even exist.
+  fetch(res, one_col, any_rows,
+        query("SELECT name FROM sqlite_master WHERE name LIKE 'manifest%'"));
+  if (res.empty())
     {
-      I(!have_rosters);
+      // Must have been changesetified and rosterified already.
+      // Or else the database was just created.
+      // Do we need to regenerate cached data?
+      E(!have_revisions || (have_rosters && have_heights),
+        F("database %s lacks some cached data\n"
+          "run '%s db regenerate_caches' to restore use of this database")
+        % filename % ui.prog_name);
+    }
+  else
+    {
+      // The manifest tables exist.  They should not be empty.  (Empty
+      // manifest tables are deleted during schema migration.)
+      fetch(res, one_col, any_rows, query("SELECT 1 FROM manifests LIMIT 1"));
+      I(!res.empty());
+
+      // The rosters and heights tables should be empty.
+      I(!have_rosters && !have_heights);
+
       // they need to either changesetify or rosterify.  which?
       if (have_revisions)
         E(false,
@@ -189,19 +205,6 @@ database::check_format()
             "this is a very old database; it needs to be upgraded\n"
             "please see README.changesets for details")
           % filename);
-    }
-  else
-    {
-      // no manifests
-      if (have_revisions && (!have_rosters || !have_heights))
-        // must be an upgrade that requires rosters be regenerated
-        E(false,
-          F("database %s lacks some cached data\n"
-            "run '%s db regenerate_caches' to restore use of this database")
-          % filename % ui.prog_name);
-      else
-        // we're all good.
-        ;
     }
 }
 
@@ -258,6 +261,10 @@ database::initialize()
   open();
 
   sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
+
+  sqlite3_exec(__sql, (FL("PRAGMA user_version = %u;")
+                       % mtn_creator_code).str().c_str(), NULL, NULL, NULL);
   assert_sqlite3_ok(__sql);
 
   // make sure what we wanted is what we got
@@ -362,6 +369,19 @@ dump_index_cb(void *data, int n, char **vals, char **cols)
   return 0;
 }
 
+static int
+dump_user_version_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  I(dump != NULL);
+  I(dump->sql != NULL);
+  I(vals != NULL);
+  I(vals[0] != NULL);
+  I(n == 1);
+  *(dump->out) << "PRAGMA user_version = " << vals[0] << ";\n";
+  return 0;
+}
+
 void
 database::dump(ostream & out)
 {
@@ -386,6 +406,10 @@ database::dump(ostream & out)
                           "WHERE type='index' AND sql NOT NULL "
                           "ORDER BY name",
                           dump_index_cb, &req, NULL);
+    assert_sqlite3_ok(req.sql);
+    res = sqlite3_exec(req.sql,
+                       "PRAGMA user_version;",
+                       dump_user_version_cb, &req, NULL);
     assert_sqlite3_ok(req.sql);
     out << "COMMIT;\n";
     guard.commit();
@@ -474,6 +498,35 @@ format_sqlite_error_for_info(informative_failure const & e)
   return err;
 }
 
+// Subroutine of info().  Pretty-print the database's "creator code", which
+// is a 32-bit unsigned number that we interpret as a four-character ASCII
+// string, provided that all four characters are graphic.  (On disk, it's
+// stored in the "user version" field of the database.)
+static string
+format_creator_code(uint32_t code)
+{
+  char buf[5];
+  string result;
+
+  if (code == 0)
+    return _("not set");
+
+  buf[4] = '\0';
+  buf[3] = ((code & 0x000000ff) >>  0);
+  buf[2] = ((code & 0x0000ff00) >>  8);
+  buf[1] = ((code & 0x00ff0000) >> 16);
+  buf[0] = ((code & 0xff000000) >> 24);
+
+  if (isgraph(buf[0]) && isgraph(buf[1]) && isgraph(buf[2]) && isgraph(buf[3]))
+    result = (FL("%s (0x%08x)") % buf % code).str();
+  else
+    result = (FL("0x%08x") % code).str();
+  if (code != mtn_creator_code)
+    result += _(" (not a monotone database)");
+  return result;
+}
+
+
 void
 database::info(ostream & out)
 {
@@ -482,11 +535,20 @@ database::info(ostream & out)
 
   // do a dummy query to confirm that the database file is an sqlite3
   // database.  (this doesn't happen on open() because sqlite postpones the
-  // actual file open until the first access.  we can't piggyback this on
-  // any of the real queries because they all trap errors in case tables are
-  // missing.)
+  // actual file open until the first access.  we can't piggyback it on the
+  // query of the user version because there's a bug in sqlite 3.3.10:
+  // the routine that reads meta-values from the database header does not
+  // check the file format.  reported as sqlite bug #2182.)
   sqlite3_exec(__sql, "SELECT 1 FROM sqlite_master LIMIT 0", 0, 0, 0);
   assert_sqlite3_ok(__sql);
+
+  uint32_t ccode;
+  {
+    results res;
+    fetch(res, one_col, one_row, query("PRAGMA user_version"));
+    I(res.size() == 1);
+    ccode = lexical_cast<uint32_t>(res[0][0]);
+  }
 
   vector<string> counts;
   counts.push_back(count("rosters"));
@@ -558,7 +620,8 @@ database::info(ostream & out)
   }
 
   i18n_format form =
-    F("schema version    : %s\n"
+    F("creator code      : %s\n"
+      "schema version    : %s\n"
       "counts:\n"
       "  full rosters    : %s\n"
       "  roster deltas   : %s\n"
@@ -583,6 +646,7 @@ database::info(ostream & out)
       "  cache size      : %s"
       );
 
+  form = form % format_creator_code(ccode);
   form = form % describe_sql_schema(__sql);
 
   for (vector<string>::iterator i = counts.begin(); i != counts.end(); i++)
@@ -1867,8 +1931,9 @@ database::delete_existing_revs_and_certs()
 void
 database::delete_existing_manifests()
 {
-  execute(query("DELETE FROM manifests"));
-  execute(query("DELETE FROM manifest_deltas"));
+  execute(query("DROP TABLE IF EXISTS manifests"));
+  execute(query("DROP TABLE IF EXISTS manifest_deltas"));
+  execute(query("DROP TABLE IF EXISTS manifest_certs"));
 }
 
 void
@@ -2524,7 +2589,7 @@ void database::complete(selector_type ty,
   completions.clear();
 
   // step 1: the limit is transformed into an SQL select statement which
-  // selects a set of IDs from the manifest_certs table which match the
+  // selects a set of IDs from the revision_certs table which match the
   // limit.  this is done by building an SQL select statement for each term
   // in the limit and then INTERSECTing them all.
 

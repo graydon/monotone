@@ -34,6 +34,17 @@ void assert_sqlite3_ok(sqlite3 * db);
 void test_migration_step(sqlite3 * db, app_state & app,
                          std::string const & schema);
 
+// this constant is part of the database schema, but it is not in schema.sql
+// because sqlite expressions can't do arithmetic on character values.  it
+// is stored in the "user version" field of the database header.  when we
+// encounter a database whose schema hash we don't recognize, we look for
+// this code in the header to decide whether it's a monotone database or
+// some other sqlite3 database.  the expectation is that it will never need
+// to change.  we call it a creator code because it has the same format and
+// function as file creator codes in old-sk00l Mac OS.
+
+const unsigned int mtn_creator_code = ((('_'*256 + 'M')*256 + 'T')*256 + 'N');
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
