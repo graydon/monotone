@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-21 08:56+0100\n"
+"POT-Creation-Date: 2007-01-22 09:17+0100\n"
 "PO-Revision-Date: 2007-01-10 14:58+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -2156,7 +2156,17 @@ msgstr "Datenbank ist in Ordnung"
 msgid "this database already contains rosters"
 msgstr "diese Datenbank enthält bereits Kataloge"
 
-#: database.cc:178
+#: database.cc:177
+#, c-format
+msgid ""
+"database %s lacks some cached data\n"
+"run '%s db regenerate_caches' to restore use of this database"
+msgstr ""
+"Der Datenbank %s fehlen einige Cache-Daten.\n"
+"Führen Sie '%s db regenerate_caches' aus, um diese Datenbank wieder "
+"benutzbar zu machen."
+
+#: database.cc:194
 #, c-format
 msgid ""
 "database %s contains old-style revisions\n"
@@ -2175,7 +2185,7 @@ msgstr ""
 "  und holen Sie sich dann eine aktualisierte Kopie.\n"
 "Wir bitten die Unannehmlichkeiten zu entschuldigen."
 
-#: database.cc:188
+#: database.cc:204
 #, c-format
 msgid ""
 "database %s contains manifests but no revisions\n"
@@ -2186,28 +2196,27 @@ msgstr ""
 "Dies ist eine sehr alte Datenbank, die erneuert werden muss.\n"
 "Bitte konsultieren Sie die Datei README.changesets für Details."
 
-#: database.cc:199
-#, c-format
-msgid ""
-"database %s lacks some cached data\n"
-"run '%s db regenerate_caches' to restore use of this database"
-msgstr ""
-"Der Datenbank %s fehlen einige Cache-Daten.\n"
-"Führen Sie '%s db regenerate_caches' aus, um diese Datenbank wieder "
-"benutzbar zu machen."
-
-#: database.cc:463 sanity.cc:234 schema_migration.cc:57
+#: database.cc:487 sanity.cc:234 schema_migration.cc:58
 msgid "error: "
 msgstr "Fehler: "
 
-#: database.cc:511 database.cc:542 database.cc:982 database.cc:1002
+#: database.cc:512
+msgid "not set"
+msgstr "nicht gesetzt"
+
+#: database.cc:525
+msgid " (not a monotone database)"
+msgstr " (keine monotone-Datenbank)"
+
+#: database.cc:573 database.cc:604 database.cc:1046 database.cc:1066
 #, c-format
 msgid "%u"
 msgstr "%u"
 
-#: database.cc:561
+#: database.cc:623
 #, c-format
 msgid ""
+"creator code      : %s\n"
 "schema version    : %s\n"
 "counts:\n"
 "  full rosters    : %s\n"
@@ -2232,6 +2241,7 @@ msgid ""
 "  page size       : %s\n"
 "  cache size      : %s"
 msgstr ""
+"DB-Identifikation      : %s\n"
 "Schema-Version         : %s\n"
 "Zahlen:\n"
 "  komplette Kataloge   : %s\n"
@@ -2256,57 +2266,57 @@ msgstr ""
 "  Seitengröße          : %s\n"
 "  Cache-Größe          : %s"
 
-#: database.cc:604
+#: database.cc:668
 #, c-format
 msgid "database schema version: %s"
 msgstr "Datenbank Schema-Version: %s"
 
-#: database.cc:692
+#: database.cc:756
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "mehrere Angaben in Anfrage: %s"
 
-#: database.cc:698
+#: database.cc:762
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "erwarte %d, erhielt %d Spalten in Anfrage: %s"
 
-#: database.cc:764
+#: database.cc:828
 #, c-format
 msgid "null result in query: %s"
 msgstr "Null-Ergebnis in Anfrage: %s"
 
-#: database.cc:782
+#: database.cc:846
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "erwarte %d, erhielt %d Zeilen in Anfrage: %s"
 
-#: database.cc:2038
+#: database.cc:2103
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "ein anderer Schlüssel mit dem Namen '%s' existiert bereits"
 
-#: database.cc:3056
+#: database.cc:3121
 #, c-format
 msgid "no database specified"
 msgstr "keine Datenbank spezifiziert"
 
-#: database.cc:3064
+#: database.cc:3129
 #, c-format
 msgid "database %s does not exist"
 msgstr "Datenbank %s existiert nicht"
 
-#: database.cc:3065
+#: database.cc:3130
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s ist ein Verzeichnis, keine Datenbank"
 
-#: database.cc:3072
+#: database.cc:3137
 #, c-format
 msgid "database %s already exists"
 msgstr "Datenbank %s existiert bereits"
 
-#: database.cc:3077
+#: database.cc:3142
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -3618,7 +3628,7 @@ msgstr "Der Selektor '%s' ist kein gültiges Datum (%s)"
 msgid "expanded date '%s' -> '%s'\n"
 msgstr "expandierte Datum '%s' -> '%s'\n"
 
-#: schema_migration.cc:77
+#: schema_migration.cc:78
 msgid ""
 "make sure database and containing directory are writeable\n"
 "and you have not run out of disk space"
@@ -3627,7 +3637,7 @@ msgstr ""
 "schreibbar sind\n"
 "und das noch genügend Speicherplatz verfügbar ist."
 
-#: schema_migration.cc:87
+#: schema_migration.cc:88
 msgid ""
 "(if this is a database last used by monotone 0.16 or older,\n"
 "you must follow a special procedure to make it usable again.\n"
@@ -3638,7 +3648,7 @@ msgstr ""
 "sie wieder benutzbar zu machen. Die Datei UPGRADE aus der\n"
 "Distribution enthält Instruktionen dazu.)"
 
-#: schema_migration.cc:96
+#: schema_migration.cc:97
 #, c-format
 msgid ""
 "sqlite error: %s\n"
@@ -3647,42 +3657,42 @@ msgstr ""
 "SQLite-Fehler: %s\n"
 "%s"
 
-#: schema_migration.cc:510
+#: schema_migration.cc:511
 #, c-format
 msgid "public and private keys for %s don't match"
 msgstr "öffentlicher und privater Schlüssel von %s stimmen nicht überein"
 
-#: schema_migration.cc:512
+#: schema_migration.cc:513
 #, c-format
 msgid "moving key '%s' from database to %s"
 msgstr "verschiebe Schlüssel '%s' von Datenbank nach %s"
 
-#: schema_migration.cc:785
+#: schema_migration.cc:889
 #, c-format
 msgid "%s (usable)"
 msgstr "%s (benutzbar)"
 
-#: schema_migration.cc:787
+#: schema_migration.cc:891
 #, c-format
 msgid "%s (migration needed)"
 msgstr "%s (Migration benötigt)"
 
-#: schema_migration.cc:789
+#: schema_migration.cc:893
 #, c-format
 msgid "%s (too new, cannot use)"
 msgstr "%s (zu neu, nicht benutzbar)"
 
-#: schema_migration.cc:791
+#: schema_migration.cc:895
 #, c-format
 msgid "%s (not a monotone database)"
 msgstr "%s (keine monotone-Datenbank)"
 
-#: schema_migration.cc:793
+#: schema_migration.cc:897
 #, c-format
 msgid "%s (database has no tables!)"
 msgstr "%s (Datenbank hat keine Tabellen!)"
 
-#: schema_migration.cc:807
+#: schema_migration.cc:910
 #, c-format
 msgid ""
 "cannot use the empty sqlite database %s\n"
@@ -3691,64 +3701,65 @@ msgstr ""
 "Kann die leere sqlite-Datenbank %s nicht benutzen.\n"
 "(Monotone-Datenbanken müssen mit '%s db init' erzeugt werden.)"
 
-#: schema_migration.cc:812
+#: schema_migration.cc:915
 #, c-format
-msgid ""
-"%s does not appear to be a monotone database\n"
-"(schema %s, core tables missing)"
-msgstr ""
-"%s scheint keine monotone-Datenbank zu sein.\n"
-"(Schema ist %s, Systemtabellen fehlen.)"
+msgid "%s does not appear to be a monotone database\n"
+msgstr "%s scheint keine monotone-Datenbank zu sein.\n"
 
-#: schema_migration.cc:817
+#: schema_migration.cc:919
 #, c-format
 msgid ""
 "%s appears to be a monotone database, but this version of\n"
-"monotone does not recognize its schema (%s).\n"
+"monotone does not recognize its schema.\n"
 "you probably need a newer version of monotone."
 msgstr ""
 "%s scheint eine monotone-Datenbank zu sein, aber diese Version von\n"
-"monotone erkennt dessen Schema (%s) nicht.\n"
+"monotone erkennt deren Schema nicht.\n"
 "Sie benötigen wahrscheinlich eine neuere Version von monotone."
 
-#: schema_migration.cc:839
+#: schema_migration.cc:938
 #, c-format
 msgid ""
-"database %s is laid out according to an old schema, %s\n"
+"database %s is laid out according to an old schema\n"
 "try '%s db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
-"Die Datenbank %s besitzt ein altes Schema, %s\n"
+"Die Datenbank %s besitzt ein altes Schema.\n"
 "Versuchen Sie '%s db migrate', um das Schema zu erneuern.\n"
 "(Dieser Vorgang ist nicht umkehrbar; Sie sollten vorher eine Sicherung "
 "machen.)"
 
-#: schema_migration.cc:866
+#: schema_migration.cc:960
 #, c-format
-msgid "calculating migration for schema %s"
-msgstr "berechne Migration für Schema %s"
+msgid "calculating migration..."
+msgstr "berechne Migration..."
 
-#: schema_migration.cc:879
+#: schema_migration.cc:973
 #, c-format
 msgid "no migration performed; database schema already up-to-date"
 msgstr "Keine Migration durchgeführt, Schema ist bereits aktuell."
 
-#: schema_migration.cc:883
+#: schema_migration.cc:980
 #, c-format
-msgid "migrating data"
-msgstr "migriere Daten"
+msgid "migrating data..."
+msgstr "migriere Daten..."
 
-#: schema_migration.cc:906
+#: schema_migration.cc:1002
+#, c-format
+msgid "migrated to schema %s"
+msgstr "zu Schema %s migriert"
+
+#: schema_migration.cc:1005
 #, c-format
 msgid "committing changes to database"
 msgstr "pflege Änderungen in Datenbank ein"
 
-#: schema_migration.cc:910
+#: schema_migration.cc:1009
 #, c-format
 msgid "optimizing database"
 msgstr "optimiere Datenbank"
 
-#: schema_migration.cc:920
+#: schema_migration.cc:1019
 #, c-format
 msgid ""
 "NOTE: because this database was last used by a rather old version\n"
@@ -3760,7 +3771,7 @@ msgstr ""
 "sind, dann lesen Sie bitte die Datei UPGRADE für Hinweise bei der\n"
 "Ausführung von '%s db %s'."
 
-#: schema_migration.cc:927
+#: schema_migration.cc:1026
 #, c-format
 msgid ""
 "NOTE: this upgrade cleared monotone's caches\n"
@@ -3769,17 +3780,17 @@ msgstr ""
 "HINWEIS: Dieses Upgrade hat monotones Caches gelöscht.\n"
 "Sie sollten nun '%s db regenerate_caches' ausführen."
 
-#: schema_migration.cc:952
+#: schema_migration.cc:1057
 #, c-format
 msgid "cannot test migration from unknown schema %s"
 msgstr "kann Migration von unbekannten Schema %s nicht testen"
 
-#: schema_migration.cc:954
+#: schema_migration.cc:1060
 #, c-format
 msgid "schema %s is up to date"
 msgstr "Schema %s ist aktuell"
 
-#: schema_migration.cc:965
+#: schema_migration.cc:1071
 #, c-format
 msgid "successful migration to schema %s"
 msgstr "erfolgreiche Migration zu Schema %s"
