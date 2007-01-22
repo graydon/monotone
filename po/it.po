@@ -310,7 +310,7 @@ msgstr "trovati certificati con rami multipli per la revisione %s, per favore in
 #: cmd_automate.cc:150
 #, c-format
 msgid "Bad input to automate stdio: expected ':' after string size"
-msgstr "Input non valido per ‘automate stdio’: atteso ‘:’ dopo la dimensione della stringa"
+msgstr "Input non valido per ‘automate stdio’: atteso ‘:’ dopo la dimensione di una stringa"
 
 #: cmd_automate.cc:169
 #, c-format
@@ -330,7 +330,7 @@ msgstr "Input non valido per ‘automate stdio’: atteso il token ‘%c’"
 #: cmd_automate.cc:348
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
-msgstr "Input non valido per ‘automate stdio’: nome di comando assente"
+msgstr "Input non valido per ‘automate stdio’: manca il nome del comando"
 
 #: cmd_automate.cc:377
 msgid "automation"
@@ -911,10 +911,11 @@ msgid ""
 "If not, update the workspace to the head of the branch."
 msgstr ""
 "aggiorna spazio di lavoro.\n"
-"Questo comando modifica il tuo spazio di lavoro affinché sia basato su di\n"
-"una differente versione, preservando nel contempo i cambiamenti non sottomessi.\n"
-"Se è specificata una revisione, aggiorna lo spazio di lavoro a quella revisione.\n"
-"Altrimenti aggiorna lo spazio di lavoro alla testa del ramo."
+"Questo comando modifica il tuo spazio di lavoro affinché sia basato su\n"
+"di una differente versione, preservando nel contempo i cambiamenti non\n"
+"sottomessi.\n"
+"Se è specificata una revisione, aggiorna lo spazio di lavoro a quella\n"
+"  revisione. Altrimenti aggiorna lo spazio di lavoro alla testa del ramo."
 
 #: cmd_merging.cc:95
 #, c-format
@@ -1426,7 +1427,7 @@ msgstr[1] "letti %d pacchetto"
 
 #: cmd_ws_commit.cc:43
 msgid "*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****"
-msgstr ""
+msgstr "*****CANCELLA QUESTA LINEA PER CONFERMARE IL COMMIT*****"
 
 #: cmd_ws_commit.cc:46
 msgid ""
@@ -1442,9 +1443,9 @@ msgid "edit of log message failed"
 msgstr "modifica del messaggio di log fallita"
 
 #: cmd_ws_commit.cc:74
-#, fuzzy, c-format
+#, c-format
 msgid "failed to remove magic line; commit cancelled"
-msgstr "messaggio di log vuoto; salvataggio annullato"
+msgstr "commit annullato: la linea di conferma non è stata rimossa"
 
 #: cmd_ws_commit.cc:80
 msgid "revert file(s), dir(s) or entire workspace (\".\")"
@@ -1495,9 +1496,8 @@ msgid "[DIRECTORY...]"
 msgstr "[DIRECTORY…]"
 
 #: cmd_ws_commit.cc:259
-#, fuzzy
 msgid "create one or more directories and add them to the workspace"
-msgstr "rinomina elementi dello spazio di lavoro"
+msgstr "crea una o più directory e le aggiunge allo spazio di lavoro"
 
 #: cmd_ws_commit.cc:279
 #, c-format
@@ -1507,7 +1507,7 @@ msgstr "la directory ‘%s’ esiste già"
 #: cmd_ws_commit.cc:286
 #, c-format
 msgid "ignoring directory '%s' [see .mtn-ignore]"
-msgstr ""
+msgstr "ignoro la directory ‘%s’ [cfr. ‘.mtn-ignore’]"
 
 #: cmd_ws_commit.cc:303
 msgid "add files to workspace"
@@ -1782,9 +1782,9 @@ msgid "import the contents of the given directory tree into a given branch"
 msgstr ""
 
 #: cmd_ws_commit.cc:980
-#, fuzzy, c-format
+#, c-format
 msgid "you must specify a directory to import"
-msgstr "devi specificare una directory di destinazione"
+msgstr "devi specificare la directory da importare"
 
 #: cmd_ws_commit.cc:1021
 #, fuzzy, c-format
@@ -2135,9 +2135,9 @@ msgid "%d incorrect heights"
 msgstr "%d altezze errate"
 
 #: database_check.cc:1017
-#, fuzzy, c-format
+#, c-format
 msgid "check complete: %d files; %d rosters; %d revisions; %d keys; %d certs; %d heights"
-msgstr "controllo completo: %d file; %d roster; %d revisioni; %d chiavi; %d certificati"
+msgstr "controllo completo: %d file; %d roster; %d revisioni; %d chiavi; %d certificati; %d altezze"
 
 #: database_check.cc:1024
 #, c-format
@@ -2226,7 +2226,7 @@ msgid "%u"
 msgstr "%u"
 
 #: database.cc:623
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "creator code      : %s\n"
 "schema version    : %s\n"
