@@ -90,14 +90,17 @@ private:
   app_state * __app;
   struct sqlite3 * __sql;
 
+  enum open_mode { normal_mode = 0,
+                   schema_bypass_mode,
+                   format_bypass_mode };
+
   void install_functions(app_state * app);
-  struct sqlite3 * sql(bool init = false, bool migrating_format = false);
+  struct sqlite3 * sql(enum open_mode mode = normal_mode);
 
   void check_filename();
   void check_db_exists();
+  void check_db_nonexistent();
   void open();
-  void close();
-
   void check_format();
 
 public:
@@ -111,6 +114,9 @@ public:
   bool is_dbfile(any_path const & file);
   void ensure_open();
   void ensure_open_for_format_changes();
+private:
+  void ensure_open_for_maintenance();
+public:
   void check_is_not_rosterified();
   bool database_specified();
 
@@ -138,9 +144,10 @@ private:
   // --== Generic database metadata gathering ==--
   //
 private:
-  unsigned long count(std::string const & table);
-  unsigned long space_usage(std::string const & table,
-                            std::string const & concatenated_columns);
+  std::string count(std::string const & table);
+  std::string space(std::string const & table,
+                    std::string const & concatenated_columns,
+                    u64 & total);
   unsigned int page_size();
   unsigned int cache_size();
 

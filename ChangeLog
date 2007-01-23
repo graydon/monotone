@@ -1,3 +1,94 @@
+2007-01-21  Derek Scherger  <derek@echologic.com>
+
+	* (read_directory): use 'entry.' instead of 'di->' for consistency
+	(walk_tree_recursive): use read_directory instead of a
+	directory_iterator directly to reuse some code we already have and
+	to separate the files and dirs phases of the walk; also move the
+	check for bookkeeping paths to the directory phase of the walk
+	* tests/ls_unknown_in_subdir/__driver__.lua: fix syntax problem
+	hidden by xfail
+
+2007-01-21  Zack Weinberg  <zackw@panix.com>
+
+	* schema_migration.hh (mtn_creator_code): Define the creator code
+	we will henceforth insert into databases.
+	* schema.sql: Remove manifests, manifest_certs, and manifest_deltas.
+	* README.changesets: Old manifest certs are no longer preserved.
+
+	* schema_migration.cc (migration_events): Update.
+	(migrate_add_ccode_and_drop_manifest_tables): New migrator.
+	(calculate_schema_id): Rename get_schema_data; don't compute the hash.
+	Include the creator code in the schema data.
+	(temporarily_allowed_tables, compare_schema_hash): New.
+	(schema_to_migration): Rename find_migration; operate on a db.
+	(classify_schema): Use creator code instead of ad-hoc check when
+	deciding if this is a monotone database at all.  Count tables
+	instead of referring to the hash to decide if the database is empty.
+	(diagnose_unrecognized_schema): Remove schema id from diagnostics.
+	(describe_sql_schema, check_sql_schema, migrate_sql_schema)
+	(test_migration_step): Adjust to match.
+
+	* database.cc (database::check_format): Manifest tables might not exist.
+	(database::initialize): Write the creator code into the database.
+	(dump_user_version_cb, format_creator_code): New functions.
+	(database::dump): Dump the creator code.
+	(database::info): Report the creator code.
+	(database::delete_existing_manifests): Drop the tables; don't just
+	delete all rows.  Drop manifest_certs too.
+
+	* tests/schema_migration: Fix logic to extract schema version from
+	"db version" output. Add migration test for schema
+	2881277287f6ee9bfc5ee255a503a6dc20dd5994.
+	* tests/schema_migration_bad_schema/possible.dump: Adjust so that
+	it is still a possible future database.
+
+	* contrib/mashschema.cc: New developer utility program.
+
+2007-01-20  Zack Weinberg  <zackw@panix.com>
+
+	* database.cc (sql_contexts): Delete write-only variable and all
+	code that touches it.
+	(database::check_format): Fix grammar error.
+	(check_sqlite_format_version): Delete.
+	(database::sql): Restructure with a single N-way mode argument.
+	Move logic for creating new databases ...
+	(database::initialize): ... here.  Use open() directly.
+	(database::ensure_open_for_maintenance)
+	(database::check_db_nonexistent): New functions.
+	(database::dump, database::load, database::version, database::migrate)
+	(database::test_migration_step): Use new functions as
+	appropriate. Don't call close().
+	(database::info): Similarly.  Do a dummy query first thing to force
+	sqlite to look at the file and tell us if it's a database or not.
+	(database::close): Collapse into database destructor.
+	(database::open): Use assert_sqlite3_ok instead of hand-rolled
+	diagnostic; special case SQLITE_NOMEM.
+	(assert_sqlite3_ok): Move to ...
+	* schema_migration.cc: ... here; merge with 'error'.  Adjust users
+	of 'error' to match.  Add aux message for SQLITE_{CORRUPT,NOTADB}.
+	Don't give aux message for SQLITE_ERROR anymore.  Special case
+	SQLITE_NOMEM.
+	* schema_migration.hh, database.hh: Update declarations.
+
+	* monotone.cc (cpp_main): Report bad_alloc as what it is: memory
+	exhaustion, not a bug.
+	* tests/dump_on_crash: Adjust to match.
+
+	* database.cc: Make database::info work on arbitrarily screwed up
+	databases.  Also make its output consistently formatted and easier
+	to read.  Check for SQLite 3 database in more places.
+	* database.hh: Tweaks to database private member declarations.
+	* schema_migration.cc: Restructure diagnostics of mismatched
+	schemas so we can provide a classification in database::info.
+	* schema_migration.hh: New interface, describe_sql_schema.
+	calculate_schema_id is no longer visible.
+
+2007-01-18  Derek Scherger  <derek@echologic.com>
+
+	* tests/ls_unknown_in_subdir/__driver__.lua: new xfailed test of
+	ls uknown in a subdir
+	* testsuite.lua: call it
+	
 2007-01-14  Nathaniel Smith  <njs@pobox.com>
 
 	* m4/boost.m4: Check for another possible library suffix used on

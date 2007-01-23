@@ -101,9 +101,6 @@ namespace
     };
     return q;
   }
-
-  // track all open databases for close_all_databases() handler
-  set<sqlite3*> sql_contexts;
 }
 
 struct query
@@ -158,23 +155,39 @@ void
 database::check_format()
 {
   results res;
-  query manifests_query("SELECT 1 FROM manifests LIMIT 1");
-  query revisions_query("SELECT 1 FROM revisions LIMIT 1");
-  query rosters_query("SELECT 1 FROM rosters LIMIT 1");
-  query heights_query("SELECT 1 FROM heights LIMIT 1");
 
-  fetch(res, one_col, any_rows, revisions_query);
+  // Check for revisions, rosters, and heights.  We need these on both sides
+  // of the major decision below.
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM revisions LIMIT 1"));
   bool have_revisions = !res.empty();
-  fetch(res, one_col, any_rows, manifests_query);
-  bool have_manifests = !res.empty();
-  fetch(res, one_col, any_rows, rosters_query);
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM rosters LIMIT 1"));
   bool have_rosters = !res.empty();
-  fetch(res, one_col, any_rows, heights_query);
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM heights LIMIT 1"));
   bool have_heights = !res.empty();
-
-  if (have_manifests)
+  
+  // Find out if the manifest tables even exist.
+  fetch(res, one_col, any_rows,
+        query("SELECT name FROM sqlite_master WHERE name LIKE 'manifest%'"));
+  if (res.empty())
     {
-      I(!have_rosters);
+      // Must have been changesetified and rosterified already.
+      // Or else the database was just created.
+      // Do we need to regenerate cached data?
+      E(!have_revisions || (have_rosters && have_heights),
+        F("database %s lacks some cached data\n"
+          "run '%s db regenerate_caches' to restore use of this database")
+        % filename % ui.prog_name);
+    }
+  else
+    {
+      // The manifest tables exist.  They should not be empty.  (Empty
+      // manifest tables are deleted during schema migration.)
+      fetch(res, one_col, any_rows, query("SELECT 1 FROM manifests LIMIT 1"));
+      I(!res.empty());
+
+      // The rosters and heights tables should be empty.
+      I(!have_rosters && !have_heights);
+
       // they need to either changesetify or rosterify.  which?
       if (have_revisions)
         E(false,
@@ -192,19 +205,6 @@ database::check_format()
             "this is a very old database; it needs to be upgraded\n"
             "please see README.changesets for details")
           % filename);
-    }
-  else
-    {
-      // no manifests
-      if (have_revisions && (!have_rosters || !have_heights))
-        // must be an upgrade that requires rosters be regenerated
-        E(false,
-          F("database %s misses some cached data\n"
-            "run '%s db regenerate_caches' to restore use of this database")
-          % filename % ui.prog_name);
-      else
-        // we're all good.
-        ;
     }
 }
 
@@ -229,119 +229,47 @@ database::set_app(app_state * app)
   __app = app;
 }
 
-static void
-check_sqlite_format_version(system_path const & filename)
-{
-  // sqlite 3 files begin with this constant string
-  // (version 2 files begin with a different one)
-  string version_string("SQLite format 3");
-
-  ifstream file(filename.as_external().c_str());
-  N(file, F("unable to probe database version in file %s") % filename);
-
-  for (string::const_iterator i = version_string.begin();
-       i != version_string.end(); ++i)
-    {
-      char c;
-      file.get(c);
-      N(c == *i, F("database %s is not an sqlite version 3 file, "
-                   "try dump and reload") % filename);
-    }
-}
-
-
-static void
-assert_sqlite3_ok(sqlite3 *s)
-{
-  int errcode = sqlite3_errcode(s);
-
-  if (errcode == SQLITE_OK) return;
-
-  const char * errmsg = sqlite3_errmsg(s);
-
-  // first log the code so we can find _out_ what the confusing code
-  // was... note that code does not uniquely identify the errmsg, unlike
-  // errno's.
-  L(FL("sqlite error: %d: %s") % errcode % errmsg);
-  
-  // sometimes sqlite is not very helpful
-  // so we keep a table of errors people have gotten and more helpful versions
-  // note: if you update this, try to keep the similar function in
-  // schema_migration.cc consistent.
-  const char * auxiliary_message = "";
-  switch (errcode)
-    {
-    case SQLITE_ERROR:
-    case SQLITE_IOERR:
-    case SQLITE_CANTOPEN:
-    case SQLITE_PROTOCOL:
-      auxiliary_message
-        = _("make sure database and containing directory are writeable\n"
-            "and you have not run out of disk space");
-      break;
-    default:
-      break;
-    }
-  // if the last message is empty, the \n will be stripped off too
-  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
-}
-
 struct sqlite3 *
-database::sql(bool init, bool migrating_format)
+database::sql(enum open_mode mode)
 {
   if (! __sql)
     {
       check_filename();
-
-      if (! init)
-        {
-          check_db_exists();
-          check_sqlite_format_version(filename);
-        }
-
+      check_db_exists();
       open();
 
-      if (init)
+      if (mode != schema_bypass_mode)
         {
-          sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
-          assert_sqlite3_ok(__sql);
+          check_sql_schema(__sql, filename);
+          install_functions(__app);
+
+          if (mode != format_bypass_mode)
+            check_format();
         }
-
-      check_sql_schema(__sql, filename);
-      install_functions(__app);
-
-      if (!migrating_format)
-        check_format();
     }
   else
-    {
-      I(!init);
-      I(!migrating_format);
-    }
+    I(mode == normal_mode);
+
   return __sql;
 }
 
 void
 database::initialize()
 {
-  if (__sql)
-    throw oops("cannot initialize database while it is open");
+  check_filename();
+  check_db_nonexistent();
+  open();
 
-  require_path_is_nonexistent(filename,
-                              F("could not initialize database: %s: already exists")
-                              % filename);
+  sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
 
-  system_path journal(filename.as_internal() + "-journal");
-  require_path_is_nonexistent(journal,
-                              F("existing (possibly stale) journal file '%s' "
-                                "has same stem as new database '%s'\n"
-                                "cancelling database creation")
-                              % journal % filename);
+  sqlite3_exec(__sql, (FL("PRAGMA user_version = %u;")
+                       % mtn_creator_code).str().c_str(), NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
 
-  sqlite3 *s = sql(true);
-  I(s != NULL);
+  // make sure what we wanted is what we got
+  check_sql_schema(__sql, filename);
 }
-
 
 struct
 dump_request
@@ -441,13 +369,24 @@ dump_index_cb(void *data, int n, char **vals, char **cols)
   return 0;
 }
 
+static int
+dump_user_version_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  I(dump != NULL);
+  I(dump->sql != NULL);
+  I(vals != NULL);
+  I(vals[0] != NULL);
+  I(n == 1);
+  *(dump->out) << "PRAGMA user_version = " << vals[0] << ";\n";
+  return 0;
+}
+
 void
 database::dump(ostream & out)
 {
-  // don't care about schema checking etc.
-  check_filename();
-  check_db_exists();
-  open();
+  ensure_open_for_maintenance();
+
   {
     transaction_guard guard(*this);
     dump_request req;
@@ -468,10 +407,13 @@ database::dump(ostream & out)
                           "ORDER BY name",
                           dump_index_cb, &req, NULL);
     assert_sqlite3_ok(req.sql);
+    res = sqlite3_exec(req.sql,
+                       "PRAGMA user_version;",
+                       dump_user_version_cb, &req, NULL);
+    assert_sqlite3_ok(req.sql);
     out << "COMMIT;\n";
     guard.commit();
   }
-  close();
 }
 
 void
@@ -481,10 +423,7 @@ database::load(istream & in)
   string sql_stmt;
 
   check_filename();
-
-  require_path_is_nonexistent(filename,
-                              F("cannot create %s; it already exists") % filename);
-
+  check_db_nonexistent();
   open();
 
   // the page size can only be set before any other commands have been executed
@@ -524,145 +463,242 @@ database::debug(string const & sql, ostream & out)
     }
 }
 
-
-namespace
+// Subroutine of info().  This compares strings that might either be numbers
+// or error messages surrounded by square brackets.  We want the longest
+// number, even if there's an error message that's longer than that.
+static bool longest_number(string a, string b)
 {
-  unsigned long
-  add(unsigned long count, unsigned long & total)
-  {
-    total += count;
-    return count;
-  }
+  if(a.length() > 0 && a[0] == '[')
+    return true;  // b is longer
+  if(b.length() > 0 && b[0] == '[')
+    return false; // a is longer
+
+  return a.length() < b.length();
 }
+
+// Subroutine of info() and some things it calls.
+// Given an informative_failure which is believed to represent an SQLite
+// error, either return a string version of the error message (if it was an
+// SQLite error) or rethrow the execption (if it wasn't).
+static string
+format_sqlite_error_for_info(informative_failure const & e)
+{
+  string err(e.what());
+  string prefix = _("error: ");
+  prefix.append("sqlite error: ");
+  if (err.find(prefix) != 0)
+    throw;
+
+  err.replace(0, prefix.length(), "[");
+  string::size_type nl = err.find('\n');
+  if (nl != string::npos)
+    err.erase(nl);
+
+  err.append("]");
+  return err;
+}
+
+// Subroutine of info().  Pretty-print the database's "creator code", which
+// is a 32-bit unsigned number that we interpret as a four-character ASCII
+// string, provided that all four characters are graphic.  (On disk, it's
+// stored in the "user version" field of the database.)
+static string
+format_creator_code(uint32_t code)
+{
+  char buf[5];
+  string result;
+
+  if (code == 0)
+    return _("not set");
+
+  buf[4] = '\0';
+  buf[3] = ((code & 0x000000ff) >>  0);
+  buf[2] = ((code & 0x0000ff00) >>  8);
+  buf[1] = ((code & 0x00ff0000) >> 16);
+  buf[0] = ((code & 0xff000000) >> 24);
+
+  if (isgraph(buf[0]) && isgraph(buf[1]) && isgraph(buf[2]) && isgraph(buf[3]))
+    result = (FL("%s (0x%08x)") % buf % code).str();
+  else
+    result = (FL("0x%08x") % code).str();
+  if (code != mtn_creator_code)
+    result += _(" (not a monotone database)");
+  return result;
+}
+
 
 void
 database::info(ostream & out)
 {
-  string id;
-  calculate_schema_id(sql(), id);
+  // don't check the schema
+  ensure_open_for_maintenance();
 
-  unsigned long total = 0UL;
+  // do a dummy query to confirm that the database file is an sqlite3
+  // database.  (this doesn't happen on open() because sqlite postpones the
+  // actual file open until the first access.  we can't piggyback it on the
+  // query of the user version because there's a bug in sqlite 3.3.10:
+  // the routine that reads meta-values from the database header does not
+  // check the file format.  reported as sqlite bug #2182.)
+  sqlite3_exec(__sql, "SELECT 1 FROM sqlite_master LIMIT 0", 0, 0, 0);
+  assert_sqlite3_ok(__sql);
 
-  u64 num_nodes;
+  uint32_t ccode;
   {
     results res;
-    fetch(res, one_col, any_rows, query("SELECT node FROM next_roster_node_number"));
-    if (res.empty())
-      num_nodes = 0;
-    else
+    fetch(res, one_col, one_row, query("PRAGMA user_version"));
+    I(res.size() == 1);
+    ccode = lexical_cast<uint32_t>(res[0][0]);
+  }
+
+  vector<string> counts;
+  counts.push_back(count("rosters"));
+  counts.push_back(count("roster_deltas"));
+  counts.push_back(count("files"));
+  counts.push_back(count("file_deltas"));
+  counts.push_back(count("revisions"));
+  counts.push_back(count("revision_ancestry"));
+  counts.push_back(count("revision_certs"));
+
+  {
+    results res;
+    try
       {
-        I(res.size() == 1);
-        num_nodes = lexical_cast<u64>(res[0][0]) - 1;
+        fetch(res, one_col, any_rows,
+              query("SELECT node FROM next_roster_node_number"));
+        if (res.empty())
+          counts.push_back("0");
+        else
+          {
+            I(res.size() == 1);
+            counts.push_back((F("%u")
+                              % (lexical_cast<u64>(res[0][0]) - 1)).str());
+          }
+      }
+    catch (informative_failure const & e)
+      {
+        counts.push_back(format_sqlite_error_for_info(e));
       }
   }
 
-#define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
+  vector<string> bytes;
+  {
+    u64 total = 0;
+    bytes.push_back(space("rosters",
+                          "length(id) + length(checksum) + length(data)",
+                          total));
+    bytes.push_back(space("roster_deltas",
+                          "length(id) + length(checksum)"
+                          "+ length(base) + length(delta)", total));
+    bytes.push_back(space("files", "length(id) + length(data)", total));
+    bytes.push_back(space("file_deltas",
+                          "length(id) + length(base) + length(delta)", total));
+    bytes.push_back(space("revisions", "length(id) + length(data)", total));
+    bytes.push_back(space("revision_ancestry",
+                          "length(parent) + length(child)", total));
+    bytes.push_back(space("revision_certs",
+                          "length(hash) + length(id) + length(name)"
+                          "+ length(value) + length(keypair)"
+                          "+ length(signature)", total));
+    bytes.push_back(space("heights", "length(revision) + length(height)",
+                          total));
+    bytes.push_back((F("%u") % total).str());
+  }
 
-  out << ( \
-    F("schema version    : %s\n"
+  // pad each vector's strings on the left with spaces to make them all the
+  // same length
+  {
+    string::size_type width
+      = max_element(counts.begin(), counts.end(), longest_number)->length();
+    for(vector<string>::iterator i = counts.begin(); i != counts.end(); i++)
+      if (width > i->length() && (*i)[0] != '[')
+        i->insert(0, width - i->length(), ' ');
+
+    width = max_element(bytes.begin(), bytes.end(), longest_number)->length();
+    for(vector<string>::iterator i = bytes.begin(); i != bytes.end(); i++)
+      if (width > i->length() && (*i)[0] != '[')
+        i->insert(0, width - i->length(), ' ');
+  }
+
+  i18n_format form =
+    F("creator code      : %s\n"
+      "schema version    : %s\n"
       "counts:\n"
-      "  full rosters    : %u\n"
-      "  roster deltas   : %u\n"
-      "  full files      : %u\n"
-      "  file deltas     : %u\n"
-      "  revisions       : %u\n"
-      "  ancestry edges  : %u\n"
-      "  certs           : %u\n"
-      "  logical files   : %u\n"
+      "  full rosters    : %s\n"
+      "  roster deltas   : %s\n"
+      "  full files      : %s\n"
+      "  file deltas     : %s\n"
+      "  revisions       : %s\n"
+      "  ancestry edges  : %s\n"
+      "  certs           : %s\n"
+      "  logical files   : %s\n"
       "bytes:\n"
-      "  full rosters    : %u\n"
-      "  roster deltas   : %u\n"
-      "  full files      : %u\n"
-      "  file deltas     : %u\n"
-      "  revisions       : %u\n"
-      "  cached ancestry : %u\n"
-      "  certs           : %u\n"
-      "  heights         : %u\n"
-      "  total           : %u\n"
+      "  full rosters    : %s\n"
+      "  roster deltas   : %s\n"
+      "  full files      : %s\n"
+      "  file deltas     : %s\n"
+      "  revisions       : %s\n"
+      "  cached ancestry : %s\n"
+      "  certs           : %s\n"
+      "  heights         : %s\n"
+      "  total           : %s\n"
       "database:\n"
-      "  page size       : %u\n"
-      "  cache size      : %u"
-      )
-    % id
-    // counts
-    % count("rosters")
-    % count("roster_deltas")
-    % count("files")
-    % count("file_deltas")
-    % count("revisions")
-    % count("revision_ancestry")
-    % count("revision_certs")
-    % num_nodes
-    // bytes
-    % SPACE_USAGE("rosters", "length(id) + length(checksum) + length(data)")
-    % SPACE_USAGE("roster_deltas", "length(id) + length(checksum) + length(base) + length(delta)")
-    % SPACE_USAGE("files", "length(id) + length(data)")
-    % SPACE_USAGE("file_deltas", "length(id) + length(base) + length(delta)")
-    % SPACE_USAGE("revisions", "length(id) + length(data)")
-    % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
-    % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
-                  " + length(value) + length(keypair) + length(signature)")
-    % SPACE_USAGE("heights","length(revision) + length(height)")
-    % total
-    % page_size()
-    % cache_size()
-    ) << "\n"; // final newline is kept out of the translation
+      "  page size       : %s\n"
+      "  cache size      : %s"
+      );
 
-#undef SPACE_USAGE
+  form = form % format_creator_code(ccode);
+  form = form % describe_sql_schema(__sql);
+
+  for (vector<string>::iterator i = counts.begin(); i != counts.end(); i++)
+    form = form % *i;
+
+  for (vector<string>::iterator i = bytes.begin(); i != bytes.end(); i++)
+    form = form % *i;
+
+  form = form % page_size();
+  form = form % cache_size();
+
+  out << form.str() << "\n"; // final newline is kept out of the translation
 }
 
 void
 database::version(ostream & out)
 {
-  string id;
-
-  check_filename();
-  check_db_exists();
-  open();
-
-  calculate_schema_id(__sql, id);
-
-  close();
-
-  out << F("database schema version: %s") % id << endl;
+  ensure_open_for_maintenance();
+  out << (F("database schema version: %s") % describe_sql_schema(__sql)).str()
+      << "\n";
 }
 
 void
 database::migrate()
 {
-  check_filename();
-  check_db_exists();
-  open();
-
+  ensure_open_for_maintenance();
   migrate_sql_schema(__sql, *__app);
-
-  close();
 }
 
 void
 database::test_migration_step(string const & schema)
 {
-  check_filename();
-  check_db_exists();
-  open();
-
+  ensure_open_for_maintenance();
   ::test_migration_step(__sql, *__app, schema);
-
-  close();
 }
 
 void
 database::ensure_open()
 {
-  sqlite3 *s = sql();
-  I(s != NULL);
+  sql();
 }
 
 void
 database::ensure_open_for_format_changes()
 {
-  sqlite3 *s = sql(false, true);
-  I(s != NULL);
+  sql(format_bypass_mode);
+}
+
+void
+database::ensure_open_for_maintenance()
+{
+  sql(schema_bypass_mode);
 }
 
 database::~database()
@@ -676,7 +712,11 @@ database::~database()
   // trigger destructors to finalize cached statements
   statement_cache.clear();
 
-  close();
+  if (__sql)
+    {
+      sqlite3_close(__sql);
+      __sql = 0;
+    }
 }
 
 void
@@ -995,24 +1035,40 @@ database::delta_exists(string const & ident,
   return table_has_entry(ident, "id", table);
 }
 
-unsigned long
+string
 database::count(string const & table)
 {
-  results res;
-  query q("SELECT COUNT(*) FROM " + table);
-  fetch(res, one_col, one_row, q);
-  return lexical_cast<unsigned long>(res[0][0]);
+  try
+    {
+      results res;
+      query q("SELECT COUNT(*) FROM " + table);
+      fetch(res, one_col, one_row, q);
+      return (F("%u") % lexical_cast<u64>(res[0][0])).str();
+    }
+  catch (informative_failure const & e)
+    {
+      return format_sqlite_error_for_info(e);
+    }
+        
 }
 
-unsigned long
-database::space_usage(string const & table, string const & rowspace)
+string
+database::space(string const & table, string const & rowspace, u64 & total)
 {
-  results res;
-  // COALESCE is required since SUM({empty set}) is NULL.
-  // the sqlite docs for SUM suggest this as a workaround
-  query q("SELECT COALESCE(SUM(" + rowspace + "), 0) FROM " + table);
-  fetch(res, one_col, one_row, q);
-  return lexical_cast<unsigned long>(res[0][0]);
+  try
+    {
+      results res;
+      // SUM({empty set}) is NULL; TOTAL({empty set}) is 0.0
+      query q("SELECT TOTAL(" + rowspace + ") FROM " + table);
+      fetch(res, one_col, one_row, q);
+      u64 bytes = static_cast<u64>(lexical_cast<double>(res[0][0]));
+      total += bytes;
+      return (F("%u") % bytes).str();
+    }
+  catch (informative_failure & e)
+    {
+      return format_sqlite_error_for_info(e);
+    }
 }
 
 unsigned int
@@ -1875,8 +1931,9 @@ database::delete_existing_revs_and_certs()
 void
 database::delete_existing_manifests()
 {
-  execute(query("DELETE FROM manifests"));
-  execute(query("DELETE FROM manifest_deltas"));
+  execute(query("DROP TABLE IF EXISTS manifests"));
+  execute(query("DROP TABLE IF EXISTS manifest_deltas"));
+  execute(query("DROP TABLE IF EXISTS manifest_certs"));
 }
 
 void
@@ -2532,7 +2589,7 @@ void database::complete(selector_type ty,
   completions.clear();
 
   // step 1: the limit is transformed into an SQL select statement which
-  // selects a set of IDs from the manifest_certs table which match the
+  // selects a set of IDs from the revision_certs table which match the
   // limit.  this is done by building an SQL select statement for each term
   // in the limit and then INTERSECTing them all.
 
@@ -3073,6 +3130,22 @@ database::check_db_exists()
                        F("%s is a directory, not a database") % filename);
 }
 
+void
+database::check_db_nonexistent()
+{
+  require_path_is_nonexistent(filename,
+                              F("database %s already exists")
+                              % filename);
+
+  system_path journal(filename.as_internal() + "-journal");
+  require_path_is_nonexistent(journal,
+                              F("existing (possibly stale) journal file '%s' "
+                                "has same stem as new database '%s'\n"
+                                "cancelling database creation")
+                              % journal % filename);
+
+}
+
 bool
 database::database_specified()
 {
@@ -3083,34 +3156,14 @@ database::database_specified()
 void
 database::open()
 {
-  int error;
-
   I(!__sql);
 
-  error = sqlite3_open(filename.as_external().c_str(), &__sql);
+  if (sqlite3_open(filename.as_external().c_str(), &__sql) == SQLITE_NOMEM)
+    throw std::bad_alloc();
 
-  if (__sql)
-    {
-      I(sql_contexts.find(__sql) == sql_contexts.end());
-      sql_contexts.insert(__sql);
-    }
-
-  N(!error, (F("could not open database '%s': %s")
-             % filename % string(sqlite3_errmsg(__sql))));
+  I(__sql);
+  assert_sqlite3_ok(__sql);
 }
-
-void
-database::close()
-{
-  if (__sql)
-    {
-      sqlite3_close(__sql);
-      I(sql_contexts.find(__sql) != sql_contexts.end());
-      sql_contexts.erase(__sql);
-      __sql = 0;
-    }
-}
-
 
 // transaction guards
 
