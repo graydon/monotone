@@ -337,8 +337,8 @@ void read_directory(any_path const & path,
     {
       fs::path entry = *di;
       if (!fs::exists(entry)
-          || di->string() == "."
-          || di->string() == "..")
+          || entry.string() == "."
+          || entry.string() == "..")
         continue;
 
       // FIXME: BUG: this screws up charsets (assumes blindly that the fs is
@@ -463,15 +463,44 @@ walk_tree_recursive(fs::path const & absolute,
                     fs::path const & relative,
                     tree_walker & walker)
 {
-  std::vector<std::pair<fs::path, fs::path> > dirs;
-  fs::directory_iterator ei;
-  for(fs::directory_iterator di(absolute);
-      di != ei; ++di)
+  system_path root(absolute.string());
+  vector<utf8> files, dirs;
+
+  read_directory(root, files, dirs);
+
+  // At this point, the directory iterator has gone out of scope, and its
+  // memory released.  This is important, because it can allocate rather a
+  // bit of memory (especially on ReiserFS, see [1]; opendir uses the
+  // filesystem's blocksize as a clue how much memory to allocate).  We used
+  // to recurse into subdirectories directly in the loop below; this left
+  // the memory describing _this_ directory pinned on the heap.  Then our
+  // recursive call itself made another recursive call, etc., causing a huge
+  // spike in peak memory.  By splitting the loop in half, we avoid this
+  // problem. By using read_directory instead of a directory_iterator above
+  // we hopefully make this all a bit more clear.
+  // 
+  // [1] http://lkml.org/lkml/2006/2/24/215
+
+  for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
     {
-      fs::path entry = *di;
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)
-      fs::path rel_entry = relative / fs::path(entry.leaf(), fs::native);
+      fs::path rel_entry = relative / fs::path((*i)(), fs::native);
+      rel_entry.normalize();
+
+      file_path p;
+      if (!try_file_pathize(rel_entry, p))
+        continue;
+      walker.visit_file(p);
+    }
+
+  for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+    {
+      // the fs::native is necessary here, or it will bomb out on any paths
+      // that look at it funny.  (E.g., rcs files with "," in the name.)
+      fs::path entry = absolute / fs::path((*i)(), fs::native);
+      fs::path rel_entry = relative / fs::path((*i)(), fs::native);
+      entry.normalize();
       rel_entry.normalize();
 
       if (bookkeeping_path::is_bookkeeping_path(rel_entry.string()))
@@ -480,42 +509,6 @@ walk_tree_recursive(fs::path const & absolute,
           continue;
         }
 
-      if (!fs::exists(entry)
-          || entry.string() == "."
-          || entry.string() == "..")
-        {
-          // ignore
-          continue;
-        }
-      else
-        {
-          if (fs::is_directory(entry))
-            dirs.push_back(std::make_pair(entry, rel_entry));
-          else
-            {
-              file_path p;
-              if (!try_file_pathize(rel_entry, p))
-                continue;
-              walker.visit_file(p);
-            }
-        }
-    }
-  // At this point, the directory iterator has gone out of scope, and its
-  // memory released.  This is important, because it can allocate rather a
-  // bit of memory (especially on ReiserFS, see [1]; opendir uses the
-  // filesystem's blocksize as a clue how much memory to allocate).  We used
-  // to recurse into subdirectories directly in the loop above; this left
-  // the memory describing _this_ directory pinned on the heap.  Then our
-  // recursive call itself made another recursive call, etc., causing a huge
-  // spike in peak memory.  By splitting the loop in half, we avoid this
-  // problem.
-  // 
-  // [1] http://lkml.org/lkml/2006/2/24/215
-  for (std::vector<std::pair<fs::path, fs::path> >::const_iterator i = dirs.begin();
-       i != dirs.end(); ++i)
-    {
-      fs::path const & entry = i->first;
-      fs::path const & rel_entry = i->second;
       file_path p;
       if (!try_file_pathize(rel_entry, p))
         continue;

@@ -1,3 +1,13 @@
+2007-01-21  Derek Scherger  <derek@echologic.com>
+
+	* (read_directory): use 'entry.' instead of 'di->' for consistency
+	(walk_tree_recursive): use read_directory instead of a
+	directory_iterator directly to reuse some code we already have and
+	to separate the files and dirs phases of the walk; also move the
+	check for bookkeeping paths to the directory phase of the walk
+	* tests/ls_unknown_in_subdir/__driver__.lua: fix syntax problem
+	hidden by xfail
+
 2007-01-21  Zack Weinberg  <zackw@panix.com>
 
 	* schema_migration.hh (mtn_creator_code): Define the creator code
