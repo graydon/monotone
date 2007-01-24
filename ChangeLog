@@ -1,3 +1,15 @@
+2007-01-24  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.postinst, debian/changelog: update the
+	version for which a database upgrade is needed.
+
+2007-01-23  Zack Weinberg  <zackw@panix.com>
+
+	* database.cc (format_sqlite_error_for_info): Look for translated
+	version of "sqlite error: " too.  Problem found by tommyd on IRC.
+	* po/*.po: Define the translation of this string, using the
+	existing translation of "sqlite error: %s\n%s".
+
 2007-01-21  Derek Scherger  <derek@echologic.com>
 
 	* (read_directory): use 'entry.' instead of 'di->' for consistency
@@ -88,7 +100,7 @@
 	* tests/ls_unknown_in_subdir/__driver__.lua: new xfailed test of
 	ls uknown in a subdir
 	* testsuite.lua: call it
-	
+
 2007-01-14  Nathaniel Smith  <njs@pobox.com>
 
 	* m4/boost.m4: Check for another possible library suffix used on

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-15 00:27+0100\n"
-"PO-Revision-Date: 2007-01-22 08:19+0100\n"
+"POT-Creation-Date: 2007-01-23 08:09-0800\n"
+"PO-Revision-Date: 2007-01-24 03:36+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -1787,16 +1787,14 @@ msgid "you must specify a directory to import"
 msgstr "devi specificare la directory da importare"
 
 #: cmd_ws_commit.cc:1021
-#, fuzzy, c-format
+#, c-format
 msgid "import directory '%s' doesn't exists"
-msgstr "La directory ‘%s’ non esiste"
+msgstr ""
 
 #: cmd_ws_commit.cc:1022
-#, fuzzy, c-format
+#, c-format
 msgid "import directory '%s' is a file"
 msgstr ""
-"non riesco a creare la directory‘%s’\n"
-"è un file"
 
 #: cmd_ws_commit.cc:1069
 msgid "migrate a workspace directory's metadata to the latest format; defaults to the current workspace"
@@ -2207,15 +2205,17 @@ msgstr ""
 msgid "error: "
 msgstr "errore: "
 
+#: database.cc:488
+msgid "sqlite error: "
+msgstr "errore sqlite: "
+
 #: database.cc:512
-#, fuzzy
 msgid "not set"
-msgstr "nota: "
+msgstr "non impostato"
 
 #: database.cc:525
-#, fuzzy
 msgid " (not a monotone database)"
-msgstr "imposta il nome del database"
+msgstr ""
 
 #: database.cc:573
 #: database.cc:604
@@ -2324,9 +2324,9 @@ msgid "%s is a directory, not a database"
 msgstr "‘%s’ è una directory, non un database"
 
 #: database.cc:3137
-#, fuzzy, c-format
+#, c-format
 msgid "database %s already exists"
-msgstr "il percorso ‘%s’ esiste già"
+msgstr "il database ‘%s’ esiste già"
 
 #: database.cc:3142
 #, c-format
@@ -2504,7 +2504,7 @@ msgstr "impossibile aprire il file ‘%s’ in scrittura"
 msgid "caught runtime error %s constructing file path for %s"
 msgstr ""
 
-#: file_io.cc:547
+#: file_io.cc:540
 #: work.cc:1112
 #, c-format
 msgid "no such file or directory: '%s'"
@@ -2611,7 +2611,7 @@ msgstr "Opzioni specifiche per ‘%s %s’:"
 
 #: monotone.cc:307
 msgid "error: memory exhausted"
-msgstr ""
+msgstr "errore: memoria esaurita"
 
 #: mt_version.cc:36
 #, c-format
@@ -3465,11 +3465,11 @@ msgstr ""
 
 #: restrictions.cc:118
 #: restrictions.cc:159
-#, fuzzy, c-format
+#, c-format
 msgid "%d unknown path"
 msgid_plural "%d unknown paths"
-msgstr[0] "Percorso sconosciuto ‘%s’"
-msgstr[1] "Percorso sconosciuto ‘%s’"
+msgstr[0] "%d percorso sconosciuto"
+msgstr[1] "%d percorsi sconosciuti"
 
 #: revision.cc:841
 #, c-format
@@ -3584,30 +3584,31 @@ msgid "Current work set: %i items"
 msgstr "Insieme di lavoro attuale: %i elementi"
 
 #: selectors.cc:43
-#, fuzzy, c-format
+#, c-format
 msgid "expanded selector '%s' -> '%s'"
-msgstr "espando la selezione ‘%s’"
+msgstr "espanso il selettore ‘%s’ in ‘%s’"
 
 #: selectors.cc:80
-#, fuzzy, c-format
+#, c-format
 msgid "unknown selector type: %c"
-msgstr "pacchetto di tipo sconosciuto: ‘%s’"
+msgstr "selettore di tipo sconosciuto: ‘%c’"
 
 # TODO: radice di ricerca?
 #: selectors.cc:89
-#, fuzzy, c-format
+#, c-format
 msgid "selector '%s' is not a valid date\n"
-msgstr "la radice di ricerca ‘%s’ non è una directory"
+msgstr ""
 
 #: selectors.cc:95
 #, c-format
 msgid "selector '%s' is not a valid date (%s)"
 msgstr ""
 
+# TODO: remove \n
 #: selectors.cc:98
-#, fuzzy, c-format
+#, c-format
 msgid "expanded date '%s' -> '%s'\n"
-msgstr "id parziale ‘%s’ espanso in ‘%s’"
+msgstr "espansa la data ‘%s’ in ‘%s’\n"
 
 #: schema_migration.cc:78
 msgid ""
@@ -3660,9 +3661,9 @@ msgid "%s (too new, cannot use)"
 msgstr "%s (troppo nuovo, non utilizzabile)"
 
 #: schema_migration.cc:895
-#, fuzzy, c-format
+#, c-format
 msgid "%s (not a monotone database)"
-msgstr "imposta il nome del database"
+msgstr ""
 
 #: schema_migration.cc:897
 #, c-format
@@ -3676,10 +3677,11 @@ msgid ""
 "(monotone databases must be created with '%s db init')"
 msgstr ""
 
+# TODO: remove \n
 #: schema_migration.cc:915
-#, fuzzy, c-format
+#, c-format
 msgid "%s does not appear to be a monotone database\n"
-msgstr "la chiave ‘%s’ non è uguale alla chiave ‘%s’ nel database"
+msgstr "‘%s’ non sembra essere un database monotone\n"
 
 #: schema_migration.cc:919
 #, c-format
@@ -3690,26 +3692,22 @@ msgid ""
 msgstr ""
 
 #: schema_migration.cc:938
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "database %s is laid out according to an old schema\n"
 "try '%s db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
-"il layout del database ‘%s’ non corrisponde a questa versione di monotone\n"
-"mi aspettavo lo schema ‘%s’, ho trovato ‘%s’\n"
-"prova ‘%s db migrate’ per aggiornarlo\n"
-"(operazione irreversibile; potresti voler prima fare una copia di backup)"
 
 #: schema_migration.cc:960
-#, fuzzy, c-format
+#, c-format
 msgid "calculating migration..."
-msgstr "calcolo i passi necessari per la migrazione"
+msgstr ""
 
 #: schema_migration.cc:973
-#, fuzzy, c-format
+#, c-format
 msgid "no migration performed; database schema already up-to-date"
-msgstr "nessuna migrazione effettuata: lo schema del database era già aggiornato a ‘%s’"
+msgstr "nessuna migrazione effettuata: lo schema del database era già aggiornato"
 
 #: schema_migration.cc:980
 #, c-format
@@ -3717,9 +3715,9 @@ msgid "migrating data..."
 msgstr "migrazione dati…"
 
 #: schema_migration.cc:1002
-#, fuzzy, c-format
+#, c-format
 msgid "migrated to schema %s"
-msgstr "migrazione fallita al passo: %s"
+msgstr "migrato allo schema %s"
 
 #: schema_migration.cc:1005
 #, c-format
@@ -3760,12 +3758,12 @@ msgstr ""
 #: schema_migration.cc:1060
 #, c-format
 msgid "schema %s is up to date"
-msgstr ""
+msgstr "lo schema %s è aggiornato"
 
 #: schema_migration.cc:1071
-#, fuzzy, c-format
+#, c-format
 msgid "successful migration to schema %s"
-msgstr "scambio con ‘%s’ avvenuto con successo"
+msgstr "migrazione verso lo schema %s completata"
 
 #: std_hooks.lua:39
 msgid "Press enter"
@@ -3897,9 +3895,9 @@ msgid "workspace is corrupt: reading %s: %s"
 msgstr "lo spazio di lavoro è corrotto: leggendo ‘%s’: %s"
 
 #: work.cc:136
-#, fuzzy, c-format
+#, c-format
 msgid "workspace base revision %s does not exist in database"
-msgstr "la revisione base %s non è in database"
+msgstr ""
 
 #: work.cc:282
 #, c-format
@@ -3984,27 +3982,27 @@ msgid "modifying %s"
 msgstr "modifico ‘%s’"
 
 #: work.cc:984
-#, fuzzy, c-format
+#, c-format
 msgid "missing directory '%s'"
-msgstr "directory non valida ‘’"
+msgstr "la directory ‘%s’ manca"
 
 #: work.cc:989
-#, fuzzy, c-format
+#, c-format
 msgid "not a directory '%s'"
-msgstr "non riesco a creare la directory‘%s’"
+msgstr "‘%s’ non è una directory"
 
 #: work.cc:1002
-#, fuzzy, c-format
+#, c-format
 msgid "missing file '%s'"
-msgstr "%d file mancanti"
+msgstr "il file ‘%s’ manca"
 
 #: work.cc:1007
-#, fuzzy, c-format
+#, c-format
 msgid "not a file '%s'"
-msgstr "il file ‘%s’ non esiste"
+msgstr "‘%s’ non è un file"
 
 #: work.cc:1018
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%d missing items; use '%s ls missing' to view\n"
 "To restore consistency, on each missing item run either\n"
@@ -4014,13 +4012,6 @@ msgid ""
 " '%s drop --missing' or\n"
 " '%s revert --missing'"
 msgstr ""
-"%d file mancanti; usa ‘%s ls missing’ per elencarli.\n"
-"Per riottenere la consistenza, eseguire su ogni file mancante\n"
-"‘%s drop FILE’'per eliminarlo permanentemente oppure\n"
-"‘%s’ revert FILE’ per recuperarlo.\n"
-"Per gestirli tutti in una volta, utilizzare\n"
-"‘%s drop --missing’ oppure\n"
-"‘%s revert --missing’"
 
 #: work.cc:1164
 #, c-format
@@ -4118,9 +4109,9 @@ msgid "workspace required but not found"
 msgstr "copia di lavoro richiesta ma non trovata"
 
 #: work_migration.cc:74
-#, fuzzy, c-format
+#, c-format
 msgid "workspace is corrupt: %s is invalid"
-msgstr "lo spazio di lavoro è corrotto: leggendo ‘%s’: %s"
+msgstr "lo spazio di lavoro è corrotto: ‘%s’ non è valido"
 
 #: work_migration.cc:79
 #, c-format

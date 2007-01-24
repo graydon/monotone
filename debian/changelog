@@ -1,3 +1,9 @@
+monotone (0.32-90.2) unstable; urgency=low
+
+  * schema upgrade => monotone-server.postinst upgrade
+
+ -- Richard Levitte <richard@levitte.org>  Tue, 24 Jan 2007 18:06:30 +0100
+
 monotone (0.32-90.1) unstable; urgency=low
 
   * monotone can depend on texlive-base-bin as well as tetex-bin.

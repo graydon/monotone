@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.32\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-12-27 13:34-0200\n"
+"POT-Creation-Date: 2007-01-23 08:09-0800\n"
 "PO-Revision-Date: 2006-12-27 13:35-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
@@ -16,27 +16,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n>1;\n"
 
-#: app_state.cc:129
+#: app_state.cc:130
 #, c-format
 msgid "workspace required but not found%s%s"
 msgstr "área de trabalho necessária mas não encontrada%s%s"
 
-#: app_state.cc:137
+#: app_state.cc:138
 #, c-format
 msgid "invalid directory ''"
 msgstr "diretório inválido ''"
 
-#: app_state.cc:145
+#: app_state.cc:146
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "diretório '%s' de manutenção do monotone já existe em '%s'"
 
-#: app_state.cc:201
+#: app_state.cc:208
 #, c-format
 msgid "search root '%s' does not exist"
 msgstr "raiz de procura '%s' não existe"
 
-#: app_state.cc:202
+#: app_state.cc:209
 #, c-format
 msgid "search root '%s' is not a directory"
 msgstr "raiz da procura '%s' não é um diretório"
@@ -48,9 +48,9 @@ msgstr "[RAMO]"
 #: automate.cc:67 automate.cc:91 automate.cc:138 automate.cc:218
 #: automate.cc:359 automate.cc:426 automate.cc:451 automate.cc:529
 #: automate.cc:905 automate.cc:1035 automate.cc:1079 automate.cc:1105
-#: automate.cc:1132 automate.cc:1159 automate.cc:1193 automate.cc:1304
-#: automate.cc:1401 automate.cc:1460 automate.cc:1506 automate.cc:1566
-#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:676
+#: automate.cc:1132 automate.cc:1159 automate.cc:1193 automate.cc:1305
+#: automate.cc:1395 automate.cc:1454 automate.cc:1500 automate.cc:1560
+#: cmd_files.cc:253 cmd_files.cc:276 cmd_list.cc:669
 #, c-format
 msgid "wrong argument count"
 msgstr ""
@@ -61,7 +61,7 @@ msgstr "VER1 [VER2 [VER3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:330
 #: automate.cc:365 automate.cc:369 automate.cc:429 automate.cc:454
-#: automate.cc:1200 cmd_list.cc:683 revision.cc:1705
+#: automate.cc:1200 cmd_list.cc:676 revision.cc:1705
 #, c-format
 msgid "No such revision %s"
 msgstr "versão '%s' não existe"
@@ -85,12 +85,12 @@ msgstr "VERSÂO_NOVA [VERSÂO_VELHA1 [VERSÃO_VELHA2 [...]]]"
 
 #: automate.cc:398 automate.cc:486 automate.cc:711 automate.cc:949
 #: automate.cc:970 automate.cc:1256 cmd_automate.cc:78 cmd_automate.cc:332
-#: cmd_list.cc:584
+#: cmd_list.cc:577
 #, c-format
 msgid "no arguments needed"
 msgstr ""
 
-#: automate.cc:423 automate.cc:448 cmd_list.cc:673 revision.cc:1699
+#: automate.cc:423 automate.cc:448 cmd_list.cc:666 revision.cc:1699
 msgid "REV"
 msgstr "VERSÂO"
 
@@ -102,21 +102,21 @@ msgstr "SELETOR"
 msgid "[REVID]"
 msgstr "[VERSÂO]"
 
-#: automate.cc:931 automate.cc:1054 automate.cc:1514 automate.cc:1573
-#: automate.cc:1578
+#: automate.cc:931 automate.cc:1054 automate.cc:1508 automate.cc:1567
+#: automate.cc:1572
 #, c-format
 msgid "no revision %s found in database"
 msgstr "nenhuma versão %s encontrada no banco de dados"
 
-#: automate.cc:1076 automate.cc:1102 cmd_merging.cc:845
+#: automate.cc:1076 automate.cc:1102 cmd_merging.cc:837
 msgid "REVID"
 msgstr "VERSÂO"
 
 #: automate.cc:1087 automate.cc:1113 automate.cc:1168 automate.cc:1170
 #: cmd_db.cc:35 cmd_diff_log.cc:386 cmd_diff_log.cc:417 cmd_diff_log.cc:419
-#: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:677
-#: cmd_merging.cc:692 cmd_merging.cc:695 cmd_ws_commit.cc:523
-#: cmd_ws_commit.cc:1011 commands.cc:413
+#: cmd_files.cc:138 cmd_files.cc:197 cmd_merging.cc:125 cmd_merging.cc:669
+#: cmd_merging.cc:684 cmd_merging.cc:687 cmd_ws_commit.cc:517
+#: cmd_ws_commit.cc:987 commands.cc:411
 #, c-format
 msgid "no such revision '%s'"
 msgstr "versão '%s' não existe"
@@ -134,48 +134,48 @@ msgstr "arquivo '%s' não existe"
 msgid "OLD_FILE NEW_FILE"
 msgstr "ARQUIVO_VELHO NOVO_ARQUIVO"
 
-#: automate.cc:1301
+#: automate.cc:1302
 msgid "[BRANCH_PATTERN]"
 msgstr "[PADRÂO_DO_RAMOS]"
 
-#: automate.cc:1398
+#: automate.cc:1392
 msgid "KEYID PASSPHRASE"
 msgstr "CHAVE FRASE-CHAVE"
 
-#: automate.cc:1416 cmd_key_cert.cc:42
+#: automate.cc:1410 cmd_key_cert.cc:42
 #, c-format
 msgid "key '%s' already exists"
 msgstr "chave '%s' já existe"
 
-#: automate.cc:1419 cmd_key_cert.cc:45
+#: automate.cc:1413 cmd_key_cert.cc:45
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "gerando par de chaves '%s'"
 
-#: automate.cc:1421 cmd_key_cert.cc:47
+#: automate.cc:1415 cmd_key_cert.cc:47
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "salvando par de chaves '%s' em %s/"
 
-#: automate.cc:1457
+#: automate.cc:1451
 msgid "OPTION"
 msgstr "OPÇÃO"
 
-#: automate.cc:1480
+#: automate.cc:1474
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' não é uma opção conhecida para área de trabalho"
 
-#: automate.cc:1503
+#: automate.cc:1497
 msgid "REV FILE"
 msgstr "VERSÃO ARQUIVO"
 
-#: automate.cc:1520 automate.cc:1584
+#: automate.cc:1514 automate.cc:1578
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "arquivo %s é desconhecido para a versão %s"
 
-#: automate.cc:1563
+#: automate.cc:1557
 msgid "REV1 FILE REV2"
 msgstr "VER1 ARQUIVO VER2"
 
@@ -184,41 +184,41 @@ msgstr "VER1 ARQUIVO VER2"
 msgid "parsing a %s at %d:%d:E: %s"
 msgstr "lendo um %s em %d:%d:E: %s"
 
-#: cert.cc:83
+#: cert.cc:82
 #, c-format
 msgid "ignoring bad signature by '%s' on '%s'"
 msgstr "ignorando assinatura inválida por '%s' sobre '%s'"
 
-#: cert.cc:91
+#: cert.cc:90
 #, c-format
 msgid "ignoring unknown signature by '%s' on '%s'"
 msgstr "ignorando assinatura desconhecida por '%s' sobre '%s'"
 
-#: cert.cc:157
+#: cert.cc:156
 #, c-format
 msgid "trust function disliked %d signers of %s cert on manifest %s"
 msgstr ""
 "função de confiança rejeitou %d assinantes do certificado %s sobre o "
 "manifesto %s"
 
-#: cert.cc:214
+#: cert.cc:213
 #, c-format
 msgid "trust function disliked %d signers of %s cert on revision %s"
 msgstr ""
 "função de confiança rejeitou %d assinantes do certificado %s sobre a revisão "
 "%s"
 
-#: cert.cc:303
+#: cert.cc:302
 #, c-format
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "hash '%s' calculado do certificado não combina com '%s'"
 
-#: cert.cc:387 keys.cc:561
+#: cert.cc:386 keys.cc:561
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "nenhum par de chaves '%s' encontrado na coleção '%s'"
 
-#: cert.cc:465
+#: cert.cc:464
 #, c-format
 msgid ""
 "you have no private key to make signatures with\n"
@@ -227,7 +227,7 @@ msgstr ""
 "você não tem chave privada para fazer assinaturas\n"
 "talvez você precise fazer 'genkey <seu email>'"
 
-#: cert.cc:468
+#: cert.cc:467
 #, c-format
 msgid ""
 "you have multiple private keys\n"
@@ -237,21 +237,21 @@ msgstr ""
 "escolha uma para usar na assinatura adicionando '-k<nomedachave>' ao seu "
 "comando"
 
-#: cert.cc:485
+#: cert.cc:484
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
 msgstr ""
 "nenhum ramo encontrado para revisão vazia, por favor forneça o nome de um "
 "ramo"
 
-#: cert.cc:494
+#: cert.cc:491
 #, c-format
 msgid "no branch certs found for revision %s, please provide a branch name"
 msgstr ""
 "nenhum certificado de ramo encontrado para revisão %s, por favor forneça o "
 "nome de um ramo"
 
-#: cert.cc:498
+#: cert.cc:495
 #, c-format
 msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
@@ -260,11 +260,13 @@ msgstr ""
 "o nome de um ramo"
 
 #: cmd_automate.cc:150
+#, c-format
 msgid "Bad input to automate stdio: expected ':' after string size"
 msgstr ""
 "Entrada inválida para automate stdio: ':' esperado após tamanho da cadeia"
 
 #: cmd_automate.cc:169
+#, c-format
 msgid "Bad input to automate stdio: unexpected EOF"
 msgstr "Entrada inválida para automate stdio: EOF não esperado"
 
@@ -278,16 +280,16 @@ msgstr "Entrada inválida para automate stdio: token inicial '%c' desconhecido"
 msgid "Bad input to automate stdio: expected '%c' token"
 msgstr "Entrada inválida para automate stdio: token '%c' esperado"
 
-#: cmd_automate.cc:344
+#: cmd_automate.cc:348
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
 msgstr "Entrada inválida para automate stdio: nome do comando faltando"
 
-#: cmd_automate.cc:373
+#: cmd_automate.cc:377
 msgid "automation"
 msgstr "automação"
 
-#: cmd_automate.cc:374
+#: cmd_automate.cc:378
 msgid "automation interface"
 msgstr "interface de automação"
 
@@ -369,8 +371,8 @@ msgstr "remove a variável do banco de dados NOME no domínio DOMAIN"
 msgid "no var with name %s in domain %s"
 msgstr "nenhuma variável com nome %s no domínio %s"
 
-#: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:603 cmd_files.cc:114
-#: cmd_files.cc:220 cmd_list.cc:478 cmd_merging.cc:614 cmd_ws_commit.cc:417
+#: cmd_db.cc:155 cmd_diff_log.cc:465 cmd_diff_log.cc:602 cmd_files.cc:114
+#: cmd_files.cc:220 cmd_list.cc:471 cmd_merging.cc:606 cmd_ws_commit.cc:411
 #: commands.cc:275
 msgid "informative"
 msgstr "informativo"
@@ -393,8 +395,8 @@ msgstr "dígitos não-hexadecimais no id parcial"
 msgid "more than two revisions given"
 msgstr ""
 
-#: cmd_diff_log.cc:465 cmd_ws_commit.cc:79 cmd_ws_commit.cc:308
-#: cmd_ws_commit.cc:343 cmd_ws_commit.cc:417 cmd_ws_commit.cc:723
+#: cmd_diff_log.cc:465 cmd_ws_commit.cc:79 cmd_ws_commit.cc:302
+#: cmd_ws_commit.cc:337 cmd_ws_commit.cc:411 cmd_ws_commit.cc:707
 msgid "[PATH]..."
 msgstr "[CAMINHO]..."
 
@@ -428,11 +430,11 @@ msgstr "sem mudanças"
 msgid "[FILE [...]]"
 msgstr "[ARQUIVO [...]]"
 
-#: cmd_diff_log.cc:603
+#: cmd_diff_log.cc:602
 msgid "[FILE] ..."
 msgstr "[ARQUIVO] ..."
 
-#: cmd_diff_log.cc:604
+#: cmd_diff_log.cc:603
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -440,13 +442,13 @@ msgstr ""
 "imprime histórico em ordem inversa (filtrado por 'ARQUIVO'). Se uma ou mais\n"
 "versões forem dadas, usa-as como ponto de partida."
 
-#: cmd_diff_log.cc:618
+#: cmd_diff_log.cc:617
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "apenas ou --last ou --next é permitido"
 
 #: cmd_files.cc:28 cmd_files.cc:41 cmd_files.cc:78 cmd_files.cc:157
-#: cmd_merging.cc:845 cmd_othervcs.cc:15
+#: cmd_merging.cc:837 cmd_othervcs.cc:15
 msgid "debug"
 msgstr "depuração"
 
@@ -580,7 +582,7 @@ msgid "Alias for %s"
 msgstr "Apelido para %s"
 
 #: cmd_key_cert.cc:26 cmd_key_cert.cc:52 cmd_key_cert.cc:92
-#: cmd_key_cert.cc:113 cmd_key_cert.cc:149
+#: cmd_key_cert.cc:113 cmd_key_cert.cc:143
 msgid "key and cert"
 msgstr "chave e certificado"
 
@@ -643,11 +645,11 @@ msgstr "VERSÃO NOME-CERTIFICADO [VALOR-CERTIFICADO]"
 msgid "create a cert for a revision"
 msgstr "cria um certificado para uma versão"
 
-#: cmd_key_cert.cc:150
+#: cmd_key_cert.cc:144
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "VERSÃO NOME VALOR ASSINANTE1 [ASSINANTE2 [...]]"
 
-#: cmd_key_cert.cc:151
+#: cmd_key_cert.cc:145
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
@@ -655,7 +657,7 @@ msgstr ""
 "verifica se um certificado hipotético teria confiança\n"
 "baseado nos parâmetros atuais"
 
-#: cmd_key_cert.cc:184
+#: cmd_key_cert.cc:178
 #, c-format
 msgid ""
 "if a cert on: %s\n"
@@ -670,72 +672,72 @@ msgstr ""
 "fosse assinado por: %s\n"
 "ele seria: %s"
 
-#: cmd_key_cert.cc:193
+#: cmd_key_cert.cc:187
 msgid "trusted"
 msgstr "confiável"
 
-#: cmd_key_cert.cc:193
+#: cmd_key_cert.cc:187
 msgid "UNtrusted"
 msgstr "NÃO-confiável"
 
-#: cmd_key_cert.cc:197 cmd_key_cert.cc:210 cmd_key_cert.cc:223
-#: cmd_key_cert.cc:239 cmd_ws_commit.cc:202
+#: cmd_key_cert.cc:191 cmd_key_cert.cc:204 cmd_key_cert.cc:217
+#: cmd_key_cert.cc:233 cmd_ws_commit.cc:202
 msgid "review"
 msgstr "revisão"
 
-#: cmd_key_cert.cc:197
+#: cmd_key_cert.cc:191
 msgid "REVISION TAGNAME"
 msgstr "VERSÃO ETIQUETA"
 
-#: cmd_key_cert.cc:198
+#: cmd_key_cert.cc:192
 msgid "put a symbolic tag cert on a revision"
 msgstr "põe um certificado de etiqueta simbólica em uma versão"
 
-#: cmd_key_cert.cc:210
+#: cmd_key_cert.cc:204
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
-#: cmd_key_cert.cc:211
+#: cmd_key_cert.cc:205
 msgid "note the results of running a test on a revision"
 msgstr "anota os resultados de executar um teste sobre uma versão"
 
-#: cmd_key_cert.cc:223 cmd_ws_commit.cc:202
+#: cmd_key_cert.cc:217 cmd_ws_commit.cc:202
 msgid "REVISION"
 msgstr "VERSÂO"
 
-#: cmd_key_cert.cc:224
+#: cmd_key_cert.cc:218
 msgid "approve of a particular revision"
 msgstr "aprova a versão especificada"
 
-#: cmd_key_cert.cc:235
+#: cmd_key_cert.cc:229
 #, c-format
 msgid "need --branch argument for approval"
 msgstr "argumento --branch necessário para aprovação"
 
-#: cmd_key_cert.cc:239
+#: cmd_key_cert.cc:233
 msgid "REVISION [COMMENT]"
 msgstr "VERSÃO [COMENTÁRIO]"
 
-#: cmd_key_cert.cc:240
+#: cmd_key_cert.cc:234
 msgid "comment on a particular revision"
 msgstr "comenta a versão especificada"
 
-#: cmd_key_cert.cc:252
+#: cmd_key_cert.cc:246
 #, c-format
 msgid "edit comment failed"
 msgstr "edição de comentário falhou"
 
-#: cmd_key_cert.cc:257
+#: cmd_key_cert.cc:251
 #, c-format
 msgid "empty comment"
 msgstr "comentário vazio"
 
-#: cmd_list.cc:64 cmd_list.cc:697
+#: cmd_list.cc:67 cmd_list.cc:693
 #, c-format
 msgid "no public key '%s' found in database"
 msgstr "chave pública '%s' não encontrada no banco de dados"
 
-#: cmd_list.cc:74
+#: cmd_list.cc:77
 #, c-format
 msgid ""
 "Key   : %s\n"
@@ -748,39 +750,39 @@ msgstr ""
 "Nome       : %s\n"
 "Valor      : %s\n"
 
-#: cmd_list.cc:108
+#: cmd_list.cc:111
 msgid "ok"
 msgstr "ok"
 
-#: cmd_list.cc:111
+#: cmd_list.cc:114
 msgid "bad"
 msgstr "inválido"
 
-#: cmd_list.cc:114
+#: cmd_list.cc:117
 msgid "unknown"
 msgstr "desconhecido"
 
-#: cmd_list.cc:202
+#: cmd_list.cc:205
 #, c-format
 msgid "(*) - only in %s/"
 msgstr "(*) - apenas em %s/"
 
-#: cmd_list.cc:226
+#: cmd_list.cc:229
 #, c-format
 msgid "no keys found"
 msgstr "nenhuma chave encontrada"
 
-#: cmd_list.cc:228
+#: cmd_list.cc:231
 #, c-format
 msgid "no keys found matching '%s'"
 msgstr "nenhuma chave de '%s' encontrada"
 
-#: cmd_list.cc:275
+#: cmd_list.cc:281
 #, c-format
 msgid "no epoch for branch %s"
 msgstr "nenhuma era para ramo %s"
 
-#: cmd_list.cc:479
+#: cmd_list.cc:472
 msgid ""
 "certs ID\n"
 "keys [PATTERN]\n"
@@ -806,7 +808,7 @@ msgstr ""
 "missing\n"
 "changed"
 
-#: cmd_list.cc:490
+#: cmd_list.cc:483
 msgid ""
 "show database objects, or the current workspace manifest, \n"
 "or known, unknown, intentionally ignored, missing, or \n"
@@ -816,10 +818,10 @@ msgstr ""
 "ou arquivos conhecidos, desconhecidos, intencionalmente ignorados,\n"
 "faltando ou que mudaram de estado"
 
-#: cmd_merging.cc:73 cmd_merging.cc:655 cmd_ws_commit.cc:79
-#: cmd_ws_commit.cc:264 cmd_ws_commit.cc:308 cmd_ws_commit.cc:343
-#: cmd_ws_commit.cc:373 cmd_ws_commit.cc:398 cmd_ws_commit.cc:623
-#: cmd_ws_commit.cc:723
+#: cmd_merging.cc:73 cmd_merging.cc:647 cmd_ws_commit.cc:79
+#: cmd_ws_commit.cc:258 cmd_ws_commit.cc:302 cmd_ws_commit.cc:337
+#: cmd_ws_commit.cc:367 cmd_ws_commit.cc:392 cmd_ws_commit.cc:607
+#: cmd_ws_commit.cc:707
 msgid "workspace"
 msgstr "área de trabalho"
 
@@ -883,12 +885,12 @@ msgstr "já atualizado em %s"
 msgid "selected update target %s"
 msgstr "selecionado alvo %s para atualização"
 
-#: cmd_merging.cc:171
+#: cmd_merging.cc:161
 #, c-format
 msgid "target revision is not in current branch"
 msgstr "versão alvo não está no ramo atual"
 
-#: cmd_merging.cc:179
+#: cmd_merging.cc:169
 #, c-format
 msgid ""
 "target revision is in multiple branches:%s\n"
@@ -899,12 +901,12 @@ msgstr ""
 "\n"
 "tente de novo com --branch"
 
-#: cmd_merging.cc:187
+#: cmd_merging.cc:177
 #, c-format
 msgid "switching to branch %s"
 msgstr "atualizando segundo ramo %s"
 
-#: cmd_merging.cc:192
+#: cmd_merging.cc:182
 #, c-format
 msgid ""
 "target revision not in any branch\n"
@@ -913,205 +915,205 @@ msgstr ""
 "a versão-alvo não está em nenhum ramo\n"
 "a próxima gravação usará ramo %s"
 
-#: cmd_merging.cc:262
+#: cmd_merging.cc:252
 #, c-format
 msgid "switched branch; next commit will use branch %s"
 msgstr "ramos trocados, próxima gravação usará ramo %s"
 
-#: cmd_merging.cc:263
+#: cmd_merging.cc:253
 #, c-format
 msgid "updated to base revision %s"
 msgstr "atualizado para versão-base %s"
 
-#: cmd_merging.cc:301
+#: cmd_merging.cc:291
 #, c-format
 msgid "[left]  %s"
 msgstr "[esquerda] %s"
 
-#: cmd_merging.cc:302
+#: cmd_merging.cc:292
 #, c-format
 msgid "[right] %s"
 msgstr "[direita] %s"
 
-#: cmd_merging.cc:313 cmd_merging.cc:584
+#: cmd_merging.cc:305 cmd_merging.cc:576
 #, c-format
 msgid "[merged] %s"
 msgstr "[combinado] %s"
 
-#: cmd_merging.cc:320 cmd_merging.cc:419 cmd_merging.cc:430 cmd_merging.cc:588
-#: cmd_merging.cc:821 cmd_ws_commit.cc:483 cmd_ws_commit.cc:969
-#: cmd_ws_commit.cc:992 cmd_ws_commit.cc:1102 cmd_ws_commit.cc:1116
+#: cmd_merging.cc:312 cmd_merging.cc:411 cmd_merging.cc:422 cmd_merging.cc:580
+#: cmd_merging.cc:813 cmd_ws_commit.cc:477 cmd_ws_commit.cc:945
+#: cmd_ws_commit.cc:968 cmd_ws_commit.cc:1068 cmd_ws_commit.cc:1082
 msgid "tree"
 msgstr "árvore"
 
-#: cmd_merging.cc:320
+#: cmd_merging.cc:312
 msgid "merge unmerged heads of branch"
 msgstr "combina diferentes frentes do ramo"
 
-#: cmd_merging.cc:330 cmd_merging.cc:829
+#: cmd_merging.cc:322 cmd_merging.cc:821
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "por favor especifique um ramo com --branch=RAMO"
 
-#: cmd_merging.cc:335 cmd_merging.cc:469 cmd_merging.cc:472 cmd_merging.cc:834
-#: cmd_ws_commit.cc:507
+#: cmd_merging.cc:327 cmd_merging.cc:461 cmd_merging.cc:464 cmd_merging.cc:826
+#: cmd_ws_commit.cc:501
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "ramo '%s' está vazio"
 
-#: cmd_merging.cc:338
+#: cmd_merging.cc:330
 #, c-format
 msgid "branch '%s' is already merged"
 msgstr "ramo '%s' já está combinado"
 
-#: cmd_merging.cc:342
+#: cmd_merging.cc:334
 #, c-format
 msgid "%d head on branch '%s'"
 msgid_plural "%d heads on branch '%s'"
 msgstr[0] "%d frente no ramo '%s'"
 msgstr[1] "%d frentes no ramo '%s'"
 
-#: cmd_merging.cc:363 cmd_merging.cc:408
+#: cmd_merging.cc:355 cmd_merging.cc:400
 #, c-format
 msgid "merge %d / %d:"
 msgstr "combinado %d / %d:"
 
-#: cmd_merging.cc:364
+#: cmd_merging.cc:356
 #, c-format
 msgid "calculating best pair of heads to merge next"
 msgstr "calculando melhor par de frentes para combinar a seguir"
 
-#: cmd_merging.cc:416
+#: cmd_merging.cc:408
 #, c-format
 msgid "note: your workspaces have not been updated"
 msgstr "nota: suas áreas de trabalho não foram atualizadas"
 
-#: cmd_merging.cc:419
+#: cmd_merging.cc:411
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "RAMO-FONTE RAMO-DESTINO"
 
-#: cmd_merging.cc:420
+#: cmd_merging.cc:412
 msgid "merge from one branch to another asymmetrically"
 msgstr "combina dois ramos de forma assimétrica"
 
-#: cmd_merging.cc:430
+#: cmd_merging.cc:422
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "RAMO-FONTE RAMO-DESTINO DIRETÓRIO"
 
-#: cmd_merging.cc:431
+#: cmd_merging.cc:423
 msgid "merge one branch into a subdirectory in another branch"
 msgstr "combina um ramo com um sibdiretório de outro ramo"
 
-#: cmd_merging.cc:470 cmd_merging.cc:473
+#: cmd_merging.cc:462 cmd_merging.cc:465
 #, c-format
 msgid "branch '%s' is not merged"
 msgstr "ramo '%s' não está combinado"
 
-#: cmd_merging.cc:478
+#: cmd_merging.cc:470
 #, c-format
 msgid "propagating %s -> %s"
 msgstr "propagando %s -> %s"
 
-#: cmd_merging.cc:479
+#: cmd_merging.cc:471
 #, c-format
 msgid "[source] %s"
 msgstr "[fonte] %s"
 
-#: cmd_merging.cc:480
+#: cmd_merging.cc:472
 #, c-format
 msgid "[target] %s"
 msgstr "[alvo] %s"
 
-#: cmd_merging.cc:485
+#: cmd_merging.cc:477
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'"
 msgstr "ramo '%s' está atualizado em relação ao ramo '%s'"
 
-#: cmd_merging.cc:487
+#: cmd_merging.cc:479
 #, c-format
 msgid "no action taken"
 msgstr "nenhuma ação tomada"
 
-#: cmd_merging.cc:491
+#: cmd_merging.cc:483
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'"
 msgstr "não há necessidade de combinação; colocando %s no ramo '%s'"
 
-#: cmd_merging.cc:529
+#: cmd_merging.cc:521
 #, c-format
 msgid "Path %s not found in destination tree."
 msgstr "Caminho %s não foi encontrado na árvore de destino."
 
-#: cmd_merging.cc:589
+#: cmd_merging.cc:581
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "VERSÃO-ESQUERDA VERSÃO-DIREITA RAMO-DESTINO"
 
-#: cmd_merging.cc:590
+#: cmd_merging.cc:582
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr ""
 "combina duas versões dadas explicitamente colocando o resuldado no ramo dado"
 
-#: cmd_merging.cc:605
+#: cmd_merging.cc:597
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr "%s e %s são a mesma versão, abortando"
 
-#: cmd_merging.cc:607 cmd_merging.cc:609
+#: cmd_merging.cc:599 cmd_merging.cc:601
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr "%s já é um ancestral de %s"
 
-#: cmd_merging.cc:614
+#: cmd_merging.cc:606
 msgid "REV REV"
 msgstr "VERSÂO VERSÂO"
 
-#: cmd_merging.cc:615
+#: cmd_merging.cc:607
 msgid ""
 "Show what conflicts would need to be resolved to merge the given revisions."
 msgstr ""
 "Mostra que conflitos precisariam ser resolvidos para combinar as\n"
 "duas versões."
 
-#: cmd_merging.cc:625 cmd_merging.cc:627
+#: cmd_merging.cc:617 cmd_merging.cc:619
 #, c-format
 msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "%s é um ancestral de %s; nenhuma combinação é necessária."
 
-#: cmd_merging.cc:641
+#: cmd_merging.cc:633
 #, c-format
 msgid "There are %s node_name_conflicts."
 msgstr "Há %s conflitos nos nomes dos nós."
 
-#: cmd_merging.cc:643
+#: cmd_merging.cc:635
 #, c-format
 msgid "There are %s file_content_conflicts."
 msgstr "Há %s conflitos nos conteúdos dos arquivos."
 
-#: cmd_merging.cc:645
+#: cmd_merging.cc:637
 #, c-format
 msgid "There are %s node_attr_conflicts."
 msgstr "Há %s conflitos nos atributos dos nós."
 
-#: cmd_merging.cc:647
+#: cmd_merging.cc:639
 #, c-format
 msgid "There are %s orphaned_node_conflicts."
 msgstr "Há %s conflitos de nós órfãos."
 
-#: cmd_merging.cc:649
+#: cmd_merging.cc:641
 #, c-format
 msgid "There are %s rename_target_conflicts."
 msgstr "Há %s conflitos de alvos de renomeação."
 
-#: cmd_merging.cc:651
+#: cmd_merging.cc:643
 #, c-format
 msgid "There are %s directory_loop_conflicts."
 msgstr "Há %s conflitos de laços de diretório."
 
-#: cmd_merging.cc:655
+#: cmd_merging.cc:647
 msgid "[-r FROM] -r TO [PATH...]"
 msgstr "[-r DE] -r PARA [CAMINHO...]"
 
-#: cmd_merging.cc:656
+#: cmd_merging.cc:648
 msgid ""
 "Apply changes made at arbitrary places in history to current workspace.\n"
 "This command takes changes made at any point in history, and\n"
@@ -1138,7 +1140,7 @@ msgstr ""
 "Se duas versões forem dadas, aplica as mudanças feitas para chegar à\n"
 "segunda revisão a partir da primeira."
 
-#: cmd_merging.cc:681
+#: cmd_merging.cc:673
 #, c-format
 msgid ""
 "revision %s is a merge\n"
@@ -1149,41 +1151,41 @@ msgstr ""
 "para aplicar as mudanças relativas a um de seus pais, use:\n"
 "  %s pluck -r PAI -r %s"
 
-#: cmd_merging.cc:702
+#: cmd_merging.cc:694
 #, c-format
 msgid "no changes to apply"
 msgstr "nenhuma mudança a aplicar"
 
-#: cmd_merging.cc:759
+#: cmd_merging.cc:751
 #, c-format
 msgid "no changes to be applied"
 msgstr "nenhuma mudança a aplicar"
 
-#: cmd_merging.cc:786
+#: cmd_merging.cc:778
 #, c-format
 msgid "no changes were applied"
 msgstr "nenhuma mudança foi aplicada"
 
-#: cmd_merging.cc:789
+#: cmd_merging.cc:781
 #, c-format
 msgid "applied changes to workspace"
 msgstr "mudanças aplicadas à área de trabalho"
 
-#: cmd_merging.cc:821
+#: cmd_merging.cc:813
 msgid "show unmerged head revisions of branch"
 msgstr "mostra frentes não combinadas do ramo"
 
-#: cmd_merging.cc:836
+#: cmd_merging.cc:828
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "ramo '%s' está atualmente combinado:"
 
-#: cmd_merging.cc:838
+#: cmd_merging.cc:830
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "ramo '%s' não está combinado atualmente:"
 
-#: cmd_merging.cc:846
+#: cmd_merging.cc:838
 msgid "dump the roster associated with the given REVID"
 msgstr "exibe conteúdo do roster associado com VERSÃO"
 
@@ -1366,6 +1368,7 @@ msgid "edit of log message failed"
 msgstr "edição de mensagem de registro falhou"
 
 #: cmd_ws_commit.cc:74
+#, c-format
 msgid "failed to remove magic line; commit cancelled"
 msgstr "erro removendo linha mágica; gravação cancelada"
 
@@ -1412,43 +1415,43 @@ msgstr "versão %s tem %d mudanças, não é possível inverter"
 msgid "need --branch argument for disapproval"
 msgstr "argumento --branch necessário para desaprovação"
 
-#: cmd_ws_commit.cc:264
+#: cmd_ws_commit.cc:258
 msgid "[DIRECTORY...]"
 msgstr "[DIRETÓRIO...]"
 
-#: cmd_ws_commit.cc:265
+#: cmd_ws_commit.cc:259
 msgid "create one or more directories and add them to the workspace"
 msgstr "cria um ou mais diretórios e os adiciona à área de trabalho"
 
-#: cmd_ws_commit.cc:285
+#: cmd_ws_commit.cc:279
 #, c-format
 msgid "directory '%s' already exists"
 msgstr "diretório '%s' já existe"
 
-#: cmd_ws_commit.cc:292
+#: cmd_ws_commit.cc:286
 #, c-format
 msgid "ignoring directory '%s' [see .mtn-ignore]"
 msgstr "ignorando diretório '%s' [veja .mtn-ignore]"
 
-#: cmd_ws_commit.cc:309
+#: cmd_ws_commit.cc:303
 msgid "add files to workspace"
 msgstr "adiciona arquivos à área de trabalho"
 
-#: cmd_ws_commit.cc:316
+#: cmd_ws_commit.cc:310
 #, c-format
 msgid "cannot set '--unknown' and '--recursive' at the same time"
 msgstr ""
 
-#: cmd_ws_commit.cc:318
+#: cmd_ws_commit.cc:312
 #, c-format
 msgid "cannot set '--unknown' and '--no-respect-ignore' at the same time"
 msgstr ""
 
-#: cmd_ws_commit.cc:344
+#: cmd_ws_commit.cc:338
 msgid "drop files from workspace"
 msgstr "remove arquivos da área de trabalho"
 
-#: cmd_ws_commit.cc:374
+#: cmd_ws_commit.cc:368
 msgid ""
 "SRC DEST\n"
 "SRC1 [SRC2 [...]] DEST_DIR"
@@ -1456,15 +1459,15 @@ msgstr ""
 "ORIGEM DESTINO\n"
 "ORIGEM1 [ORIGEM2 [...]] DIRETÓRIO_DESTINO"
 
-#: cmd_ws_commit.cc:376
+#: cmd_ws_commit.cc:370
 msgid "rename entries in the workspace"
 msgstr "renomeia entradas na área de trabalho"
 
-#: cmd_ws_commit.cc:398
+#: cmd_ws_commit.cc:392
 msgid "NEW_ROOT PUT_OLD"
 msgstr "NOVA_RAIZ COLOCAR_O_ANTIGO"
 
-#: cmd_ws_commit.cc:399
+#: cmd_ws_commit.cc:393
 msgid ""
 "rename the root directory\n"
 "after this command, the directory that currently has the name NEW_ROOT\n"
@@ -1478,31 +1481,31 @@ msgstr ""
 "COLOCAR_O_ANTIGO.\n"
 "Usar --execute é altamente recomendado."
 
-#: cmd_ws_commit.cc:417
+#: cmd_ws_commit.cc:411
 msgid "show status of workspace"
 msgstr "mostra status da área de trabalho"
 
-#: cmd_ws_commit.cc:446
+#: cmd_ws_commit.cc:440
 #, c-format
 msgid "Current branch: %s"
 msgstr "Ramo atual: %s"
 
-#: cmd_ws_commit.cc:452
+#: cmd_ws_commit.cc:446
 #, c-format
 msgid "Changes against parent %s"
 msgstr "Diferenças entre o pai %s"
 
-#: cmd_ws_commit.cc:457
+#: cmd_ws_commit.cc:451
 #, c-format
 msgid "  no changes"
 msgstr "  sem mudanças"
 
-#: cmd_ws_commit.cc:461
+#: cmd_ws_commit.cc:455
 #, c-format
 msgid "  dropped %s"
 msgstr "  %s descartado"
 
-#: cmd_ws_commit.cc:466
+#: cmd_ws_commit.cc:460
 #, c-format
 msgid ""
 "  renamed %s\n"
@@ -1511,21 +1514,21 @@ msgstr ""
 "  %s foi renomeado\n"
 "              para %s"
 
-#: cmd_ws_commit.cc:471 cmd_ws_commit.cc:475
+#: cmd_ws_commit.cc:465 cmd_ws_commit.cc:469
 #, c-format
 msgid "  added   %s"
 msgstr "  %s foi adicionado"
 
-#: cmd_ws_commit.cc:479
+#: cmd_ws_commit.cc:473
 #, c-format
 msgid "  patched %s"
 msgstr "  %s foi modificado"
 
-#: cmd_ws_commit.cc:483 cmd_ws_commit.cc:969 cmd_ws_commit.cc:1102
+#: cmd_ws_commit.cc:477 cmd_ws_commit.cc:945 cmd_ws_commit.cc:1068
 msgid "[DIRECTORY]"
 msgstr "[DIRETÓRIO]"
 
-#: cmd_ws_commit.cc:484
+#: cmd_ws_commit.cc:478
 msgid ""
 "check out a revision from database into directory.\n"
 "If a revision is given, that's the one that will be checked out.\n"
@@ -1538,47 +1541,47 @@ msgstr ""
 "Se nenhum nome de diretório for dado, o nome do ramo será usado como\n"
 "diretório"
 
-#: cmd_ws_commit.cc:502 cmd_ws_commit.cc:1036
+#: cmd_ws_commit.cc:496 cmd_ws_commit.cc:1002
 #, c-format
 msgid "use --revision or --branch to specify what to checkout"
 msgstr "use --revision ou --branch para especificar o que será extraído"
 
-#: cmd_ws_commit.cc:510 cmd_ws_commit.cc:1042
+#: cmd_ws_commit.cc:504 cmd_ws_commit.cc:1008
 #, c-format
 msgid "branch %s has multiple heads:"
 msgstr "ramo %s tem frentes múltiplas:"
 
-#: cmd_ws_commit.cc:513 cmd_ws_commit.cc:1045
+#: cmd_ws_commit.cc:507 cmd_ws_commit.cc:1011
 #, c-format
 msgid "choose one with '%s checkout -r<id>'"
 msgstr "escolha um com '%s update -r<id>'"
 
-#: cmd_ws_commit.cc:514 cmd_ws_commit.cc:1046
+#: cmd_ws_commit.cc:508 cmd_ws_commit.cc:1012
 #, c-format
 msgid "branch %s has multiple heads"
 msgstr "ramo %s tem frentes múltiplas"
 
-#: cmd_ws_commit.cc:541 cmd_ws_commit.cc:1029
+#: cmd_ws_commit.cc:525 cmd_ws_commit.cc:995
 #, c-format
 msgid "revision %s is not a member of branch %s"
 msgstr "versão %s não é um membro do ramo %s"
 
-#: cmd_ws_commit.cc:558
+#: cmd_ws_commit.cc:542
 #, c-format
 msgid "you must specify a destination directory"
 msgstr "um diretório de destino deve ser especificado"
 
-#: cmd_ws_commit.cc:571
+#: cmd_ws_commit.cc:555
 #, c-format
 msgid "checkout directory '%s' already exists"
 msgstr "diretório de saída '%s' já existe"
 
-#: cmd_ws_commit.cc:605
+#: cmd_ws_commit.cc:589
 #, c-format
 msgid "no file %s found in database for %s"
 msgstr "nenhum arquivo %s encontrado no banco de dados para %s"
 
-#: cmd_ws_commit.cc:623
+#: cmd_ws_commit.cc:607
 msgid ""
 "set PATH ATTR VALUE\n"
 "get PATH [ATTR]\n"
@@ -1588,45 +1591,45 @@ msgstr ""
 "get CAMINHO [ATRIBUTO]\n"
 "drop CAMINHO [ATRIBUTO]"
 
-#: cmd_ws_commit.cc:624
+#: cmd_ws_commit.cc:608
 msgid "set, get or drop file attributes"
 msgstr "configura, lê ou descarta atributos de arquivos"
 
-#: cmd_ws_commit.cc:641
+#: cmd_ws_commit.cc:625
 #, c-format
 msgid "Unknown path '%s'"
 msgstr "caminho desconhecido '%s'"
 
-#: cmd_ws_commit.cc:670
+#: cmd_ws_commit.cc:654
 #, c-format
 msgid "Path '%s' does not have attribute '%s'"
 msgstr "Caminho '%s' não tem atributo '%s'"
 
-#: cmd_ws_commit.cc:700
+#: cmd_ws_commit.cc:684
 #, c-format
 msgid "No attributes for '%s'"
 msgstr "Nenhum atributo para '%s'"
 
-#: cmd_ws_commit.cc:711
+#: cmd_ws_commit.cc:695
 #, c-format
 msgid "No attribute '%s' on path '%s'"
 msgstr "Nenhum atributo '%s' no caminho '%s'"
 
-#: cmd_ws_commit.cc:724
+#: cmd_ws_commit.cc:708
 msgid "commit workspace to database"
 msgstr "grava mudanças da área de trabalho no banco de dados"
 
-#: cmd_ws_commit.cc:755
+#: cmd_ws_commit.cc:739
 #, c-format
 msgid "no changes to commit"
 msgstr "nenhuma mudança para gravar"
 
-#: cmd_ws_commit.cc:775
+#: cmd_ws_commit.cc:759
 #, c-format
 msgid "beginning commit on branch '%s'"
 msgstr "iniciando gravação do ramo '%s'"
 
-#: cmd_ws_commit.cc:784
+#: cmd_ws_commit.cc:768
 #, c-format
 msgid ""
 "_MTN/log is non-empty and log message was specified on command line\n"
@@ -1638,37 +1641,37 @@ msgstr ""
 "considere mover ou apagar _MTN/log,\n"
 "ou remova --message/--message-from-file da linha de comando"
 
-#: cmd_ws_commit.cc:799
+#: cmd_ws_commit.cc:783
 #, c-format
 msgid "empty log message; commit canceled"
 msgstr "entrada no registro vazia, gravação cancelada"
 
-#: cmd_ws_commit.cc:821
+#: cmd_ws_commit.cc:805
 #, c-format
 msgid "log message rejected by hook: %s"
 msgstr "entrada no registro rejeitada pelo hook: %s"
 
-#: cmd_ws_commit.cc:829
+#: cmd_ws_commit.cc:813
 #, c-format
 msgid "revision %s already in database"
 msgstr "versão %s já está no banco de dados"
 
-#: cmd_ws_commit.cc:868 cmd_ws_commit.cc:898
+#: cmd_ws_commit.cc:852 cmd_ws_commit.cc:882
 #, c-format
 msgid "file '%s' modified during commit, aborting"
 msgstr "arquivo '%s' modificado durante gravação, abortando"
 
-#: cmd_ws_commit.cc:880
+#: cmd_ws_commit.cc:864
 #, c-format
 msgid "Your database is missing version %s of file '%s'"
 msgstr "O seu banco de dados não tem a versão %s do arquivo '%s'"
 
-#: cmd_ws_commit.cc:930
+#: cmd_ws_commit.cc:906
 #, c-format
 msgid "committed revision %s"
 msgstr "versão %s gravada"
 
-#: cmd_ws_commit.cc:936
+#: cmd_ws_commit.cc:912
 #, c-format
 msgid ""
 "note: this revision creates divergence\n"
@@ -1677,38 +1680,39 @@ msgstr ""
 "nota: esta versão cria divergência\n"
 "nota: talvez você queira executar '%s merge'"
 
-#: cmd_ws_commit.cc:970
+#: cmd_ws_commit.cc:946
 msgid "setup a new workspace directory, default to current"
 msgstr "configura um novo diretório como área de trabalho, o padrão é o atual"
 
-#: cmd_ws_commit.cc:976
+#: cmd_ws_commit.cc:952
 #, c-format
 msgid "need --branch argument for setup"
 msgstr "argumento --branch é necessário para configuração"
 
-#: cmd_ws_commit.cc:992
+#: cmd_ws_commit.cc:968
 msgid "DIRECTORY"
 msgstr "DIRETÓRIO"
 
-#: cmd_ws_commit.cc:993
+#: cmd_ws_commit.cc:969
 msgid "import the contents of the given directory tree into a given branch"
 msgstr ""
 
-#: cmd_ws_commit.cc:1004
+#: cmd_ws_commit.cc:980
+#, c-format
 msgid "you must specify a directory to import"
 msgstr "você deve especificar um diretório para ser importado"
 
-#: cmd_ws_commit.cc:1055
+#: cmd_ws_commit.cc:1021
 #, c-format
 msgid "import directory '%s' doesn't exists"
 msgstr "Diretório a ser importado '%s' não existe"
 
-#: cmd_ws_commit.cc:1056
+#: cmd_ws_commit.cc:1022
 #, c-format
 msgid "import directory '%s' is a file"
 msgstr "Diretório a ser importado '%s' é um arquivo"
 
-#: cmd_ws_commit.cc:1103
+#: cmd_ws_commit.cc:1069
 msgid ""
 "migrate a workspace directory's metadata to the latest format; defaults to "
 "the current workspace"
@@ -1716,7 +1720,7 @@ msgstr ""
 "migra os metadados de uma área de trabalho para o último formato; a área de "
 "trabalho atual é usada por omissão"
 
-#: cmd_ws_commit.cc:1116
+#: cmd_ws_commit.cc:1082
 msgid "refresh the inodeprint cache"
 msgstr "atualiza o cache de inodeprint"
 
@@ -1742,31 +1746,31 @@ msgstr "comando [ARGS...]"
 msgid "display command help"
 msgstr "exibe ajuda de comando"
 
-#: commands.cc:420
+#: commands.cc:418
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expandindo seleção '%s'"
 
-#: commands.cc:428
+#: commands.cc:426
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "sem equivalente para seleção '%s'"
 
-#: commands.cc:434
+#: commands.cc:432
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expandido para '%s'"
 
-#: commands.cc:451
+#: commands.cc:449
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "seleção '%s' tem múltiplas expansões:"
 
-#: commands.cc:468
+#: commands.cc:466
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:469
+#: commands.cc:467
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1775,7 +1779,7 @@ msgstr ""
 "ramo '%s' tem múltiplas frentes\n"
 "considere usar '%s merge'"
 
-#: commands.cc:484
+#: commands.cc:482
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message e --message-file são mutuamente exclusivos"
@@ -1797,7 +1801,7 @@ msgstr "rosters"
 msgid "markings"
 msgstr "marcas"
 
-#: database_check.cc:306 netsync.cc:3063 rcs_import.cc:1244
+#: database_check.cc:306 netsync.cc:3053 rcs_import.cc:1245
 msgid "revisions"
 msgstr "versões"
 
@@ -1805,7 +1809,7 @@ msgstr "versões"
 msgid "ancestry"
 msgstr "descendência"
 
-#: database_check.cc:434 netsync.cc:3067
+#: database_check.cc:434 netsync.cc:3057
 msgid "keys"
 msgstr "chaves"
 
@@ -2079,25 +2083,21 @@ msgstr "problemas menores detectados"
 msgid "database is good"
 msgstr "o banco de dados está bem"
 
-#: database.cc:159
-#, c-format
-msgid ""
-"layout of database %s doesn't match this version of monotone\n"
-"wanted schema %s, got %s\n"
-"try '%s db migrate' to upgrade\n"
-"(this is irreversible; you may want to make a backup copy first)"
-msgstr ""
-"o leiaute do banco de dados %s não combina com esta versão do monotone\n"
-"pedido esquema %s, conseguido %s\n"
-"tente '%s db migrate' para atualizar\n"
-"(isto é irreversível, uma cópia de segurança pode ser necessária)"
-
-#: database.cc:173
+#: database.cc:151
 #, c-format
 msgid "this database already contains rosters"
 msgstr "este banco de dados já contém inventórios"
 
-#: database.cc:200
+#: database.cc:177
+#, fuzzy, c-format
+msgid ""
+"database %s lacks some cached data\n"
+"run '%s db regenerate_caches' to restore use of this database"
+msgstr ""
+"o banco de dados %s necessita de alguns dados em cache\n"
+"execute '%s regenerate_caches' para restaurar estes dados"
+
+#: database.cc:194
 #, c-format
 msgid ""
 "database %s contains old-style revisions\n"
@@ -2116,7 +2116,7 @@ msgstr ""
 "  então puxe as versões para um novo banco de dados.\n"
 "lamentamos pela incoveniência."
 
-#: database.cc:210
+#: database.cc:204
 #, c-format
 msgid ""
 "database %s contains manifests but no revisions\n"
@@ -2127,89 +2127,56 @@ msgstr ""
 "este é um banco de dados muito velho; ele precisa ser atualizado\n"
 "por favor leia README.changesets para detalhes"
 
-#: database.cc:221
+#: database.cc:487 sanity.cc:234 schema_migration.cc:58
+msgid "error: "
+msgstr "erro:"
+
+#: database.cc:488
+msgid "sqlite error: "
+msgstr "erro da sqlite: "
+
+#: database.cc:512
+#, fuzzy
+msgid "not set"
+msgstr "nota: "
+
+#: database.cc:525
+#, fuzzy
+msgid " (not a monotone database)"
+msgstr "configura nome do banco de dados"
+
+#: database.cc:573 database.cc:604 database.cc:1046 database.cc:1066
 #, c-format
-msgid ""
-"database %s misses some cached data\n"
-"run '%s db regenerate_caches' to restore use of this database"
+msgid "%u"
 msgstr ""
-"o banco de dados %s necessita de alguns dados em cache\n"
-"execute '%s regenerate_caches' para restaurar estes dados"
 
-#: database.cc:259
-#, c-format
-msgid "unable to probe database version in file %s"
-msgstr "incapaz de verificar a versão do banco de dados no arquivo %s"
-
-#: database.cc:266
-#, c-format
-msgid "database %s is not an sqlite version 3 file, try dump and reload"
-msgstr ""
-"banco de dados %s não é um arquivo sqlite versão 3, tente dump e reload"
-
-#: database.cc:293 schema_migration.cc:201
+#: database.cc:623
+#, fuzzy, c-format
 msgid ""
-"make sure database and containing directory are writeable\n"
-"and you have not run out of disk space"
-msgstr ""
-"certifique-se de que o banco de dados e o diretório continente podem\n"
-"ser escritos e você ainda tem espaço livre do disco"
-
-#: database.cc:297 schema_migration.cc:206
-#, c-format
-msgid ""
-"sqlite error: %s\n"
-"%s"
-msgstr ""
-"erro da sqlite: %s\n"
-"%s"
-
-#: database.cc:342
-#, c-format
-msgid "could not initialize database: %s: already exists"
-msgstr "erro inicializando banco de dados: %s: já existe"
-
-#: database.cc:347
-#, c-format
-msgid ""
-"existing (possibly stale) journal file '%s' has same stem as new database '%"
-"s'\n"
-"cancelling database creation"
-msgstr ""
-"arquivo de jornal '%s' existente tem a mesma raiz que novo banco de dados\n"
-"%s, cancelando criação"
-
-#: database.cc:497
-#, c-format
-msgid "cannot create %s; it already exists"
-msgstr "erro criando %s; já existe"
-
-#: database.cc:573
-#, c-format
-msgid ""
+"creator code      : %s\n"
 "schema version    : %s\n"
 "counts:\n"
-"  full rosters    : %u\n"
-"  roster deltas   : %u\n"
-"  full files      : %u\n"
-"  file deltas     : %u\n"
-"  revisions       : %u\n"
-"  ancestry edges  : %u\n"
-"  certs           : %u\n"
-"  logical files   : %u\n"
+"  full rosters    : %s\n"
+"  roster deltas   : %s\n"
+"  full files      : %s\n"
+"  file deltas     : %s\n"
+"  revisions       : %s\n"
+"  ancestry edges  : %s\n"
+"  certs           : %s\n"
+"  logical files   : %s\n"
 "bytes:\n"
-"  full rosters    : %u\n"
-"  roster deltas   : %u\n"
-"  full files      : %u\n"
-"  file deltas     : %u\n"
-"  revisions       : %u\n"
-"  cached ancestry : %u\n"
-"  certs           : %u\n"
-"  heights         : %u\n"
-"  total           : %u\n"
+"  full rosters    : %s\n"
+"  roster deltas   : %s\n"
+"  full files      : %s\n"
+"  file deltas     : %s\n"
+"  revisions       : %s\n"
+"  cached ancestry : %s\n"
+"  certs           : %s\n"
+"  heights         : %s\n"
+"  total           : %s\n"
 "database:\n"
-"  page size       : %u\n"
-"  cache size      : %u"
+"  page size       : %s\n"
+"  cache size      : %s"
 msgstr ""
 "versão do esquema      : %s\n"
 "contagens:\n"
@@ -2235,55 +2202,65 @@ msgstr ""
 "  tamanho da página: %u\n"
 "  tamanho do cache : %u"
 
-#: database.cc:638
+#: database.cc:668
 #, c-format
 msgid "database schema version: %s"
 msgstr "versão do esquema do banco de dados: %s"
 
-#: database.cc:715
+#: database.cc:756
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "múltiplos comandos na consulta: %s"
 
-#: database.cc:721
+#: database.cc:762
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "%d colunas pedidas, %d colunas obtidas da consulta: %s"
 
-#: database.cc:787
+#: database.cc:828
 #, c-format
 msgid "null result in query: %s"
 msgstr "resultado vazio da consulta: %s"
 
-#: database.cc:805
+#: database.cc:846
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "%d linhas pedidas, %d linhas obtidas da consulta: %s"
 
-#: database.cc:2042
+#: database.cc:2103
 #, c-format
 msgid "another key with name '%s' already exists"
 msgstr "outra chave com nome '%s' já existe"
 
-#: database.cc:3040
+#: database.cc:3121
 #, c-format
 msgid "no database specified"
 msgstr "nenhum banco de dados especificado"
 
-#: database.cc:3048
+#: database.cc:3129
 #, c-format
 msgid "database %s does not exist"
 msgstr "banco de dados %s não existe"
 
-#: database.cc:3049
+#: database.cc:3130
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s é um diretório, não um banco de dados"
 
-#: database.cc:3074
+#: database.cc:3137
+#, fuzzy, c-format
+msgid "database %s already exists"
+msgstr "caminho '%s' já existe"
+
+#: database.cc:3142
 #, c-format
-msgid "could not open database '%s': %s"
-msgstr "erro abrindo banco de dados '%s': %s"
+msgid ""
+"existing (possibly stale) journal file '%s' has same stem as new database '%"
+"s'\n"
+"cancelling database creation"
+msgstr ""
+"arquivo de jornal '%s' existente tem a mesma raiz que novo banco de dados\n"
+"%s, cancelando criação"
 
 #: diff_patch.cc:614
 #, c-format
@@ -2452,7 +2429,7 @@ msgstr "impossível abrir arquivo %s para escrita"
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "erro de execução %s capturado construindo caminho do arquivo %s"
 
-#: file_io.cc:548 work.cc:1083
+#: file_io.cc:540 work.cc:1112
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "arquivo ou diretório inexistente: '%s'"
@@ -2507,7 +2484,7 @@ msgstr "%s chamado com um parâmetro inválido"
 msgid "Directory '%s' does not exist"
 msgstr "Diretório '%s' não existe"
 
-#: lua.cc:481 lua.cc:516 rcs_import.cc:1235 work.cc:1338
+#: lua.cc:481 lua.cc:516 rcs_import.cc:1236 work.cc:1367
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' não é um diretório"
@@ -2546,6 +2523,10 @@ msgstr "Uso: %s [OPÇÃO...] comando [ARG...]"
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Opções específicas para '%s %s':"
+
+#: monotone.cc:307
+msgid "error: memory exhausted"
+msgstr ""
 
 #: mt_version.cc:36
 #, c-format
@@ -2678,12 +2659,12 @@ msgstr "ver. ↑"
 msgid "underflow on count of %s items to receive"
 msgstr "contagem insuficiente de %s itens a receber"
 
-#: netsync.cc:1261 netsync.cc:1269
+#: netsync.cc:1260 netsync.cc:1268
 #, c-format
 msgid "received network error: %s"
 msgstr "erro de rede recebido: %s"
 
-#: netsync.cc:1304
+#: netsync.cc:1296
 #, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
@@ -2704,12 +2685,12 @@ msgstr ""
 "Eu esperava %s\n"
 "'%s unset %s %s' sobrecarrega este teste"
 
-#: netsync.cc:1314
+#: netsync.cc:1306
 #, c-format
 msgid "server key changed"
 msgstr "a chave do servidor mudou"
 
-#: netsync.cc:1319
+#: netsync.cc:1311
 #, c-format
 msgid ""
 "first time connecting to server %s\n"
@@ -2720,53 +2701,53 @@ msgstr ""
 "vou supor que é mesmo ele, mas você pode querer verificar\n"
 "a impressão digital da chave deles: %s"
 
-#: netsync.cc:1326
+#: netsync.cc:1318
 #, c-format
 msgid "saving public key for %s to database"
 msgstr "gravando chave pública de %s no banco de dados"
 
-#: netsync.cc:1429
+#: netsync.cc:1420
 #, c-format
 msgid "rejected attempt at anonymous connection for write"
 msgstr "tentativa de conexão anônima para gravação foi rejeitada"
 
-#: netsync.cc:1436
+#: netsync.cc:1427
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink"
 msgstr ""
 "tentativa de conexão anônima enquanto executando como\n"
 "sorvedouro foi rejeitada"
 
-#: netsync.cc:1452
+#: netsync.cc:1442
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr "acesso anônimo ao ramo '%s' negado pelo servidor"
 
-#: netsync.cc:1460
+#: netsync.cc:1450
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'"
 msgstr ""
 "permissão de leitura anônima para '%s' foi dada\n"
 "com exclusão de '%s'"
 
-#: netsync.cc:1466
+#: netsync.cc:1456
 #, c-format
 msgid "allowed anonymous read/write permission for '%s' excluding '%s'"
 msgstr ""
 "permissão de leitura/escrita anônima para '%s' foi dada\n"
 "com exclusão de '%s'"
 
-#: netsync.cc:1531
+#: netsync.cc:1519
 #, c-format
 msgid "remote public key hash '%s' is unknown"
 msgstr "hash da chave remota '%s' é desconhecido"
 
-#: netsync.cc:1549
+#: netsync.cc:1537
 #, c-format
 msgid "detected replay attack in auth netcmd"
 msgstr "detectado ataque de repetição no comando de autenticação"
 
-#: netsync.cc:1571
+#: netsync.cc:1559
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
@@ -2775,7 +2756,7 @@ msgstr ""
 "negada a '%s' permissão de leitura para '%s' excluindo '%s'\n"
 "enquanto executando como saída pura"
 
-#: netsync.cc:1584
+#: netsync.cc:1574
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
@@ -2783,12 +2764,12 @@ msgstr ""
 "negada a '%s' permissão de leitura para '%s' excluindo '%s' por causa\n"
 "do ramo '%s'"
 
-#: netsync.cc:1594
+#: netsync.cc:1584
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'"
 msgstr "permitida a '%s' permissão de leitura para '%s' excluindo '%s'"
 
-#: netsync.cc:1605
+#: netsync.cc:1595
 #, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
@@ -2797,144 +2778,144 @@ msgstr ""
 "negada a '%s' permissão de escrita para '%s' excluindo '%s' durante\n"
 "execução como fonte puro"
 
-#: netsync.cc:1613
+#: netsync.cc:1603
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'"
 msgstr "negada a '%s' permissão de escrita para '%s' excluindo '%s'"
 
-#: netsync.cc:1617
+#: netsync.cc:1607
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'"
 msgstr "permitida a '%s' permissão de escrita para '%s' excluindo '%s'"
 
-#: netsync.cc:1641
+#: netsync.cc:1631
 #, c-format
 msgid "bad client signature"
 msgstr "assinatura do cliente inválida"
 
-#: netsync.cc:1657
+#: netsync.cc:1647
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
 msgstr "Comando 'refinar' não esperado em tipo de item não-refinado"
 
-#: netsync.cc:1754
+#: netsync.cc:1744
 #, c-format
 msgid "unknown bye phase %d received"
 msgstr "fase de despedida desconhecida %d recebida"
 
-#: netsync.cc:1769
+#: netsync.cc:1759
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type"
 msgstr "Comando 'feito' inesperado em tipo de item não-refinado"
 
-#: netsync.cc:1841
+#: netsync.cc:1831
 #, c-format
 msgid "%s with hash '%s' does not exist in our database"
 msgstr "%s com hash '%s' não existe no banco de dados"
 
-#: netsync.cc:1945
+#: netsync.cc:1935
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr "Épocas não combinam no ramo %s. Servidor tem '%s', cliente tem '%s'."
 
-#: netsync.cc:1963
+#: netsync.cc:1953
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr ""
 "teste de hash falhou para chave pública '%s' (%s);\n"
 "esperado '%s', recebido '%s'"
 
-#: netsync.cc:1977
+#: netsync.cc:1967
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr "verificação do hash falhou para o certificado '%s' da versão"
 
-#: netsync.cc:2039
+#: netsync.cc:2029
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "Recebido aviso do usher: %s"
 
-#: netsync.cc:2126 netsync.cc:2157
+#: netsync.cc:2116 netsync.cc:2147
 msgid "source and sink"
 msgstr "entrada e saída"
 
-#: netsync.cc:2127 netsync.cc:2158
+#: netsync.cc:2117 netsync.cc:2148
 msgid "source"
 msgstr "entrada"
 
-#: netsync.cc:2127 netsync.cc:2158
+#: netsync.cc:2117 netsync.cc:2148
 msgid "sink"
 msgstr "saída"
 
-#: netsync.cc:2314
+#: netsync.cc:2304
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr ""
 "buffer de entrada do par %s está cheio após despacho de comando de rede"
 
-#: netsync.cc:2326 netsync.cc:2425
+#: netsync.cc:2316 netsync.cc:2415
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
 msgstr "erro de protocolo durante processamento do par %s: '%s'"
 
-#: netsync.cc:2332
+#: netsync.cc:2322
 #, c-format
 msgid "error: %s"
 msgstr "erro: %s"
 
-#: netsync.cc:2396
+#: netsync.cc:2386
 #, c-format
 msgid "connecting to %s"
 msgstr "conectando a %s"
 
-#: netsync.cc:2440
+#: netsync.cc:2430
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting"
 msgstr "tempo expirou esperando por E/S com par %s, desconectando"
 
-#: netsync.cc:2463
+#: netsync.cc:2453
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting"
 msgstr "erro de processamento durante comunicação com par %s, desconectando"
 
-#: netsync.cc:2480
+#: netsync.cc:2470
 #, c-format
 msgid "successful exchange with %s"
 msgstr "comunicação feita com sucesso com %s"
 
-#: netsync.cc:2486
+#: netsync.cc:2476
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
 msgstr "par %s desconectou após nós o termos informado de um erro"
 
-#: netsync.cc:2491
+#: netsync.cc:2481
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
 msgstr "erro de E/S comunicando com par %s, desconectando"
 
-#: netsync.cc:2557
+#: netsync.cc:2547
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
 msgstr "erro de protocolo processando par %s: '%s', marcado como inválido"
 
-#: netsync.cc:2589
+#: netsync.cc:2579
 #, c-format
 msgid "accepted new client connection from %s : %s"
 msgstr "nova conexão do cliente %s aceita: %s"
 
-#: netsync.cc:2626
+#: netsync.cc:2616
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr ""
 "erro do protocolo durante o processamento do par %s:\n"
 "'%s', desconectando"
 
-#: netsync.cc:2637
+#: netsync.cc:2627
 #, c-format
 msgid "peer %s read failed in working state (error)"
 msgstr "leitura do par %s falhou no estado trabalhando (erro)"
 
-#: netsync.cc:2642
+#: netsync.cc:2632
 #, c-format
 msgid ""
 "peer %s read failed in shutdown state (possibly client misreported error)"
@@ -2942,17 +2923,17 @@ msgstr ""
 "leitura do par %s falhou no estado de encerramento (provavelmente o\n"
 "cliente reportou o erro erroneamente)"
 
-#: netsync.cc:2648
+#: netsync.cc:2638
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
 msgstr "leitura do par %s falhou no estado confirmado (sucesso)"
 
-#: netsync.cc:2669
+#: netsync.cc:2659
 #, c-format
 msgid "peer %s write failed in working state (error)"
 msgstr "escrita no par %s falhou no estado trabalhando (erro)"
 
-#: netsync.cc:2674
+#: netsync.cc:2664
 #, c-format
 msgid ""
 "peer %s write failed in shutdown state (possibly client misreported error)"
@@ -2960,70 +2941,70 @@ msgstr ""
 "escrita no par %s falhou no estado de encerramento (provavelmente o\n"
 "cliente reportou o erro erroneamente)"
 
-#: netsync.cc:2680
+#: netsync.cc:2670
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
 msgstr "escrita no par %s falhou em um estado confirmado (sucesso)"
 
-#: netsync.cc:2707
+#: netsync.cc:2697
 #, c-format
 msgid "peer %s processing finished, disconnecting"
 msgstr "processamento do par %s terminou, desconectando"
 
-#: netsync.cc:2729
+#: netsync.cc:2719
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
 msgstr "fd %d (par %s) tem estado parado por muito tempo, desconectando"
 
-#: netsync.cc:2797
+#: netsync.cc:2787
 #, c-format
 msgid "beginning service on %s : %s"
 msgstr "iniciando serviço em %s : %s"
 
-#: netsync.cc:2798
+#: netsync.cc:2788
 msgid "<all interfaces>"
 msgstr "<todas as interfaces>"
 
-#: netsync.cc:2812
+#: netsync.cc:2802
 #, c-format
 msgid "session limit %d reached, some connections will be refused"
 msgstr "limite %d da sessão alcançado, algumas conexões serão recusadas"
 
-#: netsync.cc:2879
+#: netsync.cc:2869
 #, c-format
 msgid "Network error on peer %s, disconnecting"
 msgstr "Erro de rede no par %s, desconectando"
 
-#: netsync.cc:2885
+#: netsync.cc:2875
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "recebido OOB do par %s, desconectando"
 
-#: netsync.cc:2945
+#: netsync.cc:2935
 #, c-format
 msgid "beginning service on %s"
 msgstr "iniciando serviço em %s"
 
-#: netsync.cc:3008
+#: netsync.cc:2998
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "recebidos alguns dados OOB no fd %d (par %s), desconectando"
 
-#: netsync.cc:3057
+#: netsync.cc:3047
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "encontrando itens para sincronizar:"
 
-#: netsync.cc:3065
+#: netsync.cc:3055
 msgid "certificates"
 msgstr "certificados"
 
-#: netsync.cc:3178
+#: netsync.cc:3164
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Impossível achar chave '%s'"
 
-#: netsync.cc:3218
+#: netsync.cc:3204
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -3032,7 +3013,7 @@ msgstr ""
 "padrão de inclusão de ramos contém um caractere de aspas:\n"
 "%s"
 
-#: netsync.cc:3224
+#: netsync.cc:3210
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -3041,7 +3022,7 @@ msgstr ""
 "padrão de exclusão de ramos contém um caractere de aspas:\n"
 "%s"
 
-#: netsync.cc:3259 netsync.cc:3263
+#: netsync.cc:3245 netsync.cc:3249
 #, c-format
 msgid "network error: %s"
 msgstr "erro de rede: %s"
@@ -3358,22 +3339,22 @@ msgstr "falha de leitura %d:%d: palavra '%s' esperada"
 msgid "parse failure %d:%d: expecting word"
 msgstr "falha de leitura %d:%d: palavra esperada"
 
-#: rcs_import.cc:721
+#: rcs_import.cc:722
 #, c-format
 msgid "parsing RCS file %s"
 msgstr "lendo arquivo RCS %s"
 
-#: rcs_import.cc:724
+#: rcs_import.cc:725
 #, c-format
 msgid "parsed RCS file %s OK"
 msgstr "arquivo RCS %s lido OK"
 
-#: rcs_import.cc:913
+#: rcs_import.cc:914
 #, c-format
 msgid "error reading RCS file %s: %s"
 msgstr "erro lendo arquivo RCS %s: %s"
 
-#: rcs_import.cc:1210
+#: rcs_import.cc:1211
 #, c-format
 msgid ""
 "%s appears to be a CVS repository root directory\n"
@@ -3382,17 +3363,17 @@ msgstr ""
 "%s aparenta ser um diretório raiz do CVS\n"
 "tente ao invés importar um módulo com cvs_import %s/<nome_do_módulo>"
 
-#: rcs_import.cc:1222
+#: rcs_import.cc:1223
 #, c-format
 msgid "need base --branch argument for importing"
 msgstr "opção --branch necessária para importação"
 
-#: rcs_import.cc:1234
+#: rcs_import.cc:1235
 #, c-format
 msgid "path %s does not exist"
 msgstr "caminho %s não existe"
 
-#: rcs_import.cc:1269
+#: rcs_import.cc:1270
 msgid "tags"
 msgstr "etiquetas"
 
@@ -3522,10 +3503,6 @@ msgstr "fatal: formatador falhou em %s:%d: %s"
 msgid "misuse: "
 msgstr "mal-uso:"
 
-#: sanity.cc:234
-msgid "error: "
-msgstr "erro:"
-
 #: sanity.cc:242
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
@@ -3541,52 +3518,153 @@ msgstr "%s:%d: índice '%s' = %d estourou vetor '%s' com tamanho %d"
 msgid "Current work set: %i items"
 msgstr "Conjunto de trabalho atual: %i itens"
 
-#: schema_migration.cc:258
+#: selectors.cc:43
+#, fuzzy, c-format
+msgid "expanded selector '%s' -> '%s'"
+msgstr "expandindo seleção '%s'"
+
+#: selectors.cc:80
+#, fuzzy, c-format
+msgid "unknown selector type: %c"
+msgstr "tipo de pacote desconhecido: '%s'"
+
+#: selectors.cc:89
+#, fuzzy, c-format
+msgid "selector '%s' is not a valid date\n"
+msgstr "raiz da procura '%s' não é um diretório"
+
+#: selectors.cc:95
 #, c-format
-msgid "calculating necessary migration steps"
+msgid "selector '%s' is not a valid date (%s)"
+msgstr ""
+
+#: selectors.cc:98
+#, fuzzy, c-format
+msgid "expanded date '%s' -> '%s'\n"
+msgstr "id parcial '%s' expandido para '%s'"
+
+#: schema_migration.cc:78
+msgid ""
+"make sure database and containing directory are writeable\n"
+"and you have not run out of disk space"
+msgstr ""
+"certifique-se de que o banco de dados e o diretório continente podem\n"
+"ser escritos e você ainda tem espaço livre do disco"
+
+#: schema_migration.cc:88
+msgid ""
+"(if this is a database last used by monotone 0.16 or older,\n"
+"you must follow a special procedure to make it usable again.\n"
+"see the file UPGRADE, in the distribution, for instructions.)"
+msgstr ""
+
+#: schema_migration.cc:97
+#, c-format
+msgid ""
+"sqlite error: %s\n"
+"%s"
+msgstr ""
+"erro da sqlite: %s\n"
+"%s"
+
+#: schema_migration.cc:511
+#, c-format
+msgid "public and private keys for %s don't match"
+msgstr "chaves pública e privada de %s não combinam"
+
+#: schema_migration.cc:513
+#, c-format
+msgid "moving key '%s' from database to %s"
+msgstr "movendo chave '%s' do banco de dados para %s"
+
+#: schema_migration.cc:889
+#, c-format
+msgid "%s (usable)"
+msgstr ""
+
+#: schema_migration.cc:891
+#, c-format
+msgid "%s (migration needed)"
+msgstr ""
+
+#: schema_migration.cc:893
+#, c-format
+msgid "%s (too new, cannot use)"
+msgstr ""
+
+#: schema_migration.cc:895
+#, fuzzy, c-format
+msgid "%s (not a monotone database)"
+msgstr "configura nome do banco de dados"
+
+#: schema_migration.cc:897
+#, c-format
+msgid "%s (database has no tables!)"
+msgstr ""
+
+#: schema_migration.cc:910
+#, c-format
+msgid ""
+"cannot use the empty sqlite database %s\n"
+"(monotone databases must be created with '%s db init')"
+msgstr ""
+
+#: schema_migration.cc:915
+#, fuzzy, c-format
+msgid "%s does not appear to be a monotone database\n"
+msgstr "chave '%s' não é igual à chave '%s' no banco de dados"
+
+#: schema_migration.cc:919
+#, c-format
+msgid ""
+"%s appears to be a monotone database, but this version of\n"
+"monotone does not recognize its schema.\n"
+"you probably need a newer version of monotone."
+msgstr ""
+
+#: schema_migration.cc:938
+#, fuzzy, c-format
+msgid ""
+"database %s is laid out according to an old schema\n"
+"try '%s db migrate' to upgrade\n"
+"(this is irreversible; you may want to make a backup copy first)"
+msgstr ""
+"o leiaute do banco de dados %s não combina com esta versão do monotone\n"
+"pedido esquema %s, conseguido %s\n"
+"tente '%s db migrate' para atualizar\n"
+"(isto é irreversível, uma cópia de segurança pode ser necessária)"
+
+#: schema_migration.cc:960
+#, fuzzy, c-format
+msgid "calculating migration..."
 msgstr "calculando passos necessários para migração"
 
-#: schema_migration.cc:270
-#, c-format
-msgid "error at transaction BEGIN statement"
-msgstr "erro no comando BEGIN da transação"
+#: schema_migration.cc:973
+#, fuzzy, c-format
+msgid "no migration performed; database schema already up-to-date"
+msgstr "migração não executada, esquema do banco de dados já atualizado com %s"
 
-#: schema_migration.cc:271
-#, c-format
-msgid "migrating data"
+#: schema_migration.cc:980
+#, fuzzy, c-format
+msgid "migrating data..."
 msgstr "migrando dados"
 
-#: schema_migration.cc:297
-#, c-format
-msgid "migration step failed: %s"
+#: schema_migration.cc:1002
+#, fuzzy, c-format
+msgid "migrated to schema %s"
 msgstr "passo da migração falhou: %s"
 
-#: schema_migration.cc:311
-#, c-format
-msgid "mismatched result of migration, got %s, wanted %s"
-msgstr "resultado da migração está errado, recebido %s, o esperado era %s"
-
-#: schema_migration.cc:314
+#: schema_migration.cc:1005
 #, c-format
 msgid "committing changes to database"
 msgstr "gravando mudanças no banco de dados"
 
-#: schema_migration.cc:316
-#, c-format
-msgid "failure on COMMIT"
-msgstr "erro em COMMIT"
-
-#: schema_migration.cc:318
+#: schema_migration.cc:1009
 #, c-format
 msgid "optimizing database"
 msgstr "otimizando banco de dados"
 
-#: schema_migration.cc:320
-#, c-format
-msgid "error vacuuming after migration"
-msgstr "erro fazendo limpeza após migração"
-
-#: schema_migration.cc:329
+#: schema_migration.cc:1019
 #, c-format
 msgid ""
 "NOTE: because this database was last used by a rather old version\n"
@@ -3597,7 +3675,7 @@ msgstr ""
 "antiga de monotone, não acabou ainda. SE você é o líder do projeto, então\n"
 "veja o arquivo UPGRADE para instruções sobre executar '%s db %s'"
 
-#: schema_migration.cc:336
+#: schema_migration.cc:1026
 #, c-format
 msgid ""
 "NOTE: this upgrade cleared monotone's caches\n"
@@ -3606,25 +3684,20 @@ msgstr ""
 "NOTA: esta atualização limpou o cache do monotone\n"
 "você deve executar agora '%s db regenerate_caches'"
 
-#: schema_migration.cc:349
+#: schema_migration.cc:1057
 #, c-format
-msgid "database schema %s is unknown; cannot perform migration"
-msgstr "esquema do banco de dados %s desconhecido; impossível migrar"
+msgid "cannot test migration from unknown schema %s"
+msgstr ""
 
-#: schema_migration.cc:354
+#: schema_migration.cc:1060
 #, c-format
-msgid "no migration performed; database schema already up-to-date at %s"
-msgstr "migração não executada, esquema do banco de dados já atualizado com %s"
+msgid "schema %s is up to date"
+msgstr ""
 
-#: schema_migration.cc:913
-#, c-format
-msgid "public and private keys for %s don't match"
-msgstr "chaves pública e privada de %s não combinam"
-
-#: schema_migration.cc:916
-#, c-format
-msgid "moving key '%s' from database to %s"
-msgstr "movendo chave '%s' do banco de dados para %s"
+#: schema_migration.cc:1071
+#, fuzzy, c-format
+msgid "successful migration to schema %s"
+msgstr "comunicação feita com sucesso com %s"
 
 #: std_hooks.lua:39
 msgid "Press enter"
@@ -3633,6 +3706,16 @@ msgstr "Pressione enter"
 #: std_hooks.lua:41
 msgid "Press enter when the subprocess has completed"
 msgstr "Por favor pressione <Enter> quando o subprocesso terminar"
+
+#: transforms.cc:91
+#, c-format
+msgid ""
+"%s\n"
+"this may be due to a memory glitch, data corruption during\n"
+"a network transfer, corruption of your database or workspace,\n"
+"or a bug in monotone.  if the error persists, please contact\n"
+"%s for assistance.\n"
+msgstr ""
 
 #: ui.cc:158
 #, c-format
@@ -3686,12 +3769,12 @@ msgstr "Erro abrindo arquivo de registro '%s'"
 msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
 msgstr ""
 
-#: update.cc:72
+#: update.cc:71
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'"
 msgstr "erro decodificando o valor booleano do certificado testresult '%s'"
 
-#: update.cc:166
+#: update.cc:160
 #, c-format
 msgid "cannot determine branch for update"
 msgstr "impossível determinar ramo para atualização"
@@ -3829,18 +3912,33 @@ msgstr "conteúdo do arquivo '%s' mudou, arquivo não será sobrescrito"
 msgid "modifying %s"
 msgstr "modificando %s"
 
-#: work.cc:983
-#, c-format
-msgid "missing %s"
-msgstr "%s está faltando"
+#: work.cc:984
+#, fuzzy, c-format
+msgid "missing directory '%s'"
+msgstr "diretório inválido ''"
 
 #: work.cc:989
-#, c-format
+#, fuzzy, c-format
+msgid "not a directory '%s'"
+msgstr "não foi possível criar diretório '%s'"
+
+#: work.cc:1002
+#, fuzzy, c-format
+msgid "missing file '%s'"
+msgstr "%d arquivos desaparecidos"
+
+#: work.cc:1007
+#, fuzzy, c-format
+msgid "not a file '%s'"
+msgstr "arquivo '%s' não existe"
+
+#: work.cc:1018
+#, fuzzy, c-format
 msgid ""
-"%d missing files; use '%s ls missing' to view\n"
-"To restore consistency, on each missing file run either\n"
-" '%s drop FILE' to remove it permanently, or\n"
-" '%s revert FILE' to restore it.\n"
+"%d missing items; use '%s ls missing' to view\n"
+"To restore consistency, on each missing item run either\n"
+" '%s drop ITEM' to remove it permanently, or\n"
+" '%s revert ITEM' to restore it.\n"
 "To handle all at once, simply use\n"
 " '%s drop --missing' or\n"
 " '%s revert --missing'"
@@ -3853,92 +3951,92 @@ msgstr ""
 " '%s drop --missing' ou\n"
 " '%s revert --missing'"
 
-#: work.cc:1135
+#: work.cc:1164
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "pulando %s, não é versionado atualmente"
 
-#: work.cc:1145
+#: work.cc:1174
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "impossível remover %s/, não está vazio"
 
-#: work.cc:1156
+#: work.cc:1185
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "removendo %s da listagem da área de trabalho"
 
-#: work.cc:1209
+#: work.cc:1238
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr "diretório de destino %s/ não está versionado (adicione-o?)"
 
-#: work.cc:1212
+#: work.cc:1241
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "destino %s é um arquivo existente na versão atual"
 
-#: work.cc:1222
+#: work.cc:1251
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "caminho vazio %s não permitido"
 
-#: work.cc:1236
+#: work.cc:1265
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "%s não existe na listagem atual"
 
-#: work.cc:1239
+#: work.cc:1268
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "destino %s já existe na listagem atual"
 
-#: work.cc:1245
+#: work.cc:1274
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "diretório de destino %s não existe na listagem atual"
 
-#: work.cc:1247
+#: work.cc:1276
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "diretório de destino %s não é um diretório"
 
-#: work.cc:1256
+#: work.cc:1285
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "renomeando %s para %s na listagem da área de trabalho"
 
-#: work.cc:1284
+#: work.cc:1313
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "%s não existe na área de trabalho, pulando"
 
-#: work.cc:1288
+#: work.cc:1317
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "destino %s já existe na área de trabalho, pulando"
 
-#: work.cc:1318
+#: work.cc:1347
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr "novo diretório raiz proposto '%s' não está versionado ou não existe"
 
-#: work.cc:1320
+#: work.cc:1349
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "novo diretório raiz proposto '%s' não é um diretório"
 
-#: work.cc:1325
+#: work.cc:1354
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr "novo diretório raiz proposto '%s' contém caminho ilegal %s"
 
-#: work.cc:1335
+#: work.cc:1364
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "diretório '%s' não está versionado ou não existe"
 
-#: work.cc:1341
+#: work.cc:1370
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' está no caminho"
@@ -4026,3 +4124,36 @@ msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "esta área de trabalho está no formato atual, nenhuma migração é necessária"
 
+#~ msgid "unable to probe database version in file %s"
+#~ msgstr "incapaz de verificar a versão do banco de dados no arquivo %s"
+
+#~ msgid "database %s is not an sqlite version 3 file, try dump and reload"
+#~ msgstr ""
+#~ "banco de dados %s não é um arquivo sqlite versão 3, tente dump e reload"
+
+#~ msgid "could not initialize database: %s: already exists"
+#~ msgstr "erro inicializando banco de dados: %s: já existe"
+
+#~ msgid "cannot create %s; it already exists"
+#~ msgstr "erro criando %s; já existe"
+
+#~ msgid "could not open database '%s': %s"
+#~ msgstr "erro abrindo banco de dados '%s': %s"
+
+#~ msgid "error at transaction BEGIN statement"
+#~ msgstr "erro no comando BEGIN da transação"
+
+#~ msgid "mismatched result of migration, got %s, wanted %s"
+#~ msgstr "resultado da migração está errado, recebido %s, o esperado era %s"
+
+#~ msgid "failure on COMMIT"
+#~ msgstr "erro em COMMIT"
+
+#~ msgid "error vacuuming after migration"
+#~ msgstr "erro fazendo limpeza após migração"
+
+#~ msgid "database schema %s is unknown; cannot perform migration"
+#~ msgstr "esquema do banco de dados %s desconhecido; impossível migrar"
+
+#~ msgid "missing %s"
+#~ msgstr "%s está faltando"

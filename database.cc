@@ -485,7 +485,7 @@ format_sqlite_error_for_info(informative_failure const & e)
 {
   string err(e.what());
   string prefix = _("error: ");
-  prefix.append("sqlite error: ");
+  prefix.append(_("sqlite error: "));
   if (err.find(prefix) != 0)
     throw;
 
