@@ -1,3 +1,8 @@
+2007-01-24  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.postinst, debian/changelog: update the
+	version for which a database upgrade is needed.
+
 2007-01-23  Zack Weinberg  <zackw@panix.com>
 
 	* database.cc (format_sqlite_error_for_info): Look for translated
