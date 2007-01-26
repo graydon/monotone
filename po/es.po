@@ -47,7 +47,7 @@
 # workspace		-> (el) área de trabajo
 #
 # Nicolás Ruiz <juan.ruiz at ula.ve>, 2006.
-# Nicolas Ruiz <juan.ruiz at ula.ve>, 2006.
+# Nicolas Ruiz <juan.ruiz at ula.ve>, 2006, 2007.
 # #########################################################################
 #  Thanks to Lapo Luchini <lapo@lapo.it> for it.po and
 # + Alex Sandro Queiroz e Silva <alex@ventonegro.org> for pt_BR.po
@@ -58,7 +58,7 @@ msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2006-12-29 15:39-0400\n"
+"PO-Revision-Date: 2007-01-26 01:06-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -290,8 +290,7 @@ msgstr ""
 #: cert.cc:484
 #, c-format
 msgid "no branch found for empty revision, please provide a branch name"
-msgstr ""
-"no se encontró rama para revisión vacia, por favor indique un nombre de rama"
+msgstr "no se encontró rama para revisión vacia, por favor indique un nombre de rama"
 
 #: cert.cc:491
 #, c-format
@@ -302,8 +301,7 @@ msgstr ""
 
 #: cert.cc:495
 #, c-format
-msgid ""
-"multiple branch certs found for revision %s, please provide a branch name"
+msgid "multiple branch certs found for revision %s, please provide a branch name"
 msgstr ""
 "se encontraron múltiples certificados de ramas para la revisión %s, por "
 "favor indique un nombre de rama"
@@ -662,8 +660,7 @@ msgstr "descartando par de llaves '%s' del llavero"
 #: cmd_key_cert.cc:84
 #, c-format
 msgid "public or private key '%s' does not exist in keystore or database"
-msgstr ""
-"o la llave pública o la privada '%s' no existe en el llavero o base de datos"
+msgstr "o la llave pública o la privada '%s' no existe en el llavero o base de datos"
 
 #: cmd_key_cert.cc:87
 #, c-format
@@ -1120,8 +1117,7 @@ msgid "REV REV"
 msgstr "REV REV"
 
 #: cmd_merging.cc:607
-msgid ""
-"Show what conflicts would need to be resolved to merge the given revisions."
+msgid "Show what conflicts would need to be resolved to merge the given revisions."
 msgstr ""
 "Muestra que conflictos necesitarian ser resueltos para combinar las "
 "revisiones dadas."
@@ -1299,8 +1295,7 @@ msgstr "halando anonimamente; use -kNOMBRE_LLAVE si necesita autenticación"
 
 #: cmd_netsync.cc:139
 msgid "sync branches matching PATTERN with netsync server at ADDRESS"
-msgstr ""
-"sincroniza ramas que concuerden con PATRÓN con servidor netsync en DIRECCIÓN"
+msgstr "sincroniza ramas que concuerden con PATRÓN con servidor netsync en DIRECCIÓN"
 
 #: cmd_netsync.cc:160
 #, c-format
@@ -1318,18 +1313,15 @@ msgstr "sirve la base de datos a los clientes que se conectan"
 
 #: cmd_netsync.cc:201
 #, c-format
-msgid ""
-"need permission to store persistent passphrase (see hook persist_phrase_ok())"
+msgid "need permission to store persistent passphrase (see hook persist_phrase_ok())"
 msgstr ""
 "necesita permisos para guardar persistentemente la frase clave (vea el hook "
 "persist_phrase_ok())"
 
 #: cmd_netsync.cc:207
 #, c-format
-msgid ""
-"The --no-transport-auth option is only permitted in combination with --stdio"
-msgstr ""
-"La opción '--no-transport-auth' solo se permite en combinación con '--stdio'"
+msgid "The --no-transport-auth option is only permitted in combination with --stdio"
+msgstr "La opción '--no-transport-auth' solo se permite en combinación con '--stdio'"
 
 #: cmd_othervcs.cc:15
 msgid "RCSFILE..."
@@ -1503,8 +1495,7 @@ msgstr "no puede especificar '--unknown' y '--recursive' simultaneamente"
 #: cmd_ws_commit.cc:312
 #, c-format
 msgid "cannot set '--unknown' and '--no-respect-ignore' at the same time"
-msgstr ""
-"no puede especificar '--unknown' y '--no-respect-ignore' simultaneamente"
+msgstr "no puede especificar '--unknown' y '--no-respect-ignore' simultaneamente"
 
 #: cmd_ws_commit.cc:338
 msgid "drop files from workspace"
@@ -2152,14 +2143,13 @@ msgid "this database already contains rosters"
 msgstr "esta base de datos ya contiene rosters"
 
 #: database.cc:177
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "database %s lacks some cached data\n"
 "run '%s db regenerate_caches' to restore use of this database"
 msgstr ""
-"faltan algunos datos cache en la base de datos %s\n"
-"ejecute '%s db regenerate_caches' para restablecer el uso de esta base de "
-"datos"
+"en la base de datos %s faltan algunos datos en cache\n"
+"ejecute '%s db regenerate_caches' para restablecer el uso de esta base de datos"
 
 #: database.cc:194
 #, c-format
@@ -2200,22 +2190,20 @@ msgid "sqlite error: "
 msgstr "error sqlite: "
 
 #: database.cc:512
-#, fuzzy
 msgid "not set"
-msgstr "nota: "
+msgstr "no definido"
 
 #: database.cc:525
-#, fuzzy
 msgid " (not a monotone database)"
-msgstr "configura el nombre de la base de datos"
+msgstr " (no es una  base de datos de monotone)"
 
 #: database.cc:573 database.cc:604 database.cc:1046 database.cc:1066
 #, c-format
 msgid "%u"
-msgstr ""
+msgstr "%u"
 
 #: database.cc:623
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "creator code      : %s\n"
 "schema version    : %s\n"
@@ -2242,6 +2230,7 @@ msgid ""
 "  page size       : %s\n"
 "  cache size      : %s"
 msgstr ""
+"código creador              : %s\n"
 "versión esquema             : %s\n"
 "número:\n"
 "  rosters completos         : %u\n"
@@ -2312,9 +2301,9 @@ msgid "%s is a directory, not a database"
 msgstr "%s es un directorio, no una base de datos"
 
 #: database.cc:3137
-#, fuzzy, c-format
+#, c-format
 msgid "database %s already exists"
-msgstr "camino %s ya existe"
+msgstr "la base de datos %s ya existe"
 
 #: database.cc:3142
 #, c-format
@@ -2564,8 +2553,7 @@ msgstr "error de lua al cargar archivo rc '%s'"
 #: merge.cc:60
 #, c-format
 msgid "resolve non-content conflicts and then try again."
-msgstr ""
-"resuelva los conflictos no relacionados con contenido e intentelo nuevamente"
+msgstr "resuelva los conflictos no relacionados con contenido e intentelo nuevamente"
 
 #: merge.cc:124
 #, c-format
@@ -2594,7 +2582,7 @@ msgstr "Opciones especificas a '%s %s':"
 
 #: monotone.cc:307
 msgid "error: memory exhausted"
-msgstr ""
+msgstr "error: memoria totalmente consumida"
 
 #: mt_version.cc:36
 #, c-format
@@ -2679,8 +2667,7 @@ msgstr ""
 #: netio.hh:142
 #, c-format
 msgid "ran out of bytes reading uleb128 value for '%s' at pos %d"
-msgstr ""
-"no hay suficientes bytes leyendo valor uleb128 para '%s' en la posición %d"
+msgstr "no hay suficientes bytes leyendo valor uleb128 para '%s' en la posición %d"
 
 #: netio.hh:278
 #, c-format
@@ -2800,8 +2787,7 @@ msgstr "permiso de lectura anónima autorizada para '%s' excluyendo '%s'"
 #: netsync.cc:1456
 #, c-format
 msgid "allowed anonymous read/write permission for '%s' excluding '%s'"
-msgstr ""
-"permiso de lectura/escritura anónima autorizada para '%s' excluyendo '%s'"
+msgstr "permiso de lectura/escritura anónima autorizada para '%s' excluyendo '%s'"
 
 #: netsync.cc:1519
 #, c-format
@@ -2824,8 +2810,7 @@ msgstr ""
 
 #: netsync.cc:1574
 #, c-format
-msgid ""
-"denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
+msgid "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
 msgstr ""
 "denegado a '%s' permiso de lectura para '%s' excluyendo '%s' a causa de la "
 "rama '%s'"
@@ -2882,8 +2867,7 @@ msgstr "%s con hash '%s' no existe en nuestra base de datos"
 #: netsync.cc:1935
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
-msgstr ""
-"Epoca no concordante en rama %s. Servidor tiene '%s', cliente tiene '%s'."
+msgstr "Epoca no concordante en rama %s. Servidor tiene '%s', cliente tiene '%s'."
 
 #: netsync.cc:1953
 #, c-format
@@ -2918,8 +2902,7 @@ msgstr "destino"
 #: netsync.cc:2304
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
-msgstr ""
-"bufer de entrada para el peer %s está rebasado despues del netcmd 'dispatch'"
+msgstr "bufer de entrada para el peer %s está rebasado despues del netcmd 'dispatch'"
 
 #: netsync.cc:2316 netsync.cc:2415
 #, c-format
@@ -2985,8 +2968,7 @@ msgstr "lectura del peer %s falló en estado 'working' (error)"
 
 #: netsync.cc:2632
 #, c-format
-msgid ""
-"peer %s read failed in shutdown state (possibly client misreported error)"
+msgid "peer %s read failed in shutdown state (possibly client misreported error)"
 msgstr ""
 "lectura del peer %s falló en estado 'shutdown' (posiblemente el cliente "
 "reportó incorrectamente un error)"
@@ -3003,8 +2985,7 @@ msgstr "escritura del peer '%s' falló en estado 'working' (error)"
 
 #: netsync.cc:2664
 #, c-format
-msgid ""
-"peer %s write failed in shutdown state (possibly client misreported error)"
+msgid "peer %s write failed in shutdown state (possibly client misreported error)"
 msgstr ""
 "escritura del peer %s falló en estado 'shutdown' (posiblemente el cliente "
 "reportó incorrectamente el error)"
@@ -3165,8 +3146,7 @@ msgstr "usa formato de 'diff' en contexto"
 
 #: options_list.hh:189
 msgid "use external diff hook for generating diffs"
-msgstr ""
-"usa un hook de 'diff' externo para general las diferencias entre archivos"
+msgstr "usa un hook de 'diff' externo para general las diferencias entre archivos"
 
 #: options_list.hh:196
 msgid "use unified diff format"
@@ -3182,8 +3162,7 @@ msgstr "imprime los diffs junto con los logs"
 
 #: options_list.hh:220
 msgid "when rosterifying, drop attrs entries with the given key"
-msgstr ""
-"al generar los rosters, descarta entradas de atributos con la llave dada"
+msgstr "al generar los rosters, descarta entradas de atributos con la llave dada"
 
 #: options_list.hh:228
 msgid "don't perform the operation, just show what would have happened"
@@ -3240,8 +3219,7 @@ msgstr "configura el mensaje de 'changelog' del 'commit'"
 
 #: options_list.hh:339
 msgid "set filename containing commit changelog message"
-msgstr ""
-"configura el archivo que contiene el mensaje de 'changelog' del 'commit'"
+msgstr "configura el archivo que contiene el mensaje de 'changelog' del 'commit'"
 
 #: options_list.hh:347
 msgid "perform the operations for files missing from workspace"
@@ -3285,8 +3263,7 @@ msgstr "cargar archivo rc extra"
 
 #: options_list.hh:431
 msgid "suppress warning, verbose, informational and progress messages"
-msgstr ""
-"suprime mensajes adicionales, de advertencia, informacionales y de progreso"
+msgstr "suprime mensajes adicionales, de advertencia, informacionales y de progreso"
 
 #: options_list.hh:441
 msgid "also operate on the contents of any listed directories"
@@ -3600,29 +3577,29 @@ msgid "Current work set: %i items"
 msgstr "Conjunto de trabajo actual: %i elementos"
 
 #: selectors.cc:43
-#, fuzzy, c-format
+#, c-format
 msgid "expanded selector '%s' -> '%s'"
-msgstr "expandiendo selección '%s'"
+msgstr "selector expandido '%s' -> '%s'"
 
 #: selectors.cc:80
-#, fuzzy, c-format
+#, c-format
 msgid "unknown selector type: %c"
-msgstr "tipo de paquete desconocido: '%s'"
+msgstr "tipo de selector desconocido: '%c'"
 
 #: selectors.cc:89
-#, fuzzy, c-format
+#, c-format
 msgid "selector '%s' is not a valid date\n"
-msgstr "la raiz de búsqueda '%s' no es un directorio"
+msgstr "selector '%s' no es una fecha válida\n"
 
 #: selectors.cc:95
 #, c-format
 msgid "selector '%s' is not a valid date (%s)"
-msgstr ""
+msgstr "slector '%s' no es una fecha válida (%s)"
 
 #: selectors.cc:98
-#, fuzzy, c-format
+#, c-format
 msgid "expanded date '%s' -> '%s'\n"
-msgstr "id parcial expandida de '%s' a '%s'"
+msgstr "fecha expandida '%s' -> '%s'\n"
 
 #: schema_migration.cc:78
 msgid ""
@@ -3638,6 +3615,9 @@ msgid ""
 "you must follow a special procedure to make it usable again.\n"
 "see the file UPGRADE, in the distribution, for instructions.)"
 msgstr ""
+"(si esta es una base de datos utilizada por última vez por monotone 0.16 o anterior,\n"
+"debe seguir un procedimiento especial para hacerla nuevamente utilizable.\n"
+"busque las instrucciones en el archivo 'UPGRADE', en la distribución.)"
 
 #: schema_migration.cc:97
 #, c-format
@@ -3661,27 +3641,27 @@ msgstr "moviendo llave '%s' de la base de datos a %s"
 #: schema_migration.cc:889
 #, c-format
 msgid "%s (usable)"
-msgstr ""
+msgstr "%s (utilizable)"
 
 #: schema_migration.cc:891
 #, c-format
 msgid "%s (migration needed)"
-msgstr ""
+msgstr "%s (es necesaria migración)"
 
 #: schema_migration.cc:893
 #, c-format
 msgid "%s (too new, cannot use)"
-msgstr ""
+msgstr "%s (demasiado nueva, no se puede usar)"
 
 #: schema_migration.cc:895
-#, fuzzy, c-format
+#, c-format
 msgid "%s (not a monotone database)"
-msgstr "configura el nombre de la base de datos"
+msgstr "%s (no es una base de datos monotone)"
 
 #: schema_migration.cc:897
 #, c-format
 msgid "%s (database has no tables!)"
-msgstr ""
+msgstr "%s (ila base de datos no tiene tablas!)"
 
 #: schema_migration.cc:910
 #, c-format
@@ -3689,11 +3669,13 @@ msgid ""
 "cannot use the empty sqlite database %s\n"
 "(monotone databases must be created with '%s db init')"
 msgstr ""
+"no puede utilizar la base de datos sqlite vacia %s\n"
+"(las bases de datos monotone deben ser creadas con '%s db init')"
 
 #: schema_migration.cc:915
-#, fuzzy, c-format
+#, c-format
 msgid "%s does not appear to be a monotone database\n"
-msgstr "llave '%s' no es igual a la llave '%s' en la base de datos"
+msgstr "%s no parece ser una base de datos monotone\n"
 
 #: schema_migration.cc:919
 #, c-format
@@ -3702,40 +3684,40 @@ msgid ""
 "monotone does not recognize its schema.\n"
 "you probably need a newer version of monotone."
 msgstr ""
+"%s parece ser una base de datos monotone, pero esta versión de\n"
+"monotone no reconoce su esquema.\n"
+"Ud. probablemente necesita una nueva versión de monotone."
 
 #: schema_migration.cc:938
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "database %s is laid out according to an old schema\n"
 "try '%s db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
-"organización de la base de datos %s no concuerda con esta versión de "
-"monotone\n"
-"esquema requerido %s, obtuvo %s\n"
-"pruebe '%s db migrate' para actualizarla\n"
-"(esto es irreversible, primero haga una copia de seguridad)"
+"la base de datos %s está organizada de acuerdo a un esquema viejo\n"
+"intente '%s db migrate' para actualizar\n"
+"(esto es irreversible; primero haga una copia de seguridad)"
 
 #: schema_migration.cc:960
-#, fuzzy, c-format
+#, c-format
 msgid "calculating migration..."
-msgstr "calculando los pasos necesarios para migración"
+msgstr "calculando la migración..."
 
 #: schema_migration.cc:973
-#, fuzzy, c-format
+#, c-format
 msgid "no migration performed; database schema already up-to-date"
-msgstr ""
-"no se realizó migración; esquema de la base de datos ya está al dia en %s"
+msgstr "no se realizó migración; esquema de la base de datos ya está al dia"
 
 #: schema_migration.cc:980
-#, fuzzy, c-format
+#, c-format
 msgid "migrating data..."
-msgstr "migrando data"
+msgstr "migrando data..."
 
 #: schema_migration.cc:1002
-#, fuzzy, c-format
+#, c-format
 msgid "migrated to schema %s"
-msgstr "migración fallo en el paso: %s"
+msgstr "migrado al esquema %s"
 
 #: schema_migration.cc:1005
 #, c-format
@@ -3771,17 +3753,17 @@ msgstr ""
 #: schema_migration.cc:1057
 #, c-format
 msgid "cannot test migration from unknown schema %s"
-msgstr ""
+msgstr "no puede probar migración desde esquema desconocido %s"
 
 #: schema_migration.cc:1060
 #, c-format
 msgid "schema %s is up to date"
-msgstr ""
+msgstr "esquema %s está al día"
 
 #: schema_migration.cc:1071
-#, fuzzy, c-format
+#, c-format
 msgid "successful migration to schema %s"
-msgstr "intercambio exitoso con %s"
+msgstr "migración exitosa al esquema %s"
 
 #: std_hooks.lua:39
 msgid "Press enter"
@@ -3800,6 +3782,11 @@ msgid ""
 "or a bug in monotone.  if the error persists, please contact\n"
 "%s for assistance.\n"
 msgstr ""
+"%s\n"
+"esto puede deberse a una falla de memoria, corrupción de datos durante\n"
+"una transferencia de red, corrupción de su base de datos o área de trabajo,\n"
+"o un error en monotone.  Si el error persite, por favor contacte\n"
+"%s para asistencia.\n"
 
 #: ui.cc:158
 #, c-format
@@ -3856,8 +3843,7 @@ msgstr "La sintaxis URI es inválida. Uso ud. un URI estilo 'scp'?"
 #: update.cc:71
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'"
-msgstr ""
-"no se pudo decodificar el valor del certificado 'testresult' booleano '%s'"
+msgstr "no se pudo decodificar el valor del certificado 'testresult' booleano '%s'"
 
 #: update.cc:160
 #, c-format
@@ -3948,8 +3934,7 @@ msgstr "agregando %s al manifiesto del área de trabajo"
 
 #: work.cc:565
 #, c-format
-msgid ""
-"cannot add %s, because %s is recorded as a file in the workspace manifest"
+msgid "cannot add %s, because %s is recorded as a file in the workspace manifest"
 msgstr ""
 "no se pudo agregar %s, porque %s esta registrado como un archivo en el "
 "manifiesto del área de trabajo"
@@ -4208,37 +4193,3 @@ msgstr "área de trabajo corrupta: %s existe pero no es un archivo regular"
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "esta área de trabajo está en el formato actual, no es necesario migrar"
 
-#~ msgid "unable to probe database version in file %s"
-#~ msgstr ""
-#~ "incapaz de determinar la versión de la base de datos en el archivo %s"
-
-#~ msgid "database %s is not an sqlite version 3 file, try dump and reload"
-#~ msgstr ""
-#~ "base de datos %s no es un archivo sqlite versión 3,\n"
-#~ "intente un 'dump' y 'reload'"
-
-#~ msgid "could not initialize database: %s: already exists"
-#~ msgstr "no puede inicializar la base de datos: %s: ya existe"
-
-#~ msgid "cannot create %s; it already exists"
-#~ msgstr "no puede crear %s; ya existe"
-
-#~ msgid "could not open database '%s': %s"
-#~ msgstr "no puede abrir base de datos '%s': %s"
-
-#~ msgid "error at transaction BEGIN statement"
-#~ msgstr "error en el comando BEGIN de la transacción"
-
-#~ msgid "mismatched result of migration, got %s, wanted %s"
-#~ msgstr "resultado no concordante en la migración, obtuvo %s, esperaba %s"
-
-#~ msgid "failure on COMMIT"
-#~ msgstr "falla en el COMMIT"
-
-#~ msgid "error vacuuming after migration"
-#~ msgstr "error limpiando despues de la migración"
-
-#~ msgid "database schema %s is unknown; cannot perform migration"
-#~ msgstr ""
-#~ "esquema de la base de datos %s es desconocido; no se puede realizar "
-#~ "migración"
