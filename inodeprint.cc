@@ -100,10 +100,10 @@ write_inodeprint_map(inodeprint_map const & ipm,
     {
       basic_io::stanza st;
       st.push_file_pair(syms::file, i->first);
-      st.push_hex_pair(syms::print, i->second());
+      st.push_hex_pair(syms::print, hexenc<id>(i->second()));
       pr.print_stanza(st);
     }
-  dat = pr.buf;
+  dat = data(pr.buf);
 }
 
 class my_iprint_calc : public inodeprint_calculator

@@ -347,7 +347,7 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
         {
           // expand the --xargs in place
           data dat;
-          read_data_for_command_line(arg, dat);
+          read_data_for_command_line(utf8(arg), dat);
           vector<string> fargs;
           tokenize_for_command_line(dat(), fargs);
           

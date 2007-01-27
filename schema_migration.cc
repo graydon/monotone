@@ -495,8 +495,8 @@ migrate_to_external_privkeys(sqlite3 * db, app_state &app)
 
     while (stmt.step())
       {
-        rsa_keypair_id ident = stmt.column_string(0);
-        base64< arc4<rsa_priv_key> > old_priv = stmt.column_string(1);
+        rsa_keypair_id ident(stmt.column_string(0));
+        base64< arc4<rsa_priv_key> > old_priv(stmt.column_string(1));
 
         keypair kp;
         migrate_private_key(app, ident, old_priv, kp);
@@ -504,7 +504,7 @@ migrate_to_external_privkeys(sqlite3 * db, app_state &app)
 
         if (stmt.column_nonnull(2))
           {
-            base64< rsa_pub_key > pub = stmt.column_string(2);
+            base64< rsa_pub_key > pub(stmt.column_string(2));
             MM(pub);
             N(keys_match(ident, pub, ident, kp.pub),
               F("public and private keys for %s don't match") % ident);

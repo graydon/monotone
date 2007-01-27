@@ -937,7 +937,7 @@ database::file_or_manifest_base_exists(hexenc<id> const & ident,
                                        std::string const & table)
 {
   // just check for a delayed file, since there are no delayed manifests
-  if (have_delayed_file(ident))
+  if (have_delayed_file(file_id(ident)))
     return true;
   return table_has_entry(ident(), "id", table);
 }
@@ -1110,7 +1110,7 @@ database::get_roster_base(string const & ident_str,
   gzip<data> dat_packed(res[0][1]);
   data dat;
   decode_gzip(dat_packed, dat);
-  read_roster_and_marking(dat, roster, marking);
+  read_roster_and_marking(roster_data(dat), roster, marking);
 }
 
 void
@@ -1130,7 +1130,7 @@ database::get_roster_delta(string const & ident,
   gzip<delta> del_packed(res[0][1]);
   delta tmp;
   decode_gzip(del_packed, tmp);
-  del = tmp;
+  del = roster<delta>(tmp);
 }
 
 void
@@ -1266,7 +1266,7 @@ database::get_version(hexenc<id> const & ident,
 
   I(!selected_path.empty());
 
-  hexenc<id> curr = selected_path.back();
+  hexenc<id> curr = hexenc<id>(selected_path.back());
   selected_path.pop_back();
   data begin;
 
@@ -1281,13 +1281,13 @@ database::get_version(hexenc<id> const & ident,
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
-      hexenc<id> const nxt = *i;
+      hexenc<id> const nxt = hexenc<id>(*i);
 
       if (!vcache.exists(curr()))
         {
           string tmp;
           appl->finish(tmp);
-          vcache.insert_clean(curr(), tmp);
+          vcache.insert_clean(curr(), data(tmp));
         }
 
       L(FL("following delta %s -> %s") % curr % nxt);
@@ -1407,7 +1407,7 @@ bool
 database::file_version_exists(file_id const & id)
 {
   return delta_exists(id.inner()(), "file_deltas")
-    || file_or_manifest_base_exists(id.inner()(), "files");
+    || file_or_manifest_base_exists(id.inner(), "files");
 }
 
 bool
@@ -1427,6 +1427,19 @@ database::revision_exists(revision_id const & id)
   return res.size() == 1;
 }
 
+template<typename From, typename To>
+To add_decoration(From const & from)
+{
+  return To(from);
+}
+
+template<typename From, typename To>
+void add_decoration_to_container(From const & from, To & to)
+{
+  transform(from.begin(), from.end(), std::inserter(to, to.end()),
+            &add_decoration<typename From::value_type, typename To::value_type>);
+}
+
 void
 database::get_file_ids(set<file_id> & ids)
 {
@@ -1434,7 +1447,7 @@ database::get_file_ids(set<file_id> & ids)
   set< hexenc<id> > tmp;
   get_ids("files", tmp);
   get_ids("file_deltas", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
 }
 
 void
@@ -1443,7 +1456,7 @@ database::get_revision_ids(set<revision_id> & ids)
   ids.clear();
   set< hexenc<id> > tmp;
   get_ids("revisions", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
 }
 
 void
@@ -1452,9 +1465,9 @@ database::get_roster_ids(set<revision_id> & ids)
   ids.clear();
   set< hexenc<id> > tmp;
   get_ids("rosters", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
   get_ids("roster_deltas", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
 }
 
 void
@@ -1463,7 +1476,7 @@ database::get_file_version(file_id const & id,
 {
   data tmp;
   get_version(id.inner(), tmp, "files", "file_deltas");
-  dat = tmp;
+  dat = file_data(tmp);
 }
 
 void
@@ -1472,7 +1485,7 @@ database::get_manifest_version(manifest_id const & id,
 {
   data tmp;
   get_version(id.inner(), tmp, "manifests", "manifest_deltas");
-  dat = tmp;
+  dat = manifest_data(tmp);
 }
 
 void
@@ -1494,12 +1507,12 @@ database::put_file_version(file_id const & old_id,
   {
     data tmp;
     patch(old_data.inner(), del.inner(), tmp);
-    new_data = tmp;
+    new_data = file_data(tmp);
   }
   {
     string tmp;
     invert_xdelta(old_data.inner()(), del.inner()(), tmp);
-    reverse_delta = delta(tmp);
+    reverse_delta = file_delta(tmp);
     data old_tmp;
     hexenc<id> old_tmp_id;
     patch(new_data.inner(), reverse_delta.inner(), old_tmp);
@@ -1646,11 +1659,11 @@ database::get_revision(revision_id const & id,
   // verify that we got a revision with the right id
   {
     revision_id tmp;
-    calculate_ident(rdat, tmp);
+    calculate_ident(revision_data(rdat), tmp);
     I(id == tmp);
   }
 
-  dat = rdat;
+  dat = revision_data(rdat);
 }
 
 void
@@ -1714,7 +1727,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (file_or_manifest_base_exists(delta_entry_src(j).inner()(), "files") &&
+            if (file_or_manifest_base_exists(delta_entry_src(j).inner(), "files") &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -1958,7 +1971,7 @@ database::get_key_ids(string const & pattern,
           query("SELECT id FROM public_keys"));
 
   for (size_t i = 0; i < res.size(); ++i)
-    pubkeys.push_back(res[i][0]);
+    pubkeys.push_back(rsa_keypair_id(res[i][0]));
 }
 
 void
@@ -1968,7 +1981,7 @@ database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
   results res;
   fetch(res, one_col, any_rows, query("SELECT id FROM " + table));
   for (size_t i = 0; i < res.size(); ++i)
-    keys.push_back(res[i][0]);
+    keys.push_back(rsa_keypair_id(res[i][0]));
 }
 
 void
@@ -2012,7 +2025,7 @@ database::get_pubkey(hexenc<id> const & hash,
   fetch(res, 2, one_row,
         query("SELECT id, keydata FROM public_keys WHERE hash = ?")
         % text(hash()));
-  id = res[0][0];
+  id = rsa_keypair_id(res[0][0]);
   encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
 }
 
@@ -2266,7 +2279,7 @@ database::get_revision_certs(vector< revision<cert> > & ts)
   vector<cert> certs;
   get_certs(certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
   return cert_stamper.get_indicator();
 }
 
@@ -2277,7 +2290,7 @@ database::get_revision_certs(cert_name const & name,
   vector<cert> certs;
   get_certs(name, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
   return cert_stamper.get_indicator();
 }
 
@@ -2289,7 +2302,7 @@ database::get_revision_certs(revision_id const & id,
   vector<cert> certs;
   get_certs(id.inner(), name, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
   return cert_stamper.get_indicator();
 }
 
@@ -2302,7 +2315,7 @@ database::get_revision_certs(revision_id const & id,
   vector<cert> certs;
   get_certs(id.inner(), name, val, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
   return cert_stamper.get_indicator();
 }
 
@@ -2330,7 +2343,7 @@ database::get_revision_certs(cert_name const & name,
   vector<cert> certs;
   get_certs(name, val, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
   return cert_stamper.get_indicator();
 }
 
@@ -2341,7 +2354,7 @@ database::get_revision_certs(revision_id const & id,
   vector<cert> certs;
   get_certs(id.inner(), certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
   return cert_stamper.get_indicator();
 }
 
@@ -2399,7 +2412,7 @@ database::get_manifest_certs(manifest_id const & id,
   vector<cert> certs;
   get_certs(id.inner(), certs, "manifest_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
 }
 
 
@@ -2410,7 +2423,7 @@ database::get_manifest_certs(cert_name const & name,
   vector<cert> certs;
   get_certs(name, certs, "manifest_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
 }
 
 
@@ -2479,7 +2492,7 @@ database::complete(string const & partial,
 using selectors::selector_type;
 
 static void selector_to_certname(selector_type ty,
-                                 string & s,
+                                 cert_name & name,
                                  string & prefix,
                                  string & suffix)
 {
@@ -2488,24 +2501,24 @@ static void selector_to_certname(selector_type ty,
     {
     case selectors::sel_author:
       prefix = suffix = "";
-      s = author_cert_name;
+      name = author_cert_name;
       break;
     case selectors::sel_branch:
       prefix = suffix = "";
-      s = branch_cert_name;
+      name = branch_cert_name;
       break;
     case selectors::sel_head:
       prefix = suffix = "";
-      s = branch_cert_name;
+      name = branch_cert_name;
       break;
     case selectors::sel_date:
     case selectors::sel_later:
     case selectors::sel_earlier:
-      s = date_cert_name;
+      name = date_cert_name;
       break;
     case selectors::sel_tag:
       prefix = suffix = "";
-      s = tag_cert_name;
+      name = tag_cert_name;
       break;
     case selectors::sel_ident:
     case selectors::sel_cert:
@@ -2578,7 +2591,7 @@ void database::complete(selector_type ty,
           else if (i->first == selectors::sel_unknown)
             {
               lim.sql_cmd += "SELECT id FROM revision_certs WHERE (name=? OR name=? OR name=?)";
-              lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
+              lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
               lim.sql_cmd += " AND CAST(value AS TEXT) glob ?";
               lim % text(i->second + "*");
             }
@@ -2593,7 +2606,7 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  __app->get_project().get_branch_list(i->second, branch_names);
+                  __app->get_project().get_branch_list(utf8(i->second), branch_names);
                 }
 
               // for each branch name, get the branch heads
@@ -2625,7 +2638,7 @@ void database::complete(selector_type ty,
             }
           else
             {
-              string certname;
+              cert_name certname;
               string prefix;
               string suffix;
               selector_to_certname(i->first, certname, prefix, suffix);
@@ -2634,13 +2647,13 @@ void database::complete(selector_type ty,
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name) % text(__app->opts.branch_name());
+                  lim % text(branch_cert_name()) % text(__app->opts.branch_name());
                   L(FL("limiting to current branch '%s'") % __app->opts.branch_name);
                 }
               else
                 {
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND ";
-                  lim % text(certname);
+                  lim % text(certname());
                   switch (i->first)
                     {
                     case selectors::sel_earlier:
@@ -2679,14 +2692,14 @@ void database::complete(selector_type ty,
       if (ty == selectors::sel_unknown)
         {
           lim.sql_cmd += " (name=? OR name=? OR name=?)";
-          lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
+          lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
         }
       else
         {
-          string certname;
+          cert_name certname;
           selector_to_certname(ty, certname, prefix, suffix);
           lim.sql_cmd += " (name=?)";
-          lim % text(certname);
+          lim % text(certname());
         }
 
       lim.sql_cmd += " AND (CAST(value AS TEXT) GLOB ?) AND (id IN " + lim.sql_cmd + ")";

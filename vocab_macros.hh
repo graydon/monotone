@@ -19,8 +19,8 @@ class enc {                                            \
 public:                                                \
   bool ok;                                             \
   enc() : ok(false) {}                                 \
-  enc(std::string const & s);                          \
-  enc(INNER const & inner);                            \
+  explicit enc(std::string const & s);                 \
+  explicit enc(INNER const & inner);                   \
   enc(enc<INNER> const & other);                       \
   std::string const & operator()() const               \
     { return i(); }                                    \
@@ -53,7 +53,8 @@ class dec {                                            \
 public:                                                \
   bool ok;                                             \
   dec() : ok(false) {}                                 \
-  dec(INNER const & inner);                            \
+  explicit dec(std::string const & s);                 \
+  explicit dec(INNER const & inner);                   \
   dec(dec<INNER> const & other);                       \
   bool operator<(dec<INNER> const & x) const           \
     { return i < x.i; }                                \
@@ -74,7 +75,7 @@ class ty {                                             \
 public:                                                \
   bool ok;                                             \
   ty() : ok(false) {}                                  \
-  ty(std::string const & str);                         \
+  explicit ty(std::string const & str);                \
   ty(ty const & other);                                \
   std::string const & operator()() const               \
     { return s; }                                      \
@@ -189,6 +190,10 @@ void dump(enc<INNER> const & obj, std::string & out)     \
 template<typename INNER>                                 \
 dec<INNER>::dec(dec<INNER> const & other)                \
   : i(other.i), ok(other.ok) { verify(*this); }          \
+                                                         \
+template<typename INNER>                                 \
+dec<INNER>::dec(std::string const & s)                   \
+  : i(s), ok(false) { verify(*this); }                   \
                                                          \
 template<typename INNER>                                 \
 dec<INNER>::dec(INNER const & inner) :                   \

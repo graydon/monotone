@@ -457,7 +457,7 @@ netcmd::write_data_cmd(netcmd_item_type type,
   if (dat.size() > constants::netcmd_minimum_bytes_to_bother_with_gzip)
     {
       gzip<data> zdat;
-      encode_gzip(dat, zdat);
+      encode_gzip(data(dat), zdat);
       payload += static_cast<char>(1); // compressed flag
       insert_variable_length_string(zdat(), payload);
     }
@@ -495,7 +495,7 @@ netcmd::read_delta_cmd(netcmd_item_type & type,
     }
   else
     {
-      del = tmp;
+      del = delta(tmp);
     }
   assert_end_of_buffer(payload, pos, "delta netcmd payload");
 }

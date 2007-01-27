@@ -428,8 +428,8 @@ feed_packet_consumer
         require(regex_match(args, regex(key)));
         match_results<string::const_iterator> matches;
         require(regex_match(body, matches, regex(base + "#" + base)));
-        string pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
-        string priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
+        base64<rsa_pub_key> pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
+        base64<rsa_priv_key> priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
         cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
       }
     else if (type == "privkey")

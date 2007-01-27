@@ -465,7 +465,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
       return;
     }
 
-  if (db.file_version_exists(old_id))
+  if (db.file_version_exists(file_id(old_id)))
     {
       // we already have a way to get to this old version,
       // no need to insert another reconstruction path
@@ -473,7 +473,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
     }
   else
     {
-      I(db.file_or_manifest_base_exists(new_id(), "files")
+      I(db.file_or_manifest_base_exists(new_id, "files")
         || db.delta_exists(new_id(), "file_deltas"));
       db.put_file_delta(file_id(old_id), file_id(new_id), file_delta(del));
     }
@@ -495,7 +495,7 @@ insert_into_db(data const & curr_data,
   {
     string tmp;
     global_pieces.build_string(next_lines, tmp);
-    next_data = tmp;
+    next_data = data(tmp);
   }
   delta del;
   diff(curr_data, next_data, del);
@@ -583,7 +583,7 @@ process_branch(string const & begin_version,
     {
       L(FL("version %s has %d lines") % curr_version % curr_lines->size());
 
-      cvs_commit curr_commit(r, curr_version, curr_id, cvs);
+      cvs_commit curr_commit(r, curr_version, file_id(curr_id), cvs);
       if (!curr_commit.is_synthetic_branch_root)
         {
           cvs.stk.top()->append_commit(curr_commit);
@@ -683,14 +683,14 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
     hexenc<id> id;
     data dat(r.deltatexts.find(r.admin.head)->second->text);
     calculate_ident(dat, id);
-    file_id fid = id;
+    file_id fid(id);
 
     cvs.set_filename (filename, fid);
     cvs.index_branchpoint_symbols (r);
 
     if (! db.file_version_exists (fid))
       {
-        db.put_file(fid, dat);
+        db.put_file(fid, file_data(dat));
       }
 
     {
@@ -1388,11 +1388,11 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
     }
 
   app.get_project().put_standard_certs(p.rid,
-                                 branchname,
-                                 cvs.changelog_interner.lookup(p.changelog),
-                                 time_from_time_t(p.time),
-                                 cvs.author_interner.lookup(p.author),
-                                 dbw);
+                                       utf8(branchname),
+                                       utf8(cvs.changelog_interner.lookup(p.changelog)),
+                                       time_from_time_t(p.time),
+                                       utf8(cvs.author_interner.lookup(p.author)),
+                                       dbw);
 }
 
 void

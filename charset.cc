@@ -64,8 +64,8 @@ system_to_utf8(external const & ext, utf8 & utf)
 {
   string out;
   charset_convert(system_charset(), "UTF-8", ext(), out);
-  I(utf8_validate(out));
-  utf = out;
+  utf = utf8(out);
+  I(utf8_validate(utf));
 }
 
 size_t
@@ -171,7 +171,7 @@ utf8_to_system(utf8 const & utf, external & ext)
 {
   string out;
   utf8_to_system(utf, out);
-  ext = out;
+  ext = external(out);
 }
 
 // utf8_validate and the helper functions is_valid_unicode_char and
@@ -287,7 +287,7 @@ ace_to_utf8(ace const & a, utf8 & utf)
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
     % a().size()
     % decode_idna_error(res));
-  utf = string(out);
+  utf = utf8(string(out));
   free(out);
 }
 
@@ -301,7 +301,7 @@ utf8_to_ace(utf8 const & utf, ace & a)
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
     % utf().size()
     % decode_idna_error(res));
-  a = string(out);
+  a = ace(string(out));
   free(out);
 }
 
@@ -310,14 +310,14 @@ internalize_cert_name(utf8 const & utf, cert_name & c)
 {
   ace a;
   utf8_to_ace(utf, a);
-  c = a();
+  c = cert_name(a());
 }
 
 void
 internalize_cert_name(external const & ext, cert_name & c)
 {
   utf8 utf;
-  system_to_utf8(ext(), utf);
+  system_to_utf8(ext, utf);
   internalize_cert_name(utf, c);
 }
 
@@ -351,13 +351,13 @@ internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
       else
         {
           ace a;
-          utf8_to_ace(*i, a);
+          utf8_to_ace(utf8(*i), a);
           tmp += a();
         }
       if (*i == "@")
         in_domain = true;
     }
-  key = tmp;
+  key = rsa_keypair_id(tmp);
 }
 
 void
@@ -391,7 +391,7 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
       if (*i == "@")
         in_domain = true;
     }
-  utf = tmp;
+  utf = utf8(tmp);
 }
 
 void
@@ -407,14 +407,14 @@ internalize_var_domain(utf8 const & utf, var_domain & d)
 {
   ace a;
   utf8_to_ace(utf, a);
-  d = a();
+  d = var_domain(a());
 }
 
 void
 internalize_var_domain(external const & ext, var_domain & d)
 {
   utf8 utf;
-  system_to_utf8(ext(), utf);
+  system_to_utf8(ext, utf);
   internalize_var_domain(utf, d);
 }
 
@@ -611,11 +611,11 @@ UNIT_TEST(charset, idna_encoding)
       char *uc = stringprep_ucs4_to_utf8(idna_vec[i].in,
                                          idna_vec[i].inlen,
                                          &p, &q);
-      utf8 utf = string(uc);
+      utf8 utf = utf8(uc);
       utf8 tutf;
       free(uc);
 
-      ace a = string(idna_vec[i].out);
+      ace a = ace(idna_vec[i].out);
       ace tace;
       utf8_to_ace(utf, tace);
       L(FL("ACE-encoded %s: '%s'") % idna_vec[i].name % tace());
@@ -842,10 +842,10 @@ UNIT_TEST(charset, utf8_validation)
   };
 
   for (int i = 0; good_strings[i]; ++i)
-    BOOST_CHECK(utf8_validate(string(good_strings[i])) == true);
+    BOOST_CHECK(utf8_validate(utf8(good_strings[i])) == true);
 
   for (int i = 0; bad_strings[i]; ++i)
-    BOOST_CHECK(utf8_validate(string(bad_strings[i])) == false);
+    BOOST_CHECK(utf8_validate(utf8(bad_strings[i])) == false);
 }
 
 #endif // BUILD_UNIT_TESTS

@@ -172,7 +172,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << "\n";
-          else cout << describe_revision(app, i->inner()) << "\n";
+          else cout << describe_revision(app, *i) << "\n";
         }
     }
   else if (idx(args, 0)() == "file")

@@ -111,8 +111,8 @@ app_state::write_options()
 {
   utf8 database_option, branch_option, key_option, keydir_option;
 
-  database_option = db.get_filename().as_internal();
-  keydir_option = keys.get_key_dir().as_internal();
+  database_option = utf8(db.get_filename().as_internal());
+  keydir_option = utf8(keys.get_key_dir().as_internal());
 
   if (branch_is_sticky)
     branch_option = opts.branch_name;

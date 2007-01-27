@@ -85,7 +85,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (colon_pos != string::npos)
     {
       string substr(str, 0, colon_pos);
-      colon_pos = display_width(substr);
+      colon_pos = display_width(utf8(substr));
       extra_str = string(colon_pos, ' ') + ": %s\n";
     }
 
@@ -672,7 +672,7 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
 
   transaction_guard guard(app.db, false);
 
-  revision_id rid(idx(args, 0)());
+  revision_id rid(hexenc<id>(id(idx(args, 0)())));
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   hexenc<id> ident(rid.inner());
 
@@ -707,12 +707,12 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
       basic_io::stanza st;
       cert_status status = check_cert(app, idx(certs, i));
       cert_value tv;
-      cert_name name = idx(certs, i).name();
+      cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;
 
       decode_base64(idx(certs, i).value, tv);
 
-      rsa_keypair_id keyid = idx(certs, i).key();
+      rsa_keypair_id keyid = idx(certs, i).key;
       signers.insert(keyid);
 
       bool trusted =

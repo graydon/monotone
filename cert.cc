@@ -223,6 +223,11 @@ erase_bogus_certs(vector< revision<cert> > & certs,
 cert::cert()
 {}
 
+cert::cert(std::string const & s)
+{
+  read_cert(s, *this);
+}
+
 cert::cert(hexenc<id> const & ident,
            cert_name const & name,
            base64<cert_value> const & value,
@@ -268,12 +273,12 @@ void
 read_cert(string const & in, cert & t)
 {
   size_t pos = 0;
-  id hash = extract_substring(in, pos,
-                              constants::merkle_hash_length_in_bytes,
-                              "cert hash");
-  id ident = extract_substring(in, pos,
-                               constants::merkle_hash_length_in_bytes,
-                               "cert ident");
+  id hash = id(extract_substring(in, pos,
+                                 constants::merkle_hash_length_in_bytes,
+                                 "cert hash"));
+  id ident = id(extract_substring(in, pos,
+                                  constants::merkle_hash_length_in_bytes,
+                                  "cert ident"));
   string name, val, key, sig;
   extract_variable_length_string(in, name, pos, "cert name");
   extract_variable_length_string(in, val, pos, "cert val");
@@ -439,7 +444,7 @@ check_cert(app_state & app, cert const & t)
 
 // "special certs"
 
-string const branch_cert_name("branch");
+cert_name const branch_cert_name("branch");
 
 void
 get_user_key(rsa_keypair_id & key, app_state & app)
@@ -451,12 +456,8 @@ get_user_key(rsa_keypair_id & key, app_state & app)
       return;
     }
 
-  if (app.opts.branch_name() != "")
-    {
-      cert_value branch(app.opts.branch_name());
-      if (app.lua.hook_get_branch_key(branch, key))
-        return;
-    }
+  if (app.lua.hook_get_branch_key(app.opts.branch_name, key))
+    return;
 
   vector<rsa_keypair_id> all_privkeys;
   app.keys.get_keys(all_privkeys);
@@ -471,14 +472,9 @@ get_user_key(rsa_keypair_id & key, app_state & app)
 
 void
 guess_branch(revision_id const & ident,
-             app_state & app,
-             cert_value & branchname)
+             app_state & app)
 {
-  if ((app.opts.branch_name() != "") && app.opts.branch_given)
-    {
-      branchname = app.opts.branch_name();
-    }
-  else
+  if ((app.opts.branch_name().empty()) || !app.opts.branch_given)
     {
       N(!ident.inner()().empty(),
         F("no branch found for empty revision, "
@@ -498,7 +494,6 @@ guess_branch(revision_id const & ident,
       set<utf8>::iterator i = branches.begin();
       I(i != branches.end());
       app.opts.branch_name = *i;
-      branchname = (*i)();
     }
 }
 
@@ -544,12 +539,12 @@ cert_revision_in_branch(revision_id const & rev,
 
 // "standard certs"
 
-string const date_cert_name = "date";
-string const author_cert_name = "author";
-string const tag_cert_name = "tag";
-string const changelog_cert_name = "changelog";
-string const comment_cert_name = "comment";
-string const testresult_cert_name = "testresult";
+cert_name const date_cert_name("date");
+cert_name const author_cert_name("author");
+cert_name const tag_cert_name("tag");
+cert_name const changelog_cert_name("changelog");
+cert_name const comment_cert_name("comment");
+cert_name const testresult_cert_name("testresult");
 
 
 void
@@ -558,8 +553,8 @@ cert_revision_date_time(revision_id const & m,
                         app_state & app,
                         packet_consumer & pc)
 {
-  string val = boost::posix_time::to_iso_extended_string(t);
-  put_simple_revision_cert(m, date_cert_name, val, app, pc);
+  cert_value val = cert_value(boost::posix_time::to_iso_extended_string(t));
+  put_simple_revision_cert(m, cert_name(date_cert_name), val, app, pc);
 }
 
 void
@@ -590,7 +585,7 @@ cert_revision_author(revision_id const & m,
                      packet_consumer & pc)
 {
   put_simple_revision_cert(m, author_cert_name,
-                           author, app, pc);
+                           cert_value(author), app, pc);
 }
 
 void
@@ -599,7 +594,7 @@ cert_revision_author_default(revision_id const & m,
                              packet_consumer & pc)
 {
   string author;
-  if (!app.lua.hook_get_author(app.opts.branch_name(), author))
+  if (!app.lua.hook_get_author(app.opts.branch_name, author))
     {
       rsa_keypair_id key;
       get_user_key(key, app),
@@ -615,7 +610,7 @@ cert_revision_tag(revision_id const & m,
                   packet_consumer & pc)
 {
   put_simple_revision_cert(m, tag_cert_name,
-                           tagname, app, pc);
+                           cert_value(tagname), app, pc);
 }
 
 
@@ -626,7 +621,7 @@ cert_revision_changelog(revision_id const & m,
                         packet_consumer & pc)
 {
   put_simple_revision_cert(m, changelog_cert_name,
-                           changelog(), app, pc);
+                           cert_value(changelog()), app, pc);
 }
 
 void
@@ -636,7 +631,7 @@ cert_revision_comment(revision_id const & m,
                       packet_consumer & pc)
 {
   put_simple_revision_cert(m, comment_cert_name,
-                           comment(), app, pc);
+                           cert_value(comment()), app, pc);
 }
 
 void
@@ -661,7 +656,7 @@ cert_revision_testresult(revision_id const & r,
                               "tried '0/1' 'yes/no', 'true/false', "
                               "'pass/fail'");
 
-  put_simple_revision_cert(r, testresult_cert_name, lexical_cast<string>(passed), app, pc);
+  put_simple_revision_cert(r, testresult_cert_name, cert_value(lexical_cast<string>(passed)), app, pc);
 }
 
 // Local Variables:

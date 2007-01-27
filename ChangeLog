@@ -1,3 +1,8 @@
+2007-01-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make vocab-from-string constructors explicit. Fix (some) places
+	where variables or parameters were given the wrong type.
+
 2007-01-20  Zack Weinberg  <zackw@panix.com>
 
 	* database.cc (sql_contexts): Delete write-only variable and all

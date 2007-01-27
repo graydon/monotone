@@ -145,7 +145,7 @@ void pack(T const & in, base64< gzip<T> > & out)
                        new Botan::Base64_Encoder);
       pipe.process_msg(in());
       tmp = pipe.read_all_as_string();
-      out = tmp;
+      out = base64< gzip<T> >(tmp);
     }
   catch (Botan::Exception & e)
     {
@@ -165,7 +165,7 @@ void unpack(base64< gzip<T> > const & in, T & out)
                        new Botan::Gzip_Decompression());
       pipe.process_msg(in());
       tmp = pipe.read_all_as_string();
-      out = tmp;
+      out = T(tmp);
     }
   catch (Botan::Exception & e)
     {
@@ -198,7 +198,7 @@ patch(data const & olddata,
 {
   string result;
   apply_delta(olddata(), del(), result);
-  newdata = result;
+  newdata = data(result);
 }
 
 // identifier (a.k.a. sha1 signature) calculation
@@ -212,7 +212,7 @@ calculate_ident(data const & dat,
       Botan::Pipe p(new Botan::Hash_Filter("SHA-160"),
                     new Botan::Hex_Encoder(Botan::Hex_Encoder::Lowercase));
       p.process_msg(dat());
-      ident = p.read_all_as_string();
+      ident = hexenc<id>(p.read_all_as_string());
     }
   catch (Botan::Exception & e)
     {
@@ -226,7 +226,7 @@ calculate_ident(file_data const & dat,
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
-  ident = tmp;
+  ident = file_id(tmp);
 }
 
 void
@@ -235,7 +235,7 @@ calculate_ident(manifest_data const & dat,
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
-  ident = tmp;
+  ident = manifest_id(tmp);
 }
 
 void
@@ -244,7 +244,7 @@ calculate_ident(revision_data const & dat,
 {
   hexenc<id> tmp;
   calculate_ident(dat.inner(), tmp);
-  ident = tmp;
+  ident = revision_id(tmp);
 }
 
 string
