@@ -154,7 +154,7 @@ namespace constants
   size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits
   size_t const netsync_hmac_value_length_in_bytes = 20;      // 160 bits
 
-  string const & netsync_key_initializer = string(netsync_session_key_length_in_bytes, 0);
+  netsync_session_key const netsync_key_initializer(string(netsync_session_key_length_in_bytes, 0));
 
   // attributes
   string const encoding_attribute("mtn:encoding");

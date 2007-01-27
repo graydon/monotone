@@ -39,7 +39,7 @@ project_t::get_branch_list(std::set<utf8> & names)
       for (std::vector<std::string>::iterator i = got.begin();
            i != got.end(); ++i)
         {
-          branches.insert(*i);
+          branches.insert(utf8(*i));
         }
     }
 
@@ -56,7 +56,7 @@ project_t::get_branch_list(utf8 const & glob,
   for (std::vector<std::string>::iterator i = got.begin();
        i != got.end(); ++i)
     {
-      names.insert(*i);
+      names.insert(utf8(*i));
     }
 }
 
@@ -225,7 +225,7 @@ project_t::get_tags(set<tag_t> & tags)
     {
       cert_value value;
       decode_base64(i->inner().value, value);
-      tags.insert(tag_t(i->inner().ident, value(), i->inner().key));
+      tags.insert(tag_t(revision_id(i->inner().ident), utf8(value()), i->inner().key));
     }
   return i;
 }
@@ -242,7 +242,7 @@ project_t::put_tag(revision_id const & id,
 void
 project_t::put_standard_certs(revision_id const & id,
                               utf8 const & branch,
-                              string const & changelog,
+                              utf8 const & changelog,
                               boost::posix_time::ptime const & time,
                               utf8 const & author,
                               packet_consumer & pc)
@@ -259,7 +259,7 @@ project_t::put_standard_certs(revision_id const & id,
 void
 project_t::put_standard_certs_from_options(revision_id const & id,
                                            utf8 const & branch,
-                                           string const & changelog,
+                                           utf8 const & changelog,
                                            packet_consumer & pc)
 {
   put_standard_certs(id,

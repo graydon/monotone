@@ -185,14 +185,14 @@ fully_normalized_path_split(string const & path, bool want_split,
           if (bad_component(s))
             return false;
           if (want_split)
-            sp.push_back(s);
+            sp.push_back(path_component(s));
           break;
         }
       string const & s(path.substr(start, stop - start));
       if (bad_component(s))
         return false;
       if (want_split)
-        sp.push_back(s);
+        sp.push_back(path_component(s));
       start = stop + 1;
     }
   return true;
@@ -242,7 +242,7 @@ is_valid_internal(string const & path)
 void
 internal_string_to_split_path(string const & path, split_path & sp)
 {
-  I(utf8_validate(path));
+  I(utf8_validate(utf8(path)));
   I(!in_bookkeeping_dir(path));
   sp.clear();
   sp.reserve(8);
@@ -292,11 +292,11 @@ file_path::file_path(file_path::source_type type, string const & path)
 {
   string normalized;
   MM(path);
-  I(utf8_validate(path));
+  I(utf8_validate(utf8(path)));
   switch (type)
     {
     case internal:
-      data = path;
+      data = utf8(path);
       break;
     case external:
       normalize_external_path(path, normalized);
@@ -312,7 +312,7 @@ bookkeeping_path::bookkeeping_path(string const & path)
 {
   I(fully_normalized_path(path));
   I(in_bookkeeping_dir(path));
-  data = path;
+  data = utf8(path);
 }
 
 bool
@@ -357,7 +357,7 @@ file_path::file_path(split_path const & sp)
         start = false;
     }
   I(!in_bookkeeping_dir(tmp));
-  data = tmp;
+  data = utf8(tmp);
 }
 
 //
@@ -387,10 +387,10 @@ file_path::split(split_path & sp) const
       stop = s.find('/', start);
       if (stop == string::npos)
         {
-          sp.push_back(s.substr(start));
+          sp.push_back(path_component(s.substr(start)));
           break;
         }
-      sp.push_back(s.substr(start, stop - start));
+      sp.push_back(path_component(s.substr(start, stop - start)));
       start = stop + 1;
     }
 }
@@ -546,7 +546,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
   if (is_absolute_here(other.as_internal()))
     // another system_path.  the normalizing isn't really necessary, but it
     // makes me feel warm and fuzzy.
-    data = normalize_out_dots(other.as_internal());
+    data = utf8(normalize_out_dots(other.as_internal()));
   else
     {
       system_path wr;
@@ -554,7 +554,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
         wr = working_root.get();
       else
         wr = working_root.get_but_unused();
-      data = normalize_out_dots((wr / other.as_internal()).as_internal());
+      data = utf8(normalize_out_dots((wr / other.as_internal()).as_internal()));
     }
 }
 
@@ -570,12 +570,12 @@ static inline string const_system_path(utf8 const & path)
 
 system_path::system_path(string const & path)
 {
-  data = const_system_path(path);
+  data = utf8(const_system_path(utf8(path)));
 }
 
 system_path::system_path(utf8 const & path)
 {
-  data = const_system_path(path);
+  data = utf8(const_system_path(utf8(path)));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -826,7 +826,7 @@ UNIT_TEST(paths, file_path_internal)
 static void check_fp_normalizes_to(char * before, char * after)
 {
   L(FL("check_fp_normalizes_to: '%s' -> '%s'") % before % after);
-  file_path fp = file_path_external(string(before));
+  file_path fp = file_path_external(utf8(before));
   L(FL("  (got: %s)") % fp);
   BOOST_CHECK(fp.as_internal() == after);
   BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
@@ -1217,7 +1217,7 @@ UNIT_TEST(paths, system)
   BOOST_CHECK(system_path(file_path_internal("foo/bar")).as_internal()
               == "/working/root/foo/bar");
   BOOST_CHECK(working_root.used);
-  BOOST_CHECK(system_path(file_path_external(string("foo/bar"))).as_external()
+  BOOST_CHECK(system_path(file_path_external(utf8("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
   file_path a_file_path;
   BOOST_CHECK(system_path(a_file_path).as_external()

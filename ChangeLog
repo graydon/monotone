@@ -1,3 +1,8 @@
+2007-01-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make vocab-from-string constructors explicit. Fix (some) places
+	where variables or parameters were given the wrong type.
+
 2007-01-24  Richard Levitte  <richard@levitte.org>
 
 	* debian/monotone-server.postinst, debian/changelog: update the

@@ -58,9 +58,9 @@ get_log_message_interactively(revision_t const & cs,
   //if the _MTN/log file was non-empty, we'll append the 'magic' line
   utf8 user_log;
   if (user_log_message().length() > 0)
-    user_log = magic_line + "\n" + user_log_message();
+    user_log =utf8( magic_line + "\n" + user_log_message());
   else
-    user_log = user_log_message();
+    user_log = user_log_message;
     
   external user_log_message_external;
   utf8_to_system(user_log, user_log_message_external);
@@ -218,12 +218,11 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   N(rev.edges.size() == 1,
     F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
-  cert_value branchname;
-  guess_branch(r, app, branchname);
+  guess_branch(r, app);
   N(app.opts.branch_name() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(log_message_given, log_message, app,
-                              (FL("disapproval of revision '%s'") % r).str());
+                              utf8((FL("disapproval of revision '%s'") % r).str()));
 
   edge_entry const & old_edge (*rev.edges.begin());
   app.db.get_revision_manifest(edge_old_revision(old_edge),
@@ -248,9 +247,9 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     dbw.consume_revision_data(inv_id, rdat);
 
     app.get_project().put_standard_certs_from_options(inv_id,
-                                                branchname(),
-                                                log_message(),
-                                                dbw);
+                                                      app.opts.branch_name,
+                                                      log_message,
+                                                      dbw);
     guard.commit();
   }
 }
@@ -516,8 +515,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      cert_value b;
-      guess_branch(ident, app, b);
+      guess_branch(ident, app);
 
       I(!app.opts.branch_name().empty());
 
@@ -633,8 +631,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           if (args.size() != 4)
             throw usage(name);
 
-          attr_key a_key = idx(args, 2)();
-          attr_value a_value = idx(args, 3)();
+          attr_key a_key = attr_key(idx(args, 2)());
+          attr_value a_value = attr_value(idx(args, 3)());
 
           node->attrs[a_key] = make_pair(true, a_value);
         }
@@ -649,7 +647,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             }
           else if (args.size() == 3)
             {
-              attr_key a_key = idx(args, 2)();
+              attr_key a_key = attr_key(idx(args, 2)());
               N(node->attrs.find(a_key) != node->attrs.end(),
                 F("Path '%s' does not have attribute '%s'")
                 % path % a_key);
@@ -685,7 +683,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
         }
       else if (args.size() == 3)
         {
-          attr_key a_key = idx(args, 2)();
+          attr_key a_key = attr_key(idx(args, 2)());
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
             cout << path << " : "
@@ -738,17 +736,16 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   N(restricted_rev.is_nontrivial(), F("no changes to commit"));
 
-  cert_value branchname;
   I(restricted_rev.edges.size() == 1);
 
   set<revision_id> heads;
   app.get_project().get_branch_heads(app.opts.branch_name, heads);
   unsigned int old_head_size = heads.size();
 
-  if (app.opts.branch_name() != "")
-    branchname = app.opts.branch_name();
-  else
-    guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
+  // We need the 'if' because guess_branch will try to override any branch
+  // picked up from _MTN/options.
+  if (app.opts.branch_name().empty())
+    guess_branch(edge_old_revision(restricted_rev.edges.begin()), app);
 
   {
     // fail early if there isn't a key
@@ -756,7 +753,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     get_user_key(key, app);
   }
 
-  P(F("beginning commit on branch '%s'") % branchname);
+  P(F("beginning commit on branch '%s'") % app.opts.branch_name);
   L(FL("new manifest '%s'\n"
        "new revision '%s'\n")
     % restricted_rev.new_manifest
@@ -800,7 +797,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   revision_data new_rev;
   write_revision(restricted_rev, new_rev);
 
-  app.lua.hook_validate_commit_message(log_message, new_rev, branchname,
+  app.lua.hook_validate_commit_message(log_message, new_rev, app.opts.branch_name,
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
@@ -890,9 +887,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
     app.get_project().put_standard_certs_from_options(restricted_rev_id,
-                                                branchname(),
-                                                log_message(),
-                                                dbw);
+                                                      app.opts.branch_name,
+                                                      log_message,
+                                                      dbw);
     guard.commit();
   }
 
@@ -986,8 +983,7 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      cert_value b;
-      guess_branch(ident, app, b);
+      guess_branch(ident, app);
 
       I(!app.opts.branch_name().empty());
 

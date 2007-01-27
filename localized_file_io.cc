@@ -60,7 +60,7 @@ read_localized_data(file_path const & path,
     tmp1 = tmp2;
     line_end_convert(db_linesep, tmp1, tmp2);
   }
-  dat = tmp2;
+  dat = data(tmp2);
 }
 
 void
@@ -120,7 +120,7 @@ calculate_ident(file_path const & file,
       Botan::DataSource_Stream infile(file.as_external(), true);
       p.process_msg(infile);
 
-      ident = lowercase(p.read_all_as_string());
+      ident = hexenc<id>(lowercase(p.read_all_as_string()));
     }
 }
 
