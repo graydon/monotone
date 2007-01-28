@@ -1,3 +1,8 @@
+2007-01-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* INSTALL: Drop the libboost-serialization-dev requirement since
+	it is no longer needed.
+
 2007-01-27  Derek Scherger  <derek@echologic.com>
 
 	* configure.ac: add AC_FUNC_MMAP check so that the ifdef for
