@@ -1,3 +1,10 @@
+2007-01-27  Derek Scherger  <derek@echologic.com>
+
+	* configure.ac: add AC_FUNC_MMAP check so that the ifdef for
+	HAVE_MMAP in rcs_file.cc might work
+	* rcs_file.cc: change ifdef for HAVE_FCNTL to HAVE_FCNTL_H to
+	match config.h
+
 2007-01-27  Timothy Brownawell  <tbrownaw@gmail.com>
 
 	Make vocab-from-string constructors explicit. Fix (some) places

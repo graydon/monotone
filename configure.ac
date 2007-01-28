@@ -90,6 +90,7 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 
 # Checks for library functions.
 AC_FUNC_STAT
+AC_FUNC_MMAP
 AC_FUNC_LOCALE_WORKS
 AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint \
 		__cxa_current_exception_type __cxa_demangle])

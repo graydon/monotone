@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef HAVE_FCNTL
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
