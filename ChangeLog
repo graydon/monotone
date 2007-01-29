@@ -1,3 +1,8 @@
+2007-01-29  Thomas Keller  <me@thomaskeller.biz>
+
+	* added some lua hooks to run a script after revs or certs have 
+	arrived via netsync for a particular branch
+
 2007-01-29  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* INSTALL: Drop the libboost-serialization-dev requirement since
