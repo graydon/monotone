@@ -253,7 +253,7 @@ lua_hooks::hook_expand_date(string const & sel,
 }
 
 bool
-lua_hooks::hook_get_branch_key(cert_value const & branchname,
+lua_hooks::hook_get_branch_key(utf8 const & branchname,
                                rsa_keypair_id & k)
 {
   string key;
@@ -264,12 +264,12 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
     .extract_str(key)
     .ok();
 
-  k = key;
+  k = rsa_keypair_id(key);
   return ok;
 }
 
 bool
-lua_hooks::hook_get_author(cert_value const & branchname,
+lua_hooks::hook_get_author(utf8 const & branchname,
                            string & author)
 {
   return Lua(st)
@@ -293,7 +293,7 @@ lua_hooks::hook_edit_comment(external const & commentary,
                  .call(2,1)
                  .extract_str(result_str)
                  .ok();
-  result = result_str;
+  result = external(result_str);
   return is_ok;
 }
 
@@ -437,7 +437,7 @@ lua_hooks::hook_merge3(file_path const & anc_path,
     .call(7,1)
     .extract_str(res)
     .ok();
-  result = res;
+  result = data(res);
   return ok;
 }
 
@@ -788,7 +788,7 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 bool
 lua_hooks::hook_validate_commit_message(utf8 const & message,
                                         revision_data const & new_rev,
-                                        cert_value const & branchname,
+                                        utf8 const & branchname,
                                         bool & validated,
                                         string & reason)
 {

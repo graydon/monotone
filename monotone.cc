@@ -197,7 +197,7 @@ cpp_main(int argc, char ** argv)
         if (prog_name.rfind(".exe") == prog_name.size() - 4)
           prog_name = prog_name.substr(0, prog_name.size() - 4);
         utf8 prog_name_u;
-        system_to_utf8(prog_name, prog_name_u);
+        system_to_utf8(external(prog_name), prog_name_u);
         ui.prog_name = prog_name_u();
         I(!ui.prog_name.empty());
       }

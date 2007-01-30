@@ -518,9 +518,8 @@ LUAEXT(includedirpattern, )
   // directory, iterate over it, skipping subdirs, taking every filename
   // matching the pattern, sorting them and loading in sorted order
   fs::directory_iterator it(locpath);
-  string r(pattern);
-  string n;
-  globish_matcher glob(r, n);
+  utf8 r = utf8(string(pattern));
+  globish_matcher glob(r, utf8());
   vector<fs::path> arr;
   while (it != fs::directory_iterator())
     {

@@ -103,7 +103,7 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
 
   string pattern("");
   if (!app.opts.no_show_encloser)
-    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+    app.lua.hook_get_encloser_pattern(file_path_external(utf8(src_name)), pattern);
 
   make_diff(src_name, dst_name,
             src_id, dst_id,
@@ -170,7 +170,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
     }
   else
     {
-      dat = get_stdin();
+      dat = data(get_stdin());
     }
 
   hexenc<id> ident;

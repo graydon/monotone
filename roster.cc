@@ -2569,7 +2569,7 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane(true);
   basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = pr.buf;
+  dat = data(pr.buf);
 }
 
 
@@ -2580,7 +2580,7 @@ write_roster_and_marking(roster_t const & ros,
 {
   data tmp;
   write_roster_and_marking(ros, mm, tmp, true);
-  dat = tmp;
+  dat = roster_data(tmp);
 }
 
 
@@ -2591,7 +2591,7 @@ write_manifest_of_roster(roster_t const & ros,
   data tmp;
   marking_map mm;
   write_roster_and_marking(ros, mm, tmp, false);
-  dat = tmp;
+  dat = manifest_data(tmp);
 }
 
 void calculate_ident(roster_t const & ros,

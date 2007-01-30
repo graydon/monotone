@@ -322,7 +322,7 @@ read_data(any_path const & p, data & dat)
   pipe.start_msg();
   file >> pipe;
   pipe.end_msg();
-  dat = pipe.read_all_as_string();
+  dat = data(pipe.read_all_as_string());
 }
 
 void read_directory(any_path const & path,
@@ -362,7 +362,7 @@ read_data_stdin(data & dat)
   pipe.start_msg();
   cin >> pipe;
   pipe.end_msg();
-  dat = pipe.read_all_as_string();
+  dat = data(pipe.read_all_as_string());
 }
 
 void

@@ -7,7 +7,7 @@
 
 inline utf8 tilde_expand(utf8 const & path)
 {
-  return tilde_expand(path());
+  return utf8(tilde_expand(path()));
 }
 
 inline void change_current_working_dir(any_path const & to)

@@ -493,7 +493,7 @@ read_pubkey(string const & in,
   size_t pos = 0;
   extract_variable_length_string(in, tmp_id, pos, "pubkey id");
   extract_variable_length_string(in, tmp_key, pos, "pubkey value");
-  id = tmp_id;
+  id = rsa_keypair_id(tmp_id);
   encode_base64(rsa_pub_key(tmp_key), pub);
 }
 

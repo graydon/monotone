@@ -71,7 +71,7 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
     app.opts.branch_name = idx(args, 0);
   }
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branch_name(), heads);
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << "\n";
 }
@@ -263,7 +263,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
         node_t prev_node = base.get_node(path);
         
         // find the attribute in there
-        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
+        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first);
         I(j != prev_node->attrs.end());
         
         // was this dropped before? then ignore it
@@ -280,7 +280,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
           {
             node_t prev_node = base.get_node(path);
             full_attr_map_t::const_iterator j = 
-              prev_node->attrs.find(i->first());
+              prev_node->attrs.find(i->first);
             // attribute not found? this is new
             if (j == prev_node->attrs.end())
               {
@@ -303,7 +303,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
       
     basic_io::stanza st;
     st.push_str_triple(basic_io::syms::attr, i->first(), value);
-    st.push_str_pair(std::string("state"), state);
+    st.push_str_pair(symbol("state"), state);
     pr.print_stanza(st);
   }
   
@@ -1523,7 +1523,6 @@ AUTOMATE(get_content_changed, N_("REV FILE"), options::opts::none)
        i != mark.file_content.end(); ++i)
     {
       basic_io::stanza st;
-      revision_id old_ident = i->inner();
       st.push_hex_pair(basic_io::syms::content_mark, i->inner());
       prt.print_stanza(st);
     }

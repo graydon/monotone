@@ -50,22 +50,22 @@ template<> std::string xform<Botan::Gzip_Decompression>(std::string const &);
 
 template <typename T>
 void encode_base64(T const & in, base64<T> & out)
-{ out = xform<Botan::Base64_Encoder>(in()); }
+{ out = base64<T>(T(xform<Botan::Base64_Encoder>(in()))); }
 
 template <typename T>
 void decode_base64(base64<T> const & in, T & out)
-{ out = xform<Botan::Base64_Decoder>(in()); }
+{ out = T(xform<Botan::Base64_Decoder>(in())); }
 
 
 // hex encoding
 
 template <typename T>
 void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = xform<Botan::Hex_Encoder>(in()); }
+{ out = hexenc<T>(T(xform<Botan::Hex_Encoder>(in()))); }
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
-{ out = xform<Botan::Hex_Decoder>(in()); }
+{ out = T(xform<Botan::Hex_Decoder>(in())); }
 
 inline std::string encode_hexenc(std::string const & in)
 { return xform<Botan::Hex_Encoder>(in); }
@@ -77,11 +77,11 @@ inline std::string decode_hexenc(std::string const & in)
 
 template <typename T>
 void encode_gzip(T const & in, gzip<T> & out)
-{ out = xform<Botan::Gzip_Compression>(in()); }
+{ out = gzip<T>(xform<Botan::Gzip_Compression>(in())); }
 
 template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
-{ out = xform<Botan::Gzip_Decompression>(in()); }
+{ out = T(xform<Botan::Gzip_Decompression>(in())); }
 
 // string variant for netsync
 template <typename T>

@@ -70,13 +70,13 @@ public:
 
   void put_standard_certs(revision_id const & id,
                           utf8 const & branch,
-                          string const & changelog,
+                          utf8 const & changelog,
                           boost::posix_time::ptime const & time,
                           utf8 const & author,
                           packet_consumer & pc);
   void put_standard_certs_from_options(revision_id const & id,
                                        utf8 const & branch,
-                                       string const & changelog,
+                                       utf8 const & changelog,
                                        packet_consumer & pc);
 
   void put_cert(revision_id const & id,

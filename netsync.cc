@@ -562,7 +562,7 @@ session::~session()
        i != written_certs.end(); ++i)
     {
       map<revision_id, vector<cert> >::iterator j;
-      j = revcerts.find(i->ident);
+      j = revcerts.find(revision_id(i->ident));
       if (j == revcerts.end())
         unattached_certs.push_back(*i);
       else
@@ -607,7 +607,7 @@ session::~session()
         {
           cert_value tmp;
           decode_base64(i->value, tmp);
-          app.lua.hook_note_netsync_cert_received(i->ident, i->key,
+          app.lua.hook_note_netsync_cert_received(revision_id(i->ident), i->key,
                                                   i->name, tmp, session_id);
         }
     }
@@ -639,7 +639,7 @@ session::queue_this_cert(hexenc<id> const & c)
 bool
 session::queue_this_file(hexenc<id> const & f)
 {
-  return file_items_sent.find(f) == file_items_sent.end();
+  return file_items_sent.find(file_id(f)) == file_items_sent.end();
 }
 
 void
@@ -720,7 +720,7 @@ session::mk_nonce()
   char buf[constants::merkle_hash_length_in_bytes];
   Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf),
           constants::merkle_hash_length_in_bytes);
-  this->saved_nonce = string(buf, buf + constants::merkle_hash_length_in_bytes);
+  this->saved_nonce = id(string(buf, buf + constants::merkle_hash_length_in_bytes));
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   return this->saved_nonce;
 }
@@ -2031,7 +2031,7 @@ session::process_usher_cmd(utf8 const & msg)
         L(FL("Received greeting from usher: %s") % msg().substr(1));
     }
   netcmd cmdout;
-  cmdout.write_usher_reply_cmd(peer_id, our_include_pattern);
+  cmdout.write_usher_reply_cmd(utf8(peer_id), our_include_pattern);
   write_netcmd_and_try_flush(cmdout);
   L(FL("Sent reply."));
   return true;

@@ -475,7 +475,7 @@ check_certs(app_state & app,
         }
 
       checked_keys[i->inner().key].sigs++;
-      checked_revisions[i->inner().ident].checked_certs.push_back(checked);
+      checked_revisions[revision_id(i->inner().ident)].checked_certs.push_back(checked);
 
       ++ticks;
     }
