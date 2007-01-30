@@ -1,3 +1,25 @@
+2007-01-29  Thomas Keller  <me@thomaskeller.biz>
+
+	* added some lua hooks to run a script after revs or certs have 
+	arrived via netsync for a particular branch
+
+2007-01-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* INSTALL: Drop the libboost-serialization-dev requirement since
+	it is no longer needed.
+
+2007-01-27  Derek Scherger  <derek@echologic.com>
+
+	* configure.ac: add AC_FUNC_MMAP check so that the ifdef for
+	HAVE_MMAP in rcs_file.cc might work
+	* rcs_file.cc: change ifdef for HAVE_FCNTL to HAVE_FCNTL_H to
+	match config.h
+
+2007-01-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make vocab-from-string constructors explicit. Fix (some) places
+	where variables or parameters were given the wrong type.
+
 2007-01-24  Richard Levitte  <richard@levitte.org>
 
 	* debian/monotone-server.postinst, debian/changelog: update the

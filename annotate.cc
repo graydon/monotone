@@ -327,14 +327,14 @@ annotate_context::is_complete() const
 
 static string
 cert_string_value(vector< revision<cert> > const & certs,
-                  string const & name,
+                  cert_name const & name,
                   bool from_start, bool from_end,
                   string const & sep)
 {
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
-      if (i->inner().name() == name)
+      if (i->inner().name == name)
         {
           cert_value tv;
           decode_base64 (i->inner().value, tv);

@@ -19,7 +19,7 @@ OPTION(globals, positionals, true, "--", "")
 OPT(author, "author", utf8, , gettext_noop("override author for commit"))
 #ifdef option_bodies
 {
-  author = arg;
+  author = utf8(arg);
 }
 #endif
 
@@ -450,7 +450,7 @@ OPTION(revision, revision, true, "revision,r",
      gettext_noop("select revision id for operation"))
 #ifdef option_bodies
 {
-  revision_selectors.push_back(arg);
+  revision_selectors.push_back(utf8(arg));
 }
 #endif
 

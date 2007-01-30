@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-01-24 03:36+0100\n"
+"PO-Revision-Date: 2007-01-25 19:52+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -615,10 +615,11 @@ msgstr "NOMEFILE"
 msgid "write file from database to stdout"
 msgstr "copia un file dal database a stdout"
 
+# TODO: boh?
 #: cmd.hh:61
 #, c-format
 msgid "ignored bookkeeping path '%s'"
-msgstr ""
+msgstr "ignorata la directory di contabilità / ad uso interno ‘%s’"
 
 #: cmd.hh:94
 #, c-format
@@ -1015,7 +1016,7 @@ msgstr "[destra]   %s"
 #: cmd_merging.cc:576
 #, c-format
 msgid "[merged] %s"
-msgstr "[unione] %s"
+msgstr "[unione]   %s"
 
 #: cmd_merging.cc:312
 #: cmd_merging.cc:411
@@ -1789,12 +1790,12 @@ msgstr "devi specificare la directory da importare"
 #: cmd_ws_commit.cc:1021
 #, c-format
 msgid "import directory '%s' doesn't exists"
-msgstr ""
+msgstr "la directory di importazione ‘%s’ non esiste"
 
 #: cmd_ws_commit.cc:1022
 #, c-format
 msgid "import directory '%s' is a file"
-msgstr ""
+msgstr "la directory di importazione ‘%s’ è un file"
 
 #: cmd_ws_commit.cc:1069
 msgid "migrate a workspace directory's metadata to the latest format; defaults to the current workspace"
@@ -2215,7 +2216,7 @@ msgstr "non impostato"
 
 #: database.cc:525
 msgid " (not a monotone database)"
-msgstr ""
+msgstr " (non è un database monotone)"
 
 #: database.cc:573
 #: database.cc:604
@@ -3593,16 +3594,16 @@ msgstr "espanso il selettore ‘%s’ in ‘%s’"
 msgid "unknown selector type: %c"
 msgstr "selettore di tipo sconosciuto: ‘%c’"
 
-# TODO: radice di ricerca?
+# TODO: remove \n
 #: selectors.cc:89
 #, c-format
 msgid "selector '%s' is not a valid date\n"
-msgstr ""
+msgstr "il selettore ‘%s’ non è una data valida\n"
 
 #: selectors.cc:95
 #, c-format
 msgid "selector '%s' is not a valid date (%s)"
-msgstr ""
+msgstr "il selettore ‘%s’ non è una data valida (%s)"
 
 # TODO: remove \n
 #: selectors.cc:98
@@ -3663,7 +3664,7 @@ msgstr "%s (troppo nuovo, non utilizzabile)"
 #: schema_migration.cc:895
 #, c-format
 msgid "%s (not a monotone database)"
-msgstr ""
+msgstr "%s (non è un database monotone)"
 
 #: schema_migration.cc:897
 #, c-format
@@ -3702,7 +3703,7 @@ msgstr ""
 #: schema_migration.cc:960
 #, c-format
 msgid "calculating migration..."
-msgstr ""
+msgstr "calcolo i passi necessari per la migrazione…"
 
 #: schema_migration.cc:973
 #, c-format

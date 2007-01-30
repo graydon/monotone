@@ -663,7 +663,7 @@ make_revision_for_workspace(revision_id const & old_rev_id,
   rev.edges.clear();
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   if (!null_id(old_rev_id))
-    rev.new_manifest = fake_id();
+    rev.new_manifest = manifest_id(fake_id());
   rev.made_for = made_for_workspace;
 }
 
@@ -1606,8 +1606,8 @@ build_changesets_from_manifest_ancestry(app_state & app)
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id child, parent;
-      child = i->inner().ident;
-      parent = hexenc<id>(tv());
+      child = manifest_id(i->inner().ident);
+      parent = manifest_id(tv());
 
       u64 parent_node = graph.add_node_for_old_manifest(parent);
       u64 child_node = graph.add_node_for_old_manifest(child);
@@ -1861,7 +1861,7 @@ void calculate_ident(revision_t const & cs,
   hexenc<id> tid;
   write_revision(cs, tmp);
   calculate_ident(tmp, tid);
-  ident = tid;
+  ident = revision_id(tid);
 }
 
 #ifdef BUILD_UNIT_TESTS

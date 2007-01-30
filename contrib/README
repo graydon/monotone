@@ -49,3 +49,6 @@ licenses.
      specification file.
      Both files has comments in the beginning, explaining how the specification
      files should be written.
+
+  -- monotone-run-script-post-netsync.lua: run a script after revs or certs
+     for a particular branch have arrived via netsync

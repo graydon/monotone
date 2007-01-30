@@ -271,13 +271,13 @@ workspace::get_ws_options(utf8 & database_option,
               parser.str(val);
 
               if (opt == "database")
-                database_option = val;
+                database_option = utf8(val);
               else if (opt == "branch")
-                branch_option = val;
+                branch_option = utf8(val);
               else if (opt == "key")
-                key_option = val;
+                key_option = utf8(val);
               else if (opt == "keydir")
-                keydir_option =val;
+                keydir_option = utf8(val);
               else
                 W(F("unrecognized key '%s' in options file %s - ignored")
                   % opt % o_path);
@@ -315,13 +315,13 @@ workspace::set_ws_options(utf8 & database_option,
 
   basic_io::stanza st;
   if (!database_option().empty())
-    st.push_str_pair(string("database"), database_option());
+    st.push_str_pair(symbol("database"), database_option());
   if (!branch_option().empty())
-    st.push_str_pair(string("branch"), branch_option());
+    st.push_str_pair(symbol("branch"), branch_option());
   if (!key_option().empty())
-    st.push_str_pair(string("key"), key_option());
+    st.push_str_pair(symbol("key"), key_option());
   if (!keydir_option().empty())
-    st.push_str_pair(string("keydir"), keydir_option());
+    st.push_str_pair(symbol("keydir"), keydir_option());
 
   basic_io::printer pr;
   pr.print_stanza(st);
@@ -330,7 +330,7 @@ workspace::set_ws_options(utf8 & database_option,
   get_options_path(o_path);
   try
     {
-      write_data(o_path, pr.buf);
+      write_data(o_path, data(pr.buf));
     }
   catch(exception & e)
     {

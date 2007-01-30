@@ -31,6 +31,10 @@ struct packet_consumer;
 struct cert
 {
   cert();
+
+  // This is to make revision<cert> and manifest<cert> work.
+  explicit cert(std::string const & s);
+
   cert(hexenc<id> const & ident,
       cert_name const & name,
       base64<cert_value> const & value,
@@ -89,7 +93,7 @@ void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 
 // Special certs -- system won't work without them.
 
-extern std::string const branch_cert_name;
+extern cert_name const branch_cert_name;
 
 void
 cert_revision_in_branch(revision_id const & ctx,
@@ -108,15 +112,14 @@ get_user_key(rsa_keypair_id & key, app_state & app);
 
 void
 guess_branch(revision_id const & id,
-             app_state & app,
-             cert_value & branchname);
+             app_state & app);
 
-extern std::string const date_cert_name;
-extern std::string const author_cert_name;
-extern std::string const tag_cert_name;
-extern std::string const changelog_cert_name;
-extern std::string const comment_cert_name;
-extern std::string const testresult_cert_name;
+extern cert_name const date_cert_name;
+extern cert_name const author_cert_name;
+extern cert_name const tag_cert_name;
+extern cert_name const changelog_cert_name;
+extern cert_name const comment_cert_name;
+extern cert_name const testresult_cert_name;
 
 void
 cert_revision_date_now(revision_id const & m,

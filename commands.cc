@@ -405,7 +405,7 @@ complete(app_state & app,
   if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
       && str.size() == constants::idlen)
     {
-      completion.insert(revision_id(str));
+      completion.insert(revision_id(hexenc<id>(id(str))));
       if (must_exist)
         N(app.db.revision_exists(*completion.begin()),
           F("no such revision '%s'") % *completion.begin());
@@ -428,7 +428,8 @@ complete(app_state & app,
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     {
-      pair<set<revision_id>::const_iterator, bool> p = completion.insert(revision_id(*i));
+      pair<set<revision_id>::const_iterator, bool> p =
+        completion.insert(revision_id(hexenc<id>(id(*i))));
       P(F("expanded to '%s'") % *(p.first));
     }
 }
@@ -487,17 +488,17 @@ process_commit_message_args(bool & given,
       join_lines(app.opts.message, msg);
       log_message = utf8(msg);
       if (message_prefix().length() != 0)
-        log_message = message_prefix() + "\n\n" + log_message();
+        log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
   else if (app.opts.msgfile_given)
     {
       data dat;
       read_data_for_command_line(app.opts.msgfile, dat);
-      external dat2 = dat();
+      external dat2 = external(dat());
       system_to_utf8(dat2, log_message);
       if (message_prefix().length() != 0)
-        log_message = message_prefix() + "\n\n" + log_message();
+        log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
   else if (message_prefix().length() != 0)

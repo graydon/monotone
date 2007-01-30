@@ -118,10 +118,8 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
 
   transaction_guard guard(app.db);
 
-  hexenc<id> ident;
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
-  ident = rid.inner();
 
   cert_name name;
   internalize_cert_name(idx(args, 1), name);
@@ -136,7 +134,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
     val = cert_value(get_stdin());
 
   packet_db_writer dbw(app);
-  app.get_project().put_cert(ident, name, val, dbw);
+  app.get_project().put_cert(rid, name, val, dbw);
   guard.commit();
 }
 
@@ -224,10 +222,9 @@ CMD(approve, N_("review"), N_("REVISION"),
   revision_id r;
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
-  cert_value branchname;
-  guess_branch(r, app, branchname);
+  guess_branch(r, app);
   N(app.opts.branch_name() != "", F("need --branch argument for approval"));
-  cert_revision_in_branch(r, app.opts.branch_name(), app, dbw);
+  app.get_project().put_revision_in_branch(r, app.opts.branch_name, dbw);
 }
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
@@ -238,7 +235,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 
   utf8 comment;
   if (args.size() == 2)
-    comment = idx(args, 1)();
+    comment = idx(args, 1);
   else
     {
       external comment_external;

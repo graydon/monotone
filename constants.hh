@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string>
 #include "numeric_vocab.hh"
+#include "vocab.hh"
 
 namespace constants
 {
@@ -156,7 +157,7 @@ namespace constants
   static size_t const sha1_digest_length = 20; // 160 bits
 
   // netsync session key default initializer
-  extern std::string const & netsync_key_initializer;
+  extern netsync_session_key const netsync_key_initializer;
 
   // attributes
   extern std::string const encoding_attribute;
