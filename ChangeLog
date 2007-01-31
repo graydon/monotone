@@ -1,5 +1,9 @@
 2007-01-30  Nathaniel Smith  <njs@pobox.com>
 
+	* po/es.po: Fix a format string that was breaking the build.
+
+2007-01-30  Nathaniel Smith  <njs@pobox.com>
+
 	* vocab.cc (verify(hexenc<id>)): Rename from verify_full.  Now
 	actually runs (!!!).
 	(verify_hexenc_id): New test.
