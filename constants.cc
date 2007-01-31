@@ -85,7 +85,7 @@ namespace constants
   "0123456789abcdef"
   ;
 
-  string const regex_legal_id_bytes("([[:xdigit:]]{40})");
+  string const regex_legal_id_bytes("([0-9a-f]{40})");
 
   // all the ASCII characters (bytes) which are legal in an ACE string
   char const * const legal_ace_bytes =
