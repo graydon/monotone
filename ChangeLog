@@ -1,3 +1,13 @@
+2007-01-30  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc (verify(hexenc<id>)): Rename from verify_full.  Now
+	actually runs (!!!).
+	(verify_hexenc_id): New test.
+	* vocab.hh (is_xdigit): Disallow capitalized hex digits, above
+	test now passes.
+	* constants.cc (regex_legal_id_bytes): No capital hex digits here,
+	either!
+
 2007-01-24  Richard Levitte  <richard@levitte.org>
 
 	* debian/monotone-server.postinst, debian/changelog: update the
