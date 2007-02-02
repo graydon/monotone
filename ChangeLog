@@ -1,3 +1,20 @@
+2007-02-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* roster_delta.{cc|hh}
+	(get_markings_from_roster_delta, get_content_from_roster_delta):
+	New functions. Both try to extract node-specific information from
+	a single roster delta.
+
+	* database.{cc|hh} (get_markings, get_file_content): New functions
+	using roster deltas to find the set of markings resp. the content
+	hash for a given node and revision id.
+
+	* annotate.cc (do_annotate_node): Utilize the new methods. Store
+	the set of markings and the file content hash in the work_unit for
+	the corresponding revision, to avoid fetching the same information
+	twice. Don't fetch content hash or markings for marked ancestors,
+	as we can deduce that information from the descendants.
+
 2007-02-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*: Import SQLite 3.3.12.

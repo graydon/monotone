@@ -491,6 +491,61 @@ apply_roster_delta(roster_delta const & del,
   d.apply(roster, markings);
 }
 
+// Extract the marking for one node from the roster delta, or return false
+// if they are not contained in that delta
+bool
+get_markings_from_roster_delta(roster_delta const & del,
+                               node_id const & nid,
+                               marking_t & markings)
+{
+  // FIXME: factor out this block 
+  basic_io::input_source src(del.inner()(), "roster_delta");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  roster_delta_t d;
+  parse_roster_delta_t(pars, d);
+
+  std::map<node_id, marking_t>::iterator i = d.markings_changed.find(nid);
+  if (i != d.markings_changed.end())
+    {
+      markings = i->second;
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+// Extract the content hash for one node from the roster delta. Return false
+// if this delta doesn't contain information about this node.
+bool
+get_content_from_roster_delta(roster_delta const & del,
+                              node_id const & nid,
+                              file_id & content)
+{
+  // FIXME: factor out this block 
+  basic_io::input_source src(del.inner()(), "roster_delta");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  roster_delta_t d;
+  parse_roster_delta_t(pars, d);
+
+  std::map<node_id, file_id>::const_iterator i = d.deltas_applied.find(nid);
+  if (i != d.deltas_applied.end())
+    {
+      content = i->second;
+      return true;
+    }
+
+  if (d.nodes_deleted.find(nid) != d.nodes_deleted.end())
+    {
+      content = file_id();
+      return true;
+    }
+  
+  return false;
+}
 
 #ifdef BUILD_UNIT_TESTS
 
