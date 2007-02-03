@@ -503,7 +503,8 @@ walk_tree_recursive(fs::path const & absolute,
       entry.normalize();
       rel_entry.normalize();
 
-      if (bookkeeping_path::is_bookkeeping_path(rel_entry.string()))
+      // FIXME BUG: this utf8() cast is a total lie
+      if (bookkeeping_path::internal_string_is_bookkeeping_path(utf8(rel_entry.string())))
         {
           L(FL("ignoring book keeping entry %s") % rel_entry.string());
           continue;

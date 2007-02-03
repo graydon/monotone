@@ -661,7 +661,7 @@ editable_working_tree::detach_node(split_path const & src)
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         move_file(src_pth / (*i)(), dst_pth / (*i)());
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
-        if (!bookkeeping_path::is_bookkeeping_path((*i)()))
+        if (!bookkeeping_path::internal_string_is_bookkeeping_path(*i))
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
       root_dir_attached = false;
     }
@@ -762,12 +762,12 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
       read_directory(src_pth, files, dirs);
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         {
-          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
           move_file(src_pth / (*i)(), dst_pth / (*i)());
         }
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
-          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
         }
       delete_dir_shallow(src_pth);

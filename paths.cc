@@ -316,11 +316,16 @@ bookkeeping_path::bookkeeping_path(string const & path)
 }
 
 bool
-bookkeeping_path::is_bookkeeping_path(string const & path)
+bookkeeping_path::external_string_is_bookkeeping_path(utf8 const & path)
 {
+  // FIXME: this charset casting everywhere is ridiculous
   string normalized;
-  normalize_external_path(path, normalized);
-  return in_bookkeeping_dir(normalized);
+  normalize_external_path(path(), normalized);
+  return internal_string_is_bookkeeping_path(utf8(normalized));
+}
+bool bookkeeping_path::internal_string_is_bookkeeping_path(utf8 const & path)
+{
+  return in_bookkeeping_dir(path());
 }
 
 ///////////////////////////////////////////////////////////////////////////
