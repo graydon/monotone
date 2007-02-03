@@ -10,7 +10,7 @@ check(grep('foo$', "stdout"), 0, false, false)
 check(grep('foo/a$', "stdout"), 0, false, false)
 check(grep('foo/b$', "stdout"), 0, false, false)
 
-xfail(indir("foo", mtn("ls", "unknown")), 0, true, false)
+check(indir("foo", mtn("ls", "unknown")), 0, true, false)
 check(grep('foo$', "stdout"), 0, false, false)
 check(grep('foo/a$', "stdout"), 0, false, false)
 check(grep('foo/b$', "stdout"), 0, false, false)

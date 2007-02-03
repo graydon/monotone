@@ -10,7 +10,7 @@ names = {"_mtn", "_mtN", "_mTn", "_Mtn", "_MTn", "_MtN", "_mTN", "_MTN"}
 -- bookkeeping files are an error for add
 for _,i in pairs(names) do if not exists(i) then writefile(i) end end
 for _,i in pairs(names) do
-  check(mtn("add", i), 0, false, true)
+  check(mtn("add", i), 1, false, true)
   check(qgrep(i, "stderr"))
 end
 check(mtn("ls", "known"), 0, true, false)
@@ -28,7 +28,7 @@ for _,i in pairs(names) do
   writefile(i.."/foo", "")
 end
 for _,i in pairs(names) do
-  check(mtn("add", i), 0, false, true)
+  check(mtn("add", i), 1, false, true)
   check(qgrep(i, "stderr"))
 end
 check(mtn("ls", "known"), 0, true, false)
