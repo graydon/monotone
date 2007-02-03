@@ -325,7 +325,7 @@ Nothing for now."
     (when (get-buffer-process mtn-buf)
       (error "Monotone is currently running"))
     ;; prep the buffer for output
-    (toggle-read-only -1)
+    (setq buffer-read-only nil)
     (erase-buffer)
     ;;(buffer-disable-undo (current-buffer))
     (setq default-directory mtn-top)
@@ -513,7 +513,7 @@ With ARG of 0, clear default server and collection."
     (when (not (equal (current-buffer) buf))
       (switch-to-buffer-other-window buf))
     (set-buffer buf)
-    (toggle-read-only -1)
+    (setq buffer-read-only nil)
     ;; Have the contents been commited?
     (when (eq monotone-commit-edit-status 'started)
       (message "Continuing commit message already started."))
