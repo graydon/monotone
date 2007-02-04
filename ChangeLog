@@ -1,3 +1,12 @@
+2007-02-04  Ralf S. Engelschall  <rse@engelschall.com>
+
+	(via Richard Levitte  <richard@levitte.org>)
+	* mtn.1: Fix two typos.
+	* std_hooks.lua: Add support for a "last resort" merging via GNU
+	diffutils' diff3/sdiff (it first shows the 3-way diff via diff3
+	and then allows interactive 2-way merging via sdiff -- a little
+	bit similar to what the FreeBSD mergemaster script does).
+
 2007-02-01  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* sqlite/*: Import SQLite 3.3.12.

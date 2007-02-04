@@ -458,6 +458,48 @@ mergers.rcsmerge = {
    wanted = function () return os.getenv("MTN_RCSMERGE") ~= nil end
 }
 
+mergers.diffutils = {
+   cmd = function (tbl)
+      local ret = execute(
+          "diff3",
+          "--merge",
+          "--label", string.format("%s [left]",     tbl.left_path ),
+          "--label", string.format("%s [ancestor]", tbl.anc_path  ),
+          "--label", string.format("%s [right]",    tbl.right_path),
+          tbl.lfile,
+          tbl.afile,
+          tbl.rfile
+      )
+      if (ret ~= 0) then
+         io.write(gettext("Error running GNU diffutils 3-way difference tool 'diff3'\n"))
+         return false
+      end
+      local ret = execute(
+          "sdiff",
+          "--diff-program=diff",
+          "--suppress-common-lines",
+          "--minimal",
+          "--output", tbl.outfile,
+          tbl.lfile,
+          tbl.rfile
+      )
+      if (ret == 2) then
+         io.write(gettext("Error running GNU diffutils 2-two merging tool 'sdiff'\n"))
+         return false
+      end
+      return tbl.outfile
+   end,
+   available =
+      function ()
+          return program_exists_in_path("diff3") and
+                 program_exists_in_path("sdiff");
+      end,
+   wanted =
+      function ()
+           return true
+      end
+}
+
 mergers.emacs = {
    cmd = function (tbl)
       local emacs
@@ -592,7 +634,7 @@ function program_exists_in_path(program)
 end
 
 function get_preferred_merge3_command (tbl)
-   local default_order = {"kdiff3", "xxdiff", "opendiff", "tortoise", "emacs", "vim", "meld"}
+   local default_order = {"kdiff3", "xxdiff", "opendiff", "tortoise", "emacs", "vim", "meld", "diffutils"}
    local function existmerger(name)
       local m = mergers[name]
       if type(m) == "table" and m.available(tbl) then
