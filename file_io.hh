@@ -94,7 +94,7 @@ class tree_walker
 {
 public:
   // returns true if the directory should be descended into
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();
 };
