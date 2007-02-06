@@ -1648,7 +1648,7 @@ AUTOMATE(put_file, N_("[BASE-ID] CONTENTS"), options::opts::none)
 
 // Name: put_revision
 // Arguments:
-//   single edge specification (part of a full revision)
+//   revision-data
 // Added in: 4.1
 // Purpose:
 //   Store a revision into the database.
@@ -1660,33 +1660,31 @@ AUTOMATE(put_revision, N_("SINGLE-EDGE-DATA"), options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);
+
   revision_t rev;
+  read_revision(revision_data(idx(args,0)()),rev);
 
-  basic_io::input_source source(idx(args,0)(),"automate put_revision's 1st argument");
-  basic_io::tokenizer tokenizer(source);
-  basic_io::parser parser(tokenizer);
-
+  // recalculate manifest
   temp_node_id_source nis;
-  // I chose a single edge variant since this was much more simple to code
-  // and sufficient to my needs.
-  // make this a loop if you need to create merge revisions
-  { boost::shared_ptr<cset> cs(new cset());
-    MM(*cs);
-    // like revision::parse_edge
-    parser.esym(symbol("old_revision"));
-    string tmp;
-    parser.hex(tmp);
-    revision_id old_rev=revision_id(tmp);
-    parse_cset(parser, *cs);
-
+  rev.new_manifest=manifest_id();
+  for (edge_map::const_iterator e=rev.edges.begin(); e!=rev.edges.end(); ++e)
+  {
     // calculate new manifest
     roster_t old_roster;
-    if (!null_id(old_rev)) app.db.get_roster(old_rev, old_roster);
+    if (!null_id(e->first)) app.db.get_roster(e->first, old_roster);
     roster_t new_roster=old_roster;
     editable_roster_base eros(new_roster,nis);
-    cs->apply_to(eros);
-    calculate_ident(new_roster, rev.new_manifest);
-    safe_insert(rev.edges, std::make_pair(old_rev, cs));
+    e->second->apply_to(eros);
+    if (null_id(rev.new_manifest))
+      // first edge, initialize manifest
+      calculate_ident(new_roster, rev.new_manifest);
+    else
+      // following edge, make sure that all csets end at the same manifest
+    {
+      manifest_id calculated;
+      calculate_ident(new_roster, calculated);
+      I(calculated==rev.new_manifest);
+    }
   }
 
   revision_id id;

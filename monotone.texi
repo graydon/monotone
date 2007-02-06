@@ -7413,12 +7413,12 @@ exits with status 1.
 
 @end table
 
-@item mtn automate put_revision @var{change-set-data}
+@item mtn automate put_revision @var{revision-data}
 
 @table @strong 
 @item Arguments:
 
-@var{change-set-data} is one changeset part of a revision. See example
+@var{revision-data} is the new revision. See example
 below.
 
 @item Added in:
@@ -7433,6 +7433,10 @@ Workspace-less commit. Normally used via @command{automate stdio}.
 
 @smallexample
 @group
+format_version "1"
+
+new_manifest [0000000000000000000000000000000000000004]
+
 old_revision []
 
 add_dir ""

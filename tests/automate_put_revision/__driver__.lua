@@ -1,6 +1,6 @@
 mtn_setup()
 
-edge = "old_revision []\n\nadd_dir \"\"\n\nadd_file \"foo\"\n content [5bf1fd927dfb8679496a2e6cf00cbe50c1c87145]\n"
+edge = "format_version \"1\"\n\nnew_manifest [0000000000000000000000000000000000000004]\n\nold_revision []\n\nadd_dir \"\"\n\nadd_file \"foo\"\n content [5bf1fd927dfb8679496a2e6cf00cbe50c1c87145]\n"
 
 check(mtn("automate", "put_file", "blah"), 0, true, false)
 canonicalize("stdout")
