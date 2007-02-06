@@ -531,19 +531,33 @@ get_content_from_roster_delta(roster_delta const & del,
   roster_delta_t d;
   parse_roster_delta_t(pars, d);
 
-  std::map<node_id, file_id>::const_iterator i = d.deltas_applied.find(nid);
+  roster_delta_t::deltas_applied_t::const_iterator i = d.deltas_applied.find(nid);
   if (i != d.deltas_applied.end())
     {
       content = i->second;
       return true;
     }
 
+  // special case 1: the node was deleted, so we know for sure it's not
+  // there anymore in this roster
   if (d.nodes_deleted.find(nid) != d.nodes_deleted.end())
     {
       content = file_id();
       return true;
     }
-  
+
+  // special case 2: the node was added, so we need to get the current
+  // content hash from the add stanza
+  for (roster_delta_t::files_added_t::const_iterator j = d.files_added.begin();
+       j != d.files_added.end(); ++j)
+    {
+      if (j->second.first == nid)
+        {
+          content = j->second.second;
+          return true;
+        }
+    }
+   
   return false;
 }
 
