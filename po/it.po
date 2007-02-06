@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-01-25 19:52+0100\n"
-"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
+"PO-Revision-Date: 2007-02-06 01:08+0100\n"
+"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -241,7 +241,7 @@ msgstr "REV1 FILE REV2"
 #: basic_io.cc:33
 #, c-format
 msgid "parsing a %s at %d:%d:E: %s"
-msgstr ""
+msgstr "analizzo un ‘%s’ in %d:%d:E: ‘%s’"
 
 #: cert.cc:82
 #, c-format
@@ -2687,7 +2687,7 @@ msgstr "specificatore di ruolo %d sconosciuto"
 #: netio.hh:59
 #, c-format
 msgid "need %d bytes to decode %s at %d, only have %d"
-msgstr ""
+msgstr "necessito %d bytes per decodificare ‘%s’, ne ho solo %d"
 
 # TODO: come tradurre "datum"?
 #: netio.hh:87
@@ -3371,7 +3371,7 @@ msgstr "manca un requisito: la post-delta del file ‘%s’"
 #: packet.cc:201
 #, c-format
 msgid "cert revision '%s' does not exist in db"
-msgstr "la revisione %s non è presente in database"
+msgstr "la revisione ‘%s’ non è presente in database"
 
 #: packet.cc:203
 #, c-format
@@ -3450,19 +3450,19 @@ msgstr "etichette"
 #: restrictions.cc:77
 #, c-format
 msgid "conflicting include/exclude on path '%s'"
-msgstr ""
+msgstr "conflitto include/esclude nel percorso ‘%s’"
 
 #: restrictions.cc:103
 #: restrictions.cc:141
 #, c-format
 msgid "restriction includes unknown path '%s'"
-msgstr ""
+msgstr "restrizione include il percorso sconosciuto ‘%s’"
 
 #: restrictions.cc:114
 #: restrictions.cc:155
 #, c-format
 msgid "restriction excludes unknown path '%s'"
-msgstr ""
+msgstr "restrizione esclude il percorso sconosciuto ‘%s’"
 
 #: restrictions.cc:118
 #: restrictions.cc:159
@@ -3834,7 +3834,7 @@ msgstr "impossibile aprire il file di log ‘%s’"
 #: uri.cc:63
 #, c-format
 msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
-msgstr ""
+msgstr "La sintassi URI non è valida. Forse hai usato una URI scp-style?"
 
 # TODO: verificare che 'testresult' sia il nome del certificato
 #: update.cc:71
@@ -3903,7 +3903,7 @@ msgstr ""
 #: work.cc:282
 #, c-format
 msgid "unrecognized key '%s' in options file %s - ignored"
-msgstr ""
+msgstr "chiave sconosciuta ‘%s’ nel file opzioni ‘%s’ - ignorata"
 
 #: work.cc:289
 #, c-format
@@ -4139,6 +4139,11 @@ msgid ""
 "once you have done this, you will not be able to use the workspace\n"
 "with versions of monotone older than %s."
 msgstr ""
+"per usare questo spazio di lavoro con questa versione di monotone, il suo metadata\n"
+"deve migrare dal formato %d al formato %d, usando il comando\n"
+"'%s migrate_workspace'.\n"
+"una volta fatto questo, non potrai più usare lo spazio di lavoro\n"
+"con versioni di monotone più vecchie di ‘%s’."
 
 #: work_migration.cc:135
 #: work_migration.cc:263
