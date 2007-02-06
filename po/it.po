@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-02-06 01:08+0100\n"
+"PO-Revision-Date: 2007-02-06 16:06+0100\n"
 "Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -1780,7 +1780,7 @@ msgstr "DIRECTORY"
 
 #: cmd_ws_commit.cc:969
 msgid "import the contents of the given directory tree into a given branch"
-msgstr ""
+msgstr "importa i contenuti di un dato albero di directory in un ramo dato"
 
 #: cmd_ws_commit.cc:980
 #, c-format
@@ -2169,6 +2169,8 @@ msgid ""
 "database %s lacks some cached data\n"
 "run '%s db regenerate_caches' to restore use of this database"
 msgstr ""
+"il database ‘%s’ manca di alcuni dati in cache\n"
+"lancia %s db regenerate_caches' per ripristinare l'uso di questo database"
 
 #: database.cc:194
 #, c-format
@@ -2959,7 +2961,7 @@ msgstr "scambio con ‘%s’ avvenuto con successo"
 #: netsync.cc:2476
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
-msgstr ""
+msgstr "peer ‘%s’ disconnesso dopo averli informati dell'errore"
 
 #: netsync.cc:2481
 #, c-format
@@ -2984,32 +2986,32 @@ msgstr "errore di protocollo processando peer ‘%s’: ‘%s’, mi scollego"
 #: netsync.cc:2627
 #, c-format
 msgid "peer %s read failed in working state (error)"
-msgstr ""
+msgstr "lettura del peer ‘%s’ fallita durante il lavoro (errore)"
 
 #: netsync.cc:2632
 #, c-format
 msgid "peer %s read failed in shutdown state (possibly client misreported error)"
-msgstr ""
+msgstr "lettura del peer ‘%s’ fallita durante la chiusura (errore forse mal trasmesso al cliente)"
 
 #: netsync.cc:2638
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
-msgstr ""
+msgstr "lettura del peer ‘%s’ fallita durante la conferma (successo)"
 
 #: netsync.cc:2659
 #, c-format
 msgid "peer %s write failed in working state (error)"
-msgstr ""
+msgstr "scrittura del peer ‘%s’ fallita durante il lavoro (errore)"
 
 #: netsync.cc:2664
 #, c-format
 msgid "peer %s write failed in shutdown state (possibly client misreported error)"
-msgstr ""
+msgstr "scrittura del peer ‘%s’ fallita durante la chiusura (errore forse mal trasmesso al cliente)"
 
 #: netsync.cc:2670
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
-msgstr ""
+msgstr "scrittura del peer ‘%s’ fallita durante la conferma (successo)"
 
 # TODO: "mi scollego", "sconnessione in corso", o che? (da cambiare in tutti)
 #: netsync.cc:2697
@@ -3181,7 +3183,7 @@ msgstr "durante la conversione al formato con roster, elimina gli attributi con 
 
 #: options_list.hh:228
 msgid "don't perform the operation, just show what would have happened"
-msgstr ""
+msgstr "non eseguo l'operazione, solo mostro cosa dovrebbe essere successo"
 
 #: options_list.hh:236
 msgid "file to dump debugging log to, on failure"
@@ -3189,7 +3191,7 @@ msgstr "file su cui salvare i log di debug (in caso di fallimento)"
 
 #: options_list.hh:245
 msgid "leave out anything described by its argument"
-msgstr ""
+msgstr "ometto qualunque cosa descritta dal suo argomento"
 
 #: options_list.hh:253
 msgid "perform the associated file operation"
@@ -3205,7 +3207,7 @@ msgstr "mostra il messaggio di aiuto"
 
 #: options_list.hh:277
 msgid "include anything described by its argument"
-msgstr ""
+msgstr "includo qualunque cosa descritta dal suo argomento"
 
 #: options_list.hh:285
 msgid "set key for signatures"
@@ -3302,7 +3304,7 @@ msgstr "imposta lo stile del ticker (count|dot|none)"
 #: options_list.hh:485
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
-msgstr ""
+msgstr "l'argomento deve essere ‘none’, ‘dot’ o ‘count’"
 
 #: options_list.hh:489
 msgid "revision(s) to start logging at"
@@ -4152,7 +4154,10 @@ msgid ""
 "this version of monotone only understands workspace metadata\n"
 "in formats 0 through %d.  your workspace is in format %d.\n"
 "you need a newer version of monotone to use this workspace."
-msgstr "questa versione di monotone capisce gli spazi di lavoro con metadatinei formati da 0 a %d.  il tuo spazio di lavoro è in formato %d.ti serve una versione di monotone più recente per usarlo."
+msgstr ""
+"questa versione di monotone capisce gli spazi di lavoro con metadati\n"
+"nei formati da 0 a %d.  il tuo spazio di lavoro è in formato %d.\n"
+"ti serve una versione di monotone più recente per usarlo."
 
 #: work_migration.cc:164
 #, c-format
