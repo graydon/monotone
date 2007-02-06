@@ -114,13 +114,13 @@ changes_summary::print(ostream & os, size_t max_cols) const
 
   if (! cs.nodes_deleted.empty())
     {
-      os << "Deleted entries:" << "\n";
+      os << _("Deleted entries:") << "\n";
       print_indented_set(os, cs.nodes_deleted, max_cols);
     }
 
   if (! cs.nodes_renamed.empty())
     {
-      os << "Renamed entries:" << "\n";
+      os << _("Renamed entries:") << "\n";
       for (map<split_path, split_path>::const_iterator
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); i++)
@@ -135,13 +135,13 @@ changes_summary::print(ostream & os, size_t max_cols) const
              i = cs.files_added.begin();
            i != cs.files_added.end(); ++i)
         tmp.insert(i->first);
-      os << "Added files:" << "\n";
+      os << _("Added files:") << "\n";
       print_indented_set(os, tmp, max_cols);
     }
 
   if (! cs.dirs_added.empty())
     {
-      os << "Added directories:" << "\n";
+      os << _("Added directories:") << "\n";
       print_indented_set(os, cs.dirs_added, max_cols);
     }
 
@@ -152,7 +152,7 @@ changes_summary::print(ostream & os, size_t max_cols) const
              i = cs.deltas_applied.begin();
            i != cs.deltas_applied.end(); ++i)
         tmp.insert(i->first);
-      os << "Modified files:" << "\n";
+      os << _("Modified files:") << "\n";
       print_indented_set(os, tmp, max_cols);
     }
 
@@ -169,7 +169,7 @@ changes_summary::print(ostream & os, size_t max_cols) const
            i != cs.attrs_set.end(); ++i)
         tmp.insert(i->first.first);
 
-      os << "Modified attrs:" << "\n";
+      os << _("Modified attrs:") << "\n";
       print_indented_set(os, tmp, max_cols);
     }
 }
