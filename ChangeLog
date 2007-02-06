@@ -1,3 +1,9 @@
+2007-02-05  Lapo Luchini  <lapo@lapo.it>
+
+	* cmd_diff_log.cc: Added a few missing _() calls.
+	* po/it.po: Updated and translated.
+
+
 2007-02-05  Derek Scherger  <derek@echologic.com>
 
 	* file_io.{cc,hh} (walk_tree_recursive, tree_walker::visit_dir,
