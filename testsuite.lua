@@ -702,4 +702,4 @@ table.insert(tests, "missing_empty_dir")
 table.insert(tests, "checkout_clobbers_workspace")
 table.insert(tests, "update_clobbers_workspace")
 table.insert(tests, "ls_unknown_in_subdir")
-
+table.insert(tests, "magic__MTN_in_restrictions")
