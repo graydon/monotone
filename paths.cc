@@ -1292,6 +1292,92 @@ UNIT_TEST(paths, ordering)
   test_a_path_ordering("fallanoooo_not_otherwise_mentioned_and_smaller", "fallanopic_not_otherwise_mentioned");
 }
 
+UNIT_TESTS(paths, test_internal_string_is_bookkeeping_path)
+{
+  char const * yes[] = {"_MTN",
+                        "_MTN/foo",
+                        "_mtn/Foo",
+                        0 };
+  char const * no[] = {"foo/_MTN",
+                       "foo/bar",
+                       0 };
+  for (char const ** c = yes; *c; ++c)
+    BOOST_CHECK(bookkeeping_path
+                ::internal_string_is_bookkeeping_path(utf8(std::string(c))));
+  for (char const ** c = no; *c; ++c)
+    BOOST_CHECK(!bookkeeping_path
+                 ::internal_string_is_bookkeeping_path(utf8(std::string(c))));
+}
+
+UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix_none)
+{
+  initial_rel_path.unset();
+  initial_rel_path.set(fs::path(), true);
+
+  char const * yes[] = {"_MTN",
+                        "_MTN/foo",
+                        "_mtn/Foo",
+                        "_MTN/foo/..",
+                        0 };
+  char const * no[] = {"foo/_MTN",
+                       "foo/bar",
+                       "_MTN/..",
+                       0 };
+  for (char const ** c = yes; *c; ++c)
+    BOOST_CHECK(bookkeeping_path
+                ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+  for (char const ** c = no; *c; ++c)
+    BOOST_CHECK(!bookkeeping_path
+                 ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+}
+
+UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix_a_b)
+{
+  initial_rel_path.unset();
+  initial_rel_path.set(fs::path("a/b"), true);
+
+  char const * yes[] = {"../../_MTN",
+                        "../../_MTN/foo",
+                        "../../_mtn/Foo",
+                        "../../_MTN/foo/..",
+                        "../../foo/../_MTN/foo",
+                        0 };
+  char const * no[] = {"foo/_MTN",
+                       "foo/bar",
+                       "_MTN",
+                       "../../foo/_MTN",
+                       0 };
+  for (char const ** c = yes; *c; ++c)
+    BOOST_CHECK(bookkeeping_path
+                ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+  for (char const ** c = no; *c; ++c)
+    BOOST_CHECK(!bookkeeping_path
+                 ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+}
+
+UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix__MTN)
+{
+  initial_rel_path.unset();
+  initial_rel_path.set(fs::path("_MTN"), true);
+
+  char const * yes[] = {".",
+                        "foo",
+                        "../_MTN/foo/..",
+                        "../_mtn/foo",
+                        "../foo/../_MTN/foo",
+                        0 };
+  char const * no[] = {"../foo",
+                       "../foo/bar",
+                       "../foo/_MTN",
+                       0 };
+  for (char const ** c = yes; *c; ++c)
+    BOOST_CHECK(bookkeeping_path
+                ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+  for (char const ** c = no; *c; ++c)
+    BOOST_CHECK(!bookkeeping_path
+                 ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+}
+
 #endif // BUILD_UNIT_TESTS
 
 // Local Variables:
