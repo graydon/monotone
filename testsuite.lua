@@ -706,4 +706,4 @@ table.insert(tests, "automate_db_set,get")
 table.insert(tests, "automate_cert")
 table.insert(tests, "automate_put_file")
 table.insert(tests, "automate_put_revision")
-
+table.insert(tests, "test_a_merge_8")

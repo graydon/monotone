@@ -24,7 +24,7 @@ copy("stderr", "ignorederr")
 
 check(not qgrep("foo", "ignored"))
 check(qgrep("bar", "ignored"))
-check(qgrep("xyzzy", "ignored"))
+check(not qgrep("xyzzy", "ignored"))
 check(qgrep("WARNING", "ignorederr"))
 check(grep("-qv", "WARNING|ignoring", "ignorederr"), 1)
 
