@@ -632,6 +632,7 @@ CMD(merge_into_workspace, N_("tree"),
 
   complete(app, idx(args, 0)(), right_id);
   app.db.get_roster(right_id, right);
+  N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
   set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   app.db.get_uncommon_ancestors(left_id, right_id,
@@ -668,7 +669,7 @@ CMD(merge_into_workspace, N_("tree"),
   // perform_content_update, because content changes have been dropped.
   cset update;
   make_cset(*left.first, merge_result.roster, update);
-  
+
   // small race condition here...
   app.work.perform_content_update(update, wca);
   app.work.put_work_rev(merged_rev);
