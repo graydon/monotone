@@ -6,6 +6,7 @@
 
 using Netxx::Stream;
 using boost::shared_ptr;
+using std::string;
 
 class ssh_agent
 {
@@ -15,7 +16,8 @@ public:
   void get_keys();
 
   unsigned long get_long(char const buf[4]);
-  void get_string_from_buf(std::string buf, size_t &loc, size_t &len, std::string &out);
+  unsigned long get_long_from_buf(string const buf, unsigned long &loc);
+  void get_string_from_buf(string const buf, unsigned long &loc, unsigned long &len, string &out);
 
 private:
   shared_ptr<Stream> stream;
