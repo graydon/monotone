@@ -31,5 +31,5 @@ check(indir("bobwd", mtn("--branch=testbranch", "--root=.", "commit", "-m", 'bob
 rev = indir("bobwd", {base_revision})[1]()
 
 -- Alice does her update, discovers foo has been stomped!
-check(indir("alicewd", mtn("--branch=testbranch", "--root=.", "update", "--revision", rev)), 0, false, false)
-xfail_if(true, samefile("foo.alice", "alicewd/foo"))
+check(indir("alicewd", mtn("--branch=testbranch", "--root=.", "update", "--revision", rev)), 1, false, false)
+check(samefile("foo.alice", "alicewd/foo"))

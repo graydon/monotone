@@ -515,6 +515,38 @@ file_itemizer::visit_file(file_path const & path)
     }
 }
 
+
+struct workspace_itemizer : public tree_walker
+{
+  roster_t & roster;
+  node_id_source & nis;
+
+  workspace_itemizer(roster_t & r, node_id_source & n)
+    : roster(r), nis(n) {}
+  virtual void visit_dir(file_path const & path);
+  virtual void visit_file(file_path const & path);
+};
+
+void
+workspace_itemizer::visit_dir(file_path const & path)
+{
+  split_path sp;
+  path.split(sp);
+  node_id nid = roster.create_dir_node(nis);
+  roster.attach_node(nid, sp);
+}
+
+void
+workspace_itemizer::visit_file(file_path const & path)
+{
+  split_path sp;
+  path.split(sp);
+  file_id fid;
+  node_id nid = roster.create_file_node(fid, nis);
+  roster.attach_node(nid, sp);
+}
+
+
 class
 addition_builder
   : public tree_walker
@@ -648,6 +680,40 @@ private:
   std::map<bookkeeping_path, file_id> written_content;
   std::map<bookkeeping_path, file_path> rename_add_drop_map;
   bool root_dir_attached;
+};
+
+
+struct simulated_working_tree : public editable_tree
+{
+  roster_t & roster;
+  node_id_source & nis;
+  
+  path_set blocked_paths;
+  map<node_id, split_path> nid_map;
+  int conflicts;
+
+  simulated_working_tree(roster_t & r, temp_node_id_source & n)
+    : roster(r), nis(n), conflicts(0) {}
+
+  virtual node_id detach_node(split_path const & src);
+  virtual void drop_detached_node(node_id nid);
+
+  virtual node_id create_dir_node();
+  virtual node_id create_file_node(file_id const & content);
+  virtual void attach_node(node_id nid, split_path const & dst);
+
+  virtual void apply_delta(split_path const & pth,
+                           file_id const & old_id,
+                           file_id const & new_id);
+  virtual void clear_attr(split_path const & pth,
+                          attr_key const & name);
+  virtual void set_attr(split_path const & pth,
+                        attr_key const & name,
+                        attr_value const & val);
+
+  virtual void commit();
+
+  virtual ~simulated_working_tree();
 };
 
 
@@ -871,6 +937,103 @@ editable_working_tree::commit()
 editable_working_tree::~editable_working_tree()
 {
 }
+
+
+node_id
+simulated_working_tree::detach_node(split_path const & src)
+{
+  node_id nid = roster.detach_node(src);
+  nid_map.insert(make_pair(nid, src));
+  return nid;
+}
+
+void
+simulated_working_tree::drop_detached_node(node_id nid)
+{
+  node_t node = roster.get_node(nid);
+  if (is_dir_t(node)) 
+    {
+      dir_t dir = downcast_to_dir_t(node);
+      if (!dir->children.empty())
+        {
+          map<node_id, split_path>::const_iterator i = nid_map.find(nid);
+          I(i != nid_map.end());
+          split_path path = i->second;
+          W(F("cannot drop non-empty directory '%s'") % path);
+          conflicts++;
+        }
+    }
+}
+
+node_id
+simulated_working_tree::create_dir_node()
+{
+  return roster.create_dir_node(nis);
+}
+
+node_id
+simulated_working_tree::create_file_node(file_id const & content)
+{
+  return roster.create_file_node(content, nis);
+}
+
+void
+simulated_working_tree::attach_node(node_id nid, split_path const & dst)
+{
+  if (roster.has_node(dst))
+    {
+      W(F("attach blocked by unversioned path '%s'") % dst);
+      blocked_paths.insert(dst);
+      conflicts++;
+    }
+  else
+    {
+      split_path dirname;
+      path_component basename;
+      dirname_basename(dst, dirname, basename);
+
+      if (blocked_paths.find(dirname) == blocked_paths.end())
+        roster.attach_node(nid, dst);
+      else
+        {
+          W(F("attach blocked by unversioned path '%s'") % dst);
+          blocked_paths.insert(dst);
+        }
+    }
+}
+
+void
+simulated_working_tree::apply_delta(split_path const & path,
+                                    file_id const & old_id,
+                                    file_id const & new_id)
+{
+  // this may fail if path is not a file but that will be caught
+  // earlier in update_current_roster_from_filesystem
+}
+
+void
+simulated_working_tree::clear_attr(split_path const & pth,
+                                   attr_key const & name)
+{
+}
+
+void
+simulated_working_tree::set_attr(split_path const & pth,
+                                 attr_key const & name,
+                                 attr_value const & val)
+{
+}
+
+void
+simulated_working_tree::commit()
+{
+  N(conflicts == 0, F("%d workspace conflicts") % conflicts);
+}
+
+simulated_working_tree::~simulated_working_tree()
+{
+}
+
 
 }; // anonymous namespace
 
@@ -1446,6 +1609,20 @@ void
 workspace::perform_content_update(cset const & update,
                                   content_merge_adaptor const & ca)
 {
+  roster_t roster;
+  temp_node_id_source nis;
+  split_path root;
+  file_path().split(root);
+
+  node_id nid = roster.create_dir_node(nis);
+  roster.attach_node(nid, root);
+
+  workspace_itemizer itemizer(roster, nis);
+  walk_tree(file_path(), itemizer);
+
+  simulated_working_tree swt(roster, nis);
+  update.apply_to(swt);
+
   editable_working_tree ewt(lua, ca);
   update.apply_to(ewt);
 }

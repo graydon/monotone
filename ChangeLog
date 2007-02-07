@@ -155,6 +155,44 @@
 	of CMD(update).
 	(explicit_merge_and_update): New command.
 
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* NEWS: add notes about changes to ls unknown's behaviour
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* NEWS: add notes about changes to update's behaviour
+	* tests/(imp)_deleting_directories/__driver__.lua:
+	* tests/annotate_file_whose_name_changed/__driver__.lua:
+	* tests/merge((),_(add_a,_drop_a,_add_a))/__driver__.lua:
+	* tests/merge((),_(add_a,_patch_a,_drop_a,_add_a))/__driver__.lua:
+	* tests/merging_a_rename_twice/__driver__.lua:
+	* tests/merging_adds/__driver__.lua:
+	* tests/renaming_a_deleted_file/__driver__.lua:
+	* tests/repeatedly_exchanging_work_via_netsync/__driver__.lua:
+	* tests/schema_migration/__driver__.lua:
+	* tests/schema_migration_with_rosterify/__driver__.lua:
+	* tests/test_a_merge_7/__driver__.lua:
+	add a few "remove" calls so that tests no longer require update to
+	clobber files
+	* tests/drop_directory_with_unversioned_files_and_merge: rename to ...
+	* tests/drop_directory_with_unversioned_files_and_update: ... this
+	and un-xfail
+	* tests/update_clobbers_workspace/__driver__.lua:
+	* tests/update_does_not_stomp_non-monotone_files/__driver__.lua:
+	adjust/un-xfail to account for update no longer clobbering
+	unversioned files
+	* work.cc:
+	(struct workspace_itemizer): new itemizer that builds a roster
+	which includes every node in the workspace
+	(struct simulated_working_tree): new working tree implementation
+	that update runs against to see if it will encounter any workspace
+	conflicts
+	(perform_content_update): use workspace_itemizer to create a
+	workspace roster and then apply the update cset against this with
+	simulated_working_tree to see if update will fail on something
+	obvious
+
 2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
 	* win32/os_strerror.c (os_strerror): Clean up string handling.

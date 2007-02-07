@@ -1,5 +1,20 @@
 Wed Dec 27 09:57:48 UTC 2006
 
+        0.33 release.
+
+        Changes
+
+        - "mtn ls unknown" no longer recurses into unknown directories.
+
+        - update will fail rather than clobbering unversioned files
+          that exist in the workspace.
+
+        - update will detect directories with unversioned files before
+          attempting to drop them and will refuse to run rather than
+          corrupting the workspace. such unversioned files must be 
+          removed manually.
+
+
 	0.32 release.
 
 	Changes

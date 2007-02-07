@@ -66,6 +66,7 @@ commit("branch.x")
 
 -- produce state H
 revert_to(revs.g)
+remove("bar")
 check(mtn("add", "baz"), 0, false, false)
 commit("branch.y")
 
@@ -76,6 +77,10 @@ check(qgrep('state D', "y"))
 
 -- produce state J
 revert_to(revs.e)
+remove("foo")
+remove("bar")
+remove("baz")
+
 check(mtn("add", "quux"), 0, false, false)
 commit("branch.y")
 

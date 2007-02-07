@@ -40,6 +40,7 @@ addfile("testfile3", "f3v1\n")
 check(mtn("commit", "--branch=testbranch2", "--message-file=blah_blah.txt"), 0, false, false)
 
 revert_to(rev)
+remove("testfile3")
 
 writefile("testfile2", "f2v2\n")
 addfile("testfile4", "f4v1\n")
