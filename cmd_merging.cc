@@ -609,14 +609,12 @@ CMD(merge_into_workspace, N_("tree"),
   // Get the current state of the workspace.
 
   // This command cannot be applied to a workspace with more than one parent
-  // (revs can have no more than two parents) but we use the multiparent-safe
-  // interface anyway so we can give an N() instead of an invariant failure.
-  // (Also, it gives us the cached_roster we want with no special handling.)
+  // (revs can have no more than two parents).
   {
     parent_map parents;
     app.work.get_parent_rosters(parents);
     N(parents.size() == 1,
-      F("'%s' can only be used in a single-parent workspace") % name);
+      F("this command can only be used in a single-parent workspace"));
 
     temp_node_id_source nis;
     roster_t working_roster;
