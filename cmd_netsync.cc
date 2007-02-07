@@ -4,6 +4,7 @@
 #include "globish.hh"
 #include "keys.hh"
 #include "cert.hh"
+#include "uri.hh"
 
 #include <fstream>
 
@@ -20,55 +21,67 @@ static const var_key default_exclude_pattern_key(var_domain("database"),
                                                  var_name("default-exclude-pattern"));
 
 static void
-process_netsync_args(string const & name,
-                     vector<utf8> const & args,
-                     utf8 & addr,
-                     utf8 & include_pattern, utf8 & exclude_pattern,
-                     bool use_defaults,
-                     bool serve_mode,
-                     app_state & app)
+extract_address(vector<utf8> const & args,
+                utf8 & addr,
+                app_state & app)
 {
-  // handle host argument
-  if (!serve_mode)
+  if (args.size() >= 1)
     {
-      if (args.size() >= 1)
+      addr = idx(args, 0);
+      if (!app.db.var_exists(default_server_key) || app.opts.set_default)
         {
-          addr = idx(args, 0);
-          if (use_defaults
-              && (!app.db.var_exists(default_server_key) || app.set_default))
-            {
-              P(F("setting default server to %s") % addr);
-              app.db.set_var(default_server_key, var_value(addr()));
-            }
-        }
-      else
-        {
-          N(use_defaults, F("no hostname given"));
-          N(app.db.var_exists(default_server_key),
-            F("no server given and no default server set"));
-          var_value addr_value;
-          app.db.get_var(default_server_key, addr_value);
-          addr = utf8(addr_value());
-          L(FL("using default server address: %s") % addr);
+          P(F("setting default server to %s") % addr);
+          app.db.set_var(default_server_key, var_value(addr()));
         }
     }
-
-  // handle include/exclude args
-  if (serve_mode || (args.size() >= 2 || !app.exclude_patterns.empty()))
+  else
     {
-      E(serve_mode || args.size() >= 2, F("no branch pattern given"));
-      int pattern_offset = (serve_mode ? 0 : 1);
+      N(app.db.var_exists(default_server_key),
+        F("no server given and no default server set"));
+      var_value addr_value;
+      app.db.get_var(default_server_key, addr_value);
+      addr = utf8(addr_value());
+      L(FL("using default server address: %s") % addr);
+    }
+}
+
+static void
+find_key_if_needed(utf8 & addr, app_state & app)
+{
+      uri u;
+      bool transport_requires_auth(true);
+      if (parse_uri(addr(), u))
+        {
+          transport_requires_auth = app.lua.hook_use_transport_auth(u);
+        }
+      if (transport_requires_auth)
+        {
+          rsa_keypair_id key;
+          get_user_key(key, app);
+          app.opts.signing_key = key;
+        }
+}
+
+static void
+extract_patterns(vector<utf8> const & args,
+                 utf8 & include_pattern, utf8 & exclude_pattern,
+                 app_state & app)
+{
+  if (args.size() >= 2 || app.opts.exclude_given)
+    {
+      E(args.size() >= 2, F("no branch pattern given"));
+      int pattern_offset = 1;
       vector<utf8> patterns(args.begin() + pattern_offset, args.end());
       combine_and_check_globish(patterns, include_pattern);
-      combine_and_check_globish(app.exclude_patterns, exclude_pattern);
-      if (use_defaults &&
-          (!app.db.var_exists(default_include_pattern_key) || app.set_default))
+      combine_and_check_globish(app.opts.exclude_patterns, exclude_pattern);
+      if (!app.db.var_exists(default_include_pattern_key)
+          || app.opts.set_default)
         {
           P(F("setting default branch include pattern to '%s'") % include_pattern);
           app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
         }
-      if (use_defaults &&
-          (!app.db.var_exists(default_exclude_pattern_key) || app.set_default))
+      if (!app.db.var_exists(default_exclude_pattern_key)
+          || app.opts.set_default)
         {
           P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
           app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
@@ -76,7 +89,6 @@ process_netsync_args(string const & name,
     }
   else
     {
-      N(use_defaults, F("no branch pattern given"));
       N(app.db.var_exists(default_include_pattern_key),
         F("no branch pattern given and no default pattern set"));
       var_value pattern_value;
@@ -94,45 +106,44 @@ process_netsync_args(string const & name,
     }
 }
 
-CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
-    option::set_default % option::exclude % option::key_to_push)
+    options::opts::set_default | options::opts::exclude |
+    options::opts::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
-
-  rsa_keypair_id key;
-  get_user_key(key, app);
-  app.signing_key = key;
+  extract_address(args, addr, app);
+  find_key_if_needed(addr, app);
+  extract_patterns(args, include_pattern, exclude_pattern, app);
 
   run_netsync_protocol(client_voice, source_role, addr,
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
-    option::set_default % option::exclude)
+    options::opts::set_default | options::opts::exclude)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
+  extract_address(args, addr, app);
+  extract_patterns(args, include_pattern, exclude_pattern, app);
 
-  if (app.signing_key() == "")
+  if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
   run_netsync_protocol(client_voice, sink_role, addr,
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
-    option::set_default % option::exclude % option::key_to_push)
+    options::opts::set_default | options::opts::exclude |
+    options::opts::key_to_push)
 {
   utf8 addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, addr, include_pattern, exclude_pattern, true, false, app);
-
-  rsa_keypair_id key;
-  get_user_key(key, app);
-  app.signing_key = key;
+  extract_address(args, addr, app);
+  find_key_if_needed(addr, app);
+  extract_patterns(args, include_pattern, exclude_pattern, app);
 
   run_netsync_protocol(client_voice, source_and_sink_role, addr,
                        include_pattern, exclude_pattern, app);
@@ -170,21 +181,21 @@ private:
   system_path path;
 };
 
-CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
-                 N_("serve the branches specified by PATTERNs to connecting clients"),
-                 option::bind % option::pidfile % option::exclude %
-                 option::stdio % option::no_transport_auth)
+CMD_NO_WORKSPACE(serve, N_("network"), "",
+                 N_("serve the database to connecting clients"),
+                 options::opts::bind | options::opts::pidfile |
+                 options::opts::bind_stdio | options::opts::no_transport_auth)
 {
-  if (args.size() < 1)
+  if (!args.empty())
     throw usage(name);
 
-  pid_file pid(app.pidfile);
+  pid_file pid(app.opts.pidfile);
 
-  if (app.use_transport_auth)
+  if (app.opts.use_transport_auth)
     {
       rsa_keypair_id key;
       get_user_key(key, app);
-      app.signing_key = key;
+      app.opts.signing_key = key;
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
@@ -192,16 +203,14 @@ CMD_NO_WORKSPACE(serve, N_("network"), N_("PATTERN ..."),
     }
   else
     {
-      E(app.bind_stdio,
+      E(app.opts.bind_stdio,
 	F("The --no-transport-auth option is only permitted in combination with --stdio"));
     }
 
   app.db.ensure_open();
 
-  utf8 dummy_addr, include_pattern, exclude_pattern;
-  process_netsync_args(name, args, dummy_addr, include_pattern, exclude_pattern, false, true, app);
-  run_netsync_protocol(server_voice, source_and_sink_role, app.bind_address,
-                       include_pattern, exclude_pattern, app);
+  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_address,
+                       utf8("*"), utf8(""), app);
 }
 
 // Local Variables:

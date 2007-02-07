@@ -7,7 +7,7 @@ writefile("top", "top data")
 writefile("foo/foodata", "foo data")
 writefile("foo/bar/bardata", "foobar data")
 
-check(mtn("add", "top", "foo"), 0, false, false)
+check(mtn("add", "-R", "top", "foo"), 0, false, false)
 
 -- set attributes in directories
 

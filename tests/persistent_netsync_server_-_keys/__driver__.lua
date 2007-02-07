@@ -9,7 +9,7 @@ check(mtn2("commit", "--branch=testbranch", "--message=foo"), 0, false, false)
 
 check(mtn2("genkey", "foo@foo"), 0, false, false, string.rep("foo@foo\n",2))
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 
 srv:push("testbranch", 2)
 srv:pull("testbranch", 3)

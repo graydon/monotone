@@ -5,7 +5,7 @@ mkdir("subdir")
 mkdir("subdir/anotherdir")
 writefile("subdir/foo", "data data")
 writefile("subdir/anotherdir/bar", "more data")
-check(mtn("add", "."), 0, false, false)
+check(mtn("add", "-R", "."), 0, false, false)
 commit()
  rev = base_revision()
 

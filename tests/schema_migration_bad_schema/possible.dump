@@ -1,0 +1,92 @@
+-- empty monotone database, with a vaguely plausible future table added
+-- (skip_deltas).
+BEGIN EXCLUSIVE;
+CREATE TABLE branch_epochs
+	(
+	hash not null unique,         -- hash of remaining fields separated by ":"
+	branch not null unique,       -- joins with revision_certs.value
+	epoch not null                -- random hex-encoded id
+	);
+CREATE TABLE db_vars
+        (
+        domain not null,      -- scope of application of a var
+        name not null,        -- var key
+        value not null,       -- var value
+        unique(domain, name)
+        );
+CREATE TABLE file_deltas
+	(
+	id not null,      -- strong hash of file contents
+	base not null,    -- joins with files.id or file_deltas.id
+	delta not null,   -- compressed rdiff to construct current from base
+	unique(id, base)
+	);
+CREATE TABLE files
+	(
+	id primary key,   -- strong hash of file contents
+	data not null     -- compressed contents of a file
+	);
+CREATE TABLE heights
+	(
+	revision not null,	-- joins with revisions.id
+	height not null,	-- complex height, array of big endian u32 integers
+	unique(revision, height)
+	);
+CREATE TABLE next_roster_node_number
+	(
+	node primary key        -- only one entry in this table, ever
+	);
+CREATE TABLE public_keys
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id primary key,         -- key identifier chosen by user
+	keydata not null        -- RSA public params
+	);
+CREATE TABLE revision_ancestry
+	(
+	parent not null,     -- joins with revisions.id
+	child not null,      -- joins with revisions.id
+	unique(parent, child)
+	);
+CREATE TABLE revision_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with revisions.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+CREATE TABLE revisions
+	(
+	id primary key,      -- SHA1(text of revision)
+	data not null        -- compressed, encoded contents of a revision
+	);
+CREATE TABLE roster_deltas
+	(
+	id primary key,         -- a revision id
+	checksum not null,      -- checksum of 'delta', to protect against disk corruption
+	base not null,          -- joins with either rosters.id or roster_deltas.id
+	delta not null          -- rdiff to construct current from base
+	);
+CREATE TABLE rosters
+	(
+	id primary key,         -- a revision id
+	checksum not null,      -- checksum of 'data', to protect against disk corruption
+	data not null           -- compressed, encoded contents of the roster
+	);
+CREATE TABLE skip_deltas
+        (
+        id not null,              -- strong hash of target file contents
+        base not null,            -- joins with files.id
+        base_revision not null,   -- joins with revisions.id
+        target_revision not null, -- joins with revisions.id
+        delta not null,           -- rdiff to construct current from base
+        unique(id, base, base_revision, target_revision)
+        );
+CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
+CREATE INDEX revision_certs__id ON revision_certs (id);
+CREATE INDEX revision_certs__name_value ON revision_certs (name, value);
+PRAGMA user_version = 1598903374;
+COMMIT;

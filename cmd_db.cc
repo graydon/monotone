@@ -57,10 +57,10 @@ CMD(db, N_("database"),
       "check\n"
       "changesetify\n"
       "rosterify\n"
-      "regenerate_rosters\n"
+      "regenerate_caches\n"
       "set_epoch BRANCH EPOCH\n"),
     N_("manipulate database state"),
-    option::drop_attr)
+    options::opts::drop_attr)
 {
   if (args.size() == 1)
     {
@@ -82,8 +82,8 @@ CMD(db, N_("database"),
         build_changesets_from_manifest_ancestry(app);
       else if (idx(args, 0)() == "rosterify")
         build_roster_style_revs_from_manifest_style_revs(app);
-      else if (idx(args, 0)() == "regenerate_rosters")
-        regenerate_rosters(app);
+      else if (idx(args, 0)() == "regenerate_caches")
+        regenerate_caches(app);
       else
         throw usage(name);
     }
@@ -121,7 +121,7 @@ CMD(db, N_("database"),
 
 CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
     N_("set the database variable NAME to VALUE, in domain DOMAIN"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -137,7 +137,7 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),
     N_("remove the database variable NAME in domain DOMAIN"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -154,12 +154,12 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
 
 CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("complete partial id"),
-    option::verbose)
+    options::opts::verbose)
 {
   if (args.size() != 2)
     throw usage(name);
 
-  bool verbose = app.verbose;
+  bool verbose = app.opts.verbose;
 
   N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
     F("non-hex digits in partial id"));
@@ -172,7 +172,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << "\n";
-          else cout << describe_revision(app, i->inner()) << "\n";
+          else cout << describe_revision(app, *i) << "\n";
         }
     }
   else if (idx(args, 0)() == "file")
@@ -198,6 +198,15 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     }
   else
     throw usage(name);
+}
+
+CMD(test_migration_step, hidden_group(), "SCHEMA",
+    "run one step of migration - from SCHEMA to its successor -\n"
+    "on the specified database", options::opts::none)
+{
+  if (args.size() != 1)
+    throw usage(name);
+  app.db.test_migration_step(idx(args,0)());
 }
 
 // Local Variables:

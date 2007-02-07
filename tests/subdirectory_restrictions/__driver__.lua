@@ -7,8 +7,8 @@ mkdir("bar")
 writefile("foo/foo.txt", "file foo.txt in dir foo")
 writefile("bar/bar.txt", "file bar.txt in dir bar")
 
-check(mtn("add", "foo"), 0, false, false)
-check(mtn("add", "bar"), 0, false, false)
+check(mtn("add", "-R", "foo"), 0, false, false)
+check(mtn("add", "-R", "bar"), 0, false, false)
 
 commit()
 

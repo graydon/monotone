@@ -89,9 +89,9 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
       branches.insert(utf8(b()));
     }
 
-  if (branches.find(app.branch_name) != branches.end())
+  if (branches.find(app.opts.branch_name) != branches.end())
     {
-      L(FL("using existing branch %s") % app.branch_name());
+      L(FL("using existing branch %s") % app.opts.branch_name());
     }
   else
     {
@@ -109,7 +109,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
       else if (branches.size() == 1)
         {
           // one non-matching, inform and update
-          app.branch_name = (*(branches.begin()))();
+          app.opts.branch_name = (*(branches.begin()))();
           switched_branch = true;
         }
       else
@@ -117,7 +117,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
           I(branches.size() == 0);
           W(F("target revision not in any branch\n"
               "next commit will use branch %s")
-            % app.branch_name());
+            % app.opts.branch_name());
         }
     }
   return switched_branch;
@@ -129,12 +129,12 @@ CMD(update, N_("workspace"), "",
        "different revision, preserving uncommitted changes as it does so.\n"
        "If a revision is given, update the workspace to that revision.\n"
        "If not, update the workspace to the head of the branch."),
-    option::branch_name % option::revision)
+    options::opts::branch | options::opts::revision)
 {
   if (args.size() > 0)
     throw usage(name);
 
-  if (app.revision_selectors.size() > 1)
+  if (app.opts.revision_selectors.size() > 1)
     throw usage(name);
 
   app.require_workspace();
@@ -150,16 +150,16 @@ CMD(update, N_("workspace"), "",
   // Figure out where we're going
 
   revision_id chosen_rid;
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     {
-      P(F("updating along branch '%s'") % app.branch_name);
+      P(F("updating along branch '%s'") % app.opts.branch_name);
       set<revision_id> candidates;
       pick_update_candidates(old_rid, app, candidates);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
           "maybe you want something like --revision=h:%s")
-        % app.branch_name);
+        % app.opts.branch_name);
       if (candidates.size() != 1)
         {
           P(F("multiple update candidates:"));
@@ -173,7 +173,7 @@ CMD(update, N_("workspace"), "",
     }
   else
     {
-      complete(app, app.revision_selectors[0](), chosen_rid);
+      complete(app, app.opts.revision_selectors[0](), chosen_rid);
       N(app.db.revision_exists(chosen_rid),
         F("no such revision '%s'") % chosen_rid);
     }
@@ -189,7 +189,7 @@ CMD(update, N_("workspace"), "",
       P(F("already up to date at %s") % old_rid);
       // do still switch the workspace branch, in case they have used
       // update to switch branches.
-      if (!app.branch_name().empty())
+      if (!app.opts.branch_name().empty())
         app.make_branch_sticky();
       return;
     }
@@ -200,7 +200,7 @@ CMD(update, N_("workspace"), "",
   // wants.
   bool switched_branch = pick_branch_for_update(chosen_rid, app);
   if (switched_branch)
-    P(F("switching to branch %s") % app.branch_name());
+    P(F("switching to branch %s") % app.opts.branch_name());
 
   // Okay, we have a target, we have a branch, let's do this merge!
 
@@ -261,10 +261,10 @@ CMD(update, N_("workspace"), "",
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints();
 
-  if (!app.branch_name().empty())
+  if (!app.opts.branch_name().empty())
     app.make_branch_sticky();
   if (switched_branch)
-    P(F("switched branch; next commit will use branch %s") % app.branch_name());
+    P(F("switched branch; next commit will use branch %s") % app.opts.branch_name());
   P(F("updated to base revision %s") % chosen_rid);
 }
 
@@ -289,14 +289,14 @@ merge_two(revision_id const & left, revision_id const & right,
   ostringstream log;
   size_t fieldwidth = max(caller.size() + strlen(" of '"), strlen("and '"));
 
-  if (branch != app.branch_name())
+  if (branch != app.opts.branch_name())
     fieldwidth = max(fieldwidth, strlen("to branch '"));
 
   log << setw(fieldwidth - strlen(" of '")) << caller << " of '" << left
       << "'\n" << setw(fieldwidth) << "and '" << right
       << "'\n";
 
-  if (branch != app.branch_name())
+  if (branch != app.opts.branch_name())
     log << setw(fieldwidth) << "to branch '" << branch << "'\n";
 
   // Now it's time for the real work.
@@ -308,8 +308,10 @@ merge_two(revision_id const & left, revision_id const & right,
   interactive_merge_and_store(left, right, merged, app);
 
   packet_db_writer dbw(app);
-  cert_revision_in_branch(merged, branch, app, dbw);
-  cert_revision_changelog(merged, log.str(), app, dbw);
+  app.get_project().put_standard_certs_from_options(merged,
+                                                    utf8(branch),
+                                                    utf8(log.str()),
+                                                    dbw);
 
   guard.commit();
   P(F("[merged] %s") % merged);
@@ -320,7 +322,7 @@ merge_two(revision_id const & left, revision_id const & right,
 // (Possibility: append the --message/--message-file text to the synthetic
 // log message constructed in merge_two().)
 CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
-    option::branch_name % option::date % option::author)
+    options::opts::branch | options::opts::date | options::opts::author)
 {
   typedef std::pair<revision_id, revision_id> revpair;
   typedef set<revision_id>::const_iterator rid_set_iter;
@@ -328,21 +330,21 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   if (args.size() != 0)
     throw usage(name);
 
-  N(app.branch_name() != "",
+  N(app.opts.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
   set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
 
-  N(heads.size() != 0, F("branch '%s' is empty") % app.branch_name);
+  N(heads.size() != 0, F("branch '%s' is empty") % app.opts.branch_name);
   if (heads.size() == 1)
     {
-      P(F("branch '%s' is already merged") % app.branch_name);
+      P(F("branch '%s' is already merged") % app.opts.branch_name);
       return;
     }
 
   P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
-    % heads.size() % app.branch_name);
+    % heads.size() % app.opts.branch_name);
 
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
@@ -396,11 +398,11 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       // corresponding pair of heads.
       revpair p = heads_for_ancestor[*ancestors.begin()];
       
-      merge_two(p.first, p.second, app.branch_name(), string("merge"), app);
+      merge_two(p.first, p.second, app.opts.branch_name(), string("merge"), app);
 
       ancestors.clear();
       heads_for_ancestor.clear();
-      get_branch_heads(app.branch_name(), app, heads);
+      app.get_project().get_branch_heads(app.opts.branch_name, heads);
       pass++;
     }
 
@@ -414,13 +416,13 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
   revision_id right = *i++;
   I(i == heads.end());
   
-  merge_two(left, right, app.branch_name(), string("merge"), app);
+  merge_two(left, right, app.opts.branch_name(), string("merge"), app);
   P(F("note: your workspaces have not been updated"));
 }
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("merge from one branch to another asymmetrically"),
-    option::date % option::author % option::message % option::msgfile)
+    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -431,7 +433,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
 CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("merge one branch into a subdirectory in another branch"),
-    option::date % option::author % option::message % option::msgfile)
+    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
   //   This is a special merge operator, but very useful for people
   //   maintaining "slightly disparate but related" trees. It does a one-way
@@ -465,8 +467,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
   if (args.size() != 3)
     throw usage(name);
 
-  get_branch_heads(idx(args, 0)(), app, src_heads);
-  get_branch_heads(idx(args, 1)(), app, dst_heads);
+  app.get_project().get_branch_heads(idx(args, 0), src_heads);
+  app.get_project().get_branch_heads(idx(args, 1), dst_heads);
 
   N(src_heads.size() != 0, F("branch '%s' is empty") % idx(args, 0)());
   N(src_heads.size() == 1, F("branch '%s' is not merged") % idx(args, 0)());
@@ -494,7 +496,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
       packet_db_writer dbw(app);
-      cert_revision_in_branch(*src_i, idx(args, 1)(), app, dbw);
+      app.get_project().put_revision_in_branch(*src_i, idx(args, 1), dbw);
       guard.commit();
     }
   else
@@ -567,20 +569,20 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
                                   app);
       }
 
-      packet_db_writer dbw(app);
-
-      cert_revision_in_branch(merged, idx(args, 1)(), app, dbw);
-
       bool log_message_given;
       utf8 log_message;
       process_commit_message_args(log_message_given, log_message, app);
       if (!log_message_given)
-        log_message = (FL("propagate from branch '%s' (head %s)\n"
-                          "            to branch '%s' (head %s)\n")
-                       % idx(args, 0) % (*src_i)
-                       % idx(args, 1) % (*dst_i)).str();
+        log_message = utf8((FL("propagate from branch '%s' (head %s)\n"
+                               "            to branch '%s' (head %s)\n")
+                            % idx(args, 0) % (*src_i)
+                            % idx(args, 1) % (*dst_i)).str());
 
-      cert_revision_changelog(merged, log_message, app, dbw);
+      packet_db_writer dbw(app);
+      app.get_project().put_standard_certs_from_options(merged,
+                                                  idx(args, 1),
+                                                  log_message,
+                                                  dbw);
 
       guard.commit();
       P(F("[merged] %s") % merged);
@@ -682,7 +684,7 @@ CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH"),
     N_("merge two explicitly given revisions, "
        "placing result in given branch"),
-    option::date % option::author)
+    options::opts::date | options::opts::author)
 {
   revision_id left, right;
   string branch;
@@ -707,7 +709,7 @@ CMD(explicit_merge, N_("tree"),
 CMD(show_conflicts, N_("informative"), N_("REV REV"), 
     N_("Show what conflicts would need to be resolved "
        "to merge the given revisions."),
-    option::branch_name % option::date % option::author)
+    options::opts::branch | options::opts::date | options::opts::author)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -758,14 +760,14 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
        "\n"
        "If two revisions are given, applies the changes made to get from the\n"  
        "first revision to the second."),
-    option::revision % option::depth % option::exclude)
+    options::opts::revision | options::opts::depth | options::opts::exclude)
 {
   // Work out our arguments
   revision_id from_rid, to_rid;
 
-  if (app.revision_selectors.size() == 1)
+  if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app, idx(app.revision_selectors, 0)(), to_rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
@@ -778,12 +780,12 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
         % ui.prog_name % to_rid);
       from_rid = *parents.begin();
     }
-  else if (app.revision_selectors.size() == 2)
+  else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app, idx(app.revision_selectors, 0)(), from_rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), from_rid);
       N(app.db.revision_exists(from_rid),
         F("no such revision '%s'") % from_rid);
-      complete(app, idx(app.revision_selectors, 1)(), to_rid);
+      complete(app, idx(app.opts.revision_selectors, 1)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
     }
@@ -841,8 +843,8 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     roster_t to_true_roster;
     app.db.get_roster(to_rid, to_true_roster);
     node_restriction mask(args_to_paths(args),
-                          args_to_paths(app.exclude_patterns),
-                          app.depth,
+                          args_to_paths(app.opts.exclude_patterns),
+                          app.opts.depth,
                           *from_roster, to_true_roster, app);
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,
@@ -912,23 +914,23 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
 }
 
 CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
-    option::branch_name)
+    options::opts::branch)
 {
   set<revision_id> heads;
   if (args.size() != 0)
     throw usage(name);
 
-  N(app.branch_name() != "",
+  N(app.opts.branch_name() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
-  get_branch_heads(app.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
 
   if (heads.size() == 0)
-    P(F("branch '%s' is empty") % app.branch_name);
+    P(F("branch '%s' is empty") % app.opts.branch_name);
   else if (heads.size() == 1)
-    P(F("branch '%s' is currently merged:") % app.branch_name);
+    P(F("branch '%s' is currently merged:") % app.opts.branch_name);
   else
-    P(F("branch '%s' is currently unmerged:") % app.branch_name);
+    P(F("branch '%s' is currently unmerged:") % app.opts.branch_name);
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
@@ -938,7 +940,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
 CMD(get_roster, N_("debug"), N_("[REVID]"),
     N_("dump the roster associated with the given REVID, "
        "or the workspace if no REVID is given"),
-    option::none)
+    options::opts::none)
 {
   revision_id rid;
   roster_t roster;

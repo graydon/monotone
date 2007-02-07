@@ -43,8 +43,12 @@ function netsync.internal.pull(srv, pat, n, res) srv:client("pull", pat, n, res)
 function netsync.internal.push(srv, pat, n, res) srv:client("push", pat, n, res) end
 function netsync.internal.sync(srv, pat, n, res) srv:client("sync", pat, n, res) end
 
-function netsync.start(pat, n, min)
-  if pat == "" or pat == nil then pat = "{*}" end
+function netsync.start(opts, n, min)
+  if type(opts) == "number" then
+    min = n
+    n = opts
+    opts = nil
+  end
   local args = {}
   local fn = mtn
   local addr = "localhost:" .. math.random(20000, 50000)
@@ -60,22 +64,33 @@ function netsync.start(pat, n, min)
     table.insert(args, "--db=test"..n..".db")
   end
   table.insert(args, "serve")
-  if type(pat) == "string" then
-    table.insert(args, pat)
-  elseif type(pat) == "table" then
-    for k, v in pairs(pat) do
+  if type(opts) == "table" then
+    for k, v in pairs(opts) do
       table.insert(args, v)
     end
-  else
-    err("Bad pattern type "..type(pat))
+  elseif type(opts) ~= "nil" then
+    err("netsync.start wants a table, not a "..type(opts).." as a first argument")
   end
-  local out = bg(fn(unpack(args)), false, false, false)
+  local argv = fn(unpack(args))
+  local out = bg(argv, false, false, false)
   out.address = addr
+  out.argv = argv
   local mt = getmetatable(out)
   mt.client = netsync.internal.client
   mt.pull = netsync.internal.pull
   mt.push = netsync.internal.push
   mt.sync = netsync.internal.sync
+  mt.restart = function(obj)
+		  local newobj = bg(obj.argv, false, false, false)
+		  for x,y in pairs(newobj) do
+		     obj[x] = y
+		  end
+		  -- wait for "beginning service..."
+		  while fsize(obj.prefix .. "stderr") == 0 do
+		     sleep(1)
+		     check(out:check())
+		  end
+	       end
   local mt_wait = mt.wait
   mt.check = function(obj) return not mt_wait(obj, 0) end
   mt.wait = nil -- using this would hang; don't allow it
@@ -88,11 +103,19 @@ function netsync.start(pat, n, min)
   return out
 end
 
-function netsync.internal.run(oper, pat)
-  local srv = netsync.start(pat)
+function netsync.internal.run(oper, pat, opts)
+  local srv = netsync.start(opts)
+  if type(opts) == "table" then
+    for k, v in pairs(opts) do
+      table.insert(pat, v)
+    end
+  elseif type(opts) ~= "nil" then
+    err("second argument to netsync."..oper.." should be a table")
+  end
   srv:client(oper, pat)
   srv:finish()
 end
-function netsync.pull(pat) netsync.internal.run("pull", pat) end
-function netsync.push(pat) netsync.internal.run("push", pat) end
-function netsync.sync(pat) netsync.internal.run("sync", pat) end
+
+function netsync.pull(pat, opts) netsync.internal.run("pull", pat, opts) end
+function netsync.push(pat, opts) netsync.internal.run("push", pat, opts) end
+function netsync.sync(pat, opts) netsync.internal.run("sync", pat, opts) end

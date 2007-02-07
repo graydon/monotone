@@ -155,6 +155,1263 @@
 	of CMD(update).
 	(explicit_merge_and_update): New command.
 
+2007-02-05  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/test_a_merge_8/*:
+	* testsuite.lua: Added a merge test case, distilled from a
+	failing merge in my PostgreSQL repository.
+
+2007-02-05  Lapo Luchini  <lapo@lapo.it>
+
+	* cmd_diff_log.cc: Added a few missing _() calls.
+	* po/it.po: Updated and translated.
+
+2007-02-05  Derek Scherger  <derek@echologic.com>
+
+	* file_io.{cc,hh} (walk_tree_recursive, tree_walker::visit_dir,
+	walk_tree): return a boolean from visit_dir and use this to
+	control walks into directories
+	* work.cc (file_itemizer::visit_dir, addition_builder::visit_dir,
+	walk_tree, walk_tree_recursive): update to use the boolean from
+	visit_dir and change so that ls unknown doesn't walk into unknown
+	directories
+	* tests/addition_of_files_and_directories/__driver__.lua:
+	* tests/ls_unknown_in_subdir/__driver__.lua:
+	* tests/ls_unknown_of_unknown_subdir/__driver__.lua:
+	* tests/things_in_.mtn-ignore_get_ignored/__driver__.lua:
+	update tests to exclude things in unknown dirs
+	
+2007-02-04  Ralf S. Engelschall  <rse@engelschall.com>
+
+	(via Richard Levitte  <richard@levitte.org>)
+	* mtn.1: Fix two typos.
+	* std_hooks.lua: Add support for a "last resort" merging via GNU
+	diffutils' diff3/sdiff (it first shows the 3-way diff via diff3
+	and then allows interactive 2-way merging via sdiff -- a little
+	bit similar to what the FreeBSD mergemaster script does).
+
+2007-02-01  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.12.
+
+2007-01-30  Nathaniel Smith  <njs@pobox.com>
+
+	* po/es.po: Fix a format string that was breaking the build.
+
+2007-01-30  Nathaniel Smith  <njs@pobox.com>
+
+	* vocab.cc (verify(hexenc<id>)): Rename from verify_full.  Now
+	actually runs (!!!).
+	(verify_hexenc_id): New test.
+	* vocab.hh (is_xdigit): Disallow capitalized hex digits, above
+	test now passes.
+	* constants.cc (regex_legal_id_bytes): No capital hex digits here,
+	either!
+
+2007-01-29  Thomas Keller  <me@thomaskeller.biz>
+
+	* added some lua hooks to run a script after revs or certs have 
+	arrived via netsync for a particular branch
+
+2007-01-29  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* INSTALL: Drop the libboost-serialization-dev requirement since
+	it is no longer needed.
+
+2007-01-27  Derek Scherger  <derek@echologic.com>
+
+	* configure.ac: add AC_FUNC_MMAP check so that the ifdef for
+	HAVE_MMAP in rcs_file.cc might work
+	* rcs_file.cc: change ifdef for HAVE_FCNTL to HAVE_FCNTL_H to
+	match config.h
+
+2007-01-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make vocab-from-string constructors explicit. Fix (some) places
+	where variables or parameters were given the wrong type.
+
+2007-01-24  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.postinst, debian/changelog: update the
+	version for which a database upgrade is needed.
+
+2007-01-23  Zack Weinberg  <zackw@panix.com>
+
+	* database.cc (format_sqlite_error_for_info): Look for translated
+	version of "sqlite error: " too.  Problem found by tommyd on IRC.
+	* po/*.po: Define the translation of this string, using the
+	existing translation of "sqlite error: %s\n%s".
+
+2007-01-21  Derek Scherger  <derek@echologic.com>
+
+	* (read_directory): use 'entry.' instead of 'di->' for consistency
+	(walk_tree_recursive): use read_directory instead of a
+	directory_iterator directly to reuse some code we already have and
+	to separate the files and dirs phases of the walk; also move the
+	check for bookkeeping paths to the directory phase of the walk
+	* tests/ls_unknown_in_subdir/__driver__.lua: fix syntax problem
+	hidden by xfail
+
+2007-01-21  Zack Weinberg  <zackw@panix.com>
+
+	* schema_migration.hh (mtn_creator_code): Define the creator code
+	we will henceforth insert into databases.
+	* schema.sql: Remove manifests, manifest_certs, and manifest_deltas.
+	* README.changesets: Old manifest certs are no longer preserved.
+
+	* schema_migration.cc (migration_events): Update.
+	(migrate_add_ccode_and_drop_manifest_tables): New migrator.
+	(calculate_schema_id): Rename get_schema_data; don't compute the hash.
+	Include the creator code in the schema data.
+	(temporarily_allowed_tables, compare_schema_hash): New.
+	(schema_to_migration): Rename find_migration; operate on a db.
+	(classify_schema): Use creator code instead of ad-hoc check when
+	deciding if this is a monotone database at all.  Count tables
+	instead of referring to the hash to decide if the database is empty.
+	(diagnose_unrecognized_schema): Remove schema id from diagnostics.
+	(describe_sql_schema, check_sql_schema, migrate_sql_schema)
+	(test_migration_step): Adjust to match.
+
+	* database.cc (database::check_format): Manifest tables might not exist.
+	(database::initialize): Write the creator code into the database.
+	(dump_user_version_cb, format_creator_code): New functions.
+	(database::dump): Dump the creator code.
+	(database::info): Report the creator code.
+	(database::delete_existing_manifests): Drop the tables; don't just
+	delete all rows.  Drop manifest_certs too.
+
+	* tests/schema_migration: Fix logic to extract schema version from
+	"db version" output. Add migration test for schema
+	2881277287f6ee9bfc5ee255a503a6dc20dd5994.
+	* tests/schema_migration_bad_schema/possible.dump: Adjust so that
+	it is still a possible future database.
+
+	* contrib/mashschema.cc: New developer utility program.
+
+2007-01-20  Zack Weinberg  <zackw@panix.com>
+
+	* database.cc (sql_contexts): Delete write-only variable and all
+	code that touches it.
+	(database::check_format): Fix grammar error.
+	(check_sqlite_format_version): Delete.
+	(database::sql): Restructure with a single N-way mode argument.
+	Move logic for creating new databases ...
+	(database::initialize): ... here.  Use open() directly.
+	(database::ensure_open_for_maintenance)
+	(database::check_db_nonexistent): New functions.
+	(database::dump, database::load, database::version, database::migrate)
+	(database::test_migration_step): Use new functions as
+	appropriate. Don't call close().
+	(database::info): Similarly.  Do a dummy query first thing to force
+	sqlite to look at the file and tell us if it's a database or not.
+	(database::close): Collapse into database destructor.
+	(database::open): Use assert_sqlite3_ok instead of hand-rolled
+	diagnostic; special case SQLITE_NOMEM.
+	(assert_sqlite3_ok): Move to ...
+	* schema_migration.cc: ... here; merge with 'error'.  Adjust users
+	of 'error' to match.  Add aux message for SQLITE_{CORRUPT,NOTADB}.
+	Don't give aux message for SQLITE_ERROR anymore.  Special case
+	SQLITE_NOMEM.
+	* schema_migration.hh, database.hh: Update declarations.
+
+	* monotone.cc (cpp_main): Report bad_alloc as what it is: memory
+	exhaustion, not a bug.
+	* tests/dump_on_crash: Adjust to match.
+
+	* database.cc: Make database::info work on arbitrarily screwed up
+	databases.  Also make its output consistently formatted and easier
+	to read.  Check for SQLite 3 database in more places.
+	* database.hh: Tweaks to database private member declarations.
+	* schema_migration.cc: Restructure diagnostics of mismatched
+	schemas so we can provide a classification in database::info.
+	* schema_migration.hh: New interface, describe_sql_schema.
+	calculate_schema_id is no longer visible.
+
+2007-01-18  Derek Scherger  <derek@echologic.com>
+
+	* tests/ls_unknown_in_subdir/__driver__.lua: new xfailed test of
+	ls uknown in a subdir
+	* testsuite.lua: call it
+
+2007-01-14  Nathaniel Smith  <njs@pobox.com>
+
+	* m4/boost.m4: Check for another possible library suffix used on
+	some Cygwin builds (patch from Vaclav Haisman).
+
+2007-01-14  Derek Scherger  <derek@echologic.com>
+
+	* file_io.{cc,hh} (walk_tree_recursive): use entry instead of di
+	for consistency
+	(walk_tree): remove unused require_existing_path arg
+
+2007-01-14  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* sqlite/*: Import SQLite 3.3.10.
+
+2007-01-13  Zack Weinberg  <zackw@panix.com>
+
+	* schema_migration.cc (sql::exec): Process an entire sequence of
+	SQL statements.
+	(migrate_sql_schema, test_migration_step): Handle all-SQL
+	migrators (i.e. pass the strings to sql::exec).
+	(migrate_*): Where entirely composed of calls to sql::exec,
+	replace with a giant string constant containing all the SQL
+	statements in order.
+	(sql::sql): Support more than one statement per string.
+	(sql::column_nonnull): New.
+	(struct migration_event): Replace migrator field with migrator_sql
+	and migrator_func.
+	(migration_events): Put each entry's migrator in the appropriate field.
+	(schema_to_migration): Return a migration_event *, not an integer.
+	(migrate_to_external_privkeys): This is the only migration step
+	that still needs to be a function.  Simplify by using a single
+	joined SELECT rather than copying everything into maps.
+
+	* schema_migration.cc: Further prune using-declarations.
+	(migrate_*): Use sql::exec directly.  Shorten names.  Don't call
+	set_regime.  Remove errmsg and upgrade_regime arguments.  Change
+	app_state argument to a reference.  Return void.
+	(logged_sqlite3_exec, set_regime, move_table): Delete.
+	(enum upgrade_regime): Move to just above the migration_events table.
+	(struct migration_event): Add third 'regime' field.
+	(migration_events): Fill in the migration regimes.
+	(migrator_cb): Adjust.
+	(migrate_monotone_schema): Rename migrate_sql_schema.  Register
+	unbase64 here.  Change app_state argument to a refernece.  Handle
+	calculation of upgrade regime here.  Use sql::exec.
+	(test_migration_step): New function, for debugging.
+	* cmd_db.cc (test_migration_step): New debugging command.
+	* database.cc, database.hh: Adjust call of migrate_sql_schema.
+	(test_migration_step): New member function.
+	* tests/schema_migration_error_recovery: Add several more subcases.
+
+	* schema_migration.cc: Replace logged_sqlite3_* with a new, tidier
+	class-based API.  (logged_sqlite3_exec remains for transitional
+	purposes.)  Globally change "sql" local variables to "db" to avoid
+	conflict with new "sql" class. Introduce RAII class to ensure that
+	database rollback happens when necessary.  Report errors with
+	exceptions (migrator functions have not been fully updated for this).
+	Take the database lock at the beginning of migrate_monotone_schema,
+	not after calculating migration steps.  Trap Botan errors in
+	sqlite3_unbase64_fn.  Give helpful additional message for more
+	sqlite error codes.
+
+	* tests/schema_migration_error_recovery: New test.
+	* testsuite.lua: Update.
+
+	* sqlite/pager.c, sqlite/btree.c: Apply upstream change #3563 -
+	fixes crash when db is writable but directory isn't.
+	* database.cc (assert_sqlite_ok): Give helpful additional message
+	for more sqlite error codes.
+	* tests/fail_cleanly_on_unreadable_db: Test unwritable db,
+	unwritable directory, and -r+wx directory too.
+
+	* schema_migration.cc (logged_sqlite3_prepare, report_sqlite_error)
+	(logged_sqlite3_exec_int, sqlite3_column_string): New functions.
+	(logged_sqlite3_exec, calculate_schema_id)
+	(migrate_client_to_external_privkeys): Rewrite using
+	logged_sqlite3_prepare and sqlite3_step.
+	(massage_sql_tokens, append_sql_stmt, extract_key): Delete.
+	(diagnose_unrecognized_schema): Use logged_sqlite3_exec_int.
+
+	* schema_migration.cc: Further prune includes and using-declarations.
+	(lowercase_facet, calculate_id): Delete.
+	(is_ws): Convert from class to predicate function.
+	(sqlite3_value_cstr): New, type-adjustment wrapper around _value_text.
+	(sqlite_sha1_fn): Clarify logic by using remove_copy_if,
+	sqlite3_value_cstr, and a simpler loop in the args>1 case.
+	Use transforms.hh's calculate_ident instead of calculate_id.
+	(massage_sql_tokens): Move to directly above sole user.
+	(calculate_schema_id): Use calculate_ident.
+	(sqlite_unbase64_fn): Use sqlite_value_cstr.
+
+	* transforms.cc (encode_hexenc_inner, encode_hexenc, decode_hex_char)
+	(decode_hexenc_inner, decode_hexenc): Delete.
+	(xform<Botan::Hex_Encoder>): Request lowercase output.
+	(calculate_ident): Put a Botan::Hex_Encoder in the pipeline rather
+	than doing a separate call to encode_hexenc.  Delete unused overload.
+	* transforms.hh (encode_hexenc, decode_hexenc): Define in terms of
+	appropriate xform<> instantiations.
+	(pack, unpack): Delete unnecessary extern-template declarations.
+	(calculate_ident): Delete unused overload.
+
+2007-01-12  Zack Weinberg  <zackw@panix.com>
+
+	* tests/db_migrate_on_bad_schema: Rename to schema_migration_bad_schema.
+	Rewrite to test for specific error messages corresponding to the
+	five-way distinction made by check_sql_schema.
+	* tests/migrate_with_rosterify: Rename to
+	schema_migration_with_rosterify.
+	* testsuite.lua: Update.
+
+	* schema_migration.cc: Prune headers and using-declarations.  Make
+	various things static and/or wrapped in the anonymous namespace.
+	(struct migrator): Delete.
+	(migrator_cb): Move definition to just above first use.
+	(struct migration_event, migration_events, n_migration_events)
+	(schema_to_migration, diagnose_unrecognized_schema, check_sql_schema):
+	New functions and data.
+	(migrate_monotone_schema): Put all the logic that used to be in
+	migrator::migrate here instead.  Use two loops instead of one loop
+	and a state boolean, for clarity.
+	* schema_migration.hh: Prune headers.  Forward-declare system_path.
+	Declare check_sql_schema.  Adjust spacing.
+	* database.cc (database::database): Delete initialization of "schema".
+	(database::check_schema, close_all_databases): Delete.
+	(database::sql): Call check_sql_schema instead of check_schema.
+	* database.hh (database): Remove "schema" data-member and
+	check_schema function-member.
+	(close_all_databases): Delete declaration.
+
+	* transforms.hh (xform): Make the generic template produce a
+	compile error if instantiated.  Use standard declarations of
+	partial specializations for the usable cases of xform, not the g++
+	"extern template" extension.
+	* transforms.cc (xform): Rewrite with a helper template and a
+	bunch of explicit partial specializations.  Put Base64_Decoder and
+	Hex_Decoder into IGNORE_WS mode (i.e. garbage in their input will
+	now give an error)
+
+	* botan/base64.cpp (Base64_Decoder::handle_bad_char): Always
+	ignore equals signs; correct generation of diagnostic message.
+	Patches from upstream Botan.
+	with policy branches and whatnot.
+
+2007-01-10  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rename branch.* to project.* .
+	Have places that used get_branches() now go through this code.
+	The general idea here is to prepare for having actual projects,
+	with policy branches and whatnot.
+
+2007-01-10  Thomas Keller  <me@thomaskeller.biz>
+
+	* po/POTFILES.in: another missing candidate: selectors.cc
+
+2007-01-09  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* outdated_indicator.{cc,hh}: Allows code that caches replys to
+	find out when those replys may be outdated. Used by...
+	* branch.{cc,hh}: Give us a concept of a 'branch'. Currently, this
+	only lets you find branch heads. Branch heads are cached and only
+	recalculated if certs have been added to / removed from the db.
+	* database.{cc,hh}: Enable the use of outdated_indicator s for
+	operations that return sets of certs.
+	* many: Use the new way to calculate heads. Right now, the main
+	effect is that 'automate heads' of the same branch is very fast
+	on subsequent calls from 'automate stdio'.
+
+2007-01-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc: Migrate to new sqlite3_prepare_v2 API.
+	* sqlite/*: Import SQLite 3.3.9.
+
+2007-01-08  Richard Levitte  <richard@levitte.org>
+
+	* debian/control (Build-Depends-Indep): Have texlive-base-bin as
+	an alternative to tetex-bin.
+	* debian/changelog: Document the change for Debian.
+
+2007-01-06  Thomas Keller  <me@thomaskeller.biz>
+
+	* cmd_automate.cc: automate stdio now opens the database
+	before any command is triggered, this ensures that it early
+	checks for a correct database version
+
+2007-01-05  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* netsync.cc (queue_delta_cmd): The invariant was based on the
+	(wrong) assumption that an empty xdelta means no change.
+
+2007-01-05  Matthew Nicholson  <matt@matt-land.com>
+
+	* contrib/monotone.bash_completion: Updated completion for "mtn log".
+
+2007-01-04  Zack Weinberg  <zackw@panix.com>
+
+	* botan/gzip.cpp: Use specific subclasses of Botan::Exception
+	throughout.
+	* transforms.cc (error_in_transform): New function.
+	(xform, pack, calculate_ident): Wrap use of Botan in try/catch,
+	and call error_in_transform if we catch a Botan exception.
+	(canonical_base64): Use Botan directly; add similar try/catch clause.
+	(corruption_check): New unit test.
+
+2007-01-03  Thomas Keller  <me@thomaskeller.biz>
+
+	* work.cc: classify_roster_paths: if the inodeprints cache
+	is enabled, unchanged and missing files are now handled
+	properly for use in automate inventory (before any unchanged
+	file was wrongly determined as missing)
+
+2007-01-02  Thomas Moschny <thomas.moschny@gmx.de>
+
+	* std_hooks.lua (get_netsync_connect_command): Fix a typo.
+
+2006-12-31  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am (AM_CFLAGS, AM_CXXFLAGS): Add
+	BOOST_MULTI_INDEX_DISABLE_SERIALIZATION define to avoid pulling in
+	serialization support that we don't need.
+
+2006-12-31  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-mirror-postaction-update.sh (database):
+	Make it possible to checkout into an empty directory.  Add a
+	bit more logging.
+
+2006-12-28  Derek Scherger  <derek@echologic.com>
+
+	* tests/update_clobbers_workspace/__driver__.lua: new test to
+	see how update handles various workspace conflicts
+	* testsuite.lua: call it
+
+2006-12-28  Richard Levitte  <richard@levitte.org>
+
+	* examples/mirror.rc: An incomplete example specification for
+	contrib/monotone-mirror.pl.
+
+2006-12-28  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-mirror.sh: Mirroring script.
+	* contrib/monotone-mirror-postaction-update.sh: Postaction script
+	that goes with contrib/monotone-mirror.sh.
+	* contrib/README: Describe them.
+
+2006-12-28  Matthew Nicholson  <matt@matt-land.com>
+
+	* contrib/monotone.bash_completion: Renamed regenerate_rosters to
+	regenerate_caches.
+
+2006-12-28  Derek Scherger  <derek@echologic.com>
+
+	* tests/checkout_clobbers_workspace/__driver__.lua: new test to
+	see how checkout handles various workspace conflicts
+	* testsuite.lua: call it
+
+2006-12-28  Derek Scherger  <derek@echologic.com>
+
+	* tests/missing_empty_dir/__driver__.lua: new test for missing,
+	empty, versioned directories
+	* testsuite.lua: call it
+	* work.cc (update_current_roster_from_filesystem): abort if there
+	are missing directories, whether they contained files or
+	not. tweak the associated messages so they're a bit more specific
+	about missing things verses things that are not what they should
+	be, like files that should be directories and vice-versa.
+
+2006-12-27  Richard Levitte  <richard@levitte.org>
+
+	* NEWS: Date the release.
+
+2006-12-27  Richard Levitte  <richard@levitte.org>
+
+	* configure.ac, debian/changelog, monotone.spec,
+	win32/monotone.iss, visualc/config.h: Bumped to version 0.32.
+
+2006-12-27  Richard Levitte  <richard@levitte.org>
+
+	* UPGRADE: Gently remind people to take a backup before migrating.
+
+2006-12-27  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl: For all places where 'mtn log' is
+	used, change '--revision' to '--from'.
+
+2006-12-27  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* UPGRADE: Update for 0.32.
+
+	* netsync.cc (struct session): Fix a very minor warning: const
+	static vs static const.
+
+2006-12-26  Derek Scherger  <derek@echologic.com>
+
+	* netsync.cc:
+	* roster.hh:
+	* work.{cc,hh}: fix some comment typos
+
+2006-12-26  Derek Scherger  <derek@echologic.com>
+
+	* unix/process.cc (is_executable, make_executable, process_spawn,
+	process_spawn, redir, process_wait, process_kill, process_sleep,
+	get_process_id): fix indentation
+
+2006-12-26  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* Makefile.am (BOTAN_SOURCES): Remove entries for missing headers,
+	add entries for new headers.
+
+	* Makefile.am (BOTAN_SOURCES): distcheck target is failing because
+	the headers for Botan are missing.  Add missing line continuation.
+
+2006-12-22  Derek Scherger  <derek@echologic.com>
+
+	* paths.cc (normalize_external_path): factor new function out of
+	file_path constructor's external path normalization code
+	(file_path::file_path): call new normalization function for
+	external paths
+	(bookkeeping_path::is_bookkeeping_path): normalize strings as
+	external paths before checking for _MTN prefix
+	* tests/add_ignores__MTN/__driver__.lua: un-xfail subdir testcase
+	* tests/add_inside__MTN_/__driver__.lua: add now ignores
+	bookkeeping paths rather than failing on them. account for this
+	and check for associated warning on stderr
+	* work.cc (editable_working_tree::attach_node): add some
+	whitespace, it's cheap
+
+2006-12-22  Derek Scherger  <derek@echologic.com>
+
+	* cmd.hh (args_to_paths): warn about bookkeeping paths but ignore them
+	* tests/_MTN_case-folding_security_patch/__driver__.lua:
+	mtn add no longer fails but still reports warnings on stderr
+	add checks for these warnings
+	add checks for ls known not listing bad paths
+	* tests/add_ignores__MTN/__driver__.lua:
+	un-xfail root glob testcase
+
+2006-12-22  Derek Scherger  <derek@echologic.com>
+
+	* tests/add_ignores__MTN/__driver__.lua: new xfailed test for add *
+	which fails on seeing _MTN
+	* testsuite.lua: add it
+
+2006-12-22  Derek Scherger  <derek@echologic.com>
+
+	* cmd_list.cc (ls):
+	* cmd_ws_commit.cc (mv,co): add semi's to ALIASes so indent-region works
+	(pivot_root): tweak indentation
+	(add,drop): use args_to_paths and new split_paths function
+	* paths.{cc,hh} (split_paths): new function to split a vector of
+	file_paths into a set of split_paths
+
+2006-12-21  Richard Levitte  <richard@levitte.org>
+
+	* cmd_netsync.cc (CMD(pull), CMD(push), CMD(sync)): Make it
+	visible that more than one pattern can be given.
+
+2006-12-21  Thomas Keller  <me@thomaskeller.biz>
+
+	* cmd_diff_log.cc: renamed --revision option to --to
+	* option_list.hh: new block for --to
+	* monotone.texi: ...documented here
+	* NEWS: ...noted here
+	* tests/*: ..honored appropriately
+
+2006-12-21  Thomas Keller  <me@thomaskeller.biz>
+
+	* NEWS: refined some sections and added notes about
+	fixes in automate inventory and the localization code
+
+2006-12-19  Thomas Keller  <me@thomaskeller.biz>
+
+	* monotone.texi: added missing documentation for
+	automate get_option
+
+2006-12-19  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/main.cc: Disable the C runtime's built-in globbing.  This
+	piece of magic causes more trouble and UI inconsistency than it
+	seems to solve.
+
+2006-12-18  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Wrap the add,
+	drop and commit calls in a try block so the temporary
+	bookkeeping directory can be properly cleared even when
+	there's an exception.
+	* tests/import/__driver__.lua: Add a test
+
+2006-12-18  Christof Petig <christof.petig@arcor.de>
+
+	* basic_io.hh (peek): use widen to distinguish '\xff' and EOF
+	* basic_io.cc (binary_transparency): add an unit test for this
+
+2006-12-18  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* database.cc (database::load),
+	schema_migration.cc (migrator::migrate):
+	PerformanceWork/SQLiteAnalyzeDiscussion in the wiki makes a strong
+	argument that ANALYZE provides no benefit for our use profile.
+	Remove ANALYZE calls from the post-load and post-migrate code.
+
+	* win32/monotone.iss: Don't ask the user a bunch of questions
+	about repositories, keys, branches, and workspaces at a point
+	where they might not know the answers.  Based on feedback from new
+	users on Win32, a simpler installer UI with an option to read the
+	documentation after the install is the way to go.
+
+2006-12-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/: Update to Botan 1.6.0, add botan/README.botan-monotone
+	with maintainence details.
+
+2006-12-18  Matt Johnston  <matt@ucc.asn.au>
+
+	* work.cc (get_revision_id): check that the workspace revision
+	exists here (so that codepaths such as "log" will also hit it).
+
+2006-12-16  Joel Rosdahl  <joel@rosdahl.net>
+
+	* po/sv.po: Corrections of Swedish translation.
+
+2006-12-16  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_list.cc: ls_known, ls_changed: sort path output.
+
+2006-12-15  Nathaniel Smith  <njs@pobox.com>
+
+	* paths.cc: Add a few more normalization tests for things like
+	"foo/.".
+
+2006-12-15  Derek Scherger  <derek@echologic.com>
+
+	* monotone.cc (cpp_main): indent try/catch block properly
+
+2006-12-15  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/fail_cleanly_when__MTN_format_empty: Rename to...
+	* tests/fail_cleanly_when__MTN_format_corrupt: ...this, and
+	add a few more test cases.
+
+2006-12-15  Tero Koskinen  <tero.koskinen@iki.fi>
+
+	* work_migration.cc (get_ws_format): Fail cleanly when _MTN/format
+	is broken.
+	* tests/fail_cleanly_when__MTN_format_empty: Test.
+
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* work.cc: handle missing directories properly in
+	classify_roster_paths
+	* automate.cc: trailing slash also for missing directories
+	* tests/...: adapted automate_inventory test which now tests
+	for unknown, added (but missing) and dropped (uncommitted) dirs
+
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* POTFILES.in: added missing restrictions.cc
+	* restrictions.cc: pluralized "%d missing paths"
+
+2006-12-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* options.cc (name): Call localize_monotone() before fetching an
+	option's description, to make sure that it is translated properly.
+
+2006-12-13  Markus Schiltknecht  <markus@bluegap.ch>
+
+	Made a lua tester function more bullet proof.
+
+	* tester.lua (samelines): do not throw a format error if
+	the file ends before expected.
+
+2006-12-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* NEWS: added note about new automate get_file_of
+
+2006-12-12  Ben Walton  <bdwalton@gmail.com>
+
+	* cmd_ws_cc: Added mtn mkdir
+	* testsuite.lua: added mtn mkdir test
+	* included tests/mkdir as unit testing for mtn mkdir
+	* added documentation to monotone.texi
+
+2006-12-12  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* HACKING: Updated "Patch submission guidelines" section.
+
+2006-12-11  Ben Walton  <bdwalton@gmail.com>
+
+	* cmd_ws_commit.cc,
+	tests/commit_using__MTN_log/commit_log_modified_return.lua,
+	tests/commit_using__MTN_log/__driver__.lua:
+	Added the requirement that when _MTN/log is pre-specified by
+	the user, that the user remove a 'magic' line prior to the
+	commit being accepted.  Modified the units tests to verify this.
+	Updated texinfo to match this new behaviour.
+
+2006-12-10  Timothy Brownawell <tbrownaw@gmail.com>
+
+	Implement a "mtn log --to <revision>", that doesn't log the
+	revisions that would be logged when <revision> was given as
+	the starting revision.
+
+2006-12-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/netsync_permissions_wildcards/__driver__.lua:
+	Don't forget to get() read-permissions and write-permissions.
+	Also, netsync.start should use the full blown netsync.lua,
+	not the minimal start.
+
+2006-12-09  Richard Levitte  <richard@levitte.org>
+
+	* tests/netsync_permissions_wildcards/__driver__.lua,
+	tests/netsync_permissions_wildcards/read-permissions,
+	tests/netsync_permissions_wildcards/write-permissions,
+	testsuite.lua: Test how well netsync works when read-permissions
+	contains wildcards as part of the pattern.
+
+2006-12-08  Richard Levitte  <richard@levitte.org>
+
+	* INSTALL: A build failure showed me I needed to install
+	libboost-serialization-dev, so let's share that information.
+
+2006-12-07  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database.cc (delete_existing_rev_and_certs): When killing a
+	revision, also remove it's height from the database.
+
+2006-12-06  Thomas Keller <me@thomaskeller.biz>
+
+	Existing test for previous change in author cert selection
+	tweaked (previously b_and_t_selector_globbing)
+
+2006-12-06  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Version 1.34 of boost changes some things. In particular fs::path
+	is now a typedef (breaks the declaration we had in vocab.hh), and
+	some of our exceptions are different.
+
+	Remove the vocab.hh declaration of fs::path, and #if/#else some things in
+	file_io.cc to handle the changing names.
+
+2006-12-05  Thomas Keller  <me@thomaskeller.biz>
+
+	* database.cc: removed implicit wildcards for author cert selections
+
+2006-12-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* ChangeLog: Fixed name on previous entry.
+
+2006-12-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* contrib/monotone.bash_completion: Updated and reformated some what.
+	Still needs work.  The bulk of this could probably be generated
+	automatically.
+
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Make sure some
+	global variables, like found_workspace, are properly initialised
+	after the temporary bookkeeping directory is created.
+
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
+	* tests/import/__driver__.lua: Test using --message-file.
+
+2006-12-01  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Add the usual
+	restriction options, as well as --author and --date.
+	* tests/import/__driver__.lua: Test the restrictions a bit.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)), options_list.hh:
+	Implement --dry-run, locally for the import command for now.
+	* po/sv.po: Adjust for the added string.
+	* tests/import/__driver__.lua: Test it.
+	* monotone.texi (Tree): Document it.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
+	* tests/import/__driver__.lua: Add a test to show that it really
+	doesn't import a workspace.
+
+2006-11-30  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD_NO_WORKSPACE(import)): Add import command.
+	It's quite simplistic, it basically creates a _MTN bookkeeping
+	directory filled with information derived from a given branch or
+	revision, then does the following:
+		mtn add --unknown
+		mtn drop --missing
+		mtn commit
+	It will refuse to import from a workspace.
+	* po/sv.po: Adjust for the added and changed strings.
+	* tests/import/__driver__.lua, testsuite.lua: Test it.
+	* monotone.texi (Tree): Document it.
+
+2006-11-28  Christian Ohler <ohler+mtn@fastmail.net>
+
+	Fix automate bug where input would be garbled if a string needed
+	multiple read() calls. (patch from ML; applied by Timothy Brownawell)
+
+2006-11-28  Matt Johnston  <matt@ucc.asn.au>
+
+	* restrictions.cc: limit some verbose debugging that slows "log <file>"
+
+2006-12-04  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Bugfix: the heights index in the
+	multi_index_container was using the wrong sort order.
+	* annotate.cc (do_annotate): Calling do_annotate_node() might
+	invalidate the iterator pointing to the current work unit.
+
+2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate, do_annotate_node): Use a
+	boost::multi_index_container instead of a priority_queue together
+	with a map to store the work units to be processed.
+
+2006-12-02  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc: Minor cleanups.
+
+2006-12-01  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate_node): Remove unnecessary variable.
+
+2006-11-27  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* annotate.cc (do_annotate, do_annotate_node): use markings
+	together with heights in order to significantly speed up annotate.
+
+2006-11-22  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	* rev_height.cc: add memcmp to global namespace for sunpro.
+
+2006-11-20  Matt Johnston  <matt@ucc.asn.au>
+
+	* tests/mtn_execute_attr_respects_umask/: use ls -l rather than
+	stat -c, since the former is posix defined.
+
+2006-11-20  Thomas Keller  <me@thomaskeller.biz>
+
+       * moved automate get_file into cmd_files.cc
+       * new automate command get_file_of which is basically mtn cat
+       * replaced exception by user error for get_file and get_file_of
+       if no arguments are given
+
+2006-11-18  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.monotone.init (d_start): Remove the
+	branch argument, which was all-inklusive anyway.
+	* debian/changelog: Mark a new version to make it possible to
+	write a ...
+	* debian/NEWS: New news item indicating to Debian users that
+	they may need to do some changes if they want their servers
+	to still run.
+
+2006-11-18  Timtohy Brownawell  <tbrownaw@gmail.com>
+
+	Make 'serve' always serve everything, and no longer take
+	include/exclude patterns on the command line.
+
+	Make the testsuite not use --nostd, so it can use the standard
+	permissions hooks for tests that need restricted serve.
+
+	Un-xfail the mtn:execute / umask test, since not having the
+	standard hooks available was what made it not work.
+
+2006-11-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make spawn_redirected work with blank filenames to not redirect
+	some streams.
+
+2006-11-17  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Add status code reporting to the note_netsync_{begin,end} hooks.
+
+2006-11-16  Richard Levitte  <richard@levitte.org>
+
+	* contrib/ext_hooks.lua.in, contrib/ext_hooks_expand.pl: New
+	files that implement a system that allows easy addition of hooks
+	implementations without having to edit any file. You need to
+	run the perl script contrib/ext_hooks_expand.pl to produce the
+	file contrib/ext_hooks.lua, using contrib/ext_hooks.lua.in as
+	a template and the hook function definitions found in
+	monotone.texi.
+	* README: Add a small blurb about the above files.
+
+2006-11-17  Thomas Keller  <me@thomaskeller.biz>
+
+	* cmd_automate.cc, cmd.hh, ...: renamed member variable
+	"options" to "opts" to make (hopefully) the gcc-3.3 build
+	slaves happy
+
+2006-11-15  Richard Levitte  <richard@levitte.org>
+
+	* lua.cc (LUAEXT): Implement includedirpattern(), which is like
+	includedir() but also takes a glob pattern for the files to load.
+	* monotone.texi (Additional Lua Functions): Document
+	includedirpattern().
+	* testsuite.lua,
+	tests/include()_and_includedir()_lua_functions/:
+	Renamed to include()_includedir()_and_includedirpattern()_lua_functions
+	__driver__.lua: Test includedirpattern().
+
+2006-11-15  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.postinst: Add a note that a db migration
+	may take a while.
+
+2006-11-15  Thomas Keller  <me@thomaskeller.biz>
+
+	* cmd_automate.cc: defined equal sounding error message
+	"Bad input to stdio" further
+
+2006-11-14  Thomas Keller  <me@thomaskeller.biz>
+
+	* new automate content_diff command which is basically
+	the same like mtn diff (also uses most of its infrastructure)
+	minus the display of the basic_io revision header
+	* tests/automate_content_diff: test for that
+	* tests/automate_automate_version test renamed to
+	automate_interface_version
+	* monotone.texi: list formatting for automate attributes
+	documentation, docs for automate content_diff
+	* fixed commented version number for two commands
+
+2006-11-14  Richard Levitte  <richard@levitte.org>
+
+	NOTE: I bumped the Debian version number to 0.31-90.1 in this
+	change so needed upgrades of the monotone-server package would
+	get through easily.  I'm regarding that as a very early pre-
+	release of 0.32.  Debian maintainers should still release 0.31
+	the normal way (updating to the monotone-0.31 tag) and insert
+	their entry in debian/changelog directly above the 0.31-0.1 entry.
+	* debian/NEWS: Added to provide information on important changes
+	to Debian users.
+	* debian/changelog: Added an entry for 0.31-90.1
+	* debian/monotone-server.postinst: Changed to provide automatic
+	upgrade using 'mtn db regenerate_caches" if the previous monotone
+	version is less than 0.31-90.1.
+
+2006-11-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* cmd_diff_log.cc (CMD(log)): Fix-ups from last propagate nvm ->
+	nvm.heights.
+	* revision.cc (CMD(rev_height)): dito.
+
+2006-11-11  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* rev_height.hh, rev_height.cc: remove the dump method, add an
+	overload to the dump function to make heights work with MM().
+	* database.cc (put_height_for_revision): Add some MM() calls.
+
+2006-11-11  Nathaniel Smith  <njs@pobox.com>
+
+	* notes/: New directory for developer docs.
+	* notes/release-checklist.txt: Neaten up my release checklist and
+	commit it.
+	* tests/README, tester.txt, testsuite.txt: Move to notes/.
+	* HACKING: Add a mention of notes/.
+
+2006-11-11  Nathaniel Smith  <njs@pobox.com>
+
+	* NEWS: Set release date.
+
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
+	* debian/control (Build-Depends): Remove
+	libboost-program-options-dev.
+
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
+	* UPGRADE, configure.ac, monotone.spec, debian/changelog:
+	* win32/monotone.iss, visualc/config.h: Bump version numbers to
+	0.31.
+
+2006-11-10  Nathaniel Smith  <njs@pobox.com>
+
+	* INSTALL: Remove libboost-program-options-dev from the list of
+	debian packages.
+
+	* NEWS: First draft of 0.31 release notes.
+
+2006-11-06  Thomas Keller <me@thomaskeller.biz>
+
+	Improved error message for invalid uri's (per bug #17736)
+
+2006-11-03  Richard Levitte  <richard@levitte.org>
+
+	* cert.cc (get_user_key): app.opts.key_given is only true when
+	-k is given.  However, the signing key may be given in
+	_MTN/options as well, and that should be respected.
+
+2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Make add non-recursive by default, and also give it a
+	--no-respect-ignore switch.
+
+2006-11-03  Daniel Carosone  <dan@geek.com.au>
+
+	Tidy up some description of certs and the tag command:
+	 * mention the purpose of tag certs
+	 * remove stale mention of file certs in the description of "comment"
+	 * move "mtn cert" to the certificate section, together with all the
+	   things that are synonyms for it.
+	 * rename the "key and cert" section accordingly
+	 * add a "tag" section to the cvs phrasebook.
+
+2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Allow commands with subcommands (such as automate) to take
+	different options depending on which subcommand was called.
+	Make AUTOMATE() specify what options are taken. Test (and
+	fix) having spaces between automate commands.
+
+2006-11-02  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Allow automate commands to take options. Change "automate stdio"
+	error handling (exit instead of returning usage information when
+	given an invalid command line) and bump automate version. Increase
+	default "automate stdio" blocksize to 32k.
+
+2006-11-02  Patrick Mauritz  <oxygene@studentenbude.ath.cx>
+
+	*  cmd_automate.cc, option.cc, options_list.hh: fixes for sun studio
+
+2006-11-01  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: A fuzzy to fix.
+
+2006-10-31  Benoît Dejean  <benoit@placenet.org>
+
+	* std_hooks.lua (ignore_file): Fixed many patterns.
+	Also added gettext and intltool related patterns.
+
+2006-10-31  Nathaniel Smith  <njs@pobox.com>
+
+	* work.cc (perform_rename): Tweak error message that just annoyed
+	me.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
+	* tests/disapproving_with_message/__driver__.lua (r_sha): New
+	rudimentary test to check that disapprove with messages works.
+	* testsuite.lua: Add it.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
+	* commands.cc (process_commit_message_args): Only prepend the
+	message prefix is it's more than 0 characters.
+
+2006-10-26  Richard Levitte  <richard@levitte.org>
+
+	* cmd_ws_commit.cc (CMD(disapprove)): Make it possible to specify
+	extra message lines to be added after the standard "disapprove"
+	line, as well as author and date.  Makes use of the following
+	change:
+	* commands.cc,cmd.hh (process_commit_message_args): Add an extra
+	parameter to have as a prefix of the user message.  If the prefix
+	exists, there will always be a message containing it.
+
+2006-10-24  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* lua/lstrlib.cc: Patch for Lua 5.1.1 bug #3, from
+	lua.org/bugs.html.
+
+2006-10-24  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* tests/db_check_(heights)/: Test the heights related checks of
+	'db check'.
+	* testsuite.lua: Add the test to the lists of tests.
+
+2006-10-20  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database_check.cc: Add checks for the heights. It is checked
+	that every revision has a unique height that is greater than that
+	of all it's parents.
+
+2006-10-09  Nathaniel Smith  <njs@pobox.com>
+
+	* automate.cc: Remove spurious #include of rev_height.hh.
+	* revision.cc (allrevs_toposorted): Add a comment describing this
+	function's purpose.
+
+2006-10-24  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Fix an epoch refinement bug. If we already have an epoch for a branch
+	we're receiving and don't have any revisions for, we will be re-sent
+	that epoch. There is code to ignore received items that we already
+	have. This code needs to call maybe_note_epochs_finished() for
+	epoch items.
+
+2006-10-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/: pull in changes from net.randombit.botan head.
+
+2006-10-24  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_automate.cc (automate stdio): Do not run randomly through
+	memory doing random things when we get a 0-length stdio command
+	list.
+	* tests/automate_stdio/__driver__.lua: Add some bad-input tests.
+
+2006-10-24  Nathaniel Smith  <njs@pobox.com>
+
+	* cmd_automate.cc (automate_reader): Use delete[] to free array
+	allocated with new[].
+
+2006-10-22  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Rewrite options handling. Options are listed in options_list.hh.
+	options.{cc,hh} is support for this; option.{cc,hh} is options
+	infrastructure. unit_tests.cc uses this infrastructure directly for
+	handling the options that it accepts.
+
+2006-10-22  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Swap execution of 'set +e' and 'set
+	-e'.
+
+2006-10-15  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Propagate the rerwite of 'automate stdio' (in branch
+	...automate-stdio-extensions) to mainline. It doesn't actually
+	have any extensions anymore, just a rewrite that should make
+	the code cleaner.
+
+2006-10-13  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Revert automate stdio extensions (never were on mainline) so
+	that the only change is that automate stdio is implemented
+	more cleanly.
+
+2006-10-12  Thomas Keller <me@thomaskeller.biz>
+
+	* automate.cc: replaced std::endl in favour of simple unix
+	unix line endings which is useful if these commands are used
+	over automate stdio (flushing is expensive...)
+
+2006-10-03  Evan Deaubl  <evan@warpedview.com>
+
+	* monotone.cc, options_list.hh: Added ability to specify
+	multiple --message arguments.
+	* monotone.texi: Added documentation for multiple --message
+	arguments.
+	* tests/multiple_message_commit/__driver__.lua, testsuite.lua:
+	Added integration test for multiple --message arguments.
+
+2006-10-09  Richard Levitte  <richard@levitte.org>
+
+	* po/sv.po: 35 fuzzies cleared,
+
+2006-10-08  Richard Levitte  <richard@levitte.org>
+
+	* debian/control (monotone-doc): Set up build dependencies for the
+	tools needed to make the documentation.
+
+2006-10-08  Richard Levitte  <richard@levitte.org>
+
+	* debian/control (monotone-doc): New package that contains all
+	the documentation.
+	* debian/rules (binary-install/monotone-server): Add special rule
+	so the PDF document really gets created.
+	* debian/monotone.docs: Move the documentation referenses from
+	here ...
+	* debian/monotone-doc.docs: ... to here, since we have a separate
+	package for documentation.
+
+2006-10-04  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* automate.cc: Fix automate inventory.
+	"workspace_inventory" test should be named "automate_inventory".
+
+2006-10-03  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* visualc/lua.vcproj visualc/monotone.vcproj: Make it build again.
+
+2006-09-29  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* tests/workspace_inventory/__driver__.lua: This test has been
+	broken since efe5767b8eebbc5440f543a08b8a3521e760a02a ; added files
+	should also be marked as patched.
+
+2006-09-26  Richard Levitte  <richard@levitte.org>
+
+	* contrib/monotone-notify.pl: Change the default monotone program
+	from "monotone" to "mtn".
+
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_netsync.cc (CMD(push/sync)): don't require a -k
+    argument for a non-authed transport.
+
+2006-09-26  Matt Johnston  <matt@ucc.asn.au>
+
+	* cmd_ws_commit.cc (CMD(commit)): fail early if a key
+	wasn't set.
+
+2006-09-26  Marcel van der Boom  <marcel@hsdev.com>
+
+	* lua_hooks.cc (hook_validate_commit_message): Add a branchname
+	argument.
+	* cmd_ws_commit.cc (commit): Pass it.
+	* monotone.texi (Hooks): Document it.
+	* tests/commit_validation_lua_hook/commit_validate.lua: Test it.
+
+2006-09-25  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* contrib/monotone.zsh_completion: Applied a patch by Bruce
+	Stephens <monotone@cenderis.demon.co.uk>: Selectors can now be
+	completed in addition to revision ids, using the new functions
+	_mtn_tags and _mtn_public_keys together with _mtn_branches.
+	Selector completion is done by _mtn_selector_or_revision.
+
+2006-09-23  Matt Johnston  <matt@ucc.asn.au>
+
+	* botan/, Makefile.am: update to current botan devel branch,
+    copied manually from au.asn.ucc.matt.botan.monotone-2 import branch.
+
+2006-09-23  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* database.cc, database.hh (put_height_for_revision): New method.
+	* database.cc (put_revision): Use put_height_for_revision.
+	* revision.cc, revision.hh (regenerate_caches): Combined
+	regenerate_heights and regenerate_rosters; using
+	put_height_for_revision.
+	* cmd_db.cc: Now using regenerate_caches.
+	* automate.cc, revision.cc: Changed `rev_height' from an
+	automation subcmd into a normal, but hidden command.
+
+2006-09-21  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* revision.cc, revision.hh (regenerate_heights): New function,
+	uses toposort code from mainline to traverse the graph and assign
+	heights to all revisions.
+	(regenerate_rosters): Removed call to
+	app.db.ensure_open_for_format_changes, now done by
+	regenerate_caches.
+	* cmd_db.cc (CMD(db)): New command `regenerate_caches', calls
+	`regenerate_rosters' and `regenerate_heights'.
+	* schema_migration.cc: Replace occurrences of `regenerate_rosters'
+	with `regenerate_caches'.
+	(migrate_add_heights): set upgrade_regen_caches regime.
+	* database.cc, database.hh (check_format): Check whether the
+	database has heights.
+	(delete_existing_heights): New function.
+	(has_rev_height): Make parameter const.
+	* tests/*/__driver__.lua: Adjust some tests to account for the
+	renaming of regenerate_rosters.
+
+2006-09-23  Grahame Bowland  <grahame@angrygoats.net>
+
+	* automate.cc (get_content_changed): use the file_content
+	make rather than the parent_name mark.
+
+2006-09-23  Nathaniel Smith  <njs@pobox.com>
+
+	* randomizer.{cc,hh}: Make randomizer a stateful struct, not a
+	namespace.  Now, each test must instantiate its own randomizer,
+	and the randomizer is deterministically seeded at each test, so
+	the actual tests performed no longer depend on what other tests
+	were run in this session.
+	* diff_patch.cc, graph.cc, randomfile.hh, refiner.cc, roster.cc:
+	Adjust accordingly.
+	* roster.cc (perform_random_action): Remove stateless
+	change_automaton struct.
+
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
+	* graph.cc: I dunno, maybe this will make the buildslaves happier?
+
+2006-09-22  Nathaniel Smith  <njs@pobox.com>
+
+	* graph.cc: Add randomized tests for get_reconstruction_path.
+
 2006-09-22  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (workspace::perform_pivot_root): Partially revert
@@ -306,6 +1563,30 @@
 	* merge.cc (resolve_merge_conflicts): Constify a shared_ptr<roster_t>.
 	* work.cc (content_merge_empty_adaptor): Similarly.
 
+2006-09-13  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* schema.sql: New table for the revision heights.
+	* schema_migration.cc (migrate_monotone_schema): Add code for the
+	  schema migration.
+	* tests/schema_migration/__driver__.lua: Add migration test.
+	* rev_height.cc, rev_height.hh: Add a class for the revision
+	height.
+	* Makefile.am (MOST_SOURCES): Add rev_height.{cc|hh}.
+	* database.cc (database): New schema.
+	* database.cc (get_rev_height, put_rev_height, has_rev_height):
+	New methods for storing and retrieving revision heights.
+	* database.cc (put_revision): Determine the revision's height and
+	write it into the database.
+	* database.cc (info): Show space usage information for the
+	heights.
+	* automate.cc (rev_height): New command to query a rev's
+	height. Preliminary.
+	* revision.cc (toposort): Use the revision heights.
+	* cmd_diff_log.cc (CMD(log)): Use the heights to traverse the
+	graph in topological order. Use the markings to avoid fetching
+	rosters for uninteresting revisions for restricted, backwards
+	walking logs.
+
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* .mtn-ignore: Ignore mtn instead of monotone; additionally ignore
@@ -362,6 +1643,11 @@
 	* cmd_ws_commit.cc (commit): Generate utf8 changelogs.
 
 	* tests/i18n_commit_messages/: New test.
+
+2006-09-12  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone-server.postinst: Add code to regenerate
+	rosters when appropriate.
 
 2006-09-12  Thomas Moschny  <thomas.moschny@gmx.de>
 
@@ -839,6 +2125,22 @@
 
 	* po/pt_BR.po: Fuzzies fixed and more strings translated.
 
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+    * monotone.cc, unit_test.cc: Botan initialisation has
+    changed.
+    * botan/pkcs8.*: update monotone-specific parts to new botan
+    release.
+    * botan/{arc4.cpp, base64.*}: bring back monotone-specific changes
+
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+    * netsync.cc (~session): fixup for Botan 1.5
+
+2006-09-02  Matt Johnston  <matt@ucc.asn.au>
+
+    * botan/: import of Botan 1.5
+
 2006-08-31  Nathaniel Smith  <njs@pobox.com>
 
 	* charset.cc (system_charset_is_ascii_extension_impl): Add "646".
@@ -920,6 +2222,26 @@
 	of translatable text.  These strings were previously in
 	monotone.cc.
 	* po/sv.po: Updated automatically.
+
+2006-08-28  Richard Levitte  <richard@levitte.org>
+
+	* debian/monotone.examples: Added, currently exactly the same
+	as debian/monotone-server.examples.  There's no reason why the
+	"client" should be without some of the examples.
+
+2006-08-28  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.examples: Dropped.
+	* debian/examples: Renamed to debian/monotone-server.examples.
+
+2006-08-27  Richard Levitte  <richard@levitte.org>
+
+	* debian/examples/read-permissions
+	debian/examples/write-permissions: Move to ...
+	* examples/read-permissions examples/write-permissions:
+	... here.
+	* examples/000README.txt: add a subtle little comment covering
+	the moved files.
 
 2006-08-28  Richard Levitte  <richard@levitte.org>
 
@@ -1242,6 +2564,11 @@
 
 	* INSTALL: Say that a Debian user needs to install
 	libboost-program-options-dev as well.
+
+2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	* cmd.hh cmd_automate.cc monotone.text tests/automate_stdio/:
+	Comment out stuff related to giving automate commands an input stream.
 
 2006-08-16  Timothy Brownawell  <tbrownaw@gmail.com>
 
@@ -1660,6 +2987,19 @@
 	* file_io.cc (walk_tree_recursive): Walk files first, then
 	directories; cuts down memory usage greatly on reiserfs.
 
+2006-07-27  Timothy Brownawell  <tbrownaw@gmail.com>
+
+	Implement the automate stdio extensions mentioned on the ML.
+	- options: can be given, but don't do anything yet. Fixing this will
+	  probably be easier after landing the boost-program-options branch.
+	- input stream: there has been some discussion on IRC as to whether we
+	actually want to keep this.
+	* cmd_automate.cc: Redo automate stdio I/O parsing.
+	* cmd.hh: Automate commands now get an input stream, and can take
+	options (but the options are currently just discared, since I'm not
+	sure how to make it work with our current option-parsing machinery).
+	* monotone.texi: Update the documentation of automate stdio.
+
 2006-07-27  Nathaniel Smith  <njs@pobox.com>
 
 	* configure.ac: Add a check for g++ 4.0/4.0.1 std::tr1 hashtable
@@ -1873,11 +3213,6 @@
 	* netsync.cc: Include signal.h if not Windows.
 	(run_netsync_protocol): Ignore SIGPIPE if not Windows.
 	* tests/database_is_closed_on_signal_exit: Expected to fail.
-
-2006-07-22  Nathaniel Smith  <njs@pobox.com>
-
-	* NEWS: Set date, and it turns out AUTOMATE() was there in
-	0.27...
 
 2006-07-21  Zack Weinberg  <zackw@panix.com>
 
@@ -3716,6 +5051,14 @@
 	* work.cc (editable_working_tree::apply_delta): filename argument
 	was missing for E() format string.
 
+2006-05-04  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.monotone.default: Removed BRANCHES option and
+	make all other options optional.  Also DB became MTN_DB.
+	* debian/monotone-server.monotone.init: Set defaults for every option
+	in /etc/default/monotone, also serve '*' instead of specific branches.
+	Restrictions can be added using the read and write permissions files.
+
 2006-05-02  Richard Levitte  <richard@levitte.org>
 
 	* po/sv.po: A few new strings to translate.
@@ -3761,6 +5104,11 @@
 	(database::put_file_version): Use invert_xdelta.
 	* netsync.cc (session::note_file_delta):
 	Use get_arbitrary_file_delta.
+
+2006-04-30  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Change $MONOTONE to $MTN.  Added
+	--quite flag to key generation.
 
 2006-04-29  Richard Levitte  <richard@levitte.org>
 
@@ -4091,6 +5439,18 @@
 	reference in HTML files.  Perl is not available in some systems
 	by default so this avoids an extra build-time dependency.
 
+2006-04-13  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Only try to
+	migrate/rosterify/whatever database once.  If it fails print a
+	message.  This is how the script was coded but 'set -e' prevented it
+	from working properly.
+
+2006-04-13  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/control: Made monotone-server's Architecture 'all' instead of
+	'any', as it does not contain any architecture dependent files.
+
 2006-04-12  Nathaniel Smith  <njs@pobox.com>
 
 	* unix/process.cc (read_umask): New function.
@@ -4111,6 +5471,10 @@
 	(tick_write_count::write_ticks): Specialise the test for the
 	count/total case, since we know the exact maximum and therefore
 	don't need to make space for a ludicrously large number.
+
+2006-04-12  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone.docs: Added monotone.html back in.
 
 2006-04-12  Richard Levitte  <richard@levitte.org>
 
@@ -4404,6 +5768,16 @@
 	* tests/t_mtn_ignore.at: Shuffle the output grepping tests a bit
 	to make failure cases more obvious.
 
+2006-04-06  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postrm: Fix purging of monotone-server
+	package by not using debconf in postrm script.
+
+2006-04-06  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.examples: Don't install entire directory
+	hierarchy.
+
 2006-04-06  Nathaniel Smith  <njs@pobox.com>
 
 	* Makefile.am (mostlyclean-local): Delete
@@ -4567,6 +5941,26 @@
 
 2006-04-02  Matthew Nicholson  <matt@matt-land.com>
 
+	* ChangeLog: Fix typo and merge goofs.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.monotone.init: Clean up monotone's pid file
+	for it.  This is a temporary work around until monotone learns to
+	clean up after itself.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.TODO.Debian: Added.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.postinst: Changed to use the
+	get_passphrase_from_file.lua file as the default hooks file for the
+	server.
+
+2006-04-02  Matthew Nicholson  <matt@matt-land.com>
+
 	* contrib/get_passphrase_from_file.lua: Added.  This hook reads
 	passphrases from 'confdir/passphrases'.
 
@@ -4583,6 +5977,25 @@
 
 	* ui.cc (user_interface::redirect_log_to): Someone correctly
 	pointed out that the log gets clobbered.  Now corrected.
+
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+
+	* po/ja.po, po/pt_BR.po: Import from net.venge.monotone.
+
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.examples: Added.
+	* debian/monotone-server.install: Removed.  The
+	monotone-server.examples file handles this now.
+
+2006-04-01  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.dirs: Added new /var/log/monotone and
+	/var/run/monotone directories.
+	* debian/monotone-server.postinst: Set ownership and on new
+	directories.
+	* debian/monotone-server.monotone.init: Modified to use new log and
+	pid file locations and new --log option.
 
 2006-04-01  Lapo Luchini  <lapo@lapo.it>
 
@@ -4615,6 +6028,11 @@
 2006-04-01  Henry Nestler  <Henry@BigFoot.de>
 
 	* contrib/mtbrowse.sh: Bookkeeping directory _MTN
+
+2006-03-31  Matthew Nicholson  <matt@matt-land.com>
+
+	* debian/monotone-server.monotone.init: Fix pidfile saving.
+
 
 2006-03-31  Lapo Luchini  <lapo@lapo.it>
 
@@ -6104,6 +7522,14 @@
 2006-01-23  Nathaniel Smith  <njs@pobox.com>
 
 	* commands.cc (update): Hopefully improve wording of help a bit.
+
+2006-01-25  Matt Johnston  <matt@ucc.asn.au>
+
+	* merged in Botan 1.5.3 experimental release
+
+2006-01-22  Matt Johnston  <matt@ucc.asn.au>
+
+	* merged in Botan 1.5.2 experimental release
 
 2006-01-21  Nathaniel Smith  <njs@pobox.com>
 

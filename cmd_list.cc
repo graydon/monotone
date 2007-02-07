@@ -51,7 +51,10 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   revision_id ident;
   complete(app, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
-  app.db.get_revision_certs(ident, ts);
+  // FIXME_PROJECTS: after projects are implemented,
+  // use the app.db version instead if no project is specified.
+  app.get_project().get_revision_certs(ident, ts);
+
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
 
@@ -82,7 +85,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (colon_pos != string::npos)
     {
       string substr(str, 0, colon_pos);
-      colon_pos = display_width(substr);
+      colon_pos = display_width(utf8(substr));
       extra_str = string(colon_pos, ' ') + ": %s\n";
     }
 
@@ -137,7 +140,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_keys(string const & name, app_state & app, 
+ls_keys(string const & name, app_state & app,
         vector<utf8> const & args)
 {
   vector<rsa_keypair_id> pubs;
@@ -199,7 +202,7 @@ ls_keys(string const & name, app_state & app,
             cout << hash_code << " " << keyid << "   (*)" << "\n";
         }
       if (!all_in_db)
-        cout << (F("(*) - only in %s/") 
+        cout << (F("(*) - only in %s/")
                  % app.keys.get_key_dir()) << "\n";
       cout << "\n";
     }
@@ -238,16 +241,19 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     inc = idx(args,0);
   else if (args.size() > 1)
     throw usage(name);
-  combine_and_check_globish(app.exclude_patterns, exc);
+  combine_and_check_globish(app.opts.exclude_patterns, exc);
   globish_matcher match(inc, exc);
-  vector<string> names;
-  app.db.get_branches(names);
+  set<utf8> names;
+  app.get_project().get_branch_list(names);
 
-  sort(names.begin(), names.end());
-  for (size_t i = 0; i < names.size(); ++i)
-    if (match(idx(names, i)) 
-        && !app.lua.hook_ignore_branch(idx(names, i)))
-      cout << idx(names, i) << "\n";
+  for (set<utf8>::const_iterator i = names.begin();
+       i != names.end(); ++i)
+    {
+      if (match((*i)()) && !app.lua.hook_ignore_branch((*i)()))
+        {
+          cout << *i << "\n";
+        }
+    }
 }
 
 static void
@@ -258,7 +264,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 
   if (args.size() == 0)
     {
-      for (map<cert_value, epoch_data>::const_iterator 
+      for (map<cert_value, epoch_data>::const_iterator
              i = epochs.begin();
            i != epochs.end(); ++i)
         {
@@ -267,7 +273,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
     }
   else
     {
-      for (vector<utf8>::const_iterator i = args.begin(); 
+      for (vector<utf8>::const_iterator i = args.begin();
            i != args.end();
            ++i)
         {
@@ -281,27 +287,14 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 static void
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(tag_cert_name, certs);
+  set<tag_t> tags;
+  app.get_project().get_tags(tags);
 
-  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > > 
-    sorted_vals;
-
-  for (vector< revision<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
+  for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
-      cert_value name;
-      cert c = i->inner();
-      decode_base64(c.value, name);
-      sorted_vals.insert(make_pair(name, make_pair(c.ident, c.key)));
-    }
-  for (set<pair<cert_value, pair<revision_id,
-         rsa_keypair_id> > >::const_iterator i = sorted_vals.begin();
-       i != sorted_vals.end(); ++i)
-    {
-      cout << i->first << " "
-           << i->second.first  << " "
-           << i->second.second  << "\n";
+      cout << i->name << " "
+           << i->ident  << " "
+           << i->key  << "\n";
     }
 }
 
@@ -331,8 +324,8 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
         continue;
       external ext_domain, ext_name;
       externalize_var_domain(i->first.first, ext_domain);
-      cout << ext_domain << ": " 
-           << i->first.second << " " 
+      cout << ext_domain << ": "
+           << i->first.second << " "
            << i->second << "\n";
     }
 }
@@ -347,34 +340,45 @@ ls_known(app_state & app, vector<utf8> const & args)
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         new_roster, app);
 
+  // to be printed sorted
+  vector<split_path> print_paths;
+
   node_map const & nodes = new_roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); 
+  for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
       node_id nid = i->first;
 
-      if (!new_roster.is_root(nid) 
+      if (!new_roster.is_root(nid)
           && mask.includes(new_roster, nid))
         {
           split_path sp;
           new_roster.get_name(nid, sp);
-          cout << file_path(sp) << "\n";
+          print_paths.push_back(sp);
         }
     }
+    
+  sort(print_paths.begin(), print_paths.end());
+  for (vector<split_path>::const_iterator sp = print_paths.begin();
+       sp != print_paths.end(); sp++)
+  {
+    cout << *sp << "\n";
+  }
 }
 
 static void
-ls_unknown_or_ignored(app_state & app, bool want_ignored, 
+ls_unknown_or_ignored(app_state & app, bool want_ignored,
                       vector<utf8> const & args)
 {
   app.require_workspace();
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(roots, args_to_paths(app.exclude_patterns), app.depth, app);
+  path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth, app);
   path_set unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
@@ -384,11 +388,11 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
   app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
   if (want_ignored)
-    for (path_set::const_iterator i = ignored.begin(); 
+    for (path_set::const_iterator i = ignored.begin();
          i != ignored.end(); ++i)
       cout << file_path(*i) << "\n";
   else
-    for (path_set::const_iterator i = unknown.begin(); 
+    for (path_set::const_iterator i = unknown.begin();
          i != unknown.end(); ++i)
       cout << file_path(*i) << "\n";
 }
@@ -400,14 +404,14 @@ ls_missing(app_state & app, vector<utf8> const & args)
   roster_t current_roster_shape;
   app.work.get_current_roster_shape(current_roster_shape, nis);
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns),
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         current_roster_shape, app);
 
   path_set missing;
   app.work.find_missing(current_roster_shape, mask, missing);
 
-  for (path_set::const_iterator i = missing.begin(); 
+  for (path_set::const_iterator i = missing.begin();
        i != missing.end(); ++i)
     {
       cout << file_path(*i) << "\n";
@@ -428,19 +432,22 @@ ls_changed(app_state & app, vector<utf8> const & args)
   app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.exclude_patterns), 
-                        app.depth,
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
                         old_roster, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster, 
+  make_restricted_csets(old_roster, new_roster,
                         included, excluded, mask);
   check_restricted_cset(old_roster, included);
 
   set<node_id> nodes;
   select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
 
-  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end(); 
+  // to be printed sorted
+  vector<split_path> print_paths;
+
+  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
        ++i)
     {
       split_path sp;
@@ -448,7 +455,14 @@ ls_changed(app_state & app, vector<utf8> const & args)
         old_roster.get_name(*i, sp);
       else
         new_roster.get_name(*i, sp);
-      cout << sp << endl;
+      print_paths.push_back(sp);
+    }
+
+    sort(print_paths.begin(), print_paths.end());
+    for (vector<split_path>::const_iterator sp = print_paths.begin();
+         sp != print_paths.end(); sp++)
+    {
+      cout << *sp << endl;
     }
 
 }
@@ -469,7 +483,7 @@ CMD(list, N_("informative"),
     N_("show database objects, or the current workspace manifest, \n"
        "or known, unknown, intentionally ignored, missing, or \n"
        "changed-state files"),
-    option::depth % option::exclude)
+    options::opts::depth | options::opts::exclude)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -503,7 +517,7 @@ CMD(list, N_("informative"),
     throw usage(name);
 }
 
-ALIAS(ls, list)
+ALIAS(ls, list);
 
 namespace
 {
@@ -557,10 +571,11 @@ namespace
 //   private_location "keystore"
 //
 // Error conditions: None.
-AUTOMATE(keys, "")
+AUTOMATE(keys, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
+  
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
   // public_hash, private_hash, public_location, private_location
@@ -648,21 +663,24 @@ AUTOMATE(keys, "")
 // key, a warning message is printed to stderr. If the revision
 // specified is unknown or invalid prints an error message to stderr
 // and exits with status 1.
-AUTOMATE(certs, N_("REV"))
+AUTOMATE(certs, N_("REV"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(help_name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   vector<cert> certs;
 
   transaction_guard guard(app.db, false);
 
-  revision_id rid(idx(args, 0)());
+  revision_id rid(hexenc<id>(id(idx(args, 0)())));
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;
-  app.db.get_revision_certs(rid, ts);
+  // FIXME_PROJECTS: after projects are implemented,
+  // use the app.db version instead if no project is specified.
+  app.get_project().get_revision_certs(rid, ts);
+
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
 
@@ -689,12 +707,12 @@ AUTOMATE(certs, N_("REV"))
       basic_io::stanza st;
       cert_status status = check_cert(app, idx(certs, i));
       cert_value tv;
-      cert_name name = idx(certs, i).name();
+      cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;
 
       decode_base64(idx(certs, i).value, tv);
 
-      rsa_keypair_id keyid = idx(certs, i).key();
+      rsa_keypair_id keyid = idx(certs, i).key;
       signers.insert(keyid);
 
       bool trusted =

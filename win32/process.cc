@@ -158,6 +158,11 @@ struct redir
 redir::redir(int which, char const * filename)
  : what(which)
 {
+  if (!filename || *filename == '\0')
+    {
+      what = -1;
+      return;
+    }
   HANDLE file;
   SECURITY_ATTRIBUTES sa;
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);

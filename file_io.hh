@@ -94,7 +94,7 @@ class tree_walker
 {
 public:
   // returns true if the directory should be descended into
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();
 };
@@ -102,8 +102,7 @@ public:
 // from some safe sub-dir of cwd
 // file_path of "" means cwd
 void walk_tree(file_path const & path,
-               tree_walker & walker,
-               bool require_existing_path = true);
+               tree_walker & walker);
 
 
 

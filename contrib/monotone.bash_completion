@@ -1,5 +1,5 @@
 # -*- shell-script -*-
-# vim: set ft=sh:
+# vim: set ft=sh sw=4 et:
 
 # bash completion for monotone 0.25
 # Author: Olivier Andrieu <oandrieu@nerim.net>
@@ -89,15 +89,47 @@ _monotone() {
       COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
       ;;
     --revision=* )
+      cur="${cur#*=}"
       _monotone_complete revision
       ;;
     -* )
-      COMPREPLY=( $(compgen -W '--debug --dump --quiet --help --version
-                                --full-version --xargs --ticker --nostd --norc
-                                --rcfile --key --db --root --verbose -k -d -@
-                                -m -b -r --branch --message --date --author
-                                --depth --execute --keydir --confdir
-                                --key-to-push --bind' -- $cur) )
+      COMPREPLY=( $(compgen -W '
+          --brief
+          --confdir
+          --db -d
+          --debug
+          --dump
+          --full-version
+          --help -h
+          --key -k
+          --keydir
+          --log
+          --norc
+          --nostd
+          --pid-file
+          --quiet
+          --rcfile
+          --rellyquiet
+          --root
+          --ticker
+          --version
+          --xargs -@
+          --version
+
+          --message -m
+          --branch -b
+          --revision -r
+          --date
+          --author
+          --depth
+          --execute -e
+
+          --exclude
+          --key-to-push
+          --set-default
+
+          --bind
+      ' -- $cur) )
       ;;
     * )
       case $prev in
@@ -117,13 +149,20 @@ _monotone() {
           _monotone_complete revision
           ;;
         db )
-          COMPREPLY=( $(compgen -W 'init info version dump load migrate execute kill_rev_locally kill_branch_certs_locally kill_tag_locally check changesetify rebuild set_epoch' -- $cur ) )
+          COMPREPLY=( $(compgen -W 'init info version dump load migrate execute
+             kill_rev_locally kill_branch_certs_locally kill_tag_locally check
+             changesetify rosterify regenerate_caches set_epoch' -- $cur ) )
           ;;
         cdiff | diff | annotate )
-          COMPREPLY=( $(compgen -W '--revision' -- $cur ) )
+          COMPREPLY=( $(compgen -W '--revision -r' -- $cur ) )
           _filedir
           ;;
-        log | approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
+        log )
+          COMPREPLY=( $(compgen -W '--brief --diffs --last --next --no-files
+          --no-merges --revision -r' -- $cur ) )
+          _filedir
+          ;;
+        approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
           _monotone_complete revision
           ;;
         ls | list )
@@ -170,7 +209,7 @@ _monotone() {
               cat )
                 _monotone_complete $prev
                 ;;
-              log | attr )
+              attr )
                 _filedir
                 ;;
               list )
@@ -204,17 +243,23 @@ _monotone() {
             esac
           fi
           if (( $COMP_CWORD < 2 )) ; then
-            COMPREPLY=( $(compgen -W 'automate db agraph fload fmerge lca lcad
-                                      rcs_import annotate cat complete diff
-                                      list log ls status cert chkeypass dropkey
-                                      genkey trusted pull push reindex serve
-                                      sync certs fdata fdelta mdata mdelta
-                                      privkey pubkey rdata read cvs_import
-                                      approve comment disapprove tag testresult
-                                      checkout co explicit_merge fcommit heads
-                                      merge propagate refresh_inodeprints setup
-                                      set unset add attr ci commit drop
-                                      identify mv rename revert rm update' -- $cur) )
+            COMPREPLY=( $(compgen -W '
+                automate
+                db
+                fdiff fload fmerge get_roster identify rcs_import
+                annotate cat complete diff help list log ls show_conflicts
+                status
+                cert chkeypass dropkey genkey trusted
+                pull push serve sync
+                privkey pubkey read
+                cvs_import
+                approve comment disapprove tag testresult
+                checkout co explicit_merge heads merge merge_into_dir
+                migrate_workspace propagate refresh_inodeprints setup
+                set unset
+                add attr ci commit drop mv pivot_root pluck rename revert
+                rm update
+            ' -- $cur) )
           fi
           ;;
       esac

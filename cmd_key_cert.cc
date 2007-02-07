@@ -23,7 +23,8 @@ using std::ostringstream;
 using std::set;
 using std::string;
 
-CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), option::none)
+CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
+    options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -48,7 +49,8 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"), opt
   app.keys.put_key_pair(ident, kp);
 }
 
-CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"), option::none)
+CMD(dropkey, N_("key and cert"), N_("KEYID"),
+    N_("drop a public and private key"), options::opts::none)
 {
   bool key_deleted = false;
 
@@ -89,7 +91,7 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"), N_("drop a public and private key"
 
 CMD(chkeypass, N_("key and cert"), N_("KEYID"),
     N_("change passphrase of a private RSA key"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -109,17 +111,15 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
 }
 
 CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
-    N_("create a cert for a revision"), option::none)
+    N_("create a cert for a revision"), options::opts::none)
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
 
   transaction_guard guard(app.db);
 
-  hexenc<id> ident;
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
-  ident = rid.inner();
 
   cert_name name;
   internalize_cert_name(idx(args, 1), name);
@@ -133,14 +133,8 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   else
     val = cert_value(get_stdin());
 
-  base64<cert_value> val_encoded;
-  encode_base64(val, val_encoded);
-
-  cert t(ident, name, val_encoded, key);
-
   packet_db_writer dbw(app);
-  calculate_cert(app, t);
-  dbw.consume_revision_cert(revision<cert>(t));
+  app.get_project().put_cert(rid, name, val, dbw);
   guard.commit();
 }
 
@@ -148,7 +142,7 @@ CMD(trusted, N_("key and cert"),
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
     N_("test whether a hypothetical cert would be trusted\n"
        "by current settings"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() < 4)
     throw usage(name);
@@ -179,20 +173,21 @@ CMD(trusted, N_("key and cert"),
   copy(signers.begin(), signers.end(),
        ostream_iterator<rsa_keypair_id>(all_signers, " "));
 
-  cout << F("if a cert on: %s\n"
+  cout << (F("if a cert on: %s\n"
             "with key: %s\n"
             "and value: %s\n"
             "was signed by: %s\n"
-            "it would be: %s\n")
+            "it would be: %s")
     % ident
     % name
     % value
     % all_signers.str()
-    % (trusted ? _("trusted") : _("UNtrusted"));
+    % (trusted ? _("trusted") : _("UNtrusted")))
+    << "\n"; // final newline is kept out of the translation
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
-    N_("put a symbolic tag cert on a revision"), option::none)
+    N_("put a symbolic tag cert on a revision"), options::opts::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -205,7 +200,7 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
 
 
 CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
-    N_("note the results of running a test on a revision"), option::none)
+    N_("note the results of running a test on a revision"), options::opts::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -219,7 +214,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 
 CMD(approve, N_("review"), N_("REVISION"),
     N_("approve of a particular revision"),
-    option::branch_name)
+    options::opts::branch)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -227,21 +222,20 @@ CMD(approve, N_("review"), N_("REVISION"),
   revision_id r;
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
-  cert_value branchname;
-  guess_branch(r, app, branchname);
-  N(app.branch_name() != "", F("need --branch argument for approval"));
-  cert_revision_in_branch(r, app.branch_name(), app, dbw);
+  guess_branch(r, app);
+  N(app.opts.branch_name() != "", F("need --branch argument for approval"));
+  app.get_project().put_revision_in_branch(r, app.opts.branch_name, dbw);
 }
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
-    N_("comment on a particular revision"), option::none)
+    N_("comment on a particular revision"), options::opts::none)
 {
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);
 
   utf8 comment;
   if (args.size() == 2)
-    comment = idx(args, 1)();
+    comment = idx(args, 1);
   else
     {
       external comment_external;

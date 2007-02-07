@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="lua"
 	ProjectGUID="{84286BE1-7522-4A9E-853C-27CD329B96D1}"
+	RootNamespace="lua"
 	>
 	<Platforms>
 		<Platform
@@ -109,7 +110,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\visualc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE"
 				StringPooling="true"
 				EnableFunctionLevelLinking="false"

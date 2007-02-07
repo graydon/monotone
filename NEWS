@@ -1,3 +1,166 @@
+Wed Dec 27 09:57:48 UTC 2006
+
+	0.32 release.
+
+	Changes
+
+	- "mtn serve" no longer takes patterns on the command line.
+	  Use the permissions hooks instead.
+
+	- the name of the option that denoted the revision from which 
+	  "mtn log" should start logging was renamed from "--revision"
+	  to "--from"
+
+	- author selectors no longer have implicit wildcarding
+
+	- if you manually add entries to MTN/log while you are
+	  working, in preparation for an eventual commit, you will now
+	  be required to remove a "magic" template line from the file
+	  before the commit will succeed. This, like the test for an
+	  empty log file, helps to prevent accidents.
+
+	- the "db regenerate_caches" migration command replaces the
+	  previous "db regenerate_rosters", generalising the task of
+	  rebuilding or generating cached data that may be added
+	  across an upgrade.  Like "db migrate", which upgrades the
+	  database schema, this command fills in the data for new
+	  features. In this release, as well as rosters, it also adds
+	  "heights" information used to speed up topology operations.
+
+	Speed improvements
+
+	- "mtn annotate file" and "mtn log file" are generally much
+	  faster now, dependant on the number of revisions that
+	  changed the file. Both commands as well as "mtn automate
+	  toposort" make use of data called "heights" caching the
+	  topological order of all revisions.  In order to create and
+	  use this data, the following must be run once for each db
+	  after upgrading:
+
+               $ mtn -d mydb.mtn db regenerate_caches
+
+	New features
+
+	- "mtn automate content_diff"
+
+	- "mtn automate get_file_of" (same as get_file, but expects 
+	  a file path and optionally a revision)
+
+	- "mtn import" command
+
+	- "mtn log --to"
+
+	- netsync_note_* hooks are given much more information,
+	  inlcuding a http/smtp/etc style status code
+
+	- includedirpattern(dir, fileglob) function for hooks
+
+
+	Bugs fixed
+
+	- bug in "automate stdio" that would result in monotone
+	  garbling its input in some circumstances fixed
+
+	- "mtn annotate file" and "mtn log file" are generally much
+	  faster now, dependant on the number of revisions that
+	  changed the file. Both commands as well as "mtn automate
+	  toposort" make use of data called "heights" caching the
+	  topological order of all revisions.
+
+	- spawn_redirected hook function now understands a blank
+	  filename to mean not to redirect that stream
+
+	- "mtn log" is now in proper topological order, also due to
+	  the use of cached "heights" data
+
+	- reset options between "automate stdio" commands
+
+	- another compile fix for gcc3
+
+	- bug in localization code where option strings where not
+	  always properly translated
+
+
+	Other
+
+	- botan library upgraded to 1.6.0
+
+	- accommodate changes in boost 1.34
+
+	- documentation for "mtn automate get_option"
+
+	- notes/ directory
+
+
+
+Sat Nov 11 11:06:44 PST 2006
+
+        0.31 release.  Code cleanups and bug fixes.
+
+        New features:
+
+        - If multiple --message (or -m) arguments are passed to
+          'commit', then they will be concatenated on separate lines.
+
+        - The validate_commit_message hook is now told what branch the
+          commit is on.
+
+        Bugs fixed:
+
+        - The typo that prevented building with gcc 3.3 has been
+          fixed.
+
+        - Attempting to commit without a signing key available now
+          fails earlier.
+
+        - Command-line option parsing has been redone yet again; this
+          should fix a number of bugs caused by the use of
+          boost::program_options.  For instance, command line error
+          messages are now l10nized again, "--depth=asdf" now gives a
+          sensible error message instead of crashing, and --key= now
+          works as an alternative to -k "".
+
+        - A bug in the new roster caching logic that caused assertion
+          failures on very large trees has been fixed.
+
+        - A rare bug in the "epoch refinement" phase of the netsync
+          protocol has been fixed.
+
+        - Accidental (and undocumented) change to 'automate inventory'
+          output format reverted; documentation is now correct again.
+
+        - Some obscure error conditions with 'pivot_root' fixed.
+
+        Many fixes to 'automate stdio':
+
+        - IO handling has been rewritten, to remove some
+          obscure bugs and clean up the code.
+
+        - automate commands can now take options (even when used with
+          'automate stdio').
+
+        - The default block size has been increased to 32k (which
+          should considerably reduce overhead).
+
+        - Many automate commands were flushing their output far too
+          often, causing major slowdowns when used with 'automate
+          stdio'; this has been fixed.
+
+        - Syntax errors now cause 'automate stdio' to exit, rather
+          than attempting to provide usage information for the calling
+          program to read.
+
+        Other:
+
+        - New large-coverage random testsuite for delta reconstruction
+          path finding algorithm.
+
+        - Miscellaneous code cleanups and improved error messages.
+
+        - Enhancements to debian packaging.
+
+        - New translation to es (Spanish).
+
 Sun Sep 17 12:27:08 PDT 2006
 
         0.30 release.  Speed improvements, bug fixes, and improved

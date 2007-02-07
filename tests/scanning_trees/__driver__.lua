@@ -11,6 +11,8 @@ canonicalize("manifest")
 
 check(mtn("add", "testfile0", "foo"), 0, false, false)
 commit()
+check(mtn("add", "-R", "foo"), 0, false, false)
+commit()
 check(mtn("automate", "get_manifest_of"), 0, true)
 canonicalize("stdout")
 check(samefile("stdout", "manifest"))

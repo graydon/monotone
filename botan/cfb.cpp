@@ -1,12 +1,13 @@
 /*************************************************
 * CFB Mode Source File                           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/cfb.h>
 #include <botan/lookup.h>
 #include <botan/parsing.h>
 #include <botan/bit_ops.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -74,7 +75,7 @@ void CFB_Encryption::write(const byte input[], u32bit length)
 *************************************************/
 void CFB_Encryption::feedback()
    {
-   for(u32bit j = 0; j != BLOCK_SIZE - FEEDBACK_SIZE; j++)
+   for(u32bit j = 0; j != BLOCK_SIZE - FEEDBACK_SIZE; ++j)
       state[j] = state[j + FEEDBACK_SIZE];
    state.copy(BLOCK_SIZE - FEEDBACK_SIZE, buffer, FEEDBACK_SIZE);
    cipher->encrypt(state, buffer);
@@ -131,7 +132,7 @@ void CFB_Decryption::write(const byte input[], u32bit length)
 *************************************************/
 void CFB_Decryption::feedback()
    {
-   for(u32bit j = 0; j != BLOCK_SIZE - FEEDBACK_SIZE; j++)
+   for(u32bit j = 0; j != BLOCK_SIZE - FEEDBACK_SIZE; ++j)
       state[j] = state[j + FEEDBACK_SIZE];
    state.copy(BLOCK_SIZE - FEEDBACK_SIZE, buffer, FEEDBACK_SIZE);
    cipher->encrypt(state, buffer);

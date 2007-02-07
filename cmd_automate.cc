@@ -11,13 +11,13 @@
 #include <iostream>
 #include <map>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-
 #include "cmd.hh"
 
+using std::istream;
+using std::make_pair;
 using std::map;
 using std::ostream;
+using std::pair;
 using std::string;
 using std::vector;
 
@@ -26,8 +26,9 @@ namespace automation {
   // guarantees about initialization order. So, use something we can
   // initialize ourselves.
   static map<string, automate * const> * automations;
-  automate::automate(string const &n, string const &p)
-   : name(n), params(p)
+  automate::automate(string const &n, string const &p,
+                     options::options_type const & o)
+    : name(n), params(p), opts(o)
   {
     static bool first(true);
     if (first)
@@ -40,21 +41,27 @@ namespace automation {
   automate::~automate() {}
 }
 
+automation::automate &
+find_automation(utf8 const & name, string const & root_cmd_name)
+{
+  map<string, automation::automate * const>::const_iterator
+    i = automation::automations->find(name());
+  if (i == automation::automations->end())
+    throw usage(root_cmd_name);
+  else
+    return *(i->second);
+}
+
 void
 automate_command(utf8 cmd, vector<utf8> args,
                  string const & root_cmd_name,
                  app_state & app,
                  ostream & output)
 {
-  map<string, automation::automate * const>::const_iterator
-    i = automation::automations->find(cmd());
-  if (i == automation::automations->end())
-    throw usage(root_cmd_name);
-  else
-    i->second->run(args, root_cmd_name, app, output);
+  find_automation(cmd, root_cmd_name).run(args, root_cmd_name, app, output);
 }
 
-static string const interface_version = "3.1";
+static string const interface_version = "4.0";
 
 // Name: interface_version
 // Arguments: none
@@ -65,19 +72,13 @@ static string const interface_version = "3.1";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version, "")
+AUTOMATE(interface_version, "", options::opts::none)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
+  N(args.size() == 0,
+    F("no arguments needed"));
 
   output << interface_version << "\n";
 }
-
-void
-automate_command(utf8 cmd, std::vector<utf8> args,
-                 std::string const & root_cmd_name,
-                 app_state & app,
-                 std::ostream & output);
 
 // Name: stdio
 // Arguments: none
@@ -116,193 +117,266 @@ automate_command(utf8 cmd, std::vector<utf8> args,
 //   the error code in the output for that command. Malformed input
 //   results in exit with a non-zero return value and an error message.
 
-// We use our own stringbuf class so we can put in a callback on write.
-// This lets us dump output at a set length, rather than waiting until
-// we have all of the output.
+// automate_streambuf and automate_ostream are so we can dump output at a
+// set length, rather than waiting until we have all of the output.
 
-typedef std::basic_stringbuf<char,
-                             std::char_traits<char>,
-                             std::allocator<char> > char_stringbuf;
-struct my_stringbuf : public char_stringbuf
+
+class automate_reader
 {
-private:
-  std::streamsize written;
-  boost::function1<void, int> on_write;
-  std::streamsize last_call;
-  std::streamsize call_every;
-  bool clear;
-public:
-  my_stringbuf(std::streamsize _call_every) : char_stringbuf(),
-                                              written(0),
-                                              last_call(0),
-                                              call_every(_call_every)
-  {}
-  virtual std::streamsize
-  xsputn(const char_stringbuf::char_type* __s, std::streamsize __n)
+  istream & in;
+  enum location {opt, cmd, none, eof};
+  location loc;
+  bool get_string(std::string & out)
   {
-    std::streamsize ret=char_stringbuf::xsputn(__s, __n);
-    written+=__n;
-    while(written>=last_call+call_every)
+    out.clear();
+    if (loc == none || loc == eof)
       {
-        if(on_write)
-          on_write(call_every);
-        last_call+=call_every;
+        return false;
       }
-    return ret;
+    size_t size(0);
+    char c;
+    read(&c, 1);
+    if (c == 'e')
+      {
+        loc = none;
+        return false;
+      }
+    while(c <= '9' && c >= '0')
+      {
+        size = (size*10)+(c-'0');
+        read(&c, 1);
+      }
+    E(c == ':',
+        F("Bad input to automate stdio: expected ':' after string size"));
+    char *str = new char[size];
+    size_t got = 0;
+    while(got < size)
+      {
+        int n = read(str+got, size-got);
+        got += n;
+      }
+    out = std::string(str, size);
+    delete[] str;
+    L(FL("Got string '%s'") % out);
+    return true;
   }
-  virtual int sync()
+  std::streamsize read(char *buf, size_t nbytes, bool eof_ok = false)
   {
-    int ret=char_stringbuf::sync();
-    if(on_write)
-      on_write(-1);
-    last_call=written;
-    return ret;
+    std::streamsize rv;
+
+    rv = in.rdbuf()->sgetn(buf, nbytes);
+
+    E(eof_ok || rv > 0, F("Bad input to automate stdio: unexpected EOF"));
+    return rv;
   }
-  void set_on_write(boost::function1<void, int> x)
+  void go_to_next_item()
   {
-    on_write = x;
+    if (loc == eof)
+      return;
+    string starters("ol");
+    string whitespace(" \r\n\t");
+    string foo;
+    while (loc != none)
+      get_string(foo);
+    char c('e');
+    do
+      {
+        if (read(&c, 1, true) == 0)
+          {
+            loc = eof;
+            return;
+          }
+      }
+    while (whitespace.find(c) != std::string::npos);
+    switch (c)
+      {
+      case 'o': loc = opt; break;
+      case 'l': loc = cmd; break;
+      default:
+        E(false, 
+            F("Bad input to automate stdio: unknown start token '%c'") % c);
+      }
+  }
+public:
+  automate_reader(istream & is) : in(is), loc(none)
+  {}
+  bool get_command(vector<pair<string, string> > & params,
+                   vector<string> & cmdline)
+  {
+    params.clear();
+    cmdline.clear();
+    if (loc == none)
+      go_to_next_item();
+    if (loc == eof)
+      return false;
+    else if (loc == opt)
+      {
+        string key, val;
+        while(get_string(key) && get_string(val))
+          params.push_back(make_pair(key, val));
+        go_to_next_item();
+      }
+    E(loc == cmd, F("Bad input to automate stdio: expected '%c' token") % cmd);
+    string item;
+    while (get_string(item))
+      {
+        cmdline.push_back(item);
+      }
+    return true;
   }
 };
 
-void print_some_output(int cmdnum,
-                       int err,
-                       bool last,
-                       string const & text,
-                       ostream & s,
-                       int & pos,
-                       int size,
-                       size_t automate_stdio_size)
+struct automate_streambuf : public std::streambuf
 {
-  if(size==-1)
-    {
-      while(text.size()-pos > automate_stdio_size)
-        {
-          s<<cmdnum<<':'<<err<<':'<<'m'<<':';
-          s<<automate_stdio_size<<':'
-           <<text.substr(pos, automate_stdio_size);
-          pos+=automate_stdio_size;
-          s.flush();
-        }
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<(text.size()-pos)<<':'<<text.substr(pos);
-      pos=text.size();
-    }
-  else
-    {
-      I((unsigned int)(size) <= automate_stdio_size);
-      s<<cmdnum<<':'<<err<<':'<<(last?'l':'m')<<':';
-      s<<size<<':'<<text.substr(pos, size);
-      pos+=size;
-    }
-  s.flush();
-}
+private:
+  size_t _bufsize;
+  std::ostream *out;
+  automate_reader *in;
+  int cmdnum;
+  int err;
+public:
+  automate_streambuf(size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(0), in(0), cmdnum(0), err(0)
+  {
+    char *inbuf = new char[_bufsize];
+    setp(inbuf, inbuf + _bufsize);
+  }
+  automate_streambuf(std::ostream & o, size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(&o), in(0), cmdnum(0), err(0)
+  {
+    char *inbuf = new char[_bufsize];
+    setp(inbuf, inbuf + _bufsize);
+  }
+  automate_streambuf(automate_reader & i, size_t bufsize)
+    : std::streambuf(), _bufsize(bufsize), out(0), in(&i), cmdnum(0), err(0)
+  {
+    char *inbuf = new char[_bufsize];
+    setp(inbuf, inbuf + _bufsize);
+  }
+  ~automate_streambuf()
+  {}
+  
+  void set_err(int e)
+  {
+    sync();
+    err = e;
+  }
+  
+  void end_cmd()
+  {
+    _M_sync(true);
+    ++cmdnum;
+    err = 0;
+  }
+  
+  virtual int sync()
+  {
+    _M_sync();
+    return 0;
+  }
+  
+  void _M_sync(bool end = false)
+  {
+    if (!out)
+      {
+        setp(pbase(), pbase() + _bufsize);
+        return;
+      }
+    int num = pptr() - pbase();
+    if (num || end)
+      {
+        (*out) << cmdnum << ":"
+            << err << ":"
+            << (end?'l':'m') << ":"
+            << num << ":" << std::string(pbase(), num);
+        setp(pbase(), pbase() + _bufsize);
+        out->flush();
+      }
+  }
+  int_type
+  overflow(int_type c = traits_type::eof())
+  {
+    sync();
+    sputc(c);
+    return 0;
+  }
+};
 
-static ssize_t automate_stdio_read(int d, void *buf, size_t nbytes)
+struct automate_ostream : public std::ostream
 {
-  ssize_t rv;
+  automate_streambuf _M_autobuf;
+  
+  automate_ostream(std::ostream &out, size_t blocksize)
+    : std::ostream(NULL),
+      _M_autobuf(out, blocksize)
+  { this->init(&_M_autobuf); }
+  
+  ~automate_ostream()
+  {}
+  
+  automate_streambuf *
+  rdbuf() const
+  { return const_cast<automate_streambuf *>(&_M_autobuf); }
+  
+  void set_err(int e)
+  { _M_autobuf.set_err(e); }
+  
+  void end_cmd()
+  { _M_autobuf.end_cmd(); }
+};
 
-  rv = read(d, buf, nbytes);
 
-  E(rv >= 0, F("read from client failed with error code: %d") % rv);
-  return rv;
-}
-
-AUTOMATE(stdio, "")
+AUTOMATE(stdio, "", options::opts::automate_stdio_size)
 {
-  if (args.size() != 0)
-    throw usage(help_name);
-  int cmdnum = 0;
-  char c;
-  ssize_t n=1;
-  while(n)//while(!EOF)
+  N(args.size() == 0,
+    F("no arguments needed"));
+
+    // initialize the database early so any calling process is notified
+    // immediately if a version discrepancy exists 
+  app.db.ensure_open();
+
+  automate_ostream os(output, app.opts.automate_stdio_size);
+  automate_reader ar(std::cin);
+  vector<pair<string, string> > params;
+  vector<string> cmdline;
+  while(ar.get_command(params, cmdline))//while(!EOF)
     {
-      string x;
       utf8 cmd;
-      args.clear();
-      bool first=true;
-      int toklen=0;
-      bool firstchar=true;
-      for(n=automate_stdio_read(0, &c, 1); c != 'l' && n; n=automate_stdio_read(0, &c, 1))
-        ;
-      for(n=automate_stdio_read(0, &c, 1); c!='e' && n; n=automate_stdio_read(0, &c, 1))
+      vector<utf8> args;
+      vector<string>::iterator i = cmdline.begin();
+      E(i != cmdline.end(),
+        F("Bad input to automate stdio: command name is missing"));
+      cmd = utf8(*i);
+      for (++i; i != cmdline.end(); ++i)
         {
-          if(c<='9' && c>='0')
-            {
-              toklen=(toklen*10)+(c-'0');
-            }
-          else if(c == ':')
-            {
-              char *tok=new char[toklen];
-              int count=0;
-              while(count<toklen)
-                count+=automate_stdio_read(0, tok+count, toklen-count);
-              if(first)
-                cmd=utf8(string(tok, toklen));
-              else
-                args.push_back(utf8(string(tok, toklen)));
-              toklen=0;
-              delete[] tok;
-              first=false;
-            }
-          else
-            {
-              N(false, F("Bad input to automate stdio"));
-            }
-          firstchar=false;
+          args.push_back(utf8(*i));
         }
-      if(cmd() != "")
+      try
         {
-          int outpos=0;
-          int err;
-          std::ostringstream s;
-          my_stringbuf sb(app.automate_stdio_size);
-          sb.set_on_write(boost::bind(print_some_output,
-                                      cmdnum,
-                                      boost::ref(err),
-                                      false,
-                                      boost::bind(&my_stringbuf::str, &sb),
-                                      boost::ref(output),
-                                      boost::ref(outpos),
-                                      _1,
-                                      app.automate_stdio_size));
-          {
-            // Do not use s.std::basic_ios<...>::rdbuf here, 
-            // it confuses VC8.
-            using std::basic_ios;
-            s.basic_ios<char, std::char_traits<char> >::rdbuf(&sb);
-          }
-          try
-            {
-              err=0;
-              automate_command(cmd, args, help_name, app, s);
-            }
-          catch(usage &)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=1;
-              commands::explain_usage(help_name, s);
-            }
-          catch(informative_failure & f)
-            {
-              if(sb.str().size())
-                s.flush();
-              err=2;
-              //Do this instead of printing f.what directly so the output
-              //will be split into properly-sized blocks automatically.
-              s<<f.what();
-            }
-            print_some_output(cmdnum, err, true, sb.str(),
-                              output, outpos, -1, app.automate_stdio_size);
+          options::options_type opts;
+          opts = options::opts::all_options() - options::opts::globals();
+          opts.instantiate(&app.opts).reset();
+
+          opts = options::opts::globals();
+          opts = opts | find_automation(cmd, help_name).opts;
+          opts.instantiate(&app.opts).from_key_value_pairs(params);
+          automate_command(cmd, args, help_name, app, os);
         }
-      cmdnum++;
+      catch(informative_failure & f)
+        {
+          os.set_err(2);
+          //Do this instead of printing f.what directly so the output
+          //will be split into properly-sized blocks automatically.
+          os<<f.what();
+        }
+      os.end_cmd();
     }
 }
 
 
-CMD_PARAMS_FN(automate, N_("automation"),
-              N_("automation interface"),
-    option::automate_stdio_size)
+CMD_WITH_SUBCMDS(automate, N_("automation"),
+                 N_("automation interface"),
+                 options::opts::none)
 {
   if (args.size() == 0)
     throw usage(name);
@@ -329,6 +403,14 @@ std::string commands::cmd_automate::params()
         out += "\n";
     }
   return out;
+}
+
+options::options_type
+commands::cmd_automate::get_options(vector<utf8> const & args)
+{
+  if (args.size() < 2)
+    return options::options_type();
+  return find_automation(idx(args,1), idx(args,0)()).opts;
 }
 
 

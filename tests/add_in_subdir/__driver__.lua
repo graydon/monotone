@@ -10,7 +10,7 @@ writefile("subdir/anotherdir/bar", "more data")
 chdir("subdir")
 check(mtn("add", "foo"), 0, false, false)
 -- Add a directory
-check(mtn("add", "anotherdir"), 0, false, false)
+check(mtn("add", "-R", "anotherdir"), 0, false, false)
 chdir("..")
 
 commit()

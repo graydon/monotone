@@ -1,0 +1,128 @@
+#! /bin/sh
+#
+# monotone     Monotone server init script.
+#
+# Author:      Matthew A. Nicholson <address@hidden>.
+#
+# Version:     v0.0.1  March 29, 2005  address@hidden
+#
+### BEGIN INIT INFO
+# Provides: monotone
+# Required-Start: $network $local_fs
+# Required-Stop: $network $local_fs
+# Default-Start: 3 4 5
+# Default-Stop: 0 1 2 6
+# Short-Description: Monotone server.
+### END INIT INFO
+
+set -e
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DESC="Monotone Server"
+NAME=monotone
+EXECNAME=mtn
+DAEMON=/usr/bin/$EXECNAME
+PIDFILE=/var/run/$NAME/$EXECNAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+MAINLOG=/var/log/$NAME/$EXECNAME.log
+ERRORLOG=/var/log/$NAME/error.log
+
+MTN_HOME=/var/lib/monotone
+MTN_CONFDIR=/etc/monotone
+MTN_KEYDIR=$MTN_HOME/keys
+MTN_DB=$MTN_HOME/default.mtn
+
+START=1
+ADDRESS=0.0.0.0
+
+# Gracefully exit if the package has been removed.
+test -x $DAEMON || exit 0
+
+# Read config file 
+if [ -r /etc/default/$NAME ]; then
+	. /etc/default/$NAME
+fi
+
+
+#
+#      Function that starts the daemon/service.
+#
+d_start() {
+       if [ "$START" -ne 1 ]; then
+          echo -ne "\n$NAME configured in /etc/default/$NAME not to start"
+          return 0
+       fi
+
+       start-stop-daemon --start --quiet --pidfile $PIDFILE --background \
+          --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
+          --confdir=$MTN_CONFDIR --db=$MTN_DB --norc --pid-file=$PIDFILE \
+          --log=$MAINLOG --dump=$ERRORLOG \
+          --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR --quiet \
+          --bind=$ADDRESS serve
+}
+
+#
+#      Function that stops the daemon/service.
+#
+d_stop() {
+       start-stop-daemon --stop --quiet --pidfile $PIDFILE \
+               --name $EXECNAME --user monotone \
+          && rm $PIDFILE
+       
+
+#       kill `ps x | grep monotone.*serve | grep -v grep | awk -- '{print $1}'` &> /dev/null \
+#       or echo "Failed: monotone not running"
+        
+}
+
+#
+#      Function that sends a SIGHUP to the daemon/service.
+#
+#d_reload() {
+#      start-stop-daemon --stop --quiet --pidfile $PIDFILE \
+#              --name $NAME --signal 1
+#}
+
+case "$1" in
+  start)
+       echo -n "Starting $DESC: $NAME"
+       d_start || echo -n ...failed 
+       echo "."
+       ;;
+  stop)
+       echo -n "Stopping $DESC: $NAME"
+       d_stop || echo -n ...failed
+       echo "."
+       ;;
+  #reload)
+       #
+       #       If the daemon can reload its configuration without
+       #       restarting (for example, when it is sent a SIGHUP),
+       #       then implement that here.
+       #
+       #       If the daemon responds to changes in its config file
+       #       directly anyway, make this an "exit 0".
+       #
+       # echo -n "Reloading $DESC configuration..."
+       # d_reload
+       # echo "done."
+  #;;
+  restart|force-reload)
+       #
+       #       If the "reload" option is implemented, move the "force-reload"
+       #       option to the "reload" entry above. If not, "force-reload" is
+       #       just the same as "restart".
+       #
+       echo -n "Stopping $DESC: $NAME"
+       d_stop || echo -n ...failed
+       echo "."
+       echo -n "Starting $DESC: $NAME"
+       d_start || echo -n ...failed 
+       echo "."
+       ;;
+  *)
+       # echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
+       echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+       exit 1
+       ;;
+esac

@@ -1,0 +1,60 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: sjackman@debian.org\n"
+"POT-Creation-Date: 2006-11-13 14:30-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:4
+msgid "Automatically manage monotone database?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:4
+msgid ""
+"Select this option to automatically manage the monotone database. If "
+"selected, the database will automatically be created. Also when upgrading, "
+"the database will be automatically migrated if necessary."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:11
+msgid "Monotone key id:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:11
+msgid ""
+"Enter the id of the key your monotone server will use. The key id is "
+"typically an email address."
+msgstr ""
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:17
+msgid "Monotone key passphrase:"
+msgstr ""
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:17
+msgid ""
+"Please choose a passphrase for your monotone key. If left blank, one will be "
+"generated for you."
+msgstr ""

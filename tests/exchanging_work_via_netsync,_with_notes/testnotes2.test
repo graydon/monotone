@@ -1,6 +1,14 @@
 start ---------------------------------------------------
+start: sync_type = pull
+start: remote_keyname = tester@test.net
+start: includes = testbranch
+start: excludes = 
 cert: rev_id = REV1
 cert: name   = tag
 cert: value  = testtag
 cert: key    = tester@test.net
+end: status = 200
+end: certs in/out = 1/0
+end: revs in/out = 0/0
+end: keys in/out = 0/0
 end -----------------------------------------------------

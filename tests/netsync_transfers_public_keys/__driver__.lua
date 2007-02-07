@@ -21,7 +21,7 @@ check(not qgrep(pubkey, "stdout"))
 check(not qgrep(privkey, "stdout"))
 
 -- Now check that --key-to-push works.
-srv = netsync.start("testbranch", 2)
+srv = netsync.start(2)
 check(mtn("--rcfile=netsync.lua", "push", srv.address,
           "testbranch", "--key-to-push=foo@test.example.com"),
       0, false, false)

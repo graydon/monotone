@@ -6,7 +6,7 @@ writefile("foo/bar", "foo bar file")
 
 -- common ancestor
 
-check(mtn("add", "foo"), 0, false, false)
+check(mtn("add", "foo/bar"), 0, false, false)
 commit()
 base = base_revision()
 

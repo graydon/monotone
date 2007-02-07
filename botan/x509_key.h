@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Public Key Header File                   *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_PUBLIC_KEY_H__
@@ -8,21 +8,30 @@
 
 #include <botan/pipe.h>
 #include <botan/pk_keys.h>
+#include <botan/alg_id.h>
 
 namespace Botan {
 
 /*************************************************
-* X.509 Public Key                               *
+* X.509 Public Key Encoder                       *
 *************************************************/
-class X509_PublicKey : public virtual PK_Key
+class X509_Encoder
    {
    public:
-      u64bit key_id() const;
-      virtual MemoryVector<byte> DER_encode_pub() const = 0;
-      virtual MemoryVector<byte> DER_encode_params() const = 0;
-      virtual void BER_decode_pub(DataSource&) = 0;
-      virtual void BER_decode_params(DataSource&) = 0;
-      virtual ~X509_PublicKey() {}
+      virtual AlgorithmIdentifier alg_id() const = 0;
+      virtual MemoryVector<byte> key_bits() const = 0;
+      virtual ~X509_Encoder() {}
+   };
+
+/*************************************************
+* X.509 Public Key Decoder                       *
+*************************************************/
+class X509_Decoder
+   {
+   public:
+      virtual void alg_id(const AlgorithmIdentifier&) = 0;
+      virtual void key_bits(const MemoryRegion<byte>&) = 0;
+      virtual ~X509_Decoder() {}
    };
 
 namespace X509 {
@@ -30,16 +39,16 @@ namespace X509 {
 /*************************************************
 * X.509 Public Key Encoding/Decoding             *
 *************************************************/
-void encode(const X509_PublicKey&, Pipe&, X509_Encoding = PEM);
-std::string PEM_encode(const X509_PublicKey&);
+void encode(const Public_Key&, Pipe&, X509_Encoding = PEM);
+std::string PEM_encode(const Public_Key&);
 
-X509_PublicKey* load_key(DataSource&);
-X509_PublicKey* load_key(const std::string&);
-X509_PublicKey* load_key(const MemoryRegion<byte>&);
+Public_Key* load_key(DataSource&);
+Public_Key* load_key(const std::string&);
+Public_Key* load_key(const MemoryRegion<byte>&);
 
-X509_PublicKey* copy_key(const X509_PublicKey&);
+Public_Key* copy_key(const Public_Key&);
 
-Key_Constraints find_constraints(const X509_PublicKey&, Key_Constraints);
+Key_Constraints find_constraints(const Public_Key&, Key_Constraints);
 
 }
 

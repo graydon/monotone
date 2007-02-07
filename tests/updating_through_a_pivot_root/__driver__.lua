@@ -7,7 +7,7 @@ check(indir("workspace", mtn("setup", "-b", "testbranch")), 0, false, false)
 mkdir("workspace/dir1")
 writefile("workspace/old_root_file", "I'm in the root to start off with!")
 writefile("workspace/dir1/new_root_file", "I'm in the subdir to start off with.")
-check(indir("workspace", mtn("add", ".")), 0, false, false)
+check(indir("workspace", mtn("add", "-R", ".")), 0, false, false)
 check(indir("workspace", mtn("commit", "-m", "foo")), 0, false, false)
 base = indir("workspace", {base_revision})[1]()
 

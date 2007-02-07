@@ -16,6 +16,10 @@ check(mtn("add", "file0"), 0, false, true)
 check(qgrep("adding file0", "stderr"))
 
 check(mtn("add", "dir"), 0, false, true)
+check(not qgrep("adding dir/file1", "stderr"))
+check(not qgrep("adding dir/file2", "stderr"))
+
+check(mtn("add", "-R", "dir"), 0, false, true)
 check(qgrep("adding dir/file1", "stderr"))
 check(qgrep("adding dir/file2", "stderr"))
 
@@ -32,7 +36,7 @@ commit()
 check(mtn("add", "file0"), 0, false, true)
 check(qgrep("skipping file0", "stderr"))
 
-check(mtn("add", "dir"), 0, false, true)
+check(mtn("add", "-R", "dir"), 0, false, true)
 check(qgrep("skipping dir/file1", "stderr"))
 check(qgrep("skipping dir/file2", "stderr"))
 
@@ -59,7 +63,7 @@ check(qgrep('adding file3', "stderr"))
 check(qgrep('adding dir/file5', "stderr"))
 --check(not qgrep('adding dir/file6.ignore', "stderr"))
 check(qgrep('adding dir2', "stderr"))
-check(qgrep('adding dir2/file7', "stderr"))
+check(not qgrep('adding dir2/file7', "stderr"))
 check(not qgrep('skipping dir2/file7', "stderr"))
 check(not qgrep('adding test_hooks.lua', "stderr"))
 

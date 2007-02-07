@@ -19,7 +19,7 @@ mkdir("workspace/dir1/dir2")
 writefile("workspace/dir1/file1", "blah blah")
 mkdir("workspace/dir3")
 mkdir("workspace/dir3/_MTN")
-check(indir("workspace", mtn("add", ".")), 0, false, false)
+check(indir("workspace", mtn("add", "-R", ".")), 0, false, false)
 
 check(indir("workspace", mtn("commit", "-m", "foo")), 0, false, false)
 

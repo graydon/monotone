@@ -1,0 +1,75 @@
+-- this is an add-on to the standard set of lua hooks for monotone;
+-- the intention is to store the hooks in arrays of hooks and to load
+-- extra .lua files from a directory given by the environment variable
+-- $MTN_LUAHOOKSDIR
+--
+-- Hooks are supposed to be added using the following syntax:
+--
+--	add_hook("edit_comment",
+--               function (commentary, user_log_message)
+--                  -- do whatever needs to be done
+--               end
+--              )
+--
+-- The existing standard hooks are automatically added as the first item
+-- to each array of hooks, and will be therefore executed first.
+--
+-- Also, should the standard hook functions be defined by any of the loaded
+-- .lua files, the last definition will be added as the last item to each
+-- array of hooks.
+--
+-- It's perfectly possible to have several implementations of the same
+-- hook.  Those will be executed in the same order the were added as hooks.
+--
+-- Any non-nil result is stored in a global variable named like the hook
+-- with "res_" prepended.  For example, any non-nil result from "edit_comment"
+-- hooks is stored in the global variable res_edit_comment.  When all
+-- "edit_comment" hooks have been executed, the contents of res_edit_comment
+-- is returned by the global edit_comment function.  The same goes for all
+-- other hook executors.
+--
+-- ----------------------------------------------------------------------------
+
+-- Define the table that will contain pointers to all the hooks.
+-- Each entry is the tuple <name, fn-table>, where {name} is the name
+-- of the hook in question and fn-table is a table of functions.
+mtn_luahooks = {}
+
+-- Define functions to manipulate the table of hooks.
+function add_hook(name, fun)
+   if name ~= nil and fun ~= nil then
+      if mtn_luahooks[name] == nil then mtn_luahooks[name] = {} end
+      table.insert(mtn_luahooks[name], fun)
+   end
+end
+
+_known_hooks = {
+   "@@HOOKS_LIST@@",
+}   
+function _add_known_hooks()
+   for i,name in pairs(_known_hooks) do
+      local fntab = getfenv(0)
+      local fn = fntab[name]
+      fntab[name] = nil
+      setfenv(0, fntab)
+      add_hook(name,fn)
+   end
+end
+
+-- This stores the definitions of all the known hooks first in the table.
+_add_known_hooks()
+
+-- Load all the *.lua files found in $MTN_LUAHOOKSDIR if that variable is
+-- defined.
+_mtn_luahooksdir = os.getenv("MTN_LUAHOOKSDIR")
+if _mtn_luahooksdir ~= nil and _mtn_luahooksdir ~= "" then
+   includedirpattern(_mtn_luahooksdir, "*.lua")
+end
+
+-- If anyone was foolish enough to define a hook function directly instead
+-- of using "add_hook", the last will win and will be inserted in the table
+-- of hooks.
+_add_known_hooks()
+
+-- Finally, redefine all known functions to use the hooks to do their job
+@@HOOKS_FUNCTIONS@@

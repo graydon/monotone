@@ -67,7 +67,7 @@ extern "C"
     map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(L);
     if (i != map_of_lua_to_app.end())
       {
-        system_path dir = i->second->get_confdir();
+        system_path dir = i->second->opts.conf_dir;
         string confdir = dir.as_external();
         lua_pushstring(L, confdir.c_str());
       }
@@ -136,7 +136,7 @@ lua_hooks::default_rcfilename(system_path & file)
 {
   map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(st);
   I(i != map_of_lua_to_app.end());
-  file = i->second->get_confdir() / "monotonerc";
+  file = i->second->opts.conf_dir / "monotonerc";
 }
 
 void
@@ -253,7 +253,7 @@ lua_hooks::hook_expand_date(string const & sel,
 }
 
 bool
-lua_hooks::hook_get_branch_key(cert_value const & branchname,
+lua_hooks::hook_get_branch_key(utf8 const & branchname,
                                rsa_keypair_id & k)
 {
   string key;
@@ -264,12 +264,12 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
     .extract_str(key)
     .ok();
 
-  k = key;
+  k = rsa_keypair_id(key);
   return ok;
 }
 
 bool
-lua_hooks::hook_get_author(cert_value const & branchname,
+lua_hooks::hook_get_author(utf8 const & branchname,
                            string & author)
 {
   return Lua(st)
@@ -293,7 +293,7 @@ lua_hooks::hook_edit_comment(external const & commentary,
                  .call(2,1)
                  .extract_str(result_str)
                  .ok();
-  result = result_str;
+  result = external(result_str);
   return is_ok;
 }
 
@@ -437,7 +437,7 @@ lua_hooks::hook_merge3(file_path const & anc_path,
     .call(7,1)
     .extract_str(res)
     .ok();
-  result = res;
+  result = data(res);
   return ok;
 }
 
@@ -788,6 +788,7 @@ lua_hooks::hook_get_linesep_conv(file_path const & p,
 bool
 lua_hooks::hook_validate_commit_message(utf8 const & message,
                                         revision_data const & new_rev,
+                                        utf8 const & branchname,
                                         bool & validated,
                                         string & reason)
 {
@@ -796,7 +797,8 @@ lua_hooks::hook_validate_commit_message(utf8 const & message,
     .func("validate_commit_message")
     .push_str(message())
     .push_str(new_rev.inner()())
-    .call(2, 2)
+    .push_str(branchname())
+    .call(3, 2)
     .extract_str(reason)
     // XXX When validated, the extra returned string is superfluous.
     .pop()
@@ -830,13 +832,39 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
 }
 
 bool
-lua_hooks::hook_note_netsync_start(string nonce)
+lua_hooks::hook_note_netsync_start(size_t session_id, string my_role,
+                                   int sync_type, string remote_host,
+                                   rsa_keypair_id remote_keyname,
+                                   utf8 include_pattern,
+                                   utf8 exclude_pattern)
 {
+  string type;
+  switch (sync_type)
+    {
+    case 1:
+      type = "push";
+      break;
+    case 2:
+      type = "pull";
+      break;
+    case 3:
+      type = "sync";
+      break;
+    default:
+      type = "unknown";
+      break;
+    }
   Lua ll(st);
   return ll
     .func("note_netsync_start")
-    .push_str(nonce)
-    .call(1, 0)
+    .push_int(session_id)
+    .push_str(my_role)
+    .push_str(type)
+    .push_str(remote_host)
+    .push_str(remote_keyname())
+    .push_str(include_pattern())
+    .push_str(exclude_pattern())
+    .call(7, 0)
     .ok();
 }
 
@@ -846,7 +874,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
                             set<pair<rsa_keypair_id,
                                      pair<cert_name,
                                           cert_value> > > const & certs,
-                                               string nonce)
+                                               size_t session_id)
 {
   Lua ll(st);
   ll
@@ -875,20 +903,20 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
       ll.set_table();
     }
 
-  ll.push_str(nonce);
+  ll.push_int(session_id);
   ll.call(4, 0);
   return ll.ok();
 }
 
 bool
 lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid,
-                                             string nonce)
+                                             size_t session_id)
 {
   Lua ll(st);
   ll
     .func("note_netsync_pubkey_received")
     .push_str(kid())
-    .push_str(nonce);
+    .push_int(session_id);
 
   ll.call(2, 0);
   return ll.ok();
@@ -899,7 +927,7 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
                                            rsa_keypair_id const & kid,
                                            cert_name const & name,
                                            cert_value const & value,
-                                           string nonce)
+                                           size_t session_id)
 {
   Lua ll(st);
   ll
@@ -908,20 +936,33 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
     .push_str(kid())
     .push_str(name())
     .push_str(value())
-    .push_str(nonce);
+    .push_int(session_id);
 
   ll.call(5, 0);
   return ll.ok();
 }
 
 bool
-lua_hooks::hook_note_netsync_end(string nonce)
+lua_hooks::hook_note_netsync_end(size_t session_id, int status,
+                                 size_t bytes_in, size_t bytes_out,
+                                 size_t certs_in, size_t certs_out,
+                                 size_t revs_in, size_t revs_out,
+                                 size_t keys_in, size_t keys_out)
 {
   Lua ll(st);
   return ll
     .func("note_netsync_end")
-    .push_str(nonce)
-    .call(1, 0)
+    .push_int(session_id)
+    .push_int(status)
+    .push_int(bytes_in)
+    .push_int(bytes_out)
+    .push_int(certs_in)
+    .push_int(certs_out)
+    .push_int(revs_in)
+    .push_int(revs_out)
+    .push_int(keys_in)
+    .push_int(keys_out)
+    .call(10, 0)
     .ok();
 }
 

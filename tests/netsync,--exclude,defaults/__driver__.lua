@@ -62,7 +62,7 @@ check(mtn2("automate", "get_revision", B23), 1, false, false)
 
 -- but --set-default overrides
 
-srv = netsync.start("branch*")
+srv = netsync.start()
 srv:pull({"--set-default", 'branch*'})
 srv:stop()
 check(mtn2("automate", "get_revision", B11), 0, false, false)

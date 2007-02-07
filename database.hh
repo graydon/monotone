@@ -28,7 +28,9 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "cleanup.hh"
 #include "roster.hh"
 #include "selectors.hh"
+#include "outdated_indicator.hh"
 #include "vocab.hh"
+#include "rev_height.hh"
 
 // FIXME: would be better not to include this everywhere
 #include "lru_writeback_cache.hh"
@@ -88,16 +90,17 @@ private:
   app_state * __app;
   struct sqlite3 * __sql;
 
+  enum open_mode { normal_mode = 0,
+                   schema_bypass_mode,
+                   format_bypass_mode };
+
   void install_functions(app_state * app);
-  struct sqlite3 * sql(bool init = false, bool migrating_format = false);
+  struct sqlite3 * sql(enum open_mode mode = normal_mode);
 
   void check_filename();
   void check_db_exists();
+  void check_db_nonexistent();
   void open();
-  void close();
-
-  std::string const schema;
-  void check_schema();
   void check_format();
 
 public:
@@ -111,6 +114,9 @@ public:
   bool is_dbfile(any_path const & file);
   void ensure_open();
   void ensure_open_for_format_changes();
+private:
+  void ensure_open_for_maintenance();
+public:
   void check_is_not_rosterified();
   bool database_specified();
 
@@ -138,9 +144,10 @@ private:
   // --== Generic database metadata gathering ==--
   //
 private:
-  unsigned long count(std::string const & table);
-  unsigned long space_usage(std::string const & table,
-                            std::string const & concatenated_columns);
+  std::string count(std::string const & table);
+  std::string space(std::string const & table,
+                    std::string const & concatenated_columns,
+                    u64 & total);
   unsigned int page_size();
   unsigned int cache_size();
 
@@ -406,42 +413,51 @@ private:
                  std::vector<cert> & certs,
                  std::string const & table);
 
+  outdated_indicator_factory cert_stamper;
 public:
+
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
   void put_revision_cert(revision<cert> const & cert);
 
   // this variant has to be rather coarse and fast, for netsync's use
-  void get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
-                               std::pair<revision_id, rsa_keypair_id> > > & idx);
+  outdated_indicator get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
+                              std::pair<revision_id, rsa_keypair_id> > > & idx);
 
-  void get_revision_certs(std::vector< revision<cert> > & certs);
+  // Only used by database_check.cc
+  outdated_indicator get_revision_certs(std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  outdated_indicator get_revision_certs(cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  // Only used by get_branch_certs (project.cc)
+  outdated_indicator get_revision_certs(cert_name const & name,
                           base64<cert_value> const & val,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  // Only used by revision_is_in_branch (project.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
 
-  void get_revisions_with_cert(cert_name const & name,
+  // Only used by get_branch_heads (project.cc)
+  outdated_indicator get_revisions_with_cert(cert_name const & name,
                                base64<cert_value> const & value,
                                std::set<revision_id> & revisions);
 
-  void get_revision_certs(revision_id const & ident,
+  // Used through project.cc, and by
+  // anc_graph::add_node_for_oldstyle_revision (revision.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  // Used through get_revision_cert_hashes (project.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< hexenc<id> > & hashes);
 
   void get_revision_cert(hexenc<id> const & hash,
@@ -511,6 +527,7 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate();
+  void test_migration_step(std::string const &);
   // for kill_rev_locally:
   void delete_existing_rev_and_certs(revision_id const & rid);
   // for kill_branch_certs_locally:
@@ -526,7 +543,9 @@ private:
                                     database & db);
 public:
     // branches
-  void get_branches(std::vector<std::string> & names);
+  outdated_indicator get_branches(std::vector<std::string> & names);
+  outdated_indicator get_branches(std::string const & glob,
+                                  std::vector<std::string> & names);
 
   bool check_integrity();
 
@@ -539,6 +558,19 @@ public:
   void delete_existing_revs_and_certs();
 
   void delete_existing_manifests();
+
+  // heights
+  void get_rev_height(revision_id const & id,
+                      rev_height & height);
+
+  void put_rev_height(revision_id const & id,
+                      rev_height const & height);
+  
+  bool has_rev_height(rev_height const & height);
+  void delete_existing_heights();
+
+  void put_height_for_revision(revision_id const & new_id,
+                               revision_t const & rev);
 
   // for regenerate_rosters
   void delete_existing_rosters();
@@ -647,11 +679,6 @@ public:
   void maybe_checkpoint(size_t nbytes);
   void commit();
 };
-
-
-void
-close_all_databases();
-
 
 // Local Variables:
 // mode: C++

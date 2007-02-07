@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <queue>
 
 #include "cmd.hh"
 #include "diff_patch.hh"
@@ -30,6 +31,7 @@ using std::pair;
 using std::set;
 using std::string;
 using std::vector;
+using std::priority_queue;
 
 using boost::lexical_cast;
 
@@ -112,13 +114,13 @@ changes_summary::print(ostream & os, size_t max_cols) const
 
   if (! cs.nodes_deleted.empty())
     {
-      os << "Deleted entries:" << "\n";
+      os << _("Deleted entries:") << "\n";
       print_indented_set(os, cs.nodes_deleted, max_cols);
     }
 
   if (! cs.nodes_renamed.empty())
     {
-      os << "Renamed entries:" << "\n";
+      os << _("Renamed entries:") << "\n";
       for (map<split_path, split_path>::const_iterator
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); i++)
@@ -133,13 +135,13 @@ changes_summary::print(ostream & os, size_t max_cols) const
              i = cs.files_added.begin();
            i != cs.files_added.end(); ++i)
         tmp.insert(i->first);
-      os << "Added files:" << "\n";
+      os << _("Added files:") << "\n";
       print_indented_set(os, tmp, max_cols);
     }
 
   if (! cs.dirs_added.empty())
     {
-      os << "Added directories:" << "\n";
+      os << _("Added directories:") << "\n";
       print_indented_set(os, cs.dirs_added, max_cols);
     }
 
@@ -150,7 +152,7 @@ changes_summary::print(ostream & os, size_t max_cols) const
              i = cs.deltas_applied.begin();
            i != cs.deltas_applied.end(); ++i)
         tmp.insert(i->first);
-      os << "Modified files:" << "\n";
+      os << _("Modified files:") << "\n";
       print_indented_set(os, tmp, max_cols);
     }
 
@@ -167,7 +169,7 @@ changes_summary::print(ostream & os, size_t max_cols) const
            i != cs.attrs_set.end(); ++i)
         tmp.insert(i->first.first);
 
-      os << "Modified attrs:" << "\n";
+      os << _("Modified attrs:") << "\n";
       print_indented_set(os, tmp, max_cols);
     }
 }
@@ -209,8 +211,8 @@ do_external_diff(cset const & cs,
                                  data_old,
                                  data_new,
                                  is_binary,
-                                 app.diff_args_provided,
-                                 app.diff_args(),
+                                 app.opts.external_diff_args_given,
+                                 app.opts.external_diff_args,
                                  delta_entry_src(i).inner()(),
                                  delta_entry_dst(i).inner()());
     }
@@ -220,6 +222,7 @@ static void
 dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
+           std::ostream & output,
            set<split_path> const & paths,
            bool limit_paths = false)
 {
@@ -233,7 +236,7 @@ dump_diffs(cset const & cs,
       if (limit_paths && paths.find(i->first) == paths.end())
         continue;
 
-      cout << patch_sep << "\n";
+      output << patch_sep << "\n";
       data unpacked;
       vector<string> lines;
 
@@ -250,7 +253,7 @@ dump_diffs(cset const & cs,
         }
 
       std::string pattern("");
-      if (app.diff_show_encloser)
+      if (!app.opts.no_show_encloser)
         app.lua.hook_get_encloser_pattern(file_path(i->first),
                                           pattern);
 
@@ -259,7 +262,7 @@ dump_diffs(cset const & cs,
                 i->second,
                 i->second,
                 data(), unpacked,
-                cout, app.diff_format, pattern);
+                output, app.opts.diff_format, pattern);
     }
 
   map<split_path, split_path> reverse_rename_map;
@@ -281,7 +284,7 @@ dump_diffs(cset const & cs,
       file_data f_old;
       data data_old, data_new;
 
-      cout << patch_sep << "\n";
+      output << patch_sep << "\n";
 
       app.db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
@@ -306,7 +309,7 @@ dump_diffs(cset const & cs,
         src_path = re->second;
 
       std::string pattern("");
-      if (app.diff_show_encloser)
+      if (!app.opts.no_show_encloser)
         app.lua.hook_get_encloser_pattern(file_path(src_path),
                                           pattern);
 
@@ -315,46 +318,44 @@ dump_diffs(cset const & cs,
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                cout, app.diff_format, pattern);
+                output, app.opts.diff_format, pattern);
     }
 }
 
 static void
 dump_diffs(cset const & cs,
            app_state & app,
-           bool new_is_archived)
+           bool new_is_archived,
+           std::ostream & output)
 {
   set<split_path> dummy;
-  dump_diffs(cs, app, new_is_archived, dummy);
+  dump_diffs(cs, app, new_is_archived, output, dummy);
 }
 
-CMD(diff, N_("informative"), N_("[PATH]..."),
-    N_("show current diffs on stdout.\n"
-    "If one revision is given, the diff between the workspace and\n"
-    "that revision is shown.  If two revisions are given, the diff between\n"
-    "them is given.  If no format is specified, unified is used by default."),
-    option::revision % option::depth % option::exclude % option::unified_diff
-    % option::context_diff % option::external_diff % option::external_diff_args)
+// common functionality for diff and automate content_diff to determine
+// revisions and rosters which should be diffed
+static void 
+prepare_diff(cset & included,
+             app_state & app, 
+             std::vector<utf8> args,
+             bool & new_is_archived,
+             std::string & revheader)
 {
-  bool new_is_archived;
-  ostringstream header;
   temp_node_id_source nis;
-
-  if (app.diff_args_provided)
-    N(app.diff_format == external_diff,
-      F("--diff-args requires --external\n"
-        "try adding --external or removing --diff-args?"));
-
-  cset included, excluded;
+  ostringstream header;
+  cset excluded;
 
   // initialize before transaction so we have a database to work with.
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
-  else if (app.revision_selectors.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     app.require_workspace();
 
-  if (app.revision_selectors.size() == 0)
+  N(app.opts.revision_selectors.size() <= 2,
+    F("more than two revisions given"));
+  
+  if (app.opts.revision_selectors.size() == 0)
     {
       roster_t new_roster, old_roster;
       revision_id old_rid;
@@ -363,8 +364,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.work.get_revision_id(old_rid);
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns),
-                            app.depth,
+                            args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -375,12 +376,12 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       new_is_archived = false;
       header << "# old_revision [" << old_rid << "]" << "\n";
     }
-  else if (app.revision_selectors.size() == 1)
+  else if (app.opts.revision_selectors.size() == 1)
     {
       roster_t new_roster, old_roster;
       revision_id r_old_id;
 
-      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
+      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
@@ -392,8 +393,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns), 
-                            app.depth,
+                            args_to_paths(app.opts.exclude_patterns), 
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
@@ -404,13 +405,13 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]" << "\n";
     }
-  else if (app.revision_selectors.size() == 2)
+  else if (app.opts.revision_selectors.size() == 2)
     {
       roster_t new_roster, old_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, idx(app.revision_selectors, 0)(), r_old_id);
-      complete(app, idx(app.revision_selectors, 1)(), r_new_id);
+      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
@@ -421,8 +422,8 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
       app.db.get_roster(r_new_id, new_roster);
 
       node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.exclude_patterns),
-                            app.depth,
+                            args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth,
                             old_roster, new_roster, app);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
@@ -455,10 +456,31 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   else
     {
-      throw usage(name);
+      I(false);
     }
 
+    revheader = header.str();
+}
 
+CMD(diff, N_("informative"), N_("[PATH]..."),
+    N_("show current diffs on stdout.\n"
+    "If one revision is given, the diff between the workspace and\n"
+    "that revision is shown.  If two revisions are given, the diff between\n"
+    "them is given.  If no format is specified, unified is used by default."),
+    options::opts::revision | options::opts::depth | options::opts::exclude
+    | options::opts::diff_options)
+{
+  if (app.opts.external_diff_args_given)
+    N(app.opts.diff_format == external_diff,
+      F("--diff-args requires --external\n"
+        "try adding --external or removing --diff-args?"));
+
+  cset included;
+  std::string revs;
+  bool new_is_archived;
+  
+  prepare_diff(included, app, args, new_is_archived, revs);
+  
   data summary;
   write_cset(included, summary);
 
@@ -467,7 +489,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   cout << "# " << "\n";
   if (summary().size() > 0)
     {
-      cout << header.str() << "# " << "\n";
+      cout << revs << "# " << "\n";
       for (vector<string>::iterator i = lines.begin(); 
            i != lines.end(); ++i)
         cout << "# " << *i << "\n";
@@ -478,11 +500,35 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
     }
   cout << "# " << "\n";
 
-  if (app.diff_format == external_diff) {
+  if (app.opts.diff_format == external_diff) {
     do_external_diff(included, app, new_is_archived);
   } else
-    dump_diffs(included, app, new_is_archived);
+    dump_diffs(included, app, new_is_archived, cout);
 }
+
+
+// Name: content_diff
+// Arguments:
+//   (optional) one or more files to include
+// Added in: 4.0
+// Purpose: Availability of mtn diff as automate command.
+//
+// Output format: Like mtn diff, but with the header part omitted (as this is
+// doubles the output of automate get_revision). If no content changes happened,
+// the output is empty. All file operations beside mtn add are omitted,
+// as they don't change the content of the file.
+AUTOMATE(content_diff, N_("[FILE [...]]"),
+    options::opts::revision | options::opts::depth | options::opts::exclude)
+{
+  cset included;
+  std::string dummy_header;
+  bool new_is_archived;
+  
+  prepare_diff(included, app, args, new_is_archived, dummy_header);
+  
+  dump_diffs(included, app, new_is_archived, output);
+}
+
 
 static void
 log_certs(app_state & app, revision_id id, cert_name name,
@@ -495,8 +541,7 @@ log_certs(app_state & app, revision_id id, cert_name name,
   if (multiline)
     newline = true;
 
-  app.db.get_revision_certs(id, name, certs);
-  erase_bogus_certs(certs, app);
+  app.get_project().get_revision_certs_by_name(id, name, certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -538,33 +583,64 @@ log_certs(app_state & app, revision_id id, cert_name name)
   log_certs(app, id, name, " ", ",", false, false);
 }
 
+
+struct rev_cmp
+{
+  bool dir;
+  rev_cmp(bool _dir) : dir(_dir) {}
+  bool operator() (pair<rev_height, revision_id> const & x,
+                   pair<rev_height, revision_id> const & y) const
+  {
+    return dir ? (x.first < y.first) : (x.first > y.first);
+  }
+};
+
+typedef priority_queue<pair<rev_height, revision_id>,
+                       vector<pair<rev_height, revision_id> >,
+                       rev_cmp> frontier_t;
+
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
     "revisions are given, use them as a starting point."),
-    option::last % option::next % option::revision % option::brief
-    % option::diffs % option::no_merges % option::no_files)
+    options::opts::last | options::opts::next
+    | options::opts::from | options::opts::to
+    | options::opts::brief | options::opts::diffs 
+    | options::opts::no_merges | options::opts::no_files)
 {
-  if (app.revision_selectors.size() == 0)
-    app.require_workspace("try passing a --revision to start at");
+  if (app.opts.from.size() == 0)
+    app.require_workspace("try passing a --from revision to start at");
 
-  temp_node_id_source nis;
-  set<revision_id> frontier;
-  revision_id first_rid;
+  long last = app.opts.last;
+  long next = app.opts.next;
 
-  if (app.revision_selectors.size() == 0)
+  N(last == -1 || next == -1,
+    F("only one of --last/--next allowed"));
+
+  frontier_t frontier(rev_cmp(!(next>0)));
+  revision_id first_rid; // for mapping paths to node ids when restricted
+  
+  if (app.opts.from.size() == 0)
     {
       app.work.get_revision_id(first_rid);
-      frontier.insert(first_rid);
+      rev_height height;
+      app.db.get_rev_height(first_rid, height);
+      frontier.push(make_pair(height, first_rid));
     }
   else
     {
-      for (vector<utf8>::const_iterator i = app.revision_selectors.begin();
-           i != app.revision_selectors.end(); i++)
+      for (vector<utf8>::const_iterator i = app.opts.from.begin();
+           i != app.opts.from.end(); i++)
         {
           set<revision_id> rids;
           complete(app, (*i)(), rids);
-          frontier.insert(rids.begin(), rids.end());
-          if (i == app.revision_selectors.begin())
+          for (set<revision_id>::const_iterator j = rids.begin();
+               j != rids.end(); ++j)
+            {
+              rev_height height;
+              app.db.get_rev_height(*j, height);
+              frontier.push(make_pair(height, *j));
+            }
+          if (i == app.opts.from.begin())
             first_rid = *rids.begin();
         }
     }
@@ -576,17 +652,77 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       // User wants to trace only specific files
       roster_t old_roster, new_roster;
 
-      if (app.revision_selectors.size() == 0)
-        app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      if (app.opts.from.size() == 0)
+        {
+          temp_node_id_source nis;
+          app.work.get_base_and_current_roster_shape(old_roster,
+                                                     new_roster, nis);
+        }
       else
         app.db.get_roster(first_rid, new_roster);
 
       // FIXME_RESTRICTIONS: should this add paths from the rosters of
       // all selected revs?
       mask = node_restriction(args_to_paths(args),
-                              args_to_paths(app.exclude_patterns), 
-                              app.depth,
+                              args_to_paths(app.opts.exclude_patterns), 
+                              app.opts.depth,
                               old_roster, new_roster, app);
+    }
+
+  // If --to was given, don't log past those revisions.
+  set<revision_id> disallowed;
+  bool use_disallowed(!app.opts.to.empty());
+  if (use_disallowed)
+    {
+      std::deque<revision_id> to;
+      for (vector<utf8>::const_iterator i = app.opts.to.begin();
+           i != app.opts.to.end(); i++)
+        {
+          MM(*i);
+          set<revision_id> rids;
+          complete(app, (*i)(), rids);
+          for (set<revision_id>::const_iterator j = rids.begin();
+               j != rids.end(); ++j)
+            {
+              I(!null_id(*j));
+              pair<set<revision_id>::iterator, bool> res = disallowed.insert(*j);
+              if (res.second)
+                {
+                  to.push_back(*j);
+                }
+            }
+        }
+
+      while (!to.empty())
+        {
+          revision_id const & rid(to.front());
+          MM(rid);
+
+          set<revision_id> relatives;
+          MM(relatives);
+          if (next > 0)
+            {
+              app.db.get_revision_children(rid, relatives);
+            }
+          else
+            {
+              app.db.get_revision_parents(rid, relatives);
+            }
+
+          for (set<revision_id>::const_iterator i = relatives.begin();
+               i != relatives.end(); ++i)
+            {
+              if (null_id(*i))
+                continue;
+              pair<set<revision_id>::iterator, bool> res = disallowed.insert(*i);
+              if (res.second)
+                {
+                  to.push_back(*i);
+                }
+            }
+
+          to.pop_front();
+        }
     }
 
   cert_name author_name(author_cert_name);
@@ -596,49 +732,62 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   cert_name changelog_name(changelog_cert_name);
   cert_name comment_name(comment_cert_name);
 
+  // we can use the markings if we walk backwards for a restricted log
+  bool use_markings(!(next>0) && !mask.empty());
+
   set<revision_id> seen;
-  long last = app.last;
-  long next = app.next;
-
-  N(last == -1 || next == -1,
-    F("only one of --last/--next allowed"));
-
   revision_t rev;
-
   while(! frontier.empty() && (last == -1 || last > 0) 
         && (next == -1 || next > 0))
     {
-      set<revision_id> next_frontier;
+      revision_id const & rid = frontier.top().second;
+      
+      bool print_this = mask.empty();
+      set<split_path> diff_paths;
 
-      for (set<revision_id>::const_iterator i = frontier.begin();
-           i != frontier.end(); ++i)
+      if (null_id(rid) || seen.find(rid) != seen.end())
         {
-          revision_id rid = *i;
+          frontier.pop();
+          continue;
+        }
 
-          bool print_this = mask.empty();
-          set<  revision<id> > parents;
-          vector< revision<cert> > tmp;
-          set<split_path> diff_paths;
+      seen.insert(rid);
+      app.db.get_revision(rid, rev);
 
-          if (null_id(rid) || seen.find(rid) != seen.end())
-            continue;
+      set<revision_id> marked_revs;
 
-          seen.insert(rid);
-          app.db.get_revision(rid, rev);
+      if (!mask.empty())
+        {
+          roster_t roster;
+          marking_map markings;
+          app.db.get_roster(rid, roster, markings);
 
-          if (!mask.empty())
+          // get all revision ids mentioned in one of the markings
+          for (marking_map::const_iterator m = markings.begin();
+               m != markings.end(); ++m)
             {
-              // TODO: stop if the restriction is pre-dated by the
-              // current roster i.e. the restriction's nodes are not
-              // born in the current roster
-              roster_t roster;
-              app.db.get_roster(rid, roster);
+              node_id node = m->first;
+              marking_t marking = m->second;
+              
+              if (mask.includes(roster, node))
+                {
+                  marked_revs.insert(marking.file_content.begin(), marking.file_content.end());
+                  marked_revs.insert(marking.parent_name.begin(), marking.parent_name.end());
+                  for (map<attr_key, set<revision_id> >::const_iterator a = marking.attrs.begin();
+                       a != marking.attrs.end(); ++a)
+                    marked_revs.insert(a->second.begin(), a->second.end());
+                }
+            }
 
+          // find out whether the current rev is to be printed
+          // we don't care about changed paths if it is not marked
+          if (!use_markings || marked_revs.find(rid) != marked_revs.end())
+            {
               set<node_id> nodes_modified;
               select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
                                            app);
-
+              
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)
                 {
@@ -648,7 +797,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   if (roster.has_node(*n) && mask.includes(roster, *n))
                     {
                       print_this = true;
-                      if (app.diffs)
+                      if (app.opts.diffs)
                         {
                           split_path sp;
                           roster.get_name(*n, sp);
@@ -657,95 +806,112 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                     }
                 }
             }
+        }
+
+      if (app.opts.no_merges && rev.is_merge_node())
+        print_this = false;
+      
+      if (print_this)
+        {
+          if (app.opts.brief)
+            {
+              cout << rid;
+              log_certs(app, rid, author_name);
+              log_certs(app, rid, date_name);
+              log_certs(app, rid, branch_name);
+              cout << "\n";
+            }
+          else
+            {
+              cout << string(65, '-') << "\n";
+              cout << "Revision: " << rid << "\n";
+              
+              changes_summary csum;
+              
+              set<revision_id> ancestors;
+              
+              for (edge_map::const_iterator e = rev.edges.begin();
+                   e != rev.edges.end(); ++e)
+                {
+                  ancestors.insert(edge_old_revision(e));
+                  csum.add_change_set(edge_changes(e));
+                }
+              
+              for (set<revision_id>::const_iterator 
+                     anc = ancestors.begin();
+                   anc != ancestors.end(); ++anc)
+                cout << "Ancestor: " << *anc << "\n";
+
+              log_certs(app, rid, author_name, "Author: ", false);
+              log_certs(app, rid, date_name,   "Date: ",   false);
+              log_certs(app, rid, branch_name, "Branch: ", false);
+              log_certs(app, rid, tag_name,    "Tag: ",    false);
+
+              if (!app.opts.no_files && !csum.cs.empty())
+                {
+                  cout << "\n";
+                  csum.print(cout, 70);
+                  cout << "\n";
+                }
+              
+              log_certs(app, rid, changelog_name, "ChangeLog: ", true);
+              log_certs(app, rid, comment_name,   "Comments: ",  true);
+            }
+
+          if (app.opts.diffs)
+            {
+              for (edge_map::const_iterator e = rev.edges.begin();
+                   e != rev.edges.end(); ++e)
+                {
+                    dump_diffs(edge_changes(e), app, true, cout,
+                    	       diff_paths, !mask.empty());
+                }
+            }
 
           if (next > 0)
             {
-              set<revision_id> children;
-              app.db.get_revision_children(rid, children);
-              copy(children.begin(), children.end(),
-                   inserter(next_frontier, next_frontier.end()));
+              next--;
             }
-          else // work backwards by default
+          else if (last > 0)
             {
-              set<revision_id> parents;
-              app.db.get_revision_parents(rid, parents);
-              copy(parents.begin(), parents.end(),
-                   inserter(next_frontier, next_frontier.end()));
+              last--;
             }
 
-          if (app.no_merges && rev.is_merge_node())
-            print_this = false;
-
-          if (print_this)
-          {
-            if (app.brief)
-              {
-                cout << rid;
-                log_certs(app, rid, author_name);
-                log_certs(app, rid, date_name);
-                log_certs(app, rid, branch_name);
-                cout << "\n";
-              }
-            else
-              {
-                cout << string(65, '-') << "\n";
-                cout << "Revision: " << rid << "\n";
-
-                changes_summary csum;
-
-                set<revision_id> ancestors;
-
-                for (edge_map::const_iterator e = rev.edges.begin();
-                     e != rev.edges.end(); ++e)
-                  {
-                    ancestors.insert(edge_old_revision(e));
-                    csum.add_change_set(edge_changes(e));
-                  }
-
-                for (set<revision_id>::const_iterator 
-                       anc = ancestors.begin();
-                     anc != ancestors.end(); ++anc)
-                  cout << "Ancestor: " << *anc << "\n";
-
-                log_certs(app, rid, author_name, "Author: ", false);
-                log_certs(app, rid, date_name,   "Date: ",   false);
-                log_certs(app, rid, branch_name, "Branch: ", false);
-                log_certs(app, rid, tag_name,    "Tag: ",    false);
-
-                if (!app.no_files && !csum.cs.empty())
-                  {
-                    cout << "\n";
-                    csum.print(cout, 70);
-                    cout << "\n";
-                  }
-
-                log_certs(app, rid, changelog_name, "ChangeLog: ", true);
-                log_certs(app, rid, comment_name,   "Comments: ",  true);
-              }
-
-            if (app.diffs)
-              {
-                for (edge_map::const_iterator e = rev.edges.begin();
-                     e != rev.edges.end(); ++e)
-                  {
-                    dump_diffs(edge_changes(e), app, true, diff_paths,
-                               !mask.empty());
-                  }
-              }
-
-            if (next > 0)
-              {
-                next--;
-              }
-            else if (last > 0)
-              {
-                last--;
-              }
-
-            cout.flush();
-          }
+          cout.flush();
         }
-      frontier = next_frontier;
+
+      set<revision_id> interesting;
+      // if rid is not marked we can jump directly to the marked ancestors,
+      // otherwise we need to visit the parents
+      if (use_markings && marked_revs.find(rid) == marked_revs.end())
+        {
+          interesting.insert(marked_revs.begin(), marked_revs.end());
+        }
+      else
+        {
+          if (next > 0) 
+            {
+              app.db.get_revision_children(rid, interesting);
+            }
+          else // walk backwards by default
+            {
+              app.db.get_revision_parents(rid, interesting);
+            }
+        }
+
+      frontier.pop(); // beware: rid is invalid from now on
+
+      for (set<revision_id>::const_iterator i = interesting.begin();
+           i != interesting.end(); ++i)
+        {
+          if (use_disallowed && (disallowed.find(*i) != disallowed.end()))
+            {
+              continue;
+            }
+          rev_height height;
+          app.db.get_rev_height(*i, height);
+          frontier.push(make_pair(height, *i));
+        }
     }
 }
 

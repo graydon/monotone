@@ -25,7 +25,7 @@ using std::vector;
 // fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
+CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
 {
   string s = get_stdin();
 
@@ -40,7 +40,7 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), option::none)
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("merge 3 files and output result"),
-    option::none)
+    options::opts::none)
 {
   if (args.size() != 3)
     throw usage(name);
@@ -77,7 +77,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("diff 2 files and output result"),
-    option::context_diff % option::unified_diff % option::no_show_encloser)
+    options::opts::diff_options)
 {
   if (args.size() != 4)
     throw usage(name);
@@ -102,35 +102,35 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
   app.db.get_file_version(dst_id, dst);
 
   string pattern("");
-  if (app.diff_show_encloser)
-    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+  if (!app.opts.no_show_encloser)
+    app.lua.hook_get_encloser_pattern(file_path_external(utf8(src_name)), pattern);
 
   make_diff(src_name, dst_name,
             src_id, dst_id,
             src.inner(), dst.inner(),
-            cout, app.diff_format, pattern);
+            cout, app.opts.diff_format, pattern);
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("print annotated copy of the file from REVISION"),
-    option::revision % option::brief)
+    options::opts::revision | options::opts::brief)
 {
   revision_id rid;
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
 
-  if ((args.size() != 1) || (app.revision_selectors.size() > 1))
+  if ((args.size() != 1) || (app.opts.revision_selectors.size() > 1))
     throw usage(name);
 
   file_path file = file_path_external(idx(args, 0));
   split_path sp;
   file.split(sp);
 
-  if (app.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.size() == 0)
     app.work.get_revision_id(rid);
   else
-    complete(app, idx(app.revision_selectors, 0)(), rid);
+    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
   N(!null_id(rid), 
     F("no revision for file '%s' in database") % file);
@@ -151,12 +151,12 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.brief);
+  do_annotate(app, file_node, rid, app.opts.brief);
 }
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("calculate identity of PATH or stdin"),
-    option::none)
+    options::opts::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
     throw usage(name);
@@ -170,7 +170,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
     }
   else
     {
-      dat = get_stdin();
+      dat = data(get_stdin());
     }
 
   hexenc<id> ident;
@@ -178,24 +178,21 @@ CMD(identify, N_("debug"), N_("[PATH]"),
   cout << ident << "\n";
 }
 
-CMD(cat, N_("informative"),
-    N_("FILENAME"),
-    N_("write file from database to stdout"),
-    option::revision)
+static void
+dump_file(std::ostream & output, app_state & app, file_id & ident)
 {
-  if (args.size() != 1)
-    throw usage(name);
+  N(app.db.file_version_exists(ident),
+    F("no file version %s found in database") % ident);
 
-  if (app.revision_selectors.size() == 0)
-    app.require_workspace();
+  file_data dat;
+  L(FL("dumping file %s") % ident);
+  app.db.get_file_version(ident, dat);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
 
-  transaction_guard guard(app.db, false);
-
-  revision_id rid;
-  if (app.revision_selectors.size() == 0)
-    app.work.get_revision_id(rid);
-  else
-    complete(app, idx(app.revision_selectors, 0)(), rid);
+static void
+dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename)
+{
   N(app.db.revision_exists(rid), 
     F("no such revision '%s'") % rid);
 
@@ -203,24 +200,91 @@ CMD(cat, N_("informative"),
   // workspace, but as project-rooted external ones otherwise.
   file_path fp;
   split_path sp;
-  fp = file_path_external(idx(args, 0));
+  fp = file_path_external(filename);
   fp.split(sp);
 
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no file '%s' found in revision '%s'") % fp % rid);
+  N(roster.has_node(sp), 
+    F("no file '%s' found in revision '%s'") % fp % rid);
+  
   node_t node = roster.get_node(sp);
-  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'") % fp % rid);
+  N((!null_node(node->self) && is_file_t(node)), 
+    F("no file '%s' found in revision '%s'") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  file_id ident = file_node->content;
-  file_data dat;
-  L(FL("dumping file '%s'") % ident);
-  app.db.get_file_version(ident, dat);
-  cout.write(dat.inner()().data(), dat.inner()().size());
+  dump_file(output, app, file_node->content);
+}
 
-  guard.commit();
+CMD(cat, N_("informative"),
+    N_("FILENAME"),
+    N_("write file from database to stdout"),
+    options::opts::revision)
+{
+  if (args.size() != 1)
+    throw usage(name);
+
+  revision_id rid;
+  if (app.opts.revision_selectors.size() == 0)
+    {
+      app.require_workspace();
+      app.work.get_revision_id(rid);
+    }
+  else
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+
+  dump_file(cout, app, rid, idx(args, 0));
+}
+
+// Name: get_file
+// Arguments:
+//   1: a file id
+// Added in: 1.0
+// Purpose: Prints the contents of the specified file.
+//
+// Output format: The file contents are output without modification.
+//
+// Error conditions: If the file id specified is unknown or invalid prints
+// an error message to stderr and exits with status 1.
+AUTOMATE(get_file, N_("FILEID"), options::opts::none)
+{
+  N(args.size() == 1,
+    F("wrong argument count"));
+
+  file_id ident(idx(args, 0)());
+  dump_file(output, app, ident);
+}
+
+// Name: get_fileof
+// Arguments:
+//   1: a filename
+//
+// Options:
+//   r: a revision id
+//
+// Added in: 4.0
+// Purpose: Prints the contents of the specified file.
+//
+// Output format: The file contents are output without modification.
+//
+// Error conditions: If the file id specified is unknown or invalid prints
+// an error message to stderr and exits with status 1.
+AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
+{
+  N(args.size() == 1,
+    F("wrong argument count"));
+
+  revision_id rid;
+  if (app.opts.revision_selectors.size() == 0)
+    {
+      app.require_workspace();
+      app.work.get_revision_id(rid);
+    }
+  else
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+
+  dump_file(output, app, rid, idx(args, 0));
 }
 
 // Local Variables:

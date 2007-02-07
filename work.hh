@@ -77,7 +77,9 @@ struct workspace
                                 std::vector<file_path> const & roots,
                                 path_set & unknown, path_set & ignored);
 
-  void perform_additions(path_set const & targets, bool recursive = true);
+  void perform_additions(path_set const & targets,
+                         bool recursive = false,
+                         bool respect_ignore = true);
 
   void perform_deletions(path_set const & targets, bool recursive, 
                          bool execute);
@@ -164,7 +166,7 @@ struct workspace
 
   // the "options map" is another administrative file, stored in
   // _MTN/options. it keeps a list of name/value pairs which are considered
-  // "persistent options", associated with a particular the workspace and
+  // "persistent options", associated with a particular workspace and
   // implied unless overridden on the command line. the set of valid keys
   // corresponds exactly to the argument list of these functions.
 

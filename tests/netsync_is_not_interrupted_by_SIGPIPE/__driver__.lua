@@ -15,7 +15,7 @@ commit()
 writefile("testfile", "version 1 of test file")
 commit()
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 
 -- send the server a SIGPIPE signal (it should survive)
 netsync_killpipe(srv)

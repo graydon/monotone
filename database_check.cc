@@ -19,6 +19,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "cert.hh"
+#include "rev_height.hh"
 
 // the database has roughly the following structure
 //
@@ -121,6 +122,13 @@ struct checked_revision {
     found_roster(false), manifest_mismatch(false), incomplete_roster(false),
     missing_manifests(0), missing_revisions(0),
     cert_refs(0), parseable(false), normalized(false) {}
+};
+
+struct checked_height {
+  bool found;                  // found in db
+  bool unique;                 // not identical to any height retrieved earlier
+  bool sensible;               // greater than all parent heights
+  checked_height(): found(false), unique(false), sensible(true) {}
 };
 
 /*
@@ -472,7 +480,104 @@ check_certs(app_state & app,
         }
 
       checked_keys[i->inner().key].sigs++;
-      checked_revisions[i->inner().ident].checked_certs.push_back(checked);
+      checked_revisions[revision_id(i->inner().ident)].checked_certs.push_back(checked);
+
+      ++ticks;
+    }
+}
+
+// - check that every rev has a height
+// - check that no two revs have the same height
+static void
+check_heights(app_state & app,
+              map<revision_id, checked_height> & checked_heights)
+{
+  set<revision_id> heights;
+  app.db.get_revision_ids(heights);
+
+  // add revision [], it is the (imaginary) root of all revisions, and
+  // should have a height, too
+  {
+    revision_id null_id;
+    heights.insert(null_id);
+  }
+  
+  L(FL("checking %d heights") % heights.size());
+
+  set<rev_height> seen;
+
+  ticker ticks(_("heights"), "h", heights.size()/70+1);
+
+  for (set<revision_id>::const_iterator i = heights.begin();
+       i != heights.end(); ++i)
+    {
+      L(FL("checking height for %s") % *i);
+      
+      rev_height h;
+      try
+        {
+          app.db.get_rev_height(*i, h);
+        }
+      catch (std::exception & e)
+        {
+          L(FL("error loading height: %s") % e.what());
+          continue;
+        }
+      checked_heights[*i].found = true; // defaults to false
+
+      if (seen.find(h) != seen.end())
+        {
+          L(FL("error: height not unique: %s") % h());
+          continue;
+        }
+      checked_heights[*i].unique = true; // defaults to false
+      seen.insert(h);
+
+      ++ticks;
+    }
+}
+
+// check that every rev's height is a sensible height to assign, given its
+// parents
+static void
+check_heights_relation(app_state & app,
+                       map<revision_id, checked_height> & checked_heights)
+{
+  set<revision_id> heights;
+
+  multimap<revision_id, revision_id> graph; // parent, child
+  app.db.get_revision_ancestry(graph);
+
+  L(FL("checking heights for %d edges") % graph.size());
+
+  ticker ticks(_("height relations"), "h", graph.size()/70+1);
+
+  typedef multimap<revision_id, revision_id>::const_iterator gi;
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    {
+      revision_id const & p_id = i->first;
+      revision_id const & c_id = i->second;
+
+      if (!checked_heights[p_id].found || !checked_heights[c_id].found)
+        {
+          L(FL("missing height(s), skipping edge %s -> %s") % p_id % c_id);
+          continue;
+        }
+
+      L(FL("checking heights for edges %s -> %s") %
+        p_id % c_id);
+      
+      rev_height parent, child;
+      app.db.get_rev_height(p_id, parent);
+      app.db.get_rev_height(c_id, child);
+
+      if (!(child > parent))
+        {
+          L(FL("error: height %s of child %s not greater than height %s of parent %s")
+            % child % c_id % parent % p_id);
+          checked_heights[c_id].sensible = false; // defaults to true
+          continue;
+        }
 
       ++ticks;
     }
@@ -729,6 +834,38 @@ report_certs(map<revision_id, checked_revision> const & checked_revisions,
     }
 }
 
+static void
+report_heights(map<revision_id, checked_height> const & checked_heights,
+               size_t & missing_heights,
+               size_t & duplicate_heights,
+               size_t & incorrect_heights)
+{
+  for (map<revision_id, checked_height>::const_iterator
+         i = checked_heights.begin(); i != checked_heights.end(); ++i)
+    {
+      checked_height height = i->second;
+
+      if (!height.found)
+        {
+          missing_heights++;
+          P(F("height missing for revision %s") % i->first);
+          continue;
+        }
+
+      if (!height.unique)
+        {
+          duplicate_heights++;
+          P(F("duplicate height for revision %s") % i->first);
+        }
+
+      if (!height.sensible)
+        {
+          incorrect_heights++;
+          P(F("height of revision %s not greater than that of parent") % i->first);
+        }
+    }
+}
+
 void
 check_db(app_state & app)
 {
@@ -737,6 +874,7 @@ check_db(app_state & app)
   map<revision_id, checked_roster> checked_rosters;
   map<revision_id, checked_revision> checked_revisions;
   map<rsa_keypair_id, checked_key> checked_keys;
+  map<revision_id, checked_height> checked_heights;
 
   size_t missing_files = 0;
   size_t unreferenced_files = 0;
@@ -762,6 +900,10 @@ check_db(app_state & app)
   size_t unchecked_sigs = 0;
   size_t bad_sigs = 0;
 
+  size_t missing_heights = 0;
+  size_t duplicate_heights = 0;
+  size_t incorrect_heights = 0;
+
   check_db_integrity_check(app);
   check_files(app, checked_files);
   check_rosters_manifest(app, checked_rosters, checked_revisions,
@@ -772,6 +914,8 @@ check_db(app_state & app)
   check_ancestry(app, checked_revisions);
   check_keys(app, checked_keys);
   check_certs(app, checked_revisions, checked_keys, total_certs);
+  check_heights(app, checked_heights);
+  check_heights_relation(app, checked_heights);
 
   report_files(checked_files, missing_files, unreferenced_files);
 
@@ -791,6 +935,9 @@ check_db(app_state & app)
   report_certs(checked_revisions,
                missing_certs, mismatched_certs,
                unchecked_sigs, bad_sigs);
+
+  report_heights(checked_heights,
+                 missing_heights, duplicate_heights, incorrect_heights);
 
   // NOTE: any new sorts of problems need to have added:
   //   -- a message here, that tells the use about them
@@ -841,6 +988,13 @@ check_db(app_state & app)
   if (bad_sigs > 0)
     W(F("%d bad signatures") % bad_sigs);
 
+  if (missing_heights > 0)
+    W(F("%d missing heights") % missing_heights);
+  if (duplicate_heights > 0)
+    W(F("%d duplicate heights") % duplicate_heights);
+  if (incorrect_heights > 0)
+    W(F("%d incorrect heights") % incorrect_heights);
+
   size_t total = missing_files + unreferenced_files +
     unreferenced_rosters + incomplete_rosters +
     missing_revisions + incomplete_revisions +
@@ -850,7 +1004,8 @@ check_db(app_state & app)
     missing_rosters +
     missing_certs + mismatched_certs +
     unchecked_sigs + bad_sigs +
-    missing_keys;
+    missing_keys +
+    missing_heights + duplicate_heights + incorrect_heights;
   // unreferenced files and rosters and mismatched certs are not actually
   // serious errors; odd, but nothing will break.
   size_t serious = missing_files +
@@ -861,14 +1016,16 @@ check_db(app_state & app)
     bad_history +
     missing_certs +
     unchecked_sigs + bad_sigs +
-    missing_keys;
+    missing_keys +
+    missing_heights + duplicate_heights + incorrect_heights;
 
-  P(F("check complete: %d files; %d rosters; %d revisions; %d keys; %d certs")
+  P(F("check complete: %d files; %d rosters; %d revisions; %d keys; %d certs; %d heights")
     % checked_files.size()
     % checked_rosters.size()
     % checked_revisions.size()
     % checked_keys.size()
-    % total_certs);
+    % total_certs
+    % checked_heights.size());
   P(F("total problems detected: %d (%d serious)") % total % serious);
   if (serious)
     E(false, F("serious problems detected"));

@@ -1,4 +1,8 @@
 start ---------------------------------------------------
+start: sync_type = pull
+start: remote_keyname = tester@test.net
+start: includes = testbranch
+start: excludes = 
 revision: new_id    = REV1
 revision: revision  = format_version "1"
 
@@ -16,6 +20,7 @@ revision: cert.value = testbranch
 revision: cert.key   = tester@test.net
 revision: cert.name  = changelog
 revision: cert.value = blah-blah
+
 revision: cert.key   = tester@test.net
 revision: cert.name  = date
 revision: cert.value = DATE1
@@ -39,6 +44,7 @@ revision: cert.value = testbranch
 revision: cert.key   = tester@test.net
 revision: cert.name  = changelog
 revision: cert.value = blah-blah
+
 revision: cert.key   = tester@test.net
 revision: cert.name  = date
 revision: cert.value = DATE2
@@ -46,4 +52,8 @@ revision: cert.key   = tester@test.net
 revision: cert.name  = author
 revision: cert.value = tester@test.net
 revision: cert.key   = tester@test.net
+end: status = 200
+end: certs in/out = 8/0
+end: revs in/out = 2/0
+end: keys in/out = 1/0
 end -----------------------------------------------------

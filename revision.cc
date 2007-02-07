@@ -42,6 +42,8 @@
 #include "vocab.hh"
 #include "safe_map.hh"
 #include "legacy.hh"
+#include "rev_height.hh"
+#include "cmd.hh"
 
 using std::back_inserter;
 using std::copy;
@@ -383,53 +385,27 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
     }
 }
 
-// this function actually toposorts the whole graph, and then filters by the
-// passed in set.  if anyone ever needs to toposort the whole graph, then,
-// this function would be a good thing to generalize...
 void
 toposort(set<revision_id> const & revisions,
          vector<revision_id> & sorted,
          app_state & app)
 {
-  sorted.clear();
-  typedef multimap<revision_id, revision_id>::iterator gi;
-  typedef map<revision_id, int>::iterator pi;
-  multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
-  set<revision_id> leaves;
-  app.db.get_revision_ids(leaves);
-  map<revision_id, int> pcount;
-  for (gi i = graph.begin(); i != graph.end(); ++i)
-    pcount.insert(make_pair(i->first, 0));
-  for (gi i = graph.begin(); i != graph.end(); ++i)
-    ++(pcount[i->second]);
-  // first find the set of graph roots
-  list<revision_id> roots;
-  for (pi i = pcount.begin(); i != pcount.end(); ++i)
-    if(i->second==0)
-      roots.push_back(i->first);
-  while (!roots.empty())
+  map<rev_height, revision_id> work;
+
+  for (set<revision_id>::const_iterator i = revisions.begin();
+       i != revisions.end(); ++i) 
     {
-      // now stick them in our ordering (if wanted) and remove them from the
-      // graph, calculating the new roots as we go
-      L(FL("new root: %s") % (roots.front()));
-      if (revisions.find(roots.front()) != revisions.end())
-        sorted.push_back(roots.front());
-      for(gi i = graph.lower_bound(roots.front());
-          i != graph.upper_bound(roots.front()); i++)
-        if(--(pcount[i->second]) == 0)
-          roots.push_back(i->second);
-      graph.erase(roots.front());
-      leaves.erase(roots.front());
-      roots.pop_front();
+      rev_height height;
+      app.db.get_rev_height(*i, height);
+      work.insert(make_pair(height, *i));
     }
-  I(graph.empty());
-  for (set<revision_id>::const_iterator i = leaves.begin();
-       i != leaves.end(); ++i)
+
+  sorted.clear();
+  
+  for (map<rev_height, revision_id>::const_iterator i = work.begin();
+       i != work.end(); ++i)
     {
-      L(FL("new leaf: %s") % (*i));
-      if (revisions.find(*i) != revisions.end())
-        sorted.push_back(*i);
+      sorted.push_back(i->second);
     }
 }
 
@@ -743,7 +719,7 @@ make_revision_for_workspace(revision_id const & old_rev_id,
   rev.edges.clear();
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   if (!null_id(old_rev_id))
-    rev.new_manifest = fake_id();
+    rev.new_manifest = manifest_id(fake_id());
   rev.made_for = made_for_workspace;
 }
 
@@ -1207,7 +1183,7 @@ insert_into_roster(roster_t & child_roster,
   pth.split(sp);
 
   E(!child_roster.has_node(sp),
-    F("Path %s added to child roster multiple times\n") % pth);
+    F("Path %s added to child roster multiple times") % pth);
 
   dirname_basename(sp, dirname, basename);
 
@@ -1220,7 +1196,7 @@ insert_into_roster(roster_t & child_roster,
         if (child_roster.has_node(tmp_pth))
           {
             E(is_dir_t(child_roster.get_node(tmp_pth)),
-              F("Directory for path %s cannot be added, as there is a file in the way\n") % pth);
+              F("Directory for path %s cannot be added, as there is a file in the way") % pth);
           }
         else
           child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
@@ -1234,7 +1210,7 @@ insert_into_roster(roster_t & child_roster,
         F("Path %s cannot be added, as there is a directory in the way") % sp);
       file_t f = downcast_to_file_t(n);
       E(f->content == fid,
-        F("Path %s added twice with differing content\n") % sp);
+        F("Path %s added twice with differing content") % sp);
     }
   else
     child_roster.attach_node(child_roster.create_file_node(fid, nis), sp);
@@ -1512,7 +1488,7 @@ anc_graph::construct_revisions_from_ancestry()
                              k != fattrs.end(); ++k)
                           {
                             string key = k->first;
-                            if (app.attrs_to_drop.find(key) != app.attrs_to_drop.end())
+                            if (app.opts.attrs_to_drop.find(key) != app.opts.attrs_to_drop.end())
                               {
                                 // ignore it
                               }
@@ -1708,8 +1684,8 @@ build_changesets_from_manifest_ancestry(app_state & app)
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id child, parent;
-      child = i->inner().ident;
-      parent = hexenc<id>(tv());
+      child = manifest_id(i->inner().ident);
+      parent = manifest_id(tv());
 
       u64 parent_node = graph.add_node_for_old_manifest(parent);
       u64 child_node = graph.add_node_for_old_manifest(child);
@@ -1719,21 +1695,65 @@ build_changesets_from_manifest_ancestry(app_state & app)
   graph.rebuild_ancestry();
 }
 
-void
-regenerate_rosters(app_state & app)
+
+// This is a special function solely for the use of regenerate_caches -- it
+// must work even when caches (especially, the height cache!) do not exist.
+// For all other purposes, use toposort above.
+static void
+allrevs_toposorted(vector<revision_id> & revisions,
+                   app_state & app)
 {
-  P(F("regenerating cached rosters"));
+
+  typedef multimap<revision_id, revision_id>::const_iterator gi;
+  typedef map<revision_id, int>::iterator pi;
+
+  revisions.clear();
+
+  // get the complete ancestry
+  multimap<revision_id, revision_id> graph;
+  app.db.get_revision_ancestry(graph);
+
+  // determine the number of parents for each rev
+  map<revision_id, int> pcount;
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    pcount.insert(make_pair(i->first, 0));
+  for (gi i = graph.begin(); i != graph.end(); ++i)
+    ++(pcount[i->second]);
+
+  // find the set of graph roots
+  list<revision_id> roots;
+  for (pi i = pcount.begin(); i != pcount.end(); ++i)
+    if(i->second==0)
+      roots.push_back(i->first);
+
+  while (!roots.empty())
+    {
+      revision_id cur = roots.front();
+      roots.pop_front();
+      if (!null_id(cur))
+        revisions.push_back(cur);
+      
+      for(gi i = graph.lower_bound(cur);
+          i != graph.upper_bound(cur); i++)
+        if(--(pcount[i->second]) == 0)
+          roots.push_back(i->second);
+    }
+}
+
+void
+regenerate_caches(app_state & app)
+{
+  P(F("regenerating cached rosters and heights"));
 
   app.db.ensure_open_for_format_changes();
+
   transaction_guard guard(app.db);
 
   app.db.delete_existing_rosters();
+  app.db.delete_existing_heights();
 
-  std::set<revision_id> ids;
-  app.db.get_revision_ids(ids);
-  P(F("calculating rosters to regenerate"));
-  std::vector<revision_id> sorted_ids;
-  toposort(ids, sorted_ids, app);
+  vector<revision_id> sorted_ids;
+  allrevs_toposorted(sorted_ids, app);
 
   ticker done(_("regenerated"), "r", 5);
   done.set_total(sorted_ids.size());
@@ -1742,12 +1762,28 @@ regenerate_rosters(app_state & app)
        i != sorted_ids.end(); ++i)
     {
       revision_t rev;
-      app.db.get_revision(*i, rev);
-      app.db.put_roster_for_revision(*i, rev);
+      revision_id const & rev_id = *i;
+      app.db.get_revision(rev_id, rev);
+      app.db.put_roster_for_revision(rev_id, rev);
+      app.db.put_height_for_revision(rev_id, rev);
       ++done;
     }
 
   guard.commit();
+
+  P(F("finished regenerating cached rosters and heights"));
+}
+
+CMD(rev_height, hidden_group(), N_("REV"), "show the height for REV",
+    options::opts::none)
+{
+  if (args.size() != 1)
+    throw usage(name);
+  revision_id rid(idx(args, 0)());
+  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  rev_height height;
+  app.db.get_rev_height(rid, height);
+  P(F("cached height: %s") % height);
 }
 
 // i/o stuff
@@ -1903,7 +1939,7 @@ void calculate_ident(revision_t const & cs,
   hexenc<id> tid;
   write_revision(cs, tmp);
   calculate_ident(tmp, tid);
-  ident = tid;
+  ident = revision_id(tid);
 }
 
 #ifdef BUILD_UNIT_TESTS

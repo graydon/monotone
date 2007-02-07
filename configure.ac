@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.30, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.32, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
@@ -90,6 +90,7 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 
 # Checks for library functions.
 AC_FUNC_STAT
+AC_FUNC_MMAP
 AC_FUNC_LOCALE_WORKS
 AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint \
 		__cxa_current_exception_type __cxa_demangle])
@@ -105,7 +106,6 @@ MTN_BOOST_LIB_FILESYSTEM
 MTN_BOOST_LIB_DATE_TIME
 MTN_BOOST_LIB_REGEX
 MTN_BOOST_LIB_UNIT_TEST_FRAMEWORK
-MTN_BOOST_LIB_PROGRAM_OPTIONS
 
 # more complex library checks
 MTN_NETXX_DEPENDENCIES

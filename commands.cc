@@ -12,7 +12,9 @@
 
 #include "transforms.hh"
 #include "simplestring_xform.hh"
+#include "localized_file_io.hh"
 #include "charset.hh"
+#include "diff_patch.hh"
 #include "inodeprint.hh"
 #include "cert.hh"
 #include "ui.hh"
@@ -24,6 +26,8 @@
 #endif
 
 using std::cin;
+using std::map;
+using std::ostream;
 using std::pair;
 using std::set;
 using std::string;
@@ -62,9 +66,9 @@ namespace commands
                    string const & p,
                    string const & d,
                    bool u,
-                   command_opts const & o)
+                   options::options_type const & o)
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
-      options(o)
+      opts(o)
   {
     if (cmds == NULL)
       cmds = new map<string, command *>;
@@ -73,6 +77,10 @@ namespace commands
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
+  options::options_type command::get_options(vector<utf8> const & args)
+  {
+    return opts;
+  }
   bool operator<(command const & self, command const & other);
   std::string const & hidden_group()
   {
@@ -139,7 +147,7 @@ namespace commands
       }
 
     // more than one matched command
-    string err = (F("command '%s' has multiple ambiguous expansions:\n") % cmd).str();
+    string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
     for (vector<string>::iterator i = matched.begin();
          i != matched.end(); ++i)
       err += (*i + "\n");
@@ -235,25 +243,41 @@ namespace commands
       }
   }
 
-  boost::program_options::options_description command_options(string const & cmd)
+  options::options_type command_options(vector<utf8> const & cmdline)
   {
+    if (cmdline.empty())
+      return options::options_type();
+    string cmd = complete_command(idx(cmdline,0)());
     if ((*cmds).find(cmd) != (*cmds).end())
       {
-        return (*cmds)[cmd]->options.as_desc();
+        return (*cmds)[cmd]->get_options(cmdline);
       }
     else
       {
-        return boost::program_options::options_description();
+        return options::options_type();
+      }
+  }
+
+  options::options_type toplevel_command_options(string const & cmd)
+  {
+    if ((*cmds).find(cmd) != (*cmds).end())
+      {
+        return (*cmds)[cmd]->opts;
+      }
+    else
+      {
+        return options::options_type();
       }
   }
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help"), option::none)
+CMD(help, N_("informative"), N_("command [ARGS...]"),
+    N_("display command help"), options::opts::none)
 {
   if (args.size() < 1)
     {
-      app.requested_help = true;
+      app.opts.help = true;
       throw usage("");
     }
 
@@ -261,11 +285,12 @@ CMD(help, N_("informative"), N_("command [ARGS...]"), N_("display command help")
   if ((*cmds).find(full_cmd) == (*cmds).end())
     throw usage("");
 
-  app.requested_help = true;
+  app.opts.help = true;
   throw usage(full_cmd);
 }
 
-CMD(crash, hidden_group(), "{ N | E | I | exception | signal }", "trigger the specified kind of crash", option::none)
+CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
+    "trigger the specified kind of crash", options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -343,8 +368,7 @@ describe_revision(app_state & app,
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;
-  app.db.get_revision_certs(id, author_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.get_project().get_revision_certs_by_name(id, author_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -353,8 +377,7 @@ describe_revision(app_state & app,
       description += " ";
       description += tv();
     }
-  app.db.get_revision_certs(id, date_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.get_project().get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -382,7 +405,7 @@ complete(app_state & app,
   if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
       && str.size() == constants::idlen)
     {
-      completion.insert(revision_id(str));
+      completion.insert(revision_id(hexenc<id>(id(str))));
       if (must_exist)
         N(app.db.revision_exists(*completion.begin()),
           F("no such revision '%s'") % *completion.begin());
@@ -405,7 +428,8 @@ complete(app_state & app,
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     {
-      pair<set<revision_id>::const_iterator, bool> p = completion.insert(revision_id(*i));
+      pair<set<revision_id>::const_iterator, bool> p =
+        completion.insert(revision_id(hexenc<id>(id(*i))));
       P(F("expanded to '%s'") % *(p.first));
     }
 }
@@ -423,10 +447,10 @@ complete(app_state & app,
 
   if (completions.size() > 1)
     {
-      string err = (F("selection '%s' has multiple ambiguous expansions: \n") % str).str();
+      string err = (F("selection '%s' has multiple ambiguous expansions:") % str).str();
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += (describe_revision(app, *i) + "\n");
+        err += ("\n" + describe_revision(app, *i));
       N(completions.size() == 1, i18n_format(err));
     }
 
@@ -437,37 +461,49 @@ void
 notify_if_multiple_heads(app_state & app)
 {
   set<revision_id> heads;
-  get_branch_heads(app.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.branch_name % ui.prog_name);
+    P(i18n_format(prefixedline) % app.opts.branch_name % ui.prog_name);
   }
 }
 
 void
 process_commit_message_args(bool & given,
                             utf8 & log_message,
-                            app_state & app)
+                            app_state & app,
+                            utf8 message_prefix)
 {
   // can't have both a --message and a --message-file ...
-  N(app.message().length() == 0 || app.message_file().length() == 0,
+  N(!app.opts.message_given || !app.opts.msgfile_given,
     F("--message and --message-file are mutually exclusive"));
 
-  if (app.is_explicit_option(option::message()))
+  if (app.opts.message_given)
     {
-      log_message = app.message;
+      std::string msg;
+      join_lines(app.opts.message, msg);
+      log_message = utf8(msg);
+      if (message_prefix().length() != 0)
+        log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
-  else if (app.is_explicit_option(option::msgfile()))
+  else if (app.opts.msgfile_given)
     {
       data dat;
-      read_data_for_command_line(app.message_file(), dat);
-      external dat2 = dat();
+      read_data_for_command_line(app.opts.msgfile, dat);
+      external dat2 = external(dat());
       system_to_utf8(dat2, log_message);
+      if (message_prefix().length() != 0)
+        log_message = utf8(message_prefix() + "\n\n" + log_message());
+      given = true;
+    }
+  else if (message_prefix().length() != 0)
+    {
+      log_message = message_prefix;
       given = true;
     }
   else

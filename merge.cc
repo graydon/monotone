@@ -121,7 +121,7 @@ resolve_merge_conflicts(roster_t const & left_roster,
     }
 
   E(result.is_clean(),
-    F("merge failed due to unresolved conflicts\n"));
+    F("merge failed due to unresolved conflicts"));
 }
 
 void
@@ -196,15 +196,6 @@ store_roster_merge_result(roster_t const & left_roster,
     transaction_guard guard(app.db);
 
     app.db.put_revision(merged_rid, merged_rev);
-    packet_db_writer dbw(app);
-    if (app.date_set)
-      cert_revision_date_time(merged_rid, app.date, app, dbw);
-    else
-      cert_revision_date_now(merged_rid, app, dbw);
-    if (app.author().length() > 0)
-      cert_revision_author(merged_rid, app.author(), app, dbw);
-    else
-      cert_revision_author_default(merged_rid, app, dbw);
 
     guard.commit();
   }

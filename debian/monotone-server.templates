@@ -1,0 +1,20 @@
+Template: monotone-server/manage-db
+Type: boolean
+Default: true
+_Description: Automatically manage monotone database?
+ Select this option to automatically manage the monotone database. If
+ selected, the database will automatically be created. Also when upgrading,
+ the database will be automatically migrated if necessary.
+
+Template: monotone-server/key
+Type: string
+_Description: Monotone key id:
+ Enter the id of the key your monotone server will use. The key id
+ is typically an email address.
+
+Template: monotone-server/passphrase
+Type: password
+_Description: Monotone key passphrase:
+ Please choose a passphrase for your monotone key. If left blank, one will
+ be generated for you.
+

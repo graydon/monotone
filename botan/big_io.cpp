@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Input/Output Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/bigint.h>
@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& stream, const BigInt& n)
       SecureVector<byte> buffer = BigInt::encode(n, base);
       u32bit skip = 0;
       while(buffer[skip] == '0' && skip < buffer.size())
-         skip++;
+         ++skip;
       stream.write((const char*)buffer.begin() + skip, buffer.size() - skip);
       }
    if(!stream.good())

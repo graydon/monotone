@@ -11,7 +11,6 @@
 #include <string>
 #include <sstream>
 
-#include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
@@ -27,6 +26,8 @@ using std::exception;
 using std::ostream;
 using std::ostringstream;
 using std::string;
+using std::vector;
+
 
 // some structure to ensure we aren't doing anything broken when resolving
 // filenames.  the idea is to make sure
@@ -155,9 +156,9 @@ has_bad_chars(string const & path)
   return false;
 }
 
-// fully_normalized_path performs very similar function to file_path.split().
-// if want_split is set, split_path will be filled with the '/' separated
-// components of the path.
+// fully_normalized_path_split performs very similar function to
+// file_path.split().  if want_split is set, split_path will be filled with
+// the '/' separated components of the path.
 static inline bool
 fully_normalized_path_split(string const & path, bool want_split,
                             split_path & sp)
@@ -184,14 +185,14 @@ fully_normalized_path_split(string const & path, bool want_split,
           if (bad_component(s))
             return false;
           if (want_split)
-            sp.push_back(s);
+            sp.push_back(path_component(s));
           break;
         }
       string const & s(path.substr(start, stop - start));
       if (bad_component(s))
         return false;
       if (want_split)
-        sp.push_back(s);
+        sp.push_back(path_component(s));
       start = stop + 1;
     }
   return true;
@@ -241,7 +242,7 @@ is_valid_internal(string const & path)
 void
 internal_string_to_split_path(string const & path, split_path & sp)
 {
-  I(utf8_validate(path));
+  I(utf8_validate(utf8(path)));
   I(!in_bookkeeping_dir(path));
   sp.clear();
   sp.reserve(8);
@@ -249,28 +250,22 @@ internal_string_to_split_path(string const & path, split_path & sp)
   I(fully_normalized_path_split(path, true, sp));
 }
 
-file_path::file_path(file_path::source_type type, string const & path)
+static void
+normalize_external_path(string const & path, string & normalized)
 {
-  MM(path);
-  I(utf8_validate(path));
-  switch (type)
+  if (!initial_rel_path.initialized)
     {
-    case internal:
-      data = path;
-      break;
-    case external:
-      if (!initial_rel_path.initialized)
-        {
-          // we are not in a workspace; treat this as an internal
-          // path, and set the access_tracker() into a very uninitialised
-          // state so that we will hit an exception if we do eventually
-          // enter a workspace
-          initial_rel_path.may_not_initialize();
-          data = path;
-          N(is_valid_internal(path) && !in_bookkeeping_dir(path),
-            F("path '%s' is invalid") % path);
-          break;
-        }
+      // we are not in a workspace; treat this as an internal
+      // path, and set the access_tracker() into a very uninitialised
+      // state so that we will hit an exception if we do eventually
+      // enter a workspace
+      initial_rel_path.may_not_initialize();
+      normalized = path;
+      N(is_valid_internal(path),
+        F("path '%s' is invalid") % path);
+    }
+  else
+    {
       N(!path.empty(), F("empty path '%s' is invalid") % path);
       fs::path out, base, relative;
       try
@@ -284,12 +279,28 @@ file_path::file_path(file_path::source_type type, string const & path)
         {
           N(false, F("path '%s' is invalid") % path);
         }
-      data = utf8(out.string());
-      if (data() == ".")
-        data = string("");
+      normalized = out.string();
+      if (normalized == ".")
+        normalized = string("");
       N(!relative.has_root_path(),
         F("absolute path '%s' is invalid") % relative.string());
-      N(fully_normalized_path(data()), F("path '%s' is invalid") % data);
+      N(fully_normalized_path(normalized), F("path '%s' is invalid") % normalized);
+    }
+}
+
+file_path::file_path(file_path::source_type type, string const & path)
+{
+  string normalized;
+  MM(path);
+  I(utf8_validate(utf8(path)));
+  switch (type)
+    {
+    case internal:
+      data = utf8(path);
+      break;
+    case external:
+      normalize_external_path(path, normalized);
+      data = utf8(normalized);
       N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
       break;
     }
@@ -301,13 +312,15 @@ bookkeeping_path::bookkeeping_path(string const & path)
 {
   I(fully_normalized_path(path));
   I(in_bookkeeping_dir(path));
-  data = path;
+  data = utf8(path);
 }
 
 bool
 bookkeeping_path::is_bookkeeping_path(string const & path)
 {
-  return in_bookkeeping_dir(path);
+  string normalized;
+  normalize_external_path(path, normalized);
+  return in_bookkeeping_dir(normalized);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -344,7 +357,7 @@ file_path::file_path(split_path const & sp)
         start = false;
     }
   I(!in_bookkeeping_dir(tmp));
-  data = tmp;
+  data = utf8(tmp);
 }
 
 //
@@ -374,11 +387,23 @@ file_path::split(split_path & sp) const
       stop = s.find('/', start);
       if (stop == string::npos)
         {
-          sp.push_back(s.substr(start));
+          sp.push_back(path_component(s.substr(start)));
           break;
         }
-      sp.push_back(s.substr(start, stop - start));
+      sp.push_back(path_component(s.substr(start, stop - start)));
       start = stop + 1;
+    }
+}
+
+void
+split_paths(std::vector<file_path> const & file_paths, path_set & split_paths)
+{
+  for (vector<file_path>::const_iterator i = file_paths.begin();
+       i != file_paths.end(); ++i)
+    {
+      split_path sp;
+      i->split(sp);
+      split_paths.insert(sp);
     }
 }
 
@@ -521,7 +546,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
   if (is_absolute_here(other.as_internal()))
     // another system_path.  the normalizing isn't really necessary, but it
     // makes me feel warm and fuzzy.
-    data = normalize_out_dots(other.as_internal());
+    data = utf8(normalize_out_dots(other.as_internal()));
   else
     {
       system_path wr;
@@ -529,7 +554,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
         wr = working_root.get();
       else
         wr = working_root.get_but_unused();
-      data = normalize_out_dots((wr / other.as_internal()).as_internal());
+      data = utf8(normalize_out_dots((wr / other.as_internal()).as_internal()));
     }
 }
 
@@ -545,12 +570,12 @@ static inline string const_system_path(utf8 const & path)
 
 system_path::system_path(string const & path)
 {
-  data = const_system_path(path);
+  data = utf8(const_system_path(utf8(path)));
 }
 
 system_path::system_path(utf8 const & path)
 {
-  data = const_system_path(path);
+  data = utf8(const_system_path(utf8(path)));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -716,6 +741,8 @@ UNIT_TEST(paths, file_path_internal)
                             "_MTN",
                             "_MTN/blah",
                             "foo/bar/",
+                            "foo/bar/.",
+                            "foo/bar/./",
                             "foo/./bar",
                             "./foo",
                             ".",
@@ -799,7 +826,7 @@ UNIT_TEST(paths, file_path_internal)
 static void check_fp_normalizes_to(char * before, char * after)
 {
   L(FL("check_fp_normalizes_to: '%s' -> '%s'") % before % after);
-  file_path fp = file_path_external(string(before));
+  file_path fp = file_path_external(utf8(before));
   L(FL("  (got: %s)") % fp);
   BOOST_CHECK(fp.as_internal() == after);
   BOOST_CHECK(file_path_internal(fp.as_internal()) == fp);
@@ -877,6 +904,8 @@ UNIT_TEST(paths, file_path_external_null_prefix)
   //check_fp_normalizes_to("foo//bar", "foo/bar");
   check_fp_normalizes_to("foo/../bar", "bar");
   check_fp_normalizes_to("foo/bar/", "foo/bar");
+  check_fp_normalizes_to("foo/bar/.", "foo/bar");
+  check_fp_normalizes_to("foo/bar/./", "foo/bar");
   check_fp_normalizes_to("foo/./bar/", "foo/bar");
   check_fp_normalizes_to("./foo", "foo");
   //check_fp_normalizes_to("foo///.//", "foo");
@@ -957,6 +986,8 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
   //check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/../bar", "a/b/bar");
   check_fp_normalizes_to("foo/bar/", "a/b/foo/bar");
+  check_fp_normalizes_to("foo/bar/.", "a/b/foo/bar");
+  check_fp_normalizes_to("foo/bar/./", "a/b/foo/bar");
   check_fp_normalizes_to("foo/./bar/", "a/b/foo/bar");
   check_fp_normalizes_to("./foo", "a/b/foo");
   //check_fp_normalizes_to("foo///.//", "a/b/foo");
@@ -1077,6 +1108,8 @@ UNIT_TEST(paths, bookkeeping)
                             "foo/../bar",
                             "../bar",
                             "foo/bar/",
+                            "foo/bar/.",
+                            "foo/bar/./",
                             "foo/./bar",
                             "./foo",
                             ".",
@@ -1184,7 +1217,7 @@ UNIT_TEST(paths, system)
   BOOST_CHECK(system_path(file_path_internal("foo/bar")).as_internal()
               == "/working/root/foo/bar");
   BOOST_CHECK(working_root.used);
-  BOOST_CHECK(system_path(file_path_external(string("foo/bar"))).as_external()
+  BOOST_CHECK(system_path(file_path_external(utf8("foo/bar"))).as_external()
               == "/working/root/rel/initial/foo/bar");
   file_path a_file_path;
   BOOST_CHECK(system_path(a_file_path).as_external()

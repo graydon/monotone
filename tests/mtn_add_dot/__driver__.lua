@@ -13,7 +13,10 @@ check(mtn("setup", "--branch=testbranch", "subdir"), 0, false, false)
 
 -- Make sure that "add ." works, even at the root of the tree
 chdir("subdir")
+-- Recursive and non-recursive may process things differently, check
+-- that both return success
 check(mtn("add", "."), 0, false, false)
+check(mtn("add", "-R", "."), 0, false, false)
 
 -- Make sure that it took
 check(mtn("commit", "--message=foo"), 0, false, false)

@@ -3,14 +3,14 @@ Section: devel
 Priority: optional
 Maintainer: Shaun Jackman <sjackman@debian.org>
 Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.0.0), autotools-dev,
- libboost-date-time-dev, libboost-filesystem-dev,
- libboost-program-options-dev, libboost-regex-dev,
- libboost-test-dev, libboost-dev, texinfo, libz-dev
-Standards-Version: 3.7.2.1
+ libboost-date-time-dev, libboost-filesystem-dev, libboost-regex-dev,
+ libboost-test-dev, libboost-dev, libz-dev,
+Build-Depends-Indep: ps2eps, tetex-bin | texlive-base-bin, texinfo, xpdf-utils
+Standards-Version: 3.7.2.2
 
 Package: monotone
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}
 Description: A distributed version (revision) control system
  Monotone is a free, distributed version control system. It provides
  fully disconnected operation, manages complete tree versions, keeps
@@ -18,3 +18,23 @@ Description: A distributed version (revision) control system
  branches and extensible metadata, uses an efficient peer-to-peer
  network protocol, performs history-sensitive merging, and delegates
  trust functions to client-side RSA certificates.
+
+Package: monotone-server
+Architecture: all
+Depends: monotone (>= ${source:Version}), adduser, ucf (>= 0.28), ${misc:Depends}
+Description: A distributed version (revision) control system
+ Monotone is a free, distributed version control system. It provides
+ fully disconnected operation, manages complete tree versions, keeps
+ its state in a local transactional database, supports overlapping
+ branches and extensible metadata, uses an efficient peer-to-peer
+ network protocol, performs history-sensitive merging, and delegates
+ trust functions to client-side RSA certificates.
+ .
+ This package contains scripts to facilitate running a monotone server.
+
+Package: monotone-doc
+Section: doc
+Architecture: all
+Description: A distributed version (revision) control system
+ This package contains the documentation for monotone in HTML and PDF
+ formats. See the description of the package monotone for more details.

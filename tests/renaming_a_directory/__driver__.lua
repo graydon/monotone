@@ -7,7 +7,7 @@ writefile("foo/foo", "foo file")
 writefile("bleh", "bleh file")
 
 -- produce root
-check(mtn("add", "foo"), 0, false, false)
+check(mtn("add", "-R", "foo"), 0, false, false)
 commit()
 root_r_sha = base_revision()
 root_f_sha = sha1("foo/foo")

@@ -85,7 +85,7 @@ namespace constants
   "0123456789abcdef"
   ;
 
-  string const regex_legal_id_bytes("([[:xdigit:]]{40})");
+  string const regex_legal_id_bytes("([0-9a-f]{40})");
 
   // all the ASCII characters (bytes) which are legal in an ACE string
   char const * const legal_ace_bytes =
@@ -154,7 +154,7 @@ namespace constants
   size_t const netsync_session_key_length_in_bytes = 20;     // 160 bits
   size_t const netsync_hmac_value_length_in_bytes = 20;      // 160 bits
 
-  string const & netsync_key_initializer = string(netsync_session_key_length_in_bytes, 0);
+  netsync_session_key const netsync_key_initializer(string(netsync_session_key_length_in_bytes, 0));
 
   // attributes
   string const encoding_attribute("mtn:encoding");

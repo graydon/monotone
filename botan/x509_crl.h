@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 CRL Header File                          *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_CRL_H__
@@ -33,17 +33,12 @@ class X509_CRL : public X509_Object
       X509_Time this_update() const;
       X509_Time next_update() const;
 
-      void force_decode();
-
       X509_CRL(DataSource&);
       X509_CRL(const std::string&);
    private:
-      void handle_crl_extension(const Extension&);
+      void force_decode();
       std::vector<CRL_Entry> revoked;
-      MemoryVector<byte> issuer_key_id;
-      X509_Time start, end;
-      X509_DN issuer;
-      u32bit version, crl_count;
+      Data_Store info;
    };
 
 }

@@ -614,11 +614,11 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
                            F("file '%s' does not exist in workspace") % path,
                            F("'%s' in workspace is a directory, not a file") % path);
       read_localized_data(path, tmp, app.lua);
-      calculate_ident(tmp, fid);
+      calculate_ident(file_data(tmp), fid);
       E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
         % path % fid % ident);
-      dat = tmp;
+      dat = file_data(tmp);
     }
 }
 
@@ -646,7 +646,7 @@ content_merger::get_file_encoding(file_path const & path,
   attr_value v;
   split_path sp;
   path.split(sp);
-  if (ros.get_attr(sp, constants::encoding_attribute, v))
+  if (ros.get_attr(sp, attr_key(constants::encoding_attribute), v))
     return v();
   return constants::default_encoding;
 }
@@ -658,7 +658,7 @@ content_merger::attribute_manual_merge(file_path const & path,
   attr_value v;
   split_path sp;
   path.split(sp);
-  if (ros.get_attr(sp, constants::manual_merge_attribute, v)
+  if (ros.get_attr(sp, attr_key(constants::manual_merge_attribute), v)
       && v() == "true")
     return true;
   return false; // default: enable auto merge
@@ -745,7 +745,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       "[ancestor] %s\n"
       "[    left] %s\n"
       "[   right] %s\n"
-      "[  merged] %s\n")
+      "[  merged] %s")
     % anc_path
     % left_path
     % right_path
@@ -812,7 +812,7 @@ struct hunk_consumer
 /* Find, and write to ENCLOSER, the nearest line before POS which matches
    ENCLOSER_PATTERN.  We remember the last line scanned, and the matched, to
    avoid duplication of effort.  */
-   
+
 void
 hunk_consumer::find_encloser(size_t pos, string & encloser)
 {
@@ -973,7 +973,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
               first_mod = i - hunk.begin();
               break;
             }
-        
+
         find_encloser(a_begin + first_mod, encloser);
         ost << " @@" << encloser << endl;
       }
@@ -1110,7 +1110,7 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
 
         find_encloser(a_begin + min(first_insert, first_delete),
                       encloser);
-        
+
         ost << "***************" << encloser << endl;
       }
 
@@ -1282,7 +1282,7 @@ make_diff(string const & filename1,
   //   If there is a tab, considers everything up to that tab to be the
   //   filename.  If there is not a tab, considers everything up to the
   //   first whitespace to be the filename.
-  //   
+  //
   //   Contains comment: 'If the [file]name is "/dev/null", ignore the name
   //   and mark the file as being nonexistent.  The name "/dev/null" appears
   //   in patches regardless of how NULL_DEVICE is spelled.'  Also detects
@@ -1382,11 +1382,12 @@ static void dump_incorrect_merge(vector<string> const & expected,
 // high tech randomizing test
 UNIT_TEST(diff_patch, randomizing_merge)
 {
+  randomizer rng;
   for (int i = 0; i < 30; ++i)
     {
       vector<string> anc, d1, d2, m1, m2, gm;
 
-      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i));
+      file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i), rng);
 
       BOOST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)

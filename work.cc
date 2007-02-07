@@ -120,6 +120,8 @@ workspace::get_revision_id(revision_id & c)
   // ancestor.
   I(rev.edges.size() == 1);
   c = edge_old_revision(rev.edges.begin());
+  N(null_id(c) || db.revision_exists(c),
+    F("workspace base revision %s does not exist in database") % c);
 }
 
 // structures derived from the work revision, the database, and possibly
@@ -143,10 +145,8 @@ get_roster_for_rid(revision_id const & rid,
       N(db.revision_exists(rid),
         F("base revision %s does not exist in database") % rid);
       db.get_roster(rid, cr);
-
-      L(FL("base roster has %d entries")
-        % cr.first->all_nodes().size());
     }
+  L(FL("base roster has %d entries") % cr.first->all_nodes().size());
 }
 
 void
@@ -313,13 +313,13 @@ workspace::get_ws_options(utf8 & database_option,
               parser.str(val);
 
               if (opt == "database")
-                database_option = val;
+                database_option = utf8(val);
               else if (opt == "branch")
-                branch_option = val;
+                branch_option = utf8(val);
               else if (opt == "key")
-                key_option = val;
+                key_option = utf8(val);
               else if (opt == "keydir")
-                keydir_option =val;
+                keydir_option = utf8(val);
               else
                 W(F("unrecognized key '%s' in options file %s - ignored")
                   % opt % o_path);
@@ -357,13 +357,13 @@ workspace::set_ws_options(utf8 & database_option,
 
   basic_io::stanza st;
   if (!database_option().empty())
-    st.push_str_pair(string("database"), database_option());
+    st.push_str_pair(symbol("database"), database_option());
   if (!branch_option().empty())
-    st.push_str_pair(string("branch"), branch_option());
+    st.push_str_pair(symbol("branch"), branch_option());
   if (!key_option().empty())
-    st.push_str_pair(string("key"), key_option());
+    st.push_str_pair(symbol("key"), key_option());
   if (!keydir_option().empty())
-    st.push_str_pair(string("keydir"), keydir_option());
+    st.push_str_pair(symbol("keydir"), keydir_option());
 
   basic_io::printer pr;
   pr.print_stanza(st);
@@ -372,7 +372,7 @@ workspace::set_ws_options(utf8 & database_option,
   get_options_path(o_path);
   try
     {
-      write_data(o_path, pr.buf);
+      write_data(o_path, data(pr.buf));
     }
   catch(exception & e)
     {
@@ -486,14 +486,18 @@ struct file_itemizer : public tree_walker
                 path_set & k, path_set & u, path_set & i, 
                 path_restriction const & r)
     : db(db), lua(lua), known(k), unknown(u), ignored(i), mask(r) {}
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
 
-void
+bool
 file_itemizer::visit_dir(file_path const & path)
 {
   this->visit_file(path);
+
+  split_path sp;
+  path.split(sp);
+  return known.find(sp) != known.end();
 }
 
 void
@@ -519,12 +523,14 @@ addition_builder
   lua_hooks & lua;
   roster_t & ros;
   editable_roster_base & er;
+  bool respect_ignore;
 public:
   addition_builder(database & db, lua_hooks & lua,
-                   roster_t & r, editable_roster_base & e)
-    : db(db), lua(lua), ros(r), er(e)
+                   roster_t & r, editable_roster_base & e,
+                   bool i = true)
+    : db(db), lua(lua), ros(r), er(e), respect_ignore(i)
   {}
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
   void add_node_for(split_path const & sp);
 };
@@ -565,16 +571,17 @@ addition_builder::add_node_for(split_path const & sp)
 }
 
 
-void
+bool
 addition_builder::visit_dir(file_path const & path)
 {
   this->visit_file(path);
+  return true;
 }
 
 void
 addition_builder::visit_file(file_path const & path)
 {
-  if (lua.hook_ignore_file(path) || db.is_dbfile(path))
+  if ((respect_ignore && lua.hook_ignore_file(path)) || db.is_dbfile(path))
     {
       P(F("skipping ignorable file %s") % path);
       return;
@@ -776,8 +783,13 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   // middle of an update to avoid clobbering a file, we just end up leaving
   // the working copy in an inconsistent state instead.  so for now, we leave
   // this check down here.
-  require_path_is_nonexistent(dst_pth,
-                              F("path '%s' already exists, cannot create") % dst_pth);
+  // where are "here" and "there" ?!?
+
+  if (!workspace_root(dst))
+    {
+      require_path_is_nonexistent(dst_pth,
+                                  F("path '%s' already exists, cannot create") % dst_pth);
+    }
 
   // If we get here, we're doing a file/dir rename, or a dir-create.
   map<bookkeeping_path, file_path>::const_iterator i
@@ -789,6 +801,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
     }
   else
     P(F("adding %s") % dst_pth);
+
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself
@@ -933,26 +946,38 @@ workspace::classify_roster_paths(roster_t const & ros,
 
       file_path fp(sp);
 
-      if (is_dir_t(node) || inodeprint_unchanged(ipm, fp))
+      // if this node is a file, check the inodeprint cache for changes
+      if (!is_dir_t(node) && inodeprint_unchanged(ipm, fp))
         {
-          // dirs don't have content changes
           unchanged.insert(sp);
+          continue;
+        }
+      
+      // if the node is a directory, check if it exists
+      // directories do not have content changes, thus are inserted in the
+      // unchanged set
+      if (is_dir_t(node))
+        {
+          if (directory_exists(fp))
+              unchanged.insert(sp);
+          else
+              missing.insert(sp);
+          continue;
+        }
+      
+      // the node is a file, check if it exists and has been changed
+      file_t file = downcast_to_file_t(node);
+      file_id fid;
+      if (ident_existing_file(fp, fid, lua))
+        {
+          if (file->content == fid)
+            unchanged.insert(sp);
+          else
+            changed.insert(sp);
         }
       else
         {
-          file_t file = downcast_to_file_t(node);
-          file_id fid;
-          if (ident_existing_file(fp, fid, lua))
-            {
-              if (file->content == fid)
-                unchanged.insert(sp);
-              else
-                changed.insert(sp);
-            }
-          else
-            {
-              missing.insert(sp);
-            }
+          missing.insert(sp);
         }
     }
 }
@@ -977,7 +1002,7 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       read_inodeprint_map(dat, ipm);
     }
 
-  size_t missing_files = 0;
+  size_t missing_items = 0;
 
   // this code is speed critical, hence the use of inode fingerprints so be
   // careful when making changes in here and preferably do some timing tests
@@ -991,11 +1016,7 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       node_id nid = i->first;
       node_t node = i->second;
 
-      // Only analyze files further, not dirs.
-      if (! is_file_t(node))
-        continue;
-
-      // Only analyze restriction-included files.
+      // Only analyze restriction-included files and dirs
       if (!mask.includes(ros, nid))
         continue;
 
@@ -1003,28 +1024,52 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       ros.get_name(nid, sp);
       file_path fp(sp);
 
-      // Only analyze changed files (or all files if inodeprints mode
-      // is disabled).
-      if (inodeprint_unchanged(ipm, fp))
-        continue;
-
-      file_t file = downcast_to_file_t(node);
-      if (!ident_existing_file(fp, file->content, lua))
+      if (is_dir_t(node))
         {
-          W(F("missing %s") % (fp));
-          missing_files++;
+          if (!path_exists(fp))
+            {
+              W(F("missing directory '%s'") % (fp));
+              missing_items++;
+            }
+          else if (!directory_exists(fp))
+            {
+              W(F("not a directory '%s'") % (fp));
+              missing_items++;
+            }
         }
+      else
+        {
+          // Only analyze changed files (or all files if inodeprints mode
+          // is disabled).
+          if (inodeprint_unchanged(ipm, fp))
+            continue;
+
+          if (!path_exists(fp))
+            {
+              W(F("missing file '%s'") % (fp));
+              missing_items++;
+            }
+          else if (!file_exists(fp))
+            {
+              W(F("not a file '%s'") % (fp));
+              missing_items++;
+            }
+
+          file_t file = downcast_to_file_t(node);
+          ident_existing_file(fp, file->content, lua);
+        }
+
     }
 
-  N(missing_files == 0,
-    F("%d missing files; use '%s ls missing' to view\n"
-      "To restore consistency, on each missing file run either\n"
-      " '%s drop FILE' to remove it permanently, or\n"
-      " '%s revert FILE' to restore it.\n"
+  N(missing_items == 0,
+    F("%d missing items; use '%s ls missing' to view\n"
+      "To restore consistency, on each missing item run either\n"
+      " '%s drop ITEM' to remove it permanently, or\n"
+      " '%s revert ITEM' to restore it.\n"
       "To handle all at once, simply use\n"
       " '%s drop --missing' or\n"
       " '%s revert --missing'")
-    % missing_files % ui.prog_name % ui.prog_name % ui.prog_name
+    % missing_items % ui.prog_name % ui.prog_name % ui.prog_name
     % ui.prog_name % ui.prog_name);
 }
 
@@ -1072,7 +1117,8 @@ workspace::find_unknown_and_ignored(path_restriction const & mask,
 }
 
 void
-workspace::perform_additions(path_set const & paths, bool recursive)
+workspace::perform_additions(path_set const & paths,
+                             bool recursive, bool respect_ignore)
 {
   if (paths.empty())
     return;
@@ -1093,7 +1139,7 @@ workspace::perform_additions(path_set const & paths, bool recursive)
     }
 
   I(new_roster.has_root());
-  addition_builder build(db, lua, new_roster, er);
+  addition_builder build(db, lua, new_roster, er, respect_ignore);
 
   for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
@@ -1106,7 +1152,19 @@ workspace::perform_additions(path_set const & paths, bool recursive)
         {
           // in the case where we're just handled a set of paths, we use the builder
           // in this strange way.
-          build.visit_file(file_path(*i));
+          file_path path(*i);
+          switch (get_path_status(path))
+            {
+            case path::nonexistent:
+              N(false, F("no such file or directory: '%s'") % path);
+              break;
+            case path::file:
+              build.visit_file(path);
+              break;
+            case path::directory:
+              build.visit_dir(path);
+              break;
+            }
         }
     }
 
@@ -1224,7 +1282,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
     {
       // "rename SRC1 SRC2 DST" case
       N(new_roster.has_node(dst),
-        F("destination dir %s/ does not exist in current revision") % dst_path);
+        F("destination dir %s/ is not versioned (perhaps add it?)") % dst_path);
 
       N(is_dir_t(new_roster.get_node(dst)),
         F("destination %s is an existing file in current revision") % dst_path);

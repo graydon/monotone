@@ -5,3 +5,13 @@ include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 #include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
+
+install/monotone::
+	cp contrib/monotone.bash_completion debian/monotone/etc/bash_completion.d/monotone
+
+install/monotone-doc::
+	make monotone.pdf
+
+binary-install/monotone-server::
+	dh_installinit --name=monotone
+

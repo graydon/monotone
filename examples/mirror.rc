@@ -1,0 +1,4 @@
+mirror		PROJECTDOMAIN	PROJECTBRANCH*
+
+postaction	/etc/monotone/monotone-mirror-postaction-update.sh /etc/monotone/update.rc
+postaction	/etc/monotone/monotone-notify.pl --db=$DATABASE '--branch=PROJECTBRANCH*' --from=PROJECT@`hostname` --difflogs-to=PROJECT-commits-diffs@PROJECTDOMAIN --nodifflogs-to=PROJECT-commits-nodiffs@PROJECTDOMAIN

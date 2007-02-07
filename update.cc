@@ -55,8 +55,7 @@ get_test_results_for_revision(revision_id const & id,
                               app_state & app)
 {
   vector< revision<cert> > certs;
-  app.db.get_revision_certs(id, testresult_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  app.get_project().get_revision_certs_by_name(id, cert_name(testresult_cert_name), certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -84,12 +83,7 @@ acceptable_descendent(cert_value const & branch,
   L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
-  base64<cert_value> val;
-  encode_base64(branch, val);
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(target, branch_cert_name, val, certs);
-  erase_bogus_certs(certs, app);
-  if (certs.empty())
+  if (!app.get_project().revision_is_in_branch(target, utf8(branch())))
     {
       L(FL("%s not in branch %s") % target % branch);
       return false;
@@ -162,11 +156,11 @@ void pick_update_candidates(revision_id const & base_ident,
                             app_state & app,
                             set<revision_id> & candidates)
 {
-  N(app.branch_name() != "",
+  N(app.opts.branch_name() != "",
     F("cannot determine branch for update"));
   I(!null_id(base_ident));
 
-  calculate_update_set(base_ident, cert_value(app.branch_name()),
+  calculate_update_set(base_ident, cert_value(app.opts.branch_name()),
                        app, candidates);
 }
 

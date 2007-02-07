@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef HAVE_FCNTL
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
@@ -351,7 +351,7 @@ struct parser
   void eat(token_type want)
   {
     if (ttype != want)
-      throw oops((F("parse failure %d:%d: expecting %s, got %s with value '%s'\n")
+      throw oops((F("parse failure %d:%d: expecting %s, got %s with value '%s'")
 		  % line % col % tt2str(want) % tt2str(ttype) % token).str());
     advance();
   }
@@ -370,7 +370,7 @@ struct parser
   {
     string tmp;
     if (!symp(expected))
-      throw oops((F("parse failure %d:%d: expecting word '%s'\n")
+      throw oops((F("parse failure %d:%d: expecting word '%s'")
 		  % line % col % expected).str());
     advance();
   }
@@ -385,7 +385,7 @@ struct parser
   void word()
   {
     if (!wordp())
-      throw oops((F("parse failure %d:%d: expecting word\n")
+      throw oops((F("parse failure %d:%d: expecting word")
 		  % line % col).str());
     advance();
   }

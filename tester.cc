@@ -18,6 +18,8 @@
 #include <boost/filesystem/exception.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <boost/version.hpp>
+
 #include <map>
 #include <utility>
 
@@ -127,7 +129,13 @@ void do_make_tree_accessible(fs::path const &f)
 void do_copy_recursive(fs::path const &from, fs::path to)
 {
   if (!fs::exists(from))
-    throw fs::filesystem_error("Source for copy does not exist", from, 0);
+    {
+#if BOOST_VERSION < 103400
+      throw fs::filesystem_error("Source for copy does not exist", from, 0);
+#else
+      throw fs::filesystem_path_error("Source for copy does not exist", from, 0);
+#endif
+    }
   if (fs::exists(to))
     {
       if (fs::is_directory(to))

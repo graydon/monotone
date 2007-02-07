@@ -64,10 +64,12 @@ rcs_file.cc
 rcs_file.hh
 rcs_import.cc
 rcs_import.hh
+restrictions.cc
 revision.cc
 revision.hh
 sanity.cc
 sanity.hh
+selectors.cc
 schema_migration.cc
 schema_migration.hh
 std_hooks.lua
@@ -76,6 +78,8 @@ transforms.hh
 txt2c.cc
 ui.cc
 ui.hh
+uri.hh
+uri.cc
 unit_tests.cc
 unit_tests.hh
 update.cc

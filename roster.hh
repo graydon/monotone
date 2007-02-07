@@ -277,7 +277,7 @@ private:
   //
   // FIXME: This _is_ all a little nasty, because this can be a source of
   // abstraction leak -- for instance, roster_merge's contract is that nodes
-  // involved in name-related will be detached in the roster it returns.
+  // involved in name-related conflicts will be detached in the roster it returns.
   // Those nodes really should be allowed to be attached anywhere, or dropped,
   // which is not actually expressible right now.  Worse, whether or not they
   // are in old_locations map is an implementation detail of roster_merge --

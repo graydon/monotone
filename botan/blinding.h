@@ -1,6 +1,6 @@
 /*************************************************
 * Blinder Header File                            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BLINDER_H__
@@ -20,16 +20,11 @@ class Blinder
       BigInt blind(const BigInt&) const;
       BigInt unblind(const BigInt&) const;
 
-      void initialize(const BigInt&, const BigInt&, const BigInt&);
-      Blinder& operator=(const Blinder&);
-
-      Blinder();
-      Blinder(const Blinder&);
-      ~Blinder();
+      Blinder() {}
+      Blinder(const BigInt&, const BigInt&, const BigInt&);
    private:
+      Modular_Reducer reducer;
       mutable BigInt e, d;
-      BigInt n;
-      ModularReducer* reducer;
    };
 
 }

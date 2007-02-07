@@ -19,6 +19,7 @@
 #include "botan/botan.h"
 #include "botan/rsa.h"
 #include "botan/keypair.h"
+#include "botan/pem.h"
 
 #include "constants.hh"
 #include "keys.hh"
@@ -288,8 +289,8 @@ migrate_private_key(app_state & app,
       try
         {
           Pipe p;
-          p.process_msg(decrypted_key);
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, "", false));
+          p.process_msg(Botan::PEM_Code::encode(decrypted_key, "PRIVATE KEY"));
+          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p));
         }
       catch (...)
         {
@@ -492,7 +493,7 @@ read_pubkey(string const & in,
   size_t pos = 0;
   extract_variable_length_string(in, tmp_id, pos, "pubkey id");
   extract_variable_length_string(in, tmp_key, pos, "pubkey value");
-  id = tmp_id;
+  id = rsa_keypair_id(tmp_id);
   encode_base64(rsa_pub_key(tmp_key), pub);
 }
 

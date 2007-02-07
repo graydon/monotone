@@ -14,6 +14,7 @@
 #include <map>
 #include <iostream>
 #include <botan/engine.h>
+#include <botan/libstate.h>
 
 #include "sha1.hh"
 #include "sha1_engine.hh"
@@ -89,10 +90,10 @@ sha1_registerer::sha1_registerer(int priority, string const & name, sha1_maker *
 
 void hook_botan_sha1()
 {
-  Botan::Engine_Core::add_engine(new Monotone_SHA1_Engine);
+  Botan::global_state().add_engine(new Monotone_SHA1_Engine);
 }
 
-CMD(benchmark_sha1, hidden_group(), "", "benchmark SHA-1 cores", option::none)
+CMD(benchmark_sha1, hidden_group(), "", "benchmark SHA-1 cores", options::opts::none)
 {
   P(F("Benchmarking %s SHA-1 cores") % registry().size());
   int mebibytes = 100;
@@ -110,3 +111,13 @@ CMD(benchmark_sha1, hidden_group(), "", "benchmark SHA-1 cores", option::none)
       P(F("%s: %s MiB/s") % i->second.first % mebibytes_per_sec);
     }
 }
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+
