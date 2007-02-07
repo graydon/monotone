@@ -513,14 +513,15 @@ walk_tree_recursive(fs::path const & absolute,
       file_path p;
       if (!try_file_pathize(rel_entry, p))
         continue;
-      walker.visit_dir(p);
-      walk_tree_recursive(entry, rel_entry, walker);
+      if (walker.visit_dir(p))
+        walk_tree_recursive(entry, rel_entry, walker);
     }
 }
 
-void
+bool
 tree_walker::visit_dir(file_path const & path)
 {
+  return true;
 }
 
 
@@ -544,10 +545,10 @@ walk_tree(file_path const & path,
       walker.visit_file(path);
       break;
     case path::directory:
-      walker.visit_dir(path);
-      walk_tree_recursive(system_path(path).as_external(),
-                          path.as_external(),
-                          walker);
+      if (walker.visit_dir(path))
+        walk_tree_recursive(system_path(path).as_external(),
+                            path.as_external(),
+                            walker);
       break;
     }
 }
