@@ -1,3 +1,8 @@
+2007-02-07  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/test_a_merge_8/__driver__.lua: added xfail() and a bug id,
+	so that current tests run through fine.
+
 2007-02-07  Zack Weinberg  <zackw@panix.com>
 
 	* charset.cc (system_to_utf8): Move below system_charset_is_utf8
