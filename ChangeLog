@@ -1,5 +1,9 @@
 2007-02-07  Derek Scherger  <derek@echologic.com>
 
+	* NEWS: add notes about changes to ls unknown's behaviour
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
 	* NEWS: add notes about changes to update's behaviour
 	* tests/(imp)_deleting_directories/__driver__.lua:
 	* tests/annotate_file_whose_name_changed/__driver__.lua:
