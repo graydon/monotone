@@ -27,6 +27,105 @@ using std::pair;
 using std::set;
 using std::vector;
 
+/*
+BUGS:
+
+1)
+
+| | | | | | |\ \ \ \
+| | | | | | o | | | |    145c71fb56cff358dd711773586ae6b5219b0cfc
+| | | | | | |\ \ \ \ \
+
+should be
+
+| | | | | | |\ \ \ \
+| | | | | | o \ \ \ \    145c71fb56cff358dd711773586ae6b5219b0cfc
+| | | | | | |\ \ \ \ \
+
+need some sort "inertia", if we moved sideways before and are moving
+sideways now...
+
+2)
+
+It actually is possible to remove a ghost on the same line as a long
+rightwards edge -- and it even looks better than not doing it, at least in
+some cases.  Consider:
+
+Current:
+
+| | | o | | | | |    0f07da5974be8bf91495a34093efc635dcf1f01c
+| | | |\ \ \ \ \ \
+| | | | .-o | | | |    20037e09def77cc217679bf2f72baf5fa0415649
+| | | |/|   | | | |
+| | | o---. | | | |    de74b6e2bd612ba40f1afc3eba3f9a3d8f419135
+| | | | |  \| | | |
+| | | o |   | | | |    3fd16665caab9d942e6c5254b477587ff7d3722d
+| | | | |  / / / /
+| | | o | | | | |    38f3561cc4bf294b99436f98cd97fc707b422bfa
+| | | | | | | | |
+| | | | .-o | | |    59017bc836986a59fd1ac6fba4f78fe1045c67e9
+| | | |/| | | | |
+| | | o | | | | |    97e8f96bb34774003de428292edbdd562ca6d867
+| | | | | | | | |
+
+Desired:
+
+| | | o | | | | |    0f07da5974be8bf91495a34093efc635dcf1f01c
+| | | |\ \ \ \ \ \
+| | | | .-o | | | |    20037e09def77cc217679bf2f72baf5fa0415649
+| | | |/|   | | | |
+| | | o-.   | | | |    de74b6e2bd612ba40f1afc3eba3f9a3d8f419135
+| | | | |\ / / / /
+| | | o | | | | |    3fd16665caab9d942e6c5254b477587ff7d3722d
+| | | | | | | | |
+| | | o | | | | |    38f3561cc4bf294b99436f98cd97fc707b422bfa
+| | | | | | | | |
+| | | | .-o | | |    59017bc836986a59fd1ac6fba4f78fe1045c67e9
+| | | |/| | | | |
+| | | o | | | | |    97e8f96bb34774003de428292edbdd562ca6d867
+| | | | | | | | |
+
+Possibly the no-shift-while-drawing-long-edges code could even be removed,
+deferring to the no-edge-crossings code.
+
+
+
+
+How this works:
+  This is completely iterative; we have no lookahead whatsoever.  We output
+    each line before even looking at the next.  (This means the layout is
+    much less clever than it could be, because there is no global
+    optimization; but it also means we can calculate these things in zero
+    time, incrementally while running log.)
+
+  Output comes in two-line chunks -- a "line", which contains exactly one
+  node, and then an "interline", which contains edges that will link us to
+  the next line.
+
+  A design goal of the system is that you can always trivially increase the
+  space between two "lines", by adding another "| | | |"-type interline
+  after the real interline.  This allows us to put arbitrarily long
+  annotations in the space to the right of the graph, for each revision --
+  we can just stretch the graph portion to give us more space.
+
+Loop:
+  We start knowing, for each logical column, what thing has to go there
+    (because this was determined last time)
+  We use this to first determine what thing has to go in each column next
+    time (though we will not draw them yet).
+  This is somewhat tricky, because we do want to squish things towards the
+  left when possible.  However, we have very limited drawing options -- we
+  can slide several things 1 space to the left or right and do no other long
+  sideways edges; or, we can draw 1 or 2 long sideways edges, but then
+  everything else must go straight.  So, we try a few different layouts.
+  The options are, remove a "ghost" if one exists, don't remove a ghost, and
+  insert a ghost.  (A "ghost" is a blank space left by a line that has
+  terminated or merged back into another line, but we haven't shifted things
+  over sideways yet to fill in the space.)
+
+  Having found a layout that works, we draw lines connecting things!  Yay.
+*/
+
 //namespace asciik { }
 
 /**
@@ -65,13 +164,14 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
   vector<revision_id> sorted;
   toposort(revs, sorted, app);
   vector<revision_id> curr_row;
+//*  for (vector<revision_id>::const_reverse_iterator rev = sorted.rbegin();
+//*       rev != sorted.rend(); ++rev)
   reverse(sorted.begin(), sorted.end()); //TODO: faster to use a reverse_iterator I guess, but that seems to give some problems
   for (vector<revision_id>::const_iterator rev = sorted.begin();
        rev != sorted.end(); ++rev)
-//*  for (vector<revision_id>::const_reverse_iterator rev = sorted.rbegin();
-//*       rev != sorted.rend(); ++rev)
     {
       // print row
+      std::cerr << "asciik: foreach sorted\n";
 
 //p    if curr_rev not in curr_row:
 //p        curr_row.append(curr_rev)
@@ -84,29 +184,23 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
 	find(curr_row.begin(), curr_row.end(), *rev));
       //assert(curr_loc < size()); as it is surely found
 
+      std::cerr << "asciik: parents\n";
+      set<revision_id> parents;
+      app.db.get_revision_parents(*rev, parents);
 //p    new_revs = []
 //p    for p in parents:
 //p        if p not in curr_row:
 //p            new_revs.append(p)
-      set<revision_id> parents;
-      app.db.get_revision_parents(*rev, parents);
-
+      std::cerr << "asciik: foreach parent\n";
       set<revision_id> new_revs;
       for (set<revision_id>::const_iterator parent = parents.begin();
-	   parent != parents.end(); )
+	   parent != parents.end(); ++parent)
 	if (find(curr_row.begin(), curr_row.end(), *parent) == curr_row.end())
 	  new_revs.insert(*parent);
-//#2      set<revision_id> new_revs;
-//#2      app.db.get_revision_parents(*rev, new_revs);
-//#2      for (set<revision_id>::const_iterator parent = new_revs.begin();
-//#2	   parent != new_revs.end(); )
-//#2	if (find(curr_row.begin(), curr_row.end(), *parent) != curr_row.end())
-//#2	  new_revs.erase(parent++);
-//#2	else
-//#2	  ++parent;
 
 //p    next_row = list(curr_row)
 //p    next_row[curr_loc:curr_loc + 1] = new_revs
+      std::cerr << "asciik: next row\n";
       vector<revision_id> next_row(curr_row);
       next_row.insert(
 	next_row.erase(next_row.begin() + curr_loc),
@@ -150,10 +244,10 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
 //p     return crosses
 void links_cross(const set<pair<size_t, size_t> > & links, set<size_t> & crosses)
 {
-  for (set<pair<size_t, size_t> >::const_iterator l = links.begin();
-       l != links.end(); ++l)
+  for (set<pair<size_t, size_t> >::const_iterator link = links.begin();
+       link != links.end(); ++link)
     {
-      size_t i = l->first, j = l->second;
+      size_t i = link->first, j = link->second;
       if (i != j)
 	for (size_t coord = 2 * min(i, j) + 1, end = 2 * max(i, j);
 	     coord < end; ++coord)
@@ -185,10 +279,18 @@ void draw(const size_t curr_items, const size_t next_items,
 
 //p    # then the links
 //p    dots = set()
+  set<size_t> dots;
 //p    for i, j in links:
+  for (set<pair<size_t, size_t> >::const_iterator link = links.begin();
+       link != links.end(); ++link)
+    {
+      size_t i = link->first, j = link->second, start, end, dot;
 //p        if i == j:
 //p            interline[2 * i] = "|"
+      if (i == j)
+	interline[2 * i] = '|';
 //p        else:
+      else if (j < i) {
 //p            if j < i:
 //p                # | .---o
 //p                # |/| | |
@@ -200,6 +302,11 @@ void draw(const size_t curr_items, const size_t next_items,
 //p                end = 2*i
 //p                dot = start - 1
 //p                interline[dot - 1] = "/"
+	start = 2 * j + 3;
+	end = 2 * i;
+	dot = start - 1;
+	interline[dot - 1] = '/';
+      } else {
 //p            else: # i < j
 //p                # o---.
 //p                # | | |\|
@@ -211,21 +318,37 @@ void draw(const size_t curr_items, const size_t next_items,
 //p                end = 2*j - 2
 //p                dot = end
 //p                interline[dot + 1] = "\\"
+	start = 2 * i + 1;
+	end = 2 * j - 2;
+	dot = end;
+	interline[dot + 1] = '\\';
+      }
 //p            if end - start >= 1:
 //p                dots.add(dot)
 //p            line[start:end] = "-" * (end - start)
-//p    # add any dots (must do this in a second pass, so that if there are 
+      if ((end - start) > 0)
+	dots.insert(dot);
+      for (size_t l = start; l < end; ++l)
+	line[l] = '-';
+    }
+//p    # add any dots (must do this in a second pass, so that if there are
 //p    # cases like:
 //p    #   | .-----.-o
 //p    #   |/| | |/|
 //p    # where we want to make sure the second dot overwrites the first --.
 //p    for dot in dots:
 //p        line[dot] = "."
+  for (set<size_t>::const_iterator dot = dots.begin();
+       dot != dots.end(); ++dot)
+    line[*dot] = '·';
 //p    # and add the main attraction (may overwrite a ".").
 //p    line[curr_loc * 2] = "o"
-//p
+  line[curr_loc * 2] = 'o';
+
 //p    print "".join(line) + "    " + annotation
 //p    print "".join(interline)
+  cout << line << "    " << annotation << '\n';
+  cout << interline << '\n';
 }
 
 bool try_draw(const vector<revision_id> & curr_row,
