@@ -1,8 +1,9 @@
-2007-02-07  Markus Schiltknecht  <markus@bluegap.ch>
+2007-02-07  Daniel Carosone  <dan@geek..com.au>
 
-	* tests/test_a_merge_8/__driver__.lua: okay, sorry, that didn't work,
-	second try in adding xfail() to that test.
-
+	* tests/db_kill_rev_and_recommit/__driver__.lua/: add a test
+	(xfail'ed, until fixed) for a bug (#18990) I just tripped over,
+	whereby db_kill_rev_locally doesn't seem to kill enough.
+	
 2007-02-07  Markus Schiltknecht  <markus@bluegap.ch>
 
 	* tests/test_a_merge_8/__driver__.lua: added xfail() and a bug id,
