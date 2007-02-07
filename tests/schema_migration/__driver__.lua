@@ -54,6 +54,7 @@ check(mtn("attr", "set", ".", "dir_key", "new_value"), 0, false, false)
 check(mtn("commit", "--branch=testbranch2", "--date=2000-01-01T12:00:00", "--message-file=blah_blah.txt"), 0, false, false)
 
 revert_to(rev)
+remove("testfile3")
 
 writefile("testfile2", "f2v2\n")
 addfile("testfile4", "f4v1\n")

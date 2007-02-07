@@ -21,6 +21,7 @@ check(mtn("add", "testfile"), 0, false, false)
 commit()
 
 revert_to(base)
+remove("testfile")
 
 addfile("otherfile", "this space for rent")
 commit()
