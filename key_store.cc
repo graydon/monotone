@@ -104,7 +104,7 @@ key_store::read_key_dir()
   */
 
   /*
-  scoped_ptr<agent> a(new agent());
+  scoped_ptr<ssh_agent> a(new ssh_agent());
   a->connect();
   a->get_keys();
   */
