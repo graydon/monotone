@@ -16,4 +16,4 @@ check(mtn("commit", "-m", "subdir removed"), 0, false, false)
 check(mtn("update", "-r", base0), 0, false, false)
 writefile("subdir/unversioned", "")
 
-xfail(mtn("update"), 0, false, false)
+check(mtn("update"), 1, false, false)
