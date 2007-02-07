@@ -63,7 +63,7 @@ check(qgrep('adding file3', "stderr"))
 check(qgrep('adding dir/file5', "stderr"))
 --check(not qgrep('adding dir/file6.ignore', "stderr"))
 check(qgrep('adding dir2', "stderr"))
-check(qgrep('adding dir2/file7', "stderr"))
+check(not qgrep('adding dir2/file7', "stderr"))
 check(not qgrep('skipping dir2/file7', "stderr"))
 check(not qgrep('adding test_hooks.lua', "stderr"))
 

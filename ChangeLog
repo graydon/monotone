@@ -32,6 +32,36 @@
 	simulated_working_tree to see if update will fail on something
 	obvious
 
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/os_strerror.c (os_strerror): Clean up string handling.
+
+2007-02-05  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/test_a_merge_8/*:
+	* testsuite.lua: Added a merge test case, distilled from a
+	failing merge in my PostgreSQL repository.
+
+2007-02-05  Lapo Luchini  <lapo@lapo.it>
+
+	* cmd_diff_log.cc: Added a few missing _() calls.
+	* po/it.po: Updated and translated.
+
+2007-02-05  Derek Scherger  <derek@echologic.com>
+
+	* file_io.{cc,hh} (walk_tree_recursive, tree_walker::visit_dir,
+	walk_tree): return a boolean from visit_dir and use this to
+	control walks into directories
+	* work.cc (file_itemizer::visit_dir, addition_builder::visit_dir,
+	walk_tree, walk_tree_recursive): update to use the boolean from
+	visit_dir and change so that ls unknown doesn't walk into unknown
+	directories
+	* tests/addition_of_files_and_directories/__driver__.lua:
+	* tests/ls_unknown_in_subdir/__driver__.lua:
+	* tests/ls_unknown_of_unknown_subdir/__driver__.lua:
+	* tests/things_in_.mtn-ignore_get_ignored/__driver__.lua:
+	update tests to exclude things in unknown dirs
+
 2007-02-04  Ralf S. Engelschall  <rse@engelschall.com>
 
 	(via Richard Levitte  <richard@levitte.org>)

@@ -444,14 +444,18 @@ struct file_itemizer : public tree_walker
                 path_set & k, path_set & u, path_set & i, 
                 path_restriction const & r)
     : db(db), lua(lua), known(k), unknown(u), ignored(i), mask(r) {}
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
 
-void
+bool
 file_itemizer::visit_dir(file_path const & path)
 {
   this->visit_file(path);
+
+  split_path sp;
+  path.split(sp);
+  return known.find(sp) != known.end();
 }
 
 void
@@ -516,7 +520,7 @@ public:
                    bool i = true)
     : db(db), lua(lua), ros(r), er(e), respect_ignore(i)
   {}
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
   void add_node_for(split_path const & sp);
 };
@@ -557,10 +561,11 @@ addition_builder::add_node_for(split_path const & sp)
 }
 
 
-void
+bool
 addition_builder::visit_dir(file_path const & path)
 {
   this->visit_file(path);
+  return true;
 }
 
 void
