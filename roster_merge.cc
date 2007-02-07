@@ -389,6 +389,8 @@ roster_merge(roster_t const & left_parent,
              set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result)
 {
+  L(FL("Performing a roster_merge"));
+
   result.clear();
   MM(left_parent);
   MM(left_markings);

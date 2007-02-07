@@ -410,28 +410,23 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     options::opts::depth | options::opts::exclude)
 {
-  roster_t old_roster, new_roster;
-  cset included, excluded;
-  revision_id old_rev_id;
+  roster_t new_roster;
+  parent_map old_rosters;
   revision_t rev;
-  data tmp;
   temp_node_id_source nis;
+  cset dummy;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_parent_rosters(old_rosters);
+  app.work.get_current_roster_shape(new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        old_roster, new_roster, app);
+                        old_rosters, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
-
-  app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, included, rev);
+  make_restricted_revision(old_rosters, new_roster, mask, rev, dummy);
 
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
@@ -704,54 +699,66 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    options::opts::branch | options::opts::message | options::opts::msgfile | options::opts::date
-    | options::opts::author | options::opts::depth | options::opts::exclude)
+    options::opts::branch | options::opts::message | options::opts::msgfile
+    | options::opts::date | options::opts::author | options::opts::depth
+    | options::opts::exclude)
 {
   utf8 log_message("");
   bool log_message_given;
   revision_t restricted_rev;
-  revision_id old_rev_id, restricted_rev_id;
-  roster_t old_roster, new_roster;
+  parent_map old_rosters;
+  roster_t new_roster;
   temp_node_id_source nis;
-  cset included, excluded;
+  cset excluded;
 
-  app.make_branch_sticky();
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-
-  node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.opts.exclude_patterns),
-                        app.opts.depth,
-                        old_roster, new_roster, app);
-
-  app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
-
-  app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, included, restricted_rev);
-
-  calculate_ident(restricted_rev, restricted_rev_id);
-
-  N(restricted_rev.is_nontrivial(), F("no changes to commit"));
-
-  I(restricted_rev.edges.size() == 1);
-
-  set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branch_name, heads);
-  unsigned int old_head_size = heads.size();
-
-  // We need the 'if' because guess_branch will try to override any branch
-  // picked up from _MTN/options.
-  if (app.opts.branch_name().empty())
-    guess_branch(edge_old_revision(restricted_rev.edges.begin()), app);
 
   {
     // fail early if there isn't a key
     rsa_keypair_id key;
     get_user_key(key, app);
   }
+
+  app.make_branch_sticky();
+  app.work.get_parent_rosters(old_rosters);
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
+                        old_rosters, new_roster, app);
+
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
+  make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
+                           excluded);
+  restricted_rev.check_sane();
+  N(restricted_rev.is_nontrivial(), F("no changes to commit"));
+
+  revision_id restricted_rev_id;
+  calculate_ident(restricted_rev, restricted_rev_id);
+
+  // We need the 'if' because guess_branch will try to override any branch
+  // picked up from _MTN/options.
+  if (app.opts.branch_name().empty())
+    {
+      utf8 branchname, bn_candidate;
+      for (edge_map::iterator i = restricted_rev.edges.begin();
+           i != restricted_rev.edges.end();
+           i++)
+        {
+          // this will prefer --branch if it was set
+          guess_branch(edge_old_revision(i), app, bn_candidate);
+          N(branchname() == "" || branchname == bn_candidate,
+            F("parent revisions of this commit are in different branches:\n"
+              "'%s' and '%s'.\n"
+              "please specify a branch name for the commit, with --branch.")
+            % branchname % bn_candidate);
+          branchname = bn_candidate;
+        }
+
+      app.opts.branch_name = branchname;
+    }
+
 
   P(F("beginning commit on branch '%s'") % app.opts.branch_name);
   L(FL("new manifest '%s'\n"
@@ -801,46 +808,78 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
+  // for the divergence check, below
+  set<revision_id> heads;
+  app.get_project().get_branch_heads(app.opts.branch_name, heads);
+  unsigned int old_head_size = heads.size();
+  
   {
     transaction_guard guard(app.db);
     packet_db_writer dbw(app);
 
     if (app.db.revision_exists(restricted_rev_id))
-      {
-        W(F("revision %s already in database") % restricted_rev_id);
-      }
+      W(F("revision %s already in database") % restricted_rev_id);
     else
       {
-        // new revision
         L(FL("inserting new revision %s") % restricted_rev_id);
-
-        I(restricted_rev.edges.size() == 1);
-        edge_map::const_iterator edge = restricted_rev.edges.begin();
-        I(edge != restricted_rev.edges.end());
-
-        // process file deltas or new files
-        cset const & cs = edge_changes(edge);
-
-        for (map<split_path, pair<file_id, file_id> >::const_iterator
-               i = cs.deltas_applied.begin();
-             i != cs.deltas_applied.end(); ++i)
+  
+        for (edge_map::const_iterator edge = restricted_rev.edges.begin();
+             edge != restricted_rev.edges.end();
+             edge++)
           {
-            file_path path(i->first);
-            file_id old_content = i->second.first;
-            file_id new_content = i->second.second;
+            // process file deltas or new files
+            cset const & cs = edge_changes(edge);
 
-            if (app.db.file_version_exists(new_content))
+            for (map<split_path, pair<file_id, file_id> >::const_iterator
+                   i = cs.deltas_applied.begin();
+                 i != cs.deltas_applied.end(); ++i)
               {
-                L(FL("skipping file delta %s, already in database")
-                  % delta_entry_dst(i));
+                file_path path(i->first);
+                file_id old_content = i->second.first;
+                file_id new_content = i->second.second;
+
+                if (app.db.file_version_exists(new_content))
+                  {
+                    L(FL("skipping file delta %s, already in database")
+                      % delta_entry_dst(i));
+                  }
+                else if (app.db.file_version_exists(old_content))
+                  {
+                    L(FL("inserting delta %s -> %s")
+                      % old_content % new_content);
+                    file_data old_data;
+                    data new_data;
+                    app.db.get_file_version(old_content, old_data);
+                    read_localized_data(path, new_data, app.lua);
+                    // sanity check
+                    hexenc<id> tid;
+                    calculate_ident(new_data, tid);
+                    N(tid == new_content.inner(),
+                      F("file '%s' modified during commit, aborting")
+                      % path);
+                    delta del;
+                    diff(old_data.inner(), new_data, del);
+                    dbw.consume_file_delta(old_content,
+                                           new_content,
+                                           file_delta(del));
+                  }
+                else
+                  // If we don't err out here, our packet writer will
+                  // later.
+                  E(false,
+                    F("Your database is missing version %s of file '%s'")
+                    % old_content % path);
               }
-            else if (app.db.file_version_exists(old_content))
+
+            for (map<split_path, file_id>::const_iterator
+                   i = cs.files_added.begin();
+                 i != cs.files_added.end(); ++i)
               {
-                L(FL("inserting delta %s -> %s")
-                  % old_content % new_content);
-                file_data old_data;
+                file_path path(i->first);
+                file_id new_content = i->second;
+
+                L(FL("inserting full version %s") % new_content);
                 data new_data;
-                app.db.get_file_version(old_content, old_data);
                 read_localized_data(path, new_data, app.lua);
                 // sanity check
                 hexenc<id> tid;
@@ -848,43 +887,14 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                 N(tid == new_content.inner(),
                   F("file '%s' modified during commit, aborting")
                   % path);
-                delta del;
-                diff(old_data.inner(), new_data, del);
-                dbw.consume_file_delta(old_content,
-                                       new_content,
-                                       file_delta(del));
+                dbw.consume_file_data(new_content, file_data(new_data));
               }
-            else
-              // If we don't err out here, our packet writer will
-              // later.
-              E(false,
-                F("Your database is missing version %s of file '%s'")
-                % old_content % path);
           }
 
-        for (map<split_path, file_id>::const_iterator
-               i = cs.files_added.begin();
-             i != cs.files_added.end(); ++i)
-          {
-            file_path path(i->first);
-            file_id new_content = i->second;
-
-            L(FL("inserting full version %s") % new_content);
-            data new_data;
-            read_localized_data(path, new_data, app.lua);
-            // sanity check
-            hexenc<id> tid;
-            calculate_ident(new_data, tid);
-            N(tid == new_content.inner(),
-              F("file '%s' modified during commit, aborting")
-              % path);
-            dbw.consume_file_data(new_content, file_data(new_data));
-          }
+        revision_data rdat;
+        write_revision(restricted_rev, rdat);
+        dbw.consume_revision_data(restricted_rev_id, rdat);
       }
-
-    revision_data rdat;
-    write_revision(restricted_rev, rdat);
-    dbw.consume_revision_data(restricted_rev_id, rdat);
 
     app.get_project().put_standard_certs_from_options(restricted_rev_id,
                                                       app.opts.branch_name,

@@ -72,8 +72,8 @@ get_inodeprints_path(bookkeeping_path & ip_path)
 // routines for manipulating the bookkeeping directory
 
 // revision file contains a partial revision describing the workspace
-static void
-get_work_rev(revision_t & rev)
+void
+workspace::get_work_rev(revision_t & rev)
 {
   bookkeeping_path rev_path;
   get_revision_path(rev_path);
@@ -90,9 +90,6 @@ get_work_rev(revision_t & rev)
     }
 
   read_revision(rev_data, rev);
-  // Currently the revision must have only one ancestor.
-  I(rev.edges.size() == 1);
-
   // Mark it so it doesn't creep into the database.
   rev.made_for = made_for_workspace;
 }
@@ -100,9 +97,7 @@ get_work_rev(revision_t & rev)
 void
 workspace::put_work_rev(revision_t const & rev)
 {
-  // Currently the revision must have only one ancestor.
   MM(rev);
-  I(rev.edges.size() == 1);
   I(rev.made_for == made_for_workspace);
   rev.check_sane();
 
@@ -114,23 +109,16 @@ workspace::put_work_rev(revision_t const & rev)
   write_data(rev_path, rev_data);
 }
 
-
-// work file containing rearrangement from uncommitted adds/drops/renames
-void
-workspace::get_work_cset(cset & w)
-{
-  revision_t rev;
-  get_work_rev(rev);
-
-  w = edge_changes(rev.edges.begin());
-}
-
 // base revision ID
 void
 workspace::get_revision_id(revision_id & c)
 {
   revision_t rev;
   get_work_rev(rev);
+
+  // If you're using this interface, the revision must have only one
+  // ancestor.
+  I(rev.edges.size() == 1);
   c = edge_old_revision(rev.edges.begin());
   N(null_id(c) || db.revision_exists(c),
     F("workspace base revision %s does not exist in database") % c);
@@ -138,45 +126,93 @@ workspace::get_revision_id(revision_id & c)
 
 // structures derived from the work revision, the database, and possibly
 // the workspace
+
+static void
+get_roster_for_rid(revision_id const & rid,
+                   database::cached_roster & cr,
+                   database & db)
+{
+  // We may be asked for a roster corresponding to the null rid, which
+  // is not in the database.  In this situation, what is wanted is an empty
+  // roster (and marking map).
+  if (null_id(rid))
+    {
+      cr.first = boost::shared_ptr<roster_t const>(new roster_t);
+      cr.second = boost::shared_ptr<marking_map const>(new marking_map);
+    }
+  else
+    {
+      N(db.revision_exists(rid),
+        F("base revision %s does not exist in database") % rid);
+      db.get_roster(rid, cr);
+    }
+  L(FL("base roster has %d entries") % cr.first->all_nodes().size());
+}
+
 void
 workspace::get_base_revision(revision_id & rid,
                              roster_t & ros,
                              marking_map & mm)
 {
+  database::cached_roster cr;
   get_revision_id(rid);
-
-  if (!null_id(rid))
-    {
-      db.get_roster(rid, ros, mm);
-    }
-
-  L(FL("base roster has %d entries") % ros.all_nodes().size());
+  get_roster_for_rid(rid, cr, db);
+  ros = *cr.first;
+  mm = *cr.second;
 }
 
 void
 workspace::get_base_revision(revision_id & rid,
                              roster_t & ros)
 {
-  marking_map mm;
-  get_base_revision(rid, ros, mm);
+  database::cached_roster cr;
+  get_revision_id(rid);
+  get_roster_for_rid(rid, cr, db);
+  ros = *cr.first;
 }
 
 void
 workspace::get_base_roster(roster_t & ros)
 {
   revision_id rid;
-  marking_map mm;
-  get_base_revision(rid, ros, mm);
+  get_base_revision(rid, ros);
+}
+
+void
+workspace::get_parent_rosters(parent_map & parents)
+{
+  revision_t rev;
+  get_work_rev(rev);
+
+  parents.clear();
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); i++)
+    {
+      database::cached_roster cr;
+      get_roster_for_rid(edge_old_revision(i), cr, db);
+      safe_insert(parents, make_pair(edge_old_revision(i), cr));
+    }
 }
 
 void
 workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 {
-  get_base_roster(ros);
-  cset cs;
-  get_work_cset(cs);
-  editable_roster_base er(ros, nis);
-  cs.apply_to(er);
+  revision_t rev;
+  get_work_rev(rev);
+  revision_id new_rid(fake_id());
+
+  // If there is just one parent, it might be the null ID, which
+  // make_roster_for_revision does not handle correctly.
+  if (rev.edges.size() == 1 && null_id(edge_old_revision(rev.edges.begin())))
+    {
+      I(ros.all_nodes().size() == 0);
+      editable_roster_base er(ros, nis);
+      edge_changes(rev.edges.begin()).apply_to(er);
+    }
+  else
+    {
+      marking_map dummy;
+      make_roster_for_revision(rev, new_rid, ros, dummy, db, nis);
+    }
 }
 
 void
@@ -184,12 +220,18 @@ workspace::get_base_and_current_roster_shape(roster_t & base_roster,
                                              roster_t & current_roster,
                                              node_id_source & nis)
 {
-  get_base_roster(base_roster);
-  current_roster = base_roster;
-  cset cs;
-  get_work_cset(cs);
+  // If you're using this interface, the revision must have only one
+  // ancestor.
+  revision_t rev;
+  get_work_rev(rev);
+  I(rev.edges.size() == 1);
+
+  database::cached_roster cr;
+  get_roster_for_rid(edge_old_revision(rev.edges.begin()), cr, db);
+
+  base_roster = current_roster = *cr.first;
   editable_roster_base er(current_roster, nis);
-  cs.apply_to(er);
+  edge_changes(rev.edges.begin()).apply_to(er);
 }
 
 // user log file

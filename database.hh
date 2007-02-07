@@ -578,6 +578,44 @@ public:
                                revision_t const & rev);
 };
 
+// Parent maps are used in a number of places to keep track of all the
+// parent rosters of a given revision.
+typedef std::map<revision_id, database::cached_roster>
+parent_map;
+
+typedef parent_map::value_type
+parent_entry;
+
+inline revision_id const & parent_id(parent_entry const & p)
+{
+  return p.first;
+}
+
+inline revision_id const & parent_id(parent_map::const_iterator i)
+{
+  return i->first;
+}
+
+inline roster_t const & parent_roster(parent_entry const & p)
+{
+  return *(p.second.first);
+}
+
+inline roster_t const & parent_roster(parent_map::const_iterator i)
+{
+  return *(i->second.first);
+}
+
+inline marking_map const & parent_marking(parent_entry const & p)
+{
+  return *(p.second.second);
+}
+
+inline marking_map const & parent_marking(parent_map::const_iterator i)
+{
+  return *(i->second.second);
+}
+
 // Transaction guards nest. Acquire one in any scope you'd like
 // transaction-protected, and it'll make sure the db aborts a transaction
 // if there's any exception before you call commit().
