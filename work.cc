@@ -198,7 +198,7 @@ workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 {
   revision_t rev;
   get_work_rev(rev);
-  revision_id new_rid = fake_id();
+  revision_id new_rid(fake_id());
 
   // If there is just one parent, it might be the null ID, which
   // make_roster_for_revision does not handle correctly.

@@ -4756,7 +4756,7 @@ create_random_unification_task(roster_t & left,
       // be new in just the left, just the right, or both.
       editable_roster_base * left_er;
       editable_roster_base * right_er;
-      switch (uniform(2))
+      switch (rng.uniform(2))
         {
         case 0: left_er = &left_erm; right_er = &right_erm; break;
         case 1: left_er = &left_erb; right_er = &right_erm; break;

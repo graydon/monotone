@@ -755,7 +755,7 @@ make_revision_for_workspace(parent_map const & old_rosters,
     }
 
   rev.edges = edges;
-  rev.new_manifest = fake_id();
+  rev.new_manifest = manifest_id(fake_id());
   rev.made_for = made_for_workspace;
 }
 

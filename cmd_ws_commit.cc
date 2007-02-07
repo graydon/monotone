@@ -738,27 +738,25 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     F("revision %s is already in the database\n"
       "(update and try again?)") % restricted_rev_id);
 
-  cert_value branchname;
-  if (app.branch_name() != "")
-    branchname = app.branch_name();
-  else
-    {
-      cert_value bn_candidate;
-      for (edge_map::iterator i = restricted_rev.edges.begin();
-           i != restricted_rev.edges.end();
-           i++)
-        {
-          guess_branch(edge_old_revision(i), app, bn_candidate);
-          N(branchname() == "" || branchname() == bn_candidate(),
-            F("parent revisions of this commit are in different branches:\n"
-              "'%s' and '%s'.\n"
-              "please specify a branch name for the commit, with --branch.")
-            % branchname % bn_candidate);
-          branchname = bn_candidate;
-        }
-    }
+  utf8 branchname, bn_candidate;
 
-  P(F("beginning commit on branch '%s'") % app.opts.branch_name);
+  for (edge_map::iterator i = restricted_rev.edges.begin();
+       i != restricted_rev.edges.end();
+       i++)
+    {
+      // this will prefer --branch if it was set
+      guess_branch(edge_old_revision(i), app, bn_candidate);
+      N(branchname() == "" || branchname == bn_candidate,
+        F("parent revisions of this commit are in different branches:\n"
+          "'%s' and '%s'.\n"
+          "please specify a branch name for the commit, with --branch.")
+        % branchname % bn_candidate);
+      branchname = bn_candidate;
+    }
+  // make sure everyone's on the same page
+  app.opts.branch_name = branchname;
+
+  P(F("beginning commit on branch '%s'") % branchname);
   L(FL("new manifest '%s'\n"
        "new revision '%s'\n")
     % restricted_rev.new_manifest
@@ -808,7 +806,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   // for the divergence check, below
   set<revision_id> heads;
-  get_branch_heads(branchname(), app, heads);
+  app.get_project().get_branch_heads(branchname, heads);
   unsigned int old_head_size = heads.size();
   
   L(FL("inserting new revision %s") % restricted_rev_id);
@@ -889,7 +887,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     dbw.consume_revision_data(restricted_rev_id, rdat);
 
     app.get_project().put_standard_certs_from_options(restricted_rev_id,
-                                                      app.opts.branch_name,
+                                                      branchname,
                                                       log_message,
                                                       dbw);
     guard.commit();

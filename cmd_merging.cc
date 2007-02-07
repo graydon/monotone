@@ -109,7 +109,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
       else if (branches.size() == 1)
         {
           // one non-matching, inform and update
-          app.opts.branch_name = (*(branches.begin()))();
+          app.opts.branch_name = *(branches.begin());
           switched_branch = true;
         }
       else
@@ -117,7 +117,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
           I(branches.size() == 0);
           W(F("target revision not in any branch\n"
               "next commit will use branch %s")
-            % app.opts.branch_name());
+            % app.opts.branch_name);
         }
     }
   return switched_branch;
@@ -596,7 +596,7 @@ CMD(merge_into_workspace, N_("tree"),
        "pending changes in the current workspace.  Both OTHER-REVISION and "
        "the workspace's base revision will be recorded as parents on commit. "
        "The workspace's selected branch is not changed."),
-    option::none)
+    options::opts::none)
 {
   revision_id left_id, right_id;
   database::cached_roster left, right;
@@ -942,7 +942,6 @@ CMD(get_roster, N_("debug"), N_("[REVID]"),
        "or the workspace if no REVID is given"),
     options::opts::none)
 {
-  revision_id rid;
   roster_t roster;
   marking_map mm;
   
@@ -950,7 +949,7 @@ CMD(get_roster, N_("debug"), N_("[REVID]"),
     {
       parent_map parents;
       temp_node_id_source nis;
-      rid = fake_id();
+      revision_id rid(fake_id());
       
       app.require_workspace();
       app.work.get_parent_rosters(parents);
@@ -995,13 +994,13 @@ CMD(get_roster, N_("debug"), N_("[REVID]"),
     }
   else if (args.size() == 1)
     {
+      revision_id rid;
       complete(app, idx(args, 0)(), rid);
       I(!null_id(rid));
       app.db.get_roster(rid, roster, mm);
     }
   else
     throw usage(name);
-
 
   roster_data dat;
   write_roster_and_marking(roster, mm, dat);
