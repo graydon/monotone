@@ -15,12 +15,10 @@ check(indir("test1", mtn("checkout", "--revision", base, ".")))
 check(indir("test1", mtn("update")), 0, false, true)
 
 -- update workspace with an unversioned file blocking a versioned file
--- clobbers unversioned file
 mkdir("test2")
 writefile("test2/file1", "blocker")
 check(indir("test2", mtn("checkout", "--revision", base, ".")))
-check(indir("test2", mtn("update")), 0, false, true)
-check(samefile("file1", "test2/file1"))
+check(indir("test2", mtn("update")), 1, false, true)
 
 -- update workspace with an unversioned directory blocking a versioned directory
 mkdir("test3")
