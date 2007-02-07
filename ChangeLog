@@ -1,3 +1,11 @@
+2007-02-07  Zack Weinberg  <zackw@panix.com>
+
+	* charset.cc (system_to_utf8): Move below system_charset_is_utf8
+	etc; add the same short-circuit logic that utf8_to_system
+	has.  (In addition to being a speed win, this avoids problems with
+	buggy iconv implementations that don't implement the encoding that
+	their own locale library reports for the "C" locale.  Bleah.)
+
 2007-02-05  Markus Schiltknecht  <markus@bluegap.ch>
 
 	* tests/test_a_merge_8/*:
@@ -23,7 +31,7 @@
 	* tests/ls_unknown_of_unknown_subdir/__driver__.lua:
 	* tests/things_in_.mtn-ignore_get_ignored/__driver__.lua:
 	update tests to exclude things in unknown dirs
-	
+
 2007-02-04  Ralf S. Engelschall  <rse@engelschall.com>
 
 	(via Richard Levitte  <richard@levitte.org>)
@@ -53,7 +61,7 @@
 
 2007-01-29  Thomas Keller  <me@thomaskeller.biz>
 
-	* added some lua hooks to run a script after revs or certs have 
+	* added some lua hooks to run a script after revs or certs have
 	arrived via netsync for a particular branch
 
 2007-01-29  Matthew Gregan  <kinetik@orcon.net.nz>
