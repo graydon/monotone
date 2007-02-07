@@ -1,3 +1,7 @@
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/os_strerror.c (os_strerror): Clean up string handling.
+
 2007-02-05  Markus Schiltknecht  <markus@bluegap.ch>
 
 	* tests/test_a_merge_8/*:
@@ -23,7 +27,7 @@
 	* tests/ls_unknown_of_unknown_subdir/__driver__.lua:
 	* tests/things_in_.mtn-ignore_get_ignored/__driver__.lua:
 	update tests to exclude things in unknown dirs
-	
+
 2007-02-04  Ralf S. Engelschall  <rse@engelschall.com>
 
 	(via Richard Levitte  <richard@levitte.org>)

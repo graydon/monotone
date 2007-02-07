@@ -20,12 +20,13 @@ os_strerror(os_err_t errnum)
                             static_cast<va_list *>(0));
   if (len == 0)
     return (F("unknown error code %d") % errnum).str();
-  // clobber trailing newlines.
-  for (LPTSTR p = tstr + len - 1; p > tstr; --p)
-    if (*p == '\r' || *p == '\n')
-      *p = '\0';
-  std::string str = tstr;
+  std::string errstr = tstr;
   LocalFree(tstr);
-  return str;
+
+  // clobber trailing newlines.
+  std::string::size_type end = errstr.find_last_not_of("\r\n");
+  if (end != std::string::npos)
+    errstr.erase(end + 1);
+  return errstr;
 }
 
