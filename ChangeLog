@@ -8,6 +8,12 @@
 
 2007-02-07  Derek Scherger  <derek@echologic.com>
 
+	* work.cc (struct workspace_itemizer): return boolean from visit_dir
+	(perform_content_update): get list of known paths for visit_dir to use
+	* testsuite.lua: account for renamed test
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
 	* NEWS: add notes about changes to ls unknown's behaviour
 
 2007-02-07  Derek Scherger  <derek@echologic.com>
