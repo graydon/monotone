@@ -2,6 +2,8 @@
 
 	* cmd_diff_log.cc (prepare_diff): Handle multi-parent workspaces
 	gracefully.
+	* cmd_merging.cc (update): Likewise.
+	* cmd_ws_commit.cc (revert): Likewise.
 
 	* tests/two_parent_workspace_commands_that_fail
 	* tests/two_parent_workspace_pluck: New tests (expected to fail).
