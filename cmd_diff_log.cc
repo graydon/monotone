@@ -359,9 +359,18 @@ prepare_diff(cset & included,
     {
       roster_t new_roster, old_roster;
       revision_id old_rid;
+      parent_map parents;
 
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-      app.work.get_revision_id(old_rid);
+      app.work.get_parent_rosters(parents);
+
+      // With no arguments, which parent should we diff against?
+      N(parents.size() == 1,
+        F("this workspace has more than one parent\n"
+          "(specify a revision to diff against with --revision)"));
+
+      old_rid = parents.begin()->first;
+      old_roster = *(parents.begin()->second.first);
+      app.work.get_current_roster_shape(new_roster, nis);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
@@ -385,12 +394,8 @@ prepare_diff(cset & included,
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-      // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
-
-      // FIXME: handle no ancestor case
-      // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
+      app.work.get_current_roster_shape(new_roster, nis);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns), 
@@ -480,7 +485,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   bool new_is_archived;
   
   prepare_diff(included, app, args, new_is_archived, revs);
-  
+
   data summary;
   write_cset(included, summary);
 

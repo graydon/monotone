@@ -1,5 +1,8 @@
 2007-02-07  Zack Weinberg  <zackw@panix.com>
 
+	* cmd_diff_log.cc (prepare_diff): Handle multi-parent workspaces
+	gracefully.
+
 	* tests/two_parent_workspace_commands_that_fail
 	* tests/two_parent_workspace_pluck: New tests (expected to fail).
 	* testsuite.lua: Add them.
