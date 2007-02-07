@@ -23,6 +23,8 @@ commit()
 revs.other = base_revision()
 
 revert_to(revs.base)
+remove("bystander2")
+remove("rename-out")
 
 -- update doesn't remove files...
 remove("groundzero/rename-in")
