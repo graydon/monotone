@@ -8,6 +8,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <set>
@@ -18,10 +19,13 @@
 #include "revision.hh"
 
 using std::cout;
+using std::insert_iterator;
+using std::max;
+using std::min;
+using std::ostream_iterator;
 using std::pair;
 using std::set;
 using std::vector;
-using std::ostream_iterator;
 
 //namespace asciik { }
 
@@ -76,7 +80,7 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
 
 //p    curr_loc = curr_row.index(curr_rev)
       //iterator_traits<vector<revision_id>::iterator>::difference_type
-      int curr_loc = distance(curr_row.begin(),
+      size_t curr_loc = distance(curr_row.begin(),
 	find(curr_row.begin(), curr_row.end(), *rev));
       //assert(curr_loc < size()); as it is surely found
 
@@ -137,8 +141,96 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
     }
 }
 
-bool try_draw(const vector<revision_id> curr_row,
-  const vector<revision_id> next_row, int curr_loc, set<revision_id> parents)
+//p def links_cross(links):
+//p     crosses = set()
+//p     for i, j in links:
+//p         if i != j:
+//p             for coord in xrange(2 * min(i, j) + 1, 2 * max(i, j)):
+//p                 crosses.add(coord)
+//p     return crosses
+void links_cross(const set<pair<size_t, size_t> > & links, set<size_t> & crosses)
+{
+  for (set<pair<size_t, size_t> >::const_iterator l = links.begin();
+       l != links.end(); ++l)
+    {
+      size_t i = l->first, j = l->second;
+      if (i != j)
+	for (size_t coord = 2 * min(i, j) + 1, end = 2 * max(i, j);
+	     coord < end; ++coord)
+	  crosses.insert(coord);
+    }
+}
+
+void draw(const size_t curr_items, const size_t next_items,
+  const size_t curr_loc, const set<pair<size_t, size_t> > & links,
+  const set<size_t> & curr_ghosts, const string & annotation)
+{
+//p    line = [" "] * (curr_items * 2 - 1)
+//p    interline = [" "] * (max(curr_items, next_items) * 2 - 1)
+  string line(curr_items * 2 - 1, ' ');
+  string interline(max(curr_items, next_items) * 2 - 1, ' ');
+
+//p    # first draw the flow-through bars in the line
+//p    for i in xrange(curr_items):
+//p        line[i * 2] = "|"
+  for (size_t i = 0; i < curr_items; ++i)
+    line[i * 2] = '|';
+
+//p    # but then erase it for ghosts
+//p    for i in curr_ghosts:
+//p        line[i * 2] = " "
+  for (set<size_t>::const_iterator i = curr_ghosts.begin();
+       i != curr_ghosts.end(); ++i)
+    line[(*i) * 2] = ' ';
+
+//p    # then the links
+//p    dots = set()
+//p    for i, j in links:
+//p        if i == j:
+//p            interline[2 * i] = "|"
+//p        else:
+//p            if j < i:
+//p                # | .---o
+//p                # |/| | |
+//p                # 0 1 2 3
+//p                # j     i
+//p                # 0123456
+//p                #    s  e
+//p                start = 2*j + 3
+//p                end = 2*i
+//p                dot = start - 1
+//p                interline[dot - 1] = "/"
+//p            else: # i < j
+//p                # o---.
+//p                # | | |\|
+//p                # 0 1 2 3
+//p                # i     j
+//p                # 0123456
+//p                #  s  e
+//p                start = 2*i + 1
+//p                end = 2*j - 2
+//p                dot = end
+//p                interline[dot + 1] = "\\"
+//p            if end - start >= 1:
+//p                dots.add(dot)
+//p            line[start:end] = "-" * (end - start)
+//p    # add any dots (must do this in a second pass, so that if there are 
+//p    # cases like:
+//p    #   | .-----.-o
+//p    #   |/| | |/|
+//p    # where we want to make sure the second dot overwrites the first --.
+//p    for dot in dots:
+//p        line[dot] = "."
+//p    # and add the main attraction (may overwrite a ".").
+//p    line[curr_loc * 2] = "o"
+//p
+//p    print "".join(line) + "    " + annotation
+//p    print "".join(interline)
+}
+
+bool try_draw(const vector<revision_id> & curr_row,
+  const vector<revision_id> & next_row, const size_t curr_loc,
+  const set<revision_id> & parents)
 {
 //p    curr_items = len(curr_row)
 //p    next_items = len(next_row)
@@ -149,16 +241,13 @@ bool try_draw(const vector<revision_id> curr_row,
 //p    for i in xrange(curr_items):
 //p        if curr_row[i] is None:
 //p            curr_ghosts.append(i)
-  vector<int> curr_ghosts;
+  set<size_t> curr_ghosts;
   for (size_t i = 0; i < curr_items; ++i)
-    if (curr_row[i] == ghost)
+    if (idx(curr_row, i) == ghost)
       curr_ghosts.insert(i);
 
 //p    preservation_links = []
 //p    have_shift = False
-  vector<pair<int, int> > preservation_links;
-  bool have_shift = false;
-
 //p    for rev in curr_row:
 //p        if rev is not None and rev in next_row:
 //p            i = curr_row.index(rev)
@@ -168,16 +257,20 @@ bool try_draw(const vector<revision_id> curr_row,
 //p            if abs(i - j) > 1:
 //p                return False
 //p            preservation_links.append((i, j))
+  set<pair<size_t, size_t> > preservation_links;
+  bool have_shift = false;
   for (size_t i = 0; i < curr_items; ++i) {
     if (idx(curr_row, i) != ghost) {
-      int j = distance(next_row.begin(), find(next_row.begin(), next_row.end(), curr_row[i]));
-      if (j < news_row.size()) {
-	int d = abs(i - j);
+      vector<revision_id>::const_iterator found =
+	find(next_row.begin(), next_row.end(), idx(curr_row, i));
+      if (found != next_row.end()) {
+	size_t j = distance(next_row.begin(), found);
+	size_t d = abs(i - j);
 	if (d > 1)
 	  return false;
 	if (d != 0)
 	  have_shift = true;
-	preservation_links.insert(pair<int, int>(i, j));
+	preservation_links.insert(pair<size_t, size_t>(i, j));
       }
     }
   }
@@ -189,13 +282,41 @@ bool try_draw(const vector<revision_id> curr_row,
 //p        if abs(i - j) > 1 and have_shift:
 //p            return False
 //p        parent_links.append((i, j))
-//p
+  set<pair<size_t, size_t> > parent_links;
+  for (set<revision_id>::const_iterator p = parents.begin();
+       p != parents.end(); )
+    {
+      size_t i = curr_loc;
+      size_t j = distance(next_row.begin(),
+	find(next_row.begin(), next_row.end(), *p));
+      size_t d = abs(i - j);
+      if ((d > 1) && have_shift)
+	return false;
+      parent_links.insert(pair<size_t, size_t>(i, j));
+    }
+
 //p    preservation_crosses = links_cross(preservation_links)
 //p    parent_crosses = links_cross(parent_links)
 //p    if preservation_crosses.intersection(parent_crosses):
 //p        return False
-//p
+  set<size_t> preservation_crosses, parent_crosses, intersection_crosses;
+  links_cross(preservation_links, preservation_crosses);
+  links_cross(parent_links, parent_crosses);
+  set_intersection(
+    preservation_crosses.begin(), preservation_crosses.end(),
+    parent_crosses.begin(), parent_crosses.end(),
+    insert_iterator<set<size_t> >(intersection_crosses, intersection_crosses.begin()));
+  if (intersection_crosses.size() > 0)
+    return false;
+
 //p    links = preservation_links + parent_links
 //p    draw(curr_items, next_items, curr_loc, links, curr_ghosts, curr_row[curr_loc])
+  set<pair<size_t, size_t> > links(preservation_links);
+  copy(parent_links.begin(), parent_links.end(),
+    insert_iterator<set<pair<size_t, size_t> > >(links, links.begin()));
+  draw(curr_items, next_items, curr_loc, links, curr_ghosts,
+    /*annotation*/ idx(curr_row, curr_loc).inner()());
+
 //p    return True
+  return true;
 }
