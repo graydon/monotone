@@ -104,7 +104,7 @@ key_store::read_key_dir()
   */
 
   /*
-  scoped_ptr<agent> a = scoped_ptr<agent>(new agent());
+  scoped_ptr<agent> a(new agent());
   a->connect();
   a->get_keys();
   */
