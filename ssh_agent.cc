@@ -24,10 +24,7 @@ ssh_agent::connect() {
 
   authsocket = getenv("SSH_AUTH_SOCK");
 
-  if (!authsocket) {
-    E(authsocket, F("agent: !authsocket"));
-    return;
-  }
+  E(authsocket, F("agent: !authsocket"));
 
   sunaddr.sun_family = AF_UNIX;
   strncpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
@@ -46,7 +43,6 @@ ssh_agent::connect() {
     close(sock);
     E(ret >= 0, F("agent: connect < 0"));
   }
-  //L(FL("agent: ----"));
   stream = shared_ptr<Stream>(new Stream(sock));
 }
 
@@ -147,32 +143,38 @@ ssh_agent::get_keys() {
 
     if (type.compare("ssh-rsa") == 0) {
       L(FL("agent: RSA"));
-      string e;
-      get_string_from_buf(key, key_loc, slen, e);
-      BigInt eb = BigInt::decode((unsigned char *)(e.c_str()), slen, BigInt::Binary);
-      L(FL("agent: e: %s, len %u") % eb % slen);
-      string n;
-      get_string_from_buf(key, key_loc, slen, n);
-      BigInt nb = BigInt::decode((unsigned char *)(n.c_str()), slen, BigInt::Binary);
-      L(FL("agent: n: %s, len %u") % nb % slen);
+      string e_str;
+      get_string_from_buf(key, key_loc, slen, e_str);
+      BigInt e = BigInt::decode((unsigned char *)(e_str.c_str()), slen, BigInt::Binary);
+      L(FL("agent: e: %s, len %u") % e % slen);
+      string n_str;
+      get_string_from_buf(key, key_loc, slen, n_str);
+      BigInt n = BigInt::decode((unsigned char *)(n_str.c_str()), slen, BigInt::Binary);
+      L(FL("agent: n: %s, len %u") % n % slen);
+
+      RSA_PublicKey key(n, e);
+      keys.push_back(key);
+
     } else if (type.compare("ssh-dss") == 0) {
-      L(FL("agent: DSA"));
+      L(FL("agent: DSA (ignoring)"));
       string p;
       get_string_from_buf(key, key_loc, slen, p);
-      BigInt pb = BigInt::decode((unsigned char *)(p.c_str()), slen, BigInt::Binary);
-      L(FL("agent: p: %s, len %u") % pb % slen);
+      //BigInt pb = BigInt::decode((unsigned char *)(p.c_str()), slen, BigInt::Binary);
+      //L(FL("agent: p: %s, len %u") % pb % slen);
       string q;
       get_string_from_buf(key, key_loc, slen, q);
-      BigInt qb = BigInt::decode((unsigned char *)(q.c_str()), slen, BigInt::Binary);
-      L(FL("agent: q: %s, len %u") % qb % slen);
+      //BigInt qb = BigInt::decode((unsigned char *)(q.c_str()), slen, BigInt::Binary);
+      //L(FL("agent: q: %s, len %u") % qb % slen);
       string g;
       get_string_from_buf(key, key_loc, slen, g);
-      BigInt gb = BigInt::decode((unsigned char *)(g.c_str()), slen, BigInt::Binary);
-      L(FL("agent: g: %s, len %u") % gb % slen);
+      //BigInt gb = BigInt::decode((unsigned char *)(g.c_str()), slen, BigInt::Binary);
+      //L(FL("agent: g: %s, len %u") % gb % slen);
       string pub_key;
       get_string_from_buf(key, key_loc, slen, pub_key);
-      BigInt pkb = BigInt::decode((unsigned char *)(pub_key.c_str()), slen, BigInt::Binary);
-      L(FL("agent: pub_key: %s, len %u") % pkb % slen);
+      //BigInt pkb = BigInt::decode((unsigned char *)(pub_key.c_str()), slen, BigInt::Binary);
+      //L(FL("agent: pub_key: %s, len %u") % pkb % slen);
+    } else {
+      E(false, F("key type not recognized by ssh-agent code"));
     }
 
     L(FL("agent: packet length %u, packet loc %u, key length %u, key loc, %u")
@@ -185,11 +187,6 @@ ssh_agent::get_keys() {
     unsigned long comment_len;
     get_string_from_buf(packet, packet_loc, comment_len, comment);
     L(FL("agent: comment_len: %u, comment: %s") % comment_len % comment);
-    //L(FL("agent: \n\nkey:\n%s") % key.c_str());
-    //L(FL("agent: %i left") % len - i);
-    /*
-      }
-    */
   }
   exit(0);
 }

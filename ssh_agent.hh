@@ -2,11 +2,15 @@
 #define __SSH_AGENT_H__
 
 #include "netxx/stream.h"
+#include "botan/rsa.h"
 #include <boost/shared_ptr.hpp>
+#include <vector>
 
+using Botan::RSA_PublicKey;
 using Netxx::Stream;
 using boost::shared_ptr;
 using std::string;
+using std::vector;
 
 class ssh_agent
 {
@@ -15,12 +19,13 @@ public:
   void connect();
   void get_keys();
 
+private:
+  shared_ptr<Stream> stream;
+  vector<RSA_PublicKey> keys;
+
   unsigned long get_long(char const buf[4]);
   unsigned long get_long_from_buf(string const buf, unsigned long &loc);
   void get_string_from_buf(string const buf, unsigned long &loc, unsigned long &len, string &out);
-
-private:
-  shared_ptr<Stream> stream;
 };
 
 // Local Variables:
