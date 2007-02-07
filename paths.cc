@@ -1292,7 +1292,7 @@ UNIT_TEST(paths, ordering)
   test_a_path_ordering("fallanoooo_not_otherwise_mentioned_and_smaller", "fallanopic_not_otherwise_mentioned");
 }
 
-UNIT_TESTS(paths, test_internal_string_is_bookkeeping_path)
+UNIT_TEST(paths, test_internal_string_is_bookkeeping_path)
 {
   char const * yes[] = {"_MTN",
                         "_MTN/foo",
@@ -1303,13 +1303,13 @@ UNIT_TESTS(paths, test_internal_string_is_bookkeeping_path)
                        0 };
   for (char const ** c = yes; *c; ++c)
     BOOST_CHECK(bookkeeping_path
-                ::internal_string_is_bookkeeping_path(utf8(std::string(c))));
+                ::internal_string_is_bookkeeping_path(utf8(std::string(*c))));
   for (char const ** c = no; *c; ++c)
     BOOST_CHECK(!bookkeeping_path
-                 ::internal_string_is_bookkeeping_path(utf8(std::string(c))));
+                 ::internal_string_is_bookkeeping_path(utf8(std::string(*c))));
 }
 
-UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix_none)
+UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix_none)
 {
   initial_rel_path.unset();
   initial_rel_path.set(fs::path(), true);
@@ -1325,13 +1325,13 @@ UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix_none)
                        0 };
   for (char const ** c = yes; *c; ++c)
     BOOST_CHECK(bookkeeping_path
-                ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+                ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
   for (char const ** c = no; *c; ++c)
     BOOST_CHECK(!bookkeeping_path
-                 ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+                 ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
 }
 
-UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix_a_b)
+UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix_a_b)
 {
   initial_rel_path.unset();
   initial_rel_path.set(fs::path("a/b"), true);
@@ -1349,13 +1349,13 @@ UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix_a_b)
                        0 };
   for (char const ** c = yes; *c; ++c)
     BOOST_CHECK(bookkeeping_path
-                ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+                ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
   for (char const ** c = no; *c; ++c)
     BOOST_CHECK(!bookkeeping_path
-                 ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+                 ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
 }
 
-UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix__MTN)
+UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix__MTN)
 {
   initial_rel_path.unset();
   initial_rel_path.set(fs::path("_MTN"), true);
@@ -1372,10 +1372,10 @@ UNIT_TESTS(paths, test_external_string_is_bookkeeping_path_prefix__MTN)
                        0 };
   for (char const ** c = yes; *c; ++c)
     BOOST_CHECK(bookkeeping_path
-                ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+                ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
   for (char const ** c = no; *c; ++c)
     BOOST_CHECK(!bookkeeping_path
-                 ::external_string_is_bookkeeping_path(utf8(std::string(c))));
+                 ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
 }
 
 #endif // BUILD_UNIT_TESTS
