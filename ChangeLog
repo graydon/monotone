@@ -1,9 +1,11 @@
 2007-02-07  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (perform_rename): Work in a two-parent workspace.
+	(perform_pivot_root): Likewise.
 	* tests/two_parent_workspace_add_drop: Rename to...
 	* tests/two_parent_workspace_add_drop_rename: ... this.
 	Add testing of renames.
+	* tests/two_parent_workspace_pivot_root: New test.
 	* testsuite.lua: Update.
 
 2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>

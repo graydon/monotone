@@ -1546,10 +1546,9 @@ workspace::perform_pivot_root(file_path const & new_root,
   file_path().split(root_sp);
 
   temp_node_id_source nis;
-  roster_t base_roster, new_roster;
-  MM(base_roster);
+  roster_t new_roster;
   MM(new_roster);
-  get_base_and_current_roster_shape(base_roster, new_roster, nis);
+  get_current_roster_shape(new_roster, nis);
 
   I(new_roster.has_root());
   N(new_roster.has_node(new_root_sp),
@@ -1589,11 +1588,11 @@ workspace::perform_pivot_root(file_path const & new_root,
   }
 
   {
-    revision_id base_rev;
-    get_revision_id(base_rev);
+    parent_map parents;
+    get_parent_rosters(parents);
 
     revision_t new_work;
-    make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
+    make_revision_for_workspace(parents, new_roster, new_work);
     put_work_rev(new_work);
   }
   if (execute)
