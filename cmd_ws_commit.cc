@@ -12,7 +12,7 @@
 
 #include "cmd.hh"
 #include "diff_patch.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
@@ -154,7 +154,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
           if (file_exists(fp))
             {
               hexenc<id> ident;
-              calculate_ident(fp, ident, app.lua);
+              calculate_ident(fp, ident);
               // don't touch unchanged files
               if (ident == f->content.inner())
                 continue;
@@ -171,7 +171,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
           L(FL("writing file %s to %s")
             % f->content % fp);
           app.db.get_file_version(f->content, dat);
-          write_localized_data(fp, dat.inner(), app.lua);
+          write_data(fp, dat.inner());
         }
       else
         {
@@ -591,7 +591,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
           L(FL("writing file %s to %s")
             % file->content % path);
           app.db.get_file_version(file->content, dat);
-          write_localized_data(path, dat.inner(), app.lua);
+          write_data(path, dat.inner());
         }
     }
 
@@ -841,7 +841,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                 file_data old_data;
                 data new_data;
                 app.db.get_file_version(old_content, old_data);
-                read_localized_data(path, new_data, app.lua);
+                read_data(path, new_data);
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
@@ -871,7 +871,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
             L(FL("inserting full version %s") % new_content);
             data new_data;
-            read_localized_data(path, new_data, app.lua);
+            read_data(path, new_data);
             // sanity check
             hexenc<id> tid;
             calculate_ident(new_data, tid);

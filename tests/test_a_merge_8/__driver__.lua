@@ -27,5 +27,5 @@ check(mtn("--branch=testbranch", "merge"), 0, false, false)
 
 check(mtn("update"), 0, false, false)
 
-# triggers [bug #18989] merge failure
-xfail(check(samefile("testfile", "correct")))
+-- triggers [bug #18989] merge failure
+xfail(samefile("testfile", "correct"))
