@@ -1289,10 +1289,9 @@ workspace::perform_additions(path_set const & paths,
     return;
 
   temp_node_id_source nis;
-  roster_t base_roster, new_roster;
-  MM(base_roster);
+  roster_t new_roster;
   MM(new_roster);
-  get_base_and_current_roster_shape(base_roster, new_roster, nis);
+  get_current_roster_shape(new_roster, nis);
 
   editable_roster_base er(new_roster, nis);
 
@@ -1333,11 +1332,11 @@ workspace::perform_additions(path_set const & paths,
         }
     }
 
-  revision_id base_rev;
-  get_revision_id(base_rev);
+  parent_map parents;
+  get_parent_rosters(parents);
 
   revision_t new_work;
-  make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
+  make_revision_for_workspace(parents, new_roster, new_work);
   put_work_rev(new_work);
   update_any_attrs();
 }
@@ -1350,10 +1349,9 @@ workspace::perform_deletions(path_set const & paths,
     return;
 
   temp_node_id_source nis;
-  roster_t base_roster, new_roster;
-  MM(base_roster);
+  roster_t new_roster;
   MM(new_roster);
-  get_base_and_current_roster_shape(base_roster, new_roster, nis);
+  get_current_roster_shape(new_roster, nis);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -1407,11 +1405,11 @@ workspace::perform_deletions(path_set const & paths,
         }
     }
 
-  revision_id base_rev;
-  get_revision_id(base_rev);
+  parent_map parents;
+  get_parent_rosters(parents);
 
   revision_t new_work;
-  make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
+  make_revision_for_workspace(parents, new_roster, new_work);
   put_work_rev(new_work);
   update_any_attrs();
 }
