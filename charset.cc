@@ -59,15 +59,6 @@ charset_convert(string const & src_charset,
     }
 }
 
-void
-system_to_utf8(external const & ext, utf8 & utf)
-{
-  string out;
-  charset_convert(system_charset(), "UTF-8", ext(), out);
-  utf = utf8(out);
-  I(utf8_validate(utf));
-}
-
 size_t
 display_width(utf8 const & utf)
 {
@@ -172,6 +163,23 @@ utf8_to_system(utf8 const & utf, external & ext)
   string out;
   utf8_to_system(utf, out);
   ext = external(out);
+}
+
+void
+system_to_utf8(external const & ext, utf8 & utf)
+{
+  if (system_charset_is_utf8())
+    utf = utf8(ext());
+  else if (system_charset_is_ascii_extension()
+           && is_all_ascii(ext()))
+    utf = utf8(ext());
+  else
+    {
+      string out;
+      charset_convert(system_charset(), "UTF-8", ext(), out);
+      utf = utf8(out);
+      I(utf8_validate(utf));
+    }
 }
 
 // utf8_validate and the helper functions is_valid_unicode_char and

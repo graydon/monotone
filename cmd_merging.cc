@@ -140,10 +140,13 @@ CMD(update, N_("workspace"), "",
   app.require_workspace();
 
   // Figure out where we are
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
 
-  revision_id old_rid;
-  app.work.get_revision_id(old_rid);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
 
+  revision_id old_rid = parents.begin()->first;
   N(!null_id(old_rid),
     F("this workspace is a new project; cannot update"));
 
@@ -223,10 +226,10 @@ CMD(update, N_("workspace"), "",
   temp_node_id_source nis;
 
   // Get the OLD and WORKING rosters
-  shared_ptr<roster_t> old_roster = shared_ptr<roster_t>(new roster_t());
+  database::roster_t_cp old_roster = parents.begin()->second.first;
   MM(*old_roster);
   roster_t working_roster; MM(working_roster);
-  app.work.get_base_and_current_roster_shape(*old_roster, working_roster, nis);
+  app.work.get_current_roster_shape(working_roster, nis);
   app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the CHOSEN roster

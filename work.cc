@@ -519,21 +519,23 @@ file_itemizer::visit_file(file_path const & path)
 struct workspace_itemizer : public tree_walker
 {
   roster_t & roster;
+  path_set & known;
   node_id_source & nis;
 
-  workspace_itemizer(roster_t & r, node_id_source & n)
-    : roster(r), nis(n) {}
-  virtual void visit_dir(file_path const & path);
+  workspace_itemizer(roster_t & r, path_set & k, node_id_source & n)
+    : roster(r), known(k), nis(n) {}
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
 
-void
+bool
 workspace_itemizer::visit_dir(file_path const & path)
 {
   split_path sp;
   path.split(sp);
   node_id nid = roster.create_dir_node(nis);
   roster.attach_node(nid, sp);
+  return known.find(sp) != known.end();
 }
 
 void
@@ -774,7 +776,7 @@ editable_working_tree::detach_node(split_path const & src)
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         move_file(src_pth / (*i)(), dst_pth / (*i)());
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
-        if (!bookkeeping_path::is_bookkeeping_path((*i)()))
+        if (!bookkeeping_path::internal_string_is_bookkeeping_path(*i))
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
       root_dir_attached = false;
     }
@@ -875,12 +877,12 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
       read_directory(src_pth, files, dirs);
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         {
-          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
           move_file(src_pth / (*i)(), dst_pth / (*i)());
         }
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
-          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
         }
       delete_dir_shallow(src_pth);
@@ -1612,12 +1614,17 @@ workspace::perform_content_update(cset const & update,
   roster_t roster;
   temp_node_id_source nis;
   split_path root;
-  file_path().split(root);
+  path_set known;
+  roster_t new_roster;
 
+  file_path().split(root);
   node_id nid = roster.create_dir_node(nis);
   roster.attach_node(nid, root);
 
-  workspace_itemizer itemizer(roster, nis);
+  get_current_roster_shape(new_roster, nis);
+  new_roster.extract_path_set(known);
+
+  workspace_itemizer itemizer(roster, known, nis);
   walk_tree(file_path(), itemizer);
 
   simulated_working_tree swt(roster, nis);

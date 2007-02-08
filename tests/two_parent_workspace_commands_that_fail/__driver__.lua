@@ -37,8 +37,9 @@ check(mtn("automate", "content_diff"), 1, nil, diffdiag)
 check(mtn("diff", "-r", left), 0, false, nil)
 check(mtn("automate", "content_diff", "-r", right), 0, false, nil)
 
-xfail(mtn("revert"), 1, nil, diag)
-xfail(mtn("update"), 1, nil, diag)
+-- revert and update: to where?
+check(mtn("revert", "."), 1, nil, diag)
+check(mtn("update"), 1, nil, diag)
 
 xfail(mtn("automate", "get_base_revision_id"), 1, nil, diag)
 xfail(mtn("automate", "inventory"), 1, nil, diag)
