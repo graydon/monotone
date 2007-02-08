@@ -1,4 +1,4 @@
-Wed Dec 27 09:57:48 UTC 2006
+??? ??? ?? ??:??:?? UTC ????
 
         0.33 release.
 
@@ -14,6 +14,15 @@ Wed Dec 27 09:57:48 UTC 2006
           corrupting the workspace. such unversioned files must be 
           removed manually.
 
+        - the character set and line separator conversion hooks 
+          (get_system_linesep, get_charset_conv and get_linesep_conv) 
+          have been removed. Similar functionality (probably based on
+          file type attributes) is planned and will be added in a future
+          release.
+
+
+
+Wed Dec 27 09:57:48 UTC 2006
 
 	0.32 release.
 
