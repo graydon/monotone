@@ -1420,8 +1420,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
                           bool execute)
 {
   temp_node_id_source nis;
-  roster_t base_roster, new_roster;
-  MM(base_roster);
+  roster_t new_roster;
   MM(new_roster);
   split_path dst;
   set<split_path> srcs;
@@ -1429,7 +1428,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
 
   I(!src_paths.empty());
 
-  get_base_and_current_roster_shape(base_roster, new_roster, nis);
+  get_current_roster_shape(new_roster, nis);
 
   dst_path.split(dst);
 
@@ -1497,11 +1496,11 @@ workspace::perform_rename(set<file_path> const & src_paths,
         % file_path(i->second));
     }
 
-  revision_id base_rev;
-  get_revision_id(base_rev);
+  parent_map parents;
+  get_parent_rosters(parents);
 
   revision_t new_work;
-  make_revision_for_workspace(base_rev, base_roster, new_roster, new_work);
+  make_revision_for_workspace(parents, new_roster, new_work);
   put_work_rev(new_work);
 
   if (execute)

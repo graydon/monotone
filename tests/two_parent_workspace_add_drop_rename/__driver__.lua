@@ -21,3 +21,8 @@ check(qgrep("adding fudgie", "stderr"))
 
 check(mtn("drop", "fudgie"), 0, false, true)
 check(qgrep("dropping fudgie", "stderr"))
+
+check(mtn("rename", "-e", "foo", "bar"), 0, false, true)
+check(qgrep("renaming foo to bar", "stderr"))
+
+commit()
