@@ -1,3 +1,18 @@
+2007-02-07  Lapo Luchini  <lapo@lapo.it>
+
+	* vocab_macros.hh: added operator!=() to 'enc' and 'dec'.
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc: 
+	* roster.cc:
+	replace references to localized_file_io.hh with file_io.hh
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* NEWS: add note about the removal of the charset and line
+	separator hooks
+
 2007-02-07  Daniel Carosone  <dan@geek.com.au>
 
 	* rename tests {update,checkout}_clobbers_workspace to
@@ -8,6 +23,28 @@
 
 	* tests/ls_unknown_in_subdir: Update test to match new
 	non-recursiveness of ls unknown.
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am (localized_file_io.{cc,hh}): remove
+	* cmd_diff_log.cc:
+	* cmd_files.cc:
+	* cmd_ws_commit.cc:
+	* diff_patch.cc:
+	* work.cc:
+	replace calls to read_localized_data with read_data
+	replace calls to write_localized_data with write_data
+	remove lua arg from calls to ident_existing_file and 
+	calculate_ident
+	* file_io.{cc,hh} (ident_existing_file, calculate_ident): move
+	here from localized_file_io.{cc,hh}
+	* lua_hooks.{cc,hh} (hook_get_system_linesep,
+	hook_get_charset_conv, hook_get_linesep_conv): remove
+	* localized_file.{cc,hh}: remove
+	* monotone.texi: remove charset/linesep sections
+	* simplestring_xform.{cc,hh} (line_end_convert): remove
+	* testsuite.lua (use_get_linesep_hook, files_with_non-utf8_data):
+	remove
 
 2007-02-07  Daniel Carosone  <dan@geek.com.au>
 

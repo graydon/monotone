@@ -105,6 +105,9 @@ void walk_tree(file_path const & path,
                tree_walker & walker);
 
 
+bool ident_existing_file(file_path const & p, file_id & ident);
+void calculate_ident(file_path const & file,
+                     hexenc<id> & ident);
 
 // Local Variables:
 // mode: C++

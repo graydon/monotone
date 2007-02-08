@@ -16,7 +16,7 @@
 #include "work.hh"
 #include "basic_io.hh"
 #include "cset.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "platform-wrapped.hh"
 #include "restrictions.hh"
 #include "sanity.hh"
@@ -540,7 +540,7 @@ addition_builder::add_node_for(split_path const & sp)
     case path::file:
       {
         file_id ident;
-        I(ident_existing_file(path, ident, lua));
+        I(ident_existing_file(path, ident));
         nid = er.create_file_node(ident);
       }
       break;
@@ -797,7 +797,7 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
           P(F("adding %s") % dst_pth);
           file_data dat;
           source.get_version(dst_pth, i->second, dat);
-          write_localized_data(dst_pth, dat.inner(), lua);
+          write_data(dst_pth, dat.inner());
           return;
         }
     }
@@ -861,7 +861,7 @@ editable_working_tree::apply_delta(split_path const & pth,
                        F("file '%s' does not exist") % pth_unsplit,
                        F("file '%s' is a directory") % pth_unsplit);
   hexenc<id> curr_id_raw;
-  calculate_ident(pth_unsplit, curr_id_raw, lua);
+  calculate_ident(pth_unsplit, curr_id_raw);
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
     F("content of file '%s' has changed, not overwriting") % pth_unsplit);
@@ -869,7 +869,7 @@ editable_working_tree::apply_delta(split_path const & pth,
 
   file_data dat;
   source.get_version(pth_unsplit, new_id, dat);
-  write_localized_data(pth_unsplit, dat.inner(), lua);
+  write_data(pth_unsplit, dat.inner());
 }
 
 void
@@ -1091,7 +1091,7 @@ workspace::classify_roster_paths(roster_t const & ros,
       // the node is a file, check if it exists and has been changed
       file_t file = downcast_to_file_t(node);
       file_id fid;
-      if (ident_existing_file(fp, fid, lua))
+      if (ident_existing_file(fp, fid))
         {
           if (file->content == fid)
             unchanged.insert(sp);
@@ -1179,7 +1179,7 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
             }
 
           file_t file = downcast_to_file_t(node);
-          ident_existing_file(fp, file->content, lua);
+          ident_existing_file(fp, file->content);
         }
 
     }

@@ -15,7 +15,7 @@
 
 #include "cmd.hh"
 #include "diff_patch.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "simplestring_xform.hh"
@@ -198,8 +198,7 @@ do_external_diff(cset const & cs,
         }
       else
         {
-          read_localized_data(file_path(delta_entry_path(i)),
-                              data_new, app.lua);
+          read_data(file_path(delta_entry_path(i)), data_new);
         }
 
       bool is_binary = false;
@@ -248,8 +247,7 @@ dump_diffs(cset const & cs,
         }
       else
         {
-          read_localized_data(file_path(i->first),
-                              unpacked, app.lua);
+          read_data(file_path(i->first), unpacked);
         }
 
       std::string pattern("");
@@ -297,8 +295,7 @@ dump_diffs(cset const & cs,
         }
       else
         {
-          read_localized_data(file_path(delta_entry_path(i)),
-                              data_new, app.lua);
+          read_data(file_path(delta_entry_path(i)), data_new);
         }
 
       split_path dst_path = delta_entry_path(i);

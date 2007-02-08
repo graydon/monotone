@@ -37,7 +37,6 @@ MOST_SOURCES = 								\
 	outdated_indicator.cc outdated_indicator.hh			\
 	database.cc database.hh						\
 	key_store.cc key_store.hh					\
-	localized_file_io.cc localized_file_io.hh			\
 	keys.cc keys.hh							\
 	packet.cc packet.hh						\
 	rcs_file.cc rcs_file.hh						\
