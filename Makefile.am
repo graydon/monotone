@@ -80,7 +80,9 @@ MOST_SOURCES = 								\
         package_revision.c package_revision.h				\
         package_full_revision.c package_full_revision.h			\
         option.cc option.hh options.cc options.hh options_list.hh	\
-        i18n.h parallel_iter.hh safe_map.hh pch.hh
+        i18n.h parallel_iter.hh safe_map.hh pch.hh			\
+									\
+	asciik.cc
 
 NETXX_SOURCES =								\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\
