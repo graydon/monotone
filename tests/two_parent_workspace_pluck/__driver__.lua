@@ -25,5 +25,5 @@ check(qgrep("right", "testfile"))
 check(not qgrep("ancestor", "testfile"))
 check(qgrep("quack quack", "pluckfile"))
 
-xfail(mtn("pluck", "-r", pluckrev), 0, false, false)
-xfail(qgrep("brawwk brawwk", "pluckfile"))
+check(mtn("pluck", "-r", pluckrev), 0, false, false)
+check(qgrep("brawwk brawwk", "pluckfile"))

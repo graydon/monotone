@@ -744,7 +744,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.rename_target_conflicts.size());
   P(F("There are %s directory_loop_conflicts.") 
     % result.directory_loop_conflicts.size());
-}                                                                
+}
 
 CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     N_("Apply changes made at arbitrary places in history to current workspace.\n"
@@ -755,7 +755,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
        "renames, conflicts, and so on.\n"
        "\n"
        "If one revision is given, applies the changes made in that revision\n"
-       "compared to its parent.\n"                                                                                  
+       "compared to its parent.\n"
        "\n"
        "If two revisions are given, applies the changes made to get from the\n"  
        "first revision to the second."),
@@ -829,10 +829,10 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   MM(*from_roster);
   app.db.get_roster(from_rid, *from_roster);
 
-  // Get the WORKING roster, and also the base roster while we're at it
+  // Get the WORKING roster
   roster_t working_roster; MM(working_roster);
-  roster_t base_roster; MM(base_roster);
-  app.work.get_base_and_current_roster_shape(base_roster, working_roster, nis);
+  app.work.get_current_roster_shape(working_roster, nis);
+
   app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the FROM->TO cset...
@@ -883,11 +883,11 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   P(F("applied changes to workspace"));
 
   // and record any remaining changes in _MTN/revision
-  revision_id base_id;
+  parent_map parents;
   revision_t remaining;
   MM(remaining);
-  app.work.get_revision_id(base_id);
-  make_revision_for_workspace(base_id, base_roster, merged_roster, remaining);
+  app.work.get_parent_rosters(parents);
+  make_revision_for_workspace(parents, merged_roster, remaining);
 
   // small race condition here...
   app.work.put_work_rev(remaining);
