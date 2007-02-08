@@ -613,12 +613,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
-  roster_t old_roster, new_roster;
+  roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-
+  app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,1));
   split_path sp;
@@ -660,11 +659,12 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           else
             throw usage(name);
         }
-      revision_id base;
-      app.work.get_revision_id(base);
+
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
 
       revision_t new_work;
-      make_revision_for_workspace(base, old_roster, new_roster, new_work);
+      make_revision_for_workspace(parents, new_roster, new_work);
       app.work.put_work_rev(new_work);
       app.work.update_any_attrs();
     }
