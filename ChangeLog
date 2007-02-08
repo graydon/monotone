@@ -1,3 +1,7 @@
+2007-02-07  Lapo Luchini  <lapo@lapo.it>
+
+	* vocab_macros.hh: changed operator!=() to actually use inner ==.
+
 2007-02-07  Daniel Carosone  <dan@geek..com.au>
 
 	* tests/db_kill_rev_and_recommit/__driver__.lua/: add a test
@@ -65,6 +69,10 @@
 	workspace roster and then apply the update cset against this with
 	simulated_working_tree to see if update will fail on something
 	obvious
+
+2007-02-07  Lapo Luchini  <lapo@lapo.it>
+
+	* vocab_macros.hh: added some missing operator!=().
 
 2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
