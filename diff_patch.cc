@@ -31,7 +31,7 @@
 #include "vocab.hh"
 #include "revision.hh"
 #include "constants.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 
 using std::endl;
 using std::make_pair;
@@ -613,7 +613,7 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
       require_path_is_file(path,
                            F("file '%s' does not exist in workspace") % path,
                            F("'%s' in workspace is a directory, not a file") % path);
-      read_localized_data(path, tmp, app.lua);
+      read_data(path, tmp);
       calculate_ident(file_data(tmp), fid);
       E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")

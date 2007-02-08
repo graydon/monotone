@@ -110,13 +110,6 @@ public:
                             file_path const & filename,
                             std::string const & value);
 
-  // conversion hooks
-  bool hook_get_system_linesep(std::string & linesep);
-  bool hook_get_charset_conv(file_path const & p,
-                             std::string & db, std::string & ext);
-  bool hook_get_linesep_conv(file_path const & p,
-                             std::string & db, std::string & ext);
-
   // validation hooks
   bool hook_validate_commit_message(utf8 const & message,
                                     revision_data const & new_rev,

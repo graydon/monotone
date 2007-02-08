@@ -34,9 +34,6 @@ std::string remove_ws(std::string const & s);
 // remove leading and trailing whitespace
 std::string trim_ws(std::string const & s);
 
-// line-ending conversion
-void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
-
 // Local Variables:
 // mode: C++
 // fill-column: 76
