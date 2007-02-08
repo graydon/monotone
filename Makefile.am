@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 CMD_SOURCES =								\
 	cmd.hh cmd_netsync.cc cmd_list.cc cmd_packet.cc	cmd_key_cert.cc \
 	cmd_merging.cc cmd_db.cc cmd_diff_log.cc cmd_ws_commit.cc 	\
-	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
+	cmd_othervcs.cc cmd_automate.cc cmd_files.cc cmd_agent.cc
 
 SANITY_CORE_SOURCES =							\
 	sanity.cc sanity.hh quick_alloc.hh				\
@@ -37,6 +37,7 @@ MOST_SOURCES = 								\
 	outdated_indicator.cc outdated_indicator.hh			\
 	database.cc database.hh						\
 	key_store.cc key_store.hh					\
+	ssh_agent.cc ssh_agent.hh							\
 	keys.cc keys.hh							\
 	packet.cc packet.hh						\
 	rcs_file.cc rcs_file.hh						\

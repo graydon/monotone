@@ -72,13 +72,13 @@ do_arc4(SecureVector<Botan::byte> & sym_key,
 
 // 'force_from_user' means that we don't use the passphrase cache, and we
 // don't use the get_passphrase hook.
-static void
+void
 get_passphrase(lua_hooks & lua,
                rsa_keypair_id const & keyid,
                utf8 & phrase,
-               bool confirm_phrase = false,
-               bool force_from_user = false,
-               string prompt_beginning = "enter passphrase")
+               bool confirm_phrase,
+               bool force_from_user,
+               string prompt_beginning)
 {
 
   // we permit the user to relax security here, by caching a passphrase (if
@@ -216,7 +216,7 @@ shared_ptr<RSA_PrivateKey>
 get_private_key(lua_hooks & lua,
                 rsa_keypair_id const & id,
                 base64< rsa_priv_key > const & priv,
-                bool force_from_user = false)
+                bool force_from_user)
 {
   rsa_priv_key decoded_key;
   utf8 phrase;
