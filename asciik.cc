@@ -420,6 +420,7 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
       std::cerr << "asciik: parents\n";
       set<revision_id> parents;
       app.db.get_revision_parents(*rev, parents);
+      parents.erase(ghost);
 //p    new_revs = []
 //p    for p in parents:
 //p        if p not in curr_row:
