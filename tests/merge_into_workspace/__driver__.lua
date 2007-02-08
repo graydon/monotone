@@ -57,6 +57,13 @@ check(mtn("automate", "graph"), 0, {"ancestry"}, nil)
 check(mtn("status"), 0, true, nil)
 check(qgrep("patched testfile", "stdout"))
 
+-- some automate commands that should do sensible things
+check(mtn("automate", "get_current_revision_id"), 0,
+      "9491240daab3028f583e4d0e0239da3e626fda2b\n", nil)
+
+check(get("expected-manifest"))
+check(mtn("automate", "get_manifest_of"), 0, {"expected-manifest"}, nil)
+
 -- a commit at this point should succeed
 commit()
 merged = base_revision()

@@ -1,5 +1,13 @@
 2007-02-07  Zack Weinberg  <zackw@panix.com>
 
+	* automate.cc (inventory, get_base_revision_id): Fail gracefully
+	in a two-parent workspace.
+	(get_current_revision_id, get_manifest_of): Work in a two-parent
+	workspace.
+	* tests/merge_into_workspace: Test new behavior of automate
+	get_current_revision_id and get_manifest-of.
+	* tests/two_parent_workspace_commands_that_fail: Un-xfail.
+
 	* tests/merge_into_workspace_files_added: Fix for workspace conflicts.
 
 2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>

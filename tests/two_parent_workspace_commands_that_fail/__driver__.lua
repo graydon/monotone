@@ -41,5 +41,5 @@ check(mtn("automate", "content_diff", "-r", right), 0, false, nil)
 check(mtn("revert", "."), 1, nil, diag)
 check(mtn("update"), 1, nil, diag)
 
-xfail(mtn("automate", "get_base_revision_id"), 1, nil, diag)
-xfail(mtn("automate", "inventory"), 1, nil, diag)
+check(mtn("automate", "get_base_revision_id"), 1, nil, diag)
+check(mtn("automate", "inventory"), 1, nil, diag)
