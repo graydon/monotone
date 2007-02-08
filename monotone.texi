@@ -7383,7 +7383,7 @@ None.
 @item Arguments:
 
 The optional @var{base-id} specifies a file-id on which the contents are
-based on. This is used for diff encoding. @var{contents} are the contents of
+based on. This is used for delta encoding. @var{contents} are the contents of
 the new file.
 
 @item Added in:
@@ -7454,7 +7454,7 @@ content [5bf1fd927dfb8679496a2e6cf00cbe50c1c87145]
 
 @item Output format:
 
-The new revision, hex encoded.
+The new revision id, hex encoded.
 
 @item Error conditions:
 
