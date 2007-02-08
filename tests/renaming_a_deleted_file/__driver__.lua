@@ -19,6 +19,7 @@ commit()
 -- revert to root
 probe_node("foo", root_r_sha, root_f_sha)
 remove("bar")
+remove("baz")
 
 -- make a delete edge on the move preimage
 check(mtn("drop", "foo"), 0, false, false)

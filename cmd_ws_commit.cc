@@ -80,7 +80,6 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
     options::opts::depth | options::opts::exclude | options::opts::missing)
 {
-  temp_node_id_source nis;
   roster_t old_roster, new_roster;
   cset included, excluded;
 
@@ -89,9 +88,19 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
   app.require_workspace();
 
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  {
+    parent_map parents;
+    app.work.get_parent_rosters(parents);
+    N(parents.size() == 1,
+      F("this command can only be used in a single-parent workspace"));
+    old_roster = *(parents.begin()->second.first);
 
-  node_restriction mask(args_to_paths(args), args_to_paths(app.opts.exclude_patterns),
+    temp_node_id_source nis;
+    app.work.get_current_roster_shape(new_roster, nis);
+  }
+    
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_roster, new_roster, app);
 

@@ -24,12 +24,22 @@ check(qgrep("right", "testfile"))
 check(not qgrep("ancestor", "testfile"))
 
 diag = "mtn: misuse: this command can only be used in a single-parent workspace\n"
+diffdiag = ("mtn: misuse: this workspace has more than one parent\n"..
+	    "mtn: misuse: (specify a revision to diff against with --revision)\n")
 
 check(mtn("merge_into_workspace", anc), 1, nil, diag)
 
-xfail(mtn("diff"), 1, nil, diag)
-xfail(mtn("revert"), 1, nil, diag)
-xfail(mtn("update"), 1, nil, diag)
+-- diff with no arguments: what parent?
+check(mtn("diff"), 1, nil, diffdiag)
+check(mtn("automate", "content_diff"), 1, nil, diffdiag)
+
+-- diff can do something sensible if you specify a parent
+check(mtn("diff", "-r", left), 0, false, nil)
+check(mtn("automate", "content_diff", "-r", right), 0, false, nil)
+
+-- revert and update: to where?
+check(mtn("revert", "."), 1, nil, diag)
+check(mtn("update"), 1, nil, diag)
 
 xfail(mtn("automate", "get_base_revision_id"), 1, nil, diag)
 xfail(mtn("automate", "inventory"), 1, nil, diag)

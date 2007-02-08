@@ -10,6 +10,7 @@ commit()
 left = base_revision()
 
 revert_to(anc)
+remove("testfile1")
 
 addfile("testfile2", "This is test file 2\n")
 commit()

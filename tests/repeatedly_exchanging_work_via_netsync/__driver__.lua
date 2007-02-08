@@ -15,6 +15,7 @@ commit("testbranch")
 ver[1] = base_revision()
 
 revert_to(ver[0])
+remove("testfile2")
 
 writefile("testfile", "version 1 data")
 commit("testbranch")
