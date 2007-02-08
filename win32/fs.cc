@@ -139,38 +139,45 @@ get_path_status(std::string const & path)
 }
 
 static bool
-rename_clobberingly_impl(const char* from, const char* to)
+rename_clobberingly_impl(const char * from, const char * to)
 {
   // MoveFileEx is only available on NT-based systems.  We will revert to a
   // more compatible DeleteFile/MoveFile pair as a compatibility fall-back.
   typedef BOOL (WINAPI *MoveFileExFun)(LPCTSTR, LPCTSTR, DWORD);
   static MoveFileExFun fnMoveFileEx = 0;
   static bool MoveFileExAvailable = false;
-  if (fnMoveFileEx == 0) {
-    HMODULE hModule = LoadLibrary("kernel32");
-    if (hModule)
-      fnMoveFileEx = reinterpret_cast<MoveFileExFun>
-        (GetProcAddress(hModule, "MoveFileExA"));
-    if (fnMoveFileEx) {
-      L(FL("using MoveFileEx for renames"));
-      MoveFileExAvailable = true;
-    } else
-      L(FL("using DeleteFile/MoveFile fallback for renames"));
-  }
-
-  if (MoveFileExAvailable) {
-    if (fnMoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
-      return true;
-    else if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
-      MoveFileExAvailable = false;
-      L(FL("MoveFileEx failed with CALL_NOT_IMPLEMENTED, using fallback"));
+  if (fnMoveFileEx == 0)
+    {
+      HMODULE hModule = LoadLibrary("kernel32");
+      if (hModule)
+	fnMoveFileEx = reinterpret_cast<MoveFileExFun>
+	  (GetProcAddress(hModule, "MoveFileExA"));
+      if (fnMoveFileEx)
+	{
+	  L(FL("using MoveFileEx for renames"));
+	  MoveFileExAvailable = true;
+	}
+      else
+	L(FL("using DeleteFile/MoveFile fallback for renames"));
     }
-  } else {
-    // This is not even remotely atomic, but what can you do?
-    DeleteFile(to);
-    if (MoveFile(from, to))
-      return true;
-  }
+
+  if (MoveFileExAvailable)
+    {
+      if (fnMoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
+	return true;
+      else if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+	{
+	  MoveFileExAvailable = false;
+	  L(FL("MoveFileEx failed with CALL_NOT_IMPLEMENTED, using fallback"));
+	}
+    }
+  else
+    {
+      // This is not even remotely atomic, but what can you do?
+      DeleteFile(to);
+      if (MoveFile(from, to))
+	return true;
+    }
   return false;
 }
 
