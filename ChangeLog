@@ -1,3 +1,11 @@
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc (workspace::perform_additions,
+	workspace::perform_deletions): Update to deal with multi-parent
+	workspaces.
+	* tests/two_parent_workspace_add_drop: New test.
+	* testsuite.lua: Add it.
+
 2007-02-07  Zack Weinberg  <zackw@panix.com>
 
 	* tests/merge_into_workspace_files_added: Fix for workspace conflicts.
