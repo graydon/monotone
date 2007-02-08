@@ -6,10 +6,7 @@
 
 #include "ssh_agent.hh"
 #include "sanity.hh"
-#include "botan/bigint.h"
 #include "netio.hh"
-
-using Botan::BigInt;
 
 ssh_agent::ssh_agent() {
 }
@@ -19,8 +16,6 @@ ssh_agent::connect() {
   const char *authsocket;
   int sock;
   struct sockaddr_un sunaddr;
-
-  unsigned int cmd = 11;
 
   authsocket = getenv("SSH_AUTH_SOCK");
 
@@ -49,11 +44,13 @@ ssh_agent::connect() {
 unsigned long
 ssh_agent::get_long(char const buf[4])
 {
+  /*
   L(FL("agent: get_long: %u %u %u %u")
     % (unsigned long)((unsigned char)(buf)[0])
     % (unsigned long)((unsigned char)(buf)[1])
     % (unsigned long)((unsigned char)(buf)[2])
     % (unsigned long)((unsigned char)(buf)[3]));
+  */
   return ((unsigned long)((unsigned char)(buf)[0]) << 24)
     | ((unsigned long)((unsigned char)(buf)[1]) << 16)
     | ((unsigned long)((unsigned char)(buf)[2]) << 8)
@@ -63,8 +60,11 @@ ssh_agent::get_long(char const buf[4])
 unsigned long
 ssh_agent::get_long_from_buf(string const buf, unsigned long &loc)
 {
-  get_long(buf.c_str() + loc);
+  E(buf.length() >= loc + 4, F("string not long enough to get a long"));
+  unsigned long ret = get_long(buf.c_str() + loc);
+  E(ret <= 2048, F("long is larger than expected"));
   loc += 4;
+  return ret;
 }
 
 void
@@ -80,6 +80,57 @@ ssh_agent::get_string_from_buf(string const buf, unsigned long &loc, unsigned lo
 }
 
 void
+ssh_agent::put_long(unsigned long l, char buf[4]) {
+  buf[0] = (char)(unsigned char)(l >> 24);
+  buf[1] = (char)(unsigned char)(l >> 16);
+  buf[2] = (char)(unsigned char)(l >> 8);
+  buf[3] = (char)(unsigned char)(l);
+  /*
+  L(FL("agent: long_to_buf: %u %u %u %u")
+    % (unsigned long)(unsigned char)buf[0]
+    % (unsigned long)(unsigned char)buf[1]
+    % (unsigned long)(unsigned char)buf[2]
+    % (unsigned long)(unsigned char)buf[3]);
+  */
+}
+
+void
+ssh_agent::put_long_into_buf(unsigned long l, string & buf) {
+  char lb[4];
+  L(FL("agent: put_long_into_buf: long: %u, buf len: %i") % l % buf.length());
+  put_long(l, lb);
+  buf.append(lb, 4);
+  L(FL("agent: put_long_into_buf: buf len now %i") % buf.length());
+}
+
+void
+ssh_agent::put_bigint_into_buf(BigInt bi, string & buf) {
+  Botan::byte bi_buf[bi.bytes()];
+  L(FL("agent: put_bigint_into_buf: bigint.bytes(): %u, bigint: %s") % bi.bytes() % bi);
+  put_long_into_buf(bi.bytes(), buf);
+  BigInt::encode(bi_buf, bi);
+  buf.append((char *)bi_buf, bi.bytes());
+  L(FL("agent: put_bigint_into_buf: buf len now %i") % buf.length());
+}
+
+void
+ssh_agent::put_key_into_buf(RSA_PublicKey const key, string & buf) {
+  L(FL("agent: put_key_into_buf: key e: %s, n: %s") % key.get_e() % key.get_n());
+  put_string_into_buf("ssh-rsa", buf);
+  put_bigint_into_buf(key.get_e(), buf);
+  put_bigint_into_buf(key.get_n(), buf);
+  L(FL("agent: put_key_into_buf: buf len now %i") % buf.length());
+}
+
+void
+ssh_agent::put_string_into_buf(string const str, string & buf) {
+  L(FL("agent: put_string_into_buf: str len %i, buf len %i") % str.length() % buf.length());
+  put_long_into_buf(str.length(), buf);
+  buf.append(str.c_str(), str.length());
+  L(FL("agent: put_string_into_buf: buf len now %i") % buf.length());
+}
+
+vector<RSA_PublicKey> const
 ssh_agent::get_keys() {
   unsigned int len;
   unsigned long ret;
@@ -99,7 +150,7 @@ ssh_agent::get_keys() {
   ret = stream->read(buf, 4);
   len = get_long(buf);
 
-  L(FL("agent: len %u") % len);
+  L(FL("agent: get_keys response len %u") % len);
 
   string packet;
   char * read_buf = new char[len];
@@ -111,7 +162,7 @@ ssh_agent::get_keys() {
     get -= ret;
   }
   L(FL("agent: get: %u") % get);
-  delete read_buf;
+  delete [] read_buf;
   L(FL("agent: packet length %u") % packet.length());
 
   //L(FL("agent: ----ret: %i, len: %u, buf: %u %u %u %u") % ret % len % buf[0] % buf[1] % buf[2] % buf[3]);
@@ -145,11 +196,11 @@ ssh_agent::get_keys() {
       L(FL("agent: RSA"));
       string e_str;
       get_string_from_buf(key, key_loc, slen, e_str);
-      BigInt e = BigInt::decode((unsigned char *)(e_str.c_str()), slen, BigInt::Binary);
+      BigInt e = BigInt::decode((unsigned char *)(e_str.c_str()), e_str.length(), BigInt::Binary);
       L(FL("agent: e: %s, len %u") % e % slen);
       string n_str;
       get_string_from_buf(key, key_loc, slen, n_str);
-      BigInt n = BigInt::decode((unsigned char *)(n_str.c_str()), slen, BigInt::Binary);
+      BigInt n = BigInt::decode((unsigned char *)(n_str.c_str()), n_str.length(), BigInt::Binary);
       L(FL("agent: n: %s, len %u") % n % slen);
 
       RSA_PublicKey key(n, e);
@@ -188,7 +239,55 @@ ssh_agent::get_keys() {
     get_string_from_buf(packet, packet_loc, comment_len, comment);
     L(FL("agent: comment_len: %u, comment: %s") % comment_len % comment);
   }
-  exit(0);
+  return keys;
+}
+
+void
+ssh_agent::sign_data(RSA_PublicKey const key, string const data, string & out) {
+  L(FL("agent: sign_data: key e: %s, n: %s, data len: %i") % key.get_e() % key.get_n() % data.length());
+  string packet_out;
+  string key_buf;
+  unsigned char cmd[1];
+  cmd[0] = 13;
+  packet_out.append((char *)cmd, 1);
+  put_key_into_buf(key, key_buf);
+  put_string_into_buf(key_buf, packet_out);
+  put_string_into_buf(data, packet_out);
+  unsigned long flags = 0;
+  put_long_into_buf(flags, packet_out);
+
+  stream->write(packet_out.c_str(), packet_out.length());
+
+  char buf[4];
+  unsigned long len;
+  unsigned long ret;
+  ret = stream->read(buf, 4);
+  len = get_long(buf);
+
+  L(FL("agent: sign_data response len %u") % len);
+
+  E(len > 0, F("agent: sign_data response length is 0"));
+
+  string packet_in;
+  char * read_buf = new char[len];
+  long get = len;
+  while (get > 0) {
+    ret = stream->read(read_buf, get);
+    //L(FL("agent: ----ret: %i") % ret);
+    packet_in.append(read_buf, ret);
+    get -= ret;
+  }
+  L(FL("agent: get: %u") % get);
+  delete [] read_buf;
+  L(FL("agent: packet_in length %u") % packet_in.length());  
+
+  unsigned long packet_in_loc = 0;
+  E(packet_in.at(0) == 14, F("agent: packet_in type != 14"));
+  packet_in_loc += 1;
+
+  unsigned long out_len;
+  get_string_from_buf(packet_in, packet_in_loc, out_len, out);
+  L(FL("agent: signed data length: %u (%u)") % out_len % out.length());
 }
 
 // Local Variables:
