@@ -164,6 +164,8 @@ void draw(const size_t curr_items, const size_t next_items,
   const set<size_t> & curr_ghosts, const string & annotation)
 {
   std::cerr << "actual draw\n";
+    std::cerr << "curr_items: " << curr_items << '\n';
+    std::cerr << "next_items: " << next_items << '\n';
 //p    line = [" "] * (curr_items * 2 - 1)
 //p    interline = [" "] * (max(curr_items, next_items) * 2 - 1)
   string line(curr_items * 2 - 1, ' ');
@@ -232,13 +234,14 @@ void draw(const size_t curr_items, const size_t next_items,
 	  end = 2 * j - 2;
 	  dot = end;
 	  interline[dot + 1] = '\\';
+	  std::cerr << interline << " interline\n";
 	}
 //p            if end - start >= 1:
 //p                dots.add(dot)
 //p            line[start:end] = "-" * (end - start)
 	if ((end - start) > 0)
 	  dots.insert(dot);
-	std::cerr << "for with some -\n";
+	std::cerr << "for with some - from " << start << " to " << end << "\n";
 	for (size_t l = start; l < end; ++l)
 	  line[l] = '-';
       }
@@ -253,6 +256,7 @@ void draw(const size_t curr_items, const size_t next_items,
   for (set<size_t>::const_iterator dot = dots.begin();
        dot != dots.end(); ++dot)
     line[*dot] = '·';
+  std::cerr << line << " line\n";
 //p    # and add the main attraction (may overwrite a ".").
 //p    line[curr_loc * 2] = "o"
   line[curr_loc * 2] = 'o';
@@ -272,6 +276,7 @@ bool try_draw(const vector<revision_id> & curr_row,
 //p    next_items = len(next_row)
   size_t curr_items = curr_row.size();
   size_t next_items = next_row.size();
+  I(curr_loc < curr_items);
 
 //p    curr_ghosts = []
 //p    for i in xrange(curr_items):
@@ -309,9 +314,11 @@ bool try_draw(const vector<revision_id> & curr_row,
 	if (d != 0)
 	  have_shift = true;
 	preservation_links.insert(pair<size_t, size_t>(i, j));
+	std::cerr << '(' << i << ',' << j << ") ";
       }
     }
   }
+  std::cerr << "\n";
 
 //p    parent_links = []
 //p    for p in parents:
@@ -325,14 +332,18 @@ bool try_draw(const vector<revision_id> & curr_row,
   for (set<revision_id>::const_iterator p = parents.begin();
        p != parents.end(); ++p)
     {
+      std::cerr << (*p).inner()() << " parent\n";
       size_t i = curr_loc;
       size_t j = distance(next_row.begin(),
 	find(next_row.begin(), next_row.end(), *p));
+      I(j < next_items);
       size_t d = abs(i - j);
       if ((d > 1) && have_shift)
 	return false;
       parent_links.insert(pair<size_t, size_t>(i, j));
+      std::cerr << '(' << i << ',' << j << ") ";
     }
+  std::cerr << "\n";
 
 //p    preservation_crosses = links_cross(preservation_links)
 //p    parent_crosses = links_cross(parent_links)
@@ -393,7 +404,7 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
        rev != sorted.end(); ++rev)
     {
       // print row
-      std::cerr << "asciik: foreach sorted\n";
+      std::cerr << "asciik: foreach sorted: " << rev->inner()() << "\n";
 
 //p    if curr_rev not in curr_row:
 //p        curr_row.append(curr_rev)
@@ -413,12 +424,15 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
 //p    for p in parents:
 //p        if p not in curr_row:
 //p            new_revs.append(p)
-      std::cerr << "asciik: foreach parent\n";
+      std::cerr << "asciik: foreach in " << parents.size() << " parent\n";
       set<revision_id> new_revs;
       for (set<revision_id>::const_iterator parent = parents.begin();
 	   parent != parents.end(); ++parent)
+	   {//TODO
 	if (find(curr_row.begin(), curr_row.end(), *parent) == curr_row.end())
 	  new_revs.insert(*parent);
+	    std::cerr << *parent << " parent\n";
+	   }//TODO
 
 //p    next_row = list(curr_row)
 //p    next_row[curr_loc:curr_loc + 1] = new_revs
@@ -439,7 +453,7 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
 //p    # ghost handling has been done.
 
 //p    no_ghost = without_a_ghost(next_row)
-      vector<revision_id> no_ghost(curr_row);
+      vector<revision_id> no_ghost(next_row);
       vector<revision_id>::iterator i_ghost = find(no_ghost.begin(),
 	no_ghost.end(), ghost);
       if (i_ghost != no_ghost.end())
