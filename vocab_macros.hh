@@ -30,6 +30,8 @@ public:                                                \
   operator=(enc<INNER> const & other);                 \
   bool operator==(enc<INNER> const & x) const          \
     { return i() == x(); }                             \
+  bool operator!=(enc<INNER> const & x) const          \
+    { return !(i() == x()); }                          \
   friend std::ostream & operator<< <>(std::ostream &,  \
                                  enc<INNER> const &);  \
 };
@@ -64,6 +66,8 @@ public:                                                \
   operator=(dec<INNER> const & other);                 \
   bool operator==(dec<INNER> const & x) const          \
     { return i == x.i; }                               \
+  bool operator!=(dec<INNER> const & x) const          \
+    { return !(i == x.i); }                            \
   friend std::ostream & operator<< <>(std::ostream &,  \
                                  dec<INNER> const &);  \
 };
