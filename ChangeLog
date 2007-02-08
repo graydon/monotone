@@ -1,3 +1,26 @@
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* cmd_merging.cc (CMD(pluck)): Migrate to new internal
+	multi-parent workspace API.
+	* tests/two_parent_workspace_pluck: Un-xfail test.
+
+2007-02-07  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_diff_log.cc (prepare_diff): Handle multi-parent workspaces
+	gracefully.
+
+	* tests/two_parent_workspace_commands_that_fail
+	* tests/two_parent_workspace_pluck: New tests (expected to fail).
+	* testsuite.lua: Add them.
+	* cmd_merging.cc (merge_into_workspace): Standardize a diagnostic.
+
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* cmd_merging.cc (CMD(merge_into_workspace)): N() out if user is
+	trying to merge in the workspace's current revision.
+	* tests/merge_into_workspace_same_rev/*: New test.
+	* testsuite.lua: Add it.
+
 2006-09-25  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (workspace::get_work_rev): Fold into sole caller,
@@ -252,7 +275,7 @@
 
 2007-01-29  Thomas Keller  <me@thomaskeller.biz>
 
-	* added some lua hooks to run a script after revs or certs have 
+	* added some lua hooks to run a script after revs or certs have
 	arrived via netsync for a particular branch
 
 2007-01-29  Matthew Gregan  <kinetik@orcon.net.nz>

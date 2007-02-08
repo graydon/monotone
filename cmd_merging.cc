@@ -609,14 +609,12 @@ CMD(merge_into_workspace, N_("tree"),
   // Get the current state of the workspace.
 
   // This command cannot be applied to a workspace with more than one parent
-  // (revs can have no more than two parents) but we use the multiparent-safe
-  // interface anyway so we can give an N() instead of an invariant failure.
-  // (Also, it gives us the cached_roster we want with no special handling.)
+  // (revs can have no more than two parents).
   {
     parent_map parents;
     app.work.get_parent_rosters(parents);
     N(parents.size() == 1,
-      F("'%s' can only be used in a single-parent workspace") % name);
+      F("this command can only be used in a single-parent workspace"));
 
     temp_node_id_source nis;
     roster_t working_roster;
@@ -632,6 +630,7 @@ CMD(merge_into_workspace, N_("tree"),
 
   complete(app, idx(args, 0)(), right_id);
   app.db.get_roster(right_id, right);
+  N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
   set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   app.db.get_uncommon_ancestors(left_id, right_id,
@@ -668,7 +667,7 @@ CMD(merge_into_workspace, N_("tree"),
   // perform_content_update, because content changes have been dropped.
   cset update;
   make_cset(*left.first, merge_result.roster, update);
-  
+
   // small race condition here...
   app.work.perform_content_update(update, wca);
   app.work.put_work_rev(merged_rev);
@@ -745,7 +744,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
     % result.rename_target_conflicts.size());
   P(F("There are %s directory_loop_conflicts.") 
     % result.directory_loop_conflicts.size());
-}                                                                
+}
 
 CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     N_("Apply changes made at arbitrary places in history to current workspace.\n"
@@ -756,7 +755,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
        "renames, conflicts, and so on.\n"
        "\n"
        "If one revision is given, applies the changes made in that revision\n"
-       "compared to its parent.\n"                                                                                  
+       "compared to its parent.\n"
        "\n"
        "If two revisions are given, applies the changes made to get from the\n"  
        "first revision to the second."),
@@ -830,10 +829,10 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   MM(*from_roster);
   app.db.get_roster(from_rid, *from_roster);
 
-  // Get the WORKING roster, and also the base roster while we're at it
+  // Get the WORKING roster
   roster_t working_roster; MM(working_roster);
-  roster_t base_roster; MM(base_roster);
-  app.work.get_base_and_current_roster_shape(base_roster, working_roster, nis);
+  app.work.get_current_roster_shape(working_roster, nis);
+
   app.work.update_current_roster_from_filesystem(working_roster);
 
   // Get the FROM->TO cset...
@@ -884,11 +883,11 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   P(F("applied changes to workspace"));
 
   // and record any remaining changes in _MTN/revision
-  revision_id base_id;
+  parent_map parents;
   revision_t remaining;
   MM(remaining);
-  app.work.get_revision_id(base_id);
-  make_revision_for_workspace(base_id, base_roster, merged_roster, remaining);
+  app.work.get_parent_rosters(parents);
+  make_revision_for_workspace(parents, merged_roster, remaining);
 
   // small race condition here...
   app.work.put_work_rev(remaining);
