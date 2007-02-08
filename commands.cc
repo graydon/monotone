@@ -12,7 +12,7 @@
 
 #include "transforms.hh"
 #include "simplestring_xform.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "charset.hh"
 #include "diff_patch.hh"
 #include "inodeprint.hh"
