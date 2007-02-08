@@ -1,9 +1,15 @@
+2007-02-07  Daniel Carosone  <dan@geek.com.au>
+
+	* rename tests {update,checkout}_clobbers_workspace to
+	_does_not_clobber_workspace, because they now no longer do.
+	* add a corollary pluck_does_not_clobber_workspace
+	
 2007-02-07  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/ls_unknown_in_subdir: Update test to match new
 	non-recursiveness of ls unknown.
 
-2007-02-07  Daniel Carosone  <dan@geek..com.au>
+2007-02-07  Daniel Carosone  <dan@geek.com.au>
 
 	* tests/db_kill_rev_and_recommit/__driver__.lua/: add a test
 	(xfail'ed, until fixed) for a bug (#18990) I just tripped over,
