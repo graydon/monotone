@@ -16,6 +16,7 @@ commit()
 left = base_revision()
 
 revert_to(anc)
+check(remove("left"))
 check(get("right"))
 copy("right", "right.b")
 addfile("right")
