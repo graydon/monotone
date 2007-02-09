@@ -82,7 +82,7 @@ MOST_SOURCES = 								\
 	option.cc option.hh options.cc options.hh options_list.hh	\
 	i18n.h parallel_iter.hh safe_map.hh pch.hh			\
 									\
-	asciik.cc
+	asciik.cc asciik.hh
 
 NETXX_SOURCES =								\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\

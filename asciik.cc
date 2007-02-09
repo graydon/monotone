@@ -9,25 +9,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <algorithm>
-#include <iostream>
-#include <iterator>
-#include <set>
-#include <vector>
-#include <boost/tuple/tuple.hpp>
-
-#include "cmd.hh"
-#include "revision.hh"
-
-using std::cout;
-using std::insert_iterator;
-using std::max;
-using std::min;
-using std::ostream_iterator;
-using std::pair;
-using std::set;
-using std::vector;
-
 /*
 BUGS:
 
@@ -127,20 +108,34 @@ Loop:
   Having found a layout that works, we draw lines connecting things!  Yay.
 */
 
-//namespace asciik { }
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+//#include <boost/tuple/tuple.hpp>
+// tuples are faster than std::pair on copy constructors, but we're only using
+// std::pair<size_t, size_t> so it probably doesn't matter much
 
-/**
- * Prints an ASCII-k chunk using the given revisions.
- */
-//void asciik::print(set<revision_id> ids) {
-//  database::get_revision_parents(revision_id const & id, set<revision_id> & parents)
-//  for (iterator id = ids.begin(); id != ids.end(); ++id)
-//    os << "Work on: " << id << "\n";
-//}
+#include "asciik.hh"
+#include "cmd.hh"
+
+using std::cout;
+using std::insert_iterator;
+using std::max;
+using std::min;
+using std::ostream_iterator;
+using std::pair;
+using std::set;
+using std::vector;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
-void links_cross(const set<pair<size_t, size_t> > & links, set<size_t> & crosses)
+asciik::asciik()
+{
+}
+
+void
+asciik::links_cross(const set<pair<size_t, size_t> > & links,
+  set<size_t> & crosses) const
 {
   for (set<pair<size_t, size_t> >::const_iterator link = links.begin();
        link != links.end(); ++link)
@@ -153,9 +148,10 @@ void links_cross(const set<pair<size_t, size_t> > & links, set<size_t> & crosses
     }
 }
 
-void draw(const size_t curr_items, const size_t next_items,
+void
+asciik::draw(const size_t curr_items, const size_t next_items,
   const size_t curr_loc, const set<pair<size_t, size_t> > & links,
-  const set<size_t> & curr_ghosts, const string & annotation)
+  const set<size_t> & curr_ghosts, const string & annotation) const
 {
   string line(curr_items * 2 - 1, ' ');
   string interline(max(curr_items, next_items) * 2 - 1, ' ');
@@ -179,7 +175,7 @@ void draw(const size_t curr_items, const size_t next_items,
 	interline[2 * i] = '|';
       else {
 	if (j < i) {
-	  // | .---o
+	  // | ·---o
 	  // |/| | |
 	  // 0 1 2 3
 	  // j     i
@@ -190,7 +186,7 @@ void draw(const size_t curr_items, const size_t next_items,
 	  dot = start - 1;
 	  interline[dot - 1] = '/';
 	} else { // i < j
-	  // o---.
+	  // o---·
 	  // | | |\|
 	  // 0 1 2 3
 	  // i     j
@@ -209,22 +205,22 @@ void draw(const size_t curr_items, const size_t next_items,
     }
   // add any dots (must do this in a second pass, so that if there are
   // cases like:
-  //   | .-----.-o
+  //   | ·-----·-o
   //   |/| | |/|
-  // where we want to make sure the second dot overwrites the first --.
+  // where we want to make sure the second dot overwrites the first --·
   for (set<size_t>::const_iterator dot = dots.begin();
        dot != dots.end(); ++dot)
-    line[*dot] = '·';
-  // and add the main attraction (may overwrite a ".").
+    line[*dot] = '·'; //TODO: what about this special char? should it be UTF-8?
+  // and add the main attraction (may overwrite a '·').
   line[curr_loc * 2] = 'o';
 
   cout << line << "    " << annotation << '\n';
   cout << interline << '\n';
 }
 
-bool try_draw(const vector<revision_id> & curr_row,
-  const vector<revision_id> & next_row, const size_t curr_loc,
-  const set<revision_id> & parents)
+bool
+asciik::try_draw(const vector<revision_id> & next_row, const size_t curr_loc,
+  const set<revision_id> & parents, const string & annotation) const
 {
   size_t curr_items = curr_row.size();
   size_t next_items = next_row.size();
@@ -280,10 +276,52 @@ bool try_draw(const vector<revision_id> & curr_row,
   set<pair<size_t, size_t> > links(preservation_links);
   copy(parent_links.begin(), parent_links.end(),
     insert_iterator<set<pair<size_t, size_t> > >(links, links.begin()));
-  draw(curr_items, next_items, curr_loc, links, curr_ghosts,
-    /*annotation*/ idx(curr_row, curr_loc).inner()());
-
+  draw(curr_items, next_items, curr_loc, links, curr_ghosts, annotation);
   return true;
+}
+
+void
+asciik::print(const revision_id & rev, const set<revision_id> & parents,
+  const string & annotation)
+{
+  if (find(curr_row.begin(), curr_row.end(), rev) == curr_row.end())
+    curr_row.push_back(rev);
+
+  //iterator_traits<vector<revision_id>::iterator>::difference_type
+  size_t curr_loc = distance(curr_row.begin(),
+    find(curr_row.begin(), curr_row.end(), rev));
+  I(curr_loc < curr_row.size()); // as it is surely found
+
+  set<revision_id> new_revs;
+  for (set<revision_id>::const_iterator parent = parents.begin();
+       parent != parents.end(); ++parent)
+    if (find(curr_row.begin(), curr_row.end(), *parent) == curr_row.end())
+      new_revs.insert(*parent);
+
+  vector<revision_id> next_row(curr_row);
+  next_row.insert(
+    next_row.erase(next_row.begin() + curr_loc),
+    new_revs.begin(), new_revs.end());
+
+  // now next_row contains exactly the revisions it needs to, except that no
+  // ghost handling has been done.
+  vector<revision_id> no_ghost(next_row);
+  vector<revision_id>::iterator first_ghost = find(no_ghost.begin(),
+    no_ghost.end(), ghost);
+  if (first_ghost != no_ghost.end())
+    no_ghost.erase(first_ghost);
+
+  if (try_draw(no_ghost, curr_loc, parents, annotation))
+    curr_row = no_ghost;
+  else if (try_draw(next_row, curr_loc, parents, annotation))
+    curr_row = next_row;
+  else if (new_revs.size() == 0) { // this line has disappeared
+    vector<revision_id> extra_ghost(next_row);
+    extra_ghost.insert(curr_row.begin() + curr_loc, ghost);
+    if (!try_draw(extra_ghost, curr_loc, parents, annotation))
+      I(false);
+    curr_row = extra_ghost;
+  }
 }
 
 CMD(asciik, N_("tree"), N_("SELECTOR"),
@@ -301,6 +339,7 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
   selectors::selector_type ty = selectors::sel_ident;
   selectors::complete_selector("", sels, ty, completions, app);
 
+  asciik graph;
   set<revision_id> revs;
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
@@ -317,48 +356,9 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
   for (vector<revision_id>::const_iterator rev = sorted.begin();
        rev != sorted.end(); ++rev)
     {
-      // print row
-
-      if (find(curr_row.begin(), curr_row.end(), *rev) == curr_row.end())
-	curr_row.push_back(*rev);
-
-      //iterator_traits<vector<revision_id>::iterator>::difference_type
-      size_t curr_loc = distance(curr_row.begin(),
-	find(curr_row.begin(), curr_row.end(), *rev));
-      //assert(curr_loc < size()); as it is surely found
-
       set<revision_id> parents;
       app.db.get_revision_parents(*rev, parents);
       parents.erase(ghost); // remove the fake parent that root nodes have
-      set<revision_id> new_revs;
-      for (set<revision_id>::const_iterator parent = parents.begin();
-	   parent != parents.end(); ++parent)
-	if (find(curr_row.begin(), curr_row.end(), *parent) == curr_row.end())
-	  new_revs.insert(*parent);
-
-      vector<revision_id> next_row(curr_row);
-      next_row.insert(
-	next_row.erase(next_row.begin() + curr_loc),
-	new_revs.begin(), new_revs.end());
-
-      // now next_row contains exactly the revisions it needs to, except that no
-      // ghost handling has been done.
-      vector<revision_id> no_ghost(next_row);
-      vector<revision_id>::iterator first_ghost = find(no_ghost.begin(),
-	no_ghost.end(), ghost);
-      if (first_ghost != no_ghost.end())
-	no_ghost.erase(first_ghost);
-
-      if (try_draw(curr_row, no_ghost, curr_loc, parents))
-	curr_row = no_ghost;
-      else if (try_draw(curr_row, next_row, curr_loc, parents))
-	curr_row = next_row;
-      else if (new_revs.size() == 0) { // this line has disappeared
-	vector<revision_id> extra_ghost(next_row);
-	extra_ghost.insert(curr_row.begin() + curr_loc, ghost);
-	if (!try_draw(curr_row, extra_ghost, curr_loc, parents))
-	  I(false);
-	curr_row = extra_ghost;
-      }
+      graph.print(*rev, parents, rev->inner()());
     }
 }

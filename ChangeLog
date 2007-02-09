@@ -1,3 +1,7 @@
+2007-02-09  Lapo Luchini  <lapo@lapo.it>
+
+	* asciik.{cc,hh}: asciik is now a proper class with internal state.
+
 2007-02-08  Zack Weinberg  <zackw@panix.com>
 
 	* configure.ac: Stick some goo in config.status to kill
@@ -51,10 +55,6 @@
 	* simplestring_xform.{cc,hh} (line_end_convert): remove
 	* testsuite.lua (use_get_linesep_hook, files_with_non-utf8_data):
 	remove
-
-2007-02-07  Lapo Luchini  <lapo@lapo.it>
-
-	* vocab_macros.hh: changed operator!=() to actually use inner ==.
 
 2007-02-07  Daniel Carosone  <dan@geek.com.au>
 
@@ -123,10 +123,6 @@
 	workspace roster and then apply the update cset against this with
 	simulated_working_tree to see if update will fail on something
 	obvious
-
-2007-02-07  Lapo Luchini  <lapo@lapo.it>
-
-	* vocab_macros.hh: added some missing operator!=().
 
 2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
 
