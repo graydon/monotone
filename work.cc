@@ -434,34 +434,42 @@ workspace::maybe_update_inodeprints()
 
   inodeprint_map ipm_new;
   temp_node_id_source nis;
-  roster_t old_roster, new_roster;
+  roster_t new_roster;
 
-  get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  get_current_roster_shape(new_roster, nis);
   update_current_roster_from_filesystem(new_roster);
+
+  parent_map parents;
+  get_parent_rosters(parents);
 
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
     {
       node_id nid = i->first;
-      if (old_roster.has_node(nid))
+      for (parent_map::const_iterator parent = parents.begin();
+           parent != parents.end(); ++parent)
         {
-          node_t old_node = old_roster.get_node(nid);
-          if (is_file_t(old_node))
+          roster_t const parent_ros = parent_roster(parent);
+          if (parent_ros.has_node(nid))
             {
-              node_t new_node = i->second;
-              I(is_file_t(new_node));
-
-              file_t old_file = downcast_to_file_t(old_node);
-              file_t new_file = downcast_to_file_t(new_node);
-
-              if (new_file->content == old_file->content)
+              node_t old_node = parent_ros.get_node(nid);
+              if (is_file_t(old_node))
                 {
-                  split_path sp;
-                  new_roster.get_name(nid, sp);
-                  file_path fp(sp);
-                  hexenc<inodeprint> ip;
-                  if (inodeprint_file(fp, ip))
-                    ipm_new.insert(inodeprint_entry(fp, ip));
+                  node_t new_node = i->second;
+                  I(is_file_t(new_node));
+
+                  file_t old_file = downcast_to_file_t(old_node);
+                  file_t new_file = downcast_to_file_t(new_node);
+
+                  if (new_file->content == old_file->content)
+                    {
+                      split_path sp;
+                      new_roster.get_name(nid, sp);
+                      file_path fp(sp);
+                      hexenc<inodeprint> ip;
+                      if (inodeprint_file(fp, ip))
+                        ipm_new.insert(inodeprint_entry(fp, ip));
+                    }
                 }
             }
         }
