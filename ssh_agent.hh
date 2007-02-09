@@ -1,6 +1,7 @@
 #ifndef __SSH_AGENT_H__
 #define __SSH_AGENT_H__
 
+#include "numeric_vocab.hh"
 #include "netxx/stream.h"
 #include "botan/rsa.h"
 #include "botan/bigint.h"
@@ -26,14 +27,16 @@ private:
   shared_ptr<Stream> stream;
   vector<RSA_PublicKey> keys;
 
-  unsigned long get_long(char const * buf);
-  unsigned long get_long_from_buf(string const & buf, unsigned long & loc);
-  void get_string_from_buf(string const & buf, unsigned long & loc, unsigned long & len, string & out);
+  u32 fetch_packet(string & packet);
+  u32 get_long(char const * buf);
+  u32 get_long_from_buf(string const & buf, u32 & loc);
+  void get_string_from_buf(string const & buf, u32 & loc, u32 & len, string & out);
   void put_key_into_buf(RSA_PublicKey const & key, string & buf);
   void put_string_into_buf(string const & str, string & buf);
   void put_bigint_into_buf(BigInt const & bi, string & buf);
-  void put_long(unsigned long l, char * buf);
-  void put_long_into_buf(unsigned long l, string & buf);
+  void put_long(u32 l, char * buf);
+  void put_long_into_buf(u32 l, string & buf);
+  void read_num_bytes(u32 const len, string & out);
 };
 
 // Local Variables:

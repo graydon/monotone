@@ -43,32 +43,32 @@ ssh_agent::connect() {
   stream = shared_ptr<Stream>(new Stream(sock));
 }
 
-unsigned long
+u32
 ssh_agent::get_long(char const * buf)
 {
   L(FL("agent: get_long: %u %u %u %u")
-    % (unsigned long)((unsigned char)(buf)[0])
-    % (unsigned long)((unsigned char)(buf)[1])
-    % (unsigned long)((unsigned char)(buf)[2])
-    % (unsigned long)((unsigned char)(buf)[3]));
-  return ((unsigned long)((unsigned char)(buf)[0]) << 24)
-    | ((unsigned long)((unsigned char)(buf)[1]) << 16)
-    | ((unsigned long)((unsigned char)(buf)[2]) << 8)
-    | ((unsigned long)((unsigned char)(buf)[3]));
+    % (u32)((unsigned char)(buf)[0])
+    % (u32)((unsigned char)(buf)[1])
+    % (u32)((unsigned char)(buf)[2])
+    % (u32)((unsigned char)(buf)[3]));
+  return ((u32)((unsigned char)(buf)[0]) << 24)
+    | ((u32)((unsigned char)(buf)[1]) << 16)
+    | ((u32)((unsigned char)(buf)[2]) << 8)
+    | ((u32)((unsigned char)(buf)[3]));
 }
 
-unsigned long
-ssh_agent::get_long_from_buf(string const & buf, unsigned long & loc)
+u32
+ssh_agent::get_long_from_buf(string const & buf, u32 & loc)
 {
   E(buf.length() >= loc + 4, F("string not long enough to get a long"));
-  unsigned long ret = get_long(buf.data() + loc);
+  u32 ret = get_long(buf.data() + loc);
   E(ret <= 2048, F("long is larger than expected"));
   loc += 4;
   return ret;
 }
 
 void
-ssh_agent::get_string_from_buf(string const & buf, unsigned long & loc, unsigned long & len, string & out)
+ssh_agent::get_string_from_buf(string const & buf, u32 & loc, u32 & len, string & out)
 {
   L(FL("agent: get_string_from_buf: buf length: %u, loc: %u" ) % buf.length() % loc);
   len = get_long_from_buf(buf, loc);
@@ -80,22 +80,20 @@ ssh_agent::get_string_from_buf(string const & buf, unsigned long & loc, unsigned
 }
 
 void
-ssh_agent::put_long(unsigned long l, char * buf) {
+ssh_agent::put_long(u32 l, char * buf) {
   buf[0] = (char)(unsigned char)(l >> 24);
   buf[1] = (char)(unsigned char)(l >> 16);
   buf[2] = (char)(unsigned char)(l >> 8);
   buf[3] = (char)(unsigned char)(l);
-  /*
   L(FL("agent: long_to_buf: %u %u %u %u")
-    % (unsigned long)(unsigned char)buf[0]
-    % (unsigned long)(unsigned char)buf[1]
-    % (unsigned long)(unsigned char)buf[2]
-    % (unsigned long)(unsigned char)buf[3]);
-  */
+    % (u32)(unsigned char)buf[0]
+    % (u32)(unsigned char)buf[1]
+    % (u32)(unsigned char)buf[2]
+    % (u32)(unsigned char)buf[3]);
 }
 
 void
-ssh_agent::put_long_into_buf(unsigned long l, string & buf) {
+ssh_agent::put_long_into_buf(u32 l, string & buf) {
   char lb[4];
   L(FL("agent: put_long_into_buf: long: %u, buf len: %i") % l % buf.length());
   put_long(l, lb);
@@ -130,11 +128,43 @@ ssh_agent::put_string_into_buf(string const & str, string & buf) {
   L(FL("agent: put_string_into_buf: buf len now %i") % buf.length());
 }
 
+void
+ssh_agent::read_num_bytes(u32 const len, string & out)
+{
+  int ret;
+  const u32 bufsize = 4096;
+  char read_buf[bufsize];
+  u32 get = len;
+  while (get > 0) {
+    ret = stream->read(read_buf, min(get, bufsize));
+    E(ret >= 0, F("stream read failed (%i)") % ret);
+    //L(FL("agent: ----ret: %i") % ret);
+    out.append(read_buf, ret);
+    get -= ret;
+  }
+  L(FL("agent: read_num_bytes: get: %u") % get);
+  L(FL("agent: read_num_bytes: length %u") % out.length());
+}
+
+u32
+ssh_agent::fetch_packet(string & packet)
+{
+  u32 len;
+  string len_buf;
+  read_num_bytes(4, len_buf);
+  u32 l = 0;
+  len = get_long_from_buf(len_buf, l);
+  E(len > 0, F("zero-length packet from ssh-agent"));
+
+  L(FL("agent: get_keys response len %u") % len);
+
+  read_num_bytes(len, packet);
+  return len;
+}
+
 vector<RSA_PublicKey> const
 ssh_agent::get_keys() {
-  unsigned int len;
-  int ret;
-  char buf[4];
+  u32 len;
 
   unsigned int ch;
   void * v = (void *)&ch;
@@ -147,48 +177,31 @@ ssh_agent::get_keys() {
   ch = 11;
   stream->write(v, 1);
 
-  ret = stream->read(buf, 4);
-  len = get_long(buf);
-  E(len > 0, F("zero-length packet from ssh-agent"));
-
-  L(FL("agent: get_keys response len %u") % len);
-
   string packet;
-  const long bufsize = 4096;
-  char read_buf[bufsize];
-  long get = len;
-  while (get > 0) {
-    ret = stream->read(read_buf, min(get, bufsize));
-    E(ret >= 0, F("stream read failed (%i)") % ret);
-    //L(FL("agent: ----ret: %i") % ret);
-    packet.append(read_buf, ret);
-    get -= ret;
-  }
-  L(FL("agent: get: %u") % get);
-  L(FL("agent: packet length %u") % packet.length());
+  len = fetch_packet(packet);
 
   //L(FL("agent: ----ret: %i, len: %u, buf: %u %u %u %u") % ret % len % buf[0] % buf[1] % buf[2] % buf[3]);
   //ret = stream->read(buf, 1);
   //L(FL("agent: ----ret: %i, buf: %u") % ret % buf[0]);
 
   //first byte is packet type
-  unsigned long packet_loc = 0;
+  u32 packet_loc = 0;
   E(packet.at(0) == 12, F("agent: packet type != 12"));
   packet_loc += 1;
 
-  unsigned long num_keys = get_long_from_buf(packet, packet_loc);
+  u32 num_keys = get_long_from_buf(packet, packet_loc);
   //L(FL("agent: ----ret: ret %i, num_keys: %u") % ret % num_keys);
 
-  for (unsigned long key_num = 0; key_num < num_keys; ++key_num) {
+  for (u32 key_num = 0; key_num < num_keys; ++key_num) {
     L(FL("agent: getting key # %u") % key_num);
 
     //L(FL("agent: ----ret: ret %i, key_len: %u") % ret % key_len);
 
-    unsigned long key_len;
+    u32 key_len;
     string key;
     get_string_from_buf(packet, packet_loc, key_len, key);
 
-    unsigned long key_loc = 0, slen;
+    u32 key_loc = 0, slen;
     string type;
     get_string_from_buf(key, key_loc, slen, type);
 
@@ -240,7 +253,7 @@ ssh_agent::get_keys() {
       % key_loc);
 
     string comment;
-    unsigned long comment_len;
+    u32 comment_len;
     get_string_from_buf(packet, packet_loc, comment_len, comment);
     L(FL("agent: comment_len: %u, comment: %s") % comment_len % comment);
   }
@@ -258,40 +271,19 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   put_key_into_buf(key, key_buf);
   put_string_into_buf(key_buf, packet_out);
   put_string_into_buf(data, packet_out);
-  unsigned long flags = 0;
+  u32 flags = 0;
   put_long_into_buf(flags, packet_out);
 
   stream->write(packet_out.c_str(), packet_out.length());
 
-  char buf[4];
-  unsigned long len;
-  int ret;
-  ret = stream->read(buf, 4);
-  len = get_long(buf);
-
-  E(len > 0, F("zero-length packet from ssh-agent"));
-
-  L(FL("agent: sign_data response len %u") % len);
-
   string packet_in;
-  const long bufsize = 4096;
-  char read_buf[bufsize];
-  long get = len;
-  while (get > 0) {
-    ret = stream->read(read_buf, min(get, bufsize));
-    E(ret >= 0, F("stream read failed (%i)") % ret);
-    //L(FL("agent: ----ret: %i") % ret);
-    packet_in.append(read_buf, ret);
-    get -= ret;
-  }
-  L(FL("agent: get: %u") % get);
-  L(FL("agent: packet_in length %u") % packet_in.length());
+  u32 len = fetch_packet(packet_in);
 
-  unsigned long packet_in_loc = 0;
+  u32 packet_in_loc = 0;
   E(packet_in.at(0) == 14, F("agent: packet_in type != 14"));
   packet_in_loc += 1;
 
-  unsigned long out_len;
+  u32 out_len;
   get_string_from_buf(packet_in, packet_in_loc, out_len, out);
   L(FL("agent: signed data length: %u (%u)") % out_len % out.length());
 }
