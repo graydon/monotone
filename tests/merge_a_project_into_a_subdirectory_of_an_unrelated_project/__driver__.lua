@@ -15,7 +15,7 @@ commit("b2")
 
 check(mtn("merge_into_dir", "b1", "b2", "dir/zuul"), 0, false, false)
 
-check(mtn("checkout", "-b", "b2", "checkout"))
+check(mtn("checkout", "-b", "b2", "checkout"), 0, false, true)
 check(exists("checkout/file2"))
 check(isdir("checkout/dir"))
 check(exists("checkout/dir/quux"))

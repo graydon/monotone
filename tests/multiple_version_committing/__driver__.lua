@@ -23,6 +23,6 @@ for i = 1, 6 do
   canonicalize("stdout")
   check(samefile("stdout", "testfile"))
   remove("_MTN")
-  check(mtn("checkout", "--revision", rsha[i], "."), 0, true)
+  check(mtn("checkout", "--revision", rsha[i], "."), 0, true, true)
   check(sha1("testfile") == fsha[i])
 end

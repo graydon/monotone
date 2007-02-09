@@ -121,7 +121,7 @@ function probe_node(filename, rsha, fsha)
   remove("_MTN.old")
   rename("_MTN", "_MTN.old")
   remove(filename)
-  check(mtn("checkout", "--revision", rsha, "."), 0, false)
+  check(mtn("checkout", "--revision", rsha, "."), 0, false, true)
   rename("_MTN.old/options", "_MTN")
   check(base_revision() == rsha)
   check(sha1(filename) == fsha)
@@ -186,9 +186,9 @@ function revert_to(rev, branch, mt)
   rename("_MTN", "_MTN.old")
   
   if branch == nil then
-    check(mt("checkout", "--revision", rev, "."), 0, false)
+    check(mt("checkout", "--revision", rev, "."), 0, false, true)
   else
-    check(mt("checkout", "--branch", branch, "--revision", rev, "."), 0, false)
+    check(mt("checkout", "--branch", branch, "--revision", rev, "."), 0, false, true)
   end
   check(base_revision() == rev)
 end

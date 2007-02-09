@@ -38,6 +38,8 @@ check(mtn("drop", old_dir .. "/doomed"), 0, false, false)
 commit()
 left = base_revision()
 
+rename("subdir1", "backup")
+
 revert_to(base)
 
 check(mtn("rename", old_dir, new_dir), 0, false, false)
@@ -47,7 +49,7 @@ right = base_revision()
 
 check(mtn("merge", "--branch=testbranch"), 0, false, false)
 
-check(mtn("checkout", "--revision", base, "test_dir"), 0, false, false)
+check(mtn("checkout", "--revision", base, "test_dir"), 0, false, true)
 check(indir("test_dir", mtn("--branch=testbranch", "update")), 0, false, false)
 merged = indir("test_dir", {base_revision})[1]()
 check(base ~= merged)
@@ -56,15 +58,15 @@ check(right ~= merged)
 
 t_new_dir = "test_dir/" .. new_dir
 check(samefile(new_dir .. "/preexisting", t_new_dir .. "/preexisting"))
-check(samefile(new_dir .. "/new-file", t_new_dir .. "/new-file"))
+check(samefile("backup/the_dir/new-file", t_new_dir .. "/new-file"))
 check(samefile("rename-out-file", "test_dir/rename-out-file"))
 check(not exists(t_new_dir .. "/rename-out-file"))
 check(samefile("rename-out-dir/subfile", "test_dir/rename-out-dir/subfile"))
 check(not exists(t_new_dir .. "/rename-out-dir/subfile"))
-check(samefile(new_dir .. "/rename-in-file", t_new_dir .. "/rename-in-file"))
+check(samefile("backup/the_dir/rename-in-file", t_new_dir .. "/rename-in-file"))
 check(not exists("test_dir/rename-in-file"))
-check(samefile(new_dir .. "/rename-in-dir/subfile", t_new_dir .. "/rename-in-dir/subfile"))
+check(samefile("backup/the_dir/rename-in-dir/subfile", t_new_dir .. "/rename-in-dir/subfile"))
 check(not exists("test_dir/rename-in-dir/subfile"))
 check(not exists(t_new_dir .. "/doomed"))
 check(samefile("subdir1/bystander1", "test_dir/subdir1/bystander1"))
-check(samefile("subdir1/bystander2", "test_dir/subdir1/bystander2"))
+check(samefile("backup/bystander2", "test_dir/subdir1/bystander2"))
