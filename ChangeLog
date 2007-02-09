@@ -1,5 +1,8 @@
 2007-02-09  Zack Weinberg  <zackw@panix.com>
 
+	* tests/workspace_migration: Generalize to support different sorts
+	of migration-needing workspaces.
+
 	* cmd_list.cc (ls_known, ls_changed): Work in a two-parent workspace.
 	* tests/two_parent_workspace_list: New test.
 	* testsuite.lua: Add it.
