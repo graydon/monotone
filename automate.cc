@@ -225,10 +225,15 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
   file_path_external(idx(args,0)).split(path);
 
   roster_t base, current;
+  parent_map parents;
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  app.work.get_base_and_current_roster_shape(base, current, nis);
+  app.work.get_current_roster_shape(current, nis);
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+  base = *(parents.begin()->second.first);
 
   // escalate if the given path is unknown to the current roster
   N(current.has_node(path),
