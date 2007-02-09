@@ -193,7 +193,7 @@ ssh_agent::get_keys() {
   packet_loc += 1;
 
   u32 num_keys = get_long_from_buf(packet, packet_loc);
-  L(FL("agent: ----ret: ret %i, num_keys: %u") % ret % num_keys);
+  L(FL("agent: %u keys") % num_keys);
 
   for (u32 key_num = 0; key_num < num_keys; ++key_num) {
     L(FL("agent: getting key # %u") % key_num);
