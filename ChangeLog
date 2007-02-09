@@ -1,3 +1,23 @@
+2007-02-09  Derek Scherger  <derek@echologic.com>
+
+	* file_io.cc (write_data): indentation tweak
+	* tests/locked_workspace/__driver__.lua: new test for locked
+	workspace
+	* testsuite.lua: call it
+	* work.cc (path_for_detached_nids): new function to get the path
+	for detached workspace nodes
+	(path_for_nid): rename to ...
+	(path_for_detached_nid): ... this and use new base path function
+	(editable_working_tree::detach_node):
+	(editable_working_tree::drop_detached_node):
+	(editable_working_tree::create_dir_node):
+	(editable_working_tree::create_file_node):
+	(editable_working_tree::attach_node): call function by new name
+	(workspace::perform_content_update): ensure detached node
+	directory doesn't exist before starting; if it does consider
+	the workspace locked and abort; ensure it is removed after
+	completion
+
 2007-02-09  Markus Schiltknecht  <markus@bluegap.ch>
 
 	* tests/test_a_merge_8/{parent,left,right,correct}: simplified

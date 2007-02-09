@@ -690,9 +690,15 @@ struct content_merge_empty_adaptor : public content_merge_adaptor
 // editable_working_tree implementation
 
 static inline bookkeeping_path
-path_for_nid(node_id nid)
+path_for_detached_nids()
 {
-  return bookkeeping_root / "tmp" / lexical_cast<string>(nid);
+  return bookkeeping_root / "detached";
+}
+
+static inline bookkeeping_path
+path_for_detached_nid(node_id nid)
+{
+  return path_for_detached_nids() / lexical_cast<string>(nid);
 }
 
 // Attaching/detaching the root directory:
@@ -719,9 +725,8 @@ editable_working_tree::detach_node(split_path const & src)
   I(root_dir_attached);
   node_id nid = next_nid++;
   file_path src_pth(src);
-  bookkeeping_path dst_pth = path_for_nid(nid);
+  bookkeeping_path dst_pth = path_for_detached_nid(nid);
   safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
-  make_dir_for(dst_pth);
   if (src_pth == file_path())
     {
       // root dir detach, so we move contents, rather than the dir itself
@@ -743,7 +748,7 @@ editable_working_tree::detach_node(split_path const & src)
 void
 editable_working_tree::drop_detached_node(node_id nid)
 {
-  bookkeeping_path pth = path_for_nid(nid);
+  bookkeeping_path pth = path_for_detached_nid(nid);
   map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(pth);
   I(i != rename_add_drop_map.end());
@@ -756,7 +761,7 @@ node_id
 editable_working_tree::create_dir_node()
 {
   node_id nid = next_nid++;
-  bookkeeping_path pth = path_for_nid(nid);
+  bookkeeping_path pth = path_for_detached_nid(nid);
   require_path_is_nonexistent(pth,
                               F("path %s already exists") % pth);
   mkdir_p(pth);
@@ -767,7 +772,7 @@ node_id
 editable_working_tree::create_file_node(file_id const & content)
 {
   node_id nid = next_nid++;
-  bookkeeping_path pth = path_for_nid(nid);
+  bookkeeping_path pth = path_for_detached_nid(nid);
   require_path_is_nonexistent(pth,
                               F("path %s already exists") % pth);
   file_data dat;
@@ -780,7 +785,7 @@ editable_working_tree::create_file_node(file_id const & content)
 void
 editable_working_tree::attach_node(node_id nid, split_path const & dst)
 {
-  bookkeeping_path src_pth = path_for_nid(nid);
+  bookkeeping_path src_pth = path_for_detached_nid(nid);
   file_path dst_pth(dst);
 
   map<bookkeeping_path, file_path>::const_iterator i
@@ -1539,6 +1544,14 @@ workspace::perform_content_update(cset const & update,
   split_path root;
   path_set known;
   roster_t new_roster;
+  bookkeeping_path detached = path_for_detached_nids();
+
+  E(!directory_exists(detached), 
+    F("workspace is locked\n"
+      "you must clean up and remove the %s directory")
+    % detached);
+
+  mkdir_p(detached);
 
   file_path().split(root);
   node_id nid = roster.create_dir_node(nis);
@@ -1555,6 +1568,8 @@ workspace::perform_content_update(cset const & update,
 
   editable_working_tree ewt(lua, ca);
   update.apply_to(ewt);
+
+  delete_dir_shallow(detached);
 }
 
 void

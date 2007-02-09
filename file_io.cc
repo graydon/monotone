@@ -435,7 +435,7 @@ write_data(system_path const & path,
            system_path const & tmpdir)
 {
   write_data_impl(path, data, tmpdir / (FL("data.tmp.%d") %
-                                             get_process_id()).str());
+                                        get_process_id()).str());
 }
 
 tree_walker::~tree_walker() {}
