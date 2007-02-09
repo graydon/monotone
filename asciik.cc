@@ -70,7 +70,22 @@ Desired:
 Possibly the no-shift-while-drawing-long-edges code could even be removed,
 deferring to the no-edge-crossings code.
 
+3)
 
+It is currently not supported to have more than 2 "next lines".
+This is not a problem as currently the HEAD is on top and parents are downward,
+and in no case a revision can currently have 3 parents, but it should definitely
+be supported either to support possible future 3-parents merges and printing the
+graph with HEAD at the end.
+This can be done, sacrifying 2 more lines per additional parent, as in:
+o
+|\
+| \      2 next
+|\ \
+| \ \    3 next
+|\ \ \
+| \ \ \  4 next
+...there's no limit to that.
 
 
 How this works:
