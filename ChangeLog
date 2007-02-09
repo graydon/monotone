@@ -1,3 +1,10 @@
+2007-02-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc (maybe_update_inodeprints): Update for multi-parent
+	workspace.
+	* tests/two_parent_workspace_inodeprints: New test.
+	* testsuite.lua: Add it.
+
 2007-02-07  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (perform_rename): Work in a two-parent workspace.
