@@ -63,6 +63,10 @@
 
 	* vocab_macros.hh: added operator!=() to 'enc' and 'dec'.
 
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/fs.cc (rename_clobberingly_impl): GNU style.
+
 2007-02-07  Derek Scherger  <derek@echologic.com>
 
 	* commands.cc:
