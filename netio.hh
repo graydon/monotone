@@ -84,7 +84,7 @@ try_extract_datum_uleb128(std::string const & in,
       if (finished)
         break;
       else if (maxbytes == 1)
-        throw bad_decode(F("uleb128 decode for '%s' into %d-byte datum overflowed")
+        throw bad_decode(F("overflow while decoding variable length integer '%s' into a %d-byte field")
                          % name % maxbytes);
       else
         {
@@ -119,7 +119,7 @@ try_extract_datum_uleb128(string_queue const & in,
       if (finished)
         break;
       else if (maxbytes == 1)
-        throw bad_decode(F("uleb128 decode for '%s' into %d-byte datum overflowed")
+        throw bad_decode(F("overflow while decoding variable length integer '%s' into a %d-byte field")
                          % name % maxbytes);
       else
         {
@@ -139,7 +139,7 @@ extract_datum_uleb128(std::string const & in,
   T out;
   size_t tpos = pos;
   if (! try_extract_datum_uleb128(in, tpos, name, out))
-    throw bad_decode(F("ran out of bytes reading uleb128 value for '%s' at pos %d")
+    throw bad_decode(F("ran out of bytes reading variable length integer '%s' at pos %d")
                      % name % pos);
   pos = tpos;
   return out;
