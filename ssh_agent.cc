@@ -186,7 +186,7 @@ ssh_agent::get_keys() {
 
   //first byte is packet type
   u32 packet_loc = 0;
-  E(packet.at(0) == 12, F("agent: packet type != 12"));
+  E(packet.at(0) == 12, F("agent: packet type (%u) != 12") % (u32)packet.at(0));
   packet_loc += 1;
 
   u32 num_keys = get_long_from_buf(packet, packet_loc);
@@ -263,16 +263,19 @@ ssh_agent::get_keys() {
 void
 ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & out) {
   L(FL("agent: sign_data: key e: %s, n: %s, data len: %i") % key.get_e() % key.get_n() % data.length());
-  string packet_out;
+  string data_out;
   string key_buf;
   unsigned char cmd[1];
   cmd[0] = 13;
-  packet_out.append((char *)cmd, 1);
+  data_out.append((char *)cmd, 1);
   put_key_into_buf(key, key_buf);
-  put_string_into_buf(key_buf, packet_out);
-  put_string_into_buf(data, packet_out);
+  put_string_into_buf(key_buf, data_out);
+  put_string_into_buf(data, data_out);
   u32 flags = 0;
-  put_long_into_buf(flags, packet_out);
+  put_long_into_buf(flags, data_out);
+
+  string packet_out;
+  put_string_into_buf(data, packet_out);
 
   stream->write(packet_out.c_str(), packet_out.length());
 
@@ -280,7 +283,7 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   u32 len = fetch_packet(packet_in);
 
   u32 packet_in_loc = 0;
-  E(packet_in.at(0) == 14, F("agent: packet_in type != 14"));
+  E(packet_in.at(0) == 14, F("agent: packet_in type (%u) != 14") % (u32)packet_in.at(0));
   packet_in_loc += 1;
 
   u32 out_len;
