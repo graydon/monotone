@@ -1,6 +1,50 @@
+2007-02-09  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/test_a_merge_8/{parent,left,right,correct}: simplified
+	the test case even more. That's about as small as it gets.
+
+2007-02-09  Lapo Luchini  <lapo@lapo.it>
+
+	* netio.hh: Removed the word 'uleb128' from printed text.
+	* po/it.po: Updated and translated a few more strings (45 to go).
+
+2007-02-09  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/test_a_merge_8/{parent,left,right,correct}: simplified
+	the test case.
+	
+2007-02-08  Derek Scherger  <derek@echologic.com>
+
+	* cmd_merging.cc (get_content_paths): new function
+	(update):
+	(pluck): put paths by content hash into workspace adapter
+	* diff_patch.{cc,hh} (content_merge_adaptor::get_version): remove
+	path argument from interface
+	(content_merge_workspace_adaptor): add map of paths by content
+	hash to workspace adaptor
+	(content_merge_workspace_adaptor::get_version): get path from map
+	* work.cc (attr_file_name): remove unused var
+	(editable_working_tree::written_content): remove
+	(content_merge_empty_adaptor::get_version): remove path argument
+	(editable_working_tree::create_file_node): write file content here
+	rather than deferring it to attach_node
+	(editable_working_tree::attach_node): remove deferred file content
+	(editable_working_tree::apply_delta): remove path argument from 
+	get_version call
+
+2007-02-08  Zack Weinberg  <zackw@panix.com>
+
+	* configure.ac: Stick some goo in config.status to kill
+	UPDATEPOFILES in po/Makefile, so that .po files will not be
+	automatically regenerated.
+
+2007-02-07  Lapo Luchini  <lapo@lapo.it>
+
+	* vocab_macros.hh: added operator!=() to 'enc' and 'dec'.
+
 2007-02-07  Derek Scherger  <derek@echologic.com>
 
-	* commands.cc: 
+	* commands.cc:
 	* roster.cc:
 	replace references to localized_file_io.hh with file_io.hh
 
@@ -14,7 +58,7 @@
 	* rename tests {update,checkout}_clobbers_workspace to
 	_does_not_clobber_workspace, because they now no longer do.
 	* add a corollary pluck_does_not_clobber_workspace
-	
+
 2007-02-07  Nathaniel Smith  <njs@pobox.com>
 
 	* tests/ls_unknown_in_subdir: Update test to match new
@@ -30,7 +74,7 @@
 	* work.cc:
 	replace calls to read_localized_data with read_data
 	replace calls to write_localized_data with write_data
-	remove lua arg from calls to ident_existing_file and 
+	remove lua arg from calls to ident_existing_file and
 	calculate_ident
 	* file_io.{cc,hh} (ident_existing_file, calculate_ident): move
 	here from localized_file_io.{cc,hh}
@@ -47,7 +91,7 @@
 	* tests/db_kill_rev_and_recommit/__driver__.lua/: add a test
 	(xfail'ed, until fixed) for a bug (#18990) I just tripped over,
 	whereby db_kill_rev_locally doesn't seem to kill enough.
-	
+
 2007-02-07  Markus Schiltknecht  <markus@bluegap.ch>
 
 	* tests/test_a_merge_8/__driver__.lua: okay, sorry, that didn't work,
