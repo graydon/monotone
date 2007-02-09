@@ -1,5 +1,8 @@
 2007-02-09  Zack Weinberg  <zackw@panix.com>
 
+	* cmd_files.cc (log): Work in a two-parent workspace.
+	* tests/merge_into_workspace: Augment with tests for log.
+
 	* cmd_files.cc (annotate): Handle multi-parent workspaces gracefully.
 	Add lengthy comment about why multi-parent annotate doesn't work.
 	* tests/two_parent_workspace_annotate: New xfailed test.

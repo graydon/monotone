@@ -1,6 +1,21 @@
 -- this is very similar to the explicit_merge test, except that the
 -- result of the merge winds up in the current workspace.
 
+function samefile_ignore_dates(a, b)
+   local atxt = readfile(a):gsub("\nDate: [^\n]*\n", "\nDate: *****\n")
+   local btxt = readfile(b):gsub("\nDate: [^\n]*\n", "\nDate: *****\n")
+   if atxt == btxt then
+      return true
+   else
+      writefile_q("sfid-a.txt", atxt)
+      writefile_q("sfid-b.txt", btxt)
+      local ok,pid = runcmd({"diff","-u","sfid-a.txt","sfid-b.txt"}, "sfid-")
+      if not ok then err(pid,2) end
+      log_file_contents("sfid-stdout")
+      return false
+   end
+end
+
 mtn_setup()
 
 check(get("testfile"))
@@ -63,6 +78,16 @@ check(mtn("automate", "get_current_revision_id"), 0,
 
 check(get("expected-manifest"))
 check(mtn("automate", "get_manifest_of"), 0, {"expected-manifest"}, nil)
+
+-- log should do sensible things
+check(get("expected-log"))
+check(get("expected-log-left"))
+
+check(mtn("log", "testfile"), 0, true, nil)
+check(samefile_ignore_dates("stdout", "expected-log"))
+
+check(mtn("log", "--from", left), 0, true, nil)
+check(samefile_ignore_dates("stdout", "expected-log-left"))
 
 -- a commit at this point should succeed
 commit()
