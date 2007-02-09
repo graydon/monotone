@@ -292,10 +292,6 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   u32 out_len;
   get_string_from_buf(packet_in, packet_in_loc, out_len, out);
   L(FL("agent: signed data length: %u (%u)") % out_len % out.length());
-
-  L(FL("agent: removing first 32 bytes of signing response"));
-  out = out.substr(32);
-  L(FL("agent: signed data output length: %u") % out.length());
 }
 
 // Local Variables:
