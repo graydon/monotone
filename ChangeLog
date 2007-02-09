@@ -1,3 +1,7 @@
+2007-02-09  Lapo Luchini  <lapo@lapo.it>
+
+	* asciik.{cc,hh}: asciik is now a proper class with internal state.
+
 2007-02-09  Derek Scherger  <derek@echologic.com>
 
 	* file_io.cc (write_data): indentation tweak
