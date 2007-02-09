@@ -37,6 +37,12 @@ check(mtn("automate", "content_diff"), 1, nil, diffdiag)
 check(mtn("diff", "-r", left), 0, false, nil)
 check(mtn("automate", "content_diff", "-r", right), 0, false, nil)
 
+-- similarly for cat
+check(mtn("cat", "testfile"), 1, nil, diag)
+check(mtn("automate", "get_file_of", "testfile"), 1, nil, diag)
+check(mtn("cat", "-r", left, "testfile"), 0, false, nil)
+check(mtn("automate", "get_file_of", "-r", right, "testfile"), 0, false, nil)
+
 -- revert and update: to where?
 check(mtn("revert", "."), 1, nil, diag)
 check(mtn("update"), 1, nil, diag)

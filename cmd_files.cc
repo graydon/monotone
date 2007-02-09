@@ -254,7 +254,12 @@ CMD(cat, N_("informative"),
   if (app.opts.revision_selectors.size() == 0)
     {
       app.require_workspace();
-      app.work.get_revision_id(rid);
+
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
+      N(parents.size() == 1,
+        F("this command can only be used in a single-parent workspace"));
+      rid = parent_id(parents.begin());
     }
   else
       complete(app, idx(app.opts.revision_selectors, 0)(), rid);
@@ -304,7 +309,12 @@ AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
   if (app.opts.revision_selectors.size() == 0)
     {
       app.require_workspace();
-      app.work.get_revision_id(rid);
+
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
+      N(parents.size() == 1,
+        F("this command can only be used in a single-parent workspace"));
+      rid = parent_id(parents.begin());
     }
   else
       complete(app, idx(app.opts.revision_selectors, 0)(), rid);
