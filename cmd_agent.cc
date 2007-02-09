@@ -93,6 +93,9 @@ agent_test(string const & name, app_state & app, vector<utf8> const & args)
         L(FL("  ssh key matches monotone key"));
         string sdata;
         a->sign_data(*si, "hello", sdata);
+
+        base64<rsa_sha1_signature> signature;
+        make_signature(app, *i, key.priv, "hello", signature);
       }
     }
   }

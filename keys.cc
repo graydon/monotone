@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "botan/botan.h"
@@ -34,6 +35,7 @@
 #include "cert.hh"
 #include "app_state.hh"
 #include "charset.hh"
+#include "ssh_agent.hh"
 
 using std::cout;
 using std::endl;
@@ -41,6 +43,7 @@ using std::make_pair;
 using std::map;
 using std::string;
 
+using boost::scoped_ptr;
 using boost::shared_ptr;
 using boost::shared_dynamic_cast;
 
@@ -351,37 +354,60 @@ make_signature(app_state & app,           // to hook for phrase
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
-  SecureVector<Botan::byte> sig;
   string sig_string;
-
-  // we permit the user to relax security here, by caching a decrypted key
-  // (if they permit it) through the life of a program run. this helps when
-  // you're making a half-dozen certs during a commit or merge or
-  // something.
-
-  bool persist_phrase = (!app.signers.empty()) || app.lua.hook_persist_phrase_ok();
-
-  shared_ptr<PK_Signer> signer;
-  shared_ptr<RSA_PrivateKey> priv_key;
-  if (persist_phrase && app.signers.find(id) != app.signers.end())
-    signer = app.signers[id].first;
-
-  else
-    {
-      priv_key = get_private_key(app.lua, id, priv);
-      signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
-
-      /* XXX This is ugly. We need to keep the key around as long
-       * as the signer is around, but the shared_ptr for the key will go
-       * away after we leave this scope. Hence we store a pair of
-       * <verifier,key> so they both exist. */
-      if (persist_phrase)
-        app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
+  if (app.opts.ssh_sign_given) {
+    scoped_ptr<ssh_agent> a(new ssh_agent());
+    a->connect();
+    vector<RSA_PublicKey> ssh_keys = a->get_keys();
+    vector<rsa_keypair_id> mtn_keys;
+    keypair key;
+    app.keys.get_keys(mtn_keys);
+    for (vector<rsa_keypair_id>::const_iterator
+           i = mtn_keys.begin(); i != mtn_keys.end(); ++i) {
+      app.keys.get_key_pair(*i, key);
+      shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, *i, key.priv);
+      for (vector<RSA_PublicKey>::const_iterator
+             si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
+        if ((*priv).get_e() == (*si).get_e()
+            && (*priv).get_n() == (*si).get_n()) {
+          L(FL("  ssh key matches monotone key"));
+          string sdata;
+          a->sign_data(*si, tosign, sig_string);
+          //exit(0);
+        }
+      }
     }
+  } else {
+    SecureVector<Botan::byte> sig;
 
-  sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
-  sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
+    // we permit the user to relax security here, by caching a decrypted key
+    // (if they permit it) through the life of a program run. this helps when
+    // you're making a half-dozen certs during a commit or merge or
+    // something.
 
+    bool persist_phrase = (!app.signers.empty()) || app.lua.hook_persist_phrase_ok();
+
+    shared_ptr<PK_Signer> signer;
+    shared_ptr<RSA_PrivateKey> priv_key;
+    if (persist_phrase && app.signers.find(id) != app.signers.end())
+      signer = app.signers[id].first;
+
+    else
+      {
+        priv_key = get_private_key(app.lua, id, priv);
+        signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
+
+        /* XXX This is ugly. We need to keep the key around as long
+         * as the signer is around, but the shared_ptr for the key will go
+         * away after we leave this scope. Hence we store a pair of
+         * <verifier,key> so they both exist. */
+        if (persist_phrase)
+          app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
+      }
+
+    sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
+    sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
+  }
   L(FL("produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }

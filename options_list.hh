@@ -257,6 +257,14 @@ OPT(execute, "execute,e", bool, false,
 }
 #endif
 
+GOPT(ssh_sign, "ssh-sign", bool, false,
+     gettext_noop("sign with ssh-agent"))
+#ifdef option_bodies
+{
+  ssh_sign = true;
+}
+#endif
+
 GOPT(full_version, "full-version", bool, false,
      gettext_noop("print detailed version number, then exit"))
 #ifdef option_bodies
