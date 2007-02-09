@@ -560,8 +560,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
 }
 
 void
-content_merge_database_adaptor::get_version(file_path const & path,
-                                            file_id const & ident,
+content_merge_database_adaptor::get_version(file_id const & ident,
                                             file_data & dat) const
 {
   app.db.get_file_version(ident, dat);
@@ -597,8 +596,7 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
 }
 
 void
-content_merge_workspace_adaptor::get_version(file_path const & path,
-                                             file_id const & ident,
+content_merge_workspace_adaptor::get_version(file_id const & ident,
                                              file_data & dat) const
 {
   map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
@@ -610,14 +608,17 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
     {
       data tmp;
       file_id fid;
-      require_path_is_file(path,
-                           F("file '%s' does not exist in workspace") % path,
-                           F("'%s' in workspace is a directory, not a file") % path);
-      read_data(path, tmp);
+      map<file_id, file_path>::const_iterator i = content_paths.find(ident);
+      I(i != content_paths.end());
+
+      require_path_is_file(i->second,
+                           F("file '%s' does not exist in workspace") % i->second,
+                           F("'%s' in workspace is a directory, not a file") % i->second);
+      read_data(i->second, tmp);
       calculate_ident(file_data(tmp), fid);
       E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
-        % path % fid % ident);
+        % i->second % fid % ident);
       dat = file_data(tmp);
     }
 }
@@ -693,9 +694,9 @@ content_merger::try_to_merge_files(file_path const & anc_path,
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
 
-  adaptor.get_version(left_path, left_id, left_data);
-  adaptor.get_version(anc_path, ancestor_id, ancestor_data);
-  adaptor.get_version(right_path, right_id, right_data);
+  adaptor.get_version(left_id, left_data);
+  adaptor.get_version(ancestor_id, ancestor_data);
+  adaptor.get_version(right_id, right_data);
 
   left_unpacked = left_data.inner();
   ancestor_unpacked = ancestor_data.inner();

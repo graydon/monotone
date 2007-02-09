@@ -1,3 +1,22 @@
+2007-02-08  Derek Scherger  <derek@echologic.com>
+
+	* cmd_merging.cc (get_content_paths): new function
+	(update):
+	(pluck): put paths by content hash into workspace adapter
+	* diff_patch.{cc,hh} (content_merge_adaptor::get_version): remove
+	path argument from interface
+	(content_merge_workspace_adaptor): add map of paths by content
+	hash to workspace adaptor
+	(content_merge_workspace_adaptor::get_version): get path from map
+	* work.cc (attr_file_name): remove unused var
+	(editable_working_tree::written_content): remove
+	(content_merge_empty_adaptor::get_version): remove path argument
+	(editable_working_tree::create_file_node): write file content here
+	rather than deferring it to attach_node
+	(editable_working_tree::attach_node): remove deferred file content
+	(editable_working_tree::apply_delta): remove path argument from 
+	get_version call
+
 2007-02-08  Zack Weinberg  <zackw@panix.com>
 
 	* configure.ac: Stick some goo in config.status to kill

@@ -41,7 +41,6 @@ using boost::lexical_cast;
 
 // workspace / book-keeping file code
 
-static string const attr_file_name(".mt-attrs");
 static string const inodeprints_file_name("inodeprints");
 static string const local_dump_file_name("debug");
 static string const options_file_name("options");
@@ -637,7 +636,6 @@ private:
   lua_hooks & lua;
   content_merge_adaptor const & source;
   node_id next_nid;
-  std::map<bookkeeping_path, file_id> written_content;
   std::map<bookkeeping_path, file_path> rename_add_drop_map;
   bool root_dir_attached;
 };
@@ -679,8 +677,7 @@ struct simulated_working_tree : public editable_tree
 
 struct content_merge_empty_adaptor : public content_merge_adaptor
 {
-  virtual void get_version(file_path const &, 
-                           file_id const &, file_data &) const
+  virtual void get_version(file_id const &, file_data &) const
   { I(false); }
   virtual void record_merge(file_id const &, file_id const &,
                             file_id const &, file_data const &,
@@ -773,9 +770,10 @@ editable_working_tree::create_file_node(file_id const & content)
   bookkeeping_path pth = path_for_nid(nid);
   require_path_is_nonexistent(pth,
                               F("path %s already exists") % pth);
-  safe_insert(written_content, make_pair(pth, content));
-  // Defer actual write to moment of attachment, when we know the path
-  // and can thus determine encoding / linesep convention.
+  file_data dat;
+  source.get_version(content, dat);
+  write_data(pth, dat.inner());
+
   return nid;
 }
 
@@ -785,39 +783,6 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   bookkeeping_path src_pth = path_for_nid(nid);
   file_path dst_pth(dst);
 
-  // Possibly just write data out into the workspace, if we're doing
-  // a file-create (not a dir-create or file/dir rename).
-  if (!path_exists(src_pth))
-    {
-      I(root_dir_attached);
-      map<bookkeeping_path, file_id>::const_iterator i
-        = written_content.find(src_pth);
-      if (i != written_content.end())
-        {
-          P(F("adding %s") % dst_pth);
-          file_data dat;
-          source.get_version(dst_pth, i->second, dat);
-          write_data(dst_pth, dat.inner());
-          return;
-        }
-    }
-
-  // FIXME: it is weird to do this here, instead of up above, but if we do it
-  // up above a lot of tests break.  those tests are arguably broken -- they
-  // depend on 'update' clobbering existing, non-versioned files -- but
-  // putting this up there doesn't actually help, since if we abort in the
-  // middle of an update to avoid clobbering a file, we just end up leaving
-  // the working copy in an inconsistent state instead.  so for now, we leave
-  // this check down here.
-  // where are "here" and "there" ?!?
-
-  if (!workspace_root(dst))
-    {
-      require_path_is_nonexistent(dst_pth,
-                                  F("path '%s' already exists, cannot create") % dst_pth);
-    }
-
-  // If we get here, we're doing a file/dir rename, or a dir-create.
   map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
@@ -868,7 +833,7 @@ editable_working_tree::apply_delta(split_path const & pth,
   P(F("modifying %s") % pth_unsplit);
 
   file_data dat;
-  source.get_version(pth_unsplit, new_id, dat);
+  source.get_version(new_id, dat);
   write_data(pth_unsplit, dat.inner());
 }
 
