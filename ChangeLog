@@ -1,3 +1,8 @@
+2007-02-09  Lapo Luchini  <lapo@lapo.it>
+
+	* netio.hh: Removed the word 'uleb128' from printed text.
+	* po/it.po: Updated and translated a few more strings (45 to go).
+
 2007-02-09  Markus Schiltknecht  <markus@bluegap.ch>
 
 	* tests/test_a_merge_8/{parent,left,right,correct}: simplified

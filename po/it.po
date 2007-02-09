@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-02-08 00:45-0800\n"
+"PO-Revision-Date: 2007-02-09 10:02-0800\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -150,7 +150,7 @@ msgstr "nel database non è presente la revisione %s"
 
 #: automate.cc:1076
 #: automate.cc:1102
-#: cmd_merging.cc:837
+#: cmd_merging.cc:861
 msgid "REVID"
 msgstr "ID_REV"
 
@@ -164,10 +164,10 @@ msgstr "ID_REV"
 #: cmd_diff_log.cc:416
 #: cmd_files.cc:138
 #: cmd_files.cc:196
-#: cmd_merging.cc:125
-#: cmd_merging.cc:669
-#: cmd_merging.cc:684
-#: cmd_merging.cc:687
+#: cmd_merging.cc:143
+#: cmd_merging.cc:690
+#: cmd_merging.cc:705
+#: cmd_merging.cc:708
 #: cmd_ws_commit.cc:516
 #: cmd_ws_commit.cc:984
 #: commands.cc:411
@@ -425,7 +425,7 @@ msgstr "nessuna variabile ha nome ‘%s’ nel dominio ‘%s’"
 #: cmd_files.cc:114
 #: cmd_files.cc:219
 #: cmd_list.cc:471
-#: cmd_merging.cc:606
+#: cmd_merging.cc:627
 #: cmd_ws_commit.cc:410
 #: commands.cc:275
 msgid "informative"
@@ -533,7 +533,7 @@ msgstr "solo un comando permesso tra ‘--last’ e ‘--next’"
 #: cmd_files.cc:41
 #: cmd_files.cc:78
 #: cmd_files.cc:157
-#: cmd_merging.cc:837
+#: cmd_merging.cc:861
 #: cmd_othervcs.cc:15
 msgid "debug"
 msgstr "debug"
@@ -919,8 +919,8 @@ msgstr ""
 "attuale, o i file conosciuti, sconosciuti, intenzionalmente ignorati,\n"
 "mancanti o modificati"
 
-#: cmd_merging.cc:73
-#: cmd_merging.cc:647
+#: cmd_merging.cc:91
+#: cmd_merging.cc:668
 #: cmd_ws_commit.cc:79
 #: cmd_ws_commit.cc:257
 #: cmd_ws_commit.cc:301
@@ -932,7 +932,7 @@ msgstr ""
 msgid "workspace"
 msgstr "spazio di lavoro"
 
-#: cmd_merging.cc:74
+#: cmd_merging.cc:92
 msgid ""
 "update workspace.\n"
 "This command modifies your workspace to be based off of a\n"
@@ -947,17 +947,17 @@ msgstr ""
 "Se è specificata una revisione, aggiorna lo spazio di lavoro a quella\n"
 "  revisione. Altrimenti aggiorna lo spazio di lavoro alla testa del ramo."
 
-#: cmd_merging.cc:95
+#: cmd_merging.cc:113
 #, c-format
 msgid "this workspace is a new project; cannot update"
 msgstr "questo spazio di lavoro è un nuovo progetto, non posso fare un ‘update’"
 
-#: cmd_merging.cc:102
+#: cmd_merging.cc:120
 #, c-format
 msgid "updating along branch '%s'"
 msgstr "aggiorno seguendo il ramo ‘%s’"
 
-#: cmd_merging.cc:106
+#: cmd_merging.cc:124
 #, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
@@ -965,38 +965,38 @@ msgid ""
 "maybe you want something like --revision=h:%s"
 msgstr ""
 
-#: cmd_merging.cc:112
+#: cmd_merging.cc:130
 #, c-format
 msgid "multiple update candidates:"
 msgstr "candidati multipli per l'update:"
 
-#: cmd_merging.cc:116
+#: cmd_merging.cc:134
 #, c-format
 msgid "choose one with '%s update -r<id>'"
 msgstr "selezionane uno con ‘%s update -r<id>’"
 
-#: cmd_merging.cc:117
+#: cmd_merging.cc:135
 #, c-format
 msgid "multiple update candidates remain after selection"
 msgstr "dopo la selezione restano candidati multipli per ‘update’"
 
-#: cmd_merging.cc:136
+#: cmd_merging.cc:154
 #, c-format
 msgid "already up to date at %s"
 msgstr "già aggiornato a ‘%s’"
 
 # TODO: qui "update" è senza apici
-#: cmd_merging.cc:144
+#: cmd_merging.cc:162
 #, c-format
 msgid "selected update target %s"
 msgstr "selezionata revisione %s per l'update"
 
-#: cmd_merging.cc:161
+#: cmd_merging.cc:179
 #, c-format
 msgid "target revision is not in current branch"
 msgstr "la revisione selezionata non è sul ramo attuale"
 
-#: cmd_merging.cc:169
+#: cmd_merging.cc:187
 #, c-format
 msgid ""
 "target revision is in multiple branches:%s\n"
@@ -1007,12 +1007,12 @@ msgstr ""
 "\n"
 "prova ancora specificando ‘--branch=RAMO’"
 
-#: cmd_merging.cc:177
+#: cmd_merging.cc:195
 #, c-format
 msgid "switching to branch %s"
 msgstr "passaggio al ramo ‘%s’"
 
-#: cmd_merging.cc:182
+#: cmd_merging.cc:200
 #, c-format
 msgid ""
 "target revision not in any branch\n"
@@ -1021,37 +1021,37 @@ msgstr ""
 "la revisione in oggetto non è in un ramo\n"
 "il prossimo commit userà il ramo ‘%s’"
 
-#: cmd_merging.cc:252
+#: cmd_merging.cc:273
 #, c-format
 msgid "switched branch; next commit will use branch %s"
 msgstr "ramo cambiato: il prossimo commit userà il ramo ‘%s’"
 
-#: cmd_merging.cc:253
+#: cmd_merging.cc:274
 #, c-format
 msgid "updated to base revision %s"
 msgstr "aggiornato alla revisione base %s"
 
-#: cmd_merging.cc:291
+#: cmd_merging.cc:312
 #, c-format
 msgid "[left]  %s"
 msgstr "[sinistra] %s"
 
-#: cmd_merging.cc:292
+#: cmd_merging.cc:313
 #, c-format
 msgid "[right] %s"
 msgstr "[destra]   %s"
 
-#: cmd_merging.cc:305
-#: cmd_merging.cc:576
+#: cmd_merging.cc:326
+#: cmd_merging.cc:597
 #, c-format
 msgid "[merged] %s"
 msgstr "[unione]   %s"
 
-#: cmd_merging.cc:312
-#: cmd_merging.cc:411
-#: cmd_merging.cc:422
-#: cmd_merging.cc:580
-#: cmd_merging.cc:813
+#: cmd_merging.cc:333
+#: cmd_merging.cc:432
+#: cmd_merging.cc:443
+#: cmd_merging.cc:601
+#: cmd_merging.cc:837
 #: cmd_ws_commit.cc:476
 #: cmd_ws_commit.cc:942
 #: cmd_ws_commit.cc:965
@@ -1060,178 +1060,178 @@ msgstr "[unione]   %s"
 msgid "tree"
 msgstr "albero"
 
-#: cmd_merging.cc:312
+#: cmd_merging.cc:333
 msgid "merge unmerged heads of branch"
 msgstr "fa il ‘merge’ delle teste di un ramo"
 
-#: cmd_merging.cc:322
-#: cmd_merging.cc:821
+#: cmd_merging.cc:343
+#: cmd_merging.cc:845
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "specifica un ramo, con ‘--branch=RAMO’"
 
-#: cmd_merging.cc:327
-#: cmd_merging.cc:461
-#: cmd_merging.cc:464
-#: cmd_merging.cc:826
+#: cmd_merging.cc:348
+#: cmd_merging.cc:482
+#: cmd_merging.cc:485
+#: cmd_merging.cc:850
 #: cmd_ws_commit.cc:500
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "il ramo ‘%s’ è vuoto"
 
-#: cmd_merging.cc:330
+#: cmd_merging.cc:351
 #, c-format
 msgid "branch '%s' is already merged"
 msgstr "il ramo ‘%s’ è già unito"
 
-#: cmd_merging.cc:334
+#: cmd_merging.cc:355
 #, c-format
 msgid "%d head on branch '%s'"
 msgid_plural "%d heads on branch '%s'"
 msgstr[0] "%d testa sul ramo ‘%s’"
 msgstr[1] "%d teste sul ramo ‘%s’"
 
-#: cmd_merging.cc:355
-#: cmd_merging.cc:400
+#: cmd_merging.cc:376
+#: cmd_merging.cc:421
 #, c-format
 msgid "merge %d / %d:"
 msgstr "merge %d / %d:"
 
-#: cmd_merging.cc:356
+#: cmd_merging.cc:377
 #, c-format
 msgid "calculating best pair of heads to merge next"
 msgstr "calcolo la miglior coppia di teste su cui eseguire il prossimo merge"
 
-#: cmd_merging.cc:408
+#: cmd_merging.cc:429
 #, c-format
 msgid "note: your workspaces have not been updated"
 msgstr "nota: lo spazio di lavoro non è stato aggiornato"
 
-#: cmd_merging.cc:411
+#: cmd_merging.cc:432
 msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "RAMO-SORG RAMO-DEST"
 
-#: cmd_merging.cc:412
+#: cmd_merging.cc:433
 msgid "merge from one branch to another asymmetrically"
 msgstr "‘merge’ asimmetrico da un ramo ad un altro"
 
-#: cmd_merging.cc:422
+#: cmd_merging.cc:443
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "RAMO-SORG RAMO-DEST DIRECTORY"
 
-#: cmd_merging.cc:423
+#: cmd_merging.cc:444
 msgid "merge one branch into a subdirectory in another branch"
 msgstr "‘merge’ di un ramo in una sottodirectory di un altro ramo"
 
-#: cmd_merging.cc:462
-#: cmd_merging.cc:465
+#: cmd_merging.cc:483
+#: cmd_merging.cc:486
 #, c-format
 msgid "branch '%s' is not merged"
 msgstr "il ramo ‘%s’ è separato"
 
-#: cmd_merging.cc:470
+#: cmd_merging.cc:491
 #, c-format
 msgid "propagating %s -> %s"
 msgstr "propago da ‘%s’ a ‘%s’"
 
-#: cmd_merging.cc:471
+#: cmd_merging.cc:492
 #, c-format
 msgid "[source] %s"
 msgstr "[sorgente] %s"
 
-#: cmd_merging.cc:472
+#: cmd_merging.cc:493
 #, c-format
 msgid "[target] %s"
 msgstr "[obiettivo] %s"
 
-#: cmd_merging.cc:477
+#: cmd_merging.cc:498
 #, c-format
 msgid "branch '%s' is up-to-date with respect to branch '%s'"
 msgstr "il ramo ‘%s’ è aggiornato rispetto al ramo ‘%s’"
 
-#: cmd_merging.cc:479
+#: cmd_merging.cc:500
 #, c-format
 msgid "no action taken"
 msgstr "nessuna azione svolta"
 
-#: cmd_merging.cc:483
+#: cmd_merging.cc:504
 #, c-format
 msgid "no merge necessary; putting %s in branch '%s'"
 msgstr "‘merge’ non necessario; metto ‘%s’ nel ramo ‘%s’"
 
-#: cmd_merging.cc:521
+#: cmd_merging.cc:542
 #, c-format
 msgid "Path %s not found in destination tree."
 msgstr "Percorso ‘%s’ non trovato nell'albero di destinazione."
 
-#: cmd_merging.cc:581
+#: cmd_merging.cc:602
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "REV_SINISTRA REV_DESTRA RAMO_DESTINAZIONE"
 
-#: cmd_merging.cc:582
+#: cmd_merging.cc:603
 msgid "merge two explicitly given revisions, placing result in given branch"
 msgstr "unisce due revisioni specificate, mettendo il risultato in un ramo specificato"
 
-#: cmd_merging.cc:597
+#: cmd_merging.cc:618
 #, c-format
 msgid "%s and %s are the same revision, aborting"
 msgstr "%s e %s sono la stessa revisione, annullo"
 
-#: cmd_merging.cc:599
-#: cmd_merging.cc:601
+#: cmd_merging.cc:620
+#: cmd_merging.cc:622
 #, c-format
 msgid "%s is already an ancestor of %s"
 msgstr "%s è già antenato di %s"
 
-#: cmd_merging.cc:606
+#: cmd_merging.cc:627
 msgid "REV REV"
 msgstr "REV REV"
 
-#: cmd_merging.cc:607
+#: cmd_merging.cc:628
 msgid "Show what conflicts would need to be resolved to merge the given revisions."
 msgstr "Mostra quali conflitti andrebbero risolto per fare il ‘merge’ di due revisioni specificate."
 
-#: cmd_merging.cc:617
-#: cmd_merging.cc:619
+#: cmd_merging.cc:638
+#: cmd_merging.cc:640
 #, c-format
 msgid "%s is an ancestor of %s; no merge is needed."
 msgstr "‘%s’ è un antenato di ‘%s’: il merge non è necessario."
 
-#: cmd_merging.cc:633
+#: cmd_merging.cc:654
 #, c-format
 msgid "There are %s node_name_conflicts."
 msgstr "Ci sono %s conflitti di tipo node_name_conflicts."
 
-#: cmd_merging.cc:635
+#: cmd_merging.cc:656
 #, c-format
 msgid "There are %s file_content_conflicts."
 msgstr "Ci sono %s conflitti di tipo file_content_conflicts."
 
-#: cmd_merging.cc:637
+#: cmd_merging.cc:658
 #, c-format
 msgid "There are %s node_attr_conflicts."
 msgstr "Ci sono %s conflitti di tipo node_attr_conflicts."
 
-#: cmd_merging.cc:639
+#: cmd_merging.cc:660
 #, c-format
 msgid "There are %s orphaned_node_conflicts."
 msgstr "Ci sono %s conflitti di tipo orphaned_node_conflicts."
 
-#: cmd_merging.cc:641
+#: cmd_merging.cc:662
 #, c-format
 msgid "There are %s rename_target_conflicts."
 msgstr "Ci sono %s conflitti di tipo rename_target_conflicts."
 
-#: cmd_merging.cc:643
+#: cmd_merging.cc:664
 #, c-format
 msgid "There are %s directory_loop_conflicts."
 msgstr "Ci sono %s conflitti di tipo directory_loop_conflicts."
 
-#: cmd_merging.cc:647
+#: cmd_merging.cc:668
 msgid "[-r FROM] -r TO [PATH...]"
 msgstr "[-r DA] -r A [PERCORSO…]"
 
-#: cmd_merging.cc:648
+#: cmd_merging.cc:669
 msgid ""
 "Apply changes made at arbitrary places in history to current workspace.\n"
 "This command takes changes made at any point in history, and\n"
@@ -1247,7 +1247,7 @@ msgid ""
 "first revision to the second."
 msgstr ""
 
-#: cmd_merging.cc:673
+#: cmd_merging.cc:694
 #, c-format
 msgid ""
 "revision %s is a merge\n"
@@ -1258,41 +1258,41 @@ msgstr ""
 "per applicare le modifiche relative a uno dei suoi genitori, usa:\n"
 "  %s pluck -r GENITORE -r %s"
 
-#: cmd_merging.cc:694
+#: cmd_merging.cc:715
 #, c-format
 msgid "no changes to apply"
 msgstr "niente da modificare"
 
-#: cmd_merging.cc:751
+#: cmd_merging.cc:772
 #, c-format
 msgid "no changes to be applied"
 msgstr "nessuna modifica da applicare"
 
-#: cmd_merging.cc:778
+#: cmd_merging.cc:802
 #, c-format
 msgid "no changes were applied"
 msgstr "nessuna modifica è stata applicata"
 
-#: cmd_merging.cc:781
+#: cmd_merging.cc:805
 #, c-format
 msgid "applied changes to workspace"
 msgstr "modifica lo spazio di lavoro"
 
-#: cmd_merging.cc:813
+#: cmd_merging.cc:837
 msgid "show unmerged head revisions of branch"
 msgstr "mostra le revisioni delle teste separate di un ramo"
 
-#: cmd_merging.cc:828
+#: cmd_merging.cc:852
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "il ramo ‘%s’ è attualmente unito:"
 
-#: cmd_merging.cc:830
+#: cmd_merging.cc:854
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "il ramo ‘%s’ è attualmente separato:"
 
-#: cmd_merging.cc:838
+#: cmd_merging.cc:862
 msgid "dump the roster associated with the given REVID"
 msgstr "stampa il roster associato al REVID dato"
 
@@ -2365,22 +2365,22 @@ msgid ""
 "cancelling database creation"
 msgstr ""
 
-#: diff_patch.cc:614
+#: diff_patch.cc:615
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
 
-#: diff_patch.cc:615
+#: diff_patch.cc:616
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "nello spazio di lavoro ‘%s’ è una directory, non un file"
 
-#: diff_patch.cc:619
+#: diff_patch.cc:620
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "il file ‘%s’ hd id ‘%s’ nello spazio di lavoro, era atteso ‘%s’"
 
-#: diff_patch.cc:744
+#: diff_patch.cc:745
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -2535,7 +2535,7 @@ msgid "caught runtime error %s constructing file path for %s"
 msgstr ""
 
 #: file_io.cc:542
-#: work.cc:1282
+#: work.cc:1247
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "nessun file o directory con nome ‘%s’"
@@ -2602,7 +2602,7 @@ msgstr "La directory ‘%s’ non esiste"
 #: lua.cc:481
 #: lua.cc:516
 #: rcs_import.cc:1236
-#: work.cc:1537
+#: work.cc:1502
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "‘%s’ non è una directory"
@@ -2723,17 +2723,16 @@ msgstr "specificatore di ruolo %d sconosciuto"
 msgid "need %d bytes to decode %s at %d, only have %d"
 msgstr ""
 
-# TODO: come tradurre "datum"?
 #: netio.hh:87
 #: netio.hh:122
 #, c-format
-msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-msgstr ""
+msgid "overflow while decoding variable length integer '%s' into a %d-byte field"
+msgstr "overflow nella decodifica dell'intero a lunghezza variabile ‘%s’ in un campo di %d-byte"
 
 #: netio.hh:142
 #, c-format
-msgid "ran out of bytes reading uleb128 value for '%s' at pos %d"
-msgstr ""
+msgid "ran out of bytes reading variable length integer '%s' at pos %d"
+msgstr "spazio esaurito nella lettura dell'intero a lunghezza variabile ‘%s’ alla posizione %d"
 
 #: netio.hh:278
 #, c-format
@@ -3336,15 +3335,17 @@ msgstr "imposta lo stile del ticker (count|dot|none)"
 #: options_list.hh:485
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
-msgstr ""
+msgstr "il parametro deve essere ‘none’, ‘dot’ o ‘count’"
 
+# TODO: "da cui iniziare" è brutto
 #: options_list.hh:489
 msgid "revision(s) to start logging at"
-msgstr ""
+msgstr "revisione(i) da cui iniziare il log"
 
+# TODO: "a cui terminare" è brutto
 #: options_list.hh:496
 msgid "revision(s) to stop logging at"
-msgstr ""
+msgstr "revisione(i) a cui terminare il log"
 
 #: options_list.hh:504
 msgid "perform the operations for unknown files from workspace"
@@ -3788,7 +3789,7 @@ msgstr ""
 #: schema_migration.cc:1057
 #, c-format
 msgid "cannot test migration from unknown schema %s"
-msgstr ""
+msgstr "schema del database ‘%s’ sconosciuto: non posso verificare la migrazione"
 
 #: schema_migration.cc:1060
 #, c-format
@@ -3923,137 +3924,131 @@ msgstr "Chiave di lunghezza non valida (%d byte)"
 msgid "Invalid hmac length of %d bytes"
 msgstr "HMAC di lunghezza non valida (%d byte)"
 
-#: work.cc:88
+#: work.cc:87
 #: work_migration.cc:188
 #: work_migration.cc:208
 #, c-format
 msgid "workspace is corrupt: reading %s: %s"
 msgstr "lo spazio di lavoro è corrotto: leggendo ‘%s’: %s"
 
-#: work.cc:136
+#: work.cc:135
 #, c-format
 msgid "workspace base revision %s does not exist in database"
 msgstr ""
 
-#: work.cc:282
+#: work.cc:281
 #, c-format
 msgid "unrecognized key '%s' in options file %s - ignored"
 msgstr ""
 
-#: work.cc:289
+#: work.cc:288
 #, c-format
 msgid "Failed to read options file %s: %s"
 msgstr "Impossibile leggere il file di opzioni ‘%s’: %s"
 
-#: work.cc:337
+#: work.cc:336
 #, c-format
 msgid "Failed to write options file %s: %s"
 msgstr "Impossibile scrivere il file di opzioni ‘%s’: %s"
 
-#: work.cc:578
+#: work.cc:577
 #, c-format
 msgid "skipping ignorable file %s"
 msgstr "salto il file ignorabile ‘%s’"
 
-#: work.cc:587
+#: work.cc:586
 #, c-format
 msgid "skipping %s, already accounted for in workspace"
 msgstr "salto ‘%s’, già considerato nello spazio di lavoro"
 
-#: work.cc:598
+#: work.cc:597
 #, c-format
 msgid "adding %s to workspace manifest"
 msgstr "aggiungo ‘%s’ al manifesto dello spazio di lavoro"
 
-#: work.cc:604
+#: work.cc:603
 #, c-format
 msgid "cannot add %s, because %s is recorded as a file in the workspace manifest"
 msgstr ""
 
-#: work.cc:753
+#: work.cc:750
 #, c-format
 msgid "dropping %s"
 msgstr "cancello ‘%s’"
 
-#: work.cc:764
-#: work.cc:775
+#: work.cc:761
+#: work.cc:772
 #, c-format
 msgid "path %s already exists"
 msgstr "il percorso ‘%s’ esiste già"
 
-#: work.cc:797
-#: work.cc:829
-#, c-format
-msgid "adding %s"
-msgstr "aggiungo ‘%s’"
-
-#: work.cc:817
-#, c-format
-msgid "path '%s' already exists, cannot create"
-msgstr "il percorso ‘%s’ esiste già: non posso crearlo"
-
-#: work.cc:825
+#: work.cc:790
 #, c-format
 msgid "renaming %s to %s"
 msgstr "rinomino ‘%s’ in ‘%s’"
 
-#: work.cc:861
+#: work.cc:794
+#, c-format
+msgid "adding %s"
+msgstr "aggiungo ‘%s’"
+
+#: work.cc:826
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "il file ‘%s’ non esiste"
 
-#: work.cc:862
+#: work.cc:827
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "il file ‘%s’ è una directory "
 
-#: work.cc:867
+#: work.cc:832
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr "i contenuti del file ‘%s’ sono cambiati, non lo sovrascrivo"
 
-#: work.cc:868
+#: work.cc:833
 #, c-format
 msgid "modifying %s"
 msgstr "modifico ‘%s’"
 
-#: work.cc:922
+#: work.cc:887
 #, c-format
 msgid "cannot drop non-empty directory '%s'"
 msgstr "impossibile eliminare la cartella non vuota ‘%s’"
 
-#: work.cc:945
-#: work.cc:959
+#: work.cc:910
+#: work.cc:924
 #, c-format
 msgid "attach blocked by unversioned path '%s'"
 msgstr ""
 
-#: work.cc:990
+#: work.cc:955
 #, c-format
 msgid "%d workspace conflicts"
 msgstr "%d conflitti nello spazio di lavoro"
 
-#: work.cc:1154
+#: work.cc:1119
 #, c-format
 msgid "missing directory '%s'"
 msgstr "la directory ‘%s’ manca"
 
-#: work.cc:1159
+#: work.cc:1124
 #, c-format
 msgid "not a directory '%s'"
 msgstr "‘%s’ non è una directory"
 
-#: work.cc:1172
+#: work.cc:1137
 #, c-format
 msgid "missing file '%s'"
 msgstr "il file ‘%s’ manca"
 
-#: work.cc:1177
+#: work.cc:1142
 #, c-format
 msgid "not a file '%s'"
 msgstr "‘%s’ non è un file"
 
-#: work.cc:1188
+#: work.cc:1153
 #, c-format
 msgid ""
 "%d missing items; use '%s ls missing' to view\n"
@@ -4072,92 +4067,92 @@ msgstr ""
 " ‘%s drop --missing’ oppure\n"
 " ‘%s revert --missing’"
 
-#: work.cc:1334
+#: work.cc:1299
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "salto ‘%s’, non sotto controllo di versione"
 
-#: work.cc:1344
+#: work.cc:1309
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "non posso cancellare ‘%s/’: non è vuota"
 
-#: work.cc:1355
+#: work.cc:1320
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "elimino ‘%s’ dal manifesto dello spazio di lavoro"
 
-#: work.cc:1408
+#: work.cc:1373
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr "la directory di destinazione ‘%s/’ non è versionata (in caso, usare ‘add’)"
 
-#: work.cc:1411
+#: work.cc:1376
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "la destinazione ‘%s’ è un file già esistente nella versione attuale"
 
-#: work.cc:1421
+#: work.cc:1386
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "il percorso vuoto ‘%s’ non è permesso"
 
-#: work.cc:1435
+#: work.cc:1400
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "‘%s’ non esiste nel manifesto attuale"
 
-#: work.cc:1438
+#: work.cc:1403
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "la destinazione ‘%s’ esiste già nel manifesto attuale"
 
-#: work.cc:1444
+#: work.cc:1409
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "la directory di destinazione ‘%s’ non esiste nel manifesto attuale"
 
-#: work.cc:1446
+#: work.cc:1411
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "la directory di destinazione ‘%s’ non è una directory"
 
-#: work.cc:1455
+#: work.cc:1420
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "rinomino ‘%s’ in ‘%s’ nel manifesto dello spazio di lavoro"
 
-#: work.cc:1483
+#: work.cc:1448
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "‘%s’ non esiste nello spazio di lavoro, lo salto"
 
-#: work.cc:1487
+#: work.cc:1452
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "salto ‘%s’, esiste già nello spazio di lavoro"
 
-#: work.cc:1517
+#: work.cc:1482
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr "la nuova directory root proposta ‘%s’ non è versionata o non esiste"
 
-#: work.cc:1519
+#: work.cc:1484
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "la nuova directory root proposta ‘%s’ non è una directory"
 
-#: work.cc:1524
+#: work.cc:1489
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr "la nuova directory root proposta ‘%s’ ha un percorso illegale %s"
 
-#: work.cc:1534
+#: work.cc:1499
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "la directory ‘%s’ non è versionata o non esiste"
 
-#: work.cc:1540
+#: work.cc:1505
 #, c-format
 msgid "'%s' is in the way"
 msgstr "‘%s’ è di ostacolo"
