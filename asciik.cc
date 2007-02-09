@@ -111,6 +111,8 @@ Loop:
 #include <algorithm>
 #include <iostream>
 #include <iterator>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 //#include <boost/tuple/tuple.hpp>
 // tuples are faster than std::pair on copy constructors, but we're only using
 // std::pair<size_t, size_t> so it probably doesn't matter much
@@ -126,6 +128,8 @@ using std::ostream_iterator;
 using std::pair;
 using std::set;
 using std::vector;
+using boost::algorithm::split;
+using boost::algorithm::is_any_of;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
@@ -153,8 +157,10 @@ asciik::draw(const size_t curr_items, const size_t next_items,
   const size_t curr_loc, const set<pair<size_t, size_t> > & links,
   const set<size_t> & curr_ghosts, const string & annotation) const
 {
-  string line(curr_items * 2 - 1, ' ');
-  string interline(max(curr_items, next_items) * 2 - 1, ' ');
+  size_t line_len = max(curr_items, next_items) * 2;
+  string line(line_len, ' ');      // actual len: curr_items * 2 - 1
+  string interline(line_len, ' '); // actual len: max(curr_items, next_items) * 2 - 1
+  string interline2(line_len, ' ');
 
   // first draw the flow-through bars in the line
   for (size_t i = 0; i < curr_items; ++i)
@@ -202,20 +208,34 @@ asciik::draw(const size_t curr_items, const size_t next_items,
 	for (size_t l = start; l < end; ++l)
 	  line[l] = '-';
       }
+      // prepare the proper continuation line
+      interline2[j * 2] = '|';
     }
   // add any dots (must do this in a second pass, so that if there are
   // cases like:
   //   | ·-----·-o
   //   |/| | |/|
-  // where we want to make sure the second dot overwrites the first --·
+  // where we want to make sure the second dot overwrites the first --.
   for (set<size_t>::const_iterator dot = dots.begin();
        dot != dots.end(); ++dot)
     line[*dot] = '·'; //TODO: what about this special char? should it be UTF-8?
   // and add the main attraction (may overwrite a '·').
   line[curr_loc * 2] = 'o';
 
-  cout << line << "    " << annotation << '\n';
-  cout << interline << '\n';
+  // split a multi-line annotation
+  vector<string> lines;
+  split(lines, annotation, is_any_of("\n\r"));
+  int num_lines = lines.size();
+  if (num_lines < 1)
+    lines.push_back(string(""));
+  if (num_lines < 2)
+    lines.push_back(string(""));
+
+  // prints it out
+  cout << F("%-8s  %s") % line % lines[0] << '\n';
+  cout << F("%-8s  %s") % interline % lines[1] << '\n';
+  for (int i = 2; i < num_lines; ++i)
+    cout << F("%-8s  %s") % interline2 % lines[i] << '\n';
 }
 
 bool
@@ -359,6 +379,6 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
       set<revision_id> parents;
       app.db.get_revision_parents(*rev, parents);
       parents.erase(ghost); // remove the fake parent that root nodes have
-      graph.print(*rev, parents, rev->inner()());
+      graph.print(*rev, parents, rev->inner()() + "\nline 2\nline 3\nline 4");
     }
 }
