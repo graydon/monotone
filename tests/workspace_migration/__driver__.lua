@@ -43,6 +43,7 @@ local current_workspace_format = 2
 local workspace_sets = { 
    "basic",
    "inodeprints",
+   "twoparent"
 }
 
 function check_workspace_matches_current(dir, refdir)
