@@ -373,11 +373,13 @@ make_signature(app_state & app,           // to hook for phrase
           L(FL("  ssh key matches monotone key"));
           string sdata;
           a->sign_data(*si, tosign, sig_string);
-          //exit(0);
         }
       }
     }
-  } else {
+  }// else {
+
+  string ssh_sig = sig_string;
+
     SecureVector<Botan::byte> sig;
 
     // we permit the user to relax security here, by caching a decrypted key
@@ -407,7 +409,12 @@ make_signature(app_state & app,           // to hook for phrase
 
     sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
     sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
+  //}
+
+  if (app.opts.ssh_sign_given) {
+    E(ssh_sig == sig_string, F("make_signature: ssh_sig (%i) != sig_string (%i)\nssh_sig   : %s\nsig_string: %s") % ssh_sig.length() % sig_string.length() % encode_hexenc(ssh_sig) % encode_hexenc(sig_string));
   }
+
   L(FL("produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
