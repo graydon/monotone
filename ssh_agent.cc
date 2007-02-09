@@ -8,6 +8,8 @@
 #include "sanity.hh"
 #include "netio.hh"
 
+using std::min;
+
 ssh_agent::ssh_agent() {
 }
 
@@ -131,7 +133,7 @@ ssh_agent::put_string_into_buf(string const & str, string & buf) {
 vector<RSA_PublicKey> const
 ssh_agent::get_keys() {
   unsigned int len;
-  unsigned long ret;
+  int ret;
   char buf[4];
 
   unsigned int ch;
@@ -152,7 +154,7 @@ ssh_agent::get_keys() {
   L(FL("agent: get_keys response len %u") % len);
 
   string packet;
-  const int bufsize = 4096;
+  const long bufsize = 4096;
   char read_buf[bufsize];
   long get = len;
   while (get > 0) {
@@ -246,7 +248,7 @@ ssh_agent::get_keys() {
 }
 
 void
-ssh_agent::sign_data(RSA_PublicKey const key, string const data, string & out) {
+ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & out) {
   L(FL("agent: sign_data: key e: %s, n: %s, data len: %i") % key.get_e() % key.get_n() % data.length());
   string packet_out;
   string key_buf;
@@ -263,7 +265,7 @@ ssh_agent::sign_data(RSA_PublicKey const key, string const data, string & out) {
 
   char buf[4];
   unsigned long len;
-  unsigned long ret;
+  int ret;
   ret = stream->read(buf, 4);
   len = get_long(buf);
 
@@ -272,7 +274,7 @@ ssh_agent::sign_data(RSA_PublicKey const key, string const data, string & out) {
   L(FL("agent: sign_data response len %u") % len);
 
   string packet_in;
-  const int bufsize = 4096;
+  const long bufsize = 4096;
   char read_buf[bufsize];
   long get = len;
   while (get > 0) {
