@@ -35,3 +35,5 @@ check(fsize("_MTN/inodeprints") == 0)
 commit()
 
 check(fsize("_MTN/inodeprints") ~= 0)
+check(qgrep("left", "_MTN/inodeprints"))
+check(qgrep("right", "_MTN/inodeprints"))
