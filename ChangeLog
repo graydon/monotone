@@ -1,3 +1,8 @@
+2007-02-09  Thomas Moschny  <thomas.moschny@gmx.de>
+
+	* roster_delta.cc (get_roster_delta): Factor out the code for
+	fetching and parsing a roster delta.
+
 2007-02-06  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* roster_delta.cc (get_content_from_roster_delta): Added a missing

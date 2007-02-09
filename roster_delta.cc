@@ -475,6 +475,16 @@ delta_rosters(roster_t const & from, marking_map const & from_markings,
   del = roster_delta(printer.buf);
 }
 
+static
+void get_roster_delta(roster_delta const & del,
+                      roster_delta_t & d)
+{
+  basic_io::input_source src(del.inner()(), "roster_delta");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  parse_roster_delta_t(pars, d);
+}
+
 void
 apply_roster_delta(roster_delta const & del,
                    roster_t & roster, marking_map & markings)
@@ -483,11 +493,8 @@ apply_roster_delta(roster_delta const & del,
   MM(roster);
   MM(markings);
 
-  basic_io::input_source src(del.inner()(), "roster_delta");
-  basic_io::tokenizer tok(src);
-  basic_io::parser pars(tok);
   roster_delta_t d;
-  parse_roster_delta_t(pars, d);
+  get_roster_delta(del, d);
   d.apply(roster, markings);
 }
 
@@ -498,12 +505,8 @@ get_markings_from_roster_delta(roster_delta const & del,
                                node_id const & nid,
                                marking_t & markings)
 {
-  // FIXME: factor out this block 
-  basic_io::input_source src(del.inner()(), "roster_delta");
-  basic_io::tokenizer tok(src);
-  basic_io::parser pars(tok);
   roster_delta_t d;
-  parse_roster_delta_t(pars, d);
+  get_roster_delta(del, d);
 
   std::map<node_id, marking_t>::iterator i = d.markings_changed.find(nid);
   if (i != d.markings_changed.end())
@@ -524,13 +527,9 @@ get_content_from_roster_delta(roster_delta const & del,
                               node_id const & nid,
                               file_id & content)
 {
-  // FIXME: factor out this block 
-  basic_io::input_source src(del.inner()(), "roster_delta");
-  basic_io::tokenizer tok(src);
-  basic_io::parser pars(tok);
   roster_delta_t d;
-  parse_roster_delta_t(pars, d);
-
+  get_roster_delta(del, d);
+  
   roster_delta_t::deltas_applied_t::const_iterator i = d.deltas_applied.find(nid);
   if (i != d.deltas_applied.end())
     {
