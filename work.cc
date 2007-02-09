@@ -16,7 +16,7 @@
 #include "work.hh"
 #include "basic_io.hh"
 #include "cset.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "platform-wrapped.hh"
 #include "restrictions.hh"
 #include "sanity.hh"
@@ -41,7 +41,6 @@ using boost::lexical_cast;
 
 // workspace / book-keeping file code
 
-static string const attr_file_name(".mt-attrs");
 static string const inodeprints_file_name("inodeprints");
 static string const local_dump_file_name("debug");
 static string const options_file_name("options");
@@ -473,6 +472,40 @@ file_itemizer::visit_file(file_path const & path)
     }
 }
 
+
+struct workspace_itemizer : public tree_walker
+{
+  roster_t & roster;
+  path_set & known;
+  node_id_source & nis;
+
+  workspace_itemizer(roster_t & r, path_set & k, node_id_source & n)
+    : roster(r), known(k), nis(n) {}
+  virtual bool visit_dir(file_path const & path);
+  virtual void visit_file(file_path const & path);
+};
+
+bool
+workspace_itemizer::visit_dir(file_path const & path)
+{
+  split_path sp;
+  path.split(sp);
+  node_id nid = roster.create_dir_node(nis);
+  roster.attach_node(nid, sp);
+  return known.find(sp) != known.end();
+}
+
+void
+workspace_itemizer::visit_file(file_path const & path)
+{
+  split_path sp;
+  path.split(sp);
+  file_id fid;
+  node_id nid = roster.create_file_node(fid, nis);
+  roster.attach_node(nid, sp);
+}
+
+
 class
 addition_builder
   : public tree_walker
@@ -506,7 +539,7 @@ addition_builder::add_node_for(split_path const & sp)
     case path::file:
       {
         file_id ident;
-        I(ident_existing_file(path, ident, lua));
+        I(ident_existing_file(path, ident));
         nid = er.create_file_node(ident);
       }
       break;
@@ -603,16 +636,48 @@ private:
   lua_hooks & lua;
   content_merge_adaptor const & source;
   node_id next_nid;
-  std::map<bookkeeping_path, file_id> written_content;
   std::map<bookkeeping_path, file_path> rename_add_drop_map;
   bool root_dir_attached;
 };
 
 
+struct simulated_working_tree : public editable_tree
+{
+  roster_t & roster;
+  node_id_source & nis;
+  
+  path_set blocked_paths;
+  map<node_id, split_path> nid_map;
+  int conflicts;
+
+  simulated_working_tree(roster_t & r, temp_node_id_source & n)
+    : roster(r), nis(n), conflicts(0) {}
+
+  virtual node_id detach_node(split_path const & src);
+  virtual void drop_detached_node(node_id nid);
+
+  virtual node_id create_dir_node();
+  virtual node_id create_file_node(file_id const & content);
+  virtual void attach_node(node_id nid, split_path const & dst);
+
+  virtual void apply_delta(split_path const & pth,
+                           file_id const & old_id,
+                           file_id const & new_id);
+  virtual void clear_attr(split_path const & pth,
+                          attr_key const & name);
+  virtual void set_attr(split_path const & pth,
+                        attr_key const & name,
+                        attr_value const & val);
+
+  virtual void commit();
+
+  virtual ~simulated_working_tree();
+};
+
+
 struct content_merge_empty_adaptor : public content_merge_adaptor
 {
-  virtual void get_version(file_path const &, 
-                           file_id const &, file_data &) const
+  virtual void get_version(file_id const &, file_data &) const
   { I(false); }
   virtual void record_merge(file_id const &, file_id const &,
                             file_id const &, file_data const &,
@@ -666,7 +731,7 @@ editable_working_tree::detach_node(split_path const & src)
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         move_file(src_pth / (*i)(), dst_pth / (*i)());
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
-        if (!bookkeeping_path::is_bookkeeping_path((*i)()))
+        if (!bookkeeping_path::internal_string_is_bookkeeping_path(*i))
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
       root_dir_attached = false;
     }
@@ -705,9 +770,10 @@ editable_working_tree::create_file_node(file_id const & content)
   bookkeeping_path pth = path_for_nid(nid);
   require_path_is_nonexistent(pth,
                               F("path %s already exists") % pth);
-  safe_insert(written_content, make_pair(pth, content));
-  // Defer actual write to moment of attachment, when we know the path
-  // and can thus determine encoding / linesep convention.
+  file_data dat;
+  source.get_version(content, dat);
+  write_data(pth, dat.inner());
+
   return nid;
 }
 
@@ -717,39 +783,6 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   bookkeeping_path src_pth = path_for_nid(nid);
   file_path dst_pth(dst);
 
-  // Possibly just write data out into the workspace, if we're doing
-  // a file-create (not a dir-create or file/dir rename).
-  if (!path_exists(src_pth))
-    {
-      I(root_dir_attached);
-      map<bookkeeping_path, file_id>::const_iterator i
-        = written_content.find(src_pth);
-      if (i != written_content.end())
-        {
-          P(F("adding %s") % dst_pth);
-          file_data dat;
-          source.get_version(dst_pth, i->second, dat);
-          write_localized_data(dst_pth, dat.inner(), lua);
-          return;
-        }
-    }
-
-  // FIXME: it is weird to do this here, instead of up above, but if we do it
-  // up above a lot of tests break.  those tests are arguably broken -- they
-  // depend on 'update' clobbering existing, non-versioned files -- but
-  // putting this up there doesn't actually help, since if we abort in the
-  // middle of an update to avoid clobbering a file, we just end up leaving
-  // the working copy in an inconsistent state instead.  so for now, we leave
-  // this check down here.
-  // where are "here" and "there" ?!?
-
-  if (!workspace_root(dst))
-    {
-      require_path_is_nonexistent(dst_pth,
-                                  F("path '%s' already exists, cannot create") % dst_pth);
-    }
-
-  // If we get here, we're doing a file/dir rename, or a dir-create.
   map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
@@ -767,12 +800,12 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
       read_directory(src_pth, files, dirs);
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         {
-          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
           move_file(src_pth / (*i)(), dst_pth / (*i)());
         }
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
-          I(!bookkeeping_path::is_bookkeeping_path((*i)()));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
           move_dir(src_pth / (*i)(), dst_pth / (*i)());
         }
       delete_dir_shallow(src_pth);
@@ -793,15 +826,15 @@ editable_working_tree::apply_delta(split_path const & pth,
                        F("file '%s' does not exist") % pth_unsplit,
                        F("file '%s' is a directory") % pth_unsplit);
   hexenc<id> curr_id_raw;
-  calculate_ident(pth_unsplit, curr_id_raw, lua);
+  calculate_ident(pth_unsplit, curr_id_raw);
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
     F("content of file '%s' has changed, not overwriting") % pth_unsplit);
   P(F("modifying %s") % pth_unsplit);
 
   file_data dat;
-  source.get_version(pth_unsplit, new_id, dat);
-  write_localized_data(pth_unsplit, dat.inner(), lua);
+  source.get_version(new_id, dat);
+  write_data(pth_unsplit, dat.inner());
 }
 
 void
@@ -829,6 +862,103 @@ editable_working_tree::commit()
 editable_working_tree::~editable_working_tree()
 {
 }
+
+
+node_id
+simulated_working_tree::detach_node(split_path const & src)
+{
+  node_id nid = roster.detach_node(src);
+  nid_map.insert(make_pair(nid, src));
+  return nid;
+}
+
+void
+simulated_working_tree::drop_detached_node(node_id nid)
+{
+  node_t node = roster.get_node(nid);
+  if (is_dir_t(node)) 
+    {
+      dir_t dir = downcast_to_dir_t(node);
+      if (!dir->children.empty())
+        {
+          map<node_id, split_path>::const_iterator i = nid_map.find(nid);
+          I(i != nid_map.end());
+          split_path path = i->second;
+          W(F("cannot drop non-empty directory '%s'") % path);
+          conflicts++;
+        }
+    }
+}
+
+node_id
+simulated_working_tree::create_dir_node()
+{
+  return roster.create_dir_node(nis);
+}
+
+node_id
+simulated_working_tree::create_file_node(file_id const & content)
+{
+  return roster.create_file_node(content, nis);
+}
+
+void
+simulated_working_tree::attach_node(node_id nid, split_path const & dst)
+{
+  if (roster.has_node(dst))
+    {
+      W(F("attach blocked by unversioned path '%s'") % dst);
+      blocked_paths.insert(dst);
+      conflicts++;
+    }
+  else
+    {
+      split_path dirname;
+      path_component basename;
+      dirname_basename(dst, dirname, basename);
+
+      if (blocked_paths.find(dirname) == blocked_paths.end())
+        roster.attach_node(nid, dst);
+      else
+        {
+          W(F("attach blocked by unversioned path '%s'") % dst);
+          blocked_paths.insert(dst);
+        }
+    }
+}
+
+void
+simulated_working_tree::apply_delta(split_path const & path,
+                                    file_id const & old_id,
+                                    file_id const & new_id)
+{
+  // this may fail if path is not a file but that will be caught
+  // earlier in update_current_roster_from_filesystem
+}
+
+void
+simulated_working_tree::clear_attr(split_path const & pth,
+                                   attr_key const & name)
+{
+}
+
+void
+simulated_working_tree::set_attr(split_path const & pth,
+                                 attr_key const & name,
+                                 attr_value const & val)
+{
+}
+
+void
+simulated_working_tree::commit()
+{
+  N(conflicts == 0, F("%d workspace conflicts") % conflicts);
+}
+
+simulated_working_tree::~simulated_working_tree()
+{
+}
+
 
 }; // anonymous namespace
 
@@ -926,7 +1056,7 @@ workspace::classify_roster_paths(roster_t const & ros,
       // the node is a file, check if it exists and has been changed
       file_t file = downcast_to_file_t(node);
       file_id fid;
-      if (ident_existing_file(fp, fid, lua))
+      if (ident_existing_file(fp, fid))
         {
           if (file->content == fid)
             unchanged.insert(sp);
@@ -1014,7 +1144,7 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
             }
 
           file_t file = downcast_to_file_t(node);
-          ident_existing_file(fp, file->content, lua);
+          ident_existing_file(fp, file->content);
         }
 
     }
@@ -1404,6 +1534,25 @@ void
 workspace::perform_content_update(cset const & update,
                                   content_merge_adaptor const & ca)
 {
+  roster_t roster;
+  temp_node_id_source nis;
+  split_path root;
+  path_set known;
+  roster_t new_roster;
+
+  file_path().split(root);
+  node_id nid = roster.create_dir_node(nis);
+  roster.attach_node(nid, root);
+
+  get_current_roster_shape(new_roster, nis);
+  new_roster.extract_path_set(known);
+
+  workspace_itemizer itemizer(roster, known, nis);
+  walk_tree(file_path(), itemizer);
+
+  simulated_working_tree swt(roster, nis);
+  update.apply_to(swt);
+
   editable_working_tree ewt(lua, ca);
   update.apply_to(ewt);
 }

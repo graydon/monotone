@@ -23,6 +23,7 @@
 #include "safe_map.hh"
 
 using std::cout;
+using std::make_pair;
 using std::map;
 using std::set;
 using std::string;
@@ -68,6 +69,23 @@ three_way_merge(roster_t const & ancestor_roster,
   roster_merge(left_roster, left_markings, left_uncommon_ancestors,
                right_roster, right_markings, right_uncommon_ancestors,
                result);
+}
+
+static void
+get_content_paths(roster_t const & roster, map<file_id, file_path> & paths)
+{
+  node_map const & nodes = roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_t node = roster.get_node(i->first);
+      if (is_file_t(node))
+        {
+          split_path sp;
+          roster.get_name(i->first, sp);
+          file_t file = downcast_to_file_t(node);
+          paths.insert(make_pair(file->content, file_path(sp)));
+        }
+    }
 }
   
 CMD(update, N_("workspace"), "",
@@ -224,7 +242,10 @@ CMD(update, N_("workspace"), "",
 
   roster_t & merged_roster = result.roster;
 
-  content_merge_workspace_adaptor wca(app, old_roster);
+  map<file_id, file_path> paths;
+  get_content_paths(working_roster, paths);
+
+  content_merge_workspace_adaptor wca(app, old_roster, paths);
   resolve_merge_conflicts(working_roster, chosen_roster,
                           result, wca, app);
 
@@ -763,7 +784,10 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
 
   roster_t & merged_roster = result.roster;
 
-  content_merge_workspace_adaptor wca(app, from_roster);
+  map<file_id, file_path> paths;
+  get_content_paths(working_roster, paths);
+
+  content_merge_workspace_adaptor wca(app, from_roster, paths);
   resolve_merge_conflicts(working_roster, to_roster,
                           result, wca, app);
 

@@ -12,7 +12,7 @@
 #include "annotate.hh"
 #include "cmd.hh"
 #include "diff_patch.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "packet.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
@@ -165,8 +165,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path_external(idx(args, 0)), 
-                          dat, app.lua);
+      read_data(file_path_external(idx(args, 0)), dat);
     }
   else
     {

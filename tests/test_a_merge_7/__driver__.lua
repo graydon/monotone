@@ -27,6 +27,7 @@ commit()
 revs.b = base_revision()
 
 revert_to(revs.a)
+remove("otherfile1")
 
 writefile("testfile", "new stuff")
 commit()

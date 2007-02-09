@@ -1,3 +1,148 @@
+2007-02-08  Derek Scherger  <derek@echologic.com>
+
+	* cmd_merging.cc (get_content_paths): new function
+	(update):
+	(pluck): put paths by content hash into workspace adapter
+	* diff_patch.{cc,hh} (content_merge_adaptor::get_version): remove
+	path argument from interface
+	(content_merge_workspace_adaptor): add map of paths by content
+	hash to workspace adaptor
+	(content_merge_workspace_adaptor::get_version): get path from map
+	* work.cc (attr_file_name): remove unused var
+	(editable_working_tree::written_content): remove
+	(content_merge_empty_adaptor::get_version): remove path argument
+	(editable_working_tree::create_file_node): write file content here
+	rather than deferring it to attach_node
+	(editable_working_tree::attach_node): remove deferred file content
+	(editable_working_tree::apply_delta): remove path argument from 
+	get_version call
+
+2007-02-08  Zack Weinberg  <zackw@panix.com>
+
+	* configure.ac: Stick some goo in config.status to kill
+	UPDATEPOFILES in po/Makefile, so that .po files will not be
+	automatically regenerated.
+
+2007-02-07  Lapo Luchini  <lapo@lapo.it>
+
+	* vocab_macros.hh: added operator!=() to 'enc' and 'dec'.
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* commands.cc:
+	* roster.cc:
+	replace references to localized_file_io.hh with file_io.hh
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* NEWS: add note about the removal of the charset and line
+	separator hooks
+
+2007-02-07  Daniel Carosone  <dan@geek.com.au>
+
+	* rename tests {update,checkout}_clobbers_workspace to
+	_does_not_clobber_workspace, because they now no longer do.
+	* add a corollary pluck_does_not_clobber_workspace
+
+2007-02-07  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/ls_unknown_in_subdir: Update test to match new
+	non-recursiveness of ls unknown.
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* Makefile.am (localized_file_io.{cc,hh}): remove
+	* cmd_diff_log.cc:
+	* cmd_files.cc:
+	* cmd_ws_commit.cc:
+	* diff_patch.cc:
+	* work.cc:
+	replace calls to read_localized_data with read_data
+	replace calls to write_localized_data with write_data
+	remove lua arg from calls to ident_existing_file and
+	calculate_ident
+	* file_io.{cc,hh} (ident_existing_file, calculate_ident): move
+	here from localized_file_io.{cc,hh}
+	* lua_hooks.{cc,hh} (hook_get_system_linesep,
+	hook_get_charset_conv, hook_get_linesep_conv): remove
+	* localized_file.{cc,hh}: remove
+	* monotone.texi: remove charset/linesep sections
+	* simplestring_xform.{cc,hh} (line_end_convert): remove
+	* testsuite.lua (use_get_linesep_hook, files_with_non-utf8_data):
+	remove
+
+2007-02-07  Daniel Carosone  <dan@geek.com.au>
+
+	* tests/db_kill_rev_and_recommit/__driver__.lua/: add a test
+	(xfail'ed, until fixed) for a bug (#18990) I just tripped over,
+	whereby db_kill_rev_locally doesn't seem to kill enough.
+
+2007-02-07  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/test_a_merge_8/__driver__.lua: okay, sorry, that didn't work,
+	second try in adding xfail() to that test.
+
+2007-02-07  Markus Schiltknecht  <markus@bluegap.ch>
+
+	* tests/test_a_merge_8/__driver__.lua: added xfail() and a bug id,
+	so that current tests run through fine.
+
+2007-02-07  Zack Weinberg  <zackw@panix.com>
+
+	* charset.cc (system_to_utf8): Move below system_charset_is_utf8
+	etc; add the same short-circuit logic that utf8_to_system
+	has.  (In addition to being a speed win, this avoids problems with
+	buggy iconv implementations that don't implement the encoding that
+	their own locale library reports for the "C" locale.  Bleah.)
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* work.cc (struct workspace_itemizer): return boolean from visit_dir
+	(perform_content_update): get list of known paths for visit_dir to use
+	* testsuite.lua: account for renamed test
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* NEWS: add notes about changes to ls unknown's behaviour
+
+2007-02-07  Derek Scherger  <derek@echologic.com>
+
+	* NEWS: add notes about changes to update's behaviour
+	* tests/(imp)_deleting_directories/__driver__.lua:
+	* tests/annotate_file_whose_name_changed/__driver__.lua:
+	* tests/merge((),_(add_a,_drop_a,_add_a))/__driver__.lua:
+	* tests/merge((),_(add_a,_patch_a,_drop_a,_add_a))/__driver__.lua:
+	* tests/merging_a_rename_twice/__driver__.lua:
+	* tests/merging_adds/__driver__.lua:
+	* tests/renaming_a_deleted_file/__driver__.lua:
+	* tests/repeatedly_exchanging_work_via_netsync/__driver__.lua:
+	* tests/schema_migration/__driver__.lua:
+	* tests/schema_migration_with_rosterify/__driver__.lua:
+	* tests/test_a_merge_7/__driver__.lua:
+	add a few "remove" calls so that tests no longer require update to
+	clobber files
+	* tests/drop_directory_with_unversioned_files_and_merge: rename to ...
+	* tests/drop_directory_with_unversioned_files_and_update: ... this
+	and un-xfail
+	* tests/update_clobbers_workspace/__driver__.lua:
+	* tests/update_does_not_stomp_non-monotone_files/__driver__.lua:
+	adjust/un-xfail to account for update no longer clobbering
+	unversioned files
+	* work.cc:
+	(struct workspace_itemizer): new itemizer that builds a roster
+	which includes every node in the workspace
+	(struct simulated_working_tree): new working tree implementation
+	that update runs against to see if it will encounter any workspace
+	conflicts
+	(perform_content_update): use workspace_itemizer to create a
+	workspace roster and then apply the update cset against this with
+	simulated_working_tree to see if update will fail on something
+	obvious
+
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* win32/os_strerror.c (os_strerror): Clean up string handling.
+
 2007-02-09  Thomas Moschny  <thomas.moschny@gmx.de>
 
 	* roster_delta.cc (get_roster_delta): Factor out the code for
@@ -34,7 +179,7 @@
 	* tests/ls_unknown_of_unknown_subdir/__driver__.lua:
 	* tests/things_in_.mtn-ignore_get_ignored/__driver__.lua:
 	update tests to exclude things in unknown dirs
-	
+
 2007-02-04  Ralf S. Engelschall  <rse@engelschall.com>
 
 	(via Richard Levitte  <richard@levitte.org>)
@@ -81,7 +226,7 @@
 
 2007-01-29  Thomas Keller  <me@thomaskeller.biz>
 
-	* added some lua hooks to run a script after revs or certs have 
+	* added some lua hooks to run a script after revs or certs have
 	arrived via netsync for a particular branch
 
 2007-01-29  Matthew Gregan  <kinetik@orcon.net.nz>

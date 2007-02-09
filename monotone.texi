@@ -8147,78 +8147,6 @@ hooks}.
 
 @end ftable
 
-@subsection System Line and Character Conversions
-
-Different operating systems vary in the character(s) used as line
-separators for text files, and in the character set (locale) used for
-filenames. These differences can become annoying when multiple
-developers on a project use different operating systems. Because so much
-of monotone depends on cryptographic checksums, it is often desirable
-that these differences are removed so that files are considered
-identical regardless of platform-specific representations. The hooks in
-this section allow the user to specify these equivalence and conversion
-rules.
-
-@ftable @code
-@item get_system_linesep ()
-
-Returns a string which defines the default system line separator.
-This should be one of the strings @code{CR}, @code{LF}, or
-@code{CRLF}. The system line separator may be used when reading or
-writing data to the terminal, or otherwise interfacing with the user.
-The system line separator is not used to convert files in the working
-copy; use @code{get_linesep_conv} for converting line endings in the
-workspace.
-
-This hook has no default definition. For more information on line
-ending conversion, see the section on @ref{Internationalization}.
-
-@item get_linesep_conv (@var{filename})
-
-Returns a table which contains two strings. The first string in the
-return value is the name of a line ending convention to use for the
-``internal'' representation of @var{filename}. The second string in
-the return value is the name of a line ending convention to use for
-the ``external'' representation of @var{filename}. Line ending
-conventions should be one of the strings @code{CR}, @code{LF}, or
-@code{CRLF}. 
-
-When @var{filename} is read from the workspace, it is run through
-line ending conversion from the external form to the internal
-form. When @var{filename} is written to the workspace, it is run
-through line ending conversion from the internal form to the external
-form. @sc{sha1} values are calculated from the internal form of
-@var{filename}. It is your responsibility to decide which line ending
-conversions your work will use.
-
-This hook has no default definition; monotone's default behavior is to
-keep external and internal forms byte-for-byte identical. For more
-information on line ending conversion, see the section on
-@ref{Internationalization}.
-
-@item get_charset_conv (@var{filename})
-
-Returns a table which contains two strings. The first string in the
-return value is the name of a character set to use for the
-``internal'' representation of @var{filename}. The second string in
-the return value is the name of a character set to use for the
-``external'' representation of @var{filename}.  
-
-When @var{filename} is read from the workspace, it is run through
-character set conversion from the external form to the internal
-form. When @var{filename} is written to the workspace, it is run
-through character set conversion from the internal form to the
-external form. @sc{sha1} values are calculated from the internal
-form of @var{filename}. It is your responsibility to decide which
-character set conversions your work will use. 
-
-This hook has no default definition; monotone's default behavior is to
-keep external and internal forms byte-for-byte identical. For more
-information on character set conversion, see the section on
-@ref{Internationalization}.
-
-@end ftable
-
 @subsection Attribute Handling
 
 Some files in a project are special; they may require different handling
@@ -8550,39 +8478,6 @@ specified by a Lua hook @code{get_charset_conv} which takes a filename
 and returns a table of two strings: the first represents the
 "internal" (database) charset, the second represents the "external"
 (file system) charset.
-
-@item Line ending conversion
-The process of converting platform-dependent end-of-line codes
-(@code{0x0D}, @code{0x0A}, or the pair @code{0x0D 0x0A}) from one
-convention to another. Per-file line ending conversion is specified by
-a Lua hook @code{get_linesep_conv} which takes a filename and returns
-a table of two strings: the first represents the "internal" (database)
-line ending convention, the second represents the "external"
-(file system) line ending convention. each string should be one of the
-three strings "CR", "LF", or "CRLF".
-
-Note that Line ending conversion is always performed on the internal
-character set, when both character set and line ending conversion are
-enabled; this behavior is meant to encourage the use of the monotone's
-``normal form'' (UTF-8, '\n') as an internal form for your source
-files, when working with multiple external forms. Also note that line
-ending conversion only works on character encodings with the specific
-code bytes described above, such as ASCII, ISO-8859x, and UTF-8.
-
-@item Normal form conversion
-Character set and line ending conversions done between a "system form"
-and a "normal form". The system character set form is inferred from
-the environment, using the various locale environment variables. The
-system line ending form can be additionally specialized using the
-@code{get_system_linesep} hook. No hooks exist for adjusting the
-system character set, since the system character set must be known
-during command-line argument processing, before any Lua hooks are
-loaded.
-
-Monotone's normal form is the UTF-8 character set and the @code{0x0A}
-(LF) line ending form. This form is used in any files monotone needs
-to read, write, and interpret itself, such as @file{_MTN/revision} and
-@file{_MTN/options}.
 
 @item LDH
 Letters, digits, and hyphen: the set of ASCII bytes @code{0x2D},

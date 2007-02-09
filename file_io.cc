@@ -503,7 +503,8 @@ walk_tree_recursive(fs::path const & absolute,
       entry.normalize();
       rel_entry.normalize();
 
-      if (bookkeeping_path::is_bookkeeping_path(rel_entry.string()))
+      // FIXME BUG: this utf8() cast is a total lie
+      if (bookkeeping_path::internal_string_is_bookkeeping_path(utf8(rel_entry.string())))
         {
           L(FL("ignoring book keeping entry %s") % rel_entry.string());
           continue;
@@ -550,6 +551,41 @@ walk_tree(file_path const & path,
                             walker);
       break;
     }
+}
+
+bool
+ident_existing_file(file_path const & p, file_id & ident)
+{
+  switch (get_path_status(p))
+    {
+    case path::nonexistent:
+      return false;
+    case path::file:
+      break;
+    case path::directory:
+      W(F("expected file '%s', but it is a directory.") % p);
+      return false;
+    }
+
+  hexenc<id> id;
+  calculate_ident(p, id);
+  ident = file_id(id);
+
+  return true;
+}
+
+void
+calculate_ident(file_path const & file,
+                hexenc<id> & ident)
+{
+  // no conversions necessary, use streaming form
+  // Best to be safe and check it isn't a dir.
+  assert_path_is_file(file);
+  Botan::Pipe p(new Botan::Hash_Filter("SHA-160"), new Botan::Hex_Encoder());
+  Botan::DataSource_Stream infile(file.as_external(), true);
+  p.process_msg(infile);
+
+  ident = hexenc<id>(lowercase(p.read_all_as_string()));
 }
 
 // Local Variables:

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-02-05 16:23-0800\n"
+"PO-Revision-Date: 2007-02-08 00:45-0800\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -64,8 +64,8 @@ msgstr "[RAMO]"
 #: automate.cc:1454
 #: automate.cc:1500
 #: automate.cc:1559
-#: cmd_files.cc:253
-#: cmd_files.cc:276
+#: cmd_files.cc:252
+#: cmd_files.cc:275
 #: cmd_list.cc:669
 #, c-format
 msgid "wrong argument count"
@@ -159,11 +159,11 @@ msgstr "ID_REV"
 #: automate.cc:1168
 #: automate.cc:1170
 #: cmd_db.cc:35
-#: cmd_diff_log.cc:386
-#: cmd_diff_log.cc:417
-#: cmd_diff_log.cc:419
+#: cmd_diff_log.cc:383
+#: cmd_diff_log.cc:414
+#: cmd_diff_log.cc:416
 #: cmd_files.cc:138
-#: cmd_files.cc:197
+#: cmd_files.cc:196
 #: cmd_merging.cc:125
 #: cmd_merging.cc:669
 #: cmd_merging.cc:684
@@ -176,7 +176,7 @@ msgid "no such revision '%s'"
 msgstr "la revisione %s non esiste"
 
 #: automate.cc:1129
-#: cmd_files.cc:250
+#: cmd_files.cc:249
 msgid "FILEID"
 msgstr "ID_FILE"
 
@@ -241,7 +241,7 @@ msgstr "REV1 FILE REV2"
 #: basic_io.cc:33
 #, c-format
 msgid "parsing a %s at %d:%d:E: %s"
-msgstr ""
+msgstr "durante il parsing di un ‘%s’ in %d:%d:E: %s"
 
 #: cert.cc:82
 #, c-format
@@ -420,10 +420,10 @@ msgid "no var with name %s in domain %s"
 msgstr "nessuna variabile ha nome ‘%s’ nel dominio ‘%s’"
 
 #: cmd_db.cc:155
-#: cmd_diff_log.cc:465
-#: cmd_diff_log.cc:602
+#: cmd_diff_log.cc:462
+#: cmd_diff_log.cc:599
 #: cmd_files.cc:114
-#: cmd_files.cc:220
+#: cmd_files.cc:219
 #: cmd_list.cc:471
 #: cmd_merging.cc:606
 #: cmd_ws_commit.cc:410
@@ -466,14 +466,14 @@ msgstr "File modificati:"
 
 #: cmd_diff_log.cc:172
 msgid "Modified attrs:"
-msgstr ""
+msgstr "Attributi modificati:"
 
-#: cmd_diff_log.cc:356
+#: cmd_diff_log.cc:353
 #, c-format
 msgid "more than two revisions given"
 msgstr "selezionate più di due revisioni"
 
-#: cmd_diff_log.cc:465
+#: cmd_diff_log.cc:462
 #: cmd_ws_commit.cc:79
 #: cmd_ws_commit.cc:301
 #: cmd_ws_commit.cc:336
@@ -482,7 +482,7 @@ msgstr "selezionate più di due revisioni"
 msgid "[PATH]..."
 msgstr "[PERCORSO…]"
 
-#: cmd_diff_log.cc:466
+#: cmd_diff_log.cc:463
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -495,7 +495,7 @@ msgstr ""
 "viene stampata la differenza tra loro. Se non è specificato nessun\n"
 "formato, viene usato per default quello unificato."
 
-#: cmd_diff_log.cc:475
+#: cmd_diff_log.cc:472
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -504,19 +504,19 @@ msgstr ""
 "‘--diff-args’ richiede ‘--external’\n"
 "prova ad aggiungere ‘--external’ o togliere ‘--diff-args’"
 
-#: cmd_diff_log.cc:499
+#: cmd_diff_log.cc:496
 msgid "no changes"
 msgstr "nessun cambiamento"
 
-#: cmd_diff_log.cc:520
+#: cmd_diff_log.cc:517
 msgid "[FILE [...]]"
 msgstr "[FILE […]]"
 
-#: cmd_diff_log.cc:602
+#: cmd_diff_log.cc:599
 msgid "[FILE] ..."
 msgstr "[FILE…]"
 
-#: cmd_diff_log.cc:603
+#: cmd_diff_log.cc:600
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -524,7 +524,7 @@ msgstr ""
 "stampa lo storico in ordine contrario (filtrando per ‘FILE’).\n"
 "Se sono specificate una o più revisioni, le come punto di partenza."
 
-#: cmd_diff_log.cc:617
+#: cmd_diff_log.cc:614
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "solo un comando permesso tra ‘--last’ e ‘--next’"
@@ -619,23 +619,23 @@ msgstr "[PERCORSO]"
 msgid "calculate identity of PATH or stdin"
 msgstr "calcola l'identità di un percorso o di stdin"
 
-#: cmd_files.cc:185
+#: cmd_files.cc:184
 #, c-format
 msgid "no file version %s found in database"
 msgstr "nel database non è presente alcun file con versione ‘%s’"
 
-#: cmd_files.cc:210
-#: cmd_files.cc:214
+#: cmd_files.cc:209
+#: cmd_files.cc:213
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "nessun file ‘%s’ trovato nella revisione %s"
 
-#: cmd_files.cc:221
-#: cmd_files.cc:273
+#: cmd_files.cc:220
+#: cmd_files.cc:272
 msgid "FILENAME"
 msgstr "NOMEFILE"
 
-#: cmd_files.cc:222
+#: cmd_files.cc:221
 msgid "write file from database to stdout"
 msgstr "copia un file dal database a stdout"
 
@@ -645,27 +645,32 @@ msgstr "copia un file dal database a stdout"
 msgid "ignored bookkeeping path '%s'"
 msgstr "ignorata la directory di contabilità / ad uso interno ‘%s’"
 
-#: cmd.hh:94
+#: cmd.hh:71
+#, c-format
+msgid "all arguments given were bookkeeping paths; aborting"
+msgstr ""
+
+#: cmd.hh:101
 #, c-format
 msgid "non-hex digits in id"
 msgstr "id con cifre non esadecimali"
 
-#: cmd.hh:103
+#: cmd.hh:110
 #, c-format
 msgid "partial id '%s' does not have an expansion"
 msgstr "l'id parziale ‘%s’ non può essere espanso"
 
-#: cmd.hh:107
+#: cmd.hh:114
 #, c-format
 msgid "partial id '%s' has multiple ambiguous expansions:"
 msgstr "id parziale ‘%s’ ha espansioni multiple ambigue:"
 
-#: cmd.hh:115
+#: cmd.hh:122
 #, c-format
 msgid "expanded partial id '%s' to '%s'"
 msgstr "id parziale ‘%s’ espanso in ‘%s’"
 
-#: cmd.hh:200
+#: cmd.hh:207
 #, c-format
 msgid "Alias for %s"
 msgstr "Alias per %s"
@@ -1361,10 +1366,10 @@ msgstr "il file pid ‘%s’ esiste già"
 msgid "failed to create pid file '%s'"
 msgstr "creazione del file PID ‘%s’ fallita"
 
-# TODO: cambiare l'originale
+# TODO: non mi convince
 #: cmd_netsync.cc:185
 msgid "serve the database to connecting clients"
-msgstr ""
+msgstr "accetta connessioni e condivide il database con loro"
 
 #: cmd_netsync.cc:201
 #, c-format
@@ -2529,11 +2534,16 @@ msgstr "impossibile aprire il file ‘%s’ in scrittura"
 msgid "caught runtime error %s constructing file path for %s"
 msgstr ""
 
-#: file_io.cc:541
-#: work.cc:1117
+#: file_io.cc:542
+#: work.cc:1282
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "nessun file o directory con nome ‘%s’"
+
+#: file_io.cc:566
+#, c-format
+msgid "expected file '%s', but it is a directory."
+msgstr "mi aspettavo il file ‘%s’, invece è una cartella."
 
 #: keys.cc:103
 #, c-format
@@ -2592,7 +2602,7 @@ msgstr "La directory ‘%s’ non esiste"
 #: lua.cc:481
 #: lua.cc:516
 #: rcs_import.cc:1236
-#: work.cc:1372
+#: work.cc:1537
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "‘%s’ non è una directory"
@@ -2718,7 +2728,7 @@ msgstr ""
 #: netio.hh:122
 #, c-format
 msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-msgstr "la decodifica uleb128 per ‘%s’ in ***datum*** %d-byte ha dato overflow"
+msgstr ""
 
 #: netio.hh:142
 #, c-format
@@ -3940,94 +3950,110 @@ msgstr "Impossibile leggere il file di opzioni ‘%s’: %s"
 msgid "Failed to write options file %s: %s"
 msgstr "Impossibile scrivere il file di opzioni ‘%s’: %s"
 
-#: work.cc:544
+#: work.cc:578
 #, c-format
 msgid "skipping ignorable file %s"
 msgstr "salto il file ignorabile ‘%s’"
 
-#: work.cc:553
+#: work.cc:587
 #, c-format
 msgid "skipping %s, already accounted for in workspace"
 msgstr "salto ‘%s’, già considerato nello spazio di lavoro"
 
-#: work.cc:564
+#: work.cc:598
 #, c-format
 msgid "adding %s to workspace manifest"
 msgstr "aggiungo ‘%s’ al manifesto dello spazio di lavoro"
 
-#: work.cc:570
+#: work.cc:604
 #, c-format
 msgid "cannot add %s, because %s is recorded as a file in the workspace manifest"
 msgstr ""
 
-#: work.cc:685
+#: work.cc:753
 #, c-format
 msgid "dropping %s"
 msgstr "cancello ‘%s’"
 
-#: work.cc:696
-#: work.cc:707
+#: work.cc:764
+#: work.cc:775
 #, c-format
 msgid "path %s already exists"
 msgstr "il percorso ‘%s’ esiste già"
 
-#: work.cc:729
-#: work.cc:761
+#: work.cc:797
+#: work.cc:829
 #, c-format
 msgid "adding %s"
 msgstr "aggiungo ‘%s’"
 
-#: work.cc:749
+#: work.cc:817
 #, c-format
 msgid "path '%s' already exists, cannot create"
 msgstr "il percorso ‘%s’ esiste già: non posso crearlo"
 
-#: work.cc:757
+#: work.cc:825
 #, c-format
 msgid "renaming %s to %s"
 msgstr "rinomino ‘%s’ in ‘%s’"
 
-#: work.cc:793
+#: work.cc:861
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "il file ‘%s’ non esiste"
 
-#: work.cc:794
+#: work.cc:862
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "il file ‘%s’ è una directory "
 
-#: work.cc:799
+#: work.cc:867
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr "i contenuti del file ‘%s’ sono cambiati, non lo sovrascrivo"
 
-#: work.cc:800
+#: work.cc:868
 #, c-format
 msgid "modifying %s"
 msgstr "modifico ‘%s’"
 
-#: work.cc:989
+#: work.cc:922
+#, c-format
+msgid "cannot drop non-empty directory '%s'"
+msgstr "impossibile eliminare la cartella non vuota ‘%s’"
+
+#: work.cc:945
+#: work.cc:959
+#, c-format
+msgid "attach blocked by unversioned path '%s'"
+msgstr ""
+
+#: work.cc:990
+#, c-format
+msgid "%d workspace conflicts"
+msgstr "%d conflitti nello spazio di lavoro"
+
+#: work.cc:1154
 #, c-format
 msgid "missing directory '%s'"
 msgstr "la directory ‘%s’ manca"
 
-#: work.cc:994
+#: work.cc:1159
 #, c-format
 msgid "not a directory '%s'"
 msgstr "‘%s’ non è una directory"
 
-#: work.cc:1007
+#: work.cc:1172
 #, c-format
 msgid "missing file '%s'"
 msgstr "il file ‘%s’ manca"
 
-#: work.cc:1012
+#: work.cc:1177
 #, c-format
 msgid "not a file '%s'"
 msgstr "‘%s’ non è un file"
 
-#: work.cc:1023
+#: work.cc:1188
 #, c-format
 msgid ""
 "%d missing items; use '%s ls missing' to view\n"
@@ -4046,92 +4072,92 @@ msgstr ""
 " ‘%s drop --missing’ oppure\n"
 " ‘%s revert --missing’"
 
-#: work.cc:1169
+#: work.cc:1334
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "salto ‘%s’, non sotto controllo di versione"
 
-#: work.cc:1179
+#: work.cc:1344
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "non posso cancellare ‘%s/’: non è vuota"
 
-#: work.cc:1190
+#: work.cc:1355
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "elimino ‘%s’ dal manifesto dello spazio di lavoro"
 
-#: work.cc:1243
+#: work.cc:1408
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr "la directory di destinazione ‘%s/’ non è versionata (in caso, usare ‘add’)"
 
-#: work.cc:1246
+#: work.cc:1411
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "la destinazione ‘%s’ è un file già esistente nella versione attuale"
 
-#: work.cc:1256
+#: work.cc:1421
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "il percorso vuoto ‘%s’ non è permesso"
 
-#: work.cc:1270
+#: work.cc:1435
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "‘%s’ non esiste nel manifesto attuale"
 
-#: work.cc:1273
+#: work.cc:1438
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "la destinazione ‘%s’ esiste già nel manifesto attuale"
 
-#: work.cc:1279
+#: work.cc:1444
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "la directory di destinazione ‘%s’ non esiste nel manifesto attuale"
 
-#: work.cc:1281
+#: work.cc:1446
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "la directory di destinazione ‘%s’ non è una directory"
 
-#: work.cc:1290
+#: work.cc:1455
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "rinomino ‘%s’ in ‘%s’ nel manifesto dello spazio di lavoro"
 
-#: work.cc:1318
+#: work.cc:1483
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "‘%s’ non esiste nello spazio di lavoro, lo salto"
 
-#: work.cc:1322
+#: work.cc:1487
 #, c-format
 msgid "destination %s already exists in workspace, skipping"
 msgstr "salto ‘%s’, esiste già nello spazio di lavoro"
 
-#: work.cc:1352
+#: work.cc:1517
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr "la nuova directory root proposta ‘%s’ non è versionata o non esiste"
 
-#: work.cc:1354
+#: work.cc:1519
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "la nuova directory root proposta ‘%s’ non è una directory"
 
-#: work.cc:1359
+#: work.cc:1524
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr "la nuova directory root proposta ‘%s’ ha un percorso illegale %s"
 
-#: work.cc:1369
+#: work.cc:1534
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "la directory ‘%s’ non è versionata o non esiste"
 
-#: work.cc:1375
+#: work.cc:1540
 #, c-format
 msgid "'%s' is in the way"
 msgstr "‘%s’ è di ostacolo"

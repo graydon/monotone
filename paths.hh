@@ -209,8 +209,9 @@ public:
   // usually you should just use the / operator as a constructor!
   bookkeeping_path(std::string const & path);
   bookkeeping_path operator /(std::string const & to_append) const;
-  // exposed for the use of walk_tree
-  static bool is_bookkeeping_path(std::string const & path);
+  // exposed for the use of walk_tree and friends
+  static bool internal_string_is_bookkeeping_path(utf8 const & path);
+  static bool external_string_is_bookkeeping_path(utf8 const & path);
   bool operator ==(const bookkeeping_path & other) const
   { return data == other.data; }
 

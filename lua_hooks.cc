@@ -736,56 +736,6 @@ lua_hooks::hook_apply_attribute(string const & attr,
 
 
 bool
-lua_hooks::hook_get_system_linesep(string & linesep)
-{
-  return Lua(st)
-    .func("get_system_linesep")
-    .call(0,1)
-    .extract_str(linesep)
-    .ok();
-}
-
-bool
-lua_hooks::hook_get_charset_conv(file_path const & p,
-                                 string & db,
-                                 string & ext)
-{
-  Lua ll(st);
-  ll
-    .func("get_charset_conv")
-    .push_str(p.as_external())
-    .call(1,1)
-    .begin();
-
-  ll.next();
-  ll.extract_str(db).pop();
-
-  ll.next();
-  ll.extract_str(ext).pop();
-  return ll.ok();
-}
-
-bool
-lua_hooks::hook_get_linesep_conv(file_path const & p,
-                                 string & db,
-                                 string & ext)
-{
-  Lua ll(st);
-  ll
-    .func("get_linesep_conv")
-    .push_str(p.as_external())
-    .call(1,1)
-    .begin();
-
-  ll.next();
-  ll.extract_str(db).pop();
-
-  ll.next();
-  ll.extract_str(ext).pop();
-  return ll.ok();
-}
-
-bool
 lua_hooks::hook_validate_commit_message(utf8 const & message,
                                         revision_data const & new_rev,
                                         utf8 const & branchname,

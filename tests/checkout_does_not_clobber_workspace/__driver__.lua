@@ -10,18 +10,18 @@ mkdir("test1")
 check(indir("test1", mtn("checkout", ".")))
 
 -- checkout to workspace with an unversioned file blocking a versioned file
--- clobbers unversioned file
+-- still clobbers unversioned file; should not
 mkdir("test2")
 writefile("test2/file1", "blocker")
-check(indir("test2", mtn("checkout", ".")))
+xfail(indir("test2", mtn("checkout", ".")), 1, false, true)
 check(samefile("file1", "test2/file1"))
 
 -- checkout to workspace with an unversioned directory blocking a versioned directory
--- uses existing workspace directory
+-- uses existing workspace directory; should not
 mkdir("test3")
 mkdir("test3/foo")
 writefile("test3/foo/asdf", "asdf")
-check(indir("test3", mtn("checkout", ".")))
+xfail(indir("test3", mtn("checkout", ".")), 1, false, true)
 check(exists("test3/foo/asdf"))
 
 -- checkout to workspace with an unversioned directory blocking a versioned file
