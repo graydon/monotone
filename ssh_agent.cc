@@ -266,6 +266,7 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   L(FL("agent: sign_data: key e: %s, n: %s, data len: %i") % key.get_e() % key.get_n() % data.length());
   string data_out;
   string key_buf;
+  string full_sig;
   unsigned char cmd[1];
   cmd[0] = 13;
   data_out.append((char *)cmd, 1);
@@ -286,12 +287,19 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   u32 len = fetch_packet(packet_in);
 
   u32 packet_in_loc = 0;
-  E(packet_in.at(0) == 14, F("agent: packet_in type (%u) != 14") % (u32)packet_in.at(0));
+  E(packet_in.at(0) == 14, F("agent: sign_data: packet_in type (%u) != 14") % (u32)packet_in.at(0));
   packet_in_loc += 1;
 
-  u32 out_len;
-  get_string_from_buf(packet_in, packet_in_loc, out_len, out);
-  L(FL("agent: signed data length: %u (%u)") % out_len % out.length());
+  u32 full_sig_len;
+  get_string_from_buf(packet_in, packet_in_loc, full_sig_len, full_sig);
+  L(FL("agent: sign_data: signed data length: %u (%u)") % full_sig_len % full_sig.length());
+
+  string type;
+  u32 full_sig_loc = 0, type_len, out_len;
+  get_string_from_buf(full_sig, full_sig_loc, type_len, type);
+  L(FL("agent: sign_data: type (%u), '%s'") % type_len % type);
+  get_string_from_buf(full_sig, full_sig_loc, out_len, out);
+  L(FL("agent: sign_data: output length %u") % out_len);
 }
 
 // Local Variables:
