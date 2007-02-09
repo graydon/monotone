@@ -103,11 +103,16 @@ ssh_agent::put_long_into_buf(u32 l, string & buf) {
 
 void
 ssh_agent::put_bigint_into_buf(BigInt const & bi, string & buf) {
-  Botan::byte bi_buf[bi.bytes()];
+  int bytes = bi.bytes() + 1;
+  Botan::byte bi_buf[bytes];
   L(FL("agent: put_bigint_into_buf: bigint.bytes(): %u, bigint: %s") % bi.bytes() % bi);
-  put_long_into_buf(bi.bytes(), buf);
-  BigInt::encode(bi_buf, bi);
-  buf.append((char *)bi_buf, bi.bytes());
+  bi_buf[0] = 0x00;
+  BigInt::encode(bi_buf + 1, bi);
+  int hasnohigh = (bi_buf[1] & 0x80) ? 0 : 1;
+  string bi_str;
+  bi_str.append((char *)(bi_buf + hasnohigh), bytes - hasnohigh);
+  put_string_into_buf(bi_str, buf);
+  bi_str[0] = bytes;
   L(FL("agent: put_bigint_into_buf: buf len now %i") % buf.length());
 }
 
@@ -138,7 +143,9 @@ ssh_agent::read_num_bytes(u32 const len, string & out)
   while (get > 0) {
     ret = stream->read(read_buf, min(get, bufsize));
     E(ret >= 0, F("stream read failed (%i)") % ret);
-    //L(FL("agent: ----ret: %i") % ret);
+    if (ret > 0) {
+      L(FL("agent: read_num_bytes: read %i bytes") % ret);
+    }
     out.append(read_buf, ret);
     get -= ret;
   }
@@ -180,22 +187,16 @@ ssh_agent::get_keys() {
   string packet;
   len = fetch_packet(packet);
 
-  //L(FL("agent: ----ret: %i, len: %u, buf: %u %u %u %u") % ret % len % buf[0] % buf[1] % buf[2] % buf[3]);
-  //ret = stream->read(buf, 1);
-  //L(FL("agent: ----ret: %i, buf: %u") % ret % buf[0]);
-
   //first byte is packet type
   u32 packet_loc = 0;
   E(packet.at(0) == 12, F("agent: packet type (%u) != 12") % (u32)packet.at(0));
   packet_loc += 1;
 
   u32 num_keys = get_long_from_buf(packet, packet_loc);
-  //L(FL("agent: ----ret: ret %i, num_keys: %u") % ret % num_keys);
+  L(FL("agent: ----ret: ret %i, num_keys: %u") % ret % num_keys);
 
   for (u32 key_num = 0; key_num < num_keys; ++key_num) {
     L(FL("agent: getting key # %u") % key_num);
-
-    //L(FL("agent: ----ret: ret %i, key_len: %u") % ret % key_len);
 
     u32 key_len;
     string key;
@@ -274,8 +275,10 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   u32 flags = 0;
   put_long_into_buf(flags, data_out);
 
+  L(FL("agent: sign_data: data_out length: %u") % data_out.length());
+
   string packet_out;
-  put_string_into_buf(data, packet_out);
+  put_string_into_buf(data_out, packet_out);
 
   stream->write(packet_out.c_str(), packet_out.length());
 
