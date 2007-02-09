@@ -626,10 +626,15 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   
   if (app.opts.from.size() == 0)
     {
-      app.work.get_revision_id(first_rid);
-      rev_height height;
-      app.db.get_rev_height(first_rid, height);
-      frontier.push(make_pair(height, first_rid));
+      revision_t rev;
+      app.work.get_work_rev(rev);
+      for (edge_map::const_iterator i = rev.edges.begin();
+           i != rev.edges.end(); i++)
+        {
+          rev_height height;
+          app.db.get_rev_height(edge_old_revision(i), height);
+          frontier.push(make_pair(height, edge_old_revision(i)));
+        }
     }
   else
     {
@@ -655,23 +660,30 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (args.size() > 0)
     {
       // User wants to trace only specific files
-      roster_t old_roster, new_roster;
-
       if (app.opts.from.size() == 0)
         {
+          roster_t new_roster;
+          parent_map parents;
           temp_node_id_source nis;
-          app.work.get_base_and_current_roster_shape(old_roster,
-                                                     new_roster, nis);
+
+          app.work.get_parent_rosters(parents);
+          app.work.get_current_roster_shape(new_roster, nis);
+
+          mask = node_restriction(args_to_paths(args),
+                                  args_to_paths(app.opts.exclude_patterns), 
+                                  app.opts.depth, parents, new_roster, app);
         }
       else
-        app.db.get_roster(first_rid, new_roster);
+        {
+          // FIXME_RESTRICTIONS: should this add paths from the rosters of
+          // all selected revs?
+          roster_t roster;
+          app.db.get_roster(first_rid, roster);
 
-      // FIXME_RESTRICTIONS: should this add paths from the rosters of
-      // all selected revs?
-      mask = node_restriction(args_to_paths(args),
-                              args_to_paths(app.opts.exclude_patterns), 
-                              app.opts.depth,
-                              old_roster, new_roster, app);
+          mask = node_restriction(args_to_paths(args),
+                                  args_to_paths(app.opts.exclude_patterns), 
+                                  app.opts.depth, roster, app);
+        }
     }
 
   // If --to was given, don't log past those revisions.

@@ -5,6 +5,20 @@
 	* tests/two_parent_workspace_inodeprints: New test.
 	* testsuite.lua: Add it.
 
+2007-02-09  Zack Weinberg  <zackw@panix.com>
+
+	* automate.cc (attributes): Fail gracefully in a two-parent workspace.
+	* tests/two_parent_workspace_commands_that_fail: Add test for
+	automate attributes.
+
+	* cmd_files.cc (log): Work in a two-parent workspace.
+	* tests/merge_into_workspace: Augment with tests for log.
+
+	* cmd_files.cc (annotate): Handle multi-parent workspaces gracefully.
+	Add lengthy comment about why multi-parent annotate doesn't work.
+	* tests/two_parent_workspace_annotate: New xfailed test.
+	* testsuite.lua: Update.
+
 2007-02-07  Zack Weinberg  <zackw@panix.com>
 
 	* work.cc (perform_rename): Work in a two-parent workspace.
