@@ -27,16 +27,19 @@ private:
   shared_ptr<Stream> stream;
   vector<RSA_PublicKey> keys;
 
-  u32 fetch_packet(string & packet);
+  //helper functions for reading and unpacking data from ssh-agent
+  void fetch_packet(string & packet);
+  void read_num_bytes(u32 const len, string & out);
   u32 get_long(char const * buf);
   u32 get_long_from_buf(string const & buf, u32 & loc);
   void get_string_from_buf(string const & buf, u32 & loc, u32 & len, string & out);
-  void put_key_into_buf(RSA_PublicKey const & key, string & buf);
-  void put_string_into_buf(string const & str, string & buf);
-  void put_bigint_into_buf(BigInt const & bi, string & buf);
+
+  //helper functions for packing data to send to ssh-agent
   void put_long(u32 l, char * buf);
   void put_long_into_buf(u32 l, string & buf);
-  void read_num_bytes(u32 const len, string & out);
+  void put_string_into_buf(string const & str, string & buf);
+  void put_bigint_into_buf(BigInt const & bi, string & buf);
+  void put_key_into_buf(RSA_PublicKey const & key, string & buf);
 };
 
 // Local Variables:

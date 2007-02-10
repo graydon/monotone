@@ -156,7 +156,7 @@ ssh_agent::read_num_bytes(u32 const len, string & out)
   L(FL("agent: read_num_bytes: length %u") % out.length());
 }
 
-u32
+void
 ssh_agent::fetch_packet(string & packet)
 {
   u32 len;
@@ -169,7 +169,6 @@ ssh_agent::fetch_packet(string & packet)
   L(FL("agent: get_keys response len %u") % len);
 
   read_num_bytes(len, packet);
-  return len;
 }
 
 vector<RSA_PublicKey> const
@@ -179,7 +178,6 @@ ssh_agent::get_keys() {
     return keys;
   }
 
-  u32 len;
   unsigned int ch;
   void * v = (void *)&ch;
   ch = 0;
@@ -192,7 +190,7 @@ ssh_agent::get_keys() {
   stream->write(v, 1);
 
   string packet;
-  len = fetch_packet(packet);
+  fetch_packet(packet);
 
   //first byte is packet type
   u32 packet_loc = 0;
@@ -291,7 +289,7 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   stream->write(packet_out.c_str(), packet_out.length());
 
   string packet_in;
-  u32 len = fetch_packet(packet_in);
+  fetch_packet(packet_in);
 
   u32 packet_in_loc = 0;
   E(packet_in.at(0) == 14, F("agent: sign_data: packet_in type (%u) != 14") % (u32)packet_in.at(0));
