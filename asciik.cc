@@ -147,10 +147,8 @@ using boost::algorithm::is_any_of;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
-asciik::asciik(size_t min_width, ostream & os)
+asciik::asciik(size_t min_width, ostream & os) : width(min_width), output(os)
 {
-  width = min_width;
-  output = &os;
 }
 
 void
@@ -248,10 +246,10 @@ asciik::draw(const size_t curr_items, const size_t next_items,
     lines.push_back(string(""));
 
   // prints it out
-  *output << line << "  " << lines[0] << '\n';
-  *output << interline << "  " << lines[1] << '\n';
+  output << line << "  " << lines[0] << '\n';
+  output << interline << "  " << lines[1] << '\n';
   for (int i = 2; i < num_lines; ++i)
-    *output << interline2 << "  " << lines[i] << '\n';
+    output << interline2 << "  " << lines[i] << '\n';
 }
 
 bool

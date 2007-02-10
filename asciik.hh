@@ -25,7 +25,7 @@ private:
     const string & annotation) const;
   // internal state
   size_t width;
-  std::ostream * output;
+  std::ostream & output;
   std::vector<revision_id> curr_row;
 };
 
