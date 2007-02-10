@@ -14,7 +14,7 @@ using std::min;
  * The ssh-agent network format is essentially based on a u32 which
  * is the length of the packet followed by that number of bytes.
  *
- * The packet to as for the keys that ssh-agent has is in this format:
+ * The packet to ask for the keys that ssh-agent has is in this format:
  * u32     = 1
  * command = 11
  * 
@@ -44,6 +44,36 @@ using std::min;
  *   u32  = length of comment
  *   data = comment (path to key file)
  *  (repeat for number of keys)
+ *
+ * To ask for ssh-agent to sign data use this packet format:
+ * byte = packet type (13)
+ * u32  = length of data
+ * data
+ *  u32  = length of key data
+ *  key data
+ *   (rsa)
+ *    u32  = length of type
+ *    data = type (ssh-rsa)
+ *    u32  = length of 'e'
+ *    data = binary encoded BigInt, 'e'
+ *    u32  = length of 'n'
+ *    data = binary encoded BigInt, 'n'
+ *   (dss)
+ *    NOT IMPLEMENTED, should be same as above
+ *  u32  = length of data to sign
+ *  data to sign
+ *  u32  = flags (0)
+ *
+ * Response packet for signing request is:
+ * u32  = length of packet
+ * data
+ *  byte = packet type (14)
+ *  u32  = signature length
+ *  data = signature
+ *   u32  = type length
+ *   data = type (ssh-rsa)
+ *   u32  = signed data length
+ *   data = signed data
  */
 
 ssh_agent::ssh_agent()
@@ -301,7 +331,7 @@ ssh_agent::get_keys()
           L(FL("ssh_agent: n: %s, len %u") % n % slen);
 
           E(key.length() == key_loc,
-            F("ssh_agent: sign_data: not all or too many key bytes consumed, location (%u), length(%i)")
+            F("ssh_agent: get_keys: not all or too many key bytes consumed, location (%u), length(%i)")
             % key_loc
             % key.length());
 
@@ -365,6 +395,7 @@ ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & ou
   data_out.append((char *)cmd, 1);
   put_key_into_buf(key, key_buf);
   put_string_into_buf(key_buf, data_out);
+
   put_string_into_buf(data, data_out);
   u32 flags = 0;
   put_long_into_buf(flags, data_out);
