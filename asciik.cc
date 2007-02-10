@@ -324,11 +324,10 @@ asciik::print(const revision_id & rev, const set<revision_id> & parents,
 {
   if (find(curr_row.begin(), curr_row.end(), rev) == curr_row.end())
     curr_row.push_back(rev);
-
-  //iterator_traits<vector<revision_id>::iterator>::difference_type
   size_t curr_loc = distance(curr_row.begin(),
     find(curr_row.begin(), curr_row.end(), rev));
-  I(curr_loc < curr_row.size()); // as it is surely found
+  // it must be found as either it was there already or we just added it
+  I(curr_loc < curr_row.size());
 
   set<revision_id> new_revs;
   for (set<revision_id>::const_iterator parent = parents.begin();
@@ -337,6 +336,7 @@ asciik::print(const revision_id & rev, const set<revision_id> & parents,
       new_revs.insert(*parent);
 
   vector<revision_id> next_row(curr_row);
+  I(curr_loc < next_row.size());
   next_row.insert(
     next_row.erase(next_row.begin() + curr_loc),
     new_revs.begin(), new_revs.end());
