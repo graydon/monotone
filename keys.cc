@@ -379,7 +379,11 @@ make_signature(app_state & app,           // to hook for phrase
       if (!pub_key)
           throw informative_failure("Failed to get RSA verifying key");
 
-      E(ssh_keys.size() > 0, F("make_signature: no rsa keys received from ssh-agent"));
+      //E(ssh_keys.size() > 0, F("make_signature: no rsa keys received from ssh-agent"));
+      if (ssh_keys.size() <= 0) {
+        L(FL("make_signature: no rsa keys received from ssh-agent"));
+        break;
+      }
       for (vector<RSA_PublicKey>::const_iterator
              si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
         if ((*pub_key).get_e() == (*si).get_e()
@@ -393,10 +397,13 @@ make_signature(app_state & app,           // to hook for phrase
         break;
       }
     }
-    E(sig_string.length() > 0, F("make_signature: monotone and ssh-agent keys do not match"));
+    //E(sig_string.length() > 0, F("make_signature: monotone and ssh-agent keys do not match"));
+    if (sig_string.length() <= 0) {
+      L(FL("make_signature: monotone and ssh-agent keys do not match, will use monotone signing"));
+    }
   }
   string ssh_sig = sig_string;
-  if (app.opts.ssh_sign == "no" || app.opts.ssh_sign == "check") {
+  if (ssh_sig.length() <= 0 || app.opts.ssh_sign == "check") { // || app.opts.ssh_sign == "no" 
     SecureVector<Botan::byte> sig;
 
     // we permit the user to relax security here, by caching a decrypted key
@@ -428,7 +435,7 @@ make_signature(app_state & app,           // to hook for phrase
     sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
   }
 
-  if (app.opts.ssh_sign == "check") {
+  if (app.opts.ssh_sign == "check" && ssh_sig.length() > 0) {
     E(ssh_sig == sig_string, F("make_signature: ssh signature (%i) != monotone sugnature (%i)\nssh signature     : %s\nmonotone signature: %s") % ssh_sig.length() % sig_string.length() % encode_hexenc(ssh_sig) % encode_hexenc(sig_string));
     L(FL("make_signature: signatures from ssh-agent and monotone are the same"));
   }
