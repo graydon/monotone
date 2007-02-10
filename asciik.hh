@@ -9,7 +9,7 @@
 class asciik
 {
 public:
-  asciik();
+  asciik(std::ostream & os);
   // Prints an ASCII-k chunk using the given revisions.
   void print(const revision_id & rev, const std::set<revision_id> & parents, const string & annotation);
   //TODO: cambiare set-parents to vector-next
@@ -18,6 +18,7 @@ private:
   void draw(const size_t curr_items, const size_t next_items, const size_t curr_loc, const std::set<std::pair<size_t, size_t> > & links, const std::set<size_t> & curr_ghosts, const string & annotation) const;
   bool try_draw(const std::vector<revision_id> & next_row, const size_t curr_loc, const std::set<revision_id> & parents, const string & annotation) const;
   // internal state
+  std::ostream * output;
   std::vector<revision_id> curr_row;
 };
 

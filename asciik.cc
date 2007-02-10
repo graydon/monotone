@@ -148,8 +148,9 @@ using boost::algorithm::is_any_of;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
-asciik::asciik()
+asciik::asciik(ostream & os)
 {
+  output = &os;
 }
 
 void
@@ -247,10 +248,10 @@ asciik::draw(const size_t curr_items, const size_t next_items,
     lines.push_back(string(""));
 
   // prints it out
-  cout << F("%-8s  %s") % line % lines[0] << '\n';
-  cout << F("%-8s  %s") % interline % lines[1] << '\n';
+  *output << F("%-8s  %s") % line % lines[0] << '\n';
+  *output << F("%-8s  %s") % interline % lines[1] << '\n';
   for (int i = 2; i < num_lines; ++i)
-    cout << F("%-8s  %s") % interline2 % lines[i] << '\n';
+    *output << F("%-8s  %s") % interline2 % lines[i] << '\n';
 }
 
 bool
@@ -374,7 +375,7 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
   selectors::selector_type ty = selectors::sel_ident;
   selectors::complete_selector("", sels, ty, completions, app);
 
-  asciik graph;
+  asciik graph(cout);
   set<revision_id> revs;
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
