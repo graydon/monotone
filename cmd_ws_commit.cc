@@ -88,13 +88,13 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
   app.require_workspace();
 
-  {
-    parent_map parents;
-    app.work.get_parent_rosters(parents);
-    N(parents.size() == 1,
-      F("this command can only be used in a single-parent workspace"));
-    old_roster = *(parents.begin()->second.first);
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+  old_roster = parent_roster(parents.begin());
 
+  {
     temp_node_id_source nis;
     app.work.get_current_roster_shape(new_roster, nis);
   }
@@ -198,9 +198,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   // around.
 
   revision_t remaining;
-  revision_id base;
-  app.work.get_revision_id(base);
-  make_revision_for_workspace(base, excluded, remaining);
+  make_revision_for_workspace(parent_id(parents.begin()), excluded, remaining);
 
   // Race.
   app.work.put_work_rev(remaining);

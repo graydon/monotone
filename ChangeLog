@@ -1,5 +1,8 @@
 2007-02-09  Zack Weinberg  <zackw@panix.com>
 
+	* cmd_ws_commit.cc (revert): Remove the remaining use of
+	get_revision_id.
+
 	* cmd_files.cc (cat, automate get_file_of): Fail gracefully in a
 	two-parent workspace, unless given -r.
 	* tests/two_parent_workspace_commands_that_fail: Test them.
