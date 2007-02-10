@@ -5,7 +5,6 @@
 #include "packet.hh"
 #include "keys.hh"
 #include "globish.hh"
-#include "ssh_agent.hh"
 
 using std::make_pair;
 using std::istringstream;

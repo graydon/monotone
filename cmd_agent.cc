@@ -35,9 +35,9 @@ agent_export(string const & name, app_state & app, vector<utf8> const & args)
     app.keys.get_key_ids(idx(args,0)(), keys);
   for (vector<rsa_keypair_id>::const_iterator
          i = keys.begin(); i != keys.end(); ++i) {
+
     app.keys.get_key_pair(*i, key);
     shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, *i, key.priv);
-
     utf8 new_phrase;
     get_passphrase(app.lua, *i, new_phrase, true, true, "enter new passphrase");
     Pipe p;
