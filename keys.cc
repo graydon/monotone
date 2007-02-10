@@ -376,6 +376,7 @@ make_signature(app_state & app,           // to hook for phrase
       if (!pub_key)
           throw informative_failure("Failed to get RSA verifying key");
 
+      E(ssh_keys.size() > 0, F("make_signature: no rsa keys received from ssh-agent"));
       for (vector<RSA_PublicKey>::const_iterator
              si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
         if ((*pub_key).get_e() == (*si).get_e()
