@@ -625,6 +625,7 @@ CMD(merge_into_workspace, N_("tree"),
 {
   revision_id left_id, right_id;
   database::cached_roster left, right;
+  roster_t working_roster;
 
   if (args.size() != 1)
     throw usage(name);
@@ -642,7 +643,6 @@ CMD(merge_into_workspace, N_("tree"),
       F("this command can only be used in a single-parent workspace"));
 
     temp_node_id_source nis;
-    roster_t working_roster;
     app.work.get_current_roster_shape(working_roster, nis);
     app.work.update_current_roster_from_filesystem(working_roster);
 
@@ -673,7 +673,10 @@ CMD(merge_into_workspace, N_("tree"),
   find_common_ancestor_for_merge(left_id, right_id, lca_id, app);
   app.db.get_roster(lca_id, lca);
 
-  content_merge_workspace_adaptor wca(app, lca.first);
+  map<file_id, file_path> paths;
+  get_content_paths(working_roster, paths);
+
+  content_merge_workspace_adaptor wca(app, lca.first, paths);
   resolve_merge_conflicts(*left.first, *right.first, merge_result, wca, app);
 
   // Make sure it worked...
