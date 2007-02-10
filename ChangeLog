@@ -1,3 +1,12 @@
+2007-02-10  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* tests/two_parent_workspace_inodeprint_from_birth: Add another
+	inodeprints test, this time ensuring that multi-parent workspaces
+	and inodeprints interact correctly when inodeprints have were
+	enabled prior to the merge_into_workspace taking place.
+	* testsuite.lua: Add it.
+	* tests/two_parent_workspace_inodeprints: Tweak test.
+
 2007-02-09  Zack Weinberg  <zackw@panix.com>
 
 	* cmd_merging.cc (merge_into_workspace): Use get_content_paths.

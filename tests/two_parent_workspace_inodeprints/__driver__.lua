@@ -27,22 +27,19 @@ writefile("_MTN/inodeprints")
 check(mtn("status"), 0, true, false)
 check(qgrep("patched[ 	]\+foo", "stdout"))
 
-addfile("bar", "this is bar")
 sleep(5)
 
 check(fsize("_MTN/inodeprints") == 0)
-
 commit()
-
 check(fsize("_MTN/inodeprints") ~= 0)
+
+check(qgrep("foo", "_MTN/inodeprints"))
 check(qgrep("left", "_MTN/inodeprints"))
 check(qgrep("right", "_MTN/inodeprints"))
 
 addfile("in-two-parent", "in-two-parent's file content")
-sleep(5)
-check(mtn("refresh_inodeprints"), 0, false, false)
-check(fsize("_MTN/inodeprints") ~= 0)
 check(not qgrep("in-two-parent", "_MTN/inodeprints"))
+sleep(5)
 commit()
 check(qgrep("in-two-parent", "_MTN/inodeprints"))
 
