@@ -528,7 +528,7 @@ AUTOMATE(content_diff, N_("[FILE [...]]"),
 
 
 static void
-log_certs(app_state & app, revision_id id, cert_name name,
+log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
           string label, string separator,
           bool multiline, bool newline)
 {
@@ -546,21 +546,21 @@ log_certs(app_state & app, revision_id id, cert_name name,
       decode_base64(i->inner().value, tv);
 
       if (first)
-        cout << label;
+        os << label;
       else
-        cout << separator;
+        os << separator;
 
       if (multiline)
         {
-          cout << "\n" << "\n" << tv;
+          os << "\n" << "\n" << tv;
           if (newline)
-            cout << "\n";
+            os << "\n";
         }
       else
         {
-          cout << tv;
+          os << tv;
           if (newline)
-            cout << "\n";
+            os << "\n";
         }
 
       first = false;
@@ -568,16 +568,16 @@ log_certs(app_state & app, revision_id id, cert_name name,
 }
 
 static void
-log_certs(app_state & app, revision_id id, cert_name name, 
+log_certs(ostream & os, app_state & app, revision_id id, cert_name name, 
           string label, bool multiline)
 {
-  log_certs(app, id, name, label, label, multiline, true);
+  log_certs(os, app, id, name, label, label, multiline, true);
 }
 
 static void
-log_certs(app_state & app, revision_id id, cert_name name)
+log_certs(ostream & os, app_state & app, revision_id id, cert_name name)
 {
-  log_certs(app, id, name, " ", ",", false, false);
+  log_certs(os, app, id, name, " ", ",", false, false);
 }
 
 
@@ -813,9 +813,9 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           if (app.opts.brief)
             {
               cout << rid;
-              log_certs(app, rid, author_name);
-              log_certs(app, rid, date_name);
-              log_certs(app, rid, branch_name);
+              log_certs(cout, app, rid, author_name);
+              log_certs(cout, app, rid, date_name);
+              log_certs(cout, app, rid, branch_name);
               cout << "\n";
             }
           else
@@ -839,10 +839,10 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    anc != ancestors.end(); ++anc)
                 cout << "Ancestor: " << *anc << "\n";
 
-              log_certs(app, rid, author_name, "Author: ", false);
-              log_certs(app, rid, date_name,   "Date: ",   false);
-              log_certs(app, rid, branch_name, "Branch: ", false);
-              log_certs(app, rid, tag_name,    "Tag: ",    false);
+              log_certs(cout, app, rid, author_name, "Author: ", false);
+              log_certs(cout, app, rid, date_name,   "Date: ",   false);
+              log_certs(cout, app, rid, branch_name, "Branch: ", false);
+              log_certs(cout, app, rid, tag_name,    "Tag: ",    false);
 
               if (!app.opts.no_files && !csum.cs.empty())
                 {
@@ -851,8 +851,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   cout << "\n";
                 }
               
-              log_certs(app, rid, changelog_name, "ChangeLog: ", true);
-              log_certs(app, rid, comment_name,   "Comments: ",  true);
+              log_certs(cout, app, rid, changelog_name, "ChangeLog: ", true);
+              log_certs(cout, app, rid, comment_name,   "Comments: ",  true);
             }
 
           if (app.opts.diffs)
