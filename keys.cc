@@ -363,42 +363,43 @@ make_signature(app_state & app,           // to hook for phrase
 
   string sig_string;
   //sign with ssh-agent (if connected)
-  if (app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "check") {
-    scoped_ptr<ssh_agent> a(new ssh_agent());
-    a->connect();
-    vector<RSA_PublicKey> ssh_keys = a->get_keys();
-    if (ssh_keys.size() <= 0) {
-      L(FL("make_signature: no rsa keys received from ssh-agent"));
-    } else {
-      //grab the monotone public key as an RSA_PublicKey
-      app.keys.get_key_pair(id, key);
-      rsa_pub_key pub;
-      decode_base64(key.pub, pub);
-      SecureVector<Botan::byte> pub_block;
-      pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
-      L(FL("make_signature: building %d-byte pub key") % pub_block.size());
-      shared_ptr<X509_PublicKey> x509_key =
-        shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
-      shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
+  if (app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "check")
+    {
+      scoped_ptr<ssh_agent> a(new ssh_agent());
+      a->connect();
+      vector<RSA_PublicKey> ssh_keys = a->get_keys();
+      if (ssh_keys.size() <= 0)
+        L(FL("make_signature: no rsa keys received from ssh-agent"));
+      else {
+        //grab the monotone public key as an RSA_PublicKey
+        app.keys.get_key_pair(id, key);
+        rsa_pub_key pub;
+        decode_base64(key.pub, pub);
+        SecureVector<Botan::byte> pub_block;
+        pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
+        L(FL("make_signature: building %d-byte pub key") % pub_block.size());
+        shared_ptr<X509_PublicKey> x509_key =
+          shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
+        shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
 
-      if (!pub_key)
-        throw informative_failure("Failed to get monotone RSA public key");
+        if (!pub_key)
+          throw informative_failure("Failed to get monotone RSA public key");
 
-      //if monotone key matches ssh-agent key, sign with ssh-agent
-      for (vector<RSA_PublicKey>::const_iterator
-             si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
-        if ((*pub_key).get_e() == (*si).get_e()
-            && (*pub_key).get_n() == (*si).get_n()) {
-          L(FL("make_signature: ssh key matches monotone key, signing with ssh-agent"));
-          a->sign_data(*si, tosign, sig_string);
-          break;
+        //if monotone key matches ssh-agent key, sign with ssh-agent
+        for (vector<RSA_PublicKey>::const_iterator
+               si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
+          if ((*pub_key).get_e() == (*si).get_e()
+              && (*pub_key).get_n() == (*si).get_n()) {
+            L(FL("make_signature: ssh key matches monotone key, signing with ssh-agent"));
+            a->sign_data(*si, tosign, sig_string);
+            break;
+          }
         }
       }
+      if (sig_string.length() <= 0)
+        L(FL("make_signature: monotone and ssh-agent keys do not match, will use monotone signing"));
     }
-    if (sig_string.length() <= 0) {
-      L(FL("make_signature: monotone and ssh-agent keys do not match, will use monotone signing"));
-    }
-  }
+
   string ssh_sig = sig_string;
   if (ssh_sig.length() <= 0 || app.opts.ssh_sign == "check") { // || app.opts.ssh_sign == "no" 
     SecureVector<Botan::byte> sig;
@@ -432,17 +433,18 @@ make_signature(app_state & app,           // to hook for phrase
     sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
   }
 
-  if (app.opts.ssh_sign == "check" && ssh_sig.length() > 0) {
-    E(ssh_sig == sig_string,
-      F("make_signature: ssh signature (%i) != monotone signature (%i)\n"
-        "ssh signature     : %s\n"
-        "monotone signature: %s")
-      % ssh_sig.length()
-      % sig_string.length()
-      % encode_hexenc(ssh_sig)
-      % encode_hexenc(sig_string));
-    L(FL("make_signature: signatures from ssh-agent and monotone are the same"));
-  }
+  if (app.opts.ssh_sign == "check" && ssh_sig.length() > 0)
+    {
+      E(ssh_sig == sig_string,
+        F("make_signature: ssh signature (%i) != monotone signature (%i)\n"
+          "ssh signature     : %s\n"
+          "monotone signature: %s")
+        % ssh_sig.length()
+        % sig_string.length()
+        % encode_hexenc(ssh_sig)
+        % encode_hexenc(sig_string));
+      L(FL("make_signature: signatures from ssh-agent and monotone are the same"));
+    }
 
   L(FL("make_signature: produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
