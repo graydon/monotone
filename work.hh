@@ -106,14 +106,15 @@ struct workspace
   // read the (partial) revision describing the current workspace.
   void get_work_rev(revision_t & rev);
 
-  // convenience wrappers around the above functions.  these interfaces are
-  // safe for use with multi-parent workspaces:
+  // convenience wrappers around the above functions.
 
   // This returns the current roster, except it does not bother updating the
-  // hashes in that roster -- the "shape" is correct, all files and dirs exist
-  // and under the correct names -- but do not trust file content hashes.
-  // If you need the current roster with correct file content hashes, call
-  // update_current_roster_from_filesystem on the result of this function.
+  // hashes in that roster -- the "shape" is correct, all files and dirs
+  // exist and under the correct names -- but do not trust file content
+  // hashes.  If you need the current roster with correct file content
+  // hashes, call update_current_roster_from_filesystem on the result of
+  // this function.  Under almost all conditions, NIS should be a
+  // temp_node_id_source.
   void get_current_roster_shape(roster_t & ros, node_id_source & nis);
 
   // This returns a map whose keys are revision_ids and whose values are
@@ -121,23 +122,8 @@ struct workspace
   // revision.
   void get_parent_rosters(parent_map & parents);
 
-  // ... these interfaces can only be used with single-parent workspaces:
-
-  // the base revision id that the current working copy was checked out from
-  void get_revision_id(revision_id & c);
-
-  // structures derived from the above
-  void get_base_revision(revision_id & rid, roster_t & ros);
-  void get_base_revision(revision_id & rid, roster_t & ros, marking_map & mm);
-  void get_base_roster(roster_t & ros);
-
-  // This returns both the base roster (as get_base_roster would) and the
-  // current roster shape (as get_current_roster_shape would).  The caveats
-  // for get_current_roster_shape also apply to this function.
-  void get_base_and_current_roster_shape(roster_t & base_roster,
-                                         roster_t & current_roster,
-                                         node_id_source & nis);
-
+  // Inspect the workspace and classify all the paths in it according to
+  // what ROS thinks of them.
   void classify_roster_paths(roster_t const & ros,
                              path_set & unchanged,
                              path_set & changed,

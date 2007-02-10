@@ -368,8 +368,8 @@ prepare_diff(cset & included,
         F("this workspace has more than one parent\n"
           "(specify a revision to diff against with --revision)"));
 
-      old_rid = parents.begin()->first;
-      old_roster = *(parents.begin()->second.first);
+      old_rid = parent_id(parents.begin());
+      old_roster = parent_roster(parents.begin());
       app.work.get_current_roster_shape(new_roster, nis);
 
       node_restriction mask(args_to_paths(args),

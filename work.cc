@@ -109,21 +109,6 @@ workspace::put_work_rev(revision_t const & rev)
   write_data(rev_path, rev_data);
 }
 
-// base revision ID
-void
-workspace::get_revision_id(revision_id & c)
-{
-  revision_t rev;
-  get_work_rev(rev);
-
-  // If you're using this interface, the revision must have only one
-  // ancestor.
-  I(rev.edges.size() == 1);
-  c = edge_old_revision(rev.edges.begin());
-  N(null_id(c) || db.revision_exists(c),
-    F("workspace base revision %s does not exist in database") % c);
-}
-
 // structures derived from the work revision, the database, and possibly
 // the workspace
 
@@ -147,35 +132,6 @@ get_roster_for_rid(revision_id const & rid,
       db.get_roster(rid, cr);
     }
   L(FL("base roster has %d entries") % cr.first->all_nodes().size());
-}
-
-void
-workspace::get_base_revision(revision_id & rid,
-                             roster_t & ros,
-                             marking_map & mm)
-{
-  database::cached_roster cr;
-  get_revision_id(rid);
-  get_roster_for_rid(rid, cr, db);
-  ros = *cr.first;
-  mm = *cr.second;
-}
-
-void
-workspace::get_base_revision(revision_id & rid,
-                             roster_t & ros)
-{
-  database::cached_roster cr;
-  get_revision_id(rid);
-  get_roster_for_rid(rid, cr, db);
-  ros = *cr.first;
-}
-
-void
-workspace::get_base_roster(roster_t & ros)
-{
-  revision_id rid;
-  get_base_revision(rid, ros);
 }
 
 void
@@ -213,25 +169,6 @@ workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
       marking_map dummy;
       make_roster_for_revision(rev, new_rid, ros, dummy, db, nis);
     }
-}
-
-void
-workspace::get_base_and_current_roster_shape(roster_t & base_roster,
-                                             roster_t & current_roster,
-                                             node_id_source & nis)
-{
-  // If you're using this interface, the revision must have only one
-  // ancestor.
-  revision_t rev;
-  get_work_rev(rev);
-  I(rev.edges.size() == 1);
-
-  database::cached_roster cr;
-  get_roster_for_rid(edge_old_revision(rev.edges.begin()), cr, db);
-
-  base_roster = current_roster = *cr.first;
-  editable_roster_base er(current_roster, nis);
-  edge_changes(rev.edges.begin()).apply_to(er);
 }
 
 // user log file

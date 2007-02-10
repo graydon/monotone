@@ -1,5 +1,15 @@
 2007-02-09  Zack Weinberg  <zackw@panix.com>
 
+	* work.cc (get_revision_id, get_base_revision, get_base_roster)
+	(get_base_and_current_roster_shape): Delete delete delete.
+	* work.hh: Likewise.  Improve comments.
+	* database.hh (parent_cached_roster): New wrappers for parent_entries.
+	* automate.cc (attributes, get_base_revision_id)
+	* cmd_diff_log.cc (prepare_diff)
+	* cmd_merging.cc (update, merge_into_workspace)
+	Use parent_id/parent_roster/parent_cached_roster wrappers instead
+	of direct access to pair ->first and ->second.
+
 	* cmd_ws_commit.cc (revert): Remove the remaining use of
 	get_revision_id.
 

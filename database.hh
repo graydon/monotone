@@ -596,6 +596,18 @@ inline revision_id const & parent_id(parent_map::const_iterator i)
   return i->first;
 }
 
+inline database::cached_roster const &
+parent_cached_roster(parent_entry const & p)
+{
+  return p.second;
+}
+
+inline database::cached_roster const &
+parent_cached_roster(parent_map::const_iterator i)
+{
+  return i->second;
+}
+
 inline roster_t const & parent_roster(parent_entry const & p)
 {
   return *(p.second.first);

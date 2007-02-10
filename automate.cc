@@ -233,7 +233,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
   app.work.get_parent_rosters(parents);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
-  base = *(parents.begin()->second.first);
+  base = parent_roster(parents.begin());
 
   // escalate if the given path is unknown to the current roster
   N(current.has_node(path),
@@ -965,7 +965,7 @@ AUTOMATE(get_base_revision_id, "", options::opts::none)
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
-  output << parents.begin()->first << "\n";
+  output << parent_id(parents.begin()) << "\n";
 }
 
 // Name: get_current_revision_id

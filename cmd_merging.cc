@@ -146,7 +146,7 @@ CMD(update, N_("workspace"), "",
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
-  revision_id old_rid = parents.begin()->first;
+  revision_id old_rid = parent_id(parents.begin());
   N(!null_id(old_rid),
     F("this workspace is a new project; cannot update"));
 
@@ -226,7 +226,8 @@ CMD(update, N_("workspace"), "",
   temp_node_id_source nis;
 
   // Get the OLD and WORKING rosters
-  database::roster_t_cp old_roster = parents.begin()->second.first;
+  database::roster_t_cp old_roster
+    = parent_cached_roster(parents.begin()).first;
   MM(*old_roster);
   roster_t working_roster; MM(working_roster);
   app.work.get_current_roster_shape(working_roster, nis);
@@ -627,8 +628,8 @@ CMD(merge_into_workspace, N_("tree"),
     N(parent_roster(parents.begin()) == working_roster,
       F("'%s' can only be used in a workspace with no pending changes") % name);
 
-    left_id = parents.begin()->first;
-    left = parents.begin()->second;
+    left_id = parent_id(parents.begin());
+    left = parent_cached_roster(parents.begin());
   }
 
   complete(app, idx(args, 0)(), right_id);
