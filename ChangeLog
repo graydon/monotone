@@ -1,3 +1,268 @@
+2007-02-09  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_revision_id, get_base_revision, get_base_roster)
+	(get_base_and_current_roster_shape): Delete delete delete.
+	* work.hh: Likewise.  Improve comments.
+	* database.hh (parent_cached_roster): New wrappers for parent_entries.
+	* automate.cc (attributes, get_base_revision_id)
+	* cmd_diff_log.cc (prepare_diff)
+	* cmd_merging.cc (update, merge_into_workspace)
+	Use parent_id/parent_roster/parent_cached_roster wrappers instead
+	of direct access to pair ->first and ->second.
+
+	* cmd_ws_commit.cc (revert): Remove the remaining use of
+	get_revision_id.
+
+	* cmd_files.cc (cat, automate get_file_of): Fail gracefully in a
+	two-parent workspace, unless given -r.
+	* tests/two_parent_workspace_commands_that_fail: Test them.
+
+2007-02-09  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc (maybe_update_inodeprints): Update for multi-parent
+	workspace.
+	* tests/two_parent_workspace_inodeprints: New test.
+	* testsuite.lua: Add it.
+
+2007-02-09  Zack Weinberg  <zackw@panix.com>
+
+	* tests/workspace_migration: Generalize to support different sorts
+	of migration-needing workspaces.  Add new "inodeprints" and
+	"twoparent" tests.
+
+	* cmd_list.cc (ls_known, ls_changed): Work in a two-parent workspace.
+	* tests/two_parent_workspace_list: New test.
+	* testsuite.lua: Add it.
+
+	* automate.cc (attributes): Fail gracefully in a two-parent workspace.
+	* tests/two_parent_workspace_commands_that_fail: Add test for
+	automate attributes.
+
+	* cmd_files.cc (log): Work in a two-parent workspace.
+	* tests/merge_into_workspace: Augment with tests for log.
+
+	* cmd_files.cc (annotate): Handle multi-parent workspaces gracefully.
+	Add lengthy comment about why multi-parent annotate doesn't work.
+	* tests/two_parent_workspace_annotate: New xfailed test.
+	* testsuite.lua: Update.
+
+2007-02-07  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (perform_rename): Work in a two-parent workspace.
+	(perform_pivot_root): Likewise.
+	* tests/two_parent_workspace_add_drop: Rename to...
+	* tests/two_parent_workspace_add_drop_rename: ... this.
+	Add testing of renames.
+	* tests/two_parent_workspace_pivot_root: New test.
+	* testsuite.lua: Update.
+
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* work.cc (workspace::perform_additions,
+	workspace::perform_deletions): Update to deal with multi-parent
+	workspaces.
+	* tests/two_parent_workspace_add_drop: New test.
+	* testsuite.lua: Add it.
+
+2007-02-07  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_ws_commit.cc (attr): Work in a two-parent workspace.
+	* tests/two_parent_workspace_attrs: New test.
+	* tests/two_parent_workspace_pluck: Make sure we can commit the
+	result of our manipulations.
+
+	* automate.cc (inventory, get_base_revision_id): Fail gracefully
+	in a two-parent workspace.
+	(get_current_revision_id, get_manifest_of): Work in a two-parent
+	workspace.
+	* tests/merge_into_workspace: Test new behavior of automate
+	get_current_revision_id and get_manifest-of.
+	* tests/two_parent_workspace_commands_that_fail: Un-xfail.
+
+	* tests/merge_into_workspace_files_added: Fix for workspace conflicts.
+
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* cmd_merging.cc (CMD(pluck)): Migrate to new internal
+	multi-parent workspace API.
+	* tests/two_parent_workspace_pluck: Un-xfail test.
+
+2007-02-07  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_diff_log.cc (prepare_diff): Handle multi-parent workspaces
+	gracefully.
+	* cmd_merging.cc (update): Likewise.
+	* cmd_ws_commit.cc (revert): Likewise.
+
+	* tests/two_parent_workspace_commands_that_fail
+	* tests/two_parent_workspace_pluck: New tests (expected to fail).
+	* testsuite.lua: Add them.
+	* cmd_merging.cc (merge_into_workspace): Standardize a diagnostic.
+
+2007-02-07  Matthew Gregan  <kinetik@orcon.net.nz>
+
+	* cmd_merging.cc (CMD(merge_into_workspace)): N() out if user is
+	trying to merge in the workspace's current revision.
+	* tests/merge_into_workspace_same_rev/*: New test.
+	* testsuite.lua: Add it.
+
+2006-09-25  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (workspace::get_work_rev): Fold into sole caller,
+	get_base_and_current_roster_shape.
+	* work.hh: Don't declare get_work_rev.
+
+2006-09-21  Zack Weinberg  <zackw@panix.com>
+
+	* roster.cc (equal_shapes): New function.
+	(shallow_equal): Add boolean argument which says whether to
+	compare file contents.
+	(unify_rosters): Add kluge to detect shape rosters, which may not
+	agree on file contents even after unification.
+	(make_roster_for_merge, make_roster_for_nonmerge): Add note about
+	interfaces.  Simplify the interface not used by the unit tests.
+	Don't pass an app_state down to this level.
+	(make_roster_for_revision): Add variant that takes a database and
+	a node_id_source.  Logic for extracting rosters and csets from
+	revisions moved down to make_roster_for_(non)merge level.
+	* roster.hh: Update prototype of shallow_equal; new argument
+	defaults to true.  Declare equal_shapes a friend of roster_t.
+	Declare new make_roster_for_revision variant.
+	* work.cc (workspace::get_current_roster_shape): Use
+	make_roster_for_revision, except when the parent is the null ID.
+
+	* tests/merge_into_workspace_files_added: Don't force failure.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	Fix unit test broken by previous change (due to ill luck,
+	basically); also makes this test somewhat more rigorous.
+	* roster.cc (random_actions): Always compare with the
+	just-previous roster; the random walk can return to an earlier
+	position.  Restructure with nested loops; run tests_on_two_rosters
+	more frequently.  Set up the scratch roster with a root here.
+	(perform_random_action): Invariant on entry that r has
+	a root already.  Do not delete the root node.  Add commented L()
+	for content changes.
+
+2006-09-18  Zack Weinberg  <zackw@panix.com>
+
+	* roster.cc (unify_roster_oneway): Rename to union_new_nodes;
+	rework to remove need for true node IDs.
+	(unify_rosters): Update to match; only call union_new_nodes once.
+	(check_post_roster_unification_ok): Add argument saying whether
+	temp nodes are OK; pass it to check_sane.
+	(create_some_new_temp_nodes): Rename create_random_unification_task;
+	construct asymmetric cases (new in A, not in B) as well as
+	symmetric cases.
+	(unify_rosters_randomized): Bulk of work moved to
+	unify_rosters_randomized_core; diverge into two tests, probing
+	both the situation where true node IDs are in use, and the
+	situation where they aren't.
+
+	N.B. this patchset breaks the random_actions unit test for no
+	apparent reason; will fix later.
+
+2006-09-14  Zack Weinberg  <zackw@panix.com>
+
+	* tests/merge_into_workspace_attr_corpse
+	* tests/merge_into_workspace_files_added:
+	New tests for proper handling of roster unification in the
+	workspace (they currently fail).
+	* testsuite.lua: Add them.
+
+	* roster.hh: Move all parent_map related definitions ...
+	* database.hh: ... here; use database::cached_roster on the RHS of
+	the map.
+	(parent_marking): New inlines.
+	* work.cc: Update to match; use cached_rosters in several places
+	where that makes sense.
+	* work.hh: Include database.hh instead of just forward-declaring
+	class database.
+	* revision.cc (make_restricted_revision): Update to match.
+	(make_revision_for_workspace): Add overload that takes a parent_map.
+	* revision.hh: Declare it.
+	* roster.cc (mark_merge_roster): Promote from anonymous namespace.
+	* roster.hh: Declare it.
+	* automate.cc (get_revision): Update for multi-parent workspaces.
+	* cmd_merging.cc (merge_into_workspace): Update for
+	get_parent_rosters now returning cached_roster pointers, and use
+	that interface to database.cc where it makes sense.
+	(get_roster): Dump the workspace roster if no revid is given.
+
+2006-09-04  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (explicit_merge_and_update): Rename to
+	merge_into_workspace; take one side of the merge from the
+	workspace's ancestor; disallow the operation if there are
+	pending changes in the workspace; use the correct roster
+	when constructing the content_merge_workspace_adaptor.
+
+	* tests/explicit_merge_and_update: Rename to ...
+	* tests/merge_into_workspace: ... this; update for changed
+	command line API.
+	* tests/merge_into_workspace_no_changes: New test.
+	* testsuite.lua: Update.
+
+2006-09-01  Nathaniel Smith  <njs@pobox.com>
+
+	* tests/explicit_merge_and_update/: Log where we are on each loop
+	iteration, to facilitate debugging.
+
+2006-09-01  Zack Weinberg  <zackw@panix.com>
+
+	* tests/explicit_merge_and_update: Augment to test starting from
+	all four possible base revisions of the workspace.
+
+2006-09-01  Zack Weinberg  <zackw@panix.com>
+
+	* roster.hh (parent_map, parent_entry): New typedefs.
+	(parent_id, parent_roster): New functions.
+	* restriction.hh, restriction.cc (node_restriction constructor):
+	Add variant that takes a parent_map plus a roster, instead of two
+	rosters.
+	* revision.hh, revision.cc (make_restricted_revision): New function.
+	(make_revision): Add variant that takes a parent_map and a roster.
+	* work.cc (get_roster_for_rid): New static function.
+	(workspace::get_base_revision, workspace::get_current_roster_shape): Use it.
+	(workspace::get_parent_rosters): New member function.
+	* work.hh: Update commentary.  Declare get_parent_rosters.
+
+	* cmd_merging.cc (explicit_merge_and_update): Use new
+	make_revision variant.
+	* cmd_ws_commit.cc (status): Update for multi-parent workspaces,
+	using get_parent_rosters, make_restricted_revision, etc.
+	(commit): Likewise.  Make it an error if the revision already
+	exists in the database.
+
+	* tests/explicit_merge_and_update: Correct check of status output.
+	* tests/restrictions_with_renames_and_adds: Don't commit the same
+	thing twice with the same parent.
+
+2006-08-31  Zack Weinberg  <zackw@panix.com>
+
+	* work.cc (get_work_rev): Export as workspace member function.
+	Allow a rev with more than one ancestor.
+	(put_work_rev): Allow a rev with more than one ancestor.
+	(get_work_cset, get_revision_id): Disallow a rev with more than
+	one ancestor.
+	(get_current_roster_shape): Recode to work when the rev has more
+	than one ancestor.
+	* work.hh: Update to match.
+	* tests/explicit_merge_and_update: New (failing) test.
+	* testsuite.lua: Add it.
+
+2006-08-30  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (explicit_merge_and_update): Fix for
+	boost::program_options merge.
+
+2006-08-21  Zack Weinberg  <zackw@panix.com>
+
+	* cmd_merging.cc (pick_branch_for_update): New function split out
+	of CMD(update).
+	(explicit_merge_and_update): New command.
+
 2007-02-09  Derek Scherger  <derek@echologic.com>
 
 	* file_io.cc (write_data): indentation tweak

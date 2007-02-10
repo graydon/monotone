@@ -204,6 +204,33 @@ node_restriction::node_restriction(std::vector<file_path> const & includes,
   validate_roster_paths(included_paths, excluded_paths, known_paths, a);
 }
 
+node_restriction::node_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
+                                   long depth,
+                                   parent_map const & rosters1,
+                                   roster_t const & roster2,
+                                   app_state & a) :
+  restriction(includes, excludes, depth)
+{
+  for (parent_map::const_iterator i = rosters1.begin();
+       i != rosters1.end();
+       i++)
+    {
+      map_nodes(node_map, parent_roster(i), included_paths, known_paths, 
+                restricted_path::included);
+      map_nodes(node_map, parent_roster(i), excluded_paths, known_paths, 
+                restricted_path::excluded);
+    }
+
+  map_nodes(node_map, roster2, included_paths, known_paths, 
+            restricted_path::included);
+  map_nodes(node_map, roster2, excluded_paths, known_paths, 
+            restricted_path::excluded);
+
+  validate_roster_paths(included_paths, excluded_paths, known_paths, a);
+}
+
+
 path_restriction::path_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
                                    long depth,
