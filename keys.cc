@@ -379,7 +379,6 @@ make_signature(app_state & app,           // to hook for phrase
       if (!pub_key)
           throw informative_failure("Failed to get RSA verifying key");
 
-      //E(ssh_keys.size() > 0, F("make_signature: no rsa keys received from ssh-agent"));
       if (ssh_keys.size() <= 0) {
         L(FL("make_signature: no rsa keys received from ssh-agent"));
         break;
@@ -397,7 +396,6 @@ make_signature(app_state & app,           // to hook for phrase
         break;
       }
     }
-    //E(sig_string.length() > 0, F("make_signature: monotone and ssh-agent keys do not match"));
     if (sig_string.length() <= 0) {
       L(FL("make_signature: monotone and ssh-agent keys do not match, will use monotone signing"));
     }
