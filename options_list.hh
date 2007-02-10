@@ -257,19 +257,11 @@ OPT(execute, "execute,e", bool, false,
 }
 #endif
 
-GOPT(ssh_sign, "ssh-sign", bool, false,
-     gettext_noop("sign with ssh-agent"))
+GOPT(ssh_sign, "ssh-sign", std::string, "yes",
+     gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
 #ifdef option_bodies
 {
-  ssh_sign = true;
-}
-#endif
-
-GOPT(ssh_sign_check, "ssh-sign-check", bool, false,
-     gettext_noop("sign with ssh-agent, then sign with monotone and compare"))
-#ifdef option_bodies
-{
-  ssh_sign_check = true;
+  ssh_sign = "yes";
 }
 #endif
 

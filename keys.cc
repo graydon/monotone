@@ -354,8 +354,11 @@ make_signature(app_state & app,           // to hook for phrase
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
+  E(!app.opts.ssh_sign.empty(), F("--ssh-sign requires a value ['yes', 'no', or 'check']"));
+  E(app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "no" || app.opts.ssh_sign == "check",
+    F("--ssh-sign must be set to 'yes', 'no', or 'check'"));
   string sig_string;
-  if (app.opts.ssh_sign_given || app.opts.ssh_sign_check_given) {
+  if (app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "check") {
     scoped_ptr<ssh_agent> a(new ssh_agent());
     a->connect();
     vector<RSA_PublicKey> ssh_keys = a->get_keys();
@@ -393,7 +396,7 @@ make_signature(app_state & app,           // to hook for phrase
     E(sig_string.length() > 0, F("make_signature: monotone and ssh-agent keys do not match"));
   }
   string ssh_sig = sig_string;
-  if (!app.opts.ssh_sign_given || app.opts.ssh_sign_check_given) {
+  if (app.opts.ssh_sign == "no" || app.opts.ssh_sign == "check") {
     SecureVector<Botan::byte> sig;
 
     // we permit the user to relax security here, by caching a decrypted key
@@ -425,7 +428,7 @@ make_signature(app_state & app,           // to hook for phrase
     sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
   }
 
-  if (app.opts.ssh_sign_check_given) {
+  if (app.opts.ssh_sign == "check") {
     E(ssh_sig == sig_string, F("make_signature: ssh signature (%i) != monotone sugnature (%i)\nssh signature     : %s\nmonotone signature: %s") % ssh_sig.length() % sig_string.length() % encode_hexenc(ssh_sig) % encode_hexenc(sig_string));
   }
 
