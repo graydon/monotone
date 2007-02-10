@@ -195,7 +195,7 @@ asciik::draw(const size_t curr_items, const size_t next_items,
 	interline[2 * i] = '|';
       else {
 	if (j < i) {
-	  // | ·---o
+	  // | .---o
 	  // |/| | |
 	  // 0 1 2 3
 	  // j     i
@@ -205,8 +205,8 @@ asciik::draw(const size_t curr_items, const size_t next_items,
 	  end = 2 * i;
 	  dot = start - 1;
 	  interline[dot - 1] = '/';
-	} else { // i < j
-	  // o---·
+	} else { // j > i
+	  // o---.
 	  // | | |\|
 	  // 0 1 2 3
 	  // i     j
@@ -217,23 +217,24 @@ asciik::draw(const size_t curr_items, const size_t next_items,
 	  dot = end;
 	  interline[dot + 1] = '\\';
 	}
-	if ((end - start) > 0)
+	if (end > start) {
 	  dots.insert(dot);
-	for (size_t l = start; l < end; ++l)
-	  line[l] = '-';
+	  for (size_t l = start; l < end; ++l)
+	    line[l] = '-';
+	}
       }
       // prepare the proper continuation line
       interline2[j * 2] = '|';
     }
   // add any dots (must do this in a second pass, so that if there are
   // cases like:
-  //   | ·-----·-o
+  //   | .-----.-o
   //   |/| | |/|
   // where we want to make sure the second dot overwrites the first --.
   for (set<size_t>::const_iterator dot = dots.begin();
        dot != dots.end(); ++dot)
-    line[*dot] = '·'; //TODO: what about this special char? should it be UTF-8?
-  // and add the main attraction (may overwrite a '·').
+    line[*dot] = '.'; //TODO: what about this special char? should it be UTF-8?
+  // and add the main attraction (may overwrite a '.').
   line[curr_loc * 2] = 'o';
 
   // split a multi-line annotation
@@ -249,10 +250,10 @@ asciik::draw(const size_t curr_items, const size_t next_items,
     --num_lines;
 
   // prints it out
-  output << line << "  " << lines[0] << '\n';
-  output << interline << "  " << lines[1] << '\n';
+  output << F("%s") % line << "  " << lines[0] << '\n';
+  output << F("%s") % interline << "  " << lines[1] << '\n';
   for (int i = 2; i < num_lines; ++i)
-    output << interline2 << "  " << lines[i] << '\n';
+    output << F("%s") % interline2 << "  " << lines[i] << '\n';
 }
 
 bool
