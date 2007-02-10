@@ -22,6 +22,7 @@ check(mtn("drop", "-e", "groundzero/double-kill"), 0, false, false)
 commit()
 revs.other = base_revision()
 
+remove("groundzero")
 revert_to(revs.base)
 remove("bystander2")
 remove("rename-out")

@@ -132,6 +132,11 @@ process_commit_message_args(bool & given,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
 
+void
+get_content_paths(roster_t const & roster, 
+                  std::map<file_id, 
+                  file_path> & paths);
+
 #define CMD(C, group, params, desc, opts)                            \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \

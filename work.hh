@@ -93,7 +93,8 @@ struct workspace
                           bool execute);
 
   void perform_content_update(cset const & cs,
-                              content_merge_adaptor const & ca);
+                              content_merge_adaptor const & ca,
+                              bool messages = true);
 
   void update_any_attrs();
 

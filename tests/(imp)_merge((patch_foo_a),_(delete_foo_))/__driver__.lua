@@ -6,11 +6,10 @@ addfile("foo/a", "blah blah")
 commit()
 base = base_revision()
 
-rename("foo", "bar")
 check(mtn("drop", "--recursive", "foo"), 0, false, false)
 commit()
 
-rename("bar", "foo")
+remove("foo")
 revert_to(base)
 
 writefile("foo/a", "some other stuff")

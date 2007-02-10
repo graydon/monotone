@@ -121,7 +121,7 @@ function probe_node(filename, rsha, fsha)
   remove("_MTN.old")
   rename("_MTN", "_MTN.old")
   remove(filename)
-  check(mtn("checkout", "--revision", rsha, "."), 0, false)
+  check(mtn("checkout", "--revision", rsha, "."), 0, false, true)
   rename("_MTN.old/options", "_MTN")
   check(base_revision() == rsha)
   check(sha1(filename) == fsha)
@@ -184,11 +184,33 @@ function revert_to(rev, branch, mt)
   if mt == nil then mt = mtn end
   remove("_MTN.old")
   rename("_MTN", "_MTN.old")
-  
+
+  check(mt("automate", "get_manifest_of", rev), 0, true, false)
+  rename("stdout", "paths")
+
+  -- remove all of the files and dirs in this
+  -- manifest to clear the way for checkout
+
+  for path in io.lines("paths") do
+    len = string.len(path) - 1
+    
+    if (string.match(path, "^   file \"")) then
+      path = string.sub(path, 10, len)
+    elseif (string.match(path, "^dir \"")) then
+      path = string.sub(path, 6, len)
+    else
+      path = ""
+    end
+
+    if (string.len(path) > 0) then
+      remove(path)
+    end
+  end
+        
   if branch == nil then
-    check(mt("checkout", "--revision", rev, "."), 0, false)
+    check(mt("checkout", "--revision", rev, "."), 0, false, true)
   else
-    check(mt("checkout", "--branch", branch, "--revision", rev, "."), 0, false)
+    check(mt("checkout", "--branch", branch, "--revision", rev, "."), 0, false, true)
   end
   check(base_revision() == rev)
 end
