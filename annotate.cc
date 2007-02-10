@@ -160,12 +160,16 @@ struct annotate_node_work
   annotate_node_work(shared_ptr<annotate_context> annotations_,
                      shared_ptr<annotate_lineage_mapping> lineage_,
                      revision_id revision_, node_id fid_,
-                     rev_height height_)
+                     rev_height height_,
+                     shared_ptr<set<revision_id> > content_marks_,
+                     file_id content_)
     : annotations(annotations_),
       lineage(lineage_),
       revision(revision_),
       fid(fid_),
-      height(height_)
+      height(height_),
+      content_marks(content_marks_),
+      content(content_)
   {}
 
   shared_ptr<annotate_context> annotations;
@@ -173,6 +177,8 @@ struct annotate_node_work
   revision_id revision;
   node_id fid;
   rev_height height;
+  shared_ptr<set<revision_id> > content_marks;
+  file_id content;
 };
 
 struct by_rev {};
@@ -662,6 +668,23 @@ annotate_lineage_mapping::set_copied_all_mapped
     }
 }
 
+// fetches the list of file_content markings for the given revision_id and
+// node_id
+static void get_file_content_marks(app_state & app,
+                                   revision_id const & rev,
+                                   node_id const & fid,
+                                   set<revision_id> & content_marks)
+{
+  marking_t markings;
+  app.db.get_markings(rev, fid, markings);
+
+  I(markings.file_content.size() != 0);
+
+  content_marks.clear();
+  content_marks.insert(markings.file_content.begin(),
+                       markings.file_content.end());
+}
+
 static void
 do_annotate_node
 (annotate_node_work const & work_unit,
@@ -670,66 +693,60 @@ do_annotate_node
 {
   L(FL("do_annotate_node for node %s") % work_unit.revision);
 
-  roster_t roster;
-  marking_t marks;
+  shared_ptr<set<revision_id> > ancestors;
 
-  {
-    marking_map markmap;
-    app.db.get_roster(work_unit.revision, roster, markmap);
-
-    map<node_id, marking_t>::const_iterator mmi =
-      markmap.find(work_unit.fid);
-    I(mmi != markmap.end());
-    marks = mmi->second;
-  }
-
-  I(marks.file_content.size() != 0);
-
-  set<revision_id> parents; // fixme: rename 
-
-  if (marks.file_content.size() == 1
-      && *(marks.file_content.begin()) == work_unit.revision)
+  bool marked = (work_unit.content_marks->size() == 1
+                 && *(work_unit.content_marks->begin()) == work_unit.revision);
+  
+  if (marked)
     {
+      ancestors = shared_ptr<set<revision_id> > (new set<revision_id>());
       // this node is marked, need to inspect the parents
-      app.db.get_revision_parents(work_unit.revision, parents);
+      app.db.get_revision_parents(work_unit.revision, *ancestors);
     }
   else
     {
-      // jump directly to the marked ancestors
-      parents = marks.file_content;
+      ancestors = work_unit.content_marks;
     }
 
   size_t added_in_parent_count = 0;
 
-  for (set<revision_id>::const_iterator i = parents.begin();
-       i != parents.end(); i++)
+  for (set<revision_id>::const_iterator i = ancestors->begin();
+       i != ancestors->end(); i++)
     {
       revision_id parent_revision = *i;
 
-      roster_t parent_roster;
       L(FL("do_annotate_node processing edge from parent %s to child %s")
         % parent_revision % work_unit.revision);
 
       I(!(work_unit.revision == parent_revision));
-      app.db.get_roster(parent_revision, parent_roster);
 
-      if (!parent_roster.has_node(work_unit.fid))
+      file_id file_in_parent;
+      shared_ptr<set<revision_id> > parent_content_marks(new set<revision_id>());
+      
+      if (marked)
         {
-          L(FL("file added in %s, continuing") % work_unit.revision);
-          added_in_parent_count++;
-          continue;
+          // we are marked, so we don't know much about the ancestor
+          app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
+          if (null_id(file_in_parent))
+            {
+              L(FL("file added in %s, continuing") % work_unit.revision);
+              added_in_parent_count++;
+              continue;
+            }
+          get_file_content_marks(app, parent_revision, work_unit.fid, *parent_content_marks);
         }
-
+      else
+        {
+          // we know that this ancestor is marked
+          file_in_parent = work_unit.content;
+          parent_content_marks->insert(parent_revision);
+        }
+      
       // The node was live in the parent, so this represents a delta.
-      file_t file_in_child =
-        downcast_to_file_t(roster.get_node(work_unit.fid));
-
-      file_t file_in_parent =
-        downcast_to_file_t(parent_roster.get_node(work_unit.fid));
-
       shared_ptr<annotate_lineage_mapping> parent_lineage;
 
-      if (file_in_parent->content == file_in_child->content)
+      if (file_in_parent == work_unit.content)
         {
           L(FL("parent file identical, "
                "set copied all mapped and copy lineage\n"));
@@ -739,9 +756,9 @@ do_annotate_node
       else
         {
           file_data data;
-          app.db.get_file_version(file_in_parent->content, data);
+          app.db.get_file_version(file_in_parent, data);
           L(FL("building parent lineage for parent file %s")
-            % file_in_parent->content);
+            % file_in_parent);
           parent_lineage
             = work_unit.lineage->build_parent_lineage(work_unit.annotations,
                                                       parent_revision,
@@ -763,7 +780,9 @@ do_annotate_node
                                      parent_lineage,
                                      parent_revision,
                                      work_unit.fid,
-                                     parent_height);
+                                     parent_height,
+                                     parent_content_marks,
+                                     file_in_parent);
 
           work_units.insert(newunit);
         }
@@ -777,7 +796,7 @@ do_annotate_node
         }
     }
 
-  if (added_in_parent_count == parents.size())
+  if (added_in_parent_count == ancestors->size())
     {
       work_unit.lineage->credit_mapped_lines(work_unit.annotations);
     }
@@ -799,9 +818,13 @@ do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
 
   work_units work_units;
   {
+    // prepare the first work_unit
     rev_height height;
     app.db.get_rev_height(rid, height);
-    annotate_node_work workunit(acp, lineage, rid, file_node->self, height);
+    shared_ptr<set<revision_id> >content_marks(new set<revision_id>());
+    get_file_content_marks(app, rid, file_node->self, *content_marks);
+    annotate_node_work workunit(acp, lineage, rid, file_node->self, height,
+                                content_marks, file_node->content);
     work_units.insert(workunit);
   }
   

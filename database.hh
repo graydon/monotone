@@ -349,6 +349,15 @@ public:
   bool roster_version_exists(revision_id const & ident);
   void get_roster_ids(std::set<revision_id> & ids);
 
+  // using roster deltas
+  void get_markings(revision_id const & id,
+                    node_id const & nid,
+                    marking_t & markings);
+
+  void get_file_content(revision_id const & id,
+                        node_id const & nid,
+                        file_id & content);
+
   //
   // --== Keys ==--
   //
