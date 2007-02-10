@@ -365,15 +365,25 @@ make_signature(app_state & app,           // to hook for phrase
     for (vector<rsa_keypair_id>::const_iterator
            i = mtn_keys.begin(); i != mtn_keys.end(); ++i) {
       app.keys.get_key_pair(*i, key);
-      //shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, *i, key.priv);
+      rsa_pub_key pub;
+      decode_base64(key.pub, pub);
+      SecureVector<Botan::byte> pub_block;
+      pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
+      L(FL("building verifier for %d-byte pub key") % pub_block.size());
+      shared_ptr<X509_PublicKey> x509_key =
+          shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
+      shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
+      if (!pub_key)
+          throw informative_failure("Failed to get RSA verifying key");
+
       for (vector<RSA_PublicKey>::const_iterator
              si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
-        //if ((*priv).get_e() == (*si).get_e()
-        //    && (*priv).get_n() == (*si).get_n()) {
-          //L(FL("  ssh key matches monotone key"));
+        if ((*pub_key).get_e() == (*si).get_e()
+            && (*pub_key).get_n() == (*si).get_n()) {
+          L(FL("  ssh key matches monotone key"));
           a->sign_data(*si, tosign, sig_string);
           break;
-        //}
+        }
       }
       if (sig_string.length() > 0) {
         break;
