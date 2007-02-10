@@ -736,9 +736,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
   set<revision_id> seen;
   revision_t rev;
-  asciik * graph = NULL;
-  if (!app.opts.no_graph)
-    graph = new asciik();
+  asciik graph; // it's instantiated even when not used, but it's lightweight
   while(! frontier.empty() && (last == -1 || last > 0)
         && (next == -1 || next > 0))
     {
@@ -815,23 +813,19 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
       if (print_this)
         {
-	  ostream * out;
-	  if (graph)
-	    out = new ostringstream;
-	  else
-	    out = &cout;
+	  ostringstream out;
           if (app.opts.brief)
             {
-              *out << rid;
-              log_certs(*out, app, rid, author_name);
-              log_certs(*out, app, rid, date_name);
-              log_certs(*out, app, rid, branch_name);
-              *out << "\n";
+              out << rid;
+              log_certs(out, app, rid, author_name);
+              log_certs(out, app, rid, date_name);
+              log_certs(out, app, rid, branch_name);
+              out << "\n";
             }
           else
             {
-              *out << string(65, '-') << "\n";
-              *out << "Revision: " << rid << "\n";
+              out << string(65, '-') << "\n";
+              out << "Revision: " << rid << "\n";
 
               changes_summary csum;
 
@@ -847,22 +841,22 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               for (set<revision_id>::const_iterator
                      anc = ancestors.begin();
                    anc != ancestors.end(); ++anc)
-                *out << "Ancestor: " << *anc << "\n";
+                out << "Ancestor: " << *anc << "\n";
 
-              log_certs(*out, app, rid, author_name, "Author: ", false);
-              log_certs(*out, app, rid, date_name,   "Date: ",   false);
-              log_certs(*out, app, rid, branch_name, "Branch: ", false);
-              log_certs(*out, app, rid, tag_name,    "Tag: ",    false);
+              log_certs(out, app, rid, author_name, "Author: ", false);
+              log_certs(out, app, rid, date_name,   "Date: ",   false);
+              log_certs(out, app, rid, branch_name, "Branch: ", false);
+              log_certs(out, app, rid, tag_name,    "Tag: ",    false);
 
               if (!app.opts.no_files && !csum.cs.empty())
                 {
-                  *out << "\n";
-                  csum.print(*out, 70);
-                  *out << "\n";
+                  out << "\n";
+                  csum.print(out, 70);
+                  out << "\n";
                 }
 
-              log_certs(*out, app, rid, changelog_name, "ChangeLog: ", true);
-              log_certs(*out, app, rid, comment_name,   "Comments: ",  true);
+              log_certs(out, app, rid, changelog_name, "ChangeLog: ", true);
+              log_certs(out, app, rid, comment_name,   "Comments: ",  true);
             }
 
           if (app.opts.diffs)
@@ -870,7 +864,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               for (edge_map::const_iterator e = rev.edges.begin();
                    e != rev.edges.end(); ++e)
                 {
-                    dump_diffs(edge_changes(e), app, true, *out,
+                    dump_diffs(edge_changes(e), app, true, out,
                     	       diff_paths, !mask.empty());
                 }
             }
@@ -884,13 +878,13 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               last--;
             }
 
-          out->flush();
-	  if (graph) {
+	  if (app.opts.no_graph)
+	    cout << out.str();
+	  else {
 	    // an ASCII-k graph was requested
 	    set<revision_id> parents;
 	    app.db.get_revision_parents(rid, parents);
-	    graph->print(rid, parents, static_cast<ostringstream *>(out)->str());
-	    delete out;
+	    graph.print(rid, parents, out.str());
 	  }
         }
 
@@ -927,8 +921,6 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           frontier.push(make_pair(height, *i));
         }
     }
-    if (graph)
-      delete graph;
 }
 
 // Local Variables:
