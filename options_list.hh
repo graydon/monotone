@@ -261,7 +261,7 @@ GOPT(ssh_sign, "ssh-sign", std::string, "yes",
      gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
 #ifdef option_bodies
 {
-  ssh_sign = "yes";
+  ssh_sign = arg;
 }
 #endif
 
