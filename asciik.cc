@@ -135,7 +135,6 @@ Loop:
 #include "asciik.hh"
 #include "cmd.hh"
 
-using std::cout;
 using std::insert_iterator;
 using std::max;
 using std::min;
@@ -148,8 +147,9 @@ using boost::algorithm::is_any_of;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
-asciik::asciik(ostream & os)
+asciik::asciik(size_t min_width, ostream & os)
 {
+  width = min_width;
   output = &os;
 }
 
@@ -173,7 +173,7 @@ asciik::draw(const size_t curr_items, const size_t next_items,
   const size_t curr_loc, const set<pair<size_t, size_t> > & links,
   const set<size_t> & curr_ghosts, const string & annotation) const
 {
-  size_t line_len = max(curr_items, next_items) * 2;
+  size_t line_len = max(width, max(curr_items, next_items) * 2);
   string line(line_len, ' ');      // actual len: curr_items * 2 - 1
   string interline(line_len, ' '); // actual len: max(curr_items, next_items) * 2 - 1
   string interline2(line_len, ' ');
@@ -248,10 +248,10 @@ asciik::draw(const size_t curr_items, const size_t next_items,
     lines.push_back(string(""));
 
   // prints it out
-  *output << F("%-8s  %s") % line % lines[0] << '\n';
-  *output << F("%-8s  %s") % interline % lines[1] << '\n';
+  *output << line << "  " << lines[0] << '\n';
+  *output << interline << "  " << lines[1] << '\n';
   for (int i = 2; i < num_lines; ++i)
-    *output << F("%-8s  %s") % interline2 % lines[i] << '\n';
+    *output << interline2 << "  " << lines[i] << '\n';
 }
 
 bool
@@ -288,6 +288,7 @@ asciik::try_draw(const vector<revision_id> & next_row, const size_t curr_loc,
   set<pair<size_t, size_t> > parent_links;
   for (set<revision_id>::const_iterator p = parents.begin();
        p != parents.end(); ++p)
+    if (*p != ghost)
     {
       size_t i = curr_loc;
       size_t j = distance(next_row.begin(),
@@ -375,7 +376,7 @@ CMD(asciik, N_("tree"), N_("SELECTOR"),
   selectors::selector_type ty = selectors::sel_ident;
   selectors::complete_selector("", sels, ty, completions, app);
 
-  asciik graph(cout);
+  asciik graph(10);
   set<revision_id> revs;
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
