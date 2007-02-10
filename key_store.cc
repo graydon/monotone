@@ -90,24 +90,6 @@ key_store::read_key_dir()
       istringstream is(dat());
       read_packets(is, kr, *app);
     }
-
-  /*
-  string uri("file://");
-  printf("====\n");
-  printf("--%s--\n", std::getenv("SSH_AUTH_SOCK"));
-  uri.append(std::getenv((const char *)"SSH_AUTH_SOCK"));
-  printf("----%s----\n", uri.c_str());
-  Netxx::Address addr(uri.c_str());
-  */
-  /*
-    for (int i = 0; i < 20; ++i) {
-  */
-
-  /*
-  scoped_ptr<ssh_agent> a(new ssh_agent());
-  a->connect();
-  a->get_keys();
-  */
 }
 
 void

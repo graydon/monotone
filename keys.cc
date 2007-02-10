@@ -355,31 +355,31 @@ make_signature(app_state & app,           // to hook for phrase
                base64<rsa_sha1_signature> & signature)
 {
   string sig_string;
-  if (app.opts.ssh_sign_given) {
+  if (app.opts.ssh_sign_given || app.opts.ssh_sign_check_given) {
     scoped_ptr<ssh_agent> a(new ssh_agent());
     a->connect();
     vector<RSA_PublicKey> ssh_keys = a->get_keys();
-    vector<rsa_keypair_id> mtn_keys;
+    //vector<rsa_keypair_id> mtn_keys;
     keypair key;
-    app.keys.get_keys(mtn_keys);
-    for (vector<rsa_keypair_id>::const_iterator
-           i = mtn_keys.begin(); i != mtn_keys.end(); ++i) {
-      app.keys.get_key_pair(*i, key);
-      shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, *i, key.priv);
+    //app.keys.get_keys(mtn_keys);
+    //for (vector<rsa_keypair_id>::const_iterator
+    //       i = mtn_keys.begin(); i != mtn_keys.end(); ++i) {
+      //app.keys.get_key_pair(*i, key);
+      //shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, *i, key.priv);
       for (vector<RSA_PublicKey>::const_iterator
              si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
-        if ((*priv).get_e() == (*si).get_e()
-            && (*priv).get_n() == (*si).get_n()) {
-          L(FL("  ssh key matches monotone key"));
-          string sdata;
+        //if ((*priv).get_e() == (*si).get_e()
+        //    && (*priv).get_n() == (*si).get_n()) {
+          //L(FL("  ssh key matches monotone key"));
           a->sign_data(*si, tosign, sig_string);
-        }
+          break;// 2;
+        //}
       }
-    }
-  }// else {
-
+    //}
+    E(sig_string.length() > 0, F("make_signature: no key found to sign with"));
+  }
   string ssh_sig = sig_string;
-
+  if (!app.opts.ssh_sign_given || app.opts.ssh_sign_check_given) {
     SecureVector<Botan::byte> sig;
 
     // we permit the user to relax security here, by caching a decrypted key
@@ -409,10 +409,10 @@ make_signature(app_state & app,           // to hook for phrase
 
     sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
     sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
-  //}
+  }
 
-  if (app.opts.ssh_sign_given) {
-    E(ssh_sig == sig_string, F("make_signature: ssh_sig (%i) != sig_string (%i)\nssh_sig   : %s\nsig_string: %s") % ssh_sig.length() % sig_string.length() % encode_hexenc(ssh_sig) % encode_hexenc(sig_string));
+  if (app.opts.ssh_sign_check_given) {
+    E(ssh_sig == sig_string, F("make_signature: ssh signature (%i) != monotone sugnature (%i)\nssh signature     : %s\nmonotone signature: %s") % ssh_sig.length() % sig_string.length() % encode_hexenc(ssh_sig) % encode_hexenc(sig_string));
   }
 
   L(FL("produced %d-byte signature") % sig_string.size());
