@@ -430,8 +430,9 @@ make_signature(app_state & app,           // to hook for phrase
 
   if (app.opts.ssh_sign == "check") {
     E(ssh_sig == sig_string, F("make_signature: ssh signature (%i) != monotone sugnature (%i)\nssh signature     : %s\nmonotone signature: %s") % ssh_sig.length() % sig_string.length() % encode_hexenc(ssh_sig) % encode_hexenc(sig_string));
+    L(FL("make_signature: signatures from ssh-agent and monotone are the same"));
   }
-
+  
   L(FL("produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 }
