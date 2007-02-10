@@ -23,6 +23,7 @@
 using std::cout;
 using std::make_pair;
 using std::pair;
+using std::make_pair;
 using std::map;
 using std::set;
 using std::string;
@@ -567,9 +568,13 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
 
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
-  content_merge_workspace_adaptor wca(app, empty_roster);
 
-  app.work.perform_content_update(checkout, wca);
+  map<file_id, file_path> paths;
+  get_content_paths(*empty_roster, paths);
+
+  content_merge_workspace_adaptor wca(app, empty_roster, paths);
+
+  app.work.perform_content_update(checkout, wca, false);
 
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints();

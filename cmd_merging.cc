@@ -71,23 +71,6 @@ three_way_merge(roster_t const & ancestor_roster,
                result);
 }
 
-static void
-get_content_paths(roster_t const & roster, map<file_id, file_path> & paths)
-{
-  node_map const & nodes = roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_t node = roster.get_node(i->first);
-      if (is_file_t(node))
-        {
-          split_path sp;
-          roster.get_name(i->first, sp);
-          file_t file = downcast_to_file_t(node);
-          paths.insert(make_pair(file->content, file_path(sp)));
-        }
-    }
-}
-  
 CMD(update, N_("workspace"), "",
     N_("update workspace.\n"
        "This command modifies your workspace to be based off of a\n"
