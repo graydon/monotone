@@ -365,8 +365,7 @@ make_signature(app_state & app,           // to hook for phrase
   //sign with ssh-agent (if connected)
   if (app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "check")
     {
-      scoped_ptr<ssh_agent> a(new ssh_agent());
-      vector<RSA_PublicKey> ssh_keys = a->get_keys();
+      vector<RSA_PublicKey> ssh_keys = app.agent.get_keys();
       if (ssh_keys.size() <= 0)
         L(FL("make_signature: no rsa keys received from ssh-agent"));
       else {
@@ -390,7 +389,7 @@ make_signature(app_state & app,           // to hook for phrase
           if ((*pub_key).get_e() == (*si).get_e()
               && (*pub_key).get_n() == (*si).get_n()) {
             L(FL("make_signature: ssh key matches monotone key, signing with ssh-agent"));
-            a->sign_data(*si, tosign, sig_string);
+            app.agent.sign_data(*si, tosign, sig_string);
             break;
           }
         }
