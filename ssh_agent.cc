@@ -15,7 +15,7 @@ ssh_agent::ssh_agent()
   connect();
 }
 
-void
+bool
 ssh_agent::connect()
 {
   const char *authsocket;
@@ -23,14 +23,14 @@ ssh_agent::connect()
   struct sockaddr_un sunaddr;
 
   if (connected())
-    return;
+    return true;
 
   authsocket = getenv("SSH_AUTH_SOCK");
   
   if (!authsocket)
     {
       L(FL("ssh_agent: connect: ssh-agent socket not found"));
-      return;
+      return false;
     }
 
   sunaddr.sun_family = AF_UNIX;
