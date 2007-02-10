@@ -382,6 +382,11 @@ workspace::maybe_update_inodeprints()
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
     {
       node_id nid = i->first;
+      if (!is_file_t(i->second))
+        continue;
+      file_t new_file = downcast_to_file_t(i->second);
+      bool all_same = true;
+
       for (parent_map::const_iterator parent = parents.begin();
            parent != parents.end(); ++parent)
         {
@@ -389,25 +394,25 @@ workspace::maybe_update_inodeprints()
           if (parent_ros.has_node(nid))
             {
               node_t old_node = parent_ros.get_node(nid);
-              if (is_file_t(old_node))
+              I(is_file_t(old_node));
+              file_t old_file = downcast_to_file_t(old_node);
+
+              if (new_file->content != old_file->content)
                 {
-                  node_t new_node = i->second;
-                  I(is_file_t(new_node));
-
-                  file_t old_file = downcast_to_file_t(old_node);
-                  file_t new_file = downcast_to_file_t(new_node);
-
-                  if (new_file->content == old_file->content)
-                    {
-                      split_path sp;
-                      new_roster.get_name(nid, sp);
-                      file_path fp(sp);
-                      hexenc<inodeprint> ip;
-                      if (inodeprint_file(fp, ip))
-                        ipm_new.insert(inodeprint_entry(fp, ip));
-                    }
+                  all_same = false;
+                  break;
                 }
             }
+        }
+
+      if (all_same)
+        {
+          split_path sp;
+          new_roster.get_name(nid, sp);
+          file_path fp(sp);
+          hexenc<inodeprint> ip;
+          if (inodeprint_file(fp, ip))
+            ipm_new.insert(inodeprint_entry(fp, ip));
         }
     }
   data dat;
