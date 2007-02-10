@@ -366,7 +366,6 @@ make_signature(app_state & app,           // to hook for phrase
   if (app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "check")
     {
       scoped_ptr<ssh_agent> a(new ssh_agent());
-      a->connect();
       vector<RSA_PublicKey> ssh_keys = a->get_keys();
       if (ssh_keys.size() <= 0)
         L(FL("make_signature: no rsa keys received from ssh-agent"));

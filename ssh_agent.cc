@@ -12,6 +12,7 @@ using std::min;
 
 ssh_agent::ssh_agent()
 {
+  connect();
 }
 
 void
@@ -21,11 +22,14 @@ ssh_agent::connect()
   int sock;
   struct sockaddr_un sunaddr;
 
+  if (connected())
+    return;
+
   authsocket = getenv("SSH_AUTH_SOCK");
   
   if (!authsocket)
     {
-      W(F("ssh_agent: connect: ssh-agent socket not found"));
+      L(FL("ssh_agent: connect: ssh-agent socket not found"));
       return;
     }
 
@@ -48,6 +52,12 @@ ssh_agent::connect()
       E(ret >= 0, F("ssh_agent: connect: could not connect to socket for ssh-agent"));
     }
   stream = shared_ptr<Stream>(new Stream(sock));
+}
+
+bool
+ssh_agent::connected()
+{
+  return stream != NULL;
 }
 
 u32
@@ -183,7 +193,7 @@ ssh_agent::fetch_packet(string & packet)
 vector<RSA_PublicKey> const
 ssh_agent::get_keys()
 {
-  if (!stream)
+  if (!connected())
     {
       L(FL("ssh_agent: get_keys: stream not initialized, no agent"));
       return keys;
@@ -282,6 +292,8 @@ ssh_agent::get_keys()
 void
 ssh_agent::sign_data(RSA_PublicKey const & key, string const & data, string & out)
 {
+  E(connected(), F("ssh_agent: get_keys: attempted to sign data when not connected"));
+
   L(FL("ssh_agent: sign_data: key e: %s, n: %s, data len: %i") % key.get_e() % key.get_n() % data.length());
   string data_out;
   string key_buf;
