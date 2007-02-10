@@ -20,25 +20,28 @@ ssh_agent::connect() {
   struct sockaddr_un sunaddr;
 
   authsocket = getenv("SSH_AUTH_SOCK");
-
-  E(authsocket, F("agent: !authsocket"));
+  
+  if (!authsocket) {
+    W(F("ssh_agent: ssh-agent socket not found"));
+    return;
+  }
 
   sunaddr.sun_family = AF_UNIX;
   strncpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
 
   sock = socket(AF_UNIX, SOCK_STREAM, 0);
-  E(sock >= 0, F("agent: sock < 0"));
+  E(sock >= 0, F("ssh_agent: could not open socket to ssh-agent"));
 
   int ret = fcntl(sock, F_SETFD, 1);
   if (ret == -1) {
     close(sock);
-    E(ret != -1, F("agent: fcntl == -1"));
+    E(ret != -1, F("ssh_agent: could not set up socket for ssh-agent"));
     return;
   }
   ret = ::connect(sock, (struct sockaddr *)&sunaddr, sizeof sunaddr);
   if (ret < 0) {
     close(sock);
-    E(ret >= 0, F("agent: connect < 0"));
+    E(ret >= 0, F("ssh_agent: could not connect to socket for ssh-agent"));
   }
   stream = shared_ptr<Stream>(new Stream(sock));
 }
@@ -171,8 +174,12 @@ ssh_agent::fetch_packet(string & packet)
 
 vector<RSA_PublicKey> const
 ssh_agent::get_keys() {
-  u32 len;
+  if (!stream) {
+    L(FL("ssh_agent: get_keys: stream not initialized, no agent"));
+    return keys;
+  }
 
+  u32 len;
   unsigned int ch;
   void * v = (void *)&ch;
   ch = 0;
