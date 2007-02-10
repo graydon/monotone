@@ -390,7 +390,7 @@ make_signature(app_state & app,           // to hook for phrase
         break;
       }
     }
-    E(sig_string.length() > 0, F("make_signature: no key found to sign with"));
+    E(sig_string.length() > 0, F("make_signature: monotone and ssh-agent keys do not match"));
   }
   string ssh_sig = sig_string;
   if (!app.opts.ssh_sign_given || app.opts.ssh_sign_check_given) {
