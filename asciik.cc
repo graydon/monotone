@@ -244,6 +244,9 @@ asciik::draw(const size_t curr_items, const size_t next_items,
     lines.push_back(string(""));
   if (num_lines < 2)
     lines.push_back(string(""));
+  // ignore empty lines at the end
+  while ((num_lines > 2) && (lines[num_lines - 1].size() == 0))
+    --num_lines;
 
   // prints it out
   output << line << "  " << lines[0] << '\n';
@@ -352,9 +355,9 @@ asciik::print(const revision_id & rev, const set<revision_id> & parents,
     curr_row = next_row;
   else if (new_revs.size() == 0) { // this line has disappeared
     vector<revision_id> extra_ghost(next_row);
-    extra_ghost.insert(curr_row.begin() + curr_loc, ghost);
-    if (!try_draw(extra_ghost, curr_loc, parents, annotation))
-      I(false);
+    I(curr_loc < extra_ghost.size());
+    extra_ghost.insert(extra_ghost.begin() + curr_loc, ghost);
+    I(try_draw(extra_ghost, curr_loc, parents, annotation));
     curr_row = extra_ghost;
   }
 }

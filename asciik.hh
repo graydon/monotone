@@ -11,6 +11,8 @@ class asciik
 public:
   asciik(size_t min_width = 0, std::ostream & os = std::cout);
   // Prints an ASCII-k chunk using the given revisions.
+  // Multiple lines are supported in annotation (the graph will stretch
+  // accordingly); empty newlines at the end will be removed.
   void print(const revision_id & rev, const std::set<revision_id> & parents,
     const string & annotation);
   //TODO: cambiare set-parents to vector-next
