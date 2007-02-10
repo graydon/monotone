@@ -19,7 +19,9 @@ class ssh_agent
 {
 public:
   ssh_agent();
+  ~ssh_agent();
   bool connect();
+  void disconnect();
   bool connected();
   vector<RSA_PublicKey> const get_keys();
   void sign_data(RSA_PublicKey const & key, string const & data, string & out);

@@ -15,6 +15,11 @@ ssh_agent::ssh_agent()
   connect();
 }
 
+ssh_agent::~ssh_agent()
+{
+  disconnect();
+}
+
 bool
 ssh_agent::connect()
 {
@@ -52,6 +57,14 @@ ssh_agent::connect()
       E(ret >= 0, F("ssh_agent: connect: could not connect to socket for ssh-agent"));
     }
   stream = shared_ptr<Stream>(new Stream(sock));
+}
+
+void
+ssh_agent::disconnect()
+{
+  if (connected()) {
+    stream->close();
+  }
 }
 
 bool
