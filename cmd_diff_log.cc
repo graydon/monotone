@@ -530,8 +530,7 @@ AUTOMATE(content_diff, N_("[FILE [...]]"),
 
 static void
 log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
-          string label, string separator,
-          bool multiline, bool newline)
+          string label, string separator, bool multiline, bool newline)
 {
   vector< revision<cert> > certs;
   bool first = true;
@@ -552,17 +551,10 @@ log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
         os << separator;
 
       if (multiline)
-        {
-          os << "\n" << "\n" << tv;
-          if (newline)
-            os << "\n";
-        }
-      else
-        {
-          os << tv;
-          if (newline)
-            os << "\n";
-        }
+	os << "\n\n";
+      os << tv;
+      if (newline)
+	os << "\n";
 
       first = false;
     }
@@ -817,10 +809,15 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           if (app.opts.brief)
             {
               out << rid;
-              log_certs(out, app, rid, author_name);
-              log_certs(out, app, rid, date_name);
+	      log_certs(out, app, rid, author_name);
+	      if (app.opts.no_graph)
+		log_certs(out, app, rid, date_name);
+	      else {
+		out << '\n';
+		log_certs(out, app, rid, date_name, string(), string(), false, false);
+	      }
               log_certs(out, app, rid, branch_name);
-              out << "\n";
+              out << '\n';
             }
           else
             {
