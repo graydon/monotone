@@ -647,6 +647,62 @@ make_revision(revision_id const & old_rev_id,
   rev.made_for = made_for_database;
 }
 
+void
+make_revision(parent_map const & old_rosters,
+              roster_t const & new_roster,
+              revision_t & rev)
+{
+  edge_map edges;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> cs(new cset());
+      make_cset(parent_roster(i), new_roster, *cs);
+      safe_insert(edges, make_pair(parent_id(i), cs));
+    }
+
+  rev.edges = edges;
+  calculate_ident(new_roster, rev.new_manifest);
+  L(FL("new manifest_id is %s") % rev.new_manifest);
+}
+
+void
+make_restricted_revision(parent_map const & old_rosters,
+                         roster_t const & new_roster,
+                         node_restriction const & mask,
+                         revision_t & rev,
+                         cset & excluded)
+{
+  edge_map edges;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> included(new cset());
+      // ??? May not do the right thing with 'excluded' when there's more than
+      // one parent roster.
+      make_restricted_csets(parent_roster(i), new_roster, *included, excluded, mask);
+      check_restricted_cset(parent_roster(i), *included);
+      safe_insert(edges, make_pair(parent_id(i), included));
+    }
+
+  // In order to get the correct manifest ID, recalculate the new roster
+  // using one of the restricted csets.  It doesn't matter which of the
+  // parent roster/cset pairs we use for this; by construction, they must
+  // all produce the same result.
+  revision_id id = parent_id(old_rosters.begin());
+  roster_t restricted_roster = *(safe_get(old_rosters, id).first);
+
+  temp_node_id_source nis;
+  editable_roster_base er(restricted_roster, nis);
+  safe_get(edges, id)->apply_to(er);
+
+  calculate_ident(restricted_roster, rev.new_manifest);
+  rev.edges = edges;
+  L(FL("new manifest_id is %s") % rev.new_manifest);
+}
+
 // Workspace-only revisions, with fake rev.new_manifest and content
 // changes suppressed.
 void
@@ -681,6 +737,28 @@ make_revision_for_workspace(revision_id const & old_rev_id,
   make_cset(old_roster, new_roster, changes);
   make_revision_for_workspace(old_rev_id, changes, rev);
 }
+
+void
+make_revision_for_workspace(parent_map const & old_rosters,
+                            roster_t const & new_roster,
+                            revision_t & rev)
+{
+  edge_map edges;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> cs(new cset());
+      make_cset(parent_roster(i), new_roster, *cs);
+      cs->deltas_applied.clear();
+      safe_insert(edges, make_pair(parent_id(i), cs));
+    }
+
+  rev.edges = edges;
+  rev.new_manifest = manifest_id(fake_id());
+  rev.made_for = made_for_workspace;
+}
+
 
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
