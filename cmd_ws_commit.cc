@@ -421,7 +421,6 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   parent_map old_rosters;
   revision_t rev;
   temp_node_id_source nis;
-  cset dummy;
 
   app.require_workspace();
   app.work.get_parent_rosters(old_rosters);
@@ -433,7 +432,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
                         old_rosters, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_revision(old_rosters, new_roster, mask, rev, dummy);
+  make_restricted_revision(old_rosters, new_roster, mask, rev);
 
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
@@ -737,7 +736,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
-                           excluded);
+                           excluded, name);
   restricted_rev.check_sane();
   N(restricted_rev.is_nontrivial(), F("no changes to commit"));
 

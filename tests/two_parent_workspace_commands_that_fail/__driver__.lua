@@ -6,10 +6,12 @@
 mtn_setup()
 
 addfile("testfile", "ancestor\nancestor")
+addfile("otherfile", "blah blah")
 commit()
 anc = base_revision()
 
 writefile("testfile", "left\nancestor")
+writefile("otherfile", "modified too")
 commit()
 left = base_revision()
 
@@ -51,3 +53,10 @@ check(mtn("update"), 1, nil, diag)
 check(mtn("automate", "get_base_revision_id"), 1, nil, diag)
 check(mtn("automate", "inventory"), 1, nil, diag)
 check(mtn("automate", "attributes", "testfile"), 1, nil, diag)
+
+-- commit cannot be restricted
+check(mtn("commit", "testfile", "--message", "blah-blah"),
+      1, nil, true)
+check(qgrep("cannot be restricted", "stderr"))
+
+commit() -- unrestricted commit succeeds

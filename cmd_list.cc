@@ -439,8 +439,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
                         parents, new_roster, app);
 
   revision_t rrev;
-  cset dummy;
-  make_restricted_revision(parents, new_roster, mask, rrev, dummy);
+  make_restricted_revision(parents, new_roster, mask, rrev);
 
   // to be printed sorted, with duplicates removed
   set<split_path> print_paths;

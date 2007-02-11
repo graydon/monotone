@@ -667,26 +667,11 @@ make_revision(parent_map const & old_rosters,
   L(FL("new manifest_id is %s") % rev.new_manifest);
 }
 
-void
-make_restricted_revision(parent_map const & old_rosters,
-                         roster_t const & new_roster,
-                         node_restriction const & mask,
-                         revision_t & rev,
-                         cset & excluded)
+static void
+recalculate_manifest_id_for_restricted_rev(parent_map const & old_rosters,
+                                           edge_map & edges,
+                                           revision_t & rev)
 {
-  edge_map edges;
-  for (parent_map::const_iterator i = old_rosters.begin();
-       i != old_rosters.end();
-       i++)
-    {
-      shared_ptr<cset> included(new cset());
-      // ??? May not do the right thing with 'excluded' when there's more than
-      // one parent roster.
-      make_restricted_csets(parent_roster(i), new_roster, *included, excluded, mask);
-      check_restricted_cset(parent_roster(i), *included);
-      safe_insert(edges, make_pair(parent_id(i), included));
-    }
-
   // In order to get the correct manifest ID, recalculate the new roster
   // using one of the restricted csets.  It doesn't matter which of the
   // parent roster/cset pairs we use for this; by construction, they must
@@ -701,6 +686,58 @@ make_restricted_revision(parent_map const & old_rosters,
   calculate_ident(restricted_roster, rev.new_manifest);
   rev.edges = edges;
   L(FL("new manifest_id is %s") % rev.new_manifest);
+}
+
+void
+make_restricted_revision(parent_map const & old_rosters,
+                         roster_t const & new_roster,
+                         node_restriction const & mask,
+                         revision_t & rev)
+{
+  edge_map edges;
+  cset dummy;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> included(new cset());
+      make_restricted_csets(parent_roster(i), new_roster,
+                            *included, dummy, mask);
+      check_restricted_cset(parent_roster(i), *included);
+      safe_insert(edges, make_pair(parent_id(i), included));
+    }
+
+  recalculate_manifest_id_for_restricted_rev(old_rosters, edges, rev);
+}
+
+void
+make_restricted_revision(parent_map const & old_rosters,
+                         roster_t const & new_roster,
+                         node_restriction const & mask,
+                         revision_t & rev,
+                         cset & excluded,
+                         string const & cmd_name)
+{
+  edge_map edges;
+  bool no_excludes = true;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> included(new cset());
+      make_restricted_csets(parent_roster(i), new_roster,
+                            *included, excluded, mask);
+      check_restricted_cset(parent_roster(i), *included);
+      safe_insert(edges, make_pair(parent_id(i), included));
+      if (!excluded.empty())
+        no_excludes = false;
+    }
+
+  N(old_rosters.size() == 1 || no_excludes,
+    F("the command '%s %s' cannot be restricted in a two-parent workspace")
+    % ui.prog_name % cmd_name);
+
+  recalculate_manifest_id_for_restricted_rev(old_rosters, edges, rev);
 }
 
 // Workspace-only revisions, with fake rev.new_manifest and content
