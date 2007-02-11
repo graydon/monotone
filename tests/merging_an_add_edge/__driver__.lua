@@ -14,6 +14,7 @@ anc = base_revision()
 addfile("zz/testfile1", "added file")
 commit()
 
+remove("zz")
 revert_to(anc)
 
 writefile("ancfile", "changed anc")
