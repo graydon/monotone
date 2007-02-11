@@ -53,7 +53,7 @@ charset_convert(string const & src_charset,
       L(FL("converting '%s' (%d bytes) from %s to %s") % src % src.size()
         % src_charset % dst_charset);
       char * converted = stringprep_convert(src.c_str(),
-                                            dst_charset.c_str(),
+                                            dest.c_str(),
                                             src_charset.c_str());
       E(converted != NULL,
         F("failed to convert string from %s to %s: '%s'")
