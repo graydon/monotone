@@ -2,7 +2,7 @@ skip_if(not existsonpath("cvs"))
 
 function cvs(...)
   local what
-  if os.getenv("OSTYPE") == "msys" then
+  if ostype == "Windows" then
     what = {"cvs", "-d", cvsroot_nix, unpack(arg)}
   else
     what = {"cvs", "-d", cvsroot, unpack(arg)}
@@ -22,7 +22,7 @@ function cvs_setup()
   -- if we're mingw/msys, we need to replace the Windows drive
   -- <letter>: with /<letter> , or CVS will think it's a remote
   -- repository
-  if os.getenv("OSTYPE") == "msys" then
+  if ostype == "Windows" then
     cvsroot_nix = string.gsub(cvsroot, "^(%a):", "/%1")
   end
   check(cvs("-q", "init"), 0, false, false)

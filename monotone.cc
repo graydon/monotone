@@ -9,9 +9,7 @@
 
 #include "config.h"
 
-#include <cstdio>
 #include <iterator>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <locale.h>

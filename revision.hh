@@ -170,6 +170,11 @@ make_revision(revision_id const & old_rev_id,
               roster_t const & new_roster,
               revision_t & rev);
 
+void
+make_revision(parent_map const & old_rosters,
+              roster_t const & new_roster,
+              revision_t & rev);
+
 // This overload takes a base roster and a changeset instead.
 void
 make_revision(revision_id const & old_rev_id,
@@ -191,6 +196,25 @@ make_revision_for_workspace(revision_id const & old_rev_id,
                             roster_t const & old_roster,
                             roster_t const & new_roster,
                             revision_t & rev);
+
+void
+make_revision_for_workspace(parent_map const & old_rosters,
+                            roster_t const & new_roster,
+                            revision_t & rev);
+
+void
+make_restricted_revision(parent_map const & old_rosters,
+                         roster_t const & new_roster,
+                         node_restriction const & mask,
+                         revision_t & rev);
+
+void
+make_restricted_revision(parent_map const & old_rosters,
+                         roster_t const & new_roster,
+                         node_restriction const & mask,
+                         revision_t & rev,
+                         cset & excluded,
+                         std::string const & cmd_name);
 
 void
 build_changesets_from_manifest_ancestry(app_state & app);

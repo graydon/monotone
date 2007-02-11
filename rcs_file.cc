@@ -10,7 +10,6 @@
 #include "config.h"
 
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -32,8 +31,6 @@
 
 #include "rcs_file.hh"
 #include "sanity.hh"
-
-#include <cstdio>
 
 using std::ifstream;
 using std::ios_base;

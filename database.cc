@@ -1736,7 +1736,7 @@ database::get_rev_height(revision_id const & id,
 {
   if (null_id(id))
     {
-      rev_height::root_height(height);
+      height = rev_height::root_height();
       return;
     }
 
@@ -1747,7 +1747,8 @@ database::get_rev_height(revision_id const & id,
 
   I(res.size() == 1);
   
-  height.from_string(res[0][0]);
+  height = rev_height(res[0][0]);
+  I(height.valid());
 }
 
 void
@@ -1756,6 +1757,7 @@ database::put_rev_height(revision_id const & id,
 {
   I(!null_id(id));
   I(revision_exists(id));
+  !(height.valid());
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())
@@ -1890,7 +1892,7 @@ database::put_height_for_revision(revision_id const & new_id,
       
       while(!found)
         {
-          parent.child_height(candidate, childnr);
+          candidate = parent.child_height(childnr);
           if (!has_rev_height(candidate))
             {
               found = true;

@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <sstream>
-#include <iostream>
 
 #include "cert.hh"
 #include "charset.hh"

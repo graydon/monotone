@@ -12,7 +12,7 @@
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 
-
+using std::string;
 using std::set;
 using std::vector;
 

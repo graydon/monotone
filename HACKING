@@ -14,8 +14,11 @@ are minor deviations.  Where the coding style differs from the standard
 please follow the coding style of the particular file you're making changes
 to so that formatting consistency is retained within that file.
 
-All source indentation should be done using spaces, with two space
-characters per indentation level.
+All source indentation should use two space characters per indentation
+level.
+
+Never use tab characters to indent code.  Always use spaces.  Teach
+your editor to do the same.
 
 The appropriate Emacs modeline to use for editing source is:
 
@@ -72,6 +75,9 @@ continued to adhere to the dialect we write in. in particular:
   - separate pointer and reference types with space. write "int * foo"
     rather than "int *foo" or "int* foo".
 
+  - if you have a const, put that _after_ the main type, but before
+    any * or &.  Example: "set<revision_id> const & foo".
+
   - put the name of a function in the first column of the line it
     occurs on. the visibility and return type go on the preceeding
     line.
@@ -95,10 +101,29 @@ continued to adhere to the dialect we write in. in particular:
   - generally avoid anything which can generate a SEGV, as it's an
     uninformative error. prefer errors which say what went wrong.
 
-  - for importing symbols in other namespaces add a "using std::foo" 
-    for each foo used in the file and then strip "std::" from the uses. 
-    do not use "using namespace std" anywhere.
+  - do not use "using namespace <foo>" anywhere.  especially do not
+    use "using namespace std".
 
+  - in .cc files, it is preferred to put "using std::foo" at the top
+    for each foo used in the file rather than put "std::" in front of
+    all the uses.  this is also the preferred style for symbols from
+    other namespaces when they are used frequently.
+
+  - do not put any "using" declarations in .hh files; use the fully
+    qualified name everywhere necessary.
+
+  - .hh files should include everything that is necessary to parse all
+    of their declarations, but strenuous efforts should be made to
+    keep the number of nested includes to a minimum.  wherever
+    possible, use forward declarations (struct foo;) and similar
+    techniques.
+
+  - <iostream> deserves special mention.  including this file causes
+    the compiler to emit static constructors to ensure that the
+    standard streams are initialized before their first use.
+    therefore, do not include <iostream> unless you actually refer to
+    one of the standard streams (cin, cout, cerr, clog).  use <iosfwd>,
+    <istream>, <ostream>, <fstream>, etc instead, as appropriate.
 
 Test suites, and writing test cases
 ----------------------------------
