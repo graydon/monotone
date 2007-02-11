@@ -14,8 +14,11 @@ are minor deviations.  Where the coding style differs from the standard
 please follow the coding style of the particular file you're making changes
 to so that formatting consistency is retained within that file.
 
-All source indentation should be done using spaces, with two space
-characters per indentation level.
+All source indentation should use two space characters per indentation
+level.
+
+Never use tab characters to indent code.  Always use spaces.  Teach
+your editor to do the same.
 
 The appropriate Emacs modeline to use for editing source is:
 
