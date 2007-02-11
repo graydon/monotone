@@ -416,7 +416,7 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
 {
   utf8 utf;
   externalize_rsa_keypair_id(key, utf);
-  utf8_to_system_strict(utf, ext); //TODO:this may be
+  utf8_to_system_strict(utf, ext);
 }
 
 void
