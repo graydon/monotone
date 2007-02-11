@@ -162,9 +162,9 @@ asciik::links_cross(const set<pair<size_t, size_t> > & links,
     {
       size_t i = link->first, j = link->second;
       if (i != j)
-	for (size_t coord = 2 * min(i, j) + 1, end = 2 * max(i, j);
-	     coord < end; ++coord)
-	  crosses.insert(coord);
+        for (size_t coord = 2 * min(i, j) + 1, end = 2 * max(i, j);
+             coord < end; ++coord)
+          crosses.insert(coord);
     }
 }
 
@@ -194,40 +194,40 @@ asciik::draw(const size_t curr_items, const size_t next_items,
     {
       size_t i = link->first, j = link->second, start, end, dot;
       if (i == j)
-	interline[2 * i] = '|';
+        interline[2 * i] = '|';
       else {
-	if (j < i)
-	  {
-	    // | .---o
-	    // |/| | |
-	    // 0 1 2 3
-	    // j     i
-	    // 0123456
-	    //    s  e
-	    start = 2 * j + 3;
-	    end = 2 * i;
-	    dot = start - 1;
-	    interline[dot - 1] = '/';
-	  }
-	else // j > i
-	  {
-	    // o---.
-	    // | | |\|
-	    // 0 1 2 3
-	    // i     j
-	    // 0123456
-	    //  s  e
-	    start = 2 * i + 1;
-	    end = 2 * j - 2;
-	    dot = end;
-	    interline[dot + 1] = '\\';
-	  }
-	if (end > start)
-	  {
-	    dots.insert(dot);
-	    for (size_t l = start; l < end; ++l)
-	      line[l] = '-';
-	  }
+        if (j < i)
+          {
+            // | .---o
+            // |/| | |
+            // 0 1 2 3
+            // j     i
+            // 0123456
+            //    s  e
+            start = 2 * j + 3;
+            end = 2 * i;
+            dot = start - 1;
+            interline[dot - 1] = '/';
+          }
+        else // j > i
+          {
+            // o---.
+            // | | |\|
+            // 0 1 2 3
+            // i     j
+            // 0123456
+            //  s  e
+            start = 2 * i + 1;
+            end = 2 * j - 2;
+            dot = end;
+            interline[dot + 1] = '\\';
+          }
+        if (end > start)
+          {
+            dots.insert(dot);
+            for (size_t l = start; l < end; ++l)
+              line[l] = '-';
+          }
       }
       // prepare the proper continuation line
       interline2[j * 2] = '|';
@@ -281,15 +281,15 @@ asciik::try_draw(const vector<revision_id> & next_row, const size_t curr_loc,
   for (size_t i = 0; i < curr_items; ++i) {
     if (idx(curr_row, i) != ghost) {
       vector<revision_id>::const_iterator found =
-	find(next_row.begin(), next_row.end(), idx(curr_row, i));
+        find(next_row.begin(), next_row.end(), idx(curr_row, i));
       if (found != next_row.end()) {
-	size_t j = distance(next_row.begin(), found);
-	size_t d = abs(i - j);
-	if (d > 1)
-	  return false;
-	if (d != 0)
-	  have_shift = true;
-	preservation_links.insert(pair<size_t, size_t>(i, j));
+        size_t j = distance(next_row.begin(), found);
+        size_t d = abs(i - j);
+        if (d > 1)
+          return false;
+        if (d != 0)
+          have_shift = true;
+        preservation_links.insert(pair<size_t, size_t>(i, j));
       }
     }
   }
@@ -299,14 +299,14 @@ asciik::try_draw(const vector<revision_id> & next_row, const size_t curr_loc,
        p != parents.end(); ++p)
     if (*p != ghost)
       {
-	size_t i = curr_loc;
-	size_t j = distance(next_row.begin(),
-	  find(next_row.begin(), next_row.end(), *p));
-	I(j < next_items);
-	size_t d = abs(i - j);
-	if ((d > 1) && have_shift)
-	  return false;
-	parent_links.insert(pair<size_t, size_t>(i, j));
+        size_t i = curr_loc;
+        size_t j = distance(next_row.begin(),
+          find(next_row.begin(), next_row.end(), *p));
+        I(j < next_items);
+        size_t d = abs(i - j);
+        if ((d > 1) && have_shift)
+          return false;
+        parent_links.insert(pair<size_t, size_t>(i, j));
       }
 
   set<size_t> preservation_crosses, parent_crosses, intersection_crosses;

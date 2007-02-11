@@ -557,10 +557,10 @@ log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
         os << separator;
 
       if (multiline)
-	os << "\n\n";
+        os << "\n\n";
       os << tv;
       if (newline)
-	os << "\n";
+        os << "\n";
 
       first = false;
     }
@@ -823,17 +823,17 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
       if (print_this)
         {
-	  ostringstream out;
+          ostringstream out;
           if (app.opts.brief)
             {
               out << rid;
-	      log_certs(out, app, rid, author_name);
-	      if (app.opts.no_graph)
-		log_certs(out, app, rid, date_name);
-	      else {
-		out << '\n';
-		log_certs(out, app, rid, date_name, string(), string(), false, false);
-	      }
+              log_certs(out, app, rid, author_name);
+              if (app.opts.no_graph)
+                log_certs(out, app, rid, date_name);
+              else {
+                out << '\n';
+                log_certs(out, app, rid, date_name, string(), string(), false, false);
+              }
               log_certs(out, app, rid, branch_name);
               out << '\n';
             }
@@ -880,7 +880,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                    e != rev.edges.end(); ++e)
                 {
                     dump_diffs(edge_changes(e), app, true, out,
-                    	       diff_paths, !mask.empty());
+                                   diff_paths, !mask.empty());
                 }
             }
 
@@ -893,16 +893,16 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               last--;
             }
 
-	  string out_system;
-	  utf8_to_system(utf8(out.str()), out_system);
-	  if (app.opts.no_graph)
-	    cout << out_system;
-	  else {
-	    // an ASCII-k graph was requested
-	    set<revision_id> parents;
-	    app.db.get_revision_parents(rid, parents);
-	    graph.print(rid, parents, out_system);
-	  }
+          string out_system;
+          utf8_to_system_best_effort(utf8(out.str()), out_system);
+          if (app.opts.no_graph)
+            cout << out_system;
+          else {
+            // an ASCII-k graph was requested
+            set<revision_id> parents;
+            app.db.get_revision_parents(rid, parents);
+            graph.print(rid, parents, out_system);
+          }
         }
 
       set<revision_id> interesting;
