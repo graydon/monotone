@@ -138,9 +138,11 @@ Loop:
 using std::insert_iterator;
 using std::max;
 using std::min;
+using std::ostream;
 using std::ostream_iterator;
 using std::pair;
 using std::set;
+using std::string;
 using std::vector;
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
@@ -254,10 +256,11 @@ asciik::draw(const size_t curr_items, const size_t next_items,
     --num_lines;
 
   // prints it out
-  output << F("%s") % line << "  " << lines[0] << '\n';
-  output << F("%s") % interline << "  " << lines[1] << '\n';
+  //TODO convert line/interline/interline2 from ASCII to system charset
+  output << line << "  " << lines[0] << '\n';
+  output << interline << "  " << lines[1] << '\n';
   for (int i = 2; i < num_lines; ++i)
-    output << F("%s") % interline2 << "  " << lines[i] << '\n';
+    output << interline2 << "  " << lines[i] << '\n';
 }
 
 bool
