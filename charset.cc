@@ -40,12 +40,16 @@ void
 charset_convert(string const & src_charset,
                 string const & dst_charset,
                 string const & src,
-                string & dst)
+                string & dst,
+		bool best_effort)
 {
   if (src_charset == dst_charset)
     dst = src;
   else
     {
+      string dest(dst_charset);
+      if (best_effort)
+	dest += "//IGNORE//TRANSLIT";
       L(FL("converting %d bytes from %s to %s") % src.size()
         % src_charset % dst_charset);
       char * converted = stringprep_convert(src.c_str(),
@@ -146,7 +150,7 @@ is_all_ascii(string const & utf)
 
 // this function must be fast.  do not make it slow.
 void
-utf8_to_system(utf8 const & utf, string & ext)
+utf8_to_system_strict(utf8 const & utf, string & ext)
 {
   if (system_charset_is_utf8())
     ext = utf();
@@ -154,14 +158,35 @@ utf8_to_system(utf8 const & utf, string & ext)
            && is_all_ascii(utf()))
     ext = utf();
   else
-    charset_convert("UTF-8", system_charset(), utf(), ext);
+    charset_convert("UTF-8", system_charset(), utf(), ext, false);
+}
+
+// this function must be fast.  do not make it slow.
+void
+utf8_to_system_best_effort(utf8 const & utf, string & ext)
+{
+  if (system_charset_is_utf8())
+    ext = utf();
+  else if (system_charset_is_ascii_extension()
+           && is_all_ascii(utf()))
+    ext = utf();
+  else
+    charset_convert("UTF-8", system_charset(), utf(), ext, true);
 }
 
 void
-utf8_to_system(utf8 const & utf, external & ext)
+utf8_to_system_strict(utf8 const & utf, external & ext)
 {
   string out;
-  utf8_to_system(utf, out);
+  utf8_to_system_strict(utf, out);
+  ext = external(out);
+}
+
+void
+utf8_to_system_best_effort(utf8 const & utf, external & ext)
+{
+  string out;
+  utf8_to_system_best_effort(utf, out);
   ext = external(out);
 }
 
@@ -176,7 +201,7 @@ system_to_utf8(external const & ext, utf8 & utf)
   else
     {
       string out;
-      charset_convert(system_charset(), "UTF-8", ext(), out);
+      charset_convert(system_charset(), "UTF-8", ext(), out, false);
       utf = utf8(out);
       I(utf8_validate(utf));
     }
@@ -330,20 +355,6 @@ internalize_cert_name(external const & ext, cert_name & c)
 }
 
 void
-externalize_cert_name(cert_name const & c, utf8 & utf)
-{
-  ace_to_utf8(ace(c()), utf);
-}
-
-void
-externalize_cert_name(cert_name const & c, external & ext)
-{
-  utf8 utf;
-  externalize_cert_name(c, utf);
-  utf8_to_system(utf, ext);
-}
-
-void
 internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
 {
   string tmp;
@@ -407,7 +418,7 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
 {
   utf8 utf;
   externalize_rsa_keypair_id(key, utf);
-  utf8_to_system(utf, ext);
+  utf8_to_system_strict(utf, ext); //TODO:this may be
 }
 
 void
@@ -437,7 +448,7 @@ externalize_var_domain(var_domain const & d, external & ext)
 {
   utf8 utf;
   externalize_var_domain(d, utf);
-  utf8_to_system(utf, ext);
+  utf8_to_system_strict(utf, ext);
 }
 
 
