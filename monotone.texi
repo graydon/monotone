@@ -8,21 +8,6 @@
 @syncodeindex fn cp
 @include version.texi
 
-@ifinfo
-This manual is for the ``monotone'' distributed version control system.
-This edition documents version @value{VERSION}.
-
-Copyright 2003, 2004 Graydon Hoare
-Copyright 2004, 2005, 2006 Nathaniel Smith
-Copyright 2005 Derek Scherger
-Copyright 2005, 2006 Daniel Carosone
-Copyright 2006 Jeronimo Pellegrini
-Copyright 2006 Alex Queiroz
-All rights reserved
-Licensed to the public under the terms of the GNU FDL (>= 1.1).
-See the file COPYING for details
-@end ifinfo
-
 @dircategory Programming
 @direntry
 * monotone: (monotone).         Monotone version control system
@@ -33,8 +18,14 @@ See the file COPYING for details
 @subtitle A distributed version control system
 @author Graydon Hoare and others
 
+@ifnotinfo
 @page
 @vskip 0pt plus 1filll
+@end ifnotinfo
+
+This manual is for the ``monotone'' distributed version control system.
+This edition documents version @value{VERSION}.
+
 Copyright @copyright{} 2003, 2004 Graydon Hoare @*
 Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith @*
 Copyright @copyright{} 2005 Derek Scherger @*
@@ -44,13 +35,12 @@ Copyright @copyright{} 2006 Alex Queiroz @*
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
+
 @end titlepage
 
 @ifnottex
 @node Top
 @top Top
-
-Monotone Documentation
 
 Monotone is a distributed version control tool. It can help automate
 many tedious and error-prone tasks in group software development.
