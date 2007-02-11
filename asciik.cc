@@ -143,13 +143,14 @@ using std::vector;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
-asciik::asciik(size_t min_width, ostream & os) : width(min_width), output(os)
+asciik::asciik(size_t min_width, ostream & os)
+  : width(min_width), output(os)
 {
 }
 
 void
-asciik::links_cross(const set<pair<size_t, size_t> > & links,
-  set<size_t> & crosses) const
+asciik::links_cross(set<pair<size_t, size_t> > const & links,
+                    set<size_t> & crosses) const
 {
   for (set<pair<size_t, size_t> >::const_iterator link = links.begin();
        link != links.end(); ++link)
@@ -163,9 +164,12 @@ asciik::links_cross(const set<pair<size_t, size_t> > & links,
 }
 
 void
-asciik::draw(const size_t curr_items, const size_t next_items,
-  const size_t curr_loc, const set<pair<size_t, size_t> > & links,
-  const set<size_t> & curr_ghosts, const string & annotation) const
+asciik::draw(size_t const curr_items,
+             size_t const next_items,
+             size_t const curr_loc,
+             set<pair<size_t, size_t> > const & links,
+             set<size_t> const & curr_ghosts,
+             string const & annotation) const
 {
   size_t line_len = max(width, max(curr_items, next_items) * 2);
   string line(line_len, ' ');      // actual len: curr_items * 2 - 1
@@ -186,11 +190,13 @@ asciik::draw(const size_t curr_items, const size_t next_items,
   for (set<pair<size_t, size_t> >::const_iterator link = links.begin();
        link != links.end(); ++link)
     {
-      size_t i = link->first, j = link->second, start, end, dot;
+      size_t i = link->first;
+      size_t j = link->second;
       if (i == j)
         interline[2 * i] = '|';
-      else 
+      else
         {
+          size_t start, end, dot;
           if (j < i)
             {
               // | .---o
@@ -259,8 +265,10 @@ asciik::draw(const size_t curr_items, const size_t next_items,
 }
 
 bool
-asciik::try_draw(const vector<revision_id> & next_row, const size_t curr_loc,
-  const set<revision_id> & parents, const string & annotation) const
+asciik::try_draw(vector<revision_id> const & next_row,
+                 size_t const curr_loc,
+                 set<revision_id> const & parents,
+                 string const & annotation) const
 {
   size_t curr_items = curr_row.size();
   size_t next_items = next_row.size();
@@ -325,8 +333,9 @@ asciik::try_draw(const vector<revision_id> & next_row, const size_t curr_loc,
 }
 
 void
-asciik::print(const revision_id & rev, const set<revision_id> & parents,
-  const string & annotation)
+asciik::print(revision_id const & rev,
+              set<revision_id> const & parents,
+              string const & annotation)
 {
   if (find(curr_row.begin(), curr_row.end(), rev) == curr_row.end())
     curr_row.push_back(rev);
