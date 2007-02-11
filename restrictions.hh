@@ -90,6 +90,13 @@ class node_restriction : public restriction
                    roster_t const & roster2,
                    app_state & a);
 
+  node_restriction(std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   parent_map const & rosters1,
+                   roster_t const & roster2,
+                   app_state & a);
+
   bool includes(roster_t const & roster, node_id nid) const;
 
   node_restriction & operator=(node_restriction const & other)

@@ -15,24 +15,20 @@ struct sqlite3_stmt;
 struct cert;
 int sqlite3_finalize(sqlite3_stmt *);
 
-#include <stdarg.h>
-
 #include <vector>
 #include <set>
 #include <map>
 #include <string>
 
-#include "cset.hh"
 #include "numeric_vocab.hh"
+#include "vocab.hh"
 #include "paths.hh"
 #include "cleanup.hh"
 #include "roster.hh"
 #include "selectors.hh"
-#include "outdated_indicator.hh"
-#include "vocab.hh"
-#include "rev_height.hh"
 
 // FIXME: would be better not to include this everywhere
+#include "outdated_indicator.hh"
 #include "lru_writeback_cache.hh"
 
 // this file defines a public, typed interface to the database.
@@ -75,10 +71,10 @@ int sqlite3_finalize(sqlite3_stmt *);
 // the program. I don't know if there's any way to make it clearer.
 
 class transaction_guard;
-struct posting;
 class app_state;
 struct revision_t;
 struct query;
+class rev_height;
 
 class database
 {
@@ -586,6 +582,56 @@ public:
   void put_roster_for_revision(revision_id const & new_id,
                                revision_t const & rev);
 };
+
+// Parent maps are used in a number of places to keep track of all the
+// parent rosters of a given revision.
+typedef std::map<revision_id, database::cached_roster>
+parent_map;
+
+typedef parent_map::value_type
+parent_entry;
+
+inline revision_id const & parent_id(parent_entry const & p)
+{
+  return p.first;
+}
+
+inline revision_id const & parent_id(parent_map::const_iterator i)
+{
+  return i->first;
+}
+
+inline database::cached_roster const &
+parent_cached_roster(parent_entry const & p)
+{
+  return p.second;
+}
+
+inline database::cached_roster const &
+parent_cached_roster(parent_map::const_iterator i)
+{
+  return i->second;
+}
+
+inline roster_t const & parent_roster(parent_entry const & p)
+{
+  return *(p.second.first);
+}
+
+inline roster_t const & parent_roster(parent_map::const_iterator i)
+{
+  return *(i->second.first);
+}
+
+inline marking_map const & parent_marking(parent_entry const & p)
+{
+  return *(p.second.second);
+}
+
+inline marking_map const & parent_marking(parent_map::const_iterator i)
+{
+  return *(i->second.second);
+}
 
 // Transaction guards nest. Acquire one in any scope you'd like
 // transaction-protected, and it'll make sure the db aborts a transaction
