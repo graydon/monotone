@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <deque>
-#include <iostream>
 #include <map>
 #include <sstream>
 #include <queue>

@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <sstream>
-#include <iostream>
 
 #include "cmd.hh"
 #include "packet.hh"

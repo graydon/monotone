@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <iosfwd>
-#include <iostream>
 #include <map>
 
 #include "cmd.hh"

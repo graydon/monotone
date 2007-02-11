@@ -7,7 +7,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iostream>
 #include <cstring>
 
 #include "cmd.hh"
