@@ -237,7 +237,7 @@ asciik::draw(const size_t curr_items, const size_t next_items,
   // where we want to make sure the second dot overwrites the first --.
   for (set<size_t>::const_iterator dot = dots.begin();
        dot != dots.end(); ++dot)
-    line[*dot] = '.'; //TODO: what about this special char? should it be UTF-8?
+    line[*dot] = '.';
   // and add the main attraction (may overwrite a '.').
   line[curr_loc * 2] = 'o';
 
@@ -394,9 +394,7 @@ CMD(asciik, N_("debug"), N_("SELECTOR"),
   vector<revision_id> sorted;
   toposort(revs, sorted, app);
   vector<revision_id> curr_row;
-//  for (vector<revision_id>::const_reverse_iterator rev = sorted.rbegin();
-//       rev != sorted.rend(); ++rev)
-  reverse(sorted.begin(), sorted.end()); //TODO: faster to use a reverse_iterator I guess, but that seems to give some problems
+  reverse(sorted.begin(), sorted.end());
   for (vector<revision_id>::const_iterator rev = sorted.begin();
        rev != sorted.end(); ++rev)
     {
