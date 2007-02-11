@@ -70,6 +70,7 @@ MOST_SOURCES = 								\
 	roster_delta.cc roster_delta.hh					\
 	sha1.hh sha1.cc sha1_engine.hh                                  \
 	rev_height.cc rev_height.hh					\
+	asciik.cc asciik.hh						\
 									\
 	lru_writeback_cache.hh						\
 									\
@@ -80,9 +81,7 @@ MOST_SOURCES = 								\
 	package_revision.c package_revision.h				\
 	package_full_revision.c package_full_revision.h			\
 	option.cc option.hh options.cc options.hh options_list.hh	\
-	i18n.h parallel_iter.hh safe_map.hh pch.hh			\
-									\
-	asciik.cc asciik.hh
+	i18n.h parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =								\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\

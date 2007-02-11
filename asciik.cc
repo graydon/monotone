@@ -194,34 +194,38 @@ asciik::draw(const size_t curr_items, const size_t next_items,
       if (i == j)
 	interline[2 * i] = '|';
       else {
-	if (j < i) {
-	  // | .---o
-	  // |/| | |
-	  // 0 1 2 3
-	  // j     i
-	  // 0123456
-	  //    s  e
-	  start = 2 * j + 3;
-	  end = 2 * i;
-	  dot = start - 1;
-	  interline[dot - 1] = '/';
-	} else { // j > i
-	  // o---.
-	  // | | |\|
-	  // 0 1 2 3
-	  // i     j
-	  // 0123456
-	  //  s  e
-	  start = 2 * i + 1;
-	  end = 2 * j - 2;
-	  dot = end;
-	  interline[dot + 1] = '\\';
-	}
-	if (end > start) {
-	  dots.insert(dot);
-	  for (size_t l = start; l < end; ++l)
-	    line[l] = '-';
-	}
+	if (j < i)
+	  {
+	    // | .---o
+	    // |/| | |
+	    // 0 1 2 3
+	    // j     i
+	    // 0123456
+	    //    s  e
+	    start = 2 * j + 3;
+	    end = 2 * i;
+	    dot = start - 1;
+	    interline[dot - 1] = '/';
+	  }
+	else // j > i
+	  {
+	    // o---.
+	    // | | |\|
+	    // 0 1 2 3
+	    // i     j
+	    // 0123456
+	    //  s  e
+	    start = 2 * i + 1;
+	    end = 2 * j - 2;
+	    dot = end;
+	    interline[dot + 1] = '\\';
+	  }
+	if (end > start)
+	  {
+	    dots.insert(dot);
+	    for (size_t l = start; l < end; ++l)
+	      line[l] = '-';
+	  }
       }
       // prepare the proper continuation line
       interline2[j * 2] = '|';
@@ -291,16 +295,16 @@ asciik::try_draw(const vector<revision_id> & next_row, const size_t curr_loc,
   for (set<revision_id>::const_iterator p = parents.begin();
        p != parents.end(); ++p)
     if (*p != ghost)
-    {
-      size_t i = curr_loc;
-      size_t j = distance(next_row.begin(),
-	find(next_row.begin(), next_row.end(), *p));
-      I(j < next_items);
-      size_t d = abs(i - j);
-      if ((d > 1) && have_shift)
-	return false;
-      parent_links.insert(pair<size_t, size_t>(i, j));
-    }
+      {
+	size_t i = curr_loc;
+	size_t j = distance(next_row.begin(),
+	  find(next_row.begin(), next_row.end(), *p));
+	I(j < next_items);
+	size_t d = abs(i - j);
+	if ((d > 1) && have_shift)
+	  return false;
+	parent_links.insert(pair<size_t, size_t>(i, j));
+      }
 
   set<size_t> preservation_crosses, parent_crosses, intersection_crosses;
   links_cross(preservation_links, preservation_crosses);
@@ -354,17 +358,18 @@ asciik::print(const revision_id & rev, const set<revision_id> & parents,
     curr_row = no_ghost;
   else if (try_draw(next_row, curr_loc, parents, annotation))
     curr_row = next_row;
-  else if (new_revs.size() == 0) { // this line has disappeared
-    vector<revision_id> extra_ghost(next_row);
-    I(curr_loc < extra_ghost.size());
-    extra_ghost.insert(extra_ghost.begin() + curr_loc, ghost);
-    I(try_draw(extra_ghost, curr_loc, parents, annotation));
-    curr_row = extra_ghost;
-  }
+  else if (new_revs.size() == 0) // this line has disappeared
+    {
+      vector<revision_id> extra_ghost(next_row);
+      I(curr_loc < extra_ghost.size());
+      extra_ghost.insert(extra_ghost.begin() + curr_loc, ghost);
+      I(try_draw(extra_ghost, curr_loc, parents, annotation));
+      curr_row = extra_ghost;
+    }
 }
 
-CMD(asciik, N_("tree"), N_("SELECTOR"),
-  N_("prints ASCII-art tree representation"), options::opts::none)
+CMD(asciik, N_("debug"), N_("SELECTOR"),
+  N_("prints an ASCII-art tree representation"), options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
