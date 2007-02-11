@@ -127,7 +127,7 @@ easily by initiating a 'make check'.  The test suite (or, at least, any
 tests potentially affected by your change) should be run before you
 distribute your changes.
 
-Automated build bots run the complete test suite on a regularly basis, so
+Automated build bots run the complete test suite on a regular basis, so
 any problems will be noticed quickly, but it is still faster to find and fix
 any problems locally rather than waiting for the build bots to alert the
 development team of a problem.
