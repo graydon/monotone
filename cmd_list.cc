@@ -333,11 +333,11 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
 static void
 ls_known(app_state & app, vector<utf8> const & args)
 {
-  roster_t old_roster, new_roster;
+  roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
@@ -422,44 +422,50 @@ ls_missing(app_state & app, vector<utf8> const & args)
 static void
 ls_changed(app_state & app, vector<utf8> const & args)
 {
-  roster_t old_roster, new_roster;
-  cset included, excluded;
-  set<file_path> files;
+  parent_map parents;
+  roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
 
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.update_current_roster_from_filesystem(new_roster);
+
+  app.work.get_parent_rosters(parents);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        old_roster, new_roster, app);
+                        parents, new_roster, app);
 
-  app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
+  revision_t rrev;
+  make_restricted_revision(parents, new_roster, mask, rrev);
 
-  set<node_id> nodes;
-  select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
+  // to be printed sorted, with duplicates removed
+  set<split_path> print_paths;
 
-  // to be printed sorted
-  vector<split_path> print_paths;
-
-  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
-       ++i)
+  for (edge_map::const_iterator i = rrev.edges.begin();
+       i != rrev.edges.end(); i++)
     {
-      split_path sp;
-      if (old_roster.has_node(*i))
-        old_roster.get_name(*i, sp);
-      else
-        new_roster.get_name(*i, sp);
-      print_paths.push_back(sp);
+      set<node_id> nodes;
+      roster_t const & old_roster
+        = *safe_get(parents, edge_old_revision(i)).first;
+      select_nodes_modified_by_cset(edge_changes(i),
+                                    old_roster, new_roster, nodes);
+
+      for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
+           ++i)
+        {
+          split_path sp;
+          if (old_roster.has_node(*i))
+            old_roster.get_name(*i, sp);
+          else
+            new_roster.get_name(*i, sp);
+          print_paths.insert(sp);
+        }
     }
 
-    sort(print_paths.begin(), print_paths.end());
-    for (vector<split_path>::const_iterator sp = print_paths.begin();
+    for (set<split_path>::const_iterator sp = print_paths.begin();
          sp != print_paths.end(); sp++)
     {
       cout << *sp << endl;

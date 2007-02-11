@@ -17,6 +17,7 @@
 #include "vocab.hh"
 #include "paths.hh"
 #include "roster.hh"
+#include "database.hh"
 
 //
 // this file defines structures to deal with the "workspace" of a tree
@@ -64,7 +65,6 @@
 class path_restriction;
 class node_restriction;
 class content_merge_adaptor;
-class database;
 class lua_hooks;
 
 struct workspace
@@ -98,38 +98,33 @@ struct workspace
 
   void update_any_attrs();
 
-  // transitional: the write half of this is exposed, the read half isn't.
+
   // write out a new (partial) revision describing the current workspace;
   // the important pieces of this are the base revision id and the "shape"
   // changeset (representing tree rearrangements).
   void put_work_rev(revision_t const & rev);
 
-  // the current cset representing uncommitted add/drop/rename operations
-  // (not deltas)
-  void get_work_cset(cset & w);
+  // read the (partial) revision describing the current workspace.
+  void get_work_rev(revision_t & rev);
 
-  // the base revision id that the current working copy was checked out from
-  void get_revision_id(revision_id & c);
-
-  // structures derived from the above
-  void get_base_revision(revision_id & rid, roster_t & ros);
-  void get_base_revision(revision_id & rid, roster_t & ros, marking_map & mm);
-  void get_base_roster(roster_t & ros);
+  // convenience wrappers around the above functions.
 
   // This returns the current roster, except it does not bother updating the
-  // hashes in that roster -- the "shape" is correct, all files and dirs exist
-  // and under the correct names -- but do not trust file content hashes.
-  // If you need the current roster with correct file content hashes, call
-  // update_current_roster_from_filesystem on the result of this function.
+  // hashes in that roster -- the "shape" is correct, all files and dirs
+  // exist and under the correct names -- but do not trust file content
+  // hashes.  If you need the current roster with correct file content
+  // hashes, call update_current_roster_from_filesystem on the result of
+  // this function.  Under almost all conditions, NIS should be a
+  // temp_node_id_source.
   void get_current_roster_shape(roster_t & ros, node_id_source & nis);
 
-  // This returns both the base roster (as get_base_roster would) and the
-  // current roster shape (as get_current_roster_shape would).  The caveats
-  // for get_current_roster_shape also apply to this function.
-  void get_base_and_current_roster_shape(roster_t & base_roster,
-                                         roster_t & current_roster,
-                                         node_id_source & nis);
+  // This returns a map whose keys are revision_ids and whose values are
+  // rosters, there being one such pair for each parent of the current
+  // revision.
+  void get_parent_rosters(parent_map & parents);
 
+  // Inspect the workspace and classify all the paths in it according to
+  // what ROS thinks of them.
   void classify_roster_paths(roster_t const & ros,
                              path_set & unchanged,
                              path_set & changed,

@@ -1,0 +1,21 @@
+format_version "1"
+
+new_manifest [3c2476a7df09bb65edf97130b298503b55629d9d]
+
+old_revision [40723f467fff1acf0d7a83834b34e132fe5d919e]
+
+add_file "left"
+ content [0ffe36a4ca2169de7543a67f92134ea93636b246]
+
+  set "left"
+ attr "mtn:execute"
+value "true"
+
+old_revision [b078b838350109c6c3c382517910271f0eb47eb6]
+
+add_file "right"
+ content [7478fc33b2476515959ea9be9306295a36a22d64]
+
+  set "right"
+ attr "mtn:execute"
+value "true"

@@ -356,9 +356,18 @@ prepare_diff(cset & included,
     {
       roster_t new_roster, old_roster;
       revision_id old_rid;
+      parent_map parents;
 
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-      app.work.get_revision_id(old_rid);
+      app.work.get_parent_rosters(parents);
+
+      // With no arguments, which parent should we diff against?
+      N(parents.size() == 1,
+        F("this workspace has more than one parent\n"
+          "(specify a revision to diff against with --revision)"));
+
+      old_rid = parent_id(parents.begin());
+      old_roster = parent_roster(parents.begin());
+      app.work.get_current_roster_shape(new_roster, nis);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
@@ -382,12 +391,8 @@ prepare_diff(cset & included,
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-      // Clobber old_roster with the one specified
       app.db.get_roster(r_old_id, old_roster);
-
-      // FIXME: handle no ancestor case
-      // N(r_new.edges.size() == 1, F("current revision has no ancestor"));
+      app.work.get_current_roster_shape(new_roster, nis);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns), 
@@ -477,7 +482,7 @@ CMD(diff, N_("informative"), N_("[PATH]..."),
   bool new_is_archived;
   
   prepare_diff(included, app, args, new_is_archived, revs);
-  
+
   data summary;
   write_cset(included, summary);
 
@@ -618,10 +623,15 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   
   if (app.opts.from.size() == 0)
     {
-      app.work.get_revision_id(first_rid);
-      rev_height height;
-      app.db.get_rev_height(first_rid, height);
-      frontier.push(make_pair(height, first_rid));
+      revision_t rev;
+      app.work.get_work_rev(rev);
+      for (edge_map::const_iterator i = rev.edges.begin();
+           i != rev.edges.end(); i++)
+        {
+          rev_height height;
+          app.db.get_rev_height(edge_old_revision(i), height);
+          frontier.push(make_pair(height, edge_old_revision(i)));
+        }
     }
   else
     {
@@ -647,23 +657,30 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (args.size() > 0)
     {
       // User wants to trace only specific files
-      roster_t old_roster, new_roster;
-
       if (app.opts.from.size() == 0)
         {
+          roster_t new_roster;
+          parent_map parents;
           temp_node_id_source nis;
-          app.work.get_base_and_current_roster_shape(old_roster,
-                                                     new_roster, nis);
+
+          app.work.get_parent_rosters(parents);
+          app.work.get_current_roster_shape(new_roster, nis);
+
+          mask = node_restriction(args_to_paths(args),
+                                  args_to_paths(app.opts.exclude_patterns), 
+                                  app.opts.depth, parents, new_roster, app);
         }
       else
-        app.db.get_roster(first_rid, new_roster);
+        {
+          // FIXME_RESTRICTIONS: should this add paths from the rosters of
+          // all selected revs?
+          roster_t roster;
+          app.db.get_roster(first_rid, roster);
 
-      // FIXME_RESTRICTIONS: should this add paths from the rosters of
-      // all selected revs?
-      mask = node_restriction(args_to_paths(args),
-                              args_to_paths(app.opts.exclude_patterns), 
-                              app.opts.depth,
-                              old_roster, new_roster, app);
+          mask = node_restriction(args_to_paths(args),
+                                  args_to_paths(app.opts.exclude_patterns), 
+                                  app.opts.depth, roster, app);
+        }
     }
 
   // If --to was given, don't log past those revisions.
