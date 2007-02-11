@@ -127,9 +127,10 @@ ssh_agent::ssh_agent()
 
 ssh_agent::~ssh_agent()
 {
-  if (connected()) {
-    stream->close();
-  }
+  if (connected())
+    {
+      stream->close();
+    }
 }
 
 bool
