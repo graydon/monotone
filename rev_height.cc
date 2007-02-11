@@ -136,6 +136,90 @@ void dump(rev_height const & h, string & out)
 }
 
 
+#ifdef BUILD_UNIT_TESTS
+
+#include "unit_tests.hh"
+#include "randomizer.hh"
+
+UNIT_TEST(rev_height, count_up)
+{
+  rev_height h = rev_height::root_height().child_height(1);
+
+  I(h().size() / width == 3);
+  I(read_at(h(), 0) == 0);
+  I(read_at(h(), 1) == 0);
+  I(read_at(h(), 2) == 0);
+  BOOST_CHECK_THROW(read_at(h(), 3), std::out_of_range);
+
+  for (u32 n = 1; n < 10000; n++)
+    {
+      h = h.child_height(0);
+      I(read_at(h(), 0) == 0);
+      I(read_at(h(), 1) == 0);
+      I(read_at(h(), 2) == n);
+    }    
+}
+
+UNIT_TEST(rev_height, children)
+{
+  rev_height h;
+  I(!h.valid());
+  h = rev_height::root_height();
+  I(h.valid());
+  MM(h);
+
+  randomizer rng;
+  for (u32 generations = 0; generations < 200; generations++)
+    {
+      L(FL("gen %d: %s") % generations % h);
+
+      // generate between five and ten children each time
+      u32 children = rng.uniform(5) + 5;
+      u32 survivor_no;
+
+      // take the first child 50% of the time, a randomly chosen second or
+      // subsequent child the rest of the time.
+      if (rng.flip())
+        survivor_no = 0;
+      else
+        survivor_no = 1 + rng.uniform(children - 2);
+
+      L(FL("gen %d: %d children, survivor %d")
+        % generations % children % survivor_no);
+      
+      u32 parent_len = h().size() / width;
+      rev_height survivor;
+      MM(survivor);
+
+      for (u32 c = 0; c < children; c++)
+        {
+          rev_height child = h.child_height(c);
+          MM(child);
+          I(child.valid());
+          if (c == 0)
+            {
+              I(child().size() / width == parent_len);
+              I(read_at(child(), parent_len - 1)
+                == read_at(h(), parent_len - 1) + 1);
+            }
+          else
+            {
+              I(child().size() / width == parent_len + 2);
+              I(read_at(child(), parent_len - 1)
+                == read_at(h(), parent_len - 1));
+              I(read_at(child(), parent_len) == c - 1);
+              I(read_at(child(), parent_len + 1) == 0);
+            }
+          if (c == survivor_no)
+            survivor = child;
+        }
+      I(survivor.valid());
+      h = survivor;
+    }
+}
+
+#endif
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
