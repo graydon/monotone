@@ -4994,6 +4994,31 @@ key IDs, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
 
+@item mtn ssh_agent_export
+
+This command will export your private key in a format that ssh-agent
+can read (PKCS8, PEM). You will be asked for your current key's password
+and a new password to encrypt the key with. The key will be printed to
+stdout. Once you have put this key in a file simply add it to ssh-agent
+and you will only have to enter your key password once as ssh-agent
+will cache the key for you.
+
+@smallexample
+@group
+$ mtn ssh_agent_export > ~/.ssh/id_monotone
+enter passphrase for key ID [user@@example.com]:
+enter new passphrase for key ID [user@@example.com]:
+confirm passphrase for key ID [user@@example.com]:
+$ chmod 600 ~/.ssh/id_monotone
+$ ssh-agent /bin/bash
+$ ssh-add ~/.ssh/id_monotone
+Enter passphrase for /home/user/.ssh/id_monotone:
+Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
+$ mtn ci -m"Changed foo to bar"
+$ mtn push
+@end group
+@end smallexample
+
 @end ftable
 
 
