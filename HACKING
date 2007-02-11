@@ -14,8 +14,11 @@ are minor deviations.  Where the coding style differs from the standard
 please follow the coding style of the particular file you're making changes
 to so that formatting consistency is retained within that file.
 
-All source indentation should be done using spaces, with two space
-characters per indentation level.
+All source indentation should use two space characters per indentation
+level.
+
+Never use tab characters to indent code.  Always use spaces.  Teach
+your editor to do the same.
 
 The appropriate Emacs modeline to use for editing source is:
 
@@ -71,6 +74,9 @@ continued to adhere to the dialect we write in. in particular:
 
   - separate pointer and reference types with space. write "int * foo"
     rather than "int *foo" or "int* foo".
+
+  - if you have a const, put that _after_ the main type, but before
+    any * or &.  Example: "set<revision_id> const & foo".
 
   - put the name of a function in the first column of the line it
     occurs on. the visibility and return type go on the preceeding
