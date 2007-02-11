@@ -170,6 +170,10 @@ function qgrep(what, where)
   return res == 0
 end
 
+function ssh_agent_export()
+  check(mt("ssh_agent_export"), 0, false, false)
+end
+
 function addfile(filename, contents, mt)
   if contents ~= nil then writefile(filename, contents) end
   if mt == nil then mt = mtn end

@@ -39,7 +39,10 @@ agent_export(string const & name, app_state & app, vector<utf8> const & args)
   p.start_msg();
   if (new_phrase().length())
     {
-      Botan::PKCS8::encrypt_key(*priv, p, new_phrase(), "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+      Botan::PKCS8::encrypt_key(*priv,
+                                p,
+                                new_phrase(),
+                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
     }
   else
     {

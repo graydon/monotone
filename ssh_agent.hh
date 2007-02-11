@@ -15,7 +15,9 @@ public:
   ~ssh_agent();
   bool connected();
   std::vector<Botan::RSA_PublicKey> const get_keys();
-  void sign_data(Botan::RSA_PublicKey const & key, std::string const & data, std::string & out);
+  void sign_data(Botan::RSA_PublicKey const & key,
+                 std::string const & data,
+                 std::string & out);
 
 private:
   boost::shared_ptr<Netxx::Stream> stream;
@@ -26,7 +28,10 @@ private:
   void read_num_bytes(u32 const len, std::string & out);
   u32 get_long(char const * buf);
   u32 get_long_from_buf(std::string const & buf, u32 & loc);
-  void get_string_from_buf(std::string const & buf, u32 & loc, u32 & len, std::string & out);
+  void get_string_from_buf(std::string const & buf,
+                           u32 & loc,
+                           u32 & len,
+                           std::string & out);
 
   //helper functions for packing data to send to ssh-agent
   void put_long(u32 l, char * buf);

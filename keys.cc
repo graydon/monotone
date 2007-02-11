@@ -120,8 +120,9 @@ get_passphrase(lua_hooks & lua,
           if (confirm_phrase)
             {
               ui.ensure_clean_line();
-              read_password((F("confirm passphrase for key ID [%s]: ") % keyid()).str(),
-                              pass2, constants::maxpasswd);
+              read_password((F("confirm passphrase for key ID [%s]: ")
+                             % keyid()).str(),
+                            pass2, constants::maxpasswd);
               cout << endl;
               if (strcmp(pass1, pass2) == 0)
                 break;
@@ -184,8 +185,11 @@ generate_key_pair(keypair & kp_out,
   Pipe p;
   p.start_msg();
   if (phrase().length()) {
-    Botan::PKCS8::encrypt_key(priv, p, phrase(),
-                              "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
+    Botan::PKCS8::encrypt_key(priv,
+                              p,
+                              phrase(),
+                              "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
+                              Botan::RAW_BER);
   } else {
     Botan::PKCS8::encode(priv, p);
   }
