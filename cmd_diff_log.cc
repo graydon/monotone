@@ -20,6 +20,7 @@
 #include "revision.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
+#include "rev_height.hh"
 
 using std::cout;
 using std::deque;
