@@ -161,15 +161,17 @@ struct annotate_node_work
                      shared_ptr<annotate_lineage_mapping> lineage_,
                      revision_id revision_, node_id fid_,
                      rev_height height_,
-                     shared_ptr<set<revision_id> > content_marks_,
-                     file_id content_)
+                     shared_ptr<set<revision_id> > interesting_ancestors_,
+                     file_id content_,
+                     bool marked_)
     : annotations(annotations_),
       lineage(lineage_),
       revision(revision_),
       fid(fid_),
       height(height_),
-      content_marks(content_marks_),
-      content(content_)
+      interesting_ancestors(interesting_ancestors_),
+      content(content_),
+      marked(marked_)
   {}
 
   shared_ptr<annotate_context> annotations;
@@ -177,8 +179,9 @@ struct annotate_node_work
   revision_id revision;
   node_id fid;
   rev_height height;
-  shared_ptr<set<revision_id> > content_marks;
+  shared_ptr<set<revision_id> > interesting_ancestors;
   file_id content;
+  bool marked;
 };
 
 struct by_rev {};
@@ -686,33 +689,16 @@ static void get_file_content_marks(app_state & app,
 }
 
 static void
-do_annotate_node
-(annotate_node_work const & work_unit,
- app_state & app,
- work_units & work_units)
+do_annotate_node(annotate_node_work const & work_unit,
+                 app_state & app,
+                 work_units & work_units)
 {
   L(FL("do_annotate_node for node %s") % work_unit.revision);
 
-  shared_ptr<set<revision_id> > ancestors;
-
-  bool marked = (work_unit.content_marks->size() == 1
-                 && *(work_unit.content_marks->begin()) == work_unit.revision);
-  
-  if (marked)
-    {
-      ancestors = shared_ptr<set<revision_id> > (new set<revision_id>());
-      // this node is marked, need to inspect the parents
-      app.db.get_revision_parents(work_unit.revision, *ancestors);
-    }
-  else
-    {
-      ancestors = work_unit.content_marks;
-    }
-
   size_t added_in_parent_count = 0;
 
-  for (set<revision_id>::const_iterator i = ancestors->begin();
-       i != ancestors->end(); i++)
+  for (set<revision_id>::const_iterator i = work_unit.interesting_ancestors->begin();
+       i != work_unit.interesting_ancestors->end(); i++)
     {
       revision_id parent_revision = *i;
 
@@ -722,7 +708,8 @@ do_annotate_node
       I(!(work_unit.revision == parent_revision));
 
       file_id file_in_parent;
-      shared_ptr<set<revision_id> > parent_content_marks(new set<revision_id>());
+      shared_ptr<set<revision_id> > parents_interesting_ancestors(new set<revision_id>());
+      bool parent_marked;
       
       work_units::index<by_rev>::type::iterator lmn =
         work_units.get<by_rev>().find(parent_revision);
@@ -731,11 +718,12 @@ do_annotate_node
         {
           // we already added this parent, get the information from there
           file_in_parent = lmn->content;
-          parent_content_marks = lmn->content_marks;
+          parents_interesting_ancestors = lmn->interesting_ancestors;
+          parent_marked = lmn->marked;
         }
       else
         {
-          if (marked)
+          if (work_unit.marked)
             {
               // we are marked, so we don't know much about the ancestor
               app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
@@ -745,13 +733,18 @@ do_annotate_node
                   added_in_parent_count++;
                   continue;
                 }
-              get_file_content_marks(app, parent_revision, work_unit.fid, *parent_content_marks);
+              get_file_content_marks(app, parent_revision, work_unit.fid, *parents_interesting_ancestors);
+              parent_marked = (parents_interesting_ancestors->size() == 1
+                               && *(parents_interesting_ancestors->begin()) == parent_revision);
+              if (parent_marked)
+                app.db.get_revision_parents(parent_revision, *parents_interesting_ancestors);
             }
           else
             {
               // we know that this ancestor is marked
               file_in_parent = work_unit.content;
-              parent_content_marks->insert(parent_revision);
+              parent_marked = true;
+              app.db.get_revision_parents(parent_revision, *parents_interesting_ancestors);
             }
         }
       
@@ -788,8 +781,9 @@ do_annotate_node
                                      parent_revision,
                                      work_unit.fid,
                                      parent_height,
-                                     parent_content_marks,
-                                     file_in_parent);
+                                     parents_interesting_ancestors,
+                                     file_in_parent,
+                                     parent_marked);
 
           work_units.insert(newunit);
         }
@@ -803,7 +797,7 @@ do_annotate_node
         }
     }
 
-  if (added_in_parent_count == ancestors->size())
+  if (added_in_parent_count == work_unit.interesting_ancestors->size())
     {
       work_unit.lineage->credit_mapped_lines(work_unit.annotations);
     }
@@ -828,10 +822,15 @@ do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
     // prepare the first work_unit
     rev_height height;
     app.db.get_rev_height(rid, height);
-    shared_ptr<set<revision_id> >content_marks(new set<revision_id>());
-    get_file_content_marks(app, rid, file_node->self, *content_marks);
+    shared_ptr<set<revision_id> > rids_interesting_ancestors(new set<revision_id>());
+    get_file_content_marks(app, rid, file_node->self, *rids_interesting_ancestors);
+    bool rid_marked = (rids_interesting_ancestors->size() == 1
+                       && *(rids_interesting_ancestors->begin()) == rid);
+    if (rid_marked)
+      app.db.get_revision_parents(rid, *rids_interesting_ancestors);
+    
     annotate_node_work workunit(acp, lineage, rid, file_node->self, height,
-                                content_marks, file_node->content);
+                                rids_interesting_ancestors, file_node->content, rid_marked);
     work_units.insert(workunit);
   }
   
