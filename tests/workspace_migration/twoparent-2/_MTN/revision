@@ -1,0 +1,11 @@
+format_version "1"
+
+new_manifest [0000000000000000000000000000000000000002]
+
+old_revision [c3b220202e4e554005917b1f218406b716a039b9]
+
+old_revision [db5b36ca58a34c482f57463dd04c450647d53954]
+
+  set "attrfile"
+ attr "my other car"
+value "made of meat"

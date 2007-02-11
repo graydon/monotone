@@ -470,11 +470,15 @@ get_user_key(rsa_keypair_id & key, app_state & app)
   key = all_privkeys[0];
 }
 
+// Guess which branch is appropriate for a commit below IDENT.
+// APP may override.  Branch name is returned in BRANCHNAME.
+// Does not modify branch state in APP.
 void
-guess_branch(revision_id const & ident,
-             app_state & app)
+guess_branch(revision_id const & ident, app_state & app, utf8 & branchname)
 {
-  if ((app.opts.branch_name().empty()) || !app.opts.branch_given)
+  if (app.opts.branch_given && !app.opts.branch_name().empty())
+    branchname = app.opts.branch_name;
+  else
     {
       N(!ident.inner()().empty(),
         F("no branch found for empty revision, "
@@ -493,8 +497,17 @@ guess_branch(revision_id const & ident,
 
       set<utf8>::iterator i = branches.begin();
       I(i != branches.end());
-      app.opts.branch_name = *i;
+      branchname = *i;
     }
+}
+
+// As above, but set the branch name in the app state.
+void
+guess_branch(revision_id const & ident, app_state & app)
+{
+  utf8 branchname;
+  guess_branch(ident, app, branchname);
+  app.opts.branch_name = branchname;
 }
 
 void

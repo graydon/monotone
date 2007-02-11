@@ -7,7 +7,6 @@
 #include "platform.hh"
 #include "sanity.hh"
 
-#include <cstdio>
 #include <stdlib.h>
 
 #include <exception>
@@ -159,7 +158,7 @@ LUAEXT(posix_umask, )
   lua_pushnil(L);
   return 1;
 #else
-  int from = luaL_checknumber(L, -1);
+  unsigned int from = (unsigned int)luaL_checknumber(L, -1);
   mode_t mask = 64*((from / 100) % 10) + 8*((from / 10) % 10) + (from % 10);
   mode_t oldmask = umask(mask);
   int res = 100*(oldmask/64) + 10*((oldmask/8) % 8) + (oldmask % 8);
@@ -360,6 +359,27 @@ LUAEXT(isdir, )
       fs::path p;
       p = fs::path(name, fs::native);
       lua_pushboolean(L, fs::exists(p) && fs::is_directory(p));
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+    }
+  return 1;
+}
+
+LUAEXT(read_directory, )
+{
+  try
+    {
+      fs::path dir(luaL_checkstring(L, -1), fs::native);
+      unsigned int n = 1;
+
+      lua_newtable(L);
+      for (fs::directory_iterator i(dir); i != fs::directory_iterator(); ++i, ++n)
+        {
+          lua_pushstring(L, i->leaf().c_str());
+          lua_rawseti(L, -2, n);
+        }
     }
   catch(fs::filesystem_error & e)
     {

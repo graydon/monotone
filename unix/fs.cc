@@ -70,7 +70,8 @@ tilde_expand(std::string const & in)
       fs::path res;
       if (*i == "~")
         {
-          res /= get_homedir();
+          fs::path restmp(get_homedir(), fs::native);
+          res /= restmp;
           ++i;
         }
       else if (i->size() > 1 && i->at(0) == '~')

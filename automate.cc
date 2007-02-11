@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <sstream>
 #include <string>
@@ -225,10 +224,15 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
   file_path_external(idx(args,0)).split(path);
 
   roster_t base, current;
+  parent_map parents;
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  app.work.get_base_and_current_roster_shape(base, current, nis);
+  app.work.get_current_roster_shape(current, nis);
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+  base = parent_roster(parents.begin());
 
   // escalate if the given path is unknown to the current roster
   N(current.has_node(path),
@@ -713,13 +717,19 @@ AUTOMATE(inventory, "", options::opts::none)
   app.require_workspace();
 
   temp_node_id_source nis;
-  roster_t base, curr;
+  roster_t curr, base;
+  revision_t rev;
   inventory_map inventory;
   cset cs; MM(cs);
   path_set unchanged, changed, missing, unknown, ignored;
 
-  app.work.get_base_and_current_roster_shape(base, curr, nis);
-  make_cset(base, curr, cs);
+  app.work.get_current_roster_shape(curr, nis);
+  app.work.get_work_rev(rev);
+  N(rev.edges.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+
+  cs = edge_changes(rev.edges.begin());
+  app.db.get_roster(edge_old_revision(rev.edges.begin()), base);
 
   // The current roster (curr) has the complete set of registered nodes
   // conveniently with unchanged sha1 hash values.
@@ -910,17 +920,16 @@ AUTOMATE(get_revision, N_("[REVID]"), options::opts::none)
 
   if (args.size() == 0)
     {
-      roster_t old_roster, new_roster;
-      revision_id old_revision_id;
+      roster_t new_roster;
+      parent_map old_rosters;
       revision_t rev;
 
       app.require_workspace();
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_parent_rosters(old_rosters);
+      app.work.get_current_roster_shape(new_roster, nis);
       app.work.update_current_roster_from_filesystem(new_roster);
 
-      app.work.get_revision_id(old_revision_id);
-      make_revision(old_revision_id, old_roster, new_roster, rev);
-
+      make_revision(old_rosters, new_roster, rev);
       calculate_ident(rev, ident);
       write_revision(rev, dat);
     }
@@ -950,9 +959,12 @@ AUTOMATE(get_base_revision_id, "", options::opts::none)
 
   app.require_workspace();
 
-  revision_id rid;
-  app.work.get_revision_id(rid);
-  output << rid << "\n";
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+
+  output << parent_id(parents.begin()) << "\n";
 }
 
 // Name: get_current_revision_id
@@ -971,17 +983,18 @@ AUTOMATE(get_current_revision_id, "", options::opts::none)
 
   app.require_workspace();
 
-  roster_t old_roster, new_roster;
-  revision_id old_revision_id, new_revision_id;
+  parent_map parents;
+  roster_t new_roster;
+  revision_id new_revision_id;
   revision_t rev;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, nis);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_revision_id(old_revision_id);
-  make_revision(old_revision_id, old_roster, new_roster, rev);
+  app.work.get_parent_rosters(parents);
+  make_revision(parents, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
 
@@ -1036,15 +1049,14 @@ AUTOMATE(get_manifest_of, N_("[REVID]"), options::opts::none)
 
   manifest_data dat;
   manifest_id mid;
-  roster_t old_roster, new_roster;
-  temp_node_id_source nis;
+  roster_t new_roster;
 
   if (args.size() == 0)
     {
-      revision_id old_revision_id;
+      temp_node_id_source nis;
 
       app.require_workspace();
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_current_roster_shape(new_roster, nis);
       app.work.update_current_roster_from_filesystem(new_roster);
     }
   else

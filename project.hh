@@ -6,6 +6,7 @@
 
 #include <map>
 #include <set>
+#include <string>
 
 #include "cert.hh"
 #include "outdated_indicator.hh"
@@ -49,7 +50,7 @@ public:
   void get_branch_heads(utf8 const & name, std::set<revision_id> & heads);
 
   outdated_indicator get_tags(std::set<tag_t> & tags);
-  void put_tag(revision_id const & id, string const & name, packet_consumer & pc);
+  void put_tag(revision_id const & id, std::string const & name, packet_consumer & pc);
 
   bool revision_is_in_branch(revision_id const & id, utf8 const & branch);
   void put_revision_in_branch(revision_id const & id,

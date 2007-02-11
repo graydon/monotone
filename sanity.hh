@@ -13,7 +13,6 @@
 #include "config.h" // Required for ENABLE_NLS
 
 #include <iosfwd>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -503,17 +502,19 @@ template <> void dump(std::string const & obj, std::string & out);
 
 // debugging utility to dump out vars like MM but without requiring a crash
 
+extern void print_var(std::string const & value,
+                      std::string const & var,
+                      char const * file,
+                      int const line,
+                      char const * func);
+
 template <typename T> void
-dump(T const & t, std::string var, 
-     std::string const & file, int const line, std::string const & func)
+dump(T const & t, char const *var,
+     char const * file, int const line, char const * func)
 {
-  std::string out;
-  dump(t, out);
-  std::cout << (FL("----- begin '%s' (in %s, at %s:%d)") 
-                % var % func % file % line) << std::endl
-            << out << std::endl
-            << (FL("-----   end '%s' (in %s, at %s:%d)") 
-                % var % func % file % line) << std::endl << std::endl;
+  std::string value;
+  dump(t, value);
+  print_var(value, var, file, line, func);
 };
 
 #define DUMP(foo) dump(foo, #foo, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)

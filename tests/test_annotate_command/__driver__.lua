@@ -91,8 +91,7 @@ commit()
 revs[6] = base_revision()
 
 -- Now make right side
-remove("_MTN")
-check(mtn("co", "--revision", revs[4], "."), 0, false, false)
+revert_to(revs[4])
 writefile("bar0", "bar\non right side of fork\n")
 commit()
 revs[7] = base_revision()

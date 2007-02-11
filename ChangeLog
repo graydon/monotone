@@ -1,0 +1,22 @@
+	This file is no longer used.  Monotone developers' convention is
+	now to write ChangeLog-format log messages in the commit logs
+	only.
+
+	Many people were duplicating the same text in both places, and
+	this caused unnecessary merge conflicts for ordering of the
+	serialised ChangeLog file for the non-serialised ancestry graph.
+
+	"mtn log" will produce the same information, sorted in proper
+	ancestry order, even with the presence of propagates and putbacks
+	of long-running development branches. A copy of this output will
+	overwrite this file for release tarballs.
+
+	When writing commit log messages in ChangeLog format, you can omit
+	the date and name header, because these will be carried in the
+	author and date certs.  Just use the body part, like so:
+
+
+	* foo.cc (function): change this to foo more efficiently
+	* cmd_bar.cc: use the more efficient foo
+	* NEWS: tell the users that the bar command is now so much faster.
+	

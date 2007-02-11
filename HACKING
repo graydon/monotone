@@ -98,10 +98,29 @@ continued to adhere to the dialect we write in. in particular:
   - generally avoid anything which can generate a SEGV, as it's an
     uninformative error. prefer errors which say what went wrong.
 
-  - for importing symbols in other namespaces add a "using std::foo" 
-    for each foo used in the file and then strip "std::" from the uses. 
-    do not use "using namespace std" anywhere.
+  - do not use "using namespace <foo>" anywhere.  especially do not
+    use "using namespace std".
 
+  - in .cc files, it is preferred to put "using std::foo" at the top
+    for each foo used in the file rather than put "std::" in front of
+    all the uses.  this is also the preferred style for symbols from
+    other namespaces when they are used frequently.
+
+  - do not put any "using" declarations in .hh files; use the fully
+    qualified name everywhere necessary.
+
+  - .hh files should include everything that is necessary to parse all
+    of their declarations, but strenuous efforts should be made to
+    keep the number of nested includes to a minimum.  wherever
+    possible, use forward declarations (struct foo;) and similar
+    techniques.
+
+  - <iostream> deserves special mention.  including this file causes
+    the compiler to emit static constructors to ensure that the
+    standard streams are initialized before their first use.
+    therefore, do not include <iostream> unless you actually refer to
+    one of the standard streams (cin, cout, cerr, clog).  use <iosfwd>,
+    <istream>, <ostream>, <fstream>, etc instead, as appropriate.
 
 Test suites, and writing test cases
 ----------------------------------
