@@ -5,6 +5,7 @@
 
 #include "cmd.hh"
 #include "keys.hh"
+#include "cert.hh"
 #include "ssh_agent.hh"
 #include "botan/rsa.h"
 #include "botan/base64.h"
@@ -24,28 +25,21 @@ using Botan::Pipe;
 static void
 agent_export(string const & name, app_state & app, vector<utf8> const & args)
 {
-  if (args.size() != 0 && args.size() != 1)
+  if (args.size() != 0)
     throw usage(name);
 
-  vector<rsa_keypair_id> keys;
+  rsa_keypair_id id;
   keypair key;
-  if (args.size() == 0)
-    app.keys.get_keys(keys);
-  else
-    app.keys.get_key_ids(idx(args,0)(), keys);
-  for (vector<rsa_keypair_id>::const_iterator
-         i = keys.begin(); i != keys.end(); ++i) {
-
-    app.keys.get_key_pair(*i, key);
-    shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, *i, key.priv);
-    utf8 new_phrase;
-    get_passphrase(app.lua, *i, new_phrase, true, true, "enter new passphrase");
-    Pipe p;
-    p.start_msg();
-    Botan::PKCS8::encrypt_key(*priv, p, new_phrase(), "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
-    string decoded_key = p.read_all_as_string();
-    cout << decoded_key;
-  }
+  get_user_key(id, app);
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  utf8 new_phrase;
+  get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
+  Pipe p;
+  p.start_msg();
+  Botan::PKCS8::encrypt_key(*priv, p, new_phrase(), "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+  string decoded_key = p.read_all_as_string();
+  cout << decoded_key;
 }
 
 CMD(ssh_agent_export, N_("key and cert"),
