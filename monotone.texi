@@ -2931,7 +2931,6 @@ workspaces you create.  See @ref{Hook Reference} for details.
 
 @page
 @node    Workspace Collisions
-@anchor{Workspace Collisions}
 @section Workspace Collisions
 
 Sometimes when you work on a project, several people make similar
