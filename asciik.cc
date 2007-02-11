@@ -226,11 +226,11 @@ asciik::draw(const size_t curr_items, const size_t next_items,
       // prepare the proper continuation line
       interline2[j * 2] = '|';
     }
-  // add any dots (must do this in a second pass, so that if there are
-  // cases like:
+  // add any dots (must do this in a second pass, so that things still work if
+  // there are cases like:
   //   | .-----.-o
   //   |/| | |/|
-  // where we want to make sure the second dot overwrites the first --.
+  // where we want to make sure that the second dot overwrites the first -.
   for (set<size_t>::const_iterator dot = dots.begin();
        dot != dots.end(); ++dot)
     line[*dot] = '.';
