@@ -41,6 +41,7 @@ using std::endl;
 using std::make_pair;
 using std::map;
 using std::string;
+using std::vector;
 
 using boost::scoped_ptr;
 using boost::shared_ptr;
@@ -116,24 +117,13 @@ get_passphrase(lua_hooks & lua,
           read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
                         pass1, constants::maxpasswd);
           cout << endl;
-          if (strlen(pass1) == 0)
-            {
-              P(F("empty passphrase not allowed"));
-              continue;
-            }
-
           if (confirm_phrase)
             {
               ui.ensure_clean_line();
               read_password((F("confirm passphrase for key ID [%s]: ") % keyid()).str(),
                               pass2, constants::maxpasswd);
               cout << endl;
-              if (strlen(pass1) == 0 || strlen(pass2) == 0)
-                {
-                  P(F("empty passphrases not allowed, try again"));
-                  N(i < 2, F("too many failed passphrases"));
-                }
-              else if (strcmp(pass1, pass2) == 0)
+              if (strcmp(pass1, pass2) == 0)
                 break;
               else
                 {
@@ -144,7 +134,6 @@ get_passphrase(lua_hooks & lua,
           else
             break;
         }
-      N(strlen(pass1) != 0, F("no passphrase given"));
 
       try
         {
@@ -194,8 +183,12 @@ generate_key_pair(keypair & kp_out,
 
   Pipe p;
   p.start_msg();
-  Botan::PKCS8::encrypt_key(priv, p, phrase(),
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
+  if (phrase().length()) {
+    Botan::PKCS8::encrypt_key(priv, p, phrase(),
+                              "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
+  } else {
+    Botan::PKCS8::encode(priv, p);
+  }
   raw_priv_key = rsa_priv_key(p.read_all_as_string());
 
   // generate public key
@@ -226,33 +219,48 @@ get_private_key(lua_hooks & lua,
 
   L(FL("base64-decoding %d-byte private key") % priv().size());
   decode_base64(priv, decoded_key);
-  for (int i = 0; i < 3; ++i)
+  shared_ptr<PKCS8_PrivateKey> pkcs8_key;
+  try //with empty passphrase
     {
-      get_passphrase(lua, id, phrase, false, force);
-      L(FL("have %d-byte encrypted private key") % decoded_key().size());
-
-      shared_ptr<PKCS8_PrivateKey> pkcs8_key;
-      try
+      Pipe p;
+      p.process_msg(decoded_key());
+      pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
+    }
+  catch (...)
+    {
+      L(FL("failed to decrypt key with no passphrase"));
+    }
+  if (!pkcs8_key)
+    {
+      for (int i = 0; i < 3; ++i)
         {
-          Pipe p;
-          p.process_msg(decoded_key());
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
-        }
-      catch (...)
-        {
-          if (i >= 2)
-            throw informative_failure("failed to decrypt private RSA key, "
-                                      "probably incorrect passphrase");
-          // don't use the cache bad one next time
-          force = true;
-          continue;
-        }
+          get_passphrase(lua, id, phrase, false, force);
+          L(FL("have %d-byte encrypted private key") % decoded_key().size());
 
+          try
+            {
+              Pipe p;
+              p.process_msg(decoded_key());
+              pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
+            }
+          catch (...)
+            {
+              if (i >= 2)
+                throw informative_failure("failed to decrypt private RSA key, "
+                                          "probably incorrect passphrase");
+              // don't use the cached bad one next time
+              force = true;
+              continue;
+            }          
+        }
+    }
+  if (pkcs8_key)
+    {
       shared_ptr<RSA_PrivateKey> priv_key;
       priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
       if (!priv_key)
-          throw informative_failure("Failed to get RSA signing key");
-
+        throw informative_failure("Failed to get RSA signing key");
+      
       return priv_key;
     }
   I(false);

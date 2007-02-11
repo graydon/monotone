@@ -37,7 +37,11 @@ agent_export(string const & name, app_state & app, vector<utf8> const & args)
   get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
   Pipe p;
   p.start_msg();
-  Botan::PKCS8::encrypt_key(*priv, p, new_phrase(), "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+  if (new_phrase().length()) {
+    Botan::PKCS8::encrypt_key(*priv, p, new_phrase(), "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+  } else {
+    Botan::PKCS8::encode(*priv, p);
+  }
   string decoded_key = p.read_all_as_string();
   cout << decoded_key;
 }
