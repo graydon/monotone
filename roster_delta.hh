@@ -26,14 +26,15 @@ apply_roster_delta(roster_delta const & del,
                    roster_t & roster, marking_map & markings);
                    
 bool
-get_markings_from_roster_delta(roster_delta const & del,
-                               node_id const & nid,
-                               marking_t & markings);
+try_get_markings_from_roster_delta(roster_delta const & del,
+                                   node_id const & nid,
+                                   marking_t & markings);
 
+// See the comment on this function's body for a description of its api.
 bool
-get_content_from_roster_delta(roster_delta const & del,
-                              node_id const & nid,
-                              file_id & content);
+try_get_content_from_roster_delta(roster_delta const & del,
+                                  node_id const & nid,
+                                  file_id & content);
   
 #ifdef BUILD_UNIT_TESTS
 

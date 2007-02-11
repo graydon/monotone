@@ -1412,7 +1412,7 @@ database::get_markings(revision_id const & id,
         {
           roster_delta del;
           get_roster_delta(id.inner()(), *i, del);
-          bool found = get_markings_from_roster_delta(del, nid, markings);
+          bool found = try_get_markings_from_roster_delta(del, nid, markings);
           if (found)
             return;
         }
@@ -1431,7 +1431,7 @@ database::get_markings(revision_id const & id,
         {
           roster_delta del;
           get_roster_delta(target_rev, *p, del);
-          bool found = get_markings_from_roster_delta(del, nid, markings);
+          bool found = try_get_markings_from_roster_delta(del, nid, markings);
           if (found)
             return;
         }
@@ -1477,7 +1477,7 @@ database::get_file_content(revision_id const & id,
         {
           roster_delta del;
           get_roster_delta(id.inner()(), *i, del);
-          bool found = get_content_from_roster_delta(del, nid, content);
+          bool found = try_get_content_from_roster_delta(del, nid, content);
           if (found)
             return;
         }
@@ -1496,7 +1496,7 @@ database::get_file_content(revision_id const & id,
         {
           roster_delta del;
           get_roster_delta(target_rev, *p, del);
-          bool found = get_content_from_roster_delta(del, nid, content);
+          bool found = try_get_content_from_roster_delta(del, nid, content);
           if (found)
             return;
         }

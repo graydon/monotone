@@ -476,8 +476,8 @@ delta_rosters(roster_t const & from, marking_map const & from_markings,
 }
 
 static
-void get_roster_delta(roster_delta const & del,
-                      roster_delta_t & d)
+void read_roster_delta(roster_delta const & del,
+                       roster_delta_t & d)
 {
   basic_io::input_source src(del.inner()(), "roster_delta");
   basic_io::tokenizer tok(src);
@@ -494,19 +494,19 @@ apply_roster_delta(roster_delta const & del,
   MM(markings);
 
   roster_delta_t d;
-  get_roster_delta(del, d);
+  read_roster_delta(del, d);
   d.apply(roster, markings);
 }
 
 // Extract the marking for one node from the roster delta, or return false
 // if they are not contained in that delta
 bool
-get_markings_from_roster_delta(roster_delta const & del,
-                               node_id const & nid,
-                               marking_t & markings)
+try_get_markings_from_roster_delta(roster_delta const & del,
+                                   node_id const & nid,
+                                   marking_t & markings)
 {
   roster_delta_t d;
-  get_roster_delta(del, d);
+  read_roster_delta(del, d);
 
   std::map<node_id, marking_t>::iterator i = d.markings_changed.find(nid);
   if (i != d.markings_changed.end())
@@ -520,15 +520,19 @@ get_markings_from_roster_delta(roster_delta const & del,
     }
 }
 
-// Extract the content hash for one node from the roster delta. Return false
-// if this delta doesn't contain information about this node.
+// Extract the content hash for one node from the roster delta -- if it is
+// available.  If we know what the file_id was, we return true and set
+// 'content' appropriately.  If we can prove that the file did not exist in
+// this revision, we return true and set 'content' to a null id.  If we
+// cannot determine anything about the file contents, then we return false
+// -- in this case content is left undefined.
 bool
-get_content_from_roster_delta(roster_delta const & del,
+try_get_content_from_roster_delta(roster_delta const & del,
                               node_id const & nid,
                               file_id & content)
 {
   roster_delta_t d;
-  get_roster_delta(del, d);
+  read_roster_delta(del, d);
   
   roster_delta_t::deltas_applied_t::const_iterator i = d.deltas_applied.find(nid);
   if (i != d.deltas_applied.end())
