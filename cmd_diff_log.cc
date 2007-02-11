@@ -14,6 +14,7 @@
 #include <queue>
 
 #include "asciik.hh"
+#include "charset.hh"
 #include "cmd.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
@@ -875,13 +876,15 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               last--;
             }
 
+	  string out_system;
+	  utf8_to_system(utf8(out.str()), out_system);
 	  if (app.opts.no_graph)
-	    cout << out.str();
+	    cout << out_system;
 	  else {
 	    // an ASCII-k graph was requested
 	    set<revision_id> parents;
 	    app.db.get_revision_parents(rid, parents);
-	    graph.print(rid, parents, out.str());
+	    graph.print(rid, parents, out_system);
 	  }
         }
 
