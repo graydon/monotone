@@ -75,6 +75,9 @@ continued to adhere to the dialect we write in. in particular:
   - separate pointer and reference types with space. write "int * foo"
     rather than "int *foo" or "int* foo".
 
+  - if you have a const, put that _after_ the main type, but before
+    any * or &.  Example: "set<revision_id> const & foo".
+
   - put the name of a function in the first column of the line it
     occurs on. the visibility and return type go on the preceeding
     line.
