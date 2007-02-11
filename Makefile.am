@@ -70,6 +70,7 @@ MOST_SOURCES = 								\
 	roster_delta.cc roster_delta.hh					\
 	sha1.hh sha1.cc sha1_engine.hh                                  \
 	rev_height.cc rev_height.hh					\
+	asciik.cc asciik.hh						\
 									\
 	lru_writeback_cache.hh						\
 									\
