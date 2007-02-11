@@ -126,14 +126,10 @@ Loop:
 #include <algorithm>
 #include <iostream>
 #include <iterator>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
-//#include <boost/tuple/tuple.hpp>
-// tuples are faster than std::pair on copy constructors, but we're only using
-// std::pair<size_t, size_t> so it probably doesn't matter much
 
 #include "asciik.hh"
 #include "cmd.hh"
+#include "simplestring_xform.hh"
 
 using std::insert_iterator;
 using std::max;
@@ -144,8 +140,6 @@ using std::pair;
 using std::set;
 using std::string;
 using std::vector;
-using boost::algorithm::split;
-using boost::algorithm::is_any_of;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
@@ -245,7 +239,7 @@ asciik::draw(const size_t curr_items, const size_t next_items,
 
   // split a multi-line annotation
   vector<string> lines;
-  split(lines, annotation, is_any_of("\n\r"));
+  split_into_lines(annotation, lines);
   int num_lines = lines.size();
   if (num_lines < 1)
     lines.push_back(string(""));

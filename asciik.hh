@@ -14,18 +14,23 @@ public:
   // Prints an ASCII-k chunk using the given revisions.
   // Multiple lines are supported in annotation (the graph will stretch
   // accordingly); empty newlines at the end will be removed.
-  void print(const revision_id & rev, const std::set<revision_id> & parents,
-    const std::string & annotation);
-  //TODO: cambiare set-parents to vector-next
+  void print(revision_id const & rev,
+             std::set<revision_id> const & parents,
+             std::string const & annotation);
+  //TODO: change set-of-parents to vector-of-successors
 private:
-  void links_cross(const std::set<std::pair<size_t, size_t> > & links,
-    std::set<size_t> & crosses) const;
-  void draw(const size_t curr_items, const size_t next_items,
-    const size_t curr_loc, const std::set<std::pair<size_t, size_t> > & links,
-    const std::set<size_t> & curr_ghosts, const std::string & annotation) const;
-  bool try_draw(const std::vector<revision_id> & next_row,
-    const size_t curr_loc, const std::set<revision_id> & parents,
-    const std::string & annotation) const;
+  void links_cross(std::set<std::pair<size_t, size_t> > const & links,
+                   std::set<size_t> & crosses) const;
+  void draw(size_t curr_items,
+            size_t next_items,
+            size_t curr_loc,
+            std::set<std::pair<size_t, size_t> > const & links,
+            std::set<size_t> const & curr_ghosts,
+            std::string const & annotation) const;
+  bool try_draw(std::vector<revision_id> const & next_row,
+                size_t curr_loc,
+                std::set<revision_id> const & parents,
+                std::string const & annotation) const;
   // internal state
   size_t width;
   std::ostream & output;
