@@ -1395,6 +1395,130 @@ struct roster_reconstruction_graph : public reconstruction_graph
 };
 
 void
+database::get_markings(revision_id const & id,
+                       node_id const & nid,
+                       marking_t & markings)
+{
+  reconstruction_path selected_path;
+  {
+    roster_reconstruction_graph graph(*this);
+    {
+      // we look at the nearest delta(s) first, without constructing the
+      // whole path, as this is rather expensive
+      set<string> deltas;
+      graph.get_next(id.inner()(), deltas);
+      for (set<string>::const_iterator i = deltas.begin();
+           i != deltas.end(); ++i)
+        {
+          roster_delta del;
+          get_roster_delta(id.inner()(), *i, del);
+          bool found = get_markings_from_roster_delta(del, nid, markings);
+          if (found)
+            return;
+        }
+    }
+    get_reconstruction_path(id.inner()(), graph, selected_path);
+  }
+
+  int path_length(selected_path.size());
+  int i(0);
+  string target_rev;
+
+  for (reconstruction_path::const_iterator p = selected_path.begin();
+       p != selected_path.end(); ++p)
+    {
+      if (i > 0)
+        {
+          roster_delta del;
+          get_roster_delta(target_rev, *p, del);
+          bool found = get_markings_from_roster_delta(del, nid, markings);
+          if (found)
+            return;
+        }
+      if (i == path_length-1)
+        {
+          // last iteration, we have reached a roster base
+          roster_t roster;
+          marking_map mm;
+          get_roster_base(*p, roster, mm);
+          map<node_id, marking_t>::const_iterator mmi =
+            mm.find(nid);
+          I(mmi != mm.end());
+          markings = mmi->second;
+          return;
+        }
+      target_rev = *p;
+      ++i;
+    }
+}
+
+void
+database::get_file_content(revision_id const & id,
+                           node_id const & nid,
+                           file_id & content)
+{
+  // the imaginary root revision doesn't have any file.
+  if (null_id(id))
+    {
+      content = file_id();
+      return;
+    }
+  
+  reconstruction_path selected_path;
+  {
+    roster_reconstruction_graph graph(*this);
+    {
+      // we look at the nearest delta(s) first, without constructing the
+      // whole path, as this is rather expensive
+      set<string> deltas;
+      graph.get_next(id.inner()(), deltas);
+      for (set<string>::const_iterator i = deltas.begin();
+           i != deltas.end(); ++i)
+        {
+          roster_delta del;
+          get_roster_delta(id.inner()(), *i, del);
+          bool found = get_content_from_roster_delta(del, nid, content);
+          if (found)
+            return;
+        }
+    }
+    get_reconstruction_path(id.inner()(), graph, selected_path);
+  }
+
+  int path_length(selected_path.size());
+  int i(0);
+  string target_rev;
+  
+  for (reconstruction_path::const_iterator p = selected_path.begin();
+       p != selected_path.end(); ++p)
+    {
+      if (i > 0)
+        {
+          roster_delta del;
+          get_roster_delta(target_rev, *p, del);
+          bool found = get_content_from_roster_delta(del, nid, content);
+          if (found)
+            return;
+        }
+      if (i == path_length-1)
+        {
+          // last iteration, we have reached a roster base
+          roster_t roster;
+          marking_map mm;
+          get_roster_base(*p, roster, mm);
+          if (roster.has_node(nid))
+            content = downcast_to_file_t(roster.get_node(nid))->content;
+          else
+            content = file_id();
+          return;
+        }
+      target_rev = *p;
+      ++i;
+    }
+}
+
+
+void
 database::get_roster_version(revision_id const & id,
                              cached_roster & cr)
 {

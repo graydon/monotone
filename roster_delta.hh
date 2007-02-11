@@ -25,7 +25,16 @@ void
 apply_roster_delta(roster_delta const & del,
                    roster_t & roster, marking_map & markings);
                    
+bool
+get_markings_from_roster_delta(roster_delta const & del,
+                               node_id const & nid,
+                               marking_t & markings);
 
+bool
+get_content_from_roster_delta(roster_delta const & del,
+                              node_id const & nid,
+                              file_id & content);
+  
 #ifdef BUILD_UNIT_TESTS
 
 // instead of having elaborate tests here, we just export a function, and then
