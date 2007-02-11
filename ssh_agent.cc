@@ -98,6 +98,7 @@ ssh_agent::ssh_agent()
       return;
     }
 
+  //FIXME: move to platform.cc
   sunaddr.sun_family = AF_UNIX;
   strncpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
 
@@ -108,7 +109,7 @@ ssh_agent::ssh_agent()
       return;
     }
 
-  int ret = fcntl(sock, F_SETFD, 1);
+  int ret = fcntl(sock, F_SETFD, FD_CLOEXEC);
   if (ret == -1)
     {
       close(sock);
