@@ -50,7 +50,7 @@ charset_convert(string const & src_charset,
       string dest(dst_charset);
       if (best_effort)
 	dest += "//IGNORE//TRANSLIT";
-      L(FL("converting %d bytes from %s to %s") % src.size()
+      L(FL("converting '%s' (%d bytes) from %s to %s") % src % src.size()
         % src_charset % dst_charset);
       char * converted = stringprep_convert(src.c_str(),
                                             dst_charset.c_str(),
