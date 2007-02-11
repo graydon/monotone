@@ -724,23 +724,35 @@ do_annotate_node
       file_id file_in_parent;
       shared_ptr<set<revision_id> > parent_content_marks(new set<revision_id>());
       
-      if (marked)
+      work_units::index<by_rev>::type::iterator lmn =
+        work_units.get<by_rev>().find(parent_revision);
+
+      if (lmn != work_units.get<by_rev>().end())
         {
-          // we are marked, so we don't know much about the ancestor
-          app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
-          if (null_id(file_in_parent))
-            {
-              L(FL("file added in %s, continuing") % work_unit.revision);
-              added_in_parent_count++;
-              continue;
-            }
-          get_file_content_marks(app, parent_revision, work_unit.fid, *parent_content_marks);
+          // we already added this parent, get the information from there
+          file_in_parent = lmn->content;
+          parent_content_marks = lmn->content_marks;
         }
       else
         {
-          // we know that this ancestor is marked
-          file_in_parent = work_unit.content;
-          parent_content_marks->insert(parent_revision);
+          if (marked)
+            {
+              // we are marked, so we don't know much about the ancestor
+              app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
+              if (null_id(file_in_parent))
+                {
+                  L(FL("file added in %s, continuing") % work_unit.revision);
+                  added_in_parent_count++;
+                  continue;
+                }
+              get_file_content_marks(app, parent_revision, work_unit.fid, *parent_content_marks);
+            }
+          else
+            {
+              // we know that this ancestor is marked
+              file_in_parent = work_unit.content;
+              parent_content_marks->insert(parent_revision);
+            }
         }
       
       // The node was live in the parent, so this represents a delta.
@@ -767,13 +779,8 @@ do_annotate_node
 
       // If this parent has not yet been queued for processing, create the
       // work unit for it.
-      work_units::index<by_rev>::type::iterator lmn =
-        work_units.get<by_rev>().find(parent_revision);
-
-      if (lmn == work_units.get<by_rev>().end()) // not yet seen
+      if (lmn == work_units.get<by_rev>().end())
         {
-          // Once we move on to processing the parent that this file was
-          // renamed from, we'll need the old name
           rev_height parent_height;
           app.db.get_rev_height(parent_revision, parent_height);
           annotate_node_work newunit(work_unit.annotations,
