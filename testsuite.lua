@@ -344,17 +344,3 @@ for _,candidate in ipairs(read_directory(testdir)) do
    end
 end
 table.sort(tests)
-table.insert(tests, "merge_into_workspace")
-table.insert(tests, "merge_into_workspace_no_changes")
-table.insert(tests, "merge_into_workspace_files_added")
-table.insert(tests, "merge_into_workspace_attr_corpse")
-table.insert(tests, "merge_into_workspace_same_rev")
-table.insert(tests, "two_parent_workspace_commands_that_fail")
-table.insert(tests, "two_parent_workspace_pluck")
-table.insert(tests, "two_parent_workspace_add_drop_rename")
-table.insert(tests, "two_parent_workspace_attrs")
-table.insert(tests, "two_parent_workspace_pivot_root")
-table.insert(tests, "two_parent_workspace_inodeprints")
-table.insert(tests, "two_parent_workspace_inodeprint_from_birth")
-table.insert(tests, "two_parent_workspace_annotate")
-table.insert(tests, "two_parent_workspace_list")
