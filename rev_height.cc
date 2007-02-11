@@ -82,7 +82,7 @@ static void write_at(string & d, size_t pos, u32 value)
 static void append(string & d, u32 value)
 {
   d.resize(d.size() + width);   // make room
-  write_at(d, d.size() - width, value);
+  write_at(d, d.size() / width - 1, value);
 }
 
 // Creating derived heights
