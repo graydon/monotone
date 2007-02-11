@@ -8,41 +8,32 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
-using Botan::RSA_PublicKey;
-using Botan::BigInt;
-using Netxx::Stream;
-using boost::shared_ptr;
-using std::string;
-using std::vector;
-
 class ssh_agent
 {
 public:
   ssh_agent();
   ~ssh_agent();
-  bool connect();
-  void disconnect();
   bool connected();
-  vector<RSA_PublicKey> const get_keys();
-  void sign_data(RSA_PublicKey const & key, string const & data, string & out);
+  std::vector<Botan::RSA_PublicKey> const get_keys();
+  void sign_data(Botan::RSA_PublicKey const & key, std::string const & data, std::string & out);
 
 private:
-  shared_ptr<Stream> stream;
-  vector<RSA_PublicKey> keys;
+  boost::shared_ptr<Netxx::Stream> stream;
+  std::vector<Botan::RSA_PublicKey> keys;
 
   //helper functions for reading and unpacking data from ssh-agent
-  void fetch_packet(string & packet);
-  void read_num_bytes(u32 const len, string & out);
+  void fetch_packet(std::string & packet);
+  void read_num_bytes(u32 const len, std::string & out);
   u32 get_long(char const * buf);
-  u32 get_long_from_buf(string const & buf, u32 & loc);
-  void get_string_from_buf(string const & buf, u32 & loc, u32 & len, string & out);
+  u32 get_long_from_buf(std::string const & buf, u32 & loc);
+  void get_string_from_buf(std::string const & buf, u32 & loc, u32 & len, std::string & out);
 
   //helper functions for packing data to send to ssh-agent
   void put_long(u32 l, char * buf);
-  void put_long_into_buf(u32 l, string & buf);
-  void put_string_into_buf(string const & str, string & buf);
-  void put_bigint_into_buf(BigInt const & bi, string & buf);
-  void put_key_into_buf(RSA_PublicKey const & key, string & buf);
+  void put_long_into_buf(u32 l, std::string & buf);
+  void put_string_into_buf(std::string const & str, std::string & buf);
+  void put_bigint_into_buf(Botan::BigInt const & bi, std::string & buf);
+  void put_key_into_buf(Botan::RSA_PublicKey const & key, std::string & buf);
 };
 
 // Local Variables:

@@ -8,11 +8,19 @@
 #include "sanity.hh"
 #include "netio.hh"
 
+using Botan::RSA_PublicKey;
+using Botan::BigInt;
+using Netxx::Stream;
+using boost::shared_ptr;
+using std::string;
+using std::vector;
 using std::min;
 
 /*
  * The ssh-agent network format is essentially based on a u32 which
  * is the length of the packet followed by that number of bytes.
+ *
+ * u32 encoding is big-endian
  *
  * The packet to ask for the keys that ssh-agent has is in this format:
  * u32     = 1
@@ -78,55 +86,46 @@ using std::min;
 
 ssh_agent::ssh_agent()
 {
-  connect();
-}
-
-ssh_agent::~ssh_agent()
-{
-  disconnect();
-}
-
-bool
-ssh_agent::connect()
-{
   const char *authsocket;
   int sock;
   struct sockaddr_un sunaddr;
-
-  if (connected())
-    return true;
 
   authsocket = getenv("SSH_AUTH_SOCK");
   
   if (!authsocket)
     {
       L(FL("ssh_agent: connect: ssh-agent socket not found"));
-      return false;
+      return;
     }
 
   sunaddr.sun_family = AF_UNIX;
   strncpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
 
   sock = socket(AF_UNIX, SOCK_STREAM, 0);
-  E(sock >= 0, F("ssh_agent: connect: could not open socket to ssh-agent"));
+  if (sock < 0)
+    {
+      W(F("ssh_agent: connect: could not open socket to ssh-agent"));
+      return;
+    }
 
   int ret = fcntl(sock, F_SETFD, 1);
   if (ret == -1)
     {
       close(sock);
-      E(ret != -1, F("ssh_agent: connect: could not set up socket for ssh-agent"));
+      W(F("ssh_agent: connect: could not set up socket for ssh-agent"));
+      return;
     }
   ret = ::connect(sock, (struct sockaddr *)&sunaddr, sizeof sunaddr);
   if (ret < 0)
     {
       close(sock);
-      E(ret >= 0, F("ssh_agent: connect: could not connect to socket for ssh-agent"));
+      W(F("ssh_agent: connect: could not connect to socket for ssh-agent"));
+      return;
     }
   stream = shared_ptr<Stream>(new Stream(sock));
 }
 
-void
-ssh_agent::disconnect()
+ssh_agent::~ssh_agent()
 {
   if (connected()) {
     stream->close();
