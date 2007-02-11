@@ -37,9 +37,11 @@ check(grep('has multiple ambiguous expansions', "stderr"), 0, false)
 
 -- Check that exact value succeed...
 remove("_MTN")
+remove("testfile")
 check(mtn("co", "--revision=c:testcert=value", "."), 0, false, false)
 check(samefile("testfile", "testfile2"))
 
 remove("_MTN")
+remove("testfile")
 check(mtn("co", "--revision=c:testcert=value=with=equal=signs", "."), 0, false, false)
 check(samefile("testfile", "testfile1"))

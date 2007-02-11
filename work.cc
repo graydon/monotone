@@ -439,6 +439,7 @@ struct file_itemizer : public tree_walker
   virtual void visit_file(file_path const & path);
 };
 
+
 bool
 file_itemizer::visit_dir(file_path const & path)
 {
@@ -468,14 +469,25 @@ file_itemizer::visit_file(file_path const & path)
 struct workspace_itemizer : public tree_walker
 {
   roster_t & roster;
-  path_set & known;
+  path_set const & known;
   node_id_source & nis;
 
-  workspace_itemizer(roster_t & r, path_set & k, node_id_source & n)
-    : roster(r), known(k), nis(n) {}
+  workspace_itemizer(roster_t & roster, path_set const & paths, 
+                     node_id_source & nis);
   virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
+
+workspace_itemizer::workspace_itemizer(roster_t & roster, 
+                                       path_set const & paths, 
+                                       node_id_source & nis)
+    : roster(roster), known(paths), nis(nis)
+{
+  split_path root_path;
+  file_path().split(root_path);
+  node_id root_nid = roster.create_dir_node(nis);
+  roster.attach_node(root_nid, root_path);
+}
 
 bool
 workspace_itemizer::visit_dir(file_path const & path)
@@ -601,8 +613,10 @@ addition_builder::visit_file(file_path const & path)
 
 struct editable_working_tree : public editable_tree
 {
-  editable_working_tree(lua_hooks & lua, content_merge_adaptor const & source) 
-    : lua(lua), source(source), next_nid(1), root_dir_attached(true)
+  editable_working_tree(lua_hooks & lua, content_merge_adaptor const & source,
+                        bool const messages) 
+    : lua(lua), source(source), next_nid(1), root_dir_attached(true),
+      messages(messages)
   {};
 
   virtual node_id detach_node(split_path const & src);
@@ -630,12 +644,13 @@ private:
   node_id next_nid;
   std::map<bookkeeping_path, file_path> rename_add_drop_map;
   bool root_dir_attached;
+  bool messages;
 };
 
 
 struct simulated_working_tree : public editable_tree
 {
-  roster_t & roster;
+  roster_t & workspace;
   node_id_source & nis;
   
   path_set blocked_paths;
@@ -643,7 +658,7 @@ struct simulated_working_tree : public editable_tree
   int conflicts;
 
   simulated_working_tree(roster_t & r, temp_node_id_source & n)
-    : roster(r), nis(n), conflicts(0) {}
+    : workspace(r), nis(n), conflicts(0) {}
 
   virtual node_id detach_node(split_path const & src);
   virtual void drop_detached_node(node_id nid);
@@ -784,11 +799,12 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
     = rename_add_drop_map.find(src_pth);
   if (i != rename_add_drop_map.end())
     {
-      P(F("renaming %s to %s") % i->second % dst_pth);
+      if (messages)
+        P(F("renaming %s to %s") % i->second % dst_pth);
       safe_erase(rename_add_drop_map, src_pth);
     }
-  else
-    P(F("adding %s") % dst_pth);
+  else if (messages)
+     P(F("adding %s") % dst_pth);
 
   if (dst_pth == file_path())
     {
@@ -864,7 +880,7 @@ editable_working_tree::~editable_working_tree()
 node_id
 simulated_working_tree::detach_node(split_path const & src)
 {
-  node_id nid = roster.detach_node(src);
+  node_id nid = workspace.detach_node(src);
   nid_map.insert(make_pair(nid, src));
   return nid;
 }
@@ -872,7 +888,7 @@ simulated_working_tree::detach_node(split_path const & src)
 void
 simulated_working_tree::drop_detached_node(node_id nid)
 {
-  node_t node = roster.get_node(nid);
+  node_t node = workspace.get_node(nid);
   if (is_dir_t(node)) 
     {
       dir_t dir = downcast_to_dir_t(node);
@@ -890,21 +906,29 @@ simulated_working_tree::drop_detached_node(node_id nid)
 node_id
 simulated_working_tree::create_dir_node()
 {
-  return roster.create_dir_node(nis);
+  return workspace.create_dir_node(nis);
 }
 
 node_id
 simulated_working_tree::create_file_node(file_id const & content)
 {
-  return roster.create_file_node(content, nis);
+  return workspace.create_file_node(content, nis);
 }
 
 void
 simulated_working_tree::attach_node(node_id nid, split_path const & dst)
 {
-  if (roster.has_node(dst))
+  // this check is needed for checkout because we're using a roster to
+  // represent paths that *may* block the checkout. however to represent
+  // these we *must* have a root node in the roster which will *always*
+  // block us. so here we check for that case and avoid it.
+
+  if (workspace_root(dst) && workspace.has_root())
+    return;
+
+  if (workspace.has_node(dst))
     {
-      W(F("attach blocked by unversioned path '%s'") % dst);
+      W(F("attach node %d blocked by unversioned path '%s'") % nid % dst);
       blocked_paths.insert(dst);
       conflicts++;
     }
@@ -915,10 +939,10 @@ simulated_working_tree::attach_node(node_id nid, split_path const & dst)
       dirname_basename(dst, dirname, basename);
 
       if (blocked_paths.find(dirname) == blocked_paths.end())
-        roster.attach_node(nid, dst);
+        workspace.attach_node(nid, dst);
       else
         {
-          W(F("attach blocked by unversioned path '%s'") % dst);
+          W(F("attach node %d blocked by blocked parent '%s'") % nid % dst);
           blocked_paths.insert(dst);
         }
     }
@@ -1525,11 +1549,11 @@ workspace::perform_pivot_root(file_path const & new_root,
 
 void
 workspace::perform_content_update(cset const & update,
-                                  content_merge_adaptor const & ca)
+                                  content_merge_adaptor const & ca,
+                                  bool const messages)
 {
   roster_t roster;
   temp_node_id_source nis;
-  split_path root;
   path_set known;
   roster_t new_roster;
   bookkeeping_path detached = path_for_detached_nids();
@@ -1541,10 +1565,6 @@ workspace::perform_content_update(cset const & update,
 
   mkdir_p(detached);
 
-  file_path().split(root);
-  node_id nid = roster.create_dir_node(nis);
-  roster.attach_node(nid, root);
-
   get_current_roster_shape(new_roster, nis);
   new_roster.extract_path_set(known);
 
@@ -1554,7 +1574,7 @@ workspace::perform_content_update(cset const & update,
   simulated_working_tree swt(roster, nis);
   update.apply_to(swt);
 
-  editable_working_tree ewt(lua, ca);
+  editable_working_tree ewt(lua, ca, messages);
   update.apply_to(ewt);
 
   delete_dir_shallow(detached);

@@ -23,6 +23,7 @@
 using std::cout;
 using std::make_pair;
 using std::pair;
+using std::make_pair;
 using std::map;
 using std::set;
 using std::string;
@@ -556,45 +557,25 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
 
   app.create_workspace(dir);
 
-  file_data data;
-  roster_t ros;
-  marking_map mm;
+  shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
+  roster_t current_roster;
 
   L(FL("checking out revision %s to directory %s") % ident % dir);
-  app.db.get_roster(ident, ros, mm);
+  app.db.get_roster(ident, current_roster);
 
   revision_t workrev;
   make_revision_for_workspace(ident, cset(), workrev);
   app.work.put_work_rev(workrev);
 
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin();
-       i != nodes.end(); ++i)
-    {
-      node_t node = i->second;
-      split_path sp;
-      ros.get_name(i->first, sp);
-      file_path path(sp);
+  cset checkout;
+  make_cset(*empty_roster, current_roster, checkout);
 
-      if (is_dir_t(node))
-        {
-          if (!workspace_root(sp))
-            mkdir_p(path);
-        }
-      else
-        {
-          file_t file = downcast_to_file_t(node);
-          N(app.db.file_version_exists(file->content),
-            F("no file %s found in database for %s")
-            % file->content % path);
+  map<file_id, file_path> paths;
+  get_content_paths(*empty_roster, paths);
 
-          file_data dat;
-          L(FL("writing file %s to %s")
-            % file->content % path);
-          app.db.get_file_version(file->content, dat);
-          write_data(path, dat.inner());
-        }
-    }
+  content_merge_workspace_adaptor wca(app, empty_roster, paths);
+
+  app.work.perform_content_update(checkout, wca, false);
 
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints();
