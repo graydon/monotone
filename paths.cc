@@ -444,10 +444,10 @@ any_path::as_external() const
   return data();
 #else
   // on normal systems we actually have some work to do, alas.
-  // not much, though, because utf8_to_system does all the hard work.  it is
-  // carefully optimized.  do not screw it up.
+  // not much, though, because utf8_to_system_string does all the hard work.
+  // it is carefully optimized.  do not screw it up.
   external out;
-  utf8_to_system(data, out);
+  utf8_to_system_strict(data, out);
   return out();
 #endif
 }
