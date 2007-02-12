@@ -104,7 +104,7 @@ _MN_templates = {
    },
 
    do_revision = {
-      "mtn --db=@database@ log --last 1 --diffs --revision @revision@ > @workdir@/@nonce@.tmp",
+      "mtn --db=@database@ log --last 1 --diffs --from @revision@ > @workdir@/@nonce@.tmp",
       "cat @workdir@/@nonce@.tmp | sed -e '/^============================================================$/,$d' > @workdir@/@nonce@.with-diff.desc",
       "cat @workdir@/@nonce@.tmp | sed -e '/^============================================================$/,$p;d' > @workdir@/@revision@.diff",
       "rm -f @workdir@/@nonce@.tmp",
@@ -112,7 +112,7 @@ _MN_templates = {
       " cat @workdir@/@nonce@.with-diff.desc",
       " echo",
       " echo 'To get the patch for this revision, please do this:'",
-      " echo 'mtn log --last 1 --diffs --revision @revision@'",
+      " echo 'mtn log --last 1 --diffs --from @revision@'",
       ") > @workdir@/@nonce@.without-diff.desc",
       "if [ `grep '^Ancestor: ' @workdir@/@nonce@.with-diff.desc | wc -l` = '1' ]; then show_diffs=true; fi",
    },
