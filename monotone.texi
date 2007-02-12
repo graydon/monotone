@@ -4128,7 +4128,7 @@ Then the following files are created:
 If you wish to @command{checkout} in the current directory, you can
 supply the special name @file{.} (a single period) for
 @var{directory}. When running @command{checkout} into an existing
-directory, it is sometimes possible for @xref{Workspace Collisions} to
+directory, it is sometimes possible for @ref{Workspace Collisions} to
 occur.
 
 If no @var{id} is provided, as in the latter two commands, you
@@ -4477,7 +4477,7 @@ becomes the new default branch of the workspace (even if you also
 specify an explicit @option{--revision} argument).
 
 When running @command{update}, it is sometimes possible for
-@xref{Workspace Collisions} to occur.
+@ref{Workspace Collisions} to occur.
 
 @item mtn pluck --revision=@var{to}
 @itemx mtn pluck --revision=@var{from} --revision=@var{to}
@@ -4514,7 +4514,7 @@ consider carefully whether there is any way to change your workflow to
 reduce your need for @command{pluck}ing.
 
 When running @command{pluck}, it is sometimes possible for
-@xref{Workspace Collisions} to occur.
+@ref{Workspace Collisions} to occur.
 
 @item mtn refresh_inodeprints
 This command puts the current workspace into @ref{Inodeprints} mode,
@@ -4553,7 +4553,7 @@ The use of @option{--execute} with this command is strongly
 recommended, though not required.
 
 When running @command{pivot_root}, it is sometimes possible for
-@xref{Workspace Collisions} to occur.
+@ref{Workspace Collisions} to occur.
 
 @end ftable
 
