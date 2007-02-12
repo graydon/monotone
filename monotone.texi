@@ -1264,7 +1264,12 @@ This output shows one private and one public key stored under the name
 @code{jim@@juicebot.co.jp}, so it indicates that Jim's key-pair has been
 successfully generated and stored. On subsequent commands, Jim will need
 to re-enter his passphrase in order to perform security-sensitive
-tasks. Jim isn't very worried about security (and, more importantly, it
+tasks.
+
+TODO: add ssh-agent explanation
+
+DEPRECATED!!
+Jim isn't very worried about security (and, more importantly, it
 simplifies the tutorial text to skip the passphrase prompts) so he
 decides to store his passphrase in his @file{monotonerc} file.  He does
 this by writing a @emph{hook function} which returns the passphrase:
@@ -5012,12 +5017,13 @@ $ mtn push
 You can also use the @option{--ssh-sign} option to control whether ssh-agent will
 be used for signing. If set to @emph{yes}, ssh-agent will be used to sign. If your
 key has not been added to ssh-agent monotone will fall back to its internal signing
-code and ask you for your password. If set to @emph{no}, monotone will always use
-its internal signing code even if ssh-agent is running and has your monotone key
-loaded. If set to @emph{check}, monotone will sign with both ssh-agent (if your key
-is loaded into it) and monotone's internal signing code, then compare the results.
-@emph{check} will be removed at some future time as it is meant only for testing
-and will not work with all signing algorithms.
+code and ask you for your password. If set to @emph{only}, monotone will sign only
+with ssh-agent. If set to @emph{no}, monotone will always use its internal signing
+code even if ssh-agent is running and has your monotone key loaded. If set to
+@emph{check}, monotone will sign with both ssh-agent (if your key is loaded into
+it) and monotone's internal signing code, then compare the results. @emph{check}
+will be removed at some future time as it is meant only for testing and will not
+work with all signing algorithms.
 
 
 @end ftable

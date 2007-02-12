@@ -365,16 +365,25 @@ make_signature(app_state & app,           // to hook for phrase
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
-  E(!app.opts.ssh_sign.empty(), F("--ssh-sign requires a value ['yes', 'no', or 'check']"));
-  E(app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "no" || app.opts.ssh_sign == "check",
-    F("--ssh-sign must be set to 'yes', 'no', or 'check'"));
+  E(!app.opts.ssh_sign.empty(),
+    F("--ssh-sign requires a value ['yes', 'no', 'only', or 'check']"));
+  E(app.opts.ssh_sign == "yes"
+    || app.opts.ssh_sign == "no"
+    || app.opts.ssh_sign == "check"
+    || app.opts.ssh_sign == "only",
+    F("--ssh-sign must be set to 'yes', 'no', 'only', or 'check'"));
 
   keypair key;
   app.keys.get_key_pair(id, key);
 
   string sig_string;
   //sign with ssh-agent (if connected)
-  if (app.opts.ssh_sign == "yes" || app.opts.ssh_sign == "check")
+  N(app.agent.connected() || app.opts.ssh_sign != "only",
+    F("You have chosen to sign only with ssh-agent but ssh-agent"
+      " does not seem to be running."));
+  if (app.opts.ssh_sign == "yes"
+      || app.opts.ssh_sign == "check"
+      || app.opts.ssh_sign == "only")
     {
       vector<RSA_PublicKey> ssh_keys = app.agent.get_keys();
       if (ssh_keys.size() <= 0)
@@ -385,7 +394,8 @@ make_signature(app_state & app,           // to hook for phrase
         rsa_pub_key pub;
         decode_base64(key.pub, pub);
         SecureVector<Botan::byte> pub_block;
-        pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
+        pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()),
+                      pub().size());
         L(FL("make_signature: building %d-byte pub key") % pub_block.size());
         shared_ptr<X509_PublicKey> x509_key =
           shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
@@ -399,48 +409,58 @@ make_signature(app_state & app,           // to hook for phrase
                si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
           if ((*pub_key).get_e() == (*si).get_e()
               && (*pub_key).get_n() == (*si).get_n()) {
-            L(FL("make_signature: ssh key matches monotone key, signing with ssh-agent"));
+            L(FL("make_signature: ssh key matches monotone key, signing with"
+                 " ssh-agent"));
             app.agent.sign_data(*si, tosign, sig_string);
             break;
           }
         }
       }
       if (sig_string.length() <= 0)
-        L(FL("make_signature: monotone and ssh-agent keys do not match, will use monotone signing"));
+        L(FL("make_signature: monotone and ssh-agent keys do not match, will"
+             " use monotone signing"));
     }
 
   string ssh_sig = sig_string;
-  if (ssh_sig.length() <= 0 || app.opts.ssh_sign == "check") { // || app.opts.ssh_sign == "no" 
-    SecureVector<Botan::byte> sig;
 
-    // we permit the user to relax security here, by caching a decrypted key
-    // (if they permit it) through the life of a program run. this helps when
-    // you're making a half-dozen certs during a commit or merge or
-    // something.
+  N(ssh_sig.length() > 0 || app.opts.ssh_sign != "only",
+    F("You don't seem to have your monotone key imported "));
 
-    bool persist_phrase = (!app.signers.empty()) || app.lua.hook_persist_phrase_ok();
+  if (ssh_sig.length() <= 0
+      || app.opts.ssh_sign == "check"
+      || app.opts.ssh_sign == "no")
+    {
+      SecureVector<Botan::byte> sig;
 
-    shared_ptr<PK_Signer> signer;
-    shared_ptr<RSA_PrivateKey> priv_key;
-    if (persist_phrase && app.signers.find(id) != app.signers.end())
-      signer = app.signers[id].first;
+      // we permit the user to relax security here, by caching a decrypted key
+      // (if they permit it) through the life of a program run. this helps when
+      // you're making a half-dozen certs during a commit or merge or
+      // something.
 
-    else
-      {
-        priv_key = get_private_key(app.lua, id, priv);
-        signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
+      bool persist_phrase = (!app.signers.empty())
+        || app.lua.hook_persist_phrase_ok();
 
-        /* XXX This is ugly. We need to keep the key around as long
-         * as the signer is around, but the shared_ptr for the key will go
-         * away after we leave this scope. Hence we store a pair of
-         * <verifier,key> so they both exist. */
-        if (persist_phrase)
-          app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
-      }
+      shared_ptr<PK_Signer> signer;
+      shared_ptr<RSA_PrivateKey> priv_key;
+      if (persist_phrase && app.signers.find(id) != app.signers.end())
+        signer = app.signers[id].first;
 
-    sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
-    sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
-  }
+      else
+        {
+          priv_key = get_private_key(app.lua, id, priv);
+          signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
+
+          /* XXX This is ugly. We need to keep the key around as long
+           * as the signer is around, but the shared_ptr for the key will go
+           * away after we leave this scope. Hence we store a pair of
+           * <verifier,key> so they both exist. */
+          if (persist_phrase)
+            app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
+        }
+
+      sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
+      sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
+    }
 
   if (app.opts.ssh_sign == "check" && ssh_sig.length() > 0)
     {
@@ -452,13 +472,15 @@ make_signature(app_state & app,           // to hook for phrase
         % sig_string.length()
         % encode_hexenc(ssh_sig)
         % encode_hexenc(sig_string));
-      L(FL("make_signature: signatures from ssh-agent and monotone are the same"));
+      L(FL("make_signature: signatures from ssh-agent and monotone"
+           " are the same"));
     }
 
   L(FL("make_signature: produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 
-  E(check_signature(app, id, key.pub, tosign, signature), F("make_signature: signature is not valid"));
+  E(check_signature(app, id, key.pub, tosign, signature),
+    F("make_signature: signature is not valid"));
 }
 
 bool
