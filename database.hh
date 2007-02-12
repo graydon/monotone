@@ -353,6 +353,11 @@ public:
   void get_file_content(revision_id const & id,
                         node_id const & nid,
                         file_id & content);
+private:
+  struct extractor;
+  struct file_content_extractor;
+  struct markings_extractor;
+  void extract_from_deltas(revision_id const & id, extractor & x);
 
   //
   // --== Keys ==--

@@ -186,6 +186,11 @@ struct annotate_node_work
 
 struct by_rev {};
 
+// instead of using a priority queue and a set to keep track of the already
+// seen revisions, we use a multi index container. it stores work units is
+// indexed by their revision and their revision's height, with the latter
+// being the index used by default. usage of that data structure frees us
+// from the burden of keeping two data structures in sync.
 typedef multi_index_container<
   annotate_node_work,
   indexed_by<
@@ -681,7 +686,7 @@ static void get_file_content_marks(app_state & app,
   marking_t markings;
   app.db.get_markings(rev, fid, markings);
 
-  I(markings.file_content.size() != 0);
+  I(!markings.file_content.empty());
 
   content_marks.clear();
   content_marks.insert(markings.file_content.begin(),
@@ -700,6 +705,7 @@ do_annotate_node(annotate_node_work const & work_unit,
   for (set<revision_id>::const_iterator i = work_unit.interesting_ancestors->begin();
        i != work_unit.interesting_ancestors->end(); i++)
     {
+      // parent means parent in the annotate graph here
       revision_id parent_revision = *i;
 
       L(FL("do_annotate_node processing edge from parent %s to child %s")
@@ -718,6 +724,7 @@ do_annotate_node(annotate_node_work const & work_unit,
         {
           // we already added this parent, get the information from there
           file_in_parent = lmn->content;
+          // next two values are actually not used
           parents_interesting_ancestors = lmn->interesting_ancestors;
           parent_marked = lmn->marked;
         }
