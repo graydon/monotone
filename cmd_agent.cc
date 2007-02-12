@@ -31,6 +31,7 @@ agent_export(string const & name, app_state & app, vector<utf8> const & args)
   rsa_keypair_id id;
   keypair key;
   get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
   shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
   utf8 new_phrase;
