@@ -1266,11 +1266,41 @@ successfully generated and stored. On subsequent commands, Jim will need
 to re-enter his passphrase in order to perform security-sensitive
 tasks.
 
-TODO: add ssh-agent explanation
+Pretty soon Jim gets annoyed when he has to enter his passphrase every
+time he invokes @code{mtn} (and, more importantly, it simplifies the
+tutorial text to skip the passphrase prompts) so he decides to use
+@emph{ssh-agent} to store his key. He does this by using the
+@code{ssh_agent_export} command to export his key into a format that
+ssh-agent can understand and adding it with @code{ssh-add}.
 
-DEPRECATED!!
-Jim isn't very worried about security (and, more importantly, it
-simplifies the tutorial text to skip the passphrase prompts) so he
+@smallexample
+@group
+$ mtn ssh_agent_export ~/.ssh/id_monotone
+enter passphrase for key ID [user@@example.com]:
+enter new passphrase for key ID [user@@example.com]:
+confirm passphrase for key ID [user@@example.com]:
+$ chmod 600 ~/.ssh/id_monotone
+@end group
+@end smallexample
+
+From now on, Jim just needs to add his key to ssh-agent when he logs in
+and he will not need to enter his passphrase every time he uses monotone.
+
+@smallexample
+@group
+$ ssh-agent /bin/bash
+$ ssh-add ~/.ssh/id_monotone
+Enter passphrase for /home/user/.ssh/id_monotone:
+Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
+$ mtn ci -m"Changed foo to bar"
+$ mtn push
+@end group
+@end smallexample
+
+The following procedure is deprecated and not suggested for general use
+as it is very insecure.
+
+Jim isn't very worried about security so he
 decides to store his passphrase in his @file{monotonerc} file.  He does
 this by writing a @emph{hook function} which returns the passphrase:
 
@@ -5094,7 +5124,7 @@ key IDs, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
 
-@item mtn ssh_agent_export
+@item mtn ssh_agent_export @var{filename}
 
 This command will export your private key in a format that ssh-agent
 can read (PKCS8, PEM). You will be asked for your current key's password
@@ -5105,7 +5135,7 @@ will cache the key for you.
 
 @smallexample
 @group
-$ mtn ssh_agent_export > ~/.ssh/id_monotone
+$ mtn ssh_agent_export ~/.ssh/id_monotone
 enter passphrase for key ID [user@@example.com]:
 enter new passphrase for key ID [user@@example.com]:
 confirm passphrase for key ID [user@@example.com]:

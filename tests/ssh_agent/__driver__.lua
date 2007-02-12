@@ -29,14 +29,12 @@ check(mtn("--key", "tester@test.net", "ssh_agent_export"), 0, false, false)
 check(mtn("ssh_agent_export"), 0, false, false, tkey .. "\n" .. tkey .. "\n")
 
 -- * (ok) export monotone key without passphrase
-check(mtn("ssh_agent_export"), 0, true, false)
-rename("stdout", "id_monotone")
+check(mtn("ssh_agent_export", "id_monotone"), 0, false, false)
 skip_if(not existsonpath("chmod"))
 check({"chmod", "600", "id_monotone"}, 0, false, false)
 
--- xfail_if
--- * Windows
 skip_if(not existsonpath("ssh-agent"))
+skip_if(ostype == "Windows")
 
 function cleanup()
    check({"kill", os.getenv("SSH_AGENT_PID")}, 0, false, false)
@@ -137,8 +135,7 @@ check(raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
               "ssh_agent_export"), 1, false, false)
 
 -- * (ok) export monotone key with -k
-check(mtn("ssh_agent_export", "--key", "test2@tester.net"), 0, false, false)
-rename("stdout", "id_monotone2")
+check(mtn("ssh_agent_export", "--key", "test2@tester.net", "id_monotone2"), 0, false, false)
 skip_if(not existsonpath("chmod"))
 check({"chmod", "600", "id_monotone2"}, 0, false, false)
 

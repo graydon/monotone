@@ -14,7 +14,7 @@
 using std::cout;
 using std::string;
 using std::vector;
-using std::fstream;
+using std::ofstream;
 using boost::scoped_ptr;
 using boost::shared_ptr;
 using Botan::RSA_PublicKey;
@@ -25,7 +25,7 @@ using Botan::Pipe;
 static void
 agent_export(string const & name, app_state & app, vector<utf8> const & args)
 {
-  if (args.size() != 0)
+  if (args.size() > 1)
     throw usage(name);
 
   rsa_keypair_id id;
@@ -50,15 +50,21 @@ agent_export(string const & name, app_state & app, vector<utf8> const & args)
       Botan::PKCS8::encode(*priv, p);
     }
   string decoded_key = p.read_all_as_string();
-  cout << decoded_key;
+  if (args.size() == 0)
+    cout << decoded_key;
+  else
+    {
+      ofstream fout(idx(args,0)().c_str(), ofstream::out);
+      fout << decoded_key;
+    }
 }
 
 CMD(ssh_agent_export, N_("key and cert"),
-    "",
-    N_("export your monotone key for use with ssh-agent in PKCS8 PEM format"),
+    N_("[FILENAME]"),
+    N_("export your monotone key for use with ssh-agent"),
     options::opts::none)
 {
-  if (args.size() != 0)
+  if (args.size() > 1)
     throw usage(name);
 
   agent_export(name, app, args);
