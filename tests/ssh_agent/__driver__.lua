@@ -79,6 +79,7 @@ check(mtn("ci", "--ssh-sign=check", "--message", "commit msg"), 0, false, false)
 
 -- * (ok) mtn ci with ssh-agent running with non-monotone rsa key
 check(get("id_rsa"))
+check({"chmod", "600", "id_rsa"}, 0, false, false)
 check({"ssh-add", "id_rsa"}, 0, false, false)
 addfile("some_file7", "test")
 check(mtn("ci", "--message", "commit msg"), 0, false, false)
@@ -86,15 +87,16 @@ check(mtn("ci", "--message", "commit msg"), 0, false, false)
 -- * (ok) mtn ci with ssh-agent running with dss key
 check({"ssh-add", "-D"}, 0, false, false)
 check(get("id_dsa"))
+check({"chmod", "600", "id_dsa"}, 0, false, false)
 check({"ssh-add", "id_dsa"}, 0, false, false)
 addfile("some_file8", "test")
 check(mtn("ci", "--message", "commit msg"), 0, false, false)
 
 -- * (ok) mtn ci with ssh-agent running with multiple non-monotone rsa keys
 check({"ssh-add", "-D"}, 0, false, false)
-check(get("id_rsa"))
 check({"ssh-add", "id_rsa"}, 0, false, false)
 check(get("id_rsa2"))
+check({"chmod", "600", "id_rsa2"}, 0, false, false)
 check({"ssh-add", "id_rsa2"}, 0, false, false)
 addfile("some_file9", "test")
 check(mtn("ci", "--message", "commit msg"), 0, false, false)
