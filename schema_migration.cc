@@ -18,6 +18,8 @@
 #include "transforms.hh"
 #include "ui.hh"
 
+using std::string;
+
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
 // required to get from one hash value to the next. when you do a

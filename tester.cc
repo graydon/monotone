@@ -7,7 +7,6 @@
 #include "platform.hh"
 #include "sanity.hh"
 
-#include <cstdio>
 #include <stdlib.h>
 
 #include <exception>

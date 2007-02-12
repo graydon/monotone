@@ -10,7 +10,6 @@
 #include "config.h"
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <string>

@@ -12,7 +12,6 @@
 
 #include <string>
 #include <map>
-#include <iostream>
 #include <botan/engine.h>
 #include <botan/libstate.h>
 

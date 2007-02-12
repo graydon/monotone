@@ -6,7 +6,6 @@
 
 #ifdef BUILD_UNIT_TESTS
 
-#include <iostream>
 #include "unit_tests.hh"
 
 using std::logic_error;

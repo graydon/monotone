@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <deque>
-#include <iostream>
 #include <map>
 #include <sstream>
 #include <queue>
@@ -20,6 +19,7 @@
 #include "revision.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
+#include "rev_height.hh"
 
 using std::cout;
 using std::deque;

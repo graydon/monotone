@@ -15,24 +15,20 @@ struct sqlite3_stmt;
 struct cert;
 int sqlite3_finalize(sqlite3_stmt *);
 
-#include <stdarg.h>
-
 #include <vector>
 #include <set>
 #include <map>
 #include <string>
 
-#include "cset.hh"
 #include "numeric_vocab.hh"
+#include "vocab.hh"
 #include "paths.hh"
 #include "cleanup.hh"
 #include "roster.hh"
 #include "selectors.hh"
-#include "outdated_indicator.hh"
-#include "vocab.hh"
-#include "rev_height.hh"
 
 // FIXME: would be better not to include this everywhere
+#include "outdated_indicator.hh"
 #include "lru_writeback_cache.hh"
 
 // this file defines a public, typed interface to the database.
@@ -75,10 +71,10 @@ int sqlite3_finalize(sqlite3_stmt *);
 // the program. I don't know if there's any way to make it clearer.
 
 class transaction_guard;
-struct posting;
 class app_state;
 struct revision_t;
 struct query;
+class rev_height;
 
 class database
 {

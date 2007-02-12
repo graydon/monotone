@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <list>
 #include <map>
@@ -20,7 +19,6 @@
 #include <vector>
 
 #include <unistd.h>
-#include <cstdio>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>

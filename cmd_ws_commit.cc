@@ -7,7 +7,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iostream>
 #include <map>
 
 #include "cmd.hh"
@@ -39,7 +38,7 @@ get_log_message_interactively(revision_t const & cs,
   revision_data summary;
   write_revision(cs, summary);
   external summary_external;
-  utf8_to_system(utf8(summary.inner()()), summary_external);
+  utf8_to_system_best_effort(utf8(summary.inner()()), summary_external);
 
   string magic_line = _("*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****");
   string commentary_str;
@@ -59,12 +58,12 @@ get_log_message_interactively(revision_t const & cs,
   //if the _MTN/log file was non-empty, we'll append the 'magic' line
   utf8 user_log;
   if (user_log_message().length() > 0)
-    user_log =utf8( magic_line + "\n" + user_log_message());
+    user_log = utf8( magic_line + "\n" + user_log_message());
   else
     user_log = user_log_message;
-    
+
   external user_log_message_external;
-  utf8_to_system(user_log, user_log_message_external);
+  utf8_to_system_best_effort(user_log, user_log_message_external);
 
   external log_message_external;
   N(app.lua.hook_edit_comment(commentary, user_log_message_external,

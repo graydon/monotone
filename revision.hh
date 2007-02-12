@@ -214,7 +214,7 @@ make_restricted_revision(parent_map const & old_rosters,
                          node_restriction const & mask,
                          revision_t & rev,
                          cset & excluded,
-                         string const & cmd_name);
+                         std::string const & cmd_name);
 
 void
 build_changesets_from_manifest_ancestry(app_state & app);

@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <sstream>
-#include <cstdio>
 #include <cstring>
 #include <cerrno>
 #include <queue>
@@ -200,7 +199,7 @@ workspace::write_user_log(utf8 const & dat)
   get_user_log_path(ul_path);
 
   external tmp;
-  utf8_to_system(dat, tmp);
+  utf8_to_system_best_effort(dat, tmp);
   write_data(ul_path, data(tmp()));
 }
 
