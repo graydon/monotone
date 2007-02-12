@@ -1413,7 +1413,7 @@ public:
   
   bool look_at_delta(roster_delta const & del)
   {
-    return get_markings_from_roster_delta(del, nid, markings);
+    return try_get_markings_from_roster_delta(del, nid, markings);
   }
   
   void look_at_roster(roster_t const & roster, marking_map const & mm)
@@ -1437,7 +1437,7 @@ public:
 
   bool look_at_delta(roster_delta const & del)
   {
-    return get_content_from_roster_delta(del, nid, content);
+    return try_get_content_from_roster_delta(del, nid, content);
   }
 
   void look_at_roster(roster_t const & roster, marking_map const & mm)
