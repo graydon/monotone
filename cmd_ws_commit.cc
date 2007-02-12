@@ -1029,13 +1029,10 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       // add --unknown
       save_opts.no_ignore = app.opts.no_ignore;
       save_opts.exclude_patterns = app.opts.exclude_patterns;
-      save_opts.recursive = app.opts.recursive;
       app.opts.no_ignore = false;
       app.opts.exclude_patterns = std::vector<utf8>();
       app.opts.unknown = true;
-      app.opts.recursive = true;
       process(app, "add", empty_args);
-      app.opts.recursive = save_opts.recursive;
       app.opts.unknown = false;
       app.opts.no_ignore = save_opts.no_ignore;
       app.opts.exclude_patterns = save_opts.exclude_patterns;
