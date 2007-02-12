@@ -36,7 +36,6 @@ check({"chmod", "600", "id_monotone"}, 0, false, false)
 
 -- xfail_if
 -- * Windows
--- * cygwin
 skip_if(not existsonpath("ssh-agent"))
 
 function cleanup()
