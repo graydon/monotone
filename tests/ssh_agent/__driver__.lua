@@ -16,6 +16,12 @@ check(mtn("ci", "--message", "commit msg"), 0, false, false)
 -- * (E) export key with -k that does not exist
 check(mtn("--key", "n@n.com", "ssh_agent_export"), 1, false, false)
 
+-- * (ok) export key without -k
+check(raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
+              "--db=" .. test.root .. "/test.db",
+              "--keydir", test.root .. "/keys",
+              "ssh_agent_export"), 0, false, false)
+
 -- * (ok) export key with -k that does exist
 check(mtn("--key", "tester@test.net", "ssh_agent_export"), 0, false, false)
 
@@ -24,7 +30,6 @@ check(mtn("ssh_agent_export"), 0, false, false, tkey .. "\n" .. tkey .. "\n")
 
 -- * (ok) export monotone key without passphrase
 check(mtn("ssh_agent_export"), 0, true, false)
--- io.output("id_monotone"):write(io.input("stdout"):read())
 rename("stdout", "id_monotone")
 skip_if(not existsonpath("chmod"))
 check({"chmod", "600", "id_monotone"}, 0, false, false)
@@ -123,10 +128,44 @@ check(mtn("ci", "--ssh-sign=check", "--message", "commit msg"), 0, false, false)
 
 -- 
 -- with multiple monotone keys:
+check(mtn("genkey", "test2@tester.net"), 0, false, false)
+
 -- * (N)  try to export monotone key without -k
+remove("_MTN/options")
+check(raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
+              "--db=" .. test.root .. "/test.db",
+              "--keydir", test.root .. "/keys",
+              "ssh_agent_export"), 1, false, false)
+
 -- * (ok) export monotone key with -k
+check(mtn("ssh_agent_export", "--key", "test2@tester.net"), 0, false, false)
+rename("stdout", "id_monotone2")
+skip_if(not existsonpath("chmod"))
+check({"chmod", "600", "id_monotone2"}, 0, false, false)
+
 -- * (ok) mtn ci with -k and with ssh-agent running with no keys
+check({"ssh-add", "-D"}, 0, false, false)
+addfile("some_file15", "test")
+check(mtn("ci", "--key", "tester@test.net", "--message", "commit msg"), 0, false, false)
+
 -- * (ok) mtn ci with -k and with ssh-agent running with one non-monotone rsa key
+check({"ssh-add", "id_rsa"}, 0, false, false)
+addfile("some_file16", "test")
+check(mtn("ci", "--key", "tester@test.net", "--message", "commit msg"), 0, false, false)
+
 -- * (ok) mtn ci with -k and with ssh-agent running with same monotone key ex/imported key
+check({"ssh-add", "id_monotone"}, 0, false, false)
+addfile("some_file17", "test")
+check(mtn("ci", "--ssh-sign", "only", "--key", "tester@test.net", "--message", "commit msg"), 0, false, false)
+
 -- * (ok) mtn ci with -k and with ssh-agent running with other monotone key ex/imported key
+addfile("some_file18", "test")
+check(mtn("ci", "--ssh-sign", "only", "--key", "test2@tester.net", "--message", "commit msg"), 1, false, false)
+check(mtn("ci", "--key", "test2@tester.net", "--message", "commit msg"), 0, false, false)
+
 -- * (ok) mtn ci with -k and with ssh-agent running with both montone keys ex/imported key
+check({"ssh-add", "id_monotone2"}, 0, false, false)
+addfile("some_file19", "test")
+check(mtn("ci", "--key", "test2@tester.net", "--message", "commit msg"), 0, false, false)
+addfile("some_file20", "test")
+check(mtn("ci", "--key", "tester@test.net", "--message", "commit msg"), 0, false, false)
