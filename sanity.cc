@@ -7,9 +7,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <stdio.h>
-#include <stdarg.h>
-
 #include <algorithm>
 #include <iterator>
 #include <iostream>
@@ -326,6 +323,18 @@ template <> void
 dump(string const & obj, string & out)
 {
   out = obj;
+}
+
+void
+print_var(std::string const & value, char const * var,
+          char const * file, int const line, char const * func)
+{
+  std::cout << (FL("----- begin '%s' (in %s, at %s:%d)\n") 
+                % var % func % file % line)
+            << value
+            << (FL("\n-----   end '%s' (in %s, at %s:%d)\n") 
+                % var % func % file % line)
+            << std::endl;
 }
 
 void MusingBase::gasp_head(string & out) const

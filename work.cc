@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <sstream>
-#include <cstdio>
 #include <cstring>
 #include <cerrno>
 #include <queue>

@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <string>
-#include <iostream>
 
 #include "constants.hh"
 #include "hash_map.hh"
