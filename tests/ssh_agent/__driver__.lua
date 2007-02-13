@@ -38,6 +38,8 @@ skip_if(ostype == "Windows")
 
 function cleanup()
    check({"kill", os.getenv("SSH_AGENT_PID")}, 0, false, false)
+   set_env("SSH_AGENT_PID", "")
+   set_env("SSH_AUTH_SOCK", "")
 end
 
 check({"ssh-agent"}, 0, true, false)
