@@ -246,6 +246,7 @@ get_private_key(lua_hooks & lua,
               Pipe p;
               p.process_msg(decoded_key());
               pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
+              break;
             }
           catch (...)
             {
