@@ -265,7 +265,7 @@ get_private_key(lua_hooks & lua,
       priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
       if (!priv_key)
         throw informative_failure("Failed to get RSA signing key");
-      
+
       return priv_key;
     }
   I(false);
@@ -449,6 +449,10 @@ make_signature(app_state & app,           // to hook for phrase
       else
         {
           priv_key = get_private_key(app.lua, id, priv);
+          if (app.agent.connected()) {
+            L(FL("keys.cc: make_signature: adding private key (%s) to ssh-agent") % id());
+            app.agent.add_identity(*priv_key, id());
+          }
           signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
 
           /* XXX This is ugly. We need to keep the key around as long
