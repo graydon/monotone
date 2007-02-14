@@ -2,27 +2,21 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <iostream>
-#include <fstream>
 
-#include "cmd.hh"
 #include "ssh_agent.hh"
 #include "sanity.hh"
 #include "netio.hh"
 #include "keys.hh"
-#include "botan/pipe.h"
+#include "botan/numthry.h"
 
 using Botan::RSA_PublicKey;
 using Botan::RSA_PrivateKey;
 using Botan::BigInt;
-using Botan::Pipe;
 using Netxx::Stream;
 using boost::shared_ptr;
 using std::string;
 using std::vector;
 using std::min;
-using std::cout;
-using std::ofstream;
 
 /*
  * The ssh-agent network format is essentially based on a u32 which
@@ -148,43 +142,6 @@ ssh_agent::connected()
   return stream != NULL;
 }
 
-void
-ssh_agent::export_key(string const & name, app_state & app, vector<utf8> const & args)
-{
-  if (args.size() > 1)
-    throw usage(name);
-
-  rsa_keypair_id id;
-  keypair key;
-  get_user_key(id, app);
-  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
-  app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
-  utf8 new_phrase;
-  get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
-  Pipe p;
-  p.start_msg();
-  if (new_phrase().length())
-    {
-      Botan::PKCS8::encrypt_key(*priv,
-                                p,
-                                new_phrase(),
-                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
-    }
-  else
-    {
-      Botan::PKCS8::encode(*priv, p);
-    }
-  string decoded_key = p.read_all_as_string();
-  if (args.size() == 0)
-    cout << decoded_key;
-  else
-    {
-      ofstream fout(idx(args,0)().c_str(), ofstream::out);
-      fout << decoded_key;
-    }
-}
-
 u32
 ssh_agent::get_long(char const * buf)
 {
@@ -275,15 +232,32 @@ ssh_agent::put_bigint_into_buf(BigInt const & bi, string & buf)
 }
 
 void
-ssh_agent::put_key_into_buf(RSA_PublicKey const & key, string & buf)
+ssh_agent::put_public_key_into_buf(RSA_PublicKey const & key, string & buf)
 {
-  L(FL("ssh_agent: put_key_into_buf: key e: %s, n: %s")
+  L(FL("ssh_agent: put_public_key_into_buf: key e: %s, n: %s")
     % key.get_e()
     % key.get_n());
   put_string_into_buf("ssh-rsa", buf);
   put_bigint_into_buf(key.get_e(), buf);
   put_bigint_into_buf(key.get_n(), buf);
-  L(FL("ssh_agent: put_key_into_buf: buf len now %i") % buf.length());
+  L(FL("ssh_agent: put_public_key_into_buf: buf len now %i") % buf.length());
+}
+
+void
+ssh_agent::put_private_key_into_buf(RSA_PrivateKey const & key, string & buf)
+{
+  L(FL("ssh_agent: put_private_key_into_buf: key e: %s, n: %s")
+    % key.get_e()
+    % key.get_n());
+  put_string_into_buf("ssh-rsa", buf);
+  put_bigint_into_buf(key.get_n(), buf);
+  put_bigint_into_buf(key.get_e(), buf);
+  put_bigint_into_buf(key.get_d(), buf);
+  BigInt iqmp = inverse_mod(key.get_q(), key.get_p());
+  put_bigint_into_buf(iqmp, buf);
+  put_bigint_into_buf(key.get_p(), buf);
+  put_bigint_into_buf(key.get_q(), buf);
+  L(FL("ssh_agent: put_private_key_into_buf: buf len now %i") % buf.length());
 }
 
 void
@@ -466,7 +440,7 @@ ssh_agent::sign_data(RSA_PublicKey const & key,
   unsigned char cmd[1];
   cmd[0] = 13;
   data_out.append((char *)cmd, 1);
-  put_key_into_buf(key, key_buf);
+  put_public_key_into_buf(key, key_buf);
   put_string_into_buf(key_buf, data_out);
 
   put_string_into_buf(data, data_out);
@@ -512,6 +486,40 @@ ssh_agent::sign_data(RSA_PublicKey const & key,
        " location (%u), length(%i)")
      % packet_in_loc
      % packet_in.length()));
+}
+
+void
+ssh_agent::add_identity(RSA_PrivateKey const & key, string const & comment)
+{
+  E(connected(),
+    F("ssh_agent: add_identity: attempted to add a key when not connected"));
+
+  L(FL("ssh_agent: add_identity: key e: %s, n: %s, comment len: %i")
+    % key.get_e()
+    % key.get_n()
+    % comment.length());
+  string data_out;
+  string key_buf;
+  unsigned char cmd[1];
+  cmd[0] = 17;
+  //data_out.append((char *)cmd, 1);
+  key_buf.append((char *)cmd, 1);
+  put_private_key_into_buf(key, key_buf);
+  put_string_into_buf(comment, key_buf);
+  //put_string_into_buf(key_buf, data_out);
+
+  string packet_out;
+  put_string_into_buf(key_buf, packet_out);
+
+  stream->write(packet_out.c_str(), packet_out.length());
+
+  string packet_in;
+  fetch_packet(packet_in);
+  u32 packet_in_loc = 0;
+  E(packet_in.at(0) == 6, F("ssh_agent: packet type (%u) != 6")
+    % (u32)packet_in.at(0));
+  packet_in_loc += 1;
+
 }
 
 // Local Variables:
