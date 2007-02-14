@@ -92,7 +92,7 @@ ssh_agent::ssh_agent()
 
   authsocket = getenv("SSH_AUTH_SOCK");
   
-  if (!authsocket)
+  if (!authsocket || !strlen(authsocket))
     {
       L(FL("ssh_agent: connect: ssh-agent socket not found"));
       return;
