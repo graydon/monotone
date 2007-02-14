@@ -5,6 +5,7 @@
 #include "netxx/stream.h"
 #include "botan/rsa.h"
 #include "botan/bigint.h"
+#include "app_state.hh"
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
@@ -14,6 +15,7 @@ public:
   ssh_agent();
   ~ssh_agent();
   bool connected();
+  void export_key(std::string const & name, app_state & app, std::vector<utf8> const & args);
   std::vector<Botan::RSA_PublicKey> const get_keys();
   void sign_data(Botan::RSA_PublicKey const & key,
                  std::string const & data,

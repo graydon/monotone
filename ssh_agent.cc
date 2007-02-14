@@ -2,19 +2,27 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <sstream>
+#include <iostream>
+#include <fstream>
 
+#include "cmd.hh"
 #include "ssh_agent.hh"
 #include "sanity.hh"
 #include "netio.hh"
+#include "keys.hh"
+#include "botan/pipe.h"
 
 using Botan::RSA_PublicKey;
+using Botan::RSA_PrivateKey;
 using Botan::BigInt;
+using Botan::Pipe;
 using Netxx::Stream;
 using boost::shared_ptr;
 using std::string;
 using std::vector;
 using std::min;
+using std::cout;
+using std::ofstream;
 
 /*
  * The ssh-agent network format is essentially based on a u32 which
@@ -138,6 +146,43 @@ bool
 ssh_agent::connected()
 {
   return stream != NULL;
+}
+
+void
+ssh_agent::export_key(string const & name, app_state & app, vector<utf8> const & args)
+{
+  if (args.size() > 1)
+    throw usage(name);
+
+  rsa_keypair_id id;
+  keypair key;
+  get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  utf8 new_phrase;
+  get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
+  Pipe p;
+  p.start_msg();
+  if (new_phrase().length())
+    {
+      Botan::PKCS8::encrypt_key(*priv,
+                                p,
+                                new_phrase(),
+                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+    }
+  else
+    {
+      Botan::PKCS8::encode(*priv, p);
+    }
+  string decoded_key = p.read_all_as_string();
+  if (args.size() == 0)
+    cout << decoded_key;
+  else
+    {
+      ofstream fout(idx(args,0)().c_str(), ofstream::out);
+      fout << decoded_key;
+    }
 }
 
 u32

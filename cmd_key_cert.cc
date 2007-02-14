@@ -15,6 +15,7 @@
 #include "keys.hh"
 #include "packet.hh"
 #include "transforms.hh"
+#include "ssh_agent.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -107,6 +108,17 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   app.keys.delete_key(ident);
   app.keys.put_key_pair(ident, key);
   P(F("passphrase changed"));
+}
+
+CMD(ssh_agent_export, N_("key and cert"),
+    N_("[FILENAME]"),
+    N_("export your monotone key for use with ssh-agent"),
+    options::opts::none)
+{
+  if (args.size() > 1)
+    throw usage(name);
+
+  app.agent.export_key(name, app, args);
 }
 
 CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
