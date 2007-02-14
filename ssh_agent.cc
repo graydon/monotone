@@ -188,15 +188,15 @@ ssh_agent::export_key(string const & name, app_state & app, vector<utf8> const &
 u32
 ssh_agent::get_long(char const * buf)
 {
-  L(FL("ssh_agent: get_long: %u %u %u %u")
-    % (u32)((unsigned char)(buf)[0])
-    % (u32)((unsigned char)(buf)[1])
-    % (u32)((unsigned char)(buf)[2])
-    % (u32)((unsigned char)(buf)[3]));
-  return ((u32)((unsigned char)(buf)[0]) << 24)
-    | ((u32)((unsigned char)(buf)[1]) << 16)
-    | ((u32)((unsigned char)(buf)[2]) << 8)
-    | ((u32)((unsigned char)(buf)[3]));
+ L((FL("ssh_agent: get_long: %u %u %u %u")
+    % widen<u32,char>(buf[0])
+    % widen<u32,char>(buf[1])
+    % widen<u32,char>(buf[2])
+    % widen<u32,char>(buf[3])));
+ return ((widen<u32,char>(buf[0]) << 24)
+         | (widen<u32,char>(buf[1]) << 16)
+         | (widen<u32,char>(buf[2]) << 8)
+         | widen<u32,char>(buf[3]));
 }
 
 u32
