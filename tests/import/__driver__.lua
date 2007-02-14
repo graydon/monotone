@@ -148,5 +148,4 @@ check(mtn("import", "importdir",
 check(mtn("checkout", "exportdir10", "--branch", "importbranch"),
       0, false, false)
 
-xfail(samefile("importdir/subdir/importmesubdir",
-	       "exportdir10/subdir/importmesubdir"))
+xfail(exists("exportdir10/subdir/importmesubdir"))
