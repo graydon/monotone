@@ -1380,6 +1380,8 @@ workspace::perform_rename(set<file_path> const & src_paths,
       // "rename SRC DST" case
       split_path s;
       src_paths.begin()->split(s);
+      N(new_roster.has_node(s),
+        F("source file %s is not versioned") % s);
       renames.insert( make_pair(s, dst) );
       add_parent_dirs(dst, new_roster, nis, db, lua);
     }
