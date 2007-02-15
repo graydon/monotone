@@ -1382,6 +1382,8 @@ workspace::perform_rename(set<file_path> const & src_paths,
       src_paths.begin()->split(s);
       N(new_roster.has_node(s),
         F("source file %s is not versioned") % s);
+      N(get_path_status(dst_path) != path::directory,
+        F("destination name %s already exists as an unversioned directory") % dst);
       renames.insert( make_pair(s, dst) );
       add_parent_dirs(dst, new_roster, nis, db, lua);
     }

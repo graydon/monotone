@@ -9,6 +9,6 @@ addfile("file", "file")
 commit()
 
 mkdir("dir")
-xfail_if(true, mtn("rename", "file", "dir"), 1, false, false)
+check(mtn("rename", "file", "dir"), 1, false, false)
 check(mtn("status"), 0, false, false)
 check(mtn("diff"), 0, false, false)
