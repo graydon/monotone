@@ -411,6 +411,6 @@ CMD(asciik, N_("debug"), N_("SELECTOR"),
       set<revision_id> parents;
       app.db.get_revision_parents(*rev, parents);
       parents.erase(ghost); // remove the fake parent that root nodes have
-      graph.print(*rev, parents, rev->inner()() + "\nline 2\nline 3\nline 4");
+      graph.print(*rev, parents, rev->inner()());
     }
 }
