@@ -369,6 +369,14 @@ OPT(no_files, "no-files", bool, false,
 }
 #endif
 
+OPT(no_graph, "no-graph", bool, false,
+     gettext_noop("do not use ASCII graph to display ancestry"))
+#ifdef option_bodies
+{
+  no_graph = true;
+}
+#endif
+
 OPT(no_ignore, "no-respect-ignore", bool, false,
      gettext_noop("do not ignore any files"))
 #ifdef option_bodies

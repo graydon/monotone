@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-14 14:08+0100\n"
-"PO-Revision-Date: 2007-02-14 14:39+0100\n"
+"POT-Creation-Date: 2007-02-15 23:43+0100\n"
+"PO-Revision-Date: 2007-02-15 23:44+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -181,11 +181,20 @@ msgstr "angiven sökrot '%s' finns inte"
 msgid "search root '%s' is not a directory"
 msgstr "sökroten '%s' är inte en katalog"
 
-#: automate.cc:63
-msgid "[BRANCH]"
-msgstr "[GREN]"
+#: asciik.cc:381 cmd_files.cc:27 cmd_files.cc:40 cmd_files.cc:77
+#: cmd_files.cc:181 cmd_merging.cc:952 cmd_othervcs.cc:15
+msgid "debug"
+msgstr "felsökning"
 
-#: automate.cc:66 automate.cc:90 automate.cc:137 automate.cc:217
+#: asciik.cc:381 automate.cc:530
+msgid "SELECTOR"
+msgstr "VÄLJARE"
+
+#: asciik.cc:382
+msgid "prints an ASCII-art tree representation"
+msgstr "visualisera revisionsträdet med en ASCIIgraf"
+
+#: asciik.cc:385 automate.cc:66 automate.cc:90 automate.cc:137 automate.cc:217
 #: automate.cc:363 automate.cc:430 automate.cc:455 automate.cc:533
 #: automate.cc:915 automate.cc:1048 automate.cc:1091 automate.cc:1117
 #: automate.cc:1144 automate.cc:1171 automate.cc:1205 automate.cc:1317
@@ -194,6 +203,10 @@ msgstr "[GREN]"
 #, c-format
 msgid "wrong argument count"
 msgstr "felaktigt antal givna argument"
+
+#: automate.cc:63
+msgid "[BRANCH]"
+msgstr "[GREN]"
 
 #: automate.cc:87 automate.cc:134 automate.cc:1202
 msgid "REV1 [REV2 [REV3 [...]]]"
@@ -240,10 +253,6 @@ msgstr "inga argument behövs"
 msgid "REV"
 msgstr "REV"
 
-#: automate.cc:530
-msgid "SELECTOR"
-msgstr "VÄLJARE"
-
 #: automate.cc:912 automate.cc:1045 cmd_merging.cc:952
 msgid "[REVID]"
 msgstr "[REVID]"
@@ -259,7 +268,7 @@ msgid "REVID"
 msgstr "REVID"
 
 #: automate.cc:1099 automate.cc:1125 automate.cc:1180 automate.cc:1182
-#: cmd_db.cc:34 cmd_diff_log.cc:392 cmd_diff_log.cc:419 cmd_diff_log.cc:421
+#: cmd_db.cc:34 cmd_diff_log.cc:394 cmd_diff_log.cc:421 cmd_diff_log.cc:423
 #: cmd_files.cc:164 cmd_files.cc:220 cmd_merging.cc:181 cmd_merging.cc:781
 #: cmd_merging.cc:796 cmd_merging.cc:799 cmd_ws_commit.cc:517
 #: cmd_ws_commit.cc:980 commands.cc:412
@@ -506,7 +515,7 @@ msgstr "ta bort databasvariabeln NAMN från domänen DOMÄN"
 msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
-#: cmd_db.cc:154 cmd_diff_log.cc:467 cmd_diff_log.cc:604 cmd_files.cc:113
+#: cmd_db.cc:154 cmd_diff_log.cc:469 cmd_diff_log.cc:598 cmd_files.cc:113
 #: cmd_files.cc:243 cmd_list.cc:476 cmd_merging.cc:718 cmd_ws_commit.cc:417
 #: commands.cc:276
 msgid "informative"
@@ -525,36 +534,36 @@ msgstr "utöka den partiella identiteten"
 msgid "non-hex digits in partial id"
 msgstr "något tecken i den partiella identiteten är inte hexadecimalt"
 
-#: cmd_diff_log.cc:117
+#: cmd_diff_log.cc:119
 msgid "Deleted entries:"
 msgstr "Borttagna objekt:"
 
-#: cmd_diff_log.cc:123
+#: cmd_diff_log.cc:125
 msgid "Renamed entries:"
 msgstr "Omnämnda objekt:"
 
-#: cmd_diff_log.cc:138
+#: cmd_diff_log.cc:140
 msgid "Added files:"
 msgstr "Adderade filer:"
 
-#: cmd_diff_log.cc:144
+#: cmd_diff_log.cc:146
 msgid "Added directories:"
 msgstr "Adderade kataloger:"
 
-#: cmd_diff_log.cc:155
+#: cmd_diff_log.cc:157
 msgid "Modified files:"
 msgstr "Ändrade filer:"
 
-#: cmd_diff_log.cc:172
+#: cmd_diff_log.cc:174
 msgid "Modified attrs:"
 msgstr "Ändrade attribut:"
 
-#: cmd_diff_log.cc:353
+#: cmd_diff_log.cc:355
 #, c-format
 msgid "more than two revisions given"
 msgstr "fler än två revisioner angivna"
 
-#: cmd_diff_log.cc:365
+#: cmd_diff_log.cc:367
 #, c-format
 msgid ""
 "this workspace has more than one parent\n"
@@ -563,12 +572,12 @@ msgstr ""
 "denna arbetskopia har mer än en förälder\n"
 "(ange en revision att se skillnader emot med --revision)"
 
-#: cmd_diff_log.cc:467 cmd_ws_commit.cc:79 cmd_ws_commit.cc:308
+#: cmd_diff_log.cc:469 cmd_ws_commit.cc:79 cmd_ws_commit.cc:308
 #: cmd_ws_commit.cc:343 cmd_ws_commit.cc:417 cmd_ws_commit.cc:686
 msgid "[PATH]..."
 msgstr "[SÖKVÄG]..."
 
-#: cmd_diff_log.cc:468
+#: cmd_diff_log.cc:470
 msgid ""
 "show current diffs on stdout.\n"
 "If one revision is given, the diff between the workspace and\n"
@@ -580,7 +589,7 @@ msgstr ""
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
 
-#: cmd_diff_log.cc:477
+#: cmd_diff_log.cc:479
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -589,19 +598,19 @@ msgstr ""
 "--diff-args kräver att även --external anges\n"
 "lägg till --external eller ta bort --diff-args?"
 
-#: cmd_diff_log.cc:501
+#: cmd_diff_log.cc:503
 msgid "no changes"
 msgstr "inga ändringar"
 
-#: cmd_diff_log.cc:522
+#: cmd_diff_log.cc:524
 msgid "[FILE [...]]"
 msgstr "[FIL [...]]"
 
-#: cmd_diff_log.cc:604
+#: cmd_diff_log.cc:598
 msgid "[FILE] ..."
 msgstr "[FIL] ..."
 
-#: cmd_diff_log.cc:605
+#: cmd_diff_log.cc:599
 msgid ""
 "print history in reverse order (filtering by 'FILE'). If one or more\n"
 "revisions are given, use them as a starting point."
@@ -610,15 +619,10 @@ msgstr ""
 "arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
 "angivits används de som utgångspunkter."
 
-#: cmd_diff_log.cc:619
+#: cmd_diff_log.cc:614
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
-
-#: cmd_files.cc:27 cmd_files.cc:40 cmd_files.cc:77 cmd_files.cc:181
-#: cmd_merging.cc:952 cmd_othervcs.cc:15
-msgid "debug"
-msgstr "felsökning"
 
 #: cmd_files.cc:27
 msgid "load file contents into db"
@@ -683,7 +687,9 @@ msgstr "skriv ut filen från REVISION med extra detaljer"
 msgid ""
 "with no revision selected, this command can only be used in a single-parent "
 "workspace"
-msgstr "detta kommando kan bara användas för arbetskopior med en förälder när ingen specifik revision anges"
+msgstr ""
+"detta kommando kan bara användas för arbetskopior med en förälder när ingen "
+"specifik revision anges"
 
 #: cmd_files.cc:162
 #, c-format
@@ -1236,12 +1242,19 @@ msgid ""
 "the current workspace.  Both OTHER-REVISION and the workspace's base "
 "revision will be recorded as parents on commit. The workspace's selected "
 "branch is not changed."
-msgstr "slå ihop ANNAN-REVISION med denna arbetskopias grundrevision och uppdatera denna arbetskopia med resultatet.  Det får inte finnas några ej arkiverade förändringar i denna arbetskopia.  När arkivering görs kommer både ANNAN-REVISION och arbetskopians grundrevision att anges som föräldrar till den ny revisionen.  Arbetskopians gren kommer inte att ändras."
+msgstr ""
+"slå ihop ANNAN-REVISION med denna arbetskopias grundrevision och uppdatera "
+"denna arbetskopia med resultatet.  Det får inte finnas några ej arkiverade "
+"förändringar i denna arbetskopia.  När arkivering görs kommer både ANNAN-"
+"REVISION och arbetskopians grundrevision att anges som föräldrar till den ny "
+"revisionen.  Arbetskopians gren kommer inte att ändras."
 
 #: cmd_merging.cc:632
 #, c-format
 msgid "'%s' can only be used in a workspace with no pending changes"
-msgstr "'%s' kan enbart användas i en arbetskopia där alla gjorda ändringar har arkiverats"
+msgstr ""
+"'%s' kan enbart användas i en arbetskopia där alla gjorda ändringar har "
+"arkiverats"
 
 #: cmd_merging.cc:640
 #, c-format
@@ -1404,7 +1417,9 @@ msgstr "grenen '%s' har för tillfället mer än ett löv:"
 msgid ""
 "dump the roster associated with the given REVID, or the workspace if no "
 "REVID is given"
-msgstr "skriv ut den lista som hör ihop med angivet REVID, eller arbetskopian om REVID inte angavs"
+msgstr ""
+"skriv ut den lista som hör ihop med angivet REVID, eller arbetskopian om "
+"REVID inte angavs"
 
 #: cmd_netsync.cc:33
 #, c-format
@@ -3413,83 +3428,87 @@ msgstr ""
 "ta ej med vilka filer som lagts till, tagits bort eller ändrats i loggen"
 
 #: options_list.hh:373
+msgid "do not use ASCII graph to display ancestry"
+msgstr "använd inte en ASCIIgraf för att visualisera föräldraskapet"
+
+#: options_list.hh:381
 msgid "do not ignore any files"
 msgstr "ignorera inga filer"
 
-#: options_list.hh:381
+#: options_list.hh:389
 msgid "exclude merges when printing logs"
 msgstr "ta ej med ihopslagningar i loggen"
 
-#: options_list.hh:389
+#: options_list.hh:397
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
 
-#: options_list.hh:397
+#: options_list.hh:405
 msgid "do not load standard lua hooks"
 msgstr "använd inte standard-lua-rutinerna"
 
-#: options_list.hh:405
+#: options_list.hh:413
 msgid "record process id of server"
 msgstr "spara serverns process-ID i denna fil"
 
-#: options_list.hh:413
+#: options_list.hh:421
 msgid "suppress verbose, informational and progress messages"
 msgstr "skriv inte ut informations- eller förloppsmeddelanden"
 
-#: options_list.hh:423
+#: options_list.hh:431
 msgid "load extra rc file"
 msgstr "använd denna lua-fil"
 
-#: options_list.hh:431
+#: options_list.hh:439
 msgid "suppress warning, verbose, informational and progress messages"
 msgstr "skriv inte ut varningar eller informations- eller förloppsmeddelanden"
 
-#: options_list.hh:441
+#: options_list.hh:449
 msgid "also operate on the contents of any listed directories"
 msgstr "ta även med innehållet för varje listad katalog"
 
-#: options_list.hh:450
+#: options_list.hh:458
 msgid "select revision id for operation"
 msgstr "ange den revision som operationen ska utföras på"
 
-#: options_list.hh:458
+#: options_list.hh:466
 msgid "limit search for workspace to specified root"
 msgstr "begränsa sökningen efter arbetskopian till denna katalog"
 
-#: options_list.hh:466
+#: options_list.hh:474
 msgid "use the current arguments as the future default"
 msgstr "använd de givna argumenten som framtida standardvärden"
 
-#: options_list.hh:474
+#: options_list.hh:482
 msgid "set ticker style (count|dot|none)"
 msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
 
-#: options_list.hh:485
+#: options_list.hh:493
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "argumentet måste vara 'none', 'dot' eller 'count'"
 
-#: options_list.hh:489
+#: options_list.hh:497
 msgid "revision(s) to start logging at"
 msgstr "revision(er) där loggen ska börja"
 
-#: options_list.hh:496
+#: options_list.hh:504
 msgid "revision(s) to stop logging at"
 msgstr "revision(er) där loggen ska sluta"
 
-#: options_list.hh:504
+#: options_list.hh:512
 msgid "perform the operations for unknown files from workspace"
 msgstr "genomför operationen på okända filer i arbetskatalogen"
 
-#: options_list.hh:513
+#: options_list.hh:521
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: options_list.hh:521
+#: options_list.hh:529
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: options_list.hh:529
+#: options_list.hh:537
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
@@ -3631,7 +3650,8 @@ msgstr[1] "%d okända sökvägar"
 #: revision.cc:736
 #, c-format
 msgid "the command '%s %s' cannot be restricted in a two-parent workspace"
-msgstr "kommandot '%s %s' kan inte begränsas i en arbetskopia med två föräldrar"
+msgstr ""
+"kommandot '%s %s' kan inte begränsas i en arbetskopia med två föräldrar"
 
 #: revision.cc:955
 #, c-format
