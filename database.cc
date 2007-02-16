@@ -37,6 +37,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "vocab_cast.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
 #include "graph.hh"
@@ -1491,19 +1492,6 @@ database::revision_exists(revision_id const & id)
   return res.size() == 1;
 }
 
-template<typename From, typename To>
-To add_decoration(From const & from)
-{
-  return To(from);
-}
-
-template<typename From, typename To>
-void add_decoration_to_container(From const & from, To & to)
-{
-  transform(from.begin(), from.end(), std::inserter(to, to.end()),
-            &add_decoration<typename From::value_type, typename To::value_type>);
-}
-
 void
 database::get_file_ids(set<file_id> & ids)
 {
@@ -2665,20 +2653,20 @@ void database::complete(selector_type ty,
           else if (i->first == selectors::sel_head)
             {
               // get branch names
-              set<utf8> branch_names;
+              set<branch_name> branch_names;
               if (i->second.size() == 0)
                 {
                   __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.insert(__app->opts.branch_name);
+                  branch_names.insert(__app->opts.branchname);
                 }
               else
                 {
-                  __app->get_project().get_branch_list(utf8(i->second), branch_names);
+                  __app->get_project().get_branch_list(globish(i->second), branch_names);
                 }
 
               // for each branch name, get the branch heads
               set<revision_id> heads;
-              for (set<utf8>::const_iterator bn = branch_names.begin();
+              for (set<branch_name>::const_iterator bn = branch_names.begin();
                    bn != branch_names.end(); bn++)
                 {
                   set<revision_id> branch_heads;
@@ -2714,8 +2702,8 @@ void database::complete(selector_type ty,
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name()) % text(__app->opts.branch_name());
-                  L(FL("limiting to current branch '%s'") % __app->opts.branch_name);
+                  lim % text(branch_cert_name()) % text(__app->opts.branchname());
+                  L(FL("limiting to current branch '%s'") % __app->opts.branchname);
                 }
               else
                 {

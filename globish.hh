@@ -34,13 +34,14 @@
 
 #include "vocab.hh"
 
-void combine_and_check_globish(std::vector<utf8> const &patterns, utf8 & pattern);
+void combine_and_check_globish(std::vector<globish> const &patterns,
+                               globish & pattern);
 
 class globish_matcher
 {
 public:
   // this may throw an informative_failure if a pattern is invalid
-  globish_matcher(utf8 const & include_pat, utf8 const & exclude_pat);
+  globish_matcher(globish const & include_pat, globish const & exclude_pat);
   // this method may throw a std::runtime_error if the pattern is really
   // pathological
   bool operator()(std::string const & s);

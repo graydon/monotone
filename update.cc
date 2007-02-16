@@ -83,7 +83,7 @@ acceptable_descendent(cert_value const & branch,
   L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
-  if (!app.get_project().revision_is_in_branch(target, utf8(branch())))
+  if (!app.get_project().revision_is_in_branch(target, branch_name(branch())))
     {
       L(FL("%s not in branch %s") % target % branch);
       return false;
@@ -156,11 +156,11 @@ void pick_update_candidates(revision_id const & base_ident,
                             app_state & app,
                             set<revision_id> & candidates)
 {
-  N(app.opts.branch_name() != "",
+  N(app.opts.branchname() != "",
     F("cannot determine branch for update"));
   I(!null_id(base_ident));
 
-  calculate_update_set(base_ident, cert_value(app.opts.branch_name()),
+  calculate_update_set(base_ident, cert_value(app.opts.branchname()),
                        app, candidates);
 }
 

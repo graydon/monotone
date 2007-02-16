@@ -77,7 +77,10 @@ app_state::allow_workspace()
 void
 app_state::process_options()
 {
-  utf8 database_option, branch_option, key_option, keydir_option;
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
 
   if (!found_workspace)
     return;
@@ -87,37 +90,41 @@ app_state::process_options()
                       key_option, keydir_option);
 
   // Workspace options are not to override the command line.
-  if (db.get_filename().as_internal().empty() && !database_option().empty())
-    db.set_filename(system_path(database_option));
+  if (db.get_filename().as_internal().empty() && !database_option.as_internal().empty())
+    db.set_filename(database_option);
 
-  if (keys.get_key_dir().as_internal().empty() && !keydir_option().empty())
-    set_key_dir(system_path(keydir_option));
+  if (keys.get_key_dir().as_internal().empty() && !keydir_option.as_internal().empty())
+    set_key_dir(keydir_option);
 
-  if (opts.branch_name().empty() && !branch_option().empty())
+  if (opts.branchname().empty() && !branch_option().empty())
     {
-      opts.branch_name = branch_option;
+      opts.branchname = branch_option;
       branch_is_sticky = true;
     }
 
-  L(FL("branch name is '%s'") % opts.branch_name);
+  L(FL("branch name is '%s'") % opts.branchname);
 
   if (!opts.key_given)
-    internalize_rsa_keypair_id(key_option, opts.signing_key);
+    opts.signing_key = key_option;
 }
 
 void
 app_state::write_options()
 {
-  utf8 database_option, branch_option, key_option, keydir_option;
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
 
-  database_option = utf8(db.get_filename().as_internal());
-  keydir_option = utf8(keys.get_key_dir().as_internal());
+  database_option = db.get_filename();
+  keydir_option = keys.get_key_dir();
 
   if (branch_is_sticky)
-    branch_option = opts.branch_name;
+    branch_option = opts.branchname;
 
   if (opts.key_given)
-    externalize_rsa_keypair_id(opts.signing_key, key_option);
+    key_option = opts.signing_key;
+
   work.set_ws_options(database_option, branch_option,
                       key_option, keydir_option);
 }

@@ -25,6 +25,7 @@
 #include "simplestring_xform.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "vocab_cast.hh"
 
 using std::cout;
 using std::endl;
@@ -234,21 +235,23 @@ ls_keys(string const & name, app_state & app,
 static void
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
-  utf8 inc("*");
-  utf8 exc;
+  globish inc("*");
+  globish exc;
   if (args.size() == 1)
-    inc = idx(args,0);
+    inc = globish(idx(args,0)());
   else if (args.size() > 1)
     throw usage(name);
-  combine_and_check_globish(app.opts.exclude_patterns, exc);
+  vector<globish> excludes;
+  typecast_vocab_container(app.opts.exclude_patterns, excludes);
+  combine_and_check_globish(excludes, exc);
   globish_matcher match(inc, exc);
-  set<utf8> names;
+  set<branch_name> names;
   app.get_project().get_branch_list(names);
 
-  for (set<utf8>::const_iterator i = names.begin();
+  for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
     {
-      if (match((*i)()) && !app.lua.hook_ignore_branch((*i)()))
+      if (match((*i)()) && !app.lua.hook_ignore_branch(*i))
         {
           cout << *i << "\n";
         }

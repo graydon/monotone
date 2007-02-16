@@ -131,10 +131,10 @@ key_store::get_key_ids(string const & pattern,
 {
   maybe_read_key_dir();
   priv.clear();
-  utf8 inc(pattern);
+  globish inc(pattern);
   if (pattern.empty())
-    inc = utf8("*");
-  globish_matcher gm(inc, utf8(""));
+    inc = globish("*");
+  globish_matcher gm(inc, globish(""));
   for (map<rsa_keypair_id, keypair>::const_iterator
          i = keys.begin(); i != keys.end(); ++i)
     {

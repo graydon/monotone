@@ -91,12 +91,12 @@ OPTION(bind_opts, bind_stdio, false, "stdio",
 }
 #endif
 
-OPTVAR(branch, utf8, branch_name, )
+OPTVAR(branch, branch_name, branchname, )
 OPTION(branch, branch, true, "branch,b",
         gettext_noop("select branch cert for operation"))
 #ifdef option_bodies
 {
-  branch_name = utf8(arg);
+  branchname = branch_name(arg);
 }
 #endif
 

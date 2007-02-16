@@ -5,6 +5,7 @@
 #include "keys.hh"
 #include "cert.hh"
 #include "uri.hh"
+#include "vocab_cast.hh"
 
 #include <fstream>
 
@@ -64,16 +65,21 @@ find_key_if_needed(utf8 & addr, app_state & app)
 
 static void
 extract_patterns(vector<utf8> const & args,
-                 utf8 & include_pattern, utf8 & exclude_pattern,
+                 globish & include_pattern, globish & exclude_pattern,
                  app_state & app)
 {
   if (args.size() >= 2 || app.opts.exclude_given)
     {
       E(args.size() >= 2, F("no branch pattern given"));
       int pattern_offset = 1;
-      vector<utf8> patterns(args.begin() + pattern_offset, args.end());
+      vector<globish> patterns;
+      std::transform(args.begin() + pattern_offset, args.end(),
+                     std::inserter(patterns, patterns.end()),
+                     &typecast_vocab<utf8, globish>);
       combine_and_check_globish(patterns, include_pattern);
-      combine_and_check_globish(app.opts.exclude_patterns, exclude_pattern);
+      vector<globish> excludes;
+      typecast_vocab_container(app.opts.exclude_patterns, excludes);
+      combine_and_check_globish(excludes, exclude_pattern);
       if (!app.db.var_exists(default_include_pattern_key)
           || app.opts.set_default)
         {
@@ -93,15 +99,15 @@ extract_patterns(vector<utf8> const & args,
         F("no branch pattern given and no default pattern set"));
       var_value pattern_value;
       app.db.get_var(default_include_pattern_key, pattern_value);
-      include_pattern = utf8(pattern_value());
+      include_pattern = globish(pattern_value());
       L(FL("using default branch include pattern: '%s'") % include_pattern);
       if (app.db.var_exists(default_exclude_pattern_key))
         {
           app.db.get_var(default_exclude_pattern_key, pattern_value);
-          exclude_pattern = utf8(pattern_value());
+          exclude_pattern = globish(pattern_value());
         }
       else
-        exclude_pattern = utf8("");
+        exclude_pattern = globish();
       L(FL("excluding: %s") % exclude_pattern);
     }
 }
@@ -111,7 +117,8 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr, include_pattern, exclude_pattern;
+  utf8 addr;
+  globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   find_key_if_needed(addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
@@ -124,7 +131,8 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude)
 {
-  utf8 addr, include_pattern, exclude_pattern;
+  utf8 addr;
+  globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
 
@@ -140,7 +148,8 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr, include_pattern, exclude_pattern;
+  utf8 addr;
+  globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   find_key_if_needed(addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
@@ -210,7 +219,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), "",
   app.db.ensure_open();
 
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_address,
-                       utf8("*"), utf8(""), app);
+                       globish("*"), globish(""), app);
 }
 
 // Local Variables:
