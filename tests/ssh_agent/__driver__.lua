@@ -114,12 +114,7 @@ addfile("some_file5", "test")
 check(mtn("ci", "--ssh-sign=no", "--message", "commit msg"), 0, false, false)
 
 -- key should not be in ssh-agent with --ssh-sign=no
-check({"ssh-add", "-l"}, 0, true, false)
-for line in io.lines("stdout") do
-    if not string.gmatch(line, "no identities") then
-       err("identity in ssh-agent when there should be none")
-    end
-end
+check({"ssh-add", "-l"}, 1, false, false)
 
 -- * (ok) mtn ci with no ssh key with --ssh-sign=check
 check({"ssh-add", "-D"}, 0, false, false)
