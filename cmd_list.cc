@@ -261,12 +261,12 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 static void
 ls_epochs(string name, app_state & app, vector<utf8> const & args)
 {
-  map<cert_value, epoch_data> epochs;
+  map<branch_name, epoch_data> epochs;
   app.db.get_epochs(epochs);
 
   if (args.size() == 0)
     {
-      for (map<cert_value, epoch_data>::const_iterator
+      for (map<branch_name, epoch_data>::const_iterator
              i = epochs.begin();
            i != epochs.end(); ++i)
         {
@@ -279,7 +279,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
            i != args.end();
            ++i)
         {
-          map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
+          map<branch_name, epoch_data>::const_iterator j = epochs.find(branch_name((*i)()));
           N(j != epochs.end(), F("no epoch for branch %s") % *i);
           cout << j->second << " " << j->first << "\n";
         }
@@ -680,7 +680,7 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
 
   transaction_guard guard(app.db, false);
 
-  revision_id rid(hexenc<id>(id(idx(args, 0)())));
+  revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   hexenc<id> ident(rid.inner());
 

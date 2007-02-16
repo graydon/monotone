@@ -1835,7 +1835,7 @@ session::load_data(netcmd_item_type type,
     {
     case epoch_item:
       {
-        cert_value branch;
+        branch_name branch;
         epoch_data epoch;
         app.db.get_epoch(epoch_id(hitem), branch, epoch);
         write_epoch(branch, epoch, out);
@@ -1904,13 +1904,13 @@ session::process_data_cmd(netcmd_item_type type,
     {
     case epoch_item:
       {
-        cert_value branch;
+        branch_name branch;
         epoch_data epoch;
         read_epoch(dat, branch, epoch);
         L(FL("received epoch %s for branch %s") % epoch % branch);
-        map<cert_value, epoch_data> epochs;
+        map<branch_name, epoch_data> epochs;
         app.db.get_epochs(epochs);
-        map<cert_value, epoch_data>::const_iterator i;
+        map<branch_name, epoch_data>::const_iterator i;
         i = epochs.find(branch);
         if (i == epochs.end())
           {
@@ -3089,15 +3089,15 @@ session::rebuild_merkle_trees(app_state & app,
   }
 
   {
-    map<cert_value, epoch_data> epochs;
+    map<branch_name, epoch_data> epochs;
     app.db.get_epochs(epochs);
 
     epoch_data epoch_zero(string(constants::epochlen, '0'));
     for (set<branch_name>::const_iterator i = branchnames.begin();
          i != branchnames.end(); ++i)
       {
-        cert_value branch((*i)());
-        map<cert_value, epoch_data>::const_iterator j;
+        branch_name const & branch(*i);
+        map<branch_name, epoch_data>::const_iterator j;
         j = epochs.find(branch);
 
         // Set to zero any epoch which is not yet set.

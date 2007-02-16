@@ -74,7 +74,7 @@ get_test_results_for_revision(revision_id const & id,
 }
 
 static bool
-acceptable_descendent(cert_value const & branch,
+acceptable_descendent(branch_name const & branch,
                       revision_id const & base,
                       map<rsa_keypair_id, bool> & base_results,
                       revision_id const & target,
@@ -83,7 +83,7 @@ acceptable_descendent(cert_value const & branch,
   L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
-  if (!app.get_project().revision_is_in_branch(target, branch_name(branch())))
+  if (!app.get_project().revision_is_in_branch(target, branch))
     {
       L(FL("%s not in branch %s") % target % branch);
       return false;
@@ -107,7 +107,7 @@ acceptable_descendent(cert_value const & branch,
 
 static void
 calculate_update_set(revision_id const & base,
-                     cert_value const & branch,
+                     branch_name const & branch,
                      app_state & app,
                      set<revision_id> & candidates)
 {
@@ -160,7 +160,7 @@ void pick_update_candidates(revision_id const & base_ident,
     F("cannot determine branch for update"));
   I(!null_id(base_ident));
 
-  calculate_update_set(base_ident, cert_value(app.opts.branchname()),
+  calculate_update_set(base_ident, app.opts.branchname,
                        app, candidates);
 }
 

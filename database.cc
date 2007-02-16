@@ -2778,14 +2778,14 @@ void database::complete(selector_type ty,
 // epochs
 
 void
-database::get_epochs(map<cert_value, epoch_data> & epochs)
+database::get_epochs(map<branch_name, epoch_data> & epochs)
 {
   epochs.clear();
   results res;
   fetch(res, 2, any_rows, query("SELECT branch, epoch FROM branch_epochs"));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
-      cert_value decoded(idx(*i, 0));
+      branch_name decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(make_pair(decoded, epoch_data(idx(*i, 1))));
     }
@@ -2793,7 +2793,7 @@ database::get_epochs(map<cert_value, epoch_data> & epochs)
 
 void
 database::get_epoch(epoch_id const & eid,
-                    cert_value & branch, epoch_data & epo)
+                    branch_name & branch, epoch_data & epo)
 {
   I(epoch_exists(eid));
   results res;
@@ -2802,7 +2802,7 @@ database::get_epoch(epoch_id const & eid,
         " WHERE hash = ?")
         % text(eid.inner()()));
   I(res.size() == 1);
-  branch = cert_value(idx(idx(res, 0), 0));
+  branch = branch_name(idx(idx(res, 0), 0));
   epo = epoch_data(idx(idx(res, 0), 1));
 }
 
@@ -2818,7 +2818,7 @@ database::epoch_exists(epoch_id const & eid)
 }
 
 void
-database::set_epoch(cert_value const & branch, epoch_data const & epo)
+database::set_epoch(branch_name const & branch, epoch_data const & epo)
 {
   epoch_id eid;
   epoch_hash_code(branch, epo, eid);
@@ -2830,7 +2830,7 @@ database::set_epoch(cert_value const & branch, epoch_data const & epo)
 }
 
 void
-database::clear_epoch(cert_value const & branch)
+database::clear_epoch(branch_name const & branch)
 {
   execute(query("DELETE FROM branch_epochs WHERE branch = ?")
           % blob(branch()));
