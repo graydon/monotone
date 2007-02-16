@@ -449,7 +449,9 @@ make_signature(app_state & app,           // to hook for phrase
       else
         {
           priv_key = get_private_key(app.lua, id, priv);
-          if (app.agent.connected()) {
+          if (app.agent.connected()
+              && app.opts.ssh_sign != "only"
+              && app.opts.ssh_sign != "no") {
             L(FL("keys.cc: make_signature: adding private key (%s) to ssh-agent") % id());
             app.agent.add_identity(*priv_key, id());
           }
