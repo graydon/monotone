@@ -909,7 +909,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
           else
             graph.print(rid, interesting, out_system);
         }
-      else if (use_markings)
+      else if (use_markings && !app.opts.no_graph)
         graph.print(rid, interesting, (F("(marked node: %s)") % rid).str());
 
       frontier.pop(); // beware: rid is invalid from now on
