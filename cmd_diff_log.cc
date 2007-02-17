@@ -821,6 +821,21 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
       if (app.opts.no_merges && rev.is_merge_node())
         print_this = false;
 
+      set<revision_id> interesting;
+      // if rid is not marked we can jump directly to the marked ancestors,
+      // otherwise we need to visit the parents
+      if (use_markings && marked_revs.find(rid) == marked_revs.end())
+        {
+          interesting.insert(marked_revs.begin(), marked_revs.end());
+        }
+      else
+        {
+          if (next > 0)
+            app.db.get_revision_children(rid, interesting);
+          else // walk backwards by default
+            app.db.get_revision_parents(rid, interesting);
+        }
+
       if (print_this)
         {
           ostringstream out;
@@ -830,10 +845,11 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               log_certs(out, app, rid, author_name);
               if (app.opts.no_graph)
                 log_certs(out, app, rid, date_name);
-              else {
-                out << '\n';
-                log_certs(out, app, rid, date_name, string(), string(), false, false);
-              }
+              else
+                {
+                  out << '\n';
+                  log_certs(out, app, rid, date_name, string(), string(), false, false);
+                }
               log_certs(out, app, rid, branch_name);
               out << '\n';
             }
@@ -853,8 +869,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
                   csum.add_change_set(edge_changes(e));
                 }
 
-              for (set<revision_id>::const_iterator
-                     anc = ancestors.begin();
+              for (set<revision_id>::const_iterator anc = ancestors.begin();
                    anc != ancestors.end(); ++anc)
                 out << "Ancestor: " << *anc << "\n";
 
@@ -878,51 +893,24 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
             {
               for (edge_map::const_iterator e = rev.edges.begin();
                    e != rev.edges.end(); ++e)
-                {
-                    dump_diffs(edge_changes(e), app, true, out,
-                                   diff_paths, !mask.empty());
-                }
+                dump_diffs(edge_changes(e), app, true, out,
+                           diff_paths, !mask.empty());
             }
 
           if (next > 0)
-            {
-              next--;
-            }
+            next--;
           else if (last > 0)
-            {
-              last--;
-            }
+            last--;
 
           string out_system;
           utf8_to_system_best_effort(utf8(out.str()), out_system);
           if (app.opts.no_graph)
             cout << out_system;
-          else {
-            // an ASCII-k graph was requested
-            set<revision_id> parents;
-            app.db.get_revision_parents(rid, parents);
-            graph.print(rid, parents, out_system);
-          }
+          else
+            graph.print(rid, interesting, out_system);
         }
-
-      set<revision_id> interesting;
-      // if rid is not marked we can jump directly to the marked ancestors,
-      // otherwise we need to visit the parents
-      if (use_markings && marked_revs.find(rid) == marked_revs.end())
-        {
-          interesting.insert(marked_revs.begin(), marked_revs.end());
-        }
-      else
-        {
-          if (next > 0)
-            {
-              app.db.get_revision_children(rid, interesting);
-            }
-          else // walk backwards by default
-            {
-              app.db.get_revision_parents(rid, interesting);
-            }
-        }
+      else if (use_markings && !app.opts.no_graph)
+        graph.print(rid, interesting, (F("(marked node: %s)") % rid).str());
 
       frontier.pop(); // beware: rid is invalid from now on
 
