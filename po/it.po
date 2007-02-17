@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-02-09 10:02-0800\n"
+"PO-Revision-Date: 2007-02-13 20:19+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -256,12 +256,12 @@ msgstr "ignoro la firma sconosciuta di ‘%s’ su ‘%s’"
 #: cert.cc:156
 #, c-format
 msgid "trust function disliked %d signers of %s cert on manifest %s"
-msgstr ""
+msgstr "la funzione di fiducia ha rifiutato %d firmatari del certificato ‘%s’ nel manifesto %s"
 
 #: cert.cc:213
 #, c-format
 msgid "trust function disliked %d signers of %s cert on revision %s"
-msgstr ""
+msgstr "la funzione di fiducia ha rifiutato %d firmatari del certificato ‘%s’ nella revisione %s"
 
 #: cert.cc:307
 #, c-format
@@ -645,10 +645,11 @@ msgstr "copia un file dal database a stdout"
 msgid "ignored bookkeeping path '%s'"
 msgstr "ignorata la directory di contabilità / ad uso interno ‘%s’"
 
+# TODO: bookkeping? interrompendo?
 #: cmd.hh:71
-#, c-format
+#, fuzzy, c-format
 msgid "all arguments given were bookkeeping paths; aborting"
-msgstr ""
+msgstr "tutte le istruzioni passate erano relative al reindirizzamento dei percorsi; sto interrompendo"
 
 #: cmd.hh:101
 #, c-format
@@ -958,12 +959,15 @@ msgid "updating along branch '%s'"
 msgstr "aggiorno seguendo il ramo ‘%s’"
 
 #: cmd_merging.cc:124
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "your request matches no descendents of the current revision\n"
 "in fact, it doesn't even match the current revision\n"
 "maybe you want something like --revision=h:%s"
 msgstr ""
+"la revisione richiesta non coincide con nessun discendente della revisione corrente\n"
+"in fatti essa non coincide nemmeno con quella corrente\n"
+"magari dovresti provare con --revision=h:%s"
 
 #: cmd_merging.cc:130
 #, c-format
@@ -1232,6 +1236,7 @@ msgid "[-r FROM] -r TO [PATH...]"
 msgstr "[-r DA] -r A [PERCORSO…]"
 
 #: cmd_merging.cc:669
+#, fuzzy
 msgid ""
 "Apply changes made at arbitrary places in history to current workspace.\n"
 "This command takes changes made at any point in history, and\n"
@@ -1246,6 +1251,18 @@ msgid ""
 "If two revisions are given, applies the changes made to get from the\n"
 "first revision to the second."
 msgstr ""
+"Applica i cambiamenti effetuati in locazioni arbitrarie nello storico al\n"
+"workspace corrente. Questo comando accetta i cambiamenti eseguiti in\n"
+"qualsiasi punto dello storico e modifica il tuo workspace corrente in modo\n"
+"che li includa. Il risultato finale è identico a ‘mtn diff -r DA -r A | patch -p0’\n"
+"a eccezione del fatto che questo comando usa il merge di monotone e che\n"
+"quindi gestisce intelligentemente i file rinominati, i conflitti e altri casi simili.\n"
+"\n"
+"Se viene specificata una sola revisione, vengono applicati i cambiamenti\n"
+"effetuati per giungere a quella revisione dal suo genitore.\n"
+"\n"
+"Se vengono specificate due revisioni, vengono applicati i cambiamenti\n"
+"effetuati per giungere dalla prima revisione alla seconda. "
 
 #: cmd_merging.cc:694
 #, c-format
@@ -1390,6 +1407,8 @@ msgid ""
 "parse versions in RCS files\n"
 "this command doesn't reconstruct or import revisions.you probably want cvs_import"
 msgstr ""
+"analizza le versioni nei file RCS\n"
+"questo comando non ricostruisce o importa intere revisioni; a tal fine usare ‘cvs_import’"
 
 #: cmd_othervcs.cc:32
 msgid "rcs"
@@ -1809,7 +1828,7 @@ msgstr "DIRECTORY"
 
 #: cmd_ws_commit.cc:966
 msgid "import the contents of the given directory tree into a given branch"
-msgstr ""
+msgstr "importa ricorsivamente il contenuto della directory specificata nel ramo voluto"
 
 #: cmd_ws_commit.cc:977
 #, c-format
@@ -1826,9 +1845,14 @@ msgstr "la directory di importazione ‘%s’ non esiste"
 msgid "import directory '%s' is a file"
 msgstr "la directory di importazione ‘%s’ è un file"
 
+# TODO:
+# Cambiare tutti i "migrate" a "conversione" piuttosto che "migrazione"
 #: cmd_ws_commit.cc:1065
+#, fuzzy
 msgid "migrate a workspace directory's metadata to the latest format; defaults to the current workspace"
 msgstr ""
+"converti una directory del workspace al formato più recente;\n"
+"di default il workspace utilizzato è quello corrente"
 
 #: cmd_ws_commit.cc:1078
 msgid "refresh the inodeprint cache"
@@ -2198,6 +2222,8 @@ msgid ""
 "database %s lacks some cached data\n"
 "run '%s db regenerate_caches' to restore use of this database"
 msgstr ""
+"il database ‘%s’ manca di alcuni dati presenti nella cache\n"
+"eseguire ‘%s db regenerate_caches’ per ripristinare il database"
 
 #: database.cc:194
 #, c-format
@@ -2359,11 +2385,13 @@ msgid "database %s already exists"
 msgstr "il database ‘%s’ esiste già"
 
 #: database.cc:3155
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%s'\n"
 "cancelling database creation"
 msgstr ""
+"il file di journal ‘%s’ presente, forse relativo a uno stallo, ha la\n"
+"stessa radice del nuovo database ‘%s’; creazione del database interrotta"
 
 #: diff_patch.cc:615
 #, c-format
@@ -2530,9 +2558,9 @@ msgid "cannot open file %s for writing"
 msgstr "impossibile aprire il file ‘%s’ in scrittura"
 
 #: file_io.cc:455
-#, c-format
+#, fuzzy, c-format
 msgid "caught runtime error %s constructing file path for %s"
-msgstr ""
+msgstr "intercettato un errore in fase di esecuzione %s sto costruendo un percorso di file per %s"
 
 #: file_io.cc:542
 #: work.cc:1247
@@ -2721,7 +2749,7 @@ msgstr "specificatore di ruolo %d sconosciuto"
 #: netio.hh:59
 #, c-format
 msgid "need %d bytes to decode %s at %d, only have %d"
-msgstr ""
+msgstr "sono necessari %d byte per decodificare ‘%s’ alla posizione %d, ma solo %d sono disponibili"
 
 #: netio.hh:87
 #: netio.hh:122
@@ -2740,9 +2768,9 @@ msgid "decoding variable length string of %d bytes for '%s', maximum is %d"
 msgstr "decodifica in corso della stringa a lungheza variabile di %d byte per ‘%s’, il massimo è %d"
 
 #: netio.hh:333
-#, c-format
+#, fuzzy, c-format
 msgid "expected %s to end at %d, have %d bytes"
-msgstr ""
+msgstr "era previsto che ‘%s’ terminasse alla posizione %d, disponibili ancora %d byte"
 
 #: netsync.cc:258
 #, c-format
@@ -2954,9 +2982,11 @@ msgid "sink"
 msgstr "pozzo"
 
 #: netsync.cc:2304
-#, c-format
+#, fuzzy, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr ""
+"il buffer in ingresso per il nodo ‘%s’ si è sovraccaricato\n"
+"dopo la trasmissione del comando netcmd"
 
 #: netsync.cc:2316
 #: netsync.cc:2415
@@ -2990,9 +3020,9 @@ msgid "successful exchange with %s"
 msgstr "scambio con ‘%s’ avvenuto con successo"
 
 #: netsync.cc:2476
-#, c-format
+#, fuzzy, c-format
 msgid "peer %s disconnected after we informed them of error"
-msgstr ""
+msgstr "il nodo ‘%s’ si è disconnesso dopo la notifica di un errore"
 
 #: netsync.cc:2481
 #, c-format
@@ -3014,35 +3044,41 @@ msgstr "accettata connessione nuovo cliente da ‘%s’: ‘%s’"
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr "errore di protocollo processando peer ‘%s’: ‘%s’, mi scollego"
 
+# TODO: conferma DEL peer?
 #: netsync.cc:2627
 #, c-format
 msgid "peer %s read failed in working state (error)"
-msgstr ""
+msgstr "lettura del peer ‘%s’ fallita durante il lavoro (errore)"
 
+# TODO: conferma DEL peer?
 #: netsync.cc:2632
 #, c-format
 msgid "peer %s read failed in shutdown state (possibly client misreported error)"
-msgstr ""
+msgstr "lettura del peer ‘%s’ fallita durante la chiusura (errore forse mal trasmesso al cliente)"
 
+# TODO: conferma DEL peer?
 #: netsync.cc:2638
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
-msgstr ""
+msgstr "lettura del peer ‘%s’ fallita durante la conferma (successo)"
 
+# TODO: conferma DEL peer?
 #: netsync.cc:2659
 #, c-format
 msgid "peer %s write failed in working state (error)"
-msgstr ""
+msgstr "scrittura del peer ‘%s’ fallita durante il lavoro (errore)"
 
+# TODO: conferma DEL peer?
 #: netsync.cc:2664
 #, c-format
 msgid "peer %s write failed in shutdown state (possibly client misreported error)"
-msgstr ""
+msgstr "scrittura del peer ‘%s’ fallita durante la chiusura (errore forse mal trasmesso al cliente)"
 
+# TODO: conferma DEL peer?
 #: netsync.cc:2670
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
-msgstr ""
+msgstr "scrittura del peer ‘%s’ fallita durante la conferma (successo)"
 
 # TODO: "mi scollego", "sconnessione in corso", o che? (da cambiare in tutti)
 #: netsync.cc:2697
@@ -3105,18 +3141,22 @@ msgid "Cannot find key '%s'"
 msgstr "Non trovo la chiave ‘%s’"
 
 #: netsync.cc:3204
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
 "%s"
 msgstr ""
+"il criterio di inclusione del ramo contiene un apice\n"
+"o delle virgolette: %s"
 
 #: netsync.cc:3210
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
 "%s"
 msgstr ""
+"il criterio di esclusione del ramo contiene un apice\n"
+"o delle virgolette: %s"
 
 #: netsync.cc:3245
 #: netsync.cc:3249
@@ -3214,7 +3254,7 @@ msgstr "durante la conversione al formato con roster, elimina gli attributi con 
 
 #: options_list.hh:228
 msgid "don't perform the operation, just show what would have happened"
-msgstr ""
+msgstr "non esegue l'operazione, mostra solamente cosa sarebbe stato fatto"
 
 #: options_list.hh:236
 msgid "file to dump debugging log to, on failure"
@@ -3222,7 +3262,7 @@ msgstr "file su cui salvare i log di debug (in caso di fallimento)"
 
 #: options_list.hh:245
 msgid "leave out anything described by its argument"
-msgstr ""
+msgstr "esclude qualsiasi cosa sia stata fornita come parametro"
 
 #: options_list.hh:253
 msgid "perform the associated file operation"
@@ -3238,7 +3278,7 @@ msgstr "mostra il messaggio di aiuto"
 
 #: options_list.hh:277
 msgid "include anything described by its argument"
-msgstr ""
+msgstr "include qualsiasi cosa sia stata fornita come parametro"
 
 #: options_list.hh:285
 msgid "set key for signatures"
@@ -3251,6 +3291,8 @@ msgstr "imposta locazione del portachiavi"
 #: options_list.hh:302
 msgid "push the specified key even if it hasn't signed anything"
 msgstr ""
+"invia la chiave specificata anche se non è stata\n"
+"utilizzata per certificare nulla"
 
 #: options_list.hh:312
 msgid "limit log output to the last number of entries"
@@ -3269,8 +3311,9 @@ msgid "set filename containing commit changelog message"
 msgstr "legge il messaggio di ChangeLog del commit da un file"
 
 #: options_list.hh:347
+#, fuzzy
 msgid "perform the operations for files missing from workspace"
-msgstr ""
+msgstr "esegue le operazioni dal workspace per i file mancanti"
 
 #: options_list.hh:355
 msgid "limit log output to the next number of entries"
@@ -3302,7 +3345,7 @@ msgstr "registra l'id del processo server"
 
 #: options_list.hh:413
 msgid "suppress verbose, informational and progress messages"
-msgstr ""
+msgstr "sopprime i messaggi di notifica estesa, informativi e di progresso di esecuzione"
 
 #: options_list.hh:423
 msgid "load extra rc file"
@@ -3310,7 +3353,7 @@ msgstr "carica un ulteriore file rc"
 
 #: options_list.hh:431
 msgid "suppress warning, verbose, informational and progress messages"
-msgstr ""
+msgstr "sopprime i messaggi di avvertimento, di notifica estesa, informativi e di progresso di esecuzione"
 
 #: options_list.hh:441
 msgid "also operate on the contents of any listed directories"
@@ -3349,7 +3392,7 @@ msgstr "revisione(i) a cui terminare il log"
 
 #: options_list.hh:504
 msgid "perform the operations for unknown files from workspace"
-msgstr ""
+msgstr "esegue le operazioni sui file sconosciuti presenti in workspace"
 
 #: options_list.hh:513
 msgid "verbose completion output"
@@ -3361,7 +3404,7 @@ msgstr "stampa il numero di versione ed esce"
 
 #: options_list.hh:529
 msgid "insert command line arguments taken from the given file"
-msgstr ""
+msgstr "inserisce i parametri da linea di comando specificati nel file fornito"
 
 #: packet.cc:107
 #, c-format
@@ -3371,7 +3414,7 @@ msgstr "nel database manca la preimmagine del file ‘%s’"
 #: packet.cc:108
 #, c-format
 msgid "dropping delta '%s' -> '%s'"
-msgstr "cancello il delta ‘%s’ → ‘%s’"
+msgstr "cancello il delta %s → %s"
 
 #: packet.cc:139
 #, c-format
@@ -3481,23 +3524,24 @@ msgstr "il percorso ‘%s’ non esiste"
 msgid "tags"
 msgstr "etichette"
 
+# TODO: sul o nel?
 #: restrictions.cc:60
 #: restrictions.cc:77
 #, c-format
 msgid "conflicting include/exclude on path '%s'"
-msgstr ""
+msgstr "conflitto di inclusione/esclusione sul percorso ‘%s’"
 
 #: restrictions.cc:103
 #: restrictions.cc:141
 #, c-format
 msgid "restriction includes unknown path '%s'"
-msgstr ""
+msgstr "la restrizione include il percorso sconosciuto ‘%s’"
 
 #: restrictions.cc:114
 #: restrictions.cc:155
 #, c-format
 msgid "restriction excludes unknown path '%s'"
-msgstr ""
+msgstr "la restrizione esclude il percorso sconosciuto ‘%s’"
 
 #: restrictions.cc:118
 #: restrictions.cc:159
@@ -3510,12 +3554,12 @@ msgstr[1] "%d percorsi sconosciuti"
 #: revision.cc:841
 #, c-format
 msgid "scanning for bogus merge edges"
-msgstr ""
+msgstr "scansione in corso per falsi archi di fusione"
 
 #: revision.cc:883
 #, c-format
 msgid "optimizing out redundant edge %d -> %d"
-msgstr ""
+msgstr "elimino l'arco ridondante %d → %d"
 
 #: revision.cc:892
 #, c-format
@@ -3549,13 +3593,19 @@ msgid "Path %s added twice with differing content"
 msgstr "Percorso ‘%s’ aggiunto due volte con contenuti diversi"
 
 #: revision.cc:1422
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
 "please contact %s so we can work out the right way to migrate this\n"
 "(if you just want it to go away, see the switch --drop-attr, but\n"
 "seriously, if you'd like to keep it, we're happy to figure out how)"
 msgstr ""
+"attributo sconosciuto ‘%s’ nel percorso ‘%s’\n"
+"siete pregati di contattare ‘%s’ in modo darci la possibilità di\n"
+"studiare una soluzione per le Vostre esigenze di migrazione\n"
+"(se desiderate invece semplicemente scartare l'attributo\n"
+"consultate l'help per l'opzione --drop-attr, ma se siete interessati\n"
+"a tenerlo saremo lieti di fornirVi una soluzione)"
 
 #: revision.cc:1535
 #, c-format
@@ -3587,12 +3637,16 @@ msgid "cached height: %s"
 msgstr "altezza in cache: %s"
 
 #: revision.cc:1791
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
 "I only know how to understand the version '1' format\n"
 "a newer version of monotone is required to complete this operation"
 msgstr ""
+"è stata incontrata una revisione con un formato sconosciuto\n"
+"la cui versione è ‘%s’. l'unica versione conosciuta al momento è\n"
+"la versione ‘1’. è necessario utilizzare una nuova versione di\n"
+"monotone per completare l'operazione "
 
 #: sanity.cc:148
 #, c-format
@@ -3609,9 +3663,11 @@ msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: invariante ‘%s’ violato"
 
 #: sanity.cc:255
-#, c-format
+#, fuzzy, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d"
 msgstr ""
+"%s:%d: l'indice ‘%s’ = %d ha mandato in overflow il vettore ‘%s’\n"
+"richiedendo una grandezza di %d"
 
 # TODO: 'set', non 'space'
 #: sanity.cc:276
@@ -3660,6 +3716,11 @@ msgid ""
 "you must follow a special procedure to make it usable again.\n"
 "see the file UPGRADE, in the distribution, for instructions.)"
 msgstr ""
+"(se questo è un database che è stato usato per l'ultima volta\n"
+"con monotone 0.16 o antecedente sarà necessario eseguire una\n"
+"procedura speciale per renderlo di nuovo utilizzabile;\n"
+"leggere il file ‘UPGRADE’ presente nella distribuzione per\n"
+"ulteriori istruzioni.)"
 
 #: schema_migration.cc:97
 #, c-format
@@ -3688,7 +3749,7 @@ msgstr "%s (utilizzabile)"
 #: schema_migration.cc:891
 #, c-format
 msgid "%s (migration needed)"
-msgstr "%s (necessaria migrazione)"
+msgstr "%s (migrazione necessaria)"
 
 # TODO:maschile?
 #: schema_migration.cc:893
@@ -3707,11 +3768,13 @@ msgid "%s (database has no tables!)"
 msgstr "%s (database senza tabelle!)"
 
 #: schema_migration.cc:910
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "cannot use the empty sqlite database %s\n"
 "(monotone databases must be created with '%s db init')"
 msgstr ""
+"impossibile usare il database sqlite vuoto ‘%s’\n"
+"i database per monotone devono essere creati con:‘%s db init’"
 
 # TODO: remove \n
 #: schema_migration.cc:915
@@ -3720,20 +3783,28 @@ msgid "%s does not appear to be a monotone database\n"
 msgstr "‘%s’ non sembra essere un database monotone\n"
 
 #: schema_migration.cc:919
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "%s appears to be a monotone database, but this version of\n"
 "monotone does not recognize its schema.\n"
 "you probably need a newer version of monotone."
 msgstr ""
+"‘%s’ sembra essere un database monotone, però questa versione\n"
+"di monotone non riconosce il suo schema di creazione.\n"
+"probabilmenete è necessario installare una versione di monotone\n"
+"più recente."
 
 #: schema_migration.cc:938
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "database %s is laid out according to an old schema\n"
 "try '%s db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
+"il database ‘%s’ e stato creato secondo uno schema obsoleto\n"
+"provare a eseguire ‘%s db migrate’ per aggiornarlo\n"
+"(questo processo è irreversibile; è consigiabile eseguire prima\n"
+"una copia di backup)"
 
 #: schema_migration.cc:960
 #, c-format
@@ -3810,7 +3881,7 @@ msgid "Press enter when the subprocess has completed"
 msgstr "Premi ‘invio’ quando il sotto-processo è completato"
 
 #: transforms.cc:91
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "%s\n"
 "this may be due to a memory glitch, data corruption during\n"
@@ -3818,6 +3889,11 @@ msgid ""
 "or a bug in monotone.  if the error persists, please contact\n"
 "%s for assistance.\n"
 msgstr ""
+"‘%s’ la causa potrebbe essere: un fallimento temporaneo nella\n"
+"memoria, una corruzione dei dati durante un trasferimento via rete,\n"
+"una corruzione nel workspace o nel database o un errore in\n"
+"monotone. se l'errore persiste siete pregati di contattare ‘%s’\n"
+"per avere assistenza.\n"
 
 #: ui.cc:158
 #, c-format
@@ -3871,6 +3947,8 @@ msgstr "impossibile aprire il file di log ‘%s’"
 #, c-format
 msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
 msgstr ""
+"La sintassi utilizzata per l'URI non è valida. Verificare che non\n"
+"si sia utilizzata una sintassi in stile SCP"
 
 # TODO: verificare che 'testresult' sia il nome del certificato
 #: update.cc:71
@@ -3934,12 +4012,13 @@ msgstr "lo spazio di lavoro è corrotto: leggendo ‘%s’: %s"
 #: work.cc:135
 #, c-format
 msgid "workspace base revision %s does not exist in database"
-msgstr ""
+msgstr "la revisione base del workspace ‘%s’ non esiste all'interno database"
 
+# non riconosciuta o che?
 #: work.cc:281
 #, c-format
 msgid "unrecognized key '%s' in options file %s - ignored"
-msgstr ""
+msgstr "chiave ‘%s’ non riconosciuta nel file di opzioni ‘%s’, verrà ignorata"
 
 #: work.cc:288
 #, c-format
@@ -3967,9 +4046,11 @@ msgid "adding %s to workspace manifest"
 msgstr "aggiungo ‘%s’ al manifesto dello spazio di lavoro"
 
 #: work.cc:603
-#, c-format
+#, fuzzy, c-format
 msgid "cannot add %s, because %s is recorded as a file in the workspace manifest"
 msgstr ""
+"impossibile aggiungere ‘%s’ perché ‘%s’ e stato memorizzato come un file nel\n"
+"manifesto del workspace"
 
 #: work.cc:750
 #, c-format
@@ -4017,11 +4098,12 @@ msgstr "modifico ‘%s’"
 msgid "cannot drop non-empty directory '%s'"
 msgstr "impossibile eliminare la cartella non vuota ‘%s’"
 
+# TODO: attach
 #: work.cc:910
 #: work.cc:924
-#, c-format
+#, fuzzy, c-format
 msgid "attach blocked by unversioned path '%s'"
-msgstr ""
+msgstr "fusione bloccata dal precorso senza versione ‘%s’ "
 
 #: work.cc:955
 #, c-format
@@ -4173,7 +4255,7 @@ msgid "_MTN/format should not exist in a format 1 workspace; corrected"
 msgstr "‘_MTN/format’ non dovrebbe esistere in uno spazio di lavoro con formato 1; corretto"
 
 #: work_migration.cc:116
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "this workspace's metadata is in format 0. to use this workspace\n"
 "with this version of monotone, you must delete it and check it\n"
@@ -4182,9 +4264,15 @@ msgid ""
 "with versions of monotone older than %s.\n"
 "we apologize for the inconvenience."
 msgstr ""
+"i metadata di questo workspace sono nel formato 0. Per usare questo\n"
+"workspace con questa versione di monotone sarà necessario prima\n"
+"eliminarlo e poi eseguire un nuovo checkout (la migrazione dal formato 0\n"
+"non è possibile).\n"
+"attenzione: dopo la conversione non sarà più possibile utilizzare questo\n"
+"workspace con versioni di monotone antecedenti alla %s. ci scusiamo perl'inconveniente."
 
 #: work_migration.cc:125
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "to use this workspace with this version of monotone, its metadata\n"
 "must be migrated from format %d to format %d, using the command\n"
@@ -4192,15 +4280,27 @@ msgid ""
 "once you have done this, you will not be able to use the workspace\n"
 "with versions of monotone older than %s."
 msgstr ""
+"per usare questo spazio di lavoro con questa versione di monotone, il suo metadata\n"
+"deve migrare dal formato %d al formato %d, usando il comando\n"
+"'%s migrate_workspace'.\n"
+"una volta fatto questo, non potrai più usare lo spazio di lavoro\n"
+"con versioni di monotone più vecchie di ‘%s’.----per usare questo workspace con questa versione di monotone i suoi\n"
+"metadati devono essere prima convertiti dal formato %d al formato %d\n"
+"usando il comando ‘%s migrate_workspace’.\n"
+"attenzione: dopo la conversione non sarà più possibile utilizzare questo\n"
+"workspace con versioni di monotone antecedenti alla %s."
 
 #: work_migration.cc:135
 #: work_migration.cc:263
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "this version of monotone only understands workspace metadata\n"
 "in formats 0 through %d.  your workspace is in format %d.\n"
 "you need a newer version of monotone to use this workspace."
-msgstr "questa versione di monotone capisce gli spazi di lavoro con metadatinei formati da 0 a %d.  il tuo spazio di lavoro è in formato %d.ti serve una versione di monotone più recente per usarlo."
+msgstr ""
+"questa versione di monotone capisce gli spazi di lavoro con metadati\n"
+"nei formati da 0 a %d.  il tuo spazio di lavoro è in formato %d.\n"
+"ti serve una versione di monotone più recente per usarlo.-----------questa versione di monotone capisce gli spazi di lavoro con metadatinei formati da 0 a %d.  il tuo spazio di lavoro è in formato %d.ti serve una versione di monotone più recente per usarlo.----questa versione di monotone capisce gli spazi di lavoro con metadatinei formati da 0 a %d.  il tuo spazio di lavoro è in formato %d.ti serve una versione di monotone più recente per usarlo."
 
 #: work_migration.cc:164
 #, c-format

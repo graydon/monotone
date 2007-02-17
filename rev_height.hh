@@ -29,24 +29,29 @@ public:
 
   bool valid() const { return d.size() > 0; }
 
-  bool operator ==(rev_height const & other) const;
-  bool operator < (rev_height const & other) const;
-
+  bool operator ==(rev_height const & other) const
+  {
+    return this->d == other.d;
+  }
+  bool operator < (rev_height const & other) const
+  {
+    return this->d < other.d;
+  }
   bool operator !=(rev_height const & other) const
   {
-    return !(*this == other);
+    return this->d != other.d;
   }
   bool operator > (rev_height const & other) const
   {
-    return other < *this;
+    return this->d > other.d;
   }
   bool operator <=(rev_height const & other) const
   {
-    return !(other < *this);
+    return this->d <= other.d;
   }
   bool operator >=(rev_height const & other) const
   {
-    return !(*this < other);
+    return this->d >= other.d;
   }
 };
 

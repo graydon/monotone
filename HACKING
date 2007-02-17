@@ -6,6 +6,7 @@ monotone.  For more specific topics (for instance, documentation on
 writing tests, or the release process), see also the files in the
 notes/ directory.
 
+
 Coding standards
 ----------------
 
@@ -14,8 +15,11 @@ are minor deviations.  Where the coding style differs from the standard
 please follow the coding style of the particular file you're making changes
 to so that formatting consistency is retained within that file.
 
-All source indentation should be done using spaces, with two space
-characters per indentation level.
+All source indentation should use two space characters per indentation
+level.
+
+Never use tab characters to indent code.  Always use spaces.  Teach
+your editor to do the same.
 
 The appropriate Emacs modeline to use for editing source is:
 
@@ -52,9 +56,9 @@ continued to adhere to the dialect we write in. in particular:
     and mutators check the condition. see vocab.hh for string-valued
     examples.
 
-  - in general, try to express both issues and semantically rich 
+  - in general, try to express both issues and semantically rich
     names in the type system. use typedefs to make names more
-    meaningful. 
+    meaningful.
 
   - avoid returning values, especially large ones. instead, pass a
     value as a parameter, by reference, clear it and assign into
@@ -71,6 +75,9 @@ continued to adhere to the dialect we write in. in particular:
 
   - separate pointer and reference types with space. write "int * foo"
     rather than "int *foo" or "int* foo".
+
+  - if you have a const, put that _after_ the main type, but before
+    any * or &.  Example: "set<revision_id> const & foo".
 
   - put the name of a function in the first column of the line it
     occurs on. the visibility and return type go on the preceeding
@@ -118,6 +125,11 @@ continued to adhere to the dialect we write in. in particular:
     therefore, do not include <iostream> unless you actually refer to
     one of the standard streams (cin, cout, cerr, clog).  use <iosfwd>,
     <istream>, <ostream>, <fstream>, etc instead, as appropriate.
+
+  - return type and function qualifiers should be placed on the line above
+    the function name, so that the function name sits flush with the first
+    column.  this makes grepping for function definitions easier.
+
 
 Test suites, and writing test cases
 ----------------------------------
@@ -175,7 +187,7 @@ bare capital letters scattered around.  Here's a quick guide.
       P(F("foo")): print "foo".  For generic informative messages to the
          user.
       W(F("foo")): warn "foo".  For warnings to the user.
-      
+
    Assertion macros (see also the next section).  These all cause
    monotone to exit if their condition is false:
       I(x != y): "invariant" -- if the condition is not true, then there
@@ -200,7 +212,7 @@ bare capital letters scattered around.  Here's a quick guide.
           -- the object passed to MM must remain in scope as long as the
              MM does.  Code like
                 MM(get_cool_value())
-             will probably crash!  Instead say 
+             will probably crash!  Instead say
                 cool_t my_cool_value = get_cool_value();
                 MM(my_cool_value);"
           -- You can only use MM() once per line.  If you say
@@ -211,6 +223,7 @@ bare capital letters scattered around.  Here's a quick guide.
           -- The object passed to MM() must have a defined "dump"
              function.  You can easily add an overload to "dump" to
              support new types.
+
 
 Reporting errors to the user
 ----------------------------
@@ -255,18 +268,16 @@ Patch submission guidelines
 Mail patches to 'monotone-devel@nongnu.org' with a subject beginning with
 '[PATCH]' and followed by a brief description of the patch.  The body of the
 message should contain a description of the patch with reasoning for why the
-changes are required, followed by a prepared ChangeLog entry.  Patches may
+changes are required, followed by a prepared commit message.  Patches may
 be included inline in a message, or attached as a text/plain, text/x-diff,
 or text/x-patch attachment.  Make sure your mailer does not mangle the
 patch (e.g. by wrapping lines in the patch) before sending your patch to the
 list.
 
-All changes to the monotone source require an accompanying ChangeLog
-entry (except translation updates, and changes to the ChangeLog itself
-[e.g. typos], obviously).  Any changes that affect the user interface
-(e.g. adding command-line options, changing the output format) or
-affect the documented behaviour of monotone must include appropriate
-changes to the documentation.
+All changes to the monotone source require an accompanying commit message.
+Any changes that affect the user interface (e.g. adding command-line
+options, changing the output format) or affect the documented behaviour of
+monotone must include appropriate changes to the documentation.
 
 Please review your patch prior to submission, to not include
 accidental white-space-only changes or changes to the language
@@ -288,7 +299,7 @@ Third-party code
 ----------------
 
 monotone contains parts of a number of third-party libraries, including but
-not limited to: Lua, Popt, Crypto++, SQLite, Netxx, and libidn.  See AUTHORS
+not limited to: Lua, Popt, Botan, SQLite, Netxx, and libidn.  See AUTHORS
 for complete details on the included third-party code and the copyrights and
 licenses of each portion.
 
@@ -299,9 +310,9 @@ fixes), the change should also be sent to the upstream developers for
 inclusion in the next release.
 
 In a small number of cases, a change made to our local version of the
-third-party code may not make sense to send upstream.  In this case, make a
-note of this in the file you're changing and in the ChangeLog so that this
-permanent deviation is documented.
+third-party code may not make sense to send upstream.  In this case,
+make a note of this in the file you're changing and in your commit
+message so that this permanent deviation is documented.
 
 
 Compiling Hints

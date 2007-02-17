@@ -7,7 +7,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <cstring>
 #include <sstream>
 
 #include "sanity.hh"
@@ -16,7 +15,6 @@
 using std::ostream;
 using std::string;
 using std::ostringstream;
-using std::memcmp;
 
 /*
  * Implementation note: hv, holding the raw revision height, is
@@ -31,26 +29,6 @@ using std::memcmp;
  * every now and then, and additionally inhibit the use of memcmp().
  * 
  */
-
-// Comparisons
-bool rev_height::operator==(rev_height const & other) const
-{
-  if (d.size() != other.d.size())
-    return false;
-
-  // sizes are equal
-  return (memcmp(d.data(), other.d.data(), d.size()) == 0);
-}
-
-bool rev_height::operator<(rev_height const & other) const
-{
-  int o = memcmp(d.data(), other.d.data(),
-                 std::min(d.size(), other.d.size()));
-  if (o != 0)
-    return o < 0;
-  else
-    return d.size() < other.d.size();
-}
 
 // Internal manipulations
 size_t const width = sizeof(u32);
@@ -135,6 +113,108 @@ void dump(rev_height const & h, string & out)
   out = os.str();
 }
 
+
+#ifdef BUILD_UNIT_TESTS
+
+#include "unit_tests.hh"
+#include "randomizer.hh"
+
+UNIT_TEST(rev_height, count_up)
+{
+  rev_height h = rev_height::root_height().child_height(1);
+
+  I(h().size() / width == 3);
+  I(read_at(h(), 0) == 0);
+  I(read_at(h(), 1) == 0);
+  I(read_at(h(), 2) == 0);
+  BOOST_CHECK_THROW(read_at(h(), 3), std::out_of_range);
+
+  for (u32 n = 1; n < 10000; n++)
+    {
+      h = h.child_height(0);
+      I(read_at(h(), 0) == 0);
+      I(read_at(h(), 1) == 0);
+      I(read_at(h(), 2) == n);
+    }    
+}
+
+UNIT_TEST(rev_height, children)
+{
+  rev_height h;
+  I(!h.valid());
+  h = rev_height::root_height();
+  I(h.valid());
+  MM(h);
+
+  randomizer rng;
+  for (u32 generations = 0; generations < 200; generations++)
+    {
+      L(FL("gen %d: %s") % generations % h);
+
+      // generate between five and ten children each time
+      u32 children = rng.uniform(5) + 5;
+      u32 survivor_no;
+
+      // take the first child 50% of the time, a randomly chosen second or
+      // subsequent child the rest of the time.
+      if (rng.flip())
+        survivor_no = 0;
+      else
+        survivor_no = 1 + rng.uniform(children - 2);
+
+      L(FL("gen %d: %d children, survivor %d")
+        % generations % children % survivor_no);
+      
+      u32 parent_len = h().size() / width;
+      rev_height survivor;
+      MM(survivor);
+
+      for (u32 c = 0; c < children; c++)
+        {
+          rev_height child = h.child_height(c);
+          MM(child);
+          I(child.valid());
+          if (c == 0)
+            {
+              I(child().size() / width == parent_len);
+              I(read_at(child(), parent_len - 1)
+                == read_at(h(), parent_len - 1) + 1);
+            }
+          else
+            {
+              I(child().size() / width == parent_len + 2);
+              I(read_at(child(), parent_len - 1)
+                == read_at(h(), parent_len - 1));
+              I(read_at(child(), parent_len) == c - 1);
+              I(read_at(child(), parent_len + 1) == 0);
+            }
+          if (c == survivor_no)
+            survivor = child;
+        }
+      I(survivor.valid());
+      h = survivor;
+    }
+}
+
+UNIT_TEST(rev_height, comparisons)
+{
+  rev_height root(rev_height::root_height());
+  rev_height left(root.child_height(0));
+  rev_height right(root.child_height(1));
+
+  I(root < left);
+  I(root < right);
+  I(right < left);
+  for (u32 i = 0; i < 1000; i++)
+    {
+      rev_height rchild(right.child_height(0));
+      I(right < rchild);
+      I(rchild < left);
+      right = rchild;
+    }
+}
+
+#endif
 
 // Local Variables:
 // mode: C++

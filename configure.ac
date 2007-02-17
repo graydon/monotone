@@ -77,7 +77,9 @@ AC_OUTPUT_COMMANDS([
         target="`echo x$ac_file | sed -e 's/.in$//' -e 's/^x//'`"
 	tmp="${target}.tmp"
         test -n "$as_me" && echo "$as_me: fixing $target" || echo "fixing $target"
-	sed 's/^UPDATEPOFILES =.*$/UPDATEPOFILES =/' < "$target" > "$tmp"
+	sed -e 's/^MSGMERGE =.*$/MSGMERGE = false/' \
+            -e 's/^MSGMERGE_UPDATE =.*$/MSGMERGE_UPDATE = true/' \
+               "$target" > "$tmp"
 	mv -f "$tmp" "$target" ;;
       esac
     done

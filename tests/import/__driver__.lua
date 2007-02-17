@@ -131,7 +131,21 @@ check(not qgrep("committed revision ", "stderr"))
 -- This attempt is expected to FAIL, because we gave it a non-existing key.
 -- However, we want to check that such an error didn't leave a _MTN behind.
 check(mtn("import", "importdir",
-	  "--message", "Import seven, trying to import a workspace",
+	  "--message", "Import nine, trying to import a workspace",
 	  "--branch", "importbranch",
 	  "--key", "bozo@bozoland.com"), 1, false, false)
 check(not exists("importdir/_MTN"))
+
+------------------------------------------------------------------------------
+-- Tenth attempt, importing with an added subdirectory
+mkdir("importdir/subdir")
+writefile("importdir/subdir/importmesubdir", "version 0 of subdir file\n")
+
+check(mtn("import", "importdir",
+	  "--message", "Import ten, trying to import a workspace",
+	  "--branch", "importbranch"), 0, false, false)
+
+check(mtn("checkout", "exportdir10", "--branch", "importbranch"),
+      0, false, false)
+
+xfail(exists("exportdir10/subdir/importmesubdir"))
