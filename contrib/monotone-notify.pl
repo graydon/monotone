@@ -43,6 +43,7 @@ my $man = 0;
 my $user_database = undef;
 my $root = undef;
 my @user_branches = ();
+my @user_not_branches = ();
 my $update = -1;
 my $mail = -1;
 my $attachments = 1;
@@ -168,6 +169,7 @@ if ($#user_branches >= 0) {
 			     s/\*/.\*/g;
 			     $_ } @user_branches).')$';
 }
+my $not_branches_re = "^\$";
 if ($#user_not_branches >= 0) {
     $not_branches_re=
 	'^('.join('|', map { s/([^a-zA-Z0-9\[\]\*\?_])/\\$1/g;
@@ -191,7 +193,7 @@ my_debug("changed current directory to $workdir");
 my %branches =
     map { $_ => 1 }
 	grep (/$branches_re/,
-	      grep (!/$not_branches_re,
+	      grep (!/$not_branches_re/,
 		    map { chomp; $_ }
 			my_backtick("$monotone$database list branches")));
 my_debug("collected the following branches:\n",
