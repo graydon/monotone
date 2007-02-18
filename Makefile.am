@@ -419,9 +419,8 @@ PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
 PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
 
-man1_MANS = mtn.1
 info_TEXINFOS = monotone.texi
-EXTRA_DIST = $(man1_MANS) $(PDF_FIGURES) $(PNG_FIGURES) INSTALL			\
+EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	README.changesets UPGRADE monotone.spec monotone.html			\
 	texinfo.css schema.sql std_hooks.lua test_hooks.lua tester.lua		\
 	testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
