@@ -358,20 +358,20 @@ __END__
 
 =head1 NAME
 
-monotone-notify.pl - a script to send monotone change notifications by email
+monotone-import.pl - a script to send monotone change notifications by email
 
 =head1 SYNOPSIS
 
-monotone-notify.pl [--help] [--man]
+monotone-import.pl [--help] [--man]
 [--db=database] [--branch=branch] [--message=message] [--tag=tag]
 [--quiet] [--debug]
 
 =head1 DESCRIPTION
 
-B<monotone-notify.pl> is used to generate emails containing monotone
-change logs for recent changes.  It uses monotone database variables
-in the domain 'notify' to keep track of the latest revisions already
-logged.
+B<monotone-import.pl> is used to subsequently import unversioned
+third-party sources into a Monotone repository for versioning purposes.
+To some extend this resembles the "vendor branch" approach of CVS's "cvs
+import" command.
 
 =head1 OPTIONS
 
@@ -404,13 +404,13 @@ REQUIRED!
 
 =item B<--debug>
 
-Makes B<monotone-notify.pl> go to debug mode.  It means a LOT of extra
+Makes B<monotone-import.pl> go to debug mode.  It means a LOT of extra
 output, and also implies B<--noupdate> and B<--nomail> unless
 specified differently on the command line.
 
 =item B<--quiet>
 
-Makes B<monotone-notify.pl> really silent.  It will normally produce a
+Makes B<monotone-import.pl> really silent.  It will normally produce a
 small log of it's activities, but with B<--quiet>, it will only output
 error messages.  If B<--debug> was given, B<--quiet> is turned off
 unconditionally.
