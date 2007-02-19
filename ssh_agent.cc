@@ -16,7 +16,6 @@ using Netxx::Stream;
 using boost::shared_ptr;
 using std::string;
 using std::vector;
-using std::min;
 
 /*
  * The ssh-agent network format is essentially based on a u32 which
@@ -88,58 +87,12 @@ using std::min;
 
 ssh_agent::ssh_agent()
 {
-  const char *authsocket;
-  int sock;
-  struct sockaddr_un sunaddr;
-
-  authsocket = getenv("SSH_AUTH_SOCK");
-  
-  if (!authsocket || !strlen(authsocket))
-    {
-      L(FL("ssh_agent: connect: ssh-agent socket not found"));
-      return;
-    }
-
-  //FIXME: move to platform.cc
-  sunaddr.sun_family = AF_UNIX;
-  strncpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
-
-  sock = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (sock < 0)
-    {
-      W(F("ssh_agent: connect: could not open socket to ssh-agent"));
-      return;
-    }
-
-  int ret = fcntl(sock, F_SETFD, FD_CLOEXEC);
-  if (ret == -1)
-    {
-      close(sock);
-      W(F("ssh_agent: connect: could not set up socket for ssh-agent"));
-      return;
-    }
-  ret = ::connect(sock, (struct sockaddr *)&sunaddr, sizeof sunaddr);
-  if (ret < 0)
-    {
-      close(sock);
-      W(F("ssh_agent: connect: could not connect to socket for ssh-agent"));
-      return;
-    }
-  stream = shared_ptr<Stream>(new Stream(sock));
+  connect();
 }
 
 ssh_agent::~ssh_agent()
 {
-  if (connected())
-    {
-      stream->close();
-    }
-}
-
-bool
-ssh_agent::connected()
-{
-  return stream != NULL;
+  disconnect();
 }
 
 u32
@@ -272,38 +225,18 @@ ssh_agent::put_string_into_buf(string const & str, string & buf)
 }
 
 void
-ssh_agent::read_num_bytes(u32 const len, string & out)
-{
-  int ret;
-  const u32 bufsize = 4096;
-  char read_buf[bufsize];
-  u32 get = len;
-  while (get > 0)
-    {
-      ret = stream->read(read_buf, min(get, bufsize));
-      E(ret >= 0, F("stream read failed (%i)") % ret);
-      if (ret > 0)
-        L(FL("ssh_agent: read_num_bytes: read %i bytes") % ret);
-      out.append(read_buf, ret);
-      get -= ret;
-    }
-  L(FL("ssh_agent: read_num_bytes: get: %u") % get);
-  L(FL("ssh_agent: read_num_bytes: length %u") % out.length());
-}
-
-void
 ssh_agent::fetch_packet(string & packet)
 {
   u32 len;
   string len_buf;
-  read_num_bytes(4, len_buf);
+  read_data(4, len_buf);
   u32 l = 0;
   len = get_long_from_buf(len_buf, l);
   E(len > 0, F("ssh_agent: fetch_packet: zero-length packet from ssh-agent"));
 
   L(FL("ssh_agent: fetch_packet: response len %u") % len);
 
-  read_num_bytes(len, packet);
+  read_data(len, packet);
 }
 
 vector<RSA_PublicKey> const
@@ -315,6 +248,8 @@ ssh_agent::get_keys()
       return keys;
     }
 
+  string out("\0\0\0\11", 4);
+  /*
   unsigned int ch;
   void * v = (void *)&ch;
   ch = 0;
@@ -325,7 +260,8 @@ ssh_agent::get_keys()
   stream->write(v, 1);
   ch = 11;
   stream->write(v, 1);
-
+  */
+  write_data(out);
   string packet;
   fetch_packet(packet);
 
@@ -452,7 +388,8 @@ ssh_agent::sign_data(RSA_PublicKey const & key,
   string packet_out;
   put_string_into_buf(data_out, packet_out);
 
-  stream->write(packet_out.c_str(), packet_out.length());
+  //stream->write(packet_out.c_str(), packet_out.length());
+  write_data(packet_out);
 
   string packet_in;
   fetch_packet(packet_in);
@@ -488,6 +425,12 @@ ssh_agent::sign_data(RSA_PublicKey const & key,
      % packet_in.length()));
 }
 
+bool
+ssh_agent::connected()
+{
+  return ssh_agent_platform::connected();
+}
+
 void
 ssh_agent::add_identity(RSA_PrivateKey const & key, string const & comment)
 {
@@ -511,7 +454,8 @@ ssh_agent::add_identity(RSA_PrivateKey const & key, string const & comment)
   string packet_out;
   put_string_into_buf(key_buf, packet_out);
 
-  stream->write(packet_out.c_str(), packet_out.length());
+  //stream->write(packet_out.c_str(), packet_out.length());
+  write_data(packet_out);
 
   string packet_in;
   fetch_packet(packet_in);

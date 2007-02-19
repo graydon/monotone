@@ -7,26 +7,25 @@
 #include "botan/bigint.h"
 #include <boost/shared_ptr.hpp>
 #include <vector>
+#include "platform.hh"
 
-class ssh_agent
+class ssh_agent : ssh_agent_platform
 {
 public:
   ssh_agent();
   ~ssh_agent();
-  bool connected();
   std::vector<Botan::RSA_PublicKey> const get_keys();
   void sign_data(Botan::RSA_PublicKey const & key,
                  std::string const & data,
                  std::string & out);
   void add_identity(Botan::RSA_PrivateKey const & key, std::string const & comment);
+  bool connected();
 
 private:
-  boost::shared_ptr<Netxx::Stream> stream;
   std::vector<Botan::RSA_PublicKey> keys;
 
   //helper functions for reading and unpacking data from ssh-agent
   void fetch_packet(std::string & packet);
-  void read_num_bytes(u32 const len, std::string & out);
   u32 get_long(char const * buf);
   u32 get_long_from_buf(std::string const & buf, u32 & loc);
   void get_string_from_buf(std::string const & buf,
