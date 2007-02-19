@@ -32,6 +32,7 @@
 #include "vocab.hh"
 #include "globish.hh"
 #include "charset.hh"
+#include "safe_map.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -1600,6 +1601,196 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
       prt.print_stanza(st);
     }
   output.write(prt.buf.data(), prt.buf.size());
+}
+
+// Name: put_file
+// Arguments:
+//   base ID (optional).
+//   file contents (binary, intended for automate stdio use)
+// Added in: 4.1
+// Purpose:
+//   Store a file in the database.
+//   Optionally encode it as a file_delta
+// Output format:
+//   The ID of the new file (40 digit hex string)
+// Error conditions:
+//   a runtime exception is thrown if base revision is not available
+AUTOMATE(put_file, N_("[BASE-ID] CONTENTS"), options::opts::none)
+{
+  file_id sha1sum;
+  transaction_guard tr(app.db);
+  if (args.size() == 1)
+    {
+      file_data dat(idx(args, 0)());
+      calculate_ident(dat, sha1sum);
+      if (!app.db.file_version_exists(sha1sum))
+        {
+          app.db.put_file(sha1sum, dat);
+        }
+      else L(FL("revision %s already known") % sha1sum);
+    }
+  else if (args.size() == 2)
+    {
+      file_data dat(idx(args, 1)());
+      calculate_ident(dat, sha1sum);
+      if (!app.db.file_version_exists(sha1sum))
+        {
+          file_id base_id(idx(args, 0)());
+          N(app.db.file_version_exists(base_id),
+            F("no file version %s found in database") % base_id);
+
+          file_data olddat;
+          app.db.get_file_version(base_id, olddat);
+          delta del;
+          diff(olddat.inner(), dat.inner(), del);
+          L(FL("data size %d, delta size %d") % dat.inner()().size() % del().size());
+          if (dat.inner()().size() <= del().size())
+            // the data is smaller or of equal size to the patch
+            app.db.put_file(sha1sum, dat);
+          else
+            app.db.put_file_version(base_id, sha1sum, file_delta(del));
+        }
+      else L(FL("revision %s already known") % sha1sum);
+    }
+  else throw usage(name);
+
+  tr.commit();
+  output << sha1sum << '\n';
+}
+
+// Name: put_revision
+// Arguments:
+//   revision-data
+// Added in: 4.1
+// Purpose:
+//   Store a revision into the database.
+// Output format:
+//   The ID of the new revision
+// Error conditions:
+//   none
+AUTOMATE(put_revision, N_("SINGLE-EDGE-DATA"), options::opts::none)
+{
+  if (args.size() != 1)
+    throw usage(name);
+
+  revision_t rev;
+  read_revision(revision_data(idx(args, 0)()), rev);
+
+  // recalculate manifest
+  temp_node_id_source nis;
+  rev.new_manifest = manifest_id();
+  for (edge_map::const_iterator e = rev.edges.begin(); e != rev.edges.end(); ++e)
+    {
+      // calculate new manifest
+      roster_t old_roster;
+      if (!null_id(e->first)) app.db.get_roster(e->first, old_roster);
+      roster_t new_roster = old_roster;
+      editable_roster_base eros(new_roster, nis);
+      e->second->apply_to(eros);
+      if (null_id(rev.new_manifest))
+        // first edge, initialize manifest
+        calculate_ident(new_roster, rev.new_manifest);
+      else
+        // following edge, make sure that all csets end at the same manifest
+        {
+          manifest_id calculated;
+          calculate_ident(new_roster, calculated);
+          I(calculated == rev.new_manifest);
+        }
+    }
+
+  revision_id id;
+  calculate_ident(rev, id);
+
+  if (app.db.revision_exists(id))
+    W(F("revision %s already present in the database") % id);
+  else
+    {
+      transaction_guard tr(app.db);
+      rev.made_for = made_for_database;
+      app.db.put_revision(id, rev);
+      tr.commit();
+    }
+
+  output << id << '\n';
+}
+
+// Name: cert
+// Arguments:
+//   revision ID
+//   certificate name
+//   certificate value
+// Added in: 4.1
+// Purpose:
+//   Add a revision certificate (like mtn cert).
+// Output format:
+//   nothing
+// Error conditions:
+//   none
+AUTOMATE(cert, N_("REVISION-ID NAME VALUE"), options::opts::none)
+{
+  if (args.size() != 3)
+    throw usage(name);
+  cert c;
+  revision_id rid(idx(args, 0)());
+  make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
+                   cert_value(idx(args, 2)()), app, c);
+  revision<cert> rc(c);
+  packet_db_writer dbw(app);
+  dbw.consume_revision_cert(rc);
+}
+
+// Name: db_set
+// Arguments:
+//   variable domain
+//   variable name
+//   veriable value
+// Added in: 4.1
+// Purpose:
+//   Set a database variable (like mtn database set)
+// Output format:
+//   nothing
+// Error conditions:
+//   none
+AUTOMATE(db_set, N_("DOMAIN NAME VALUE"), options::opts::none)
+{
+  if (args.size() != 3)
+    throw usage(name);
+  var_domain domain = var_domain(idx(args, 0)());
+  utf8 name = idx(args, 1);
+  utf8 value = idx(args, 2);
+  var_key key(domain, var_name(name()));
+  app.db.set_var(key, var_value(value()));
+}
+
+// Name: db_get
+// Arguments:
+//   variable domain
+//   variable name
+// Added in: 4.1
+// Purpose:
+//   Get a database variable (like mtn database ls vars | grep NAME)
+// Output format:
+//   variable value
+// Error conditions:
+//   a runtime exception is thrown if the variable is not set
+AUTOMATE(db_get, N_("DOMAIN NAME"), options::opts::none)
+{
+  if (args.size() != 2)
+    throw usage(name);
+  var_domain domain = var_domain(idx(args, 0)());
+  utf8 name = idx(args, 1);
+  var_key key(domain, var_name(name()));
+  var_value value;
+  try
+    {
+      app.db.get_var(key, value);
+    }
+  catch (std::logic_error)
+    {
+      N(false, F("variable not found"));
+    }
+  output << value();
 }
 
 // Local Variables:
