@@ -29,6 +29,10 @@ And something close (but not perfect) for VIM:
 
 vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
+The appropriate astyle options are:
+
+astyle --style=gnu -s2 -p 
+
 monotone's source includes a number of third party libraries.  These have
 been imported from upstream, and should retain the original coding style of
 the particular library in all cases.  This makes life easier when a
