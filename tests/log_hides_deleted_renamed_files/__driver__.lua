@@ -26,7 +26,7 @@ check(mtn("log", "foo"), 1, 0, false)
 
 check(mtn("log", "baz"), 1, 0, false)
 
-check(mtn("log", "bar"), 0, true, false)
+check(mtn("log", "--no-graph", "bar"), 0, true, false)
 rename("stdout", "log")
 check(grep("^Addition of [a-z][a-z][a-z].$", "log"), 0, true)
 check(get("first"))
@@ -34,7 +34,7 @@ canonicalize("first")
 canonicalize("stdout")
 check(samefile("stdout", "first"))
 
-check(mtn("log"), 0, true, false)
+check(mtn("log", "--no-graph"), 0, true, false)
 rename("stdout", "log")
 check(grep("^Addition of [a-z][a-z][a-z].$", "log"), 0, true)
 check(get("second"))
