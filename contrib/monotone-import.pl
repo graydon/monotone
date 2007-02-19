@@ -89,15 +89,15 @@ if (!file_name_is_absolute($user_database)) {
 ######################################################################
 # Set up internal variables.
 #
-my $database = " --db=$user_database";
+my $database = "--db='$user_database'";
 my_debug("using database $user_database");
 
 my @files_to_clean_up = ();
 my @directories_to_clean_up = ();
 
 my @branches =
-    grep /^${user_branch}$/,
-	map { chomp; $_ } my_backtick("monotone$database list branches");
+    grep { $_ eq ${user_branch} }
+	map { chomp; $_ } my_backtick("mtn $database list branches");
 
 if ($#branches > 0) {
     my_error("More than one branch named $user_branch.  This is a serious error in your database!\n");
@@ -109,7 +109,7 @@ if ($#branches == 0) {
     @heads =
 	map {
 	    chomp; $_;
-	} my_backtick("monotone$database automate heads $user_branch");
+	} my_backtick("mtn $database automate heads '$user_branch'");
 
     if ($#heads > 0) {
 	my_error("More than one head in the branch $user_branch.  Please merge before importing\n");
@@ -130,36 +130,51 @@ if (-d $MT_dir) {
 # directory.  This is really the simplest trick to do an import, but
 # note that it is sensitive to changes in monotone.
 #
+my_debug("creating control directory $MT_dir");
 mkdir $MT_dir;
 push @directories_to_clean_up, $MT_dir;
 
-my ($options, $revision) = map { catfile($MT_dir, $_) } ("options",
-							 "revision");
+my ($format, $options, $revision, $log) = map { catfile($MT_dir, $_) } ("format", "options",
+							 "revision", "log");
+
+open FORMAT, ">$format" || my_error("Couldn't create $format: $!\n");
+print FORMAT "2\n";
+close FORMAT;
 
 open OPTIONS, ">$options" || my_error("Couldn't create $options: $!\n");
-print OPTIONS "  branch \"$user_branch\"\n";
 print OPTIONS "database \"$user_database\"\n";
-print OPTIONS "     key \"\"\n";
+print OPTIONS "  branch \"$user_branch\"\n";
+print OPTIONS "  keydir \"$ENV{HOME}/.monotone/keys\"\n";
 close OPTIONS;
 
+my $old_revision = ($heads[0] || "");
+my $new_manifest = "";
+if ($old_revision ne '') {
+    ($new_manifest) =
+        map  { $_ =~ s/^.*new_manifest\s+\[(.+)\].*$/$1/s; $_ }
+        grep { m/new_manifest\s+\[.+\]/s; }
+        my_backtick("mtn $database automate get_revision '$old_revision'");
+}
 open REVISION, ">$revision" || my_error("Couldn't create $revision: $!\n");
-map { print REVISION $_,"\n"; } @heads;
+print REVISION "format_version \"1\"\n";
+print REVISION "\n";
+print REVISION "new_manifest [$new_manifest]\n";
+print REVISION "\n";
+print REVISION "old_revision [$old_revision]\n";
 close REVISION;
 
-if (! -f ".mt-attrs") {
-    system("monotone revert .mt-attrs");
-    push @files_to_clean_up, ".mt-attrs";
-}
+open LOG, ">$log" || my_error("Couldn't create $log: $!\n");
+print LOG "";
+close LOG;
 
 ######################################################################
-# Figure out what files dropped out since the last import, and have
-# them explicitely removed unless it's .mt-attrs.  Make sure any
-# attributes associated with them are removed as well.
+# Figure out what files dropped out since the last import, and have them
+# explicitely removed. Make sure any attributes associated with them are
+# removed as well.
 #
+my_debug("determining files to remove");
 map {
     chomp;
-    if ($_ ne ".mt-attrs") {
-
 	# Because monotone will complain and refuse to do anything if
 	# a file is missing before it's dropped, we need to make sure
 	# it's there long enough to be able to drop it.  So, we "touch"
@@ -177,40 +192,39 @@ map {
 	} File::Spec->splitdir(dirname($_));
 	open FILE, ">$_"; close FILE; # touch
 
-	my_system("monotone drop \"$_\"");
-	my_system("monotone attr drop \"$_\" execute");
+	my_system("mtn drop '$_'");
+	my_system("mtn attr drop '$_' mtn:execute");
 
 	unlink $_;
 	map { rmdir $_ } @created_dirs;
-    }
-} my_backtick("monotone list missing\n");
+} my_backtick("mtn list missing");
 
 ######################################################################
 # Figure out what files are new since the last import, and have them
 # explicitely added.
 #
-my @new_files = map { chomp; my_system("monotone add \"$_\""); $_ }
-		    my_backtick("monotone list unknown\n");
+my_debug("determining files to add");
+my @new_files = map { chomp; my_system("mtn add '$_'"); $_ }
+		    my_backtick("mtn list unknown");
 
 ######################################################################
 # Figure out which of the new files are executable, and give them the
 # execute attribute.
 #
+my_debug("determining files with executable attribute");
 map {
     if (-x $_) {
-	my_system("monotone attr set \"$_\" execute true");
+	my_system("mtn attr set '$_' mtn:execute true");
     }
 } @new_files;
 
 ######################################################################
 # Commit and tag.
 #
-my_system("monotone commit --message=\"$user_message\"");
-open REV,catfile($MT_dir, "revision");
-my $newrev = <REV>;
-chomp $newrev;
-close REV;
-my_system("monotone tag $newrev \"$user_tag\"");
+my_debug("commit and tag");
+my_system("mtn commit --message='$user_message'");
+my ($newrev) = map { chomp; $_ } my_backtick("mtn automate get_base_revision_id");
+my_system("mtn tag '$newrev' '$user_tag'");
 
 ######################################################################
 # Tell the user what he can do with the import.
@@ -219,7 +233,7 @@ print "********** IMPORTANT NOTICE **********\n";
 print "If you want the changes that come with the import to appear in\n";
 print "another branch (like your development branch), do the following\n";
 print "\n";
-print "monotone$database propagate $user_branch {your-chosen-branch}\n";
+print "mtn $database propagate '$user_branch' {your-chosen-branch}\n";
 print "**************************************\n";
 
 ######################################################################
@@ -399,14 +413,12 @@ Sets the message for the commit of the import.
 
 =item B<--tag>=I<tag>
 
-Sets the tag to be associated with the import.  NOT CURRENTLY USED BUT
-REQUIRED!
+Sets the tag to be associated with the import.
 
 =item B<--debug>
 
 Makes B<monotone-import.pl> go to debug mode.  It means a LOT of extra
-output, and also implies B<--noupdate> and B<--nomail> unless
-specified differently on the command line.
+output.
 
 =item B<--quiet>
 
