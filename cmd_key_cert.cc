@@ -8,6 +8,7 @@
 // PURPOSE.
 
 #include <sstream>
+#include <fstream>
 
 #include "cert.hh"
 #include "charset.hh"
@@ -15,12 +16,17 @@
 #include "keys.hh"
 #include "packet.hh"
 #include "transforms.hh"
+#include "ssh_agent.hh"
+#include "botan/pipe.h"
 
 using std::cout;
 using std::ostream_iterator;
 using std::ostringstream;
 using std::set;
 using std::string;
+using std::ofstream;
+using Botan::Pipe;
+using Botan::RSA_PrivateKey;
 
 CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
     options::opts::none)
@@ -107,6 +113,62 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   app.keys.delete_key(ident);
   app.keys.put_key_pair(ident, key);
   P(F("passphrase changed"));
+}
+
+CMD(ssh_agent_export, N_("key and cert"),
+    N_("[FILENAME]"),
+    N_("export your monotone key for use with ssh-agent"),
+    options::opts::none)
+{
+  if (args.size() > 1)
+    throw usage(name);
+
+  rsa_keypair_id id;
+  keypair key;
+  get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  utf8 new_phrase;
+  get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
+  Pipe p;
+  p.start_msg();
+  if (new_phrase().length())
+    {
+      Botan::PKCS8::encrypt_key(*priv,
+                                p,
+                                new_phrase(),
+                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+    }
+  else
+    {
+      Botan::PKCS8::encode(*priv, p);
+    }
+  string decoded_key = p.read_all_as_string();
+  if (args.size() == 0)
+    cout << decoded_key;
+  else
+    {
+      ofstream fout(idx(args,0)().c_str(), ofstream::out);
+      fout << decoded_key;
+    }
+}
+
+CMD(ssh_agent_add, N_("key and cert"),
+    N_(""),
+    N_("Add your momotone key to ssh-agent"),
+    options::opts::none)
+{
+  if (args.size() > 1)
+    throw usage(name);
+
+  rsa_keypair_id id;
+  keypair key;
+  get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  app.agent.add_identity(*priv, id());
 }
 
 CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),

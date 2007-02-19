@@ -27,6 +27,7 @@ class lua_hooks;
 #include "project.hh"
 #include "vocab.hh"
 #include "work.hh"
+#include "ssh_agent.hh"
 
 namespace Botan
 {
@@ -49,6 +50,7 @@ public:
   lua_hooks lua;
   key_store keys;
   workspace work;
+  ssh_agent agent;
 
   options opts;
 
