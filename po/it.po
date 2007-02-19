@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-02-19 00:22+0100\n"
+"PO-Revision-Date: 2007-02-19 16:58+0100\n"
 "Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -56,9 +56,8 @@ msgid "SELECTOR"
 msgstr "SELETTORE"
 
 #: asciik.cc:382
-#, fuzzy
 msgid "prints an ASCII representation of the graph"
-msgstr "visualizza una rappresentazione ASCII del grafo"
+msgstr "stampa una rappresentazione ASCII del grafo"
 
 #: asciik.cc:385
 #: automate.cc:66
@@ -508,6 +507,8 @@ msgid ""
 "this workspace has more than one parent\n"
 "(specify a revision to diff against with --revision)"
 msgstr ""
+"questo spazio di lavoro ha più di un genitore\n"
+"(specificare una revisione per confronto diff con --revision)"
 
 #: cmd_diff_log.cc:469
 #: cmd_ws_commit.cc:79
@@ -568,7 +569,7 @@ msgstr "solo un comando permesso tra ‘--last’ e ‘--next’"
 #: cmd_diff_log.cc:913
 #, c-format
 msgid "(marked node: %s)"
-msgstr ""
+msgstr "(nodo segnato: ‘%s’)"
 
 #: cmd_files.cc:27
 msgid "load file contents into db"
@@ -1212,7 +1213,7 @@ msgstr "ALTRA-REVISIONE"
 
 #: cmd_merging.cc:601
 msgid "Merge OTHER-REVISION into the current workspace's base revision, and update the current workspace with the result.  There can be no pending changes in the current workspace.  Both OTHER-REVISION and the workspace's base revision will be recorded as parents on commit. The workspace's selected branch is not changed."
-msgstr ""
+msgstr "Unisce ALTRA-REVISIONE nella revisione base del corrente spazio di lavoro, e aggiorna lo spazio di lavoro col risultato. Ci può essere nessun cambiamento nello spazio di lavoro attuale. Sia ALTRA-REVISIONE che revisione base del corrente spazio di lavoro saranno registrate come genitori nel commit. Il ramo selezionato dello spazio di lavoro non viene cambiato"
 
 #: cmd_merging.cc:632
 #, c-format
@@ -1811,12 +1812,12 @@ msgstr "Nessun attributo ‘%s’ nel percorso ‘%s’"
 
 #: cmd_ws_commit.cc:687
 msgid "commit workspace to database"
-msgstr "salvataggio dello spazio di lavoro nel database"
+msgstr "esegui commit dello spazio di lavoro nel database"
 
 #: cmd_ws_commit.cc:721
 #, c-format
 msgid "no changes to commit"
-msgstr "nessuna modifica da salvare"
+msgstr "nessuna modifica per il commit"
 
 #: cmd_ws_commit.cc:738
 #, c-format
@@ -1848,7 +1849,7 @@ msgstr ""
 #: cmd_ws_commit.cc:773
 #, c-format
 msgid "empty log message; commit canceled"
-msgstr "messaggio di log vuoto; salvataggio annullato"
+msgstr "messaggio di log vuoto; commit annullato"
 
 #: cmd_ws_commit.cc:795
 #, c-format
@@ -1874,7 +1875,7 @@ msgstr "Nel tuo database manca la versione %s del file ‘%s’"
 #: cmd_ws_commit.cc:899
 #, c-format
 msgid "committed revision %s"
-msgstr "salvato come revisione %s"
+msgstr "eseguito commit revisione ‘%s’"
 
 #: cmd_ws_commit.cc:905
 #, c-format
@@ -2835,9 +2836,9 @@ msgid "decoding variable length string of %d bytes for '%s', maximum is %d"
 msgstr "decodifica in corso della stringa a lungheza variabile di %d byte per ‘%s’, il massimo è %d"
 
 #: netio.hh:333
-#, fuzzy, c-format
+#, c-format
 msgid "expected %s to end at %d, have %d bytes"
-msgstr "era previsto che ‘%s’ terminasse alla posizione %d, ma sono disponibili ancora %d byte"
+msgstr "era previsto che ‘%s’ terminasse in %d, ci sono %d byte"
 
 #: netsync.cc:258
 #, c-format
@@ -3049,11 +3050,9 @@ msgid "sink"
 msgstr "pozzo"
 
 #: netsync.cc:2304
-#, fuzzy, c-format
+#, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
-msgstr ""
-"il buffer in ingresso per il nodo ‘%s’ si è sovraccaricato\n"
-"dopo la trasmissione del comando netcmd"
+msgstr "il buffer d'ingresso per il peer ‘%s’ è sovraccarico dopo invio netcmd"
 
 #: netsync.cc:2316
 #: netsync.cc:2415
@@ -3087,9 +3086,9 @@ msgid "successful exchange with %s"
 msgstr "scambio con ‘%s’ avvenuto con successo"
 
 #: netsync.cc:2476
-#, fuzzy, c-format
+#, c-format
 msgid "peer %s disconnected after we informed them of error"
-msgstr "il nodo ‘%s’ si è disconnesso dopo la notifica di un errore"
+msgstr "peer ‘%s’ disconnesso dopo nostra notifica di errore"
 
 #: netsync.cc:2481
 #, c-format
@@ -3123,29 +3122,27 @@ msgstr "lettura del peer ‘%s’ fallita durante il lavoro (errore)"
 msgid "peer %s read failed in shutdown state (possibly client misreported error)"
 msgstr "lettura del peer ‘%s’ fallita durante la chiusura (forse il cliente ha mal trasmesso l'errore)"
 
-# TODO: DEL peer?
 #: netsync.cc:2638
-#, fuzzy, c-format
+#, c-format
 msgid "peer %s read failed in confirmed state (success)"
-msgstr "lettura dal peer ‘%s’ fallita durante la conferma (successo)"
+msgstr "lettura peer ‘%s’ fallita durante la conferma (successo)"
 
-# TODO: DEL peer?
 #: netsync.cc:2659
-#, fuzzy, c-format
+#, c-format
 msgid "peer %s write failed in working state (error)"
-msgstr "scrittura del peer ‘%s’ fallita durante il lavoro (errore)"
+msgstr "scrittura peer ‘%s’ fallita durante il lavoro (errore)"
 
-# TODO: DEL peer?
+# TODO: non sono sicura se il cliente è sogg o dest
 #: netsync.cc:2664
-#, fuzzy, c-format
+#, c-format
 msgid "peer %s write failed in shutdown state (possibly client misreported error)"
-msgstr "scrittura del peer ‘%s’ fallita durante la chiusura (errore forse mal trasmesso al cliente)"
+msgstr "scrittura peer ‘%s’ fallita durante la chiusura (errore forse mal trasmesso al cliente)"
 
 # TODO: conferma DEL peer?
 #: netsync.cc:2670
-#, fuzzy, c-format
+#, c-format
 msgid "peer %s write failed in confirmed state (success)"
-msgstr "scrittura del peer ‘%s’ fallita durante la conferma (successo)"
+msgstr "scrittura peer ‘%s’ fallita durante la conferma (successo)"
 
 # TODO: "mi scollego", "sconnessione in corso", o che? (da cambiare in tutti)
 #: netsync.cc:2697
@@ -3208,22 +3205,22 @@ msgid "Cannot find key '%s'"
 msgstr "Non trovo la chiave ‘%s’"
 
 #: netsync.cc:3204
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
 "%s"
 msgstr ""
-"il criterio di inclusione del ramo contiene un apice\n"
-"o delle virgolette: %s"
+"il criterio di inclusione del ramo contiene un carattere virgolette:\n"
+"‘%s’"
 
 #: netsync.cc:3210
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
 "%s"
 msgstr ""
-"il criterio di esclusione del ramo contiene un apice\n"
-"o delle virgolette: %s"
+"il criterio di esclusione del ramo contiene un carattere virgolette:\n"
+"‘%s’"
 
 #: netsync.cc:3245
 #: netsync.cc:3249
@@ -3320,9 +3317,8 @@ msgid "when rosterifying, drop attrs entries with the given key"
 msgstr "durante la conversione al formato con roster, elimina gli attributi con una chiave specificata"
 
 #: options_list.hh:228
-#, fuzzy
 msgid "don't perform the operation, just show what would have happened"
-msgstr "non esegue l'operazione, mostra solamente cosa sarebbe stato fatto"
+msgstr "non esegue l'operazione, mostra solamente cosa sarebbe successo"
 
 #: options_list.hh:236
 msgid "file to dump debugging log to, on failure"
@@ -3377,9 +3373,8 @@ msgid "set filename containing commit changelog message"
 msgstr "legge il messaggio di ChangeLog del commit da un file"
 
 #: options_list.hh:347
-#, fuzzy
 msgid "perform the operations for files missing from workspace"
-msgstr "esegue l'operazione sui file mancanti dal workspace"
+msgstr "esegue l'operazione per file mancanti dallo spazio di lavoro"
 
 #: options_list.hh:355
 msgid "limit log output to the next number of entries"
@@ -3414,18 +3409,16 @@ msgid "record process id of server"
 msgstr "registra l'id del processo server"
 
 #: options_list.hh:421
-#, fuzzy
 msgid "suppress verbose, informational and progress messages"
-msgstr "sopprime i messaggi di notifica estesa, informativi e di progresso di esecuzione"
+msgstr "sopprime i messaggi di notifica estesa, informativi e di avanzamento"
 
 #: options_list.hh:431
 msgid "load extra rc file"
 msgstr "carica un ulteriore file rc"
 
 #: options_list.hh:439
-#, fuzzy
 msgid "suppress warning, verbose, informational and progress messages"
-msgstr "sopprime i messaggi di avvertimento, di notifica estesa, informativi e di progresso di esecuzione"
+msgstr "sopprime i messaggi di avvertimento, di notifica estesa, informativi e di avanzamento"
 
 #: options_list.hh:449
 msgid "also operate on the contents of any listed directories"
@@ -3475,9 +3468,8 @@ msgid "print version number, then exit"
 msgstr "stampa il numero di versione ed esce"
 
 #: options_list.hh:537
-#, fuzzy
 msgid "insert command line arguments taken from the given file"
-msgstr "inserisce i parametri da linea di comando specificati nel file fornito"
+msgstr "inserisce argomenti da linea di comando presi dal file dato"
 
 #: packet.cc:106
 #, c-format
@@ -3671,7 +3663,7 @@ msgid "Path %s added twice with differing content"
 msgstr "Percorso ‘%s’ aggiunto due volte con contenuti diversi"
 
 #: revision.cc:1536
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
 "please contact %s so we can work out the right way to migrate this\n"
@@ -3679,11 +3671,9 @@ msgid ""
 "seriously, if you'd like to keep it, we're happy to figure out how)"
 msgstr ""
 "attributo sconosciuto ‘%s’ nel percorso ‘%s’\n"
-"siete pregati di contattare ‘%s’ in modo da darci la possibilità di\n"
-"studiare una soluzione per le Vostre esigenze di conversione\n"
-"(se desiderate invece semplicemente scartare l'attributo\n"
-"consultate l'help per l'opzione --drop-attr, ma se siete interessati\n"
-"a tenerlo saremo lieti di fornirVi una soluzione)"
+"prego contatta ‘%s’ così possiamo trovare il modo giusto per convertirlo\n"
+"(se vuoi invece semplicemente scartare l'attributo, vedi lo switch --drop-attr, ma\n"
+"se sei interessato a tenerlo, saremo lieti di fornirti una soluzione)"
 
 #: revision.cc:1649
 #, c-format
@@ -3715,16 +3705,15 @@ msgid "cached height: %s"
 msgstr "altezza in cache: %s"
 
 #: revision.cc:1905
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
 "I only know how to understand the version '1' format\n"
 "a newer version of monotone is required to complete this operation"
 msgstr ""
-"è stata incontrata una revisione con un formato sconosciuto\n"
-"la cui versione è ‘%s’. l'unica versione conosciuta al momento è\n"
-"la versione ‘1’. è necessario utilizzare una nuova versione di\n"
-"monotone per completare l'operazione "
+"incontrata una revisione con un formato sconosciuto, versione ‘%s’.\n"
+"capisco solo la versione formato ‘1’\n"
+"è necessaria una versione di monotone più nuova per completare l'operazione "
 
 #: sanity.cc:145
 #, c-format
@@ -3741,11 +3730,9 @@ msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: invariante ‘%s’ violato"
 
 #: sanity.cc:252
-#, fuzzy, c-format
+#, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d"
-msgstr ""
-"%s:%d: l'indice ‘%s’ = %d ha mandato in overflow il vettore ‘%s’\n"
-"richiedendo una grandezza di %d"
+msgstr "%s:%d: l'indice ‘%s’ = %d ha mandato in overflow il vettore ‘%s’ con grandezza %d"
 
 # TODO: 'set', non 'space'
 #: sanity.cc:273
@@ -3789,17 +3776,14 @@ msgstr ""
 "scrivibili e che tu non abbia esaurito lo spazio su disco"
 
 #: schema_migration.cc:90
-#, fuzzy
 msgid ""
 "(if this is a database last used by monotone 0.16 or older,\n"
 "you must follow a special procedure to make it usable again.\n"
 "see the file UPGRADE, in the distribution, for instructions.)"
 msgstr ""
-"(se questo è un database che è stato usato per l'ultima volta\n"
-"con monotone 0.16 o antecedente sarà necessario eseguire una\n"
-"procedura speciale per renderlo di nuovo utilizzabile;\n"
-"leggere il file ‘UPGRADE’ presente nella distribuzione per\n"
-"ulteriori istruzioni.)"
+"(se questo è un database usato per l'ultima volta con monotone 0.16 o più vecchio\n"
+"devi seguire una procedura speciale per renderlo di nuovo utilizzabile.\n"
+"vedi il file ‘UPGRADE’, presente nella distribuzione, per istuzioni.)"
 
 #: schema_migration.cc:99
 #, c-format
@@ -3847,13 +3831,13 @@ msgid "%s (database has no tables!)"
 msgstr "%s (database senza tabelle!)"
 
 #: schema_migration.cc:912
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "cannot use the empty sqlite database %s\n"
 "(monotone databases must be created with '%s db init')"
 msgstr ""
 "impossibile usare il database sqlite vuoto ‘%s’\n"
-"i database per monotone devono essere creati con:‘%s db init’"
+"(i database monotone devono essere creati con:‘%s db init’)"
 
 # TODO: remove \n
 #: schema_migration.cc:917
@@ -3862,28 +3846,26 @@ msgid "%s does not appear to be a monotone database\n"
 msgstr "‘%s’ non sembra essere un database monotone\n"
 
 #: schema_migration.cc:921
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s appears to be a monotone database, but this version of\n"
 "monotone does not recognize its schema.\n"
 "you probably need a newer version of monotone."
 msgstr ""
 "‘%s’ sembra essere un database monotone, però questa versione\n"
-"di monotone non riconosce il suo schema di creazione.\n"
-"probabilmenete è necessario installare una versione di monotone\n"
-"più recente."
+"di monotone non riconosce il suo schema.\n"
+"probabilmenete è necessaria una versione di monotone più recente."
 
 #: schema_migration.cc:940
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "database %s is laid out according to an old schema\n"
 "try '%s db migrate' to upgrade\n"
 "(this is irreversible; you may want to make a backup copy first)"
 msgstr ""
 "il database ‘%s’ e stato creato secondo uno schema obsoleto\n"
-"provare a eseguire ‘%s db migrate’ per aggiornarlo\n"
-"(questo processo è irreversibile; è consigiabile eseguire prima\n"
-"una copia di backup)"
+"provare con ‘%s db migrate’ per aggiornarlo\n"
+"(questo processo è irreversibile; è consigiabile eseguire prima una copia di backup)"
 
 #: schema_migration.cc:962
 #, c-format
@@ -3909,7 +3891,7 @@ msgstr "aggiornato allo schema %s"
 #: schema_migration.cc:1007
 #, c-format
 msgid "committing changes to database"
-msgstr "salvataggio delle modifiche nel database in corso"
+msgstr "eseguito commit delle modifiche nel database"
 
 #: schema_migration.cc:1011
 #, c-format
@@ -3961,7 +3943,7 @@ msgid "Press enter when the subprocess has completed"
 msgstr "Premi ‘invio’ quando il sotto-processo è completato"
 
 #: transforms.cc:91
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s\n"
 "this may be due to a memory glitch, data corruption during\n"
@@ -3969,11 +3951,11 @@ msgid ""
 "or a bug in monotone.  if the error persists, please contact\n"
 "%s for assistance.\n"
 msgstr ""
-"‘%s’ la causa potrebbe essere: un fallimento temporaneo nella\n"
-"memoria, una corruzione dei dati durante un trasferimento via rete,\n"
-"una corruzione nel workspace o nel database o un errore in\n"
-"monotone. se l'errore persiste siete pregati di contattare ‘%s’\n"
-"per avere assistenza.\n"
+"‘%s’ \n"
+"la causa potrebbe essere un fallimento nella memoria, una corruzione di dati durante\n"
+"un trasferimento via rete, una corruzione del tuo database o spazio di lavoro\n"
+"o un bug in monotone. se l'errore persiste, prego contatta\n"
+"‘%s’ per assistenza.\n"
 
 #: ui.cc:158
 #, c-format
@@ -4126,11 +4108,9 @@ msgid "adding %s to workspace manifest"
 msgstr "aggiungo ‘%s’ al manifesto dello spazio di lavoro"
 
 #: work.cc:606
-#, fuzzy, c-format
+#, c-format
 msgid "cannot add %s, because %s is recorded as a file in the workspace manifest"
-msgstr ""
-"impossibile aggiungere ‘%s’ perché ‘%s’ è stato memorizzato come un file nel\n"
-"manifesto del workspace"
+msgstr "impossibile aggiungere ‘%s’ perché ‘%s’ è memorizzato come un file nel manifesto dello spazio di lavoro"
 
 #: work.cc:761
 #, c-format
@@ -4182,13 +4162,13 @@ msgstr "impossibile eliminare la cartella non vuota ‘%s’"
 #: work.cc:930
 #, c-format
 msgid "attach node %d blocked by unversioned path '%s'"
-msgstr ""
+msgstr "allega nodo %d bloccato da percorso non versionato ‘%s’"
 
 # TODO: attach NON È fusione
 #: work.cc:944
 #, c-format
 msgid "attach node %d blocked by blocked parent '%s'"
-msgstr ""
+msgstr "allega nodo %d bloccato da genitore bloccato ‘%s’"
 
 #: work.cc:975
 #, c-format
@@ -4330,6 +4310,8 @@ msgid ""
 "workspace is locked\n"
 "you must clean up and remove the %s directory"
 msgstr ""
+"lo spazio di lavoro è bloccato\n"
+"devi pulire e rimuovere la directory ‘%s’"
 
 #: work_migration.cc:62
 #, c-format
