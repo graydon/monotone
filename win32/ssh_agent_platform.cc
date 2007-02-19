@@ -1,17 +1,20 @@
 bool
 ssh_agent_platform::connect() 
 {
+  return false;
 }
 
 bool
 ssh_agent_platform::disconnect()
 {
+  return false;
 }
 
 
 bool
 ssh_agent_platform::connected()
 {
+  return false;
 }
 
 void
