@@ -45,8 +45,8 @@
 
 	- "mtn merge_into_workspace" (still to be documented)
 
-	- "mtn asciik", a debug command to print the revision graph
-	  in ASCII.
+	- "mtn log" will now print an ASCII revision graph alongside the
+	  usual log text.
 
 	Other
 
