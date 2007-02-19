@@ -1,3 +1,7 @@
+#include "ssh_agent_platform.hh"
+
+using std:string;
+
 bool
 ssh_agent_platform::connect() 
 {
