@@ -1,3 +1,4 @@
+#include <string>
 #include "ssh_agent_platform.hh"
 
 using std::string;
