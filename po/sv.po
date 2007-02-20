@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-15 23:43+0100\n"
-"PO-Revision-Date: 2007-02-15 23:44+0100\n"
+"POT-Creation-Date: 2007-02-19 12:46+0100\n"
+"PO-Revision-Date: 2007-02-19 12:47+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -191,8 +191,8 @@ msgid "SELECTOR"
 msgstr "VÄLJARE"
 
 #: asciik.cc:382
-msgid "prints an ASCII-art tree representation"
-msgstr "visualisera revisionsträdet med en ASCIIgraf"
+msgid "prints an ASCII representation of the graph"
+msgstr "visualisera revisionsträdet med i ASCII"
 
 #: asciik.cc:385 automate.cc:66 automate.cc:90 automate.cc:137 automate.cc:217
 #: automate.cc:363 automate.cc:430 automate.cc:455 automate.cc:533
@@ -623,6 +623,11 @@ msgstr ""
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
+
+#: cmd_diff_log.cc:913
+#, c-format
+msgid "(marked node: %s)"
+msgstr "(markerad nod: %s)"
 
 #: cmd_files.cc:27
 msgid "load file contents into db"

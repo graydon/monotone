@@ -2,6 +2,15 @@
 
         0.33 release.
 
+        Several internal data formats have changed with this release;
+        migration is straight-forward.
+          -- Manifests are completely removed from the database.  To
+	     upgrade your databases, you must run:
+               $ mtn -d mydb.mtn db migrate
+        All of these operations are completely lossless, and 0.33
+        remains compatible with earlier versions with regards to
+        netsync.
+
         Changes
 
         - "mtn ls unknown" no longer recurses into unknown directories.
@@ -19,6 +28,45 @@
           have been removed. Similar functionality (probably based on
           file type attributes) is planned and will be added in a future
           release.
+
+	- update will switch to the branch of a given revision if it
+	  differs from the current workspace branch.
+
+	- use SQLite 3.3.12.
+
+	- schema migrator rebuilt and will now properly detect and report
+	  if the database used is created by a newer monotone than the one
+	  currently used.
+
+	- removed the man page mtn.1, as it hadn't been updated for a long
+	  time.
+
+	New features
+
+	- "mtn merge_into_workspace" (still to be documented)
+
+	- "mtn log" will now print an ASCII revision graph alongside the
+	  usual log text.
+
+	Other
+
+	- contrib/monotone-mirror.sh and
+	  contrib/monotone-mirror-postaction-update.sh, two scripts
+	  to mirror and update directories automatically.
+
+	- contrib/monotone-run-script-post-netsync.lua, to automatically
+	  update a directory as soon as new revisions or certs arrive for
+	  a given branch.
+
+	- contrib/monotone.bash_completion had some improvemens.
+
+	- contrib/monotone.el had some improvements.
+
+	Internal
+
+	- Internally, the concept of "projects" has been introduced.  It
+	  currently doesn't mean anything, but will be used later, with
+	  policy branches and similar.
 
 
 
