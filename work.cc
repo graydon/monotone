@@ -389,7 +389,7 @@ workspace::maybe_update_inodeprints()
       for (parent_map::const_iterator parent = parents.begin();
            parent != parents.end(); ++parent)
         {
-          roster_t const parent_ros = parent_roster(parent);
+          roster_t const & parent_ros = parent_roster(parent);
           if (parent_ros.has_node(nid))
             {
               node_t old_node = parent_ros.get_node(nid);
