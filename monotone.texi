@@ -1595,8 +1595,8 @@ branch 'jp.co.juicebot.jb7' is currently merged:
 The output of this command tells us that there is only one current
 ``head'' revision in the branch @code{jp.co.juicebot.jb7}, and it is
 the revision Jim just committed. A head revision is one without any
-descendents. Since Jim has not committed any changes to this revision
-yet, it has no descendents.
+descendants. Since Jim has not committed any changes to this revision
+yet, it has no descendants.
 
 @page
 @node    Basic Network Service
@@ -2326,7 +2326,7 @@ multiple monotone processes on the one database file.
 
 When Jim reappears, the next person to @command{sync} with him will
 often pass him information about both employees' work that they've
-sync'ed with eachother in the meantime, just as he used to do. In fact,
+sync'ed with each other in the meantime, just as he used to do. In fact,
 Jim now finds it more convenient to initiate the sync with one of the
 other servers when he has a spare moment and dynamic connectivity from a
 hotel room or airport.  Changes will flow between servers automatically
@@ -2567,13 +2567,13 @@ use. It can also transport netsync through SSH, or any program which
 can provide a full-duplex connection over @code{stdio}.
 
 When a monotone client initiates a push, pull, or sync operation, it
-parses the first command-line argument as a URI and calls a lua hook
-to convert that URI into a @dfn{connection command}. If the lua hook
+parses the first command-line argument as a URI and calls a Lua hook
+to convert that URI into a @dfn{connection command}. If the Lua hook
 returns a connection command, monotone spawns the command locally and
 speaks netsync over a pipe connected to the command's standard I/O
 handles. 
 
-If the lua hook does not return a connection command, monotone
+If the Lua hook does not return a connection command, monotone
 attempts to parse the command-line argument as a TCP address -- a
 hostname with an optional port number -- connects a TCP socket the
 host and port, and speaks netsync over the socket.
@@ -2608,7 +2608,7 @@ operation. Also note that monotone's default transport authentication
 is @emph{disabled} over these transports, to reduce the complexity of
 configuration and eliminate redundant protocol cost.
 
-Additional URI schemes can be supported by customization of the lua
+Additional URI schemes can be supported by customization of the Lua
 hooks @code{get_netsync_connect_command} and
 @code{use_transport_auth}. For details on these hooks, see
 @ref{Netsync Transport Hooks}.
@@ -2723,7 +2723,7 @@ revision which has an @code{author} cert beginning with @code{graydon}
 @heading Selector expansion
 
 Before selectors are passed to the database, they are expanded using a
-lua hook: @code{expand_selector}. The default definition of this hook
+Lua hook: @code{expand_selector}. The default definition of this hook
 attempts to guess a number of common forms for selection, allowing you
 to omit selector types in many cases. For example, the hook guesses
 that the typeless selector @code{jrh@@example.org} is an author
@@ -2736,8 +2736,8 @@ source code of the hook, see @ref{Hook Reference}.
 @heading Expanding dates
 
 All date-related selectors (@code{d}, @code{e}, @code{l}) support an
-english-like syntax similar to CVS.  This syntax is expanded to the
-numeric format by a lua hook: @code{expand_date}.
+English-like syntax similar to CVS.  This syntax is expanded to the
+numeric format by a Lua hook: @code{expand_date}.
 The allowed date formats are:
 @table @asis
 
@@ -3041,10 +3041,10 @@ each branch is a subgraph of the revision graph, containing only the
 nodes carrying a particular @code{branch} cert.
 
 Many of monotone's operations involve searching the revision graph for
-the ancestors or descendents of a particular revision, or extracting
+the ancestors or descendants of a particular revision, or extracting
 the ``heads'' of a subgraph, which is the subgraph's set of nodes with
-no descendents. For example, when you run the @command{update} command,
-monotone searches the subgraph consisting of descendents of the base
+no descendants. For example, when you run the @command{update} command,
+monotone searches the subgraph consisting of descendants of the base
 revision of the current workspace, trying to locate a unique head to
 update the base revision to.
 
@@ -3065,7 +3065,7 @@ test, or testsuite.
 @end itemize
 
 The evaluation of trust is done on a cert-by-cert basis by calling a
-set of lua hooks: @code{get_revision_cert_trust},
+set of Lua hooks: @code{get_revision_cert_trust},
 @code{get_manifest_cert_trust} and @code{get_file_cert_trust}. These
 hooks are only called when a cert has at least one good signature from
 a known key, and are passed @emph{all} the keys which have signed the
@@ -3456,7 +3456,7 @@ a transaction, so if it fails --- for example if the result of
 migration hashes to an unexpected value --- the migration is aborted.
 
 If more drastic changes to the underlying database are made, such as
-changing the page size of sqlite, or if you simply want to keep a
+changing the page size of SQLite, or if you simply want to keep a
 plain text version of your database on hand, the @command{mtn db
 dump} command can produce a plain ASCII SQL statement which generates
 the state of your database. This dump can later be reloaded using the
@@ -3698,7 +3698,7 @@ file 2 getting in
 @end group
 @end smallexample
 
-And that's it! The revisions were successfully transfered.
+And that's it! The revisions were successfully transferred.
 
 
 @page
@@ -3821,7 +3821,7 @@ This command, like other networking commands, involves a separate
 communication step with monotone. The extra command, @command{merge},
 ensures that the branch your are working on has a unique head. You can
 omit the @command{merge} step if you only want @command{update} to
-examine descendents of your base revision, and ignore other heads on
+examine descendants of your base revision, and ignore other heads on
 your branch.
 
 
@@ -4144,19 +4144,19 @@ will show up as a new head and thus a subsequent @command{merge} will
 incorporate the inverse of the disapproved changes in the other head(s).
 
 Conceptually, @command{disapprove}s contract is that disapprove(A) gives a 
-revision B such that whenever B is merged with a descendent D of A the merge 
+revision B such that whenever B is merged with a descendant D of A the merge 
 will result in what D ``would have looked like'' if A had never happened.
 
 Note that as a consequence of this contract the @command{disapprove} command 
 only works if @var{id} has exactly one ancestor, since it hasn't been 
-worked out how to generate such a descendent in the multi-ancestor case.
+worked out how to generate such a descendant in the multi-ancestor case.
 
 
 @item mtn heads --branch=@var{branchname}
 This command lists the ``heads'' of @var{branchname}. 
 
 The ``heads'' of a branch is the set of revisions which are members of
-the branch, but which have no descendents. These revisions are
+the branch, but which have no descendants. These revisions are
 generally the ``newest'' revisions committed by you or your
 colleagues, at least in terms of ancestry. The heads of a branch may
 not be the newest revisions, in terms of time, but synchronization of
@@ -4227,7 +4227,7 @@ consequently into the branch that revision resides in).
 
 If the given branch doesn't exist, it is created automatically.  If the
 branch already exists, any missing files are dropped and any unknown
-files are added before commiting.
+files are added before committing.
 
 If @command{--dry-run} is given, no commit is done.
 @end ftable
@@ -4275,7 +4275,7 @@ This command creates a directory in the filesystem relative to your
 current location and adds it to your workspace's ``work list''.  The
 changes are not reflected in your database until such time as you
 perform a commit.  If you use the @option{--no-respect-ignore} flag,
-entries in .mtn-ignore will not be honoured.
+entries in .mtn-ignore will not be honored.
 
 @item mtn [--execute] drop @var{pathname...}
 @itemx mtn drop --missing
@@ -4446,7 +4446,7 @@ fails, the update aborts, doing nothing. The stages are:
 @itemize
 @item
 Examine the ancestry graph of revisions in your database, and (subject
-to trust evaluation) select the set of all descendents of your
+to trust evaluation) select the set of all descendants of your
 workspace's base revision. Call this set the ``candidates'' of the
 update.
 @item
@@ -4594,7 +4594,7 @@ authentication and authorization facilities.
 
 The @var{uri-or-address} arguments given to @command{push},
 @command{pull}, and @command{sync} can be of two possible forms. If
-the argument is a URI, a lua hook may transform the URI into a
+the argument is a URI, a Lua hook may transform the URI into a
 connection command, and execute the command as a transport channel for
 netsync. If the argument is a simple hostname (with optional port
 number), monotone will use a TCP socket to the specified host and port
@@ -4958,7 +4958,7 @@ This command lists all vars in your database, or all vars within a given
 @itemx mtn ls known @var{pathname...}
 
 This command lists all files which would become part of the manifest of
-the next revision if you comitted your workspace at this point.
+the next revision if you committed your workspace at this point.
 
 Specifying pathnames to the @command{list known} command restricts
 the set of paths that are searched for manifest files. Files not
@@ -5239,7 +5239,7 @@ This command dumps an SQL statement representing the entire state of
 @var{dbfile} to the standard output stream. It is a very low-level
 command, and produces the most ``recoverable'' dumps of your database
 possible. It is sometimes also useful when migrating databases between
-variants of the underlying sqlite database format.
+variants of the underlying SQLite database format.
 
 @item mtn db load --db=@var{dbfile} 
 
@@ -5402,9 +5402,9 @@ command; it permanently and irrevocably deletes historical information
 from your database.  There are a number of caveats:
 @itemize
 @item
-It can only be applied to revisions that have no descendents.  If you
-want to kill a revision that has descendents, you must kill all of the
-descendents first.
+It can only be applied to revisions that have no descendants.  If you
+want to kill a revision that has descendants, you must kill all of the
+descendants first.
 @item
 It only removes the revision from your local database (hence the
 ``locally'' in the command name).  If you have already pushed this
@@ -5679,7 +5679,7 @@ One or more revision IDs, @var{rev1}, @var{rev2}, etc.
 
 @item Purpose:
 
-Prints the descendents of one or more revisions.
+Prints the descendants of one or more revisions.
 
 @item Sample output:
 
@@ -5690,13 +5690,13 @@ Prints the descendents of one or more revisions.
 
 @item Output format:
 
-Zero or more lines, each giving the ID of one descendent of the given
+Zero or more lines, each giving the ID of one descendant of the given
 revisions.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.  The lines are printed in alphabetically sorted
 order.
 
 The output does not include @var{rev1}, @var{rev2}, etc., except that if
-@var{rev2} is itself a descendent of @var{rev1}, then @var{rev2} will be
+@var{rev2} is itself a descendant of @var{rev1}, then @var{rev2} will be
 included in the output.
 
 @item Error conditions:
@@ -5819,7 +5819,7 @@ are no arguments, prints nothing.
 
 @item Output format:
 
-Zero or more lines, each giving the ID of one descendent of the given
+Zero or more lines, each giving the ID of one descendant of the given
 revisions.  Each line consists of a revision ID, in hexadecimal,
 followed by a newline.  The lines are printed in alphabetically sorted
 order.
@@ -5933,7 +5933,7 @@ None.
 Prints the leaves of the revision graph, i.e. all revision that have no
 children.  This is similar, but not identical to the functionality of
 @command{heads}, which prints every revision in a branch, that has no
-descendents in that branch.  If every revision in the database was in
+descendants in that branch.  If every revision in the database was in
 the same branch, then they would be identical.  Generally, every leaf is
 the head of some branch, but not every branch head is a leaf.
 
@@ -5971,7 +5971,7 @@ None.
 @item Purpose:
 
 Prints all branch certs present in the revision graph, that are not
-excluded by the lua hook @code{ignore_branch}.
+excluded by the Lua hook @code{ignore_branch}.
 
 @item Sample output:
 
@@ -6009,7 +6009,7 @@ If a branch pattern is given, prints all tags that are attached to
 revisions on branches matched by the pattern; otherwise prints all
 tags of the revision graph.
 
-If a branch name is ignored by means of the lua hook
+If a branch name is ignored by means of the Lua hook
 @code{ignore_branch}, it is neither printed, nor can it be matched by
 a pattern.
 
@@ -6066,7 +6066,7 @@ Stanzas are printed in arbitrary order.
 
 @item Error conditions:
 
-A run-time exception occures if an illegal branch pattern is
+A run-time exception occurs if an illegal branch pattern is
 specified.
 
 @end table
@@ -6251,7 +6251,7 @@ are not valid, detailed below.
 '   ' unchanged
 '  P' patched (contents changed)
 '  U' unknown (exists on the filesystem but not tracked)
-'  I' ignored (exists on the filesystem but excluded by lua hook)
+'  I' ignored (exists on the filesystem but excluded by Lua hook)
 '  M' missing (exists in the manifest but not on the filesystem)
 
 ' A ' added (invalid, add should have associated patch)
@@ -6464,7 +6464,7 @@ o6:author7:Timothye l6:commite
 
 The input is a series of commands. The command name plus arguments are
 provided as 'l' <string> [<string> ...] 'e', where <string> = <size> colon
-<data> . This may optionally be preceeded by a set of key=value pairs
+<data> . This may optionally be preceded by a set of key=value pairs
 (command options) as 'o' <string> <string> [<string> <string> ...] 'e', where
 strings come in pairs, key followed by value.
 
@@ -7485,7 +7485,7 @@ only be seen by the new hook. Since in Lua variables default to the global
 scope, the new hook is seen from inside monotone.
 
 Monotone also makes available to hook writers a number of helper
-functions exposing functionality not available with standard lua.
+functions exposing functionality not available with standard Lua.
 
 @menu
 * Hooks::                     All hooks called by monotone.
@@ -7515,7 +7515,7 @@ are taken.
 Called by monotone after the version @var{new_id} is committed. The
 second parameter, @var{revision} is the text of the revision, what would
 be given by "monotone cat revision @var{new_id}". The
-third parameter, @var{certs}, is a lua table containing the set of
+third parameter, @var{certs}, is a Lua table containing the set of
 certificate names and values committed along with this version. There
 is no default definition for this hook. 
 
@@ -7568,7 +7568,7 @@ The include and exclude patterns used by the client.
 
 Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
-by "monotone cat revision @var{new_id}". @var{certs} is a lua table
+by "monotone cat revision @var{new_id}". @var{certs} is a Lua table
 containing one subtable for each
 cert attached to the revision @var{new_id}. These subtables have fields
 named "key", "name", and "value", containing the signing key for the cert,
@@ -7580,7 +7580,7 @@ tracking, you can ignore that variable entirely.
 
 @item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value}, @var{session_id})
 
-Called by monotone after a cert is received through netsync, iff the revision
+Called by monotone after a cert is received through netsync, if the revision
 that the cert is attached to was not also received in the same netsync
 operation. @var{rev_id} is the revision id that the cert is attached to,
 @var{key} is the key that the cert is signed with, @var{name} is the name
@@ -7606,7 +7606,7 @@ Called by monotone after all other the netsync notification hooks have
 been called.  This hook would usually be used for post-netsync purposes,
 like collecting all the data from all other netsync notification hooks,
 make some nice output from them and finally send the result somewhere.
-It could also be used to prepare parallell databases with all the data
+It could also be used to prepare parallel databases with all the data
 to be displayed through something like viewmtn.
 
 @var{status} is a three digit integer that tells whether there was an error,
@@ -8156,7 +8156,7 @@ be nil.
 
 The default implementation of this hook calls the program @command{diff},
 and if @option{--diff-args} were not passed, takes default arguments
-from the lua variable @code{external_diff_default_args}.  You can
+from the Lua variable @code{external_diff_default_args}.  You can
 override this variable in your configuration file, without overriding
 the whole hook.
 
@@ -8167,7 +8167,7 @@ the whole hook.
 
 Monotone often needs to merge together the work of multiple distributed
 developers, and uses these hooks to help this process when the merge
-does not automatcally succeed.  Often these hooks will be used to invoke
+does not automatically succeed.  Often these hooks will be used to invoke
 an external interactive merge tool.  
 
 The @ref{Default hooks} include helper functions used by the hooks below
@@ -8195,7 +8195,7 @@ Returns a string, which should be the merger of the given texts.  The
 default definition of this hook delegates the actual merge to the
 result of @ref{get_preferred_merge3_command}.  The default definition
 of @ref{get_preferred_merge3_command} checks to see if the
-@env{MTN_MERGE} environment variable, or the lua variable
+@env{MTN_MERGE} environment variable, or the Lua variable
 @code{merger} are set to the name of a merge tool that it recognizes,
 and if not, then simply searches for whatever is installed on the
 local system.  For details, see the code in @ref{Default hooks}.
@@ -8318,7 +8318,7 @@ attr_init_functions["manual_merge"] =
 @end group
 @end smallexample
 
-The @code{binary_file} function is also defined as a lua hook. See
+The @code{binary_file} function is also defined as a Lua hook. See
 @ref{Default hooks}. 
 
 @end ftable
@@ -8348,7 +8348,7 @@ rejects empty log messages.
 @node   Additional Lua Functions
 @section Additional Lua Functions
 
-This section documents the additional lua functions made available to
+This section documents the additional Lua functions made available to
 hook writers. 
 
 @ftable @code
@@ -8360,7 +8360,7 @@ program and returns 0 if it exists on path and is executable, -1
 otherwise. 
 As an example, @code{existonpath("xxdiff")} returns 0 if the
 program xxdiff is available.
-On windows, this function automatically appends ``.exe'' to the
+On Windows, this function automatically appends ``.exe'' to the
 program name. In the previous example, @code{existonpath} would search
 for ``xxdiff.exe''.
 
@@ -8399,19 +8399,19 @@ remaining scripts and immediately returns false.
 @item is_executable(@var{filespec})
 
 This function returns true if the file is executable, false
-otherwise.  On windows this function returns always false.
+otherwise.  On Windows this function returns always false.
 
 @item kill(@var{pid} [, @var{signal}])
 
-This function calls the kill() C library function on posix systems and
+This function calls the kill() C library function on POSIX systems and
 TerminateProcess on Win32 (in that case @var{pid} is the process
 handle).  If the optional @var{signal} parameter is missing, SIGTERM
 will be used. 
-Returns 0 on succes, -1 on error.
+Returns 0 on success, -1 on error.
 
 @item make_executable(@var{filespec})
 
-This function marks the named file as executable.  On windows has no
+This function marks the named file as executable.  On Windows has no
 effect. 
 
 @item mkstemp(@var{template})
@@ -8444,9 +8444,9 @@ Makes the calling process sleep for the specified number of seconds.
 @item spawn(@var{executable} [, @var{args ...}])
 
 Starts the named executable with the given arguments.  Returns the
-process pid on Posix systems, the process handle on Win32 or -1 if
+process PID on POSIX systems, the process handle on Win32 or -1 if
 there was an error.
-Calls fork/execvp on Posix, CreateProcess on Win32.
+Calls fork/execvp on POSIX, CreateProcess on Win32.
 
 @strong{Important notice:}@*
 To spawn a process and wait for its completion, use the @code{execute()}
@@ -8456,7 +8456,7 @@ in a standardized way.
 
 @item wait(@var{pid})
 
-Wait until the process with given pid (process handle on Win32) exits.
+Wait until the process with given PID (process handle on Win32) exits.
 Returns two values: a result value and the exit code of the waited-for
 process.
 The exit code is meaningful only if the result value is 0.
@@ -8588,14 +8588,14 @@ RFC 3491, a specific profile of stringprep, used for preparing
 international domain names (IDNs)
 
 @item punycode
-RFC 3492, a "bootstring" encoding of unicode into ASCII. 
+RFC 3492, a "bootstring" encoding of Unicode into ASCII. 
 
 @item IDNA
 RFC 3490, international domain names for applications, a combination
 of the above technologies (nameprep, punycoding, limiting to LDH
 characters) to form a specific "ASCII compatible encoding" (ACE) of
-unicode, signified by the presence of an "unlikely" ACE prefix string
-"xn--". IDNA is intended to make it possible to use unicode relatively
+Unicode, signified by the presence of an "unlikely" ACE prefix string
+"xn--". IDNA is intended to make it possible to use Unicode relatively
 "safely" over legacy ASCII-based applications. the general picture of
 an IDNA string is this:
 
@@ -8634,7 +8634,7 @@ for platform name semantics, for example changing the Windows
 processing is performed by boost::filesystem.
 
 @item
-FIXME: Monotone does not properly handle case insensitivity on windows.
+FIXME: Monotone does not properly handle case insensitivity on Windows.
 
 @item
 A filename (in normal form) is constrained to be a nonempty sequence
@@ -9402,7 +9402,7 @@ must debate everything, and there would be no end to the discussion).
 
 Replies and further discussion concerning this email can be found in the  @uref{http://thread.gmane.org/gmane.comp.version-control.monotone.devel/4297, monotone-devel archives}.
 
-@subheading Improvments to *-merge
+@subheading Improvements to *-merge
 
 @verbatim
 From: Nathaniel Smith <njs@...>
