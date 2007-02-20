@@ -8022,7 +8022,7 @@ same privileges, or be trusted for the same purposes (indeed, some
 signers might be automated robots, with very specific purposes).
 
 These hooks allow the user to configure which signers will be trusted to
-make which kinds of assertions using certs. Monotone these certs when
+make which kinds of assertions using certs. Monotone uses these certs when
 selecting available revisions for commands such as @command{update}.
 
 Each user, or even each workspace, can have their own
