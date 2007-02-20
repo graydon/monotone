@@ -187,10 +187,10 @@ struct annotate_node_work
 struct by_rev {};
 
 // instead of using a priority queue and a set to keep track of the already
-// seen revisions, we use a multi index container. it stores work units is
-// indexed by their revision and their revision's height, with the latter
-// being the index used by default. usage of that data structure frees us
-// from the burden of keeping two data structures in sync.
+// seen revisions, we use a multi index container. it stores work units
+// indexed by both, their revision and their revision's height, with the
+// latter being used by default. usage of that data structure frees us from
+// the burden of keeping two data structures in sync.
 typedef multi_index_container<
   annotate_node_work,
   indexed_by<
@@ -705,7 +705,8 @@ do_annotate_node(annotate_node_work const & work_unit,
   for (set<revision_id>::const_iterator i = work_unit.interesting_ancestors.begin();
        i != work_unit.interesting_ancestors.end(); i++)
     {
-      // parent means parent in the annotate graph here
+      // here, 'parent' means either a real parent or one of the marked
+      // ancestors, depending on whether work_unit.marked is true.
       revision_id parent_revision = *i;
 
       L(FL("do_annotate_node processing edge from parent %s to child %s")
@@ -714,49 +715,32 @@ do_annotate_node(annotate_node_work const & work_unit,
       I(!(work_unit.revision == parent_revision));
 
       file_id file_in_parent;
-      set<revision_id> parents_interesting_ancestors;
-      bool parent_marked;
       
       work_units::index<by_rev>::type::iterator lmn =
         work_units.get<by_rev>().find(parent_revision);
 
+      // find out the content hash of the file in parent.
       if (lmn != work_units.get<by_rev>().end())
-        {
-          // we already added this parent, get the information from there
-          file_in_parent = lmn->content;
-          // next two values are actually not used
-          parents_interesting_ancestors.insert(lmn->interesting_ancestors.begin(),
-                                               lmn->interesting_ancestors.end());
-          parent_marked = lmn->marked;
-        }
+        // we already got the content hash.
+        file_in_parent = lmn->content;
       else
         {
           if (work_unit.marked)
-            {
-              // we are marked, so we don't know much about the ancestor
-              app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
-              if (null_id(file_in_parent))
-                {
-                  L(FL("file added in %s, continuing") % work_unit.revision);
-                  added_in_parent_count++;
-                  continue;
-                }
-              get_file_content_marks(app, parent_revision, work_unit.fid, parents_interesting_ancestors);
-              parent_marked = (parents_interesting_ancestors.size() == 1
-                               && *(parents_interesting_ancestors.begin()) == parent_revision);
-              if (parent_marked)
-                app.db.get_revision_parents(parent_revision, parents_interesting_ancestors);
-            }
+            app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
           else
-            {
-              // we know that this ancestor is marked
-              file_in_parent = work_unit.content;
-              parent_marked = true;
-              app.db.get_revision_parents(parent_revision, parents_interesting_ancestors);
-            }
+            // we are not marked, so parent is marked.
+            file_in_parent = work_unit.content;
+        }
+
+      // stop if file is not present in the parent.
+      if (null_id(file_in_parent))
+        {
+          L(FL("file added in %s, continuing") % work_unit.revision);
+          added_in_parent_count++;
+          continue;
         }
       
-      // The node was live in the parent, so this represents a delta.
+      // the node was live in the parent, so this represents a delta.
       shared_ptr<annotate_lineage_mapping> parent_lineage;
 
       if (file_in_parent == work_unit.content)
@@ -782,6 +766,24 @@ do_annotate_node(annotate_node_work const & work_unit,
       // work unit for it.
       if (lmn == work_units.get<by_rev>().end())
         {
+          set<revision_id> parents_interesting_ancestors;
+          bool parent_marked;
+
+          if (work_unit.marked)
+            {
+              // we are marked, thus we don't know a priori whether parent
+              // is marked or not.
+              get_file_content_marks(app, parent_revision, work_unit.fid, parents_interesting_ancestors);
+              parent_marked = (parents_interesting_ancestors.size() == 1
+                               && *(parents_interesting_ancestors.begin()) == parent_revision);
+            }
+          else
+            parent_marked = true;
+          
+          // if it's marked, we need to look at its parents instead.
+          if (parent_marked)
+            app.db.get_revision_parents(parent_revision, parents_interesting_ancestors);
+          
           rev_height parent_height;
           app.db.get_rev_height(parent_revision, parent_height);
           annotate_node_work newunit(work_unit.annotations,
@@ -792,12 +794,11 @@ do_annotate_node(annotate_node_work const & work_unit,
                                      parents_interesting_ancestors,
                                      file_in_parent,
                                      parent_marked);
-
           work_units.insert(newunit);
         }
       else
         {
-          // Already a pending node, so we just have to merge the lineage.
+          // already a pending node, so we just have to merge the lineage.
           L(FL("merging lineage from node %s to parent %s")
             % work_unit.revision % parent_revision);
           
