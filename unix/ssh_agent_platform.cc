@@ -72,6 +72,7 @@ ssh_agent_platform::connected()
 void
 ssh_agent_platform::write_data(string const & data)
 {
+  L(FL("ssh_agent_platform::write_data: asked to write %u bytes") % data.length());
   stream->write(data.c_str(), data.length());
 }
 
@@ -82,15 +83,17 @@ ssh_agent_platform::read_data(u32 const len, string & out)
   const u32 bufsize = 4096;
   char read_buf[bufsize];
   u32 get = len;
+  L(FL("ssh_agent: read_data: asked to read %u bytes") % len);
   while (get > 0)
     {
       ret = stream->read(read_buf, min(get, bufsize));
       E(ret >= 0, F("stream read failed (%i)") % ret);
+      /*
       if (ret > 0)
-	L(FL("ssh_agent: read_num_bytes: read %i bytes") % ret);
+	L(FL("ssh_agent: read_data: read %i bytes") % ret);
+      */
       out.append(read_buf, ret);
       get -= ret;
     }
-  L(FL("ssh_agent: read_num_bytes: get: %u") % get);
-  L(FL("ssh_agent: read_num_bytes: length %u") % out.length());
+  E(get == 0, F("%u extra bytes from ssh-agent") % -get);
 }

@@ -245,19 +245,10 @@ ssh_agent::get_keys()
       return keys;
     }
 
-  string out("\0\0\0\11", 4);
-  /*
-  unsigned int ch;
-  void * v = (void *)&ch;
-  ch = 0;
-  stream->write(v, 1);
-  stream->write(v, 1);
-  stream->write(v, 1);
-  ch = 1;
-  stream->write(v, 1);
-  ch = 11;
-  stream->write(v, 1);
-  */
+  string out("\0\0\0\1", 4);
+  char ch[1];
+  ch[0] = 11;
+  out.append(ch, 1);
   write_data(out);
   string packet;
   fetch_packet(packet);
