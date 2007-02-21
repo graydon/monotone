@@ -42,6 +42,28 @@ INSERT INTO heights VALUES('c81722b0236303685e341e16f0073d665090fb73',X'00000002
 INSERT INTO heights VALUES('43a2235616452dca74eecf39d645a69da8e0bdd0',X'000000010000000000000000');
 INSERT INTO heights VALUES('4a1274f35812a695e357c6e7c7cd60f449f0cada',X'00000003');
 INSERT INTO heights VALUES('75810233cc39b62341d669b610e9416fd6352869',X'00000004');
+CREATE TABLE manifest_certs
+	(
+	hash not null unique,   -- hash of remaining fields separated by ":"
+	id not null,            -- joins with manifests.id or manifest_deltas.id
+	name not null,          -- opaque string chosen by user
+	value not null,         -- opaque blob
+	keypair not null,       -- joins with public_keys.id
+	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
+	unique(name, id, value, keypair, signature)
+	);
+CREATE TABLE manifest_deltas
+	(
+	id not null,      -- strong hash of all the entries in a manifest
+	base not null,    -- joins with either manifest.id or manifest_deltas.id
+	delta not null,   -- rdiff to construct current from base
+	unique(id, base)
+	);
+CREATE TABLE manifests
+	(
+	id primary key,      -- strong hash of all the entries in a manifest
+	data not null        -- compressed, encoded contents of a manifest
+	);
 CREATE TABLE next_roster_node_number
 	(
 	node primary key        -- only one entry in this table, ever

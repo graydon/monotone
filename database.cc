@@ -156,8 +156,9 @@ database::check_format()
 {
   results res;
 
-  // Check for revisions, rosters, and heights.  We need these on both sides
-  // of the major decision below.
+  // Check for manifests, revisions, rosters, and heights.
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM manifests LIMIT 1"));
+  bool have_manifests = !res.empty();
   fetch(res, one_col, any_rows, query("SELECT 1 FROM revisions LIMIT 1"));
   bool have_revisions = !res.empty();
   fetch(res, one_col, any_rows, query("SELECT 1 FROM rosters LIMIT 1"));
@@ -165,10 +166,8 @@ database::check_format()
   fetch(res, one_col, any_rows, query("SELECT 1 FROM heights LIMIT 1"));
   bool have_heights = !res.empty();
   
-  // Find out if the manifest tables even exist.
-  fetch(res, one_col, any_rows,
-        query("SELECT name FROM sqlite_master WHERE name LIKE 'manifest%'"));
-  if (res.empty())
+
+  if (!have_manifests)
     {
       // Must have been changesetified and rosterified already.
       // Or else the database was just created.
@@ -180,11 +179,6 @@ database::check_format()
     }
   else
     {
-      // The manifest tables exist.  They should not be empty.  (Empty
-      // manifest tables are deleted during schema migration.)
-      fetch(res, one_col, any_rows, query("SELECT 1 FROM manifests LIMIT 1"));
-      I(!res.empty());
-
       // The rosters and heights tables should be empty.
       I(!have_rosters && !have_heights);
 
@@ -448,6 +442,8 @@ database::load(istream & in)
 void
 database::debug(string const & sql, ostream & out)
 {
+  ensure_open_for_maintenance();
+
   results res;
   fetch(res, any_cols, any_rows, query(sql));
   out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
@@ -1931,9 +1927,8 @@ database::delete_existing_revs_and_certs()
 void
 database::delete_existing_manifests()
 {
-  execute(query("DROP TABLE IF EXISTS manifests"));
-  execute(query("DROP TABLE IF EXISTS manifest_deltas"));
-  execute(query("DROP TABLE IF EXISTS manifest_certs"));
+  execute(query("DELETE FROM manifests"));
+  execute(query("DELETE FROM manifest_deltas"));
 }
 
 void

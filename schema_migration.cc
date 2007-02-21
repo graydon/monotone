@@ -608,33 +608,13 @@ char const migrate_add_heights[] =
   ;
 
 // this is a function because it has to refer to the numeric constant
-// defined in schema_migration.hh; also because it has to carry out the
-// removal of stale tables left behind by old versions of 'changesetify',
-// but only if those tables still exist and are empty.
+// defined in schema_migration.hh.
 static void
-migrate_add_ccode_and_drop_manifest_tables(sqlite3 * db, app_state &)
+migrate_add_ccode(sqlite3 * db, app_state &)
 {
   string cmd = "PRAGMA user_version = ";
   cmd += boost::lexical_cast<string>(mtn_creator_code);
   sql::exec(db, cmd.c_str());
-
-  try
-    {
-      if (sql::value(db, "SELECT COUNT(*) FROM manifests")
-          + sql::value(db, "SELECT COUNT(*) FROM manifest_certs")
-          + sql::value(db, "SELECT COUNT(*) FROM manifest_deltas") > 0)
-        return;
-    }
-  catch (informative_failure & e)
-    {
-      // this should be a "no such table" error
-      I(string(e.what()).find("no such table") != string::npos);
-      return;
-    }
-
-  sql::exec(db, "DROP TABLE manifests;"
-            "DROP TABLE manifest_certs;"
-            "DROP TABLE manifest_deltas;");
 }
 
 
@@ -647,6 +627,18 @@ enum upgrade_regime
     upgrade_regen_caches,
     upgrade_none, 
   };
+static void
+dump(enum upgrade_regime const & regime, string & out)
+{
+  switch (regime)
+    {
+    case upgrade_changesetify:  out = "upgrade_changesetify"; break;
+    case upgrade_rosterify:     out = "upgrade_rosterify"; break;
+    case upgrade_regen_caches:  out = "upgrade_regen_caches"; break;
+    case upgrade_none:          out = "upgrade_none"; break;
+    default: out = (FL("upgrade_regime(%d)") % regime).str(); break;
+    }
+}
 
 typedef void (*migrator_cb)(sqlite3 *, app_state &);
 
@@ -699,19 +691,49 @@ const migration_event migration_events[] = {
     migrate_add_heights, 0, upgrade_regen_caches },
 
   { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d",
-    0, migrate_add_ccode_and_drop_manifest_tables, upgrade_none },
+    0, migrate_add_ccode, upgrade_none },
 
   // The last entry in this table should always be the current
   // schema ID, with 0 for the migrators.
-  { "2881277287f6ee9bfc5ee255a503a6dc20dd5994", 0, 0, upgrade_none }
+  { "fe48b0804e0048b87b4cea51b3ab338ba187bdc2", 0, 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
 
+// unfortunately, this has to be aware of the migration_events array and its
+// limits, lest we crash trying to print the garbage on either side.
+static void
+dump(struct migration_event const * const & mref, string & out)
+{
+  struct migration_event const * m = mref;
+  ptrdiff_t i = m - migration_events;
+  if (m == 0)
+    out = "invalid migration event (null pointer)";
+  else if (i < 0 || static_cast<size_t>(i) >= n_migration_events)
+    out = (FL("invalid migration event, index %ld/%lu")
+           % i % n_migration_events).str();
+  else
+    {
+      char const * type;
+      if (m->migrator_sql)
+        type = "SQL only";
+      else if (m->migrator_func)
+        type = "codeful";
+      else
+        type = "none (current)";
+
+      string regime;
+      dump(m->regime, regime);
+
+      out = (FL("migration %ld/%lu: %s, %s, from %s")
+             % i % n_migration_events % type % regime % m->id).str();
+    }
+}
+
 // The next several functions are concerned with calculating the schema hash
 // and determining whether a database is usable (with or without migration).
 static void
-get_schema_data(sqlite3 * db, string & schema)
+calculate_schema_id(sqlite3 * db, string & ident)
 {
   sql stmt(db, 1,
            "SELECT sql FROM sqlite_master "
@@ -723,6 +745,7 @@ get_schema_data(sqlite3 * db, string & schema)
            "AND name not like 'sqlite_stat%' "
            "ORDER BY name");
 
+  string schema;
   using boost::char_separator;
   typedef boost::tokenizer<char_separator<char> > tokenizer;
   char_separator<char> sep(" \r\n\t", "(),;");
@@ -745,72 +768,9 @@ get_schema_data(sqlite3 * db, string & schema)
       schema += " PRAGMA user_version = ";
       schema += boost::lexical_cast<string>(code);
     }
-}
-
-// On rare occasions, a migration event leaves tables behind that will be
-// deleted by a post-migration conversion.  When this happens, all the
-// entries in the migration-event array after that point must record the
-// schema hash as it will be *after* the tables are deleted, because that is
-// the state during normal operation and during migrations that start from a
-// later epoch.  However, that means the schema will fail to match *before*
-// the tables are deleted.  To handle this, we have this array, which
-// records blocks of text to try removing from the schema-as-we-hash-it.
-// They are removed in sequence, and we stop as soon as we get a match.
-// It is database.cc's responsibility to ensure that a database in
-// "migrated but not converted" state is only usable for the conversion
-// operation; we report it just as if it were normally usable.
-//
-// Text in this array has to be in a particular format; see
-// contrib/mashschema.cc for instructions.
-
-char const * const temporarily_allowed_tables[] = {
-  // manifests - obsoleted by migrate_to_revisions, but not actually dropped
-  // until migrate_add_ccode_and_drop_manifest_tables.
-
-  "CREATE TABLE manifest_certs ( hash not null unique , -- hash of remaining "
-  "fields separated by \":\" id not null , -- joins with manifests.id or "
-  "manifest_deltas.id name not null , -- opaque string chosen by user value "
-  "not null , -- opaque blob keypair not null , -- joins with public_keys.id "
-  "signature not null , -- RSA/SHA1 signature of \"[name@id:val]\" unique ( "
-  "name , id , value , keypair , signature ) ) CREATE TABLE manifest_deltas "
-  "( id not null , -- strong hash of all the entries in a manifest base "
-  "not null , -- joins with either manifest.id or manifest_deltas.id delta "
-  "not null , -- rdiff to construct current from base unique ( id , base ) "
-  ") CREATE TABLE manifests ( id primary key , -- strong hash of all the "
-  "entries in a manifest data not null -- compressed , encoded contents of "
-  "a manifest )",
-  0
-};
-
-static bool
-compare_schema_hash(string const & s, string const & hash)
-{
-  {
-    hexenc<id> tid;
-    calculate_ident(data(s), tid);
-    if (hash == tid())
-      return true;
-  }
-
-  string schema = s;
-  for (char const * const * t = temporarily_allowed_tables; *t; t++)
-    {
-      string::size_type pos = schema.find(*t);
-      if (pos == string::npos)
-        break;
-
-      string::size_type len = strlen(*t);
-      if (schema.at(pos + len) == ' ')
-        len ++;
-
-      schema.erase(pos, len);
-      
-      hexenc<id> tid;
-      calculate_ident(data(schema), tid);
-      if (hash == tid())
-        return true;
-    }
-  return false;
+  hexenc<id> tid;
+  calculate_ident(data(schema), tid);
+  ident = tid();
 }
 
 // Look through the migration_events table and return a pointer to the entry
@@ -819,13 +779,13 @@ compare_schema_hash(string const & s, string const & hash)
 static migration_event const *
 find_migration(sqlite3 * db)
 {
-  string schema;
-  get_schema_data(db, schema);
+  string id;
+  calculate_schema_id(db, id);
 
-  for (migration_event const *p = migration_events + n_migration_events - 1;
-       p >= migration_events; p--)
-    if (compare_schema_hash(schema, p->id))
-      return p;
+  for (migration_event const *m = migration_events + n_migration_events - 1;
+       m >= migration_events; m--)
+    if (m->id == id)
+      return m;
 
   return 0;
 }
@@ -840,6 +800,19 @@ enum schema_mismatch_case
     SCHEMA_NOT_MONOTONE,
     SCHEMA_EMPTY
   };
+static void dump(schema_mismatch_case const & cat, std::string & out)
+{
+  switch (cat)
+    {
+    case SCHEMA_MATCHES: out = "SCHEMA_MATCHES"; break;
+    case SCHEMA_MIGRATION_NEEDED: out = "SCHEMA_MIGRATION_NEEDED"; break;
+    case SCHEMA_TOO_NEW: out = "SCHEMA_TOO_NEW"; break;
+    case SCHEMA_NOT_MONOTONE: out = "SCHEMA_NOT_MONOTONE"; break;
+    case SCHEMA_EMPTY: out = "SCHEMA_EMPTY"; break;
+    default: out = (FL("schema_mismatch_case(%d)") % cat).str(); break;
+    }
+}
+
 
 static schema_mismatch_case
 classify_schema(sqlite3 * db, migration_event const * m = 0)
@@ -878,10 +851,8 @@ string
 describe_sql_schema(sqlite3 * db)
 {
   I(db != NULL);
-  string schema;
-  get_schema_data(db, schema);
-  hexenc<id> hash;
-  calculate_ident(data(schema), hash);
+  string hash;
+  calculate_schema_id(db, hash);
 
   switch (classify_schema(db))
     {
@@ -946,7 +917,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 {
   I(db != NULL);
 
-  upgrade_regime regime = upgrade_none;
+  upgrade_regime regime = upgrade_none; MM(regime);
   
   // Take an exclusive lock on the database before we try to read anything
   // from it.  If we don't take this lock until the beginning of the
@@ -959,8 +930,10 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 
     P(F("calculating migration..."));
 
-    migration_event const *m = find_migration(db);
-    schema_mismatch_case cat = classify_schema(db, m);
+    migration_event const *m; MM(m);
+    schema_mismatch_case cat; MM(cat);
+    m = find_migration(db);
+    cat = classify_schema(db, m);
 
     diagnose_unrecognized_schema(cat, app.db.get_filename());
 
@@ -982,10 +955,10 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
     for (;;)
       {
         // confirm that we are where we ought to be
-        string schema;
-        get_schema_data(db, schema);
+        string id; MM(id);
+        calculate_schema_id(db, id);
 
-        I(compare_schema_hash(schema, m->id));
+        I(id == m->id);
         I(!m->migrator_sql || !m->migrator_func);
 
         if (m->migrator_sql)
