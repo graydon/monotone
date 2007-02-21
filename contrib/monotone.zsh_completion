@@ -378,6 +378,11 @@ _mtn_update() {
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'
 }
 
+(( $+functions[_mtn_up] )) ||
+_mtn_up() {
+    _mtn_update
+}
+
 # define completion functions for files maintained by monotone.
 
 (( $+functions[_mtn_files_unknown] )) ||

@@ -100,7 +100,7 @@ OPTION(branch, branch, true, "branch,b",
 }
 #endif
 
-GOPT(brief, "brief", bool, false,
+OPT(brief, "brief", bool, false,
      gettext_noop("print a brief version of the normal output"))
 #ifdef option_bodies
 {
@@ -409,7 +409,7 @@ GOPT(nostd, "nostd", bool, false,
 }
 #endif
  
-GOPT(pidfile, "pid-file", system_path, ,
+OPT(pidfile, "pid-file", system_path, ,
      gettext_noop("record process id of server"))
 #ifdef option_bodies
 {

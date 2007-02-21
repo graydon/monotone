@@ -53,6 +53,6 @@ for n,x in pairs{[""]  = {0,0,0,0,0,0,0},
   end
   for i,v in pairs(x) do
     L("Checking log of '", n, "' for revision ", i, "\n")
-    check((v == 0) == qgrep("^Revision: "..revs[i], "stdout"))
+    check((v == 0) == qgrep("^[\\|\\\\\/ ]+Revision: "..revs[i], "stdout"))
   end
 end

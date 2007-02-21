@@ -83,10 +83,10 @@ check(mtn("automate", "get_manifest_of"), 0, {"expected-manifest"}, nil)
 check(get("expected-log"))
 check(get("expected-log-left"))
 
-check(mtn("log", "testfile"), 0, true, nil)
+check(mtn("log", "--no-graph", "testfile"), 0, true, nil)
 check(samefile_ignore_dates("stdout", "expected-log"))
 
-check(mtn("log", "--from", left), 0, true, nil)
+check(mtn("log", "--no-graph", "--from", left), 0, true, nil)
 check(samefile_ignore_dates("stdout", "expected-log-left"))
 
 -- a commit at this point should succeed
