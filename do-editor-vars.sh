@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for file in $(ls *cc *hh | sort); do
+for file in $(ls *cc *hh unix/*cc unix/*hh win32/*cc win32/*hh 2>/dev/null | sort); do
     if ! grep -q 'Local Variables' $file; then
 	echo "Adding vars block to $file"
 	cat <<EOF >> $file

@@ -389,7 +389,7 @@ workspace::maybe_update_inodeprints()
       for (parent_map::const_iterator parent = parents.begin();
            parent != parents.end(); ++parent)
         {
-          roster_t const parent_ros = parent_roster(parent);
+          roster_t const & parent_ros = parent_roster(parent);
           if (parent_ros.has_node(nid))
             {
               node_t old_node = parent_ros.get_node(nid);
@@ -1380,6 +1380,10 @@ workspace::perform_rename(set<file_path> const & src_paths,
       // "rename SRC DST" case
       split_path s;
       src_paths.begin()->split(s);
+      N(new_roster.has_node(s),
+        F("source file %s is not versioned") % s);
+      N(get_path_status(dst_path) != path::directory,
+        F("destination name %s already exists as an unversioned directory") % dst);
       renames.insert( make_pair(s, dst) );
       add_parent_dirs(dst, new_roster, nis, db, lua);
     }
