@@ -111,7 +111,7 @@ ssh_agent::get_long_from_buf(string const & buf, u32 & loc)
 {
   E(buf.length() >= loc + 4, F("string not long enough to get a long"));
   u32 ret = get_long(buf.data() + loc);
-  E(ret <= 2048, F("long is larger than expected"));
+  //E(ret <= 2048, F("long is larger than expected"));
   loc += 4;
   return ret;
 }
