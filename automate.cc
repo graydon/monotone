@@ -1605,7 +1605,7 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
 
 // Name: put_file
 // Arguments:
-//   base ID (optional).
+//   base FILEID (optional)
 //   file contents (binary, intended for automate stdio use)
 // Added in: 4.1
 // Purpose:
@@ -1615,44 +1615,51 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
 //   The ID of the new file (40 digit hex string)
 // Error conditions:
 //   a runtime exception is thrown if base revision is not available
-AUTOMATE(put_file, N_("[BASE-ID] CONTENTS"), options::opts::none)
+AUTOMATE(put_file, N_("[FILEID] CONTENTS"), options::opts::none)
 {
+  N(args.size() <= 2,
+    F("wrong argument count"));
+
   file_id sha1sum;
   transaction_guard tr(app.db);
   if (args.size() == 1)
     {
       file_data dat(idx(args, 0)());
       calculate_ident(dat, sha1sum);
-      if (!app.db.file_version_exists(sha1sum))
-        {
-          app.db.put_file(sha1sum, dat);
-        }
-      else L(FL("revision %s already known") % sha1sum);
+      
+      E(
+        !app.db.file_version_exists(sha1sum),
+	F("file version %s already known") % sha1sum
+      );
+      
+      app.db.put_file(sha1sum, dat);
     }
   else if (args.size() == 2)
     {
       file_data dat(idx(args, 1)());
       calculate_ident(dat, sha1sum);
-      if (!app.db.file_version_exists(sha1sum))
-        {
-          file_id base_id(idx(args, 0)());
-          N(app.db.file_version_exists(base_id),
-            F("no file version %s found in database") % base_id);
+     
+      E(
+        !app.db.file_version_exists(sha1sum),
+        F("file version %s already known") % sha1sum
+      );
 
-          file_data olddat;
-          app.db.get_file_version(base_id, olddat);
-          delta del;
-          diff(olddat.inner(), dat.inner(), del);
-          L(FL("data size %d, delta size %d") % dat.inner()().size() % del().size());
-          if (dat.inner()().size() <= del().size())
-            // the data is smaller or of equal size to the patch
-            app.db.put_file(sha1sum, dat);
-          else
-            app.db.put_file_version(base_id, sha1sum, file_delta(del));
-        }
-      else L(FL("revision %s already known") % sha1sum);
+      file_id base_id(idx(args, 0)());
+      N(app.db.file_version_exists(base_id),
+        F("no file version %s found in database") % base_id);
+
+      file_data olddat;
+      app.db.get_file_version(base_id, olddat);
+      delta del;
+      diff(olddat.inner(), dat.inner(), del);
+      L(FL("data size %d, delta size %d") % dat.inner()().size() % del().size());
+      if (dat.inner()().size() <= del().size())
+        // the data is smaller or of equal size to the patch
+        app.db.put_file(sha1sum, dat);
+      else
+        app.db.put_file_version(base_id, sha1sum, file_delta(del));
     }
-  else throw usage(name);
+  else I(false);
 
   tr.commit();
   output << sha1sum << '\n';
@@ -1670,8 +1677,8 @@ AUTOMATE(put_file, N_("[BASE-ID] CONTENTS"), options::opts::none)
 //   none
 AUTOMATE(put_revision, N_("SINGLE-EDGE-DATA"), options::opts::none)
 {
-  if (args.size() != 1)
-    throw usage(name);
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   revision_t rev;
   read_revision(revision_data(idx(args, 0)()), rev);
@@ -1702,15 +1709,15 @@ AUTOMATE(put_revision, N_("SINGLE-EDGE-DATA"), options::opts::none)
   revision_id id;
   calculate_ident(rev, id);
 
-  if (app.db.revision_exists(id))
-    W(F("revision %s already present in the database") % id);
-  else
-    {
-      transaction_guard tr(app.db);
-      rev.made_for = made_for_database;
-      app.db.put_revision(id, rev);
-      tr.commit();
-    }
+  E(
+    !app.db.revision_exists(id),
+    F("revision %s already present in the database") % id
+  );
+
+  transaction_guard tr(app.db);
+  rev.made_for = made_for_database;
+  app.db.put_revision(id, rev);
+  tr.commit();
 
   output << id << '\n';
 }
@@ -1729,8 +1736,9 @@ AUTOMATE(put_revision, N_("SINGLE-EDGE-DATA"), options::opts::none)
 //   none
 AUTOMATE(cert, N_("REVISION-ID NAME VALUE"), options::opts::none)
 {
-  if (args.size() != 3)
-    throw usage(name);
+  N(args.size() == 3,
+    F("wrong argument count"));
+
   cert c;
   revision_id rid(idx(args, 0)());
   make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
@@ -1754,8 +1762,9 @@ AUTOMATE(cert, N_("REVISION-ID NAME VALUE"), options::opts::none)
 //   none
 AUTOMATE(db_set, N_("DOMAIN NAME VALUE"), options::opts::none)
 {
-  if (args.size() != 3)
-    throw usage(name);
+  N(args.size() == 3,
+    F("wrong argument count"));
+  
   var_domain domain = var_domain(idx(args, 0)());
   utf8 name = idx(args, 1);
   utf8 value = idx(args, 2);
@@ -1776,8 +1785,9 @@ AUTOMATE(db_set, N_("DOMAIN NAME VALUE"), options::opts::none)
 //   a runtime exception is thrown if the variable is not set
 AUTOMATE(db_get, N_("DOMAIN NAME"), options::opts::none)
 {
-  if (args.size() != 2)
-    throw usage(name);
+  N(args.size() == 2,
+    F("wrong argument count"));
+
   var_domain domain = var_domain(idx(args, 0)());
   utf8 name = idx(args, 1);
   var_key key(domain, var_name(name()));
