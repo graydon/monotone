@@ -48,6 +48,13 @@
 	- "mtn log" will now print an ASCII revision graph alongside the
 	  usual log text.
 
+	Speed improvements
+
+	- "mtn annotate file" should run even faster now. it exploits
+	  the fact that we store deltas of rosters. by peeking at
+	  these deltas, it can avoid reconstruction of whole rosters
+	  in many cases.
+
 	Other
 
 	- contrib/monotone-mirror.sh and
