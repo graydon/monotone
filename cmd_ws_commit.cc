@@ -312,14 +312,11 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 {
   if (!app.opts.unknown && (args.size() < 1))
     throw usage(name);
-  N(!app.opts.unknown || !app.opts.recursive,
-    F("cannot set '--unknown' and '--recursive' at the same time"));
-  N(!app.opts.unknown || !app.opts.no_ignore,
-    F("cannot set '--unknown' and '--no-respect-ignore' at the same time"));
 
   app.require_workspace();
 
   path_set paths;
+  bool add_recursive = app.opts.recursive;
   if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
@@ -332,11 +329,12 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
         roots.push_back(file_path());
 
       app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
+
+      app.work.perform_additions(ignored, add_recursive, !app.opts.no_ignore);
     }
   else
     split_paths(args_to_paths(args), paths);
 
-  bool add_recursive = app.opts.recursive;
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
@@ -1027,24 +1025,25 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       vector<utf8> empty_args;
       options save_opts;
       // add --unknown
-      save_opts.no_ignore = app.opts.no_ignore;
       save_opts.exclude_patterns = app.opts.exclude_patterns;
-      app.opts.no_ignore = false;
       app.opts.exclude_patterns = std::vector<utf8>();
       app.opts.unknown = true;
+      app.opts.recursive = true;
       process(app, "add", empty_args);
+      app.opts.recursive = false;
       app.opts.unknown = false;
-      app.opts.no_ignore = save_opts.no_ignore;
       app.opts.exclude_patterns = save_opts.exclude_patterns;
 
       // drop --missing
+      save_opts.no_ignore = app.opts.no_ignore;
       app.opts.missing = true;
       process(app, "drop", empty_args);
       app.opts.missing = false;
+      app.opts.no_ignore = save_opts.no_ignore;
 
       // commit
       if (!app.opts.dryrun)
-	process(app, "commit", empty_args);
+        process(app, "commit", empty_args);
     }
   catch (...)
     {
