@@ -426,7 +426,7 @@ LUAEXT(set_env, )
 
 LUAEXT(unset_env, )
 {
-  char const * var = luaL_checkstring(L, -2);
+  char const * var = luaL_checkstring(L, -1);
   if (orig_env_vars.find(string(var)) == orig_env_vars.end()) {
     char const * old = getenv(var);
     if (old)
