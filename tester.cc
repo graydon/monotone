@@ -413,13 +413,28 @@ LUAEXT(set_env, )
 {
   char const * var = luaL_checkstring(L, -2);
   char const * val = luaL_checkstring(L, -1);
-  char const * old = getenv(var);
-  if (old)
-    orig_env_vars.insert(make_pair(string(var), string(old)));
-  else
-    orig_env_vars.insert(make_pair(string(var), ""));
+  if (orig_env_vars.find(string(var)) == orig_env_vars.end()) {
+    char const * old = getenv(var);
+    if (old)
+      orig_env_vars.insert(make_pair(string(var), string(old)));
+    else
+      orig_env_vars.insert(make_pair(string(var), ""));
+  }
   setenv(var, val);
   return 0;
+}
+
+LUAEXT(unset_env, )
+{
+  char const * var = luaL_checkstring(L, -2);
+  if (orig_env_vars.find(string(var)) == orig_env_vars.end()) {
+    char const * old = getenv(var);
+    if (old)
+      orig_env_vars.insert(make_pair(string(var), string(old)));
+    else
+      orig_env_vars.insert(make_pair(string(var), ""));
+  }
+  unsetenv(var);
 }
 
 LUAEXT(timed_wait, )

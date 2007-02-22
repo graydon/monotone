@@ -818,6 +818,7 @@ function run_tests(args)
   local of_interest = {}
 
   local function runtest(i, tname)
+    save_env()
     local env = {}
     local genv = getfenv(0)
     for x,y in pairs(genv) do
@@ -888,7 +889,6 @@ function run_tests(args)
         end
       end
       test.errline = errline
-      restore_env()
       posix_umask(oldmask)
     end
     
@@ -947,9 +947,9 @@ function run_tests(args)
       end
     end
     counts.total = counts.total + 1
+    restore_env()
   end
 
-  save_env()
   if run_all then
     for i,t in pairs(tests) do
       if list_only then
