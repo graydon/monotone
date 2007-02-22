@@ -93,7 +93,7 @@ CMD(db, N_("database"),
       else if (idx(args, 0)() == "kill_rev_locally")
         kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
-        app.db.clear_epoch(cert_value(idx(args, 1)()));
+        app.db.clear_epoch(branch_name(idx(args, 1)()));
       else if (idx(args, 0)() == "kill_branch_certs_locally")
         app.db.delete_branch_named(cert_value(idx(args, 1)()));
       else if (idx(args, 0)() == "kill_tag_locally")
@@ -109,7 +109,7 @@ CMD(db, N_("database"),
           N(ed.inner()().size() == constants::epochlen,
             F("The epoch must be %s characters") 
             % constants::epochlen);
-          app.db.set_epoch(cert_value(idx(args, 1)()), ed);
+          app.db.set_epoch(branch_name(idx(args, 1)()), ed);
         }
       else
         throw usage(name);

@@ -157,14 +157,14 @@ struct workspace
   // implied unless overridden on the command line. the set of valid keys
   // corresponds exactly to the argument list of these functions.
 
-  void get_ws_options(utf8 & database_option,
-                      utf8 & branch_option,
-                      utf8 & key_option,
-                      utf8 & keydir_option);
-  void set_ws_options(utf8 & database_option,
-                      utf8 & branch_option,
-                      utf8 & key_option,
-                      utf8 & keydir_option);
+  void get_ws_options(system_path & database_option,
+                      branch_name & branch_option,
+                      rsa_keypair_id & key_option,
+                      system_path & keydir_option);
+  void set_ws_options(system_path & database_option,
+                      branch_name & branch_option,
+                      rsa_keypair_id & key_option,
+                      system_path & keydir_option);
 
   // the "workspace format version" is a nonnegative integer value, stored
   // in _MTN/format as an unadorned decimal number.  at any given time

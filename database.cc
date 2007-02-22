@@ -37,6 +37,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "vocab_cast.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
 #include "graph.hh"
@@ -1487,19 +1488,6 @@ database::revision_exists(revision_id const & id)
   return res.size() == 1;
 }
 
-template<typename From, typename To>
-To add_decoration(From const & from)
-{
-  return To(from);
-}
-
-template<typename From, typename To>
-void add_decoration_to_container(From const & from, To & to)
-{
-  transform(from.begin(), from.end(), std::inserter(to, to.end()),
-            &add_decoration<typename From::value_type, typename To::value_type>);
-}
-
 void
 database::get_file_ids(set<file_id> & ids)
 {
@@ -2660,20 +2648,20 @@ void database::complete(selector_type ty,
           else if (i->first == selectors::sel_head)
             {
               // get branch names
-              set<utf8> branch_names;
+              set<branch_name> branch_names;
               if (i->second.size() == 0)
                 {
                   __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.insert(__app->opts.branch_name);
+                  branch_names.insert(__app->opts.branchname);
                 }
               else
                 {
-                  __app->get_project().get_branch_list(utf8(i->second), branch_names);
+                  __app->get_project().get_branch_list(globish(i->second), branch_names);
                 }
 
               // for each branch name, get the branch heads
               set<revision_id> heads;
-              for (set<utf8>::const_iterator bn = branch_names.begin();
+              for (set<branch_name>::const_iterator bn = branch_names.begin();
                    bn != branch_names.end(); bn++)
                 {
                   set<revision_id> branch_heads;
@@ -2709,8 +2697,8 @@ void database::complete(selector_type ty,
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name()) % text(__app->opts.branch_name());
-                  L(FL("limiting to current branch '%s'") % __app->opts.branch_name);
+                  lim % text(branch_cert_name()) % text(__app->opts.branchname());
+                  L(FL("limiting to current branch '%s'") % __app->opts.branchname);
                 }
               else
                 {
@@ -2785,14 +2773,14 @@ void database::complete(selector_type ty,
 // epochs
 
 void
-database::get_epochs(map<cert_value, epoch_data> & epochs)
+database::get_epochs(map<branch_name, epoch_data> & epochs)
 {
   epochs.clear();
   results res;
   fetch(res, 2, any_rows, query("SELECT branch, epoch FROM branch_epochs"));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
-      cert_value decoded(idx(*i, 0));
+      branch_name decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(make_pair(decoded, epoch_data(idx(*i, 1))));
     }
@@ -2800,7 +2788,7 @@ database::get_epochs(map<cert_value, epoch_data> & epochs)
 
 void
 database::get_epoch(epoch_id const & eid,
-                    cert_value & branch, epoch_data & epo)
+                    branch_name & branch, epoch_data & epo)
 {
   I(epoch_exists(eid));
   results res;
@@ -2809,7 +2797,7 @@ database::get_epoch(epoch_id const & eid,
         " WHERE hash = ?")
         % text(eid.inner()()));
   I(res.size() == 1);
-  branch = cert_value(idx(idx(res, 0), 0));
+  branch = branch_name(idx(idx(res, 0), 0));
   epo = epoch_data(idx(idx(res, 0), 1));
 }
 
@@ -2825,7 +2813,7 @@ database::epoch_exists(epoch_id const & eid)
 }
 
 void
-database::set_epoch(cert_value const & branch, epoch_data const & epo)
+database::set_epoch(branch_name const & branch, epoch_data const & epo)
 {
   epoch_id eid;
   epoch_hash_code(branch, epo, eid);
@@ -2837,7 +2825,7 @@ database::set_epoch(cert_value const & branch, epoch_data const & epo)
 }
 
 void
-database::clear_epoch(cert_value const & branch)
+database::clear_epoch(branch_name const & branch)
 {
   execute(query("DELETE FROM branch_epochs WHERE branch = ?")
           % blob(branch()));

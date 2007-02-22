@@ -15,7 +15,7 @@ LUAEXT(match, globish)
     string r(re);
     string n;
     string s(str);
-    result = globish_matcher(utf8(r), utf8(n))(s);
+    result = globish_matcher(globish(r), globish(n))(s);
   } catch (informative_failure & e) {
     return luaL_error(L, e.what());
   } catch (boost::bad_pattern & e) {

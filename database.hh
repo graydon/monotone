@@ -469,15 +469,15 @@ public:
   // --== Epochs ==--
   //
 public:
-  void get_epochs(std::map<cert_value, epoch_data> & epochs);
+  void get_epochs(std::map<branch_name, epoch_data> & epochs);
 
-  void get_epoch(epoch_id const & eid, cert_value & branch, epoch_data & epo);
+  void get_epoch(epoch_id const & eid, branch_name & branch, epoch_data & epo);
 
   bool epoch_exists(epoch_id const & eid);
 
-  void set_epoch(cert_value const & branch, epoch_data const & epo);
+  void set_epoch(branch_name const & branch, epoch_data const & epo);
 
-  void clear_epoch(cert_value const & branch);
+  void clear_epoch(branch_name const & branch);
 
   //
   // --== Database 'vars' ==--

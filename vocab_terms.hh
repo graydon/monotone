@@ -23,6 +23,9 @@ ATOMIC_NOVERIFY(data);        // meaningless blob
 ATOMIC_NOVERIFY(delta);       // xdelta between 2 datas
 ATOMIC_NOVERIFY(inodeprint);  // fingerprint of an inode
 
+ATOMIC_NOVERIFY(branch_name); // utf-8
+ATOMIC_NOVERIFY(globish);     // kinda like a glob, see globish.hh (also, utf-8)
+
 ATOMIC(cert_name);            // symbol-of-your-choosing
 ATOMIC_NOVERIFY(cert_value);  // symbol-of-your-choosing
 
