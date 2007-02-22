@@ -2,10 +2,9 @@
 
         0.33 release.
 
-        Several internal data formats have changed with this release;
-        migration is straight-forward.
-          -- Manifests are completely removed from the database.  To
-	     upgrade your databases, you must run:
+        The internal data format had changed with this release;
+        migration is straight-forward.  To upgrade your databases,
+	you must run:
                $ mtn -d mydb.mtn db migrate
         All of these operations are completely lossless, and 0.33
         remains compatible with earlier versions with regards to
@@ -31,6 +30,11 @@
 
 	- update will switch to the branch of a given revision if it
 	  differs from the current workspace branch.
+
+	- add will now accept combinations of --unknown, --recursive and
+	  --no-respect-ignore.
+
+	- import now imports unknown directory trees properly.
 
 	- use SQLite 3.3.12.
 
