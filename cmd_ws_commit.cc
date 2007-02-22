@@ -314,12 +314,11 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
     throw usage(name);
   N(!app.opts.unknown || !app.opts.recursive,
     F("cannot set '--unknown' and '--recursive' at the same time"));
-  N(!app.opts.unknown || !app.opts.no_ignore,
-    F("cannot set '--unknown' and '--no-respect-ignore' at the same time"));
 
   app.require_workspace();
 
   path_set paths;
+  bool add_recursive = app.opts.recursive;
   if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
@@ -332,11 +331,12 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
         roots.push_back(file_path());
 
       app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
+
+      app.work.perform_additions(ignored, add_recursive, !app.opts.no_ignore);
     }
   else
     split_paths(args_to_paths(args), paths);
 
-  bool add_recursive = app.opts.recursive;
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
