@@ -67,10 +67,10 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
 
   if (args.size() ==1 ) {
     // branchname was explicitly given, use that
-    app.opts.branch_name = idx(args, 0);
+    app.opts.branchname = branch_name(idx(args, 0)());
   }
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branch_name, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << "\n";
 }
@@ -1267,14 +1267,14 @@ AUTOMATE(branches, "", options::opts::none)
   N(args.size() == 0,
     F("no arguments needed"));
 
-  set<utf8> names;
+  set<branch_name> names;
 
   app.get_project().get_branch_list(names);
 
-  for (set<utf8>::const_iterator i = names.begin();
+  for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
     {
-      if (!app.lua.hook_ignore_branch((*i)()))
+      if (!app.lua.hook_ignore_branch(*i))
         output << (*i) << "\n";
     }
 }
@@ -1316,15 +1316,15 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
   N(args.size() < 2,
     F("wrong argument count"));
 
-  utf8 incl("*");
+  globish incl("*");
   bool filtering(false);
   
   if (args.size() == 1) {
-    incl = idx(args, 0);
+    incl = globish(idx(args, 0)());
     filtering = true;
   }
 
-  globish_matcher match(incl, utf8());
+  globish_matcher match(incl, globish());
   basic_io::printer prt;
   basic_io::stanza stz;
   stz.push_str_pair(symbol("format_version"), "1");
@@ -1336,16 +1336,16 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
   for (set<tag_t>::const_iterator tag = tags.begin();
        tag != tags.end(); ++tag)
     {
-      set<utf8> branches;
+      set<branch_name> branches;
       app.get_project().get_revision_branches(tag->ident, branches);
     
       bool show(!filtering);
       vector<string> branch_names;
 
-      for (set<utf8>::const_iterator branch = branches.begin();
+      for (set<branch_name>::const_iterator branch = branches.begin();
            branch != branches.end(); ++branch)
         {
-          if (app.lua.hook_ignore_branch((*branch)()))
+          if (app.lua.hook_ignore_branch(*branch))
             continue;
       
           if (!show && match((*branch)()))
@@ -1468,7 +1468,10 @@ AUTOMATE(get_option, N_("OPTION"), options::opts::none)
   // this command requires a workspace to be run on
   app.require_workspace();
 
-  utf8 database_option, branch_option, key_option, keydir_option;
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
   app.work.get_ws_options(database_option, branch_option,
                           key_option, keydir_option);
 

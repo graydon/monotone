@@ -108,13 +108,14 @@ checked_globish_to_regex(string const & glob, string & regex)
 }
 
 void
-combine_and_check_globish(vector<utf8> const & patterns, utf8 & pattern)
+combine_and_check_globish(vector<globish> const & patterns, globish & pattern)
 {
   string p;
   if (patterns.size() > 1)
     p += '{';
   bool first = true;
-  for (vector<utf8>::const_iterator i = patterns.begin(); i != patterns.end(); ++i)
+  for (vector<globish>::const_iterator i = patterns.begin();
+       i != patterns.end(); ++i)
     {
       string tmp;
       // run for the checking it does
@@ -126,10 +127,11 @@ combine_and_check_globish(vector<utf8> const & patterns, utf8 & pattern)
     }
   if (patterns.size() > 1)
     p += '}';
-  pattern = utf8(p);
+  pattern = globish(p);
 }
 
-globish_matcher::globish_matcher(utf8 const & include_pat, utf8 const & exclude_pat)
+globish_matcher::globish_matcher(globish const & include_pat,
+                                 globish const & exclude_pat)
 {
   string re;
   checked_globish_to_regex(include_pat(), re);
@@ -190,11 +192,11 @@ UNIT_TEST(globish, checked_globish_to_regex)
 
 UNIT_TEST(globish, combine_and_check_globish)
 {
-  vector<utf8> s;
-  s.push_back(utf8("a"));
-  s.push_back(utf8("b"));
-  s.push_back(utf8("c"));
-  utf8 combined;
+  vector<globish> s;
+  s.push_back(globish("a"));
+  s.push_back(globish("b"));
+  s.push_back(globish("c"));
+  globish combined;
   combine_and_check_globish(s, combined);
   BOOST_CHECK(combined() == "{a,b,c}");
 }
@@ -202,7 +204,7 @@ UNIT_TEST(globish, combine_and_check_globish)
 UNIT_TEST(globish, globish_matcher)
 {
   {
-    globish_matcher m(utf8("{a,b}?*\\*|"), utf8("*c*"));
+    globish_matcher m(globish("{a,b}?*\\*|"), globish("*c*"));
     BOOST_CHECK(m("aq*|"));
     BOOST_CHECK(m("bq*|"));
     BOOST_CHECK(!m("bc*|"));
@@ -211,7 +213,7 @@ UNIT_TEST(globish, globish_matcher)
     BOOST_CHECK(!m(""));
   }
   {
-    globish_matcher m(utf8("{a,\\\\,b*}"), utf8("*c*"));
+    globish_matcher m(globish("{a,\\\\,b*}"), globish("*c*"));
     BOOST_CHECK(m("a"));
     BOOST_CHECK(!m("ab"));
     BOOST_CHECK(m("\\"));
@@ -221,12 +223,12 @@ UNIT_TEST(globish, globish_matcher)
     BOOST_CHECK(!m("bfoobarcfoobar"));
   }
   {
-    globish_matcher m(utf8("*"), utf8(""));
+    globish_matcher m(globish("*"), globish(""));
     BOOST_CHECK(m("foo"));
     BOOST_CHECK(m(""));
   }
   {
-    globish_matcher m(utf8("{foo}"), utf8(""));
+    globish_matcher m(globish("{foo}"), globish(""));
     BOOST_CHECK(m("foo"));
     BOOST_CHECK(!m("bar"));
   }

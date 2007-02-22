@@ -259,8 +259,8 @@ netcmd::write_bye_cmd(u8 phase)
 
 void
 netcmd::read_anonymous_cmd(protocol_role & role,
-                           utf8 & include_pattern,
-                           utf8 & exclude_pattern,
+                           globish & include_pattern,
+                           globish & exclude_pattern,
                            rsa_oaep_sha_data & hmac_key_encrypted) const
 {
   size_t pos = 0;
@@ -274,10 +274,10 @@ netcmd::read_anonymous_cmd(protocol_role & role,
   string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "anonymous(hmac) netcmd, include_pattern");
-  include_pattern = utf8(pattern_string);
+  include_pattern = globish(pattern_string);
   extract_variable_length_string(payload, pattern_string, pos,
                                  "anonymous(hmac) netcmd, exclude_pattern");
-  exclude_pattern = utf8(pattern_string);
+  exclude_pattern = globish(pattern_string);
   string hmac_key_string;
   extract_variable_length_string(payload, hmac_key_string, pos,
                                  "anonymous(hmac) netcmd, hmac_key_encrypted");
@@ -287,8 +287,8 @@ netcmd::read_anonymous_cmd(protocol_role & role,
 
 void
 netcmd::write_anonymous_cmd(protocol_role role,
-                            utf8 const & include_pattern,
-                            utf8 const & exclude_pattern,
+                            globish const & include_pattern,
+                            globish const & exclude_pattern,
                             rsa_oaep_sha_data const & hmac_key_encrypted)
 {
   cmd_code = anonymous_cmd;
@@ -300,8 +300,8 @@ netcmd::write_anonymous_cmd(protocol_role role,
 
 void
 netcmd::read_auth_cmd(protocol_role & role,
-                      utf8 & include_pattern,
-                      utf8 & exclude_pattern,
+                      globish & include_pattern,
+                      globish & exclude_pattern,
                       id & client,
                       id & nonce1,
                       rsa_oaep_sha_data & hmac_key_encrypted,
@@ -320,10 +320,10 @@ netcmd::read_auth_cmd(protocol_role & role,
   string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "auth(hmac) netcmd, include_pattern");
-  include_pattern = utf8(pattern_string);
+  include_pattern = globish(pattern_string);
   extract_variable_length_string(payload, pattern_string, pos,
                                  "auth(hmac) netcmd, exclude_pattern");
-  exclude_pattern = utf8(pattern_string);
+  exclude_pattern = globish(pattern_string);
   client = id(extract_substring(payload, pos,
                                 constants::merkle_hash_length_in_bytes,
                                 "auth(hmac) netcmd, client identifier"));
@@ -341,8 +341,8 @@ netcmd::read_auth_cmd(protocol_role & role,
 
 void
 netcmd::write_auth_cmd(protocol_role role,
-                       utf8 const & include_pattern,
-                       utf8 const & exclude_pattern,
+                       globish const & include_pattern,
+                       globish const & exclude_pattern,
                        id const & client,
                        id const & nonce1,
                        rsa_oaep_sha_data const & hmac_key_encrypted,
@@ -541,7 +541,7 @@ netcmd::read_usher_cmd(utf8 & greeting) const
 }
 
 void
-netcmd::write_usher_reply_cmd(utf8 const & server, utf8 const & pattern)
+netcmd::write_usher_reply_cmd(utf8 const & server, globish const & pattern)
 {
   cmd_code = usher_reply_cmd;
   payload.clear();
@@ -673,8 +673,8 @@ UNIT_TEST(netcmd, functions)
         // total cheat, since we don't actually verify that rsa_oaep_sha_data
         // is sensible anywhere here...
         rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
-        utf8 out_include_pattern("radishes galore!"), in_include_pattern;
-        utf8 out_exclude_pattern("turnips galore!"), in_exclude_pattern;
+        globish out_include_pattern("radishes galore!"), in_include_pattern;
+        globish out_exclude_pattern("turnips galore!"), in_exclude_pattern;
 
         out_cmd.write_anonymous_cmd(out_role, out_include_pattern, out_exclude_pattern, out_key);
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
@@ -698,8 +698,8 @@ UNIT_TEST(netcmd, functions)
         // is sensible anywhere here...
         rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
         string out_signature(raw_sha1("burble") + raw_sha1("gorby")), in_signature;
-        utf8 out_include_pattern("radishes galore!"), in_include_pattern;
-        utf8 out_exclude_pattern("turnips galore!"), in_exclude_pattern;
+        globish out_include_pattern("radishes galore!"), in_include_pattern;
+        globish out_exclude_pattern("turnips galore!"), in_exclude_pattern;
 
         out_cmd.write_auth_cmd(out_role, out_include_pattern, out_exclude_pattern
                                , out_client, out_nonce1, out_key, out_signature);

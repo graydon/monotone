@@ -44,9 +44,9 @@ public:
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_expand_date(std::string const & sel, std::string & exp);
-  bool hook_get_branch_key(utf8 const & branchname, rsa_keypair_id & k);
+  bool hook_get_branch_key(branch_name const & branchname, rsa_keypair_id & k);
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
-  bool hook_get_author(utf8 const & branchname, std::string & author);
+  bool hook_get_author(branch_name const & branchname, std::string & author);
   bool hook_edit_comment(external const & commentary,
                          external const & user_log_message,
                          external & result);
@@ -64,8 +64,8 @@ public:
 
   // network hooks
   bool hook_get_netsync_connect_command(uri const & u,
-                                        std::string const & include_pattern,
-                                        std::string const & exclude_pattern,
+                                        globish const & include_pattern,
+                                        globish const & exclude_pattern,
                                         bool debug,
                                         std::vector<std::string> & argv);
   bool hook_use_transport_auth(uri const & u);
@@ -78,7 +78,7 @@ public:
 
   // local repo hooks
   bool hook_ignore_file(file_path const & p);
-  bool hook_ignore_branch(std::string const & branch);
+  bool hook_ignore_branch(branch_name const & branch);
   bool hook_merge3(file_path const & anc_path,
                    file_path const & left_path,
                    file_path const & right_path,
@@ -113,7 +113,7 @@ public:
   // validation hooks
   bool hook_validate_commit_message(utf8 const & message,
                                     revision_data const & new_rev,
-                                    utf8 const & branchname,
+                                    branch_name const & branchname,
                                     bool & validated,
                                     std::string & reason);
 
@@ -127,8 +127,8 @@ public:
                                int sync_type,
                                std::string remote_host,
                                rsa_keypair_id remote_keyname,
-                               utf8 include_pattern,
-                               utf8 exclude_pattern);
+                               globish include_pattern,
+                               globish exclude_pattern);
   bool hook_note_netsync_revision_received(revision_id const & new_id,
                                            revision_data const & rdat,
                         std::set<std::pair<rsa_keypair_id,

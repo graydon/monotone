@@ -29,7 +29,7 @@ project_t::project_t(app_state & app)
 {}
 
 void
-project_t::get_branch_list(std::set<utf8> & names)
+project_t::get_branch_list(std::set<branch_name> & names)
 {
   if (indicator.outdated())
     {
@@ -39,7 +39,7 @@ project_t::get_branch_list(std::set<utf8> & names)
       for (std::vector<std::string>::iterator i = got.begin();
            i != got.end(); ++i)
         {
-          branches.insert(utf8(*i));
+          branches.insert(branch_name(*i));
         }
     }
 
@@ -47,8 +47,8 @@ project_t::get_branch_list(std::set<utf8> & names)
 }
 
 void
-project_t::get_branch_list(utf8 const & glob,
-                           std::set<utf8> & names)
+project_t::get_branch_list(globish const & glob,
+                           std::set<branch_name> & names)
 {
   std::vector<std::string> got;
   app.db.get_branches(glob(), got);
@@ -56,7 +56,7 @@ project_t::get_branch_list(utf8 const & glob,
   for (std::vector<std::string>::iterator i = got.begin();
        i != got.end(); ++i)
     {
-      names.insert(utf8(*i));
+      names.insert(branch_name(*i));
     }
 }
 
@@ -84,7 +84,7 @@ namespace
 }
 
 void
-project_t::get_branch_heads(utf8 const & name, std::set<revision_id> & heads)
+project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & heads)
 {
   std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[name];
   if (branch.first.outdated())
@@ -108,7 +108,7 @@ project_t::get_branch_heads(utf8 const & name, std::set<revision_id> & heads)
 
 bool
 project_t::revision_is_in_branch(revision_id const & id,
-                                 utf8 const & branch)
+                                 branch_name const & branch)
 {
   base64<cert_value> branch_encoded;
   encode_base64(cert_value(branch()), branch_encoded);
@@ -131,7 +131,7 @@ project_t::revision_is_in_branch(revision_id const & id,
 
 void
 project_t::put_revision_in_branch(revision_id const & id,
-                                  utf8 const & branch,
+                                  branch_name const & branch,
                                   packet_consumer & pc)
 {
   cert_revision_in_branch(id, cert_value(branch()), app, pc);
@@ -164,7 +164,7 @@ project_t::get_revision_certs_by_name(revision_id const & id,
 
 outdated_indicator
 project_t::get_revision_branches(revision_id const & id,
-                                 std::set<utf8> & branches)
+                                 std::set<branch_name> & branches)
 {
   std::vector<revision<cert> > certs;
   outdated_indicator i = get_revision_certs_by_name(id, branch_cert_name, certs);
@@ -174,13 +174,13 @@ project_t::get_revision_branches(revision_id const & id,
     {
       cert_value b;
       decode_base64(i->inner().value, b);
-      branches.insert(utf8(b()));
+      branches.insert(branch_name(b()));
     }
   return i;
 }
 
 outdated_indicator
-project_t::get_branch_certs(utf8 const & branch,
+project_t::get_branch_certs(branch_name const & branch,
                             std::vector<revision<cert> > & certs)
 {
   base64<cert_value> branch_encoded;
@@ -241,7 +241,7 @@ project_t::put_tag(revision_id const & id,
 
 void
 project_t::put_standard_certs(revision_id const & id,
-                              utf8 const & branch,
+                              branch_name const & branch,
                               utf8 const & changelog,
                               boost::posix_time::ptime const & time,
                               utf8 const & author,
@@ -258,7 +258,7 @@ project_t::put_standard_certs(revision_id const & id,
 
 void
 project_t::put_standard_certs_from_options(revision_id const & id,
-                                           utf8 const & branch,
+                                           branch_name const & branch,
                                            utf8 const & changelog,
                                            packet_consumer & pc)
 {

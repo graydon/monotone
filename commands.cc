@@ -462,14 +462,14 @@ void
 notify_if_multiple_heads(app_state & app)
 {
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branch_name, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.opts.branch_name % ui.prog_name);
+    P(i18n_format(prefixedline) % app.opts.branchname % ui.prog_name);
   }
 }
 

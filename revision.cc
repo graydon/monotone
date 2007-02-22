@@ -899,7 +899,7 @@ void anc_graph::write_certs()
         encode_hexenc(data(string(buf, buf + constants::epochlen_bytes)), hexdata);
         epoch_data new_epoch(hexdata);
         L(FL("setting epoch for %s to %s") % *i % new_epoch);
-        app.db.set_epoch(cert_value(*i), new_epoch);
+        app.db.set_epoch(branch_name(*i), new_epoch);
       }
   }
 
