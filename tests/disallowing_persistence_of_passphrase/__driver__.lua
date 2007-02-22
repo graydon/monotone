@@ -2,7 +2,7 @@
 mtn_setup()
 save_env()
 
-set_env("SSH_AUTH_SOCK", "")
+unset_env("SSH_AUTH_SOCK")
 
 check(get("persist.lua"))
 

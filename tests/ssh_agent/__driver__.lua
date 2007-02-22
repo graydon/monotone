@@ -36,10 +36,8 @@ skip_if(ostype == "Windows")
 
 function cleanup()
    check({"kill", os.getenv("SSH_AGENT_PID")}, 0, false, false)
-   restore_env()
 end
 
-save_env()
 check({"ssh-agent"}, 0, true, false)
 for line in io.lines("stdout") do
    for k, v in string.gmatch(line, "([%w_]+)=([%w/\.-]+)") do
