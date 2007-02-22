@@ -1025,24 +1025,25 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       vector<utf8> empty_args;
       options save_opts;
       // add --unknown
-      save_opts.no_ignore = app.opts.no_ignore;
       save_opts.exclude_patterns = app.opts.exclude_patterns;
-      app.opts.no_ignore = false;
       app.opts.exclude_patterns = std::vector<utf8>();
       app.opts.unknown = true;
+      app.opts.recursive = true;
       process(app, "add", empty_args);
+      app.opts.recursive = false;
       app.opts.unknown = false;
-      app.opts.no_ignore = save_opts.no_ignore;
       app.opts.exclude_patterns = save_opts.exclude_patterns;
 
       // drop --missing
+      save_opts.no_ignore = app.opts.no_ignore;
       app.opts.missing = true;
       process(app, "drop", empty_args);
       app.opts.missing = false;
+      app.opts.no_ignore = save_opts.no_ignore;
 
       // commit
       if (!app.opts.dryrun)
-	process(app, "commit", empty_args);
+        process(app, "commit", empty_args);
     }
   catch (...)
     {
