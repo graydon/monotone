@@ -143,7 +143,6 @@ using std::vector;
 using std::find;
 using std::reverse;
 using std::distance;
-using std::abs;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
@@ -294,7 +293,7 @@ asciik::try_draw(vector<revision_id> const & next_row,
           if (found != next_row.end()) 
             {
               size_t j = distance(next_row.begin(), found);
-              size_t d = abs(i - j);
+              size_t d = i>j ? i-j : j-i;
               if (d > 1)
                 return false;
               if (d != 0)
@@ -313,7 +312,7 @@ asciik::try_draw(vector<revision_id> const & next_row,
         size_t j = distance(next_row.begin(),
           find(next_row.begin(), next_row.end(), *p));
         I(j < next_items);
-        size_t d = abs(i - j);
+        size_t d = i>j ? i-j : j-i;
         if ((d > 1) && have_shift)
           return false;
         parent_links.insert(pair<size_t, size_t>(i, j));
