@@ -22,3 +22,11 @@ check(mtn("automate", "cert", rev, "date", "2005-05-21T12:30:51"), 0, true, fals
 check(mtn("automate", "heads", "testbranch"), 0, true, false)
 canonicalize("stdout")
 check(rev.."\n" == readfile("stdout"))
+
+--
+-- this should exit cleanly without an invariant being violated
+-- I'm trying to add a node which already exists
+--
+edge = "format_version \"1\"\n\nnew_manifest [0000000000000000000000000000000000000000]\n\nold_revision [4c2c1d846fa561601254200918fba1fd71e6795d]\n\nadd_file \"foo\"\n content [5bf1fd927dfb8679496a2e6cf00cbe50c1c87145]\n"
+check(mtn("automate", "put_revision", edge), 1, false, false)
+
