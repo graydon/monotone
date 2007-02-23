@@ -236,11 +236,12 @@ database::sql(enum open_mode mode)
       if (mode != schema_bypass_mode)
         {
           check_sql_schema(__sql, filename);
-          install_functions(__app);
 
           if (mode != format_bypass_mode)
             check_format();
         }
+
+      install_functions(__app);
     }
   else
     I(mode == normal_mode);
