@@ -12,7 +12,7 @@ check(mtn("attr", "set", "testfile1", "bar1", "new-value"), 0, false, false)
 check(mtn("attr", "drop", "testfile2", "foo2"), 0, false, false)
 
 check(mtn("status"), 0, true, false)
-xfail_if(not qgrep("testfile1", "stdout"))
+check(qgrep("testfile1", "stdout"))
 check(qgrep("foo1", "stdout"))
 check(qgrep("bar1", "stdout"))
 check(qgrep("testfile2", "stdout"))

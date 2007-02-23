@@ -450,25 +450,37 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
-        cout << (F("  dropped %s") % *i).str() << "\n";
+        cout << (F("  dropped  %s") % *i).str() << "\n";
 
       for (map<split_path, split_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
-        cout << (F("  renamed %s\n"
-                   "       to %s") % i->first % i->second).str() << "\n";
+        cout << (F("  renamed  %s\n"
+                   "       to  %s") % i->first % i->second).str() << "\n";
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
-        cout << (F("  added   %s") % *i).str() << "\n";
+        cout << (F("  added    %s") % *i).str() << "\n";
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
-        cout << (F("  added   %s") % i->first).str() << "\n";
+        cout << (F("  added    %s") % i->first).str() << "\n";
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << (F("  patched %s") % (i->first)).str() << "\n";
+        cout << (F("  patched  %s") % (i->first)).str() << "\n";
+
+      for (map<pair<split_path, attr_key>, attr_value >::const_iterator
+             i = cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
+        cout << (F("  set on   %s\n"
+                   "    attr   %s")
+                 % (i->first.first) % (i->first.second)).str() << "\n";
+
+      for (set<pair<split_path, attr_key> >::const_iterator
+             i = cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
+        cout << (F("  unset on %s\n"
+                   "      attr %s")
+                 % (i->first) % (i->second)).str() << "\n";
     }
 }
 
