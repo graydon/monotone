@@ -13,6 +13,7 @@
 #include <botan/timers.h>
 #include <botan/charset.h>
 #include <algorithm>
+#include <stdlib.h>
 
 namespace Botan {
 

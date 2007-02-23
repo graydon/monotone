@@ -140,6 +140,10 @@ using std::pair;
 using std::set;
 using std::string;
 using std::vector;
+using std::find;
+using std::reverse;
+using std::distance;
+using std::abs;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
