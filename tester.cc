@@ -435,6 +435,7 @@ LUAEXT(unset_env, )
       orig_env_vars.insert(make_pair(string(var), ""));
   }
   unsetenv(var);
+  return 0;
 }
 
 LUAEXT(timed_wait, )
