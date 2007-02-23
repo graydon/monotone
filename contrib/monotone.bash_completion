@@ -71,6 +71,26 @@ _monotone() {
   prev=${COMP_WORDS[COMP_CWORD-1]}
 
   case $cur in
+    */a:!(*/[[:alpha:]]:*) | *=a:!(*/[[:alpha:]]:*) | a:!(*/[[:alpha:]]:*) )
+      cur="${cur##*a:}"
+      _monotone_keys pubkey
+      ;;      
+    */b:!(*/[[:alpha:]]:*) | *=b:!(*/[[:alpha:]]:*) | b:!(*/[[:alpha:]]:*) )
+      cur="${cur##*b:}"
+      _monotone_branches
+      ;;      
+    */h:!(*/[[:alpha:]]:*) | *=h:!(*/[[:alpha:]]:*) | h:!(*/[[:alpha:]]:*) )
+      cur="${cur##*h:}"
+      _monotone_branches
+      ;;      
+    */i:!(*/[[:alpha:]]:*) | *=i:!(*/[[:alpha:]]:*) | i:!(*/[[:alpha:]]:*) )
+      cur="${cur##*i:}"
+      _monotone_complete revision
+      ;;      
+    */t:!(*/[[:alpha:]]:*) | *=t:!(*/[[:alpha:]]:*) | t:!(*/[[:alpha:]]:*) )
+      cur="${cur##*t:}"
+      _monotone_tags
+      ;;      
     --db=* | --rcfile=* | --dump=* )
       cur="${cur#*=}"
       _filedir
@@ -88,10 +108,6 @@ _monotone() {
     --ticker=* )
       cur="${cur#*=}"
       COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
-      ;;
-    --revision=h:* )
-      cur="${cur#*=h:}"
-      _monotone_branches
       ;;
     --revision=* )
       cur="${cur#*=}"
@@ -151,12 +167,6 @@ _monotone() {
           COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
           ;;
         --revision | -r )
-         case $cur in
-             h:* )
-             cur="${cur#*h:}"
-             _monotone_branches
-             ;;
-             * )
              _monotone_complete revision
              ;;
          esac
