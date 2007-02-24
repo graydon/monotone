@@ -34,7 +34,7 @@ msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-02-16 13:03+0100\n"
-"PO-Revision-Date: 2007-01-10 14:58+0100\n"
+"PO-Revision-Date: 2007-02-24 23:29+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -78,7 +78,7 @@ msgstr "SELEKTOR"
 
 #: asciik.cc:382
 msgid "prints an ASCII-art tree representation"
-msgstr "gibt eine Baumrepresentation in Form von \"ASCII-Art\" aus"
+msgstr "gibt eine Baumrepräsentation in Form von \"ASCII-Art\" aus"
 
 #: asciik.cc:385 automate.cc:66 automate.cc:90 automate.cc:137 automate.cc:217
 #: automate.cc:363 automate.cc:430 automate.cc:455 automate.cc:533
@@ -766,11 +766,11 @@ msgstr ""
 
 #: cmd_key_cert.cc:184
 msgid "trusted"
-msgstr "vertrauensvoll"
+msgstr "vertrauenswürdig"
 
 #: cmd_key_cert.cc:184
 msgid "UNtrusted"
-msgstr "NICHT vertrauensvoll"
+msgstr "NICHT vertrauenswürdig"
 
 #: cmd_key_cert.cc:188 cmd_key_cert.cc:201 cmd_key_cert.cc:214
 #: cmd_key_cert.cc:229 cmd_ws_commit.cc:209
