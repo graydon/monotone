@@ -28,13 +28,12 @@ check(samefile("dir3/_MTN", "outdir1/dir3/_MTN"))
  
 -- renames
 
-rename("dir1/_MTN/testfile1", "dir1/_MTN/testfile1x")
-rename("dir2/_MTN", "dir2/TM")
-rename("dir3", "dir3x")
-
 check(mtn("rename", "dir1/_MTN/testfile1", "dir1/_MTN/testfile1x"), 0, false, false)
 check(mtn("rename", "dir2/_MTN", "dir2/TM"), 0, false, false)
 check(mtn("rename", "dir3", "dir3x"), 0, false, false)
+rename("dir1/_MTN/testfile1", "dir1/_MTN/testfile1x")
+rename("dir2/_MTN", "dir2/TM")
+rename("dir3", "dir3x")
 commit()
 
 check(mtn("checkout", "outdir2"), 0, false, false)

@@ -236,11 +236,12 @@ database::sql(enum open_mode mode)
       if (mode != schema_bypass_mode)
         {
           check_sql_schema(__sql, filename);
-          install_functions(__app);
 
           if (mode != format_bypass_mode)
             check_format();
         }
+
+      install_functions(__app);
     }
   else
     I(mode == normal_mode);
@@ -1390,6 +1391,147 @@ struct roster_reconstruction_graph : public reconstruction_graph
       next.insert((*i)[0]);
   }
 };
+
+struct database::extractor
+{
+  virtual bool look_at_delta(roster_delta const & del) = 0;
+  virtual void look_at_roster(roster_t const & roster, marking_map const & mm) = 0;
+  virtual ~extractor() {};
+};
+
+struct database::markings_extractor : public database::extractor
+{
+private:
+  node_id const & nid;
+  marking_t & markings;
+
+public:
+  markings_extractor(node_id const & _nid, marking_t & _markings) :
+    nid(_nid), markings(_markings) {} ;
+  
+  bool look_at_delta(roster_delta const & del)
+  {
+    return try_get_markings_from_roster_delta(del, nid, markings);
+  }
+  
+  void look_at_roster(roster_t const & roster, marking_map const & mm)
+  {
+    map<node_id, marking_t>::const_iterator mmi =
+      mm.find(nid);
+    I(mmi != mm.end());
+    markings = mmi->second;
+  }
+};
+
+struct database::file_content_extractor : database::extractor
+{
+private:
+  node_id const & nid;
+  file_id & content;
+
+public:
+  file_content_extractor(node_id const & _nid, file_id & _content) :
+    nid(_nid), content(_content) {} ;
+
+  bool look_at_delta(roster_delta const & del)
+  {
+    return try_get_content_from_roster_delta(del, nid, content);
+  }
+
+  void look_at_roster(roster_t const & roster, marking_map const & mm)
+  {
+    if (roster.has_node(nid))
+      content = downcast_to_file_t(roster.get_node(nid))->content;
+    else
+      content = file_id();
+  }
+};
+
+void
+database::extract_from_deltas(revision_id const & id, extractor & x)
+{
+  reconstruction_path selected_path;
+  {
+    roster_reconstruction_graph graph(*this);
+    {
+      // we look at the nearest delta(s) first, without constructing the
+      // whole path, as that would be a rather expensive operation.
+      //
+      // the reason why this strategy is worth the effort is, that in most
+      // cases we are looking at the parent of a (content-)marked node, thus
+      // the information we are for is right there in the delta leading to
+      // this node.
+      // 
+      // recording the deltas visited here in a set as to avoid inspecting
+      // them later seems to be of little value, as it imposes a cost here,
+      // but can seldom be exploited.
+      set<string> deltas;
+      graph.get_next(id.inner()(), deltas);
+      for (set<string>::const_iterator i = deltas.begin();
+           i != deltas.end(); ++i)
+        {
+          roster_delta del;
+          get_roster_delta(id.inner()(), *i, del);
+          bool found = x.look_at_delta(del);
+          if (found)
+            return;
+        }
+    }
+    get_reconstruction_path(id.inner()(), graph, selected_path);
+  }
+
+  int path_length(selected_path.size());
+  int i(0);
+  string target_rev;
+
+  for (reconstruction_path::const_iterator p = selected_path.begin();
+       p != selected_path.end(); ++p)
+    {
+      if (i > 0)
+        {
+          roster_delta del;
+          get_roster_delta(target_rev, *p, del);
+          bool found = x.look_at_delta(del);
+          if (found)
+            return;
+        }
+      if (i == path_length-1)
+        {
+          // last iteration, we have reached a roster base
+          roster_t roster;
+          marking_map mm;
+          get_roster_base(*p, roster, mm);
+          x.look_at_roster(roster, mm);
+          return;
+        }
+      target_rev = *p;
+      ++i;
+    }
+}
+
+void
+database::get_markings(revision_id const & id,
+                       node_id const & nid,
+                       marking_t & markings)
+{
+  markings_extractor x(nid, markings);
+  extract_from_deltas(id, x);
+}
+
+void
+database::get_file_content(revision_id const & id,
+                           node_id const & nid,
+                           file_id & content)
+{
+  // the imaginary root revision doesn't have any file.
+  if (null_id(id))
+    {
+      content = file_id();
+      return;
+    }
+  file_content_extractor x(nid, content);
+  extract_from_deltas(id, x);
+}
 
 void
 database::get_roster_version(revision_id const & id,

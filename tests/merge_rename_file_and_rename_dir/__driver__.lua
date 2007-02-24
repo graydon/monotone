@@ -12,8 +12,8 @@ base = base_revision()
 
 -- rename directory
 
-rename("foo", "foof")
 check(mtn("rename", "foo", "foof"), 0, false, false)
+rename("foo", "foof")
 commit()
 
 -- rename file in directory

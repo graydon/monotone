@@ -24,10 +24,10 @@ check(mtn("ls", "known"), 0, true)
 check(sort("stdout"), 0, "bar\ndir\ndir/bar\ndir/foo\nfoo\n")
 
 check(mtn("drop", "foo"), 0, false, false)
-rename("dir", "dir2")
 check(mtn("rename", "dir", "dir2"), 0, false, false)
-rename("bar", "baz")
+rename("dir", "dir2")
 check(mtn("rename", "bar", "baz"), 0, false, false)
+rename("bar", "baz")
 
 check(mtn("ls", "known"), 0, true)
 check(sort("stdout"), 0, "baz\ndir2\ndir2/bar\ndir2/foo\n")

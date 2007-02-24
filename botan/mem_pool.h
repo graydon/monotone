@@ -11,6 +11,7 @@
 #include <botan/mutex.h>
 #include <utility>
 #include <vector>
+#include <functional>
 
 namespace Botan {
 
@@ -55,6 +56,12 @@ class Pooling_Allocator : public Allocator
             byte* buffer, *buffer_end;
             u32bit block_size;
          };
+
+template <typename _first, typename _second>
+struct diff_less : public std::binary_function<_first,_second,bool>
+{
+  bool operator()(const _first& __x, const _second& __y) const { return __x < __y; }
+};
 
       const u32bit PREF_SIZE, BLOCK_SIZE;
 
