@@ -48,16 +48,22 @@ III) Edit the header of your new language po according to
       here [1].
 
 IV) Start translating the entries. If you like to update your
-    *.po file, trigger the following command:
+    *.po file, trigger the following command (here for the
+    German translation):
 	
-	$ export lang=<yourlang>
-    $ (cd po; make monotone.pot-update && make ${lang}.mo ${lang}.gmo)
+    $ cd po
+    $ make monotone.pot-update && make de.po-update
+
+    To check if new or fuzzy strings have arrived, use msgfmt:
+
+    $ msgfmt -cv po/de.po
 
 
 Thats it basically. If you're looking for a nice GUI to edit
 language files, I can recommend KBabel[2], which comes with the kdesdk 
-module of KDE.
+module of KDE, or poedit[3].
 
 [0] http://mail.gnome.org/archives/gnome-i18n/2004-July/msg00073.html
 [1] http://www.gnu.org/software/gettext/manual/html_node/gettext_150.html
 [2] http://kbabel.kde.org/
+[3] http://www.poedit.net
