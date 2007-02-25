@@ -18,7 +18,6 @@ I) Edit the file po/LINGUAS a new entry for your language.
    in Great Britain (BE), while "en_US" determines 
    American English (AE).
 
-
 II) Configure monotone
   
    $ cd net.venge.monotone
@@ -52,7 +51,7 @@ IV) Start translating the entries. If you like to update your
     German translation):
 	
     $ cd po
-    $ make monotone.pot-update && make de.po-update
+    $ make monotone.pot-update && make MSGMERGE=msgmerge de.po-update
 
     To check if new or fuzzy strings have arrived, use msgfmt:
 
