@@ -222,8 +222,8 @@ CMD(approve, N_("review"), N_("REVISION"),
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
   guess_branch(r, app);
-  N(app.opts.branch_name() != "", F("need --branch argument for approval"));
-  app.get_project().put_revision_in_branch(r, app.opts.branch_name, dbw);
+  N(app.opts.branchname() != "", F("need --branch argument for approval"));
+  app.get_project().put_revision_in_branch(r, app.opts.branchname, dbw);
 }
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),

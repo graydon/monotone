@@ -226,7 +226,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
   guess_branch(r, app);
-  N(app.opts.branch_name() != "", F("need --branch argument for disapproval"));
+  N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(log_message_given, log_message, app,
                               utf8((FL("disapproval of revision '%s'") % r).str()));
@@ -254,7 +254,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     dbw.consume_revision_data(inv_id, rdat);
 
     app.get_project().put_standard_certs_from_options(inv_id,
-                                                      app.opts.branch_name,
+                                                      app.opts.branchname,
                                                       log_message,
                                                       dbw);
     guard.commit();
@@ -312,14 +312,11 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 {
   if (!app.opts.unknown && (args.size() < 1))
     throw usage(name);
-  N(!app.opts.unknown || !app.opts.recursive,
-    F("cannot set '--unknown' and '--recursive' at the same time"));
-  N(!app.opts.unknown || !app.opts.no_ignore,
-    F("cannot set '--unknown' and '--no-respect-ignore' at the same time"));
 
   app.require_workspace();
 
   path_set paths;
+  bool add_recursive = app.opts.recursive;
   if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
@@ -332,11 +329,12 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
         roots.push_back(file_path());
 
       app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
+
+      app.work.perform_additions(ignored, add_recursive, !app.opts.no_ignore);
     }
   else
     split_paths(args_to_paths(args), paths);
 
-  bool add_recursive = app.opts.recursive;
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
@@ -437,7 +435,7 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
   // other format strings.
-  cout << (F("Current branch: %s") % app.opts.branch_name).str() << "\n";
+  cout << (F("Current branch: %s") % app.opts.branchname).str() << "\n";
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
@@ -492,20 +490,20 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
   if (app.opts.revision_selectors.size() == 0)
     {
       // use branch head revision
-      N(!app.opts.branch_name().empty(),
+      N(!app.opts.branchname().empty(),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branch_name, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads);
       N(heads.size() > 0,
-        F("branch '%s' is empty") % app.opts.branch_name);
+        F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
         {
-          P(F("branch %s has multiple heads:") % app.opts.branch_name);
+          P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
-          E(false, F("branch %s has multiple heads") % app.opts.branch_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
       ident = *(heads.begin());
     }
@@ -518,11 +516,11 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
 
       guess_branch(ident, app);
 
-      I(!app.opts.branch_name().empty());
+      I(!app.opts.branchname().empty());
 
-      N(app.get_project().revision_is_in_branch(ident, app.opts.branch_name),
+      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
         F("revision %s is not a member of branch %s")
-        % ident % app.opts.branch_name);
+        % ident % app.opts.branchname);
     }
 
   // we do this part of the checking down here, because it is legitimate to
@@ -537,9 +535,9 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
     if (args.size() == 0)
       {
         // No checkout dir specified, use branch name for dir.
-        N(!app.opts.branch_name().empty(),
+        N(!app.opts.branchname().empty(),
           F("you must specify a destination directory"));
-        dir = system_path(app.opts.branch_name());
+        dir = system_path(app.opts.branchname());
       }
     else
       {
@@ -725,9 +723,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   // We need the 'if' because guess_branch will try to override any branch
   // picked up from _MTN/options.
-  if (app.opts.branch_name().empty())
+  if (app.opts.branchname().empty())
     {
-      utf8 branchname, bn_candidate;
+      branch_name branchname, bn_candidate;
       for (edge_map::iterator i = restricted_rev.edges.begin();
            i != restricted_rev.edges.end();
            i++)
@@ -742,11 +740,11 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
           branchname = bn_candidate;
         }
 
-      app.opts.branch_name = branchname;
+      app.opts.branchname = branchname;
     }
 
 
-  P(F("beginning commit on branch '%s'") % app.opts.branch_name);
+  P(F("beginning commit on branch '%s'") % app.opts.branchname);
   L(FL("new manifest '%s'\n"
        "new revision '%s'\n")
     % restricted_rev.new_manifest
@@ -790,13 +788,13 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   revision_data new_rev;
   write_revision(restricted_rev, new_rev);
 
-  app.lua.hook_validate_commit_message(log_message, new_rev, app.opts.branch_name,
+  app.lua.hook_validate_commit_message(log_message, new_rev, app.opts.branchname,
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
   // for the divergence check, below
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branch_name, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
   unsigned int old_head_size = heads.size();
   
   {
@@ -883,7 +881,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       }
 
     app.get_project().put_standard_certs_from_options(restricted_rev_id,
-                                                      app.opts.branch_name,
+                                                      app.opts.branchname,
                                                       log_message,
                                                       dbw);
     guard.commit();
@@ -900,7 +898,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.blank_user_log();
 
-  app.get_project().get_branch_heads(app.opts.branch_name, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
@@ -942,7 +940,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   if (args.size() > 1)
     throw usage(name);
 
-  N(!app.opts.branch_name().empty(), F("need --branch argument for setup"));
+  N(!app.opts.branchname().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
 
   string dir;
@@ -981,27 +979,27 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
 
       guess_branch(ident, app);
 
-      I(!app.opts.branch_name().empty());
+      I(!app.opts.branchname().empty());
 
-      N(app.get_project().revision_is_in_branch(ident, app.opts.branch_name),
+      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
         F("revision %s is not a member of branch %s")
-        % ident % app.opts.branch_name);
+        % ident % app.opts.branchname);
     }
   else
     {
       // use branch head revision
-      N(!app.opts.branch_name().empty(),
+      N(!app.opts.branchname().empty(),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branch_name, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads);
       if (heads.size() > 1)
         {
-          P(F("branch %s has multiple heads:") % app.opts.branch_name);
+          P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
-          E(false, F("branch %s has multiple heads") % app.opts.branch_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
       if (heads.size() > 0)
         ident = *(heads.begin());
@@ -1027,24 +1025,25 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       vector<utf8> empty_args;
       options save_opts;
       // add --unknown
-      save_opts.no_ignore = app.opts.no_ignore;
       save_opts.exclude_patterns = app.opts.exclude_patterns;
-      app.opts.no_ignore = false;
       app.opts.exclude_patterns = std::vector<utf8>();
       app.opts.unknown = true;
+      app.opts.recursive = true;
       process(app, "add", empty_args);
+      app.opts.recursive = false;
       app.opts.unknown = false;
-      app.opts.no_ignore = save_opts.no_ignore;
       app.opts.exclude_patterns = save_opts.exclude_patterns;
 
       // drop --missing
+      save_opts.no_ignore = app.opts.no_ignore;
       app.opts.missing = true;
       process(app, "drop", empty_args);
       app.opts.missing = false;
+      app.opts.no_ignore = save_opts.no_ignore;
 
       // commit
       if (!app.opts.dryrun)
-	process(app, "commit", empty_args);
+        process(app, "commit", empty_args);
     }
   catch (...)
     {

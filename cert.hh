@@ -111,7 +111,7 @@ void
 get_user_key(rsa_keypair_id & key, app_state & app);
 
 void
-guess_branch(revision_id const & id, app_state & app, utf8 & branchname);
+guess_branch(revision_id const & id, app_state & app, branch_name & branchname);
 void
 guess_branch(revision_id const & id, app_state & app);
 

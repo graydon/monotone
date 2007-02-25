@@ -1218,8 +1218,8 @@ import_cvs_repo(system_path const & cvsroot,
   }
 
   cvs_history cvs;
-  N(app.opts.branch_name() != "", F("need base --branch argument for importing"));
-  cvs.base_branch = app.opts.branch_name();
+  N(app.opts.branchname() != "", F("need base --branch argument for importing"));
+  cvs.base_branch = app.opts.branchname();
 
   // push the trunk
   cvs.trunk = shared_ptr<cvs_branch>(new cvs_branch());
@@ -1386,7 +1386,7 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
     }
 
   app.get_project().put_standard_certs(p.rid,
-                                       utf8(branchname),
+                                       branch_name(branchname),
                                        utf8(cvs.changelog_interner.lookup(p.changelog)),
                                        time_from_time_t(p.time),
                                        utf8(cvs.author_interner.lookup(p.author)),

@@ -4,6 +4,7 @@
 # bash completion for monotone 0.25
 # Author: Olivier Andrieu <oandrieu@nerim.net>
 # Contributions by Matthew A. Nicholson <matt@matt-land.com>
+#              and Matthew Sackman <matthew@wellquite.org>
 
 # source this file from your .bashrc
 # If you use the bash completion package <http://www.caliban.org/bash/>,
@@ -88,6 +89,10 @@ _monotone() {
       cur="${cur#*=}"
       COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
       ;;
+    --revision=h:* )
+      cur="${cur#*=h:}"
+      _monotone_branches
+      ;;
     --revision=* )
       cur="${cur#*=}"
       _monotone_complete revision
@@ -146,7 +151,15 @@ _monotone() {
           COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
           ;;
         --revision | -r )
-          _monotone_complete revision
+         case $cur in
+             h:* )
+             cur="${cur#*h:}"
+             _monotone_branches
+             ;;
+             * )
+             _monotone_complete revision
+             ;;
+         esac
           ;;
         db )
           COMPREPLY=( $(compgen -W 'init info version dump load migrate execute

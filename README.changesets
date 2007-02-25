@@ -109,10 +109,10 @@ seriously, it's just a single "cp" command. How lazy can you get?
    $ cp mydatabase.db mydatabase.db.pre-changesets
 
 Please be sure to do so. After backing up, there are three required
-steps to the migration. The first step is to dump and reload your
-database, to get something that the new version of SQLite can read.
-Note that you need to keep your old version of monotone around at
-least long enough to perform this step:
+steps (and one optional step) to the migration. The first step is to
+dump and reload your database, to get something that the new version
+of SQLite can read.  Note that you need to keep your old version of
+monotone around at least long enough to perform this step:
 
   $ old-monotone --db=mydatabase.db db dump > mydatabase.dump
   $ monotone --db=new-mydatabase.db db load < mydatabase.dump
@@ -142,10 +142,15 @@ a special, otherwise undocumented "changesetification" command:
 
 This should build the new changeset and revision structure and issue
 all the necessary certs. It will therefore take a while on a large
-database.
+database. It will not, however, delete the old manifest certs: the new
+version of monotone will simply ignore them, but they continue to
+exist in your database, should you wish to recover some of their
+information for forensic purposes in the future. If you truly wish to
+remove all manifest certs as well (they are all subsumed by revision
+certs now, anyways) you can issue one further command:
 
-Older versions of these instructions said that this command would
-preserve the old manifest certs.  As of monotone 0.33 this is no
-longer the case.  If you wish to refer back to the old information,
-you will need to keep the old database and the old version of monotone
-around.
+  $ monotone --db=new-mydatabase.db db execute "delete from manifest_certs"
+
+This will purge the manifest_certs table of all its entries, but as we
+said this step is purely optional. No harm will come from old manifest
+certs remaining in your database.

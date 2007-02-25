@@ -223,10 +223,10 @@ workspace::has_contents_user_log()
 // _MTN/options handling.
 
 void
-workspace::get_ws_options(utf8 & database_option,
-                          utf8 & branch_option,
-                          utf8 & key_option,
-                          utf8 & keydir_option)
+workspace::get_ws_options(system_path & database_option,
+                          branch_name & branch_option,
+                          rsa_keypair_id & key_option,
+                          system_path & keydir_option)
 {
   bookkeeping_path o_path;
   get_options_path(o_path);
@@ -248,13 +248,13 @@ workspace::get_ws_options(utf8 & database_option,
               parser.str(val);
 
               if (opt == "database")
-                database_option = utf8(val);
+                database_option = system_path(val);
               else if (opt == "branch")
-                branch_option = utf8(val);
+                branch_option = branch_name(val);
               else if (opt == "key")
-                key_option = utf8(val);
+                internalize_rsa_keypair_id(utf8(val), key_option);
               else if (opt == "keydir")
-                keydir_option = utf8(val);
+                keydir_option = system_path(val);
               else
                 W(F("unrecognized key '%s' in options file %s - ignored")
                   % opt % o_path);
@@ -268,37 +268,43 @@ workspace::get_ws_options(utf8 & database_option,
 }
 
 void
-workspace::set_ws_options(utf8 & database_option,
-                          utf8 & branch_option,
-                          utf8 & key_option,
-                          utf8 & keydir_option)
+workspace::set_ws_options(system_path & database_option,
+                          branch_name & branch_option,
+                          rsa_keypair_id & key_option,
+                          system_path & keydir_option)
 {
   // If caller passes an empty string for any of the incoming options,
   // we want to leave that option as is in _MTN/options, not write out
   // an empty option.
-  utf8 old_database_option, old_branch_option;
-  utf8 old_key_option, old_keydir_option;
+  system_path old_database_option;
+  branch_name old_branch_option;
+  rsa_keypair_id old_key_option;
+  system_path old_keydir_option;
   get_ws_options(old_database_option, old_branch_option,
                  old_key_option, old_keydir_option);
 
-  if (database_option().empty())
+  if (database_option.as_internal().empty())
     database_option = old_database_option;
   if (branch_option().empty())
     branch_option = old_branch_option;
   if (key_option().empty())
     key_option = old_key_option;
-  if (keydir_option().empty())
+  if (keydir_option.as_internal().empty())
     keydir_option = old_keydir_option;
 
   basic_io::stanza st;
-  if (!database_option().empty())
-    st.push_str_pair(symbol("database"), database_option());
+  if (!database_option.as_internal().empty())
+    st.push_str_pair(symbol("database"), database_option.as_internal());
   if (!branch_option().empty())
     st.push_str_pair(symbol("branch"), branch_option());
   if (!key_option().empty())
-    st.push_str_pair(symbol("key"), key_option());
-  if (!keydir_option().empty())
-    st.push_str_pair(symbol("keydir"), keydir_option());
+    {
+      utf8 key;
+      externalize_rsa_keypair_id(key_option, key);
+      st.push_str_pair(symbol("key"), key());
+    }
+  if (!keydir_option.as_internal().empty())
+    st.push_str_pair(symbol("keydir"), keydir_option.as_internal());
 
   basic_io::printer pr;
   pr.print_stanza(st);
@@ -389,7 +395,7 @@ workspace::maybe_update_inodeprints()
       for (parent_map::const_iterator parent = parents.begin();
            parent != parents.end(); ++parent)
         {
-          roster_t const parent_ros = parent_roster(parent);
+          roster_t const & parent_ros = parent_roster(parent);
           if (parent_ros.has_node(nid))
             {
               node_t old_node = parent_ros.get_node(nid);
@@ -1380,6 +1386,10 @@ workspace::perform_rename(set<file_path> const & src_paths,
       // "rename SRC DST" case
       split_path s;
       src_paths.begin()->split(s);
+      N(new_roster.has_node(s),
+        F("source file %s is not versioned") % s);
+      N(get_path_status(dst_path) != path::directory,
+        F("destination name %s already exists as an unversioned directory") % dst);
       renames.insert( make_pair(s, dst) );
       add_parent_dirs(dst, new_roster, nis, db, lua);
     }

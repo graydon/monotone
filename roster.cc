@@ -2178,18 +2178,22 @@ editable_roster_for_check::editable_roster_for_check(roster_t & r)
   : editable_roster_base(r, nis), problems(0)
 {
   node_map nodes = r.all_nodes();
-  node_map::const_iterator i = nodes.begin();
-  node_id max = i->first;
 
-  for (; i != nodes.end(); ++i)
+  if (!nodes.empty())
     {
-      if (i->first > max)
-        max = i->first;
-    }
+      node_map::const_iterator i = nodes.begin();
+      node_id max = i->first;
 
-  // ensure our node source starts beyond the max temp node in this roster
-  while (nis.next() <= max)
-    ;
+      for (; i != nodes.end(); ++i)
+        {
+          if (i->first > max)
+            max = i->first;
+        }
+
+      // ensure our node source starts beyond the max temp node in this roster
+      while (nis.next() <= max)
+        ;
+    }
 }
 
 node_id

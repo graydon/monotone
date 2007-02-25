@@ -37,6 +37,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "vocab_cast.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
 #include "graph.hh"
@@ -156,8 +157,9 @@ database::check_format()
 {
   results res;
 
-  // Check for revisions, rosters, and heights.  We need these on both sides
-  // of the major decision below.
+  // Check for manifests, revisions, rosters, and heights.
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM manifests LIMIT 1"));
+  bool have_manifests = !res.empty();
   fetch(res, one_col, any_rows, query("SELECT 1 FROM revisions LIMIT 1"));
   bool have_revisions = !res.empty();
   fetch(res, one_col, any_rows, query("SELECT 1 FROM rosters LIMIT 1"));
@@ -165,10 +167,8 @@ database::check_format()
   fetch(res, one_col, any_rows, query("SELECT 1 FROM heights LIMIT 1"));
   bool have_heights = !res.empty();
   
-  // Find out if the manifest tables even exist.
-  fetch(res, one_col, any_rows,
-        query("SELECT name FROM sqlite_master WHERE name LIKE 'manifest%'"));
-  if (res.empty())
+
+  if (!have_manifests)
     {
       // Must have been changesetified and rosterified already.
       // Or else the database was just created.
@@ -180,11 +180,6 @@ database::check_format()
     }
   else
     {
-      // The manifest tables exist.  They should not be empty.  (Empty
-      // manifest tables are deleted during schema migration.)
-      fetch(res, one_col, any_rows, query("SELECT 1 FROM manifests LIMIT 1"));
-      I(!res.empty());
-
       // The rosters and heights tables should be empty.
       I(!have_rosters && !have_heights);
 
@@ -448,6 +443,8 @@ database::load(istream & in)
 void
 database::debug(string const & sql, ostream & out)
 {
+  ensure_open_for_maintenance();
+
   results res;
   fetch(res, any_cols, any_rows, query(sql));
   out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
@@ -1394,6 +1391,147 @@ struct roster_reconstruction_graph : public reconstruction_graph
   }
 };
 
+struct database::extractor
+{
+  virtual bool look_at_delta(roster_delta const & del) = 0;
+  virtual void look_at_roster(roster_t const & roster, marking_map const & mm) = 0;
+  virtual ~extractor() {};
+};
+
+struct database::markings_extractor : public database::extractor
+{
+private:
+  node_id const & nid;
+  marking_t & markings;
+
+public:
+  markings_extractor(node_id const & _nid, marking_t & _markings) :
+    nid(_nid), markings(_markings) {} ;
+  
+  bool look_at_delta(roster_delta const & del)
+  {
+    return try_get_markings_from_roster_delta(del, nid, markings);
+  }
+  
+  void look_at_roster(roster_t const & roster, marking_map const & mm)
+  {
+    map<node_id, marking_t>::const_iterator mmi =
+      mm.find(nid);
+    I(mmi != mm.end());
+    markings = mmi->second;
+  }
+};
+
+struct database::file_content_extractor : database::extractor
+{
+private:
+  node_id const & nid;
+  file_id & content;
+
+public:
+  file_content_extractor(node_id const & _nid, file_id & _content) :
+    nid(_nid), content(_content) {} ;
+
+  bool look_at_delta(roster_delta const & del)
+  {
+    return try_get_content_from_roster_delta(del, nid, content);
+  }
+
+  void look_at_roster(roster_t const & roster, marking_map const & mm)
+  {
+    if (roster.has_node(nid))
+      content = downcast_to_file_t(roster.get_node(nid))->content;
+    else
+      content = file_id();
+  }
+};
+
+void
+database::extract_from_deltas(revision_id const & id, extractor & x)
+{
+  reconstruction_path selected_path;
+  {
+    roster_reconstruction_graph graph(*this);
+    {
+      // we look at the nearest delta(s) first, without constructing the
+      // whole path, as that would be a rather expensive operation.
+      //
+      // the reason why this strategy is worth the effort is, that in most
+      // cases we are looking at the parent of a (content-)marked node, thus
+      // the information we are for is right there in the delta leading to
+      // this node.
+      // 
+      // recording the deltas visited here in a set as to avoid inspecting
+      // them later seems to be of little value, as it imposes a cost here,
+      // but can seldom be exploited.
+      set<string> deltas;
+      graph.get_next(id.inner()(), deltas);
+      for (set<string>::const_iterator i = deltas.begin();
+           i != deltas.end(); ++i)
+        {
+          roster_delta del;
+          get_roster_delta(id.inner()(), *i, del);
+          bool found = x.look_at_delta(del);
+          if (found)
+            return;
+        }
+    }
+    get_reconstruction_path(id.inner()(), graph, selected_path);
+  }
+
+  int path_length(selected_path.size());
+  int i(0);
+  string target_rev;
+
+  for (reconstruction_path::const_iterator p = selected_path.begin();
+       p != selected_path.end(); ++p)
+    {
+      if (i > 0)
+        {
+          roster_delta del;
+          get_roster_delta(target_rev, *p, del);
+          bool found = x.look_at_delta(del);
+          if (found)
+            return;
+        }
+      if (i == path_length-1)
+        {
+          // last iteration, we have reached a roster base
+          roster_t roster;
+          marking_map mm;
+          get_roster_base(*p, roster, mm);
+          x.look_at_roster(roster, mm);
+          return;
+        }
+      target_rev = *p;
+      ++i;
+    }
+}
+
+void
+database::get_markings(revision_id const & id,
+                       node_id const & nid,
+                       marking_t & markings)
+{
+  markings_extractor x(nid, markings);
+  extract_from_deltas(id, x);
+}
+
+void
+database::get_file_content(revision_id const & id,
+                           node_id const & nid,
+                           file_id & content)
+{
+  // the imaginary root revision doesn't have any file.
+  if (null_id(id))
+    {
+      content = file_id();
+      return;
+    }
+  file_content_extractor x(nid, content);
+  extract_from_deltas(id, x);
+}
+
 void
 database::get_roster_version(revision_id const & id,
                              cached_roster & cr)
@@ -1489,19 +1627,6 @@ database::revision_exists(revision_id const & id)
   fetch(res, one_col, any_rows, q % text(id.inner()()));
   I(res.size() <= 1);
   return res.size() == 1;
-}
-
-template<typename From, typename To>
-To add_decoration(From const & from)
-{
-  return To(from);
-}
-
-template<typename From, typename To>
-void add_decoration_to_container(From const & from, To & to)
-{
-  transform(from.begin(), from.end(), std::inserter(to, to.end()),
-            &add_decoration<typename From::value_type, typename To::value_type>);
 }
 
 void
@@ -1946,9 +2071,8 @@ database::delete_existing_revs_and_certs()
 void
 database::delete_existing_manifests()
 {
-  execute(query("DROP TABLE IF EXISTS manifests"));
-  execute(query("DROP TABLE IF EXISTS manifest_deltas"));
-  execute(query("DROP TABLE IF EXISTS manifest_certs"));
+  execute(query("DELETE FROM manifests"));
+  execute(query("DELETE FROM manifest_deltas"));
 }
 
 void
@@ -2665,20 +2789,20 @@ void database::complete(selector_type ty,
           else if (i->first == selectors::sel_head)
             {
               // get branch names
-              set<utf8> branch_names;
+              set<branch_name> branch_names;
               if (i->second.size() == 0)
                 {
                   __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.insert(__app->opts.branch_name);
+                  branch_names.insert(__app->opts.branchname);
                 }
               else
                 {
-                  __app->get_project().get_branch_list(utf8(i->second), branch_names);
+                  __app->get_project().get_branch_list(globish(i->second), branch_names);
                 }
 
               // for each branch name, get the branch heads
               set<revision_id> heads;
-              for (set<utf8>::const_iterator bn = branch_names.begin();
+              for (set<branch_name>::const_iterator bn = branch_names.begin();
                    bn != branch_names.end(); bn++)
                 {
                   set<revision_id> branch_heads;
@@ -2714,8 +2838,8 @@ void database::complete(selector_type ty,
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name()) % text(__app->opts.branch_name());
-                  L(FL("limiting to current branch '%s'") % __app->opts.branch_name);
+                  lim % text(branch_cert_name()) % text(__app->opts.branchname());
+                  L(FL("limiting to current branch '%s'") % __app->opts.branchname);
                 }
               else
                 {
@@ -2790,14 +2914,14 @@ void database::complete(selector_type ty,
 // epochs
 
 void
-database::get_epochs(map<cert_value, epoch_data> & epochs)
+database::get_epochs(map<branch_name, epoch_data> & epochs)
 {
   epochs.clear();
   results res;
   fetch(res, 2, any_rows, query("SELECT branch, epoch FROM branch_epochs"));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
-      cert_value decoded(idx(*i, 0));
+      branch_name decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(make_pair(decoded, epoch_data(idx(*i, 1))));
     }
@@ -2805,7 +2929,7 @@ database::get_epochs(map<cert_value, epoch_data> & epochs)
 
 void
 database::get_epoch(epoch_id const & eid,
-                    cert_value & branch, epoch_data & epo)
+                    branch_name & branch, epoch_data & epo)
 {
   I(epoch_exists(eid));
   results res;
@@ -2814,7 +2938,7 @@ database::get_epoch(epoch_id const & eid,
         " WHERE hash = ?")
         % text(eid.inner()()));
   I(res.size() == 1);
-  branch = cert_value(idx(idx(res, 0), 0));
+  branch = branch_name(idx(idx(res, 0), 0));
   epo = epoch_data(idx(idx(res, 0), 1));
 }
 
@@ -2830,7 +2954,7 @@ database::epoch_exists(epoch_id const & eid)
 }
 
 void
-database::set_epoch(cert_value const & branch, epoch_data const & epo)
+database::set_epoch(branch_name const & branch, epoch_data const & epo)
 {
   epoch_id eid;
   epoch_hash_code(branch, epo, eid);
@@ -2842,7 +2966,7 @@ database::set_epoch(cert_value const & branch, epoch_data const & epo)
 }
 
 void
-database::clear_epoch(cert_value const & branch)
+database::clear_epoch(branch_name const & branch)
 {
   execute(query("DELETE FROM branch_epochs WHERE branch = ?")
           % blob(branch()));

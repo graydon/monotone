@@ -456,7 +456,7 @@ get_user_key(rsa_keypair_id & key, app_state & app)
       return;
     }
 
-  if (app.lua.hook_get_branch_key(app.opts.branch_name, key))
+  if (app.lua.hook_get_branch_key(app.opts.branchname, key))
     return;
 
   vector<rsa_keypair_id> all_privkeys;
@@ -474,17 +474,17 @@ get_user_key(rsa_keypair_id & key, app_state & app)
 // APP may override.  Branch name is returned in BRANCHNAME.
 // Does not modify branch state in APP.
 void
-guess_branch(revision_id const & ident, app_state & app, utf8 & branchname)
+guess_branch(revision_id const & ident, app_state & app, branch_name & branchname)
 {
-  if (app.opts.branch_given && !app.opts.branch_name().empty())
-    branchname = app.opts.branch_name;
+  if (app.opts.branch_given && !app.opts.branchname().empty())
+    branchname = app.opts.branchname;
   else
     {
       N(!ident.inner()().empty(),
         F("no branch found for empty revision, "
           "please provide a branch name"));
 
-      set<utf8> branches;
+      set<branch_name> branches;
       app.get_project().get_revision_branches(ident, branches);
 
       N(branches.size() != 0,
@@ -495,7 +495,7 @@ guess_branch(revision_id const & ident, app_state & app, utf8 & branchname)
         F("multiple branch certs found for revision %s, "
           "please provide a branch name") % ident);
 
-      set<utf8>::iterator i = branches.begin();
+      set<branch_name>::iterator i = branches.begin();
       I(i != branches.end());
       branchname = *i;
     }
@@ -505,9 +505,9 @@ guess_branch(revision_id const & ident, app_state & app, utf8 & branchname)
 void
 guess_branch(revision_id const & ident, app_state & app)
 {
-  utf8 branchname;
+  branch_name branchname;
   guess_branch(ident, app, branchname);
-  app.opts.branch_name = branchname;
+  app.opts.branchname = branchname;
 }
 
 void
@@ -607,7 +607,7 @@ cert_revision_author_default(revision_id const & m,
                              packet_consumer & pc)
 {
   string author;
-  if (!app.lua.hook_get_author(app.opts.branch_name, author))
+  if (!app.lua.hook_get_author(app.opts.branchname, author))
     {
       rsa_keypair_id key;
       get_user_key(key, app),

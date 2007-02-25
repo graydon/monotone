@@ -26,8 +26,8 @@ protocol_voice;
 void run_netsync_protocol(protocol_voice voice,
                           protocol_role role,
                           utf8 const & addr,
-                          utf8 const & include_pattern,
-                          utf8 const & exclude_pattern,
+                          globish const & include_pattern,
+                          globish const & exclude_pattern,
                           app_state & app);
 
 // Local Variables:
