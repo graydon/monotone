@@ -50,12 +50,9 @@ static void
 find_key_if_needed(utf8 & addr, app_state & app)
 {
       uri u;
-      bool transport_requires_auth(true);
-      if (parse_uri(addr(), u))
-        {
-          transport_requires_auth = app.lua.hook_use_transport_auth(u);
-        }
-      if (transport_requires_auth)
+      parse_uri(addr(), u);
+
+      if (app.lua.hook_use_transport_auth(u))
         {
           rsa_keypair_id key;
           get_user_key(key, app);

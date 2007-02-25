@@ -2338,12 +2338,13 @@ build_stream_to_server(app_state & app,
   shared_ptr<Netxx::StreamBase> server;
   uri u;
   vector<string> argv;
-  if (parse_uri(address(), u)
-      && app.lua.hook_get_netsync_connect_command(u,
-                                                  include_pattern,
-                                                  exclude_pattern,
-                                                  global_sanity.debug,
-                                                  argv))
+
+  parse_uri(address(), u);
+  if (app.lua.hook_get_netsync_connect_command(u,
+                                               include_pattern,
+                                               exclude_pattern,
+                                               global_sanity.debug,
+                                               argv))
     {
       I(argv.size() > 0);
       string cmd = argv[0];
