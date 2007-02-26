@@ -7699,10 +7699,10 @@ are taken.
 
 Called by monotone after the version @var{new_id} is committed. The
 second parameter, @var{revision} is the text of the revision, what would
-be given by "monotone cat revision @var{new_id}". The
-third parameter, @var{certs}, is a Lua table containing the set of
-certificate names and values committed along with this version. There
-is no default definition for this hook. 
+be given by @command{mtn automate get_revision @var{new_id}}. The third
+parameter, @var{certs}, is a Lua table containing the set of certificate
+names and values committed along with this version. There is no default
+definition for this hook. 
 
 Note that since the @var{certs} table does not contain cryptographic
 or trust information, and only contains one entry per cert name, it is
@@ -7753,12 +7753,11 @@ The include and exclude patterns used by the client.
 
 Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
-by "monotone cat revision @var{new_id}". @var{certs} is a Lua table
-containing one subtable for each
-cert attached to the revision @var{new_id}. These subtables have fields
-named "key", "name", and "value", containing the signing key for the cert,
-the name of the cert, and the value of the cert. There is no default
-definition for this hook.
+by @command{mtn automate get_revision @var{new_id}}. @var{certs} is a
+Lua table containing one subtable for each cert attached to the revision
+@var{new_id}. These subtables have fields named "key", "name", and
+"value", containing the signing key for the cert, the name of the cert,
+and the value of the cert. There is no default definition for this hook.
 @var{session_id} is used together with @code{note_netsync_start} and
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.
