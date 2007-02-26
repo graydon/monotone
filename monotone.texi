@@ -7406,6 +7406,191 @@ revision @var{source_id} or is invalid, prints an error message to stderr and ex
 
 @end table
 
+@item mtn automate db_get @var{domain} @var{name}
+
+@table @strong 
+@item Arguments:
+
+The @var{domain} and @var{name} specify the database variable 
+which is returned.
+
+@item Added in:
+
+4.1
+
+@item Purpose:
+
+Read a database variable, see also @ref{Vars}.
+
+@item Sample output:
+
+@verbatim 
+off.net 
+@end verbatim
+
+@item Output format:
+
+Exactly the variable's content. Since this command is mainly intended for 
+@command{automate stdio} it will not add a trailing newline.
+
+@item Error conditions:
+
+If the variable is unknown prints an error message to stderr and exits with
+status 1.
+
+@end table
+
+@item mtn automate db_put @var{domain} @var{name} @var{value}
+
+@table @strong
+@item Arguments:
+
+The @var{domain} and @var{name} specify the database variable 
+which is changed to @var{value}.
+
+@item Added in:
+
+4.1
+
+@item Purpose:
+
+Change a database variable, see also @ref{Vars}.
+
+@item Sample usage:
+
+@verbatim 
+mtn automate db_set database default-server off.net 
+@end verbatim
+
+@item Output format:
+
+No output.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+@item mtn automate put_file [@var{base-id}] @var{contents}
+
+@table @strong 
+@item Arguments:
+
+The optional @var{base-id} specifies a file-id on which the contents are
+based on. This is used for delta encoding. @var{contents} are the contents of
+the new file.
+
+@item Added in:
+
+4.1
+
+@item Purpose:
+
+Preparation of a workspace-less commit. 
+See also @command{automate put_revision}. Normally used via 
+@command{automate stdio}.
+
+@item Sample output:
+
+@verbatim 
+70a0f283898a18815a83df37c902e5f1492e9aa2 
+@end verbatim
+
+@item Output format:
+
+The sha1 sum of the contents, hex encoded.
+
+@item Error conditions:
+
+If the optional base id is unknown prints an error message to stderr and 
+exits with status 1.
+
+@end table
+
+@item mtn automate put_revision @var{revision-data}
+
+@table @strong 
+@item Arguments:
+
+@var{revision-data} is the new revision. See example
+below.
+
+@item Added in:
+
+4.1
+
+@item Purpose:
+
+Workspace-less commit. Normally used via @command{automate stdio}.
+
+@item Sample argument:
+
+@smallexample
+@group
+format_version "1"
+
+new_manifest [0000000000000000000000000000000000000004]
+
+old_revision []
+
+add_dir ""
+
+add_file "foo"
+content [5bf1fd927dfb8679496a2e6cf00cbe50c1c87145]
+@end group
+@end smallexample
+
+@item Sample output:
+
+@verbatim 
+4c2c1d846fa561601254200918fba1fd71e6795d 
+@end verbatim
+
+@item Output format:
+
+The new revision id, hex encoded.
+
+@item Error conditions:
+
+If the changeset is invalid prints an error message to stderr and 
+exits with status 1. May abort on invalid formats.
+
+@end table
+
+@item mtn automate cert @var{revision} @var{name} @var{value}
+
+@table @strong 
+@item Arguments:
+
+@var{revision} is an existing revision, @var{name} is the certificate name
+and @var{value} its value.
+
+@item Added in:
+
+4.1
+
+@item Purpose:
+
+@command{automate stdio} capable variant of @command{mtn cert}.
+
+@item Sample usage:
+
+@verbatim 
+mtn automate cert 4c2c1d846fa561601254200918fba1fd71e6795d author tester@test.net 
+@end verbatim
+
+@item Output format:
+
+No output.
+
+@item Error conditions:
+
+If the revision is invalid prints an error message to stderr and 
+exits with status 1.
+
+@end table
+
 @end ftable
 
 @page
@@ -7514,10 +7699,10 @@ are taken.
 
 Called by monotone after the version @var{new_id} is committed. The
 second parameter, @var{revision} is the text of the revision, what would
-be given by "monotone cat revision @var{new_id}". The
-third parameter, @var{certs}, is a Lua table containing the set of
-certificate names and values committed along with this version. There
-is no default definition for this hook. 
+be given by @command{mtn automate get_revision @var{new_id}}. The third
+parameter, @var{certs}, is a Lua table containing the set of certificate
+names and values committed along with this version. There is no default
+definition for this hook. 
 
 Note that since the @var{certs} table does not contain cryptographic
 or trust information, and only contains one entry per cert name, it is
@@ -7568,12 +7753,11 @@ The include and exclude patterns used by the client.
 
 Called by monotone after the revision @var{new_id} is received through
 netsync. @var{revision} is the text of the revision, what would be given
-by "monotone cat revision @var{new_id}". @var{certs} is a Lua table
-containing one subtable for each
-cert attached to the revision @var{new_id}. These subtables have fields
-named "key", "name", and "value", containing the signing key for the cert,
-the name of the cert, and the value of the cert. There is no default
-definition for this hook.
+by @command{mtn automate get_revision @var{new_id}}. @var{certs} is a
+Lua table containing one subtable for each cert attached to the revision
+@var{new_id}. These subtables have fields named "key", "name", and
+"value", containing the signing key for the cert, the name of the cert,
+and the value of the cert. There is no default definition for this hook.
 @var{session_id} is used together with @code{note_netsync_start} and
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.

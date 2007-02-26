@@ -145,12 +145,23 @@ static int os_date (lua_State *L) {
     setfield(L, "yday", stm->tm_yday+1);
     setboolfield(L, "isdst", stm->tm_isdst);
   }
-  else {
-    char b[256];
-    if (strftime(b, sizeof(b), s, stm))
-      lua_pushstring(L, b);
-    else
-      return luaL_error(L, LUA_QL("date") " format too long");
+   else {
+    char cc[3];
+    luaL_Buffer b;
+    cc[0] = '%'; cc[2] = '\0';
+    luaL_buffinit(L, &b);
+    for (; *s; s++) {
+      if (*s != '%' || *(s + 1) == '\0')  /* no conversion specifier? */
+        luaL_addchar(&b, *s);
+      else {
+        size_t reslen;
+        char buff[200];  /* should be big enough for any conversion result */
+        cc[1] = *(++s);
+        reslen = strftime(buff, sizeof(buff), cc, stm);
+        luaL_addlstring(&b, buff, reslen);
+      }
+    }
+    luaL_pushresult(&b);
   }
   return 1;
 }
