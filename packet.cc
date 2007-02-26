@@ -326,29 +326,19 @@ feed_packet_consumer
   app_state & app;
   size_t & count;
   packet_consumer & cons;
-  string ident;
-  string key;
-  string certname;
-  string base;
-  string sp;
   feed_packet_consumer(size_t & count, packet_consumer & c, app_state & app_)
-   : app(app_), count(count), cons(c),
-     ident(constants::regex_legal_id_bytes),
-     key(constants::regex_legal_key_name_bytes),
-     certname(constants::regex_legal_cert_name_bytes),
-     base(constants::regex_legal_packet_bytes),
-     sp("[[:space:]]+")
+   : app(app_), count(count), cons(c)
   {}
   void validate_id(string const & id) const
   {
-    E(id.size() == 40
+    E(id.size() == constants::idlen
       && id.find_first_not_of(constants::legal_id_bytes) == string::npos,
       F("malformed packet: invalid identifier"));
   }
   void validate_base64(string const & s) const
   {
     E(s.size() > 0
-      && s.find_first_not_of(constants::legal_packet_bytes) == string::npos,
+      && s.find_first_not_of(constants::legal_base64_bytes) == string::npos,
       F("malformed packet: invalid base64 block"));
   }
   void validate_key(string const & k) const
