@@ -8,9 +8,7 @@
 // PURPOSE.
 
 #include <string>
-
-#include <boost/regex.hpp>
-#include <boost/lexical_cast.hpp>
+#include <sstream>
 
 #include "app_state.hh"
 #include "cset.hh"
@@ -25,16 +23,13 @@
 
 using std::endl;
 using std::istream;
+using std::istringstream;
 using std::make_pair;
 using std::map;
 using std::ostream;
 using std::pair;
 using std::string;
 
-using boost::lexical_cast;
-using boost::match_default;
-using boost::match_results;
-using boost::regex;
 using boost::shared_ptr;
 
 void
@@ -344,129 +339,228 @@ feed_packet_consumer
      base(constants::regex_legal_packet_bytes),
      sp("[[:space:]]+")
   {}
-  void require(bool x) const
+  void validate_id(string const & id) const
   {
-    E(x, F("malformed packet"));
+    E(id.size() == 40
+      && id.find_first_not_of(constants::legal_id_bytes) == string::npos,
+      F("malformed packet: invalid identifier"));
   }
-  bool operator()(match_results<string::const_iterator> const & res) const
+  void validate_base64(string const & s) const
   {
-    if (res.size() != 4)
-      throw oops("matched impossible packet with "
-                 + lexical_cast<string>(res.size()) + " matching parts: " +
-                 string(res[0].first, res[0].second));
-    I(res[1].matched);
-    I(res[2].matched);
-    I(res[3].matched);
-    string type(res[1].first, res[1].second);
-    string args(res[2].first, res[2].second);
-    string body(res[3].first, res[3].second);
-    if (regex_match(type, regex("[fr]data")))
-      {
-        L(FL("read data packet"));
-        require(regex_match(args, regex(ident)));
-        require(regex_match(body, regex(base)));
-        base64<gzip<data> > body_packed(trim_ws(body));
-        data contents;
-        unpack(body_packed, contents);
-        if (type == "rdata")
-          cons.consume_revision_data(revision_id(hexenc<id>(args)),
-                                     revision_data(contents));
-        else if (type == "fdata")
-          cons.consume_file_data(file_id(hexenc<id>(args)),
-                                 file_data(contents));
-        else
-          throw oops("matched impossible data packet with head '" + type + "'");
-      }
-    else if (type == "fdelta")
-      {
-        L(FL("read delta packet"));
-        match_results<string::const_iterator> matches;
-        require(regex_match(args, matches, regex(ident + sp + ident)));
-        string src_id(matches[1].first, matches[1].second);
-        string dst_id(matches[2].first, matches[2].second);
-        require(regex_match(body, regex(base)));
-        base64<gzip<delta> > body_packed(trim_ws(body));
-        delta contents;
-        unpack(body_packed, contents);
-        cons.consume_file_delta(file_id(hexenc<id>(src_id)),
-                                file_id(hexenc<id>(dst_id)),
-                                file_delta(contents));
-      }
-    else if (type == "rcert")
-      {
-        L(FL("read cert packet"));
-        match_results<string::const_iterator> matches;
-        require(regex_match(args, matches, regex(ident + sp + certname
-                                                 + sp + key + sp + base)));
-        string certid(matches[1].first, matches[1].second);
-        string name(matches[2].first, matches[2].second);
-        string keyid(matches[3].first, matches[3].second);
-        string val(matches[4].first, matches[4].second);
-        string contents(trim_ws(body));
+    E(s.size() > 0
+      && s.find_first_not_of(constants::legal_packet_bytes) == string::npos,
+      F("malformed packet: invalid base64 block"));
+  }
+  void validate_key(string const & k) const
+  {
+    E(k.size() > 0
+      && k.find_first_not_of(constants::legal_key_name_bytes) == string::npos,
+      F("malformed packet: invalid key name"));
+  }
+  void validate_certname(string const & cn) const
+  {
+    E(cn.size() > 0
+      && cn.find_first_not_of(constants::legal_cert_name_bytes) == string::npos,
+      F("malformed packet: invalid cert name"));
+  }
+  void validate_no_more_args(istringstream & iss) const
+  {
+    string next;
+    iss >> next;
+    E(next.size() == 0,
+      F("malformed packet: too many arguments in header"));
+  }
 
-        // canonicalize the base64 encodings to permit searches
-        cert t = cert(hexenc<id>(certid),
-                      cert_name(name),
-                      base64<cert_value>(canonical_base64(val)),
-                      rsa_keypair_id(keyid),
-                      base64<rsa_sha1_signature>(canonical_base64(contents)));
-        cons.consume_revision_cert(revision<cert>(t));
-      }
+  void data_packet(string const & args, string const & body,
+                   bool is_revision) const
+  {
+    L(FL("read %s data packet") % (is_revision ? "revision" : "file"));
+    validate_id(args);
+    validate_base64(body);
+
+    data contents;
+    unpack(base64<gzip<data> >(body), contents);
+    if (is_revision)
+      cons.consume_revision_data(revision_id(hexenc<id>(args)),
+                                 revision_data(contents));
+    else
+      cons.consume_file_data(file_id(hexenc<id>(args)),
+                             file_data(contents));
+  }
+
+  void fdelta_packet(string const & args, string const & body) const
+  {
+    L(FL("read delta packet"));
+    istringstream iss(args);
+    string src_id; iss >> src_id; validate_id(src_id);
+    string dst_id; iss >> dst_id; validate_id(dst_id);
+    validate_no_more_args(iss);
+    validate_base64(body);
+
+    delta contents;
+    unpack(base64<gzip<delta> >(body), contents);
+    cons.consume_file_delta(file_id(hexenc<id>(src_id)),
+                            file_id(hexenc<id>(dst_id)),
+                            file_delta(contents));
+  }
+
+  void rcert_packet(string const & args, string const & body) const
+  {
+    L(FL("read cert packet"));
+    istringstream iss(args);
+    string certid; iss >> certid; validate_id(certid);
+    string name;   iss >> name;   validate_certname(name);
+    string keyid;  iss >> keyid;  validate_key(keyid);
+    string val;    iss >> val;    validate_base64(val);
+    validate_no_more_args(iss);
+    validate_base64(body);
+    // canonicalize the base64 encodings to permit searches
+    cert t = cert(hexenc<id>(certid),
+                  cert_name(name),
+                  base64<cert_value>(canonical_base64(val)),
+                  rsa_keypair_id(keyid),
+                  base64<rsa_sha1_signature>(canonical_base64(body)));
+    cons.consume_revision_cert(revision<cert>(t));
+  }
+
+  void pubkey_packet(string const & args, string const & body) const
+  {
+    L(FL("read pubkey packet"));
+    validate_key(args);
+    validate_base64(body);
+
+    cons.consume_public_key(rsa_keypair_id(args),
+                            base64<rsa_pub_key>(body));
+  }
+
+  void keypair_packet(string const & args, string const & body) const
+  {
+    L(FL("read keypair packet"));
+    string::size_type hashpos = body.find('#');
+    string pub(body, 0, hashpos);
+    string priv(body, hashpos+1);
+
+    validate_key(args);
+    validate_base64(pub);
+    validate_base64(priv);
+    cons.consume_key_pair(rsa_keypair_id(args),
+                          keypair(base64<rsa_pub_key>(pub),
+                                  base64<rsa_priv_key>(priv)));
+  }
+
+  void privkey_packet(string const & args, string const & body) const
+  {
+    L(FL("read privkey packet"));
+    validate_key(args);
+    validate_base64(body);
+    keypair kp;
+    migrate_private_key(app,
+                        rsa_keypair_id(args),
+                        base64<arc4<rsa_priv_key> >(body),
+                        kp);
+    cons.consume_key_pair(rsa_keypair_id(args), kp);
+  }
+  
+  void operator()(string const & type,
+                  string const & args,
+                  string const & body) const
+  {
+    if (type == "rdata")
+      data_packet(args, body, true);
+    if (type == "fdata")
+      data_packet(args, body, false);
+    else if (type == "fdelta")
+      fdelta_packet(args, body);
+    else if (type == "rcert")
+      rcert_packet(args, body);
     else if (type == "pubkey")
-      {
-        L(FL("read pubkey data packet"));
-        require(regex_match(args, regex(key)));
-        require(regex_match(body, regex(base)));
-        string contents(trim_ws(body));
-        cons.consume_public_key(rsa_keypair_id(args),
-                                base64<rsa_pub_key>(contents));
-      }
+      pubkey_packet(args, body);
     else if (type == "keypair")
-      {
-        L(FL("read keypair data packet"));
-        require(regex_match(args, regex(key)));
-        match_results<string::const_iterator> matches;
-        require(regex_match(body, matches, regex(base + "#" + base)));
-        base64<rsa_pub_key> pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
-        base64<rsa_priv_key> priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
-        cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
-      }
+      keypair_packet(args, body);
     else if (type == "privkey")
-      {
-        L(FL("read pubkey data packet"));
-        require(regex_match(args, regex(key)));
-        require(regex_match(body, regex(base)));
-        string contents(trim_ws(body));
-        keypair kp;
-        migrate_private_key(app,
-                            rsa_keypair_id(args),
-                            base64<arc4<rsa_priv_key> >(contents),
-                            kp);
-        cons.consume_key_pair(rsa_keypair_id(args), kp);
-      }
+      privkey_packet(args, body);
     else
       {
         W(F("unknown packet type: '%s'") % type);
-        return true;
+        return;
       }
     ++count;
-    return true;
   }
 };
 
 static size_t
 extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
-  static string const head("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]");
-  static string const body("([^\\[\\]]+)");
-  static string const tail("\\[end\\]");
-  static string const whole = head + body + tail;
-  regex expr(whole);
   size_t count = 0;
-  regex_grep(feed_packet_consumer(count, cons, app), s, expr, match_default);
+  feed_packet_consumer feeder(count, cons, app);
+
+  string::const_iterator p, tbeg, tend, abeg, aend, bbeg, bend;
+
+  enum extract_state {
+    skipping, open_bracket, scanning_type, found_type,
+    scanning_args, found_args, scanning_body,
+    end_1, end_2, end_3, end_4, end_5
+  } state = skipping;
+  
+  for (p = s.begin(); p != s.end(); p++)
+    switch (state)
+      {
+      case skipping: if (*p == '[') state = open_bracket; break;
+      case open_bracket:
+        if (is_alpha (*p))
+          state = scanning_type;
+        else
+          state = skipping;
+        tbeg = p;
+        break;
+      case scanning_type:
+        if (!is_alpha (*p))
+          {
+            state = is_space(*p) ? found_type : skipping;
+            tend = p;
+          }
+        break;
+      case found_type:
+        if (!is_space (*p))
+          {
+            state = (*p != ']') ? scanning_args : skipping;
+            abeg = p;
+          }
+        break;
+      case scanning_args:
+        if (*p == ']')
+          {
+            state = found_args;
+            aend = p;
+          }
+        break;
+      case found_args:
+        state = (*p != '[' && *p != ']') ? scanning_body : skipping;
+        bbeg = p;
+        break;
+      case scanning_body:
+        if (*p == '[')
+          {
+            state = end_1;
+            bend = p;
+          }
+        else if (*p == ']')
+          state = skipping;
+        break;
+
+      case end_1: state = (*p == 'e') ? end_2 : skipping; break;
+      case end_2: state = (*p == 'n') ? end_3 : skipping; break;
+      case end_3: state = (*p == 'd') ? end_4 : skipping; break;
+      case end_4:
+        if (*p == ']')
+          feeder(string(tbeg, tend), string(abeg, aend), string(bbeg, bend));
+        state = skipping;
+        break;
+      default:
+        I(false);
+      }
   return count;
 }
-
 
 size_t
 read_packets(istream & in, packet_consumer & cons, app_state & app)
@@ -501,8 +595,76 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
 #include "unit_tests.hh"
 #include "transforms.hh"
 
-using std::istringstream;
 using std::ostringstream;
+
+UNIT_TEST(packet, validators)
+{
+  ostringstream oss;
+  packet_writer pw(oss);
+  app_state app;
+  size_t count;
+  feed_packet_consumer f(count, pw, app);
+
+#define N_THROW(expr) BOOST_CHECK_NOT_THROW(expr, informative_failure)
+#define Y_THROW(expr) BOOST_CHECK_THROW(expr, informative_failure)
+
+  // validate_id
+  N_THROW(f.validate_id("5d7005fadff386039a8d066684d22d369c1e6c94"));
+  Y_THROW(f.validate_id(""));
+  Y_THROW(f.validate_id("5d7005fadff386039a8d066684d22d369c1e6c9"));
+  for (int i = 1; i < std::numeric_limits<unsigned char>::max(); i++)
+    if (!((i >= '0' && i <= '9')
+          || (i >= 'a' && i <= 'f')))
+      Y_THROW(f.validate_id(string("5d7005fadff386039a8d066684d22d369c1e6c9")
+                            + char(i)));
+
+  // validate_base64
+  N_THROW(f.validate_base64("YmwK"));
+  N_THROW(f.validate_base64(" Y m x h a A o = "));
+  N_THROW(f.validate_base64("ABCD EFGH IJKL MNOP QRST UVWX YZ"
+                            "abcd efgh ijkl mnop qrst uvwx yz"
+                            "0123 4567 89/+ z\t=\r=\n="));
+
+  Y_THROW(f.validate_base64(""));
+  Y_THROW(f.validate_base64("!@#$"));
+
+  // validate_key
+  N_THROW(f.validate_key("graydon@venge.net"));
+  N_THROW(f.validate_key("dscherger+mtn"));
+  N_THROW(f.validate_key("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                         "abcdefghijklmnopqrstuvwxyz"
+                         "0123456789-.@+_"));
+  Y_THROW(f.validate_key(""));
+  Y_THROW(f.validate_key("graydon at venge dot net"));
+
+  // validate_certname
+  N_THROW(f.validate_certname("graydon-at-venge-dot-net"));
+  N_THROW(f.validate_certname("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                              "abcdefghijklmnopqrstuvwxyz"
+                              "0123456789-"));
+    
+  Y_THROW(f.validate_certname(""));
+  Y_THROW(f.validate_certname("graydon@venge.net"));
+  Y_THROW(f.validate_certname("graydon at venge dot net"));
+
+  // validate_no_more_args
+  {
+    istringstream iss("a b");
+    string a; iss >> a; BOOST_CHECK(a == "a");
+    string b; iss >> b; BOOST_CHECK(b == "b");
+    N_THROW(f.validate_no_more_args(iss));
+  }
+  {
+    istringstream iss("a ");
+    string a; iss >> a; BOOST_CHECK(a == "a");
+    N_THROW(f.validate_no_more_args(iss));
+  }
+  {
+    istringstream iss("a b");
+    string a; iss >> a; BOOST_CHECK(a == "a");
+    Y_THROW(f.validate_no_more_args(iss));
+  }
+}
 
 UNIT_TEST(packet, roundabout)
 {

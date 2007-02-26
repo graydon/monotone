@@ -63,22 +63,19 @@ namespace constants
   // truncated.
   size_t const log_line_sz = 0x300;
 
-  // all the ASCII characters (bytes) which are legal in a packet.
+  // all the ASCII characters (bytes) which are legal in a sequence of
+  // base64-encoded data.  note that botan doesn't count \v or \f as
+  // whitespace (unlike <ctype.h>) and so neither do we.
   char const * const legal_packet_bytes =
-  // LDH characters
+  // base64 data characters
   "abcdefghijklmnopqrstuvwxyz"
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  "0123456789"
-  "-"
-  // extra base64 codes
-  "+/="
-  // separators
-  ".@[]"
+  "0123456789+/="
   // whitespace
   " \r\n\t"
   ;
 
-  string const regex_legal_packet_bytes("([a-zA-Z0-9+/=[:space:]]+)");
+  string const regex_legal_packet_bytes("([a-zA-Z0-9+/= \r\n\t]+)");
 
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   char const * const legal_id_bytes =
@@ -116,11 +113,11 @@ namespace constants
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   "0123456789"
   "-"
-  // other non-shell, non-selector metacharacters allowed in (unquoted) local
-  // parts by RFC2821/RFC2822.  The full list is !#$%&'*+-/=?^_`|{}~.
-  "+_."
   // label and component separators
   ".@"
+  // other non-shell, non-selector metacharacters allowed in (unquoted) local
+  // parts by RFC2821/RFC2822.  The full list is !#$%&'*+-/=?^_`|{}~.
+  "+_"
   ;
 
   string const regex_legal_key_name_bytes("([-a-zA-Z0-9\\.@\\+_]+)");
