@@ -18,7 +18,7 @@ return {
 	 writefile("testfile1", "new stuff\n")
 	 writefile("testfile2", "more new stuff\n")
 	 -- and some tree rearrangement stuff too
-	 check(mtn("rename", "--execute", "testfile2", "renamed-testfile2"),
+	 check(mtn("rename", "testfile2", "renamed-testfile2"),
 	       0, false, false)
 	 check(mtn("attr", "set", "renamed-testfile2", "test:attr2", "asdf"),
 	       0, false, false)

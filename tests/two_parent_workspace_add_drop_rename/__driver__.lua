@@ -19,10 +19,10 @@ writefile("fudgie", "fudgie content")
 check(mtn("add", "fudgie"), 0, false, true)
 check(qgrep("adding fudgie", "stderr"))
 
-check(mtn("drop", "fudgie"), 0, false, true)
+check(mtn("drop", "--bookkeep-only", "fudgie"), 0, false, true)
 check(qgrep("dropping fudgie", "stderr"))
 
-check(mtn("rename", "-e", "foo", "bar"), 0, false, true)
+check(mtn("rename", "foo", "bar"), 0, false, true)
 check(qgrep("renaming foo to bar", "stderr"))
 
 commit()

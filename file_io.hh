@@ -42,6 +42,8 @@ bool path_exists(any_path const & path);
 bool directory_exists(any_path const & path);
 // returns true if there is a file at 'path'
 bool file_exists(any_path const & path);
+// returns true if there is a directory at 'path' with no files or sub-directories
+bool directory_empty(any_path const & path);
 
 
 // returns true if the string content is binary according to monotone heuristic

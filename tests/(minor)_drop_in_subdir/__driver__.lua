@@ -13,8 +13,8 @@ rev = base_revision()
 check(mtn("checkout", "--revision", rev, "codir"), 0, false, false)
 
 chdir("subdir")
-check(mtn("drop", "foo"), 0, false, false)
-check(mtn("drop", "--recursive", "anotherdir"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "foo"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "--recursive", "anotherdir"), 0, false, false)
 chdir("..")
 commit()
 
