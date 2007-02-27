@@ -16,5 +16,6 @@ check(samefile("stdout", "orig_rev"))
 -- running a recursive add what's supposed to be a file, but is actually a
 -- dir...
 mkdir("dir2")
-check(mtn("rename", "file", "dir2"), 0, false, false)
+check(mtn("rename", "file", "dir2"), 1, false, false)
 check(mtn("add", "dir2"), 0, false, false)
+check(mtn("rename", "file", "dir2"), 0, false, false)
