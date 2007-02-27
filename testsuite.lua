@@ -183,7 +183,7 @@ function revert_to(rev, branch, mt)
   end
   if mt == nil then mt = mtn end
 
-  check(mt("automate", "get_manifest_of"), 0, true, false)
+  check(mt("automate", "get_manifest_of", base_revision()), 0, true, false)
   rename("stdout", "paths-new")
 
   remove("_MTN.old")
