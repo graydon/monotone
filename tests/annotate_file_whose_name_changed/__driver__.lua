@@ -18,7 +18,7 @@ revert_to(revs.base)
 remove("junk")
 
 copy("foo.rightnewname", "foo")
-check(mtn("rename", "-e", "foo", "foo.new"), 0, false, false)
+check(mtn("rename", "foo", "foo.new"), 0, false, false)
 commit()
 revs.right = base_revision()
 

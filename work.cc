@@ -1290,9 +1290,23 @@ workspace::perform_additions(path_set const & paths,
   update_any_attrs();
 }
 
+static bool
+in_parent_roster(const parent_map & parents, const node_id & nid)
+{
+  for (parent_map::const_iterator i = parents.begin();
+       i != parents.end();
+       i++)
+    {
+      if (parent_roster(i).has_node(nid))
+        return true;
+    }
+  
+  return false;
+}
+
 void
 workspace::perform_deletions(path_set const & paths, 
-                             bool recursive, bool execute)
+                             bool recursive, bool bookkeep_only)
 {
   if (paths.empty())
     return;
@@ -1301,6 +1315,9 @@ workspace::perform_deletions(path_set const & paths,
   roster_t new_roster;
   MM(new_roster);
   get_current_roster_shape(new_roster, nis);
+
+  parent_map parents;
+  get_parent_rosters(parents);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -1341,10 +1358,28 @@ workspace::perform_deletions(path_set const & paths,
                   continue;
                 }
             }
+          if (!bookkeep_only && path_exists(name) && in_parent_roster(parents, n->self))
+            {
+              if (is_dir_t(n))
+                {
+                  if (directory_empty(name))
+                    delete_file_or_dir_shallow(name);
+                  else
+                    W(F("directory %s not empty - it will be dropped but not deleted") % name);
+                }
+              else
+                {
+                  file_t file = downcast_to_file_t(n);
+                  file_id fid;
+                  I(ident_existing_file(name, fid));
+                  if (file->content == fid)
+                    delete_file_or_dir_shallow(name);
+                  else
+                    W(F("file %s changed - it will be dropped but not deleted") % name);
+                }
+            }
           P(F("dropping %s from workspace manifest") % name);
           new_roster.drop_detached_node(new_roster.detach_node(p));
-          if (execute && path_exists(name))
-            delete_file_or_dir_shallow(name);
         }
       todo.pop_front();
       if (i != paths.rend())
@@ -1353,9 +1388,6 @@ workspace::perform_deletions(path_set const & paths,
           ++i;
         }
     }
-
-  parent_map parents;
-  get_parent_rosters(parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
@@ -1366,7 +1398,7 @@ workspace::perform_deletions(path_set const & paths,
 void
 workspace::perform_rename(set<file_path> const & src_paths,
                           file_path const & dst_path,
-                          bool execute)
+                          bool bookkeep_only)
 {
   temp_node_id_source nis;
   roster_t new_roster;
@@ -1456,7 +1488,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
   make_revision_for_workspace(parents, new_roster, new_work);
   put_work_rev(new_work);
 
-  if (execute)
+  if (!bookkeep_only)
     {
       for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
            i != renames.end(); i++)
@@ -1476,11 +1508,11 @@ workspace::perform_rename(set<file_path> const & src_paths,
             }
           else if (have_src && have_dst)
             {
-              W(F("destination %s already exists in workspace, skipping") % d);
+              W(F("destination %s already exists in workspace, skipping filesystem rename") % d);
             }
           else
             {
-              L(FL("skipping move_path %s->%s silently, src doesn't exist, dst does")
+              W(F("skipping move_path in filesystem %s->%s, source doesn't exist, destination does")
                 % s % d);
             }
         }
@@ -1491,7 +1523,7 @@ workspace::perform_rename(set<file_path> const & src_paths,
 void
 workspace::perform_pivot_root(file_path const & new_root,
                               file_path const & put_old,
-                              bool execute)
+                              bool bookkeep_only)
 {
   split_path new_root_sp, put_old_sp, root_sp;
   new_root.split(new_root_sp);
@@ -1548,7 +1580,7 @@ workspace::perform_pivot_root(file_path const & new_root,
     make_revision_for_workspace(parents, new_roster, new_work);
     put_work_rev(new_work);
   }
-  if (execute)
+  if (!bookkeep_only)
     {
       content_merge_empty_adaptor cmea;
       perform_content_update(cs, cmea);

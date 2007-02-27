@@ -131,6 +131,17 @@ file_exists(any_path const & p)
   return get_path_status(p) == path::file;
 }
 
+bool
+directory_empty(any_path const & path)
+{
+  vector<utf8> files;
+  vector<utf8> subdirs;
+  
+  read_directory(path, files, subdirs);
+  
+  return files.empty() && subdirs.empty();
+}
+
 static bool did_char_is_binary_init;
 static bool char_is_binary[256];
 

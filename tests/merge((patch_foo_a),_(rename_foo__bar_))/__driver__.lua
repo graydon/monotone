@@ -7,7 +7,6 @@ commit()
 base = base_revision()
 
 check(mtn("rename", "foo", "bar"), 0, false, false)
-rename("foo", "bar")
 commit()
 
 remove("bar")

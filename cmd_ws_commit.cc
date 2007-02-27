@@ -340,7 +340,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
     N_("drop files from workspace"),
-    options::opts::execute | options::opts::missing | options::opts::recursive)
+    options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
     throw usage(name);
@@ -362,7 +362,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
   else
     split_paths(args_to_paths(args), paths);
 
-  app.work.perform_deletions(paths, app.opts.recursive, app.opts.execute);
+  app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
 
 ALIAS(rm, drop);
@@ -372,7 +372,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    options::opts::execute)
+    options::opts::bookkeep_only)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -387,7 +387,7 @@ CMD(rename, N_("workspace"),
       file_path s = file_path_external(idx(args, i));
       src_paths.insert(s);
     }
-  app.work.perform_rename(src_paths, dst_path, app.opts.execute);
+  app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
 
 ALIAS(mv, rename);
@@ -400,8 +400,8 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
        "will be the root directory, and the directory "
        "that is currently the root\n"
        "directory will have name PUT_OLD.\n"
-       "Using --execute is strongly recommended."),
-    options::opts::execute)
+       "Use of --bookkeep-only is NOT recommended."),
+    options::opts::bookkeep_only)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -409,7 +409,7 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
   file_path put_old = file_path_external(idx(args, 1));
-  app.work.perform_pivot_root(new_root, put_old, app.opts.execute);
+  app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
