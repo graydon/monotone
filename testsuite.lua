@@ -182,18 +182,38 @@ function revert_to(rev, branch, mt)
     branch = nil
   end
   if mt == nil then mt = mtn end
+
+  check(mt("automate", "get_manifest_of"), 0, true, false)
+  rename("stdout", "paths-new")
+
   remove("_MTN.old")
   rename("_MTN", "_MTN.old")
 
   check(mt("automate", "get_manifest_of", rev), 0, true, false)
-  rename("stdout", "paths")
+  rename("stdout", "paths-old")
 
   -- remove all of the files and dirs in this
   -- manifest to clear the way for checkout
 
-  for path in io.lines("paths") do
+  for path in io.lines("paths-new") do
     len = string.len(path) - 1
-    
+      
+    if (string.match(path, "^   file \"")) then
+      path = string.sub(path, 10, len)
+    elseif (string.match(path, "^dir \"")) then
+      path = string.sub(path, 6, len)
+    else
+      path = ""
+    end
+
+    if (string.len(path) > 0) then
+      remove(path)
+    end
+  end
+        
+  for path in io.lines("paths-old") do
+    len = string.len(path) - 1
+      
     if (string.match(path, "^   file \"")) then
       path = string.sub(path, 10, len)
     elseif (string.match(path, "^dir \"")) then
