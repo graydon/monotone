@@ -157,6 +157,11 @@ struct workspace
   // implied unless overridden on the command line. the set of valid keys
   // corresponds exactly to the argument list of these functions.
 
+  static bool get_ws_options_from_path(system_path & workspace,
+                                       system_path & database_option,
+                                       branch_name & branch_option,
+                                       rsa_keypair_id & key_option,
+                                       system_path & keydir_option);
   void get_ws_options(system_path & database_option,
                       branch_name & branch_option,
                       rsa_keypair_id & key_option,
