@@ -40,6 +40,7 @@ check(mtn("pluck", "-r", root_rev, "-r", second_rev), 1, false, false)
 check(readfile("_MTN/log") == "")
 
 check(mtn("drop", "somefile"), 0, false, false)
+remove("somefile")
 -- now it should work again
 check(mtn("pluck", "-r", root_rev, "-r", second_rev), 0, false, false)
 newtext = readfile("otherfile")
