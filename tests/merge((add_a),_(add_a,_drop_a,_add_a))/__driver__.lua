@@ -21,7 +21,7 @@ copy("right_1_b", "testfile")
 commit()
 
 remove("testfile")
-check(mtn("drop", "testfile"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
 commit()
 
 copy("right_2_a", "testfile")

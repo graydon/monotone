@@ -29,7 +29,7 @@ check(not qgrep("testfile0", "stdout"))
 
 -- check reverting a delete
 
-check(mtn("drop", "testfile0"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile0"), 0, false, false)
 check(qgrep("testfile0", "_MTN/revision"))
 check(mtn("status"), 0, true)
 check(qgrep("testfile0", "stdout"))
@@ -44,7 +44,7 @@ check(not qgrep("testfile0", "stdout"))
 f = io.open("testfile0", "a")
 f:write("liver and maude\n")
 f:close()
-check(mtn("drop", "testfile0"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile0"), 0, false, false)
 check(qgrep("testfile0", "_MTN/revision"))
 check(mtn("status"), 0, true)
 check(qgrep("testfile0", "stdout"))
@@ -101,8 +101,8 @@ check(mtn("status"), 0, true)
 copy("testfile0", "foofile0")
 copy("sub/testfile2", "sub/foofile2")
 
-check(mtn("rename", "testfile0", "foofile0"), 0, false, false)
-check(mtn("rename", "sub/testfile2", "sub/foofile2"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "testfile0", "foofile0"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "sub/testfile2", "sub/foofile2"), 0, false, false)
 
 check(mtn("status"), 0, true)
 check(qgrep("foofile0", "stdout"))

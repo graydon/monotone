@@ -39,5 +39,5 @@ check(mtn("ls", "missing"), 0, "file4\n", nil)
 
 -- this is drop because revert doesn't work in a 2-parent workspace yet,
 -- and all that matters is we get commit to be happy
-check(mtn("drop", "--missing"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "--missing"), 0, false, false)
 commit()

@@ -82,15 +82,15 @@ struct workspace
                          bool respect_ignore = true);
 
   void perform_deletions(path_set const & targets, bool recursive, 
-                         bool execute);
+                         bool bookkeep_only);
 
   void perform_rename(std::set<file_path> const & src_paths,
                       file_path const & dst_dir,
-                      bool execute);
+                      bool bookkeep_only);
 
   void perform_pivot_root(file_path const & new_root,
                           file_path const & put_old,
-                          bool execute);
+                          bool bookkeep_only);
 
   void perform_content_update(cset const & cs,
                               content_merge_adaptor const & ca,

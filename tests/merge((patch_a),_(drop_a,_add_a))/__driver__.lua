@@ -19,7 +19,7 @@ commit()
 revert_to(base)
 
 remove("testfile")
-check(mtn("drop", "testfile"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
 commit()
 
 copy("new_right", "testfile")

@@ -13,8 +13,8 @@ commit()
 base = base_revision()
 
 remove("testfile")
-check(mtn("drop", "testfile"), 0, false, false)
-check(mtn("rename", "renamefile", "testfile"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "renamefile", "testfile"), 0, false, false)
 rename("renamefile", "testfile")
 commit()
 
