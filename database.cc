@@ -265,6 +265,8 @@ database::initialize()
 
   // make sure what we wanted is what we got
   check_sql_schema(__sql, filename);
+  
+  close();
 }
 
 struct
@@ -711,10 +713,7 @@ database::~database()
   statement_cache.clear();
 
   if (__sql)
-    {
-      sqlite3_close(__sql);
-      __sql = 0;
-    }
+    close();
 }
 
 void
@@ -3303,6 +3302,17 @@ database::open()
 
   I(__sql);
   assert_sqlite3_ok(__sql);
+}
+
+void
+database::close()
+{
+  I(__sql);
+
+  sqlite3_close(__sql);
+  __sql = 0;
+
+  I(!__sql);
 }
 
 // transaction guards

@@ -147,6 +147,7 @@ app_state::create_workspace(system_path const & new_dir)
 
   mkdir_p(new_dir);
   go_to_workspace(new_dir);
+  fix_paths();
 
   N(!directory_exists(bookkeeping_root),
     F("monotone bookkeeping directory '%s' already exists in '%s'")
@@ -167,6 +168,18 @@ app_state::create_workspace(system_path const & new_dir)
   if (lua.hook_use_inodeprints())
     work.enable_inodeprints();
 
+  found_workspace = true;
+  if (global_sanity.filename.empty())
+    {
+      bookkeeping_path dump_path;
+      work.get_local_dump_path(dump_path);
+      L(FL("setting dump path to %s") % dump_path);
+      // The 'true' means that, e.g., if we're running checkout,
+      // then it's okay for dumps to go into our starting working
+      // dir's _MTN rather than the new workspace dir's _MTN.
+      global_sanity.filename = system_path(dump_path, false).as_external();
+    }
+
   load_rcfiles();
 }
 
@@ -174,8 +187,18 @@ void
 app_state::set_database(system_path const & filename)
 {
   if (!filename.empty())
-    db.set_filename(filename);
-}
+    {
+      system_path database_option(filename);
+      branch_name branch_option;
+      rsa_keypair_id key_option;
+      system_path keydir_option;
+      
+      db.set_filename(filename);
+      
+      work.set_ws_options(database_option, branch_option,
+                      key_option, keydir_option);
+    }
+ }
 
 void
 app_state::set_key_dir(system_path const & filename)
