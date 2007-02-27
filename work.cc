@@ -1290,6 +1290,20 @@ workspace::perform_additions(path_set const & paths,
   update_any_attrs();
 }
 
+static bool
+in_parent_roster(const parent_map & parents, const node_id & nid)
+{
+  for (parent_map::const_iterator i = parents.begin();
+       i != parents.end();
+       i++)
+    {
+      if (parent_roster(i).has_node(nid))
+        return true;
+    }
+  
+  return false;
+}
+
 void
 workspace::perform_deletions(path_set const & paths, 
                              bool recursive, bool bookkeep_only)
@@ -1301,6 +1315,9 @@ workspace::perform_deletions(path_set const & paths,
   roster_t new_roster;
   MM(new_roster);
   get_current_roster_shape(new_roster, nis);
+
+  parent_map parents;
+  get_parent_rosters(parents);
 
   // we traverse the the paths backwards, so that we always hit deep paths
   // before shallow paths (because path_set is lexicographically sorted).
@@ -1341,7 +1358,7 @@ workspace::perform_deletions(path_set const & paths,
                   continue;
                 }
             }
-          if (!bookkeep_only && path_exists(name))
+          if (!bookkeep_only && path_exists(name) && in_parent_roster(parents, n->self))
             {
               if (is_dir_t(n))
                 {
@@ -1371,9 +1388,6 @@ workspace::perform_deletions(path_set const & paths,
           ++i;
         }
     }
-
-  parent_map parents;
-  get_parent_rosters(parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
