@@ -424,6 +424,8 @@ LUAEXT(set_env, )
   return 0;
 }
 
+// #if'd out because unsetenv() doesn't exist everywhere.
+#if 0
 LUAEXT(unset_env, )
 {
   char const * var = luaL_checkstring(L, -1);
@@ -437,6 +439,7 @@ LUAEXT(unset_env, )
   unsetenv(var);
   return 0;
 }
+#endif
 
 LUAEXT(timed_wait, )
 {
