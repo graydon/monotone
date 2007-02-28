@@ -1,8 +1,8 @@
 -----------------------------------------------------------------
-Revision: e9e23d2764be2b4e8d1b7350f5ab5c6b34901669
-Ancestor: deb1d49035983e4785ddba48904924a5307d59eb
+Revision: 21320a960288df775cd62b01f1b40e981f4ecd65
+Ancestor: 87c726bb950efb3d809662b86700a8566346970d
 Author: tester@test.net
-Date: 2007-02-09T19:14:43
+Date: 2007-02-28T02:11:20
 Branch: testbranch
 
 Modified files:
@@ -13,18 +13,16 @@ ChangeLog:
 blah-blah
 
 -----------------------------------------------------------------
-Revision: deb1d49035983e4785ddba48904924a5307d59eb
+Revision: 87c726bb950efb3d809662b86700a8566346970d
 Ancestor: 
 Author: tester@test.net
-Date: 2007-02-09T19:14:42
+Date: 2007-02-28T02:11:19
 Branch: testbranch
 
 Added files:
         otherfile testfile
 Added directories:
         
-Modified attrs:
-        otherfile testfile
 
 ChangeLog: 
 

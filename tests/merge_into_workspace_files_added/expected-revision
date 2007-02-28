@@ -1,21 +1,13 @@
 format_version "1"
 
-new_manifest [3c2476a7df09bb65edf97130b298503b55629d9d]
+new_manifest [1ad9c86d349f3f4af96ddd1147f6da0e3d52a234]
 
-old_revision [40723f467fff1acf0d7a83834b34e132fe5d919e]
+old_revision [a140446fe05fa24bd367c57ea9b572dc264188cb]
 
 add_file "left"
  content [0ffe36a4ca2169de7543a67f92134ea93636b246]
 
-  set "left"
- attr "mtn:execute"
-value "true"
-
-old_revision [b078b838350109c6c3c382517910271f0eb47eb6]
+old_revision [c77393b91d1abd3f4306465ca468b2f87494c910]
 
 add_file "right"
  content [7478fc33b2476515959ea9be9306295a36a22d64]
-
-  set "right"
- attr "mtn:execute"
-value "true"

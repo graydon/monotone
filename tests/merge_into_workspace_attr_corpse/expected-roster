@@ -2,18 +2,16 @@ format_version "1"
 
       dir ""
     ident "1"
-    birth [5e2a549855d47ce5627e826265ef016bce093539]
-path_mark [5e2a549855d47ce5627e826265ef016bce093539]
+    birth [e032edcb78885de86a3a3a05f641ae1d25f63988]
+path_mark [e032edcb78885de86a3a3a05f641ae1d25f63988]
 
         file "testfile"
      content [c537e8ec248c6cd32e54cd6fa98ae15743f996b4]
        ident "2"
-        attr "mtn:execute" "true"
 dormant_attr "left-attr"
 dormant_attr "right-attr"
-       birth [5e2a549855d47ce5627e826265ef016bce093539]
-   path_mark [5e2a549855d47ce5627e826265ef016bce093539]
-content_mark [5e2a549855d47ce5627e826265ef016bce093539]
-   attr_mark "left-attr" [e29deed4801eb2e6e0c2fe33cc257b8eb885f50e]
-   attr_mark "mtn:execute" [5e2a549855d47ce5627e826265ef016bce093539]
-   attr_mark "right-attr" [e279d8a69e83b8b6f52fc8435c57a17a289408f7]
+       birth [e032edcb78885de86a3a3a05f641ae1d25f63988]
+   path_mark [e032edcb78885de86a3a3a05f641ae1d25f63988]
+content_mark [e032edcb78885de86a3a3a05f641ae1d25f63988]
+   attr_mark "left-attr" [fd014440f510fde3f7d8093c03ee510fb2781694]
+   attr_mark "right-attr" [7dcdf53649d29ab55ca7f400b12771ffa3493702]
