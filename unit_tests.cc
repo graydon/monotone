@@ -19,7 +19,9 @@
 #include <boost/function.hpp>
 
 #include <boost/test/unit_test_suite.hpp>
+#if BOOST_VERSION >= 103300
 #include <boost/test/parameterized_test.hpp>
+#endif
 
 #include "botan/botan.h"
 #include "option.hh"
@@ -58,7 +60,9 @@ unit_test::unit_test_case::unit_test_case(char const * group,
     unit_tests = new unit_test_list_t;
 
   boost_unit_test_case * tcase = BOOST_TEST_CASE(func);
+#if BOOST_VERSION >= 103300
   tcase->p_name.set(string(test));
+#endif
   unit_tests->insert(make_pair(string(group), tcase));
 }
 
