@@ -33,7 +33,7 @@
 #       end
 #    end
 #    local exe = "/path/to/this/script"
-#    spawn(exe, rid, branch, author, changelog, rdat)
+#    wait(spawn(exe, rid, branch, author, changelog, rdat))
 #    return
 # end
 
@@ -70,6 +70,7 @@ class config:
 
 import sys
 import re
+import os
 
 def escape_for_xml(text, is_attrib=0):
     text = text.replace("&", "&amp;")
@@ -188,6 +189,13 @@ def send_change_for(rid, branch, author, log, rev, c):
 def main(progname, args):
     if len(args) != 5:
         sys.exit("Usage: %s revid branch author changelog revision_text" % (progname, ))
+    # We don't want to clutter the process table with zombies; but we also
+    # don't want to force the monotone server to wait around while we call the
+    # CIA server.  So we fork -- the original process exits immediately, and
+    # the child continues (orphaned, so it will eventually be reaped by init).
+    if hasattr(os, "fork"):
+        if os.fork():
+            return
     (rid, branch, author, log, rev, ) = args
     c = config()
     send_change_for(rid, branch, author, log, rev, c)
