@@ -1264,8 +1264,43 @@ This output shows one private and one public key stored under the name
 @code{jim@@juicebot.co.jp}, so it indicates that Jim's key-pair has been
 successfully generated and stored. On subsequent commands, Jim will need
 to re-enter his passphrase in order to perform security-sensitive
-tasks. Jim isn't very worried about security (and, more importantly, it
-simplifies the tutorial text to skip the passphrase prompts) so he
+tasks.
+
+Pretty soon Jim gets annoyed when he has to enter his passphrase every
+time he invokes @code{mtn} (and, more importantly, it simplifies the
+tutorial text to skip the passphrase prompts) so he decides to use
+@emph{ssh-agent} to store his key. He does this by using the
+@code{ssh_agent_export} command to export his key into a format that
+ssh-agent can understand and adding it with @code{ssh-add}.
+
+@smallexample
+@group
+$ mtn ssh_agent_export ~/.ssh/id_monotone
+enter passphrase for key ID [user@@example.com]:
+enter new passphrase for key ID [user@@example.com]:
+confirm passphrase for key ID [user@@example.com]:
+$ chmod 600 ~/.ssh/id_monotone
+@end group
+@end smallexample
+
+From now on, Jim just needs to add his key to ssh-agent when he logs in
+and he will not need to enter his passphrase every time he uses monotone.
+
+@smallexample
+@group
+$ ssh-agent /bin/bash
+$ ssh-add ~/.ssh/id_monotone
+Enter passphrase for /home/user/.ssh/id_monotone:
+Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
+$ mtn ci -m"Changed foo to bar"
+$ mtn push
+@end group
+@end smallexample
+
+The following procedure is deprecated and not suggested for general use
+as it is very insecure.
+
+Jim isn't very worried about security so he
 decides to store his passphrase in his @file{monotonerc} file.  He does
 this by writing a @emph{hook function} which returns the passphrase:
 
@@ -5076,6 +5111,43 @@ a revision ID, a certificate name, a certificate value, and one or more
 key IDs, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
+
+@item mtn ssh_agent_export @var{filename}
+
+This command will export your private key in a format that ssh-agent
+can read (PKCS8, PEM). You will be asked for your current key's password
+and a new password to encrypt the key with. The key will be printed to
+stdout. Once you have put this key in a file simply add it to ssh-agent
+and you will only have to enter your key password once as ssh-agent
+will cache the key for you.
+
+@smallexample
+@group
+$ mtn ssh_agent_export ~/.ssh/id_monotone
+enter passphrase for key ID [user@@example.com]:
+enter new passphrase for key ID [user@@example.com]:
+confirm passphrase for key ID [user@@example.com]:
+$ chmod 600 ~/.ssh/id_monotone
+$ ssh-agent /bin/bash
+$ ssh-add ~/.ssh/id_monotone
+Enter passphrase for /home/user/.ssh/id_monotone:
+Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
+$ mtn ci -m"Changed foo to bar"
+$ mtn push
+@end group
+@end smallexample
+
+You can also use the @option{--ssh-sign} option to control whether ssh-agent will
+be used for signing. If set to @emph{yes}, ssh-agent will be used to sign. If your
+key has not been added to ssh-agent monotone will fall back to its internal signing
+code and ask you for your password. If set to @emph{only}, monotone will sign only
+with ssh-agent. If set to @emph{no}, monotone will always use its internal signing
+code even if ssh-agent is running and has your monotone key loaded. If set to
+@emph{check}, monotone will sign with both ssh-agent (if your key is loaded into
+it) and monotone's internal signing code, then compare the results. @emph{check}
+will be removed at some future time as it is meant only for testing and will not
+work with all signing algorithms.
+
 
 @end ftable
 

@@ -257,6 +257,18 @@ OPT(bookkeep_only, "bookkeep-only", bool, false,
 }
 #endif
 
+  execute = true;
+}
+#endif
+
+GOPT(ssh_sign, "ssh-sign", std::string, "yes",
+     gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
+#ifdef option_bodies
+{
+  ssh_sign = arg;
+}
+#endif
+
 GOPT(full_version, "full-version", bool, false,
      gettext_noop("print detailed version number, then exit"))
 #ifdef option_bodies

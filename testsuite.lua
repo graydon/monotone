@@ -72,6 +72,7 @@ for _,name in pairs({  "LANG",
                        "LC_TIME"  }) do
    set_env(name,"C")
 end
+unset_env("SSH_AUTH_SOCK")
        
 
 function safe_mtn(...)
