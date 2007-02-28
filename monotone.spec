@@ -58,7 +58,7 @@ fi
 
 
 %changelog
-* Tue Feb 27 2007 Richard Levitte <richard@levitte.org>
+* Wed Feb 28 2007 Richard Levitte <richard@levitte.org>
 - 0.33 release
 
 * Wed Dec 27 2006 Richard Levitte <richard@levitte.org>
