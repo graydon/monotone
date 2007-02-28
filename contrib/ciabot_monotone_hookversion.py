@@ -88,11 +88,12 @@ TOKEN = re.compile(r'''
 ''', re.VERBOSE)
 
 def parse_basic_io(raw):
+    parsed = []
     key = None
     for m in TOKEN.finditer(raw):
         if m.lastgroup == 'key':
             if key:
-                yield key, values
+                parsed.append((key, values))
             key = m.group('key')
             values = []
         elif m.lastgroup == 'id':
@@ -105,7 +106,8 @@ def parse_basic_io(raw):
             value = re.sub(r'\\\\', r'\\', value)
             values.append(value)
     if key:
-        yield key, values
+        parsed.append((key, values))
+    return parsed
 
 def send_message(message, c):
     if c.delivery == "debug":
