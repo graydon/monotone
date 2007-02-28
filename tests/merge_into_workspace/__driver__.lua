@@ -74,7 +74,7 @@ check(qgrep("patched testfile", "stdout"))
 
 -- some automate commands that should do sensible things
 check(mtn("automate", "get_current_revision_id"), 0,
-      "9491240daab3028f583e4d0e0239da3e626fda2b\n", nil)
+      "5e009ca0dc972a9b09a7fbfb647908bee07fb562\n", nil)
 
 check(get("expected-manifest"))
 check(mtn("automate", "get_manifest_of"), 0, {"expected-manifest"}, nil)
