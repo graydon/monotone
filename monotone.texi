@@ -7501,8 +7501,15 @@ exits with status 1.
 @table @strong 
 @item Arguments:
 
-@var{revision-data} is the new revision. See example
-below.
+@var{revision-data} is the new revision. See example below.  Note that
+the new_manifest entry is ignored -- @command{put_revision} will
+ignore whatever you put here and calculate the correct manifest id
+itself.  (However, for now, you must put 40 hex digits here -- it's
+just that which particular digits you put are entirely irrelevant.
+All zeros is a good choice.)  Monotone will also canonicalize your
+whitespace automatically.  You do not need to worry about getting just
+the right amount of indentation in front of each line.  However,
+everything else about your revision must be valid.
 
 @item Added in:
 
@@ -7542,7 +7549,9 @@ The new revision id, hex encoded.
 @item Error conditions:
 
 If the changeset is invalid prints an error message to stderr and 
-exits with status 1. May abort on invalid formats.
+exits with status 1. May abort on invalid formats.  If the revision is
+already present in the database, prints a message to stderr noting
+this fact, but otherwise works as normal.
 
 @end table
 
