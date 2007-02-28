@@ -13,7 +13,7 @@ check(mtn("add", "testfile"), 0, false, false)
 commit()
 
 remove("testfile")
-check(mtn("drop", "testfile"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
 commit()
 
 copy("v2", "testfile")

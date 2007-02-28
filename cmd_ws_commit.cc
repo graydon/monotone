@@ -340,7 +340,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
     N_("drop files from workspace"),
-    options::opts::execute | options::opts::missing | options::opts::recursive)
+    options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
     throw usage(name);
@@ -362,7 +362,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
   else
     split_paths(args_to_paths(args), paths);
 
-  app.work.perform_deletions(paths, app.opts.recursive, app.opts.execute);
+  app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
 
 ALIAS(rm, drop);
@@ -372,7 +372,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    options::opts::execute)
+    options::opts::bookkeep_only)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -387,7 +387,7 @@ CMD(rename, N_("workspace"),
       file_path s = file_path_external(idx(args, i));
       src_paths.insert(s);
     }
-  app.work.perform_rename(src_paths, dst_path, app.opts.execute);
+  app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
 
 ALIAS(mv, rename);
@@ -400,8 +400,8 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
        "will be the root directory, and the directory "
        "that is currently the root\n"
        "directory will have name PUT_OLD.\n"
-       "Using --execute is strongly recommended."),
-    options::opts::execute)
+       "Use of --bookkeep-only is NOT recommended."),
+    options::opts::bookkeep_only)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -409,7 +409,7 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
   file_path put_old = file_path_external(idx(args, 1));
-  app.work.perform_pivot_root(new_root, put_old, app.opts.execute);
+  app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
@@ -435,40 +435,52 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
   // other format strings.
-  cout << (F("Current branch: %s") % app.opts.branchname).str() << "\n";
+  cout << (F("Current branch: %s") % app.opts.branchname).str() << '\n';
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
       // A colon at the end of this string looked nicer, but it made
       // double-click copying from terminals annoying.
-      cout << (F("Changes against parent %s") % parent).str() << "\n";
+      cout << (F("Changes against parent %s") % parent).str() << '\n';
 
       cset const & cs = edge_changes(*i);
 
       if (cs.empty())
-        cout << F("  no changes").str() << "\n";
+        cout << F("  no changes").str() << '\n';
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
-        cout << (F("  dropped %s") % *i).str() << "\n";
+        cout << (F("  dropped  %s") % *i).str() << '\n';
 
       for (map<split_path, split_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
-        cout << (F("  renamed %s\n"
-                   "       to %s") % i->first % i->second).str() << "\n";
+        cout << (F("  renamed  %s\n"
+                   "       to  %s") % i->first % i->second).str() << '\n';
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
-        cout << (F("  added   %s") % *i).str() << "\n";
+        cout << (F("  added    %s") % *i).str() << '\n';
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
-        cout << (F("  added   %s") % i->first).str() << "\n";
+        cout << (F("  added    %s") % i->first).str() << '\n';
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << (F("  patched %s") % (i->first)).str() << "\n";
+        cout << (F("  patched  %s") % (i->first)).str() << '\n';
+
+      for (map<pair<split_path, attr_key>, attr_value >::const_iterator
+             i = cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
+        cout << (F("  set on   %s\n"
+                   "    attr   %s")
+                 % (i->first.first) % (i->first.second)).str() << "\n";
+
+      for (set<pair<split_path, attr_key> >::const_iterator
+             i = cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
+        cout << (F("  unset on %s\n"
+                   "      attr %s")
+                 % (i->first) % (i->second)).str() << "\n";
     }
 }
 
@@ -653,12 +665,12 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             if (i->second.first)
               {
                 cout << path << " : "
-                     << i->first << "="
-                     << i->second.second << "\n";
+                     << i->first << '='
+                     << i->second.second << '\n';
                 has_any_live_attrs = true;
               }
           if (!has_any_live_attrs)
-            cout << F("No attributes for '%s'") % path << "\n";
+            cout << F("No attributes for '%s'") % path << '\n';
         }
       else if (args.size() == 3)
         {
@@ -666,11 +678,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
             cout << path << " : "
-                 << i->first << "="
-                 << i->second.second << "\n";
+                 << i->first << '='
+                 << i->second.second << '\n';
           else
             cout << (F("No attribute '%s' on path '%s'")
-                     % a_key % path) << "\n";
+                     % a_key % path) << '\n';
         }
       else
         throw usage(name);

@@ -12,12 +12,12 @@ addfile("rename_file", "foo foo")
 mkdir("rename_dir")
 addfile("rename_dir/file", "bar bar")
 
-check(mtn("rename", "unknown_file", "other_file"), 1, false, false)
-check(mtn("rename", "rename_file", "target_file"), 1, false, false)
-check(mtn("rename", "rename_dir", "target_file"), 1, false, false)
+check(mtn("rename", "--bookkeep-only", "unknown_file", "other_file"), 1, false, false)
+check(mtn("rename", "--bookkeep-only", "rename_file", "target_file"), 1, false, false)
+check(mtn("rename", "--bookkeep-only", "rename_dir", "target_file"), 1, false, false)
 
 commit()
 
-check(mtn("rename", "unknown_file", "other_file"), 1, false, false)
-check(mtn("rename", "rename_file", "target_file"), 1, false, false)
-check(mtn("rename", "rename_dir", "target_file"), 1, false, false)
+check(mtn("rename", "--bookkeep-only", "unknown_file", "other_file"), 1, false, false)
+check(mtn("rename", "--bookkeep-only", "rename_file", "target_file"), 1, false, false)
+check(mtn("rename", "--bookkeep-only", "rename_dir", "target_file"), 1, false, false)

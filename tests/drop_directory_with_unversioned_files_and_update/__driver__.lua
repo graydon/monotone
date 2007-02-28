@@ -7,7 +7,7 @@ check(mtn("commit", "-m", "create the base"), 0, false, false)
 
 base0 = base_revision()
 
-check(mtn("drop", "-R", "-e", "subdir"), 0, false, false)
+check(mtn("drop", "-R", "subdir"), 0, false, false)
 check(mtn("commit", "-m", "subdir removed"), 0, false, false)
 
 -- Now, move back to the first revision, add an unversioned

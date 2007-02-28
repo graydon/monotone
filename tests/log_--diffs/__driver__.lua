@@ -20,7 +20,7 @@ REV3=base_revision()
 writefile("foo", "foo again\n")
 writefile("bar", "bar again\n")
 
-check(mtn("rename", "-e", "foo", "foo2"), 0, false, false)
+check(mtn("rename", "foo", "foo2"), 0, false, false)
 
 commit()
 REV4=base_revision()

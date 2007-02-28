@@ -13,13 +13,11 @@ base = base_revision()
 -- rename directory
 
 check(mtn("rename", "foo", "foof"), 0, false, false)
-rename("foo", "foof")
 commit()
 
 -- rename file in directory
 
 revert_to(base)
-rename("foo/bar", "foo/barf")
 check(mtn("rename", "foo/bar", "foo/barf"), 0, false, false)
 commit()
 

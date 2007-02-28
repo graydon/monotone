@@ -35,7 +35,6 @@
 #include "charset.hh"
 
 using std::cout;
-using std::endl;
 using std::make_pair;
 using std::map;
 using std::string;
@@ -112,7 +111,6 @@ get_passphrase(lua_hooks & lua,
           ui.ensure_clean_line();
           read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
                         pass1, constants::maxpasswd);
-          cout << endl;
           if (strlen(pass1) == 0)
             {
               P(F("empty passphrase not allowed"));
@@ -124,7 +122,6 @@ get_passphrase(lua_hooks & lua,
               ui.ensure_clean_line();
               read_password((F("confirm passphrase for key ID [%s]: ") % keyid()).str(),
                               pass2, constants::maxpasswd);
-              cout << endl;
               if (strlen(pass1) == 0 || strlen(pass2) == 0)
                 {
                   P(F("empty passphrases not allowed, try again"));

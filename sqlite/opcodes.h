@@ -16,7 +16,7 @@
 #define OP_NotNull                             67   /* same as TK_NOTNULL  */
 #define OP_If                                  10
 #define OP_ToInt                              142   /* same as TK_TO_INT   */
-#define OP_String8                             88   /* same as TK_STRING   */
+#define OP_String8                             89   /* same as TK_STRING   */
 #define OP_Pop                                 11
 #define OP_VRowid                              12
 #define OP_CollSeq                             13
@@ -82,8 +82,8 @@
 #define OP_IdxDelete                           64
 #define OP_Vacuum                              65
 #define OP_MoveLe                              74
-#define OP_IfNot                               86
-#define OP_DropTable                           89
+#define OP_IfNot                               85
+#define OP_DropTable                           87
 #define OP_MakeRecord                          90
 #define OP_ToBlob                             140   /* same as TK_TO_BLOB  */
 #define OP_Delete                              91
@@ -107,7 +107,7 @@
 #define OP_AbsValue                           104
 #define OP_Transaction                        105
 #define OP_VFilter                            106
-#define OP_Negative                            85   /* same as TK_UMINUS   */
+#define OP_Negative                            86   /* same as TK_UMINUS   */
 #define OP_Ne                                  68   /* same as TK_NE       */
 #define OP_VDestroy                           107
 #define OP_ContextPop                         108
@@ -133,7 +133,7 @@
 #define OP_MoveGe                             125
 #define OP_VBegin                             128
 #define OP_VUpdate                            129
-#define OP_BitNot                              87   /* same as TK_BITNOT   */
+#define OP_BitNot                              88   /* same as TK_BITNOT   */
 #define OP_VCreate                            130
 #define OP_MemMove                            131
 #define OP_MemNull                            132
@@ -154,7 +154,7 @@
 #define NOPUSH_MASK_2 0x7ddb
 #define NOPUSH_MASK_3 0xff92
 #define NOPUSH_MASK_4 0xffff
-#define NOPUSH_MASK_5 0xdaef
+#define NOPUSH_MASK_5 0xd9ef
 #define NOPUSH_MASK_6 0xfefe
 #define NOPUSH_MASK_7 0x39d9
 #define NOPUSH_MASK_8 0xf867

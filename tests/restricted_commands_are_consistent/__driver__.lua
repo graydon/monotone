@@ -97,14 +97,14 @@ commit()
 
 -- ls unknown 
 -- dropped files are valid for restriction but are unknown in the post-state
-check(mtn("drop", unpack(allfiles)), 0, false, false)
+check(mtn("drop", "--bookkeep-only", unpack(allfiles)), 0, false, false)
 checkall({"ls", "unknown"}, "stdout")
 check(mtn("revert", "."), 0, false, false)
 
 -- ls ignored
 check(get("ignore.lua"))
 -- only unknown files are considered by ls ignored
-check(mtn("drop", unpack(allfiles)), 0, false, false)
+check(mtn("drop", "--bookkeep-only", unpack(allfiles)), 0, false, false)
 checkall({"ls", "ignored", "--rcfile=ignore.lua"}, "stdout")
 check(mtn("revert", "."), 0, false, false)
 

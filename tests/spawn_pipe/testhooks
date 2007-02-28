@@ -1,0 +1,42 @@
+function ignore_file (name)
+  ok = true
+
+  mytext = "text from lua1"
+
+  result = "ok"
+
+  if ok then
+    if existsonpath("cat") == 0 then
+      procfin, procfout, pid = spawn_pipe("cat")
+      if pid == -1 then
+        result = "no pid"
+        ok = false
+      else
+        procfin:write(mytext)
+        procfin:close()
+        line, errstr = procfout:read()
+        if line == nil then
+          result = "no line"
+          ok = false
+        elseif line ~= mytext then
+          result = "Expected: " .. mytext .. "\nRead: " .. line
+          ok = false
+        end
+        procfout:close()
+        ret, pid = wait(pid)
+      end
+    else
+      result = "Lacking cat"
+      x = io.open("skipfile", "w")
+      x:close()
+    end
+  end
+  
+  if ok then
+    x = io.open("outfile", "w")
+    x:close()
+  end
+
+  ignore_file = function (name) return true end
+  return true
+end

@@ -11,7 +11,7 @@ check(indir("workspace", mtn("add", "-R", ".")), 0, false, false)
 check(indir("workspace", mtn("commit", "-m", "foo")), 0, false, false)
 base = indir("workspace", {base_revision})[1]()
 
-check(indir("workspace", mtn("pivot_root", "--execute", "dir1", "old_root")), 0, false, false)
+check(indir("workspace", mtn("pivot_root", "dir1", "old_root")), 0, false, false)
 check(indir("workspace", mtn("commit", "-m", "foo")), 0, false, false)
 
 check(mtn("co", "-r", base, "testspace"), 0, false, false)

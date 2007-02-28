@@ -198,7 +198,7 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 
   hexenc<id> ident;
   calculate_ident(dat, ident);
-  cout << ident << "\n";
+  cout << ident << '\n';
 }
 
 static void

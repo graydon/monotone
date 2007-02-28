@@ -35,7 +35,7 @@ pluck_rev = base_revision()
 -- and two_rev
 revert_to(root_rev)
 addfile("d", "original\n")
-check(mtn("drop", "-e", "c"), 0, false, false)
+check(mtn("drop", "c"), 0, false, false)
 commit()
 two_rev = base_revision()
 
