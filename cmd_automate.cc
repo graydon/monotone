@@ -76,7 +76,7 @@ AUTOMATE(interface_version, "", options::opts::none)
   N(args.size() == 0,
     F("no arguments needed"));
 
-  output << interface_version << "\n";
+  output << interface_version << '\n';
 }
 
 // Name: stdio
@@ -284,10 +284,10 @@ public:
     int num = pptr() - pbase();
     if (num || end)
       {
-        (*out) << cmdnum << ":"
-            << err << ":"
-            << (end?'l':'m') << ":"
-            << num << ":" << std::string(pbase(), num);
+        (*out) << cmdnum << ':'
+            << err << ':'
+            << (end?'l':'m') << ':'
+            << num << ':' << std::string(pbase(), num);
         setp(pbase(), pbase() + _bufsize);
         out->flush();
       }

@@ -35,7 +35,6 @@ using std::string;
 using std::cout;
 using std::cerr;
 using std::clog;
-using std::endl;
 using std::exit;
 using std::atexit;
 using boost::unit_test::test_suite;
@@ -67,7 +66,7 @@ unit_test::unit_test_case::unit_test_case(char const * group,
 // per-test-group level.
 static void notifier(string const & group)
 {
-  cerr << group << "..." << endl;
+  cerr << group << "...\n";
 }
 
 // A teebuf implements the basic_streambuf interface and forwards all
@@ -172,21 +171,20 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
       if (help)
         {
           cout << (FL("Usage: %s [options] [tests]\nOptions") % argv[0])
-               << os.get_usage_str() << endl;
+               << os.get_usage_str() << '\n';
           exit(0);
         }
     }
   catch (option::option_error const & e)
     {
-      cerr << argv[0] << ": " << e.what() << endl;
+      cerr << argv[0] << ": " << e.what() << '\n';
       exit(2);
     }
 
   if (list_groups && list_tests)
     {
       cerr << argv[0]
-           << ": only one of --list-groups and --list-tests at a time"
-           << endl;
+           << ": only one of --list-groups and --list-tests at a time\n";
       exit(2);
     }
 
@@ -198,7 +196,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
            i++)
         if (last != (*i).first)
           {
-            cout << (*i).first << "\n";
+            cout << (*i).first << '\n';
             last = (*i).first;
           }
       exit(0);
@@ -209,7 +207,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
       for (unit_test_list_t::const_iterator i = unit_tests->begin();
            i != unit_tests->end();
            i++)
-        cout << (*i).first << ':' << (*i).second->p_name.get() << "\n";
+        cout << (*i).first << ':' << (*i).second->p_name.get() << '\n';
       exit(0);
     }
 
@@ -259,7 +257,8 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
           if (range.first == range.second)
             {
               unrecognized = true;
-              cerr << argv[0] << ": unrecognized test group: " << group << endl;
+              cerr << argv[0] << ": unrecognized test group: "
+                   << group << '\n';
               continue;
             }
 
@@ -279,7 +278,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
             {
               unrecognized = true;
               cerr << argv[0] << ": unrecognized test: "
-                   << group << ':' << test << endl;
+                   << group << ':' << test << '\n';
             }
         }
 
@@ -308,7 +307,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
         {
           char const * syserr = std::strerror(errno);
           cerr << argv[0] << ": failed to open " << logname
-               << ": " << syserr << endl;
+               << ": " << syserr << '\n';
           exit(1);
         }
       clog.rdbuf(logbuf);
@@ -324,8 +323,7 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
       if (!log.empty())
         {
           cerr << argv[0]
-               << ": only one of --debug and --log at a time"
-               << endl;
+               << ": only one of --debug and --log at a time\n";
           exit(2);
         }
 

@@ -92,8 +92,10 @@ lua_hooks::lua_hooks()
   // Disable any functions we don't want. This is easiest
   // to do just by running a lua string.
   if (!run_string(st,
-                  "os.execute = nil "
-                  "io.popen = nil ",
+                  // "os.unsafeexecute = os.execute "
+                  // "io.unsafepopen = io.popen "
+                  "os.execute = function(c) error(\"os.execute disabled for security reasons.  Try spawn().\") end "
+                  "io.popen = function(c,t) error(\"io.popen disabled for security reasons.  Try spawn_pipe().\") end ",
                   string("<disabled dangerous functions>")))
     throw oops("lua error while disabling existing functions");
 }

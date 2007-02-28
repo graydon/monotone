@@ -808,7 +808,7 @@ dump(parent_roster_map const & prm, string & out)
   ostringstream oss;
   for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
     {
-      oss << "roster: " << i->first << "\n";
+      oss << "roster: " << i->first << '\n';
       string roster_str, indented_roster_str;
       dump(*i->second.first, roster_str);
       prefix_lines_with("    ", roster_str, indented_roster_str);

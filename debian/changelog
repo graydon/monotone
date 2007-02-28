@@ -1,3 +1,9 @@
+monotone (0.33-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Richard Levitte <richard@levitte.org>  Tue, 27 Feb 2007 19:46:58 +0100
+
 monotone (0.32-90.2) unstable; urgency=low
 
   * schema upgrade => monotone-server.postinst upgrade

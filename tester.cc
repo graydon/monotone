@@ -82,10 +82,23 @@ void setenv(char const * var, char const * val)
 {
   _putenv_s(var, val);
 }
+void unsetenv(char const * var)
+{
+  _putenv_s(var, "");
+}
 #else
 void setenv(char const * var, char const * val)
 {
   string tempstr = string(var) + "=" + string(val);
+  char const *s = tempstr.c_str();
+  size_t len = tempstr.size() + 1;
+  char *cp = new char[len];
+  memcpy(cp, s, len);
+  putenv(cp);
+}
+void unsetenv(char const * var)
+{
+  string tempstr = string(var) + "=";
   char const *s = tempstr.c_str();
   size_t len = tempstr.size() + 1;
   char *cp = new char[len];
@@ -428,6 +441,8 @@ LUAEXT(set_env, )
   return 0;
 }
 
+// #if'd out because unsetenv() doesn't exist everywhere.
+#if 0
 LUAEXT(unset_env, )
 {
   char const * var = luaL_checkstring(L, -1);
@@ -441,6 +456,7 @@ LUAEXT(unset_env, )
   unsetenv(var);
   return 0;
 }
+#endif
 
 LUAEXT(timed_wait, )
 {

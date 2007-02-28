@@ -14,7 +14,7 @@ SANITY_CORE_SOURCES =							\
 
 
 LUAEXT_SOURCES = 							\
-	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
+	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh vocab_cast.hh  \
 	charset.cc charset.hh paths.cc paths.hh				\
 	interner.hh hash_map.hh						\
 	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
