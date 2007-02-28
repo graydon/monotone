@@ -84,9 +84,11 @@ check(get("expected-log"))
 check(get("expected-log-left"))
 
 check(mtn("log", "--no-graph", "testfile"), 0, true, nil)
+canonicalize("stdout")
 check(samefile_ignore_dates("stdout", "expected-log"))
 
 check(mtn("log", "--no-graph", "--from", left), 0, true, nil)
+canonicalize("stdout")
 check(samefile_ignore_dates("stdout", "expected-log-left"))
 
 -- a commit at this point should succeed

@@ -42,7 +42,9 @@ check(samefile("testfile", "testfile.b"))
 -- in-database merge would generate; in particular, both "left-attr"
 -- and "right-attr" should show up as "dormant_attr"s.
 check(get("expected-roster"))
-check(mtn("get_roster"), 0, {"expected-roster"}, nil)
+check(mtn("get_roster"), 0, true, nil)
+canonicalize("stdout")
+check(samefile("expected-roster", "stdout"))
 
 -- a commit at this point should succeed
 commit()
