@@ -1620,7 +1620,7 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
 //   a runtime exception is thrown if base revision is not available
 AUTOMATE(put_file, N_("[FILEID] CONTENTS"), options::opts::none)
 {
-  N(args.size() <= 2,
+  N(args.size() == 1 || args.size() == 2,
     F("wrong argument count"));
 
   file_id sha1sum;
@@ -1630,37 +1630,30 @@ AUTOMATE(put_file, N_("[FILEID] CONTENTS"), options::opts::none)
       file_data dat(idx(args, 0)());
       calculate_ident(dat, sha1sum);
       
-      E(
-        !app.db.file_version_exists(sha1sum),
-	F("file version %s already known") % sha1sum
-      );
-      
-      app.db.put_file(sha1sum, dat);
+      if (!app.db.file_version_exists(sha1sum))
+        app.db.put_file(sha1sum, dat);
     }
   else if (args.size() == 2)
     {
       file_data dat(idx(args, 1)());
       calculate_ident(dat, sha1sum);
-     
-      E(
-        !app.db.file_version_exists(sha1sum),
-        F("file version %s already known") % sha1sum
-      );
-
       file_id base_id(idx(args, 0)());
       N(app.db.file_version_exists(base_id),
         F("no file version %s found in database") % base_id);
-
-      file_data olddat;
-      app.db.get_file_version(base_id, olddat);
-      delta del;
-      diff(olddat.inner(), dat.inner(), del);
-      L(FL("data size %d, delta size %d") % dat.inner()().size() % del().size());
-      if (dat.inner()().size() <= del().size())
-        // the data is smaller or of equal size to the patch
-        app.db.put_file(sha1sum, dat);
-      else
-        app.db.put_file_version(base_id, sha1sum, file_delta(del));
+     
+      if (!app.db.file_version_exists(sha1sum))
+        {
+          file_data olddat;
+          app.db.get_file_version(base_id, olddat);
+          delta del;
+          diff(olddat.inner(), dat.inner(), del);
+          L(FL("data size %d, delta size %d") % dat.inner()().size() % del().size());
+          if (dat.inner()().size() <= del().size())
+            // the data is smaller or of equal size to the patch
+            app.db.put_file(sha1sum, dat);
+          else
+            app.db.put_file_version(base_id, sha1sum, file_delta(del));
+        }
     }
   else I(false);
 
@@ -1678,7 +1671,7 @@ AUTOMATE(put_file, N_("[FILEID] CONTENTS"), options::opts::none)
 //   The ID of the new revision
 // Error conditions:
 //   none
-AUTOMATE(put_revision, N_("SINGLE-EDGE-DATA"), options::opts::none)
+AUTOMATE(put_revision, N_("REVISION-DATA"), options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -1712,15 +1705,15 @@ AUTOMATE(put_revision, N_("SINGLE-EDGE-DATA"), options::opts::none)
   revision_id id;
   calculate_ident(rev, id);
 
-  E(
-    !app.db.revision_exists(id),
-    F("revision %s already present in the database") % id
-  );
-
-  transaction_guard tr(app.db);
-  rev.made_for = made_for_database;
-  app.db.put_revision(id, rev);
-  tr.commit();
+  if (app.db.revision_exists(id))
+    P(F("revision %s already present in the database, skipping") % id);
+  else
+    {
+      transaction_guard tr(app.db);
+      rev.made_for = made_for_database;
+      app.db.put_revision(id, rev);
+      tr.commit();
+    }
 
   output << id << '\n';
 }

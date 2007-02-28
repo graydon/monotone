@@ -1956,12 +1956,23 @@ database::put_revision(revision_id const & new_id,
   MM(d.inner());
   write_revision(rev, d);
 
-  // Phase 1: confirm the revision makes sense
+  // Phase 1: confirm the revision makes sense, and we the required files
+  // actually exist
   {
     revision_id tmp;
     MM(tmp);
     calculate_ident(d, tmp);
     I(tmp == new_id);
+    for (edge_map::const_iterator e = rev.edges.begin(); e != rev.edges.end(); ++e)
+      {
+        cset const & cs = edge_changes(e);
+        for (map<split_path, file_id>::const_iterator
+               i = cs.files_added.begin(); i != cs.files_added.end(); ++i)
+          I(file_version_exists(i->second));
+        for (map<split_path, pair<file_id, file_id> >::const_iterator
+               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+          I(file_version_exists(i->second.second));
+      }
   }
 
   transaction_guard guard(*this);

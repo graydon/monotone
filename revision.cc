@@ -67,6 +67,10 @@ void revision_t::check_sane() const
 {
   // null id in current manifest only permitted if previous
   // state was null and no changes
+  // FIXME: above comment makes no sense.  This should just be
+  // I(!null_id(new_manifest)), and the only reason I am not making it so
+  // right now is that I don't have time to immediately track down all the
+  // fallout.
   if (null_id(new_manifest))
     {
       for (edge_map::const_iterator i = edges.begin();
