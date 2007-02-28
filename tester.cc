@@ -82,7 +82,7 @@ void setenv(char const * var, char const * val)
 {
   _putenv_s(var, val);
 }
-void unsetenv(char const * var)
+int unsetenv(char const * var)
 {
   _putenv_s(var, "");
 }
@@ -96,7 +96,7 @@ void setenv(char const * var, char const * val)
   memcpy(cp, s, len);
   putenv(cp);
 }
-void unsetenv(char const * var)
+int unsetenv(char const * var)
 {
   string tempstr = string(var) + "=";
   char const *s = tempstr.c_str();
