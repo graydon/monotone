@@ -295,7 +295,7 @@ void tick_write_count::write_ticks()
   if(write_tickline1)
     {
       if (ui.last_write_was_a_tick)
-        clog << "\n";
+        clog << '\n';
 
       if (tw && display_width(utf8(tickline1)) > tw)
         {
@@ -303,7 +303,7 @@ void tick_write_count::write_ticks()
           // bytes, not by characters)
           tickline1.resize(tw);
         }
-      clog << tickline1 << "\n";
+      clog << tickline1 << '\n';
     }
   if (tw && display_width(utf8(tickline2)) > tw)
     {
@@ -311,7 +311,7 @@ void tick_write_count::write_ticks()
       // bytes, not by characters)
       tickline2.resize(tw);
     }
-  clog << "\r" << tickline2;
+  clog << '\r' << tickline2;
   clog.flush();
 }
 
@@ -588,8 +588,7 @@ user_interface::inform(string const & line)
   string prefixedLine;
   prefix_lines_with(output_prefix(), line, prefixedLine);
   ensure_clean_line();
-  clog << sanitize(prefixedLine) << endl;
-  clog.flush();
+  clog << sanitize(prefixedLine) << endl; // flushes
 }
 
 unsigned int

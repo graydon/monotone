@@ -73,7 +73,7 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
   set<revision_id> heads;
   app.get_project().get_branch_heads(app.opts.branchname, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: ancestors
@@ -119,7 +119,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
   for (set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << "\n";
+      output << (*i).inner()() << '\n';
 }
 
 
@@ -163,7 +163,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
     }
   for (set<revision_id>::const_iterator i = descendents.begin();
        i != descendents.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 
@@ -191,7 +191,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
     }
   erase_ancestors(revs, app);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: attributes
@@ -339,7 +339,7 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
   toposort(revs, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: ancestry_difference
@@ -381,7 +381,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options
   toposort(ancestors, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: leaves
@@ -412,7 +412,7 @@ AUTOMATE(leaves, "", options::opts::none)
     leaves.erase(i->first);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: parents
@@ -437,7 +437,7 @@ AUTOMATE(parents, N_("REV"), options::opts::none)
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << "\n";
+          output << (*i).inner()() << '\n';
 }
 
 // Name: children
@@ -462,7 +462,7 @@ AUTOMATE(children, N_("REV"), options::opts::none)
   for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << "\n";
+          output << (*i).inner()() << '\n';
 }
 
 // Name: graph
@@ -515,8 +515,8 @@ AUTOMATE(graph, "", options::opts::none)
       output << (i->first).inner()();
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
-        output << " " << (*j).inner()();
-      output << "\n";
+        output << ' ' << (*j).inner()();
+      output << '\n';
     }
 }
 
@@ -543,7 +543,7 @@ AUTOMATE(select, N_("SELECTOR"), options::opts::none)
 
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    output << *i << "\n";
+    output << *i << '\n';
 }
 
 // consider a changeset with the following
@@ -803,17 +803,17 @@ AUTOMATE(inventory, "", options::opts::none)
 
       switch (i->second.pre_state)
         {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::DROPPED_PATH: output << "D"; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
+        case inventory_item::UNCHANGED_PATH: output << ' '; break;
+        case inventory_item::DROPPED_PATH: output << 'D'; break;
+        case inventory_item::RENAMED_PATH: output << 'R'; break;
         default: I(false); // invalid pre_state
         }
 
       switch (i->second.post_state)
         {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
-        case inventory_item::ADDED_PATH:   output << "A"; break;
+        case inventory_item::UNCHANGED_PATH: output << ' '; break;
+        case inventory_item::RENAMED_PATH: output << 'R'; break;
+        case inventory_item::ADDED_PATH:   output << 'A'; break;
         default: I(false); // invalid post_state
         }
 
@@ -821,20 +821,20 @@ AUTOMATE(inventory, "", options::opts::none)
         {
         case inventory_item::UNCHANGED_NODE:
           if (i->second.post_state == inventory_item::ADDED_PATH)
-            output << "P";
+            output << 'P';
           else
-            output << " ";
+            output << ' ';
           break;
-        case inventory_item::PATCHED_NODE: output << "P"; break;
-        case inventory_item::UNKNOWN_NODE: output << "U"; break;
-        case inventory_item::IGNORED_NODE: output << "I"; break;
-        case inventory_item::MISSING_NODE: output << "M"; break;
+        case inventory_item::PATCHED_NODE: output << 'P'; break;
+        case inventory_item::UNKNOWN_NODE: output << 'U'; break;
+        case inventory_item::IGNORED_NODE: output << 'I'; break;
+        case inventory_item::MISSING_NODE: output << 'M'; break;
         default: I(false); // invalid node_state
         }
 
-      output << " " << i->second.pre_id
-             << " " << i->second.post_id
-             << " " << i->first;
+      output << ' ' << i->second.pre_id
+             << ' ' << i->second.post_id
+             << ' ' << i->first;
 
       // FIXME: it's possible that a directory was deleted and a file
       // was added in it's place (or vice-versa) so we need something
@@ -843,7 +843,7 @@ AUTOMATE(inventory, "", options::opts::none)
 
       output << path_suffix;
 
-      output << "\n";
+      output << '\n';
     }
 }
 
@@ -965,7 +965,7 @@ AUTOMATE(get_base_revision_id, "", options::opts::none)
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
-  output << parent_id(parents.begin()) << "\n";
+  output << parent_id(parents.begin()) << '\n';
 }
 
 // Name: get_current_revision_id
@@ -999,7 +999,7 @@ AUTOMATE(get_current_revision_id, "", options::opts::none)
 
   calculate_ident(rev, new_revision_id);
 
-  output << new_revision_id << "\n";
+  output << new_revision_id << '\n';
 }
 
 // Name: get_manifest_of
@@ -1248,7 +1248,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
   for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << "\n";
+      output << (*i).inner()() << '\n';
 }
 
 // Name: branches
@@ -1276,7 +1276,7 @@ AUTOMATE(branches, "", options::opts::none)
        i != names.end(); ++i)
     {
       if (!app.lua.hook_ignore_branch(*i))
-        output << (*i) << "\n";
+        output << (*i) << '\n';
     }
 }
 
@@ -1479,13 +1479,13 @@ AUTOMATE(get_option, N_("OPTION"), options::opts::none)
   string opt = args[0]();
 
   if (opt == "database")
-    output << database_option << "\n"; 
+    output << database_option << '\n'; 
   else if (opt == "branch")
-    output << branch_option << "\n";
+    output << branch_option << '\n';
   else if (opt == "key")
-    output << key_option << "\n";
+    output << key_option << '\n';
   else if (opt == "keydir")
-    output << keydir_option << "\n";
+    output << keydir_option << '\n';
   else
     N(false, F("'%s' is not a recognized workspace option") % opt);
 }

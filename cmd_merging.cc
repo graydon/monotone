@@ -948,7 +948,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
-    cout << describe_revision(app, *i) << "\n";
+    cout << describe_revision(app, *i) << '\n';
 }
 
 CMD(get_roster, N_("debug"), N_("[REVID]"),

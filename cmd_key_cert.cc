@@ -182,7 +182,7 @@ CMD(trusted, N_("key and cert"),
     % value
     % all_signers.str()
     % (trusted ? _("trusted") : _("UNtrusted")))
-    << "\n"; // final newline is kept out of the translation
+    << '\n'; // final newline is kept out of the translation
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),

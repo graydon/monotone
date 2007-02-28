@@ -169,7 +169,7 @@ struct pid_file
     require_path_is_nonexistent(path, F("pid file '%s' already exists") % path);
     file.open(path.as_external().c_str());
     E(file.is_open(), F("failed to create pid file '%s'") % path);
-    file << get_process_id() << "\n";
+    file << get_process_id() << '\n';
     file.flush();
   }
 
