@@ -8,7 +8,7 @@ check(mtn("add", "foo"), 0, false, false)
 commit()
 
 -- rename 'foo' dir to 'bar'
-check(mtn("rename", "foo", "bar"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo", "bar"), 0, false, false)
 rename("foo", "bar")
 
 -- add new 'foo' dir

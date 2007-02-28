@@ -22,8 +22,8 @@ rename("original", "renamed")
 writefile("patched", "something has changed")
 
 check(mtn("add", "added"), 0, false, false)
-check(mtn("rename", "original", "renamed"), 0, false, false)
-check(mtn("drop", "dropped"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "original", "renamed"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "dropped"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 check(grep('^  M 0 0 missing$', "stdout"), 0, false, false)
@@ -40,9 +40,9 @@ check(grep('^  I 0 0 ignored~$', "stdout"), 0, false, false)
 
 check(mtn("revert", "."), 0, false, false)
 
-check(mtn("rename", "unchanged", "temporary"), 0, false, false)
-check(mtn("rename", "original", "unchanged"), 0, false, false)
-check(mtn("rename", "temporary", "original"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "unchanged", "temporary"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "original", "unchanged"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "temporary", "original"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 check(grep('^RRP 1 2 original$', "stdout"), 0, false, false)
@@ -62,7 +62,7 @@ check(grep('^RR  2 1 unchanged$', "stdout"), 0, false, false)
 
 check(mtn("revert", "."), 0, false, false)
 
-check(mtn("rename", "original", "renamed"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "original", "renamed"), 0, false, false)
 check(mtn("add", "original"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
@@ -75,10 +75,10 @@ check(grep('^ R  0 1 renamed$', "stdout"), 0, false, false)
 
 check(mtn("revert", "."), 0, false, false)
 
-check(mtn("rename", "original", "temporary"), 0, false, false)
-check(mtn("rename", "missing", "original"), 0, false, false)
-check(mtn("rename", "dropped", "missing"), 0, false, false)
-check(mtn("rename", "temporary", "dropped"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "original", "temporary"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "missing", "original"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "dropped", "missing"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "temporary", "dropped"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 check(grep('^RRP 1 3 dropped$', "stdout"), 0, false, false)
@@ -101,7 +101,7 @@ check(grep('^RR  3 2 original$', "stdout"), 0, false, false)
 
 check(mtn("revert", "."), 0, false, false)
 
-check(mtn("drop", "dropped"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "dropped"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 check(grep('^D U 0 0 dropped$', "stdout"), 0, false, false)
@@ -121,7 +121,7 @@ check(grep('^ AM 0 0 added$', "stdout"), 0, false, false)
 check(mtn("revert", "."), 0, false, false)
 
 remove("renamed")
-check(mtn("rename", "original", "renamed"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "original", "renamed"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 check(qgrep('^R U 1 0 original$', "stdout"))
@@ -144,7 +144,7 @@ check(mtn("revert", "."), 0, false, false)
 writefile("renamed", "renamed and patched")
 remove("original")
 
-check(mtn("rename", "original", "renamed"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "original", "renamed"), 0, false, false)
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 
 check(grep('^R   1 0 original$', "stdout"), 0, false, false)
@@ -169,7 +169,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 check(grep('^    0 0 new_dir\/$', "stdout"), 0, false, false)
 
 remove("new_dir")
-check(mtn("drop", "new_dir"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "new_dir"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 check(grep('^D   0 0 new_dir\/$', "stdout"), 0, false, false)

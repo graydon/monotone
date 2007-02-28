@@ -28,7 +28,7 @@ check(qgrep("left", "w3/testfile"))
 check(qgrep("right", "w3/testfile"))
 check(not qgrep("ancestor", "w3/testfile"))
 
-check(indir("w3", mtn("pivot_root", "-e", "newroot", "oldroot")),
+check(indir("w3", mtn("pivot_root", "newroot", "oldroot")),
       0, nil, false)
 
 check(exists("w3/fileinroot"))

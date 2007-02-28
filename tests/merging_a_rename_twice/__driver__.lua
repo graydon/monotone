@@ -43,7 +43,7 @@ revs.c = base_revision()
 
 -- produce state E
 revert_to(revs.a)
-check(mtn("rename", "x", "y"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "x", "y"), 0, false, false)
 rename("x", "y")
 commit("branch.y")
 revs.e = base_revision()
