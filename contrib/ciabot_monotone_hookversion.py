@@ -2,6 +2,7 @@
 #
 # Copyright (C) Nathaniel Smith <njs@pobox.com>
 #               Timothy Brownawell <tbrownaw@gmail.com>
+#               Thomas Moschny <thomas.moschny@gmx.de>
 # Licensed under the MIT license:
 #   http://www.opensource.org/licenses/mit-license.html
 # I.e., do what you like, but keep copyright and there's NO WARRANTY.
@@ -68,6 +69,7 @@ class config:
 ################################################################################
 
 import sys
+import re
 
 def escape_for_xml(text, is_attrib=0):
     text = text.replace("&", "&amp;")
@@ -77,6 +79,33 @@ def escape_for_xml(text, is_attrib=0):
         text = text.replace("'", "&apos;")
         text = text.replace("\"", "&quot;")
     return text
+
+TOKEN = re.compile(r'''
+    "(?P<str>(\\\\|\\"|[^"])*)"
+    |\[(?P<id>[a-f0-9]{40}|)\]
+    |(?P<key>\w+)
+    |(?P<ws>\s+)
+''', re.VERBOSE)
+
+def parse_basic_io(raw):
+    key = None
+    for m in TOKEN.finditer(raw):
+        if m.lastgroup == 'key':
+            if key:
+                yield key, values
+            key = m.group('key')
+            values = []
+        elif m.lastgroup == 'id':
+            values.append(m.group('id'))
+        elif m.lastgroup == 'str':
+            value = m.group('str')
+            # dequote: replace \" with "
+            value = re.sub(r'\\"', '"', value)
+            # dequote: replace \\ with \
+            value = re.sub(r'\\\\', r'\\', value)
+            values.append(value)
+    if key:
+        yield key, values
 
 def send_message(message, c):
     if c.delivery == "debug":
@@ -115,16 +144,32 @@ def send_change_for(rid, branch, author, log, rev, c):
 </message>"""
     
     substs = {}
-    
-    # Stupid way to pull out everything inside quotes (which currently
-    # uniquely identifies filenames inside a changeset).
-    pieces = rev.split('"')
     files = []
-    for i in range(len(pieces)):
-        if (i % 2) == 1:
-            if pieces[i] not in files:
-                files.append(pieces[i])
-    substs["files"] = "\n".join(["<file>%s</file>" % escape_for_xml(f) for f in files])
+    for key, values in parse_basic_io(rev):
+        if key == 'old_revision':
+            # start a new changeset
+            oldpath = None
+        if key == 'delete':
+            files.append('<file action="remove">%s</file>'
+                         % escape_for_xml(values[0]))
+        elif key == 'rename':
+            oldpath = values[0]
+        elif key == 'to':
+            if oldpath:
+                files.append('<file action="rename" to="%s">%s</file>'
+                             % (escape_for_xml(values[0]), escape_for_xml(oldpath)))
+                oldpath = None
+        elif key == 'add_dir':
+            files.append('<file action="add">%s</file>'
+                         % escape_for_xml(values[0] + '/'))
+        elif key == 'add_file':
+            files.append('<file action="add">%s</file>'
+                          % escape_for_xml(values[0]))
+        elif key == 'patch':
+            files.append('<file action="modify">%s</file>'
+                         % escape_for_xml(values[0]))
+            
+    substs["files"] = "\n".join(files)
     changelog = log.strip()
     project = c.project_for_branch(branch)
     if project is None:
