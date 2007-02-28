@@ -170,8 +170,8 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         {
-          if (!verbose) cout << i->inner()() << "\n";
-          else cout << describe_revision(app, *i) << "\n";
+          if (!verbose) cout << i->inner()() << '\n';
+          else cout << describe_revision(app, *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")
@@ -180,7 +180,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
       app.db.complete(idx(args, 1)(), completions);
       for (set<file_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        cout << i->inner()() << "\n";
+        cout << i->inner()() << '\n';
     }
   else if (idx(args, 0)() == "key")
     {
@@ -191,8 +191,8 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
            i != completions.end(); ++i)
         {
           cout << i->first.inner()();
-          if (verbose) cout << " " << i->second();
-          cout << "\n";
+          if (verbose) cout << ' ' << i->second();
+          cout << '\n';
         }
     }
   else
