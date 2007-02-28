@@ -67,7 +67,11 @@ bool make_accessible(string const &name)
   bool ok = (stat(name.c_str(), &st) == 0);
   if (!ok)
     return false;
-  return (chmod(name.c_str(), st.st_mode | S_IREAD | S_IWRITE | S_IEXEC) == 0);
+  mode_t new_mode = st.st_mode;
+  if (S_ISDIR(st.st_mode))
+    new_mode |= S_IEXEC;
+  new_mode |= S_IREAD | S_IWRITE;
+  return (chmod(name.c_str(), new_mode) == 0);
 }
 #endif
 
@@ -78,10 +82,23 @@ void setenv(char const * var, char const * val)
 {
   _putenv_s(var, val);
 }
+void unsetenv(char const * var)
+{
+  _putenv_s(var, "");
+}
 #else
 void setenv(char const * var, char const * val)
 {
   string tempstr = string(var) + "=" + string(val);
+  char const *s = tempstr.c_str();
+  size_t len = tempstr.size() + 1;
+  char *cp = new char[len];
+  memcpy(cp, s, len);
+  putenv(cp);
+}
+void unsetenv(char const * var)
+{
+  string tempstr = string(var) + "=";
   char const *s = tempstr.c_str();
   size_t len = tempstr.size() + 1;
   char *cp = new char[len];
