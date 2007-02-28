@@ -96,7 +96,11 @@ void setenv(char const * var, char const * val)
   memcpy(cp, s, len);
   putenv(cp);
 }
+#if defined(__APPLE__)
+void unsetenv(char const * var)
+#else
 int unsetenv(char const * var)
+#endif
 {
   string tempstr = string(var) + "=";
   char const *s = tempstr.c_str();
