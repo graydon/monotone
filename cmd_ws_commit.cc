@@ -435,40 +435,40 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
   // other format strings.
-  cout << (F("Current branch: %s") % app.opts.branchname).str() << "\n";
+  cout << (F("Current branch: %s") % app.opts.branchname).str() << '\n';
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
       // A colon at the end of this string looked nicer, but it made
       // double-click copying from terminals annoying.
-      cout << (F("Changes against parent %s") % parent).str() << "\n";
+      cout << (F("Changes against parent %s") % parent).str() << '\n';
 
       cset const & cs = edge_changes(*i);
 
       if (cs.empty())
-        cout << F("  no changes").str() << "\n";
+        cout << F("  no changes").str() << '\n';
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
-        cout << (F("  dropped %s") % *i).str() << "\n";
+        cout << (F("  dropped %s") % *i).str() << '\n';
 
       for (map<split_path, split_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
         cout << (F("  renamed %s\n"
-                   "       to %s") % i->first % i->second).str() << "\n";
+                   "       to %s") % i->first % i->second).str() << '\n';
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
-        cout << (F("  added   %s") % *i).str() << "\n";
+        cout << (F("  added   %s") % *i).str() << '\n';
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
-        cout << (F("  added   %s") % i->first).str() << "\n";
+        cout << (F("  added   %s") % i->first).str() << '\n';
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << (F("  patched %s") % (i->first)).str() << "\n";
+        cout << (F("  patched %s") % (i->first)).str() << '\n';
     }
 }
 
@@ -653,12 +653,12 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             if (i->second.first)
               {
                 cout << path << " : "
-                     << i->first << "="
-                     << i->second.second << "\n";
+                     << i->first << '='
+                     << i->second.second << '\n';
                 has_any_live_attrs = true;
               }
           if (!has_any_live_attrs)
-            cout << F("No attributes for '%s'") % path << "\n";
+            cout << F("No attributes for '%s'") % path << '\n';
         }
       else if (args.size() == 3)
         {
@@ -666,11 +666,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
             cout << path << " : "
-                 << i->first << "="
-                 << i->second.second << "\n";
+                 << i->first << '='
+                 << i->second.second << '\n';
           else
             cout << (F("No attribute '%s' on path '%s'")
-                     % a_key % path) << "\n";
+                     % a_key % path) << '\n';
         }
       else
         throw usage(name);

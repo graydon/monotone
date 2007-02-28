@@ -37,6 +37,7 @@ read_password(std::string const & prompt, char * buf, size_t bufsz)
   std::cout.flush();
   echo_off(save_term);
   std::cin.getline(buf, bufsz, '\n');
+  std::cout << std::endl;
   echo_on(save_term);
 }
 
