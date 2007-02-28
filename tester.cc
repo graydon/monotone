@@ -88,9 +88,9 @@ void set_env(char const * var, char const * val)
   // note: this leaks memory, but the tester is short lived so it probably
   // doesn't matter much.
   string * tempstr = new string(var);
-  tempstr += '=';
-  tempstr += val;
-  putenv(tempstr.c_str());
+  tempstr->append("=");
+  tempstr->append(val);
+  putenv(const_cast<char *>(tempstr->c_str()));
 #else
 #error set_env needs to be ported to this platform
 #endif
