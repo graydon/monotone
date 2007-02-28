@@ -55,8 +55,8 @@ check(qgrep("bar", "_MTN/inodeprints"))
 
 -- left and right are unchanged, but added in the other parent, so should be
 -- inodeprinted, except that left was added during the merge_into_workspace,
--- so it's too new to be inodeprinted
-check(not qgrep("left", "_MTN/inodeprints"))
+-- so it might be too new to be inodeprinted (depending on the speed the
+-- test happens to run), so we don't check for it.
 check(qgrep("right", "_MTN/inodeprints"))
 
 -- wait a bit, refresh, and check that left shows up now
