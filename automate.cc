@@ -1737,11 +1737,16 @@ AUTOMATE(cert, N_("REVISION-ID NAME VALUE"), options::opts::none)
 
   cert c;
   revision_id rid(idx(args, 0)());
+
+  transaction_guard guard(app.db);
+  N(app.db.revision_exists(rid),
+    F("no such revision '%s'") % rid);
   make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
                    cert_value(idx(args, 2)()), app, c);
   revision<cert> rc(c);
   packet_db_writer dbw(app);
   dbw.consume_revision_cert(rc);
+  guard.commit();
 }
 
 // Name: db_set
