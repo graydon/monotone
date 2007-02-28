@@ -3,11 +3,11 @@ mtn_setup()
 
 tkey = "happy@bogus.com"
 
--- fail to enter a passphrase
-check(mtn("genkey", tkey), 1, false, false)
+-- empty passphrase
+check(mtn("genkey", tkey .. ".empty"), 0, false, false)
 
--- fail to enter passphrase twice
-check(mtn("genkey", tkey), 1, false, false, tkey .. "\n")
+-- fail to enter passphrase 3 times
+check(mtn("genkey", tkey), 1, false, false, tkey .. "\n" .. "\n" .. "\n" .. tkey .. "\n" .. tkey .. "\n")
 
 -- generate a new key
 check(mtn("genkey", tkey), 0, false, false, tkey .. "\n" .. tkey .. "\n")

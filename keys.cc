@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "botan/botan.h"
@@ -33,12 +34,15 @@
 #include "cert.hh"
 #include "app_state.hh"
 #include "charset.hh"
+#include "ssh_agent.hh"
 
 using std::cout;
 using std::make_pair;
 using std::map;
 using std::string;
+using std::vector;
 
+using boost::scoped_ptr;
 using boost::shared_ptr;
 using boost::shared_dynamic_cast;
 
@@ -70,13 +74,13 @@ do_arc4(SecureVector<Botan::byte> & sym_key,
 
 // 'force_from_user' means that we don't use the passphrase cache, and we
 // don't use the get_passphrase hook.
-static void
+void
 get_passphrase(lua_hooks & lua,
                rsa_keypair_id const & keyid,
                utf8 & phrase,
-               bool confirm_phrase = false,
-               bool force_from_user = false,
-               string prompt_beginning = "enter passphrase")
+               bool confirm_phrase,
+               bool force_from_user,
+               string prompt_beginning)
 {
 
   // we permit the user to relax security here, by caching a passphrase (if
@@ -111,23 +115,13 @@ get_passphrase(lua_hooks & lua,
           ui.ensure_clean_line();
           read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
                         pass1, constants::maxpasswd);
-          if (strlen(pass1) == 0)
-            {
-              P(F("empty passphrase not allowed"));
-              continue;
-            }
-
           if (confirm_phrase)
             {
               ui.ensure_clean_line();
-              read_password((F("confirm passphrase for key ID [%s]: ") % keyid()).str(),
-                              pass2, constants::maxpasswd);
-              if (strlen(pass1) == 0 || strlen(pass2) == 0)
-                {
-                  P(F("empty passphrases not allowed, try again"));
-                  N(i < 2, F("too many failed passphrases"));
-                }
-              else if (strcmp(pass1, pass2) == 0)
+              read_password((F("confirm passphrase for key ID [%s]: ")
+                             % keyid()).str(),
+                            pass2, constants::maxpasswd);
+              if (strcmp(pass1, pass2) == 0)
                 break;
               else
                 {
@@ -138,7 +132,6 @@ get_passphrase(lua_hooks & lua,
           else
             break;
         }
-      N(strlen(pass1) != 0, F("no passphrase given"));
 
       try
         {
@@ -188,8 +181,15 @@ generate_key_pair(keypair & kp_out,
 
   Pipe p;
   p.start_msg();
-  Botan::PKCS8::encrypt_key(priv, p, phrase(),
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
+  if (phrase().length()) {
+    Botan::PKCS8::encrypt_key(priv,
+                              p,
+                              phrase(),
+                              "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
+                              Botan::RAW_BER);
+  } else {
+    Botan::PKCS8::encode(priv, p);
+  }
   raw_priv_key = rsa_priv_key(p.read_all_as_string());
 
   // generate public key
@@ -212,7 +212,7 @@ shared_ptr<RSA_PrivateKey>
 get_private_key(lua_hooks & lua,
                 rsa_keypair_id const & id,
                 base64< rsa_priv_key > const & priv,
-                bool force_from_user = false)
+                bool force_from_user)
 {
   rsa_priv_key decoded_key;
   utf8 phrase;
@@ -220,32 +220,48 @@ get_private_key(lua_hooks & lua,
 
   L(FL("base64-decoding %d-byte private key") % priv().size());
   decode_base64(priv, decoded_key);
-  for (int i = 0; i < 3; ++i)
+  shared_ptr<PKCS8_PrivateKey> pkcs8_key;
+  try //with empty passphrase
     {
-      get_passphrase(lua, id, phrase, false, force);
-      L(FL("have %d-byte encrypted private key") % decoded_key().size());
-
-      shared_ptr<PKCS8_PrivateKey> pkcs8_key;
-      try
+      Pipe p;
+      p.process_msg(decoded_key());
+      pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
+    }
+  catch (...)
+    {
+      L(FL("failed to decrypt key with no passphrase"));
+    }
+  if (!pkcs8_key)
+    {
+      for (int i = 0; i < 3; ++i)
         {
-          Pipe p;
-          p.process_msg(decoded_key());
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
-        }
-      catch (...)
-        {
-          if (i >= 2)
-            throw informative_failure("failed to decrypt private RSA key, "
-                                      "probably incorrect passphrase");
-          // don't use the cache bad one next time
-          force = true;
-          continue;
-        }
+          get_passphrase(lua, id, phrase, false, force);
+          L(FL("have %d-byte encrypted private key") % decoded_key().size());
 
+          try
+            {
+              Pipe p;
+              p.process_msg(decoded_key());
+              pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
+              break;
+            }
+          catch (...)
+            {
+              if (i >= 2)
+                throw informative_failure("failed to decrypt private RSA key, "
+                                          "probably incorrect passphrase");
+              // don't use the cached bad one next time
+              force = true;
+              continue;
+            }          
+        }
+    }
+  if (pkcs8_key)
+    {
       shared_ptr<RSA_PrivateKey> priv_key;
       priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
       if (!priv_key)
-          throw informative_failure("Failed to get RSA signing key");
+        throw informative_failure("Failed to get RSA signing key");
 
       return priv_key;
     }
@@ -347,39 +363,128 @@ make_signature(app_state & app,           // to hook for phrase
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
-  SecureVector<Botan::byte> sig;
+  E(!app.opts.ssh_sign.empty(),
+    F("--ssh-sign requires a value ['yes', 'no', 'only', or 'check']"));
+  E(app.opts.ssh_sign == "yes"
+    || app.opts.ssh_sign == "no"
+    || app.opts.ssh_sign == "check"
+    || app.opts.ssh_sign == "only",
+    F("--ssh-sign must be set to 'yes', 'no', 'only', or 'check'"));
+
+  keypair key;
+  app.keys.get_key_pair(id, key);
+
   string sig_string;
-
-  // we permit the user to relax security here, by caching a decrypted key
-  // (if they permit it) through the life of a program run. this helps when
-  // you're making a half-dozen certs during a commit or merge or
-  // something.
-
-  bool persist_phrase = (!app.signers.empty()) || app.lua.hook_persist_phrase_ok();
-
-  shared_ptr<PK_Signer> signer;
-  shared_ptr<RSA_PrivateKey> priv_key;
-  if (persist_phrase && app.signers.find(id) != app.signers.end())
-    signer = app.signers[id].first;
-
-  else
+  //sign with ssh-agent (if connected)
+  N(app.agent.connected() || app.opts.ssh_sign != "only",
+    F("You have chosen to sign only with ssh-agent but ssh-agent"
+      " does not seem to be running."));
+  if (app.opts.ssh_sign == "yes"
+      || app.opts.ssh_sign == "check"
+      || app.opts.ssh_sign == "only")
     {
-      priv_key = get_private_key(app.lua, id, priv);
-      signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
+      vector<RSA_PublicKey> ssh_keys = app.agent.get_keys();
+      if (ssh_keys.size() <= 0)
+        L(FL("make_signature: no rsa keys received from ssh-agent"));
+      else {
+        //grab the monotone public key as an RSA_PublicKey
+        app.keys.get_key_pair(id, key);
+        rsa_pub_key pub;
+        decode_base64(key.pub, pub);
+        SecureVector<Botan::byte> pub_block;
+        pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()),
+                      pub().size());
+        L(FL("make_signature: building %d-byte pub key") % pub_block.size());
+        shared_ptr<X509_PublicKey> x509_key =
+          shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
+        shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
 
-      /* XXX This is ugly. We need to keep the key around as long
-       * as the signer is around, but the shared_ptr for the key will go
-       * away after we leave this scope. Hence we store a pair of
-       * <verifier,key> so they both exist. */
-      if (persist_phrase)
-        app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
+        if (!pub_key)
+          throw informative_failure("Failed to get monotone RSA public key");
+
+        //if monotone key matches ssh-agent key, sign with ssh-agent
+        for (vector<RSA_PublicKey>::const_iterator
+               si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
+          if ((*pub_key).get_e() == (*si).get_e()
+              && (*pub_key).get_n() == (*si).get_n()) {
+            L(FL("make_signature: ssh key matches monotone key, signing with"
+                 " ssh-agent"));
+            app.agent.sign_data(*si, tosign, sig_string);
+            break;
+          }
+        }
+      }
+      if (sig_string.length() <= 0)
+        L(FL("make_signature: monotone and ssh-agent keys do not match, will"
+             " use monotone signing"));
     }
 
-  sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
-  sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
+  string ssh_sig = sig_string;
 
-  L(FL("produced %d-byte signature") % sig_string.size());
+  N(ssh_sig.length() > 0 || app.opts.ssh_sign != "only",
+    F("You don't seem to have your monotone key imported "));
+
+  if (ssh_sig.length() <= 0
+      || app.opts.ssh_sign == "check"
+      || app.opts.ssh_sign == "no")
+    {
+      SecureVector<Botan::byte> sig;
+
+      // we permit the user to relax security here, by caching a decrypted key
+      // (if they permit it) through the life of a program run. this helps when
+      // you're making a half-dozen certs during a commit or merge or
+      // something.
+
+      bool persist_phrase = (!app.signers.empty())
+        || app.lua.hook_persist_phrase_ok();
+
+      shared_ptr<PK_Signer> signer;
+      shared_ptr<RSA_PrivateKey> priv_key;
+      if (persist_phrase && app.signers.find(id) != app.signers.end())
+        signer = app.signers[id].first;
+
+      else
+        {
+          priv_key = get_private_key(app.lua, id, priv);
+          if (app.agent.connected()
+              && app.opts.ssh_sign != "only"
+              && app.opts.ssh_sign != "no") {
+            L(FL("keys.cc: make_signature: adding private key (%s) to ssh-agent") % id());
+            app.agent.add_identity(*priv_key, id());
+          }
+          signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
+
+          /* XXX This is ugly. We need to keep the key around as long
+           * as the signer is around, but the shared_ptr for the key will go
+           * away after we leave this scope. Hence we store a pair of
+           * <verifier,key> so they both exist. */
+          if (persist_phrase)
+            app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
+        }
+
+      sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
+      sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
+    }
+
+  if (app.opts.ssh_sign == "check" && ssh_sig.length() > 0)
+    {
+      E(ssh_sig == sig_string,
+        F("make_signature: ssh signature (%i) != monotone signature (%i)\n"
+          "ssh signature     : %s\n"
+          "monotone signature: %s")
+        % ssh_sig.length()
+        % sig_string.length()
+        % encode_hexenc(ssh_sig)
+        % encode_hexenc(sig_string));
+      L(FL("make_signature: signatures from ssh-agent and monotone"
+           " are the same"));
+    }
+
+  L(FL("make_signature: produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
+
+  E(check_signature(app, id, key.pub, tosign, signature),
+    F("make_signature: signature is not valid"));
 }
 
 bool
