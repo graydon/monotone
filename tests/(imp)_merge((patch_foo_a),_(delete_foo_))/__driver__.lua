@@ -6,7 +6,7 @@ addfile("foo/a", "blah blah")
 commit()
 base = base_revision()
 
-check(mtn("drop", "--recursive", "foo"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "--recursive", "foo"), 0, false, false)
 commit()
 
 remove("foo")

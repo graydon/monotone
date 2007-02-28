@@ -715,8 +715,7 @@ struct server
     for (vector<string>::const_iterator i = h.begin(); i != h.end(); ++i) {
       c = servers_by_host.find(*i);
       if (c != servers_by_host.end()) {
-        cerr << "Removing duplicate for hostname " << *i << " in:" << std::endl
-             << "  ";
+        cerr << "Removing duplicate for hostname " << *i << " in:\n  "
         list<map<string, shared_ptr<server> >::iterator>::iterator j;
         bool first = true;
         for (j = c->second->by_host.begin(); j != c->second->by_host.end();)
@@ -732,8 +731,7 @@ struct server
                 c->second->by_host.erase(j_saved);
               }
           }
-        cerr << std::endl
-             << "  ... because it appeared in " << by_name->first << std::endl;
+        cerr << "\n  ... because it appeared in " << by_name->first << '\n';
       }
       c = servers_by_host.insert(make_pair(*i, me)).first;
       by_host.push_back(c);
@@ -750,8 +748,7 @@ struct server
     for (vector<string>::const_iterator i = p.begin(); i != p.end(); ++i) {
       c = servers_by_pattern.find(*i);
       if (c != servers_by_pattern.end()) {
-        cerr << "Removing duplicate for pattern " << *i << " in: " << std::endl
-             << "  ";
+        cerr << "Removing duplicate for pattern " << *i << " in:\n  ";
         list<map<string, shared_ptr<server> >::iterator>::iterator j;
         bool first = true;
         for (j = c->second->by_pat.begin(); j != c->second->by_pat.end(); ++j)
@@ -767,8 +764,7 @@ struct server
                 c->second->by_pat.erase(j_saved);
               }
           }
-        cerr << std::endl
-             << "  ... because it appeared in " << by_name->first << std::endl;
+        cerr << "\n  ... because it appeared in " << by_name->first << '\n';
       }
       c = servers_by_pattern.insert(make_pair(*i, me)).first;
       by_pat.push_back(c);
@@ -908,8 +904,7 @@ string read_server_record(std::istream & in)
     else if (cmd == "pattern")
       patterns.push_back(arg);
     else
-      cerr << "Unrecognised directive " << cmd << ", skipping line..."
-           << std::endl;
+      cerr << "Unrecognised directive " << cmd << ", skipping line...\n";
 
     line = getline(in);
   }
@@ -1209,8 +1204,7 @@ void reload_conffile(string const & file)
         logdir = b;
       }
     else
-      cerr << "Unrecognised directive " << a << ", skipping line..."
-           << std::endl;
+      cerr << "Unrecognised directive " << a << ", skipping line...\n";
     line = getline(cf);
   }
 

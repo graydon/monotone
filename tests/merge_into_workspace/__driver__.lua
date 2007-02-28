@@ -70,7 +70,7 @@ check(mtn("automate", "graph"), 0, {"ancestry"}, nil)
 
 -- testfile should be in state 'patched'
 check(mtn("status"), 0, true, nil)
-check(qgrep("patched testfile", "stdout"))
+check(qgrep("patched *testfile", "stdout"))
 
 -- some automate commands that should do sensible things
 check(mtn("automate", "get_current_revision_id"), 0,

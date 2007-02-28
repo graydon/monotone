@@ -23,7 +23,6 @@
 #include "keys.hh"
 #include "cert.hh"
 
-using std::endl;
 using std::istream;
 using std::make_pair;
 using std::map;
@@ -264,9 +263,9 @@ packet_writer::consume_file_data(file_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[fdata " << ident.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[fdata " << ident.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
@@ -276,10 +275,10 @@ packet_writer::consume_file_delta(file_id const & old_id,
 {
   base64<gzip<delta> > packed;
   pack(del.inner(), packed);
-  ost << "[fdelta " << old_id.inner()() << endl
-      << "        " << new_id.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[fdelta " << old_id.inner()() << '\n'
+      << "        " << new_id.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
@@ -288,38 +287,38 @@ packet_writer::consume_revision_data(revision_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[rdata " << ident.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[rdata " << ident.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_revision_cert(revision<cert> const & t)
 {
-  ost << "[rcert " << t.inner().ident() << endl
-      << "       " << t.inner().name() << endl
-      << "       " << t.inner().key() << endl
-      << "       " << trim_ws(t.inner().value()) << "]" << endl
-      << trim_ws(t.inner().sig()) << endl
-      << "[end]" << endl;
+  ost << "[rcert " << t.inner().ident() << '\n'
+      << "       " << t.inner().name() << '\n'
+      << "       " << t.inner().key() << '\n'
+      << "       " << trim_ws(t.inner().value()) << "]\n"
+      << trim_ws(t.inner().sig()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k)
 {
-  ost << "[pubkey " << ident() << "]" << endl
-      << trim_ws(k()) << endl
-      << "[end]" << endl;
+  ost << "[pubkey " << ident() << "]\n"
+      << trim_ws(k()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp)
 {
-  ost << "[keypair " << ident() << "]" << endl
-      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << endl
-      << "[end]" << endl;
+  ost << "[keypair " << ident() << "]\n"
+      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << '\n'
+      << "[end]\n";
 }
 
 

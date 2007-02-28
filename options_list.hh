@@ -249,11 +249,11 @@ OPTION(exclude, exclude, true, "exclude",
 }
 #endif
 
-OPT(execute, "execute,e", bool, false,
-        gettext_noop("perform the associated file operation"))
+OPT(bookkeep_only, "bookkeep-only", bool, false,
+        gettext_noop("only update monotone's internal bookkeeping, not the filesystem"))
 #ifdef option_bodies
 {
-  execute = true;
+  bookkeep_only = true;
 }
 #endif
 

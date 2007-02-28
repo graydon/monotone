@@ -8,6 +8,6 @@ check(mtn("add", "dir"), 0, false, false)
 
 commit()
 
-check(mtn("--execute", "mv", "file", "dir"), 0, false, false)
-check(mtn("--execute", "mv", "dir", "foo"), 0, false, false)
+check(mtn("mv", "file", "dir"), 0, false, false)
+check(mtn("mv", "dir", "foo"), 0, false, false)
 check(mtn("revert", "dir"), 0, false, false)

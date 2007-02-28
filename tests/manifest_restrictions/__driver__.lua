@@ -73,8 +73,8 @@ writefile("work/file3", "version 2 of file3 with some changes")
 writefile("work/A/fileA", "version 2 of fileA with some changes")
 writefile("work/A/B/fileAB", "version 2 of fileAB with some changes")
 
-check(mtn("rename", "work/fileX", "work/file1"), 0, false, false)
-check(mtn("drop", "work/file2"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "work/fileX", "work/file1"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "work/file2"), 0, false, false)
 check(mtn("add", "work/file4"), 0, false, false)
 
 -- moved fileX to file1

@@ -17,7 +17,7 @@ root_f_sha=sha1("foo")
 -- produce 4-step path with move in the middle
 rename("foo2", "foo")
 check(mtn("commit", "--message=edit-foo"), 0, false, false)
-check(mtn("rename", "foo", "bar"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo", "bar"), 0, false, false)
 rename("bar1", "bar")
 check(mtn("commit", "--message=rename-to-bar"), 0, false, false)
 rename("bar2", "bar")

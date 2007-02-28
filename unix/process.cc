@@ -163,6 +163,56 @@ pid_t process_spawn_redirected(char const * in,
     }
 }
 
+pid_t process_spawn_pipe(char const * const argv[], FILE** in, FILE** out)
+{
+  int infds[2];
+  int outfds[2];
+  pid_t pid;
+  
+  if (pipe(infds) < 0)
+    return -1;
+  if (pipe(outfds) < 0)
+    {
+      close(infds[0]);
+      close(infds[1]);
+      return -1;
+    }
+  
+  switch(pid = vfork())
+    {
+      case -1:
+        close(infds[0]);
+        close(infds[1]);
+        close(outfds[0]);
+        close(outfds[1]);
+        return -1;
+      case 0:
+        {
+          if (infds[0] != STDIN_FILENO)
+            {
+              dup2(infds[0], STDIN_FILENO);
+              close(infds[0]);
+            }
+          close(infds[1]);
+          if (outfds[1] != STDOUT_FILENO)
+            {
+              dup2(outfds[1], STDOUT_FILENO);
+              close(outfds[1]);
+            }
+          close(outfds[0]);
+          
+          execvp(argv[0], (char * const *)argv);
+          raise(SIGKILL);
+        }
+    }
+  close(infds[0]);
+  close(outfds[1]);
+  *in = fdopen(infds[1], "w");
+  *out = fdopen(outfds[0], "r");
+  
+  return pid;
+}
+
 int process_wait(pid_t pid, int *res, int timeout)
 {
   int status;
