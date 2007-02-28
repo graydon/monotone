@@ -228,6 +228,12 @@ pid_t process_spawn_redirected(char const * in,
     }
 }
 
+pid_t process_spawn_pipe(char const * const argv[], FILE** in, FILE** out)
+{
+  // XXX: not implemented on Win32 yet
+  return -1;
+}
+
 int process_wait(pid_t pid, int *res, int timeout)
 {
   HANDLE hProcess = (HANDLE)pid;

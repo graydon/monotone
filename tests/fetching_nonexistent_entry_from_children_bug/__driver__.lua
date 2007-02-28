@@ -11,11 +11,11 @@ mkdir("bar");
 check(mtn("add", "bar"), 0, false, false)
 commit()
 
--- now renamed the directory, change the file and move it into the renamed
+-- now rename the directory, change the file and move it into the renamed
 -- directory
-check(mtn("rename", "--execute", "bar", "baz"), 0, false, false)
+check(mtn("rename", "bar", "baz"), 0, false, false)
 writefile("foo", "bazfile")
-check(mtn("rename", "--execute", "foo", "baz/foo"), 0, false, false)
+check(mtn("rename", "foo", "baz/foo"), 0, false, false)
 
 -- if we try to check-in these changes and restrict on baz/foo, we'll hit an 
 -- invariant in roster.cc, around line 188

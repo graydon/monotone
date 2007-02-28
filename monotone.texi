@@ -3979,9 +3979,8 @@ $ mtn drop file.txt
 @end multitable
 
 Monotone does not require that you erase a file from the workspace
-before you drop it. Dropping a file merely removes its entry in the
-manifest of the current revision unless you give it the @option{--execute}
-flag, which tells monotone to go ahead and also remove it from the filesystem.
+before you drop it. Dropping a file both removes its entry in the
+manifest of the current revision and removes it from the filesystem.
 
 
 @heading Viewing History
@@ -4277,10 +4276,11 @@ changes are not reflected in your database until such time as you
 perform a commit.  If you use the @option{--no-respect-ignore} flag,
 entries in .mtn-ignore will not be honored.
 
-@item mtn [--execute] drop @var{pathname...}
+@item mtn [--bookkeep-only] drop @var{pathname...}
 @itemx mtn drop --missing
 This command places ``drop'' entries for the paths specified in
-@var{pathname...} in the workspace's ``work list''. The work list of
+@var{pathname...} in the workspace's ``work list'' and deletes
+the file from the workspace. The work list of
 your workspace is stored in @file{_MTN/revision}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also removes
@@ -4296,19 +4296,16 @@ workspace, monotone will use the work list to build a new revision,
 which it will then commit to the database. The new revision will have
 any dropped entries removed from its manifest.
 
-Currently this command does @emph{not} actually delete the file
-@var{src} in your filesystem; if you want to actually delete the file,
-you should run @command{drop}, and then perform the actual delete using
-whatever mechanism you normally use to delete files.
+There are situations in which @command{drop} will tell monotone
+to remove the file from the revision at commit time, but where it will
+@emph{not} to remove the file from the workspace immediately.  One
+is if the @option{--bookkeep-only} option is supplied.  Another is
+if a file has un-committed changes or if a directory is not empty.
 
-The option @option{--execute} will make ``drop'' perform the actual
-deletion operations in the filesystem.  It will ignore files or
-directories which have already been deleted.
-
-@item mtn [--execute] rename @var{src} @var{dst}
-@item mtn [--execute] mv @var{src} @var{dst}
-@itemx mtn [--execute] rename @var{src1} @var{...} @var{dst/}
-@itemx mtn [--execute] mv @var{src1} @var{...} @var{dst/}
+@item mtn [--bookkeep-only] rename @var{src} @var{dst}
+@item mtn [--bookkeep-only] mv @var{src} @var{dst}
+@itemx mtn [--bookkeep-only] rename @var{src1} @var{...} @var{dst/}
+@itemx mtn [--bookkeep-only] mv @var{src1} @var{...} @var{dst/}
 This command places ``rename'' entries for the paths specified in
 @var{src} and @var{dst} in the workspace's ``work list''. The second form
 renames a number of source paths to the given destination. The work
@@ -4316,18 +4313,8 @@ list of your workspace is stored in @file{_MTN/revision}, and is a list of
 explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also moves any
 attributes on @var{src} to @var{dst}; see @ref{File Attributes} for more
-details.
-
-While this command places a ``rename'' entry on your work list, it
-does not immediately affect your database. When you @command{commit}
-your workspace, monotone will use the work list to build a new
-revision, which it will then commit to the database. The new revision
-will have any renamed entries in its manifest adjusted to their new
-names.
-
-The option @option{--execute} will make ``rename'' perform the actual
-rename operations in the filesystem. It will ignore missing source files
-and will not overwrite existing destination files.
+details, and, unless the @option{--bookkeep-only} option is supplied, it
+will rename the files immediately in the filesystem.
 
 @item mtn commit
 @item mtn ci
@@ -4523,7 +4510,7 @@ After running this command, you are guaranteed that your workspace is
 in inodeprints mode, and that the inodeprints cache is accurate and up
 to date.
 
-@item mtn pivot_root [--execute] pivot_root @var{new_root} @var{put_old}
+@item mtn pivot_root [--bookkeep-only] pivot_root @var{new_root} @var{put_old}
 Most users will never need this command.  It is primarily useful in
 certain tricky cases where one wishes to combine several projects
 into one, or split one project into several. See also @command{merge_into_dir}.
@@ -4549,8 +4536,9 @@ is a directory loop.  This illegality is the only reason for
 exactly like two renames, including with respect to merges and
 updates.
 
-The use of @option{--execute} with this command is strongly
-recommended, though not required.
+The use of @option{--bookkeep-only} with this command is not
+recommended.  It causes the changes to be made in monotone's
+records, but not in the filesystem itself.
 
 When running @command{pivot_root}, it is sometimes possible for
 @ref{Workspace Collisions} to occur.
@@ -7513,8 +7501,15 @@ exits with status 1.
 @table @strong 
 @item Arguments:
 
-@var{revision-data} is the new revision. See example
-below.
+@var{revision-data} is the new revision. See example below.  Note that
+the new_manifest entry is ignored -- @command{put_revision} will
+ignore whatever you put here and calculate the correct manifest id
+itself.  (However, for now, you must put 40 hex digits here -- it's
+just that which particular digits you put are entirely irrelevant.
+All zeros is a good choice.)  Monotone will also canonicalize your
+whitespace automatically.  You do not need to worry about getting just
+the right amount of indentation in front of each line.  However,
+everything else about your revision must be valid.
 
 @item Added in:
 
@@ -7554,7 +7549,9 @@ The new revision id, hex encoded.
 @item Error conditions:
 
 If the changeset is invalid prints an error message to stderr and 
-exits with status 1. May abort on invalid formats.
+exits with status 1. May abort on invalid formats.  If the revision is
+already present in the database, prints a message to stderr noting
+this fact, but otherwise works as normal.
 
 @end table
 

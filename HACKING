@@ -130,6 +130,16 @@ continued to adhere to the dialect we write in. in particular:
     one of the standard streams (cin, cout, cerr, clog).  use <iosfwd>,
     <istream>, <ostream>, <fstream>, etc instead, as appropriate.
 
+  - it is almost always a mistake to use std::endl instead of '\n'.
+    std::endl writes a newline to the stream *and flushes it*.
+    in monotone this is basically only appropriate when one needs to
+    resynchronize clog and cout (ui.cc:clear_line()), or recover from
+    disabling terminal echo (read_password()).  note that it is never
+    necessary to use endl with cerr, as cerr is unbuffered.
+
+  - prefer character constants ('x') to single-character strings ("x") in
+    formatted output sequences.
+
   - return type and function qualifiers should be placed on the line above
     the function name, so that the function name sits flush with the first
     column.  this makes grepping for function definitions easier.

@@ -48,7 +48,7 @@ check(mtn("--branch=branch.fork", "merge"), 0, false, false)
 
 -- produce state E
 revert_to(revs.c, "branch.main")
-check(mtn("drop", "bar"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "bar"), 0, false, false)
 commit("branch.main")
 revs.e = base_revision()
 

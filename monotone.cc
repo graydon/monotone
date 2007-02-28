@@ -39,7 +39,6 @@
 
 using std::cout;
 using std::cerr;
-using std::endl;
 using std::string;
 using std::ios_base;
 using std::ostringstream;
@@ -271,7 +270,7 @@ cpp_main(int argc, char ** argv)
           std::ostream & usage_stream = (app.opts.help ? cout : cerr);
 
           usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
-          usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << "\n";
+          usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << '\n';
 
           // Make sure to hide documentation that's not part of
           // the current command.
@@ -279,7 +278,7 @@ cpp_main(int argc, char ** argv)
           if (!cmd_options.empty())
             {
               usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
-              usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << "\n";
+              usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << '\n';
             }
 
           commands::explain_usage(u.which, usage_stream);

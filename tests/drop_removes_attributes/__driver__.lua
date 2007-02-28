@@ -9,5 +9,5 @@ check(qgrep("some_value", "stdout"))
 
 commit()
 
-check(mtn("drop", "testfile"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
 check(mtn("attr", "get", "testfile"), 1, true, false)

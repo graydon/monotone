@@ -18,7 +18,7 @@ writefile("foo", "changed foo once")
 commit("testbranch", "foo has changed once.")
 rev_foo2 = base_revision()
 
-check(mtn("drop", "bar"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "bar"), 0, false, false)
 commit("testbranch", "Dropped bar.")
 
 writefile("foo", "changed foo again")

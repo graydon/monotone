@@ -70,11 +70,11 @@ check(mtn("automate", "graph"), 0, {"ancestry"}, nil)
 
 -- testfile should be in state 'patched'
 check(mtn("status"), 0, true, nil)
-check(qgrep("patched testfile", "stdout"))
+check(qgrep("patched *testfile", "stdout"))
 
 -- some automate commands that should do sensible things
 check(mtn("automate", "get_current_revision_id"), 0,
-      "9491240daab3028f583e4d0e0239da3e626fda2b\n", nil)
+      "5e009ca0dc972a9b09a7fbfb647908bee07fb562\n", nil)
 
 check(get("expected-manifest"))
 check(mtn("automate", "get_manifest_of"), 0, {"expected-manifest"}, nil)
@@ -84,9 +84,11 @@ check(get("expected-log"))
 check(get("expected-log-left"))
 
 check(mtn("log", "--no-graph", "testfile"), 0, true, nil)
+canonicalize("stdout")
 check(samefile_ignore_dates("stdout", "expected-log"))
 
 check(mtn("log", "--no-graph", "--from", left), 0, true, nil)
+canonicalize("stdout")
 check(samefile_ignore_dates("stdout", "expected-log-left"))
 
 -- a commit at this point should succeed

@@ -12,7 +12,7 @@ addfile("foo", "foo")
 
 commit()
 
-check(mtn("--execute", "mv", "foo", "bar"), 0, false, false)
+check(mtn("mv", "foo", "bar"), 0, false, false)
 
 -- create directory blocking revert of foo
 mkdir("foo")

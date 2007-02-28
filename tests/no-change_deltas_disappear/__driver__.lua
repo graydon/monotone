@@ -23,7 +23,7 @@ commit()
 
 writefile("testfile", "version 1")
 addfile("end_file", "end file")
-check(mtn("drop", "start_file"), 0, true, false)
+check(mtn("drop", "--bookkeep-only", "start_file"), 0, true, false)
 commit()
 revs.new = base_revision()
 files.new = sha1("testfile")

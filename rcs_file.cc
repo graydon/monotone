@@ -335,7 +335,7 @@ struct parser
   void advance()
   {
     ttype = get_token(ist, token, line, col);
-    // cerr << tt2str(ttype) << ": " << token << endl;
+    // cerr << tt2str(ttype) << ": " << token << '\n';
   }
 
   bool nump() { return ttype == TOK_NUM; }

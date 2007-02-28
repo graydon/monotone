@@ -134,7 +134,7 @@ prefix_lines_with(string const & prefix, string const & lines, string & out)
       oss << prefix << *i;
       i++;
       if (i != msgs.end())
-        oss << "\n";
+        oss << '\n';
     }
 
   out = oss.str();

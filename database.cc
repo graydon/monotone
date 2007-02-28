@@ -54,7 +54,6 @@
 // see file schema.sql for the text of the schema.
 
 using std::deque;
-using std::endl;
 using std::istream;
 using std::ifstream;
 using std::make_pair;
@@ -291,7 +290,7 @@ dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
           const char *val = (const char*) sqlite3_column_blob(stmt, i);
           int bytes = sqlite3_column_bytes(stmt, i);
           out << encode_hexenc(string(val,val+bytes));
-          out << "'";
+          out << '\'';
         }
       else
         {
@@ -300,7 +299,7 @@ dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
             out << "NULL";
           else
             {
-              out << "'";
+              out << '\'';
               for (const unsigned char *cp = val; *cp; ++cp)
                 {
                   if (*cp == '\'')
@@ -308,7 +307,7 @@ dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
                   else
                     out << *cp;
                 }
-              out << "'";
+              out << '\'';
             }
         }
     }
@@ -448,7 +447,7 @@ database::debug(string const & sql, ostream & out)
 
   results res;
   fetch(res, any_cols, any_rows, query(sql));
-  out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
+  out << '\'' << sql << "' -> " << res.size() << " rows\n\n";
   for (size_t i = 0; i < res.size(); ++i)
     {
       for (size_t j = 0; j < res[i].size(); ++j)
@@ -457,7 +456,7 @@ database::debug(string const & sql, ostream & out)
             out << " | ";
           out << res[i][j];
         }
-      out << endl;
+      out << '\n';
     }
 }
 
@@ -656,7 +655,7 @@ database::info(ostream & out)
   form = form % page_size();
   form = form % cache_size();
 
-  out << form.str() << "\n"; // final newline is kept out of the translation
+  out << form.str() << '\n'; // final newline is kept out of the translation
 }
 
 void
@@ -664,7 +663,7 @@ database::version(ostream & out)
 {
   ensure_open_for_maintenance();
   out << (F("database schema version: %s") % describe_sql_schema(__sql)).str()
-      << "\n";
+      << '\n';
 }
 
 void
@@ -1956,12 +1955,23 @@ database::put_revision(revision_id const & new_id,
   MM(d.inner());
   write_revision(rev, d);
 
-  // Phase 1: confirm the revision makes sense
+  // Phase 1: confirm the revision makes sense, and we the required files
+  // actually exist
   {
     revision_id tmp;
     MM(tmp);
     calculate_ident(d, tmp);
     I(tmp == new_id);
+    for (edge_map::const_iterator e = rev.edges.begin(); e != rev.edges.end(); ++e)
+      {
+        cset const & cs = edge_changes(e);
+        for (map<split_path, file_id>::const_iterator
+               i = cs.files_added.begin(); i != cs.files_added.end(); ++i)
+          I(file_version_exists(i->second));
+        for (map<split_path, pair<file_id, file_id> >::const_iterator
+               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+          I(file_version_exists(i->second.second));
+      }
   }
 
   transaction_guard guard(*this);

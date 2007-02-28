@@ -9,6 +9,6 @@ addfile("file", "file")
 commit()
 
 mkdir("dir")
-check(mtn("rename", "file", "dir"), 1, false, false)
+check(mtn("rename", "--bookkeep-only", "file", "dir"), 1, false, false)
 check(mtn("status"), 0, false, false)
 check(mtn("diff"), 0, false, false)
