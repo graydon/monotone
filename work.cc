@@ -61,6 +61,13 @@ get_options_path(bookkeeping_path & o_path)
 }
 
 static void
+get_options_path(system_path & workspace, system_path & o_path)
+{
+  o_path = workspace / bookkeeping_root.as_internal() / options_file_name;
+  L(FL("options path is %s") % o_path);
+}
+
+static void
 get_inodeprints_path(bookkeeping_path & ip_path)
 {
   ip_path = bookkeeping_root / inodeprints_file_name;
@@ -228,16 +235,41 @@ workspace::get_ws_options(system_path & database_option,
                           rsa_keypair_id & key_option,
                           system_path & keydir_option)
 {
-  bookkeeping_path o_path;
-  get_options_path(o_path);
+  system_path empty_path;
+  get_ws_options_from_path(empty_path, database_option,
+                branch_option, key_option, keydir_option);
+}
+
+bool
+workspace::get_ws_options_from_path(system_path & workspace,
+                          system_path & database_option,
+                          branch_name & branch_option,
+                          rsa_keypair_id & key_option,
+                          system_path & keydir_option)
+{
+  any_path * o_path;
+  bookkeeping_path ws_o_path;
+  system_path sys_o_path;
+  
+  if (workspace.empty())
+    {
+      get_options_path(ws_o_path);
+      o_path = & ws_o_path;
+    }
+  else
+    {
+      get_options_path(workspace, sys_o_path);
+      o_path = & sys_o_path;
+    }
+  
   try
     {
-      if (path_exists(o_path))
+      if (path_exists(*o_path))
         {
           data dat;
-          read_data(o_path, dat);
+          read_data(*o_path, dat);
 
-          basic_io::input_source src(dat(), o_path.as_external());
+          basic_io::input_source src(dat(), o_path->as_external());
           basic_io::tokenizer tok(src);
           basic_io::parser parser(tok);
 
@@ -259,12 +291,17 @@ workspace::get_ws_options(system_path & database_option,
                 W(F("unrecognized key '%s' in options file %s - ignored")
                   % opt % o_path);
             }
+          return true;
         }
+      else
+        return false;
     }
   catch(exception & e)
     {
-      W(F("Failed to read options file %s: %s") % o_path % e.what());
+      W(F("Failed to read options file %s: %s") % *o_path % e.what());
     }
+  
+  return false;
 }
 
 void

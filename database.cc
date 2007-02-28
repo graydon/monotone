@@ -30,6 +30,7 @@
 #include "database.hh"
 #include "hash_map.hh"
 #include "keys.hh"
+#include "platform-wrapped.hh"
 #include "revision.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
@@ -264,6 +265,8 @@ database::initialize()
 
   // make sure what we wanted is what we got
   check_sql_schema(__sql, filename);
+  
+  close();
 }
 
 struct
@@ -710,10 +713,7 @@ database::~database()
   statement_cache.clear();
 
   if (__sql)
-    {
-      sqlite3_close(__sql);
-      __sql = 0;
-    }
+    close();
 }
 
 void
@@ -3264,9 +3264,36 @@ database::check_filename()
 void
 database::check_db_exists()
 {
-  require_path_is_file(filename,
-                       F("database %s does not exist") % filename,
-                       F("%s is a directory, not a database") % filename);
+  switch (get_path_status(filename))
+    {
+    case path::nonexistent:
+      N(false, F("database %s does not exist") % filename);
+      break;
+    case path::file:
+      return;
+    case path::directory:
+      {
+        system_path database_option;
+        branch_name branch_option;
+        rsa_keypair_id key_option;
+        system_path keydir_option;
+        if (workspace::get_ws_options_from_path(
+                    filename,
+                    database_option,
+                    branch_option,
+                    key_option,
+                    keydir_option))
+          {
+            N(database_option.empty(),
+                              F("You gave a database option of: \n"
+                                "%s\n"
+                                "That is actually a workspace.  Did you mean: \n"
+                                "%s") % filename % database_option );
+          }
+        N(false, F("%s is a directory, not a database") % filename);
+      }
+      break;
+    }
 }
 
 void
@@ -3302,6 +3329,17 @@ database::open()
 
   I(__sql);
   assert_sqlite3_ok(__sql);
+}
+
+void
+database::close()
+{
+  I(__sql);
+
+  sqlite3_close(__sql);
+  __sql = 0;
+
+  I(!__sql);
 }
 
 // transaction guards
