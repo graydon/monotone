@@ -16,8 +16,8 @@
 #include <cstring>
 #include <cerrno>
 
+#include <boost/version.hpp>
 #include <boost/function.hpp>
-
 #include <boost/test/unit_test_suite.hpp>
 #if BOOST_VERSION >= 103300
 #include <boost/test/parameterized_test.hpp>
