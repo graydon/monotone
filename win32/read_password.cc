@@ -43,6 +43,7 @@ read_password(std::string const & prompt, char * buf, size_t bufsz)
   {
     I(SetConsoleMode(mt_stdin, pwmode) != 0);
     std::cin.getline(buf, bufsz, '\n');
+    std::cout << std::endl;
     I(SetConsoleMode(mt_stdin, origmode) != 0);
   }
   else
@@ -50,7 +51,7 @@ read_password(std::string const & prompt, char * buf, size_t bufsz)
     std::cout << "\x1B\x37\x1B[30;40m";
     std::cout.flush();
     fgets(buf, bufsz, stdin); /* Sorry, but cin.getline just doesn't work under MinGW's rxvt */
-    std::cout << "\x1B[0m\x1B\x38";
+    std::cout << "\x1B[0m\x1B\x38\n";
     std::cout.flush();
 
     /* ...and fgets gives us an LF we don't want */

@@ -1565,7 +1565,7 @@ msgstr "Dateiversion %s für %s nicht in Datenbank gefunden"
 #: cmd_ws_commit.cc:189
 #, c-format
 msgid "recreating %s/"
-msgstr "erzeuge %s neu/"
+msgstr "erzeuge %s/ neu"
 
 #: cmd_ws_commit.cc:210
 msgid "disapprove of a particular revision"

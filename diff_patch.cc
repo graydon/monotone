@@ -32,7 +32,6 @@
 #include "constants.hh"
 #include "file_io.hh"
 
-using std::endl;
 using std::make_pair;
 using std::map;
 using std::min;
@@ -378,7 +377,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
 
   //   for (int i = 0; i < min(min(left.size(), right.size()), ancestor.size()); ++i)
   //     {
-  //       cerr << "[" << i << "] " << left[i] << " " << ancestor[i] <<  " " << right[i] << endl;
+  //       cerr << '[' << i << "] " << left[i] << ' ' << ancestor[i] <<  ' ' << right[i] << '\n';
   //     }
 
   anc_interned.reserve(ancestor.size());
@@ -951,7 +950,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
         {
           ost << "@@ -" << a_begin+1;
           if (a_len > 1)
-            ost << "," << a_len;
+            ost << ',' << a_len;
         }
 
       if (b_len == 0)
@@ -960,7 +959,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
         {
           ost << " +" << b_begin+1;
           if (b_len > 1)
-            ost << "," << b_len;
+            ost << ',' << b_len;
         }
 
       {
@@ -975,7 +974,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
             }
 
         find_encloser(a_begin + first_mod, encloser);
-        ost << " @@" << encloser << endl;
+        ost << " @@" << encloser << '\n';
       }
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
     }
@@ -1111,14 +1110,14 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
         find_encloser(a_begin + min(first_insert, first_delete),
                       encloser);
 
-        ost << "***************" << encloser << endl;
+        ost << "***************" << encloser << '\n';
       }
 
-      ost << "*** " << (a_begin + 1) << "," << (a_begin + a_len) << " ****" << endl;
+      ost << "*** " << (a_begin + 1) << ',' << (a_begin + a_len) << " ****\n";
       if (have_deletions)
         copy(from_file.begin(), from_file.end(), ostream_iterator<string>(ost, "\n"));
 
-      ost << "--- " << (b_begin + 1) << "," << (b_begin + b_len) << " ----" << endl;
+      ost << "--- " << (b_begin + 1) << ',' << (b_begin + b_len) << " ----\n";
       if (have_insertions)
         copy(to_file.begin(), to_file.end(), ostream_iterator<string>(ost, "\n"));
     }
@@ -1317,8 +1316,8 @@ make_diff(string const & filename1,
     {
       case unified_diff:
       {
-        ost << "--- " << filename1 << "\t" << id1 << endl;
-        ost << "+++ " << filename2 << "\t" << id2 << endl;
+        ost << "--- " << filename1 << '\t' << id1 << '\n';
+        ost << "+++ " << filename2 << '\t' << id2 << '\n';
 
         unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1326,8 +1325,8 @@ make_diff(string const & filename1,
       }
       case context_diff:
       {
-        ost << "*** " << filename1 << "\t" << id1 << endl;
-        ost << "--- " << filename2 << "\t" << id2 << endl;
+        ost << "*** " << filename1 << '\t' << id1 << '\n';
+        ost << "--- " << filename2 << '\t' << id2 << '\n';
 
         cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1366,16 +1365,16 @@ static void dump_incorrect_merge(vector<string> const & expected,
       cerr << "bad merge: " << i << " [" << prefix << "]\t";
 
       if (i < expected.size())
-        cerr << "[" << expected[i] << "]\t";
+        cerr << '[' << expected[i] << "]\t";
       else
         cerr << "[--nil--]\t";
 
       if (i < got.size())
-        cerr << "[" << got[i] << "]\t";
+        cerr << '[' << got[i] << "]\t";
       else
         cerr << "[--nil--]\t";
 
-      cerr << endl;
+      cerr << '\n';
     }
 }
 

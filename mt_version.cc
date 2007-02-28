@@ -26,7 +26,6 @@
 #include "sanity.hh"
 
 using std::cout;
-using std::endl;
 using std::ostringstream;
 using std::string;
 
@@ -42,7 +41,7 @@ print_version()
 {
   string s;
   get_version(s);
-  cout << s << endl;
+  cout << s << '\n';
 }
 
 void
@@ -51,7 +50,7 @@ get_full_version(string & out)
   ostringstream oss;
   string s;
   get_version(s);
-  oss << s << "\n";
+  oss << s << '\n';
   get_system_flavour(s);
   oss << F("Running on          : %s\n"
            "C++ compiler        : %s\n"
@@ -72,7 +71,7 @@ print_full_version()
 {
   string s;
   get_full_version(s);
-  cout << s << endl;
+  cout << s << '\n';
 }
 
 // Local Variables:

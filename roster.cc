@@ -53,7 +53,7 @@ dump(full_attr_map_t const & val, string & out)
   ostringstream oss;
   for (full_attr_map_t::const_iterator i = val.begin(); i != val.end(); ++i)
     oss << "attr key: '" << i->first << "'\n"
-        << "  status: " << (i->second.first ? "live" : "dead") << "\n"
+        << "  status: " << (i->second.first ? "live" : "dead") << '\n'
         << "   value: '" << i->second.second << "'\n";
   out = oss.str();
 }
@@ -78,17 +78,17 @@ dump(marking_t const & marking, string & out)
 {
   ostringstream oss;
   string tmp;
-  oss << "birth_revision: " << marking.birth_revision << "\n";
+  oss << "birth_revision: " << marking.birth_revision << '\n';
   dump(marking.parent_name, tmp);
-  oss << "parent_name: " << tmp << "\n";
+  oss << "parent_name: " << tmp << '\n';
   dump(marking.file_content, tmp);
-  oss << "file_content: " << tmp << "\n";
+  oss << "file_content: " << tmp << '\n';
   oss << "attrs (number: " << marking.attrs.size() << "):\n";
   for (map<attr_key, set<revision_id> >::const_iterator
          i = marking.attrs.begin(); i != marking.attrs.end(); ++i)
     {
       dump(i->second, tmp);
-      oss << "  " << i->first << ": " << tmp << "\n";
+      oss << "  " << i->first << ": " << tmp << '\n';
     }
   out = oss.str();
 }
@@ -105,7 +105,7 @@ dump(marking_map const & markings, string & out)
       string marking_str, indented_marking_str;
       dump(i->second, marking_str);
       prefix_lines_with("    ", marking_str, indented_marking_str);
-      oss << indented_marking_str << "\n";
+      oss << indented_marking_str << '\n';
     }
   out = oss.str();
 }
@@ -253,25 +253,25 @@ dump(node_t const & n, string & out)
   string name;
   dump(n->name, name);
   oss << "address: " << n << " (uses: " << n.use_count() << ")\n"
-      << "self: " << n->self << "\n"
-      << "parent: " << n->parent << "\n"
-      << "name: " << name << "\n";
+      << "self: " << n->self << '\n'
+      << "parent: " << n->parent << '\n'
+      << "name: " << name << '\n';
   string attr_map_s;
   dump(n->attrs, attr_map_s);
   oss << "attrs:\n" << attr_map_s;
   oss << "type: ";
   if (is_file_t(n))
     oss << "file\n"
-        << "content: " << downcast_to_file_t(n)->content << "\n";
+        << "content: " << downcast_to_file_t(n)->content << '\n';
   else
     {
       oss << "dir\n";
       dir_map const & c = downcast_to_dir_t(n)->children;
-      oss << "children: " << c.size() << "\n";
+      oss << "children: " << c.size() << '\n';
       for (dir_map::const_iterator i = c.begin(); i != c.end(); ++i)
         {
           dump(i->first, name);
-          oss << "  " << name << " -> " << i->second << "\n";
+          oss << "  " << name << " -> " << i->second << '\n';
         }
     }
   out = oss.str();
@@ -900,13 +900,13 @@ dump(roster_t const & val, string & out)
 {
   ostringstream oss;
   if (val.root_dir)
-    oss << "Root node: " << val.root_dir->self << "\n"
-        << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << "\n";
+    oss << "Root node: " << val.root_dir->self << '\n'
+        << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << '\n';
   else
     oss << "root dir is NULL\n";
   for (node_map::const_iterator i = val.nodes.begin(); i != val.nodes.end(); ++i)
     {
-      oss << "\nNode " << i->first << "\n";
+      oss << "\nNode " << i->first << '\n';
       string node_s;
       dump(i->second, node_s);
       oss << node_s;
@@ -3462,9 +3462,9 @@ namespace
     virtual void dump(string & out) const
     {
       ostringstream oss;
-      oss << "type: " << my_type() << "\n"
-          << "root_nid: " << root_nid << "\n"
-          << "obj_under_test_nid: " << obj_under_test_nid << "\n";
+      oss << "type: " << my_type() << '\n'
+          << "root_nid: " << root_nid << '\n'
+          << "obj_under_test_nid: " << obj_under_test_nid << '\n';
       out = oss.str();
     }
   };

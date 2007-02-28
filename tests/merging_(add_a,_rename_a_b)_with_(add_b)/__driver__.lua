@@ -26,6 +26,7 @@ revs.b = base_revision()
 
 -- produce state C
 revert_to(revs.a)
+writefile("bar", "extra blah blah foo")
 check(mtn("add", "bar"), 0, false, false)
 commit()
 revs.c = base_revision()

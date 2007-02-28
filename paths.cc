@@ -419,12 +419,12 @@ void dump(split_path const & sp, string & out)
   for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
     {
       if (null_name(*i))
-        oss << ".";
+        oss << '.';
       else
-        oss << "/" << *i;
+        oss << '/' << *i;
     }
 
-  oss << "\n";
+  oss << '\n';
 
   out = oss.str();
 }

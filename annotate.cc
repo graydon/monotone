@@ -34,7 +34,6 @@
 using std::back_insert_iterator;
 using std::back_inserter;
 using std::cout;
-using std::endl;
 using std::map;
 using std::min;
 using std::set;
@@ -446,15 +445,15 @@ annotate_context::dump(app_state & app, bool just_revs) const
         {
           if (lastid == annotations[i])
             cout << empty_note << ": "
-                 << file_lines[i] << endl;
+                 << file_lines[i] << '\n';
           else
             cout << revs_to_notations[annotations[i]]
-                 << file_lines[i] << endl;
+                 << file_lines[i] << '\n';
           lastid = annotations[i];
         }
       else
         cout << annotations[i] << ": "
-             << file_lines[i] << endl;
+             << file_lines[i] << '\n';
     }
 }
 
