@@ -270,7 +270,7 @@ find_and_go_to_workspace(system_path const & search_root);
 void
 go_to_workspace(system_path const & new_workspace);
 
-void fix_paths(void);
+void mark_std_paths_used(void);
 
 typedef std::set<split_path> path_set;
 

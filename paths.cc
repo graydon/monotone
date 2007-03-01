@@ -723,7 +723,7 @@ go_to_workspace(system_path const & new_workspace)
 }
 
 void
-fix_paths(void)
+mark_std_paths_used(void)
 {
   working_root.get();
   initial_rel_path.get();
