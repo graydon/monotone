@@ -29,7 +29,7 @@ addfile("foo/bystander", "data data")
 commit()
 revs.base = base_revision()
 
-check(mtn("rename", "foo/", "bar/"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo/", "bar/"), 0, false, false)
 rename("foo", "bar")
 commit()
 revs.rename_dir = base_revision()
@@ -43,7 +43,7 @@ revs.added = base_revision()
 check(mtn("merge"), 0, false, false)
 
 rename("foo/a", "foo/b")
-check(mtn("rename", "foo/a", "foo/b"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo/a", "foo/b"), 0, false, false)
 commit()
 revs.rename_file = base_revision()
 

@@ -17,3 +17,12 @@ check(samefile("empty", "stdout"))
 check(mtn("automate", "certs", base), 0, true, false)
 canonicalize("stdout")
 check(samefile("expected", "stdout"))
+
+-- check edge cases:
+-- wrong number of arguments:
+check(mtn("automate", "cert", base, "asdf"), 1, false, false)
+check(mtn("automate", "cert", base, "testcert", "testvalue", "asdf"), 1, false, false)
+-- nonexistent revision:
+check(mtn("automate", "cert", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "branch", "net.venge.monotone"),
+      1, false, false)

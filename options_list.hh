@@ -249,11 +249,19 @@ OPTION(exclude, exclude, true, "exclude",
 }
 #endif
 
-OPT(execute, "execute,e", bool, false,
-        gettext_noop("perform the associated file operation"))
+OPT(bookkeep_only, "bookkeep-only", bool, false,
+        gettext_noop("only update monotone's internal bookkeeping, not the filesystem"))
 #ifdef option_bodies
 {
-  execute = true;
+  bookkeep_only = true;
+}
+#endif
+
+GOPT(ssh_sign, "ssh-sign", std::string, "yes",
+     gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
+#ifdef option_bodies
+{
+  ssh_sign = arg;
 }
 #endif
 

@@ -26,15 +26,15 @@ end
 co()
 
 -- basics
-check(indir("checkout", mtn("rename", "ant", "foo")), 0, false, false)
-check(indir("checkout", mtn("rename", "mosquito", "termite", "foo")),
+check(indir("checkout", mtn("rename", "--bookkeep-only", "ant", "foo")), 0, false, false)
+check(indir("checkout", mtn("rename", "--bookkeep-only", "mosquito", "termite", "foo")),
       0, false, false)
 
 co()
 
 -- with --execute
-check(indir("checkout", mtn("--execute", "rename", "ant", "foo")), 0, false, false)
-check(indir("checkout", mtn("--execute", "rename", "mosquito", "termite", "foo")),
+check(indir("checkout", mtn("rename", "ant", "foo")), 0, false, false)
+check(indir("checkout", mtn("rename", "mosquito", "termite", "foo")),
       0, false, false)
 for _,x in pairs{"ant", "mosquito", "termite"} do
   check(exists("checkout/foo/"..x))
@@ -42,27 +42,27 @@ for _,x in pairs{"ant", "mosquito", "termite"} do
 end
 
 -- to root
-check(indir("checkout", mtn("--execute", "rename", "foo/ant", ".")),
+check(indir("checkout", mtn("rename", "foo/ant", ".")),
       0, false, false)
-check(indir("checkout", mtn("rename", "foo/termite", ".")), 0, false, false)
+check(indir("checkout", mtn("rename", "--bookkeep-only", "foo/termite", ".")), 0, false, false)
 check(exists("checkout/ant") and exists("checkout/foo/termite"))
 check(not exists("checkout/foo/ant") and not exists("checkout/termite"))
 
 co()
 
 -- conflicts
-check(indir("checkout", mtn("rename", "gnat", "foo")), 1, false, false)
-check(indir("checkout", mtn("rename", "gnat", "termite", "foo")), 1, false, false)
-check(indir("checkout", mtn("rename", "termite", "foo")), 0, false, false)
+check(indir("checkout", mtn("rename", "--bookkeep-only", "gnat", "foo")), 1, false, false)
+check(indir("checkout", mtn("rename", "--bookkeep-only", "gnat", "termite", "foo")), 1, false, false)
+check(indir("checkout", mtn("rename", "--bookkeep-only", "termite", "foo")), 0, false, false)
 
-check(indir("checkout", mtn("rename", "mosquito", "foo/ant")), 0, false, false)
-check(indir("checkout", mtn("rename", "ant", "foo")), 1, false, false)
+check(indir("checkout", mtn("rename", "--bookkeep-only", "mosquito", "foo/ant")), 0, false, false)
+check(indir("checkout", mtn("rename", "--bookkeep-only", "ant", "foo")), 1, false, false)
 
 co()
 
-check(indir("checkout", mtn("--execute", "rename", "gnat", "foo")), 1, false, false)
-check(indir("checkout", mtn("--execute", "rename", "gnat", "termite", "foo")), 1, false, false)
-check(indir("checkout", mtn("--execute", "rename", "termite", "foo")), 0, false, false)
+check(indir("checkout", mtn("rename", "gnat", "foo")), 1, false, false)
+check(indir("checkout", mtn("rename", "gnat", "termite", "foo")), 1, false, false)
+check(indir("checkout", mtn("rename", "termite", "foo")), 0, false, false)
 check(exists("checkout/foo/termite") and not exists("checkout/termite"))
 check(exists("checkout/gnat") and exists("checkout/foo/gnat/."))
 check(not exists("foo/gnat/gnat"))

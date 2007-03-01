@@ -9,7 +9,7 @@ check(qgrep("some_value", "stdout"))
 
 commit()
 
-check(mtn("rename", "testfile", "otherfile"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "testfile", "otherfile"), 0, false, false)
 rename("testfile", "otherfile")
 commit()
 

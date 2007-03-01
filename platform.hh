@@ -129,6 +129,12 @@ std::string os_strerror(os_err_t errnum);
 // arbitrary constant, measured in seconds.
 double cpu_now();
 
+#ifdef WIN32_PLATFORM
+#include "win32/ssh_agent_platform.hh"
+#else
+#include "unix/ssh_agent_platform.hh"
+#endif
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

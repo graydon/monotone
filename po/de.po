@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-02-25 14:56+0100\n"
+"POT-Creation-Date: 2007-02-28 12:51+0100\n"
 "PO-Revision-Date: 2007-02-24 23:29+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -72,7 +72,7 @@ msgstr "Wurzel der Suche '%s' ist kein Verzeichnis"
 msgid "debug"
 msgstr "Debugging"
 
-#: asciik.cc:384 automate.cc:530
+#: asciik.cc:384 automate.cc:531
 msgid "SELECTOR"
 msgstr "SELEKTOR"
 
@@ -80,40 +80,41 @@ msgstr "SELEKTOR"
 msgid "prints an ASCII representation of the graph"
 msgstr "gibt eine ASCII-Repräsentation des Graphen aus"
 
-#: asciik.cc:388 automate.cc:66 automate.cc:90 automate.cc:137 automate.cc:217
-#: automate.cc:363 automate.cc:430 automate.cc:455 automate.cc:533
-#: automate.cc:915 automate.cc:1048 automate.cc:1091 automate.cc:1117
-#: automate.cc:1144 automate.cc:1171 automate.cc:1205 automate.cc:1317
-#: automate.cc:1407 automate.cc:1466 automate.cc:1515 automate.cc:1574
-#: cmd_files.cc:281 cmd_files.cc:304 cmd_list.cc:677
+#: asciik.cc:388 automate.cc:67 automate.cc:91 automate.cc:138 automate.cc:218
+#: automate.cc:364 automate.cc:431 automate.cc:456 automate.cc:534
+#: automate.cc:916 automate.cc:1049 automate.cc:1092 automate.cc:1118
+#: automate.cc:1145 automate.cc:1172 automate.cc:1206 automate.cc:1318
+#: automate.cc:1408 automate.cc:1467 automate.cc:1516 automate.cc:1575
+#: automate.cc:1624 automate.cc:1684 automate.cc:1743 automate.cc:1769
+#: automate.cc:1792 cmd_files.cc:281 cmd_files.cc:304 cmd_list.cc:677
 #, c-format
 msgid "wrong argument count"
 msgstr "falsche Anzahl an Parametern"
 
-#: automate.cc:63
+#: automate.cc:64
 msgid "[BRANCH]"
 msgstr "[ZWEIG]"
 
-#: automate.cc:87 automate.cc:134 automate.cc:1202
+#: automate.cc:88 automate.cc:135 automate.cc:1203
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
-#: automate.cc:97 automate.cc:144 automate.cc:188 automate.cc:334
-#: automate.cc:369 automate.cc:373 automate.cc:433 automate.cc:458
-#: automate.cc:1212 cmd_list.cc:684 revision.cc:1819
+#: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:335
+#: automate.cc:370 automate.cc:374 automate.cc:434 automate.cc:459
+#: automate.cc:1213 cmd_list.cc:684 revision.cc:1819
 #, c-format
 msgid "No such revision %s"
 msgstr "Revision %s nicht gefunden"
 
-#: automate.cc:182 automate.cc:328
+#: automate.cc:183 automate.cc:329
 msgid "[REV1 [REV2 [REV3 [...]]]]"
 msgstr "[REV1 [REV2 [REV3 [...]]]]"
 
-#: automate.cc:214
+#: automate.cc:215
 msgid "FILE"
 msgstr "DATEI"
 
-#: automate.cc:234 automate.cc:729 automate.cc:965 cmd_files.cc:259
+#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:259
 #: cmd_files.cc:314 cmd_merging.cc:147 cmd_merging.cc:627 cmd_ws_commit.cc:94
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
@@ -121,41 +122,41 @@ msgstr ""
 "Dieses Kommando kann nur in einem Arbeitsbereich mit einem Vorfahren genutzt "
 "werden."
 
-#: automate.cc:239
+#: automate.cc:240
 #, c-format
 msgid "file %s is unknown to the current workspace"
 msgstr "Datei %s existiert nicht im Arbeitsbereich"
 
-#: automate.cc:360
+#: automate.cc:361
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "NEUE_REV [ALTE_REV1 [ALTE_REV2 [...]]]"
 
-#: automate.cc:402 automate.cc:490 automate.cc:715 automate.cc:958
-#: automate.cc:982 automate.cc:1268 cmd_automate.cc:77 cmd_automate.cc:331
+#: automate.cc:403 automate.cc:491 automate.cc:716 automate.cc:959
+#: automate.cc:983 automate.cc:1269 cmd_automate.cc:77 cmd_automate.cc:331
 #: cmd_list.cc:585
 #, c-format
 msgid "no arguments needed"
 msgstr "keine Parameter benötigt"
 
-#: automate.cc:427 automate.cc:452 cmd_list.cc:674 revision.cc:1813
+#: automate.cc:428 automate.cc:453 cmd_list.cc:674 revision.cc:1813
 msgid "REV"
 msgstr "REV"
 
-#: automate.cc:912 automate.cc:1045 cmd_merging.cc:954
+#: automate.cc:913 automate.cc:1046 cmd_merging.cc:954
 msgid "[REVID]"
 msgstr "[REVISIONS_ID]"
 
-#: automate.cc:940 automate.cc:1066 automate.cc:1523 automate.cc:1581
-#: automate.cc:1586
+#: automate.cc:941 automate.cc:1067 automate.cc:1524 automate.cc:1582
+#: automate.cc:1587
 #, c-format
 msgid "no revision %s found in database"
 msgstr "Revision %s nicht in Datenbank gefunden"
 
-#: automate.cc:1088 automate.cc:1114
+#: automate.cc:1089 automate.cc:1115
 msgid "REVID"
 msgstr "REVISIONS_ID"
 
-#: automate.cc:1099 automate.cc:1125 automate.cc:1180 automate.cc:1182
+#: automate.cc:1100 automate.cc:1126 automate.cc:1181 automate.cc:1183
 #: cmd_db.cc:34 cmd_diff_log.cc:394 cmd_diff_log.cc:421 cmd_diff_log.cc:423
 #: cmd_files.cc:164 cmd_files.cc:220 cmd_merging.cc:181 cmd_merging.cc:783
 #: cmd_merging.cc:798 cmd_merging.cc:801 cmd_ws_commit.cc:515
@@ -164,63 +165,103 @@ msgstr "REVISIONS_ID"
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
 
-#: automate.cc:1141 cmd_files.cc:278
+#: automate.cc:1142 cmd_files.cc:278
 msgid "FILEID"
 msgstr "DATEI_ID"
 
-#: automate.cc:1152
+#: automate.cc:1153
 #, c-format
 msgid "no such file '%s'"
 msgstr "Datei nicht gefunden: '%s'"
 
-#: automate.cc:1168
+#: automate.cc:1169
 msgid "OLD_FILE NEW_FILE"
 msgstr "ALTE_DATEI NEUE_DATEI"
 
-#: automate.cc:1314
+#: automate.cc:1315
 msgid "[BRANCH_PATTERN]"
 msgstr "[ZWEIG_MUSTER]"
 
-#: automate.cc:1404
+#: automate.cc:1405
 msgid "KEYID PASSPHRASE"
 msgstr "SCHLÜSSEL_ID PASSWORT"
 
-#: automate.cc:1422 cmd_key_cert.cc:41
+#: automate.cc:1423 cmd_key_cert.cc:41
 #, c-format
 msgid "key '%s' already exists"
 msgstr "Schlüssel '%s' existiert bereits"
 
-#: automate.cc:1425 cmd_key_cert.cc:44
+#: automate.cc:1426 cmd_key_cert.cc:44
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "erzeuge Schlüsselpaar '%s'"
 
-#: automate.cc:1427 cmd_key_cert.cc:46
+#: automate.cc:1428 cmd_key_cert.cc:46
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "speichere Schlüsselpaar '%s' in %s/"
 
-#: automate.cc:1463
+#: automate.cc:1464
 msgid "OPTION"
 msgstr "OPTION"
 
-#: automate.cc:1489
+#: automate.cc:1490
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
 
-#: automate.cc:1512
+#: automate.cc:1513
 msgid "REV FILE"
 msgstr "REVISION DATEI"
 
-#: automate.cc:1529 automate.cc:1592
+#: automate.cc:1530 automate.cc:1593
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "Datei %s existiert nicht in der Revision %s"
 
-#: automate.cc:1571
+#: automate.cc:1572
 msgid "REV1 FILE REV2"
 msgstr "REV1 DATEI REV2"
+
+#: automate.cc:1621
+msgid "[FILEID] CONTENTS"
+msgstr "[DATEIID] INHALT"
+
+#: automate.cc:1635 automate.cc:1647
+#, c-format
+msgid "file version %s already known"
+msgstr "Dateiversion %s ist bereits bekannt"
+
+#: automate.cc:1652 cmd_files.cc:208
+#, c-format
+msgid "no file version %s found in database"
+msgstr "Dateiversion %s nicht in Datenbank gefunden"
+
+#: automate.cc:1681
+msgid "SINGLE-EDGE-DATA"
+msgstr "REVISIONS-DATEN"
+
+#: automate.cc:1717
+#, c-format
+msgid "revision %s already present in the database"
+msgstr "Revision %s ist bereits in der Datenbank vorhanden"
+
+#: automate.cc:1740
+msgid "REVISION-ID NAME VALUE"
+msgstr "REVISIONS-ID NAME WERT"
+
+#: automate.cc:1766 cmd_db.cc:121
+msgid "DOMAIN NAME VALUE"
+msgstr "DOMÄNE NAME WERT"
+
+#: automate.cc:1789 cmd_db.cc:137
+msgid "DOMAIN NAME"
+msgstr "DOMÄNE NAME"
+
+#: automate.cc:1804
+#, c-format
+msgid "variable not found"
+msgstr "Variable nicht gefunden"
 
 #: basic_io.cc:32
 #, c-format
@@ -391,17 +432,9 @@ msgstr "Der Zeitraum muss %s Zeichen sein"
 msgid "vars"
 msgstr "Variablen"
 
-#: cmd_db.cc:121
-msgid "DOMAIN NAME VALUE"
-msgstr "DOMÄNE NAME WERT"
-
 #: cmd_db.cc:122
 msgid "set the database variable NAME to VALUE, in domain DOMAIN"
 msgstr "setzt die Datenbankvariable NAME auf WERT in der Domäne DOMÄNE"
-
-#: cmd_db.cc:137
-msgid "DOMAIN NAME"
-msgstr "DOMÄNE NAME"
 
 #: cmd_db.cc:138
 msgid "remove the database variable NAME in domain DOMAIN"
@@ -623,11 +656,6 @@ msgstr "[PFAD]"
 #: cmd_files.cc:182
 msgid "calculate identity of PATH or stdin"
 msgstr "berechnet die Identität (ID) von PFAD oder der Standardeingabe"
-
-#: cmd_files.cc:208
-#, c-format
-msgid "no file version %s found in database"
-msgstr "Dateiversion %s nicht in Datenbank gefunden"
 
 #: cmd_files.cc:233 cmd_files.cc:237
 #, c-format

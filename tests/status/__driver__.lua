@@ -21,13 +21,13 @@ addfile("added", "added")
 writefile("from_patched", "from_patched \npatched")
 writefile("patched", "patched \npatched")
 
-check(mtn("drop", "dropped"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "dropped"), 0, false, false)
 
 rename("from", "to")
 rename("from_patched", "to_patched")
 
-check(mtn("rename", "from", "to"), 0, false, false)
-check(mtn("rename", "from_patched", "to_patched"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "from", "to"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "from_patched", "to_patched"), 0, false, false)
 
 check(mtn("status"), 0, true, false)
 check(qgrep('^  dropped  dropped', "stdout"))

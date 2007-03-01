@@ -75,12 +75,12 @@ AC_OUTPUT_COMMANDS([
       # PO directories have a Makefile.in generated from Makefile.in.in.
       case "$ac_file" in */Makefile.in)
         target="`echo x$ac_file | sed -e 's/.in$//' -e 's/^x//'`"
-	tmp="${target}.tmp"
+	mtn_tmp="${target}.tmp"
         test -n "$as_me" && echo "$as_me: fixing $target" || echo "fixing $target"
 	sed -e 's/^MSGMERGE =.*$/MSGMERGE = false/' \
             -e 's/^MSGMERGE_UPDATE =.*$/MSGMERGE_UPDATE = true/' \
-               "$target" > "$tmp"
-	mv -f "$tmp" "$target" ;;
+               "$target" > "$mtn_tmp"
+	mv -f "$mtn_tmp" "$target" ;;
       esac
     done
 ])
@@ -115,8 +115,9 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 AC_FUNC_STAT
 AC_FUNC_MMAP
 AC_FUNC_LOCALE_WORKS
-AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint \
-		__cxa_current_exception_type __cxa_demangle])
+AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
+		__cxa_current_exception_type __cxa_demangle \
+                putenv setenv unsetenv])
 
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))

@@ -63,7 +63,7 @@ check(mtn("commit", "--branch=testbranch1", "--date=2001-01-01T12:00:00", "--mes
 check(mtn("propagate", "--date=2002-01-01T12:00:00", "testbranch2", "testbranch1"), 0, false, false)
 check(mtn("update"), 0, false, false)
 
-check(mtn("drop", "testfile1"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile1"), 0, false, false)
 writefile("testfile4", "f4v2\n")
 check(mtn("commit", "--branch=testbranch3", "--date=2003-01-01T12:00:00", "--message-file=blah_blah.txt"), 0, false, false)
 
