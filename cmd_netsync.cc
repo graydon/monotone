@@ -170,11 +170,16 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
 class dir_cleanup_helper
 {
 public:
-  dir_cleanup_helper(system_path const & new_dir) : commited(false), dir(new_dir) {}
+  dir_cleanup_helper(system_path const & new_dir, app_state *app_st, bool i_db) :
+                  commited(false), internal_db(i_db), dir(new_dir), app(app_st) {}
   ~dir_cleanup_helper()
   {
     if (!commited && directory_exists(dir))
-      delete_dir_recursive(dir);
+      {
+        if (internal_db && app)
+          app->db.close();
+        delete_dir_recursive(dir);
+      }
   }
   void commit(void)
   {
@@ -182,7 +187,9 @@ public:
   }
 private:
   bool commited;
+  bool internal_db;
   system_path dir;
+  app_state *app;
 };
 
 CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
@@ -219,10 +226,12 @@ CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
    // remember the initial working dir so that relative file:// db URIs will work
   system_path start_dir(get_current_working_dir());
 
-  dir_cleanup_helper remove_on_fail(workspace_dir);
+  bool internal_db = !app.opts.dbname_given || app.opts.dbname.empty();
+
+  dir_cleanup_helper remove_on_fail(workspace_dir, &app, internal_db);
   app.create_workspace(workspace_dir);
 
-  if (!app.opts.dbname_given || app.opts.dbname.empty())
+  if (internal_db)
     app.set_database(system_path(bookkeeping_root / ws_internal_db_file_name));
   else
     app.set_database(app.opts.dbname);

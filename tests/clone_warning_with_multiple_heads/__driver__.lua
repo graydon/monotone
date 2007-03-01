@@ -18,5 +18,6 @@ testURI="file:" .. test.root .. "/test.db"
 
 check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir1"),
          1, false, true)
+check(not exists("test_dir1"))
 check(qgrep(REV2, "stderr"))
 check(qgrep(REV3, "stderr"))
