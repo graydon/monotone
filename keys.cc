@@ -710,8 +710,8 @@ UNIT_TEST(key, signature_round_trip)
 
   BOOST_CHECKPOINT("generating key pairs");
   keypair kp;
-  utf8 passphrase("bob123@test.com");
-  rsa_keypair_id key("bob123@test.com");
+  utf8 passphrase("bob123@example.com");
+  rsa_keypair_id key("bob123@example.com");
   generate_key_pair(kp, passphrase);
   app.keys.put_key_pair(key, kp);
 
