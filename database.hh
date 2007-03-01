@@ -97,15 +97,15 @@ private:
   void check_db_exists();
   void check_db_nonexistent();
   void open();
-  void close();
   void check_format();
 
 public:
   database(system_path const & file);
   ~database();
 
-  void set_app(app_state * app);
+  void close();
 
+  void set_app(app_state * app);
   void set_filename(system_path const & file);
   system_path get_filename();
   bool is_dbfile(any_path const & file);
