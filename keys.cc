@@ -712,14 +712,8 @@ UNIT_TEST(key, signature_round_trip)
   keypair kp;
   utf8 passphrase("bob123@test.com");
   rsa_keypair_id key("bob123@test.com");
-  try {
-    L(FL("trying to get key"));
-    app.keys.get_key_pair(key, kp);
-  } catch (std::exception e) {
-    generate_key_pair(kp, passphrase);
-    L(FL("key not in store, putting"));
-    app.keys.put_key_pair(key, kp);
-  }
+  generate_key_pair(kp, passphrase);
+  app.keys.put_key_pair(key, kp);
 
   BOOST_CHECKPOINT("signing plaintext");
   string plaintext("test string to sign");
@@ -732,6 +726,7 @@ UNIT_TEST(key, signature_round_trip)
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
   BOOST_CHECK(!check_signature(app, key, kp.pub, broken_plaintext, sig));
+  app.keys.delete_key(key);
 }
 
 #endif // BUILD_UNIT_TESTS
