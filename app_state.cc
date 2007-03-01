@@ -188,17 +188,20 @@ app_state::set_database(system_path const & filename)
 {
   if (!filename.empty())
     {
-      system_path database_option(filename);
-      branch_name branch_option;
-      rsa_keypair_id key_option;
-      system_path keydir_option;
-      
       db.set_filename(filename);
       
-      work.set_ws_options(database_option, branch_option,
+      if (found_workspace)
+        {
+          system_path database_option(filename);
+          branch_name branch_option;
+          rsa_keypair_id key_option;
+          system_path keydir_option;
+      
+          work.set_ws_options(database_option, branch_option,
                       key_option, keydir_option);
+        }
     }
- }
+}
 
 void
 app_state::set_key_dir(system_path const & filename)

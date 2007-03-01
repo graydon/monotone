@@ -61,7 +61,7 @@ get_options_path(bookkeeping_path & o_path)
 }
 
 static void
-get_options_path(system_path & workspace, system_path & o_path)
+get_options_path(system_path const & workspace, system_path & o_path)
 {
   o_path = workspace / bookkeeping_root.as_internal() / options_file_name;
   L(FL("options path is %s") % o_path);
@@ -241,7 +241,7 @@ workspace::get_ws_options(system_path & database_option,
 }
 
 bool
-workspace::get_ws_options_from_path(system_path & workspace,
+workspace::get_ws_options_from_path(system_path const & workspace,
                           system_path & database_option,
                           branch_name & branch_option,
                           rsa_keypair_id & key_option,
