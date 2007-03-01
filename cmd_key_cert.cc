@@ -156,7 +156,7 @@ CMD(ssh_agent_export, N_("key and cert"),
 
 CMD(ssh_agent_add, N_("key and cert"),
     N_(""),
-    N_("Add your momotone key to ssh-agent"),
+    N_("Add your monotone key to ssh-agent"),
     options::opts::none)
 {
   if (args.size() > 1)

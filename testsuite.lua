@@ -99,6 +99,12 @@ function mtn(...)
          "--key=tester@test.net", unpack(arg))
 end
 
+function nodb_mtn(...)
+  return raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
+         "--keydir", test.root .. "/keys",
+         "--key=tester@test.net", unpack(arg))
+end
+
 function minhooks_mtn(...)
   return raw_mtn("--db=" .. test.root .. "/test.db",
                  "--keydir", test.root .. "/keys",

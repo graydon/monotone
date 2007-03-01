@@ -32,6 +32,7 @@ Copyright @copyright{} 2005 Derek Scherger @*
 Copyright @copyright{} 2005, 2006 Daniel Carosone @*
 Copyright @copyright{} 2006 Jeronimo Pellegrini @*
 Copyright @copyright{} 2006 Alex Queiroz @*
+Copyright @copyright{} 2006 William Uther @*
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -2897,9 +2898,9 @@ proceed with no default options if no @file{_MTN} directory is found.
 However, some monotone commands do require a workspace and will fail
 if no @file{_MTN} directory can be found.
 
-The @command{checkout} and @command{setup} commands create a @i{new
-workspace} and initialize a new @file{_MTN/options} file based on their
-current option settings.
+The @command{checkout}, @command{clone} and @command{setup} commands
+create a @i{new workspace} and initialize a new @file{_MTN/options}
+file based on their current option settings.
 
 
 @page
@@ -3331,7 +3332,7 @@ commands in the future.
 @item tag
 This cert's value is a symbolic name given to a revision, which may be
 used as a way of selecting the revision by name for later commands like
-@command{checkout} and @command{diff}.  
+@command{checkout}, @command{log} or @command{diff}.  
 
 @item testresult
 This cert's value is interpreted as a boolean string, either @code{0}
@@ -4168,6 +4169,16 @@ occur.
 If no @var{id} is provided, as in the latter two commands, you
 @emph{must} provide a @var{branchname}; monotone will attempt to infer
 @var{id} as the unique head of @var{branchname} if it exists.
+
+@item mtn clone --branch=@var{branchname} @var{address} @var{directory}
+
+The clone command is a helper command that performs the roles of a
+number of other commands all at once.  Firstly, it constructs a new
+database.  It then populates this database by @command{pull}ing any data
+in the branch @var{branchname} from the remote database, @var{address}.
+Finally, it copies the files out of the newly created database into a
+local directory, just as @command{checkout} would.  The created
+database is placed in the new workspace as @file{@var{directory}/_MTN/mtn.db}.
 
 @item mtn disapprove @var{id}
 

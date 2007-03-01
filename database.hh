@@ -97,6 +97,7 @@ private:
   void check_db_exists();
   void check_db_nonexistent();
   void open();
+  void close();
   void check_format();
 
 public:
