@@ -52,12 +52,14 @@ fi
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING NEWS README README.changesets UPGRADE monotone.html contrib
 %{_bindir}/mtn
-%{_mandir}/man1/mtn.1.gz
 %{_infodir}/*.info*.gz
 %{_datadir}/locale/*/LC_MESSAGES/monotone.mo
 
 
 %changelog
+* Thu Mar 01 2007 Thomas Keller <me@thomaskeller.biz>
+- removed reference to no longer shipped manpage
+
 * Wed Feb 28 2007 Richard Levitte <richard@levitte.org>
 - 0.33 release
 
