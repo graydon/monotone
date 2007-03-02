@@ -8535,12 +8535,12 @@ be used to extend monotone's understanding of files with
 platform-specific attributes, such as permission bits, access control
 lists, or special file types.
 
-By default, there is only one entry in this table, for the @code{execute}
+By default, there is only one entry in this table, for the @code{mtn:execute}
 attribute. Its definition is:
 
 @smallexample
 @group
-attr_functions["execute"] = 
+attr_functions["mtn:execute"] = 
   function(filename, value) 
         if (value == "true") then
          make_executable(filename)
@@ -8559,22 +8559,23 @@ that should be set on the file named @var{filename}. This table of
 hook functions is called once for each file during an @dfn{add}.
 
 By default, there are only two entries in this table, for the
-@code{execute} and @code{manual_merge} attributes. Their definition is:
+@code{mtn:execute} and @code{mtn:manual_merge} attributes. Their
+definition is:
 
 @smallexample
 @group
-attr_init_functions["execute"] = 
+attr_init_functions["mtn:execute"] = 
    function(filename)
       if (is_executable(filename)) then 
         return "true" 
       else 
         return nil 
-        end
-  end
-attr_init_functions["manual_merge"] = 
+      end
+   end
+attr_init_functions["mtn:manual_merge"] = 
    function(filename)
       if (binary_file(filename)) then 
-        return "true" -- binary files must merged manually
+        return "true" -- binary files must be merged manually
       else 
         return nil
       end 
