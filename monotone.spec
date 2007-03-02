@@ -4,7 +4,7 @@ Version: 0.33
 Release: 0.mtn.1%{?dist}
 License: GPL
 Group: Development/Tools
-URL: http://www.venge.net/monotone
+URL: http://www.monotone.ca/
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 BuildRequires: boost-devel >= 1.33.1, texinfo, zlib-devel

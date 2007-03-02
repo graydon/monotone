@@ -1,6 +1,6 @@
 -- Create a simple two-parent workspace and then run a bunch of
 -- commands all of which should give errors (but not I()s).
--- see http://venge.net/monotone/wiki/MultiParentWorkspaceFallout
+-- see http://venge.net/mtn-wiki/MultiParentWorkspaceFallout
 -- for rationales for failures
 
 mtn_setup()
