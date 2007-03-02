@@ -66,7 +66,7 @@ attr_init_functions["mtn:execute"] =
 attr_init_functions["mtn:manual_merge"] = 
    function(filename)
       if (binary_file(filename)) then 
-        return "true" -- binary files must merged manually
+        return "true" -- binary files must be merged manually
       else 
         return nil
       end 
