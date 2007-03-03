@@ -824,13 +824,17 @@ Grab the ids you want from the buffer and then yank back when needed."
       '(menu-item "DB Pull" monotone-pull))
     (define-key map [monotone-separator] '("--"))
     ;;
+    (define-key map [monotone-vc-commit]
+      '(menu-item "Commit" monotone-vc-commit))
+    (define-key map [monotone-separator2] '("--"))
+    ;;
     (define-key map [monotone-cat-rid]
       '(menu-item "Cat this revision id" monotone-cat-revisionid))
     (define-key map [monotone-cat-mid]
       '(menu-item "Cat this manifest id" monotone-cat-manifestid))
     (define-key map [monotone-cat-fid]
       '(menu-item "Cat this file     id" monotone-cat-fileid))
-    (define-key map [monotone-separator] '("--"))
+    (define-key map [monotone-separator3] '("--"))
     ;;
     (define-key map [monotone-grab-id]
       '(menu-item "Grab ID" monotone-grab-id))
