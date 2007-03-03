@@ -50,7 +50,7 @@ charset_convert(string const & src_charset,
       string dst_charset_real(dst_charset);
 #ifdef ICONV_TRANSLIT
       if (best_effort)
-        dst_charset_real += "//IGNORE//TRANSLIT";
+        dst_charset_real += "//TRANSLIT";
 #endif
       char * converted = stringprep_convert(src.c_str(),
                                             dst_charset_real.c_str(),
