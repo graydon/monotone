@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <iterator>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <locale.h>

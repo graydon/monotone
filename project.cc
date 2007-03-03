@@ -10,19 +10,9 @@
 #include "revision.hh"
 #include "transforms.hh"
 
-#include <boost/date_time/gregorian/gregorian.hpp>
-
 using std::string;
 using std::set;
 using std::vector;
-
-boost::posix_time::ptime time_from_time_t(time_t time)
-{
-  boost::gregorian::date the_epoch(1970, 1, 1);
-  boost::posix_time::seconds seconds(static_cast<long>(time));
-  return boost::posix_time::ptime(the_epoch, seconds);
-}
-
 
 project_t::project_t(app_state & app)
   : app(app)
@@ -243,7 +233,7 @@ void
 project_t::put_standard_certs(revision_id const & id,
                               branch_name const & branch,
                               utf8 const & changelog,
-                              boost::posix_time::ptime const & time,
+                              date_t const & time,
                               utf8 const & author,
                               packet_consumer & pc)
 {
@@ -265,7 +255,7 @@ project_t::put_standard_certs_from_options(revision_id const & id,
   put_standard_certs(id,
                      branch,
                      changelog,
-                     app.opts.date_given?app.opts.date:now(),
+                     app.opts.date_given ? app.opts.date : date_t::now(),
                      app.opts.author,
                      pc);
 }

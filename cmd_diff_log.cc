@@ -9,6 +9,7 @@
 
 #include <deque>
 #include <map>
+#include <iostream>
 #include <sstream>
 #include <queue>
 
@@ -746,7 +747,8 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
 
   set<revision_id> seen;
   revision_t rev;
-  asciik graph; // it's instantiated even when not used, but it's lightweight
+  // this is instantiated even when not used, but it's lightweight
+  asciik graph(cout);
   while(! frontier.empty() && (last == -1 || last > 0)
         && (next == -1 || next > 0))
     {

@@ -8,6 +8,8 @@
 // PURPOSE.
 
 #include <cstring>
+#include <iostream>
+#include <iomanip>
 
 #include "cmd.hh"
 #include "diff_patch.hh"

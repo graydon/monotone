@@ -10,7 +10,7 @@
 class asciik
 {
 public:
-  asciik(size_t min_width = 0, std::ostream & os = std::cout);
+  asciik(std::ostream & os, size_t min_width = 0);
   // Prints an ASCII-k chunk using the given revisions.
   // Multiple lines are supported in annotation (the graph will stretch
   // accordingly); empty newlines at the end will be removed.

@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -562,33 +561,12 @@ cert_name const testresult_cert_name("testresult");
 
 void
 cert_revision_date_time(revision_id const & m,
-                        boost::posix_time::ptime t,
+                        date_t const & t,
                         app_state & app,
                         packet_consumer & pc)
 {
-  cert_value val = cert_value(boost::posix_time::to_iso_extended_string(t));
+  cert_value val = cert_value(t.as_iso_8601_extended());
   put_simple_revision_cert(m, cert_name(date_cert_name), val, app, pc);
-}
-
-void
-cert_revision_date_time(revision_id const & m,
-                        time_t t,
-                        app_state & app,
-                        packet_consumer & pc)
-{
-  // make sure you do all your CVS conversions by 2038!
-  boost::posix_time::ptime tmp(boost::gregorian::date(1970,1,1),
-                               boost::posix_time::seconds(static_cast<long>(t)));
-  cert_revision_date_time(m, tmp, app, pc);
-}
-
-void
-cert_revision_date_now(revision_id const & m,
-                       app_state & app,
-                       packet_consumer & pc)
-{
-  cert_revision_date_time
-    (m, boost::posix_time::second_clock::universal_time(), app, pc);
 }
 
 void

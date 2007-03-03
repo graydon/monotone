@@ -173,16 +173,6 @@ AC_DEFUN([MTN_BOOST_LIB_FILESYSTEM],
       exists(path("/boot"));
     ]])])])
 
-AC_DEFUN([MTN_BOOST_LIB_DATE_TIME],
-[MTN_NEED_BOOST_LIB([date_time],
-  [AC_LANG_PROGRAM([[
-      #include <boost/date_time/posix_time/posix_time.hpp>
-      #include <iostream>
-      using namespace boost::posix_time; 
-    ]],[[
-      std::cout << to_iso_extended_string(second_clock::universal_time());
-    ]])])])
-
 AC_DEFUN([MTN_BOOST_LIB_REGEX],
 [MTN_NEED_BOOST_LIB([regex],
   [AC_LANG_PROGRAM([[

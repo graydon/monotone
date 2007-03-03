@@ -9,6 +9,7 @@
 
 #include <map>
 #include <algorithm>
+#include <iostream>
 
 #include "transforms.hh"
 #include "simplestring_xform.hh"

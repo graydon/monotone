@@ -37,7 +37,7 @@ MOST_SOURCES = 								\
 	outdated_indicator.cc outdated_indicator.hh			\
 	database.cc database.hh						\
 	key_store.cc key_store.hh					\
-	ssh_agent.cc ssh_agent.hh							\
+	ssh_agent.cc ssh_agent.hh					\
 	keys.cc keys.hh							\
 	packet.cc packet.hh						\
 	rcs_file.cc rcs_file.hh						\
@@ -72,6 +72,7 @@ MOST_SOURCES = 								\
 	sha1.hh sha1.cc sha1_engine.hh                                  \
 	rev_height.cc rev_height.hh					\
 	asciik.cc asciik.hh						\
+	dates.cc dates.hh						\
 									\
 	lru_writeback_cache.hh						\
 									\
