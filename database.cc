@@ -3345,11 +3345,10 @@ database::open()
 void
 database::close()
 {
-  if (__sql)
-    {
-      sqlite3_close(__sql);
-      __sql = 0;
-    }
+  I(__sql);
+
+  sqlite3_close(__sql);
+  __sql = 0;
 
   I(!__sql);
 }

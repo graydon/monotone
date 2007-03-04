@@ -170,15 +170,18 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
 class dir_cleanup_helper
 {
 public:
-  dir_cleanup_helper(system_path const & new_dir, app_state *app_st, bool i_db) :
-                  commited(false), internal_db(i_db), dir(new_dir), app(app_st) {}
+  dir_cleanup_helper(system_path const & new_dir, bool i_db) :
+                  commited(false), internal_db(i_db), dir(new_dir) {}
   ~dir_cleanup_helper()
   {
     if (!commited && directory_exists(dir))
       {
-        if (internal_db && app)
-          app->db.close();
+#ifdef WIN32
+        if (!internal_db)
+          delete_dir_recursive(dir);
+#else
         delete_dir_recursive(dir);
+#endif /* WIN32 */
       }
   }
   void commit(void)
@@ -189,7 +192,6 @@ private:
   bool commited;
   bool internal_db;
   system_path dir;
-  app_state *app;
 };
 
 CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
@@ -228,7 +230,7 @@ CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
 
   bool internal_db = !app.opts.dbname_given || app.opts.dbname.empty();
 
-  dir_cleanup_helper remove_on_fail(workspace_dir, &app, internal_db);
+  dir_cleanup_helper remove_on_fail(workspace_dir, internal_db);
   app.create_workspace(workspace_dir);
 
   if (internal_db)
