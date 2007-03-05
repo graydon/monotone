@@ -8702,30 +8702,6 @@ option.  @code{temp_file()} builds on @code{mkstemp()} and creates a
 file in the standard TMP/TEMP directories.
 For the definition of @code{temp_file()}, see @ref{Default hooks}.
 
-@item sleep(@var{seconds})
-
-Makes the calling process sleep for the specified number of seconds.
-
-@item spawn(@var{executable} [, @var{args ...}])
-
-Starts the named executable with the given arguments.  Returns the
-process PID on POSIX systems, the process handle on Win32 or -1 if
-there was an error.
-Calls fork/execvp on POSIX, CreateProcess on Win32.
-
-@strong{Important notice:}@*
-To spawn a process and wait for its completion, use the @code{execute()}
-function, unless you need to run monotone with the @option{--nostd}
-option.  @code{execute()} builds on @code{spawn()} and @code{wait()}
-in a standardized way.
-
-@item wait(@var{pid})
-
-Wait until the process with given PID (process handle on Win32) exits.
-Returns two values: a result value and the exit code of the waited-for
-process.
-The exit code is meaningful only if the result value is 0.
-
 @item parse_basic_io(@var{data})
 
 Parse the string @var{data}, which should be in basic_io format. It returns nil
@@ -8756,6 +8732,30 @@ The output table will be:
 @}
 @end group
 @end smallexample
+
+@item sleep(@var{seconds})
+
+Makes the calling process sleep for the specified number of seconds.
+
+@item spawn(@var{executable} [, @var{args ...}])
+
+Starts the named executable with the given arguments.  Returns the
+process PID on POSIX systems, the process handle on Win32 or -1 if
+there was an error.
+Calls fork/execvp on POSIX, CreateProcess on Win32.
+
+@strong{Important notice:}@*
+To spawn a process and wait for its completion, use the @code{execute()}
+function, unless you need to run monotone with the @option{--nostd}
+option.  @code{execute()} builds on @code{spawn()} and @code{wait()}
+in a standardized way.
+
+@item wait(@var{pid})
+
+Wait until the process with given PID (process handle on Win32) exits.
+Returns two values: a result value and the exit code of the waited-for
+process.
+The exit code is meaningful only if the result value is 0.
 
 @end ftable
 
