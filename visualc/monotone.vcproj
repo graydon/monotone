@@ -374,10 +374,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\localized_file_io.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\lua.cc"
 				>
 			</File>
@@ -749,10 +745,6 @@
 			</File>
 			<File
 				RelativePath="..\legacy.hh"
-				>
-			</File>
-			<File
-				RelativePath="..\localized_file_io.hh"
 				>
 			</File>
 			<File
