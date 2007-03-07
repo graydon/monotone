@@ -18,6 +18,7 @@
 using Botan::RSA_PublicKey;
 using Botan::RSA_PrivateKey;
 using Botan::BigInt;
+using Botan::SecureVector;
 using Netxx::Stream;
 using boost::shared_ptr;
 using std::string;
@@ -175,18 +176,15 @@ ssh_agent::put_long_into_buf(u32 l, string & buf)
 void
 ssh_agent::put_bigint_into_buf(BigInt const & bi, string & buf)
 {
-  int bytes = bi.bytes() + 1;
-  Botan::byte bi_buf[bytes];
   L(FL("ssh_agent: put_bigint_into_buf: bigint.bytes(): %u, bigint: %s")
     % bi.bytes()
     % bi);
-  bi_buf[0] = 0x00;
-  BigInt::encode(bi_buf + 1, bi);
-  int hasnohigh = (bi_buf[1] & 0x80) ? 0 : 1;
+  SecureVector<Botan::byte> bi_buf = BigInt::encode(bi);
   string bi_str;
-  bi_str.append((char *)(bi_buf + hasnohigh), bytes - hasnohigh);
+  if (*bi_buf.begin() & 0x80)
+	  bi_str.append(1, static_cast<char>(0));
+  bi_str.append((char *) bi_buf.begin(), bi_buf.size());
   put_string_into_buf(bi_str, buf);
-  bi_str[0] = bytes;
   L(FL("ssh_agent: put_bigint_into_buf: buf len now %i") % buf.length());
 }
 

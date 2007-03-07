@@ -201,12 +201,12 @@ CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
        "If no directory is given, the branch name will be used as directory"),
     options::opts::exclude | options::opts::branch | options::opts::revision)
 {
+  if (args.size() < 1 || args.size() > 2 || app.opts.revision_selectors.size() > 1)
+    throw usage(name);
+
   revision_id ident;
   system_path workspace_dir;
   utf8 addr = idx(args, 0);
-
-  if (args.size() < 1 || args.size() > 2 || app.opts.revision_selectors.size() > 1)
-    throw usage(name);
 
   N(app.opts.branch_given && !app.opts.branchname().empty(),
     F("you must specify a branch to clone"));

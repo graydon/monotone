@@ -129,10 +129,10 @@ project_t::put_revision_in_branch(revision_id const & id,
 
 
 outdated_indicator
-project_t::get_revision_cert_hashes(revision_id const & id,
+project_t::get_revision_cert_hashes(revision_id const & rid,
                                     std::vector<hexenc<id> > & hashes)
 {
-  return app.db.get_revision_certs(id, hashes);
+  return app.db.get_revision_certs(rid, hashes);
 }
 
 outdated_indicator
