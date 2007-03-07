@@ -61,6 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="botan.lib lua.lib stringprep.lib libiconv.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(ProjectDir)\Debug&quot;"
 				GenerateDebugInformation="true"
