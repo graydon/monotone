@@ -64,7 +64,7 @@
 
 class path_restriction;
 class node_restriction;
-class content_merge_adaptor;
+struct content_merge_adaptor;
 class lua_hooks;
 
 struct workspace
