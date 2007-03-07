@@ -24,10 +24,12 @@
 #include "mt-stdint.h"
 #include "quick_alloc.hh" // to get the QA() macro
 
-#ifdef __GNUC__
-#define NORETURN __attribute__((noreturn))
+#if defined(__GNUC__)
+#define NORETURN(x) x __attribute__((noreturn))
+#elif defined(WIN32)
+#define NORETURN(x) __declspec(noreturn) x
 #else
-#define NORETURN
+#define NORETURN(x) x
 #endif
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
@@ -76,17 +78,17 @@ struct sanity {
                 char const * file, int line);
   void warning(i18n_format const & fmt,
                char const * file, int line);
-  void naughty_failure(std::string const & expr, i18n_format const & explain,
-                       std::string const & file, int line) NORETURN;
-  void error_failure(std::string const & expr, i18n_format const & explain,
-                     std::string const & file, int line) NORETURN;
-  void invariant_failure(std::string const & expr,
-                         std::string const & file, int line) NORETURN;
-  void index_failure(std::string const & vec_expr,
+  NORETURN(void naughty_failure(std::string const & expr, i18n_format const & explain,
+                       std::string const & file, int line));
+  NORETURN(void error_failure(std::string const & expr, i18n_format const & explain,
+                     std::string const & file, int line));
+  NORETURN(void invariant_failure(std::string const & expr,
+                         std::string const & file, int line));
+  NORETURN(void index_failure(std::string const & vec_expr,
                      std::string const & idx_expr,
                      unsigned long sz,
                      unsigned long idx,
-                     std::string const & file, int line) NORETURN;
+                     std::string const & file, int line));
   void gasp();
 
 private:
