@@ -26,7 +26,7 @@
 
 #if defined(__GNUC__)
 #define NORETURN(x) x __attribute__((noreturn))
-#elif defined(WIN32)
+#elif defined(_MSC_VER)
 #define NORETURN(x) __declspec(noreturn) x
 #else
 #define NORETURN(x) x
