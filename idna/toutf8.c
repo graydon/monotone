@@ -132,6 +132,7 @@ stringprep_convert (const char *str,
   size_t outbuf_size;
   int have_error = 0;
   int len;
+  int best_effort = 0;
 
   if (strcmp (to_codeset, from_codeset) == 0)
     {
@@ -142,6 +143,11 @@ stringprep_convert (const char *str,
       strcpy (p, str);
       return p;
     }
+
+  char * bp = to_codeset + strlen(to_codeset);
+  if (bp - to_codeset >= 10 && memcmp(bp - 10, "//TRANSLIT", 10) == 0)
+    best_effort = 1;
+  fprintf(stderr, "UTF8: %d\nBest effort: %d\n", strcmp(from_codeset, "UTF-8") == 0, best_effort);
 
   cd = iconv_open (to_codeset, from_codeset);
 
@@ -188,8 +194,43 @@ again:
 	  break;
 
 	case EILSEQ:
-	  have_error = 1;
-	  break;
+          if (!best_effort)
+            {
+              have_error = 1;
+              break;
+            }
+          else
+            {
+              int char_len;
+              //TODO: check of EOF in 'p' and 'outp'
+              if      ((*p & 0x80) == 0)
+                char_len = 1;
+              else if ((*p & 0x40) == 0)
+                {
+                  fprintf(stderr, "Error: len 1.5\n");
+                  // ERROR: not allowed to begin a sequence!
+                  have_error = 1;
+                  break;
+                }
+              else if ((*p & 0x20) == 0)
+                char_len = 2;
+              else if ((*p & 0x10) == 0)
+                char_len = 3;
+              else if ((*p & 0x08) == 0)
+                char_len = 4;
+              else if ((*p & 0x04) == 0)
+                char_len = 5;
+              fprintf(stderr, "Char %d: len %d\n", len - inbytes_remaining, char_len);
+              //TODO check UTF-8 specs for length 5 & 6
+              if (char_len > inbytes_remaining)
+                char_len = inbytes_remaining;
+              p += char_len;
+              inbytes_remaining -= char_len;
+              *outp++ = '?';
+              --outbytes_remaining;
+              goto again;
+            }
+          break;
 
 	default:
 	  have_error = 1;
