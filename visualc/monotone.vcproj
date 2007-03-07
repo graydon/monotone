@@ -212,6 +212,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\asciik.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\automate.cc"
 				>
 			</File>
@@ -293,6 +297,10 @@
 			</File>
 			<File
 				RelativePath="..\database_check.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\dates.cc"
 				>
 			</File>
 			<File
@@ -446,11 +454,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\numeric_vocab.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\option.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\options.cc"
 				>
 			</File>
 			<File
 				RelativePath="..\win32\os_strerror.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\outdated_indicator.cc"
 				>
 			</File>
 			<File
@@ -519,6 +539,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\project.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\randomizer.cc"
 				>
 			</File>
@@ -540,6 +564,10 @@
 			</File>
 			<File
 				RelativePath="..\restrictions.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\rev_height.cc"
 				>
 			</File>
 			<File
@@ -576,6 +604,14 @@
 			</File>
 			<File
 				RelativePath="..\simplestring_xform.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\ssh_agent.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\win32\ssh_agent_platform.cc"
 				>
 			</File>
 			<File
@@ -636,6 +672,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\asciik.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\automate.hh"
 				>
 			</File>
@@ -685,6 +725,10 @@
 			</File>
 			<File
 				RelativePath="..\database_check.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\dates.hh"
 				>
 			</File>
 			<File
@@ -752,6 +796,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\lru_writeback_cache.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\lua.hh"
 				>
 			</File>
@@ -804,11 +852,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\option.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\options.hh"
 				>
 			</File>
 			<File
 				RelativePath="..\options_list.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\outdated_indicator.hh"
 				>
 			</File>
 			<File
@@ -840,7 +896,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\project.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\quick_alloc.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\randomfile.hh"
 				>
 			</File>
 			<File
@@ -861,6 +925,10 @@
 			</File>
 			<File
 				RelativePath="..\restrictions.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\rev_height.hh"
 				>
 			</File>
 			<File
@@ -916,6 +984,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\ssh_agent.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\win32\ssh_agent_platform.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\std_hooks.h"
 				>
 			</File>
@@ -944,6 +1020,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\unit_tests.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\update.hh"
 				>
 			</File>
@@ -957,6 +1037,14 @@
 			</File>
 			<File
 				RelativePath="..\vocab.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\vocab_cast.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\vocab_macros.hh"
 				>
 			</File>
 			<File
