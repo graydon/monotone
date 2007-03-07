@@ -1882,7 +1882,7 @@ database::put_rev_height(revision_id const & id,
 {
   I(!null_id(id));
   I(revision_exists(id));
-  !(height.valid());
+  I(height.valid());
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())
