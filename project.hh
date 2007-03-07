@@ -13,7 +13,7 @@
 #include "vocab.hh"
 
 class app_state;
-class packet_consumer;
+struct packet_consumer;
 
 class tag_t
 {
@@ -47,7 +47,7 @@ public:
                               branch_name const & branch,
                               packet_consumer & pc);
 
-  outdated_indicator get_revision_cert_hashes(revision_id const & id,
+  outdated_indicator get_revision_cert_hashes(revision_id const & rid,
                                               std::vector<hexenc<id> > & hashes);
   outdated_indicator get_revision_certs(revision_id const & id,
                                         std::vector<revision<cert> > & certs);

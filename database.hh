@@ -226,8 +226,8 @@ private:
   void get_roster_delta(std::string const & ident,
                         std::string const & base,
                         roster_delta & del);
-  friend class file_and_manifest_reconstruction_graph;
-  friend class roster_reconstruction_graph;
+  friend struct file_and_manifest_reconstruction_graph;
+  friend struct roster_reconstruction_graph;
   void get_version(hexenc<id> const & ident,
                    data & dat,
                    std::string const & data_table,
