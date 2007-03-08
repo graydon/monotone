@@ -437,7 +437,7 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	contrib/monotone.zsh_completion contrib/mtbrowse.sh			\
 	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf		\
 	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
-	contrib/monotone-cvs-ignore.lua contrib/usher.cc $(wildcard		\
+	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
 	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
 	$(wildcard $(srcdir)/debian/*)
 
