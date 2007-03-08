@@ -1,0 +1,25 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.02.27.20.45.00;	author markus;	state Exp;
+branches;
+next	;
+commitid	A4By316YPyhtFa8s;
+
+
+desc
+@@
+
+
+1.1
+log
+@commit 0
+@
+text
+@version 0 of test file foo
+@

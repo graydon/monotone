@@ -1,0 +1,77 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2007.02.27.20.56.07;	author markus;	state Exp;
+branches;
+next	1.3;
+commitid	IfLVNWqiXFLhJa8s;
+
+1.3
+date	2007.02.27.20.56.06;	author markus;	state Exp;
+branches;
+next	1.2;
+commitid	CtanCPNehnbhJa8s;
+
+1.2
+date	2007.02.27.20.56.05;	author markus;	state Exp;
+branches;
+next	1.1;
+commitid	IkocdHkrmeSgJa8s;
+
+1.1
+date	2007.02.27.20.56.04;	author markus;	state Exp;
+branches;
+next	;
+commitid	aPp3YlZMS1pgJa8s;
+
+
+desc
+@@
+
+
+1.4
+log
+@commit 3
+@
+text
+@version 3 of test file foo
+@
+
+
+1.3
+log
+@commit 2
+@
+text
+@d1 1
+a1 1
+version 2 of test file foo
+@
+
+
+1.2
+log
+@commit 1
+@
+text
+@d1 1
+a1 1
+version 1 of test file foo
+@
+
+
+1.1
+log
+@commit 0
+@
+text
+@d1 1
+a1 1
+version 0 of test file foo
+@
+
