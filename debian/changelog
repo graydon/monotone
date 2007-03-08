@@ -1,3 +1,10 @@
+monotone (0.33-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update the watch file.
+
+ -- Shaun Jackman <sjackman@debian.org>  Tue,  6 Mar 2007 13:54:19 -0700
+
 monotone (0.33-0.1) unstable; urgency=low
 
   * New upstream release.
@@ -15,6 +22,12 @@ monotone (0.32-90.1) unstable; urgency=low
   * monotone can depend on texlive-base-bin as well as tetex-bin.
 
  -- Richard Levitte <richard@levitte.org>  Mon,  8 Jan 2007 14:15:26 +0100
+
+monotone (0.32-1) experimental; urgency=low
+
+  * New upstream release. Closes: #409828.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 12 Feb 2007 08:02:25 -0700
 
 monotone (0.32-0.1) unstable; urgency=low
 
@@ -36,6 +49,30 @@ monotone (0.31-90.1) unstable; urgency=low
     which is reflected in monotone-server.postinst.
 
  -- Richard Levitte <richard@levitte.org>  Mon, 13 Nov 2006 23:50:45 +0100
+
+monotone (0.31-7) unstable; urgency=low
+
+  * Add Japanese debconf translation. Closes: #413002.
+
+ -- Shaun Jackman <sjackman@debian.org>  Thu,  1 Mar 2007 12:53:22 -0700
+
+monotone (0.31-6) unstable; urgency=low
+
+  * Add Czech debconf translation. Closes: #408697.
+
+ -- Shaun Jackman <sjackman@debian.org>  Wed, 31 Jan 2007 13:14:40 -0700
+
+monotone (0.31-5) unstable; urgency=low
+
+  * Add Swedish debconf translation. Closes: #407868.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 22 Jan 2007 10:32:37 -0700
+
+monotone (0.31-4) unstable; urgency=low
+
+  * Add German debconf translation. Closes: #405820.
+
+ -- Shaun Jackman <sjackman@debian.org>  Tue,  9 Jan 2007 12:59:29 -0700
 
 monotone (0.31-3) unstable; urgency=low
 

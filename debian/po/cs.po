@@ -1,26 +1,26 @@
-# SOME DESCRIPTIVE TITLE.
+# translation of monotone_0.31-5_cs-utf8.po to czech
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+# Jakub Kasparec <mr.k@centrum.cz>, 2007.
 msgid ""
 msgstr ""
-"Project-Id-Version: monotone\n"
+"Project-Id-Version: monotone_0.31-5_cs-utf8\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-17 05:19+0100\n"
-"PO-Revision-Date: 2006-11-23 13:26+0100\n"
-"Last-Translator: Arnaud <arnaud.baysse@gmail.com>\n"
-"Language-Team: French <debian-l10n-french@lists.debian.org>\n"
+"POT-Creation-Date: 2007-01-23 04:32+0100\n"
+"PO-Revision-Date: 2007-01-27 21:17+0100\n"
+"Last-Translator: Jakub Kasparec <mr.k@centrum.cz>\n"
+"Language-Team: czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-15\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: French\n"
+"X-Generator: KBabel 1.11.4\n"
 
 #. Type: boolean
 #. Description
 #: ../monotone-server.templates:1001
 msgid "Automatically manage monotone database?"
-msgstr "Faut-il gÈrer automatiquement la base de donnÈes monotone†?"
+msgstr "Spravovat datab√°zi bal√≠ku monotone automaticky?"
 
 #. Type: boolean
 #. Description
@@ -29,16 +29,13 @@ msgid ""
 "Select this option to automatically manage the monotone database. If "
 "selected, the database will automatically be created. Also when upgrading, "
 "the database will be automatically migrated if necessary."
-msgstr ""
-"Veuillez choisir si vous souhaitez gÈrer automatiquement la base de donnÈes "
-"monotone. La base de donnÈes sera alors automatiquement crÈÈe. De plus, lors "
-"d'une mise ‡ jour, sa structure sera modifiÈe si nÈcessaire."
+msgstr "Jestli≈æe chcete spravovat datab√°zi bal√≠ku monotone automaticky, pak zvolte tuto mo≈ænost. Zvol√≠te-li ji, datab√°ze bude vytvo≈ôena automaticky a n√°slednƒõ p≈ôi aktualizac√≠ch bude tak√© automaticky p≈ôevedena na novƒõj≈°√≠ verzi (bude-li pot≈ôeba)."
 
 #. Type: string
 #. Description
 #: ../monotone-server.templates:2001
 msgid "Monotone key id:"
-msgstr "Identifiant de la clÈ monotone†:"
+msgstr "Identifik√°tor kl√≠ƒçe monotone:"
 
 #. Type: string
 #. Description
@@ -46,15 +43,13 @@ msgstr "Identifiant de la clÈ monotone†:"
 msgid ""
 "Enter the id of the key your monotone server will use. The key id is "
 "typically an email address."
-msgstr ""
-"Veuillez indiquer l'identifiant de la clÈ qu'utilisera le serveur monotone. "
-"Cet identifiant est gÈnÈralement une adresse de courrier Èlectronique."
+msgstr "Zadejte identifik√°tor kl√≠ƒçe, kter√Ω bude pou≈æ√≠vat v√°≈° monotone server. Identifik√°tor kl√≠ƒçe je obvykle emailov√° adresa."
 
 #. Type: password
 #. Description
 #: ../monotone-server.templates:3001
 msgid "Monotone key passphrase:"
-msgstr "Phrase secrËte de la clÈ monotone†:"
+msgstr "Heslo monotone kl√≠ƒçe:"
 
 #. Type: password
 #. Description
@@ -62,6 +57,5 @@ msgstr "Phrase secrËte de la clÈ monotone†:"
 msgid ""
 "Please choose a passphrase for your monotone key. If left blank, one will be "
 "generated for you."
-msgstr ""
-"Veuillez choisir une phrase secrËte pour la clÈ de monotone. Si vous ne "
-"choisissez rien, une phrase sera crÈe automatiquement."
+msgstr "Zvolte pros√≠m heslo pro kl√≠ƒç monotone. Ponech√°te-li pole pr√°zdn√©, vygeneruje se n√°hodn√© heslo."
+
