@@ -212,7 +212,7 @@ again:
           else
             {
               int char_len;
-              if (!from_utf_8)
+              if (!from_utf8)
                 char_len = 1; // not from UTF-8, one '?' will do
               else
                 {
