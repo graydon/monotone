@@ -1,0 +1,70 @@
+# translation of de.po to german
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Alwin Meschede <ameschede@gmx.de>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: de\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-12-07 04:32+0100\n"
+"PO-Revision-Date: 2007-01-06 16:01+0100\n"
+"Last-Translator: Alwin Meschede <ameschede@gmx.de>\n"
+"Language-Team: german <debian-l10n-german@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms:  nplurals=2; plural=(n != 1);\n"
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:1001
+msgid "Automatically manage monotone database?"
+msgstr "Die Monotone-Datenbank automatisch verwalten?"
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:1001
+msgid ""
+"Select this option to automatically manage the monotone database. If "
+"selected, the database will automatically be created. Also when upgrading, "
+"the database will be automatically migrated if necessary."
+msgstr ""
+"Wählen Sie diese Option, wenn die Monotone-Datenbank automatisch verwaltet "
+"werden soll. Die Datenbank wird dann automatisch erzeugt und falls notwendig "
+"bei Aktualisierungen automatisch migriert."
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:2001
+msgid "Monotone key id:"
+msgstr "Monotone-Schlüssel-ID:"
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:2001
+msgid ""
+"Enter the id of the key your monotone server will use. The key id is "
+"typically an email address."
+msgstr ""
+"Geben Sie die ID für den Schlüssel des Monotone-Servers ein. Die Schlüssel-ID "
+"ist üblicherweise eine E-Mailadresse."
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:3001
+msgid "Monotone key passphrase:"
+msgstr "Monotone-Schlüssel-Passwort:"
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:3001
+msgid ""
+"Please choose a passphrase for your monotone key. If left blank, one will be "
+"generated for you."
+msgstr ""
+"Bitte wählen Sie ein Passwort für Ihren Monotone-Schlüssel. Wenn Sie nichts "
+"eingeben, wird eines für Sie generiert."
+
+
