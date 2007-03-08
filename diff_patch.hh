@@ -16,7 +16,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -55,8 +54,7 @@ content_merge_adaptor
   virtual void get_ancestral_roster(node_id nid,
                                     boost::shared_ptr<roster_t const> & anc) = 0;
 
-  virtual void get_version(file_path const & path,
-                           file_id const & ident,
+  virtual void get_version(file_id const & ident,
                            file_data & dat) const = 0;
 
   virtual ~content_merge_adaptor() {}
@@ -83,8 +81,7 @@ content_merge_database_adaptor
   void get_ancestral_roster(node_id nid,
                             boost::shared_ptr<roster_t const> & anc);
 
-  void get_version(file_path const & path,
-                   file_id const & ident,
+  void get_version(file_id const & ident,
                    file_data & dat) const;
 };
 
@@ -95,9 +92,11 @@ content_merge_workspace_adaptor
   std::map<file_id, file_data> temporary_store;
   app_state & app;
   boost::shared_ptr<roster_t const> base;
+  std::map<file_id, file_path> content_paths;
   content_merge_workspace_adaptor (app_state & app,
-                                   boost::shared_ptr<roster_t const> base)
-    : app(app), base(base)
+                                   boost::shared_ptr<roster_t const> base,
+                                   std::map<file_id, file_path> const & paths)
+    : app(app), base(base), content_paths(paths)
   {}
   void record_merge(file_id const & left_ident,
                     file_id const & right_ident,
@@ -108,8 +107,7 @@ content_merge_workspace_adaptor
   void get_ancestral_roster(node_id nid,
                             boost::shared_ptr<roster_t const> & anc);
 
-  void get_version(file_path const & path,
-                   file_id const & ident,
+  void get_version(file_id const & ident,
                    file_data & dat) const;
 };
 

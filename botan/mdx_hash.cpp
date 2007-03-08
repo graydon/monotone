@@ -1,6 +1,6 @@
 /*************************************************
 * MDx Hash Function Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mdx_hash.h>
@@ -37,21 +37,29 @@ void MDx_HashFunction::clear() throw()
 void MDx_HashFunction::add_data(const byte input[], u32bit length)
    {
    count += length;
-   buffer.copy(position, input, length);
-   if(position + length >= HASH_BLOCK_SIZE)
+
+   if(position)
       {
-      hash(buffer.begin());
-      input += (HASH_BLOCK_SIZE - position);
-      length -= (HASH_BLOCK_SIZE - position);
-      while(length >= HASH_BLOCK_SIZE)
+      buffer.copy(position, input, length);
+
+      if(position + length >= HASH_BLOCK_SIZE)
          {
-         hash(input);
-         input += HASH_BLOCK_SIZE;
-         length -= HASH_BLOCK_SIZE;
+         hash(buffer.begin());
+         input += (HASH_BLOCK_SIZE - position);
+         length -= (HASH_BLOCK_SIZE - position);
+         position = 0;
          }
-      buffer.copy(input, length);
-      position = 0;
       }
+
+   while(length >= HASH_BLOCK_SIZE)
+      {
+      hash(input);
+      input += HASH_BLOCK_SIZE;
+      length -= HASH_BLOCK_SIZE;
+      }
+
+   buffer.copy(position, input, length);
+
    position += length;
    }
 
@@ -61,7 +69,7 @@ void MDx_HashFunction::add_data(const byte input[], u32bit length)
 void MDx_HashFunction::final_result(byte output[])
    {
    buffer[position] = (BIG_BIT_ENDIAN ? 0x80 : 0x01);
-   for(u32bit j = position+1; j != HASH_BLOCK_SIZE; j++)
+   for(u32bit j = position+1; j != HASH_BLOCK_SIZE; ++j)
       buffer[j] = 0;
    if(position >= HASH_BLOCK_SIZE - COUNT_SIZE)
       {
@@ -82,7 +90,7 @@ void MDx_HashFunction::write_count(byte out[])
    {
    if(COUNT_SIZE < 8)
       throw Invalid_State("MDx_HashFunction::write_count: COUNT_SIZE < 8");
-   for(u32bit j = 0; j != 8; j++)
+   for(u32bit j = 0; j != 8; ++j)
       {
       const u32bit choose = (BIG_BYTE_ENDIAN ? (j % 8) : (7 - (j % 8)));
       out[j+COUNT_SIZE-8] = get_byte(choose, 8 * count);

@@ -1,9 +1,9 @@
 /*************************************************
 * Default Engine Source File                     *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
-#include <botan/def_eng.h>
+#include <botan/eng_def.h>
 #include <botan/parsing.h>
 #include <botan/filters.h>
 #include <botan/lookup.h>
@@ -17,45 +17,6 @@
 
 namespace Botan {
 
-namespace {
-
-/*************************************************
-* Simply return a mode object of choice          *
-*************************************************/
-Keyed_Filter* get_mode(Cipher_Dir direction, const std::string& cipher,
-                       const std::string& mode, const std::string& pad = "",
-                       u32bit bits = 0)
-   {
-   if(mode == "ECB")
-      {
-      if(direction == ENCRYPTION) return new ECB_Encryption(cipher, pad);
-      else                        return new ECB_Decryption(cipher, pad);
-      }
-   else if(mode == "CFB")
-      {
-      if(direction == ENCRYPTION) return new CFB_Encryption(cipher, bits);
-      else                        return new CFB_Decryption(cipher, bits);
-      }
-   else if(mode == "CBC")
-      {
-      if(pad == "CTS")
-         {
-         if(direction == ENCRYPTION) return new CTS_Encryption(cipher);
-         else                        return new CTS_Decryption(cipher);
-         }
-      if(direction == ENCRYPTION) return new CBC_Encryption(cipher, pad);
-      else                        return new CBC_Decryption(cipher, pad);
-      }
-   else if(mode == "EAX")
-      {
-      if(direction == ENCRYPTION) return new EAX_Encryption(cipher, bits);
-      else                        return new EAX_Decryption(cipher, bits);
-      }
-   else
-      throw Internal_Error("get_mode: " + cipher + "/" + mode + "/" + pad);
-   }
-
-}
 /*************************************************
 * Get a cipher object                            *
 *************************************************/
@@ -63,7 +24,7 @@ Keyed_Filter* Default_Engine::get_cipher(const std::string& algo_spec,
                                          Cipher_Dir direction)
    {
    std::vector<std::string> algo_parts = split_on(algo_spec, '/');
-   if(algo_parts.size() == 0)
+   if(algo_parts.empty())
       throw Invalid_Algorithm_Name(algo_spec);
 
    const std::string cipher = algo_parts[0];
@@ -106,11 +67,52 @@ Keyed_Filter* Default_Engine::get_cipher(const std::string& algo_spec,
       else if((mode != "CBC" && mode != "ECB") && padding != "NoPadding")
          throw Invalid_Algorithm_Name(algo_spec);
 
-      if(mode == "OFB")         return new OFB(cipher);
-      else if(mode == "CTR-BE") return new CTR_BE(cipher);
+      if(mode == "OFB")
+         return new OFB(cipher);
+      else if(mode == "CTR-BE")
+         return new CTR_BE(cipher);
       else if(mode == "ECB" || mode == "CBC" || mode == "CTS" ||
               mode == "CFB" || mode == "EAX")
-         return get_mode(direction, cipher, mode, padding, bits);
+         {
+         if(mode == "ECB")
+            {
+            if(direction == ENCRYPTION)
+               return new ECB_Encryption(cipher, padding);
+            else
+               return new ECB_Decryption(cipher, padding);
+            }
+         else if(mode == "CFB")
+            {
+            if(direction == ENCRYPTION)
+               return new CFB_Encryption(cipher, bits);
+            else
+               return new CFB_Decryption(cipher, bits);
+            }
+         else if(mode == "CBC")
+            {
+            if(padding == "CTS")
+               {
+               if(direction == ENCRYPTION)
+                  return new CTS_Encryption(cipher);
+               else
+                  return new CTS_Decryption(cipher);
+               }
+            if(direction == ENCRYPTION)
+               return new CBC_Encryption(cipher, padding);
+            else
+               return new CBC_Decryption(cipher, padding);
+            }
+         else if(mode == "EAX")
+            {
+            if(direction == ENCRYPTION)
+               return new EAX_Encryption(cipher, bits);
+            else
+               return new EAX_Decryption(cipher, bits);
+            }
+         else
+            throw Internal_Error("get_mode: " + cipher + "/"
+                                              + mode + "/" + padding);
+         }
       else
          return 0;
       }

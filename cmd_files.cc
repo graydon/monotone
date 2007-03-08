@@ -12,7 +12,7 @@
 #include "annotate.hh"
 #include "cmd.hh"
 #include "diff_patch.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "packet.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
@@ -103,7 +103,7 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
 
   string pattern("");
   if (!app.opts.no_show_encloser)
-    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+    app.lua.hook_get_encloser_pattern(file_path_external(utf8(src_name)), pattern);
 
   make_diff(src_name, dst_name,
             src_id, dst_id,
@@ -127,22 +127,47 @@ CMD(annotate, N_("informative"), N_("PATH"),
   split_path sp;
   file.split(sp);
 
+  L(FL("annotate file '%s'") % file);
+
+  roster_t roster;
   if (app.opts.revision_selectors.size() == 0)
-    app.work.get_revision_id(rid);
+    {
+      // What this _should_ do is calculate the current workspace roster
+      // and/or revision and hand that to do_annotate.  This should just
+      // work, no matter how many parents the workspace has.  However,
+      // do_annotate currently expects to be given a file_t and revision_id
+      // corresponding to items already in the database.  This is a minor
+      // bug in the one-parent case (it means annotate will not show you
+      // changes in the working copy) but is fatal in the two-parent case.
+      // Thus, what we do instead is get the parent rosters, refuse to
+      // proceed if there's more than one, and give do_annotate what it
+      // wants.  See tests/two_parent_workspace_annotate.
+
+      revision_t rev;
+      app.work.get_work_rev(rev);
+      N(rev.edges.size() == 1,
+        F("with no revision selected, this command can only be used in "
+          "a single-parent workspace"));
+
+      rid = edge_old_revision(rev.edges.begin());
+
+      // this call will change to something else when the above bug is
+      // fixed, and so should not be merged with the identical call in
+      // the else branch.
+      app.db.get_roster(rid, roster);
+    }
   else
-    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      N(!null_id(rid), 
+        F("no revision for file '%s' in database") % file);
+      N(app.db.revision_exists(rid), 
+        F("no such revision '%s'") % rid);
 
-  N(!null_id(rid), 
-    F("no revision for file '%s' in database") % file);
-  N(app.db.revision_exists(rid), 
-    F("no such revision '%s'") % rid);
-
-  L(FL("annotate file file_path '%s'") % file);
+      app.db.get_roster(rid, roster);
+    }
 
   // find the version of the file requested
-  roster_t roster;
-  marking_map marks;
-  app.db.get_roster(rid, roster, marks);
   N(roster.has_node(sp), 
     F("no such file '%s' in revision '%s'") % file % rid);
   node_t node = roster.get_node(sp);
@@ -165,17 +190,16 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path_external(idx(args, 0)), 
-                          dat, app.lua);
+      read_data(file_path_external(idx(args, 0)), dat);
     }
   else
     {
-      dat = get_stdin();
+      dat = data(get_stdin());
     }
 
   hexenc<id> ident;
   calculate_ident(dat, ident);
-  cout << ident << "\n";
+  cout << ident << '\n';
 }
 
 static void
@@ -229,7 +253,12 @@ CMD(cat, N_("informative"),
   if (app.opts.revision_selectors.size() == 0)
     {
       app.require_workspace();
-      app.work.get_revision_id(rid);
+
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
+      N(parents.size() == 1,
+        F("this command can only be used in a single-parent workspace"));
+      rid = parent_id(parents.begin());
     }
   else
       complete(app, idx(app.opts.revision_selectors, 0)(), rid);
@@ -279,7 +308,12 @@ AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
   if (app.opts.revision_selectors.size() == 0)
     {
       app.require_workspace();
-      app.work.get_revision_id(rid);
+
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
+      N(parents.size() == 1,
+        F("this command can only be used in a single-parent workspace"));
+      rid = parent_id(parents.begin());
     }
   else
       complete(app, idx(app.opts.revision_selectors, 0)(), rid);

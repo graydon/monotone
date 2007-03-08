@@ -7,7 +7,7 @@ commit()
 base = base_revision()
 
 remove("testdir")
-check(mtn("drop", "testdir/foo", "testdir"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testdir/foo", "testdir"), 0, false, false)
 commit()
 
 revert_to(base)

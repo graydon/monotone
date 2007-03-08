@@ -29,6 +29,7 @@ pid_t process_spawn_redirected(char const * in,
                                char const * out,
                                char const * err,
                                char const * const argv[]);
+pid_t process_spawn_pipe(char const * const argv[], FILE** in, FILE** out);
 int process_wait(pid_t pid, int *res, int timeout = -1);// default infinite
 int process_kill(pid_t pid, int signal);
 int process_sleep(unsigned int seconds);
@@ -127,6 +128,12 @@ std::string os_strerror(os_err_t errnum);
 // Returns the processor time used by the current process, plus some
 // arbitrary constant, measured in seconds.
 double cpu_now();
+
+#ifdef WIN32_PLATFORM
+#include "win32/ssh_agent_platform.hh"
+#else
+#include "unix/ssh_agent_platform.hh"
+#endif
 
 // Local Variables:
 // mode: C++

@@ -1,9 +1,6 @@
 
 #include <algorithm>
 
-#include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include "charset.hh"
 #include "options.hh"
 #include "platform.hh"
@@ -154,6 +151,8 @@ options::options_type const & options::opts::all_options()
 # define OPTION(optset, name, hasarg, optstring, description)		\
   options::options_type const & options::opts::name()			\
   {									\
+    localize_monotone();                                                \
+                                                                        \
     static options::options_type val(optstring,				\
 				     gettext(description), hasarg,	\
 				     &options::set_ ## name ,		\

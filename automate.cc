@@ -8,7 +8,6 @@
 // PURPOSE.
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <sstream>
 #include <string>
@@ -33,6 +32,7 @@
 #include "vocab.hh"
 #include "globish.hh"
 #include "charset.hh"
+#include "safe_map.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -68,12 +68,12 @@ AUTOMATE(heads, N_("[BRANCH]"), options::opts::none)
 
   if (args.size() ==1 ) {
     // branchname was explicitly given, use that
-    app.opts.branch_name = idx(args, 0);
+    app.opts.branchname = branch_name(idx(args, 0)());
   }
   set<revision_id> heads;
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: ancestors
@@ -119,7 +119,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
   for (set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << "\n";
+      output << (*i).inner()() << '\n';
 }
 
 
@@ -163,7 +163,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
     }
   for (set<revision_id>::const_iterator i = descendents.begin();
        i != descendents.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 
@@ -191,7 +191,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
     }
   erase_ancestors(revs, app);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: attributes
@@ -225,10 +225,15 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
   file_path_external(idx(args,0)).split(path);
 
   roster_t base, current;
+  parent_map parents;
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  app.work.get_base_and_current_roster_shape(base, current, nis);
+  app.work.get_current_roster_shape(current, nis);
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+  base = parent_roster(parents.begin());
 
   // escalate if the given path is unknown to the current roster
   N(current.has_node(path),
@@ -263,7 +268,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
         node_t prev_node = base.get_node(path);
         
         // find the attribute in there
-        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first());
+        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first);
         I(j != prev_node->attrs.end());
         
         // was this dropped before? then ignore it
@@ -280,7 +285,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
           {
             node_t prev_node = base.get_node(path);
             full_attr_map_t::const_iterator j = 
-              prev_node->attrs.find(i->first());
+              prev_node->attrs.find(i->first);
             // attribute not found? this is new
             if (j == prev_node->attrs.end())
               {
@@ -303,7 +308,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
       
     basic_io::stanza st;
     st.push_str_triple(basic_io::syms::attr, i->first(), value);
-    st.push_str_pair(std::string("state"), state);
+    st.push_str_pair(symbol("state"), state);
     pr.print_stanza(st);
   }
   
@@ -334,7 +339,7 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
   toposort(revs, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: ancestry_difference
@@ -376,7 +381,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options
   toposort(ancestors, sorted, app);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: leaves
@@ -407,7 +412,7 @@ AUTOMATE(leaves, "", options::opts::none)
     leaves.erase(i->first);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
-    output << (*i).inner()() << "\n";
+    output << (*i).inner()() << '\n';
 }
 
 // Name: parents
@@ -432,7 +437,7 @@ AUTOMATE(parents, N_("REV"), options::opts::none)
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << "\n";
+          output << (*i).inner()() << '\n';
 }
 
 // Name: children
@@ -457,7 +462,7 @@ AUTOMATE(children, N_("REV"), options::opts::none)
   for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << "\n";
+          output << (*i).inner()() << '\n';
 }
 
 // Name: graph
@@ -510,8 +515,8 @@ AUTOMATE(graph, "", options::opts::none)
       output << (i->first).inner()();
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
-        output << " " << (*j).inner()();
-      output << "\n";
+        output << ' ' << (*j).inner()();
+      output << '\n';
     }
 }
 
@@ -538,7 +543,7 @@ AUTOMATE(select, N_("SELECTOR"), options::opts::none)
 
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    output << *i << "\n";
+    output << *i << '\n';
 }
 
 // consider a changeset with the following
@@ -713,13 +718,19 @@ AUTOMATE(inventory, "", options::opts::none)
   app.require_workspace();
 
   temp_node_id_source nis;
-  roster_t base, curr;
+  roster_t curr, base;
+  revision_t rev;
   inventory_map inventory;
   cset cs; MM(cs);
   path_set unchanged, changed, missing, unknown, ignored;
 
-  app.work.get_base_and_current_roster_shape(base, curr, nis);
-  make_cset(base, curr, cs);
+  app.work.get_current_roster_shape(curr, nis);
+  app.work.get_work_rev(rev);
+  N(rev.edges.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+
+  cs = edge_changes(rev.edges.begin());
+  app.db.get_roster(edge_old_revision(rev.edges.begin()), base);
 
   // The current roster (curr) has the complete set of registered nodes
   // conveniently with unchanged sha1 hash values.
@@ -770,11 +781,18 @@ AUTOMATE(inventory, "", options::opts::none)
 
       string path_suffix;
 
+      // ensure that directory nodes always get a trailing slash even
+      // if they're missing from the workspace or have been deleted
+      // but skip the root node which do not get this trailing slash appended
       if (curr.has_node(i->first))
         {
-          // Explicitly skip the root dir for now. The trailing / dir
-          // format isn't going to work here.
           node_t n = curr.get_node(i->first);
+          if (is_root_dir_t(n)) continue;
+          if (is_dir_t(n)) path_suffix = "/";
+        }
+      else if (base.has_node(i->first))
+        {
+          node_t n = base.get_node(i->first);
           if (is_root_dir_t(n)) continue;
           if (is_dir_t(n)) path_suffix = "/";
         }
@@ -785,17 +803,17 @@ AUTOMATE(inventory, "", options::opts::none)
 
       switch (i->second.pre_state)
         {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::DROPPED_PATH: output << "D"; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
+        case inventory_item::UNCHANGED_PATH: output << ' '; break;
+        case inventory_item::DROPPED_PATH: output << 'D'; break;
+        case inventory_item::RENAMED_PATH: output << 'R'; break;
         default: I(false); // invalid pre_state
         }
 
       switch (i->second.post_state)
         {
-        case inventory_item::UNCHANGED_PATH: output << " "; break;
-        case inventory_item::RENAMED_PATH: output << "R"; break;
-        case inventory_item::ADDED_PATH:   output << "A"; break;
+        case inventory_item::UNCHANGED_PATH: output << ' '; break;
+        case inventory_item::RENAMED_PATH: output << 'R'; break;
+        case inventory_item::ADDED_PATH:   output << 'A'; break;
         default: I(false); // invalid post_state
         }
 
@@ -803,20 +821,20 @@ AUTOMATE(inventory, "", options::opts::none)
         {
         case inventory_item::UNCHANGED_NODE:
           if (i->second.post_state == inventory_item::ADDED_PATH)
-            output << "P";
+            output << 'P';
           else
-            output << " ";
+            output << ' ';
           break;
-        case inventory_item::PATCHED_NODE: output << "P"; break;
-        case inventory_item::UNKNOWN_NODE: output << "U"; break;
-        case inventory_item::IGNORED_NODE: output << "I"; break;
-        case inventory_item::MISSING_NODE: output << "M"; break;
+        case inventory_item::PATCHED_NODE: output << 'P'; break;
+        case inventory_item::UNKNOWN_NODE: output << 'U'; break;
+        case inventory_item::IGNORED_NODE: output << 'I'; break;
+        case inventory_item::MISSING_NODE: output << 'M'; break;
         default: I(false); // invalid node_state
         }
 
-      output << " " << i->second.pre_id
-             << " " << i->second.post_id
-             << " " << i->first;
+      output << ' ' << i->second.pre_id
+             << ' ' << i->second.post_id
+             << ' ' << i->first;
 
       // FIXME: it's possible that a directory was deleted and a file
       // was added in it's place (or vice-versa) so we need something
@@ -825,7 +843,7 @@ AUTOMATE(inventory, "", options::opts::none)
 
       output << path_suffix;
 
-      output << "\n";
+      output << '\n';
     }
 }
 
@@ -903,17 +921,16 @@ AUTOMATE(get_revision, N_("[REVID]"), options::opts::none)
 
   if (args.size() == 0)
     {
-      roster_t old_roster, new_roster;
-      revision_id old_revision_id;
+      roster_t new_roster;
+      parent_map old_rosters;
       revision_t rev;
 
       app.require_workspace();
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_parent_rosters(old_rosters);
+      app.work.get_current_roster_shape(new_roster, nis);
       app.work.update_current_roster_from_filesystem(new_roster);
 
-      app.work.get_revision_id(old_revision_id);
-      make_revision(old_revision_id, old_roster, new_roster, rev);
-
+      make_revision(old_rosters, new_roster, rev);
       calculate_ident(rev, ident);
       write_revision(rev, dat);
     }
@@ -943,9 +960,12 @@ AUTOMATE(get_base_revision_id, "", options::opts::none)
 
   app.require_workspace();
 
-  revision_id rid;
-  app.work.get_revision_id(rid);
-  output << rid << "\n";
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+
+  output << parent_id(parents.begin()) << '\n';
 }
 
 // Name: get_current_revision_id
@@ -964,21 +984,22 @@ AUTOMATE(get_current_revision_id, "", options::opts::none)
 
   app.require_workspace();
 
-  roster_t old_roster, new_roster;
-  revision_id old_revision_id, new_revision_id;
+  parent_map parents;
+  roster_t new_roster;
+  revision_id new_revision_id;
   revision_t rev;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, nis);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_revision_id(old_revision_id);
-  make_revision(old_revision_id, old_roster, new_roster, rev);
+  app.work.get_parent_rosters(parents);
+  make_revision(parents, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
 
-  output << new_revision_id << "\n";
+  output << new_revision_id << '\n';
 }
 
 // Name: get_manifest_of
@@ -1029,15 +1050,14 @@ AUTOMATE(get_manifest_of, N_("[REVID]"), options::opts::none)
 
   manifest_data dat;
   manifest_id mid;
-  roster_t old_roster, new_roster;
-  temp_node_id_source nis;
+  roster_t new_roster;
 
   if (args.size() == 0)
     {
-      revision_id old_revision_id;
+      temp_node_id_source nis;
 
       app.require_workspace();
-      app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+      app.work.get_current_roster_shape(new_roster, nis);
       app.work.update_current_roster_from_filesystem(new_roster);
     }
   else
@@ -1104,7 +1124,7 @@ AUTOMATE(packets_for_certs, N_("REVID"), options::opts::none)
 
   N(app.db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
-  app.db.get_revision_certs(r_id, certs);
+  app.get_project().get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs,i));
 }
@@ -1228,7 +1248,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
   for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << "\n";
+      output << (*i).inner()() << '\n';
 }
 
 // Name: branches
@@ -1248,15 +1268,16 @@ AUTOMATE(branches, "", options::opts::none)
   N(args.size() == 0,
     F("no arguments needed"));
 
-  vector<string> names;
+  set<branch_name> names;
 
-  app.db.get_branches(names);
-  sort(names.begin(), names.end());
+  app.get_project().get_branch_list(names);
 
-  for (vector<string>::const_iterator i = names.begin();
+  for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
-    if (!app.lua.hook_ignore_branch(*i))
-      output << (*i) << "\n";
+    {
+      if (!app.lua.hook_ignore_branch(*i))
+        output << (*i) << '\n';
+    }
 }
 
 // Name: tags
@@ -1296,60 +1317,53 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
   N(args.size() < 2,
     F("wrong argument count"));
 
-  utf8 incl("*");
+  globish incl("*");
   bool filtering(false);
   
   if (args.size() == 1) {
-    incl = idx(args, 0);
+    incl = globish(idx(args, 0)());
     filtering = true;
   }
 
-  globish_matcher match(incl, utf8());
+  globish_matcher match(incl, globish());
   basic_io::printer prt;
   basic_io::stanza stz;
   stz.push_str_pair(symbol("format_version"), "1");
   prt.print_stanza(stz);
   
-  vector<revision<cert> > tag_certs;
-  app.db.get_revision_certs(tag_cert_name, tag_certs);
+  set<tag_t> tags;
+  app.get_project().get_tags(tags);
 
-  for (vector<revision<cert> >::const_iterator i = tag_certs.begin();
-       i != tag_certs.end(); ++i) {
-
-    cert tagcert(i->inner());
-    vector<revision<cert> > branch_certs;
-    app.db.get_revision_certs(tagcert.ident, branch_cert_name, branch_certs);
+  for (set<tag_t>::const_iterator tag = tags.begin();
+       tag != tags.end(); ++tag)
+    {
+      set<branch_name> branches;
+      app.get_project().get_revision_branches(tag->ident, branches);
     
-    bool show(!filtering);
-    vector<string> branch_names;
+      bool show(!filtering);
+      vector<string> branch_names;
 
-    for (vector<revision<cert> >::const_iterator j = branch_certs.begin();
-         j != branch_certs.end(); ++j) {
-
-      cert branchcert(j->inner());
-      cert_value branch;
-      decode_base64(branchcert.value, branch);
-      string branch_name(branch());
+      for (set<branch_name>::const_iterator branch = branches.begin();
+           branch != branches.end(); ++branch)
+        {
+          if (app.lua.hook_ignore_branch(*branch))
+            continue;
       
-      if (app.lua.hook_ignore_branch(branch_name))
-        continue;
-      
-      if (!show && match(branch_name)) 
-        show = true;
-      branch_names.push_back(branch_name);
-    }
+          if (!show && match((*branch)()))
+            show = true;
+          branch_names.push_back((*branch)());
+        }
 
-    if (show) {
-      basic_io::stanza stz;
-      cert_value tag;
-      decode_base64(tagcert.value, tag);
-      stz.push_str_pair(symbol("tag"), tag());
-      stz.push_hex_pair(symbol("revision"), tagcert.ident);
-      stz.push_str_pair(symbol("signer"), tagcert.key());
-      stz.push_str_multi(symbol("branches"), branch_names);
-      prt.print_stanza(stz);
+      if (show)
+        {
+          basic_io::stanza stz;
+          stz.push_str_pair(symbol("tag"), tag->name());
+          stz.push_hex_pair(symbol("revision"), tag->ident.inner());
+          stz.push_str_pair(symbol("signer"), tag->key());
+          stz.push_str_multi(symbol("branches"), branch_names);
+          prt.print_stanza(stz);
+        }
     }
-  }
   output.write(prt.buf.data(), prt.buf.size());
 }
 
@@ -1455,20 +1469,23 @@ AUTOMATE(get_option, N_("OPTION"), options::opts::none)
   // this command requires a workspace to be run on
   app.require_workspace();
 
-  utf8 database_option, branch_option, key_option, keydir_option;
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
   app.work.get_ws_options(database_option, branch_option,
                           key_option, keydir_option);
 
   string opt = args[0]();
 
   if (opt == "database")
-    output << database_option << "\n"; 
+    output << database_option << '\n'; 
   else if (opt == "branch")
-    output << branch_option << "\n";
+    output << branch_option << '\n';
   else if (opt == "key")
-    output << key_option << "\n";
+    output << key_option << '\n';
   else if (opt == "keydir")
-    output << keydir_option << "\n";
+    output << keydir_option << '\n';
   else
     N(false, F("'%s' is not a recognized workspace option") % opt);
 }
@@ -1522,7 +1539,6 @@ AUTOMATE(get_content_changed, N_("REV FILE"), options::opts::none)
        i != mark.file_content.end(); ++i)
     {
       basic_io::stanza st;
-      revision_id old_ident = i->inner();
       st.push_hex_pair(basic_io::syms::content_mark, i->inner());
       prt.print_stanza(st);
     }
@@ -1588,6 +1604,204 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
       prt.print_stanza(st);
     }
   output.write(prt.buf.data(), prt.buf.size());
+}
+
+// Name: put_file
+// Arguments:
+//   base FILEID (optional)
+//   file contents (binary, intended for automate stdio use)
+// Added in: 4.1
+// Purpose:
+//   Store a file in the database.
+//   Optionally encode it as a file_delta
+// Output format:
+//   The ID of the new file (40 digit hex string)
+// Error conditions:
+//   a runtime exception is thrown if base revision is not available
+AUTOMATE(put_file, N_("[FILEID] CONTENTS"), options::opts::none)
+{
+  N(args.size() == 1 || args.size() == 2,
+    F("wrong argument count"));
+
+  file_id sha1sum;
+  transaction_guard tr(app.db);
+  if (args.size() == 1)
+    {
+      file_data dat(idx(args, 0)());
+      calculate_ident(dat, sha1sum);
+      
+      if (!app.db.file_version_exists(sha1sum))
+        app.db.put_file(sha1sum, dat);
+    }
+  else if (args.size() == 2)
+    {
+      file_data dat(idx(args, 1)());
+      calculate_ident(dat, sha1sum);
+      file_id base_id(idx(args, 0)());
+      N(app.db.file_version_exists(base_id),
+        F("no file version %s found in database") % base_id);
+     
+      if (!app.db.file_version_exists(sha1sum))
+        {
+          file_data olddat;
+          app.db.get_file_version(base_id, olddat);
+          delta del;
+          diff(olddat.inner(), dat.inner(), del);
+          L(FL("data size %d, delta size %d") % dat.inner()().size() % del().size());
+          if (dat.inner()().size() <= del().size())
+            // the data is smaller or of equal size to the patch
+            app.db.put_file(sha1sum, dat);
+          else
+            app.db.put_file_version(base_id, sha1sum, file_delta(del));
+        }
+    }
+  else I(false);
+
+  tr.commit();
+  output << sha1sum << '\n';
+}
+
+// Name: put_revision
+// Arguments:
+//   revision-data
+// Added in: 4.1
+// Purpose:
+//   Store a revision into the database.
+// Output format:
+//   The ID of the new revision
+// Error conditions:
+//   none
+AUTOMATE(put_revision, N_("REVISION-DATA"), options::opts::none)
+{
+  N(args.size() == 1,
+    F("wrong argument count"));
+
+  revision_t rev;
+  read_revision(revision_data(idx(args, 0)()), rev);
+
+  // recalculate manifest
+  temp_node_id_source nis;
+  rev.new_manifest = manifest_id();
+  for (edge_map::const_iterator e = rev.edges.begin(); e != rev.edges.end(); ++e)
+    {
+      // calculate new manifest
+      roster_t old_roster;
+      if (!null_id(e->first)) app.db.get_roster(e->first, old_roster);
+      roster_t new_roster = old_roster;
+      editable_roster_base eros(new_roster, nis);
+      e->second->apply_to(eros);
+      if (null_id(rev.new_manifest))
+        // first edge, initialize manifest
+        calculate_ident(new_roster, rev.new_manifest);
+      else
+        // following edge, make sure that all csets end at the same manifest
+        {
+          manifest_id calculated;
+          calculate_ident(new_roster, calculated);
+          I(calculated == rev.new_manifest);
+        }
+    }
+
+  revision_id id;
+  calculate_ident(rev, id);
+
+  if (app.db.revision_exists(id))
+    P(F("revision %s already present in the database, skipping") % id);
+  else
+    {
+      transaction_guard tr(app.db);
+      rev.made_for = made_for_database;
+      app.db.put_revision(id, rev);
+      tr.commit();
+    }
+
+  output << id << '\n';
+}
+
+// Name: cert
+// Arguments:
+//   revision ID
+//   certificate name
+//   certificate value
+// Added in: 4.1
+// Purpose:
+//   Add a revision certificate (like mtn cert).
+// Output format:
+//   nothing
+// Error conditions:
+//   none
+AUTOMATE(cert, N_("REVISION-ID NAME VALUE"), options::opts::none)
+{
+  N(args.size() == 3,
+    F("wrong argument count"));
+
+  cert c;
+  revision_id rid(idx(args, 0)());
+
+  transaction_guard guard(app.db);
+  N(app.db.revision_exists(rid),
+    F("no such revision '%s'") % rid);
+  make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
+                   cert_value(idx(args, 2)()), app, c);
+  revision<cert> rc(c);
+  packet_db_writer dbw(app);
+  dbw.consume_revision_cert(rc);
+  guard.commit();
+}
+
+// Name: db_set
+// Arguments:
+//   variable domain
+//   variable name
+//   veriable value
+// Added in: 4.1
+// Purpose:
+//   Set a database variable (like mtn database set)
+// Output format:
+//   nothing
+// Error conditions:
+//   none
+AUTOMATE(db_set, N_("DOMAIN NAME VALUE"), options::opts::none)
+{
+  N(args.size() == 3,
+    F("wrong argument count"));
+  
+  var_domain domain = var_domain(idx(args, 0)());
+  utf8 name = idx(args, 1);
+  utf8 value = idx(args, 2);
+  var_key key(domain, var_name(name()));
+  app.db.set_var(key, var_value(value()));
+}
+
+// Name: db_get
+// Arguments:
+//   variable domain
+//   variable name
+// Added in: 4.1
+// Purpose:
+//   Get a database variable (like mtn database ls vars | grep NAME)
+// Output format:
+//   variable value
+// Error conditions:
+//   a runtime exception is thrown if the variable is not set
+AUTOMATE(db_get, N_("DOMAIN NAME"), options::opts::none)
+{
+  N(args.size() == 2,
+    F("wrong argument count"));
+
+  var_domain domain = var_domain(idx(args, 0)());
+  utf8 name = idx(args, 1);
+  var_key key(domain, var_name(name()));
+  var_value value;
+  try
+    {
+      app.db.get_var(key, value);
+    }
+  catch (std::logic_error)
+    {
+      N(false, F("variable not found"));
+    }
+  output << value();
 }
 
 // Local Variables:

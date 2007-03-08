@@ -30,6 +30,7 @@
 #include "database.hh"
 #include "hash_map.hh"
 #include "keys.hh"
+#include "platform-wrapped.hh"
 #include "revision.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
@@ -37,6 +38,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "vocab_cast.hh"
 #include "xdelta.hh"
 #include "epoch.hh"
 #include "graph.hh"
@@ -53,7 +55,6 @@
 // see file schema.sql for the text of the schema.
 
 using std::deque;
-using std::endl;
 using std::istream;
 using std::ifstream;
 using std::make_pair;
@@ -101,9 +102,6 @@ namespace
     };
     return q;
   }
-
-  // track all open databases for close_all_databases() handler
-  set<sqlite3*> sql_contexts;
 }
 
 struct query
@@ -127,13 +125,7 @@ struct query
 
 database::database(system_path const & fn) :
   filename(fn),
-  // nb. update this if you change the schema. unfortunately we are not
-  // using self-digesting schemas due to comment irregularities and
-  // non-alphabetic ordering of tables in sql source files. we could create
-  // a temporary db, write our intended schema into it, and read it back,
-  // but this seems like it would be too rude. possibly revisit this issue.
   __sql(NULL),
-  schema("48fd5d84f1e5a949ca093e87e5ac558da6e5956d"),
   transaction_level(0),
   roster_cache(constants::db_roster_cache_sz,
                roster_writeback_manager(*this)),
@@ -151,19 +143,6 @@ database::is_dbfile(any_path const & file)
 }
 
 void
-database::check_schema()
-{
-  string db_schema_id;
-  calculate_schema_id (__sql, db_schema_id);
-  N (schema == db_schema_id,
-     F("layout of database %s doesn't match this version of monotone\n"
-       "wanted schema %s, got %s\n"
-       "try '%s db migrate' to upgrade\n"
-       "(this is irreversible; you may want to make a backup copy first)")
-     % filename % schema % db_schema_id % ui.prog_name);
-}
-
-void
 database::check_is_not_rosterified()
 {
   results res;
@@ -177,23 +156,33 @@ void
 database::check_format()
 {
   results res;
-  query manifests_query("SELECT 1 FROM manifests LIMIT 1");
-  query revisions_query("SELECT 1 FROM revisions LIMIT 1");
-  query rosters_query("SELECT 1 FROM rosters LIMIT 1");
-  query heights_query("SELECT 1 FROM heights LIMIT 1");
 
-  fetch(res, one_col, any_rows, revisions_query);
-  bool have_revisions = !res.empty();
-  fetch(res, one_col, any_rows, manifests_query);
+  // Check for manifests, revisions, rosters, and heights.
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM manifests LIMIT 1"));
   bool have_manifests = !res.empty();
-  fetch(res, one_col, any_rows, rosters_query);
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM revisions LIMIT 1"));
+  bool have_revisions = !res.empty();
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM rosters LIMIT 1"));
   bool have_rosters = !res.empty();
-  fetch(res, one_col, any_rows, heights_query);
+  fetch(res, one_col, any_rows, query("SELECT 1 FROM heights LIMIT 1"));
   bool have_heights = !res.empty();
+  
 
-  if (have_manifests)
+  if (!have_manifests)
     {
-      I(!have_rosters);
+      // Must have been changesetified and rosterified already.
+      // Or else the database was just created.
+      // Do we need to regenerate cached data?
+      E(!have_revisions || (have_rosters && have_heights),
+        F("database %s lacks some cached data\n"
+          "run '%s db regenerate_caches' to restore use of this database")
+        % filename % ui.prog_name);
+    }
+  else
+    {
+      // The rosters and heights tables should be empty.
+      I(!have_rosters && !have_heights);
+
       // they need to either changesetify or rosterify.  which?
       if (have_revisions)
         E(false,
@@ -211,19 +200,6 @@ database::check_format()
             "this is a very old database; it needs to be upgraded\n"
             "please see README.changesets for details")
           % filename);
-    }
-  else
-    {
-      // no manifests
-      if (have_revisions && (!have_rosters || !have_heights))
-        // must be an upgrade that requires rosters be regenerated
-        E(false,
-          F("database %s misses some cached data\n"
-            "run '%s db regenerate_caches' to restore use of this database")
-          % filename % ui.prog_name);
-      else
-        // we're all good.
-        ;
     }
 }
 
@@ -248,111 +224,50 @@ database::set_app(app_state * app)
   __app = app;
 }
 
-static void
-check_sqlite_format_version(system_path const & filename)
-{
-  // sqlite 3 files begin with this constant string
-  // (version 2 files begin with a different one)
-  string version_string("SQLite format 3");
-
-  ifstream file(filename.as_external().c_str());
-  N(file, F("unable to probe database version in file %s") % filename);
-
-  for (string::const_iterator i = version_string.begin();
-       i != version_string.end(); ++i)
-    {
-      char c;
-      file.get(c);
-      N(c == *i, F("database %s is not an sqlite version 3 file, "
-                   "try dump and reload") % filename);
-    }
-}
-
-
-static void
-assert_sqlite3_ok(sqlite3 *s)
-{
-  int errcode = sqlite3_errcode(s);
-
-  if (errcode == SQLITE_OK) return;
-
-  const char * errmsg = sqlite3_errmsg(s);
-
-  // first log the code so we can find _out_ what the confusing code
-  // was... note that code does not uniquely identify the errmsg, unlike
-  // errno's.
-  L(FL("sqlite error: %d: %s") % errcode % errmsg);
-  
-  // sometimes sqlite is not very helpful
-  // so we keep a table of errors people have gotten and more helpful versions
-  // note: if you update this, try to keep calculate_schema_id() in
-  // schema_migration.cc consistent.
-  string auxiliary_message = "";
-  if (errcode == SQLITE_ERROR)
-    {
-      auxiliary_message += _("make sure database and containing directory are writeable\n"
-                             "and you have not run out of disk space");
-    }
-  // if the last message is empty, the \n will be stripped off too
-  E(false, F("sqlite error: %s\n%s") % errmsg % auxiliary_message);
-}
-
 struct sqlite3 *
-database::sql(bool init, bool migrating_format)
+database::sql(enum open_mode mode)
 {
   if (! __sql)
     {
       check_filename();
-
-      if (! init)
-        {
-          check_db_exists();
-          check_sqlite_format_version(filename);
-        }
-
+      check_db_exists();
       open();
 
-      if (init)
+      if (mode != schema_bypass_mode)
         {
-          sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
-          assert_sqlite3_ok(__sql);
+          check_sql_schema(__sql, filename);
+
+          if (mode != format_bypass_mode)
+            check_format();
         }
 
-      check_schema();
       install_functions(__app);
-
-      if (!migrating_format)
-        check_format();
     }
   else
-    {
-      I(!init);
-      I(!migrating_format);
-    }
+    I(mode == normal_mode);
+
   return __sql;
 }
 
 void
 database::initialize()
 {
-  if (__sql)
-    throw oops("cannot initialize database while it is open");
+  check_filename();
+  check_db_nonexistent();
+  open();
 
-  require_path_is_nonexistent(filename,
-                              F("could not initialize database: %s: already exists")
-                              % filename);
+  sqlite3_exec(__sql, schema_constant, NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
 
-  system_path journal(filename.as_internal() + "-journal");
-  require_path_is_nonexistent(journal,
-                              F("existing (possibly stale) journal file '%s' "
-                                "has same stem as new database '%s'\n"
-                                "cancelling database creation")
-                              % journal % filename);
+  sqlite3_exec(__sql, (FL("PRAGMA user_version = %u;")
+                       % mtn_creator_code).str().c_str(), NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
 
-  sqlite3 *s = sql(true);
-  I(s != NULL);
+  // make sure what we wanted is what we got
+  check_sql_schema(__sql, filename);
+  
+  close();
 }
-
 
 struct
 dump_request
@@ -378,7 +293,7 @@ dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
           const char *val = (const char*) sqlite3_column_blob(stmt, i);
           int bytes = sqlite3_column_bytes(stmt, i);
           out << encode_hexenc(string(val,val+bytes));
-          out << "'";
+          out << '\'';
         }
       else
         {
@@ -387,7 +302,7 @@ dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
             out << "NULL";
           else
             {
-              out << "'";
+              out << '\'';
               for (const unsigned char *cp = val; *cp; ++cp)
                 {
                   if (*cp == '\'')
@@ -395,7 +310,7 @@ dump_row(ostream &out, sqlite3_stmt *stmt, string const& table_name)
                   else
                     out << *cp;
                 }
-              out << "'";
+              out << '\'';
             }
         }
     }
@@ -418,7 +333,7 @@ dump_table_cb(void *data, int n, char **vals, char **cols)
   string table_name(vals[0]);
   string query = "SELECT * FROM " + table_name;
   sqlite3_stmt *stmt = 0;
-  sqlite3_prepare(dump->sql, query.c_str(), -1, &stmt, NULL);
+  sqlite3_prepare_v2(dump->sql, query.c_str(), -1, &stmt, NULL);
   assert_sqlite3_ok(dump->sql);
 
   int stepresult = SQLITE_DONE;
@@ -452,13 +367,24 @@ dump_index_cb(void *data, int n, char **vals, char **cols)
   return 0;
 }
 
+static int
+dump_user_version_cb(void *data, int n, char **vals, char **cols)
+{
+  dump_request *dump = reinterpret_cast<dump_request *>(data);
+  I(dump != NULL);
+  I(dump->sql != NULL);
+  I(vals != NULL);
+  I(vals[0] != NULL);
+  I(n == 1);
+  *(dump->out) << "PRAGMA user_version = " << vals[0] << ";\n";
+  return 0;
+}
+
 void
 database::dump(ostream & out)
 {
-  // don't care about schema checking etc.
-  check_filename();
-  check_db_exists();
-  open();
+  ensure_open_for_maintenance();
+
   {
     transaction_guard guard(*this);
     dump_request req;
@@ -479,10 +405,13 @@ database::dump(ostream & out)
                           "ORDER BY name",
                           dump_index_cb, &req, NULL);
     assert_sqlite3_ok(req.sql);
+    res = sqlite3_exec(req.sql,
+                       "PRAGMA user_version;",
+                       dump_user_version_cb, &req, NULL);
+    assert_sqlite3_ok(req.sql);
     out << "COMMIT;\n";
     guard.commit();
   }
-  close();
 }
 
 void
@@ -492,10 +421,7 @@ database::load(istream & in)
   string sql_stmt;
 
   check_filename();
-
-  require_path_is_nonexistent(filename,
-                              F("cannot create %s; it already exists") % filename);
-
+  check_db_nonexistent();
   open();
 
   // the page size can only be set before any other commands have been executed
@@ -514,16 +440,17 @@ database::load(istream & in)
     }
 
   assert_sqlite3_ok(__sql);
-  execute(query("ANALYZE"));
 }
 
 
 void
 database::debug(string const & sql, ostream & out)
 {
+  ensure_open_for_maintenance();
+
   results res;
   fetch(res, any_cols, any_rows, query(sql));
-  out << "'" << sql << "' -> " << res.size() << " rows\n" << endl;
+  out << '\'' << sql << "' -> " << res.size() << " rows\n\n";
   for (size_t i = 0; i < res.size(); ++i)
     {
       for (size_t j = 0; j < res[i].size(); ++j)
@@ -532,137 +459,246 @@ database::debug(string const & sql, ostream & out)
             out << " | ";
           out << res[i][j];
         }
-      out << endl;
+      out << '\n';
     }
 }
 
-
-namespace
+// Subroutine of info().  This compares strings that might either be numbers
+// or error messages surrounded by square brackets.  We want the longest
+// number, even if there's an error message that's longer than that.
+static bool longest_number(string a, string b)
 {
-  unsigned long
-  add(unsigned long count, unsigned long & total)
-  {
-    total += count;
-    return count;
-  }
+  if(a.length() > 0 && a[0] == '[')
+    return true;  // b is longer
+  if(b.length() > 0 && b[0] == '[')
+    return false; // a is longer
+
+  return a.length() < b.length();
 }
+
+// Subroutine of info() and some things it calls.
+// Given an informative_failure which is believed to represent an SQLite
+// error, either return a string version of the error message (if it was an
+// SQLite error) or rethrow the execption (if it wasn't).
+static string
+format_sqlite_error_for_info(informative_failure const & e)
+{
+  string err(e.what());
+  string prefix = _("error: ");
+  prefix.append(_("sqlite error: "));
+  if (err.find(prefix) != 0)
+    throw;
+
+  err.replace(0, prefix.length(), "[");
+  string::size_type nl = err.find('\n');
+  if (nl != string::npos)
+    err.erase(nl);
+
+  err.append("]");
+  return err;
+}
+
+// Subroutine of info().  Pretty-print the database's "creator code", which
+// is a 32-bit unsigned number that we interpret as a four-character ASCII
+// string, provided that all four characters are graphic.  (On disk, it's
+// stored in the "user version" field of the database.)
+static string
+format_creator_code(uint32_t code)
+{
+  char buf[5];
+  string result;
+
+  if (code == 0)
+    return _("not set");
+
+  buf[4] = '\0';
+  buf[3] = ((code & 0x000000ff) >>  0);
+  buf[2] = ((code & 0x0000ff00) >>  8);
+  buf[1] = ((code & 0x00ff0000) >> 16);
+  buf[0] = ((code & 0xff000000) >> 24);
+
+  if (isgraph(buf[0]) && isgraph(buf[1]) && isgraph(buf[2]) && isgraph(buf[3]))
+    result = (FL("%s (0x%08x)") % buf % code).str();
+  else
+    result = (FL("0x%08x") % code).str();
+  if (code != mtn_creator_code)
+    result += _(" (not a monotone database)");
+  return result;
+}
+
 
 void
 database::info(ostream & out)
 {
-  string id;
-  calculate_schema_id(sql(), id);
+  // don't check the schema
+  ensure_open_for_maintenance();
 
-  unsigned long total = 0UL;
+  // do a dummy query to confirm that the database file is an sqlite3
+  // database.  (this doesn't happen on open() because sqlite postpones the
+  // actual file open until the first access.  we can't piggyback it on the
+  // query of the user version because there's a bug in sqlite 3.3.10:
+  // the routine that reads meta-values from the database header does not
+  // check the file format.  reported as sqlite bug #2182.)
+  sqlite3_exec(__sql, "SELECT 1 FROM sqlite_master LIMIT 0", 0, 0, 0);
+  assert_sqlite3_ok(__sql);
 
-  u64 num_nodes;
+  uint32_t ccode;
   {
     results res;
-    fetch(res, one_col, any_rows, query("SELECT node FROM next_roster_node_number"));
-    if (res.empty())
-      num_nodes = 0;
-    else
+    fetch(res, one_col, one_row, query("PRAGMA user_version"));
+    I(res.size() == 1);
+    ccode = lexical_cast<uint32_t>(res[0][0]);
+  }
+
+  vector<string> counts;
+  counts.push_back(count("rosters"));
+  counts.push_back(count("roster_deltas"));
+  counts.push_back(count("files"));
+  counts.push_back(count("file_deltas"));
+  counts.push_back(count("revisions"));
+  counts.push_back(count("revision_ancestry"));
+  counts.push_back(count("revision_certs"));
+
+  {
+    results res;
+    try
       {
-        I(res.size() == 1);
-        num_nodes = lexical_cast<u64>(res[0][0]) - 1;
+        fetch(res, one_col, any_rows,
+              query("SELECT node FROM next_roster_node_number"));
+        if (res.empty())
+          counts.push_back("0");
+        else
+          {
+            I(res.size() == 1);
+            counts.push_back((F("%u")
+                              % (lexical_cast<u64>(res[0][0]) - 1)).str());
+          }
+      }
+    catch (informative_failure const & e)
+      {
+        counts.push_back(format_sqlite_error_for_info(e));
       }
   }
 
-#define SPACE_USAGE(TABLE, COLS) add(space_usage(TABLE, COLS), total)
+  vector<string> bytes;
+  {
+    u64 total = 0;
+    bytes.push_back(space("rosters",
+                          "length(id) + length(checksum) + length(data)",
+                          total));
+    bytes.push_back(space("roster_deltas",
+                          "length(id) + length(checksum)"
+                          "+ length(base) + length(delta)", total));
+    bytes.push_back(space("files", "length(id) + length(data)", total));
+    bytes.push_back(space("file_deltas",
+                          "length(id) + length(base) + length(delta)", total));
+    bytes.push_back(space("revisions", "length(id) + length(data)", total));
+    bytes.push_back(space("revision_ancestry",
+                          "length(parent) + length(child)", total));
+    bytes.push_back(space("revision_certs",
+                          "length(hash) + length(id) + length(name)"
+                          "+ length(value) + length(keypair)"
+                          "+ length(signature)", total));
+    bytes.push_back(space("heights", "length(revision) + length(height)",
+                          total));
+    bytes.push_back((F("%u") % total).str());
+  }
 
-  out << ( \
-    F("schema version    : %s\n"
+  // pad each vector's strings on the left with spaces to make them all the
+  // same length
+  {
+    string::size_type width
+      = max_element(counts.begin(), counts.end(), longest_number)->length();
+    for(vector<string>::iterator i = counts.begin(); i != counts.end(); i++)
+      if (width > i->length() && (*i)[0] != '[')
+        i->insert(0, width - i->length(), ' ');
+
+    width = max_element(bytes.begin(), bytes.end(), longest_number)->length();
+    for(vector<string>::iterator i = bytes.begin(); i != bytes.end(); i++)
+      if (width > i->length() && (*i)[0] != '[')
+        i->insert(0, width - i->length(), ' ');
+  }
+
+  i18n_format form =
+    F("creator code      : %s\n"
+      "schema version    : %s\n"
       "counts:\n"
-      "  full rosters    : %u\n"
-      "  roster deltas   : %u\n"
-      "  full files      : %u\n"
-      "  file deltas     : %u\n"
-      "  revisions       : %u\n"
-      "  ancestry edges  : %u\n"
-      "  certs           : %u\n"
-      "  logical files   : %u\n"
+      "  full rosters    : %s\n"
+      "  roster deltas   : %s\n"
+      "  full files      : %s\n"
+      "  file deltas     : %s\n"
+      "  revisions       : %s\n"
+      "  ancestry edges  : %s\n"
+      "  certs           : %s\n"
+      "  logical files   : %s\n"
       "bytes:\n"
-      "  full rosters    : %u\n"
-      "  roster deltas   : %u\n"
-      "  full files      : %u\n"
-      "  file deltas     : %u\n"
-      "  revisions       : %u\n"
-      "  cached ancestry : %u\n"
-      "  certs           : %u\n"
-      "  heights         : %u\n"
-      "  total           : %u\n"
+      "  full rosters    : %s\n"
+      "  roster deltas   : %s\n"
+      "  full files      : %s\n"
+      "  file deltas     : %s\n"
+      "  revisions       : %s\n"
+      "  cached ancestry : %s\n"
+      "  certs           : %s\n"
+      "  heights         : %s\n"
+      "  total           : %s\n"
       "database:\n"
-      "  page size       : %u\n"
-      "  cache size      : %u"
-      )
-    % id
-    // counts
-    % count("rosters")
-    % count("roster_deltas")
-    % count("files")
-    % count("file_deltas")
-    % count("revisions")
-    % count("revision_ancestry")
-    % count("revision_certs")
-    % num_nodes
-    // bytes
-    % SPACE_USAGE("rosters", "length(id) + length(checksum) + length(data)")
-    % SPACE_USAGE("roster_deltas", "length(id) + length(checksum) + length(base) + length(delta)")
-    % SPACE_USAGE("files", "length(id) + length(data)")
-    % SPACE_USAGE("file_deltas", "length(id) + length(base) + length(delta)")
-    % SPACE_USAGE("revisions", "length(id) + length(data)")
-    % SPACE_USAGE("revision_ancestry", "length(parent) + length(child)")
-    % SPACE_USAGE("revision_certs", "length(hash) + length(id) + length(name)"
-                  " + length(value) + length(keypair) + length(signature)")
-    % SPACE_USAGE("heights","length(revision) + length(height)")
-    % total
-    % page_size()
-    % cache_size()
-    ) << "\n"; // final newline is kept out of the translation
+      "  page size       : %s\n"
+      "  cache size      : %s"
+      );
 
-#undef SPACE_USAGE
+  form = form % format_creator_code(ccode);
+  form = form % describe_sql_schema(__sql);
+
+  for (vector<string>::iterator i = counts.begin(); i != counts.end(); i++)
+    form = form % *i;
+
+  for (vector<string>::iterator i = bytes.begin(); i != bytes.end(); i++)
+    form = form % *i;
+
+  form = form % page_size();
+  form = form % cache_size();
+
+  out << form.str() << '\n'; // final newline is kept out of the translation
 }
 
 void
 database::version(ostream & out)
 {
-  string id;
-
-  check_filename();
-  check_db_exists();
-  open();
-
-  calculate_schema_id(__sql, id);
-
-  close();
-
-  out << F("database schema version: %s") % id << endl;
+  ensure_open_for_maintenance();
+  out << (F("database schema version: %s") % describe_sql_schema(__sql)).str()
+      << '\n';
 }
 
 void
 database::migrate()
 {
-  check_filename();
-  check_db_exists();
-  open();
+  ensure_open_for_maintenance();
+  migrate_sql_schema(__sql, *__app);
+}
 
-  migrate_monotone_schema(__sql, __app);
-
-  close();
+void
+database::test_migration_step(string const & schema)
+{
+  ensure_open_for_maintenance();
+  ::test_migration_step(__sql, *__app, schema);
 }
 
 void
 database::ensure_open()
 {
-  sqlite3 *s = sql();
-  I(s != NULL);
+  sql();
 }
 
 void
 database::ensure_open_for_format_changes()
 {
-  sqlite3 *s = sql(false, true);
-  I(s != NULL);
+  sql(format_bypass_mode);
+}
+
+void
+database::ensure_open_for_maintenance()
+{
+  sql(schema_bypass_mode);
 }
 
 database::~database()
@@ -676,7 +712,8 @@ database::~database()
   // trigger destructors to finalize cached statements
   statement_cache.clear();
 
-  close();
+  if (__sql)
+    close();
 }
 
 void
@@ -707,7 +744,7 @@ database::fetch(results & res,
       I(i != statement_cache.end());
 
       const char * tail;
-      sqlite3_prepare(sql(), query.sql_cmd.c_str(), -1, i->second.stmt.paddr(), &tail);
+      sqlite3_prepare_v2(sql(), query.sql_cmd.c_str(), -1, i->second.stmt.paddr(), &tail);
       assert_sqlite3_ok(sql());
       L(FL("prepared statement %s") % query.sql_cmd);
 
@@ -961,7 +998,7 @@ database::file_or_manifest_base_exists(hexenc<id> const & ident,
                                        std::string const & table)
 {
   // just check for a delayed file, since there are no delayed manifests
-  if (have_delayed_file(ident))
+  if (have_delayed_file(file_id(ident)))
     return true;
   return table_has_entry(ident(), "id", table);
 }
@@ -995,24 +1032,40 @@ database::delta_exists(string const & ident,
   return table_has_entry(ident, "id", table);
 }
 
-unsigned long
+string
 database::count(string const & table)
 {
-  results res;
-  query q("SELECT COUNT(*) FROM " + table);
-  fetch(res, one_col, one_row, q);
-  return lexical_cast<unsigned long>(res[0][0]);
+  try
+    {
+      results res;
+      query q("SELECT COUNT(*) FROM " + table);
+      fetch(res, one_col, one_row, q);
+      return (F("%u") % lexical_cast<u64>(res[0][0])).str();
+    }
+  catch (informative_failure const & e)
+    {
+      return format_sqlite_error_for_info(e);
+    }
+        
 }
 
-unsigned long
-database::space_usage(string const & table, string const & rowspace)
+string
+database::space(string const & table, string const & rowspace, u64 & total)
 {
-  results res;
-  // COALESCE is required since SUM({empty set}) is NULL.
-  // the sqlite docs for SUM suggest this as a workaround
-  query q("SELECT COALESCE(SUM(" + rowspace + "), 0) FROM " + table);
-  fetch(res, one_col, one_row, q);
-  return lexical_cast<unsigned long>(res[0][0]);
+  try
+    {
+      results res;
+      // SUM({empty set}) is NULL; TOTAL({empty set}) is 0.0
+      query q("SELECT TOTAL(" + rowspace + ") FROM " + table);
+      fetch(res, one_col, one_row, q);
+      u64 bytes = static_cast<u64>(lexical_cast<double>(res[0][0]));
+      total += bytes;
+      return (F("%u") % bytes).str();
+    }
+  catch (informative_failure & e)
+    {
+      return format_sqlite_error_for_info(e);
+    }
 }
 
 unsigned int
@@ -1118,7 +1171,7 @@ database::get_roster_base(string const & ident_str,
   gzip<data> dat_packed(res[0][1]);
   data dat;
   decode_gzip(dat_packed, dat);
-  read_roster_and_marking(dat, roster, marking);
+  read_roster_and_marking(roster_data(dat), roster, marking);
 }
 
 void
@@ -1138,7 +1191,7 @@ database::get_roster_delta(string const & ident,
   gzip<delta> del_packed(res[0][1]);
   delta tmp;
   decode_gzip(del_packed, tmp);
-  del = tmp;
+  del = roster<delta>(tmp);
 }
 
 void
@@ -1274,7 +1327,7 @@ database::get_version(hexenc<id> const & ident,
 
   I(!selected_path.empty());
 
-  hexenc<id> curr = selected_path.back();
+  hexenc<id> curr = hexenc<id>(selected_path.back());
   selected_path.pop_back();
   data begin;
 
@@ -1289,13 +1342,13 @@ database::get_version(hexenc<id> const & ident,
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
-      hexenc<id> const nxt = *i;
+      hexenc<id> const nxt = hexenc<id>(*i);
 
       if (!vcache.exists(curr()))
         {
           string tmp;
           appl->finish(tmp);
-          vcache.insert_clean(curr(), tmp);
+          vcache.insert_clean(curr(), data(tmp));
         }
 
       L(FL("following delta %s -> %s") % curr % nxt);
@@ -1337,6 +1390,147 @@ struct roster_reconstruction_graph : public reconstruction_graph
       next.insert((*i)[0]);
   }
 };
+
+struct database::extractor
+{
+  virtual bool look_at_delta(roster_delta const & del) = 0;
+  virtual void look_at_roster(roster_t const & roster, marking_map const & mm) = 0;
+  virtual ~extractor() {};
+};
+
+struct database::markings_extractor : public database::extractor
+{
+private:
+  node_id const & nid;
+  marking_t & markings;
+
+public:
+  markings_extractor(node_id const & _nid, marking_t & _markings) :
+    nid(_nid), markings(_markings) {} ;
+  
+  bool look_at_delta(roster_delta const & del)
+  {
+    return try_get_markings_from_roster_delta(del, nid, markings);
+  }
+  
+  void look_at_roster(roster_t const & roster, marking_map const & mm)
+  {
+    map<node_id, marking_t>::const_iterator mmi =
+      mm.find(nid);
+    I(mmi != mm.end());
+    markings = mmi->second;
+  }
+};
+
+struct database::file_content_extractor : database::extractor
+{
+private:
+  node_id const & nid;
+  file_id & content;
+
+public:
+  file_content_extractor(node_id const & _nid, file_id & _content) :
+    nid(_nid), content(_content) {} ;
+
+  bool look_at_delta(roster_delta const & del)
+  {
+    return try_get_content_from_roster_delta(del, nid, content);
+  }
+
+  void look_at_roster(roster_t const & roster, marking_map const & mm)
+  {
+    if (roster.has_node(nid))
+      content = downcast_to_file_t(roster.get_node(nid))->content;
+    else
+      content = file_id();
+  }
+};
+
+void
+database::extract_from_deltas(revision_id const & id, extractor & x)
+{
+  reconstruction_path selected_path;
+  {
+    roster_reconstruction_graph graph(*this);
+    {
+      // we look at the nearest delta(s) first, without constructing the
+      // whole path, as that would be a rather expensive operation.
+      //
+      // the reason why this strategy is worth the effort is, that in most
+      // cases we are looking at the parent of a (content-)marked node, thus
+      // the information we are for is right there in the delta leading to
+      // this node.
+      // 
+      // recording the deltas visited here in a set as to avoid inspecting
+      // them later seems to be of little value, as it imposes a cost here,
+      // but can seldom be exploited.
+      set<string> deltas;
+      graph.get_next(id.inner()(), deltas);
+      for (set<string>::const_iterator i = deltas.begin();
+           i != deltas.end(); ++i)
+        {
+          roster_delta del;
+          get_roster_delta(id.inner()(), *i, del);
+          bool found = x.look_at_delta(del);
+          if (found)
+            return;
+        }
+    }
+    get_reconstruction_path(id.inner()(), graph, selected_path);
+  }
+
+  int path_length(selected_path.size());
+  int i(0);
+  string target_rev;
+
+  for (reconstruction_path::const_iterator p = selected_path.begin();
+       p != selected_path.end(); ++p)
+    {
+      if (i > 0)
+        {
+          roster_delta del;
+          get_roster_delta(target_rev, *p, del);
+          bool found = x.look_at_delta(del);
+          if (found)
+            return;
+        }
+      if (i == path_length-1)
+        {
+          // last iteration, we have reached a roster base
+          roster_t roster;
+          marking_map mm;
+          get_roster_base(*p, roster, mm);
+          x.look_at_roster(roster, mm);
+          return;
+        }
+      target_rev = *p;
+      ++i;
+    }
+}
+
+void
+database::get_markings(revision_id const & id,
+                       node_id const & nid,
+                       marking_t & markings)
+{
+  markings_extractor x(nid, markings);
+  extract_from_deltas(id, x);
+}
+
+void
+database::get_file_content(revision_id const & id,
+                           node_id const & nid,
+                           file_id & content)
+{
+  // the imaginary root revision doesn't have any file.
+  if (null_id(id))
+    {
+      content = file_id();
+      return;
+    }
+  file_content_extractor x(nid, content);
+  extract_from_deltas(id, x);
+}
 
 void
 database::get_roster_version(revision_id const & id,
@@ -1415,7 +1609,7 @@ bool
 database::file_version_exists(file_id const & id)
 {
   return delta_exists(id.inner()(), "file_deltas")
-    || file_or_manifest_base_exists(id.inner()(), "files");
+    || file_or_manifest_base_exists(id.inner(), "files");
 }
 
 bool
@@ -1442,7 +1636,7 @@ database::get_file_ids(set<file_id> & ids)
   set< hexenc<id> > tmp;
   get_ids("files", tmp);
   get_ids("file_deltas", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
 }
 
 void
@@ -1451,7 +1645,7 @@ database::get_revision_ids(set<revision_id> & ids)
   ids.clear();
   set< hexenc<id> > tmp;
   get_ids("revisions", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
 }
 
 void
@@ -1460,9 +1654,9 @@ database::get_roster_ids(set<revision_id> & ids)
   ids.clear();
   set< hexenc<id> > tmp;
   get_ids("rosters", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
   get_ids("roster_deltas", tmp);
-  ids.insert(tmp.begin(), tmp.end());
+  add_decoration_to_container(tmp, ids);
 }
 
 void
@@ -1471,7 +1665,7 @@ database::get_file_version(file_id const & id,
 {
   data tmp;
   get_version(id.inner(), tmp, "files", "file_deltas");
-  dat = tmp;
+  dat = file_data(tmp);
 }
 
 void
@@ -1480,7 +1674,7 @@ database::get_manifest_version(manifest_id const & id,
 {
   data tmp;
   get_version(id.inner(), tmp, "manifests", "manifest_deltas");
-  dat = tmp;
+  dat = manifest_data(tmp);
 }
 
 void
@@ -1502,12 +1696,12 @@ database::put_file_version(file_id const & old_id,
   {
     data tmp;
     patch(old_data.inner(), del.inner(), tmp);
-    new_data = tmp;
+    new_data = file_data(tmp);
   }
   {
     string tmp;
     invert_xdelta(old_data.inner()(), del.inner()(), tmp);
-    reverse_delta = delta(tmp);
+    reverse_delta = file_delta(tmp);
     data old_tmp;
     hexenc<id> old_tmp_id;
     patch(new_data.inner(), reverse_delta.inner(), old_tmp);
@@ -1654,11 +1848,11 @@ database::get_revision(revision_id const & id,
   // verify that we got a revision with the right id
   {
     revision_id tmp;
-    calculate_ident(rdat, tmp);
+    calculate_ident(revision_data(rdat), tmp);
     I(id == tmp);
   }
 
-  dat = rdat;
+  dat = revision_data(rdat);
 }
 
 void
@@ -1667,7 +1861,7 @@ database::get_rev_height(revision_id const & id,
 {
   if (null_id(id))
     {
-      rev_height::root_height(height);
+      height = rev_height::root_height();
       return;
     }
 
@@ -1678,7 +1872,8 @@ database::get_rev_height(revision_id const & id,
 
   I(res.size() == 1);
   
-  height.from_string(res[0][0]);
+  height = rev_height(res[0][0]);
+  I(height.valid());
 }
 
 void
@@ -1687,6 +1882,7 @@ database::put_rev_height(revision_id const & id,
 {
   I(!null_id(id));
   I(revision_exists(id));
+  I(height.valid());
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())
@@ -1722,7 +1918,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (file_or_manifest_base_exists(delta_entry_src(j).inner()(), "files") &&
+            if (file_or_manifest_base_exists(delta_entry_src(j).inner(), "files") &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -1759,12 +1955,23 @@ database::put_revision(revision_id const & new_id,
   MM(d.inner());
   write_revision(rev, d);
 
-  // Phase 1: confirm the revision makes sense
+  // Phase 1: confirm the revision makes sense, and we the required files
+  // actually exist
   {
     revision_id tmp;
     MM(tmp);
     calculate_ident(d, tmp);
     I(tmp == new_id);
+    for (edge_map::const_iterator e = rev.edges.begin(); e != rev.edges.end(); ++e)
+      {
+        cset const & cs = edge_changes(e);
+        for (map<split_path, file_id>::const_iterator
+               i = cs.files_added.begin(); i != cs.files_added.end(); ++i)
+          I(file_version_exists(i->second));
+        for (map<split_path, pair<file_id, file_id> >::const_iterator
+               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+          I(file_version_exists(i->second.second));
+      }
   }
 
   transaction_guard guard(*this);
@@ -1821,7 +2028,7 @@ database::put_height_for_revision(revision_id const & new_id,
       
       while(!found)
         {
-          parent.child_height(candidate, childnr);
+          candidate = parent.child_height(childnr);
           if (!has_rev_height(candidate))
             {
               found = true;
@@ -1912,8 +2119,12 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   // Kill the certs, ancestry, and revision.
   execute(query("DELETE from revision_certs WHERE id = ?")
           % text(rid.inner()()));
+  cert_stamper.note_change();
 
   execute(query("DELETE from revision_ancestry WHERE child = ?")
+          % text(rid.inner()()));
+
+  execute(query("DELETE from heights WHERE revision = ?")
           % text(rid.inner()()));
 
   execute(query("DELETE from revisions WHERE id = ?")
@@ -1929,6 +2140,7 @@ database::delete_branch_named(cert_value const & branch)
   L(FL("Deleting all references to branch %s") % branch);
   execute(query("DELETE FROM revision_certs WHERE name='branch' AND value =?")
           % blob(branch()));
+  cert_stamper.note_change();
   execute(query("DELETE FROM branch_epochs WHERE branch=?")
           % blob(branch()));
 }
@@ -1940,6 +2152,7 @@ database::delete_tag_named(cert_value const & tag)
   L(FL("Deleting all references to tag %s") % tag);
   execute(query("DELETE FROM revision_certs WHERE name='tag' AND value =?")
           % blob(tag()));
+  cert_stamper.note_change();
 }
 
 // crypto key management
@@ -1960,7 +2173,7 @@ database::get_key_ids(string const & pattern,
           query("SELECT id FROM public_keys"));
 
   for (size_t i = 0; i < res.size(); ++i)
-    pubkeys.push_back(res[i][0]);
+    pubkeys.push_back(rsa_keypair_id(res[i][0]));
 }
 
 void
@@ -1970,7 +2183,7 @@ database::get_keys(string const & table, vector<rsa_keypair_id> & keys)
   results res;
   fetch(res, one_col, any_rows, query("SELECT id FROM " + table));
   for (size_t i = 0; i < res.size(); ++i)
-    keys.push_back(res[i][0]);
+    keys.push_back(rsa_keypair_id(res[i][0]));
 }
 
 void
@@ -2014,7 +2227,7 @@ database::get_pubkey(hexenc<id> const & hash,
   fetch(res, 2, one_row,
         query("SELECT id, keydata FROM public_keys WHERE hash = ?")
         % text(hash()));
-  id = res[0][0];
+  id = rsa_keypair_id(res[0][0]);
   encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
 }
 
@@ -2239,10 +2452,12 @@ void
 database::put_revision_cert(revision<cert> const & cert)
 {
   put_cert(cert.inner(), "revision_certs");
+  cert_stamper.note_change();
 }
 
-void database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
-                                                pair<revision_id, rsa_keypair_id> > > & idx)
+outdated_indicator
+database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
+                                           pair<revision_id, rsa_keypair_id> > > & idx)
 {
   results res;
   fetch(res, 3, any_rows,
@@ -2257,28 +2472,31 @@ void database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
                               make_pair(revision_id((*i)[1]),
                                         rsa_keypair_id((*i)[2]))));
     }
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(cert_name const & name,
                             vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(name, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & id,
                              cert_name const & name,
                              vector< revision<cert> > & ts)
@@ -2286,10 +2504,11 @@ database::get_revision_certs(revision_id const & id,
   vector<cert> certs;
   get_certs(id.inner(), name, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & id,
                              cert_name const & name,
                              base64<cert_value> const & val,
@@ -2298,10 +2517,11 @@ database::get_revision_certs(revision_id const & id,
   vector<cert> certs;
   get_certs(id.inner(), name, val, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revisions_with_cert(cert_name const & name,
                                   base64<cert_value> const & val,
                                   set<revision_id> & revisions)
@@ -2314,9 +2534,10 @@ database::get_revisions_with_cert(cert_name const & name,
   fetch(res, one_col, any_rows, q % text(name()) % blob(binvalue()));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     revisions.insert(revision_id((*i)[0]));
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(cert_name const & name,
                              base64<cert_value> const & val,
                              vector< revision<cert> > & ts)
@@ -2324,20 +2545,22 @@ database::get_revision_certs(cert_name const & name,
   vector<cert> certs;
   get_certs(name, val, certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & id,
                              vector< revision<cert> > & ts)
 {
   vector<cert> certs;
   get_certs(id.inner(), certs, "revision_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
+  return cert_stamper.get_indicator();
 }
 
-void
+outdated_indicator
 database::get_revision_certs(revision_id const & ident,
                              vector< hexenc<id> > & ts)
 {
@@ -2351,6 +2574,7 @@ database::get_revision_certs(revision_id const & ident,
   ts.clear();
   for (size_t i = 0; i < res.size(); ++i)
     ts.push_back(hexenc<id>(res[i][0]));
+  return cert_stamper.get_indicator();
 }
 
 void
@@ -2390,7 +2614,7 @@ database::get_manifest_certs(manifest_id const & id,
   vector<cert> certs;
   get_certs(id.inner(), certs, "manifest_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
 }
 
 
@@ -2401,7 +2625,7 @@ database::get_manifest_certs(cert_name const & name,
   vector<cert> certs;
   get_certs(name, certs, "manifest_certs");
   ts.clear();
-  copy(certs.begin(), certs.end(), back_inserter(ts));
+  add_decoration_to_container(certs, ts);
 }
 
 
@@ -2470,7 +2694,7 @@ database::complete(string const & partial,
 using selectors::selector_type;
 
 static void selector_to_certname(selector_type ty,
-                                 string & s,
+                                 cert_name & name,
                                  string & prefix,
                                  string & suffix)
 {
@@ -2479,24 +2703,24 @@ static void selector_to_certname(selector_type ty,
     {
     case selectors::sel_author:
       prefix = suffix = "";
-      s = author_cert_name;
+      name = author_cert_name;
       break;
     case selectors::sel_branch:
       prefix = suffix = "";
-      s = branch_cert_name;
+      name = branch_cert_name;
       break;
     case selectors::sel_head:
       prefix = suffix = "";
-      s = branch_cert_name;
+      name = branch_cert_name;
       break;
     case selectors::sel_date:
     case selectors::sel_later:
     case selectors::sel_earlier:
-      s = date_cert_name;
+      name = date_cert_name;
       break;
     case selectors::sel_tag:
       prefix = suffix = "";
-      s = tag_cert_name;
+      name = tag_cert_name;
       break;
     case selectors::sel_ident:
     case selectors::sel_cert:
@@ -2515,7 +2739,7 @@ void database::complete(selector_type ty,
   completions.clear();
 
   // step 1: the limit is transformed into an SQL select statement which
-  // selects a set of IDs from the manifest_certs table which match the
+  // selects a set of IDs from the revision_certs table which match the
   // limit.  this is done by building an SQL select statement for each term
   // in the limit and then INTERSECTing them all.
 
@@ -2569,38 +2793,31 @@ void database::complete(selector_type ty,
           else if (i->first == selectors::sel_unknown)
             {
               lim.sql_cmd += "SELECT id FROM revision_certs WHERE (name=? OR name=? OR name=?)";
-              lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
+              lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
               lim.sql_cmd += " AND CAST(value AS TEXT) glob ?";
               lim % text(i->second + "*");
             }
           else if (i->first == selectors::sel_head)
             {
               // get branch names
-              vector<cert_value> branch_names;
+              set<branch_name> branch_names;
               if (i->second.size() == 0)
                 {
                   __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.push_back((__app->opts.branch_name)());
+                  branch_names.insert(__app->opts.branchname);
                 }
               else
                 {
-                  query subquery("SELECT DISTINCT value FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?");
-                  subquery % text(branch_cert_name) % text(i->second);
-                  results res;
-                  fetch(res, one_col, any_rows, subquery);
-                  for (size_t i = 0; i < res.size(); ++i)
-                    {
-                      data row_decoded(res[i][0]);
-                      branch_names.push_back(row_decoded());
-                    }
+                  __app->get_project().get_branch_list(globish(i->second), branch_names);
                 }
 
               // for each branch name, get the branch heads
               set<revision_id> heads;
-              for (vector<cert_value>::const_iterator bn = branch_names.begin(); bn != branch_names.end(); bn++)
+              for (set<branch_name>::const_iterator bn = branch_names.begin();
+                   bn != branch_names.end(); bn++)
                 {
                   set<revision_id> branch_heads;
-                  get_branch_heads(*bn, *__app, branch_heads);
+                  __app->get_project().get_branch_heads(*bn, branch_heads);
                   heads.insert(branch_heads.begin(), branch_heads.end());
                   L(FL("after get_branch_heads for %s, heads has %d entries") % (*bn) % heads.size());
                 }
@@ -2623,7 +2840,7 @@ void database::complete(selector_type ty,
             }
           else
             {
-              string certname;
+              cert_name certname;
               string prefix;
               string suffix;
               selector_to_certname(i->first, certname, prefix, suffix);
@@ -2632,13 +2849,13 @@ void database::complete(selector_type ty,
                 {
                   __app->require_workspace("the empty branch selector b: refers to the current branch");
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name) % text(__app->opts.branch_name());
-                  L(FL("limiting to current branch '%s'") % __app->opts.branch_name);
+                  lim % text(branch_cert_name()) % text(__app->opts.branchname());
+                  L(FL("limiting to current branch '%s'") % __app->opts.branchname);
                 }
               else
                 {
                   lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND ";
-                  lim % text(certname);
+                  lim % text(certname());
                   switch (i->first)
                     {
                     case selectors::sel_earlier:
@@ -2677,14 +2894,14 @@ void database::complete(selector_type ty,
       if (ty == selectors::sel_unknown)
         {
           lim.sql_cmd += " (name=? OR name=? OR name=?)";
-          lim % text(author_cert_name) % text(tag_cert_name) % text(branch_cert_name);
+          lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
         }
       else
         {
-          string certname;
+          cert_name certname;
           selector_to_certname(ty, certname, prefix, suffix);
           lim.sql_cmd += " (name=?)";
-          lim % text(certname);
+          lim % text(certname());
         }
 
       lim.sql_cmd += " AND (CAST(value AS TEXT) GLOB ?) AND (id IN " + lim.sql_cmd + ")";
@@ -2708,14 +2925,14 @@ void database::complete(selector_type ty,
 // epochs
 
 void
-database::get_epochs(map<cert_value, epoch_data> & epochs)
+database::get_epochs(map<branch_name, epoch_data> & epochs)
 {
   epochs.clear();
   results res;
   fetch(res, 2, any_rows, query("SELECT branch, epoch FROM branch_epochs"));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
-      cert_value decoded(idx(*i, 0));
+      branch_name decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(make_pair(decoded, epoch_data(idx(*i, 1))));
     }
@@ -2723,7 +2940,7 @@ database::get_epochs(map<cert_value, epoch_data> & epochs)
 
 void
 database::get_epoch(epoch_id const & eid,
-                    cert_value & branch, epoch_data & epo)
+                    branch_name & branch, epoch_data & epo)
 {
   I(epoch_exists(eid));
   results res;
@@ -2732,7 +2949,7 @@ database::get_epoch(epoch_id const & eid,
         " WHERE hash = ?")
         % text(eid.inner()()));
   I(res.size() == 1);
-  branch = cert_value(idx(idx(res, 0), 0));
+  branch = branch_name(idx(idx(res, 0), 0));
   epo = epoch_data(idx(idx(res, 0), 1));
 }
 
@@ -2748,7 +2965,7 @@ database::epoch_exists(epoch_id const & eid)
 }
 
 void
-database::set_epoch(cert_value const & branch, epoch_data const & epo)
+database::set_epoch(branch_name const & branch, epoch_data const & epo)
 {
   epoch_id eid;
   epoch_hash_code(branch, epo, eid);
@@ -2760,7 +2977,7 @@ database::set_epoch(cert_value const & branch, epoch_data const & epo)
 }
 
 void
-database::clear_epoch(cert_value const & branch)
+database::clear_epoch(branch_name const & branch)
 {
   execute(query("DELETE FROM branch_epochs WHERE branch = ?")
           % blob(branch()));
@@ -2835,7 +3052,7 @@ database::clear_var(var_key const & key)
 
 // branches
 
-void
+outdated_indicator
 database::get_branches(vector<string> & names)
 {
     results res;
@@ -2846,6 +3063,22 @@ database::get_branches(vector<string> & names)
       {
         names.push_back(res[i][0]);
       }
+    return cert_stamper.get_indicator();
+}
+
+outdated_indicator
+database::get_branches(string const & glob,
+                       vector<string> & names)
+{
+    results res;
+    query q("SELECT DISTINCT value FROM revision_certs WHERE name = ? AND CAST(value AS TEXT) glob ?");
+    string cert_name = "branch";
+    fetch(res, one_col, any_rows, q % text(cert_name) % text(glob));
+    for (size_t i = 0; i < res.size(); ++i)
+      {
+        names.push_back(res[i][0]);
+      }
+    return cert_stamper.get_indicator();
 }
 
 void
@@ -3042,9 +3275,52 @@ database::check_filename()
 void
 database::check_db_exists()
 {
-  require_path_is_file(filename,
-                       F("database %s does not exist") % filename,
-                       F("%s is a directory, not a database") % filename);
+  switch (get_path_status(filename))
+    {
+    case path::nonexistent:
+      N(false, F("database %s does not exist") % filename);
+      break;
+    case path::file:
+      return;
+    case path::directory:
+      {
+        system_path database_option;
+        branch_name branch_option;
+        rsa_keypair_id key_option;
+        system_path keydir_option;
+        if (workspace::get_ws_options_from_path(
+                    filename,
+                    database_option,
+                    branch_option,
+                    key_option,
+                    keydir_option))
+          {
+            N(database_option.empty(),
+                              F("You gave a database option of: \n"
+                                "%s\n"
+                                "That is actually a workspace.  Did you mean: \n"
+                                "%s") % filename % database_option );
+          }
+        N(false, F("%s is a directory, not a database") % filename);
+      }
+      break;
+    }
+}
+
+void
+database::check_db_nonexistent()
+{
+  require_path_is_nonexistent(filename,
+                              F("database %s already exists")
+                              % filename);
+
+  system_path journal(filename.as_internal() + "-journal");
+  require_path_is_nonexistent(journal,
+                              F("existing (possibly stale) journal file '%s' "
+                                "has same stem as new database '%s'\n"
+                                "cancelling database creation")
+                              % journal % filename);
+
 }
 
 bool
@@ -3057,34 +3333,25 @@ database::database_specified()
 void
 database::open()
 {
-  int error;
-
   I(!__sql);
 
-  error = sqlite3_open(filename.as_external().c_str(), &__sql);
+  if (sqlite3_open(filename.as_external().c_str(), &__sql) == SQLITE_NOMEM)
+    throw std::bad_alloc();
 
-  if (__sql)
-    {
-      I(sql_contexts.find(__sql) == sql_contexts.end());
-      sql_contexts.insert(__sql);
-    }
-
-  N(!error, (F("could not open database '%s': %s")
-             % filename % string(sqlite3_errmsg(__sql))));
+  I(__sql);
+  assert_sqlite3_ok(__sql);
 }
 
 void
 database::close()
 {
-  if (__sql)
-    {
-      sqlite3_close(__sql);
-      I(sql_contexts.find(__sql) != sql_contexts.end());
-      sql_contexts.erase(__sql);
-      __sql = 0;
-    }
-}
+  I(__sql);
 
+  sqlite3_close(__sql);
+  __sql = 0;
+
+  I(!__sql);
+}
 
 // transaction guards
 
@@ -3131,27 +3398,6 @@ void
 transaction_guard::commit()
 {
   committed = true;
-}
-
-
-
-// called to avoid foo.db-journal files hanging around if we exit cleanly
-// without unwinding the stack (happens with SIGINT & SIGTERM)
-void
-close_all_databases()
-{
-  L(FL("attempting to rollback and close %d databases") % sql_contexts.size());
-  for (set<sqlite3*>::iterator i = sql_contexts.begin();
-       i != sql_contexts.end(); i++)
-    {
-      // the ROLLBACK is required here, even though the sqlite docs
-      // imply that transactions are rolled back on database closure
-      int exec_err = sqlite3_exec(*i, "ROLLBACK", NULL, NULL, NULL);
-      int close_err = sqlite3_close(*i);
-
-      L(FL("exec_err = %d, close_err = %d") % exec_err % close_err);
-    }
-  sql_contexts.clear();
 }
 
 // Local Variables:

@@ -8,13 +8,13 @@ commit()
 check(mtn("--branch=testbranch", "co", "codir"), 0, false, false)
 
 remove("file")
-check(mtn("drop", "file"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "file"), 0, false, false)
 
 commit()
 
 rev = base_revision()
 
-check(indir("codir", mtn("drop", "file")), 0, false, false)
+check(indir("codir", mtn("drop", "--bookkeep-only", "file")), 0, false, false)
 check(indir("codir", mtn("update")), 0, false, false)
 
 check(indir("codir", mtn("automate", "get_revision", rev)), 0, false, false)

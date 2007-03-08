@@ -12,7 +12,7 @@
 
 #include "cmd.hh"
 #include "diff_patch.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
@@ -23,6 +23,7 @@
 using std::cout;
 using std::make_pair;
 using std::pair;
+using std::make_pair;
 using std::map;
 using std::set;
 using std::string;
@@ -38,8 +39,9 @@ get_log_message_interactively(revision_t const & cs,
   revision_data summary;
   write_revision(cs, summary);
   external summary_external;
-  utf8_to_system(utf8(summary.inner()()), summary_external);
+  utf8_to_system_best_effort(utf8(summary.inner()()), summary_external);
 
+  string magic_line = _("*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****");
   string commentary_str;
   commentary_str += string(70, '-') + "\n";
   commentary_str += _("Enter a description of this change.\n"
@@ -53,13 +55,25 @@ get_log_message_interactively(revision_t const & cs,
 
   utf8 user_log_message;
   app.work.read_user_log(user_log_message);
+
+  //if the _MTN/log file was non-empty, we'll append the 'magic' line
+  utf8 user_log;
+  if (user_log_message().length() > 0)
+    user_log = utf8( magic_line + "\n" + user_log_message());
+  else
+    user_log = user_log_message;
+
   external user_log_message_external;
-  utf8_to_system(user_log_message, user_log_message_external);
+  utf8_to_system_best_effort(user_log, user_log_message_external);
 
   external log_message_external;
   N(app.lua.hook_edit_comment(commentary, user_log_message_external,
                               log_message_external),
     F("edit of log message failed"));
+
+  N(log_message_external().find(magic_line) == string::npos,
+    F("failed to remove magic line; commit cancelled"));
+
   system_to_utf8(log_message_external, log_message);
 }
 
@@ -67,7 +81,6 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
     N_("revert file(s), dir(s) or entire workspace (\".\")"),
     options::opts::depth | options::opts::exclude | options::opts::missing)
 {
-  temp_node_id_source nis;
   roster_t old_roster, new_roster;
   cset included, excluded;
 
@@ -76,9 +89,19 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
   app.require_workspace();
 
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+  old_roster = parent_roster(parents.begin());
 
-  node_restriction mask(args_to_paths(args), args_to_paths(app.opts.exclude_patterns),
+  {
+    temp_node_id_source nis;
+    app.work.get_current_roster_shape(new_roster, nis);
+  }
+    
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_roster, new_roster, app);
 
@@ -141,7 +164,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
           if (file_exists(fp))
             {
               hexenc<id> ident;
-              calculate_ident(fp, ident, app.lua);
+              calculate_ident(fp, ident);
               // don't touch unchanged files
               if (ident == f->content.inner())
                 continue;
@@ -158,7 +181,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
           L(FL("writing file %s to %s")
             % f->content % fp);
           app.db.get_file_version(f->content, dat);
-          write_localized_data(fp, dat.inner(), app.lua);
+          write_data(fp, dat.inner());
         }
       else
         {
@@ -176,9 +199,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   // around.
 
   revision_t remaining;
-  revision_id base;
-  app.work.get_revision_id(base);
-  make_revision_for_workspace(base, excluded, remaining);
+  make_revision_for_workspace(parent_id(parents.begin()), excluded, remaining);
 
   // Race.
   app.work.put_work_rev(remaining);
@@ -205,12 +226,11 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   N(rev.edges.size() == 1,
     F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
-  cert_value branchname;
-  guess_branch(r, app, branchname);
-  N(app.opts.branch_name() != "", F("need --branch argument for disapproval"));
+  guess_branch(r, app);
+  N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(log_message_given, log_message, app,
-                              (FL("disapproval of revision '%s'") % r).str());
+                              utf8((FL("disapproval of revision '%s'") % r).str()));
 
   edge_entry const & old_edge (*rev.edges.begin());
   app.db.get_revision_manifest(edge_old_revision(old_edge),
@@ -234,20 +254,57 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     calculate_ident(rdat, inv_id);
     dbw.consume_revision_data(inv_id, rdat);
 
-    cert_revision_in_branch(inv_id, branchname, app, dbw);
-    if (app.opts.date_given)
-      cert_revision_date_time(inv_id, app.opts.date, app, dbw);
-    else
-      cert_revision_date_now(inv_id, app, dbw);
-    if (app.opts.author().length() > 0)
-      cert_revision_author(inv_id, app.opts.author(), app, dbw);
-    else
-      cert_revision_author_default(inv_id, app, dbw);
-    cert_revision_changelog(inv_id, log_message, app, dbw);
+    app.get_project().put_standard_certs_from_options(inv_id,
+                                                      app.opts.branchname,
+                                                      log_message,
+                                                      dbw);
     guard.commit();
   }
 }
 
+CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
+    N_("create one or more directories and add them to the workspace"),
+    options::opts::no_ignore)
+{
+  if (args.size() < 1)
+    throw usage(name);
+
+  app.require_workspace();
+
+  path_set paths;
+  //spin through args and try to ensure that we won't have any collisions
+  //before doing any real filesystem modification.  we'll also verify paths
+  //against .mtn-ignore here.
+  for (vector<utf8>::const_iterator i = args.begin();
+       i != args.end(); ++i)
+    {
+      split_path sp;
+      file_path_external(*i).split(sp);
+      file_path fp(sp);
+
+      require_path_is_nonexistent
+        (fp, F("directory '%s' already exists") % fp);
+
+      //we'll treat this as a user (fatal) error.  it really
+      //wouldn't make sense to add a dir to .mtn-ignore and then
+      //try to add it to the project with a mkdir statement, but
+      //one never can tell...
+      N(app.opts.no_ignore || !app.lua.hook_ignore_file(fp),
+        F("ignoring directory '%s' [see .mtn-ignore]") % fp);
+
+      paths.insert(sp);
+    }
+
+  //this time, since we've verified that there should be no collisions,
+  //we'll just go ahead and do the filesystem additions.
+  for (path_set::const_iterator i = paths.begin();
+       i != paths.end(); ++i)
+    {
+      mkdir_p(file_path(*i));
+    }
+
+  app.work.perform_additions(paths, false, true);
+}
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
     N_("add files to workspace"),
@@ -256,14 +313,11 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
 {
   if (!app.opts.unknown && (args.size() < 1))
     throw usage(name);
-  N(!app.opts.unknown || !app.opts.recursive,
-    F("cannot set '--unknown' and '--recursive' at the same time"));
-  N(!app.opts.unknown || !app.opts.no_ignore,
-    F("cannot set '--unknown' and '--no-respect-ignore' at the same time"));
 
   app.require_workspace();
 
   path_set paths;
+  bool add_recursive = app.opts.recursive;
   if (app.opts.unknown)
     {
       vector<file_path> roots = args_to_paths(args);
@@ -276,23 +330,18 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
         roots.push_back(file_path());
 
       app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
+
+      app.work.perform_additions(ignored, add_recursive, !app.opts.no_ignore);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin();
-         i != args.end(); ++i)
-      {
-        split_path sp;
-        file_path_external(*i).split(sp);
-        paths.insert(sp);
-      }
+    split_paths(args_to_paths(args), paths);
 
-  bool add_recursive = app.opts.recursive;
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
     N_("drop files from workspace"),
-    options::opts::execute | options::opts::missing | options::opts::recursive)
+    options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
     throw usage(name);
@@ -312,15 +361,9 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
       app.work.find_missing(current_roster_shape, mask, paths);
     }
   else
-    for (vector<utf8>::const_iterator i = args.begin();
-         i != args.end(); ++i)
-      {
-        split_path sp;
-        file_path_external(*i).split(sp);
-        paths.insert(sp);
-      }
+    split_paths(args_to_paths(args), paths);
 
-  app.work.perform_deletions(paths, app.opts.recursive, app.opts.execute);
+  app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
 
 ALIAS(rm, drop);
@@ -330,7 +373,7 @@ CMD(rename, N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("rename entries in the workspace"),
-    options::opts::execute)
+    options::opts::bookkeep_only)
 {
   if (args.size() < 2)
     throw usage(name);
@@ -345,21 +388,21 @@ CMD(rename, N_("workspace"),
       file_path s = file_path_external(idx(args, i));
       src_paths.insert(s);
     }
-  app.work.perform_rename(src_paths, dst_path, app.opts.execute);
+  app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
 
-ALIAS(mv, rename)
+ALIAS(mv, rename);
 
 
-  CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
-      N_("rename the root directory\n"
-         "after this command, the directory that currently "
-         "has the name NEW_ROOT\n"
-         "will be the root directory, and the directory "
-         "that is currently the root\n"
-         "directory will have name PUT_OLD.\n"
-         "Using --execute is strongly recommended."),
-    options::opts::execute)
+CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
+    N_("rename the root directory\n"
+       "after this command, the directory that currently "
+       "has the name NEW_ROOT\n"
+       "will be the root directory, and the directory "
+       "that is currently the root\n"
+       "directory will have name PUT_OLD.\n"
+       "Use of --bookkeep-only is NOT recommended."),
+    options::opts::bookkeep_only)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -367,72 +410,78 @@ ALIAS(mv, rename)
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
   file_path put_old = file_path_external(idx(args, 1));
-  app.work.perform_pivot_root(new_root, put_old, app.opts.execute);
+  app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     options::opts::depth | options::opts::exclude)
 {
-  roster_t old_roster, new_roster;
-  cset included, excluded;
-  revision_id old_rev_id;
+  roster_t new_roster;
+  parent_map old_rosters;
   revision_t rev;
-  data tmp;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_parent_rosters(old_rosters);
+  app.work.get_current_roster_shape(new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        old_roster, new_roster, app);
+                        old_rosters, new_roster, app);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
-
-  app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, included, rev);
+  make_restricted_revision(old_rosters, new_roster, mask, rev);
 
   // We intentionally do not collapse the final \n into the format
   // strings here, for consistency with newline conventions used by most
   // other format strings.
-  cout << (F("Current branch: %s") % app.opts.branch_name).str() << "\n";
+  cout << (F("Current branch: %s") % app.opts.branchname).str() << '\n';
   for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
     {
       revision_id parent = edge_old_revision(*i);
       // A colon at the end of this string looked nicer, but it made
       // double-click copying from terminals annoying.
-      cout << (F("Changes against parent %s") % parent).str() << "\n";
+      cout << (F("Changes against parent %s") % parent).str() << '\n';
 
       cset const & cs = edge_changes(*i);
 
       if (cs.empty())
-        cout << F("  no changes").str() << "\n";
+        cout << F("  no changes").str() << '\n';
 
       for (path_set::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
-        cout << (F("  dropped %s") % *i).str() << "\n";
+        cout << (F("  dropped  %s") % *i).str() << '\n';
 
       for (map<split_path, split_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
-        cout << (F("  renamed %s\n"
-                   "       to %s") % i->first % i->second).str() << "\n";
+        cout << (F("  renamed  %s\n"
+                   "       to  %s") % i->first % i->second).str() << '\n';
 
       for (path_set::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
-        cout << (F("  added   %s") % *i).str() << "\n";
+        cout << (F("  added    %s") % *i).str() << '\n';
 
       for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
-        cout << (F("  added   %s") % i->first).str() << "\n";
+        cout << (F("  added    %s") % i->first).str() << '\n';
 
       for (map<split_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << (F("  patched %s") % (i->first)).str() << "\n";
+        cout << (F("  patched  %s") % (i->first)).str() << '\n';
+
+      for (map<pair<split_path, attr_key>, attr_value >::const_iterator
+             i = cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
+        cout << (F("  set on   %s\n"
+                   "    attr   %s")
+                 % (i->first.first) % (i->first.second)).str() << "\n";
+
+      for (set<pair<split_path, attr_key> >::const_iterator
+             i = cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
+        cout << (F("  unset on %s\n"
+                   "      attr %s")
+                 % (i->first) % (i->second)).str() << "\n";
     }
 }
 
@@ -454,20 +503,20 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
   if (app.opts.revision_selectors.size() == 0)
     {
       // use branch head revision
-      N(!app.opts.branch_name().empty(),
+      N(!app.opts.branchname().empty(),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      get_branch_heads(app.opts.branch_name(), app, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads);
       N(heads.size() > 0,
-        F("branch '%s' is empty") % app.opts.branch_name);
+        F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
         {
-          P(F("branch %s has multiple heads:") % app.opts.branch_name);
+          P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
-          E(false, F("branch %s has multiple heads") % app.opts.branch_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
       ident = *(heads.begin());
     }
@@ -478,24 +527,13 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      cert_value b;
-      guess_branch(ident, app, b);
+      guess_branch(ident, app);
 
-      I(!app.opts.branch_name().empty());
-      cert_value branch_name(app.opts.branch_name());
-      base64<cert_value> branch_encoded;
-      encode_base64(branch_name, branch_encoded);
+      I(!app.opts.branchname().empty());
 
-      vector< revision<cert> > certs;
-      app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
-
-      L(FL("found %d %s branch certs on revision %s")
-        % certs.size()
-        % app.opts.branch_name
-        % ident);
-
-      N(certs.size() != 0, F("revision %s is not a member of branch %s")
-        % ident % app.opts.branch_name);
+      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
+        F("revision %s is not a member of branch %s")
+        % ident % app.opts.branchname);
     }
 
   // we do this part of the checking down here, because it is legitimate to
@@ -510,9 +548,9 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
     if (args.size() == 0)
       {
         // No checkout dir specified, use branch name for dir.
-        N(!app.opts.branch_name().empty(),
+        N(!app.opts.branchname().empty(),
           F("you must specify a destination directory"));
-        dir = system_path(app.opts.branch_name());
+        dir = system_path(app.opts.branchname());
       }
     else
       {
@@ -529,52 +567,32 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
 
   app.create_workspace(dir);
 
-  file_data data;
-  roster_t ros;
-  marking_map mm;
+  shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
+  roster_t current_roster;
 
   L(FL("checking out revision %s to directory %s") % ident % dir);
-  app.db.get_roster(ident, ros, mm);
+  app.db.get_roster(ident, current_roster);
 
   revision_t workrev;
   make_revision_for_workspace(ident, cset(), workrev);
   app.work.put_work_rev(workrev);
 
-  node_map const & nodes = ros.all_nodes();
-  for (node_map::const_iterator i = nodes.begin();
-       i != nodes.end(); ++i)
-    {
-      node_t node = i->second;
-      split_path sp;
-      ros.get_name(i->first, sp);
-      file_path path(sp);
+  cset checkout;
+  make_cset(*empty_roster, current_roster, checkout);
 
-      if (is_dir_t(node))
-        {
-          if (!workspace_root(sp))
-            mkdir_p(path);
-        }
-      else
-        {
-          file_t file = downcast_to_file_t(node);
-          N(app.db.file_version_exists(file->content),
-            F("no file %s found in database for %s")
-            % file->content % path);
+  map<file_id, file_path> paths;
+  get_content_paths(*empty_roster, paths);
 
-          file_data dat;
-          L(FL("writing file %s to %s")
-            % file->content % path);
-          app.db.get_file_version(file->content, dat);
-          write_localized_data(path, dat.inner(), app.lua);
-        }
-    }
+  content_merge_workspace_adaptor wca(app, empty_roster, paths);
+
+  app.work.perform_content_update(checkout, wca, false);
 
   app.work.update_any_attrs();
   app.work.maybe_update_inodeprints();
   guard.commit();
 }
 
-ALIAS(co, checkout)
+ALIAS(co, checkout);
 
 CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
     N_("set, get or drop file attributes"),
@@ -583,12 +601,11 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
   if (args.size() < 2 || args.size() > 4)
     throw usage(name);
 
-  roster_t old_roster, new_roster;
+  roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-
+  app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,1));
   split_path sp;
@@ -605,8 +622,8 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           if (args.size() != 4)
             throw usage(name);
 
-          attr_key a_key = idx(args, 2)();
-          attr_value a_value = idx(args, 3)();
+          attr_key a_key = attr_key(idx(args, 2)());
+          attr_value a_value = attr_value(idx(args, 3)());
 
           node->attrs[a_key] = make_pair(true, a_value);
         }
@@ -621,7 +638,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             }
           else if (args.size() == 3)
             {
-              attr_key a_key = idx(args, 2)();
+              attr_key a_key = attr_key(idx(args, 2)());
               N(node->attrs.find(a_key) != node->attrs.end(),
                 F("Path '%s' does not have attribute '%s'")
                 % path % a_key);
@@ -630,11 +647,12 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
           else
             throw usage(name);
         }
-      revision_id base;
-      app.work.get_revision_id(base);
+
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
 
       revision_t new_work;
-      make_revision_for_workspace(base, old_roster, new_roster, new_work);
+      make_revision_for_workspace(parents, new_roster, new_work);
       app.work.put_work_rev(new_work);
       app.work.update_any_attrs();
     }
@@ -648,24 +666,24 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
             if (i->second.first)
               {
                 cout << path << " : "
-                     << i->first << "="
-                     << i->second.second << "\n";
+                     << i->first << '='
+                     << i->second.second << '\n';
                 has_any_live_attrs = true;
               }
           if (!has_any_live_attrs)
-            cout << F("No attributes for '%s'") % path << "\n";
+            cout << F("No attributes for '%s'") % path << '\n';
         }
       else if (args.size() == 3)
         {
-          attr_key a_key = idx(args, 2)();
+          attr_key a_key = attr_key(idx(args, 2)());
           full_attr_map_t::const_iterator i = node->attrs.find(a_key);
           if (i != node->attrs.end() && i->second.first)
             cout << path << " : "
-                 << i->first << "="
-                 << i->second.second << "\n";
+                 << i->first << '='
+                 << i->second.second << '\n';
           else
             cout << (F("No attribute '%s' on path '%s'")
-                     % a_key % path) << "\n";
+                     % a_key % path) << '\n';
         }
       else
         throw usage(name);
@@ -678,49 +696,19 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
     N_("commit workspace to database"),
-    options::opts::branch | options::opts::message | options::opts::msgfile | options::opts::date
-    | options::opts::author | options::opts::depth | options::opts::exclude)
+    options::opts::branch | options::opts::message | options::opts::msgfile
+    | options::opts::date | options::opts::author | options::opts::depth
+    | options::opts::exclude)
 {
   utf8 log_message("");
   bool log_message_given;
   revision_t restricted_rev;
-  revision_id old_rev_id, restricted_rev_id;
-  roster_t old_roster, new_roster;
+  parent_map old_rosters;
+  roster_t new_roster;
   temp_node_id_source nis;
-  cset included, excluded;
+  cset excluded;
 
-  app.make_branch_sticky();
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
-
-  node_restriction mask(args_to_paths(args),
-                        args_to_paths(app.opts.exclude_patterns),
-                        app.opts.depth,
-                        old_roster, new_roster, app);
-
-  app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
-
-  app.work.get_revision_id(old_rev_id);
-  make_revision(old_rev_id, old_roster, included, restricted_rev);
-
-  calculate_ident(restricted_rev, restricted_rev_id);
-
-  N(restricted_rev.is_nontrivial(), F("no changes to commit"));
-
-  cert_value branchname;
-  I(restricted_rev.edges.size() == 1);
-
-  set<revision_id> heads;
-  get_branch_heads(app.opts.branch_name(), app, heads);
-  unsigned int old_head_size = heads.size();
-
-  if (app.opts.branch_name() != "")
-    branchname = app.opts.branch_name();
-  else
-    guess_branch(edge_old_revision(restricted_rev.edges.begin()), app, branchname);
 
   {
     // fail early if there isn't a key
@@ -728,7 +716,48 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     get_user_key(key, app);
   }
 
-  P(F("beginning commit on branch '%s'") % branchname);
+  app.make_branch_sticky();
+  app.work.get_parent_rosters(old_rosters);
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
+                        old_rosters, new_roster, app);
+
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
+  make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
+                           excluded, name);
+  restricted_rev.check_sane();
+  N(restricted_rev.is_nontrivial(), F("no changes to commit"));
+
+  revision_id restricted_rev_id;
+  calculate_ident(restricted_rev, restricted_rev_id);
+
+  // We need the 'if' because guess_branch will try to override any branch
+  // picked up from _MTN/options.
+  if (app.opts.branchname().empty())
+    {
+      branch_name branchname, bn_candidate;
+      for (edge_map::iterator i = restricted_rev.edges.begin();
+           i != restricted_rev.edges.end();
+           i++)
+        {
+          // this will prefer --branch if it was set
+          guess_branch(edge_old_revision(i), app, bn_candidate);
+          N(branchname() == "" || branchname == bn_candidate,
+            F("parent revisions of this commit are in different branches:\n"
+              "'%s' and '%s'.\n"
+              "please specify a branch name for the commit, with --branch.")
+            % branchname % bn_candidate);
+          branchname = bn_candidate;
+        }
+
+      app.opts.branchname = branchname;
+    }
+
+
+  P(F("beginning commit on branch '%s'") % app.opts.branchname);
   L(FL("new manifest '%s'\n"
        "new revision '%s'\n")
     % restricted_rev.new_manifest
@@ -772,107 +801,102 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   revision_data new_rev;
   write_revision(restricted_rev, new_rev);
 
-  app.lua.hook_validate_commit_message(log_message, new_rev, branchname,
+  app.lua.hook_validate_commit_message(log_message, new_rev, app.opts.branchname,
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
+  // for the divergence check, below
+  set<revision_id> heads;
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  unsigned int old_head_size = heads.size();
+  
   {
     transaction_guard guard(app.db);
     packet_db_writer dbw(app);
 
     if (app.db.revision_exists(restricted_rev_id))
-      {
-        W(F("revision %s already in database") % restricted_rev_id);
-      }
+      W(F("revision %s already in database") % restricted_rev_id);
     else
       {
-        // new revision
         L(FL("inserting new revision %s") % restricted_rev_id);
-
-        I(restricted_rev.edges.size() == 1);
-        edge_map::const_iterator edge = restricted_rev.edges.begin();
-        I(edge != restricted_rev.edges.end());
-
-        // process file deltas or new files
-        cset const & cs = edge_changes(edge);
-
-        for (map<split_path, pair<file_id, file_id> >::const_iterator
-               i = cs.deltas_applied.begin();
-             i != cs.deltas_applied.end(); ++i)
+  
+        for (edge_map::const_iterator edge = restricted_rev.edges.begin();
+             edge != restricted_rev.edges.end();
+             edge++)
           {
-            file_path path(i->first);
-            file_id old_content = i->second.first;
-            file_id new_content = i->second.second;
+            // process file deltas or new files
+            cset const & cs = edge_changes(edge);
 
-            if (app.db.file_version_exists(new_content))
+            for (map<split_path, pair<file_id, file_id> >::const_iterator
+                   i = cs.deltas_applied.begin();
+                 i != cs.deltas_applied.end(); ++i)
               {
-                L(FL("skipping file delta %s, already in database")
-                  % delta_entry_dst(i));
+                file_path path(i->first);
+                file_id old_content = i->second.first;
+                file_id new_content = i->second.second;
+
+                if (app.db.file_version_exists(new_content))
+                  {
+                    L(FL("skipping file delta %s, already in database")
+                      % delta_entry_dst(i));
+                  }
+                else if (app.db.file_version_exists(old_content))
+                  {
+                    L(FL("inserting delta %s -> %s")
+                      % old_content % new_content);
+                    file_data old_data;
+                    data new_data;
+                    app.db.get_file_version(old_content, old_data);
+                    read_data(path, new_data);
+                    // sanity check
+                    hexenc<id> tid;
+                    calculate_ident(new_data, tid);
+                    N(tid == new_content.inner(),
+                      F("file '%s' modified during commit, aborting")
+                      % path);
+                    delta del;
+                    diff(old_data.inner(), new_data, del);
+                    dbw.consume_file_delta(old_content,
+                                           new_content,
+                                           file_delta(del));
+                  }
+                else
+                  // If we don't err out here, our packet writer will
+                  // later.
+                  E(false,
+                    F("Your database is missing version %s of file '%s'")
+                    % old_content % path);
               }
-            else if (app.db.file_version_exists(old_content))
+
+            for (map<split_path, file_id>::const_iterator
+                   i = cs.files_added.begin();
+                 i != cs.files_added.end(); ++i)
               {
-                L(FL("inserting delta %s -> %s")
-                  % old_content % new_content);
-                file_data old_data;
+                file_path path(i->first);
+                file_id new_content = i->second;
+
+                L(FL("inserting full version %s") % new_content);
                 data new_data;
-                app.db.get_file_version(old_content, old_data);
-                read_localized_data(path, new_data, app.lua);
+                read_data(path, new_data);
                 // sanity check
                 hexenc<id> tid;
                 calculate_ident(new_data, tid);
                 N(tid == new_content.inner(),
                   F("file '%s' modified during commit, aborting")
                   % path);
-                delta del;
-                diff(old_data.inner(), new_data, del);
-                dbw.consume_file_delta(old_content,
-                                       new_content,
-                                       file_delta(del));
+                dbw.consume_file_data(new_content, file_data(new_data));
               }
-            else
-              // If we don't err out here, our packet writer will
-              // later.
-              E(false,
-                F("Your database is missing version %s of file '%s'")
-                % old_content % path);
           }
 
-        for (map<split_path, file_id>::const_iterator
-               i = cs.files_added.begin();
-             i != cs.files_added.end(); ++i)
-          {
-            file_path path(i->first);
-            file_id new_content = i->second;
-
-            L(FL("inserting full version %s") % new_content);
-            data new_data;
-            read_localized_data(path, new_data, app.lua);
-            // sanity check
-            hexenc<id> tid;
-            calculate_ident(new_data, tid);
-            N(tid == new_content.inner(),
-              F("file '%s' modified during commit, aborting")
-              % path);
-            dbw.consume_file_data(new_content, file_data(new_data));
-          }
+        revision_data rdat;
+        write_revision(restricted_rev, rdat);
+        dbw.consume_revision_data(restricted_rev_id, rdat);
       }
 
-    revision_data rdat;
-    write_revision(restricted_rev, rdat);
-    dbw.consume_revision_data(restricted_rev_id, rdat);
-
-    cert_revision_in_branch(restricted_rev_id, branchname, app, dbw);
-    if (app.opts.date_given)
-      cert_revision_date_time(restricted_rev_id, app.opts.date, app, dbw);
-    else
-      cert_revision_date_now(restricted_rev_id, app, dbw);
-
-    if (app.opts.author_given > 0)
-      cert_revision_author(restricted_rev_id, app.opts.author(), app, dbw);
-    else
-      cert_revision_author_default(restricted_rev_id, app, dbw);
-
-    cert_revision_changelog(restricted_rev_id, log_message, app, dbw);
+    app.get_project().put_standard_certs_from_options(restricted_rev_id,
+                                                      app.opts.branchname,
+                                                      log_message,
+                                                      dbw);
     guard.commit();
   }
 
@@ -887,7 +911,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.blank_user_log();
 
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
@@ -905,7 +929,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
     // later.
     map<cert_name, cert_value> certs;
     vector< revision<cert> > ctmp;
-    app.db.get_revision_certs(restricted_rev_id, ctmp);
+    app.get_project().get_revision_certs(restricted_rev_id, ctmp);
     for (vector< revision<cert> >::const_iterator i = ctmp.begin();
          i != ctmp.end(); ++i)
       {
@@ -929,7 +953,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   if (args.size() > 1)
     throw usage(name);
 
-  N(!app.opts.branch_name().empty(), F("need --branch argument for setup"));
+  N(!app.opts.branchname().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
 
   string dir;
@@ -966,40 +990,29 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      cert_value b;
-      guess_branch(ident, app, b);
+      guess_branch(ident, app);
 
-      I(!app.opts.branch_name().empty());
-      cert_value branch_name(app.opts.branch_name());
-      base64<cert_value> branch_encoded;
-      encode_base64(branch_name, branch_encoded);
+      I(!app.opts.branchname().empty());
 
-      vector< revision<cert> > certs;
-      app.db.get_revision_certs(ident, branch_cert_name, branch_encoded, certs);
-
-      L(FL("found %d %s branch certs on revision %s")
-        % certs.size()
-        % app.opts.branch_name
-        % ident);
-
-      N(certs.size() != 0, F("revision %s is not a member of branch %s")
-        % ident % app.opts.branch_name);
+      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
+        F("revision %s is not a member of branch %s")
+        % ident % app.opts.branchname);
     }
   else
     {
       // use branch head revision
-      N(!app.opts.branch_name().empty(),
+      N(!app.opts.branchname().empty(),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      get_branch_heads(app.opts.branch_name(), app, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads);
       if (heads.size() > 1)
         {
-          P(F("branch %s has multiple heads:") % app.opts.branch_name);
+          P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s") % describe_revision(app, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
-          E(false, F("branch %s has multiple heads") % app.opts.branch_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
       if (heads.size() > 0)
         ident = *(heads.begin());
@@ -1013,34 +1026,44 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
 
   app.create_workspace(dir);
 
-  revision_t rev;
-  make_revision_for_workspace(ident, cset(), rev);
-  app.work.put_work_rev(rev);
+  try
+    {
+      revision_t rev;
+      make_revision_for_workspace(ident, cset(), rev);
+      app.work.put_work_rev(rev);
 
-  // prepare stuff for 'add' and so on.
-  app.found_workspace = true;       // Yup, this is cheating!
+      // prepare stuff for 'add' and so on.
+      app.found_workspace = true;       // Yup, this is cheating!
 
-  vector<utf8> empty_args;
-  options save_opts;
-  // add --unknown
-  save_opts.no_ignore = app.opts.no_ignore;
-  save_opts.exclude_patterns = app.opts.exclude_patterns;
-  app.opts.no_ignore = false;
-  app.opts.exclude_patterns = std::vector<utf8>();
-  app.opts.unknown = true;
-  process(app, "add", empty_args);
-  app.opts.unknown = false;
-  app.opts.no_ignore = save_opts.no_ignore;
-  app.opts.exclude_patterns = save_opts.exclude_patterns;
+      vector<utf8> empty_args;
+      options save_opts;
+      // add --unknown
+      save_opts.exclude_patterns = app.opts.exclude_patterns;
+      app.opts.exclude_patterns = std::vector<utf8>();
+      app.opts.unknown = true;
+      app.opts.recursive = true;
+      process(app, "add", empty_args);
+      app.opts.recursive = false;
+      app.opts.unknown = false;
+      app.opts.exclude_patterns = save_opts.exclude_patterns;
 
-  // drop --missing
-  app.opts.missing = true;
-  process(app, "drop", empty_args);
-  app.opts.missing = false;
+      // drop --missing
+      save_opts.no_ignore = app.opts.no_ignore;
+      app.opts.missing = true;
+      process(app, "drop", empty_args);
+      app.opts.missing = false;
+      app.opts.no_ignore = save_opts.no_ignore;
 
-  // commit
-  if (!app.opts.dryrun)
-    process(app, "commit", empty_args);
+      // commit
+      if (!app.opts.dryrun)
+        process(app, "commit", empty_args);
+    }
+  catch (...)
+    {
+      // clean up before rethrowing
+      delete_dir_recursive(bookkeeping_root);
+      throw;
+    }
 
   // clean up
   delete_dir_recursive(bookkeeping_root);

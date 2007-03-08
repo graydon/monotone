@@ -14,7 +14,7 @@ check(indir("workspace", mtn("commit", "-m", "foo")), 0, false, false)
 mkdir("workspace/new_root")
 check(indir("workspace", mtn("add", "new_root")), 0, false, false)
 
-check(indir("workspace", mtn("pivot_root", "-e", "new_root", "Attic")),
+check(indir("workspace", mtn("pivot_root", "new_root", "Attic")),
       0, false, false)
 
 check(isdir("workspace/_MTN"))

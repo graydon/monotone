@@ -56,7 +56,19 @@ args_to_paths(std::vector<utf8> const & args)
 {
   std::vector<file_path> paths;
   for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(file_path_external(*i));
+    {
+      if (bookkeeping_path::external_string_is_bookkeeping_path(*i))
+        W(F("ignored bookkeeping path '%s'") % *i);
+      else 
+        paths.push_back(file_path_external(*i));
+    }
+  // "it should not be the case that args were passed, but our paths set
+  // ended up empty".  This test is because some commands have default
+  // behavior for empty path sets -- in particular, it is the same as having
+  // no restriction at all.  "mtn revert _MTN" turning into "mtn revert"
+  // would be bad.  (Or substitute diff, etc.)
+  N(!(!args.empty() && paths.empty()),
+    F("all arguments given were bookkeeping paths; aborting"));
   return paths;
 }
 
@@ -119,6 +131,11 @@ process_commit_message_args(bool & given,
                             utf8 & log_message,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
+
+void
+get_content_paths(roster_t const & roster, 
+                  std::map<file_id, 
+                  file_path> & paths);
 
 #define CMD(C, group, params, desc, opts)                            \
 namespace commands {                                                 \

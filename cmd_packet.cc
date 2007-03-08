@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
 
 #include "cmd.hh"
 #include "packet.hh"

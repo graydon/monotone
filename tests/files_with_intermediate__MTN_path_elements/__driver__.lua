@@ -28,10 +28,6 @@ check(samefile("dir3/_MTN", "outdir1/dir3/_MTN"))
  
 -- renames
 
-rename("dir1/_MTN/testfile1", "dir1/_MTN/testfile1x")
-rename("dir2/_MTN", "dir2/TM")
-rename("dir3", "dir3x")
-
 check(mtn("rename", "dir1/_MTN/testfile1", "dir1/_MTN/testfile1x"), 0, false, false)
 check(mtn("rename", "dir2/_MTN", "dir2/TM"), 0, false, false)
 check(mtn("rename", "dir3", "dir3x"), 0, false, false)
@@ -45,7 +41,7 @@ check(samefile("dir3x/_MTN", "outdir2/dir3x/_MTN"))
 
 -- explicit drop
 
-check(mtn("drop", "dir1/_MTN/testfile2"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "dir1/_MTN/testfile2"), 0, false, false)
 commit()
 
 check(mtn("checkout", "outdir3"), 0, false, false)
@@ -54,7 +50,7 @@ check(not exists("outdir3/dir1/_MTN/testfile2"))
 
 -- recursive drop
 
-check(mtn("drop", "--recursive", "dir1"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "--recursive", "dir1"), 0, false, false)
 commit()
 
 check(mtn("checkout", "outdir4"), 0, false, false)

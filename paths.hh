@@ -110,6 +110,10 @@
 
 #include "vocab.hh"
 
+#include <boost/filesystem/path.hpp>
+
+namespace fs = boost::filesystem;
+
 typedef std::vector<path_component> split_path;
 
 const path_component the_null_component;
@@ -205,8 +209,9 @@ public:
   // usually you should just use the / operator as a constructor!
   bookkeeping_path(std::string const & path);
   bookkeeping_path operator /(std::string const & to_append) const;
-  // exposed for the use of walk_tree
-  static bool is_bookkeeping_path(std::string const & path);
+  // exposed for the use of walk_tree and friends
+  static bool internal_string_is_bookkeeping_path(utf8 const & path);
+  static bool external_string_is_bookkeeping_path(utf8 const & path);
   bool operator ==(const bookkeeping_path & other) const
   { return data == other.data; }
 
@@ -265,7 +270,12 @@ find_and_go_to_workspace(system_path const & search_root);
 void
 go_to_workspace(system_path const & new_workspace);
 
+void mark_std_paths_used(void);
+
 typedef std::set<split_path> path_set;
+
+void
+split_paths(std::vector<file_path> const & file_paths, path_set & split_paths);
 
 // equivalent to file_path_internal(path).split(sp) but more efficient.
 void

@@ -9,7 +9,6 @@
 
 #include "config.h"
 
-#include <cstdio>
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -41,7 +40,6 @@
 
 using std::cout;
 using std::cerr;
-using std::endl;
 using std::string;
 using std::ios_base;
 using std::ostringstream;
@@ -87,12 +85,13 @@ using boost::shared_ptr;
 struct botan_library
 {
   botan_library() {
-    Botan::Init::initialize();
-    Botan::set_default_allocator("malloc");
-    hook_botan_sha1();
+    Botan::InitializerOptions options("thread_safe=0 selftest=0 seed_rng=1 "
+                                      "use_engines=0 secure_memory=1 "
+                                      "fips140=0");
+    Botan::LibraryInitializer::initialize(options);
   }
   ~botan_library() {
-    Botan::Init::deinitialize();
+    Botan::LibraryInitializer::deinitialize();
   }
 };
 
@@ -110,7 +109,7 @@ struct ui_library
 };
 
 
-// This is in a sepaarte procedure so it can be called from code that's called
+// This is in a separate procedure so it can be called from code that's called
 // before cpp_main(), such as program option object creation code.  It's made
 // so it can be called multiple times as well.
 void localize_monotone()
@@ -167,130 +166,130 @@ cpp_main(int argc, char ** argv)
   // we want to catch any early informative_failures due to charset
   // conversion etc
   try
-  {
-  // Set up the global sanity object.  No destructor is needed and
-  // therefore no wrapper object is needed either.
-  global_sanity.initialize(argc, argv, setlocale(LC_ALL, 0));
-
-  // Set up secure memory allocation etc
-  botan_library acquire_botan;
-
-  // Record where we are.  This has to happen before any use of
-  // boost::filesystem.
-  save_initial_path();
-
-  // decode all argv values into a UTF-8 array
-  vector<string> args;
-  for (int i = 1; i < argc; ++i)
     {
-      external ex(argv[i]);
-      utf8 ut;
-      system_to_utf8(ex, ut);
-      args.push_back(ut());
+      // Set up the global sanity object.  No destructor is needed and
+      // therefore no wrapper object is needed either.
+      global_sanity.initialize(argc, argv, setlocale(LC_ALL, 0));
+      
+      // Set up secure memory allocation etc
+      botan_library acquire_botan;
+      
+      // Record where we are.  This has to happen before any use of
+      // boost::filesystem.
+      save_initial_path();
+      
+      // decode all argv values into a UTF-8 array
+      vector<string> args;
+      for (int i = 1; i < argc; ++i)
+        {
+          external ex(argv[i]);
+          utf8 ut;
+          system_to_utf8(ex, ut);
+          args.push_back(ut());
+        }
+
+      // find base name of executable, convert to utf8, and save it in the
+      // global ui object
+      {
+        string prog_name = fs::path(argv[0]).leaf();
+        if (prog_name.rfind(".exe") == prog_name.size() - 4)
+          prog_name = prog_name.substr(0, prog_name.size() - 4);
+        utf8 prog_name_u;
+        system_to_utf8(external(prog_name), prog_name_u);
+        ui.prog_name = prog_name_u();
+        I(!ui.prog_name.empty());
+      }
+
+      app_state app;
+      try
+        {
+          string cmd = read_options(app.opts, args);
+
+          if (app.opts.version_given)
+            {
+              print_version();
+              return 0;
+            }
+
+          if (app.opts.full_version_given)
+            {
+              print_full_version();
+              return 0;
+            }
+
+          if (app.opts.dbname_given)
+            {
+              if (!app.opts.dbname.empty())
+                app.db.set_filename(app.opts.dbname);
+            }
+
+          if (app.opts.key_dir_given)
+            {
+              if (!app.opts.key_dir.empty())
+                app.keys.set_key_dir(app.opts.key_dir);
+            }
+
+          // stop here if they asked for help
+          if (app.opts.help)
+            {
+              throw usage(cmd);     // cmd may be empty, and that's fine.
+            }
+
+          // at this point we allow a workspace (meaning search for it
+          // and if found read _MTN/options, but don't use the data quite
+          // yet, and read all the monotonercs).  Processing the data
+          // from _MTN/options happens later.
+          // Certain commands may subsequently require a workspace or fail
+          // if we didn't find one at this point.
+          app.allow_workspace();
+
+          if (!app.found_workspace && global_sanity.filename.empty())
+            global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
+
+          // main options processed, now invoke the
+          // sub-command w/ remaining args
+          if (cmd.empty())
+            {
+              throw usage("");
+            }
+          else
+            {
+              vector<utf8> args(app.opts.args.begin(), app.opts.args.end());
+              return commands::process(app, cmd, args);
+            }
+        }
+      catch (option::option_error const & e)
+        {
+          N(false, i18n_format("%s") % e.what());
+        }
+      catch (usage & u)
+        {
+          // we send --help output to stdout, so that "mtn --help | less" works
+          // but we send error-triggered usage information to stderr, so that if
+          // you screw up in a script, you don't just get usage information sent
+          // merrily down your pipes.
+          std::ostream & usage_stream = (app.opts.help ? cout : cerr);
+
+          usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
+          usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << '\n';
+
+          // Make sure to hide documentation that's not part of
+          // the current command.
+          options::options_type cmd_options = commands::toplevel_command_options(u.which);
+          if (!cmd_options.empty())
+            {
+              usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
+              usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << '\n';
+            }
+
+          commands::explain_usage(u.which, usage_stream);
+          if (app.opts.help)
+            return 0;
+          else
+            return 2;
+
+        }
     }
-
-  // find base name of executable, convert to utf8, and save it in the
-  // global ui object
-  {
-    string prog_name = fs::path(argv[0]).leaf();
-    if (prog_name.rfind(".exe") == prog_name.size() - 4)
-      prog_name = prog_name.substr(0, prog_name.size() - 4);
-    utf8 prog_name_u;
-    system_to_utf8(prog_name, prog_name_u);
-    ui.prog_name = prog_name_u();
-    I(!ui.prog_name.empty());
-  }
-
-  app_state app;
-  try
-    {
-      string cmd = read_options(app.opts, args);
-
-      if (app.opts.version_given)
-        {
-          print_version();
-          return 0;
-        }
-
-      if (app.opts.full_version_given)
-        {
-          print_full_version();
-          return 0;
-        }
-
-      if (app.opts.dbname_given)
-        {
-          if (!app.opts.dbname.empty())
-            app.db.set_filename(app.opts.dbname);
-        }
-
-      if (app.opts.key_dir_given)
-        {
-          if (!app.opts.key_dir.empty())
-            app.keys.set_key_dir(app.opts.key_dir);
-        }
-
-      // stop here if they asked for help
-      if (app.opts.help)
-        {
-          throw usage(cmd);     // cmd may be empty, and that's fine.
-        }
-
-      // at this point we allow a workspace (meaning search for it
-      // and if found read _MTN/options, but don't use the data quite
-      // yet, and read all the monotonercs).  Processing the data
-      // from _MTN/options happens later.
-      // Certain commands may subsequently require a workspace or fail
-      // if we didn't find one at this point.
-      app.allow_workspace();
-
-      if (!app.found_workspace && global_sanity.filename.empty())
-        global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
-
-      // main options processed, now invoke the
-      // sub-command w/ remaining args
-      if (cmd.empty())
-        {
-          throw usage("");
-        }
-      else
-        {
-          vector<utf8> args(app.opts.args.begin(), app.opts.args.end());
-          return commands::process(app, cmd, args);
-        }
-    }
-  catch (option::option_error const & e)
-    {
-      N(false, i18n_format("%s") % e.what());
-    }
-  catch (usage & u)
-    {
-      // we send --help output to stdout, so that "mtn --help | less" works
-      // but we send error-triggered usage information to stderr, so that if
-      // you screw up in a script, you don't just get usage information sent
-      // merrily down your pipes.
-      std::ostream & usage_stream = (app.opts.help ? cout : cerr);
-
-      usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
-      usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << "\n";
-
-      // Make sure to hide documentation that's not part of
-      // the current command.
-      options::options_type cmd_options = commands::toplevel_command_options(u.which);
-      if (!cmd_options.empty())
-        {
-          usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
-          usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << "\n";
-        }
-
-      commands::explain_usage(u.which, usage_stream);
-      if (app.opts.help)
-        return 0;
-      else
-        return 2;
-
-    }
-  }
   catch (informative_failure & inf)
     {
       ui.inform(inf.what());
@@ -299,6 +298,11 @@ cpp_main(int argc, char ** argv)
   catch (ios_base::failure const & ex)
     {
       // an error has already been printed
+      return 1;
+    }
+  catch (std::bad_alloc)
+    {
+      ui.inform(_("error: memory exhausted"));
       return 1;
     }
   catch (std::exception const & ex)

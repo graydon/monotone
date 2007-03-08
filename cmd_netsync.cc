@@ -1,15 +1,23 @@
 #include "cmd.hh"
 
+#include "diff_patch.hh"
 #include "netsync.hh"
 #include "globish.hh"
 #include "keys.hh"
 #include "cert.hh"
+#include "revision.hh"
+#include "ui.hh"
 #include "uri.hh"
+#include "vocab_cast.hh"
+#include "platform-wrapped.hh"
+
 
 #include <fstream>
 
 using std::ifstream;
 using std::ofstream;
+using std::map;
+using std::set;
 using std::string;
 using std::vector;
 
@@ -19,6 +27,8 @@ static const var_key default_include_pattern_key(var_domain("database"),
                                                  var_name("default-include-pattern"));
 static const var_key default_exclude_pattern_key(var_domain("database"),
                                                  var_name("default-exclude-pattern"));
+
+static string const ws_internal_db_file_name("mtn.db");
 
 static void
 extract_address(vector<utf8> const & args,
@@ -64,16 +74,21 @@ find_key_if_needed(utf8 & addr, app_state & app)
 
 static void
 extract_patterns(vector<utf8> const & args,
-                 utf8 & include_pattern, utf8 & exclude_pattern,
+                 globish & include_pattern, globish & exclude_pattern,
                  app_state & app)
 {
   if (args.size() >= 2 || app.opts.exclude_given)
     {
       E(args.size() >= 2, F("no branch pattern given"));
       int pattern_offset = 1;
-      vector<utf8> patterns(args.begin() + pattern_offset, args.end());
+      vector<globish> patterns;
+      std::transform(args.begin() + pattern_offset, args.end(),
+                     std::inserter(patterns, patterns.end()),
+                     &typecast_vocab<utf8, globish>);
       combine_and_check_globish(patterns, include_pattern);
-      combine_and_check_globish(app.opts.exclude_patterns, exclude_pattern);
+      vector<globish> excludes;
+      typecast_vocab_container(app.opts.exclude_patterns, excludes);
+      combine_and_check_globish(excludes, exclude_pattern);
       if (!app.db.var_exists(default_include_pattern_key)
           || app.opts.set_default)
         {
@@ -93,25 +108,26 @@ extract_patterns(vector<utf8> const & args,
         F("no branch pattern given and no default pattern set"));
       var_value pattern_value;
       app.db.get_var(default_include_pattern_key, pattern_value);
-      include_pattern = utf8(pattern_value());
+      include_pattern = globish(pattern_value());
       L(FL("using default branch include pattern: '%s'") % include_pattern);
       if (app.db.var_exists(default_exclude_pattern_key))
         {
           app.db.get_var(default_exclude_pattern_key, pattern_value);
-          exclude_pattern = utf8(pattern_value());
+          exclude_pattern = globish(pattern_value());
         }
       else
-        exclude_pattern = utf8("");
+        exclude_pattern = globish();
       L(FL("excluding: %s") % exclude_pattern);
     }
 }
 
-CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("push branches matching PATTERN to netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr, include_pattern, exclude_pattern;
+  utf8 addr;
+  globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   find_key_if_needed(addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
@@ -120,11 +136,12 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude)
 {
-  utf8 addr, include_pattern, exclude_pattern;
+  utf8 addr;
+  globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
 
@@ -135,12 +152,13 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
+CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("sync branches matching PATTERN with netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr, include_pattern, exclude_pattern;
+  utf8 addr;
+  globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   find_key_if_needed(addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
@@ -149,6 +167,188 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN]]"),
                        include_pattern, exclude_pattern, app);
 }
 
+class dir_cleanup_helper
+{
+public:
+  dir_cleanup_helper(system_path const & new_dir, bool i_db) :
+                  commited(false), internal_db(i_db), dir(new_dir) {}
+  ~dir_cleanup_helper()
+  {
+    if (!commited && directory_exists(dir))
+      {
+#ifdef WIN32
+        if (!internal_db)
+          delete_dir_recursive(dir);
+#else
+        delete_dir_recursive(dir);
+#endif /* WIN32 */
+      }
+  }
+  void commit(void)
+  {
+    commited = true;
+  }
+private:
+  bool commited;
+  bool internal_db;
+  system_path dir;
+};
+
+CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
+    N_("check out a revision from remote database into directory.\n"
+       "If a revision is given, that's the one that will be checked out.\n"
+       "Otherwise, it will be the head of the branch supplied.\n"
+       "If no directory is given, the branch name will be used as directory"),
+    options::opts::exclude | options::opts::branch | options::opts::revision)
+{
+  if (args.size() < 1 || args.size() > 2 || app.opts.revision_selectors.size() > 1)
+    throw usage(name);
+
+  revision_id ident;
+  system_path workspace_dir;
+  utf8 addr = idx(args, 0);
+
+  N(app.opts.branch_given && !app.opts.branchname().empty(),
+    F("you must specify a branch to clone"));
+
+  if (args.size() == 1)
+    {
+      // No checkout dir specified, use branch name for dir.
+      workspace_dir = system_path(app.opts.branchname());
+    }
+  else
+    {
+      // Checkout to specified dir.
+      workspace_dir = system_path(idx(args, 1));
+    }
+
+  require_path_is_nonexistent
+    (workspace_dir, F("clone destination directory '%s' already exists") % workspace_dir);
+
+   // remember the initial working dir so that relative file:// db URIs will work
+  system_path start_dir(get_current_working_dir());
+
+  bool internal_db = !app.opts.dbname_given || app.opts.dbname.empty();
+
+  dir_cleanup_helper remove_on_fail(workspace_dir, internal_db);
+  app.create_workspace(workspace_dir);
+
+  if (internal_db)
+    app.set_database(system_path(bookkeeping_root / ws_internal_db_file_name));
+  else
+    app.set_database(app.opts.dbname);
+
+  if (get_path_status(app.db.get_filename()) == path::nonexistent)
+    app.db.initialize();
+
+  app.db.ensure_open();
+
+  if (!app.db.var_exists(default_server_key) || app.opts.set_default)
+    {
+      P(F("setting default server to %s") % addr);
+      app.db.set_var(default_server_key, var_value(addr()));
+    }
+
+  if (app.opts.signing_key() == "")
+    P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
+
+  globish include_pattern(app.opts.branchname());
+  if (!app.db.var_exists(default_include_pattern_key)
+      || app.opts.set_default)
+    {
+      P(F("setting default branch include pattern to '%s'") % include_pattern);
+      app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
+    }
+  
+  globish exclude_pattern;
+  if (app.opts.exclude_given)
+    {
+      vector<globish> excludes;
+      typecast_vocab_container(app.opts.exclude_patterns, excludes);
+      combine_and_check_globish(excludes, exclude_pattern);
+      if (!app.db.var_exists(default_exclude_pattern_key)
+          || app.opts.set_default)
+        {
+          P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
+          app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
+        }
+    }
+  else
+    {
+      exclude_pattern = globish();
+    }
+  
+  // make sure we're back in the original dir so that file: URIs work
+  change_current_working_dir(start_dir);
+  
+  run_netsync_protocol(client_voice, sink_role, addr,
+                       include_pattern, exclude_pattern, app);
+
+  change_current_working_dir(workspace_dir);
+
+  transaction_guard guard(app.db, false);
+
+  if (app.opts.revision_selectors.size() == 0)
+    {
+      // use branch head revision
+      N(!app.opts.branchname().empty(),
+        F("use --revision or --branch to specify what to checkout"));
+
+      set<revision_id> heads;
+      app.get_project().get_branch_heads(app.opts.branchname, heads);
+      N(heads.size() > 0,
+        F("branch '%s' is empty") % app.opts.branchname);
+      if (heads.size() > 1)
+        {
+          P(F("branch %s has multiple heads:") % app.opts.branchname);
+          for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+            P(i18n_format("  %s") % describe_revision(app, *i));
+          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
+          E(false, F("branch %s has multiple heads") % app.opts.branchname);
+        }
+      ident = *(heads.begin());
+    }
+  else if (app.opts.revision_selectors.size() == 1)
+    {
+      // use specified revision
+      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
+      N(app.db.revision_exists(ident),
+        F("no such revision '%s'") % ident);
+
+      guess_branch(ident, app);
+
+      I(!app.opts.branchname().empty());
+
+      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
+        F("revision %s is not a member of branch %s")
+        % ident % app.opts.branchname);
+    }
+
+  shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
+  roster_t current_roster;
+
+  L(FL("checking out revision %s to directory %s") % ident % workspace_dir);
+  app.db.get_roster(ident, current_roster);
+
+  revision_t workrev;
+  make_revision_for_workspace(ident, cset(), workrev);
+  app.work.put_work_rev(workrev);
+
+  cset checkout;
+  make_cset(*empty_roster, current_roster, checkout);
+
+  map<file_id, file_path> paths;
+  get_content_paths(*empty_roster, paths);
+
+  content_merge_workspace_adaptor wca(app, empty_roster, paths);
+
+  app.work.perform_content_update(checkout, wca, false);
+
+  app.work.update_any_attrs();
+  app.work.maybe_update_inodeprints();
+  guard.commit();
+  remove_on_fail.commit();
+}
 
 struct pid_file
 {
@@ -160,7 +360,7 @@ struct pid_file
     require_path_is_nonexistent(path, F("pid file '%s' already exists") % path);
     file.open(path.as_external().c_str());
     E(file.is_open(), F("failed to create pid file '%s'") % path);
-    file << get_process_id() << "\n";
+    file << get_process_id() << '\n';
     file.flush();
   }
 
@@ -210,7 +410,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), "",
   app.db.ensure_open();
 
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_address,
-                       utf8("*"), utf8(""), app);
+                       globish("*"), globish(""), app);
 }
 
 // Local Variables:

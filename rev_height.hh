@@ -10,53 +10,60 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iostream>
+#include <iosfwd>
 #include <string>
 #include "numeric_vocab.hh"
 
-using std::ostream;
-using std::string;
-
-
 class rev_height
 {
-  string d;
-  static size_t const width = sizeof(u32);
-  u32 read_at(size_t pos) const;
-  void write_at(size_t pos, u32 val);
-  void append(u32 val);
-  size_t size() const;
-  void clear();
+  std::string d;
+
 public:
-  rev_height();
-  rev_height(rev_height const & other);
-  void from_string(string const & s);
-  string const & operator()() const;
-  void child_height(rev_height & child, u32 nr) const;
-  static void root_height(rev_height & root);
+  rev_height() : d() {}
+  rev_height(rev_height const & other) : d(other.d) {}
+  explicit rev_height(std::string const & s) : d(s) {}
+  std::string const & operator()() const { return d; }
 
-  bool operator ==(rev_height const & other) const;
-  bool operator < (rev_height const & other) const;
+  rev_height child_height(u32 nr) const;
+  static rev_height root_height();
 
-  inline bool operator !=(rev_height const & other) const
+  bool valid() const { return d.size() > 0; }
+
+  bool operator ==(rev_height const & other) const
   {
-    return !(*this == other);
+    return this->d == other.d;
   }
-  inline bool operator > (rev_height const & other) const
+  bool operator < (rev_height const & other) const
   {
-    return other < *this;
+    return this->d < other.d;
   }
-  inline bool operator <=(rev_height const & other) const
+  bool operator !=(rev_height const & other) const
   {
-    return !(other < *this);
+    return this->d != other.d;
   }
-  inline bool operator >=(rev_height const & other) const
+  bool operator > (rev_height const & other) const
   {
-    return !(*this < other);
+    return this->d > other.d;
   }
-  friend ostream & operator <<(ostream & os, rev_height const & h);
+  bool operator <=(rev_height const & other) const
+  {
+    return this->d <= other.d;
+  }
+  bool operator >=(rev_height const & other) const
+  {
+    return this->d >= other.d;
+  }
 };
 
-void dump(rev_height const & h, string & out);
+std::ostream & operator <<(std::ostream & os, rev_height const & h);
+void dump(rev_height const & h, std::string & out);
 
 #endif // __REV_HEIGHT_HH_
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

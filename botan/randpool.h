@@ -1,6 +1,6 @@
 /*************************************************
 * Randpool Header File                           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_RANDPOOL_H__
@@ -32,8 +32,8 @@ class Randpool : public RandomNumberGenerator
       BlockCipher* cipher;
       MessageAuthenticationCode* mac;
 
-      SecureVector<byte> pool, buffer;
-      u32bit entropy, counter;
+      SecureVector<byte> pool, buffer, counter;
+      u32bit entropy;
    };
 
 }

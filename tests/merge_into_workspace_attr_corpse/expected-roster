@@ -1,0 +1,17 @@
+format_version "1"
+
+      dir ""
+    ident "1"
+    birth [e032edcb78885de86a3a3a05f641ae1d25f63988]
+path_mark [e032edcb78885de86a3a3a05f641ae1d25f63988]
+
+        file "testfile"
+     content [c537e8ec248c6cd32e54cd6fa98ae15743f996b4]
+       ident "2"
+dormant_attr "left-attr"
+dormant_attr "right-attr"
+       birth [e032edcb78885de86a3a3a05f641ae1d25f63988]
+   path_mark [e032edcb78885de86a3a3a05f641ae1d25f63988]
+content_mark [e032edcb78885de86a3a3a05f641ae1d25f63988]
+   attr_mark "left-attr" [fd014440f510fde3f7d8093c03ee510fb2781694]
+   attr_mark "right-attr" [7dcdf53649d29ab55ca7f400b12771ffa3493702]

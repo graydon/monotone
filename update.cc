@@ -55,8 +55,7 @@ get_test_results_for_revision(revision_id const & id,
                               app_state & app)
 {
   vector< revision<cert> > certs;
-  app.db.get_revision_certs(id, testresult_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  app.get_project().get_revision_certs_by_name(id, cert_name(testresult_cert_name), certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -75,7 +74,7 @@ get_test_results_for_revision(revision_id const & id,
 }
 
 static bool
-acceptable_descendent(cert_value const & branch,
+acceptable_descendent(branch_name const & branch,
                       revision_id const & base,
                       map<rsa_keypair_id, bool> & base_results,
                       revision_id const & target,
@@ -84,12 +83,7 @@ acceptable_descendent(cert_value const & branch,
   L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
-  base64<cert_value> val;
-  encode_base64(branch, val);
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(target, branch_cert_name, val, certs);
-  erase_bogus_certs(certs, app);
-  if (certs.empty())
+  if (!app.get_project().revision_is_in_branch(target, branch))
     {
       L(FL("%s not in branch %s") % target % branch);
       return false;
@@ -113,7 +107,7 @@ acceptable_descendent(cert_value const & branch,
 
 static void
 calculate_update_set(revision_id const & base,
-                     cert_value const & branch,
+                     branch_name const & branch,
                      app_state & app,
                      set<revision_id> & candidates)
 {
@@ -162,11 +156,11 @@ void pick_update_candidates(revision_id const & base_ident,
                             app_state & app,
                             set<revision_id> & candidates)
 {
-  N(app.opts.branch_name() != "",
+  N(app.opts.branchname() != "",
     F("cannot determine branch for update"));
   I(!null_id(base_ident));
 
-  calculate_update_set(base_ident, cert_value(app.opts.branch_name()),
+  calculate_update_set(base_ident, app.opts.branchname,
                        app, candidates);
 }
 

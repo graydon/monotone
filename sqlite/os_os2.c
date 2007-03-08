@@ -12,6 +12,12 @@
 **
 ** This file contains code that is specific to OS/2.
 */
+
+#if (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 3) && defined(OS2_HIGH_MEMORY)
+/* os2safe.h has to be included before os2.h, needed for high mem */
+#include <os2safe.h>
+#endif
+
 #include "sqliteInt.h"
 #include "os.h"
 
@@ -287,10 +293,17 @@ int os2Close( OsFile **pld ){
 int os2Read( OsFile *id, void *pBuf, int amt ){
   ULONG got;
   assert( id!=0 );
-  SimulateIOError( SQLITE_IOERR );
+  SimulateIOError( return SQLITE_IOERR );
   TRACE3( "READ %d lock=%d\n", ((os2File*)id)->h, ((os2File*)id)->locktype );
   DosRead( ((os2File*)id)->h, pBuf, amt, &got );
-  return (got == (ULONG)amt) ? SQLITE_OK : SQLITE_IOERR;
+  if (got == (ULONG)amt)
+    return SQLITE_OK;
+  else if (got < 0)
+    return SQLITE_IOERR_READ;
+  else {
+    memset(&((char*)pBuf)[got], 0, amt-got);
+    return SQLITE_IOERR_SHORT_READ;
+  }
 }
 
 /*
@@ -301,8 +314,8 @@ int os2Write( OsFile *id, const void *pBuf, int amt ){
   APIRET rc = NO_ERROR;
   ULONG wrote;
   assert( id!=0 );
-  SimulateIOError( SQLITE_IOERR );
-  SimulateDiskfullError;
+  SimulateIOError( return SQLITE_IOERR );
+  SimulateDiskfullError( return SQLITE_FULL );
   TRACE3( "WRITE %d lock=%d\n", ((os2File*)id)->h, ((os2File*)id)->locktype );
   while( amt > 0 &&
       (rc = DosWrite( ((os2File*)id)->h, (PVOID)pBuf, amt, &wrote )) && wrote > 0 ){
@@ -339,7 +352,7 @@ int os2Sync( OsFile *id, int dataOnly ){
 ** than UNIX.
 */
 int sqlite3Os2SyncDirectory( const char *zDirname ){
-  SimulateIOError( SQLITE_IOERR );
+  SimulateIOError( return SQLITE_IOERR );
   return SQLITE_OK;
 }
 
@@ -351,7 +364,7 @@ int os2Truncate( OsFile *id, i64 nByte ){
   ULONG upperBits = nByte>>32;
   assert( id!=0 );
   TRACE3( "TRUNCATE %d %lld\n", ((os2File*)id)->h, nByte );
-  SimulateIOError( SQLITE_IOERR );
+  SimulateIOError( return SQLITE_IOERR );
   rc = DosSetFilePtr( ((os2File*)id)->h, nByte, FILE_BEGIN, &upperBits );
   if( rc != NO_ERROR ){
     return SQLITE_IOERR;
@@ -368,7 +381,7 @@ int os2FileSize( OsFile *id, i64 *pSize ){
   FILESTATUS3 fsts3FileInfo;
   memset(&fsts3FileInfo, 0, sizeof(fsts3FileInfo));
   assert( id!=0 );
-  SimulateIOError( SQLITE_IOERR );
+  SimulateIOError( return SQLITE_IOERR );
   rc = DosQueryFileInfo( ((os2File*)id)->h, FIL_STANDARD, &fsts3FileInfo, sizeof(FILESTATUS3) );
   if( rc == NO_ERROR ){
     *pSize = fsts3FileInfo.cbFile;
@@ -767,6 +780,40 @@ int allocateOs2File( os2File *pInit, OsFile **pld ){
 ** Everything above deals with file I/O.  Everything that follows deals
 ** with other miscellanous aspects of the operating system interface
 ****************************************************************************/
+
+#ifndef SQLITE_OMIT_LOAD_EXTENSION
+/*
+** Interfaces for opening a shared library, finding entry points
+** within the shared library, and closing the shared library.
+*/
+void *sqlite3Os2Dlopen(const char *zFilename){
+  UCHAR loadErr[256];
+  HMODULE hmod;
+  APIRET rc;
+  rc = DosLoadModule(loadErr, sizeof(loadErr), zFilename, &hmod);
+  if (rc != NO_ERROR) return 0;
+  return (void*)hmod;
+}
+void *sqlite3Os2Dlsym(void *pHandle, const char *zSymbol){
+  PFN pfn;
+  APIRET rc;
+  rc = DosQueryProcAddr((HMODULE)pHandle, 0L, zSymbol, &pfn);
+  if (rc != NO_ERROR) {
+    /* if the symbol itself was not found, search again for the same
+     * symbol with an extra underscore, that might be needed depending
+     * on the calling convention */
+    char _zSymbol[256] = "_";
+    strncat(_zSymbol, zSymbol, 255);
+    rc = DosQueryProcAddr((HMODULE)pHandle, 0L, _zSymbol, &pfn);
+  }
+  if (rc != NO_ERROR) return 0;
+  return pfn;
+}
+int sqlite3Os2Dlclose(void *pHandle){
+  return DosFreeModule((HMODULE)pHandle);
+}
+#endif /* SQLITE_OMIT_LOAD_EXTENSION */
+
 
 /*
 ** Get information to seed the random number generator.  The seed

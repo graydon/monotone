@@ -7,9 +7,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <stdio.h>
-#include <stdarg.h>
-
 #include <algorithm>
 #include <iterator>
 #include <iostream>
@@ -67,7 +64,7 @@ sanity::initialize(int argc, char ** argv, char const * lc_all)
       {
         if (i)
           cmdline_ss << ", ";
-        cmdline_ss << "'" << argv[i] << "'";
+        cmdline_ss << '\'' << argv[i] << '\'';
       }
     cmdline_string = cmdline_ss.str();
   }
@@ -274,7 +271,7 @@ sanity::gasp()
   L(FL("saving current work set: %i items") % musings.size());
   ostringstream out;
   out << (F("Current work set: %i items") % musings.size())
-      << "\n"; // final newline is kept out of the translation
+      << '\n'; // final newline is kept out of the translation
   for (vector<MusingI const *>::const_iterator
          i = musings.begin(); i != musings.end(); ++i)
     {
@@ -326,6 +323,17 @@ template <> void
 dump(string const & obj, string & out)
 {
   out = obj;
+}
+
+void
+print_var(std::string const & value, char const * var,
+          char const * file, int const line, char const * func)
+{
+  std::cout << (FL("----- begin '%s' (in %s, at %s:%d)\n") 
+                % var % func % file % line)
+            << value
+            << (FL("\n-----   end '%s' (in %s, at %s:%d)\n\n") 
+                % var % func % file % line);
 }
 
 void MusingBase::gasp_head(string & out) const

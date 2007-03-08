@@ -59,9 +59,9 @@ check(greplines("stdout", {revs[1], revs[2], revs[3]}))
 --
 -- OK, now try some renames
 --
-check(mtn("rename", "foo0", "tmp"), 0, false, false)
-check(mtn("rename", "bar0", "foo0"), 0, false, false)
-check(mtn("rename", "tmp", "bar0"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo0", "tmp"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "bar0", "foo0"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "tmp", "bar0"), 0, false, false)
 rename("foo0", "tmp")
 rename("bar0", "foo0")
 rename("tmp", "bar0")
@@ -91,8 +91,7 @@ commit()
 revs[6] = base_revision()
 
 -- Now make right side
-remove("_MTN")
-check(mtn("co", "--revision", revs[4], "."), 0, false, false)
+revert_to(revs[4])
 writefile("bar0", "bar\non right side of fork\n")
 commit()
 revs[7] = base_revision()

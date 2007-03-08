@@ -6,11 +6,10 @@ addfile("foo/a", "blah blah")
 commit()
 base = base_revision()
 
-rename("foo", "bar")
 check(mtn("rename", "foo", "bar"), 0, false, false)
 commit()
 
-rename("bar", "foo")
+remove("bar")
 revert_to(base)
 writefile("foo/a", "some other stuff")
 commit()

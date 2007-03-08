@@ -7,8 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 
 #include "cert.hh"
 #include "charset.hh"
@@ -16,12 +17,17 @@
 #include "keys.hh"
 #include "packet.hh"
 #include "transforms.hh"
+#include "ssh_agent.hh"
+#include "botan/pipe.h"
 
 using std::cout;
 using std::ostream_iterator;
 using std::ostringstream;
 using std::set;
 using std::string;
+using std::ofstream;
+using Botan::Pipe;
+using Botan::RSA_PrivateKey;
 
 CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
     options::opts::none)
@@ -110,6 +116,61 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   P(F("passphrase changed"));
 }
 
+CMD(ssh_agent_export, N_("key and cert"),
+    N_("[FILENAME]"),
+    N_("export your monotone key for use with ssh-agent"),
+    options::opts::none)
+{
+  if (args.size() > 1)
+    throw usage(name);
+
+  rsa_keypair_id id;
+  keypair key;
+  get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  utf8 new_phrase;
+  get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
+  Pipe p;
+  p.start_msg();
+  if (new_phrase().length())
+    {
+      Botan::PKCS8::encrypt_key(*priv,
+                                p,
+                                new_phrase(),
+                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+    }
+  else
+    {
+      Botan::PKCS8::encode(*priv, p);
+    }
+  string decoded_key = p.read_all_as_string();
+  if (args.size() == 0)
+    cout << decoded_key;
+  else
+    {
+      ofstream fout(idx(args,0)().c_str(), ofstream::out);
+      fout << decoded_key;
+    }
+}
+
+CMD(ssh_agent_add, N_("key and cert"), "",
+    N_("Add your monotone key to ssh-agent"),
+    options::opts::none)
+{
+  if (args.size() > 1)
+    throw usage(name);
+
+  rsa_keypair_id id;
+  keypair key;
+  get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  app.agent.add_identity(*priv, id());
+}
+
 CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
     N_("create a cert for a revision"), options::opts::none)
 {
@@ -118,10 +179,8 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
 
   transaction_guard guard(app.db);
 
-  hexenc<id> ident;
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
-  ident = rid.inner();
 
   cert_name name;
   internalize_cert_name(idx(args, 1), name);
@@ -135,14 +194,8 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   else
     val = cert_value(get_stdin());
 
-  base64<cert_value> val_encoded;
-  encode_base64(val, val_encoded);
-
-  cert t(ident, name, val_encoded, key);
-
   packet_db_writer dbw(app);
-  calculate_cert(app, t);
-  dbw.consume_revision_cert(revision<cert>(t));
+  app.get_project().put_cert(rid, name, val, dbw);
   guard.commit();
 }
 
@@ -191,7 +244,7 @@ CMD(trusted, N_("key and cert"),
     % value
     % all_signers.str()
     % (trusted ? _("trusted") : _("UNtrusted")))
-    << "\n"; // final newline is kept out of the translation
+    << '\n'; // final newline is kept out of the translation
 }
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
@@ -230,10 +283,9 @@ CMD(approve, N_("review"), N_("REVISION"),
   revision_id r;
   complete(app, idx(args, 0)(), r);
   packet_db_writer dbw(app);
-  cert_value branchname;
-  guess_branch(r, app, branchname);
-  N(app.opts.branch_name() != "", F("need --branch argument for approval"));
-  cert_revision_in_branch(r, app.opts.branch_name(), app, dbw);
+  guess_branch(r, app);
+  N(app.opts.branchname() != "", F("need --branch argument for approval"));
+  app.get_project().put_revision_in_branch(r, app.opts.branchname, dbw);
 }
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
@@ -244,7 +296,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 
   utf8 comment;
   if (args.size() == 2)
-    comment = idx(args, 1)();
+    comment = idx(args, 1);
   else
     {
       external comment_external;

@@ -7,12 +7,14 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <deque>
 #include <set>
-#include <sstream>
 #include <string>
+#include <iostream>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/key_extractors.hpp>
 
 #include "annotate.hh"
 #include "app_state.hh"
@@ -28,21 +30,26 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab.hh"
+#include "rev_height.hh"
 
-using std::auto_ptr;
 using std::back_insert_iterator;
 using std::back_inserter;
 using std::cout;
-using std::deque;
-using std::endl;
-using std::make_pair;
 using std::map;
 using std::min;
 using std::set;
 using std::string;
 using std::vector;
+using std::pair;
 
 using boost::shared_ptr;
+
+using boost::multi_index::multi_index_container;
+using boost::multi_index::indexed_by;
+using boost::multi_index::ordered_unique;
+using boost::multi_index::tag;
+using boost::multi_index::member;
+
 
 class annotate_lineage_mapping;
 
@@ -99,7 +106,6 @@ private:
 };
 
 
-
 /*
   An annotate_lineage_mapping tells you, for each line of a file,
   where in the ultimate descendent of interest (UDOI) the line came
@@ -141,7 +147,6 @@ private:
   vector<int> mapping;
 };
 
-
 interner<long> annotate_lineage_mapping::in;
 
 
@@ -154,70 +159,49 @@ struct annotate_node_work
 {
   annotate_node_work(shared_ptr<annotate_context> annotations_,
                      shared_ptr<annotate_lineage_mapping> lineage_,
-                     revision_id revision_, node_id fid_)
+                     revision_id revision_, node_id fid_,
+                     rev_height height_,
+                     set<revision_id> interesting_ancestors_,
+                     file_id content_,
+                     bool marked_)
     : annotations(annotations_),
       lineage(lineage_),
       revision(revision_),
-      fid(fid_)
-  {}
-
-  annotate_node_work(annotate_node_work const & w)
-    : annotations(w.annotations),
-      lineage(w.lineage),
-      revision(w.revision),
-      fid(w.fid)
+      fid(fid_),
+      height(height_),
+      interesting_ancestors(interesting_ancestors_),
+      content(content_),
+      marked(marked_)
   {}
 
   shared_ptr<annotate_context> annotations;
   shared_ptr<annotate_lineage_mapping> lineage;
   revision_id revision;
   node_id fid;
+  rev_height height;
+  set<revision_id> interesting_ancestors;
+  file_id content;
+  bool marked;
 };
 
+struct by_rev {};
 
-class lineage_merge_node
-{
-public:
-  typedef shared_ptr<annotate_lineage_mapping> splm;
-
-  lineage_merge_node(lineage_merge_node const & m)
-    : work(m.work),
-      incoming_edges(m.incoming_edges),
-      completed_edges(m.completed_edges)
-  {}
-
-  lineage_merge_node(annotate_node_work wu, size_t incoming)
-    : work(wu),
-      incoming_edges(incoming),
-      completed_edges(1)
-  {}
-
-  void merge(splm incoming,
-             shared_ptr<annotate_context> const & acp)
-  {
-    work.lineage->merge(*incoming, acp); completed_edges++;
-  }
-
-  bool iscomplete() const
-  {
-    I(completed_edges <= incoming_edges);
-    return incoming_edges == completed_edges;
-  }
-
-  annotate_node_work get_work() const
-  {
-    I(iscomplete());
-    return work;
-  }
-
-private:
-  annotate_node_work work;
-  size_t incoming_edges;
-  size_t completed_edges;
-};
-
-
-
+// instead of using a priority queue and a set to keep track of the already
+// seen revisions, we use a multi index container. it stores work units
+// indexed by both, their revision and their revision's height, with the
+// latter being used by default. usage of that data structure frees us from
+// the burden of keeping two data structures in sync.
+typedef multi_index_container<
+  annotate_node_work,
+  indexed_by<
+    ordered_unique<
+      member<annotate_node_work,rev_height,&annotate_node_work::height>,
+      std::greater<rev_height> >,
+    ordered_unique<
+      tag<by_rev>,
+      member<annotate_node_work,revision_id,&annotate_node_work::revision> >
+    >
+  > work_units;
 
 
 annotate_context::annotate_context(file_id fid, app_state & app)
@@ -273,7 +257,6 @@ annotate_context::evaluate(revision_id rev)
       I(*i < annotations.size());
       if (annotations[*i] == nullid)
         {
-        
           // L(FL("evaluate setting annotations[%d] -> %s, since "
           //      "touched_lines contained %d, copied_lines didn't and "
           //      "annotations[%d] was nullid\n") % *i % rev % *i % *i);
@@ -356,16 +339,16 @@ annotate_context::is_complete() const
   return false;
 }
 
-
-string cert_string_value(vector< revision<cert> > const & certs,
-                         string const & name,
-                         bool from_start, bool from_end,
-                         string const & sep)
+static string
+cert_string_value(vector< revision<cert> > const & certs,
+                  cert_name const & name,
+                  bool from_start, bool from_end,
+                  string const & sep)
 {
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
-      if (i->inner().name() == name)
+      if (i->inner().name == name)
         {
           cert_value tv;
           decode_base64 (i->inner().value, tv);
@@ -385,7 +368,6 @@ string cert_string_value(vector< revision<cert> > const & certs,
 
   return "";
 }
-
 
 void
 annotate_context::build_revisions_to_annotations
@@ -409,7 +391,7 @@ annotate_context::build_revisions_to_annotations
        i != seen.end(); i++)
     {
       vector< revision<cert> > certs;
-      app.db.get_revision_certs(*i, certs);
+      app.get_project().get_revision_certs(*i, certs);
       erase_bogus_certs(certs, app);
 
       string author(cert_string_value(certs, author_cert_name,
@@ -441,7 +423,6 @@ annotate_context::build_revisions_to_annotations
     }
 }
 
-
 void
 annotate_context::dump(app_state & app, bool just_revs) const
 {
@@ -465,18 +446,17 @@ annotate_context::dump(app_state & app, bool just_revs) const
         {
           if (lastid == annotations[i])
             cout << empty_note << ": "
-                 << file_lines[i] << endl;
+                 << file_lines[i] << '\n';
           else
             cout << revs_to_notations[annotations[i]]
-                 << file_lines[i] << endl;
+                 << file_lines[i] << '\n';
           lastid = annotations[i];
         }
       else
         cout << annotations[i] << ": "
-             << file_lines[i] << endl;
+             << file_lines[i] << '\n';
     }
 }
-
 
 annotate_lineage_mapping::annotate_lineage_mapping(file_data const & data)
 {
@@ -542,7 +522,6 @@ annotate_lineage_mapping::init_with_lines(vector<string> const & lines)
   L(FL("annotate_lineage_mapping::init_with_lines "
        "ending with %d entries in mapping\n") % mapping.size());
 }
-
 
 shared_ptr<annotate_lineage_mapping>
 annotate_lineage_mapping::build_parent_lineage
@@ -646,7 +625,6 @@ annotate_lineage_mapping::build_parent_lineage
   return parent_lineage;
 }
 
-
 void
 annotate_lineage_mapping::merge(annotate_lineage_mapping const & other,
                                 shared_ptr<annotate_context> const & acp)
@@ -687,7 +665,6 @@ annotate_lineage_mapping::credit_mapped_lines
     }
 }
 
-
 void
 annotate_lineage_mapping::set_copied_all_mapped
 (shared_ptr<annotate_context> acp) const
@@ -699,92 +676,74 @@ annotate_lineage_mapping::set_copied_all_mapped
     }
 }
 
+// fetches the list of file_content markings for the given revision_id and
+// node_id
+static void get_file_content_marks(app_state & app,
+                                   revision_id const & rev,
+                                   node_id const & fid,
+                                   set<revision_id> & content_marks)
+{
+  marking_t markings;
+  app.db.get_markings(rev, fid, markings);
+
+  I(!markings.file_content.empty());
+
+  content_marks.clear();
+  content_marks.insert(markings.file_content.begin(),
+                       markings.file_content.end());
+}
 
 static void
-do_annotate_node
-(annotate_node_work const & work_unit,
- app_state & app,
- deque<annotate_node_work> & nodes_to_process,
- set<revision_id> & nodes_complete,
- map<revision_id, size_t> const & paths_to_nodes,
- map<revision_id, lineage_merge_node> & pending_merge_nodes)
+do_annotate_node(annotate_node_work const & work_unit,
+                 app_state & app,
+                 work_units & work_units)
 {
   L(FL("do_annotate_node for node %s") % work_unit.revision);
-  I(nodes_complete.find(work_unit.revision) == nodes_complete.end());
-  // nodes_seen.insert(make_pair(work_unit.revision, work_unit.lineage));
-
-  roster_t roster;
-  marking_map markmap;
-  app.db.get_roster(work_unit.revision, roster, markmap);
-  marking_t marks;
-
-  map<node_id, marking_t>::const_iterator mmi =
-    markmap.find(work_unit.fid);
-  I(mmi != markmap.end());
-  marks = mmi->second;
-
-  if (marks.file_content.size() == 0)
-    {
-      L(FL("found empty content-mark set at rev %s")
-        % work_unit.revision);
-      work_unit.lineage->credit_mapped_lines(work_unit.annotations);
-      work_unit.annotations->evaluate(work_unit.revision);
-      nodes_complete.insert(work_unit.revision);
-      return;
-    }
-
-  set<revision_id> parents;
-
-  // If we have content-marks which are *not* equal to the current
-  // rev, we can jump back to them directly. If we have only a
-  // content-mark equal to the current rev, it means we made a
-  // decision here, and we must move to the immediate parent revs.
-  //
-  // Unfortunately, while this algorithm *could* use the marking
-  // information as suggested above, it seems to work much better
-  // (especially wrt. merges) when it goes rev-by-rev, so we leave it
-  // that way for now.
-
-  //   if (marks.file_content.size() == 1
-  //       && *(marks.file_content.begin()) == work_unit.revision)
-
-  app.db.get_revision_parents(work_unit.revision, parents);
-
-  //   else
-  //     parents = marks.file_content;
 
   size_t added_in_parent_count = 0;
 
-  for (set<revision_id>::const_iterator i = parents.begin();
-       i != parents.end(); i++)
+  for (set<revision_id>::const_iterator i = work_unit.interesting_ancestors.begin();
+       i != work_unit.interesting_ancestors.end(); i++)
     {
+      // here, 'parent' means either a real parent or one of the marked
+      // ancestors, depending on whether work_unit.marked is true.
       revision_id parent_revision = *i;
 
-      roster_t parent_roster;
-      marking_map parent_marks;
       L(FL("do_annotate_node processing edge from parent %s to child %s")
         % parent_revision % work_unit.revision);
 
       I(!(work_unit.revision == parent_revision));
-      app.db.get_roster(parent_revision, parent_roster, parent_marks);
 
-      if (!parent_roster.has_node(work_unit.fid))
+      file_id file_in_parent;
+      
+      work_units::index<by_rev>::type::iterator lmn =
+        work_units.get<by_rev>().find(parent_revision);
+
+      // find out the content hash of the file in parent.
+      if (lmn != work_units.get<by_rev>().end())
+        // we already got the content hash.
+        file_in_parent = lmn->content;
+      else
+        {
+          if (work_unit.marked)
+            app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
+          else
+            // we are not marked, so parent is marked.
+            file_in_parent = work_unit.content;
+        }
+
+      // stop if file is not present in the parent.
+      if (null_id(file_in_parent))
         {
           L(FL("file added in %s, continuing") % work_unit.revision);
           added_in_parent_count++;
           continue;
         }
-
-      // The node was live in the parent, so this represents a delta.
-      file_t file_in_child =
-        downcast_to_file_t(roster.get_node(work_unit.fid));
-
-      file_t file_in_parent =
-        downcast_to_file_t(parent_roster.get_node(work_unit.fid));
-
+      
+      // the node was live in the parent, so this represents a delta.
       shared_ptr<annotate_lineage_mapping> parent_lineage;
 
-      if (file_in_parent->content == file_in_child->content)
+      if (file_in_parent == work_unit.content)
         {
           L(FL("parent file identical, "
                "set copied all mapped and copy lineage\n"));
@@ -794,9 +753,9 @@ do_annotate_node
       else
         {
           file_data data;
-          app.db.get_file_version(file_in_parent->content, data);
+          app.db.get_file_version(file_in_parent, data);
           L(FL("building parent lineage for parent file %s")
-            % file_in_parent->content);
+            % file_in_parent);
           parent_lineage
             = work_unit.lineage->build_parent_lineage(work_unit.annotations,
                                                       parent_revision,
@@ -805,101 +764,54 @@ do_annotate_node
 
       // If this parent has not yet been queued for processing, create the
       // work unit for it.
-      map<revision_id, lineage_merge_node>::iterator lmn
-        = pending_merge_nodes.find(parent_revision);
-
-      if (lmn == pending_merge_nodes.end())
+      if (lmn == work_units.get<by_rev>().end())
         {
-          // Once we move on to processing the parent that this file was
-          // renamed from, we'll need the old name
+          set<revision_id> parents_interesting_ancestors;
+          bool parent_marked;
+
+          if (work_unit.marked)
+            {
+              // we are marked, thus we don't know a priori whether parent
+              // is marked or not.
+              get_file_content_marks(app, parent_revision, work_unit.fid, parents_interesting_ancestors);
+              parent_marked = (parents_interesting_ancestors.size() == 1
+                               && *(parents_interesting_ancestors.begin()) == parent_revision);
+            }
+          else
+            parent_marked = true;
+          
+          // if it's marked, we need to look at its parents instead.
+          if (parent_marked)
+            app.db.get_revision_parents(parent_revision, parents_interesting_ancestors);
+          
+          rev_height parent_height;
+          app.db.get_rev_height(parent_revision, parent_height);
           annotate_node_work newunit(work_unit.annotations,
                                      parent_lineage,
                                      parent_revision,
-                                     work_unit.fid);
-
-          map<revision_id, size_t>::const_iterator ptn
-            = paths_to_nodes.find(parent_revision);
-
-          if (ptn->second > 1)
-            {
-              lineage_merge_node nmn(newunit, ptn->second);
-              pending_merge_nodes.insert(make_pair(parent_revision, nmn));
-              L(FL("put new merge node on pending_merge_nodes "
-                   "for parent %s\n")
-                % parent_revision);
-              // just checking...
-              //(pending_merge_nodes.find(parent_revision))->second.dump();
-            }
-          else
-            {
-              L(FL("single path to node, just stick work on the queue "
-                   "for parent %s\n")
-                % parent_revision);
-              nodes_to_process.push_back(newunit);
-            }
+                                     work_unit.fid,
+                                     parent_height,
+                                     parents_interesting_ancestors,
+                                     file_in_parent,
+                                     parent_marked);
+          work_units.insert(newunit);
         }
       else
         {
-          // Already a pending node, so we just have to merge the lineage
-          // and decide whether to move it over to the nodes_to_process
-          // queue.
+          // already a pending node, so we just have to merge the lineage.
           L(FL("merging lineage from node %s to parent %s")
             % work_unit.revision % parent_revision);
-          lmn->second.merge(parent_lineage, work_unit.annotations);
-          //L(FL("after merging from work revision %s to parent %s"
-          // " lineage_merge_node is:\n") % work_unit.revision
-          // % parent_revision); lmn->second.dump();
-          if (lmn->second.iscomplete())
-            {
-              nodes_to_process.push_back(lmn->second.get_work());
-              pending_merge_nodes.erase(lmn);
-            }
+          
+          lmn->lineage->merge(*parent_lineage, work_unit.annotations);
         }
     }
 
-  if (added_in_parent_count == parents.size())
+  if (added_in_parent_count == work_unit.interesting_ancestors.size())
     {
       work_unit.lineage->credit_mapped_lines(work_unit.annotations);
     }
 
   work_unit.annotations->evaluate(work_unit.revision);
-  nodes_complete.insert(work_unit.revision);
-}
-
-
-void
-find_ancestors(app_state & app,
-               revision_id rid,
-               map<revision_id, size_t> & paths_to_nodes)
-{
-  vector<revision_id> frontier;
-  frontier.push_back(rid);
-
-  while (!frontier.empty())
-    {
-      revision_id rid = frontier.back();
-      frontier.pop_back();
-      if(!null_id(rid)) {
-        set<revision_id> parents;
-        app.db.get_revision_parents(rid, parents);
-        for (set<revision_id>::const_iterator i = parents.begin();
-             i != parents.end(); ++i)
-          {
-            map<revision_id, size_t>::iterator found
-              = paths_to_nodes.find(*i);
-
-            if (found == paths_to_nodes.end())
-              {
-                frontier.push_back(*i);
-                paths_to_nodes.insert(make_pair(*i, 1));
-              }
-            else
-              {
-                (found->second)++;
-              }
-          }
-      }
-    }
 }
 
 void
@@ -914,29 +826,37 @@ do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
   shared_ptr<annotate_lineage_mapping> lineage
     = acp->initial_lineage();
 
-  set<revision_id> nodes_complete;
-  map<revision_id, size_t> paths_to_nodes;
-  map<revision_id, lineage_merge_node> pending_merge_nodes;
-  find_ancestors(app, rid, paths_to_nodes);
-
-  // build node work unit
-  deque<annotate_node_work> nodes_to_process;
-  annotate_node_work workunit(acp, lineage, rid, file_node->self);
-  nodes_to_process.push_back(workunit);
-
-  auto_ptr<ticker> revs_ticker(new ticker(N_("revs done"), "r", 1));
-  revs_ticker->set_total(paths_to_nodes.size() + 1);
-
-  while (nodes_to_process.size() && !acp->is_complete())
+  work_units work_units;
+  {
+    // prepare the first work_unit
+    rev_height height;
+    app.db.get_rev_height(rid, height);
+    set<revision_id> rids_interesting_ancestors;
+    get_file_content_marks(app, rid, file_node->self, rids_interesting_ancestors);
+    bool rid_marked = (rids_interesting_ancestors.size() == 1
+                       && *(rids_interesting_ancestors.begin()) == rid);
+    if (rid_marked)
+      app.db.get_revision_parents(rid, rids_interesting_ancestors);
+    
+    annotate_node_work workunit(acp, lineage, rid, file_node->self, height,
+                                rids_interesting_ancestors, file_node->content, rid_marked);
+    work_units.insert(workunit);
+  }
+  
+  while (!(work_units.empty() || acp->is_complete()))
     {
-      annotate_node_work work = nodes_to_process.front();
-      nodes_to_process.pop_front();
-      do_annotate_node(work, app, nodes_to_process, nodes_complete,
-                       paths_to_nodes, pending_merge_nodes);
-      ++(*revs_ticker);
+      // get the work unit for the revision with the greatest height
+      work_units::iterator w = work_units.begin();
+      I(w != work_units.end());
+      
+      // do_annotate_node() might insert new work units into work_units, and
+      // thus might invalidate the iterator
+      annotate_node_work work = *w;
+      work_units.erase(w);
+
+      do_annotate_node(work, app, work_units);
     }
 
-  I(pending_merge_nodes.size() == 0);
   acp->annotate_equivalent_lines();
   I(acp->is_complete());
 

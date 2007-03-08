@@ -19,8 +19,8 @@ class enc {                                            \
 public:                                                \
   bool ok;                                             \
   enc() : ok(false) {}                                 \
-  enc(std::string const & s);                          \
-  enc(INNER const & inner);                            \
+  explicit enc(std::string const & s);                 \
+  explicit enc(INNER const & inner);                   \
   enc(enc<INNER> const & other);                       \
   std::string const & operator()() const               \
     { return i(); }                                    \
@@ -30,6 +30,8 @@ public:                                                \
   operator=(enc<INNER> const & other);                 \
   bool operator==(enc<INNER> const & x) const          \
     { return i() == x(); }                             \
+  bool operator!=(enc<INNER> const & x) const          \
+    { return !(i() == x()); }                          \
   friend std::ostream & operator<< <>(std::ostream &,  \
                                  enc<INNER> const &);  \
 };
@@ -53,7 +55,8 @@ class dec {                                            \
 public:                                                \
   bool ok;                                             \
   dec() : ok(false) {}                                 \
-  dec(INNER const & inner);                            \
+  explicit dec(std::string const & s);                 \
+  explicit dec(INNER const & inner);                   \
   dec(dec<INNER> const & other);                       \
   bool operator<(dec<INNER> const & x) const           \
     { return i < x.i; }                                \
@@ -63,6 +66,8 @@ public:                                                \
   operator=(dec<INNER> const & other);                 \
   bool operator==(dec<INNER> const & x) const          \
     { return i == x.i; }                               \
+  bool operator!=(dec<INNER> const & x) const          \
+    { return !(i == x.i); }                            \
   friend std::ostream & operator<< <>(std::ostream &,  \
                                  dec<INNER> const &);  \
 };
@@ -74,7 +79,7 @@ class ty {                                             \
 public:                                                \
   bool ok;                                             \
   ty() : ok(false) {}                                  \
-  ty(std::string const & str);                         \
+  explicit ty(std::string const & str);                \
   ty(ty const & other);                                \
   std::string const & operator()() const               \
     { return s; }                                      \
@@ -191,6 +196,10 @@ dec<INNER>::dec(dec<INNER> const & other)                \
   : i(other.i), ok(other.ok) { verify(*this); }          \
                                                          \
 template<typename INNER>                                 \
+dec<INNER>::dec(std::string const & s)                   \
+  : i(s), ok(false) { verify(*this); }                   \
+                                                         \
+template<typename INNER>                                 \
 dec<INNER>::dec(INNER const & inner) :                   \
     i(inner), ok(false)                                  \
   { verify(*this); }                                     \
@@ -211,4 +220,14 @@ void dump(dec<INNER> const & obj, std::string & out)     \
 { dump(obj.inner(), out); }
 
 
+
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 

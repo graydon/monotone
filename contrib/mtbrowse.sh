@@ -2,7 +2,7 @@
 #
 # File: mtbrowse.sh
 # Description: Text based browser for monotone source control.
-# url: http://www.venge.net/monotone/
+# url: http://www.monotone.ca/
 # Licence: GPL
 # Author: Henry Nestler <Henry@BigFoot.de>
 #

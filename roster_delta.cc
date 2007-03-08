@@ -475,6 +475,16 @@ delta_rosters(roster_t const & from, marking_map const & from_markings,
   del = roster_delta(printer.buf);
 }
 
+static
+void read_roster_delta(roster_delta const & del,
+                       roster_delta_t & d)
+{
+  basic_io::input_source src(del.inner()(), "roster_delta");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  parse_roster_delta_t(pars, d);
+}
+
 void
 apply_roster_delta(roster_delta const & del,
                    roster_t & roster, marking_map & markings)
@@ -483,14 +493,76 @@ apply_roster_delta(roster_delta const & del,
   MM(roster);
   MM(markings);
 
-  basic_io::input_source src(del.inner()(), "roster_delta");
-  basic_io::tokenizer tok(src);
-  basic_io::parser pars(tok);
   roster_delta_t d;
-  parse_roster_delta_t(pars, d);
+  read_roster_delta(del, d);
   d.apply(roster, markings);
 }
 
+// Extract the marking for one node from the roster delta, or return false
+// if they are not contained in that delta
+bool
+try_get_markings_from_roster_delta(roster_delta const & del,
+                                   node_id const & nid,
+                                   marking_t & markings)
+{
+  roster_delta_t d;
+  read_roster_delta(del, d);
+
+  std::map<node_id, marking_t>::iterator i = d.markings_changed.find(nid);
+  if (i != d.markings_changed.end())
+    {
+      markings = i->second;
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+// Extract the content hash for one node from the roster delta -- if it is
+// available.  If we know what the file_id was, we return true and set
+// 'content' appropriately.  If we can prove that the file did not exist in
+// this revision, we return true and set 'content' to a null id.  If we
+// cannot determine anything about the file contents, then we return false
+// -- in this case content is left undefined.
+bool
+try_get_content_from_roster_delta(roster_delta const & del,
+                              node_id const & nid,
+                              file_id & content)
+{
+  roster_delta_t d;
+  read_roster_delta(del, d);
+  
+  roster_delta_t::deltas_applied_t::const_iterator i = d.deltas_applied.find(nid);
+  if (i != d.deltas_applied.end())
+    {
+      content = i->second;
+      return true;
+    }
+
+  // special case 1: the node was deleted, so we know for sure it's not
+  // there anymore in this roster
+  if (d.nodes_deleted.find(nid) != d.nodes_deleted.end())
+    {
+      content = file_id();
+      return true;
+    }
+
+  // special case 2: the node was added, so we need to get the current
+  // content hash from the add stanza
+  for (roster_delta_t::files_added_t::const_iterator j = d.files_added.begin();
+       j != d.files_added.end(); ++j)
+    {
+      if (j->second.first == nid)
+        {
+          content = j->second.second;
+          return true;
+        }
+    }
+   
+  return false;
+}
 
 #ifdef BUILD_UNIT_TESTS
 
@@ -527,3 +599,13 @@ void test_roster_delta_on(roster_t const & a, marking_map const & a_marking,
 }
 
 #endif // BUILD_UNIT_TESTS
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+

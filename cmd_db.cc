@@ -94,7 +94,7 @@ CMD(db, N_("database"),
       else if (idx(args, 0)() == "kill_rev_locally")
         kill_rev_locally(app,idx(args, 1)());
       else if (idx(args, 0)() == "clear_epoch")
-        app.db.clear_epoch(cert_value(idx(args, 1)()));
+        app.db.clear_epoch(branch_name(idx(args, 1)()));
       else if (idx(args, 0)() == "kill_branch_certs_locally")
         app.db.delete_branch_named(cert_value(idx(args, 1)()));
       else if (idx(args, 0)() == "kill_tag_locally")
@@ -110,7 +110,7 @@ CMD(db, N_("database"),
           N(ed.inner()().size() == constants::epochlen,
             F("The epoch must be %s characters") 
             % constants::epochlen);
-          app.db.set_epoch(cert_value(idx(args, 1)()), ed);
+          app.db.set_epoch(branch_name(idx(args, 1)()), ed);
         }
       else
         throw usage(name);
@@ -171,8 +171,8 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         {
-          if (!verbose) cout << i->inner()() << "\n";
-          else cout << describe_revision(app, i->inner()) << "\n";
+          if (!verbose) cout << i->inner()() << '\n';
+          else cout << describe_revision(app, *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")
@@ -181,7 +181,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
       app.db.complete(idx(args, 1)(), completions);
       for (set<file_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        cout << i->inner()() << "\n";
+        cout << i->inner()() << '\n';
     }
   else if (idx(args, 0)() == "key")
     {
@@ -192,12 +192,21 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
            i != completions.end(); ++i)
         {
           cout << i->first.inner()();
-          if (verbose) cout << " " << i->second();
-          cout << "\n";
+          if (verbose) cout << ' ' << i->second();
+          cout << '\n';
         }
     }
   else
     throw usage(name);
+}
+
+CMD(test_migration_step, hidden_group(), "SCHEMA",
+    "run one step of migration - from SCHEMA to its successor -\n"
+    "on the specified database", options::opts::none)
+{
+  if (args.size() != 1)
+    throw usage(name);
+  app.db.test_migration_step(idx(args,0)());
 }
 
 // Local Variables:

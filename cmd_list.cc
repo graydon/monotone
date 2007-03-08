@@ -8,9 +8,9 @@
 // PURPOSE.
 
 #include <algorithm>
-#include <iostream>
 #include <map>
 #include <utility>
+#include <iostream>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -26,9 +26,9 @@
 #include "simplestring_xform.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "vocab_cast.hh"
 
 using std::cout;
-using std::endl;
 using std::make_pair;
 using std::map;
 using std::ostream_iterator;
@@ -51,7 +51,10 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   revision_id ident;
   complete(app, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
-  app.db.get_revision_certs(ident, ts);
+  // FIXME_PROJECTS: after projects are implemented,
+  // use the app.db version instead if no project is specified.
+  app.get_project().get_revision_certs(ident, ts);
+
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
 
@@ -82,7 +85,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   if (colon_pos != string::npos)
     {
       string substr(str, 0, colon_pos);
-      colon_pos = display_width(substr);
+      colon_pos = display_width(utf8(substr));
       extra_str = string(colon_pos, ' ') + ": %s\n";
     }
 
@@ -131,7 +134,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
     }
 
   if (certs.size() > 0)
-    cout << "\n";
+    cout << '\n';
 
   guard.commit();
 }
@@ -175,7 +178,7 @@ ls_keys(string const & name, app_state & app,
 
   if (pubkeys.size() > 0)
     {
-      cout << "\n" << "[public keys]" << "\n";
+      cout << "\n[public keys]\n";
       for (map<rsa_keypair_id, bool>::iterator i = pubkeys.begin();
            i != pubkeys.end(); i++)
         {
@@ -194,19 +197,19 @@ ls_keys(string const & name, app_state & app,
             }
           key_hash_code(keyid, pub_encoded, hash_code);
           if (indb)
-            cout << hash_code << " " << keyid << "\n";
+            cout << hash_code << ' ' << keyid << '\n';
           else
-            cout << hash_code << " " << keyid << "   (*)" << "\n";
+            cout << hash_code << ' ' << keyid << "   (*)\n";
         }
       if (!all_in_db)
         cout << (F("(*) - only in %s/")
-                 % app.keys.get_key_dir()) << "\n";
-      cout << "\n";
+                 % app.keys.get_key_dir()) << '\n';
+      cout << '\n';
     }
 
   if (privkeys.size() > 0)
     {
-      cout << "\n" << "[private keys]" << "\n";
+      cout << "\n[private keys]\n";
       for (vector<rsa_keypair_id>::iterator i = privkeys.begin();
            i != privkeys.end(); i++)
         {
@@ -214,9 +217,9 @@ ls_keys(string const & name, app_state & app,
           hexenc<id> hash_code;
           app.keys.get_key_pair(*i, kp);
           key_hash_code(*i, kp.priv, hash_code);
-          cout << hash_code << " " << *i << "\n";
+          cout << hash_code << ' ' << *i << '\n';
         }
-      cout << "\n";
+      cout << '\n';
     }
 
   if (pubkeys.size() == 0 &&
@@ -232,37 +235,42 @@ ls_keys(string const & name, app_state & app,
 static void
 ls_branches(string name, app_state & app, vector<utf8> const & args)
 {
-  utf8 inc("*");
-  utf8 exc;
+  globish inc("*");
+  globish exc;
   if (args.size() == 1)
-    inc = idx(args,0);
+    inc = globish(idx(args,0)());
   else if (args.size() > 1)
     throw usage(name);
-  combine_and_check_globish(app.opts.exclude_patterns, exc);
+  vector<globish> excludes;
+  typecast_vocab_container(app.opts.exclude_patterns, excludes);
+  combine_and_check_globish(excludes, exc);
   globish_matcher match(inc, exc);
-  vector<string> names;
-  app.db.get_branches(names);
+  set<branch_name> names;
+  app.get_project().get_branch_list(names);
 
-  sort(names.begin(), names.end());
-  for (size_t i = 0; i < names.size(); ++i)
-    if (match(idx(names, i))
-        && !app.lua.hook_ignore_branch(idx(names, i)))
-      cout << idx(names, i) << "\n";
+  for (set<branch_name>::const_iterator i = names.begin();
+       i != names.end(); ++i)
+    {
+      if (match((*i)()) && !app.lua.hook_ignore_branch(*i))
+        {
+          cout << *i << '\n';
+        }
+    }
 }
 
 static void
 ls_epochs(string name, app_state & app, vector<utf8> const & args)
 {
-  map<cert_value, epoch_data> epochs;
+  map<branch_name, epoch_data> epochs;
   app.db.get_epochs(epochs);
 
   if (args.size() == 0)
     {
-      for (map<cert_value, epoch_data>::const_iterator
+      for (map<branch_name, epoch_data>::const_iterator
              i = epochs.begin();
            i != epochs.end(); ++i)
         {
-          cout << i->second << " " << i->first << "\n";
+          cout << i->second << ' ' << i->first << '\n';
         }
     }
   else
@@ -271,9 +279,9 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
            i != args.end();
            ++i)
         {
-          map<cert_value, epoch_data>::const_iterator j = epochs.find(cert_value((*i)()));
+          map<branch_name, epoch_data>::const_iterator j = epochs.find(branch_name((*i)()));
           N(j != epochs.end(), F("no epoch for branch %s") % *i);
-          cout << j->second << " " << j->first << "\n";
+          cout << j->second << ' ' << j->first << '\n';
         }
     }
 }
@@ -281,27 +289,14 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 static void
 ls_tags(string name, app_state & app, vector<utf8> const & args)
 {
-  vector< revision<cert> > certs;
-  app.db.get_revision_certs(tag_cert_name, certs);
+  set<tag_t> tags;
+  app.get_project().get_tags(tags);
 
-  set< pair<cert_value, pair<revision_id, rsa_keypair_id> > >
-    sorted_vals;
-
-  for (vector< revision<cert> >::const_iterator i = certs.begin();
-       i != certs.end(); ++i)
+  for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
-      cert_value name;
-      cert c = i->inner();
-      decode_base64(c.value, name);
-      sorted_vals.insert(make_pair(name, make_pair(c.ident, c.key)));
-    }
-  for (set<pair<cert_value, pair<revision_id,
-         rsa_keypair_id> > >::const_iterator i = sorted_vals.begin();
-       i != sorted_vals.end(); ++i)
-    {
-      cout << i->first << " "
-           << i->second.first  << " "
-           << i->second.second  << "\n";
+      cout << i->name << ' '
+           << i->ident  << ' '
+           << i->key  << '\n';
     }
 }
 
@@ -332,24 +327,27 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
       external ext_domain, ext_name;
       externalize_var_domain(i->first.first, ext_domain);
       cout << ext_domain << ": "
-           << i->first.second << " "
-           << i->second << "\n";
+           << i->first.second << ' '
+           << i->second << '\n';
     }
 }
 
 static void
 ls_known(app_state & app, vector<utf8> const & args)
 {
-  roster_t old_roster, new_roster;
+  roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         new_roster, app);
+
+  // to be printed sorted
+  vector<split_path> print_paths;
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin();
@@ -362,9 +360,16 @@ ls_known(app_state & app, vector<utf8> const & args)
         {
           split_path sp;
           new_roster.get_name(nid, sp);
-          cout << file_path(sp) << "\n";
+          print_paths.push_back(sp);
         }
     }
+    
+  sort(print_paths.begin(), print_paths.end());
+  for (vector<split_path>::const_iterator sp = print_paths.begin();
+       sp != print_paths.end(); sp++)
+  {
+    cout << *sp << '\n';
+  }
 }
 
 static void
@@ -387,11 +392,11 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin();
          i != ignored.end(); ++i)
-      cout << file_path(*i) << "\n";
+      cout << file_path(*i) << '\n';
   else
     for (path_set::const_iterator i = unknown.begin();
          i != unknown.end(); ++i)
-      cout << file_path(*i) << "\n";
+      cout << file_path(*i) << '\n';
 }
 
 static void
@@ -411,7 +416,7 @@ ls_missing(app_state & app, vector<utf8> const & args)
   for (path_set::const_iterator i = missing.begin();
        i != missing.end(); ++i)
     {
-      cout << file_path(*i) << "\n";
+      cout << file_path(*i) << '\n';
     }
 }
 
@@ -419,37 +424,53 @@ ls_missing(app_state & app, vector<utf8> const & args)
 static void
 ls_changed(app_state & app, vector<utf8> const & args)
 {
-  roster_t old_roster, new_roster;
-  cset included, excluded;
-  set<file_path> files;
+  parent_map parents;
+  roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
 
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.update_current_roster_from_filesystem(new_roster);
+
+  app.work.get_parent_rosters(parents);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        old_roster, new_roster, app);
+                        parents, new_roster, app);
 
-  app.work.update_current_roster_from_filesystem(new_roster, mask);
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
-  check_restricted_cset(old_roster, included);
+  revision_t rrev;
+  make_restricted_revision(parents, new_roster, mask, rrev);
 
-  set<node_id> nodes;
-  select_nodes_modified_by_cset(included, old_roster, new_roster, nodes);
+  // to be printed sorted, with duplicates removed
+  set<split_path> print_paths;
 
-  for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
-       ++i)
+  for (edge_map::const_iterator i = rrev.edges.begin();
+       i != rrev.edges.end(); i++)
     {
-      split_path sp;
-      if (old_roster.has_node(*i))
-        old_roster.get_name(*i, sp);
-      else
-        new_roster.get_name(*i, sp);
-      cout << sp << endl;
+      set<node_id> nodes;
+      roster_t const & old_roster
+        = *safe_get(parents, edge_old_revision(i)).first;
+      select_nodes_modified_by_cset(edge_changes(i),
+                                    old_roster, new_roster, nodes);
+
+      for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
+           ++i)
+        {
+          split_path sp;
+          if (old_roster.has_node(*i))
+            old_roster.get_name(*i, sp);
+          else
+            new_roster.get_name(*i, sp);
+          print_paths.insert(sp);
+        }
+    }
+
+    for (set<split_path>::const_iterator sp = print_paths.begin();
+         sp != print_paths.end(); sp++)
+    {
+      cout << *sp << '\n';
     }
 
 }
@@ -504,7 +525,7 @@ CMD(list, N_("informative"),
     throw usage(name);
 }
 
-ALIAS(ls, list)
+ALIAS(ls, list);
 
 namespace
 {
@@ -664,7 +685,10 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
   hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;
-  app.db.get_revision_certs(rid, ts);
+  // FIXME_PROJECTS: after projects are implemented,
+  // use the app.db version instead if no project is specified.
+  app.get_project().get_revision_certs(rid, ts);
+
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
 
@@ -691,12 +715,12 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
       basic_io::stanza st;
       cert_status status = check_cert(app, idx(certs, i));
       cert_value tv;
-      cert_name name = idx(certs, i).name();
+      cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;
 
       decode_base64(idx(certs, i).value, tv);
 
-      rsa_keypair_id keyid = idx(certs, i).key();
+      rsa_keypair_id keyid = idx(certs, i).key;
       signers.insert(keyid);
 
       bool trusted =

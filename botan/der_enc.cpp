@@ -1,12 +1,14 @@
 /*************************************************
 * DER Encoder Source File                        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/der_enc.h>
+#include <botan/asn1_int.h>
 #include <botan/bigint.h>
 #include <botan/bit_ops.h>
 #include <botan/parsing.h>
+#include <algorithm>
 
 namespace Botan {
 
@@ -30,7 +32,7 @@ SecureVector<byte> encode_tag(ASN1_Tag type_tag, ASN1_Tag class_tag)
       blocks = (blocks - (blocks % 7)) / 7;
 
       encoded_tag.append(class_tag | 0x1F);
-      for(u32bit k = 0; k != blocks - 1; k++)
+      for(u32bit k = 0; k != blocks - 1; ++k)
          encoded_tag.append(0x80 | ((type_tag >> 7*(blocks-k-1)) & 0x7F));
       encoded_tag.append(type_tag & 0x7F);
       }
@@ -50,37 +52,10 @@ SecureVector<byte> encode_length(u32bit length)
       {
       const u32bit top_byte = significant_bytes(length);
       encoded_length.append((byte)(0x80 | top_byte));
-      for(u32bit j = 4-top_byte; j != 4; j++)
+      for(u32bit j = 4-top_byte; j != 4; ++j)
          encoded_length.append(get_byte(j, length));
       }
    return encoded_length;
-   }
-
-/*************************************************
-* A comparison functor for sorting SET objects   *
-*************************************************/
-class DER_Cmp
-   {
-   public:
-      bool operator()(const MemoryRegion<byte>&,
-                      const MemoryRegion<byte>&) const;
-   };
-
-/*************************************************
-* Compare two encodings, as specified by X.690   *
-*************************************************/
-bool DER_Cmp::operator()(const MemoryRegion<byte>& a,
-                         const MemoryRegion<byte>& b) const
-   {
-   if(a.size() < b.size()) return true;
-   if(a.size() > b.size()) return false;
-
-   for(u32bit j = 0; j != a.size(); j++)
-      {
-      if(a[j] < b[j]) return true;
-      if(a[j] > b[j]) return false;
-      }
-   return false;
    }
 
 }
@@ -94,10 +69,10 @@ SecureVector<byte> DER_Encoder::DER_Sequence::get_contents()
 
    SecureVector<byte> encoded_tag = encode_tag(type_tag, real_class_tag);
 
-   if(is_a_set)
+   if(type_tag == SET)
       {
-      std::sort(set_contents.begin(), set_contents.end(), DER_Cmp());
-      for(u32bit j = 0; j != set_contents.size(); j++)
+      std::sort(set_contents.begin(), set_contents.end());
+      for(u32bit j = 0; j != set_contents.size(); ++j)
          contents.append(set_contents[j]);
       set_contents.clear();
       }
@@ -117,10 +92,8 @@ SecureVector<byte> DER_Encoder::DER_Sequence::get_contents()
 *************************************************/
 void DER_Encoder::DER_Sequence::add_bytes(const byte data[], u32bit length)
    {
-   if(is_a_set)
-      {
+   if(type_tag == SET)
       set_contents.push_back(SecureVector<byte>(data, length));
-      }
    else
       contents.append(data, length);
    }
@@ -136,8 +109,8 @@ ASN1_Tag DER_Encoder::DER_Sequence::tag_of() const
 /*************************************************
 * DER_Sequence Constructor                       *
 *************************************************/
-DER_Encoder::DER_Sequence::DER_Sequence(ASN1_Tag t1, ASN1_Tag t2, bool b) :
-   type_tag(t1), class_tag(t2), is_a_set(b)
+DER_Encoder::DER_Sequence::DER_Sequence(ASN1_Tag t1, ASN1_Tag t2) :
+   type_tag(t1), class_tag(t2)
    {
    }
 
@@ -146,7 +119,7 @@ DER_Encoder::DER_Sequence::DER_Sequence(ASN1_Tag t1, ASN1_Tag t2, bool b) :
 *************************************************/
 SecureVector<byte> DER_Encoder::get_contents()
    {
-   if(sequence_level != 0)
+   if(subsequences.size() != 0)
       throw Invalid_State("DER_Encoder: Sequence hasn't been marked done");
 
    SecureVector<byte> retval;
@@ -158,133 +131,219 @@ SecureVector<byte> DER_Encoder::get_contents()
 /*************************************************
 * Start a new ASN.1 SEQUENCE/SET/EXPLICIT        *
 *************************************************/
-void DER_Encoder::start_cons(ASN1_Tag type_tag, ASN1_Tag class_tag,
-                             bool is_a_set)
+DER_Encoder& DER_Encoder::start_cons(ASN1_Tag type_tag,
+                                     ASN1_Tag class_tag)
    {
-   sequence_level++;
-   subsequences.push_back(DER_Sequence(type_tag, class_tag, is_a_set));
+   subsequences.push_back(DER_Sequence(type_tag, class_tag));
+   return (*this);
    }
 
 /*************************************************
 * Finish the current ASN.1 SEQUENCE/SET/EXPLICIT *
 *************************************************/
-void DER_Encoder::end_cons(ASN1_Tag type_tag, ASN1_Tag class_tag)
+DER_Encoder& DER_Encoder::end_cons()
    {
-   if(sequence_level == 0)
+   if(subsequences.empty())
       throw Invalid_State("DER_Encoder::end_cons: No such sequence");
-   sequence_level--;
-   if(subsequences[sequence_level].tag_of() != ASN1_Tag(type_tag | class_tag))
-      throw Invalid_Argument("DER_Encoder::end_cons: Tag mismatch");
 
-   SecureVector<byte> seq = subsequences[sequence_level].get_contents();
+   SecureVector<byte> seq = subsequences[subsequences.size()-1].get_contents();
    subsequences.pop_back();
-   add_raw_octets(seq);
-   }
-
-/*************************************************
-* Start a new ASN.1 SEQUENCE                     *
-*************************************************/
-void DER_Encoder::start_sequence(ASN1_Tag type_tag, ASN1_Tag class_tag)
-   {
-   start_cons(type_tag, class_tag, false);
-   }
-
-/*************************************************
-* Finish the current ASN.1 SEQUENCE              *
-*************************************************/
-void DER_Encoder::end_sequence(ASN1_Tag type_tag, ASN1_Tag class_tag)
-   {
-   end_cons(type_tag, class_tag);
-   }
-
-/*************************************************
-* Start a new ASN.1 SET                          *
-*************************************************/
-void DER_Encoder::start_set(ASN1_Tag type_tag, ASN1_Tag class_tag)
-   {
-   start_cons(type_tag, class_tag, true);
-   }
-
-/*************************************************
-* Finish the current ASN.1 SET                   *
-*************************************************/
-void DER_Encoder::end_set(ASN1_Tag type_tag, ASN1_Tag class_tag)
-   {
-   end_cons(type_tag, class_tag);
-   }
-
-/*************************************************
-* Start a new ASN.1 SEQUENCE                     *
-*************************************************/
-void DER_Encoder::start_sequence()
-   {
-   start_sequence(SEQUENCE, UNIVERSAL);
-   }
-
-/*************************************************
-* Finish the current ASN.1 SEQUENCE              *
-*************************************************/
-void DER_Encoder::end_sequence()
-   {
-   end_sequence(SEQUENCE, UNIVERSAL);
-   }
-
-/*************************************************
-* Start a new ASN.1 SET                          *
-*************************************************/
-void DER_Encoder::start_set()
-   {
-   start_set(SET, UNIVERSAL);
-   }
-
-/*************************************************
-* Finish the current ASN.1 SET                   *
-*************************************************/
-void DER_Encoder::end_set()
-   {
-   end_set(SET, UNIVERSAL);
+   raw_bytes(seq);
+   return (*this);
    }
 
 /*************************************************
 * Start a new ASN.1 EXPLICIT encoding            *
 *************************************************/
-void DER_Encoder::start_explicit(ASN1_Tag type_tag, ASN1_Tag class_tag)
+DER_Encoder& DER_Encoder::start_explicit(u16bit type_no)
    {
-   start_cons(type_tag, class_tag, false);
+   ASN1_Tag type_tag = (ASN1_Tag)type_no;
+
+   if(type_tag == SET)
+      throw Internal_Error("DER_Encoder.start_explicit(SET); cannot perform");
+
+   return start_cons(type_tag, CONTEXT_SPECIFIC);
    }
 
 /*************************************************
 * Finish the current ASN.1 EXPLICIT encoding     *
 *************************************************/
-void DER_Encoder::end_explicit(ASN1_Tag type_tag, ASN1_Tag class_tag)
+DER_Encoder& DER_Encoder::end_explicit()
    {
-   end_cons(type_tag, class_tag);
+   return end_cons();
    }
 
 /*************************************************
-* Write raw octets into the stream               *
+* Write raw bytes into the stream                *
 *************************************************/
-void DER_Encoder::add_raw_octets(const MemoryRegion<byte>& octets)
+DER_Encoder& DER_Encoder::raw_bytes(const MemoryRegion<byte>& val)
    {
-   add_raw_octets(octets.begin(), octets.size());
+   return raw_bytes(val.begin(), val.size());
    }
 
 /*************************************************
-* Write raw octets into the stream               *
+* Write raw bytes into the stream                *
 *************************************************/
-void DER_Encoder::add_raw_octets(const byte octets[], u32bit length)
+DER_Encoder& DER_Encoder::raw_bytes(const byte bytes[], u32bit length)
    {
-   if(sequence_level == 0)
-      contents.append(octets, length);
+   if(subsequences.size())
+      subsequences[subsequences.size()-1].add_bytes(bytes, length);
    else
-      subsequences[sequence_level-1].add_bytes(octets, length);
+      contents.append(bytes, length);
+
+   return (*this);
    }
 
 /*************************************************
-* Write the encoding of the octet(s)             *
+* Encode a NULL object                           *
 *************************************************/
-void DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag,
-                             const byte rep[], u32bit length)
+DER_Encoder& DER_Encoder::encode_null()
+   {
+   return add_object(NULL_TAG, UNIVERSAL, 0, 0);
+   }
+
+/*************************************************
+* DER encode a BOOLEAN                           *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(bool is_true)
+   {
+   return encode(is_true, BOOLEAN, UNIVERSAL);
+   }
+
+/*************************************************
+* DER encode a small INTEGER                     *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(u32bit n)
+   {
+   return encode(BigInt(n), INTEGER, UNIVERSAL);
+   }
+
+/*************************************************
+* DER encode a small INTEGER                     *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(const BigInt& n)
+   {
+   return encode(n, INTEGER, UNIVERSAL);
+   }
+
+/*************************************************
+* DER encode an OCTET STRING or BIT STRING       *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(const MemoryRegion<byte>& bytes,
+                                 ASN1_Tag real_type)
+   {
+   return encode(bytes.begin(), bytes.size(),
+                 real_type, real_type, UNIVERSAL);
+   }
+
+/*************************************************
+* Encode this object                             *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(const byte bytes[], u32bit length,
+                                 ASN1_Tag real_type)
+   {
+   return encode(bytes, length, real_type, real_type, UNIVERSAL);
+   }
+
+/*************************************************
+* DER encode a BOOLEAN                           *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(bool is_true,
+                                 ASN1_Tag type_tag, ASN1_Tag class_tag)
+   {
+   byte val = is_true ? 0xFF : 0x00;
+   return add_object(type_tag, class_tag, &val, 1);
+   }
+
+/*************************************************
+* DER encode a small INTEGER                     *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(u32bit n,
+                                 ASN1_Tag type_tag, ASN1_Tag class_tag)
+   {
+   return encode(BigInt(n), type_tag, class_tag);
+   }
+
+/*************************************************
+* DER encode an INTEGER                          *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(const BigInt& n,
+                                 ASN1_Tag type_tag, ASN1_Tag class_tag)
+   {
+   if(n == 0)
+      return add_object(type_tag, class_tag, 0);
+
+   bool extra_zero = (n.bits() % 8 == 0);
+   SecureVector<byte> contents(extra_zero + n.bytes());
+   BigInt::encode(contents.begin() + extra_zero, n);
+   if(n < 0)
+      {
+      for(u32bit j = 0; j != contents.size(); ++j)
+         contents[j] = ~contents[j];
+      for(u32bit j = contents.size(); j > 0; --j)
+         if(++contents[j-1])
+            break;
+      }
+
+   return add_object(type_tag, class_tag, contents);
+   }
+
+/*************************************************
+* DER encode an OCTET STRING or BIT STRING       *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(const MemoryRegion<byte>& bytes,
+                                 ASN1_Tag real_type,
+                                 ASN1_Tag type_tag, ASN1_Tag class_tag)
+   {
+   return encode(bytes.begin(), bytes.size(),
+                 real_type, type_tag, class_tag);
+   }
+
+/*************************************************
+* DER encode an OCTET STRING or BIT STRING       *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(const byte bytes[], u32bit length,
+                                 ASN1_Tag real_type,
+                                 ASN1_Tag type_tag, ASN1_Tag class_tag)
+   {
+   if(real_type != OCTET_STRING && real_type != BIT_STRING)
+      throw Invalid_Argument("DER_Encoder: Invalid tag for byte/bit string");
+
+   if(real_type == BIT_STRING)
+      {
+      SecureVector<byte> encoded;
+      encoded.append(0);
+      encoded.append(bytes, length);
+      return add_object(type_tag, class_tag, encoded);
+      }
+   else
+      return add_object(type_tag, class_tag, bytes, length);
+   }
+
+/*************************************************
+* Conditionally write some values to the stream  *
+*************************************************/
+DER_Encoder& DER_Encoder::encode_if(bool cond, DER_Encoder& codec)
+   {
+   if(cond)
+      return raw_bytes(codec.get_contents());
+   return (*this);
+   }
+
+/*************************************************
+* Request for an object to encode itself         *
+*************************************************/
+DER_Encoder& DER_Encoder::encode(const ASN1_Object& obj)
+   {
+   obj.encode_into(*this);
+   return (*this);
+   }
+
+/*************************************************
+* Write the encoding of the byte(s)              *
+*************************************************/
+DER_Encoder& DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag,
+                                     const byte rep[], u32bit length)
    {
    SecureVector<byte> encoded_tag = encode_tag(type_tag, class_tag);
    SecureVector<byte> encoded_length = encode_length(length);
@@ -294,45 +353,38 @@ void DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag,
    buffer.append(encoded_length);
    buffer.append(rep, length);
 
-   add_raw_octets(buffer);
+   return raw_bytes(buffer);
    }
 
 /*************************************************
-* Write the encoding of the octet(s)             *
+* Write the encoding of the byte(s)              *
 *************************************************/
-void DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag,
-                             const MemoryRegion<byte>& rep_buf)
+DER_Encoder& DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag,
+                                     const MemoryRegion<byte>& rep_buf)
    {
    const byte* rep = rep_buf.begin();
    const u32bit rep_len = rep_buf.size();
-   add_object(type_tag, class_tag, rep, rep_len);
+   return add_object(type_tag, class_tag, rep, rep_len);
    }
 
 /*************************************************
-* Write the encoding of the octet(s)             *
+* Write the encoding of the byte(s)              *
 *************************************************/
-void DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag,
-                             const std::string& rep_str)
+DER_Encoder& DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag,
+                                     const std::string& rep_str)
    {
    const byte* rep = (const byte*)rep_str.c_str();
    const u32bit rep_len = rep_str.size();
-   add_object(type_tag, class_tag, rep, rep_len);
+   return add_object(type_tag, class_tag, rep, rep_len);
    }
 
 /*************************************************
-* Write the encoding of the octet                *
+* Write the encoding of the byte                 *
 *************************************************/
-void DER_Encoder::add_object(ASN1_Tag type_tag, ASN1_Tag class_tag, byte rep)
+DER_Encoder& DER_Encoder::add_object(ASN1_Tag type_tag,
+                                     ASN1_Tag class_tag, byte rep)
    {
-   add_object(type_tag, class_tag, &rep, 1);
-   }
-
-/*************************************************
-* DER_Encoder Constructor                        *
-*************************************************/
-DER_Encoder::DER_Encoder()
-    {
-   sequence_level = 0;
+   return add_object(type_tag, class_tag, &rep, 1);
    }
 
 }

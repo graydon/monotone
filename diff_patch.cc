@@ -10,7 +10,6 @@
 #include "config.h"
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <string>
@@ -31,9 +30,8 @@
 #include "vocab.hh"
 #include "revision.hh"
 #include "constants.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 
-using std::endl;
 using std::make_pair;
 using std::map;
 using std::min;
@@ -379,7 +377,7 @@ void merge_via_edit_scripts(vector<string> const & ancestor,
 
   //   for (int i = 0; i < min(min(left.size(), right.size()), ancestor.size()); ++i)
   //     {
-  //       cerr << "[" << i << "] " << left[i] << " " << ancestor[i] <<  " " << right[i] << endl;
+  //       cerr << '[' << i << "] " << left[i] << ' ' << ancestor[i] <<  ' ' << right[i] << '\n';
   //     }
 
   anc_interned.reserve(ancestor.size());
@@ -560,8 +558,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
 }
 
 void
-content_merge_database_adaptor::get_version(file_path const & path,
-                                            file_id const & ident,
+content_merge_database_adaptor::get_version(file_id const & ident,
                                             file_data & dat) const
 {
   app.db.get_file_version(ident, dat);
@@ -597,8 +594,7 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
 }
 
 void
-content_merge_workspace_adaptor::get_version(file_path const & path,
-                                             file_id const & ident,
+content_merge_workspace_adaptor::get_version(file_id const & ident,
                                              file_data & dat) const
 {
   map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
@@ -610,15 +606,18 @@ content_merge_workspace_adaptor::get_version(file_path const & path,
     {
       data tmp;
       file_id fid;
-      require_path_is_file(path,
-                           F("file '%s' does not exist in workspace") % path,
-                           F("'%s' in workspace is a directory, not a file") % path);
-      read_localized_data(path, tmp, app.lua);
-      calculate_ident(tmp, fid);
+      map<file_id, file_path>::const_iterator i = content_paths.find(ident);
+      I(i != content_paths.end());
+
+      require_path_is_file(i->second,
+                           F("file '%s' does not exist in workspace") % i->second,
+                           F("'%s' in workspace is a directory, not a file") % i->second);
+      read_data(i->second, tmp);
+      calculate_ident(file_data(tmp), fid);
       E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
-        % path % fid % ident);
-      dat = tmp;
+        % i->second % fid % ident);
+      dat = file_data(tmp);
     }
 }
 
@@ -646,7 +645,7 @@ content_merger::get_file_encoding(file_path const & path,
   attr_value v;
   split_path sp;
   path.split(sp);
-  if (ros.get_attr(sp, constants::encoding_attribute, v))
+  if (ros.get_attr(sp, attr_key(constants::encoding_attribute), v))
     return v();
   return constants::default_encoding;
 }
@@ -658,7 +657,7 @@ content_merger::attribute_manual_merge(file_path const & path,
   attr_value v;
   split_path sp;
   path.split(sp);
-  if (ros.get_attr(sp, constants::manual_merge_attribute, v)
+  if (ros.get_attr(sp, attr_key(constants::manual_merge_attribute), v)
       && v() == "true")
     return true;
   return false; // default: enable auto merge
@@ -693,9 +692,9 @@ content_merger::try_to_merge_files(file_path const & anc_path,
   file_data left_data, right_data, ancestor_data;
   data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
 
-  adaptor.get_version(left_path, left_id, left_data);
-  adaptor.get_version(anc_path, ancestor_id, ancestor_data);
-  adaptor.get_version(right_path, right_id, right_data);
+  adaptor.get_version(left_id, left_data);
+  adaptor.get_version(ancestor_id, ancestor_data);
+  adaptor.get_version(right_id, right_data);
 
   left_unpacked = left_data.inner();
   ancestor_unpacked = ancestor_data.inner();
@@ -951,7 +950,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
         {
           ost << "@@ -" << a_begin+1;
           if (a_len > 1)
-            ost << "," << a_len;
+            ost << ',' << a_len;
         }
 
       if (b_len == 0)
@@ -960,7 +959,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
         {
           ost << " +" << b_begin+1;
           if (b_len > 1)
-            ost << "," << b_len;
+            ost << ',' << b_len;
         }
 
       {
@@ -975,7 +974,7 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
             }
 
         find_encloser(a_begin + first_mod, encloser);
-        ost << " @@" << encloser << endl;
+        ost << " @@" << encloser << '\n';
       }
       copy(hunk.begin(), hunk.end(), ostream_iterator<string>(ost, "\n"));
     }
@@ -1111,14 +1110,14 @@ void cxtdiff_hunk_writer::flush_hunk(size_t pos)
         find_encloser(a_begin + min(first_insert, first_delete),
                       encloser);
 
-        ost << "***************" << encloser << endl;
+        ost << "***************" << encloser << '\n';
       }
 
-      ost << "*** " << (a_begin + 1) << "," << (a_begin + a_len) << " ****" << endl;
+      ost << "*** " << (a_begin + 1) << ',' << (a_begin + a_len) << " ****\n";
       if (have_deletions)
         copy(from_file.begin(), from_file.end(), ostream_iterator<string>(ost, "\n"));
 
-      ost << "--- " << (b_begin + 1) << "," << (b_begin + b_len) << " ----" << endl;
+      ost << "--- " << (b_begin + 1) << ',' << (b_begin + b_len) << " ----\n";
       if (have_insertions)
         copy(to_file.begin(), to_file.end(), ostream_iterator<string>(ost, "\n"));
     }
@@ -1317,8 +1316,8 @@ make_diff(string const & filename1,
     {
       case unified_diff:
       {
-        ost << "--- " << filename1 << "\t" << id1 << endl;
-        ost << "+++ " << filename2 << "\t" << id2 << endl;
+        ost << "--- " << filename1 << '\t' << id1 << '\n';
+        ost << "+++ " << filename2 << '\t' << id2 << '\n';
 
         unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1326,8 +1325,8 @@ make_diff(string const & filename1,
       }
       case context_diff:
       {
-        ost << "*** " << filename1 << "\t" << id1 << endl;
-        ost << "--- " << filename2 << "\t" << id2 << endl;
+        ost << "*** " << filename1 << '\t' << id1 << '\n';
+        ost << "--- " << filename2 << '\t' << id2 << '\n';
 
         cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1366,16 +1365,16 @@ static void dump_incorrect_merge(vector<string> const & expected,
       cerr << "bad merge: " << i << " [" << prefix << "]\t";
 
       if (i < expected.size())
-        cerr << "[" << expected[i] << "]\t";
+        cerr << '[' << expected[i] << "]\t";
       else
         cerr << "[--nil--]\t";
 
       if (i < got.size())
-        cerr << "[" << got[i] << "]\t";
+        cerr << '[' << got[i] << "]\t";
       else
         cerr << "[--nil--]\t";
 
-      cerr << endl;
+      cerr << '\n';
     }
 }
 

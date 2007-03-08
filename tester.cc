@@ -7,7 +7,6 @@
 #include "platform.hh"
 #include "sanity.hh"
 
-#include <cstdio>
 #include <stdlib.h>
 
 #include <exception>
@@ -17,6 +16,8 @@
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <boost/version.hpp>
 
 #include <map>
 #include <utility>
@@ -66,28 +67,46 @@ bool make_accessible(string const &name)
   bool ok = (stat(name.c_str(), &st) == 0);
   if (!ok)
     return false;
-  return (chmod(name.c_str(), st.st_mode | S_IREAD | S_IWRITE | S_IEXEC) == 0);
+  mode_t new_mode = st.st_mode;
+  if (S_ISDIR(st.st_mode))
+    new_mode |= S_IEXEC;
+  new_mode |= S_IREAD | S_IWRITE;
+  return (chmod(name.c_str(), new_mode) == 0);
 }
 #endif
 
 
 #include <cstdlib>
-#if defined(WIN32) && !defined(__MINGW32__)
-void setenv(char const * var, char const * val)
+
+void set_env(char const * var, char const * val)
 {
-  _putenv_s(var, val);
-}
+#if defined(WIN32)
+  SetEnvironmentVariable(var, val);
+#elif defined(HAVE_SETENV)
+  setenv(var, val, 1);
+#elif defined(HAVE_PUTENV)
+  // note: this leaks memory, but the tester is short lived so it probably
+  // doesn't matter much.
+  string * tempstr = new string(var);
+  tempstr->append("=");
+  tempstr->append(val);
+  putenv(const_cast<char *>(tempstr->c_str()));
 #else
-void setenv(char const * var, char const * val)
-{
-  string tempstr = string(var) + "=" + string(val);
-  char const *s = tempstr.c_str();
-  size_t len = tempstr.size() + 1;
-  char *cp = new char[len];
-  memcpy(cp, s, len);
-  putenv(cp);
-}
+#error set_env needs to be ported to this platform
 #endif
+}
+
+void unset_env(char const * var)
+{
+#if defined(WIN32)
+  SetEnvironmentVariable(var, 0);
+#elif defined(HAVE_UNSETENV)
+  unsetenv(var);
+#else
+#error unset_env needs to be ported to this platform
+#endif
+}
+
 map<string, string> orig_env_vars;
 
 
@@ -127,7 +146,13 @@ void do_make_tree_accessible(fs::path const &f)
 void do_copy_recursive(fs::path const &from, fs::path to)
 {
   if (!fs::exists(from))
-    throw fs::filesystem_error("Source for copy does not exist", from, 0);
+    {
+#if BOOST_VERSION < 103400
+      throw fs::filesystem_error("Source for copy does not exist", from, 0);
+#else
+      throw fs::filesystem_path_error("Source for copy does not exist", from, 0);
+#endif
+    }
   if (fs::exists(to))
     {
       if (fs::is_directory(to))
@@ -151,7 +176,7 @@ LUAEXT(posix_umask, )
   lua_pushnil(L);
   return 1;
 #else
-  int from = luaL_checknumber(L, -1);
+  unsigned int from = (unsigned int)luaL_checknumber(L, -1);
   mode_t mask = 64*((from / 100) % 10) + 8*((from / 10) % 10) + (from % 10);
   mode_t oldmask = umask(mask);
   int res = 100*(oldmask/64) + 10*((oldmask/8) % 8) + (oldmask % 8);
@@ -360,6 +385,27 @@ LUAEXT(isdir, )
   return 1;
 }
 
+LUAEXT(read_directory, )
+{
+  try
+    {
+      fs::path dir(luaL_checkstring(L, -1), fs::native);
+      unsigned int n = 1;
+
+      lua_newtable(L);
+      for (fs::directory_iterator i(dir); i != fs::directory_iterator(); ++i, ++n)
+        {
+          lua_pushstring(L, i->leaf().c_str());
+          lua_rawseti(L, -2, n);
+        }
+    }
+  catch(fs::filesystem_error & e)
+    {
+      lua_pushnil(L);
+    }
+  return 1;
+}
+
 LUAEXT(get_source_dir, )
 {
   lua_pushstring(L, source_dir.native_file_string().c_str());
@@ -376,7 +422,7 @@ LUAEXT(restore_env, )
 {
   for (map<string,string>::const_iterator i = orig_env_vars.begin();
        i != orig_env_vars.end(); ++i)
-    setenv(i->first.c_str(), i->second.c_str());
+    set_env(i->first.c_str(), i->second.c_str());
   orig_env_vars.clear();
   return 0;
 }
@@ -385,12 +431,28 @@ LUAEXT(set_env, )
 {
   char const * var = luaL_checkstring(L, -2);
   char const * val = luaL_checkstring(L, -1);
-  char const * old = getenv(var);
-  if (old)
-    orig_env_vars.insert(make_pair(string(var), string(old)));
-  else
-    orig_env_vars.insert(make_pair(string(var), ""));
-  setenv(var, val);
+  if (orig_env_vars.find(string(var)) == orig_env_vars.end()) {
+    char const * old = getenv(var);
+    if (old)
+      orig_env_vars.insert(make_pair(string(var), string(old)));
+    else
+      orig_env_vars.insert(make_pair(string(var), ""));
+  }
+  set_env(var, val);
+  return 0;
+}
+
+LUAEXT(unset_env, )
+{
+  char const * var = luaL_checkstring(L, -1);
+  if (orig_env_vars.find(string(var)) == orig_env_vars.end()) {
+    char const * old = getenv(var);
+    if (old)
+      orig_env_vars.insert(make_pair(string(var), string(old)));
+    else
+      orig_env_vars.insert(make_pair(string(var), ""));
+  }
+  unset_env(var);
   return 0;
 }
 

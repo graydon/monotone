@@ -10,6 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <cstddef>
 #include <limits>
 
 #include "mt-stdint.h"

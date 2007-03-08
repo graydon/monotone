@@ -19,7 +19,7 @@ OPTION(globals, positionals, true, "--", "")
 OPT(author, "author", utf8, , gettext_noop("override author for commit"))
 #ifdef option_bodies
 {
-  author = arg;
+  author = utf8(arg);
 }
 #endif
 
@@ -91,16 +91,16 @@ OPTION(bind_opts, bind_stdio, false, "stdio",
 }
 #endif
 
-OPTVAR(branch, utf8, branch_name, )
+OPTVAR(branch, branch_name, branchname, )
 OPTION(branch, branch, true, "branch,b",
         gettext_noop("select branch cert for operation"))
 #ifdef option_bodies
 {
-  branch_name = utf8(arg);
+  branchname = branch_name(arg);
 }
 #endif
 
-GOPT(brief, "brief", bool, false,
+OPT(brief, "brief", bool, false,
      gettext_noop("print a brief version of the normal output"))
 #ifdef option_bodies
 {
@@ -118,20 +118,13 @@ GOPT(conf_dir, "confdir", system_path, get_default_confdir(),
 }
 #endif
 
-OPT(date, "date", boost::posix_time::ptime, ,
+OPT(date, "date", date_t, ,
      gettext_noop("override date/time for commit"))
 #ifdef option_bodies
 {
   try
     {
-      // boost::posix_time can parse "basic" ISO times, of the form
-      // 20000101T120000, but not "extended" ISO times, of the form
-      // 2000-01-01T12:00:00. So convert one to the other.
-      string tmp = arg;
-      string::size_type pos = 0;
-      while ((pos = tmp.find_first_of("-:")) != string::npos)
-        tmp.erase(pos, 1);
-      date = boost::posix_time::from_iso_string(tmp);
+      date = date_t::from_string(arg);
     }
   catch (std::exception &e)
     {
@@ -249,11 +242,19 @@ OPTION(exclude, exclude, true, "exclude",
 }
 #endif
 
-OPT(execute, "execute,e", bool, false,
-        gettext_noop("perform the associated file operation"))
+OPT(bookkeep_only, "bookkeep-only", bool, false,
+        gettext_noop("only update monotone's internal bookkeeping, not the filesystem"))
 #ifdef option_bodies
 {
-  execute = true;
+  bookkeep_only = true;
+}
+#endif
+
+GOPT(ssh_sign, "ssh-sign", std::string, "yes",
+     gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
+#ifdef option_bodies
+{
+  ssh_sign = arg;
 }
 #endif
 
@@ -369,6 +370,14 @@ OPT(no_files, "no-files", bool, false,
 }
 #endif
 
+OPT(no_graph, "no-graph", bool, false,
+     gettext_noop("do not use ASCII graph to display ancestry"))
+#ifdef option_bodies
+{
+  no_graph = true;
+}
+#endif
+
 OPT(no_ignore, "no-respect-ignore", bool, false,
      gettext_noop("do not ignore any files"))
 #ifdef option_bodies
@@ -401,7 +410,7 @@ GOPT(nostd, "nostd", bool, false,
 }
 #endif
  
-GOPT(pidfile, "pid-file", system_path, ,
+OPT(pidfile, "pid-file", system_path, ,
      gettext_noop("record process id of server"))
 #ifdef option_bodies
 {
@@ -450,7 +459,7 @@ OPTION(revision, revision, true, "revision,r",
      gettext_noop("select revision id for operation"))
 #ifdef option_bodies
 {
-  revision_selectors.push_back(arg);
+  revision_selectors.push_back(utf8(arg));
 }
 #endif
 
@@ -486,12 +495,27 @@ GOPT(ticker, "ticker", std::string, ,
 }
 #endif
 
+OPT(from, "from", std::vector<utf8>, , gettext_noop("revision(s) to start logging at"))
+#ifdef option_bodies
+{
+  from.push_back(utf8(arg));
+}
+#endif
+
+OPT(to, "to", std::vector<utf8>, , gettext_noop("revision(s) to stop logging at"))
+#ifdef option_bodies
+{
+  to.push_back(utf8(arg));
+}
+#endif
+
 OPT(unknown, "unknown", bool, false,
      gettext_noop("perform the operations for unknown files from workspace"))
 #ifdef option_bodies
 {
   unknown = true;
 }
+
 #endif
 
 OPT(verbose, "verbose", bool, false,
@@ -516,3 +540,13 @@ OPTION(globals, xargs, true, "xargs,@",
 {
 }
 #endif
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+

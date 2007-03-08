@@ -19,13 +19,14 @@ commit()
 revs.a = base_revision()
 
 -- produce state B
-check(mtn("rename", "foo", "bar"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo", "bar"), 0, false, false)
 rename("foo", "bar")
 commit()
 revs.b = base_revision()
 
 -- produce state C
 revert_to(revs.a)
+writefile("bar", "extra blah blah foo")
 check(mtn("add", "bar"), 0, false, false)
 commit()
 revs.c = base_revision()
