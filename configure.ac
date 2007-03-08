@@ -115,6 +115,7 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 AC_FUNC_STAT
 AC_FUNC_MMAP
 AC_FUNC_LOCALE_WORKS
+AC_FUNC_ICONV_TRANSLIT
 AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
 		__cxa_current_exception_type __cxa_demangle \
                 putenv setenv unsetenv])
