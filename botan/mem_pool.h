@@ -61,6 +61,10 @@ template <typename _first, typename _second>
 struct diff_less : public std::binary_function<_first,_second,bool>
 {
   bool operator()(const _first& __x, const _second& __y) const { return __x < __y; }
+#if defined(_MSC_VER) && defined(_DEBUG)
+  bool operator()(const _second& __y, const _first& __x) const { return __x < __y; }
+  bool operator()(const _first& __x, const _first& __y) const { return __x < __y; }
+#endif
 };
 
       const u32bit PREF_SIZE, BLOCK_SIZE;

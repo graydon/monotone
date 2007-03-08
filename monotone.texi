@@ -32,6 +32,7 @@ Copyright @copyright{} 2005 Derek Scherger @*
 Copyright @copyright{} 2005, 2006 Daniel Carosone @*
 Copyright @copyright{} 2006 Jeronimo Pellegrini @*
 Copyright @copyright{} 2006 Alex Queiroz @*
+Copyright @copyright{} 2006 William Uther @*
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -1264,8 +1265,43 @@ This output shows one private and one public key stored under the name
 @code{jim@@juicebot.co.jp}, so it indicates that Jim's key-pair has been
 successfully generated and stored. On subsequent commands, Jim will need
 to re-enter his passphrase in order to perform security-sensitive
-tasks. Jim isn't very worried about security (and, more importantly, it
-simplifies the tutorial text to skip the passphrase prompts) so he
+tasks.
+
+Pretty soon Jim gets annoyed when he has to enter his passphrase every
+time he invokes @code{mtn} (and, more importantly, it simplifies the
+tutorial text to skip the passphrase prompts) so he decides to use
+@emph{ssh-agent} to store his key. He does this by using the
+@code{ssh_agent_export} command to export his key into a format that
+ssh-agent can understand and adding it with @code{ssh-add}.
+
+@smallexample
+@group
+$ mtn ssh_agent_export ~/.ssh/id_monotone
+enter passphrase for key ID [user@@example.com]:
+enter new passphrase for key ID [user@@example.com]:
+confirm passphrase for key ID [user@@example.com]:
+$ chmod 600 ~/.ssh/id_monotone
+@end group
+@end smallexample
+
+From now on, Jim just needs to add his key to ssh-agent when he logs in
+and he will not need to enter his passphrase every time he uses monotone.
+
+@smallexample
+@group
+$ ssh-agent /bin/bash
+$ ssh-add ~/.ssh/id_monotone
+Enter passphrase for /home/user/.ssh/id_monotone:
+Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
+$ mtn ci -m"Changed foo to bar"
+$ mtn push
+@end group
+@end smallexample
+
+The following procedure is deprecated and not suggested for general use
+as it is very insecure.
+
+Jim isn't very worried about security so he
 decides to store his passphrase in his @file{monotonerc} file.  He does
 this by writing a @emph{hook function} which returns the passphrase:
 
@@ -2862,9 +2898,9 @@ proceed with no default options if no @file{_MTN} directory is found.
 However, some monotone commands do require a workspace and will fail
 if no @file{_MTN} directory can be found.
 
-The @command{checkout} and @command{setup} commands create a @i{new
-workspace} and initialize a new @file{_MTN/options} file based on their
-current option settings.
+The @command{checkout}, @command{clone} and @command{setup} commands
+create a @i{new workspace} and initialize a new @file{_MTN/options}
+file based on their current option settings.
 
 
 @page
@@ -3296,7 +3332,7 @@ commands in the future.
 @item tag
 This cert's value is a symbolic name given to a revision, which may be
 used as a way of selecting the revision by name for later commands like
-@command{checkout} and @command{diff}.  
+@command{checkout}, @command{log} or @command{diff}.  
 
 @item testresult
 This cert's value is interpreted as a boolean string, either @code{0}
@@ -4133,6 +4169,16 @@ occur.
 If no @var{id} is provided, as in the latter two commands, you
 @emph{must} provide a @var{branchname}; monotone will attempt to infer
 @var{id} as the unique head of @var{branchname} if it exists.
+
+@item mtn clone --branch=@var{branchname} @var{address} @var{directory}
+
+The clone command is a helper command that performs the roles of a
+number of other commands all at once.  Firstly, it constructs a new
+database.  It then populates this database by @command{pull}ing any data
+in the branch @var{branchname} from the remote database, @var{address}.
+Finally, it copies the files out of the newly created database into a
+local directory, just as @command{checkout} would.  The created
+database is placed in the new workspace as @file{@var{directory}/_MTN/mtn.db}.
 
 @item mtn disapprove @var{id}
 
@@ -5076,6 +5122,43 @@ a revision ID, a certificate name, a certificate value, and one or more
 key IDs, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
+
+@item mtn ssh_agent_export @var{filename}
+
+This command will export your private key in a format that ssh-agent
+can read (PKCS8, PEM). You will be asked for your current key's password
+and a new password to encrypt the key with. The key will be printed to
+stdout. Once you have put this key in a file simply add it to ssh-agent
+and you will only have to enter your key password once as ssh-agent
+will cache the key for you.
+
+@smallexample
+@group
+$ mtn ssh_agent_export ~/.ssh/id_monotone
+enter passphrase for key ID [user@@example.com]:
+enter new passphrase for key ID [user@@example.com]:
+confirm passphrase for key ID [user@@example.com]:
+$ chmod 600 ~/.ssh/id_monotone
+$ ssh-agent /bin/bash
+$ ssh-add ~/.ssh/id_monotone
+Enter passphrase for /home/user/.ssh/id_monotone:
+Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
+$ mtn ci -m"Changed foo to bar"
+$ mtn push
+@end group
+@end smallexample
+
+You can also use the @option{--ssh-sign} option to control whether ssh-agent will
+be used for signing. If set to @emph{yes}, ssh-agent will be used to sign. If your
+key has not been added to ssh-agent monotone will fall back to its internal signing
+code and ask you for your password. If set to @emph{only}, monotone will sign only
+with ssh-agent. If set to @emph{no}, monotone will always use its internal signing
+code even if ssh-agent is running and has your monotone key loaded. If set to
+@emph{check}, monotone will sign with both ssh-agent (if your key is loaded into
+it) and monotone's internal signing code, then compare the results. @emph{check}
+will be removed at some future time as it is meant only for testing and will not
+work with all signing algorithms.
+
 
 @end ftable
 
@@ -8452,12 +8535,12 @@ be used to extend monotone's understanding of files with
 platform-specific attributes, such as permission bits, access control
 lists, or special file types.
 
-By default, there is only one entry in this table, for the @code{execute}
+By default, there is only one entry in this table, for the @code{mtn:execute}
 attribute. Its definition is:
 
 @smallexample
 @group
-attr_functions["execute"] = 
+attr_functions["mtn:execute"] = 
   function(filename, value) 
         if (value == "true") then
          make_executable(filename)
@@ -8476,22 +8559,23 @@ that should be set on the file named @var{filename}. This table of
 hook functions is called once for each file during an @dfn{add}.
 
 By default, there are only two entries in this table, for the
-@code{execute} and @code{manual_merge} attributes. Their definition is:
+@code{mtn:execute} and @code{mtn:manual_merge} attributes. Their
+definition is:
 
 @smallexample
 @group
-attr_init_functions["execute"] = 
+attr_init_functions["mtn:execute"] = 
    function(filename)
       if (is_executable(filename)) then 
         return "true" 
       else 
         return nil 
-        end
-  end
-attr_init_functions["manual_merge"] = 
+      end
+   end
+attr_init_functions["mtn:manual_merge"] = 
    function(filename)
       if (binary_file(filename)) then 
-        return "true" -- binary files must merged manually
+        return "true" -- binary files must be merged manually
       else 
         return nil
       end 
@@ -8545,7 +8629,11 @@ On Windows, this function automatically appends ``.exe'' to the
 program name. In the previous example, @code{existonpath} would search
 for ``xxdiff.exe''.
 
-@item guess_binary(@var{filespec})
+@item get_ostype()
+
+Returns the operating system flavor as a string.
+
+@item guess_binary_file_contents(@var{filespec})
 
 Returns true if the file appears to be binary, i.e. contains one or
 more of the following characters:
@@ -8595,6 +8683,10 @@ Returns 0 on success, -1 on error.
 This function marks the named file as executable.  On Windows has no
 effect. 
 
+@item match(@var{glob}, @var{string})
+
+Returns true if @var{glob} matches @var{str}, return false otherwise.
+
 @item mkstemp(@var{template})
 
 Like its C library counterpart,  mkstemp creates a unique name and
@@ -8617,30 +8709,6 @@ function, unless you need to run monotone with the @option{--nostd}
 option.  @code{temp_file()} builds on @code{mkstemp()} and creates a
 file in the standard TMP/TEMP directories.
 For the definition of @code{temp_file()}, see @ref{Default hooks}.
-
-@item sleep(@var{seconds})
-
-Makes the calling process sleep for the specified number of seconds.
-
-@item spawn(@var{executable} [, @var{args ...}])
-
-Starts the named executable with the given arguments.  Returns the
-process PID on POSIX systems, the process handle on Win32 or -1 if
-there was an error.
-Calls fork/execvp on POSIX, CreateProcess on Win32.
-
-@strong{Important notice:}@*
-To spawn a process and wait for its completion, use the @code{execute()}
-function, unless you need to run monotone with the @option{--nostd}
-option.  @code{execute()} builds on @code{spawn()} and @code{wait()}
-in a standardized way.
-
-@item wait(@var{pid})
-
-Wait until the process with given PID (process handle on Win32) exits.
-Returns two values: a result value and the exit code of the waited-for
-process.
-The exit code is meaningful only if the result value is 0.
 
 @item parse_basic_io(@var{data})
 
@@ -8672,6 +8740,44 @@ The output table will be:
 @}
 @end group
 @end smallexample
+
+@item regex.search(@var{regexp}, @var{string})
+
+Returns true if a match for @var{regexp} is found in @var{str}, return
+false otherwise.
+
+@item sleep(@var{seconds})
+
+Makes the calling process sleep for the specified number of seconds.
+
+@item spawn(@var{executable} [, @var{args ...}])
+
+Starts the named executable with the given arguments.  Returns the
+process PID on POSIX systems, the process handle on Win32 or -1 if
+there was an error.
+Calls fork/execvp on POSIX, CreateProcess on Win32.
+
+@strong{Important notice:}@*
+To spawn a process and wait for its completion, use the @code{execute()}
+function, unless you need to run monotone with the @option{--nostd}
+option.  @code{execute()} builds on @code{spawn()} and @code{wait()}
+in a standardized way.
+
+@item spawn_pipe(@var{executable} [, @var{args ...}])
+
+TO BE DOCUMENTED!
+
+@item spawn_redirected(@var{infile}, @var{outfile}, @var{errfile}, @var{executable} [, @var{args ...}])
+
+Like spawn(), but with standard input, standard output and standard
+error redirected to the given files.
+
+@item wait(@var{pid})
+
+Wait until the process with given PID (process handle on Win32) exits.
+Returns two values: a result value and the exit code of the waited-for
+process.
+The exit code is meaningful only if the result value is 0.
 
 @end ftable
 

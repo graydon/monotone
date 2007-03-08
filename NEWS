@@ -1,8 +1,8 @@
-Tue Feb 27 18:46:58 UTC 2007
+Wed Feb 28 22:02:43 UTC 2007
 
         0.33 release.
 
-        The internal data format had changed with this release;
+        The internal data format has changed with this release;
         migration is straight-forward.  To upgrade your databases,
 	you must run:
                $ mtn -d mydb.mtn db migrate
@@ -47,7 +47,14 @@ Tue Feb 27 18:46:58 UTC 2007
 
 	New features
 
-	- "mtn merge_into_workspace" (still to be documented)
+	- "mtn merge_into_workspace" (still to be documented).  This command
+	  will allow you to review and fix up a merge in your workspace
+	  before committing it to the repository.  However, the conflict
+	  resolution interface remains the same as that of the 'merge'
+	  command for now (i.e. monotone will invoke your specified merge
+	  tool on all files with conflicts and you must resolve them as they
+	  are presented).  Work on in-workspace conflict presentation and
+	  resolution is planned for the future.
 
 	- "mtn log" will now print an ASCII revision graph alongside the
 	  usual log text.

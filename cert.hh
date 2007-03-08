@@ -14,10 +14,8 @@
 #include <set>
 #include <vector>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <time.h>
-
 #include "vocab.hh"
+#include "dates.hh"
 
 // Certs associate an opaque name/value pair with a revision ID, and
 // are accompanied by an RSA public-key signature attesting to the
@@ -123,19 +121,8 @@ extern cert_name const comment_cert_name;
 extern cert_name const testresult_cert_name;
 
 void
-cert_revision_date_now(revision_id const & m,
-                      app_state & app,
-                      packet_consumer & pc);
-
-void
 cert_revision_date_time(revision_id const & m,
-                        boost::posix_time::ptime t,
-                        app_state & app,
-                        packet_consumer & pc);
-
-void
-cert_revision_date_time(revision_id const & m,
-                        time_t time,
+                        date_t const & t,
                         app_state & app,
                         packet_consumer & pc);
 

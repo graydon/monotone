@@ -128,7 +128,8 @@ continued to adhere to the dialect we write in. in particular:
     standard streams are initialized before their first use.
     therefore, do not include <iostream> unless you actually refer to
     one of the standard streams (cin, cout, cerr, clog).  use <iosfwd>,
-    <istream>, <ostream>, <fstream>, etc instead, as appropriate.
+    <istream>, <ostream>, <fstream>, etc instead, as appropriate.  do not,
+    under any circumstances, refer to the standard streams in a header file.
 
   - it is almost always a mistake to use std::endl instead of '\n'.
     std::endl writes a newline to the stream *and flushes it*.
@@ -153,7 +154,7 @@ easily by initiating a 'make check'.  The test suite (or, at least, any
 tests potentially affected by your change) should be run before you
 distribute your changes.
 
-Automated build bots run the complete test suite on a regularly basis, so
+Automated build bots run the complete test suite on a regular basis, so
 any problems will be noticed quickly, but it is still faster to find and fix
 any problems locally rather than waiting for the build bots to alert the
 development team of a problem.

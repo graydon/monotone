@@ -20,21 +20,21 @@ AC_DEFUN([BOOST_THREAD_STUBS],
 # Check for suitably new version of boost.
 AC_DEFUN([BOOST_VERSION_CHECK],
 [AC_LANG_ASSERT([C++])
- AC_CACHE_CHECK([boost version 1.33.0 or newer], ac_cv_boost_version_least_1_33_0,
+ AC_CACHE_CHECK([boost version 1.32.0 or newer], ac_cv_boost_version_least_1_32_0,
  [
   AC_COMPILE_IFELSE(
   [#include <boost/version.hpp>
-  #if BOOST_VERSION >= 103300
+  #if BOOST_VERSION >= 103200
   int main() { return 0; }
   #else
   #error boost version is too old
   #endif
   ],
-  ac_cv_boost_version_least_1_33_0=yes,
-  ac_cv_boost_version_least_1_33_0=no)
+  ac_cv_boost_version_least_1_32_0=yes,
+  ac_cv_boost_version_least_1_32_0=no)
  ])
-  if test x$ac_cv_boost_version_least_1_33_0 = xno; then
-	AC_MSG_ERROR([boost 1.33.0 or newer required])
+  if test x$ac_cv_boost_version_least_1_32_0 = xno; then
+	AC_MSG_ERROR([boost 1.32.0 or newer required])
   fi
 ])
 
@@ -171,16 +171,6 @@ AC_DEFUN([MTN_BOOST_LIB_FILESYSTEM],
       using namespace boost::filesystem;
     ]],[[
       exists(path("/boot"));
-    ]])])])
-
-AC_DEFUN([MTN_BOOST_LIB_DATE_TIME],
-[MTN_NEED_BOOST_LIB([date_time],
-  [AC_LANG_PROGRAM([[
-      #include <boost/date_time/posix_time/posix_time.hpp>
-      #include <iostream>
-      using namespace boost::posix_time; 
-    ]],[[
-      std::cout << to_iso_extended_string(second_clock::universal_time());
     ]])])])
 
 AC_DEFUN([MTN_BOOST_LIB_REGEX],

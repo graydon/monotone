@@ -72,6 +72,7 @@ for _,name in pairs({  "LANG",
                        "LC_TIME"  }) do
    set_env(name,"C")
 end
+unset_env("SSH_AUTH_SOCK")
        
 
 function safe_mtn(...)
@@ -94,6 +95,12 @@ end
 function mtn(...)
   return raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
          "--db=" .. test.root .. "/test.db",
+         "--keydir", test.root .. "/keys",
+         "--key=tester@test.net", unpack(arg))
+end
+
+function nodb_mtn(...)
+  return raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
          "--keydir", test.root .. "/keys",
          "--key=tester@test.net", unpack(arg))
 end

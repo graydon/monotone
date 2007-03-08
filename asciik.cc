@@ -146,7 +146,7 @@ using std::distance;
 
 static revision_id ghost; // valid but empty revision_id to be used as ghost value
 
-asciik::asciik(size_t min_width, ostream & os)
+asciik::asciik(ostream & os, size_t min_width)
   : width(min_width), output(os)
 {
 }
@@ -396,7 +396,7 @@ CMD(asciik, N_("debug"), N_("SELECTOR"),
   selectors::selector_type ty = selectors::sel_ident;
   selectors::complete_selector("", sels, ty, completions, app);
 
-  asciik graph(10);
+  asciik graph(std::cout, 10);
   set<revision_id> revs;
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)

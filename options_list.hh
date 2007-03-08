@@ -118,20 +118,13 @@ GOPT(conf_dir, "confdir", system_path, get_default_confdir(),
 }
 #endif
 
-OPT(date, "date", boost::posix_time::ptime, ,
+OPT(date, "date", date_t, ,
      gettext_noop("override date/time for commit"))
 #ifdef option_bodies
 {
   try
     {
-      // boost::posix_time can parse "basic" ISO times, of the form
-      // 20000101T120000, but not "extended" ISO times, of the form
-      // 2000-01-01T12:00:00. So convert one to the other.
-      string tmp = arg;
-      string::size_type pos = 0;
-      while ((pos = tmp.find_first_of("-:")) != string::npos)
-        tmp.erase(pos, 1);
-      date = boost::posix_time::from_iso_string(tmp);
+      date = date_t::from_string(arg);
     }
   catch (std::exception &e)
     {
@@ -254,6 +247,14 @@ OPT(bookkeep_only, "bookkeep-only", bool, false,
 #ifdef option_bodies
 {
   bookkeep_only = true;
+}
+#endif
+
+GOPT(ssh_sign, "ssh-sign", std::string, "yes",
+     gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
+#ifdef option_bodies
+{
+  ssh_sign = arg;
 }
 #endif
 

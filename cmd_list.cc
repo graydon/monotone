@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <map>
 #include <utility>
+#include <iostream>
 
 #include <boost/tuple/tuple.hpp>
 

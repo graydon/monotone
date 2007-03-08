@@ -77,39 +77,36 @@ bool make_accessible(string const &name)
 
 
 #include <cstdlib>
-#if defined(WIN32) && !defined(__MINGW32__)
-void setenv(char const * var, char const * val)
+
+void set_env(char const * var, char const * val)
 {
-  _putenv_s(var, val);
-}
-int unsetenv(char const * var)
-{
-  _putenv_s(var, "");
-}
+#if defined(WIN32)
+  SetEnvironmentVariable(var, val);
+#elif defined(HAVE_SETENV)
+  setenv(var, val, 1);
+#elif defined(HAVE_PUTENV)
+  // note: this leaks memory, but the tester is short lived so it probably
+  // doesn't matter much.
+  string * tempstr = new string(var);
+  tempstr->append("=");
+  tempstr->append(val);
+  putenv(const_cast<char *>(tempstr->c_str()));
 #else
-void setenv(char const * var, char const * val)
-{
-  string tempstr = string(var) + "=" + string(val);
-  char const *s = tempstr.c_str();
-  size_t len = tempstr.size() + 1;
-  char *cp = new char[len];
-  memcpy(cp, s, len);
-  putenv(cp);
+#error set_env needs to be ported to this platform
+#endif
 }
-#if defined(__APPLE__)
-void unsetenv(char const * var)
+
+void unset_env(char const * var)
+{
+#if defined(WIN32)
+  SetEnvironmentVariable(var, 0);
+#elif defined(HAVE_UNSETENV)
+  unsetenv(var);
 #else
-int unsetenv(char const * var)
+#error unset_env needs to be ported to this platform
 #endif
-{
-  string tempstr = string(var) + "=";
-  char const *s = tempstr.c_str();
-  size_t len = tempstr.size() + 1;
-  char *cp = new char[len];
-  memcpy(cp, s, len);
-  putenv(cp);
 }
-#endif
+
 map<string, string> orig_env_vars;
 
 
@@ -425,7 +422,7 @@ LUAEXT(restore_env, )
 {
   for (map<string,string>::const_iterator i = orig_env_vars.begin();
        i != orig_env_vars.end(); ++i)
-    setenv(i->first.c_str(), i->second.c_str());
+    set_env(i->first.c_str(), i->second.c_str());
   orig_env_vars.clear();
   return 0;
 }
@@ -441,12 +438,10 @@ LUAEXT(set_env, )
     else
       orig_env_vars.insert(make_pair(string(var), ""));
   }
-  setenv(var, val);
+  set_env(var, val);
   return 0;
 }
 
-// #if'd out because unsetenv() doesn't exist everywhere.
-#if 0
 LUAEXT(unset_env, )
 {
   char const * var = luaL_checkstring(L, -1);
@@ -457,10 +452,9 @@ LUAEXT(unset_env, )
     else
       orig_env_vars.insert(make_pair(string(var), ""));
   }
-  unsetenv(var);
+  unset_env(var);
   return 0;
 }
-#endif
 
 LUAEXT(timed_wait, )
 {

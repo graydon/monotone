@@ -12,11 +12,8 @@
 #include "outdated_indicator.hh"
 #include "vocab.hh"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-
 class app_state;
-class packet_consumer;
+struct packet_consumer;
 
 class tag_t
 {
@@ -27,13 +24,6 @@ public:
   tag_t(revision_id const & ident, utf8 const & name, rsa_keypair_id const & key);
 };
 bool operator < (tag_t const & a, tag_t const & b);
-
-inline boost::posix_time::ptime now()
-{
-  return boost::posix_time::second_clock::universal_time();
-}
-
-boost::posix_time::ptime time_from_time_t(time_t time);
 
 class project_t
 {
@@ -57,7 +47,7 @@ public:
                               branch_name const & branch,
                               packet_consumer & pc);
 
-  outdated_indicator get_revision_cert_hashes(revision_id const & id,
+  outdated_indicator get_revision_cert_hashes(revision_id const & rid,
                                               std::vector<hexenc<id> > & hashes);
   outdated_indicator get_revision_certs(revision_id const & id,
                                         std::vector<revision<cert> > & certs);
@@ -72,7 +62,7 @@ public:
   void put_standard_certs(revision_id const & id,
                           branch_name const & branch,
                           utf8 const & changelog,
-                          boost::posix_time::ptime const & time,
+                          date_t const & time,
                           utf8 const & author,
                           packet_consumer & pc);
   void put_standard_certs_from_options(revision_id const & id,

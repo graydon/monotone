@@ -9,6 +9,7 @@
 
 #include <set>
 #include <string>
+#include <iostream>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_index_container.hpp>

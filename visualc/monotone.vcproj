@@ -157,7 +157,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib popt.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)/mtn.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;"
@@ -209,6 +209,10 @@
 			</File>
 			<File
 				RelativePath="..\app_state.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\asciik.cc"
 				>
 			</File>
 			<File
@@ -296,6 +300,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\dates.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\diff_patch.cc"
 				>
 			</File>
@@ -374,10 +382,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\localized_file_io.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\lua.cc"
 				>
 			</File>
@@ -450,11 +454,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\numeric_vocab.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\option.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\options.cc"
 				>
 			</File>
 			<File
 				RelativePath="..\win32\os_strerror.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\outdated_indicator.cc"
 				>
 			</File>
 			<File
@@ -523,6 +539,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\project.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\randomizer.cc"
 				>
 			</File>
@@ -544,6 +564,10 @@
 			</File>
 			<File
 				RelativePath="..\restrictions.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\rev_height.cc"
 				>
 			</File>
 			<File
@@ -580,6 +604,14 @@
 			</File>
 			<File
 				RelativePath="..\simplestring_xform.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\ssh_agent.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\win32\ssh_agent_platform.cc"
 				>
 			</File>
 			<File
@@ -640,6 +672,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\asciik.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\automate.hh"
 				>
 			</File>
@@ -689,6 +725,10 @@
 			</File>
 			<File
 				RelativePath="..\database_check.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\dates.hh"
 				>
 			</File>
 			<File
@@ -752,11 +792,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\localized_file_io.hh"
+				RelativePath="..\lru_cache.h"
 				>
 			</File>
 			<File
-				RelativePath="..\lru_cache.h"
+				RelativePath="..\lru_writeback_cache.hh"
 				>
 			</File>
 			<File
@@ -812,11 +852,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\option.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\options.hh"
 				>
 			</File>
 			<File
 				RelativePath="..\options_list.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\outdated_indicator.hh"
 				>
 			</File>
 			<File
@@ -848,7 +896,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\project.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\quick_alloc.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\randomfile.hh"
 				>
 			</File>
 			<File
@@ -869,6 +925,10 @@
 			</File>
 			<File
 				RelativePath="..\restrictions.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\rev_height.hh"
 				>
 			</File>
 			<File
@@ -924,6 +984,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\ssh_agent.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\win32\ssh_agent_platform.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\std_hooks.h"
 				>
 			</File>
@@ -952,6 +1020,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\unit_tests.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\update.hh"
 				>
 			</File>
@@ -965,6 +1037,14 @@
 			</File>
 			<File
 				RelativePath="..\vocab.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\vocab_cast.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\vocab_macros.hh"
 				>
 			</File>
 			<File

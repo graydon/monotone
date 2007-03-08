@@ -1388,7 +1388,7 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
   app.get_project().put_standard_certs(p.rid,
                                        branch_name(branchname),
                                        utf8(cvs.changelog_interner.lookup(p.changelog)),
-                                       time_from_time_t(p.time),
+                                       date_t::from_unix_epoch(p.time),
                                        utf8(cvs.author_interner.lookup(p.author)),
                                        dbw);
 }

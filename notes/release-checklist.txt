@@ -70,24 +70,42 @@ How to release a new version of monotone
    $ ./configure
    $ make monotone.pdf html
 
-8) Upload everything to the website:
+8) Upload everything to the website (uses monotone):
 
-   $ scp SOMEDIR/monotone-<NEW VERSION>.tar.gz \
-         venge.net:~graydon/public_html/monotone/downloads/
-   $ scp monotone-<NEW VERSION>/{NEWS,INSTALL,UPGRADE,README,monotone.pdf,monotone.html} \
-         venge.net:~graydon/public_html/monotone
-   $ ssh venge.net
-   venge.net$ cd ~graydon/public_html/monotone
-   venge.net$ rm -rf docs/
-   venge.net$ exit
-   $ scp -r monotone-<NEW VERSION>/html \
-            venge.net:~graydon/public_html/monotone/docs
+   # This requires that you have registered a SSH version 2 public key
+   # with the administrators of monotone.ca, currently richard@levitte.org.
+   #
+   $ mkdir <NEW VERSION>
+   $ mv SOMEDIR/monotone-<NEW VERSION>.tar.gz <NEW VERSION>/
+   $ scp -r <NEW VERSION> mtn-uploads@monotone.ca:downloads/
+
+   # The rest is done via monotone.
+   #
+   $ mtn -d DATABASE co -b net.venge.monotone.web WEBDIR
+   $ cp monotone-<NEW VERSION>/{NEWS,INSTALL,UPGRADE,README,monotone.pdf,monotone.html} \
+         WEBDIR/
+   $ rm -rf WEBDIR/docs
+   $ cp -r monotone-<NEW VERSION>/html WEBDIR/docs
+   $ rm WEBDIR/figures/*
+   $ cp monotone-<NEW VERSION>/figures/*.png WEBDIR/figures/
+   $ cd WEBDIR
+   $ mtn drop --missing
+   $ mtn add --unknown
+   $ mtn ci -m "Updates related to the release of monotone <NEW VERSION>"
+   $ mtn sync
 
 9) Update index.html on the website to state the latest version at the
    top, and modify the list of download links to point to the new
    version.
 
+   $ cd WEBDIR
+   $ vi index.html
+   $ mtn ci -m "Updates related to the release of monotone <NEW VERSION>"
+   $ mtn sync
+
 10) Update downloads.html on the website similarly.
+
+    [Richard's comment: Huh?]
 
 11) Once you're pretty sure things have gone well, tag the source:
 
