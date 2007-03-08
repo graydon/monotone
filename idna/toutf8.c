@@ -132,6 +132,7 @@ stringprep_convert (const char *str,
   size_t err;
   size_t outbuf_size;
   int have_error = 0;
+  int from_utf8;
   int len;
 
   if (strcmp (to_codeset, from_codeset) == 0)
@@ -143,6 +144,8 @@ stringprep_convert (const char *str,
       strcpy (p, str);
       return p;
     }
+
+  from_utf8 = (strcmp (from_codeset, "UTF-8") == 0);
 
 #ifdef ICONV_TRANSLIT
   if (best_effort)
@@ -201,7 +204,7 @@ again:
 	  break;
 
 	case EILSEQ:
-          if (!best_effort)
+          if (!best_effort || outbytes_remaining == 0)
             {
               have_error = 1;
               break;
@@ -209,32 +212,35 @@ again:
           else
             {
               int char_len;
-              if      ((*p & 0x80) == 0)
-                char_len = 1;
-              else if ((*p & 0x40) == 0)
-                char_len = 1; // error: not allowed to begin a sequence
-              else if ((*p & 0x20) == 0)
-                char_len = 2;
-              else if ((*p & 0x10) == 0)
-                char_len = 3;
-              else if ((*p & 0x08) == 0)
-                char_len = 4;
-              else if ((*p & 0x04) == 0)
-                char_len = 5;
-              else if ((*p & 0x02) == 0)
-                char_len = 6;
+              if (!from_utf_8)
+                char_len = 1; // not from UTF-8, one '?' will do
               else
-                char_len = 1; // error: 0xFE/0xFF not used by UTF-8
+                {
+                  if      ((*p & 0x80) == 0)
+                    char_len = 1;
+                  else if ((*p & 0x40) == 0)
+                    char_len = 1; // error: not allowed to begin a sequence
+                  else if ((*p & 0x20) == 0)
+                    char_len = 2;
+                  else if ((*p & 0x10) == 0)
+                    char_len = 3;
+                  else if ((*p & 0x08) == 0)
+                    char_len = 4;
+                  else if ((*p & 0x04) == 0)
+                    char_len = 5;
+                  else if ((*p & 0x02) == 0)
+                    char_len = 6;
+                  else
+                    char_len = 1; // error: 0xFE/0xFF not used by UTF-8
+                }
               if (char_len > inbytes_remaining)
                 char_len = inbytes_remaining;
               p += char_len;
               inbytes_remaining -= char_len;
-              if (outbytes_remaining >= 1)
-                {
-                  *outp++ = '?';
-                  --outbytes_remaining;
-                }
-              goto again;
+              *outp++ = '?';
+              --outbytes_remaining;
+              if (inbytes_remaining > 0)
+                goto again;
             }
           break;
 
