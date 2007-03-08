@@ -209,11 +209,10 @@ again:
           else
             {
               int char_len;
-              //TODO: check of EOF in 'p' and 'outp'
               if      ((*p & 0x80) == 0)
                 char_len = 1;
               else if ((*p & 0x40) == 0)
-                char_len = 1; // ERROR: not allowed to begin a sequence
+                char_len = 1; // error: not allowed to begin a sequence
               else if ((*p & 0x20) == 0)
                 char_len = 2;
               else if ((*p & 0x10) == 0)
@@ -225,12 +224,12 @@ again:
               else if ((*p & 0x02) == 0)
                 char_len = 6;
               else
-                char_len = 1; // ERROR: not used by UTF-8
+                char_len = 1; // error: 0xFE/0xFF not used by UTF-8
               if (char_len > inbytes_remaining)
                 char_len = inbytes_remaining;
               p += char_len;
               inbytes_remaining -= char_len;
-              if (outbytes_remaining > 0)
+              if (outbytes_remaining >= 1)
                 {
                   *outp++ = '?';
                   --outbytes_remaining;
