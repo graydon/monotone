@@ -47,15 +47,13 @@ charset_convert(string const & src_charset,
     dst = src;
   else
     {
-      string dst_charset_real(dst_charset);
-      if (best_effort)
-        dst_charset_real += "//IGNORE//TRANSLIT";
       char * converted = stringprep_convert(src.c_str(),
-                                            dst_charset_real.c_str(),
-                                            src_charset.c_str());
+                                            dst_charset.c_str(),
+                                            src_charset.c_str(),
+                                            best_effort);
       E(converted != NULL,
         F("failed to convert string from %s to %s: '%s'")
-         % src_charset % dst_charset_real % src);
+         % src_charset % dst_charset % src);
       dst = string(converted);
       free(converted);
     }
