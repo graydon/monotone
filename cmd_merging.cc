@@ -605,7 +605,7 @@ CMD(merge_into_workspace, N_("tree"),
     N_("Merge OTHER-REVISION into the current workspace's base revision, "
        "and update the current workspace with the result.  There can be no "
        "pending changes in the current workspace.  Both OTHER-REVISION and "
-       "the workspace's base revision will be recorded as parents on commit. "
+       "the workspace's base revision will be recorded as parents on commit.  "
        "The workspace's selected branch is not changed."),
     options::opts::none)
 {
