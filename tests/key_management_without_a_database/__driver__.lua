@@ -5,7 +5,7 @@ mtn_setup()
 check(raw_mtn("--keydir=keys", "genkey", "foobar"), 0, false, false,
       string.rep("foobar\n", 2))
 
-check(raw_mtn("--keydir=keys", "chkeypass", "foobar"), 0, false, false,
+check(raw_mtn("--keydir=keys", "passphrase", "foobar"), 0, false, false,
       "foobar\n"..string.rep("barfoo\n", 2))
 
 check(raw_mtn("--keydir=keys", "ls", "keys"), 0, false, false)
