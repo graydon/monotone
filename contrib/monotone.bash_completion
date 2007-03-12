@@ -22,6 +22,16 @@ _filedir() {
 }
 fi
 
+_monotone_previous_RETURN=`trap -p RETURN`
+_monotone_previous_SIGHUP=`trap -p SIGHUP`
+_monotone_previous_SIGINT=`trap -p SIGINT`
+_monotone_previous_SIGPIPE=`trap -p SIGPIPE`
+_monotone_previous_SIGTERM=`trap -p SIGTERM`
+if shopt -q extglob; then :; else
+    shopt -s extglob
+    trap "shopt -u extglob; ${_monotone_previous_RETURN:-trap - RETURN}; ${_monotone_previous_SIGHUP:-trap - SIGHUP}; ${_monotone_previous_SIGINT:-trap - SIGINT}; ${_monotone_previous_SIGPIPE:-trap - SIGPIPE}; ${_monotone_previous_SIGTERM:-trap - SIGTERM}" RETURN SIGHUP SIGINT SIGPIPE SIGTERM
+fi
+
 # Call monotone to complete IDs
 _monotone_complete() {
     if (( "${#cur}" >=2 )) ; then
