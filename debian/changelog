@@ -50,6 +50,12 @@ monotone (0.31-90.1) unstable; urgency=low
 
  -- Richard Levitte <richard@levitte.org>  Mon, 13 Nov 2006 23:50:45 +0100
 
+monotone (0.31-8) unstable; urgency=low
+
+  * Add Portuguese (pt) debconf translation. Closes: #414212.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 12 Mar 2007 08:57:20 -0600
+
 monotone (0.31-7) unstable; urgency=low
 
   * Add Japanese debconf translation. Closes: #413002.
