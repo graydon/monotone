@@ -244,7 +244,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.28\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-11 23:40+0100\n"
-"PO-Revision-Date: 2007-03-13 00:16+0100\n"
+"PO-Revision-Date: 2007-03-13 00:20+0100\n"
 "Last-Translator: Stéphane Gimenez <dev@gim.name>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -1234,7 +1234,7 @@ msgstr "sélection de la cible %s pour la mise à jour"
 #: cmd_merging.cc:208
 #, c-format
 msgid "switching to branch %s"
-msgstr "passage à la branche « %s »\n"
+msgstr "passage à la branche « %s »"
 
 #: cmd_merging.cc:276
 #, c-format
@@ -2010,7 +2010,7 @@ msgstr ""
 #: cmd_ws_commit.cc:760
 #, c-format
 msgid "beginning commit on branch '%s'"
-msgstr "début du commit sur la branche « %s »\n"
+msgstr "début du commit sur la branche « %s »"
 
 #: cmd_ws_commit.cc:769
 #, c-format
@@ -2268,7 +2268,7 @@ msgstr "révision %s incomplète (liste incomplète)"
 #: database_check.cc:703
 #, c-format
 msgid "revision %s mismatched parents (%d ancestry parents; %d revision refs)"
-msgstr "révision %s, parents déparaillés (%d ancêtres; %d révision référencées)\n"
+msgstr "révision %s, parents déparaillés (%d ancêtres; %d révision référencées)"
 
 #: database_check.cc:712
 #, c-format
@@ -3799,7 +3799,7 @@ msgstr "les contraintes incluent un chemin inconnu « %s »"
 #: restrictions.cc:114 restrictions.cc:155
 #, c-format
 msgid "restriction excludes unknown path '%s'"
-msgstr "les contraintes excluent un chemin inconnu « %s »\n"
+msgstr "les contraintes excluent un chemin inconnu « %s »"
 
 #: restrictions.cc:118 restrictions.cc:159
 #, c-format
@@ -3920,7 +3920,7 @@ msgstr "%s:%d : violation de l'invariant « %s »"
 #: sanity.cc:252
 #, c-format
 msgid "%s:%d: index '%s' = %d overflowed vector '%s' with size %d"
-msgstr "%s:%d : l'index « %s » = %d dépasse la capacité du vecteur « %s » de taille %d\n"
+msgstr "%s:%d : l'index « %s » = %d dépasse la capacité du vecteur « %s » de taille %d"
 
 #: sanity.cc:273
 #, c-format
@@ -4028,7 +4028,7 @@ msgstr ""
 #: schema_migration.cc:888
 #, c-format
 msgid "%s does not appear to be a monotone database\n"
-msgstr "%s  n'apparaît pas être une base de données monotone"
+msgstr "%s n'apparaît pas être une base de données monotone\n"
 
 #: schema_migration.cc:892
 #, c-format
