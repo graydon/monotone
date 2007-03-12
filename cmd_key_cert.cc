@@ -95,7 +95,7 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"),
   N(key_deleted, fmt % idx(args, 0)());
 }
 
-CMD(chkeypass, N_("key and cert"), N_("KEYID"),
+CMD(passphrase, N_("key and cert"), N_("KEYID"),
     N_("change passphrase of a private RSA key"),
     options::opts::none)
 {
