@@ -5109,7 +5109,7 @@ are dropped, if only one exists, it is dropped. This command should
 be used with caution as changes are irreversible without a backup of
 the key(s) that were dropped.
 
-@item mtn chkeypass @var{id}
+@item mtn passphrase @var{id}
 
 This command lets you change the passphrase of the private half of the
 key @var{id}.
