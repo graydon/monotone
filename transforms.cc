@@ -60,9 +60,9 @@ using boost::scoped_array;
 // paradigm "must" be used. this program is intended for source code
 // control and I make no bones about it.
 
-NORETURN(static void error_in_transform(Botan::Exception & e));
+NORETURN(static inline void error_in_transform(Botan::Exception & e));
 
-static void
+static inline void
 error_in_transform(Botan::Exception & e)
 {
   // why do people make up their own out-of-memory exceptions?
