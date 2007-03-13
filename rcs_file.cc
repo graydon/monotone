@@ -18,6 +18,9 @@
 #endif
 
 #ifdef HAVE_MMAP
+#ifdef sun
+#define _XPG4_2
+#endif
 #include <sys/mman.h>
 #endif
 

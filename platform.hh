@@ -16,6 +16,7 @@
 #include "config.h"
 
 #include <string>
+#include <stdio.h>
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);
 void get_system_flavour(std::string & ident);

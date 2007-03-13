@@ -10,6 +10,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <sqlite3.h>
+#include <string.h>
 
 #include "sanity.hh"
 #include "schema_migration.hh"
