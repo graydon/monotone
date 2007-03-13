@@ -147,6 +147,7 @@ public:
                              size_t certs_in, size_t certs_out,
                              size_t revs_in, size_t revs_out,
                              size_t keys_in, size_t keys_out);
+  bool hook_note_mtn_startup(std::vector<std::string> const & args);
 };
 
 // Local Variables:

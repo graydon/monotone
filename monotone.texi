@@ -7921,6 +7921,15 @@ error, and 5xx means there was a protocol error. xx1 means some data may
 have been transferred, xx2 means no data was transferred, and xx0 means all
 data was transferred.
 
+@item note_mtn_startup (...)
+
+Called by monotone when it is first started, this hook was added so that
+usage of monotone could be monitored for user interface testing.  Note
+that by default, no monitoring occurs.  The arguments to the hook
+function are the arguments to monotone, without the initial
+@command{mtn} command.  They can be accessed through the lua @var{arg}
+variable which contains the variable list of arguments.
+
 @end ftable
 
 @subsection User Defaults

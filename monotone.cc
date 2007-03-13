@@ -246,6 +246,8 @@ cpp_main(int argc, char ** argv)
           if (!app.found_workspace && global_sanity.filename.empty())
             global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
 
+          app.lua.hook_note_mtn_startup(args);
+
           // main options processed, now invoke the
           // sub-command w/ remaining args
           if (cmd.empty())
