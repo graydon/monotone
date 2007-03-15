@@ -918,7 +918,7 @@ msgstr "ID (engl. pass|fail|true|false|yes|no|1|0)"
 
 #: cmd_key_cert.cc:265
 msgid "note the results of running a test on a revision"
-msgstr "Beachten Sie die Ergebnisse, die durch einen Test auf einer Revision auftreten."
+msgstr "notiere die Ergebnisse eines ausgeführten Tests auf einer Revision"
 
 #: cmd_key_cert.cc:277
 #: cmd_ws_commit.cc:210
