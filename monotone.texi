@@ -8383,7 +8383,7 @@ end
 @end smallexample
 
 This definition accepts only those updates which preserve the set of
-@code{true} test results from update source to target. If no rest
+@code{true} test results from update source to target. If no test
 results exist, this hook has no affect; but once a @code{true} test
 result is present, future updates will require it. If you want a more
 lenient behavior you must redefine this hook.

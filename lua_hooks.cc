@@ -838,7 +838,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
 
   typedef set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > cdat;
 
-  int n=0;
+  int n = 1;
   for (cdat::const_iterator i = certs.begin(); i != certs.end(); ++i)
     {
       ll.push_int(n++);
