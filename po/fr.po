@@ -244,7 +244,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.28\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-13 16:12+0100\n"
-"PO-Revision-Date: 2007-03-15 06:33+0100\n"
+"PO-Revision-Date: 2007-03-15 06:49+0100\n"
 "Last-Translator: Stéphane Gimenez <dev@gim.name>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -3313,7 +3313,7 @@ msgstr "permission de lecture refusée à « %s » pour « %s » en excluant
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
-msgstr "permission d'écriture refusée à « %s » pour « %s » en excluant « %s » pendant une exécution en mode source pure"
+msgstr "permission de lecture refusée à « %s » pour « %s » en excluant « %s » à cause de la branche « %s »"
 
 #: netsync.cc:1584
 #, c-format
