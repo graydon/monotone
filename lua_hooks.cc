@@ -918,6 +918,21 @@ lua_hooks::hook_note_netsync_end(size_t session_id, int status,
     .ok();
 }
 
+bool
+lua_hooks::hook_note_mtn_startup(vector<string> const & args)
+{
+  Lua ll(st);
+
+  ll.func("note_mtn_startup");
+
+  int n=0;
+  for (vector<string>::const_iterator i = args.begin(); i != args.end(); ++i, ++n)
+    ll.push_str(*i);
+
+  ll.call(n, 0);
+  return ll.ok();
+}
+
 
 // Local Variables:
 // mode: C++
