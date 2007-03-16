@@ -364,7 +364,7 @@ void read_directory(any_path const & path,
 
 
 // This function can only be called once per run.
-static void
+void
 read_data_stdin(data & dat)
 {
   static bool have_consumed_stdin = false;

@@ -192,7 +192,11 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   if (args.size() == 3)
     val = cert_value(idx(args, 2)());
   else
-    val = cert_value(get_stdin());
+    {
+      data dat;
+      read_data_stdin(dat);
+      val = cert_value(dat());
+    }
 
   packet_db_writer dbw(app);
   app.get_project().put_cert(rid, name, val, dbw);
