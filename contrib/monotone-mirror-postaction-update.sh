@@ -40,7 +40,7 @@ databasefile=`basename $DATABASE`
 databasedir=`cd $databasedir; pwd`
 database="$databasedir/$databasefile"
 
-cat "$rc" | while read DIRECTORY BRANCH; do
+sed -e '/^#/d' < "$rc" | while read DIRECTORY BRANCH; do
     if [ -n "$DIRECTORY" -o -n "$BRANCH" ]; then
 	if [ -z "$DIRECTORY" -o -z "$BRANCH" ]; then
 	    echo "Directory or branch missing in line: $DIRECTORY $BRANCH" >&2
