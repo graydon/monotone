@@ -51,30 +51,34 @@ databasefile=`basename $database`
 databasedir=`cd $databasedir; pwd`
 database="$databasedir/$databasefile"
 
+mkdir -p $database.redo
 mkdir $database.lock1 || \
     (echo 'Database locked by another process'; exit 1) && \
     (
-    cat "$rc" | while read KEYWORD SERVER PATTERNS; do
-	if [ "$KEYWORD" = "mirror" ]; then
-	    if [ -z "$SERVER" -o -z "$PATTERNS" ]; then
-		echo "Server or pattern missing in line: $SERVER $PATTERNS" >&2
-		echo "Skipping..." >&2
-	    else
-		( eval "set -x; mtn -d '$database' --ticker=dot pull $SERVER $PATTERNS" )
+    while [ -d $database.redo ]; do
+	rmdir $database.redo
+	sed -e '/^#/d' < "$rc" | while read KEYWORD SERVER PATTERNS; do
+	    if [ "$KEYWORD" = "mirror" ]; then
+		if [ -z "$SERVER" -o -z "$PATTERNS" ]; then
+		    echo "Server or pattern missing in line: $SERVER $PATTERNS" >&2
+		    echo "Skipping..." >&2
+		else
+		    ( eval "set -x; mtn -d '$database' --ticker=dot pull $SERVER $PATTERNS" )
+		fi
 	    fi
-	fi
-    done
+	done
 
-    cat "$rc" | while read KEYWORD COMMAND; do
-	if [ "$KEYWORD" = "postaction" ]; then
-	    if [ -z "$COMMAND" ]; then
-		echo "Command missing in line: $COMMAND" >&2
-		echo "Skipping..." >&2
-	    else
-		( DATABASE="$database" eval "set -x; $COMMAND" )
+	sed -e '/^#/d' < "$rc" | while read KEYWORD COMMAND; do
+	    if [ "$KEYWORD" = "postaction" ]; then
+		if [ -z "$COMMAND" ]; then
+		    echo "Command missing in line: $COMMAND" >&2
+		    echo "Skipping..." >&2
+		else
+		    ( DATABASE="$database" eval "set -x; $COMMAND" )
+		fi
 	    fi
-	fi
+	done
     done
 
     rmdir $database.lock1
-)
+    )
