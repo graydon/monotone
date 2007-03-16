@@ -15,6 +15,9 @@ add_dir ""
 add_file "testfile"
  content [FILE1]
 
+revision: cert.name  = author
+revision: cert.value = tester@test.net
+revision: cert.key   = tester@test.net
 revision: cert.name  = branch
 revision: cert.value = testbranch
 revision: cert.key   = tester@test.net
@@ -24,9 +27,6 @@ revision: cert.value = blah-blah
 revision: cert.key   = tester@test.net
 revision: cert.name  = date
 revision: cert.value = DATE1
-revision: cert.key   = tester@test.net
-revision: cert.name  = author
-revision: cert.value = tester@test.net
 revision: cert.key   = tester@test.net
 revision: new_id    = REV2
 revision: revision  = format_version "1"
@@ -39,6 +39,9 @@ patch "testfile"
  from [FILE1]
    to [FILE2]
 
+revision: cert.name  = author
+revision: cert.value = tester@test.net
+revision: cert.key   = tester@test.net
 revision: cert.name  = branch
 revision: cert.value = testbranch
 revision: cert.key   = tester@test.net
@@ -48,9 +51,6 @@ revision: cert.value = blah-blah
 revision: cert.key   = tester@test.net
 revision: cert.name  = date
 revision: cert.value = DATE2
-revision: cert.key   = tester@test.net
-revision: cert.name  = author
-revision: cert.value = tester@test.net
 revision: cert.key   = tester@test.net
 end: status = 200
 end: certs in/out = 8/0
