@@ -73,9 +73,6 @@ args_to_paths(std::vector<utf8> const & args)
 }
 
 std::string
-get_stdin();
-
-std::string
 describe_revision(app_state & app,
                   revision_id const & id);
 
