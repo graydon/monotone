@@ -1,5 +1,10 @@
 #!./tester
 
+-- We have a bunch of tests that depend on being able to create files or
+-- directories that we cannot read or write (mostly to test error handling
+-- behavior).
+require_not_root()
+
 ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
 
 -- maybe this should go in tester.lua instead?
