@@ -344,19 +344,6 @@ CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
 }
 
 string
-get_stdin()
-{
-  char buf[constants::bufsz];
-  string tmp;
-  while(cin)
-    {
-      cin.read(buf, constants::bufsz);
-      tmp.append(buf, cin.gcount());
-    }
-  return tmp;
-}
-
-string
 describe_revision(app_state & app,
                   revision_id const & id)
 {

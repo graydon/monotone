@@ -73,6 +73,8 @@ void read_directory(any_path const & path,
                     std::vector<utf8> & files,
                     std::vector<utf8> & dirs);
 
+void read_data_stdin(data & dat);
+
 // This function knows that "-" means "stdin".
 void read_data_for_command_line(utf8 const & path, data & dat);
 

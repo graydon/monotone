@@ -27,10 +27,11 @@ using std::vector;
 
 CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
 {
-  string s = get_stdin();
+  data dat;
+  read_data_stdin(dat);
 
   file_id f_id;
-  file_data f_data(s);
+  file_data f_data(dat);
 
   calculate_ident (f_data, f_id);
 
@@ -190,11 +191,11 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 
   if (args.size() == 1)
     {
-      read_data(file_path_external(idx(args, 0)), dat);
+      read_data_for_command_line(idx(args, 0), dat);
     }
   else
     {
-      dat = data(get_stdin());
+      read_data_stdin(dat);
     }
 
   hexenc<id> ident;
