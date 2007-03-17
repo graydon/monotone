@@ -7511,7 +7511,7 @@ status 1.
 
 @end table
 
-@item mtn automate db_put @var{domain} @var{name} @var{value}
+@item mtn automate db_set @var{domain} @var{name} @var{value}
 
 @table @strong
 @item Arguments:
