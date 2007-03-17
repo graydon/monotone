@@ -151,7 +151,7 @@ namespace commands
     string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
     for (vector<string>::iterator i = matched.begin();
          i != matched.end(); ++i)
-      err += (*i + "\n");
+      err += ('\n' + *i);
     W(i18n_format(err));
     return cmd;
   }

@@ -1641,8 +1641,6 @@ workspace::perform_content_update(cset const & update,
       "you must clean up and remove the %s directory")
     % detached);
 
-  mkdir_p(detached);
-
   get_current_roster_shape(new_roster, nis);
   new_roster.extract_path_set(known);
 
@@ -1651,6 +1649,8 @@ workspace::perform_content_update(cset const & update,
 
   simulated_working_tree swt(roster, nis);
   update.apply_to(swt);
+
+  mkdir_p(detached);
 
   editable_working_tree ewt(lua, ca, messages);
   update.apply_to(ewt);
