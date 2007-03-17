@@ -468,6 +468,24 @@ LUAEXT(timed_wait, )
   return 2;
 }
 
+LUAEXT(require_not_root, )
+{
+#ifdef WIN32
+  bool running_as_root = false;
+#else
+  bool running_as_root = !geteuid();
+#endif
+  // E() doesn't work here, I just get "warning: " in the
+  // output.  Why?
+  if (running_as_root)
+    {
+      P(F("This test suite cannot be run as the root user.\n"
+          "Please try again with a normal user account.\n"));
+      exit(1);
+    }
+  return 0;
+}
+
 int main(int argc, char **argv)
 {
   int retcode = 2;
