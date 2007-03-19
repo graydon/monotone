@@ -46,7 +46,9 @@ public:
   bool hook_expand_date(std::string const & sel, std::string & exp);
   bool hook_get_branch_key(branch_name const & branchname, rsa_keypair_id & k);
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
-  bool hook_get_author(branch_name const & branchname, std::string & author);
+  bool hook_get_author(branch_name const & branchname,
+                       rsa_keypair_id const & k,
+                       std::string & author);
   bool hook_edit_comment(external const & commentary,
                          external const & user_log_message,
                          external & result);

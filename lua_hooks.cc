@@ -272,12 +272,14 @@ lua_hooks::hook_get_branch_key(branch_name const & branchname,
 
 bool
 lua_hooks::hook_get_author(branch_name const & branchname,
+                           rsa_keypair_id const & k,
                            string & author)
 {
   return Lua(st)
     .func("get_author")
     .push_str(branchname())
-    .call(1,1)
+    .push_str(k())
+    .call(2,1)
     .extract_str(author)
     .ok();
 }
