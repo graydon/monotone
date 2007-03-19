@@ -90,14 +90,14 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   app.require_workspace();
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
   old_roster = parent_roster(parents.begin());
 
   {
     temp_node_id_source nis;
-    app.work.get_current_roster_shape(new_roster, nis);
+    app.work.get_current_roster_shape(new_roster, app.db, nis);
   }
     
   node_restriction mask(args_to_paths(args),
@@ -203,8 +203,8 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
 
   // Race.
   app.work.put_work_rev(remaining);
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
 }
 
 CMD(disapprove, N_("review"), N_("REVISION"),
@@ -303,7 +303,7 @@ CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
       mkdir_p(file_path(*i));
     }
 
-  app.work.perform_additions(paths, false, true);
+  app.work.perform_additions(paths, app.db, false, true);
 }
 
 CMD(add, N_("workspace"), N_("[PATH]..."),
@@ -329,14 +329,15 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
       if (roots.empty())
         roots.push_back(file_path());
 
-      app.work.find_unknown_and_ignored(mask, roots, paths, ignored);
+      app.work.find_unknown_and_ignored(mask, roots, paths, ignored, app.db);
 
-      app.work.perform_additions(ignored, add_recursive, !app.opts.no_ignore);
+      app.work.perform_additions(ignored, app.db,
+                                 add_recursive, !app.opts.no_ignore);
     }
   else
     split_paths(args_to_paths(args), paths);
 
-  app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
+  app.work.perform_additions(paths, app.db, add_recursive, !app.opts.no_ignore);
 }
 
 CMD(drop, N_("workspace"), N_("[PATH]..."),
@@ -353,7 +354,7 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
     {
       temp_node_id_source nis;
       roster_t current_roster_shape;
-      app.work.get_current_roster_shape(current_roster_shape, nis);
+      app.work.get_current_roster_shape(current_roster_shape, app.db, nis);
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
@@ -363,7 +364,8 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
   else
     split_paths(args_to_paths(args), paths);
 
-  app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
+  app.work.perform_deletions(paths, app.db,
+                             app.opts.recursive, app.opts.bookkeep_only);
 }
 
 ALIAS(rm, drop);
@@ -388,7 +390,7 @@ CMD(rename, N_("workspace"),
       file_path s = file_path_external(idx(args, i));
       src_paths.insert(s);
     }
-  app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
+  app.work.perform_rename(src_paths, dst_path, app.db, app.opts.bookkeep_only);
 }
 
 ALIAS(mv, rename);
@@ -410,7 +412,8 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
   file_path put_old = file_path_external(idx(args, 1));
-  app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
+  app.work.perform_pivot_root(new_root, put_old, app.db,
+                              app.opts.bookkeep_only);
 }
 
 CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
@@ -422,8 +425,8 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_parent_rosters(old_rosters);
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_parent_rosters(old_rosters, app.db);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
@@ -585,10 +588,10 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
 
   content_merge_workspace_adaptor wca(app, empty_roster, paths);
 
-  app.work.perform_content_update(checkout, wca, false);
+  app.work.perform_content_update(checkout, wca, app.db, false);
 
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
   guard.commit();
 }
 
@@ -605,7 +608,7 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
 
   file_path path = file_path_external(idx(args,1));
   split_path sp;
@@ -649,12 +652,12 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
         }
 
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      app.work.get_parent_rosters(parents, app.db);
 
       revision_t new_work;
       make_revision_for_workspace(parents, new_roster, new_work);
       app.work.put_work_rev(new_work);
-      app.work.update_any_attrs();
+      app.work.update_any_attrs(app.db);
     }
   else if (subcmd == "get")
     {
@@ -717,8 +720,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   }
 
   app.make_branch_sticky();
-  app.work.get_parent_rosters(old_rosters);
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_parent_rosters(old_rosters, app.db);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
@@ -918,8 +921,8 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
       % ui.prog_name);
   }
 
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
 
   {
     // Tell lua what happened. Yes, we might lose some information
@@ -1088,7 +1091,7 @@ CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
 {
   app.require_workspace();
   app.work.enable_inodeprints();
-  app.work.maybe_update_inodeprints();
+  app.work.maybe_update_inodeprints(app.db);
 }
 
 

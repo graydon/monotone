@@ -66,6 +66,7 @@ class path_restriction;
 class node_restriction;
 struct content_merge_adaptor;
 class lua_hooks;
+class database;
 
 struct workspace
 {
@@ -75,28 +76,33 @@ struct workspace
 
   void find_unknown_and_ignored(path_restriction const & mask,
                                 std::vector<file_path> const & roots,
-                                path_set & unknown, path_set & ignored);
+                                path_set & unknown, path_set & ignored,
+                                database & db);
 
   void perform_additions(path_set const & targets,
+                         database & db,
                          bool recursive = false,
                          bool respect_ignore = true);
 
-  void perform_deletions(path_set const & targets, bool recursive, 
-                         bool bookkeep_only);
+  void perform_deletions(path_set const & targets, database & db,
+                         bool recursive, bool bookkeep_only);
 
   void perform_rename(std::set<file_path> const & src_paths,
                       file_path const & dst_dir,
+                      database & db,
                       bool bookkeep_only);
 
   void perform_pivot_root(file_path const & new_root,
                           file_path const & put_old,
+                          database & db,
                           bool bookkeep_only);
 
   void perform_content_update(cset const & cs,
                               content_merge_adaptor const & ca,
+                              database & db,
                               bool messages = true);
 
-  void update_any_attrs();
+  void update_any_attrs(database &);
 
 
   // write out a new (partial) revision describing the current workspace;
@@ -116,12 +122,13 @@ struct workspace
   // hashes, call update_current_roster_from_filesystem on the result of
   // this function.  Under almost all conditions, NIS should be a
   // temp_node_id_source.
-  void get_current_roster_shape(roster_t & ros, node_id_source & nis);
+  void get_current_roster_shape(roster_t & ros,
+                                database & db, node_id_source & nis);
 
   // This returns a map whose keys are revision_ids and whose values are
   // rosters, there being one such pair for each parent of the current
   // revision.
-  void get_parent_rosters(parent_map & parents);
+  void get_parent_rosters(parent_map & parents, database & db);
 
   // Inspect the workspace and classify all the paths in it according to
   // what ROS thinks of them.
@@ -195,13 +202,12 @@ struct workspace
   // the 'inodeprints file' contains inode fingerprints
 
   void enable_inodeprints();
-  void maybe_update_inodeprints();
+  void maybe_update_inodeprints(database &);
 
-  // constructor and locals.  by caching pointers to the database and the
+  // constructor and locals.  by caching pointers to the
   // lua hooks, we don't have to know about app_state.
-  workspace(database & db, lua_hooks & lua) : db(db), lua(lua) {};
+  workspace(lua_hooks & lua) : lua(lua) {};
 private:
-  database & db;
   lua_hooks & lua;
 };
 

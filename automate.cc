@@ -229,8 +229,8 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  app.work.get_current_roster_shape(current, nis);
-  app.work.get_parent_rosters(parents);
+  app.work.get_current_roster_shape(current, app.db, nis);
+  app.work.get_parent_rosters(parents, app.db);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
   base = parent_roster(parents.begin());
@@ -724,7 +724,7 @@ AUTOMATE(inventory, "", options::opts::none)
   cset cs; MM(cs);
   path_set unchanged, changed, missing, unknown, ignored;
 
-  app.work.get_current_roster_shape(curr, nis);
+  app.work.get_current_roster_shape(curr, app.db, nis);
   app.work.get_work_rev(rev);
   N(rev.edges.size() == 1,
     F("this command can only be used in a single-parent workspace"));
@@ -756,7 +756,7 @@ AUTOMATE(inventory, "", options::opts::none)
   roots.push_back(file_path());
 
   app.work.classify_roster_paths(curr, unchanged, changed, missing);
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored, app.db);
 
   inventory_node_state(inventory, unchanged,
                        inventory_item::UNCHANGED_NODE);
@@ -926,8 +926,8 @@ AUTOMATE(get_revision, N_("[REVID]"), options::opts::none)
       revision_t rev;
 
       app.require_workspace();
-      app.work.get_parent_rosters(old_rosters);
-      app.work.get_current_roster_shape(new_roster, nis);
+      app.work.get_parent_rosters(old_rosters, app.db);
+      app.work.get_current_roster_shape(new_roster, app.db, nis);
       app.work.update_current_roster_from_filesystem(new_roster);
 
       make_revision(old_rosters, new_roster, rev);
@@ -961,7 +961,7 @@ AUTOMATE(get_base_revision_id, "", options::opts::none)
   app.require_workspace();
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
@@ -991,10 +991,10 @@ AUTOMATE(get_current_revision_id, "", options::opts::none)
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
   make_revision(parents, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
@@ -1057,7 +1057,7 @@ AUTOMATE(get_manifest_of, N_("[REVID]"), options::opts::none)
       temp_node_id_source nis;
 
       app.require_workspace();
-      app.work.get_current_roster_shape(new_roster, nis);
+      app.work.get_current_roster_shape(new_roster, app.db, nis);
       app.work.update_current_roster_from_filesystem(new_roster);
     }
   else

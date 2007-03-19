@@ -256,7 +256,7 @@ CMD(cat, N_("informative"),
       app.require_workspace();
 
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      app.work.get_parent_rosters(parents, app.db);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
@@ -311,7 +311,7 @@ AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
       app.require_workspace();
 
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      app.work.get_parent_rosters(parents, app.db);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());

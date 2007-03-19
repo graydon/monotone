@@ -339,7 +339,7 @@ ls_known(app_state & app, vector<utf8> const & args)
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
@@ -387,7 +387,7 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
   if (roots.empty())
     roots.push_back(file_path());
 
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored, app.db);
 
   if (want_ignored)
     for (path_set::const_iterator i = ignored.begin();
@@ -404,7 +404,7 @@ ls_missing(app_state & app, vector<utf8> const & args)
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(current_roster_shape, nis);
+  app.work.get_current_roster_shape(current_roster_shape, app.db, nis);
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
@@ -430,10 +430,10 @@ ls_changed(app_state & app, vector<utf8> const & args)
 
   app.require_workspace();
 
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),

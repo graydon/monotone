@@ -342,10 +342,10 @@ CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
 
   content_merge_workspace_adaptor wca(app, empty_roster, paths);
 
-  app.work.perform_content_update(checkout, wca, false);
+  app.work.perform_content_update(checkout, wca, app.db, false);
 
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
   guard.commit();
   remove_on_fail.commit();
 }
