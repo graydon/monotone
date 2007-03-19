@@ -585,11 +585,12 @@ cert_revision_author_default(revision_id const & m,
                              packet_consumer & pc)
 {
   string author;
-  if (!app.lua.hook_get_author(app.opts.branchname, author))
+  rsa_keypair_id key;
+  get_user_key(key, app);
+
+  if (!app.lua.hook_get_author(app.opts.branchname, key, author))
     {
-      rsa_keypair_id key;
-      get_user_key(key, app),
-        author = key();
+      author = key();
     }
   cert_revision_author(m, author, app, pc);
 }

@@ -7511,7 +7511,7 @@ status 1.
 
 @end table
 
-@item mtn automate db_set @var{domain} @var{name} @var{value}
+@item mtn automate db_put @var{domain} @var{name} @var{value}
 
 @table @strong
 @item Arguments:
@@ -7960,22 +7960,36 @@ used when you created your key --- something like
 this hook is not defined or returns false, monotone will prompt you for
 a passphrase each time it needs to use a private key.
 
-@item get_author (@var{branchname})
+@item get_author (@var{branchname}, @var{keypair_id})
 
 Returns a string which is used as a value for automatically generated
 @code{author} certificates when you commit changes to
-@var{branchname}.  Generally this hook remains undefined, and monotone
-selects your signing key name for the author certificate. You can use
-this hook to override that choice, if you like.
+@var{branchname} with the keypair identity @var{keypair_id}.  Generally
+this hook remains undefined, and monotone selects your signing key name
+for the author certificate. You can use this hook to override that
+choice, if you like.
 
-This hook has no default definition, but a possible definition might be:
+This hook has no default definition, but a couple of possible
+definitions might be:
 @smallexample
 @group
-function get_author(branchname)
+function get_author(branchname, keypair_id)
+        -- Key pair identity ignored.
         local user = os.getenv("USER")
         local host = os.getenv("HOSTNAME")
         if ((user == nil) or (host == nil)) then return nil end
         return string.format("%s@@%s", user, host)
+end
+@end group
+@end smallexample
+@smallexample
+@group
+function get_author(branchname, keypair_id)
+        -- Branch name ignored.
+        if (keypair_id == "joe@@example.com") then
+                return "Joe Random <joe@@example.com>"
+        end
+        return keypair_id
 end
 @end group
 @end smallexample
