@@ -657,10 +657,16 @@ static void codearith (FuncState *fs, OpCode op, expdesc *e1, expdesc *e2) {
   if (constfolding(op, e1, e2))
     return;
   else {
-    int o1 = luaK_exp2RK(fs, e1);
     int o2 = (op != OP_UNM && op != OP_LEN) ? luaK_exp2RK(fs, e2) : 0;
-    freeexp(fs, e2);
-    freeexp(fs, e1);
+    int o1 = luaK_exp2RK(fs, e1);
+    if (o1 > o2) {
+      freeexp(fs, e1);
+      freeexp(fs, e2);
+    }
+    else {
+      freeexp(fs, e2);
+      freeexp(fs, e1);
+    }
     e1->u.s.info = luaK_codeABC(fs, op, 0, o1, o2);
     e1->k = VRELOCABLE;
   }
@@ -718,8 +724,13 @@ void luaK_infix (FuncState *fs, BinOpr op, expdesc *v) {
       luaK_exp2nextreg(fs, v);  /* operand must be on the `stack' */
       break;
     }
-    default: {
+    case OPR_ADD: case OPR_SUB: case OPR_MUL: case OPR_DIV:
+    case OPR_MOD: case OPR_POW: {
       if (!isnumeral(v)) luaK_exp2RK(fs, v);
+      break;
+    }
+    default: {
+      luaK_exp2RK(fs, v);
       break;
     }
   }
