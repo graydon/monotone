@@ -6,8 +6,13 @@
 #
 # and updates each directory with the data from said branch.
 #
-# This script relies on the environment DATABASE to point out what database
-# to use as source.
+# This script relies on the following environment variables:
+#
+#	DATABASE	points out what database to use as source.
+#	KEYDIROPT	has the form '--keydir=<KEYDIRECTORY>' it the top
+#			mirror script has a keydir setting.
+#	KEYIDOPT	has the form '--key=<KEYID>' it the top mirror
+#			script has a keyid setting.
 #
 # $1	specification file name.
 #	Default: /etc/monotone/update.rc

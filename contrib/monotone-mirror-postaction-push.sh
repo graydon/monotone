@@ -2,13 +2,18 @@
 #
 # Reads a simple specification in the following form:
 #
-#	SERVER	PATTERN ...
+#	SERVER		PATTERN ...
 #
-# and for each line, the given branch PATTERNs are pushed to the given SERVER.
-# SERVER has the following syntax: ADDRESS[:PORT]
+# For each line, the given branch PATTERNs are pushed to the given
+# SERVER. SERVER has the following syntax: ADDRESS[:PORT]
 #
-# This script relies on the environment variable DATABASE to point out what
-# database to use as source.
+# This script relies on the following environment variables:
+#
+#	DATABASE	points out what database to use as source.
+#	KEYDIROPT	has the form '--keydir=<KEYDIRECTORY>' it the top
+#			mirror script has a keydir setting.
+#	KEYIDOPT	has the form '--key=<KEYID>' it the top mirror
+#			script has a keyid setting.
 #
 # $1	specification file name.
 #	Default: /etc/monotone/push.rc
@@ -43,10 +48,8 @@ database="$databasedir/$databasefile"
 
 sed -e '/^#/d' < "$rc" | while read SERVER PATTERNS; do
     if [ -n "$SERVER" -a -n "$PATTERNS" ]; then
-	( eval "set -x; mtn -d \"$database\" push $SERVER $PATTERNS" )
+	( eval "set -x; mtn -d \"$database\" $KEYDIROPT $KEYIDOPT push $SERVER $PATTERNS" )
     elif [ -n "$SERVER" -o -n "$PATTERNS" ]; then
 	echo "SYNTAX ERROR IN LINE '$SERVER $PATTERNS'"
     fi
 done
-
-exit 0
