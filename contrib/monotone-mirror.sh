@@ -3,6 +3,8 @@
 # Reads a simple specification with lines describing what to do.
 # The lines may be several of the following:
 #
+#	key		KEYDIR KEYID
+#
 #	mirror		SERVER	[OPTIONS ...] PATTERN ...
 #
 #	postaction	COMMAND
@@ -15,6 +17,8 @@
 # contains the name of the database for them to use.
 #
 # All "mirror" lines are executed first, then all "postaction" lines.
+# "key" lines are always executed in place, and affect any subsequent "mirror"
+# or "postaction" line.
 #
 # $1	database to use.  Must be initialised beforehand or this will fail!
 #	Default: /var/lib/monotone/mirror/mirror.mtn
@@ -55,30 +59,70 @@ mkdir -p $database.redo
 mkdir $database.lock1 || \
     (echo 'Database locked by another process'; exit 1) && \
     (
+    touch $database.keyvars
     while [ -d $database.redo ]; do
 	rmdir $database.redo
-	sed -e '/^#/d' < "$rc" | while read KEYWORD SERVER PATTERNS; do
-	    if [ "$KEYWORD" = "mirror" ]; then
-		if [ -z "$SERVER" -o -z "$PATTERNS" ]; then
-		    echo "Server or pattern missing in line: $SERVER $PATTERNS" >&2
-		    echo "Skipping..." >&2
-		else
-		    ( eval "set -x; mtn -d '$database' --ticker=dot pull $SERVER $PATTERNS" )
-		fi
-	    fi
+	sed -e '/^#/d' < "$rc" | while read KEYWORD ARGS; do
+	    case $KEYWORD in
+		key)
+		    set $ARGS
+		    keydir=$1
+		    keyid=$2
+		    keydiropt=""
+		    keyidopt=""
+		    if [ -n "$keydir" ]; then keydiropt="--keydir='$keydir'"; fi
+		    if [ -n "$keyid" ]; then keyidopt="--key='$keyid'"; fi
+		    (
+			echo "keydiropt=\"$keydiropt\""
+			echo "keyidopt=\"$keyidopt\""
+		    ) > $database.keyvars
+		    ;;
+		mirror)
+		    echo "$ARGS" | while read SERVER PATTERNS; do
+			if [ -z "$SERVER" -o -z "$PATTERNS" ]; then
+			    echo "Server or pattern missing in line: $SERVER $PATTERNS" >&2
+			    echo "Skipping..." >&2
+			else
+			    ( 
+				. $database.keyvars
+				eval "set -x; mtn -d '$database' '$keydiropt' '$keyidopt' --ticker=dot pull $SERVER $PATTERNS"
+			    )
+			fi
+		    done
+	    esac
 	done
 
-	sed -e '/^#/d' < "$rc" | while read KEYWORD COMMAND; do
-	    if [ "$KEYWORD" = "postaction" ]; then
-		if [ -z "$COMMAND" ]; then
-		    echo "Command missing in line: $COMMAND" >&2
-		    echo "Skipping..." >&2
-		else
-		    ( DATABASE="$database" eval "set -x; $COMMAND" )
-		fi
-	    fi
+	sed -e '/^#/d' < "$rc" | while read KEYWORD ARGS; do
+	    case $KEYWORD in
+		key)
+		    set $ARGS
+		    keydir=$1
+		    keyid=$2
+		    keydiropt=""
+		    keyidopt=""
+		    if [ -n "$keydir" ]; then keydiropt="--keydir='$keydir'"; fi
+		    if [ -n "$keyid" ]; then keyidopt="--key='$keyid'"; fi
+		    (
+			echo "keydiropt=\"$keydiropt\""
+			echo "keyidopt=\"$keyidopt\""
+		    ) > $database.keyvars
+		    ;;
+		postaction)
+		    if [ -z "$ARGS" ]; then
+			echo "Command missing in line: $ARGS" >&2
+			echo "Skipping..." >&2
+		    else
+			(
+			    . $database.keyvars
+			    DATABASE="$database" \
+				KEYDIROPT="$keydiropt" KEYIDOPT="$keyidopt" \
+				eval "set -x; $ARGS"
+			)
+		    fi
+	    esac
 	done
     done
 
     rmdir $database.lock1
+    rm $database.keyvars
     )
