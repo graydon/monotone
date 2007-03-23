@@ -8652,6 +8652,11 @@ On Windows, this function automatically appends ``.exe'' to the
 program name. In the previous example, @code{existonpath} would search
 for ``xxdiff.exe''.
 
+@item get_confdir()
+
+Returns the path to the configuration directory, either implied or given
+with @option{--confdir}.
+
 @item get_ostype()
 
 Returns the operating system flavor as a string.
