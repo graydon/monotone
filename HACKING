@@ -145,6 +145,16 @@ continued to adhere to the dialect we write in. in particular:
     the function name, so that the function name sits flush with the first
     column.  this makes grepping for function definitions easier.
 
+Interfacing with Lua
+--------------------
+
+monotone is extended with hooks written in the Lua language. Code that
+interfaces with Lua must obey the following rules:
+
+  - Lua arrays (tables with numeric indices) are 1-indexed. This is not
+    mandated by the language per se, but the standard libraries assume that
+    and using the arrays otherwise may break hooks that use standard
+    functions.
 
 Test suites, and writing test cases
 ----------------------------------

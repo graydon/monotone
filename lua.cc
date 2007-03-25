@@ -208,7 +208,7 @@ Lua::extract_int(int & i)
       fail("isnumber() in extract_int");
       return *this;
     }
-  i = static_cast<int>(lua_tonumber(st, -1));
+  i = lua_tointeger(st, -1);
   L(FL("lua: extracted int = %i") % i);
   return *this;
 }
@@ -343,6 +343,14 @@ Lua::set_table(int idx)
 }
 
 Lua &
+Lua::set_field(const string& key, int idx)
+{
+  if (failed) return *this;
+  lua_setfield(st, idx, key.c_str());
+  return *this;
+}
+
+Lua &
 Lua::call(int in, int out)
 {
   if (failed) return *this;
@@ -436,9 +444,8 @@ void add_functions(lua_State * st)
       if (table != "")
         {
           lua_newtable(st);
-          lua_pushstring(st, table.c_str());
-          lua_pushvalue(st, -2);
-          lua_settable(st, LUA_GLOBALSINDEX);
+          lua_pushvalue(st, -1);
+          lua_setfield(st, LUA_GLOBALSINDEX, table.c_str());
         }
       for (luaext::fmap::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
@@ -447,9 +454,8 @@ void add_functions(lua_State * st)
             lua_register(st, j->first.c_str(), j->second);
           else
             {
-              lua_pushstring(st, j->first.c_str());
               lua_pushcfunction(st, j->second);
-              lua_settable(st, -3);
+              lua_setfield(st, -2, j->first.c_str());
             }
         }
       if (table != "")
