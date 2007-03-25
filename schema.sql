@@ -54,6 +54,8 @@ CREATE TABLE heights
 	height not null,	-- complex height, array of big endian u32 integers
 	unique(revision, height)
 	);
+	
+CREATE INDEX heights__height ON heights (height);
 
 CREATE TABLE rosters
 	(

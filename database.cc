@@ -2016,30 +2016,33 @@ database::put_height_for_revision(revision_id const & new_id,
 {
   I(!null_id(new_id));
   
-  rev_height height;
+  rev_height highest_parent;
+  // we always branch off the highest parent ...
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
     {
-      bool found(false);
-      u32 childnr(0);
-      rev_height candidate; MM(candidate);
       rev_height parent; MM(parent);
       get_rev_height(edge_old_revision(e), parent);
-      
-      while(!found)
-        {
-          candidate = parent.child_height(childnr);
-          if (!has_rev_height(candidate))
-            {
-              found = true;
-              if (candidate > height)
-                height = candidate;
-            }
-          I(childnr < std::numeric_limits<u32>::max());
-          ++childnr;
-        }
+      if (parent > highest_parent)
+      {
+        highest_parent = parent;
+      }
     }
-  put_rev_height(new_id, height);
+    
+  // ... then find the first unused child
+  u32 childnr(0);
+  rev_height candidate; MM(candidate);
+  while(true)
+    {
+      candidate = highest_parent.child_height(childnr);
+      if (!has_rev_height(candidate))
+        {
+          break;
+        }
+      I(childnr < std::numeric_limits<u32>::max());
+      ++childnr;
+    }
+  put_rev_height(new_id, candidate);
 }
 
 void
