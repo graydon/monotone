@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Monotone 0.33\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-25 19:51-0300\n"
-"PO-Revision-Date: 2006-03-25 20:00-0300\n"
+"PO-Revision-Date: 2007-03-26 09:10-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -63,7 +63,7 @@ msgstr "exibe uma representação ASCII do grafo"
 #: automate.cc:1790 cmd_files.cc:283 cmd_files.cc:306 cmd_list.cc:677
 #, c-format
 msgid "wrong argument count"
-msgstr ""
+msgstr "número errado de argumentos"
 
 #: automate.cc:64
 msgid "[BRANCH]"
@@ -92,7 +92,8 @@ msgstr "ARQUIVO"
 #: cmd_files.cc:316 cmd_merging.cc:149 cmd_merging.cc:629 cmd_ws_commit.cc:95
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
-msgstr ""
+msgstr "este comando só pode ser usado em uma área de trabalho com\n"
+"um único pai"
 
 #: automate.cc:240
 #, c-format
@@ -108,7 +109,7 @@ msgstr "VERSÂO_NOVA [VERSÂO_VELHA1 [VERSÃO_VELHA2 [...]]]"
 #: cmd_list.cc:585
 #, c-format
 msgid "no arguments needed"
-msgstr ""
+msgstr "nenhum argumento é necessário"
 
 #: automate.cc:428 automate.cc:453 cmd_list.cc:674 revision.cc:1817
 msgid "REV"
@@ -197,7 +198,7 @@ msgstr "VER1 ARQUIVO VER2"
 
 #: automate.cc:1621
 msgid "[FILEID] CONTENTS"
-msgstr ""
+msgstr "[ID-DO-ARQUIVO] CONTEÚDO"
 
 #: automate.cc:1642 cmd_files.cc:210
 #, c-format
@@ -228,7 +229,7 @@ msgstr "DOMÍNIO NOME"
 #: automate.cc:1802
 #, c-format
 msgid "variable not found"
-msgstr ""
+msgstr "variável não encontrada"
 
 #: basic_io.cc:32
 #, c-format
@@ -435,32 +436,32 @@ msgstr "dígitos não-hexadecimais no id parcial"
 
 #: cmd_diff_log.cc:120
 msgid "Deleted entries:"
-msgstr ""
+msgstr "Entradas removidas:"
 
 #: cmd_diff_log.cc:126
 msgid "Renamed entries:"
-msgstr ""
+msgstr "Entradas renomeadas:"
 
 #: cmd_diff_log.cc:141
 msgid "Added files:"
-msgstr ""
+msgstr "Arquivos adicionados:"
 
 #: cmd_diff_log.cc:147
 msgid "Added directories:"
-msgstr ""
+msgstr "Diretórios adicionados:"
 
 #: cmd_diff_log.cc:158
 msgid "Modified files:"
-msgstr ""
+msgstr "Arquivos modificados:"
 
 #: cmd_diff_log.cc:175
 msgid "Modified attrs:"
-msgstr ""
+msgstr "Atributos modificados:"
 
 #: cmd_diff_log.cc:356
 #, c-format
 msgid "more than two revisions given"
-msgstr ""
+msgstr "dadas mais do que duas versões"
 
 #: cmd_diff_log.cc:368
 #, c-format
@@ -589,7 +590,8 @@ msgstr "imprime cópia anotada do arquivo da VERSÃO"
 msgid ""
 "with no revision selected, this command can only be used in a single-parent "
 "workspace"
-msgstr ""
+msgstr "sem versões selecionadas, este comando só pode ser usado em\n"
+"uma área de trabalho com um único pai"
 
 #: cmd_files.cc:164
 #, c-format
@@ -630,12 +632,12 @@ msgstr "escreve arquivo do banco de dados em stdout"
 #: cmd.hh:61
 #, c-format
 msgid "ignored bookkeeping path '%s'"
-msgstr ""
+msgstr "ignorado caminho de manutenção '%s'"
 
 #: cmd.hh:71
 #, c-format
 msgid "all arguments given were bookkeeping paths; aborting"
-msgstr ""
+msgstr "todos os argumentos dados foram caminhos de manutenção; abortando"
 
 #: cmd.hh:98
 #, c-format
@@ -725,16 +727,16 @@ msgstr "[ARQUIVO]"
 
 #: cmd_key_cert.cc:121
 msgid "export your monotone key for use with ssh-agent"
-msgstr ""
+msgstr "exporta sua chave do monotone para ser usada com ssh-agent"
 
 #: cmd_key_cert.cc:130 cmd_key_cert.cc:168
 #, c-format
 msgid "the key you specified cannot be found"
-msgstr ""
+msgstr "a chave especificada não pode ser salva"
 
 #: cmd_key_cert.cc:159
 msgid "Add your monotone key to ssh-agent"
-msgstr ""
+msgstr "Adiciona a sua chave do monotone ao ssh-agent"
 
 #: cmd_key_cert.cc:174
 msgid "REVISION CERTNAME [CERTVAL]"
@@ -1156,11 +1158,16 @@ msgid ""
 "revision will be recorded as parents on commit.  The workspace's selected "
 "branch is not changed."
 msgstr ""
+"Combina OUTRA-VERSÃO com a versão-base da área de trabalho atual, e atualiza "
+"a área de trabalho atual com o resultado. Não pode haver mudanças pendentes "
+"na área de trabalho atual. Tanto OUTRA-VERSÃO quanto a versão-base da área "
+"de trabalho serão gravadas como pais da nova versão. O ramo selecionado da "
+"área de trabalho não será modificado."
 
 #: cmd_merging.cc:636
 #, c-format
 msgid "'%s' can only be used in a workspace with no pending changes"
-msgstr ""
+msgstr "'%s' só pode ser usado em uma área de trabalho sem mudanças pendentes"
 
 #: cmd_merging.cc:644
 #, c-format
@@ -1174,6 +1181,9 @@ msgid ""
 " [left] %s\n"
 "[right] %s\n"
 msgstr ""
+"atualizado para o resultado do merge\n"
+"[esquerda] %s\n"
+" [direita] %s\n"
 
 #: cmd_merging.cc:697
 msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
@@ -1538,7 +1548,7 @@ msgstr[1] "lidos %d pacotes"
 
 #: cmd_ws_commit.cc:44
 msgid "*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****"
-msgstr ""
+msgstr "*****APAGUE ESTA LINHA PARA CONFIRMAR A GRAVAÇÃO*****"
 
 #: cmd_ws_commit.cc:47
 msgid ""
@@ -1795,6 +1805,9 @@ msgid ""
 "'%s' and '%s'.\n"
 "please specify a branch name for the commit, with --branch."
 msgstr ""
+"as versões que são pais desta gravação estão em ramos diferentes:\n"
+"'%s' e '%s'.\n"
+"por favor especifique um ramo para a gravação com --branch."
 
 #: cmd_ws_commit.cc:760
 #, c-format
