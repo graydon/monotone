@@ -57,6 +57,7 @@ Lua
   Lua & push_bool(bool b);
   Lua & push_nil();
   Lua & push_table();
+  Lua & set_field(std::string const & key, int idx = -2);
   Lua & set_table(int idx = -3);
   Lua & call(int in, int out);
   Lua & pop(int count = 1);
