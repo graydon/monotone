@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-26 13:32+0200\n"
+"POT-Creation-Date: 2007-03-27 12:37+0200\n"
 "PO-Revision-Date: 2007-03-06 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -1198,7 +1198,7 @@ msgstr "ANDERE-REVISION"
 
 #: cmd_merging.cc:605
 msgid ""
-"Mere OTHER-REVISION into the current workspace's base revision, and update "
+"Merge OTHER-REVISION into the current workspace's base revision, and update "
 "the current workspace with the result.  There can be no pending changes in "
 "the current workspace.  Both OTHER-REVISION and the workspace's base "
 "revision will be recorded as parents on commit.  The workspace's selected "
@@ -3846,6 +3846,25 @@ msgstr ""
 "Ich kann lediglich das Format der Version '1' verstehen.\n"
 "Eine neuere Version von monotone wird benötigt, um diese Operation "
 "durchzuführen."
+
+#: roster.cc:2235
+#, c-format
+msgid "restriction includes deletion of '%s' but excludes deletion of '%s'"
+msgstr ""
+"Die Beschränkung schließt das Löschen von '%s' ein, jedoch das Löschen von '%"
+"s' aus."
+
+#: roster.cc:2255
+#, c-format
+msgid "restriction excludes addition of '%s' but includes addition of '%s'"
+msgstr ""
+"Beschränkung schließt das Hinzufügen von '%s' ein, jedoch das Hinzufügen von "
+"'%s' aus."
+
+#: roster.cc:2283
+#, c-format
+msgid "invalid restriction"
+msgstr "ungültige Beschränkung"
 
 #: sanity.cc:145
 #, c-format

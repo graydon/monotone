@@ -3138,8 +3138,8 @@ UNIT_TEST(roster, random_actions)
   for (int i = 0; i < 2000; )
     {
       int manychanges = 100 + rng.uniform(300);
-      P(F("random roster actions: outer step at %d, making %d changes")
-        % i % manychanges);
+      // P(F("random roster actions: outer step at %d, making %d changes")
+      //   % i % manychanges);
 
       for (int outer_limit = i + manychanges; i < outer_limit; )
         {
