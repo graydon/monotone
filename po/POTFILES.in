@@ -69,6 +69,7 @@ rcs_import.hh
 restrictions.cc
 revision.cc
 revision.hh
+roster.cc
 sanity.cc
 sanity.hh
 selectors.cc

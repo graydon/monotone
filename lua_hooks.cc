@@ -845,15 +845,12 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
     {
       ll.push_int(n++);
       ll.push_table();
-      ll.push_str("key");
       ll.push_str(i->first());
-      ll.set_table();
-      ll.push_str("name");
+      ll.set_field("key");
       ll.push_str(i->second.first());
-      ll.set_table();
-      ll.push_str("value");
+      ll.set_field("name");
       ll.push_str(i->second.second());
-      ll.set_table();
+      ll.set_field("value");
       ll.set_table();
     }
 
