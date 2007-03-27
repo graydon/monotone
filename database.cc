@@ -3160,35 +3160,39 @@ database::put_roster(revision_id const & rev_id,
   guard.commit();
 }
 
-
-typedef hashmap::hash_multimap<string, string> ancestry_map;
-
-static void
-transitive_closure(string const & x,
-                   ancestry_map const & m,
-                   set<revision_id> & results)
+// helper for get_uncommon_ancestors
+void
+database::do_step_ancestor(set<height_rev_pair> & this_frontier,
+                           set<revision_id> & this_seen,
+                           set<revision_id> const & other_seen,
+                           set<revision_id> & this_uncommon_ancs)
 {
-  results.clear();
+  const height_rev_pair h_rev = *this_frontier.rbegin();
+  const revision_id & rid(h_rev.second);
+  
+  this_frontier.erase(h_rev);
+  
+  if (other_seen.find(rid) == other_seen.end())
+  {
+    this_uncommon_ancs.insert(rid);
+  }
 
-  deque<string> work;
-  work.push_back(x);
-  while (!work.empty())
+  // extend the frontier with parents 
+  results res;
+  fetch(res, 2, any_rows,
+        query("SELECT parent, height FROM revision_ancestry r, heights h"
+          " WHERE child = ? AND r.parent = h.revision")
+        % text(rid.inner()()));
+  
+  for (size_t i = 0; i < res.size(); ++i)
+  {
+    revision_id par_rid(res[i][0]);
+    if (this_seen.find(par_rid) == this_seen.end())
     {
-      string c = work.front();
-      work.pop_front();
-      revision_id curr(c);
-      if (results.find(curr) == results.end())
-        {
-          results.insert(curr);
-          pair<ancestry_map::const_iterator, ancestry_map::const_iterator> \
-            range(m.equal_range(c));
-          for (ancestry_map::const_iterator i(range.first); i != range.second; ++i)
-            {
-              if (i->first == c)
-                work.push_back(i->second);
-            }
-        }
+      this_frontier.insert(make_pair(rev_height(res[i][1]), par_rid));
+      this_seen.insert(par_rid);
     }
+  }
 }
 
 void
@@ -3197,37 +3201,65 @@ database::get_uncommon_ancestors(revision_id const & a,
                                  set<revision_id> & a_uncommon_ancs,
                                  set<revision_id> & b_uncommon_ancs)
 {
-  // FIXME: This is a somewhat ugly, and possibly unaccepably slow way
-  // to do it. Another approach involves maintaining frontier sets for
-  // each and slowly deepening them into history; would need to
-  // benchmark to know which is actually faster on real datasets.
-
   a_uncommon_ancs.clear();
   b_uncommon_ancs.clear();
 
-  results res;
-  a_uncommon_ancs.clear();
-  b_uncommon_ancs.clear();
+  // We extend a frontier from each revision until it reaches
+  // a revision that has been seen by the other frontier. By
+  // traversing in ascending height order we can ensure that
+  // any common ancestor will have been 'seen' by both sides
+  // before it is traversed.
 
-  fetch(res, 2, any_rows,
-        query("SELECT parent,child FROM revision_ancestry"));
-
-  set<revision_id> a_ancs, b_ancs;
-
-  ancestry_map child_to_parent_map;
-  for (size_t i = 0; i < res.size(); ++i)
-    child_to_parent_map.insert(make_pair(res[i][1], res[i][0]));
-
-  transitive_closure(a.inner()(), child_to_parent_map, a_ancs);
-  transitive_closure(b.inner()(), child_to_parent_map, b_ancs);
-
-  set_difference(a_ancs.begin(), a_ancs.end(),
-                 b_ancs.begin(), b_ancs.end(),
-                 inserter(a_uncommon_ancs, a_uncommon_ancs.begin()));
-
-  set_difference(b_ancs.begin(), b_ancs.end(),
-                 a_ancs.begin(), a_ancs.end(),
-                 inserter(b_uncommon_ancs, b_uncommon_ancs.begin()));
+  set<height_rev_pair> a_frontier, b_frontier;
+  rev_height height;
+  get_rev_height(a, height);
+  a_frontier.insert(make_pair(height, a));
+  get_rev_height(b, height);
+  b_frontier.insert(make_pair(height, b));
+  
+  set<revision_id> a_seen, b_seen;
+  a_seen.insert(a);
+  b_seen.insert(b);
+  
+  while (!a_frontier.empty() || !b_frontier.empty())
+  {
+    // We take the leaf-most (ie highest) height entry from either
+    // a_frontier or b_frontier.
+    // If one of them is empty, we take entries from the other.
+    bool step_a;
+    if (a_frontier.empty())
+    {
+      step_a = false;
+    }
+    else
+    {
+      if (!b_frontier.empty())
+      {
+        if (a_frontier == b_frontier)
+        {
+          // if both frontiers are the same, then we can safely say that
+          // we've found all uncommon ancestors. This stopping condition
+          // can result in traversing more nodes than required, but is simple.
+          break;
+        }
+        step_a = (*a_frontier.rbegin() > *b_frontier.rbegin());
+      }
+      else
+      {
+        // b is empty
+        step_a = true;
+      }
+    }
+    
+    if (step_a)
+    {
+      do_step_ancestor(a_frontier, a_seen, b_seen, a_uncommon_ancs);
+    }
+    else
+    {
+      do_step_ancestor(b_frontier, b_seen, a_seen, b_uncommon_ancs);
+    }
+  }  
 }
 
 
