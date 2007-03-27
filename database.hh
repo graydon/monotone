@@ -552,6 +552,12 @@ private:
                                     hexenc<id> const & new_id,
                                     delta const & del,
                                     database & db);
+  typedef std::pair<rev_height, revision_id> height_rev_pair;
+  void do_step_ancestor(std::set<height_rev_pair> & this_frontier,
+                        std::set<revision_id> & this_seen,
+                        std::set<revision_id> const & other_seen,
+                        std::set<revision_id> & this_uncommon_ancs);
+
 public:
     // branches
   outdated_indicator get_branches(std::vector<std::string> & names);
