@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Monotone 0.33\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-25 19:51-0300\n"
-"PO-Revision-Date: 2007-03-26 09:10-0300\n"
+"PO-Revision-Date: 2007-03-27 09:30-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -469,6 +469,8 @@ msgid ""
 "this workspace has more than one parent\n"
 "(specify a revision to diff against with --revision)"
 msgstr ""
+"esta área de trabalho tem mais de um pai\n"
+"(especifique uma versão para fazer o diff com --versão)"
 
 #: cmd_diff_log.cc:470 cmd_ws_commit.cc:80 cmd_ws_commit.cc:309
 #: cmd_ws_commit.cc:342 cmd_ws_commit.cc:416 cmd_ws_commit.cc:697
@@ -1880,7 +1882,7 @@ msgstr "DIRETÓRIO"
 
 #: cmd_ws_commit.cc:973
 msgid "import the contents of the given directory tree into a given branch"
-msgstr ""
+msgstr "importa o conteúdo do diretório dado no ramo dado"
 
 #: cmd_ws_commit.cc:984
 #, c-format
@@ -2004,11 +2006,11 @@ msgstr "certificados"
 
 #: database_check.cc:509
 msgid "heights"
-msgstr ""
+msgstr "alturas"
 
 #: database_check.cc:553
 msgid "height relations"
-msgstr ""
+msgstr "relações entre as alturas"
 
 #: database_check.cc:599
 #, c-format
@@ -2137,7 +2139,7 @@ msgstr "versão %s tem altura duplicada"
 #: database_check.cc:864
 #, c-format
 msgid "height of revision %s not greater than that of parent"
-msgstr ""
+msgstr "altura da versão %s não é maior do que a altura do pai"
 
 #: database_check.cc:951
 #, c-format
@@ -2331,7 +2333,7 @@ msgstr " (não é um banco de dados do monotone)"
 #: database.cc:573 database.cc:604 database.cc:1043 database.cc:1063
 #, c-format
 msgid "%u"
-msgstr ""
+msgstr "%u"
 
 #: database.cc:623
 #, c-format
@@ -2434,6 +2436,10 @@ msgid ""
 "That is actually a workspace.  Did you mean: \n"
 "%s"
 msgstr ""
+"Você deu a opção para o banco de dados: \n"
+"%s\n"
+"Aquilo é na verdade uma área de trabalho. Você quis dizer: \n"
+"%s ?"
 
 #: database.cc:3307
 #, c-format
@@ -2655,12 +2661,12 @@ msgstr "número de frases-chave erradas excessivo"
 #: keys.cc:367
 #, c-format
 msgid "--ssh-sign requires a value ['yes', 'no', 'only', or 'check']"
-msgstr ""
+msgstr "--ssh-sign requer um valor ['yes', 'no', 'only' ou 'check']"
 
 #: keys.cc:372
 #, c-format
 msgid "--ssh-sign must be set to 'yes', 'no', 'only', or 'check'"
-msgstr ""
+msgstr "--ssh-sign deve ser configurado para 'yes', 'no', 'only' ou 'check'"
 
 #: keys.cc:380
 #, c-format
@@ -2668,11 +2674,14 @@ msgid ""
 "You have chosen to sign only with ssh-agent but ssh-agent does not seem to "
 "be running."
 msgstr ""
+"Você decidiu usar apenas o ssh-agent mas o ssh-agent não parece estar "
+"sendo executado"
+
 
 #: keys.cc:425
 #, c-format
 msgid "You don't seem to have your monotone key imported "
-msgstr ""
+msgstr "A sua chave do monotone não parece ter sido importada"
 
 #: keys.cc:472
 #, c-format
@@ -2681,11 +2690,14 @@ msgid ""
 "ssh signature     : %s\n"
 "monotone signature: %s"
 msgstr ""
+"make_signature: assinatura ssh (%i) != assinatura monotone (%i)\n"
+"assinatura ssh:      %s\n"
+"assinatura monotone: %s"
 
 #: keys.cc:487
 #, c-format
 msgid "make_signature: signature is not valid"
-msgstr ""
+msgstr "make_signature: assinatura não é válida"
 
 #: keys.cc:672
 #, c-format
@@ -2744,7 +2756,7 @@ msgstr "Opções específicas para '%s %s':"
 
 #: monotone.cc:307
 msgid "error: memory exhausted"
-msgstr ""
+msgstr "erro: memória exaurida"
 
 #: mt_version.cc:35
 #, c-format
@@ -2826,6 +2838,8 @@ msgstr ""
 msgid ""
 "overflow while decoding variable length integer '%s' into a %d-byte field"
 msgstr ""
+"estouro enquanto decodificava inteiro de tamanho variável '%s'\n"
+"em um campo de %d bytes"
 
 #: netio.hh:142
 #, c-format
@@ -2898,7 +2912,7 @@ msgstr ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 "@ AVISO: A IDENTIFICAÇÃO DO SERVIDOR MUDOU                @\n"
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-"É POSSÍVEL QUE ALGUÉM ESTEJA FAZENDO ALGO ERRADO\n"
+"É POSSÍVEL QUE ALGUÉM ESTEJA FAZENDO ALGO MALICIOSO\n"
 "pode ser possível que a chave do servidor tenha apenas sido trocada\n"
 "o servidor remoto enviou a chave %s\n"
 "Eu esperava %s\n"
@@ -3336,7 +3350,7 @@ msgstr "quando criando inventórios, descarta atributos com a chave dada"
 
 #: options_list.hh:221
 msgid "don't perform the operation, just show what would have happened"
-msgstr ""
+msgstr "não executa a operação, apenas mostra o que teria acontecido"
 
 #: options_list.hh:229
 msgid "file to dump debugging log to, on failure"
@@ -3348,13 +3362,16 @@ msgstr "exclui qualquer coisa descrita pelo seu argumento"
 
 #: options_list.hh:246
 msgid "only update monotone's internal bookkeeping, not the filesystem"
-msgstr ""
+msgstr "atualiza apenas a manutenção interna do monotone, não atualiza "
+"o sistema de arquivos"
 
 #: options_list.hh:254
 msgid ""
 "sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force "
 "monotone to sign, 'check' to sign with both and compare"
 msgstr ""
+"entra com ssh-agent, 'yes' para entrar com ssh se a chave for encontrada, "
+"'no' para forçar monotone a entrar, 'check' para entrar com ambas e comparar"
 
 #: options_list.hh:262
 msgid "print detailed version number, then exit"
@@ -3410,11 +3427,11 @@ msgstr "exclui arquivos quando imprime os registros"
 
 #: options_list.hh:374
 msgid "do not use ASCII graph to display ancestry"
-msgstr ""
+msgstr "não usa um grafo ASCII para mostras ancestrais"
 
 #: options_list.hh:382
 msgid "do not ignore any files"
-msgstr ""
+msgstr "não ignora nenhum arquivo"
 
 #: options_list.hh:390
 msgid "exclude merges when printing logs"
