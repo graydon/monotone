@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Monotone 0.33\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-27 22:55-0300\n"
-"PO-Revision-Date: 2007-03-27 09:30-0300\n"
+"PO-Revision-Date: 2007-03-28 08:31-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -3488,15 +3488,15 @@ msgstr "configura estilo do contador (count|dot|none)"
 #: options_list.hh:494
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
-msgstr ""
+msgstr "o argumento deve ser 'none', 'dot' ou 'count'"
 
 #: options_list.hh:498
 msgid "revision(s) to start logging at"
-msgstr ""
+msgstr "versão(ões) para iniciar o registro"
 
 #: options_list.hh:505
 msgid "revision(s) to stop logging at"
-msgstr ""
+msgstr "versão(ões) para parar o registro"
 
 #: options_list.hh:513
 msgid "perform the operations for unknown files from workspace"
@@ -3630,17 +3630,17 @@ msgstr "etiquetas"
 #: restrictions.cc:60 restrictions.cc:77
 #, c-format
 msgid "conflicting include/exclude on path '%s'"
-msgstr ""
+msgstr "inclusão/exclusão conflitantes no caminho '%s'"
 
 #: restrictions.cc:103 restrictions.cc:141
 #, c-format
 msgid "restriction includes unknown path '%s'"
-msgstr ""
+msgstr "a restrição inclui o caminho desconhecido '%s'"
 
 #: restrictions.cc:114 restrictions.cc:155
 #, c-format
 msgid "restriction excludes unknown path '%s'"
-msgstr ""
+msgstr "a restrição exclui o caminho desconhecido '%s'"
 
 #: restrictions.cc:118 restrictions.cc:159
 #, c-format
@@ -3652,7 +3652,8 @@ msgstr[1] "%d caminhos desconhecidos"
 #: revision.cc:740
 #, c-format
 msgid "the command '%s %s' cannot be restricted in a two-parent workspace"
-msgstr ""
+msgstr "o comando '%s %s' não pode ser restringido em uma área de trabalho "
+"com dois pais"
 
 #: revision.cc:959
 #, c-format
@@ -3726,7 +3727,7 @@ msgstr "regerando cache de inventários e alturas"
 
 #: revision.cc:1798
 msgid "regenerated"
-msgstr "regerado"
+msgstr "regenerado"
 
 #: revision.cc:1814
 #, c-format
@@ -3736,7 +3737,7 @@ msgstr "fim da geração do cache de inventários e alturas"
 #: revision.cc:1826
 #, c-format
 msgid "cached height: %s"
-msgstr ""
+msgstr "altura em cache: %s"
 
 #: revision.cc:1909
 #, c-format
@@ -3752,12 +3753,12 @@ msgstr ""
 #: roster.cc:2235
 #, c-format
 msgid "restriction includes deletion of '%s' but excludes deletion of '%s'"
-msgstr ""
+msgstr "a restrição inclui a remoção de '%s' mas exclui remoção de '%s'"
 
 #: roster.cc:2255
 #, c-format
 msgid "restriction excludes addition of '%s' but includes addition of '%s'"
-msgstr ""
+msgstr "a restrição exclui a adição de '%s' mas inclui adição de '%s'"
 
 #: roster.cc:2283
 #, c-format
@@ -3806,7 +3807,7 @@ msgstr "seletor '%s' não é uma data válida\n"
 #: selectors.cc:97
 #, c-format
 msgid "selector '%s' is not a valid date (%s)"
-msgstr ""
+msgstr "seletor '%s' não é uma data válida (%s)"
 
 #: selectors.cc:100
 #, c-format
@@ -3827,6 +3828,9 @@ msgid ""
 "you must follow a special procedure to make it usable again.\n"
 "see the file UPGRADE, in the distribution, for instructions.)"
 msgstr ""
+"(se este é um banco de dados usado por monotone 0.16 ou anterior,\n"
+"você deve seguir um procedimento especial de atualização para torná-lo\n"
+"usável de novo. Veja o arquivo UPGRADE, na distribuição, para instruções.)"
 
 #: schema_migration.cc:100
 #, c-format
@@ -3961,12 +3965,12 @@ msgstr ""
 #: schema_migration.cc:1040
 #, c-format
 msgid "cannot test migration from unknown schema %s"
-msgstr ""
+msgstr "é impossível testar migração do esquema desconhecido %s"
 
 #: schema_migration.cc:1043
 #, c-format
 msgid "schema %s is up to date"
-msgstr ""
+msgstr "o esquema %s está atualizado"
 
 #: schema_migration.cc:1054
 #, c-format
@@ -3990,6 +3994,11 @@ msgid ""
 "or a bug in monotone.  if the error persists, please contact\n"
 "%s for assistance.\n"
 msgstr ""
+"%s\n"
+"isto pode ser devido a um erro de memória, dados corrompidos durante\n"
+"uma transferência pela rede, corrupção do seu banco de dados ou da\n"
+"área de trabalho, ou um erro no monotone. Se o erro persistir, por favor\n"
+"contate %s para assistência.\n"
 
 #: ui.cc:158
 #, c-format
@@ -4042,6 +4051,8 @@ msgstr "Erro abrindo arquivo de registro '%s'"
 #, c-format
 msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
 msgstr ""
+"A sintaxe da URI está errada. Talvez você esteja usando uma URI no "
+"estilo SCP?"
 
 #: update.cc:71
 #, c-format
@@ -4195,11 +4206,13 @@ msgstr "nó anexado %d boqueado por caminho não-versionado '%s'"
 #, c-format
 msgid "attach node %d blocked by blocked parent '%s'"
 msgstr ""
+"o nó anexado %d está bloqueado pelo pai '%s'"
 
 #: work.cc:1018
 #, c-format
 msgid "%d workspace conflicts"
 msgstr ""
+"%d conflitos na área de trabalho"
 
 #: work.cc:1182
 #, c-format
@@ -4254,11 +4267,13 @@ msgstr "impossível remover %s/, não está vazio"
 #, c-format
 msgid "directory %s not empty - it will be dropped but not deleted"
 msgstr ""
+"o diretório %s não está vazio - ele será descartado, mas não apagado"
 
 #: work.cc:1415
 #, c-format
 msgid "file %s changed - it will be dropped but not deleted"
 msgstr ""
+"o arquivo %s mudou - ele será descartado, mas não apagado"
 
 #: work.cc:1418
 #, c-format
@@ -4333,6 +4348,8 @@ msgid ""
 "skipping move_path in filesystem %s->%s, source doesn't exist, destination "
 "does"
 msgstr ""
+"pulando move_path %s -> %s no sistema de arquivos, origem não existe, "
+"destino sim"
 
 #: work.cc:1577
 #, c-format
@@ -4365,6 +4382,8 @@ msgid ""
 "workspace is locked\n"
 "you must clean up and remove the %s directory"
 msgstr ""
+"a área de trabalho está trancada\n"
+"você deve fazer uma limpeza e remover o diretório %s"
 
 #: work_migration.cc:62
 #, c-format
@@ -4449,57 +4468,3 @@ msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "esta área de trabalho está no formato atual, nenhuma migração é necessária"
 
-#~ msgid "no file %s found in database for %s"
-#~ msgstr "nenhum arquivo %s encontrado no banco de dados para %s"
-
-#~ msgid "empty passphrase not allowed"
-#~ msgstr "frase-chave vazia não permitida"
-
-#~ msgid "empty passphrases not allowed, try again"
-#~ msgstr "frases-chave vazias não são permitidas, tente de novo"
-
-#~ msgid "no passphrase given"
-#~ msgstr "nenhuma frase-chave dada"
-
-#~ msgid "uleb128 decode for '%s' into %d-byte datum overflowed"
-#~ msgstr "decodificação uleb128 de '%s' em dado de %d bytes estourou"
-
-#~ msgid "perform the associated file operation"
-#~ msgstr "executa a operação associada ao arquivo"
-
-#~ msgid "path '%s' already exists, cannot create"
-#~ msgstr "caminho '%s' já existe, impossível criar"
-
-#~ msgid "unable to probe database version in file %s"
-#~ msgstr "incapaz de verificar a versão do banco de dados no arquivo %s"
-
-#~ msgid "database %s is not an sqlite version 3 file, try dump and reload"
-#~ msgstr ""
-#~ "banco de dados %s não é um arquivo sqlite versão 3, tente dump e reload"
-
-#~ msgid "could not initialize database: %s: already exists"
-#~ msgstr "erro inicializando banco de dados: %s: já existe"
-
-#~ msgid "cannot create %s; it already exists"
-#~ msgstr "erro criando %s; já existe"
-
-#~ msgid "could not open database '%s': %s"
-#~ msgstr "erro abrindo banco de dados '%s': %s"
-
-#~ msgid "error at transaction BEGIN statement"
-#~ msgstr "erro no comando BEGIN da transação"
-
-#~ msgid "mismatched result of migration, got %s, wanted %s"
-#~ msgstr "resultado da migração está errado, recebido %s, o esperado era %s"
-
-#~ msgid "failure on COMMIT"
-#~ msgstr "erro em COMMIT"
-
-#~ msgid "error vacuuming after migration"
-#~ msgstr "erro fazendo limpeza após migração"
-
-#~ msgid "database schema %s is unknown; cannot perform migration"
-#~ msgstr "esquema do banco de dados %s desconhecido; impossível migrar"
-
-#~ msgid "missing %s"
-#~ msgstr "%s está faltando"
