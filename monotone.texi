@@ -6315,8 +6315,8 @@ column 3 file-state
       'M' the file is missing but is included in the current manifest
 @end verbatim
 
-Note that there are 45 possible status code combinations, some of which
-are not valid, detailed below.
+Note that out of the 45 possible status code combinations, only 24 are valid,
+detailed below.
 
 @verbatim
 '   ' unchanged
@@ -6328,25 +6328,25 @@ are not valid, detailed below.
 ' A ' added (invalid, add should have associated patch)
 ' AP' added and patched
 ' AU' added but unknown (invalid)
-' AI' added but ignored (seems invalid, but may be possible?)
+' AI' added but ignored (invalid, added files are no longer ignored)
 ' AM' added but missing from the filesystem
 
 ' R ' rename target
 ' RP' rename target and patched
 ' RU' rename target but unknown (invalid)
-' RI' rename target but ignored (seems invalid, but may be possible?)
+' RI' rename target but ignored (invalid)
 ' RM' rename target but missing from the filesystem
 
 'D  ' dropped
 'D P' dropped and patched (invalid)
 'D U' dropped and unknown (still exists on the filesystem)
-'D I' dropped and ignored (seems invalid, but may be possible?)
+'D I' dropped and ignored (invalid)
 'D M' dropped and missing (invalid)
 
 'DA ' dropped and added (invalid, add should have associated patch)
 'DAP' dropped and added and patched
 'DAU' dropped and added but unknown (invalid)
-'DAI' dropped and added but ignored (seems invalid, but may be possible?)
+'DAI' dropped and added but ignored (invalid, added files are no longer ignored)
 'DAM' dropped and added but missing from the filesystem
 
 'DR ' dropped and rename target
@@ -6358,19 +6358,19 @@ are not valid, detailed below.
 'R  ' rename source
 'R P' rename source and patched (invalid)
 'R U' rename source and unknown (still exists on the filesystem)
-'R I' rename source and ignored (seems invalid, but may be possible?)
+'R I' rename source and ignored (invalid)
 'R M' rename source and missing (invalid)
 
 'RA ' rename source and added (invalid, add should have associated patch)
 'RAP' rename source and added and patched
 'RAU' rename source and added but unknown (invalid)
-'RAI' rename source and added but ignored (seems invalid, but may be possible?)
+'RAI' rename source and added but ignored (invalid, added files are no longer ignored)
 'RAM' rename source and added but missing from the filesystem
 
 'RR ' rename source and target
 'RRP' rename source and target and target patched
 'RRU' rename source and target and target unknown (invalid)
-'RRI' rename source and target and target ignored (seems invalid, but may be possible?)
+'RRI' rename source and target and target ignored (invalid)
 'RRM' rename source and target and target missing
 @end verbatim
 
