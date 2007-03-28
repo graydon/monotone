@@ -1,3 +1,95 @@
+??? ??? ?? ??:??:?? UTC 2007
+
+        0.34 release.
+
+        The internal data format has changed with this release;
+        migration is straight-forward.  To upgrade your databases,
+	you must run:
+               $ mtn -d mydb.mtn db migrate
+        All of these operations are completely lossless, and 0.34
+        remains compatible with earlier versions all the way back
+        to 0.26 with regards to netsync.
+
+	Changes
+
+	- Enhanced transliteration.
+
+	- The lua hook get_author() now takes a second argument, a
+	  key identity, in case someone wants to create an author based
+	  on that and not only the branch name.
+
+	- The command 'chkeypass' became 'passphrase'.
+
+	- The commands 'drop', 'rename' and 'pivot_root' default to
+	  always perform the operation in the file system as well.
+	  They do not accept '--execute' any more, but will instead
+	  take '--bookkeep-only' in case the user only wants to affect
+	  bookkeeping files.
+
+	New features
+
+	- New hook note_mtn_startup(), which is called when monotone is
+	  started.
+
+	- New Lua support function spawn_pipe(), which is used to run
+	  a command and get back its standard input and standard output
+	  file handles as well as the pid.
+
+	- Monotone will automatically add a monotone key in a resident
+	  ssh-agent when it's first used.  Thus, you will only need to
+	  give the password once in one session.
+	- New command 'ssh_agent_export' to export a monotone key into
+	  an SSH key.
+	- New command 'ssh_agent_add' to add a monotone key explicitely
+	  to a resident ssh-agent.
+
+	- New command 'clone' that combines 'pull' and 'checkout'.
+
+	- 'automate put_file' and 'automate put_revision' stores a file
+	  and a revision in the database.
+
+	- 'automate cert', an automate version of 'mtn cert'.
+	- 'automate db_set', an automate version of 'mtn set'.
+	- 'automate db_set', an automate version of 'mtn ls vars' with
+	  a twist.
+
+	Other
+
+	- contrib/ciabot_monotone_hookversion.py has become more careful
+	  with creating zombies.
+
+	- contrib/monotone-log-of-pulled-revs-hook.lua, a lua hook
+	  to display information about incoming revisions.
+
+	- contrib/monotone-mirror-postaction-push.sh, a postaction
+	  script that should be executed by contrib/monotone-mirror.sh
+	  to automatically push data on to other servers.
+
+	- contrib/monotone-mirror.lua, a lua hook that executes
+	  contrib/monotone-mirror.sh after any netsync session is done.
+
+	- contrib/monotone-mirror.sh now takes keydir and keyid
+	  configuration and has better protection against overlapping
+	  duplicate runs.
+
+	- contrib/monotone.bash_completion now handles signals.
+
+	- contrib/monotone.el now includes a commit button.
+
+	Internal
+
+	- Date and time display has now been reimplemented internally
+	  to avoid Boost more.  This means that we have lowered our
+	  dependency from Boost 1.33.0 to 1.32.0.
+
+	- Lots of code cleanup.
+
+	- The heights cache got an index, making the processing faster.
+
+	- Update the internal SQLite to version 3.3.13.
+
+
+
 Wed Feb 28 22:02:43 UTC 2007
 
         0.33 release.
