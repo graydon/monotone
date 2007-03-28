@@ -8793,7 +8793,10 @@ in a standardized way.
 
 @item spawn_pipe(@var{executable} [, @var{args ...}])
 
-TO BE DOCUMENTED!
+Like spawn(), but returns three values, where the first two are the
+subprocess' standard input and standard output, and the last is the
+process PID on POSIX systems, the process handle on Win32 or -1 if
+there was an error.
 
 @item spawn_redirected(@var{infile}, @var{outfile}, @var{errfile}, @var{executable} [, @var{args ...}])
 
