@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.33\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-25 19:51-0300\n"
+"POT-Creation-Date: 2007-03-27 22:55-0300\n"
 "PO-Revision-Date: 2007-03-27 09:30-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
@@ -92,7 +92,8 @@ msgstr "ARQUIVO"
 #: cmd_files.cc:316 cmd_merging.cc:149 cmd_merging.cc:629 cmd_ws_commit.cc:95
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
-msgstr "este comando só pode ser usado em uma área de trabalho com\n"
+msgstr ""
+"este comando só pode ser usado em uma área de trabalho com\n"
 "um único pai"
 
 #: automate.cc:240
@@ -592,7 +593,8 @@ msgstr "imprime cópia anotada do arquivo da VERSÃO"
 msgid ""
 "with no revision selected, this command can only be used in a single-parent "
 "workspace"
-msgstr "sem versões selecionadas, este comando só pode ser usado em\n"
+msgstr ""
+"sem versões selecionadas, este comando só pode ser usado em\n"
 "uma área de trabalho com um único pai"
 
 #: cmd_files.cc:164
@@ -1332,8 +1334,9 @@ msgstr "ramo '%s' não está combinado atualmente:"
 msgid ""
 "dump the roster associated with the given REVID, or the workspace if no "
 "REVID is given"
-msgstr "exibe conteúdo do roster associado com ID-DA-VERSÃO, ou com a área "
-"de trabalho se nenhum ID-DA-VERSÃO for dado"
+msgstr ""
+"exibe conteúdo do roster associado com ID-DA-VERSÃO, ou com a área de "
+"trabalho se nenhum ID-DA-VERSÃO for dado"
 
 #: cmd_netsync.cc:43 cmd_netsync.cc:248
 #, c-format
@@ -1412,6 +1415,7 @@ msgstr ""
 "diretório"
 
 #: cmd_netsync.cc:212
+#, c-format
 msgid "you must specify a branch to clone"
 msgstr "você deve especificar um ramo para ser clonado"
 
@@ -2418,17 +2422,17 @@ msgstr "%d linhas pedidas, %d linhas obtidas da consulta: %s"
 msgid "another key with name '%s' already exists"
 msgstr "outra chave com nome '%s' já existe"
 
-#: database.cc:3274
+#: database.cc:3306
 #, c-format
 msgid "no database specified"
 msgstr "nenhum banco de dados especificado"
 
-#: database.cc:3284
+#: database.cc:3316
 #, c-format
 msgid "database %s does not exist"
 msgstr "banco de dados %s não existe"
 
-#: database.cc:3302
+#: database.cc:3334
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -2441,17 +2445,17 @@ msgstr ""
 "Aquilo é na verdade uma área de trabalho. Você quis dizer: \n"
 "%s ?"
 
-#: database.cc:3307
+#: database.cc:3339
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s é um diretório, não um banco de dados"
 
-#: database.cc:3317
+#: database.cc:3349
 #, c-format
 msgid "database %s already exists"
 msgstr "banco de dados %s já existe"
 
-#: database.cc:3322
+#: database.cc:3354
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2674,9 +2678,8 @@ msgid ""
 "You have chosen to sign only with ssh-agent but ssh-agent does not seem to "
 "be running."
 msgstr ""
-"Você decidiu usar apenas o ssh-agent mas o ssh-agent não parece estar "
-"sendo executado"
-
+"Você decidiu usar apenas o ssh-agent mas o ssh-agent não parece estar sendo "
+"executado"
 
 #: keys.cc:425
 #, c-format
@@ -3362,8 +3365,9 @@ msgstr "exclui qualquer coisa descrita pelo seu argumento"
 
 #: options_list.hh:246
 msgid "only update monotone's internal bookkeeping, not the filesystem"
-msgstr "atualiza apenas a manutenção interna do monotone, não atualiza "
-"o sistema de arquivos"
+msgstr ""
+"atualiza apenas a manutenção interna do monotone, não atualiza o sistema de "
+"arquivos"
 
 #: options_list.hh:254
 msgid ""
@@ -3745,6 +3749,21 @@ msgstr ""
 "apenas sei como entender o formato da versão '1'\n"
 "uma nova versão de monotone é necessária para completar esta operação"
 
+#: roster.cc:2235
+#, c-format
+msgid "restriction includes deletion of '%s' but excludes deletion of '%s'"
+msgstr ""
+
+#: roster.cc:2255
+#, c-format
+msgid "restriction excludes addition of '%s' but includes addition of '%s'"
+msgstr ""
+
+#: roster.cc:2283
+#, c-format
+msgid "invalid restriction"
+msgstr "restrição inválida"
+
 #: sanity.cc:145
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
@@ -3895,6 +3914,7 @@ msgid "calculating migration..."
 msgstr "calculando migração..."
 
 #: schema_migration.cc:956
+#, c-format
 msgid "no migration performed; database schema already up-to-date"
 msgstr "migração não executada, esquema do banco de dados já atualizado"
 
@@ -4303,7 +4323,8 @@ msgstr "%s não existe na área de trabalho, pulando"
 #: work.cc:1548
 #, c-format
 msgid "destination %s already exists in workspace, skipping filesystem rename"
-msgstr "destino %s já existe na área de trabalho, pulando renomeação\n"
+msgstr ""
+"destino %s já existe na área de trabalho, pulando renomeação\n"
 "no sistema de arquivos"
 
 #: work.cc:1552
