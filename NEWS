@@ -43,6 +43,8 @@
           an SSH key.
         - New command 'ssh_agent_add' to add a monotone key explicitely
           to a resident ssh-agent.
+        - Monotone will use ssh-agent for all signing if your monotone
+          key has been imported.
 
         - New command 'clone' that combines 'pull' and 'checkout'.
 
