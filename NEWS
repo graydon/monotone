@@ -55,8 +55,10 @@
 
         Other
 
-        - contrib/ciabot_monotone_hookversion.py has become more careful
-          with creating zombies.
+        - contrib/ciabot_monotone_hookversion.py now uses a real
+          basic_io parser and thus should send more precise
+          information to the cia server. Furthermore, it has become
+          more careful with creating zombies.
 
         - contrib/monotone-log-of-pulled-revs-hook.lua, a lua hook
           to display information about incoming revisions.
