@@ -12,7 +12,8 @@
 
         Changes
 
-        - Enhanced transliteration.
+        - Text is now output at best of the environment's possibilities,
+          transliterating them or substituting '?' as needed.
 
         - The lua hook get_author() now takes a second argument, a
           key identity, in case someone wants to create an author based
