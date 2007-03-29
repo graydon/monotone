@@ -50,7 +50,7 @@
 
 	- 'automate cert', an automate version of 'mtn cert'.
 	- 'automate db_set', an automate version of 'mtn set'.
-	- 'automate db_set', an automate version of 'mtn ls vars' with
+	- 'automate db_get', an automate version of 'mtn ls vars' with
 	  a twist.
 
 	Other
@@ -88,6 +88,8 @@
 
 	- Update the internal SQLite to version 3.3.13.
 
+	- Algorithm to find uncommon ancestors has been rewritten, so
+	  'pull' and 'regenerate_caches' should be faster.
 
 
 Wed Feb 28 22:02:43 UTC 2007
