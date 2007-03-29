@@ -37,14 +37,13 @@
           file handles as well as the pid.
 
         - Monotone will automatically add a monotone key in a resident
-          ssh-agent when it's first used.  Thus, you will only need to
-          give the password once in one session.
+          ssh-agent when it's first used, and will then use ssh-agent
+          for all subsequent signing.  Thus, you will only need to give
+          the password once in one session.
         - New command 'ssh_agent_export' to export a monotone key into
           an SSH key.
         - New command 'ssh_agent_add' to add a monotone key explicitely
           to a resident ssh-agent.
-        - Monotone will use ssh-agent for all signing if your monotone
-          key has been imported.
 
         - New command 'clone' that combines 'pull' and 'checkout'.
 
