@@ -6315,7 +6315,7 @@ column 3 file-state
       'M' the file is missing but is included in the current manifest
 @end verbatim
 
-Note that out of the 45 possible status code combinations, only 24 are valid,
+Note that out of the 45 possible status code combinations, only 26 are valid,
 detailed below.
 
 @verbatim
@@ -6340,7 +6340,7 @@ detailed below.
 'D  ' dropped
 'D P' dropped and patched (invalid)
 'D U' dropped and unknown (still exists on the filesystem)
-'D I' dropped and ignored (invalid)
+'D I' dropped and ignored
 'D M' dropped and missing (invalid)
 
 'DA ' dropped and added (invalid, add should have associated patch)
@@ -6358,7 +6358,7 @@ detailed below.
 'R  ' rename source
 'R P' rename source and patched (invalid)
 'R U' rename source and unknown (still exists on the filesystem)
-'R I' rename source and ignored (invalid)
+'R I' rename source and ignored
 'R M' rename source and missing (invalid)
 
 'RA ' rename source and added (invalid, add should have associated patch)
