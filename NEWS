@@ -4,92 +4,96 @@
 
         The internal data format has changed with this release;
         migration is straight-forward.  To upgrade your databases,
-	you must run:
+        you must run:
                $ mtn -d mydb.mtn db migrate
         All of these operations are completely lossless, and 0.34
         remains compatible with earlier versions all the way back
         to 0.26 with regards to netsync.
 
-	Changes
+        Changes
 
-	- Enhanced transliteration.
+        - Text is now output at best of the environment's possibilities,
+          transliterating them or substituting '?' as needed.
 
-	- The lua hook get_author() now takes a second argument, a
-	  key identity, in case someone wants to create an author based
-	  on that and not only the branch name.
+        - The lua hook get_author() now takes a second argument, a
+          key identity, in case someone wants to create an author based
+          on that and not only the branch name.
 
-	- The command 'chkeypass' became 'passphrase'.
+        - The command 'chkeypass' became 'passphrase'.
 
-	- The commands 'drop', 'rename' and 'pivot_root' default to
-	  always perform the operation in the file system as well.
-	  They do not accept '--execute' any more, but will instead
-	  take '--bookkeep-only' in case the user only wants to affect
-	  bookkeeping files.
+        - The commands 'drop', 'rename' and 'pivot_root' default to
+          always perform the operation in the file system as well.
+          They do not accept '--execute' any more, but will instead
+          take '--bookkeep-only' in case the user only wants to affect
+          bookkeeping files.
 
-	New features
+        New features
 
-	- New hook note_mtn_startup(), which is called when monotone is
-	  started.
+        - New hook note_mtn_startup(), which is called when monotone is
+          started.
 
-	- New Lua support function spawn_pipe(), which is used to run
-	  a command and get back its standard input and standard output
-	  file handles as well as the pid.
+        - New Lua support function spawn_pipe(), which is used to run
+          a command and get back its standard input and standard output
+          file handles as well as the pid.
 
-	- Monotone will automatically add a monotone key in a resident
-	  ssh-agent when it's first used.  Thus, you will only need to
-	  give the password once in one session.
-	- New command 'ssh_agent_export' to export a monotone key into
-	  an SSH key.
-	- New command 'ssh_agent_add' to add a monotone key explicitely
-	  to a resident ssh-agent.
+        - Monotone will automatically add a monotone key in a resident
+          ssh-agent when it's first used, and will then use ssh-agent
+          for all subsequent signing.  Thus, you will only need to give
+          the password once in one session.
+        - New command 'ssh_agent_export' to export a monotone key into
+          an SSH key.
+        - New command 'ssh_agent_add' to add a monotone key explicitely
+          to a resident ssh-agent.
 
-	- New command 'clone' that combines 'pull' and 'checkout'.
+        - New command 'clone' that combines 'pull' and 'checkout'.
 
-	- 'automate put_file' and 'automate put_revision' stores a file
-	  and a revision in the database.
+        - 'automate put_file' and 'automate put_revision' stores a file
+          and a revision in the database.
 
-	- 'automate cert', an automate version of 'mtn cert'.
-	- 'automate db_set', an automate version of 'mtn set'.
-	- 'automate db_get', an automate version of 'mtn ls vars' with
-	  a twist.
+        - 'automate cert', an automate version of 'mtn cert'.
+        - 'automate db_set', an automate version of 'mtn set'.
+        - 'automate db_get', an automate version of 'mtn ls vars' with
+          a twist.
 
-	Other
+        Other
 
-	- contrib/ciabot_monotone_hookversion.py has become more careful
-	  with creating zombies.
+        - contrib/ciabot_monotone_hookversion.py now uses a real
+          basic_io parser and thus should send more precise
+          information to the cia server. Furthermore, it has become
+          more careful with creating zombies.
 
-	- contrib/monotone-log-of-pulled-revs-hook.lua, a lua hook
-	  to display information about incoming revisions.
+        - contrib/monotone-log-of-pulled-revs-hook.lua, a lua hook
+          to display information about incoming revisions.
 
-	- contrib/monotone-mirror-postaction-push.sh, a postaction
-	  script that should be executed by contrib/monotone-mirror.sh
-	  to automatically push data on to other servers.
+        - contrib/monotone-mirror-postaction-push.sh, a postaction
+          script that should be executed by contrib/monotone-mirror.sh
+          to automatically push data on to other servers.
 
-	- contrib/monotone-mirror.lua, a lua hook that executes
-	  contrib/monotone-mirror.sh after any netsync session is done.
+        - contrib/monotone-mirror.lua, a lua hook that executes
+          contrib/monotone-mirror.sh after any netsync session is done.
 
-	- contrib/monotone-mirror.sh now takes keydir and keyid
-	  configuration and has better protection against overlapping
-	  duplicate runs.
+        - contrib/monotone-mirror.sh now takes keydir and keyid
+          configuration and has better protection against overlapping
+          duplicate runs.
 
-	- contrib/monotone.bash_completion now handles signals.
+        - contrib/monotone.bash_completion now handles signals.
 
-	- contrib/monotone.el now includes a commit button.
+        - contrib/monotone.el now includes a commit button.
 
-	Internal
+        Internal
 
-	- Date and time display has now been reimplemented internally
-	  to avoid Boost more.  This means that we have lowered our
-	  dependency from Boost 1.33.0 to 1.32.0.
+        - Date and time display has now been reimplemented internally
+          to avoid Boost more.  This means that we have lowered our
+          dependency from Boost 1.33.0 to 1.32.0.
 
-	- Lots of code cleanup.
+        - Lots of code cleanup.
 
-	- The heights cache got an index, making the processing faster.
+        - The heights cache got an index, making the processing faster.
 
-	- Update the internal SQLite to version 3.3.13.
+        - Update the internal SQLite to version 3.3.13.
 
-	- Algorithm to find uncommon ancestors has been rewritten, so
-	  'pull' and 'regenerate_caches' should be faster.
+        - Algorithm to find uncommon ancestors has been rewritten, so
+          'pull' and 'regenerate_caches' should be faster.
 
 
 Wed Feb 28 22:02:43 UTC 2007
@@ -98,7 +102,7 @@ Wed Feb 28 22:02:43 UTC 2007
 
         The internal data format has changed with this release;
         migration is straight-forward.  To upgrade your databases,
-	you must run:
+        you must run:
                $ mtn -d mydb.mtn db migrate
         All of these operations are completely lossless, and 0.33
         remains compatible with earlier versions with regards to
@@ -122,158 +126,158 @@ Wed Feb 28 22:02:43 UTC 2007
           file type attributes) is planned and will be added in a future
           release.
 
-	- update will switch to the branch of a given revision if it
-	  differs from the current workspace branch.
+        - update will switch to the branch of a given revision if it
+          differs from the current workspace branch.
 
-	- add will now accept combinations of --unknown, --recursive and
-	  --no-respect-ignore.
+        - add will now accept combinations of --unknown, --recursive and
+          --no-respect-ignore.
 
-	- import now imports unknown directory trees properly.
+        - import now imports unknown directory trees properly.
 
-	- use SQLite 3.3.12.
+        - use SQLite 3.3.12.
 
-	- schema migrator rebuilt and will now properly detect and report
-	  if the database used is created by a newer monotone than the one
-	  currently used.
+        - schema migrator rebuilt and will now properly detect and report
+          if the database used is created by a newer monotone than the one
+          currently used.
 
-	- removed the man page mtn.1, as it hadn't been updated for a long
-	  time.
+        - removed the man page mtn.1, as it hadn't been updated for a long
+          time.
 
-	New features
+        New features
 
-	- "mtn merge_into_workspace" (still to be documented).  This command
-	  will allow you to review and fix up a merge in your workspace
-	  before committing it to the repository.  However, the conflict
-	  resolution interface remains the same as that of the 'merge'
-	  command for now (i.e. monotone will invoke your specified merge
-	  tool on all files with conflicts and you must resolve them as they
-	  are presented).  Work on in-workspace conflict presentation and
-	  resolution is planned for the future.
+        - "mtn merge_into_workspace" (still to be documented).  This command
+          will allow you to review and fix up a merge in your workspace
+          before committing it to the repository.  However, the conflict
+          resolution interface remains the same as that of the 'merge'
+          command for now (i.e. monotone will invoke your specified merge
+          tool on all files with conflicts and you must resolve them as they
+          are presented).  Work on in-workspace conflict presentation and
+          resolution is planned for the future.
 
-	- "mtn log" will now print an ASCII revision graph alongside the
-	  usual log text.
+        - "mtn log" will now print an ASCII revision graph alongside the
+          usual log text.
 
-	Speed improvements
+        Speed improvements
 
-	- "mtn annotate file" should run even faster now. it exploits
-	  the fact that we store deltas of rosters. by peeking at
-	  these deltas, it can avoid reconstruction of whole rosters
-	  in many cases.
+        - "mtn annotate file" should run even faster now. it exploits
+          the fact that we store deltas of rosters. by peeking at
+          these deltas, it can avoid reconstruction of whole rosters
+          in many cases.
 
-	Other
+        Other
 
-	- contrib/monotone-mirror.sh and
-	  contrib/monotone-mirror-postaction-update.sh, two scripts
-	  to mirror and update directories automatically.
+        - contrib/monotone-mirror.sh and
+          contrib/monotone-mirror-postaction-update.sh, two scripts
+          to mirror and update directories automatically.
 
-	- contrib/monotone-run-script-post-netsync.lua, to automatically
-	  update a directory as soon as new revisions or certs arrive for
-	  a given branch.
+        - contrib/monotone-run-script-post-netsync.lua, to automatically
+          update a directory as soon as new revisions or certs arrive for
+          a given branch.
 
-	- contrib/monotone.bash_completion had some improvemens.
+        - contrib/monotone.bash_completion had some improvemens.
 
-	- contrib/monotone.el had some improvements.
+        - contrib/monotone.el had some improvements.
 
-	Internal
+        Internal
 
-	- Internally, the concept of "projects" has been introduced.  It
-	  currently doesn't mean anything, but will be used later, with
-	  policy branches and similar.
+        - Internally, the concept of "projects" has been introduced.  It
+          currently doesn't mean anything, but will be used later, with
+          policy branches and similar.
 
 
 
 Wed Dec 27 09:57:48 UTC 2006
 
-	0.32 release.
+        0.32 release.
 
-	Changes
+        Changes
 
-	- "mtn serve" no longer takes patterns on the command line.
-	  Use the permissions hooks instead.
+        - "mtn serve" no longer takes patterns on the command line.
+          Use the permissions hooks instead.
 
-	- the name of the option that denoted the revision from which 
-	  "mtn log" should start logging was renamed from "--revision"
-	  to "--from"
+        - the name of the option that denoted the revision from which 
+          "mtn log" should start logging was renamed from "--revision"
+          to "--from"
 
-	- author selectors no longer have implicit wildcarding
+        - author selectors no longer have implicit wildcarding
 
-	- if you manually add entries to MTN/log while you are
-	  working, in preparation for an eventual commit, you will now
-	  be required to remove a "magic" template line from the file
-	  before the commit will succeed. This, like the test for an
-	  empty log file, helps to prevent accidents.
+        - if you manually add entries to MTN/log while you are
+          working, in preparation for an eventual commit, you will now
+          be required to remove a "magic" template line from the file
+          before the commit will succeed. This, like the test for an
+          empty log file, helps to prevent accidents.
 
-	- the "db regenerate_caches" migration command replaces the
-	  previous "db regenerate_rosters", generalising the task of
-	  rebuilding or generating cached data that may be added
-	  across an upgrade.  Like "db migrate", which upgrades the
-	  database schema, this command fills in the data for new
-	  features. In this release, as well as rosters, it also adds
-	  "heights" information used to speed up topology operations.
+        - the "db regenerate_caches" migration command replaces the
+          previous "db regenerate_rosters", generalising the task of
+          rebuilding or generating cached data that may be added
+          across an upgrade.  Like "db migrate", which upgrades the
+          database schema, this command fills in the data for new
+          features. In this release, as well as rosters, it also adds
+          "heights" information used to speed up topology operations.
 
-	Speed improvements
+        Speed improvements
 
-	- "mtn annotate file" and "mtn log file" are generally much
-	  faster now, dependant on the number of revisions that
-	  changed the file. Both commands as well as "mtn automate
-	  toposort" make use of data called "heights" caching the
-	  topological order of all revisions.  In order to create and
-	  use this data, the following must be run once for each db
-	  after upgrading:
+        - "mtn annotate file" and "mtn log file" are generally much
+          faster now, dependant on the number of revisions that
+          changed the file. Both commands as well as "mtn automate
+          toposort" make use of data called "heights" caching the
+          topological order of all revisions.  In order to create and
+          use this data, the following must be run once for each db
+          after upgrading:
 
                $ mtn -d mydb.mtn db regenerate_caches
 
-	New features
+        New features
 
-	- "mtn automate content_diff"
+        - "mtn automate content_diff"
 
-	- "mtn automate get_file_of" (same as get_file, but expects 
-	  a file path and optionally a revision)
+        - "mtn automate get_file_of" (same as get_file, but expects 
+          a file path and optionally a revision)
 
-	- "mtn import" command
+        - "mtn import" command
 
-	- "mtn log --to"
+        - "mtn log --to"
 
-	- netsync_note_* hooks are given much more information,
-	  inlcuding a http/smtp/etc style status code
+        - netsync_note_* hooks are given much more information,
+          inlcuding a http/smtp/etc style status code
 
-	- includedirpattern(dir, fileglob) function for hooks
-
-
-	Bugs fixed
-
-	- bug in "automate stdio" that would result in monotone
-	  garbling its input in some circumstances fixed
-
-	- "mtn annotate file" and "mtn log file" are generally much
-	  faster now, dependant on the number of revisions that
-	  changed the file. Both commands as well as "mtn automate
-	  toposort" make use of data called "heights" caching the
-	  topological order of all revisions.
-
-	- spawn_redirected hook function now understands a blank
-	  filename to mean not to redirect that stream
-
-	- "mtn log" is now in proper topological order, also due to
-	  the use of cached "heights" data
-
-	- reset options between "automate stdio" commands
-
-	- another compile fix for gcc3
-
-	- bug in localization code where option strings where not
-	  always properly translated
+        - includedirpattern(dir, fileglob) function for hooks
 
 
-	Other
+        Bugs fixed
 
-	- botan library upgraded to 1.6.0
+        - bug in "automate stdio" that would result in monotone
+          garbling its input in some circumstances fixed
 
-	- accommodate changes in boost 1.34
+        - "mtn annotate file" and "mtn log file" are generally much
+          faster now, dependant on the number of revisions that
+          changed the file. Both commands as well as "mtn automate
+          toposort" make use of data called "heights" caching the
+          topological order of all revisions.
 
-	- documentation for "mtn automate get_option"
+        - spawn_redirected hook function now understands a blank
+          filename to mean not to redirect that stream
 
-	- notes/ directory
+        - "mtn log" is now in proper topological order, also due to
+          the use of cached "heights" data
+
+        - reset options between "automate stdio" commands
+
+        - another compile fix for gcc3
+
+        - bug in localization code where option strings where not
+          always properly translated
+
+
+        Other
+
+        - botan library upgraded to 1.6.0
+
+        - accommodate changes in boost 1.34
+
+        - documentation for "mtn automate get_option"
+
+        - notes/ directory
 
 
 

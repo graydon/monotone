@@ -61,6 +61,9 @@ verify_full(path_component & val)
 inline void
 verify(hexenc<id> & val)
 {
+  if (val.ok)
+    return;
+
   if (val().empty())
     return;
 
