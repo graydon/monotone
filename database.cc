@@ -1747,7 +1747,7 @@ database::get_arbitrary_file_delta(file_id const & src_id,
     }
 
   query q2("SELECT delta FROM file_deltas "
-           "WHERE id = ? AND base = ?");
+           "WHERE base = ? AND id = ?");
   fetch(res, one_col, any_rows,
         q2 % text(dst_id.inner()()) % text(src_id.inner()()));
 
