@@ -101,7 +101,9 @@ function ignore_file(name)
       if (ignfile ~= nil) then
          local line = ignfile:read()
          while (line ~= nil) do
-            table.insert(ignored_files, line)
+            if line ~= "" then
+                table.insert(ignored_files, line)
+            end
             line = ignfile:read()
          end
          io.close(ignfile)
