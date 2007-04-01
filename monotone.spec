@@ -1,14 +1,14 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.33
+Version: 0.34
 Release: 0.mtn.1%{?dist}
 License: GPL
 Group: Development/Tools
 URL: http://www.monotone.ca/
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-BuildRequires: boost-devel >= 1.33.1, texinfo, zlib-devel
-Requires: boost >= 1.33.1
+BuildRequires: boost-devel >= 1.32.0, texinfo, zlib-devel
+Requires: boost >= 1.32.0
 
 %description
 monotone is a free, distributed version control system. It provides
@@ -57,6 +57,9 @@ fi
 
 
 %changelog
+* Sun Apr  1 2007 Richard Levitte <richard@levitte.org>
+- 0.34 release
+
 * Thu Mar 01 2007 Thomas Keller <me@thomaskeller.biz>
 - removed reference to no longer shipped manpage
 
