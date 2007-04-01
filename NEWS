@@ -42,7 +42,7 @@
           the password once in one session.
         - New command 'ssh_agent_export' to export a monotone key into
           an SSH key.
-        - New command 'ssh_agent_add' to add a monotone key explicitely
+        - New command 'ssh_agent_add' to add a monotone key explicitly
           to a resident ssh-agent.
 
         - New command 'clone' that combines 'pull' and 'checkout'.
@@ -65,7 +65,7 @@
         - contrib/monotone-log-of-pulled-revs-hook.lua, a lua hook
           to display information about incoming revisions.
 
-        - contrib/monotone-mirror-postaction-push.sh, a postaction
+        - contrib/monotone-mirror-postaction-push.sh, a post action
           script that should be executed by contrib/monotone-mirror.sh
           to automatically push data on to other servers.
 
