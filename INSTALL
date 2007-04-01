@@ -18,7 +18,6 @@ building and installation process for monotone
 
         on debian: 
 
-           apt-get install libboost-date-time-dev
            apt-get install libboost-filesystem-dev
            apt-get install libboost-regex-dev
            apt-get install libboost-test-dev
