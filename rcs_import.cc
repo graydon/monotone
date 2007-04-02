@@ -685,11 +685,7 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 
     cvs.set_filename (filename, fid);
     cvs.index_branchpoint_symbols (r);
-
-    if (! db.file_version_exists (fid))
-      {
-        db.put_file(fid, file_data(dat));
-      }
+    db.put_file(fid, file_data(dat));
 
     {
       // create the head state in case it is a loner
@@ -1347,16 +1343,11 @@ cluster_consumer::store_revisions()
 {
   for (vector<prepared_revision>::const_iterator i = preps.begin();
        i != preps.end(); ++i)
-    {
-      if (! app.db.revision_exists(i->rid))
-        {
-          data tmp;
-          write_revision(*(i->rev), tmp);
-          app.db.put_revision(i->rid, *(i->rev));
-          store_auxiliary_certs(*i);
-          ++n_revisions;
-        }
-    }
+    if (app.db.put_revision(i->rid, *(i->rev)))
+      {
+        store_auxiliary_certs(*i);
+        ++n_revisions;
+      }
 }
 
 void

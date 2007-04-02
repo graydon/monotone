@@ -43,7 +43,7 @@ public:
   void get_key_pair(rsa_keypair_id const & ident,
                     keypair & kp);
 
-  void put_key_pair(rsa_keypair_id const & ident,
+  bool put_key_pair(rsa_keypair_id const & ident,
                     keypair const & kp);
 
   void delete_key(rsa_keypair_id const & ident);

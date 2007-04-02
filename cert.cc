@@ -403,8 +403,7 @@ calculate_cert(app_state & app, cert & t)
   cert_signable_text(t, signed_text);
 
   load_key_pair(app, t.key, kp);
-  if (!app.db.public_key_exists(t.key))
-    app.db.put_key(t.key, kp.pub);
+  app.db.put_key(t.key, kp.pub);
 
   make_signature(app, t.key, kp.priv, signed_text, t.sig);
 }

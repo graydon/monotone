@@ -76,12 +76,6 @@ void
 packet_db_writer::consume_file_data(file_id const & ident,
                                     file_data const & dat)
 {
-  if (app.db.file_version_exists(ident))
-    {
-      L(FL("file version '%s' already exists in db") % ident);
-      return;
-    }
-
   transaction_guard guard(app.db);
   app.db.put_file(ident, dat);
   guard.commit();
@@ -93,22 +87,7 @@ packet_db_writer::consume_file_delta(file_id const & old_id,
                                      file_delta const & del)
 {
   transaction_guard guard(app.db);
-
-  if (app.db.file_version_exists(new_id))
-    {
-      L(FL("file version '%s' already exists in db") % new_id);
-      return;
-    }
-
-  if (!app.db.file_version_exists(old_id))
-    {
-      W(F("file preimage '%s' missing in db") % old_id);
-      W(F("dropping delta '%s' -> '%s'") % old_id % new_id);
-      return;
-    }
-
   app.db.put_file_version(old_id, new_id, del);
-
   guard.commit();
 }
 
@@ -118,67 +97,9 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
 {
   MM(ident);
   transaction_guard guard(app.db);
-  if (app.db.revision_exists(ident))
-    {
-      L(FL("revision '%s' already exists in db") % ident);
-      return;
-    }
-
-  revision_t rev;
-  MM(rev);
-  read_revision(dat, rev);
-
-  for (edge_map::const_iterator i = rev.edges.begin();
-       i != rev.edges.end(); ++i)
-    {
-      if (!edge_old_revision(i).inner()().empty()
-          && !app.db.revision_exists(edge_old_revision(i)))
-        {
-          W(F("missing prerequisite revision '%s'") % edge_old_revision(i));
-          W(F("dropping revision '%s'") % ident);
-          return;
-        }
-
-      for (map<split_path, file_id>::const_iterator a
-             = edge_changes(i).files_added.begin();
-           a != edge_changes(i).files_added.end(); ++a)
-        {
-          if (! app.db.file_version_exists(a->second))
-            {
-              W(F("missing prerequisite file '%s'") % a->second);
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-        }
-
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d
-             = edge_changes(i).deltas_applied.begin();
-           d != edge_changes(i).deltas_applied.end(); ++d)
-        {
-          I(!delta_entry_src(d).inner()().empty());
-          I(!delta_entry_dst(d).inner()().empty());
-
-          if (! app.db.file_version_exists(delta_entry_src(d)))
-            {
-              W(F("missing prerequisite file pre-delta '%s'")
-                % delta_entry_src(d));
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-
-          if (! app.db.file_version_exists(delta_entry_dst(d)))
-            {
-              W(F("missing prerequisite file post-delta '%s'")
-                % delta_entry_dst(d));
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-        }
-    }
-
-  app.db.put_revision(ident, dat);
-  if (on_revision_written)
-    on_revision_written(ident);
+  if (app.db.put_revision(ident, dat))
+    if (on_revision_written)
+      on_revision_written(ident);
   guard.commit();
 }
 
@@ -186,26 +107,9 @@ void
 packet_db_writer::consume_revision_cert(revision<cert> const & t)
 {
   transaction_guard guard(app.db);
-
-  if (app.db.revision_cert_exists(t))
-    {
-      L(FL("revision cert on '%s' already exists in db")
-        % t.inner().ident);
-      return;
-    }
-
-  if (!app.db.revision_exists(revision_id(t.inner().ident)))
-    {
-      W(F("cert revision '%s' does not exist in db")
-        % t.inner().ident);
-      W(F("dropping cert"));
-      return;
-    }
-
-  app.db.put_revision_cert(t);
-  if (on_cert_written)
-    on_cert_written(t.inner());
-
+  if (app.db.put_revision_cert(t))
+    if (on_cert_written)
+      on_cert_written(t.inner());
   guard.commit();
 }
 
@@ -215,22 +119,9 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
                                      base64< rsa_pub_key > const & k)
 {
   transaction_guard guard(app.db);
-
-  if (app.db.public_key_exists(ident))
-    {
-      base64<rsa_pub_key> tmp;
-      app.db.get_key(ident, tmp);
-      if (!keys_match(ident, tmp, ident, k))
-        W(F("key '%s' is not equal to key '%s' in database") % ident % ident);
-      L(FL("skipping existing public key %s") % ident);
-      return;
-    }
-
-  L(FL("putting public key %s") % ident);
-  app.db.put_key(ident, k);
-  if (on_pubkey_written)
-    on_pubkey_written(ident);
-
+  if (app.db.put_key(ident, k))
+    if (on_pubkey_written)
+      on_pubkey_written(ident);
   guard.commit();
 }
 
@@ -239,17 +130,9 @@ packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
                                    keypair const & kp)
 {
   transaction_guard guard(app.db);
-
-  if (app.keys.key_pair_exists(ident))
-    {
-      L(FL("skipping existing key pair %s") % ident);
-      return;
-    }
-
-  app.keys.put_key_pair(ident, kp);
-  if (on_keypair_written)
-    on_keypair_written(ident);
-
+  if (app.keys.put_key_pair(ident, kp))
+    if (on_keypair_written)
+      on_keypair_written(ident);
   guard.commit();
 }
 

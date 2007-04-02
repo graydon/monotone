@@ -104,15 +104,17 @@ void
 key_store::ensure_in_database(rsa_keypair_id const & ident)
 {
   maybe_read_key_dir();
-  if (app->db.public_key_exists(ident))
+  map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
+
+  // if this object does not have the key, the database had better.
+  if (i == keys.end())
     {
-      L(FL("public key '%s' is already in db, not loading") % ident);
+      I(app->db.public_key_exists(ident));
       return;
     }
-  map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
-  I(i != keys.end());
-  app->db.put_key(ident, i->second.pub);
-  L(FL("loaded public key '%s' into db") % ident);
+  
+  if (app->db.put_key(ident, i->second.pub))
+    L(FL("loaded public key '%s' into db") % ident);
 }
 
 bool
@@ -210,7 +212,7 @@ key_store::write_key(rsa_keypair_id const & ident)
   write_data(file, dat, key_dir);
 }
 
-void
+bool
 key_store::put_key_pair(rsa_keypair_id const & ident,
                         keypair const & kp)
 {
@@ -224,13 +226,15 @@ key_store::put_key_pair(rsa_keypair_id const & ident,
       key_hash_code(ident, kp.pub, hash);
       I(hashes.insert(make_pair(hash, ident)).second);
       write_key(ident);
+      return true;
     }
   else
     {
-      E(/*keys_match(ident, res.first->second.priv, ident, kp.priv)
-        && */keys_match(ident, res.first->second.pub, ident, kp.pub),
+      E(keys_match(ident, res.first->second.pub, ident, kp.pub),
         F("Cannot store key '%s'; a different key by that name exists.")
           % ident);
+      L(FL("skipping existing key pair %s") % ident);
+      return false;
     }
 }
 

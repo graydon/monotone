@@ -1313,11 +1313,9 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
               "their key's fingerprint: %s") % peer_id % their_key_hash);
           app.db.set_var(their_key_key, var_value(their_key_hash()));
         }
-      if (!app.db.public_key_exists(their_key_hash))
-        {
-          W(F("saving public key for %s to database") % their_keyname);
-          app.db.put_key(their_keyname, their_key_encoded);
-        }
+      if (app.db.put_key(their_keyname, their_key_encoded))
+        W(F("saving public key for %s to database") % their_keyname);
+
       {
         hexenc<id> hnonce;
         encode_hexenc(nonce, hnonce);
