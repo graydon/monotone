@@ -27,7 +27,7 @@
 #include "constants.hh"
 #include "inodeprint.hh"
 #include "keys.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
@@ -642,11 +642,11 @@ struct inventory_itemizer : public tree_walker
         read_inodeprint_map(dat, ipm);
       }
   }
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
 
-void
+bool
 inventory_itemizer::visit_dir(file_path const & path)
 {
   split_path sp;
@@ -655,6 +655,8 @@ inventory_itemizer::visit_dir(file_path const & path)
     {
       inventory[sp].fs_type = path::directory;
     }
+  // always recurse into subdirectories
+  return true;
 }
 
 void
@@ -673,7 +675,7 @@ inventory_itemizer::visit_file(file_path const & path)
           if (inodeprint_unchanged(ipm, path))
             item.fs_ident = item.old_node.ident;
           else
-            ident_existing_file(path, item.fs_ident, app.lua);
+            ident_existing_file(path, item.fs_ident);
         }
     }
 }
@@ -738,14 +740,22 @@ AUTOMATE(inventory, "[PATH]...", options::opts::none)
 {
   app.require_workspace();
 
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+  // for now, until we've figured out what the format could look like
+  // and what conceptional model we can implement
+  // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+  
+  roster_t new_roster, old_roster = parent_roster(parents.begin());
   temp_node_id_source nis;
-  roster_t old_roster, new_roster;
-  vector<file_path> includes = args_to_paths(args);
-  vector<file_path> excludes = args_to_paths(app.opts.exclude_patterns);
-
-  app.work.get_base_and_current_roster_shape(old_roster, new_roster, nis);
+  
+  app.work.get_current_roster_shape(new_roster, nis);
 
   inventory_map inventory;
+  vector<file_path> includes = args_to_paths(args);
+  vector<file_path> excludes = args_to_paths(app.opts.exclude_patterns);
 
   node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
   inventory_rosters(old_roster, new_roster, nmask, inventory);
