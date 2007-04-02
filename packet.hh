@@ -11,13 +11,10 @@
 // PURPOSE.
 
 #include <iosfwd>
-#include <memory>
-
-#include <boost/function.hpp>
-
-#include "app_state.hh"
-#include "ui.hh"
 #include "vocab.hh"
+
+class app_state;
+struct cert;
 
 // the idea here is that monotone can produce and consume "packet streams",
 // where each packet is *informative* rather than transactional. that is to
@@ -40,22 +37,7 @@
 
 struct packet_consumer
 {
-protected:
-  boost::function1<void, revision_id> on_revision_written;
-  boost::function1<void, cert const &> on_cert_written;
-  boost::function1<void, rsa_keypair_id> on_pubkey_written;
-  boost::function1<void, rsa_keypair_id> on_keypair_written;
 public:
-
-  virtual void set_on_revision_written(boost::function1<void, revision_id>
-                                                const & x);
-  virtual void set_on_cert_written(boost::function1<void, cert const &>
-                                                const & x);
-  virtual void set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
-                                                const & x);
-  virtual void set_on_keypair_written(boost::function1<void, rsa_keypair_id>
-                                                const & x);
-
   virtual ~packet_consumer() {}
   virtual void consume_file_data(file_id const & ident,
                                  file_data const & dat) = 0;

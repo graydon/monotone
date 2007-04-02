@@ -5,6 +5,7 @@
 #include "packet.hh"
 #include "keys.hh"
 #include "globish.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::istringstream;

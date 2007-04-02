@@ -1736,8 +1736,7 @@ AUTOMATE(cert, N_("REVISION-ID NAME VALUE"), options::opts::none)
   make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
                    cert_value(idx(args, 2)()), app, c);
   revision<cert> rc(c);
-  packet_db_writer dbw(app);
-  dbw.consume_revision_cert(rc);
+  app.db.put_revision_cert(rc);
   guard.commit();
 }
 

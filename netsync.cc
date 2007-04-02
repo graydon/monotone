@@ -33,7 +33,6 @@
 #include "netio.hh"
 #include "netsync.hh"
 #include "numeric_vocab.hh"
-#include "packet.hh"
 #include "refiner.hh"
 #include "revision.hh"
 #include "sanity.hh"
@@ -320,7 +319,6 @@ session:
   vector<cert> written_certs;
 
   id saved_nonce;
-  packet_db_writer dbw;
 
   enum
     {
@@ -378,10 +376,6 @@ session:
           shared_ptr<Netxx::StreamBase> sock);
 
   virtual ~session();
-
-  void rev_written_callback(revision_id rid);
-  void key_written_callback(rsa_keypair_id kid);
-  void cert_written_callback(cert const & c);
 
   id mk_nonce();
   void mark_recent_io();
@@ -524,7 +518,6 @@ session::session(protocol_role role,
   keys_in(0), keys_out(0),
   session_id(++session_count),
   saved_nonce(""),
-  dbw(app),
   protocol_state(working_state),
   encountered_error(false),
   error_code(no_transfer),
@@ -534,14 +527,7 @@ session::session(protocol_role role,
   cert_refiner(cert_item, voice, *this),
   rev_refiner(revision_item, voice, *this),
   rev_enumerator(*this, app)
-{
-  dbw.set_on_revision_written(boost::bind(&session::rev_written_callback,
-                                          this, _1));
-  dbw.set_on_cert_written(boost::bind(&session::cert_written_callback,
-                                      this, _1));
-  dbw.set_on_pubkey_written(boost::bind(&session::key_written_callback,
-                                        this, _1));
-}
+{}
 
 session::~session()
 {
@@ -697,21 +683,6 @@ session::note_cert(hexenc<id> const & c)
   queue_data_cmd(cert_item, item, str);
 }
 
-
-void session::rev_written_callback(revision_id rid)
-{
-  written_revisions.push_back(rid);
-}
-
-void session::key_written_callback(rsa_keypair_id kid)
-{
-  written_keys.push_back(kid);
-}
-
-void session::cert_written_callback(cert const & c)
-{
-  written_certs.push_back(c);
-}
 
 id
 session::mk_nonce()
@@ -1951,7 +1922,8 @@ session::process_data_cmd(netcmd_item_type type,
           throw bad_decode(F("hash check failed for public key '%s' (%s);"
                              " wanted '%s' got '%s'")
                            % hitem % keyid % hitem % tmp);
-        this->dbw.consume_public_key(keyid, pub);
+        if (app.db.put_key(keyid, pub))
+          written_keys.push_back(keyid);
       }
       break;
 
@@ -1963,21 +1935,23 @@ session::process_data_cmd(netcmd_item_type type,
         cert_hash_code(c, tmp);
         if (! (tmp == hitem))
           throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
-        this->dbw.consume_revision_cert(revision<cert>(c));
+        if (app.db.put_revision_cert(revision<cert>(c)))
+          written_certs.push_back(c);
       }
       break;
 
     case revision_item:
       {
         L(FL("received revision '%s'") % hitem);
-        this->dbw.consume_revision_data(revision_id(hitem), revision_data(dat));
+        if (app.db.put_revision(revision_id(hitem), revision_data(dat)))
+          written_revisions.push_back(revision_id(hitem));
       }
       break;
 
     case file_item:
       {
         L(FL("received file '%s'") % hitem);
-        this->dbw.consume_file_data(file_id(hitem), file_data(dat));
+        app.db.put_file(file_id(hitem), file_data(dat));
       }
       break;
     }
@@ -2005,9 +1979,7 @@ session::process_delta_cmd(netcmd_item_type type,
     case file_item:
       {
         file_id src_file(hbase), dst_file(hident);
-        this->dbw.consume_file_delta(src_file,
-                                     dst_file,
-                                     file_delta(del));
+        app.db.put_file_version(src_file, dst_file, file_delta(del));
       }
       break;
 

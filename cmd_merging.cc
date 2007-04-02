@@ -22,6 +22,7 @@
 #include "update.hh"
 #include "work.hh"
 #include "safe_map.hh"
+#include "ui.hh"
 
 using std::cout;
 using std::make_pair;

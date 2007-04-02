@@ -36,35 +36,6 @@ using boost::match_results;
 using boost::regex;
 using boost::shared_ptr;
 
-void
-packet_consumer::set_on_revision_written(boost::function1<void,
-                                         revision_id> const & x)
-{
-  on_revision_written=x;
-}
-
-void
-packet_consumer::set_on_cert_written(boost::function1<void,
-                                     cert const &> const & x)
-{
-  on_cert_written=x;
-}
-
-void
-packet_consumer::set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
-                                       const & x)
-{
-  on_pubkey_written=x;
-}
-
-void
-packet_consumer::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
-                                        const & x)
-{
-  on_keypair_written=x;
-}
-
-
 packet_db_writer::packet_db_writer(app_state & app)
   : app(app)
 {}
@@ -97,9 +68,7 @@ packet_db_writer::consume_revision_data(revision_id const & ident,
 {
   MM(ident);
   transaction_guard guard(app.db);
-  if (app.db.put_revision(ident, dat))
-    if (on_revision_written)
-      on_revision_written(ident);
+  app.db.put_revision(ident, dat);
   guard.commit();
 }
 
@@ -107,9 +76,7 @@ void
 packet_db_writer::consume_revision_cert(revision<cert> const & t)
 {
   transaction_guard guard(app.db);
-  if (app.db.put_revision_cert(t))
-    if (on_cert_written)
-      on_cert_written(t.inner());
+  app.db.put_revision_cert(t);
   guard.commit();
 }
 
@@ -119,9 +86,7 @@ packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
                                      base64< rsa_pub_key > const & k)
 {
   transaction_guard guard(app.db);
-  if (app.db.put_key(ident, k))
-    if (on_pubkey_written)
-      on_pubkey_written(ident);
+  app.db.put_key(ident, k);
   guard.commit();
 }
 
@@ -130,9 +95,7 @@ packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
                                    keypair const & kp)
 {
   transaction_guard guard(app.db);
-  if (app.keys.put_key_pair(ident, kp))
-    if (on_keypair_written)
-      on_keypair_written(ident);
+  app.keys.put_key_pair(ident, kp);
   guard.commit();
 }
 
