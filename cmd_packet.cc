@@ -65,6 +65,67 @@ CMD(privkey, N_("packet i/o"), N_("ID"),
   pw.consume_key_pair(ident, kp);
 }
 
+namespace
+{
+  // this writer injects packets it receives to the database
+  // and/or keystore.
+
+  struct packet_db_writer : public packet_consumer
+  {
+    app_state & app;
+  public:
+    packet_db_writer(app_state & app) : app(app) {}
+    virtual ~packet_db_writer() {}
+    virtual void consume_file_data(file_id const & ident,
+                                   file_data const & dat)
+    {
+      transaction_guard guard(app.db);
+      app.db.put_file(ident, dat);
+      guard.commit();
+    }
+
+    virtual void consume_file_delta(file_id const & old_id,
+                                    file_id const & new_id,
+                                    file_delta const & del)
+    {
+      transaction_guard guard(app.db);
+      app.db.put_file_version(old_id, new_id, del);
+      guard.commit();
+    }
+
+    virtual void consume_revision_data(revision_id const & ident,
+                                       revision_data const & dat)
+    {
+      transaction_guard guard(app.db);
+      app.db.put_revision(ident, dat);
+      guard.commit();
+    }
+    
+    virtual void consume_revision_cert(revision<cert> const & t)
+    {
+      transaction_guard guard(app.db);
+      app.db.put_revision_cert(t);
+      guard.commit();
+    }
+
+    virtual void consume_public_key(rsa_keypair_id const & ident,
+                                    base64< rsa_pub_key > const & k)
+    {
+      transaction_guard guard(app.db);
+      app.db.put_key(ident, k);
+      guard.commit();
+    }
+    
+    virtual void consume_key_pair(rsa_keypair_id const & ident,
+                                  keypair const & kp)
+    {
+      transaction_guard guard(app.db);
+      app.keys.put_key_pair(ident, kp);
+      guard.commit();
+    }
+  };
+}
+
 
 CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     N_("read packets from files or stdin"),

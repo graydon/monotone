@@ -14,7 +14,6 @@
 #include "cmd.hh"
 #include "diff_patch.hh"
 #include "merge.hh"
-#include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "roster_merge.hh"
@@ -317,11 +316,9 @@ merge_two(revision_id const & left, revision_id const & right,
   transaction_guard guard(app.db);
   interactive_merge_and_store(left, right, merged, app);
 
-  packet_db_writer dbw(app);
   app.get_project().put_standard_certs_from_options(merged,
                                                     branch,
-                                                    utf8(log.str()),
-                                                    dbw);
+                                                    utf8(log.str()));
 
   guard.commit();
   P(F("[merged] %s") % merged);
@@ -505,10 +502,8 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
       P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
-      packet_db_writer dbw(app);
       app.get_project().put_revision_in_branch(*src_i,
-                                               branch_name(idx(args, 1)()),
-                                               dbw);
+                                               branch_name(idx(args, 1)()));
       guard.commit();
     }
   else
@@ -590,11 +585,9 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
                             % idx(args, 0) % (*src_i)
                             % idx(args, 1) % (*dst_i)).str());
 
-      packet_db_writer dbw(app);
       app.get_project().put_standard_certs_from_options(merged,
                                                         branch_name(idx(args, 1)()),
-                                                        log_message,
-                                                        dbw);
+                                                        log_message);
 
       guard.commit();
       P(F("[merged] %s") % merged);

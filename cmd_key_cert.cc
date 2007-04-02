@@ -15,7 +15,6 @@
 #include "charset.hh"
 #include "cmd.hh"
 #include "keys.hh"
-#include "packet.hh"
 #include "transforms.hh"
 #include "ssh_agent.hh"
 #include "botan/pipe.h"
@@ -198,8 +197,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
       val = cert_value(dat());
     }
 
-  packet_db_writer dbw(app);
-  app.get_project().put_cert(rid, name, val, dbw);
+  app.get_project().put_cert(rid, name, val);
   guard.commit();
 }
 
@@ -259,8 +257,7 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_revision_tag(r, idx(args, 1)(), app, dbw);
+  cert_revision_tag(r, idx(args, 1)(), app);
 }
 
 
@@ -272,8 +269,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_revision_testresult(r, idx(args, 1)(), app, dbw);
+  cert_revision_testresult(r, idx(args, 1)(), app);
 }
 
 
@@ -286,10 +282,9 @@ CMD(approve, N_("review"), N_("REVISION"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
   guess_branch(r, app);
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
-  app.get_project().put_revision_in_branch(r, app.opts.branchname, dbw);
+  app.get_project().put_revision_in_branch(r, app.opts.branchname);
 }
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
@@ -314,8 +309,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_revision_comment(r, comment, app, dbw);
+  cert_revision_comment(r, comment, app);
 }
 
 // Local Variables:

@@ -24,7 +24,6 @@
 #include "keys.hh"
 #include "netio.hh"
 #include "option.hh"
-#include "packet.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
@@ -442,8 +441,6 @@ check_cert(app_state & app, cert const & t)
 
 // "special certs"
 
-cert_name const branch_cert_name("branch");
-
 void
 get_user_key(rsa_keypair_id & key, app_state & app)
 {
@@ -528,60 +525,46 @@ void
 put_simple_revision_cert(revision_id const & id,
                          cert_name const & nm,
                          cert_value const & val,
-                         app_state & app,
-                         packet_consumer & pc)
+                         app_state & app)
 {
   cert t;
   make_simple_cert(id.inner(), nm, val, app, t);
   revision<cert> cc(t);
-  pc.consume_revision_cert(cc);
+  app.db.put_revision_cert(cc);
 }
 
 void
 cert_revision_in_branch(revision_id const & rev,
-                       cert_value const & branchname,
-                       app_state & app,
-                       packet_consumer & pc)
+                        branch_name const & branch,
+                        app_state & app)
 {
-  put_simple_revision_cert (rev, branch_cert_name,
-                            branchname, app, pc);
+  put_simple_revision_cert (rev, branch_cert_name, cert_value(branch()),
+                            app);
 }
 
 
 // "standard certs"
 
-cert_name const date_cert_name("date");
-cert_name const author_cert_name("author");
-cert_name const tag_cert_name("tag");
-cert_name const changelog_cert_name("changelog");
-cert_name const comment_cert_name("comment");
-cert_name const testresult_cert_name("testresult");
-
-
 void
 cert_revision_date_time(revision_id const & m,
                         date_t const & t,
-                        app_state & app,
-                        packet_consumer & pc)
+                        app_state & app)
 {
   cert_value val = cert_value(t.as_iso_8601_extended());
-  put_simple_revision_cert(m, cert_name(date_cert_name), val, app, pc);
+  put_simple_revision_cert(m, date_cert_name, val, app);
 }
 
 void
 cert_revision_author(revision_id const & m,
                      string const & author,
-                     app_state & app,
-                     packet_consumer & pc)
+                     app_state & app)
 {
-  put_simple_revision_cert(m, author_cert_name,
-                           cert_value(author), app, pc);
+  put_simple_revision_cert(m, author_cert_name, cert_value(author), app);
 }
 
 void
 cert_revision_author_default(revision_id const & m,
-                             app_state & app,
-                             packet_consumer & pc)
+                             app_state & app)
 {
   string author;
   rsa_keypair_id key;
@@ -591,45 +574,38 @@ cert_revision_author_default(revision_id const & m,
     {
       author = key();
     }
-  cert_revision_author(m, author, app, pc);
+  cert_revision_author(m, author, app);
 }
 
 void
 cert_revision_tag(revision_id const & m,
                   string const & tagname,
-                  app_state & app,
-                  packet_consumer & pc)
+                  app_state & app)
 {
-  put_simple_revision_cert(m, tag_cert_name,
-                           cert_value(tagname), app, pc);
+  put_simple_revision_cert(m, tag_cert_name, cert_value(tagname), app);
 }
 
 
 void
 cert_revision_changelog(revision_id const & m,
-                        utf8 const & changelog,
-                        app_state & app,
-                        packet_consumer & pc)
+                        utf8 const & log,
+                        app_state & app)
 {
-  put_simple_revision_cert(m, changelog_cert_name,
-                           cert_value(changelog()), app, pc);
+  put_simple_revision_cert(m, changelog_cert_name, cert_value(log()), app);
 }
 
 void
 cert_revision_comment(revision_id const & m,
                       utf8 const & comment,
-                      app_state & app,
-                      packet_consumer & pc)
+                      app_state & app)
 {
-  put_simple_revision_cert(m, comment_cert_name,
-                           cert_value(comment()), app, pc);
+  put_simple_revision_cert(m, comment_cert_name, cert_value(comment()), app);
 }
 
 void
 cert_revision_testresult(revision_id const & r,
                          string const & results,
-                         app_state & app,
-                         packet_consumer & pc)
+                         app_state & app)
 {
   bool passed = false;
   if (lowercase(results) == "true" ||
@@ -647,7 +623,8 @@ cert_revision_testresult(revision_id const & r,
                               "tried '0/1' 'yes/no', 'true/false', "
                               "'pass/fail'");
 
-  put_simple_revision_cert(r, testresult_cert_name, cert_value(lexical_cast<string>(passed)), app, pc);
+  put_simple_revision_cert(r, testresult_cert_name,
+                           cert_value(lexical_cast<string>(passed)), app);
 }
 
 // Local Variables:

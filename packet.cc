@@ -36,69 +36,6 @@ using boost::match_results;
 using boost::regex;
 using boost::shared_ptr;
 
-packet_db_writer::packet_db_writer(app_state & app)
-  : app(app)
-{}
-
-packet_db_writer::~packet_db_writer()
-{}
-
-void
-packet_db_writer::consume_file_data(file_id const & ident,
-                                    file_data const & dat)
-{
-  transaction_guard guard(app.db);
-  app.db.put_file(ident, dat);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_file_delta(file_id const & old_id,
-                                     file_id const & new_id,
-                                     file_delta const & del)
-{
-  transaction_guard guard(app.db);
-  app.db.put_file_version(old_id, new_id, del);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_revision_data(revision_id const & ident,
-                                        revision_data const & dat)
-{
-  MM(ident);
-  transaction_guard guard(app.db);
-  app.db.put_revision(ident, dat);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_revision_cert(revision<cert> const & t)
-{
-  transaction_guard guard(app.db);
-  app.db.put_revision_cert(t);
-  guard.commit();
-}
-
-
-void
-packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
-                                     base64< rsa_pub_key > const & k)
-{
-  transaction_guard guard(app.db);
-  app.db.put_key(ident, k);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
-                                   keypair const & kp)
-{
-  transaction_guard guard(app.db);
-  app.keys.put_key_pair(ident, kp);
-  guard.commit();
-}
-
 // --- packet writer ---
 
 packet_writer::packet_writer(ostream & o) : ost(o) {}

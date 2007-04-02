@@ -13,7 +13,6 @@
 #include "cmd.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
-#include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
@@ -254,11 +253,9 @@ CMD(disapprove, N_("review"), N_("REVISION"),
     calculate_ident(rdat, inv_id);
     app.db.put_revision(inv_id, rdat);
 
-    packet_db_writer dbw(app);
     app.get_project().put_standard_certs_from_options(inv_id,
                                                       app.opts.branchname,
-                                                      log_message,
-                                                      dbw);
+                                                      log_message);
     guard.commit();
   }
 }
@@ -861,8 +858,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                                             file_delta(del));
                   }
                 else
-                  // If we don't err out here, our packet writer will
-                  // later.
+                  // If we don't err out here, the database will later.
                   E(false,
                     F("Your database is missing version %s of file '%s'")
                     % old_content % path);
@@ -893,11 +889,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
         app.db.put_revision(restricted_rev_id, rdat);
       }
 
-    packet_db_writer dbw(app);
     app.get_project().put_standard_certs_from_options(restricted_rev_id,
                                                       app.opts.branchname,
-                                                      log_message,
-                                                      dbw);
+                                                      log_message);
     guard.commit();
   }
 
