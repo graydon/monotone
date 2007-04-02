@@ -374,8 +374,8 @@ select_nodes_modified_by_cset(cset const & cs,
                               std::set<node_id> & nodes_modified);
 
 void
-extract_roster_path_set(roster_t const & ros,
-                        path_set & paths);
+get_content_paths(roster_t const & roster, 
+                  std::map<file_id, file_path> & paths);
 
 // These functions are for the use of things like 'update' or 'pluck', that
 // need to construct fake rosters and/or markings in-memory, to achieve

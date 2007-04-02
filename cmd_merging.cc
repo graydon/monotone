@@ -22,6 +22,7 @@
 #include "work.hh"
 #include "safe_map.hh"
 #include "ui.hh"
+#include "app_state.hh"
 
 using std::cout;
 using std::make_pair;

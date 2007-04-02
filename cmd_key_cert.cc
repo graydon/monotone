@@ -14,6 +14,7 @@
 #include "cert.hh"
 #include "charset.hh"
 #include "cmd.hh"
+#include "app_state.hh"
 #include "keys.hh"
 #include "transforms.hh"
 #include "ssh_agent.hh"

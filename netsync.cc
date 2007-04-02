@@ -31,7 +31,6 @@
 #include "merkle_tree.hh"
 #include "netcmd.hh"
 #include "netio.hh"
-#include "netsync.hh"
 #include "numeric_vocab.hh"
 #include "refiner.hh"
 #include "revision.hh"
