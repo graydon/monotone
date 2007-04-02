@@ -92,8 +92,10 @@ lua_hooks::lua_hooks()
   // Disable any functions we don't want. This is easiest
   // to do just by running a lua string.
   if (!run_string(st,
-                  "os.execute = nil "
-                  "io.popen = nil ",
+                  // "os.unsafeexecute = os.execute "
+                  // "io.unsafepopen = io.popen "
+                  "os.execute = function(c) error(\"os.execute disabled for security reasons.  Try spawn().\") end "
+                  "io.popen = function(c,t) error(\"io.popen disabled for security reasons.  Try spawn_pipe().\") end ",
                   string("<disabled dangerous functions>")))
     throw oops("lua error while disabling existing functions");
 }
@@ -253,7 +255,7 @@ lua_hooks::hook_expand_date(string const & sel,
 }
 
 bool
-lua_hooks::hook_get_branch_key(cert_value const & branchname,
+lua_hooks::hook_get_branch_key(branch_name const & branchname,
                                rsa_keypair_id & k)
 {
   string key;
@@ -264,18 +266,20 @@ lua_hooks::hook_get_branch_key(cert_value const & branchname,
     .extract_str(key)
     .ok();
 
-  k = key;
+  k = rsa_keypair_id(key);
   return ok;
 }
 
 bool
-lua_hooks::hook_get_author(cert_value const & branchname,
+lua_hooks::hook_get_author(branch_name const & branchname,
+                           rsa_keypair_id const & k,
                            string & author)
 {
   return Lua(st)
     .func("get_author")
     .push_str(branchname())
-    .call(1,1)
+    .push_str(k())
+    .call(2,1)
     .extract_str(author)
     .ok();
 }
@@ -293,7 +297,7 @@ lua_hooks::hook_edit_comment(external const & commentary,
                  .call(2,1)
                  .extract_str(result_str)
                  .ok();
-  result = result_str;
+  result = external(result_str);
   return is_ok;
 }
 
@@ -311,12 +315,12 @@ lua_hooks::hook_ignore_file(file_path const & p)
 }
 
 bool
-lua_hooks::hook_ignore_branch(string const & branch)
+lua_hooks::hook_ignore_branch(branch_name const & branch)
 {
   bool ignore_it = false;
   bool exec_ok = Lua(st)
     .func("ignore_branch")
-    .push_str(branch)
+    .push_str(branch())
     .call(1,1)
     .extract_bool(ignore_it)
     .ok();
@@ -437,7 +441,7 @@ lua_hooks::hook_merge3(file_path const & anc_path,
     .call(7,1)
     .extract_str(res)
     .ok();
-  result = res;
+  result = data(res);
   return ok;
 }
 
@@ -566,8 +570,8 @@ push_uri(uri const & u, Lua & ll)
 
 bool
 lua_hooks::hook_get_netsync_connect_command(uri const & u,
-                                            std::string const & include_pattern,
-                                            std::string const & exclude_pattern,
+                                            globish const & include_pattern,
+                                            globish const & exclude_pattern,
                                             bool debug,
                                             std::vector<std::string> & argv)
 {
@@ -579,17 +583,17 @@ lua_hooks::hook_get_netsync_connect_command(uri const & u,
 
   ll.push_table();
 
-  if (!include_pattern.empty())
+  if (!include_pattern().empty())
     {
       ll.push_str("include");
-      ll.push_str(include_pattern);
+      ll.push_str(include_pattern());
       ll.set_table();
     }
 
-  if (!exclude_pattern.empty())
+  if (!exclude_pattern().empty())
     {
       ll.push_str("exclude");
-      ll.push_str(exclude_pattern);
+      ll.push_str(exclude_pattern());
       ll.set_table();
     }
 
@@ -736,59 +740,9 @@ lua_hooks::hook_apply_attribute(string const & attr,
 
 
 bool
-lua_hooks::hook_get_system_linesep(string & linesep)
-{
-  return Lua(st)
-    .func("get_system_linesep")
-    .call(0,1)
-    .extract_str(linesep)
-    .ok();
-}
-
-bool
-lua_hooks::hook_get_charset_conv(file_path const & p,
-                                 string & db,
-                                 string & ext)
-{
-  Lua ll(st);
-  ll
-    .func("get_charset_conv")
-    .push_str(p.as_external())
-    .call(1,1)
-    .begin();
-
-  ll.next();
-  ll.extract_str(db).pop();
-
-  ll.next();
-  ll.extract_str(ext).pop();
-  return ll.ok();
-}
-
-bool
-lua_hooks::hook_get_linesep_conv(file_path const & p,
-                                 string & db,
-                                 string & ext)
-{
-  Lua ll(st);
-  ll
-    .func("get_linesep_conv")
-    .push_str(p.as_external())
-    .call(1,1)
-    .begin();
-
-  ll.next();
-  ll.extract_str(db).pop();
-
-  ll.next();
-  ll.extract_str(ext).pop();
-  return ll.ok();
-}
-
-bool
 lua_hooks::hook_validate_commit_message(utf8 const & message,
                                         revision_data const & new_rev,
-                                        cert_value const & branchname,
+                                        branch_name const & branchname,
                                         bool & validated,
                                         string & reason)
 {
@@ -832,13 +786,39 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
 }
 
 bool
-lua_hooks::hook_note_netsync_start(string nonce)
+lua_hooks::hook_note_netsync_start(size_t session_id, string my_role,
+                                   int sync_type, string remote_host,
+                                   rsa_keypair_id remote_keyname,
+                                   globish include_pattern,
+                                   globish exclude_pattern)
 {
+  string type;
+  switch (sync_type)
+    {
+    case 1:
+      type = "push";
+      break;
+    case 2:
+      type = "pull";
+      break;
+    case 3:
+      type = "sync";
+      break;
+    default:
+      type = "unknown";
+      break;
+    }
   Lua ll(st);
   return ll
     .func("note_netsync_start")
-    .push_str(nonce)
-    .call(1, 0)
+    .push_int(session_id)
+    .push_str(my_role)
+    .push_str(type)
+    .push_str(remote_host)
+    .push_str(remote_keyname())
+    .push_str(include_pattern())
+    .push_str(exclude_pattern())
+    .call(7, 0)
     .ok();
 }
 
@@ -848,7 +828,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
                             set<pair<rsa_keypair_id,
                                      pair<cert_name,
                                           cert_value> > > const & certs,
-                                               string nonce)
+                                               size_t session_id)
 {
   Lua ll(st);
   ll
@@ -860,37 +840,34 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
 
   typedef set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > cdat;
 
-  int n=0;
+  int n = 1;
   for (cdat::const_iterator i = certs.begin(); i != certs.end(); ++i)
     {
       ll.push_int(n++);
       ll.push_table();
-      ll.push_str("key");
       ll.push_str(i->first());
-      ll.set_table();
-      ll.push_str("name");
+      ll.set_field("key");
       ll.push_str(i->second.first());
-      ll.set_table();
-      ll.push_str("value");
+      ll.set_field("name");
       ll.push_str(i->second.second());
-      ll.set_table();
+      ll.set_field("value");
       ll.set_table();
     }
 
-  ll.push_str(nonce);
+  ll.push_int(session_id);
   ll.call(4, 0);
   return ll.ok();
 }
 
 bool
 lua_hooks::hook_note_netsync_pubkey_received(rsa_keypair_id const & kid,
-                                             string nonce)
+                                             size_t session_id)
 {
   Lua ll(st);
   ll
     .func("note_netsync_pubkey_received")
     .push_str(kid())
-    .push_str(nonce);
+    .push_int(session_id);
 
   ll.call(2, 0);
   return ll.ok();
@@ -901,7 +878,7 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
                                            rsa_keypair_id const & kid,
                                            cert_name const & name,
                                            cert_value const & value,
-                                           string nonce)
+                                           size_t session_id)
 {
   Lua ll(st);
   ll
@@ -910,21 +887,49 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
     .push_str(kid())
     .push_str(name())
     .push_str(value())
-    .push_str(nonce);
+    .push_int(session_id);
 
   ll.call(5, 0);
   return ll.ok();
 }
 
 bool
-lua_hooks::hook_note_netsync_end(string nonce)
+lua_hooks::hook_note_netsync_end(size_t session_id, int status,
+                                 size_t bytes_in, size_t bytes_out,
+                                 size_t certs_in, size_t certs_out,
+                                 size_t revs_in, size_t revs_out,
+                                 size_t keys_in, size_t keys_out)
 {
   Lua ll(st);
   return ll
     .func("note_netsync_end")
-    .push_str(nonce)
-    .call(1, 0)
+    .push_int(session_id)
+    .push_int(status)
+    .push_int(bytes_in)
+    .push_int(bytes_out)
+    .push_int(certs_in)
+    .push_int(certs_out)
+    .push_int(revs_in)
+    .push_int(revs_out)
+    .push_int(keys_in)
+    .push_int(keys_out)
+    .call(10, 0)
     .ok();
+}
+
+bool
+lua_hooks::hook_note_mtn_startup(vector<string> const & args)
+{
+  Lua ll(st);
+
+  ll.func("note_mtn_startup");
+
+  int n=0;
+  for (vector<string>::const_iterator i = args.begin(); i != args.end(); ++i, ++n)
+    ll.push_str(*i);
+
+  ll.call(n, 0);
+  return ll.ok();
 }
 
 

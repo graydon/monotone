@@ -44,8 +44,7 @@ void dump(T const &, std::string &)
 inline bool is_xdigit(char x)
 {
   return ((x >= '0' && x <= '9')
-          || (x >= 'a' && x <= 'f')
-          || (x >= 'A' && x <= 'F'));
+          || (x >= 'a' && x <= 'f'));
 }
 
 inline bool is_alpha(char x)
@@ -123,8 +122,8 @@ struct keypair
 // in the filesystem. if you want to *define* or work with any of these you
 // need to include boost/filesystem/path.hpp.
 
-namespace boost { namespace filesystem { class path; } }
-namespace fs = boost::filesystem;
+//namespace boost { namespace filesystem { class path; } }
+//namespace fs = boost::filesystem;
 
 // diff type
 enum diff_type

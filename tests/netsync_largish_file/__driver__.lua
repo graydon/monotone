@@ -11,7 +11,7 @@ check(mtn("add", "largish"), 0, false, false)
 commit()
 file = sha1("largish")
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 
 srv:pull("testbranch")
 

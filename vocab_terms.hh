@@ -23,6 +23,9 @@ ATOMIC_NOVERIFY(data);        // meaningless blob
 ATOMIC_NOVERIFY(delta);       // xdelta between 2 datas
 ATOMIC_NOVERIFY(inodeprint);  // fingerprint of an inode
 
+ATOMIC_NOVERIFY(branch_name); // utf-8
+ATOMIC_NOVERIFY(globish);     // kinda like a glob, see globish.hh (also, utf-8)
+
 ATOMIC(cert_name);            // symbol-of-your-choosing
 ATOMIC_NOVERIFY(cert_value);  // symbol-of-your-choosing
 
@@ -144,3 +147,13 @@ EXTERN template std::ostream & operator<< <>(std::ostream &, base64< cert_value 
 
 EXTERN template std::ostream & operator<< <>(std::ostream &, hexenc<prefix> const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, base64<merkle> const &);
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+

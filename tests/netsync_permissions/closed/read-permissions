@@ -1,2 +1,5 @@
+pattern "badbranch"
+deny "*"
+
 pattern "*"
 allow "tester@test.net"

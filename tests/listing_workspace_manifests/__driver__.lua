@@ -23,10 +23,8 @@ check(mtn("--branch=testbranch", "commit", "--message=committed"), 0, false, fal
 check(mtn("ls", "known"), 0, true)
 check(sort("stdout"), 0, "bar\ndir\ndir/bar\ndir/foo\nfoo\n")
 
-check(mtn("drop", "foo"), 0, false, false)
-rename("dir", "dir2")
+check(mtn("drop", "--bookkeep-only", "foo"), 0, false, false)
 check(mtn("rename", "dir", "dir2"), 0, false, false)
-rename("bar", "baz")
 check(mtn("rename", "bar", "baz"), 0, false, false)
 
 check(mtn("ls", "known"), 0, true)

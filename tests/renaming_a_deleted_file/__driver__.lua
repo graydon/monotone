@@ -12,16 +12,17 @@ root_f_sha = sha1("foo")
 
 -- produce move edge
 check(mtn("add", "baz"), 0, false, false)
-check(mtn("rename", "foo", "bar"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo", "bar"), 0, false, false)
 rename("foo", "bar")
 commit()
 
 -- revert to root
 probe_node("foo", root_r_sha, root_f_sha)
 remove("bar")
+remove("baz")
 
 -- make a delete edge on the move preimage
-check(mtn("drop", "foo"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "foo"), 0, false, false)
 commit()
 
 -- merge the del and the rename

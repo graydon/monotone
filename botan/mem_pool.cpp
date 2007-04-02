@@ -1,27 +1,140 @@
 /*************************************************
 * Pooling Allocator Source File                  *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mem_pool.h>
-#include <botan/conf.h>
+#include <botan/libstate.h>
+#include <botan/config.h>
+#include <botan/bit_ops.h>
 #include <botan/util.h>
 #include <algorithm>
 
 namespace Botan {
 
+namespace {
+
+/*************************************************
+* Decide how much memory to allocate at once     *
+*************************************************/
+u32bit choose_pref_size(u32bit provided)
+   {
+   if(provided)
+      return provided;
+
+   u32bit result = global_config().option_as_u32bit("base/memory_chunk");
+   if(result)
+      return result;
+
+   return 16*1024;
+   }
+
+}
+
+/*************************************************
+* Memory_Block Constructor                       *
+*************************************************/
+Pooling_Allocator::Memory_Block::Memory_Block(void* buf, u32bit map_size,
+                                              u32bit block_size)
+   {
+   buffer = static_cast<byte*>(buf);
+   bitmap = 0;
+   this->block_size = block_size;
+
+   buffer_end = buffer + (block_size * BITMAP_SIZE);
+
+   clear_mem(buffer, block_size * BITMAP_SIZE);
+
+   if(map_size != BITMAP_SIZE)
+      throw Invalid_Argument("Memory_Block: Bad bitmap size");
+   }
+
+/*************************************************
+* Compare a Memory_Block with a void pointer     *
+*************************************************/
+inline bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
+   {
+   if(buffer <= other && other < buffer_end)
+      return false;
+   return (buffer < other);
+   }
+
+/*************************************************
+* See if ptr is contained by this block          *
+*************************************************/
+bool Pooling_Allocator::Memory_Block::contains(void* ptr,
+                                               u32bit length) const throw()
+   {
+   return ((buffer <= ptr) &&
+           (buffer_end >= (byte*)ptr + length * block_size));
+   }
+
+/*************************************************
+* Allocate some memory, if possible              *
+*************************************************/
+byte* Pooling_Allocator::Memory_Block::alloc(u32bit n) throw()
+   {
+   if(n == 0 || n > BITMAP_SIZE)
+      return 0;
+
+   if(n == BITMAP_SIZE)
+      {
+      if(bitmap)
+         return 0;
+      else
+         {
+         bitmap = ~bitmap;
+         return buffer;
+         }
+      }
+
+   bitmap_type mask = ((bitmap_type)1 << n) - 1;
+   u32bit offset = 0;
+
+   while(bitmap & mask)
+      {
+      mask <<= 1;
+      ++offset;
+
+      if((bitmap & mask) == 0)
+         break;
+      if(mask >> 63)
+         break;
+      }
+
+   if(bitmap & mask)
+      return 0;
+
+   bitmap |= mask;
+   return buffer + offset * block_size;
+   }
+
+/*************************************************
+* Mark this memory as free, if we own it         *
+*************************************************/
+void Pooling_Allocator::Memory_Block::free(void* ptr, u32bit blocks) throw()
+   {
+   clear_mem((byte*)ptr, blocks * block_size);
+
+   const u32bit offset = ((byte*)ptr - buffer) / block_size;
+
+   if(offset == 0 && blocks == BITMAP_SIZE)
+      bitmap = ~bitmap;
+   else
+      {
+      for(u32bit j = 0; j != blocks; ++j)
+         bitmap &= ~((bitmap_type)1 << (j+offset));
+      }
+   }
+
 /*************************************************
 * Pooling_Allocator Constructor                  *
 *************************************************/
-Pooling_Allocator::Pooling_Allocator(u32bit size) :
-   PREF_SIZE(size ? size : Config::get_u32bit("base/memory_chunk")),
-   ALIGN_TO(16)
+Pooling_Allocator::Pooling_Allocator(u32bit p_size, bool) :
+   PREF_SIZE(choose_pref_size(p_size)), BLOCK_SIZE(64)
    {
-   if(PREF_SIZE == 0)
-      throw Internal_Error("The base/memory_chunk option is unset");
-   lock = get_mutex();
-   initialized = destroyed = false;
-   defrag_counter = 0;
+   mutex = global_state().get_mutex();
+   last_used = blocks.begin();
    }
 
 /*************************************************
@@ -29,38 +142,9 @@ Pooling_Allocator::Pooling_Allocator(u32bit size) :
 *************************************************/
 Pooling_Allocator::~Pooling_Allocator()
    {
-   delete lock;
-   if(!initialized)
-      throw Invalid_State("Pooling_Allocator: Was never initialized");
-   if(!destroyed)
+   delete mutex;
+   if(blocks.size())
       throw Invalid_State("Pooling_Allocator: Never released memory");
-   }
-
-/*************************************************
-* Allocate some initial buffers                  *
-*************************************************/
-void Pooling_Allocator::init()
-   {
-   if(PREF_SIZE >= 64 && prealloc_bytes())
-      {
-      u32bit allocated = 0;
-      while(allocated < prealloc_bytes())
-         {
-         void* ptr = 0;
-         try {
-            ptr = alloc_block(PREF_SIZE);
-            allocated += PREF_SIZE;
-         }
-         catch(Exception) {}
-
-         if(!ptr)
-            break;
-
-         real_mem.push_back(Buffer(ptr, PREF_SIZE, false));
-         }
-      }
-
-   initialized = true;
    }
 
 /*************************************************
@@ -68,105 +152,44 @@ void Pooling_Allocator::init()
 *************************************************/
 void Pooling_Allocator::destroy()
    {
-   if(!initialized)
-      throw Invalid_State("Pooling_Allocator::destroy(): Never initialized");
-   if(destroyed)
-      throw Invalid_State("Pooling_Allocator::destroy(): Already destroyed");
+   Mutex_Holder lock(mutex);
 
-   destroyed = true;
-   for(u32bit j = 0; j != real_mem.size(); j++)
-      dealloc_block(real_mem[j].buf, real_mem[j].length);
-   }
+   blocks.clear();
 
-/*************************************************
-* Buffer Comparison                              *
-*************************************************/
-bool Pooling_Allocator::is_empty_buffer(const Buffer& block)
-   {
-   return (block.length == 0);
-   }
-
-/*************************************************
-* Return true if these buffers are contiguous    *
-*************************************************/
-bool Pooling_Allocator::are_contiguous(const Buffer& a, const Buffer& b)
-   {
-   if((const byte*)a.buf + a.length == (const byte*)b.buf)
-      return true;
-   return false;
-   }
-
-/*************************************************
-* See if two free blocks are from the same block *
-*************************************************/
-bool Pooling_Allocator::same_buffer(Buffer& a, Buffer& b) const
-   {
-   return (find_block(a.buf) == find_block(b.buf));
-   }
-
-/*************************************************
-* Find the block containing this memory          *
-*************************************************/
-u32bit Pooling_Allocator::find_block(void* addr) const
-   {
-   for(u32bit j = 0; j != real_mem.size(); j++)
-      {
-      const byte* buf_addr = (const byte*)real_mem[j].buf;
-      if(buf_addr <= (byte*)addr &&
-         (byte*)addr < buf_addr + real_mem[j].length)
-         return j;
-      }
-   throw Internal_Error("Pooling_Allocator::find_block: no buffer found");
-   }
-
-/*************************************************
-* Remove empty buffers from list                 *
-*************************************************/
-void Pooling_Allocator::remove_empty_buffers(std::vector<Buffer>& list) const
-   {
-   std::vector<Buffer>::iterator empty;
-
-   empty = std::find_if(list.begin(), list.end(), is_empty_buffer);
-   while(empty != list.end())
-      {
-      list.erase(empty);
-      empty = std::find_if(list.begin(), list.end(), is_empty_buffer);
-      }
+   for(u32bit j = 0; j != allocated.size(); ++j)
+      dealloc_block(allocated[j].first, allocated[j].second);
+   allocated.clear();
    }
 
 /*************************************************
 * Allocation                                     *
 *************************************************/
-void* Pooling_Allocator::allocate(u32bit n) const
+void* Pooling_Allocator::allocate(u32bit n)
    {
-   struct Memory_Exhaustion : public Exception
+   const u32bit BITMAP_SIZE = Memory_Block::bitmap_size();
+
+   Mutex_Holder lock(mutex);
+
+   if(n <= BITMAP_SIZE * BLOCK_SIZE)
       {
-      Memory_Exhaustion() :
-         Exception("Pooling_Allocator: Ran out of memory") {}
-      };
+      const u32bit block_no = round_up(n, BLOCK_SIZE) / BLOCK_SIZE;
 
-   if(n == 0) return 0;
-   n = round_up(n, ALIGN_TO);
+      byte* mem = allocate_blocks(block_no);
+      if(mem)
+         return mem;
 
-   Mutex_Holder holder(lock);
+      get_more_core(PREF_SIZE);
 
-   void* new_buf = find_free_block(n);
-   if(new_buf)
-      return alloc_hook(new_buf, n);
+      mem = allocate_blocks(block_no);
+      if(mem)
+         return mem;
 
-   Buffer block;
-   block.length = ((n > PREF_SIZE) ? n : PREF_SIZE);
-   block.buf = get_block(block.length);
-   if(!block.buf)
       throw Memory_Exhaustion();
-   free_list.push_back(block);
-   if(free_list.size() >= 2)
-      std::inplace_merge(free_list.begin(), free_list.end() - 1,
-                         free_list.end());
+      }
 
-   new_buf = find_free_block(n);
+   void* new_buf = alloc_block(n);
    if(new_buf)
-      return alloc_hook(new_buf, n);
+      return new_buf;
 
    throw Memory_Exhaustion();
    }
@@ -174,198 +197,88 @@ void* Pooling_Allocator::allocate(u32bit n) const
 /*************************************************
 * Deallocation                                   *
 *************************************************/
-void Pooling_Allocator::deallocate(void* ptr, u32bit n) const
+void Pooling_Allocator::deallocate(void* ptr, u32bit n)
    {
-   const u32bit RUNS_TO_DEFRAGS = 16;
+   const u32bit BITMAP_SIZE = Memory_Block::bitmap_size();
 
-   if(ptr == 0 || n == 0) return;
+   if(ptr == 0 && n == 0)
+      return;
 
-   n = round_up(n, ALIGN_TO);
-   std::memset(ptr, 0, n);
+   Mutex_Holder lock(mutex);
 
-   Mutex_Holder holder(lock);
-
-   dealloc_hook(ptr, n);
-
-   free_list.push_back(Buffer(ptr, n));
-   if(free_list.size() >= 2)
-      std::inplace_merge(free_list.begin(), free_list.end() - 1,
-                         free_list.end());
-
-   defrag_counter = (defrag_counter + 1) % RUNS_TO_DEFRAGS;
-   if(defrag_counter == 0)
+   if(n > BITMAP_SIZE * BLOCK_SIZE)
+      dealloc_block(ptr, n);
+   else
       {
-      for(u32bit j = 0; j != free_list.size(); j++)
-         {
-         bool erase = false;
-         if(free_list[j].buf == 0) continue;
+      const u32bit block_no = round_up(n, BLOCK_SIZE) / BLOCK_SIZE;
 
-         for(u32bit k = 0; k != real_mem.size(); k++)
-            if(free_list[j].buf == real_mem[k].buf &&
-               free_list[j].length == real_mem[k].length)
-               erase = true;
+      std::vector<Memory_Block>::iterator i =
+         std::lower_bound(blocks.begin(), blocks.end(), ptr, diff_less<Memory_Block,void*>());
 
-         if(erase)
-            {
-            const u32bit buf = find_block(free_list[j].buf);
-            free_block(real_mem[buf].buf, real_mem[buf].length);
-            free_list[j].buf = 0;
-            free_list[j].length = 0;
-            }
-         }
-
-      remove_empty_buffers(real_mem);
-      defrag_free_list();
+      if(i != blocks.end() && i->contains((byte*)ptr, block_no))
+         i->free(ptr, block_no);
+      else
+         throw Invalid_State("Pointer released to the wrong allocator");
       }
    }
 
 /*************************************************
-* Handle Allocating New Memory                   *
+* Try to get some memory from an existing block  *
 *************************************************/
-void* Pooling_Allocator::get_block(u32bit n) const
+byte* Pooling_Allocator::allocate_blocks(u32bit n)
    {
-   for(u32bit j = 0; j != real_mem.size(); j++)
-      if(!real_mem[j].in_use && real_mem[j].length == n)
-         {
-         real_mem[j].in_use = true;
-         return real_mem[j].buf;
-         }
+   if(blocks.empty())
+      return 0;
 
-   void* ptr = 0;
-   try {
-      ptr = alloc_block(n);
-   }
-   catch(Exception) {}
+   std::vector<Memory_Block>::iterator i = last_used;
 
-   if(ptr)
-      real_mem.push_back(Buffer(ptr, n, true));
-   return ptr;
-   }
-
-/*************************************************
-* Handle Deallocating Memory                     *
-*************************************************/
-void Pooling_Allocator::free_block(void* ptr, u32bit n) const
-   {
-   if(!ptr) return;
-
-   u32bit free_space = 0;
-   for(u32bit j = 0; j != real_mem.size(); j++)
-      if(!real_mem[j].in_use)
-         free_space += real_mem[j].length;
-
-   bool free_this_block = false;
-   if(free_space > keep_free())
-      free_this_block = true;
-
-   for(u32bit j = 0; j != real_mem.size(); j++)
-      if(real_mem[j].buf == ptr)
-         {
-         if(!real_mem[j].in_use || real_mem[j].length != n)
-            throw Internal_Error("Pooling_Allocator: Size mismatch in free");
-
-         if(free_this_block)
-            {
-            dealloc_block(real_mem[j].buf, real_mem[j].length);
-            real_mem[j].buf = 0;
-            real_mem[j].length = 0;
-            }
-         else
-            real_mem[j].in_use = false;
-
-         return;
-         }
-
-   throw Internal_Error("Pooling_Allocator: Unknown pointer was freed");
-   }
-
-/*************************************************
-* Defragment the free list                       *
-*************************************************/
-void Pooling_Allocator::defrag_free_list() const
-   {
-   if(free_list.size() < 2) return;
-
-   for(u32bit j = 0; j != free_list.size(); j++)
+   do
       {
-      if(free_list[j].length == 0)
-         continue;
-
-      if(j > 0 &&
-         are_contiguous(free_list[j-1], free_list[j]) &&
-         same_buffer(free_list[j-1], free_list[j]))
+      byte* mem = i->alloc(n);
+      if(mem)
          {
-         free_list[j].buf = free_list[j-1].buf;
-         free_list[j].length += free_list[j-1].length;
-         free_list[j-1].length = 0;
+         last_used = i;
+         return mem;
          }
 
-      if(j < free_list.size() - 1 &&
-         are_contiguous(free_list[j], free_list[j+1]) &&
-         same_buffer(free_list[j], free_list[j+1]))
-         {
-         free_list[j+1].buf = free_list[j].buf;
-         free_list[j+1].length += free_list[j].length;
-         free_list[j].length = 0;
-         }
+      ++i;
+      if(i == blocks.end())
+         i = blocks.begin();
       }
-   remove_empty_buffers(free_list);
+   while(i != last_used);
+
+   return 0;
    }
 
 /*************************************************
-* Find a block on the free list                  *
+* Allocate more memory for the pool              *
 *************************************************/
-void* Pooling_Allocator::find_free_block(u32bit n) const
+void Pooling_Allocator::get_more_core(u32bit in_bytes)
    {
-   void* retval = 0;
+   const u32bit BITMAP_SIZE = Memory_Block::bitmap_size();
 
-   for(u32bit j = 0; j != free_list.size(); j++)
-      if(free_list[j].length >= n)
-         {
-         retval = free_list[j].buf;
+   const u32bit TOTAL_BLOCK_SIZE = BLOCK_SIZE * BITMAP_SIZE;
 
-         if(free_list[j].length == n)
-            free_list.erase(free_list.begin() + j);
-         else if(free_list[j].length > n)
-            {
-            free_list[j].length -= n;
-            free_list[j].buf = ((byte*)free_list[j].buf) + n;
-            }
-         break;
-         }
+   const u32bit in_blocks = round_up(in_bytes, BLOCK_SIZE) / TOTAL_BLOCK_SIZE;
+   const u32bit to_allocate = in_blocks * TOTAL_BLOCK_SIZE;
 
-   return retval;
-   }
+   void* ptr = alloc_block(to_allocate);
+   if(ptr == 0)
+      throw Memory_Exhaustion();
 
-/*************************************************
-* Allocation hook for debugging                  *
-*************************************************/
-void* Pooling_Allocator::alloc_hook(void* ptr, u32bit) const
-   {
-   return ptr;
-   }
+   allocated.push_back(std::make_pair(ptr, to_allocate));
 
-/*************************************************
-* Deallocation hook for debugging                *
-*************************************************/
-void Pooling_Allocator::dealloc_hook(void*, u32bit) const
-   {
-   }
-
-/*************************************************
-* Run internal consistency checks                *
-*************************************************/
-void Pooling_Allocator::consistency_check() const
-   {
-   for(u32bit j = 0; j != free_list.size(); j++)
+   for(u32bit j = 0; j != in_blocks; ++j)
       {
-      const byte* byte_buf = (const byte*)free_list[j].buf;
-      const u32bit length = free_list[j].length;
+      byte* byte_ptr = static_cast<byte*>(ptr);
 
-      for(u32bit k = 0; k != length; k++)
-         if(byte_buf[k])
-            throw Internal_Error("Pooling_Allocator: free list corrupted");
+      blocks.push_back(
+         Memory_Block(byte_ptr + j * TOTAL_BLOCK_SIZE, BITMAP_SIZE, BLOCK_SIZE)
+         );
       }
+
+   std::sort(blocks.begin(), blocks.end());
+   last_used = std::lower_bound(blocks.begin(), blocks.end(), ptr, diff_less<Memory_Block,void*>());
    }
 
 }

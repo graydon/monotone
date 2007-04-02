@@ -48,7 +48,7 @@ check(mtn("--branch=branch.fork", "merge"), 0, false, false)
 
 -- produce state E
 revert_to(revs.c, "branch.main")
-check(mtn("drop", "bar"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "bar"), 0, false, false)
 commit("branch.main")
 revs.e = base_revision()
 
@@ -66,7 +66,10 @@ check(mtn("propagate", "branch.main", "branch.fork"), 0, false, false)
 
 -- check
 remove("_MTN")
-check(mtn("--branch=branch.fork", "checkout", "."))
+remove("foo")
+remove("iced")
+remove("quux")
+check(mtn("--branch=branch.fork", "checkout", "."), 0, false, true)
 
 check(mtn("automate", "get_manifest_of"), 0, true)
 rename("stdout", "manifest")

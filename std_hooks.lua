@@ -66,7 +66,7 @@ attr_init_functions["mtn:execute"] =
 attr_init_functions["mtn:manual_merge"] = 
    function(filename)
       if (binary_file(filename)) then 
-        return "true" -- binary files must merged manually
+        return "true" -- binary files must be merged manually
       else 
         return nil
       end 
@@ -101,7 +101,9 @@ function ignore_file(name)
       if (ignfile ~= nil) then
          local line = ignfile:read()
          while (line ~= nil) do
-            table.insert(ignored_files, line)
+            if line ~= "" then
+                table.insert(ignored_files, line)
+            end
             line = ignfile:read()
          end
          io.close(ignfile)
@@ -236,7 +238,7 @@ end
 function edit_comment(basetext, user_log_message)
    local exe = nil
    if (program_exists_in_path("vi")) then exe = "vi" end
-   if (program_exists_in_path("notepad.exe")) then exe = "notepad.exe" end
+   if (string.sub(get_ostype(), 1, 6) ~= "CYGWIN" and program_exists_in_path("notepad.exe")) then exe = "notepad.exe" end
    local debian_editor = io.open("/usr/bin/editor")
    if (debian_editor ~= nil) then
       debian_editor:close()
@@ -458,6 +460,48 @@ mergers.rcsmerge = {
    wanted = function () return os.getenv("MTN_RCSMERGE") ~= nil end
 }
 
+mergers.diffutils = {
+   cmd = function (tbl)
+      local ret = execute(
+          "diff3",
+          "--merge",
+          "--label", string.format("%s [left]",     tbl.left_path ),
+          "--label", string.format("%s [ancestor]", tbl.anc_path  ),
+          "--label", string.format("%s [right]",    tbl.right_path),
+          tbl.lfile,
+          tbl.afile,
+          tbl.rfile
+      )
+      if (ret ~= 0) then
+         io.write(gettext("Error running GNU diffutils 3-way difference tool 'diff3'\n"))
+         return false
+      end
+      local ret = execute(
+          "sdiff",
+          "--diff-program=diff",
+          "--suppress-common-lines",
+          "--minimal",
+          "--output", tbl.outfile,
+          tbl.lfile,
+          tbl.rfile
+      )
+      if (ret == 2) then
+         io.write(gettext("Error running GNU diffutils 2-two merging tool 'sdiff'\n"))
+         return false
+      end
+      return tbl.outfile
+   end,
+   available =
+      function ()
+          return program_exists_in_path("diff3") and
+                 program_exists_in_path("sdiff");
+      end,
+   wanted =
+      function ()
+           return true
+      end
+}
+
 mergers.emacs = {
    cmd = function (tbl)
       local emacs
@@ -592,7 +636,7 @@ function program_exists_in_path(program)
 end
 
 function get_preferred_merge3_command (tbl)
-   local default_order = {"kdiff3", "xxdiff", "opendiff", "tortoise", "emacs", "vim", "meld"}
+   local default_order = {"kdiff3", "xxdiff", "opendiff", "tortoise", "emacs", "vim", "meld", "diffutils"}
    local function existmerger(name)
       local m = mergers[name]
       if type(m) == "table" and m.available(tbl) then
@@ -866,7 +910,7 @@ function get_netsync_write_permitted(ident)
    return matches
 end
 
--- This is a simple funciton which assumes you're going to be spawning
+-- This is a simple function which assumes you're going to be spawning
 -- a copy of mtn, so reuses a common bit at the end for converting
 -- local args into remote args. You might need to massage the logic a
 -- bit if this doesn't fit your assumptions.
@@ -874,7 +918,6 @@ end
 function get_netsync_connect_command(uri, args)
 
         local argv = nil
-        local quote_patterns = false
 
         if uri["scheme"] == "ssh" 
                 and uri["host"] 
@@ -897,7 +940,6 @@ function get_netsync_connect_command(uri, args)
                 end
 
                 table.insert(argv, uri["host"])
-		quote_patterns = true
         end
         
         if uri["scheme"] == "file" and uri["path"] then
@@ -920,23 +962,6 @@ function get_netsync_connect_command(uri, args)
                 table.insert(argv, "--stdio")
                 table.insert(argv, "--no-transport-auth")
 
-                -- patterns must be quoted to avoid a remote shell expanding them
-                if args["include"] then
-                        local include = args["include"]
-                        if quote_patterns then
-                                include = "'" .. args["include"] .. "'"
-                        end
-                        table.insert(argv, include)
-                end
-
-                if args["exclude"] then
-                        table.insert(argv, "--exclude")
-                        local exclude = args["exclude"]
-                        if quote_patterns then
-                                exclude = "'" .. args["exclude"] .. "'"
-                        end
-                        table.insert(argv, exclude)
-                end
         end
         return argv
 end

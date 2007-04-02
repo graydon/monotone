@@ -1,0 +1,66 @@
+# Portuguese translation for monotone's debconf messages
+# Copyright (C) 2007 Miguel Figueiredo
+# This file is distributed under the same license as the monotone package.
+# Miguel Figueiredo <elmig@debianpt.org>, 2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: monotone 0.31-7\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-03-03 04:32+0100\n"
+"PO-Revision-Date: 2007-03-09 22:20+0000\n"
+"Last-Translator: Miguel Figueiredo <elmig@debianpt.org>\n"
+"Language-Team: Portuguese <traduz@debianpt.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:1001
+msgid "Automatically manage monotone database?"
+msgstr "Gerir automaticamente a base de dados monotone?"
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:1001
+msgid ""
+"Select this option to automatically manage the monotone database. If "
+"selected, the database will automatically be created. Also when upgrading, "
+"the database will be automatically migrated if necessary."
+msgstr ""
+"Escolha esta opção para gerir automaticamente a base de dados monotone. Caso "
+"seja escolhido, a base de dados será automaticamente criada. Também ao "
+"actualizar, se necessário, a base de dados será automaticamente migrada."
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:2001
+msgid "Monotone key id:"
+msgstr "Identificação da chave do Monotone:"
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:2001
+msgid ""
+"Enter the id of the key your monotone server will use. The key id is "
+"typically an email address."
+msgstr ""
+"Introduza a identificação da chave que o seu servidor monotone irá utilizar. "
+"A identificação da chave é normalmente um endereço de email."
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:3001
+msgid "Monotone key passphrase:"
+msgstr "Frase-passe da chave Monotone:"
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:3001
+msgid ""
+"Please choose a passphrase for your monotone key. If left blank, one will be "
+"generated for you."
+msgstr ""
+"Por favor escolha uma frase-passe para a sua chave monotone. Se for deixada "
+"em branco, será gerada uma para si."

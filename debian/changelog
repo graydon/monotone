@@ -1,3 +1,118 @@
+monotone (0.34-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Richard Levitte <richard@levitte.org>  Sun, 01 Apr 2007 10:20:07 +0200
+
+monotone (0.33-90.1) unstable; urgency=low
+
+  * schema upgrade => monotone-server.postinst upgrade
+
+ -- Richard Levitte <richard@levitte.org>  Sun, 25 Mar 2007 22:16:54 +0200
+
+monotone (0.33-1) experimental; urgency=low
+
+  * New upstream release.
+  * Update the watch file.
+
+ -- Shaun Jackman <sjackman@debian.org>  Tue,  6 Mar 2007 13:54:19 -0700
+
+monotone (0.33-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Richard Levitte <richard@levitte.org>  Wed, 28 Feb 2007 23:02:43 +0100
+
+monotone (0.32-90.2) unstable; urgency=low
+
+  * schema upgrade => monotone-server.postinst upgrade
+
+ -- Richard Levitte <richard@levitte.org>  Tue, 24 Jan 2007 18:06:30 +0100
+
+monotone (0.32-90.1) unstable; urgency=low
+
+  * monotone can depend on texlive-base-bin as well as tetex-bin.
+
+ -- Richard Levitte <richard@levitte.org>  Mon,  8 Jan 2007 14:15:26 +0100
+
+monotone (0.32-1) experimental; urgency=low
+
+  * New upstream release. Closes: #409828.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 12 Feb 2007 08:02:25 -0700
+
+monotone (0.32-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Richard Levitte <richard@levitte.org>  Wed, 27 Dec 2006 10:57:48 +0100
+
+monotone (0.31-90.2) unstable; urgency=low
+
+  * Another pre-0.32 "release", just to mark that an important behavior
+    change has been made to the "mtn serve" command.
+
+ -- Richard Levitte <richard@levitte.org>  Sat, 18 Nov 2006 22:25:11 +0100
+
+monotone (0.31-90.1) unstable; urgency=low
+
+  * Pre-0.32 "release", serving as a marker for a new infrastructure which
+    has been merged into mainline and that requires database upgrades,
+    which is reflected in monotone-server.postinst.
+
+ -- Richard Levitte <richard@levitte.org>  Mon, 13 Nov 2006 23:50:45 +0100
+
+monotone (0.31-8) unstable; urgency=low
+
+  * Add Portuguese (pt) debconf translation. Closes: #414212.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 12 Mar 2007 08:57:20 -0600
+
+monotone (0.31-7) unstable; urgency=low
+
+  * Add Japanese debconf translation. Closes: #413002.
+
+ -- Shaun Jackman <sjackman@debian.org>  Thu,  1 Mar 2007 12:53:22 -0700
+
+monotone (0.31-6) unstable; urgency=low
+
+  * Add Czech debconf translation. Closes: #408697.
+
+ -- Shaun Jackman <sjackman@debian.org>  Wed, 31 Jan 2007 13:14:40 -0700
+
+monotone (0.31-5) unstable; urgency=low
+
+  * Add Swedish debconf translation. Closes: #407868.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 22 Jan 2007 10:32:37 -0700
+
+monotone (0.31-4) unstable; urgency=low
+
+  * Add German debconf translation. Closes: #405820.
+
+ -- Shaun Jackman <sjackman@debian.org>  Tue,  9 Jan 2007 12:59:29 -0700
+
+monotone (0.31-3) unstable; urgency=low
+
+  * Add French debconf translation. Closes: #401754.
+
+ -- Shaun Jackman <sjackman@debian.org>  Tue,  5 Dec 2006 13:37:52 -0700
+
+monotone (0.31-2) unstable; urgency=medium
+
+  *  Remove -DBOOST_SP_DISABLE_THREADS. Closes: #384565.
+
+ -- Shaun Jackman <sjackman@debian.org>  Wed, 22 Nov 2006 09:53:37 -0700
+
+monotone (0.31-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update policy to version 3.7.2.2. No changes were necessary.
+  * New packages: monotone-doc and monotone-server.
+  * Add ps2eps, tetex-bin, texinfo, xpdf-utils to Build-Depends-Indep.
+
+ -- Shaun Jackman <sjackman@debian.org>  Mon, 13 Nov 2006 10:16:14 -0700
+
 monotone (0.31-0.1) unstable; urgency=low
 
   * New upstream release.

@@ -43,6 +43,7 @@ my $man = 0;
 my $user_database = undef;
 my $root = undef;
 my @user_branches = ();
+my @user_not_branches = ();
 my $update = -1;
 my $mail = -1;
 my $attachments = 1;
@@ -62,6 +63,7 @@ GetOptions('help|?' => \$help,
 	   'db=s' => \$user_database,
 	   'root=s' => \$root,
 	   'branch=s' => \@user_branches,
+	   'not-branch=s' => \@user_not_branches,
 	   'update!' => \$update,
 	   'mail!' => \$mail,
 	   'attachments!' => \$attachments,
@@ -167,6 +169,14 @@ if ($#user_branches >= 0) {
 			     s/\*/.\*/g;
 			     $_ } @user_branches).')$';
 }
+my $not_branches_re = "^\$";
+if ($#user_not_branches >= 0) {
+    $not_branches_re=
+	'^('.join('|', map { s/([^a-zA-Z0-9\[\]\*\?_])/\\$1/g;
+			     s/\?/./g;
+			     s/\*/.\*/g;
+			     $_ } @user_not_branches).')$';
+}
 my_debug("using the regular expression /$branches_re/ to select branches");
 
 my @files_to_clean_up = ();
@@ -183,8 +193,9 @@ my_debug("changed current directory to $workdir");
 my %branches =
     map { $_ => 1 }
 	grep (/$branches_re/,
-	      map { chomp; $_ }
-		  my_backtick("$monotone$database list branches"));
+	      grep (!/$not_branches_re/,
+		    map { chomp; $_ }
+			my_backtick("$monotone$database list branches")));
 my_debug("collected the following branches:\n",
 	 map { "  $_\n" } keys %branches);
 
@@ -268,7 +279,7 @@ if ($mail || $debug) {
     foreach my $revision (keys %revisions) {
 	$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("$monotone$database log --last=1 --revision=$revision") ];
+	      my_backtick("$monotone$database log --no-graph --last=1 --from=$revision") ];
 	my $date = (split(' ', (grep(/^Date:/, @{$revision_data{$revision}}))[0]))[1];
 
 	if (defined $before && $date ge $before) {
@@ -582,7 +593,7 @@ sub revision_is_in_branch
     if (!defined $$revision_data{$revision}) {
 	$$revision_data{$revision} =
 	    [ map { chomp; $_ }
-	      my_backtick("$monotone$database log --last=1 --revision=$revision") ];
+	      my_backtick("$monotone$database log --no-graph --last=1 --from=$revision") ];
     }
 
     map {

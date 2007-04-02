@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Store Header File            *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_X509_CERT_STORE_H__
@@ -11,6 +11,34 @@
 #include <botan/certstor.h>
 
 namespace Botan {
+
+/*************************************************
+* X.509 Certificate Validation Result            *
+*************************************************/
+enum X509_Code {
+   VERIFIED,
+   UNKNOWN_X509_ERROR,
+   CANNOT_ESTABLISH_TRUST,
+   CERT_CHAIN_TOO_LONG,
+   SIGNATURE_ERROR,
+   POLICY_ERROR,
+   INVALID_USAGE,
+
+   CERT_FORMAT_ERROR,
+   CERT_ISSUER_NOT_FOUND,
+   CERT_NOT_YET_VALID,
+   CERT_HAS_EXPIRED,
+   CERT_IS_REVOKED,
+
+   CRL_FORMAT_ERROR,
+   CRL_ISSUER_NOT_FOUND,
+   CRL_NOT_YET_VALID,
+   CRL_HAS_EXPIRED,
+
+   CA_CERT_CANNOT_SIGN,
+   CA_CERT_NOT_FOR_CERT_ISSUER,
+   CA_CERT_NOT_FOR_CRL_ISSUER
+};
 
 /*************************************************
 * X.509 Certificate Store                        *
@@ -48,7 +76,7 @@ class X509_Store
 
       void add_new_certstore(Certificate_Store*);
 
-      static X509_Code check_sig(const X509_Object&, X509_PublicKey*);
+      static X509_Code check_sig(const X509_Object&, Public_Key*);
 
       X509_Store();
       X509_Store(const X509_Store&);
@@ -100,22 +128,6 @@ class X509_Store
       std::vector<Certificate_Store*> stores;
       mutable bool revoked_info_valid;
    };
-
-namespace X509_Store_Search {
-
-/*************************************************
-* Methods to search through a X509_Store         *
-*************************************************/
-std::vector<X509_Certificate> by_email(const X509_Store&, const std::string&);
-std::vector<X509_Certificate> by_name(const X509_Store&, const std::string&);
-std::vector<X509_Certificate> by_dns(const X509_Store&, const std::string&);
-std::vector<X509_Certificate> by_keyid(const X509_Store&, u64bit);
-std::vector<X509_Certificate> by_iands(const X509_Store&, const X509_DN&,
-                                       const MemoryRegion<byte>&);
-std::vector<X509_Certificate> by_SKID(const X509_Store&,
-                                      const MemoryRegion<byte>&);
-
-}
 
 }
 

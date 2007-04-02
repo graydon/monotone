@@ -7,7 +7,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iostream>
 #include <string>
 
 #include <boost/regex.hpp>
@@ -24,7 +23,6 @@
 #include "keys.hh"
 #include "cert.hh"
 
-using std::endl;
 using std::istream;
 using std::make_pair;
 using std::map;
@@ -38,223 +36,6 @@ using boost::match_results;
 using boost::regex;
 using boost::shared_ptr;
 
-void
-packet_consumer::set_on_revision_written(boost::function1<void,
-                                         revision_id> const & x)
-{
-  on_revision_written=x;
-}
-
-void
-packet_consumer::set_on_cert_written(boost::function1<void,
-                                     cert const &> const & x)
-{
-  on_cert_written=x;
-}
-
-void
-packet_consumer::set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
-                                       const & x)
-{
-  on_pubkey_written=x;
-}
-
-void
-packet_consumer::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
-                                        const & x)
-{
-  on_keypair_written=x;
-}
-
-
-packet_db_writer::packet_db_writer(app_state & app)
-  : app(app)
-{}
-
-packet_db_writer::~packet_db_writer()
-{}
-
-void
-packet_db_writer::consume_file_data(file_id const & ident,
-                                    file_data const & dat)
-{
-  if (app.db.file_version_exists(ident))
-    {
-      L(FL("file version '%s' already exists in db") % ident);
-      return;
-    }
-
-  transaction_guard guard(app.db);
-  app.db.put_file(ident, dat);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_file_delta(file_id const & old_id,
-                                     file_id const & new_id,
-                                     file_delta const & del)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.file_version_exists(new_id))
-    {
-      L(FL("file version '%s' already exists in db") % new_id);
-      return;
-    }
-
-  if (!app.db.file_version_exists(old_id))
-    {
-      W(F("file preimage '%s' missing in db") % old_id);
-      W(F("dropping delta '%s' -> '%s'") % old_id % new_id);
-      return;
-    }
-
-  app.db.put_file_version(old_id, new_id, del);
-
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_revision_data(revision_id const & ident,
-                                        revision_data const & dat)
-{
-  MM(ident);
-  transaction_guard guard(app.db);
-  if (app.db.revision_exists(ident))
-    {
-      L(FL("revision '%s' already exists in db") % ident);
-      return;
-    }
-
-  revision_t rev;
-  MM(rev);
-  read_revision(dat, rev);
-
-  for (edge_map::const_iterator i = rev.edges.begin();
-       i != rev.edges.end(); ++i)
-    {
-      if (!edge_old_revision(i).inner()().empty()
-          && !app.db.revision_exists(edge_old_revision(i)))
-        {
-          W(F("missing prerequisite revision '%s'") % edge_old_revision(i));
-          W(F("dropping revision '%s'") % ident);
-          return;
-        }
-
-      for (map<split_path, file_id>::const_iterator a
-             = edge_changes(i).files_added.begin();
-           a != edge_changes(i).files_added.end(); ++a)
-        {
-          if (! app.db.file_version_exists(a->second))
-            {
-              W(F("missing prerequisite file '%s'") % a->second);
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-        }
-
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d
-             = edge_changes(i).deltas_applied.begin();
-           d != edge_changes(i).deltas_applied.end(); ++d)
-        {
-          I(!delta_entry_src(d).inner()().empty());
-          I(!delta_entry_dst(d).inner()().empty());
-
-          if (! app.db.file_version_exists(delta_entry_src(d)))
-            {
-              W(F("missing prerequisite file pre-delta '%s'")
-                % delta_entry_src(d));
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-
-          if (! app.db.file_version_exists(delta_entry_dst(d)))
-            {
-              W(F("missing prerequisite file post-delta '%s'")
-                % delta_entry_dst(d));
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-        }
-    }
-
-  app.db.put_revision(ident, dat);
-  if (on_revision_written)
-    on_revision_written(ident);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_revision_cert(revision<cert> const & t)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.revision_cert_exists(t))
-    {
-      L(FL("revision cert on '%s' already exists in db")
-        % t.inner().ident);
-      return;
-    }
-
-  if (!app.db.revision_exists(revision_id(t.inner().ident)))
-    {
-      W(F("cert revision '%s' does not exist in db")
-        % t.inner().ident);
-      W(F("dropping cert"));
-      return;
-    }
-
-  app.db.put_revision_cert(t);
-  if (on_cert_written)
-    on_cert_written(t.inner());
-
-  guard.commit();
-}
-
-
-void
-packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
-                                     base64< rsa_pub_key > const & k)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.public_key_exists(ident))
-    {
-      base64<rsa_pub_key> tmp;
-      app.db.get_key(ident, tmp);
-      if (!keys_match(ident, tmp, ident, k))
-        W(F("key '%s' is not equal to key '%s' in database") % ident % ident);
-      L(FL("skipping existing public key %s") % ident);
-      return;
-    }
-
-  L(FL("putting public key %s") % ident);
-  app.db.put_key(ident, k);
-  if (on_pubkey_written)
-    on_pubkey_written(ident);
-
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
-                                   keypair const & kp)
-{
-  transaction_guard guard(app.db);
-
-  if (app.keys.key_pair_exists(ident))
-    {
-      L(FL("skipping existing key pair %s") % ident);
-      return;
-    }
-
-  app.keys.put_key_pair(ident, kp);
-  if (on_keypair_written)
-    on_keypair_written(ident);
-
-  guard.commit();
-}
-
 // --- packet writer ---
 
 packet_writer::packet_writer(ostream & o) : ost(o) {}
@@ -265,9 +46,9 @@ packet_writer::consume_file_data(file_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[fdata " << ident.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[fdata " << ident.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
@@ -277,10 +58,10 @@ packet_writer::consume_file_delta(file_id const & old_id,
 {
   base64<gzip<delta> > packed;
   pack(del.inner(), packed);
-  ost << "[fdelta " << old_id.inner()() << endl
-      << "        " << new_id.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[fdelta " << old_id.inner()() << '\n'
+      << "        " << new_id.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
@@ -289,38 +70,38 @@ packet_writer::consume_revision_data(revision_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[rdata " << ident.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[rdata " << ident.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_revision_cert(revision<cert> const & t)
 {
-  ost << "[rcert " << t.inner().ident() << endl
-      << "       " << t.inner().name() << endl
-      << "       " << t.inner().key() << endl
-      << "       " << trim_ws(t.inner().value()) << "]" << endl
-      << trim_ws(t.inner().sig()) << endl
-      << "[end]" << endl;
+  ost << "[rcert " << t.inner().ident() << '\n'
+      << "       " << t.inner().name() << '\n'
+      << "       " << t.inner().key() << '\n'
+      << "       " << trim_ws(t.inner().value()) << "]\n"
+      << trim_ws(t.inner().sig()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k)
 {
-  ost << "[pubkey " << ident() << "]" << endl
-      << trim_ws(k()) << endl
-      << "[end]" << endl;
+  ost << "[pubkey " << ident() << "]\n"
+      << trim_ws(k()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp)
 {
-  ost << "[keypair " << ident() << "]" << endl
-      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << endl
-      << "[end]" << endl;
+  ost << "[keypair " << ident() << "]\n"
+      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << '\n'
+      << "[end]\n";
 }
 
 
@@ -428,8 +209,8 @@ feed_packet_consumer
         require(regex_match(args, regex(key)));
         match_results<string::const_iterator> matches;
         require(regex_match(body, matches, regex(base + "#" + base)));
-        string pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
-        string priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
+        base64<rsa_pub_key> pub_dat(trim_ws(string(matches[1].first, matches[1].second)));
+        base64<rsa_priv_key> priv_dat(trim_ws(string(matches[2].first, matches[2].second)));
         cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
       }
     else if (type == "privkey")

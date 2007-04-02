@@ -1,0 +1,45 @@
+head	1.1;
+branch	1.1.1;
+access;
+symbols
+	branch:1.1.1.1.0.2
+	rtag:1.1.1.1
+	vtag:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.02.27.19.30.18;	author markus;	state Exp;
+branches
+	1.1.1.1;
+next	;
+commitid	A7Ju4GgVezsQfa8s;
+
+1.1.1.1
+date	2007.02.27.19.30.18;	author markus;	state Exp;
+branches;
+next	;
+commitid	A7Ju4GgVezsQfa8s;
+
+
+desc
+@@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@foo
+@
+
+
+1.1.1.1
+log
+@import
+@
+text
+@@

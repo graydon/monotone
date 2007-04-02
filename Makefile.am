@@ -14,7 +14,7 @@ SANITY_CORE_SOURCES =							\
 
 
 LUAEXT_SOURCES = 							\
-	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh		\
+	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh vocab_cast.hh  \
 	charset.cc charset.hh paths.cc paths.hh				\
 	interner.hh hash_map.hh						\
 	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
@@ -33,9 +33,11 @@ MOST_SOURCES = 								\
 	update.cc update.hh						\
 	work.cc work_migration.cc work.hh				\
 	cert.cc cert.hh							\
+	project.cc project.hh						\
+	outdated_indicator.cc outdated_indicator.hh			\
 	database.cc database.hh						\
 	key_store.cc key_store.hh					\
-	localized_file_io.cc localized_file_io.hh			\
+	ssh_agent.cc ssh_agent.hh					\
 	keys.cc keys.hh							\
 	packet.cc packet.hh						\
 	rcs_file.cc rcs_file.hh						\
@@ -69,17 +71,19 @@ MOST_SOURCES = 								\
 	roster_delta.cc roster_delta.hh					\
 	sha1.hh sha1.cc sha1_engine.hh                                  \
 	rev_height.cc rev_height.hh					\
+	asciik.cc asciik.hh						\
+	dates.cc dates.hh						\
 									\
-        lru_writeback_cache.hh						\
+	lru_writeback_cache.hh						\
 									\
 	cleanup.hh unit_tests.hh					\
-        cycle_detector.hh randomfile.hh adler32.hh			\
-        randomizer.cc randomizer.hh					\
-        netio.hh smap.hh gettext.h					\
-        package_revision.c package_revision.h				\
-        package_full_revision.c package_full_revision.h			\
-        option.cc option.hh options.cc options.hh options_list.hh	\
-        i18n.h parallel_iter.hh safe_map.hh pch.hh
+	cycle_detector.hh randomfile.hh adler32.hh			\
+	randomizer.cc randomizer.hh					\
+	netio.hh smap.hh gettext.h					\
+	package_revision.c package_revision.h				\
+	package_full_revision.c package_full_revision.h			\
+	option.cc option.hh options.cc options.hh options_list.hh	\
+	i18n.h parallel_iter.hh safe_map.hh pch.hh
 
 NETXX_SOURCES =								\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\
@@ -98,101 +102,113 @@ NETXX_SOURCES =								\
 	netxx/types.h
 
 BOTAN_SOURCES = 							\
-	botan/aes.cpp botan/aes_tab.cpp botan/algolist.cpp		\
-        botan/allocate.cpp botan/arc4.cpp botan/asn1_alg.cpp		\
-        botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp		\
-        botan/asn1_ext.cpp botan/asn1_ku.cpp botan/asn1_oid.cpp		\
-        botan/asn1_str.cpp botan/asn1_tm.cpp botan/barrett.cpp		\
-        botan/base.cpp botan/base64.cpp botan/basefilt.cpp		\
-        botan/ber_code.cpp botan/ber_dec.cpp botan/big_base.cpp		\
-        botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp		\
-        botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp		\
-        botan/buf_filt.cpp botan/cbc.cpp botan/certstore.cpp		\
-	botan/cfb.cpp botan/charset.cpp botan/conf.cpp botan/crc32.cpp	\
-	botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp 			\
-	botan/data_snk.cpp botan/data_src.cpp				\
-        botan/def_ops.cpp botan/defalloc.cpp botan/der_code.cpp		\
-        botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp		\
-        botan/dl_group.cpp botan/dl_param.cpp botan/dl_cache.cpp	\
-        botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
-        botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
-	botan/emsa3.cpp	botan/emsa4.cpp botan/emsa_raw.cpp		\
-	botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp		\
-	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp		\
-	botan/fips140.cpp botan/fused.cpp				\
-        botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp		\
-        botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp	\
-        botan/if_algo.cpp botan/inifile.cpp botan/init.cpp		\
-	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp		\
-	botan/lookup.cpp botan/make_prm.cpp botan/mdx_hash.cpp		\
-	botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp		\
-	botan/mod_exp.cpp botan/mode_pad.cpp botan/modebase.cpp		\
-	botan/mp_comba.cpp botan/mp_core.cpp botan/mp_fkmul.cpp		\
-	botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp		\
-	botan/mp_smul.cpp botan/mutex.cpp botan/numthry.cpp		\
-	botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp	\
-	botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp 	\
-	botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp		\
-	botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp		\
-	botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp		\
-        botan/pow_mod.cpp						\
-	botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp		\
-	botan/randpool.cpp botan/reducer.cpp botan/rng.cpp		\
-        botan/rsa.cpp botan/s2k.cpp botan/secqueue.cpp			\
-	botan/sha160.cpp botan/symkey.cpp botan/timers.cpp		\
-	botan/ui.cpp botan/util.cpp botan/x509_ca.cpp			\
-	botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp	\
-	botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp		\
-	botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp			\
-        botan/x509self.cpp botan/x509stor.cpp				\
-	botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp		\
-	botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp		\
-									\
-        botan/aes.h botan/botan.h botan/def_eng.h botan/es_win32.h	\
-        botan/lookup.h botan/randpool.h botan/version.h			\
-        botan/algolist.h botan/buf_es.h botan/der_enc.h			\
-        botan/exceptn.h botan/mdx_hash.h botan/par_hash.h		\
-        botan/reducer.h botan/x509_ca.h botan/allocate.h		\
-        botan/buf_filt.h botan/dh.h botan/filter.h botan/mem_ops.h	\
-        botan/pbe.h botan/rng.h botan/x509cert.h botan/arc4.h		\
-        botan/cbc.h botan/dl_algo.h botan/filters.h botan/mem_pool.h	\
-        botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h botan/asn1.h	\
-        botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h	\
-        botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h	\
-        botan/cfb.h botan/dl_param.h botan/modebase.h			\
-        botan/pipe.h botan/x509_obj.h					\
-        botan/asn1_oid.h botan/conf.h botan/eax.h botan/gzip.h		\
-        botan/mode_pad.h botan/pk_algs.h botan/secmem.h			\
-        botan/x509self.h botan/barrett.h botan/config.h botan/ecb.h	\
-        botan/hex.h botan/mod_exp.h botan/pk_core.h botan/secqueue.h	\
-        botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h	\
-        botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h	\
-        botan/crl_ent.h botan/emsa.h					\
-        botan/if_algo.h botan/mp_madd.h botan/pkcs8.h			\
-        botan/x919_mac.h botan/basefilt.h botan/ctr.h botan/engine.h	\
-        botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h	\
-        botan/base.h botan/cts.h botan/enums.h botan/kdf.h		\
-        botan/mutex.h botan/pk_keys.h botan/timers.h botan/ber_dec.h	\
-        botan/data_snk.h botan/es_capi.h botan/keypair.h		\
-        botan/numthry.h botan/pk_ops.h botan/types.h botan/bigint.h	\
-        botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h	\
-        botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h	\
-        botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h	\
-        botan/util.h botan/charset.h botan/hash_id.h			\
-        botan/des.h botan/pkcs5.h					\
-        botan/x931_rng.h botan/sha256.h					\
-        botan/parsing.h botan/out_buf.h botan/bit_ops.h
+	botan/aes.cpp botan/aes_tab.cpp \
+	botan/arc4.cpp botan/alg_id.cpp        \
+	botan/asn1_alt.cpp botan/asn1_att.cpp botan/asn1_dn.cpp     \
+	botan/asn1_ku.cpp botan/asn1_oid.cpp     \
+	botan/asn1_str.cpp botan/asn1_tm.cpp \
+	botan/base.cpp botan/base64.cpp botan/basefilt.cpp      \
+	botan/ber_dec.cpp botan/big_base.cpp     \
+	botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp      \
+	botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp      \
+	botan/buf_filt.cpp botan/cbc.cpp botan/certstor.cpp        \
+	botan/cfb.cpp botan/charset.cpp botan/crc32.cpp  \
+	botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp           \
+	botan/data_snk.cpp botan/data_src.cpp \
+	botan/def_ops.cpp botan/defalloc.cpp \
+	botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp        \
+	botan/dl_group.cpp \
+	botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp  \
+	botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp      \
+	botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp      \
+	botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp       \
+	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp        \
+	botan/fips140.cpp \
+	botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
+	botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
+	botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
+	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
+	botan/make_prm.cpp botan/mdx_hash.cpp       \
+	botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp       \
+	botan/mode_pad.cpp botan/modebase.cpp       \
+	botan/mp_comba.cpp botan/mp_mulop.cpp \
+	botan/mp_misc.cpp botan/mp_mul.cpp botan/mp_shift.cpp       \
+	botan/mutex.cpp botan/numthry.cpp       \
+	botan/ofb.cpp botan/oids.cpp botan/parsing.cpp botan/pbes1.cpp  \
+	botan/pbes2.cpp botan/pem.cpp botan/pipe.cpp botan/pipe_io.cpp  \
+	botan/pipe_rw.cpp botan/pk_algs.cpp botan/pk_core.cpp       \
+	botan/pk_filts.cpp botan/pk_keys.cpp botan/pk_util.cpp      \
+	botan/pkcs10.cpp botan/pkcs8.cpp botan/policy.cpp       \
+	botan/pow_mod.cpp \
+	botan/prf_x942.cpp botan/primes.cpp botan/pubkey.cpp        \
+	botan/randpool.cpp botan/reducer.cpp botan/rng.cpp      \
+	botan/rsa.cpp botan/s2k.cpp botan/secqueue.cpp          \
+	botan/sha160.cpp botan/symkey.cpp botan/timers.cpp      \
+	botan/ui.cpp botan/util.cpp botan/x509_ca.cpp           \
+	botan/x509_crl.cpp botan/x509_key.cpp botan/x509_obj.cpp    \
+	botan/x509cert.cpp botan/x509find.cpp botan/x509opt.cpp     \
+	botan/des.cpp botan/des_tab.cpp botan/pkcs5.cpp         \
+	botan/x509self.cpp botan/x509stor.cpp               \
+	botan/def_alg.cpp botan/def_mode.cpp botan/sha256.cpp       \
+	botan/x931_rng.cpp botan/out_buf.cpp botan/bit_ops.cpp \
+	botan/big_rand.cpp botan/def_powm.cpp botan/libstate.cpp \
+	botan/modules.cpp botan/mp_numth.cpp \
+	botan/mp_sqr.cpp botan/powm_fw.cpp \
+	botan/powm_mnt.cpp botan/mp_asm.cpp \
+	botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
+	botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
+	botan/x509_ext.cpp botan/x509stat.cpp \
+	\
+	botan/aes.h botan/botan.h botan/es_win32.h  \
+	botan/lookup.h botan/randpool.h botan/version.h \
+	botan/buf_es.h botan/der_enc.h         \
+	botan/exceptn.h botan/mdx_hash.h \
+	botan/reducer.h botan/x509_ca.h botan/allocate.h        \
+	botan/buf_filt.h botan/dh.h botan/filter.h botan/mem_ops.h  \
+	botan/pbe.h botan/rng.h botan/x509cert.h botan/arc4.h       \
+	botan/cbc.h botan/dl_algo.h botan/filters.h botan/mem_pool.h    \
+	botan/pbe_pkcs.h botan/rsa.h botan/x509_crl.h \
+	botan/certstor.h botan/dlies.h botan/fips140.h botan/mgf1.h \
+	botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h   \
+	botan/cfb.h botan/modebase.h    \
+	botan/pipe.h botan/x509_obj.h           \
+	botan/asn1_oid.h botan/eax.h botan/gzip.h      \
+	botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
+	botan/x509find.h botan/x509self.h botan/config.h botan/ecb.h \
+	botan/hex.h botan/pk_core.h botan/secqueue.h    \
+	botan/x509stor.h botan/base64.h botan/crc32.h botan/eme.h   \
+	botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h  \
+	botan/crl_ent.h botan/emsa.h botan/eng_def.h \
+	botan/if_algo.h botan/pkcs8.h \
+	botan/basefilt.h botan/ctr.h botan/engine.h    \
+	botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h   \
+	botan/base.h botan/cts.h botan/enums.h botan/kdf.h      \
+	botan/mutex.h botan/pk_keys.h botan/timers.h botan/ber_dec.h    \
+	botan/data_snk.h botan/es_capi.h botan/keypair.h        \
+	botan/numthry.h botan/pk_ops.h botan/types.h botan/bigint.h \
+	botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h    \
+	botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h    \
+	botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h \
+	botan/util.h botan/charset.h botan/hash_id.h            \
+	botan/des.h botan/pkcs5.h                   \
+	botan/x931_rng.h botan/sha256.h \
+	botan/parsing.h botan/out_buf.h botan/bit_ops.h \
+	botan/def_powm.h botan/dl_group.h botan/libstate.h \
+	botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h \
+	botan/build.h botan/asn1_int.h botan/datastor.h botan/def_char.h \
+	botan/stl_util.h botan/x509_ext.h botan/x509stat.h \
+	botan/alg_id.h
 
 BOOST_SANDBOX_SOURCES =							\
 	boost/circular_buffer_adaptor.hpp				\
-        boost/circular_buffer_base.hpp					\
+	boost/circular_buffer_base.hpp					\
 	boost/circular_buffer_fwd.hpp					\
-        boost/circular_buffer.hpp
+	boost/circular_buffer.hpp
 
 SQLITE_SOURCES =							\
 	sqlite/alter.c sqlite/attach.c sqlite/auth.c sqlite/btree.c	\
-        sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c	\
-        sqlite/func.c sqlite/hash.c sqlite/insert.c			\
+	sqlite/build.c sqlite/date.c sqlite/delete.c sqlite/expr.c	\
+	sqlite/func.c sqlite/hash.c sqlite/insert.c			\
 	sqlite/legacy.c	sqlite/main.c sqlite/opcodes.c			\
 	sqlite/os.c sqlite/os_unix.c sqlite/os_win.c sqlite/os_os2.c	\
 	sqlite/pager.c sqlite/parse.c sqlite/pragma.c sqlite/printf.c	\
@@ -202,13 +218,13 @@ SQLITE_SOURCES =							\
 	sqlite/util.c sqlite/vacuum.c					\
 	sqlite/vdbe.c sqlite/vdbeapi.c sqlite/vdbeaux.c			\
 	sqlite/vdbemem.c sqlite/where.c					\
-        sqlite/prepare.c sqlite/callback.c				\
+	sqlite/prepare.c sqlite/callback.c				\
 	sqlite/analyze.c sqlite/vdbefifo.c				\
 	sqlite/complete.c						\
 	sqlite/loadext.c sqlite/vtab.c					\
 									\
-        sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h	\
-        sqlite/os_common.h sqlite/os_os2.h				\
+	sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h	\
+	sqlite/os_common.h sqlite/os_os2.h				\
 	sqlite/parse.h sqlite/sqlite3.h	sqlite/sqlite3ext.h		\
 	sqlite/sqliteInt.h						\
 	sqlite/vdbe.h sqlite/vdbeInt.h					\
@@ -260,13 +276,15 @@ UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
 	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc           \
-	unix/cputime.cc
+	unix/cputime.cc unix/ssh_agent_platform.cc	\
+	unix/ssh_agent_platform.hh
 
 WIN32_PLATFORM_SOURCES =						\
 	win32/read_password.cc win32/get_system_flavour.cc		\
 	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
 	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc        \
-	win32/cputime.cc
+	win32/cputime.cc win32/ssh_agent_platform.cc \
+	win32/ssh_agent_platform.hh
 
 # primaries
 
@@ -316,16 +334,16 @@ $(PCH_FILE): $(PCH_BUILD)
 
 pch-file:
 	$(CXXCOMPILE) -x c++-header $(PCH_BUILD) -o $(PCH_FILE) \
-        -MT $(PCH_FILE)  -MD -MP -MF "./$(PCH_FILE).Tdep" \
-        && mv "./$(PCH_FILE).Tdep" "./$(PCH_FILE).dep" \
-        || rm "./$(PCH_FILE).Tdep"
+	-MT $(PCH_FILE)  -MD -MP -MF "./$(PCH_FILE).Tdep" \
+	&& mv "./$(PCH_FILE).Tdep" "./$(PCH_FILE).dep" \
+	|| rm "./$(PCH_FILE).Tdep"
 endif
 
 SUFFIXES = .gch
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
+AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
@@ -405,24 +423,23 @@ PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
 PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
 
-man1_MANS = mtn.1
 info_TEXINFOS = monotone.texi
-EXTRA_DIST = $(man1_MANS) $(PDF_FIGURES) $(PNG_FIGURES) INSTALL			\
-	     README.changesets UPGRADE monotone.spec monotone.html		\
-	     texinfo.css schema.sql std_hooks.lua test_hooks.lua tester.lua	\
-	     testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
-	     $(srcdir)/tester-tests package.m4 package_revision.txt		\
-	     package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
-	     sqlite/keywordhash.h contrib/README contrib/monoprof.sh		\
-	     contrib/monotone-notify.pl contrib/monotone-import.pl		\
-	     contrib/ciabot_monotone.py contrib/monotone.el			\
-	     contrib/monotone-nav.el contrib/monotone.bash_completion		\
-	     contrib/monotone.zsh_completion contrib/mtbrowse.sh		\
-	     contrib/colorize contrib/color-logs.sh contrib/color-logs.conf	\
-	     contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
-	     contrib/monotone-cvs-ignore.lua contrib/usher.cc $(wildcard	\
-	     $(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	     $(wildcard $(srcdir)/debian/*)
+EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
+	README.changesets UPGRADE monotone.spec monotone.html			\
+	texinfo.css schema.sql std_hooks.lua test_hooks.lua tester.lua		\
+	testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
+	$(srcdir)/tester-tests package.m4 package_revision.txt			\
+	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)		\
+	sqlite/keywordhash.h contrib/README contrib/monoprof.sh			\
+	contrib/monotone-notify.pl contrib/monotone-import.pl			\
+	contrib/ciabot_monotone.py contrib/monotone.el				\
+	contrib/monotone-nav.el contrib/monotone.bash_completion		\
+	contrib/monotone.zsh_completion contrib/mtbrowse.sh			\
+	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf		\
+	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
+	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
+	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
+	$(wildcard $(srcdir)/debian/*)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -465,9 +482,9 @@ DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_tester_tests
 # distcheck stuff
 
 DISTCHECK_CONFIGURE_FLAGS = \
-			 --with-bundled-sqlite \
-			 --with-bundled-lua \
-			 --enable-static-boost
+	--with-bundled-sqlite \
+	--with-bundled-lua \
+	--enable-static-boost
 
 # note: these targets are all in srcdir; they are *not* built during
 # the VPATH build part of distcheck (with non-writable source
@@ -497,10 +514,10 @@ run_tester_tests: Makefile
 
 # we generate some headers to copy data into the executable
 
-BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h schema.h		\
-                      package_revision.c package_full_revision.txt		\
-                      package_full_revision_raw.txt package_full_revision.c	\
-                      $(PCH_FILE) $(PCH_BUILD)
+BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h schema.h \
+	package_revision.c package_full_revision.txt \
+	package_full_revision_raw.txt package_full_revision.c	\
+	$(PCH_FILE) $(PCH_BUILD)
 BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
 BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
 CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES) 

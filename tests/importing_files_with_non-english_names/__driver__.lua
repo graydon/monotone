@@ -60,7 +60,7 @@ check(qgrep(european_utf8, "manifest"))
 -- the tree, then, monotone will attempt to convert them to the current
 -- locale, and fail miserably.  so get rid of them first.
 
-check(mtn("drop", "utf8/" .. european_utf8, "utf8/" .. japanese_utf8), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "utf8/" .. european_utf8, "utf8/" .. japanese_utf8), 0, false, false)
 commit()
 
 -- OS X expects data passed to the OS to be utf8, so these tests don't make
@@ -88,7 +88,7 @@ end
 -- okay, clean up again
 
 if ostype ~= "Darwin" then
-	check(mtn("drop", "8859-1/" .. european_8859_1), 0, false, false)
+	check(mtn("drop", "--bookkeep-only", "8859-1/" .. european_8859_1), 0, false, false)
 	commit()
 end
 

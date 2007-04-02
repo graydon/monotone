@@ -18,7 +18,7 @@ netsync.setup()
 --
 -- -- Matthew Nicholson <matt@matt-land.com>
 
-srv = netsync.start({"{*}", "--pid-file=mtn.pid"})
+srv = netsync.start({"--pid-file=mtn.pid"})
 check(exists("mtn.pid"))
 srv:finish(0)
 xfail_if(true, not exists("mtn.pid"))

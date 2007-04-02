@@ -1,6 +1,8 @@
 adler32.hh
 app_state.cc
 app_state.hh
+asciik.cc
+asciik.hh
 automate.cc
 basic_io.cc
 basic_io.hh
@@ -64,10 +66,13 @@ rcs_file.cc
 rcs_file.hh
 rcs_import.cc
 rcs_import.hh
+restrictions.cc
 revision.cc
 revision.hh
+roster.cc
 sanity.cc
 sanity.hh
+selectors.cc
 schema_migration.cc
 schema_migration.hh
 std_hooks.lua

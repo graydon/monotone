@@ -1,0 +1,24 @@
+function ignore_file (name)
+  ok = true
+
+  if ok then
+    if existsonpath("touch") == 0 then
+      pid = spawn_redirected ("", "", "xyzzy", "touch", "foofile")
+      if pid == -1 then ok = false end
+    elseif existsonpath("xcopy") == 0 then
+      pid = spawn_redirected ("", "", "xyzzy", "xcopy")
+      if pid == -1 then ok = false end
+    else
+      x = io.open("skipfile", "w")
+      x:close()
+    end
+  end
+  
+  if ok then
+    x = io.open("outfile", "w")
+    x:close()
+  end
+
+  ignore_file = function (name) return true end
+return true
+end

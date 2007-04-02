@@ -134,7 +134,7 @@ prefix_lines_with(string const & prefix, string const & lines, string & out)
       oss << prefix << *i;
       i++;
       if (i != msgs.end())
-        oss << "\n";
+        oss << '\n';
     }
 
   out = oss.str();
@@ -184,27 +184,6 @@ trim_ws(string const & s)
     tmp = tmp.substr(pos);
   return tmp;
 }
-
-void
-line_end_convert(string const & linesep, string const & src, string & dst)
-{
-  string linesep_str("\n");
-  if (linesep == "CR" || linesep == "\r")
-    linesep_str = "\r";
-  else if (linesep == "CRLF" || linesep == "\r\n")
-    linesep_str = "\r\n";
-  else if (linesep == "LF"|| linesep == "\n")
-    linesep_str = "\n";
-
-  L(FL("doing linesep conversion to %s") % linesep);
-  vector<string> tmp;
-  split_into_lines(src, tmp);
-  join_lines(tmp, dst, linesep_str);
-  if (src.size() >= linesep.size() &&
-      (src.compare(src.size() - linesep.size(), linesep.size(), linesep) == 0))
-    dst += linesep_str;
-}
-
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"

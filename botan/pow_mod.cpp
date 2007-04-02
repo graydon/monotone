@@ -1,142 +1,155 @@
 /*************************************************
-* Modular Exponentiation Source File             *
-* (C) 1999-2005 The Botan Project                *
+* Modular Exponentiation Proxy Source File       *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
-#include <botan/numthry.h>
-#include <vector>
+#include <botan/pow_mod.h>
+#include <botan/engine.h>
 
 namespace Botan {
+
+/*************************************************
+* Power_Mod Constructor                          *
+*************************************************/
+Power_Mod::Power_Mod(const BigInt& n, Usage_Hints hints)
+   {
+   core = 0;
+   set_modulus(n, hints);
+   }
+
+/*************************************************
+* Power_Mod Copy Constructor                     *
+*************************************************/
+Power_Mod::Power_Mod(const Power_Mod& other)
+   {
+   core = 0;
+   if(other.core)
+      core = other.core->copy();
+   }
+
+/*************************************************
+* Power_Mod Assignment Operator                  *
+*************************************************/
+Power_Mod& Power_Mod::operator=(const Power_Mod& other)
+   {
+   delete core;
+   core = 0;
+   if(other.core)
+      core = other.core->copy();
+   return (*this);
+   }
+
+/*************************************************
+* Power_Mod Destructor                           *
+*************************************************/
+Power_Mod::~Power_Mod()
+   {
+   delete core;
+   }
+
+/*************************************************
+* Set the modulus                                *
+*************************************************/
+void Power_Mod::set_modulus(const BigInt& n, Usage_Hints hints) const
+   {
+   delete core;
+   core = ((n == 0) ? 0 : Engine_Core::mod_exp(n, hints));
+   }
+
+/*************************************************
+* Set the base                                   *
+*************************************************/
+void Power_Mod::set_base(const BigInt& b) const
+   {
+   if(b.is_zero() || b.is_negative())
+      throw Invalid_Argument("Power_Mod::set_base: arg must be > 0");
+
+   if(!core)
+      throw Internal_Error("Power_Mod::set_base: core was NULL");
+   core->set_base(b);
+   }
+
+/*************************************************
+* Set the exponent                               *
+*************************************************/
+void Power_Mod::set_exponent(const BigInt& e) const
+   {
+   if(e.is_negative())
+      throw Invalid_Argument("Power_Mod::set_exponent: arg must be > 0");
+
+   if(!core)
+      throw Internal_Error("Power_Mod::set_exponent: core was NULL");
+   core->set_exponent(e);
+   }
+
+/*************************************************
+* Compute the result                             *
+*************************************************/
+BigInt Power_Mod::execute() const
+   {
+   if(!core)
+      throw Internal_Error("Power_Mod::execute: core was NULL");
+   return core->execute();
+   }
 
 namespace {
 
 /*************************************************
-* Exponentiation Window Size                     *
+* Choose potentially useful hints                *
 *************************************************/
-u32bit window_size(u32bit exp_bits)
+Power_Mod::Usage_Hints choose_base_hints(const BigInt& b, const BigInt& n)
    {
-   struct mapping { u32bit bits; u32bit window_size; };
+   if(b == 2)
+      return Power_Mod::Usage_Hints(Power_Mod::BASE_IS_2 |
+                                    Power_Mod::BASE_IS_SMALL);
 
-   static const mapping wsize[] = {
-      { 2048, 7 },
-      { 1024, 6 },
-      {  256, 5 },
-      {  128, 4 },
-      {   64, 3 },
-      {    0, 0 }
-   };
+   const u32bit b_bits = b.bits();
+   const u32bit n_bits = n.bits();
 
-   for(u32bit j = 0; wsize[j].bits; j++)
-      {
-      if(exp_bits >= wsize[j].bits)
-         return wsize[j].window_size;
-      }
-   return 1;
+   if(b_bits < n_bits / 32)
+      return Power_Mod::BASE_IS_SMALL;
+   if(b_bits > n_bits / 4)
+      return Power_Mod::BASE_IS_LARGE;
+
+   return Power_Mod::NO_HINTS;
    }
 
 /*************************************************
-* Left-to-Right Binary Modular Exponentiation    *
+* Choose potentially useful hints                *
 *************************************************/
-BigInt power_mod_l2r(const BigInt& basex, const BigInt& exp,
-                     ModularReducer* reducer)
+Power_Mod::Usage_Hints choose_exp_hints(const BigInt& e, const BigInt& n)
    {
-   const BigInt base = reducer->convert_in(basex);
-   const u32bit exp_bits = exp.bits();
+   const u32bit e_bits = e.bits();
+   const u32bit n_bits = n.bits();
 
-   BigInt x = reducer->convert_in(1);
-   for(u32bit j = exp_bits; j > 0; j--)
-      {
-      x = reducer->square(x);
-      if(exp.get_bit(j-1))
-         x = reducer->multiply(x, base);
-      }
-   return reducer->convert_out(x);
-   }
-
-/*************************************************
-* Modular Exponentiation with g = 2              *
-*************************************************/
-BigInt power_mod_g2(const BigInt& exp, ModularReducer* reducer)
-   {
-   if(reducer->must_convert())
-      throw Internal_Error("power_mod_g2: Can't use this reducer");
-
-   const u32bit exp_bits = exp.bits();
-   BigInt x = 1;
-   for(u32bit j = exp_bits; j > 0; j--)
-      {
-      x = reducer->square(x);
-      if(exp.get_bit(j-1))
-         {
-         x <<= 1;
-         x = reducer->reduce(x);
-         }
-      }
-   return x;
-   }
-
-/*************************************************
-* Window Modular Exponentiation                  *
-*************************************************/
-BigInt power_mod_window(const BigInt& base, const BigInt& exp,
-                        ModularReducer* reducer, u32bit window_bits)
-   {
-   if(window_bits < 2)
-      throw Internal_Error("power_mod_window: Window size too small");
-
-   std::vector<BigInt> g((1 << window_bits) - 1);
-
-   g[0] = reducer->convert_in(base);
-   for(u32bit j = 1; j != g.size(); j++)
-      g[j] = reducer->multiply(g[j-1], g[0]);
-
-   const u32bit exp_nibbles = (exp.bits() + window_bits - 1) / window_bits;
-
-   BigInt x = reducer->convert_in(1);
-   for(u32bit j = exp_nibbles; j > 0; j--)
-      {
-      for(u32bit k = 0; k != window_bits; k++)
-         x = reducer->square(x);
-      u32bit nibble = exp.get_nibble(j-1, window_bits);
-      if(nibble)
-         x = reducer->multiply(x, g[nibble-1]);
-      }
-   return reducer->convert_out(x);
+   if(e_bits < n_bits / 32)
+      return Power_Mod::BASE_IS_SMALL;
+   if(e_bits > n_bits / 4)
+      return Power_Mod::BASE_IS_LARGE;
+   return Power_Mod::NO_HINTS;
    }
 
 }
 
 /*************************************************
-* Modular Exponentiation                         *
+* Fixed_Exponent_Power_Mod Constructor           *
 *************************************************/
-BigInt power_mod(const BigInt& base, const BigInt& exp, const BigInt& mod)
+Fixed_Exponent_Power_Mod::Fixed_Exponent_Power_Mod(const BigInt& e,
+                                                   const BigInt& n,
+                                                   Usage_Hints hints) :
+   Power_Mod(n, Usage_Hints(hints | EXP_IS_FIXED | choose_exp_hints(e, n)))
    {
-   ModularReducer* reducer = get_reducer(mod);
-   BigInt x = power_mod(base, exp, reducer);
-   delete reducer;
-   return x;
+   set_exponent(e);
    }
 
 /*************************************************
-* Modular Exponentiation Algorithm Dispatch      *
+* Fixed_Base_Power_Mod Constructor               *
 *************************************************/
-BigInt power_mod(const BigInt& base, const BigInt& exp,
-                 ModularReducer* reducer)
+Fixed_Base_Power_Mod::Fixed_Base_Power_Mod(const BigInt& b, const BigInt& n,
+                                           Usage_Hints hints) :
+   Power_Mod(n, Usage_Hints(hints | BASE_IS_FIXED | choose_base_hints(b, n)))
    {
-   if(base.is_negative())
-      throw Invalid_Argument("power_mod: base must be positive");
-   if(exp.is_negative())
-      throw Invalid_Argument("power_mod: exponent must be positive");
-   if(exp.is_zero())
-      return 1;
-
-   const u32bit window_bits = window_size(exp.bits());
-
-   if(base == 2 && !reducer->must_convert())
-      return power_mod_g2(exp, reducer);
-   if(window_bits > 1)
-      return power_mod_window(base, exp, reducer, window_bits);
-   return power_mod_l2r(base, exp, reducer);
+   set_base(b);
    }
 
 }

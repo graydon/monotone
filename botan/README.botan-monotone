@@ -1,0 +1,27 @@
+This botan/ subdirectory is maintained in a separate staging branch
+(currently au.asn.ucc.matt.botan.monotone-2). This avoids pulling the entire
+net.randombit.botan history into net.venge.monotone. It also evades the issue
+of being unable to resurrect files (a problem of die-die-die merge), as
+unwanted files are just moved into a.a.u.m.b.monotone-2's Attic/ directory.
+
+Steps to update net.venge.monotone.botan with net.randombit.net:
+
+1) "mtn pull randombit.net net.randombit.botan"
+
+2) "mtn propagate net.randombit.botan au.asn.ucc.matt.botan.monotone-2"
+
+3) "mtn up" in an a.a.u.m.b.monotone-2 workspace. 
+   In a n.v.m.botan botan/ dir, do "rm *".
+   Then copy the entire / contents (no subdirs though) from the staging
+   branch's root dir to the botan/ dir.
+
+4) "mtn ls unknown botan/" and "mtn ls missing botan/" in n.v.m.botan. If 
+   there are obviously renamed files, use "mtn rename" to fix them. 
+   Otherwise add/drop files as appropriate. Also fix up Makefile.am.
+
+4) make check in n.v.m.botan. If it succeeds, commit. If there are problems,
+   copy the changes back to the staging branch and commit there as well. You
+   might need to move some files from Attic/src/ to / in the staging branch.
+
+Update this file if things don't work, and remember to push the staging branch
+to venge.net.

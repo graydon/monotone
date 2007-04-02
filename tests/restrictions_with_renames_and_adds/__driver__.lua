@@ -20,40 +20,37 @@ commit()
 root_rev = base_revision()
 
 -- easiest way to get: rename a dir, and add something to it, and then diff
-revert_to(root_rev)
 mkdir("testdir")
 check(mtn("add", "testdir"), 0, false, false)
 commit()
-check(mtn("mv", "-e", "testdir", "newdir"), 0, false, false)
+rev_with_testdir = base_revision()
+
+check(mtn("mv", "testdir", "newdir"), 0, false, false)
 addfile("newdir/foo", "blah blah\n")
--- these should succeed, but they error out.
+-- these should succeed.
 check(mtn("diff"), 0, false, false)
 check(mtn("commit", "-m", "foo"), 0, false, false)
 
 -- or: rename a dir A, add a replacement B, add something C to the
 --   replacement, then use a restriction that includes A and C only
-revert_to(root_rev)
-mkdir("testdir")
-check(mtn("add", "testdir"), 0, false, false)
-commit()
-check(mtn("mv", "-e", "testdir", "newdir"), 0, false, false)
+check(mtn("up", "-r", rev_with_testdir), 0, false, false)
+check(not exists("newdir"))
+check(mtn("mv", "testdir", "newdir"), 0, false, false)
 mkdir("testdir")
 addfile("testdir/newfile", "asdfasdf")
--- these are nonsensical, but instead of erroring out gracefully, diff
--- succeeds and commit asserts out in roster.cc
+-- these are nonsensical, and should error out gracefully
 check(mtn("diff", "newdir", "testdir/newfile"), 1, false, false)
 check(mtn("commit", "newdir", "testdir/newfile"), 1, false, false)
 
 -- or: rename A, then rename B under it, and use a restriction that includes
 --   only B
-revert_to(root_rev)
+check(mtn("up", "-r", root_rev), 0, false, false)
 mkdir("A")
 mkdir("B")
 check(mtn("add", "A", "B"), 0, false, false)
 commit()
-check(mtn("rename", "-e", "A", "newA"), 0, false, false)
-check(mtn("rename", "-e", "B", "newA/B"), 0, false, false)
--- these are nonsensical, but instead of erroring out gracefully, diff
--- succeeds and commit asserts out in roster.cc
+check(mtn("rename", "A", "newA"), 0, false, false)
+check(mtn("rename", "B", "newA/B"), 0, false, false)
+-- these are nonsensical, and should error out gracefully
 check(mtn("diff", "newA/B"), 1, false, false)
 check(mtn("commit", "newA/B"), 1, false, false)

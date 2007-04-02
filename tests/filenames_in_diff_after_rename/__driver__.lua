@@ -10,7 +10,7 @@ addfile("testfile", "blah blah")
 commit()
 
 writefile("testfile", "stuff stuff")
-check(mtn("rename", "--execute", "testfile", "otherfile"), 0, false, false)
+check(mtn("rename", "testfile", "otherfile"), 0, false, false)
 
 check(exists("otherfile"))
 

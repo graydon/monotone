@@ -325,7 +325,7 @@ Nothing for now."
     (when (get-buffer-process mtn-buf)
       (error "Monotone is currently running"))
     ;; prep the buffer for output
-    (toggle-read-only -1)
+    (setq buffer-read-only nil)
     (erase-buffer)
     ;;(buffer-disable-undo (current-buffer))
     (setq default-directory mtn-top)
@@ -513,7 +513,7 @@ With ARG of 0, clear default server and collection."
     (when (not (equal (current-buffer) buf))
       (switch-to-buffer-other-window buf))
     (set-buffer buf)
-    (toggle-read-only -1)
+    (setq buffer-read-only nil)
     ;; Have the contents been commited?
     (when (eq monotone-commit-edit-status 'started)
       (message "Continuing commit message already started."))
@@ -824,13 +824,17 @@ Grab the ids you want from the buffer and then yank back when needed."
       '(menu-item "DB Pull" monotone-pull))
     (define-key map [monotone-separator] '("--"))
     ;;
+    (define-key map [monotone-vc-commit]
+      '(menu-item "Commit" monotone-vc-commit))
+    (define-key map [monotone-separator2] '("--"))
+    ;;
     (define-key map [monotone-cat-rid]
       '(menu-item "Cat this revision id" monotone-cat-revisionid))
     (define-key map [monotone-cat-mid]
       '(menu-item "Cat this manifest id" monotone-cat-manifestid))
     (define-key map [monotone-cat-fid]
       '(menu-item "Cat this file     id" monotone-cat-fileid))
-    (define-key map [monotone-separator] '("--"))
+    (define-key map [monotone-separator3] '("--"))
     ;;
     (define-key map [monotone-grab-id]
       '(menu-item "Grab ID" monotone-grab-id))

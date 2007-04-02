@@ -1,6 +1,6 @@
 /*************************************************
 * CBC Padding Methods Source File                *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/mode_pad.h>
@@ -21,7 +21,7 @@ u32bit BlockCipherModePaddingMethod::pad_bytes(u32bit bs, u32bit pos) const
 *************************************************/
 void PKCS7_Padding::pad(byte block[], u32bit size, u32bit position) const
    {
-   for(u32bit j = 0; j != size; j++)
+   for(u32bit j = 0; j != size; ++j)
       block[j] = (size-position);
    }
 
@@ -33,7 +33,7 @@ u32bit PKCS7_Padding::unpad(const byte block[], u32bit size) const
    u32bit position = block[size-1];
    if(position > size)
       throw Decoding_Error(name());
-   for(u32bit j = size-position; j != size-1; j++)
+   for(u32bit j = size-position; j != size-1; ++j)
       if(block[j] != position)
          throw Decoding_Error(name());
    return (size-position);
@@ -55,7 +55,7 @@ bool PKCS7_Padding::valid_blocksize(u32bit size) const
 *************************************************/
 void ANSI_X923_Padding::pad(byte block[], u32bit size, u32bit position) const
    {
-   for(u32bit j = 0; j != size-position; j++)
+   for(u32bit j = 0; j != size-position; ++j)
       block[j] = 0;
    block[size-position-1] = (size-position);
    }
@@ -68,7 +68,7 @@ u32bit ANSI_X923_Padding::unpad(const byte block[], u32bit size) const
    u32bit position = block[size-1];
    if(position > size)
       throw Decoding_Error(name());
-   for(u32bit j = size-position; j != size-1; j++)
+   for(u32bit j = size-position; j != size-1; ++j)
       if(block[j] != 0)
          throw Decoding_Error(name());
    return (size-position);
@@ -91,7 +91,7 @@ bool ANSI_X923_Padding::valid_blocksize(u32bit size) const
 void OneAndZeros_Padding::pad(byte block[], u32bit size, u32bit) const
    {
    block[0] = 0x80;
-   for(u32bit j = 1; j != size; j++)
+   for(u32bit j = 1; j != size; ++j)
       block[j] = 0x00;
    }
 

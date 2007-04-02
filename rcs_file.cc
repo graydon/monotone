@@ -10,7 +10,6 @@
 #include "config.h"
 
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -19,6 +18,9 @@
 #endif
 
 #ifdef HAVE_MMAP
+#ifdef sun
+#define _XPG4_2
+#endif
 #include <sys/mman.h>
 #endif
 
@@ -26,14 +28,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef HAVE_FCNTL
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
 #include "rcs_file.hh"
 #include "sanity.hh"
-
-#include <cstdio>
 
 using std::ifstream;
 using std::ios_base;
@@ -338,7 +338,7 @@ struct parser
   void advance()
   {
     ttype = get_token(ist, token, line, col);
-    // cerr << tt2str(ttype) << ": " << token << endl;
+    // cerr << tt2str(ttype) << ": " << token << '\n';
   }
 
   bool nump() { return ttype == TOK_NUM; }

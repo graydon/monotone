@@ -12,6 +12,8 @@
 #include "app_state.hh"
 #include "constants.hh"
 
+#include <boost/tokenizer.hpp>
+
 using std::make_pair;
 using std::pair;
 using std::set;

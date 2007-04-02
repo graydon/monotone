@@ -201,7 +201,8 @@ extern "C"
   extern const char *stringprep_locale_charset (void);
   extern char *stringprep_convert (const char *str,
 				   const char *to_codeset,
-				   const char *from_codeset);
+				   const char *from_codeset,
+				   int best_effort);
   extern char *stringprep_locale_to_utf8 (const char *str);
   extern char *stringprep_utf8_to_locale (const char *str);
 

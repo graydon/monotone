@@ -12,8 +12,7 @@
 #include "annotate.hh"
 #include "cmd.hh"
 #include "diff_patch.hh"
-#include "localized_file_io.hh"
-#include "packet.hh"
+#include "file_io.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
 
@@ -27,15 +26,17 @@ using std::vector;
 
 CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
 {
-  string s = get_stdin();
+  data dat;
+  read_data_stdin(dat);
 
   file_id f_id;
-  file_data f_data(s);
+  file_data f_data(dat);
 
   calculate_ident (f_data, f_id);
 
-  packet_db_writer dbw(app);
-  dbw.consume_file_data(f_id, f_data);
+  transaction_guard guard(app.db);
+  app.db.put_file(f_id, f_data);
+  guard.commit();
 }
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
@@ -103,7 +104,7 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
 
   string pattern("");
   if (!app.opts.no_show_encloser)
-    app.lua.hook_get_encloser_pattern(file_path_external(src_name), pattern);
+    app.lua.hook_get_encloser_pattern(file_path_external(utf8(src_name)), pattern);
 
   make_diff(src_name, dst_name,
             src_id, dst_id,
@@ -127,22 +128,47 @@ CMD(annotate, N_("informative"), N_("PATH"),
   split_path sp;
   file.split(sp);
 
+  L(FL("annotate file '%s'") % file);
+
+  roster_t roster;
   if (app.opts.revision_selectors.size() == 0)
-    app.work.get_revision_id(rid);
+    {
+      // What this _should_ do is calculate the current workspace roster
+      // and/or revision and hand that to do_annotate.  This should just
+      // work, no matter how many parents the workspace has.  However,
+      // do_annotate currently expects to be given a file_t and revision_id
+      // corresponding to items already in the database.  This is a minor
+      // bug in the one-parent case (it means annotate will not show you
+      // changes in the working copy) but is fatal in the two-parent case.
+      // Thus, what we do instead is get the parent rosters, refuse to
+      // proceed if there's more than one, and give do_annotate what it
+      // wants.  See tests/two_parent_workspace_annotate.
+
+      revision_t rev;
+      app.work.get_work_rev(rev);
+      N(rev.edges.size() == 1,
+        F("with no revision selected, this command can only be used in "
+          "a single-parent workspace"));
+
+      rid = edge_old_revision(rev.edges.begin());
+
+      // this call will change to something else when the above bug is
+      // fixed, and so should not be merged with the identical call in
+      // the else branch.
+      app.db.get_roster(rid, roster);
+    }
   else
-    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      N(!null_id(rid), 
+        F("no revision for file '%s' in database") % file);
+      N(app.db.revision_exists(rid), 
+        F("no such revision '%s'") % rid);
 
-  N(!null_id(rid), 
-    F("no revision for file '%s' in database") % file);
-  N(app.db.revision_exists(rid), 
-    F("no such revision '%s'") % rid);
-
-  L(FL("annotate file file_path '%s'") % file);
+      app.db.get_roster(rid, roster);
+    }
 
   // find the version of the file requested
-  roster_t roster;
-  marking_map marks;
-  app.db.get_roster(rid, roster, marks);
   N(roster.has_node(sp), 
     F("no such file '%s' in revision '%s'") % file % rid);
   node_t node = roster.get_node(sp);
@@ -165,17 +191,55 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 
   if (args.size() == 1)
     {
-      read_localized_data(file_path_external(idx(args, 0)), 
-                          dat, app.lua);
+      read_data_for_command_line(idx(args, 0), dat);
     }
   else
     {
-      dat = get_stdin();
+      read_data_stdin(dat);
     }
 
   hexenc<id> ident;
   calculate_ident(dat, ident);
-  cout << ident << "\n";
+  cout << ident << '\n';
+}
+
+static void
+dump_file(std::ostream & output, app_state & app, file_id & ident)
+{
+  N(app.db.file_version_exists(ident),
+    F("no file version %s found in database") % ident);
+
+  file_data dat;
+  L(FL("dumping file %s") % ident);
+  app.db.get_file_version(ident, dat);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+static void
+dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename)
+{
+  N(app.db.revision_exists(rid), 
+    F("no such revision '%s'") % rid);
+
+  // Paths are interpreted as standard external ones when we're in a
+  // workspace, but as project-rooted external ones otherwise.
+  file_path fp;
+  split_path sp;
+  fp = file_path_external(filename);
+  fp.split(sp);
+
+  roster_t roster;
+  marking_map marks;
+  app.db.get_roster(rid, roster, marks);
+  N(roster.has_node(sp), 
+    F("no file '%s' found in revision '%s'") % fp % rid);
+  
+  node_t node = roster.get_node(sp);
+  N((!null_node(node->self) && is_file_t(node)), 
+    F("no file '%s' found in revision '%s'") % fp % rid);
+
+  file_t file_node = downcast_to_file_t(node);
+  dump_file(output, app, file_node->content);
 }
 
 CMD(cat, N_("informative"),
@@ -186,41 +250,76 @@ CMD(cat, N_("informative"),
   if (args.size() != 1)
     throw usage(name);
 
+  revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
-    app.require_workspace();
+    {
+      app.require_workspace();
 
-  transaction_guard guard(app.db, false);
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
+      N(parents.size() == 1,
+        F("this command can only be used in a single-parent workspace"));
+      rid = parent_id(parents.begin());
+    }
+  else
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+
+  dump_file(cout, app, rid, idx(args, 0));
+}
+
+// Name: get_file
+// Arguments:
+//   1: a file id
+// Added in: 1.0
+// Purpose: Prints the contents of the specified file.
+//
+// Output format: The file contents are output without modification.
+//
+// Error conditions: If the file id specified is unknown or invalid prints
+// an error message to stderr and exits with status 1.
+AUTOMATE(get_file, N_("FILEID"), options::opts::none)
+{
+  N(args.size() == 1,
+    F("wrong argument count"));
+
+  file_id ident(idx(args, 0)());
+  dump_file(output, app, ident);
+}
+
+// Name: get_fileof
+// Arguments:
+//   1: a filename
+//
+// Options:
+//   r: a revision id
+//
+// Added in: 4.0
+// Purpose: Prints the contents of the specified file.
+//
+// Output format: The file contents are output without modification.
+//
+// Error conditions: If the file id specified is unknown or invalid prints
+// an error message to stderr and exits with status 1.
+AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
+{
+  N(args.size() == 1,
+    F("wrong argument count"));
 
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
-    app.work.get_revision_id(rid);
+    {
+      app.require_workspace();
+
+      parent_map parents;
+      app.work.get_parent_rosters(parents);
+      N(parents.size() == 1,
+        F("this command can only be used in a single-parent workspace"));
+      rid = parent_id(parents.begin());
+    }
   else
-    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
-  N(app.db.revision_exists(rid), 
-    F("no such revision '%s'") % rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
-  // Paths are interpreted as standard external ones when we're in a
-  // workspace, but as project-rooted external ones otherwise.
-  file_path fp;
-  split_path sp;
-  fp = file_path_external(idx(args, 0));
-  fp.split(sp);
-
-  roster_t roster;
-  marking_map marks;
-  app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), F("no file '%s' found in revision '%s'") % fp % rid);
-  node_t node = roster.get_node(sp);
-  N((!null_node(node->self) && is_file_t(node)), F("no file '%s' found in revision '%s'") % fp % rid);
-
-  file_t file_node = downcast_to_file_t(node);
-  file_id ident = file_node->content;
-  file_data dat;
-  L(FL("dumping file '%s'") % ident);
-  app.db.get_file_version(ident, dat);
-  cout.write(dat.inner()().data(), dat.inner()().size());
-
-  guard.commit();
+  dump_file(output, app, rid, idx(args, 0));
 }
 
 // Local Variables:

@@ -20,5 +20,5 @@ addfile("foo/bar", "foobar")
 commit()
 root_rev = base_revision()
 
-check(mtn("drop", "foo/bar", "foo"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "foo/bar", "foo"), 0, false, false)
 check(mtn("st", "--exclude", "foo/bar"), 1, false, false)

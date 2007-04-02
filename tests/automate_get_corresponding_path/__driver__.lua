@@ -9,7 +9,7 @@ addfile("foo", "blah\n")
 check(mtn("commit", "--date=2005-05-21T12:30:51",
           "--branch=testbranch", "--message=blah-blah"), 0, false, false)
 old_rev = base_revision()
-check(mtn("rename", "foo", "foo2"), 0, true, false)
+check(mtn("rename", "--bookkeep-only", "foo", "foo2"), 0, true, false)
 rename("foo", "foo2")
 check(mtn("commit", "--date=2005-05-21T12:30:51",
           "--branch=testbranch", "--message=blah-blah"), 0, false, false)

@@ -1,187 +1,317 @@
 /*************************************************
-* DL Groups Source File                          *
-* (C) 1999-2005 The Botan Project                *
+* Discrete Logarithm Parameters Source File      *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
-#include <botan/dl_param.h>
+#include <botan/dl_group.h>
+#include <botan/config.h>
+#include <botan/parsing.h>
+#include <botan/numthry.h>
+#include <botan/der_enc.h>
+#include <botan/ber_dec.h>
+#include <botan/pipe.h>
+#include <botan/util.h>
+#include <botan/pem.h>
 
 namespace Botan {
 
-namespace {
-
 /*************************************************
-* IETF 768-bit DL modulus                        *
+* DL_Group Constructor                           *
 *************************************************/
-const char* IETF_768_PRIME =
-   "FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
-   "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
-   "EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245"
-   "E485B576 625E7EC6 F44C42E9 A63A3620 FFFFFFFF FFFFFFFF";
-
-/*************************************************
-* IETF 1024-bit DL modulus                       *
-*************************************************/
-const char* IETF_1024_PRIME =
-   "FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
-   "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
-   "EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245"
-   "E485B576 625E7EC6 F44C42E9 A637ED6B 0BFF5CB6 F406B7ED"
-   "EE386BFB 5A899FA5 AE9F2411 7C4B1FE6 49286651 ECE65381"
-   "FFFFFFFF FFFFFFFF";
-
-/*************************************************
-* IETF 1536-bit DL modulus                       *
-*************************************************/
-const char* IETF_1536_PRIME =
-   "FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
-   "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
-   "EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245"
-   "E485B576 625E7EC6 F44C42E9 A637ED6B 0BFF5CB6 F406B7ED"
-   "EE386BFB 5A899FA5 AE9F2411 7C4B1FE6 49286651 ECE45B3D"
-   "C2007CB8 A163BF05 98DA4836 1C55D39A 69163FA8 FD24CF5F"
-   "83655D23 DCA3AD96 1C62F356 208552BB 9ED52907 7096966D"
-   "670C354E 4ABC9804 F1746C08 CA237327 FFFFFFFF FFFFFFFF";
-
-/*************************************************
-* IETF 2048-bit DL modulus                       *
-*************************************************/
-const char* IETF_2048_PRIME =
-   "FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
-   "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
-   "EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245"
-   "E485B576 625E7EC6 F44C42E9 A637ED6B 0BFF5CB6 F406B7ED"
-   "EE386BFB 5A899FA5 AE9F2411 7C4B1FE6 49286651 ECE45B3D"
-   "C2007CB8 A163BF05 98DA4836 1C55D39A 69163FA8 FD24CF5F"
-   "83655D23 DCA3AD96 1C62F356 208552BB 9ED52907 7096966D"
-   "670C354E 4ABC9804 F1746C08 CA18217C 32905E46 2E36CE3B"
-   "E39E772C 180E8603 9B2783A2 EC07A28F B5C55DF0 6F4C52C9"
-   "DE2BCBF6 95581718 3995497C EA956AE5 15D22618 98FA0510"
-   "15728E5A 8AACAA68 FFFFFFFF FFFFFFFF";
-
-/*************************************************
-* IETF 3072-bit DL modulus                       *
-*************************************************/
-const char* IETF_3072_PRIME =
-  "FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
-  "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
-  "EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245"
-  "E485B576 625E7EC6 F44C42E9 A637ED6B 0BFF5CB6 F406B7ED"
-  "EE386BFB 5A899FA5 AE9F2411 7C4B1FE6 49286651 ECE45B3D"
-  "C2007CB8 A163BF05 98DA4836 1C55D39A 69163FA8 FD24CF5F"
-  "83655D23 DCA3AD96 1C62F356 208552BB 9ED52907 7096966D"
-  "670C354E 4ABC9804 F1746C08 CA18217C 32905E46 2E36CE3B"
-  "E39E772C 180E8603 9B2783A2 EC07A28F B5C55DF0 6F4C52C9"
-  "DE2BCBF6 95581718 3995497C EA956AE5 15D22618 98FA0510"
-  "15728E5A 8AAAC42D AD33170D 04507A33 A85521AB DF1CBA64"
-  "ECFB8504 58DBEF0A 8AEA7157 5D060C7D B3970F85 A6E1E4C7"
-  "ABF5AE8C DB0933D7 1E8C94E0 4A25619D CEE3D226 1AD2EE6B"
-  "F12FFA06 D98A0864 D8760273 3EC86A64 521F2B18 177B200C"
-  "BBE11757 7A615D6C 770988C0 BAD946E2 08E24FA0 74E5AB31"
-  "43DB5BFC E0FD108E 4B82D120 A93AD2CA FFFFFFFF FFFFFFFF";
-
-/*************************************************
-* IETF 4096-bit DL modulus                       *
-*************************************************/
-const char* IETF_4096_PRIME =
-  "FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
-  "29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
-  "EF9519B3 CD3A431B 302B0A6D F25F1437 4FE1356D 6D51C245"
-  "E485B576 625E7EC6 F44C42E9 A637ED6B 0BFF5CB6 F406B7ED"
-  "EE386BFB 5A899FA5 AE9F2411 7C4B1FE6 49286651 ECE45B3D"
-  "C2007CB8 A163BF05 98DA4836 1C55D39A 69163FA8 FD24CF5F"
-  "83655D23 DCA3AD96 1C62F356 208552BB 9ED52907 7096966D"
-  "670C354E 4ABC9804 F1746C08 CA18217C 32905E46 2E36CE3B"
-  "E39E772C 180E8603 9B2783A2 EC07A28F B5C55DF0 6F4C52C9"
-  "DE2BCBF6 95581718 3995497C EA956AE5 15D22618 98FA0510"
-  "15728E5A 8AAAC42D AD33170D 04507A33 A85521AB DF1CBA64"
-  "ECFB8504 58DBEF0A 8AEA7157 5D060C7D B3970F85 A6E1E4C7"
-  "ABF5AE8C DB0933D7 1E8C94E0 4A25619D CEE3D226 1AD2EE6B"
-  "F12FFA06 D98A0864 D8760273 3EC86A64 521F2B18 177B200C"
-  "BBE11757 7A615D6C 770988C0 BAD946E2 08E24FA0 74E5AB31"
-  "43DB5BFC E0FD108E 4B82D120 A9210801 1A723C12 A787E6D7"
-  "88719A10 BDBA5B26 99C32718 6AF4E23C 1A946834 B6150BDA"
-  "2583E9CA 2AD44CE8 DBBBC2DB 04DE8EF9 2E8EFC14 1FBECAA6"
-  "287C5947 4E6BC05D 99B2964F A090C3A2 233BA186 515BE7ED"
-  "1F612970 CEE2D7AF B81BDD76 2170481C D0069127 D5B05AA9"
-  "93B4EA98 8D8FDDC1 86FFB7DC 90A6C08F 4DF435C9 34063199"
-  "FFFFFFFF FFFFFFFF";
-
-/*************************************************
-* JCE default 512-bit DSA group                  *
-*************************************************/
-const char* JCE_512_PRIME_P =
-  "FCA682CE 8E12CABA 26EFCCF7 110E526D B078B05E DECBCD1E"
-  "B4A208F3 AE1617AE 01F35B91 A47E6DF6 3413C5E1 2ED0899B"
-  "CD132ACD 50D99151 BDC43EE7 37592E17";
-const char* JCE_512_PRIME_Q =
-  "962EDDCC 369CBA8E BB260EE6 B6A126D9 346E38C5";
-
-/*************************************************
-* JCE default 768-bit DSA group                  *
-*************************************************/
-const char* JCE_768_PRIME_P =
-  "E9E64259 9D355F37 C97FFD35 67120B8E 25C9CD43 E927B3A9"
-  "670FBEC5 D8901419 22D2C3B3 AD248009 3799869D 1E846AAB"
-  "49FAB0AD 26D2CE6A 22219D47 0BCE7D77 7D4A21FB E9C270B5"
-  "7F607002 F3CEF839 3694CF45 EE3688C1 1A8C56AB 127A3DAF";
-const char* JCE_768_PRIME_Q =
-  "9CDBD84C 9F1AC2F3 8D0F80F4 2AB952E7 338BF511";
-
-/*************************************************
-* JCE default 1024-bit DSA group                 *
-*************************************************/
-const char* JCE_1024_PRIME_P =
-  "FD7F5381 1D751229 52DF4A9C 2EECE4E7 F611B752 3CEF4400"
-  "C31E3F80 B6512669 455D4022 51FB593D 8D58FABF C5F5BA30"
-  "F6CB9B55 6CD7813B 801D346F F26660B7 6B9950A5 A49F9FE8"
-  "047B1022 C24FBBA9 D7FEB7C6 1BF83B57 E7C6A8A6 150F04FB"
-  "83F6D3C5 1EC30235 54135A16 9132F675 F3AE2B61 D72AEFF2"
-  "2203199D D14801C7";
-const char* JCE_1024_PRIME_Q =
-  "9760508F 15230BCC B292B982 A2EB840B F0581CF5";
-
-/*************************************************
-* Decode the modulus string                      *
-*************************************************/
-BigInt decode(const char* prime)
+DL_Group::DL_Group()
    {
-   return BigInt::decode((const byte*)prime, std::strlen(prime),
-                         BigInt::Hexadecimal);
+   initialized = false;
    }
 
-}
+/*************************************************
+* DL_Group Constructor                           *
+*************************************************/
+DL_Group::DL_Group(const std::string& type)
+   {
+   DataSource_Memory pem(global_config().get("dl", type));
+   PEM_decode(pem);
+   }
 
 /*************************************************
-* Try to obtain a particular DL group            *
+* DL_Group Constructor                           *
 *************************************************/
-DL_Group try_to_get_dl_group(const std::string& name)
+DL_Group::DL_Group(u32bit pbits, PrimeType type)
    {
-   if(name == "DSA-512" || name == "DSA-768" || name == "DSA-1024")
-      {
-      const char* P = 0;
-      const char* Q = 0;
-      if(name == "DSA-512")  { P = JCE_512_PRIME_P; Q = JCE_512_PRIME_Q; }
-      if(name == "DSA-768")  { P = JCE_768_PRIME_P; Q = JCE_768_PRIME_Q; }
-      if(name == "DSA-1024") { P = JCE_1024_PRIME_P; Q = JCE_1024_PRIME_Q; }
+   if(pbits < 512)
+      throw Invalid_Argument("DL_Group: prime size " + to_string(pbits) +
+                             " is too small");
 
-      BigInt p = decode(P), q = decode(Q);
-      BigInt g = DL_Group::make_dsa_generator(p, q);
-      return DL_Group(p, q, g);
+   if(type == Strong)
+      {
+      p = random_safe_prime(pbits);
+      q = (p - 1) / 2;
+      g = 2;
+      }
+   else if(type == Prime_Subgroup || type == DSA_Kosherizer)
+      {
+      if(type == Prime_Subgroup)
+         {
+         const u32bit qbits = 2 * dl_work_factor(pbits);
+         q = random_prime(qbits);
+         BigInt X;
+         while(p.bits() != pbits || !is_prime(p))
+            {
+            X = random_integer(pbits);
+            p = X - (X % (2*q) - 1);
+            }
+         }
+      else
+         generate_dsa_primes(p, q, pbits);
+
+      g = make_dsa_generator(p, q);
       }
 
-   BigInt p, g;
+   initialized = true;
+   }
 
-   if(name == "IETF-768")  { g = 2; p = decode(IETF_768_PRIME); }
-   if(name == "IETF-1024") { g = 2; p = decode(IETF_1024_PRIME); }
-   if(name == "IETF-1536") { g = 2; p = decode(IETF_1536_PRIME); }
-   if(name == "IETF-2048") { g = 2; p = decode(IETF_2048_PRIME); }
-   if(name == "IETF-3072") { g = 2; p = decode(IETF_3072_PRIME); }
-   if(name == "IETF-4096") { g = 2; p = decode(IETF_4096_PRIME); }
+/*************************************************
+* DL_Group Constructor                           *
+*************************************************/
+DL_Group::DL_Group(const MemoryRegion<byte>& seed, u32bit pbits, u32bit start)
+   {
+   if(!generate_dsa_primes(p, q, seed.begin(), seed.size(), pbits, start))
+      throw Invalid_Argument("DL_Group: The seed/counter given does not "
+                             "generate a DSA group");
 
-   if(p > 0 && g > 0)
-      return DL_Group(p, g);
+   g = make_dsa_generator(p, q);
 
-   throw Lookup_Error("DL group \"" + name + "\" not found");
+   initialized = true;
+   }
+
+/*************************************************
+* DL_Group Constructor                           *
+*************************************************/
+DL_Group::DL_Group(const BigInt& p1, const BigInt& g1)
+   {
+   initialize(p1, 0, g1);
+   }
+
+/*************************************************
+* DL_Group Constructor                           *
+*************************************************/
+DL_Group::DL_Group(const BigInt& p1, const BigInt& q1, const BigInt& g1)
+   {
+   initialize(p1, q1, g1);
+   }
+
+/*************************************************
+* DL_Group Initializer                           *
+*************************************************/
+void DL_Group::initialize(const BigInt& p1, const BigInt& q1, const BigInt& g1)
+   {
+   if(p1 < 3)
+      throw Invalid_Argument("DL_Group: Prime invalid");
+   if(g1 < 2 || g1 >= p1)
+      throw Invalid_Argument("DL_Group: Generator invalid");
+   if(q1 < 0 || q1 >= p1)
+      throw Invalid_Argument("DL_Group: Subgroup invalid");
+
+   p = p1;
+   g = g1;
+   q = q1;
+
+   if(q == 0 && check_prime((p - 1) / 2))
+      q = (p - 1) / 2;
+
+   initialized = true;
+   }
+
+/*************************************************
+* Verify that the group has been set             *
+*************************************************/
+void DL_Group::init_check() const
+   {
+   if(!initialized)
+      throw Invalid_State("DLP group cannot be used uninitialized");
+   }
+
+/*************************************************
+* Verify the parameters                          *
+*************************************************/
+bool DL_Group::verify_group(bool strong) const
+   {
+   init_check();
+
+   if(g < 2 || p < 3 || q < 0)
+      return false;
+   if((q != 0) && ((p - 1) % q != 0))
+      return false;
+
+   if(!strong)
+      return true;
+
+   if(!check_prime(p))
+      return false;
+   if((q > 0) && !check_prime(q))
+      return false;
+   return true;
+   }
+
+/*************************************************
+* Return the prime                               *
+*************************************************/
+const BigInt& DL_Group::get_p() const
+   {
+   init_check();
+   return p;
+   }
+
+/*************************************************
+* Return the generator                           *
+*************************************************/
+const BigInt& DL_Group::get_g() const
+   {
+   init_check();
+   return g;
+   }
+
+/*************************************************
+* Return the subgroup                            *
+*************************************************/
+const BigInt& DL_Group::get_q() const
+   {
+   init_check();
+   if(q == 0)
+      throw Format_Error("DLP group has no q prime specified");
+   return q;
+   }
+
+/*************************************************
+* DER encode the parameters                      *
+*************************************************/
+SecureVector<byte> DL_Group::DER_encode(Format format) const
+   {
+   init_check();
+
+   if((q == 0) && (format != PKCS_3))
+      throw Encoding_Error("The ANSI DL parameter formats require a subgroup");
+
+   if(format == ANSI_X9_57)
+      {
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(p)
+            .encode(q)
+            .encode(g)
+         .end_cons()
+      .get_contents();
+      }
+   else if(format == ANSI_X9_42)
+      {
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(p)
+            .encode(g)
+            .encode(q)
+         .end_cons()
+      .get_contents();
+      }
+   else if(format == PKCS_3)
+      {
+      return DER_Encoder()
+         .start_cons(SEQUENCE)
+            .encode(p)
+            .encode(g)
+         .end_cons()
+      .get_contents();
+      }
+
+   throw Invalid_Argument("Unknown DL_Group encoding " + to_string(format));
+   }
+
+/*************************************************
+* PEM encode the parameters                      *
+*************************************************/
+std::string DL_Group::PEM_encode(Format format) const
+   {
+   SecureVector<byte> encoding = DER_encode(format);
+   if(format == PKCS_3)
+      return PEM_Code::encode(encoding, "DH PARAMETERS");
+   else if(format == ANSI_X9_57)
+      return PEM_Code::encode(encoding, "DSA PARAMETERS");
+   else if(format == ANSI_X9_42)
+      return PEM_Code::encode(encoding, "X942 DH PARAMETERS");
+   else
+      throw Invalid_Argument("Unknown DL_Group encoding " + to_string(format));
+   }
+
+/*************************************************
+* Decode BER encoded parameters                  *
+*************************************************/
+void DL_Group::BER_decode(DataSource& source, Format format)
+   {
+   BigInt new_p, new_q, new_g;
+
+   BER_Decoder decoder(source);
+   BER_Decoder ber = decoder.start_cons(SEQUENCE);
+
+   if(format == ANSI_X9_57)
+      {
+      ber.decode(new_p)
+         .decode(new_q)
+         .decode(new_g)
+         .verify_end();
+      }
+   else if(format == ANSI_X9_42)
+      {
+      ber.decode(new_p)
+         .decode(new_g)
+         .decode(new_q)
+         .discard_remaining();
+      }
+   else if(format == PKCS_3)
+      {
+      ber.decode(new_p)
+         .decode(new_g)
+         .discard_remaining();
+      }
+   else
+      throw Invalid_Argument("Unknown DL_Group encoding " + to_string(format));
+
+   initialize(new_p, new_q, new_g);
+   }
+
+/*************************************************
+* Decode PEM encoded parameters                  *
+*************************************************/
+void DL_Group::PEM_decode(DataSource& source)
+   {
+   std::string label;
+   DataSource_Memory ber(PEM_Code::decode(source, label));
+
+   if(label == "DH PARAMETERS")
+      BER_decode(ber, PKCS_3);
+   else if(label == "DSA PARAMETERS")
+      BER_decode(ber, ANSI_X9_57);
+   else if(label == "X942 DH PARAMETERS")
+      BER_decode(ber, ANSI_X9_42);
+   else
+      throw Decoding_Error("DL_Group: Invalid PEM label " + label);
+   }
+
+/*************************************************
+* Create a random DSA-style generator            *
+*************************************************/
+BigInt DL_Group::make_dsa_generator(const BigInt& p, const BigInt& q)
+   {
+   BigInt g, e = (p - 1) / q;
+
+   for(u32bit j = 0; j != PRIME_TABLE_SIZE; ++j)
+      {
+      g = power_mod(PRIMES[j], e, p);
+      if(g != 1)
+         break;
+      }
+
+   if(g == 1)
+      throw Exception("DL_Group: Couldn't create a suitable generator");
+
+   return g;
    }
 
 }

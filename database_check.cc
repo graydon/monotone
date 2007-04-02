@@ -34,6 +34,11 @@
 //          files
 //
 
+// FIXME: add a test that for each revision, generates that rev's roster
+// from scratch, and compares it to the one stored in the db.  (Do the
+// comparison using something like equal_up_to_renumbering, except should
+// say if (!temp_node(a) && !temp_node(b)) I(a == b).)
+
 using std::logic_error;
 using std::map;
 using std::multimap;
@@ -475,7 +480,7 @@ check_certs(app_state & app,
         }
 
       checked_keys[i->inner().key].sigs++;
-      checked_revisions[i->inner().ident].checked_certs.push_back(checked);
+      checked_revisions[revision_id(i->inner().ident)].checked_certs.push_back(checked);
 
       ++ticks;
     }
@@ -898,6 +903,8 @@ check_db(app_state & app)
   size_t missing_heights = 0;
   size_t duplicate_heights = 0;
   size_t incorrect_heights = 0;
+
+  transaction_guard guard(app.db, false);
 
   check_db_integrity_check(app);
   check_files(app, checked_files);

@@ -9,10 +9,13 @@
 
 #include <map>
 #include <algorithm>
+#include <iostream>
 
 #include "transforms.hh"
 #include "simplestring_xform.hh"
+#include "file_io.hh"
 #include "charset.hh"
+#include "diff_patch.hh"
 #include "inodeprint.hh"
 #include "cert.hh"
 #include "ui.hh"
@@ -24,6 +27,9 @@
 #endif
 
 using std::cin;
+using std::make_pair;
+using std::map;
+using std::ostream;
 using std::pair;
 using std::set;
 using std::string;
@@ -64,7 +70,7 @@ namespace commands
                    bool u,
                    options::options_type const & o)
     : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
-      options(o)
+      opts(o)
   {
     if (cmds == NULL)
       cmds = new map<string, command *>;
@@ -75,7 +81,7 @@ namespace commands
   std::string command::desc() {return safe_gettext(desc_.c_str());}
   options::options_type command::get_options(vector<utf8> const & args)
   {
-    return options;
+    return opts;
   }
   bool operator<(command const & self, command const & other);
   std::string const & hidden_group()
@@ -99,7 +105,6 @@ namespace std
 
 namespace commands
 {
-  using std::endl;
   using std::greater;
   using std::ostream;
 
@@ -146,7 +151,7 @@ namespace commands
     string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
     for (vector<string>::iterator i = matched.begin();
          i != matched.end(); ++i)
-      err += (*i + "\n");
+      err += ('\n' + *i);
     W(i18n_format(err));
     return cmd;
   }
@@ -166,17 +171,17 @@ namespace commands
         split_into_lines(params, lines);
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
-          out << "     " << i->second->name << " " << *j << endl;
+          out << "     " << i->second->name << ' ' << *j << '\n';
         split_into_lines(i->second->desc(), lines);
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
-          out << "       " << *j << endl;
-        out << endl;
+          out << "       " << *j << '\n';
+        out << '\n';
         return;
       }
 
     vector<command *> sorted;
-    out << _("commands:") << endl;
+    out << _("commands:") << '\n';
     for (i = (*cmds).begin(); i != (*cmds).end(); ++i)
       {
         if (i->second->cmdgroup != hidden_group())
@@ -199,23 +204,23 @@ namespace commands
         if (idx(sorted, i)->cmdgroup != curr_group)
           {
             curr_group = idx(sorted, i)->cmdgroup;
-            out << endl;
+            out << '\n';
             out << "  " << safe_gettext(idx(sorted, i)->cmdgroup.c_str());
             col = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str()))) + 2;
             while (col++ < (col2 + 3))
               out << ' ';
           }
-        out << " " << idx(sorted, i)->name;
+        out << ' ' << idx(sorted, i)->name;
         col += idx(sorted, i)->name.size() + 1;
         if (col >= 70)
           {
-            out << endl;
+            out << '\n';
             col = 0;
             while (col++ < (col2 + 3))
               out << ' ';
           }
       }
-    out << endl << endl;
+    out << "\n\n";
   }
 
   int process(app_state & app, string const & cmd, vector<utf8> const & args)
@@ -258,7 +263,7 @@ namespace commands
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
-        return (*cmds)[cmd]->options;
+        return (*cmds)[cmd]->opts;
       }
     else
       {
@@ -339,19 +344,6 @@ CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
 }
 
 string
-get_stdin()
-{
-  char buf[constants::bufsz];
-  string tmp;
-  while(cin)
-    {
-      cin.read(buf, constants::bufsz);
-      tmp.append(buf, cin.gcount());
-    }
-  return tmp;
-}
-
-string
 describe_revision(app_state & app,
                   revision_id const & id)
 {
@@ -364,8 +356,7 @@ describe_revision(app_state & app,
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;
-  app.db.get_revision_certs(id, author_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.get_project().get_revision_certs_by_name(id, author_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -374,8 +365,7 @@ describe_revision(app_state & app,
       description += " ";
       description += tv();
     }
-  app.db.get_revision_certs(id, date_name, tmp);
-  erase_bogus_certs(tmp, app);
+  app.get_project().get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -403,7 +393,7 @@ complete(app_state & app,
   if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
       && str.size() == constants::idlen)
     {
-      completion.insert(revision_id(str));
+      completion.insert(revision_id(hexenc<id>(id(str))));
       if (must_exist)
         N(app.db.revision_exists(*completion.begin()),
           F("no such revision '%s'") % *completion.begin());
@@ -426,7 +416,8 @@ complete(app_state & app,
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     {
-      pair<set<revision_id>::const_iterator, bool> p = completion.insert(revision_id(*i));
+      pair<set<revision_id>::const_iterator, bool> p =
+        completion.insert(revision_id(hexenc<id>(id(*i))));
       P(F("expanded to '%s'") % *(p.first));
     }
 }
@@ -458,14 +449,14 @@ void
 notify_if_multiple_heads(app_state & app)
 {
   set<revision_id> heads;
-  get_branch_heads(app.opts.branch_name(), app, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.opts.branch_name % ui.prog_name);
+    P(i18n_format(prefixedline) % app.opts.branchname % ui.prog_name);
   }
 }
 
@@ -485,17 +476,17 @@ process_commit_message_args(bool & given,
       join_lines(app.opts.message, msg);
       log_message = utf8(msg);
       if (message_prefix().length() != 0)
-        log_message = message_prefix() + "\n\n" + log_message();
+        log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
   else if (app.opts.msgfile_given)
     {
       data dat;
       read_data_for_command_line(app.opts.msgfile, dat);
-      external dat2 = dat();
+      external dat2 = external(dat());
       system_to_utf8(dat2, log_message);
       if (message_prefix().length() != 0)
-        log_message = message_prefix() + "\n\n" + log_message();
+        log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
   else if (message_prefix().length() != 0)
@@ -506,6 +497,24 @@ process_commit_message_args(bool & given,
   else
     given = false;
 }
+
+void
+get_content_paths(roster_t const & roster, map<file_id, file_path> & paths)
+{
+  node_map const & nodes = roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_t node = roster.get_node(i->first);
+      if (is_file_t(node))
+        {
+          split_path sp;
+          roster.get_name(i->first, sp);
+          file_t file = downcast_to_file_t(node);
+          paths.insert(make_pair(file->content, file_path(sp)));
+        }
+    }
+}
+  
 
 // Local Variables:
 // mode: C++

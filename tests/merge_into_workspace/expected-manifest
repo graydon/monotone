@@ -1,0 +1,9 @@
+format_version "1"
+
+dir ""
+
+   file "otherfile"
+content [db19801f1850d7d85114e6c3f80d019f5bdb804a]
+
+   file "testfile"
+content [aed28f362beb27308db048db953a985fba45d8e7]

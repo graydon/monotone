@@ -1,13 +1,12 @@
 /*************************************************
 * OctetString Header File                        *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_SYMKEY_H__
 #define BOTAN_SYMKEY_H__
 
 #include <botan/secmem.h>
-#include <botan/enums.h>
 #include <string>
 
 namespace Botan {
@@ -30,11 +29,12 @@ class OctetString
 
       void set_odd_parity();
 
-      void change(u32bit, RNG_Quality);
+      void change(u32bit);
       void change(const std::string&);
       void change(const byte[], u32bit);
       void change(const MemoryRegion<byte>& in) { bits = in; }
 
+      OctetString(u32bit len) { change(len); }
       OctetString(const std::string& str = "") { change(str); }
       OctetString(const byte in[], u32bit len) { change(in, len); }
       OctetString(const MemoryRegion<byte>& in) { change(in); }
@@ -51,32 +51,10 @@ OctetString operator+(const OctetString&, const OctetString&);
 OctetString operator^(const OctetString&, const OctetString&);
 
 /*************************************************
-* Symmetric Key                                  *
+* Alternate Names                                *
 *************************************************/
-class SymmetricKey : public OctetString
-   {
-   public:
-      void change(u32bit n) { OctetString::change(n, SessionKey); }
-      SymmetricKey(u32bit len) { change(len); }
-      SymmetricKey(const std::string& str = "") : OctetString(str) {}
-      SymmetricKey(const byte in[], u32bit l) : OctetString(in, l) {}
-      SymmetricKey(const MemoryRegion<byte>& in) : OctetString(in) {}
-      SymmetricKey(const OctetString& os) : OctetString(os) {}
-   };
-
-/*************************************************
-* Initialization Vector                          *
-*************************************************/
-class InitializationVector : public OctetString
-   {
-   public:
-      void change(u32bit n) { OctetString::change(n, Nonce); }
-      InitializationVector(u32bit len) { change(len); }
-      InitializationVector(const std::string& str = "") : OctetString(str) {}
-      InitializationVector(const byte in[], u32bit l) : OctetString(in, l) {}
-      InitializationVector(const MemoryRegion<byte>& in) : OctetString(in) {}
-      InitializationVector(const OctetString& os) : OctetString(os) {}
-   };
+typedef OctetString SymmetricKey;
+typedef OctetString InitializationVector;
 
 }
 

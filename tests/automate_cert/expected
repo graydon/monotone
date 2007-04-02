@@ -1,0 +1,30 @@
+      key "tester@test.net"
+signature "ok"
+     name "author"
+    value "tester@test.net"
+    trust "trusted"
+
+      key "tester@test.net"
+signature "ok"
+     name "branch"
+    value "testbranch"
+    trust "trusted"
+
+      key "tester@test.net"
+signature "ok"
+     name "changelog"
+    value "blah-blah
+"
+    trust "trusted"
+
+      key "tester@test.net"
+signature "ok"
+     name "date"
+    value "2005-05-21T12:30:51"
+    trust "trusted"
+
+      key "tester@test.net"
+signature "ok"
+     name "testcert"
+    value "testvalue"
+    trust "trusted"

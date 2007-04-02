@@ -9,9 +9,7 @@ check(mtn("add", "-R", "."), 0, false, false)
 commit()
  rev = base_revision()
 
-rename("subdir/foo", "subdir/foo-renamed")
 check(indir("subdir", mtn("rename", "foo", "foo-renamed")), 0, false, false)
-rename("subdir/anotherdir", "anotherdir-renamed")
 check(indir("subdir", mtn("rename", "anotherdir", "../anotherdir-renamed")), 0, false, false)
 commit()
 

@@ -2,9 +2,9 @@
 #
 # File: mtbrowse.sh
 # Description: Text based browser for monotone source control.
-# url: http://www.venge.net/monotone/
+# url: http://www.monotone.ca/
 # Licence: GPL
-# Author: Henry Nestler <Henry@BigFoot.de>
+# Author: Henry Nestler <Henry at BigFoot.de>
 #
 # Simple text based browser for Monotone repositories, written as shell script.
 # Can select branch, revision. Views diff from revision, logs, certs and more.
@@ -22,121 +22,16 @@
 #  - Browse in branches, revisions, diff files, view logs ...
 #
 # Needed tools:
-#  Monotone 0.19, 0.23, mtn 0.26 or compatible
+#  Monotone (tested 0.19, 0.23, mtn 0.26-0.33)
 #  dialog (tested Version 0.9b)
 #  bash, sh, dash
 #  less, vi or vim (use $VISUAL or $PAGER)
 #  cat, cut, echo, eval, head, sort, tail, tr, wc, xargs ...
 #
-# History:
-# 2005/5/5 Version 0.1.1 Henry@BigFoot.de
-# 
-# 2005/5/9 Version 0.1.2 Henry@BigFoot.de
-# Update for MT 0.19
-# Diff from parent.
-# Toposort or Date/Time sort, config via TOPOSORT
-# 
-# 2005/5/13 Version 0.1.3 Henry@BigFoot.de
-# Diff from 'parent' mistaken HEAD/REVISION usage.
-# Limit count of revisions, change by config menu, default 20 (for big proj).
-# 
-# 2005/5/24 Version 0.1.4 Henry@BigFoot.de
-# Don't run "monotone log" with empty head.
-# 
-# 2005/5/31 Version 0.1.5 Henry@BigFoot.de
-# Add selection for head, if unmerged heads found.
-# Short revision hash. Keys in selection. (option)
-# Popup select, if more as one parent (from merge).
-#
-# 2005/6/1 Version 0.1.6 Henry@BigFoot.de
-# Autotect for log --depth/--last, new Monotone style version 0.19+.
-# Use internal dialog file viewer if VISUAL and PAGER empty.
-# Config menu with radiolist. View actual setting.
-# Save config only from config menu. No autosave.
-# Fix cache deleting on startup.
-# Xargs for revision selection with date and key.
-#
-# 2005/6/6 Version 0.1.7 Henry@BigFoot.de
-# Backtitle with head, branch and filename.
-# Default-item to remember the selection in menues.
-# Check filname for reading before MT fails.
-# Exit after --help or --version.
-#
-# 2005/6/16 Version 0.1.8 Henry@BigFoot.de
-# automate ancestors, toposort, complete revision and
-# automate parents missing param --db (if no MT directory).
-# Switch --depth/--last without error dialog.
-# Bug: Select rev for multiple parents (from merge), remove "cat cat".
-# Use Author, not Key. Add Branch and Changelog in selection.
-# Selectable format for Date, Branch, Author, ChangeLog.  Coloring author.
-# Current marker is asterix before date/time.
-#
-# 2005/6/23 Version 0.1.9 Henry@BigFoot.de
-# Cancel is "EXIT" in main menu.
-# Meter alongwith --gauge for reading certs :-)
-# Config with menu and def.item, instand radiolist and the test on/off thingy.
-# Don't remove some old files at exit.
-# Branch and head not in Main background title.
-#
-# 2005/6/24 Version 0.1.10 Henry@BigFoot.de
-# Remove TAB's from ChangeLog.
-# Some cat as stdin pipe.
-# Typofix topsort/toposort.
-#
-# 2005-06-26 Version 0.1.11 Henry@BigFoot.de
-# No double Date/Branch/Author with CR in selection list.
-# Short Author and no branch as default.
-# Set default revision for first selection to head.
-# "automate ancestors" without cut (have only one field).
-# Internal function for "automate ancestors" with depth limit. Speedup.
-#    real    user      sys
-# 19.925s  6.780s  13.030s  automate ancestors (net.venge.monotone)
-#  6.067s  2.920s   3.120s  automate parents as loop, depth 30
-#  4.226s  2.280s   1.910s  automate parents as loop, depth 20
-#  1.384s  0.680s   0.700s  automate parents as loop, depth 10
-#
-# 2005-06-29 Version 0.1.12 Henry@BigFoot.de
-# Automatic author color.
-# Date have inverse color for last selection.
-# Expand revision after input, if not 40 chars. (parents don't allow short rev)
-#
-# 2005-11-20 Version 0.1.13 Henry@BigFoot.de
-# Handle authors without '@'.
-# Minor box sizing.
-# Get Version of monotone before starts anything.
-# DEPTH_LAST detects for version >0.19, no save to config.
-# 'cat revision' replaced with 'automate get_revision' (mt >0.22).
-# ANCESTORS "M" changed to "A". Default "L" (monotone log --brief).
-# Warn user about misconfigurations.
-# Temp files without tailing dot.
-# New option: Sort by Date/Time with up or down.
-# Fix: Parent of merge, if certs list from cache (ncolor).
-#
-# 2006-01-17 Version 0.1.14 Henry@BigFoot.de
-# One call for getting monotone version.
-# Warn before using "automate ancestor" on big database.
-#
-# 2006-01-21 Version 0.1.15 Henry@BigFoot.de
-# Fix: Author colors >8 wrong handled.
-# Faster brief selection menu, without changelog (do_log_brief_ancestors).
-# Skip merges from more as one person in brief selection.
-# Remove forbitten chars from changelog with tr. added backslash.
-#
-# 2006-01-23 Version 0.1.16 Henry@BigFoot.de
-# More posix shell syntax for dash.
-# do_head_sel: Prints error message from mt (it's first call with db file).
-#
-# 2006-04-01 Version 0.2.0 Henry@BigFoot.de
-# Handle bookkeeping directory MT and _MTN
-# Move checking bookkeeping directory behind versions check.
-#
-# 2006-04-10 Version 0.2.1 Henry@BigFoot.de
-# Binary is mtn, set by MTN, with fallback to 'monotone'.
-
 # Known Bugs / ToDo-List:
 # * better make "sed -n -e '1p'" for merge two different branches.
 
-VERSION="0.2.1"
+VERSION="0.3.0"
 
 # Binary
 MTN="mtn"
@@ -189,6 +84,9 @@ FORMAT_COLOR="\\Z7\\Zb"
 # L=log brief with changelog, B=brief log
 ANCESTORS="L"
 
+# Don't view merges. Can overwrite in .mtbrowserc
+NOMERGES="--no-merges"
+
 # read saved settings
 if [ -f $CONFIGFILE ]
 then
@@ -236,18 +134,18 @@ do_pager()
 # Add the date, author and changlog to the list of revisions
 
 # Scanning for:
-# Key   : henry@bigfoot.de
+# Key   : name@domain.de
 # Sig   : ok
 # Name  : date
 # Value : 2005-05-31T22:29:50		<<---
 # --------------------------------------
-# Key   : henry@bigfoot.de
+# Key   : name@domain.de
 # Sig   : ok
 # Name  : changelog
 # Value : Handle merged parents		<<---
 
 # Output
-# 123456 "2005-05-31 22:29 henry@bigfoot.de  Handle merged parents"
+# 123456 "2005-05-31 22:29 name@domain.de  Handle merged parents"
 
 fill_date_key()
 {
@@ -280,7 +178,7 @@ fill_date_key()
 	short_hash=`echo $hash | cut -c 1-$HASH_TRIM`
 
 	# get certs of revision, remove special chars, cache it
-	$MTN --db=$DB list certs $hash | tr '\\\t\042' '/ \047' > $tfc
+	LANG=POSIX $MTN --db=$DB list certs $hash | tr '\\\t\042' '/ \047' > $tfc
 		
 	# Date format
 	case $FORMAT_DATE in
@@ -398,10 +296,10 @@ do_log_brief_ancestors()
     local hash short_hash dat bra aut lineno color
 
     # Brief output
-    # e51dc90425c6371a176e87df294b47fcdba3f0bb Full Name <henry@bigfoot.de> 2005-11-20T20:31:34 mtbrowse
+    # e51dc90425c6371a176e87df294b47fcdba3f0bb Full Name <name@domain.de> 2005-11-20T20:31:34 mtbrowse
 
     lineno=0
-    $MTN log --brief --last=$CERTS_MAX --revision=$HEAD --db=$DB |\
+    $MTN log --brief --last=$CERTS_MAX $ARG_FROM=$HEAD --db=$DB $NO_GRAPH $NOMERGES |\
     while read line
     do
 	lineno=$(( $lineno+1 ))
@@ -419,7 +317,7 @@ do_log_brief_ancestors()
 	branch="$4"
 
 	# Skip wrong formats, special case
-	# 37416b924fc25a48bba11ed8b2cd62e9dab7e637 First Name  <abc@gmail.com>,geecko@geek.com.au,third@domain.org 2006-01-20T08:21:37,2006-01-20T08:35:46,2006-01-20T08:35:33 net.venge.monotone
+	# 37416b924fc25a48bba11ed8b2cd62e9dab7e637 First Name  <name@domain.de>,name2@domain.com.au,third@domain.org 2006-01-20T08:21:37,2006-01-20T08:35:46,2006-01-20T08:35:33 net.venge.monotone
 
 	if [ -n "$hash" -a -n "$date" -a -n "$time" -a -n "$author" ]
 	then
@@ -630,9 +528,11 @@ do_action_sel()
 	case `cat $TEMPFILE.action-select` in
 	  L)
 	    # LOG
-	    # 0.19   monotone log --depth=n id file
-	    # 0.19+  monotone log --last=n id file
-	    $MTN --db=$DB log $DEPTH_LAST=1 --revision=$REVISION \
+	    # 0.19   monotone log --depth=n --revision=id
+	    # 0.19+  monotone log --last=n --revision=id
+	    # 0.29   monotone log --last=n --revision=id
+	    # 0.33   monotone log --last=n --from=id --no-graph
+	    $MTN --db=$DB log $DEPTH_LAST=1 $ARG_FROM=$REVISION $NO_GRAPH \
 	      > $TEMPFILE.change.log || exit 200
 
 	    do_pager $TEMPFILE.change.log
@@ -801,7 +701,7 @@ do_revision_sel()
 	    ;;
 	    L)
 		# Get ancestors from log
-		$MTN log --brief --last=$CERTS_MAX --revision=$HEAD \
+		$MTN log --brief --last=$CERTS_MAX $ARG_FROM=$HEAD $NO_GRAPH $NOMERGES \
 		  --db=$DB | cut -d ' ' -f 1 > $TEMPFILE.ancestors
 		# Check empty output, if fails
 		test -s $TEMPFILE.ancestors || exit 200
@@ -1113,6 +1013,7 @@ FORMAT_AUTHOR="$FORMAT_AUTHOR"
 FORMAT_LOG="$FORMAT_LOG"
 FORMAT_COLOR="$FORMAT_COLOR"
 ANCESTORS="$ANCESTORS"
+NOMERGES="$NOMERGES"
 EOF
 		dialog --title " Info " --sleep 2 --infobox \
 		    "Configration wrote to\n$CONFIGFILE" 0 0
@@ -1194,9 +1095,9 @@ then
     exit -1
 fi
 
-# "log --depth=n" was changed to "log --last=n", in MT 0.20
-# 0.19   monotone log --depth=n id file
-# 0.20+  monotone log --last=n id file
+# "log --depth=n" was changed to "log --last=n" in 0.20
+# 0.19   monotone log --depth=n
+# 0.20+  monotone log --last=n
 if [ $MT_MAJOR -eq 0 -a $MT_MINOR -lt 20 ]
 then
     DEPTH_LAST="--depth"
@@ -1210,6 +1111,22 @@ then
     BK_DIR="MT"
 else
     BK_DIR="_MTN"
+fi
+
+# "log --revision=n" was changed to "log --from=n" in 0.32
+if [ $MT_MAJOR -eq 0 -a $MT_MINOR -lt 32 ]
+then
+    ARG_FROM="--revision"
+else
+    ARG_FROM="--from"
+fi
+
+# "log --no-graph" need for 0.33
+if [ $MT_MAJOR -eq 0 -a $MT_MINOR -lt 33 ]
+then
+    NO_GRAPH=""
+else
+    NO_GRAPH="--no-graph"
 fi
 
 # exist working copy?
@@ -1357,7 +1274,7 @@ do
 	do_clear_cache
 	;;
       l)
-	# Sumary coplete LOG
+	# Sumary complete LOG
 	# if not branch known, ask user
 	do_branch_sel check
 	do_head_sel check
@@ -1366,7 +1283,7 @@ do
 	    $DB -nt $TEMPFILE.changelog.$BRANCH ]
 	then
 	    echo "Reading log...($BRANCH)"
-	    $MTN --db=$DB log --revision=$HEAD \
+	    $MTN --db=$DB log $ARG_FROM=$HEAD $NO_GRAPH \
 	      > $TEMPFILE.changelog.$BRANCH || exit 200
 	fi
 	cp $TEMPFILE.changelog.$BRANCH $TEMPFILE.change.log

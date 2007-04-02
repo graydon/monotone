@@ -1,14 +1,38 @@
 /*************************************************
 * Randpool Source File                           *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/randpool.h>
 #include <botan/lookup.h>
 #include <botan/bit_ops.h>
 #include <botan/util.h>
+#include <algorithm>
 
 namespace Botan {
+
+namespace {
+
+/*************************************************
+* PRF based on a MAC                             *
+*************************************************/
+enum RANDPOOL_PRF_TAG {
+   USER_INPUT = 0,
+   CIPHER_KEY = 1,
+   MAC_KEY    = 2,
+   GEN_OUTPUT = 3
+};
+
+SecureVector<byte> randpool_prf(MessageAuthenticationCode* mac,
+                                RANDPOOL_PRF_TAG tag,
+                                const byte in[], u32bit length)
+   {
+   mac->update((byte)tag);
+   mac->update(in, length);
+   return mac->final();
+   }
+
+}
 
 /*************************************************
 * Generate a buffer of random bytes              *
@@ -35,20 +59,21 @@ void Randpool::randomize(byte out[], u32bit length) throw(PRNG_Unseeded)
 void Randpool::update_buffer()
    {
    const u64bit timestamp = system_clock();
-   counter++;
 
-   for(u32bit j = 0; j != 4; j++)
-      mac->update(get_byte(j, counter));
-   for(u32bit j = 0; j != 8; j++)
-      mac->update(get_byte(j, timestamp));
+   for(u32bit j = 0; j != counter.size(); ++j)
+      if(++counter[j])
+         break;
+   for(u32bit j = 0; j != 8; ++j)
+      counter[j+4] = get_byte(j, timestamp);
 
-   SecureVector<byte> mac_val = mac->final();
+   SecureVector<byte> mac_val = randpool_prf(mac, GEN_OUTPUT,
+                                             counter, counter.size());
 
-   for(u32bit j = 0; j != mac_val.size(); j++)
+   for(u32bit j = 0; j != mac_val.size(); ++j)
       buffer[j % buffer.size()] ^= mac_val[j];
    cipher->encrypt(buffer);
 
-   if(counter % ITERATIONS_BEFORE_RESEED == 0)
+   if(counter[0] % ITERATIONS_BEFORE_RESEED == 0)
       {
       mix_pool();
       update_buffer();
@@ -62,12 +87,12 @@ void Randpool::mix_pool()
    {
    const u32bit BLOCK_SIZE = cipher->BLOCK_SIZE;
 
-   mac->set_key(mac->process(pool));
-   cipher->set_key(mac->process(pool));
+   mac->set_key(randpool_prf(mac, MAC_KEY, pool, pool.size()));
+   cipher->set_key(randpool_prf(mac, CIPHER_KEY, pool, pool.size()));
 
    xor_buf(pool, buffer, BLOCK_SIZE);
    cipher->encrypt(pool);
-   for(u32bit j = 1; j != POOL_BLOCKS; j++)
+   for(u32bit j = 1; j != POOL_BLOCKS; ++j)
       {
       const byte* previous_block = pool + BLOCK_SIZE*(j-1);
       byte* this_block = pool + BLOCK_SIZE*j;
@@ -85,7 +110,7 @@ void Randpool::add_randomness(const byte data[], u32bit length)
    entropy += std::min(this_entropy, 8*mac->OUTPUT_LENGTH);
    entropy = std::min(entropy, 8 * pool.size());
 
-   SecureVector<byte> mac_val = mac->process(data, length);
+   SecureVector<byte> mac_val = randpool_prf(mac, USER_INPUT, data, length);
    xor_buf(pool, mac_val, mac_val.size());
    mix_pool();
    }
@@ -107,7 +132,8 @@ void Randpool::clear() throw()
    mac->clear();
    pool.clear();
    buffer.clear();
-   entropy = counter = 0;
+   counter.clear();
+   entropy = 0;
    }
 
 /*************************************************
@@ -144,7 +170,8 @@ Randpool::Randpool() : ITERATIONS_BEFORE_RESEED(8), POOL_BLOCKS(32)
 
    buffer.create(BLOCK_SIZE);
    pool.create(POOL_BLOCKS * BLOCK_SIZE);
-   entropy = counter = 0;
+   counter.create(12);
+   entropy = 0;
 
    mix_pool();
    }
@@ -156,7 +183,7 @@ Randpool::~Randpool()
    {
    delete cipher;
    delete mac;
-   entropy = counter = 0;
+   entropy = 0;
    }
 
 }

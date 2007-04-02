@@ -34,6 +34,9 @@
 #include <windows.h>
 #include <string.h>
 
+// Disable the C runtime's built-in filename globbing.
+int _CRT_glob = 0;
+
 // Microsoft + other compatible compilers such as Intel
 #if defined(_MSC_VER)
 #define MS_CRT_DEBUG_HOOK

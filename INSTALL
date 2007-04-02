@@ -13,12 +13,11 @@ building and installation process for monotone
   * software prerequisites:
 
     - a supported C++ compiler: g++ 3.2 or later.
-    - an installed copy of boost 1.33.1 or later.
+    - an installed copy of boost 1.32.0 or later.
     - zlib 1.1.4 or later.
 
         on debian: 
 
-           apt-get install libboost-date-time-dev
            apt-get install libboost-filesystem-dev
            apt-get install libboost-regex-dev
            apt-get install libboost-test-dev

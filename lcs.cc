@@ -39,7 +39,6 @@
 */
 
 #include <algorithm>
-#include <iostream>
 #include <vector>
 
 #include "lcs.hh"

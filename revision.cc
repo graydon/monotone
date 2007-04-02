@@ -9,7 +9,6 @@
 
 #include <cctype>
 #include <cstdlib>
-#include <iostream>
 #include <map>
 #include <queue>
 #include <set>
@@ -68,6 +67,10 @@ void revision_t::check_sane() const
 {
   // null id in current manifest only permitted if previous
   // state was null and no changes
+  // FIXME: above comment makes no sense.  This should just be
+  // I(!null_id(new_manifest)), and the only reason I am not making it so
+  // right now is that I don't have time to immediately track down all the
+  // fallout.
   if (null_id(new_manifest))
     {
       for (edge_map::const_iterator i = edges.begin();
@@ -647,6 +650,99 @@ make_revision(revision_id const & old_rev_id,
   rev.made_for = made_for_database;
 }
 
+void
+make_revision(parent_map const & old_rosters,
+              roster_t const & new_roster,
+              revision_t & rev)
+{
+  edge_map edges;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> cs(new cset());
+      make_cset(parent_roster(i), new_roster, *cs);
+      safe_insert(edges, make_pair(parent_id(i), cs));
+    }
+
+  rev.edges = edges;
+  calculate_ident(new_roster, rev.new_manifest);
+  L(FL("new manifest_id is %s") % rev.new_manifest);
+}
+
+static void
+recalculate_manifest_id_for_restricted_rev(parent_map const & old_rosters,
+                                           edge_map & edges,
+                                           revision_t & rev)
+{
+  // In order to get the correct manifest ID, recalculate the new roster
+  // using one of the restricted csets.  It doesn't matter which of the
+  // parent roster/cset pairs we use for this; by construction, they must
+  // all produce the same result.
+  revision_id id = parent_id(old_rosters.begin());
+  roster_t restricted_roster = *(safe_get(old_rosters, id).first);
+
+  temp_node_id_source nis;
+  editable_roster_base er(restricted_roster, nis);
+  safe_get(edges, id)->apply_to(er);
+
+  calculate_ident(restricted_roster, rev.new_manifest);
+  rev.edges = edges;
+  L(FL("new manifest_id is %s") % rev.new_manifest);
+}
+
+void
+make_restricted_revision(parent_map const & old_rosters,
+                         roster_t const & new_roster,
+                         node_restriction const & mask,
+                         revision_t & rev)
+{
+  edge_map edges;
+  cset dummy;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> included(new cset());
+      make_restricted_csets(parent_roster(i), new_roster,
+                            *included, dummy, mask);
+      check_restricted_cset(parent_roster(i), *included);
+      safe_insert(edges, make_pair(parent_id(i), included));
+    }
+
+  recalculate_manifest_id_for_restricted_rev(old_rosters, edges, rev);
+}
+
+void
+make_restricted_revision(parent_map const & old_rosters,
+                         roster_t const & new_roster,
+                         node_restriction const & mask,
+                         revision_t & rev,
+                         cset & excluded,
+                         string const & cmd_name)
+{
+  edge_map edges;
+  bool no_excludes = true;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> included(new cset());
+      make_restricted_csets(parent_roster(i), new_roster,
+                            *included, excluded, mask);
+      check_restricted_cset(parent_roster(i), *included);
+      safe_insert(edges, make_pair(parent_id(i), included));
+      if (!excluded.empty())
+        no_excludes = false;
+    }
+
+  N(old_rosters.size() == 1 || no_excludes,
+    F("the command '%s %s' cannot be restricted in a two-parent workspace")
+    % ui.prog_name % cmd_name);
+
+  recalculate_manifest_id_for_restricted_rev(old_rosters, edges, rev);
+}
+
 // Workspace-only revisions, with fake rev.new_manifest and content
 // changes suppressed.
 void
@@ -663,7 +759,7 @@ make_revision_for_workspace(revision_id const & old_rev_id,
   rev.edges.clear();
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   if (!null_id(old_rev_id))
-    rev.new_manifest = fake_id();
+    rev.new_manifest = manifest_id(fake_id());
   rev.made_for = made_for_workspace;
 }
 
@@ -682,6 +778,28 @@ make_revision_for_workspace(revision_id const & old_rev_id,
   make_revision_for_workspace(old_rev_id, changes, rev);
 }
 
+void
+make_revision_for_workspace(parent_map const & old_rosters,
+                            roster_t const & new_roster,
+                            revision_t & rev)
+{
+  edge_map edges;
+  for (parent_map::const_iterator i = old_rosters.begin();
+       i != old_rosters.end();
+       i++)
+    {
+      shared_ptr<cset> cs(new cset());
+      make_cset(parent_roster(i), new_roster, *cs);
+      cs->deltas_applied.clear();
+      safe_insert(edges, make_pair(parent_id(i), cs));
+    }
+
+  rev.edges = edges;
+  rev.new_manifest = manifest_id(fake_id());
+  rev.made_for = made_for_workspace;
+}
+
+
 // Stuff related to rebuilding the revision graph. Unfortunately this is a
 // real enough error case that we need support code for it.
 
@@ -694,7 +812,7 @@ dump(parent_roster_map const & prm, string & out)
   ostringstream oss;
   for (parent_roster_map::const_iterator i = prm.begin(); i != prm.end(); ++i)
     {
-      oss << "roster: " << i->first << "\n";
+      oss << "roster: " << i->first << '\n';
       string roster_str, indented_roster_str;
       dump(*i->second.first, roster_str);
       prefix_lines_with("    ", roster_str, indented_roster_str);
@@ -785,7 +903,7 @@ void anc_graph::write_certs()
         encode_hexenc(data(string(buf, buf + constants::epochlen_bytes)), hexdata);
         epoch_data new_epoch(hexdata);
         L(FL("setting epoch for %s to %s") % *i % new_epoch);
-        app.db.set_epoch(cert_value(*i), new_epoch);
+        app.db.set_epoch(branch_name(*i), new_epoch);
       }
   }
 
@@ -807,11 +925,8 @@ void anc_graph::write_certs()
           cert new_cert;
           make_simple_cert(rev.inner(), name, val, app, new_cert);
           revision<cert> rcert(new_cert);
-          if (! app.db.revision_cert_exists(rcert))
-            {
-              ++n_certs_out;
-              app.db.put_revision_cert(rcert);
-            }
+          if (app.db.put_revision_cert(rcert))
+            ++n_certs_out;
         }
     }
 }
@@ -1495,17 +1610,10 @@ anc_graph::construct_revisions_from_ancestry()
           P(F("------------------------------------------------"));
           */
 
-          if (!app.db.revision_exists (new_rid))
-            {
-              L(FL("mapped node %d to revision %s") % child % new_rid);
-              app.db.put_revision(new_rid, rev);
-              ++n_revs_out;
-            }
-          else
-            {
-              L(FL("skipping already existing revision %s") % new_rid);
-            }
-
+          L(FL("mapped node %d to revision %s") % child % new_rid);
+          if (app.db.put_revision(new_rid, rev))
+            ++n_revs_out;
+          
           // Mark this child as done, hooray!
           safe_insert(done, child);
 
@@ -1606,8 +1714,8 @@ build_changesets_from_manifest_ancestry(app_state & app)
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id child, parent;
-      child = i->inner().ident;
-      parent = hexenc<id>(tv());
+      child = manifest_id(i->inner().ident);
+      parent = manifest_id(tv());
 
       u64 parent_node = graph.add_node_for_old_manifest(parent);
       u64 child_node = graph.add_node_for_old_manifest(child);
@@ -1861,7 +1969,7 @@ void calculate_ident(revision_t const & cs,
   hexenc<id> tid;
   write_revision(cs, tmp);
   calculate_ident(tmp, tid);
-  ident = tid;
+  ident = revision_id(tid);
 }
 
 #ifdef BUILD_UNIT_TESTS

@@ -111,24 +111,24 @@ public:
   void write_bye_cmd(u8 phase);
 
   void read_anonymous_cmd(protocol_role & role,
-                          utf8 & include_pattern,
-                          utf8 & exclude_pattern,
+                          globish & include_pattern,
+                          globish & exclude_pattern,
                           rsa_oaep_sha_data & hmac_key_encrypted) const;
   void write_anonymous_cmd(protocol_role role,
-                           utf8 const & include_pattern,
-                           utf8 const & exclude_pattern,
+                           globish const & include_pattern,
+                           globish const & exclude_pattern,
                            rsa_oaep_sha_data const & hmac_key_encrypted);
 
   void read_auth_cmd(protocol_role & role,
-                     utf8 & include_pattern,
-                     utf8 & exclude_pattern,
+                     globish & include_pattern,
+                     globish & exclude_pattern,
                      id & client,
                      id & nonce1,
                      rsa_oaep_sha_data & hmac_key_encrypted,
                      std::string & signature) const;
   void write_auth_cmd(protocol_role role,
-                      utf8 const & include_pattern,
-                      utf8 const & exclude_pattern,
+                      globish const & include_pattern,
+                      globish const & exclude_pattern,
                       id const & client,
                       id const & nonce1,
                       rsa_oaep_sha_data const & hmac_key_encrypted,
@@ -158,7 +158,7 @@ public:
                        delta const & del);
 
   void read_usher_cmd(utf8 & greeting) const;
-  void write_usher_reply_cmd(utf8 const & server, utf8 const & pattern);
+  void write_usher_reply_cmd(utf8 const & server, globish const & pattern);
 
 };
 

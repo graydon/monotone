@@ -29,9 +29,9 @@ check(mtn("--branch=testbranch", "checkout", "bob"), 0, false, false)
 writefile("bob/bar", "bob's bar")
 
 -- Alice renames some files
-check(indir("alice", mtn("rename", "file.3", "bar")), 0, false, false)
-check(indir("alice", mtn("rename", "file.4", "bar.4")), 0, false, false)
-check(indir("alice", mtn("rename", "file.5", "bar.5")), 0, false, false)
+check(indir("alice", mtn("rename", "--bookkeep-only", "file.3", "bar")), 0, false, false)
+check(indir("alice", mtn("rename", "--bookkeep-only", "file.4", "bar.4")), 0, false, false)
+check(indir("alice", mtn("rename", "--bookkeep-only", "file.5", "bar.5")), 0, false, false)
 rename("alice/file.3", "alice/bar")
 rename("alice/file.4", "alice/bar.4")
 rename("alice/file.5", "alice/bar.5")

@@ -15,7 +15,7 @@ second_rev = base_revision()
 
 revert_to(root_rev)
 remove("somefile")
-check(mtn("rename", "-e", "testfile", "otherfile"), 0, false, false)
+check(mtn("rename", "testfile", "otherfile"), 0, false, false)
 writefile("otherfile", "1\n2\n3\n4\n5-changed\n")
 
 check(mtn("pluck", "-r", second_rev), 0, false, false)
@@ -39,7 +39,8 @@ writefile("_MTN/log", "")
 check(mtn("pluck", "-r", root_rev, "-r", second_rev), 1, false, false)
 check(readfile("_MTN/log") == "")
 
-check(mtn("drop", "-e", "somefile"), 0, false, false)
+check(mtn("drop", "somefile"), 0, false, false)
+remove("somefile")
 -- now it should work again
 check(mtn("pluck", "-r", root_rev, "-r", second_rev), 0, false, false)
 newtext = readfile("otherfile")

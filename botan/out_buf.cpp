@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe Output Buffer Source file                 *
-* (C) 1999-2005 The Botan Project                *
+* (C) 1999-2006 The Botan Project                *
 *************************************************/
 
 #include <botan/out_buf.h>
@@ -67,7 +67,7 @@ void Output_Buffers::retire()
          {
          delete buffers[0];
          buffers.pop_front();
-         offset++;
+         ++offset;
          }
       else
          break;
@@ -108,7 +108,7 @@ Output_Buffers::Output_Buffers()
 *************************************************/
 Output_Buffers::~Output_Buffers()
    {
-   for(u32bit j = 0; j != buffers.size(); j++)
+   for(u32bit j = 0; j != buffers.size(); ++j)
       delete buffers[j];
    }
 

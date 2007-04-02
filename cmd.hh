@@ -35,7 +35,7 @@ namespace commands
     std::string params_;
     std::string desc_;
     bool use_workspace_options;
-    options::options_type options;
+    options::options_type opts;
     command(std::string const & n,
             std::string const & g,
             std::string const & p,
@@ -56,12 +56,21 @@ args_to_paths(std::vector<utf8> const & args)
 {
   std::vector<file_path> paths;
   for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
-    paths.push_back(file_path_external(*i));
+    {
+      if (bookkeeping_path::external_string_is_bookkeeping_path(*i))
+        W(F("ignored bookkeeping path '%s'") % *i);
+      else 
+        paths.push_back(file_path_external(*i));
+    }
+  // "it should not be the case that args were passed, but our paths set
+  // ended up empty".  This test is because some commands have default
+  // behavior for empty path sets -- in particular, it is the same as having
+  // no restriction at all.  "mtn revert _MTN" turning into "mtn revert"
+  // would be bad.  (Or substitute diff, etc.)
+  N(!(!args.empty() && paths.empty()),
+    F("all arguments given were bookkeeping paths; aborting"));
   return paths;
 }
-
-std::string
-get_stdin();
 
 std::string
 describe_revision(app_state & app,
@@ -119,6 +128,11 @@ process_commit_message_args(bool & given,
                             utf8 & log_message,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
+
+void
+get_content_paths(roster_t const & roster, 
+                  std::map<file_id, 
+                  file_path> & paths);
 
 #define CMD(C, group, params, desc, opts)                            \
 namespace commands {                                                 \
@@ -180,7 +194,7 @@ namespace commands {                                                 \
     cmd_ ## C() : command(#C, realcommand##_cmd.cmdgroup,            \
                           realcommand##_cmd.params_,                 \
                           realcommand##_cmd.desc_, true,             \
-                          realcommand##_cmd.options)                 \
+                          realcommand##_cmd.opts)                 \
     {}                                                               \
     virtual std::string desc();                                      \
     virtual void exec(app_state & app,                               \
@@ -206,7 +220,7 @@ namespace automation {
   {
     std::string name;
     std::string params;
-    options::options_type options;
+    options::options_type opts;
     automate(std::string const & n, std::string const & p,
              options::options_type const & o);
     virtual void run(std::vector<utf8> args,

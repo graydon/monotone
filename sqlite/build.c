@@ -22,7 +22,7 @@
 **     COMMIT
 **     ROLLBACK
 **
-** $Id: build.c,v 1.409 2006/07/26 16:22:15 danielk1977 Exp $
+** $Id: build.c,v 1.413 2007/02/02 12:44:37 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -1077,8 +1077,12 @@ void sqlite3AddDefaultValue(Parse *pParse, Expr *pExpr){
       sqlite3ErrorMsg(pParse, "default value of column [%s] is not constant",
           pCol->zName);
     }else{
+      Expr *pCopy;
       sqlite3ExprDelete(pCol->pDflt);
-      pCol->pDflt = sqlite3ExprDup(pExpr);
+      pCol->pDflt = pCopy = sqlite3ExprDup(pExpr);
+      if( pCopy ){
+        sqlite3TokenCopy(&pCopy->span, &pExpr->span);
+      }
     }
   }
   sqlite3ExprDelete(pExpr);
@@ -1218,6 +1222,10 @@ void sqlite3AddCollateType(Parse *pParse, const char *zType, int nType){
 ** If no versions of the requested collations sequence are available, or
 ** another error occurs, NULL is returned and an error message written into
 ** pParse.
+**
+** This routine is a wrapper around sqlite3FindCollSeq().  This routine
+** invokes the collation factory if the named collation cannot be found
+** and generates an error message.
 */
 CollSeq *sqlite3LocateCollSeq(Parse *pParse, const char *zName, int nName){
   sqlite3 *db = pParse->db;
@@ -1586,7 +1594,8 @@ void sqlite3CreateView(
   Token *pName1,     /* The token that holds the name of the view */
   Token *pName2,     /* The token that holds the name of the view */
   Select *pSelect,   /* A SELECT statement that will become the new view */
-  int isTemp         /* TRUE for a TEMPORARY view */
+  int isTemp,        /* TRUE for a TEMPORARY view */
+  int noErr          /* Suppress error messages if VIEW already exists */
 ){
   Table *p;
   int n;
@@ -1601,7 +1610,7 @@ void sqlite3CreateView(
     sqlite3SelectDelete(pSelect);
     return;
   }
-  sqlite3StartTable(pParse, pName1, pName2, isTemp, 1, 0, 0);
+  sqlite3StartTable(pParse, pName1, pName2, isTemp, 1, 0, noErr);
   p = pParse->pNewTable;
   if( p==0 || pParse->nErr ){
     sqlite3SelectDelete(pSelect);
@@ -2452,7 +2461,7 @@ void sqlite3CreateIndex(
     const char *zColName = pListItem->zName;
     Column *pTabCol;
     int requestedSortOrder;
-    char *zColl;                   /* Collation sequence */
+    char *zColl;                   /* Collation sequence name */
 
     for(j=0, pTabCol=pTab->aCol; j<pTab->nCol; j++, pTabCol++){
       if( sqlite3StrICmp(zColName, pTabCol->zName)==0 ) break;
@@ -2462,6 +2471,12 @@ void sqlite3CreateIndex(
         pTab->zName, zColName);
       goto exit_create_index;
     }
+    /* TODO:  Add a test to make sure that the same column is not named
+    ** more than once within the same index.  Only the first instance of
+    ** the column will ever be used by the optimizer.  Note that using the
+    ** same column more than once cannot be an error because that would 
+    ** break backwards compatibility - it needs to be a warning.
+    */
     pIndex->aiColumn[i] = j;
     if( pListItem->pExpr ){
       assert( pListItem->pExpr->pColl );
@@ -2936,15 +2951,6 @@ void sqlite3SrcListAssignCursors(Parse *pParse, SrcList *pList){
 }
 
 /*
-** Add an alias to the last identifier on the given identifier list.
-*/
-void sqlite3SrcListAddAlias(SrcList *pList, Token *pToken){
-  if( pList && pList->nSrc>0 ){
-    pList->a[pList->nSrc-1].zAlias = sqlite3NameFromToken(pToken);
-  }
-}
-
-/*
 ** Delete an entire SrcList including all its substructure.
 */
 void sqlite3SrcListDelete(SrcList *pList){
@@ -2961,6 +2967,74 @@ void sqlite3SrcListDelete(SrcList *pList){
     sqlite3IdListDelete(pItem->pUsing);
   }
   sqliteFree(pList);
+}
+
+/*
+** This routine is called by the parser to add a new term to the
+** end of a growing FROM clause.  The "p" parameter is the part of
+** the FROM clause that has already been constructed.  "p" is NULL
+** if this is the first term of the FROM clause.  pTable and pDatabase
+** are the name of the table and database named in the FROM clause term.
+** pDatabase is NULL if the database name qualifier is missing - the
+** usual case.  If the term has a alias, then pAlias points to the
+** alias token.  If the term is a subquery, then pSubquery is the
+** SELECT statement that the subquery encodes.  The pTable and
+** pDatabase parameters are NULL for subqueries.  The pOn and pUsing
+** parameters are the content of the ON and USING clauses.
+**
+** Return a new SrcList which encodes is the FROM with the new
+** term added.
+*/
+SrcList *sqlite3SrcListAppendFromTerm(
+  SrcList *p,             /* The left part of the FROM clause already seen */
+  Token *pTable,          /* Name of the table to add to the FROM clause */
+  Token *pDatabase,       /* Name of the database containing pTable */
+  Token *pAlias,          /* The right-hand side of the AS subexpression */
+  Select *pSubquery,      /* A subquery used in place of a table name */
+  Expr *pOn,              /* The ON clause of a join */
+  IdList *pUsing          /* The USING clause of a join */
+){
+  struct SrcList_item *pItem;
+  p = sqlite3SrcListAppend(p, pTable, pDatabase);
+  if( p==0 || p->nSrc==0 ){
+    sqlite3ExprDelete(pOn);
+    sqlite3IdListDelete(pUsing);
+    sqlite3SelectDelete(pSubquery);
+    return p;
+  }
+  pItem = &p->a[p->nSrc-1];
+  if( pAlias && pAlias->n ){
+    pItem->zAlias = sqlite3NameFromToken(pAlias);
+  }
+  pItem->pSelect = pSubquery;
+  pItem->pOn = pOn;
+  pItem->pUsing = pUsing;
+  return p;
+}
+
+/*
+** When building up a FROM clause in the parser, the join operator
+** is initially attached to the left operand.  But the code generator
+** expects the join operator to be on the right operand.  This routine
+** Shifts all join operators from left to right for an entire FROM
+** clause.
+**
+** Example: Suppose the join is like this:
+**
+**           A natural cross join B
+**
+** The operator is "natural cross join".  The A and B operands are stored
+** in p->a[0] and p->a[1], respectively.  The parser initially stores the
+** operator with A.  This routine shifts that operator over to B.
+*/
+void sqlite3SrcListShiftJoinType(SrcList *p){
+  if( p && p->a ){
+    int i;
+    for(i=p->nSrc-1; i>0; i--){
+      p->a[i].jointype = p->a[i-1].jointype;
+    }
+    p->a[0].jointype = 0;
+  }
 }
 
 /*

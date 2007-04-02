@@ -17,7 +17,7 @@ check(mtn3("add", "otherfile"), 0, false, false)
 check(mtn3("commit", "--branch=testbranch", "--message=foo"), 0, false, false)
 revs[2] = base_revision()
 
-srv = netsync.start("testbranch")
+srv = netsync.start()
 
 srv:sync("testbranch", 2)
 srv:sync("testbranch", 3)
@@ -43,6 +43,7 @@ check(mtn3("commit", "--branch=testbranch", "--message=foo"), 0, false, false)
 revs[3] = base_revision()
 
 remove("_MTN")
+remove("testfile")
 check(mtn2("checkout", "--revision", revs[1], "."), 0, false, false)
 writefile("testfile", "ptang")
 check(mtn2("commit", "--branch=testbranch", "--message=foo"), 0, false, false)

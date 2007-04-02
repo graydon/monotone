@@ -47,12 +47,12 @@ int existsonpath(const char *exe)
 
 bool is_executable(const char *path)
 {
-        struct stat s;
+  struct stat s;
 
-        int rc = stat(path, &s);
-        N(rc != -1, F("error getting status of file %s: %s") % path % os_strerror(errno));
+  int rc = stat(path, &s);
+  N(rc != -1, F("error getting status of file %s: %s") % path % os_strerror(errno));
 
-        return (s.st_mode & S_IXUSR) && !(s.st_mode & S_IFDIR);
+  return (s.st_mode & S_IXUSR) && !(s.st_mode & S_IFDIR);
 }
 
 // copied from libc info page
@@ -66,43 +66,43 @@ read_umask()
 
 int make_executable(const char *path)
 {
-        mode_t mode;
-        struct stat s;
-        int fd = open(path, O_RDONLY);
-        N(fd != -1, F("error opening file %s: %s") % path % os_strerror(errno));
-        if (fstat(fd, &s))
-          return -1;
-        mode = s.st_mode;
-        mode |= ((S_IXUSR|S_IXGRP|S_IXOTH) & ~read_umask());
-        int ret = fchmod(fd, mode);
-        N(close(fd) == 0, F("error closing file %s: %s") % path % os_strerror(errno));
-        return ret;
+  mode_t mode;
+  struct stat s;
+  int fd = open(path, O_RDONLY);
+  N(fd != -1, F("error opening file %s: %s") % path % os_strerror(errno));
+  if (fstat(fd, &s))
+    return -1;
+  mode = s.st_mode;
+  mode |= ((S_IXUSR|S_IXGRP|S_IXOTH) & ~read_umask());
+  int ret = fchmod(fd, mode);
+  N(close(fd) == 0, F("error closing file %s: %s") % path % os_strerror(errno));
+  return ret;
 }
 
 pid_t process_spawn(const char * const argv[])
 {
-        {
-                std::ostringstream cmdline_ss;
-                for (const char *const *i = argv; *i; ++i)
-                {
-                        if (i != argv)
-                                cmdline_ss << ", ";
-                        cmdline_ss << "'" << *i << "'";
-                }
-                L(FL("spawning command: %s\n") % cmdline_ss.str());
-        }       
-        pid_t pid;
-        pid = fork();
-        switch (pid)
-        {
-                case -1: /* Error */
-                        return -1;
-                case 0: /* Child */
-                        execvp(argv[0], (char * const *)argv);
-                        raise(SIGKILL);
-                default: /* Parent */
-                        return pid;
-        }
+  {
+    std::ostringstream cmdline_ss;
+    for (const char *const *i = argv; *i; ++i)
+      {
+        if (i != argv)
+          cmdline_ss << ", ";
+        cmdline_ss << "'" << *i << "'";
+      }
+    L(FL("spawning command: %s\n") % cmdline_ss.str());
+  }       
+  pid_t pid;
+  pid = fork();
+  switch (pid)
+    {
+    case -1: /* Error */
+      return -1;
+    case 0: /* Child */
+      execvp(argv[0], (char * const *)argv);
+      raise(SIGKILL);
+    default: /* Parent */
+      return pid;
+    }
 }
 
 struct redir
@@ -114,8 +114,10 @@ struct redir
   ~redir();
 };
 redir::redir(int which, char const * file)
- : savedfd(-1), fd(which)
+  : savedfd(-1), fd(which)
 {
+  if (!file || *file == '\0')
+    return;
   int tempfd = open(file, (which==0?O_RDONLY:O_WRONLY|O_CREAT|O_TRUNC), 0664);
   if (tempfd == -1)
     {
@@ -161,46 +163,104 @@ pid_t process_spawn_redirected(char const * in,
     }
 }
 
+pid_t process_spawn_pipe(char const * const argv[], FILE** in, FILE** out)
+{
+  int infds[2];
+  int outfds[2];
+  pid_t pid;
+  
+  if (pipe(infds) < 0)
+    return -1;
+  if (pipe(outfds) < 0)
+    {
+      close(infds[0]);
+      close(infds[1]);
+      return -1;
+    }
+  
+  switch(pid = vfork())
+    {
+      case -1:
+        close(infds[0]);
+        close(infds[1]);
+        close(outfds[0]);
+        close(outfds[1]);
+        return -1;
+      case 0:
+        {
+          if (infds[0] != STDIN_FILENO)
+            {
+              dup2(infds[0], STDIN_FILENO);
+              close(infds[0]);
+            }
+          close(infds[1]);
+          if (outfds[1] != STDOUT_FILENO)
+            {
+              dup2(outfds[1], STDOUT_FILENO);
+              close(outfds[1]);
+            }
+          close(outfds[0]);
+          
+          execvp(argv[0], (char * const *)argv);
+          raise(SIGKILL);
+        }
+    }
+  close(infds[0]);
+  close(outfds[1]);
+  *in = fdopen(infds[1], "w");
+  *out = fdopen(outfds[0], "r");
+  
+  return pid;
+}
+
 int process_wait(pid_t pid, int *res, int timeout)
 {
-        int status;
-        int flags = 0;
-        if (timeout == -1)
-          timeout = 0;
-        else
-          flags |= WNOHANG;
-        int r;
-        for (r = 0; r == 0 && timeout >= 0; --timeout)
-          {
-            r = waitpid(pid, &status, flags);
-            if (r == 0 && timeout > 0)
-              process_sleep(1);
-          }
-        if (r == 0)
-          return -1;
-        if (WIFEXITED(status))    
-                *res = WEXITSTATUS(status);
-        else
-                *res = -WTERMSIG(status);
-        return 0;
+  int status;
+  int flags = 0;
+  if (timeout == -1)
+    timeout = 0;
+  else
+    flags |= WNOHANG;
+  int r;
+  for (r = 0; r == 0 && timeout >= 0; --timeout)
+    {
+      r = waitpid(pid, &status, flags);
+      if (r == 0 && timeout > 0)
+        process_sleep(1);
+    }
+  if (r == 0)
+    return -1;
+  if (WIFEXITED(status))    
+    *res = WEXITSTATUS(status);
+  else
+    *res = -WTERMSIG(status);
+  return 0;
 }
 
 int process_kill(pid_t pid, int signal)
 {
-        return kill(pid, signal);
+  return kill(pid, signal);
 }
 
 int process_sleep(unsigned int seconds)
 {
-        return sleep(seconds);
+  return sleep(seconds);
 }
 
 pid_t get_process_id()
 {
-        return getpid();
+  return getpid();
 }
 
 void ignore_sigpipe()
 {
   signal(SIGPIPE, SIG_IGN);
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.31, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.34, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
@@ -62,6 +62,29 @@ AC_PROG_XGETTEXT_FLAG_OPTION
 # similarly, this calls ACX_PTHREAD, which expects C.
 BOOST_THREAD_STUBS
 
+# Stick some logic into config.status, after the logic that
+# AM_GNU_GETTEXT sticks into config.status, to annul the UPDATEPOFILES
+# variable in po/Makefile.  This prevents auto-regeneration of the
+# .po files when the sources change, which the translators do not want.
+AC_OUTPUT_COMMANDS([
+    for ac_file in $CONFIG_FILES; do
+      # Support "outfile[:infile[:infile...]]"
+      case "$ac_file" in
+        *:*) ac_file=`echo "$ac_file"|sed 's%:.*%%'` ;;
+      esac
+      # PO directories have a Makefile.in generated from Makefile.in.in.
+      case "$ac_file" in */Makefile.in)
+        target="`echo x$ac_file | sed -e 's/.in$//' -e 's/^x//'`"
+	mtn_tmp="${target}.tmp"
+        test -n "$as_me" && echo "$as_me: fixing $target" || echo "fixing $target"
+	sed -e 's/^MSGMERGE =.*$/MSGMERGE = false/' \
+            -e 's/^MSGMERGE_UPDATE =.*$/MSGMERGE_UPDATE = true/' \
+               "$target" > "$mtn_tmp"
+	mv -f "$mtn_tmp" "$target" ;;
+      esac
+    done
+])
+
 AC_LANG([C++])
 # This header may not be visible to the C compiler.
 AC_CHECK_HEADERS([cxxabi.h],,, [AC_INCLUDES_DEFAULT()])
@@ -90,9 +113,12 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 
 # Checks for library functions.
 AC_FUNC_STAT
+AC_FUNC_MMAP
 AC_FUNC_LOCALE_WORKS
-AC_CHECK_FUNCS([atexit memset mkstemp setenv strptime lrint \
-		__cxa_current_exception_type __cxa_demangle])
+AC_FUNC_ICONV_TRANSLIT
+AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
+		__cxa_current_exception_type __cxa_demangle \
+                putenv setenv unsetenv])
 
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
@@ -102,7 +128,6 @@ BOOST_VERSION_CHECK
 BOOST_VERSION_SPECIFIC_BUGS
 
 MTN_BOOST_LIB_FILESYSTEM
-MTN_BOOST_LIB_DATE_TIME
 MTN_BOOST_LIB_REGEX
 MTN_BOOST_LIB_UNIT_TEST_FRAMEWORK
 

@@ -142,7 +142,8 @@ downcast_to_file_t(node_t const n)
 }
 
 bool
-shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children);
+shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children,
+              bool compare_file_contents = true);
 
 template <> void dump(node_t const & n, std::string & out);
 
@@ -234,6 +235,8 @@ public:
 
   bool operator==(roster_t const & other) const;
 
+  friend bool equal_shapes(roster_t const & a, roster_t const & b);
+
   void check_sane(bool temp_nodes_ok=false) const;
 
   // verify that this roster is sane, and corresponds to the given
@@ -274,7 +277,7 @@ private:
   //
   // FIXME: This _is_ all a little nasty, because this can be a source of
   // abstraction leak -- for instance, roster_merge's contract is that nodes
-  // involved in name-related will be detached in the roster it returns.
+  // involved in name-related conflicts will be detached in the roster it returns.
   // Those nodes really should be allowed to be attached anywhere, or dropped,
   // which is not actually expressible right now.  Worse, whether or not they
   // are in old_locations map is an implementation detail of roster_merge --
@@ -314,6 +317,7 @@ struct temp_node_id_source
 template <> void dump(roster_t const & val, std::string & out);
 
 class app_state;
+class database;
 struct revision_t;
 
 // adaptor class to enable cset application on rosters.
@@ -369,8 +373,8 @@ select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & new_roster,
                               std::set<node_id> & nodes_modified);
 
-// These two functions are for the use of things like 'update' or 'pluck',
-// that need to construct fake rosters and/or markings in-memory, to achieve
+// These functions are for the use of things like 'update' or 'pluck', that
+// need to construct fake rosters and/or markings in-memory, to achieve
 // particular merge results.
 void
 mark_roster_with_no_parents(revision_id const & rid,
@@ -383,6 +387,17 @@ mark_roster_with_one_parent(roster_t const & parent,
                             roster_t const & child,
                             marking_map & child_markings);
 
+void
+mark_merge_roster(roster_t const & left_roster,
+                  marking_map const & left_markings,
+                  std::set<revision_id> const & left_uncommon_ancestors,
+                  roster_t const & right_roster,
+                  marking_map const & right_markings,
+                  std::set<revision_id> const & right_uncommon_ancestors,
+                  revision_id const & new_rid,
+                  roster_t const & merge,
+                  marking_map & new_markings);
+
 // This is for revisions that are being written to the db, only.  It assigns
 // permanent node ids.
 void
@@ -391,6 +406,16 @@ make_roster_for_revision(revision_t const & rev,
                          roster_t & result,
                          marking_map & marking,
                          app_state & app);
+
+// This is for revisions that are not necessarily going to be written to the
+// db; you can specify your own node_id_source.
+void
+make_roster_for_revision(revision_t const & rev,
+                         revision_id const & rid,
+                         roster_t & result,
+                         marking_map & marking,
+                         database & db,
+                         node_id_source & nis);
 
 void
 read_roster_and_marking(roster_data const & dat,
@@ -419,7 +444,6 @@ namespace basic_io
 // for roster_delta
 void push_marking(basic_io::stanza & st, bool is_file, marking_t const & mark);
 void parse_marking(basic_io::parser & pa, marking_t & marking);
-
 
 #ifdef BUILD_UNIT_TESTS
 

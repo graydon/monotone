@@ -2,22 +2,17 @@
 #define __KEY_STORE_H__
 
 #include <map>
-
 #include "vocab.hh"
 #include "paths.hh"
-#include "platform.hh"
 
 class app_state;
-
-struct keyreader;
 
 class key_store
 {
 private:
-  friend struct keyreader;
   system_path key_dir;
   bool have_read;
-  app_state * app;
+  app_state & app;
   std::map<rsa_keypair_id, keypair> keys;
   std::map<hexenc<id>, rsa_keypair_id> hashes;
 
@@ -26,7 +21,7 @@ private:
   void read_key_dir();
   void maybe_read_key_dir();
 public:
-  key_store(app_state * a);
+  key_store(app_state & a);
   void set_key_dir(system_path const & kd);
   system_path const & get_key_dir();
 
@@ -43,8 +38,14 @@ public:
   void get_key_pair(rsa_keypair_id const & ident,
                     keypair & kp);
 
-  void put_key_pair(rsa_keypair_id const & ident,
+  bool put_key_pair(rsa_keypair_id const & ident,
                     keypair const & kp);
+
+  // just like put_key_pair except that the key is _not_ written to disk.
+  // primarily for internal use in reading keys back from disk.
+  bool put_key_pair_memory(rsa_keypair_id const & ident,
+                           keypair const & kp);
+                         
 
   void delete_key(rsa_keypair_id const & ident);
 };

@@ -1,0 +1,8 @@
+pattern "branch2"
+deny "*"
+
+pattern "branch4"
+deny "*"
+
+pattern "branch*"
+allow "*"

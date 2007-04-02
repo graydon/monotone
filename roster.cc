@@ -23,7 +23,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
-#include "localized_file_io.hh"
+#include "file_io.hh"
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
@@ -53,7 +53,7 @@ dump(full_attr_map_t const & val, string & out)
   ostringstream oss;
   for (full_attr_map_t::const_iterator i = val.begin(); i != val.end(); ++i)
     oss << "attr key: '" << i->first << "'\n"
-        << "  status: " << (i->second.first ? "live" : "dead") << "\n"
+        << "  status: " << (i->second.first ? "live" : "dead") << '\n'
         << "   value: '" << i->second.second << "'\n";
   out = oss.str();
 }
@@ -78,17 +78,17 @@ dump(marking_t const & marking, string & out)
 {
   ostringstream oss;
   string tmp;
-  oss << "birth_revision: " << marking.birth_revision << "\n";
+  oss << "birth_revision: " << marking.birth_revision << '\n';
   dump(marking.parent_name, tmp);
-  oss << "parent_name: " << tmp << "\n";
+  oss << "parent_name: " << tmp << '\n';
   dump(marking.file_content, tmp);
-  oss << "file_content: " << tmp << "\n";
+  oss << "file_content: " << tmp << '\n';
   oss << "attrs (number: " << marking.attrs.size() << "):\n";
   for (map<attr_key, set<revision_id> >::const_iterator
          i = marking.attrs.begin(); i != marking.attrs.end(); ++i)
     {
       dump(i->second, tmp);
-      oss << "  " << i->first << ": " << tmp << "\n";
+      oss << "  " << i->first << ": " << tmp << '\n';
     }
   out = oss.str();
 }
@@ -105,7 +105,7 @@ dump(marking_map const & markings, string & out)
       string marking_str, indented_marking_str;
       dump(i->second, marking_str);
       prefix_lines_with("    ", marking_str, indented_marking_str);
-      oss << indented_marking_str << "\n";
+      oss << indented_marking_str << '\n';
     }
   out = oss.str();
 }
@@ -253,25 +253,25 @@ dump(node_t const & n, string & out)
   string name;
   dump(n->name, name);
   oss << "address: " << n << " (uses: " << n.use_count() << ")\n"
-      << "self: " << n->self << "\n"
-      << "parent: " << n->parent << "\n"
-      << "name: " << name << "\n";
+      << "self: " << n->self << '\n'
+      << "parent: " << n->parent << '\n'
+      << "name: " << name << '\n';
   string attr_map_s;
   dump(n->attrs, attr_map_s);
   oss << "attrs:\n" << attr_map_s;
   oss << "type: ";
   if (is_file_t(n))
     oss << "file\n"
-        << "content: " << downcast_to_file_t(n)->content << "\n";
+        << "content: " << downcast_to_file_t(n)->content << '\n';
   else
     {
       oss << "dir\n";
       dir_map const & c = downcast_to_dir_t(n)->children;
-      oss << "children: " << c.size() << "\n";
+      oss << "children: " << c.size() << '\n';
       for (dir_map::const_iterator i = c.begin(); i != c.end(); ++i)
         {
           dump(i->first, name);
-          oss << "  " << name << " -> " << i->second << "\n";
+          oss << "  " << name << " -> " << i->second << '\n';
         }
     }
   out = oss.str();
@@ -398,7 +398,8 @@ same_type(node_t a, node_t b)
 
 inline bool
 shallow_equal(node_t a, node_t b,
-              bool shallow_compare_dir_children)
+              bool shallow_compare_dir_children,
+              bool compare_file_contents)
 {
   if (a->self != b->self)
     return false;
@@ -417,10 +418,13 @@ shallow_equal(node_t a, node_t b,
 
   if (is_file_t(a))
     {
-      file_t fa = downcast_to_file_t(a);
-      file_t fb = downcast_to_file_t(b);
-      if (!(fa->content == fb->content))
-        return false;
+      if (compare_file_contents)
+        {
+          file_t fa = downcast_to_file_t(a);
+          file_t fb = downcast_to_file_t(b);
+          if (!(fa->content == fb->content))
+            return false;
+        }
     }
   else
     {
@@ -476,6 +480,40 @@ roster_t::operator==(roster_t const & other) const
   while (! (p.finished() || q.finished()))
     {
       if (!shallow_equal(*p, *q, true))
+        return false;
+      ++p;
+      ++q;
+    }
+
+  if (!(p.finished() && q.finished()))
+    return false;
+
+  return true;
+}
+
+// This is exactly the same as roster_t::operator== (and the same FIXME
+// above applies) except that it does not compare file contents.
+bool
+equal_shapes(roster_t const & a, roster_t const & b)
+{
+  node_map::const_iterator i = a.nodes.begin(), j = b.nodes.begin();
+  while (i != a.nodes.end() && j != b.nodes.end())
+    {
+      if (i->first != j->first)
+        return false;
+      if (!shallow_equal(i->second, j->second, true, false))
+        return false;
+      ++i;
+      ++j;
+    }
+
+  if (i != a.nodes.end() || j != b.nodes.end())
+    return false;
+
+  dfs_iter p(a.root_dir), q(b.root_dir);
+  while (! (p.finished() || q.finished()))
+    {
+      if (!shallow_equal(*p, *q, true, false))
         return false;
       ++p;
       ++q;
@@ -862,13 +900,13 @@ dump(roster_t const & val, string & out)
 {
   ostringstream oss;
   if (val.root_dir)
-    oss << "Root node: " << val.root_dir->self << "\n"
-        << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << "\n";
+    oss << "Root node: " << val.root_dir->self << '\n'
+        << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << '\n';
   else
     oss << "root dir is NULL\n";
   for (node_map::const_iterator i = val.nodes.begin(); i != val.nodes.end(); ++i)
     {
-      oss << "\nNode " << i->first << "\n";
+      oss << "\nNode " << i->first << '\n';
       string node_s;
       dump(i->second, node_s);
       oss << node_s;
@@ -1091,11 +1129,19 @@ namespace
   };
 
 
-  // This handles all the stuff in a_new.
-  void unify_roster_oneway(roster_t & a, set<node_id> & a_new,
-                           roster_t & b, set<node_id> & b_new,
-                           node_id_source & nis)
+  void union_new_nodes(roster_t & a, set<node_id> & a_new,
+                       roster_t & b, set<node_id> & b_new,
+                       node_id_source & nis)
   {
+    // We must not replace a node whose id is in both a_new and b_new
+    // with a new temp id that is already in either set.  b_new is
+    // destructively modified, so record the union of both sets now.
+    set<node_id> all_new_nids;
+    std::set_union(a_new.begin(), a_new.end(),
+                   b_new.begin(), b_new.end(),
+                   std::inserter(all_new_nids, all_new_nids.begin()));
+
+    // First identify nodes that are new in A but not in B, or new in both.
     for (set<node_id>::const_iterator i = a_new.begin(); i != a_new.end(); ++i)
       {
         node_id const aid = *i;
@@ -1106,22 +1152,14 @@ namespace
         // get out in any case)
         a.get_name(aid, sp);
         node_id bid = b.get_node(sp)->self;
-        if (temp_node(bid))
+        if (b_new.find(bid) != b_new.end())
           {
-            node_id new_nid = nis.next();
-            // the node_id_source provided to this function must only generate
-            // true node ids, because this code was written with the
-            // assumption that only true nids would come in or go out, and
-            // temp ids are used as an intermediate stage to indicate nodes
-            // that need true ids installed.
-            // FIXME: make everything work correctly when this node_id_source
-            // returns temp ids.  This is needed for workspace merge support.
-            // FIXME: having done this, add a test in database_check.cc that
-            // for each revision, generates that rev's roster from scratch,
-            // and compares it to the one stored in the db.  (Do the
-            // comparison using something like equal_up_to_renumbering, except
-            // should say if (!temp_node(a) && !temp_node(b)) I(a == b).)
-            I(!temp_node(new_nid));
+            I(temp_node(bid));
+            node_id new_nid;
+            do
+              new_nid = nis.next();
+            while (all_new_nids.find(new_nid) != all_new_nids.end());
+
             a.replace_node_id(aid, new_nid);
             b.replace_node_id(bid, new_nid);
             b_new.erase(bid);
@@ -1131,8 +1169,22 @@ namespace
             a.replace_node_id(aid, bid);
           }
       }
-  }
 
+    // Now identify nodes that are new in B but not A.
+    for (set<node_id>::const_iterator i = b_new.begin(); i != b_new.end(); i++)
+      {
+        node_id const bid = *i;
+        split_path sp;
+        // SPEEDUP?: climb out only so far as is necessary to find a shared
+        // id?  possibly faster (since usually will get a hit immediately),
+        // but may not be worth the effort (since it doesn't take that long to
+        // get out in any case)
+        b.get_name(bid, sp);
+        node_id aid = a.get_node(sp)->self;
+        I(a_new.find(aid) == a_new.end());
+        b.replace_node_id(bid, aid);
+      }
+  }
 
   void
   union_corpses(roster_t & left, roster_t & right)
@@ -1212,8 +1264,7 @@ namespace
     // "add_file", then this really is a new id; both rosters will have temp
     // ids, and we replace both of them with a newly allocated id.  After
     // this, the two rosters will have identical node_ids at every path.
-    unify_roster_oneway(left, left_new, right, right_new, nis);
-    unify_roster_oneway(right, right_new, left, left_new, nis);
+    union_new_nodes(left, left_new, right, right_new, nis);
 
     // The other thing we need to fix up is attr corpses.  Live attrs are made
     // identical by the csets; but if, say, on one side of a fork an attr is
@@ -1392,10 +1443,10 @@ namespace
 
   void
   mark_merged_node(marking_t const & left_marking,
-                   set<revision_id> left_uncommon_ancestors,
+                   set<revision_id> const & left_uncommon_ancestors,
                    node_t ln,
                    marking_t const & right_marking,
-                   set<revision_id> right_uncommon_ancestors,
+                   set<revision_id> const & right_uncommon_ancestors,
                    node_t rn,
                    revision_id const & new_rid,
                    node_t n,
@@ -1478,73 +1529,76 @@ namespace
       I(n->attrs.find(i->first) != n->attrs.end());
   }
 
+} // anonymous namespace
 
-  // This function is also responsible for verifying ancestry invariants --
-  // those invariants on a roster that involve the structure of the roster's
-  // parents, rather than just the structure of the roster itself.
-  void
-  mark_merge_roster(roster_t const & left_roster,
-                    marking_map const & left_markings,
-                    set<revision_id> const & left_uncommon_ancestors,
-                    roster_t const & right_roster,
-                    marking_map const & right_markings,
-                    set<revision_id> const & right_uncommon_ancestors,
-                    revision_id const & new_rid,
-                    roster_t const & merge,
-                    marking_map & new_markings)
-  {
-    for (node_map::const_iterator i = merge.all_nodes().begin();
-         i != merge.all_nodes().end(); ++i)
-      {
-        node_t const & n = i->second;
-        // SPEEDUP?: instead of using find repeatedly, iterate everything in
-        // parallel
-        map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
-        map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
 
-        bool exists_in_left = (lni != left_roster.all_nodes().end());
-        bool exists_in_right = (rni != right_roster.all_nodes().end());
+// This function is also responsible for verifying ancestry invariants --
+// those invariants on a roster that involve the structure of the roster's
+// parents, rather than just the structure of the roster itself.
+void
+mark_merge_roster(roster_t const & left_roster,
+                  marking_map const & left_markings,
+                  set<revision_id> const & left_uncommon_ancestors,
+                  roster_t const & right_roster,
+                  marking_map const & right_markings,
+                  set<revision_id> const & right_uncommon_ancestors,
+                  revision_id const & new_rid,
+                  roster_t const & merge,
+                  marking_map & new_markings)
+{
+  for (node_map::const_iterator i = merge.all_nodes().begin();
+       i != merge.all_nodes().end(); ++i)
+    {
+      node_t const & n = i->second;
+      // SPEEDUP?: instead of using find repeatedly, iterate everything in
+      // parallel
+      map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
+      map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
 
-        marking_t new_marking;
+      bool exists_in_left = (lni != left_roster.all_nodes().end());
+      bool exists_in_right = (rni != right_roster.all_nodes().end());
 
-        if (!exists_in_left && !exists_in_right)
-          mark_new_node(new_rid, n, new_marking);
+      marking_t new_marking;
 
-        else if (!exists_in_left && exists_in_right)
-          {
-            node_t const & right_node = rni->second;
-            marking_t const & right_marking = safe_get(right_markings, n->self);
-            // must be unborn on the left (as opposed to dead)
-            I(right_uncommon_ancestors.find(right_marking.birth_revision)
-              != right_uncommon_ancestors.end());
-            mark_unmerged_node(right_marking, right_node,
-                               new_rid, n, new_marking);
-          }
-        else if (exists_in_left && !exists_in_right)
-          {
-            node_t const & left_node = lni->second;
-            marking_t const & left_marking = safe_get(left_markings, n->self);
-            // must be unborn on the right (as opposed to dead)
-            I(left_uncommon_ancestors.find(left_marking.birth_revision)
-              != left_uncommon_ancestors.end());
-            mark_unmerged_node(left_marking, left_node,
-                               new_rid, n, new_marking);
-          }
-        else
-          {
-            node_t const & left_node = lni->second;
-            node_t const & right_node = rni->second;
-            mark_merged_node(safe_get(left_markings, n->self),
-                             left_uncommon_ancestors, left_node,
-                             safe_get(right_markings, n->self),
-                             right_uncommon_ancestors, right_node,
+      if (!exists_in_left && !exists_in_right)
+        mark_new_node(new_rid, n, new_marking);
+
+      else if (!exists_in_left && exists_in_right)
+        {
+          node_t const & right_node = rni->second;
+          marking_t const & right_marking = safe_get(right_markings, n->self);
+          // must be unborn on the left (as opposed to dead)
+          I(right_uncommon_ancestors.find(right_marking.birth_revision)
+            != right_uncommon_ancestors.end());
+          mark_unmerged_node(right_marking, right_node,
                              new_rid, n, new_marking);
-          }
+        }
+      else if (exists_in_left && !exists_in_right)
+        {
+          node_t const & left_node = lni->second;
+          marking_t const & left_marking = safe_get(left_markings, n->self);
+          // must be unborn on the right (as opposed to dead)
+          I(left_uncommon_ancestors.find(left_marking.birth_revision)
+            != left_uncommon_ancestors.end());
+          mark_unmerged_node(left_marking, left_node,
+                             new_rid, n, new_marking);
+        }
+      else
+        {
+          node_t const & left_node = lni->second;
+          node_t const & right_node = rni->second;
+          mark_merged_node(safe_get(left_markings, n->self),
+                           left_uncommon_ancestors, left_node,
+                           safe_get(right_markings, n->self),
+                           right_uncommon_ancestors, right_node,
+                           new_rid, n, new_marking);
+        }
 
-        safe_insert(new_markings, make_pair(i->first, new_marking));
-      }
-  }
+      safe_insert(new_markings, make_pair(i->first, new_marking));
+    }
+}
 
+namespace {
 
   class editable_roster_for_nonmerge
     : public editable_roster_base
@@ -1638,6 +1692,18 @@ namespace
     marking_map & markings;
   };
 
+  // Interface note: make_roster_for_merge and make_roster_for_nonmerge
+  // each exist in two variants:
+  //
+  // 1. A variant that does all of the actual work, taking every single
+  //    relevant base-level data object as a separate argument.  This
+  //    variant is called directly by the unit tests, and also by variant 2.
+  //
+  // 2. A variant that takes a revision object, a revision ID, a database,
+  //    and a node_id_source.  This variant uses those four things to look
+  //    up all of the low-level data required by variant 1, then calls
+  //    variant 1 to get the real work done.  This is the one called by
+  //    (one variant of) make_roster_for_revision.
 
   // yes, this function takes 14 arguments.  I'm very sorry.
   void
@@ -1645,13 +1711,13 @@ namespace
                         roster_t const & left_roster,
                         marking_map const & left_markings,
                         cset const & left_cs,
-                        set<revision_id> left_uncommon_ancestors,
+                        set<revision_id> const & left_uncommon_ancestors,
 
                         revision_id const & right_rid,
                         roster_t const & right_roster,
                         marking_map const & right_markings,
                         cset const & right_cs,
-                        set<revision_id> right_uncommon_ancestors,
+                        set<revision_id> const & right_uncommon_ancestors,
 
                         revision_id const & new_rid,
                         roster_t & new_roster,
@@ -1692,7 +1758,17 @@ namespace
       unify_rosters(new_roster, from_left_er.new_nodes,
                     from_right_r, from_right_er.new_nodes,
                     nis);
-      I(new_roster == from_right_r);
+
+      // Kluge: If both csets have no content changes, and the node_id_source
+      // passed to this function is a temp_node_id_source, then we are being
+      // called from get_current_roster_shape, and we should not attempt to
+      // verify that these rosters match as far as content IDs.
+      if (left_cs.deltas_applied.size() == 0
+          && right_cs.deltas_applied.size() == 0
+          && typeid(nis) == typeid(temp_node_id_source))
+        I(equal_shapes(new_roster, from_right_r));
+      else
+        I(new_roster == from_right_r);
     }
 
     // SPEEDUP?: instead of constructing new marking from scratch, track which
@@ -1708,29 +1784,34 @@ namespace
   // WARNING: this function is not tested directly (no unit tests).  Do not
   // put real logic in it.
   void
-  make_roster_for_merge(revision_id const & left_rid, cset const & left_cs,
-                        revision_id const & right_rid, cset const & right_cs,
-                        revision_id const & new_rid,
+  make_roster_for_merge(revision_t const & rev, revision_id const & new_rid,
                         roster_t & new_roster, marking_map & new_markings,
-                        app_state & app)
+                        database & db, node_id_source & nis)
   {
+    edge_map::const_iterator i = rev.edges.begin();
+    revision_id const & left_rid = edge_old_revision(i);
+    cset const & left_cs = edge_changes(i);
+    ++i;
+    revision_id const & right_rid = edge_old_revision(i);
+    cset const & right_cs = edge_changes(i);
+
     I(!null_id(left_rid) && !null_id(right_rid));
     database::cached_roster left_cached, right_cached;
-    app.db.get_roster(left_rid, left_cached);
-    app.db.get_roster(right_rid, right_cached);
-    true_node_id_source tnis = true_node_id_source(app);
+    db.get_roster(left_rid, left_cached);
+    db.get_roster(right_rid, right_cached);
 
     set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
-    app.db.get_uncommon_ancestors(left_rid, right_rid,
+    db.get_uncommon_ancestors(left_rid, right_rid,
                                   left_uncommon_ancestors,
                                   right_uncommon_ancestors);
-    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second, left_cs,
-                          left_uncommon_ancestors,
-                          right_rid, *right_cached.first, *right_cached.second, right_cs,
-                          right_uncommon_ancestors,
+
+    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second,
+                          left_cs, left_uncommon_ancestors,
+                          right_rid, *right_cached.first, *right_cached.second,
+                          right_cs, right_uncommon_ancestors,
                           new_rid,
                           new_roster, new_markings,
-                          tnis);
+                          nis);
   }
 
   // Warning: this function expects the parent's roster and markings in the
@@ -1752,14 +1833,14 @@ namespace
   // WARNING: this function is not tested directly (no unit tests).  Do not
   // put real logic in it.
   void
-  make_roster_for_nonmerge(revision_id const & parent_rid,
-                           cset const & parent_cs,
+  make_roster_for_nonmerge(revision_t const & rev,
                            revision_id const & new_rid,
                            roster_t & new_roster, marking_map & new_markings,
-                           app_state & app)
+                           database & db, node_id_source & nis)
   {
-    app.db.get_roster(parent_rid, new_roster, new_markings);
-    true_node_id_source nis(app);
+    revision_id const & parent_rid = edge_old_revision(rev.edges.begin());
+    cset const & parent_cs = edge_changes(rev.edges.begin());
+    db.get_roster(parent_rid, new_roster, new_markings);
     make_roster_for_nonmerge(parent_cs, new_rid, new_roster, new_markings, nis);
   }
 }
@@ -1812,31 +1893,33 @@ mark_roster_with_one_parent(roster_t const & parent,
 void
 make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
                          roster_t & new_roster, marking_map & new_markings,
-                         app_state & app)
+                         database & db, node_id_source & nis)
 {
   MM(rev);
   MM(new_rid);
   MM(new_roster);
   MM(new_markings);
   if (rev.edges.size() == 1)
-    make_roster_for_nonmerge(edge_old_revision(rev.edges.begin()),
-                             edge_changes(rev.edges.begin()),
-                             new_rid, new_roster, new_markings, app);
+    make_roster_for_nonmerge(rev, new_rid, new_roster, new_markings, db, nis);
   else if (rev.edges.size() == 2)
-    {
-      edge_map::const_iterator i = rev.edges.begin();
-      revision_id const & left_rid = edge_old_revision(i);
-      cset const & left_cs = edge_changes(i);
-      ++i;
-      revision_id const & right_rid = edge_old_revision(i);
-      cset const & right_cs = edge_changes(i);
-      make_roster_for_merge(left_rid, left_cs, right_rid, right_cs,
-                            new_rid, new_roster, new_markings, app);
-    }
+    make_roster_for_merge(rev, new_rid, new_roster, new_markings, db, nis);
   else
     I(false);
 
-  new_roster.check_sane_against(new_markings);
+  // If nis is not a true_node_id_source, we have to assume we can get temp
+  // node ids out of it.  ??? Provide a predicate method on node_id_sources
+  // instead of doing a typeinfo comparison.
+  new_roster.check_sane_against(new_markings,
+                                typeid(nis) != typeid(true_node_id_source));
+}
+
+void
+make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings,
+                         app_state & app)
+{
+  true_node_id_source nis(app);
+  make_roster_for_revision(rev, new_rid, new_roster, new_markings, app.db, nis);
 }
 
 
@@ -2095,18 +2178,22 @@ editable_roster_for_check::editable_roster_for_check(roster_t & r)
   : editable_roster_base(r, nis), problems(0)
 {
   node_map nodes = r.all_nodes();
-  node_map::const_iterator i = nodes.begin();
-  node_id max = i->first;
 
-  for (; i != nodes.end(); ++i)
+  if (!nodes.empty())
     {
-      if (i->first > max)
-        max = i->first;
-    }
+      node_map::const_iterator i = nodes.begin();
+      node_id max = i->first;
 
-  // ensure our node source starts beyond the max temp node in this roster
-  while (nis.next() <= max)
-    ;
+      for (; i != nodes.end(); ++i)
+        {
+          if (i->first > max)
+            max = i->first;
+        }
+
+      // ensure our node source starts beyond the max temp node in this roster
+      while (nis.next() <= max)
+        ;
+    }
 }
 
 node_id
@@ -2569,7 +2656,7 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane(true);
   basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = pr.buf;
+  dat = data(pr.buf);
 }
 
 
@@ -2580,7 +2667,7 @@ write_roster_and_marking(roster_t const & ros,
 {
   data tmp;
   write_roster_and_marking(ros, mm, tmp, true);
-  dat = tmp;
+  dat = roster_data(tmp);
 }
 
 
@@ -2591,7 +2678,7 @@ write_manifest_of_roster(roster_t const & ros,
   data tmp;
   marking_map mm;
   write_roster_and_marking(ros, mm, tmp, false);
-  dat = tmp;
+  dat = manifest_data(tmp);
 }
 
 void calculate_ident(roster_t const & ros,
@@ -3051,8 +3138,8 @@ UNIT_TEST(roster, random_actions)
   for (int i = 0; i < 2000; )
     {
       int manychanges = 100 + rng.uniform(300);
-      P(F("random roster actions: outer step at %d, making %d changes")
-        % i % manychanges);
+      // P(F("random roster actions: outer step at %d, making %d changes")
+      //   % i % manychanges);
 
       for (int outer_limit = i + manychanges; i < outer_limit; )
         {
@@ -3375,9 +3462,9 @@ namespace
     virtual void dump(string & out) const
     {
       ostringstream oss;
-      oss << "type: " << my_type() << "\n"
-          << "root_nid: " << root_nid << "\n"
-          << "obj_under_test_nid: " << obj_under_test_nid << "\n";
+      oss << "type: " << my_type() << '\n'
+          << "root_nid: " << root_nid << '\n'
+          << "obj_under_test_nid: " << obj_under_test_nid << '\n';
       out = oss.str();
     }
   };
@@ -4629,68 +4716,75 @@ UNIT_TEST(roster, check_sane_against)
 
 static void
 check_post_roster_unification_ok(roster_t const & left,
-                                 roster_t const & right)
+                                 roster_t const & right,
+                                 bool temp_nodes_ok)
 {
   MM(left);
   MM(right);
   I(left == right);
-  left.check_sane();
-  right.check_sane();
+  left.check_sane(temp_nodes_ok);
+  right.check_sane(temp_nodes_ok);
 }
 
 static void
-create_some_new_temp_nodes(temp_node_id_source & nis,
-                           roster_t & left_ros,
-                           set<node_id> & left_new_nodes,
-                           roster_t & right_ros,
-                           set<node_id> & right_new_nodes,
-                           randomizer & rng)
+create_random_unification_task(roster_t & left,
+                               roster_t & right,
+                               editable_roster_base & left_erb,
+                               editable_roster_base & right_erb,
+                               editable_roster_for_merge & left_erm,
+                               editable_roster_for_merge & right_erm,
+			       randomizer & rng)
 {
-  size_t n_nodes = 10 + (rng.uniform(30));
-  editable_roster_base left_er(left_ros, nis);
-  editable_roster_base right_er(right_ros, nis);
-
+  size_t n_nodes = 20 + rng.uniform(60);
+  
   // Stick in a root if there isn't one.
-  if (!left_ros.has_root())
+  if (!left.has_root())
     {
-      I(!right_ros.has_root());
+      I(!right.has_root());
       split_path root;
       root.push_back(the_null_component);
 
-      node_id left_nid = left_er.create_dir_node();
-      left_new_nodes.insert(left_nid);
-      left_er.attach_node(left_nid, root);
+      node_id left_nid = left_erm.create_dir_node();
+      left_erm.attach_node(left_nid, root);
 
-      node_id right_nid = right_er.create_dir_node();
-      right_new_nodes.insert(right_nid);
-      right_er.attach_node(right_nid, root);
+      node_id right_nid = right_erm.create_dir_node();
+      right_erm.attach_node(right_nid, root);
     }
 
   // Now throw in a bunch of others
   for (size_t i = 0; i < n_nodes; ++i)
     {
-      node_t left_n = random_element(left_ros.all_nodes(), rng)->second;
+      node_t left_n = random_element(left.all_nodes(), rng)->second;
+
+      // With equal probability, choose to make the new node appear to
+      // be new in just the left, just the right, or both.
+      editable_roster_base * left_er;
+      editable_roster_base * right_er;
+      switch (rng.uniform(2))
+        {
+        case 0: left_er = &left_erm; right_er = &right_erm; break;
+        case 1: left_er = &left_erb; right_er = &right_erm; break;
+        case 2: left_er = &left_erm; right_er = &right_erb; break;
+        default: I(false);
+        }
 
       node_id left_nid, right_nid;
       if (rng.flip())
         {
-          left_nid = left_er.create_dir_node();
-          right_nid = right_er.create_dir_node();
+          left_nid = left_er->create_dir_node();
+          right_nid = right_er->create_dir_node();
         }
       else
         {
           file_id fid = new_ident(rng);
-          left_nid = left_er.create_file_node(fid);
-          right_nid = right_er.create_file_node(fid);
+          left_nid = left_er->create_file_node(fid);
+          right_nid = right_er->create_file_node(fid);
         }
 
-      left_new_nodes.insert(left_nid);
-      right_new_nodes.insert(right_nid);
-
       split_path pth;
-      left_ros.get_name(left_n->self, pth);
+      left.get_name(left_n->self, pth);
 
-      I(right_ros.has_node(pth));
+      I(right.has_node(pth));
 
       if (is_file_t(left_n) || (pth.size() > 1 && rng.flip()))
         // Add a sibling of an existing entry.
@@ -4699,27 +4793,50 @@ create_some_new_temp_nodes(temp_node_id_source & nis,
         // Add a child of an existing entry.
         pth.push_back(new_component(rng));
 
-      left_er.attach_node(left_nid, pth);
-      right_er.attach_node(right_nid, pth);
+      left_er->attach_node(left_nid, pth);
+      right_er->attach_node(right_nid, pth);
     }
 }
 
-UNIT_TEST(roster, unify_rosters_randomized)
+static void
+unify_rosters_randomized_core(node_id_source & tmp_nis,
+                              node_id_source & test_nis,
+                              bool temp_nodes_ok)
 {
-  L(FL("TEST: begin checking unification of rosters (randomly)"));
-  temp_node_id_source tmp_nis;
-  testing_node_id_source test_nis;
   roster_t left, right;
   randomizer rng;
   for (size_t i = 0; i < 30; ++i)
     {
-      set<node_id> left_new, right_new;
-      create_some_new_temp_nodes(tmp_nis, left, left_new, right, right_new, rng);
-      create_some_new_temp_nodes(tmp_nis, right, right_new, left, left_new, rng);
-      unify_rosters(left, left_new, right, right_new, test_nis);
-      check_post_roster_unification_ok(left, right);
+      editable_roster_base left_erb(left, test_nis);
+      editable_roster_base right_erb(right, test_nis);
+      editable_roster_for_merge left_erm(left, tmp_nis);
+      editable_roster_for_merge right_erm(right, tmp_nis);
+
+      create_random_unification_task(left, right,
+                                     left_erb, right_erb,
+                                     left_erm, right_erm, rng);
+      unify_rosters(left, left_erm.new_nodes,
+                    right, right_erm.new_nodes,
+                    test_nis);
+      check_post_roster_unification_ok(left, right, temp_nodes_ok);
     }
-  L(FL("TEST: end checking unification of rosters (randomly)"));
+}
+
+UNIT_TEST(roster, unify_rosters_randomized_trueids)
+{
+  L(FL("TEST: begin checking unification of rosters (randomly, true IDs)"));
+  temp_node_id_source tmp_nis;
+  testing_node_id_source test_nis;
+  unify_rosters_randomized_core(tmp_nis, test_nis, false);
+  L(FL("TEST: end checking unification of rosters (randomly, true IDs)"));
+}
+
+UNIT_TEST(roster, unify_rosters_randomized_tempids)
+{
+  L(FL("TEST: begin checking unification of rosters (randomly, temp IDs)"));
+  temp_node_id_source tmp_nis;
+  unify_rosters_randomized_core(tmp_nis, tmp_nis, true);
+  L(FL("TEST: end checking unification of rosters (randomly, temp IDs)"));
 }
 
 UNIT_TEST(roster, unify_rosters_end_to_end_ids)

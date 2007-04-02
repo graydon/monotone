@@ -11,7 +11,6 @@
 // PURPOSE.
 
 
-#include <cstdio>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -20,6 +19,7 @@
 #include "paths.hh"
 #include "sanity.hh"
 #include "vocab.hh"
+#include "numeric_vocab.hh"
 
 // This file provides parsing and printing primitives used by the
 // higher level parser and printer routines for the datatypes cset,
@@ -78,7 +78,9 @@ namespace basic_io
     inline void peek()
     {
       if (LIKELY(curr != in.end()))
-	lookahead = *curr;
+        // we do want to distinguish between EOF and '\xff', 
+        // so we translate '\xff' to 255u
+	lookahead = widen<unsigned int,char>(*curr);
       else
 	lookahead = EOF;
     }

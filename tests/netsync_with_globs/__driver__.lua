@@ -20,7 +20,7 @@ addfile("testfile", "baz")
 commit("2branch1")
 revs[21] = base_revision()
 
-srv = netsync.start("*branch*")
+srv = netsync.start()
 
 -- check a glob
 srv:pull("*anch2")

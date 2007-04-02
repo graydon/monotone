@@ -11,13 +11,13 @@ commit()
 base = base_revision()
 
 -- drop it
-check(mtn("drop", "testfile"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
 commit()
 
 revert_to(base)
 
 -- on the other side of the fork, drop it ...
-check(mtn("drop", "testfile"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
 -- we add this file so that we don't end up with the same revision as
 -- our first "drop" commit
 check(mtn("add", "nonce"), 0, false, false)

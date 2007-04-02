@@ -57,7 +57,8 @@ _mtn_command() {
 	explicit_merge fload fmerge genkey get_roster heads help identify list log \
 	ls merge merge_into_dir mv pivot_root privkey propagate pubkey pull push \
 	rcs_import read refresh_inodeprints rename revert rm serve set setup \
-	show_conflicts status sync tag testresult trusted unset update)
+	show_conflicts status sync tag testresult trusted unset update \
+	mkdir)
     
     local cmd="$words[1]"
     if (( CURRENT == 1 )); then
@@ -82,6 +83,13 @@ _mtn_add() {
     _arguments -s : \
 	'--unknown[add unknown files from workspace]'\
 	'*:file to add:_mtn_files_unknown'
+}
+
+(( $+functions[_mtn_mkdir] )) ||
+_mtn_mkdir() {
+    _arguments -s : \
+	'--no-respect-ignore[do not ignore any files]'\
+	'*:directory to create: '
 }
 
 (( $+functions[_mtn_annotate] )) ||
@@ -376,6 +384,11 @@ _mtn_update() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'
+}
+
+(( $+functions[_mtn_up] )) ||
+_mtn_up() {
+    _mtn_update
 }
 
 # define completion functions for files maintained by monotone.

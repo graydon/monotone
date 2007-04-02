@@ -13,20 +13,20 @@ commit("testbranch", "Addition of bar.")
 addfile("baz", "baz")
 commit("testbranch", "Addition of baz.")
 
-check(mtn("drop", "bar", "baz"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "bar", "baz"), 0, false, false)
 commit()
 remove("bar")
 remove("baz")
 
 rename("foo", "bar")
-check(mtn("rename", "foo", "bar"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo", "bar"), 0, false, false)
 commit()
 
 check(mtn("log", "foo"), 1, 0, false)
 
 check(mtn("log", "baz"), 1, 0, false)
 
-check(mtn("log", "bar"), 0, true, false)
+check(mtn("log", "--no-graph", "bar"), 0, true, false)
 rename("stdout", "log")
 check(grep("^Addition of [a-z][a-z][a-z].$", "log"), 0, true)
 check(get("first"))
@@ -34,7 +34,7 @@ canonicalize("first")
 canonicalize("stdout")
 check(samefile("stdout", "first"))
 
-check(mtn("log"), 0, true, false)
+check(mtn("log", "--no-graph"), 0, true, false)
 rename("stdout", "log")
 check(grep("^Addition of [a-z][a-z][a-z].$", "log"), 0, true)
 check(get("second"))

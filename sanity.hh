@@ -13,7 +13,6 @@
 #include "config.h" // Required for ENABLE_NLS
 
 #include <iosfwd>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -25,10 +24,12 @@
 #include "mt-stdint.h"
 #include "quick_alloc.hh" // to get the QA() macro
 
-#ifdef __GNUC__
-#define NORETURN __attribute__((noreturn))
+#if defined(__GNUC__)
+#define NORETURN(x) x __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define NORETURN(x) __declspec(noreturn) x
 #else
-#define NORETURN
+#define NORETURN(x) x
 #endif
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
@@ -77,17 +78,17 @@ struct sanity {
                 char const * file, int line);
   void warning(i18n_format const & fmt,
                char const * file, int line);
-  void naughty_failure(std::string const & expr, i18n_format const & explain,
-                       std::string const & file, int line) NORETURN;
-  void error_failure(std::string const & expr, i18n_format const & explain,
-                     std::string const & file, int line) NORETURN;
-  void invariant_failure(std::string const & expr,
-                         std::string const & file, int line) NORETURN;
-  void index_failure(std::string const & vec_expr,
+  NORETURN(void naughty_failure(std::string const & expr, i18n_format const & explain,
+                       std::string const & file, int line));
+  NORETURN(void error_failure(std::string const & expr, i18n_format const & explain,
+                     std::string const & file, int line));
+  NORETURN(void invariant_failure(std::string const & expr,
+                         std::string const & file, int line));
+  NORETURN(void index_failure(std::string const & vec_expr,
                      std::string const & idx_expr,
                      unsigned long sz,
                      unsigned long idx,
-                     std::string const & file, int line) NORETURN;
+                     std::string const & file, int line));
   void gasp();
 
 private:
@@ -503,17 +504,19 @@ template <> void dump(std::string const & obj, std::string & out);
 
 // debugging utility to dump out vars like MM but without requiring a crash
 
+extern void print_var(std::string const & value,
+                      std::string const & var,
+                      char const * file,
+                      int const line,
+                      char const * func);
+
 template <typename T> void
-dump(T const & t, std::string var, 
-     std::string const & file, int const line, std::string const & func)
+dump(T const & t, char const *var,
+     char const * file, int const line, char const * func)
 {
-  std::string out;
-  dump(t, out);
-  std::cout << (FL("----- begin '%s' (in %s, at %s:%d)") 
-                % var % func % file % line) << std::endl
-            << out << std::endl
-            << (FL("-----   end '%s' (in %s, at %s:%d)") 
-                % var % func % file % line) << std::endl << std::endl;
+  std::string value;
+  dump(t, value);
+  print_var(value, var, file, line, func);
 };
 
 #define DUMP(foo) dump(foo, #foo, __FILE__, __LINE__, BOOST_CURRENT_FUNCTION)

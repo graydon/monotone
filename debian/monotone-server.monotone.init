@@ -58,8 +58,7 @@ d_start() {
           --confdir=$MTN_CONFDIR --db=$MTN_DB --norc --pid-file=$PIDFILE \
           --log=$MAINLOG --dump=$ERRORLOG \
           --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR --quiet \
-          --bind=$ADDRESS serve "*"
-
+          --bind=$ADDRESS serve
 }
 
 #
