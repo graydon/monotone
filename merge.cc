@@ -17,6 +17,7 @@
 #include "roster_merge.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::map;

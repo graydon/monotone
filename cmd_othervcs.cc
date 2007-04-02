@@ -8,6 +8,7 @@
 // PURPOSE.
 
 #include "cmd.hh"
+#include "app_state.hh"
 #include "rcs_import.hh"
 
 using std::vector;

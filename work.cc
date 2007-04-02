@@ -12,6 +12,8 @@
 #include <cerrno>
 #include <queue>
 
+#include <boost/lexical_cast.hpp>
+
 #include "work.hh"
 #include "basic_io.hh"
 #include "cset.hh"
@@ -26,6 +28,7 @@
 #include "diff_patch.hh"
 #include "ui.hh"
 #include "charset.hh"
+#include "lua_hooks.hh"
 
 using std::deque;
 using std::exception;

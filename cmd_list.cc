@@ -27,6 +27,7 @@
 #include "transforms.hh"
 #include "ui.hh"
 #include "vocab_cast.hh"
+#include "app_state.hh"
 
 using std::cout;
 using std::make_pair;

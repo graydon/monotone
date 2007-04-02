@@ -15,8 +15,8 @@
 #include <set>
 #include <vector>
 
-#include "app_state.hh"
 #include "vocab.hh"
+class app_state;
 
 // The revision_enumerator struct acts as a cursor which emits files,
 // deltas, revisions and certs in dependency-correct order. This is

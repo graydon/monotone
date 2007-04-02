@@ -30,6 +30,7 @@
 #include "revision.hh"
 #include "constants.hh"
 #include "file_io.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::map;

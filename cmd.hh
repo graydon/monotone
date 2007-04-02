@@ -1,8 +1,6 @@
 #ifndef __CMD_HH__
 #define __CMD_HH__
 
-#include <boost/shared_ptr.hpp>
-
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -12,18 +10,15 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "app_state.hh"
 #include "commands.hh"
-#include "constants.hh"
 #include "options.hh"
 #include "sanity.hh"
 
+class app_state;
 
 namespace commands
 {
   std::string const & hidden_group();
-  using boost::shared_ptr;
-
 
   struct command
   {
@@ -88,38 +83,6 @@ complete(app_state & app,
          std::set<revision_id> & completion,
          bool must_exist=true);
 
-template<typename ID>
-static void
-complete(app_state & app,
-         std::string const & str,
-         ID & completion)
-{
-  N(str.find_first_not_of(constants::legal_id_bytes) == std::string::npos,
-    F("non-hex digits in id"));
-  if (str.size() == constants::idlen)
-    {
-      completion = ID(str);
-      return;
-    }
-  std::set<ID> completions;
-  app.db.complete(str, completions);
-  N(completions.size() != 0,
-    F("partial id '%s' does not have an expansion") % str);
-  if (completions.size() > 1)
-    {
-      std::string err =
-        (F("partial id '%s' has multiple ambiguous expansions:")
-         % str).str();
-      for (typename std::set<ID>::const_iterator i = completions.begin();
-            i != completions.end(); ++i)
-        err += (i->inner()() + "\n");
-      N(completions.size() == 1, i18n_format(err));
-    }
-  completion = *(completions.begin());
-  P(F("expanded partial id '%s' to '%s'")
-    % str % completion);
-}
-
 void
 notify_if_multiple_heads(app_state & app);
 
@@ -128,11 +91,6 @@ process_commit_message_args(bool & given,
                             utf8 & log_message,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
-
-void
-get_content_paths(roster_t const & roster, 
-                  std::map<file_id, 
-                  file_path> & paths);
 
 #define CMD(C, group, params, desc, opts)                            \
 namespace commands {                                                 \

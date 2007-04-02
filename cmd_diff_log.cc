@@ -23,6 +23,7 @@
 #include "rev_height.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
+#include "app_state.hh"
 
 using std::cout;
 using std::deque;

@@ -11,6 +11,8 @@
 #include "ui.hh"
 #include "simplestring_xform.hh"
 #include "revision.hh"
+#include "file_io.hh"
+#include "work.hh"
 
 #include <boost/lexical_cast.hpp>
 #include <exception>

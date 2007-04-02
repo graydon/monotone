@@ -12,8 +12,6 @@
 
 #include "vocab.hh"
 
-#include <vector>
-
 // this file contans various sorts of string transformations. each
 // transformation should be self-explanatory from its type signature. see
 // transforms.cc for the implementations (most of which are delegations to
@@ -38,7 +36,7 @@ template<typename XFM> std::string xform(std::string const & in)
   return in; // avoid warnings about no return statement
 }
 
-// these specializations of the template are defined in transforms.hh
+// these specializations of the template are defined in transforms.cc
 template<> std::string xform<Botan::Base64_Encoder>(std::string const &);
 template<> std::string xform<Botan::Base64_Decoder>(std::string const &);
 template<> std::string xform<Botan::Hex_Encoder>(std::string const &);

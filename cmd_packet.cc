@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "cmd.hh"
+#include "app_state.hh"
 #include "packet.hh"
 
 using std::cin;

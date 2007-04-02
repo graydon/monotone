@@ -10,11 +10,13 @@
 #include <iostream>
 
 #include "annotate.hh"
+#include "revision.hh"
 #include "cmd.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
+#include "app_state.hh"
 
 using std::cout;
 using std::ostream_iterator;
