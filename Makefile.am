@@ -463,6 +463,34 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 #	acroread -toPostScript -pairs $< $@
 	pdftops $< $@
 
+# build an OS X installer
+PKG_INST_ROOT = $(PWD)/$(top_builddir)/pkg_inst_root
+monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
+	rm -rf $(PKG_INST_ROOT) "$@"
+	$(MAKE) install-strip DESTDIR=$(PKG_INST_ROOT)
+	mkdir -p $(PKG_INST_ROOT)/Developer/Documentation/monotone
+	cp monotone.pdf $(PKG_INST_ROOT)/Developer/Documentation/monotone/
+	cp -r html $(PKG_INST_ROOT)/Developer/Documentation/monotone/html
+	plutil -convert xml1 -o monotone-xml.pmproj.in $(srcdir)/mac/monotone.pmproj
+	sed "s/__MONOTONE_VERSION__/$(PACKAGE_VERSION)/g" \
+		< monotone-xml.pmproj.in > monotone-xml.pmproj
+	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf \
+		$(srcdir)/COPYING.txt .
+	chmod -R o-w,g-w,a+rX $(PKG_INST_ROOT)
+	/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker \
+		-build -proj monotone-xml.pmproj -p "$@"
+
+# build an OS X distribution disk image
+dmg: monotone-$(PACKAGE_VERSION).dmg
+
+monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
+	rm -rf $(top_builddir)/dmg_root "$@"
+	mkdir $(top_builddir)/dmg_root
+	cp -R $^ $(top_builddir)/dmg_root/
+	chmod -R a+rX $(top_builddir)/dmg_root
+	hdiutil create -srcfolder "$(top_builddir)/dmg_root" \
+		"$@" -format UDZO -scrub -imagekey zlib-level=9 \
+		-volname monotone-$(PACKAGE_VERSION)
 
 # testsuite stuff (could this possibly be more ugly?)
 
