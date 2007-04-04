@@ -22,6 +22,13 @@
 
 typedef enum
   {
+    server_voice,
+    client_voice
+  }
+protocol_voice;
+
+typedef enum
+  {
     source_role = 1,
     sink_role = 2,
     source_and_sink_role = 3
@@ -161,6 +168,14 @@ public:
   void write_usher_reply_cmd(utf8 const & server, globish const & pattern);
 
 };
+
+class app_state;
+void run_netsync_protocol(protocol_voice voice,
+                          protocol_role role,
+                          utf8 const & addr,
+                          globish const & include_pattern,
+                          globish const & exclude_pattern,
+                          app_state & app);
 
 // Local Variables:
 // mode: C++

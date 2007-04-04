@@ -925,11 +925,8 @@ void anc_graph::write_certs()
           cert new_cert;
           make_simple_cert(rev.inner(), name, val, app, new_cert);
           revision<cert> rcert(new_cert);
-          if (! app.db.revision_cert_exists(rcert))
-            {
-              ++n_certs_out;
-              app.db.put_revision_cert(rcert);
-            }
+          if (app.db.put_revision_cert(rcert))
+            ++n_certs_out;
         }
     }
 }
@@ -1613,17 +1610,10 @@ anc_graph::construct_revisions_from_ancestry()
           P(F("------------------------------------------------"));
           */
 
-          if (!app.db.revision_exists (new_rid))
-            {
-              L(FL("mapped node %d to revision %s") % child % new_rid);
-              app.db.put_revision(new_rid, rev);
-              ++n_revs_out;
-            }
-          else
-            {
-              L(FL("skipping already existing revision %s") % new_rid);
-            }
-
+          L(FL("mapped node %d to revision %s") % child % new_rid);
+          if (app.db.put_revision(new_rid, rev))
+            ++n_revs_out;
+          
           // Mark this child as done, hooray!
           safe_insert(done, child);
 

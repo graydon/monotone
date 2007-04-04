@@ -22,7 +22,6 @@
 #include "interner.hh"
 #include "lcs.hh"
 #include "roster.hh"
-#include "packet.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
 #include "transforms.hh"
@@ -31,6 +30,7 @@
 #include "revision.hh"
 #include "constants.hh"
 #include "file_io.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::map;
@@ -510,9 +510,9 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 
   diff(left_data.inner(), merged_data.inner(), left_delta);
   diff(left_data.inner(), merged_data.inner(), right_delta);
-  packet_db_writer dbw(app);
-  dbw.consume_file_delta (left_ident, merged_ident, file_delta(left_delta));
-  dbw.consume_file_delta (right_ident, merged_ident, file_delta(right_delta));
+
+  app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
+  app.db.put_file_version(right_ident, merged_ident, file_delta(right_delta));
   guard.commit();
 }
 

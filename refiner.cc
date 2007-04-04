@@ -18,7 +18,6 @@
 #include "vocab.hh"
 #include "merkle_tree.hh"
 #include "netcmd.hh"
-#include "netsync.hh"
 
 using std::inserter;
 using std::make_pair;

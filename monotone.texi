@@ -6523,7 +6523,7 @@ Allow multiple automate commands to be run from one instance of monotone.
 @verbatim
 l6:leavese
 l7:parents40:0e3171212f34839c2e3263e7282cdeea22fc5378e
-o6:author7:Timothye l6:commite
+o3:key11:foo@bar.come l4:cert40:0e3171212f34839c2e3263e7282cdeea22fc53783:foo3:bare
 @end verbatim
 
 @item Input format:
@@ -7652,7 +7652,8 @@ and @var{value} its value.
 
 @item Purpose:
 
-@command{automate stdio} capable variant of @command{mtn cert}.
+@command{automate stdio} capable variant of @command{mtn cert}. To sign the
+cert with a specific private key, use @option{--key}.
 
 @item Sample usage:
 

@@ -13,11 +13,11 @@
 
 #include "diff_patch.hh"
 #include "merge.hh"
-#include "packet.hh"
 #include "revision.hh"
 #include "roster_merge.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::map;

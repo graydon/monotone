@@ -13,12 +13,13 @@
 #include "cmd.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
-#include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "transforms.hh"
 #include "work.hh"
 #include "charset.hh"
+#include "ui.hh"
+#include "app_state.hh"
 
 using std::cout;
 using std::make_pair;
@@ -245,19 +246,17 @@ CMD(disapprove, N_("review"), N_("REVISION"),
 
   {
     transaction_guard guard(app.db);
-    packet_db_writer dbw(app);
 
     revision_id inv_id;
     revision_data rdat;
 
     write_revision(rev_inverse, rdat);
     calculate_ident(rdat, inv_id);
-    dbw.consume_revision_data(inv_id, rdat);
+    app.db.put_revision(inv_id, rdat);
 
     app.get_project().put_standard_certs_from_options(inv_id,
                                                       app.opts.branchname,
-                                                      log_message,
-                                                      dbw);
+                                                      log_message);
     guard.commit();
   }
 }
@@ -812,7 +811,6 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   
   {
     transaction_guard guard(app.db);
-    packet_db_writer dbw(app);
 
     if (app.db.revision_exists(restricted_rev_id))
       W(F("revision %s already in database") % restricted_rev_id);
@@ -856,13 +854,12 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                       % path);
                     delta del;
                     diff(old_data.inner(), new_data, del);
-                    dbw.consume_file_delta(old_content,
-                                           new_content,
-                                           file_delta(del));
+                    app.db.put_file_version(old_content,
+                                            new_content,
+                                            file_delta(del));
                   }
                 else
-                  // If we don't err out here, our packet writer will
-                  // later.
+                  // If we don't err out here, the database will later.
                   E(false,
                     F("Your database is missing version %s of file '%s'")
                     % old_content % path);
@@ -884,19 +881,18 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
                 N(tid == new_content.inner(),
                   F("file '%s' modified during commit, aborting")
                   % path);
-                dbw.consume_file_data(new_content, file_data(new_data));
+                app.db.put_file(new_content, file_data(new_data));
               }
           }
 
         revision_data rdat;
         write_revision(restricted_rev, rdat);
-        dbw.consume_revision_data(restricted_rev_id, rdat);
+        app.db.put_revision(restricted_rev_id, rdat);
       }
 
     app.get_project().put_standard_certs_from_options(restricted_rev_id,
                                                       app.opts.branchname,
-                                                      log_message,
-                                                      dbw);
+                                                      log_message);
     guard.commit();
   }
 

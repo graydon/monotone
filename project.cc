@@ -5,7 +5,6 @@
 
 #include "app_state.hh"
 #include "cert.hh"
-#include "packet.hh"
 #include "project.hh"
 #include "revision.hh"
 #include "transforms.hh"
@@ -121,10 +120,9 @@ project_t::revision_is_in_branch(revision_id const & id,
 
 void
 project_t::put_revision_in_branch(revision_id const & id,
-                                  branch_name const & branch,
-                                  packet_consumer & pc)
+                                  branch_name const & branch)
 {
-  cert_revision_in_branch(id, cert_value(branch()), app, pc);
+  cert_revision_in_branch(id, branch, app);
 }
 
 
@@ -222,10 +220,9 @@ project_t::get_tags(set<tag_t> & tags)
 
 void
 project_t::put_tag(revision_id const & id,
-                   string const & name,
-                   packet_consumer & pc)
+                   string const & name)
 {
-  cert_revision_tag(id, name, app, pc);
+  cert_revision_tag(id, name, app);
 }
 
 
@@ -234,38 +231,34 @@ project_t::put_standard_certs(revision_id const & id,
                               branch_name const & branch,
                               utf8 const & changelog,
                               date_t const & time,
-                              utf8 const & author,
-                              packet_consumer & pc)
+                              utf8 const & author)
 {
-  cert_revision_in_branch(id, cert_value(branch()), app, pc);
-  cert_revision_changelog(id, changelog, app, pc);
-  cert_revision_date_time(id, time, app, pc);
+  cert_revision_in_branch(id, branch, app);
+  cert_revision_changelog(id, changelog, app);
+  cert_revision_date_time(id, time, app);
   if (!author().empty())
-    cert_revision_author(id, author(), app, pc);
+    cert_revision_author(id, author(), app);
   else
-    cert_revision_author_default(id, app, pc);
+    cert_revision_author_default(id, app);
 }
 
 void
 project_t::put_standard_certs_from_options(revision_id const & id,
                                            branch_name const & branch,
-                                           utf8 const & changelog,
-                                           packet_consumer & pc)
+                                           utf8 const & changelog)
 {
   put_standard_certs(id,
                      branch,
                      changelog,
                      app.opts.date_given ? app.opts.date : date_t::now(),
-                     app.opts.author,
-                     pc);
+                     app.opts.author);
 }
 void
 project_t::put_cert(revision_id const & id,
                     cert_name const & name,
-                    cert_value const & value,
-                    packet_consumer & pc)
+                    cert_value const & value)
 {
-  put_simple_revision_cert(id, name, value, app, pc);
+  put_simple_revision_cert(id, name, value, app);
 }
 
 

@@ -24,7 +24,6 @@
 // permission.
 
 class app_state;
-struct packet_consumer;
 
 struct cert
 {
@@ -80,8 +79,7 @@ void make_simple_cert(hexenc<id> const & id,
 void put_simple_revision_cert(revision_id const & id,
                               cert_name const & nm,
                               cert_value const & val,
-                              app_state & app,
-                              packet_consumer & pc);
+                              app_state & app);
 
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
                        app_state & app);
@@ -91,13 +89,12 @@ void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 
 // Special certs -- system won't work without them.
 
-extern cert_name const branch_cert_name;
+#define branch_cert_name cert_name("branch")
 
 void
 cert_revision_in_branch(revision_id const & ctx,
-                        cert_value const & branchname,
-                        app_state & app,
-                        packet_consumer & pc);
+                        branch_name const & branchname,
+                        app_state & app);
 
 
 // We also define some common cert types, to help establish useful
@@ -113,53 +110,46 @@ guess_branch(revision_id const & id, app_state & app, branch_name & branchname);
 void
 guess_branch(revision_id const & id, app_state & app);
 
-extern cert_name const date_cert_name;
-extern cert_name const author_cert_name;
-extern cert_name const tag_cert_name;
-extern cert_name const changelog_cert_name;
-extern cert_name const comment_cert_name;
-extern cert_name const testresult_cert_name;
+#define date_cert_name cert_name("date")
+#define author_cert_name cert_name("author")
+#define tag_cert_name cert_name("tag")
+#define changelog_cert_name cert_name("changelog")
+#define comment_cert_name cert_name("comment")
+#define testresult_cert_name cert_name("testresult")
 
 void
 cert_revision_date_time(revision_id const & m,
                         date_t const & t,
-                        app_state & app,
-                        packet_consumer & pc);
+                        app_state & app);
 
 void
 cert_revision_author(revision_id const & m,
                     std::string const & author,
-                    app_state & app,
-                    packet_consumer & pc);
+                    app_state & app);
 
 void
 cert_revision_author_default(revision_id const & m,
-                            app_state & app,
-                            packet_consumer & pc);
+                            app_state & app);
 
 void
 cert_revision_tag(revision_id const & m,
                  std::string const & tagname,
-                 app_state & app,
-                 packet_consumer & pc);
+                 app_state & app);
 
 void
 cert_revision_changelog(revision_id const & m,
                         utf8 const & changelog,
-                        app_state & app,
-                        packet_consumer & pc);
+                        app_state & app);
 
 void
 cert_revision_comment(revision_id const & m,
                       utf8 const & comment,
-                      app_state & app,
-                      packet_consumer & pc);
+                      app_state & app);
 
 void
 cert_revision_testresult(revision_id const & m,
                          std::string const & results,
-                         app_state & app,
-                         packet_consumer & pc);
+                         app_state & app);
 
 
 // Local Variables:

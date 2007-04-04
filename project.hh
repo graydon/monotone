@@ -13,7 +13,6 @@
 #include "vocab.hh"
 
 class app_state;
-struct packet_consumer;
 
 class tag_t
 {
@@ -40,12 +39,11 @@ public:
   void get_branch_heads(branch_name const & name, std::set<revision_id> & heads);
 
   outdated_indicator get_tags(std::set<tag_t> & tags);
-  void put_tag(revision_id const & id, std::string const & name, packet_consumer & pc);
+  void put_tag(revision_id const & id, std::string const & name);
 
   bool revision_is_in_branch(revision_id const & id, branch_name const & branch);
   void put_revision_in_branch(revision_id const & id,
-                              branch_name const & branch,
-                              packet_consumer & pc);
+                              branch_name const & branch);
 
   outdated_indicator get_revision_cert_hashes(revision_id const & rid,
                                               std::vector<hexenc<id> > & hashes);
@@ -63,17 +61,14 @@ public:
                           branch_name const & branch,
                           utf8 const & changelog,
                           date_t const & time,
-                          utf8 const & author,
-                          packet_consumer & pc);
+                          utf8 const & author);
   void put_standard_certs_from_options(revision_id const & id,
                                        branch_name const & branch,
-                                       utf8 const & changelog,
-                                       packet_consumer & pc);
+                                       utf8 const & changelog);
 
   void put_cert(revision_id const & id,
                 cert_name const & name,
-                cert_value const & value,
-                packet_consumer & pc);
+                cert_value const & value);
 };
 
 #endif

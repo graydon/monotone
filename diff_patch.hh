@@ -10,9 +10,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "app_state.hh"
-#include "cert.hh"
 #include "vocab.hh"
+#include "roster.hh"
 
 #include <boost/shared_ptr.hpp>
 
@@ -20,7 +19,7 @@
 #include <string>
 #include <vector>
 
-class roster_t;
+class app_state;
 
 struct conflict {};
 

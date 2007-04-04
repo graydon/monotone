@@ -1,7 +1,7 @@
 #include "cmd.hh"
 
 #include "diff_patch.hh"
-#include "netsync.hh"
+#include "netcmd.hh"
 #include "globish.hh"
 #include "keys.hh"
 #include "cert.hh"
@@ -10,7 +10,7 @@
 #include "uri.hh"
 #include "vocab_cast.hh"
 #include "platform-wrapped.hh"
-
+#include "app_state.hh"
 
 #include <fstream>
 

@@ -10,12 +10,13 @@
 #include <iostream>
 
 #include "annotate.hh"
+#include "revision.hh"
 #include "cmd.hh"
 #include "diff_patch.hh"
 #include "file_io.hh"
-#include "packet.hh"
 #include "simplestring_xform.hh"
 #include "transforms.hh"
+#include "app_state.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -35,8 +36,9 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::non
 
   calculate_ident (f_data, f_id);
 
-  packet_db_writer dbw(app);
-  dbw.consume_file_data(f_id, f_data);
+  transaction_guard guard(app.db);
+  app.db.put_file(f_id, f_data);
+  guard.commit();
 }
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),

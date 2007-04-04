@@ -33,7 +33,6 @@
 #include "file_io.hh"
 #include "interner.hh"
 #include "keys.hh"
-#include "packet.hh"
 #include "paths.hh"
 #include "platform-wrapped.hh"
 #include "project.hh"
@@ -685,11 +684,7 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
 
     cvs.set_filename (filename, fid);
     cvs.index_branchpoint_symbols (r);
-
-    if (! db.file_version_exists (fid))
-      {
-        db.put_file(fid, file_data(dat));
-      }
+    db.put_file(fid, file_data(dat));
 
     {
       // create the head state in case it is a loner
@@ -1266,14 +1261,13 @@ import_cvs_repo(system_path const & cvsroot,
   // now we have a "last" rev for each tag
   {
     ticker n_tags(_("tags"), "t", 1);
-    packet_db_writer dbw(app);
     transaction_guard guard(app.db);
     for (map<unsigned long, pair<time_t, revision_id> >::const_iterator i = cvs.resolved_tags.begin();
          i != cvs.resolved_tags.end(); ++i)
       {
         string tag = cvs.tag_interner.lookup(i->first);
         ui.set_tick_trailer("marking tag " + tag);
-        app.get_project().put_tag(i->second.second, tag, dbw);
+        app.get_project().put_tag(i->second.second, tag);
         ++n_tags;
       }
     guard.commit();
@@ -1347,23 +1341,16 @@ cluster_consumer::store_revisions()
 {
   for (vector<prepared_revision>::const_iterator i = preps.begin();
        i != preps.end(); ++i)
-    {
-      if (! app.db.revision_exists(i->rid))
-        {
-          data tmp;
-          write_revision(*(i->rev), tmp);
-          app.db.put_revision(i->rid, *(i->rev));
-          store_auxiliary_certs(*i);
-          ++n_revisions;
-        }
-    }
+    if (app.db.put_revision(i->rid, *(i->rev)))
+      {
+        store_auxiliary_certs(*i);
+        ++n_revisions;
+      }
 }
 
 void
 cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
 {
-  packet_db_writer dbw(app);
-
   for (vector<cvs_tag>::const_iterator i = p.tags.begin();
        i != p.tags.end(); ++i)
     {
@@ -1389,8 +1376,7 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
                                        branch_name(branchname),
                                        utf8(cvs.changelog_interner.lookup(p.changelog)),
                                        date_t::from_unix_epoch(p.time),
-                                       utf8(cvs.author_interner.lookup(p.author)),
-                                       dbw);
+                                       utf8(cvs.author_interner.lookup(p.author)));
 }
 
 void

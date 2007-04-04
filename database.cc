@@ -1681,7 +1681,10 @@ void
 database::put_file(file_id const & id,
                    file_data const & dat)
 {
-  schedule_delayed_file(id, dat);
+  if (file_version_exists(id))
+    L(FL("file version '%s' already exists in db") % id);
+  else
+    schedule_delayed_file(id, dat);
 }
 
 void
@@ -1692,6 +1695,19 @@ database::put_file_version(file_id const & old_id,
   file_data old_data, new_data;
   file_delta reverse_delta;
 
+  if (file_version_exists(new_id))
+    {
+      L(FL("file version '%s' already exists in db") % new_id);
+      return;
+    }
+
+  if (!file_version_exists(old_id))
+    {
+      W(F("file preimage '%s' missing in db") % old_id);
+      W(F("dropping delta '%s' -> '%s'") % old_id % new_id);
+      return;
+    }
+  
   get_file_version(old_id, old_data);
   {
     data tmp;
@@ -1939,7 +1955,7 @@ database::deltify_revision(revision_id const & rid)
 }
 
 
-void
+bool
 database::put_revision(revision_id const & new_id,
                        revision_t const & rev)
 {
@@ -1947,37 +1963,72 @@ database::put_revision(revision_id const & new_id,
   MM(rev);
 
   I(!null_id(new_id));
-  I(!revision_exists(new_id));
+
+  if (revision_exists(new_id))
+    {
+      L(FL("revision '%s' already exists in db") % new_id);
+      return false;
+    }
 
   I(rev.made_for == made_for_database);
   rev.check_sane();
-  revision_data d;
-  MM(d.inner());
-  write_revision(rev, d);
 
   // Phase 1: confirm the revision makes sense, and we the required files
   // actually exist
-  {
-    revision_id tmp;
-    MM(tmp);
-    calculate_ident(d, tmp);
-    I(tmp == new_id);
-    for (edge_map::const_iterator e = rev.edges.begin(); e != rev.edges.end(); ++e)
-      {
-        cset const & cs = edge_changes(e);
-        for (map<split_path, file_id>::const_iterator
-               i = cs.files_added.begin(); i != cs.files_added.end(); ++i)
-          I(file_version_exists(i->second));
-        for (map<split_path, pair<file_id, file_id> >::const_iterator
-               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-          I(file_version_exists(i->second.second));
-      }
-  }
+  for (edge_map::const_iterator i = rev.edges.begin();
+       i != rev.edges.end(); ++i)
+    {
+      if (!edge_old_revision(i).inner()().empty()
+          && !revision_exists(edge_old_revision(i)))
+        {
+          W(F("missing prerequisite revision '%s'") % edge_old_revision(i));
+          W(F("dropping revision '%s'") % new_id);
+          return false;
+        }
+
+      for (map<split_path, file_id>::const_iterator a
+             = edge_changes(i).files_added.begin();
+           a != edge_changes(i).files_added.end(); ++a)
+        {
+          if (! file_version_exists(a->second))
+            {
+              W(F("missing prerequisite file '%s'") % a->second);
+              W(F("dropping revision '%s'") % new_id);
+              return false;
+            }
+        }
+
+      for (map<split_path, pair<file_id, file_id> >::const_iterator d
+             = edge_changes(i).deltas_applied.begin();
+           d != edge_changes(i).deltas_applied.end(); ++d)
+        {
+          I(!delta_entry_src(d).inner()().empty());
+          I(!delta_entry_dst(d).inner()().empty());
+
+          if (! file_version_exists(delta_entry_src(d)))
+            {
+              W(F("missing prerequisite file pre-delta '%s'")
+                % delta_entry_src(d));
+              W(F("dropping revision '%s'") % new_id);
+              return false;
+            }
+
+          if (! file_version_exists(delta_entry_dst(d)))
+            {
+              W(F("missing prerequisite file post-delta '%s'")
+                % delta_entry_dst(d));
+              W(F("dropping revision '%s'") % new_id);
+              return false;
+            }
+        }
+    }
 
   transaction_guard guard(*this);
 
   // Phase 2: Write the revision data (inside a transaction)
 
+  revision_data d;
+  write_revision(rev, d);
   gzip<data> d_packed;
   encode_gzip(d.inner(), d_packed);
   execute(query("INSERT INTO revisions VALUES(?, ?)")
@@ -2008,6 +2059,7 @@ database::put_revision(revision_id const & new_id,
   // Finally, commit.
 
   guard.commit();
+  return true;
 }
 
 void
@@ -2064,13 +2116,13 @@ database::put_roster_for_revision(revision_id const & new_id,
   put_roster(new_id, ros, mm);
 }
 
-void
+bool
 database::put_revision(revision_id const & new_id,
                        revision_data const & dat)
 {
   revision_t rev;
   read_revision(dat, rev);
-  put_revision(new_id, rev);
+  return put_revision(new_id, rev);
 }
 
 
@@ -2245,21 +2297,34 @@ database::get_key(rsa_keypair_id const & pub_id,
   encode_base64(rsa_pub_key(res[0][0]), pub_encoded);
 }
 
-void
+bool
 database::put_key(rsa_keypair_id const & pub_id,
                   base64<rsa_pub_key> const & pub_encoded)
 {
+  if (public_key_exists(pub_id))
+    {
+      base64<rsa_pub_key> tmp;
+      get_key(pub_id, tmp);
+      if (!keys_match(pub_id, tmp, pub_id, pub_encoded))
+        W(F("key '%s' is not equal to key '%s' in database") % pub_id % pub_id);
+      L(FL("skipping existing public key %s") % pub_id);
+      return false;
+    }
+
+  L(FL("putting public key %s") % pub_id);
+
   hexenc<id> thash;
   key_hash_code(pub_id, pub_encoded, thash);
   I(!public_key_exists(thash));
-  E(!public_key_exists(pub_id),
-    F("another key with name '%s' already exists") % pub_id);
+
   rsa_pub_key pub_key;
   decode_base64(pub_encoded, pub_key);
   execute(query("INSERT INTO public_keys VALUES(?, ?, ?)")
           % text(thash())
           % text(pub_id())
           % blob(pub_key()));
+
+  return true;
 }
 
 void
@@ -2451,11 +2516,27 @@ database::revision_cert_exists(revision<cert> const & cert)
   return cert_exists(cert.inner(), "revision_certs");
 }
 
-void
+bool
 database::put_revision_cert(revision<cert> const & cert)
 {
+  if (revision_cert_exists(cert))
+    {
+      L(FL("revision cert on '%s' already exists in db")
+        % cert.inner().ident);
+      return false;
+    }
+
+  if (!revision_exists(revision_id(cert.inner().ident)))
+    {
+      W(F("cert revision '%s' does not exist in db")
+        % cert.inner().ident);
+      W(F("dropping cert"));
+      return false;
+    }
+
   put_cert(cert.inner(), "revision_certs");
   cert_stamper.note_change();
+  return true;
 }
 
 outdated_indicator

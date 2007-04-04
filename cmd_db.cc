@@ -14,6 +14,8 @@
 #include "cmd.hh"
 #include "database_check.hh"
 #include "revision.hh"
+#include "constants.hh"
+#include "app_state.hh"
 
 using std::cin;
 using std::cout;

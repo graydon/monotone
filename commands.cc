@@ -20,6 +20,8 @@
 #include "cert.hh"
 #include "ui.hh"
 #include "cmd.hh"
+#include "constants.hh"
+#include "app_state.hh"
 
 #ifndef _WIN32
 #include <boost/lexical_cast.hpp>
@@ -497,24 +499,6 @@ process_commit_message_args(bool & given,
   else
     given = false;
 }
-
-void
-get_content_paths(roster_t const & roster, map<file_id, file_path> & paths)
-{
-  node_map const & nodes = roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_t node = roster.get_node(i->first);
-      if (is_file_t(node))
-        {
-          split_path sp;
-          roster.get_name(i->first, sp);
-          file_t file = downcast_to_file_t(node);
-          paths.insert(make_pair(file->content, file_path(sp)));
-        }
-    }
-}
-  
 
 // Local Variables:
 // mode: C++

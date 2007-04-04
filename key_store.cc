@@ -5,6 +5,7 @@
 #include "packet.hh"
 #include "keys.hh"
 #include "globish.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::istringstream;
@@ -14,45 +15,46 @@ using std::pair;
 using std::string;
 using std::vector;
 
-struct keyreader : public packet_consumer
+namespace
 {
-  key_store * ks;
-
-  keyreader(key_store * k): ks(k) {}
-  virtual void consume_file_data(file_id const & ident,
-                                 file_data const & dat)
-  {E(false, F("Extraneous data in key store."));}
-  virtual void consume_file_delta(file_id const & id_old,
-                                  file_id const & id_new,
-                                  file_delta const & del)
-  {E(false, F("Extraneous data in key store."));}
-
-  virtual void consume_revision_data(revision_id const & ident,
-                                     revision_data const & dat)
-  {E(false, F("Extraneous data in key store."));}
-  virtual void consume_revision_cert(revision<cert> const & t)
-  {E(false, F("Extraneous data in key store."));}
-
-
-  virtual void consume_public_key(rsa_keypair_id const & ident,
-                                  base64< rsa_pub_key > const & k)
-  {E(false, F("Extraneous data in key store."));}
-
-  virtual void consume_key_pair(rsa_keypair_id const & ident,
-                                keypair const & kp)
+  struct keyreader : public packet_consumer
   {
-    L(FL("reading key pair '%s' from key store") % ident);
-    E(!ks->key_pair_exists(ident),
-      F("Key store has multiple keys with id '%s'.") % ident);
-    ks->keys.insert(make_pair(ident, kp));
-    hexenc<id> hash;
-    key_hash_code(ident, kp.pub, hash);
-    ks->hashes.insert(make_pair(hash, ident));
-    L(FL("successfully read key pair '%s' from key store") % ident);
-  }
-};
+    key_store & ks;
 
-key_store::key_store(app_state * a): have_read(false), app(a)
+    keyreader(key_store & k): ks(k) {}
+    virtual void consume_file_data(file_id const & ident,
+                                   file_data const & dat)
+    {E(false, F("Extraneous data in key store."));}
+    virtual void consume_file_delta(file_id const & id_old,
+                                    file_id const & id_new,
+                                    file_delta const & del)
+    {E(false, F("Extraneous data in key store."));}
+
+    virtual void consume_revision_data(revision_id const & ident,
+                                       revision_data const & dat)
+    {E(false, F("Extraneous data in key store."));}
+    virtual void consume_revision_cert(revision<cert> const & t)
+    {E(false, F("Extraneous data in key store."));}
+
+
+    virtual void consume_public_key(rsa_keypair_id const & ident,
+                                    base64< rsa_pub_key > const & k)
+    {E(false, F("Extraneous data in key store."));}
+
+    virtual void consume_key_pair(rsa_keypair_id const & ident,
+                                  keypair const & kp)
+    {
+      L(FL("reading key pair '%s' from key store") % ident);
+
+      E(ks.put_key_pair_memory(ident, kp),
+        F("Key store has multiple keys with id '%s'.") % ident);
+
+      L(FL("successfully read key pair '%s' from key store") % ident);
+    }
+  };
+}
+
+key_store::key_store(app_state & a): have_read(false), app(a)
 {
 }
 
@@ -79,7 +81,7 @@ key_store::read_key_dir()
     }
   else
     L(FL("key dir '%s' does not exist") % key_dir);
-  keyreader kr(this);
+  keyreader kr(*this);
   for (vector<utf8>::const_iterator i = key_files.begin();
        i != key_files.end(); ++i)
     {
@@ -87,7 +89,7 @@ key_store::read_key_dir()
       data dat;
       read_data(key_dir / (*i)(), dat);
       istringstream is(dat());
-      read_packets(is, kr, *app);
+      read_packets(is, kr, app);
     }
 }
 
@@ -104,15 +106,17 @@ void
 key_store::ensure_in_database(rsa_keypair_id const & ident)
 {
   maybe_read_key_dir();
-  if (app->db.public_key_exists(ident))
+  map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
+
+  // if this object does not have the key, the database had better.
+  if (i == keys.end())
     {
-      L(FL("public key '%s' is already in db, not loading") % ident);
+      I(app.db.public_key_exists(ident));
       return;
     }
-  map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
-  I(i != keys.end());
-  app->db.put_key(ident, i->second.pub);
-  L(FL("loaded public key '%s' into db") % ident);
+  
+  if (app.db.put_key(ident, i->second.pub))
+    L(FL("loaded public key '%s' into db") % ident);
 }
 
 bool
@@ -210,9 +214,19 @@ key_store::write_key(rsa_keypair_id const & ident)
   write_data(file, dat, key_dir);
 }
 
-void
+bool
 key_store::put_key_pair(rsa_keypair_id const & ident,
                         keypair const & kp)
+{
+  bool newkey = put_key_pair_memory(ident, kp);
+  if (newkey)
+    write_key(ident);
+  return newkey;
+}
+
+bool
+key_store::put_key_pair_memory(rsa_keypair_id const & ident,
+                               keypair const & kp)
 {
   maybe_read_key_dir();
   L(FL("putting key pair '%s'") % ident);
@@ -223,14 +237,15 @@ key_store::put_key_pair(rsa_keypair_id const & ident,
       hexenc<id> hash;
       key_hash_code(ident, kp.pub, hash);
       I(hashes.insert(make_pair(hash, ident)).second);
-      write_key(ident);
+      return true;
     }
   else
     {
-      E(/*keys_match(ident, res.first->second.priv, ident, kp.priv)
-        && */keys_match(ident, res.first->second.pub, ident, kp.pub),
+      E(keys_match(ident, res.first->second.pub, ident, kp.pub),
         F("Cannot store key '%s'; a different key by that name exists.")
           % ident);
+      L(FL("skipping existing key pair %s") % ident);
+      return false;
     }
 }
 

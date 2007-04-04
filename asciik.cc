@@ -111,8 +111,9 @@ Loop:
 #include <iterator>
 
 #include "asciik.hh"
-#include "cmd.hh"
 #include "simplestring_xform.hh"
+#include "cmd.hh"
+#include "app_state.hh"
 
 using std::insert_iterator;
 using std::max;
