@@ -1,5 +1,5 @@
 /*
-** $Id: lbaselib.c,v 1.191 2006/06/02 15:34:00 roberto Exp $
+** $Id: lbaselib.c,v 1.191a 2006/06/02 15:34:00 roberto Exp $
 ** Basic library
 ** See Copyright Notice in lua.h
 */
