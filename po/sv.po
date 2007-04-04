@@ -148,7 +148,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-04-02 05:56+0200\n"
-"PO-Revision-Date: 2007-04-02 06:00+0200\n"
+"PO-Revision-Date: 2007-04-04 14:05+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -349,7 +349,7 @@ msgid "REVISION-DATA"
 msgstr "REVISIONS-DATA"
 
 #: automate.cc:1708
-#, fuzzy, c-format
+#, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "saknar nödvändiga förutsättningar för att stoppa in revision %s"
 

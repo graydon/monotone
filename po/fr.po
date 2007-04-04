@@ -250,7 +250,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.33\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-04-02 05:56+0200\n"
-"PO-Revision-Date: 2007-04-02 06:01+0200\n"
+"PO-Revision-Date: 2007-04-04 14:04+0200\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -454,7 +454,7 @@ msgid "REVISION-DATA"
 msgstr "DONNÉS-DE-RÉVISION"
 
 #: automate.cc:1708
-#, fuzzy, c-format
+#, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "des prérequises pour la révision « %s » manquent"
 
