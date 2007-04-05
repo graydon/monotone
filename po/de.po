@@ -3908,7 +3908,7 @@ msgid ""
 "see the file UPGRADE, in the distribution, for instructions.)"
 msgstr ""
 "(Wenn diese Datenbank zuletzt mit monotone 0.16 oder älter\n"
-"verwendet wurde, müssen Sie einer spezieelen Prozedur folgen, um\n"
+"verwendet wurde, müssen Sie einer speziellen Prozedur folgen, um\n"
 "sie wieder benutzbar zu machen. Die Datei UPGRADE aus der\n"
 "Distribution enthält Instruktionen dazu.)"
 
