@@ -4,6 +4,13 @@ Steps to build a distributable OS X dmg:
 gettext so that translations work. Static libraries should be built
 for libintl.a and the Boost libraries, and they need to be built as
 universal binaries.
+Make also sure you've TeX installed, as we're bundling a PDF version
+of the monotone documentation later on. The easiest way to install TeX
+on Mac OS X is using the gwTeX i-Install package; further instructions for
+this can be found here: http://ii2.sourceforge.net/tex-index.html. 
+After installation the all the needed binaries can be found in
+/usr/local/gwTeX/bin/i386-apple-darwin-current.
+
 
 At the time of writing Macports doesn't build these as universal binaries.
 
