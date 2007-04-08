@@ -7,3 +7,34 @@ annotate.cc:
     app.get_project().get_revision_certs(*i, certs);
 
     needs: erase_bogus_certs()
+
+
+revision.cc:
+
+  struct anc_graph still uses app_state, while most methods only need the
+  database, these functions are exceptions:
+
+    anc_graph::write_certs():
+      needs: make_simple_cert()
+
+    anc_graph::add_node_for_old_manifest
+      needs: erase_bogus_cert()
+
+    anc_graph::construct_revisions_from_ancestry()
+      app.opts.attrs_to_drop
+
+
+  build_roster_style_revs_from_manifest_style_revs()
+
+    app.db....
+    needs: anc_graph()
+    needs: get_user_key()
+    needs: require_password()
+
+
+  build_changesets_from_manifest_ancestry()
+    app.db...
+    needs: anc_graph()
+    needs: get_user_key()
+    needs: require_password()
+    needs: erase_bogus_certs()
