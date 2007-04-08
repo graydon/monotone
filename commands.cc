@@ -212,15 +212,20 @@ namespace commands
             while (col++ < (col2 + 3))
               out << ' ';
           }
-        out << ' ' << idx(sorted, i)->name;
-        col += idx(sorted, i)->name.size() + 1;
-        if (col >= 70)
+
+        // Start new line if the current command could make the previous
+        // one wrap.  Indent it appropriately.
+        if (col + idx(sorted, i)->name.size() + 1 >= 79)
           {
             out << '\n';
             col = 0;
             while (col++ < (col2 + 3))
               out << ' ';
           }
+
+        // Print the current command name.
+        out << ' ' << idx(sorted, i)->name;
+        col += idx(sorted, i)->name.size() + 1;
       }
     out << "\n\n";
   }
