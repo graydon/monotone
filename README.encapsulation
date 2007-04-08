@@ -1,0 +1,9 @@
+annotate.cc:
+
+  annotate_context::build_revisions_to_annotations():
+
+    # Why does this go via the project? It only calls
+    # db.get_revision_certs()...
+    app.get_project().get_revision_certs(*i, certs);
+
+    needs: erase_bogus_certs()
