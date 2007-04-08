@@ -201,6 +201,7 @@ namespace commands
         col2 = col2 > cmp ? col2 : cmp;
       }
 
+    size_t maxcol = guess_terminal_width();
     for (size_t i = 0; i < sorted.size(); ++i)
       {
         if (idx(sorted, i)->cmdgroup != curr_group)
@@ -215,7 +216,7 @@ namespace commands
 
         // Start new line if the current command could make the previous
         // one wrap.  Indent it appropriately.
-        if (col + idx(sorted, i)->name.size() + 1 >= 79)
+        if (col + idx(sorted, i)->name.size() + 1 >= maxcol)
           {
             out << '\n';
             col = 0;
