@@ -63,7 +63,7 @@ struct
 bogus_cert_p
 {
   app_state & app;
-  bogus_cert_p(app_state & a) : app(a) {};
+  bogus_cert_p(app_state & app) : app(app) {};
 
   bool cert_is_bogus(cert const & c) const
   {
@@ -360,10 +360,10 @@ cert_hash_code(cert const & t, hexenc<id> & out)
 }
 
 bool
-priv_key_exists(app_state & app, rsa_keypair_id const & id)
+priv_key_exists(key_store & keys, rsa_keypair_id const & id)
 {
 
-  return app.keys.key_pair_exists(id);
+  return keys.key_pair_exists(id);
 }
 
 // Loads a key pair for a given key id, from either a lua hook

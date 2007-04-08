@@ -25,7 +25,6 @@ revision.cc:
 
 
   build_roster_style_revs_from_manifest_style_revs()
-
     app.db....
     needs: anc_graph()
     needs: get_user_key()
@@ -38,3 +37,22 @@ revision.cc:
     needs: get_user_key()
     needs: require_password()
     needs: erase_bogus_certs()
+
+
+cert.cc:
+
+  erase_bogus_certs():
+    app.db...
+    app.lua.hook_get_manifest_cert_trust
+
+  load_key_pair():
+    app.keys...
+    app.loa.hook
+
+  calculate_cert():
+    app.db...
+    needs: load_key_pair()  (i.e. keys, lua.hook_persist_phrase_ok)
+    needs: make_signature()
+
+
+
