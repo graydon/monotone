@@ -1376,6 +1376,9 @@ workspace::perform_deletions(path_set const & paths,
       split_path &p(todo.front());
       file_path name(p);
 
+      E(!name.empty(),
+        F("unable to drop the root of the repository"));
+
       if (!new_roster.has_node(p))
         P(F("skipping %s, not currently tracked") % name);
       else
