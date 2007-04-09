@@ -41,6 +41,9 @@ revision.cc:
 
 cert.cc:
 
+  bogus_cert_p::is_bogus_cert():
+    needs: check_cert()
+
   erase_bogus_certs():
     app.db...
     app.lua.hook_get_manifest_cert_trust
@@ -53,6 +56,33 @@ cert.cc:
     app.db...
     needs: load_key_pair()  (i.e. keys, lua.hook_persist_phrase_ok)
     needs: make_signature()
+
+  check_cert()
+    app.db...
+    app.lua.hook_persist_phrase_ok
+    needs: check_signature()
+
+  get_user_key():
+    app.keys...
+    app.opts.signing_key
+    app.lua.hook_get_branch_key
+    app.opts.branchname
+
+  guess_branch():
+    app.opts.branch_given + app.opts.branchname
+    app.get_project().get_revision_branches()
+
+  make_simple_cert():
+    needs: get_user_key()  (i.e. keys + some opts and hooks)
+    needs: calculate_cert()
+
+  cert_revision_author_default():
+    needs (thought other calls): make_simple_cert()
+    app.lua.hook_get_author
+    app.opts.branchname
+    
+
+
 
 
 
