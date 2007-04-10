@@ -799,7 +799,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
               set<node_id> nodes_modified;
               select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
-                                           app);
+                                           app.db);
 
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)

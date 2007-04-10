@@ -24,6 +24,7 @@
 // permission.
 
 class app_state;
+class key_store;
 
 struct cert
 {
@@ -63,7 +64,7 @@ typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 
 void cert_signable_text(cert const & t,std::string & out);
 cert_status check_cert(app_state & app, cert const & t);
-bool priv_key_exists(app_state & app, rsa_keypair_id const & id);
+bool priv_key_exists(key_store & keys, rsa_keypair_id const & id);
 void load_key_pair(app_state & app,
                    rsa_keypair_id const & id,
                    keypair & kp);

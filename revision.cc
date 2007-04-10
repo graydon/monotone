@@ -177,7 +177,7 @@ void
 find_common_ancestor_for_merge(revision_id const & left,
                                revision_id const & right,
                                revision_id & anc,
-                               app_state & app)
+                               database & db)
 {
   interner<ctx> intern;
   set<ctx> leaves;
@@ -193,7 +193,7 @@ find_common_ancestor_for_merge(revision_id const & left,
   multimap<revision_id, revision_id> inverse_graph;
   {
     multimap<revision_id, revision_id> graph;
-    app.db.get_revision_ancestry(graph);
+    db.get_revision_ancestry(graph);
     typedef multimap<revision_id, revision_id>::const_iterator gi;
     for (gi i = graph.begin(); i != graph.end(); ++i)
       inverse_graph.insert(make_pair(i->second, i->first));
@@ -303,12 +303,12 @@ is_ancestor(T const & ancestor_id,
 bool
 is_ancestor(revision_id const & ancestor_id,
             revision_id const & descendent_id,
-            app_state & app)
+            database & db)
 {
   L(FL("checking whether %s is an ancestor of %s") % ancestor_id % descendent_id);
 
   multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
   return is_ancestor(ancestor_id, descendent_id, graph);
 }
 
@@ -391,7 +391,7 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
 void
 toposort(set<revision_id> const & revisions,
          vector<revision_id> & sorted,
-         app_state & app)
+         database & db)
 {
   map<rev_height, revision_id> work;
 
@@ -399,7 +399,7 @@ toposort(set<revision_id> const & revisions,
        i != revisions.end(); ++i) 
     {
       rev_height height;
-      app.db.get_rev_height(*i, height);
+      db.get_rev_height(*i, height);
       work.insert(make_pair(height, *i));
     }
 
@@ -456,14 +456,14 @@ accumulate_strict_ancestors(revision_id const & start,
 void
 erase_ancestors_and_failures(std::set<revision_id> & candidates,
                              is_failure & p,
-                             app_state & app)
+                             database & db)
 {
   // Load up the ancestry graph
   multimap<revision_id, revision_id> inverse_graph;
   
   {
     multimap<revision_id, revision_id> graph;
-    app.db.get_revision_ancestry(graph);
+    db.get_revision_ancestry(graph);
     for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
          i != graph.end(); ++i)
       inverse_graph.insert(make_pair(i->second, i->first));
@@ -519,10 +519,10 @@ namespace
   };
 }
 void
-erase_ancestors(set<revision_id> & revisions, app_state & app)
+erase_ancestors(set<revision_id> & revisions, database & db)
 {
   no_failures p;
-  erase_ancestors_and_failures(revisions, p, app);
+  erase_ancestors_and_failures(revisions, p, db);
 }
 
 // This function takes a revision A and a set of revision Bs, calculates the
@@ -533,14 +533,14 @@ erase_ancestors(set<revision_id> & revisions, app_state & app)
 void
 ancestry_difference(revision_id const & a, set<revision_id> const & bs,
                     set<revision_id> & new_stuff,
-                    app_state & app)
+                    database & db)
 {
   new_stuff.clear();
   typedef multimap<revision_id, revision_id>::const_iterator gi;
   multimap<revision_id, revision_id> graph;
   multimap<revision_id, revision_id> inverse_graph;
 
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
   for (gi i = graph.begin(); i != graph.end(); ++i)
     inverse_graph.insert(make_pair(i->second, i->first));
 
@@ -588,7 +588,7 @@ void
 select_nodes_modified_by_rev(revision_t const & rev,
                              roster_t const new_roster,
                              set<node_id> & nodes_modified,
-                             app_state & app)
+                             database & db)
 {
   nodes_modified.clear();
 
@@ -597,7 +597,7 @@ select_nodes_modified_by_rev(revision_t const & rev,
     {
       set<node_id> edge_nodes_modified;
       roster_t old_roster;
-      app.db.get_roster(edge_old_revision(i), old_roster);
+      db.get_roster(edge_old_revision(i), old_roster);
       select_nodes_modified_by_cset(edge_changes(i),
                                     old_roster,
                                     new_roster,
@@ -1075,7 +1075,7 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 
       manifest_id man;
       legacy::renames_map renames;
-      legacy::get_manifest_and_renames_for_rev(app, rev, man, renames);
+      legacy::get_manifest_and_renames_for_rev(app.db, rev, man, renames);
 
       L(FL("node %d = revision %s = manifest %s") % node % rev % man);
       old_rev_to_node.insert(make_pair(rev, node));
@@ -1731,7 +1731,7 @@ build_changesets_from_manifest_ancestry(app_state & app)
 // For all other purposes, use toposort above.
 static void
 allrevs_toposorted(vector<revision_id> & revisions,
-                   app_state & app)
+                   database & db)
 {
 
   typedef multimap<revision_id, revision_id>::const_iterator gi;
@@ -1741,7 +1741,7 @@ allrevs_toposorted(vector<revision_id> & revisions,
 
   // get the complete ancestry
   multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
 
   // determine the number of parents for each rev
   map<revision_id, int> pcount;
@@ -1771,19 +1771,19 @@ allrevs_toposorted(vector<revision_id> & revisions,
 }
 
 void
-regenerate_caches(app_state & app)
+regenerate_caches(database & db)
 {
   P(F("regenerating cached rosters and heights"));
 
-  app.db.ensure_open_for_format_changes();
+  db.ensure_open_for_format_changes();
 
-  transaction_guard guard(app.db);
+  transaction_guard guard(db);
 
-  app.db.delete_existing_rosters();
-  app.db.delete_existing_heights();
+  db.delete_existing_rosters();
+  db.delete_existing_heights();
 
   vector<revision_id> sorted_ids;
-  allrevs_toposorted(sorted_ids, app);
+  allrevs_toposorted(sorted_ids, db);
 
   ticker done(_("regenerated"), "r", 5);
   done.set_total(sorted_ids.size());
@@ -1793,9 +1793,9 @@ regenerate_caches(app_state & app)
     {
       revision_t rev;
       revision_id const & rev_id = *i;
-      app.db.get_revision(rev_id, rev);
-      app.db.put_roster_for_revision(rev_id, rev);
-      app.db.put_height_for_revision(rev_id, rev);
+      db.get_revision(rev_id, rev);
+      db.put_roster_for_revision(rev_id, rev);
+      db.put_height_for_revision(rev_id, rev);
       ++done;
     }
 

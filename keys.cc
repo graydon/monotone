@@ -658,7 +658,7 @@ void
 require_password(rsa_keypair_id const & key,
                  app_state & app)
 {
-  N(priv_key_exists(app, key),
+  N(priv_key_exists(app.keys, key),
     F("no key pair '%s' found in key store '%s'")
     % key % app.keys.get_key_dir());
   keypair kp;
