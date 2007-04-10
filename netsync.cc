@@ -2981,7 +2981,6 @@ insert_with_parents(revision_id rev,
                     refiner & ref,
                     revision_enumerator & rev_enumerator,
                     set<revision_id> & revs,
-                    app_state & app,
                     ticker & revisions_ticker)
 {
   deque<revision_id> work;
@@ -3043,7 +3042,7 @@ session::rebuild_merkle_trees(app_state & app,
           {
             revision_id rid(j->inner().ident);
             insert_with_parents(rid, rev_refiner, rev_enumerator,
-                                revision_ids, app, revisions_ticker);
+                                revision_ids, revisions_ticker);
             // Branch certs go in here, others later on.
             hexenc<id> tmp;
             id item;

@@ -90,7 +90,7 @@ private:
                    schema_bypass_mode,
                    format_bypass_mode };
 
-  void install_functions(app_state * app);
+  void install_functions();
   struct sqlite3 * sql(enum open_mode mode = normal_mode);
 
   void check_filename();

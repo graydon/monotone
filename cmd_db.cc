@@ -85,7 +85,7 @@ CMD(db, N_("database"),
       else if (idx(args, 0)() == "rosterify")
         build_roster_style_revs_from_manifest_style_revs(app);
       else if (idx(args, 0)() == "regenerate_caches")
-        regenerate_caches(app);
+        regenerate_caches(app.db);
       else
         throw usage(name);
     }

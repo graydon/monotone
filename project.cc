@@ -88,7 +88,7 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
                                                     branch.second);
 
       not_in_branch p(app, branch_encoded);
-      erase_ancestors_and_failures(branch.second, p, app);
+      erase_ancestors_and_failures(branch.second, p, app.db);
       L(FL("found heads of branch %s (%s heads)")
         % name % branch.second.size());
     }

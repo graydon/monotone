@@ -389,7 +389,7 @@ CMD(asciik, N_("debug"), N_("SELECTOR"),
       revs.insert(rid);
     }
   vector<revision_id> sorted;
-  toposort(revs, sorted, app);
+  toposort(revs, sorted, app.db);
   vector<revision_id> curr_row;
   reverse(sorted.begin(), sorted.end());
   for (vector<revision_id>::const_iterator rev = sorted.begin();
