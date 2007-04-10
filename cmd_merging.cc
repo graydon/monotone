@@ -574,7 +574,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         // Write new files into the db.
         store_roster_merge_result(left_roster, right_roster, result,
                                   left_rid, right_rid, merged,
-                                  app);
+                                  app.db);
       }
 
       bool log_message_given;
