@@ -58,8 +58,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-04 11:08-0400\n"
-"PO-Revision-Date: 2007-04-04 11:44-0400\n"
+"POT-Creation-Date: 2007-04-10 10:29-0400\n"
+"PO-Revision-Date: 2007-04-10 10:36-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -184,7 +184,7 @@ msgstr "ID_REV"
 #: automate.cc:1735 cmd_db.cc:37 cmd_diff_log.cc:396 cmd_diff_log.cc:423
 #: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:224 cmd_merging.cc:184
 #: cmd_merging.cc:780 cmd_merging.cc:795 cmd_merging.cc:798 cmd_netsync.cc:316
-#: cmd_ws_commit.cc:527 cmd_ws_commit.cc:987 commands.cc:401
+#: cmd_ws_commit.cc:527 cmd_ws_commit.cc:987 commands.cc:407
 #, c-format
 msgid "no such revision '%s'"
 msgstr "la revisión '%s' no existe"
@@ -466,7 +466,7 @@ msgstr "ninguna variable tiene nombre %s en el dominino %s"
 
 #: cmd_db.cc:157 cmd_diff_log.cc:471 cmd_diff_log.cc:600 cmd_files.cc:117
 #: cmd_files.cc:247 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
-#: commands.cc:278
+#: commands.cc:284
 msgid "informative"
 msgstr "informativo"
 
@@ -1944,7 +1944,7 @@ msgstr ""
 msgid "refresh the inodeprint cache"
 msgstr "refresca el cache inodeprint"
 
-#: commands.cc:142 commands.cc:244
+#: commands.cc:142 commands.cc:250
 #, c-format
 msgid "unknown command '%s'"
 msgstr "comando desconocido '%s'"
@@ -1958,39 +1958,39 @@ msgstr "comando '%s' tiene múltiple expansiones ambiguas:"
 msgid "commands:"
 msgstr "comandos:"
 
-#: commands.cc:278
+#: commands.cc:284
 msgid "command [ARGS...]"
 msgstr "comando [ARGUMENTOS...]"
 
-#: commands.cc:279
+#: commands.cc:285
 msgid "display command help"
 msgstr "muestra la ayuda del comando"
 
-#: commands.cc:408
+#: commands.cc:414
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expandiendo selección '%s'"
 
-#: commands.cc:416
+#: commands.cc:422
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "no hay concordancia para la selección '%s'"
 
-#: commands.cc:423
+#: commands.cc:429
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expandido a '%s'"
 
-#: commands.cc:440
+#: commands.cc:446
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "selección '%s' tiene múltiple expansiones ambiguas:"
 
-#: commands.cc:457
+#: commands.cc:463
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:458
+#: commands.cc:464
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -1999,7 +1999,7 @@ msgstr ""
 "rama '%s' tiene múltiples cabezas\n"
 "considere utilizar '%s merge'"
 
-#: commands.cc:473
+#: commands.cc:479
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "'--message' y '--message-file' son mutuamente exclusivos"
@@ -2801,7 +2801,7 @@ msgstr "%s invocado con un parámetro inválido"
 msgid "Directory '%s' does not exist"
 msgstr "Directorio '%s' no existe"
 
-#: lua.cc:487 lua.cc:522 rcs_import.cc:1229 work.cc:1600
+#: lua.cc:487 lua.cc:522 rcs_import.cc:1229 work.cc:1603
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' no es un directorio"
@@ -4290,92 +4290,97 @@ msgstr ""
 
 #: work.cc:1380
 #, c-format
+msgid "unable to drop the root directory"
+msgstr "imposible descartar el directorio raiz"
+
+#: work.cc:1383
+#, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "saltandose %s, no está versionado actualmente"
 
-#: work.cc:1390
+#: work.cc:1393
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "no puede borrar %s/, no esta vacio"
 
-#: work.cc:1408
+#: work.cc:1411
 #, c-format
 msgid "directory %s not empty - it will be dropped but not deleted"
 msgstr "directorio %s no está vacio - será descartado pero no borrado"
 
-#: work.cc:1418
+#: work.cc:1421
 #, c-format
 msgid "file %s changed - it will be dropped but not deleted"
 msgstr "archivo %s ha cambiado - será descartado pero no borrado"
 
-#: work.cc:1421
+#: work.cc:1424
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "eliminando %s del manifiesto del área de trabajo"
 
-#: work.cc:1462
+#: work.cc:1465
 #, c-format
 msgid "source file %s is not versioned"
 msgstr "archivo fuente %s no está versionado"
 
-#: work.cc:1464
+#: work.cc:1467
 #, c-format
 msgid "destination name %s already exists as an unversioned directory"
 msgstr "nombre de destino %s ya existe como un directorio no versionado"
 
-#: work.cc:1472
+#: work.cc:1475
 #, c-format
 msgid "destination dir %s/ is not versioned (perhaps add it?)"
 msgstr "directorio de destino %s/ no esta versionado (quizas deba agregarlo)"
 
-#: work.cc:1475
+#: work.cc:1478
 #, c-format
 msgid "destination %s is an existing file in current revision"
 msgstr "destino %s es un archivo existente en la revisión actual"
 
-#: work.cc:1485
+#: work.cc:1488
 #, c-format
 msgid "empty path %s is not allowed"
 msgstr "camino vacio %s no esta permitido"
 
-#: work.cc:1499
+#: work.cc:1502
 #, c-format
 msgid "%s does not exist in current manifest"
 msgstr "%s no existe en el manifiesto actual"
 
-#: work.cc:1502
+#: work.cc:1505
 #, c-format
 msgid "destination %s already exists in current manifest"
 msgstr "destino %s ya existe en el manifiesto actual"
 
-#: work.cc:1508
+#: work.cc:1511
 #, c-format
 msgid "destination directory %s does not exist in current manifest"
 msgstr "directorio de destino %s no existe en el manifiesto actual"
 
-#: work.cc:1510
+#: work.cc:1513
 #, c-format
 msgid "destination directory %s is not a directory"
 msgstr "directorio de destino %s no es un directorio"
 
-#: work.cc:1519
+#: work.cc:1522
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "renombrando %s a %s en el manifiesto del área de trabajo"
 
-#: work.cc:1547
+#: work.cc:1550
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "%s no existe en el área de trabajo, ignorada"
 
-#: work.cc:1551
+#: work.cc:1554
 #, c-format
 msgid "destination %s already exists in workspace, skipping filesystem rename"
 msgstr ""
 "destino %s ya existe en el área de trabajo, ignorando renombrado del sistema "
 "de archivos"
 
-#: work.cc:1555
+#: work.cc:1558
 #, c-format
 msgid ""
 "skipping move_path in filesystem %s->%s, source doesn't exist, destination "
@@ -4384,32 +4389,32 @@ msgstr ""
 "ignorando 'move_path' en el sistema de archivos %s->%s, fuente no existe, "
 "pero el destino si"
 
-#: work.cc:1580
+#: work.cc:1583
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr "nuevo directorio raiz propuesto '%s' no esta versionado o no existe"
 
-#: work.cc:1582
+#: work.cc:1585
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "nuevo directorio raiz propuesto '%s' no es un directorio"
 
-#: work.cc:1587
+#: work.cc:1590
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr "nuevo directorio raiz propuesto '%s' contiene camino ilegal %s"
 
-#: work.cc:1597
+#: work.cc:1600
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "directorio '%s' no está versionado o no existe"
 
-#: work.cc:1603
+#: work.cc:1606
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' está en el camino"
 
-#: work.cc:1643
+#: work.cc:1646
 #, c-format
 msgid ""
 "workspace is locked\n"
