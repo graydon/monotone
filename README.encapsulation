@@ -199,3 +199,25 @@ keys.cc:
     app.opts.ssh_sign
     app.keys...
     app.agent
+    app.signers
+    app.lua.hook_persist_phrase_ok()
+    needs: check_signature()
+
+  check_signature():
+    app.verifiers
+    app.lua.hook_persist_phrase_ok
+
+  encrypt_rsa():
+    (takes 'lua' argument, but doesn't use it??)
+
+  decrypt_rsa():
+    needs: get_private_key()
+
+  require_password():
+    needs: priv_key_exists()
+    app.keys.get_key_dir()
+    needs: load_key_pair()
+    app.lua.hook_persist_phrase_ok()
+    needs: make_signature()
+    needs: check_signature()
+
