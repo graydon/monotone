@@ -3469,6 +3469,19 @@ database::close()
   I(!__sql);
 }
 
+// FIXME: the quick hack lua link in functions
+bool
+database::hook_expand_selector(std::string const & sel, std::string & exp)
+{
+  return __app->lua.hook_expand_selector(sel, exp);
+};
+
+bool
+database::hook_expand_date(std::string const & sel, std::string & exp)
+{
+  return __app->lua.hook_expand_date(sel, exp);
+};
+
 // transaction guards
 
 transaction_guard::transaction_guard(database & d, bool exclusive,

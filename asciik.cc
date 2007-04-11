@@ -372,13 +372,13 @@ CMD(asciik, N_("debug"), N_("SELECTOR"),
     F("wrong argument count"));
 
   vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(args[0](), app));
+    sels(selectors::parse_selector(args[0](), app.db));
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
   //set<hexenc<id>> completions;
   selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
+  selectors::complete_selector("", sels, ty, completions, app.db);
 
   asciik graph(std::cout, 10);
   set<revision_id> revs;

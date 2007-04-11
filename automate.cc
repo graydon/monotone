@@ -534,12 +534,12 @@ AUTOMATE(select, N_("SELECTOR"), options::opts::none)
     F("wrong argument count"));
 
   vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(args[0](), app));
+    sels(selectors::parse_selector(args[0](), app.db));
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
   selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
+  selectors::complete_selector("", sels, ty, completions, app.db);
 
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)

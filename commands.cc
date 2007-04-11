@@ -409,14 +409,14 @@ complete(app_state & app,
     }
 
   vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(str, app));
+    sels(selectors::parse_selector(str, app.db));
 
   P(F("expanding selection '%s'") % str);
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
   selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
+  selectors::complete_selector("", sels, ty, completions, app.db);
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);

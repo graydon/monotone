@@ -593,6 +593,10 @@ public:
   void delete_existing_rosters();
   void put_roster_for_revision(revision_id const & new_id,
                                revision_t const & rev);
+
+  // quick hack to make these hooks available via the database context
+  bool hook_expand_selector(std::string const & sel, std::string & exp);
+  bool hook_expand_date(std::string const & sel, std::string & exp);
 };
 
 // Parent maps are used in a number of places to keep track of all the
