@@ -435,13 +435,13 @@ make_signature(app_state & app,           // to hook for phrase
       // you're making a half-dozen certs during a commit or merge or
       // something.
 
-      bool persist_phrase = (!app.signers.empty())
+      bool persist_phrase = (!app.keys.signers.empty())
         || app.lua.hook_persist_phrase_ok();
 
       shared_ptr<PK_Signer> signer;
       shared_ptr<RSA_PrivateKey> priv_key;
-      if (persist_phrase && app.signers.find(id) != app.signers.end())
-        signer = app.signers[id].first;
+      if (persist_phrase && app.keys.signers.find(id) != app.keys.signers.end())
+        signer = app.keys.signers[id].first;
 
       else
         {
@@ -459,7 +459,7 @@ make_signature(app_state & app,           // to hook for phrase
            * away after we leave this scope. Hence we store a pair of
            * <verifier,key> so they both exist. */
           if (persist_phrase)
-            app.signers.insert(make_pair(id,make_pair(signer,priv_key)));
+            app.keys.signers.insert(make_pair(id,make_pair(signer,priv_key)));
         }
 
       sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
@@ -496,13 +496,13 @@ check_signature(app_state &app,
 {
   // examine pubkey
 
-  bool persist_phrase = (!app.verifiers.empty()) || app.lua.hook_persist_phrase_ok();
+  bool persist_phrase = (!app.keys.verifiers.empty()) || app.lua.hook_persist_phrase_ok();
 
   shared_ptr<PK_Verifier> verifier;
   shared_ptr<RSA_PublicKey> pub_key;
   if (persist_phrase
-      && app.verifiers.find(id) != app.verifiers.end())
-    verifier = app.verifiers[id].first;
+      && app.keys.verifiers.find(id) != app.keys.verifiers.end())
+    verifier = app.keys.verifiers[id].first;
 
   else
     {
@@ -525,7 +525,7 @@ check_signature(app_state &app,
        * away after we leave this scope. Hence we store a pair of
        * <verifier,key> so they both exist. */
       if (persist_phrase)
-        app.verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
+        app.keys.verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
     }
 
   // examine signature

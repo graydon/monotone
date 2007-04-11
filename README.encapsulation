@@ -199,12 +199,11 @@ keys.cc:
     app.opts.ssh_sign
     app.keys...
     app.agent
-    app.signers
     app.lua.hook_persist_phrase_ok()
     needs: check_signature()
 
   check_signature():
-    app.verifiers
+    app.keys...
     app.lua.hook_persist_phrase_ok
 
   encrypt_rsa():

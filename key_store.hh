@@ -2,10 +2,22 @@
 #define __KEY_STORE_H__
 
 #include <map>
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
+
 #include "vocab.hh"
 #include "paths.hh"
 
 class app_state;
+
+namespace Botan
+{
+  class PK_Signer;
+  class RSA_PrivateKey;
+  class PK_Verifier;
+  class RSA_PublicKey;
+};
 
 class key_store
 {
@@ -48,6 +60,18 @@ public:
                          
 
   void delete_key(rsa_keypair_id const & ident);
+
+  // These are used to cache signers/verifiers (if the hook allows).
+  // They can't be function-static variables in key.cc, since they
+  // must be destroyed before the Botan deinitialize() function is
+  // called.
+
+  std::map<rsa_keypair_id,
+    std::pair<boost::shared_ptr<Botan::PK_Signer>,
+        boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
+  std::map<rsa_keypair_id,
+    std::pair<boost::shared_ptr<Botan::PK_Verifier>,
+        boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 };
 
 // Local Variables:
