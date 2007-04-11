@@ -221,3 +221,44 @@ keys.cc:
     needs: make_signature()
     needs: check_signature()
 
+
+project.cc:
+
+  struct not_in_branch:
+    needs: erase_bogus_certs()
+
+  project_t:
+    app.db...
+    needs: erase_bogus_certs()
+    needs: cert_revision_{in_branch,tag,changelog,date_time,author}()
+      which in turn all need make_simple_cert()
+    app.opts.date
+    app.opts.author
+
+
+
+cmd_diff_log.cc:
+
+  CMD(diff:
+    app.db (read-only?)
+    app.opts.external_diff_args_given
+    app.opts.diff_format
+    app.opts.no_show_encloser
+    app.opts.revision_selectors
+    app.opts.exclude_patterns
+    app.opts.depth
+    app.lua.hook_get_encloser_pattern
+
+    needs: app.require_workspace()
+    needs: app.work.get_parent_rosters()
+    needs: app.work.get_current_roster_shape()
+    needs: app.work.update_current_roster_from_filesystem()
+    needs: node_restriction()
+
+    needs: complete()
+
+
+selectors.cc:
+  decode_selector():
+    app.lua.hook_expand_{selector,date}
+
