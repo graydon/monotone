@@ -268,6 +268,18 @@ key_store::delete_key(rsa_keypair_id const & ident)
   delete_file(file);
 }
 
+bool
+key_store::hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase)
+{
+  return app.lua.hook_get_passphrase(k, phrase);
+}
+
+bool
+key_store::hook_persist_phrase_ok()
+{
+  return app.lua.hook_persist_phrase_ok();
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

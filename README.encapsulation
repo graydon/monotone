@@ -5,9 +5,7 @@ annotate.cc:
     # Why does this go via the project? It only calls
     # db.get_revision_certs()...
     app.get_project().get_revision_certs(*i, certs);
-
-    needs: erase_bogus_certs()
-
+    app.db..
 
 revision.cc:
 
@@ -36,31 +34,14 @@ revision.cc:
     needs: anc_graph()
     needs: get_user_key()
     needs: require_password()
-    needs: erase_bogus_certs()
 
 
 cert.cc:
-
-  bogus_cert_p::is_bogus_cert():
-    needs: check_cert()
-
-  erase_bogus_certs():
-    app.db...
-    app.lua.hook_get_manifest_cert_trust
-
-  load_key_pair():
-    app.keys...
-    app.loa.hook
 
   calculate_cert():
     app.db...
     needs: load_key_pair()  (i.e. keys, lua.hook_persist_phrase_ok)
     needs: make_signature()
-
-  check_cert()
-    app.db...
-    app.lua.hook_persist_phrase_ok
-    needs: check_signature()
 
   get_user_key():
     app.keys...
@@ -144,13 +125,12 @@ netsync.cc:
 
   session::process_auth_cmd():
     app.db...
-    app.keys.try_ensure_in_db()
+    app.keys...
     app.lua.hook_note_netsync_start()
     app.lua.hook_get_netsync_read_permitted()
     app.lua.hook_get_netsync_write_permitted()
     app.get_project().get_branch_list()
     needs: rebuild_merkle_trees()
-    needs: check_signature()
 
   session::begin_service():
     app.opts.use_transport_auth
@@ -188,37 +168,18 @@ packet.cc:
 
 
 keys.cc:
-  migrate_private_key():
-    needs: get_passphrase()
-
-  get_passphrase():
-    lua.hook_get_passphrase
-
   make_signature():
-    needs: get_passphrase()
+    app.keys...
     app.opts.ssh_sign
-    app.keys...
     app.agent
-    app.lua.hook_persist_phrase_ok()
-    needs: check_signature()
-
-  check_signature():
-    app.keys...
-    app.lua.hook_persist_phrase_ok
 
   encrypt_rsa():
-    (takes 'lua' argument, but doesn't use it??)
-
-  decrypt_rsa():
-    needs: get_private_key()
+    (now takes a key_store context, but doesn't use it..)
 
   require_password():
+    app.keys...
     needs: priv_key_exists()
-    app.keys.get_key_dir()
-    needs: load_key_pair()
-    app.lua.hook_persist_phrase_ok()
     needs: make_signature()
-    needs: check_signature()
 
 
 project.cc:
@@ -228,7 +189,6 @@ project.cc:
 
   project_t:
     app.db...
-    needs: erase_bogus_certs()
     needs: cert_revision_{in_branch,tag,changelog,date_time,author}()
       which in turn all need make_simple_cert()
     app.opts.date
@@ -255,9 +215,3 @@ cmd_diff_log.cc:
     needs: node_restriction()
 
     needs: complete()
-
-
-selectors.cc:
-  decode_selector():
-    app.lua.hook_expand_{selector,date}
-

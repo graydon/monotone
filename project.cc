@@ -66,7 +66,7 @@ namespace
                                 cert_name(branch_cert_name),
                                 branch_encoded,
                                 certs);
-      erase_bogus_certs(certs, app);
+      erase_bogus_certs(certs, app.db);
       return certs.empty();
     }
   };
@@ -107,7 +107,7 @@ project_t::revision_is_in_branch(revision_id const & id,
 
   int num = certs.size();
 
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, app.db);
 
   L(FL("found %d (%d valid) %s branch certs on revision %s")
     % num
@@ -146,7 +146,7 @@ project_t::get_revision_certs_by_name(revision_id const & id,
                                       std::vector<revision<cert> > & certs)
 {
   outdated_indicator i = app.db.get_revision_certs(id, name, certs);
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, app.db);
   return i;
 }
 
@@ -206,7 +206,7 @@ project_t::get_tags(set<tag_t> & tags)
 {
   std::vector<revision<cert> > certs;
   outdated_indicator i = app.db.get_revision_certs(tag_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, app.db);
   tags.clear();
   for (std::vector<revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)

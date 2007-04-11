@@ -72,6 +72,10 @@ public:
   std::map<rsa_keypair_id,
     std::pair<boost::shared_ptr<Botan::PK_Verifier>,
         boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
+
+  // FIXME: quick hack to make these hooks available via the key_store context
+  bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
+  bool hook_persist_phrase_ok();
 };
 
 // Local Variables:

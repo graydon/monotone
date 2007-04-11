@@ -81,7 +81,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
   // figure out which branches the target is in
   vector< revision<cert> > certs;
   app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, app.db);
 
   set< branch_name > branches;
   for (vector< revision<cert> >::const_iterator i = certs.begin();

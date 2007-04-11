@@ -3482,6 +3482,26 @@ database::hook_expand_date(std::string const & sel, std::string & exp)
   return __app->lua.hook_expand_date(sel, exp);
 };
 
+bool
+database::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+{
+  return __app->lua.hook_get_manifest_cert_trust(signers, id, name, val);
+};
+
+bool
+database::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+{
+  return __app->lua.hook_get_revision_cert_trust(signers, id, name, val);
+};
+
+key_store &
+database::get_key_store()
+{
+  return __app->keys;
+}
+
 // transaction guards
 
 transaction_guard::transaction_guard(database & d, bool exclusive,

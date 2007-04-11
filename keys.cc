@@ -75,7 +75,7 @@ do_arc4(SecureVector<Botan::byte> & sym_key,
 // 'force_from_user' means that we don't use the passphrase cache, and we
 // don't use the get_passphrase hook.
 void
-get_passphrase(lua_hooks & lua,
+get_passphrase(key_store & keys,
                rsa_keypair_id const & keyid,
                utf8 & phrase,
                bool confirm_phrase,
@@ -87,7 +87,7 @@ get_passphrase(lua_hooks & lua,
   // they permit it) through the life of a program run. this helps when
   // you're making a half-dozen certs during a commit or merge or
   // something.
-  bool persist_phrase = lua.hook_persist_phrase_ok();
+  bool persist_phrase = keys.hook_persist_phrase_ok();
   static map<rsa_keypair_id, utf8> phrases;
 
   if (!force_from_user && phrases.find(keyid) != phrases.end())
@@ -97,7 +97,7 @@ get_passphrase(lua_hooks & lua,
     }
 
   string lua_phrase;
-  if (!force_from_user && lua.hook_get_passphrase(keyid, lua_phrase))
+  if (!force_from_user && keys.hook_get_passphrase(keyid, lua_phrase))
     {
       // user is being a slob and hooking lua to return his passphrase
       phrase = utf8(lua_phrase);
@@ -158,12 +158,12 @@ get_passphrase(lua_hooks & lua,
 
 
 void
-generate_key_pair(lua_hooks & lua,              // to hook for phrase
+generate_key_pair(key_store & keys,             // to hook for phrase
                   rsa_keypair_id const & id,    // to prompting user for phrase
                   keypair & kp_out)
 {
   utf8 phrase;
-  get_passphrase(lua, id, phrase, true, true);
+  get_passphrase(keys, id, phrase, true, true);
   generate_key_pair(kp_out, phrase);
 }
 
@@ -209,7 +209,7 @@ generate_key_pair(keypair & kp_out,
 
 // ask for passphrase then decrypt a private key.
 shared_ptr<RSA_PrivateKey>
-get_private_key(lua_hooks & lua,
+get_private_key(key_store & keys,
                 rsa_keypair_id const & id,
                 base64< rsa_priv_key > const & priv,
                 bool force_from_user)
@@ -235,7 +235,7 @@ get_private_key(lua_hooks & lua,
     {
       for (int i = 0; i < 3; ++i)
         {
-          get_passphrase(lua, id, phrase, false, force);
+          get_passphrase(keys, id, phrase, false, force);
           L(FL("have %d-byte encrypted private key") % decoded_key().size());
 
           try
@@ -290,7 +290,7 @@ migrate_private_key(app_state & app,
     {
       decrypted_key.set(reinterpret_cast<Botan::byte const *>(decoded_key().data()),
                            decoded_key().size());
-      get_passphrase(app.lua, id, phrase, false, force);
+      get_passphrase(app.keys, id, phrase, false, force);
       SecureVector<Botan::byte> sym_key;
       sym_key.set(reinterpret_cast<Botan::byte const *>(phrase().data()), phrase().size());
       do_arc4(sym_key, decrypted_key);
@@ -338,14 +338,14 @@ migrate_private_key(app_state & app,
 }
 
 void
-change_key_passphrase(lua_hooks & lua,
+change_key_passphrase(key_store & keys,
                       rsa_keypair_id const & id,
                       base64< rsa_priv_key > & encoded_key)
 {
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(lua, id, encoded_key, true);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(keys, id, encoded_key, true);
 
   utf8 new_phrase;
-  get_passphrase(lua, id, new_phrase, true, true, "enter new passphrase");
+  get_passphrase(keys, id, new_phrase, true, true, "enter new passphrase");
 
   Pipe p;
   p.start_msg();
@@ -445,7 +445,7 @@ make_signature(app_state & app,           // to hook for phrase
 
       else
         {
-          priv_key = get_private_key(app.lua, id, priv);
+          priv_key = get_private_key(app.keys, id, priv);
           if (app.agent.connected()
               && app.opts.ssh_sign != "only"
               && app.opts.ssh_sign != "no") {
@@ -483,12 +483,12 @@ make_signature(app_state & app,           // to hook for phrase
   L(FL("make_signature: produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 
-  E(check_signature(app, id, key.pub, tosign, signature),
+  E(check_signature(app.keys, id, key.pub, tosign, signature),
     F("make_signature: signature is not valid"));
 }
 
 bool
-check_signature(app_state &app,
+check_signature(key_store & keys,
                 rsa_keypair_id const & id,
                 base64<rsa_pub_key> const & pub_encoded,
                 string const & alleged_text,
@@ -496,13 +496,13 @@ check_signature(app_state &app,
 {
   // examine pubkey
 
-  bool persist_phrase = (!app.keys.verifiers.empty()) || app.lua.hook_persist_phrase_ok();
+  bool persist_phrase = (!keys.verifiers.empty()) || keys.hook_persist_phrase_ok();
 
   shared_ptr<PK_Verifier> verifier;
   shared_ptr<RSA_PublicKey> pub_key;
   if (persist_phrase
-      && app.keys.verifiers.find(id) != app.keys.verifiers.end())
-    verifier = app.keys.verifiers[id].first;
+      && keys.verifiers.find(id) != keys.verifiers.end())
+    verifier = keys.verifiers[id].first;
 
   else
     {
@@ -525,7 +525,7 @@ check_signature(app_state &app,
        * away after we leave this scope. Hence we store a pair of
        * <verifier,key> so they both exist. */
       if (persist_phrase)
-        app.keys.verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
+        keys.verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
     }
 
   // examine signature
@@ -543,7 +543,7 @@ check_signature(app_state &app,
   return valid_sig;
 }
 
-void encrypt_rsa(lua_hooks & lua,
+void encrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
                  base64<rsa_pub_key> & pub_encoded,
                  string const & plaintext,
@@ -568,13 +568,13 @@ void encrypt_rsa(lua_hooks & lua,
   ciphertext = rsa_oaep_sha_data(string(reinterpret_cast<char const *>(ct.begin()), ct.size()));
 }
 
-void decrypt_rsa(lua_hooks & lua,
+void decrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
                  base64< rsa_priv_key > const & priv,
                  rsa_oaep_sha_data const & ciphertext,
                  string & plaintext)
 {
-  shared_ptr<RSA_PrivateKey> priv_key = get_private_key(lua, id, priv);
+  shared_ptr<RSA_PrivateKey> priv_key = get_private_key(keys, id, priv);
 
   shared_ptr<PK_Decryptor> decryptor;
   decryptor = shared_ptr<PK_Decryptor>(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
@@ -662,13 +662,13 @@ require_password(rsa_keypair_id const & key,
     F("no key pair '%s' found in key store '%s'")
     % key % app.keys.get_key_dir());
   keypair kp;
-  load_key_pair(app, key, kp);
+  load_key_pair(app.keys, key, kp);
   if (app.lua.hook_persist_phrase_ok())
     {
       string plaintext("hi maude");
       base64<rsa_sha1_signature> sig;
       make_signature(app, key, kp.priv, plaintext, sig);
-      N(check_signature(app, key, kp.pub, plaintext, sig),
+      N(check_signature(app.keys, key, kp.pub, plaintext, sig),
         F("passphrase for '%s' is incorrect") % key);
     }
 }
@@ -721,11 +721,11 @@ UNIT_TEST(key, signature_round_trip)
   make_signature(app, key, kp.priv, plaintext, sig);
 
   BOOST_CHECKPOINT("checking signature");
-  BOOST_CHECK(check_signature(app, key, kp.pub, plaintext, sig));
+  BOOST_CHECK(check_signature(app.keys, key, kp.pub, plaintext, sig));
 
   string broken_plaintext = plaintext + " ...with a lie";
   BOOST_CHECKPOINT("checking non-signature");
-  BOOST_CHECK(!check_signature(app, key, kp.pub, broken_plaintext, sig));
+  BOOST_CHECK(!check_signature(app.keys, key, kp.pub, broken_plaintext, sig));
   app.keys.delete_key(key);
 }
 
