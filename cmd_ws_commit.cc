@@ -403,9 +403,9 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
     N_("Renames the root directory"),
     N_("rename the root directory\n"
        "after this command, the directory that currently "
-       "has the name NEW_ROOT\n"
+       "has the name NEW_ROOT "
        "will be the root directory, and the directory "
-       "that is currently the root\n"
+       "that is currently the root "
        "directory will have name PUT_OLD.\n"
        "Use of --bookkeep-only is NOT recommended."),
     options::opts::bookkeep_only)
@@ -496,8 +496,8 @@ CMD(status, N_("informative"), N_("[PATH]..."),
 CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
     N_("Checks out a revision from the database into a directory"),
     N_("check out a revision from database into directory.\n"
-       "If a revision is given, that's the one that will be checked out.\n"
-       "Otherwise, it will be the head of the branch (given or implicit).\n"
+       "If a revision is given, that's the one that will be checked out. "
+       "Otherwise, it will be the head of the branch (given or implicit). "
        "If no directory is given, the branch name will be used as directory"),
     options::opts::branch | options::opts::revision)
 {

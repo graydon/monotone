@@ -129,9 +129,9 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
 CMD(update, N_("workspace"), "",
     N_("Updates the workspace"),
     N_("update workspace.\n"
-       "This command modifies your workspace to be based off of a\n"
-       "different revision, preserving uncommitted changes as it does so.\n"
-       "If a revision is given, update the workspace to that revision.\n"
+       "This command modifies your workspace to be based off of a "
+       "different revision, preserving uncommitted changes as it does so. "
+       "If a revision is given, update the workspace to that revision. "
        "If not, update the workspace to the head of the branch."),
     options::opts::branch | options::opts::revision)
 {
@@ -765,17 +765,15 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
 
 CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     N_("Applies changes made at arbitrary places in history"),
-    N_("Apply changes made at arbitrary places in history to current workspace.\n"
-       "This command takes changes made at any point in history, and\n"
-       "edits your current workspace to include those changes.  The end result\n"
-       "is identical to 'mtn diff -r FROM -r TO | patch -p0', except that\n"
-       "this command uses monotone's merger, and thus intelligently handles\n"
+    N_("Apply changes made at arbitrary places in history to current workspace. "
+       "This command takes changes made at any point in history, and "
+       "edits your current workspace to include those changes.  The end result "
+       "is identical to 'mtn diff -r FROM -r TO | patch -p0', except that "
+       "this command uses monotone's merger, and thus intelligently handles "
        "renames, conflicts, and so on.\n"
-       "\n"
-       "If one revision is given, applies the changes made in that revision\n"
+       "If one revision is given, applies the changes made in that revision "
        "compared to its parent.\n"
-       "\n"
-       "If two revisions are given, applies the changes made to get from the\n"  
+       "If two revisions are given, applies the changes made to get from the "  
        "first revision to the second."),
     options::opts::revision | options::opts::depth | options::opts::exclude)
 {

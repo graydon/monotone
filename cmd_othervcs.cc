@@ -16,7 +16,7 @@ using std::vector;
 CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
     N_("Parses versions in RCS files"),
     N_("parse versions in RCS files\n"
-       "this command doesn't reconstruct or import revisions."
+       "this command doesn't reconstruct or import revisions. "
        "you probably want cvs_import"),
     options::opts::branch)
 {

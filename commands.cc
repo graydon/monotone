@@ -352,7 +352,10 @@ namespace commands
     split_into_lines(i->second->desc(), lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
-      out << "    " << *j << std::endl;
+      {
+        describe("", *j, 4, out);
+        out << std::endl;
+      }
   }
 
   void explain_usage(string const & cmd, ostream & out)
@@ -373,6 +376,7 @@ namespace commands
         out << std::endl;
         out << "For information on a specific command, type "
                "'mtn help <command_name>'." << std::endl;
+        out << std::endl;
       }
     else
       {
@@ -384,9 +388,8 @@ namespace commands
                "'mtn help <group_name>'." << std::endl;
         out << "For information on a specific command, type "
                "'mtn help <command_name>'." << std::endl;
+        out << std::endl;
       }
-
-    out << std::endl;
   }
 
   int process(app_state & app, string const & cmd, vector<utf8> const & args)

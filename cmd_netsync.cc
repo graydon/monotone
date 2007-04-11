@@ -200,8 +200,8 @@ private:
 CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
     N_("Checks out a revision from remote a database into a directory"),
     N_("check out a revision from remote database into directory.\n"
-       "If a revision is given, that's the one that will be checked out.\n"
-       "Otherwise, it will be the head of the branch supplied.\n"
+       "If a revision is given, that's the one that will be checked out. "
+       "Otherwise, it will be the head of the branch supplied. "
        "If no directory is given, the branch name will be used as directory"),
     options::opts::exclude | options::opts::branch | options::opts::revision)
 {

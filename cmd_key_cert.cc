@@ -214,7 +214,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
 CMD(trusted, N_("key and cert"), 
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
     N_("Tests whether a hypothetical certificate would be trusted"),
-    N_("test whether a hypothetical cert would be trusted\n"
+    N_("test whether a hypothetical cert would be trusted "
        "by current settings"),
     options::opts::none)
 {

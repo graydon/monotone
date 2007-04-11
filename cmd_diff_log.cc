@@ -471,8 +471,8 @@ prepare_diff(cset & included,
 CMD(diff, N_("informative"), N_("[PATH]..."),
     N_("Shows current differences"),
     N_("show current diffs on stdout.\n"
-    "If one revision is given, the diff between the workspace and\n"
-    "that revision is shown.  If two revisions are given, the diff between\n"
+    "If one revision is given, the diff between the workspace and "
+    "that revision is shown.  If two revisions are given, the diff between "
     "them is given.  If no format is specified, unified is used by default."),
     options::opts::revision | options::opts::depth | options::opts::exclude
     | options::opts::diff_options)
@@ -600,7 +600,7 @@ typedef priority_queue<pair<rev_height, revision_id>,
 
 CMD(log, N_("informative"), N_("[FILE] ..."),
     N_("Prints history in reverse order"),
-    N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
+    N_("print history in reverse order (filtering by 'FILE'). If one or more "
     "revisions are given, use them as a starting point."),
     options::opts::last | options::opts::next
     | options::opts::from | options::opts::to

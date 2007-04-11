@@ -208,7 +208,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
 
 CMD(test_migration_step, hidden_group(), "SCHEMA",
     "Runs one step of migration on the specified database",
-    "run one step of migration - from SCHEMA to its successor -\n"
+    "run one step of migration - from SCHEMA to its successor - "
     "on the specified database", options::opts::none)
 {
   if (args.size() != 1)
