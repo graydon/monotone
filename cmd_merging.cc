@@ -127,6 +127,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
 }
 
 CMD(update, N_("workspace"), "",
+    N_("Updates the workspace"),
     N_("update workspace.\n"
        "This command modifies your workspace to be based off of a\n"
        "different revision, preserving uncommitted changes as it does so.\n"
@@ -329,7 +330,9 @@ merge_two(revision_id const & left, revision_id const & right,
 // since a single 'merge' command may perform arbitrarily many actual merges.
 // (Possibility: append the --message/--message-file text to the synthetic
 // log message constructed in merge_two().)
-CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
+CMD(merge, N_("tree"), "",
+    N_("Merges unmerged heads of a branch"),
+    N_("merge unmerged heads of branch"),
     options::opts::branch | options::opts::date | options::opts::author)
 {
   typedef std::pair<revision_id, revision_id> revpair;
@@ -429,6 +432,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
 }
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
+    N_("Merges from one branch to another asymmetrically"),
     N_("merge from one branch to another asymmetrically"),
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
@@ -440,6 +444,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 }
 
 CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
+    N_("Merges one branch into a subdirectory in another branch"),
     N_("merge one branch into a subdirectory in another branch"),
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
@@ -597,6 +602,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
 
 CMD(merge_into_workspace, N_("tree"),
     N_("OTHER-REVISION"),
+    N_("Merges a revision into the current workspace's base revision"),
     N_("Merge OTHER-REVISION into the current workspace's base revision, "
        "and update the current workspace with the result.  There can be no "
        "pending changes in the current workspace.  Both OTHER-REVISION and "
@@ -690,6 +696,7 @@ CMD(merge_into_workspace, N_("tree"),
 
 CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH"),
+    N_("Merges two explicitly given revisions"),
     N_("merge two explicitly given revisions, "
        "placing result in given branch"),
     options::opts::date | options::opts::author)
@@ -715,6 +722,7 @@ CMD(explicit_merge, N_("tree"),
 }
 
 CMD(show_conflicts, N_("informative"), N_("REV REV"), 
+    N_("Shows what conflicts would need to be resolved"),
     N_("Show what conflicts would need to be resolved "
        "to merge the given revisions."),
     options::opts::branch | options::opts::date | options::opts::author)
@@ -756,6 +764,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
 }
 
 CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
+    N_("Applies changes made at arbitrary places in history"),
     N_("Apply changes made at arbitrary places in history to current workspace.\n"
        "This command takes changes made at any point in history, and\n"
        "edits your current workspace to include those changes.  The end result\n"
@@ -924,7 +933,9 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   }
 }
 
-CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
+CMD(heads, N_("tree"), "",
+    N_("Shows unmerged head revisions of a branch"),
+    N_("show unmerged head revisions of branch"),
     options::opts::branch)
 {
   set<revision_id> heads;
@@ -949,6 +960,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
 }
 
 CMD(get_roster, N_("debug"), N_("[REVID]"),
+    N_("Dumps the roster associated with a given identifier"),
     N_("dump the roster associated with the given REVID, "
        "or the workspace if no REVID is given"),
     options::opts::none)

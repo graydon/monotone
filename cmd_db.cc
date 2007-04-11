@@ -61,6 +61,7 @@ CMD(db, N_("database"),
       "rosterify\n"
       "regenerate_caches\n"
       "set_epoch BRANCH EPOCH\n"),
+    N_("Manipulates database state"),
     N_("manipulate database state"),
     options::opts::drop_attr)
 {
@@ -122,6 +123,7 @@ CMD(db, N_("database"),
 }
 
 CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
+    N_("Sets a database variable"),
     N_("set the database variable NAME to VALUE, in domain DOMAIN"),
     options::opts::none)
 {
@@ -138,6 +140,7 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
 }
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),
+    N_("Unsets a database variable"),
     N_("remove the database variable NAME in domain DOMAIN"),
     options::opts::none)
 {
@@ -155,6 +158,7 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
 }
 
 CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
+    N_("Completes a partial identifier"),
     N_("complete partial id"),
     options::opts::verbose)
 {
@@ -203,6 +207,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
 }
 
 CMD(test_migration_step, hidden_group(), "SCHEMA",
+    "Runs one step of migration on the specified database",
     "run one step of migration - from SCHEMA to its successor -\n"
     "on the specified database", options::opts::none)
 {

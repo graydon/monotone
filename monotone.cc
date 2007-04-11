@@ -134,7 +134,11 @@ string read_options(options & opts, vector<string> args)
   // consume the command, and perform completion if necessary
   string cmd;
   if (!opts.args.empty())
-    cmd = commands::complete_command(idx(opts.args, 0)());
+    {
+      cmd = commands::complete_command(idx(opts.args, 0)());
+      N(!cmd.empty(),
+        F("unknown command '%s'") % cmd);
+    }
 
   // reparse options, now that we know what command-specific
   // options are allowed.

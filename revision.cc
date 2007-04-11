@@ -1804,7 +1804,9 @@ regenerate_caches(app_state & app)
   P(F("finished regenerating cached rosters and heights"));
 }
 
-CMD(rev_height, hidden_group(), N_("REV"), "show the height for REV",
+CMD(rev_height, hidden_group(), N_("REV"),
+    "Shows a revision's height",
+    "show the height for REV",
     options::opts::none)
 {
   if (args.size() != 1)

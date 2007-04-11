@@ -28,17 +28,20 @@ namespace commands
     std::string name;
     std::string cmdgroup;
     std::string params_;
+    std::string abstract_;
     std::string desc_;
     bool use_workspace_options;
     options::options_type opts;
     command(std::string const & n,
             std::string const & g,
             std::string const & p,
+            std::string const & a,
             std::string const & d,
             bool u,
             options::options_type const & o);
     virtual ~command();
     virtual std::string params();
+    virtual std::string abstract();
     virtual std::string desc();
     virtual options::options_type get_options(std::vector<utf8> const & args);
     virtual void exec(app_state & app,
@@ -92,11 +95,11 @@ process_commit_message_args(bool & given,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
 
-#define CMD(C, group, params, desc, opts)                            \
+#define CMD(C, group, params, abstract, desc, opts)                  \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, params, desc, true,             \
+    cmd_ ## C() : command(#C, group, params, abstract, desc, true,   \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -110,11 +113,11 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // Use this for commands that want to define a params() function
 // instead of having a static description. (Good for "automate"
 // and possibly "list".)
-#define CMD_WITH_SUBCMDS(C, group, desc, opts)                       \
+#define CMD_WITH_SUBCMDS(C, group, abstract, desc, opts)             \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, "", desc, true,                 \
+    cmd_ ## C() : command(#C, group, "", abstract, desc, true,       \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -130,11 +133,11 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // Use this for commands that should specifically _not_ look for an
 // _MTN dir and load options from it.
 
-#define CMD_NO_WORKSPACE(C, group, params, desc, opts)               \
+#define CMD_NO_WORKSPACE(C, group, params, abstract, desc, opts)     \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, params, desc, false,            \
+    cmd_ ## C() : command(#C, group, params, abstract, desc, false,  \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -151,6 +154,7 @@ namespace commands {                                                 \
   {                                                                  \
     cmd_ ## C() : command(#C, realcommand##_cmd.cmdgroup,            \
                           realcommand##_cmd.params_,                 \
+                          realcommand##_cmd.abstract_,               \
                           realcommand##_cmd.desc_, true,             \
                           realcommand##_cmd.opts)                 \
     {}                                                               \

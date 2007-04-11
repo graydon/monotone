@@ -489,6 +489,7 @@ CMD(list, N_("informative"),
        "ignored\n"
        "missing\n"
        "changed"),
+    N_("Shows database objects"),
     N_("show database objects, or the current workspace manifest, \n"
        "or known, unknown, intentionally ignored, missing, or \n"
        "changed-state files"),

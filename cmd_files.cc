@@ -26,7 +26,10 @@ using std::vector;
 // fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
+CMD(fload, N_("debug"), "",
+    N_("Loads a file's contents into the database"),
+    N_("load file contents into db"),
+    options::opts::none)
 {
   data dat;
   read_data_stdin(dat);
@@ -42,6 +45,7 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::non
 }
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
+    N_("Merges 3 files and outputs the result"),
     N_("merge 3 files and output result"),
     options::opts::none)
 {
@@ -79,6 +83,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 }
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
+    N_("Differences 2 files and outputs the result"),
     N_("diff 2 files and output result"),
     options::opts::diff_options)
 {
@@ -115,6 +120,7 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
 }
 
 CMD(annotate, N_("informative"), N_("PATH"),
+    N_("Prints an annotated copy of a file"),
     N_("print annotated copy of the file from REVISION"),
     options::opts::revision | options::opts::brief)
 {
@@ -183,6 +189,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 }
 
 CMD(identify, N_("debug"), N_("[PATH]"),
+    N_("Calculates the identity of a file or stdin"),
     N_("calculate identity of PATH or stdin"),
     options::opts::none)
 {
@@ -246,6 +253,7 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
 
 CMD(cat, N_("informative"),
     N_("FILENAME"),
+    N_("Prints a file from the database"),
     N_("write file from database to stdout"),
     options::opts::revision)
 {

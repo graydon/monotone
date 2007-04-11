@@ -375,6 +375,7 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
 
 
 CMD_WITH_SUBCMDS(automate, N_("automation"),
+                 N_("Interface for scripted execution"),
                  N_("automation interface"),
                  options::opts::none)
 {

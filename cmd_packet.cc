@@ -20,6 +20,7 @@ using std::istringstream;
 using std::vector;
 
 CMD(pubkey, N_("packet i/o"), N_("ID"), 
+    N_("Prints a public key packet"),
     N_("write public key packet to stdout"),
     options::opts::none)
 {
@@ -49,6 +50,7 @@ CMD(pubkey, N_("packet i/o"), N_("ID"),
 }
 
 CMD(privkey, N_("packet i/o"), N_("ID"), 
+    N_("Prints a private key packet"),
     N_("write private key packet to stdout"),
     options::opts::none)
 {
@@ -129,6 +131,7 @@ namespace
 
 
 CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
+    N_("Reads packets from files"),
     N_("read packets from files or stdin"),
     options::opts::none)
 {

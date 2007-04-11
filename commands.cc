@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <cassert>
 #include <map>
 #include <algorithm>
 #include <iostream>
@@ -68,11 +69,12 @@ namespace commands
   command::command(string const & n,
                    string const & g,
                    string const & p,
+                   string const & a,
                    string const & d,
                    bool u,
                    options::options_type const & o)
-    : name(n), cmdgroup(g), params_(p), desc_(d), use_workspace_options(u),
-      opts(o)
+    : name(n), cmdgroup(g), params_(p), abstract_(a), desc_(d),
+      use_workspace_options(u), opts(o)
   {
     if (cmds == NULL)
       cmds = new map<string, command *>;
@@ -80,6 +82,7 @@ namespace commands
   }
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
+  std::string command::abstract() {return safe_gettext(abstract_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
   options::options_type command::get_options(vector<utf8> const & args)
   {
@@ -110,6 +113,34 @@ namespace commands
   using std::greater;
   using std::ostream;
 
+  static map<string, string> cmdgroups;
+
+  static void init_cmdgroups(void)
+  {
+    if (cmdgroups.empty())
+      {
+#define insert(id, abstract) \
+        cmdgroups.insert(map<string, string>::value_type(id, abstract));
+
+        insert("automation", N_("Commands that aid in scripted execution"));
+        insert("database", N_("Commands that manipulate the database"));
+        insert("debug", N_("Commands that aid in program debugging"));
+        insert("informative", N_("Commands for information retrieval"));
+        insert("key and cert", N_("Commands to manage keys and certificates"));
+        insert("network", N_("Commands that access the network"));
+        insert("packet i/o", N_("Commands for packet reading and writing"));
+        insert("rcs", N_("Commands for interaction with RCS and CVS"));
+        insert("review", N_("Commands to review revisions"));
+        insert("tree", N_("Commands to manipulate the tree"));
+        insert("vars", N_("Commands to manage persistent variables"));
+        insert("workspace", N_("Commands that deal with the workspace"));
+
+#undef insert
+      }
+
+    assert(!cmdgroups.empty());
+  }
+
   bool operator<(command const & self, command const & other)
   {
     // *twitch*
@@ -138,8 +169,8 @@ namespace commands
       }
 
     // no matched commands
-    N(matched.size() != 0,
-      F("unknown command '%s'") % cmd);
+    if (matched.size() == 0)
+      return "";
 
     // one matched command
     if (matched.size() == 1)
@@ -158,77 +189,180 @@ namespace commands
     return cmd;
   }
 
-  void explain_usage(string const & cmd, ostream & out)
+  string complete_command_group(string const & cmdgroup)
   {
-    map<string,command *>::const_iterator i;
+    init_cmdgroups();
 
-    // try to get help on a specific command
+    if (cmdgroup.length() == 0 || cmdgroups.find(cmdgroup) != cmdgroups.end())
+      return cmdgroup;
 
-    i = (*cmds).find(cmd);
+    L(FL("expanding command group '%s'") % cmdgroup);
 
-    if (i != (*cmds).end())
+    vector<string> matched;
+
+    for (map<string, string>::const_iterator i = cmdgroups.begin();
+         i != cmdgroups.end(); ++i)
       {
-        string params = i->second->params();
-        vector<string> lines;
-        split_into_lines(params, lines);
-        for (vector<string>::const_iterator j = lines.begin();
-             j != lines.end(); ++j)
-          out << "     " << i->second->name << ' ' << *j << '\n';
-        split_into_lines(i->second->desc(), lines);
-        for (vector<string>::const_iterator j = lines.begin();
-             j != lines.end(); ++j)
-          out << "       " << *j << '\n';
-        out << '\n';
-        return;
+        if (cmdgroup.length() < i->first.length())
+          {
+            string prefix(i->first, 0, cmdgroup.length());
+            if (cmdgroup == prefix)
+              matched.push_back(i->first);
+          }
       }
 
-    vector<command *> sorted;
-    out << _("commands:") << '\n';
-    for (i = (*cmds).begin(); i != (*cmds).end(); ++i)
+    // no matched commands
+    if (matched.size() == 0)
+      return "";
+
+    // one matched command
+    if (matched.size() == 1)
       {
-        if (i->second->cmdgroup != hidden_group())
-          sorted.push_back(i->second);
+        string completed = *matched.begin();
+        L(FL("expanded command group to '%s'") % completed);
+        return completed;
+      }
+
+    // more than one matched command
+    string err = (F("command group '%s' has multiple ambiguous "
+                    "expansions:") % cmdgroup).str();
+    for (vector<string>::iterator i = matched.begin();
+         i != matched.end(); ++i)
+      err += ('\n' + *i);
+    W(i18n_format(err));
+
+    return cmdgroup;
+  }
+
+  // Prints the abstract description of the given command or command group
+  // properly indented.  The tag starts at column two.  The description has
+  // to start, at the very least, two spaces after the tag's end position;
+  // this is given by the colabstract parameter.
+  static void describe(const string & tag, const string & abstract,
+                       size_t colabstract, ostream & out)
+  {
+    size_t col = 0;
+    out << "  " << tag << "  ";
+    col += display_width(utf8(tag + "    "));
+
+    // TODO: Properly wrap long lines.
+
+    while (col++ < colabstract)
+      out << ' ';
+    out << abstract << std::endl;
+  }
+
+  static void explain_cmdgroups(ostream & out )
+  {
+    size_t colabstract = 0;
+    for (map<string, string>::const_iterator i = cmdgroups.begin();
+         i != cmdgroups.end(); i++)
+      {
+        string const & name = (*i).first;
+
+        size_t len = display_width(utf8(name + "    "));
+        if (colabstract < len)
+          colabstract = len;
+      }
+
+    out << "Command groups:" << std::endl << std::endl;
+    for (map<string, string>::const_iterator i = cmdgroups.begin();
+         i != cmdgroups.end(); i++)
+      {
+        string const & name = (*i).first;
+        string const & abstract = (*i).second;
+
+        describe(name, abstract, colabstract, out);
+      }
+  }
+
+  static void explain_cmdgroup_usage(string const & cmdgroup, ostream & out)
+  {
+    init_cmdgroups();
+
+    map<string, string>::const_iterator grpi = cmdgroups.find(cmdgroup);
+    assert(grpi != cmdgroups.end());
+
+    size_t colabstract = 0;
+    vector<command *> sorted;
+    for (map<string, command *>::const_iterator i = (*cmds).begin();
+         i != (*cmds).end(); ++i)
+      {
+        if (i->second->cmdgroup == cmdgroup)
+          {
+            sorted.push_back(i->second);
+
+            size_t len = display_width(utf8(i->second->name + "    "));
+            if (colabstract < len)
+              colabstract = len;
+          }
       }
 
     sort(sorted.begin(), sorted.end(), greater<command *>());
 
-    string curr_group;
-    size_t col = 0;
-    size_t col2 = 0;
+    out << (*grpi).second << ":" << std::endl;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-        size_t cmp = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str())));
-        col2 = col2 > cmp ? col2 : cmp;
-      }
+        string const & name = idx(sorted, i)->name;
+        string const & abstract = idx(sorted, i)->abstract();
 
-    size_t maxcol = guess_terminal_width();
-    for (size_t i = 0; i < sorted.size(); ++i)
+        describe(name, abstract, colabstract, out);
+      }
+  }
+
+  static void explain_cmd_usage(string const & cmd, ostream & out)
+  {
+    map<string, command *>::const_iterator i;
+
+    i = (*cmds).find(cmd);
+    assert(i != (*cmds).end());
+
+    out << F(safe_gettext("Syntax specific to 'mtn %s':")) % cmd
+        << std::endl << std::endl;
+    string params = i->second->params();
+    vector<string> lines;
+    split_into_lines(params, lines);
+    for (vector<string>::const_iterator j = lines.begin();
+         j != lines.end(); ++j)
+      out << "  " << i->second->name << ' ' << *j << std::endl;
+    split_into_lines(i->second->desc(), lines);
+    for (vector<string>::const_iterator j = lines.begin();
+         j != lines.end(); ++j)
+      out << "    " << *j << std::endl;
+  }
+
+  void explain_usage(string const & cmd, ostream & out)
+  {
+    init_cmdgroups();
+
+    map<string, command *>::const_iterator cmditer;
+    map<string, string>::const_iterator cmdgroupiter;
+
+    cmditer = (*cmds).find(cmd);
+    cmdgroupiter = cmdgroups.find(cmd);
+
+    if (cmditer != (*cmds).end())
+      explain_cmd_usage(cmd, out);
+    else if (cmdgroupiter != cmdgroups.end())
       {
-        if (idx(sorted, i)->cmdgroup != curr_group)
-          {
-            curr_group = idx(sorted, i)->cmdgroup;
-            out << '\n';
-            out << "  " << safe_gettext(idx(sorted, i)->cmdgroup.c_str());
-            col = display_width(utf8(safe_gettext(idx(sorted, i)->cmdgroup.c_str()))) + 2;
-            while (col++ < (col2 + 3))
-              out << ' ';
-          }
-
-        // Start new line if the current command could make the previous
-        // one wrap.  Indent it appropriately.
-        if (col + idx(sorted, i)->name.size() + 1 >= maxcol)
-          {
-            out << '\n';
-            col = 0;
-            while (col++ < (col2 + 3))
-              out << ' ';
-          }
-
-        // Print the current command name.
-        out << ' ' << idx(sorted, i)->name;
-        col += idx(sorted, i)->name.size() + 1;
+        explain_cmdgroup_usage(cmd, out);
+        out << std::endl;
+        out << "For information on a specific command, type "
+               "'mtn help <command_name>'." << std::endl;
       }
-    out << "\n\n";
+    else
+      {
+        assert(cmd.empty());
+
+        explain_cmdgroups(out);
+        out << std::endl;
+        out << "To see what commands are available in a group, type "
+               "'mtn help <group_name>'." << std::endl;
+        out << "For information on a specific command, type "
+               "'mtn help <command_name>'." << std::endl;
+      }
+
+    out << std::endl;
   }
 
   int process(app_state & app, string const & cmd, vector<utf8> const & args)
@@ -263,6 +397,8 @@ namespace commands
       }
     else
       {
+        N(!cmd.empty(),
+          F("unknown command '%s'") % cmd);
         return options::options_type();
       }
   }
@@ -282,7 +418,9 @@ namespace commands
 ////////////////////////////////////////////////////////////////////////
 
 CMD(help, N_("informative"), N_("command [ARGS...]"),
-    N_("display command help"), options::opts::none)
+    N_("Displays help about commands and options"),
+    N_("display command help"),
+    options::opts::none)
 {
   if (args.size() < 1)
     {
@@ -291,15 +429,31 @@ CMD(help, N_("informative"), N_("command [ARGS...]"),
     }
 
   string full_cmd = complete_command(idx(args, 0)());
-  if ((*cmds).find(full_cmd) == (*cmds).end())
-    throw usage("");
+  string full_cmdgroup = complete_command_group(idx(args, 0)());
 
-  app.opts.help = true;
-  throw usage(full_cmd);
+  if (cmdgroups.find(full_cmdgroup) != cmdgroups.end())
+    {
+      app.opts.help = true;
+      throw usage(full_cmdgroup);
+    }
+  else if ((*cmds).find(full_cmd) != (*cmds).end())
+    {
+      app.opts.help = true;
+      throw usage(full_cmd);
+    }
+  else
+    {
+      // No matched commands or command groups
+      N(!full_cmd.empty() && full_cmdgroup.empty(),
+        F("unknown command or command group '%s'") % idx(args, 0)());
+      throw usage("");
+    }
 }
 
 CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
-    "trigger the specified kind of crash", options::opts::none)
+    "Triggers the specified kind of crash",
+    "trigger the specified kind of crash",
+    options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);
