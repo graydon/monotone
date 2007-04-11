@@ -241,15 +241,39 @@ namespace commands
   static void describe(const string & tag, const string & abstract,
                        size_t colabstract, ostream & out)
   {
+    // The algorithm below avoids printing an space on entry (note that
+    // there are two before the tag but just one after it) and considers
+    // that the colabstract is always one unit less than that given on
+    // entry because it always prints a single space before each word.
+    assert(colabstract > 0);
+
     size_t col = 0;
-    out << "  " << tag << "  ";
-    col += display_width(utf8(tag + "    "));
+    out << "  " << tag << " ";
+    col += display_width(utf8(tag + "   "));
 
-    // TODO: Properly wrap long lines.
-
-    while (col++ < colabstract)
+    while (col++ < colabstract - 1)
       out << ' ';
-    out << abstract << std::endl;
+    col = colabstract - 1;
+
+    vector<string> words;
+    split_into_words(abstract, words);
+
+    const size_t maxcol = terminal_width();
+    for (vector<string>::const_iterator i = words.begin();
+         i != words.end(); i++) {
+        string const & word = *i;
+
+        if (col + word.length() + 1 >= maxcol) {
+          out << std::endl;
+          col = 0;
+          while (col++ < colabstract - 1)
+            out << ' ';
+        }
+
+        out << ' ' << word;
+        col += word.length() + 1;
+    }
+    out << std::endl;
   }
 
   static void explain_cmdgroups(ostream & out )

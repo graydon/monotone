@@ -104,6 +104,35 @@ split_into_lines(string const & in,
   split_into_lines(in, constants::default_encoding, out);
 }
 
+void split_into_words(string const & in,
+                      string const & encoding,
+                      vector<string> & out)
+{
+  string lc_encoding = lowercase(encoding);
+  out.clear();
+
+  string::size_type begin = 0;
+  string::size_type end = in.find_first_of(" ", begin);
+
+  while (end != string::npos && end >= begin)
+    {
+      out.push_back(in.substr(begin, end-begin));
+      begin = end + 1;
+      if (begin >= in.size())
+        break;
+      end = in.find_first_of(" ", begin);
+    }
+  if (begin < in.size())
+    out.push_back(in.substr(begin, in.size() - begin));
+}
+
+void
+split_into_words(string const & in,
+                 vector<string> & out)
+{
+  split_into_words(in, constants::default_encoding, out);
+}
+
 void
 join_lines(vector<string> const & in,
            string & out,
@@ -219,6 +248,26 @@ UNIT_TEST(simplestring_xform, join_lines)
   strs.push_back("user");
   join_lines(strs, joined);
   BOOST_CHECK(joined == "hi\nthere\nuser\n");
+}
+
+UNIT_TEST(simplestring_xform, split_into_words)
+{
+  vector<string> words;
+
+  words.clear();
+  split_into_words("", words);
+  BOOST_CHECK(words.size() == 0);
+
+  words.clear();
+  split_into_words("foo", words);
+  BOOST_CHECK(words.size() == 1);
+  BOOST_CHECK(words[0] == "foo");
+
+  words.clear();
+  split_into_words("foo bar", words);
+  BOOST_CHECK(words.size() == 2);
+  BOOST_CHECK(words[0] == "foo");
+  BOOST_CHECK(words[1] == "bar");
 }
 
 UNIT_TEST(simplestring_xform, strip_ws)
