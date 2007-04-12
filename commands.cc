@@ -50,6 +50,8 @@ using std::vector;
 
 namespace commands
 {
+  aliases_map aliases;
+
   const char * safe_gettext(const char * msgid)
   {
     if (strlen(msgid) == 0)
@@ -149,6 +151,21 @@ namespace commands
                 && (string(_(self.name.c_str())) < (string(_(other.name.c_str()))))));
   }
 
+  static bool is_alias(string const & cmd)
+  {
+    bool ia = false;
+
+    if (aliases.find(cmd) == aliases.end())
+      for (aliases_map::const_iterator iter = aliases.begin();
+           iter != aliases.end() && !ia; iter++)
+        {
+          set<string> const & as = (*iter).second;
+          if (as.find(cmd) != as.end())
+            ia = true;
+        }
+
+    return ia;
+  }
 
   string complete_command(string const & cmd)
   {
@@ -234,6 +251,36 @@ namespace commands
     return cmdgroup;
   }
 
+  // Generates a string of the form (a1, ..., aN), preceded by a space
+  // for simplicity reasons later on, where a1 through aN are the aliases
+  // for the command cmd.  Returns the empty string if no aliases are
+  // defined for that command.
+  static string format_aliases(string const & cmd)
+  {
+    string text;
+
+    aliases_map::const_iterator iter = aliases.find(cmd);
+    if (iter != aliases.end())
+      {
+        text = " (";
+
+        set<string> const & as = (*iter).second;
+        set<string>::const_iterator asiter = as.begin();
+        for (;;)
+          {
+            text += *asiter;
+            asiter++;
+            if (asiter == as.end())
+              break;
+            text += ", ";
+          }
+
+        text += ")";
+      }
+
+    return text;
+  }
+
   // Prints the abstract description of the given command or command group
   // properly indented.  The tag starts at column two.  The description has
   // to start, at the very least, two spaces after the tag's end position;
@@ -312,11 +359,14 @@ namespace commands
     for (map<string, command *>::const_iterator i = (*cmds).begin();
          i != (*cmds).end(); ++i)
       {
-        if (i->second->cmdgroup == cmdgroup)
+        const string & name = i->second->name;
+
+        if (i->second->cmdgroup == cmdgroup && !is_alias(name))
           {
             sorted.push_back(i->second);
 
-            size_t len = display_width(utf8(i->second->name + "    "));
+            string tag = name + format_aliases(name);
+            size_t len = display_width(utf8(tag + "    "));
             if (colabstract < len)
               colabstract = len;
           }
@@ -330,7 +380,8 @@ namespace commands
         string const & name = idx(sorted, i)->name;
         string const & abstract = idx(sorted, i)->abstract();
 
-        describe(name, abstract, colabstract, out);
+        string tag = name + format_aliases(name);
+        describe(tag, abstract, colabstract, out);
       }
   }
 
@@ -686,6 +737,55 @@ process_commit_message_args(bool & given,
   else
     given = false;
 }
+
+#ifdef BUILD_UNIT_TESTS
+#include "unit_tests.hh"
+
+CMD(__test1, hidden_group(), "", "", "", options::opts::none) {}
+
+CMD(__test2, hidden_group(), "", "", "", options::opts::none) {}
+ALIAS(__test2_alias1, __test2)
+
+CMD(__test3, hidden_group(), "", "", "", options::opts::none) {}
+ALIAS(__test3_alias1, __test3)
+ALIAS(__test3_alias2, __test3)
+
+UNIT_TEST(commands, is_alias)
+{
+  using namespace commands;
+
+  // Non-existent command.
+  BOOST_CHECK(!is_alias("__test0"));
+
+  // Non-alias commands.
+  BOOST_CHECK(!is_alias("__test1"));
+  BOOST_CHECK(!is_alias("__test2"));
+  BOOST_CHECK(!is_alias("__test3"));
+
+  // Alias commands.
+  BOOST_CHECK(is_alias("__test2_alias1"));
+  BOOST_CHECK(is_alias("__test3_alias1"));
+  BOOST_CHECK(is_alias("__test3_alias2"));
+}
+
+UNIT_TEST(commands, format_aliases)
+{
+  using namespace commands;
+
+  // Non-existent command.
+  BOOST_CHECK(format_aliases("__test0").empty());
+
+  // Commands with aliases.
+  BOOST_CHECK(format_aliases("__test1").empty());
+  BOOST_CHECK(format_aliases("__test2") == " (__test2_alias1)");
+  BOOST_CHECK(format_aliases("__test3") == " (__test3_alias1, __test3_alias2)");
+
+  // Alias commands; cannot get their aliases.
+  BOOST_CHECK(format_aliases("__test2_alias1").empty());
+  BOOST_CHECK(format_aliases("__test3_alias1").empty());
+  BOOST_CHECK(format_aliases("__test3_alias2").empty());
+}
+#endif // BUILD_UNIT_TESTS
 
 // Local Variables:
 // mode: C++

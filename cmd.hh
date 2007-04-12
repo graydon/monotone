@@ -10,6 +10,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <map>
+#include <set>
+#include <string>
+
 #include "commands.hh"
 #include "options.hh"
 #include "sanity.hh"
@@ -47,6 +51,12 @@ namespace commands
     virtual void exec(app_state & app,
                       std::vector<utf8> const & args) = 0;
   };
+
+  // This type and global map maintain a relation between each command name
+  // and all of its aliases.  If the command has no aliases, it is not
+  // present here.
+  typedef std::map< std::string, std::set<std::string> > aliases_map;
+  extern aliases_map aliases;
 };
 
 inline std::vector<file_path>
@@ -157,7 +167,20 @@ namespace commands {                                                 \
                           realcommand##_cmd.abstract_,               \
                           realcommand##_cmd.desc_, true,             \
                           realcommand##_cmd.opts)                 \
-    {}                                                               \
+    {                                                                \
+      aliases_map::iterator i = aliases.find(#realcommand);          \
+      if (i == aliases.end())                                        \
+        {                                                            \
+          std::set<std::string> as;                                  \
+          as.insert(#C);                                             \
+          aliases.insert(aliases_map::value_type(#realcommand, as)); \
+        }                                                            \
+      else                                                           \
+        {                                                            \
+          std::set<std::string> & as = (*i).second;                  \
+          as.insert(#C);                                             \
+        }                                                            \
+    }                                                                \
     virtual std::string desc();                                      \
     virtual void exec(app_state & app,                               \
                       std::vector<utf8> const & args);               \
