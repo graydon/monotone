@@ -243,8 +243,9 @@ cpp_main(int argc, char ** argv)
           // if we didn't find one at this point.
           app.allow_workspace();
 
-          if (!app.found_workspace && global_sanity.filename.empty())
-            global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
+          if (!app.found_workspace)
+            global_sanity.set_dump_path((app.opts.conf_dir / "dump")
+                                        .as_external());
 
           app.lua.hook_note_mtn_startup(args);
 

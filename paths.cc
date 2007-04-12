@@ -86,13 +86,6 @@ static access_tracker<fs::path> initial_rel_path;
 // system_path's.
 static access_tracker<system_path> working_root;
 
-bookkeeping_path const bookkeeping_root("_MTN");
-path_component const bookkeeping_root_component("_MTN");
-
-// this is a file_path because it does not conform to the invariant that
-// bookkeeping paths always start with the _current_ bookkeeping root.
-file_path const old_bookkeeping_root = file_path_internal("MT");
-
 void
 save_initial_path()
 {

@@ -491,6 +491,7 @@ int main(int argc, char **argv)
   int retcode = 2;
   lua_State *st = 0;
   try{
+  global_sanity.initialize(argc, argv, "C");
 //  global_sanity.set_debug();
   string testfile;
   string firstdir;
