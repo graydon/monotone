@@ -26,6 +26,28 @@ check(mtn("--key", "tester@test.net", "ssh_agent_export"), 0, false, false)
 -- * (ok) export monotone key with passphrase
 check(mtn("ssh_agent_export"), 0, false, false, tkey .. "\n" .. tkey .. "\n")
 
+-- * (ok) export in workspace exports to subdir
+mkdir("subdir")
+mkdir("subdir/anotherdir")
+writefile("subdir/foo", "data data")
+writefile("subdir/anotherdir/bar", "more data")
+chdir("subdir")
+check(mtn("add", "foo"), 0, false, false)
+check(mtn("add", "-R", "anotherdir"), 0, false, false)
+
+check(mtn("ssh_agent_export", "id_monotone"), 0, false, false)
+skip_if(not existsonpath("chmod"))
+check({"chmod", "600", "id_monotone"}, 0, false, false)
+chdir("..")
+
+--commit()
+--rev = base_revision()
+--
+--check(mtn("checkout", "--revision", rev, "codir"), 0, false, false)
+--check(samefile("subdir/foo", "codir/subdir/foo"))
+--check(samefile("subdir/anotherdir/bar", "codir/subdir/anotherdir/bar"))
+
+
 -- * (ok) export monotone key without passphrase
 check(mtn("ssh_agent_export", "id_monotone"), 0, false, false)
 skip_if(not existsonpath("chmod"))
