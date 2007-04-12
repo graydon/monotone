@@ -128,10 +128,9 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
 
 CMD(update, N_("workspace"), "",
     N_("Updates the workspace"),
-    N_("update workspace.\n"
-       "This command modifies your workspace to be based off of a "
-       "different revision, preserving uncommitted changes as it does so. "
-       "If a revision is given, update the workspace to that revision. "
+    N_("This command modifies your workspace to be based off of a "
+       "different revision, preserving uncommitted changes as it does so.  "
+       "If a revision is given, update the workspace to that revision.  "
        "If not, update the workspace to the head of the branch."),
     options::opts::branch | options::opts::revision)
 {
@@ -332,7 +331,7 @@ merge_two(revision_id const & left, revision_id const & right,
 // log message constructed in merge_two().)
 CMD(merge, N_("tree"), "",
     N_("Merges unmerged heads of a branch"),
-    N_("merge unmerged heads of branch"),
+    N_(""),
     options::opts::branch | options::opts::date | options::opts::author)
 {
   typedef std::pair<revision_id, revision_id> revpair;
@@ -433,7 +432,7 @@ CMD(merge, N_("tree"), "",
 
 CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("Merges from one branch to another asymmetrically"),
-    N_("merge from one branch to another asymmetrically"),
+    N_(""),
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
   if (args.size() != 2)
@@ -445,7 +444,7 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 
 CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("Merges one branch into a subdirectory in another branch"),
-    N_("merge one branch into a subdirectory in another branch"),
+    N_(""),
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
   //   This is a special merge operator, but very useful for people
@@ -603,7 +602,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
 CMD(merge_into_workspace, N_("tree"),
     N_("OTHER-REVISION"),
     N_("Merges a revision into the current workspace's base revision"),
-    N_("Merge OTHER-REVISION into the current workspace's base revision, "
+    N_("Merges OTHER-REVISION into the current workspace's base revision, "
        "and update the current workspace with the result.  There can be no "
        "pending changes in the current workspace.  Both OTHER-REVISION and "
        "the workspace's base revision will be recorded as parents on commit.  "
@@ -697,8 +696,8 @@ CMD(merge_into_workspace, N_("tree"),
 CMD(explicit_merge, N_("tree"),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH"),
     N_("Merges two explicitly given revisions"),
-    N_("merge two explicitly given revisions, "
-       "placing result in given branch"),
+    N_("The results of the merge are placed on the branch specified by "
+       "DEST-BRANCH."),
     options::opts::date | options::opts::author)
 {
   revision_id left, right;
@@ -722,9 +721,9 @@ CMD(explicit_merge, N_("tree"),
 }
 
 CMD(show_conflicts, N_("informative"), N_("REV REV"), 
-    N_("Shows what conflicts would need to be resolved"),
-    N_("Show what conflicts would need to be resolved "
-       "to merge the given revisions."),
+    N_("Shows what conflicts need resolution between two revisions"),
+    N_("The conflicts are calculated based on the two revisions given in "
+       "the REV parameters."),
     options::opts::branch | options::opts::date | options::opts::author)
 {
   if (args.size() != 2)
@@ -765,8 +764,7 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
 
 CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     N_("Applies changes made at arbitrary places in history"),
-    N_("Apply changes made at arbitrary places in history to current workspace. "
-       "This command takes changes made at any point in history, and "
+    N_("This command takes changes made at any point in history, and "
        "edits your current workspace to include those changes.  The end result "
        "is identical to 'mtn diff -r FROM -r TO | patch -p0', except that "
        "this command uses monotone's merger, and thus intelligently handles "
@@ -933,7 +931,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
 
 CMD(heads, N_("tree"), "",
     N_("Shows unmerged head revisions of a branch"),
-    N_("show unmerged head revisions of branch"),
+    N_(""),
     options::opts::branch)
 {
   set<revision_id> heads;
@@ -959,8 +957,7 @@ CMD(heads, N_("tree"), "",
 
 CMD(get_roster, N_("debug"), N_("[REVID]"),
     N_("Dumps the roster associated with a given identifier"),
-    N_("dump the roster associated with the given REVID, "
-       "or the workspace if no REVID is given"),
+    N_("If no REVID is given, the workspace is used."),
     options::opts::none)
 {
   roster_t roster;

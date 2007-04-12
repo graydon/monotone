@@ -21,7 +21,7 @@ using std::vector;
 
 CMD(pubkey, N_("packet i/o"), N_("ID"), 
     N_("Prints a public key packet"),
-    N_("write public key packet to stdout"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)
@@ -51,7 +51,7 @@ CMD(pubkey, N_("packet i/o"), N_("ID"),
 
 CMD(privkey, N_("packet i/o"), N_("ID"), 
     N_("Prints a private key packet"),
-    N_("write private key packet to stdout"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)
@@ -132,7 +132,7 @@ namespace
 
 CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     N_("Reads packets from files"),
-    N_("read packets from files or stdin"),
+    N_("If no files are provided, the standard input is used."),
     options::opts::none)
 {
   packet_db_writer dbw(app);

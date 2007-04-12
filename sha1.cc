@@ -93,8 +93,8 @@ void hook_botan_sha1()
 }
 
 CMD(benchmark_sha1, hidden_group(), "",
-    "Benchmarks SHA-1 cores",
-    "benchmark SHA-1 cores",
+    N_("Benchmarks SHA-1 cores"),
+    N_(""),
     options::opts::none)
 {
   P(F("Benchmarking %s SHA-1 cores") % registry().size());

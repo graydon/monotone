@@ -31,7 +31,7 @@ using Botan::RSA_PrivateKey;
 
 CMD(genkey, N_("key and cert"), N_("KEYID"),
     N_("Generates an RSA key-pair"),
-    N_("generate an RSA key-pair"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)
@@ -59,7 +59,7 @@ CMD(genkey, N_("key and cert"), N_("KEYID"),
 
 CMD(dropkey, N_("key and cert"), N_("KEYID"),
     N_("Drops a public and/or private key"),
-    N_("drop a public and private key"),
+    N_(""),
     options::opts::none)
 {
   bool key_deleted = false;
@@ -101,7 +101,7 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"),
 
 CMD(passphrase, N_("key and cert"), N_("KEYID"),
     N_("Changes the passphrase of a private RSA key"),
-    N_("change passphrase of a private RSA key"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)
@@ -123,8 +123,8 @@ CMD(passphrase, N_("key and cert"), N_("KEYID"),
 
 CMD(ssh_agent_export, N_("key and cert"),
     N_("[FILENAME]"),
-    N_("Export a private key for use with ssh-agent"),
-    N_("export your monotone key for use with ssh-agent"),
+    N_("Exports a private key for use with ssh-agent"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() > 1)
@@ -163,7 +163,7 @@ CMD(ssh_agent_export, N_("key and cert"),
 
 CMD(ssh_agent_add, N_("key and cert"), "",
     N_("Adds a private key to ssh-agent"),
-    N_("Add your monotone key to ssh-agent"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() > 1)
@@ -180,7 +180,7 @@ CMD(ssh_agent_add, N_("key and cert"), "",
 
 CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
     N_("Creates a certificate for a revision"),
-    N_("create a cert for a revision"),
+    N_(""),
     options::opts::none)
 {
   if ((args.size() != 3) && (args.size() != 2))
@@ -214,8 +214,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
 CMD(trusted, N_("key and cert"), 
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
     N_("Tests whether a hypothetical certificate would be trusted"),
-    N_("test whether a hypothetical cert would be trusted "
-       "by current settings"),
+    N_("The current settings are used to run the test."),
     options::opts::none)
 {
   if (args.size() < 4)
@@ -262,7 +261,7 @@ CMD(trusted, N_("key and cert"),
 
 CMD(tag, N_("review"), N_("REVISION TAGNAME"),
     N_("Puts a symbolic tag certificate on a revision"),
-    N_("put a symbolic tag cert on a revision"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 2)
@@ -276,7 +275,7 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
 
 CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
     N_("Notes the results of running a test on a revision"),
-    N_("note the results of running a test on a revision"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 2)
@@ -290,7 +289,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 
 CMD(approve, N_("review"), N_("REVISION"),
     N_("Approves a particular revision"),
-    N_("approve of a particular revision"),
+    N_(""),
     options::opts::branch)
 {
   if (args.size() != 1)
@@ -305,7 +304,7 @@ CMD(approve, N_("review"), N_("REVISION"),
 
 CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
     N_("Comments on a particular revision"),
-    N_("comment on a particular revision"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1 && args.size() != 2)

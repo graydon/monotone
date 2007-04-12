@@ -1805,8 +1805,8 @@ regenerate_caches(app_state & app)
 }
 
 CMD(rev_height, hidden_group(), N_("REV"),
-    "Shows a revision's height",
-    "show the height for REV",
+    N_("Shows a revision's height"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)

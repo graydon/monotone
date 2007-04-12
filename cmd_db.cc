@@ -62,7 +62,8 @@ CMD(db, N_("database"),
       "regenerate_caches\n"
       "set_epoch BRANCH EPOCH\n"),
     N_("Manipulates database state"),
-    N_("manipulate database state"),
+    N_("This set of commands are used to create and maintain the database "
+       "that monotone uses to maintain the certificates' data"),
     options::opts::drop_attr)
 {
   if (args.size() == 1)
@@ -124,7 +125,9 @@ CMD(db, N_("database"),
 
 CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
     N_("Sets a database variable"),
-    N_("set the database variable NAME to VALUE, in domain DOMAIN"),
+    N_("This command modifies (or adds if it did not exist before) the "
+       "variable named NAME, stored in the database, and sets it to the "
+       "given value in VALUE.  The variable is placed in the domain DOMAIN."),
     options::opts::none)
 {
   if (args.size() != 3)
@@ -141,7 +144,8 @@ CMD(set, N_("vars"), N_("DOMAIN NAME VALUE"),
 
 CMD(unset, N_("vars"), N_("DOMAIN NAME"),
     N_("Unsets a database variable"),
-    N_("remove the database variable NAME in domain DOMAIN"),
+    N_("This command removes the variable NAME from domain DOMAIN, which"
+       "was previously stored in the database."),
     options::opts::none)
 {
   if (args.size() != 2)
@@ -159,7 +163,7 @@ CMD(unset, N_("vars"), N_("DOMAIN NAME"),
 
 CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     N_("Completes a partial identifier"),
-    N_("complete partial id"),
+    N_(""),
     options::opts::verbose)
 {
   if (args.size() != 2)
@@ -207,9 +211,10 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
 }
 
 CMD(test_migration_step, hidden_group(), "SCHEMA",
-    "Runs one step of migration on the specified database",
-    "run one step of migration - from SCHEMA to its successor - "
-    "on the specified database", options::opts::none)
+    N_("Runs one step of migration on the specified database"),
+    N_("This command migrates the given database from the specified schema "
+       "in SCHEMA to its successor."),
+    options::opts::none)
 {
   if (args.size() != 1)
     throw usage(name);

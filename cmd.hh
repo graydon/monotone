@@ -189,9 +189,9 @@ namespace commands {                                                 \
 }                                                                    \
 std::string commands::cmd_ ## C::desc()                              \
 {                                                                    \
-  std::string result = _(desc_.c_str());                             \
+  std::string result = abstract() + ".\n" + _(desc_.c_str());        \
   result += "\n";                                                    \
-  result += (F("Alias for %s") % #realcommand).str();                \
+  result += (F("Alias for %s.") % #realcommand).str();                \
   return result;                                                     \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \

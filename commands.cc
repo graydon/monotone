@@ -85,7 +85,10 @@ namespace commands
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::abstract() {return safe_gettext(abstract_.c_str());}
-  std::string command::desc() {return safe_gettext(desc_.c_str());}
+  std::string command::desc()
+  {
+    return abstract() + ".\n" + safe_gettext(desc_.c_str());
+  }
   options::options_type command::get_options(vector<utf8> const & args)
   {
     return opts;
@@ -497,7 +500,7 @@ namespace commands
 
 CMD(help, N_("informative"), N_("command [ARGS...]"),
     N_("Displays help about commands and options"),
-    N_("display command help"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() < 1)
@@ -529,8 +532,8 @@ CMD(help, N_("informative"), N_("command [ARGS...]"),
 }
 
 CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
-    "Triggers the specified kind of crash",
-    "trigger the specified kind of crash",
+    N_("Triggers the specified kind of crash"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)

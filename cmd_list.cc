@@ -490,9 +490,9 @@ CMD(list, N_("informative"),
        "missing\n"
        "changed"),
     N_("Shows database objects"),
-    N_("show database objects, or the current workspace manifest, "
+    N_("Shows database objects, or the current workspace manifest, "
        "or known, unknown, intentionally ignored, missing, or "
-       "changed-state files"),
+       "changed-state files."),
     options::opts::depth | options::opts::exclude)
 {
   if (args.size() == 0)

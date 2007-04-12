@@ -123,7 +123,8 @@ extract_patterns(vector<utf8> const & args,
 
 CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("Pushes branches to a netsync server"),
-    N_("push branches matching PATTERN to netsync server at ADDRESS"),
+    N_("This will push all branches that match the pattern given in PATTERN "
+       "to the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
@@ -139,7 +140,8 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
 
 CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("Pulls branches from a netsync server"),
-    N_("pull branches matching PATTERN from netsync server at ADDRESS"),
+    N_("This pulls all branches that match the pattern given in PATTERN "
+       "from the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude)
 {
   utf8 addr;
@@ -156,7 +158,8 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
 
 CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("Synchronizes branches with a netsync server"),
-    N_("sync branches matching PATTERN with netsync server at ADDRESS"),
+    N_("This synchronizes branches that match the pattern given in PATTERN "
+       "with the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
@@ -199,9 +202,8 @@ private:
 
 CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
     N_("Checks out a revision from remote a database into a directory"),
-    N_("check out a revision from remote database into directory.\n"
-       "If a revision is given, that's the one that will be checked out. "
-       "Otherwise, it will be the head of the branch supplied. "
+    N_("If a revision is given, that's the one that will be checked out.  "
+       "Otherwise, it will be the head of the branch supplied.  "
        "If no directory is given, the branch name will be used as directory"),
     options::opts::exclude | options::opts::branch | options::opts::revision)
 {
@@ -387,7 +389,7 @@ private:
 
 CMD_NO_WORKSPACE(serve, N_("network"), "",
                  N_("Serves the database to connecting clients"),
-                 N_("serve the database to connecting clients"),
+                 N_(""),
                  options::opts::bind | options::opts::pidfile |
                  options::opts::bind_stdio | options::opts::no_transport_auth)
 {

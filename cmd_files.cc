@@ -28,7 +28,7 @@ using std::vector;
 
 CMD(fload, N_("debug"), "",
     N_("Loads a file's contents into the database"),
-    N_("load file contents into db"),
+    N_(""),
     options::opts::none)
 {
   data dat;
@@ -46,7 +46,7 @@ CMD(fload, N_("debug"), "",
 
 CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
     N_("Merges 3 files and outputs the result"),
-    N_("merge 3 files and output result"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 3)
@@ -84,7 +84,7 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("Differences 2 files and outputs the result"),
-    N_("diff 2 files and output result"),
+    N_(""),
     options::opts::diff_options)
 {
   if (args.size() != 4)
@@ -121,7 +121,8 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
 
 CMD(annotate, N_("informative"), N_("PATH"),
     N_("Prints an annotated copy of a file"),
-    N_("print annotated copy of the file from REVISION"),
+    N_("Calculates and prints an annotated copy of the given file from "
+       "the specified REVISION."),
     options::opts::revision | options::opts::brief)
 {
   revision_id rid;
@@ -190,7 +191,8 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
 CMD(identify, N_("debug"), N_("[PATH]"),
     N_("Calculates the identity of a file or stdin"),
-    N_("calculate identity of PATH or stdin"),
+    N_("If any PATH is given, calculates their identity; otherwise, the "
+       "one from the standard input is calculated."),
     options::opts::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
@@ -254,7 +256,8 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
 CMD(cat, N_("informative"),
     N_("FILENAME"),
     N_("Prints a file from the database"),
-    N_("write file from database to stdout"),
+    N_("Fetches the given file FILENAME from the database and prints it "
+       "to the standard output."),
     options::opts::revision)
 {
   if (args.size() != 1)
