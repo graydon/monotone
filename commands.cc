@@ -309,19 +309,46 @@ namespace commands
     split_into_words(abstract, words);
 
     const size_t maxcol = terminal_width();
-    for (vector<string>::const_iterator i = words.begin();
-         i != words.end(); i++) {
+    vector<string>::const_iterator i = words.begin();
+    while (i != words.end()) {
         string const & word = *i;
 
         if (col + word.length() + 1 >= maxcol) {
           out << std::endl;
           col = 0;
+
+          // Skip empty words at the beginning of the line so that they do
+          // not mess with indentation.  These "words" appear because we
+          // put two spaces between sentences, and one of these is
+          // transformed into a word.
+          //
+          // Another approach could be to simply omit these words (by
+          // modifying split_into_words) and then add this formatting (two
+          // spaces between sentences) from this algorithm.  But then,
+          // other kinds of formatting could not be allowed in the original
+          // strings... (i.e., they'd disappear after we mangled them).
+          if (word == "")
+            {
+              do
+                i++;
+              while (i != words.end() && (*i) == "");
+              if (i == words.end())
+                break;
+              else
+                {
+                  while (col++ < colabstract - 1)
+                    out << ' ';
+                  continue;
+                }
+            }
+
           while (col++ < colabstract - 1)
             out << ' ';
         }
 
         out << ' ' << word;
         col += word.length() + 1;
+        i++;
     }
     out << std::endl;
   }
