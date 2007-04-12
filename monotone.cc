@@ -137,7 +137,7 @@ string read_options(options & opts, vector<string> args)
     {
       cmd = commands::complete_command(idx(opts.args, 0)());
       N(!cmd.empty(),
-        F("unknown command '%s'") % cmd);
+        F("unknown command '%s'") % idx(opts.args, 0)());
     }
 
   // reparse options, now that we know what command-specific

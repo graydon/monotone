@@ -508,7 +508,7 @@ namespace commands
     else
       {
         N(!cmd.empty(),
-          F("unknown command '%s'") % cmd);
+          F("unknown command '%s'") % idx(cmdline, 0));
         return options::options_type();
       }
   }
