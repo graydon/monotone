@@ -26,6 +26,7 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "cleanup.hh"
 #include "roster.hh"
 #include "selectors.hh"
+#include "graph.hh"
 
 // FIXME: would be better not to include this everywhere
 #include "outdated_indicator.hh"
@@ -287,7 +288,7 @@ public:
   // --== The ancestry graph ==--
   //
 public:
-  void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
+  void get_revision_ancestry(rev_ancestry_map & graph);
 
   void get_revision_parents(revision_id const & ident,
                            std::set<revision_id> & parents);
@@ -552,12 +553,6 @@ private:
                                     hexenc<id> const & new_id,
                                     delta const & del,
                                     database & db);
-  typedef std::pair<rev_height, revision_id> height_rev_pair;
-  void do_step_ancestor(std::set<height_rev_pair> & this_frontier,
-                        std::set<revision_id> & this_seen,
-                        std::set<revision_id> const & other_seen,
-                        std::set<revision_id> & this_uncommon_ancs);
-
 public:
     // branches
   outdated_indicator get_branches(std::vector<std::string> & names);

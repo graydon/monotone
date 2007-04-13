@@ -1791,7 +1791,7 @@ database::get_arbitrary_file_delta(file_id const & src_id,
 
 
 void
-database::get_revision_ancestry(multimap<revision_id, revision_id> & graph)
+database::get_revision_ancestry(rev_ancestry_map & graph)
 {
   results res;
   graph.clear();
@@ -3241,40 +3241,26 @@ database::put_roster(revision_id const & rev_id,
   guard.commit();
 }
 
-// helper for get_uncommon_ancestors
-void
-database::do_step_ancestor(set<height_rev_pair> & this_frontier,
-                           set<revision_id> & this_seen,
-                           set<revision_id> const & other_seen,
-                           set<revision_id> & this_uncommon_ancs)
+// for get_uncommon_ancestors
+struct rev_height_graph : rev_graph
 {
-  const height_rev_pair h_rev = *this_frontier.rbegin();
-  const revision_id & rid(h_rev.second);
-  
-  this_frontier.erase(h_rev);
-  
-  if (other_seen.find(rid) == other_seen.end())
+  rev_height_graph(database & db) : db(db) {}
+  virtual void get_parents(revision_id const & rev, set<revision_id> & parents) const
   {
-    this_uncommon_ancs.insert(rid);
+    db.get_revision_parents(rev, parents);
   }
-
-  // extend the frontier with parents 
-  results res;
-  fetch(res, 2, any_rows,
-        query("SELECT parent, height FROM revision_ancestry r, heights h"
-          " WHERE child = ? AND r.parent = h.revision")
-        % text(rid.inner()()));
-  
-  for (size_t i = 0; i < res.size(); ++i)
+  virtual void get_children(revision_id const & rev, set<revision_id> & parents) const
   {
-    revision_id par_rid(res[i][0]);
-    if (this_seen.find(par_rid) == this_seen.end())
-    {
-      this_frontier.insert(make_pair(rev_height(res[i][1]), par_rid));
-      this_seen.insert(par_rid);
-    }
+    // not required
+    I(false);
   }
-}
+  virtual void get_height(revision_id const & rev, rev_height & h) const
+  {
+      db.get_rev_height(rev, h);
+  }
+  
+  database & db;
+};
 
 void
 database::get_uncommon_ancestors(revision_id const & a,
@@ -3282,65 +3268,9 @@ database::get_uncommon_ancestors(revision_id const & a,
                                  set<revision_id> & a_uncommon_ancs,
                                  set<revision_id> & b_uncommon_ancs)
 {
-  a_uncommon_ancs.clear();
-  b_uncommon_ancs.clear();
-
-  // We extend a frontier from each revision until it reaches
-  // a revision that has been seen by the other frontier. By
-  // traversing in ascending height order we can ensure that
-  // any common ancestor will have been 'seen' by both sides
-  // before it is traversed.
-
-  set<height_rev_pair> a_frontier, b_frontier;
-  rev_height height;
-  get_rev_height(a, height);
-  a_frontier.insert(make_pair(height, a));
-  get_rev_height(b, height);
-  b_frontier.insert(make_pair(height, b));
   
-  set<revision_id> a_seen, b_seen;
-  a_seen.insert(a);
-  b_seen.insert(b);
-  
-  while (!a_frontier.empty() || !b_frontier.empty())
-  {
-    // We take the leaf-most (ie highest) height entry from either
-    // a_frontier or b_frontier.
-    // If one of them is empty, we take entries from the other.
-    bool step_a;
-    if (a_frontier.empty())
-    {
-      step_a = false;
-    }
-    else
-    {
-      if (!b_frontier.empty())
-      {
-        if (a_frontier == b_frontier)
-        {
-          // if both frontiers are the same, then we can safely say that
-          // we've found all uncommon ancestors. This stopping condition
-          // can result in traversing more nodes than required, but is simple.
-          break;
-        }
-        step_a = (*a_frontier.rbegin() > *b_frontier.rbegin());
-      }
-      else
-      {
-        // b is empty
-        step_a = true;
-      }
-    }
-    
-    if (step_a)
-    {
-      do_step_ancestor(a_frontier, a_seen, b_seen, a_uncommon_ancs);
-    }
-    else
-    {
-      do_step_ancestor(b_frontier, b_seen, a_seen, b_uncommon_ancs);
-    }
-  }  
+  rev_height_graph graph(*this);
+  ::get_uncommon_ancestors(a, b, graph, a_uncommon_ancs, b_uncommon_ancs);
 }
 
 
