@@ -168,9 +168,16 @@ namespace commands
                 && (string(_(selfname.c_str())) < (string(_(othername.c_str()))))));
   }
 
+  static command * find_command(string const & name)
+  {
+    map< string, command * >::iterator iter = (*cmds).find(name);
+    return iter == (*cmds).end() ? NULL : (*iter).second;
+  }
+
   string complete_command(string const & cmd)
   {
-    if (cmd.length() == 0 || (*cmds).find(cmd) != (*cmds).end()) return cmd;
+    if (cmd.length() == 0 || find_command(cmd) != NULL)
+      return cmd;
 
     L(FL("expanding command '%s'") % cmd);
 
@@ -412,52 +419,48 @@ namespace commands
       }
   }
 
-  static void explain_cmd_usage(string const & cmd, ostream & out)
+  static void explain_cmd_usage(string const & name, ostream & out)
   {
-    map<string, command *>::const_iterator i;
+    command * cmd = find_command(name); // XXX Should be const.
+    assert(cmd != NULL);
 
-    i = (*cmds).find(cmd);
-    assert(i != (*cmds).end());
-
-    out << F(safe_gettext("Syntax specific to 'mtn %s':")) % cmd
+    out << F(safe_gettext("Syntax specific to 'mtn %s':")) % name
         << std::endl << std::endl;
-    string params = i->second->params();
+    string params = cmd->params();
     vector<string> lines;
     split_into_lines(params, lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
-      out << "  " << cmd << ' ' << *j << std::endl;
-    split_into_lines(i->second->desc(), lines);
+      out << "  " << name << ' ' << *j << std::endl;
+    split_into_lines(cmd->desc(), lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
       {
         describe("", *j, 4, out);
         out << std::endl;
       }
-    if (i->second->names.size() > 1)
+    if (cmd->names.size() > 1)
       {
-        set< string > othernames = i->second->names;
-        othernames.erase(cmd);
+        set< string > othernames = cmd->names;
+        othernames.erase(name);
         describe("", "Aliases: " + format_names(othernames) + ".", 4, out);
         out << std::endl;
       }
   }
 
-  void explain_usage(string const & cmd, ostream & out)
+  void explain_usage(string const & name, ostream & out)
   {
     init_cmdgroups();
 
-    map<string, command *>::const_iterator cmditer;
     map<string, string>::const_iterator cmdgroupiter;
 
-    cmditer = (*cmds).find(cmd);
-    cmdgroupiter = cmdgroups.find(cmd);
+    cmdgroupiter = cmdgroups.find(name);
 
-    if (cmditer != (*cmds).end())
-      explain_cmd_usage(cmd, out);
+    if (find_command(name) != NULL)
+      explain_cmd_usage(name, out);
     else if (cmdgroupiter != cmdgroups.end())
       {
-        explain_cmdgroup_usage(cmd, out);
+        explain_cmdgroup_usage(name, out);
         out << std::endl;
         out << "For information on a specific command, type "
                "'mtn help <command_name>'." << std::endl;
@@ -465,7 +468,7 @@ namespace commands
       }
     else
       {
-        assert(cmd.empty());
+        assert(name.empty());
 
         explain_cmdgroups(out);
         out << std::endl;
@@ -477,23 +480,24 @@ namespace commands
       }
   }
 
-  int process(app_state & app, string const & cmd, vector<utf8> const & args)
+  int process(app_state & app, string const & name, vector<utf8> const & args)
   {
-    if ((*cmds).find(cmd) != (*cmds).end())
+    command * cmd = find_command(name);
+    if (cmd != NULL)
       {
-        L(FL("executing command '%s'") % cmd);
+        L(FL("executing command '%s'") % name);
 
         // at this point we process the data from _MTN/options if
         // the command needs it.
-        if ((*cmds)[cmd]->use_workspace_options)
+        if (cmd->use_workspace_options)
           app.process_options();
 
-        (*cmds)[cmd]->exec(app, cmd, args);
+        cmd->exec(app, name, args);
         return 0;
       }
     else
       {
-        P(F("unknown command '%s'") % cmd);
+        P(F("unknown command '%s'") % name);
         return 1;
       }
   }
@@ -502,24 +506,25 @@ namespace commands
   {
     if (cmdline.empty())
       return options::options_type();
-    string cmd = complete_command(idx(cmdline,0)());
-    if (!cmd.empty())
+    string name = complete_command(idx(cmdline,0)());
+    if (!name.empty())
       {
-        return (*cmds)[cmd]->get_options(cmdline);
+        return find_command(name)->get_options(cmdline);
       }
     else
       {
-        N(!cmd.empty(),
+        N(!name.empty(),
           F("unknown command '%s'") % idx(cmdline, 0));
         return options::options_type();
       }
   }
 
-  options::options_type toplevel_command_options(string const & cmd)
+  options::options_type toplevel_command_options(string const & name)
   {
-    if ((*cmds).find(cmd) != (*cmds).end())
+    command * cmd = find_command(name);
+    if (cmd != NULL)
       {
-        return (*cmds)[cmd]->opts;
+        return cmd->opts;
       }
     else
       {
@@ -548,7 +553,7 @@ CMD(help, "", N_("informative"), N_("command [ARGS...]"),
       app.opts.help = true;
       throw usage(full_cmdgroup);
     }
-  else if ((*cmds).find(full_cmd) != (*cmds).end())
+  else if (find_command(full_cmd) != NULL)
     {
       app.opts.help = true;
       throw usage(full_cmd);
@@ -783,26 +788,44 @@ CMD(__test2, "__test2.1",
 CMD(__test3, "__test3.1 __test3.2",
     hidden_group(), "", "", "", options::opts::none) {}
 
+UNIT_TEST(commands, find_command)
+{
+  using namespace commands;
+
+  // Non-existent command.
+  BOOST_CHECK(find_command("__test0") == NULL);
+
+  // Lookup commands using their "primary" name.
+  BOOST_CHECK(find_command("__test1") != NULL);
+  BOOST_CHECK(find_command("__test2") != NULL);
+  BOOST_CHECK(find_command("__test3") != NULL);
+
+  // Lookup commands using any of their "secondary" names.
+  BOOST_CHECK(find_command("__test2.1") != NULL);
+  BOOST_CHECK(find_command("__test3.1") != NULL);
+  BOOST_CHECK(find_command("__test3.2") != NULL);
+}
+
 UNIT_TEST(commands, format_names)
 {
   using namespace commands;
 
   // Command with one name.
-  BOOST_CHECK(format_names((*cmds)["__test1"]->names) ==
+  BOOST_CHECK(format_names(find_command("__test1")->names) ==
               "__test1");
 
   // Command with two names.
-  BOOST_CHECK(format_names((*cmds)["__test2"]->names) ==
+  BOOST_CHECK(format_names(find_command("__test2")->names) ==
               "__test2, __test2.1");
-  BOOST_CHECK(format_names((*cmds)["__test2.1"]->names) ==
+  BOOST_CHECK(format_names(find_command("__test2.1")->names) ==
               "__test2, __test2.1");
 
   // Command with three names.
-  BOOST_CHECK(format_names((*cmds)["__test3"]->names) ==
+  BOOST_CHECK(format_names(find_command("__test3")->names) ==
               "__test3, __test3.1, __test3.2");
-  BOOST_CHECK(format_names((*cmds)["__test3.1"]->names) ==
+  BOOST_CHECK(format_names(find_command("__test3.1")->names) ==
               "__test3, __test3.1, __test3.2");
-  BOOST_CHECK(format_names((*cmds)["__test3.2"]->names) ==
+  BOOST_CHECK(format_names(find_command("__test3.2")->names) ==
               "__test3, __test3.1, __test3.2");
 }
 #endif // BUILD_UNIT_TESTS
