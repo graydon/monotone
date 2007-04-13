@@ -219,7 +219,7 @@ namespace commands
          i != matched.end(); ++i)
       err += ('\n' + *i);
     W(i18n_format(err));
-    return cmd;
+    return "";
   }
 
   string complete_command_group(string const & cmdgroup)
