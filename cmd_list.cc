@@ -477,7 +477,7 @@ ls_changed(app_state & app, vector<utf8> const & args)
 }
 
 
-CMD(list, N_("informative"),
+CMD(list, "ls", N_("informative"),
     N_("certs ID\n"
        "keys [PATTERN]\n"
        "branches [PATTERN]\n"
@@ -527,7 +527,6 @@ CMD(list, N_("informative"),
     throw usage(name);
 }
 
-ALIAS(ls, list);
 
 namespace
 {

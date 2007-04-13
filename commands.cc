@@ -50,8 +50,6 @@ using std::vector;
 
 namespace commands
 {
-  aliases_map aliases;
-
   const char * safe_gettext(const char * msgid)
   {
     if (strlen(msgid) == 0)
@@ -69,18 +67,30 @@ namespace commands
   // it ourselves the first time we use it.
   static map<string, command *> * cmds;
   command::command(string const & n,
+                   string const & aliases,
                    string const & g,
                    string const & p,
                    string const & a,
                    string const & d,
                    bool u,
                    options::options_type const & o)
-    : name(n), cmdgroup(g), params_(p), abstract_(a), desc_(d),
+    : cmdgroup(g), params_(p), abstract_(a), desc_(d),
       use_workspace_options(u), opts(o)
   {
     if (cmds == NULL)
-      cmds = new map<string, command *>;
+      cmds = new map< string, command * >;
+
+    names.insert(n);
     (*cmds)[n] = this;
+
+    std::vector< std::string > as;
+    split_into_words(aliases, as);
+    for (std::vector< std::string >::const_iterator iter = as.begin();
+         iter != as.end(); iter++)
+      {
+        names.insert(*iter);
+        (*cmds)[*iter] = this;
+      }
   }
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
@@ -148,26 +158,14 @@ namespace commands
 
   bool operator<(command const & self, command const & other)
   {
+    // These two get the "minor" names of each command, as the 'names'
+    // set is sorted alphabetically.
+    string const & selfname = *(self.names.begin());
+    string const & othername = *(other.names.begin());
     // *twitch*
     return ((string(_(self.cmdgroup.c_str())) < string(_(other.cmdgroup.c_str())))
             || ((self.cmdgroup == other.cmdgroup)
-                && (string(_(self.name.c_str())) < (string(_(other.name.c_str()))))));
-  }
-
-  static bool is_alias(string const & cmd)
-  {
-    bool ia = false;
-
-    if (aliases.find(cmd) == aliases.end())
-      for (aliases_map::const_iterator iter = aliases.begin();
-           iter != aliases.end() && !ia; iter++)
-        {
-          set<string> const & as = (*iter).second;
-          if (as.find(cmd) != as.end())
-            ia = true;
-        }
-
-    return ia;
+                && (string(_(selfname.c_str())) < (string(_(othername.c_str()))))));
   }
 
   string complete_command(string const & cmd)
@@ -176,15 +174,23 @@ namespace commands
 
     L(FL("expanding command '%s'") % cmd);
 
-    vector<string> matched;
+    set<string> matched;
 
     for (map<string,command *>::const_iterator i = (*cmds).begin();
          i != (*cmds).end(); ++i)
       {
-        if (cmd.length() < i->first.length())
+        set< string > const & names = i->second->names;
+
+        for (set< string >::const_iterator i2 = names.begin();
+             i2 != names.end(); i2++)
           {
-            string prefix(i->first, 0, cmd.length());
-            if (cmd == prefix) matched.push_back(i->first);
+            string const & name = *i2;
+
+            if (cmd.length() < name.length())
+              {
+                string prefix(name, 0, cmd.length());
+                if (cmd == prefix) matched.insert(name);
+              }
           }
       }
 
@@ -202,7 +208,7 @@ namespace commands
 
     // more than one matched command
     string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
-    for (vector<string>::iterator i = matched.begin();
+    for (set<string>::iterator i = matched.begin();
          i != matched.end(); ++i)
       err += ('\n' + *i);
     W(i18n_format(err));
@@ -258,28 +264,19 @@ namespace commands
   // for simplicity reasons later on, where a1 through aN are the aliases
   // for the command cmd.  Returns the empty string if no aliases are
   // defined for that command.
-  static string format_aliases(string const & cmd)
+  static string format_names(set< string > const & names)
   {
     string text;
 
-    aliases_map::const_iterator iter = aliases.find(cmd);
-    if (iter != aliases.end())
+    set< string >::const_iterator iter = names.begin();
+    do
       {
-        text = " (";
-
-        set<string> const & as = (*iter).second;
-        set<string>::const_iterator asiter = as.begin();
-        for (;;)
-          {
-            text += *asiter;
-            asiter++;
-            if (asiter == as.end())
-              break;
-            text += ", ";
-          }
-
-        text += ")";
+        text += *iter;
+        iter++;
+        if (iter != names.end())
+          text += ", ";
       }
+    while (iter != names.end());
 
     return text;
   }
@@ -391,13 +388,11 @@ namespace commands
     for (map<string, command *>::const_iterator i = (*cmds).begin();
          i != (*cmds).end(); ++i)
       {
-        const string & name = i->second->name;
-
-        if (i->second->cmdgroup == cmdgroup && !is_alias(name))
+        if (i->second->cmdgroup == cmdgroup)
           {
             sorted.push_back(i->second);
 
-            string tag = name + format_aliases(name);
+            string tag = format_names(i->second->names);
             size_t len = display_width(utf8(tag + "    "));
             if (colabstract < len)
               colabstract = len;
@@ -409,10 +404,10 @@ namespace commands
     out << (*grpi).second << ":" << std::endl;
     for (size_t i = 0; i < sorted.size(); ++i)
       {
-        string const & name = idx(sorted, i)->name;
+        set< string > const & names = idx(sorted, i)->names;
         string const & abstract = idx(sorted, i)->abstract();
 
-        string tag = name + format_aliases(name);
+        string tag = format_names(names);
         describe(tag, abstract, colabstract, out);
       }
   }
@@ -431,12 +426,19 @@ namespace commands
     split_into_lines(params, lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
-      out << "  " << i->second->name << ' ' << *j << std::endl;
+      out << "  " << cmd << ' ' << *j << std::endl;
     split_into_lines(i->second->desc(), lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
       {
         describe("", *j, 4, out);
+        out << std::endl;
+      }
+    if (i->second->names.size() > 1)
+      {
+        set< string > othernames = i->second->names;
+        othernames.erase(cmd);
+        describe("", "Aliases: " + format_names(othernames) + ".", 4, out);
         out << std::endl;
       }
   }
@@ -486,7 +488,7 @@ namespace commands
         if ((*cmds)[cmd]->use_workspace_options)
           app.process_options();
 
-        (*cmds)[cmd]->exec(app, args);
+        (*cmds)[cmd]->exec(app, cmd, args);
         return 0;
       }
     else
@@ -501,7 +503,7 @@ namespace commands
     if (cmdline.empty())
       return options::options_type();
     string cmd = complete_command(idx(cmdline,0)());
-    if ((*cmds).find(cmd) != (*cmds).end())
+    if (!cmd.empty())
       {
         return (*cmds)[cmd]->get_options(cmdline);
       }
@@ -527,7 +529,7 @@ namespace commands
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, N_("informative"), N_("command [ARGS...]"),
+CMD(help, "", N_("informative"), N_("command [ARGS...]"),
     N_("Displays help about commands and options"),
     N_(""),
     options::opts::none)
@@ -560,7 +562,7 @@ CMD(help, N_("informative"), N_("command [ARGS...]"),
     }
 }
 
-CMD(crash, hidden_group(), "{ N | E | I | exception | signal }",
+CMD(crash, "", hidden_group(), "{ N | E | I | exception | signal }",
     N_("Triggers the specified kind of crash"),
     N_(""),
     options::opts::none)
@@ -773,49 +775,35 @@ process_commit_message_args(bool & given,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-CMD(__test1, hidden_group(), "", "", "", options::opts::none) {}
+CMD(__test1, "", hidden_group(), "", "", "", options::opts::none) {}
 
-CMD(__test2, hidden_group(), "", "", "", options::opts::none) {}
-ALIAS(__test2_alias1, __test2)
+CMD(__test2, "__test2.1",
+    hidden_group(), "", "", "", options::opts::none) {}
 
-CMD(__test3, hidden_group(), "", "", "", options::opts::none) {}
-ALIAS(__test3_alias1, __test3)
-ALIAS(__test3_alias2, __test3)
+CMD(__test3, "__test3.1 __test3.2",
+    hidden_group(), "", "", "", options::opts::none) {}
 
-UNIT_TEST(commands, is_alias)
+UNIT_TEST(commands, format_names)
 {
   using namespace commands;
 
-  // Non-existent command.
-  BOOST_CHECK(!is_alias("__test0"));
+  // Command with one name.
+  BOOST_CHECK(format_names((*cmds)["__test1"]->names) ==
+              "__test1");
 
-  // Non-alias commands.
-  BOOST_CHECK(!is_alias("__test1"));
-  BOOST_CHECK(!is_alias("__test2"));
-  BOOST_CHECK(!is_alias("__test3"));
+  // Command with two names.
+  BOOST_CHECK(format_names((*cmds)["__test2"]->names) ==
+              "__test2, __test2.1");
+  BOOST_CHECK(format_names((*cmds)["__test2.1"]->names) ==
+              "__test2, __test2.1");
 
-  // Alias commands.
-  BOOST_CHECK(is_alias("__test2_alias1"));
-  BOOST_CHECK(is_alias("__test3_alias1"));
-  BOOST_CHECK(is_alias("__test3_alias2"));
-}
-
-UNIT_TEST(commands, format_aliases)
-{
-  using namespace commands;
-
-  // Non-existent command.
-  BOOST_CHECK(format_aliases("__test0").empty());
-
-  // Commands with aliases.
-  BOOST_CHECK(format_aliases("__test1").empty());
-  BOOST_CHECK(format_aliases("__test2") == " (__test2_alias1)");
-  BOOST_CHECK(format_aliases("__test3") == " (__test3_alias1, __test3_alias2)");
-
-  // Alias commands; cannot get their aliases.
-  BOOST_CHECK(format_aliases("__test2_alias1").empty());
-  BOOST_CHECK(format_aliases("__test3_alias1").empty());
-  BOOST_CHECK(format_aliases("__test3_alias2").empty());
+  // Command with three names.
+  BOOST_CHECK(format_names((*cmds)["__test3"]->names) ==
+              "__test3, __test3.1, __test3.2");
+  BOOST_CHECK(format_names((*cmds)["__test3.1"]->names) ==
+              "__test3, __test3.1, __test3.2");
+  BOOST_CHECK(format_names((*cmds)["__test3.2"]->names) ==
+              "__test3, __test3.1, __test3.2");
 }
 #endif // BUILD_UNIT_TESTS
 

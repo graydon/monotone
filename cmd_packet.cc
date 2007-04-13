@@ -19,7 +19,7 @@ using std::cout;
 using std::istringstream;
 using std::vector;
 
-CMD(pubkey, N_("packet i/o"), N_("ID"), 
+CMD(pubkey, "", N_("packet i/o"), N_("ID"), 
     N_("Prints a public key packet"),
     N_(""),
     options::opts::none)
@@ -49,7 +49,7 @@ CMD(pubkey, N_("packet i/o"), N_("ID"),
   pw.consume_public_key(ident, key);
 }
 
-CMD(privkey, N_("packet i/o"), N_("ID"), 
+CMD(privkey, "", N_("packet i/o"), N_("ID"), 
     N_("Prints a private key packet"),
     N_(""),
     options::opts::none)
@@ -130,7 +130,7 @@ namespace
 }
 
 
-CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
+CMD(read, "", N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     N_("Reads packets from files"),
     N_("If no files are provided, the standard input is used."),
     options::opts::none)

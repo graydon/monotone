@@ -365,7 +365,7 @@ asciik::print(revision_id const & rev,
     }
 }
 
-CMD(asciik, N_("debug"), N_("SELECTOR"),
+CMD(asciik, "", N_("debug"), N_("SELECTOR"),
   N_("Prints an ASCII representation of the revisions' graph"),
   N_(""),
   options::opts::none)

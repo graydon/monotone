@@ -29,7 +29,7 @@ namespace commands
     // NB: these strings are stored _un_translated, because we cannot
     // translate them until after main starts, by which time the
     // command objects have all been constructed.
-    std::string name;
+    std::set< std::string > names;
     std::string cmdgroup;
     std::string params_;
     std::string abstract_;
@@ -37,6 +37,7 @@ namespace commands
     bool use_workspace_options;
     options::options_type opts;
     command(std::string const & n,
+            std::string const & aliases,
             std::string const & g,
             std::string const & p,
             std::string const & a,
@@ -49,14 +50,9 @@ namespace commands
     virtual std::string desc();
     virtual options::options_type get_options(std::vector<utf8> const & args);
     virtual void exec(app_state & app,
+                      std::string const & name,
                       std::vector<utf8> const & args) = 0;
   };
-
-  // This type and global map maintain a relation between each command name
-  // and all of its aliases.  If the command has no aliases, it is not
-  // present here.
-  typedef std::map< std::string, std::set<std::string> > aliases_map;
-  extern aliases_map aliases;
 };
 
 inline std::vector<file_path>
@@ -105,32 +101,36 @@ process_commit_message_args(bool & given,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
 
-#define CMD(C, group, params, abstract, desc, opts)                  \
+#define CMD(C, aliases, group, params, abstract, desc, opts)         \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, params, abstract, desc, true,   \
+    cmd_ ## C() : command(#C, aliases, group, params, abstract,      \
+                          desc, true,                                \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
+                      std::string const & name,                      \
                       std::vector<utf8> const & args);               \
   };                                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
+                               std::string const & name,             \
                                std::vector<utf8> const & args)
 
 // Use this for commands that want to define a params() function
 // instead of having a static description. (Good for "automate"
 // and possibly "list".)
-#define CMD_WITH_SUBCMDS(C, group, abstract, desc, opts)             \
+#define CMD_WITH_SUBCMDS(C, aliases, group, abstract, desc, opts)    \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, "", abstract, desc, true,       \
-                          options::options_type() | opts)            \
+    cmd_ ## C() : command(#C, aliases, group, "", abstract, desc,    \
+                          true, options::options_type() | opts)      \
     {}                                                               \
     virtual void exec(app_state & app,                               \
+                      std::string const & name,                      \
                       std::vector<utf8> const & args);               \
     std::string params();                                            \
     options::options_type get_options(vector<utf8> const & args);    \
@@ -138,67 +138,29 @@ namespace commands {                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
+                               std::string const & name,             \
                                std::vector<utf8> const & args)
 
 // Use this for commands that should specifically _not_ look for an
 // _MTN dir and load options from it.
 
-#define CMD_NO_WORKSPACE(C, group, params, abstract, desc, opts)     \
+#define CMD_NO_WORKSPACE(C, aliases, group, params, abstract, desc, opts) \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, params, abstract, desc, false,  \
+    cmd_ ## C() : command(#C, aliases, group, params, abstract,      \
+                          desc, false,                               \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
+                      std::string const & name,                      \
                       std::vector<utf8> const & args);               \
   };                                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
+                               std::string const & name,             \
                                std::vector<utf8> const & args)       \
-
-#define ALIAS(C, realcommand)                                        \
-namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
-  {                                                                  \
-    cmd_ ## C() : command(#C, realcommand##_cmd.cmdgroup,            \
-                          realcommand##_cmd.params_,                 \
-                          realcommand##_cmd.abstract_,               \
-                          realcommand##_cmd.desc_, true,             \
-                          realcommand##_cmd.opts)                 \
-    {                                                                \
-      aliases_map::iterator i = aliases.find(#realcommand);          \
-      if (i == aliases.end())                                        \
-        {                                                            \
-          std::set<std::string> as;                                  \
-          as.insert(#C);                                             \
-          aliases.insert(aliases_map::value_type(#realcommand, as)); \
-        }                                                            \
-      else                                                           \
-        {                                                            \
-          std::set<std::string> & as = (*i).second;                  \
-          as.insert(#C);                                             \
-        }                                                            \
-    }                                                                \
-    virtual std::string desc();                                      \
-    virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
-  };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
-}                                                                    \
-std::string commands::cmd_ ## C::desc()                              \
-{                                                                    \
-  std::string result = abstract() + ".\n" + _(desc_.c_str());        \
-  result += "\n";                                                    \
-  result += (F("Alias for %s.") % #realcommand).str();                \
-  return result;                                                     \
-}                                                                    \
-void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)       \
-{                                                                    \
-  process(app, std::string(#realcommand), args);                     \
-}
 
 namespace automation {
   struct automate

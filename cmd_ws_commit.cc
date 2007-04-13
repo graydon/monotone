@@ -78,7 +78,7 @@ get_log_message_interactively(revision_t const & cs,
   system_to_utf8(log_message_external, log_message);
 }
 
-CMD(revert, N_("workspace"), N_("[PATH]..."),
+CMD(revert, "", N_("workspace"), N_("[PATH]..."),
     N_("Reverts files and/or directories"),
     N_("In order to revert the entire workspace, specify \".\" as the "
        "file name."),
@@ -210,7 +210,7 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   app.work.maybe_update_inodeprints();
 }
 
-CMD(disapprove, N_("review"), N_("REVISION"),
+CMD(disapprove, "", N_("review"), N_("REVISION"),
     N_("Disapproves a particular revision"),
     N_(""),
     options::opts::branch | options::opts::messages | options::opts::date |
@@ -264,7 +264,7 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   }
 }
 
-CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
+CMD(mkdir, "", N_("workspace"), N_("[DIRECTORY...]"),
     N_("Creates directories and adds them to the workspace"),
     N_(""),
     options::opts::no_ignore)
@@ -309,7 +309,7 @@ CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
   app.work.perform_additions(paths, false, true);
 }
 
-CMD(add, N_("workspace"), N_("[PATH]..."),
+CMD(add, "", N_("workspace"), N_("[PATH]..."),
     N_("Adds files to the workspace"),
     N_(""),
     options::opts::unknown | options::opts::no_ignore |
@@ -343,7 +343,7 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
-CMD(drop, N_("workspace"), N_("[PATH]..."),
+CMD(drop, "rm", N_("workspace"), N_("[PATH]..."),
     N_("Drops files from the workspace"),
     N_(""),
     options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
@@ -371,10 +371,8 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
   app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
 
-ALIAS(rm, drop);
 
-
-CMD(rename, N_("workspace"),
+CMD(rename, "mv", N_("workspace"),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("Renames entries in the workspace"),
@@ -397,10 +395,8 @@ CMD(rename, N_("workspace"),
   app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
 
-ALIAS(mv, rename);
 
-
-CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
+CMD(pivot_root, "", N_("workspace"), N_("NEW_ROOT PUT_OLD"),
     N_("Renames the root directory"),
     N_("After this command, the directory that currently "
        "has the name NEW_ROOT "
@@ -419,7 +415,7 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
   app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."),
+CMD(status, "", N_("informative"), N_("[PATH]..."),
     N_("Shows workspace's status information"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -493,7 +489,7 @@ CMD(status, N_("informative"), N_("[PATH]..."),
     }
 }
 
-CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
+CMD(checkout, "co", N_("tree"), N_("[DIRECTORY]"),
     N_("Checks out a revision from the database into a directory"),
     N_("If a revision is given, that's the one that will be checked out.  "
        "Otherwise, it will be the head of the branch (given or implicit).  "
@@ -600,9 +596,7 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
   guard.commit();
 }
 
-ALIAS(co, checkout);
-
-CMD(attr, N_("workspace"),
+CMD(attr, "", N_("workspace"),
     N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
     N_("Manages file attributes"),
     N_("This command is used to set, get or drop file attributes."),
@@ -704,7 +698,7 @@ CMD(attr, N_("workspace"),
 
 
 
-CMD(commit, N_("workspace"), N_("[PATH]..."),
+CMD(commit, "ci", N_("workspace"), N_("[PATH]..."),
     N_("Commits workspace changes to the database"),
     N_(""),
     options::opts::branch | options::opts::message | options::opts::msgfile
@@ -951,10 +945,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   }
 }
 
-ALIAS(ci, commit);
-
-
-CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
+CMD_NO_WORKSPACE(setup, "", N_("tree"), N_("[DIRECTORY]"),
     N_("Sets up a new workspace directory"),
     N_("If no directory is specified, uses the current directory."),
     options::opts::branch)
@@ -978,7 +969,7 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   app.work.put_work_rev(rev);
 }
 
-CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
+CMD_NO_WORKSPACE(import, "", N_("tree"), N_("DIRECTORY"),
   N_("Imports the contents of a directory into a branch"),
   N_(""),
   options::opts::branch | options::opts::revision |
@@ -1079,7 +1070,7 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   delete_dir_recursive(bookkeeping_root);
 }
 
-CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
+CMD_NO_WORKSPACE(migrate_workspace, "", N_("tree"), N_("[DIRECTORY]"),
   N_("Migrates a workspace directory's metadata to the latest format"),
   N_("If no directory is given, defaults to the current workspace."),
   options::opts::none)
@@ -1093,7 +1084,7 @@ CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
   app.work.migrate_ws_format();
 }
 
-CMD(refresh_inodeprints, N_("tree"), "",
+CMD(refresh_inodeprints, "", N_("tree"), "",
     N_("Refreshes the inodeprint cache"),
     N_(""),
     options::opts::none)
