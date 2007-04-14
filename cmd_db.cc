@@ -210,7 +210,7 @@ CMD(complete, "", N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(name);
 }
 
-CMD(test_migration_step, "", hidden_group(), "SCHEMA",
+CMD(test_migration_step, "", hidden_parent(), "SCHEMA",
     N_("Runs one step of migration on the specified database"),
     N_("This command migrates the given database from the specified schema "
        "in SCHEMA to its successor."),

@@ -29,7 +29,7 @@ using std::ofstream;
 using Botan::Pipe;
 using Botan::RSA_PrivateKey;
 
-CMD(genkey, "", N_("key and cert"), N_("KEYID"),
+CMD(genkey, "", N_("key_and_cert"), N_("KEYID"),
     N_("Generates an RSA key-pair"),
     N_(""),
     options::opts::none)
@@ -57,7 +57,7 @@ CMD(genkey, "", N_("key and cert"), N_("KEYID"),
   app.keys.put_key_pair(ident, kp);
 }
 
-CMD(dropkey, "", N_("key and cert"), N_("KEYID"),
+CMD(dropkey, "", N_("key_and_cert"), N_("KEYID"),
     N_("Drops a public and/or private key"),
     N_(""),
     options::opts::none)
@@ -99,7 +99,7 @@ CMD(dropkey, "", N_("key and cert"), N_("KEYID"),
   N(key_deleted, fmt % idx(args, 0)());
 }
 
-CMD(passphrase, "", N_("key and cert"), N_("KEYID"),
+CMD(passphrase, "", N_("key_and_cert"), N_("KEYID"),
     N_("Changes the passphrase of a private RSA key"),
     N_(""),
     options::opts::none)
@@ -121,7 +121,7 @@ CMD(passphrase, "", N_("key and cert"), N_("KEYID"),
   P(F("passphrase changed"));
 }
 
-CMD(ssh_agent_export, "", N_("key and cert"),
+CMD(ssh_agent_export, "", N_("key_and_cert"),
     N_("[FILENAME]"),
     N_("Exports a private key for use with ssh-agent"),
     N_(""),
@@ -161,7 +161,7 @@ CMD(ssh_agent_export, "", N_("key and cert"),
     }
 }
 
-CMD(ssh_agent_add, "", N_("key and cert"), "",
+CMD(ssh_agent_add, "", N_("key_and_cert"), "",
     N_("Adds a private key to ssh-agent"),
     N_(""),
     options::opts::none)
@@ -178,7 +178,7 @@ CMD(ssh_agent_add, "", N_("key and cert"), "",
   app.agent.add_identity(*priv, id());
 }
 
-CMD(cert, "", N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
+CMD(cert, "", N_("key_and_cert"), N_("REVISION CERTNAME [CERTVAL]"),
     N_("Creates a certificate for a revision"),
     N_(""),
     options::opts::none)
@@ -211,7 +211,7 @@ CMD(cert, "", N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   guard.commit();
 }
 
-CMD(trusted, "", N_("key and cert"), 
+CMD(trusted, "", N_("key_and_cert"), 
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
     N_("Tests whether a hypothetical certificate would be trusted"),
     N_("The current settings are used to run the test."),

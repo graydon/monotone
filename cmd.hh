@@ -22,7 +22,8 @@ class app_state;
 
 namespace commands
 {
-  std::string const & hidden_group();
+  std::string const & hidden_parent();
+  std::string const & root_parent();
 
   struct command
   {
@@ -30,12 +31,13 @@ namespace commands
     // translate them until after main starts, by which time the
     // command objects have all been constructed.
     std::set< std::string > names;
-    std::string cmdgroup;
+    std::string parent;
     std::string params_;
     std::string abstract_;
     std::string desc_;
     bool use_workspace_options;
     options::options_type opts;
+    std::set< command * > children;
     command(std::string const & n,
             std::string const & aliases,
             std::string const & g,
@@ -46,7 +48,7 @@ namespace commands
             options::options_type const & o);
     virtual ~command();
     virtual std::string params();
-    virtual std::string abstract();
+    virtual std::string abstract() const;
     virtual std::string desc();
     virtual options::options_type get_options(std::vector<utf8> const & args);
     virtual void exec(app_state & app,
@@ -101,11 +103,11 @@ process_commit_message_args(bool & given,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
 
-#define CMD(C, aliases, group, params, abstract, desc, opts)         \
+#define CMD(C, aliases, parent, params, abstract, desc, opts)        \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, aliases, group, params, abstract,      \
+    cmd_ ## C() : command(#C, aliases, parent, params, abstract,     \
                           desc, true,                                \
                           options::options_type() | opts)            \
     {}                                                               \
@@ -122,11 +124,11 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // Use this for commands that want to define a params() function
 // instead of having a static description. (Good for "automate"
 // and possibly "list".)
-#define CMD_WITH_SUBCMDS(C, aliases, group, abstract, desc, opts)    \
+#define CMD_WITH_SUBCMDS(C, aliases, parent, abstract, desc, opts)   \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, aliases, group, "", abstract, desc,    \
+    cmd_ ## C() : command(#C, aliases, parent, "", abstract, desc,   \
                           true, options::options_type() | opts)      \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -141,14 +143,35 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
                                std::vector<utf8> const & args)
 
-// Use this for commands that should specifically _not_ look for an
-// _MTN dir and load options from it.
-
-#define CMD_NO_WORKSPACE(C, aliases, group, params, abstract, desc, opts) \
+// XXX Should the 'opts' parameter go away?
+#define CMD_GROUP(C, aliases, parent, abstract, desc, opts)          \
 namespace commands {                                                 \
   struct cmd_ ## C : public command                                  \
   {                                                                  \
-    cmd_ ## C() : command(#C, aliases, group, params, abstract,      \
+    cmd_ ## C() : command(#C, aliases, parent, "", abstract, desc,   \
+                          true, options::options_type() | opts)      \
+    {}                                                               \
+    virtual void exec(app_state & app,                               \
+                      std::string const & name,                      \
+                      std::vector<utf8> const & args);               \
+  };                                                                 \
+  static cmd_ ## C C ## _cmd;                                        \
+}                                                                    \
+void commands::cmd_ ## C::exec(app_state & app,                      \
+                               std::string const & name,             \
+                               std::vector<utf8> const & args)       \
+{                                                                    \
+  I(false);                                                          \
+}
+
+// Use this for commands that should specifically _not_ look for an
+// _MTN dir and load options from it.
+
+#define CMD_NO_WORKSPACE(C, aliases, parent, params, abstract, desc, opts) \
+namespace commands {                                                 \
+  struct cmd_ ## C : public command                                  \
+  {                                                                  \
+    cmd_ ## C() : command(#C, aliases, parent, params, abstract,     \
                           desc, false,                               \
                           options::options_type() | opts)            \
     {}                                                               \

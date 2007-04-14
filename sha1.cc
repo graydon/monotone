@@ -92,7 +92,7 @@ void hook_botan_sha1()
   Botan::global_state().add_engine(new Monotone_SHA1_Engine);
 }
 
-CMD(benchmark_sha1, "", hidden_group(), "",
+CMD(benchmark_sha1, "", hidden_parent(), "",
     N_("Benchmarks SHA-1 cores"),
     N_(""),
     options::opts::none)

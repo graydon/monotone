@@ -1,4 +1,5 @@
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+// Copyright (C) 2007 Julio M. Merino Vidal <jmmv@NetBSD.org>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -39,6 +40,59 @@ using std::string;
 using std::strlen;
 using std::vector;
 
+//
+// Definition of top-level commands, used to classify the real commands
+// in logical groups.
+//
+CMD_GROUP(automation, "", root_parent(),
+          N_("Commands that aid in scripted execution"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(database, "", root_parent(),
+          N_("Commands that manipulate the database"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(debug, "", root_parent(),
+          N_("Commands that aid in program debugging"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(informative, "", root_parent(),
+          N_("Commands for information retrieval"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(key_and_cert, "", root_parent(),
+          N_("Commands to manage keys and certificates"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(network, "", root_parent(),
+          N_("Commands that access the network"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(packet_io, "", root_parent(),
+          N_("Commands for packet reading and writing"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(rcs, "", root_parent(),
+          N_("Commands for interaction with RCS and CVS"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(review, "", root_parent(),
+          N_("Commands to review revisions"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(tree, "", root_parent(),
+          N_("Commands to manipulate the tree"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(vars, "", root_parent(),
+          N_("Commands to manage persistent variables"),
+          N_(""),
+          options::opts::none);
+CMD_GROUP(workspace, "", root_parent(),
+          N_("Commands that deal with the workspace"),
+          N_(""),
+          options::opts::none);
+
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
 // have one such command on it, followed by a vector of strings which are its
@@ -74,7 +128,7 @@ namespace commands
                    string const & d,
                    bool u,
                    options::options_type const & o)
-    : cmdgroup(g), params_(p), abstract_(a), desc_(d),
+    : parent(g), params_(p), abstract_(a), desc_(d),
       use_workspace_options(u), opts(o)
   {
     if (cmds == NULL)
@@ -94,7 +148,10 @@ namespace commands
   }
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
-  std::string command::abstract() {return safe_gettext(abstract_.c_str());}
+  std::string command::abstract() const
+  {
+    return safe_gettext(abstract_.c_str());
+  }
   std::string command::desc()
   {
     return abstract() + ".\n" + safe_gettext(desc_.c_str());
@@ -104,10 +161,15 @@ namespace commands
     return opts;
   }
   bool operator<(command const & self, command const & other);
-  std::string const & hidden_group()
+  std::string const & root_parent()
   {
-    static const std::string the_hidden_group("");
-    return the_hidden_group;
+    static const std::string the_root_parent("root");
+    return the_root_parent;
+  }
+  std::string const & hidden_parent()
+  {
+    static const std::string the_hidden_parent("hidden");
+    return the_hidden_parent;
   }
 };
 
@@ -128,34 +190,6 @@ namespace commands
   using std::greater;
   using std::ostream;
 
-  static map<string, string> cmdgroups;
-
-  static void init_cmdgroups(void)
-  {
-    if (cmdgroups.empty())
-      {
-#define insert(id, abstract) \
-        cmdgroups.insert(map<string, string>::value_type(id, abstract));
-
-        insert("automation", N_("Commands that aid in scripted execution"));
-        insert("database", N_("Commands that manipulate the database"));
-        insert("debug", N_("Commands that aid in program debugging"));
-        insert("informative", N_("Commands for information retrieval"));
-        insert("key and cert", N_("Commands to manage keys and certificates"));
-        insert("network", N_("Commands that access the network"));
-        insert("packet i/o", N_("Commands for packet reading and writing"));
-        insert("rcs", N_("Commands for interaction with RCS and CVS"));
-        insert("review", N_("Commands to review revisions"));
-        insert("tree", N_("Commands to manipulate the tree"));
-        insert("vars", N_("Commands to manage persistent variables"));
-        insert("workspace", N_("Commands that deal with the workspace"));
-
-#undef insert
-      }
-
-    assert(!cmdgroups.empty());
-  }
-
   bool operator<(command const & self, command const & other)
   {
     // These two get the "minor" names of each command, as the 'names'
@@ -163,8 +197,8 @@ namespace commands
     string const & selfname = *(self.names.begin());
     string const & othername = *(other.names.begin());
     // *twitch*
-    return ((string(_(self.cmdgroup.c_str())) < string(_(other.cmdgroup.c_str())))
-            || ((self.cmdgroup == other.cmdgroup)
+    return ((string(_(self.parent.c_str())) < string(_(other.parent.c_str())))
+            || ((self.parent == other.parent)
                 && (string(_(selfname.c_str())) < (string(_(othername.c_str()))))));
   }
 
@@ -174,32 +208,102 @@ namespace commands
     return iter == (*cmds).end() ? NULL : (*iter).second;
   }
 
+  static void init_children(void)
+  {
+    static bool children_inited = false;
+
+    if (!children_inited)
+      {
+        for (map< string, command * >::iterator iter = (*cmds).begin();
+             iter != (*cmds).end(); iter++)
+          {
+            command * cmd = (*iter).second;
+
+            if (cmd->parent != root_parent() &&
+                cmd->parent != hidden_parent())
+              {
+                command * cmdparent = find_command(cmd->parent);
+                assert(cmdparent != NULL);
+                cmdparent->children.insert(cmd);
+              }
+          }
+
+        children_inited = true;
+      }
+  }
+
+  set< command * > find_root_commands(void)
+  {
+    static set< command * > roots;
+
+    if (roots.empty())
+      {
+        for (map< string, command * >::const_iterator iter = (*cmds).begin();
+             iter != (*cmds).end(); iter++)
+          {
+            command * cmd = (*iter).second;
+
+            if (cmd->parent == root_parent())
+              roots.insert(cmd);
+          }
+      }
+
+    return roots;
+  }
+
+  static void complete_names(string const & name,
+                             set< string > const & names,
+                             set< string > & matched)
+  {
+    for (set< string >::const_iterator iter = names.begin();
+         iter != names.end(); iter++)
+      {
+        if (name.length() < (*iter).length())
+          {
+            string prefix(*iter, 0, name.length());
+            if (name == prefix)
+              matched.insert(*iter);
+          }
+      }
+  }
+
+  static void complete_command_aux(string const & cmdname,
+                                   command const * curcmd,
+                                   int const maxlevel,
+                                   set< string > & matched)
+  {
+    I(!cmdname.empty());
+    I(curcmd != NULL);
+    I(maxlevel >= 0);
+
+    complete_names(cmdname, curcmd->names, matched);
+
+    if (maxlevel > 0)
+      {
+        for (set< command * >::const_iterator iter = curcmd->children.begin();
+             iter != curcmd->children.end(); iter++)
+          {
+            complete_names(cmdname, (*iter)->names, matched);
+            complete_command_aux(cmdname, *iter, maxlevel - 1, matched);
+          }
+      }
+  }
+
   string complete_command(string const & cmd)
   {
+    init_children();
+
     if (cmd.length() == 0 || find_command(cmd) != NULL)
       return cmd;
 
     L(FL("expanding command '%s'") % cmd);
 
-    set<string> matched;
+    set< string > matched;
 
-    for (map<string,command *>::const_iterator i = (*cmds).begin();
-         i != (*cmds).end(); ++i)
-      {
-        set< string > const & names = i->second->names;
-
-        for (set< string >::const_iterator i2 = names.begin();
-             i2 != names.end(); i2++)
-          {
-            string const & name = *i2;
-
-            if (cmd.length() < name.length())
-              {
-                string prefix(name, 0, cmd.length());
-                if (cmd == prefix) matched.insert(name);
-              }
-          }
-      }
+    set< command * > roots = find_root_commands();
+    for (set< command * >::const_iterator iter = roots.begin();
+         iter != roots.end(); iter++)
+      complete_command_aux(cmd, *iter, 2 /* XXX */, matched);
 
     // no matched commands
     if (matched.size() == 0)
@@ -222,57 +326,30 @@ namespace commands
     return "";
   }
 
-  string complete_command_group(string const & cmdgroup)
+  static string format_command_path(command const * cmd)
   {
-    init_cmdgroups();
+    string path;
 
-    if (cmdgroup.length() == 0 || cmdgroups.find(cmdgroup) != cmdgroups.end())
-      return cmdgroup;
-
-    L(FL("expanding command group '%s'") % cmdgroup);
-
-    vector<string> matched;
-
-    for (map<string, string>::const_iterator i = cmdgroups.begin();
-         i != cmdgroups.end(); ++i)
+    if (cmd->parent == root_parent() || cmd->parent == hidden_parent())
+      path = *(cmd->names.begin()); // XXX
+    else
       {
-        if (cmdgroup.length() < i->first.length())
-          {
-            string prefix(i->first, 0, cmdgroup.length());
-            if (cmdgroup == prefix)
-              matched.push_back(i->first);
-          }
+        command const * cmdparent = find_command(cmd->parent);
+        I(cmdparent != NULL);
+
+        string const & name = *(cmd->names.begin()); // XXX
+        path = format_command_path(cmdparent) + " " + name;
       }
 
-    // no matched commands
-    if (matched.size() == 0)
-      return "";
-
-    // one matched command
-    if (matched.size() == 1)
-      {
-        string completed = *matched.begin();
-        L(FL("expanded command group to '%s'") % completed);
-        return completed;
-      }
-
-    // more than one matched command
-    string err = (F("command group '%s' has multiple ambiguous "
-                    "expansions:") % cmdgroup).str();
-    for (vector<string>::iterator i = matched.begin();
-         i != matched.end(); ++i)
-      err += ('\n' + *i);
-    W(i18n_format(err));
-
-    return cmdgroup;
+    return path;
   }
 
-  // Generates a string of the form (a1, ..., aN), preceded by a space
-  // for simplicity reasons later on, where a1 through aN are the aliases
-  // for the command cmd.  Returns the empty string if no aliases are
-  // defined for that command.
+  // Generates a string of the form "a1, ..., aN" where a1 through aN are
+  // all the elements of the 'names' set.  The input set cannot be empty.
   static string format_names(set< string > const & names)
   {
+    I(names.size() > 0);
+
     string text;
 
     set< string >::const_iterator iter = names.begin();
@@ -359,64 +436,29 @@ namespace commands
     out << std::endl;
   }
 
-  static void explain_cmdgroups(ostream & out )
+  static void explain_children(set< command * > const & children,
+                               ostream & out)
   {
-    size_t colabstract = 0;
-    for (map<string, string>::const_iterator i = cmdgroups.begin();
-         i != cmdgroups.end(); i++)
-      {
-        string const & name = (*i).first;
+    I(children.size() > 0);
 
-        size_t len = display_width(utf8(name + "    "));
+    vector< command * > sorted;
+
+    size_t colabstract = 0;
+    for (set< command * >::const_iterator i = children.begin();
+         i != children.end(); i++)
+      {
+        size_t len = display_width(utf8(format_names((*i)->names) + "    "));
         if (colabstract < len)
           colabstract = len;
+
+        sorted.push_back(*i);
       }
 
-    out << "Command groups:" << std::endl << std::endl;
-    for (map<string, string>::const_iterator i = cmdgroups.begin();
-         i != cmdgroups.end(); i++)
-      {
-        string const & name = (*i).first;
-        string const & abstract = (*i).second;
+    sort(sorted.begin(), sorted.end(), greater< command * >());
 
-        describe(name, abstract, colabstract, out);
-      }
-  }
-
-  static void explain_cmdgroup_usage(string const & cmdgroup, ostream & out)
-  {
-    init_cmdgroups();
-
-    map<string, string>::const_iterator grpi = cmdgroups.find(cmdgroup);
-    assert(grpi != cmdgroups.end());
-
-    size_t colabstract = 0;
-    vector<command *> sorted;
-    for (map<string, command *>::const_iterator i = (*cmds).begin();
-         i != (*cmds).end(); ++i)
-      {
-        if (i->second->cmdgroup == cmdgroup)
-          {
-            sorted.push_back(i->second);
-
-            string tag = format_names(i->second->names);
-            size_t len = display_width(utf8(tag + "    "));
-            if (colabstract < len)
-              colabstract = len;
-          }
-      }
-
-    sort(sorted.begin(), sorted.end(), greater<command *>());
-
-    out << (*grpi).second << ":" << std::endl;
-    for (size_t i = 0; i < sorted.size(); ++i)
-      {
-        set< string > const & names = idx(sorted, i)->names;
-        string const & abstract = idx(sorted, i)->abstract();
-
-        string tag = format_names(names);
-        describe(tag, abstract, colabstract, out);
-      }
+    for (vector< command * >::const_iterator i = sorted.begin();
+         i != sorted.end(); i++)
+      describe(format_names((*i)->names), (*i)->abstract(), colabstract, out);
   }
 
   static void explain_cmd_usage(string const & name, ostream & out)
@@ -424,14 +466,29 @@ namespace commands
     command * cmd = find_command(name); // XXX Should be const.
     assert(cmd != NULL);
 
-    out << F(safe_gettext("Syntax specific to 'mtn %s':")) % name
-        << std::endl << std::endl;
+    vector< string > lines;
+
+    // XXX Use ui.prog_name instead of hardcoding 'mtn'.
+    if (cmd->children.size() > 0)
+      out << F(safe_gettext("Subcommands for 'mtn %s':")) %
+             format_command_path(cmd) << std::endl << std::endl;
+    else
+      out << F(safe_gettext("Syntax specific to 'mtn %s':")) %
+             format_command_path(cmd) << std::endl << std::endl;
+
+    // Print command parameters.
     string params = cmd->params();
-    vector<string> lines;
     split_into_lines(params, lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
-      out << "  " << name << ' ' << *j << std::endl;
+      out << "  " << name << ' ' << *j << std::endl << std::endl;
+
+    if (cmd->children.size() > 0)
+      {
+        explain_children(cmd->children, out);
+        out << std::endl;
+      }
+
     split_into_lines(cmd->desc(), lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
@@ -439,6 +496,7 @@ namespace commands
         describe("", *j, 4, out);
         out << std::endl;
       }
+
     if (cmd->names.size() > 1)
       {
         set< string > othernames = cmd->names;
@@ -450,32 +508,22 @@ namespace commands
 
   void explain_usage(string const & name, ostream & out)
   {
-    init_cmdgroups();
-
-    map<string, string>::const_iterator cmdgroupiter;
-
-    cmdgroupiter = cmdgroups.find(name);
+    init_children();
 
     if (find_command(name) != NULL)
       explain_cmd_usage(name, out);
-    else if (cmdgroupiter != cmdgroups.end())
-      {
-        explain_cmdgroup_usage(name, out);
-        out << std::endl;
-        out << "For information on a specific command, type "
-               "'mtn help <command_name>'." << std::endl;
-        out << std::endl;
-      }
     else
       {
-        assert(name.empty());
+        I(name.empty());
 
-        explain_cmdgroups(out);
+        // TODO Wrap long lines in these messages.
+        out << "Top-level commands:" << std::endl << std::endl;
+        explain_children(find_root_commands(), out);
         out << std::endl;
-        out << "To see what commands are available in a group, type "
-               "'mtn help <group_name>'." << std::endl;
         out << "For information on a specific command, type "
                "'mtn help <command_name>'." << std::endl;
+        out << "Note that you can always abbreviate a command name as "
+               "long as it does not conflict with other names." << std::endl;
         out << std::endl;
       }
   }
@@ -546,14 +594,8 @@ CMD(help, "", N_("informative"), N_("command [ARGS...]"),
     }
 
   string full_cmd = complete_command(idx(args, 0)());
-  string full_cmdgroup = complete_command_group(idx(args, 0)());
 
-  if (cmdgroups.find(full_cmdgroup) != cmdgroups.end())
-    {
-      app.opts.help = true;
-      throw usage(full_cmdgroup);
-    }
-  else if (find_command(full_cmd) != NULL)
+  if (find_command(full_cmd) != NULL)
     {
       app.opts.help = true;
       throw usage(full_cmd);
@@ -561,13 +603,13 @@ CMD(help, "", N_("informative"), N_("command [ARGS...]"),
   else
     {
       // No matched commands or command groups
-      N(!full_cmd.empty() && full_cmdgroup.empty(),
-        F("unknown command or command group '%s'") % idx(args, 0)());
+      N(!full_cmd.empty(),
+        F("unknown command '%s'") % idx(args, 0)());
       throw usage("");
     }
 }
 
-CMD(crash, "", hidden_group(), "{ N | E | I | exception | signal }",
+CMD(crash, "", hidden_parent(), "{ N | E | I | exception | signal }",
     N_("Triggers the specified kind of crash"),
     N_(""),
     options::opts::none)
@@ -780,13 +822,17 @@ process_commit_message_args(bool & given,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-CMD(__test1, "", hidden_group(), "", "", "", options::opts::none) {}
+CMD(__test1, "", hidden_parent(), "", "", "", options::opts::none) {}
 
 CMD(__test2, "__test2.1",
-    hidden_group(), "", "", "", options::opts::none) {}
+    hidden_parent(), "", "", "", options::opts::none) {}
 
 CMD(__test3, "__test3.1 __test3.2",
-    hidden_group(), "", "", "", options::opts::none) {}
+    hidden_parent(), "", "", "", options::opts::none) {}
+
+CMD_GROUP(__group, "", root_parent(), "", "", options::opts::none);
+CMD(__child1, "", "__group", "", "", "", options::opts::none) {}
+CMD(__child2, "", "__group", "", "", "", options::opts::none) {}
 
 UNIT_TEST(commands, find_command)
 {
@@ -804,6 +850,23 @@ UNIT_TEST(commands, find_command)
   BOOST_CHECK(find_command("__test2.1") != NULL);
   BOOST_CHECK(find_command("__test3.1") != NULL);
   BOOST_CHECK(find_command("__test3.2") != NULL);
+
+  // Lookup a top-level group command.
+  BOOST_CHECK(find_command("__group") != NULL);
+  BOOST_CHECK(find_command("__group_ne") == NULL);
+
+  // Lookup command that are one level deep in the tree.
+  BOOST_CHECK(find_command("__child1") != NULL);
+  BOOST_CHECK(find_command("__child2") != NULL);
+}
+
+UNIT_TEST(commands, find_root_commands)
+{
+  using namespace commands;
+
+  set< command * > roots = find_root_commands();
+  BOOST_CHECK(roots.find(find_command("__group")) != roots.end());
+  BOOST_CHECK(roots.find(find_command("__child1")) == roots.end());
 }
 
 UNIT_TEST(commands, format_names)
