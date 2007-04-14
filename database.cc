@@ -45,8 +45,8 @@
 #include "roster_delta.hh"
 #include "rev_height.hh"
 
-// defined in schema.sql, converted to header:
-#include "schema.h"
+// defined in schema.c, generated from schema.sql:
+extern char const schema_constant[];
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
