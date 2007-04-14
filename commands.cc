@@ -31,6 +31,7 @@
 #endif
 
 using std::cin;
+using std::endl;
 using std::make_pair;
 using std::map;
 using std::ostream;
@@ -112,7 +113,6 @@ namespace commands
     return _(msgid);
   }
 
-  using std::map;
   // This must be a pointer.
   // It's used by the constructor of other static objects in different
   // files (cmd_*.cc), and since they're in different files, there's no
@@ -137,9 +137,9 @@ namespace commands
     names.insert(n);
     (*cmds)[n] = this;
 
-    std::vector< std::string > as;
+    vector< string > as;
     split_into_words(aliases, as);
-    for (std::vector< std::string >::const_iterator iter = as.begin();
+    for (vector< string >::const_iterator iter = as.begin();
          iter != as.end(); iter++)
       {
         names.insert(*iter);
@@ -147,12 +147,12 @@ namespace commands
       }
   }
   command::~command() {}
-  std::string command::params() {return safe_gettext(params_.c_str());}
-  std::string command::abstract() const
+  string command::params() {return safe_gettext(params_.c_str());}
+  string command::abstract() const
   {
     return safe_gettext(abstract_.c_str());
   }
-  std::string command::desc()
+  string command::desc()
   {
     return abstract() + ".\n" + safe_gettext(desc_.c_str());
   }
@@ -161,14 +161,14 @@ namespace commands
     return opts;
   }
   bool operator<(command const & self, command const & other);
-  std::string const & root_parent()
+  string const & root_parent()
   {
-    static const std::string the_root_parent("root");
+    static const string the_root_parent("root");
     return the_root_parent;
   }
-  std::string const & hidden_parent()
+  string const & hidden_parent()
   {
-    static const std::string the_hidden_parent("hidden");
+    static const string the_hidden_parent("hidden");
     return the_hidden_parent;
   }
 };
@@ -187,9 +187,6 @@ namespace std
 
 namespace commands
 {
-  using std::greater;
-  using std::ostream;
-
   bool operator<(command const & self, command const & other)
   {
     // These two get the "minor" names of each command, as the 'names'
@@ -397,7 +394,7 @@ namespace commands
 
         if (col + word.length() + 1 >= maxcol)
           {
-            out << std::endl;
+            out << endl;
             col = 0;
 
             // Skip empty words at the beginning of the line so that they do
@@ -433,7 +430,7 @@ namespace commands
         col += word.length() + 1;
         i++;
       }
-    out << std::endl;
+    out << endl;
   }
 
   static void explain_children(set< command * > const & children,
@@ -454,7 +451,7 @@ namespace commands
         sorted.push_back(*i);
       }
 
-    sort(sorted.begin(), sorted.end(), greater< command * >());
+    sort(sorted.begin(), sorted.end(), std::greater< command * >());
 
     for (vector< command * >::const_iterator i = sorted.begin();
          i != sorted.end(); i++)
@@ -471,10 +468,10 @@ namespace commands
     // XXX Use ui.prog_name instead of hardcoding 'mtn'.
     if (cmd->children.size() > 0)
       out << F(safe_gettext("Subcommands for 'mtn %s':")) %
-             format_command_path(cmd) << std::endl << std::endl;
+             format_command_path(cmd) << endl << endl;
     else
       out << F(safe_gettext("Syntax specific to 'mtn %s':")) %
-             format_command_path(cmd) << std::endl << std::endl;
+             format_command_path(cmd) << endl << endl;
 
     // Print command parameters.
     string params = cmd->params();
@@ -483,14 +480,14 @@ namespace commands
       {
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
-          out << "  " << name << ' ' << *j << std::endl;
-        out << std::endl;
+          out << "  " << name << ' ' << *j << endl;
+        out << endl;
       }
 
     if (cmd->children.size() > 0)
       {
         explain_children(cmd->children, out);
-        out << std::endl;
+        out << endl;
       }
 
     split_into_lines(cmd->desc(), lines);
@@ -498,7 +495,7 @@ namespace commands
          j != lines.end(); ++j)
       {
         describe("", *j, 4, out);
-        out << std::endl;
+        out << endl;
       }
 
     if (cmd->names.size() > 1)
@@ -506,7 +503,7 @@ namespace commands
         set< string > othernames = cmd->names;
         othernames.erase(name);
         describe("", "Aliases: " + format_names(othernames) + ".", 4, out);
-        out << std::endl;
+        out << endl;
       }
   }
 
@@ -521,14 +518,14 @@ namespace commands
         I(name.empty());
 
         // TODO Wrap long lines in these messages.
-        out << "Top-level commands:" << std::endl << std::endl;
+        out << "Top-level commands:" << endl << endl;
         explain_children(find_root_commands(), out);
-        out << std::endl;
+        out << endl;
         out << "For information on a specific command, type "
-               "'mtn help <command_name>'." << std::endl;
+               "'mtn help <command_name>'." << endl;
         out << "Note that you can always abbreviate a command name as "
-               "long as it does not conflict with other names." << std::endl;
-        out << std::endl;
+               "long as it does not conflict with other names." << endl;
+        out << endl;
       }
   }
 
@@ -797,7 +794,7 @@ process_commit_message_args(bool & given,
 
   if (app.opts.message_given)
     {
-      std::string msg;
+      string msg;
       join_lines(app.opts.message, msg);
       log_message = utf8(msg);
       if (message_prefix().length() != 0)
