@@ -219,10 +219,18 @@ public:
   { return data < other.data; }
 };
 
-extern bookkeeping_path const bookkeeping_root;
-extern path_component const bookkeeping_root_component;
-// for migration
-extern file_path const old_bookkeeping_root;
+// these are #defines so that they will be constructed lazily, when used.
+// This is actually necessary for correct behavior; the path constructors
+// use sanity.hh assertions and therefore must not run before
+// sanity::initialize is called.
+//
+// old_bookkeeping_root is a file_path because it does not conform to the
+// invariant that bookkeeping paths always start with the _current_
+// bookkeeping root.
+
+#define bookkeeping_root (bookkeeping_path("_MTN"))
+#define bookkeeping_root_component (path_component("_MTN"))
+#define old_bookkeeping_root (file_path_internal("MT"))
 
 // this will always be an absolute path
 class system_path : public any_path

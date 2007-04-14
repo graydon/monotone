@@ -7,7 +7,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <cstdlib>              // for strtoul()
 #include <string>
 #include <vector>
 
@@ -60,16 +59,13 @@ app_state::allow_workspace()
 
   if (found_workspace)
     {
-      if (global_sanity.filename.empty())
-        {
-          bookkeeping_path dump_path;
-          work.get_local_dump_path(dump_path);
-          L(FL("setting dump path to %s") % dump_path);
-          // The 'true' means that, e.g., if we're running checkout,
-          // then it's okay for dumps to go into our starting working
-          // dir's _MTN rather than the new workspace dir's _MTN.
-          global_sanity.filename = system_path(dump_path, false).as_external();
-        }
+      bookkeeping_path dump_path;
+      work.get_local_dump_path(dump_path);
+
+      // The 'false' means that, e.g., if we're running checkout,
+      // then it's okay for dumps to go into our starting working
+      // dir's _MTN rather than the new workspace dir's _MTN.
+      global_sanity.set_dump_path(system_path(dump_path, false).as_external());
     }
   load_rcfiles();
 }
@@ -169,16 +165,13 @@ app_state::create_workspace(system_path const & new_dir)
     work.enable_inodeprints();
 
   found_workspace = true;
-  if (global_sanity.filename.empty())
-    {
-      bookkeeping_path dump_path;
-      work.get_local_dump_path(dump_path);
-      L(FL("setting dump path to %s") % dump_path);
-      // The 'true' means that, e.g., if we're running checkout,
-      // then it's okay for dumps to go into our starting working
-      // dir's _MTN rather than the new workspace dir's _MTN.
-      global_sanity.filename = system_path(dump_path, false).as_external();
-    }
+
+  bookkeeping_path dump_path;
+  work.get_local_dump_path(dump_path);
+  // The 'false' means that, e.g., if we're running checkout,
+  // then it's okay for dumps to go into our starting working
+  // dir's _MTN rather than the new workspace dir's _MTN.
+  global_sanity.set_dump_path(system_path(dump_path, false).as_external());
 
   load_rcfiles();
 }

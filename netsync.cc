@@ -2311,7 +2311,7 @@ build_stream_to_server(app_state & app,
       && app.lua.hook_get_netsync_connect_command(u,
                                                   include_pattern,
                                                   exclude_pattern,
-                                                  global_sanity.debug,
+                                                  global_sanity.debug_p(),
                                                   argv))
     {
       I(argv.size() > 0);

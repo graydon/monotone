@@ -3,6 +3,7 @@
 #include "constants.hh"
 
 #include <sstream>
+#include <iterator>
 
 using std::string;
 using std::vector;
