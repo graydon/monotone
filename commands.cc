@@ -479,9 +479,13 @@ namespace commands
     // Print command parameters.
     string params = cmd->params();
     split_into_lines(params, lines);
-    for (vector<string>::const_iterator j = lines.begin();
-         j != lines.end(); ++j)
-      out << "  " << name << ' ' << *j << std::endl << std::endl;
+    if (lines.size() > 0)
+      {
+        for (vector<string>::const_iterator j = lines.begin();
+             j != lines.end(); ++j)
+          out << "  " << name << ' ' << *j << std::endl;
+        out << std::endl;
+      }
 
     if (cmd->children.size() > 0)
       {
