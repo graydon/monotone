@@ -55,6 +55,8 @@ namespace commands
                       std::string const & name,
                       std::vector<utf8> const & args) = 0;
   };
+
+  command * find_command(command const * startcmd, std::string const & name);
 };
 
 inline std::vector<file_path>
@@ -161,7 +163,18 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
                                std::vector<utf8> const & args)       \
 {                                                                    \
-  I(false);                                                          \
+  if (args.size() == 0)                                              \
+    throw usage(name);                                               \
+                                                                     \
+  vector< utf8 >::const_iterator i = args.begin();                   \
+  ++i;                                                               \
+  vector< utf8 > removed (i, args.end());                            \
+  /* XXX Command completion... */ \
+  command * child = find_command(this, idx(args, 0)());              \
+  if (child == NULL)                                                 \
+    throw usage(name);                                               \
+  else                                                               \
+    child->exec(app, idx(args, 0)(), removed);                       \
 }
 
 // Use this for commands that should specifically _not_ look for an

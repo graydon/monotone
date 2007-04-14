@@ -85,7 +85,7 @@ CMD_GROUP(tree, "", root_parent(),
           N_("Commands to manipulate the tree"),
           N_(""),
           options::opts::none);
-CMD_GROUP(vars, "", root_parent(),
+CMD_GROUP(variables, "", root_parent(),
           N_("Commands to manage persistent variables"),
           N_(""),
           options::opts::none);
@@ -199,10 +199,29 @@ namespace commands
                 && (string(_(selfname.c_str())) < (string(_(othername.c_str()))))));
   }
 
+  // XXX Remove this one.
   static command * find_command(string const & name)
   {
     map< string, command * >::iterator iter = (*cmds).find(name);
     return iter == (*cmds).end() ? NULL : (*iter).second;
+  }
+
+  command * find_command(command const * startcmd, string const & name)
+  {
+    for (set< command * >::iterator iter = startcmd->children.begin();
+         iter != startcmd->children.end(); iter++)
+      {
+        command * child = *iter;
+
+        for (set< string >::const_iterator iter2 = child->names.begin();
+             iter2 != child->names.end(); iter2++)
+          {
+            if (*iter2 == name)
+              return child;
+          }
+      }
+
+    return NULL;
   }
 
   static void init_children(void)
