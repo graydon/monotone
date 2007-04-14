@@ -513,20 +513,14 @@ format_base::operator=(format_base const & other)
   return *this;
 }
 
-format_base::format_base(char const * pattern)
-  : pimpl(new impl(pattern))
+format_base::format_base(char const * pattern, bool use_locale)
+  : pimpl(use_locale ? new impl(pattern, get_user_locale())
+                     : new impl(pattern))
 {}
 
-format_base::format_base(std::string const & pattern)
-  : pimpl(new impl(pattern))
-{}
-
-format_base::format_base(char const * pattern, locale const & loc)
-  : pimpl(new impl(pattern, loc))
-{}
-
-format_base::format_base(string const & pattern, locale const & loc)
-  : pimpl(new impl(pattern, loc))
+format_base::format_base(std::string const & pattern, bool use_locale)
+  : pimpl(use_locale ? new impl(pattern, get_user_locale())
+                     : new impl(pattern))
 {}
 
 ostream &
@@ -559,16 +553,6 @@ std::string
 format_base::str() const
 {
   return pimpl->fmt.str();
-}
-
-i18n_format::i18n_format(const char * localized_pattern)
-  : format_base(localized_pattern, get_user_locale())
-{
-}
-
-i18n_format::i18n_format(std::string const & localized_pattern)
-  : format_base(localized_pattern, get_user_locale())
-{
 }
 
 ostream &

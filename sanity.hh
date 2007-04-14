@@ -16,7 +16,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <locale>
 
 #include "boost/current_function.hpp"
 
@@ -124,10 +123,9 @@ protected:
   ~format_base();
   format_base(format_base const & other);
   format_base & operator=(format_base const & other);
-  explicit format_base(char const * pattern);
-  explicit format_base(std::string const & pattern);
-  explicit format_base(char const * pattern, std::locale const & loc);
-  explicit format_base(std::string const & pattern, std::locale const & loc);
+
+  explicit format_base(char const * pattern, bool use_locale);
+  explicit format_base(std::string const & pattern, bool use_locale);
 public:
   // It is a lie that these are const; but then, everything about this
   // class is a lie.
@@ -156,11 +154,11 @@ plain_format
   {}
 
   explicit plain_format(char const * pattern)
-    : format_base(pattern)
+    : format_base(pattern, false)
   {}
 
   explicit plain_format(std::string const & pattern)
-    : format_base(pattern)
+    : format_base(pattern, false)
   {}
 };
 
@@ -228,9 +226,16 @@ struct
 i18n_format
   : public format_base
 {
-  i18n_format() {}
-  explicit i18n_format(const char * localized_pattern);
-  explicit i18n_format(std::string const & localized_pattern);
+  i18n_format()
+  {}
+
+  explicit i18n_format(const char * localized_pattern)
+    : format_base(localized_pattern, true)
+  {}
+  
+  explicit i18n_format(std::string const & localized_pattern)
+    : format_base(localized_pattern, true)
+  {}
 };
 
 template<typename T> inline i18n_format const & 
