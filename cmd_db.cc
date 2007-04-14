@@ -63,7 +63,7 @@ CMD(db, "", N_("database"),
       "set_epoch BRANCH EPOCH\n"),
     N_("Manipulates database state"),
     N_("This set of commands are used to create and maintain the database "
-       "that monotone uses to maintain the certificates' data"),
+       "that monotone uses to maintain the certificates' data."),
     options::opts::drop_attr)
 {
   if (args.size() == 1)
