@@ -253,7 +253,7 @@ get_private_key(lua_hooks & lua,
               // don't use the cached bad one next time
               force = true;
               continue;
-            }          
+            }
         }
     }
   if (pkcs8_key)
@@ -383,10 +383,13 @@ make_signature(app_state & app,           // to hook for phrase
       || app.opts.ssh_sign == "check"
       || app.opts.ssh_sign == "only")
     {
+      /*
       vector<RSA_PublicKey> ssh_keys = app.agent.get_keys();
       if (ssh_keys.size() <= 0)
         L(FL("make_signature: no rsa keys received from ssh-agent"));
       else {
+      */
+      if (app.agent.connected()) {
         //grab the monotone public key as an RSA_PublicKey
         app.keys.get_key_pair(id, key);
         rsa_pub_key pub;
@@ -401,7 +404,7 @@ make_signature(app_state & app,           // to hook for phrase
 
         if (!pub_key)
           throw informative_failure("Failed to get monotone RSA public key");
-
+        /*
         //if monotone key matches ssh-agent key, sign with ssh-agent
         for (vector<RSA_PublicKey>::const_iterator
                si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
@@ -409,10 +412,13 @@ make_signature(app_state & app,           // to hook for phrase
               && (*pub_key).get_n() == (*si).get_n()) {
             L(FL("make_signature: ssh key matches monotone key, signing with"
                  " ssh-agent"));
-            app.agent.sign_data(*si, tosign, sig_string);
+        */
+            app.agent.sign_data(*pub_key, tosign, sig_string);
+        /*
             break;
           }
         }
+        */
       }
       if (sig_string.length() <= 0)
         L(FL("make_signature: monotone and ssh-agent keys do not match, will"

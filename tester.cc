@@ -3,7 +3,6 @@
 #include "lauxlib.h"
 
 #include "lua.hh"
-#include "tester.h"
 #include "platform.hh"
 #include "sanity.hh"
 
@@ -21,6 +20,9 @@
 
 #include <map>
 #include <utility>
+
+// defined in testlib.c, generated from testlib.lua
+extern char const testlib_constant[];
 
 namespace fs = boost::filesystem;
 
@@ -542,7 +544,7 @@ int main(int argc, char **argv)
 
   try
     {
-      run_string(st, tester_constant, "tester builtin functions");
+      run_string(st, testlib_constant, "tester builtin functions");
       //printf("Loading test file %s\n", testfile.c_str());
       run_file(st, testfile);
       Lua ll(st);

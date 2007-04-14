@@ -1,4 +1,5 @@
 #ifndef __GRAPH__HH__
+#define __GRAPH__HH__
 
 // Copyright (C) 2006 Nathaniel Smith <njs@pobox.com>
 //
@@ -19,6 +20,10 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <utility>
+
+#include "vocab.hh"
+#include "rev_height.hh"
 
 struct reconstruction_graph
 {
@@ -33,6 +38,28 @@ void
 get_reconstruction_path(std::string const & start,
                         reconstruction_graph const & graph,
                         reconstruction_path & path);
+
+typedef std::multimap<revision_id, revision_id> rev_ancestry_map;
+
+void toposort_rev_ancestry(rev_ancestry_map const & graph,
+                          std::vector<revision_id> & revisions);
+
+struct rev_graph
+{
+  virtual void get_parents(revision_id const & rev, std::set<revision_id> & parents) const = 0;
+  virtual void get_children(revision_id const & rev, std::set<revision_id> & children) const = 0;
+  virtual void get_height(revision_id const & rev, rev_height & h) const = 0;
+  virtual ~rev_graph() {};
+};
+
+void
+get_uncommon_ancestors(revision_id const & a,
+                       revision_id const & b,
+                       rev_graph const & hg,
+                       std::set<revision_id> & a_uncommon_ancs,
+                       std::set<revision_id> & b_uncommon_ancs);
+                       
+
 
 #endif // __GRAPH__HH__
 

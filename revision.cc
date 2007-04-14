@@ -1733,41 +1733,10 @@ static void
 allrevs_toposorted(vector<revision_id> & revisions,
                    app_state & app)
 {
-
-  typedef multimap<revision_id, revision_id>::const_iterator gi;
-  typedef map<revision_id, int>::iterator pi;
-
-  revisions.clear();
-
   // get the complete ancestry
-  multimap<revision_id, revision_id> graph;
+  rev_ancestry_map graph;
   app.db.get_revision_ancestry(graph);
-
-  // determine the number of parents for each rev
-  map<revision_id, int> pcount;
-  for (gi i = graph.begin(); i != graph.end(); ++i)
-    pcount.insert(make_pair(i->first, 0));
-  for (gi i = graph.begin(); i != graph.end(); ++i)
-    ++(pcount[i->second]);
-
-  // find the set of graph roots
-  list<revision_id> roots;
-  for (pi i = pcount.begin(); i != pcount.end(); ++i)
-    if(i->second==0)
-      roots.push_back(i->first);
-
-  while (!roots.empty())
-    {
-      revision_id cur = roots.front();
-      roots.pop_front();
-      if (!null_id(cur))
-        revisions.push_back(cur);
-      
-      for(gi i = graph.lower_bound(cur);
-          i != graph.upper_bound(cur); i++)
-        if(--(pcount[i->second]) == 0)
-          roots.push_back(i->second);
-    }
+  toposort_rev_ancestry(graph, revisions);
 }
 
 void

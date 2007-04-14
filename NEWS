@@ -14,6 +14,8 @@
 
 	- Added build files for Mac OS X.
 
+        - Update the internal SQLite to version 3.3.15.
+
 
 
 Sun Apr  1 08:23:34 UTC 2007
