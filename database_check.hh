@@ -10,7 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "app_state.hh"
+class app_state;
 
 void
 check_db(app_state & app);

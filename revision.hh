@@ -15,9 +15,11 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "app_state.hh"
 #include "cset.hh"
 #include "vocab.hh"
+#include "database.hh"
+
+class app_state;
 
 // a revision is a text object. It has a precise, normalizable serial form
 // as UTF-8 text. it also has some sub-components. not all of these

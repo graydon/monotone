@@ -10,10 +10,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "platform.hh"
 #include "vocab.hh"
-#include "revision.hh"
-#include "app_state.hh"
+#include "roster.hh"
+class app_state;
 
 void
 do_annotate(app_state &app, file_t file_node, revision_id rid, bool just_revs);

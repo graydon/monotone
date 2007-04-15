@@ -1,5 +1,5 @@
 /*
-** $Id: loslib.c,v 1.19 2006/04/26 18:19:49 roberto Exp $
+** $Id: loslib.c,v 1.20 2006/09/19 13:57:08 roberto Exp $
 ** Standard Operating System library
 ** See Copyright Notice in lua.h
 */
@@ -145,7 +145,7 @@ static int os_date (lua_State *L) {
     setfield(L, "yday", stm->tm_yday+1);
     setboolfield(L, "isdst", stm->tm_isdst);
   }
-   else {
+  else {
     char cc[3];
     luaL_Buffer b;
     cc[0] = '%'; cc[2] = '\0';

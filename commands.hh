@@ -12,20 +12,13 @@
 
 #include <string>
 #include <vector>
-#include <set>
-#include <boost/shared_ptr.hpp>
-
 #include "options.hh"
-#include "vocab.hh"
-
-using boost::shared_ptr;
+class app_state;
+class utf8;
 
 // this defines a global function which processes command-line-like things,
 // possibly from the command line and possibly internal scripting if we ever
 // bind tcl or lua or something in here
-
-class app_state;
-class utf8;
 
 struct usage
 {
@@ -36,7 +29,8 @@ struct usage
 namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
   std::string complete_command(std::string const & cmd);
-  int process(app_state & app, std::string const & cmd, std::vector<utf8> const & args);
+  int process(app_state & app, std::string const & cmd,
+              std::vector<utf8> const & args);
   options::options_type command_options(std::vector<utf8> const & cmdline);
   options::options_type toplevel_command_options(std::string const & cmd);
 };

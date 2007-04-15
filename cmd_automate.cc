@@ -11,6 +11,7 @@
 #include <map>
 
 #include "cmd.hh"
+#include "app_state.hh"
 
 using std::istream;
 using std::make_pair;

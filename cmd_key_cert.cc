@@ -14,6 +14,7 @@
 #include "cert.hh"
 #include "charset.hh"
 #include "cmd.hh"
+#include "app_state.hh"
 #include "keys.hh"
 #include "transforms.hh"
 #include "ssh_agent.hh"
@@ -149,7 +150,7 @@ CMD(ssh_agent_export, N_("key and cert"),
     cout << decoded_key;
   else
     {
-      ofstream fout(idx(args,0)().c_str(), ofstream::out);
+      ofstream fout(system_path(idx(args, 0)).as_external().c_str(), ofstream::out);
       fout << decoded_key;
     }
 }

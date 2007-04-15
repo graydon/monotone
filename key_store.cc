@@ -1,4 +1,5 @@
 #include <sstream>
+#include <sys/stat.h>
 
 #include "key_store.hh"
 #include "file_io.hh"
@@ -210,8 +211,12 @@ key_store::write_key(rsa_keypair_id const & ident)
   data dat(oss.str());
   system_path file;
   get_key_file(ident, file);
+
+  // set a restrictive umask, write the file and reset umask
+  mode_t mask = umask(S_IRWXG|S_IRWXO);
   L(FL("writing key '%s' to file '%s' in dir '%s'") % ident % file % key_dir);
   write_data(file, dat, key_dir);
+  umask(mask);
 }
 
 bool

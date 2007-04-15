@@ -27,10 +27,10 @@
 // (commit and revert) to be "tested" first with non-destructive commands
 // (ls unknown/ignored/missing/known, status, diff)
 
-#include "app_state.hh"
-#include "cset.hh"
-#include "roster.hh"
 #include "vocab.hh"
+#include "database.hh" // for parent_map
+
+class app_state;
 
 // between any two related revisions, A and B, there is a set of changes (a
 // cset) that describes the operations required to get from A to B. for example:

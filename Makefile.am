@@ -45,7 +45,7 @@ MOST_SOURCES = 								\
 	schema_migration.cc schema_migration.hh				\
 	refiner.cc refiner.hh						\
 	enumerator.cc enumerator.hh					\
-	netsync.cc netsync.hh 						\
+	netsync.cc            						\
 	netxx_pipe.cc netxx_pipe.hh					\
 	netcmd.cc netcmd.hh						\
 	merkle_tree.cc merkle_tree.hh 					\
@@ -294,9 +294,12 @@ noinst_PROGRAMS = txt2c
 EXTRA_PROGRAMS = usher
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
+nodist_mtn_SOURCES = std_hooks.c schema.c
 usher_SOURCES = contrib/usher.cc
 unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
+nodist_unit_tests_SOURCES = std_hooks.c test_hooks.c schema.c
 tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
+nodist_tester_SOURCES = testlib.c
 
 txt2c_SOURCES = txt2c.cc
 
@@ -426,7 +429,7 @@ EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.ep
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	README.changesets UPGRADE monotone.spec monotone.html			\
-	texinfo.css schema.sql std_hooks.lua test_hooks.lua tester.lua		\
+	texinfo.css schema.sql std_hooks.lua test_hooks.lua testlib.lua		\
 	testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
 	$(srcdir)/tester-tests package.m4 package_revision.txt			\
 	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)		\
@@ -463,6 +466,34 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 #	acroread -toPostScript -pairs $< $@
 	pdftops $< $@
 
+# build an OS X installer
+PKG_INST_ROOT = $(PWD)/$(top_builddir)/pkg_inst_root
+monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
+	rm -rf $(PKG_INST_ROOT) "$@"
+	$(MAKE) install-strip DESTDIR=$(PKG_INST_ROOT)
+	mkdir -p $(PKG_INST_ROOT)/Developer/Documentation/monotone
+	cp monotone.pdf $(PKG_INST_ROOT)/Developer/Documentation/monotone/
+	cp -r html $(PKG_INST_ROOT)/Developer/Documentation/monotone/html
+	plutil -convert xml1 -o monotone-xml.pmproj.in $(srcdir)/mac/monotone.pmproj
+	sed "s/__MONOTONE_VERSION__/$(PACKAGE_VERSION)/g" \
+		< monotone-xml.pmproj.in > monotone-xml.pmproj
+	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf \
+		$(srcdir)/COPYING.txt .
+	chmod -R o-w,g-w,a+rX $(PKG_INST_ROOT)
+	/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker \
+		-build -proj monotone-xml.pmproj -p "$@"
+
+# build an OS X distribution disk image
+dmg: monotone-$(PACKAGE_VERSION).dmg
+
+monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
+	rm -rf $(top_builddir)/dmg_root "$@"
+	mkdir $(top_builddir)/dmg_root
+	cp -R $^ $(top_builddir)/dmg_root/
+	chmod -R a+rX $(top_builddir)/dmg_root
+	hdiutil create -srcfolder "$(top_builddir)/dmg_root" \
+		"$@" -format UDZO -scrub -imagekey zlib-level=9 \
+		-volname monotone-$(PACKAGE_VERSION)
 
 # testsuite stuff (could this possibly be more ugly?)
 
@@ -512,33 +543,43 @@ run_tester_tests: Makefile
 	echo 'exec $(top_builddir)/tester $(srcdir)/tester-testsuite.lua "$$@"' >> $@ ; \
 	chmod 755 $@
 
-# we generate some headers to copy data into the executable
+# we generate some source files to copy data into the executable 
+# note that the only things that should go in BUILT_SOURCES are things
+# that need to be generated early on 'make all'; this is _not_ true of
+# generated source files, but it is true for the PCH if used.
 
-BUILT_SOURCES_CLEAN = std_hooks.h test_hooks.h tester.h schema.h \
+CLEAN_SOURCES = std_hooks.c test_hooks.c testlib.c schema.c \
 	package_revision.c package_full_revision.txt \
-	package_full_revision_raw.txt package_full_revision.c	\
-	$(PCH_FILE) $(PCH_BUILD)
-BUILT_SOURCES_NOCLEAN = package_revision.txt package_full_revision_dist.txt
-BUILT_SOURCES = $(BUILT_SOURCES_CLEAN) $(BUILT_SOURCES_NOCLEAN)
-CLEANFILES = $(BUILT_SOURCES_CLEAN) $(EPS_FIGURES) 
+	package_full_revision_raw.txt package_full_revision.c
 
-txt2c: txt2c.cc Makefile
+BUILT_SOURCES = $(PCH_FILE) $(PCH_BUILD)
+
+CLEANFILES = $(BUILT_SOURCES) $(CLEAN_SOURCES) $(EPS_FIGURES)
+
+txt2c: txt2c.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 	chmod 0755 $@$(EXEEXT)
 
-.PHONY: apidocs
-apidocs:
-	doxygen doxygen.cfg
-
-%.h: %.sql txt2c Makefile
-	./txt2c $< $(*F) >$@.tmp
+# FIXME: should use stamp files.
+%.c: %.sql txt2c
+	./txt2c $(TXT2CFLAGS) --no-static $< $(*F) >$@.tmp
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
 
-%.h: %.lua txt2c Makefile
-	./txt2c $< $(*F) >$@.tmp
+%.c: %.lua txt2c
+	./txt2c $(TXT2CFLAGS) --no-static $< $(*F) >$@.tmp
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
+
+%.c: %.txt txt2c
+	./txt2c $(TXT2CFLAGS) --no-static $< $(*F) >$@.tmp
+	cmp -s $@.tmp $@ || mv -f $@.tmp $@
+	rm -f $@.tmp
+
+# This construct causes --strip-trailing to be applied only when
+# generating package_revision.c.
+TXT2CFLAGS =
+package_revision.c : TXT2CFLAGS = --strip-trailing
 
 # This is phony, so that we always try to rebuild it.  If it succeeds
 # in calculating changes, it produces its target; otherwise, its
@@ -557,10 +598,6 @@ package_revision.txt: package_revision_raw.txt
 	  cp $< $@; \
 	fi
 	[ -f $@ ] || echo "unknown" > $@
-package_revision.c: package_revision.txt txt2c Makefile
-	./txt2c --strip-trailing --no-static $< package_revision >$@.tmp
-	cmp -s $@.tmp $@ || mv -f $@.tmp $@
-	rm -f $@.tmp
 
 # To avoid a dependency loop here, what we do is:
 #           calculate changes
@@ -598,10 +635,6 @@ package_full_revision_dist.txt: package_full_revision_raw.txt
 package_full_revision.txt: package_full_revision_raw.txt package_full_revision_dist.txt
 	rm -f $@
 	for SRC in $^; do ([ -f $$SRC -a ! -f $@ ] && cp -f $$SRC $@) || true; done
-package_full_revision.c: package_full_revision.txt txt2c Makefile
-	./txt2c --no-static $< package_full_revision >$@.tmp
-	cmp -s $@.tmp $@ || mv -f $@.tmp $@
-	rm -f $@.tmp
 
 # This is a magic directive copy-and-pasted, then modified, from the
 # automake 1.9 manual, section 13.4, "Checking the distribution".
@@ -621,6 +654,10 @@ distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -
 # automake doesn't build html docs
 
 CHECK_SRCDIR_EQ_BUILDDIR=[ "`cd \"$(srcdir)\"; pwd`" = "`pwd`" -a -f ./monotone.texi ]
+
+.PHONY: apidocs
+apidocs:
+	doxygen doxygen.cfg
 
 monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
@@ -645,10 +682,3 @@ html: monotone.texi version.texi std_hooks.lua texinfo.css
 		sed -e 's,<head>,<head><link type="text/css" rel="stylesheet" href="texinfo.css" />,' $$f.bak >$$f; \
 		rm -f $$f.bak; \
 	done
-
-# Explicit dependencies of object files on generated headers, so Make
-# knows it has to build 'em.
-mtn-lua_hooks.o unit_tests-lua_hooks.o : test_hooks.h std_hooks.h
-mtn-database.o  unit_tests-database.o  : schema.h
-
-tester.o : tester.h

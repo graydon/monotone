@@ -11,9 +11,9 @@
 // PURPOSE.
 
 #include <set>
-
-#include "app_state.hh"
 #include "vocab.hh"
+
+class app_state;
 
 // this function just encapsulates the (somewhat complex) logic
 // behind picking an update target. the actual updating takes

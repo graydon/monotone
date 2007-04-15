@@ -32,9 +32,11 @@
 #include "paths.hh"
 #include "uri.hh"
 
-// defined in {std,test}_hooks.lua, converted
-#include "test_hooks.h"
-#include "std_hooks.h"
+// defined in {std,test}_hooks.lua, converted to {std,test}_hooks.c respectively
+extern char const std_hooks_constant[];
+#ifdef BUILD_UNIT_TESTS
+extern char const test_hooks_constant[];
+#endif
 
 using std::make_pair;
 using std::map;

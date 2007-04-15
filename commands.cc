@@ -20,6 +20,8 @@
 #include "cert.hh"
 #include "ui.hh"
 #include "cmd.hh"
+#include "constants.hh"
+#include "app_state.hh"
 
 #ifndef _WIN32
 #include <boost/lexical_cast.hpp>
@@ -199,6 +201,7 @@ namespace commands
         col2 = col2 > cmp ? col2 : cmp;
       }
 
+    size_t maxcol = guess_terminal_width();
     for (size_t i = 0; i < sorted.size(); ++i)
       {
         if (idx(sorted, i)->cmdgroup != curr_group)
@@ -210,15 +213,20 @@ namespace commands
             while (col++ < (col2 + 3))
               out << ' ';
           }
-        out << ' ' << idx(sorted, i)->name;
-        col += idx(sorted, i)->name.size() + 1;
-        if (col >= 70)
+
+        // Start new line if the current command could make the previous
+        // one wrap.  Indent it appropriately.
+        if (col + idx(sorted, i)->name.size() + 1 >= maxcol)
           {
             out << '\n';
             col = 0;
             while (col++ < (col2 + 3))
               out << ' ';
           }
+
+        // Print the current command name.
+        out << ' ' << idx(sorted, i)->name;
+        col += idx(sorted, i)->name.size() + 1;
       }
     out << "\n\n";
   }
@@ -497,24 +505,6 @@ process_commit_message_args(bool & given,
   else
     given = false;
 }
-
-void
-get_content_paths(roster_t const & roster, map<file_id, file_path> & paths)
-{
-  node_map const & nodes = roster.all_nodes();
-  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
-    {
-      node_t node = roster.get_node(i->first);
-      if (is_file_t(node))
-        {
-          split_path sp;
-          roster.get_name(i->first, sp);
-          file_t file = downcast_to_file_t(node);
-          paths.insert(make_pair(file->content, file_path(sp)));
-        }
-    }
-}
-  
 
 // Local Variables:
 // mode: C++
