@@ -736,7 +736,7 @@ namespace
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-AUTOMATE(inventory, "[PATH]...", options::opts::none)
+AUTOMATE(inventory, "[PATH]...", options::opts::depth | options::opts::exclude)
 {
   app.require_workspace();
 
