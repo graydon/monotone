@@ -189,7 +189,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
       revs.insert(rid);
     }
-  erase_ancestors(revs, app);
+  erase_ancestors(revs, app.db);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
     output << (*i).inner()() << '\n';
 }
@@ -336,7 +336,7 @@ AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
       revs.insert(rid);
     }
   vector<revision_id> sorted;
-  toposort(revs, sorted, app);
+  toposort(revs, sorted, app.db);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -375,10 +375,10 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options
       bs.insert(b);
     }
   set<revision_id> ancestors;
-  ancestry_difference(a, bs, ancestors, app);
+  ancestry_difference(a, bs, ancestors, app.db);
 
   vector<revision_id> sorted;
-  toposort(ancestors, sorted, app);
+  toposort(ancestors, sorted, app.db);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -534,12 +534,12 @@ AUTOMATE(select, N_("SELECTOR"), options::opts::none)
     F("wrong argument count"));
 
   vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(args[0](), app));
+    sels(selectors::parse_selector(args[0](), app.db));
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
   selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
+  selectors::complete_selector("", sels, ty, completions, app.db);
 
   for (set<string>::const_iterator i = completions.begin();
        i != completions.end(); ++i)

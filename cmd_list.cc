@@ -92,7 +92,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 
   for (size_t i = 0; i < certs.size(); ++i)
     {
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(app.db, idx(certs, i));
       cert_value tv;
       decode_base64(idx(certs, i).value, tv);
       string washed;
@@ -714,7 +714,7 @@ AUTOMATE(certs, N_("REV"), options::opts::none)
   for (size_t i = 0; i < certs.size(); ++i)
     {
       basic_io::stanza st;
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(app.db, idx(certs, i));
       cert_value tv;
       cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;

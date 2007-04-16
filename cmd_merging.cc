@@ -81,7 +81,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
   // figure out which branches the target is in
   vector< revision<cert> > certs;
   app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, app.db);
 
   set< branch_name > branches;
   for (vector< revision<cert> >::const_iterator i = certs.begin();
@@ -386,7 +386,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
               continue;
 
             revision_id ancestor;
-            find_common_ancestor_for_merge(*i, *j, ancestor, app);
+            find_common_ancestor_for_merge(*i, *j, ancestor, app.db);
             
             // More than one pair might have the same ancestor (e.g. if we
             // have three heads all with the same parent); as this table
@@ -399,7 +399,7 @@ CMD(merge, N_("tree"), "", N_("merge unmerged heads of branch"),
       // Erasing ancestors from ANCESTORS will now produce a set of merge
       // ancestors each of which is not itself an ancestor of any other
       // merge ancestor.
-      erase_ancestors(ancestors, app);
+      erase_ancestors(ancestors, app.db);
       I(ancestors.size() > 0);
 
       // Take the first ancestor from the above set and merge its
@@ -492,13 +492,13 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
   P(F("[target] %s") % *dst_i);
 
   // check for special cases
-  if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app))
+  if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app.db))
     {
       P(F("branch '%s' is up-to-date with respect to branch '%s'")
           % idx(args, 1)() % idx(args, 0)());
       P(F("no action taken"));
     }
-  else if (is_ancestor(*dst_i, *src_i, app))
+  else if (is_ancestor(*dst_i, *src_i, app.db))
     {
       P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
@@ -574,7 +574,7 @@ CMD(merge_into_dir, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
         // Write new files into the db.
         store_roster_merge_result(left_roster, right_roster, result,
                                   left_rid, right_rid, merged,
-                                  app);
+                                  app.db);
       }
 
       bool log_message_given;
@@ -651,7 +651,7 @@ CMD(merge_into_workspace, N_("tree"),
 
   revision_id lca_id;
   database::cached_roster lca;
-  find_common_ancestor_for_merge(left_id, right_id, lca_id, app);
+  find_common_ancestor_for_merge(left_id, right_id, lca_id, app.db);
   app.db.get_roster(lca_id, lca);
 
   map<file_id, file_path> paths;
@@ -706,9 +706,9 @@ CMD(explicit_merge, N_("tree"),
 
   N(!(left == right),
     F("%s and %s are the same revision, aborting") % left % right);
-  N(!is_ancestor(left, right, app),
+  N(!is_ancestor(left, right, app.db),
     F("%s is already an ancestor of %s") % left % right);
-  N(!is_ancestor(right, left, app),
+  N(!is_ancestor(right, left, app.db),
     F("%s is already an ancestor of %s") % right % left);
 
   merge_two(left, right, branch, string("explicit merge"), app);
@@ -724,9 +724,9 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
   revision_id l_id, r_id;
   complete(app, idx(args,0)(), l_id);
   complete(app, idx(args,1)(), r_id);                                                                    
-  N(!is_ancestor(l_id, r_id, app),
+  N(!is_ancestor(l_id, r_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
-  N(!is_ancestor(r_id, l_id, app),
+  N(!is_ancestor(r_id, l_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
   roster_t l_roster, r_roster;
   marking_map l_marking, r_marking;

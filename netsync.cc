@@ -715,9 +715,9 @@ session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
   if (app.opts.use_transport_auth)
     {
       keypair our_kp;
-      load_key_pair(app, app.opts.signing_key, our_kp);
+      load_key_pair(app.keys, app.opts.signing_key, our_kp);
       string hmac_key;
-      decrypt_rsa(app.lua, app.opts.signing_key, our_kp.priv,
+      decrypt_rsa(app.keys, app.opts.signing_key, our_kp.priv,
                   hmac_key_encrypted, hmac_key);
       set_session_key(hmac_key);
     }
@@ -1097,7 +1097,7 @@ session::queue_anonymous_cmd(protocol_role role,
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
   if (app.opts.use_transport_auth)
-    encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+    encrypt_rsa(app.keys, remote_peer_key_name, server_key_encoded,
                 nonce2(), hmac_key_encrypted);
   cmd.write_anonymous_cmd(role, include_pattern, exclude_pattern,
                           hmac_key_encrypted);
@@ -1118,7 +1118,7 @@ session::queue_auth_cmd(protocol_role role,
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
   I(app.opts.use_transport_auth);
-  encrypt_rsa(app.lua, remote_peer_key_name, server_key_encoded,
+  encrypt_rsa(app.keys, remote_peer_key_name, server_key_encoded,
               nonce2(), hmac_key_encrypted);
   cmd.write_auth_cmd(role, include_pattern, exclude_pattern, client,
                      nonce1, hmac_key_encrypted, signature);
@@ -1320,7 +1320,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     {
       // get our key pair
       keypair our_kp;
-      load_key_pair(app, app.opts.signing_key, our_kp);
+      load_key_pair(app.keys, app.opts.signing_key, our_kp);
 
       // get the hash identifier for our pubkey
       hexenc<id> our_key_hash;
@@ -1584,7 +1584,7 @@ session::process_auth_cmd(protocol_role their_role,
   // Check the signature.
   base64<rsa_sha1_signature> sig;
   encode_base64(rsa_sha1_signature(signature), sig);
-  if (check_signature(app, their_id, their_key, nonce1(), sig))
+  if (check_signature(app.keys, their_id, their_key, nonce1(), sig))
     {
       // Get our private key and sign back.
       L(FL("client signature OK, accepting authentication"));
@@ -2981,7 +2981,6 @@ insert_with_parents(revision_id rev,
                     refiner & ref,
                     revision_enumerator & rev_enumerator,
                     set<revision_id> & revs,
-                    app_state & app,
                     ticker & revisions_ticker)
 {
   deque<revision_id> work;
@@ -3043,7 +3042,7 @@ session::rebuild_merkle_trees(app_state & app,
           {
             revision_id rid(j->inner().ident);
             insert_with_parents(rid, rev_refiner, rev_enumerator,
-                                revision_ids, app, revisions_ticker);
+                                revision_ids, revisions_ticker);
             // Branch certs go in here, others later on.
             hexenc<id> tmp;
             id item;

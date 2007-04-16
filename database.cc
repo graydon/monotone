@@ -241,7 +241,7 @@ database::sql(enum open_mode mode)
             check_format();
         }
 
-      install_functions(__app);
+      install_functions();
     }
   else
     I(mode == normal_mode);
@@ -2107,7 +2107,7 @@ database::put_roster_for_revision(revision_id const & new_id,
   shared_ptr<marking_map> mm_writeable(new marking_map); MM(*mm_writeable);
   manifest_id roster_manifest_id;
   MM(roster_manifest_id);
-  make_roster_for_revision(rev, new_id, *ros_writeable, *mm_writeable, *__app);
+  make_roster_for_revision(rev, new_id, *ros_writeable, *mm_writeable, *this);
   calculate_ident(*ros_writeable, roster_manifest_id);
   I(rev.new_manifest == roster_manifest_id);
   // const'ify the objects, suitable for caching etc.
@@ -2406,7 +2406,7 @@ database::results_to_certs(results const & res,
 }
 
 void
-database::install_functions(app_state * app)
+database::install_functions()
 {
   // register any functions we're going to use
   I(sqlite3_create_function(sql(), "gunzip", -1,
@@ -3397,6 +3397,39 @@ database::close()
   __sql = 0;
 
   I(!__sql);
+}
+
+// FIXME: the quick hack lua link in functions
+bool
+database::hook_expand_selector(std::string const & sel, std::string & exp)
+{
+  return __app->lua.hook_expand_selector(sel, exp);
+};
+
+bool
+database::hook_expand_date(std::string const & sel, std::string & exp)
+{
+  return __app->lua.hook_expand_date(sel, exp);
+};
+
+bool
+database::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+{
+  return __app->lua.hook_get_manifest_cert_trust(signers, id, name, val);
+};
+
+bool
+database::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+{
+  return __app->lua.hook_get_revision_cert_trust(signers, id, name, val);
+};
+
+key_store &
+database::get_key_store()
+{
+  return __app->keys;
 }
 
 // transaction guards

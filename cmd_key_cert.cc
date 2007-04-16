@@ -49,7 +49,7 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
 
   keypair kp;
   P(F("generating key-pair '%s'") % ident);
-  generate_key_pair(app.lua, ident, kp);
+  generate_key_pair(app.keys, ident, kp);
   P(F("storing key-pair '%s' in %s/") 
     % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
@@ -110,7 +110,7 @@ CMD(passphrase, N_("key and cert"), N_("KEYID"),
 
   keypair key;
   app.keys.get_key_pair(ident, key);
-  change_key_passphrase(app.lua, ident, key.priv);
+  change_key_passphrase(app.keys, ident, key.priv);
   app.keys.delete_key(ident);
   app.keys.put_key_pair(ident, key);
   P(F("passphrase changed"));
@@ -127,11 +127,11 @@ CMD(ssh_agent_export, N_("key and cert"),
   rsa_keypair_id id;
   keypair key;
   get_user_key(id, app);
-  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
   utf8 new_phrase;
-  get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
+  get_passphrase(app.keys, id, new_phrase, true, true, "enter new passphrase");
   Pipe p;
   p.start_msg();
   if (new_phrase().length())
@@ -165,9 +165,9 @@ CMD(ssh_agent_add, N_("key and cert"), "",
   rsa_keypair_id id;
   keypair key;
   get_user_key(id, app);
-  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
   app.agent.add_identity(*priv, id());
 }
 

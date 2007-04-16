@@ -24,6 +24,8 @@
 // permission.
 
 class app_state;
+class key_store;
+class database;
 
 struct cert
 {
@@ -62,9 +64,9 @@ void cert_hash_code(cert const & t, hexenc<id> & out);
 typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 
 void cert_signable_text(cert const & t,std::string & out);
-cert_status check_cert(app_state & app, cert const & t);
-bool priv_key_exists(app_state & app, rsa_keypair_id const & id);
-void load_key_pair(app_state & app,
+cert_status check_cert(database & db, cert const & t);
+bool priv_key_exists(key_store & keys, rsa_keypair_id const & id);
+void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id,
                    keypair & kp);
 
@@ -82,10 +84,10 @@ void put_simple_revision_cert(revision_id const & id,
                               app_state & app);
 
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
-                       app_state & app);
+                       database & db);
 
 void erase_bogus_certs(std::vector< manifest<cert> > & certs,
-                       app_state & app);
+                       database & db);
 
 // Special certs -- system won't work without them.
 
