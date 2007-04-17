@@ -440,20 +440,20 @@ check_cert(database & db, cert const & t)
 // "special certs"
 
 void
-get_user_key(rsa_keypair_id & key, app_state & app)
+get_user_key(rsa_keypair_id & key, key_store & keys)
 {
 
-  if (app.opts.signing_key() != "")
+  if (keys.has_opt_signing_key())
     {
-      key = app.opts.signing_key;
+      key = keys.get_opt_signing_key();
       return;
     }
 
-  if (app.lua.hook_get_branch_key(app.opts.branchname, key))
+  if (keys.hook_get_current_branch_key(key))
     return;
 
   vector<rsa_keypair_id> all_privkeys;
-  app.keys.get_keys(all_privkeys);
+  keys.get_keys(all_privkeys);
   N(!all_privkeys.empty(), 
     F("you have no private key to make signatures with\n"
       "perhaps you need to 'genkey <your email>'"));
@@ -511,7 +511,7 @@ make_simple_cert(hexenc<id> const & id,
                  cert & c)
 {
   rsa_keypair_id key;
-  get_user_key(key, app);
+  get_user_key(key, app.keys);
   base64<cert_value> encoded_val;
   encode_base64(cv, encoded_val);
   cert t(id, nm, encoded_val, key);
@@ -566,7 +566,7 @@ cert_revision_author_default(revision_id const & m,
 {
   string author;
   rsa_keypair_id key;
-  get_user_key(key, app);
+  get_user_key(key, app.keys);
 
   if (!app.lua.hook_get_author(app.opts.branchname, key, author))
     {

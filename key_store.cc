@@ -285,6 +285,24 @@ key_store::hook_persist_phrase_ok()
   return app.lua.hook_persist_phrase_ok();
 }
 
+bool
+key_store::hook_get_current_branch_key(rsa_keypair_id & k)
+{
+  return app.lua.hook_get_branch_key(app.opts.branchname, k);
+}
+
+bool
+key_store::has_opt_signing_key()
+{
+  return (app.opts.signing_key() != "");
+}
+
+rsa_keypair_id
+key_store::get_opt_signing_key()
+{
+  return app.opts.signing_key;
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

@@ -712,7 +712,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   {
     // fail early if there isn't a key
     rsa_keypair_id key;
-    get_user_key(key, app);
+    get_user_key(key, app.keys);
   }
 
   app.make_branch_sticky();

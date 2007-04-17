@@ -105,7 +105,7 @@ cert_revision_in_branch(revision_id const & ctx,
 
 // N()'s out if there is no unique key for us to use
 void
-get_user_key(rsa_keypair_id & key, app_state & app);
+get_user_key(rsa_keypair_id & key, key_store & keys);
 
 void
 guess_branch(revision_id const & id, app_state & app, branch_name & branchname);

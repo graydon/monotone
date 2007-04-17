@@ -67,7 +67,7 @@ find_key_if_needed(utf8 & addr, app_state & app)
       if (transport_requires_auth)
         {
           rsa_keypair_id key;
-          get_user_key(key, app);
+          get_user_key(key, app.keys);
           app.opts.signing_key = key;
         }
 }
@@ -394,7 +394,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), "",
   if (app.opts.use_transport_auth)
     {
       rsa_keypair_id key;
-      get_user_key(key, app);
+      get_user_key(key, app.keys);
       app.opts.signing_key = key;
 
       N(app.lua.hook_persist_phrase_ok(),
