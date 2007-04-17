@@ -736,7 +736,7 @@ namespace
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-AUTOMATE(inventory, "[PATH]...", options::opts::depth | options::opts::exclude)
+AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclude)
 {
   app.require_workspace();
 
@@ -811,7 +811,13 @@ AUTOMATE(inventory, "[PATH]...", options::opts::depth | options::opts::exclude)
       // perhaps include all relevant status flags...
       // status "unknown", "renamed", "added", "dropped", "missing", ...
       // note that many/most of these can be inferred from the old/new node entries
-
+      //
+      // tommyd: we actually _have_ to add renamed, added, aso. here as well
+      // because otherwise we can't determine whats up with a certain entry
+      // if we run a path restricted inventory which includes a directory-
+      // crossing rename. A renamed file could therefor look like a dropped file
+      // when the restriction on the source directory applies or as added file
+      // when the restriction on the target directory applies
       if (item.fs_type == path::nonexistent)
         {
           if (item.new_node.exists)
@@ -829,6 +835,11 @@ AUTOMATE(inventory, "[PATH]...", options::opts::depth | options::opts::exclude)
           else if (item.new_node.type != item.fs_type)
             st.push_str_pair(syms::status, "invalid");
           // TODO: would an ls_invalid command be good for listing these paths?
+          //
+          // tommyd: the current situation is that mtn status warns about
+          // "<path> is not a directory" and points the user to ls missing,
+          // and ls missing happily ignores the fact that <path> is a file
+          // and outputs nothing, likewise ls unknown... a bug IMHO
           else
             st.push_str_pair(syms::status, "known");
         }
@@ -866,6 +877,8 @@ AUTOMATE(inventory, "[PATH]...", options::opts::depth | options::opts::exclude)
             {
               file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
               old_file->content;
+              // tommyd: what about outputting the file ids of old and new content as well?
+              // one could save a call to get_revision in that case to get the file ids
               if (item.fs_type == path::file && !(item.fs_ident == old_file->content))
                 changes.push_back("content");
             }
