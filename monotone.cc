@@ -125,11 +125,11 @@ void localize_monotone()
 }
 
 // read command-line options and return the command name
-commands::command_id read_options(options & opts, args_vector args, vector< string > argsstr)
+commands::command_id read_options(options & opts, args_vector args)
 {
   option::concrete_option_set optset =
     options::opts::all_options().instantiate(&opts);
-  optset.from_command_line(argsstr);
+  optset.from_command_line(args);
 
   // consume the command, and perform completion if necessary
   commands::command_id cmd;
@@ -149,7 +149,7 @@ commands::command_id read_options(options & opts, args_vector args, vector< stri
   optset.reset();
 
   optset = (options::opts::globals() | cmdopts).instantiate(&opts);
-  optset.from_command_line(argsstr, false);
+  optset.from_command_line(args, false);
 
   if (!opts.args.empty())
     opts.args.erase(opts.args.begin());
@@ -186,15 +186,12 @@ cpp_main(int argc, char ** argv)
       
       // decode all argv values into a UTF-8 array
       args_vector args;
-      // XXX Remove argsstr.
-      vector< string > argsstr;
       for (int i = 1; i < argc; ++i)
         {
           external ex(argv[i]);
           utf8 ut;
           system_to_utf8(ex, ut);
           args.push_back(arg_type(ut));
-          argsstr.push_back(ut());
         }
 
       // find base name of executable, convert to utf8, and save it in the
@@ -212,7 +209,7 @@ cpp_main(int argc, char ** argv)
       app_state app;
       try
         {
-          commands::command_id cmd = read_options(app.opts, args, argsstr);
+          commands::command_id cmd = read_options(app.opts, args);
           // XXX Remove cmdstr
           string cmdstr = cmd.size() > 0 ? (*(cmd.begin()))() : "";
 
@@ -257,7 +254,7 @@ cpp_main(int argc, char ** argv)
           if (!app.found_workspace && global_sanity.filename.empty())
             global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
 
-          app.lua.hook_note_mtn_startup(argsstr);
+          app.lua.hook_note_mtn_startup(args);
 
           // main options processed, now invoke the
           // sub-command w/ remaining args

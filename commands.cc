@@ -599,7 +599,7 @@ namespace commands
       }
   }
 
-  int process(app_state & app, string const & cmd, args_vector const & args)
+  int process(app_state & app, string const & name, args_vector const & args)
   {
     command * cmd = NULL;
     if (cmd != NULL)

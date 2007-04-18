@@ -200,9 +200,9 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
   if (args.size() == 0)                                              \
     throw usage(name);                                               \
                                                                      \
-  vector< utf8 >::const_iterator i = args.begin();                   \
+  args_vector::const_iterator i = args.begin();                      \
   ++i;                                                               \
-  vector< utf8 > removed (i, args.end());                            \
+  args_vector removed (i, args.end());                               \
   /* XXX Command completion... */ \
   /*command * child = find_command(this, idx(args, 0)());              \
   if (child == NULL)                                                 \
