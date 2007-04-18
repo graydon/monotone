@@ -39,8 +39,18 @@ using std::sort;
 using std::string;
 using std::vector;
 
-static void
-ls_certs(string const & name, app_state & app, vector<utf8> const & args)
+CMD_GROUP(list, "ls", CMD_REF(informative),
+          N_("Shows database objects"),
+          N_("This command is used to query information from the database.  "
+             "It shows database objects, or the current workspace manifest, "
+             "or known, unknown, intentionally ignored, missing, or "
+             "changed-state files."),
+          options::opts::none);
+
+CMD(certs, "", CMD_REF(list), "ID",
+    N_("Lists certificates attached to an identifier"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -140,9 +150,10 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   guard.commit();
 }
 
-static void
-ls_keys(string const & name, app_state & app,
-        vector<utf8> const & args)
+CMD(keys, "", CMD_REF(list), "[PATTERN]",
+    N_("Lists keys that match a pattern"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
@@ -233,8 +244,10 @@ ls_keys(string const & name, app_state & app,
     }
 }
 
-static void
-ls_branches(string name, app_state & app, vector<utf8> const & args)
+CMD(branches, "", CMD_REF(list), "[PATTERN]",
+    N_("Lists branches in the database that match a pattern"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   globish inc("*");
   globish exc;
@@ -259,8 +272,10 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
-static void
-ls_epochs(string name, app_state & app, vector<utf8> const & args)
+CMD(epochs, "", CMD_REF(list), "[BRANCH [...]]",
+    N_("Lists the current epoch of branches that match a pattern"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   map<branch_name, epoch_data> epochs;
   app.db.get_epochs(epochs);
@@ -276,7 +291,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
     }
   else
     {
-      for (vector<utf8>::const_iterator i = args.begin();
+      for (args_vector::const_iterator i = args.begin();
            i != args.end();
            ++i)
         {
@@ -287,8 +302,10 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
-static void
-ls_tags(string name, app_state & app, vector<utf8> const & args)
+CMD(tags, "", CMD_REF(list), "",
+    N_("Lists all tags in the database"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   set<tag_t> tags;
   app.get_project().get_tags(tags);
@@ -301,8 +318,10 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
-static void
-ls_vars(string name, app_state & app, vector<utf8> const & args)
+CMD(vars, "", CMD_REF(list), "[DOMAIN]",
+    N_("Lists variables in the whole database or a domain"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   bool filterp;
   var_domain filter;
@@ -333,8 +352,10 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
     }
 }
 
-static void
-ls_known(app_state & app, vector<utf8> const & args)
+CMD(known, "", CMD_REF(list), "",
+    N_("Lists workspace files that belong to the current branch"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   roster_t new_roster;
   temp_node_id_source nis;
@@ -373,9 +394,10 @@ ls_known(app_state & app, vector<utf8> const & args)
   }
 }
 
-static void
-ls_unknown_or_ignored(app_state & app, bool want_ignored,
-                      vector<utf8> const & args)
+CMD(unknown, "ignored", CMD_REF(list), "",
+    N_("Lists workspace files that do not belong to the current branch"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   app.require_workspace();
 
@@ -390,18 +412,23 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
 
   app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
-  if (want_ignored)
+  if (name == "ignored")
     for (path_set::const_iterator i = ignored.begin();
          i != ignored.end(); ++i)
       cout << file_path(*i) << '\n';
   else
-    for (path_set::const_iterator i = unknown.begin();
-         i != unknown.end(); ++i)
-      cout << file_path(*i) << '\n';
+    {
+      I(name == "unknown");
+      for (path_set::const_iterator i = unknown.begin();
+           i != unknown.end(); ++i)
+        cout << file_path(*i) << '\n';
+    }
 }
 
-static void
-ls_missing(app_state & app, vector<utf8> const & args)
+CMD(missing, "", CMD_REF(list), "",
+    N_("Lists files that belong to the branch but are not in the workspace"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
@@ -422,8 +449,10 @@ ls_missing(app_state & app, vector<utf8> const & args)
 }
 
 
-static void
-ls_changed(app_state & app, vector<utf8> const & args)
+CMD(changed, "", CMD_REF(list), "",
+    N_("Lists files that have changed with respect to the current revision"),
+    N_(""),
+    options::opts::depth | options::opts::exclude)
 {
   parent_map parents;
   roster_t new_roster;
@@ -475,58 +504,6 @@ ls_changed(app_state & app, vector<utf8> const & args)
     }
 
 }
-
-
-CMD(list, N_("informative"),
-    N_("certs ID\n"
-       "keys [PATTERN]\n"
-       "branches [PATTERN]\n"
-       "epochs [BRANCH [...]]\n"
-       "tags\n"
-       "vars [DOMAIN]\n"
-       "known\n"
-       "unknown\n"
-       "ignored\n"
-       "missing\n"
-       "changed"),
-    N_("show database objects, or the current workspace manifest, \n"
-       "or known, unknown, intentionally ignored, missing, or \n"
-       "changed-state files"),
-    options::opts::depth | options::opts::exclude)
-{
-  if (args.size() == 0)
-    throw usage(name);
-
-  vector<utf8>::const_iterator i = args.begin();
-  ++i;
-  vector<utf8> removed (i, args.end());
-  if (idx(args, 0)() == "certs")
-    ls_certs(name, app, removed);
-  else if (idx(args, 0)() == "keys")
-    ls_keys(name, app, removed);
-  else if (idx(args, 0)() == "branches")
-    ls_branches(name, app, removed);
-  else if (idx(args, 0)() == "epochs")
-    ls_epochs(name, app, removed);
-  else if (idx(args, 0)() == "tags")
-    ls_tags(name, app, removed);
-  else if (idx(args, 0)() == "vars")
-    ls_vars(name, app, removed);
-  else if (idx(args, 0)() == "known")
-    ls_known(app, removed);
-  else if (idx(args, 0)() == "unknown")
-    ls_unknown_or_ignored(app, false, removed);
-  else if (idx(args, 0)() == "ignored")
-    ls_unknown_or_ignored(app, true, removed);
-  else if (idx(args, 0)() == "missing")
-    ls_missing(app, removed);
-  else if (idx(args, 0)() == "changed")
-    ls_changed(app, removed);
-  else
-    throw usage(name);
-}
-
-ALIAS(ls, list);
 
 namespace
 {

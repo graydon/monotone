@@ -92,7 +92,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
   
   set<revision_id> ancestors;
   vector<revision_id> frontier;
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -139,7 +139,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 
   set<revision_id> descendents;
   vector<revision_id> frontier;
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -183,7 +183,7 @@ AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
 {
   set<revision_id> revs;
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -329,7 +329,7 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
 AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
 {
   set<revision_id> revs;
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);
@@ -365,7 +365,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options
     
   revision_id a;
   set<revision_id> bs;
-  vector<utf8>::const_iterator i = args.begin();
+  args_vector::const_iterator i = args.begin();
   a = revision_id((*i)());
   N(app.db.revision_exists(a), F("No such revision %s") % a);
   for (++i; i != args.end(); ++i)
@@ -1207,7 +1207,7 @@ AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 
   set<revision_id> ancestors, common_ancestors;
   vector<revision_id> frontier;
-  for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
       N(app.db.revision_exists(rid), F("No such revision %s") % rid);

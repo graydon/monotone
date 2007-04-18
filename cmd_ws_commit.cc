@@ -78,8 +78,10 @@ get_log_message_interactively(revision_t const & cs,
   system_to_utf8(log_message_external, log_message);
 }
 
-CMD(revert, N_("workspace"), N_("[PATH]..."),
-    N_("revert file(s), dir(s) or entire workspace (\".\")"),
+CMD(revert, "", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Reverts files and/or directories"),
+    N_("In order to revert the entire workspace, specify \".\" as the "
+       "file name."),
     options::opts::depth | options::opts::exclude | options::opts::missing)
 {
   roster_t old_roster, new_roster;
@@ -208,8 +210,9 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   app.work.maybe_update_inodeprints();
 }
 
-CMD(disapprove, N_("review"), N_("REVISION"),
-    N_("disapprove of a particular revision"),
+CMD(disapprove, "", CMD_REF(review), N_("REVISION"),
+    N_("Disapproves a particular revision"),
+    N_(""),
     options::opts::branch | options::opts::messages | options::opts::date |
     options::opts::author)
 {
@@ -261,8 +264,9 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   }
 }
 
-CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
-    N_("create one or more directories and add them to the workspace"),
+CMD(mkdir, "", CMD_REF(workspace), N_("[DIRECTORY...]"),
+    N_("Creates directories and adds them to the workspace"),
+    N_(""),
     options::opts::no_ignore)
 {
   if (args.size() < 1)
@@ -274,7 +278,7 @@ CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
   //spin through args and try to ensure that we won't have any collisions
   //before doing any real filesystem modification.  we'll also verify paths
   //against .mtn-ignore here.
-  for (vector<utf8>::const_iterator i = args.begin();
+  for (args_vector::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
       split_path sp;
@@ -305,8 +309,9 @@ CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
   app.work.perform_additions(paths, false, true);
 }
 
-CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"),
+CMD(add, "", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Adds files to the workspace"),
+    N_(""),
     options::opts::unknown | options::opts::no_ignore |
     options::opts::recursive)
 {
@@ -338,8 +343,9 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
-CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"),
+CMD(drop, "rm", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Drops files from the workspace"),
+    N_(""),
     options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
@@ -365,13 +371,12 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
   app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
 
-ALIAS(rm, drop);
 
-
-CMD(rename, N_("workspace"),
+CMD(rename, "mv", CMD_REF(workspace),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
-    N_("rename entries in the workspace"),
+    N_("Renames entries in the workspace"),
+    N_(""),
     options::opts::bookkeep_only)
 {
   if (args.size() < 2)
@@ -390,15 +395,13 @@ CMD(rename, N_("workspace"),
   app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
 
-ALIAS(mv, rename);
 
-
-CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
-    N_("rename the root directory\n"
-       "after this command, the directory that currently "
-       "has the name NEW_ROOT\n"
+CMD(pivot_root, "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
+    N_("Renames the root directory"),
+    N_("After this command, the directory that currently "
+       "has the name NEW_ROOT "
        "will be the root directory, and the directory "
-       "that is currently the root\n"
+       "that is currently the root "
        "directory will have name PUT_OLD.\n"
        "Use of --bookkeep-only is NOT recommended."),
     options::opts::bookkeep_only)
@@ -412,7 +415,9 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
   app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
+CMD(status, "", CMD_REF(informative), N_("[PATH]..."),
+    N_("Shows workspace's status information"),
+    N_(""),
     options::opts::depth | options::opts::exclude)
 {
   roster_t new_roster;
@@ -484,11 +489,11 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
     }
 }
 
-CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
-    N_("check out a revision from database into directory.\n"
-       "If a revision is given, that's the one that will be checked out.\n"
-       "Otherwise, it will be the head of the branch (given or implicit).\n"
-       "If no directory is given, the branch name will be used as directory"),
+CMD(checkout, "co", CMD_REF(tree), N_("[DIRECTORY]"),
+    N_("Checks out a revision from the database into a directory"),
+    N_("If a revision is given, that's the one that will be checked out.  "
+       "Otherwise, it will be the head of the branch (given or implicit).  "
+       "If no directory is given, the branch name will be used as directory."),
     options::opts::branch | options::opts::revision)
 {
   revision_id ident;
@@ -591,10 +596,10 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
   guard.commit();
 }
 
-ALIAS(co, checkout);
-
-CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
-    N_("set, get or drop file attributes"),
+CMD(attr, "", CMD_REF(workspace),
+    N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
+    N_("Manages file attributes"),
+    N_("This command is used to set, get or drop file attributes."),
     options::opts::none)
 {
   if (args.size() < 2 || args.size() > 4)
@@ -693,8 +698,9 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 
 
 
-CMD(commit, N_("workspace"), N_("[PATH]..."),
-    N_("commit workspace to database"),
+CMD(commit, "ci", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Commits workspace changes to the database"),
+    N_(""),
     options::opts::branch | options::opts::message | options::opts::msgfile
     | options::opts::date | options::opts::author | options::opts::depth
     | options::opts::exclude)
@@ -939,11 +945,9 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   }
 }
 
-ALIAS(ci, commit);
-
-
-CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
-    N_("setup a new workspace directory, default to current"),
+CMD_NO_WORKSPACE(setup, "", CMD_REF(tree), N_("[DIRECTORY]"),
+    N_("Sets up a new workspace directory"),
+    N_("If no directory is specified, uses the current directory."),
     options::opts::branch)
 {
   if (args.size() > 1)
@@ -965,8 +969,9 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   app.work.put_work_rev(rev);
 }
 
-CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
-  N_("import the contents of the given directory tree into a given branch"),
+CMD_NO_WORKSPACE(import, "", CMD_REF(tree), N_("DIRECTORY"),
+  N_("Imports the contents of a directory into a branch"),
+  N_(""),
   options::opts::branch | options::opts::revision |
   options::opts::message | options::opts::msgfile |
   options::opts::dryrun |
@@ -1031,11 +1036,11 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       // prepare stuff for 'add' and so on.
       app.found_workspace = true;       // Yup, this is cheating!
 
-      vector<utf8> empty_args;
+      args_vector empty_args;
       options save_opts;
       // add --unknown
       save_opts.exclude_patterns = app.opts.exclude_patterns;
-      app.opts.exclude_patterns = std::vector<utf8>();
+      app.opts.exclude_patterns = args_vector();
       app.opts.unknown = true;
       app.opts.recursive = true;
       process(app, "add", empty_args);
@@ -1065,9 +1070,9 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   delete_dir_recursive(bookkeeping_root);
 }
 
-CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
-  N_("migrate a workspace directory's metadata to the latest format; "
-     "defaults to the current workspace"),
+CMD_NO_WORKSPACE(migrate_workspace, "", CMD_REF(tree), N_("[DIRECTORY]"),
+  N_("Migrates a workspace directory's metadata to the latest format"),
+  N_("If no directory is given, defaults to the current workspace."),
   options::opts::none)
 {
   if (args.size() > 1)
@@ -1079,7 +1084,9 @@ CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
   app.work.migrate_ws_format();
 }
 
-CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
+CMD(refresh_inodeprints, "", CMD_REF(tree), "",
+    N_("Refreshes the inodeprint cache"),
+    N_(""),
     options::opts::none)
 {
   app.require_workspace();

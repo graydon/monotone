@@ -26,7 +26,10 @@ using std::vector;
 // fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
+CMD(fload, "", CMD_REF(debug), "",
+    N_("Loads a file's contents into the database"),
+    N_(""),
+    options::opts::none)
 {
   data dat;
   read_data_stdin(dat);
@@ -41,8 +44,9 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::non
   guard.commit();
 }
 
-CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
-    N_("merge 3 files and output result"),
+CMD(fmerge, "", CMD_REF(debug), N_("<parent> <left> <right>"),
+    N_("Merges 3 files and outputs the result"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 3)
@@ -78,8 +82,9 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 }
 
-CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
-    N_("diff 2 files and output result"),
+CMD(fdiff, "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
+    N_("Differences 2 files and outputs the result"),
+    N_(""),
     options::opts::diff_options)
 {
   if (args.size() != 4)
@@ -114,8 +119,10 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
             cout, app.opts.diff_format, pattern);
 }
 
-CMD(annotate, N_("informative"), N_("PATH"),
-    N_("print annotated copy of the file from REVISION"),
+CMD(annotate, "", CMD_REF(informative), N_("PATH"),
+    N_("Prints an annotated copy of a file"),
+    N_("Calculates and prints an annotated copy of the given file from "
+       "the specified REVISION."),
     options::opts::revision | options::opts::brief)
 {
   revision_id rid;
@@ -182,8 +189,10 @@ CMD(annotate, N_("informative"), N_("PATH"),
   do_annotate(app, file_node, rid, app.opts.brief);
 }
 
-CMD(identify, N_("debug"), N_("[PATH]"),
-    N_("calculate identity of PATH or stdin"),
+CMD(identify, "", CMD_REF(debug), N_("[PATH]"),
+    N_("Calculates the identity of a file or stdin"),
+    N_("If any PATH is given, calculates their identity; otherwise, the "
+       "one from the standard input is calculated."),
     options::opts::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
@@ -244,9 +253,11 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
   dump_file(output, app, file_node->content);
 }
 
-CMD(cat, N_("informative"),
+CMD(cat, "", CMD_REF(informative),
     N_("FILENAME"),
-    N_("write file from database to stdout"),
+    N_("Prints a file from the database"),
+    N_("Fetches the given file FILENAME from the database and prints it "
+       "to the standard output."),
     options::opts::revision)
 {
   if (args.size() != 1)
