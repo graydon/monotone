@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <string>
 
 #include <boost/shared_ptr.hpp>
 
@@ -10,6 +11,7 @@
 #include "paths.hh"
 
 class app_state;
+class ssh_agent;
 
 namespace Botan
 {
@@ -80,6 +82,8 @@ public:
   bool hook_get_current_branch_key(rsa_keypair_id & k);
   bool has_opt_signing_key();
   rsa_keypair_id get_opt_signing_key();
+  std::string const & get_opt_ssh_sign();
+  ssh_agent & get_agent();
 };
 
 // Local Variables:

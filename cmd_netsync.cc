@@ -399,7 +399,7 @@ CMD_NO_WORKSPACE(serve, N_("network"), "",
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(key, app);
+      require_password(key, app.keys);
     }
   else
     {

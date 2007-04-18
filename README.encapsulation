@@ -15,9 +15,6 @@ revision.cc:
     anc_graph::write_certs():
       needs: make_simple_cert()
 
-    anc_graph::add_node_for_old_manifest
-      needs: erase_bogus_cert()
-
     anc_graph::construct_revisions_from_ancestry()
       app.opts.attrs_to_drop
 
@@ -25,36 +22,20 @@ revision.cc:
   build_roster_style_revs_from_manifest_style_revs()
     app.db....
     needs: anc_graph()
-    needs: get_user_key()
-    needs: require_password()
 
 
   build_changesets_from_manifest_ancestry()
     app.db...
     needs: anc_graph()
-    needs: get_user_key()
-    needs: require_password()
 
 
 cert.cc:
-
-  calculate_cert():
-    app.db...
-    needs: load_key_pair()  (i.e. keys, lua.hook_persist_phrase_ok)
-    needs: make_signature()
-
-  get_user_key():
-    app.keys...
-    app.opts.signing_key
-    app.lua.hook_get_branch_key
-    app.opts.branchname
 
   guess_branch():
     app.opts.branch_given + app.opts.branchname
     app.get_project().get_revision_branches()
 
   make_simple_cert():
-    needs: get_user_key()  (i.e. keys + some opts and hooks)
     needs: calculate_cert()
 
   cert_revision_author_default():
@@ -98,7 +79,6 @@ netsync.cc:
   session::set_session_key():
     app.opts.use_transport_auth
     app.opts.signing_key
-    needs: load_key_pair()
     needs: decrypt_rsa()
 
   session::queue_anonymous_cmd():
@@ -112,7 +92,6 @@ netsync.cc:
     app.opts.use_transport_auth
     app.opts.signing_key
     app.get_project().get_branch_list()
-    needs: make_signature()
     app.lua.hook_note_netsync_start
 
   session::process_anonymous_cmd():
@@ -162,30 +141,11 @@ netsync.cc:
     app.opts.bind_stdio
 
 
-packet.cc:
-  feed_packet_consumer:
-    needs: migrate_private_key()
-
-
 keys.cc:
-  make_signature():
-    app.keys...
-    app.opts.ssh_sign
-    app.agent
-
-  encrypt_rsa():
-    (now takes a key_store context, but doesn't use it..)
-
-  require_password():
-    app.keys...
-    needs: priv_key_exists()
-    needs: make_signature()
-
+  Only a unit test left, which uses app_state. This should be cleaned
+  up as soon as we remove the hackish hooks in the key_store.
 
 project.cc:
-
-  struct not_in_branch:
-    needs: erase_bogus_certs()
 
   project_t:
     app.db...
@@ -215,3 +175,4 @@ cmd_diff_log.cc:
     needs: node_restriction()
 
     needs: complete()
+

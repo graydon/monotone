@@ -1647,7 +1647,7 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
     get_user_key(key, app.keys);
-    require_password(key, app);
+    require_password(key, app.keys);
   }
 
   // cross-check that we're getting everything
@@ -1701,7 +1701,7 @@ build_changesets_from_manifest_ancestry(app_state & app)
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
     get_user_key(key, app.keys);
-    require_password(key, app);
+    require_password(key, app.keys);
   }
 
   vector< manifest<cert> > tmp;

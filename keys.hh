@@ -18,7 +18,6 @@
 using Botan::RSA_PrivateKey;
 using boost::shared_ptr;
 
-class app_state;
 class key_store;
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
@@ -37,12 +36,12 @@ void change_key_passphrase(key_store & keys,          // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase
                            base64< rsa_priv_key > & encoded_key);
 
-void migrate_private_key(app_state & app,
+void migrate_private_key(key_store & keys,
                          rsa_keypair_id const & id,
                          base64< arc4<rsa_priv_key> > const & old_priv,
                          keypair & kp);
 
-void make_signature(app_state & app,           // to hook for phrase
+void make_signature(key_store & keys,          // to hook for phrase
                     rsa_keypair_id const & id, // to prompting user for phrase
                     base64< rsa_priv_key > const & priv,
                     std::string const & tosign,
@@ -55,7 +54,7 @@ bool check_signature(key_store & keys,
                      base64<rsa_sha1_signature> const & signature);
 
 void require_password(rsa_keypair_id const & id,
-                      app_state & app);
+                      key_store & keys);
 
 void encrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,

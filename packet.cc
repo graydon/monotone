@@ -220,7 +220,7 @@ feed_packet_consumer
         require(regex_match(body, regex(base)));
         string contents(trim_ws(body));
         keypair kp;
-        migrate_private_key(app,
+        migrate_private_key(app.keys,
                             rsa_keypair_id(args),
                             base64<arc4<rsa_priv_key> >(contents),
                             kp);

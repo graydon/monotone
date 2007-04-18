@@ -403,7 +403,7 @@ calculate_cert(app_state & app, cert & t)
   load_key_pair(app.keys, t.key, kp);
   app.db.put_key(t.key, kp.pub);
 
-  make_signature(app, t.key, kp.priv, signed_text, t.sig);
+  make_signature(app.keys, t.key, kp.priv, signed_text, t.sig);
 }
 
 cert_status

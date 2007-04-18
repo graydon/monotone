@@ -303,6 +303,18 @@ key_store::get_opt_signing_key()
   return app.opts.signing_key;
 }
 
+const string &
+key_store::get_opt_ssh_sign()
+{
+  return app.opts.ssh_sign;
+}
+
+ssh_agent &
+key_store::get_agent()
+{
+  return app.agent;
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

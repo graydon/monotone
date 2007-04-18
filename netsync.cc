@@ -1331,7 +1331,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       // make a signature
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
-      make_signature(app, app.opts.signing_key, our_kp.priv, nonce(), sig);
+      make_signature(app.keys, app.opts.signing_key, our_kp.priv, nonce(), sig);
       decode_base64(sig, sig_raw);
 
       // make a new nonce of our own and send off the 'auth'
