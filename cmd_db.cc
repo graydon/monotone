@@ -81,9 +81,9 @@ CMD(db, N_("database"),
       else if (idx(args, 0)() == "check")
         check_db(app);
       else if (idx(args, 0)() == "changesetify")
-        build_changesets_from_manifest_ancestry(app);
+        build_changesets_from_manifest_ancestry(app.db);
       else if (idx(args, 0)() == "rosterify")
-        build_roster_style_revs_from_manifest_style_revs(app);
+        build_roster_style_revs_from_manifest_style_revs(app.db);
       else if (idx(args, 0)() == "regenerate_caches")
         regenerate_caches(app.db);
       else

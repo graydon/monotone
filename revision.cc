@@ -829,9 +829,9 @@ dump(parent_roster_map const & prm, string & out)
 
 struct anc_graph
 {
-  anc_graph(bool existing, app_state & a) :
+  anc_graph(bool existing, database & db) :
     existing_graph(existing),
-    app(a),
+    db(db),
     max_node(0),
     n_nodes("nodes", "n", 1),
     n_certs_in("certs in", "c", 1),
@@ -840,7 +840,7 @@ struct anc_graph
   {}
 
   bool existing_graph;
-  app_state & app;
+  database & db;
   u64 max_node;
 
   ticker n_nodes;
@@ -903,7 +903,7 @@ void anc_graph::write_certs()
         encode_hexenc(data(string(buf, buf + constants::epochlen_bytes)), hexdata);
         epoch_data new_epoch(hexdata);
         L(FL("setting epoch for %s to %s") % *i % new_epoch);
-        app.db.set_epoch(branch_name(*i), new_epoch);
+        db.set_epoch(branch_name(*i), new_epoch);
       }
   }
 
@@ -923,9 +923,9 @@ void anc_graph::write_certs()
           cert_value val(j->second.second);
 
           cert new_cert;
-          make_simple_cert(rev.inner(), name, val, app.db, new_cert);
+          make_simple_cert(rev.inner(), name, val, db, new_cert);
           revision<cert> rcert(new_cert);
-          if (app.db.put_revision_cert(rcert))
+          if (db.put_revision_cert(rcert))
             ++n_certs_out;
         }
     }
@@ -1017,13 +1017,13 @@ anc_graph::rebuild_ancestry()
 
   P(F("rebuilding %d nodes") % max_node);
   {
-    transaction_guard guard(app.db);
+    transaction_guard guard(db);
     if (existing_graph)
-      app.db.delete_existing_revs_and_certs();
+      db.delete_existing_revs_and_certs();
     construct_revisions_from_ancestry();
     write_certs();
     if (existing_graph)
-      app.db.delete_existing_manifests();
+      db.delete_existing_manifests();
     guard.commit();
   }
 }
@@ -1043,8 +1043,8 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
 
       // load certs
       vector< manifest<cert> > mcerts;
-      app.db.get_manifest_certs(man, mcerts);
-      erase_bogus_certs(mcerts, app.db);
+      db.get_manifest_certs(man, mcerts);
+      erase_bogus_certs(mcerts, db);
       for(vector< manifest<cert> >::const_iterator i = mcerts.begin();
           i != mcerts.end(); ++i)
         {
@@ -1075,7 +1075,7 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 
       manifest_id man;
       legacy::renames_map renames;
-      legacy::get_manifest_and_renames_for_rev(app.db, rev, man, renames);
+      legacy::get_manifest_and_renames_for_rev(db, rev, man, renames);
 
       L(FL("node %d = revision %s = manifest %s") % node % rev % man);
       old_rev_to_node.insert(make_pair(rev, node));
@@ -1085,8 +1085,8 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 
       // load certs
       vector< revision<cert> > rcerts;
-      app.db.get_revision_certs(rev, rcerts);
-      erase_bogus_certs(rcerts, app.db);
+      db.get_revision_certs(rev, rcerts);
+      erase_bogus_certs(rcerts, db);
       for(vector< revision<cert> >::const_iterator i = rcerts.begin();
           i != rcerts.end(); ++i)
         {
@@ -1452,7 +1452,7 @@ anc_graph::construct_revisions_from_ancestry()
 
           get_node_manifest(child, old_child_mid);
           manifest_data mdat;
-          app.db.get_manifest_version(old_child_mid, mdat);
+          db.get_manifest_version(old_child_mid, mdat);
           legacy::read_manifest_map(mdat, old_child_man);
 
           // Load all the parent rosters into a temporary roster map
@@ -1468,7 +1468,7 @@ anc_graph::construct_revisions_from_ancestry()
                 {
                   shared_ptr<roster_t> ros = shared_ptr<roster_t>(new roster_t());
                   shared_ptr<marking_map> mm = shared_ptr<marking_map>(new marking_map());
-                  app.db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
+                  db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
                   safe_insert(parent_rosters, make_pair(parent, make_pair(ros, mm)));
                 }
             }
@@ -1508,7 +1508,7 @@ anc_graph::construct_revisions_from_ancestry()
             if (i != old_child_man.end())
               {
                 file_data dat;
-                app.db.get_file_version(i->second, dat);
+                db.get_file_version(i->second, dat);
                 legacy::dot_mt_attrs_map attrs;
                 legacy::read_dot_mt_attrs(dat.inner(), attrs);
                 for (legacy::dot_mt_attrs_map::const_iterator j = attrs.begin();
@@ -1525,7 +1525,7 @@ anc_graph::construct_revisions_from_ancestry()
                              k != fattrs.end(); ++k)
                           {
                             string key = k->first;
-                            if (app.opts.attrs_to_drop.find(key) != app.opts.attrs_to_drop.end())
+                            if (db.must_drop_attr(key))
                               {
                                 // ignore it
                               }
@@ -1611,7 +1611,7 @@ anc_graph::construct_revisions_from_ancestry()
           */
 
           L(FL("mapped node %d to revision %s") % child % new_rid);
-          if (app.db.put_revision(new_rid, rev))
+          if (db.put_revision(new_rid, rev))
             ++n_revs_out;
           
           // Mark this child as done, hooray!
@@ -1632,13 +1632,13 @@ anc_graph::construct_revisions_from_ancestry()
 }
 
 void
-build_roster_style_revs_from_manifest_style_revs(app_state & app)
+build_roster_style_revs_from_manifest_style_revs(database & db)
 {
-  app.db.ensure_open_for_format_changes();
-  app.db.check_is_not_rosterified();
+  db.ensure_open_for_format_changes();
+  db.check_is_not_rosterified();
 
   real_sanity.set_relaxed(true);
-  anc_graph graph(true, app);
+  anc_graph graph(true, db);
 
   P(F("converting existing revision graph to new roster-style revisions"));
   multimap<revision_id, revision_id> existing_graph;
@@ -1646,8 +1646,8 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key, app.keys);
-    require_password(key, app.keys);
+    get_user_key(key, db.get_key_store());
+    require_password(key, db.get_key_store());
   }
 
   // cross-check that we're getting everything
@@ -1657,9 +1657,9 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   // This code at least causes this case to throw an assertion; FIXME: make
   // this case actually work.
   set<revision_id> all_rev_ids;
-  app.db.get_revision_ids(all_rev_ids);
+  db.get_revision_ids(all_rev_ids);
 
-  app.db.get_revision_ancestry(existing_graph);
+  db.get_revision_ancestry(existing_graph);
   for (multimap<revision_id, revision_id>::const_iterator i = existing_graph.begin();
        i != existing_graph.end(); ++i)
     {
@@ -1688,25 +1688,25 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
 
 
 void
-build_changesets_from_manifest_ancestry(app_state & app)
+build_changesets_from_manifest_ancestry(database & db)
 {
-  app.db.ensure_open_for_format_changes();
-  app.db.check_is_not_rosterified();
+  db.ensure_open_for_format_changes();
+  db.check_is_not_rosterified();
 
-  anc_graph graph(false, app);
+  anc_graph graph(false, db);
 
   P(F("rebuilding revision graph from manifest certs"));
 
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key, app.keys);
-    require_password(key, app.keys);
+    get_user_key(key, db.get_key_store());
+    require_password(key, db.get_key_store());
   }
 
   vector< manifest<cert> > tmp;
-  app.db.get_manifest_certs(cert_name("ancestor"), tmp);
-  erase_bogus_certs(tmp, app.db);
+  db.get_manifest_certs(cert_name("ancestor"), tmp);
+  erase_bogus_certs(tmp, db);
 
   for (vector< manifest<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)

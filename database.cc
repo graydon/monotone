@@ -3439,6 +3439,13 @@ database::get_key_store()
   return __app->keys;
 }
 
+bool
+database::must_drop_attr(string const & key)
+{
+  return (__app->opts.attrs_to_drop.find(key) !=
+          __app->opts.attrs_to_drop.end());
+}
+
 // transaction guards
 
 transaction_guard::transaction_guard(database & d, bool exclusive,

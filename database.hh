@@ -599,6 +599,7 @@ public:
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
   bool hook_get_author(rsa_keypair_id const & k,
                        std::string & author);
+  bool must_drop_attr(std::string const & key);
 
   key_store & get_key_store();
 };

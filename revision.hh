@@ -16,10 +16,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "cset.hh"
-#include "vocab.hh"
 #include "database.hh"
-
-class app_state;
+#include "vocab.hh"
 
 // a revision is a text object. It has a precise, normalizable serial form
 // as UTF-8 text. it also has some sub-components. not all of these
@@ -219,10 +217,10 @@ make_restricted_revision(parent_map const & old_rosters,
                          std::string const & cmd_name);
 
 void
-build_changesets_from_manifest_ancestry(app_state & app);
+build_changesets_from_manifest_ancestry(database & db);
 
 void
-build_roster_style_revs_from_manifest_style_revs(app_state & app);
+build_roster_style_revs_from_manifest_style_revs(database & db);
 
 void
 regenerate_caches(database & db);

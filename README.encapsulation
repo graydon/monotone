@@ -9,22 +9,7 @@ annotate.cc:
 
 revision.cc:
 
-  struct anc_graph still uses app_state, while most methods only need the
-  database, these functions are exceptions:
-
-    anc_graph::construct_revisions_from_ancestry()
-      app.opts.attrs_to_drop
-
-
-  build_roster_style_revs_from_manifest_style_revs()
-    app.db....
-    needs: anc_graph()
-
-
-  build_changesets_from_manifest_ancestry()
-    app.db...
-    needs: anc_graph()
-
+ only a CMD(rev_height is left using the app_state
 
 cert.cc:
 
@@ -167,4 +152,3 @@ cmd_diff_log.cc:
 
 next candidates for app_state removal:
   project.cc: struct project_t
-  revision.cc: struct anc_graph
