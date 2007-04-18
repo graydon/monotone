@@ -12,9 +12,6 @@ revision.cc:
   struct anc_graph still uses app_state, while most methods only need the
   database, these functions are exceptions:
 
-    anc_graph::write_certs():
-      needs: make_simple_cert()
-
     anc_graph::construct_revisions_from_ancestry()
       app.opts.attrs_to_drop
 
@@ -35,14 +32,6 @@ cert.cc:
     app.opts.branch_given + app.opts.branchname
     app.get_project().get_revision_branches()
 
-  make_simple_cert():
-    needs: calculate_cert()
-
-  cert_revision_author_default():
-    needs (thought other calls): make_simple_cert()
-    app.lua.hook_get_author
-    app.opts.branchname
-    
 
 database.cc:
 
@@ -149,8 +138,6 @@ project.cc:
 
   project_t:
     app.db...
-    needs: cert_revision_{in_branch,tag,changelog,date_time,author}()
-      which in turn all need make_simple_cert()
     app.opts.date
     app.opts.author
 
@@ -176,3 +163,8 @@ cmd_diff_log.cc:
 
     needs: complete()
 
+
+
+next candidates for app_state removal:
+  project.cc: struct project_t
+  revision.cc: struct anc_graph

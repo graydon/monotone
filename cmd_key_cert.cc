@@ -258,7 +258,7 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_tag(r, idx(args, 1)(), app);
+  cert_revision_tag(r, idx(args, 1)(), app.db);
 }
 
 
@@ -270,7 +270,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_testresult(r, idx(args, 1)(), app);
+  cert_revision_testresult(r, idx(args, 1)(), app.db);
 }
 
 
@@ -310,7 +310,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_comment(r, comment, app);
+  cert_revision_comment(r, comment, app.db);
 }
 
 // Local Variables:

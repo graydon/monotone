@@ -394,16 +394,16 @@ load_key_pair(key_store & keys,
 }
 
 void
-calculate_cert(app_state & app, cert & t)
+calculate_cert(database & db, cert & t)
 {
   string signed_text;
   keypair kp;
   cert_signable_text(t, signed_text);
 
-  load_key_pair(app.keys, t.key, kp);
-  app.db.put_key(t.key, kp.pub);
+  load_key_pair(db.get_key_store(), t.key, kp);
+  db.put_key(t.key, kp.pub);
 
-  make_signature(app.keys, t.key, kp.priv, signed_text, t.sig);
+  make_signature(db.get_key_store(), t.key, kp.priv, signed_text, t.sig);
 }
 
 cert_status
@@ -507,15 +507,15 @@ void
 make_simple_cert(hexenc<id> const & id,
                  cert_name const & nm,
                  cert_value const & cv,
-                 app_state & app,
+                 database & db,
                  cert & c)
 {
   rsa_keypair_id key;
-  get_user_key(key, app.keys);
+  get_user_key(key, db.get_key_store());
   base64<cert_value> encoded_val;
   encode_base64(cv, encoded_val);
   cert t(id, nm, encoded_val, key);
-  calculate_cert(app, t);
+  calculate_cert(db, t);
   c = t;
 }
 
@@ -523,21 +523,20 @@ void
 put_simple_revision_cert(revision_id const & id,
                          cert_name const & nm,
                          cert_value const & val,
-                         app_state & app)
+                         database & db)
 {
   cert t;
-  make_simple_cert(id.inner(), nm, val, app, t);
+  make_simple_cert(id.inner(), nm, val, db, t);
   revision<cert> cc(t);
-  app.db.put_revision_cert(cc);
+  db.put_revision_cert(cc);
 }
 
 void
 cert_revision_in_branch(revision_id const & rev,
                         branch_name const & branch,
-                        app_state & app)
+                        database & db)
 {
-  put_simple_revision_cert (rev, branch_cert_name, cert_value(branch()),
-                            app);
+  put_simple_revision_cert(rev, branch_cert_name, cert_value(branch()), db);
 }
 
 
@@ -546,64 +545,64 @@ cert_revision_in_branch(revision_id const & rev,
 void
 cert_revision_date_time(revision_id const & m,
                         date_t const & t,
-                        app_state & app)
+                        database & db)
 {
   cert_value val = cert_value(t.as_iso_8601_extended());
-  put_simple_revision_cert(m, date_cert_name, val, app);
+  put_simple_revision_cert(m, date_cert_name, val, db);
 }
 
 void
 cert_revision_author(revision_id const & m,
                      string const & author,
-                     app_state & app)
+                     database & db)
 {
-  put_simple_revision_cert(m, author_cert_name, cert_value(author), app);
+  put_simple_revision_cert(m, author_cert_name, cert_value(author), db);
 }
 
 void
 cert_revision_author_default(revision_id const & m,
-                             app_state & app)
+                             database & db)
 {
   string author;
   rsa_keypair_id key;
-  get_user_key(key, app.keys);
+  get_user_key(key, db.get_key_store());
 
-  if (!app.lua.hook_get_author(app.opts.branchname, key, author))
+  if (!db.hook_get_author(key, author))
     {
       author = key();
     }
-  cert_revision_author(m, author, app);
+  cert_revision_author(m, author, db);
 }
 
 void
 cert_revision_tag(revision_id const & m,
                   string const & tagname,
-                  app_state & app)
+                  database & db)
 {
-  put_simple_revision_cert(m, tag_cert_name, cert_value(tagname), app);
+  put_simple_revision_cert(m, tag_cert_name, cert_value(tagname), db);
 }
 
 
 void
 cert_revision_changelog(revision_id const & m,
                         utf8 const & log,
-                        app_state & app)
+                        database & db)
 {
-  put_simple_revision_cert(m, changelog_cert_name, cert_value(log()), app);
+  put_simple_revision_cert(m, changelog_cert_name, cert_value(log()), db);
 }
 
 void
 cert_revision_comment(revision_id const & m,
                       utf8 const & comment,
-                      app_state & app)
+                      database & db)
 {
-  put_simple_revision_cert(m, comment_cert_name, cert_value(comment()), app);
+  put_simple_revision_cert(m, comment_cert_name, cert_value(comment()), db);
 }
 
 void
 cert_revision_testresult(revision_id const & r,
                          string const & results,
-                         app_state & app)
+                         database & db)
 {
   bool passed = false;
   if (lowercase(results) == "true" ||
@@ -622,7 +621,7 @@ cert_revision_testresult(revision_id const & r,
                               "'pass/fail'");
 
   put_simple_revision_cert(r, testresult_cert_name,
-                           cert_value(lexical_cast<string>(passed)), app);
+                           cert_value(lexical_cast<string>(passed)), db);
 }
 
 // Local Variables:

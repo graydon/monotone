@@ -597,6 +597,8 @@ public:
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
+  bool hook_get_author(rsa_keypair_id const & k,
+                       std::string & author);
 
   key_store & get_key_store();
 };

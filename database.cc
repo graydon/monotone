@@ -3426,6 +3426,13 @@ database::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
   return __app->lua.hook_get_revision_cert_trust(signers, id, name, val);
 };
 
+bool
+database::hook_get_author(rsa_keypair_id const & k,
+                          string & author)
+{
+  return __app->lua.hook_get_author(__app->opts.branchname, k, author);
+}
+
 key_store &
 database::get_key_store()
 {

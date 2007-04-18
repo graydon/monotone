@@ -122,7 +122,7 @@ void
 project_t::put_revision_in_branch(revision_id const & id,
                                   branch_name const & branch)
 {
-  cert_revision_in_branch(id, branch, app);
+  cert_revision_in_branch(id, branch, app.db);
 }
 
 
@@ -222,7 +222,7 @@ void
 project_t::put_tag(revision_id const & id,
                    string const & name)
 {
-  cert_revision_tag(id, name, app);
+  cert_revision_tag(id, name, app.db);
 }
 
 
@@ -233,13 +233,13 @@ project_t::put_standard_certs(revision_id const & id,
                               date_t const & time,
                               utf8 const & author)
 {
-  cert_revision_in_branch(id, branch, app);
-  cert_revision_changelog(id, changelog, app);
-  cert_revision_date_time(id, time, app);
+  cert_revision_in_branch(id, branch, app.db);
+  cert_revision_changelog(id, changelog, app.db);
+  cert_revision_date_time(id, time, app.db);
   if (!author().empty())
-    cert_revision_author(id, author(), app);
+    cert_revision_author(id, author(), app.db);
   else
-    cert_revision_author_default(id, app);
+    cert_revision_author_default(id, app.db);
 }
 
 void
@@ -258,7 +258,7 @@ project_t::put_cert(revision_id const & id,
                     cert_name const & name,
                     cert_value const & value)
 {
-  put_simple_revision_cert(id, name, value, app);
+  put_simple_revision_cert(id, name, value, app.db);
 }
 
 

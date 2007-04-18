@@ -1734,7 +1734,7 @@ AUTOMATE(cert, N_("REVISION-ID NAME VALUE"), options::opts::none)
   N(app.db.revision_exists(rid),
     F("no such revision '%s'") % rid);
   make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
-                   cert_value(idx(args, 2)()), app, c);
+                   cert_value(idx(args, 2)()), app.db, c);
   revision<cert> rc(c);
   app.db.put_revision_cert(rc);
   guard.commit();
