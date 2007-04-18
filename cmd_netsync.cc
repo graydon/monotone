@@ -31,8 +31,8 @@ static const var_key default_exclude_pattern_key(var_domain("database"),
 static string const ws_internal_db_file_name("mtn.db");
 
 static void
-extract_address(vector<utf8> const & args,
-                utf8 & addr,
+extract_address(args_vector const & args,
+                arg_type & addr,
                 app_state & app)
 {
   if (args.size() >= 1)
@@ -40,7 +40,7 @@ extract_address(vector<utf8> const & args,
       addr = idx(args, 0);
       if (!app.db.var_exists(default_server_key) || app.opts.set_default)
         {
-          P(F("setting default server to %s") % addr);
+          P(F("setting default server to %s") % addr());
           app.db.set_var(default_server_key, var_value(addr()));
         }
     }
@@ -50,8 +50,8 @@ extract_address(vector<utf8> const & args,
         F("no server given and no default server set"));
       var_value addr_value;
       app.db.get_var(default_server_key, addr_value);
-      addr = utf8(addr_value());
-      L(FL("using default server address: %s") % addr);
+      addr = arg_type(addr_value());
+      L(FL("using default server address: %s") % addr());
     }
 }
 
@@ -73,7 +73,7 @@ find_key_if_needed(utf8 & addr, app_state & app)
 }
 
 static void
-extract_patterns(vector<utf8> const & args,
+extract_patterns(args_vector const & args,
                  globish & include_pattern, globish & exclude_pattern,
                  app_state & app)
 {
@@ -126,7 +126,7 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr;
+  arg_type addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   find_key_if_needed(addr, app);
@@ -140,7 +140,7 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("pull branches matching PATTERN from netsync server at ADDRESS"),
     options::opts::set_default | options::opts::exclude)
 {
-  utf8 addr;
+  arg_type addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
@@ -157,7 +157,7 @@ CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr;
+  arg_type addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   find_key_if_needed(addr, app);

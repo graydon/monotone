@@ -81,7 +81,7 @@ namespace commands
   command::~command() {}
   std::string command::params() {return safe_gettext(params_.c_str());}
   std::string command::desc() {return safe_gettext(desc_.c_str());}
-  options::options_type command::get_options(vector<utf8> const & args)
+  options::options_type command::get_options(args_vector const & args)
   {
     return opts;
   }
@@ -231,7 +231,7 @@ namespace commands
     out << "\n\n";
   }
 
-  int process(app_state & app, string const & cmd, vector<utf8> const & args)
+  int process(app_state & app, string const & cmd, args_vector const & args)
   {
     if ((*cmds).find(cmd) != (*cmds).end())
       {
@@ -252,7 +252,7 @@ namespace commands
       }
   }
 
-  options::options_type command_options(vector<utf8> const & cmdline)
+  options::options_type command_options(args_vector const & cmdline)
   {
     if (cmdline.empty())
       return options::options_type();

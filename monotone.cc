@@ -125,7 +125,7 @@ void localize_monotone()
 }
 
 // read command-line options and return the command name
-string read_options(options & opts, vector<string> args)
+string read_options(options & opts, args_vector args)
 {
   option::concrete_option_set optset =
     options::opts::all_options().instantiate(&opts);
@@ -179,13 +179,13 @@ cpp_main(int argc, char ** argv)
       save_initial_path();
       
       // decode all argv values into a UTF-8 array
-      vector<string> args;
+      args_vector args;
       for (int i = 1; i < argc; ++i)
         {
           external ex(argv[i]);
           utf8 ut;
           system_to_utf8(ex, ut);
-          args.push_back(ut());
+          args.push_back(arg_type(ut));
         }
 
       // find base name of executable, convert to utf8, and save it in the
@@ -256,8 +256,7 @@ cpp_main(int argc, char ** argv)
             }
           else
             {
-              vector<utf8> args(app.opts.args.begin(), app.opts.args.end());
-              return commands::process(app, cmd, args);
+              return commands::process(app, cmd, app.opts.args);
             }
         }
       catch (option::option_error const & e)

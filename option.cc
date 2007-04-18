@@ -28,15 +28,15 @@ extra_arg::extra_arg(std::string const & opt)
  : option_error((F("option '%s' does not take an argument") % opt).str())
 {}
 
-bad_arg::bad_arg(std::string const & opt, std::string const & arg)
- : option_error((F("bad argument '%s' to option '%s'") % arg % opt).str())
+bad_arg::bad_arg(std::string const & opt, arg_type const & arg)
+ : option_error((F("bad argument '%s' to option '%s'") % arg() % opt).str())
 {}
 
 bad_arg::bad_arg(std::string const & opt,
-                 std::string const & arg,
+                 arg_type const & arg,
                  std::string const & reason)
  : option_error((F("bad argument '%s' to option '%s': %s")
-                   % arg % opt % reason).str())
+                   % arg() % opt % reason).str())
 {}
 
 bad_arg_internal::bad_arg_internal(string const & str)
@@ -166,7 +166,7 @@ void concrete_option_set::reset() const
 }
 
 static void
-tokenize_for_command_line(string const & from, vector<string> & to)
+tokenize_for_command_line(string const & from, args_vector & to)
 {
   // Unfortunately, the tokenizer in basic_io is too format-specific
   to.clear();
@@ -214,7 +214,7 @@ tokenize_for_command_line(string const & from, vector<string> & to)
           if (type == none)
             {
               if (have_tok)
-                to.push_back(cur);
+                to.push_back(arg_type(cur));
               cur.clear();
               have_tok = false;
             }
@@ -231,14 +231,14 @@ tokenize_for_command_line(string const & from, vector<string> & to)
         }
     }
   if (have_tok)
-    to.push_back(cur);
+    to.push_back(arg_type(cur));
 }
 
 void concrete_option_set::from_command_line(int argc, char const * const * argv)
 {
-  vector<string> arguments;
+  args_vector arguments;
   for (int i = 1; i < argc; ++i)
-    arguments.push_back(argv[i]);
+    arguments.push_back(arg_type(argv[i]));
   from_command_line(arguments, true);
 }
 
@@ -267,7 +267,7 @@ get_by_name(std::set<concrete_option> const & options)
   return by_name;
 }
 
-void concrete_option_set::from_command_line(std::vector<std::string> & args,
+void concrete_option_set::from_command_line(args_vector & args,
                                             bool allow_xargs)
 {
   map<string, concrete_option> by_name = get_by_name(options);
@@ -276,9 +276,10 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
   for (unsigned int i = 0; i < args.size(); ++i)
     {
       concrete_option o;
-      string name, arg;
+      string name;
+      arg_type arg;
       bool separate_arg(false);
-      if (idx(args,i) == "--" || seen_dashdash)
+      if (idx(args,i)() == "--" || seen_dashdash)
         {
           if (!seen_dashdash)
             {
@@ -290,13 +291,13 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
           o = getopt(by_name, name);
           arg = idx(args,i);
         }
-      else if (idx(args,i).substr(0,2) == "--")
+      else if (idx(args,i)().substr(0,2) == "--")
         {
-          string::size_type equals = idx(args,i).find('=');
+          string::size_type equals = idx(args,i)().find('=');
           if (equals == string::npos)
-            name = idx(args,i).substr(2);
+            name = idx(args,i)().substr(2);
           else
-            name = idx(args,i).substr(2, equals-2);
+            name = idx(args,i)().substr(2, equals-2);
 
           o = getopt(by_name, name);
           if (!o.has_arg && equals != string::npos)
@@ -312,20 +313,20 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
                   arg = idx(args,i+1);
                 }
               else
-                arg = idx(args,i).substr(equals+1);
+                arg = arg_type(idx(args,i)().substr(equals+1));
             }
         }
-      else if (idx(args,i).substr(0,1) == "-")
+      else if (idx(args,i)().substr(0,1) == "-")
         {
-          name = idx(args,i).substr(1,1);
+          name = idx(args,i)().substr(1,1);
           
           o = getopt(by_name, name);
-          if (!o.has_arg && idx(args,i).size() != 2)
+          if (!o.has_arg && idx(args,i)().size() != 2)
             throw extra_arg(name);
           
           if (o.has_arg)
             {
-              if (idx(args,i).size() == 2)
+              if (idx(args,i)().size() == 2)
                 {
                   separate_arg = true;
                   if (i+1 == args.size())
@@ -333,7 +334,7 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
                   arg = idx(args,i+1);
                 }
               else
-                arg = idx(args,i).substr(2);
+                arg = arg_type(idx(args,i)().substr(2));
             }
         }
       else
@@ -347,8 +348,8 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
         {
           // expand the --xargs in place
           data dat;
-          read_data_for_command_line(utf8(arg), dat);
-          vector<string> fargs;
+          read_data_for_command_line(arg, dat);
+          args_vector fargs;
           tokenize_for_command_line(dat(), fargs);
           
           args.erase(args.begin() + i);
@@ -364,7 +365,7 @@ void concrete_option_set::from_command_line(std::vector<std::string> & args,
           try
             {
               if (o.setter)
-                o.setter(arg);
+                o.setter(arg());
             }
           catch (boost::bad_lexical_cast)
             {
@@ -389,14 +390,14 @@ void concrete_option_set::from_key_value_pairs(vector<pair<string, string> > con
        i != keyvals.end(); ++i)
     {
       string const & key(i->first);
-      string const & value(i->second);
+      arg_type const & value(arg_type(i->second));
 
       concrete_option o = getopt(by_name, key);
 
       try
         {
           if (o.setter)
-            o.setter(value);
+            o.setter(value());
         }
       catch (boost::bad_lexical_cast)
         {
@@ -533,11 +534,11 @@ UNIT_TEST(option, concrete_options)
   BOOST_CHECK(v.empty());
 
   {
-    vector<string> cmdline;
-    cmdline.push_back("--bool");
-    cmdline.push_back("-s");
-    cmdline.push_back("-s");
-    cmdline.push_back("foo");
+    args_vector cmdline;
+    cmdline.push_back(arg_type("--bool"));
+    cmdline.push_back(arg_type("-s"));
+    cmdline.push_back(arg_type("-s"));
+    cmdline.push_back(arg_type("foo"));
     os.from_command_line(cmdline);
   }
   BOOST_CHECK(b);

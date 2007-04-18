@@ -274,7 +274,7 @@ CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
   //spin through args and try to ensure that we won't have any collisions
   //before doing any real filesystem modification.  we'll also verify paths
   //against .mtn-ignore here.
-  for (vector<utf8>::const_iterator i = args.begin();
+  for (args_vector::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
       split_path sp;
@@ -1031,11 +1031,11 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       // prepare stuff for 'add' and so on.
       app.found_workspace = true;       // Yup, this is cheating!
 
-      vector<utf8> empty_args;
+      args_vector empty_args;
       options save_opts;
       // add --unknown
       save_opts.exclude_patterns = app.opts.exclude_patterns;
-      app.opts.exclude_patterns = std::vector<utf8>();
+      app.opts.exclude_patterns = args_vector();
       app.opts.unknown = true;
       app.opts.recursive = true;
       process(app, "add", empty_args);

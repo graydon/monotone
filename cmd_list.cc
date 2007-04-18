@@ -40,7 +40,7 @@ using std::string;
 using std::vector;
 
 static void
-ls_certs(string const & name, app_state & app, vector<utf8> const & args)
+ls_certs(string const & name, app_state & app, args_vector const & args)
 {
   if (args.size() != 1)
     throw usage(name);
@@ -142,7 +142,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
 
 static void
 ls_keys(string const & name, app_state & app,
-        vector<utf8> const & args)
+        args_vector const & args)
 {
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
@@ -234,7 +234,7 @@ ls_keys(string const & name, app_state & app,
 }
 
 static void
-ls_branches(string name, app_state & app, vector<utf8> const & args)
+ls_branches(string name, app_state & app, args_vector const & args)
 {
   globish inc("*");
   globish exc;
@@ -260,7 +260,7 @@ ls_branches(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_epochs(string name, app_state & app, vector<utf8> const & args)
+ls_epochs(string name, app_state & app, args_vector const & args)
 {
   map<branch_name, epoch_data> epochs;
   app.db.get_epochs(epochs);
@@ -276,7 +276,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
     }
   else
     {
-      for (vector<utf8>::const_iterator i = args.begin();
+      for (args_vector::const_iterator i = args.begin();
            i != args.end();
            ++i)
         {
@@ -288,7 +288,7 @@ ls_epochs(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_tags(string name, app_state & app, vector<utf8> const & args)
+ls_tags(string name, app_state & app, args_vector const & args)
 {
   set<tag_t> tags;
   app.get_project().get_tags(tags);
@@ -302,7 +302,7 @@ ls_tags(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_vars(string name, app_state & app, vector<utf8> const & args)
+ls_vars(string name, app_state & app, args_vector const & args)
 {
   bool filterp;
   var_domain filter;
@@ -334,7 +334,7 @@ ls_vars(string name, app_state & app, vector<utf8> const & args)
 }
 
 static void
-ls_known(app_state & app, vector<utf8> const & args)
+ls_known(app_state & app, args_vector const & args)
 {
   roster_t new_roster;
   temp_node_id_source nis;
@@ -375,7 +375,7 @@ ls_known(app_state & app, vector<utf8> const & args)
 
 static void
 ls_unknown_or_ignored(app_state & app, bool want_ignored,
-                      vector<utf8> const & args)
+                      args_vector const & args)
 {
   app.require_workspace();
 
@@ -401,7 +401,7 @@ ls_unknown_or_ignored(app_state & app, bool want_ignored,
 }
 
 static void
-ls_missing(app_state & app, vector<utf8> const & args)
+ls_missing(app_state & app, args_vector const & args)
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
@@ -423,7 +423,7 @@ ls_missing(app_state & app, vector<utf8> const & args)
 
 
 static void
-ls_changed(app_state & app, vector<utf8> const & args)
+ls_changed(app_state & app, args_vector const & args)
 {
   parent_map parents;
   roster_t new_roster;
@@ -497,9 +497,9 @@ CMD(list, N_("informative"),
   if (args.size() == 0)
     throw usage(name);
 
-  vector<utf8>::const_iterator i = args.begin();
+  args_vector::const_iterator i = args.begin();
   ++i;
-  vector<utf8> removed (i, args.end());
+  args_vector removed(i, args.end());
   if (idx(args, 0)() == "certs")
     ls_certs(name, app, removed);
   else if (idx(args, 0)() == "keys")

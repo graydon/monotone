@@ -22,7 +22,7 @@ CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
   if (args.size() < 1)
     throw usage(name);
 
-  for (vector<utf8>::const_iterator i = args.begin();
+  for (args_vector::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
       test_parse_rcs_file(system_path((*i)()), app.db);

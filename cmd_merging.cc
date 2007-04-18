@@ -434,8 +434,8 @@ CMD(propagate, N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
 {
   if (args.size() != 2)
     throw usage(name);
-  vector<utf8> a = args;
-  a.push_back(utf8());
+  args_vector a = args;
+  a.push_back(arg_type());
   process(app, "merge_into_dir", a);
 }
 

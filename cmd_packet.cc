@@ -141,7 +141,7 @@ CMD(read, N_("packet i/o"), "[FILE1 [FILE2 [...]]]",
     }
   else
     {
-      for (vector<utf8>::const_iterator i = args.begin(); 
+      for (args_vector::const_iterator i = args.begin(); 
            i != args.end(); ++i)
         {
           data dat;

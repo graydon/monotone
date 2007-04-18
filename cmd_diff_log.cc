@@ -338,7 +338,7 @@ dump_diffs(cset const & cs,
 static void
 prepare_diff(cset & included,
              app_state & app,
-             std::vector<utf8> args,
+             args_vector args,
              bool & new_is_archived,
              std::string & revheader)
 {
@@ -632,7 +632,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
     }
   else
     {
-      for (vector<utf8>::const_iterator i = app.opts.from.begin();
+      for (args_vector::const_iterator i = app.opts.from.begin();
            i != app.opts.from.end(); i++)
         {
           set<revision_id> rids;
@@ -686,7 +686,7 @@ CMD(log, N_("informative"), N_("[FILE] ..."),
   if (use_disallowed)
     {
       std::deque<revision_id> to;
-      for (vector<utf8>::const_iterator i = app.opts.to.begin();
+      for (args_vector::const_iterator i = app.opts.to.begin();
            i != app.opts.to.end(); i++)
         {
           MM(*i);

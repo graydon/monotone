@@ -42,7 +42,7 @@ namespace automation {
 }
 
 automation::automate &
-find_automation(utf8 const & name, string const & root_cmd_name)
+find_automation(arg_type const & name, string const & root_cmd_name)
 {
   map<string, automation::automate * const>::const_iterator
     i = automation::automations->find(name());
@@ -53,7 +53,7 @@ find_automation(utf8 const & name, string const & root_cmd_name)
 }
 
 void
-automate_command(utf8 cmd, vector<utf8> args,
+automate_command(arg_type cmd, args_vector args,
                  string const & root_cmd_name,
                  app_state & app,
                  ostream & output)
@@ -341,15 +341,15 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
   vector<string> cmdline;
   while(ar.get_command(params, cmdline))//while(!EOF)
     {
-      utf8 cmd;
-      vector<utf8> args;
+      arg_type cmd;
+      args_vector args;
       vector<string>::iterator i = cmdline.begin();
       E(i != cmdline.end(),
         F("Bad input to automate stdio: command name is missing"));
-      cmd = utf8(*i);
+      cmd = arg_type(*i);
       for (++i; i != cmdline.end(); ++i)
         {
-          args.push_back(utf8(*i));
+          args.push_back(arg_type(*i));
         }
       try
         {
@@ -381,10 +381,10 @@ CMD_WITH_SUBCMDS(automate, N_("automation"),
   if (args.size() == 0)
     throw usage(name);
 
-  vector<utf8>::const_iterator i = args.begin();
-  utf8 cmd = *i;
+  args_vector::const_iterator i = args.begin();
+  arg_type cmd = *i;
   ++i;
-  vector<utf8> cmd_args(i, args.end());
+  args_vector cmd_args(i, args.end());
 
   make_io_binary();
 
@@ -406,7 +406,7 @@ std::string commands::cmd_automate::params()
 }
 
 options::options_type
-commands::cmd_automate::get_options(vector<utf8> const & args)
+commands::cmd_automate::get_options(args_vector const & args)
 {
   if (args.size() < 2)
     return options::options_type();

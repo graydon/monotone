@@ -40,17 +40,17 @@ namespace commands
     virtual ~command();
     virtual std::string params();
     virtual std::string desc();
-    virtual options::options_type get_options(std::vector<utf8> const & args);
+    virtual options::options_type get_options(args_vector const & args);
     virtual void exec(app_state & app,
-                      std::vector<utf8> const & args) = 0;
+                      args_vector const & args) = 0;
   };
 };
 
 inline std::vector<file_path>
-args_to_paths(std::vector<utf8> const & args)
+args_to_paths(args_vector const & args)
 {
   std::vector<file_path> paths;
-  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       if (bookkeeping_path::external_string_is_bookkeeping_path(*i))
         W(F("ignored bookkeeping path '%s'") % *i);
@@ -100,12 +100,12 @@ namespace commands {                                                 \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
+                      args_vector const & args);                     \
   };                                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)
+                               args_vector const & args)
 
 // Use this for commands that want to define a params() function
 // instead of having a static description. (Good for "automate"
@@ -118,14 +118,14 @@ namespace commands {                                                 \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
+                      args_vector const & args);                     \
     std::string params();                                            \
-    options::options_type get_options(vector<utf8> const & args);    \
+    options::options_type get_options(args_vector const & args);     \
   };                                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)
+                               args_vector const & args)
 
 // Use this for commands that should specifically _not_ look for an
 // _MTN dir and load options from it.
@@ -138,12 +138,12 @@ namespace commands {                                                 \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
+                      args_vector const & args);                     \
   };                                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)       \
+                               args_vector const & args)
 
 #define ALIAS(C, realcommand)                                        \
 namespace commands {                                                 \
@@ -156,7 +156,7 @@ namespace commands {                                                 \
     {}                                                               \
     virtual std::string desc();                                      \
     virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
+                      args_vector const & args);                     \
   };                                                                 \
   static cmd_ ## C C ## _cmd;                                        \
 }                                                                    \
@@ -168,7 +168,7 @@ std::string commands::cmd_ ## C::desc()                              \
   return result;                                                     \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)       \
+                               args_vector const & args)             \
 {                                                                    \
   process(app, std::string(#realcommand), args);                     \
 }
@@ -181,7 +181,7 @@ namespace automation {
     options::options_type opts;
     automate(std::string const & n, std::string const & p,
              options::options_type const & o);
-    virtual void run(std::vector<utf8> args,
+    virtual void run(args_vector args,
                      std::string const & help_name,
                      app_state & app,
                      std::ostream & output) const = 0;
@@ -196,13 +196,13 @@ namespace automation {                                              \
     auto_ ## NAME ()                                                \
       : automate(#NAME, PARAMS, options::options_type() | OPTIONS)  \
     {}                                                              \
-    void run(std::vector<utf8> args, std::string const & help_name, \
+    void run(args_vector args, std::string const & help_name, \
                      app_state & app, std::ostream & output) const; \
     virtual ~auto_ ## NAME() {}                                     \
   };                                                                \
   static auto_ ## NAME NAME ## _auto;                               \
 }                                                                   \
-void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
+void automation::auto_ ## NAME :: run(args_vector args,             \
                                       std::string const & help_name,\
                                       app_state & app,              \
                                       std::ostream & output) const
