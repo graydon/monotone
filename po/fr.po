@@ -247,7 +247,7 @@
 # invalid                 pas valable
 msgid ""
 msgstr ""
-"Project-Id-Version: monotone 0.33\n"
+"Project-Id-Version: monotone 0.34\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-04-13 15:11+0200\n"
 "PO-Revision-Date: 2007-04-13 15:14+0200\n"
@@ -1076,7 +1076,7 @@ msgid ""
 "Name  : %s\n"
 "Value : %s\n"
 msgstr ""
-"Clé       : %s\n"
+"Clef       : %s\n"
 "Signature : %s\n"
 "Nom       : %s\n"
 "Valeur    : %s\n"
@@ -1190,7 +1190,7 @@ msgid ""
 "If not, update the workspace to the head of the branch."
 msgstr ""
 "met à jour l'espace de travail.\n"
-"Cette commande modifie vôtre espace de travail en se fondant sur\n"
+"Cette commande modifie votre espace de travail en se fondant sur\n"
 "une révision différente, tout en préservant les changements locaux\n"
 "attendant un commit. Si une révision est donnée, l'espace de travail\n"
 "est mis à jour à partir de cette révision. Sinon, il est mis à jour\n"
@@ -1525,7 +1525,7 @@ msgid ""
 "to apply the changes relative to one of its parents, use:\n"
 "  %s pluck -r PARENT -r %s"
 msgstr ""
-"la révision « %s » est le résultat d'une fusion\n"
+"la révision « %s » est le résultat d'une fusion.\n"
 "Pour appliquer les changements relatifs à un de ses parents, utiliser :\n"
 "« %s pluck -r PARENT -r %s »"
 
@@ -2072,7 +2072,7 @@ msgstr ""
 #: cmd_ws_commit.cc:783
 #, c-format
 msgid "empty log message; commit canceled"
-msgstr "message d'historique vide ; commit arrêté"
+msgstr "message d'historique vide ; commit annulé"
 
 #: cmd_ws_commit.cc:805
 #, c-format
@@ -3681,8 +3681,8 @@ msgid ""
 "sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force "
 "monotone to sign, 'check' to sign with both and compare"
 msgstr ""
-"signe avec ssh-agent, 'yes' pour signer avec ssh si une clé est trouvée, "
-"'no' pour obliger monotone à signer, 'check' pour signer avec les deux et "
+"signe avec ssh-agent, « yes » pour signer avec ssh si une clef est trouvée, "
+"« no » pour obliger monotone à signer, « check » pour signer avec les deux et "
 "comparer"
 
 #: options_list.hh:262
@@ -4119,7 +4119,7 @@ msgstr ""
 #: schema_migration.cc:514
 #, c-format
 msgid "public and private keys for %s don't match"
-msgstr "les clefs publique ou privée pour « %s » ne correspondent pas"
+msgstr "les clefs publique et privée pour « %s » ne correspondent pas"
 
 #: schema_migration.cc:516
 #, c-format
