@@ -125,16 +125,22 @@ void localize_monotone()
 }
 
 // read command-line options and return the command name
-string read_options(options & opts, args_vector args)
+commands::command_id read_options(options & opts, args_vector args, vector< string > argsstr)
 {
   option::concrete_option_set optset =
     options::opts::all_options().instantiate(&opts);
-  optset.from_command_line(args);
+  optset.from_command_line(argsstr);
 
   // consume the command, and perform completion if necessary
-  string cmd;
+  commands::command_id cmd;
   if (!opts.args.empty())
-    cmd = commands::complete_command(idx(opts.args, 0)());
+    {
+      vector<utf8> args(args.begin(), args.end()); // XXX
+      vector<utf8> rest;
+      cmd = commands::complete_command(args, rest);
+      N(!cmd.empty(),
+        F("unknown command '%s'") % join_words(args)());
+    }
 
   // reparse options, now that we know what command-specific
   // options are allowed.
@@ -143,7 +149,7 @@ string read_options(options & opts, args_vector args)
   optset.reset();
 
   optset = (options::opts::globals() | cmdopts).instantiate(&opts);
-  optset.from_command_line(args, false);
+  optset.from_command_line(argsstr, false);
 
   if (!opts.args.empty())
     opts.args.erase(opts.args.begin());
@@ -180,12 +186,15 @@ cpp_main(int argc, char ** argv)
       
       // decode all argv values into a UTF-8 array
       args_vector args;
+      // XXX Remove argsstr.
+      vector< string > argsstr;
       for (int i = 1; i < argc; ++i)
         {
           external ex(argv[i]);
           utf8 ut;
           system_to_utf8(ex, ut);
           args.push_back(arg_type(ut));
+          argsstr.push_back(ut());
         }
 
       // find base name of executable, convert to utf8, and save it in the
@@ -203,7 +212,9 @@ cpp_main(int argc, char ** argv)
       app_state app;
       try
         {
-          string cmd = read_options(app.opts, args);
+          commands::command_id cmd = read_options(app.opts, args, argsstr);
+          // XXX Remove cmdstr
+          string cmdstr = cmd.size() > 0 ? (*(cmd.begin()))() : "";
 
           if (app.opts.version_given)
             {
@@ -232,7 +243,7 @@ cpp_main(int argc, char ** argv)
           // stop here if they asked for help
           if (app.opts.help)
             {
-              throw usage(cmd);     // cmd may be empty, and that's fine.
+              throw usage(cmdstr);     // cmd may be empty, and that's fine.
             }
 
           // at this point we allow a workspace (meaning search for it
@@ -246,7 +257,7 @@ cpp_main(int argc, char ** argv)
           if (!app.found_workspace && global_sanity.filename.empty())
             global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
 
-          app.lua.hook_note_mtn_startup(args);
+          app.lua.hook_note_mtn_startup(argsstr);
 
           // main options processed, now invoke the
           // sub-command w/ remaining args
@@ -256,7 +267,7 @@ cpp_main(int argc, char ** argv)
             }
           else
             {
-              return commands::process(app, cmd, app.opts.args);
+              return commands::process(app, cmdstr, app.opts.args);
             }
         }
       catch (option::option_error const & e)

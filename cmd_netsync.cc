@@ -121,8 +121,10 @@ extract_patterns(args_vector const & args,
     }
 }
 
-CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
-    N_("push branches matching PATTERN to netsync server at ADDRESS"),
+CMD(push, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
+    N_("Pushes branches to a netsync server"),
+    N_("This will push all branches that match the pattern given in PATTERN "
+       "to the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
@@ -136,8 +138,10 @@ CMD(push, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
-    N_("pull branches matching PATTERN from netsync server at ADDRESS"),
+CMD(pull, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
+    N_("Pulls branches from a netsync server"),
+    N_("This pulls all branches that match the pattern given in PATTERN "
+       "from the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude)
 {
   arg_type addr;
@@ -152,8 +156,10 @@ CMD(pull, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(sync, N_("network"), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
-    N_("sync branches matching PATTERN with netsync server at ADDRESS"),
+CMD(sync, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
+    N_("Synchronizes branches with a netsync server"),
+    N_("This synchronizes branches that match the pattern given in PATTERN "
+       "with the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
@@ -194,10 +200,10 @@ private:
   system_path dir;
 };
 
-CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
-    N_("check out a revision from remote database into directory.\n"
-       "If a revision is given, that's the one that will be checked out.\n"
-       "Otherwise, it will be the head of the branch supplied.\n"
+CMD(clone, "", CMD_REF(network), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
+    N_("Checks out a revision from remote a database into a directory"),
+    N_("If a revision is given, that's the one that will be checked out.  "
+       "Otherwise, it will be the head of the branch supplied.  "
        "If no directory is given, the branch name will be used as directory"),
     options::opts::exclude | options::opts::branch | options::opts::revision)
 {
@@ -381,8 +387,9 @@ private:
   system_path path;
 };
 
-CMD_NO_WORKSPACE(serve, N_("network"), "",
-                 N_("serve the database to connecting clients"),
+CMD_NO_WORKSPACE(serve, "", CMD_REF(network), "",
+                 N_("Serves the database to connecting clients"),
+                 N_(""),
                  options::opts::bind | options::opts::pidfile |
                  options::opts::bind_stdio | options::opts::no_transport_auth)
 {

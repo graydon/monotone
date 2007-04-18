@@ -468,11 +468,14 @@ prepare_diff(cset & included,
     revheader = header.str();
 }
 
-CMD(diff, N_("informative"), N_("[PATH]..."),
-    N_("show current diffs on stdout.\n"
-    "If one revision is given, the diff between the workspace and\n"
-    "that revision is shown.  If two revisions are given, the diff between\n"
-    "them is given.  If no format is specified, unified is used by default."),
+CMD(diff, "", CMD_REF(informative), N_("[PATH]..."),
+    N_("Shows current differences"),
+    N_("Compares the current tree with the files in the repository and "
+       "prints the differences on the standard output.\n"
+       "If one revision is given, the diff between the workspace and "
+       "that revision is shown.  If two revisions are given, the diff "
+       "between them is given.  If no format is specified, unified is "
+       "used by default."),
     options::opts::revision | options::opts::depth | options::opts::exclude
     | options::opts::diff_options)
 {
@@ -597,9 +600,11 @@ typedef priority_queue<pair<rev_height, revision_id>,
                        vector<pair<rev_height, revision_id> >,
                        rev_cmp> frontier_t;
 
-CMD(log, N_("informative"), N_("[FILE] ..."),
-    N_("print history in reverse order (filtering by 'FILE'). If one or more\n"
-    "revisions are given, use them as a starting point."),
+CMD(log, "", CMD_REF(informative), N_("[FILE] ..."),
+    N_("Prints history in reverse order"),
+    N_("This command prints history in reverse order, filtering it by "
+       "FILE if given.  If one or more revisions are given, uses them as "
+       "a starting point."),
     options::opts::last | options::opts::next
     | options::opts::from | options::opts::to
     | options::opts::brief | options::opts::diffs

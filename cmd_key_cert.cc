@@ -29,7 +29,9 @@ using std::ofstream;
 using Botan::Pipe;
 using Botan::RSA_PrivateKey;
 
-CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
+CMD(genkey, "", CMD_REF(key_and_cert), N_("KEYID"),
+    N_("Generates an RSA key-pair"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)
@@ -55,8 +57,10 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
   app.keys.put_key_pair(ident, kp);
 }
 
-CMD(dropkey, N_("key and cert"), N_("KEYID"),
-    N_("drop a public and private key"), options::opts::none)
+CMD(dropkey, "", CMD_REF(key_and_cert), N_("KEYID"),
+    N_("Drops a public and/or private key"),
+    N_(""),
+    options::opts::none)
 {
   bool key_deleted = false;
 
@@ -95,8 +99,9 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"),
   N(key_deleted, fmt % idx(args, 0)());
 }
 
-CMD(passphrase, N_("key and cert"), N_("KEYID"),
-    N_("change passphrase of a private RSA key"),
+CMD(passphrase, "", CMD_REF(key_and_cert), N_("KEYID"),
+    N_("Changes the passphrase of a private RSA key"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 1)
@@ -116,9 +121,10 @@ CMD(passphrase, N_("key and cert"), N_("KEYID"),
   P(F("passphrase changed"));
 }
 
-CMD(ssh_agent_export, N_("key and cert"),
+CMD(ssh_agent_export, "", CMD_REF(key_and_cert),
     N_("[FILENAME]"),
-    N_("export your monotone key for use with ssh-agent"),
+    N_("Exports a private key for use with ssh-agent"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() > 1)
@@ -155,8 +161,9 @@ CMD(ssh_agent_export, N_("key and cert"),
     }
 }
 
-CMD(ssh_agent_add, N_("key and cert"), "",
-    N_("Add your monotone key to ssh-agent"),
+CMD(ssh_agent_add, "", CMD_REF(key_and_cert), "",
+    N_("Adds a private key to ssh-agent"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() > 1)
@@ -171,8 +178,10 @@ CMD(ssh_agent_add, N_("key and cert"), "",
   app.agent.add_identity(*priv, id());
 }
 
-CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
-    N_("create a cert for a revision"), options::opts::none)
+CMD(cert, "", CMD_REF(key_and_cert), N_("REVISION CERTNAME [CERTVAL]"),
+    N_("Creates a certificate for a revision"),
+    N_(""),
+    options::opts::none)
 {
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(name);
@@ -182,8 +191,8 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
 
-  cert_name name;
-  internalize_cert_name(idx(args, 1), name);
+  cert_name cname;
+  internalize_cert_name(idx(args, 1), cname);
 
   rsa_keypair_id key;
   get_user_key(key, app);
@@ -198,14 +207,14 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
       val = cert_value(dat());
     }
 
-  app.get_project().put_cert(rid, name, val);
+  app.get_project().put_cert(rid, cname, val);
   guard.commit();
 }
 
-CMD(trusted, N_("key and cert"), 
+CMD(trusted, "", CMD_REF(key_and_cert), 
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
-    N_("test whether a hypothetical cert would be trusted\n"
-       "by current settings"),
+    N_("Tests whether a hypothetical certificate would be trusted"),
+    N_("The current settings are used to run the test."),
     options::opts::none)
 {
   if (args.size() < 4)
@@ -215,8 +224,8 @@ CMD(trusted, N_("key and cert"),
   complete(app, idx(args, 0)(), rid, false);
   hexenc<id> ident(rid.inner());
 
-  cert_name name;
-  internalize_cert_name(idx(args, 1), name);
+  cert_name cname;
+  internalize_cert_name(idx(args, 1), cname);
 
   cert_value value(idx(args, 2)());
 
@@ -230,7 +239,7 @@ CMD(trusted, N_("key and cert"),
 
 
   bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
-                                                      name, value);
+                                                      cname, value);
 
 
   ostringstream all_signers;
@@ -243,15 +252,17 @@ CMD(trusted, N_("key and cert"),
             "was signed by: %s\n"
             "it would be: %s")
     % ident
-    % name
+    % cname
     % value
     % all_signers.str()
     % (trusted ? _("trusted") : _("UNtrusted")))
     << '\n'; // final newline is kept out of the translation
 }
 
-CMD(tag, N_("review"), N_("REVISION TAGNAME"),
-    N_("put a symbolic tag cert on a revision"), options::opts::none)
+CMD(tag, "", CMD_REF(review), N_("REVISION TAGNAME"),
+    N_("Puts a symbolic tag certificate on a revision"),
+    N_(""),
+    options::opts::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -262,8 +273,10 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
 }
 
 
-CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
-    N_("note the results of running a test on a revision"), options::opts::none)
+CMD(testresult, "", CMD_REF(review), N_("ID (pass|fail|true|false|yes|no|1|0)"),
+    N_("Notes the results of running a test on a revision"),
+    N_(""),
+    options::opts::none)
 {
   if (args.size() != 2)
     throw usage(name);
@@ -274,8 +287,9 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 }
 
 
-CMD(approve, N_("review"), N_("REVISION"),
-    N_("approve of a particular revision"),
+CMD(approve, "", CMD_REF(review), N_("REVISION"),
+    N_("Approves a particular revision"),
+    N_(""),
     options::opts::branch)
 {
   if (args.size() != 1)
@@ -288,8 +302,10 @@ CMD(approve, N_("review"), N_("REVISION"),
   app.get_project().put_revision_in_branch(r, app.opts.branchname);
 }
 
-CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
-    N_("comment on a particular revision"), options::opts::none)
+CMD(comment, "", CMD_REF(review), N_("REVISION [COMMENT]"),
+    N_("Comments on a particular revision"),
+    N_(""),
+    options::opts::none)
 {
   if (args.size() != 1 && args.size() != 2)
     throw usage(name);

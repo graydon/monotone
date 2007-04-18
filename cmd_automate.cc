@@ -374,8 +374,12 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
 }
 
 
-CMD_WITH_SUBCMDS(automate, N_("automation"),
-                 N_("automation interface"),
+CMD_WITH_SUBCMDS(automate, "", CMD_REF(automation),
+                 N_("Interface for scripted execution"),
+                 N_("This set of commands provides a stable interface to run "
+                    "monotone from other, external tools and interact with it "
+                    "by means of a text protocol over standard file "
+                    "descriptors."),
                  options::opts::none)
 {
   if (args.size() == 0)

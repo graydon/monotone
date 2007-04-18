@@ -104,6 +104,28 @@ split_into_lines(string const & in,
   split_into_lines(in, constants::default_encoding, out);
 }
 
+std::vector< utf8 > split_into_words(utf8 const & in)
+{
+  string const & instr = in();
+  vector< utf8 > out;
+
+  string::size_type begin = 0;
+  string::size_type end = instr.find_first_of(" ", begin);
+
+  while (end != string::npos && end >= begin)
+    {
+      out.push_back(utf8(instr.substr(begin, end-begin)));
+      begin = end + 1;
+      if (begin >= instr.size())
+        break;
+      end = instr.find_first_of(" ", begin);
+    }
+  if (begin < instr.size())
+    out.push_back(utf8(instr.substr(begin, instr.size() - begin)));
+
+  return out;
+}
+
 void
 join_lines(vector<string> const & in,
            string & out,
@@ -219,6 +241,35 @@ UNIT_TEST(simplestring_xform, join_lines)
   strs.push_back("user");
   join_lines(strs, joined);
   BOOST_CHECK(joined == "hi\nthere\nuser\n");
+}
+
+UNIT_TEST(simplestring_xform, split_into_words)
+{
+  vector<string> words;
+
+  words.clear();
+  split_into_words("", words);
+  BOOST_CHECK(words.size() == 0);
+
+  words.clear();
+  split_into_words("foo", words);
+  BOOST_CHECK(words.size() == 1);
+  BOOST_CHECK(words[0] == "foo");
+
+  words.clear();
+  split_into_words("foo bar", words);
+  BOOST_CHECK(words.size() == 2);
+  BOOST_CHECK(words[0] == "foo");
+  BOOST_CHECK(words[1] == "bar");
+
+  // describe() in commands.cc assumes this behavior.  If it ever changes,
+  // remember to modify that function accordingly!
+  words.clear();
+  split_into_words("foo  bar", words);
+  BOOST_CHECK(words.size() == 3);
+  BOOST_CHECK(words[0] == "foo");
+  BOOST_CHECK(words[1] == "");
+  BOOST_CHECK(words[2] == "bar");
 }
 
 UNIT_TEST(simplestring_xform, strip_ws)
