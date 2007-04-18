@@ -13,7 +13,7 @@
 
 using std::vector;
 
-CMD(rcs_import, "", N_("debug"), N_("RCSFILE..."),
+CMD(rcs_import, "", CMD_REF(debug), N_("RCSFILE..."),
     N_("Parses versions in RCS files"),
     N_("This command doesn't reconstruct or import revisions.  "
        "You probably want to use cvs_import."),
@@ -30,7 +30,7 @@ CMD(rcs_import, "", N_("debug"), N_("RCSFILE..."),
 }
 
 
-CMD(cvs_import, "", N_("rcs"), N_("CVSROOT"), 
+CMD(cvs_import, "", CMD_REF(rcs), N_("CVSROOT"), 
     N_("Imports all versions in a CVS repository"),
     N_(""),
     options::opts::branch)

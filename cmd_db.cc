@@ -45,7 +45,7 @@ kill_rev_locally(app_state& app, string const& id)
   app.db.delete_existing_rev_and_certs(ident);
 }
 
-CMD(db, "", N_("database"),
+CMD(db, "", CMD_REF(database),
     N_("init\n"
       "info\n"
       "version\n"
@@ -123,7 +123,7 @@ CMD(db, "", N_("database"),
     throw usage(name);
 }
 
-CMD(set, "", N_("vars"), N_("DOMAIN NAME VALUE"),
+CMD(set, "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
     N_("Sets a database variable"),
     N_("This command modifies (or adds if it did not exist before) the "
        "variable named NAME, stored in the database, and sets it to the "
@@ -142,7 +142,7 @@ CMD(set, "", N_("vars"), N_("DOMAIN NAME VALUE"),
   app.db.set_var(make_pair(d, n), v);
 }
 
-CMD(unset, "", N_("vars"), N_("DOMAIN NAME"),
+CMD(unset, "", CMD_REF(variables), N_("DOMAIN NAME"),
     N_("Unsets a database variable"),
     N_("This command removes the variable NAME from domain DOMAIN, which"
        "was previously stored in the database."),
@@ -161,7 +161,7 @@ CMD(unset, "", N_("vars"), N_("DOMAIN NAME"),
   app.db.clear_var(k);
 }
 
-CMD(complete, "", N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
+CMD(complete, "", CMD_REF(informative), N_("(revision|file|key) PARTIAL-ID"),
     N_("Completes a partial identifier"),
     N_(""),
     options::opts::verbose)
@@ -210,7 +210,7 @@ CMD(complete, "", N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(name);
 }
 
-CMD(test_migration_step, "", hidden_parent(), "SCHEMA",
+CMD(test_migration_step, "", CMD_REF(hidden), "SCHEMA",
     N_("Runs one step of migration on the specified database"),
     N_("This command migrates the given database from the specified schema "
        "in SCHEMA to its successor."),

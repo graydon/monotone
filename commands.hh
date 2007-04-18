@@ -27,8 +27,11 @@ struct usage
 };
 
 namespace commands {
+  typedef std::vector< utf8 > command_id;
+
   void explain_usage(std::string const & cmd, std::ostream & out);
-  std::string complete_command(std::string const & cmd);
+  command_id complete_command(std::vector< utf8 > const & args,
+                              std::vector< utf8 > & rest);
   int process(app_state & app, std::string const & cmd,
               std::vector<utf8> const & args);
   options::options_type command_options(std::vector<utf8> const & cmdline);

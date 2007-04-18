@@ -41,55 +41,59 @@ using std::string;
 using std::strlen;
 using std::vector;
 
+CMD_GROUP(the_root, "", NULL, N_(""), N_(""), options::opts::none);
+CMD_GROUP(public, "", CMD_REF(the_root), N_(""), N_(""), options::opts::none);
+CMD_GROUP(hidden, "", CMD_REF(the_root), N_(""), N_(""), options::opts::none);
+
 //
 // Definition of top-level commands, used to classify the real commands
 // in logical groups.
 //
-CMD_GROUP(automation, "", root_parent(),
+CMD_GROUP(automation, "", CMD_REF(public),
           N_("Commands that aid in scripted execution"),
           N_(""),
           options::opts::none);
-CMD_GROUP(database, "", root_parent(),
+CMD_GROUP(database, "", CMD_REF(public),
           N_("Commands that manipulate the database"),
           N_(""),
           options::opts::none);
-CMD_GROUP(debug, "", root_parent(),
+CMD_GROUP(debug, "", CMD_REF(public),
           N_("Commands that aid in program debugging"),
           N_(""),
           options::opts::none);
-CMD_GROUP(informative, "", root_parent(),
+CMD_GROUP(informative, "", CMD_REF(public),
           N_("Commands for information retrieval"),
           N_(""),
           options::opts::none);
-CMD_GROUP(key_and_cert, "", root_parent(),
+CMD_GROUP(key_and_cert, "", CMD_REF(public),
           N_("Commands to manage keys and certificates"),
           N_(""),
           options::opts::none);
-CMD_GROUP(network, "", root_parent(),
+CMD_GROUP(network, "", CMD_REF(public),
           N_("Commands that access the network"),
           N_(""),
           options::opts::none);
-CMD_GROUP(packet_io, "", root_parent(),
+CMD_GROUP(packet_io, "", CMD_REF(public),
           N_("Commands for packet reading and writing"),
           N_(""),
           options::opts::none);
-CMD_GROUP(rcs, "", root_parent(),
+CMD_GROUP(rcs, "", CMD_REF(public),
           N_("Commands for interaction with RCS and CVS"),
           N_(""),
           options::opts::none);
-CMD_GROUP(review, "", root_parent(),
+CMD_GROUP(review, "", CMD_REF(public),
           N_("Commands to review revisions"),
           N_(""),
           options::opts::none);
-CMD_GROUP(tree, "", root_parent(),
+CMD_GROUP(tree, "", CMD_REF(public),
           N_("Commands to manipulate the tree"),
           N_(""),
           options::opts::none);
-CMD_GROUP(variables, "", root_parent(),
+CMD_GROUP(variables, "", CMD_REF(public),
           N_("Commands to manage persistent variables"),
           N_(""),
           options::opts::none);
-CMD_GROUP(workspace, "", root_parent(),
+CMD_GROUP(workspace, "", CMD_REF(public),
           N_("Commands that deal with the workspace"),
           N_(""),
           options::opts::none);
@@ -119,57 +123,240 @@ namespace commands
   // guarantee about what order they'll be initialized in. So have this
   // be something that doesn't get automatic initialization, and initialize
   // it ourselves the first time we use it.
-  static map<string, command *> * cmds;
-  command::command(string const & n,
-                   string const & aliases,
-                   string const & g,
-                   string const & p,
-                   string const & a,
-                   string const & d,
-                   bool u,
-                   options::options_type const & o)
-    : parent(g), params_(p), abstract_(a), desc_(d),
-      use_workspace_options(u), opts(o)
+  typedef map< command *, command * > relation_map;
+  static relation_map * cmds_relation_map = NULL;
+
+  static void init_children(void)
   {
-    if (cmds == NULL)
-      cmds = new map< string, command * >;
+    static bool children_inited = false;
 
-    names.insert(n);
-    (*cmds)[n] = this;
-
-    vector< string > as;
-    split_into_words(aliases, as);
-    for (vector< string >::const_iterator iter = as.begin();
-         iter != as.end(); iter++)
+    if (!children_inited)
       {
-        names.insert(*iter);
-        (*cmds)[*iter] = this;
+        children_inited = true;
+
+        for (relation_map::iterator iter = cmds_relation_map->begin();
+             iter != cmds_relation_map->end(); iter++)
+          {
+            if ((*iter).second != NULL)
+              (*iter).second->children().insert((*iter).first);
+          }
       }
   }
-  command::~command() {}
-  string command::params() {return safe_gettext(params_.c_str());}
-  string command::abstract() const
+
+  // XXX Remove.
+  static command * find_command(string const & name)
   {
-    return safe_gettext(abstract_.c_str());
+    return NULL;
   }
-  string command::desc()
+}
+
+//
+// Implementation of the commands::command class.
+//
+namespace commands {
+  command::command(std::string const & primary_name,
+                   std::string const & other_names,
+                   command * parent,
+                   std::string const & params,
+                   std::string const & abstract,
+                   std::string const & desc,
+                   bool use_workspace_options,
+                   options::options_type const & opts)
+    : m_primary_name(utf8(primary_name)),
+      m_parent(parent),
+      m_params(utf8(params)),
+      m_abstract(utf8(abstract)),
+      m_desc(utf8(desc)),
+      m_use_workspace_options(use_workspace_options),
+      m_opts(opts)
   {
-    return abstract() + ".\n" + safe_gettext(desc_.c_str());
+    // A warning about the parent pointer: commands are defined as global
+    // variables, so they are initialized during program startup.  As they
+    // are spread over different compilation units, we have no idea of the
+    // order in which they will be initialized.  Therefore, accessing
+    // *parent from here is dangerous.
+    //
+    // This is the reason for the cmds_relation_map.  We cannot set up
+    // the m_children set until a late stage during program execution.
+
+    if (cmds_relation_map == NULL)
+      cmds_relation_map = new relation_map();
+    (*cmds_relation_map)[this] = m_parent;
+
+    m_names.insert(m_primary_name);
+
+    vector< utf8 > onv = split_into_words(utf8(other_names));
+    m_names.insert(onv.begin(), onv.end());
   }
-  options::options_type command::get_options(vector<utf8> const & args)
+
+  command::~command()
   {
-    return opts;
   }
-  bool operator<(command const & self, command const & other);
-  string const & root_parent()
+
+  command_id
+  command::ident(void) const
   {
-    static const string the_root_parent("root");
-    return the_root_parent;
+    command_id i;
+
+    if (parent() != NULL)
+      i = parent()->ident();
+    i.push_back(primary_name());
+
+    return i;
   }
-  string const & hidden_parent()
+
+  const utf8 &
+  command::primary_name(void) const
   {
-    static const string the_hidden_parent("hidden");
-    return the_hidden_parent;
+    return m_primary_name;
+  }
+
+  const command::names_set &
+  command::names(void) const
+  {
+    return m_names;
+  }
+
+  command *
+  command::parent(void) const
+  {
+    return m_parent;
+  }
+
+  std::string
+  command::params() const
+  {
+    return safe_gettext(m_params().c_str());
+  }
+
+  std::string
+  command::abstract() const
+  {
+    return safe_gettext(m_abstract().c_str());
+  }
+
+  std::string
+  command::desc() const
+  {
+    return abstract() + ".\n" + safe_gettext(m_desc().c_str());
+  }
+
+  options::options_type const &
+  command::opts(void) const
+  {
+    return m_opts;
+  }
+
+  bool
+  command::use_workspace_options(void) const
+  {
+    return m_use_workspace_options;
+  }
+
+  command::children_set &
+  command::children(void)
+  {
+    init_children();
+    return m_children;
+  }
+
+  command::children_set const &
+  command::children(void) const
+  {
+    init_children();
+    return m_children;
+  }
+
+  bool
+  command::operator<(command const & cmd) const
+  {
+    // *twitch*
+    return (parent()->primary_name() < cmd.parent()->primary_name() ||
+            ((parent() == cmd.parent()) &&
+             primary_name() < cmd.primary_name()));
+  }
+
+  bool
+  command::has_name(utf8 const & name) const
+  {
+    return names().find(name) != names().end();
+  }
+
+  void
+  command::complete_child_name(utf8 const & name, set< utf8 > & matches)
+      const
+  {
+    I(!name().empty());
+
+    for (children_set::const_iterator iter = children().begin();
+         iter != children().end(); iter++)
+      {
+        command const * child = *iter;
+
+        for (names_set::const_iterator iter2 = child->names().begin();
+             iter2 != child->names().end(); iter2++)
+          {
+            if (name == *iter2)
+              matches.insert(*iter2);
+            else if (name().length() < (*iter2)().length())
+              {
+                utf8 p(string((*iter2)(), 0, name().length()));
+                if (name == p)
+                  matches.insert(*iter2);
+              }
+          }
+      }
+  }
+
+  command *
+  command::find_child_by_components(vector< utf8 > const & cs,
+                                    vector< utf8 > & rest)
+  {
+    command * cmd = this;
+
+    vector< utf8 >::const_iterator iter;
+    for (iter = cs.begin(); iter != cs.end(); iter++)
+      {
+        set< utf8 > matches;
+        cmd->complete_child_name(*iter, matches);
+
+        N(matches.size() <= 1,
+          N_(F("Ambiguous command '%s'") % *iter));
+
+        if (matches.size() == 0)
+          break;
+
+        I(matches.size() == 1);
+        cmd = cmd->find_child_by_name(*(matches.begin()));
+        I(cmd != NULL);
+      }
+
+    if (iter != cs.end())
+      {
+        rest.clear();
+        rest.insert(rest.end(), iter, cs.end());
+      }
+
+    return cmd;
+  }
+
+  command *
+  command::find_child_by_name(utf8 const & name) const
+  {
+    I(!name().empty());
+
+    command * cmd = NULL;
+
+    for (children_set::const_iterator iter = children().begin();
+         iter != children().end() && cmd == NULL; iter++)
+      {
+        command * child = *iter;
+
+        if (child->has_name(name))
+          cmd = child;
+      }
+
+    return cmd;
   }
 };
 
@@ -187,187 +374,47 @@ namespace std
 
 namespace commands
 {
-  bool operator<(command const & self, command const & other)
+  command_id
+  complete_command(vector< utf8 > const & args,
+                   vector< utf8 > & rest)
   {
-    // These two get the "minor" names of each command, as the 'names'
-    // set is sorted alphabetically.
-    string const & selfname = *(self.names.begin());
-    string const & othername = *(other.names.begin());
-    // *twitch*
-    return ((string(_(self.parent.c_str())) < string(_(other.parent.c_str())))
-            || ((self.parent == other.parent)
-                && (string(_(selfname.c_str())) < (string(_(othername.c_str()))))));
-  }
+    command * root = CMD_REF(public);
+    I(root != NULL);
 
-  // XXX Remove this one.
-  static command * find_command(string const & name)
-  {
-    map< string, command * >::iterator iter = (*cmds).find(name);
-    return iter == (*cmds).end() ? NULL : (*iter).second;
-  }
-
-  command * find_command(command const * startcmd, string const & name)
-  {
-    for (set< command * >::iterator iter = startcmd->children.begin();
-         iter != startcmd->children.end(); iter++)
-      {
-        command * child = *iter;
-
-        for (set< string >::const_iterator iter2 = child->names.begin();
-             iter2 != child->names.end(); iter2++)
-          {
-            if (*iter2 == name)
-              return child;
-          }
-      }
-
-    return NULL;
-  }
-
-  static void init_children(void)
-  {
-    static bool children_inited = false;
-
-    if (!children_inited)
-      {
-        for (map< string, command * >::iterator iter = (*cmds).begin();
-             iter != (*cmds).end(); iter++)
-          {
-            command * cmd = (*iter).second;
-
-            if (cmd->parent != root_parent() &&
-                cmd->parent != hidden_parent())
-              {
-                command * cmdparent = find_command(cmd->parent);
-                assert(cmdparent != NULL);
-                cmdparent->children.insert(cmd);
-              }
-          }
-
-        children_inited = true;
-      }
-  }
-
-  set< command * > find_root_commands(void)
-  {
-    static set< command * > roots;
-
-    if (roots.empty())
-      {
-        for (map< string, command * >::const_iterator iter = (*cmds).begin();
-             iter != (*cmds).end(); iter++)
-          {
-            command * cmd = (*iter).second;
-
-            if (cmd->parent == root_parent())
-              roots.insert(cmd);
-          }
-      }
-
-    return roots;
-  }
-
-  static void complete_names(string const & name,
-                             set< string > const & names,
-                             set< string > & matched)
-  {
-    for (set< string >::const_iterator iter = names.begin();
-         iter != names.end(); iter++)
-      {
-        if (name.length() < (*iter).length())
-          {
-            string prefix(*iter, 0, name.length());
-            if (name == prefix)
-              matched.insert(*iter);
-          }
-      }
-  }
-
-  static void complete_command_aux(string const & cmdname,
-                                   command const * curcmd,
-                                   int const maxlevel,
-                                   set< string > & matched)
-  {
-    I(!cmdname.empty());
-    I(curcmd != NULL);
-    I(maxlevel >= 0);
-
-    complete_names(cmdname, curcmd->names, matched);
-
-    if (maxlevel > 0)
-      {
-        for (set< command * >::const_iterator iter = curcmd->children.begin();
-             iter != curcmd->children.end(); iter++)
-          {
-            complete_names(cmdname, (*iter)->names, matched);
-            complete_command_aux(cmdname, *iter, maxlevel - 1, matched);
-          }
-      }
-  }
-
-  string complete_command(string const & cmd)
-  {
-    init_children();
-
-    if (cmd.length() == 0 || find_command(cmd) != NULL)
-      return cmd;
-
-    L(FL("expanding command '%s'") % cmd);
-
-    set< string > matched;
-
-    set< command * > roots = find_root_commands();
-    for (set< command * >::const_iterator iter = roots.begin();
-         iter != roots.end(); iter++)
-      complete_command_aux(cmd, *iter, 2 /* XXX */, matched);
-
-    // no matched commands
-    if (matched.size() == 0)
-      return "";
-
-    // one matched command
-    if (matched.size() == 1)
-      {
-        string completed = *matched.begin();
-        L(FL("expanded command to '%s'") %  completed);
-        return completed;
-      }
-
-    // more than one matched command
-    string err = (F("command '%s' has multiple ambiguous expansions:") % cmd).str();
-    for (set<string>::iterator i = matched.begin();
-         i != matched.end(); ++i)
-      err += ('\n' + *i);
-    W(i18n_format(err));
-    return "";
+    command * cmd = root->find_child_by_components(args, rest);
+    I(cmd != NULL);
+    return cmd->ident();
   }
 
   static string format_command_path(command const * cmd)
   {
     string path;
+    /*
 
-    if (cmd->parent == root_parent() || cmd->parent == hidden_parent())
-      path = *(cmd->names.begin()); // XXX
+    if (cmd->parent() == NULL)
+      path = cmd->primary_name();
     else
       {
-        command const * cmdparent = find_command(cmd->parent);
+        command const * cmdparent = cmd->parent();
         I(cmdparent != NULL);
 
-        string const & name = *(cmd->names.begin()); // XXX
+        string const & name = cmd->primary_name();
         path = format_command_path(cmdparent) + " " + name;
       }
+    */
 
     return path;
   }
 
   // Generates a string of the form "a1, ..., aN" where a1 through aN are
   // all the elements of the 'names' set.  The input set cannot be empty.
-  static string format_names(set< string > const & names)
+  static string format_names(command::names_set const & names)
   {
     I(names.size() > 0);
 
     string text;
 
+/*
     set< string >::const_iterator iter = names.begin();
     do
       {
@@ -377,6 +424,7 @@ namespace commands
           text += ", ";
       }
     while (iter != names.end());
+*/
 
     return text;
   }
@@ -388,6 +436,7 @@ namespace commands
   static void describe(const string & tag, const string & abstract,
                        size_t colabstract, ostream & out)
   {
+  /*
     // The algorithm below avoids printing an space on entry (note that
     // there are two before the tag but just one after it) and considers
     // that the colabstract is always one unit less than that given on
@@ -402,11 +451,10 @@ namespace commands
       out << ' ';
     col = colabstract - 1;
 
-    vector<string> words;
-    split_into_words(abstract, words);
+    vector< utf8 > words = split_into_words(abstract);
 
     const size_t maxcol = terminal_width();
-    vector<string>::const_iterator i = words.begin();
+    vector< utf8 >::const_iterator i = words.begin();
     while (i != words.end())
       {
         string const & word = *i;
@@ -450,20 +498,22 @@ namespace commands
         i++;
       }
     out << endl;
+    */
   }
 
   static void explain_children(set< command * > const & children,
                                ostream & out)
   {
+  /*
     I(children.size() > 0);
 
     vector< command * > sorted;
 
     size_t colabstract = 0;
-    for (set< command * >::const_iterator i = children.begin();
+    for (command::children_set::const_iterator i = children.begin();
          i != children.end(); i++)
       {
-        size_t len = display_width(utf8(format_names((*i)->names) + "    "));
+        size_t len = display_width(utf8(format_names((*i)->names()) + "    "));
         if (colabstract < len)
           colabstract = len;
 
@@ -474,18 +524,20 @@ namespace commands
 
     for (vector< command * >::const_iterator i = sorted.begin();
          i != sorted.end(); i++)
-      describe(format_names((*i)->names), (*i)->abstract(), colabstract, out);
+      describe(format_names((*i)->names()), (*i)->abstract(), colabstract, out);
+    */
   }
 
   static void explain_cmd_usage(string const & name, ostream & out)
   {
+  /*
     command * cmd = find_command(name); // XXX Should be const.
     assert(cmd != NULL);
 
     vector< string > lines;
 
     // XXX Use ui.prog_name instead of hardcoding 'mtn'.
-    if (cmd->children.size() > 0)
+    if (cmd->children().size() > 0)
       out << F(safe_gettext("Subcommands for 'mtn %s':")) %
              format_command_path(cmd) << endl << endl;
     else
@@ -503,9 +555,9 @@ namespace commands
         out << endl;
       }
 
-    if (cmd->children.size() > 0)
+    if (cmd->children().size() > 0)
       {
-        explain_children(cmd->children, out);
+        explain_children(cmd->children(), out);
         out << endl;
       }
 
@@ -517,19 +569,18 @@ namespace commands
         out << endl;
       }
 
-    if (cmd->names.size() > 1)
+    if (cmd->names().size() > 1)
       {
-        set< string > othernames = cmd->names;
+        command::names_set othernames = cmd->names();
         othernames.erase(name);
         describe("", "Aliases: " + format_names(othernames) + ".", 4, out);
         out << endl;
       }
+    */
   }
 
   void explain_usage(string const & name, ostream & out)
   {
-    init_children();
-
     if (find_command(name) != NULL)
       explain_cmd_usage(name, out);
     else
@@ -538,7 +589,7 @@ namespace commands
 
         // TODO Wrap long lines in these messages.
         out << "Top-level commands:" << endl << endl;
-        explain_children(find_root_commands(), out);
+        explain_children(CMD_REF(public)->children(), out);
         out << endl;
         out << "For information on a specific command, type "
                "'mtn help <command_name>'." << endl;
@@ -550,17 +601,17 @@ namespace commands
 
   int process(app_state & app, string const & name, vector<utf8> const & args)
   {
-    command * cmd = find_command(name);
+    command * cmd = NULL;
     if (cmd != NULL)
       {
         L(FL("executing command '%s'") % name);
 
         // at this point we process the data from _MTN/options if
         // the command needs it.
-        if (cmd->use_workspace_options)
+        if (cmd->use_workspace_options())
           app.process_options();
 
-        cmd->exec(app, name, args);
+        cmd->exec(app, "foo", args);
         return 0;
       }
     else
@@ -572,12 +623,13 @@ namespace commands
 
   options::options_type command_options(vector<utf8> const & cmdline)
   {
+/*
     if (cmdline.empty())
       return options::options_type();
     string name = complete_command(idx(cmdline,0)());
     if (!name.empty())
       {
-        return find_command(name)->get_options(cmdline);
+        return find_command(name)->opts();
       }
     else
       {
@@ -585,6 +637,8 @@ namespace commands
           F("unknown command '%s'") % idx(cmdline, 0));
         return options::options_type();
       }
+*/
+    return options::options_type();
   }
 
   options::options_type toplevel_command_options(string const & name)
@@ -592,7 +646,7 @@ namespace commands
     command * cmd = find_command(name);
     if (cmd != NULL)
       {
-        return cmd->opts;
+        return cmd->opts();
       }
     else
       {
@@ -602,7 +656,7 @@ namespace commands
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, "", N_("informative"), N_("command [ARGS...]"),
+CMD(help, "", CMD_REF(informative), N_("command [ARGS...]"),
     N_("Displays help about commands and options"),
     N_(""),
     options::opts::none)
@@ -613,8 +667,21 @@ CMD(help, "", N_("informative"), N_("command [ARGS...]"),
       throw usage("");
     }
 
-  string full_cmd = complete_command(idx(args, 0)());
+/*
+  vector< string > fooargs,rest;
+  for (vector< utf8 >::const_iterator i = args.begin(); i != args.end(); i++)
+    fooargs.push_back((*i)());
+  command & cmd = commands::find_command(fooargs, rest);
 
+  N(!rest.empty(),
+    F("could not match any command given '%s'; failed after '%s'") %
+      join_words(fooargs)() % join_words(rest)());
+
+  app.opts.help = true;
+  throw usage(fooargs);
+*/
+
+/*
   if (find_command(full_cmd) != NULL)
     {
       app.opts.help = true;
@@ -627,9 +694,10 @@ CMD(help, "", N_("informative"), N_("command [ARGS...]"),
         F("unknown command '%s'") % idx(args, 0)());
       throw usage("");
     }
+*/
 }
 
-CMD(crash, "", hidden_parent(), "{ N | E | I | exception | signal }",
+CMD(crash, "", CMD_REF(hidden), "{ N | E | I | exception | signal }",
     N_("Triggers the specified kind of crash"),
     N_(""),
     options::opts::none)
@@ -842,74 +910,86 @@ process_commit_message_args(bool & given,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-CMD(__test1, "", hidden_parent(), "", "", "", options::opts::none) {}
+CMD(__test1, "", CMD_REF(hidden), "", "", "", options::opts::none) {}
 
 CMD(__test2, "__test2.1",
-    hidden_parent(), "", "", "", options::opts::none) {}
+    CMD_REF(hidden), "", "", "", options::opts::none) {}
 
 CMD(__test3, "__test3.1 __test3.2",
-    hidden_parent(), "", "", "", options::opts::none) {}
+    CMD_REF(hidden), "", "", "", options::opts::none) {}
 
-CMD_GROUP(__group, "", root_parent(), "", "", options::opts::none);
-CMD(__child1, "", "__group", "", "", "", options::opts::none) {}
-CMD(__child2, "", "__group", "", "", "", options::opts::none) {}
+CMD(test_visible, "", CMD_REF(public), "", "", "", options::opts::none) {}
+CMD(test_invisible, "", CMD_REF(hidden), "", "", "", options::opts::none) {}
 
-UNIT_TEST(commands, find_command)
+CMD_GROUP(test_group, "", CMD_REF(public), "", "", options::opts::none);
+CMD(test_subcmd, "", CMD_REF(test_group), "", "", "", options::opts::none) {}
+
+static void
+cc_aux(commands::command * startcmd,
+       utf8 const & path,
+       commands::command const * expcmd,
+       utf8 const & exprest)
 {
-  using namespace commands;
+  I(!path.empty());
+  I(path[0] != ' ');
 
-  // Non-existent command.
-  BOOST_CHECK(find_command("__test0") == NULL);
+  vector< utf8 > components = split_into_words(path);
 
-  // Lookup commands using their "primary" name.
-  BOOST_CHECK(find_command("__test1") != NULL);
-  BOOST_CHECK(find_command("__test2") != NULL);
-  BOOST_CHECK(find_command("__test3") != NULL);
+  vector< utf8 > rest;
+  commands::command * cmd =
+      startcmd->find_child_by_components(components, rest);
 
-  // Lookup commands using any of their "secondary" names.
-  BOOST_CHECK(find_command("__test2.1") != NULL);
-  BOOST_CHECK(find_command("__test3.1") != NULL);
-  BOOST_CHECK(find_command("__test3.2") != NULL);
+  BOOST_CHECK(cmd == expcmd);
 
-  // Lookup a top-level group command.
-  BOOST_CHECK(find_command("__group") != NULL);
-  BOOST_CHECK(find_command("__group_ne") == NULL);
-
-  // Lookup command that are one level deep in the tree.
-  BOOST_CHECK(find_command("__child1") != NULL);
-  BOOST_CHECK(find_command("__child2") != NULL);
+  vector< utf8 > restwords = split_into_words(exprest);
+  BOOST_CHECK(rest == restwords);
 }
 
-UNIT_TEST(commands, find_root_commands)
+UNIT_TEST(commands, complete_command)
 {
-  using namespace commands;
+  using commands::command;
+  using commands::init_children;
 
-  set< command * > roots = find_root_commands();
-  BOOST_CHECK(roots.find(find_command("__group")) != roots.end());
-  BOOST_CHECK(roots.find(find_command("__child1")) == roots.end());
+  command * root = CMD_REF(public);
+  BOOST_REQUIRE(root != NULL);
+  command * group = CMD_REF(test_group);
+  BOOST_REQUIRE(group != NULL);
+
+  cc_aux(root, "test_group", CMD_REF(test_group), "");
+  cc_aux(root, "test_gr", CMD_REF(test_group), "");
+  cc_aux(root, "bar", root, "bar");
+
+  cc_aux(root, "test_group test_subcmd", CMD_REF(test_subcmd), "");
+  cc_aux(root, "test_gr test_subcmd", CMD_REF(test_subcmd), "");
+  cc_aux(root, "test_group test_sub", CMD_REF(test_subcmd), "");
+  cc_aux(root, "test_gr test_sub", CMD_REF(test_subcmd), "");
+  cc_aux(root, "test_group bar", group, "bar");
+
+  cc_aux(group, "test_subcmd", CMD_REF(test_subcmd), "");
+  cc_aux(group, "test_sub", CMD_REF(test_subcmd), "");
+  cc_aux(group, "bar", group, "bar");
 }
 
 UNIT_TEST(commands, format_names)
 {
-  using namespace commands;
+  using commands::format_names;
 
-  // Command with one name.
-  BOOST_CHECK(format_names(find_command("__test1")->names) ==
-              "__test1");
+  set< string > s;
 
-  // Command with two names.
-  BOOST_CHECK(format_names(find_command("__test2")->names) ==
-              "__test2, __test2.1");
-  BOOST_CHECK(format_names(find_command("__test2.1")->names) ==
-              "__test2, __test2.1");
+  s.clear();
+  s.insert("a");
+  BOOST_CHECK(format_names(s) == "a");
 
-  // Command with three names.
-  BOOST_CHECK(format_names(find_command("__test3")->names) ==
-              "__test3, __test3.1, __test3.2");
-  BOOST_CHECK(format_names(find_command("__test3.1")->names) ==
-              "__test3, __test3.1, __test3.2");
-  BOOST_CHECK(format_names(find_command("__test3.2")->names) ==
-              "__test3, __test3.1, __test3.2");
+  s.clear();
+  s.insert("a");
+  s.insert("b");
+  BOOST_CHECK(format_names(s) == "a, b");
+
+  s.clear();
+  s.insert("a");
+  s.insert("b");
+  s.insert("c");
+  BOOST_CHECK(format_names(s) == "a, b, c");
 }
 #endif // BUILD_UNIT_TESTS
 

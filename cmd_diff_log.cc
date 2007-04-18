@@ -468,7 +468,7 @@ prepare_diff(cset & included,
     revheader = header.str();
 }
 
-CMD(diff, "", N_("informative"), N_("[PATH]..."),
+CMD(diff, "", CMD_REF(informative), N_("[PATH]..."),
     N_("Shows current differences"),
     N_("Compares the current tree with the files in the repository and "
        "prints the differences on the standard output.\n"
@@ -600,7 +600,7 @@ typedef priority_queue<pair<rev_height, revision_id>,
                        vector<pair<rev_height, revision_id> >,
                        rev_cmp> frontier_t;
 
-CMD(log, "", N_("informative"), N_("[FILE] ..."),
+CMD(log, "", CMD_REF(informative), N_("[FILE] ..."),
     N_("Prints history in reverse order"),
     N_("This command prints history in reverse order, filtering it by "
        "FILE if given.  If one or more revisions are given, uses them as "

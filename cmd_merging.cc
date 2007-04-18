@@ -126,7 +126,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
   return switched_branch;
 }
 
-CMD(update, "", N_("workspace"), "",
+CMD(update, "", CMD_REF(workspace), "",
     N_("Updates the workspace"),
     N_("This command modifies your workspace to be based off of a "
        "different revision, preserving uncommitted changes as it does so.  "
@@ -329,7 +329,7 @@ merge_two(revision_id const & left, revision_id const & right,
 // since a single 'merge' command may perform arbitrarily many actual merges.
 // (Possibility: append the --message/--message-file text to the synthetic
 // log message constructed in merge_two().)
-CMD(merge, "", N_("tree"), "",
+CMD(merge, "", CMD_REF(tree), "",
     N_("Merges unmerged heads of a branch"),
     N_(""),
     options::opts::branch | options::opts::date | options::opts::author)
@@ -430,7 +430,7 @@ CMD(merge, "", N_("tree"), "",
   P(F("note: your workspaces have not been updated"));
 }
 
-CMD(propagate, "", N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
+CMD(propagate, "", CMD_REF(tree), N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("Merges from one branch to another asymmetrically"),
     N_(""),
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
@@ -442,7 +442,7 @@ CMD(propagate, "", N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH"),
   process(app, "merge_into_dir", a);
 }
 
-CMD(merge_into_dir, "", N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
+CMD(merge_into_dir, "", CMD_REF(tree), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("Merges one branch into a subdirectory in another branch"),
     N_(""),
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
@@ -599,7 +599,7 @@ CMD(merge_into_dir, "", N_("tree"), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     }
 }
 
-CMD(merge_into_workspace, "", N_("tree"),
+CMD(merge_into_workspace, "", CMD_REF(tree),
     N_("OTHER-REVISION"),
     N_("Merges a revision into the current workspace's base revision"),
     N_("Merges OTHER-REVISION into the current workspace's base revision, "
@@ -693,7 +693,7 @@ CMD(merge_into_workspace, "", N_("tree"),
       "[right] %s\n") % left_id % right_id);
 }
 
-CMD(explicit_merge, "", N_("tree"),
+CMD(explicit_merge, "", CMD_REF(tree),
     N_("LEFT-REVISION RIGHT-REVISION DEST-BRANCH"),
     N_("Merges two explicitly given revisions"),
     N_("The results of the merge are placed on the branch specified by "
@@ -720,7 +720,7 @@ CMD(explicit_merge, "", N_("tree"),
   merge_two(left, right, branch, string("explicit merge"), app);
 }
 
-CMD(show_conflicts, "", N_("informative"), N_("REV REV"), 
+CMD(show_conflicts, "", CMD_REF(informative), N_("REV REV"), 
     N_("Shows what conflicts need resolution between two revisions"),
     N_("The conflicts are calculated based on the two revisions given in "
        "the REV parameters."),
@@ -762,7 +762,7 @@ CMD(show_conflicts, "", N_("informative"), N_("REV REV"),
     % result.directory_loop_conflicts.size());
 }
 
-CMD(pluck, "", N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
+CMD(pluck, "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     N_("Applies changes made at arbitrary places in history"),
     N_("This command takes changes made at any point in history, and "
        "edits your current workspace to include those changes.  The end result "
@@ -929,7 +929,7 @@ CMD(pluck, "", N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
   }
 }
 
-CMD(heads, "", N_("tree"), "",
+CMD(heads, "", CMD_REF(tree), "",
     N_("Shows unmerged head revisions of a branch"),
     N_(""),
     options::opts::branch)
@@ -955,7 +955,7 @@ CMD(heads, "", N_("tree"), "",
     cout << describe_revision(app, *i) << '\n';
 }
 
-CMD(get_roster, "", N_("debug"), N_("[REVID]"),
+CMD(get_roster, "", CMD_REF(debug), N_("[REVID]"),
     N_("Dumps the roster associated with a given identifier"),
     N_("If no REVID is given, the workspace is used."),
     options::opts::none)

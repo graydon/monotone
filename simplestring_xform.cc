@@ -104,33 +104,26 @@ split_into_lines(string const & in,
   split_into_lines(in, constants::default_encoding, out);
 }
 
-void split_into_words(string const & in,
-                      string const & encoding,
-                      vector<string> & out)
+std::vector< utf8 > split_into_words(utf8 const & in)
 {
-  string lc_encoding = lowercase(encoding);
-  out.clear();
+  string const & instr = in();
+  vector< utf8 > out;
 
   string::size_type begin = 0;
-  string::size_type end = in.find_first_of(" ", begin);
+  string::size_type end = instr.find_first_of(" ", begin);
 
   while (end != string::npos && end >= begin)
     {
-      out.push_back(in.substr(begin, end-begin));
+      out.push_back(utf8(instr.substr(begin, end-begin)));
       begin = end + 1;
-      if (begin >= in.size())
+      if (begin >= instr.size())
         break;
-      end = in.find_first_of(" ", begin);
+      end = instr.find_first_of(" ", begin);
     }
-  if (begin < in.size())
-    out.push_back(in.substr(begin, in.size() - begin));
-}
+  if (begin < instr.size())
+    out.push_back(utf8(instr.substr(begin, instr.size() - begin)));
 
-void
-split_into_words(string const & in,
-                 vector<string> & out)
-{
-  split_into_words(in, constants::default_encoding, out);
+  return out;
 }
 
 void

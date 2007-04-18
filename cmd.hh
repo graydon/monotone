@@ -22,41 +22,64 @@ class app_state;
 
 namespace commands
 {
-  std::string const & hidden_parent();
-  std::string const & root_parent();
-
-  struct command
+  class command
   {
+  public:
+    typedef std::set< utf8 > names_set;
+    typedef std::set< command * > children_set;
+
+  private:
     // NB: these strings are stored _un_translated, because we cannot
     // translate them until after main starts, by which time the
     // command objects have all been constructed.
-    std::set< std::string > names;
-    std::string parent;
-    std::string params_;
-    std::string abstract_;
-    std::string desc_;
-    bool use_workspace_options;
-    options::options_type opts;
-    std::set< command * > children;
-    command(std::string const & n,
-            std::string const & aliases,
-            std::string const & g,
-            std::string const & p,
-            std::string const & a,
-            std::string const & d,
-            bool u,
-            options::options_type const & o);
-    virtual ~command();
-    virtual std::string params();
-    virtual std::string abstract() const;
-    virtual std::string desc();
-    virtual options::options_type get_options(std::vector<utf8> const & args);
-    virtual void exec(app_state & app,
-                      std::string const & name,
-                      std::vector<utf8> const & args) = 0;
-  };
+    utf8 m_primary_name;
+    names_set m_names;
+    command * m_parent;
+    utf8 m_params;
+    utf8 m_abstract;
+    utf8 m_desc;
+    bool m_use_workspace_options;
+    options::options_type m_opts;
+    children_set m_children;
 
-  command * find_command(command const * startcmd, std::string const & name);
+  public:
+    command(std::string const & primary_name,
+            std::string const & other_names,
+            command * parent,
+            std::string const & params,
+            std::string const & abstract,
+            std::string const & desc,
+            bool use_workspace_options,
+            options::options_type const & opts);
+
+    virtual ~command(void);
+
+    command_id ident(void) const;
+
+    utf8 const & primary_name(void) const;
+    names_set const & names(void) const;
+    command * parent(void) const;
+    virtual std::string params(void) const;
+    virtual std::string abstract(void) const;
+    virtual std::string desc(void) const;
+    options::options_type const & opts(void) const;
+    bool use_workspace_options(void) const;
+    children_set & children(void);
+    children_set const & children(void) const;
+
+    bool operator<(command const & cmd) const;
+
+    virtual void exec(app_state & app,
+                      std::string const & name, // XXX Extra parameter
+                      std::vector< utf8 > const & args) = 0;
+
+    bool has_name(utf8 const & name) const;
+    void complete_child_name(utf8 const & prefix,
+                             std::set< utf8 > & matches) const;
+    command * find_child_by_components(std::vector< utf8 > const & cs,
+                                       std::vector< utf8 > & rest);
+    command * find_child_by_name(utf8 const & name) const;
+  };
 };
 
 inline std::vector<file_path>
@@ -105,10 +128,19 @@ process_commit_message_args(bool & given,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
 
+#define CMD_FWD_DECL(C) \
+namespace commands { \
+  class cmd_ ## C; \
+  extern cmd_ ## C C ## _cmd; \
+}
+
+#define CMD_REF(C) ((commands::command *)&(commands::C ## _cmd))
+
 #define CMD(C, aliases, parent, params, abstract, desc, opts)        \
 namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
+  class cmd_ ## C : public command                                   \
   {                                                                  \
+  public:                                                            \
     cmd_ ## C() : command(#C, aliases, parent, params, abstract,     \
                           desc, true,                                \
                           options::options_type() | opts)            \
@@ -117,7 +149,7 @@ namespace commands {                                                 \
                       std::string const & name,                      \
                       std::vector<utf8> const & args);               \
   };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
+  cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
@@ -128,8 +160,9 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // and possibly "list".)
 #define CMD_WITH_SUBCMDS(C, aliases, parent, abstract, desc, opts)   \
 namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
+  class cmd_ ## C : public command                                   \
   {                                                                  \
+  public:                                                            \
     cmd_ ## C() : command(#C, aliases, parent, "", abstract, desc,   \
                           true, options::options_type() | opts)      \
     {}                                                               \
@@ -139,7 +172,7 @@ namespace commands {                                                 \
     std::string params();                                            \
     options::options_type get_options(vector<utf8> const & args);    \
   };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
+  cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
@@ -148,8 +181,9 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // XXX Should the 'opts' parameter go away?
 #define CMD_GROUP(C, aliases, parent, abstract, desc, opts)          \
 namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
+  class cmd_ ## C : public command                                   \
   {                                                                  \
+  public:                                                            \
     cmd_ ## C() : command(#C, aliases, parent, "", abstract, desc,   \
                           true, options::options_type() | opts)      \
     {}                                                               \
@@ -157,7 +191,7 @@ namespace commands {                                                 \
                       std::string const & name,                      \
                       std::vector<utf8> const & args);               \
   };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
+  cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
@@ -170,11 +204,11 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
   ++i;                                                               \
   vector< utf8 > removed (i, args.end());                            \
   /* XXX Command completion... */ \
-  command * child = find_command(this, idx(args, 0)());              \
+  /*command * child = find_command(this, idx(args, 0)());              \
   if (child == NULL)                                                 \
     throw usage(name);                                               \
   else                                                               \
-    child->exec(app, idx(args, 0)(), removed);                       \
+    child->exec(app, idx(args, 0)(), removed); */                      \
 }
 
 // Use this for commands that should specifically _not_ look for an
@@ -182,8 +216,9 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 
 #define CMD_NO_WORKSPACE(C, aliases, parent, params, abstract, desc, opts) \
 namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
+  class cmd_ ## C : public command                                   \
   {                                                                  \
+  public:                                                            \
     cmd_ ## C() : command(#C, aliases, parent, params, abstract,     \
                           desc, false,                               \
                           options::options_type() | opts)            \
@@ -192,11 +227,27 @@ namespace commands {                                                 \
                       std::string const & name,                      \
                       std::vector<utf8> const & args);               \
   };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
+  cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
                                std::vector<utf8> const & args)       \
+
+CMD_FWD_DECL(public);
+CMD_FWD_DECL(hidden);
+
+CMD_FWD_DECL(automation);
+CMD_FWD_DECL(database);
+CMD_FWD_DECL(debug);
+CMD_FWD_DECL(informative);
+CMD_FWD_DECL(key_and_cert);
+CMD_FWD_DECL(network);
+CMD_FWD_DECL(packet_io);
+CMD_FWD_DECL(rcs);
+CMD_FWD_DECL(review);
+CMD_FWD_DECL(tree);
+CMD_FWD_DECL(variables);
+CMD_FWD_DECL(workspace);
 
 namespace automation {
   struct automate

@@ -1,8 +1,12 @@
 #ifndef __SIMPLESTRING_XFORM_HH__
 #define __SIMPLESTRING_XFORM_HH__
 
+#include <iterator>
 #include <vector>
+#include <sstream>
 #include <string>
+
+class utf8;
 
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);
@@ -14,19 +18,22 @@ void split_into_lines(std::string const & in,
                       std::string const & encoding,
                       std::vector<std::string> & out);
 
-void split_into_words(std::string const & in,
-                      std::vector<std::string> & out);
-
-void split_into_words(std::string const & in,
-                      std::string const & encoding,
-                      std::vector<std::string> & out);
-
 void join_lines(std::vector<std::string> const & in,
                 std::string & out,
                 std::string const & linesep);
 
 void join_lines(std::vector<std::string> const & in,
                 std::string & out);
+
+std::vector< utf8 > split_into_words(utf8 const & in);
+
+template< class T >
+T join_words(std::vector< T > const & in)
+{
+  std::ostringstream oss;
+  copy(in.begin(), in.end(), std::ostream_iterator< T >(oss, " "));
+  return T(oss.str());
+}
 
 void prefix_lines_with(std::string const & prefix,
                        std::string const & lines,
