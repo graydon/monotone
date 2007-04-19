@@ -607,6 +607,7 @@ public:
   date_t const get_opt_date_or_cur_date();
   bool has_opt_branch();
   branch_name const & get_opt_branchname();
+  bool const get_opt_set_default();
   void set_opt_branchname(branch_name const & branchname);
 
   key_store & get_key_store();

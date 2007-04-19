@@ -279,7 +279,7 @@ CMD(cat, N_("informative"),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file, N_("FILEID"), options::opts::none)
+AUTOMATE_WITH_EVERYTHING(get_file, N_("FILEID"), options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -302,7 +302,7 @@ AUTOMATE(get_file, N_("FILEID"), options::opts::none)
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
+AUTOMATE_WITH_EVERYTHING(get_file_of, N_("FILENAME"), options::opts::revision)
 {
   N(args.size() == 1,
     F("wrong argument count"));
