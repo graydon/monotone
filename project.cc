@@ -53,20 +53,20 @@ namespace
 {
   struct not_in_branch : public is_failure
   {
-    app_state & app;
+    database & db;
     base64<cert_value > const & branch_encoded;
-    not_in_branch(app_state & app,
+    not_in_branch(database & db,
                   base64<cert_value> const & branch_encoded)
-      : app(app), branch_encoded(branch_encoded)
+      : db(db), branch_encoded(branch_encoded)
     {}
     virtual bool operator()(revision_id const & rid)
     {
       vector< revision<cert> > certs;
-      app.db.get_revision_certs(rid,
-                                cert_name(branch_cert_name),
-                                branch_encoded,
-                                certs);
-      erase_bogus_certs(certs, app.db);
+      db.get_revision_certs(rid,
+                            cert_name(branch_cert_name),
+                            branch_encoded,
+                            certs);
+      erase_bogus_certs(certs, db);
       return certs.empty();
     }
   };
@@ -87,7 +87,7 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
                                                     branch_encoded,
                                                     branch.second);
 
-      not_in_branch p(app, branch_encoded);
+      not_in_branch p(app.db, branch_encoded);
       erase_ancestors_and_failures(branch.second, p, app.db);
       L(FL("found heads of branch %s (%s heads)")
         % name % branch.second.size());
