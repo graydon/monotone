@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-04-17 13:11+0100\n"
+"PO-Revision-Date: 2007-04-19 09:03+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -288,9 +288,9 @@ msgid "REVISION-DATA"
 msgstr "DATI-REVISIONE"
 
 #: automate.cc:1708
-#, fuzzy, c-format
+#, c-format
 msgid "missing prerequisite for revision %s"
-msgstr "manca un requisito: la revisione %s"
+msgstr "manca un requisito per la revisione %s"
 
 #: automate.cc:1725
 msgid "REVISION-ID NAME VALUE"
@@ -1246,9 +1246,8 @@ msgid "OTHER-REVISION"
 msgstr "ALTRA-REVISIONE"
 
 #: cmd_merging.cc:600
-#, fuzzy
 msgid "Merge OTHER-REVISION into the current workspace's base revision, and update the current workspace with the result.  There can be no pending changes in the current workspace.  Both OTHER-REVISION and the workspace's base revision will be recorded as parents on commit.  The workspace's selected branch is not changed."
-msgstr "Unisce ALTRA-REVISIONE nella revisione base del corrente spazio di lavoro, e aggiorna lo spazio di lavoro col risultato. Ci può essere nessun cambiamento nello spazio di lavoro attuale. Sia ALTRA-REVISIONE che revisione base del corrente spazio di lavoro saranno registrate come genitori nel commit. Il ramo selezionato dello spazio di lavoro non viene cambiato"
+msgstr "Unisce ALTRA-REVISIONE nella revisione base dello spazio di lavoro attuale e aggiorna lo spazio di lavoro col risultato. Potrebbe non esserci alcun cambiamento nello spazio di lavoro attuale. Sia ALTRA-REVISIONE che revisione base dello spazio di lavoro attuale saranno registrate come genitori nel commit. Il ramo selezionato dello spazio di lavoro non viene cambiato."
 
 #: cmd_merging.cc:631
 #, c-format
@@ -1498,9 +1497,9 @@ msgstr ""
 "Se nessuna directory è specificata, il nome del ramo sarà usato come directory"
 
 #: cmd_netsync.cc:212
-#, fuzzy, c-format
+#, c-format
 msgid "you must specify a branch to clone"
-msgstr "devi specificare la directory da importare"
+msgstr "devi specificare il ramo da clonare"
 
 #: cmd_netsync.cc:226
 #, fuzzy, c-format
@@ -2827,11 +2826,14 @@ msgid ""
 "ssh signature     : %s\n"
 "monotone signature: %s"
 msgstr ""
+"make_signature: firma signature (%i) != firma monotone (%i)\n"
+"firma ssh:      %s\n"
+"firma monotone: %s"
 
 #: keys.cc:487
-#, fuzzy, c-format
+#, c-format
 msgid "make_signature: signature is not valid"
-msgstr "`%s' non è un key ID lungo valido\n"
+msgstr "make_signature: firma non valida"
 
 #: keys.cc:672
 #, c-format
@@ -3484,13 +3486,14 @@ msgstr "file su cui salvare i log di debug (in caso di fallimento)"
 msgid "leave out anything described by its argument"
 msgstr "esclude qualsiasi cosa sia stata fornita come parametro"
 
+# TODO: registro??
 #: options_list.hh:246
 msgid "only update monotone's internal bookkeeping, not the filesystem"
-msgstr ""
+msgstr "aggiorna il registro interno di monotone, non il filesystem"
 
 #: options_list.hh:254
 msgid "sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"
-msgstr ""
+msgstr "firma con ‘ssh-agent’: ‘yes’ per firmare solo se viene trovata la chiave, ‘no’ per firmare solo con monotone, ‘check’ per firmare con entrambi e verificare"
 
 #: options_list.hh:262
 msgid "print detailed version number, then exit"
