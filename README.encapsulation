@@ -109,23 +109,13 @@ netsync.cc:
     app.db...
     app.opts.keys_to_push()
     app.keys.key_pair_exists()
-    app.keys.ensure_in_database()
-
-  run_netsync_protocol():
+    app.keys.ensure_in_database()_netsync_protocol():
     app.opts.bind_stdio
 
 
 keys.cc:
   Only a unit test left, which uses app_state. This should be cleaned
   up as soon as we remove the hackish hooks in the key_store.
-
-project.cc:
-
-  project_t:
-    app.db...
-    app.opts.date
-    app.opts.author
-
 
 
 cmd_diff_log.cc:
@@ -148,7 +138,3 @@ cmd_diff_log.cc:
 
     needs: complete()
 
-
-
-next candidates for app_state removal:
-  project.cc: struct project_t

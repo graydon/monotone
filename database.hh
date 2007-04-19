@@ -77,6 +77,7 @@ class key_store;
 struct revision_t;
 struct query;
 class rev_height;
+struct date_t;
 
 class database
 {
@@ -600,6 +601,9 @@ public:
   bool hook_get_author(rsa_keypair_id const & k,
                        std::string & author);
   bool must_drop_attr(std::string const & key);
+
+  utf8 const & get_opt_author();
+  date_t const get_opt_date_or_cur_date();
 
   key_store & get_key_store();
 };

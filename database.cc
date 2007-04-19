@@ -27,6 +27,7 @@
 #include "cert.hh"
 #include "cleanup.hh"
 #include "constants.hh"
+#include "dates.hh"
 #include "database.hh"
 #include "hash_map.hh"
 #include "keys.hh"
@@ -3445,6 +3446,22 @@ database::must_drop_attr(string const & key)
   return (__app->opts.attrs_to_drop.find(key) !=
           __app->opts.attrs_to_drop.end());
 }
+
+utf8 const &
+database::get_opt_author()
+{
+  return __app->opts.author;
+}
+
+date_t const
+database::get_opt_date_or_cur_date()
+{
+  if (__app->opts.date_given)
+    return __app->opts.date;
+  else
+    return date_t::now();
+}
+
 
 // transaction guards
 
