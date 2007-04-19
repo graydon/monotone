@@ -23,7 +23,6 @@
 // about revisions, using certs, without needing anyone's special
 // permission.
 
-class app_state;
 class key_store;
 class database;
 
@@ -108,9 +107,9 @@ void
 get_user_key(rsa_keypair_id & key, key_store & keys);
 
 void
-guess_branch(revision_id const & id, app_state & app, branch_name & branchname);
+guess_branch(revision_id const & id, database & db, branch_name & branchname);
 void
-guess_branch(revision_id const & id, app_state & app);
+guess_branch(revision_id const & id, database & db);
 
 #define date_cert_name cert_name("date")
 #define author_cert_name cert_name("author")

@@ -17,13 +17,15 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 
-#include "app_state.hh"
 #include "cert.hh"
 #include "constants.hh"
+#include "database.hh"
 #include "interner.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "netio.hh"
 #include "option.hh"
+#include "project.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
@@ -467,10 +469,11 @@ get_user_key(rsa_keypair_id & key, key_store & keys)
 // APP may override.  Branch name is returned in BRANCHNAME.
 // Does not modify branch state in APP.
 void
-guess_branch(revision_id const & ident, app_state & app, branch_name & branchname)
+guess_branch(revision_id const & ident, database & db,
+             branch_name & branchname)
 {
-  if (app.opts.branch_given && !app.opts.branchname().empty())
-    branchname = app.opts.branchname;
+  if (db.has_opt_branch() && !db.get_opt_branchname()().empty())
+    branchname = db.get_opt_branchname();
   else
     {
       N(!ident.inner()().empty(),
@@ -478,7 +481,7 @@ guess_branch(revision_id const & ident, app_state & app, branch_name & branchnam
           "please provide a branch name"));
 
       set<branch_name> branches;
-      app.get_project().get_revision_branches(ident, branches);
+      db.get_project().get_revision_branches(ident, branches);
 
       N(branches.size() != 0,
         F("no branch certs found for revision %s, "
@@ -496,11 +499,11 @@ guess_branch(revision_id const & ident, app_state & app, branch_name & branchnam
 
 // As above, but set the branch name in the app state.
 void
-guess_branch(revision_id const & ident, app_state & app)
+guess_branch(revision_id const & ident, database & db)
 {
   branch_name branchname;
-  guess_branch(ident, app, branchname);
-  app.opts.branchname = branchname;
+  guess_branch(ident, db, branchname);
+  db.set_opt_branchname(branchname);
 }
 
 void

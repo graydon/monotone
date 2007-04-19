@@ -180,7 +180,7 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   transaction_guard guard(app.db);
 
   revision_id rid;
-  complete(app, idx(args, 0)(), rid);
+  complete(app.db, idx(args, 0)(), rid);
 
   cert_name name;
   internalize_cert_name(idx(args, 1), name);
@@ -212,7 +212,7 @@ CMD(trusted, N_("key and cert"),
     throw usage(name);
 
   revision_id rid;
-  complete(app, idx(args, 0)(), rid, false);
+  complete(app.db, idx(args, 0)(), rid, false);
   hexenc<id> ident(rid.inner());
 
   cert_name name;
@@ -257,7 +257,7 @@ CMD(tag, N_("review"), N_("REVISION TAGNAME"),
     throw usage(name);
 
   revision_id r;
-  complete(app, idx(args, 0)(), r);
+  complete(app.db, idx(args, 0)(), r);
   cert_revision_tag(r, idx(args, 1)(), app.db);
 }
 
@@ -269,7 +269,7 @@ CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
     throw usage(name);
 
   revision_id r;
-  complete(app, idx(args, 0)(), r);
+  complete(app.db, idx(args, 0)(), r);
   cert_revision_testresult(r, idx(args, 1)(), app.db);
 }
 
@@ -282,8 +282,8 @@ CMD(approve, N_("review"), N_("REVISION"),
     throw usage(name);
 
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  guess_branch(r, app);
+  complete(app.db, idx(args, 0)(), r);
+  guess_branch(r, app.db);
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
   app.get_project().put_revision_in_branch(r, app.opts.branchname);
 }
@@ -309,7 +309,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
     F("empty comment"));
 
   revision_id r;
-  complete(app, idx(args, 0)(), r);
+  complete(app.db, idx(args, 0)(), r);
   cert_revision_comment(r, comment, app.db);
 }
 

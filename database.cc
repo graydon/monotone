@@ -3440,6 +3440,12 @@ database::get_key_store()
   return __app->keys;
 }
 
+project_t &
+database::get_project()
+{
+  return __app->get_project();
+}
+
 bool
 database::must_drop_attr(string const & key)
 {
@@ -3461,6 +3467,25 @@ database::get_opt_date_or_cur_date()
   else
     return date_t::now();
 }
+
+bool
+database::has_opt_branch()
+{
+  return __app->opts.branch_given;
+}
+
+branch_name const &
+database::get_opt_branchname()
+{
+  return __app->opts.branchname;
+}
+
+void
+database::set_opt_branchname(branch_name const & branchname)
+{
+  __app->opts.branchname = branchname;
+}
+
 
 
 // transaction guards

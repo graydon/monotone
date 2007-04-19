@@ -1,21 +1,6 @@
-annotate.cc:
-
-  annotate_context::build_revisions_to_annotations():
-
-    # Why does this go via the project? It only calls
-    # db.get_revision_certs()...
-    app.get_project().get_revision_certs(*i, certs);
-    app.db..
-
 revision.cc:
 
  only a CMD(rev_height is left using the app_state
-
-cert.cc:
-
-  guess_branch():
-    app.opts.branch_given + app.opts.branchname
-    app.get_project().get_revision_branches()
 
 
 database.cc:
@@ -27,9 +12,7 @@ database.cc:
   test_migration_step()
 
   database::complete()
-    needs: __app->get_project().get_branch_list()
     needs: __app->require_workspace()
-    needs: __app->get_project().get_branch_heads()
     needs: __app->opts.branchname
 
 
@@ -65,14 +48,12 @@ netsync.cc:
     app.db...
     app.opts.use_transport_auth
     app.opts.signing_key
-    app.get_project().get_branch_list()
     app.lua.hook_note_netsync_start
 
   session::process_anonymous_cmd():
     app.db...
     app.opts.use_transport_auth
     app.opts.signing_key
-    app.get_project().get_branch_list()
     app.lua.hook_get_netsync_read_permitted
     needs: rebuild_merkle_trees()
 
@@ -82,7 +63,6 @@ netsync.cc:
     app.lua.hook_note_netsync_start()
     app.lua.hook_get_netsync_read_permitted()
     app.lua.hook_get_netsync_write_permitted()
-    app.get_project().get_branch_list()
     needs: rebuild_merkle_trees()
 
   session::begin_service():
@@ -105,7 +85,6 @@ netsync.cc:
 
   session::rebuild_merkle_trees()
     (huh? takes another app_state, even if the session already has one?)
-    app.get_project().get_branch_certs()
     app.db...
     app.opts.keys_to_push()
     app.keys.key_pair_exists()

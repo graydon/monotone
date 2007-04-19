@@ -171,7 +171,7 @@ CMD(update, N_("workspace"), "",
           P(F("multiple update candidates:"));
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s") % describe_revision(app.db, *i));
           P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
@@ -179,7 +179,7 @@ CMD(update, N_("workspace"), "",
     }
   else
     {
-      complete(app, app.opts.revision_selectors[0](), chosen_rid);
+      complete(app.db, app.opts.revision_selectors[0](), chosen_rid);
       N(app.db.revision_exists(chosen_rid),
         F("no such revision '%s'") % chosen_rid);
     }
@@ -188,7 +188,7 @@ CMD(update, N_("workspace"), "",
   // do this notification before checking to see if we can bail out early,
   // because when you are at one of several heads, and you hit update, you
   // want to know that merging would let you update further.
-  notify_if_multiple_heads(app);
+  notify_if_multiple_heads(app.db);
 
   if (old_rid == chosen_rid)
     {
@@ -634,7 +634,7 @@ CMD(merge_into_workspace, N_("tree"),
     left = parent_cached_roster(parents.begin());
   }
 
-  complete(app, idx(args, 0)(), right_id);
+  complete(app.db, idx(args, 0)(), right_id);
   app.db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
@@ -700,8 +700,8 @@ CMD(explicit_merge, N_("tree"),
   if (args.size() != 3)
     throw usage(name);
 
-  complete(app, idx(args, 0)(), left);
-  complete(app, idx(args, 1)(), right);
+  complete(app.db, idx(args, 0)(), left);
+  complete(app.db, idx(args, 1)(), right);
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
@@ -722,8 +722,8 @@ CMD(show_conflicts, N_("informative"), N_("REV REV"),
   if (args.size() != 2)
     throw usage(name);
   revision_id l_id, r_id;
-  complete(app, idx(args,0)(), l_id);
-  complete(app, idx(args,1)(), r_id);                                                                    
+  complete(app.db, idx(args,0)(), l_id);
+  complete(app.db, idx(args,1)(), r_id);                                                                    
   N(!is_ancestor(l_id, r_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app.db),
@@ -775,7 +775,7 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
 
   if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), to_rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
@@ -790,10 +790,10 @@ CMD(pluck, N_("workspace"), N_("[-r FROM] -r TO [PATH...]"),
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), from_rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), from_rid);
       N(app.db.revision_exists(from_rid),
         F("no such revision '%s'") % from_rid);
-      complete(app, idx(app.opts.revision_selectors, 1)(), to_rid);
+      complete(app.db, idx(app.opts.revision_selectors, 1)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
     }
@@ -945,7 +945,7 @@ CMD(heads, N_("tree"), "", N_("show unmerged head revisions of branch"),
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
-    cout << describe_revision(app, *i) << '\n';
+    cout << describe_revision(app.db, *i) << '\n';
 }
 
 CMD(get_roster, N_("debug"), N_("[REVID]"),
@@ -1006,7 +1006,7 @@ CMD(get_roster, N_("debug"), N_("[REVID]"),
   else if (args.size() == 1)
     {
       revision_id rid;
-      complete(app, idx(args, 0)(), rid);
+      complete(app.db, idx(args, 0)(), rid);
       I(!null_id(rid));
       app.db.get_roster(rid, roster, mm);
     }

@@ -78,6 +78,7 @@ struct revision_t;
 struct query;
 class rev_height;
 struct date_t;
+struct project_t;
 
 class database
 {
@@ -604,8 +605,12 @@ public:
 
   utf8 const & get_opt_author();
   date_t const get_opt_date_or_cur_date();
+  bool has_opt_branch();
+  branch_name const & get_opt_branchname();
+  void set_opt_branchname(branch_name const & branchname);
 
   key_store & get_key_store();
+  project_t & get_project();
 };
 
 // Parent maps are used in a number of places to keep track of all the

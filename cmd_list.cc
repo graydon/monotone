@@ -50,7 +50,7 @@ ls_certs(string const & name, app_state & app, vector<utf8> const & args)
   transaction_guard guard(app.db, false);
 
   revision_id ident;
-  complete(app, idx(args, 0)(), ident);
+  complete(app.db, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
   // use the app.db version instead if no project is specified.
