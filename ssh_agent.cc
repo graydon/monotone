@@ -33,7 +33,7 @@ using std::vector;
  * The packet to ask for the keys that ssh-agent has is in this format:
  * u32     = 1
  * command = 11
- * 
+ *
  * The response packet:
  * u32 = length
  * data
@@ -310,7 +310,7 @@ ssh_agent::get_keys()
 
         } else
           L(FL("ssh_agent: ignoring key of type '%s'") % type);
-      
+
       //if (type == "ssh-dss")
       //  {
       //    L(FL("ssh_agent: DSA (ignoring)"));
@@ -390,9 +390,16 @@ ssh_agent::sign_data(RSA_PublicKey const & key,
   fetch_packet(packet_in);
 
   u32 packet_in_loc = 0;
+  /*
   E(packet_in.at(0) == 14,
     (F("ssh_agent: sign_data: packet_in type (%u) != 14")
      % (u32)packet_in.at(0)));
+  */
+  if (packet_in.at(0) != 14) {
+    L(FL("ssh_agent: sign_data: packet_in type (%u) != 14")
+      % (u32)packet_in.at(0));
+    return;
+  }
   packet_in_loc += 1;
 
   u32 full_sig_len;

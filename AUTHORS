@@ -290,7 +290,7 @@ retain copyrights on their portions of the work.
 ---
 
 The file ssh_agent.cc includes a translation of the GET_32BIT_MSB_FIRST
-define from PuTTY's misc.h. PuTTY is licened under an MIT-like license,
+define from PuTTY's misc.h. PuTTY is licensed under an MIT-like license,
 reproduced here:
 
 ---

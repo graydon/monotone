@@ -75,7 +75,7 @@ version control tools.
 * Hook Reference::      Functions which extend monotone
 * Special Topics::      Extra explanations and details
 * Default hooks::       The standard hook definitions
-* Index::               Index of concepts and functions
+* General Index::       Index of concepts and functions
 @end menu
 
 @ifnottex
@@ -10165,8 +10165,8 @@ default values for all hooks.
 
 @verbatiminclude std_hooks.lua
 
-@node Index
-@unnumbered Index
+@node General Index
+@unnumbered General Index
      
 @printindex cp
 

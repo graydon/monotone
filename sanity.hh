@@ -78,17 +78,17 @@ struct sanity {
                 char const * file, int line);
   void warning(i18n_format const & fmt,
                char const * file, int line);
-  NORETURN(void naughty_failure(std::string const & expr, i18n_format const & explain,
-                       std::string const & file, int line));
-  NORETURN(void error_failure(std::string const & expr, i18n_format const & explain,
-                     std::string const & file, int line));
-  NORETURN(void invariant_failure(std::string const & expr,
-                         std::string const & file, int line));
-  NORETURN(void index_failure(std::string const & vec_expr,
-                     std::string const & idx_expr,
+  NORETURN(void naughty_failure(char const * expr, i18n_format const & explain,
+                       char const * file, int line));
+  NORETURN(void error_failure(char const * expr, i18n_format const & explain,
+                     char const * file, int line));
+  NORETURN(void invariant_failure(char const * expr,
+                         char const * file, int line));
+  NORETURN(void index_failure(char const * vec_expr,
+                     char const * idx_expr,
                      unsigned long sz,
                      unsigned long idx,
-                     std::string const & file, int line));
+                     char const * file, int line));
   void gasp();
 
 private:

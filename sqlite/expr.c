@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.275 2007/02/07 13:09:46 drh Exp $
+** $Id: expr.c,v 1.284 2007/04/13 16:06:33 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -131,7 +131,7 @@ static char comparisonAffinity(Expr *pExpr){
     aff = sqlite3CompareAffinity(pExpr->pSelect->pEList->a[0].pExpr, aff);
   }
   else if( !aff ){
-    aff = SQLITE_AFF_NUMERIC;
+    aff = SQLITE_AFF_NONE;
   }
   return aff;
 }
@@ -404,7 +404,7 @@ void sqlite3ExprAssignVarNumber(Parse *pParse, Expr *pExpr){
       pExpr->iTable = ++pParse->nVar;
       if( pParse->nVarExpr>=pParse->nVarExprAlloc-1 ){
         pParse->nVarExprAlloc += pParse->nVarExprAlloc + 10;
-        sqliteReallocOrFree((void**)&pParse->apVarExpr,
+        pParse->apVarExpr = sqliteReallocOrFree(pParse->apVarExpr,
                        pParse->nVarExprAlloc*sizeof(pParse->apVarExpr[0]) );
       }
       if( !sqlite3MallocFailed() ){
@@ -1420,7 +1420,9 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
         int iParm = pExpr->iTable +  (((int)affinity)<<16);
         ExprList *pEList;
         assert( (pExpr->iTable&0x0000FFFF)==pExpr->iTable );
-        sqlite3Select(pParse, pExpr->pSelect, SRT_Set, iParm, 0, 0, 0, 0);
+        if( sqlite3Select(pParse, pExpr->pSelect, SRT_Set, iParm, 0, 0, 0, 0) ){
+          return;
+        }
         pEList = pExpr->pSelect->pEList;
         if( pEList && pEList->nExpr>0 ){ 
           keyInfo.aColl[0] = binaryCompareCollSeq(pParse, pExpr->pLeft,
@@ -1491,7 +1493,9 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
       }
       sqlite3ExprDelete(pSel->pLimit);
       pSel->pLimit = sqlite3Expr(TK_INTEGER, 0, 0, &one);
-      sqlite3Select(pParse, pSel, sop, iMem, 0, 0, 0, 0);
+      if( sqlite3Select(pParse, pSel, sop, iMem, 0, 0, 0, 0) ){
+        return;
+      }
       break;
     }
   }
@@ -1515,6 +1519,31 @@ static void codeInteger(Vdbe *v, const char *z, int n){
     sqlite3VdbeOp3(v, OP_Int64, 0, 0, z, n);
   }else{
     sqlite3VdbeOp3(v, OP_Real, 0, 0, z, n);
+  }
+}
+
+
+/*
+** Generate code that will extract the iColumn-th column from
+** table pTab and push that column value on the stack.  There
+** is an open cursor to pTab in iTable.  If iColumn<0 then
+** code is generated that extracts the rowid.
+*/
+void sqlite3ExprCodeGetColumn(Vdbe *v, Table *pTab, int iColumn, int iTable){
+  if( iColumn<0 ){
+    int op = (pTab && IsVirtual(pTab)) ? OP_VRowid : OP_Rowid;
+    sqlite3VdbeAddOp(v, op, iTable, 0);
+  }else if( pTab==0 ){
+    sqlite3VdbeAddOp(v, OP_Column, iTable, iColumn);
+  }else{
+    int op = IsVirtual(pTab) ? OP_VColumn : OP_Column;
+    sqlite3VdbeAddOp(v, op, iTable, iColumn);
+    sqlite3ColumnDefault(v, pTab, iColumn);
+#ifndef SQLITE_OMIT_FLOATING_POINT
+    if( pTab->aCol[iColumn].affinity==SQLITE_AFF_REAL ){
+      sqlite3VdbeAddOp(v, OP_RealAffinity, 0, 0);
+    }
+#endif
   }
 }
 
@@ -1558,21 +1587,8 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
         /* This only happens when coding check constraints */
         assert( pParse->ckOffset>0 );
         sqlite3VdbeAddOp(v, OP_Dup, pParse->ckOffset-pExpr->iColumn-1, 1);
-      }else if( pExpr->iColumn>=0 ){
-        Table *pTab = pExpr->pTab;
-        int iCol = pExpr->iColumn;
-        int op = (pTab && IsVirtual(pTab)) ? OP_VColumn : OP_Column;
-        sqlite3VdbeAddOp(v, op, pExpr->iTable, iCol);
-        sqlite3ColumnDefault(v, pTab, iCol);
-#ifndef SQLITE_OMIT_FLOATING_POINT
-        if( pTab && pTab->aCol[iCol].affinity==SQLITE_AFF_REAL ){
-          sqlite3VdbeAddOp(v, OP_RealAffinity, 0, 0);
-        }
-#endif
       }else{
-        Table *pTab = pExpr->pTab;
-        int op = (pTab && IsVirtual(pTab)) ? OP_VRowid : OP_Rowid;
-        sqlite3VdbeAddOp(v, op, pExpr->iTable, 0);
+        sqlite3ExprCodeGetColumn(v, pExpr->pTab, pExpr->iColumn, pExpr->iTable);
       }
       break;
     }
@@ -2175,6 +2191,16 @@ void sqlite3ExprIfFalse(Parse *pParse, Expr *pExpr, int dest, int jumpIfNull){
 /*
 ** Do a deep comparison of two expression trees.  Return TRUE (non-zero)
 ** if they are identical and return FALSE if they differ in any way.
+**
+** Sometimes this routine will return FALSE even if the two expressions
+** really are equivalent.  If we cannot prove that the expressions are
+** identical, we return FALSE just to be safe.  So if this routine
+** returns false, then you do not really know for certain if the two
+** expressions are the same.  But if you get a TRUE return, then you
+** can be sure the expressions are the same.  In the places where
+** this routine is used, it does not hurt to get an extra FALSE - that
+** just might result in some slightly slower code.  But returning
+** an incorrect TRUE could lead to a malfunction.
 */
 int sqlite3ExprCompare(Expr *pA, Expr *pB){
   int i;
@@ -2198,7 +2224,7 @@ int sqlite3ExprCompare(Expr *pA, Expr *pB){
   }
   if( pA->pSelect || pB->pSelect ) return 0;
   if( pA->iTable!=pB->iTable || pA->iColumn!=pB->iColumn ) return 0;
-  if( pA->token.z ){
+  if( pA->op!=TK_COLUMN && pA->token.z ){
     if( pB->token.z==0 ) return 0;
     if( pB->token.n!=pA->token.n ) return 0;
     if( sqlite3StrNICmp((char*)pA->token.z,(char*)pB->token.z,pB->token.n)!=0 ){
@@ -2215,10 +2241,14 @@ int sqlite3ExprCompare(Expr *pA, Expr *pB){
 */
 static int addAggInfoColumn(AggInfo *pInfo){
   int i;
-  i = sqlite3ArrayAllocate((void**)&pInfo->aCol, sizeof(pInfo->aCol[0]), 3);
-  if( i<0 ){
-    return -1;
-  }
+  pInfo->aCol = sqlite3ArrayAllocate(
+       pInfo->aCol,
+       sizeof(pInfo->aCol[0]),
+       3,
+       &pInfo->nColumn,
+       &pInfo->nColumnAlloc,
+       &i
+  );
   return i;
 }    
 
@@ -2228,10 +2258,14 @@ static int addAggInfoColumn(AggInfo *pInfo){
 */
 static int addAggInfoFunc(AggInfo *pInfo){
   int i;
-  i = sqlite3ArrayAllocate((void**)&pInfo->aFunc, sizeof(pInfo->aFunc[0]), 2);
-  if( i<0 ){
-    return -1;
-  }
+  pInfo->aFunc = sqlite3ArrayAllocate(
+       pInfo->aFunc,
+       sizeof(pInfo->aFunc[0]),
+       3,
+       &pInfo->nFunc,
+       &pInfo->nFuncAlloc,
+       &i
+  );
   return i;
 }    
 
@@ -2266,15 +2300,17 @@ static int analyzeAggregate(void *pArg, Expr *pExpr){
             ** Make an entry for the column in pAggInfo->aCol[] if there
             ** is not an entry there already.
             */
+            int k;
             pCol = pAggInfo->aCol;
-            for(i=0; i<pAggInfo->nColumn; i++, pCol++){
+            for(k=0; k<pAggInfo->nColumn; k++, pCol++){
               if( pCol->iTable==pExpr->iTable &&
                   pCol->iColumn==pExpr->iColumn ){
                 break;
               }
             }
-            if( i>=pAggInfo->nColumn && (i = addAggInfoColumn(pAggInfo))>=0 ){
-              pCol = &pAggInfo->aCol[i];
+            if( k>=pAggInfo->nColumn && (k = addAggInfoColumn(pAggInfo))>=0 ){
+              pCol = &pAggInfo->aCol[k];
+              pCol->pTab = pExpr->pTab;
               pCol->iTable = pExpr->iTable;
               pCol->iColumn = pExpr->iColumn;
               pCol->iMem = pParse->nMem++;
@@ -2305,7 +2341,7 @@ static int analyzeAggregate(void *pArg, Expr *pExpr){
             */
             pExpr->pAggInfo = pAggInfo;
             pExpr->op = TK_AGG_COLUMN;
-            pExpr->iAgg = i;
+            pExpr->iAgg = k;
             break;
           } /* endif pExpr->iTable==pItem->iCursor */
         } /* end loop over pSrcList */
