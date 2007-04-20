@@ -214,8 +214,6 @@ cpp_main(int argc, char ** argv)
       try
         {
           commands::command_id cmd = read_options(app.opts, args);
-          // XXX Remove cmdstr
-          string cmdstr = cmd.size() > 0 ? (*(cmd.begin()))() : "";
 
           if (app.opts.version_given)
             {
@@ -268,7 +266,7 @@ cpp_main(int argc, char ** argv)
             }
           else
             {
-              return commands::process(app, cmdstr, app.opts.args);
+              return commands::process(app, cmd, app.opts.args);
             }
         }
       catch (option::option_error const & e)

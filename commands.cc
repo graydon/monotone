@@ -606,24 +606,38 @@ namespace commands
       }
   }
 
-  int process(app_state & app, string const & name, args_vector const & args)
+  // XXX Must go away.
+  int process(app_state & app, string const & cmd,
+              args_vector const & args)
   {
-    command * cmd = NULL;
+    args_vector a1, a2;
+    a1.push_back(arg_type("merge_into_dir"));
+    command_id ident;
+    ident = commands::complete_command(a1, a2);
+    return process(app, ident, args);
+  }
+
+  int process(app_state & app, command_id const & ident,
+              args_vector const & args)
+  {
+    vector< utf8 > rest;
+    command * cmd = CMD_REF(public)->find_child_by_components(ident, rest);
+    I(rest.size() == 0);
     if (cmd != NULL)
       {
-        L(FL("executing command '%s'") % name);
+        L(FL("executing command '%s'") % join_words(ident));
 
         // at this point we process the data from _MTN/options if
         // the command needs it.
         if (cmd->use_workspace_options())
           app.process_options();
 
-        cmd->exec(app, "foo", args);
+        cmd->exec(app, join_words(ident)(), args); // XXX
         return 0;
       }
     else
       {
-        P(F("unknown command '%s'") % name);
+        P(F("unknown command '%s'") % join_words(ident));
         return 1;
       }
   }

@@ -26,7 +26,9 @@ namespace commands {
   void explain_usage(std::string const & cmd, std::ostream & out);
   command_id complete_command(args_vector const & args,
                               args_vector & rest);
-  int process(app_state & app, std::string const & cmd,
+  int process(app_state & app, std::string const & ident,
+              args_vector const & args);
+  int process(app_state & app, command_id const & ident,
               args_vector const & args);
   options::options_type command_options(args_vector const & cmdline);
   options::options_type toplevel_command_options(std::string const & cmd);
