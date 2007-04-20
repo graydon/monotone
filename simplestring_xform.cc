@@ -243,6 +243,26 @@ UNIT_TEST(simplestring_xform, join_lines)
   BOOST_CHECK(joined == "hi\nthere\nuser\n");
 }
 
+UNIT_TEST(simplestring_xform, join_words)
+{
+  vector< utf8 > s;
+
+  s.clear();
+  s.push_back(utf8("a"));
+  BOOST_CHECK(join_words(s)() == "a");
+
+  s.clear();
+  s.push_back(utf8("a"));
+  s.push_back(utf8("b"));
+  BOOST_CHECK(join_words(s)() == "a b");
+
+  s.clear();
+  s.push_back(utf8("a"));
+  s.push_back(utf8("b"));
+  s.push_back(utf8("c"));
+  BOOST_CHECK(join_words(s)() == "a b c");
+}
+
 UNIT_TEST(simplestring_xform, split_into_words)
 {
   vector<string> words;

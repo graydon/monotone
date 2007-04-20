@@ -1,9 +1,7 @@
 #ifndef __SIMPLESTRING_XFORM_HH__
 #define __SIMPLESTRING_XFORM_HH__
 
-#include <iterator>
 #include <vector>
-#include <sstream>
 #include <string>
 
 class utf8;
@@ -30,9 +28,14 @@ std::vector< utf8 > split_into_words(utf8 const & in);
 template< class T >
 T join_words(std::vector< T > const & in)
 {
-  std::ostringstream oss;
-  copy(in.begin(), in.end(), std::ostream_iterator< T >(oss, " "));
-  return T(oss.str());
+  std::string str;
+  for (typename std::vector< T >::size_type i = 0; i < in.size(); i++)
+    {
+      str += in[i]();
+      if (i + 1 < in.size())
+        str += ' ';
+    }
+  return T(str);
 }
 
 void prefix_lines_with(std::string const & prefix,
