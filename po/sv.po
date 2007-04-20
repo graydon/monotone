@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-13 15:11+0200\n"
-"PO-Revision-Date: 2007-04-13 15:14+0200\n"
+"POT-Creation-Date: 2007-04-20 05:03+0200\n"
+"PO-Revision-Date: 2007-04-20 05:04+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -200,7 +200,8 @@ msgstr "visualisera revisionsträdet med i ASCII"
 #: automate.cc:1145 automate.cc:1172 automate.cc:1206 automate.cc:1318
 #: automate.cc:1408 automate.cc:1467 automate.cc:1516 automate.cc:1575
 #: automate.cc:1624 automate.cc:1674 automate.cc:1728 automate.cc:1758
-#: automate.cc:1781 cmd_files.cc:285 cmd_files.cc:308 cmd_list.cc:678
+#: automate.cc:1781 cmd_files.cc:221 cmd_files.cc:314 cmd_files.cc:337
+#: cmd_list.cc:678
 #, c-format
 msgid "wrong argument count"
 msgstr "felaktigt antal givna argument"
@@ -215,7 +216,7 @@ msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:335
 #: automate.cc:370 automate.cc:374 automate.cc:434 automate.cc:459
-#: automate.cc:1213 cmd_list.cc:685 revision.cc:1813
+#: automate.cc:1213 cmd_list.cc:685 revision.cc:1782
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
@@ -228,8 +229,8 @@ msgstr "[REV1 [REV2 [REV3 [...]]]]"
 msgid "FILE"
 msgstr "FIL"
 
-#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:263
-#: cmd_files.cc:318 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
+#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:292
+#: cmd_files.cc:347 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr "detta kommando kan enbart användas i en arbetskopia med en förälder"
@@ -250,7 +251,7 @@ msgstr "NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]"
 msgid "no arguments needed"
 msgstr "inga argument behövs"
 
-#: automate.cc:428 automate.cc:453 cmd_list.cc:675 revision.cc:1807
+#: automate.cc:428 automate.cc:453 cmd_list.cc:675 revision.cc:1776
 msgid "REV"
 msgstr "REV"
 
@@ -270,14 +271,14 @@ msgstr "REVID"
 
 #: automate.cc:1100 automate.cc:1126 automate.cc:1181 automate.cc:1183
 #: automate.cc:1735 cmd_db.cc:37 cmd_diff_log.cc:396 cmd_diff_log.cc:423
-#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:224 cmd_merging.cc:184
+#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:253 cmd_merging.cc:184
 #: cmd_merging.cc:780 cmd_merging.cc:795 cmd_merging.cc:798 cmd_netsync.cc:316
 #: cmd_ws_commit.cc:527 cmd_ws_commit.cc:987 commands.cc:407
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1142 cmd_files.cc:282
+#: automate.cc:1142 cmd_files.cc:311
 msgid "FILEID"
 msgstr "FILID"
 
@@ -339,7 +340,7 @@ msgstr "REV1 FIL REV2"
 msgid "[FILEID] CONTENTS"
 msgstr "[FILID] INNEHÅLL"
 
-#: automate.cc:1641 cmd_files.cc:212
+#: automate.cc:1641 cmd_files.cc:241
 #, c-format
 msgid "no file version %s found in database"
 msgstr "filversionen %s finns inte i databasen"
@@ -400,7 +401,7 @@ msgstr "tillitsfunktionen ogillar %d signerare av certet %s i revisionen %s"
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "den beräknade kontrollsumman '%s' på certet skiljer sig ifrån '%s'"
 
-#: cert.cc:389 keys.cc:662
+#: cert.cc:389 keys.cc:668
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "nyckelparet '%s' finns inte i katalogen '%s'"
@@ -544,7 +545,7 @@ msgid "no var with name %s in domain %s"
 msgstr "det finns inga variabler med namnet %s i domänen %s"
 
 #: cmd_db.cc:157 cmd_diff_log.cc:471 cmd_diff_log.cc:600 cmd_files.cc:117
-#: cmd_files.cc:247 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
+#: cmd_files.cc:276 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
 #: commands.cc:284
 msgid "informative"
 msgstr "informativ"
@@ -707,7 +708,7 @@ msgstr "källans filidentitet finns inte"
 msgid "destination file id does not exist"
 msgstr "målets filidentitet finns inte"
 
-#: cmd_files.cc:117
+#: cmd_files.cc:117 cmd_files.cc:218
 msgid "PATH"
 msgstr "SÖKVÄG"
 
@@ -747,16 +748,21 @@ msgstr "[SÖKVÄG]"
 msgid "calculate identity of PATH or stdin"
 msgstr "räkna ut identiteten för SÖKVÄG eller stdin"
 
-#: cmd_files.cc:237 cmd_files.cc:241
+#: cmd_files.cc:226
+#, c-format
+msgid "Cannot read from stdin"
+msgstr "Kan inte läsa från stdin"
+
+#: cmd_files.cc:266 cmd_files.cc:270
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "filen '%s' finns inte i revisionen '%s'"
 
-#: cmd_files.cc:248 cmd_files.cc:305
+#: cmd_files.cc:277 cmd_files.cc:334
 msgid "FILENAME"
 msgstr "FILNAMN"
 
-#: cmd_files.cc:249
+#: cmd_files.cc:278
 msgid "write file from database to stdout"
 msgstr "skriv ut angiven fil från databasen"
 
@@ -2573,17 +2579,17 @@ msgstr "certrevision '%s' finns inte i databasen"
 msgid "dropping cert"
 msgstr "slänger cert"
 
-#: database.cc:3387
+#: database.cc:3317
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:3397
+#: database.cc:3327
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:3415
+#: database.cc:3345
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -2596,17 +2602,17 @@ msgstr ""
 "Det är en arbetskopia.  Du kanske menade: \n"
 "%s"
 
-#: database.cc:3420
+#: database.cc:3350
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:3430
+#: database.cc:3360
 #, c-format
 msgid "database %s already exists"
 msgstr "databasen %s finns redan"
 
-#: database.cc:3435
+#: database.cc:3365
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2835,12 +2841,12 @@ msgstr ""
 "Du har valt att enbart signera med hjälp av ssh-agent, men den tycks inte "
 "vara igång."
 
-#: keys.cc:425
+#: keys.cc:431
 #, c-format
 msgid "You don't seem to have your monotone key imported "
 msgstr "Du verkar inte ha importerat din monotonenyckel "
 
-#: keys.cc:472
+#: keys.cc:478
 #, c-format
 msgid ""
 "make_signature: ssh signature (%i) != monotone signature (%i)\n"
@@ -2851,12 +2857,12 @@ msgstr ""
 "sshsignatur     : %s\n"
 "monotonesignatur: %s"
 
-#: keys.cc:487
+#: keys.cc:493
 #, c-format
 msgid "make_signature: signature is not valid"
 msgstr "make_signature: signaturen är ogiltig"
 
-#: keys.cc:672
+#: keys.cc:678
 #, c-format
 msgid "passphrase for '%s' is incorrect"
 msgstr "lösen för '%s' stämmer inte"
@@ -3822,26 +3828,26 @@ msgstr "konverterar existerande revisionsgraf till nya revisioner i liststil"
 msgid "rebuilding revision graph from manifest certs"
 msgstr "bygger om revisionsgrafen från manifestcert"
 
-#: revision.cc:1776
+#: revision.cc:1745
 #, c-format
 msgid "regenerating cached rosters and heights"
 msgstr "återskapar cachade listor och höjder"
 
-#: revision.cc:1788
+#: revision.cc:1757
 msgid "regenerated"
 msgstr "omgjorda"
 
-#: revision.cc:1804
+#: revision.cc:1773
 #, c-format
 msgid "finished regenerating cached rosters and heights"
 msgstr "färdig med återskapandet av cachade listor och höjder"
 
-#: revision.cc:1816
+#: revision.cc:1785
 #, c-format
 msgid "cached height: %s"
 msgstr "cachade höjder: %s"
 
-#: revision.cc:1899
+#: revision.cc:1868
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -3879,7 +3885,7 @@ msgstr "allvarligt fel: formatering misslyckades vid %s:%d: %s"
 msgid "misuse: "
 msgstr "missbruk: "
 
-#: sanity.cc:239
+#: sanity.cc:238
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: invariant '%s' ej uppfylld"
