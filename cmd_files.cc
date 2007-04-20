@@ -205,6 +205,35 @@ CMD(identify, N_("debug"), N_("[PATH]"),
   cout << ident << '\n';
 }
 
+// Name: identify
+// Arguments:
+//   1: a file path
+// Added in: 4.2
+// Purpose: Prints the fileid of the given file (aka hash)
+//
+// Output format: a single, 40 byte long hex-encoded id
+//
+// Error conditions: If the file path doesn't point to a valid file prints
+// an error message to stderr and exits with status 1.
+AUTOMATE(identify, N_("PATH"), options::opts::none)
+{
+  N(args.size() == 1,
+    F("wrong argument count"));
+  
+  utf8 path = idx(args, 0);
+  
+  N(path() != "-",
+    F("Cannot read from stdin"));
+  
+  data dat;
+  read_data_for_command_line(path, dat);
+  
+  hexenc<id> ident;
+  calculate_ident(dat, ident);
+  
+  output << ident << '\n';
+}
+
 static void
 dump_file(std::ostream & output, app_state & app, file_id & ident)
 {
