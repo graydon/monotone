@@ -25,7 +25,7 @@ CMD(pubkey, "", CMD_REF(packet_io), N_("ID"),
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(ident());
 
   rsa_keypair_id ident(idx(args, 0)());
   bool exists(false);
@@ -55,7 +55,7 @@ CMD(privkey, "", CMD_REF(packet_io), N_("ID"),
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(ident());
 
   rsa_keypair_id ident(idx(args, 0)());
   N(app.keys.key_pair_exists(ident),

@@ -53,7 +53,7 @@ CMD(certs, "", CMD_REF(list), "ID",
     options::opts::depth | options::opts::exclude)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(ident());
 
   vector<cert> certs;
 
@@ -161,7 +161,7 @@ CMD(keys, "", CMD_REF(list), "[PATTERN]",
   if (args.size() == 1)
     pattern = idx(args, 0)();
   else if (args.size() > 1)
-    throw usage(name);
+    throw usage(ident());
 
   if (app.db.database_specified())
     {
@@ -254,7 +254,7 @@ CMD(branches, "", CMD_REF(list), "[PATTERN]",
   if (args.size() == 1)
     inc = globish(idx(args,0)());
   else if (args.size() > 1)
-    throw usage(name);
+    throw usage(ident());
   vector<globish> excludes;
   typecast_vocab_container(app.opts.exclude_patterns, excludes);
   combine_and_check_globish(excludes, exc);
@@ -335,7 +335,7 @@ CMD(vars, "", CMD_REF(list), "[DOMAIN]",
       internalize_var_domain(idx(args, 0), filter);
     }
   else
-    throw usage(name);
+    throw usage(ident());
 
   map<var_key, var_value> vars;
   app.db.get_vars(vars);

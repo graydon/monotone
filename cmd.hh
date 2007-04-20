@@ -198,7 +198,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                args_vector const & args)             \
 {                                                                    \
   if (args.size() == 0)                                              \
-    throw usage(name);                                               \
+    throw usage(ident());                                            \
                                                                      \
   args_vector::const_iterator i = args.begin();                      \
   ++i;                                                               \
@@ -206,7 +206,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
   /* XXX Command completion... */ \
   /*command * child = find_command(this, idx(args, 0)());              \
   if (child == NULL)                                                 \
-    throw usage(name);                                               \
+    throw usage(ident());                                            \
   else                                                               \
     child->exec(app, idx(args, 0)(), removed); */                      \
 }

@@ -50,7 +50,7 @@ CMD(fmerge, "", CMD_REF(debug), N_("<parent> <left> <right>"),
     options::opts::none)
 {
   if (args.size() != 3)
-    throw usage(name);
+    throw usage(ident());
 
   file_id 
     anc_id(idx(args, 0)()), 
@@ -88,7 +88,7 @@ CMD(fdiff, "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
     options::opts::diff_options)
 {
   if (args.size() != 4)
-    throw usage(name);
+    throw usage(ident());
 
   string const
     & src_name = idx(args, 0)(),
@@ -131,7 +131,7 @@ CMD(annotate, "", CMD_REF(informative), N_("PATH"),
     app.require_workspace();
 
   if ((args.size() != 1) || (app.opts.revision_selectors.size() > 1))
-    throw usage(name);
+    throw usage(ident());
 
   file_path file = file_path_external(idx(args, 0));
   split_path sp;
@@ -196,7 +196,7 @@ CMD(identify, "", CMD_REF(debug), N_("[PATH]"),
     options::opts::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
-    throw usage(name);
+    throw usage(ident());
 
   data dat;
 
@@ -261,7 +261,7 @@ CMD(cat, "", CMD_REF(informative),
     options::opts::revision)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(ident());
 
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)

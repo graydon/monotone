@@ -244,7 +244,7 @@ cpp_main(int argc, char ** argv)
           // stop here if they asked for help
           if (app.opts.help)
             {
-              throw usage(cmdstr);     // cmd may be empty, and that's fine.
+              throw usage(cmd);
             }
 
           // at this point we allow a workspace (meaning search for it
@@ -264,7 +264,7 @@ cpp_main(int argc, char ** argv)
           // sub-command w/ remaining args
           if (cmd.empty())
             {
-              throw usage("");
+              throw usage(commands::command_id());
             }
           else
             {
@@ -286,6 +286,7 @@ cpp_main(int argc, char ** argv)
           usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
           usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << '\n';
 
+/* XXX
           // Make sure to hide documentation that's not part of
           // the current command.
           options::options_type cmd_options = commands::toplevel_command_options(u.which);
@@ -296,6 +297,7 @@ cpp_main(int argc, char ** argv)
             }
 
           commands::explain_usage(u.which, usage_stream);
+          */
           if (app.opts.help)
             return 0;
           else

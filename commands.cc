@@ -671,7 +671,7 @@ CMD(help, "", CMD_REF(informative), N_("command [ARGS...]"),
   if (args.size() < 1)
     {
       app.opts.help = true;
-      throw usage("");
+      throw usage(command_id());
     }
 
 /*
@@ -710,7 +710,7 @@ CMD(crash, "", CMD_REF(hidden), "{ N | E | I | exception | signal }",
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(ident());
   bool spoon_exists(false);
   if (idx(args,0)() == "N")
     N(spoon_exists, i18n_format("There is no spoon."));
@@ -753,7 +753,7 @@ CMD(crash, "", CMD_REF(hidden), "{ N | E | I | exception | signal }",
         { // fall through and throw usage
         }
 #endif
-      throw usage(name);
+      throw usage(ident());
     }
 #undef maybe_throw
 #undef maybe_throw_bare

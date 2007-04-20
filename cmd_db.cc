@@ -89,7 +89,7 @@ CMD(db, "", CMD_REF(database),
       else if (idx(args, 0)() == "regenerate_caches")
         regenerate_caches(app);
       else
-        throw usage(name);
+        throw usage(ident());
     }
   else if (args.size() == 2)
     {
@@ -104,7 +104,7 @@ CMD(db, "", CMD_REF(database),
       else if (idx(args, 0)() == "kill_tag_locally")
         app.db.delete_tag_named(cert_value(idx(args, 1)()));
       else
-        throw usage(name);
+        throw usage(ident());
     }
   else if (args.size() == 3)
     {
@@ -117,10 +117,10 @@ CMD(db, "", CMD_REF(database),
           app.db.set_epoch(branch_name(idx(args, 1)()), ed);
         }
       else
-        throw usage(name);
+        throw usage(ident());
     }
   else
-    throw usage(name);
+    throw usage(ident());
 }
 
 CMD(set, "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
@@ -131,7 +131,7 @@ CMD(set, "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
     options::opts::none)
 {
   if (args.size() != 3)
-    throw usage(name);
+    throw usage(ident());
 
   var_domain d;
   var_name n;
@@ -149,7 +149,7 @@ CMD(unset, "", CMD_REF(variables), N_("DOMAIN NAME"),
     options::opts::none)
 {
   if (args.size() != 2)
-    throw usage(name);
+    throw usage(ident());
 
   var_domain d;
   var_name n;
@@ -167,7 +167,7 @@ CMD(complete, "", CMD_REF(informative), N_("(revision|file|key) PARTIAL-ID"),
     options::opts::verbose)
 {
   if (args.size() != 2)
-    throw usage(name);
+    throw usage(ident());
 
   bool verbose = app.opts.verbose;
 
@@ -207,7 +207,7 @@ CMD(complete, "", CMD_REF(informative), N_("(revision|file|key) PARTIAL-ID"),
         }
     }
   else
-    throw usage(name);
+    throw usage(ident());
 }
 
 CMD(test_migration_step, "", CMD_REF(hidden), "SCHEMA",
@@ -217,7 +217,7 @@ CMD(test_migration_step, "", CMD_REF(hidden), "SCHEMA",
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(ident());
   app.db.test_migration_step(idx(args,0)());
 }
 

@@ -47,7 +47,7 @@ find_automation(arg_type const & name, string const & root_cmd_name)
   map<string, automation::automate * const>::const_iterator
     i = automation::automations->find(name());
   if (i == automation::automations->end())
-    throw usage(root_cmd_name);
+    throw usage(commands::command_id()); // XXX root_cmd_name
   else
     return *(i->second);
 }
@@ -383,7 +383,7 @@ CMD_WITH_SUBCMDS(automate, "", CMD_REF(automation),
                  options::opts::none)
 {
   if (args.size() == 0)
-    throw usage(name);
+    throw usage(ident());
 
   args_vector::const_iterator i = args.begin();
   arg_type cmd = *i;

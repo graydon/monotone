@@ -1779,7 +1779,7 @@ CMD(rev_height, "", CMD_REF(hidden), N_("REV"),
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(ident());
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   rev_height height;
