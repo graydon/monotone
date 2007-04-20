@@ -127,12 +127,13 @@ void localize_monotone()
 // read command-line options and return the command name
 commands::command_id read_options(options & opts, args_vector args)
 {
+  commands::command_id cmd;
+
   option::concrete_option_set optset =
     options::opts::all_options().instantiate(&opts);
   optset.from_command_line(args);
 
   // consume the command, and perform completion if necessary
-  commands::command_id cmd;
   if (!opts.args.empty())
     {
       args_vector rest;
@@ -151,7 +152,11 @@ commands::command_id read_options(options & opts, args_vector args)
   optset.from_command_line(args, false);
 
   if (!opts.args.empty())
-    opts.args.erase(opts.args.begin());
+    {
+      I(opts.args.size() >= cmd.size());
+      for (args_vector::size_type i = 0; i < cmd.size(); i++)
+        opts.args.erase(opts.args.begin());
+    }
 
   return cmd;
 }

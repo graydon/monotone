@@ -198,9 +198,12 @@ namespace commands {
   {
     command_id i;
 
-    if (parent() != NULL)
-      i = parent()->ident();
-    i.push_back(primary_name());
+    // XXX public must go away
+    if (this != CMD_REF(the_root) && this != CMD_REF(public))
+      {
+        i = parent()->ident();
+        i.push_back(primary_name());
+      }
 
     return i;
   }
