@@ -135,8 +135,7 @@ commands::command_id read_options(options & opts, args_vector args)
   commands::command_id cmd;
   if (!opts.args.empty())
     {
-      vector<utf8> args(args.begin(), args.end()); // XXX
-      vector<utf8> rest;
+      args_vector rest;
       cmd = commands::complete_command(args, rest);
       N(!cmd.empty(),
         F("unknown command '%s'") % join_words(args)());

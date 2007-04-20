@@ -30,8 +30,8 @@ namespace commands {
   typedef std::vector< utf8 > command_id;
 
   void explain_usage(std::string const & cmd, std::ostream & out);
-  command_id complete_command(std::vector< utf8 > const & args,
-                              std::vector< utf8 > & rest);
+  command_id complete_command(args_vector const & args,
+                              args_vector & rest);
   int process(app_state & app, std::string const & cmd,
               args_vector const & args);
   options::options_type command_options(args_vector const & cmdline);

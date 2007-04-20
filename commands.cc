@@ -375,13 +375,17 @@ namespace std
 namespace commands
 {
   command_id
-  complete_command(vector< utf8 > const & args,
-                   vector< utf8 > & rest)
+  complete_command(args_vector const & args,
+                   args_vector & rest)
   {
     command * root = CMD_REF(public);
     I(root != NULL);
 
-    command * cmd = root->find_child_by_components(args, rest);
+    vector< utf8 > utf8args(args.begin(), args.end());
+    vector< utf8 > utf8rest;
+
+    command * cmd = root->find_child_by_components(utf8args, utf8rest);
+    rest = args_vector(utf8rest.begin(), utf8rest.end());
     I(cmd != NULL);
     return cmd->ident();
   }
