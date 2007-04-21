@@ -4,6 +4,9 @@
 
         Changes
 
+        - 'mkdir --no-respect-ignore PATH' now really skips any
+          ignore directives from .mtn-ignore or Lua hooks
+
         New features
 
         - 'automate identify', an automate version of 'mtn identify'.
