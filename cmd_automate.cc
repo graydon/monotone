@@ -61,7 +61,7 @@ automate_command(arg_type cmd, args_vector args,
   find_automation(cmd, root_cmd_name).run(args, root_cmd_name, app, output);
 }
 
-static string const interface_version = "4.1";
+static string const interface_version = "4.2";
 
 // Name: interface_version
 // Arguments: none

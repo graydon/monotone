@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Monotone 0.33\n"
+"Project-Id-Version: Monotone 0.35\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-14 16:35-0300\n"
-"PO-Revision-Date: 2007-04-14 16:37-0300\n"
+"POT-Creation-Date: 2007-04-20 15:40-0300\n"
+"PO-Revision-Date: 2007-04-20 15:40-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -60,7 +60,8 @@ msgstr "exibe uma representação ASCII do grafo"
 #: automate.cc:1145 automate.cc:1172 automate.cc:1206 automate.cc:1318
 #: automate.cc:1408 automate.cc:1467 automate.cc:1516 automate.cc:1575
 #: automate.cc:1624 automate.cc:1674 automate.cc:1728 automate.cc:1758
-#: automate.cc:1781 cmd_files.cc:285 cmd_files.cc:308 cmd_list.cc:678
+#: automate.cc:1781 cmd_files.cc:221 cmd_files.cc:314 cmd_files.cc:337
+#: cmd_list.cc:678
 #, c-format
 msgid "wrong argument count"
 msgstr "número errado de argumentos"
@@ -88,8 +89,8 @@ msgstr "[VER1 [VER2 [VER3 [...]]]]"
 msgid "FILE"
 msgstr "ARQUIVO"
 
-#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:263
-#: cmd_files.cc:318 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
+#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:292
+#: cmd_files.cc:347 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr ""
@@ -132,14 +133,14 @@ msgstr "VERSÂO"
 
 #: automate.cc:1100 automate.cc:1126 automate.cc:1181 automate.cc:1183
 #: automate.cc:1735 cmd_db.cc:37 cmd_diff_log.cc:396 cmd_diff_log.cc:423
-#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:224 cmd_merging.cc:184
+#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:253 cmd_merging.cc:184
 #: cmd_merging.cc:780 cmd_merging.cc:795 cmd_merging.cc:798 cmd_netsync.cc:316
 #: cmd_ws_commit.cc:527 cmd_ws_commit.cc:987 commands.cc:407
 #, c-format
 msgid "no such revision '%s'"
 msgstr "versão '%s' não existe"
 
-#: automate.cc:1142 cmd_files.cc:282
+#: automate.cc:1142 cmd_files.cc:311
 msgid "FILEID"
 msgstr "ID-ARQUIVO"
 
@@ -201,7 +202,7 @@ msgstr "VER1 ARQUIVO VER2"
 msgid "[FILEID] CONTENTS"
 msgstr "[ID-DO-ARQUIVO] CONTEÚDO"
 
-#: automate.cc:1641 cmd_files.cc:212
+#: automate.cc:1641 cmd_files.cc:241
 #, c-format
 msgid "no file version %s found in database"
 msgstr "nenhuma versão %s do arquivo achada no banco de dados"
@@ -417,7 +418,7 @@ msgid "no var with name %s in domain %s"
 msgstr "nenhuma variável com nome %s no domínio %s"
 
 #: cmd_db.cc:157 cmd_diff_log.cc:471 cmd_diff_log.cc:600 cmd_files.cc:117
-#: cmd_files.cc:247 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
+#: cmd_files.cc:276 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
 #: commands.cc:284
 msgid "informative"
 msgstr "informativo"
@@ -580,7 +581,7 @@ msgstr "identificador do arquivo de origem não existe"
 msgid "destination file id does not exist"
 msgstr "identificador do arquivo de destino não existe"
 
-#: cmd_files.cc:117
+#: cmd_files.cc:117 cmd_files.cc:218
 msgid "PATH"
 msgstr "CAMINHO"
 
@@ -620,16 +621,21 @@ msgstr "[CAMINHO]"
 msgid "calculate identity of PATH or stdin"
 msgstr "calcula identidade do CAMINHO ou stdin"
 
-#: cmd_files.cc:237 cmd_files.cc:241
+#: cmd_files.cc:226
+#, c-format
+msgid "Cannot read from stdin"
+msgstr "Erro lendo da entrada padrão"
+
+#: cmd_files.cc:266 cmd_files.cc:270
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "nenhum arquivo '%s' encontrado na versão '%s'"
 
-#: cmd_files.cc:248 cmd_files.cc:305
+#: cmd_files.cc:277 cmd_files.cc:334
 msgid "FILENAME"
 msgstr "ARQUIVO"
 
-#: cmd_files.cc:249
+#: cmd_files.cc:278
 msgid "write file from database to stdout"
 msgstr "escreve arquivo do banco de dados em stdout"
 
@@ -3750,7 +3756,7 @@ msgstr "fatal: formatador falhou em %s:%d: %s"
 msgid "misuse: "
 msgstr "mal-uso:"
 
-#: sanity.cc:239
+#: sanity.cc:238
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: invariante '%s' violada"
@@ -4444,4 +4450,3 @@ msgstr ""
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "esta área de trabalho está no formato atual, nenhuma migração é necessária"
-

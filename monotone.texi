@@ -6178,6 +6178,40 @@ None.
 
 @end table
 
+@item mtn automate identify @var{path}
+
+@table @strong
+@item Arguments:
+
+A file path.
+
+@item Added in:
+
+4.2
+
+@item Purpose:
+
+Prints the file ID (aka hash) of the given file.
+
+@item Sample output:
+
+@verbatim
+6265ab1312fbe38bdc3aafa92441139cb2b779b0
+@end verbatim
+
+@item Output format:
+
+A single line with the file's ID, in hexadecimal, followed by a newline.
+
+@item Error conditions:
+
+If the file does not exists, is a special file or not readable, prints an
+error message to stderr and exists with status 1. A single file path only
+consisting of "-" is disallowed since it collides with the UNIX stdin
+marker.
+
+@end table
+
 @item mtn automate inventory
 
 @table @strong

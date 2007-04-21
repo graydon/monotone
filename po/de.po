@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-10 11:00+0200\n"
+"POT-Creation-Date: 2007-04-20 21:10+0200\n"
 "PO-Revision-Date: 2007-03-06 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -87,7 +87,8 @@ msgstr "gibt eine ASCII-Repräsentation des Graphen aus"
 #: automate.cc:1145 automate.cc:1172 automate.cc:1206 automate.cc:1318
 #: automate.cc:1408 automate.cc:1467 automate.cc:1516 automate.cc:1575
 #: automate.cc:1624 automate.cc:1674 automate.cc:1728 automate.cc:1758
-#: automate.cc:1781 cmd_files.cc:285 cmd_files.cc:308 cmd_list.cc:678
+#: automate.cc:1781 cmd_files.cc:221 cmd_files.cc:314 cmd_files.cc:337
+#: cmd_list.cc:678
 #, c-format
 msgid "wrong argument count"
 msgstr "falsche Anzahl an Parametern"
@@ -102,7 +103,7 @@ msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:335
 #: automate.cc:370 automate.cc:374 automate.cc:434 automate.cc:459
-#: automate.cc:1213 cmd_list.cc:685 revision.cc:1813
+#: automate.cc:1213 cmd_list.cc:685 revision.cc:1782
 #, c-format
 msgid "No such revision %s"
 msgstr "Revision %s nicht gefunden"
@@ -115,8 +116,8 @@ msgstr "[REV1 [REV2 [REV3 [...]]]]"
 msgid "FILE"
 msgstr "DATEI"
 
-#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:263
-#: cmd_files.cc:318 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
+#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:292
+#: cmd_files.cc:347 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr ""
@@ -139,7 +140,7 @@ msgstr "NEUE_REV [ALTE_REV1 [ALTE_REV2 [...]]]"
 msgid "no arguments needed"
 msgstr "keine Parameter benötigt"
 
-#: automate.cc:428 automate.cc:453 cmd_list.cc:675 revision.cc:1807
+#: automate.cc:428 automate.cc:453 cmd_list.cc:675 revision.cc:1776
 msgid "REV"
 msgstr "REV"
 
@@ -159,14 +160,14 @@ msgstr "REVISIONS_ID"
 
 #: automate.cc:1100 automate.cc:1126 automate.cc:1181 automate.cc:1183
 #: automate.cc:1735 cmd_db.cc:37 cmd_diff_log.cc:396 cmd_diff_log.cc:423
-#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:224 cmd_merging.cc:184
+#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:253 cmd_merging.cc:184
 #: cmd_merging.cc:780 cmd_merging.cc:795 cmd_merging.cc:798 cmd_netsync.cc:316
 #: cmd_ws_commit.cc:527 cmd_ws_commit.cc:987 commands.cc:407
 #, c-format
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
 
-#: automate.cc:1142 cmd_files.cc:282
+#: automate.cc:1142 cmd_files.cc:311
 msgid "FILEID"
 msgstr "DATEI_ID"
 
@@ -228,7 +229,7 @@ msgstr "REV1 DATEI REV2"
 msgid "[FILEID] CONTENTS"
 msgstr "[DATEIID] INHALT"
 
-#: automate.cc:1641 cmd_files.cc:212
+#: automate.cc:1641 cmd_files.cc:241
 #, c-format
 msgid "no file version %s found in database"
 msgstr "Dateiversion %s nicht in Datenbank gefunden"
@@ -293,7 +294,7 @@ msgstr ""
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "berechnete Zertifikatsprüfsumme '%s' stimmt nicht mit '%s' überein"
 
-#: cert.cc:389 keys.cc:662
+#: cert.cc:389 keys.cc:668
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "kein Schlüsselpaar '%s' in Schlüsselbund '%s' gefunden"
@@ -442,7 +443,7 @@ msgid "no var with name %s in domain %s"
 msgstr "keine Variable mit dem Namen %s in der Domäne %s"
 
 #: cmd_db.cc:157 cmd_diff_log.cc:471 cmd_diff_log.cc:600 cmd_files.cc:117
-#: cmd_files.cc:247 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
+#: cmd_files.cc:276 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
 #: commands.cc:284
 msgid "informative"
 msgstr "Informativ"
@@ -613,7 +614,7 @@ msgstr "Quell-Datei-ID existiert nicht"
 msgid "destination file id does not exist"
 msgstr "Ziel-Datei-ID existiert nicht"
 
-#: cmd_files.cc:117
+#: cmd_files.cc:117 cmd_files.cc:218
 msgid "PATH"
 msgstr "PFAD"
 
@@ -653,16 +654,21 @@ msgstr "[PFAD]"
 msgid "calculate identity of PATH or stdin"
 msgstr "berechnet die Identität (ID) von PFAD oder der Standardeingabe"
 
-#: cmd_files.cc:237 cmd_files.cc:241
+#: cmd_files.cc:226
+#, c-format
+msgid "Cannot read from stdin"
+msgstr "Kann nicht von stdin lesen"
+
+#: cmd_files.cc:266 cmd_files.cc:270
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "keine Datei '%s' in Revision '%s' gefunden"
 
-#: cmd_files.cc:248 cmd_files.cc:305
+#: cmd_files.cc:277 cmd_files.cc:334
 msgid "FILENAME"
 msgstr "DATEINAME"
 
-#: cmd_files.cc:249
+#: cmd_files.cc:278
 msgid "write file from database to stdout"
 msgstr "schreibt Dateiinhalte aus der Datenbank zur Standardausgabe"
 
@@ -2523,17 +2529,17 @@ msgstr "Zertifikats-Revision '%s' existiert nicht in der Datenbank"
 msgid "dropping cert"
 msgstr "entferne Zertifikat"
 
-#: database.cc:3387
+#: database.cc:3317
 #, c-format
 msgid "no database specified"
 msgstr "keine Datenbank spezifiziert"
 
-#: database.cc:3397
+#: database.cc:3327
 #, c-format
 msgid "database %s does not exist"
 msgstr "Datenbank %s existiert nicht"
 
-#: database.cc:3415
+#: database.cc:3345
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -2546,17 +2552,17 @@ msgstr ""
 "Dieser Pfad ist aber ein Arbeitsbereich. Meinten Sie: \n"
 "%s"
 
-#: database.cc:3420
+#: database.cc:3350
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s ist ein Verzeichnis, keine Datenbank"
 
-#: database.cc:3430
+#: database.cc:3360
 #, c-format
 msgid "database %s already exists"
 msgstr "Datenbank %s existiert bereits"
 
-#: database.cc:3435
+#: database.cc:3365
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2787,12 +2793,12 @@ msgstr ""
 "Sie haben ausgewählt, nur mit ssh-agent zu signieren, aber derzeit scheint "
 "ssh-agent nicht zu laufen."
 
-#: keys.cc:425
+#: keys.cc:431
 #, c-format
 msgid "You don't seem to have your monotone key imported "
 msgstr "Anscheinend haben Sie Ihren monotone-Schlüssel nicht importiert "
 
-#: keys.cc:472
+#: keys.cc:478
 #, c-format
 msgid ""
 "make_signature: ssh signature (%i) != monotone signature (%i)\n"
@@ -2803,12 +2809,12 @@ msgstr ""
 "ssh-Signatur     : %s\n"
 "monotone-Signatur: %s"
 
-#: keys.cc:487
+#: keys.cc:493
 #, c-format
 msgid "make_signature: signature is not valid"
 msgstr "make_signature: Signatur ist ungültig"
 
-#: keys.cc:672
+#: keys.cc:678
 #, c-format
 msgid "passphrase for '%s' is incorrect"
 msgstr "Passwort für '%s' ist nicht korrekt"
@@ -3793,26 +3799,26 @@ msgstr ""
 msgid "rebuilding revision graph from manifest certs"
 msgstr "erneuere Revisions-Graph auf Basis der Manifest-Zertifikate"
 
-#: revision.cc:1776
+#: revision.cc:1745
 #, c-format
 msgid "regenerating cached rosters and heights"
 msgstr "erstelle Katalog-Cache und Höhenangaben neu"
 
-#: revision.cc:1788
+#: revision.cc:1757
 msgid "regenerated"
 msgstr "neu erstellt"
 
-#: revision.cc:1804
+#: revision.cc:1773
 #, c-format
 msgid "finished regenerating cached rosters and heights"
 msgstr "Katalog-Cache und Höhenangaben wurden neu erstellt"
 
-#: revision.cc:1816
+#: revision.cc:1785
 #, c-format
 msgid "cached height: %s"
 msgstr "zwischengespeicherte Höhenangabe: %s"
 
-#: revision.cc:1899
+#: revision.cc:1868
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -3852,7 +3858,7 @@ msgstr "Fataler Fehler: Formatierung schlug fehl bei %s:%d: %s"
 msgid "misuse: "
 msgstr "falscher Gebrauch: "
 
-#: sanity.cc:239
+#: sanity.cc:238
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: Invariante '%s' verletzt"

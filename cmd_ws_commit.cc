@@ -306,7 +306,7 @@ CMD(mkdir, "", CMD_REF(workspace), N_("[DIRECTORY...]"),
       mkdir_p(file_path(*i));
     }
 
-  app.work.perform_additions(paths, false, true);
+  app.work.perform_additions(paths, false, !app.opts.no_ignore);
 }
 
 CMD(add, "", CMD_REF(workspace), N_("[PATH]..."),
