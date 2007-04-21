@@ -31,7 +31,6 @@
 #endif
 
 using std::cin;
-using std::endl;
 using std::make_pair;
 using std::map;
 using std::ostream;
@@ -444,7 +443,7 @@ namespace commands
 
         if (col + word.length() + 1 >= maxcol)
           {
-            out << endl;
+            out << '\n';
             col = 0;
 
             // Skip empty words at the beginning of the line so that they do
@@ -480,7 +479,7 @@ namespace commands
         col += word.length() + 1;
         i++;
       }
-    out << endl;
+    out << '\n';
   }
 
   static void explain_children(command::children_set const & children,
@@ -521,10 +520,10 @@ namespace commands
     // XXX Use ui.prog_name instead of hardcoding 'mtn'.
     if (cmd->children().size() > 0)
       out << F(safe_gettext("Subcommands for 'mtn %s':")) %
-             format_command_path(cmd) << endl << endl;
+             format_command_path(cmd) << "\n\n";
     else
       out << F(safe_gettext("Syntax specific to 'mtn %s':")) %
-             format_command_path(cmd) << endl << endl;
+             format_command_path(cmd) << "\n\n";
 
     // Print command parameters.
     string params = cmd->params();
@@ -533,14 +532,14 @@ namespace commands
       {
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
-          out << "  " << name << ' ' << *j << endl;
-        out << endl;
+          out << "  " << name << ' ' << *j << '\n';
+        out << '\n';
       }
 
     if (cmd->children().size() > 0)
       {
         explain_children(cmd->children(), out);
-        out << endl;
+        out << '\n';
       }
 
     split_into_lines(cmd->desc(), lines);
@@ -548,7 +547,7 @@ namespace commands
          j != lines.end(); ++j)
       {
         describe("", *j, 4, out);
-        out << endl;
+        out << '\n';
       }
 
     if (cmd->names().size() > 1)
@@ -556,7 +555,7 @@ namespace commands
         command::names_set othernames = cmd->names();
         othernames.erase(name);
         describe("", "Aliases: " + format_names(othernames) + ".", 4, out);
-        out << endl;
+        out << '\n';
       }
     */
   }
@@ -571,14 +570,14 @@ namespace commands
         I(ident.empty());
 
         // TODO Wrap long lines in these messages.
-        out << "Top-level commands:" << endl << endl;
+        out << "Top-level commands:\n\n";
         explain_children(CMD_REF(public)->children(), out);
-        out << endl;
+        out << '\n';
         out << "For information on a specific command, type "
-               "'mtn help <command_name>'." << endl;
+               "'mtn help <command_name>'.\n";
         out << "Note that you can always abbreviate a command name as "
-               "long as it does not conflict with other names." << endl;
-        out << endl;
+               "long as it does not conflict with other names.\n";
+        out << '\n';
       }
   }
 
