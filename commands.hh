@@ -30,7 +30,7 @@ namespace commands {
   int process(app_state & app, command_id const & ident,
               args_vector const & args);
   options::options_type command_options(args_vector const & cmdline);
-  options::options_type toplevel_command_options(std::string const & cmd);
+  options::options_type toplevel_command_options(command_id const & ident);
 };
 
 struct usage

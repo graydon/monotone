@@ -590,21 +590,16 @@ namespace commands
                out);
   }
 
-  static void explain_cmd_usage(string const & name, ostream & out)
+  static void explain_cmd_usage(command * cmd, ostream & out)
   {
-  /*
-    command * cmd = find_command(name); // XXX Should be const.
-    assert(cmd != NULL);
-
     vector< string > lines;
 
-    // XXX Use ui.prog_name instead of hardcoding 'mtn'.
     if (cmd->children().size() > 0)
-      out << F(safe_gettext("Subcommands for 'mtn %s':")) %
-             format_command_path(cmd) << "\n\n";
+      out << F(safe_gettext("Subcommands of '%s %s':")) %
+             ui.prog_name % join_words(cmd->ident()) << "\n\n";
     else
-      out << F(safe_gettext("Syntax specific to 'mtn %s':")) %
-             format_command_path(cmd) << "\n\n";
+      out << F(safe_gettext("Syntax specific to '%s %s':")) %
+             ui.prog_name % join_words(cmd->ident()) << "\n\n";
 
     // Print command parameters.
     string params = cmd->params();
@@ -613,16 +608,20 @@ namespace commands
       {
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
-          out << "  " << name << ' ' << *j << '\n';
+          out << "  " << join_words(cmd->ident())() << ' ' << *j << '\n';
         out << '\n';
       }
 
-    if (cmd->children().size() > 0)
+    // Explain children, if any.
+    if (!cmd->is_leaf())
       {
         explain_children(cmd->children(), out);
         out << '\n';
       }
 
+    // Print command description.
+    out << F(safe_gettext("Description for '%s %s':")) %
+           ui.prog_name % join_words(cmd->ident()) << "\n\n";
     split_into_lines(cmd->desc(), lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
@@ -631,20 +630,23 @@ namespace commands
         out << '\n';
       }
 
+    // Print all available aliases.
     if (cmd->names().size() > 1)
       {
         command::names_set othernames = cmd->names();
-        othernames.erase(name);
-        describe("", "Aliases: " + format_names(othernames) + ".", 4, out);
+        othernames.erase(cmd->primary_name());
+        describe("", "Aliases: " + join_words(othernames, ", ")() +
+                 ".", 4, out);
         out << '\n';
       }
-    */
   }
 
   void explain_usage(command_id const & ident, ostream & out)
   {
-    if (CMD_REF(__root__)->find_command(ident) != CMD_REF(__root__))
-      explain_cmd_usage("", out); // XXX
+    command * cmd = find_command(ident);
+
+    if (cmd != CMD_REF(__root__))
+      explain_cmd_usage(cmd, out);
     else
       {
         I(ident.empty());
@@ -720,17 +722,10 @@ namespace commands
     return options::options_type();
   }
 
-  options::options_type toplevel_command_options(string const & name)
+  options::options_type toplevel_command_options(command_id const & ident)
   {
-    command * cmd = NULL; // XXX find_command(name);
-    if (cmd != NULL)
-      {
-        return cmd->opts();
-      }
-    else
-      {
-        return options::options_type();
-      }
+    command * cmd = find_command(ident);
+    return cmd->opts();
   }
 }
 ////////////////////////////////////////////////////////////////////////
@@ -746,34 +741,9 @@ CMD(help, "", CMD_REF(informative), N_("command [ARGS...]"),
       throw usage(command_id());
     }
 
-/*
-  vector< string > fooargs,rest;
-  for (vector< utf8 >::const_iterator i = args.begin(); i != args.end(); i++)
-    fooargs.push_back((*i)());
-  command & cmd = commands::find_command(fooargs, rest);
-
-  N(!rest.empty(),
-    F("could not match any command given '%s'; failed after '%s'") %
-      join_words(fooargs)() % join_words(rest)());
-
+  command_id id = commands::complete_command(args);
   app.opts.help = true;
-  throw usage(fooargs);
-*/
-
-/*
-  if (find_command(full_cmd) != NULL)
-    {
-      app.opts.help = true;
-      throw usage(full_cmd);
-    }
-  else
-    {
-      // No matched commands or command groups
-      N(!full_cmd.empty(),
-        F("unknown command '%s'") % idx(args, 0)());
-      throw usage("");
-    }
-*/
+  throw usage(id);
 }
 
 CMD_HIDDEN(crash, "", CMD_REF(__root__), "{ N | E | I | exception | signal }",

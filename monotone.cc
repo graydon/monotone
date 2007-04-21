@@ -296,16 +296,14 @@ cpp_main(int argc, char ** argv)
           usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
           usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << '\n';
 
-/* XXX
           // Make sure to hide documentation that's not part of
           // the current command.
           options::options_type cmd_options = commands::toplevel_command_options(u.which);
           if (!cmd_options.empty())
             {
-              usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
+              usage_stream << F("Options specific to '%s %s':") % ui.prog_name % join_words(u.which)() << "\n\n";
               usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << '\n';
             }
-          */
 
           commands::explain_usage(u.which, usage_stream);
           if (app.opts.help)
