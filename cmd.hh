@@ -79,8 +79,7 @@ namespace commands
     bool has_name(utf8 const & name) const;
     void complete_child_name(utf8 const & prefix,
                              std::set< utf8 > & matches) const;
-    command * find_child_by_components(std::vector< utf8 > const & cs,
-                                       std::vector< utf8 > & rest);
+    command * find_child_by_components(std::vector< utf8 > const & cs);
     command * find_child_by_name(utf8 const & name) const;
   };
 };

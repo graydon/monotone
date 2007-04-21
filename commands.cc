@@ -316,8 +316,7 @@ namespace commands {
   }
 
   command *
-  command::find_child_by_components(vector< utf8 > const & cs,
-                                    vector< utf8 > & rest)
+  command::find_child_by_components(vector< utf8 > const & cs)
   {
     command * cmd = this;
 
@@ -336,12 +335,6 @@ namespace commands {
         I(matches.size() == 1);
         cmd = cmd->find_child_by_name(*(matches.begin()));
         I(cmd != NULL);
-      }
-
-    if (iter != cs.end())
-      {
-        rest.clear();
-        rest.insert(rest.end(), iter, cs.end());
       }
 
     return cmd;
@@ -382,17 +375,14 @@ namespace std
 namespace commands
 {
   command_id
-  complete_command(args_vector const & args,
-                   args_vector & rest)
+  complete_command(args_vector const & args)
   {
     command * root = CMD_REF(__root__);
     I(root != NULL);
 
     vector< utf8 > utf8args(args.begin(), args.end());
-    vector< utf8 > utf8rest;
 
-    command * cmd = root->find_child_by_components(utf8args, utf8rest);
-    rest = args_vector(utf8rest.begin(), utf8rest.end());
+    command * cmd = root->find_child_by_components(utf8args);
     I(cmd != NULL);
     return cmd->ident();
   }
@@ -567,8 +557,7 @@ namespace commands
 
   void explain_usage(command_id const & ident, ostream & out)
   {
-    vector< utf8 > rest; // XXX
-    if (CMD_REF(__root__)->find_child_by_components(ident, rest) != CMD_REF(__root__))
+    if (CMD_REF(__root__)->find_child_by_components(ident) != CMD_REF(__root__))
       explain_cmd_usage("", out); // XXX
     else
       {
@@ -590,19 +579,18 @@ namespace commands
   int process(app_state & app, string const & cmd,
               args_vector const & args)
   {
-    args_vector a1, a2;
+    args_vector a1;
     a1.push_back(arg_type("merge_into_dir"));
     command_id ident;
-    ident = commands::complete_command(a1, a2);
+    ident = commands::complete_command(a1);
     return process(app, ident, args);
   }
 
   int process(app_state & app, command_id const & ident,
               args_vector const & args)
   {
-    vector< utf8 > rest;
-    command * cmd = CMD_REF(__root__)->find_child_by_components(ident, rest);
-    I(rest.size() == 0);
+    command * cmd = CMD_REF(__root__)->find_child_by_components(ident);
+    I(cmd->children().size() == 0);
     if (cmd != NULL)
       {
         L(FL("executing command '%s'") % join_words(ident));

@@ -136,8 +136,7 @@ commands::command_id read_options(options & opts, args_vector args)
   // consume the command, and perform completion if necessary
   if (!opts.args.empty())
     {
-      args_vector rest;
-      cmd = commands::complete_command(args, rest);
+      cmd = commands::complete_command(args);
       N(!cmd.empty(),
         F("unknown command '%s'") % join_words(args)());
     }
