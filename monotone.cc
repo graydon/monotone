@@ -165,7 +165,8 @@ commands::command_id read_options(options & opts, args_vector args)
 
       for (args_vector::size_type i = 0; i < cmd2.size(); i++)
         {
-          I(cmd2[i]().find(opts.args[i]()) == 0);
+          // Cannot enable the check below due to command name aliases.
+          // I(cmd2[i]().find(opts.args[i]()) == 0);
           opts.args.erase(opts.args.begin());
         }
     }

@@ -959,8 +959,8 @@ process_commit_message_args(bool & given,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-CMD(test1, "", CMD_REF(__root__), "", "", "", options::opts::none) {}
-CMD(test2, "", CMD_REF(__root__), "", "", "", options::opts::none) {}
+CMD(test1, "alias1", CMD_REF(__root__), "", "", "", options::opts::none) {}
+CMD(test2, "alias2", CMD_REF(__root__), "", "", "", options::opts::none) {}
 CMD_HIDDEN(test3, "", CMD_REF(__root__), "", "", "", options::opts::none) {}
 
 CMD_GROUP(testg, "", CMD_REF(__root__), "", "", options::opts::none);
@@ -989,6 +989,12 @@ UNIT_TEST(commands, complete_command)
   {
     command_id id = complete_command(mkargs("testg"));
     BOOST_CHECK(id == mkid("testg"));
+  }
+
+  // Single-word identifier, non-primary name.
+  {
+    command_id id = complete_command(mkargs("alias1"));
+    BOOST_CHECK(id == mkid("test1"));
   }
 
   // Multi-word identifier.
@@ -1030,6 +1036,14 @@ UNIT_TEST(commands, command_complete_command)
     BOOST_CHECK(*matches.begin() == mkid("test1"));
   }
 
+  // Single-word identifier with one match, non-primary name.
+  {
+    command_id id = mkid("alias1");
+    set< command_id > matches = CMD_REF(__root__)->complete_command(id);
+    BOOST_REQUIRE(matches.size() == 1);
+    BOOST_CHECK(*matches.begin() == mkid("test1"));
+  }
+
   // Single-word identifier with multiple matches.
   {
     command_id id = mkid("test");
@@ -1040,6 +1054,18 @@ UNIT_TEST(commands, command_complete_command)
     expected.insert(mkid("test1"));
     expected.insert(mkid("test2"));
     expected.insert(mkid("testg"));
+    BOOST_CHECK(matches == expected);
+  }
+
+  // Single-word identifier with multiple matches, non-primary name.
+  {
+    command_id id = mkid("alias");
+    set< command_id > matches = CMD_REF(__root__)->complete_command(id);
+    BOOST_REQUIRE(matches.size() == 2);
+
+    set< command_id > expected;
+    expected.insert(mkid("test1"));
+    expected.insert(mkid("test2"));
     BOOST_CHECK(matches == expected);
   }
 
