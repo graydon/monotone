@@ -427,6 +427,17 @@ namespace commands
 
     if (matches.empty())
       {
+        command::children_set const & cs = CMD_REF(__root__)->children();
+        for (command::children_set::const_iterator iter = cs.begin();
+             iter != cs.end(); iter++)
+          {
+            set< command_id > m2 = (*iter)->complete_command(id);
+            matches.insert(m2.begin(), m2.end());
+          }
+      }
+
+    if (matches.empty())
+      {
         N(false,
           F("could not match '%s' to any command") % join_words(id)());
       }
@@ -987,10 +998,40 @@ CMD(testg1, "", CMD_REF(testg), "", "", "", options::opts::none) {}
 CMD(testg2, "", CMD_REF(testg), "", "", "", options::opts::none) {}
 CMD_HIDDEN(testg3, "", CMD_REF(testg), "", "", "", options::opts::none) {}
 
+static args_vector
+mkargs(const char *words)
+{
+  return split_into_words(arg_type(words));
+}
+
 static commands::command_id
 mkid(const char *path)
 {
   return split_into_words(utf8(path));
+}
+
+UNIT_TEST(commands, complete_command)
+{
+  using commands::command_id;
+  using commands::complete_command;
+
+  // Single-word identifier.
+  {
+    command_id id = complete_command(mkargs("testg"));
+    BOOST_CHECK(id == mkid("testg"));
+  }
+
+  // Multi-word identifier.
+  {
+    command_id id = complete_command(mkargs("testg testg1"));
+    BOOST_CHECK(id == mkid("testg testg1"));
+  }
+
+  // Single-word identifier, one level deep.
+  {
+    command_id id = complete_command(mkargs("testg1"));
+    BOOST_CHECK(id == mkid("testg testg1"));
+  }
 }
 
 UNIT_TEST(commands, command_complete_command)

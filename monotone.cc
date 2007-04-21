@@ -152,9 +152,22 @@ commands::command_id read_options(options & opts, args_vector args)
 
   if (!opts.args.empty())
     {
-      I(opts.args.size() >= cmd.size());
-      for (args_vector::size_type i = 0; i < cmd.size(); i++)
-        opts.args.erase(opts.args.begin());
+      // Remove the command name from the arguments.  It is important to
+      // note that the first component of the identifier is always optional,
+      // so we must take care about that here.
+      I(opts.args[0]() != cmd[0]() || opts.args.size() >= cmd.size());
+      I(opts.args[0]() == cmd[0]() || opts.args.size() >= cmd.size() - 1);
+
+      commands::command_id cmd2 = cmd;
+
+      if (opts.args[0]() != cmd[0]())
+        cmd2.erase(cmd2.begin());
+
+      for (args_vector::size_type i = 0; i < cmd2.size(); i++)
+        {
+          I(cmd2[i]().find(opts.args[i]()) == 0);
+          opts.args.erase(opts.args.begin());
+        }
     }
 
   return cmd;
