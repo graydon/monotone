@@ -23,7 +23,7 @@ class utf8;
 namespace commands {
   typedef std::vector< utf8 > command_id;
 
-  void explain_usage(std::string const & cmd, std::ostream & out);
+  void explain_usage(command_id const & cmd, std::ostream & out);
   command_id complete_command(args_vector const & args,
                               args_vector & rest);
   int process(app_state & app, std::string const & ident,

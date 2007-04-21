@@ -245,22 +245,44 @@ UNIT_TEST(simplestring_xform, join_lines)
 
 UNIT_TEST(simplestring_xform, join_words)
 {
-  vector< utf8 > s;
+  vector< utf8 > v;
+  set< utf8 > s;
+
+  v.clear();
+  v.push_back(utf8("a"));
+  BOOST_CHECK(join_words(v)() == "a");
+  BOOST_CHECK(join_words(v, ", ")() == "a");
 
   s.clear();
-  s.push_back(utf8("a"));
+  s.insert(utf8("a"));
   BOOST_CHECK(join_words(s)() == "a");
+  BOOST_CHECK(join_words(s, ", ")() == "a");
+
+  v.clear();
+  v.push_back(utf8("a"));
+  v.push_back(utf8("b"));
+  BOOST_CHECK(join_words(v)() == "a b");
+  BOOST_CHECK(join_words(v, ", ")() == "a, b");
 
   s.clear();
-  s.push_back(utf8("a"));
-  s.push_back(utf8("b"));
+  s.insert(utf8("b"));
+  s.insert(utf8("a"));
   BOOST_CHECK(join_words(s)() == "a b");
+  BOOST_CHECK(join_words(s, ", ")() == "a, b");
+
+  v.clear();
+  v.push_back(utf8("a"));
+  v.push_back(utf8("b"));
+  v.push_back(utf8("c"));
+  BOOST_CHECK(join_words(v)() == "a b c");
+  BOOST_CHECK(join_words(v, ", ")() == "a, b, c");
 
   s.clear();
-  s.push_back(utf8("a"));
-  s.push_back(utf8("b"));
-  s.push_back(utf8("c"));
+  s.insert(utf8("b"));
+  s.insert(utf8("a"));
+  s.insert(utf8("c"));
   BOOST_CHECK(join_words(s)() == "a b c");
+  BOOST_CHECK(join_words(s, ", ")() == "a, b, c");
 }
 
 UNIT_TEST(simplestring_xform, split_into_words)

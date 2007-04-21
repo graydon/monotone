@@ -413,29 +413,6 @@ namespace commands
     return path;
   }
 
-  // Generates a string of the form "a1, ..., aN" where a1 through aN are
-  // all the elements of the 'names' set.  The input set cannot be empty.
-  static string format_names(command::names_set const & names)
-  {
-    I(names.size() > 0);
-
-    string text;
-
-/*
-    set< string >::const_iterator iter = names.begin();
-    do
-      {
-        text += *iter;
-        iter++;
-        if (iter != names.end())
-          text += ", ";
-      }
-    while (iter != names.end());
-*/
-
-    return text;
-  }
-
   // Prints the abstract description of the given command or command group
   // properly indented.  The tag starts at column two.  The description has
   // to start, at the very least, two spaces after the tag's end position;
@@ -443,7 +420,6 @@ namespace commands
   static void describe(const string & tag, const string & abstract,
                        size_t colabstract, ostream & out)
   {
-  /*
     // The algorithm below avoids printing an space on entry (note that
     // there are two before the tag but just one after it) and considers
     // that the colabstract is always one unit less than that given on
@@ -458,13 +434,13 @@ namespace commands
       out << ' ';
     col = colabstract - 1;
 
-    vector< utf8 > words = split_into_words(abstract);
+    vector< utf8 > words = split_into_words(utf8(abstract));
 
     const size_t maxcol = terminal_width();
     vector< utf8 >::const_iterator i = words.begin();
     while (i != words.end())
       {
-        string const & word = *i;
+        string const & word = (*i)();
 
         if (col + word.length() + 1 >= maxcol)
           {
@@ -485,7 +461,7 @@ namespace commands
               {
                 do
                   i++;
-                while (i != words.end() && (*i) == "");
+                while (i != words.end() && (*i)().empty());
                 if (i == words.end())
                   break;
                 else
@@ -505,13 +481,11 @@ namespace commands
         i++;
       }
     out << endl;
-    */
   }
 
-  static void explain_children(set< command * > const & children,
+  static void explain_children(command::children_set const & children,
                                ostream & out)
   {
-  /*
     I(children.size() > 0);
 
     vector< command * > sorted;
@@ -520,7 +494,8 @@ namespace commands
     for (command::children_set::const_iterator i = children.begin();
          i != children.end(); i++)
       {
-        size_t len = display_width(utf8(format_names((*i)->names()) + "    "));
+        size_t len = display_width(join_words((*i)->names())) +
+            display_width(utf8("    "));
         if (colabstract < len)
           colabstract = len;
 
@@ -531,8 +506,8 @@ namespace commands
 
     for (vector< command * >::const_iterator i = sorted.begin();
          i != sorted.end(); i++)
-      describe(format_names((*i)->names()), (*i)->abstract(), colabstract, out);
-    */
+      describe(join_words((*i)->names())(), (*i)->abstract(), colabstract,
+               out);
   }
 
   static void explain_cmd_usage(string const & name, ostream & out)
@@ -586,13 +561,14 @@ namespace commands
     */
   }
 
-  void explain_usage(string const & name, ostream & out)
+  void explain_usage(command_id const & ident, ostream & out)
   {
-    if (find_command(name) != NULL)
-      explain_cmd_usage(name, out);
+    vector< utf8 > rest; // XXX
+    if (CMD_REF(public)->find_child_by_components(ident, rest) != CMD_REF(public))
+      explain_cmd_usage("", out); // XXX
     else
       {
-        I(name.empty());
+        I(ident.empty());
 
         // TODO Wrap long lines in these messages.
         out << "Top-level commands:" << endl << endl;
@@ -989,28 +965,6 @@ UNIT_TEST(commands, complete_command)
   cc_aux(group, "test_subcmd", CMD_REF(test_subcmd), "");
   cc_aux(group, "test_sub", CMD_REF(test_subcmd), "");
   cc_aux(group, "bar", group, "bar");
-}
-
-UNIT_TEST(commands, format_names)
-{
-  using commands::format_names;
-
-  set< string > s;
-
-  s.clear();
-  s.insert("a");
-  BOOST_CHECK(format_names(s) == "a");
-
-  s.clear();
-  s.insert("a");
-  s.insert("b");
-  BOOST_CHECK(format_names(s) == "a, b");
-
-  s.clear();
-  s.insert("a");
-  s.insert("b");
-  s.insert("c");
-  BOOST_CHECK(format_names(s) == "a, b, c");
 }
 #endif // BUILD_UNIT_TESTS
 

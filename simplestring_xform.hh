@@ -25,17 +25,21 @@ void join_lines(std::vector<std::string> const & in,
 
 std::vector< utf8 > split_into_words(utf8 const & in);
 
-template< class T >
-T join_words(std::vector< T > const & in)
+template< template< typename > class T1, class T2 >
+T2 join_words(T1< T2 > const & in, std::string const & sep = " ")
 {
   std::string str;
-  for (typename std::vector< T >::size_type i = 0; i < in.size(); i++)
+  typename T1< T2 >::const_iterator iter = in.begin();
+  for (;;)
     {
-      str += in[i]();
-      if (i + 1 < in.size())
-        str += ' ';
+      str += (*iter)();
+      iter++;
+      if (iter == in.end())
+        break;
+      else
+        str += sep;
     }
-  return T(str);
+  return T2(str);
 }
 
 void prefix_lines_with(std::string const & prefix,

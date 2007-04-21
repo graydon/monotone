@@ -293,9 +293,9 @@ cpp_main(int argc, char ** argv)
               usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
               usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << '\n';
             }
+          */
 
           commands::explain_usage(u.which, usage_stream);
-          */
           if (app.opts.help)
             return 0;
           else
