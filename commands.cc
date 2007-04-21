@@ -437,8 +437,13 @@ namespace commands
     else
       {
         I(matches.size() > 1);
-        N(false,
-          F("'%s' is ambiguous") % join_words(id)());
+        string err =
+          (F("'%s' is ambiguous; possible completions are:") %
+             join_words(id)()).str();
+        for (set< command_id >::const_iterator iter = matches.begin();
+             iter != matches.end(); iter++)
+          err += '\n' + join_words(*iter)();
+        N(false, i18n_format(err));
       }
 
     I(!id.empty());
