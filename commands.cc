@@ -473,26 +473,6 @@ namespace commands
     return cmd;
   }
 
-  static string format_command_path(command const * cmd)
-  {
-    string path;
-    /*
-
-    if (cmd->parent() == NULL)
-      path = cmd->primary_name();
-    else
-      {
-        command const * cmdparent = cmd->parent();
-        I(cmdparent != NULL);
-
-        string const & name = cmd->primary_name();
-        path = format_command_path(cmdparent) + " " + name;
-      }
-    */
-
-    return path;
-  }
-
   // Prints the abstract description of the given command or command group
   // properly indented.  The tag starts at column two.  The description has
   // to start, at the very least, two spaces after the tag's end position;
