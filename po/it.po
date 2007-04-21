@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-04-19 09:03+0100\n"
+"PO-Revision-Date: 2007-04-21 12:14+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -1502,9 +1502,9 @@ msgid "you must specify a branch to clone"
 msgstr "devi specificare il ramo da clonare"
 
 #: cmd_netsync.cc:226
-#, fuzzy, c-format
+#, c-format
 msgid "clone destination directory '%s' already exists"
-msgstr "la destinazione ‘%s’ esiste già nella revisione attuale"
+msgstr "la directory di destinazione della clonazione ‘%s’ esiste già"
 
 # TODO: ‘estrarre’ non mi convince?
 #: cmd_netsync.cc:295
@@ -2812,7 +2812,7 @@ msgstr "‘--ssh-sign’ deve essere impostato a ‘yes’, ‘no’, ‘only’
 #: keys.cc:380
 #, c-format
 msgid "You have chosen to sign only with ssh-agent but ssh-agent does not seem to be running."
-msgstr ""
+msgstr "Hai scelto di firmare esclusivamente con ‘ssh-agent’ ma non sembra essere in esecuzione."
 
 #: keys.cc:425
 #, c-format
@@ -4365,14 +4365,14 @@ msgid "dropping %s from workspace manifest"
 msgstr "elimino ‘%s’ dal manifesto dello spazio di lavoro"
 
 #: work.cc:1462
-#, fuzzy, c-format
+#, c-format
 msgid "source file %s is not versioned"
-msgstr "`%s' non è un file regolare - ignorato\n"
+msgstr "il file sorgente ‘%s’ non è sotto controllo di versione"
 
 #: work.cc:1464
-#, fuzzy, c-format
+#, c-format
 msgid "destination name %s already exists as an unversioned directory"
-msgstr "la destinazione ‘%s’ esiste già nel manifesto attuale"
+msgstr "il file di destinazione ‘%s’ esiste già come directory non sotto controllo di versione"
 
 #: work.cc:1472
 #, c-format
@@ -4420,9 +4420,9 @@ msgid "%s doesn't exist in workspace, skipping"
 msgstr "‘%s’ non esiste nello spazio di lavoro, lo salto"
 
 #: work.cc:1551
-#, fuzzy, c-format
+#, c-format
 msgid "destination %s already exists in workspace, skipping filesystem rename"
-msgstr "salto ‘%s’, esiste già nello spazio di lavoro"
+msgstr "la destinazione ‘%s’ esiste già nello spazio di lavoro, evito di rinominarla sul filesystem"
 
 #: work.cc:1555
 #, c-format
