@@ -2,8 +2,10 @@
 #include "sanity.hh"
 #include "constants.hh"
 
+#include <set>
 #include <sstream>
 
+using std::set;
 using std::string;
 using std::vector;
 using std::ostringstream;
@@ -287,31 +289,27 @@ UNIT_TEST(simplestring_xform, join_words)
 
 UNIT_TEST(simplestring_xform, split_into_words)
 {
-  vector<string> words;
+  vector< utf8 > words;
 
-  words.clear();
-  split_into_words("", words);
+  words = split_into_words(utf8(""));
   BOOST_CHECK(words.size() == 0);
 
-  words.clear();
-  split_into_words("foo", words);
+  words = split_into_words(utf8("foo"));
   BOOST_CHECK(words.size() == 1);
-  BOOST_CHECK(words[0] == "foo");
+  BOOST_CHECK(words[0]() == "foo");
 
-  words.clear();
-  split_into_words("foo bar", words);
+  words = split_into_words(utf8("foo bar"));
   BOOST_CHECK(words.size() == 2);
-  BOOST_CHECK(words[0] == "foo");
-  BOOST_CHECK(words[1] == "bar");
+  BOOST_CHECK(words[0]() == "foo");
+  BOOST_CHECK(words[1]() == "bar");
 
   // describe() in commands.cc assumes this behavior.  If it ever changes,
   // remember to modify that function accordingly!
-  words.clear();
-  split_into_words("foo  bar", words);
+  words = split_into_words(utf8("foo  bar"));
   BOOST_CHECK(words.size() == 3);
-  BOOST_CHECK(words[0] == "foo");
-  BOOST_CHECK(words[1] == "");
-  BOOST_CHECK(words[2] == "bar");
+  BOOST_CHECK(words[0]() == "foo");
+  BOOST_CHECK(words[1]() == "");
+  BOOST_CHECK(words[2]() == "bar");
 }
 
 UNIT_TEST(simplestring_xform, strip_ws)
