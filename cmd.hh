@@ -43,6 +43,9 @@ namespace commands
     options::options_type m_opts;
     children_set m_children;
 
+    std::set< command * > find_completions(utf8 const & prefix);
+    command * find_child_by_name(utf8 const & name) const;
+
   public:
     command(std::string const & primary_name,
             std::string const & other_names,
@@ -69,6 +72,7 @@ namespace commands
     bool use_workspace_options(void) const;
     children_set & children(void);
     children_set const & children(void) const;
+    bool is_leaf(void) const;
 
     bool operator<(command const & cmd) const;
 
@@ -77,10 +81,8 @@ namespace commands
                       args_vector const & args) = 0;
 
     bool has_name(utf8 const & name) const;
-    void complete_child_name(utf8 const & prefix,
-                             std::set< utf8 > & matches) const;
-    command * find_child_by_components(std::vector< utf8 > const & cs);
-    command * find_child_by_name(utf8 const & name) const;
+    command * find_command(command_id const & id);
+    std::set< command_id > complete_command(command_id const & id);
   };
 };
 
