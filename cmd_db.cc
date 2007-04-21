@@ -210,11 +210,11 @@ CMD(complete, "", CMD_REF(informative), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(ident());
 }
 
-CMD(test_migration_step, "", CMD_REF(hidden), "SCHEMA",
-    N_("Runs one step of migration on the specified database"),
-    N_("This command migrates the given database from the specified schema "
-       "in SCHEMA to its successor."),
-    options::opts::none)
+CMD_HIDDEN(test_migration_step, "", CMD_REF(database), "SCHEMA",
+           N_("Runs one step of migration on the specified database"),
+           N_("This command migrates the given database from the specified "
+              "schema in SCHEMA to its successor."),
+           options::opts::none)
 {
   if (args.size() != 1)
     throw usage(ident());

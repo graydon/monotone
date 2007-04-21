@@ -40,59 +40,57 @@ using std::string;
 using std::strlen;
 using std::vector;
 
-CMD_GROUP(the_root, "", NULL, N_(""), N_(""), options::opts::none);
-CMD_GROUP(public, "", CMD_REF(the_root), N_(""), N_(""), options::opts::none);
-CMD_GROUP(hidden, "", CMD_REF(the_root), N_(""), N_(""), options::opts::none);
+CMD_GROUP(__root__, "", NULL, N_(""), N_(""), options::opts::none);
 
 //
 // Definition of top-level commands, used to classify the real commands
 // in logical groups.
 //
-CMD_GROUP(automation, "", CMD_REF(public),
+CMD_GROUP(automation, "", CMD_REF(__root__),
           N_("Commands that aid in scripted execution"),
           N_(""),
           options::opts::none);
-CMD_GROUP(database, "", CMD_REF(public),
+CMD_GROUP(database, "", CMD_REF(__root__),
           N_("Commands that manipulate the database"),
           N_(""),
           options::opts::none);
-CMD_GROUP(debug, "", CMD_REF(public),
+CMD_GROUP(debug, "", CMD_REF(__root__),
           N_("Commands that aid in program debugging"),
           N_(""),
           options::opts::none);
-CMD_GROUP(informative, "", CMD_REF(public),
+CMD_GROUP(informative, "", CMD_REF(__root__),
           N_("Commands for information retrieval"),
           N_(""),
           options::opts::none);
-CMD_GROUP(key_and_cert, "", CMD_REF(public),
+CMD_GROUP(key_and_cert, "", CMD_REF(__root__),
           N_("Commands to manage keys and certificates"),
           N_(""),
           options::opts::none);
-CMD_GROUP(network, "", CMD_REF(public),
+CMD_GROUP(network, "", CMD_REF(__root__),
           N_("Commands that access the network"),
           N_(""),
           options::opts::none);
-CMD_GROUP(packet_io, "", CMD_REF(public),
+CMD_GROUP(packet_io, "", CMD_REF(__root__),
           N_("Commands for packet reading and writing"),
           N_(""),
           options::opts::none);
-CMD_GROUP(rcs, "", CMD_REF(public),
+CMD_GROUP(rcs, "", CMD_REF(__root__),
           N_("Commands for interaction with RCS and CVS"),
           N_(""),
           options::opts::none);
-CMD_GROUP(review, "", CMD_REF(public),
+CMD_GROUP(review, "", CMD_REF(__root__),
           N_("Commands to review revisions"),
           N_(""),
           options::opts::none);
-CMD_GROUP(tree, "", CMD_REF(public),
+CMD_GROUP(tree, "", CMD_REF(__root__),
           N_("Commands to manipulate the tree"),
           N_(""),
           options::opts::none);
-CMD_GROUP(variables, "", CMD_REF(public),
+CMD_GROUP(variables, "", CMD_REF(__root__),
           N_("Commands to manage persistent variables"),
           N_(""),
           options::opts::none);
-CMD_GROUP(workspace, "", CMD_REF(public),
+CMD_GROUP(workspace, "", CMD_REF(__root__),
           N_("Commands that deal with the workspace"),
           N_(""),
           options::opts::none);
@@ -156,6 +154,7 @@ namespace commands {
   command::command(std::string const & primary_name,
                    std::string const & other_names,
                    command * parent,
+                   bool hidden,
                    std::string const & params,
                    std::string const & abstract,
                    std::string const & desc,
@@ -163,6 +162,7 @@ namespace commands {
                    options::options_type const & opts)
     : m_primary_name(utf8(primary_name)),
       m_parent(parent),
+      m_hidden(hidden),
       m_params(utf8(params)),
       m_abstract(utf8(abstract)),
       m_desc(utf8(desc)),
@@ -197,8 +197,7 @@ namespace commands {
   {
     command_id i;
 
-    // XXX public must go away
-    if (this != CMD_REF(the_root) && this != CMD_REF(public))
+    if (this != CMD_REF(__root__))
       {
         i = parent()->ident();
         i.push_back(primary_name());
@@ -223,6 +222,12 @@ namespace commands {
   command::parent(void) const
   {
     return m_parent;
+  }
+
+  bool
+  command::hidden(void) const
+  {
+    return m_hidden;
   }
 
   std::string
@@ -380,7 +385,7 @@ namespace commands
   complete_command(args_vector const & args,
                    args_vector & rest)
   {
-    command * root = CMD_REF(public);
+    command * root = CMD_REF(__root__);
     I(root != NULL);
 
     vector< utf8 > utf8args(args.begin(), args.end());
@@ -563,7 +568,7 @@ namespace commands
   void explain_usage(command_id const & ident, ostream & out)
   {
     vector< utf8 > rest; // XXX
-    if (CMD_REF(public)->find_child_by_components(ident, rest) != CMD_REF(public))
+    if (CMD_REF(__root__)->find_child_by_components(ident, rest) != CMD_REF(__root__))
       explain_cmd_usage("", out); // XXX
     else
       {
@@ -571,7 +576,7 @@ namespace commands
 
         // TODO Wrap long lines in these messages.
         out << "Top-level commands:\n\n";
-        explain_children(CMD_REF(public)->children(), out);
+        explain_children(CMD_REF(__root__)->children(), out);
         out << '\n';
         out << "For information on a specific command, type "
                "'mtn help <command_name>'.\n";
@@ -596,7 +601,7 @@ namespace commands
               args_vector const & args)
   {
     vector< utf8 > rest;
-    command * cmd = CMD_REF(public)->find_child_by_components(ident, rest);
+    command * cmd = CMD_REF(__root__)->find_child_by_components(ident, rest);
     I(rest.size() == 0);
     if (cmd != NULL)
       {
@@ -693,10 +698,10 @@ CMD(help, "", CMD_REF(informative), N_("command [ARGS...]"),
 */
 }
 
-CMD(crash, "", CMD_REF(hidden), "{ N | E | I | exception | signal }",
-    N_("Triggers the specified kind of crash"),
-    N_(""),
-    options::opts::none)
+CMD_HIDDEN(crash, "", CMD_REF(__root__), "{ N | E | I | exception | signal }",
+           N_("Triggers the specified kind of crash"),
+           N_(""),
+           options::opts::none)
 {
   if (args.size() != 1)
     throw usage(ident());
@@ -906,18 +911,18 @@ process_commit_message_args(bool & given,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-CMD(__test1, "", CMD_REF(hidden), "", "", "", options::opts::none) {}
+CMD(__test1, "", CMD_REF(__root__), "", "", "", options::opts::none) {}
 
 CMD(__test2, "__test2.1",
-    CMD_REF(hidden), "", "", "", options::opts::none) {}
+    CMD_REF(__root__), "", "", "", options::opts::none) {}
 
 CMD(__test3, "__test3.1 __test3.2",
-    CMD_REF(hidden), "", "", "", options::opts::none) {}
+    CMD_REF(__root__), "", "", "", options::opts::none) {}
 
-CMD(test_visible, "", CMD_REF(public), "", "", "", options::opts::none) {}
-CMD(test_invisible, "", CMD_REF(hidden), "", "", "", options::opts::none) {}
+CMD(test_visible, "", CMD_REF(__root__), "", "", "", options::opts::none) {}
+CMD(test_invisible, "", CMD_REF(__root__), "", "", "", options::opts::none) {}
 
-CMD_GROUP(test_group, "", CMD_REF(public), "", "", options::opts::none);
+CMD_GROUP(test_group, "", CMD_REF(__root__), "", "", options::opts::none);
 CMD(test_subcmd, "", CMD_REF(test_group), "", "", "", options::opts::none) {}
 
 static void
@@ -946,7 +951,7 @@ UNIT_TEST(commands, complete_command)
   using commands::command;
   using commands::init_children;
 
-  command * root = CMD_REF(public);
+  command * root = CMD_REF(__root__);
   BOOST_REQUIRE(root != NULL);
   command * group = CMD_REF(test_group);
   BOOST_REQUIRE(group != NULL);

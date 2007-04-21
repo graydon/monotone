@@ -35,6 +35,7 @@ namespace commands
     utf8 m_primary_name;
     names_set m_names;
     command * m_parent;
+    bool m_hidden;
     utf8 m_params;
     utf8 m_abstract;
     utf8 m_desc;
@@ -46,6 +47,7 @@ namespace commands
     command(std::string const & primary_name,
             std::string const & other_names,
             command * parent,
+            bool hidden,
             std::string const & params,
             std::string const & abstract,
             std::string const & desc,
@@ -59,6 +61,7 @@ namespace commands
     utf8 const & primary_name(void) const;
     names_set const & names(void) const;
     command * parent(void) const;
+    bool hidden(void) const;
     virtual std::string params(void) const;
     virtual std::string abstract(void) const;
     virtual std::string desc(void) const;
@@ -136,13 +139,13 @@ namespace commands { \
 
 #define CMD_REF(C) ((commands::command *)&(commands::C ## _cmd))
 
-#define CMD(C, aliases, parent, params, abstract, desc, opts)        \
+#define _CMD2(C, aliases, parent, hidden, params, abstract, desc, opts) \
 namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, params, abstract,     \
-                          desc, true,                                \
+    cmd_ ## C() : command(#C, aliases, parent, hidden, params,       \
+                          abstract, desc, true,                      \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -155,6 +158,12 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
                                args_vector const & args)
 
+#define CMD(C, aliases, parent, params, abstract, desc, opts) \
+  _CMD2(C, aliases, parent, false, params, abstract, desc, opts)
+
+#define CMD_HIDDEN(C, aliases, parent, params, abstract, desc, opts) \
+  _CMD2(C, aliases, parent, true, params, abstract, desc, opts)
+
 // Use this for commands that want to define a params() function
 // instead of having a static description. (Good for "automate"
 // and possibly "list".)
@@ -163,8 +172,9 @@ namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, "", abstract, desc,   \
-                          true, options::options_type() | opts)      \
+    cmd_ ## C() : command(#C, aliases, parent, false, "", abstract,  \
+                          desc, true,                                \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::string const & name,                      \
@@ -184,8 +194,9 @@ namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, "", abstract, desc,   \
-                          true, options::options_type() | opts)      \
+    cmd_ ## C() : command(#C, aliases, parent, false, "", abstract,  \
+                          desc, true,                                \
+                          options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       std::string const & name,                      \
@@ -219,8 +230,8 @@ namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, params, abstract,     \
-                          desc, false,                               \
+    cmd_ ## C() : command(#C, aliases, parent, false, params,        \
+                          abstract, desc, false,                     \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -233,8 +244,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                std::string const & name,             \
                                args_vector const & args)             \
 
-CMD_FWD_DECL(public);
-CMD_FWD_DECL(hidden);
+CMD_FWD_DECL(__root__);
 
 CMD_FWD_DECL(automation);
 CMD_FWD_DECL(database);
