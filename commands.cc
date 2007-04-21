@@ -665,8 +665,8 @@ namespace commands
               args_vector const & args)
   {
     command * cmd = CMD_REF(__root__)->find_command(ident);
-    I(cmd->is_leaf());
-    if (cmd != NULL)
+
+    if (cmd->is_leaf())
       {
         L(FL("executing command '%s'") % join_words(ident));
 
@@ -680,7 +680,11 @@ namespace commands
       }
     else
       {
-        P(F("unknown command '%s'") % join_words(ident));
+        if (args.empty())
+          W(F("no subcommand specified for '%s'") % join_words(ident));
+        else
+          W(F("could not match '%s' to a subcommand of '%s'") %
+            join_words(args) % join_words(ident));
         return 1;
       }
   }
