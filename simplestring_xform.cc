@@ -229,6 +229,9 @@ UNIT_TEST(simplestring_xform, join_words)
   set< utf8 > s;
 
   v.clear();
+  BOOST_CHECK(join_words(v)() == "");
+
+  v.clear();
   v.push_back(utf8("a"));
   BOOST_CHECK(join_words(v)() == "a");
   BOOST_CHECK(join_words(v, ", ")() == "a");

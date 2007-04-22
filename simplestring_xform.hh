@@ -51,13 +51,11 @@ T2 join_words(T1< T2 > const & in, std::string const & sep = " ")
 {
   std::string str;
   typename T1< T2 >::const_iterator iter = in.begin();
-  for (;;)
+  while (iter != in.end())
     {
       str += (*iter)();
       iter++;
-      if (iter == in.end())
-        break;
-      else
+      if (iter != in.end())
         str += sep;
     }
   return T2(str);
