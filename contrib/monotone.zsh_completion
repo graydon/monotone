@@ -415,7 +415,7 @@ _mtn_files() {
     local prefix=${PREFIX}X
     local rcwd="$(_mtn_rcwd)"
     local -a list
-    list=( ${${${(f)"$(mtn ls --depth=0 $1 ${prefix:h} 2>/dev/null)"}#$rcwd}#/} )
+    list=( ${${${(f)"$(mtn ls $1 ${prefix:h} 2>/dev/null)"}#$rcwd}#/} )
     compadd -f -a list 
 }
 
