@@ -418,6 +418,9 @@ namespace std
   };
 };
 
+// XXX
+CMD_FWD_DECL(automate);
+
 namespace commands
 {
   command_id
@@ -437,6 +440,10 @@ namespace commands
         for (command::children_set::const_iterator iter = cs.begin();
              iter != cs.end(); iter++)
           {
+            // XXX Ugly hack to avoid completion collisions...
+            if (*iter == CMD_REF(automate))
+              continue;
+
             set< command_id > m2 = (*iter)->complete_command(id);
             matches.insert(m2.begin(), m2.end());
           }

@@ -224,7 +224,10 @@ CMD(identify, "", CMD_REF(debug), N_("[PATH]"),
 //
 // Error conditions: If the file path doesn't point to a valid file prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(identify, N_("PATH"), options::opts::none)
+CMD_AUTOMATE(identify, N_("PATH"),
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -319,7 +322,10 @@ CMD(cat, "", CMD_REF(informative),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file, N_("FILEID"), options::opts::none)
+CMD_AUTOMATE(get_file, N_("FILEID"),
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -342,7 +348,10 @@ AUTOMATE(get_file, N_("FILEID"), options::opts::none)
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
+CMD_AUTOMATE(get_file_of, N_("FILENAME"),
+             N_("TODO"),
+             N_(""),
+             options::opts::revision)
 {
   N(args.size() == 1,
     F("wrong argument count"));

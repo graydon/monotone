@@ -87,6 +87,24 @@ namespace commands
       complete_command(command_id const & id,
                        command_id completed = command_id());
   };
+
+  class automate : public command
+  {
+  public:
+    automate(std::string const & name,
+             std::string const & params,
+             std::string const & abstract,
+             std::string const & desc,
+             options::options_type const & opts);
+
+    virtual void exec(app_state & app,
+                      command_id const & execid,
+                      args_vector const & args);
+    virtual void run(args_vector args,
+                     command_id const & execid,
+                     app_state & app,
+                     std::ostream & output) const = 0;
+  };
 };
 
 inline std::vector<file_path>
@@ -168,30 +186,6 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 #define CMD_HIDDEN(C, aliases, parent, params, abstract, desc, opts) \
   _CMD2(C, aliases, parent, true, params, abstract, desc, opts)
 
-// Use this for commands that want to define a params() function
-// instead of having a static description. (Good for "automate"
-// and possibly "list".)
-#define CMD_WITH_SUBCMDS(C, aliases, parent, abstract, desc, opts)   \
-namespace commands {                                                 \
-  class cmd_ ## C : public command                                   \
-  {                                                                  \
-  public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, false, "", abstract,  \
-                          desc, true,                                \
-                          options::options_type() | opts)            \
-    {}                                                               \
-    virtual void exec(app_state & app,                               \
-                      command_id const & execid,                     \
-                      args_vector const & args);                     \
-    std::string params();                                            \
-    options::options_type get_options(args_vector const & args);     \
-  };                                                                 \
-  cmd_ ## C C ## _cmd;                                               \
-}                                                                    \
-void commands::cmd_ ## C::exec(app_state & app,                      \
-                               command_id const & execid,            \
-                               args_vector const & args)
-
 // XXX Should the 'opts' parameter go away?
 #define CMD_GROUP(C, aliases, parent, abstract, desc, opts)          \
 namespace commands {                                                 \
@@ -248,6 +242,25 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
                                args_vector const & args)             \
 
+#define CMD_AUTOMATE(C, params, abstract, desc, opts)                \
+namespace commands {                                                 \
+  struct automate_ ## C : public automate                            \
+  {                                                                  \
+    automate_ ## C() : automate(#C, params, abstract, desc,          \
+                                options::options_type() | opts)      \
+    {}                                                               \
+    void run(args_vector args,                                       \
+             command_id const & execid,                              \
+             app_state & app,                                        \
+             std::ostream & output) const;                           \
+  };                                                                 \
+  automate_ ## C C ## _automate;                                     \
+}                                                                    \
+void commands::automate_ ## C :: run(args_vector args,               \
+                                     command_id const & execid,      \
+                                     app_state & app,                \
+                                     std::ostream & output) const
+
 CMD_FWD_DECL(__root__);
 
 CMD_FWD_DECL(automation);
@@ -262,43 +275,6 @@ CMD_FWD_DECL(review);
 CMD_FWD_DECL(tree);
 CMD_FWD_DECL(variables);
 CMD_FWD_DECL(workspace);
-
-namespace automation {
-  struct automate
-  {
-    std::string name;
-    std::string params;
-    options::options_type opts;
-    automate(std::string const & n, std::string const & p,
-             options::options_type const & o);
-    virtual void run(args_vector args,
-                     std::string const & help_name,
-                     app_state & app,
-                     std::ostream & output) const = 0;
-    virtual ~automate();
-  };
-}
-
-#define AUTOMATE(NAME, PARAMS, OPTIONS)                             \
-namespace automation {                                              \
-  struct auto_ ## NAME : public automate                            \
-  {                                                                 \
-    auto_ ## NAME ()                                                \
-      : automate(#NAME, PARAMS, options::options_type() | OPTIONS)  \
-    {}                                                              \
-    void run(args_vector args, std::string const & help_name, \
-                     app_state & app, std::ostream & output) const; \
-    virtual ~auto_ ## NAME() {}                                     \
-  };                                                                \
-  static auto_ ## NAME NAME ## _auto;                               \
-}                                                                   \
-void automation::auto_ ## NAME :: run(args_vector args,             \
-                                      std::string const & help_name,\
-                                      app_state & app,              \
-                                      std::ostream & output) const
-
-
-
 
 // Local Variables:
 // mode: C++

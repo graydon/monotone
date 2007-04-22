@@ -526,8 +526,11 @@ CMD(diff, "", CMD_REF(informative), N_("[PATH]..."),
 // doubles the output of automate get_revision). If no content changes happened,
 // the output is empty. All file operations beside mtn add are omitted,
 // as they don't change the content of the file.
-AUTOMATE(content_diff, N_("[FILE [...]]"),
-    options::opts::revision | options::opts::depth | options::opts::exclude)
+CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
+             N_("TODO"),
+             N_(""),
+             options::opts::revision | options::opts::depth |
+             options::opts::exclude)
 {
   cset included;
   std::string dummy_header;

@@ -558,7 +558,10 @@ namespace
 //   private_location "keystore"
 //
 // Error conditions: None.
-AUTOMATE(keys, "", options::opts::none)
+CMD_AUTOMATE(keys, "",
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 0,
     F("no arguments needed"));
@@ -650,7 +653,10 @@ AUTOMATE(keys, "", options::opts::none)
 // key, a warning message is printed to stderr. If the revision
 // specified is unknown or invalid prints an error message to stderr
 // and exits with status 1.
-AUTOMATE(certs, N_("REV"), options::opts::none)
+CMD_AUTOMATE(certs, N_("REV"),
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));

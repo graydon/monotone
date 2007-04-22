@@ -18,48 +18,34 @@ using std::make_pair;
 using std::map;
 using std::ostream;
 using std::pair;
+using std::set;
 using std::string;
 using std::vector;
 
-namespace automation {
-  // When this is split into multiple files, there will not be any
-  // guarantees about initialization order. So, use something we can
-  // initialize ourselves.
-  static map<string, automate * const> * automations;
-  automate::automate(string const &n, string const &p,
-                     options::options_type const & o)
-    : name(n), params(p), opts(o)
+CMD_GROUP(automate, "", CMD_REF(__root__),
+          N_("Interface for scripted execution"),
+          N_(""),
+          options::opts::none);
+
+namespace commands {
+  automate::automate(string const & name,
+                     string const & params,
+                     string const & abstract,
+                     string const & desc,
+                     options::options_type const & opts) :
+    command(name, "", CMD_REF(automate), false, params, abstract,
+            desc, false, opts)
   {
-    static bool first(true);
-    if (first)
-      {
-        first = false;
-        automations = new map<string, automate * const>;
-      }
-    automations->insert(make_pair(name, this));
   }
-  automate::~automate() {}
-}
 
-automation::automate &
-find_automation(arg_type const & name, string const & root_cmd_name)
-{
-  map<string, automation::automate * const>::const_iterator
-    i = automation::automations->find(name());
-  if (i == automation::automations->end())
-    throw usage(commands::command_id()); // XXX root_cmd_name
-  else
-    return *(i->second);
-}
-
-void
-automate_command(arg_type cmd, args_vector args,
-                 commands::command_id const & root_cmd_name,
-                 app_state & app,
-                 ostream & output)
-{
-  string const & leaf = root_cmd_name[root_cmd_name.size() - 1]();
-  find_automation(cmd, leaf).run(args, leaf, app, output);
+  void
+  automate::exec(app_state & app,
+                 command_id const & execid,
+                 args_vector const & args)
+  {
+    make_io_binary();
+    run(args, execid, app, std::cout);
+  }
 }
 
 static string const interface_version = "4.2";
@@ -73,7 +59,10 @@ static string const interface_version = "4.2";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version, "", options::opts::none)
+CMD_AUTOMATE(interface_version, "",
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 0,
     F("no arguments needed"));
@@ -327,7 +316,10 @@ struct automate_ostream : public std::ostream
 };
 
 
-AUTOMATE(stdio, "", options::opts::automate_stdio_size)
+CMD_AUTOMATE(stdio, "",
+             N_("TODO"),
+             N_(""),
+             options::opts::automate_stdio_size)
 {
   N(args.size() == 0,
     F("no arguments needed"));
@@ -342,13 +334,11 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
   vector<string> cmdline;
   while(ar.get_command(params, cmdline))//while(!EOF)
     {
-      arg_type cmd;
       args_vector args;
       vector<string>::iterator i = cmdline.begin();
       E(i != cmdline.end(),
         F("Bad input to automate stdio: command name is missing"));
-      cmd = arg_type(*i);
-      for (++i; i != cmdline.end(); ++i)
+      for (; i != cmdline.end(); ++i)
         {
           args.push_back(arg_type(*i));
         }
@@ -358,11 +348,35 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
           opts = options::opts::all_options() - options::opts::globals();
           opts.instantiate(&app.opts).reset();
 
-          opts = options::opts::globals();
-          opts = opts | find_automation(cmd, help_name).opts;
-          opts.instantiate(&app.opts).from_key_value_pairs(params);
-          commands::command_id help_name; // XXX
-          automate_command(cmd, args, help_name, app, os);
+          command_id id;
+          for (args_vector::const_iterator iter = args.begin();
+               iter != args.end(); iter++)
+            id.push_back(utf8((*iter)()));
+
+          if (!id.empty())
+            {
+              I(!args.empty());
+
+              set< command_id > matches =
+                CMD_REF(automate)->complete_command(id);
+              N(matches.size() == 1,
+                F("invalid automation specified"));
+              id = *matches.begin();
+              id.erase(id.begin()); // Remove 'automate' from the beginning.
+
+              for (command_id::size_type i = 0; i < id.size(); i++)
+                args.erase(args.begin());
+
+              command * cmd = CMD_REF(automate)->find_command(id);
+              I(cmd != NULL);
+              automate * acmd = reinterpret_cast< automate * >(cmd);
+
+              opts = options::opts::globals() | acmd->opts();
+              opts.instantiate(&app.opts).from_key_value_pairs(params);
+              acmd->run(args, id, app, os);
+            }
+          else
+            opts.instantiate(&app.opts).from_key_value_pairs(params);
         }
       catch(informative_failure & f)
         {
@@ -374,51 +388,6 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
       os.end_cmd();
     }
 }
-
-
-CMD_WITH_SUBCMDS(automate, "", CMD_REF(automation),
-                 N_("Interface for scripted execution"),
-                 N_("This set of commands provides a stable interface to run "
-                    "monotone from other, external tools and interact with it "
-                    "by means of a text protocol over standard file "
-                    "descriptors."),
-                 options::opts::none)
-{
-  if (args.size() == 0)
-    throw usage(execid);
-
-  args_vector::const_iterator i = args.begin();
-  arg_type cmd = *i;
-  ++i;
-  args_vector cmd_args(i, args.end());
-
-  make_io_binary();
-
-  automate_command(cmd, cmd_args, execid, app, std::cout);
-}
-
-std::string commands::cmd_automate::params()
-{
-  std::string out;
-  map<string, automation::automate * const>::const_iterator i;
-  for (i = automation::automations->begin();
-       i != automation::automations->end(); ++i)
-    {
-      out += i->second->name + " " + i->second->params;
-      if (out[out.size()-1] != '\n')
-        out += "\n";
-    }
-  return out;
-}
-
-options::options_type
-commands::cmd_automate::get_options(args_vector const & args)
-{
-  if (args.size() < 2)
-    return options::options_type();
-  return find_automation(idx(args,1), idx(args,0)()).opts;
-}
-
 
 // Local Variables:
 // mode: C++
