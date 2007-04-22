@@ -242,6 +242,10 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
                                args_vector const & args)             \
 
+// TODO: 'abstract' and 'desc' should be refactored so that the
+// command definition allows the description of input/output format,
+// error conditions, version when added, etc.  'desc' can later be
+// automatically built from these.
 #define CMD_AUTOMATE(C, params, abstract, desc, opts)                \
 namespace commands {                                                 \
   struct automate_ ## C : public automate                            \
