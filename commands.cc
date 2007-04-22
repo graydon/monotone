@@ -325,8 +325,6 @@ namespace commands {
          iter != children().end(); iter++)
       {
         command * child = *iter;
-        if (child->hidden())
-          continue;
 
         for (names_set::const_iterator iter2 = child->names().begin();
              iter2 != child->names().end(); iter2++)
@@ -335,7 +333,8 @@ namespace commands {
             caux.push_back(*iter2);
             if (prefix == *iter2)
               matches[caux] = child;
-            else if (prefix().length() < (*iter2)().length())
+            else if (!child->hidden() &&
+                     prefix().length() < (*iter2)().length())
               {
                 utf8 p(string((*iter2)(), 0, prefix().length()));
                 if (prefix == p)
