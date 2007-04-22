@@ -23,10 +23,9 @@ class utf8;
 namespace commands {
   typedef std::vector< utf8 > command_id;
 
+  command_id make_command_id(std::string const & path);
   void explain_usage(command_id const & cmd, std::ostream & out);
   command_id complete_command(args_vector const & args);
-  int process(app_state & app, std::string const & ident,
-              args_vector const & args);
   int process(app_state & app, command_id const & ident,
               args_vector const & args);
   options::options_type command_options(args_vector const & cmdline);

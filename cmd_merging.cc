@@ -439,7 +439,7 @@ CMD(propagate, "", CMD_REF(tree), N_("SOURCE-BRANCH DEST-BRANCH"),
     throw usage(ident());
   args_vector a = args;
   a.push_back(arg_type());
-  process(app, "merge_into_dir", a);
+  process(app, make_command_id("tree merge_into_dir"), a);
 }
 
 CMD(merge_into_dir, "", CMD_REF(tree), N_("SOURCE-BRANCH DEST-BRANCH DIR"),

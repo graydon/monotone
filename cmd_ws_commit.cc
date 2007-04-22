@@ -1043,7 +1043,7 @@ CMD_NO_WORKSPACE(import, "", CMD_REF(tree), N_("DIRECTORY"),
       app.opts.exclude_patterns = args_vector();
       app.opts.unknown = true;
       app.opts.recursive = true;
-      process(app, "add", empty_args);
+      process(app, make_command_id("workspace add"), empty_args);
       app.opts.recursive = false;
       app.opts.unknown = false;
       app.opts.exclude_patterns = save_opts.exclude_patterns;
@@ -1051,13 +1051,13 @@ CMD_NO_WORKSPACE(import, "", CMD_REF(tree), N_("DIRECTORY"),
       // drop --missing
       save_opts.no_ignore = app.opts.no_ignore;
       app.opts.missing = true;
-      process(app, "drop", empty_args);
+      process(app, make_command_id("workspace drop"), empty_args);
       app.opts.missing = false;
       app.opts.no_ignore = save_opts.no_ignore;
 
       // commit
       if (!app.opts.dryrun)
-        process(app, "commit", empty_args);
+        process(app, make_command_id("workspace commit"), empty_args);
     }
   catch (...)
     {

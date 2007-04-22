@@ -621,6 +621,11 @@ namespace commands
       }
   }
 
+  command_id make_command_id(std::string const & path)
+  {
+    return split_into_words(utf8(path));
+  }
+
   void explain_usage(command_id const & ident, ostream & out)
   {
     command * cmd = find_command(ident);
@@ -641,17 +646,6 @@ namespace commands
                "long as it does not conflict with other names.\n";
         out << '\n';
       }
-  }
-
-  // XXX Must go away.
-  int process(app_state & app, string const & cmd,
-              args_vector const & args)
-  {
-    args_vector a1;
-    a1.push_back(arg_type("merge_into_dir"));
-    command_id ident;
-    ident = commands::complete_command(a1);
-    return process(app, ident, args);
   }
 
   int process(app_state & app, command_id const & ident,
@@ -954,145 +948,160 @@ mkargs(const char *words)
   return split_into_words(arg_type(words));
 }
 
-static commands::command_id
-mkid(const char *path)
+UNIT_TEST(commands, make_command_id)
 {
-  return split_into_words(utf8(path));
+  using commands::command_id;
+  using commands::make_command_id;
+
+  {
+    command_id id = make_command_id("foo");
+    BOOST_CHECK(id.size() == 1);
+    BOOST_CHECK(id[0]() == "foo");
+  }
+
+  {
+    command_id id = make_command_id("foo bar");
+    BOOST_CHECK(id.size() == 2);
+    BOOST_CHECK(id[0]() == "foo");
+    BOOST_CHECK(id[1]() == "bar");
+  }
 }
 
 UNIT_TEST(commands, complete_command)
 {
   using commands::command_id;
   using commands::complete_command;
+  using commands::make_command_id;
 
   // Single-word identifier.
   {
     command_id id = complete_command(mkargs("testg"));
-    BOOST_CHECK(id == mkid("testg"));
+    BOOST_CHECK(id == make_command_id("testg"));
   }
 
   // Single-word identifier, non-primary name.
   {
     command_id id = complete_command(mkargs("alias1"));
-    BOOST_CHECK(id == mkid("test1"));
+    BOOST_CHECK(id == make_command_id("test1"));
   }
 
   // Multi-word identifier.
   {
     command_id id = complete_command(mkargs("testg testg1"));
-    BOOST_CHECK(id == mkid("testg testg1"));
+    BOOST_CHECK(id == make_command_id("testg testg1"));
   }
 
   // Single-word identifier, one level deep.
   {
     command_id id = complete_command(mkargs("testg1"));
-    BOOST_CHECK(id == mkid("testg testg1"));
+    BOOST_CHECK(id == make_command_id("testg testg1"));
   }
 }
 
 UNIT_TEST(commands, command_complete_command)
 {
   using commands::command_id;
+  using commands::make_command_id;
 
   // Non-existent single-word identifier.
   {
-    command_id id = mkid("foo");
+    command_id id = make_command_id("foo");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 0);
   }
 
   // Non-existent multi-word identifier.
   {
-    command_id id = mkid("foo bar");
+    command_id id = make_command_id("foo bar");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 0);
   }
 
   // Single-word identifier with one match.
   {
-    command_id id = mkid("test1");
+    command_id id = make_command_id("test1");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 1);
-    BOOST_CHECK(*matches.begin() == mkid("test1"));
+    BOOST_CHECK(*matches.begin() == make_command_id("test1"));
   }
 
   // Single-word identifier with one match, non-primary name.
   {
-    command_id id = mkid("alias1");
+    command_id id = make_command_id("alias1");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 1);
-    BOOST_CHECK(*matches.begin() == mkid("test1"));
+    BOOST_CHECK(*matches.begin() == make_command_id("test1"));
   }
 
   // Single-word identifier with multiple matches.
   {
-    command_id id = mkid("test");
+    command_id id = make_command_id("test");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 3);
 
     set< command_id > expected;
-    expected.insert(mkid("test1"));
-    expected.insert(mkid("test2"));
-    expected.insert(mkid("testg"));
+    expected.insert(make_command_id("test1"));
+    expected.insert(make_command_id("test2"));
+    expected.insert(make_command_id("testg"));
     BOOST_CHECK(matches == expected);
   }
 
   // Single-word identifier with multiple matches, non-primary name.
   {
-    command_id id = mkid("alias");
+    command_id id = make_command_id("alias");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 2);
 
     set< command_id > expected;
-    expected.insert(mkid("test1"));
-    expected.insert(mkid("test2"));
+    expected.insert(make_command_id("test1"));
+    expected.insert(make_command_id("test2"));
     BOOST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with one match.
   {
-    command_id id = mkid("testg testg1");
+    command_id id = make_command_id("testg testg1");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 1);
 
     set< command_id > expected;
-    expected.insert(mkid("testg testg1"));
+    expected.insert(make_command_id("testg testg1"));
     BOOST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with multiple matches.
   {
-    command_id id = mkid("testg testg");
+    command_id id = make_command_id("testg testg");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 2);
 
     set< command_id > expected;
-    expected.insert(mkid("testg testg1"));
-    expected.insert(mkid("testg testg2"));
+    expected.insert(make_command_id("testg testg1"));
+    expected.insert(make_command_id("testg testg2"));
     BOOST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with multiple matches at different levels.
   {
-    command_id id = mkid("test testg1");
+    command_id id = make_command_id("test testg1");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 3);
 
     set< command_id > expected;
-    expected.insert(mkid("test1"));
-    expected.insert(mkid("test2"));
-    expected.insert(mkid("testg testg1"));
+    expected.insert(make_command_id("test1"));
+    expected.insert(make_command_id("test2"));
+    expected.insert(make_command_id("testg testg1"));
     BOOST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with one match and extra words.
   {
-    command_id id = mkid("testg testg1 foo");
+    command_id id = make_command_id("testg testg1 foo");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 1);
 
     set< command_id > expected;
-    expected.insert(mkid("testg testg1"));
+    expected.insert(make_command_id("testg testg1"));
     BOOST_CHECK(matches == expected);
   }
 }
@@ -1101,66 +1110,67 @@ UNIT_TEST(commands, command_find_command)
 {
   using commands::command;
   using commands::command_id;
+  using commands::make_command_id;
 
   // Non-existent single-word identifier.
   {
-    command_id id = mkid("foo");
+    command_id id = make_command_id("foo");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == NULL);
   }
 
   // Non-existent multi-word identifier.
   {
-    command_id id = mkid("foo bar");
+    command_id id = make_command_id("foo bar");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == NULL);
   }
 
   // Single-word identifier that could be completed.
   {
-    command_id id = mkid("test");
+    command_id id = make_command_id("test");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == NULL);
   }
 
   // Single-word identifier.
   {
-    command_id id = mkid("test1");
+    command_id id = make_command_id("test1");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == CMD_REF(test1));
   }
 
   // Hidden single-word identifier.
   {
-    command_id id = mkid("test3");
+    command_id id = make_command_id("test3");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == CMD_REF(test3));
   }
 
   // Multi-word identifier that could be completed.
   {
-    command_id id = mkid("testg testg");
+    command_id id = make_command_id("testg testg");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == NULL);
   }
 
   // Multi-word identifier.
   {
-    command_id id = mkid("testg testg1");
+    command_id id = make_command_id("testg testg1");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == CMD_REF(testg1));
   }
 
   // Hidden multi-word identifier.
   {
-    command_id id = mkid("testg testg3");
+    command_id id = make_command_id("testg testg3");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == CMD_REF(testg3));
   }
 
   // Multi-word identifier with extra words.
   {
-    command_id id = mkid("testg testg1 foo");
+    command_id id = make_command_id("testg testg1 foo");
     command * cmd = CMD_REF(__root__)->find_command(id);
     BOOST_CHECK(cmd == NULL);
   }
