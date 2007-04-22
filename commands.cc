@@ -469,7 +469,7 @@ namespace commands
     if (matches.empty())
       {
         N(false,
-          F("could not match '%s' to any command") % join_words(id)());
+          F("unknown command '%s'") % join_words(id)());
       }
     else if (matches.size() == 1)
       {
@@ -708,6 +708,10 @@ namespace commands
         else
           W(F("could not match '%s' to a subcommand of '%s'") %
             join_words(args) % join_words(ident));
+        // XXX Oh, oh, what to do.  This is a syntax error, so an usage is
+        // probably worth it... but then, the return value of this function
+        // becomes useless...
+        throw usage(ident);
         return 1;
       }
   }
