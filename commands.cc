@@ -519,67 +519,15 @@ namespace commands
   static void describe(const string & tag, const string & abstract,
                        size_t colabstract, ostream & out)
   {
-    // The algorithm below avoids printing an space on entry (note that
-    // there are two before the tag but just one after it) and considers
-    // that the colabstract is always one unit less than that given on
-    // entry because it always prints a single space before each word.
     I(colabstract > 0);
 
     size_t col = 0;
     out << "  " << tag << " ";
     col += display_width(utf8(tag + "   "));
 
-    while (col++ < colabstract - 1)
-      out << ' ';
-    col = colabstract - 1;
-
-    vector< utf8 > words = split_into_words(utf8(abstract));
-
-    const size_t maxcol = terminal_width();
-    vector< utf8 >::const_iterator i = words.begin();
-    while (i != words.end())
-      {
-        string const & word = (*i)();
-
-        if (col + word.length() + 1 >= maxcol)
-          {
-            out << '\n';
-            col = 0;
-
-            // Skip empty words at the beginning of the line so that they do
-            // not mess with indentation.  These "words" appear because we
-            // put two spaces between sentences, and one of these is
-            // transformed into a word.
-            //
-            // Another approach could be to simply omit these words (by
-            // modifying split_into_words) and then add this formatting (two
-            // spaces between sentences) from this algorithm.  But then,
-            // other kinds of formatting could not be allowed in the original
-            // strings... (i.e., they'd disappear after we mangled them).
-            if (word == "")
-              {
-                do
-                  i++;
-                while (i != words.end() && (*i)().empty());
-                if (i == words.end())
-                  break;
-                else
-                  {
-                    while (col++ < colabstract - 1)
-                      out << ' ';
-                    continue;
-                  }
-              }
-
-            while (col++ < colabstract - 1)
-              out << ' ';
-          }
-
-        out << ' ' << word;
-        col += word.length() + 1;
-        i++;
-      }
-    out << '\n';
+    out << string(colabstract - col, ' ');
+    col = colabstract;
+    out << format_text(abstract, colabstract, col) << '\n';
   }
 
   static void explain_children(command::children_set const & children,
@@ -625,16 +573,19 @@ namespace commands
                                                  ident.end()))();
 
     if (visibleid.empty())
-      out << F(safe_gettext("Commands in group '%s':")) %
-             join_words(ident)() << "\n\n";
+      out << format_text(F(safe_gettext("Commands in group '%s':")) %
+                         join_words(ident)())
+          << "\n\n";
     else
       {
         if (cmd->children().size() > 0)
-          out << F(safe_gettext("Subcommands of '%s %s':")) %
-                 ui.prog_name % visibleid << "\n\n";
+          out << format_text(F(safe_gettext("Subcommands of '%s %s':")) %
+                             ui.prog_name % visibleid)
+              << "\n\n";
         else
-          out << F(safe_gettext("Syntax specific to '%s %s':")) %
-                 ui.prog_name % visibleid << "\n\n";
+          out << format_text(F(safe_gettext("Syntax specific to '%s %s':")) %
+                             ui.prog_name % visibleid)
+              << "\n\n";
       }
 
     // Print command parameters.
@@ -657,27 +608,23 @@ namespace commands
 
     // Print command description.
     if (visibleid.empty())
-      out << F(safe_gettext("Purpose of group '%s':")) %
-             join_words(ident)() << "\n\n";
+      out << format_text(F(safe_gettext("Purpose of group '%s':")) %
+                         join_words(ident)())
+          << "\n\n";
     else
-      out << F(safe_gettext("Description for '%s %s':")) %
-             ui.prog_name % visibleid << "\n\n";
-    split_into_lines(cmd->desc(), lines);
-    for (vector<string>::const_iterator j = lines.begin();
-         j != lines.end(); ++j)
-      {
-        describe("", *j, 4, out);
-        out << '\n';
-      }
+      out << format_text(F(safe_gettext("Description for '%s %s':")) %
+                         ui.prog_name % visibleid)
+          << "\n\n";
+    out << format_text(cmd->desc(), 2) << "\n\n";
 
     // Print all available aliases.
     if (cmd->names().size() > 1)
       {
         command::names_set othernames = cmd->names();
         othernames.erase(ident[ident.size() - 1]);
-        describe("", "Aliases: " + join_words(othernames, ", ")() +
-                 ".", 4, out);
-        out << '\n';
+        out << format_text(F("Aliases: %s.") %
+                           join_words(othernames, ", ")(), 2)
+            << '\n';
       }
   }
 
@@ -692,17 +639,19 @@ namespace commands
 
     if (ident.empty())
       {
-        // TODO Wrap long lines in these messages.
-        out << "Command groups:\n\n";
+        out << format_text("Command groups:") << "\n\n";
         explain_children(CMD_REF(__root__)->children(), out);
-        out << '\n';
-        out << "For information on a specific command, type "
-               "'mtn help <command_name> [subcommand_name ...]'.\n";
-        out << "To see the commands available within a group, type "
-               "'mtn help <group_name>'.\n";
-        out << "Note that you can always abbreviate a command name as "
-               "long as it does not conflict with other names.\n";
-        out << '\n';
+        out << '\n'
+            << format_text("For information on a specific command, type "
+                           "'mtn help <command_name> [subcommand_name ...]'.")
+            << '\n'
+            << format_text("To see the commands available within a group, "
+                           "type 'mtn help <group_name>'.")
+            << '\n'
+            << format_text("Note that you can always abbreviate a command "
+                           "name as long as it does not conflict with other "
+                           "names.")
+            << "\n\n";
       }
     else
       explain_cmd_usage(ident, out);
