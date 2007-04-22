@@ -423,6 +423,7 @@ namespace commands
 
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
 
+    int offset = 0;
     if (matches.empty())
       {
         command::children_set const & cs = CMD_REF(__root__)->children();
@@ -432,6 +433,27 @@ namespace commands
             set< command_id > m2 = (*iter)->complete_command(id);
             matches.insert(m2.begin(), m2.end());
           }
+
+        offset = 1;
+      }
+
+    if (matches.size() >= 2)
+      {
+        // If there is an exact match at the lowest level, pick it.  Needed
+        // to automatically resolve ambiguities between, e.g., 'drop' and
+        // 'dropkey'.
+        command_id tmp;
+
+        for (set< command_id >::const_iterator iter = matches.begin();
+             iter != matches.end() && tmp.empty(); iter++)
+          {
+            command_id const & id = *iter;
+            if (id[id.size() - 1]() == args[id.size() - 1 - offset]())
+              tmp = id;
+          }
+
+        matches.clear();
+        matches.insert(tmp);
       }
 
     if (matches.empty())
