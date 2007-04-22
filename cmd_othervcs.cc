@@ -20,7 +20,7 @@ CMD(rcs_import, "", CMD_REF(debug), N_("RCSFILE..."),
     options::opts::branch)
 {
   if (args.size() < 1)
-    throw usage(ident());
+    throw usage(execid);
 
   for (args_vector::const_iterator i = args.begin();
        i != args.end(); ++i)
@@ -36,7 +36,7 @@ CMD(cvs_import, "", CMD_REF(rcs), N_("CVSROOT"),
     options::opts::branch)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   import_cvs_repo(system_path(idx(args, 0)()), app);
 }

@@ -23,6 +23,7 @@
 #include "safe_map.hh"
 #include "ui.hh"
 #include "app_state.hh"
+#include "simplestring_xform.hh"
 
 using std::cout;
 using std::make_pair;
@@ -135,10 +136,10 @@ CMD(update, "", CMD_REF(workspace), "",
     options::opts::branch | options::opts::revision)
 {
   if (args.size() > 0)
-    throw usage(ident());
+    throw usage(execid);
 
   if (app.opts.revision_selectors.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -338,7 +339,7 @@ CMD(merge, "", CMD_REF(tree), "",
   typedef set<revision_id>::const_iterator rid_set_iter;
 
   if (args.size() != 0)
-    throw usage(ident());
+    throw usage(execid);
 
   N(app.opts.branchname() != "",
     F("please specify a branch, with --branch=BRANCH"));
@@ -436,7 +437,7 @@ CMD(propagate, "", CMD_REF(tree), N_("SOURCE-BRANCH DEST-BRANCH"),
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
   if (args.size() != 2)
-    throw usage(ident());
+    throw usage(execid);
   args_vector a = args;
   a.push_back(arg_type());
   process(app, make_command_id("tree merge_into_dir"), a);
@@ -477,7 +478,7 @@ CMD(merge_into_dir, "", CMD_REF(tree), N_("SOURCE-BRANCH DEST-BRANCH DIR"),
   set<revision_id> src_heads, dst_heads;
 
   if (args.size() != 3)
-    throw usage(ident());
+    throw usage(execid);
 
   app.get_project().get_branch_heads(branch_name(idx(args, 0)()), src_heads);
   app.get_project().get_branch_heads(branch_name(idx(args, 1)()), dst_heads);
@@ -614,7 +615,7 @@ CMD(merge_into_workspace, "", CMD_REF(tree),
   roster_t working_roster;
 
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -633,7 +634,8 @@ CMD(merge_into_workspace, "", CMD_REF(tree),
     app.work.update_current_roster_from_filesystem(working_roster);
 
     N(parent_roster(parents.begin()) == working_roster,
-      F("'%s' can only be used in a workspace with no pending changes") % name);
+      F("'%s' can only be used in a workspace with no pending changes") %
+        join_words(execid)());
 
     left_id = parent_id(parents.begin());
     left = parent_cached_roster(parents.begin());
@@ -704,7 +706,7 @@ CMD(explicit_merge, "", CMD_REF(tree),
   branch_name branch;
 
   if (args.size() != 3)
-    throw usage(ident());
+    throw usage(execid);
 
   complete(app, idx(args, 0)(), left);
   complete(app, idx(args, 1)(), right);
@@ -727,7 +729,7 @@ CMD(show_conflicts, "", CMD_REF(informative), N_("REV REV"),
     options::opts::branch | options::opts::date | options::opts::author)
 {
   if (args.size() != 2)
-    throw usage(ident());
+    throw usage(execid);
   revision_id l_id, r_id;
   complete(app, idx(args,0)(), l_id);
   complete(app, idx(args,1)(), r_id);                                                                    
@@ -803,7 +805,7 @@ CMD(pluck, "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
         F("no such revision '%s'") % to_rid);
     }
   else
-    throw usage(ident());
+    throw usage(execid);
   
   app.require_workspace();
 
@@ -936,7 +938,7 @@ CMD(heads, "", CMD_REF(tree), "",
 {
   set<revision_id> heads;
   if (args.size() != 0)
-    throw usage(ident());
+    throw usage(execid);
 
   N(app.opts.branchname() != "",
     F("please specify a branch, with --branch=BRANCH"));
@@ -1018,7 +1020,7 @@ CMD(get_roster, "", CMD_REF(debug), N_("[REVID]"),
       app.db.get_roster(rid, roster, mm);
     }
   else
-    throw usage(ident());
+    throw usage(execid);
 
   roster_data dat;
   write_roster_and_marking(roster, mm, dat);

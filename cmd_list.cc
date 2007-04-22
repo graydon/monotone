@@ -53,7 +53,7 @@ CMD(certs, "", CMD_REF(list), "ID",
     options::opts::depth | options::opts::exclude)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   vector<cert> certs;
 
@@ -161,7 +161,7 @@ CMD(keys, "", CMD_REF(list), "[PATTERN]",
   if (args.size() == 1)
     pattern = idx(args, 0)();
   else if (args.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   if (app.db.database_specified())
     {
@@ -254,7 +254,7 @@ CMD(branches, "", CMD_REF(list), "[PATTERN]",
   if (args.size() == 1)
     inc = globish(idx(args,0)());
   else if (args.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
   vector<globish> excludes;
   typecast_vocab_container(app.opts.exclude_patterns, excludes);
   combine_and_check_globish(excludes, exc);
@@ -335,7 +335,7 @@ CMD(vars, "", CMD_REF(list), "[DOMAIN]",
       internalize_var_domain(idx(args, 0), filter);
     }
   else
-    throw usage(ident());
+    throw usage(execid);
 
   map<var_key, var_value> vars;
   app.db.get_vars(vars);
@@ -412,13 +412,14 @@ CMD(unknown, "ignored", CMD_REF(list), "",
 
   app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
 
-  if (name == "ignored")
+  utf8 const & realname = execid[execid.size() - 1];
+  if (realname() == "ignored")
     for (path_set::const_iterator i = ignored.begin();
          i != ignored.end(); ++i)
       cout << file_path(*i) << '\n';
   else
     {
-      I(name == "unknown");
+      I(realname() == "unknown");
       for (path_set::const_iterator i = unknown.begin();
            i != unknown.end(); ++i)
         cout << file_path(*i) << '\n';

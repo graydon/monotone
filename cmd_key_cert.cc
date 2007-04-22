@@ -35,7 +35,7 @@ CMD(genkey, "", CMD_REF(key_and_cert), N_("KEYID"),
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -65,7 +65,7 @@ CMD(dropkey, "", CMD_REF(key_and_cert), N_("KEYID"),
   bool key_deleted = false;
 
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   rsa_keypair_id ident(idx(args, 0)());
   bool checked_db = false;
@@ -105,7 +105,7 @@ CMD(passphrase, "", CMD_REF(key_and_cert), N_("KEYID"),
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -128,7 +128,7 @@ CMD(ssh_agent_export, "", CMD_REF(key_and_cert),
     options::opts::none)
 {
   if (args.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   rsa_keypair_id id;
   keypair key;
@@ -167,7 +167,7 @@ CMD(ssh_agent_add, "", CMD_REF(key_and_cert), "",
     options::opts::none)
 {
   if (args.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   rsa_keypair_id id;
   keypair key;
@@ -184,7 +184,7 @@ CMD(cert, "", CMD_REF(key_and_cert), N_("REVISION CERTNAME [CERTVAL]"),
     options::opts::none)
 {
   if ((args.size() != 3) && (args.size() != 2))
-    throw usage(ident());
+    throw usage(execid);
 
   transaction_guard guard(app.db);
 
@@ -218,7 +218,7 @@ CMD(trusted, "", CMD_REF(key_and_cert),
     options::opts::none)
 {
   if (args.size() < 4)
-    throw usage(ident());
+    throw usage(execid);
 
   revision_id rid;
   complete(app, idx(args, 0)(), rid, false);
@@ -265,7 +265,7 @@ CMD(tag, "", CMD_REF(review), N_("REVISION TAGNAME"),
     options::opts::none)
 {
   if (args.size() != 2)
-    throw usage(ident());
+    throw usage(execid);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
@@ -279,7 +279,7 @@ CMD(testresult, "", CMD_REF(review), N_("ID (pass|fail|true|false|yes|no|1|0)"),
     options::opts::none)
 {
   if (args.size() != 2)
-    throw usage(ident());
+    throw usage(execid);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
@@ -293,7 +293,7 @@ CMD(approve, "", CMD_REF(review), N_("REVISION"),
     options::opts::branch)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
@@ -308,7 +308,7 @@ CMD(comment, "", CMD_REF(review), N_("REVISION [COMMENT]"),
     options::opts::none)
 {
   if (args.size() != 1 && args.size() != 2)
-    throw usage(ident());
+    throw usage(execid);
 
   utf8 comment;
   if (args.size() == 2)

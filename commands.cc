@@ -667,7 +667,7 @@ namespace commands
         if (cmd->use_workspace_options())
           app.process_options();
 
-        cmd->exec(app, join_words(ident)(), args); // XXX
+        cmd->exec(app, ident, args);
         return 0;
       }
     else
@@ -731,7 +731,7 @@ CMD_HIDDEN(crash, "", CMD_REF(__root__), "{ N | E | I | exception | signal }",
            options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
   bool spoon_exists(false);
   if (idx(args,0)() == "N")
     N(spoon_exists, i18n_format("There is no spoon."));
@@ -774,7 +774,7 @@ CMD_HIDDEN(crash, "", CMD_REF(__root__), "{ N | E | I | exception | signal }",
         { // fall through and throw usage
         }
 #endif
-      throw usage(ident());
+      throw usage(execid);
     }
 #undef maybe_throw
 #undef maybe_throw_bare

@@ -54,11 +54,12 @@ find_automation(arg_type const & name, string const & root_cmd_name)
 
 void
 automate_command(arg_type cmd, args_vector args,
-                 string const & root_cmd_name,
+                 commands::command_id const & root_cmd_name,
                  app_state & app,
                  ostream & output)
 {
-  find_automation(cmd, root_cmd_name).run(args, root_cmd_name, app, output);
+  string const & leaf = root_cmd_name[root_cmd_name.size() - 1]();
+  find_automation(cmd, leaf).run(args, leaf, app, output);
 }
 
 static string const interface_version = "4.2";
@@ -360,6 +361,7 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
           opts = options::opts::globals();
           opts = opts | find_automation(cmd, help_name).opts;
           opts.instantiate(&app.opts).from_key_value_pairs(params);
+          commands::command_id help_name; // XXX
           automate_command(cmd, args, help_name, app, os);
         }
       catch(informative_failure & f)
@@ -383,7 +385,7 @@ CMD_WITH_SUBCMDS(automate, "", CMD_REF(automation),
                  options::opts::none)
 {
   if (args.size() == 0)
-    throw usage(ident());
+    throw usage(execid);
 
   args_vector::const_iterator i = args.begin();
   arg_type cmd = *i;
@@ -392,7 +394,7 @@ CMD_WITH_SUBCMDS(automate, "", CMD_REF(automation),
 
   make_io_binary();
 
-  automate_command(cmd, cmd_args, name, app, std::cout);
+  automate_command(cmd, cmd_args, execid, app, std::cout);
 }
 
 std::string commands::cmd_automate::params()

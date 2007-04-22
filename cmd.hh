@@ -77,7 +77,7 @@ namespace commands
     bool operator<(command const & cmd) const;
 
     virtual void exec(app_state & app,
-                      std::string const & name, // XXX Extra parameter
+                      command_id const & execid,
                       args_vector const & args) = 0;
 
     bool has_name(utf8 const & name) const;
@@ -150,13 +150,13 @@ namespace commands {                                                 \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::string const & name,                      \
+                      command_id const & execid,                     \
                       args_vector const & args);                     \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::string const & name,             \
+                               command_id const & execid,            \
                                args_vector const & args)
 
 #define CMD(C, aliases, parent, params, abstract, desc, opts) \
@@ -178,7 +178,7 @@ namespace commands {                                                 \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::string const & name,                      \
+                      command_id const & execid,                     \
                       args_vector const & args);                     \
     std::string params();                                            \
     options::options_type get_options(args_vector const & args);     \
@@ -186,7 +186,7 @@ namespace commands {                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::string const & name,             \
+                               command_id const & execid,            \
                                args_vector const & args)
 
 // XXX Should the 'opts' parameter go away?
@@ -200,17 +200,17 @@ namespace commands {                                                 \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::string const & name,                      \
+                      command_id const & execid,                     \
                       args_vector const & args);                     \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::string const & name,             \
+                               command_id const & execid,            \
                                args_vector const & args)             \
 {                                                                    \
   if (args.size() == 0)                                              \
-    throw usage(ident());                                            \
+    throw usage(execid);                                             \
                                                                      \
   args_vector::const_iterator i = args.begin();                      \
   ++i;                                                               \
@@ -218,7 +218,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
   /* XXX Command completion... */ \
   /*command * child = find_command(this, idx(args, 0)());              \
   if (child == NULL)                                                 \
-    throw usage(ident());                                            \
+    throw usage(execid);                                             \
   else                                                               \
     child->exec(app, idx(args, 0)(), removed); */                      \
 }
@@ -236,13 +236,13 @@ namespace commands {                                                 \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::string const & name,                      \
+                      command_id const & execid,                     \
                       args_vector const & args);                     \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::string const & name,             \
+                               command_id const & execid,            \
                                args_vector const & args)             \
 
 CMD_FWD_DECL(__root__);

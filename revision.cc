@@ -719,7 +719,7 @@ make_restricted_revision(parent_map const & old_rosters,
                          node_restriction const & mask,
                          revision_t & rev,
                          cset & excluded,
-                         string const & cmd_name)
+                         commands::command_id const & cmd_name)
 {
   edge_map edges;
   bool no_excludes = true;
@@ -738,7 +738,7 @@ make_restricted_revision(parent_map const & old_rosters,
 
   N(old_rosters.size() == 1 || no_excludes,
     F("the command '%s %s' cannot be restricted in a two-parent workspace")
-    % ui.prog_name % cmd_name);
+    % ui.prog_name % join_words(cmd_name)());
 
   recalculate_manifest_id_for_restricted_rev(old_rosters, edges, rev);
 }
@@ -1779,7 +1779,7 @@ CMD_HIDDEN(rev_height, "", CMD_REF(informative), N_("REV"),
            options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   rev_height height;

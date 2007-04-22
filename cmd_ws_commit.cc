@@ -217,7 +217,7 @@ CMD(disapprove, "", CMD_REF(review), N_("REVISION"),
     options::opts::author)
 {
   if (args.size() != 1)
-    throw usage(ident());
+    throw usage(execid);
 
   utf8 log_message("");
   bool log_message_given;
@@ -270,7 +270,7 @@ CMD(mkdir, "", CMD_REF(workspace), N_("[DIRECTORY...]"),
     options::opts::no_ignore)
 {
   if (args.size() < 1)
-    throw usage(ident());
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -316,7 +316,7 @@ CMD(add, "", CMD_REF(workspace), N_("[PATH]..."),
     options::opts::recursive)
 {
   if (!app.opts.unknown && (args.size() < 1))
-    throw usage(ident());
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -349,7 +349,7 @@ CMD(drop, "rm", CMD_REF(workspace), N_("[PATH]..."),
     options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
-    throw usage(ident());
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -380,7 +380,7 @@ CMD(rename, "mv", CMD_REF(workspace),
     options::opts::bookkeep_only)
 {
   if (args.size() < 2)
-    throw usage(ident());
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -407,7 +407,7 @@ CMD(pivot_root, "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
     options::opts::bookkeep_only)
 {
   if (args.size() != 2)
-    throw usage(ident());
+    throw usage(execid);
 
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
@@ -502,7 +502,7 @@ CMD(checkout, "co", CMD_REF(tree), N_("[DIRECTORY]"),
   transaction_guard guard(app.db, false);
 
   if (args.size() > 1 || app.opts.revision_selectors.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   if (app.opts.revision_selectors.size() == 0)
     {
@@ -603,7 +603,7 @@ CMD(attr, "", CMD_REF(workspace),
     options::opts::none)
 {
   if (args.size() < 2 || args.size() > 4)
-    throw usage(ident());
+    throw usage(execid);
 
   roster_t new_roster;
   temp_node_id_source nis;
@@ -624,7 +624,7 @@ CMD(attr, "", CMD_REF(workspace),
       if (subcmd == "set")
         {
           if (args.size() != 4)
-            throw usage(ident());
+            throw usage(execid);
 
           attr_key a_key = attr_key(idx(args, 2)());
           attr_value a_value = attr_value(idx(args, 3)());
@@ -649,7 +649,7 @@ CMD(attr, "", CMD_REF(workspace),
               node->attrs[a_key] = make_pair(false, "");
             }
           else
-            throw usage(ident());
+            throw usage(execid);
         }
 
       parent_map parents;
@@ -690,10 +690,10 @@ CMD(attr, "", CMD_REF(workspace),
                      % a_key % path) << '\n';
         }
       else
-        throw usage(ident());
+        throw usage(execid);
     }
   else
-    throw usage(ident());
+    throw usage(execid);
 }
 
 
@@ -732,7 +732,7 @@ CMD(commit, "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
-                           excluded, name);
+                           excluded, execid);
   restricted_rev.check_sane();
   N(restricted_rev.is_nontrivial(), F("no changes to commit"));
 
@@ -951,7 +951,7 @@ CMD_NO_WORKSPACE(setup, "", CMD_REF(tree), N_("[DIRECTORY]"),
     options::opts::branch)
 {
   if (args.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   N(!app.opts.branchname().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
@@ -1076,7 +1076,7 @@ CMD_NO_WORKSPACE(migrate_workspace, "", CMD_REF(tree), N_("[DIRECTORY]"),
   options::opts::none)
 {
   if (args.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   if (args.size() == 1)
     go_to_workspace(system_path(idx(args, 0)));

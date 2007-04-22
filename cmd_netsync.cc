@@ -208,7 +208,7 @@ CMD(clone, "", CMD_REF(network), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
     options::opts::exclude | options::opts::branch | options::opts::revision)
 {
   if (args.size() < 1 || args.size() > 2 || app.opts.revision_selectors.size() > 1)
-    throw usage(ident());
+    throw usage(execid);
 
   revision_id ident;
   system_path workspace_dir;
@@ -394,7 +394,7 @@ CMD_NO_WORKSPACE(serve, "", CMD_REF(network), "",
                  options::opts::bind_stdio | options::opts::no_transport_auth)
 {
   if (!args.empty())
-    throw usage(ident());
+    throw usage(execid);
 
   pid_file pid(app.opts.pidfile);
 
