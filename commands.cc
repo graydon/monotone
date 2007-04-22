@@ -680,26 +680,13 @@ namespace commands
       }
   }
 
-  options::options_type command_options(args_vector const & cmdline)
+  options::options_type command_options(command_id const & ident)
   {
-/*
-    if (cmdline.empty())
-      return options::options_type();
-    string name = complete_command(idx(cmdline,0)());
-    if (!name.empty())
-      {
-        return find_command(name)->opts();
-      }
-    else
-      {
-        N(!name.empty(),
-          F("unknown command '%s'") % idx(cmdline, 0));
-        return options::options_type();
-      }
-*/
-    return options::options_type();
+    command * cmd = find_command(ident);
+    return cmd->opts();
   }
 
+  // XXX How does this differ from command_options()?
   options::options_type toplevel_command_options(command_id const & ident)
   {
     command * cmd = find_command(ident);

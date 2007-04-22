@@ -28,7 +28,7 @@ namespace commands {
   command_id complete_command(args_vector const & args);
   int process(app_state & app, command_id const & ident,
               args_vector const & args);
-  options::options_type command_options(args_vector const & cmdline);
+  options::options_type command_options(command_id const & ident);
   options::options_type toplevel_command_options(command_id const & ident);
 };
 

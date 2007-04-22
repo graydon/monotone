@@ -133,24 +133,20 @@ commands::command_id read_options(options & opts, args_vector args)
     options::opts::all_options().instantiate(&opts);
   optset.from_command_line(args);
 
-  // consume the command, and perform completion if necessary
   if (!opts.args.empty())
     {
+      // There are some arguments remaining in the command line.  Try first
+      // to see if they are a command.
       cmd = commands::complete_command(opts.args);
       I(!cmd.empty());
-    }
 
-  // reparse options, now that we know what command-specific
-  // options are allowed.
+      // Reparse options now that we know what command-specific options
+      // are allowed.
+      options::options_type cmdopts = commands::command_options(cmd);
+      optset.reset();
+      optset = (options::opts::globals() | cmdopts).instantiate(&opts);
+      optset.from_command_line(args, false);
 
-  options::options_type cmdopts = commands::command_options(opts.args);
-  optset.reset();
-
-  optset = (options::opts::globals() | cmdopts).instantiate(&opts);
-  optset.from_command_line(args, false);
-
-  if (!opts.args.empty())
-    {
       // Remove the command name from the arguments.  It is important to
       // note that the first component of the identifier is always optional,
       // so we must take care about that here.
@@ -164,8 +160,7 @@ commands::command_id read_options(options & opts, args_vector args)
 
       for (args_vector::size_type i = 0; i < cmd2.size(); i++)
         {
-          // Cannot enable the check below due to command name aliases.
-          // I(cmd2[i]().find(opts.args[i]()) == 0);
+          I(cmd2[i]().find(opts.args[i]()) == 0);
           opts.args.erase(opts.args.begin());
         }
     }
