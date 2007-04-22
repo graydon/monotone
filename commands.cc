@@ -574,16 +574,19 @@ namespace commands
                out);
   }
 
-  static void explain_cmd_usage(command * cmd, ostream & out)
+  static void explain_cmd_usage(command_id const & ident, ostream & out)
   {
+    I(!ident.empty());
+
     vector< string > lines;
+    command const * cmd = find_command(ident);
 
     if (cmd->children().size() > 0)
       out << F(safe_gettext("Subcommands of '%s %s':")) %
-             ui.prog_name % join_words(cmd->ident()) << "\n\n";
+             ui.prog_name % join_words(ident) << "\n\n";
     else
       out << F(safe_gettext("Syntax specific to '%s %s':")) %
-             ui.prog_name % join_words(cmd->ident()) << "\n\n";
+             ui.prog_name % join_words(ident) << "\n\n";
 
     // Print command parameters.
     string params = cmd->params();
@@ -592,7 +595,7 @@ namespace commands
       {
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
-          out << "  " << join_words(cmd->ident())() << ' ' << *j << '\n';
+          out << "  " << join_words(ident)() << ' ' << *j << '\n';
         out << '\n';
       }
 
@@ -605,7 +608,7 @@ namespace commands
 
     // Print command description.
     out << F(safe_gettext("Description for '%s %s':")) %
-           ui.prog_name % join_words(cmd->ident()) << "\n\n";
+           ui.prog_name % join_words(ident) << "\n\n";
     split_into_lines(cmd->desc(), lines);
     for (vector<string>::const_iterator j = lines.begin();
          j != lines.end(); ++j)
@@ -618,7 +621,7 @@ namespace commands
     if (cmd->names().size() > 1)
       {
         command::names_set othernames = cmd->names();
-        othernames.erase(cmd->primary_name());
+        othernames.erase(ident[ident.size() - 1]);
         describe("", "Aliases: " + join_words(othernames, ", ")() +
                  ".", 4, out);
         out << '\n';
@@ -634,12 +637,8 @@ namespace commands
   {
     command * cmd = find_command(ident);
 
-    if (cmd != CMD_REF(__root__))
-      explain_cmd_usage(cmd, out);
-    else
+    if (ident.empty())
       {
-        I(ident.empty());
-
         // TODO Wrap long lines in these messages.
         out << "Top-level commands:\n\n";
         explain_children(CMD_REF(__root__)->children(), out);
@@ -650,6 +649,8 @@ namespace commands
                "long as it does not conflict with other names.\n";
         out << '\n';
       }
+    else
+      explain_cmd_usage(ident, out);
   }
 
   int process(app_state & app, command_id const & ident,
