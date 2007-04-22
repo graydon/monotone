@@ -8,7 +8,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <cassert>
 #include <map>
 #include <algorithm>
 #include <iostream>
@@ -483,7 +482,7 @@ namespace commands
     // there are two before the tag but just one after it) and considers
     // that the colabstract is always one unit less than that given on
     // entry because it always prints a single space before each word.
-    assert(colabstract > 0);
+    I(colabstract > 0);
 
     size_t col = 0;
     out << "  " << tag << " ";
