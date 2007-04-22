@@ -187,15 +187,15 @@ namespace commands {
   }
 
   command_id
-  command::ident(void) const
+  command::ident(utf8 const & name) const
   {
     I(this != CMD_REF(__root__));
 
     command_id i;
     
     if (parent() != CMD_REF(__root__))
-      i = parent()->ident();
-    i.push_back(primary_name());
+      i = parent()->ident(utf8());
+    i.push_back(name().empty() ? primary_name() : name);
 
     I(!i.empty());
     return i;
@@ -315,10 +315,10 @@ namespace commands {
     return cmd;
   }
 
-  std::set< command * >
+  map< command_id, command * >
   command::find_completions(utf8 const & prefix)
   {
-    std::set< command * > matches;
+    map< command_id, command * > matches;
 
     I(!prefix().empty());
 
@@ -333,12 +333,12 @@ namespace commands {
              iter2 != child->names().end(); iter2++)
           {
             if (prefix == *iter2)
-              matches.insert(child);
+              matches[child->ident(*iter2)] = child;
             else if (prefix().length() < (*iter2)().length())
               {
                 utf8 p(string((*iter2)(), 0, prefix().length()));
                 if (prefix == p)
-                  matches.insert(child);
+                  matches[child->ident(*iter2)] = child;
               }
           }
       }
@@ -350,31 +350,30 @@ namespace commands {
   command::complete_command(command_id const & id)
   {
     I(this != CMD_REF(__root__) || !id.empty());
+    I(!id.empty());
 
     set< command_id > matches;
 
-    if (id.empty())
-      matches.insert(ident());
-    else
-      {
-        utf8 component = *(id.begin());
-        command_id remaining(id.begin() + 1, id.end());
+    utf8 component = *(id.begin());
+    command_id remaining(id.begin() + 1, id.end());
 
-        set< command * > m2 = find_completions(component);
-        for (set< command * >::const_iterator iter = m2.begin();
-             iter != m2.end(); iter++)
+    map< command_id, command * > m2 = find_completions(component);
+    for (map< command_id, command * >::const_iterator iter = m2.begin();
+         iter != m2.end(); iter++)
+      {
+        command_id const & i2 = (*iter).first;
+        command * child = (*iter).second;
+
+        if (child->is_leaf() || remaining.empty())
+          matches.insert(i2);
+        else
           {
-            if ((*iter)->is_leaf())
-              matches.insert((*iter)->ident());
+            I(remaining.size() == id.size() - 1);
+            set< command_id > maux = child->complete_command(remaining);
+            if (maux.empty())
+              matches.insert(i2);
             else
-              {
-                I(remaining.size() == id.size() - 1);
-                set< command_id > maux = (*iter)->complete_command(remaining);
-                if (maux.empty())
-                  matches.insert((*iter)->ident());
-                else
-                  matches.insert(maux.begin(), maux.end());
-              }
+              matches.insert(maux.begin(), maux.end());
           }
       }
 
@@ -987,7 +986,7 @@ UNIT_TEST(commands, complete_command)
   // Single-word identifier, non-primary name.
   {
     command_id id = complete_command(mkargs("alias1"));
-    BOOST_CHECK(id == make_command_id("test1"));
+    BOOST_CHECK(id == make_command_id("alias1"));
   }
 
   // Multi-word identifier.
@@ -1035,7 +1034,7 @@ UNIT_TEST(commands, command_complete_command)
     command_id id = make_command_id("alias1");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
     BOOST_REQUIRE(matches.size() == 1);
-    BOOST_CHECK(*matches.begin() == make_command_id("test1"));
+    BOOST_CHECK(*matches.begin() == make_command_id("alias1"));
   }
 
   // Single-word identifier with multiple matches.
@@ -1058,8 +1057,8 @@ UNIT_TEST(commands, command_complete_command)
     BOOST_REQUIRE(matches.size() == 2);
 
     set< command_id > expected;
-    expected.insert(make_command_id("test1"));
-    expected.insert(make_command_id("test2"));
+    expected.insert(make_command_id("alias1"));
+    expected.insert(make_command_id("alias2"));
     BOOST_CHECK(matches == expected);
   }
 

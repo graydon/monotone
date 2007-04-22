@@ -43,7 +43,7 @@ namespace commands
     options::options_type m_opts;
     children_set m_children;
 
-    std::set< command * > find_completions(utf8 const & prefix);
+    std::map< command_id, command * > find_completions(utf8 const & prefix);
     command * find_child_by_name(utf8 const & name) const;
 
   public:
@@ -59,7 +59,7 @@ namespace commands
 
     virtual ~command(void);
 
-    command_id ident(void) const;
+    command_id ident(utf8 const & name = utf8()) const;
 
     utf8 const & primary_name(void) const;
     names_set const & names(void) const;
