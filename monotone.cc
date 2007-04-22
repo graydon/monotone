@@ -147,20 +147,13 @@ commands::command_id read_options(options & opts, args_vector args)
       optset = (options::opts::globals() | cmdopts).instantiate(&opts);
       optset.from_command_line(args, false);
 
-      // Remove the command name from the arguments.  It is important to
-      // note that the first component of the identifier is always optional,
-      // so we must take care about that here.
-      I(opts.args[0]() != cmd[0]() || opts.args.size() >= cmd.size());
-      I(opts.args[0]() == cmd[0]() || opts.args.size() >= cmd.size() - 1);
+      // Remove the command name from the arguments.  Rember that the group
+      // is not taken into account.
+      I(opts.args.size() >= cmd.size() - 1);
 
-      commands::command_id cmd2 = cmd;
-
-      if (cmd2[0]().find(opts.args[0]()) != 0)
-        cmd2.erase(cmd2.begin());
-
-      for (args_vector::size_type i = 0; i < cmd2.size(); i++)
+      for (args_vector::size_type i = 1; i < cmd.size(); i++)
         {
-          I(cmd2[i]().find(opts.args[0]()) == 0);
+          I(cmd[i]().find(opts.args[0]()) == 0);
           opts.args.erase(opts.args.begin());
         }
     }
@@ -288,6 +281,11 @@ cpp_main(int argc, char ** argv)
           // merrily down your pipes.
           std::ostream & usage_stream = (app.opts.help ? cout : cerr);
 
+          string visibleid;
+          if (!u.which.empty())
+            visibleid = join_words(vector< utf8 >(u.which.begin() + 1,
+                                                  u.which.end()))();
+
           usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
           usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << '\n';
 
@@ -296,7 +294,7 @@ cpp_main(int argc, char ** argv)
           options::options_type cmd_options = commands::toplevel_command_options(u.which);
           if (!cmd_options.empty())
             {
-              usage_stream << F("Options specific to '%s %s':") % ui.prog_name % join_words(u.which)() << "\n\n";
+              usage_stream << F("Options specific to '%s %s':") % ui.prog_name % visibleid << "\n\n";
               usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << '\n';
             }
 

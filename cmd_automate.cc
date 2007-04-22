@@ -362,8 +362,8 @@ CMD_AUTOMATE(stdio, "",
               N(matches.size() == 1,
                 F("invalid automation specified"));
               id = *matches.begin();
-              id.erase(id.begin()); // Remove 'automate' from the beginning.
 
+              I(args.size() >= id.size());
               for (command_id::size_type i = 0; i < id.size(); i++)
                 args.erase(args.begin());
 
