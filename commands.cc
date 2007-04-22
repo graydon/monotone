@@ -460,8 +460,11 @@ namespace commands
               tmp = id;
           }
 
-        matches.clear();
-        matches.insert(tmp);
+        if (!tmp.empty())
+          {
+            matches.clear();
+            matches.insert(tmp);
+          }
       }
 
     if (matches.empty())
