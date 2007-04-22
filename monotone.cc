@@ -155,12 +155,12 @@ commands::command_id read_options(options & opts, args_vector args)
 
       commands::command_id cmd2 = cmd;
 
-      if (opts.args[0]() != cmd[0]())
+      if (cmd2[0]().find(opts.args[0]()) != 0)
         cmd2.erase(cmd2.begin());
 
       for (args_vector::size_type i = 0; i < cmd2.size(); i++)
         {
-          I(cmd2[i]().find(opts.args[i]()) == 0);
+          I(cmd2[i]().find(opts.args[0]()) == 0);
           opts.args.erase(opts.args.begin());
         }
     }

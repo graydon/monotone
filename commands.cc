@@ -315,7 +315,7 @@ namespace commands {
   }
 
   map< command_id, command * >
-  command::find_completions(utf8 const & prefix)
+  command::find_completions(utf8 const & prefix, command_id const & completed)
   {
     map< command_id, command * > matches;
 
@@ -331,13 +331,15 @@ namespace commands {
         for (names_set::const_iterator iter2 = child->names().begin();
              iter2 != child->names().end(); iter2++)
           {
+            command_id caux = completed;
+            caux.push_back(*iter2);
             if (prefix == *iter2)
-              matches[child->ident(*iter2)] = child;
+              matches[caux] = child;
             else if (prefix().length() < (*iter2)().length())
               {
                 utf8 p(string((*iter2)(), 0, prefix().length()));
                 if (prefix == p)
-                  matches[child->ident(*iter2)] = child;
+                  matches[caux] = child;
               }
           }
       }
@@ -346,17 +348,21 @@ namespace commands {
   }
 
   set< command_id >
-  command::complete_command(command_id const & id)
+  command::complete_command(command_id const & id,
+                            command_id completed)
   {
     I(this != CMD_REF(__root__) || !id.empty());
     I(!id.empty());
+
+    if (completed.empty() && this != CMD_REF(__root__))
+      completed = ident();
 
     set< command_id > matches;
 
     utf8 component = *(id.begin());
     command_id remaining(id.begin() + 1, id.end());
 
-    map< command_id, command * > m2 = find_completions(component);
+    map< command_id, command * > m2 = find_completions(component, completed);
     for (map< command_id, command * >::const_iterator iter = m2.begin();
          iter != m2.end(); iter++)
       {
@@ -368,7 +374,9 @@ namespace commands {
         else
           {
             I(remaining.size() == id.size() - 1);
-            set< command_id > maux = child->complete_command(remaining);
+            command_id caux = completed;
+            caux.push_back(i2[i2.size() - 1]);
+            set< command_id > maux = child->complete_command(remaining, caux);
             if (maux.empty())
               matches.insert(i2);
             else
@@ -950,7 +958,7 @@ CMD(test1, "alias1", CMD_REF(__root__), "", "", "", options::opts::none) {}
 CMD(test2, "alias2", CMD_REF(__root__), "", "", "", options::opts::none) {}
 CMD_HIDDEN(test3, "", CMD_REF(__root__), "", "", "", options::opts::none) {}
 
-CMD_GROUP(testg, "", CMD_REF(__root__), "", "", options::opts::none);
+CMD_GROUP(testg, "aliasg", CMD_REF(__root__), "", "", options::opts::none);
 CMD(testg1, "", CMD_REF(testg), "", "", "", options::opts::none) {}
 CMD(testg2, "", CMD_REF(testg), "", "", "", options::opts::none) {}
 CMD_HIDDEN(testg3, "", CMD_REF(testg), "", "", "", options::opts::none) {}
@@ -1002,6 +1010,12 @@ UNIT_TEST(commands, complete_command)
   {
     command_id id = complete_command(mkargs("testg testg1"));
     BOOST_CHECK(id == make_command_id("testg testg1"));
+  }
+
+  // Multi-word identifier, non-primary names.
+  {
+    command_id id = complete_command(mkargs("al testg1"));
+    BOOST_CHECK(id == make_command_id("aliasg testg1"));
   }
 
   // Single-word identifier, one level deep.
@@ -1063,11 +1077,12 @@ UNIT_TEST(commands, command_complete_command)
   {
     command_id id = make_command_id("alias");
     set< command_id > matches = CMD_REF(__root__)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 2);
+    BOOST_REQUIRE(matches.size() == 3);
 
     set< command_id > expected;
     expected.insert(make_command_id("alias1"));
     expected.insert(make_command_id("alias2"));
+    expected.insert(make_command_id("aliasg"));
     BOOST_CHECK(matches == expected);
   }
 
