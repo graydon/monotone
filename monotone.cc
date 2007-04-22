@@ -291,7 +291,7 @@ cpp_main(int argc, char ** argv)
 
           // Make sure to hide documentation that's not part of
           // the current command.
-          options::options_type cmd_options = commands::toplevel_command_options(u.which);
+          options::options_type cmd_options = commands::command_options(u.which);
           if (!cmd_options.empty())
             {
               usage_stream << F("Options specific to '%s %s':") % ui.prog_name % visibleid << "\n\n";

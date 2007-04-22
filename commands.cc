@@ -750,13 +750,6 @@ namespace commands
     command * cmd = find_command(ident);
     return cmd->opts();
   }
-
-  // XXX How does this differ from command_options()?
-  options::options_type toplevel_command_options(command_id const & ident)
-  {
-    command * cmd = find_command(ident);
-    return cmd->opts();
-  }
 }
 ////////////////////////////////////////////////////////////////////////
 
