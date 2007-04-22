@@ -34,7 +34,7 @@ namespace commands {
                      string const & desc,
                      options::options_type const & opts) :
     command(name, "", CMD_REF(automate), false, params, abstract,
-            desc, false, opts)
+            desc, true, opts)
   {
   }
 
