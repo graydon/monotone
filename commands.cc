@@ -548,23 +548,28 @@ namespace commands
   {
     I(children.size() > 0);
 
-    vector< command * > sorted;
+    vector< command const * > sorted;
 
     size_t colabstract = 0;
     for (command::children_set::const_iterator i = children.begin();
          i != children.end(); i++)
       {
-        size_t len = display_width(join_words((*i)->names())) +
+        command const * child = *i;
+
+        if (child->hidden())
+          continue;
+
+        size_t len = display_width(join_words(child->names())) +
             display_width(utf8("    "));
         if (colabstract < len)
           colabstract = len;
 
-        sorted.push_back(*i);
+        sorted.push_back(child);
       }
 
     sort(sorted.begin(), sorted.end(), std::greater< command * >());
 
-    for (vector< command * >::const_iterator i = sorted.begin();
+    for (vector< command const * >::const_iterator i = sorted.begin();
          i != sorted.end(); i++)
       describe(join_words((*i)->names())(), (*i)->abstract(), colabstract,
                out);
