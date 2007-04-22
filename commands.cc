@@ -49,7 +49,7 @@ CMD_GROUP(automation, "", CMD_REF(__root__),
           N_("Commands that aid in scripted execution"),
           N_(""),
           options::opts::none);
-CMD_GROUP(database, "", CMD_REF(__root__),
+CMD_GROUP(database, "db", CMD_REF(__root__),
           N_("Commands that manipulate the database"),
           N_(""),
           options::opts::none);
