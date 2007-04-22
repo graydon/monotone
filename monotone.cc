@@ -136,9 +136,8 @@ commands::command_id read_options(options & opts, args_vector args)
   // consume the command, and perform completion if necessary
   if (!opts.args.empty())
     {
-      cmd = commands::complete_command(args);
-      N(!cmd.empty(),
-        F("unknown command '%s'") % join_words(args)());
+      cmd = commands::complete_command(opts.args);
+      I(!cmd.empty());
     }
 
   // reparse options, now that we know what command-specific
