@@ -26,8 +26,7 @@ using std::string;
 
 CMD_GROUP(db, "", CMD_REF(database),
           N_("Deals with the database"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 
 // Deletes a revision from the local database.  This can be used to
 // 'undo' a changed revision from a local database without leaving

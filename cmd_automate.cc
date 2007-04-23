@@ -24,8 +24,7 @@ using std::vector;
 
 CMD_GROUP(automate, "", CMD_REF(automation),
           N_("Interface for scripted execution"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 
 namespace commands {
   automate::automate(string const & name,

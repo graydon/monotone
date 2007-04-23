@@ -44,8 +44,7 @@ CMD_GROUP(list, "ls", CMD_REF(informative),
           N_("This command is used to query information from the database.  "
              "It shows database objects, or the current workspace manifest, "
              "or known, unknown, intentionally ignored, missing, or "
-             "changed-state files."),
-          options::opts::none);
+             "changed-state files."));
 
 CMD(certs, "", CMD_REF(list), "ID",
     N_("Lists certificates attached to an identifier"),

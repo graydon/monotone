@@ -187,15 +187,14 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 #define CMD_HIDDEN(C, aliases, parent, params, abstract, desc, opts) \
   _CMD2(C, aliases, parent, true, params, abstract, desc, opts)
 
-// XXX Should the 'opts' parameter go away?
-#define CMD_GROUP(C, aliases, parent, abstract, desc, opts)          \
+#define CMD_GROUP(C, aliases, parent, abstract, desc)                \
 namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
     cmd_ ## C() : command(#C, aliases, parent, false, "", abstract,  \
                           desc, true,                                \
-                          options::options_type() | opts)            \
+                          options::options_type())                   \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       command_id const & execid,                     \

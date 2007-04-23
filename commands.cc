@@ -39,7 +39,7 @@ using std::string;
 using std::strlen;
 using std::vector;
 
-CMD_GROUP(__root__, "", NULL, N_(""), N_(""), options::opts::none);
+CMD_GROUP(__root__, "", NULL, N_(""), N_(""));
 
 //
 // Definition of top-level commands, used to classify the real commands
@@ -55,52 +55,40 @@ CMD_GROUP(__root__, "", NULL, N_(""), N_(""), options::opts::none);
 //
 CMD_GROUP(automation, "", CMD_REF(__root__),
           N_("Commands that aid in scripted execution"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(database, "", CMD_REF(__root__),
           N_("Commands that manipulate the database"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(debug, "", CMD_REF(__root__),
           N_("Commands that aid in program debugging"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(informative, "", CMD_REF(__root__),
           N_("Commands for information retrieval"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(key_and_cert, "", CMD_REF(__root__),
           N_("Commands to manage keys and certificates"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(network, "", CMD_REF(__root__),
           N_("Commands that access the network"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(packet_io, "", CMD_REF(__root__),
           N_("Commands for packet reading and writing"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(rcs, "", CMD_REF(__root__),
           N_("Commands for interaction with RCS and CVS"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(review, "", CMD_REF(__root__),
           N_("Commands to review revisions"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(tree, "", CMD_REF(__root__),
           N_("Commands to manipulate the tree"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(variables, "", CMD_REF(__root__),
           N_("Commands to manage persistent variables"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 CMD_GROUP(workspace, "", CMD_REF(__root__),
           N_("Commands that deal with the workspace"),
-          N_(""),
-          options::opts::none);
+          N_(""));
 
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
