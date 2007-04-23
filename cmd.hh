@@ -91,6 +91,18 @@ namespace commands
 
   class automate : public command
   {
+    // This function is supposed to be called only after the requirements
+    // for "automate" commands have been fulfilled.  This is done by the
+    // "exec" function defined below, which implements code shared among
+    // all automation commands.  Also, this is also needed by the "stdio"
+    // automation, as it executes multiple of these commands sharing the
+    // same initialization, hence the friend declaration.
+    virtual void exec_from_automate(args_vector args,
+                                    command_id const & execid,
+                                    app_state & app,
+                                    std::ostream & output) const = 0;
+    friend class automate_stdio;
+
   public:
     automate(std::string const & name,
              std::string const & params,
@@ -98,13 +110,9 @@ namespace commands
              std::string const & desc,
              options::options_type const & opts);
 
-    virtual void exec(app_state & app,
-                      command_id const & execid,
-                      args_vector const & args);
-    virtual void run(args_vector args,
-                     command_id const & execid,
-                     app_state & app,
-                     std::ostream & output) const = 0;
+    void exec(app_state & app,
+              command_id const & execid,
+              args_vector const & args);
   };
 };
 
@@ -238,22 +246,24 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // automatically built from these.
 #define CMD_AUTOMATE(C, params, abstract, desc, opts)                \
 namespace commands {                                                 \
-  struct automate_ ## C : public automate                            \
+  class automate_ ## C : public automate                             \
   {                                                                  \
+    void exec_from_automate(args_vector args,                        \
+                            command_id const & execid,               \
+                            app_state & app,                         \
+                            std::ostream & output) const;            \
+  public:                                                            \
     automate_ ## C() : automate(#C, params, abstract, desc,          \
                                 options::options_type() | opts)      \
     {}                                                               \
-    void run(args_vector args,                                       \
-             command_id const & execid,                              \
-             app_state & app,                                        \
-             std::ostream & output) const;                           \
   };                                                                 \
   automate_ ## C C ## _automate;                                     \
 }                                                                    \
-void commands::automate_ ## C :: run(args_vector args,               \
-                                     command_id const & execid,      \
-                                     app_state & app,                \
-                                     std::ostream & output) const
+void commands::automate_ ## C :: exec_from_automate                  \
+  (args_vector args,                                                 \
+   command_id const & execid,                                        \
+   app_state & app,                                                  \
+   std::ostream & output) const
 
 CMD_FWD_DECL(__root__);
 

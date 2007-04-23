@@ -43,7 +43,7 @@ namespace commands {
                  args_vector const & args)
   {
     make_io_binary();
-    run(args, execid, app, std::cout);
+    exec_from_automate(args, execid, app, std::cout);
   }
 }
 
@@ -372,7 +372,7 @@ CMD_AUTOMATE(stdio, "",
 
               opts = options::opts::globals() | acmd->opts();
               opts.instantiate(&app.opts).from_key_value_pairs(params);
-              acmd->run(args, id, app, os);
+              acmd->exec_from_automate(args, id, app, os);
             }
           else
             opts.instantiate(&app.opts).from_key_value_pairs(params);
