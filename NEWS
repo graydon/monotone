@@ -21,6 +21,8 @@
 
         - Update the internal SQLite to version 3.3.16.
 
+	- Code cleanup of app_state.
+
 
 
 Sun Apr  1 08:23:34 UTC 2007
