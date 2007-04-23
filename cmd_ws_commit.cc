@@ -596,14 +596,19 @@ CMD(checkout, "co", CMD_REF(tree), N_("[DIRECTORY]"),
   guard.commit();
 }
 
-CMD(attr, "", CMD_REF(workspace),
-    N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
-    N_("Manages file attributes"),
-    N_("This command is used to set, get or drop file attributes."),
+CMD_GROUP(attr, "", CMD_REF(workspace),
+          N_("Manages file attributes"),
+          N_("This command is used to set, get or drop file attributes."));
+
+CMD(attr_drop, "drop", CMD_REF(attr), N_("PATH [ATTR]"),
+    N_("Removes attributes from a file"),
+    N_("If no attribute is specified, this command removes all attributes "
+       "attached to the file given in PATH.  Otherwise only removes the "
+       "attribute specified in ATTR."),
     options::opts::none)
 {
-  if (args.size() < 2 || args.size() > 4)
-    throw usage(execid);
+  N(args.size() > 0 && args.size() < 3,
+    F("wrong argument count"));
 
   roster_t new_roster;
   temp_node_id_source nis;
@@ -611,92 +616,127 @@ CMD(attr, "", CMD_REF(workspace),
   app.require_workspace();
   app.work.get_current_roster_shape(new_roster, nis);
 
-  file_path path = file_path_external(idx(args,1));
+  file_path path = file_path_external(idx(args, 0));
   split_path sp;
   path.split(sp);
 
   N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
   node_t node = new_roster.get_node(sp);
 
-  string subcmd = idx(args, 0)();
-  if (subcmd == "set" || subcmd == "drop")
+  // Clear all attrs (or a specific attr).
+  if (args.size() == 1)
     {
-      if (subcmd == "set")
-        {
-          if (args.size() != 4)
-            throw usage(execid);
-
-          attr_key a_key = attr_key(idx(args, 2)());
-          attr_value a_value = attr_value(idx(args, 3)());
-
-          node->attrs[a_key] = make_pair(true, a_value);
-        }
-      else
-        {
-          // Clear all attrs (or a specific attr).
-          if (args.size() == 2)
-            {
-              for (full_attr_map_t::iterator i = node->attrs.begin();
-                   i != node->attrs.end(); ++i)
-                i->second = make_pair(false, "");
-            }
-          else if (args.size() == 3)
-            {
-              attr_key a_key = attr_key(idx(args, 2)());
-              N(node->attrs.find(a_key) != node->attrs.end(),
-                F("Path '%s' does not have attribute '%s'")
-                % path % a_key);
-              node->attrs[a_key] = make_pair(false, "");
-            }
-          else
-            throw usage(execid);
-        }
-
-      parent_map parents;
-      app.work.get_parent_rosters(parents);
-
-      revision_t new_work;
-      make_revision_for_workspace(parents, new_roster, new_work);
-      app.work.put_work_rev(new_work);
-      app.work.update_any_attrs();
+      for (full_attr_map_t::iterator i = node->attrs.begin();
+           i != node->attrs.end(); ++i)
+        i->second = make_pair(false, "");
     }
-  else if (subcmd == "get")
+  else
     {
-      if (args.size() == 2)
-        {
-          bool has_any_live_attrs = false;
-          for (full_attr_map_t::const_iterator i = node->attrs.begin();
-               i != node->attrs.end(); ++i)
-            if (i->second.first)
-              {
-                cout << path << " : "
-                     << i->first << '='
-                     << i->second.second << '\n';
-                has_any_live_attrs = true;
-              }
-          if (!has_any_live_attrs)
-            cout << F("No attributes for '%s'") % path << '\n';
-        }
-      else if (args.size() == 3)
-        {
-          attr_key a_key = attr_key(idx(args, 2)());
-          full_attr_map_t::const_iterator i = node->attrs.find(a_key);
-          if (i != node->attrs.end() && i->second.first)
+      I(args.size() == 2);
+      attr_key a_key = attr_key(idx(args, 1)());
+      N(node->attrs.find(a_key) != node->attrs.end(),
+        F("Path '%s' does not have attribute '%s'")
+        % path % a_key);
+      node->attrs[a_key] = make_pair(false, "");
+    }
+
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+
+  revision_t new_work;
+  make_revision_for_workspace(parents, new_roster, new_work);
+  app.work.put_work_rev(new_work);
+  app.work.update_any_attrs();
+}
+
+CMD(attr_get, "get", CMD_REF(attr), N_("PATH [ATTR]"),
+    N_("Gets the values of a file's attributes"),
+    N_("If no attribute is specified, this command prints all attributes "
+       "attached to the file given in PATH.  Otherwise it only prints the "
+       "attribute specified in ATTR."),
+    options::opts::none)
+{
+  N(args.size() > 0 && args.size() < 3,
+    F("wrong argument count"));
+
+  roster_t new_roster;
+  temp_node_id_source nis;
+
+  app.require_workspace();
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  file_path path = file_path_external(idx(args, 0));
+  split_path sp;
+  path.split(sp);
+
+  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(sp);
+
+  if (args.size() == 1)
+    {
+      bool has_any_live_attrs = false;
+      for (full_attr_map_t::const_iterator i = node->attrs.begin();
+           i != node->attrs.end(); ++i)
+        if (i->second.first)
+          {
             cout << path << " : "
                  << i->first << '='
                  << i->second.second << '\n';
-          else
-            cout << (F("No attribute '%s' on path '%s'")
-                     % a_key % path) << '\n';
-        }
-      else
-        throw usage(execid);
+            has_any_live_attrs = true;
+          }
+      if (!has_any_live_attrs)
+        cout << F("No attributes for '%s'") % path << '\n';
     }
   else
-    throw usage(execid);
+    {
+      I(args.size() == 2);
+      attr_key a_key = attr_key(idx(args, 1)());
+      full_attr_map_t::const_iterator i = node->attrs.find(a_key);
+      if (i != node->attrs.end() && i->second.first)
+        cout << path << " : "
+             << i->first << '='
+             << i->second.second << '\n';
+      else
+        cout << (F("No attribute '%s' on path '%s'")
+                 % a_key % path) << '\n';
+    }
 }
 
+CMD(attr_set, "set", CMD_REF(attr), N_("PATH ATTR VALUE"),
+    N_("Sets an attribute on a file"),
+    N_("Sets the attribute given on ATTR to the value specified in VALUE "
+       "for the file mentioned in PATH."),
+    options::opts::none)
+{
+  N(args.size() == 3,
+    F("wrong argument count"));
 
+  roster_t new_roster;
+  temp_node_id_source nis;
+
+  app.require_workspace();
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  file_path path = file_path_external(idx(args, 0));
+  split_path sp;
+  path.split(sp);
+
+  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(sp);
+
+  attr_key a_key = attr_key(idx(args, 1)());
+  attr_value a_value = attr_value(idx(args, 2)());
+
+  node->attrs[a_key] = make_pair(true, a_value);
+
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+
+  revision_t new_work;
+  make_revision_for_workspace(parents, new_roster, new_work);
+  app.work.put_work_rev(new_work);
+  app.work.update_any_attrs();
+}
 
 CMD(commit, "ci", CMD_REF(workspace), N_("[PATH]..."),
     N_("Commits workspace changes to the database"),
