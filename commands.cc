@@ -531,7 +531,7 @@ namespace commands
         if (child->hidden())
           continue;
 
-        size_t len = display_width(join_words(child->names())) +
+        size_t len = display_width(join_words(child->names(), ", ")) +
             display_width(utf8("    "));
         if (colabstract < len)
           colabstract = len;
@@ -543,8 +543,8 @@ namespace commands
 
     for (vector< command const * >::const_iterator i = sorted.begin();
          i != sorted.end(); i++)
-      describe(join_words((*i)->names())(), (*i)->abstract(), colabstract,
-               out);
+      describe(join_words((*i)->names(), ", ")(), (*i)->abstract(),
+               colabstract, out);
   }
 
   static void explain_cmd_usage(command_id const & ident, ostream & out)
