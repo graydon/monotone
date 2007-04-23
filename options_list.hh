@@ -258,11 +258,11 @@ GOPT(ssh_sign, "ssh-sign", std::string, "yes",
 }
 #endif
 
-GOPT(full_version, "full-version", bool, false,
-     gettext_noop("print detailed version number, then exit"))
+OPT(full, "full", bool, false,
+     gettext_noop("print detailed version number"))
 #ifdef option_bodies
 {
-  full_version = true;
+  full = true;
 }
 #endif
 

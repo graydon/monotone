@@ -221,12 +221,6 @@ cpp_main(int argc, char ** argv)
               return 0;
             }
 
-          if (app.opts.full_version_given)
-            {
-              print_full_version();
-              return 0;
-            }
-
           if (app.opts.dbname_given)
             {
               if (!app.opts.dbname.empty())
