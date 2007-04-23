@@ -647,17 +647,20 @@ namespace commands
   {
     command * cmd = CMD_REF(__root__)->find_command(ident);
 
+    string visibleid = join_words(vector< utf8 >(ident.begin() + 1,
+                                                 ident.end()))();
+
     N(!(!cmd->is_leaf() && cmd->parent() == CMD_REF(__root__)),
       F("command '%s' is invalid; it is a group") % join_words(ident));
 
     N(!(!cmd->is_leaf() && args.empty()),
-      F("no subcommand specified for '%s'") % join_words(ident));
+      F("no subcommand specified for '%s'") % visibleid);
 
     N(!(!cmd->is_leaf() && !args.empty()),
       F("could not match '%s' to a subcommand of '%s'") %
-      join_words(args) % join_words(ident));
+      join_words(args) % visibleid);
 
-    L(FL("executing command '%s'") % join_words(ident));
+    L(FL("executing command '%s'") % visibleid);
 
     // at this point we process the data from _MTN/options if
     // the command needs it.
