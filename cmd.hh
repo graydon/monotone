@@ -206,18 +206,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
                                args_vector const & args)             \
 {                                                                    \
-  if (args.size() == 0)                                              \
-    throw usage(execid);                                             \
-                                                                     \
-  args_vector::const_iterator i = args.begin();                      \
-  ++i;                                                               \
-  args_vector removed (i, args.end());                               \
-  /* XXX Command completion... */ \
-  /*command * child = find_command(this, idx(args, 0)());              \
-  if (child == NULL)                                                 \
-    throw usage(execid);                                             \
-  else                                                               \
-    child->exec(app, idx(args, 0)(), removed); */                      \
+  I(false);                                                          \
 }
 
 // Use this for commands that should specifically _not_ look for an
