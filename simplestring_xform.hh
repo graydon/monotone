@@ -4,8 +4,6 @@
 #include <vector>
 #include <string>
 
-class utf8;
-
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);
 

@@ -366,9 +366,9 @@ asciik::print(revision_id const & rev,
 }
 
 CMD(asciik, "", CMD_REF(debug), N_("SELECTOR"),
-  N_("Prints an ASCII representation of the revisions' graph"),
-  N_(""),
-  options::opts::none)
+    N_("Prints an ASCII representation of the revisions' graph"),
+    N_(""),
+    options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));

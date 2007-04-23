@@ -412,9 +412,6 @@ namespace std
   };
 };
 
-// XXX
-CMD_FWD_DECL(automate);
-
 namespace commands
 {
   command_id
