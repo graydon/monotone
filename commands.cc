@@ -909,22 +909,22 @@ process_commit_message_args(bool & given,
 #include "unit_tests.hh"
 
 CMD_GROUP(top, "top", "", CMD_REF(__root__),
-          "", "", options::opts::none);
+          "", "");
 
-CMD(test, "test"1, "alias1", CMD_REF(top),
+CMD(test1, "test1", "alias1", CMD_REF(top),
     "", "", "", options::opts::none) {}
-CMD(test, "test"2, "alias2", CMD_REF(top),
+CMD(test2, "test2", "alias2", CMD_REF(top),
     "", "", "", options::opts::none) {}
-CMD_HIDDEN(test, "test"3, "", CMD_REF(top),
+CMD_HIDDEN(test3, "test3", "", CMD_REF(top),
            "", "", "", options::opts::none) {}
 
 CMD_GROUP(testg, "testg", "aliasg", CMD_REF(top),
-          "", "", options::opts::none);
-CMD(testg, "testg"1, "", CMD_REF(testg),
+          "", "");
+CMD(testg1, "testg1", "", CMD_REF(testg),
     "", "", "", options::opts::none) {}
-CMD(testg, "testg"2, "", CMD_REF(testg),
+CMD(testg2, "testg2", "", CMD_REF(testg),
     "", "", "", options::opts::none) {}
-CMD_HIDDEN(testg, "testg"3, "", CMD_REF(testg),
+CMD_HIDDEN(testg3, "testg3", "", CMD_REF(testg),
            "", "", "", options::opts::none) {}
 
 static args_vector
