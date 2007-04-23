@@ -270,7 +270,7 @@ app_state::load_rcfiles()
 
   // Command-line rcfiles override even that.
 
-  for (vector<utf8>::const_iterator i = opts.extra_rcfiles.begin();
+  for (args_vector::const_iterator i = opts.extra_rcfiles.begin();
        i != opts.extra_rcfiles.end(); ++i)
     {
       lua.load_rcfile(*i);

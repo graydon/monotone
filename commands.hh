@@ -20,19 +20,21 @@ class utf8;
 // possibly from the command line and possibly internal scripting if we ever
 // bind tcl or lua or something in here
 
-struct usage
-{
-  usage(std::string const & w) : which(w) {}
-  std::string which;
+namespace commands {
+  typedef std::vector< utf8 > command_id;
+
+  command_id make_command_id(std::string const & path);
+  void explain_usage(command_id const & cmd, std::ostream & out);
+  command_id complete_command(args_vector const & args);
+  int process(app_state & app, command_id const & ident,
+              args_vector const & args);
+  options::options_type command_options(command_id const & ident);
 };
 
-namespace commands {
-  void explain_usage(std::string const & cmd, std::ostream & out);
-  std::string complete_command(std::string const & cmd);
-  int process(app_state & app, std::string const & cmd,
-              std::vector<utf8> const & args);
-  options::options_type command_options(std::vector<utf8> const & cmdline);
-  options::options_type toplevel_command_options(std::string const & cmd);
+struct usage
+{
+  usage(commands::command_id const & w) : which(w) {}
+  commands::command_id which;
 };
 
 // Local Variables:

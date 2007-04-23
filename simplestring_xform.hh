@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+class utf8;
+
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);
 
@@ -20,6 +22,44 @@ void join_lines(std::vector<std::string> const & in,
 
 void join_lines(std::vector<std::string> const & in,
                 std::string & out);
+
+template< class T >
+std::vector< T > split_into_words(T const & in)
+{
+  std::string const & instr = in();
+  std::vector< T > out;
+
+  std::string::size_type begin = 0;
+  std::string::size_type end = instr.find_first_of(" ", begin);
+
+  while (end != std::string::npos && end >= begin)
+    {
+      out.push_back(T(instr.substr(begin, end-begin)));
+      begin = end + 1;
+      if (begin >= instr.size())
+        break;
+      end = instr.find_first_of(" ", begin);
+    }
+  if (begin < instr.size())
+    out.push_back(T(instr.substr(begin, instr.size() - begin)));
+
+  return out;
+}
+
+template< template< typename > class T1, class T2 >
+T2 join_words(T1< T2 > const & in, std::string const & sep = " ")
+{
+  std::string str;
+  typename T1< T2 >::const_iterator iter = in.begin();
+  while (iter != in.end())
+    {
+      str += (*iter)();
+      iter++;
+      if (iter != in.end())
+        str += sep;
+    }
+  return T2(str);
+}
 
 void prefix_lines_with(std::string const & prefix,
                        std::string const & lines,

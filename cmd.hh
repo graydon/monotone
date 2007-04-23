@@ -10,6 +10,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <map>
+#include <set>
+#include <string>
+
 #include "commands.hh"
 #include "options.hh"
 #include "sanity.hh"
@@ -18,39 +22,97 @@ class app_state;
 
 namespace commands
 {
-  std::string const & hidden_group();
-
-  struct command
+  class command
   {
+  public:
+    typedef std::set< utf8 > names_set;
+    typedef std::set< command * > children_set;
+
+  private:
     // NB: these strings are stored _un_translated, because we cannot
     // translate them until after main starts, by which time the
     // command objects have all been constructed.
-    std::string name;
-    std::string cmdgroup;
-    std::string params_;
-    std::string desc_;
-    bool use_workspace_options;
-    options::options_type opts;
-    command(std::string const & n,
-            std::string const & g,
-            std::string const & p,
-            std::string const & d,
-            bool u,
-            options::options_type const & o);
-    virtual ~command();
-    virtual std::string params();
-    virtual std::string desc();
-    virtual options::options_type get_options(std::vector<utf8> const & args);
+    utf8 m_primary_name;
+    names_set m_names;
+    command * m_parent;
+    bool m_hidden;
+    utf8 m_params;
+    utf8 m_abstract;
+    utf8 m_desc;
+    bool m_use_workspace_options;
+    options::options_type m_opts;
+    children_set m_children;
+
+    std::map< command_id, command * >
+      find_completions(utf8 const & prefix, command_id const & completed)
+      const;
+    command * find_child_by_name(utf8 const & name) const;
+
+  public:
+    command(std::string const & primary_name,
+            std::string const & other_names,
+            command * parent,
+            bool hidden,
+            std::string const & params,
+            std::string const & abstract,
+            std::string const & desc,
+            bool use_workspace_options,
+            options::options_type const & opts);
+
+    virtual ~command(void);
+
+    command_id ident(void) const;
+
+    utf8 const & primary_name(void) const;
+    names_set const & names(void) const;
+    command * parent(void) const;
+    bool hidden(void) const;
+    virtual std::string params(void) const;
+    virtual std::string abstract(void) const;
+    virtual std::string desc(void) const;
+    options::options_type const & opts(void) const;
+    bool use_workspace_options(void) const;
+    children_set & children(void);
+    children_set const & children(void) const;
+    bool is_leaf(void) const;
+
+    bool operator<(command const & cmd) const;
+
     virtual void exec(app_state & app,
-                      std::vector<utf8> const & args) = 0;
+                      command_id const & execid,
+                      args_vector const & args) = 0;
+
+    bool has_name(utf8 const & name) const;
+    command * find_command(command_id const & id);
+    std::set< command_id >
+      complete_command(command_id const & id,
+                       command_id completed = command_id()) const;
+  };
+
+  class automate : public command
+  {
+  public:
+    automate(std::string const & name,
+             std::string const & params,
+             std::string const & abstract,
+             std::string const & desc,
+             options::options_type const & opts);
+
+    virtual void exec(app_state & app,
+                      command_id const & execid,
+                      args_vector const & args);
+    virtual void run(args_vector args,
+                     command_id const & execid,
+                     app_state & app,
+                     std::ostream & output) const = 0;
   };
 };
 
 inline std::vector<file_path>
-args_to_paths(std::vector<utf8> const & args)
+args_to_paths(args_vector const & args)
 {
   std::vector<file_path> paths;
-  for (std::vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       if (bookkeeping_path::external_string_is_bookkeeping_path(*i))
         W(F("ignored bookkeeping path '%s'") % *i);
@@ -92,123 +154,120 @@ process_commit_message_args(bool & given,
                             app_state & app,
                             utf8 message_prefix = utf8(""));
 
-#define CMD(C, group, params, desc, opts)                            \
-namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
-  {                                                                  \
-    cmd_ ## C() : command(#C, group, params, desc, true,             \
-                          options::options_type() | opts)            \
-    {}                                                               \
-    virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
-  };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
-}                                                                    \
-void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)
+#define CMD_FWD_DECL(C) \
+namespace commands { \
+  class cmd_ ## C; \
+  extern cmd_ ## C C ## _cmd; \
+}
 
-// Use this for commands that want to define a params() function
-// instead of having a static description. (Good for "automate"
-// and possibly "list".)
-#define CMD_WITH_SUBCMDS(C, group, desc, opts)                       \
+#define CMD_REF(C) ((commands::command *)&(commands::C ## _cmd))
+
+#define _CMD2(C, aliases, parent, hidden, params, abstract, desc, opts) \
 namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
+  class cmd_ ## C : public command                                   \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, "", desc, true,                 \
+  public:                                                            \
+    cmd_ ## C() : command(#C, aliases, parent, hidden, params,       \
+                          abstract, desc, true,                      \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
-    std::string params();                                            \
-    options::options_type get_options(vector<utf8> const & args);    \
+                      command_id const & execid,                     \
+                      args_vector const & args);                     \
   };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
+  cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)
+                               command_id const & execid,            \
+                               args_vector const & args)
+
+#define CMD(C, aliases, parent, params, abstract, desc, opts) \
+  _CMD2(C, aliases, parent, false, params, abstract, desc, opts)
+
+#define CMD_HIDDEN(C, aliases, parent, params, abstract, desc, opts) \
+  _CMD2(C, aliases, parent, true, params, abstract, desc, opts)
+
+#define CMD_GROUP(C, aliases, parent, abstract, desc)                \
+namespace commands {                                                 \
+  class cmd_ ## C : public command                                   \
+  {                                                                  \
+  public:                                                            \
+    cmd_ ## C() : command(#C, aliases, parent, false, "", abstract,  \
+                          desc, true,                                \
+                          options::options_type())                   \
+    {}                                                               \
+    virtual void exec(app_state & app,                               \
+                      command_id const & execid,                     \
+                      args_vector const & args);                     \
+  };                                                                 \
+  cmd_ ## C C ## _cmd;                                               \
+}                                                                    \
+void commands::cmd_ ## C::exec(app_state & app,                      \
+                               command_id const & execid,            \
+                               args_vector const & args)             \
+{                                                                    \
+  I(false);                                                          \
+}
 
 // Use this for commands that should specifically _not_ look for an
 // _MTN dir and load options from it.
 
-#define CMD_NO_WORKSPACE(C, group, params, desc, opts)               \
+#define CMD_NO_WORKSPACE(C, aliases, parent, params, abstract, desc, opts) \
 namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
+  class cmd_ ## C : public command                                   \
   {                                                                  \
-    cmd_ ## C() : command(#C, group, params, desc, false,            \
+  public:                                                            \
+    cmd_ ## C() : command(#C, aliases, parent, false, params,        \
+                          abstract, desc, false,                     \
                           options::options_type() | opts)            \
     {}                                                               \
     virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
+                      command_id const & execid,                     \
+                      args_vector const & args);                     \
   };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
+  cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)       \
+                               command_id const & execid,            \
+                               args_vector const & args)             \
 
-#define ALIAS(C, realcommand)                                        \
+// TODO: 'abstract' and 'desc' should be refactored so that the
+// command definition allows the description of input/output format,
+// error conditions, version when added, etc.  'desc' can later be
+// automatically built from these.
+#define CMD_AUTOMATE(C, params, abstract, desc, opts)                \
 namespace commands {                                                 \
-  struct cmd_ ## C : public command                                  \
+  struct automate_ ## C : public automate                            \
   {                                                                  \
-    cmd_ ## C() : command(#C, realcommand##_cmd.cmdgroup,            \
-                          realcommand##_cmd.params_,                 \
-                          realcommand##_cmd.desc_, true,             \
-                          realcommand##_cmd.opts)                 \
+    automate_ ## C() : automate(#C, params, abstract, desc,          \
+                                options::options_type() | opts)      \
     {}                                                               \
-    virtual std::string desc();                                      \
-    virtual void exec(app_state & app,                               \
-                      std::vector<utf8> const & args);               \
+    void run(args_vector args,                                       \
+             command_id const & execid,                              \
+             app_state & app,                                        \
+             std::ostream & output) const;                           \
   };                                                                 \
-  static cmd_ ## C C ## _cmd;                                        \
+  automate_ ## C C ## _automate;                                     \
 }                                                                    \
-std::string commands::cmd_ ## C::desc()                              \
-{                                                                    \
-  std::string result = _(desc_.c_str());                             \
-  result += "\n";                                                    \
-  result += (F("Alias for %s") % #realcommand).str();                \
-  return result;                                                     \
-}                                                                    \
-void commands::cmd_ ## C::exec(app_state & app,                      \
-                               std::vector<utf8> const & args)       \
-{                                                                    \
-  process(app, std::string(#realcommand), args);                     \
-}
+void commands::automate_ ## C :: run(args_vector args,               \
+                                     command_id const & execid,      \
+                                     app_state & app,                \
+                                     std::ostream & output) const
 
-namespace automation {
-  struct automate
-  {
-    std::string name;
-    std::string params;
-    options::options_type opts;
-    automate(std::string const & n, std::string const & p,
-             options::options_type const & o);
-    virtual void run(std::vector<utf8> args,
-                     std::string const & help_name,
-                     app_state & app,
-                     std::ostream & output) const = 0;
-    virtual ~automate();
-  };
-}
+CMD_FWD_DECL(__root__);
 
-#define AUTOMATE(NAME, PARAMS, OPTIONS)                             \
-namespace automation {                                              \
-  struct auto_ ## NAME : public automate                            \
-  {                                                                 \
-    auto_ ## NAME ()                                                \
-      : automate(#NAME, PARAMS, options::options_type() | OPTIONS)  \
-    {}                                                              \
-    void run(std::vector<utf8> args, std::string const & help_name, \
-                     app_state & app, std::ostream & output) const; \
-    virtual ~auto_ ## NAME() {}                                     \
-  };                                                                \
-  static auto_ ## NAME NAME ## _auto;                               \
-}                                                                   \
-void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
-                                      std::string const & help_name,\
-                                      app_state & app,              \
-                                      std::ostream & output) const
-
-
-
+CMD_FWD_DECL(automation);
+CMD_FWD_DECL(database);
+CMD_FWD_DECL(debug);
+CMD_FWD_DECL(informative);
+CMD_FWD_DECL(key_and_cert);
+CMD_FWD_DECL(network);
+CMD_FWD_DECL(packet_io);
+CMD_FWD_DECL(rcs);
+CMD_FWD_DECL(review);
+CMD_FWD_DECL(tree);
+CMD_FWD_DECL(variables);
+CMD_FWD_DECL(workspace);
 
 // Local Variables:
 // mode: C++

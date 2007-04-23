@@ -8,7 +8,7 @@ function test_one(tag, target, diagnostic)
    db = tag .. ".mtn"
    check(get(dump))
    check(raw_mtn("db", "load", "-d", db), 0, nil, nil, {dump})
-   check(raw_mtn("test_migration_step", target, "-d", db), 1, nil, true)
+   check(raw_mtn("db", "test_migration_step", target, "-d", db), 1, nil, true)
    check(qgrep(diagnostic, "stderr"))
 end
 
