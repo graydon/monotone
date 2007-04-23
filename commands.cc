@@ -642,41 +642,29 @@ namespace commands
       explain_cmd_usage(ident, out);
   }
 
-  int process(app_state & app, command_id const & ident,
-              args_vector const & args)
+  void process(app_state & app, command_id const & ident,
+               args_vector const & args)
   {
     command * cmd = CMD_REF(__root__)->find_command(ident);
 
-    if (cmd->is_leaf())
-      {
-        L(FL("executing command '%s'") % join_words(ident));
+    N(!(!cmd->is_leaf() && cmd->parent() == CMD_REF(__root__)),
+      F("command '%s' is invalid; it is a group") % join_words(ident));
 
-        // at this point we process the data from _MTN/options if
-        // the command needs it.
-        if (cmd->use_workspace_options())
-          app.process_options();
+    N(!(!cmd->is_leaf() && args.empty()),
+      F("no subcommand specified for '%s'") % join_words(ident));
 
-        cmd->exec(app, ident, args);
-        return 0;
-      }
-    else if (cmd->parent() == CMD_REF(__root__))
-      {
-        N(false,
-          F("command '%s' is invalid; it is a group") % join_words(ident));
-      }
-    else
-      {
-        if (args.empty())
-          W(F("no subcommand specified for '%s'") % join_words(ident));
-        else
-          W(F("could not match '%s' to a subcommand of '%s'") %
-            join_words(args) % join_words(ident));
-        // XXX Oh, oh, what to do.  This is a syntax error, so an usage is
-        // probably worth it... but then, the return value of this function
-        // becomes useless...
-        throw usage(ident);
-        return 1;
-      }
+    N(!(!cmd->is_leaf() && !args.empty()),
+      F("could not match '%s' to a subcommand of '%s'") %
+      join_words(args) % join_words(ident));
+
+    L(FL("executing command '%s'") % join_words(ident));
+
+    // at this point we process the data from _MTN/options if
+    // the command needs it.
+    if (cmd->use_workspace_options())
+      app.process_options();
+
+    cmd->exec(app, ident, args);
   }
 
   options::options_type command_options(command_id const & ident)

@@ -266,7 +266,11 @@ cpp_main(int argc, char ** argv)
             }
           else
             {
-              return commands::process(app, cmd, app.opts.args);
+              commands::process(app, cmd, app.opts.args);
+              // The command will raise any problems itself through
+              // exceptions.  If we reach this point, it is because it
+              // worked correctly.
+              return 0;
             }
         }
       catch (option::option_error const & e)
