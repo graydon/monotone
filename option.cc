@@ -413,27 +413,6 @@ void concrete_option_set::from_key_value_pairs(vector<pair<string, string> > con
     }
 }
 
-static vector<string> wordwrap(string str, unsigned int width)
-{
-  vector<string> out;
-  while (str.size() > width)
-    {
-      string::size_type pos = str.find_last_of(" ", width);
-      if (pos == string::npos)
-        { // bah. we have to break a word
-          out.push_back(str.substr(0, width));
-          str = str.substr(width);
-        }
-      else
-        {
-          out.push_back(str.substr(0, pos));
-          str = str.substr(pos+1);
-        }
-    }
-  out.push_back(str);
-  return out;
-}
-
 // Get the non-description part of the usage string,
 // looks like "--long [ -s ] <arg>".
 static string usagestr(concrete_option const & opt)
@@ -483,21 +462,17 @@ std::string concrete_option_set::get_usage_str() const
       string names = usagestr(*i);
       if (names.empty())
         continue;
-      vector<string> desclines = wordwrap(i->description, descwidth);
 
       result += string(pre_indent, ' ')
-              + names + string(namelen - names.size(), ' ')
-              + string(space, ' ');
-      vector<string>::const_iterator line = desclines.begin();
-      if (line != desclines.end())
+              + names + string(namelen - names.size(), ' ');
+
+      if (!i->description.empty())
         {
-          result += *line + "\n";
-          ++line;
+          result += string(space, ' ');
+          result += format_text(i->description, descindent, descindent);
         }
-      else // no description
-        result += "\n";
-      for (; line != desclines.end(); ++line)
-        result += string(descindent, ' ') + *line + "\n";
+
+      result += '\n';
     }
   return result;
 }
