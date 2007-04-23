@@ -78,7 +78,7 @@ get_log_message_interactively(revision_t const & cs,
   system_to_utf8(log_message_external, log_message);
 }
 
-CMD(revert, "", CMD_REF(workspace), N_("[PATH]..."),
+CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
     N_("Reverts files and/or directories"),
     N_("In order to revert the entire workspace, specify \".\" as the "
        "file name."),
@@ -210,7 +210,7 @@ CMD(revert, "", CMD_REF(workspace), N_("[PATH]..."),
   app.work.maybe_update_inodeprints();
 }
 
-CMD(disapprove, "", CMD_REF(review), N_("REVISION"),
+CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
     N_("Disapproves a particular revision"),
     N_(""),
     options::opts::branch | options::opts::messages | options::opts::date |
@@ -264,7 +264,7 @@ CMD(disapprove, "", CMD_REF(review), N_("REVISION"),
   }
 }
 
-CMD(mkdir, "", CMD_REF(workspace), N_("[DIRECTORY...]"),
+CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
     N_("Creates directories and adds them to the workspace"),
     N_(""),
     options::opts::no_ignore)
@@ -309,7 +309,7 @@ CMD(mkdir, "", CMD_REF(workspace), N_("[DIRECTORY...]"),
   app.work.perform_additions(paths, false, !app.opts.no_ignore);
 }
 
-CMD(add, "", CMD_REF(workspace), N_("[PATH]..."),
+CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
     N_("Adds files to the workspace"),
     N_(""),
     options::opts::unknown | options::opts::no_ignore |
@@ -343,7 +343,7 @@ CMD(add, "", CMD_REF(workspace), N_("[PATH]..."),
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
-CMD(drop, "rm", CMD_REF(workspace), N_("[PATH]..."),
+CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
     N_("Drops files from the workspace"),
     N_(""),
     options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
@@ -372,7 +372,7 @@ CMD(drop, "rm", CMD_REF(workspace), N_("[PATH]..."),
 }
 
 
-CMD(rename, "mv", CMD_REF(workspace),
+CMD(rename, "rename", "mv", CMD_REF(workspace),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("Renames entries in the workspace"),
@@ -396,7 +396,7 @@ CMD(rename, "mv", CMD_REF(workspace),
 }
 
 
-CMD(pivot_root, "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
+CMD(pivot_root, "pivot_root", "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
     N_("Renames the root directory"),
     N_("After this command, the directory that currently "
        "has the name NEW_ROOT "
@@ -415,7 +415,7 @@ CMD(pivot_root, "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
   app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
 }
 
-CMD(status, "", CMD_REF(informative), N_("[PATH]..."),
+CMD(status, "status", "", CMD_REF(informative), N_("[PATH]..."),
     N_("Shows workspace's status information"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -489,7 +489,7 @@ CMD(status, "", CMD_REF(informative), N_("[PATH]..."),
     }
 }
 
-CMD(checkout, "co", CMD_REF(tree), N_("[DIRECTORY]"),
+CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
     N_("Checks out a revision from the database into a directory"),
     N_("If a revision is given, that's the one that will be checked out.  "
        "Otherwise, it will be the head of the branch (given or implicit).  "
@@ -596,11 +596,11 @@ CMD(checkout, "co", CMD_REF(tree), N_("[DIRECTORY]"),
   guard.commit();
 }
 
-CMD_GROUP(attr, "", CMD_REF(workspace),
+CMD_GROUP(attr, "attr", "", CMD_REF(workspace),
           N_("Manages file attributes"),
           N_("This command is used to set, get or drop file attributes."));
 
-CMD(attr_drop, "drop", CMD_REF(attr), N_("PATH [ATTR]"),
+CMD(attr_drop, "drop", "", CMD_REF(attr), N_("PATH [ATTR]"),
     N_("Removes attributes from a file"),
     N_("If no attribute is specified, this command removes all attributes "
        "attached to the file given in PATH.  Otherwise only removes the "
@@ -649,7 +649,7 @@ CMD(attr_drop, "drop", CMD_REF(attr), N_("PATH [ATTR]"),
   app.work.update_any_attrs();
 }
 
-CMD(attr_get, "get", CMD_REF(attr), N_("PATH [ATTR]"),
+CMD(attr_get, "get", "", CMD_REF(attr), N_("PATH [ATTR]"),
     N_("Gets the values of a file's attributes"),
     N_("If no attribute is specified, this command prints all attributes "
        "attached to the file given in PATH.  Otherwise it only prints the "
@@ -702,7 +702,7 @@ CMD(attr_get, "get", CMD_REF(attr), N_("PATH [ATTR]"),
     }
 }
 
-CMD(attr_set, "set", CMD_REF(attr), N_("PATH ATTR VALUE"),
+CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
     N_("Sets an attribute on a file"),
     N_("Sets the attribute given on ATTR to the value specified in VALUE "
        "for the file mentioned in PATH."),
@@ -738,7 +738,7 @@ CMD(attr_set, "set", CMD_REF(attr), N_("PATH ATTR VALUE"),
   app.work.update_any_attrs();
 }
 
-CMD(commit, "ci", CMD_REF(workspace), N_("[PATH]..."),
+CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     N_("Commits workspace changes to the database"),
     N_(""),
     options::opts::branch | options::opts::message | options::opts::msgfile
@@ -985,7 +985,7 @@ CMD(commit, "ci", CMD_REF(workspace), N_("[PATH]..."),
   }
 }
 
-CMD_NO_WORKSPACE(setup, "", CMD_REF(tree), N_("[DIRECTORY]"),
+CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),
     N_("Sets up a new workspace directory"),
     N_("If no directory is specified, uses the current directory."),
     options::opts::branch)
@@ -1009,7 +1009,7 @@ CMD_NO_WORKSPACE(setup, "", CMD_REF(tree), N_("[DIRECTORY]"),
   app.work.put_work_rev(rev);
 }
 
-CMD_NO_WORKSPACE(import, "", CMD_REF(tree), N_("DIRECTORY"),
+CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
   N_("Imports the contents of a directory into a branch"),
   N_(""),
   options::opts::branch | options::opts::revision |
@@ -1110,7 +1110,8 @@ CMD_NO_WORKSPACE(import, "", CMD_REF(tree), N_("DIRECTORY"),
   delete_dir_recursive(bookkeeping_root);
 }
 
-CMD_NO_WORKSPACE(migrate_workspace, "", CMD_REF(tree), N_("[DIRECTORY]"),
+CMD_NO_WORKSPACE(migrate_workspace, "migrate_workspace", "", CMD_REF(tree),
+  N_("[DIRECTORY]"),
   N_("Migrates a workspace directory's metadata to the latest format"),
   N_("If no directory is given, defaults to the current workspace."),
   options::opts::none)
@@ -1124,7 +1125,7 @@ CMD_NO_WORKSPACE(migrate_workspace, "", CMD_REF(tree), N_("[DIRECTORY]"),
   app.work.migrate_ws_format();
 }
 
-CMD(refresh_inodeprints, "", CMD_REF(tree), "",
+CMD(refresh_inodeprints, "refresh_inodeprints", "", CMD_REF(tree), "",
     N_("Refreshes the inodeprint cache"),
     N_(""),
     options::opts::none)

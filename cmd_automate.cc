@@ -22,7 +22,7 @@ using std::set;
 using std::string;
 using std::vector;
 
-CMD_GROUP(automate, "", CMD_REF(automation),
+CMD_GROUP(automate, "automate", "", CMD_REF(automation),
           N_("Interface for scripted execution"),
           N_(""));
 

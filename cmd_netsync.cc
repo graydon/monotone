@@ -121,7 +121,8 @@ extract_patterns(args_vector const & args,
     }
 }
 
-CMD(push, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
+CMD(push, "push", "", CMD_REF(network),
+    N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("Pushes branches to a netsync server"),
     N_("This will push all branches that match the pattern given in PATTERN "
        "to the netsync server at the address ADDRESS."),
@@ -138,7 +139,8 @@ CMD(push, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(pull, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
+CMD(pull, "pull", "", CMD_REF(network),
+    N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("Pulls branches from a netsync server"),
     N_("This pulls all branches that match the pattern given in PATTERN "
        "from the netsync server at the address ADDRESS."),
@@ -156,7 +158,8 @@ CMD(pull, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
                        include_pattern, exclude_pattern, app);
 }
 
-CMD(sync, "", CMD_REF(network), N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
+CMD(sync, "sync", "", CMD_REF(network),
+    N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("Synchronizes branches with a netsync server"),
     N_("This synchronizes branches that match the pattern given in PATTERN "
        "with the netsync server at the address ADDRESS."),
@@ -200,7 +203,8 @@ private:
   system_path dir;
 };
 
-CMD(clone, "", CMD_REF(network), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
+CMD(clone, "clone", "", CMD_REF(network),
+    N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
     N_("Checks out a revision from remote a database into a directory"),
     N_("If a revision is given, that's the one that will be checked out.  "
        "Otherwise, it will be the head of the branch supplied.  "
@@ -387,7 +391,7 @@ private:
   system_path path;
 };
 
-CMD_NO_WORKSPACE(serve, "", CMD_REF(network), "",
+CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
                  N_("Serves the database to connecting clients"),
                  N_(""),
                  options::opts::bind | options::opts::pidfile |

@@ -162,12 +162,12 @@ namespace commands { \
 
 #define CMD_REF(C) ((commands::command *)&(commands::C ## _cmd))
 
-#define _CMD2(C, aliases, parent, hidden, params, abstract, desc, opts) \
+#define _CMD2(C, name, aliases, parent, hidden, params, abstract, desc, opts) \
 namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, hidden, params,       \
+    cmd_ ## C() : command(name, aliases, parent, hidden, params,     \
                           abstract, desc, true,                      \
                           options::options_type() | opts)            \
     {}                                                               \
@@ -181,18 +181,18 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
                                args_vector const & args)
 
-#define CMD(C, aliases, parent, params, abstract, desc, opts) \
-  _CMD2(C, aliases, parent, false, params, abstract, desc, opts)
+#define CMD(C, name, aliases, parent, params, abstract, desc, opts) \
+  _CMD2(C, name, aliases, parent, false, params, abstract, desc, opts)
 
-#define CMD_HIDDEN(C, aliases, parent, params, abstract, desc, opts) \
-  _CMD2(C, aliases, parent, true, params, abstract, desc, opts)
+#define CMD_HIDDEN(C, name, aliases, parent, params, abstract, desc, opts) \
+  _CMD2(C, name, aliases, parent, true, params, abstract, desc, opts)
 
-#define CMD_GROUP(C, aliases, parent, abstract, desc)                \
+#define CMD_GROUP(C, name, aliases, parent, abstract, desc)          \
 namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, false, "", abstract,  \
+    cmd_ ## C() : command(name, aliases, parent, false, "", abstract,\
                           desc, true,                                \
                           options::options_type())                   \
     {}                                                               \
@@ -212,12 +212,13 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // Use this for commands that should specifically _not_ look for an
 // _MTN dir and load options from it.
 
-#define CMD_NO_WORKSPACE(C, aliases, parent, params, abstract, desc, opts) \
+#define CMD_NO_WORKSPACE(C, name, aliases, parent, params, abstract, \
+                         desc, opts)                                 \
 namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(#C, aliases, parent, false, params,        \
+    cmd_ ## C() : command(name, aliases, parent, false, params,      \
                           abstract, desc, false,                     \
                           options::options_type() | opts)            \
     {}                                                               \

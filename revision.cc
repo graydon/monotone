@@ -1773,7 +1773,7 @@ regenerate_caches(app_state & app)
   P(F("finished regenerating cached rosters and heights"));
 }
 
-CMD_HIDDEN(rev_height, "", CMD_REF(informative), N_("REV"),
+CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),
            N_("Shows a revision's height"),
            N_(""),
            options::opts::none)

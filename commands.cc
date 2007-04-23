@@ -39,7 +39,7 @@ using std::string;
 using std::strlen;
 using std::vector;
 
-CMD_GROUP(__root__, "", NULL, N_(""), N_(""));
+CMD_GROUP(__root__, "__root__", "", NULL, N_(""), N_(""));
 
 //
 // Definition of top-level commands, used to classify the real commands
@@ -53,40 +53,40 @@ CMD_GROUP(__root__, "", NULL, N_(""), N_(""));
 // maybe this should be revised, because exposing the top level category
 // (being optional, of course), may not be a bad idea.
 //
-CMD_GROUP(automation, "", CMD_REF(__root__),
+CMD_GROUP(automation, "automation", "", CMD_REF(__root__),
           N_("Commands that aid in scripted execution"),
           N_(""));
-CMD_GROUP(database, "", CMD_REF(__root__),
+CMD_GROUP(database, "database", "", CMD_REF(__root__),
           N_("Commands that manipulate the database"),
           N_(""));
-CMD_GROUP(debug, "", CMD_REF(__root__),
+CMD_GROUP(debug, "debug", "", CMD_REF(__root__),
           N_("Commands that aid in program debugging"),
           N_(""));
-CMD_GROUP(informative, "", CMD_REF(__root__),
+CMD_GROUP(informative, "informative", "", CMD_REF(__root__),
           N_("Commands for information retrieval"),
           N_(""));
-CMD_GROUP(key_and_cert, "", CMD_REF(__root__),
+CMD_GROUP(key_and_cert, "key_and_cert", "", CMD_REF(__root__),
           N_("Commands to manage keys and certificates"),
           N_(""));
-CMD_GROUP(network, "", CMD_REF(__root__),
+CMD_GROUP(network, "network", "", CMD_REF(__root__),
           N_("Commands that access the network"),
           N_(""));
-CMD_GROUP(packet_io, "", CMD_REF(__root__),
+CMD_GROUP(packet_io, "packet_io", "", CMD_REF(__root__),
           N_("Commands for packet reading and writing"),
           N_(""));
-CMD_GROUP(rcs, "", CMD_REF(__root__),
+CMD_GROUP(rcs, "rcs", "", CMD_REF(__root__),
           N_("Commands for interaction with RCS and CVS"),
           N_(""));
-CMD_GROUP(review, "", CMD_REF(__root__),
+CMD_GROUP(review, "review", "", CMD_REF(__root__),
           N_("Commands to review revisions"),
           N_(""));
-CMD_GROUP(tree, "", CMD_REF(__root__),
+CMD_GROUP(tree, "tree", "", CMD_REF(__root__),
           N_("Commands to manipulate the tree"),
           N_(""));
-CMD_GROUP(variables, "", CMD_REF(__root__),
+CMD_GROUP(variables, "variables", "", CMD_REF(__root__),
           N_("Commands to manage persistent variables"),
           N_(""));
-CMD_GROUP(workspace, "", CMD_REF(__root__),
+CMD_GROUP(workspace, "workspace", "", CMD_REF(__root__),
           N_("Commands that deal with the workspace"),
           N_(""));
 
@@ -678,7 +678,7 @@ namespace commands
 }
 ////////////////////////////////////////////////////////////////////////
 
-CMD(help, "", CMD_REF(informative), N_("command [ARGS...]"),
+CMD(help, "help", "", CMD_REF(informative), N_("command [ARGS...]"),
     N_("Displays help about commands and options"),
     N_(""),
     options::opts::none)
@@ -694,7 +694,8 @@ CMD(help, "", CMD_REF(informative), N_("command [ARGS...]"),
   throw usage(id);
 }
 
-CMD_HIDDEN(crash, "", CMD_REF(debug), "{ N | E | I | exception | signal }",
+CMD_HIDDEN(crash, "crash", "", CMD_REF(debug),
+           "{ N | E | I | exception | signal }",
            N_("Triggers the specified kind of crash"),
            N_(""),
            options::opts::none)
@@ -907,16 +908,24 @@ process_commit_message_args(bool & given,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-CMD_GROUP(top, "", CMD_REF(__root__), "", "", options::opts::none);
+CMD_GROUP(top, "top", "", CMD_REF(__root__),
+          "", "", options::opts::none);
 
-CMD(test1, "alias1", CMD_REF(top), "", "", "", options::opts::none) {}
-CMD(test2, "alias2", CMD_REF(top), "", "", "", options::opts::none) {}
-CMD_HIDDEN(test3, "", CMD_REF(top), "", "", "", options::opts::none) {}
+CMD(test, "test"1, "alias1", CMD_REF(top),
+    "", "", "", options::opts::none) {}
+CMD(test, "test"2, "alias2", CMD_REF(top),
+    "", "", "", options::opts::none) {}
+CMD_HIDDEN(test, "test"3, "", CMD_REF(top),
+           "", "", "", options::opts::none) {}
 
-CMD_GROUP(testg, "aliasg", CMD_REF(top), "", "", options::opts::none);
-CMD(testg1, "", CMD_REF(testg), "", "", "", options::opts::none) {}
-CMD(testg2, "", CMD_REF(testg), "", "", "", options::opts::none) {}
-CMD_HIDDEN(testg3, "", CMD_REF(testg), "", "", "", options::opts::none) {}
+CMD_GROUP(testg, "testg", "aliasg", CMD_REF(top),
+          "", "", options::opts::none);
+CMD(testg, "testg"1, "", CMD_REF(testg),
+    "", "", "", options::opts::none) {}
+CMD(testg, "testg"2, "", CMD_REF(testg),
+    "", "", "", options::opts::none) {}
+CMD_HIDDEN(testg, "testg"3, "", CMD_REF(testg),
+           "", "", "", options::opts::none) {}
 
 static args_vector
 mkargs(const char *words)

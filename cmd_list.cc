@@ -39,14 +39,14 @@ using std::sort;
 using std::string;
 using std::vector;
 
-CMD_GROUP(list, "ls", CMD_REF(informative),
+CMD_GROUP(list, "list", "ls", CMD_REF(informative),
           N_("Shows database objects"),
           N_("This command is used to query information from the database.  "
              "It shows database objects, or the current workspace manifest, "
              "or known, unknown, intentionally ignored, missing, or "
              "changed-state files."));
 
-CMD(certs, "", CMD_REF(list), "ID",
+CMD(certs, "certs", "", CMD_REF(list), "ID",
     N_("Lists certificates attached to an identifier"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -149,7 +149,7 @@ CMD(certs, "", CMD_REF(list), "ID",
   guard.commit();
 }
 
-CMD(keys, "", CMD_REF(list), "[PATTERN]",
+CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
     N_("Lists keys that match a pattern"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -243,7 +243,7 @@ CMD(keys, "", CMD_REF(list), "[PATTERN]",
     }
 }
 
-CMD(branches, "", CMD_REF(list), "[PATTERN]",
+CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
     N_("Lists branches in the database that match a pattern"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -271,7 +271,7 @@ CMD(branches, "", CMD_REF(list), "[PATTERN]",
     }
 }
 
-CMD(epochs, "", CMD_REF(list), "[BRANCH [...]]",
+CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
     N_("Lists the current epoch of branches that match a pattern"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -301,7 +301,7 @@ CMD(epochs, "", CMD_REF(list), "[BRANCH [...]]",
     }
 }
 
-CMD(tags, "", CMD_REF(list), "",
+CMD(tags, "tags", "", CMD_REF(list), "",
     N_("Lists all tags in the database"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -317,7 +317,7 @@ CMD(tags, "", CMD_REF(list), "",
     }
 }
 
-CMD(vars, "", CMD_REF(list), "[DOMAIN]",
+CMD(vars, "vars", "", CMD_REF(list), "[DOMAIN]",
     N_("Lists variables in the whole database or a domain"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -351,7 +351,7 @@ CMD(vars, "", CMD_REF(list), "[DOMAIN]",
     }
 }
 
-CMD(known, "", CMD_REF(list), "",
+CMD(known, "known", "", CMD_REF(list), "",
     N_("Lists workspace files that belong to the current branch"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -393,7 +393,7 @@ CMD(known, "", CMD_REF(list), "",
   }
 }
 
-CMD(unknown, "ignored", CMD_REF(list), "",
+CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
     N_("Lists workspace files that do not belong to the current branch"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -425,7 +425,7 @@ CMD(unknown, "ignored", CMD_REF(list), "",
     }
 }
 
-CMD(missing, "", CMD_REF(list), "",
+CMD(missing, "missing", "", CMD_REF(list), "",
     N_("Lists files that belong to the branch but are not in the workspace"),
     N_(""),
     options::opts::depth | options::opts::exclude)
@@ -449,7 +449,7 @@ CMD(missing, "", CMD_REF(list), "",
 }
 
 
-CMD(changed, "", CMD_REF(list), "",
+CMD(changed, "changed", "", CMD_REF(list), "",
     N_("Lists files that have changed with respect to the current revision"),
     N_(""),
     options::opts::depth | options::opts::exclude)

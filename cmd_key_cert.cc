@@ -29,7 +29,7 @@ using std::ofstream;
 using Botan::Pipe;
 using Botan::RSA_PrivateKey;
 
-CMD(genkey, "", CMD_REF(key_and_cert), N_("KEYID"),
+CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
     N_("Generates an RSA key-pair"),
     N_(""),
     options::opts::none)
@@ -57,7 +57,7 @@ CMD(genkey, "", CMD_REF(key_and_cert), N_("KEYID"),
   app.keys.put_key_pair(ident, kp);
 }
 
-CMD(dropkey, "", CMD_REF(key_and_cert), N_("KEYID"),
+CMD(dropkey, "dropkey", "", CMD_REF(key_and_cert), N_("KEYID"),
     N_("Drops a public and/or private key"),
     N_(""),
     options::opts::none)
@@ -99,7 +99,7 @@ CMD(dropkey, "", CMD_REF(key_and_cert), N_("KEYID"),
   N(key_deleted, fmt % idx(args, 0)());
 }
 
-CMD(passphrase, "", CMD_REF(key_and_cert), N_("KEYID"),
+CMD(passphrase, "passphrase", "", CMD_REF(key_and_cert), N_("KEYID"),
     N_("Changes the passphrase of a private RSA key"),
     N_(""),
     options::opts::none)
@@ -121,7 +121,7 @@ CMD(passphrase, "", CMD_REF(key_and_cert), N_("KEYID"),
   P(F("passphrase changed"));
 }
 
-CMD(ssh_agent_export, "", CMD_REF(key_and_cert),
+CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
     N_("[FILENAME]"),
     N_("Exports a private key for use with ssh-agent"),
     N_(""),
@@ -161,7 +161,7 @@ CMD(ssh_agent_export, "", CMD_REF(key_and_cert),
     }
 }
 
-CMD(ssh_agent_add, "", CMD_REF(key_and_cert), "",
+CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
     N_("Adds a private key to ssh-agent"),
     N_(""),
     options::opts::none)
@@ -178,7 +178,8 @@ CMD(ssh_agent_add, "", CMD_REF(key_and_cert), "",
   app.agent.add_identity(*priv, id());
 }
 
-CMD(cert, "", CMD_REF(key_and_cert), N_("REVISION CERTNAME [CERTVAL]"),
+CMD(cert, "cert", "", CMD_REF(key_and_cert),
+    N_("REVISION CERTNAME [CERTVAL]"),
     N_("Creates a certificate for a revision"),
     N_(""),
     options::opts::none)
@@ -211,7 +212,7 @@ CMD(cert, "", CMD_REF(key_and_cert), N_("REVISION CERTNAME [CERTVAL]"),
   guard.commit();
 }
 
-CMD(trusted, "", CMD_REF(key_and_cert), 
+CMD(trusted, "trusted", "", CMD_REF(key_and_cert), 
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
     N_("Tests whether a hypothetical certificate would be trusted"),
     N_("The current settings are used to run the test."),
@@ -259,7 +260,7 @@ CMD(trusted, "", CMD_REF(key_and_cert),
     << '\n'; // final newline is kept out of the translation
 }
 
-CMD(tag, "", CMD_REF(review), N_("REVISION TAGNAME"),
+CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
     N_("Puts a symbolic tag certificate on a revision"),
     N_(""),
     options::opts::none)
@@ -273,7 +274,8 @@ CMD(tag, "", CMD_REF(review), N_("REVISION TAGNAME"),
 }
 
 
-CMD(testresult, "", CMD_REF(review), N_("ID (pass|fail|true|false|yes|no|1|0)"),
+CMD(testresult, "testresult", "", CMD_REF(review),
+    N_("ID (pass|fail|true|false|yes|no|1|0)"),
     N_("Notes the results of running a test on a revision"),
     N_(""),
     options::opts::none)
@@ -287,7 +289,7 @@ CMD(testresult, "", CMD_REF(review), N_("ID (pass|fail|true|false|yes|no|1|0)"),
 }
 
 
-CMD(approve, "", CMD_REF(review), N_("REVISION"),
+CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
     N_("Approves a particular revision"),
     N_(""),
     options::opts::branch)
@@ -302,7 +304,7 @@ CMD(approve, "", CMD_REF(review), N_("REVISION"),
   app.get_project().put_revision_in_branch(r, app.opts.branchname);
 }
 
-CMD(comment, "", CMD_REF(review), N_("REVISION [COMMENT]"),
+CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     N_("Comments on a particular revision"),
     N_(""),
     options::opts::none)

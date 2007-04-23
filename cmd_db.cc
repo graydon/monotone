@@ -24,7 +24,7 @@ using std::pair;
 using std::set;
 using std::string;
 
-CMD_GROUP(db, "", CMD_REF(database),
+CMD_GROUP(db, "db", "", CMD_REF(database),
           N_("Deals with the database"),
           N_(""));
 
@@ -49,7 +49,7 @@ kill_rev_locally(app_state& app, string const& id)
   app.db.delete_existing_rev_and_certs(ident);
 }
 
-CMD(init, "", CMD_REF(db), "",
+CMD(init, "init", "", CMD_REF(db), "",
     N_("Initializes a database"),
     N_("Creates a new database file and initializes it."),
     options::opts::none)
@@ -60,7 +60,7 @@ CMD(init, "", CMD_REF(db), "",
   app.db.initialize();
 }
 
-CMD(info, "", CMD_REF(db), "",
+CMD(info, "info", "", CMD_REF(db), "",
     N_("Shows information about the database"),
     N_(""),
     options::opts::none)
@@ -71,7 +71,7 @@ CMD(info, "", CMD_REF(db), "",
   app.db.info(cout);
 }
 
-CMD(version, "", CMD_REF(db), "",
+CMD(version, "version", "", CMD_REF(db), "",
     N_("Shows the database's version"),
     N_(""),
     options::opts::none)
@@ -82,7 +82,7 @@ CMD(version, "", CMD_REF(db), "",
   app.db.version(cout);
 }
 
-CMD(dump, "", CMD_REF(db), "",
+CMD(dump, "dump", "", CMD_REF(db), "",
     N_("Dumps the contents of the database"),
     N_("Generates a list of SQL instructions that represent the whole "
        "contents of the database.  The resulting output is useful to later "
@@ -95,7 +95,7 @@ CMD(dump, "", CMD_REF(db), "",
   app.db.dump(cout);
 }
 
-CMD(load, "", CMD_REF(db), "",
+CMD(load, "load", "", CMD_REF(db), "",
     N_("Loads the contents of the database"),
     N_("Reads a list of SQL instructions that regenerate the contents of "
        "the database.  This is supposed to be used in conjunction with the "
@@ -108,7 +108,7 @@ CMD(load, "", CMD_REF(db), "",
   app.db.load(cin);
 }
 
-CMD(migrate, "", CMD_REF(db), "",
+CMD(migrate, "migrate", "", CMD_REF(db), "",
     N_("Migrates the database to a newer schema"),
     N_("Updates the database's internal schema to the most recent one.  "
        "Needed to automatically resolve incompatibilities that may be "
@@ -121,7 +121,7 @@ CMD(migrate, "", CMD_REF(db), "",
   app.db.migrate();
 }
 
-CMD(execute, "", CMD_REF(db), "",
+CMD(execute, "execute", "", CMD_REF(db), "",
     N_("Executes an SQL command on the database"),
     N_("Directly executes the given SQL command on the database"),
     options::opts::none)
@@ -132,7 +132,7 @@ CMD(execute, "", CMD_REF(db), "",
   app.db.debug(idx(args, 0)(), cout);
 }
 
-CMD(kill_rev_locally, "", CMD_REF(db), "ID",
+CMD(kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
     N_("Kills a revision from the local database"),
     N_(""),
     options::opts::none)
@@ -143,7 +143,8 @@ CMD(kill_rev_locally, "", CMD_REF(db), "ID",
   kill_rev_locally(app,idx(args, 0)());
 }
 
-CMD(kill_branch_certs_locally, "", CMD_REF(db), "BRANCH",
+CMD(kill_branch_certs_locally, "kill_branch_certs_locally", "", CMD_REF(db),
+    "BRANCH",
     N_("Kills branch certificates from the local database"),
     N_(""),
     options::opts::none)
@@ -154,7 +155,7 @@ CMD(kill_branch_certs_locally, "", CMD_REF(db), "BRANCH",
   app.db.delete_branch_named(cert_value(idx(args, 0)()));
 }
 
-CMD(kill_tag_locally, "", CMD_REF(db), "TAG",
+CMD(kill_tag_locally, "kill_tag_locally", "", CMD_REF(db), "TAG",
     N_("Kills a tag from the local database"),
     N_(""),
     options::opts::none)
@@ -165,7 +166,7 @@ CMD(kill_tag_locally, "", CMD_REF(db), "TAG",
   app.db.delete_tag_named(cert_value(idx(args, 0)()));
 }
 
-CMD(check, "", CMD_REF(db), "",
+CMD(check, "check", "", CMD_REF(db), "",
     N_("Does some sanity checks on the database"),
     N_("Ensures that the database is consistent by issuing multiple "
        "checks."),
@@ -177,7 +178,7 @@ CMD(check, "", CMD_REF(db), "",
   check_db(app);
 }
 
-CMD(changesetify, "", CMD_REF(db), "",
+CMD(changesetify, "changesetify", "", CMD_REF(db), "",
     N_("Converts the database to the changeset format"),
     N_(""),
     options::opts::none)
@@ -188,7 +189,7 @@ CMD(changesetify, "", CMD_REF(db), "",
   build_changesets_from_manifest_ancestry(app);
 }
 
-CMD(rosterify, "", CMD_REF(db), "",
+CMD(rosterify, "rosterify", "", CMD_REF(db), "",
     N_("Converst the database to the rosters format"),
     N_(""),
     options::opts::drop_attr)
@@ -199,7 +200,7 @@ CMD(rosterify, "", CMD_REF(db), "",
   build_roster_style_revs_from_manifest_style_revs(app);
 }
 
-CMD(regenerate_caches, "", CMD_REF(db), "",
+CMD(regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
     N_("Regenerates the caches stored in the database"),
     N_(""),
     options::opts::none)
@@ -210,7 +211,7 @@ CMD(regenerate_caches, "", CMD_REF(db), "",
   regenerate_caches(app);
 }
 
-CMD_HIDDEN(clear_epoch, "", CMD_REF(db), "BRANCH",
+CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
     N_("Clears the database's epoch"),
     N_(""),
     options::opts::none)
@@ -221,7 +222,7 @@ CMD_HIDDEN(clear_epoch, "", CMD_REF(db), "BRANCH",
   app.db.clear_epoch(branch_name(idx(args, 0)()));
 }
 
-CMD(set_epoch, "", CMD_REF(db), "BRANCH EPOCH",
+CMD(set_epoch, "set_epoch", "", CMD_REF(db), "BRANCH EPOCH",
     N_("Sets the database's epoch"),
     N_(""),
     options::opts::none)
@@ -235,7 +236,7 @@ CMD(set_epoch, "", CMD_REF(db), "BRANCH EPOCH",
   app.db.set_epoch(branch_name(idx(args, 0)()), ed);
 }
 
-CMD(set, "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
+CMD(set, "set", "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
     N_("Sets a database variable"),
     N_("This command modifies (or adds if it did not exist before) the "
        "variable named NAME, stored in the database, and sets it to the "
@@ -254,7 +255,7 @@ CMD(set, "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
   app.db.set_var(make_pair(d, n), v);
 }
 
-CMD(unset, "", CMD_REF(variables), N_("DOMAIN NAME"),
+CMD(unset, "unset", "", CMD_REF(variables), N_("DOMAIN NAME"),
     N_("Unsets a database variable"),
     N_("This command removes the variable NAME from domain DOMAIN, which"
        "was previously stored in the database."),
@@ -273,7 +274,8 @@ CMD(unset, "", CMD_REF(variables), N_("DOMAIN NAME"),
   app.db.clear_var(k);
 }
 
-CMD(complete, "", CMD_REF(informative), N_("(revision|file|key) PARTIAL-ID"),
+CMD(complete, "complete", "", CMD_REF(informative),
+    N_("(revision|file|key) PARTIAL-ID"),
     N_("Completes a partial identifier"),
     N_(""),
     options::opts::verbose)
@@ -322,7 +324,8 @@ CMD(complete, "", CMD_REF(informative), N_("(revision|file|key) PARTIAL-ID"),
     throw usage(execid);
 }
 
-CMD_HIDDEN(test_migration_step, "", CMD_REF(db), "SCHEMA",
+CMD_HIDDEN(test_migration_step, "test_migration_step", "", CMD_REF(db),
+           "SCHEMA",
            N_("Runs one step of migration on the specified database"),
            N_("This command migrates the given database from the specified "
               "schema in SCHEMA to its successor."),
