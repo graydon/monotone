@@ -32,7 +32,7 @@ static void
 kill_rev_locally(app_state& app, string const& id)
 {
   revision_id ident;
-  complete(app, id, ident);
+  complete(app.db, id, ident);
   N(app.db.revision_exists(ident),
     F("no such revision '%s'") % ident);
 
@@ -81,11 +81,11 @@ CMD(db, N_("database"),
       else if (idx(args, 0)() == "check")
         check_db(app);
       else if (idx(args, 0)() == "changesetify")
-        build_changesets_from_manifest_ancestry(app);
+        build_changesets_from_manifest_ancestry(app.db);
       else if (idx(args, 0)() == "rosterify")
-        build_roster_style_revs_from_manifest_style_revs(app);
+        build_roster_style_revs_from_manifest_style_revs(app.db);
       else if (idx(args, 0)() == "regenerate_caches")
-        regenerate_caches(app);
+        regenerate_caches(app.db);
       else
         throw usage(name);
     }
@@ -174,7 +174,7 @@ CMD(complete, N_("informative"), N_("(revision|file|key) PARTIAL-ID"),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << '\n';
-          else cout << describe_revision(app, *i) << '\n';
+          else cout << describe_revision(app.db, *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")

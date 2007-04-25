@@ -15,6 +15,8 @@
 #include "sanity.hh"
 
 class app_state;
+class database;
+struct workspace;
 
 namespace commands
 {
@@ -68,23 +70,23 @@ args_to_paths(std::vector<utf8> const & args)
 }
 
 std::string
-describe_revision(app_state & app,
+describe_revision(database & db,
                   revision_id const & id);
 
 void
-complete(app_state & app,
+complete(database & db,
          std::string const & str,
          revision_id & completion,
          bool must_exist=true);
 
 void
-complete(app_state & app,
+complete(database & db,
          std::string const & str,
          std::set<revision_id> & completion,
          bool must_exist=true);
 
 void
-notify_if_multiple_heads(app_state & app);
+notify_if_multiple_heads(database & db);
 
 void
 process_commit_message_args(bool & given,
@@ -181,15 +183,71 @@ namespace automation {
     options::options_type opts;
     automate(std::string const & n, std::string const & p,
              options::options_type const & o);
+  public:
     virtual void run(std::vector<utf8> args,
                      std::string const & help_name,
                      app_state & app,
                      std::ostream & output) const = 0;
+
     virtual ~automate();
   };
+
+  struct automate_with_database
+    : public automate
+  {
+    automate_with_database(std::string const & n, std::string const & p,
+                           options::options_type const & o);
+
+  public:
+    virtual void run(std::vector<utf8> args,
+                     std::string const & help_name,
+                     database & db,
+                     std::ostream & output) const = 0;
+
+    virtual void run(std::vector<utf8> args,
+                     std::string const & help_name,
+                     app_state & app,
+                     std::ostream & output) const;
+  };
+
+  struct automate_with_workspace
+    : public automate
+  {
+    automate_with_workspace(std::string const & n, std::string const & p,
+                            options::options_type const & o);
+
+  public:
+    virtual void run(std::vector<utf8> args,
+                     std::string const & help_name,
+                     workspace & work,
+                     std::ostream & output) const = 0;
+
+    virtual void run(std::vector<utf8> args,
+                     std::string const & help_name,
+                     app_state & app,
+                     std::ostream & output) const;
+  };
+
+  struct automate_with_nothing
+    : public automate
+  {
+    automate_with_nothing(std::string const & n, std::string const & p,
+                          options::options_type const & o);
+
+  public:
+    virtual void run(std::vector<utf8> args,
+                     std::string const & help_name,
+                     std::ostream & output) const = 0;
+
+    virtual void run(std::vector<utf8> args,
+                     std::string const & help_name,
+                     app_state & app,
+                     std::ostream & output) const;
+  };
+
 }
 
-#define AUTOMATE(NAME, PARAMS, OPTIONS)                             \
+#define AUTOMATE_WITH_EVERYTHING(NAME, PARAMS, OPTIONS)             \
 namespace automation {                                              \
   struct auto_ ## NAME : public automate                            \
   {                                                                 \
@@ -207,7 +265,62 @@ void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
                                       app_state & app,              \
                                       std::ostream & output) const
 
+#define AUTOMATE_WITH_DATABASE(NAME, PARAMS, OPTIONS)               \
+namespace automation {                                              \
+  struct auto_ ## NAME : public automate_with_database              \
+  {                                                                 \
+    auto_ ## NAME ()                                                \
+      : automate_with_database(#NAME, PARAMS,                       \
+                                options::options_type() | OPTIONS)  \
+    {}                                                              \
+    void run(std::vector<utf8> args, std::string const & help_name, \
+                       database & db, std::ostream & output) const; \
+    virtual ~auto_ ## NAME() {}                                     \
+  };                                                                \
+  static auto_ ## NAME NAME ## _auto;                               \
+}                                                                   \
+void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
+                                      std::string const & help_name,\
+                                      database & db,                \
+                                      std::ostream & output) const
 
+
+#define AUTOMATE_WITH_WORKSPACE(NAME, PARAMS, OPTIONS)              \
+namespace automation {                                              \
+  struct auto_ ## NAME : public automate_with_workspace             \
+  {                                                                 \
+    auto_ ## NAME ()                                                \
+      : automate_with_workspace(#NAME, PARAMS,                      \
+                                options::options_type() | OPTIONS)  \
+    {}                                                              \
+    void run(std::vector<utf8> args, std::string const & help_name, \
+                    workspace & work, std::ostream & output) const; \
+    virtual ~auto_ ## NAME() {}                                     \
+  };                                                                \
+  static auto_ ## NAME NAME ## _auto;                               \
+}                                                                   \
+void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
+                                      std::string const & help_name,\
+                                      workspace & work,             \
+                                      std::ostream & output) const
+
+#define AUTOMATE_WITH_NOTHING(NAME, PARAMS, OPTIONS)                \
+namespace automation {                                              \
+  struct auto_ ## NAME : public automate_with_nothing               \
+  {                                                                 \
+    auto_ ## NAME ()                                                \
+      : automate_with_nothing(#NAME, PARAMS,                        \
+                                options::options_type() | OPTIONS)  \
+    {}                                                              \
+    void run(std::vector<utf8> args, std::string const & help_name, \
+                                      std::ostream & output) const; \
+    virtual ~auto_ ## NAME() {}                                     \
+  };                                                                \
+  static auto_ ## NAME NAME ## _auto;                               \
+}                                                                   \
+void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
+                                      std::string const & help_name,\
+                                      std::ostream & output) const
 
 
 // Local Variables:
