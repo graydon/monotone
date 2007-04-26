@@ -13,6 +13,11 @@
 
         Other
 
+        - Private keys are now stored more safely, using file
+          permissions.
+
+        - You can't drop the workspace root any more.
+
         Internal
 
         - Update the internal Lua to version 5.1.2.
