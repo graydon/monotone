@@ -21,7 +21,7 @@
 
         - Update the internal SQLite to version 3.3.16.
 
-	- Code cleanup of app_state.
+        - Code cleanup of app_state.
 
 
 
