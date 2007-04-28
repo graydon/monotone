@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file contains code used to help implement virtual tables.
 **
-** $Id: vtab.c,v 1.42 2007/04/18 14:24:34 danielk1977 Exp $
+** $Id: vtab.c,v 1.45 2007/04/19 14:48:37 danielk1977 Exp $
 */
 #ifndef SQLITE_OMIT_VIRTUALTABLE
 #include "sqliteInt.h"
@@ -132,10 +132,12 @@ void sqlite3VtabBeginParse(
   int iDb;              /* The database the table is being created in */
   Table *pTable;        /* The new virtual table */
 
+#ifndef SQLITE_OMIT_SHARED_CACHE
   if( sqlite3ThreadDataReadOnly()->useSharedData ){
     sqlite3ErrorMsg(pParse, "Cannot use virtual tables in shared-cache mode");
     return;
   }
+#endif
 
   sqlite3StartTable(pParse, pName1, pName2, 0, 0, 1, 0);
   pTable = pParse->pNewTable;
@@ -531,16 +533,18 @@ int sqlite3VtabCallDestroy(sqlite3 *db, int iDb, const char *zTab)
 */
 static void callFinaliser(sqlite3 *db, int offset){
   int i;
-  for(i=0; i<db->nVTrans && db->aVTrans[i]; i++){
-    sqlite3_vtab *pVtab = db->aVTrans[i];
-    int (*x)(sqlite3_vtab *);
-    x = *(int (**)(sqlite3_vtab *))((char *)pVtab->pModule + offset);
-    if( x ) x(pVtab);
-    sqlite3VtabUnlock(db, pVtab);
+  if( db->aVTrans ){
+    for(i=0; i<db->nVTrans && db->aVTrans[i]; i++){
+      sqlite3_vtab *pVtab = db->aVTrans[i];
+      int (*x)(sqlite3_vtab *);
+      x = *(int (**)(sqlite3_vtab *))((char *)pVtab->pModule + offset);
+      if( x ) x(pVtab);
+      sqlite3VtabUnlock(db, pVtab);
+    }
+    sqliteFree(db->aVTrans);
+    db->nVTrans = 0;
+    db->aVTrans = 0;
   }
-  sqliteFree(db->aVTrans);
-  db->nVTrans = 0;
-  db->aVTrans = 0;
 }
 
 /*
