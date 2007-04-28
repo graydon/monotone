@@ -24,7 +24,7 @@
 
         - Added build files for Mac OS X.
 
-        - Update the internal SQLite to version 3.3.16.
+        - Update the internal SQLite to version 3.3.17.
 
         - Code cleanup of app_state.
 
