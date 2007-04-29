@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-20 05:03+0200\n"
-"PO-Revision-Date: 2007-04-20 05:04+0200\n"
+"POT-Creation-Date: 2007-04-29 08:15+0200\n"
+"PO-Revision-Date: 2007-04-29 08:29+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -782,8 +782,8 @@ msgid "Alias for %s"
 msgstr "Synonym för %s"
 
 #: cmd_key_cert.cc:32 cmd_key_cert.cc:58 cmd_key_cert.cc:98
-#: cmd_key_cert.cc:119 cmd_key_cert.cc:158 cmd_key_cert.cc:174
-#: cmd_key_cert.cc:205
+#: cmd_key_cert.cc:119 cmd_key_cert.cc:159 cmd_key_cert.cc:175
+#: cmd_key_cert.cc:206
 msgid "key and cert"
 msgstr "nyckel och cert"
 
@@ -847,28 +847,28 @@ msgstr "[FILNAMN]"
 msgid "export your monotone key for use with ssh-agent"
 msgstr "exportera din monotonenyckel för att användas med ssh-agent"
 
-#: cmd_key_cert.cc:130 cmd_key_cert.cc:168
+#: cmd_key_cert.cc:130 cmd_key_cert.cc:169
 #, c-format
 msgid "the key you specified cannot be found"
 msgstr "kan inte hitta nyckeln du angav"
 
-#: cmd_key_cert.cc:159
+#: cmd_key_cert.cc:160
 msgid "Add your monotone key to ssh-agent"
 msgstr "Lägg till din monotonenyckel till ssh-agent"
 
-#: cmd_key_cert.cc:174
+#: cmd_key_cert.cc:175
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "REVISION CERTNAMN [CERTVÄRDE]"
 
-#: cmd_key_cert.cc:175
+#: cmd_key_cert.cc:176
 msgid "create a cert for a revision"
 msgstr "skapa ett cert för en revision"
 
-#: cmd_key_cert.cc:206
+#: cmd_key_cert.cc:207
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "REVISION NAMN VÄRDE SIGNERARE1 [SIGNERARE2 [...]]"
 
-#: cmd_key_cert.cc:207
+#: cmd_key_cert.cc:208
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
@@ -876,7 +876,7 @@ msgstr ""
 "kontrollera ifall ett hypotetiskt cert skulle vara pålitligt\n"
 "enligt nuvarande inställningar"
 
-#: cmd_key_cert.cc:240
+#: cmd_key_cert.cc:241
 #, c-format
 msgid ""
 "if a cert on: %s\n"
@@ -891,62 +891,62 @@ msgstr ""
 "signerades av: %s\n"
 "skulle det vara: %s"
 
-#: cmd_key_cert.cc:249
+#: cmd_key_cert.cc:250
 msgid "trusted"
 msgstr "pålitligt"
 
-#: cmd_key_cert.cc:249
+#: cmd_key_cert.cc:250
 msgid "UNtrusted"
 msgstr "Opålitligt"
 
-#: cmd_key_cert.cc:253 cmd_key_cert.cc:265 cmd_key_cert.cc:277
-#: cmd_key_cert.cc:291 cmd_ws_commit.cc:211
+#: cmd_key_cert.cc:254 cmd_key_cert.cc:266 cmd_key_cert.cc:278
+#: cmd_key_cert.cc:292 cmd_ws_commit.cc:211
 msgid "review"
 msgstr "granskning"
 
-#: cmd_key_cert.cc:253
+#: cmd_key_cert.cc:254
 msgid "REVISION TAGNAME"
 msgstr "REVISION TAGNAMN"
 
-#: cmd_key_cert.cc:254
+#: cmd_key_cert.cc:255
 msgid "put a symbolic tag cert on a revision"
 msgstr "sätt ett symboliskt tagg-cert på en revision"
 
-#: cmd_key_cert.cc:265
+#: cmd_key_cert.cc:266
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
-#: cmd_key_cert.cc:266
+#: cmd_key_cert.cc:267
 msgid "note the results of running a test on a revision"
 msgstr "notera ett testresultat för en revision"
 
-#: cmd_key_cert.cc:277 cmd_ws_commit.cc:211
+#: cmd_key_cert.cc:278 cmd_ws_commit.cc:211
 msgid "REVISION"
 msgstr "REVISION"
 
-#: cmd_key_cert.cc:278
+#: cmd_key_cert.cc:279
 msgid "approve of a particular revision"
 msgstr "godkänn en specifik revision"
 
-#: cmd_key_cert.cc:287
+#: cmd_key_cert.cc:288
 #, c-format
 msgid "need --branch argument for approval"
 msgstr "för godkännande behöver en gren anges med --branch"
 
-#: cmd_key_cert.cc:291
+#: cmd_key_cert.cc:292
 msgid "REVISION [COMMENT]"
 msgstr "REVISION [KOMMENTAR]"
 
-#: cmd_key_cert.cc:292
+#: cmd_key_cert.cc:293
 msgid "comment on a particular revision"
 msgstr "kommentera en specifik revision"
 
-#: cmd_key_cert.cc:304
+#: cmd_key_cert.cc:305
 #, c-format
 msgid "edit comment failed"
 msgstr "misslyckades med att redigera kommentaren"
 
-#: cmd_key_cert.cc:309
+#: cmd_key_cert.cc:310
 #, c-format
 msgid "empty comment"
 msgstr "tom kommentar"
@@ -2782,22 +2782,17 @@ msgstr "Kan inte läsa från stdin mer än en gång"
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "filen %s kan inte skrivas över som data; den är en katalog"
 
-#: file_io.cc:410
-#, c-format
-msgid "cannot open file %s for writing"
-msgstr "kan inte öppna filen %s för skrivning"
-
-#: file_io.cc:467
+#: file_io.cc:455
 #, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "fick felet %s när sökväg för %s byggdes"
 
-#: file_io.cc:554 work.cc:1312
+#: file_io.cc:542 work.cc:1312
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "ingen sådan fil eller katalog: '%s'"
 
-#: file_io.cc:578
+#: file_io.cc:566
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "förväntade filen '%s', men det är en katalog."
@@ -4585,6 +4580,148 @@ msgstr "arbetskopian är korrupt: %s finns men är inte en vanlig fil"
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 
+#: unix/fs.cc:30 win32/fs.cc:27
+#, c-format
+msgid "cannot get working directory: %s"
+msgstr "kan inte finna katalogen vi står i: %s"
+
+#: unix/fs.cc:38 win32/fs.cc:38
+#, c-format
+msgid "cannot change to directory %s: %s"
+msgstr "kan inte byta till katalog %s: %s"
+
+#: unix/fs.cc:58
+#, c-format
+msgid "could not find home directory for uid %d"
+msgstr "kunde inte finna hemkatalogen för uid %d"
+
+#: unix/fs.cc:86
+#, c-format
+msgid "could not find home directory for user %s"
+msgstr "kunde inte finns hemkatalogen för användaren %s"
+
+#: unix/fs.cc:109
+#, c-format
+msgid "error accessing file %s: %s"
+msgstr "fel när jag försökte nå filen %s: %s"
+
+#: unix/fs.cc:118
+#, c-format
+msgid "cannot handle special file %s"
+msgstr "kan inte hantera specialfilen %s"
+
+#: unix/fs.cc:126
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s"
+msgstr "byta namn på '%s' till '%s' misslyckades: %s"
+
+#: unix/fs.cc:190 win32/fs.cc:270
+#, c-format
+msgid "cannot create temp file %s: %s"
+msgstr "kan inte skapa tillfällig fil %s: %s"
+
+#: unix/fs.cc:199
+#, c-format
+msgid "all %d possible temporary file names are in use"
+msgstr "Alla %d möjliga tillfälliga filnamn används"
+
+#: unix/fs.cc:239 win32/fs.cc:330
+#, c-format
+msgid "error writing to temp file %s: %s"
+msgstr "fel vid skrivning till tillfällig fil %s: %s"
+
+#: unix/fs.cc:244 win32/fs.cc:337
+#, c-format
+msgid ""
+"giving up after four zero-length writes to %s (%d byte written, %d left)"
+msgid_plural ""
+"giving up after four zero-length writes to %s (%d bytes written, %d left)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: unix/os_strerror.cc:16 win32/os_strerror.cc:22
+#, c-format
+msgid "unknown error code %d"
+msgstr "okänd felkod %d"
+
+#: unix/process.cc:24
+#, c-format
+msgid "command -v '%s' >/dev/null 2>&1"
+msgstr "command -v '%s' >/dev/null 2>&1"
+
+#: unix/process.cc:53
+#, c-format
+msgid "error getting status of file %s: %s"
+msgstr "fel vid hämtning av läget för filen %s: %s"
+
+#: unix/process.cc:72
+#, c-format
+msgid "error opening file %s: %s"
+msgstr "fel vid öppnande av filen %s: %s"
+
+#: unix/process.cc:78
+#, c-format
+msgid "error closing file %s: %s"
+msgstr "fel vid stängning av filen %s: %s"
+
+#: unix/ssh_agent_platform.cc:48
+#, c-format
+msgid "ssh_agent: connect: could not open socket to ssh-agent"
+msgstr "ssh_agent: connect: kunde inte öppna kanal till ssh-agent"
+
+#: unix/ssh_agent_platform.cc:56
+#, c-format
+msgid "ssh_agent: connect: could not set up socket for ssh-agent"
+msgstr "ssh_agent: connect: kunde inte ställa in kanal till ssh-agent"
+
+#: unix/ssh_agent_platform.cc:63
+#, c-format
+msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
+msgstr "ssh_agent: connect: kunde inte koppla till kanal till ssh-agent"
+
+#: unix/ssh_agent_platform.cc:102
+#, c-format
+msgid "stream read failed (%i)"
+msgstr "misslyckades med att läsa strömmen (%i)"
+
+#: unix/ssh_agent_platform.cc:110
+#, c-format
+msgid "%u extra bytes from ssh-agent"
+msgstr "%u extra bytes från ssh-agent"
+
+#: win32/fs.cc:55
+#, c-format
+msgid "could not determine configuration path"
+msgstr "kunde inte räkna ut vägen till konfigurationen"
+
+#: win32/fs.cc:209
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s (%d)"
+msgstr "namnbyte av '%s' till '%s' misslyckades: %s (%d)"
+
+#: win32/fs.cc:278
+#, c-format
+msgid "cannot find a temporary file (tried %d possibilities)"
+msgstr "kan inte finna någon tillfällig fil (provade %d möjligheter)"
+
+#: win32/fs.cc:305
+#, c-format
+msgid "%s will be accessible to all users of this computer\n"
+msgstr "%s kommer att vara åtkomlig för alla användare på den här datorn\n"
+
+#: win32/get_system_flavour.cc:156
+#, c-format
+msgid "%s (level %d, rev %d)"
+msgstr "%s (nivå %d, rev %d)"
+
+#: win32/get_system_flavour.cc:162
+#, c-format
+msgid "Windows %s (%d.%d, build %d, %s) on %s"
+msgstr "Windows %s (%d.%d build %d, %s) på %s"
+
+#~ msgid "cannot open file %s for writing"
+#~ msgstr "kan inte öppna filen %s för skrivning"
+
 #~ msgid "non-hex digits in id"
 #~ msgstr "något tecken i identiteten är inte hexadecimalt"
 
@@ -4649,9 +4786,6 @@ msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 
 #~ msgid "could not initialize database: %s: already exists"
 #~ msgstr "kunde inte initiera databasen: %s: den finns redan"
-
-#~ msgid "cannot create %s; it already exists"
-#~ msgstr "kan inte skapa %s; den finns redan"
 
 #~ msgid "could not open database '%s': %s"
 #~ msgstr "kunde inte öppna databasen '%s': %s"
@@ -4947,9 +5081,6 @@ msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 
 #~ msgid "executing external 3-way merge command\n"
 #~ msgstr "använder externt 3-vägs ihopslagningskommando\n"
-
-#~ msgid "renaming '%s' onto existing file: '%s'\n"
-#~ msgstr "byter namn på '%s' till redan existerande fil: '%s'\n"
 
 #~ msgid ""
 #~ "wrote debugging log to %s\n"
