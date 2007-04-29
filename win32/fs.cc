@@ -14,7 +14,6 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
-//#include "vocab.hh"
 #include "sanity.hh"
 #include "platform.hh"
 
@@ -237,7 +236,6 @@ make_temp_file(std::string const & dir, std::string & name)
 
   for (u64 i = 0; i < limit; i++)
     {
-      char *X = tmp.c_str() + tmp.size() - 7;
       u64 v = value;
 
       tmp.at(tmp.size() - 11) = letters[v % base];
@@ -303,8 +301,8 @@ write_data_worker(std::string const & fname,
   // browse_thread/thread/9e37e931de022791/c5172d5b8c5aa48e%23c5172d5b8c5aa48e
   // might be recyclable to the purpose. ]
 
-  W(user_private,
-    F("%s will be accessible to all users of this computer\n") % fname);
+  if (user_private)
+    W(F("%s will be accessible to all users of this computer\n") % fname);
 
   struct auto_closer
   {
@@ -313,7 +311,7 @@ write_data_worker(std::string const & fname,
     ~auto_closer() { CloseHandle(h); }
   };
 
-  string tmp;
+  std::string tmp;
   HANDLE h = make_temp_file(tmpdir, tmp);
 
   {
