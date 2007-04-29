@@ -147,7 +147,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-29 08:15+0200\n"
+"POT-Creation-Date: 2007-04-29 15:39+0200\n"
 "PO-Revision-Date: 2007-04-29 08:29+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
@@ -4644,11 +4644,6 @@ msgstr[1] ""
 msgid "unknown error code %d"
 msgstr "okänd felkod %d"
 
-#: unix/process.cc:24
-#, c-format
-msgid "command -v '%s' >/dev/null 2>&1"
-msgstr "command -v '%s' >/dev/null 2>&1"
-
 #: unix/process.cc:53
 #, c-format
 msgid "error getting status of file %s: %s"
@@ -4718,6 +4713,9 @@ msgstr "%s (nivå %d, rev %d)"
 #, c-format
 msgid "Windows %s (%d.%d, build %d, %s) on %s"
 msgstr "Windows %s (%d.%d build %d, %s) på %s"
+
+#~ msgid "command -v '%s' >/dev/null 2>&1"
+#~ msgstr "command -v '%s' >/dev/null 2>&1"
 
 #~ msgid "cannot open file %s for writing"
 #~ msgstr "kan inte öppna filen %s för skrivning"
