@@ -8,9 +8,10 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <pwd.h>
 #include <stdio.h>
-#include <cstring>
+#include <fcntl.h>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -124,6 +125,139 @@ rename_clobberingly(std::string const & from, std::string const & to)
   E(!rename(from.c_str(), to.c_str()),
     F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(errno));
 }
+
+// Create a temporary file in directory DIR, writing its name to NAME and
+// returning a read-write file descriptor for it.  If unable to create
+// the file, throws an E().
+//
+
+// N.B. None of the standard temporary-file creation routines in libc do
+// what we want (mkstemp almost does, but it doesn't let us specify the
+// mode).  This logic borrowed from libiberty's mkstemps().  To avoid grief
+// with case-insensitive file systems (*cough* OSX) we use only lowercase
+// letters for the name.  This reduces the number of possible temporary
+// files from 62**6 to 36**6, oh noes.
+
+static int
+make_temp_file(std::string const & dir, std::string & name, mode_t mode)
+{
+  static const char letters[]
+    = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+  const u32 base = sizeof letters - 1;
+  const u32 limit = base*base*base * base*base*base;
+
+  static u32 value;
+  struct timeval tv;
+  std::string tmp = dir + "/mtxxxxxx.tmp";
+
+  gettimeofday(&tv, 0);
+  value += ((u32) tv.tv_usec << 16) ^ tv.tv_sec ^ getpid();
+  value %= limit;
+
+  for (u32 i = 0; i < limit; i++)
+    {
+      u32 v = value;
+
+      tmp.at(tmp.size() - 11) = letters[v % base];
+      v /= base;
+      tmp.at(tmp.size() - 10) = letters[v % base];
+      v /= base;
+      tmp.at(tmp.size() -  9) = letters[v % base];
+      v /= base;
+      tmp.at(tmp.size() -  8) = letters[v % base];
+      v /= base;
+      tmp.at(tmp.size() -  7) = letters[v % base];
+      v /= base;
+      tmp.at(tmp.size() -  6) = letters[v % base];
+      v /= base;
+    
+      int fd = open(tmp.c_str(), O_RDWR|O_CREAT|O_EXCL, mode);
+
+      if (fd >= 0)
+        {
+          name = tmp;
+          return fd;
+        }
+
+      // EEXIST means we should go 'round again.  Any other errno value is a
+      // plain error.  (ENOTDIR is a bug, and so are some ELOOP and EACCES
+      // conditions - caller's responsibility to make sure that 'dir' is in
+      // fact a directory to which we can write - but we get better
+      // diagnostics from this E() than we would from an I().)
+
+      E(errno == EEXIST,
+        F("cannot create temp file %s: %s") % tmp % os_strerror(errno));
+
+      // This increment is relatively prime to 'limit', therefore 'value'
+      // will visit every number in its range.
+      value += 7777;
+      value %= limit;
+    }
+
+  // we really should never get here.
+  E(false, F("all %d possible temporary file names are in use") % limit);
+}
+
+
+// Write string DAT atomically to file FNAME, using TMP as the location to
+// create a file temporarily.  rename(2) from an arbitrary filename in TMP
+// to FNAME must work (i.e. they must be on the same filesystem).
+// If USER_PRIVATE is true, the file will be potentially accessible only to
+// the user, else it will be potentially accessible to everyone (i.e. open()
+// will be passed mode 0600 or 0666 -- the actual permissions are modified
+// by umask as usual).
+void
+write_data_worker(std::string const & fname,
+                  std::string const & dat,
+                  std::string const & tmpdir,
+                  bool user_private)
+{
+  struct auto_closer
+  {
+    int fd;
+    auto_closer(int fd) : fd(fd) {}
+    ~auto_closer() { close(fd); }
+  };
+
+  std::string tmp;
+  int fd = make_temp_file(tmpdir, tmp, user_private ? 0600 : 0666);
+
+  {
+    auto_closer guard(fd);
+
+    char const * ptr = dat.data();
+    size_t remaining = dat.size();
+    int deadcycles = 0;
+
+    L(FL("writing %s via temp %s") % fname % tmp);
+
+    do
+      {
+        ssize_t written = write(fd, ptr, remaining);
+        E(written >= 0,
+          F("error writing to temp file %s: %s") % tmp % os_strerror(errno));
+        if (written == 0)
+          {
+            deadcycles++;
+            E(deadcycles < 4,
+              FP("giving up after four zero-length writes to %s "
+                 "(%d byte written, %d left)",
+                 "giving up after four zero-length writes to %s "
+                 "(%d bytes written, %d left)",
+                 ptr - dat.data())
+              % tmp % (ptr - dat.data()) % remaining);
+          }
+        ptr += written;
+        remaining -= written;
+      }
+    while (remaining > 0);
+  }
+  // fd is now closed
+
+  rename_clobberingly(tmp, fname);
+}
+
 
 // Local Variables:
 // mode: C++
