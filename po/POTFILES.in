@@ -94,3 +94,12 @@ work_migration.cc
 work.hh
 xdelta.cc
 xdelta.hh
+
+unix/fs.cc
+unix/os_strerror.cc
+unix/process.cc
+unix/ssh_agent_platform.cc
+win32/fs.cc
+win32/get_system_flavour.cc
+win32/os_strerror.cc
+win32/process.cc
