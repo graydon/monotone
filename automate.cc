@@ -586,6 +586,8 @@ struct inventory_item
 {
   node_info old_node;
   node_info new_node;
+  split_path old_path;
+  split_path new_path;
 
   path::status fs_type;
   file_id fs_ident;
@@ -601,6 +603,9 @@ inventory_rosters(roster_t const & old_roster,
                   node_restriction const & mask,
                   inventory_map & inventory)
 {
+  std::map<int, split_path> old_paths;
+  std::map<int, split_path> new_paths;
+  
   node_map const & old_nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = old_nodes.begin(); i != old_nodes.end(); ++i)
     {
@@ -609,6 +614,7 @@ inventory_rosters(roster_t const & old_roster,
           split_path sp;
           old_roster.get_name(i->first, sp);
           get_node_info(old_roster, sp, inventory[sp].old_node);
+          old_paths[inventory[sp].old_node.id] = sp;
         }
     }
 
@@ -620,9 +626,27 @@ inventory_rosters(roster_t const & old_roster,
           split_path sp;
           new_roster.get_name(i->first, sp);
           get_node_info(new_roster, sp, inventory[sp].new_node);
+          new_paths[inventory[sp].new_node.id] = sp;
         }
     }
-  
+
+  std::map<int, split_path>::iterator i;
+  for (i = old_paths.begin(); i != old_paths.end(); ++i)
+    {
+      // there is no new node available, i.e. this is a drop
+      if (new_paths.find(i->first) == new_paths.end())
+        continue;
+
+      split_path old_path(i->second);
+      split_path new_path(new_paths[i->first]);
+
+      // both paths are identical, no rename
+      if (old_path == new_path)
+        continue;
+
+      inventory[new_path].old_path = old_path;
+      inventory[old_path].new_path = new_path;
+    }
 }
 
 struct inventory_itemizer : public tree_walker
@@ -692,9 +716,11 @@ namespace
   namespace syms
   {
     symbol const path("path");
-    symbol const old_node("old_node");
-    symbol const new_node("new_node");
+    symbol const old_type("old_type");
+    symbol const new_type("new_type");
     symbol const fs_type("fs_type");
+    symbol const old_path("old_path");
+    symbol const new_path("new_path");
     symbol const status("status");
     symbol const changes("changes");
   }
@@ -775,32 +801,30 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
 
       if (item.old_node.exists)
         {
-          string id = lexical_cast<string>(item.old_node.id);
-//           st.push_str_pair("old_id", lexical_cast<string>(item.old_node.id));
           switch (item.old_node.type)
             {
-            case path::file: st.push_str_triple(syms::old_node, id, "file"); break;
-            case path::directory: st.push_str_triple(syms::old_node, id, "directory"); break;
-//             case path::file: st.push_str_pair("old_type", "file"); break;
-//             case path::directory: st.push_str_pair("old_type", "directory"); break;
+            case path::file: st.push_str_pair(syms::old_type, "file"); break;
+            case path::directory: st.push_str_pair(syms::old_type, "directory"); break;
             case path::nonexistent: I(false);
             }
+          
+          if (item.new_path.size() > 0)
+            st.push_file_pair(syms::new_path, item.new_path);
         }
 
       if (item.new_node.exists)
         {
-          string id = lexical_cast<string>(item.new_node.id);
-//           st.push_str_pair("new_id", lexical_cast<string>(item.new_node.id));
           switch (item.new_node.type)
             {
-            case path::file: st.push_str_triple(syms::new_node, id, "file"); break;
-            case path::directory: st.push_str_triple(syms::new_node, id, "directory"); break;
-//             case path::file: st.push_str_pair("new_type", "file"); break;
-//             case path::directory: st.push_str_pair("new_type", "directory"); break;
+            case path::file: st.push_str_pair(syms::new_type, "file"); break;
+            case path::directory: st.push_str_pair(syms::new_type, "directory"); break;
             case path::nonexistent: I(false);
             }
+          
+          if (item.old_path.size() > 0)
+            st.push_file_pair(syms::old_path, item.old_path);
         }
-
+      
       switch (item.fs_type)
         {
         case path::file: st.push_str_pair(syms::fs_type, "file"); break;
@@ -808,41 +832,57 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
-      // perhaps include all relevant status flags...
-      // status "unknown", "renamed", "added", "dropped", "missing", ...
-      // note that many/most of these can be inferred from the old/new node entries
-      //
-      // tommyd: we actually _have_ to add renamed, added, aso. here as well
-      // because otherwise we can't determine whats up with a certain entry
-      // if we run a path restricted inventory which includes a directory-
-      // crossing rename. A renamed file could therefor look like a dropped file
-      // when the restriction on the source directory applies or as added file
-      // when the restriction on the target directory applies
+      std::vector<std::string> states;
+
+      if (item.old_node.exists && !item.new_node.exists)
+        {
+          if (item.new_path.size() > 0)
+            {
+              states.push_back("renamed");
+            }
+          else
+            {
+              states.push_back("dropped");
+            }
+        }
+      else if (!item.old_node.exists && item.new_node.exists)
+        {
+          if (item.old_path.size() > 0)
+            {
+              states.push_back("renamed");
+            }
+          else
+            {
+              states.push_back("added");
+            }
+        }
+      else if (item.old_node.exists && item.new_node.exists &&
+               (item.old_node.id != item.new_node.id))
+        {
+              states.push_back("renamed");
+        }
+        
       if (item.fs_type == path::nonexistent)
         {
           if (item.new_node.exists)
-            st.push_str_pair(syms::status, "missing");
+            states.push_back("missing");
         }
       else // exists on filesystem
         {
           if (!item.new_node.exists)
             {
               if (app.lua.hook_ignore_file(i->first))
-                st.push_str_pair(syms::status, "ignored");
+                states.push_back("ignored");
               else 
-                st.push_str_pair(syms::status, "unknown");
+                states.push_back("unknown");
             }
           else if (item.new_node.type != item.fs_type)
-            st.push_str_pair(syms::status, "invalid");
-          // TODO: would an ls_invalid command be good for listing these paths?
-          //
-          // tommyd: the current situation is that mtn status warns about
-          // "<path> is not a directory" and points the user to ls missing,
-          // and ls missing happily ignores the fact that <path> is a file
-          // and outputs nothing, likewise ls unknown... a bug IMHO
+            states.push_back("invalid");
           else
-            st.push_str_pair(syms::status, "known");
+            states.push_back("known");
         }
+
+      st.push_str_multi(syms::status, states);
 
       // note that we have three sources of information here
       //
