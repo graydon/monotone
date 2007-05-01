@@ -11,6 +11,9 @@
 
         - 'automate identify', an automate version of 'mtn identify'.
 
+        - 'automate roots', prints the roots of the revision graph,
+          i.e. all revisions that have no parents.
+
         Other
 
         - Private keys are now stored more safely, using file

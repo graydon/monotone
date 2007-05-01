@@ -6028,6 +6028,41 @@ None.
 @end table
 
 
+@item mtn automate roots
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+4.3
+
+@item Purpose:
+
+Prints the roots of the revision graph, i.e. all revisions that have
+no parents.
+
+@item Sample output:
+
+@verbatim
+276264b0b3f1e70fc1835a700e6e61bdbe4c3f2f
+@end verbatim
+
+@item Output format:
+
+Zero or more lines, each a root of the revision graph.  Each line
+consists of a revision ID, in hexadecimal, followed by a newline.  The
+lines are printed in alphabetically sorted order.
+
+@item Error conditions:
+
+None.
+
+@end table
+
+
 @item mtn automate branches
 
 @table @strong

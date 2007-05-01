@@ -415,6 +415,30 @@ AUTOMATE(leaves, "", options::opts::none)
     output << (*i).inner()() << '\n';
 }
 
+// Name: roots
+// Arguments:
+//   None
+// Added in: 4.3
+// Purpose: Prints the roots of the revision graph, i.e. all revisions that
+//   have no parents.
+// Output format: A list of revision ids, in hexadecimal, each followed by a
+//   newline.  Revision ids are printed in alphabetically sorted order.
+// Error conditions: None.
+AUTOMATE(roots, "", options::opts::none)
+{
+  N(args.size() == 0,
+    F("no arguments needed"));
+
+  // the real root revisions are the children of one single imaginary root
+  // with an empty revision id
+  set<revision_id> roots;
+  revision_id nullid;
+  app.db.get_revision_children(nullid, roots);
+  for (set<revision_id>::const_iterator i = roots.begin();
+       i != roots.end(); ++i)
+      output << i->inner()() << '\n';
+}
+
 // Name: parents
 // Arguments:
 //   1: a revision id
