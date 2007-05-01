@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone 0.35\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-20 15:40-0300\n"
-"PO-Revision-Date: 2007-04-20 15:40-0300\n"
+"POT-Creation-Date: 2007-04-30 22:02-0300\n"
+"PO-Revision-Date: 2007-04-30  22:02-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -655,8 +655,8 @@ msgid "Alias for %s"
 msgstr "Apelido para %s"
 
 #: cmd_key_cert.cc:32 cmd_key_cert.cc:58 cmd_key_cert.cc:98
-#: cmd_key_cert.cc:119 cmd_key_cert.cc:158 cmd_key_cert.cc:174
-#: cmd_key_cert.cc:205
+#: cmd_key_cert.cc:119 cmd_key_cert.cc:159 cmd_key_cert.cc:175
+#: cmd_key_cert.cc:206
 msgid "key and cert"
 msgstr "chave e certificado"
 
@@ -719,28 +719,28 @@ msgstr "[ARQUIVO]"
 msgid "export your monotone key for use with ssh-agent"
 msgstr "exporta sua chave do monotone para ser usada com ssh-agent"
 
-#: cmd_key_cert.cc:130 cmd_key_cert.cc:168
+#: cmd_key_cert.cc:130 cmd_key_cert.cc:169
 #, c-format
 msgid "the key you specified cannot be found"
 msgstr "a chave especificada não pode ser salva"
 
-#: cmd_key_cert.cc:159
+#: cmd_key_cert.cc:160
 msgid "Add your monotone key to ssh-agent"
 msgstr "Adiciona a sua chave do monotone ao ssh-agent"
 
-#: cmd_key_cert.cc:174
+#: cmd_key_cert.cc:175
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "VERSÃO NOME-CERTIFICADO [VALOR-CERTIFICADO]"
 
-#: cmd_key_cert.cc:175
+#: cmd_key_cert.cc:176
 msgid "create a cert for a revision"
 msgstr "cria um certificado para uma versão"
 
-#: cmd_key_cert.cc:206
+#: cmd_key_cert.cc:207
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "VERSÃO NOME VALOR ASSINANTE1 [ASSINANTE2 [...]]"
 
-#: cmd_key_cert.cc:207
+#: cmd_key_cert.cc:208
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
@@ -748,7 +748,7 @@ msgstr ""
 "verifica se um certificado hipotético teria confiança\n"
 "baseado nos parâmetros atuais"
 
-#: cmd_key_cert.cc:240
+#: cmd_key_cert.cc:241
 #, c-format
 msgid ""
 "if a cert on: %s\n"
@@ -763,62 +763,62 @@ msgstr ""
 "fosse assinado por: %s\n"
 "ele seria: %s"
 
-#: cmd_key_cert.cc:249
+#: cmd_key_cert.cc:250
 msgid "trusted"
 msgstr "confiável"
 
-#: cmd_key_cert.cc:249
+#: cmd_key_cert.cc:250
 msgid "UNtrusted"
 msgstr "NÃO-confiável"
 
-#: cmd_key_cert.cc:253 cmd_key_cert.cc:265 cmd_key_cert.cc:277
-#: cmd_key_cert.cc:291 cmd_ws_commit.cc:211
+#: cmd_key_cert.cc:254 cmd_key_cert.cc:266 cmd_key_cert.cc:278
+#: cmd_key_cert.cc:292 cmd_ws_commit.cc:211
 msgid "review"
 msgstr "revisão"
 
-#: cmd_key_cert.cc:253
+#: cmd_key_cert.cc:254
 msgid "REVISION TAGNAME"
 msgstr "VERSÃO ETIQUETA"
 
-#: cmd_key_cert.cc:254
+#: cmd_key_cert.cc:255
 msgid "put a symbolic tag cert on a revision"
 msgstr "põe um certificado de etiqueta simbólica em uma versão"
 
-#: cmd_key_cert.cc:265
+#: cmd_key_cert.cc:266
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
-#: cmd_key_cert.cc:266
+#: cmd_key_cert.cc:267
 msgid "note the results of running a test on a revision"
 msgstr "anota os resultados de executar um teste sobre uma versão"
 
-#: cmd_key_cert.cc:277 cmd_ws_commit.cc:211
+#: cmd_key_cert.cc:278 cmd_ws_commit.cc:211
 msgid "REVISION"
 msgstr "VERSÂO"
 
-#: cmd_key_cert.cc:278
+#: cmd_key_cert.cc:279
 msgid "approve of a particular revision"
 msgstr "aprova a versão especificada"
 
-#: cmd_key_cert.cc:287
+#: cmd_key_cert.cc:288
 #, c-format
 msgid "need --branch argument for approval"
 msgstr "argumento --branch necessário para aprovação"
 
-#: cmd_key_cert.cc:291
+#: cmd_key_cert.cc:292
 msgid "REVISION [COMMENT]"
 msgstr "VERSÃO [COMENTÁRIO]"
 
-#: cmd_key_cert.cc:292
+#: cmd_key_cert.cc:293
 msgid "comment on a particular revision"
 msgstr "comenta a versão especificada"
 
-#: cmd_key_cert.cc:304
+#: cmd_key_cert.cc:305
 #, c-format
 msgid "edit comment failed"
 msgstr "edição de comentário falhou"
 
-#: cmd_key_cert.cc:309
+#: cmd_key_cert.cc:310
 #, c-format
 msgid "empty comment"
 msgstr "comentário vazio"
@@ -2653,22 +2653,17 @@ msgstr "Impossível ler entrada padrão múltiplas vezes"
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "arquivo '%s' não pode ser sobrescrito com dados, é um diretório"
 
-#: file_io.cc:410
-#, c-format
-msgid "cannot open file %s for writing"
-msgstr "impossível abrir arquivo %s para escrita"
-
-#: file_io.cc:467
+#: file_io.cc:455
 #, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "erro de execução %s capturado construindo caminho do arquivo %s"
 
-#: file_io.cc:554 work.cc:1312
+#: file_io.cc:542 work.cc:1312
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "arquivo ou diretório inexistente: '%s'"
 
-#: file_io.cc:578
+#: file_io.cc:566
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "esperado arquivo '%s', mas é um diretório"
@@ -4450,3 +4445,139 @@ msgstr ""
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "esta área de trabalho está no formato atual, nenhuma migração é necessária"
+
+#: unix/fs.cc:30 win32/fs.cc:27
+#, fuzzy, c-format
+msgid "cannot get working directory: %s"
+msgstr "não é possível remover diretório não-vazio '%s'"
+
+#: unix/fs.cc:38 win32/fs.cc:38
+#, fuzzy, c-format
+msgid "cannot change to directory %s: %s"
+msgstr "arquivo ou diretório inexistente: '%s'"
+
+#: unix/fs.cc:58
+#, fuzzy, c-format
+msgid "could not find home directory for uid %d"
+msgstr "não foi possível criar diretório '%s'"
+
+#: unix/fs.cc:86
+#, fuzzy, c-format
+msgid "could not find home directory for user %s"
+msgstr ""
+"não foi possível criar diretório '%s'\n"
+"%s"
+
+#: unix/fs.cc:109
+#, fuzzy, c-format
+msgid "error accessing file %s: %s"
+msgstr "erro lendo arquivo RCS %s: %s"
+
+#: unix/fs.cc:118
+#, fuzzy, c-format
+msgid "cannot handle special file %s"
+msgstr "especificador de papel %d desconhecido"
+
+#: unix/fs.cc:126
+#, fuzzy, c-format
+msgid "renaming '%s' to '%s' failed: %s"
+msgstr "renomeando %s para %s"
+
+#: unix/fs.cc:190 win32/fs.cc:270
+#, fuzzy, c-format
+msgid "cannot create temp file %s: %s"
+msgstr "erro criando arquivo de PID '%s'"
+
+#: unix/fs.cc:199
+#, c-format
+msgid "all %d possible temporary file names are in use"
+msgstr ""
+
+#: unix/fs.cc:239 win32/fs.cc:330
+#, fuzzy, c-format
+msgid "error writing to temp file %s: %s"
+msgstr "erro lendo arquivo RCS %s: %s"
+
+#: unix/fs.cc:244 win32/fs.cc:337
+#, c-format
+msgid ""
+"giving up after four zero-length writes to %s (%d byte written, %d left)"
+msgid_plural ""
+"giving up after four zero-length writes to %s (%d bytes written, %d left)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: unix/os_strerror.cc:16 win32/os_strerror.cc:22
+#, fuzzy, c-format
+msgid "unknown error code %d"
+msgstr "código de comando de rede desconhecido 0x%x"
+
+#: unix/process.cc:53
+#, fuzzy, c-format
+msgid "error getting status of file %s: %s"
+msgstr "erro lendo arquivo RCS %s: %s"
+
+#: unix/process.cc:72
+#, fuzzy, c-format
+msgid "error opening file %s: %s"
+msgstr "erro lendo arquivo RCS %s: %s"
+
+#: unix/process.cc:78
+#, fuzzy, c-format
+msgid "error closing file %s: %s"
+msgstr "erro lendo arquivo RCS %s: %s"
+
+#: unix/ssh_agent_platform.cc:48
+#, c-format
+msgid "ssh_agent: connect: could not open socket to ssh-agent"
+msgstr ""
+
+#: unix/ssh_agent_platform.cc:56
+#, c-format
+msgid "ssh_agent: connect: could not set up socket for ssh-agent"
+msgstr ""
+
+#: unix/ssh_agent_platform.cc:63
+#, c-format
+msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
+msgstr ""
+
+#: unix/ssh_agent_platform.cc:102
+#, c-format
+msgid "stream read failed (%i)"
+msgstr "leitura da entrada falhou (%i)"
+
+#: unix/ssh_agent_platform.cc:110
+#, c-format
+msgid "%u extra bytes from ssh-agent"
+msgstr "%u bytes extras do agente ssh"
+
+#: win32/fs.cc:55
+#, fuzzy, c-format
+msgid "could not determine configuration path"
+msgstr "impossível determinar ramo para atualização"
+
+#: win32/fs.cc:209
+#, fuzzy, c-format
+msgid "renaming '%s' to '%s' failed: %s (%d)"
+msgstr "renomeando %s para %s"
+
+#: win32/fs.cc:278
+#, c-format
+msgid "cannot find a temporary file (tried %d possibilities)"
+msgstr "não foi possível encontrar um arquivo temporário (feitas %d tentativas)"
+
+#: win32/fs.cc:305
+#, c-format
+msgid "%s will be accessible to all users of this computer\n"
+msgstr "%s será acessível por todos os usuários deste computador\n"
+
+#: win32/get_system_flavour.cc:156
+#, c-format
+msgid "%s (level %d, rev %d)"
+msgstr "%s (nível %d, ver %d)"
+
+#: win32/get_system_flavour.cc:162
+#, c-format
+msgid "Windows %s (%d.%d, build %d, %s) on %s"
+msgstr "Windows %s (%d.%d, compilação %d, %s) em %s"
