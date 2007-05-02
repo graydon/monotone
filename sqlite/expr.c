@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.283 2007/03/27 13:36:37 drh Exp $
+** $Id: expr.c,v 1.285 2007/04/18 17:07:58 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -237,12 +237,12 @@ Expr *sqlite3Expr(int op, Expr *pLeft, Expr *pRight, const Token *pToken){
   }else if( pLeft ){
     if( pRight ){
       sqlite3ExprSpan(pNew, &pLeft->span, &pRight->span);
-      if( pRight->flags && EP_ExpCollate ){
+      if( pRight->flags & EP_ExpCollate ){
         pNew->flags |= EP_ExpCollate;
         pNew->pColl = pRight->pColl;
       }
     }
-    if( pLeft->flags && EP_ExpCollate ){
+    if( pLeft->flags & EP_ExpCollate ){
       pNew->flags |= EP_ExpCollate;
       pNew->pColl = pLeft->pColl;
     }
@@ -1420,7 +1420,9 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
         int iParm = pExpr->iTable +  (((int)affinity)<<16);
         ExprList *pEList;
         assert( (pExpr->iTable&0x0000FFFF)==pExpr->iTable );
-        sqlite3Select(pParse, pExpr->pSelect, SRT_Set, iParm, 0, 0, 0, 0);
+        if( sqlite3Select(pParse, pExpr->pSelect, SRT_Set, iParm, 0, 0, 0, 0) ){
+          return;
+        }
         pEList = pExpr->pSelect->pEList;
         if( pEList && pEList->nExpr>0 ){ 
           keyInfo.aColl[0] = binaryCompareCollSeq(pParse, pExpr->pLeft,
@@ -1491,7 +1493,9 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
       }
       sqlite3ExprDelete(pSel->pLimit);
       pSel->pLimit = sqlite3Expr(TK_INTEGER, 0, 0, &one);
-      sqlite3Select(pParse, pSel, sop, iMem, 0, 0, 0, 0);
+      if( sqlite3Select(pParse, pSel, sop, iMem, 0, 0, 0, 0) ){
+        return;
+      }
       break;
     }
   }

@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-10 11:00+0200\n"
+"POT-Creation-Date: 2007-04-29 11:53+0200\n"
 "PO-Revision-Date: 2007-03-06 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -87,7 +87,8 @@ msgstr "gibt eine ASCII-Repräsentation des Graphen aus"
 #: automate.cc:1145 automate.cc:1172 automate.cc:1206 automate.cc:1318
 #: automate.cc:1408 automate.cc:1467 automate.cc:1516 automate.cc:1575
 #: automate.cc:1624 automate.cc:1674 automate.cc:1728 automate.cc:1758
-#: automate.cc:1781 cmd_files.cc:285 cmd_files.cc:308 cmd_list.cc:678
+#: automate.cc:1781 cmd_files.cc:221 cmd_files.cc:314 cmd_files.cc:337
+#: cmd_list.cc:678
 #, c-format
 msgid "wrong argument count"
 msgstr "falsche Anzahl an Parametern"
@@ -102,7 +103,7 @@ msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:98 automate.cc:145 automate.cc:189 automate.cc:335
 #: automate.cc:370 automate.cc:374 automate.cc:434 automate.cc:459
-#: automate.cc:1213 cmd_list.cc:685 revision.cc:1813
+#: automate.cc:1213 cmd_list.cc:685 revision.cc:1782
 #, c-format
 msgid "No such revision %s"
 msgstr "Revision %s nicht gefunden"
@@ -115,8 +116,8 @@ msgstr "[REV1 [REV2 [REV3 [...]]]]"
 msgid "FILE"
 msgstr "DATEI"
 
-#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:263
-#: cmd_files.cc:318 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
+#: automate.cc:235 automate.cc:730 automate.cc:966 cmd_files.cc:292
+#: cmd_files.cc:347 cmd_merging.cc:150 cmd_merging.cc:624 cmd_ws_commit.cc:96
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr ""
@@ -139,7 +140,7 @@ msgstr "NEUE_REV [ALTE_REV1 [ALTE_REV2 [...]]]"
 msgid "no arguments needed"
 msgstr "keine Parameter benötigt"
 
-#: automate.cc:428 automate.cc:453 cmd_list.cc:675 revision.cc:1807
+#: automate.cc:428 automate.cc:453 cmd_list.cc:675 revision.cc:1776
 msgid "REV"
 msgstr "REV"
 
@@ -159,14 +160,14 @@ msgstr "REVISIONS_ID"
 
 #: automate.cc:1100 automate.cc:1126 automate.cc:1181 automate.cc:1183
 #: automate.cc:1735 cmd_db.cc:37 cmd_diff_log.cc:396 cmd_diff_log.cc:423
-#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:224 cmd_merging.cc:184
+#: cmd_diff_log.cc:425 cmd_files.cc:168 cmd_files.cc:253 cmd_merging.cc:184
 #: cmd_merging.cc:780 cmd_merging.cc:795 cmd_merging.cc:798 cmd_netsync.cc:316
 #: cmd_ws_commit.cc:527 cmd_ws_commit.cc:987 commands.cc:407
 #, c-format
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
 
-#: automate.cc:1142 cmd_files.cc:282
+#: automate.cc:1142 cmd_files.cc:311
 msgid "FILEID"
 msgstr "DATEI_ID"
 
@@ -228,7 +229,7 @@ msgstr "REV1 DATEI REV2"
 msgid "[FILEID] CONTENTS"
 msgstr "[DATEIID] INHALT"
 
-#: automate.cc:1641 cmd_files.cc:212
+#: automate.cc:1641 cmd_files.cc:241
 #, c-format
 msgid "no file version %s found in database"
 msgstr "Dateiversion %s nicht in Datenbank gefunden"
@@ -293,7 +294,7 @@ msgstr ""
 msgid "calculated cert hash '%s' does not match '%s'"
 msgstr "berechnete Zertifikatsprüfsumme '%s' stimmt nicht mit '%s' überein"
 
-#: cert.cc:389 keys.cc:662
+#: cert.cc:389 keys.cc:668
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "kein Schlüsselpaar '%s' in Schlüsselbund '%s' gefunden"
@@ -442,7 +443,7 @@ msgid "no var with name %s in domain %s"
 msgstr "keine Variable mit dem Namen %s in der Domäne %s"
 
 #: cmd_db.cc:157 cmd_diff_log.cc:471 cmd_diff_log.cc:600 cmd_files.cc:117
-#: cmd_files.cc:247 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
+#: cmd_files.cc:276 cmd_list.cc:480 cmd_merging.cc:717 cmd_ws_commit.cc:415
 #: commands.cc:284
 msgid "informative"
 msgstr "Informativ"
@@ -613,7 +614,7 @@ msgstr "Quell-Datei-ID existiert nicht"
 msgid "destination file id does not exist"
 msgstr "Ziel-Datei-ID existiert nicht"
 
-#: cmd_files.cc:117
+#: cmd_files.cc:117 cmd_files.cc:218
 msgid "PATH"
 msgstr "PFAD"
 
@@ -653,16 +654,21 @@ msgstr "[PFAD]"
 msgid "calculate identity of PATH or stdin"
 msgstr "berechnet die Identität (ID) von PFAD oder der Standardeingabe"
 
-#: cmd_files.cc:237 cmd_files.cc:241
+#: cmd_files.cc:226
+#, c-format
+msgid "Cannot read from stdin"
+msgstr "Kann nicht von stdin lesen"
+
+#: cmd_files.cc:266 cmd_files.cc:270
 #, c-format
 msgid "no file '%s' found in revision '%s'"
 msgstr "keine Datei '%s' in Revision '%s' gefunden"
 
-#: cmd_files.cc:248 cmd_files.cc:305
+#: cmd_files.cc:277 cmd_files.cc:334
 msgid "FILENAME"
 msgstr "DATEINAME"
 
-#: cmd_files.cc:249
+#: cmd_files.cc:278
 msgid "write file from database to stdout"
 msgstr "schreibt Dateiinhalte aus der Datenbank zur Standardausgabe"
 
@@ -682,8 +688,8 @@ msgid "Alias for %s"
 msgstr "Alias für %s"
 
 #: cmd_key_cert.cc:32 cmd_key_cert.cc:58 cmd_key_cert.cc:98
-#: cmd_key_cert.cc:119 cmd_key_cert.cc:158 cmd_key_cert.cc:174
-#: cmd_key_cert.cc:205
+#: cmd_key_cert.cc:119 cmd_key_cert.cc:159 cmd_key_cert.cc:175
+#: cmd_key_cert.cc:206
 msgid "key and cert"
 msgstr "Schlüssel und Zertifikat"
 
@@ -747,28 +753,28 @@ msgstr "[DATEINAME]"
 msgid "export your monotone key for use with ssh-agent"
 msgstr "exportiert Ihren monotone-Schlüssel für die Benutzung mit ssh-agent"
 
-#: cmd_key_cert.cc:130 cmd_key_cert.cc:168
+#: cmd_key_cert.cc:130 cmd_key_cert.cc:169
 #, c-format
 msgid "the key you specified cannot be found"
 msgstr "der übergebene Schlüssel konnte nicht gefunden werden"
 
-#: cmd_key_cert.cc:159
+#: cmd_key_cert.cc:160
 msgid "Add your monotone key to ssh-agent"
 msgstr "Fügt Ihren monotone-Schlüssel zu ssh-agent hinzu"
 
-#: cmd_key_cert.cc:174
+#: cmd_key_cert.cc:175
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "REVISION ZERTIFIKAT [ZERTIFIKATSWERT]"
 
-#: cmd_key_cert.cc:175
+#: cmd_key_cert.cc:176
 msgid "create a cert for a revision"
 msgstr "erzeuge ein Zertifikat für eine Revision"
 
-#: cmd_key_cert.cc:206
+#: cmd_key_cert.cc:207
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "REVISION NAME WERT UNTERZEICHNER1 [UNTERZEICHNER2 [...]]"
 
-#: cmd_key_cert.cc:207
+#: cmd_key_cert.cc:208
 msgid ""
 "test whether a hypothetical cert would be trusted\n"
 "by current settings"
@@ -776,7 +782,7 @@ msgstr ""
 "teste, ob einem hypothetischen Zertifikat bei gegebenen Einstellungen\n"
 "vertraut werden würde"
 
-#: cmd_key_cert.cc:240
+#: cmd_key_cert.cc:241
 #, c-format
 msgid ""
 "if a cert on: %s\n"
@@ -791,62 +797,62 @@ msgstr ""
 "unterzeichnet werden würde von: %s\n"
 "wäre es: %s"
 
-#: cmd_key_cert.cc:249
+#: cmd_key_cert.cc:250
 msgid "trusted"
 msgstr "vertrauenswürdig"
 
-#: cmd_key_cert.cc:249
+#: cmd_key_cert.cc:250
 msgid "UNtrusted"
 msgstr "NICHT vertrauenswürdig"
 
-#: cmd_key_cert.cc:253 cmd_key_cert.cc:265 cmd_key_cert.cc:277
-#: cmd_key_cert.cc:291 cmd_ws_commit.cc:211
+#: cmd_key_cert.cc:254 cmd_key_cert.cc:266 cmd_key_cert.cc:278
+#: cmd_key_cert.cc:292 cmd_ws_commit.cc:211
 msgid "review"
 msgstr "Überprüfung"
 
-#: cmd_key_cert.cc:253
+#: cmd_key_cert.cc:254
 msgid "REVISION TAGNAME"
 msgstr "REVISION MARKENNAME"
 
-#: cmd_key_cert.cc:254
+#: cmd_key_cert.cc:255
 msgid "put a symbolic tag cert on a revision"
 msgstr "setze eine symbolische Marke auf eine Revision"
 
-#: cmd_key_cert.cc:265
+#: cmd_key_cert.cc:266
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (engl. pass|fail|true|false|yes|no|1|0)"
 
-#: cmd_key_cert.cc:266
+#: cmd_key_cert.cc:267
 msgid "note the results of running a test on a revision"
 msgstr "notiere die Ergebnisse eines ausgeführten Tests auf einer Revision"
 
-#: cmd_key_cert.cc:277 cmd_ws_commit.cc:211
+#: cmd_key_cert.cc:278 cmd_ws_commit.cc:211
 msgid "REVISION"
 msgstr "REVISION"
 
-#: cmd_key_cert.cc:278
+#: cmd_key_cert.cc:279
 msgid "approve of a particular revision"
 msgstr "Überprüfung einer bestimmten Revision"
 
-#: cmd_key_cert.cc:287
+#: cmd_key_cert.cc:288
 #, c-format
 msgid "need --branch argument for approval"
 msgstr "benötige '--branch'-Parameter für das Akzeptieren"
 
-#: cmd_key_cert.cc:291
+#: cmd_key_cert.cc:292
 msgid "REVISION [COMMENT]"
 msgstr "REVISION [KOMMENTAR]"
 
-#: cmd_key_cert.cc:292
+#: cmd_key_cert.cc:293
 msgid "comment on a particular revision"
 msgstr "Kommentieren einer bestimmten Revision"
 
-#: cmd_key_cert.cc:304
+#: cmd_key_cert.cc:305
 #, c-format
 msgid "edit comment failed"
 msgstr "Bearbeiten des Kommentars fehlgeschlagen"
 
-#: cmd_key_cert.cc:309
+#: cmd_key_cert.cc:310
 #, c-format
 msgid "empty comment"
 msgstr "leerer Kommentar"
@@ -2523,17 +2529,17 @@ msgstr "Zertifikats-Revision '%s' existiert nicht in der Datenbank"
 msgid "dropping cert"
 msgstr "entferne Zertifikat"
 
-#: database.cc:3387
+#: database.cc:3317
 #, c-format
 msgid "no database specified"
 msgstr "keine Datenbank spezifiziert"
 
-#: database.cc:3397
+#: database.cc:3327
 #, c-format
 msgid "database %s does not exist"
 msgstr "Datenbank %s existiert nicht"
 
-#: database.cc:3415
+#: database.cc:3345
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -2546,17 +2552,17 @@ msgstr ""
 "Dieser Pfad ist aber ein Arbeitsbereich. Meinten Sie: \n"
 "%s"
 
-#: database.cc:3420
+#: database.cc:3350
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s ist ein Verzeichnis, keine Datenbank"
 
-#: database.cc:3430
+#: database.cc:3360
 #, c-format
 msgid "database %s already exists"
 msgstr "Datenbank %s existiert bereits"
 
-#: database.cc:3435
+#: database.cc:3365
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -2728,22 +2734,17 @@ msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr ""
 "Datei %s kann nicht mit Daten überschrieben werden; sie ist ein Verzeichnis"
 
-#: file_io.cc:410
-#, c-format
-msgid "cannot open file %s for writing"
-msgstr "Kann Datei %s nicht zum schreiben öffnen"
-
-#: file_io.cc:467
+#: file_io.cc:455
 #, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "Laufzeitfehler %s während der Erstellung des Dateipfades für %s"
 
-#: file_io.cc:554 work.cc:1312
+#: file_io.cc:542 work.cc:1312
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
 
-#: file_io.cc:578
+#: file_io.cc:566
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "erwartete Datei '%s', diese ist jedoch ein Verzeichnis"
@@ -2787,12 +2788,12 @@ msgstr ""
 "Sie haben ausgewählt, nur mit ssh-agent zu signieren, aber derzeit scheint "
 "ssh-agent nicht zu laufen."
 
-#: keys.cc:425
+#: keys.cc:431
 #, c-format
 msgid "You don't seem to have your monotone key imported "
 msgstr "Anscheinend haben Sie Ihren monotone-Schlüssel nicht importiert "
 
-#: keys.cc:472
+#: keys.cc:478
 #, c-format
 msgid ""
 "make_signature: ssh signature (%i) != monotone signature (%i)\n"
@@ -2803,12 +2804,12 @@ msgstr ""
 "ssh-Signatur     : %s\n"
 "monotone-Signatur: %s"
 
-#: keys.cc:487
+#: keys.cc:493
 #, c-format
 msgid "make_signature: signature is not valid"
 msgstr "make_signature: Signatur ist ungültig"
 
-#: keys.cc:672
+#: keys.cc:678
 #, c-format
 msgid "passphrase for '%s' is incorrect"
 msgstr "Passwort für '%s' ist nicht korrekt"
@@ -3793,26 +3794,26 @@ msgstr ""
 msgid "rebuilding revision graph from manifest certs"
 msgstr "erneuere Revisions-Graph auf Basis der Manifest-Zertifikate"
 
-#: revision.cc:1776
+#: revision.cc:1745
 #, c-format
 msgid "regenerating cached rosters and heights"
 msgstr "erstelle Katalog-Cache und Höhenangaben neu"
 
-#: revision.cc:1788
+#: revision.cc:1757
 msgid "regenerated"
 msgstr "neu erstellt"
 
-#: revision.cc:1804
+#: revision.cc:1773
 #, c-format
 msgid "finished regenerating cached rosters and heights"
 msgstr "Katalog-Cache und Höhenangaben wurden neu erstellt"
 
-#: revision.cc:1816
+#: revision.cc:1785
 #, c-format
 msgid "cached height: %s"
 msgstr "zwischengespeicherte Höhenangabe: %s"
 
-#: revision.cc:1899
+#: revision.cc:1868
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -3852,7 +3853,7 @@ msgstr "Fataler Fehler: Formatierung schlug fehl bei %s:%d: %s"
 msgid "misuse: "
 msgstr "falscher Gebrauch: "
 
-#: sanity.cc:239
+#: sanity.cc:238
 #, c-format
 msgid "%s:%d: invariant '%s' violated"
 msgstr "%s:%d: Invariante '%s' verletzt"
@@ -4570,6 +4571,147 @@ msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "Der Arbeitsbereich hat bereits das neueste Format, keine Migration notwendig."
 
+#: unix/fs.cc:30 win32/fs.cc:27
+#, c-format
+msgid "cannot get working directory: %s"
+msgstr "kann Arbeitsverzeichnis nicht ermitteln: %s"
+
+#: unix/fs.cc:38 win32/fs.cc:38
+#, c-format
+msgid "cannot change to directory %s: %s"
+msgstr "kann nicht in Verzeichnis %s wechseln: %s"
+
+#: unix/fs.cc:58
+#, c-format
+msgid "could not find home directory for uid %d"
+msgstr "konnte Heimatverzeichnis für UID %d nicht finden"
+
+#: unix/fs.cc:86
+#, c-format
+msgid "could not find home directory for user %s"
+msgstr "konnte Heimatverzeichnis von Benutzer %s nicht finden"
+
+#: unix/fs.cc:109
+#, c-format
+msgid "error accessing file %s: %s"
+msgstr "Fehler beim Zugriff auf die Datei %s: %s"
+
+#: unix/fs.cc:118
+#, c-format
+msgid "cannot handle special file %s"
+msgstr "kann nicht mit spezieller Datei %s umgehen"
+
+#: unix/fs.cc:126
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s"
+msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s"
+
+#: unix/fs.cc:190 win32/fs.cc:270
+#, c-format
+msgid "cannot create temp file %s: %s"
+msgstr "Kann temporäre Datei %s nicht anlegen: %s"
+
+#: unix/fs.cc:199
+#, c-format
+msgid "all %d possible temporary file names are in use"
+msgstr "alle %d möglichen, temporären Dateinamen sind in Benutzung"
+
+#: unix/fs.cc:239 win32/fs.cc:330
+#, c-format
+msgid "error writing to temp file %s: %s"
+msgstr "Fehler beim Schreiben zur temporären Datei %s: %s"
+
+#: unix/fs.cc:244 win32/fs.cc:337
+#, c-format
+msgid ""
+"giving up after four zero-length writes to %s (%d byte written, %d left)"
+msgid_plural ""
+"giving up after four zero-length writes to %s (%d bytes written, %d left)"
+msgstr[0] ""
+"breche nach vier fehlgeschlagenen Schreibversuchen zu %s ab (%d Byte "
+"geschrieben, %d verbleiben)"
+msgstr[1] ""
+"breche nach vier fehlgeschlagenen Schreibversuchen zu %s ab (%d Bytes "
+"geschrieben, %d verbleiben)"
+
+#: unix/os_strerror.cc:16 win32/os_strerror.cc:22
+#, c-format
+msgid "unknown error code %d"
+msgstr "unbekannter Fehlercode %d"
+
+#: unix/process.cc:53
+#, c-format
+msgid "error getting status of file %s: %s"
+msgstr "Fehler bei der Abfrage des Status der Datei %s: %s"
+
+#: unix/process.cc:72
+#, c-format
+msgid "error opening file %s: %s"
+msgstr "Fehler beim Öffnen der Datei %s: %s"
+
+#: unix/process.cc:78
+#, c-format
+msgid "error closing file %s: %s"
+msgstr "Fehler beim Schliessen der Datei %s: %s"
+
+#: unix/ssh_agent_platform.cc:48
+#, c-format
+msgid "ssh_agent: connect: could not open socket to ssh-agent"
+msgstr "ssh_agent: connect: kann Socket zu ssh-agent nicht öffnen"
+
+#: unix/ssh_agent_platform.cc:56
+#, c-format
+msgid "ssh_agent: connect: could not set up socket for ssh-agent"
+msgstr "ssh_agent: connect: kann Socket für ssh-agent nicht aufsetzen"
+
+#: unix/ssh_agent_platform.cc:63
+#, c-format
+msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
+msgstr "ssh_agent: connect: kann nicht zu Socket für ssh-agent verbinden"
+
+#: unix/ssh_agent_platform.cc:102
+#, c-format
+msgid "stream read failed (%i)"
+msgstr "Lesen vom Strom schlug fehl (%i)"
+
+#: unix/ssh_agent_platform.cc:110
+#, c-format
+msgid "%u extra bytes from ssh-agent"
+msgstr "%u zusätzliche Bytes von ssh-agent"
+
+#: win32/fs.cc:55
+#, c-format
+msgid "could not determine configuration path"
+msgstr "kann Konfigurationspfad nicht bestimmen"
+
+#: win32/fs.cc:209
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s (%d)"
+msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s (%d)"
+
+#: win32/fs.cc:278
+#, c-format
+msgid "cannot find a temporary file (tried %d possibilities)"
+msgstr "kann keine temporäre Datei finden (versuchte %d Möglichkeiten)"
+
+#: win32/fs.cc:305
+#, c-format
+msgid "%s will be accessible to all users of this computer\n"
+msgstr "%s wird für alle Benutzer dieses Computers zugänglich sein\n"
+
+#: win32/get_system_flavour.cc:156
+#, c-format
+msgid "%s (level %d, rev %d)"
+msgstr "%s (Level %d, Rev %d)"
+
+#: win32/get_system_flavour.cc:162
+#, c-format
+msgid "Windows %s (%d.%d, build %d, %s) on %s"
+msgstr "Windows %s (%d.%d, Build %d, %s) auf %s"
+
+#~ msgid "cannot open file %s for writing"
+#~ msgstr "Kann Datei %s nicht zum schreiben öffnen"
+
 #~ msgid "non-hex digits in id"
 #~ msgstr "Nicht-Hexadezimalzeichen in ID"
 
@@ -4635,9 +4777,6 @@ msgstr ""
 
 #~ msgid "could not initialize database: %s: already exists"
 #~ msgstr "Konnte Datenbank nicht initialisieren: %s existiert bereits"
-
-#~ msgid "cannot create %s; it already exists"
-#~ msgstr "Kann %s nicht erzeugen; es existiert bereits"
 
 #~ msgid "could not open database '%s': %s"
 #~ msgstr "Konnte Datenbank '%s' nicht öffnen: %s"

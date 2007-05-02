@@ -150,7 +150,8 @@ CMD(ssh_agent_export, N_("key and cert"),
     cout << decoded_key;
   else
     {
-      ofstream fout(system_path(idx(args, 0)).as_external().c_str(), ofstream::out);
+      string external_path = system_path(idx(args, 0)).as_external();
+      ofstream fout(external_path.c_str(), ofstream::out);
       fout << decoded_key;
     }
 }

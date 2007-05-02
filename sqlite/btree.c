@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.354 2007/04/09 12:45:03 drh Exp $
+** $Id: btree.c,v 1.358 2007/04/24 17:35:59 drh Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** For a detailed discussion of BTrees, refer to
@@ -1396,13 +1396,20 @@ static void zeroPage(MemPage *pPage, int flags){
 /*
 ** Get a page from the pager.  Initialize the MemPage.pBt and
 ** MemPage.aData elements if needed.
+**
+** If the noContent flag is set, it means that we do not care about
+** the content of the page at this time.  So do not go to the disk
+** to fetch the content.  Just fill in the content with zeros for now.
+** If in the future we call sqlite3PagerWrite() on this page, that
+** means we have started to be concerned about content and the disk
+** read should occur at that point.
 */
-static int getPage(BtShared *pBt, Pgno pgno, MemPage **ppPage, int clrFlag){
+static int getPage(BtShared *pBt, Pgno pgno, MemPage **ppPage, int noContent){
   int rc;
   MemPage *pPage;
   DbPage *pDbPage;
 
-  rc = sqlite3PagerAcquire(pBt->pPager, pgno, (DbPage**)&pDbPage, clrFlag);
+  rc = sqlite3PagerAcquire(pBt->pPager, pgno, (DbPage**)&pDbPage, noContent);
   if( rc ) return rc;
   pPage = (MemPage *)sqlite3PagerGetExtra(pDbPage);
   pPage->aData = sqlite3PagerGetData(pDbPage);
@@ -1411,9 +1418,6 @@ static int getPage(BtShared *pBt, Pgno pgno, MemPage **ppPage, int clrFlag){
   pPage->pgno = pgno;
   pPage->hdrOffset = pPage->pgno==1 ? 100 : 0;
   *ppPage = pPage;
-  if( clrFlag ){
-    sqlite3PagerDontRollback(pPage->pDbPage);
-  }
   return SQLITE_OK;
 }
 
@@ -1866,7 +1870,10 @@ static int lockBtree(BtShared *pBt){
     if( memcmp(page1, zMagicHeader, 16)!=0 ){
       goto page1_init_failed;
     }
-    if( page1[18]>1 || page1[19]>1 ){
+    if( page1[18]>1 ){
+      pBt->readOnly = 1;
+    }
+    if( page1[19]>1 ){
       goto page1_init_failed;
     }
     pageSize = get2byte(&page1[16]);
@@ -2064,11 +2071,15 @@ int sqlite3BtreeBeginTrans(Btree *p, int wrflag){
     if( pBt->pPage1==0 ){
       rc = lockBtree(pBt);
     }
-  
+
     if( rc==SQLITE_OK && wrflag ){
-      rc = sqlite3PagerBegin(pBt->pPage1->pDbPage, wrflag>1);
-      if( rc==SQLITE_OK ){
-        rc = newDatabase(pBt);
+      if( pBt->readOnly ){
+        rc = SQLITE_READONLY;
+      }else{
+        rc = sqlite3PagerBegin(pBt->pPage1->pDbPage, wrflag>1);
+        if( rc==SQLITE_OK ){
+          rc = newDatabase(pBt);
+        }
       }
     }
   
@@ -2777,6 +2788,9 @@ int sqlite3BtreeCursor(
     rc = lockBtreeWithRetry(p);
     if( rc!=SQLITE_OK ){
       return rc;
+    }
+    if( pBt->readOnly && wrFlag ){
+      return SQLITE_READONLY;
     }
   }
   pCur = sqliteMalloc( sizeof(*pCur) );
@@ -3515,26 +3529,22 @@ int sqlite3BtreeNext(BtCursor *pCur, int *pRes){
   int rc;
   MemPage *pPage;
 
-#ifndef SQLITE_OMIT_SHARED_CACHE
   rc = restoreOrClearCursorPosition(pCur);
   if( rc!=SQLITE_OK ){
     return rc;
   }
-#endif 
   assert( pRes!=0 );
   pPage = pCur->pPage;
   if( CURSOR_INVALID==pCur->eState ){
     *pRes = 1;
     return SQLITE_OK;
   }
-#ifndef SQLITE_OMIT_SHARED_CACHE
   if( pCur->skip>0 ){
     pCur->skip = 0;
     *pRes = 0;
     return SQLITE_OK;
   }
   pCur->skip = 0;
-#endif 
 
   assert( pPage->isInit );
   assert( pCur->idx<pPage->nCell );
@@ -3585,24 +3595,20 @@ int sqlite3BtreePrevious(BtCursor *pCur, int *pRes){
   Pgno pgno;
   MemPage *pPage;
 
-#ifndef SQLITE_OMIT_SHARED_CACHE
   rc = restoreOrClearCursorPosition(pCur);
   if( rc!=SQLITE_OK ){
     return rc;
   }
-#endif
   if( CURSOR_INVALID==pCur->eState ){
     *pRes = 1;
     return SQLITE_OK;
   }
-#ifndef SQLITE_OMIT_SHARED_CACHE
   if( pCur->skip<0 ){
     pCur->skip = 0;
     *pRes = 0;
     return SQLITE_OK;
   }
   pCur->skip = 0;
-#endif
 
   pPage = pCur->pPage;
   assert( pPage->isInit );
@@ -3830,6 +3836,7 @@ static int allocateBtreePage(
           put4byte(&aData[4], k-1);
           rc = getPage(pBt, *pPgno, ppPage, 1);
           if( rc==SQLITE_OK ){
+            sqlite3PagerDontRollback((*ppPage)->pDbPage);
             rc = sqlite3PagerWrite((*ppPage)->pDbPage);
             if( rc!=SQLITE_OK ){
               releasePage(*ppPage);
@@ -3948,7 +3955,7 @@ static int freePage(MemPage *pPage){
         put4byte(&pTrunk->aData[4], k+1);
         put4byte(&pTrunk->aData[8+k*4], pPage->pgno);
 #ifndef SQLITE_SECURE_DELETE
-        sqlite3PagerDontWrite(pBt->pPager, pPage->pgno);
+        sqlite3PagerDontWrite(pPage->pDbPage);
 #endif
       }
       TRACE(("FREE-PAGE: %d leaf on trunk page %d\n",pPage->pgno,pTrunk->pgno));
@@ -3982,7 +3989,7 @@ static int clearCell(MemPage *pPage, unsigned char *pCell){
     if( ovflPgno==0 || ovflPgno>sqlite3PagerPagecount(pBt->pPager) ){
       return SQLITE_CORRUPT_BKPT;
     }
-    rc = getPage(pBt, ovflPgno, &pOvfl, 0);
+    rc = getPage(pBt, ovflPgno, &pOvfl, nOvfl==0);
     if( rc ) return rc;
     if( nOvfl ){
       ovflPgno = get4byte(pOvfl->aData);
@@ -6561,18 +6568,31 @@ int sqlite3BtreeCopyFile(Btree *pTo, Btree *pFrom){
     rc = sqlite3PagerOverwrite(pBtTo->pPager, i, sqlite3PagerGetData(pDbPage));
     sqlite3PagerUnref(pDbPage);
   }
+
+  /* If the file is shrinking, journal the pages that are being truncated
+  ** so that they can be rolled back if the commit fails.
+  */
   for(i=nPage+1; rc==SQLITE_OK && i<=nToPage; i++){
     DbPage *pDbPage;
     if( i==iSkip ) continue;
     rc = sqlite3PagerGet(pBtTo->pPager, i, &pDbPage);
     if( rc ) break;
     rc = sqlite3PagerWrite(pDbPage);
+    sqlite3PagerDontWrite(pDbPage);
+    /* Yeah.  It seems wierd to call DontWrite() right after Write().  But
+    ** that is because the names of those procedures do not exactly 
+    ** represent what they do.  Write() really means "put this page in the
+    ** rollback journal and mark it as dirty so that it will be written
+    ** to the database file later."  DontWrite() undoes the second part of
+    ** that and prevents the page from being written to the database.  The
+    ** page is still on the rollback journal, though.  And that is the whole
+    ** point of this loop: to put pages on the rollback journal. */
     sqlite3PagerUnref(pDbPage);
-    sqlite3PagerDontWrite(pBtTo->pPager, i);
   }
   if( !rc && nPage<nToPage ){
     rc = sqlite3PagerTruncate(pBtTo->pPager, nPage);
   }
+
   if( rc ){
     sqlite3BtreeRollback(pTo);
   }

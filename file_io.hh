@@ -94,6 +94,12 @@ void write_data(system_path const & path,
                 data const & data,
                 system_path const & tmpdir);
 
+// Identical to the above, but the file will be inaccessible to anyone but
+// the user.  Use for things like private keys.
+void write_data_userprivate(system_path const & path,
+                            data const & data,
+                            system_path const & tmpdir);
+
 class tree_walker
 {
 public:

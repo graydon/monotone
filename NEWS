@@ -4,17 +4,29 @@
 
         Changes
 
+        - 'mkdir --no-respect-ignore PATH' now really skips any
+          ignore directives from .mtn-ignore or Lua hooks
+
         New features
 
+        - 'automate identify', an automate version of 'mtn identify'.
+
         Other
+
+        - Private keys are now stored more safely, using file
+          permissions.
+
+        - You can't drop the workspace root any more.
 
         Internal
 
         - Update the internal Lua to version 5.1.2.
 
-	- Added build files for Mac OS X.
+        - Added build files for Mac OS X.
 
-        - Update the internal SQLite to version 3.3.15.
+        - Update the internal SQLite to version 3.3.17.
+
+        - Code cleanup of app_state.
 
 
 

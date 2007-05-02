@@ -392,53 +392,34 @@ read_data_for_command_line(utf8 const & path, data & dat)
 // trying, and I'm not sure it's really a strict requirement of this tool,
 // but you might want to make this code a bit tighter.
 
-
 static void
 write_data_impl(any_path const & p,
                 data const & dat,
-                any_path const & tmp)
+                any_path const & tmp,
+                bool user_private)
 {
   N(!directory_exists(p),
     F("file '%s' cannot be overwritten as data; it is a directory") % p);
 
   make_dir_for(p);
 
-  {
-    // data.tmp opens
-    ofstream file(tmp.as_external().c_str(),
-                  ios_base::out | ios_base::trunc | ios_base::binary);
-    N(file, F("cannot open file %s for writing") % tmp);
-    Botan::Pipe pipe(new Botan::DataSink_Stream(file));
-    pipe.process_msg(dat());
-    // data.tmp closes
-  }
-
-  rename_clobberingly(tmp, p);
-}
-
-static void
-write_data_impl(any_path const & p,
-                data const & dat)
-{
-  // we write, non-atomically, to _MTN/data.tmp.
-  // nb: no mucking around with multiple-writer conditions. we're a
-  // single-user single-threaded program. you get what you paid for.
-  assert_path_is_directory(bookkeeping_root);
-  bookkeeping_path tmp = bookkeeping_root / (FL("data.tmp.%d") %
-                                             get_process_id()).str();
-  write_data_impl(p, dat, tmp);
+  write_data_worker(p.as_external(), dat(), tmp.as_external(), user_private);
 }
 
 void
 write_data(file_path const & path, data const & dat)
 {
-  write_data_impl(path, dat);
+  // use the bookkeeping root as the temporary directory.
+  assert_path_is_directory(bookkeeping_root);
+  write_data_impl(path, dat, bookkeeping_root, false);
 }
 
 void
 write_data(bookkeeping_path const & path, data const & dat)
 {
-  write_data_impl(path, dat);
+  // use the bookkeeping root as the temporary directory.
+  assert_path_is_directory(bookkeeping_root);
+  write_data_impl(path, dat, bookkeeping_root, false);
 }
 
 void
@@ -446,8 +427,15 @@ write_data(system_path const & path,
            data const & data,
            system_path const & tmpdir)
 {
-  write_data_impl(path, data, tmpdir / (FL("data.tmp.%d") %
-                                        get_process_id()).str());
+  write_data_impl(path, data, tmpdir, false);
+}
+
+void
+write_data_userprivate(system_path const & path,
+                       data const & data,
+                       system_path const & tmpdir)
+{
+  write_data_impl(path, data, tmpdir, true);
 }
 
 tree_walker::~tree_walker() {}

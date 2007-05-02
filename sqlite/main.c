@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.368 2007/04/02 16:40:38 drh Exp $
+** $Id: main.c,v 1.370 2007/04/18 14:24:33 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -127,8 +127,18 @@ int sqlite3_close(sqlite3 *db){
   }
 #endif 
 
-  /* If there are any outstanding VMs, return SQLITE_BUSY. */
   sqlite3ResetInternalSchema(db, 0);
+
+  /* If a transaction is open, the ResetInternalSchema() call above
+  ** will not have called the xDisconnect() method on any virtual
+  ** tables in the db->aVTrans[] array. The following sqlite3VtabRollback()
+  ** call will do so. We need to do this before the check for active
+  ** SQL statements below, as the v-table implementation may be storing
+  ** some prepared statements internally.
+  */
+  sqlite3VtabRollback(db);
+
+  /* If there are any outstanding VMs, return SQLITE_BUSY. */
   if( db->pVdbe ){
     sqlite3Error(db, SQLITE_BUSY, 
         "Unable to close due to unfinalised statements");
@@ -148,8 +158,6 @@ int sqlite3_close(sqlite3 *db){
     /* printf("DID NOT CLOSE\n"); fflush(stdout); */
     return SQLITE_ERROR;
   }
-
-  sqlite3VtabRollback(db);
 
   for(j=0; j<db->nDb; j++){
     struct Db *pDb = &db->aDb[j];

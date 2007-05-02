@@ -21,7 +21,7 @@ int existsonpath(const char *exe)
 {
   L(FL("checking for program '%s'\n") % exe);
   // this is horribly ugly, but at least it is rather portable
-  std::string cmd_str = (F("command -v '%s' >/dev/null 2>&1") % exe).str();
+  std::string cmd_str = (FL("command -v '%s' >/dev/null 2>&1") % exe).str();
   const char * const args[] = {"sh", "-c", cmd_str.c_str(), NULL};
   int pid;
   int res;
