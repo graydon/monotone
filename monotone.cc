@@ -125,28 +125,38 @@ void localize_monotone()
 }
 
 // read command-line options and return the command name
-string read_options(options & opts, vector<string> args)
+commands::command_id read_options(options & opts, args_vector args)
 {
+  commands::command_id cmd;
+
   option::concrete_option_set optset =
     options::opts::all_options().instantiate(&opts);
   optset.from_command_line(args);
 
-  // consume the command, and perform completion if necessary
-  string cmd;
   if (!opts.args.empty())
-    cmd = commands::complete_command(idx(opts.args, 0)());
+    {
+      // There are some arguments remaining in the command line.  Try first
+      // to see if they are a command.
+      cmd = commands::complete_command(opts.args);
+      I(!cmd.empty());
 
-  // reparse options, now that we know what command-specific
-  // options are allowed.
+      // Reparse options now that we know what command-specific options
+      // are allowed.
+      options::options_type cmdopts = commands::command_options(cmd);
+      optset.reset();
+      optset = (options::opts::globals() | cmdopts).instantiate(&opts);
+      optset.from_command_line(args, false);
 
-  options::options_type cmdopts = commands::command_options(opts.args);
-  optset.reset();
+      // Remove the command name from the arguments.  Rember that the group
+      // is not taken into account.
+      I(opts.args.size() >= cmd.size() - 1);
 
-  optset = (options::opts::globals() | cmdopts).instantiate(&opts);
-  optset.from_command_line(args, false);
-
-  if (!opts.args.empty())
-    opts.args.erase(opts.args.begin());
+      for (args_vector::size_type i = 1; i < cmd.size(); i++)
+        {
+          I(cmd[i]().find(opts.args[0]()) == 0);
+          opts.args.erase(opts.args.begin());
+        }
+    }
 
   return cmd;
 }
@@ -179,13 +189,13 @@ cpp_main(int argc, char ** argv)
       save_initial_path();
       
       // decode all argv values into a UTF-8 array
-      vector<string> args;
+      args_vector args;
       for (int i = 1; i < argc; ++i)
         {
           external ex(argv[i]);
           utf8 ut;
           system_to_utf8(ex, ut);
-          args.push_back(ut());
+          args.push_back(arg_type(ut));
         }
 
       // find base name of executable, convert to utf8, and save it in the
@@ -203,17 +213,11 @@ cpp_main(int argc, char ** argv)
       app_state app;
       try
         {
-          string cmd = read_options(app.opts, args);
+          commands::command_id cmd = read_options(app.opts, args);
 
           if (app.opts.version_given)
             {
               print_version();
-              return 0;
-            }
-
-          if (app.opts.full_version_given)
-            {
-              print_full_version();
               return 0;
             }
 
@@ -232,7 +236,7 @@ cpp_main(int argc, char ** argv)
           // stop here if they asked for help
           if (app.opts.help)
             {
-              throw usage(cmd);     // cmd may be empty, and that's fine.
+              throw usage(cmd);
             }
 
           // at this point we allow a workspace (meaning search for it
@@ -252,12 +256,15 @@ cpp_main(int argc, char ** argv)
           // sub-command w/ remaining args
           if (cmd.empty())
             {
-              throw usage("");
+              throw usage(commands::command_id());
             }
           else
             {
-              vector<utf8> args(app.opts.args.begin(), app.opts.args.end());
-              return commands::process(app, cmd, args);
+              commands::process(app, cmd, app.opts.args);
+              // The command will raise any problems itself through
+              // exceptions.  If we reach this point, it is because it
+              // worked correctly.
+              return 0;
             }
         }
       catch (option::option_error const & e)
@@ -272,16 +279,26 @@ cpp_main(int argc, char ** argv)
           // merrily down your pipes.
           std::ostream & usage_stream = (app.opts.help ? cout : cerr);
 
-          usage_stream << F("Usage: %s [OPTION...] command [ARG...]") % ui.prog_name << "\n\n";
-          usage_stream << options::opts::globals().instantiate(&app.opts).get_usage_str() << '\n';
+          string visibleid;
+          if (!u.which.empty())
+            visibleid = join_words(vector< utf8 >(u.which.begin() + 1,
+                                                  u.which.end()))();
+
+          usage_stream << F("Usage: %s [OPTION...] command [ARG...]") %
+                          ui.prog_name << "\n\n";
+          usage_stream << options::opts::globals().instantiate(&app.opts).
+                          get_usage_str() << '\n';
 
           // Make sure to hide documentation that's not part of
           // the current command.
-          options::options_type cmd_options = commands::toplevel_command_options(u.which);
+          options::options_type cmd_options =
+            commands::command_options(u.which);
           if (!cmd_options.empty())
             {
-              usage_stream << F("Options specific to '%s %s':") % ui.prog_name % u.which << "\n\n";
-              usage_stream << cmd_options.instantiate(&app.opts).get_usage_str() << '\n';
+              usage_stream << F("Options specific to '%s %s':") %
+                              ui.prog_name % visibleid << "\n\n";
+              usage_stream << cmd_options.instantiate(&app.opts).
+                              get_usage_str() << '\n';
             }
 
           commands::explain_usage(u.which, usage_stream);

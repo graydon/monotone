@@ -26,7 +26,10 @@ using std::vector;
 // fload, fmerge, and fdiff are simple commands for debugging the line
 // merger.
 
-CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::none)
+CMD(fload, "fload", "", CMD_REF(debug), "",
+    N_("Loads a file's contents into the database"),
+    N_(""),
+    options::opts::none)
 {
   data dat;
   read_data_stdin(dat);
@@ -41,12 +44,13 @@ CMD(fload, N_("debug"), "", N_("load file contents into db"), options::opts::non
   guard.commit();
 }
 
-CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
-    N_("merge 3 files and output result"),
+CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
+    N_("Merges 3 files and outputs the result"),
+    N_(""),
     options::opts::none)
 {
   if (args.size() != 3)
-    throw usage(name);
+    throw usage(execid);
 
   file_id 
     anc_id(idx(args, 0)()), 
@@ -78,12 +82,13 @@ CMD(fmerge, N_("debug"), N_("<parent> <left> <right>"),
 
 }
 
-CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
-    N_("diff 2 files and output result"),
+CMD(fdiff, "fdiff", "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
+    N_("Differences 2 files and outputs the result"),
+    N_(""),
     options::opts::diff_options)
 {
   if (args.size() != 4)
-    throw usage(name);
+    throw usage(execid);
 
   string const
     & src_name = idx(args, 0)(),
@@ -114,8 +119,10 @@ CMD(fdiff, N_("debug"), N_("SRCNAME DESTNAME SRCID DESTID"),
             cout, app.opts.diff_format, pattern);
 }
 
-CMD(annotate, N_("informative"), N_("PATH"),
-    N_("print annotated copy of the file from REVISION"),
+CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
+    N_("Prints an annotated copy of a file"),
+    N_("Calculates and prints an annotated copy of the given file from "
+       "the specified REVISION."),
     options::opts::revision | options::opts::brief)
 {
   revision_id rid;
@@ -124,7 +131,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
     app.require_workspace();
 
   if ((args.size() != 1) || (app.opts.revision_selectors.size() > 1))
-    throw usage(name);
+    throw usage(execid);
 
   file_path file = file_path_external(idx(args, 0));
   split_path sp;
@@ -182,12 +189,14 @@ CMD(annotate, N_("informative"), N_("PATH"),
   do_annotate(app, file_node, rid, app.opts.brief);
 }
 
-CMD(identify, N_("debug"), N_("[PATH]"),
-    N_("calculate identity of PATH or stdin"),
+CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
+    N_("Calculates the identity of a file or stdin"),
+    N_("If any PATH is given, calculates their identity; otherwise, the "
+       "one from the standard input is calculated."),
     options::opts::none)
 {
   if (!(args.size() == 0 || args.size() == 1))
-    throw usage(name);
+    throw usage(execid);
 
   data dat;
 
@@ -215,7 +224,10 @@ CMD(identify, N_("debug"), N_("[PATH]"),
 //
 // Error conditions: If the file path doesn't point to a valid file prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(identify, N_("PATH"), options::opts::none)
+CMD_AUTOMATE(identify, N_("PATH"),
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -273,13 +285,15 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
   dump_file(output, app, file_node->content);
 }
 
-CMD(cat, N_("informative"),
+CMD(cat, "cat", "", CMD_REF(informative),
     N_("FILENAME"),
-    N_("write file from database to stdout"),
+    N_("Prints a file from the database"),
+    N_("Fetches the given file FILENAME from the database and prints it "
+       "to the standard output."),
     options::opts::revision)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(execid);
 
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
@@ -308,7 +322,10 @@ CMD(cat, N_("informative"),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file, N_("FILEID"), options::opts::none)
+CMD_AUTOMATE(get_file, N_("FILEID"),
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -331,7 +348,10 @@ AUTOMATE(get_file, N_("FILEID"), options::opts::none)
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
+CMD_AUTOMATE(get_file_of, N_("FILENAME"),
+             N_("TODO"),
+             N_(""),
+             options::opts::revision)
 {
   N(args.size() == 1,
     F("wrong argument count"));

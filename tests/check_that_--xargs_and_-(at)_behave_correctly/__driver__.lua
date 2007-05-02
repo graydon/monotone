@@ -27,7 +27,7 @@ writefile("at_test.input2", "--help")
 check(raw_mtn("-@", "at_test.input1", "-@", "at_test.input2"), 0, {"expout"}, false)
 
 -- Check that -@ works with an argument file with no content
-check(raw_mtn("list"), 2, true, false)
+check(raw_mtn("list"), 1, true, false)
 rename("stdout", "expout")
 writefile("at_test.input")
-check(raw_mtn("list", "-@", "at_test.input"), 2, {"expout"}, false)
+check(raw_mtn("list", "-@", "at_test.input"), 1, {"expout"}, false)

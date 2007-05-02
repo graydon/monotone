@@ -18,47 +18,33 @@ using std::make_pair;
 using std::map;
 using std::ostream;
 using std::pair;
+using std::set;
 using std::string;
 using std::vector;
 
-namespace automation {
-  // When this is split into multiple files, there will not be any
-  // guarantees about initialization order. So, use something we can
-  // initialize ourselves.
-  static map<string, automate * const> * automations;
-  automate::automate(string const &n, string const &p,
-                     options::options_type const & o)
-    : name(n), params(p), opts(o)
+CMD_GROUP(automate, "automate", "", CMD_REF(automation),
+          N_("Interface for scripted execution"),
+          N_(""));
+
+namespace commands {
+  automate::automate(string const & name,
+                     string const & params,
+                     string const & abstract,
+                     string const & desc,
+                     options::options_type const & opts) :
+    command(name, "", CMD_REF(automate), false, params, abstract,
+            desc, true, opts)
   {
-    static bool first(true);
-    if (first)
-      {
-        first = false;
-        automations = new map<string, automate * const>;
-      }
-    automations->insert(make_pair(name, this));
   }
-  automate::~automate() {}
-}
 
-automation::automate &
-find_automation(utf8 const & name, string const & root_cmd_name)
-{
-  map<string, automation::automate * const>::const_iterator
-    i = automation::automations->find(name());
-  if (i == automation::automations->end())
-    throw usage(root_cmd_name);
-  else
-    return *(i->second);
-}
-
-void
-automate_command(utf8 cmd, vector<utf8> args,
-                 string const & root_cmd_name,
-                 app_state & app,
-                 ostream & output)
-{
-  find_automation(cmd, root_cmd_name).run(args, root_cmd_name, app, output);
+  void
+  automate::exec(app_state & app,
+                 command_id const & execid,
+                 args_vector const & args)
+  {
+    make_io_binary();
+    exec_from_automate(args, execid, app, std::cout);
+  }
 }
 
 static string const interface_version = "4.3";
@@ -72,7 +58,10 @@ static string const interface_version = "4.3";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version, "", options::opts::none)
+CMD_AUTOMATE(interface_version, "",
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 0,
     F("no arguments needed"));
@@ -326,7 +315,10 @@ struct automate_ostream : public std::ostream
 };
 
 
-AUTOMATE(stdio, "", options::opts::automate_stdio_size)
+CMD_AUTOMATE(stdio, "",
+             N_("TODO"),
+             N_(""),
+             options::opts::automate_stdio_size)
 {
   N(args.size() == 0,
     F("no arguments needed"));
@@ -341,15 +333,13 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
   vector<string> cmdline;
   while(ar.get_command(params, cmdline))//while(!EOF)
     {
-      utf8 cmd;
-      vector<utf8> args;
+      args_vector args;
       vector<string>::iterator i = cmdline.begin();
       E(i != cmdline.end(),
         F("Bad input to automate stdio: command name is missing"));
-      cmd = utf8(*i);
-      for (++i; i != cmdline.end(); ++i)
+      for (; i != cmdline.end(); ++i)
         {
-          args.push_back(utf8(*i));
+          args.push_back(arg_type(*i));
         }
       try
         {
@@ -357,10 +347,35 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
           opts = options::opts::all_options() - options::opts::globals();
           opts.instantiate(&app.opts).reset();
 
-          opts = options::opts::globals();
-          opts = opts | find_automation(cmd, help_name).opts;
-          opts.instantiate(&app.opts).from_key_value_pairs(params);
-          automate_command(cmd, args, help_name, app, os);
+          command_id id;
+          for (args_vector::const_iterator iter = args.begin();
+               iter != args.end(); iter++)
+            id.push_back(utf8((*iter)()));
+
+          if (!id.empty())
+            {
+              I(!args.empty());
+
+              set< command_id > matches =
+                CMD_REF(automate)->complete_command(id);
+              N(matches.size() == 1,
+                F("invalid automation specified"));
+              id = *matches.begin();
+
+              I(args.size() >= id.size());
+              for (command_id::size_type i = 0; i < id.size(); i++)
+                args.erase(args.begin());
+
+              command * cmd = CMD_REF(automate)->find_command(id);
+              I(cmd != NULL);
+              automate * acmd = reinterpret_cast< automate * >(cmd);
+
+              opts = options::opts::globals() | acmd->opts();
+              opts.instantiate(&app.opts).from_key_value_pairs(params);
+              acmd->exec_from_automate(args, id, app, os);
+            }
+          else
+            opts.instantiate(&app.opts).from_key_value_pairs(params);
         }
       catch(informative_failure & f)
         {
@@ -372,47 +387,6 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
       os.end_cmd();
     }
 }
-
-
-CMD_WITH_SUBCMDS(automate, N_("automation"),
-                 N_("automation interface"),
-                 options::opts::none)
-{
-  if (args.size() == 0)
-    throw usage(name);
-
-  vector<utf8>::const_iterator i = args.begin();
-  utf8 cmd = *i;
-  ++i;
-  vector<utf8> cmd_args(i, args.end());
-
-  make_io_binary();
-
-  automate_command(cmd, cmd_args, name, app, std::cout);
-}
-
-std::string commands::cmd_automate::params()
-{
-  std::string out;
-  map<string, automation::automate * const>::const_iterator i;
-  for (i = automation::automations->begin();
-       i != automation::automations->end(); ++i)
-    {
-      out += i->second->name + " " + i->second->params;
-      if (out[out.size()-1] != '\n')
-        out += "\n";
-    }
-  return out;
-}
-
-options::options_type
-commands::cmd_automate::get_options(vector<utf8> const & args)
-{
-  if (args.size() < 2)
-    return options::options_type();
-  return find_automation(idx(args,1), idx(args,0)()).opts;
-}
-
 
 // Local Variables:
 // mode: C++
