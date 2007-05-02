@@ -41,6 +41,10 @@ get_log_message_interactively(revision_t const & cs,
   write_revision(cs, summary);
   external summary_external;
   utf8_to_system_best_effort(utf8(summary.inner()()), summary_external);
+  
+  utf8 branch_comment = utf8((F("branch \"%s\"\n\n") % app.opts.branchname).str());
+  external branch_external;
+  utf8_to_system_best_effort(branch_comment, branch_external);
 
   string magic_line = _("*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****");
   string commentary_str;
@@ -49,6 +53,7 @@ get_log_message_interactively(revision_t const & cs,
                       "Lines beginning with `MTN:' "
                       "are removed automatically.");
   commentary_str += "\n\n";
+  commentary_str += branch_external();
   commentary_str += summary_external();
   commentary_str += string(70, '-') + "\n";
 
