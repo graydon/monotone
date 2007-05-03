@@ -1,4 +1,4 @@
-// Copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
+// Copyright (C) 2004, 2007 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -93,7 +93,7 @@ AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"), options::opts::none)
 {
   N(args.size() > 0,
     F("wrong argument count"));
-  
+
   set<revision_id> ancestors;
   vector<revision_id> frontier;
   for (vector<utf8>::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -214,7 +214,7 @@ AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"), options::opts::none)
 //         format: ('attr', name, value), ('state', [unchanged|changed|added|dropped])
 //         occurs: zero or more times
 //
-// Error conditions: If the file name has no attributes, prints only the 
+// Error conditions: If the file name has no attributes, prints only the
 //                   format version, if the file is unknown, escalates
 AUTOMATE(attributes, N_("FILE"), options::opts::none)
 {
@@ -245,20 +245,20 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
 
   // create the printer
   basic_io::printer pr;
-  
+
   // print the format version
   basic_io::stanza st;
   st.push_str_pair(basic_io::syms::format_version, "1");
   pr.print_stanza(st);
-    
+
   // the current node holds all current attributes (unchanged and new ones)
   node_t n = current.get_node(path);
-  for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+  for (full_attr_map_t::const_iterator i = n->attrs.begin();
        i != n->attrs.end(); ++i)
   {
     std::string value(i->second.second());
     std::string state("unchanged");
-    
+
     // if if the first value of the value pair is false this marks a
     // dropped attribute
     if (!i->second.first)
@@ -268,16 +268,16 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
         // because if it is dropped there as well it was already deleted
         // in any previous revision
         I(base.has_node(path));
-        
+
         node_t prev_node = base.get_node(path);
-        
+
         // find the attribute in there
         full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first);
         I(j != prev_node->attrs.end());
-        
+
         // was this dropped before? then ignore it
         if (!j->second.first) { continue; }
-        
+
         state = "dropped";
         // output the previous (dropped) value later
         value = j->second.second();
@@ -288,20 +288,20 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
         if (base.has_node(path))
           {
             node_t prev_node = base.get_node(path);
-            full_attr_map_t::const_iterator j = 
+            full_attr_map_t::const_iterator j =
               prev_node->attrs.find(i->first);
             // attribute not found? this is new
             if (j == prev_node->attrs.end())
               {
                 state = "added";
               }
-            // check if this attribute has been changed 
+            // check if this attribute has been changed
             // (dropped and set again)
             else if (i->second.second() != j->second.second())
               {
                 state = "changed";
               }
-                
+
           }
         // its added since the whole node has been just added
         else
@@ -309,14 +309,14 @@ AUTOMATE(attributes, N_("FILE"), options::opts::none)
             state = "added";
           }
       }
-      
+
     basic_io::stanza st;
     st.push_str_triple(basic_io::syms::attr, i->first(), value);
     st.push_str_pair(symbol("state"), state);
     pr.print_stanza(st);
   }
-  
-  // print the output  
+
+  // print the output
   output.write(pr.buf.data(), pr.buf.size());
 }
 
@@ -366,7 +366,7 @@ AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"), options
 {
   N(args.size() > 0,
     F("wrong argument count"));
-    
+
   revision_id a;
   set<revision_id> bs;
   vector<utf8>::const_iterator i = args.begin();
@@ -433,7 +433,7 @@ AUTOMATE(parents, N_("REV"), options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
-  
+
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   set<revision_id> parents;
@@ -458,7 +458,7 @@ AUTOMATE(children, N_("REV"), options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
-  
+
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   set<revision_id> children;
@@ -550,8 +550,8 @@ AUTOMATE(select, N_("SELECTOR"), options::opts::none)
     output << *i << '\n';
 }
 
-struct node_info 
-{ 
+struct node_info
+{
   bool exists;
   node_id id;
   path::status type;
@@ -596,7 +596,7 @@ struct inventory_item
 typedef std::map<split_path, inventory_item> inventory_map;
 
 static void
-inventory_rosters(roster_t const & old_roster, 
+inventory_rosters(roster_t const & old_roster,
                   roster_t const & new_roster,
                   node_restriction const & mask,
                   inventory_map & inventory)
@@ -622,7 +622,7 @@ inventory_rosters(roster_t const & old_roster,
           get_node_info(new_roster, sp, inventory[sp].new_node);
         }
     }
-  
+
 }
 
 struct inventory_itemizer : public tree_walker
@@ -632,7 +632,7 @@ struct inventory_itemizer : public tree_walker
   app_state & app;
   inodeprint_map ipm;
 
-  inventory_itemizer(path_restriction const & m, inventory_map & i, app_state & a) : 
+  inventory_itemizer(path_restriction const & m, inventory_map & i, app_state & a) :
     mask(m), inventory(i), app(a)
   {
     if (app.work.in_inodeprints_mode())
@@ -701,37 +701,32 @@ namespace
 }
 
 // Name: inventory
-// Arguments: none
+// Arguments: [PATH]...
 // Added in: 1.0
+// Modified to basic_io in: 4.1
 
-// Purpose: Prints a summary of every file found in the workspace or its
-//   associated base manifest. Each unique path is listed on a line
-//   prefixed by three status characters and two numeric values used
-//   for identifying renames. The three status characters are as
-//   follows.
+// Purpose: Prints a summary of every file or directory found in the
+//   workspace or its associated base manifest.
+
+// Output: basic_io format. For each item, three to six lines are output:
 //
-//   column 1 pre-state
-//         ' ' the path was unchanged in the pre-state
-//         'D' the path was deleted from the pre-state
-//         'R' the path was renamed from the pre-state name
-//   column 2 post-state
-//         ' ' the path was unchanged in the post-state
-//         'R' the path was renamed to the post-state name
-//         'A' the path was added to the post-state
-//   column 3 node-state
-//         ' ' the node is unchanged from the current roster
-//         'P' the node is patched to a new version
-//         'U' the node is unknown and not included in the roster
-//         'I' the node is ignored and not included in the roster
-//         'M' the node is missing but is included in the roster
+//        path "<path>"
+//    old_node "<old_node_id>" "file | directory"
+//    new_node "<new_node_id>" "file | directory"
+//     fs_type "file | directory | none"
+//      status "ignored | known | missing | unknown"
+//     changes "content | content attrs | attrs"
 //
-// Output format: Each path is printed on its own line, prefixed by three
-//   status characters as described above. The status is followed by a
-//   single space and two numbers, each separated by a single space,
-//   used for identifying renames.  The numbers are followed by a
-//   single space and then the pathname, which includes the rest of
-//   the line. Directory paths are identified as ending with the "/"
-//   character, file paths do not end in this character.
+// 'fs_type' gives the state of the item in the workspace filesystem.
+//
+// 'old_node' and 'new_node' give the status of the item in the manifest.
+// The 'old_node' and 'new_node' lines are not output if the corresponding
+// node state is 'none'.
+//
+// 'changes' is not output if there are no changes.
+//
+// FIXME: 'dropped', 'renamed' are not explicitly labeled.
+// FIXME: whether an item needs to be committed is not clear.
 //
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
@@ -747,10 +742,10 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
   // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
-  
+
   roster_t new_roster, old_roster = parent_roster(parents.begin());
   temp_node_id_source nis;
-  
+
   app.work.get_current_roster_shape(new_roster, nis);
 
   inventory_map inventory;
@@ -759,13 +754,13 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
 
   node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
   inventory_rosters(old_roster, new_roster, nmask, inventory);
-  
+
   path_restriction pmask(includes, excludes, app.opts.depth, app);
   inventory_filesystem(pmask, inventory, app);
 
   basic_io::printer pr;
 
-  for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end(); 
+  for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end();
        ++i)
     {
       basic_io::stanza st;
@@ -822,6 +817,12 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
         {
           if (item.new_node.exists)
             st.push_str_pair(syms::status, "missing");
+
+          // FIXME: missing 'else'. For examples,
+          // see tests/automate_inventory:
+          // 'original' renamed to 'renamed'
+          // 'dropped' dropped
+          // Original output identified these.
         }
       else // exists on filesystem
         {
@@ -829,7 +830,7 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
             {
               if (app.lua.hook_ignore_file(i->first))
                 st.push_str_pair(syms::status, "ignored");
-              else 
+              else
                 st.push_str_pair(syms::status, "unknown");
             }
           else if (item.new_node.type != item.fs_type)
@@ -860,7 +861,7 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
       // we're interested in comparing the content and attributes of the current
       // path in the new roster against their corresponding values in the old
       // roster.
-      // 
+      //
       // the new content hash comes from the filesystem since the new roster has
       // not been updated. the new attributes can come directly from the new
       // roster.
@@ -889,6 +890,8 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
               if (old_node->attrs != item.new_node.attrs)
                 changes.push_back("attrs");
             }
+
+          // FIXME: maybe indicate renamed, dropped, needs commit here?
 
           if (!changes.empty())
             st.push_str_multi(syms::changes, changes);
@@ -1372,7 +1375,7 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
 
   globish incl("*");
   bool filtering(false);
-  
+
   if (args.size() == 1) {
     incl = globish(idx(args, 0)());
     filtering = true;
@@ -1383,7 +1386,7 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
   basic_io::stanza stz;
   stz.push_str_pair(symbol("format_version"), "1");
   prt.print_stanza(stz);
-  
+
   set<tag_t> tags;
   app.get_project().get_tags(tags);
 
@@ -1392,7 +1395,7 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
     {
       set<branch_name> branches;
       app.get_project().get_revision_branches(tag->ident, branches);
-    
+
       bool show(!filtering);
       vector<string> branch_names;
 
@@ -1401,7 +1404,7 @@ AUTOMATE(tags, N_("[BRANCH_PATTERN]"), options::opts::none)
         {
           if (app.lua.hook_ignore_branch(*branch))
             continue;
-      
+
           if (!show && match((*branch)()))
             show = true;
           branch_names.push_back((*branch)());
@@ -1478,7 +1481,7 @@ AUTOMATE(genkey, N_("KEYID PASSPHRASE"), options::opts::none)
   keypair kp;
   P(F("generating key-pair '%s'") % ident);
   generate_key_pair(kp, passphrase);
-  P(F("storing key-pair '%s' in %s/") 
+  P(F("storing key-pair '%s' in %s/")
     % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
 
@@ -1532,7 +1535,7 @@ AUTOMATE(get_option, N_("OPTION"), options::opts::none)
   string opt = args[0]();
 
   if (opt == "database")
-    output << database_option << '\n'; 
+    output << database_option << '\n';
   else if (opt == "branch")
     output << branch_option << '\n';
   else if (opt == "key")
@@ -1548,12 +1551,12 @@ AUTOMATE(get_option, N_("OPTION"), options::opts::none)
 //   1: a revision ID
 //   2: a file name
 // Added in: 3.1
-// Purpose: Returns a list of revision IDs in which the content 
-// was most recently changed, relative to the revision ID specified 
-// in argument 1. This equates to a content mark following 
+// Purpose: Returns a list of revision IDs in which the content
+// was most recently changed, relative to the revision ID specified
+// in argument 1. This equates to a content mark following
 // the *-merge algorithm.
 //
-// Output format: Zero or more basic_io stanzas, each specifying a 
+// Output format: Zero or more basic_io stanzas, each specifying a
 // revision ID for which a content mark is set.
 //
 //   Each stanza has exactly one entry:
@@ -1604,15 +1607,15 @@ AUTOMATE(get_content_changed, N_("REV FILE"), options::opts::none)
 //   2: a file name (in the source revision)
 //   3: a target revision ID
 // Added in: 3.1
-// Purpose: Given a the file name in the source revision, a filename 
-// will if possible be returned naming the file in the target revision. 
-// This allows the same file to be matched between revisions, accounting 
+// Purpose: Given a the file name in the source revision, a filename
+// will if possible be returned naming the file in the target revision.
+// This allows the same file to be matched between revisions, accounting
 // for renames and other changes.
 //
-// Output format: Zero or one basic_io stanzas. Zero stanzas will be 
-// output if the file does not exist within the target revision; this is 
+// Output format: Zero or one basic_io stanzas. Zero stanzas will be
+// output if the file does not exist within the target revision; this is
 // not considered an error.
-// If the file does exist in the target revision, a single stanza with the 
+// If the file does exist in the target revision, a single stanza with the
 // following details is output.
 //
 //   The stanza has exactly one entry:
@@ -1653,7 +1656,7 @@ AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"), options::opts::none)
       basic_io::stanza st;
       old_roster.get_name(node->self, old_path);
       file_path fp = file_path(old_path);
-      st.push_file_pair(basic_io::syms::file, fp);  
+      st.push_file_pair(basic_io::syms::file, fp);
       prt.print_stanza(st);
     }
   output.write(prt.buf.data(), prt.buf.size());
@@ -1682,7 +1685,7 @@ AUTOMATE(put_file, N_("[FILEID] CONTENTS"), options::opts::none)
     {
       file_data dat(idx(args, 0)());
       calculate_ident(dat, sha1sum);
-      
+
       app.db.put_file(sha1sum, dat);
     }
   else if (args.size() == 2)
@@ -1809,7 +1812,7 @@ AUTOMATE(db_set, N_("DOMAIN NAME VALUE"), options::opts::none)
 {
   N(args.size() == 3,
     F("wrong argument count"));
-  
+
   var_domain domain = var_domain(idx(args, 0)());
   utf8 name = idx(args, 1);
   utf8 value = idx(args, 2);
