@@ -148,7 +148,7 @@ calculate_update_set(revision_id const & base,
       copy(children.begin(), children.end(), back_inserter(to_traverse));
     }
 
-  erase_ancestors(candidates, app);
+  erase_ancestors(candidates, app.db);
 }
 
 

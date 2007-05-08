@@ -67,7 +67,7 @@ find_key_if_needed(utf8 & addr, app_state & app)
       if (transport_requires_auth)
         {
           rsa_keypair_id key;
-          get_user_key(key, app);
+          get_user_key(key, app.keys);
           app.opts.signing_key = key;
         }
 }
@@ -302,7 +302,7 @@ CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s") % describe_revision(app.db, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -311,11 +311,11 @@ CMD(clone, N_("network"), N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      guess_branch(ident, app);
+      guess_branch(ident, app.db);
 
       I(!app.opts.branchname().empty());
 
@@ -394,12 +394,12 @@ CMD_NO_WORKSPACE(serve, N_("network"), "",
   if (app.opts.use_transport_auth)
     {
       rsa_keypair_id key;
-      get_user_key(key, app);
+      get_user_key(key, app.keys);
       app.opts.signing_key = key;
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(key, app);
+      require_password(key, app.keys);
     }
   else
     {

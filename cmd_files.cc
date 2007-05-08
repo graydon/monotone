@@ -161,7 +161,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
     }
   else
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
       N(!null_id(rid), 
         F("no revision for file '%s' in database") % file);
       N(app.db.revision_exists(rid), 
@@ -179,7 +179,7 @@ CMD(annotate, N_("informative"), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.opts.brief);
+  do_annotate(app.db, file_node, rid, app.opts.brief);
 }
 
 CMD(identify, N_("debug"), N_("[PATH]"),
@@ -293,7 +293,7 @@ CMD(cat, N_("informative"),
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
 
   dump_file(cout, app, rid, idx(args, 0));
 }
@@ -308,7 +308,7 @@ CMD(cat, N_("informative"),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file, N_("FILEID"), options::opts::none)
+AUTOMATE_WITH_EVERYTHING(get_file, N_("FILEID"), options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -331,7 +331,7 @@ AUTOMATE(get_file, N_("FILEID"), options::opts::none)
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
+AUTOMATE_WITH_EVERYTHING(get_file_of, N_("FILENAME"), options::opts::revision)
 {
   N(args.size() == 1,
     F("wrong argument count"));
@@ -348,7 +348,7 @@ AUTOMATE(get_file_of, N_("FILENAME"), options::opts::revision)
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
 
   dump_file(output, app, rid, idx(args, 0));
 }

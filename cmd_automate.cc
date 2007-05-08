@@ -39,6 +39,46 @@ namespace automation {
     automations->insert(make_pair(name, this));
   }
   automate::~automate() {}
+
+  automate_with_database::automate_with_database(string const &n,
+    string const &p, options::options_type const & o)
+    : automate(n, p, o)
+  { }
+
+  void automate_with_database::run(std::vector<utf8> args,
+                                   string const & help_name,
+                                   app_state & app,
+                                   std::ostream & output) const
+  {
+    run(args, help_name, app.db, output);
+  }
+
+
+  automate_with_workspace::automate_with_workspace(string const &n,
+    string const &p, options::options_type const & o)
+    : automate(n, p, o)
+  { }
+  void automate_with_workspace::run(std::vector<utf8> args,
+                                    string const & help_name,
+                                    app_state & app,
+                                    std::ostream & output) const
+  {
+    run(args, help_name, app.work, output);
+  }
+
+
+  automate_with_nothing::automate_with_nothing(string const &n,
+    string const &p, options::options_type const & o)
+    : automate(n, p, o)
+  { }
+
+  void automate_with_nothing::run(std::vector<utf8> args,
+                                  string const & help_name,
+                                  app_state & app,
+                                  std::ostream & output) const
+  {
+    run(args, help_name, output);
+  }
 }
 
 automation::automate &
@@ -72,7 +112,7 @@ static string const interface_version = "4.3";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version, "", options::opts::none)
+AUTOMATE_WITH_NOTHING(interface_version, "", options::opts::none)
 {
   N(args.size() == 0,
     F("no arguments needed"));
@@ -326,7 +366,7 @@ struct automate_ostream : public std::ostream
 };
 
 
-AUTOMATE(stdio, "", options::opts::automate_stdio_size)
+AUTOMATE_WITH_EVERYTHING(stdio, "", options::opts::automate_stdio_size)
 {
   N(args.size() == 0,
     F("no arguments needed"));
