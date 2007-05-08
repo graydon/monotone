@@ -80,7 +80,7 @@ get_passphrase(lua_hooks & lua,
                utf8 & phrase,
                bool confirm_phrase,
                bool force_from_user,
-               string prompt_beginning)
+               bool generating_key)
 {
 
   // we permit the user to relax security here, by caching a passphrase (if
@@ -113,8 +113,12 @@ get_passphrase(lua_hooks & lua,
           memset(pass1, 0, constants::maxpasswd);
           memset(pass2, 0, constants::maxpasswd);
           ui.ensure_clean_line();
-          read_password(prompt_beginning + " for key ID [" + keyid() + "]: ",
-                        pass1, constants::maxpasswd);
+          string prompt1 = ((confirm_phrase && !generating_key
+                             ? F("enter new passphrase for key ID [%s]: ")
+                             : F("enter passphrase for key ID [%s]: "))
+                            % keyid()).str();
+
+          read_password(prompt1, pass1, constants::maxpasswd);
           if (confirm_phrase)
             {
               ui.ensure_clean_line();
@@ -163,7 +167,7 @@ generate_key_pair(lua_hooks & lua,              // to hook for phrase
                   keypair & kp_out)
 {
   utf8 phrase;
-  get_passphrase(lua, id, phrase, true, true);
+  get_passphrase(lua, id, phrase, true, true, true);
   generate_key_pair(kp_out, phrase);
 }
 
@@ -345,7 +349,7 @@ change_key_passphrase(lua_hooks & lua,
   shared_ptr<RSA_PrivateKey> priv = get_private_key(lua, id, encoded_key, true);
 
   utf8 new_phrase;
-  get_passphrase(lua, id, new_phrase, true, true, "enter new passphrase");
+  get_passphrase(lua, id, new_phrase, true, true);
 
   Pipe p;
   p.start_msg();

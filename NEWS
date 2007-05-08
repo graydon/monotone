@@ -1,4 +1,4 @@
-??? ??? ?? ??:??:?? UTC 2007
+Mon May  7 14:08:44 UTC 2007
 
         0.35 release.
 
@@ -6,6 +6,16 @@
 
         - 'mkdir --no-respect-ignore PATH' now really skips any
           ignore directives from .mtn-ignore or Lua hooks
+
+        - Private keys are now stored more safely, using file
+          permissions.
+
+        - The editable log summary (what you get in an editor when
+          committing without -m) now includes information about which
+          branch the commit applies to.
+
+        - The status command and the editable log summary now show
+          the same details about the change.
 
         New features
 
@@ -15,9 +25,6 @@
           i.e. all revisions that have no parents.
 
         Other
-
-        - Private keys are now stored more safely, using file
-          permissions.
 
         - You can't drop the workspace root any more.
 

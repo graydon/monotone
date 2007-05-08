@@ -33,14 +33,77 @@ using std::vector;
 using boost::shared_ptr;
 
 static void
+revision_summary(revision_t const & rev, branch_name const & branch, utf8 & summary)
+{
+  string out;
+  // We intentionally do not collapse the final \n into the format
+  // strings here, for consistency with newline conventions used by most
+  // other format strings.
+  out += (F("Current branch: %s") % branch).str() += '\n';
+  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
+    {
+      revision_id parent = edge_old_revision(*i);
+      // A colon at the end of this string looked nicer, but it made
+      // double-click copying from terminals annoying.
+      out += (F("Changes against parent %s") % parent).str() += '\n';
+
+      cset const & cs = edge_changes(*i);
+
+      if (cs.empty())
+        out += F("  no changes").str() += '\n';
+
+      for (path_set::const_iterator i = cs.nodes_deleted.begin();
+            i != cs.nodes_deleted.end(); ++i)
+        out += (F("  dropped  %s") % *i).str() += '\n';
+
+      for (map<split_path, split_path>::const_iterator
+            i = cs.nodes_renamed.begin();
+            i != cs.nodes_renamed.end(); ++i)
+        out += (F("  renamed  %s\n"
+                   "       to  %s") % i->first % i->second).str() += '\n';
+
+      for (path_set::const_iterator i = cs.dirs_added.begin();
+            i != cs.dirs_added.end(); ++i)
+        out += (F("  added    %s") % *i).str() += '\n';
+
+      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+            i != cs.files_added.end(); ++i)
+        out += (F("  added    %s") % i->first).str() += '\n';
+
+      for (map<split_path, pair<file_id, file_id> >::const_iterator
+              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
+        out += (F("  patched  %s") % (i->first)).str() += '\n';
+
+      for (map<pair<split_path, attr_key>, attr_value >::const_iterator
+             i = cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
+        out += (F("  attr on  %s\n"
+                   "    attr   %s\n"
+                   "    value  %s")
+                 % (i->first.first) % (i->first.second) % (i->second)
+                 ).str() += "\n";
+
+      for (set<pair<split_path, attr_key> >::const_iterator
+             i = cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
+        out += (F("  unset on %s\n"
+                   "      attr %s")
+                 % (i->first) % (i->second)).str() += "\n";
+    }
+    summary = utf8(out);
+}
+
+static void
 get_log_message_interactively(revision_t const & cs,
                               app_state & app,
                               utf8 & log_message)
 {
-  revision_data summary;
-  write_revision(cs, summary);
+  utf8 summary;
+  revision_summary(cs, app.opts.branchname, summary);
   external summary_external;
-  utf8_to_system_best_effort(utf8(summary.inner()()), summary_external);
+  utf8_to_system_best_effort(summary, summary_external);
+  
+  utf8 branch_comment = utf8((F("branch \"%s\"\n\n") % app.opts.branchname).str());
+  external branch_external;
+  utf8_to_system_best_effort(branch_comment, branch_external);
 
   string magic_line = _("*****DELETE THIS LINE TO CONFIRM YOUR COMMIT*****");
   string commentary_str;
@@ -432,56 +495,11 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, rev);
 
-  // We intentionally do not collapse the final \n into the format
-  // strings here, for consistency with newline conventions used by most
-  // other format strings.
-  cout << (F("Current branch: %s") % app.opts.branchname).str() << '\n';
-  for (edge_map::const_iterator i = rev.edges.begin(); i != rev.edges.end(); ++i)
-    {
-      revision_id parent = edge_old_revision(*i);
-      // A colon at the end of this string looked nicer, but it made
-      // double-click copying from terminals annoying.
-      cout << (F("Changes against parent %s") % parent).str() << '\n';
-
-      cset const & cs = edge_changes(*i);
-
-      if (cs.empty())
-        cout << F("  no changes").str() << '\n';
-
-      for (path_set::const_iterator i = cs.nodes_deleted.begin();
-            i != cs.nodes_deleted.end(); ++i)
-        cout << (F("  dropped  %s") % *i).str() << '\n';
-
-      for (map<split_path, split_path>::const_iterator
-            i = cs.nodes_renamed.begin();
-            i != cs.nodes_renamed.end(); ++i)
-        cout << (F("  renamed  %s\n"
-                   "       to  %s") % i->first % i->second).str() << '\n';
-
-      for (path_set::const_iterator i = cs.dirs_added.begin();
-            i != cs.dirs_added.end(); ++i)
-        cout << (F("  added    %s") % *i).str() << '\n';
-
-      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
-            i != cs.files_added.end(); ++i)
-        cout << (F("  added    %s") % i->first).str() << '\n';
-
-      for (map<split_path, pair<file_id, file_id> >::const_iterator
-              i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
-        cout << (F("  patched  %s") % (i->first)).str() << '\n';
-
-      for (map<pair<split_path, attr_key>, attr_value >::const_iterator
-             i = cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
-        cout << (F("  set on   %s\n"
-                   "    attr   %s")
-                 % (i->first.first) % (i->first.second)).str() << "\n";
-
-      for (set<pair<split_path, attr_key> >::const_iterator
-             i = cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
-        cout << (F("  unset on %s\n"
-                   "      attr %s")
-                 % (i->first) % (i->second)).str() << "\n";
-    }
+  utf8 summary;
+  revision_summary(rev, app.opts.branchname, summary);
+  external summary_external;
+  utf8_to_system_best_effort(summary, summary_external);
+  cout << summary_external;
 }
 
 CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
