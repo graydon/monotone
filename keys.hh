@@ -77,7 +77,7 @@ get_passphrase(lua_hooks & lua,
                utf8 & phrase,
                bool confirm_phrase = false,
                bool force_from_user = false,
-               std::string prompt_beginning = "enter passphrase");
+               bool generating_key = false);
 
 shared_ptr<RSA_PrivateKey>
 get_private_key(lua_hooks & lua,

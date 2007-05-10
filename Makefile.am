@@ -467,9 +467,11 @@ $(top_builddir)/figures/%.ps: $(srcdir)/figures/%.pdf
 	pdftops $< $@
 
 # build an OS X installer
+# requires sudo since packagemaker just looks at directory permissions.
 PKG_INST_ROOT = $(PWD)/$(top_builddir)/pkg_inst_root
 monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
-	rm -rf $(PKG_INST_ROOT) "$@"
+	sudo rm -rf $(PKG_INST_ROOT)
+	rm -rf "$@"
 	$(MAKE) install-strip DESTDIR=$(PKG_INST_ROOT)
 	mkdir -p $(PKG_INST_ROOT)/Developer/Documentation/monotone
 	cp monotone.pdf $(PKG_INST_ROOT)/Developer/Documentation/monotone/
@@ -480,6 +482,8 @@ monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
 	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf \
 		$(srcdir)/COPYING.txt .
 	chmod -R o-w,g-w,a+rX $(PKG_INST_ROOT)
+	sudo chown -R root:wheel $(PKG_INST_ROOT)/usr
+	sudo chown -R root:admin $(PKG_INST_ROOT)/Developer
 	/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker \
 		-build -proj monotone-xml.pmproj -p "$@"
 

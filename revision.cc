@@ -414,12 +414,10 @@ toposort(set<revision_id> const & revisions,
 
 static void
 accumulate_strict_ancestors(revision_id const & start,
-                            set<revision_id> & new_ancestors,
                             set<revision_id> & all_ancestors,
                             multimap<revision_id, revision_id> const & inverse_graph)
 {
   typedef multimap<revision_id, revision_id>::const_iterator gi;
-  new_ancestors.clear();
 
   vector<revision_id> frontier;
   frontier.push_back(start);
@@ -433,9 +431,8 @@ accumulate_strict_ancestors(revision_id const & start,
           revision_id const & parent = i->second;
           if (all_ancestors.find(parent) == all_ancestors.end())
             {
-              new_ancestors.insert(parent);
               all_ancestors.insert(parent);
-              frontier.push_back(i->second);
+              frontier.push_back(parent);
             }
         }
     }
@@ -492,16 +489,15 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
           continue;
         }
       // okay, it is good enough that all its ancestors should be
-      // eliminated; do that now.
-      {
-        set<revision_id> new_ancestors;
-        accumulate_strict_ancestors(rid, new_ancestors, all_ancestors, inverse_graph);
-        I(new_ancestors.find(rid) == new_ancestors.end());
-        for (set<revision_id>::const_iterator i = new_ancestors.begin();
-             i != new_ancestors.end(); ++i)
-          candidates.erase(*i);
-      }
+      // eliminated
+      accumulate_strict_ancestors(rid, all_ancestors, inverse_graph);
     }
+
+  // now go and eliminate the ancestors
+  for (set<revision_id>::const_iterator i = all_ancestors.begin();
+       i != all_ancestors.end(); ++i)
+    candidates.erase(*i);
+
   L(FL("called predicate %s times") % predicates);
 }
 
