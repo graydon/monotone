@@ -166,7 +166,7 @@ index = check_inventory (parsed, index,
 old_type = "file",
 new_path = "renamed",
  fs_type = "none",
-  status = "renamed"})
+  status = "rename_source"})
 
 --   P 0 0 patched
 index = check_inventory (parsed, index,
@@ -183,7 +183,7 @@ index = check_inventory (parsed, index,
 new_type = "file",
 old_path = "original",
  fs_type = "file",
-  status = {"renamed", "known"}})
+  status = {"rename_target", "known"}})
 
 -- skip test.db, test_hooks.lua, tester.log, ts-stderr, ts-stdin, ts-stdout
 index = find_line (parsed, {name = "path", values = "unchanged"})
@@ -218,6 +218,14 @@ parsed = parse_basic_io(readfile("stdout"))
 index = find_line (parsed, {name = "path", values = "original"})
 
 -- FIXME: this output is confusing. And this file's contents are _not_ changed.
+--
+-- tommyd: since the changes were bookkeep-only, the node to which inventory
+-- refers to with 'path' actually has different contents than what has been
+-- recorded in the old roster, so its more the question: do we want to guess
+-- if a file rename was bookkeep-only by comparing fileids or not? If a commit
+-- happens at this stage, no missing files hinder that, and both file's 
+-- contents are really changed and not swapped as they should, so I vote for
+-- keeping this flag on here.
 check_inventory (parsed, index,
 {path     = "original",
  old_type = "file",
@@ -225,7 +233,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "unchanged",
  fs_type  = "file",
- status   = {"renamed", "known"},
+ status   = {"rename_source", "rename_target", "known"},
  changes  = "content"})
 
 index = find_line (parsed, {name = "path", values = "unchanged"})
@@ -238,7 +246,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "original",
  fs_type  = "file",
- status   = {"renamed", "known"},
+ status   = {"rename_source", "rename_target", "known"},
  changes  = "content"})
 
 -- swapped and moved
@@ -261,7 +269,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "unchanged",
  fs_type  = "file",
- status   = {"renamed", "known"}})
+ status   = {"rename_source", "rename_target", "known"}})
 
 index = find_line (parsed, {name = "path", values = "unchanged"})
 
@@ -273,7 +281,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "original",
  fs_type  = "file",
- status   = {"renamed", "known"}})
+ status   = {"rename_source", "rename_target", "known"}})
 
 -- rename foo bar; add foo
 
@@ -288,14 +296,13 @@ parsed = parse_basic_io(readfile("stdout"))
 
 index = find_line (parsed, {name = "path", values = "original"})
 
--- FIXME: this output is confusing.
 check_inventory (parsed, index,
 {path     = "original",
  old_type = "file",
  new_path = "renamed",
  new_type = "file",
  fs_type  = "file",
- status   = {"renamed", "known"}})
+ status   = {"rename_source", "added", "known"}})
 
 -- rotated but not moved
 --   dropped -> missing -> original -> dropped
@@ -320,7 +327,7 @@ new_path = "missing",
 new_type = "file",
 old_path = "original",
  fs_type = "file",
-  status = {"renamed", "known"},
+  status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
 index = find_line (parsed, {name = "path", values = "missing"})
@@ -332,7 +339,7 @@ new_path = "original",
 new_type = "file",
 old_path = "dropped",
  fs_type = "file",
-  status = {"renamed", "known"},
+  status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
 index = find_line (parsed, {name = "path", values = "original"})
@@ -344,7 +351,7 @@ new_path = "dropped",
 new_type = "file",
 old_path = "missing",
  fs_type = "file",
-  status = {"renamed", "known"},
+  status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
 -- rotated and moved
@@ -368,7 +375,7 @@ new_path = "missing",
 new_type = "file",
 old_path = "original",
  fs_type = "file",
-  status = {"renamed", "known"}})
+  status = {"rename_source", "rename_target", "known"}})
 
 index = find_line (parsed, {name = "path", values = "missing"})
 
@@ -379,7 +386,7 @@ new_path = "original",
 new_type = "file",
 old_path = "dropped",
  fs_type = "file",
-  status = {"renamed", "known"}})
+  status = {"rename_source", "rename_target", "known"}})
 
 index = find_line (parsed, {name = "path", values = "original"})
 
@@ -390,7 +397,7 @@ new_path = "dropped",
 new_type = "file",
 old_path = "missing",
  fs_type = "file",
-  status = {"renamed", "known"}})
+  status = {"rename_source", "rename_target", "known"}})
 
 -- dropped but not removed and thus unknown
 
@@ -447,7 +454,7 @@ check_inventory (parsed, index,
 old_type = "file",
 new_path = "renamed",
  fs_type = "file",
-  status = {"renamed", "unknown"}})
+  status = {"rename_source", "unknown"}})
 
 index = find_line (parsed, {name = "path", values = "renamed"})
 
@@ -456,7 +463,7 @@ check_inventory (parsed, index,
 new_type = "file",
 old_path = "original",
  fs_type = "none",
-  status = {"renamed", "missing"}})
+  status = {"rename_target", "missing"}})
 
 -- moved but not renamed and thus missing source and unknown target
 
@@ -503,7 +510,7 @@ check_inventory (parsed, index,
 old_type = "file",
 new_path = "renamed",
  fs_type = "none",
-  status = {"renamed"}})
+  status = {"rename_source"}})
 
 index = find_line (parsed, {name = "path", values = "renamed"})
 
@@ -512,7 +519,7 @@ check_inventory (parsed, index,
 new_type = "file",
 old_path = "original",
  fs_type = "file",
-  status = {"renamed", "known"},
+  status = {"rename_target", "known"},
   changes = "content"})
 
 -- check if unknown/missing/dropped directories are recognized as such
@@ -563,4 +570,4 @@ old_type = "directory",
  fs_type = "none",
   status = {"dropped"}})
 
--- some tests for renaming directories are still missing here!
+-- TODO: tests for renaming directories and restricted inventory output

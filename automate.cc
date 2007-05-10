@@ -857,7 +857,7 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
         {
           if (item.new_path.size() > 0)
             {
-              states.push_back("renamed");
+              states.push_back("rename_source");
             }
           else
             {
@@ -868,7 +868,7 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
         {
           if (item.old_path.size() > 0)
             {
-              states.push_back("renamed");
+              states.push_back("rename_target");
             }
           else
             {
@@ -878,7 +878,24 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
       else if (item.old_node.exists && item.new_node.exists &&
                (item.old_node.id != item.new_node.id))
         {
-              states.push_back("renamed");
+           // check if this is a cyclic rename or a rename 
+           // paired with an add / drop
+           if (item.old_path.size() > 0 &&
+               item.new_path.size() > 0)
+             {
+               states.push_back("rename_source");
+               states.push_back("rename_target");
+             }
+           else if (item.old_path.size() > 0)
+             {
+               states.push_back("dropped");
+               states.push_back("rename_target");
+             }
+           else
+             {
+               states.push_back("rename_source");
+               states.push_back("added");
+             }
         }
 
       if (item.fs_type == path::nonexistent)
@@ -941,9 +958,7 @@ AUTOMATE(inventory, N_("[PATH]..."), options::opts::depth | options::opts::exclu
           if (item.new_node.type == path::file && old_roster.has_node(item.new_node.id))
             {
               file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
-              old_file->content;
-              // tommyd: what about outputting the file ids of old and new content as well?
-              // one could save a call to get_revision in that case to get the file ids
+              
               if (item.fs_type == path::file && !(item.fs_ident == old_file->content))
                 changes.push_back("content");
             }
