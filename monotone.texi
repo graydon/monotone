@@ -6978,16 +6978,20 @@ message to stderr and exits with status 1.
 
 @end table
 
-@item mtn automate attributes @var{file}
+@item mtn automate get_attributes @var{path}
 
 @table @strong
 @item Arguments:
 
-The argument @var{file} determines which file's attributes should be printed.
+The argument @var{path} determines which path's attributes should be printed.
 
 @item Added in:
 
 3.0
+
+@item Renamed from @command{attributes} to @command{get_attributes} in:
+
+5.0
 
 @item Purpose:
 
@@ -7056,10 +7060,69 @@ The complete format:
 
 @item Error conditions:
 
-If the file specified is unknown to the current workspace prints an error
+If the path specified is unknown in the new workspace revision, prints an error
 message to stderr and exits with status 1.
 
 @end table
+
+@item mtn automate set_attribute @var{path} @var{key} @var{value}
+
+@table @strong
+@item Arguments:
+
+A path, an attribute key and an attribute value.
+
+@item Added in:
+
+5.0
+
+@item Purpose:
+
+Edits the current workspace revision and inserts the given attribute key and
+value for the specified path. Note that this change is not committed and 
+therefor behaves exactly like @command{mtn attr set @var{key} @var{value}}.
+
+@item Output format:
+
+This command does not print out anything if successful.
+
+@item Error conditions:
+
+If the path specified is unknown in the new workspace revision, prints an error
+message to stderr and exits with status 1.
+
+@end table
+
+@item mtn automate drop_attribute @var{path} [@var{key}]
+
+@table @strong
+@item Arguments:
+
+A path and an attribute key (optional).
+
+@item Added in:
+
+5.0
+
+@item Purpose:
+
+Removes an attribute from the current workspace revision for the specified path.
+If no attribute key is given, all attributes of this path are removed. Note that
+this change is not committed and therefor behaves exactly like 
+@command{mtn attr drop @var{path} [@var{key}]}.
+
+@item Output format:
+
+This command does not print out anything if successful.
+
+@item Error conditions:
+
+If the path specified is unknown in the new workspace revision or the attribute
+key is not found for this path, prints an error message to stderr and exits with
+status 1.
+
+@end table
+
 
 @item mtn automate content_diff [--revision=@var{id1} [--revision=@var{id2}]] [@var{files} ...]
 
