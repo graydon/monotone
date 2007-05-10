@@ -52,7 +52,7 @@ check(mtn("update"), 1, nil, diag)
 -- formats need updating to deal
 check(mtn("automate", "get_base_revision_id"), 1, nil, diag)
 check(mtn("automate", "inventory"), 1, nil, diag)
-check(mtn("automate", "attributes", "testfile"), 1, nil, diag)
+check(mtn("automate", "get_attributes", "testfile"), 1, nil, diag)
 
 -- commit cannot be restricted
 check(mtn("commit", "testfile", "--message", "blah-blah"),

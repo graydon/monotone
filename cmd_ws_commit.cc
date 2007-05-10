@@ -20,6 +20,7 @@
 #include "charset.hh"
 #include "ui.hh"
 #include "app_state.hh"
+#include "basic_io.hh"
 
 using std::cout;
 using std::make_pair;
@@ -709,6 +710,222 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
     throw usage(name);
 }
 
+// Name: get_attributes
+// Arguments:
+//   1: file / directory name
+// Added in: 1.0
+// Renamed from attributes to get_attributes in: 5.0
+// Purpose: Prints all attributes for the specified path
+// Output format: basic_io formatted output, each attribute has its own stanza:
+//
+// 'format_version'
+//         used in case this format ever needs to change.
+//         format: ('format_version', the string "1" currently)
+//         occurs: exactly once
+// 'attr'
+//         represents an attribute entry
+//         format: ('attr', name, value), ('state', [unchanged|changed|added|dropped])
+//         occurs: zero or more times
+//
+// Error conditions: If the path has no attributes, prints only the 
+//                   format version, if the file is unknown, escalates
+AUTOMATE(get_attributes, N_("PATH"), options::opts::none)
+{
+  N(args.size() > 0,
+    F("wrong argument count"));
+
+  // this command requires a workspace to be run on
+  app.require_workspace();
+
+  // retrieve the path
+  split_path path;
+  file_path_external(idx(args,0)).split(path);
+
+  roster_t base, current;
+  parent_map parents;
+  temp_node_id_source nis;
+
+  // get the base and the current roster of this workspace
+  app.work.get_current_roster_shape(current, nis);
+  app.work.get_parent_rosters(parents);
+  N(parents.size() == 1,
+    F("this command can only be used in a single-parent workspace"));
+  base = parent_roster(parents.begin());
+
+  N(current.has_node(path), F("Unknown path '%s'") % path);
+
+  // create the printer
+  basic_io::printer pr;
+  
+  // print the format version
+  basic_io::stanza st;
+  st.push_str_pair(basic_io::syms::format_version, "1");
+  pr.print_stanza(st);
+    
+  // the current node holds all current attributes (unchanged and new ones)
+  node_t n = current.get_node(path);
+  for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+       i != n->attrs.end(); ++i)
+  {
+    std::string value(i->second.second());
+    std::string state("unchanged");
+    
+    // if if the first value of the value pair is false this marks a
+    // dropped attribute
+    if (!i->second.first)
+      {
+        // if the attribute is dropped, we should have a base roster
+        // with that node. we need to check that for the attribute as well
+        // because if it is dropped there as well it was already deleted
+        // in any previous revision
+        I(base.has_node(path));
+        
+        node_t prev_node = base.get_node(path);
+        
+        // find the attribute in there
+        full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first);
+        I(j != prev_node->attrs.end());
+        
+        // was this dropped before? then ignore it
+        if (!j->second.first) { continue; }
+        
+        state = "dropped";
+        // output the previous (dropped) value later
+        value = j->second.second();
+      }
+    // this marks either a new or an existing attribute
+    else
+      {
+        if (base.has_node(path))
+          {
+            node_t prev_node = base.get_node(path);
+            full_attr_map_t::const_iterator j = 
+              prev_node->attrs.find(i->first);
+            // attribute not found? this is new
+            if (j == prev_node->attrs.end())
+              {
+                state = "added";
+              }
+            // check if this attribute has been changed 
+            // (dropped and set again)
+            else if (i->second.second() != j->second.second())
+              {
+                state = "changed";
+              }
+                
+          }
+        // its added since the whole node has been just added
+        else
+          {
+            state = "added";
+          }
+      }
+      
+    basic_io::stanza st;
+    st.push_str_triple(basic_io::syms::attr, i->first(), value);
+    st.push_str_pair(symbol("state"), state);
+    pr.print_stanza(st);
+  }
+  
+  // print the output  
+  output.write(pr.buf.data(), pr.buf.size());
+}
+
+// Name: set_attribute
+// Arguments:
+//   1: file / directory name
+//   2: attribute key
+//   3: attribute value
+// Added in: 5.0
+// Purpose: Edits the workspace revision and sets an attribute on a certain path
+//
+// Error conditions: If PATH is unknown in the new roster, prints an error and
+//                   exits with status 1.
+AUTOMATE(set_attribute, N_("PATH KEY VALUE"), options::opts::none)
+{
+  N(args.size() == 3,
+    F("wrong argument count"));
+
+  roster_t new_roster;
+  temp_node_id_source nis;
+
+  app.require_workspace();
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  file_path path = file_path_external(idx(args,0));
+  split_path sp;
+  path.split(sp);
+
+  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(sp);
+
+  attr_key a_key = attr_key(idx(args,1)());
+  attr_value a_value = attr_value(idx(args,2)());
+
+  node->attrs[a_key] = make_pair(true, a_value);
+
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+
+  revision_t new_work;
+  make_revision_for_workspace(parents, new_roster, new_work);
+  app.work.put_work_rev(new_work);
+  app.work.update_any_attrs();
+}
+
+// Name: drop_attribute
+// Arguments:
+//   1: file / directory name
+//   2: attribute key (optional)
+// Added in: 5.0
+// Purpose: Edits the workspace revision and drops an attribute or all 
+//          attributes of the specified path
+//
+// Error conditions: If PATH is unknown in the new roster or the specified
+//                   attribute key is unknown, prints an error and exits with
+//                   status 1.
+AUTOMATE(drop_attribute, N_("PATH [KEY]"), options::opts::none)
+{
+  N(args.size() ==1 || args.size() == 2,
+    F("wrong argument count"));
+
+  roster_t new_roster;
+  temp_node_id_source nis;
+
+  app.require_workspace();
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  file_path path = file_path_external(idx(args,0));
+  split_path sp;
+  path.split(sp);
+
+  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(sp);
+
+  // Clear all attrs (or a specific attr).
+  if (args.size() == 1)
+    {
+      for (full_attr_map_t::iterator i = node->attrs.begin();
+           i != node->attrs.end(); ++i)
+        i->second = make_pair(false, "");
+    }
+  else
+    {
+      attr_key a_key = attr_key(idx(args,1)());
+      N(node->attrs.find(a_key) != node->attrs.end(),
+        F("Path '%s' does not have attribute '%s'")
+        % path % a_key);
+      node->attrs[a_key] = make_pair(false, "");
+    }
+
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+
+  revision_t new_work;
+  make_revision_for_workspace(parents, new_roster, new_work);
+  app.work.put_work_rev(new_work);
+  app.work.update_any_attrs();
+}
 
 
 CMD(commit, N_("workspace"), N_("[PATH]..."),
