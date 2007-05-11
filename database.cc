@@ -1695,12 +1695,6 @@ database::put_file_version(file_id const & old_id,
   file_data old_data, new_data;
   file_delta reverse_delta;
 
-  if (file_version_exists(new_id))
-    {
-      L(FL("file version '%s' already exists in db") % new_id);
-      return;
-    }
-
   if (!file_version_exists(old_id))
     {
       W(F("file preimage '%s' missing in db") % old_id);
