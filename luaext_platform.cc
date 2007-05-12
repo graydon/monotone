@@ -162,7 +162,12 @@ LUAEXT(sleep, )
   return 1;
 }
 
-
+LUAEXT(get_pid, )
+{
+  pid_t pid = get_process_id();
+  lua_pushnumber(L, pid);
+  return 1;
+}
 
 // Local Variables:
 // mode: C++
