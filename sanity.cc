@@ -228,6 +228,7 @@ sanity::error_failure(char const * expr, i18n_format const & explain,
   string message;
   log(FL("%s:%d: detected error '%s' violated") % file % line % expr,
       file, line);
+  gasp();
   prefix_lines_with(_("error: "), do_format(explain, file, line), message);
   throw informative_failure(message);
 }
