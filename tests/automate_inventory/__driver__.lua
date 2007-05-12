@@ -1,96 +1,17 @@
+-- Test 'automate inventory', with no path or depth restrictions
+--
+-- path and depth restrictions are tested in ../automate_inventory_path
+
 local index = 1
-
-function checkexp (label, computed, expected)
-   if computed ~= expected then
-      err (label .. " Expected '" .. expected .. "' got '" .. computed .. "'")
-   end
-end
-
-function checkvalue (label, computed, name, value)
-   checkexp(label .. ".name", computed.name, name)
-
-   if type(value) == "table" then
-      checkexp(label .. ".length", #computed.values, #value)
-      for i = 1, #value do
-         checkexp(label .. i, computed.values[i], value[i])
-      end
-
-   else
-      checkexp(label .. ".length", #computed.values, 1)
-      checkexp(label .. "." .. name, computed.values[1], value)
-   end
-end
-
-function find_line (parsed, line)
--- return index in parsed matching line.name, line.values
-   for I = 1, #parsed do
-       if parsed[I].name == line.name then
-          if type (line.values) ~= "table" then
-             if parsed[I].values[1] == line.values then
-                return I
-             end
-          else
-             err ("searching for line with table of values not yet supported")
-          end
-       end
-   end
-
-   err ("line '" .. line.name .. " " .. line.values .. "' not found")
-end
-
-function check_inventory (parsed, parsed_index, stanza)
--- 'stanza' is a table for one stanza
--- 'parsed_index' gives the first index for this stanza in 'parsed'
--- (which should be the output of parse_basic_io).
--- Returns parsed_index incremented to the last index checked.
-
-   checkvalue (parsed_index, parsed[parsed_index], "path", stanza.path)
-   parsed_index = parsed_index + 1
-
-   if stanza.old_type then
-      checkvalue (parsed_index, parsed[parsed_index], "old_type", stanza.old_type)
-      parsed_index = parsed_index + 1
-   end
-
-   if stanza.new_path then
-      checkvalue (parsed_index, parsed[parsed_index], "new_path", stanza.new_path)
-      parsed_index = parsed_index + 1
-   end
-
-   if stanza.new_type then
-      checkvalue (parsed_index, parsed[parsed_index], "new_type", stanza.new_type)
-      parsed_index = parsed_index + 1
-   end
-
-   if stanza.old_path then
-      checkvalue (parsed_index, parsed[parsed_index], "old_path", stanza.old_path)
-      parsed_index = parsed_index + 1
-   end
-
-   if stanza.fs_type then
-      checkvalue (parsed_index, parsed[parsed_index], "fs_type", stanza.fs_type)
-      parsed_index = parsed_index + 1
-   end
-
-   if stanza.status then
-      checkvalue (parsed_index, parsed[parsed_index], "status", stanza.status)
-      parsed_index = parsed_index + 1
-   end
-
-   if stanza.changes then
-      checkvalue (parsed_index, parsed[parsed_index], "changes", stanza.changes)
-      parsed_index = parsed_index + 1
-   end
-
-   return parsed_index
-end -- check_inventory
-
-----------
---  main process
 
 mtn_setup()
 
-check(get("inventory_hooks.lua"))
+check(getstd("inventory_hooks.lua"))
+
+include ("test_utils_inventory.lua")
+
+----------
+--  main process
 
 -- create a basic file history; add some files, then operate on each
 -- of them in some way.
@@ -186,7 +107,7 @@ old_path = "original",
   status = {"rename_target", "known"}})
 
 -- skip test.db, test_hooks.lua, tester.log, ts-stderr, ts-stdin, ts-stdout
-index = find_line (parsed, {name = "path", values = "unchanged"})
+index = find_basic_io_line (parsed, {name = "path", values = "unchanged"})
 
 --     0 0 unchanged
 index = check_inventory (parsed, index,
@@ -215,7 +136,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 parsed = parse_basic_io(readfile("stdout"))
 
 -- Only check the stanzas for the renamed files
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 -- FIXME: this output is confusing. And this file's contents are _not_ changed.
 --
@@ -223,7 +144,7 @@ index = find_line (parsed, {name = "path", values = "original"})
 -- refers to with 'path' actually has different contents than what has been
 -- recorded in the old roster, so its more the question: do we want to guess
 -- if a file rename was bookkeep-only by comparing fileids or not? If a commit
--- happens at this stage, no missing files hinder that, and both file's 
+-- happens at this stage, no missing files hinder that, and both file's
 -- contents are really changed and not swapped as they should, so I vote for
 -- keeping this flag on here.
 check_inventory (parsed, index,
@@ -236,7 +157,7 @@ check_inventory (parsed, index,
  status   = {"rename_source", "rename_target", "known"},
  changes  = "content"})
 
-index = find_line (parsed, {name = "path", values = "unchanged"})
+index = find_basic_io_line (parsed, {name = "path", values = "unchanged"})
 
 -- FIXME: this output is confusing.
 check_inventory (parsed, index,
@@ -260,7 +181,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 parsed = parse_basic_io(readfile("stdout"))
 
 -- Only check the stanzas for the renamed files
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 check_inventory (parsed, index,
 {path     = "original",
@@ -271,7 +192,7 @@ check_inventory (parsed, index,
  fs_type  = "file",
  status   = {"rename_source", "rename_target", "known"}})
 
-index = find_line (parsed, {name = "path", values = "unchanged"})
+index = find_basic_io_line (parsed, {name = "path", values = "unchanged"})
 
 -- FIXME: this output is confusing.
 check_inventory (parsed, index,
@@ -294,7 +215,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 check_inventory (parsed, index,
 {path     = "original",
@@ -318,7 +239,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "dropped"})
+index = find_basic_io_line (parsed, {name = "path", values = "dropped"})
 
 check_inventory (parsed, index,
 {path = "dropped",
@@ -330,7 +251,7 @@ old_path = "original",
   status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
-index = find_line (parsed, {name = "path", values = "missing"})
+index = find_basic_io_line (parsed, {name = "path", values = "missing"})
 
 check_inventory (parsed, index,
 {   path = "missing",
@@ -342,7 +263,7 @@ old_path = "dropped",
   status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 check_inventory (parsed, index,
 {   path = "original",
@@ -365,7 +286,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "dropped"})
+index = find_basic_io_line (parsed, {name = "path", values = "dropped"})
 
 --  FIXME: the only difference between this and the previous case is the absense of the erroneous 'changes'.
 check_inventory (parsed, index,
@@ -377,7 +298,7 @@ old_path = "original",
  fs_type = "file",
   status = {"rename_source", "rename_target", "known"}})
 
-index = find_line (parsed, {name = "path", values = "missing"})
+index = find_basic_io_line (parsed, {name = "path", values = "missing"})
 
 check_inventory (parsed, index,
 {   path = "missing",
@@ -388,7 +309,7 @@ old_path = "dropped",
  fs_type = "file",
   status = {"rename_source", "rename_target", "known"}})
 
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 check_inventory (parsed, index,
 {   path = "original",
@@ -409,7 +330,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "dropped"})
+index = find_basic_io_line (parsed, {name = "path", values = "dropped"})
 
 check_inventory (parsed, index,
 {path = "dropped",
@@ -428,7 +349,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "added"})
+index = find_basic_io_line (parsed, {name = "path", values = "added"})
 
 check_inventory (parsed, index,
 {path = "added",
@@ -447,7 +368,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 check_inventory (parsed, index,
 {path = "original",
@@ -456,7 +377,7 @@ new_path = "renamed",
  fs_type = "file",
   status = {"rename_source", "unknown"}})
 
-index = find_line (parsed, {name = "path", values = "renamed"})
+index = find_basic_io_line (parsed, {name = "path", values = "renamed"})
 
 check_inventory (parsed, index,
 {path = "renamed",
@@ -475,7 +396,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 check_inventory (parsed, index,
 {path = "original",
@@ -484,7 +405,7 @@ new_type = "file",
  fs_type = "none",
   status = {"missing"}})
 
-index = find_line (parsed, {name = "path", values = "renamed"})
+index = find_basic_io_line (parsed, {name = "path", values = "renamed"})
 
 check_inventory (parsed, index,
 {path = "renamed",
@@ -503,7 +424,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "original"})
+index = find_basic_io_line (parsed, {name = "path", values = "original"})
 
 check_inventory (parsed, index,
 {path = "original",
@@ -512,14 +433,14 @@ new_path = "renamed",
  fs_type = "none",
   status = {"rename_source"}})
 
-index = find_line (parsed, {name = "path", values = "renamed"})
+index = find_basic_io_line (parsed, {name = "path", values = "renamed"})
 
 check_inventory (parsed, index,
 {path = "renamed",
 new_type = "file",
 old_path = "original",
  fs_type = "file",
-  status = {"rename_target", "known"},
+  status = {"renamed", "known"},
   changes = "content"})
 
 -- check if unknown/missing/dropped directories are recognized as such
@@ -529,7 +450,7 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
-index = find_line (parsed, {name = "path", values = "new_dir"})
+index = find_basic_io_line (parsed, {name = "path", values = "new_dir"})
 
 check_inventory (parsed, index,
 {path = "new_dir",
@@ -541,7 +462,7 @@ remove("new_dir");
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
-check_inventory (parsed, find_line (parsed, {name = "path", values = "new_dir"}),
+check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "new_dir"}),
 {    path = "new_dir",
  new_type = "directory",
   fs_type = "none",
@@ -552,7 +473,7 @@ commit()
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
-check_inventory (parsed, find_line (parsed, {name = "path", values = "new_dir"}),
+check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "new_dir"}),
 {path = "new_dir",
 old_type = "directory",
 new_type = "directory",
@@ -564,10 +485,12 @@ check(mtn("drop", "--bookkeep-only", "new_dir"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
-check_inventory (parsed, find_line (parsed, {name = "path", values = "new_dir"}),
+check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "new_dir"}),
 {   path = "new_dir",
 old_type = "directory",
  fs_type = "none",
   status = {"dropped"}})
 
--- TODO: tests for renaming directories and restricted inventory output
+-- TODO: tests for renaming directories
+
+-- end of file
