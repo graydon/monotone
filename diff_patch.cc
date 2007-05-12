@@ -500,19 +500,26 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
                                              file_id const & right_ident,
                                              file_id const & merged_ident,
                                              file_data const & left_data,
+                                             file_data const & right_data,
                                              file_data const & merged_data)
 {
   L(FL("recording successful merge of %s <-> %s into %s")
     % left_ident % right_ident % merged_ident);
 
-  delta left_delta, right_delta;
   transaction_guard guard(app.db);
 
-  diff(left_data.inner(), merged_data.inner(), left_delta);
-  diff(left_data.inner(), merged_data.inner(), right_delta);
-
-  app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
-  app.db.put_file_version(right_ident, merged_ident, file_delta(right_delta));
+  if (!(left_ident == merged_ident))
+    {
+      delta left_delta;
+      diff(left_data.inner(), merged_data.inner(), left_delta);
+      app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));    
+    }
+  if (!(right_ident == merged_ident))
+    {
+      delta right_delta;
+      diff(right_data.inner(), merged_data.inner(), right_delta);
+      app.db.put_file_version(right_ident, merged_ident, file_delta(right_delta));
+    }
   guard.commit();
 }
 
@@ -574,6 +581,7 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
                                               file_id const & right_id,
                                               file_id const & merged_id,
                                               file_data const & left_data,
+                                              file_data const & right_data,
                                               file_data const & merged_data)
 {
   L(FL("temporarily recording merge of %s <-> %s into %s")
@@ -734,7 +742,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
 
           merged_id = merged_fid;
           adaptor.record_merge(left_id, right_id, merged_fid,
-                               left_data, merge_data);
+                               left_data, right_data, merge_data);
 
           return true;
         }
@@ -764,7 +772,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
 
       merged_id = merged_fid;
       adaptor.record_merge(left_id, right_id, merged_fid,
-                           left_data, merge_data);
+                           left_data, right_data, merge_data);
       return true;
     }
 
