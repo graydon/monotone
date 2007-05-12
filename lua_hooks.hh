@@ -40,6 +40,7 @@ public:
   void default_rcfilename(system_path & file);
   void load_rcfile(utf8 const & file);
   void load_rcfile(any_path const & file, bool required);
+  bool hook_exists(std::string const & func_name);
 
   // cert hooks
   bool hook_expand_selector(std::string const & sel, std::string & exp);
