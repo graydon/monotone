@@ -3,6 +3,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "config.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <io.h>
 #include <errno.h>
@@ -350,6 +352,19 @@ write_data_worker(std::string const & fname,
 
   rename_clobberingly(tmp, fname);
 
+}
+
+std::string
+get_locale_dir()
+{
+  char buffer[4096];
+  DWORD result = GetModuleFileName(NULL, buffer, sizeof(buffer));
+  I(result != sizeof(buffer)); // ran out of buffer space
+  I(result != 0); // some other error
+  std::string module(buffer);
+  std::string::size_type pos = module.find_last_of('\\');
+  I(pos != std::string::npos);
+  return module.substr(0, pos) + "/locale";
 }
 
 // Local Variables:

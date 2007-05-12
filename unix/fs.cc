@@ -3,6 +3,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "config.h"
+
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -258,6 +260,11 @@ write_data_worker(std::string const & fname,
   rename_clobberingly(tmp, fname);
 }
 
+std::string
+get_locale_dir()
+{
+  return std::string(LOCALEDIR);
+}
 
 // Local Variables:
 // mode: C++

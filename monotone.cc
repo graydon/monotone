@@ -37,6 +37,7 @@
 #include "paths.hh"
 #include "sha1.hh"
 #include "simplestring_xform.hh"
+#include "platform.hh"
 
 using std::cout;
 using std::cerr;
@@ -118,7 +119,7 @@ void localize_monotone()
   if (!init)
     {
       setlocale(LC_ALL, "");
-      bindtextdomain(PACKAGE, LOCALEDIR);
+      bindtextdomain(PACKAGE, get_locale_dir().c_str());
       textdomain(PACKAGE);
       init = 1;
     }
