@@ -922,6 +922,15 @@ database::cancel_delayed_file(file_id const & an_id)
 }
 
 void
+database::drop_or_cancel_file(file_id const & id)
+{
+  if (have_delayed_file(id))
+    cancel_delayed_file(id);
+  else
+    drop(id.inner()(), "files");
+}
+
+void
 database::schedule_delayed_file(file_id const & an_id,
                                 file_data const & dat)
 {
@@ -1030,6 +1039,17 @@ database::delta_exists(string const & ident,
                        string const & table)
 {
   return table_has_entry(ident, "id", table);
+}
+
+bool
+database::delta_exists(string const & ident,
+                       string const & base,
+                       string const & table)
+{
+  results res;
+  query q("SELECT 1 FROM " + table + " WHERE id = ? and base = ? LIMIT 1");
+  fetch(res, one_col, any_rows, q % text(ident) % text(base));
+  return !res.empty();
 }
 
 string
@@ -1692,6 +1712,7 @@ database::put_file_version(file_id const & old_id,
                            file_id const & new_id,
                            file_delta const & del)
 {
+  I(!(old_id == new_id));
   file_data old_data, new_data;
   file_delta reverse_delta;
 
@@ -1708,6 +1729,7 @@ database::put_file_version(file_id const & old_id,
     patch(old_data.inner(), del.inner(), tmp);
     new_data = file_data(tmp);
   }
+
   {
     string tmp;
     invert_xdelta(old_data.inner()(), del.inner()(), tmp);
@@ -1718,20 +1740,25 @@ database::put_file_version(file_id const & old_id,
     calculate_ident(old_tmp, old_tmp_id);
     I(file_id(old_tmp_id) == old_id);
   }
-
-  transaction_guard guard(*this);
+  
+  transaction_guard guard(*this);  
   if (file_or_manifest_base_exists(old_id.inner(), "files"))
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
-      if (have_delayed_file(old_id))
-        cancel_delayed_file(old_id);
-      else
-        drop(old_id.inner()(), "files");
+      drop_or_cancel_file(old_id);
     }
-  schedule_delayed_file(new_id, new_data);
-  put_file_delta(old_id, new_id, reverse_delta);
-  guard.commit();
+  if (!file_or_manifest_base_exists(new_id.inner(), "files"))
+    {
+      schedule_delayed_file(new_id, new_data);
+      drop(new_id.inner()(), "file_deltas");
+    }
+    
+  if (!delta_exists(old_id.inner()(), new_id.inner()(), "file_deltas"))
+    {
+      put_file_delta(old_id, new_id, reverse_delta);
+      guard.commit();
+    }
 }
 
 void
@@ -1938,7 +1965,7 @@ database::deltify_revision(revision_id const & rid)
                 delta delt;
                 diff(old_data.inner(), new_data.inner(), delt);
                 file_delta del(delt);
-                drop(delta_entry_dst(j).inner()(), "files");
+                drop_or_cancel_file(delta_entry_dst(j));
                 drop(delta_entry_dst(j).inner()(), "file_deltas");
                 put_file_version(delta_entry_src(j), delta_entry_dst(j), del);
               }
