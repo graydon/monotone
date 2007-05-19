@@ -98,3 +98,8 @@ JANITORIAL
   however, the command lookup routine has to support ignoring the top-level
   command if not given to preserve compatibility and not complicate things
   a lot.  e.g. 'mtn informative list' should be the same as 'mtn list'.
+
+- modify the CMD_AUTOMATE macro so that it can document all the details of
+  an automate command (input, output, first version, etc.).  the idea is to
+  move all the documentation for automate commands (currently placed in
+  comments in the code) to the online help system.
