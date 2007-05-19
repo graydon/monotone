@@ -448,7 +448,10 @@ CMD_AUTOMATE(leaves, "",
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-AUTOMATE(roots, "", options::opts::none)
+CMD_AUTOMATE(roots, "",
+             N_("TODO"),
+             N_(""),
+             options::opts::none)
 {
   N(args.size() == 0,
     F("no arguments needed"));
