@@ -134,6 +134,9 @@ std::string os_strerror(os_err_t errnum);
 // arbitrary constant, measured in seconds.
 double cpu_now();
 
+// determine directory to load locale data from
+std::string get_locale_dir();
+
 #ifdef WIN32_PLATFORM
 #include "win32/ssh_agent_platform.hh"
 #else

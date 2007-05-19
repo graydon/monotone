@@ -8,7 +8,7 @@ check(mtn("genkey", "foo@bar"), 0, false, false, "foo@bar\nfoo@bar\n")
 -- Once to let the client note down the key...
 -- We need to set the random seed, because each time a server is
 -- started it picks a new random port.
-seed = os.time()
+seed = get_pid()
 math.randomseed(seed)
 netsync.pull("testbranch")
 

@@ -137,7 +137,7 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
   app.keys.get_key_pair(id, key);
   shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
   utf8 new_phrase;
-  get_passphrase(app.lua, id, new_phrase, true, true, "enter new passphrase");
+  get_passphrase(app.lua, id, new_phrase, true, true);
   Pipe p;
   p.start_msg();
   if (new_phrase().length())

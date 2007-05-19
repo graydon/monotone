@@ -48,6 +48,7 @@ content_merge_adaptor
                             file_id const & right_ident,
                             file_id const & merged_ident,
                             file_data const & left_data,
+                            file_data const & right_data,
                             file_data const & merged_data) = 0;
 
   virtual void get_ancestral_roster(node_id nid,
@@ -75,6 +76,7 @@ content_merge_database_adaptor
                     file_id const & right_ident,
                     file_id const & merged_ident,
                     file_data const & left_data,
+                    file_data const & right_data,
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
@@ -101,6 +103,7 @@ content_merge_workspace_adaptor
                     file_id const & right_ident,
                     file_id const & merged_ident,
                     file_data const & left_data,
+                    file_data const & right_data,
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,

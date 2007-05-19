@@ -187,6 +187,7 @@ private:
   bool have_delayed_file(file_id const & id);
   void load_delayed_file(file_id const & id, file_data & dat);
   void cancel_delayed_file(file_id const & id);
+  void drop_or_cancel_file(file_id const & id);
   void schedule_delayed_file(file_id const & id, file_data const & dat);
 
   std::map<file_id, file_data> delayed_files;
@@ -213,6 +214,10 @@ private:
   
   // "do we have any entry for 'ident' that is a delta"
   bool delta_exists(std::string const & ident,
+                    std::string const & table);
+
+  bool delta_exists(std::string const & ident,
+                    std::string const & base,
                     std::string const & table);
 
   void get_file_or_manifest_base_unchecked(hexenc<id> const & new_id,

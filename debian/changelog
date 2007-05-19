@@ -1,3 +1,9 @@
+monotone (0.35-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Richard Levitte <richard@levitte.org>  Mon, 07 May 2007 16:08:44 +0200
+
 monotone (0.34-0.1) unstable; urgency=low
 
   * New upstream release.

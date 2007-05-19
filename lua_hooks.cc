@@ -203,6 +203,14 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
     }
 }
 
+bool
+lua_hooks::hook_exists(std::string const & func_name)
+{
+  return Lua(st)
+    .func(func_name)
+    .ok();
+}
+
 // concrete hooks
 
 // nb: if you're hooking lua to return your passphrase, you don't care if we

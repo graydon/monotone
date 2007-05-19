@@ -16,7 +16,7 @@ function netsync.setup()
   check(copy("test.db", "test3.db"))
   check(copy("keys", "keys3"))
   check(getstd("common/netsync-hooks.lua", "netsync.lua"))
-  math.randomseed(os.time())
+  math.randomseed(get_pid())
 end
 
 function netsync.setup_with_notes()
@@ -51,7 +51,7 @@ function netsync.start(opts, n, min)
   end
   local args = {}
   local fn = mtn
-  local addr = "localhost:" .. math.random(20000, 50000)
+  local addr = "localhost:" .. math.random(1024, 65535)
   table.insert(args, "--dump=_MTN/server_dump")
   table.insert(args, "--bind="..addr)
   if min then

@@ -9,7 +9,7 @@ c) You can deal with the shell...
 
 Now the step-by-step HOWTO:
 
-I) Edit the file po/LINGUAS a new entry for your language.
+1) Edit the file po/LINGUAS a new entry for your language.
    The language code has the format ISO 639-1 (e.g. "en" 
    for English, "de" for German, aso.) - if your language 
    differs by region, you can also expand the language code 
@@ -18,10 +18,14 @@ I) Edit the file po/LINGUAS a new entry for your language.
    in Great Britain (BE), while "en_US" determines 
    American English (AE).
 
-II) Configure monotone
+2) Add an entry for the translation into win32/monotone.iss
+   so that it is included in future Win32 installer
+   packages.
+
+3) Configure monotone
   
    $ cd net.venge.monotone
-   $ aclocal && autoreconf --install 
+   $ autoreconf --install
    $ ./configure
    $ ( cd po; make monotone.pot-update )
    
@@ -30,7 +34,7 @@ II) Configure monotone
    language code you've entered in LINGUAS), and continue 
    with III).
     
-III) Edit the header of your new language po according to
+4) Edit the header of your new language po according to
    the excellent HOWTO here [0]. Of particular interest
    are mainly two things:
      
@@ -46,16 +50,16 @@ III) Edit the header of your new language po according to
       what to write here, take a look at the gettext manual
       here [1].
 
-IV) Start translating the entries. If you like to update your
-    *.po file, trigger the following command (here for the
-    German translation):
+5) Start translating the entries. If you like to update your
+   *.po file, trigger the following command (here for the
+   German translation):
 	
-    $ cd po
-    $ make monotone.pot-update && make MSGMERGE=msgmerge de.po-update
+   $ cd po
+   $ make monotone.pot-update && make MSGMERGE=msgmerge de.po-update
 
-    To check if new or fuzzy strings have arrived, use msgfmt:
+   To check if new or fuzzy strings have arrived, use msgfmt:
 
-    $ msgfmt -cv po/de.po
+   $ msgfmt -cv po/de.po
 
 
 Thats it basically. If you're looking for a nice GUI to edit
