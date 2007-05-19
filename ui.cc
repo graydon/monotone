@@ -476,7 +476,7 @@ user_interface::fatal(string const & fatal)
 {
   inform(F("fatal: %s\n"
            "this is almost certainly a bug in monotone.\n"
-           "please send this error message, the output of '%s --full-version',\n"
+           "please send this error message, the output of '%s version --full',\n"
            "and a description of what you were doing to %s.")
          % fatal % prog_name % PACKAGE_BUGREPORT);
   global_sanity.dump_buffer();
@@ -598,6 +598,96 @@ guess_terminal_width()
   if (!w)
     w = constants::default_terminal_width;
   return w;
+}
+
+// A very simple class that adds an operator() to a string that returns
+// the string itself.  This is to make it compatible with, for example,
+// the utf8 class, allowing it to be usable in other contexts without
+// encoding conversions.
+class string_adaptor : public string
+{
+public:
+  string_adaptor(string const & str) : string(str) {}
+  string const & operator()(void) const { return *this; }
+};
+
+// See description for format_text below for more details.
+static string
+format_paragraph(string const & text, size_t const col, size_t curcol)
+{
+  I(text.find('\n') == string::npos);
+
+  string formatted;
+  if (curcol < col)
+    {
+      formatted = string(col - curcol, ' ');
+      curcol = col;
+    }
+
+  const size_t maxcol = guess_terminal_width();
+
+  vector< string_adaptor > words = split_into_words(string_adaptor(text));
+  for (vector< string_adaptor >::const_iterator iter = words.begin();
+       iter != words.end(); iter++)
+    {
+      string const & word = (*iter)();
+
+      if (iter != words.begin() &&
+          curcol + display_width(utf8(word)) + 1 > maxcol)
+        {
+          formatted += '\n' + string(col, ' ');
+          curcol = col;
+        }
+      else if (iter != words.begin())
+        {
+          formatted += ' ';
+          curcol++;
+        }
+
+      formatted += word;
+      curcol += display_width(utf8(word));
+    }
+
+  return formatted;
+}
+
+// Reformats the given text so that it fits in the current screen with no
+// wrapping.
+//
+// The input text is a series of words and sentences.  Paragraphs may be
+// separated with a '\n' character, which is taken into account to do the
+// proper formatting.  The text should not finish in '\n'.
+//
+// 'col' specifies the column where the text will start and 'curcol'
+// specifies the current position of the cursor.
+string
+format_text(string const & text, size_t const col, size_t curcol)
+{
+  I(curcol <= col);
+
+  string formatted;
+
+  vector< string > lines;
+  split_into_lines(text, lines);
+  for (vector< string >::const_iterator iter = lines.begin();
+       iter != lines.end(); iter++)
+    {
+      string const & line = *iter;
+
+      formatted += format_paragraph(line, col, curcol);
+      if (iter + 1 != lines.end())
+        formatted += "\n\n";
+      curcol = 0;
+    }
+
+  return formatted;
+}
+
+// See description for the other format_text below for more details.
+string
+format_text(i18n_format const & text, size_t const col, size_t curcol)
+{
+  return format_text(text.str(), col, curcol);
 }
 
 // Local Variables:
