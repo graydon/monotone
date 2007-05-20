@@ -59,7 +59,7 @@ static string const interface_version = "5.0";
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
 CMD_AUTOMATE(interface_version, "",
-             N_("TODO"),
+             N_("Prints the automation interface's version"),
              N_(""),
              options::opts::none)
 {
@@ -316,7 +316,7 @@ struct automate_ostream : public std::ostream
 
 
 CMD_AUTOMATE(stdio, "",
-             N_("TODO"),
+             N_("Automates several commands in one run"),
              N_(""),
              options::opts::automate_stdio_size)
 {

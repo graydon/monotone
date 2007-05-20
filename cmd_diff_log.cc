@@ -527,7 +527,7 @@ CMD(diff, "diff", "", CMD_REF(informative), N_("[PATH]..."),
 // the output is empty. All file operations beside mtn add are omitted,
 // as they don't change the content of the file.
 CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
-             N_("TODO"),
+             N_("Calculates diffs of files"),
              N_(""),
              options::opts::revision | options::opts::depth |
              options::opts::exclude)

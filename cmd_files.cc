@@ -225,7 +225,7 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
 // Error conditions: If the file path doesn't point to a valid file prints
 // an error message to stderr and exits with status 1.
 CMD_AUTOMATE(identify, N_("PATH"),
-             N_("TODO"),
+             N_("Prints the file identifier of a file"),
              N_(""),
              options::opts::none)
 {
@@ -323,7 +323,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_file, N_("FILEID"),
-             N_("TODO"),
+             N_("Prints the contents of a file (given an identifier)"),
              N_(""),
              options::opts::none)
 {
@@ -349,7 +349,7 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_file_of, N_("FILENAME"),
-             N_("TODO"),
+             N_("Prints the contents of a file (given a name)"),
              N_(""),
              options::opts::revision)
 {

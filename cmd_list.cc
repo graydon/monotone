@@ -558,7 +558,7 @@ namespace
 //
 // Error conditions: None.
 CMD_AUTOMATE(keys, "",
-             N_("TODO"),
+             N_("Lists all keys in the keystore"),
              N_(""),
              options::opts::none)
 {
@@ -653,7 +653,7 @@ CMD_AUTOMATE(keys, "",
 // specified is unknown or invalid prints an error message to stderr
 // and exits with status 1.
 CMD_AUTOMATE(certs, N_("REV"),
-             N_("TODO"),
+             N_("Prints all certificates attached to a revision"),
              N_(""),
              options::opts::none)
 {

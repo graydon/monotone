@@ -777,7 +777,7 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
 // Error conditions: If the path has no attributes, prints only the 
 //                   format version, if the file is unknown, escalates
 CMD_AUTOMATE(get_attributes, N_("PATH"),
-             N_("TODO"),
+             N_("Prints all attributes for the specified path"),
              N_(""),
              options::opts::none)
 {
@@ -892,7 +892,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
 // Error conditions: If PATH is unknown in the new roster, prints an error and
 //                   exits with status 1.
 CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
-             N_("TODO"),
+             N_("Sets an attribute on a certain path"),
              N_(""),
              options::opts::none)
 {
@@ -938,7 +938,7 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
 //                   attribute key is unknown, prints an error and exits with
 //                   status 1.
 CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
-             N_("TODO"),
+             N_("Drops an attribute or all of them from a certain path"),
              N_(""),
              options::opts::none)
 {

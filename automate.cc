@@ -62,7 +62,7 @@ using std::vector;
 // Error conditions: If the branch does not exist, prints nothing.  (There are
 //   no heads.)
 CMD_AUTOMATE(heads, N_("[BRANCH]"),
-             N_("TODO"),
+             N_("Prints the heads of the given branch"),
              N_(""),
              options::opts::none)
 {
@@ -89,7 +89,7 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
-             N_("TODO"),
+             N_("Prints the ancestors of the given revisions"),
              N_(""),
              options::opts::none)
 {
@@ -139,7 +139,7 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
-             N_("TODO"),
+             N_("Prints the descendents of the given revisions"),
              N_(""),
              options::opts::none)
 {
@@ -190,7 +190,7 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
-             N_("TODO"),
+             N_("Erases the ancestors in a list of revisions"),
              N_(""),
              options::opts::none)
 {
@@ -217,7 +217,7 @@ CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
-             N_("TODO"),
+             N_("Topologically sorts a list of revisions"),
              N_(""),
              options::opts::none)
 {
@@ -252,7 +252,8 @@ CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
 // Error conditions: If any of the revisions do not exist, prints nothing to
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
-             N_("TODO"),
+             N_("Lists the ancestors of the first revision given, not in "
+                "the others"),
              N_(""),
              options::opts::none)
 {
@@ -294,7 +295,7 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
 CMD_AUTOMATE(leaves, "",
-             N_("TODO"),
+             N_("Lists the leaves of the revision graph"),
              N_(""),
              options::opts::none)
 {
@@ -324,7 +325,7 @@ CMD_AUTOMATE(leaves, "",
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
 CMD_AUTOMATE(roots, "",
-             N_("TODO"),
+             N_("Lists the roots of the revision graph"),
              N_(""),
              options::opts::none)
 {
@@ -352,7 +353,7 @@ CMD_AUTOMATE(roots, "",
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(parents, N_("REV"),
-             N_("TODO"),
+             N_("Prints the parents of a revision"),
              N_(""),
              options::opts::none)
 {
@@ -380,7 +381,7 @@ CMD_AUTOMATE(parents, N_("REV"),
 // Error conditions: If the revision does not exist, prints nothing to stdout,
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(children, N_("REV"),
-             N_("TODO"),
+             N_("Prints the children of a revision"),
              N_(""),
              options::opts::none)
 {
@@ -418,7 +419,7 @@ CMD_AUTOMATE(children, N_("REV"),
 //   within each line are alphabetically sorted.
 // Error conditions: None.
 CMD_AUTOMATE(graph, "",
-             N_("TODO"),
+             N_("Prints the complete ancestry graph"),
              N_(""),
              options::opts::none)
 {
@@ -464,7 +465,7 @@ CMD_AUTOMATE(graph, "",
 //   newline. Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
 CMD_AUTOMATE(select, N_("SELECTOR"),
-             N_("TODO"),
+             N_("Lists the revisions that match a selector"),
              N_(""),
              options::opts::none)
 {
@@ -649,7 +650,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 //   prints an error message to stderr, and exits with status 1.
 
 CMD_AUTOMATE(inventory, "",
-             N_("TODO"),
+             N_("Prints a summary of files found in the workspace"),
              N_(""),
              options::opts::none)
 {
@@ -852,7 +853,7 @@ CMD_AUTOMATE(inventory, "",
 // Error conditions: If the revision specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_revision, N_("[REVID]"),
-             N_("TODO"),
+             N_("Shows change information for a revision"),
              N_(""),
              options::opts::none)
 {
@@ -898,7 +899,7 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(get_base_revision_id, "",
-             N_("TODO"),
+             N_("Shows the revision on which the workspace is based"),
              N_(""),
              options::opts::none)
 {
@@ -925,7 +926,7 @@ CMD_AUTOMATE(get_base_revision_id, "",
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(get_current_revision_id, "",
-             N_("TODO"),
+             N_("Shows the revision of the current workspace"),
              N_(""),
              options::opts::none)
 {
@@ -994,7 +995,7 @@ CMD_AUTOMATE(get_current_revision_id, "",
 // Error conditions: If the revision ID specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
-             N_("TODO"),
+             N_("Shows the manifest associated with a revision"),
              N_(""),
              options::opts::none)
 {
@@ -1040,7 +1041,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 // Error conditions: If the revision id specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(packet_for_rdata, N_("REVID"),
-             N_("TODO"),
+             N_("Prints the revision data in packet format"),
              N_(""),
              options::opts::none)
 {
@@ -1069,7 +1070,8 @@ CMD_AUTOMATE(packet_for_rdata, N_("REVID"),
 // Error conditions: If the revision id specified is unknown or
 // invalid prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(packets_for_certs, N_("REVID"),
-             N_("TODO"),
+             N_("Prints the certs associated with a revision in "
+                "packet format"),
              N_(""),
              options::opts::none)
 {
@@ -1099,7 +1101,7 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
 // Error conditions: If the file id specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(packet_for_fdata, N_("FILEID"),
-             N_("TODO"),
+             N_("Prints the file data in packet format"),
              N_(""),
              options::opts::none)
 {
@@ -1129,7 +1131,7 @@ CMD_AUTOMATE(packet_for_fdata, N_("FILEID"),
 // Error conditions: If any of the file ids specified are unknown or
 // invalid prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"),
-             N_("TODO"),
+             N_("Prints the file delta in packet format"),
              N_(""),
              options::opts::none)
 {
@@ -1166,7 +1168,8 @@ CMD_AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"),
 //   nothing to stdout, prints an error message to stderr, and exits
 //   with status 1.
 CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
-             N_("TODO"),
+             N_("Prints revisions that are common ancestors of a list "
+                "of revisions"),
              N_(""),
              options::opts::none)
 {
@@ -1232,7 +1235,7 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
 // Error conditions:
 //   None.
 CMD_AUTOMATE(branches, "",
-             N_("TODO"),
+             N_("Prints all branch certs in the revision graph"),
              N_(""),
              options::opts::none)
 {
@@ -1284,7 +1287,7 @@ CMD_AUTOMATE(branches, "",
 // Error conditions:
 //   A run-time exception is thrown for illegal patterns.
 CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
-             N_("TODO"),
+             N_("Prints all tags attached to a set of branches"),
              N_(""),
              options::opts::none)
 {
@@ -1377,7 +1380,7 @@ namespace
 // Error conditions: If the passphrase is empty or the key already exists,
 // prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
-             N_("TODO"),
+             N_("Generates a key"),
              N_(""),
              options::opts::none)
 {
@@ -1439,7 +1442,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
 //   net.venge.monotone
 //
 CMD_AUTOMATE(get_option, N_("OPTION"),
-             N_("TODO"),
+             N_("Shows the value of an option"),
              N_(""),
              options::opts::none)
 {
@@ -1491,7 +1494,8 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
 //   content_mark [276264b0b3f1e70fc1835a700e6e61bdbe4c3f2f]
 //
 CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
-             N_("TODO"),
+             N_("Lists the revisions that changed the content relative "
+                "to another revision"),
              N_(""),
              options::opts::none)
 {
@@ -1553,7 +1557,8 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
 // Sample output (for automate get_corresponding_path 91f25c8ee830b11b52dd356c925161848d4274d0 foo2 dae0d8e3f944c82a9688bcd6af99f5b837b41968; see automate_get_corresponding_path test)
 // file "foo"
 CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
-             N_("TODO"),
+             N_("Prints the name of a file in a target revision relative "
+                "to a given revision"),
              N_(""),
              options::opts::none)
 {
@@ -1605,7 +1610,7 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
 // Error conditions:
 //   a runtime exception is thrown if base revision is not available
 CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
-             N_("TODO"),
+             N_("Stores a file in the database"),
              N_(""),
              options::opts::none)
 {
@@ -1658,7 +1663,7 @@ CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
 // Error conditions:
 //   none
 CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
-             N_("TODO"),
+             N_("Stores a revision into the database"),
              N_(""),
              options::opts::none)
 {
@@ -1715,7 +1720,7 @@ CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
 // Error conditions:
 //   none
 CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
-             N_("TODO"),
+             N_("Adds a revision certificate"),
              N_(""),
              options::opts::none)
 {
@@ -1748,7 +1753,7 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
 // Error conditions:
 //   none
 CMD_AUTOMATE(db_set, N_("DOMAIN NAME VALUE"),
-             N_("TODO"),
+             N_("Sets a database variable"),
              N_(""),
              options::opts::none)
 {
@@ -1774,7 +1779,7 @@ CMD_AUTOMATE(db_set, N_("DOMAIN NAME VALUE"),
 // Error conditions:
 //   a runtime exception is thrown if the variable is not set
 CMD_AUTOMATE(db_get, N_("DOMAIN NAME"),
-             N_("TODO"),
+             N_("Gets a database variable"),
              N_(""),
              options::opts::none)
 {
