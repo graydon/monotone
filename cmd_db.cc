@@ -257,7 +257,7 @@ CMD(set, "set", "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
 
 CMD(unset, "unset", "", CMD_REF(variables), N_("DOMAIN NAME"),
     N_("Unsets a database variable"),
-    N_("This command removes the variable NAME from domain DOMAIN, which"
+    N_("This command removes the variable NAME from domain DOMAIN, which "
        "was previously stored in the database."),
     options::opts::none)
 {
