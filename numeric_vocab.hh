@@ -21,13 +21,6 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-BOOST_STATIC_ASSERT(sizeof(char) == 1);
-BOOST_STATIC_ASSERT(CHAR_BIT == 8);
-BOOST_STATIC_ASSERT(sizeof(u8) == 1);
-BOOST_STATIC_ASSERT(sizeof(u16) == 2);
-BOOST_STATIC_ASSERT(sizeof(u32) == 4);
-BOOST_STATIC_ASSERT(sizeof(u64) == 8);
-
 // This is similar to static_cast<T>(v).  The difference is that when T is
 // unsigned, this cast does not sign-extend:
 //   static_cast<u32>((signed char) -1) = 4294967295
@@ -43,8 +36,9 @@ widen(V const & v)
     return static_cast<T>(v);
   else
     {
+      const size_t char_bit = std::numeric_limits<unsigned char>::digits;
       T mask = std::numeric_limits<T>::max();
-      size_t shift = (sizeof(T) - sizeof(V)) * 8;
+      size_t shift = (sizeof(T) - sizeof(V)) * char_bit;
       mask >>= shift;
       return static_cast<T>(v) & mask;
     }
