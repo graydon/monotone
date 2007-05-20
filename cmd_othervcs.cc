@@ -32,7 +32,7 @@ CMD(rcs_import, "rcs_import", "", CMD_REF(debug), N_("RCSFILE..."),
 
 CMD(cvs_import, "cvs_import", "", CMD_REF(rcs), N_("CVSROOT"), 
     N_("Imports all versions in a CVS repository"),
-    N_(""),
+    "",
     options::opts::branch)
 {
   if (args.size() != 1)

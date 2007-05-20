@@ -393,7 +393,7 @@ private:
 
 CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
                  N_("Serves the database to connecting clients"),
-                 N_(""),
+                 "",
                  options::opts::bind | options::opts::pidfile |
                  options::opts::bind_stdio | options::opts::no_transport_auth)
 {

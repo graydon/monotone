@@ -332,7 +332,7 @@ merge_two(revision_id const & left, revision_id const & right,
 // log message constructed in merge_two().)
 CMD(merge, "merge", "", CMD_REF(tree), "",
     N_("Merges unmerged heads of a branch"),
-    N_(""),
+    "",
     options::opts::branch | options::opts::date | options::opts::author)
 {
   typedef std::pair<revision_id, revision_id> revpair;
@@ -434,7 +434,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
 CMD(propagate, "propagate", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("Merges from one branch to another asymmetrically"),
-    N_(""),
+    "",
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
   if (args.size() != 2)
@@ -447,7 +447,7 @@ CMD(propagate, "propagate", "", CMD_REF(tree),
 CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("Merges one branch into a subdirectory in another branch"),
-    N_(""),
+    "",
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
   //   This is a special merge operator, but very useful for people
@@ -935,7 +935,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
 
 CMD(heads, "heads", "", CMD_REF(tree), "",
     N_("Shows unmerged head revisions of a branch"),
-    N_(""),
+    "",
     options::opts::branch)
 {
   set<revision_id> heads;

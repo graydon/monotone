@@ -94,7 +94,7 @@ void hook_botan_sha1()
 
 CMD_HIDDEN(benchmark_sha1, "benchmark_sha1", "", CMD_REF(debug), "",
            N_("Benchmarks SHA-1 cores"),
-           N_(""),
+           "",
            options::opts::none)
 {
   P(F("Benchmarking %s SHA-1 cores") % registry().size());

@@ -21,7 +21,7 @@ using std::vector;
 
 CMD(pubkey, "pubkey", "", CMD_REF(packet_io), N_("ID"), 
     N_("Prints a public key packet"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)
@@ -51,7 +51,7 @@ CMD(pubkey, "pubkey", "", CMD_REF(packet_io), N_("ID"),
 
 CMD(privkey, "privkey", "", CMD_REF(packet_io), N_("ID"), 
     N_("Prints a private key packet"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)

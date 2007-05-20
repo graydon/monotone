@@ -33,7 +33,7 @@ using std::string;
 
 CMD(version, "version", "", CMD_REF(informative), "",
     N_("Shows the program version"),
-    N_(""),
+    "",
     options::opts::full)
 {
   N(args.size() == 0,

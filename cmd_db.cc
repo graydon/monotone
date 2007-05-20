@@ -26,7 +26,7 @@ using std::string;
 
 CMD_GROUP(db, "db", "", CMD_REF(database),
           N_("Deals with the database"),
-          N_(""));
+          "");
 
 // Deletes a revision from the local database.  This can be used to
 // 'undo' a changed revision from a local database without leaving
@@ -62,7 +62,7 @@ CMD(db_init, "init", "", CMD_REF(db), "",
 
 CMD(db_info, "info", "", CMD_REF(db), "",
     N_("Shows information about the database"),
-    N_(""),
+    "",
     options::opts::none)
 {
   N(args.size() == 0,
@@ -73,7 +73,7 @@ CMD(db_info, "info", "", CMD_REF(db), "",
 
 CMD(db_version, "version", "", CMD_REF(db), "",
     N_("Shows the database's version"),
-    N_(""),
+    "",
     options::opts::none)
 {
   N(args.size() == 0,
@@ -134,7 +134,7 @@ CMD(db_execute, "execute", "", CMD_REF(db), "",
 
 CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
     N_("Kills a revision from the local database"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)
@@ -146,7 +146,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
 CMD(db_kill_branch_certs_locally, "kill_branch_certs_locally", "", CMD_REF(db),
     "BRANCH",
     N_("Kills branch certificates from the local database"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)
@@ -157,7 +157,7 @@ CMD(db_kill_branch_certs_locally, "kill_branch_certs_locally", "", CMD_REF(db),
 
 CMD(db_kill_tag_locally, "kill_tag_locally", "", CMD_REF(db), "TAG",
     N_("Kills a tag from the local database"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)
@@ -180,7 +180,7 @@ CMD(db_check, "check", "", CMD_REF(db), "",
 
 CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
     N_("Converts the database to the changeset format"),
-    N_(""),
+    "",
     options::opts::none)
 {
   N(args.size() == 0,
@@ -191,7 +191,7 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
     N_("Converst the database to the rosters format"),
-    N_(""),
+    "",
     options::opts::drop_attr)
 {
   N(args.size() == 0,
@@ -202,7 +202,7 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
 
 CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
     N_("Regenerates the caches stored in the database"),
-    N_(""),
+    "",
     options::opts::none)
 {
   N(args.size() == 0,
@@ -213,7 +213,7 @@ CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
 
 CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
     N_("Clears the database's epoch"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)
@@ -224,7 +224,7 @@ CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
 
 CMD(db_set_epoch, "set_epoch", "", CMD_REF(db), "BRANCH EPOCH",
     N_("Sets the database's epoch"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 2)
@@ -277,7 +277,7 @@ CMD(unset, "unset", "", CMD_REF(variables), N_("DOMAIN NAME"),
 CMD(complete, "complete", "", CMD_REF(informative),
     N_("(revision|file|key) PARTIAL-ID"),
     N_("Completes a partial identifier"),
-    N_(""),
+    "",
     options::opts::verbose)
 {
   if (args.size() != 2)

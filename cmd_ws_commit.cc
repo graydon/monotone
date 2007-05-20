@@ -276,7 +276,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
 
 CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
     N_("Disapproves a particular revision"),
-    N_(""),
+    "",
     options::opts::branch | options::opts::messages | options::opts::date |
     options::opts::author)
 {
@@ -330,7 +330,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
 
 CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
     N_("Creates directories and adds them to the workspace"),
-    N_(""),
+    "",
     options::opts::no_ignore)
 {
   if (args.size() < 1)
@@ -375,7 +375,7 @@ CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
 
 CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
     N_("Adds files to the workspace"),
-    N_(""),
+    "",
     options::opts::unknown | options::opts::no_ignore |
     options::opts::recursive)
 {
@@ -409,7 +409,7 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
 
 CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
     N_("Drops files from the workspace"),
-    N_(""),
+    "",
     options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
@@ -440,7 +440,7 @@ CMD(rename, "rename", "mv", CMD_REF(workspace),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
     N_("Renames entries in the workspace"),
-    N_(""),
+    "",
     options::opts::bookkeep_only)
 {
   if (args.size() < 2)
@@ -481,7 +481,7 @@ CMD(pivot_root, "pivot_root", "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
 
 CMD(status, "status", "", CMD_REF(informative), N_("[PATH]..."),
     N_("Shows workspace's status information"),
-    N_(""),
+    "",
     options::opts::depth | options::opts::exclude)
 {
   roster_t new_roster;
@@ -778,7 +778,7 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
 //                   format version, if the file is unknown, escalates
 CMD_AUTOMATE(get_attributes, N_("PATH"),
              N_("Prints all attributes for the specified path"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() > 0,
@@ -893,7 +893,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
 //                   exits with status 1.
 CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
              N_("Sets an attribute on a certain path"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 3,
@@ -939,7 +939,7 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
 //                   status 1.
 CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
              N_("Drops an attribute or all of them from a certain path"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() ==1 || args.size() == 2,
@@ -985,7 +985,7 @@ CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
 
 CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     N_("Commits workspace changes to the database"),
-    N_(""),
+    "",
     options::opts::branch | options::opts::message | options::opts::msgfile
     | options::opts::date | options::opts::author | options::opts::depth
     | options::opts::exclude)
@@ -1256,7 +1256,7 @@ CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),
 
 CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
   N_("Imports the contents of a directory into a branch"),
-  N_(""),
+  "",
   options::opts::branch | options::opts::revision |
   options::opts::message | options::opts::msgfile |
   options::opts::dryrun |
@@ -1372,7 +1372,7 @@ CMD_NO_WORKSPACE(migrate_workspace, "migrate_workspace", "", CMD_REF(tree),
 
 CMD(refresh_inodeprints, "refresh_inodeprints", "", CMD_REF(tree), "",
     N_("Refreshes the inodeprint cache"),
-    N_(""),
+    "",
     options::opts::none)
 {
   app.require_workspace();

@@ -39,7 +39,7 @@ using std::string;
 using std::strlen;
 using std::vector;
 
-CMD_GROUP(__root__, "__root__", "", NULL, N_(""), N_(""));
+CMD_GROUP(__root__, "__root__", "", NULL, "", "");
 
 //
 // Definition of top-level commands, used to classify the real commands
@@ -55,40 +55,40 @@ CMD_GROUP(__root__, "__root__", "", NULL, N_(""), N_(""));
 //
 CMD_GROUP(automation, "automation", "", CMD_REF(__root__),
           N_("Commands that aid in scripted execution"),
-          N_(""));
+          "");
 CMD_GROUP(database, "database", "", CMD_REF(__root__),
           N_("Commands that manipulate the database"),
-          N_(""));
+          "");
 CMD_GROUP(debug, "debug", "", CMD_REF(__root__),
           N_("Commands that aid in program debugging"),
-          N_(""));
+          "");
 CMD_GROUP(informative, "informative", "", CMD_REF(__root__),
           N_("Commands for information retrieval"),
-          N_(""));
+          "");
 CMD_GROUP(key_and_cert, "key_and_cert", "", CMD_REF(__root__),
           N_("Commands to manage keys and certificates"),
-          N_(""));
+          "");
 CMD_GROUP(network, "network", "", CMD_REF(__root__),
           N_("Commands that access the network"),
-          N_(""));
+          "");
 CMD_GROUP(packet_io, "packet_io", "", CMD_REF(__root__),
           N_("Commands for packet reading and writing"),
-          N_(""));
+          "");
 CMD_GROUP(rcs, "rcs", "", CMD_REF(__root__),
           N_("Commands for interaction with RCS and CVS"),
-          N_(""));
+          "");
 CMD_GROUP(review, "review", "", CMD_REF(__root__),
           N_("Commands to review revisions"),
-          N_(""));
+          "");
 CMD_GROUP(tree, "tree", "", CMD_REF(__root__),
           N_("Commands to manipulate the tree"),
-          N_(""));
+          "");
 CMD_GROUP(variables, "variables", "", CMD_REF(__root__),
           N_("Commands to manage persistent variables"),
-          N_(""));
+          "");
 CMD_GROUP(workspace, "workspace", "", CMD_REF(__root__),
           N_("Commands that deal with the workspace"),
-          N_(""));
+          "");
 
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
@@ -680,7 +680,7 @@ namespace commands
 
 CMD(help, "help", "", CMD_REF(informative), N_("command [ARGS...]"),
     N_("Displays help about commands and options"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() < 1)
@@ -697,7 +697,7 @@ CMD(help, "help", "", CMD_REF(informative), N_("command [ARGS...]"),
 CMD_HIDDEN(crash, "crash", "", CMD_REF(debug),
            "{ N | E | I | exception | signal }",
            N_("Triggers the specified kind of crash"),
-           N_(""),
+           "",
            options::opts::none)
 {
   if (args.size() != 1)

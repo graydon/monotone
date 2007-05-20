@@ -28,7 +28,7 @@ using std::vector;
 
 CMD(fload, "fload", "", CMD_REF(debug), "",
     N_("Loads a file's contents into the database"),
-    N_(""),
+    "",
     options::opts::none)
 {
   data dat;
@@ -46,7 +46,7 @@ CMD(fload, "fload", "", CMD_REF(debug), "",
 
 CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
     N_("Merges 3 files and outputs the result"),
-    N_(""),
+    "",
     options::opts::none)
 {
   if (args.size() != 3)
@@ -84,7 +84,7 @@ CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
 
 CMD(fdiff, "fdiff", "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
     N_("Differences 2 files and outputs the result"),
-    N_(""),
+    "",
     options::opts::diff_options)
 {
   if (args.size() != 4)
@@ -226,7 +226,7 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
 // an error message to stderr and exits with status 1.
 CMD_AUTOMATE(identify, N_("PATH"),
              N_("Prints the file identifier of a file"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -324,7 +324,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
 // an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_file, N_("FILEID"),
              N_("Prints the contents of a file (given an identifier)"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -350,7 +350,7 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
 // an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_file_of, N_("FILENAME"),
              N_("Prints the contents of a file (given a name)"),
-             N_(""),
+             "",
              options::opts::revision)
 {
   N(args.size() == 1,

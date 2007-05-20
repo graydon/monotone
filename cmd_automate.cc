@@ -24,7 +24,7 @@ using std::vector;
 
 CMD_GROUP(automate, "automate", "", CMD_REF(automation),
           N_("Interface for scripted execution"),
-          N_(""));
+          "");
 
 namespace commands {
   automate::automate(string const & name,
@@ -60,7 +60,7 @@ static string const interface_version = "5.0";
 // Error conditions: None.
 CMD_AUTOMATE(interface_version, "",
              N_("Prints the automation interface's version"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -317,7 +317,7 @@ struct automate_ostream : public std::ostream
 
 CMD_AUTOMATE(stdio, "",
              N_("Automates several commands in one run"),
-             N_(""),
+             "",
              options::opts::automate_stdio_size)
 {
   N(args.size() == 0,

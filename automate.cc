@@ -63,7 +63,7 @@ using std::vector;
 //   no heads.)
 CMD_AUTOMATE(heads, N_("[BRANCH]"),
              N_("Prints the heads of the given branch"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() < 2,
@@ -90,7 +90,7 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
              N_("Prints the ancestors of the given revisions"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() > 0,
@@ -140,7 +140,7 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
              N_("Prints the descendents of the given revisions"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() > 0,
@@ -191,7 +191,7 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
              N_("Erases the ancestors in a list of revisions"),
-             N_(""),
+             "",
              options::opts::none)
 {
   set<revision_id> revs;
@@ -218,7 +218,7 @@ CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
 //   stdout, prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
              N_("Topologically sorts a list of revisions"),
-             N_(""),
+             "",
              options::opts::none)
 {
   set<revision_id> revs;
@@ -254,7 +254,7 @@ CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
 CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
              N_("Lists the ancestors of the first revision given, not in "
                 "the others"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() > 0,
@@ -296,7 +296,7 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
 // Error conditions: None.
 CMD_AUTOMATE(leaves, "",
              N_("Lists the leaves of the revision graph"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -326,7 +326,7 @@ CMD_AUTOMATE(leaves, "",
 // Error conditions: None.
 CMD_AUTOMATE(roots, "",
              N_("Lists the roots of the revision graph"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -354,7 +354,7 @@ CMD_AUTOMATE(roots, "",
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(parents, N_("REV"),
              N_("Prints the parents of a revision"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -382,7 +382,7 @@ CMD_AUTOMATE(parents, N_("REV"),
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(children, N_("REV"),
              N_("Prints the children of a revision"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -420,7 +420,7 @@ CMD_AUTOMATE(children, N_("REV"),
 // Error conditions: None.
 CMD_AUTOMATE(graph, "",
              N_("Prints the complete ancestry graph"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -466,7 +466,7 @@ CMD_AUTOMATE(graph, "",
 // Error conditions: None.
 CMD_AUTOMATE(select, N_("SELECTOR"),
              N_("Lists the revisions that match a selector"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -651,7 +651,7 @@ extract_added_file_paths(addition_map const & additions, path_set & paths)
 
 CMD_AUTOMATE(inventory, "",
              N_("Prints a summary of files found in the workspace"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -854,7 +854,7 @@ CMD_AUTOMATE(inventory, "",
 // prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_revision, N_("[REVID]"),
              N_("Shows change information for a revision"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() < 2,
@@ -900,7 +900,7 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(get_base_revision_id, "",
              N_("Shows the revision on which the workspace is based"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -927,7 +927,7 @@ CMD_AUTOMATE(get_base_revision_id, "",
 //   prints an error message to stderr, and exits with status 1.
 CMD_AUTOMATE(get_current_revision_id, "",
              N_("Shows the revision of the current workspace"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -996,7 +996,7 @@ CMD_AUTOMATE(get_current_revision_id, "",
 // invalid prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
              N_("Shows the manifest associated with a revision"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() < 2,
@@ -1042,7 +1042,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 // invalid prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(packet_for_rdata, N_("REVID"),
              N_("Prints the revision data in packet format"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -1072,7 +1072,7 @@ CMD_AUTOMATE(packet_for_rdata, N_("REVID"),
 CMD_AUTOMATE(packets_for_certs, N_("REVID"),
              N_("Prints the certs associated with a revision in "
                 "packet format"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -1102,7 +1102,7 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
 // prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(packet_for_fdata, N_("FILEID"),
              N_("Prints the file data in packet format"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -1132,7 +1132,7 @@ CMD_AUTOMATE(packet_for_fdata, N_("FILEID"),
 // invalid prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"),
              N_("Prints the file delta in packet format"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 2,
@@ -1170,7 +1170,7 @@ CMD_AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"),
 CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
              N_("Prints revisions that are common ancestors of a list "
                 "of revisions"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() > 0,
@@ -1236,7 +1236,7 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
 //   None.
 CMD_AUTOMATE(branches, "",
              N_("Prints all branch certs in the revision graph"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 0,
@@ -1288,7 +1288,7 @@ CMD_AUTOMATE(branches, "",
 //   A run-time exception is thrown for illegal patterns.
 CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
              N_("Prints all tags attached to a set of branches"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() < 2,
@@ -1381,7 +1381,7 @@ namespace
 // prints an error message to stderr and exits with status 1.
 CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
              N_("Generates a key"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 2,
@@ -1443,7 +1443,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
 //
 CMD_AUTOMATE(get_option, N_("OPTION"),
              N_("Shows the value of an option"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -1496,7 +1496,7 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
 CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
              N_("Lists the revisions that changed the content relative "
                 "to another revision"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 2,
@@ -1559,7 +1559,7 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
 CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
              N_("Prints the name of a file in a target revision relative "
                 "to a given revision"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 3,
@@ -1611,7 +1611,7 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
 //   a runtime exception is thrown if base revision is not available
 CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
              N_("Stores a file in the database"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1 || args.size() == 2,
@@ -1664,7 +1664,7 @@ CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
 //   none
 CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
              N_("Stores a revision into the database"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 1,
@@ -1721,7 +1721,7 @@ CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
 //   none
 CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
              N_("Adds a revision certificate"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 3,
@@ -1754,7 +1754,7 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
 //   none
 CMD_AUTOMATE(db_set, N_("DOMAIN NAME VALUE"),
              N_("Sets a database variable"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 3,
@@ -1780,7 +1780,7 @@ CMD_AUTOMATE(db_set, N_("DOMAIN NAME VALUE"),
 //   a runtime exception is thrown if the variable is not set
 CMD_AUTOMATE(db_get, N_("DOMAIN NAME"),
              N_("Gets a database variable"),
-             N_(""),
+             "",
              options::opts::none)
 {
   N(args.size() == 2,
