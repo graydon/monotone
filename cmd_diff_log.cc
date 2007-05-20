@@ -391,7 +391,7 @@ prepare_diff(cset & included,
       roster_t new_roster, old_roster;
       revision_id r_old_id;
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
@@ -416,8 +416,8 @@ prepare_diff(cset & included,
       roster_t new_roster, old_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
@@ -526,7 +526,7 @@ CMD(diff, "diff", "", CMD_REF(informative), N_("[PATH]..."),
 // doubles the output of automate get_revision). If no content changes happened,
 // the output is empty. All file operations beside mtn add are omitted,
 // as they don't change the content of the file.
-CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
+CMD_AUTOMATE_WITH_EVERYTHING(content_diff, N_("[FILE [...]]"),
              N_("Calculates diffs of files"),
              N_(""),
              options::opts::revision | options::opts::depth |
@@ -644,7 +644,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
            i != app.opts.from.end(); i++)
         {
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app.db, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -699,7 +699,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         {
           MM(*i);
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app.db, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -807,7 +807,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
               set<node_id> nodes_modified;
               select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
-                                           app);
+                                           app.db);
 
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)

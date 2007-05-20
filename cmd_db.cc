@@ -36,7 +36,7 @@ static void
 kill_rev_locally(app_state& app, string const& id)
 {
   revision_id ident;
-  complete(app, id, ident);
+  complete(app.db, id, ident);
   N(app.db.revision_exists(ident),
     F("no such revision '%s'") % ident);
 
@@ -296,7 +296,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << '\n';
-          else cout << describe_revision(app, *i) << '\n';
+          else cout << describe_revision(app.db, *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")

@@ -9,8 +9,8 @@
 
 #include "selectors.hh"
 #include "sanity.hh"
-#include "app_state.hh"
 #include "constants.hh"
+#include "database.hh"
 
 #include <boost/tokenizer.hpp>
 
@@ -27,7 +27,7 @@ namespace selectors
   decode_selector(string const & orig_sel,
                   selector_type & type,
                   string & sel,
-                  app_state & app)
+                  database & db)
   {
     sel = orig_sel;
 
@@ -36,7 +36,7 @@ namespace selectors
     string tmp;
     if (sel.size() < 2 || sel[1] != ':')
       {
-        if (!app.lua.hook_expand_selector(sel, tmp))
+        if (!db.hook_expand_selector(sel, tmp))
           {
             L(FL("expansion of selector '%s' failed") % sel);
           }
@@ -87,6 +87,7 @@ namespace selectors
         /* a selector date-related should be validated */	
         if (sel_date==type || sel_later==type || sel_earlier==type)
           {
+            //FIXME: db.hook_expand_date(...)
             if (app.lua.hook_exists("expand_date"))
               { 
                 N(app.lua.hook_expand_date(sel, tmp),
@@ -124,16 +125,16 @@ namespace selectors
                     vector<pair<selector_type, string> > const & limit,
                     selector_type & type,
                     set<string> & completions,
-                    app_state & app)
+                    database & db)
   {
     string sel;
-    decode_selector(orig_sel, type, sel, app);
-    app.db.complete(type, sel, limit, completions);
+    decode_selector(orig_sel, type, sel, db);
+    db.complete(type, sel, limit, completions);
   }
 
   vector<pair<selector_type, string> >
   parse_selector(string const & str,
-                 app_state & app)
+                 database & db)
   {
     vector<pair<selector_type, string> > sels;
 
@@ -159,7 +160,7 @@ namespace selectors
             string sel;
             selector_type type = sel_unknown;
 
-            decode_selector(*i, type, sel, app);
+            decode_selector(*i, type, sel, db);
             sels.push_back(make_pair(type, sel));
           }
       }

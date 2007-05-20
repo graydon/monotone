@@ -168,7 +168,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
   else
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
       N(!null_id(rid), 
         F("no revision for file '%s' in database") % file);
       N(app.db.revision_exists(rid), 
@@ -186,7 +186,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.opts.brief);
+  do_annotate(app.db, file_node, rid, app.opts.brief);
 }
 
 CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
@@ -307,7 +307,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
 
   dump_file(cout, app, rid, idx(args, 0));
 }
@@ -322,7 +322,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-CMD_AUTOMATE(get_file, N_("FILEID"),
+CMD_AUTOMATE_WITH_EVERYTHING(get_file, N_("FILEID"),
              N_("Prints the contents of a file (given an identifier)"),
              N_(""),
              options::opts::none)
@@ -348,7 +348,7 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-CMD_AUTOMATE(get_file_of, N_("FILENAME"),
+CMD_AUTOMATE_WITH_EVERYTHING(get_file_of, N_("FILENAME"),
              N_("Prints the contents of a file (given a name)"),
              N_(""),
              options::opts::revision)
@@ -368,7 +368,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
 
   dump_file(output, app, rid, idx(args, 0));
 }
