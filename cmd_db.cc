@@ -212,7 +212,7 @@ CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
 }
 
 CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
-    N_("Clears the database's epoch"),
+    N_("Clears the branch's epoch"),
     "",
     options::opts::none)
 {
@@ -223,7 +223,7 @@ CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
 }
 
 CMD(db_set_epoch, "set_epoch", "", CMD_REF(db), "BRANCH EPOCH",
-    N_("Sets the database's epoch"),
+    N_("Sets the branch's epoch"),
     "",
     options::opts::none)
 {
