@@ -190,7 +190,7 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
 }
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
-    N_("Converst the database to the rosters format"),
+    N_("Converts the database to the rosters format"),
     "",
     options::opts::drop_attr)
 {
