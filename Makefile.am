@@ -289,7 +289,6 @@ WIN32_PLATFORM_SOURCES =						\
 # primaries
 
 bin_PROGRAMS = mtn
-check_PROGRAMS = unit_tests tester
 noinst_PROGRAMS = txt2c
 EXTRA_PROGRAMS = usher
 
@@ -502,9 +501,15 @@ monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
 # testsuite stuff (could this possibly be more ugly?)
 
 if BUILD_UNIT_TESTS
+
+check_PROGRAMS = unit_tests tester
 TESTS = unit_tests run_tester_tests run_lua_tests
+
 else
+
+check_PROGRAMS = tester
 TESTS = run_tester_tests run_lua_tests
+
 endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."

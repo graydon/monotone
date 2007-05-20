@@ -212,7 +212,7 @@ CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
 }
 
 CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
-    N_("Clears the database's epoch"),
+    N_("Clears the branch's epoch"),
     "",
     options::opts::none)
 {
@@ -223,7 +223,7 @@ CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
 }
 
 CMD(db_set_epoch, "set_epoch", "", CMD_REF(db), "BRANCH EPOCH",
-    N_("Sets the database's epoch"),
+    N_("Sets the branch's epoch"),
     "",
     options::opts::none)
 {
@@ -257,7 +257,7 @@ CMD(set, "set", "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
 
 CMD(unset, "unset", "", CMD_REF(variables), N_("DOMAIN NAME"),
     N_("Unsets a database variable"),
-    N_("This command removes the variable NAME from domain DOMAIN, which"
+    N_("This command removes the variable NAME from domain DOMAIN, which "
        "was previously stored in the database."),
     options::opts::none)
 {

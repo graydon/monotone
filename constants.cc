@@ -13,8 +13,6 @@
 #include "constants.hh"
 #include "numeric_vocab.hh"
 
-#include <boost/static_assert.hpp>
-
 using std::string;
 
 namespace constants
@@ -136,17 +134,6 @@ namespace constants
   size_t const merkle_bitmap_length_in_bits = merkle_num_slots * 2;
   size_t const merkle_bitmap_length_in_bytes = merkle_bitmap_length_in_bits / 8;
 
-  BOOST_STATIC_ASSERT(sizeof(char) == 1);
-  BOOST_STATIC_ASSERT(CHAR_BIT == 8);
-  BOOST_STATIC_ASSERT(merkle_num_tree_levels > 0);
-  BOOST_STATIC_ASSERT(merkle_num_tree_levels < 256);
-  BOOST_STATIC_ASSERT(merkle_fanout_bits > 0);
-  BOOST_STATIC_ASSERT(merkle_fanout_bits < 32);
-  BOOST_STATIC_ASSERT(merkle_hash_length_in_bits > 0);
-  BOOST_STATIC_ASSERT((merkle_hash_length_in_bits % merkle_fanout_bits) == 0);
-  BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
-  BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
-
   u8 const netcmd_current_protocol_version = 6;
 
   size_t const netcmd_minimum_bytes_to_bother_with_gzip = 0xfff;
@@ -162,6 +149,27 @@ namespace constants
   string const binary_encoding("binary");
   string const default_encoding("default");
 }
+
+#include <boost/static_assert.hpp>
+
+// constraint checks for fundamental types
+// n.b. sizeof([unsigned] char) is *defined* to be 1 by the C++ standard.
+BOOST_STATIC_ASSERT(std::numeric_limits<unsigned char>::digits == 8);
+BOOST_STATIC_ASSERT(sizeof(u8) == 1);
+BOOST_STATIC_ASSERT(sizeof(u16) == 2);
+BOOST_STATIC_ASSERT(sizeof(u32) == 4);
+BOOST_STATIC_ASSERT(sizeof(u64) == 8);
+
+// constraint checks for relations between constants above
+using namespace constants;
+BOOST_STATIC_ASSERT(merkle_num_tree_levels > 0);
+BOOST_STATIC_ASSERT(merkle_num_tree_levels < 256);
+BOOST_STATIC_ASSERT(merkle_fanout_bits > 0);
+BOOST_STATIC_ASSERT(merkle_fanout_bits < 32);
+BOOST_STATIC_ASSERT(merkle_hash_length_in_bits > 0);
+BOOST_STATIC_ASSERT((merkle_hash_length_in_bits % merkle_fanout_bits) == 0);
+BOOST_STATIC_ASSERT(merkle_bitmap_length_in_bits > 0);
+BOOST_STATIC_ASSERT((merkle_bitmap_length_in_bits % 8) == 0);
 
 // Local Variables:
 // mode: C++
