@@ -186,7 +186,7 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  build_changesets_from_manifest_ancestry(app);
+  build_changesets_from_manifest_ancestry(app.db);
 }
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
@@ -197,7 +197,7 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  build_roster_style_revs_from_manifest_style_revs(app);
+  build_roster_style_revs_from_manifest_style_revs(app.db);
 }
 
 CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
@@ -208,7 +208,7 @@ CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  regenerate_caches(app);
+  regenerate_caches(app.db);
 }
 
 CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",

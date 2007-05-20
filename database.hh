@@ -598,6 +598,7 @@ public:
                                revision_t const & rev);
 
   // FIXME: quick hack to make these hooks available via the database context
+  bool hook_exists(std::string const & name);
   bool hook_expand_selector(std::string const & sel, std::string & exp);
   bool hook_expand_date(std::string const & sel, std::string & exp);
   bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,

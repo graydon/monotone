@@ -349,7 +349,7 @@ change_key_passphrase(key_store & keys,
   shared_ptr<RSA_PrivateKey> priv = get_private_key(keys, id, encoded_key, true);
 
   utf8 new_phrase;
-  get_passphrase(lua, id, new_phrase, true, true, "enter new passphrase");
+  get_passphrase(keys, id, new_phrase, true, true, "enter new passphrase");
 
   Pipe p;
   p.start_msg();

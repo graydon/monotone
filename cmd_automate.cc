@@ -45,46 +45,6 @@ namespace commands {
     make_io_binary();
     exec_from_automate(args, execid, app, std::cout);
   }
-
-  automate_with_database::automate_with_database(string const &n,
-    string const &p, options::options_type const & o)
-    : automate(n, p, o)
-  { }
-
-  void automate_with_database::run(std::vector<utf8> args,
-                                   string const & help_name,
-                                   app_state & app,
-                                   std::ostream & output) const
-  {
-    run(args, help_name, app.db, output);
-  }
-
-
-  automate_with_workspace::automate_with_workspace(string const &n,
-    string const &p, options::options_type const & o)
-    : automate(n, p, o)
-  { }
-  void automate_with_workspace::run(std::vector<utf8> args,
-                                    string const & help_name,
-                                    app_state & app,
-                                    std::ostream & output) const
-  {
-    run(args, help_name, app.work, output);
-  }
-
-
-  automate_with_nothing::automate_with_nothing(string const &n,
-    string const &p, options::options_type const & o)
-    : automate(n, p, o)
-  { }
-
-  void automate_with_nothing::run(std::vector<utf8> args,
-                                  string const & help_name,
-                                  app_state & app,
-                                  std::ostream & output) const
-  {
-    run(args, help_name, output);
-  }
 }
 
 static string const interface_version = "5.0";
@@ -355,7 +315,7 @@ struct automate_ostream : public std::ostream
 };
 
 
-CMD_AUTOMATE_WITH_NOTHING(stdio, "",
+CMD_AUTOMATE_WITH_EVERYTHING(stdio, "",
              N_("Automates several commands in one run"),
              N_(""),
              options::opts::automate_stdio_size)

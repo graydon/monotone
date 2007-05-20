@@ -324,7 +324,7 @@ CMD_AUTOMATE_WITH_DATABASE(leaves, "",
 // Output format: A list of revision ids, in hexadecimal, each followed by a
 //   newline.  Revision ids are printed in alphabetically sorted order.
 // Error conditions: None.
-CMD_AUTOMATE(roots, "",
+CMD_AUTOMATE_WITH_EVERYTHING(roots, "",
              N_("Lists the roots of the revision graph"),
              N_(""),
              options::opts::none)

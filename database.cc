@@ -3423,6 +3423,12 @@ database::close()
 
 // FIXME: the quick hack lua link in functions
 bool
+database::hook_exists(std::string const & name)
+{
+  return __app->lua.hook_exists(name);
+}
+
+bool
 database::hook_expand_selector(std::string const & sel, std::string & exp)
 {
   return __app->lua.hook_expand_selector(sel, exp);

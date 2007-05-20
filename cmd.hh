@@ -246,7 +246,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // command definition allows the description of input/output format,
 // error conditions, version when added, etc.  'desc' can later be
 // automatically built from these.
-#define CMD_AUTOMATE(C, params, abstract, desc, opts)                \
+#define CMD_AUTOMATE_WITH_EVERYTHING(C, params, abstract, desc, opts)\
 namespace commands {                                                 \
   class automate_ ## C : public automate                             \
   {                                                                  \
@@ -257,62 +257,6 @@ namespace commands {                                                 \
   public:                                                            \
     automate_ ## C() : automate(#C, params, abstract, desc,          \
                                 options::options_type() | opts)      \
-  public:
-
-
-  struct automate_with_database
-    : public automate
-  {
-    automate_with_database(std::string const & n, std::string const & p,
-                           options::options_type const & o);
-
-  public:
-    virtual void run(std::vector<utf8> args,
-                     std::string const & help_name,
-                     database & db,
-                     std::ostream & output) const = 0;
-
-    virtual void run(std::vector<utf8> args,
-                     std::string const & help_name,
-                     app_state & app,
-                     std::ostream & output) const;
-  };
-
-  struct automate_with_workspace
-    : public automate
-  {
-    automate_with_workspace(std::string const & n, std::string const & p,
-                            options::options_type const & o);
-
-  public:
-    virtual void run(std::vector<utf8> args,
-                     std::string const & help_name,
-                     workspace & work,
-                     std::ostream & output) const = 0;
-
-    virtual void run(std::vector<utf8> args,
-                     std::string const & help_name,
-                     app_state & app,
-                     std::ostream & output) const;
-  };
-
-  struct automate_with_nothing
-    : public automate
-  {
-    automate_with_nothing(std::string const & n, std::string const & p,
-                          options::options_type const & o);
-
-  public:
-    virtual void run(std::vector<utf8> args,
-                     std::string const & help_name,
-                     std::ostream & output) const = 0;
-
-    virtual void run(std::vector<utf8> args,
-                     std::string const & help_name,
-                     app_state & app,
-                     std::ostream & output) const;
-  };
-
     {}                                                               \
   };                                                                 \
   automate_ ## C C ## _automate;                                     \
@@ -323,25 +267,71 @@ void commands::automate_ ## C :: exec_from_automate                  \
    app_state & app,                                                  \
    std::ostream & output) const
 
-CMD_FWD_DECL(__root__);
-namespace automation {                                              \
-  struct auto_ ## NAME : public automate_with_database              \
-  {                                                                 \
-    auto_ ## NAME ()                                                \
-      : automate_with_database(#NAME, PARAMS,                       \
-                                options::options_type() | OPTIONS)  \
-    {}                                                              \
-    void run(std::vector<utf8> args, std::string const & help_name, \
-                       database & db, std::ostream & output) const; \
-    virtual ~auto_ ## NAME() {}                                     \
-  };                                                                \
-  static auto_ ## NAME NAME ## _auto;                               \
-}                                                                   \
-void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
-                                      std::string const & help_name,\
-                                      database & db,                \
-                                      std::ostream & output) const
+#define CMD_AUTOMATE_WITH_DATABASE(C, params, abstract, desc, opts)  \
+namespace commands {                                                 \
+  class automate_ ## C : public automate                             \
+  {                                                                  \
+    void exec_from_automate(args_vector args,                        \
+                            command_id const & execid,               \
+                            app_state & app,                         \
+                            std::ostream & output) const;            \
+                                                                     \
+    void exec_from_automate(args_vector args,                        \
+                            command_id const & execid,               \
+                            database & db,                           \
+                            std::ostream & output) const;            \
+  public:                                                            \
+    automate_ ## C() : automate(#C, params, abstract, desc,          \
+                                options::options_type() | opts)      \
+    {}                                                               \
+  };                                                                 \
+  automate_ ## C C ## _automate;                                     \
+}                                                                    \
+void commands::automate_ ## C :: exec_from_automate                  \
+  (args_vector args,                                                 \
+   command_id const & execid,                                        \
+   app_state & app,                                                  \
+   std::ostream & output) const                                      \
+  { exec_from_automate(args, execid, app.db, output); }              \
+                                                                     \
+void commands::automate_ ## C :: exec_from_automate                  \
+  (args_vector args,                                                 \
+   command_id const & execid,                                        \
+   database & db,                                                    \
+   std::ostream & output) const
 
+#define CMD_AUTOMATE_WITH_NOTHING(C, params, abstract, desc, opts)   \
+namespace commands {                                                 \
+  class automate_ ## C : public automate                             \
+  {                                                                  \
+    void exec_from_automate(args_vector args,                        \
+                            command_id const & execid,               \
+                            app_state & app,                         \
+                            std::ostream & output) const;            \
+                                                                     \
+    void exec_from_automate(args_vector args,                        \
+                            command_id const & execid,               \
+                            std::ostream & output) const;            \
+  public:                                                            \
+    automate_ ## C() : automate(#C, params, abstract, desc,          \
+                                options::options_type() | opts)      \
+    {}                                                               \
+  };                                                                 \
+  automate_ ## C C ## _automate;                                     \
+}                                                                    \
+void commands::automate_ ## C :: exec_from_automate                  \
+  (args_vector args,                                                 \
+   command_id const & execid,                                        \
+   app_state & app,                                                  \
+   std::ostream & output) const                                      \
+  { exec_from_automate(args, execid, output); }                      \
+                                                                     \
+void commands::automate_ ## C :: exec_from_automate                  \
+  (args_vector args,                                                 \
+   command_id const & execid,                                        \
+   std::ostream & output) const
+
+CMD_FWD_DECL(__root__);
 CMD_FWD_DECL(automation);
 CMD_FWD_DECL(database);
 CMD_FWD_DECL(debug);
@@ -354,43 +344,6 @@ CMD_FWD_DECL(review);
 CMD_FWD_DECL(tree);
 CMD_FWD_DECL(variables);
 CMD_FWD_DECL(workspace);
-
-#define AUTOMATE_WITH_WORKSPACE(NAME, PARAMS, OPTIONS)              \
-namespace automation {                                              \
-  struct auto_ ## NAME : public automate_with_workspace             \
-  {                                                                 \
-    auto_ ## NAME ()                                                \
-      : automate_with_workspace(#NAME, PARAMS,                      \
-                                options::options_type() | OPTIONS)  \
-    {}                                                              \
-    void run(std::vector<utf8> args, std::string const & help_name, \
-                    workspace & work, std::ostream & output) const; \
-    virtual ~auto_ ## NAME() {}                                     \
-  };                                                                \
-  static auto_ ## NAME NAME ## _auto;                               \
-}                                                                   \
-void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
-                                      std::string const & help_name,\
-                                      workspace & work,             \
-                                      std::ostream & output) const
-
-#define AUTOMATE_WITH_NOTHING(NAME, PARAMS, OPTIONS)                \
-namespace automation {                                              \
-  struct auto_ ## NAME : public automate_with_nothing               \
-  {                                                                 \
-    auto_ ## NAME ()                                                \
-      : automate_with_nothing(#NAME, PARAMS,                        \
-                                options::options_type() | OPTIONS)  \
-    {}                                                              \
-    void run(std::vector<utf8> args, std::string const & help_name, \
-                                      std::ostream & output) const; \
-    virtual ~auto_ ## NAME() {}                                     \
-  };                                                                \
-  static auto_ ## NAME NAME ## _auto;                               \
-}                                                                   \
-void automation::auto_ ## NAME :: run(std::vector<utf8> args,       \
-                                      std::string const & help_name,\
-                                      std::ostream & output) const
 
 // Local Variables:
 // mode: C++

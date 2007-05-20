@@ -87,10 +87,9 @@ namespace selectors
         /* a selector date-related should be validated */	
         if (sel_date==type || sel_later==type || sel_earlier==type)
           {
-            //FIXME: db.hook_expand_date(...)
-            if (app.lua.hook_exists("expand_date"))
+            if (db.hook_exists("expand_date"))
               { 
-                N(app.lua.hook_expand_date(sel, tmp),
+                N(db.hook_expand_date(sel, tmp),
                   F("selector '%s' is not a valid date\n") % sel);
               }
             else

@@ -224,7 +224,7 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
 //
 // Error conditions: If the file path doesn't point to a valid file prints
 // an error message to stderr and exits with status 1.
-CMD_AUTOMATE(identify, N_("PATH"),
+CMD_AUTOMATE_WITH_EVERYTHING(identify, N_("PATH"),
              N_("Prints the file identifier of a file"),
              N_(""),
              options::opts::none)
