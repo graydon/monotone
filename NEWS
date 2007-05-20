@@ -1,3 +1,30 @@
+??? ??? ?? ??:??:?? ??? ????
+
+        0.36 release.
+
+        Changes
+
+        - The help command is now able to show documentation on subcommands
+          (such as 'attr set').
+
+        - The help command now shows a brief abstract of each command,
+          instead of only listing their names.
+
+        New features
+
+        Other
+
+        Internal
+
+        - Commands are now defined as a tree of commands instead of a
+          plain list, which allows the help system to look up information
+          of a command at an level in the tree.
+
+        - The command class, the automate class and all the associated
+          macros have been cleaned up.
+
+
+
 Mon May  7 14:08:44 UTC 2007
 
         0.35 release.

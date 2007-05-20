@@ -8,11 +8,11 @@
 
 OPTSET(globals)
 
-OPTVAR(globals, std::vector<utf8>, args, )
+OPTVAR(globals, args_vector, args, )
 OPTION(globals, positionals, true, "--", "")
 #ifdef option_bodies
 {
-  args.push_back(utf8(arg));
+  args.push_back(arg_type(arg));
 }
 #endif
 
@@ -233,12 +233,12 @@ OPTION(globals, dump, true, "dump",
 }
 #endif
 
-OPTVAR(exclude, std::vector<utf8>, exclude_patterns, )
+OPTVAR(exclude, args_vector, exclude_patterns, )
 OPTION(exclude, exclude, true, "exclude",
         gettext_noop("leave out anything described by its argument"))
 #ifdef option_bodies
 {
-  exclude_patterns.push_back(utf8(arg));
+  exclude_patterns.push_back(arg_type(arg));
 }
 #endif
 
@@ -258,11 +258,11 @@ GOPT(ssh_sign, "ssh-sign", std::string, "yes",
 }
 #endif
 
-GOPT(full_version, "full-version", bool, false,
-     gettext_noop("print detailed version number, then exit"))
+OPT(full, "full", bool, false,
+     gettext_noop("print detailed version number"))
 #ifdef option_bodies
 {
-  full_version = true;
+  full = true;
 }
 #endif
 
@@ -273,12 +273,12 @@ GOPT(help, "help,h", bool, false, gettext_noop("display help message"))
 }
 #endif
 
-OPTVAR(include, std::vector<utf8>, include_patterns, )
+OPTVAR(include, args_vector, include_patterns, )
 OPTION(include, include, true, "include",
         gettext_noop("include anything described by its argument"))
 #ifdef option_bodies
 {
-  include_patterns.push_back(utf8(arg));
+  include_patterns.push_back(arg_type(arg));
 }
 #endif
 
@@ -428,11 +428,11 @@ GOPT(quiet, "quiet", bool, false,
 }
 #endif
 
-GOPT(extra_rcfiles, "rcfile", std::vector<utf8>, ,
+GOPT(extra_rcfiles, "rcfile", args_vector, ,
      gettext_noop("load extra rc file"))
 #ifdef option_bodies
 {
-  extra_rcfiles.push_back(utf8(arg));
+  extra_rcfiles.push_back(arg_type(arg));
 }
 #endif
 
@@ -454,12 +454,12 @@ OPT(recursive, "recursive,R", bool, false,
 }
 #endif
 
-OPTVAR(revision, std::vector<utf8>, revision_selectors, )
+OPTVAR(revision, args_vector, revision_selectors, )
 OPTION(revision, revision, true, "revision,r",
      gettext_noop("select revision id for operation"))
 #ifdef option_bodies
 {
-  revision_selectors.push_back(utf8(arg));
+  revision_selectors.push_back(arg_type(arg));
 }
 #endif
 
@@ -495,17 +495,17 @@ GOPT(ticker, "ticker", std::string, ,
 }
 #endif
 
-OPT(from, "from", std::vector<utf8>, , gettext_noop("revision(s) to start logging at"))
+OPT(from, "from", args_vector, , gettext_noop("revision(s) to start logging at"))
 #ifdef option_bodies
 {
-  from.push_back(utf8(arg));
+  from.push_back(arg_type(arg));
 }
 #endif
 
-OPT(to, "to", std::vector<utf8>, , gettext_noop("revision(s) to stop logging at"))
+OPT(to, "to", args_vector, , gettext_noop("revision(s) to stop logging at"))
 #ifdef option_bodies
 {
-  to.push_back(utf8(arg));
+  to.push_back(arg_type(arg));
 }
 #endif
 

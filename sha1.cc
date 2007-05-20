@@ -92,7 +92,10 @@ void hook_botan_sha1()
   Botan::global_state().add_engine(new Monotone_SHA1_Engine);
 }
 
-CMD(benchmark_sha1, hidden_group(), "", "benchmark SHA-1 cores", options::opts::none)
+CMD_HIDDEN(benchmark_sha1, "benchmark_sha1", "", CMD_REF(debug), "",
+           N_("Benchmarks SHA-1 cores"),
+           "",
+           options::opts::none)
 {
   P(F("Benchmarking %s SHA-1 cores") % registry().size());
   int mebibytes = 100;

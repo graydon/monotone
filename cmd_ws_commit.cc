@@ -142,8 +142,10 @@ get_log_message_interactively(revision_t const & cs,
   system_to_utf8(log_message_external, log_message);
 }
 
-CMD(revert, N_("workspace"), N_("[PATH]..."),
-    N_("revert file(s), dir(s) or entire workspace (\".\")"),
+CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Reverts files and/or directories"),
+    N_("In order to revert the entire workspace, specify \".\" as the "
+       "file name."),
     options::opts::depth | options::opts::exclude | options::opts::missing)
 {
   roster_t old_roster, new_roster;
@@ -272,13 +274,14 @@ CMD(revert, N_("workspace"), N_("[PATH]..."),
   app.work.maybe_update_inodeprints();
 }
 
-CMD(disapprove, N_("review"), N_("REVISION"),
-    N_("disapprove of a particular revision"),
+CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
+    N_("Disapproves a particular revision"),
+    "",
     options::opts::branch | options::opts::messages | options::opts::date |
     options::opts::author)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(execid);
 
   utf8 log_message("");
   bool log_message_given;
@@ -325,12 +328,13 @@ CMD(disapprove, N_("review"), N_("REVISION"),
   }
 }
 
-CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
-    N_("create one or more directories and add them to the workspace"),
+CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
+    N_("Creates directories and adds them to the workspace"),
+    "",
     options::opts::no_ignore)
 {
   if (args.size() < 1)
-    throw usage(name);
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -338,7 +342,7 @@ CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
   //spin through args and try to ensure that we won't have any collisions
   //before doing any real filesystem modification.  we'll also verify paths
   //against .mtn-ignore here.
-  for (vector<utf8>::const_iterator i = args.begin();
+  for (args_vector::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
       split_path sp;
@@ -369,13 +373,14 @@ CMD(mkdir, N_("workspace"), N_("[DIRECTORY...]"),
   app.work.perform_additions(paths, false, !app.opts.no_ignore);
 }
 
-CMD(add, N_("workspace"), N_("[PATH]..."),
-    N_("add files to workspace"),
+CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Adds files to the workspace"),
+    "",
     options::opts::unknown | options::opts::no_ignore |
     options::opts::recursive)
 {
   if (!app.opts.unknown && (args.size() < 1))
-    throw usage(name);
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -402,12 +407,13 @@ CMD(add, N_("workspace"), N_("[PATH]..."),
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
 
-CMD(drop, N_("workspace"), N_("[PATH]..."),
-    N_("drop files from workspace"),
+CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Drops files from the workspace"),
+    "",
     options::opts::bookkeep_only | options::opts::missing | options::opts::recursive)
 {
   if (!app.opts.missing && (args.size() < 1))
-    throw usage(name);
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -429,17 +435,16 @@ CMD(drop, N_("workspace"), N_("[PATH]..."),
   app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
 
-ALIAS(rm, drop);
 
-
-CMD(rename, N_("workspace"),
+CMD(rename, "rename", "mv", CMD_REF(workspace),
     N_("SRC DEST\n"
        "SRC1 [SRC2 [...]] DEST_DIR"),
-    N_("rename entries in the workspace"),
+    N_("Renames entries in the workspace"),
+    "",
     options::opts::bookkeep_only)
 {
   if (args.size() < 2)
-    throw usage(name);
+    throw usage(execid);
 
   app.require_workspace();
 
@@ -454,21 +459,19 @@ CMD(rename, N_("workspace"),
   app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
 
-ALIAS(mv, rename);
 
-
-CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
-    N_("rename the root directory\n"
-       "after this command, the directory that currently "
-       "has the name NEW_ROOT\n"
+CMD(pivot_root, "pivot_root", "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
+    N_("Renames the root directory"),
+    N_("After this command, the directory that currently "
+       "has the name NEW_ROOT "
        "will be the root directory, and the directory "
-       "that is currently the root\n"
+       "that is currently the root "
        "directory will have name PUT_OLD.\n"
        "Use of --bookkeep-only is NOT recommended."),
     options::opts::bookkeep_only)
 {
   if (args.size() != 2)
-    throw usage(name);
+    throw usage(execid);
 
   app.require_workspace();
   file_path new_root = file_path_external(idx(args, 0));
@@ -476,7 +479,9 @@ CMD(pivot_root, N_("workspace"), N_("NEW_ROOT PUT_OLD"),
   app.work.perform_pivot_root(new_root, put_old, app.opts.bookkeep_only);
 }
 
-CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
+CMD(status, "status", "", CMD_REF(informative), N_("[PATH]..."),
+    N_("Shows workspace's status information"),
+    "",
     options::opts::depth | options::opts::exclude)
 {
   roster_t new_roster;
@@ -503,20 +508,20 @@ CMD(status, N_("informative"), N_("[PATH]..."), N_("show status of workspace"),
   cout << summary_external;
 }
 
-CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
-    N_("check out a revision from database into directory.\n"
-       "If a revision is given, that's the one that will be checked out.\n"
-       "Otherwise, it will be the head of the branch (given or implicit).\n"
-       "If no directory is given, the branch name will be used as directory"),
+CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
+    N_("Checks out a revision from the database into a directory"),
+    N_("If a revision is given, that's the one that will be checked out.  "
+       "Otherwise, it will be the head of the branch (given or implicit).  "
+       "If no directory is given, the branch name will be used as directory."),
     options::opts::branch | options::opts::revision)
 {
-  revision_id ident;
+  revision_id revid;
   system_path dir;
 
   transaction_guard guard(app.db, false);
 
   if (args.size() > 1 || app.opts.revision_selectors.size() > 1)
-    throw usage(name);
+    throw usage(execid);
 
   if (app.opts.revision_selectors.size() == 0)
     {
@@ -536,22 +541,22 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
-      ident = *(heads.begin());
+      revid = *(heads.begin());
     }
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
-      N(app.db.revision_exists(ident),
-        F("no such revision '%s'") % ident);
+      complete(app, idx(app.opts.revision_selectors, 0)(), revid);
+      N(app.db.revision_exists(revid),
+        F("no such revision '%s'") % revid);
 
-      guess_branch(ident, app);
+      guess_branch(revid, app);
 
       I(!app.opts.branchname().empty());
 
-      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
+      N(app.get_project().revision_is_in_branch(revid, app.opts.branchname),
         F("revision %s is not a member of branch %s")
-        % ident % app.opts.branchname);
+        % revid % app.opts.branchname);
     }
 
   // we do this part of the checking down here, because it is legitimate to
@@ -588,11 +593,11 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
   shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
   roster_t current_roster;
 
-  L(FL("checking out revision %s to directory %s") % ident % dir);
-  app.db.get_roster(ident, current_roster);
+  L(FL("checking out revision %s to directory %s") % revid % dir);
+  app.db.get_roster(revid, current_roster);
 
   revision_t workrev;
-  make_revision_for_workspace(ident, cset(), workrev);
+  make_revision_for_workspace(revid, cset(), workrev);
   app.work.put_work_rev(workrev);
 
   cset checkout;
@@ -610,14 +615,19 @@ CMD(checkout, N_("tree"), N_("[DIRECTORY]"),
   guard.commit();
 }
 
-ALIAS(co, checkout);
+CMD_GROUP(attr, "attr", "", CMD_REF(workspace),
+          N_("Manages file attributes"),
+          N_("This command is used to set, get or drop file attributes."));
 
-CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [ATTR]"),
-    N_("set, get or drop file attributes"),
+CMD(attr_drop, "drop", "", CMD_REF(attr), N_("PATH [ATTR]"),
+    N_("Removes attributes from a file"),
+    N_("If no attribute is specified, this command removes all attributes "
+       "attached to the file given in PATH.  Otherwise only removes the "
+       "attribute specified in ATTR."),
     options::opts::none)
 {
-  if (args.size() < 2 || args.size() > 4)
-    throw usage(name);
+  N(args.size() > 0 && args.size() < 3,
+    F("wrong argument count"));
 
   roster_t new_roster;
   temp_node_id_source nis;
@@ -625,89 +635,126 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
   app.require_workspace();
   app.work.get_current_roster_shape(new_roster, nis);
 
-  file_path path = file_path_external(idx(args,1));
+  file_path path = file_path_external(idx(args, 0));
   split_path sp;
   path.split(sp);
 
   N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
   node_t node = new_roster.get_node(sp);
 
-  string subcmd = idx(args, 0)();
-  if (subcmd == "set" || subcmd == "drop")
+  // Clear all attrs (or a specific attr).
+  if (args.size() == 1)
     {
-      if (subcmd == "set")
-        {
-          if (args.size() != 4)
-            throw usage(name);
-
-          attr_key a_key = attr_key(idx(args, 2)());
-          attr_value a_value = attr_value(idx(args, 3)());
-
-          node->attrs[a_key] = make_pair(true, a_value);
-        }
-      else
-        {
-          // Clear all attrs (or a specific attr).
-          if (args.size() == 2)
-            {
-              for (full_attr_map_t::iterator i = node->attrs.begin();
-                   i != node->attrs.end(); ++i)
-                i->second = make_pair(false, "");
-            }
-          else if (args.size() == 3)
-            {
-              attr_key a_key = attr_key(idx(args, 2)());
-              N(node->attrs.find(a_key) != node->attrs.end(),
-                F("Path '%s' does not have attribute '%s'")
-                % path % a_key);
-              node->attrs[a_key] = make_pair(false, "");
-            }
-          else
-            throw usage(name);
-        }
-
-      parent_map parents;
-      app.work.get_parent_rosters(parents);
-
-      revision_t new_work;
-      make_revision_for_workspace(parents, new_roster, new_work);
-      app.work.put_work_rev(new_work);
-      app.work.update_any_attrs();
+      for (full_attr_map_t::iterator i = node->attrs.begin();
+           i != node->attrs.end(); ++i)
+        i->second = make_pair(false, "");
     }
-  else if (subcmd == "get")
+  else
     {
-      if (args.size() == 2)
-        {
-          bool has_any_live_attrs = false;
-          for (full_attr_map_t::const_iterator i = node->attrs.begin();
-               i != node->attrs.end(); ++i)
-            if (i->second.first)
-              {
-                cout << path << " : "
-                     << i->first << '='
-                     << i->second.second << '\n';
-                has_any_live_attrs = true;
-              }
-          if (!has_any_live_attrs)
-            cout << F("No attributes for '%s'") % path << '\n';
-        }
-      else if (args.size() == 3)
-        {
-          attr_key a_key = attr_key(idx(args, 2)());
-          full_attr_map_t::const_iterator i = node->attrs.find(a_key);
-          if (i != node->attrs.end() && i->second.first)
+      I(args.size() == 2);
+      attr_key a_key = attr_key(idx(args, 1)());
+      N(node->attrs.find(a_key) != node->attrs.end(),
+        F("Path '%s' does not have attribute '%s'")
+        % path % a_key);
+      node->attrs[a_key] = make_pair(false, "");
+    }
+
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+
+  revision_t new_work;
+  make_revision_for_workspace(parents, new_roster, new_work);
+  app.work.put_work_rev(new_work);
+  app.work.update_any_attrs();
+}
+
+CMD(attr_get, "get", "", CMD_REF(attr), N_("PATH [ATTR]"),
+    N_("Gets the values of a file's attributes"),
+    N_("If no attribute is specified, this command prints all attributes "
+       "attached to the file given in PATH.  Otherwise it only prints the "
+       "attribute specified in ATTR."),
+    options::opts::none)
+{
+  N(args.size() > 0 && args.size() < 3,
+    F("wrong argument count"));
+
+  roster_t new_roster;
+  temp_node_id_source nis;
+
+  app.require_workspace();
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  file_path path = file_path_external(idx(args, 0));
+  split_path sp;
+  path.split(sp);
+
+  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(sp);
+
+  if (args.size() == 1)
+    {
+      bool has_any_live_attrs = false;
+      for (full_attr_map_t::const_iterator i = node->attrs.begin();
+           i != node->attrs.end(); ++i)
+        if (i->second.first)
+          {
             cout << path << " : "
                  << i->first << '='
                  << i->second.second << '\n';
-          else
-            cout << (F("No attribute '%s' on path '%s'")
-                     % a_key % path) << '\n';
-        }
-      else
-        throw usage(name);
+            has_any_live_attrs = true;
+          }
+      if (!has_any_live_attrs)
+        cout << F("No attributes for '%s'") % path << '\n';
     }
   else
-    throw usage(name);
+    {
+      I(args.size() == 2);
+      attr_key a_key = attr_key(idx(args, 1)());
+      full_attr_map_t::const_iterator i = node->attrs.find(a_key);
+      if (i != node->attrs.end() && i->second.first)
+        cout << path << " : "
+             << i->first << '='
+             << i->second.second << '\n';
+      else
+        cout << (F("No attribute '%s' on path '%s'")
+                 % a_key % path) << '\n';
+    }
+}
+
+CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
+    N_("Sets an attribute on a file"),
+    N_("Sets the attribute given on ATTR to the value specified in VALUE "
+       "for the file mentioned in PATH."),
+    options::opts::none)
+{
+  N(args.size() == 3,
+    F("wrong argument count"));
+
+  roster_t new_roster;
+  temp_node_id_source nis;
+
+  app.require_workspace();
+  app.work.get_current_roster_shape(new_roster, nis);
+
+  file_path path = file_path_external(idx(args, 0));
+  split_path sp;
+  path.split(sp);
+
+  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(sp);
+
+  attr_key a_key = attr_key(idx(args, 1)());
+  attr_value a_value = attr_value(idx(args, 2)());
+
+  node->attrs[a_key] = make_pair(true, a_value);
+
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+
+  revision_t new_work;
+  make_revision_for_workspace(parents, new_roster, new_work);
+  app.work.put_work_rev(new_work);
+  app.work.update_any_attrs();
 }
 
 // Name: get_attributes
@@ -729,7 +776,10 @@ CMD(attr, N_("workspace"), N_("set PATH ATTR VALUE\nget PATH [ATTR]\ndrop PATH [
 //
 // Error conditions: If the path has no attributes, prints only the 
 //                   format version, if the file is unknown, escalates
-AUTOMATE(get_attributes, N_("PATH"), options::opts::none)
+CMD_AUTOMATE(get_attributes, N_("PATH"),
+             N_("Prints all attributes for the specified path"),
+             "",
+             options::opts::none)
 {
   N(args.size() > 0,
     F("wrong argument count"));
@@ -841,7 +891,10 @@ AUTOMATE(get_attributes, N_("PATH"), options::opts::none)
 //
 // Error conditions: If PATH is unknown in the new roster, prints an error and
 //                   exits with status 1.
-AUTOMATE(set_attribute, N_("PATH KEY VALUE"), options::opts::none)
+CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
+             N_("Sets an attribute on a certain path"),
+             "",
+             options::opts::none)
 {
   N(args.size() == 3,
     F("wrong argument count"));
@@ -884,7 +937,10 @@ AUTOMATE(set_attribute, N_("PATH KEY VALUE"), options::opts::none)
 // Error conditions: If PATH is unknown in the new roster or the specified
 //                   attribute key is unknown, prints an error and exits with
 //                   status 1.
-AUTOMATE(drop_attribute, N_("PATH [KEY]"), options::opts::none)
+CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
+             N_("Drops an attribute or all of them from a certain path"),
+             "",
+             options::opts::none)
 {
   N(args.size() ==1 || args.size() == 2,
     F("wrong argument count"));
@@ -927,9 +983,9 @@ AUTOMATE(drop_attribute, N_("PATH [KEY]"), options::opts::none)
   app.work.update_any_attrs();
 }
 
-
-CMD(commit, N_("workspace"), N_("[PATH]..."),
-    N_("commit workspace to database"),
+CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Commits workspace changes to the database"),
+    "",
     options::opts::branch | options::opts::message | options::opts::msgfile
     | options::opts::date | options::opts::author | options::opts::depth
     | options::opts::exclude)
@@ -961,7 +1017,7 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
-                           excluded, name);
+                           excluded, execid);
   restricted_rev.check_sane();
   N(restricted_rev.is_nontrivial(), F("no changes to commit"));
 
@@ -1174,15 +1230,13 @@ CMD(commit, N_("workspace"), N_("[PATH]..."),
   }
 }
 
-ALIAS(ci, commit);
-
-
-CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
-    N_("setup a new workspace directory, default to current"),
+CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),
+    N_("Sets up a new workspace directory"),
+    N_("If no directory is specified, uses the current directory."),
     options::opts::branch)
 {
   if (args.size() > 1)
-    throw usage(name);
+    throw usage(execid);
 
   N(!app.opts.branchname().empty(), F("need --branch argument for setup"));
   app.db.ensure_open();
@@ -1200,8 +1254,9 @@ CMD_NO_WORKSPACE(setup, N_("tree"), N_("[DIRECTORY]"),
   app.work.put_work_rev(rev);
 }
 
-CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
-  N_("import the contents of the given directory tree into a given branch"),
+CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
+  N_("Imports the contents of a directory into a branch"),
+  "",
   options::opts::branch | options::opts::revision |
   options::opts::message | options::opts::msgfile |
   options::opts::dryrun |
@@ -1266,14 +1321,14 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       // prepare stuff for 'add' and so on.
       app.found_workspace = true;       // Yup, this is cheating!
 
-      vector<utf8> empty_args;
+      args_vector empty_args;
       options save_opts;
       // add --unknown
       save_opts.exclude_patterns = app.opts.exclude_patterns;
-      app.opts.exclude_patterns = std::vector<utf8>();
+      app.opts.exclude_patterns = args_vector();
       app.opts.unknown = true;
       app.opts.recursive = true;
-      process(app, "add", empty_args);
+      process(app, make_command_id("workspace add"), empty_args);
       app.opts.recursive = false;
       app.opts.unknown = false;
       app.opts.exclude_patterns = save_opts.exclude_patterns;
@@ -1281,13 +1336,13 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
       // drop --missing
       save_opts.no_ignore = app.opts.no_ignore;
       app.opts.missing = true;
-      process(app, "drop", empty_args);
+      process(app, make_command_id("workspace drop"), empty_args);
       app.opts.missing = false;
       app.opts.no_ignore = save_opts.no_ignore;
 
       // commit
       if (!app.opts.dryrun)
-        process(app, "commit", empty_args);
+        process(app, make_command_id("workspace commit"), empty_args);
     }
   catch (...)
     {
@@ -1300,13 +1355,14 @@ CMD_NO_WORKSPACE(import, N_("tree"), N_("DIRECTORY"),
   delete_dir_recursive(bookkeeping_root);
 }
 
-CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
-  N_("migrate a workspace directory's metadata to the latest format; "
-     "defaults to the current workspace"),
+CMD_NO_WORKSPACE(migrate_workspace, "migrate_workspace", "", CMD_REF(tree),
+  N_("[DIRECTORY]"),
+  N_("Migrates a workspace directory's metadata to the latest format"),
+  N_("If no directory is given, defaults to the current workspace."),
   options::opts::none)
 {
   if (args.size() > 1)
-    throw usage(name);
+    throw usage(execid);
 
   if (args.size() == 1)
     go_to_workspace(system_path(idx(args, 0)));
@@ -1314,7 +1370,9 @@ CMD_NO_WORKSPACE(migrate_workspace, N_("tree"), N_("[DIRECTORY]"),
   app.work.migrate_ws_format();
 }
 
-CMD(refresh_inodeprints, N_("tree"), "", N_("refresh the inodeprint cache"),
+CMD(refresh_inodeprints, "refresh_inodeprints", "", CMD_REF(tree), "",
+    N_("Refreshes the inodeprint cache"),
+    "",
     options::opts::none)
 {
   app.require_workspace();

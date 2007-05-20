@@ -129,6 +129,11 @@ extern struct user_interface ui;
 // (even if there is no terminal)
 unsigned int guess_terminal_width();
 
+std::string format_text(std::string const & text,
+                        size_t const col = 0, size_t curcol = 0);
+std::string format_text(i18n_format const & text,
+                        size_t const col = 0, size_t curcol = 0);
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
