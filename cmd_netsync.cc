@@ -205,7 +205,7 @@ private:
 
 CMD(clone, "clone", "", CMD_REF(network),
     N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
-    N_("Checks out a revision from remote a database into a directory"),
+    N_("Checks out a revision from a remote database into a directory"),
     N_("If a revision is given, that's the one that will be checked out.  "
        "Otherwise, it will be the head of the branch supplied.  "
        "If no directory is given, the branch name will be used as directory"),
