@@ -249,8 +249,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.36\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2007-05-21 00:53+0200\n"
-"PO-Revision-Date: 2007-05-21 00:52+0200\n"
+"POT-Creation-Date: 2007-05-21 09:34+0200\n"
+"PO-Revision-Date: 2007-05-21 09:43+0200\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
 "MIME-Version: 1.0\n"
@@ -296,9 +296,8 @@ msgid "SELECTOR"
 msgstr "SÉLECTEUR"
 
 #: ../asciik.cc:369
-#, fuzzy
 msgid "Prints an ASCII representation of the revisions' graph"
-msgstr "affiche une représentation ASCII du graphe"
+msgstr "Affiche une représentation ASCII du graphe des révisions"
 
 #: ../asciik.cc:374 ../automate.cc:70 ../automate.cc:97 ../automate.cc:147
 #: ../automate.cc:261 ../automate.cc:361 ../automate.cc:389 ../automate.cc:473
@@ -367,16 +366,15 @@ msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "RÉV1 [RÉV2 [RÉV3 [...]]]"
 
 #: ../automate.cc:92
-#, fuzzy
 msgid "Prints the ancestors of the given revisions"
-msgstr "note le résultat d'un test sur une révision"
+msgstr "Affiche les ancêtres des révisions données"
 
 #: ../automate.cc:104 ../automate.cc:154 ../automate.cc:201 ../automate.cc:228
 #: ../automate.cc:267 ../automate.cc:271 ../automate.cc:364 ../automate.cc:392
 #: ../automate.cc:1184 ../cmd_list.cc:668 ../revision.cc:1780
 #, c-format
 msgid "No such revision %s"
-msgstr "aucune révision %s"
+msgstr "Aucune révision %s"
 
 #: ../automate.cc:142
 #, fuzzy
@@ -1303,11 +1301,11 @@ msgid "Regenerates the caches stored in the database"
 msgstr ""
 
 #: ../cmd_db.cc:215
-msgid "Clears the database's epoch"
+msgid "Clears the branch's epoch"
 msgstr ""
 
 #: ../cmd_db.cc:226
-msgid "Sets the database's epoch"
+msgid "Sets the branch's epoch"
 msgstr ""
 
 #: ../cmd_db.cc:235
@@ -1329,7 +1327,7 @@ msgstr "nom de la base de données"
 
 #: ../cmd_db.cc:260
 msgid ""
-"This command removes the variable NAME from domain DOMAIN, whichwas "
+"This command removes the variable NAME from domain DOMAIN, which was "
 "previously stored in the database."
 msgstr ""
 
@@ -1889,7 +1887,7 @@ msgstr "inconnu"
 
 #: ../cmd_list.cc:153
 msgid "Lists keys that match a pattern"
-msgstr ""
+msgstr "Liste les clefs qui correspondent à un motif"
 
 #: ../cmd_list.cc:216
 #, c-format
@@ -1908,7 +1906,7 @@ msgstr "aucune clef correspondant à « %s »"
 
 #: ../cmd_list.cc:247
 msgid "Lists branches in the database that match a pattern"
-msgstr ""
+msgstr "Liste les branches de la base de données qui correspondent à un motif"
 
 #: ../cmd_list.cc:275
 msgid "Lists the current epoch of branches that match a pattern"
@@ -1930,11 +1928,11 @@ msgstr ""
 
 #: ../cmd_list.cc:355
 msgid "Lists workspace files that belong to the current branch"
-msgstr ""
+msgstr "Liste les fichiers de l'espace de travail qui appartienent à la branche actuelle"
 
 #: ../cmd_list.cc:397
 msgid "Lists workspace files that do not belong to the current branch"
-msgstr ""
+msgstr "Liste les fichiers qui n'appartiennent pas à la branche actuelle"
 
 #: ../cmd_list.cc:429
 #, fuzzy
@@ -1946,9 +1944,8 @@ msgid "Lists files that have changed with respect to the current revision"
 msgstr ""
 
 #: ../cmd_list.cc:561
-#, fuzzy
 msgid "Lists all keys in the keystore"
-msgstr "la clef « %s » n'existe pas dans l'entrepôt de clefs"
+msgstr "Liste toutes les clefs de l'entrepôt de clefs"
 
 #: ../cmd_list.cc:656
 msgid "Prints all certificates attached to a revision"
@@ -2850,7 +2847,7 @@ msgstr ""
 
 #: ../cmd_ws_commit.cc:483
 msgid "Shows workspace's status information"
-msgstr ""
+msgstr "Affiche des informations sur l'état de l'espace de travail"
 
 #: ../cmd_ws_commit.cc:511 ../cmd_ws_commit.cc:1233 ../cmd_ws_commit.cc:1359
 msgid "[DIRECTORY]"
@@ -2944,7 +2941,7 @@ msgstr "pas d'attribut « %s » pour le chemin « %s »"
 
 #: ../cmd_ws_commit.cc:724
 msgid "PATH ATTR VALUE"
-msgstr ""
+msgstr "CHEMIN ATTR VALEUR"
 
 #: ../cmd_ws_commit.cc:725
 msgid "Sets an attribute on a file"
@@ -2972,7 +2969,7 @@ msgstr ""
 #. exits with status 1.
 #: ../cmd_ws_commit.cc:894
 msgid "PATH KEY VALUE"
-msgstr ""
+msgstr "CHEMIN CLEF VALEUR"
 
 #: ../cmd_ws_commit.cc:895
 msgid "Sets an attribute on a certain path"
@@ -5967,12 +5964,12 @@ msgstr "ssh_agent : connect : impossible d'ouvrir le socket vers ssh-agent"
 #: ../unix/ssh_agent_platform.cc:56
 #, c-format
 msgid "ssh_agent: connect: could not set up socket for ssh-agent"
-msgstr ""
+msgstr "ssh_agent : connect : impossible de créer le socket vers ssh-agent"
 
 #: ../unix/ssh_agent_platform.cc:63
 #, c-format
 msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
-msgstr ""
+msgstr "ssh-agent : connect : impossible de se connecter au socket vers ssh-agent"
 
 #: ../unix/ssh_agent_platform.cc:102
 #, c-format
@@ -5982,7 +5979,7 @@ msgstr ""
 #: ../unix/ssh_agent_platform.cc:110
 #, c-format
 msgid "%u extra bytes from ssh-agent"
-msgstr "%u ocets supplémentaires venant de ssh-agent"
+msgstr "%u octets supplémentaires venant de ssh-agent"
 
 #: ../win32/fs.cc:57
 #, fuzzy, c-format
@@ -5990,14 +5987,14 @@ msgid "could not determine configuration path"
 msgstr "impossible de déterminer la branche pour la mise à jour"
 
 #: ../win32/fs.cc:211
-#, fuzzy, c-format
+#, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
-msgstr "renommage de %s en %s"
+msgstr "le renommage de %s en %s a échoué : %s (%d)"
 
 #: ../win32/fs.cc:280
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
-msgstr ""
+msgstr "impossible de trouver un fichier temporaire (%d possibilités essayées)"
 
 #: ../win32/fs.cc:307
 #, c-format
