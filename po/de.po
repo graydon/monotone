@@ -1,13 +1,13 @@
 # ##############################################################################
-#
+# 
 # German language file
 # Copyright (C) 2006  Thomas Keller <me AT thomaskeller DOT biz>
 # This file is distributed under the same license as the monotone package.
-#
-#
+# 
+# 
 # Wiederzuverwendende Übersetzungen:
 # ----------------------------------
-#
+# 
 # branch         -> Zweig
 # tag            -> Marke
 # public         -> öffentlich
@@ -27,13 +27,13 @@
 # directory      -> Verzeichnis (NICHT "Ordner")
 # argument       -> Parameter
 # option         -> Option
-#
+# 
 # ##############################################################################
 msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-21 00:28+0200\n"
+"POT-Creation-Date: 2007-05-21 10:22+0200\n"
 "PO-Revision-Date: 2007-03-06 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -741,7 +741,6 @@ msgstr "Zeigt die derzeitigen Unterschiede"
 
 #
 #: cmd_diff_log.cc:473
-#, fuzzy
 msgid ""
 "Compares the current tree with the files in the repository and prints the "
 "differences on the standard output.\n"
@@ -749,12 +748,12 @@ msgid ""
 "is shown.  If two revisions are given, the diff between them is given.  If "
 "no format is specified, unified is used by default."
 msgstr ""
-"Zeige derzeitige Unterschiede auf Standard-Ausgabe.\n"
-"Wenn eine Revision angegeben wurde, werden die\n"
-"Unterschiede zwischen dieser Revision und dem\n"
-"Arbeitsbereich angezeigt. Werden zwei Revisionen\n"
-"angegeben, werden die Unterschiede zwischen diesen\n"
-"beiden ausgegeben. Wenn kein Format angegeben\n"
+"Vergleicht den derzeitigen Dateibaum mit Dateien im Repository und gibt die "
+"Unterschiede auf der Standardausgabe aus. "
+"Wenn eine Revision übergeben wird, werden die Unterschiede zwischen dieser "
+"Revision und dem Arbeitsbereich angezeigt. Werden zwei Revisionen "
+"angegeben, werden die Unterschiede zwischen diesen "
+"beiden ausgegeben. Wenn kein Format angegeben "
 "wurde, wird standardmäßig 'unified' verwendet."
 
 #: cmd_diff_log.cc:484
@@ -776,7 +775,7 @@ msgstr "[DATEI [...]]"
 
 #: cmd_diff_log.cc:530
 msgid "Calculates diffs of files"
-msgstr ""
+msgstr "Berechtnet die Unterschiede in Dateien"
 
 #: cmd_diff_log.cc:606
 msgid "[FILE] ..."
@@ -784,18 +783,17 @@ msgstr "[DATEI] ..."
 
 #: cmd_diff_log.cc:607
 msgid "Prints history in reverse order"
-msgstr ""
+msgstr "Gibt die Historie in umgekehrter Reihenfolge aus"
 
 #
 #: cmd_diff_log.cc:608
-#, fuzzy
 msgid ""
 "This command prints history in reverse order, filtering it by FILE if "
 "given.  If one or more revisions are given, uses them as a starting point."
 msgstr ""
-"Gibt die Historie in umgekehrter Reihenfolge aus\n"
-"(gefiltert durch 'DATEI'). Wenn eine oder mehrere\n"
-"Revisionen übergeben wurden, werden diese als\n"
+"Dieses Kommando gibt die Historie in umgekehrter Reihenfolge aus. Wenn DATEI "
+"als Argument übergeben wurde, wird nach dieser gefiltert. "
+"Wenn eine oder mehrere Revisionen übergeben wurden, werden diese als "
 "Ausgangspunkt genutzt."
 
 #: cmd_diff_log.cc:624
@@ -809,18 +807,16 @@ msgid "(Revision: %s)"
 msgstr "(Revision: %s)"
 
 #: cmd_files.cc:30
-#, fuzzy
 msgid "Loads a file's contents into the database"
-msgstr "lädt Dateiinhalte in Datenbank"
+msgstr "Lädt die Inhalte einer Datei in die Datenbank"
 
 #: cmd_files.cc:47
 msgid "<parent> <left> <right>"
 msgstr "<Eltern> <links> <rechts>"
 
 #: cmd_files.cc:48
-#, fuzzy
 msgid "Merges 3 files and outputs the result"
-msgstr "vereinige drei Dateien und gibt das Ergebnis aus"
+msgstr "Vereinige drei Dateien und gibt das Ergebnis aus"
 
 #: cmd_files.cc:63
 #, c-format
@@ -847,10 +843,9 @@ msgid "SRCNAME DESTNAME SRCID DESTID"
 msgstr "QUELLNAME ZIELNAME QUELLID ZIELID"
 
 #: cmd_files.cc:86
-#, fuzzy
 msgid "Differences 2 files and outputs the result"
 msgstr ""
-"bestimmt den Unterschied zwischen zwei Dateien und gibt das Ergebnis aus"
+"Bestimmt den Unterschied zwischen zwei Dateien und gibt das Ergebnis aus"
 
 #: cmd_files.cc:104
 #, c-format
@@ -867,16 +862,14 @@ msgid "PATH"
 msgstr "PFAD"
 
 #: cmd_files.cc:123
-#, fuzzy
 msgid "Prints an annotated copy of a file"
-msgstr "gibt eine kommentierte Kopie der Datei aus der Revision REVISION aus"
+msgstr "Gibt eine kommentierte Kopie der Datei aus"
 
 #: cmd_files.cc:124
-#, fuzzy
 msgid ""
 "Calculates and prints an annotated copy of the given file from the specified "
 "REVISION."
-msgstr "gibt eine kommentierte Kopie der Datei aus der Revision REVISION aus"
+msgstr "Berechnet und gibt eine kommentierte Kopie der übergebenen Datei von REVISION aus"
 
 #: cmd_files.cc:159
 #, c-format
@@ -907,19 +900,20 @@ msgid "[PATH]"
 msgstr "[PFAD]"
 
 #: cmd_files.cc:193
-#, fuzzy
 msgid "Calculates the identity of a file or stdin"
-msgstr "berechnet die Identität (ID) von PFAD oder der Standardeingabe"
+msgstr "Berechnet die Identität (ID) einer Datei oder der Standardeingabe"
 
 #: cmd_files.cc:194
 msgid ""
 "If any PATH is given, calculates their identity; otherwise, the one from the "
 "standard input is calculated."
 msgstr ""
+"Wenn ein PFAD übergeben wurde, wird die ID dieser Datei berechnet. Andernfalls "
+"wird die ID der Standardeingabe berechnet."
 
 #: cmd_files.cc:228
 msgid "Prints the file identifier of a file"
-msgstr ""
+msgstr "Gibt die Identität (ID) einer Datei aus"
 
 #: cmd_files.cc:238
 #, c-format
@@ -936,23 +930,24 @@ msgid "FILENAME"
 msgstr "DATEINAME"
 
 #: cmd_files.cc:290
-#, fuzzy
 msgid "Prints a file from the database"
-msgstr "schreibt Dateiinhalte aus der Datenbank zur Standardausgabe"
+msgstr "Gibt Dateiinhalte aus der Datenbank aus"
 
 #: cmd_files.cc:291
 msgid ""
 "Fetches the given file FILENAME from the database and prints it to the "
 "standard output."
 msgstr ""
+"Liest die Daten der Datei DATEINAME von der Datenbank und gibt sie auf "
+"der Standardausgabe aus."
 
 #: cmd_files.cc:326
 msgid "Prints the contents of a file (given an identifier)"
-msgstr ""
+msgstr "Gibt die Inhalte einer Datei aus (anhand einer gegebenen ID)"
 
 #: cmd_files.cc:352
 msgid "Prints the contents of a file (given a name)"
-msgstr ""
+msgstr "Gibt die Inhalte einer Datei aus (anhand eines gegebenen Names)"
 
 #: cmd.hh:126
 #, c-format
@@ -969,14 +964,12 @@ msgid "KEYID"
 msgstr "Schlüssel-ID"
 
 #: cmd_key_cert.cc:33
-#, fuzzy
 msgid "Generates an RSA key-pair"
-msgstr "erzeuge ein RSA-Schlüsselpaar"
+msgstr "Erzeugt ein RSA-Schlüsselpaar"
 
 #: cmd_key_cert.cc:61
-#, fuzzy
 msgid "Drops a public and/or private key"
-msgstr "lösche einen öffentlichen und geheimen Schlüssel"
+msgstr "Löscht einen öffentlichen und/oder geheimen Schlüssel"
 
 #: cmd_key_cert.cc:77
 #, c-format
@@ -1005,9 +998,8 @@ msgstr ""
 "und es wurde keine Datenbank angegeben."
 
 #: cmd_key_cert.cc:103
-#, fuzzy
 msgid "Changes the passphrase of a private RSA key"
-msgstr "ändere Passwort eines geheimen RSA-Schlüssels"
+msgstr "Ändert das Passwort eines geheimen RSA-Schlüssels"
 
 #: cmd_key_cert.cc:114
 #, c-format
@@ -1024,9 +1016,8 @@ msgid "[FILENAME]"
 msgstr "[DATEINAME]"
 
 #: cmd_key_cert.cc:126
-#, fuzzy
 msgid "Exports a private key for use with ssh-agent"
-msgstr "exportiert Ihren monotone-Schlüssel für die Benutzung mit ssh-agent"
+msgstr "Exportiert einen geheimen Schlüssel für die Benutzung mit ssh-agent"
 
 #: cmd_key_cert.cc:136 cmd_key_cert.cc:176
 #, c-format
@@ -1034,33 +1025,29 @@ msgid "the key you specified cannot be found"
 msgstr "der übergebene Schlüssel konnte nicht gefunden werden"
 
 #: cmd_key_cert.cc:166
-#, fuzzy
 msgid "Adds a private key to ssh-agent"
-msgstr "Fügt Ihren monotone-Schlüssel zu ssh-agent hinzu"
+msgstr "Fügt einen geheimen Schlüssel zu ssh-agent hinzu"
 
 #: cmd_key_cert.cc:183
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "REVISION ZERTIFIKAT [ZERTIFIKATSWERT]"
 
 #: cmd_key_cert.cc:184
-#, fuzzy
 msgid "Creates a certificate for a revision"
-msgstr "erzeuge ein Zertifikat für eine Revision"
+msgstr "Erzeugt ein Zertifikat für eine Revision"
 
 #: cmd_key_cert.cc:217
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "REVISION NAME WERT UNTERZEICHNER1 [UNTERZEICHNER2 [...]]"
 
 #: cmd_key_cert.cc:218
-#, fuzzy
 msgid "Tests whether a hypothetical certificate would be trusted"
 msgstr ""
-"teste, ob einem hypothetischen Zertifikat bei gegebenen Einstellungen\n"
-"vertraut werden würde"
+"Testet, ob einem hypothetischen Zertifikat vertraut werden würde"
 
 #: cmd_key_cert.cc:219
 msgid "The current settings are used to run the test."
-msgstr ""
+msgstr "Die derzeitigen Einstellungen werden für die Ausführung des Tests benutzt."
 
 #: cmd_key_cert.cc:251
 #, c-format
@@ -1090,27 +1077,24 @@ msgid "REVISION TAGNAME"
 msgstr "REVISION MARKENNAME"
 
 #: cmd_key_cert.cc:265
-#, fuzzy
 msgid "Puts a symbolic tag certificate on a revision"
-msgstr "setze eine symbolische Marke auf eine Revision"
+msgstr "Setzt eine symbolische Marke auf eine Revision"
 
 #: cmd_key_cert.cc:279
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (engl. pass|fail|true|false|yes|no|1|0)"
 
 #: cmd_key_cert.cc:280
-#, fuzzy
 msgid "Notes the results of running a test on a revision"
-msgstr "notiere die Ergebnisse eines ausgeführten Tests auf einer Revision"
+msgstr "Notiert die Ergebnisse eines ausgeführten Tests auf einer Revision"
 
 #: cmd_key_cert.cc:293 cmd_ws_commit.cc:277
 msgid "REVISION"
 msgstr "REVISION"
 
 #: cmd_key_cert.cc:294
-#, fuzzy
 msgid "Approves a particular revision"
-msgstr "Überprüfung einer bestimmten Revision"
+msgstr "Überprüft eine bestimmte Revision"
 
 #: cmd_key_cert.cc:304
 #, c-format
@@ -1122,9 +1106,8 @@ msgid "REVISION [COMMENT]"
 msgstr "REVISION [KOMMENTAR]"
 
 #: cmd_key_cert.cc:309
-#, fuzzy
 msgid "Comments on a particular revision"
-msgstr "Kommentieren einer bestimmten Revision"
+msgstr "Kommentiert einer bestimmte Revision"
 
 #: cmd_key_cert.cc:323
 #, c-format
@@ -1137,25 +1120,23 @@ msgid "empty comment"
 msgstr "leerer Kommentar"
 
 #: cmd_list.cc:43
-#, fuzzy
 msgid "Shows database objects"
-msgstr "keine Datenbank spezifiziert"
+msgstr "Zeigt Datenbank-Objekte"
 
-#
 #: cmd_list.cc:44
-#, fuzzy
 msgid ""
 "This command is used to query information from the database.  It shows "
 "database objects, or the current workspace manifest, or known, unknown, "
 "intentionally ignored, missing, or changed-state files."
 msgstr ""
-"zeigt Datenbankobjekte oder das derzeitige Manifest des \n"
-"Arbeitsbereichs oder bekannte, unbekannte, absichtlich \n"
+"Dieses Kommando wird benutzt, um Informationen von der Datenbank abzufragen. "
+"Es zeigt Datenbankobjekte oder das derzeitige Manifest des "
+"Arbeitsbereichs oder bekannte, unbekannte, absichtlich "
 "ignorierte, fehlende oder geänderte Dateien"
 
 #: cmd_list.cc:50
 msgid "Lists certificates attached to an identifier"
-msgstr ""
+msgstr "Listet Zertifikate auf, die zu einer Revision gehören"
 
 #: cmd_list.cc:77 cmd_list.cc:685
 #, c-format
@@ -1189,7 +1170,7 @@ msgstr "unbekannt"
 
 #: cmd_list.cc:153
 msgid "Lists keys that match a pattern"
-msgstr ""
+msgstr "Listet Schlüssel auf, die auf ein Muster passen"
 
 #: cmd_list.cc:216
 #, c-format
@@ -1208,11 +1189,11 @@ msgstr "keine Schlüssel gefunden, die auf '%s' passen"
 
 #: cmd_list.cc:247
 msgid "Lists branches in the database that match a pattern"
-msgstr ""
+msgstr "Listet Zweige in der Datenbank auf, die auf ein Muster passen"
 
 #: cmd_list.cc:275
 msgid "Lists the current epoch of branches that match a pattern"
-msgstr ""
+msgstr "Listet die derzeitige Epoche der Zweige auf, die auf ein Muster passen"
 
 #: cmd_list.cc:298
 #, c-format
@@ -1220,39 +1201,36 @@ msgid "no epoch for branch %s"
 msgstr "kein Zeitraum für Zweig %s"
 
 #: cmd_list.cc:305
-#, fuzzy
 msgid "Lists all tags in the database"
-msgstr "Revision %s ist bereits in der Datenbank"
+msgstr "Listet alle Marken in der Datenbank auf"
 
 #: cmd_list.cc:321
 msgid "Lists variables in the whole database or a domain"
-msgstr ""
+msgstr "Listet die Variablen der gesamten Datenbank oder einer Domäne auf"
 
 #: cmd_list.cc:355
 msgid "Lists workspace files that belong to the current branch"
-msgstr ""
+msgstr "Listet Dateien des Arbeitsbereiches auf, die zum derzeitigen Zweig gehören"
 
 #: cmd_list.cc:397
 msgid "Lists workspace files that do not belong to the current branch"
-msgstr ""
+msgstr "Listet Dateien des Arbeitsbereiches auf, die nicht zum derzeitigen Zweig gehören"
 
 #: cmd_list.cc:429
-#, fuzzy
 msgid "Lists files that belong to the branch but are not in the workspace"
-msgstr "Datei %s existiert nicht im Arbeitsbereich"
+msgstr "Listet Dateien auf, die zum derzeitigen Zweig gehören, jedoch im Arbeitsbereich fehlen"
 
 #: cmd_list.cc:453
 msgid "Lists files that have changed with respect to the current revision"
-msgstr ""
+msgstr "Listet Dateien auf, die sich gegenüber der Basisrevision des Arbeitsbereiches geändert haben."
 
 #: cmd_list.cc:561
-#, fuzzy
 msgid "Lists all keys in the keystore"
-msgstr "Schlüssel '%s' existiert nicht im Schlüsselbund"
+msgstr "Listet alle Schlüssel aus dem Schlüsselbund auf"
 
 #: cmd_list.cc:656
 msgid "Prints all certificates attached to a revision"
-msgstr ""
+msgstr "Gibt alle Zertifikate, die zu einer Revision gehören, aus"
 
 #: cmd_merging.cc:102
 #, c-format
@@ -1280,25 +1258,20 @@ msgstr ""
 "beim nächsten Einpflegen wird der Zweig %s genutzt"
 
 #: cmd_merging.cc:131
-#, fuzzy
 msgid "Updates the workspace"
-msgstr "Dateien zum Arbeitsbereich hinzufügen"
+msgstr "Aktualisiert den Arbeitsbereich"
 
 #: cmd_merging.cc:132
-#, fuzzy
 msgid ""
 "This command modifies your workspace to be based off of a different "
 "revision, preserving uncommitted changes as it does so.  If a revision is "
 "given, update the workspace to that revision.  If not, update the workspace "
 "to the head of the branch."
 msgstr ""
-"Aktualisiere Arbeitsbereich.\n"
 "Dieses Kommando verändert Ihren Arbeitsbereich, sodass dieser auf einer "
-"anderen Revision basiert.\n"
-"Noch nicht eingepflegte Änderungen bleiben dabei erhalten.\n"
+"anderen Revision basiert. Noch nicht eingepflegte Änderungen bleiben dabei erhalten. "
 "Wenn eine Revision angegeben wurde, erfolgt die Aktualisierung zu dieser "
-"Revision.\n"
-"Wenn nicht, dient der Kopf des Zweiges als Grundlage für die Aktualisierung."
+"Revision. Wenn nicht, dient der Kopf des aktuellen Zweiges als Grundlage für die Aktualisierung."
 
 #: cmd_merging.cc:155
 #, c-format
@@ -1377,9 +1350,8 @@ msgid "[merged] %s"
 msgstr "[vereinigt] %s"
 
 #: cmd_merging.cc:334
-#, fuzzy
 msgid "Merges unmerged heads of a branch"
-msgstr "führe nicht-vereinigte Köpfe des Zweiges zusammen"
+msgstr "Führt nicht-vereinigte Köpfe eines Zweiges zusammen"
 
 #: cmd_merging.cc:345 cmd_merging.cc:946
 #, c-format
@@ -1425,22 +1397,16 @@ msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "QUELL-ZWEIG ZIEL-ZWEIG"
 
 #: cmd_merging.cc:436
-#, fuzzy
 msgid "Merges from one branch to another asymmetrically"
-msgstr ""
-"asymmetrisches Vereinigen zweier Zweige, wobei lediglich Änderungen im Quell-"
-"Zweig auf den Ziel-Zweig überführt werden und nicht umgekehrt"
+msgstr "Überführt die Änderungen eines Zweigs auf einen anderen asymmetrisch"
 
 #: cmd_merging.cc:448
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "QUELL-ZWEIG ZIEL-ZWEIG VERZEICHNIS"
 
 #: cmd_merging.cc:449
-#, fuzzy
 msgid "Merges one branch into a subdirectory in another branch"
-msgstr ""
-"schiebe die Dateien und Verzeichnisse eines Zweig in ein Unterverzeichnis "
-"eines anderen Zweiges"
+msgstr "Überführt die Änderungen eines Zweigs in ein Unterverzeichnis eines anderen Zweigs"
 
 #: cmd_merging.cc:489 cmd_merging.cc:492
 #, c-format
@@ -1487,9 +1453,8 @@ msgid "OTHER-REVISION"
 msgstr "ANDERE-REVISION"
 
 #: cmd_merging.cc:607
-#, fuzzy
 msgid "Merges a revision into the current workspace's base revision"
-msgstr "Datei %s existiert nicht im Arbeitsbereich"
+msgstr "Überführt die Änderungen einer revision in den derzeitigen Arbeitsbereich"
 
 #: cmd_merging.cc:608
 #, fuzzy
