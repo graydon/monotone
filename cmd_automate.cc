@@ -58,7 +58,7 @@ static string const interface_version = "5.0";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-CMD_AUTOMATE(interface_version, "",
+CMD_AUTOMATE_WITH_NOTHING(interface_version, "",
              N_("Prints the automation interface's version"),
              "",
              options::opts::none)
@@ -315,7 +315,7 @@ struct automate_ostream : public std::ostream
 };
 
 
-CMD_AUTOMATE(stdio, "",
+CMD_AUTOMATE_WITH_EVERYTHING(stdio, "",
              N_("Automates several commands in one run"),
              "",
              options::opts::automate_stdio_size)

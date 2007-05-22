@@ -59,7 +59,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   transaction_guard guard(app.db, false);
 
   revision_id ident;
-  complete(app, idx(args, 0)(), ident);
+  complete(app.db, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
   // use the app.db version instead if no project is specified.
@@ -101,7 +101,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
 
   for (size_t i = 0; i < certs.size(); ++i)
     {
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(app.db, idx(certs, i));
       cert_value tv;
       decode_base64(idx(certs, i).value, tv);
       string washed;
@@ -557,7 +557,7 @@ namespace
 //   private_location "keystore"
 //
 // Error conditions: None.
-CMD_AUTOMATE(keys, "",
+CMD_AUTOMATE_WITH_DATABASE(keys, "",
              N_("Lists all keys in the keystore"),
              "",
              options::opts::none)
@@ -571,13 +571,14 @@ CMD_AUTOMATE(keys, "",
   map<string, boost::tuple<hexenc<id>, hexenc<id>,
                            vector<string>,
                            vector<string> > > items;
-  if (app.db.database_specified())
+  if (db.database_specified())
     {
-      transaction_guard guard(app.db, false);
-      app.db.get_key_ids("", dbkeys);
+      transaction_guard guard(db, false);
+      db.get_key_ids("", dbkeys);
       guard.commit();
     }
-  app.keys.get_key_ids("", kskeys);
+  key_store & keys = db.get_key_store();
+  keys.get_key_ids("", kskeys);
 
   for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();
        i != dbkeys.end(); i++)
@@ -585,7 +586,7 @@ CMD_AUTOMATE(keys, "",
       base64<rsa_pub_key> pub_encoded;
       hexenc<id> hash_code;
 
-      app.db.get_key(*i, pub_encoded);
+      db.get_key(*i, pub_encoded);
       key_hash_code(*i, pub_encoded, hash_code);
       items[(*i)()].get<0>() = hash_code;
       items[(*i)()].get<2>().push_back("database");
@@ -596,7 +597,7 @@ CMD_AUTOMATE(keys, "",
     {
       keypair kp;
       hexenc<id> privhash, pubhash;
-      app.keys.get_key_pair(*i, kp);
+      keys.get_key_pair(*i, kp);
       key_hash_code(*i, kp.pub, pubhash);
       key_hash_code(*i, kp.priv, privhash);
       items[(*i)()].get<0>() = pubhash;
@@ -652,7 +653,7 @@ CMD_AUTOMATE(keys, "",
 // key, a warning message is printed to stderr. If the revision
 // specified is unknown or invalid prints an error message to stderr
 // and exits with status 1.
-CMD_AUTOMATE(certs, N_("REV"),
+CMD_AUTOMATE_WITH_DATABASE(certs, N_("REV"),
              N_("Prints all certificates attached to a revision"),
              "",
              options::opts::none)
@@ -662,16 +663,16 @@ CMD_AUTOMATE(certs, N_("REV"),
 
   vector<cert> certs;
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
   revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("No such revision %s") % rid);
   hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
-  // use the app.db version instead if no project is specified.
-  app.get_project().get_revision_certs(rid, ts);
+  // use the db version instead if no project is specified.
+  db.get_project().get_revision_certs(rid, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
@@ -681,7 +682,7 @@ CMD_AUTOMATE(certs, N_("REV"),
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
-            !app.db.public_key_exists(idx(certs, i).key))
+            !db.public_key_exists(idx(certs, i).key))
           W(F("no public key '%s' found in database")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
@@ -697,7 +698,7 @@ CMD_AUTOMATE(certs, N_("REV"),
   for (size_t i = 0; i < certs.size(); ++i)
     {
       basic_io::stanza st;
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(db, idx(certs, i));
       cert_value tv;
       cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;
@@ -708,8 +709,8 @@ CMD_AUTOMATE(certs, N_("REV"),
       signers.insert(keyid);
 
       bool trusted =
-        app.lua.hook_get_revision_cert_trust(signers, ident,
-                                             name, tv);
+        db.hook_get_revision_cert_trust(signers, ident,
+                                        name, tv);
 
       st.push_str_pair(syms::key, keyid());
 
