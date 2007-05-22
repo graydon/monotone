@@ -776,7 +776,7 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
 //
 // Error conditions: If the path has no attributes, prints only the 
 //                   format version, if the file is unknown, escalates
-CMD_AUTOMATE_WITH_EVERYTHING(get_attributes, N_("PATH"),
+CMD_AUTOMATE(get_attributes, N_("PATH"),
              N_("Prints all attributes for the specified path"),
              N_(""),
              options::opts::none)
@@ -784,8 +784,7 @@ CMD_AUTOMATE_WITH_EVERYTHING(get_attributes, N_("PATH"),
   N(args.size() > 0,
     F("wrong argument count"));
 
-  // this command requires a workspace to be run on
-  app.require_workspace();
+  CMD_REQUIRES_WORKSPACE(app);
 
   // retrieve the path
   split_path path;
@@ -796,8 +795,8 @@ CMD_AUTOMATE_WITH_EVERYTHING(get_attributes, N_("PATH"),
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  app.work.get_current_roster_shape(current, nis);
-  app.work.get_parent_rosters(parents);
+  work.get_current_roster_shape(current, nis);
+  work.get_parent_rosters(parents);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
   base = parent_roster(parents.begin());
@@ -891,7 +890,7 @@ CMD_AUTOMATE_WITH_EVERYTHING(get_attributes, N_("PATH"),
 //
 // Error conditions: If PATH is unknown in the new roster, prints an error and
 //                   exits with status 1.
-CMD_AUTOMATE_WITH_EVERYTHING(set_attribute, N_("PATH KEY VALUE"),
+CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
              N_("Sets an attribute on a certain path"),
              N_(""),
              options::opts::none)
@@ -899,11 +898,12 @@ CMD_AUTOMATE_WITH_EVERYTHING(set_attribute, N_("PATH KEY VALUE"),
   N(args.size() == 3,
     F("wrong argument count"));
 
+  CMD_REQUIRES_WORKSPACE(app);
+
   roster_t new_roster;
   temp_node_id_source nis;
 
-  app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
   split_path sp;
@@ -918,12 +918,12 @@ CMD_AUTOMATE_WITH_EVERYTHING(set_attribute, N_("PATH KEY VALUE"),
   node->attrs[a_key] = make_pair(true, a_value);
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  work.get_parent_rosters(parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
-  app.work.put_work_rev(new_work);
-  app.work.update_any_attrs();
+  work.put_work_rev(new_work);
+  work.update_any_attrs();
 }
 
 // Name: drop_attribute
@@ -937,7 +937,7 @@ CMD_AUTOMATE_WITH_EVERYTHING(set_attribute, N_("PATH KEY VALUE"),
 // Error conditions: If PATH is unknown in the new roster or the specified
 //                   attribute key is unknown, prints an error and exits with
 //                   status 1.
-CMD_AUTOMATE_WITH_EVERYTHING(drop_attribute, N_("PATH [KEY]"),
+CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
              N_("Drops an attribute or all of them from a certain path"),
              N_(""),
              options::opts::none)
@@ -945,11 +945,12 @@ CMD_AUTOMATE_WITH_EVERYTHING(drop_attribute, N_("PATH [KEY]"),
   N(args.size() ==1 || args.size() == 2,
     F("wrong argument count"));
 
+  CMD_REQUIRES_WORKSPACE(app);
+
   roster_t new_roster;
   temp_node_id_source nis;
 
-  app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
   split_path sp;
@@ -975,12 +976,12 @@ CMD_AUTOMATE_WITH_EVERYTHING(drop_attribute, N_("PATH [KEY]"),
     }
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  work.get_parent_rosters(parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
-  app.work.put_work_rev(new_work);
-  app.work.update_any_attrs();
+  work.put_work_rev(new_work);
+  work.update_any_attrs();
 }
 
 CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),

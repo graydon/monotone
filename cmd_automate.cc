@@ -58,7 +58,7 @@ static string const interface_version = "5.0";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-CMD_AUTOMATE_WITH_NOTHING(interface_version, "",
+CMD_AUTOMATE(interface_version, "",
              N_("Prints the automation interface's version"),
              N_(""),
              options::opts::none)
@@ -315,7 +315,7 @@ struct automate_ostream : public std::ostream
 };
 
 
-CMD_AUTOMATE_WITH_EVERYTHING(stdio, "",
+CMD_AUTOMATE(stdio, "",
              N_("Automates several commands in one run"),
              N_(""),
              options::opts::automate_stdio_size)
@@ -323,9 +323,12 @@ CMD_AUTOMATE_WITH_EVERYTHING(stdio, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  CMD_REQUIRES_DATABASE(app);
+  // FIXME: additionally requires some app.opts...
+
     // initialize the database early so any calling process is notified
     // immediately if a version discrepancy exists 
-  app.db.ensure_open();
+  db.ensure_open();
 
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);

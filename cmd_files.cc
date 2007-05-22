@@ -224,7 +224,7 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
 //
 // Error conditions: If the file path doesn't point to a valid file prints
 // an error message to stderr and exits with status 1.
-CMD_AUTOMATE_WITH_EVERYTHING(identify, N_("PATH"),
+CMD_AUTOMATE(identify, N_("PATH"),
              N_("Prints the file identifier of a file"),
              N_(""),
              options::opts::none)
@@ -322,13 +322,15 @@ CMD(cat, "cat", "", CMD_REF(informative),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-CMD_AUTOMATE_WITH_EVERYTHING(get_file, N_("FILEID"),
+CMD_AUTOMATE(get_file, N_("FILEID"),
              N_("Prints the contents of a file (given an identifier)"),
              N_(""),
              options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
+
+  // FIXME: dump_file should not take app arg
 
   file_id ident(idx(args, 0)());
   dump_file(output, app, ident);
@@ -348,7 +350,7 @@ CMD_AUTOMATE_WITH_EVERYTHING(get_file, N_("FILEID"),
 //
 // Error conditions: If the file id specified is unknown or invalid prints
 // an error message to stderr and exits with status 1.
-CMD_AUTOMATE_WITH_EVERYTHING(get_file_of, N_("FILENAME"),
+CMD_AUTOMATE(get_file_of, N_("FILENAME"),
              N_("Prints the contents of a file (given a name)"),
              N_(""),
              options::opts::revision)
@@ -359,17 +361,23 @@ CMD_AUTOMATE_WITH_EVERYTHING(get_file_of, N_("FILENAME"),
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
-      app.require_workspace();
+      CMD_REQUIRES_WORKSPACE(app);
 
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      work.get_parent_rosters(parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
     }
   else
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      CMD_REQUIRES_DATABASE(app);
 
+      // FIXME: what about app.opts.revision_selectors?
+      complete(db, idx(app.opts.revision_selectors, 0)(), rid);
+    }
+
+  // FIXME: again, dump_file should not take app arg
   dump_file(output, app, rid, idx(args, 0));
 }
 

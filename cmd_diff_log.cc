@@ -526,12 +526,14 @@ CMD(diff, "diff", "", CMD_REF(informative), N_("[PATH]..."),
 // doubles the output of automate get_revision). If no content changes happened,
 // the output is empty. All file operations beside mtn add are omitted,
 // as they don't change the content of the file.
-CMD_AUTOMATE_WITH_EVERYTHING(content_diff, N_("[FILE [...]]"),
+CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
              N_("Calculates diffs of files"),
              N_(""),
              options::opts::revision | options::opts::depth |
              options::opts::exclude)
 {
+  // FIXME: prepare_diff and dump_diffs should not take 'app' argument.
+
   cset included;
   std::string dummy_header;
   bool new_is_archived;

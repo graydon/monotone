@@ -246,7 +246,7 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 // command definition allows the description of input/output format,
 // error conditions, version when added, etc.  'desc' can later be
 // automatically built from these.
-#define CMD_AUTOMATE_WITH_EVERYTHING(C, params, abstract, desc, opts)\
+#define CMD_AUTOMATE(C, params, abstract, desc, opts)                \
 namespace commands {                                                 \
   class automate_ ## C : public automate                             \
   {                                                                  \
@@ -267,69 +267,12 @@ void commands::automate_ ## C :: exec_from_automate                  \
    app_state & app,                                                  \
    std::ostream & output) const
 
-#define CMD_AUTOMATE_WITH_DATABASE(C, params, abstract, desc, opts)  \
-namespace commands {                                                 \
-  class automate_ ## C : public automate                             \
-  {                                                                  \
-    void exec_from_automate(args_vector args,                        \
-                            command_id const & execid,               \
-                            app_state & app,                         \
-                            std::ostream & output) const;            \
-                                                                     \
-    void exec_from_automate(args_vector args,                        \
-                            command_id const & execid,               \
-                            database & db,                           \
-                            std::ostream & output) const;            \
-  public:                                                            \
-    automate_ ## C() : automate(#C, params, abstract, desc,          \
-                                options::options_type() | opts)      \
-    {}                                                               \
-  };                                                                 \
-  automate_ ## C C ## _automate;                                     \
-}                                                                    \
-void commands::automate_ ## C :: exec_from_automate                  \
-  (args_vector args,                                                 \
-   command_id const & execid,                                        \
-   app_state & app,                                                  \
-   std::ostream & output) const                                      \
-  { exec_from_automate(args, execid, app.db, output); }              \
-                                                                     \
-void commands::automate_ ## C :: exec_from_automate                  \
-  (args_vector args,                                                 \
-   command_id const & execid,                                        \
-   database & db,                                                    \
-   std::ostream & output) const
+#define CMD_REQUIRES_DATABASE(app)                                   \
+database & db = app.db
 
-#define CMD_AUTOMATE_WITH_NOTHING(C, params, abstract, desc, opts)   \
-namespace commands {                                                 \
-  class automate_ ## C : public automate                             \
-  {                                                                  \
-    void exec_from_automate(args_vector args,                        \
-                            command_id const & execid,               \
-                            app_state & app,                         \
-                            std::ostream & output) const;            \
-                                                                     \
-    void exec_from_automate(args_vector args,                        \
-                            command_id const & execid,               \
-                            std::ostream & output) const;            \
-  public:                                                            \
-    automate_ ## C() : automate(#C, params, abstract, desc,          \
-                                options::options_type() | opts)      \
-    {}                                                               \
-  };                                                                 \
-  automate_ ## C C ## _automate;                                     \
-}                                                                    \
-void commands::automate_ ## C :: exec_from_automate                  \
-  (args_vector args,                                                 \
-   command_id const & execid,                                        \
-   app_state & app,                                                  \
-   std::ostream & output) const                                      \
-  { exec_from_automate(args, execid, output); }                      \
-                                                                     \
-void commands::automate_ ## C :: exec_from_automate                  \
-  (args_vector args,                                                 \
-   command_id const & execid,                                        \
-   std::ostream & output) const
+#define CMD_REQUIRES_WORKSPACE(app)                                  \
+workspace & work = app.work;                                         \
+app.require_workspace()
 
 CMD_FWD_DECL(__root__);
 CMD_FWD_DECL(automation);
