@@ -23,6 +23,7 @@
 # head			-> (la) cabeza
 # height		-> (la) altura
 # key			-> (la) llave
+# keystore		-> (el) llavero
 # log			-> log
 # (to) log		-> registrar
 # manifest		-> (el) manifiesto
@@ -63,7 +64,7 @@ msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-22 16:45-0400\n"
-"PO-Revision-Date: 2007-05-23 10:33-0400\n"
+"PO-Revision-Date: 2007-05-24 11:59-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -1203,38 +1204,36 @@ msgid "no epoch for branch %s"
 msgstr "no se encontró ninguna época para la rama %s"
 
 #: cmd_list.cc:305
-#, fuzzy
 msgid "Lists all tags in the database"
-msgstr "revisión %s ya está en la base de datos"
+msgstr "Lista todas las etiquetas en la base de datos"
 
 #: cmd_list.cc:321
 msgid "Lists variables in the whole database or a domain"
-msgstr ""
+msgstr "Lista variables en toda la base de datos o dominio"
 
 #: cmd_list.cc:355
 msgid "Lists workspace files that belong to the current branch"
-msgstr ""
+msgstr "Lista archivos en el área de trabajo que pertenecen a la rama actual"
 
 #: cmd_list.cc:397
 msgid "Lists workspace files that do not belong to the current branch"
-msgstr ""
+msgstr "Lista archivos en el área de trabajo que no pertenecen a la rama actual"
 
 #: cmd_list.cc:429
 msgid "Lists files that belong to the branch but are not in the workspace"
-msgstr ""
+msgstr "Lista archivos que pertenecen a la rama pero no existen en el área de trabajo"
 
 #: cmd_list.cc:453
 msgid "Lists files that have changed with respect to the current revision"
-msgstr ""
+msgstr "Lista archivos que han cambiado con respecto a la revisión actual"
 
 #: cmd_list.cc:561
-#, fuzzy
 msgid "Lists all keys in the keystore"
-msgstr "llave '%s' no existe en el llavero"
+msgstr "Lista todas las llaves en el llavero"
 
 #: cmd_list.cc:656
 msgid "Prints all certificates attached to a revision"
-msgstr ""
+msgstr "Imprime todos los certificados adheridos a una revisión"
 
 #: cmd_merging.cc:102
 #, c-format
@@ -1262,22 +1261,19 @@ msgstr ""
 "el siguiente 'commit' utilizará la rama '%s'"
 
 #: cmd_merging.cc:131
-#, fuzzy
 msgid "Updates the workspace"
-msgstr "agrega archivos al área de trabajo"
+msgstr "Actualiza el área de trabajo"
 
 #: cmd_merging.cc:132
-#, fuzzy
 msgid ""
 "This command modifies your workspace to be based off of a different "
 "revision, preserving uncommitted changes as it does so.  If a revision is "
 "given, update the workspace to that revision.  If not, update the workspace "
 "to the head of the branch."
 msgstr ""
-"actualiza área de trabajo.\n"
-"Este comando modifica su área de trabajo y lo basa en una revisión\n"
-"diferente, preservando los cambios no grabados al hacerlo.\n"
-"Si se indica una revisión, actualiza el área de trabajo a dicha revisión.\n"
+"Este comando modifica su área de trabajo y lo basa en una revisión"
+"diferente, preservando los cambios no grabados al hacerlo."
+"Si se indica una revisión, actualiza el área de trabajo a dicha revisión."
 "De lo contrario, actualiza el área de trabajo a la cabeza de la rama."
 
 #: cmd_merging.cc:155
@@ -1357,9 +1353,8 @@ msgid "[merged] %s"
 msgstr "[merged] %s"
 
 #: cmd_merging.cc:334
-#, fuzzy
 msgid "Merges unmerged heads of a branch"
-msgstr "fusiona diferentes cabezas de una rama"
+msgstr "Fusiona diferentes cabezas de una rama"
 
 #: cmd_merging.cc:345 cmd_merging.cc:946
 #, c-format
@@ -1404,18 +1399,16 @@ msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "RAMA-ORIGEN RAMA-DESTINO"
 
 #: cmd_merging.cc:436
-#, fuzzy
 msgid "Merges from one branch to another asymmetrically"
-msgstr "combina de una rama a otra asimétricamente"
+msgstr "Combina de una rama a otra asimétricamente"
 
 #: cmd_merging.cc:448
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "RAMA-ORIGEN RAMA-DESTINO DIRECTORIO"
 
 #: cmd_merging.cc:449
-#, fuzzy
 msgid "Merges one branch into a subdirectory in another branch"
-msgstr "combina una rama en un subdirectorio en otra rama"
+msgstr "Combina una rama a un subdirectorio en otra rama"
 
 #: cmd_merging.cc:489 cmd_merging.cc:492
 #, c-format
@@ -1463,10 +1456,9 @@ msgstr "OTRA-REVISIÓN"
 
 #: cmd_merging.cc:607
 msgid "Merges a revision into the current workspace's base revision"
-msgstr ""
+msgstr "Fusiona una revisión a la revisión base del área de trabajo actual"
 
 #: cmd_merging.cc:608
-#, fuzzy
 msgid ""
 "Merges OTHER-REVISION into the current workspace's base revision, and update "
 "the current workspace with the result.  There can be no pending changes in "
@@ -1474,12 +1466,11 @@ msgid ""
 "revision will be recorded as parents on commit.  The workspace's selected "
 "branch is not changed."
 msgstr ""
-"Fusione OTRA-REVISIÓN con la revisión base del área de trabajo actual; y "
-"actualice el área de trabajo actual con el resultado.  No pueden haber "
+"Fusiona OTRA-REVISIÓN con la revisión base del área de trabajo actual y "
+"actualiza el área de trabajo actual con el resultado.  No pueden haber "
 "cambios pendientes en el área de trabajo actual.  Ambos, OTRA-REVISIÓN y la "
 "revisión base del área de trabajo seran registradas como padres al momento "
-"de hacer 'commit'.  La rama del área de trabajo seleccionada no se ha "
-"cambiado."
+"de hacer 'commit'.  La rama del área de trabajo seleccionada no cambia."
 
 #: cmd_merging.cc:639
 #, c-format
@@ -1507,15 +1498,12 @@ msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "REVISIÓN-IZQUIERDA REVISIÓN-DERECHA RAMA-DESTINO"
 
 #: cmd_merging.cc:702
-#, fuzzy
 msgid "Merges two explicitly given revisions"
-msgstr ""
-"combina dos revisiónes especificadas explicitamente, colocando el resultado "
-"en una rama dada"
+msgstr "Fusiona dos revisiónes especificadas explicitamente"
 
 #: cmd_merging.cc:703
 msgid "The results of the merge are placed on the branch specified by DEST-BRANCH."
-msgstr ""
+msgstr "Los resultados de la fusión son ubicados en la rama indicada en RAMA-DESTINO."
 
 #: cmd_merging.cc:718
 #, c-format
@@ -1532,17 +1520,16 @@ msgid "REV REV"
 msgstr "REV REV"
 
 #: cmd_merging.cc:728
-#, fuzzy
 msgid "Shows what conflicts need resolution between two revisions"
-msgstr ""
-"Muestra que conflictos necesitarian ser resueltos para combinar las "
-"revisiones dadas."
+msgstr "Muestra que conflictos necesitarian ser resueltos entre dos revisiones"
 
 #: cmd_merging.cc:729
 msgid ""
 "The conflicts are calculated based on the two revisions given in the REV "
 "parameters."
 msgstr ""
+"Los conflictos son calculados basados en las dos revisiones especificadas "
+"en los parámetros REV."
 
 #: cmd_merging.cc:739 cmd_merging.cc:741
 #, c-format
@@ -1585,10 +1572,9 @@ msgstr "[-r DE] -r A [CAMINO...]"
 
 #: cmd_merging.cc:770
 msgid "Applies changes made at arbitrary places in history"
-msgstr ""
+msgstr "Aplica cambios hechos en puntos arbitrarios en la historia"
 
 #: cmd_merging.cc:771
-#, fuzzy
 msgid ""
 "This command takes changes made at any point in history, and edits your "
 "current workspace to include those changes.  The end result is identical to "
@@ -1600,17 +1586,15 @@ msgid ""
 "If two revisions are given, applies the changes made to get from the first "
 "revision to the second."
 msgstr ""
-"Aplica cambios echos en lugares arbitrarios de la historia al área de\n"
-"trabajo actual. Este comando toma cambios hechos en cuaquier punto de\n"
-"la historia, y edita su área de trabajo actual para incluir estos cambios.\n"
-"El resultado final es idéntico a 'mtn diff -r DE -r A | patch -p0',\n"
-"excepto que este comando utiliza el combinador interno de monotone, y\n"
-"por lo tanto maneja inteligentemente renombramientos, conflictos y demases.\n"
-"\n"
-"Si se especifica una sola revisión, aplica los cambios echos en dicha\n"
+"Este comando toma cambios hechos en cuaquier punto de la historia y "
+"edita su área de trabajo actual para incluir estos cambios.  El resultado "
+"final es idéntico a 'mtn diff -r DESDE -r HACIA | patch -p0', excepto "
+"que este comando utiliza el combinador interno de monotone y por "
+"lo tanto maneja inteligentemente renombramientos, conflictos y "
+"demases.\n"
+"Si se especifica una sola revisión, aplica los cambios hechos en dicha"
 "revisión comparada con su padre.\n"
-"\n"
-"Si se especifican dos revisiones, aplica lo scambios hechos para ir de\n"
+"Si se especifican dos revisiones, aplica los cambios hechos para ir de"
 "la primera revisión a la segunda."
 
 #: cmd_merging.cc:793
@@ -1645,9 +1629,8 @@ msgid "applied changes to workspace"
 msgstr "cambios aplicados al área de trabajo"
 
 #: cmd_merging.cc:937
-#, fuzzy
 msgid "Shows unmerged head revisions of a branch"
-msgstr "muestra las revisiones cabeza no combinadas de una rama"
+msgstr "Muestra las revisiones cabeza no combinadas de una rama"
 
 #: cmd_merging.cc:953
 #, c-format
@@ -1660,15 +1643,12 @@ msgid "branch '%s' is currently unmerged:"
 msgstr "rama '%s' está actualmente no combinada:"
 
 #: cmd_merging.cc:963
-#, fuzzy
 msgid "Dumps the roster associated with a given identifier"
-msgstr ""
-"descarga el roster asociado con el ID_REVISIÓN dado; o el área de trabajo. "
-"si no se indica ID_REVISIÓN"
+msgstr "Descarga el roster asociado con el identificador dado"
 
 #: cmd_merging.cc:964
 msgid "If no REVID is given, the workspace is used."
-msgstr ""
+msgstr "Si no se especifica una ID_REV, se utiliza el área de trabajo"
 
 #: cmd_netsync.cc:43 cmd_netsync.cc:258
 #, c-format
@@ -1709,28 +1689,28 @@ msgid "[ADDRESS[:PORTNUMBER] [PATTERN ...]]"
 msgstr "[DIRECCIÓN[:NÚMERO_PUERTO] [PATRÓN ...]]"
 
 #: cmd_netsync.cc:126
-#, fuzzy
 msgid "Pushes branches to a netsync server"
-msgstr "envia ramas que corresponden a PATRÓN al servidor netsync en DIRECCIÓN"
+msgstr "Envia ramas a un servidor netsync"
 
 #: cmd_netsync.cc:127
-#, fuzzy
 msgid ""
 "This will push all branches that match the pattern given in PATTERN to the "
 "netsync server at the address ADDRESS."
-msgstr "envia ramas que corresponden a PATRÓN al servidor netsync en DIRECCIÓN"
+msgstr ""
+"Esto envia todas las ramas que concuerdan con el patrón dado en PATRÓN "
+"al servidor netsybc en la dirección DIRECCIÓN."
 
 #: cmd_netsync.cc:144
-#, fuzzy
 msgid "Pulls branches from a netsync server"
-msgstr "hala ramas que corresponden a PATRÓN del servidor netsync en DIRECCIÓN"
+msgstr "Hala ramas de un servidor netsync"
 
 #: cmd_netsync.cc:145
-#, fuzzy
 msgid ""
 "This pulls all branches that match the pattern given in PATTERN from the "
 "netsync server at the address ADDRESS."
-msgstr "hala ramas que corresponden a PATRÓN del servidor netsync en DIRECCIÓN"
+msgstr ""
+"Esto hala ramas que concuerdan con el patrón especificado en PATRÓN "
+"del servidor netsync en la dirección DIRECCIÓN."
 
 #: cmd_netsync.cc:155 cmd_netsync.cc:263
 #, c-format
@@ -1738,16 +1718,16 @@ msgid "doing anonymous pull; use -kKEYNAME if you need authentication"
 msgstr "halando anonimamente; use -kNOMBRE_LLAVE si necesita autenticación"
 
 #: cmd_netsync.cc:163
-#, fuzzy
 msgid "Synchronizes branches with a netsync server"
-msgstr "sincroniza ramas que concuerden con PATRÓN con servidor netsync en DIRECCIÓN"
+msgstr "Sincroniza ramas con servidor netsync"
 
 #: cmd_netsync.cc:164
-#, fuzzy
 msgid ""
 "This synchronizes branches that match the pattern given in PATTERN with the "
 "netsync server at the address ADDRESS."
-msgstr "sincroniza ramas que concuerden con PATRÓN con servidor netsync en DIRECCIÓN"
+msgstr ""
+"Esto sincroniza ramas que concuerdan con el patrón especificado en PATRÓN "
+"con el servidor netsync en la dirección DIRECCIÓN."
 
 #: cmd_netsync.cc:207
 msgid "ADDRESS[:PORTNUMBER] [DIRECTORY]"
@@ -1755,7 +1735,7 @@ msgstr "DIRECCIÓN[:NÚMERO_PUERTO] [DIRECTORIO]"
 
 #: cmd_netsync.cc:208
 msgid "Checks out a revision from a remote database into a directory"
-msgstr ""
+msgstr "Se baja una revisión desde una base de datos remota a un directorio"
 
 #: cmd_netsync.cc:209
 #, fuzzy
