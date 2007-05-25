@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: monotone\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-05-24 22:26+0100\n"
+"PO-Revision-Date: 2007-05-25 19:14+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -104,9 +104,8 @@ msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV_1 [REV_2 [REV_3 […]]]"
 
 #: automate.cc:92
-#, fuzzy
 msgid "Prints the ancestors of the given revisions"
-msgstr "annota i risultati dell'esecuzione di un test su una revisione"
+msgstr "Stampa gli antenati di una data reivisione"
 
 #: automate.cc:104
 #: automate.cc:154
@@ -124,9 +123,8 @@ msgid "No such revision %s"
 msgstr "La revisione %s non esiste"
 
 #: automate.cc:142
-#, fuzzy
 msgid "Prints the descendents of the given revisions"
-msgstr "annota i risultati dell'esecuzione di un test su una revisione"
+msgstr "Stampa i discendenti di una data reivisione"
 
 #: automate.cc:192
 #: automate.cc:219
@@ -152,7 +150,7 @@ msgstr ""
 
 #: automate.cc:298
 msgid "Lists the leaves of the revision graph"
-msgstr ""
+msgstr "Elenca le foglie del grafo delle revisioni"
 
 #: automate.cc:303
 #: automate.cc:333
@@ -180,7 +178,7 @@ msgstr "nessun argomento richiesto"
 
 #: automate.cc:328
 msgid "Lists the roots of the revision graph"
-msgstr ""
+msgstr "Elenca le radici del grafo delle revisioni"
 
 #: automate.cc:355
 #: automate.cc:383
@@ -190,14 +188,12 @@ msgid "REV"
 msgstr "REV"
 
 #: automate.cc:356
-#, fuzzy
 msgid "Prints the parents of a revision"
-msgstr "crea un certificato per una revisione"
+msgstr "Stampa i genitori di una revisione"
 
 #: automate.cc:384
-#, fuzzy
 msgid "Prints the children of a revision"
-msgstr "crea un certificato per una revisione"
+msgstr "Stampa i figli di una revisione"
 
 #: automate.cc:422
 msgid "Prints the complete ancestry graph"
@@ -208,9 +204,8 @@ msgid "Lists the revisions that match a selector"
 msgstr ""
 
 #: automate.cc:653
-#, fuzzy
 msgid "Prints a summary of files found in the workspace"
-msgstr "rinomina elementi dello spazio di lavoro"
+msgstr "Stampa un sommario dei file contenuti nello spazio di lavoro"
 
 #: automate.cc:672
 #: automate.cc:914
@@ -362,8 +357,9 @@ msgid "OPTION"
 msgstr "OPZIONE"
 
 #: automate.cc:1445
+#, fuzzy
 msgid "Shows the value of an option"
-msgstr ""
+msgstr "L'opzione '%s' richiede un valore."
 
 #: automate.cc:1473
 #, c-format
@@ -397,9 +393,8 @@ msgid "[FILEID] CONTENTS"
 msgstr "[ID-FILE] CONTENUTI"
 
 #: automate.cc:1613
-#, fuzzy
 msgid "Stores a file in the database"
-msgstr "nessuna revisione nel database per il file ‘%s’"
+msgstr "Inserisce un file nel database"
 
 #: automate.cc:1635
 #: cmd_files.cc:253
@@ -412,9 +407,8 @@ msgid "REVISION-DATA"
 msgstr "DATI-REVISIONE"
 
 #: automate.cc:1666
-#, fuzzy
 msgid "Stores a revision into the database"
-msgstr "nel database non è presente la revisione %s"
+msgstr "Inserisce una revisione nel database"
 
 #: automate.cc:1705
 #, c-format
@@ -427,7 +421,7 @@ msgstr "REVISIONE NOME VALORE"
 
 #: automate.cc:1723
 msgid "Adds a revision certificate"
-msgstr ""
+msgstr "Aggiunge un certificato di revisione"
 
 #: automate.cc:1755
 #: cmd_db.cc:239
@@ -436,9 +430,8 @@ msgstr "DOMINIO NOME VALORE"
 
 #: automate.cc:1756
 #: cmd_db.cc:240
-#, fuzzy
 msgid "Sets a database variable"
-msgstr "%s (database senza tabelle!)"
+msgstr "Imposta una variabile del database"
 
 #: automate.cc:1781
 #: cmd_db.cc:258
@@ -446,9 +439,8 @@ msgid "DOMAIN NAME"
 msgstr "DOMINIO NOME"
 
 #: automate.cc:1782
-#, fuzzy
 msgid "Gets a database variable"
-msgstr "%s (database senza tabelle!)"
+msgstr "Legge una variabile dal database"
 
 #: automate.cc:1799
 #, c-format
@@ -529,9 +521,8 @@ msgid "Interface for scripted execution"
 msgstr ""
 
 #: cmd_automate.cc:62
-#, fuzzy
 msgid "Prints the automation interface's version"
-msgstr "interfaccia di automazione"
+msgstr "Stampa la versione dellinterfaccia di automazione"
 
 #: cmd_automate.cc:139
 #, c-format
@@ -555,7 +546,7 @@ msgstr "Input non valido per ‘automate stdio’: atteso il token ‘%c’"
 
 #: cmd_automate.cc:319
 msgid "Automates several commands in one run"
-msgstr ""
+msgstr "Automatizza più comandi in una sola esecuzione"
 
 #: cmd_automate.cc:339
 #, c-format
@@ -565,12 +556,12 @@ msgstr "Input non valido per ‘automate stdio’: manca il nome del comando"
 #: cmd_automate.cc:362
 #, fuzzy, c-format
 msgid "invalid automation specified"
-msgstr "nessuna database specificato"
+msgstr "%s: sono stati specificati segnali multipli"
 
 #: cmd_db.cc:28
 #, fuzzy
 msgid "Deals with the database"
-msgstr "imposta il nome del database"
+msgstr "errore nel database della fiducia"
 
 #: cmd_db.cc:47
 #, c-format
@@ -583,11 +574,11 @@ msgstr "Inizializza il database"
 
 #: cmd_db.cc:54
 msgid "Creates a new database file and initializes it."
-msgstr ""
+msgstr "Crea un nuovo database e lo inizializza."
 
 #: cmd_db.cc:64
 msgid "Shows information about the database"
-msgstr ""
+msgstr "Mostra informazioni sul database"
 
 #: cmd_db.cc:75
 #, fuzzy
@@ -597,7 +588,7 @@ msgstr "versione dello schema del database: %s"
 #: cmd_db.cc:86
 #, fuzzy
 msgid "Dumps the contents of the database"
-msgstr "imposta il nome del database"
+msgstr "Carica il contenuto di un file nel database"
 
 #: cmd_db.cc:87
 msgid "Generates a list of SQL instructions that represent the whole contents of the database.  The resulting output is useful to later restore the database from a text file that serves as a backup."
@@ -606,7 +597,7 @@ msgstr ""
 #: cmd_db.cc:99
 #, fuzzy
 msgid "Loads the contents of the database"
-msgstr "carica il contenuto di un file in db"
+msgstr "Carica il contenuto di un file nel database"
 
 #: cmd_db.cc:100
 msgid "Reads a list of SQL instructions that regenerate the contents of the database.  This is supposed to be used in conjunction with the output generated by the 'dump' command."
@@ -633,15 +624,17 @@ msgstr ""
 #: cmd_db.cc:136
 #, fuzzy
 msgid "Kills a revision from the local database"
-msgstr "nessuna revisione nel database per il file ‘%s’"
+msgstr "Elimina un tag dal database locale"
 
+# TODO: elimina è erase/delete, kill è più forte
 #: cmd_db.cc:148
 msgid "Kills branch certificates from the local database"
-msgstr ""
+msgstr "Elimina i certificati di ramo dal database locale"
 
+# TODO: elimina è erase/delete, kill è più forte
 #: cmd_db.cc:159
 msgid "Kills a tag from the local database"
-msgstr ""
+msgstr "Elimina un tag dal database locale"
 
 #: cmd_db.cc:170
 msgid "Does some sanity checks on the database"
@@ -653,23 +646,25 @@ msgstr ""
 
 #: cmd_db.cc:182
 msgid "Converts the database to the changeset format"
-msgstr ""
+msgstr "Converte il database al formato changeset"
 
 #: cmd_db.cc:193
 msgid "Converts the database to the rosters format"
-msgstr ""
+msgstr "Converte il database al formato roster"
 
 #: cmd_db.cc:204
 msgid "Regenerates the caches stored in the database"
-msgstr ""
+msgstr "Rigenera le cache immagazzinate nel database"
 
 #: cmd_db.cc:215
+#, fuzzy
 msgid "Clears the branch's epoch"
-msgstr ""
+msgstr "nessuna epoca trovata per il ramo ‘%s’\n"
 
 #: cmd_db.cc:226
+#, fuzzy
 msgid "Sets the branch's epoch"
-msgstr ""
+msgstr "nessuna epoca trovata per il ramo ‘%s’\n"
 
 #: cmd_db.cc:235
 #, c-format
@@ -683,7 +678,7 @@ msgstr ""
 #: cmd_db.cc:259
 #, fuzzy
 msgid "Unsets a database variable"
-msgstr "imposta il nome del database"
+msgstr "Imposta una variabile del database"
 
 #: cmd_db.cc:260
 msgid "This command removes the variable NAME from domain DOMAIN, which was previously stored in the database."
@@ -764,8 +759,9 @@ msgid "[PATH]..."
 msgstr "[PERCORSO…]"
 
 #: cmd_diff_log.cc:472
+#, fuzzy
 msgid "Shows current differences"
-msgstr ""
+msgstr "Annulla la funzione corrente"
 
 #: cmd_diff_log.cc:473
 #, fuzzy
@@ -797,8 +793,9 @@ msgid "[FILE [...]]"
 msgstr "[FILE […]]"
 
 #: cmd_diff_log.cc:530
+#, fuzzy
 msgid "Calculates diffs of files"
-msgstr ""
+msgstr "&Mostra file in edit..."
 
 #: cmd_diff_log.cc:606
 msgid "[FILE] ..."
@@ -865,7 +862,7 @@ msgstr "NOME_ORIG NOME_DEST ID_ORIG ID_DEST"
 #: cmd_files.cc:86
 #, fuzzy
 msgid "Differences 2 files and outputs the result"
-msgstr "calcola le differenze tra 2 file e stampa il risultato"
+msgstr "unisce 3 file e stampa il risultato"
 
 #: cmd_files.cc:104
 #, c-format
@@ -926,13 +923,14 @@ msgid "If any PATH is given, calculates their identity; otherwise, the one from 
 msgstr ""
 
 #: cmd_files.cc:228
+#, fuzzy
 msgid "Prints the file identifier of a file"
-msgstr ""
+msgstr "Completa un id parziale"
 
 #: cmd_files.cc:238
 #, c-format
 msgid "Cannot read from stdin"
-msgstr ""
+msgstr "Impossibile leggere da stdin"
 
 #: cmd_files.cc:278
 #: cmd_files.cc:282
@@ -946,9 +944,8 @@ msgid "FILENAME"
 msgstr "NOMEFILE"
 
 #: cmd_files.cc:290
-#, fuzzy
 msgid "Prints a file from the database"
-msgstr "copia un file dal database a stdout"
+msgstr "Stampa un file dal database"
 
 #: cmd_files.cc:291
 msgid "Fetches the given file FILENAME from the database and prints it to the standard output."
@@ -960,7 +957,7 @@ msgstr ""
 
 #: cmd_files.cc:352
 msgid "Prints the contents of a file (given a name)"
-msgstr ""
+msgstr "Stampa il contenuto di un dato file"
 
 # TODO: boh?
 #: cmd.hh:126
@@ -1050,9 +1047,8 @@ msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "REVISIONE NOME_CERT VALORE_CERT"
 
 #: cmd_key_cert.cc:184
-#, fuzzy
 msgid "Creates a certificate for a revision"
-msgstr "crea un certificato per una revisione"
+msgstr "Crea un certificato per una revisione"
 
 #: cmd_key_cert.cc:217
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
@@ -1133,7 +1129,7 @@ msgstr "REVISIONE [COMMENTO]"
 #: cmd_key_cert.cc:309
 #, fuzzy
 msgid "Comments on a particular revision"
-msgstr "commento su una specifica revisione"
+msgstr "commenta su una specifica revisione"
 
 #: cmd_key_cert.cc:323
 #, c-format
@@ -1148,7 +1144,7 @@ msgstr "commento vuoto"
 #: cmd_list.cc:43
 #, fuzzy
 msgid "Shows database objects"
-msgstr "nessuna database specificato"
+msgstr "Mostra informazioni sul database"
 
 #: cmd_list.cc:44
 #, fuzzy
@@ -1287,9 +1283,8 @@ msgstr ""
 "il prossimo commit userà il ramo ‘%s’"
 
 #: cmd_merging.cc:131
-#, fuzzy
 msgid "Updates the workspace"
-msgstr "aggiunge file allo spazio di lavoro"
+msgstr "Aggiorna lo spazio di lavoro"
 
 #: cmd_merging.cc:132
 #, fuzzy
@@ -1383,7 +1378,7 @@ msgstr "[unione]   %s"
 #: cmd_merging.cc:334
 #, fuzzy
 msgid "Merges unmerged heads of a branch"
-msgstr "unisce teste distinte di un ramo"
+msgstr "fa il merge delle teste di un ramo"
 
 #: cmd_merging.cc:345
 #: cmd_merging.cc:946
@@ -1530,7 +1525,7 @@ msgstr "REV_SINISTRA REV_DESTRA RAMO_DESTINAZIONE"
 #: cmd_merging.cc:702
 #, fuzzy
 msgid "Merges two explicitly given revisions"
-msgstr "unisce due revisioni specificate, mettendo il risultato in un ramo specificato"
+msgstr "date più di due revisioni"
 
 #: cmd_merging.cc:703
 msgid "The results of the merge are placed on the branch specified by DEST-BRANCH."
@@ -1673,7 +1668,7 @@ msgstr "il ramo ‘%s’ è attualmente separato:"
 #: cmd_merging.cc:963
 #, fuzzy
 msgid "Dumps the roster associated with a given identifier"
-msgstr "scarica il roster associato al REVID dato, o lo spazio di lavoro se nessun REVID è dasto"
+msgstr "stampa il roster associato al REVID dato"
 
 #: cmd_merging.cc:964
 msgid "If no REVID is given, the workspace is used."
@@ -1848,16 +1843,12 @@ msgid "RCSFILE..."
 msgstr "FILE_RCS…"
 
 #: cmd_othervcs.cc:17
-#, fuzzy
 msgid "Parses versions in RCS files"
-msgstr "analizzo il file RCS ‘%s’"
+msgstr "Analizzo i file RCS"
 
 #: cmd_othervcs.cc:18
-#, fuzzy
 msgid "This command doesn't reconstruct or import revisions.  You probably want to use cvs_import."
-msgstr ""
-"analizza le versioni nei file RCS\n"
-"questo comando non ricostruisce o importa intere revisioni; a tal fine usare ‘cvs_import’"
+msgstr "Questo comando non ricostruisce o importa intere revisioni; a tal fine usare ‘cvs_import’."
 
 #: cmd_othervcs.cc:33
 msgid "CVSROOT"
@@ -1874,9 +1865,8 @@ msgid "ID"
 msgstr "ID"
 
 #: cmd_packet.cc:23
-#, fuzzy
 msgid "Prints a public key packet"
-msgstr "scrive la chiave pubblica su stdout"
+msgstr "Stampa un pacchetto di chiave pubblica"
 
 #: cmd_packet.cc:46
 #, c-format
@@ -1884,9 +1874,8 @@ msgid "public key '%s' does not exist"
 msgstr "la chiave pubblica ‘%s’ non è conosciuta"
 
 #: cmd_packet.cc:53
-#, fuzzy
 msgid "Prints a private key packet"
-msgstr "scrive la chiave privata su stdout"
+msgstr "Stampa un pacchetto di chiave private"
 
 #: cmd_packet.cc:62
 #, c-format
@@ -1894,9 +1883,8 @@ msgid "public and private key '%s' do not exist in keystore"
 msgstr "la coppia di chiavi ‘%s’ non è nel portachiavi"
 
 #: cmd_packet.cc:134
-#, fuzzy
 msgid "Reads packets from files"
-msgstr "legge pacchetti da file o da stdin"
+msgstr "Legge pacchetti da file"
 
 #: cmd_packet.cc:135
 msgid "If no files are provided, the standard input is used."
@@ -1967,9 +1955,7 @@ msgid ""
 "  attr on  %s\n"
 "    attr   %s\n"
 "    value  %s"
-msgstr ""
-"  impostato su %s\n"
-"   l'attributo %s"
+msgstr "PATH ATTR VALORE"
 
 #: cmd_ws_commit.cc:88
 #, c-format
@@ -2049,7 +2035,7 @@ msgstr "ri-creo ‘%s/’"
 #: cmd_ws_commit.cc:278
 #, fuzzy
 msgid "Disapproves a particular revision"
-msgstr "disapprova una particolare revisione"
+msgstr "approva una particolare revisione"
 
 # TODO: invert?
 #: cmd_ws_commit.cc:295
@@ -2082,14 +2068,12 @@ msgid "ignoring directory '%s' [see .mtn-ignore]"
 msgstr "ignoro la directory ‘%s’ [cfr. ‘.mtn-ignore’]"
 
 #: cmd_ws_commit.cc:377
-#, fuzzy
 msgid "Adds files to the workspace"
-msgstr "aggiunge file allo spazio di lavoro"
+msgstr "Aggiunge file allo spazio di lavoro"
 
 #: cmd_ws_commit.cc:411
-#, fuzzy
 msgid "Drops files from the workspace"
-msgstr "toglie file dallo spazio di lavoro"
+msgstr "Toglie file dallo spazio di lavoro"
 
 #: cmd_ws_commit.cc:440
 msgid ""
@@ -2100,18 +2084,16 @@ msgstr ""
 "SORG1 [SORG2 […]] CART_DEST"
 
 #: cmd_ws_commit.cc:442
-#, fuzzy
 msgid "Renames entries in the workspace"
-msgstr "rinomina elementi dello spazio di lavoro"
+msgstr "Rinomina elementi dello spazio di lavoro"
 
 #: cmd_ws_commit.cc:463
 msgid "NEW_ROOT PUT_OLD"
 msgstr "NUOVA_ROOT METTI_VECCHIA"
 
 #: cmd_ws_commit.cc:464
-#, fuzzy
 msgid "Renames the root directory"
-msgstr "‘%s’ non è una directory"
+msgstr "Rinomina la directory root"
 
 #: cmd_ws_commit.cc:465
 #, fuzzy
@@ -2127,7 +2109,7 @@ msgstr ""
 
 #: cmd_ws_commit.cc:483
 msgid "Shows workspace's status information"
-msgstr ""
+msgstr "Mostra informazioni sullo spazio di lavoro"
 
 #: cmd_ws_commit.cc:511
 #: cmd_ws_commit.cc:1233
@@ -2159,9 +2141,8 @@ msgid "checkout directory '%s' already exists"
 msgstr "la directory ‘%s’ esiste già, non può essere utilizzata per il ‘checkout’"
 
 #: cmd_ws_commit.cc:619
-#, fuzzy
 msgid "Manages file attributes"
-msgstr "imposta, legge o elimina attributi sui file"
+msgstr "Gestisce gli attributi dei file"
 
 #: cmd_ws_commit.cc:620
 #, fuzzy
@@ -2176,7 +2157,7 @@ msgstr "PATH [ATTR]"
 #: cmd_ws_commit.cc:623
 #, fuzzy
 msgid "Removes attributes from a file"
-msgstr "Nessun attributo per ‘%s’"
+msgstr "File da inserire [da %s] "
 
 #: cmd_ws_commit.cc:624
 msgid "If no attribute is specified, this command removes all attributes attached to the file given in PATH.  Otherwise only removes the attribute specified in ATTR."
@@ -2201,7 +2182,7 @@ msgstr "Il percorso ‘%s’ non ha l'attributo ‘%s’"
 #: cmd_ws_commit.cc:672
 #, fuzzy
 msgid "Gets the values of a file's attributes"
-msgstr "imposta, legge o elimina attributi sui file"
+msgstr "Lettura degli attributi del file \"%s\" fallito: fstat() fallita: %s"
 
 #: cmd_ws_commit.cc:673
 msgid "If no attribute is specified, this command prints all attributes attached to the file given in PATH.  Otherwise it only prints the attribute specified in ATTR."
@@ -2223,7 +2204,7 @@ msgstr "PATH ATTR VALORE"
 
 #: cmd_ws_commit.cc:725
 msgid "Sets an attribute on a file"
-msgstr ""
+msgstr "Imposta un attributo su un file"
 
 #: cmd_ws_commit.cc:726
 msgid "Sets the attribute given on ATTR to the value specified in VALUE for the file mentioned in PATH."
@@ -2327,9 +2308,8 @@ msgstr ""
 "nota: potresti voler (o non voler) eseguire ‘%s merge’"
 
 #: cmd_ws_commit.cc:1234
-#, fuzzy
 msgid "Sets up a new workspace directory"
-msgstr "imposta una nuova directory come spazio di lavoro, il default è quella attuale"
+msgstr "Imposta un nuovo spazio di lavoro in una directory"
 
 #: cmd_ws_commit.cc:1235
 msgid "If no directory is specified, uses the current directory."
@@ -2375,9 +2355,8 @@ msgid "If no directory is given, defaults to the current workspace."
 msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
 
 #: cmd_ws_commit.cc:1374
-#, fuzzy
 msgid "Refreshes the inodeprint cache"
-msgstr "aggiorna la cache degli inodeprint"
+msgstr "Aggiorna la cache degli inodeprint"
 
 #: commands.cc:57
 msgid "Commands that aid in scripted execution"
@@ -2393,8 +2372,9 @@ msgid "Commands that aid in program debugging"
 msgstr ""
 
 #: commands.cc:66
+#, fuzzy
 msgid "Commands for information retrieval"
-msgstr ""
+msgstr "Usare `%s --help' per ulteriori informazioni.\n"
 
 #: commands.cc:69
 msgid "Commands to manage keys and certificates"
@@ -2415,11 +2395,12 @@ msgstr ""
 #: commands.cc:81
 #, fuzzy
 msgid "Commands to review revisions"
-msgstr "aggiornato alla revisione base %s"
+msgstr "comandi Texinfo di cui ignorare i parametri"
 
 #: commands.cc:84
+#, fuzzy
 msgid "Commands to manipulate the tree"
-msgstr ""
+msgstr "comandi Texinfo di cui ignorare i parametri"
 
 #: commands.cc:87
 msgid "Commands to manage persistent variables"
@@ -2452,12 +2433,12 @@ msgstr ""
 #: commands.cc:657
 #, fuzzy, c-format
 msgid "no subcommand specified for '%s'"
-msgstr "il file ‘%s’ non esiste"
+msgstr "Non è disponibile un aiuto per `%s'"
 
 #: commands.cc:660
-#, c-format
+#, fuzzy, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
-msgstr ""
+msgstr "L'archivio non è stato etichettato per corrispondere a %s"
 
 #: commands.cc:681
 msgid "command [ARGS...]"
@@ -3225,7 +3206,9 @@ msgstr "ricevuta passphrase vuota dall'hook ‘get_passphrase()’"
 #: keys.cc:117
 #, fuzzy, c-format
 msgid "enter new passphrase for key ID [%s]: "
-msgstr "conferma la passphrase per la chiave con ID [%s]: "
+msgstr ""
+"Inserisci la nuova passphrase per questa chiave segreta.\n"
+"\n"
 
 #: keys.cc:118
 #, fuzzy, c-format
@@ -4265,8 +4248,9 @@ msgid "finished regenerating cached rosters and heights"
 msgstr "rigenerazione della cache dei roster e delle altezze completata"
 
 #: revision.cc:1773
+#, fuzzy
 msgid "Shows a revision's height"
-msgstr ""
+msgstr "Altezza rilievo (definizione)"
 
 #: revision.cc:1783
 #, c-format
@@ -4579,10 +4563,9 @@ msgid ""
 "and a description of what you were doing to %s."
 msgstr ""
 "errore fatale: %s\n"
-"questo è quasi sicuramente un bug in monotone.\n"
-"per favore invia questo messaggio di errore, l'output di\n"
-"‘%s --full-version’ e una descrizione di quello che stavi facendo\n"
-"a ‘%s’."
+"this is almost certainly a bug in monotone.\n"
+"please send this error message, the output of '%s --full-version',\n"
+"and a description of what you were doing to %s.\n"
 
 #: ui.cc:581
 #, c-format
@@ -4801,7 +4784,7 @@ msgstr ""
 #: work.cc:1381
 #, c-format
 msgid "unable to drop the root directory"
-msgstr ""
+msgstr "impossibile eliminare la directory root"
 
 #: work.cc:1384
 #, c-format
@@ -5013,13 +4996,13 @@ msgstr "questo spazio di lavoro è nel formato attuale, non è necessario migrar
 #: win32/fs.cc:29
 #, fuzzy, c-format
 msgid "cannot get working directory: %s"
-msgstr "impossibile eliminare la cartella non vuota ‘%s’"
+msgstr "Impossibile cambiare la directory di lavoro"
 
 #: unix/fs.cc:40
 #: win32/fs.cc:40
 #, fuzzy, c-format
 msgid "cannot change to directory %s: %s"
-msgstr "nessun file o directory con nome ‘%s’"
+msgstr "impossibile entrare nella directory %s"
 
 #: unix/fs.cc:60
 #, fuzzy, c-format
@@ -5036,23 +5019,23 @@ msgstr ""
 #: unix/fs.cc:111
 #, fuzzy, c-format
 msgid "error accessing file %s: %s"
-msgstr "errore leggendo file RCS ‘%s’: %s"
+msgstr "errore durante la chiusura del file"
 
 #: unix/fs.cc:120
 #, fuzzy, c-format
 msgid "cannot handle special file %s"
-msgstr "specificatore di ruolo %d sconosciuto"
+msgstr "impossibile creare il file speciale %s"
 
 #: unix/fs.cc:128
 #, fuzzy, c-format
 msgid "renaming '%s' to '%s' failed: %s"
-msgstr "rinomino ‘%s’ in ‘%s’"
+msgstr "impossibile creare %s: %s\n"
 
 #: unix/fs.cc:192
 #: win32/fs.cc:272
-#, fuzzy, c-format
+#, c-format
 msgid "cannot create temp file %s: %s"
-msgstr "creazione del file PID ‘%s’ fallita"
+msgstr "impossibile creare il file temporaneo ‘%s’: %s"
 
 #: unix/fs.cc:201
 #, c-format
@@ -5061,9 +5044,9 @@ msgstr ""
 
 #: unix/fs.cc:241
 #: win32/fs.cc:332
-#, fuzzy, c-format
+#, c-format
 msgid "error writing to temp file %s: %s"
-msgstr "errore leggendo file RCS ‘%s’: %s"
+msgstr "impossibile scrivere sul file temporaneo ‘%s’: %s"
 
 #: unix/fs.cc:246
 #: win32/fs.cc:339
@@ -5080,19 +5063,19 @@ msgid "unknown error code %d"
 msgstr "codice di errore sconosciuto %d"
 
 #: unix/process.cc:53
-#, fuzzy, c-format
+#, c-format
 msgid "error getting status of file %s: %s"
-msgstr "errore leggendo file RCS ‘%s’: %s"
+msgstr ""
 
 #: unix/process.cc:72
-#, fuzzy, c-format
+#, c-format
 msgid "error opening file %s: %s"
-msgstr "errore leggendo file RCS ‘%s’: %s"
+msgstr ""
 
 #: unix/process.cc:78
-#, fuzzy, c-format
+#, c-format
 msgid "error closing file %s: %s"
-msgstr "errore leggendo file RCS ‘%s’: %s"
+msgstr ""
 
 #: unix/ssh_agent_platform.cc:48
 #, c-format
@@ -5125,9 +5108,9 @@ msgid "could not determine configuration path"
 msgstr "non riesco a determinare il path della configurazione"
 
 #: win32/fs.cc:211
-#, fuzzy, c-format
+#, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
-msgstr "rinomino ‘%s’ in ‘%s’"
+msgstr ""
 
 #: win32/fs.cc:280
 #, c-format
