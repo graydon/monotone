@@ -557,14 +557,16 @@ namespace
 //   private_location "keystore"
 //
 // Error conditions: None.
-CMD_AUTOMATE_WITH_DATABASE(keys, "",
+CMD_AUTOMATE(keys, "",
              N_("Lists all keys in the keystore"),
              "",
              options::opts::none)
 {
   N(args.size() == 0,
     F("no arguments needed"));
-  
+
+  CMD_REQUIRES_DATABASE(app);
+
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
   // public_hash, private_hash, public_location, private_location
@@ -653,13 +655,15 @@ CMD_AUTOMATE_WITH_DATABASE(keys, "",
 // key, a warning message is printed to stderr. If the revision
 // specified is unknown or invalid prints an error message to stderr
 // and exits with status 1.
-CMD_AUTOMATE_WITH_DATABASE(certs, N_("REV"),
+CMD_AUTOMATE(certs, N_("REV"),
              N_("Prints all certificates attached to a revision"),
              "",
              options::opts::none)
 {
   N(args.size() == 1,
     F("wrong argument count"));
+
+  CMD_REQUIRES_DATABASE(app);
 
   vector<cert> certs;
 
