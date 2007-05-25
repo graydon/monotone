@@ -148,7 +148,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-23 20:17+0200\n"
-"PO-Revision-Date: 2007-05-23 20:27+0200\n"
+"PO-Revision-Date: 2007-05-25 08:00+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -186,9 +186,8 @@ msgid "SELECTOR"
 msgstr "VÄLJARE"
 
 #: asciik.cc:369
-#, fuzzy
 msgid "Prints an ASCII representation of the revisions' graph"
-msgstr "visualisera revisionsträdet med i ASCII"
+msgstr "Visar en ASCII-representation av revisionsträdet"
 
 #: asciik.cc:374 automate.cc:70 automate.cc:97 automate.cc:147 automate.cc:261
 #: automate.cc:361 automate.cc:389 automate.cc:473 automate.cc:861
@@ -216,9 +215,8 @@ msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
 #: automate.cc:92
-#, fuzzy
 msgid "Prints the ancestors of the given revisions"
-msgstr "notera ett testresultat för en revision"
+msgstr "Skriver ut den givna revisionens förfäder"
 
 #: automate.cc:104 automate.cc:154 automate.cc:201 automate.cc:228
 #: automate.cc:267 automate.cc:271 automate.cc:364 automate.cc:392
@@ -228,18 +226,16 @@ msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
 
 #: automate.cc:142
-#, fuzzy
 msgid "Prints the descendents of the given revisions"
-msgstr "notera ett testresultat för en revision"
+msgstr "Skriver ut den givna revisionens anfäder"
 
 #: automate.cc:192 automate.cc:219
 msgid "[REV1 [REV2 [REV3 [...]]]]"
 msgstr "[REV1 [REV2 [REV3 [...]]]]"
 
 #: automate.cc:193
-#, fuzzy
 msgid "Erases the ancestors in a list of revisions"
-msgstr "notera ett testresultat för en revision"
+msgstr "Tar bort förfäderna i en given lista av revisioner"
 
 #: automate.cc:220
 msgid "Topologically sorts a list of revisions"
@@ -277,14 +273,12 @@ msgid "REV"
 msgstr "REV"
 
 #: automate.cc:356
-#, fuzzy
 msgid "Prints the parents of a revision"
-msgstr "skapa ett cert för en revision"
+msgstr "Skriver ut identiteten på en revisions föräldrar"
 
 #: automate.cc:384
-#, fuzzy
 msgid "Prints the children of a revision"
-msgstr "skapa ett cert för en revision"
+msgstr "Skriver ut identiteten på en revisions barn"
 
 #: automate.cc:422
 msgid "Prints the complete ancestry graph"
@@ -295,9 +289,8 @@ msgid "Lists the revisions that match a selector"
 msgstr "Visar revisionerna som matchar en väljare"
 
 #: automate.cc:653
-#, fuzzy
 msgid "Prints a summary of files found in the workspace"
-msgstr "byt namn på filer i arbetskopian"
+msgstr "Skriver ut en sammanfattning om filerna funna i en arbetskopia"
 
 #: automate.cc:672 automate.cc:914 cmd_files.cc:306 cmd_files.cc:367
 #: cmd_merging.cc:151 cmd_merging.cc:632 cmd_ws_commit.cc:162
@@ -311,9 +304,8 @@ msgid "[REVID]"
 msgstr "[REVID]"
 
 #: automate.cc:856
-#, fuzzy
 msgid "Shows change information for a revision"
-msgstr "skapa ett cert för en revision"
+msgstr "Visar information om ändringen i en revision"
 
 #: automate.cc:886 automate.cc:1021 automate.cc:1511 automate.cc:1573
 #: automate.cc:1578
@@ -326,9 +318,8 @@ msgid "Shows the revision on which the workspace is based"
 msgstr "Visar revisionen denna arbetskopia grundar sig på"
 
 #: automate.cc:929
-#, fuzzy
 msgid "Shows the revision of the current workspace"
-msgstr "filen '%s' är okänd i denna arbetskopia"
+msgstr "Visar nuvarande arbetskopias revision"
 
 #: automate.cc:998
 msgid "Shows the manifest associated with a revision"
@@ -339,9 +330,8 @@ msgid "REVID"
 msgstr "REVID"
 
 #: automate.cc:1044
-#, fuzzy
 msgid "Prints the revision data in packet format"
-msgstr "skriv ut datapaket för revision till stdout"
+msgstr "Skriv ut datapaket för revision till stdout"
 
 #: automate.cc:1057 automate.cc:1087 automate.cc:1148 automate.cc:1150
 #: automate.cc:1735 cmd_db.cc:41 cmd_diff_log.cc:396 cmd_diff_log.cc:423
@@ -361,9 +351,8 @@ msgid "FILEID"
 msgstr "FILID"
 
 #: automate.cc:1104
-#, fuzzy
 msgid "Prints the file data in packet format"
-msgstr "skriv ut datapaket för fil till stdout"
+msgstr "Skriv ut datapaket för fil till stdout"
 
 #: automate.cc:1117
 #, c-format
@@ -375,9 +364,8 @@ msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NY_FIL"
 
 #: automate.cc:1134
-#, fuzzy
 msgid "Prints the file delta in packet format"
-msgstr "skriv ut datapaket för fildelta till stdout"
+msgstr "Skriv ut datapaket för fildelta till stdout"
 
 #: automate.cc:1171
 msgid "Prints revisions that are common ancestors of a list of revisions"
@@ -400,9 +388,8 @@ msgid "KEYID PASSPHRASE"
 msgstr "NYCKELID LÖSEN"
 
 #: automate.cc:1383
-#, fuzzy
 msgid "Generates a key"
-msgstr "skapa ett RSA-nyckelpar"
+msgstr "Skapa ett nyckelpar"
 
 #: automate.cc:1403 cmd_key_cert.cc:50
 #, c-format
@@ -464,9 +451,8 @@ msgid "[FILEID] CONTENTS"
 msgstr "[FILID] INNEHÅLL"
 
 #: automate.cc:1613
-#, fuzzy
 msgid "Stores a file in the database"
-msgstr "filen '%s' har ingen revision i databasen"
+msgstr "Lagra en fil i databasen"
 
 #: automate.cc:1635 cmd_files.cc:253
 #, c-format
@@ -478,9 +464,8 @@ msgid "REVISION-DATA"
 msgstr "REVISIONS-DATA"
 
 #: automate.cc:1666
-#, fuzzy
 msgid "Stores a revision into the database"
-msgstr "revisionen %s finns inte i databasen"
+msgstr "Lagra en revision i databasen"
 
 #: automate.cc:1705
 #, c-format
@@ -500,18 +485,16 @@ msgid "DOMAIN NAME VALUE"
 msgstr "DOMÄN NAMN VÄRDE"
 
 #: automate.cc:1756 cmd_db.cc:240
-#, fuzzy
 msgid "Sets a database variable"
-msgstr "(%s (databasen har inga tabeller!)"
+msgstr "Sätt en databasvariabel"
 
 #: automate.cc:1781 cmd_db.cc:258
 msgid "DOMAIN NAME"
 msgstr "DOMÄN NAMN"
 
 #: automate.cc:1782
-#, fuzzy
 msgid "Gets a database variable"
-msgstr "(%s (databasen har inga tabeller!)"
+msgstr "Hämta värdet för en databasvariabel"
 
 #: automate.cc:1799
 #, c-format
@@ -593,9 +576,8 @@ msgid "Interface for scripted execution"
 msgstr "Gränssnitt till skriptat körning"
 
 #: cmd_automate.cc:62
-#, fuzzy
 msgid "Prints the automation interface's version"
-msgstr "automatiseringsgränssnitt"
+msgstr "Skriv ut automatiseringsgränssnittets versionsnummer"
 
 #: cmd_automate.cc:139
 #, c-format
@@ -628,14 +610,13 @@ msgid "Bad input to automate stdio: command name is missing"
 msgstr "Felaktigt indata till automate stdio: saknar kommandonamn"
 
 #: cmd_automate.cc:362
-#, fuzzy, c-format
+#, c-format
 msgid "invalid automation specified"
-msgstr "ingen databas angiven"
+msgstr "ogiltig automat angiven"
 
 #: cmd_db.cc:28
-#, fuzzy
 msgid "Deals with the database"
-msgstr "ange databasens filnamn"
+msgstr "Hanterar databasen"
 
 #: cmd_db.cc:47
 #, c-format
@@ -643,9 +624,8 @@ msgid "revision %s already has children. We cannot kill it."
 msgstr "revisionen %s har barn. Vi kan inte ta bort den."
 
 #: cmd_db.cc:53
-#, fuzzy
 msgid "Initializes a database"
-msgstr "optimerar databasen"
+msgstr "Initierar databasen"
 
 #: cmd_db.cc:54
 msgid "Creates a new database file and initializes it."
@@ -656,14 +636,12 @@ msgid "Shows information about the database"
 msgstr "Visar information om databasen"
 
 #: cmd_db.cc:75
-#, fuzzy
 msgid "Shows the database's version"
-msgstr "databasens schemaversion: %s"
+msgstr "Visar databasens schemaversion"
 
 #: cmd_db.cc:86
-#, fuzzy
 msgid "Dumps the contents of the database"
-msgstr "ange databasens filnamn"
+msgstr "Skriver ut databasens innehåll"
 
 #: cmd_db.cc:87
 msgid ""
@@ -676,9 +654,8 @@ msgstr ""
 "textfile."
 
 #: cmd_db.cc:99
-#, fuzzy
 msgid "Loads the contents of the database"
-msgstr "ladda in filinnehållet i databasen"
+msgstr "Ladda in filinnehållet i databasen"
 
 #: cmd_db.cc:100
 msgid ""
@@ -688,9 +665,8 @@ msgid ""
 msgstr "Läser en lista med SQL-instruktioner för att generera innehåll i en databas.  Detta är tänkt att användas tillsammans med utdatat från kommandot 'dump'."
 
 #: cmd_db.cc:112
-#, fuzzy
 msgid "Migrates the database to a newer schema"
-msgstr "servera databasen till anslutande klienter"
+msgstr "Migrerar databasen till ett nyare schema"
 
 #: cmd_db.cc:113
 msgid ""
@@ -708,9 +684,8 @@ msgid "Directly executes the given SQL command on the database"
 msgstr "Utför det givna SQL-kommando direkt på databasen"
 
 #: cmd_db.cc:136
-#, fuzzy
 msgid "Kills a revision from the local database"
-msgstr "filen '%s' har ingen revision i databasen"
+msgstr "Tar bort en revision från den lokala databasen"
 
 #: cmd_db.cc:148
 msgid "Kills branch certificates from the local database"
@@ -733,9 +708,8 @@ msgid "Converts the database to the changeset format"
 msgstr "Konverterar databasen till changeset-formatet"
 
 #: cmd_db.cc:193
-#, fuzzy
 msgid "Converts the database to the rosters format"
-msgstr "servera databasen till anslutande klienter"
+msgstr "Gör om databasen till att använda listor"
 
 #: cmd_db.cc:204
 msgid "Regenerates the caches stored in the database"
@@ -762,9 +736,8 @@ msgid ""
 msgstr "Detta kommando ändrar (eller skapar om det inte redan finns) databasvariabeln NAMN, lagrad i databasen, och sätter dess värde till VÄRDE.  Variabeln sorteras in under domänen DOMÄN."
 
 #: cmd_db.cc:259
-#, fuzzy
 msgid "Unsets a database variable"
-msgstr "ange databasens filnamn"
+msgstr "Tar bort en databasvariabel"
 
 #: cmd_db.cc:260
 msgid ""
@@ -782,9 +755,8 @@ msgid "(revision|file|key) PARTIAL-ID"
 msgstr "(revision|file|key) PARTIAL-ID"
 
 #: cmd_db.cc:279
-#, fuzzy
 msgid "Completes a partial identifier"
-msgstr "utöka den partiella identiteten"
+msgstr "Utöka den partiella identiteten"
 
 #: cmd_db.cc:289
 #, c-format
@@ -799,7 +771,7 @@ msgstr "Genomför ett migrationssteg på den angivna databasen"
 msgid ""
 "This command migrates the given database from the specified schema in SCHEMA "
 "to its successor."
-msgstr ""
+msgstr "Detta kommando migrerar den givna databasen från ett specifikt schema i SCHEMA till dess efterföljare."
 
 #: cmd_diff_log.cc:121
 msgid "Deleted entries:"
@@ -846,7 +818,7 @@ msgstr "[SÖKVÄG]..."
 
 #: cmd_diff_log.cc:472
 msgid "Shows current differences"
-msgstr ""
+msgstr "Visa nuvarande skillnader"
 
 #: cmd_diff_log.cc:473
 #, fuzzy
@@ -881,7 +853,7 @@ msgstr "[FIL [...]]"
 
 #: cmd_diff_log.cc:530
 msgid "Calculates diffs of files"
-msgstr ""
+msgstr "Räknar ut skillnaden mellan filerna"
 
 #: cmd_diff_log.cc:606
 msgid "[FILE] ..."
@@ -889,7 +861,7 @@ msgstr "[FIL] ..."
 
 #: cmd_diff_log.cc:607
 msgid "Prints history in reverse order"
-msgstr ""
+msgstr "Skriver ut historien i omvänd ordning"
 
 #: cmd_diff_log.cc:608
 #, fuzzy
@@ -1017,11 +989,11 @@ msgstr "räkna ut identiteten för SÖKVÄG eller stdin"
 msgid ""
 "If any PATH is given, calculates their identity; otherwise, the one from the "
 "standard input is calculated."
-msgstr ""
+msgstr "Om någon SÖKVÄG är angiven räknas dess identitet ut; om ingen SÖKVÄG angivits räknas identiteten för data som kommer på stdin ut."
 
 #: cmd_files.cc:228
 msgid "Prints the file identifier of a file"
-msgstr ""
+msgstr "Skriver ut en fils identitet"
 
 #: cmd_files.cc:238
 #, c-format
@@ -1046,15 +1018,15 @@ msgstr "skriv ut angiven fil från databasen"
 msgid ""
 "Fetches the given file FILENAME from the database and prints it to the "
 "standard output."
-msgstr ""
+msgstr "Hämtar den angivna filen FILNAMN från database och skriver ut den på stdout."
 
 #: cmd_files.cc:326
 msgid "Prints the contents of a file (given an identifier)"
-msgstr ""
+msgstr "Skriver ut innehållet på en fil (givet en filidentitet)"
 
 #: cmd_files.cc:352
 msgid "Prints the contents of a file (given a name)"
-msgstr ""
+msgstr "Skriver ut innehållet på en fil (givet ett filnamn)"
 
 #: cmd.hh:126
 #, c-format
@@ -1162,7 +1134,7 @@ msgstr ""
 
 #: cmd_key_cert.cc:219
 msgid "The current settings are used to run the test."
-msgstr ""
+msgstr "Nuvarande inställningar används för att genomföra testet."
 
 #: cmd_key_cert.cc:251
 #, c-format
@@ -1255,7 +1227,7 @@ msgstr ""
 
 #: cmd_list.cc:50
 msgid "Lists certificates attached to an identifier"
-msgstr ""
+msgstr "Visar certifikaten kopplade till en identitet"
 
 #: cmd_list.cc:77 cmd_list.cc:685
 #, c-format
@@ -1289,7 +1261,7 @@ msgstr "okänd"
 
 #: cmd_list.cc:153
 msgid "Lists keys that match a pattern"
-msgstr ""
+msgstr "Visar nycklarna som matchar ett givet mönster"
 
 #: cmd_list.cc:216
 #, c-format
@@ -1308,11 +1280,11 @@ msgstr "hittade inga nycklar som matchar '%s'"
 
 #: cmd_list.cc:247
 msgid "Lists branches in the database that match a pattern"
-msgstr ""
+msgstr "Visar grenarna i en database som matchar ett givet mönster"
 
 #: cmd_list.cc:275
 msgid "Lists the current epoch of branches that match a pattern"
-msgstr ""
+msgstr "Visar nuvarande epoch för grenarna som matchar ett givet mönster"
 
 #: cmd_list.cc:298
 #, c-format
@@ -1326,15 +1298,15 @@ msgstr "revisionen %s finns redan i databasen"
 
 #: cmd_list.cc:321
 msgid "Lists variables in the whole database or a domain"
-msgstr ""
+msgstr "Visar alla databasvariabler eller bara de som tillhör en domän"
 
 #: cmd_list.cc:355
 msgid "Lists workspace files that belong to the current branch"
-msgstr ""
+msgstr "Visar de filer i arbetskopian som hör till nuvarande gren"
 
 #: cmd_list.cc:397
 msgid "Lists workspace files that do not belong to the current branch"
-msgstr ""
+msgstr "Visar de filer i arbetskopian som inte hör till nuvarande gren"
 
 #: cmd_list.cc:429
 #, fuzzy
@@ -1343,7 +1315,7 @@ msgstr "filen '%s' är okänd i denna arbetskopia"
 
 #: cmd_list.cc:453
 msgid "Lists files that have changed with respect to the current revision"
-msgstr ""
+msgstr "Visar de filer som har ändrats med avseende på nuvarande revision"
 
 #: cmd_list.cc:561
 #, fuzzy
@@ -1352,7 +1324,7 @@ msgstr "nyckeln '%s' finns inte i nyckellagret"
 
 #: cmd_list.cc:656
 msgid "Prints all certificates attached to a revision"
-msgstr ""
+msgstr "Skriver ut alla certifikat kopplade till en revision"
 
 #: cmd_merging.cc:102
 #, c-format
@@ -1635,7 +1607,7 @@ msgstr ""
 #: cmd_merging.cc:703
 msgid ""
 "The results of the merge are placed on the branch specified by DEST-BRANCH."
-msgstr ""
+msgstr "Ihopslagningens resultat är placerat i grenen MÅLGREN."
 
 #: cmd_merging.cc:718
 #, c-format
@@ -1661,7 +1633,7 @@ msgstr ""
 msgid ""
 "The conflicts are calculated based on the two revisions given in the REV "
 "parameters."
-msgstr ""
+msgstr "Konflikten beräknas på bas av de två angivna revisionerna REV."
 
 #: cmd_merging.cc:739 cmd_merging.cc:741
 #, c-format
@@ -1704,7 +1676,7 @@ msgstr "[-r FRÅN] -r TILL [SÖKVÄG...]"
 
 #: cmd_merging.cc:770
 msgid "Applies changes made at arbitrary places in history"
-msgstr ""
+msgstr "Applicerar ändringar som gjorts på godtyckliga platser i historien"
 
 #: cmd_merging.cc:771
 #, fuzzy
@@ -1787,7 +1759,7 @@ msgstr ""
 
 #: cmd_merging.cc:964
 msgid "If no REVID is given, the workspace is used."
-msgstr ""
+msgstr "Om ingen REVID angivits används arbetskopian."
 
 #: cmd_netsync.cc:43 cmd_netsync.cc:258
 #, c-format
@@ -1870,7 +1842,7 @@ msgstr "ADRESS[:PORTNUMMER] [KATALOG]"
 
 #: cmd_netsync.cc:208
 msgid "Checks out a revision from a remote database into a directory"
-msgstr ""
+msgstr "Hämtar en revision från en databas på en annan dator till en katalog"
 
 #: cmd_netsync.cc:209
 #, fuzzy
@@ -2007,7 +1979,7 @@ msgstr "läs paket från filer eller stdin"
 
 #: cmd_packet.cc:135
 msgid "If no files are provided, the standard input is used."
-msgstr ""
+msgstr "Om ingen fil angivits används stdin."
 
 #: cmd_packet.cc:143
 #, c-format
@@ -2126,7 +2098,7 @@ msgstr "ingen sådan fil eller katalog: '%s'"
 #: cmd_ws_commit.cc:147
 msgid ""
 "In order to revert the entire workspace, specify \".\" as the file name."
-msgstr ""
+msgstr "Använda \".\" om hela arbetskopian ska återställas."
 
 #: cmd_ws_commit.cc:155
 #, c-format
@@ -2235,7 +2207,7 @@ msgstr ""
 
 #: cmd_ws_commit.cc:483
 msgid "Shows workspace's status information"
-msgstr ""
+msgstr "Visar statusinformation för arbetskopian"
 
 #: cmd_ws_commit.cc:511 cmd_ws_commit.cc:1233 cmd_ws_commit.cc:1359
 msgid "[DIRECTORY]"
@@ -2243,7 +2215,7 @@ msgstr "[KATALOG]"
 
 #: cmd_ws_commit.cc:512
 msgid "Checks out a revision from the database into a directory"
-msgstr ""
+msgstr "Hämtar en revision från databasen till en katalog"
 
 #: cmd_ws_commit.cc:513
 #, fuzzy
@@ -2292,7 +2264,7 @@ msgid ""
 "If no attribute is specified, this command removes all attributes attached "
 "to the file given in PATH.  Otherwise only removes the attribute specified "
 "in ATTR."
-msgstr ""
+msgstr "Detta kommando tar bort alla attribut kopplade till filen SÖKVÄG om NYCKEL inte är givet.  Om NYCKEL är givet tas enbart detta attribut bort."
 
 #: cmd_ws_commit.cc:642 cmd_ws_commit.cc:691 cmd_ws_commit.cc:743
 #: cmd_ws_commit.cc:805 cmd_ws_commit.cc:912 cmd_ws_commit.cc:958
@@ -2315,7 +2287,7 @@ msgid ""
 "If no attribute is specified, this command prints all attributes attached to "
 "the file given in PATH.  Otherwise it only prints the attribute specified in "
 "ATTR."
-msgstr ""
+msgstr "Detta kommando skriver ut alla attribut kopplade till filen SÖKVÄG om NYCKEL inte är givet.  Om NYCKEL är givet skrivs enbart detta attribut ut."
 
 #: cmd_ws_commit.cc:707
 #, c-format
@@ -2334,17 +2306,17 @@ msgstr "SÖKVÄG NYCKEL VÄRDE"
 
 #: cmd_ws_commit.cc:725
 msgid "Sets an attribute on a file"
-msgstr ""
+msgstr "Sätt ett attribut på en fil"
 
 #: cmd_ws_commit.cc:726
 msgid ""
 "Sets the attribute given on ATTR to the value specified in VALUE for the "
 "file mentioned in PATH."
-msgstr ""
+msgstr "Sätt attributet NYCKEL med värde VÄRDE på filen SÖKVÄG."
 
 #: cmd_ws_commit.cc:780
 msgid "Prints all attributes for the specified path"
-msgstr ""
+msgstr "Skriver ut alla attribut för den givna sökvägen"
 
 #: cmd_ws_commit.cc:894
 msgid "PATH KEY VALUE"
@@ -2352,7 +2324,7 @@ msgstr "SÖKVÄG NYCKEL VÄRDE"
 
 #: cmd_ws_commit.cc:895
 msgid "Sets an attribute on a certain path"
-msgstr ""
+msgstr "Sätt ett attribut på en given sökväg"
 
 #: cmd_ws_commit.cc:940
 msgid "PATH [KEY]"
@@ -2360,7 +2332,7 @@ msgstr "SÖKVÄG [NYCKEL]"
 
 #: cmd_ws_commit.cc:941
 msgid "Drops an attribute or all of them from a certain path"
-msgstr ""
+msgstr "Kata ett eller alla attribut för en given sökväg"
 
 #: cmd_ws_commit.cc:987
 #, fuzzy
@@ -2496,7 +2468,7 @@ msgstr "uppdatera inodeprint-cachen"
 
 #: commands.cc:57
 msgid "Commands that aid in scripted execution"
-msgstr ""
+msgstr "Kommandon som kan användas för skriptat körning"
 
 #: commands.cc:60
 #, fuzzy
@@ -2505,27 +2477,27 @@ msgstr "gör ändringar direkt i databasen"
 
 #: commands.cc:63
 msgid "Commands that aid in program debugging"
-msgstr ""
+msgstr "Kommandon som kan användas för att hitta fel och lösa problem"
 
 #: commands.cc:66
 msgid "Commands for information retrieval"
-msgstr ""
+msgstr "Kommandon för att hämta information"
 
 #: commands.cc:69
 msgid "Commands to manage keys and certificates"
-msgstr ""
+msgstr "Kommandon för att hantera nycklar och certifikat"
 
 #: commands.cc:72
 msgid "Commands that access the network"
-msgstr ""
+msgstr "Kommandon som använder nätverket"
 
 #: commands.cc:75
 msgid "Commands for packet reading and writing"
-msgstr ""
+msgstr "Kommandon för att skriva och läsa paket"
 
 #: commands.cc:78
 msgid "Commands for interaction with RCS and CVS"
-msgstr ""
+msgstr "Kommandon för att hämta data från RCS och CVS"
 
 #: commands.cc:81
 #, fuzzy
@@ -2534,15 +2506,15 @@ msgstr "uppdaterad till revisionen %s"
 
 #: commands.cc:84
 msgid "Commands to manipulate the tree"
-msgstr ""
+msgstr "Kommandon för att hantera trädet"
 
 #: commands.cc:87
 msgid "Commands to manage persistent variables"
-msgstr ""
+msgstr "Kommandon för att hantera databasvariabler"
 
 #: commands.cc:90
 msgid "Commands that deal with the workspace"
-msgstr ""
+msgstr "Kommandon för att hantera arbetskopian"
 
 #: commands.cc:466
 #, c-format
@@ -2552,7 +2524,7 @@ msgstr "okänt kommando '%s'"
 #: commands.cc:476
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
-msgstr ""
+msgstr "'%s' är flertydigt; möjliga tolkningar är:"
 
 #: commands.cc:610
 #, fuzzy, c-format
@@ -2562,7 +2534,7 @@ msgstr "Synonym för %s"
 #: commands.cc:654
 #, c-format
 msgid "command '%s' is invalid; it is a group"
-msgstr ""
+msgstr "kommandot '%s' är ogiltigt, det är en grupp"
 
 #: commands.cc:657
 #, fuzzy, c-format
@@ -2572,7 +2544,7 @@ msgstr "filen '%s' finns inte"
 #: commands.cc:660
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
-msgstr ""
+msgstr "Kunde inte matcha '%s' med något subkommando i '%s'"
 
 #: commands.cc:681
 msgid "command [ARGS...]"
@@ -2580,11 +2552,11 @@ msgstr "kommandon [ARGUMENT...]"
 
 #: commands.cc:682
 msgid "Displays help about commands and options"
-msgstr ""
+msgstr "Visa hjälp för kommandon och väljare"
 
 #: commands.cc:699
 msgid "Triggers the specified kind of crash"
-msgstr ""
+msgstr "Triggar en specifik sorts krash"
 
 #: commands.cc:813
 #, c-format
@@ -3468,7 +3440,7 @@ msgstr "fel: slut på minnet"
 
 #: mt_version.cc:35
 msgid "Shows the program version"
-msgstr ""
+msgstr "Visar programversionen"
 
 #: mt_version.cc:40
 #, fuzzy, c-format
@@ -4399,7 +4371,7 @@ msgstr "färdig med återskapandet av cachade listor och höjder"
 
 #: revision.cc:1773
 msgid "Shows a revision's height"
-msgstr ""
+msgstr "Visar en revisions höjd"
 
 #: revision.cc:1783
 #, c-format
