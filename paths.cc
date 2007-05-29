@@ -256,7 +256,7 @@ static fs::path
 normalize_path(fs::path const & in)
 {
 #if BOOST_VERSION < 103400
-  return in.normalize();
+  return fs::path(in).normalize();
 #else
   fs::path out;
   vector<string> stack;
