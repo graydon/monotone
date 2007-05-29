@@ -249,6 +249,37 @@ internal_string_to_split_path(string const & path, split_path & sp)
   I(fully_normalized_path_split(path, true, sp));
 }
 
+// path::normalize() is deprecated in Boost 1.34, and also
+// doesn't remove leading or trailing dots any more.
+static fs::path
+normalize_path(fs::path const & in)
+{
+  fs::path out;
+  vector<string> stack;
+  for (fs::path::iterator i = in.begin(); i != in.end(); ++i)
+    {
+      // remove . elements
+      if (*i == ".")
+        continue;
+      // remove foo/.. element pairs
+      if (*i == "..")
+        {
+          if (!stack.empty())
+            {
+              stack.pop_back();
+              continue;
+            }
+        }
+      stack.push_back(*i);
+    }
+  for (vector<string>::const_iterator i = stack.begin();
+       i != stack.end(); ++i)
+    {
+      out /= *i;
+    }
+  return out;
+}
+
 static void
 normalize_external_path(string const & path, string & normalized)
 {
@@ -272,7 +303,7 @@ normalize_external_path(string const & path, string & normalized)
           base = initial_rel_path.get();
           // the fs::native is needed to get it to accept paths like ".foo".
           relative = fs::path(path, fs::native);
-          out = (base / relative).normalize();
+          out = normalize_path(base / relative);
         }
       catch (exception &)
         {
@@ -539,9 +570,9 @@ static string
 normalize_out_dots(string const & path)
 {
 #ifdef WIN32
-  return fs::path(path, fs::native).normalize().string();
+  return normalize_path(fs::path(path, fs::native)).string();
 #else
-  return fs::path(path, fs::native).normalize().native_file_string();
+  return normalize_path(fs::path(path, fs::native)).native_file_string();
 #endif
 }
 
@@ -679,9 +710,17 @@ find_bookdir(fs::path const & root, fs::path const & bookdir,
     }
 
   // check for _MTN/. and _MTN/.. to see if mt dir is readable
-  if (!fs::exists(check / ".") || !fs::exists(check / ".."))
+  try
     {
-      L(FL("problems with '%s' (missing '.' or '..')") % check.string());
+      if (!fs::exists(check / ".") || !fs::exists(check / ".."))
+        {
+          L(FL("problems with '%s' (missing '.' or '..')") % check.string());
+          return false;
+        }
+    }
+  catch(exception &)
+    {
+      L(FL("problems with '%s' (cannot check for '.' or '..')") % check.string());
       return false;
     }
   return true;
